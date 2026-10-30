@@ -9,6 +9,7 @@ import {
 } from './parse-portal-member'
 import {
   PORTAL_WITHDRAWAL_CONFIRMATION_TEXT,
+  type AuthTokenResponse,
   type HomepageMeResponse,
   type MemberLoginRequest,
   type PasswordChangeRequest,
@@ -31,17 +32,9 @@ export async function postPortalLogout(refreshToken: string): Promise<void> {
 }
 
 /** POST /api/portal/auth/login — PUBLIC */
-export async function postPortalLogin(body: MemberLoginRequest): Promise<{
-  accessToken: string
-  refreshToken: string
-  tokenType?: string
-  expiresInSeconds?: number
-  passwordChangeRequired?: boolean
-  adminProvisionedOnboardingRequired?: boolean
-  adminProvisionedOnboardingStep?: string
-  registeredByAdmin?: boolean
-  identitySelfSignupCompletedAfterAdminRegistration?: boolean
-}> {
+export async function postPortalLogin(
+  body: MemberLoginRequest,
+): Promise<AuthTokenResponse & { accessToken: string; refreshToken: string }> {
   const { data } = await axiosClient.post<unknown>(portalAuthPaths.login(), body, {
     skipAuth: true,
     skipRefresh: true,

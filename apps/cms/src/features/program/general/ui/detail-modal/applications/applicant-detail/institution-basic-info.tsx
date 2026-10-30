@@ -55,6 +55,15 @@ import { organizationRequestedSchedulesQueryOptions } from '@/features/program/g
 import { formatClassStudentCountSegments } from '@/features/program/general/lib/detail-value-helpers'
 import type { Program } from '@/types/domain'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { resolveAffiliatedFinancialCompanyDisplay } from '@/features/program/1c-1s/lib/affiliated-financial-company-display'
+import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
+import {
+  alignCompanySchoolScheduleDates,
+  buildCompanySchoolPreferredScheduleBlocks,
+  parseCompanySchoolRequestedScheduleMemo,
+} from '@/features/program/1c-1s/lib/company-school-preferred-schedule-blocks'
+import { formatCompanySchoolSexOffenseParts } from '@/features/program/1c-1s/lib/company-school-sex-offense-display'
+import { CompanySchoolPreferredScheduleSection } from '@/features/program/1c-1s/ui/applicant-detail/company-school-preferred-schedule-section'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
@@ -122,15 +131,32 @@ function ProgramApprovalStatusValue({
   )
 }
 
+/** 1사1교 결연 금융 회사 — 신청 폼 객체 값을 라디오 옵션 기준 라벨로 */
+function buildAffiliatedFinancialCompanyCell(
+  detail: ApplicantInstitutionDetailExtend | undefined,
+  program: Program | null | undefined
+): ReactNode {
+  const display = resolveAffiliatedFinancialCompanyDisplay(detail?.affiliatedFinancialCompany)
+  if (display.kind === 'text') return display.text
+  if (display.kind === 'partner' && program?.sponsorId) {
+    return <SponsorNameById sponsorId={program.sponsorId} />
+  }
+  return '-'
+}
+
 function buildSexOffenseRequestCell(
-  detail: ApplicantInstitutionDetailExtend | undefined
+  detail: ApplicantInstitutionDetailExtend | undefined,
+  isCompanySchool = false
 ): ReactNode {
   const raw = detail?.sexOffenseCheckRequest?.trim()
   if (!raw) return '-'
-  const parts = raw
-    .split(' | ')
-    .map(s => s.trim())
-    .filter(Boolean)
+  /** 1사1교: 시안 형식 `온라인 제출 | ID : … | 검증번호 : …` */
+  const parts = isCompanySchool
+    ? formatCompanySchoolSexOffenseParts(raw)
+    : raw
+        .split(' | ')
+        .map(s => s.trim())
+        .filter(Boolean)
   if (parts.length === 0) return '-'
   return (
     <ProgramDetailTdSegmentWrap>
@@ -298,28 +324,53 @@ export function ApplicantGeneralInstitutionBasicInfo({
     ) : (
       buildTeacherInfoCell(institution, detail)
     )
-  const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail)
-  const useStoredRequestedHopeSchedules = !isCompanySchoolProgram(program)
+  const isCompanySchool = isCompanySchoolProgram(program)
+  const sexOffenseRequestDisplay = buildSexOffenseRequestCell(detail, isCompanySchool)
+  /** 1사1교도 requested-schedules 를 조회한다. 로딩 중 data는 undefined이며 빈 배열로 덮지 않는다. */
   const requestedHopeSchedulesQuery = useQuery({
     ...organizationRequestedSchedulesQueryOptions(institution.id),
-    enabled: useStoredRequestedHopeSchedules && institution.id.trim().length > 0,
+    enabled: institution.id.trim().length > 0,
   })
+  const companySchoolScheduleBlocks = useMemo(
+    () =>
+      isCompanySchool
+        ? buildCompanySchoolPreferredScheduleBlocks(
+            /**
+             * 교시·시간: requested-schedules, 비면 `requestedScheduleMemo`(참고용) 해석.
+             * 날짜: `preferredEducationSchedules[].educationDate`(SSOT)로 맞춘다.
+             */
+            alignCompanySchoolScheduleDates(
+              requestedHopeSchedulesQuery.data && requestedHopeSchedulesQuery.data.length > 0
+                ? requestedHopeSchedulesQuery.data
+                : parseCompanySchoolRequestedScheduleMemo(institution.desiredEducationPeriod),
+              institution.preferredEducationSchedules
+            )
+          )
+        : [],
+    [
+      isCompanySchool,
+      requestedHopeSchedulesQuery.data,
+      institution.desiredEducationPeriod,
+      institution.preferredEducationSchedules,
+    ]
+  )
   const sessions = useMemo(() => {
     const preferred = institution.preferredEducationSchedules ?? []
-    const fromHope = useStoredRequestedHopeSchedules
-      ? resolveOrganizationApplicationHopeSessions(
-          {
-            programType: program?.backendProgramType?.trim() || 'GENERAL_ORGANIZATION',
-            availableActions: [],
-            sessions: [],
-            preferredEducationSchedules: [],
-          },
-          preferred,
-          requestedHopeSchedulesQuery.data
-        )
-      : (institution.sessions ?? [])
+    const fromHope = resolveOrganizationApplicationHopeSessions(
+      {
+        programType: isCompanySchool
+          ? program?.backendProgramType?.trim() || 'COMPANY_SCHOOL'
+          : program?.backendProgramType?.trim() || 'GENERAL_ORGANIZATION',
+        availableActions: [],
+        sessions: [],
+        preferredEducationSchedules: [],
+      },
+      preferred,
+      requestedHopeSchedulesQuery.data
+    )
+    const source = fromHope.length > 0 ? fromHope : (institution.sessions ?? [])
     return prepareGeneralEducationScheduleSessions(
-      fromHope,
+      source,
       institutionApplicationBridge
         ? {
             educationStructure: institutionApplicationBridge.educationStructure,
@@ -337,12 +388,13 @@ export function ApplicantGeneralInstitutionBasicInfo({
     educationScheduleLines,
     institution,
     institutionApplicationBridge,
+    isCompanySchool,
     program?.backendProgramType,
     requestedHopeSchedulesQuery.data,
-    useStoredRequestedHopeSchedules,
   ])
   const showScheduleSection =
     sessions.length > 0 ||
+    (institution.preferredEducationSchedules?.length ?? 0) > 0 ||
     shouldShowInstitutionApplicationDetailScheduleSection(institutionApplicationBridge, institution)
 
   const combinedClassViewValue = buildCombinedClassViewValue(detail, combinedClassProgramEligible)
@@ -404,6 +456,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
   const mealValue = detail?.mealInfo ?? '-'
   const otherNotesValue = detail?.otherSpecialNotes ?? detail?.parkingInfo ?? '-'
   const showCompanySchoolEconomyFields = shouldShowCompanySchoolEconomyFields(program, detail)
+  /** 1사1교 시안 — 결연 금융 회사·전년도 진행 여부를 학급 수 행 아래로, 일부 라벨만 시안 표기 */
+  const isCompanySchoolLayout = showCompanySchoolEconomyFields && isCompanySchoolProgram(program)
+  const affiliatedFinancialCompanyValue = buildAffiliatedFinancialCompanyCell(detail, program)
 
   const combinedClassEditValue =
     isEditMode && draft && onDraftChange ? (
@@ -537,6 +592,20 @@ export function ApplicantGeneralInstitutionBasicInfo({
               />
             </DetailInfoForm.Row>
           )}
+          {isCompanySchoolLayout ? (
+            <DetailInfoForm.Row type="double">
+              <DetailInfoForm.Field
+                label="결연 금융 회사"
+                readOnlyDisplay
+                view={affiliatedFinancialCompanyValue}
+              />
+              <DetailInfoForm.Field
+                label="전년도 진행 여부"
+                readOnlyDisplay
+                view={detail?.previousYearParticipation ?? '-'}
+              />
+            </DetailInfoForm.Row>
+          ) : null}
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="담당 교사 정보"
@@ -562,7 +631,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
               view={otherRequestsValue}
             />
           </DetailInfoForm.Row>
-          {showCompanySchoolEconomyFields ? (
+          {showCompanySchoolEconomyFields && !isCompanySchoolLayout ? (
             <DetailInfoForm.Row type="double">
               <DetailInfoForm.Field
                 label="전년도 참여 여부"
@@ -572,7 +641,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
               <DetailInfoForm.Field
                 label="결연 금융회사명"
                 readOnlyDisplay
-                view={detail?.affiliatedFinancialCompany ?? '-'}
+                view={affiliatedFinancialCompanyValue}
               />
             </DetailInfoForm.Row>
           ) : null}
@@ -580,7 +649,10 @@ export function ApplicantGeneralInstitutionBasicInfo({
       </section>
 
       {showGuidanceSection ? (
-        <DetailInfoForm title="안내 사항" mode={basicInfoFormMode}>
+        <DetailInfoForm
+          title={isCompanySchoolLayout ? '안내사항' : '안내 사항'}
+          mode={basicInfoFormMode}
+        >
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="강의 공간 내 컴퓨터 여부"
@@ -612,7 +684,7 @@ export function ApplicantGeneralInstitutionBasicInfo({
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
-              label="성범죄 경력 조회서 요청"
+              label={isCompanySchoolLayout ? '성범죄경력 조회서 요청' : '성범죄 경력 조회서 요청'}
               fullRow
               readOnlyDisplay
               view={sexOffenseRequestDisplay}
@@ -621,7 +693,9 @@ export function ApplicantGeneralInstitutionBasicInfo({
         </DetailInfoForm>
       ) : null}
 
-      {showScheduleSection ? (
+      {companySchoolScheduleBlocks.length > 0 ? (
+        <CompanySchoolPreferredScheduleSection blocks={companySchoolScheduleBlocks} />
+      ) : showScheduleSection ? (
         <ApplicantPreferredScheduleDetailSection
           sessions={sessions}
           bridge={institutionApplicationBridge}

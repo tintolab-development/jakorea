@@ -4,25 +4,47 @@
  */
 
 import type { ProgramRole, UserRole } from '@/types/user'
+import {
+  isCmsMasterAdminRole,
+  isCmsOperableProgramOwnerRole,
+  isCmsViewerAdminRole,
+} from '@/shared/lib/cms-global-role-code'
+
+export {
+  isCmsMasterAdminRole,
+  isCmsOperableProgramOwnerRole,
+  isCmsViewerAdminRole,
+} from '@/shared/lib/cms-global-role-code'
 
 export const MAX_PM_PER_PROGRAM = 3
 
 export const PROGRAM_PM_ROLE_LIMIT_MESSAGE = `프로그램당 PM(담당자)은 최대 ${MAX_PM_PER_PROGRAM}명까지 지정할 수 있습니다.`
 
-/** CMS 전역 VIEWER는 프로그램 담당 역할도 뷰어만 가능 (BE `INVALID_PROGRAM_ASSIGNMENT_ROLE`) */
+/** CMS 전역 VIEWER/PROGRAM_VIEWER는 프로그램 담당 역할도 뷰어만 가능 */
 export const CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE =
   '조회 전용 관리자에게는 프로그램 뷰어 권한만 지정할 수 있습니다.'
 
-export function isCmsViewerAdminRole(roleCode: string | undefined | null): boolean {
-  return (roleCode ?? '').trim().toUpperCase() === 'VIEWER'
-}
+/** MASTER는 신규 프로그램 OWNER(PM)로 배정 불가 (BE `PROGRAM_OWNER_ROLE_REQUIRES_ACCOUNTING_OR_PROGRAM_MANAGER`) */
+export const CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE =
+  'Master 관리자는 프로그램 담당(PM)으로 지정할 수 없습니다. Accounting Manager 또는 Program Manager를 지정해 주세요.'
+
+/**
+ * BE가 운영 관리자의 프로그램 VIEWER 배정을 거절할 때 표시.
+ * FE 배정 가능 여부는 canAssignProgramRoleToCmsAdmin이 허용한다.
+ */
+export const CMS_OPERABLE_ADMIN_PROGRAM_VIEWER_FORBIDDEN_MESSAGE =
+  'Accounting Manager·Program Manager에게는 프로그램 뷰어 권한을 지정할 수 없습니다.'
 
 export function canAssignProgramRoleToCmsAdmin(
   cmsRoleCode: string | undefined | null,
   programRole: ProgramRole
 ): boolean {
-  if (!isCmsViewerAdminRole(cmsRoleCode)) return true
-  return programRole === 'ASSISTANT'
+  if (isCmsMasterAdminRole(cmsRoleCode)) return false
+  if (isCmsViewerAdminRole(cmsRoleCode)) return programRole === 'ASSISTANT'
+  if (isCmsOperableProgramOwnerRole(cmsRoleCode)) {
+    return programRole === 'OWNER' || programRole === 'PARTNER' || programRole === 'ASSISTANT'
+  }
+  return true
 }
 
 export function countProgramPmsInManagerList(

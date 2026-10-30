@@ -20,14 +20,14 @@
 .summary {
   margin-bottom: var(--spacing-24);
   display: flex;
-  padding: var(--Spacing-16, 16px) var(--Spacing-24, 24px);
+  padding: var(--spacing-24);
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--spacing-8);
   align-self: stretch;
-  border-radius: var(--radius-12);
-  background: var(--Color-netural-cool-100, #e6e9eb);
+  border-radius: var(--radius-24);
+  background: var(--color-element-hover);
 }
 
 .form {
@@ -194,4 +194,30 @@
   padding: var(--spacing-12) var(--spacing-16);
   border-radius: var(--radius-12);
   background: var(--color-neutral-cool-100, #e6e9eb);
+}
+
+/* 시안 11265-96723 — 신청폼 카드·표 (플랫폼 화면 한정) */
+.form :global(.form-template-host[data-surface='platformUser']) {
+  --detail-info-form-body-radius: var(--radius-24);
+}
+
+.form :global(.form-template-host .form-template-renderer) {
+  gap: var(--spacing-24);
+}
+
+.form :global(.form-template-host .paragraph-card) {
+  border-radius: var(--radius-24);
+  box-shadow:
+    0 0 9px 0 rgba(41, 96, 118, 0.02),
+    0 20px 42px 0 rgba(30, 71, 75, 0.05);
+}
+
+.form :global(.form-template-host .paragraph-card .paragraph-input--title) {
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.2px;
+}
+
+.form :global(.form-template-host .paragraph-card .paragraph-input__required) {
+  color: var(--color-status-error-default);
 }

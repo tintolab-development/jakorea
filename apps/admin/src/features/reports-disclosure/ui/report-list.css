@@ -1,4 +1,4 @@
-/* 연차 / 회계감사 보고서 목록 — admin-list-card 갭(24px) 사용, 패널 flex gap 금지 */
+/* 연차 / 회계감사 보고서 목록 — FilterTableLayout 카드 간격, 패널 flex gap 금지 */
 
 .rd-list {
   display: flex;

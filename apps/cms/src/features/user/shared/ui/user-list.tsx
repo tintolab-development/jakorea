@@ -101,6 +101,7 @@ function renderInstructorSettlementStatusCell(labelRaw?: string) {
 
 const ADMIN_PERMISSION_OPTIONS: { value: AdminPermissionTagVariant; label: string }[] = [
   { value: 'manager', label: ADMIN_PERMISSION_TAG_LABEL.manager },
+  { value: 'accounting', label: ADMIN_PERMISSION_TAG_LABEL.accounting },
   { value: 'partner', label: ADMIN_PERMISSION_TAG_LABEL.partner },
   { value: 'viewer', label: ADMIN_PERMISSION_TAG_LABEL.viewer },
 ]

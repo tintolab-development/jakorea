@@ -50,6 +50,10 @@ import {
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { resolveVenueKind } from '@/features/program/general/model/common-info-edit-schema'
 import {
+  isPreEducationCurriculumSession,
+  isPreEducationScheduleBlock,
+} from '@/features/program/general/lib/schedule-detail-form'
+import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
 } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
@@ -178,17 +182,34 @@ export function resolveStoredIpsTypeSummary(input: {
   )
 }
 
+type ResolveStoredEducationFormLabelScheduleRow = Parameters<
+  typeof isPreEducationScheduleBlock
+>[0] & {
+  educationFormLabel?: string | null
+}
+
+type ResolveStoredEducationFormLabelCurriculumRow = Parameters<
+  typeof isPreEducationCurriculumSession
+>[0] & {
+  educationFormLabel?: string | null
+}
+
 export function resolveStoredEducationFormLabel(input: {
   educationFormLabel?: string | null
-  scheduleDetails?: Array<{ educationFormLabel?: string | null }> | null
-  curriculumSessions?: Array<{ educationFormLabel?: string | null }> | null
+  scheduleDetails?: ResolveStoredEducationFormLabelScheduleRow[] | null
+  curriculumSessions?: ResolveStoredEducationFormLabelCurriculumRow[] | null
 }): string {
   const root = input.educationFormLabel?.trim()
   if (root) return root
+  // 사전 교육 행(overlay 0) 교육 형태는 본 교육과 별개다. 본 교육 라벨 추론에서 뺀다.
   return (
     sharedFilledText([
-      ...(input.scheduleDetails ?? []).map(row => row.educationFormLabel),
-      ...(input.curriculumSessions ?? []).map(row => row.educationFormLabel),
+      ...(input.scheduleDetails ?? [])
+        .filter(row => !isPreEducationScheduleBlock(row))
+        .map(row => row.educationFormLabel),
+      ...(input.curriculumSessions ?? [])
+        .filter(row => !isPreEducationCurriculumSession(row))
+        .map(row => row.educationFormLabel),
     ]) ?? ''
   )
 }
@@ -343,6 +364,10 @@ const programDetailEditSchemaBase = z.object({
     .refine(v => v === undefined || (typeof v === 'string' && v.trim().length >= 1), '모집 안내를 입력해주세요'),
   learningSupportContent: z.string().min(1, '학습 지원 내용을 입력해주세요'),
   attachmentFileNames: z.array(z.string()).optional(),
+  /** UJAT 등록 초안 — 모집 행 대표 이미지. overlay 키가 아니라 typed RHF가 SSOT */
+  recruitmentThumbnailFileObjectId: z.number().optional(),
+  recruitmentThumbnailFileName: z.string().optional(),
+  recruitmentAttachmentFileObjectIds: z.array(z.number()).optional(),
   rounds: z.array(roundEditSchema),
   curriculumSession1Title: z.string().optional(),
   curriculumSession1Description: z.string().optional(),
@@ -1060,6 +1085,9 @@ export function programToDetailEditValues(
     recruitmentGuide: program.recruitmentGuide?.trim() ? program.recruitmentGuide : undefined,
     learningSupportContent: program.learningSupportContent ?? '',
     attachmentFileNames: program.attachmentFileNames ?? [],
+    recruitmentThumbnailFileObjectId: undefined,
+    recruitmentThumbnailFileName: undefined,
+    recruitmentAttachmentFileObjectIds: undefined,
     resultAnnouncementDate: program.resultAnnouncementDate
       ? toStr(program.resultAnnouncementDate)
       : '',

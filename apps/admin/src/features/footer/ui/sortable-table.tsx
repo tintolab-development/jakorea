@@ -8,7 +8,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 
 type RowWithId = { id: string }
@@ -46,7 +46,7 @@ export function FooterSortableTable<T extends RowWithId>({
 
   return (
     <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
-      <Table<T>
+      <CmsDataTable<T>
         className={tableClass}
         rowKey="id"
         loading={loading}

@@ -125,6 +125,12 @@ import {
   getGeneralProgramApiErrorMessage,
 } from '@/features/program/general/api/get-general-program-api-error'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
+import {
+  isProgramDateOutsideOpenPeriodError,
+  publishProgramOperationDateFocus,
+  resolveProgramDateOutsideOpenPeriodAlert,
+} from '@/features/program/shared/lib/program-date-outside-open-period-alert'
+import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { isEducationStructureChanged } from '@/features/program/general/lib/overlay-phase1/independent-session-authoring'
 import {
@@ -589,6 +595,9 @@ export function GeneralProgramDetailFullPageModal({
   } = useGeneralProgramNavigation(open ? programId : undefined, open)
   const { showAlert } = useCmsAlert()
   const detailRequiredHighlight = useDetailEditRequiredHighlightRequest()
+  useProgramOperationDateErrorFocus(open, focus => {
+    detailRequiredHighlight.report(focus.highlightKeys)
+  })
   const displayProgram = useMemo(() => {
     // remote(API id): 상세 GET만 본문에 사용 (목록 행·resolve 시드 선표시 금지)
     // FE 시드(`general-prog-*`): remoteEnabled=false → resolve 폴백
@@ -1112,7 +1121,16 @@ export function GeneralProgramDetailFullPageModal({
               queryKey: generalProgramQueryKeys.detail(programId),
             })
           }
-          if (!isGlobalApiErrorAlertShown(result.error)) {
+          const dateAlert = isProgramDateOutsideOpenPeriodError(result.error)
+            ? resolveProgramDateOutsideOpenPeriodAlert(result.error)
+            : null
+          if (dateAlert) {
+            detailRequiredHighlight.report(dateAlert.focus.highlightKeys)
+            if (!isGlobalApiErrorAlertShown(result.error)) {
+              pendingAlert = { title: dateAlert.title, content: dateAlert.content }
+              publishProgramOperationDateFocus(dateAlert.focus)
+            }
+          } else if (!isGlobalApiErrorAlertShown(result.error)) {
             pendingAlert = {
               title: '저장 실패',
               content: getGeneralProgramApiErrorMessage(

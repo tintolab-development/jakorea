@@ -726,12 +726,51 @@ function mapCompanySchoolPatchFieldsToRequest(
  * @param patch 있으면 **해당 키만** PATCH body에 포함 (부분 수정).
  *   없으면 기존처럼 프로그램 코어 필드 전체를 직렬화(생성 직후 전체 동기화 등).
  */
+function trimmedOrUndefined(value: string | null | undefined): string | undefined {
+  const next = value?.trim()
+  return next ? next : undefined
+}
+
+/**
+ * 1사1교는 모집 행이 없어 포털이 최상위 `contactName`·`applicationMethod`를 읽는다.
+ * 참여 모집 탭 수정이 중첩(participantRecruitmentInfo)만 바꾸면 최상위가 그대로 남으므로,
+ * 중첩 값이 최상위와 다를 때 최상위 키도 patch에 싣는다. 빈 값(삭제)은 동기화하지 않는다.
+ */
+function withCompanySchoolParticipantTopLevelSync(
+  program: Program,
+  patch: Partial<Program>
+): Partial<Program> {
+  const nextInfo = patch.generalCommonInfo?.participantRecruitmentInfo
+  if (nextInfo == null) return patch
+  let synced = patch
+  if (!patchHasKey(patch, 'contactName')) {
+    const nestedContact =
+      trimmedOrUndefined(nextInfo.contactOrganizationName) ||
+      trimmedOrUndefined(nextInfo.contactName)
+    if (nestedContact && nestedContact !== trimmedOrUndefined(program.contactName)) {
+      synced = { ...synced, contactName: nestedContact }
+    }
+  }
+  if (!patchHasKey(patch, 'applicationMethod')) {
+    const nestedMethod = trimmedOrUndefined(nextInfo.applicationMethod)
+    if (nestedMethod && nestedMethod !== trimmedOrUndefined(program.applicationMethod)) {
+      synced = { ...synced, applicationMethod: nextInfo.applicationMethod }
+    }
+  }
+  return synced
+}
+
 export function mapCompanySchoolToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
 ): ProgramUpdateRequest {
   if (patch && Object.keys(patch).length > 0) {
-    return mapCompanySchoolPatchFieldsToRequest({ ...program, ...patch }, patch, program)
+    const syncedPatch = withCompanySchoolParticipantTopLevelSync(program, patch)
+    return mapCompanySchoolPatchFieldsToRequest(
+      { ...program, ...syncedPatch },
+      syncedPatch,
+      program
+    )
   }
   return mapCompanySchoolCoreFieldsToRequest(program)
 }

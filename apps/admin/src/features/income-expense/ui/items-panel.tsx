@@ -34,7 +34,11 @@ import {
   FinanceItemsSortableTable,
 } from '@/features/income-expense/ui/sortable-table'
 import { SummaryBar } from '@/features/income-expense/ui/summary-bar'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import {
   CmsButton,
   CmsInput,
@@ -141,21 +145,18 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
     setIsEditing(false)
   }, [])
 
-  const handleDraftChange = useCallback(
-    (id: string, patch: Partial<DraftRow>) => {
-      setDrafts(prev => ({
-        ...prev,
-        [id]: {
-          name: prev[id]?.name ?? '',
-          ratio: prev[id]?.ratio ?? '',
-          amount: prev[id]?.amount ?? '',
-          category: prev[id]?.category,
-          ...patch,
-        },
-      }))
-    },
-    []
-  )
+  const handleDraftChange = useCallback((id: string, patch: Partial<DraftRow>) => {
+    setDrafts(prev => ({
+      ...prev,
+      [id]: {
+        name: prev[id]?.name ?? '',
+        ratio: prev[id]?.ratio ?? '',
+        amount: prev[id]?.amount ?? '',
+        category: prev[id]?.category,
+        ...patch,
+      },
+    }))
+  }, [])
 
   const handleSave = useCallback(async () => {
     try {
@@ -462,7 +463,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
               <>
                 <CmsButton
                   variant="secondary"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={updateMutation.isPending}
@@ -471,7 +472,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="large"
+                  size="h40"
                   type="button"
                   loading={updateMutation.isPending}
                   onClick={() => void handleSave()}
@@ -483,7 +484,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
               <>
                 <CmsButton
                   variant="delete"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleDeleteClick}
                   loading={removeMutation.isPending}
@@ -492,19 +493,14 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                 </CmsButton>
                 <CmsButton
                   variant="secondary"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleStartEdit}
                   disabled={rows.length === 0}
                 >
                   항목 수정
                 </CmsButton>
-                <CmsButton
-                  variant="primary"
-                  size="large"
-                  type="button"
-                  onClick={handleOpenCreate}
-                >
+                <CmsButton variant="primary" size="h40" type="button" onClick={handleOpenCreate}>
                   항목 등록
                 </CmsButton>
               </>

@@ -5,8 +5,7 @@
 }
 
 .template-form-tab__catalog-notice,
-.template-form-tab__catalog-error,
-.template-form-tab__loading {
+.template-form-tab__catalog-error {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;

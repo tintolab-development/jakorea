@@ -296,7 +296,7 @@ export function UjatRecruitVolunteerNotesField({
               const checked = e.target.checked
               field.onChange(checked ? 'not_applicable' : 'applicable')
               if (checked) {
-                form.setValue('otherNotes', undefined, { shouldDirty: true })
+                form.setValue('oneLineIntroduction', '', { shouldDirty: true })
               }
             }}
           >
@@ -306,7 +306,7 @@ export function UjatRecruitVolunteerNotesField({
       />
       <DetailInfoForm.InputsSeparator />
       <Controller
-        name="otherNotes"
+        name="oneLineIntroduction"
         control={form.control}
         render={({ field }) => (
           <CmsInput

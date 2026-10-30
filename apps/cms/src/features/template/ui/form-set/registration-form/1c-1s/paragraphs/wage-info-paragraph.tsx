@@ -7,7 +7,10 @@ import {
   paymentItemSelectPlaceholder,
   usePaymentItemCatalogState,
 } from '@/features/template/lib/template-registration-payment-item-options'
-import { normalizeProgramPaymentItemIds } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
+import {
+  COMPANY_SCHOOL_WAGE_DEDUCTION_LABEL,
+  nextCompanySchoolWagePaymentItemValues,
+} from '@/features/program/1c-1s/lib/company-school-wage-defaults'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
@@ -17,8 +20,6 @@ import {
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
-
-const DEDUCTION_VIEW = '일용근로자 원천징수세액'
 
 /** 화면 라벨 — 카탈로그 원문과 매칭해 실제 마스터 id 를 고른다 */
 const PAYMENT_LABEL_TRANSPORT_CATALOG = '강사 교통비'
@@ -118,27 +119,11 @@ export function OneCOneSRegistrationWageInfoParagraph() {
   }, [remotePaymentOptions])
 
   useEffect(() => {
-    if (!paymentCatalog.ready || remotePaymentOptions.length === 0) return
-    const raw = getProgramRegistrationOverlayRecord()['economyRegistration.wageInfo.paymentItemValues']
-    // 미기록(undefined)만 기본 지급 항목(교통비·숙박비 1사1교)으로 시드
-    if (raw === undefined) {
-      const transport = remotePaymentOptions.find(
-        opt => opt.label.trim() === PAYMENT_LABEL_TRANSPORT_CATALOG
-      )
-      const lodging = remotePaymentOptions.find(
-        opt => opt.label.trim() === PAYMENT_LABEL_LODGING_CATALOG
-      )
-      const next = [transport?.value, lodging?.value].filter((id): id is string => Boolean(id))
-      if (next.length > 0) setPaymentItemValues(next)
-      return
-    }
-    // 사용자가 []로 비운 값은 유지. 임시저장·템플릿의 예전 mock id는 실제 id로 교정
-    if (!Array.isArray(raw)) return
-    const current = raw.map(id => String(id ?? '').trim()).filter(Boolean)
-    const next = normalizeProgramPaymentItemIds(current)
-    if (next.length !== current.length || next.some((id, index) => id !== current[index])) {
-      setPaymentItemValues(next)
-    }
+    const raw =
+      getProgramRegistrationOverlayRecord()['economyRegistration.wageInfo.paymentItemValues']
+    const next = nextCompanySchoolWagePaymentItemValues(raw, paymentCatalog.ready)
+    if (next == null) return
+    setPaymentItemValues(next)
   }, [paymentCatalog.ready, paymentItemValues, remotePaymentOptions, setPaymentItemValues])
 
   return (
@@ -181,7 +166,7 @@ export function OneCOneSRegistrationWageInfoParagraph() {
           }
           view="-"
         />
-        <DetailInfoForm.Field label="공제 항목" view={DEDUCTION_VIEW} />
+        <DetailInfoForm.Field label="공제 항목" view={COMPANY_SCHOOL_WAGE_DEDUCTION_LABEL} />
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )

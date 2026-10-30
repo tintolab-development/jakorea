@@ -6,12 +6,10 @@ import {
 import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 
-/** 목록·신청 기관 상세 일괄/단건 반려 */
-export type UjatInstitutionApplicationRejectModalAction =
-  | 'application_reject'
-  | 'temp_reject'
+/** 목록·신청 기관 상세 일괄/단건 실제 신청 반려 */
+export type UjatInstitutionApplicationRejectModalAction = 'application_reject'
 
-/** 반려 + 임시 배정 기관 확인 승인 */
+/** 실제 신청 반려 + 임시 배정 기관 확인 승인. 임시 반려는 TemporaryActionModal. */
 export type UjatInstitutionApplicationModalAction =
   | UjatInstitutionApplicationRejectModalAction
   | 'application_approve'
@@ -74,34 +72,6 @@ function getModalCopy(
     }
   }
 
-  if (action === 'temp_reject') {
-    if (variant === 'single') {
-      return {
-        permissionVariant: 'reject',
-        title: '기관 임시 반려 안내',
-        message: `**[${displayName}]**의 프로그램 참여를 임시 반려하시겠습니까?\n임시 반려 시 입력하신 임시 반려 사유가 담당 교사에게 전달되며, 알림이 발송됩니다.`,
-        confirmLabel: '임시 반려',
-        confirmVariant: 'delete',
-        requireReason: true,
-        reasonLabel: '임시 반려 사유',
-        reasonPlaceholder: '임시 반려 사유를 입력해 주세요.',
-        reasonRequiredMessage: '임시 반려 사유를 입력해 주세요.',
-      }
-    }
-
-    return {
-      permissionVariant: 'reject',
-      title: '기관 일괄 임시 반려 안내',
-      message: `선택한 **${selectionCount}개**의 모든 기관의 프로그램 참여를 일괄 임시 반려하시겠습니까?\n임시 반려 시 입력하신 임시 반려 사유가 각 담당 교사에게 개별로 전달되며, 알림이 발송됩니다.`,
-      confirmLabel: '임시 반려',
-      confirmVariant: 'delete',
-      requireReason: true,
-      reasonLabel: '임시 반려 사유',
-      reasonPlaceholder: '임시 반려 사유를 입력해 주세요.',
-      reasonRequiredMessage: '임시 반려 사유를 입력해 주세요.',
-    }
-  }
-
   throw new Error(`Unknown action: ${action}`)
 }
 
@@ -145,11 +115,7 @@ export function UjatInstitutionApplicationActionModal({
       reasonLabel={copy.reasonLabel}
       reasonPlaceholder={copy.reasonPlaceholder}
       reasonRequiredMessage={copy.reasonRequiredMessage}
-      notifyTimingCapability={
-        action === 'temp_reject'
-          ? NOTIFY_TIMING_CAPABILITY.immediateOnly
-          : NOTIFY_TIMING_CAPABILITY.timedBulk
-      }
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
     />
   )
 }

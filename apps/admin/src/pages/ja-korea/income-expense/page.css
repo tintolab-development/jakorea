@@ -42,35 +42,3 @@
   margin-top: 16px;
   margin-bottom: 20px;
 }
-
-/*
- * 그래프 · 테이블 탭 타이포 (시안)
- * active: mint-01 / 18 / 700 / lh 150%
- */
-.income-expense-page__tabs--view .cms-text-tabs__list {
-  gap: 8px;
-}
-
-.income-expense-page__tabs--view button.cms-text-tabs__tab {
-  padding: 4px 8px 8px;
-  color: #7d7d7d;
-  font-family: Pretendard, sans-serif;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.income-expense-page__tabs--view button.cms-text-tabs__tab:hover:not(:disabled) {
-  color: var(--color-mint-01, #01a1af);
-}
-
-.income-expense-page__tabs--view button.cms-text-tabs__tab.cms-text-tabs__tab--active {
-  color: var(--color-mint-01, #01a1af);
-  font-family: Pretendard, sans-serif;
-  font-size: 18px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%; /* 27px */
-  border-bottom-color: var(--color-mint-01, #01a1af);
-}

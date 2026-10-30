@@ -3,13 +3,25 @@
   min-width: 0;
 }
 
-.popups-page__filter-card {
-  margin-bottom: var(--spacing-24, 24px);
-}
-
 .popups-page__table-scroll {
   max-height: calc(100vh - var(--header-height, 64px) - 280px);
   overflow: auto;
+}
+
+/*
+ * 헤더 고정 — CMS `recipient-select-modal.css` 패턴.
+ * 스크롤은 바깥 `.popups-page__table-scroll` 하나만 담당하도록 내부 래퍼의 overflow 스크롤을 풀고 th를 sticky 처리.
+ * (`.ant-table-container`의 overflow: clip 은 스크롤 컨테이너가 아니라 sticky 에 영향 없음 — 라운드 클립 유지)
+ */
+.popups-page__table-scroll .popup-table.cms-data-table,
+.popups-page__table-scroll .popup-table .ant-table-content {
+  overflow: visible;
+}
+
+.popups-page__table-scroll .popup-table .ant-table-thead > tr > th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .popups-page__thumb-wrap {

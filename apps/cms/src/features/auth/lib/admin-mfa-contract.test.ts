@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ADMIN_DETAIL_MFA_RESET_DEFAULTS,
   buildAdminMfaEnrollmentRequest,
   buildMfaResetRequest,
   mapMfaResetError,
@@ -116,6 +117,18 @@ describe('buildMfaResetRequest', () => {
     expect(buildMfaResetRequest({ ...valid, verificationReference: 'b'.repeat(121) }).ok).toBe(false)
     expect(buildMfaResetRequest({ ...valid, reason: '123456' }).ok).toBe(false)
   })
+
+  it('관리자 상세 기본 감사 필드로 reset 본문을 만든다', () => {
+    const built = buildMfaResetRequest({
+      ...ADMIN_DETAIL_MFA_RESET_DEFAULTS,
+      stepUpProof: 'proof-1',
+    })
+    expect(built.ok).toBe(true)
+    if (built.ok) {
+      expect(built.body.recoveryType).toBe('ADMINISTRATIVE_RECOVERY')
+      expect(built.body.verificationReference).toBe('CMS-ADMIN-DETAIL')
+    }
+  })
 })
 
 describe('mapMfaResetError', () => {
@@ -128,5 +141,14 @@ describe('mapMfaResetError', () => {
     expect(mapMfaResetError('MFA_RESET_TARGET_INACTIVE', 423).action).toBe('inactive')
     expect(mapMfaResetError('ACCOUNT_LOCKED', 423).action).toBe('rate-limited')
     expect(mapMfaResetError('PERMISSION_DENIED', 403).action).toBe('permission')
+    expect(mapMfaResetError('MFA_RESET_SELF_FORBIDDEN', 403).action).toBe('permission')
+    expect(mapMfaResetError('MFA_RESET_SELF_FORBIDDEN', 403).message).not.toContain('본인')
+    expect(mapMfaResetError('MFA_RESET_TARGET_PRIVILEGE_FORBIDDEN', 403).message).not.toContain(
+      '마스터'
+    )
+    expect(mapMfaResetError('MFA_RESET_TARGET_PRIVILEGE_FORBIDDEN', 403).action).toBe('permission')
+    expect(mapMfaResetError('UNAUTHORIZED', 401).action).toBe('permission')
+    expect(mapMfaResetError('MFA_VERIFICATION_FAILED').action).toBe('restart-step-up')
+    expect(mapMfaResetError('MFA_RESET_STEP_UP_REQUIRED', 401).message).toContain('실행자 MFA')
   })
 })

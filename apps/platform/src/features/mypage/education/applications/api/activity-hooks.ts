@@ -30,7 +30,9 @@ import {
 } from '../../schedules/lib/schedules-query-error'
 import { buildAssignedSettlementItems } from '../../settlements/lib/assigned-settlement-items'
 import { getAllLectureReportAssignments } from '../../schedules/api/lecture-report-client'
+import { asAssignmentDisplayText } from '../../schedules/lib/instructor-assignment-support'
 import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
+import { mapAvailableProgramFormToListItem } from '../lib/portal-form-list'
 import {
   createApplicationNotice,
   createApplicationNoticeComment,
@@ -39,6 +41,7 @@ import {
   deleteApplicationNoticeComment,
   deleteApplicationNoticeReaction,
   fetchApplicationForms,
+  fetchAvailableProgramForms,
   fetchApplicationNoticeAttachments,
   fetchApplicationNoticeDetail,
   fetchApplicationNoticeReactions,
@@ -932,6 +935,43 @@ export function useApplicationFormsQuery(
   }
 }
 
+export function useAvailableProgramFormsQuery(
+  programId: string | null | undefined,
+  formTypes: readonly string[]
+) {
+  const numericProgramId = parsePortalProgramId(programId)
+  const enabled =
+    isRemoteApiConfigured() && Boolean(getAccessToken()) && numericProgramId != null
+  const query = useQuery({
+    queryKey: platformQueryKeys.program.availableForms(String(numericProgramId ?? '')),
+    queryFn: ({ signal }) => fetchAvailableProgramForms(numericProgramId!, signal),
+    enabled,
+    ...queryOptions(),
+  })
+  const normalizedFormTypeKey = formTypes
+    .map(value => value.trim().toUpperCase())
+    .join(',')
+  const items = useMemo(
+    () => {
+      const normalizedTypes = normalizedFormTypeKey.split(',')
+      return (query.data ?? []).flatMap(item => {
+        if (!normalizedTypes.includes((item.formType ?? '').trim().toUpperCase())) return []
+        const mapped = mapPortalFormListItem(mapAvailableProgramFormToListItem(item))
+        return mapped ? [mapped] : []
+      })
+    },
+    [normalizedFormTypeKey, query.data]
+  )
+  return {
+    enabled,
+    isLoading: enabled && query.isPending,
+    isError: enabled && query.isError,
+    isSuccess: enabled && query.isSuccess,
+    items,
+    rawItems: query.data ?? [],
+  }
+}
+
 export function useIndividualSettlementSchedulesQuery(
   applicationId: string | null | undefined,
   extraEnabled = true
@@ -975,10 +1015,10 @@ export function useApplicationSettlementsQuery(
   applicationType: ProgramApplicationType | null | undefined,
   applicationId: string | null | undefined,
   programId: string | null | undefined,
-  options?: { operationEndAt?: string | null; programType?: string | null }
+  options?: { operationEndAt?: string | null; programType?: string | null; enabled?: boolean }
 ) {
   const schedules = useApplicationSchedulesQuery(applicationType, applicationId)
-  const enabled = schedules.enabled
+  const enabled = schedules.enabled && options?.enabled !== false
   const individualAudience = shouldUseIndividualSettlementSchedulesApi(
     applicationType,
     options?.programType,
@@ -1040,7 +1080,7 @@ export function useApplicationSettlementsQuery(
                 reportStatus: row.reportStatus,
                 lectureStatus: row.lectureStatus,
                 institutionName: row.institutionName,
-                grade: row.grade,
+                grade: asAssignmentDisplayText(row.grade) || null,
                 startAt: row.startAt,
                 endAt: row.endAt,
                 sessionNo: row.sessionNo,
@@ -1156,7 +1196,8 @@ export function useSubmitIndividualSettlementMutation(applicationId: string | nu
 
 export function useApplicationSurveyFormQuery(
   programId: string | null | undefined,
-  bindingId: string | null | undefined
+  bindingId: string | null | undefined,
+  templateVersionId?: number
 ) {
   const numericProgramId = parsePortalProgramId(programId)
   const numericBindingId = parsePortalProgramId(bindingId)
@@ -1169,6 +1210,7 @@ export function useApplicationSurveyFormQuery(
     queryKey: platformQueryKeys.mypage.programApplications.formBinding({
       programId: String(numericProgramId ?? ''),
       bindingId: numericBindingId ?? 0,
+      templateVersionId,
     }),
     queryFn: ({ signal }) =>
       fetchPortalSurveyFormBinding(numericProgramId!, numericBindingId!, signal),
@@ -1224,6 +1266,9 @@ export function useSubmitEducationSurveyMutation(
       })
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.programApplications.all(),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.program.availableForms(String(numericProgramId ?? '')),
       })
     },
   })

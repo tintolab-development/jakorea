@@ -5,10 +5,13 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { GeminiTrainingReportImportResultPaymentExclusionReason } from './geminiTrainingReportImportResultPaymentExclusionReason';
+import type { GeminiTrainingReportImportResultStatus } from './geminiTrainingReportImportResultStatus';
 
 export interface GeminiTrainingReportImportResult {
   rowNumber?: number;
-  status?: string;
+  /** 대소문자 고정. 행 검증 실패 또는 지급완료 overwrite 차단만 FAILED. */
+  status?: GeminiTrainingReportImportResultStatus;
   message?: string;
   trainingReportId?: number;
   accountPaymentId?: number;
@@ -19,4 +22,6 @@ export interface GeminiTrainingReportImportResult {
   assistantInstructorCount?: number;
   deliveryType?: string;
   duplicate?: boolean;
+  /** 계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정 */
+  paymentExclusionReason?: GeminiTrainingReportImportResultPaymentExclusionReason;
 }

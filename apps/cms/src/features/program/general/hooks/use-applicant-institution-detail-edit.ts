@@ -33,6 +33,7 @@ import {
   resolveApplicantInstitutionTextbookDisplayLabel,
 } from '@/features/program/general/lib/applicant-institution-textbook'
 import { TEXTBOOK_NOT_USED_OPTION_VALUE } from '@/features/program/general/lib/individual-applicant-textbook'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 import { getSameSchoolApplicantGrades } from '@/features/program/general/lib/get-same-school-applicant-grades'
 import { resolveOrganizationMergeErrorMessage } from '@/features/program/general/lib/organization-merge-error-message'
 import {
@@ -301,6 +302,7 @@ export function useApplicantInstitutionDetailEdit({
 
       if (!nonMergeChanged) {
         resetEditState()
+        showUpdateCompletedAlert()
         return true
       }
 
@@ -415,6 +417,7 @@ export function useApplicantInstitutionDetailEdit({
       }
 
       resetEditState()
+      showUpdateCompletedAlert()
       return true
     } catch (error) {
       const responseData = axios.isAxiosError(error) ? error.response?.data : undefined

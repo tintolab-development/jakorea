@@ -1,10 +1,13 @@
 import {
+  applyAgreementNoticeSubjectMemberName,
   buildPlatformConsentFillOptions,
   createConsentTemplateSeedDraft,
+  formatMemberConsentIncompleteRequiredAlertMessage,
   getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
   hasMemberConsentInvalidResidentNumberFormat,
   isCrimeConsentTemplate,
+  listMemberConsentIncompleteRequiredFields,
   normalizeMemberConsentWriteDraft,
   PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
   resolveInstructorApplyConsentTemplate,
@@ -15,14 +18,14 @@ import {
   ensureAgreementNoticeInstitutionPurposeParagraphs,
   overlayAgreementNoticeSeedHorizontalTable,
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
-  AGREEMENT_NOTICE_SUBJECT_ITEM_IDS,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { isAxiosError } from 'axios'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import {
@@ -37,7 +40,14 @@ import {
   isConsentSignaturesComplete,
   resolveConsentSignatureSlots,
 } from './resolve-consent-signature-slots'
+import {
+  createPortalConsentDocument,
+  fetchPortalConsentDocumentDetail,
+} from '../../settings/api/portal-consent-documents'
+import { restoreCompatibleConsentDraftValues } from '../../settings/lib/restore-compatible-consent-draft'
 import { submitPortalConsentDocumentFromWriteState } from '../../settings/lib/submit-portal-consent-document'
+import { PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY } from '../../settings/lib/settings-consent-key'
+import type { PortalConsentDocumentDetail } from '../../settings/api/portal-consent-documents.types'
 import type { InstructorApplyConsentKey } from './catalog'
 import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
 import { CrimeConsentDocumentForm } from './crime-document-form'
@@ -103,37 +113,29 @@ export type ConsentWriteSubmitContext = 'instructorApply' | 'mypageSettings'
 const PORTAL_SUBMIT_FAILED_MESSAGE =
   '동의서를 제출하지 못했어요. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
 const SIGNATURE_REQUIRED_ALERT_MESSAGE = '전자서명을 완료해 주세요'
+const SERVER_DRAFT_LOADING_MESSAGE = '동의서 양식을 불러오는 중입니다.'
+const PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE =
+  '동의서 양식이 변경되었습니다. 최신 양식을 다시 확인해 주세요.'
+const MEMBER_PROFILE_LOADING_MESSAGE = '회원 정보를 불러오는 중입니다.'
 
-function patchAgreementNoticeSubjectMemberName(
+function readPortalConsentTemplateErrorCode(error: unknown): string | null {
+  if (!isAxiosError(error)) return null
+  const data = error.response?.data
+  if (!data || typeof data !== 'object') return null
+  const body = data as { code?: unknown; error?: { code?: unknown } }
+  const nested = body.error?.code
+  if (typeof nested === 'string' && nested.trim()) return nested.trim().toUpperCase()
+  if (typeof body.code === 'string' && body.code.trim()) return body.code.trim().toUpperCase()
+  return null
+}
+
+function applyLockedNoticeSubjectName(
   draft: WritingFormDraft,
+  templateId: string,
   memberName: string,
 ): WritingFormDraft {
-  const name = memberName.trim()
-  if (!name) return draft
-
-  let changed = false
-  const paragraphs = draft.paragraphs.map(paragraph => {
-    if (
-      paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject ||
-      paragraph.kind !== 'single_item' ||
-      paragraph.variant !== 'short_essay'
-    ) {
-      return paragraph
-    }
-    let paragraphChanged = false
-    const items = (paragraph.items ?? []).map(item => {
-      if (item.id !== AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name || item.bodyText === name) {
-        return item
-      }
-      paragraphChanged = true
-      return { ...item, bodyText: name }
-    })
-    if (!paragraphChanged) return paragraph
-    changed = true
-    return { ...paragraph, items }
-  })
-
-  return changed ? { ...draft, paragraphs } : draft
+  if (templateId !== 'agreement-notice') return draft
+  return applyAgreementNoticeSubjectMemberName(draft, memberName)
 }
 
 export function SchemaConsentWriteForm({
@@ -151,11 +153,13 @@ export function SchemaConsentWriteForm({
   onTitleAside?: (aside: ReactNode | null) => void
 }) {
   const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
-  const { lockedBasic } = useInstructorApplyLockedBasic()
+  const { lockedBasic, isLoading: isLockedBasicLoading } = useInstructorApplyLockedBasic()
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const portalSubmitEnabled = isRemoteApiConfigured() && Boolean(getAccessToken())
+  const serverDraftInitializedRef = useRef(false)
+  const [isServerDraftLoading, setIsServerDraftLoading] = useState(false)
 
   const [state, setState] = useState<SchemaConsentWriteState>(() => {
     const initial = createInitialSchemaConsentState(consentKey)
@@ -172,6 +176,66 @@ export function SchemaConsentWriteForm({
     return normalized
   })
 
+  const applyServerDraftDocument = useCallback(
+    (document: PortalConsentDocumentDetail, restoreFromDraft?: WritingFormDraft) => {
+      const formTemplateVersion = document.formTemplateVersion
+      const documentId = document.documentId
+      const serverTemplateCode = formTemplateVersion?.templateCode?.trim() || templateId
+      const normalizedServerDraft =
+        formTemplateVersion?.schemaJson != null
+          ? normalizeMemberConsentWriteDraft(
+              formTemplateVersion.schemaJson as WritingFormDraft,
+              serverTemplateCode,
+            )
+          : null
+      if (documentId == null || normalizedServerDraft == null) return
+      const restoredDraft =
+        restoreFromDraft == null
+          ? normalizedServerDraft
+          : restoreCompatibleConsentDraftValues(restoreFromDraft, normalizedServerDraft)
+      const serverDraft = applyLockedNoticeSubjectName(
+        restoredDraft,
+        serverTemplateCode,
+        lockedBasic.name,
+      )
+      setState(prev => ({
+        ...prev,
+        draft: serverDraft,
+        paymentBasicInfo:
+          serverTemplateCode === 'agreement-third-party' ? prev.paymentBasicInfo ?? {} : undefined,
+        portalDocument: {
+          documentId,
+          templateVersionId: formTemplateVersion?.templateVersionId ?? null,
+          templateCode: serverTemplateCode,
+        },
+      }))
+    },
+    [lockedBasic.name, templateId],
+  )
+
+  useEffect(() => {
+    if (readOnly || !portalSubmitEnabled || isCrimeConsentTemplate(templateId)) return
+    if (serverDraftInitializedRef.current) return
+    serverDraftInitializedRef.current = true
+    setIsServerDraftLoading(true)
+    const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+    void createPortalConsentDocument({ consentType })
+      .then(applyServerDraftDocument)
+      .catch(error => {
+        console.debug('portal consent draft create failed', error)
+        setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE)
+        setAlertOpen(true)
+      })
+      .finally(() => setIsServerDraftLoading(false))
+  }, [applyServerDraftDocument, consentKey, portalSubmitEnabled, readOnly, templateId])
+
+  const recoverPortalDraftVersion = useCallback(async () => {
+    const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+    const previousDraft = state.draft
+    const document = await createPortalConsentDocument({ consentType })
+    applyServerDraftDocument(document, previousDraft)
+  }, [applyServerDraftDocument, consentKey, state.draft])
+
   useEffect(() => {
     if (readOnly) return
     saveSchemaConsentWriteState(consentKey, state)
@@ -182,19 +246,40 @@ export function SchemaConsentWriteForm({
     const memberName = lockedBasic.name.trim()
     if (!memberName) return
     setState(prev => {
-      const nextDraft = patchAgreementNoticeSubjectMemberName(prev.draft, memberName)
+      const nextDraft = applyAgreementNoticeSubjectMemberName(prev.draft, memberName)
       if (nextDraft === prev.draft) return prev
       return { ...prev, draft: nextDraft }
     })
-  }, [lockedBasic.name, readOnly, templateId])
+  }, [lockedBasic.name, readOnly, state.draft, templateId])
 
   const signatureSlots = useMemo(() => resolveConsentSignatureSlots(templateId), [templateId])
+  const incompleteRequiredFields = useMemo(
+    () =>
+      listMemberConsentIncompleteRequiredFields(state.draft, {
+        templateId,
+        paymentStatementBasicInfo: state.paymentBasicInfo,
+      }),
+    [state.draft, state.paymentBasicInfo, templateId],
+  )
   const incomplete = isSchemaConsentWriteIncomplete(consentKey, state)
 
   const handleSubmit = () => {
     if (isSubmitting) return
+    if (isServerDraftLoading) {
+      setAlertMessage(SERVER_DRAFT_LOADING_MESSAGE)
+      setAlertOpen(true)
+      return
+    }
+    if (templateId === 'agreement-notice' && isLockedBasicLoading && !lockedBasic.name.trim()) {
+      setAlertMessage(MEMBER_PROFILE_LOADING_MESSAGE)
+      setAlertOpen(true)
+      return
+    }
     if (incomplete) {
-      setAlertMessage(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
+      setAlertMessage(
+        formatMemberConsentIncompleteRequiredAlertMessage(incompleteRequiredFields) ||
+          CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE,
+      )
       setAlertOpen(true)
       return
     }
@@ -233,7 +318,31 @@ export function SchemaConsentWriteForm({
           }
           onComplete()
         })
-        .catch(() => {
+        .catch(error => {
+          const code = readPortalConsentTemplateErrorCode(error)
+          if (code === 'PORTAL_CONSENT_TEMPLATE_VERSION_CHANGED') {
+            void recoverPortalDraftVersion().finally(() => {
+              setAlertMessage(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
+              setAlertOpen(true)
+            })
+            return
+          }
+          if (code === 'PORTAL_CONSENT_TEMPLATE_VERSION_MISMATCH') {
+            const documentId = state.portalDocument?.documentId
+            void (
+              documentId == null
+                ? recoverPortalDraftVersion()
+                : fetchPortalConsentDocumentDetail(documentId).then(document => {
+                    applyServerDraftDocument(document, state.draft)
+                  })
+            )
+              .catch(() => recoverPortalDraftVersion())
+              .finally(() => {
+                setAlertMessage(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
+                setAlertOpen(true)
+              })
+            return
+          }
           setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE)
           setAlertOpen(true)
         })
@@ -449,8 +558,13 @@ export function SchemaConsentWriteForm({
         </fieldset>
         {readOnly ? null : (
           <div className={styles.actions}>
-            <PFButton size="xlarge" width={240} type="submit" disabled={isSubmitting}>
-              {isSubmitting ? '제출 중…' : '작성 완료'}
+            <PFButton
+              size="xlarge"
+              width={240}
+              type="submit"
+              disabled={isSubmitting || isServerDraftLoading}
+            >
+              {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성 완료'}
             </PFButton>
           </div>
         )}

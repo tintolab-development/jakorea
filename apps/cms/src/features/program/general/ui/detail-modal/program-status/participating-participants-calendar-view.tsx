@@ -2,7 +2,7 @@
  * 참여자(개인) 캘린더 뷰 (풀페이지 모달 > 프로그램 진행 현황 > 참여자)
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -13,11 +13,15 @@ import {
   type ParticipatingIndividualParticipantCalendarEvent,
 } from '@/features/program/general/lib/build-participating-individual-participant-calendar-events'
 import { formatInstitutionCalendarSessionTimeDisplay } from '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-calendar-session'
-import { SCHEDULE_COLORS } from '@/features/program/shared/ui/program-schedule-colors'
+import {
+  SCHEDULE_COLORS,
+  type ScheduleColorPair,
+} from '@/features/program/shared/ui/program-schedule-colors'
 import {
   CalendarMain,
   CalendarSplitCardLayout,
   calendarItemsForEventMode,
+  type CalendarItem,
 } from '@/shared/components/calendar'
 import {
   createInitialCalendarNavigationState,
@@ -145,6 +149,21 @@ export function ParticipatingParticipantsCalendarView({
   const getColorForEvent = (event: ParticipatingIndividualParticipantCalendarEvent) =>
     getColorForParticipant(event.originalItem.participant.applicantName?.trim() || '')
 
+  /** 캘린더 태그 색 = 우측 참여자 목록 색과 동일 기준(참여자명 가나다순) */
+  const overrideEventColorMap = useCallback(
+    (items: CalendarItem[]) => {
+      const map = new Map<string | number, ScheduleColorPair>()
+      for (const item of calendarItemsForEventMode(items)) {
+        const event = item.original as ParticipatingIndividualParticipantCalendarEvent | undefined
+        const name = event?.originalItem?.participant?.applicantName?.trim() || ''
+        const idx = participantToColorIndex.get(name) ?? 0
+        map.set(item.id, SCHEDULE_COLORS[idx % SCHEDULE_COLORS.length])
+      }
+      return map
+    },
+    [participantToColorIndex]
+  )
+
   const eventsForSelectedDate = useMemo(
     () =>
       events.filter(
@@ -177,6 +196,7 @@ export function ParticipatingParticipantsCalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
+          overrideEventColorMap={overrideEventColorMap}
           previewTooltipContent={({ events: dayItems, colorMap }) => {
             const dayEvents = calendarItemsForEventMode(dayItems).map(
               item => item.original as ParticipatingIndividualParticipantCalendarEvent

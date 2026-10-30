@@ -27,6 +27,10 @@ assert.equal(
   '<img src="/api/portal/public/files/7/content?inline=1" alt="이미공개" />'
 )
 assert.equal(rewriteAdminFileContentSrcsForPortal('<p>텍스트만</p>'), '<p>텍스트만</p>')
+assert.equal(
+  rewriteAdminFileContentSrcsForPortal('<img src="file-object:15" alt="사진" />'),
+  '<img src="/api/portal/public/files/15/content?inline=1" alt="사진" />',
+)
 assert.equal(fileObjectIdFromStoredFileUrl('/api/admin/files/42/content'), 42)
 assert.equal(fileObjectIdFromStoredFileUrl('/api/portal/public/files/9/content?inline=1'), 9)
 assert.equal(fileObjectIdFromStoredFileUrl('https://example/api/admin/files/3/download'), 3)

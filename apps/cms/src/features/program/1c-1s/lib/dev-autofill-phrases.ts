@@ -165,7 +165,7 @@ export function selectEconomyRegistrationAutofillPhrases(
   }
 }
 
-type RangeIso = { start: string; end: string }
+export type EconomyAutofillDateRange = { start: string; end: string }
 
 function dayIso(date: Dayjs): string {
   return date.startOf('day').toISOString()
@@ -175,11 +175,11 @@ function dayIso(date: Dayjs): string {
  * 1사1교는 1년 단위. 사업·프로그램 기간은 약 1년이고, 모집·면접은 그 안에 둔다.
  */
 export function buildEconomyAutofillDatePlan(now: Dayjs = dayjs()): {
-  business: RangeIso
-  program: RangeIso
-  recruit: RangeIso
-  interview: RangeIso
-  educationPeriod: RangeIso
+  business: EconomyAutofillDateRange
+  program: EconomyAutofillDateRange
+  recruit: EconomyAutofillDateRange
+  interview: EconomyAutofillDateRange
+  educationPeriod: EconomyAutofillDateRange
 } {
   const start = now.add(14, 'day').startOf('day')
   const end = start.add(1, 'year').subtract(1, 'day')
@@ -194,5 +194,67 @@ export function buildEconomyAutofillDatePlan(now: Dayjs = dayjs()): {
     recruit: { start: dayIso(start), end: dayIso(recruitEnd) },
     interview: { start: dayIso(interviewStart), end: dayIso(interviewEnd) },
     educationPeriod: { start: dayIso(educationStart), end: dayIso(educationEnd) },
+  }
+}
+
+export type EconomyAutofillPreferredScheduleBlock = {
+  date: string
+  session: '1' | '2'
+  firstClassPeriod: string
+  firstStart: string
+  firstEnd: string
+  secondClassPeriod: string
+  secondStart: string | null
+  secondEnd: string | null
+}
+
+function weekdayInsideRange(range: EconomyAutofillDateRange, offsetDays: number): string {
+  const start = dayjs(range.start).startOf('day')
+  const end = dayjs(range.end).startOf('day')
+  const lo = start.isAfter(end, 'day') ? end : start
+  const hi = start.isAfter(end, 'day') ? start : end
+  const span = Math.max(0, hi.diff(lo, 'day'))
+  let date = lo.add(Math.min(Math.max(offsetDays, 0), span), 'day')
+
+  while ((date.day() === 0 || date.day() === 6) && date.isBefore(hi, 'day')) {
+    date = date.add(1, 'day')
+  }
+  while ((date.day() === 0 || date.day() === 6) && date.isAfter(lo, 'day')) {
+    date = date.subtract(1, 'day')
+  }
+  return date.format('YYYY-MM-DD')
+}
+
+/**
+ * 1사1교 신청 폼의 1·2지망을 교육 가능 기간 안에서 만든다.
+ * 교육 가능 기간은 사업 운영기간 안에서 생성되므로, 두 희망일도 운영기간을 벗어나지 않는다.
+ */
+export function buildEconomyAutofillPreferredScheduleBlocks(
+  range: EconomyAutofillDateRange
+): {
+  first: EconomyAutofillPreferredScheduleBlock
+  second: EconomyAutofillPreferredScheduleBlock
+} {
+  return {
+    first: {
+      date: weekdayInsideRange(range, 0),
+      session: '1',
+      firstClassPeriod: '1',
+      firstStart: '09:00',
+      firstEnd: '09:40',
+      secondClassPeriod: '',
+      secondStart: null,
+      secondEnd: null,
+    },
+    second: {
+      date: weekdayInsideRange(range, 7),
+      session: '2',
+      firstClassPeriod: '2',
+      firstStart: '10:00',
+      firstEnd: '10:40',
+      secondClassPeriod: '3',
+      secondStart: '11:00',
+      secondEnd: '11:40',
+    },
   }
 }

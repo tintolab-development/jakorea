@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { resetAllOperationalOverlayStores, setOperationalOverlayScope } from '@/features/template/ui/form-set/shared/set-operational-overlay-scope'
 import {
   getGeneralRecruitOverlayRecord,
@@ -25,6 +25,13 @@ import {
   isFixedScheduleFieldKey,
   useFixedScheduleField,
 } from '@/features/template/ui/form-set/application-form/shared/fixed-schedule-form-rhf'
+import {
+  notifyTrainedTeachersRegistrationRhf,
+  peekActiveTrainedTeachersRecruitmentOverlayRecord,
+  registerTrainedTeachersRegistrationRhf,
+  type TrainedTeachersRegistrationRhfApi,
+} from '@/features/program/trained-teachers/lib/registration-rhf-api'
+import { createDefaultTrainedTeachersRegistrationRhfValues } from '@/features/program/trained-teachers/lib/registration-rhf-values'
 
 describe('part3 step5 RHF 필드 폼 — 소유 키·훅 동등성', () => {
   beforeEach(() => {
@@ -74,5 +81,53 @@ describe('part3 step5 RHF 필드 폼 — 소유 키·훅 동등성', () => {
     const { result: f2 } = renderHook(() => useGeneralApplicationOverlayKv<string[]>(key, []))
     act(() => f1.current[1](['s1']))
     expect(f2.current[0]).toEqual(['s1'])
+  })
+})
+
+function mockTtRhf(): TrainedTeachersRegistrationRhfApi {
+  let current = createDefaultTrainedTeachersRegistrationRhfValues()
+  return {
+    getValues: () => current,
+    getPath: path => (current as Record<string, unknown>)[path],
+    setPath: (path, value) => {
+      current = { ...current, [path]: value }
+      notifyTrainedTeachersRegistrationRhf()
+    },
+    reset: next => {
+      current = next
+      notifyTrainedTeachersRegistrationRhf()
+    },
+    applyOverlayRecord: () => undefined,
+    isDirty: () => false,
+    markBaseline: () => undefined,
+  }
+}
+
+describe('TT 상세정보 첨부 — updateRecruitDetailInfoKey가 TT RHF에 기록', () => {
+  afterEach(() => {
+    registerTrainedTeachersRegistrationRhf(null)
+    resetAllOperationalOverlayStores()
+  })
+
+  it('첨부 파일명·objectId를 TT RHF에 쌓고 훅이 그 값을 읽는다', () => {
+    const rhf = mockTtRhf()
+    registerTrainedTeachersRegistrationRhf(rhf)
+    setOperationalOverlayScope('recruitment-trained-teachers')
+    const namesKey = 'trainedTeachersRecruit.detailInfo.attachmentFileNames'
+    const idsKey = 'trainedTeachersRecruit.detailInfo.attachmentFileObjectIds'
+    const { result } = renderHook(() => useRecruitDetailInfoField<string[]>(namesKey, []))
+
+    act(() => {
+      updateRecruitDetailInfoKey<string[]>(namesKey, prev => [...(prev ?? []), '교사안내.pdf'])
+      updateRecruitDetailInfoKey<number[]>(idsKey, prev => [...(prev ?? []), 901])
+    })
+
+    expect(result.current[0]).toEqual(['교사안내.pdf'])
+    expect(peekActiveTrainedTeachersRecruitmentOverlayRecord()?.[namesKey]).toEqual([
+      '교사안내.pdf',
+    ])
+    expect(peekActiveTrainedTeachersRecruitmentOverlayRecord()?.[idsKey]).toEqual([901])
+    expect(rhf.getValues().recruitment.attachmentFileNames).toEqual(['교사안내.pdf'])
+    expect(rhf.getValues().recruitment.attachmentFileObjectIds).toEqual([901])
   })
 })

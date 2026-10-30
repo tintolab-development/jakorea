@@ -1,25 +1,28 @@
-.modal {
-  height: auto;
-  min-height: 200px;
+/* PFModal 패널 — 시안(1125) 대비 여백·높이, 스크롤은 패널 단일 */
+.panel {
+  display: flex;
+  min-height: 0;
   max-height: min(1125px, calc(100dvh - 32px));
-  gap: var(--spacing-28);
-  padding: var(--spacing-28);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-20);
+  padding: var(--spacing-20) var(--spacing-28);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .form {
   display: flex;
-  min-height: 0;
   width: 100%;
   flex: 0 1 auto;
   flex-direction: column;
-  gap: var(--spacing-28);
+  gap: var(--spacing-16);
 }
 
 .body {
   width: 100%;
   flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
 }
 
 .fields {
@@ -27,7 +30,7 @@
   width: 100%;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-20);
+  gap: var(--spacing-16);
   align-self: stretch;
 }
 
@@ -99,8 +102,7 @@
   width: 100%;
   box-sizing: border-box;
   align-items: center;
-  min-height: 64px;
-  padding: var(--spacing-16) var(--spacing-20);
+  padding: var(--spacing-12) var(--spacing-20);
   border-radius: var(--radius-16);
   background: var(--color-neutral-cool-50);
 }
@@ -118,28 +120,26 @@
 }
 
 .actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   width: 100%;
   align-items: center;
   justify-content: flex-end;
   gap: var(--spacing-12);
   flex-shrink: 0;
+  margin-top: var(--spacing-4);
+  padding-top: var(--spacing-12);
+  background: var(--color-neutral-white);
 }
 
 @media (--bp-below-pc) {
-  .modal {
+  .panel {
     height: 100%;
     max-height: 100%;
-    padding: var(--spacing-28) var(--spacing-20);
-  }
-
-  .fields {
-    margin-top: var(--spacing-20);
-  }
-
-  .form,
-  .body {
-    flex: 1 1 auto;
+    padding: var(--spacing-20) var(--spacing-20);
+    overflow-y: auto;
   }
 
   .actions {

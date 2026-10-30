@@ -21,7 +21,12 @@ import {
 import { ValueIcon } from '@/features/global-value/ui/value-icon'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 
 import './page.css'
 type DraftTexts = Record<string, { mainText: string; subText: string }>
@@ -213,16 +218,14 @@ export function GlobalValuePage() {
         <div className="admin-list-toolbar">
           <div className="table-header-title--wrapper">
             <span className="table-title">JA Global Value 관리</span>
-            <span className="table-description">
-              아이콘 이미지는 수정 및 삭제가 불가합니다.
-            </span>
+            <span className="table-description">아이콘 이미지는 수정 및 삭제가 불가합니다.</span>
           </div>
           <div className="table-header-actions--wrapper">
             {isEditing ? (
               <>
                 <CmsButton
                   variant="secondary"
-                  size="large"
+                  size="h40"
                   type="button"
                   onClick={handleCancelEdit}
                   disabled={saveMutation.isPending}
@@ -231,7 +234,7 @@ export function GlobalValuePage() {
                 </CmsButton>
                 <CmsButton
                   variant="primary"
-                  size="large"
+                  size="h40"
                   type="button"
                   loading={saveMutation.isPending}
                   onClick={() => {
@@ -244,7 +247,7 @@ export function GlobalValuePage() {
             ) : (
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleStartEdit}
                 disabled={listQuery.isLoading || rows.length === 0}

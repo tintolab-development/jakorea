@@ -2,8 +2,10 @@ import { useState } from 'react'
 import type { User } from '@/types/user'
 import type { AdminProvisionedMemberBasicInfoDraft } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import {
+  ADMIN_PERMISSION_SELECT_OPTIONS,
   ADMIN_PERMISSION_TAG_LABEL,
   getAdminPermissionVariant,
+  isAdminPermissionTagVariant,
   type AdminPermissionTagVariant,
 } from '@/features/user/shared/lib/admin-permission-display'
 import { AppStatusBadge } from '@/shared/components'
@@ -11,8 +13,8 @@ import {
   StatusDropdownCell,
   STATUS_DROPDOWN_CELL_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
-
-const ADMIN_PERM_BADGE_WIDTH = 132
+import { AdminMfaResetButton } from '@/features/user/detail/ui/admin-mfa-reset-button'
+import '@/features/user/shared/ui/admin-permission-tag.css'
 
 export type AdminPermissionTypeFieldProps = {
   mode: 'view' | 'edit'
@@ -46,16 +48,15 @@ export function AdminPermissionTypeField({
   const permVariant = getAdminPermissionVariant(user)
 
   const selectedPerm =
-    mode === 'edit' &&
-    (memberInfoDraft?.adminPermissionVariant === 'manager' ||
-      memberInfoDraft?.adminPermissionVariant === 'partner' ||
-      memberInfoDraft?.adminPermissionVariant === 'viewer')
+    mode === 'edit' && isAdminPermissionTagVariant(memberInfoDraft?.adminPermissionVariant)
       ? memberInfoDraft.adminPermissionVariant
       : permVariant
 
   const permDropdownInView =
     mode === 'view' && Boolean(onPatchAdminPermissionVariantFromDetailView)
   const permDropdownInEdit = mode === 'edit' && Boolean(onMemberInfoDraftChange)
+
+  const mfaReset = mode === 'view' ? <AdminMfaResetButton target={user} /> : null
 
   if (permDropdownInView || permDropdownInEdit) {
     return (
@@ -64,7 +65,7 @@ export function AdminPermissionTypeField({
       >
         <StatusDropdownCell<AdminPermissionTagVariant>
           status={selectedPerm}
-          statusOptions={['manager', 'partner', 'viewer']}
+          statusOptions={ADMIN_PERMISSION_SELECT_OPTIONS.map(option => option.value)}
           renderBadge={renderAdminPermBadge}
           isItemDisabled={(cur, option) => cur === option}
           onChange={async next => {
@@ -77,10 +78,10 @@ export function AdminPermissionTypeField({
           isUpdating={permDropdownInView && adminPermissionVariantPatching}
           isOpen={adminPermissionOpen}
           onOpenChange={setAdminPermissionOpen}
-          tagLayout="default"
-          style={{ width: ADMIN_PERM_BADGE_WIDTH }}
+          tagLayout="tag160"
           emptyPlaceholder="-"
         />
+        {mfaReset}
       </span>
     )
   }
@@ -90,6 +91,7 @@ export function AdminPermissionTypeField({
       <span className={`user-list-admin-perm-tag user-list-admin-perm-tag--${permVariant}`}>
         {ADMIN_PERMISSION_TAG_LABEL[permVariant]}
       </span>
+      {mfaReset}
     </span>
   )
 }

@@ -164,11 +164,16 @@ export function resolvePortalDisplayStatus(
 function mapDetailCase(
   applicationType: ProgramApplicationType,
   programGroup: string | undefined,
+  programType?: string,
 ): ProgramDetailCase {
+  const type = (programType ?? '').trim().toUpperCase()
+  const isGemini =
+    type === 'GEMINI_TRAINING' || type === 'GEMINI' || type === 'VISITING_TRAINING'
   if (applicationType === 'VOLUNTEER') {
     return (programGroup ?? '').toUpperCase() === 'UJAT' ? 'ujat-volunteer' : 'volunteer'
   }
   if (applicationType === 'INSTRUCTOR') return 'instructor'
+  if (isGemini) return 'gemini'
   if (applicationType === 'ORGANIZATION' && (programGroup ?? '').toUpperCase() === 'UJAT') {
     return 'ujat-participant'
   }
@@ -241,7 +246,7 @@ export function mapPortalProgramApplicationListItem(
   if (!applicationType || row.applicationId == null || row.programId == null || !title) return null
 
   const displayStatus = resolvePortalDisplayStatus(row)
-  const detailCase = mapDetailCase(applicationType, row.programGroup)
+  const detailCase = mapDetailCase(applicationType, row.programGroup, row.programType)
   const thumbnailUrl =
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
   const ujatPortalBannerState = readUjatPortalBannerState(row.supplement)
@@ -424,7 +429,95 @@ function mapTeacherAssignedInstructor(
     id: String(instructorMemberId),
     instructorMemberId,
     name,
+    ...(assignment.instructorPhone?.trim() ? { phone: assignment.instructorPhone.trim() } : {}),
+    ...(assignment.instructorEmail?.trim() ? { email: assignment.instructorEmail.trim() } : {}),
   }
+}
+
+function readOverlayString(row: Record<string, unknown> | undefined, key: string): string {
+  if (!row) return ''
+  const raw = row[key]
+  if (typeof raw === 'string' && raw.trim()) return raw.trim()
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw)
+  return ''
+}
+
+function asOverlayRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  return value as Record<string, unknown>
+}
+
+function nestedOverlayRecord(
+  row: Record<string, unknown> | undefined,
+  ...path: string[]
+): Record<string, unknown> | undefined {
+  let current: Record<string, unknown> | undefined = row
+  for (const part of path) {
+    current = asOverlayRecord(current?.[part])
+    if (!current) return undefined
+  }
+  return current
+}
+
+function pickGeminiInstitutionOverlay(
+  detail: PortalProgramApplicationDetail,
+): Record<string, unknown> {
+  const row = detail as Record<string, unknown>
+  const program = asOverlayRecord(detail.program)
+  const organizationApplication = asOverlayRecord(detail.organizationApplication)
+  const nestedInst =
+    nestedOverlayRecord(row, 'application', 'gemini', 'inst') ??
+    nestedOverlayRecord(row, 'gemini', 'inst') ??
+    nestedOverlayRecord(row, 'geminiApplication')
+  const overlay: Record<string, unknown> = {}
+  const assign = (target: string, ...keys: string[]) => {
+    if (overlay[target]) return
+    for (const source of [row, nestedInst, organizationApplication, program]) {
+      for (const key of keys) {
+        const value = readOverlayString(source, key)
+        if (value) {
+          overlay[target] = value
+          return
+        }
+      }
+    }
+  }
+  assign(
+    'institutionName',
+    'institutionName',
+    'organizationName',
+    'schoolName',
+    'approvedInstitutionName',
+  )
+  assign('applicationGrade', 'applicationGrade', 'grade', 'educationGrade', 'requestedGrade')
+  assign('regionLabel', 'regionLabel', 'institutionAddress', 'address')
+  assign('addressDetail', 'addressDetail', 'detailAddress', 'institutionAddressDetail')
+  assign(
+    'teacherName',
+    'teacherName',
+    'managerName',
+    'contactName',
+    'teacherContactName',
+    'contactTeacherName',
+  )
+  assign('teacherTel', 'teacherTel', 'contactPhone', 'contactTel')
+  assign('teacherMobile', 'teacherMobile', 'contactMobile')
+  assign('teacherEmail', 'teacherEmail', 'contactEmail')
+  assign('officialNeed', 'officialNeed', 'officialDocumentRequired')
+  assign('officialDetail', 'officialDetail', 'officialDocumentRequiredInfo')
+  return overlay
+}
+
+function mergeApplicationAnswers(
+  answers: Record<string, unknown>,
+  overlay: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged = { ...answers }
+  for (const [key, value] of Object.entries(overlay)) {
+    const existing = merged[key]
+    if (existing == null || existing === '') merged[key] = value
+  }
+  return merged
 }
 
 export function mapPortalProgramApplicationDetail(
@@ -441,7 +534,7 @@ export function mapPortalProgramApplicationDetail(
     // 상세 화면의 식별값·제목은 신청 상세 응답의 루트 필드만 사용한다.
     // nested program 값으로 보정하면 다른 모집행 또는 오래된 projection이
     // 화면에 섞일 수 있다.
-    programType: detail.programType,
+    programType: detail.programType ?? detail.program?.programType,
     programGroup: detail.programGroup,
     portalCategories: detail.portalCategories ?? detail.program?.portalCategories,
     thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,
@@ -474,7 +567,10 @@ export function mapPortalProgramApplicationDetail(
   )
   if (recruitmentLabel !== '-') mapped.recruitmentPeriodLabel = recruitmentLabel
 
-  const answers = normalizeApplicationAnswers(detail.answers)
+  const answers = mergeApplicationAnswers(
+    normalizeApplicationAnswers(detail.answers),
+    pickGeminiInstitutionOverlay(detail),
+  )
   const fromAnswers = resolveApplicationContentFromAnswers(answers)
   const preferredFromBlocks = resolvePreferredEducationScheduleLabelFromAnswers({
     preferredScheduleBlocks: detail.preferredScheduleBlocks ?? [],

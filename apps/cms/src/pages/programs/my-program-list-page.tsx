@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { EmptyState, LoadingButton } from '@/shared/ui'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -361,7 +361,7 @@ export function MyProgramListPage() {
         onSearch={handleSearch}
         loading={loading}
       >
-        <Table
+        <CmsDataTable
           columns={columns}
           dataSource={programs}
           rowKey="id"

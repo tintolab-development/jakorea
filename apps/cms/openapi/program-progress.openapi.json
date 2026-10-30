@@ -45,6 +45,10 @@
       "description": "회원 포탈 일반 사용자 로그인/세션 API. 관리자 인증과 분리된 canonical surface입니다."
     },
     {
+      "name": "기타 API",
+      "description": "만 14세 미만 회원의 초상권 동의·프로그램 신청용 보호자 NICE. 가입 Bridge와 분리됩니다."
+    },
+    {
       "name": "회원/강사",
       "description": "Members 관련 관리자 API"
     },

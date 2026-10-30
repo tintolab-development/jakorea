@@ -42,8 +42,8 @@ const CONSENT_BLOCK_PRIMARY: ConsentItem[][] = [
 const CONSENT_BLOCK_SECONDARY: (ConsentItem | 'empty')[][] = [
   [{ key: 'educationPledge', label: '교육진행자 서약서', documentButton: 'edit' }, 'empty'],
   [
-    { key: 'jointUse', label: '행정정보 공동이용 사전동의서', documentButton: 'write' },
-    { key: 'sexOffenseCheck', label: '성범죄 경력 조회 동의서', documentButton: 'write' },
+    { key: 'jointUse', label: '행정정보 공동이용 동의서', documentButton: 'write' },
+    { key: 'sexOffenseCheck', label: '성범죄경력 조회 동의서', documentButton: 'write' },
   ],
 ]
 

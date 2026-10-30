@@ -12,12 +12,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useNotifications } from '@/features/dashboard/hooks/use-notifications'
 import { useDashboardNotificationCount } from '@/features/dashboard/hooks/use-dashboard-notification-count'
+import { formatDashboardCountLabel } from '@/features/dashboard/api/adapters/dashboard-adapters'
 import { shouldUseDashboardRemoteApi } from '@/features/dashboard/api/admin-dashboard-service'
 import { getRoleLabel, AppBreadcrumb, ProfileEditModal } from '@/shared/ui'
 import { useBreadcrumb } from '@/shared/hooks'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
 import { normalizeMemberListKind } from '@/shared/config/member-list-kinds'
-import { getAdminLevelLabel } from '@/shared/config/permissions'
+import { getAdminPermissionDisplayLabel } from '@/features/user/shared/lib/admin-permission-display'
 import type { Notification } from '@/features/dashboard/api/notification-service'
 import { NotificationDropdown } from '@/features/dashboard/ui/notification-dropdown'
 import { NotificationSettingsModal } from '@/features/dashboard/ui/notification-settings-modal'
@@ -36,7 +37,7 @@ export function MainHeader() {
   const location = useLocation()
   const { user, logout, checkAuth } = useAuthStore()
   const useRemoteNotificationCount = user?.role === 'ADMIN' && shouldUseDashboardRemoteApi()
-  const { data: remoteUnreadCount = 0, refetch: refetchRemoteUnreadCount } =
+  const { data: remoteUnreadCount, refetch: refetchRemoteUnreadCount } =
     useDashboardNotificationCount(useRemoteNotificationCount)
   const {
     notifications: headerNotifications,
@@ -48,7 +49,9 @@ export function MainHeader() {
     isFetchingNextPage,
     fetchNextPage,
   } = useNotifications()
-  const unreadCount = useRemoteNotificationCount ? remoteUnreadCount : listUnreadCount
+  const unreadCount = useRemoteNotificationCount
+    ? (typeof remoteUnreadCount === 'number' ? remoteUnreadCount : null)
+    : listUnreadCount
   const dropdownNotifications = headerNotifications
   const { items: breadcrumbItems } = useBreadcrumb()
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -219,15 +222,11 @@ export function MainHeader() {
   // 세부 권한 정보 계산 (상태 동기화 확인)
   const userRoleLabel = useMemo(() => {
     if (!user) return ''
-
-    // 관리자인 경우 adminLevel에 따른 세부 권한 표시
-    if (user.role === 'ADMIN' && user.adminLevel) {
-      return getAdminLevelLabel(user.adminLevel)
+    if (user.role === 'ADMIN') {
+      return getAdminPermissionDisplayLabel(user)
     }
-
-    // 일반 역할인 경우 기본 라벨 사용
     return getRoleLabel(user.role, user.adminLevel)
-  }, [user?.role, user?.adminLevel])
+  }, [user])
 
   if (!user) {
     return null
@@ -284,12 +283,14 @@ export function MainHeader() {
               )}
             >
               <div className="main-header-notification-badge" role="button" tabIndex={0}>
-                {unreadCount > 0 ? (
+                {typeof unreadCount === 'number' && unreadCount > 0 ? (
                   <BellFilled className="main-header-notification-icon" />
                 ) : (
                   <BellOutlined className="main-header-notification-icon" />
                 )}
-                <Text className="main-header-notification-count">{unreadCount}건</Text>
+                <Text className="main-header-notification-count">
+                  {formatDashboardCountLabel(unreadCount)}
+                </Text>
               </div>
             </Dropdown>
 

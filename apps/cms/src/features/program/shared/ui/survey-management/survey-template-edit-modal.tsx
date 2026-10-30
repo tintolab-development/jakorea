@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import { useWritingFormEditorWithUserPreview } from '@/features/template/hooks/use-writing-form-editor-with-user-preview'
 import { useFormTemplateSaveFeedback } from '@/features/template/lib/form-template-save-feedback'
@@ -12,6 +12,8 @@ import {
   DEFAULT_SURVEY_PARAGRAPH_IDS,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
+import { forceSurveyTitleWritingPeriodOn } from '@/features/template/lib/survey-title-period-policy'
+import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
 import { FormEditorFieldNav } from '@/features/template/ui/form-editor/left-panel/form-editor-field-nav'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import { useTableRowSelectionState } from '@/features/template/ui/form-editor/hooks/use-table-row-selection-state'
@@ -33,6 +35,13 @@ import {
   saveProgramSurveyFormEdit,
   type ProgramSurveyFormEditTarget,
 } from '../../lib/survey-management/save-program-survey-form-edit'
+import {
+  applyProgramSurveyTitleToParagraph,
+  findProgramSurveyTitleParagraphId,
+  readProgramSurveyTitle,
+  resolveProgramSurveyHeaderTitle,
+  seedProgramSurveyTitle,
+} from '../../lib/survey-management/program-survey-title-sync'
 
 /** 프로그램에 바인딩된 설문 version 수정 — 양식 관리 원본 대신 프로그램 전용 복제본에 저장 */
 export type ProgramSurveyFormEdit = {
@@ -77,17 +86,20 @@ function SurveyTemplateEditModalInner({
     () => (open && programEdit == null ? lookupTemplateRegistry(templateId) : undefined),
     [open, programEdit, templateId]
   )
-  const headerTitle = useMemo(
-    () =>
-      programEdit != null
-        ? programEdit.target.title.trim() || '설문조사'
-        : resolvePreviewHeaderTitle(registryEntry, templateRow?.templateName),
-    [programEdit, registryEntry, templateRow?.templateName]
+  const catalogHeaderTitle = useMemo(
+    () => resolvePreviewHeaderTitle(registryEntry, templateRow?.templateName),
+    [registryEntry, templateRow?.templateName]
   )
 
+  /** 프로그램 설문: 좌상단 설문명 = 제목 단락 `surveyTitle` (draft가 진실 원천) */
   const getInitialDraft = useCallback(
     () =>
-      programEdit?.initialDraft ??
+      (programEdit != null
+        ? seedProgramSurveyTitle(
+            forceSurveyTitleWritingPeriodOn(programEdit.initialDraft),
+            programEdit.target.title
+          )
+        : null) ??
       buildDefaultSurveyWritingDraft(templateId, { templateName: templateRow?.templateName }),
     [programEdit, templateId, templateRow?.templateName]
   )
@@ -96,14 +108,25 @@ function SurveyTemplateEditModalInner({
     []
   )
 
+  /** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」토글 ON 고정 */
+  const paragraphBodyOptions = useMemo<RenderFormParagraphBodyOptions | undefined>(
+    () => (programEdit != null ? { lockSurveyWritingPeriodToggleOn: true } : undefined),
+    [programEdit]
+  )
+
   const canEdit =
     programEdit != null || (templateRow != null && isSurveyRegistryEntry(registryEntry))
+
+  /** 미리보기 헤더용 — editor 생성 전에 필요해서 draft 변화를 effect로 따라간다 */
+  const [programPreviewHeaderTitle, setProgramPreviewHeaderTitle] = useState(() =>
+    programEdit != null ? resolveProgramSurveyHeaderTitle(getInitialDraft()) : ''
+  )
 
   const editor = useWritingFormEditorWithUserPreview({
     open: open && canEdit,
     getInitialDraft,
     getDefaultActiveParagraphId,
-    previewHeaderTitle: headerTitle,
+    previewHeaderTitle: programEdit != null ? programPreviewHeaderTitle : catalogHeaderTitle,
     editorKind: 'survey',
     previewZIndex: 1300,
     ...(programEdit == null ? { templateCode: templateId } : {}),
@@ -112,12 +135,35 @@ function SurveyTemplateEditModalInner({
   const draftRef = useRef(editor.draft)
   draftRef.current = editor.draft
 
+  const programHeaderTitle = resolveProgramSurveyHeaderTitle(editor.draft)
+  const headerTitle = programEdit != null ? programHeaderTitle : catalogHeaderTitle
+  useEffect(() => {
+    if (programEdit != null) setProgramPreviewHeaderTitle(programHeaderTitle)
+  }, [programHeaderTitle, programEdit])
+
+  const { updateParagraph } = editor
+  /** 좌상단 연필 편집 → 제목 단락 `surveyTitle`에 반영 */
+  const handleProgramTitleCommit = useCallback(
+    (nextTitle: string) => {
+      const titleId = findProgramSurveyTitleParagraphId(draftRef.current)
+      if (titleId == null) return
+      updateParagraph(titleId, paragraph => applyProgramSurveyTitleToParagraph(paragraph, nextTitle))
+    },
+    [updateParagraph]
+  )
+
   const handleSave = useCallback(() => {
     void (async () => {
       try {
         const result =
           programEdit != null
-            ? await saveProgramSurveyFormEdit(programEdit.target, draftRef.current)
+            ? await saveProgramSurveyFormEdit(
+                {
+                  ...programEdit.target,
+                  title: readProgramSurveyTitle(draftRef.current) || programEdit.target.title,
+                },
+                draftRef.current
+              )
             : await saveSurveyWritingTemplate(templateId, draftRef.current)
         if (!result.ok) {
           if ('refetchBindings' in result && result.refetchBindings) onBindingsStale?.()
@@ -166,6 +212,7 @@ function SurveyTemplateEditModalInner({
       open={open}
       onClose={onClose}
       title={headerTitle}
+      {...(programEdit != null ? { onTitleCommit: handleProgramTitleCommit } : {})}
       description={TEMPLATE_FORM_MODAL_DESCRIPTION}
       templateTabType="writing"
       className="ujat-survey-template-edit-modal"
@@ -194,6 +241,7 @@ function SurveyTemplateEditModalInner({
             tableRowSelection.onVerticalTableBodyRowSelectionChange
           }
           middleParagraphActions={editor.middleParagraphActions}
+          paragraphBodyOptions={paragraphBodyOptions}
         />
       }
       rightNavigation={

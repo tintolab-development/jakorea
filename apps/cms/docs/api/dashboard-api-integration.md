@@ -33,8 +33,8 @@
 | `GET /program-schedules` | `get_admin_dashboard_program-schedules` | `getDashboardScheduleEvents()` | 프로그램 일정 위젯 (remote 시 API-only) |
 | `GET/PUT /api/me/dashboard-preferences` | `get_me_dashboard_preferences` | `dashboard-preferences-service` | 설정·DnD layout SSOT (revision 잠금) |
 | `GET /shortcuts` | `get_admin_dashboard_shortcuts` | `getDashboardShortcuts()` | 바로가기 메타 |
-| `GET /api/me/dashboard-shortcut-badges` | `get_me_dashboard_shortcut_badges` | `getDashboardShortcutBadges()` | 바로가기 배지 count |
-| `POST /api/me/dashboard-shortcut-badges/{id}/read` | — | `readDashboardShortcutBadge()` | 바로가기 배지 읽음 |
+| `GET /api/me/dashboard-shortcut-badges` | `get_me_dashboard_shortcut_badges` | `getDashboardShortcutBadges()` | 바로가기 배지. counts[k]는 이 관리자 lastReadAt 이후 신규(대기 키 inquiries·permission-requests는 PENDING). 0·누락 숨김 |
+| `POST /api/me/dashboard-shortcut-badges/{id}/read` | — | `readDashboardShortcutBadge()` | path/body shortcutId=키 문자열. readAt 생략(서버 시각). 성공 후 badges GET만 refetch. 로컬 0 덮기 없음 |
 | `GET /log-alerts` | `get_admin_dashboard_log-alerts` | `getDashboardLogAlerts()` | MASTER 로그 알림 위젯 |
 
 **preferences_only:** `shortcuts/visibility`, `widgets/layout`, `program-filters` granular API는 호출하지 않음. Me preferences API로 통합.
@@ -77,6 +77,17 @@ OpenAPI subset 필터: `scripts/filter-openapi-dashboard.mjs` — `/api/admin/da
 
 ---
 
+## 바로가기 배지
+
+`GET /api/admin/me/dashboard-shortcut-badges`의 `counts`만 사용한다. 목록 GET으로 다시 세지 않는다.
+
+- 신규 추적 키: 이 관리자 `lastReadAt` 이후 행 수. 배지가 있는 항목 클릭 시 즉시 해당 키를 캐시에서 빼고 이동한 뒤 `POST .../{shortcutId}/read`(body `shortcutId`만, `readAt` 생략) → badges GET refetch. 실패하면 캐시 롤백. 배지 없는 항목·대기 키는 POST하지 않음.
+- `inquiries` / `permission-requests`: GET이 PENDING 대기를 주면 클릭해도 그 숫자를 유지한다.
+- 렌더: 키 존재이고 양수일 때만 배지. 0·키 없음·문서 외 키 0 채우기 금지.
+- `home.programCount` / `home.memberCount`와 배지를 맞추지 않음. 읽은 뒤 `programs-detail` ≠ `programCount`, `users-all` ≠ `memberCount`일 수 있다.
+
+---
+
 ## KPI adapter
 
 API 스키마는 `actualParticipantCount` 등 실적 필드를 제공합니다. 미제공이면 UI는 `-`.
@@ -85,12 +96,16 @@ API 스키마는 `actualParticipantCount` 등 실적 필드를 제공합니다. 
 
 ## 모집 adapter
 
-`DashboardRecruitmentResponse` 기본 필드는 status·기간뿐입니다. FE는 아래 **확장 필드가 오면** 참여자/봉사자 `n/n`에 매핑합니다.
+`DashboardRecruitmentResponse` 기본 필드는 status·기간뿐입니다. FE는 아래 **확장 필드가 오면** 참여자/봉사자 `n/n`에 매핑합니다. 없으면 `-`. 목록 API 승인/KPI 필드로 별칭하지 않습니다.
 
-- 참여자: `participantAppliedCount` | `studentAppliedCount` | `approvedStudentCount` / `participantCapacity` | `studentCapacity`
-- 봉사자: `volunteerAppliedCount` | `instructorAppliedCount` / `volunteerCapacity` | `instructorCapacity`
+- 참여자 신청: `participantAppliedCount` | `studentAppliedCount` — `approvedStudentCount` 미사용
+- 참여자 정원: `participantCapacity` | `studentCapacity`
+- 봉사자 신청: `volunteerAppliedCount`만 — `instructorAppliedCount` 미사용
+- 봉사자 정원: `volunteerCapacity`
+- 목록 총건수: `totalCount` | `totalElements`. 없으면 헤더는 `총 -` (items.length로 대체하지 않음)
+- `programType=general` 필터: `GENERAL` / `GENERAL_ORGANIZATION` / `GENERAL_INDIVIDUAL`만. `TRAINED_TEACHER`·`VOLUNTEER` 제외
 
-`recruitmentStatus`가 있으면 그대로 사용(기간 자동 산출은 **BE 책임**). 없을 때만 `recruitmentStartAt`~`EndAt`으로 추정합니다.
+`recruitmentStatus`가 있으면 그대로 라벨한다 (`CLOSED` → 모집 마감). 기간으로 상태를 추정하지 않는다.
 
 OpenAPI에 `participantAppliedCount` / `volunteerAppliedCount` 등과 KPI `*Applicable` 플래그가 명시되어 있습니다.
 
@@ -129,4 +144,4 @@ Me preferences `assignedProgramTypes`가 오면 그 유형만 일정 위젯을 �
 
 `buildAdminDashboardWidgets`에 포함되지 않은 위젯(`overall-statistics-cards`, `pending-actions-row`, `monthly-*`, `unified-activity-feed` 등)은 **현재 홈 재도입 계획 없음 → 전용 API 설계 보류**. 홈에 다시 올릴 때 백엔드와 집계 API 스펙을 별도 협의한다.
 
-**Last updated:** 2026-08-26
+**Last updated:** 2026-10-29

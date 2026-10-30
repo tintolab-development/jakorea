@@ -442,6 +442,7 @@ export default function SponsorPage() {
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys,
         }}
       >
         <CmsDataTable<SponsorManagementRow>

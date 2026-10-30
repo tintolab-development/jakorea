@@ -82,7 +82,7 @@ export function permissionApprovalStatusTextView(user: Omit<User, 'password'>) {
   if (isInstructorPermissionRevoked(user)) {
     return (
       <span className="user-basic-info-section__approval-status user-basic-info-section__approval-status--rejected">
-        권한 박탈
+        권한 종료
       </span>
     )
   }
@@ -127,11 +127,7 @@ export function PermissionApprovalStatusWithResend({
   const status = normalizePermissionApprovalStatus(user.permissionApprovalStatus)
   const tone = permissionApprovalStatusListToneView(user)
 
-  if (
-    status === 'PENDING' ||
-    status === 'REJECTED' ||
-    isInstructorPermissionRevoked(user)
-  ) {
+  if (status === 'PENDING' || status === 'REJECTED' || isInstructorPermissionRevoked(user)) {
     return tone
   }
 

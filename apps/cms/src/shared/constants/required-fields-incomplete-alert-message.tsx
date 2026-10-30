@@ -10,3 +10,16 @@ export const REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE: ReactNode = (
     &apos; 표시된 필수 항목을 모두 작성해 주세요.
   </>
 )
+
+export function buildRequiredFieldsIncompleteAlertContent(
+  fieldLabels: readonly string[]
+): ReactNode {
+  if (fieldLabels.length === 0) return REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE
+  return (
+    <>
+      {REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE}
+      {'\n'}
+      {fieldLabels.join(', ')}
+    </>
+  )
+}

@@ -6,6 +6,10 @@ import dayjs from 'dayjs'
 import type { Program, ProgramCategory } from '@/types/domain'
 import { mapGeneralProgramToCreateRequest } from '@/features/program/general/api/adapters/general-program-adapters'
 import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
+import {
+  withIndividualInterviewRequiredCreateDefault,
+  withVolunteerInterviewRequiredCreateDefault,
+} from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
@@ -249,9 +253,12 @@ export function buildGeneralProgramCreateFromWizardRhf(args: {
     },
   })
   const participant = participantFromWizardUi(args.uiValues)
-  const selectedRecruitKv = selectRecruitmentKvForParticipant(
-    args.uiValues.recruitmentKv,
-    participant
+  const selectedRecruitKv = withVolunteerInterviewRequiredCreateDefault(
+    withIndividualInterviewRequiredCreateDefault(
+      selectRecruitmentKvForParticipant(args.uiValues.recruitmentKv, participant),
+      participant.individual === true
+    ),
+    participant.volunteer === true
   )
   const mediaPersist = pickRecruitMediaPersistOverlay(
     collectSelectedRecruitOverlaysForProgram(independent.programDraft)

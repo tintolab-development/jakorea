@@ -41,11 +41,11 @@ export function isMaskedGenderValue(gender: string | undefined | null): boolean 
   return /^[*•]+$/.test(raw)
 }
 
-/** 회원 상세·목록 표시용 성별 — `남성` | `여성` | 마스킹 원문 | `-` */
+/** 회원 상세·목록 표시용 성별 — `남성` | `여성` | 확정 마스킹 `**` | `-` */
 export function toDisplayGender(gender: string | undefined | null): string {
   const raw = gender?.trim()
   if (!raw) return '-'
-  if (isMaskedGenderValue(raw)) return raw
+  if (isMaskedGenderValue(raw)) return '**'
   const api = toApiGender(raw)
   if (api === 'M') return '남성'
   if (api === 'F') return '여성'

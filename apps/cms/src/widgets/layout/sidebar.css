@@ -20,6 +20,8 @@
   flex-direction: column;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
+  /* CMS 시안 LNB(13192:232238): drop-shadow 0 0 6px rgba(0,0,0,0.1) */
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-container.ant-layout-sider > .ant-layout-sider-children {
@@ -95,7 +97,8 @@
   max-width: 100%;
   /* 가로 패딩 없음: 행이 사이드바·스크롤 영역까지 맞닿도록 (Ant 기본 inline padding 제거) */
   padding-inline: 0 !important;
-  padding-block: 10px;
+  /* 시안: 로고↔메뉴 30px(헤더 하단 패딩), LNB 하단 pb 20px */
+  padding-block: 0 20px;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
 }
@@ -127,13 +130,19 @@
 .sidebar-menu.ant-menu > li.ant-menu-submenu {
   width: 100% !important;
   max-width: 100%;
-  margin-bottom: 2px !important;
+  /* 시안: 1뎁스 행 간 gap 8px */
+  margin-bottom: 8px !important;
 }
 
-/* ---- 타이포: 1뎁스 18px / 600 (루트 ul 직계 li만) ---- */
+.sidebar-menu.ant-menu > li.ant-menu-item:last-child,
+.sidebar-menu.ant-menu > li.ant-menu-submenu:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* ---- 타이포: 1뎁스 18px / 700 (시안 Pretendard Bold, 루트 ul 직계 li만) ---- */
 .sidebar-menu.ant-menu > li.ant-menu-item {
   font-size: 18px !important;
-  font-weight: var(--font-weight-600) !important;
+  font-weight: var(--font-weight-700) !important;
   line-height: 120%;
   transition:
     background-color 0.2s ease,
@@ -149,8 +158,26 @@
 .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-submenu-title,
 .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-submenu-title > .ant-menu-title-content {
   font-size: 18px !important;
-  font-weight: var(--font-weight-600) !important;
+  font-weight: var(--font-weight-700) !important;
   color: var(--color-sidebar-text) !important;
+}
+
+/* 시안: 1뎁스 아이콘 24×24 프레임 안에 글리프 20(일부 18) 중앙 → 라벨 시작 x = 20 + 24 + 8 = 52 */
+.sidebar-menu.ant-menu > li.ant-menu-item > svg:first-child,
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-submenu-title > svg:first-child {
+  flex-shrink: 0;
+  margin-inline: 2px;
+}
+
+.sidebar-menu.ant-menu > li.ant-menu-item > svg[width='18']:first-child,
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-submenu-title > svg[width='18']:first-child {
+  margin-inline: 3px;
+}
+
+/* 시안: 비선택 1뎁스 행 opacity 0.8 (행 배경·호버 면은 유지, 내용만) */
+.sidebar-menu.ant-menu > li.ant-menu-item:not(.ant-menu-item-selected) > *,
+.sidebar-menu.ant-menu > li.ant-menu-submenu:not(.ant-menu-submenu-selected) > .ant-menu-submenu-title > * {
+  opacity: 0.8;
 }
 
 /* ---- 상태(open 등) — 기본 면 ---- */
@@ -319,6 +346,17 @@
 .sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected,
 .sidebar-menu .ant-menu-sub .ant-menu-item.ant-menu-item-selected {
   background: var(--sidebar-selected-bg) !important;
+}
+
+/* CMS 시안: 선택된 1뎁스 리프(대시보드 홈 등)는 rgba(0,0,0,0.3) = 하위 선택 1뎁스 타이틀과 같은 open 면 */
+.sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected {
+  background: var(--sidebar-open-bg) !important;
+}
+
+.sidebar-menu.ant-menu > li.ant-menu-item.ant-menu-item-selected:hover {
+  background:
+    var(--sidebar-hover-overlay),
+    linear-gradient(var(--sidebar-open-bg), var(--sidebar-open-bg)) !important;
 }
 
 /* 2뎁스 리프(자식 없는 메뉴) 선택 배경 명시 적용 */
@@ -537,13 +575,30 @@
   gap: 8px !important;
 }
 
+/*
+ * 불릿 실제 DOM: menu-config `BulletIcon` = `<span aria-hidden>•</span>` (antd가 .ant-menu-item-icon 클래스를 붙이지 않아
+ * 기존 .ant-menu-item-icon 셀렉터가 적용되지 않던 것 → 실제 span 기준으로 보정, 3×3 닷 + 텍스트 gap 8)
+ * 2-depth 텍스트 시작 x=48 (어드민 시안과 동일): row pl 24 + ml 13 + 닷 3 + gap 8
+ */
 .sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item .ant-menu-item-icon,
 .sidebar-menu.ant-menu
   > li.ant-menu-submenu
   > .ant-menu-sub
   > li.ant-menu-submenu
   > .ant-menu-submenu-title
-  .ant-menu-item-icon {
+  .ant-menu-item-icon,
+.sidebar-menu.ant-menu > li.ant-menu-submenu > .ant-menu-sub > .ant-menu-item > span[aria-hidden='true']:first-child,
+.sidebar-menu.ant-menu
+  > li.ant-menu-submenu
+  > .ant-menu-sub
+  > li.ant-menu-submenu
+  > .ant-menu-submenu-title
+  > span[aria-hidden='true']:first-child {
+  display: block !important;
+  border-radius: 50%;
+  background-color: var(--color-sidebar-text);
+  color: transparent !important;
+  overflow: hidden;
   width: 3px !important;
   min-width: 3px !important;
   max-width: 3px !important;
@@ -554,7 +609,7 @@
   line-height: 0 !important;
   flex-shrink: 0;
   padding: 0 !important;
-  margin-left: 6px !important;
+  margin-left: 13px !important;
   margin-right: 0 !important;
   transform: translateY(1px);
 }

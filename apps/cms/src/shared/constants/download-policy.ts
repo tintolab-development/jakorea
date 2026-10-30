@@ -36,6 +36,7 @@ export const MASKING_POLICY = {
    */
   phone: (value: string): string => {
     if (!value) return value
+    if (value.includes('*')) return value
     const v = value.trim()
 
     const hyphenRules: Array<[RegExp, string]> = [
@@ -55,15 +56,19 @@ export const MASKING_POLICY = {
   },
 
   /**
-   * 이메일 마스킹: 로컬파트 앞 3글자 노출 + 나머지 `*`
-   * - 0915123@naver.com -> 091***@naver.com
+   * 이메일 마스킹: 로컬파트 마지막 3글자만 `*`
+   * - 0915123@naver.com -> 0915***@naver.com
+   * 이미 `*`가 있으면 재마스킹하지 않는다. 로컬 3자 이하는 전부 `*`.
    */
   email: (value: string): string => {
     if (!value) return value
-    const [local, domain] = value.split('@')
-    if (!local || !domain) return value
-    if (local.length <= 3) return `${local}***@${domain}`
-    return `${local.slice(0, 3)}***@${domain}`
+    const at = value.lastIndexOf('@')
+    if (at <= 0 || at === value.length - 1) return '***'
+    const local = value.slice(0, at)
+    const domain = value.slice(at + 1)
+    if (local.includes('*') || domain.includes('*')) return value
+    if (local.length <= 3) return `${'*'.repeat(local.length)}@${domain}`
+    return `${local.slice(0, local.length - 3)}***@${domain}`
   },
 
   /**
@@ -72,23 +77,29 @@ export const MASKING_POLICY = {
    */
   accountNumber: (value: string): string => {
     if (!value) return value
+    if (value.includes('*')) return value
     return value.replace(/\d/g, '*')
   },
 
   /**
-   * 예금주명 마스킹: 성씨만 노출, 나머지 `*`
-   * 단일 성(1글자) 기본, 복성은 아래 집합이면 앞 2글자를 성으로 간주.
+   * 예금주: 성 + 마지막 글자. 중간만 `*`.
+   * 성 다음이 한 글자면 그 글자를 마스킹 (`김이` → `김*`).
+   * 복성 2글자. 이미 `*`면 재마스킹하지 않음.
    */
   accountHolderName: (value: string): string => {
     if (!value) return value
     const trimmed = value.trim()
-    if (trimmed.length === 0) return value
+    if (!trimmed || trimmed.includes('*')) return value
     let surnameLen = 1
     if (trimmed.length >= 2 && COMPOUND_SURNAMES_TWO.has(trimmed.slice(0, 2))) {
       surnameLen = 2
     }
-    if (trimmed.length <= surnameLen) return trimmed
-    return trimmed.slice(0, surnameLen) + '*'.repeat(trimmed.length - surnameLen)
+    if (trimmed.length <= surnameLen) return '*'.repeat(trimmed.length)
+    if (trimmed.length === surnameLen + 1) {
+      return trimmed.slice(0, surnameLen) + '*'
+    }
+    const middleLen = trimmed.length - surnameLen - 1
+    return trimmed.slice(0, surnameLen) + '*'.repeat(middleLen) + trimmed.slice(-1)
   },
 
   /**
@@ -96,26 +107,41 @@ export const MASKING_POLICY = {
    */
   name: (value: string): string => {
     if (!value) return value
+    if (value.includes('*')) return value
     if (value.length <= 2) return value[0] + '*'
     return value[0] + '*'.repeat(value.length - 2) + value.slice(-1)
   },
 
   /**
    * 주민등록번호 마스킹: 123456-1******
+   * 형식이 아니면 원문을 남기지 않는다.
    */
   residentNumber: (value: string): string => {
     if (!value) return value
-    return value.replace(/(\d{6})-?(\d{1})(\d{6})/, '$1-$2******')
+    if (value.includes('*')) return value
+    const matched = value.match(/^(\d{6})-?(\d)(\d{6})$/)
+    if (!matched) return '******-*******'
+    return `${matched[1]}-${matched[2]}******`
   },
 
   /**
-   * 주소 마스킹: 서울시 강남구 ***
+   * 주소: 지번은 동·읍·면·리까지, 도로명은 도로명까지. 이후는 블러.
+   * 구분할 수 없으면 원문을 남기지 않는다.
    */
   address: (value: string): string => {
     if (!value) return value
-    const parts = value.split(' ')
-    if (parts.length <= 2) return value
-    return parts.slice(0, 2).join(' ') + ' ***'
+    const trimmed = value.trim()
+    if (!trimmed || trimmed.includes('*')) return value
+    const tokens = trimmed.split(/\s+/).filter(Boolean)
+    const roadIdx = tokens.findIndex(token => /(로|길|대로)$/.test(token))
+    if (roadIdx >= 0) {
+      return `${tokens.slice(0, roadIdx + 1).join(' ')} ***`
+    }
+    const lotIdx = tokens.findIndex(token => /(동|읍|면|리)$/.test(token))
+    if (lotIdx >= 0) {
+      return `${tokens.slice(0, lotIdx + 1).join(' ')} ***`
+    }
+    return '***'
   },
 } as const
 

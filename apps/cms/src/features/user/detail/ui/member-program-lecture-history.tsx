@@ -717,6 +717,8 @@ export function MemberProgramLectureHistory({
         excelExport={{
           columns,
           data: tableDataSource,
+          selectedRowKeys:
+            SHOW_PROGRAM_HISTORY_DELETE || showCertificateBulkIssue ? selectedRowKeys : undefined,
         }}
       >
         <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">

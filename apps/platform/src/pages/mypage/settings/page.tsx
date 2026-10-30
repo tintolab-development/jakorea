@@ -22,6 +22,7 @@ import {
   type SettingsProfileInput,
 } from '@/features/mypage'
 import { isInstructorDualMypageProfile } from '@/features/mypage/lib/member-profile'
+import { mapPortalGuardianToSettingsView } from '@/features/mypage/settings/lib/map-view'
 import type { InstructorSettingsSectionId } from '@/features/mypage/settings/lib/format-instructor-settings-display'
 import { INSTRUCTOR_SETTINGS_ESSAY_SECTIONS } from '@/features/mypage/settings/lib/format-instructor-settings-display'
 import { buildInstructorSettingsFormValues } from '@/features/mypage/settings/lib/map-instructor-settings-form'
@@ -152,7 +153,9 @@ export function MypageSettingsPage() {
         guardian: null,
       }
     }
-    return mapPortalProfileToSettingsView(effectiveProfile, guardian, {
+    const nextGuardian =
+      mapPortalGuardianToSettingsView(effectiveProfile.guardian) ?? guardian
+    return mapPortalProfileToSettingsView(effectiveProfile, nextGuardian, {
       variant: isTeacher ? 'teacher' : 'individual',
     })
   }, [effectiveProfile, guardian, isInstructor, isInstructorDual, isTeacher, linkedSocialProviders])
@@ -258,12 +261,11 @@ export function MypageSettingsPage() {
     return wrap(
       <SettingsEditForm
         profile={effectiveProfile}
+        guardian={view.guardian}
         variant={isTeacher ? 'teacher' : 'individual'}
         onCancel={() => setMode('view')}
         onSaved={next => {
-          if (!isRemoteSession) {
-            setLocalProfile(next)
-          }
+          setLocalProfile(next)
           setMode('view')
         }}
       />
@@ -306,6 +308,7 @@ export function MypageSettingsPage() {
       basicRows={view.basicRows}
       guardian={view.guardian}
       onEditBasic={() => setMode('edit-basic')}
+      onEditGuardian={() => setMode('edit-basic')}
       instructorProfileValues={instructorProfileForView}
       onEditInstructorSection={
         isInstructor

@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   BannerSaveInput,
@@ -97,7 +97,7 @@ export function BannerSectionCard({ banner }: Props) {
         <div className="table-header-actions--wrapper">
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             type="button"
             onClick={() => setModalOpen(true)}
           >
@@ -106,7 +106,7 @@ export function BannerSectionCard({ banner }: Props) {
         </div>
       </div>
 
-      <Table<Row>
+      <CmsDataTable<Row>
         className="cms-data-table cms-data-table--skip-auto-no-col talent-intro-banner-table"
         columns={columns}
         dataSource={rows}

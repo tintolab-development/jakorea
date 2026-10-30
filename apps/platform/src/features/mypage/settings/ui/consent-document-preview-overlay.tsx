@@ -18,6 +18,7 @@ import { loadConsentPreviewSignature } from '../lib/load-consent-preview-signatu
 import {
   readPaymentBasicInfoFromConsentDetail,
   resolveConsentPreviewDraft,
+  resolveConsentPreviewTemplateId,
 } from '../lib/parse-consent-document-draft'
 import { resolveConsentPreviewSignerName } from '../lib/resolve-consent-preview-signer'
 import {
@@ -214,7 +215,9 @@ export function ConsentDocumentPreviewOverlay({
         }
         if (cancelled) return
 
-        if (isCrimeConsentTemplate(templateId)) {
+        const previewTemplateId = resolveConsentPreviewTemplateId(detail, templateId)
+
+        if (isCrimeConsentTemplate(previewTemplateId)) {
           const content = detail?.content?.trim()
           if (content && (content.startsWith('http') || content.startsWith('data:'))) {
             setCrimeImageSrc(content)
@@ -224,7 +227,7 @@ export function ConsentDocumentPreviewOverlay({
           return
         }
 
-        const resolved = resolveConsentPreviewDraft(detail, templateId, {
+        const resolved = resolveConsentPreviewDraft(detail, previewTemplateId, {
           allowTemplateSeedFallback: !isRemoteSession && fallbackDraft == null,
         })
         if (resolved == null) {

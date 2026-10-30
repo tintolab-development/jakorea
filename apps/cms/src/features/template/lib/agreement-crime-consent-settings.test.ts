@@ -5,17 +5,17 @@ import {
 } from '@/features/template/lib/agreement-crime-consent-settings'
 
 describe('isCrimeConsentUploadFile', () => {
-  it('allows pdf and image mime types', () => {
+  it('allows pdf only', () => {
     expect(isCrimeConsentUploadFile(new File(['x'], 'a.pdf', { type: 'application/pdf' }))).toBe(
       true
     )
-    expect(isCrimeConsentUploadFile(new File(['x'], 'a.png', { type: 'image/png' }))).toBe(true)
-    expect(isCrimeConsentUploadFile(new File(['x'], 'a.jpg', { type: 'image/jpeg' }))).toBe(true)
+    expect(isCrimeConsentUploadFile(new File(['x'], 'a.png', { type: 'image/png' }))).toBe(false)
+    expect(isCrimeConsentUploadFile(new File(['x'], 'a.jpg', { type: 'image/jpeg' }))).toBe(false)
   })
 
-  it('allows pdf/image by file name when mime is empty', () => {
+  it('allows pdf by file name when mime is empty', () => {
     expect(isCrimeConsentUploadFile(new File(['x'], 'form.PDF', { type: '' }))).toBe(true)
-    expect(isCrimeConsentUploadFile(new File(['x'], 'scan.JPEG', { type: '' }))).toBe(true)
+    expect(isCrimeConsentUploadFile(new File(['x'], 'scan.JPEG', { type: '' }))).toBe(false)
   })
 
   it('rejects other documents', () => {

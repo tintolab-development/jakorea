@@ -7,7 +7,7 @@ import {
   type ShortEssayParagraph,
 } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
-import type { ChangeEvent } from 'react'
+import { type ChangeEvent, useEffect } from 'react'
 import { PFTextInput, PFTextarea } from '@/shared/ui'
 import styles from './consent-form.module.css'
 
@@ -75,6 +75,15 @@ export function ConsentShortEssayFillFields({
   const showItemTitle = resolveShowItemTitle(paragraph, items.length)
   const maxLength =
     paragraph.variant === 'short_essay' ? paragraph.maxLength : undefined
+  const lockedName = lockedNoticeSubjectMemberName?.trim() ?? ''
+  const nameItem = items.find(item => item.id === AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name)
+
+  useEffect(() => {
+    if (paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject) return
+    if (!lockedName) return
+    if (nameItem?.bodyText === lockedName) return
+    commitItemBodyText(paragraph.id, AGREEMENT_NOTICE_SUBJECT_ITEM_IDS.name, lockedName, onUpdateParagraph)
+  }, [lockedName, nameItem?.bodyText, onUpdateParagraph, paragraph.id])
 
   if (items.length === 0) {
     return (

@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import type { PaymentOrderCalculationTableRow } from './payment-order-calculation-breakdown-table'
 import {
   isSupportedBasisDetailLayout,
@@ -119,6 +119,7 @@ export function usePaymentOrderCalculationBasisDetailModal(
   parentOpen = true,
   context?: PaymentOrderCalculationBasisDetailModalContext | null
 ) {
+  const { showAlert } = useCmsAlert()
   const [basisDetailOpen, setBasisDetailOpen] = useState(false)
   const [selectedBasisDetail, setSelectedBasisDetail] =
     useState<PaymentOrderCalculationBasisDetail | null>(null)
@@ -144,9 +145,9 @@ export function usePaymentOrderCalculationBasisDetailModal(
         return
       }
 
-      window.alert('준비 중입니다.')
+      showAlert({ title: '안내', content: '준비 중입니다.' })
     },
-    [context]
+    [context, showAlert]
   )
 
   return {

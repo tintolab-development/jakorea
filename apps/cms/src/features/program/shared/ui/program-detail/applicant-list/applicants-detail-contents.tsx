@@ -1,6 +1,7 @@
 import { useMemo, useCallback, useState, useEffect } from 'react'
 import axios from 'axios'
 import { useQueryClient } from '@tanstack/react-query'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import { useSearchParams } from 'react-router-dom'
 import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -52,7 +53,6 @@ import {
 import {
   unmaskInstructorApplicationPrivacyRemote,
   unmaskOrganizationApplicationPrivacyRemote,
-  updateInstructorApplicationManagerCommentRemote,
 } from '@/features/program/general/api/applications-api-client'
 import { mapInstructorApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
@@ -74,6 +74,7 @@ import { ApplicantGeneralIndividualBasicInfo } from '@/features/program/general/
 import { ApplicantGeneralInstructorBasicInfo } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-general-instructor-basic-info'
 import { ApplicantInstructorResume } from './applicant-instructor-resume'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import {
   PersonalInfoRevealButton,
   PERSONAL_INFO_REVEAL_BUTTON_LABEL,
@@ -86,6 +87,7 @@ import {
   resolveProgramEditInfoClick,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import { TrainedTeachersApplicantInstitutionDetailContents } from '@/features/program/trained-teachers/ui/institution-detail/applicant-institution-detail-contents'
 
 export type ApplicantType =
@@ -96,7 +98,7 @@ export type ApplicantType =
 
 export type ApplicantDetailVariant = 'legacy' | 'general'
 
-const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
+const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
   "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
@@ -143,9 +145,11 @@ type ApplicantHeaderActionItem = {
 function ApplicantHeaderActionsExtra({
   items,
   personalInfoRevealed,
+  programPrivacyPending = false,
 }: {
   items: ApplicantHeaderActionItem[]
   personalInfoRevealed: boolean
+  programPrivacyPending?: boolean
 }) {
   return (
     <Space size="small" className="applicant-contents__header-actions">
@@ -158,7 +162,7 @@ function ApplicantHeaderActionsExtra({
             cmsVariant={a.variant}
             cmsSize="large"
             width={a.width ?? (a.size === 'filter-wide' ? 180 : CMS_ACTION_BUTTON_WIDTH)}
-            disabled={a.disabled}
+            disabled={a.disabled || programPrivacyPending}
             onClick={a.onClick ?? (() => {})}
           />
         ) : a.key === 'edit-info' ? (
@@ -1033,17 +1037,43 @@ export function ApplicantsDetailContents({
 
   const handleInstructorAdminCommentSave = useCallback(async () => {
     if (!instructorData) return
+    const comment = instructorAdminCommentDraft.trim()
+    if (!shouldUseOrganizationApplicationRemoteApi()) {
+      void showAlert({
+        title: PROGRAM_API_UNAVAILABLE_TITLE,
+        content: buildProgramApiUnavailableSaveContent('강사 신청 관리자 코멘트'),
+      })
+      return
+    }
+
+    const targetId = Number(instructorData.id)
+    if (!Number.isFinite(targetId)) {
+      void showAlert({
+        title: '안내',
+        content: MESSAGES.error.save,
+      })
+      return
+    }
+
     try {
-      const response = await updateInstructorApplicationManagerCommentRemote(
-        instructorData.id,
-        { managerComment: instructorAdminCommentDraft.trim() || null }
-      )
+      const result = await upsertAdminCommentByTargetRemote({
+        targetType: 'INSTRUCTOR_APPLICATION',
+        targetId,
+        screenCode: 'INSTRUCTOR_APPLICATION',
+        comment,
+      })
       onInstructorDetailSaved?.({
         ...instructorData,
-        managerComment: response.managerComment ?? undefined,
+        managerComment: result.commentText,
       })
       await queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.instructorDetail(instructorData.id),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: generalApplicationsQueryKeys.commentsByTarget(
+          'INSTRUCTOR_APPLICATION',
+          String(targetId)
+        ),
       })
       setIsInstructorAdminCommentModalOpen(false)
     } catch {
@@ -1172,14 +1202,16 @@ export function ApplicantsDetailContents({
         reason,
         Number.isFinite(programIdNumber) ? programIdNumber : undefined
       )
-      queryClient.setQueryData(
+      const safeDetail = cacheProjectedProgramPrivacy(
+        queryClient,
         generalApplicationsQueryKeys.organizationDetail(applicationId),
+        program?.id ?? '',
         detail
       )
       return {
-        name: detail.teacherName?.trim() || undefined,
-        phone: detail.teacherPhone?.trim() || undefined,
-        email: detail.teacherEmail?.trim() || undefined,
+        name: safeDetail.teacherName?.trim() || undefined,
+        phone: safeDetail.teacherPhone?.trim() || undefined,
+        email: safeDetail.teacherEmail?.trim() || undefined,
       }
     },
     [institutionData?.id, program?.id, queryClient]
@@ -1207,20 +1239,22 @@ export function ApplicantsDetailContents({
         reason,
         Number.isFinite(programIdNumber) ? programIdNumber : undefined
       )
-      queryClient.setQueryData(
+      const safeDetail = cacheProjectedProgramPrivacy(
+        queryClient,
         generalApplicationsQueryKeys.instructorDetail(applicationId),
+        program?.id ?? '',
         detail
       )
       if (instructorData) {
-        const mapped = mapInstructorApplicationDetailToApplicantRow(detail, instructorData)
+        const mapped = mapInstructorApplicationDetailToApplicantRow(safeDetail, instructorData)
         onInstructorDetailSaved?.(mapped)
       }
       return {
-        name: detail.instructorName?.trim() || undefined,
-        phone: detail.contact?.trim() || undefined,
-        email: detail.email?.trim() || undefined,
+        name: safeDetail.instructorName?.trim() || undefined,
+        phone: safeDetail.contact?.trim() || undefined,
+        email: safeDetail.email?.trim() || undefined,
         address:
-          [detail.homeAddress, detail.homeAddressDetail]
+          [safeDetail.homeAddress, safeDetail.homeAddressDetail]
             .map(part => part?.trim())
             .filter(Boolean)
             .join(' ') || undefined,
@@ -1284,7 +1318,11 @@ export function ApplicantsDetailContents({
     revealWithReason,
     openPersonalInfoRevealConfirm: onRevealPersonalInfo,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: programId,
+    resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: resolveApplicantPersonalInfoAccessItem,
     resolveMemberId: () => {
       if (isIndividual) return individualData?.memberId
@@ -1420,6 +1458,7 @@ export function ApplicantsDetailContents({
       <ApplicantHeaderActionsExtra
         items={visibleItems}
         personalInfoRevealed={personalInfoRevealed}
+        programPrivacyPending={programPrivacyPending}
       />
     )
   }, [
@@ -1458,6 +1497,7 @@ export function ApplicantsDetailContents({
     onCancelFinalPass,
     onCancelFinalFail,
     personalInfoRevealed,
+    programPrivacyPending,
     individualData,
     institutionData,
     instructorData,
@@ -1763,6 +1803,10 @@ export function ApplicantsDetailContents({
           <div className="applicant-contents__header-only-actions">{headerExtraContent}</div>
         ) : null}
         <div className="applicant-contents__panel">{tabPanel}</div>
+        {/* 1사1교 기관 신청 상세 — 시안 하단 52px (교육받은교사 기관 신청 상세와 같은 스페이서) */}
+        {isInstitution && isGeneralDetail && isCompanySchoolProgram(program ?? null) ? (
+          <div className="applicant-contents__page-bottom-spacer" aria-hidden />
+        ) : null}
         {personalInfoRevealModal}
         {isIndividual ? (
           <ConfirmModal

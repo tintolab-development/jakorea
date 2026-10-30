@@ -387,6 +387,7 @@ export function ParticipatingParticipantsSection({
         excelExport={{
           columns: excelColumns,
           data: filteredParticipants,
+          selectedRowKeys,
         }}
       >
         {viewMode === 'list' ? (

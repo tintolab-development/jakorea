@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
@@ -8,12 +8,12 @@ import {
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
+  EducationApplicationInfoModal,
   resolvePreferredEducationScheduleDisplayLabel,
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
   EducationInProgressNoticePanel,
-  EducationSchedulePanel,
   EducationSettlementPanel,
   EducationSurveySection,
   DocumentPassBanner,
@@ -22,7 +22,6 @@ import {
   isWithdrawnDuringEducation,
   lectureApplicationDetailPath,
   MYPAGE_LECTURE_PATH,
-  resolveEducationScheduleTabLabel,
   shouldShowDocumentPassBanner,
   useCancelMyProgramApplicationMutation,
   useMyProgramApplicationDetail,
@@ -32,17 +31,27 @@ import {
   type EducationDisplayStatus,
   type ProgramApplicationType,
 } from '@/features/mypage'
-import { resolveInstructorAvailableScheduleLines } from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
+import {
+  instructorAvailableScheduleHasSubmittedSelection,
+  resolveInstructorAvailableScheduleLines,
+} from '@/features/mypage/education/applications/lib/instructor-available-schedule-from-answers'
+import { resolveGeminiOfficialDocumentFromAnswers } from '@/features/mypage/education/applications/lib/official-document-from-answers'
 import { LectureReportPanel } from '@/features/mypage/education/schedules/ui/lecture-report-panel'
 import { InstructorAssignmentPanel } from '@/features/mypage/education/schedules/ui/instructor-assignment-panel'
-import { useLectureReportAssignmentsQuery } from '@/features/mypage/education/schedules/api/use-lecture-report-assignments-query'
-import { supportsInstructorInstitutionAssignment } from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
+import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
+import { useInstructorAssignmentStatusQuery } from '@/features/mypage/education/schedules/api/use-instructor-assignment-status-query'
+import {
+  supportsInstructorIndividualAssignment,
+  supportsInstructorInstitutionAssignment,
+} from '@/features/mypage/education/schedules/lib/instructor-assignment-support'
 import { programDetailToPreferredScheduleLookup } from '@/features/mypage/education/applications/lib/teacher-preferred-schedules'
 import {
   canWriteEducationNotice,
   resolveEducationNoticeAuthorDisplayName,
 } from '@/features/mypage/education/notices'
 import { resolveLectureListBackPath } from '@/features/mypage/lecture'
+import { EducationProgramInfoModal } from '@/features/mypage/education/notices/ui/program-info-modal'
+import { isGeminiTrainingProgram } from '@/features/program/lib/is-gemini-training'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
 import {
   getAccessToken,
@@ -77,6 +86,7 @@ function isActivitySection(value: string): value is EducationActivitySection {
   return (
     value === 'notice' ||
     value === 'schedule' ||
+    value === 'assignment' ||
     value === 'lecture-report' ||
     value === 'survey' ||
     value === 'satisfaction' ||
@@ -127,6 +137,8 @@ export function MypageLectureDetailPage() {
   const [isAuthReady, setIsAuthReady] = useState(false)
   const section = readSection(location.search)
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false)
+  const [isProgramInfoOpen, setIsProgramInfoOpen] = useState(false)
+  const [isApplicationInfoOpen, setIsApplicationInfoOpen] = useState(false)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const cancelMutation = useCancelMyProgramApplicationMutation()
   const member = useMypageMember()
@@ -172,26 +184,44 @@ export function MypageLectureDetailPage() {
   const isActivityStatus = application
     ? ACTIVITY_STATUSES.has(application.displayStatus)
     : false
+  const isGeminiProgram = isGeminiTrainingProgram(program)
   const institutionAssignmentProgram = supportsInstructorInstitutionAssignment(program?.programType)
+  const individualAssignmentProgram = supportsInstructorIndividualAssignment(program?.programType)
 
-  const instructorAssignmentQuery = useLectureReportAssignmentsQuery(
+  /** 배정 현황 탭 — lecture-report-assignments (존재하지 않는 instructor-assignments/waitings 호출 금지) */
+  const instructorAssignmentQuery = useInstructorAssignmentStatusQuery(
     program?.id,
-    routeApplicationType === 'INSTRUCTOR' && isActivityStatus && institutionAssignmentProgram,
+    routeApplicationType === 'INSTRUCTOR' && (isActivityStatus || isWithdrawnDuring),
   )
-  const instructorAssignmentVisible = institutionAssignmentProgram && instructorAssignmentQuery.hasAssignment
+  /**
+   * 강의현황 상세: 배정 현황 탭은 유형·배정 여부와 무관하게 항상 첫 번째(기본) 탭이다.
+   * 강의 일정 탭은 두지 않는다. 목록이 비어 있으면 패널의 빈 상태 문구를 보여준다.
+   */
+  const instructorAssignmentVisible = true
+  /** 기관형·제미나이 외(일반 개인형 등): 배정 현황 뒤에 안내사항·강의보고서·설문·만족도·정산 탭을 둔다. */
+  const instructorAssignmentWithActivityTabs = !institutionAssignmentProgram && !isGeminiProgram
 
   const activityTabOptions = useMemo(
     () =>
       program
         ? {
             detailCase: program.detailCase,
+            programType: program.programType,
             surveyConfigured: program.surveyConfigured,
             satisfactionConfigured: program.satisfactionConfigured,
-            lectureReportVisible: routeApplicationType === 'INSTRUCTOR',
+            lectureReportVisible: routeApplicationType === 'INSTRUCTOR' && !isGeminiProgram,
             instructorAssignmentVisible,
+            instructorAssignmentWithActivityTabs,
+            geminiInstructorActivityTabs: isGeminiProgram,
           }
         : null,
-    [instructorAssignmentVisible, program, routeApplicationType],
+    [
+      instructorAssignmentVisible,
+      instructorAssignmentWithActivityTabs,
+      isGeminiProgram,
+      program,
+      routeApplicationType,
+    ],
   )
 
   const inProgressTabItems = useMemo(
@@ -291,6 +321,10 @@ export function MypageLectureDetailPage() {
     navigate(MYPAGE_LECTURE_PATH, { replace: true })
   }
 
+  /**
+   * APPLICATION 바인딩은 /me/.../form-bindings/.../render 로 조회하지 않는다(403 정상).
+   * 일정 표시는 신청 상세 answers·preferredSchedule 서버 값만 사용한다.
+   */
   const instructorAvailableScheduleLines = useMemo(
     () =>
       resolveInstructorAvailableScheduleLines({
@@ -298,6 +332,7 @@ export function MypageLectureDetailPage() {
         preferredEducationScheduleLabel: application?.preferredEducationScheduleLabel,
         preferredScheduleOptionValues: application?.preferredScheduleOptionValues,
         program: programDetailToPreferredScheduleLookup(program),
+        bindingSlots: [],
       }),
     [
       application?.applicationAnswers,
@@ -306,6 +341,20 @@ export function MypageLectureDetailPage() {
       program,
     ],
   )
+  const instructorAvailableScheduleUnresolved =
+    instructorAvailableScheduleLines.length === 0 &&
+    instructorAvailableScheduleHasSubmittedSelection({
+      answers: application?.applicationAnswers,
+      preferredEducationScheduleLabel: application?.preferredEducationScheduleLabel,
+      preferredScheduleOptionValues: application?.preferredScheduleOptionValues,
+    })
+  const geminiOfficialDocument = useMemo(
+    () =>
+      isGeminiProgram
+        ? resolveGeminiOfficialDocumentFromAnswers(application?.applicationAnswers)
+        : null,
+    [application?.applicationAnswers, isGeminiProgram],
+  )
 
   if (isDetailLoading) {
     return (
@@ -313,6 +362,20 @@ export function MypageLectureDetailPage() {
         backLabel="강의현황"
         onBack={handleBack}
       />
+    )
+  }
+
+  if (remoteDetailEnabled && remoteApplicationQuery.isError) {
+    return (
+      <section className={styles.page}>
+        <EducationDetailBack label="강의현황" onClick={handleBack} />
+        <PFText as="p" typo="hd-md" color="black" className={styles.empty}>
+          신청 내용을 불러오지 못했습니다
+        </PFText>
+        <PFButton variant="secondary" onClick={() => navigate(MYPAGE_LECTURE_PATH)}>
+          강의현황으로
+        </PFButton>
+      </section>
     )
   }
 
@@ -375,12 +438,40 @@ export function MypageLectureDetailPage() {
         selfIntroMotivation={application.selfIntroMotivation}
         preferredEducationScheduleLabel={preferredEducationScheduleLabel}
         instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+        instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
+        availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+        officialDocument={geminiOfficialDocument}
       />
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
         신청 내용 화면은 준비 중입니다.
       </PFText>
     )
+
+  /** 배정 현황 탭은 항상 노출되므로 조회 중·실패를 빈 목록으로 보이지 않게 한다. */
+  const renderInstructorAssignmentStatus = (panel: ReactNode) => {
+    if (instructorAssignmentQuery.isLoading) {
+      return <EducationSessionListSkeleton statusMessage="배정 현황을 불러오는 중입니다." />
+    }
+    if (instructorAssignmentQuery.isError) {
+      return (
+        <>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
+            배정 현황을 불러오지 못했습니다.
+          </PFText>
+          <PFButton
+            type="button"
+            variant="tertiary"
+            size="large"
+            onClick={() => void instructorAssignmentQuery.refetch()}
+          >
+            다시 시도
+          </PFButton>
+        </>
+      )
+    }
+    return panel
+  }
 
   const renderActivityBody = (active: EducationActivitySection) => {
     if (active === 'notice' && isActivityStatus) {
@@ -389,6 +480,10 @@ export function MypageLectureDetailPage() {
           program={program}
           selfIntroMotivation={application.selfIntroMotivation}
           preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+          instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+          instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
+          availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+          officialDocument={geminiOfficialDocument}
           applicationType={routeApplicationType}
           applicationId={application.id}
           noticeWriteEnabled={canWriteEducationNotice(member.profile, application.displayStatus)}
@@ -396,18 +491,24 @@ export function MypageLectureDetailPage() {
         />
       )
     }
-    if (active === 'schedule') {
-      if (instructorAssignmentVisible) {
-        return <InstructorAssignmentPanel items={instructorAssignmentQuery.items} />
-      }
-      return (
-        <EducationSchedulePanel
-          applicationType={routeApplicationType}
-          applicationId={application.id}
-          lastParticipatedSession={
-            isWithdrawnDuring ? application.lastParticipatedSession : undefined
+    if (active === 'assignment' && instructorAssignmentVisible) {
+      return renderInstructorAssignmentStatus(
+        <InstructorAssignmentPanel
+          assignedItems={instructorAssignmentQuery.assignedItems}
+          waitingItems={instructorAssignmentQuery.waitingItems}
+          individual={individualAssignmentProgram}
+          useScheduleName={
+            program.educationStructure === 'schedule' && program.sessionRound === 'multi'
           }
-          listTitle={resolveEducationScheduleTabLabel(program.detailCase)}
+        />
+      )
+    }
+    if (active === 'schedule') {
+      // 기관형·제미나이: `schedule` 키가 배정 현황 탭이다(강의 일정 탭 없음).
+      return renderInstructorAssignmentStatus(
+        <InstructorAssignmentPanel
+          assignedItems={instructorAssignmentQuery.assignedItems}
+          waitingItems={instructorAssignmentQuery.waitingItems}
         />
       )
     }
@@ -483,6 +584,17 @@ export function MypageLectureDetailPage() {
         educationForm={program.educationForm}
         educationFormLabel={program.educationFormLabel}
       />
+      {isGeminiProgram && isActivityStatus ? (
+        <div className={styles.headerActions}>
+          <PFButton variant="text" onClick={() => setIsProgramInfoOpen(true)}>
+            프로그램 정보
+          </PFButton>
+          <span className={styles.actionDivider} aria-hidden="true" />
+          <PFButton variant="text" onClick={() => setIsApplicationInfoOpen(true)}>
+            신청 정보
+          </PFButton>
+        </div>
+      ) : null}
 
       {showBanner ? (
         <DocumentPassBanner interviewAtLabel={application.interviewAtLabel} />
@@ -543,6 +655,22 @@ export function MypageLectureDetailPage() {
           해당 진행 상태의 상세 탭은 준비 중입니다.
         </PFText>
       )}
+
+      <EducationProgramInfoModal
+        open={isProgramInfoOpen}
+        program={program}
+        onClose={() => setIsProgramInfoOpen(false)}
+      />
+      <EducationApplicationInfoModal
+        open={isApplicationInfoOpen}
+        selfIntroMotivation={application.selfIntroMotivation}
+        preferredEducationScheduleLabel={preferredEducationScheduleLabel}
+        instructorAvailableScheduleLines={instructorAvailableScheduleLines}
+        instructorAvailableScheduleUnresolved={instructorAvailableScheduleUnresolved}
+        availableScheduleTitle={isGeminiProgram ? '강의 진행 가능 일정' : undefined}
+        officialDocument={geminiOfficialDocument}
+        onClose={() => setIsApplicationInfoOpen(false)}
+      />
 
       <EducationCancelConfirm
         open={isCancelConfirmOpen}

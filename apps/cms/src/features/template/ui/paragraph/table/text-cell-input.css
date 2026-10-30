@@ -39,7 +39,6 @@
   min-width: 0;
   width: auto;
   max-width: 100%;
-  height: 24px !important;
   min-height: 24px !important;
   padding: 0 !important;
   margin: 0;
@@ -56,6 +55,15 @@
   line-height: 24px;
   resize: none;
   overflow: hidden;
+}
+
+/*
+ * 한 줄(header·single-line)만 24px 고정.
+ * 여러 줄은 높이를 지정하지 않아 antd autoSize 인라인 height가 적용되게 둠
+ * (!important height가 있으면 autoSize가 무시되고 textarea 기본 rows=2(48px)에서 잘림).
+ */
+.text-cell-input:not(.text-cell-input--multiline) .text-cell-input__control.ant-input {
+  height: 24px !important;
 }
 
 /* 한 줄 body: 높이 24px 고정 + 가로 100% */
@@ -88,7 +96,6 @@
   flex: 1 1 auto;
   width: 100% !important;
   max-width: 100%;
-  height: auto !important;
   min-height: 24px !important;
   max-height: none !important;
   padding: 0 !important;

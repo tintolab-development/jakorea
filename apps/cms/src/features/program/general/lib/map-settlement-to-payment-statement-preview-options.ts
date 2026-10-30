@@ -11,7 +11,7 @@ import { formatInstructorFeeGradeLabel } from '@/shared/constants/instructor-fee
 import { mapSettlementFrontendItemTypeToLineKind } from '@/features/settlement/lib/resolve-settlement-item-setting-for-calculation-row'
 import { buildParticipatingInstructorEducationScheduleLabel } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
 
-function presentText(value: string | undefined): string {
+function presentText(value: string | null | undefined): string {
   const trimmed = value?.trim() ?? ''
   if (!trimmed || trimmed === '-' || trimmed === '—' || trimmed === '–') return ''
   return trimmed

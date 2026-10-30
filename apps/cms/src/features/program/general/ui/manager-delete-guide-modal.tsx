@@ -15,22 +15,28 @@ export interface ManagerDeleteGuideModalProps {
   managerNames: string[]
 }
 
-/** 담당자 삭제 문구 생성 */
+const MANAGER_DELETE_IMPACT_LINE =
+  '삭제 시 해당 프로그램의 접근 권한을 모두 잃게 됩니다.'
+
+/** 단건 / 일괄 제목 */
+export function resolveManagerDeleteModalTitle(count: number): string {
+  if (count >= 2) return '프로그램 담당자 일괄 삭제 안내'
+  return '프로그램 담당자 삭제 안내'
+}
+
+/** 담당자 삭제 문구 생성 — 단건 `[이름] 님을` / 일괄 `[이름] 님 외 N명` */
 export function buildManagerMessageLines(names: string[]): string[] {
   if (names.length === 0) return []
   if (names.length === 1) {
-    const name = names[0]
     return [
-      `[${name}] 매니저를 해당 프로젝트 담당자 목록에서 삭제하시겠습니까?`,
-      `삭제 시 [${name}] 매니저님은 해당 프로젝트의 권한을 모두 잃게 됩니다.`,
+      `[${names[0]}] 님을 프로그램 담당자 목록에서 삭제하시겠습니까?`,
+      MANAGER_DELETE_IMPACT_LINE,
     ]
   }
-  const count = names.length
-  const nameList = names.map(n => `[${n}]`).join(', ')
+  const others = names.length - 1
   return [
-    `선택한 ${count}명의 담당자(${nameList})를 해당 프로젝트 담당자 목록에서 삭제하시겠습니까?`,
-    `삭제 시 해당 담당자들은 프로젝트의 권한을 모두 잃게 됩니다.`,
-    '정말로 삭제하시겠습니까?',
+    `[${names[0]}] 님 외 ${others}명을 프로그램 담당자 목록에서 삭제하시겠습니까?`,
+    MANAGER_DELETE_IMPACT_LINE,
   ]
 }
 
@@ -154,9 +160,9 @@ export function ManagerDeleteGuideModal({
       open={open}
       onCancel={onCancel}
       onConfirm={onConfirm}
-      title="담당자 삭제 안내"
+      title={resolveManagerDeleteModalTitle(managerNames.length)}
       lines={lines}
-      confirmText="담당자 삭제"
+      confirmText="삭제"
     />
   )
 }

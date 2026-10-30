@@ -85,3 +85,17 @@
   min-height: 0;
   overflow: hidden;
 }
+
+/* 모바일 문서 미리보기 — Figma 12770:3911 */
+@media (--bp-below-pc) {
+  .stage {
+    --consent-a4-display-width: min(794px, calc(100vw - 40px));
+  }
+
+  .frame {
+    border-radius: 4.188px;
+    box-shadow:
+      0 0 3.141px rgba(41, 96, 118, 0.02),
+      0 6.979px 14.656px rgba(30, 71, 75, 0.05);
+  }
+}

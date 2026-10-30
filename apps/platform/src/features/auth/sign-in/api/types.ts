@@ -3,6 +3,9 @@ import type {
   InstructorRoleRequestProfile,
   InstructorRoleRequestSettlement,
 } from '@/features/mypage/instructor-apply/api/types'
+import type { PortalAgeGroup } from '../lib/portal-age-group'
+
+export type { PortalAgeGroup }
 
 /** 포털 회원 로그인 OpenAPI 최소 타입 (앱 경계 — CMS generated import 금지) */
 
@@ -26,6 +29,12 @@ export type AuthTokenResponse = {
   registeredByAdmin?: boolean
   /** 관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 */
   identitySelfSignupCompletedAfterAdminRegistration?: boolean
+  /**
+   * 회원 포털 토큰: 항상 `UNDER_14` | `OVER_14`.
+   * 관리자 토큰이 같은 DTO를 쓰면 `null` — 포털은 무시하고 GET /me 로 보완.
+   * 로그인 응답에 `under14`는 두지 않는다. `isUnder14 = ageGroup === "UNDER_14"`
+   */
+  ageGroup?: PortalAgeGroup | null
 }
 
 export type PasswordChangeRequest = {
@@ -42,7 +51,7 @@ export type HomepageMeResponse = {
   status?: string
   memberType?: string
   /** `UNDER_14` | `OVER_14` */
-  ageGroup?: string
+  ageGroup?: PortalAgeGroup
   teacher?: boolean
   instructor?: boolean
   identityVerified?: boolean
@@ -74,6 +83,13 @@ export type PortalSchoolSelectionRequest = {
  * PATCH /api/portal/me/profile — OpenAPI `UpdatePortalProfileRequest`.
  * 이메일·이름·휴대폰·생년월일·성별은 본인인증 필드로 PATCH 대상이 아님.
  */
+/** PATCH `guardian` — GET `PortalProfileResponse.guardian` 과 동일 필드 */
+export type PortalGuardianProfileUpdate = {
+  guardianName?: string | null
+  guardianRelation?: string | null
+  guardianPhone?: string | null
+}
+
 export type UpdatePortalProfileRequest = {
   postalCode?: string | null
   address?: string | null
@@ -90,6 +106,12 @@ export type UpdatePortalProfileRequest = {
   teacherEmploymentStatus?: string | null
   external1365Id?: string | null
   instructorProfile?: InstructorPortalProfileUpdate
+  /** 만 14세 미만 보호자. nested 가 최상위 동일 필드보다 우선 */
+  guardian?: PortalGuardianProfileUpdate | null
+  /** 호환용. nested `guardian` 과 둘 다 있으면 nested 우선 */
+  guardianName?: string | null
+  guardianRelation?: string | null
+  guardianPhone?: string | null
 }
 
 /** PATCH — 강사 포탈 프로필 (editable profile + optional settlement) */
@@ -134,8 +156,8 @@ export type PortalProfileResponse = {
   teacher?: boolean
   instructor?: boolean
   under14?: boolean
-  /** `UNDER_14` | `OVER_14` */
-  ageGroup?: string
+  /** `UNDER_14` | `OVER_14` — `under14 === (ageGroup === "UNDER_14")` */
+  ageGroup?: PortalAgeGroup
   postalCode?: string
   address?: string
   addressDetail?: string
@@ -154,6 +176,12 @@ export type PortalProfileResponse = {
   external1365Id?: string
   accountStatus?: string
   joinedAt?: string
+  /** 만 14세 미만 회원 보호자. GET·PATCH 응답 nested `guardian` */
+  guardian?: {
+    guardianName?: string
+    guardianRelation?: string
+    guardianPhone?: string
+  }
   instructorProfile?: InstructorPortalProfileResponse
   socialAccounts?: string[]
   listMetrics?: {

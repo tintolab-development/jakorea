@@ -18,7 +18,8 @@ export interface SettlementListItemResponse {
   /** 신청자 실명. 서버에서 마스킹하지 않습니다. */
   instructorName?: string;
   statementId?: number;
-  institutionName?: string;
+  /** 참여 기관명. 배정 기관 → 일정 단일 기관 → 장소명 순. 개인 참여 등으로 기관이 없으면 null */
+  institutionName?: string | null;
   businessPeriodStart?: string;
   businessPeriodEnd?: string;
   sessionCompleted?: number;

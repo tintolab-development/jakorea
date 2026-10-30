@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const fetchVersion = vi.fn()
 const copyVersion = vi.fn()
+const createVersion = vi.fn()
 const updateVersion = vi.fn()
 const updateTemplate = vi.fn()
 const publishVersion = vi.fn()
@@ -12,6 +13,7 @@ const validate = vi.fn()
 vi.mock('@/features/template/api/form-templates-api-client', () => ({
   fetchFormTemplateVersionRemote: (...args: unknown[]) => fetchVersion(...args),
   copyFormTemplateVersionRemote: (...args: unknown[]) => copyVersion(...args),
+  createFormTemplateVersionRemote: (...args: unknown[]) => createVersion(...args),
   updateFormTemplateVersionRemote: (...args: unknown[]) => updateVersion(...args),
   updateFormTemplateRemote: (...args: unknown[]) => updateTemplate(...args),
 }))
@@ -40,6 +42,7 @@ vi.mock('@/features/program/shared/lib/survey-management/resolve-published-surve
 import {
   buildProgramSurveyFormEditTarget,
   resolveProgramSurveyFormEditFailure,
+  PROGRAM_SURVEY_FORM_FOREIGN_OWNER_MESSAGE,
   saveProgramSurveyFormEdit,
 } from '@/features/program/shared/lib/survey-management/save-program-survey-form-edit'
 import { SURVEY_OPEN_ENDED_END_AT } from '@/features/program/shared/lib/survey-management/survey-binding-period'
@@ -81,7 +84,7 @@ describe('buildProgramSurveyFormEditTarget', () => {
 
 describe('saveProgramSurveyFormEdit', () => {
   beforeEach(() => {
-    for (const mock of [fetchVersion, copyVersion, updateVersion, updateTemplate, publishVersion, updateBinding, listBindings, validate]) {
+    for (const mock of [fetchVersion, copyVersion, createVersion, updateVersion, updateTemplate, publishVersion, updateBinding, listBindings, validate]) {
       mock.mockReset()
     }
     validate.mockReturnValue({ ok: true })
@@ -113,6 +116,155 @@ describe('saveProgramSurveyFormEdit', () => {
       submissionStartAt: '2026-10-20T00:00:00.000Z',
       submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
     })
+  })
+
+  it('이미 이 프로그램 전용(PROGRAM) 템플릿이면 copy 없이 같은 템플릿에 version을 추가해 저장한다', async () => {
+    fetchVersion.mockResolvedValue({
+      templateId: 196537,
+      templateVersionId: 352,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'PROGRAM',
+      ownerProgramId: 186051,
+    })
+    createVersion.mockResolvedValue({ templateId: 196537, templateVersionId: 410, versionNo: 3 })
+    publishVersion.mockResolvedValue(410)
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+      ok: true,
+      templateId: 196537,
+      templateVersionId: 410,
+    })
+    expect(copyVersion).not.toHaveBeenCalled()
+    expect(createVersion).toHaveBeenCalledWith(196537, {
+      versionLabel: 'program-186051',
+      sourceVersionId: 352,
+    })
+    expect(updateVersion).toHaveBeenCalledWith(410, { schemaJson: '{"edited":true}' })
+    expect(publishVersion).toHaveBeenCalledWith(410)
+    expect(updateTemplate).not.toHaveBeenCalled()
+    expect(updateBinding).toHaveBeenCalledWith('186051', '900', {
+      templateId: 196537,
+      templateVersionId: 410,
+      submissionStartAt: '2026-10-20T00:00:00.000Z',
+      submissionEndAt: SURVEY_OPEN_ENDED_END_AT,
+    })
+  })
+
+  it('COPY 템플릿도 copy 없이 같은 템플릿에 version을 추가한다', async () => {
+    fetchVersion.mockResolvedValue({
+      templateId: 3001,
+      templateVersionId: 352,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'COPY',
+      ownerProgramId: null,
+    })
+    createVersion.mockResolvedValue({ templateId: 3001, templateVersionId: 411 })
+    publishVersion.mockResolvedValue(411)
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toMatchObject({
+      ok: true,
+      templateId: 3001,
+      templateVersionId: 411,
+    })
+    expect(copyVersion).not.toHaveBeenCalled()
+    expect(createVersion).toHaveBeenCalledWith(3001, expect.objectContaining({ sourceVersionId: 352 }))
+  })
+
+  it('CATALOG copy 응답이 기존 PROGRAM 복사본의 PUBLISHED version이면 그 템플릿에 version을 추가한다', async () => {
+    fetchVersion.mockResolvedValue({
+      templateId: 1995,
+      templateVersionId: 352,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
+    })
+    copyVersion.mockResolvedValue({
+      templateId: 2001,
+      templateVersionId: 399,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'PROGRAM',
+      ownerProgramId: 186051,
+    })
+    createVersion.mockResolvedValue({ templateId: 2001, templateVersionId: 400 })
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+      ok: true,
+      templateId: 2001,
+      templateVersionId: 400,
+    })
+    expect(copyVersion).toHaveBeenCalledWith(1995, { sourceVersionId: 352, ownerProgramId: 186051 })
+    expect(createVersion).toHaveBeenCalledWith(2001, {
+      versionLabel: 'program-186051',
+      sourceVersionId: 399,
+    })
+    expect(updateVersion).toHaveBeenCalledWith(400, { schemaJson: '{"edited":true}' })
+    expect(updateVersion).not.toHaveBeenCalledWith(399, expect.anything())
+    expect(publishVersion).toHaveBeenCalledWith(400)
+  })
+
+  it('CATALOG copy 응답이 DRAFT면 version을 추가하지 않고 그 DRAFT에 저장한다', async () => {
+    fetchVersion.mockResolvedValue({
+      templateId: 1995,
+      templateVersionId: 352,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'CATALOG',
+      ownerProgramId: null,
+    })
+    copyVersion.mockResolvedValue({ templateId: 2001, templateVersionId: 400, versionStatus: 'DRAFT' })
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toMatchObject({
+      ok: true,
+      templateVersionId: 400,
+    })
+    expect(createVersion).not.toHaveBeenCalled()
+    expect(updateVersion).toHaveBeenCalledWith(400, { schemaJson: '{"edited":true}' })
+  })
+
+  it('구버전 응답으로 copy를 골랐는데 카탈로그 원본 아님 400이면 같은 템플릿에 version을 추가한다', async () => {
+    copyVersion.mockRejectedValueOnce({
+      response: {
+        status: 400,
+        data: {
+          error: {
+            code: 'BAD_REQUEST',
+            message:
+              '신규 템플릿은 카탈로그 원본에서만 복제할 수 있습니다. 프로그램 전용 복사본은 같은 템플릿에 버전을 추가해 주세요.',
+          },
+        },
+      },
+    })
+    createVersion.mockResolvedValue({ templateId: 1995, templateVersionId: 420 })
+    publishVersion.mockResolvedValue(420)
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+      ok: true,
+      templateId: 1995,
+      templateVersionId: 420,
+    })
+    expect(createVersion).toHaveBeenCalledWith(1995, {
+      versionLabel: 'program-186051',
+      sourceVersionId: 352,
+    })
+  })
+
+  it('다른 프로그램 소유 PROGRAM 템플릿이면 원격 쓰기 없이 차단한다', async () => {
+    fetchVersion.mockResolvedValue({
+      templateId: 196537,
+      templateVersionId: 352,
+      versionStatus: 'PUBLISHED',
+      templateScope: 'PROGRAM',
+      ownerProgramId: 999999,
+    })
+
+    await expect(saveProgramSurveyFormEdit(TARGET, createNewSurveyDraft())).resolves.toEqual({
+      ok: false,
+      message: PROGRAM_SURVEY_FORM_FOREIGN_OWNER_MESSAGE,
+    })
+    expect(copyVersion).not.toHaveBeenCalled()
+    expect(createVersion).not.toHaveBeenCalled()
+    expect(updateVersion).not.toHaveBeenCalled()
+    expect(publishVersion).not.toHaveBeenCalled()
+    expect(updateBinding).not.toHaveBeenCalled()
   })
 
   it('stops before any remote write when the draft is invalid', async () => {

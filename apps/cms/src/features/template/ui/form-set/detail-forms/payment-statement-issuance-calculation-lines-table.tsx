@@ -11,6 +11,7 @@ import type {
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatPaymentOrderCalculationWonPlain } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
+import { resolvePaymentStatementIssuanceCategoryLabel } from './payment-statement-issuance-category-label'
 import './payment-statement-issuance-calculation-lines-table.css'
 
 export interface PaymentStatementIssuanceCalculationLinesRow {
@@ -32,26 +33,6 @@ function paymentDeductionLabel(kind: PaymentOrderCalculationLineKind): string {
   return kind === 'withholding' ? '공제' : '지급'
 }
 
-/** 발급용 시안 구분 라벨 (정산 모달과 별도) */
-function categoryLabel(kind: PaymentOrderCalculationLineKind): string {
-  switch (kind) {
-    case 'lecture_fee':
-      return '3급'
-    case 'travel':
-      return '왕복'
-    case 'lodging':
-      return '1사1교'
-    case 'meal':
-      return '식사'
-    case 'activity':
-      return '활동'
-    case 'withholding':
-      return '기타소득'
-    default:
-      return ''
-  }
-}
-
 export function buildPaymentStatementIssuanceCalculationLinesRows(
   blocks: PaymentOrderCalculationStatementSessionBlock[]
 ): PaymentStatementIssuanceCalculationLinesRow[] {
@@ -67,7 +48,7 @@ export function buildPaymentStatementIssuanceCalculationLinesRows(
         lectureDateDisplay: block.lectureDateDisplay,
         lectureSessionDisplay: block.lectureSessionDisplay,
         paymentDeductionLabel: paymentDeductionLabel(line.kind),
-        categoryLabel: categoryLabel(line.kind),
+        categoryLabel: resolvePaymentStatementIssuanceCategoryLabel(line),
         itemLabel: line.itemLabel,
         amount: line.amount,
         lineId: line.id,

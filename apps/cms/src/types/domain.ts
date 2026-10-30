@@ -94,6 +94,10 @@ export interface GeneralProgramCurriculumSessionRow {
   ipsTypeSummary?: string
   /** 개인 커리큘럼 사전 교육 — 진행 일정 (일정형과 동일 표기) */
   scheduleDateLabel?: string
+  /** GENERAL 필수 사전교육 행. 신청 선택지가 아님 */
+  isPreEducation?: boolean
+  /** BE가 overlay에서 복사한 교육 진행 장소(일정 별 상이·사전 교육 아님). 읽기 전용 fallback */
+  educationPlaceAddress?: string
 }
 
 /** 일반 프로그램 — 교육 형태·참여·IPS 일정 공통/별 상이 */
@@ -103,6 +107,8 @@ export type GeneralProgramScheduleDetailKind = 'common' | 'perSchedule'
 export interface GeneralProgramScheduleDetailRow {
   /** `세부 일정 01` / `행사 일정 01` */
   scheduleLabel: string
+  /** 일정형 블록 종류. 사전교육 ON이면 첫 행 `preEducation` */
+  blockKind?: 'sub' | 'event' | 'preEducation'
   /** 일정명 */
   name: string
   /** `그룹 A : 09:30 ~ 09:40 | 그룹 B : …` — 세부 일정(단일·복수 공통) */
@@ -115,6 +121,8 @@ export interface GeneralProgramScheduleDetailRow {
   educationFormLabel?: string
   participationMethodLabel?: string
   ipsTypeSummary?: string
+  /** BE가 overlay에서 복사한 교육 진행 장소(일정 별 상이·사전 교육 아님). 읽기 전용 fallback */
+  educationPlaceAddress?: string
 }
 
 /** 일반 프로그램 캘린더 — 설문·과제 등 보조 일정 */
@@ -158,6 +166,10 @@ export interface GeneralProgramCommonInfoExtension {
   educationFormScheduleDetail?: GeneralProgramScheduleDetailKind
   participationScheduleDetail?: GeneralProgramScheduleDetailKind
   ipsScheduleDetail?: GeneralProgramScheduleDetailKind
+  /** 교육 진행 장소 — BE가 overlay에서 복사한 hydrate fallback (정본은 registration.overlay) */
+  educationPlaceScheduleDetail?: GeneralProgramScheduleDetailKind | null
+  /** 교육 진행 장소 공통 주소 — common일 때만 */
+  educationPlaceAddress?: string | null
   /** 교육 진행(커리큘럼·일정형) — 사전 교육 토글 */
   scheduleCurriculumPreEducation?: boolean
   curriculumSessions?: GeneralProgramCurriculumSessionRow[]

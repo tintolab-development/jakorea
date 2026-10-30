@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { mapMailDeliveryToSendHistoryRow } from './mail-delivery-adapters'
+import {
+  mapMailDeliveryDetailResponse,
+  mapMailDeliveryToSendHistoryRow,
+} from './mail-delivery-adapters'
 
 describe('mapMailDeliveryToSendHistoryRow', () => {
   it('maps delivery fields into mail history row', () => {
@@ -210,5 +213,19 @@ describe('mapMailDeliveryToSendHistoryRow', () => {
       { contentTemplate: '<p>#{회원명}님</p>' }
     )
     expect(html?.bodyHtml).toBe('<p>#{회원명}님</p>')
+  })
+
+  it('keeps detail recipientContactMasked plaintext without remasking', () => {
+    const row = mapMailDeliveryDetailResponse({
+      delivery: {
+        deliveryId: 90,
+        recipientName: '김원문',
+        recipientContactMasked: 'kim.wonmun@jakorea.org',
+        sendStatus: 'SENT',
+      },
+    })
+    expect(row?.receiverName).toBe('김원문')
+    expect(row?.receiverEmail).toBe('kim.wonmun@jakorea.org')
+    expect(row?.receiverInfo).toContain('kim.wonmun@jakorea.org')
   })
 })

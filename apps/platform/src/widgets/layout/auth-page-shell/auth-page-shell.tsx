@@ -5,11 +5,25 @@ type AuthPageShellProps = {
   children: ReactNode
   className?: string
   containerClassName?: string
+  fill?: boolean
 }
 
-export function AuthPageShell({ children, className, containerClassName }: AuthPageShellProps) {
-  const pageClassName = [styles.page, className].filter(Boolean).join(' ')
-  const innerClassName = [styles.container, containerClassName].filter(Boolean).join(' ')
+export function AuthPageShell({
+  children,
+  className,
+  containerClassName,
+  fill = false,
+}: AuthPageShellProps) {
+  const pageClassName = [styles.page, fill ? styles.pageFill : null, className]
+    .filter(Boolean)
+    .join(' ')
+  const innerClassName = [
+    styles.container,
+    fill ? styles.containerFill : null,
+    containerClassName,
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <div className={pageClassName}>

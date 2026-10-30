@@ -11,6 +11,7 @@ import {
   toTalentApplicationListParams,
   toTalentApplicationStatusUpdateRequest,
 } from './mappers'
+import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status'
 import {
   confirmTalentDonationApplications as confirmLocal,
   getTalentDonationApplicationWithPrivacyLog as getWithLogLocal,
@@ -53,7 +54,8 @@ export async function getTalentDonationApplicationService(
     try {
       const row = await sponsorshipApi().detail7(numericId)
       return mapTalentApplicationDetailToDomain(row)
-    } catch {
+    } catch (error) {
+      if (isAdminForbidden(error) || isAdminNotFound(error)) throw error
       return null
     }
   }

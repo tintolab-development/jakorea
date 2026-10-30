@@ -70,7 +70,12 @@
  * 셀·카드 밖으로 넘친다. education-fields 와 동일하게 행 높이를 콘텐츠에 맡긴다.
  */
 .corporate-guide-section .cms-data-table .ant-table-tbody > tr > td,
-.corporate-guide-section .cms-data-table .ant-table-tbody > tr:hover > td {
+.corporate-guide-section .cms-data-table .ant-table-tbody > tr:hover > td,
+.corporate-guide-section
+  .cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell-row-hover {
   height: auto !important;
   min-height: 54px;
   white-space: normal !important;

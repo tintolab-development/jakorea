@@ -3552,9 +3552,11 @@
     "/api/admin/notifications/public-applications/{id}/retry": {
       "post": {
         "tags": [
-          "public-application-notification-admin-controller"
+          "Public application notifications"
         ],
-        "operationId": "retry",
+        "summary": "Retry or recover a failed public-application notification",
+        "description": "Requires HOMEPAGE_VIEW (filter) and HOMEPAGE_EDIT. FAILED rows with providerMessageId are recovered to SENT without a second NHN send. FAILED rows without providerMessageId return to PENDING for the worker. SENT, PENDING, and RETRYING rows are not retryable.",
+        "operationId": "retryPublicApplicationNotification",
         "parameters": [
           {
             "name": "id",
@@ -3572,12 +3574,55 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/StatusResponse"
+                  "$ref": "#/components/schemas/PublicApplicationNotificationStatusResponse"
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/notifications/inbox/{id}/read": {
+      "post": {
+        "tags": [
+          "Homepage admin system notifications"
+        ],
+        "summary": "Mark one homepage-admin system inbox row as read",
+        "description": "Requires HOMEPAGE_VIEW plus CMS MASTER role. Other administrators' ids return 404. Excel [닫기] is UI dismiss only and must not call this endpoint.",
+        "operationId": "readHomepageAdminSystemNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomepageAdminSystemNotificationItem"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/admin/main/strip-banners": {
@@ -8123,9 +8168,11 @@
     "/api/admin/notifications/public-applications": {
       "get": {
         "tags": [
-          "public-application-notification-admin-controller"
+          "Public application notifications"
         ],
-        "operationId": "list_15",
+        "summary": "List recent public-application notification outbox rows",
+        "description": "Requires HOMEPAGE_VIEW. Recipient emails are never included. SENT means the NHN provider returned a messageId, not mailbox delivery.",
+        "operationId": "listPublicApplicationNotifications",
         "parameters": [
           {
             "name": "size",
@@ -8146,13 +8193,87 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/StatusResponse"
+                    "$ref": "#/components/schemas/PublicApplicationNotificationStatusResponse"
                   }
                 }
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/notifications/inbox": {
+      "get": {
+        "tags": [
+          "Homepage admin system notifications"
+        ],
+        "summary": "List homepage-admin system inbox rows for the current MASTER administrator",
+        "description": "Requires HOMEPAGE_VIEW plus CMS MASTER role. Returns only the caller's rows. This is in-app inbox state, not EMAIL/ALIMTALK outbox SENT/HELD/FAILED. Closing a UI panel must not call this read API.",
+        "operationId": "listHomepageAdminSystemNotifications",
+        "parameters": [
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HomepageAdminSystemNotificationItem"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/admin/notifications/inbox/unread-count": {
+      "get": {
+        "tags": [
+          "Homepage admin system notifications"
+        ],
+        "summary": "Count unread homepage-admin system inbox rows",
+        "description": "Requires HOMEPAGE_VIEW plus CMS MASTER role. Counts only the caller's unread rows.",
+        "operationId": "countHomepageAdminSystemNotifications",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomepageAdminSystemNotificationUnreadCount"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/admin/me": {
@@ -8862,7 +8983,7 @@
         "tags": [
           "career-talent-application-admin-controller"
         ],
-        "operationId": "list_16",
+        "operationId": "list_15",
         "parameters": [
           {
             "name": "status",
@@ -14209,8 +14330,9 @@
           "version"
         ]
       },
-      "StatusResponse": {
+      "PublicApplicationNotificationStatusResponse": {
         "type": "object",
+        "description": "Public-application mail outbox row. Recipient emails are never returned.",
         "properties": {
           "id": {
             "type": "integer",
@@ -14224,7 +14346,16 @@
             "enum": [
               "CAREER_TALENT_APPLICATION",
               "CORPORATE_CONSULTATION",
-              "TALENT_APPLICATION"
+              "TALENT_APPLICATION",
+              "CAREER_POSTING_DEADLINE"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "ALIMTALK",
+              "SYSTEM"
             ]
           },
           "aggregateId": {
@@ -14249,11 +14380,71 @@
           "lastError": {
             "type": "string"
           },
+          "providerMessageId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "NHN messageId after provider acceptance. Null until accepted."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
           "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HomepageAdminSystemNotificationItem": {
+        "type": "object",
+        "description": "Homepage-admin in-app inbox item. Distinct from public-application outbox history.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventKey": {
+            "type": "string"
+          },
+          "notificationType": {
+            "type": "string",
+            "enum": [
+              "CAREER_TALENT_APPLICATION",
+              "CORPORATE_CONSULTATION",
+              "TALENT_APPLICATION",
+              "CAREER_POSTING_DEADLINE"
+            ]
+          },
+          "aggregateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "actionLabel": {
+            "type": "string"
+          },
+          "actionPath": {
+            "type": "string"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "readAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Set when the caller marks this row read. Distinct from outbox SENT."
+          },
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           }
@@ -16812,6 +17003,12 @@
               "null"
             ]
           },
+          "attachmentUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "authorName": {
             "type": "string"
           },
@@ -17902,6 +18099,15 @@
             "items": {
               "$ref": "#/components/schemas/FooterPartnerResponse"
             }
+          }
+        }
+      },
+      "HomepageAdminSystemNotificationUnreadCount": {
+        "type": "object",
+        "properties": {
+          "unreadCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

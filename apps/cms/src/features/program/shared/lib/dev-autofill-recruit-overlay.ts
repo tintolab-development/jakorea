@@ -30,6 +30,7 @@ import {
   replaceUjatRecruitVolunteerOverlayForScope,
 } from '@/features/template/ui/form-set/recruit-form/UJAT-volunteer/ujat-recruit-volunteer-overlay-sync'
 import { UJAT_PROGRAM_REGISTRATION_STEPS } from '@/features/program/ujat/model/ujat-program-registration-flow'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 
 export type DevAutofillRegistrationVariant = ProgramRegistrationFormVariant | 'ujat'
 
@@ -73,7 +74,7 @@ function mergeOverlayForScopes(
 ): void {
   if (Object.keys(partial).length === 0) return
   for (const code of uniqueCodes(codes)) {
-    replaceFor(code, { ...peek(code), ...partial })
+    replaceFor(code, mergeDevAutofillSparse(peek(code), partial))
   }
 }
 

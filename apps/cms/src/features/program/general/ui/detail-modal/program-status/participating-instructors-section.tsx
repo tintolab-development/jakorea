@@ -461,6 +461,7 @@ export function ParticipatingInstructorsSection({
   const instructorListExportRows = useMemo(
     () =>
       filteredInstructors.map(row => ({
+        id: row.id,
         no: row.no,
         instructorName: row.instructorName,
         homeAddress: formatParticipatingInstructorHomeAddress(row.address ?? row.region),
@@ -736,6 +737,7 @@ export function ParticipatingInstructorsSection({
         excelExport={{
           columns: instructorListExportColumns,
           data: instructorListExportRows,
+          selectedRowKeys: selectedInstructorRowKeys,
         }}
       >
         {viewMode === 'list' ? (

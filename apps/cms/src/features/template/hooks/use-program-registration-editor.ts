@@ -35,6 +35,12 @@ import {
 } from '@/features/template/lib/program-registration-curriculum-description'
 import { buildProgramRegistrationParagraphBodyOptions } from '@/features/template/ui/form-set/registration-form/general/paragraph-config'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  isProgramDateOutsideOpenPeriodError,
+  publishProgramOperationDateFocus,
+  resolveProgramDateOutsideOpenPeriodAlert,
+} from '@/features/program/shared/lib/program-date-outside-open-period-alert'
+import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
 import { shouldUseCompanySchoolRemoteApi } from '@/features/program/1c-1s/api/capabilities'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
@@ -43,7 +49,10 @@ import {
   registrationPendingSnapshotId,
   persistGeneralProgramRegistration,
 } from '@/features/program/general/lib/registration-local-save'
-import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
+import {
+  peekGeneralRegistrationWizardRhf,
+  subscribeGeneralRegistrationWizardRhf,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import { buildGeneralProgramCreateFromWizardRhf } from '@/features/program/general/lib/overlay-phase1/build-registration-create-from-rhf'
 import {
   buildTrainedTeachersCanonicalFromRhf,
@@ -108,7 +117,7 @@ import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set
 import { peekGeneralApplicationOverlayRecord } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { flushRecruitDetailRichTextIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
-  createDefaultRegistrationWizardUiValues,
+  createNewRegistrationWizardUiValues,
   REGISTRATION_WIZARD_RHF_SETTINGS_KEY,
   type RegistrationWizardUiValues,
 } from '@/features/program/general/lib/overlay-phase1/registration-wizard-ui-values'
@@ -476,6 +485,31 @@ export function useProgramRegistrationEditor(
     [programRegistrationFormVariant]
   )
 
+  // general: 참여자 칩을 건드리지 않으면 editor 기본값(개인)이 위저드 RHF extras.participant(전부 false)에
+  // 반영되지 않아, participant 기준 peek/collect(임시저장)가 개인 신청 키를 버린다.
+  // RHF 등록 시점과 participant 변경 시에만 맞춘다(같으면 no-op, dirty 표시 안 함).
+  useEffect(() => {
+    if (programRegistrationFormVariant !== 'general') return
+    let syncedApi: ReturnType<typeof peekGeneralRegistrationWizardRhf> = null
+    const sync = () => {
+      const rhf = peekGeneralRegistrationWizardRhf()
+      if (rhf == null || rhf === syncedApi) return
+      syncedApi = rhf
+      const current = rhf.getValues().extras.participant
+      if (
+        current.individual === participant.individual &&
+        current.organization === participant.organization &&
+        current.teacherInstructor === participant.teacherInstructor &&
+        current.volunteer === participant.volunteer
+      ) {
+        return
+      }
+      rhf.setPath('extras.participant', { ...participant }, { shouldDirty: false })
+    }
+    sync()
+    return subscribeGeneralRegistrationWizardRhf(sync)
+  }, [participant, programRegistrationFormVariant])
+
   const patchTrainedTeachersWizardRhf = useCallback(
     (
       patch: (
@@ -740,7 +774,7 @@ export function useProgramRegistrationEditor(
       setSingleItemListActiveItemId(null)
       applyEditorStateSnapshot(createDefaultRegistrationEditorState(programRegistrationFormVariant))
       if (programRegistrationFormVariant === 'general') {
-        peekGeneralRegistrationWizardRhf()?.reset(createDefaultRegistrationWizardUiValues(), {
+        peekGeneralRegistrationWizardRhf()?.reset(createNewRegistrationWizardUiValues(), {
           keepDirty: false,
         })
       }
@@ -2386,16 +2420,26 @@ export function useProgramRegistrationEditor(
           resetProgramRegistrationOverlay()
           onRegistrationSaved(createdProgram)
         } catch (error) {
-          showAlert({
-            title: '등록 실패',
-            content:
-              error instanceof CompanySchoolOperationRangeRequiredError
-                ? error.message
-                : getGeneralProgramApiErrorMessage(
-                    error,
-                    '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
-                  ),
-          })
+          const dateAlert = isProgramDateOutsideOpenPeriodError(error)
+            ? resolveProgramDateOutsideOpenPeriodAlert(error)
+            : null
+          if (dateAlert) {
+            if (!isGlobalApiErrorAlertShown(error)) {
+              showAlert({ title: dateAlert.title, content: dateAlert.content })
+              publishProgramOperationDateFocus(dateAlert.focus)
+            }
+          } else {
+            showAlert({
+              title: '등록 실패',
+              content:
+                error instanceof CompanySchoolOperationRangeRequiredError
+                  ? error.message
+                  : getGeneralProgramApiErrorMessage(
+                      error,
+                      '프로그램 등록 중 오류가 발생했습니다. 다시 시도해 주세요.'
+                    ),
+            })
+          }
         } finally {
           endOverlay()
           completionPromiseRef.current = null

@@ -5,6 +5,7 @@
 import { SendNotiButton } from '@/features/program/shared/ui/detail-modal/components/send-noti-button'
 import { ProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PaymentOrderAdminLineProcessingStatus } from '@/features/settlement-management/model/payment-order-admin-list'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
 export type PaymentOrderCalculationStatementProcessingStatusFields = {
   processingStatusDisplay: string
@@ -18,7 +19,7 @@ function processingStatusCssModifier(status: PaymentOrderAdminLineProcessingStat
 }
 
 function sendNotiPlaceholder() {
-  window.alert('준비중')
+  cmsAlertModal.show({ title: '안내', content: '준비 중입니다.' })
 }
 
 export function PaymentOrderCalculationStatementProcessingStatusView({

@@ -1,20 +1,29 @@
-/* 관리자 권한 유형 태그 — 목록 테이블·회원 상세 기본 정보 공통 */
+/*
+ * 관리자 권한 유형 태그.
+ * Accounting Manager(가장 긴 라벨) 좌우 패딩이 보이도록 172×32, padding 6×12.
+ */
 .user-list-admin-perm-tag {
   display: flex;
-  width: 132px;
-  padding: 6px 10px;
+  width: 172px;
+  min-width: 172px;
+  max-width: 172px;
+  height: 32px;
+  padding: 6px 12px;
   justify-content: center;
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
   margin-inline: auto;
   box-sizing: border-box;
-  border-radius: 4px;
+  border-radius: 6px;
   color: #017eaf;
   text-align: center;
   font-size: 14px;
   font-weight: 600;
   line-height: 150%; /* 21px */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-detail-modal__basic-table .user-list-admin-perm-tag {
@@ -25,6 +34,12 @@
   border: 1px solid rgba(1, 126, 175, 0.06);
   background: #e6f2f7;
   color: #017eaf;
+}
+
+.user-list-admin-perm-tag--accounting {
+  border: 1px solid rgba(132, 87, 206, 0.06);
+  background: #f3eef9;
+  color: #8457ce;
 }
 
 .user-list-admin-perm-tag--partner {
@@ -46,6 +61,12 @@
   color: #017eaf;
 }
 
+.user-list-admin-perm-badge--accounting {
+  border: 1px solid rgba(132, 87, 206, 0.06);
+  background: #f3eef9;
+  color: #8457ce;
+}
+
 .user-list-admin-perm-badge--partner {
   border: 1px solid rgba(30, 140, 41, 0.06);
   background: #e9f3ea;
@@ -58,13 +79,93 @@
   color: #464646;
 }
 
-/* 목록 tag160 — 132×33 배지 (래퍼 160 = 1+13+132+13+1). 기본 app-status-badge 120 덮어씀 */
-.status-dropdown-cell__status-trigger--tag-160 .app-status-badge[class*='user-list-admin-perm-badge'],
-.status-dropdown-cell__dropdown-overlay--tag-160 .app-status-badge[class*='user-list-admin-perm-badge'] {
-  width: 132px !important;
-  min-width: 132px !important;
-  max-width: 132px !important;
-  height: 33px !important;
-  min-height: 33px !important;
-  max-height: 33px !important;
+.status-dropdown-cell__status-trigger .app-status-badge.user-list-admin-perm-badge,
+.status-dropdown-cell__dropdown-item .app-status-badge.user-list-admin-perm-badge,
+.status-dropdown-cell__status-trigger--tag-160 .app-status-badge.user-list-admin-perm-badge,
+.status-dropdown-cell__dropdown-overlay--tag-160 .app-status-badge.user-list-admin-perm-badge {
+  box-sizing: border-box;
+  width: 172px !important;
+  min-width: 172px !important;
+  max-width: 172px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 6px 12px !important;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: 6px;
+}
+
+/*
+ * 권한 배지 172 + 좌우 패딩 10px → 드롭다운 셸 192.
+ * Accounting Manager 라벨이 잘리거나 좌우 패딩이 없어지지 않게 맞춤.
+ */
+.cms-data-table.user-list-table
+  .ant-table-tbody
+  > tr
+  > td.status-dropdown-cell__cell-status--tag-160:has(.user-list-admin-perm-badge),
+.cms-data-table.user-list-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__header--tag-160 {
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+}
+
+.status-dropdown-cell__cell-status--tag-160:has(.user-list-admin-perm-badge) .ant-dropdown-trigger {
+  max-width: 192px !important;
+}
+
+.status-dropdown-cell__status-trigger--tag-160:has(.user-list-admin-perm-badge),
+.status-dropdown-cell__status-trigger--tag-160.status-dropdown-cell__status-trigger--open:has(
+    .user-list-admin-perm-badge
+  ) {
+  box-sizing: border-box !important;
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+  padding: 8px 10px !important;
+  overflow: hidden;
+}
+
+.status-dropdown-cell__status-trigger:has(.user-list-admin-perm-badge),
+.status-dropdown-cell__status-trigger.status-dropdown-cell__status-trigger--open:has(
+    .user-list-admin-perm-badge
+  ) {
+  box-sizing: border-box !important;
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+  padding: 8px 10px !important;
+  overflow: hidden;
+}
+
+/*
+ * default 오버레이 136px 규칙(클래스 4개)보다 특이도를 높인다.
+ * 관리자 상세·신청 상세도 목록과 같은 192px 셸을 쓴다.
+ */
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-160
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line):has(
+    .user-list-admin-perm-badge
+  ),
+.status-dropdown-cell__dropdown-overlay--tag-160:has(.user-list-admin-perm-badge) {
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+}
+
+.status-dropdown-cell__dropdown-overlay:not(.status-dropdown-cell__dropdown-overlay--tag-100):not(
+    .status-dropdown-cell__dropdown-overlay--tag-160
+  ):not(.status-dropdown-cell__dropdown-overlay--payment-order-line):has(
+    .user-list-admin-perm-badge
+  )
+  .ant-dropdown-menu,
+.status-dropdown-cell__dropdown-overlay--tag-160:has(.user-list-admin-perm-badge) .ant-dropdown-menu {
+  width: 192px !important;
+  min-width: 192px !important;
+  max-width: 192px !important;
+  padding: 8px 10px !important;
 }

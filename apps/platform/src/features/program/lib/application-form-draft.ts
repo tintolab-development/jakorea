@@ -21,9 +21,12 @@ import { resolveApplicationAnswerKey } from './application-answer-key.ts'
 import {
   isApplicationBasicInfoParagraphId,
   isApplicationGuidanceParagraphId,
+  isApplicationPreferredScheduleParagraphId,
   isApplicationSexOffenseInquiryParagraphId,
   isApplicationSexOffenseSubmissionParagraphId,
   isApplicationTeamInfoParagraphId,
+  isGeminiInstitutionContactPersonParagraphId,
+  isGeminiInstitutionTrainingInfoParagraphId,
   isPortalDynamicOptionArrayParagraphId,
 } from './apply-form-paragraph-ids.ts'
 import { remapInstitutionSchedulePreviewSlotIds } from './apply-form-schedule.ts'
@@ -787,7 +790,10 @@ function extractParagraphAnswer(paragraph: WritingFormParagraph): unknown {
     isApplicationSexOffenseInquiryParagraphId(paragraph.id) ||
     isApplicationSexOffenseSubmissionParagraphId(paragraph.id) ||
     isApplicationBasicInfoParagraphId(paragraph.id) ||
-    isApplicationGuidanceParagraphId(paragraph.id)
+    isApplicationGuidanceParagraphId(paragraph.id) ||
+    isGeminiInstitutionTrainingInfoParagraphId(paragraph.id) ||
+    isGeminiInstitutionContactPersonParagraphId(paragraph.id) ||
+    isApplicationPreferredScheduleParagraphId(paragraph.id)
   ) {
     /** sidecar 객체는 override 가 정본. 표 fieldDataRows 를 answers로 보내지 않는다. */
     return undefined
@@ -899,7 +905,10 @@ export function buildApplicationAnswersFromDraft(
         isApplicationSexOffenseInquiryParagraphId(paragraph.id) ||
         isApplicationSexOffenseSubmissionParagraphId(paragraph.id) ||
         isApplicationBasicInfoParagraphId(paragraph.id) ||
-        isApplicationGuidanceParagraphId(paragraph.id)
+        isApplicationGuidanceParagraphId(paragraph.id) ||
+        isGeminiInstitutionTrainingInfoParagraphId(paragraph.id) ||
+        isGeminiInstitutionContactPersonParagraphId(paragraph.id) ||
+        isApplicationPreferredScheduleParagraphId(paragraph.id)
       ) {
         continue
       }

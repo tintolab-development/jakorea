@@ -17,12 +17,18 @@ import {
   FindPasswordPage,
   FindPasswordResetPage,
   RequiredPage,
+  MemberConversionCompletePage,
+  MemberConversionConfirmPage,
+  MemberConversionIdentityPage,
+  MemberConversionMarketingPage,
+  MemberConversionPage,
   SignInPage,
   SignUpCompletePage,
   SignUpPage,
   SignUpPortraitConsentPage,
   SignUpIdentityCallbackPage,
   SignUpGuardianIdentityCallbackPage,
+  AgeTransitionIdentityCallbackPage,
   SignUpSocialConnectCompletePage,
   SignUpSocialConnectErrorPage,
   SignUpSocialConnectCallbackPage,
@@ -50,6 +56,7 @@ import {
   MypageSettlementPage,
   MypageSettingsPage,
   MypageSettingsConsentPage,
+  MypageSettingsGuardianIdentityCallbackPage,
 } from '@/pages/mypage'
 import {
   ProgramApplyCompletePage,
@@ -70,7 +77,6 @@ import { HistoryPage } from '@/pages/about/history'
 import { IntroductionPage } from '@/pages/about/introduction'
 import { PeoplePage } from '@/pages/about/people'
 import { TransparencyPage, TransparencyReportsPage } from '@/pages/about/transparency'
-import { DesignSystemPage } from '@/pages/design-system'
 import { PublicSurveyPage } from '@/pages/surveys'
 import { ImpactStoriesPage, ImpactStoryDetailPage } from '@/pages/impact'
 import { CorporateDonationPage } from '@/pages/support/corporate'
@@ -212,15 +218,28 @@ export const router = createBrowserRouter([
       { path: '/auth/sign-up/social-connect/error', element: <SignUpSocialConnectErrorPage /> },
       { path: '/auth/social/complete', element: <SocialLoginCompletePage /> },
       { path: '/auth/social/error', element: <SocialErrorPage /> },
+      { path: '/auth/member-conversion/identity', element: <MemberConversionIdentityPage /> },
+      { path: '/auth/member-conversion/confirm', element: <MemberConversionConfirmPage /> },
+      { path: '/auth/member-conversion/marketing', element: <MemberConversionMarketingPage /> },
+      { path: '/auth/member-conversion/complete', element: <MemberConversionCompletePage /> },
     ],
   },
   {
     element: <AppLayoutRoute layout="full" />,
     children: [
+      { path: '/auth/member-conversion', element: <MemberConversionPage /> },
       { path: '/auth/sign-up/identity/callback', element: <SignUpIdentityCallbackPage /> },
+      {
+        path: '/auth/age-transition/identity/callback',
+        element: <AgeTransitionIdentityCallbackPage />,
+      },
       {
         path: '/auth/sign-up/guardian-identity/callback',
         element: <SignUpGuardianIdentityCallbackPage />,
+      },
+      {
+        path: '/mypage/settings/guardian-identity/callback',
+        element: <MypageSettingsGuardianIdentityCallbackPage />,
       },
       {
         path: '/auth/find-password/identity/callback',
@@ -322,7 +341,6 @@ export const router = createBrowserRouter([
         path: '/mypage/volunteer/:applicationId/settlement/confirm',
         element: <MypageEducationSettlementConfirmPage />,
       },
-      { path: '/design-system', element: <DesignSystemPage /> },
     ],
   },
   {

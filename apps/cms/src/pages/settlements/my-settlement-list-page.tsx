@@ -7,8 +7,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useQueryParams } from '@/shared/hooks/use-query-params'
-import { Space, Card, Table, Tabs, Select, Segmented } from 'antd'
+import { Space, Card, Select, Segmented } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { CmsButton, LoadingButton, ContentModal } from '@/shared/ui'
+import { CmsPageTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { LabeledSearchInput } from '@/shared/ui/labeled-search-input'
 import { CalendarOutlined, TableOutlined } from '@ant-design/icons'
@@ -299,38 +301,28 @@ export function MySettlementListPage() {
         </Space>
       </Space>
 
-      {/* 상태별 탭 */}
-      <Tabs
-        activeKey={activeTabKey}
-        onChange={key => handleStatusChange(key as SettlementStatus | 'all')}
+      <CmsPageTabs
+        size="section"
+        aria-label="정산 상태"
+        className="my-settlement-list-page__tabs"
+        value={activeTabKey}
+        onChange={key => handleStatusChange(key)}
         items={statusTabs.map(tab => ({
-          key: tab.key,
-          label: (
-            <span>
-              {tab.label}
-              {tab.key !== 'all' && (
-                <span style={{ marginLeft: 8, color: 'rgba(0, 0, 0, 0.45)' }}>
-                  {(() => {
-                    let count = 0
-                    if (tab.key === 'not-applied') {
-                      count = allSettlements.filter(s => s.status === 'pending').length
-                    } else if (tab.key === 'submitted') {
-                      count = allSettlements.filter(
-                        s => s.status === 'calculated' || s.status === 'review'
-                      ).length
-                    } else if (tab.key === 'issues') {
-                      count = allSettlements.filter(s => s.status === 'review').length
-                    } else {
-                      count = allSettlements.filter(s => s.status === tab.key).length
-                    }
-                    return `(${count})`
-                  })()}
-                </span>
-              )}
-            </span>
-          ),
+          value: tab.key,
+          label: tab.label,
+          count:
+            tab.key === 'all'
+              ? undefined
+              : tab.key === 'not-applied'
+                ? allSettlements.filter(s => s.status === 'pending').length
+                : tab.key === 'submitted'
+                  ? allSettlements.filter(
+                      s => s.status === 'calculated' || s.status === 'review'
+                    ).length
+                  : tab.key === 'issues'
+                    ? allSettlements.filter(s => s.status === 'review').length
+                    : allSettlements.filter(s => s.status === tab.key).length,
         }))}
-        style={{ marginBottom: 16 }}
       />
 
       {viewMode === 'list' ? (
@@ -362,7 +354,7 @@ export function MySettlementListPage() {
             </Space>
           </Card>
           <Card>
-            <Table
+            <CmsDataTable
               columns={columns}
               dataSource={filteredByPeriod}
               rowKey="id"

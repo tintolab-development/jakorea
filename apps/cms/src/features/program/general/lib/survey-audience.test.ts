@@ -266,7 +266,7 @@ describe('general survey audience', () => {
     expect(getGeneralSurveyMenuItems(org).map(item => item.key)).toEqual(['survey', 'satisfaction'])
   })
 
-  it('설문 진행 항목이 없으면 2depth 메뉴가 없다', () => {
+  it('설문 진행 항목이 없으면 설문 관리 LNB 카테고리(1·2depth)가 없다', () => {
     const org = program({
       generalProgramAudience: 'organization',
       generalParticipantTypes: ['school_institution'],

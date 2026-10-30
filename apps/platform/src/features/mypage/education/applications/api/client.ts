@@ -81,9 +81,10 @@ export async function fetchMyProgramApplicationDetail(
 }
 
 /**
- * 제출된 신청의 양식 runtime.
- * GET /api/portal/programs/{programId}/form-bindings/{bindingId} 는 제출 후
- * APPLICATION_ALREADY_SUBMITTED 로 거절된다.
+ * 설문·만족도·강의보고서 등 non-APPLICATION 바인딩 렌더.
+ * APPLICATION(신청서) 바인딩에는 호출하지 않는다 — 403 PERMISSION_DENIED가 정상이다.
+ * 신청서 조회는 fetchPortalApplicationForm
+ * (`GET /api/portal/programs/{programId}/form-bindings/{bindingId}`).
  */
 export async function fetchPortalMeFormBindingRender(
   programId: number,

@@ -11,7 +11,7 @@ import {
 } from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
 import {
   cloneRegistrationWizardUiValues,
-  createDefaultRegistrationWizardUiValues,
+  createNewRegistrationWizardUiValues,
   type RegistrationWizardUiValues,
 } from '@/features/program/general/lib/overlay-phase1/registration-wizard-ui-values'
 
@@ -22,7 +22,7 @@ type GeneralRegistrationWizardFormProviderProps = {
 export function GeneralRegistrationWizardFormProvider({
   children,
 }: GeneralRegistrationWizardFormProviderProps) {
-  const defaultValues = useMemo(() => createDefaultRegistrationWizardUiValues(), [])
+  const defaultValues = useMemo(() => createNewRegistrationWizardUiValues(), [])
   const form = useForm<RegistrationWizardUiValues>({
     defaultValues,
     shouldUnregister: false,

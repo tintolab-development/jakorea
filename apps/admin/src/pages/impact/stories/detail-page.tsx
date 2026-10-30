@@ -317,6 +317,7 @@ function ImpactStoryDetailView({
               contentFormat={
                 story.contentMarkdown.trim().startsWith('<') ? 'html' : 'markdown'
               }
+              maxHeight="none"
             />
           </div>
         </div>

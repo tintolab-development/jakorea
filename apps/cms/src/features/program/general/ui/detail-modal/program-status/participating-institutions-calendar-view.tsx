@@ -3,7 +3,7 @@
  * 좌측 캘린더 7 : 우측 선택일 기관 리스트 3
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -12,11 +12,17 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
-import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import {
+  resolveParticipatingInstitutionPreferredDisplaySessions,
+  resolveParticipatingProgressAssignedSessions,
+} from '@/features/program/general/lib/organization-education-schedule-sources'
 import {
   formatInstitutionRegionForCalendarListDisplay,
 } from '@/shared/lib/format-institution-region-display'
-import { SCHEDULE_COLORS } from '../../../../shared/ui/program-schedule-colors'
+import {
+  SCHEDULE_COLORS,
+  type ScheduleColorPair,
+} from '../../../../shared/ui/program-schedule-colors'
 import {
   ParticipatingInstitutionsCalendarDayList,
   formatParticipatingSessionsPeriodForCalendarDisplay,
@@ -28,6 +34,7 @@ import {
   CalendarMain,
   CalendarSplitCardLayout,
   calendarItemsForEventMode,
+  type CalendarItem,
   type CalendarMainEventInput,
   type RenderCalendarMonthEventContent,
 } from '@/shared/components/calendar'
@@ -291,7 +298,7 @@ function buildEventsFromSchools(
 
     const sessionsByDate = new Map<string, ParticipatingSchoolSession[]>()
 
-    for (const session of row.sessions?.filter(s => s.status !== 'not_planned') ?? []) {
+    for (const session of resolveParticipatingInstitutionPreferredDisplaySessions(row)) {
       const date = parseSessionDate(session.date)
       if (!date.isValid()) continue
       const dateKey = date.format('YYYY-MM-DD')
@@ -410,6 +417,21 @@ export function ParticipatingInstitutionsCalendarView({
     return SCHEDULE_COLORS[idx % SCHEDULE_COLORS.length]
   }
 
+  /** 캘린더 태그 색 = 우측 목록·섹션(강사·봉사자) 학교 색과 동일 기준(학교명 가나다순) */
+  const overrideEventColorMap = useCallback(
+    (items: CalendarItem[]) => {
+      const map = new Map<string | number, ScheduleColorPair>()
+      for (const item of calendarItemsForEventMode(items)) {
+        const schoolName = (item.original as CalendarEvent | undefined)?.originalItem?.row
+          ?.schoolName
+        const idx = (schoolName != null ? entityToColorIndex.get(schoolName) : undefined) ?? 0
+        map.set(item.id, SCHEDULE_COLORS[idx % SCHEDULE_COLORS.length])
+      }
+      return map
+    },
+    [entityToColorIndex]
+  )
+
   const eventsForSelectedDate = useMemo(
     () =>
       events.filter(
@@ -443,6 +465,7 @@ export function ParticipatingInstitutionsCalendarView({
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
+          overrideEventColorMap={overrideEventColorMap}
           renderMonthEventContent={renderMonthEventContent}
           previewTooltipContent={({ events: dayItems, colorMap }) => {
             const dayEvents = calendarItemsForEventMode(dayItems).map(

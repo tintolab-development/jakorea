@@ -13,9 +13,9 @@ const ROLE_LABELS: Record<UserRole, string> = {
 }
 
 const ADMIN_LEVEL_LABELS: Record<AdminLevel, string> = {
-  MASTER: '마스터 관리자',
-  ADMIN: '중간관리자(PM/파트너)',
-  GENERAL: '뷰어',
+  MASTER: 'Master',
+  ADMIN: 'Program Manager',
+  GENERAL: 'Program Viewer',
 }
 
 const PROGRAM_ROLE_LABELS: Record<ProgramRole, string> = {

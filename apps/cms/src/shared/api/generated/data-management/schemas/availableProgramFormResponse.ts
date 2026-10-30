@@ -7,17 +7,17 @@
  */
 
 export interface AvailableProgramFormResponse {
-  bindingId?: number;
-  programId?: number;
-  templateId?: number;
-  templateVersionId?: number;
-  templateName?: string;
-  formType?: string;
-  targetScope?: string;
-  targetScopeId?: number;
-  targetScopeLabel?: string;
-  required?: boolean;
-  submissionStartAt?: string;
-  submissionEndAt?: string;
-  alreadySubmitted?: boolean;
+  bindingId: number;
+  programId: number;
+  templateId: number;
+  templateVersionId: number;
+  templateName: string;
+  formType: string;
+  targetScope: string;
+  targetScopeId?: number | null;
+  targetScopeLabel?: string | null;
+  required: boolean;
+  submissionStartAt?: string | null;
+  submissionEndAt?: string | null;
+  alreadySubmitted: boolean;
 }

@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import type { PaymentOrderProgramCalculationStatement } from '@/features/settlement-management/model/payment-order-admin-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { useConfirmPaymentStatementMutation, useRejectPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
@@ -34,7 +34,10 @@ import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
 } from './payment-order-calculation-basis-detail-modal'
-import { computePaymentOrderCalculationSubtotalBeforeWithholding } from './payment-order-calculation-basis-detail'
+import {
+  computePaymentOrderCalculationSubtotalBeforeWithholding,
+  isCanonicalLectureSessionDisplay,
+} from './payment-order-calculation-basis-detail'
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 
@@ -89,6 +92,7 @@ export function PaymentOrderCalculationStatementModalImpl({
   onStatementLineCommitted,
   onAfterRejectResultClosed,
 }: PaymentOrderCalculationStatementModalImplProps) {
+  const { showAlert } = useCmsAlert()
   const confirmMutation = useConfirmPaymentStatementMutation()
   const rejectMutation = useRejectPaymentStatementMutation()
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
@@ -102,11 +106,22 @@ export function PaymentOrderCalculationStatementModalImpl({
       return null
     }
     const subtotalBeforeWithholding = computePaymentOrderCalculationSubtotalBeforeWithholding(data.blocks)
+    const firstSessionDisplay = data.blocks[0]?.lectureSessionDisplay?.trim()
+    const canonicalSessionMatch = isCanonicalLectureSessionDisplay(firstSessionDisplay)
+      ? firstSessionDisplay.match(/^(\d+)/u)
+      : null
+    const amountDigits = data.basic.lectureFeeStandardAmount?.replace(/[^\d]/g, '')
+    const lectureFeeStandardAmountWon = amountDigits ? Number(amountDigits) : undefined
     return {
       lectureFeeStandardTitle: data.basic.lectureFeeStandardTitle,
       withholdingDailySalaryTotalWon:
         subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
       remoteData: paymentOrdersRemote,
+      sessionOrdinal: canonicalSessionMatch ? Number(canonicalSessionMatch[1]) : undefined,
+      lectureFeeStandardAmountWon:
+        lectureFeeStandardAmountWon != null && Number.isFinite(lectureFeeStandardAmountWon)
+          ? lectureFeeStandardAmountWon
+          : undefined,
     }
   }, [data, paymentOrdersRemote])
 
@@ -232,7 +247,10 @@ export function PaymentOrderCalculationStatementModalImpl({
 
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
     if (statementId == null) {
-      window.alert('지급조서 확인 API에 필요한 statementId가 없습니다.')
+      showAlert({
+        title: '안내',
+        content: '지급조서 확인 API에 필요한 statementId가 없습니다.',
+      })
       return
     }
     try {
@@ -248,7 +266,10 @@ export function PaymentOrderCalculationStatementModalImpl({
       })
       setPaymentConfirmOpen(false)
     } catch (error) {
-      window.alert(getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'))
+      showAlert({
+        title: '안내',
+        content: getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'),
+      })
     }
   }
 
@@ -259,7 +280,10 @@ export function PaymentOrderCalculationStatementModalImpl({
   }) => {
     if (paymentOrdersRemote) {
       if (statementId == null) {
-        window.alert('신청 반려 API에 필요한 statementId가 없습니다.')
+        showAlert({
+          title: '안내',
+          content: '신청 반려 API에 필요한 statementId가 없습니다.',
+        })
         return
       }
       try {
@@ -271,7 +295,10 @@ export function PaymentOrderCalculationStatementModalImpl({
         })
         await detailContextQuery?.refetch()
       } catch (error) {
-        window.alert(getSettlementApiErrorMessage(error, '신청 반려 처리에 실패했습니다.'))
+        showAlert({
+          title: '안내',
+          content: getSettlementApiErrorMessage(error, '신청 반려 처리에 실패했습니다.'),
+        })
         return
       }
     }
@@ -336,24 +363,26 @@ export function PaymentOrderCalculationStatementModalImpl({
           onBasisDetailClick={handleBasisDetailClick}
           onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
           headerActions={
-            <>
-              <CmsButton
-                variant="delete"
-                size="medium"
-                disabled={rejectMutation.isPending || isStatementActionLocked}
-                onClick={() => setPaymentRejectOpen(true)}
-              >
-                신청 반려
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="medium"
-                disabled={confirmMutation.isPending || isStatementActionLocked}
-                onClick={() => setPaymentConfirmOpen(true)}
-              >
-                확인 처리
-              </CmsButton>
-            </>
+            isStatementActionLocked ? null : (
+              <>
+                <CmsButton
+                  variant="delete"
+                  size="medium"
+                  disabled={rejectMutation.isPending}
+                  onClick={() => setPaymentRejectOpen(true)}
+                >
+                  신청 반려
+                </CmsButton>
+                <CmsButton
+                  variant="primary"
+                  size="medium"
+                  disabled={confirmMutation.isPending}
+                  onClick={() => setPaymentConfirmOpen(true)}
+                >
+                  확인 처리
+                </CmsButton>
+              </>
+            )
           }
         />
       </ContentModal>

@@ -40,6 +40,7 @@ import {
   recruitDetailInfoPrefixesForPreviewAudience,
   recruitmentCreateMediaFieldsFromOverlay,
   resolveRecruitDetailThumbFileObjectId,
+  withRecruitmentCreateMedia,
 } from './recruit-detail-info-media'
 
 describe('isEphemeralThumbPreviewUrl', () => {
@@ -182,6 +183,28 @@ describe('recruitmentCreateMediaFieldsFromOverlay', () => {
         'ujat'
       )
     ).toEqual({ attachmentFileObjectIds: [603, 604] })
+  })
+
+  it('typed 행 thumbnailFileObjectId가 overlay보다 우선한다', () => {
+    const rows = withRecruitmentCreateMedia(
+      [
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          thumbnailFileObjectId: 777,
+          attachments: [{ fileObjectId: 888 }],
+        },
+      ],
+      {
+        'recruitVolunteer.h1.detailInfo.thumbFileObjectId': 502,
+        'recruitVolunteer.h1.detailInfo.attachmentFileObjectIds': [603],
+      },
+      'ujat'
+    )
+    expect(rows?.[0]).toMatchObject({
+      thumbnailFileObjectId: 777,
+      attachmentFileObjectIds: [888],
+    })
   })
 
   it('미완료 blob만 있으면 생성 요청 미디어 필드를 생략한다', () => {

@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, type ReactNode } from 'react'
+import { memo, useMemo, type ReactNode } from 'react'
 import type { CheckboxChangeEvent } from 'antd/es/checkbox'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -311,8 +311,8 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
               inputSize="small"
-              placeholder="전체"
-              withAllOption={trainedTeachersDefaults}
+              placeholder="선택하세요"
+              withAllOption={false}
               width={240}
               options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
               value={trainedTeachersDefaults ? educationCourse : educationCourse || undefined}
@@ -329,16 +329,15 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
 export const ProgramRegistrationBasicInfoIpOwnedField = memo(
   function ProgramRegistrationBasicInfoIpOwnedField({
     overlayPrefix,
-    trainedTeachersDefaults,
   }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
         label="IP Owned"
         validationKey="basicInfo.ipOwned"
         overlayKey={`${overlayPrefix}.ipOwned`}
-        placeholder="전체"
+        placeholder="선택하세요"
         options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
-        defaultValue={trainedTeachersDefaults ? 'ja' : ''}
+        defaultValue=""
       />
     )
   }
@@ -347,16 +346,15 @@ export const ProgramRegistrationBasicInfoIpOwnedField = memo(
 export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
   function ProgramRegistrationBasicInfoCourseDeliveredByField({
     overlayPrefix,
-    trainedTeachersDefaults,
   }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
         label="Course Delivered By"
         validationKey="basicInfo.courseDeliveredBy"
         overlayKey={`${overlayPrefix}.courseDeliveredBy`}
-        placeholder="전체"
+        placeholder="선택하세요"
         options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
-        defaultValue={trainedTeachersDefaults ? 'ja' : ''}
+        defaultValue=""
       />
     )
   }
@@ -365,15 +363,10 @@ export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
 export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
   function ProgramRegistrationBasicInfoPartnerInvolvementField({
     overlayPrefix,
-    trainedTeachersDefaults,
   }: OverlayPrefixProps) {
     const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
-      'yes' | 'no'
-    >(`${overlayPrefix}.partnerInvolvement`, trainedTeachersDefaults ? 'no' : 'yes')
-
-    useEffect(() => {
-      setPartnerInvolvement(partnerInvolvement)
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps -- mount seed only
+      'yes' | 'no' | ''
+    >(`${overlayPrefix}.partnerInvolvement`, '')
 
     return (
       <DetailInfoForm.Field
@@ -382,7 +375,8 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
           <div className="detail-info-form-inputs-wrapper">
             <CmsRadioGroup
               size="medium"
-              value={partnerInvolvement}
+              // 미선택('')·키 없음은 저장 빌더와 동일하게 Yes(true)로 표시 — 'no'만 No
+              value={partnerInvolvement === 'no' ? 'no' : 'yes'}
               onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
             >
               <CmsRadio size="medium" value="yes">Yes</CmsRadio>
@@ -400,7 +394,7 @@ export const ProgramRegistrationBasicInfoFooterIpsTypeField = memo(
   function ProgramRegistrationBasicInfoFooterIpsTypeField({ overlayPrefix }: OverlayPrefixProps) {
     const [footerIpsType, setFooterIpsType] = useProgramRegistrationOverlayKv<
       ProgramRegistrationIpsTypeValue
-    >(`${overlayPrefix}.footerIpsType`, { category: 'prepare', detail: 'none' })
+    >(`${overlayPrefix}.footerIpsType`, { category: '', detail: '' })
 
     return (
       <DetailInfoForm.Field

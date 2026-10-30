@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react'
-import { Form, Input, Typography } from 'antd'
+import { Form } from 'antd'
 import { Link } from 'react-router-dom'
 import { AuthFormLabel } from '@/features/auth/ui/auth-form-label'
 import { AuthLogoLink } from '@/features/auth/ui/auth-logo-link'
@@ -11,12 +11,9 @@ import { LoginUtilityLinks } from '@/features/auth/ui/login-utility-links'
 import { LoginSocialSection } from '@/features/auth/ui/login-social-section'
 import { LoginAdminApprovalPendingNotice } from '@/features/auth/ui/login-admin-approval-pending-notice'
 import { MfaVerificationModal } from '@/features/auth/ui/mfa-verification-modal'
-import { LoadingButton } from '@/shared/ui/loading-button'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, CmsInput } from '@/shared/ui'
 import { DsDemo, DsSection } from './section'
 import '@/pages/auth/login-page.css'
-
-const { Text } = Typography
 
 export function AuthSection() {
   const [mfaOpen, setMfaOpen] = useState(false)
@@ -26,11 +23,11 @@ export function AuthSection() {
     <DsSection
       id="auth"
       title="Auth"
-      description="Homepage Admin 로그인·MFA 셸은 CMS Auth 디자인 시스템을 공유합니다. SSOT: auth-shell.css · login-page.css · LoadingButton · MFA 모달."
+      description="Homepage Admin 로그인·MFA 셸은 CMS Auth 디자인 시스템을 공유합니다. SSOT: auth-shell.css · login-page.css · CmsInput · CmsButton · MFA 모달."
     >
       <p className="ds-note">
-        실화면: <Link to="/login">/login</Link> · Auth는 antd Form + <code>LoadingButton</code>{' '}
-        (CmsInput 미사용 — CMS Do/Don&apos;t와 동일).
+        실화면: <Link to="/login">/login</Link> · Auth는 CMS 로그인과 동일하게{' '}
+        <code>CmsInput</code> + <code>CmsButton</code>을 사용합니다.
         <br />
         토큰: <code>--color-mint-01</code>, <code>--main-BK</code>, 카드 600px · radius 16 · 인풋
         높이 52.
@@ -42,7 +39,9 @@ export function AuthSection() {
             <div className="login-card">
               <AuthLogoLink wrapperClassName="login-logo-wrapper" logoClassName="login-logo" />
               <p className="login-notice">
-                인가된 관리자만 접속 가능하며, 중요 활동의 경우 로그로 기록됩니다.
+                본 시스템은 승인된 관리자 전용입니다.
+                <br />
+                보안을 위해 접속 및 중요 작업의 이력이 저장됩니다.
               </p>
               <div className="login-form-wrapper">
                 <Form
@@ -54,31 +53,38 @@ export function AuthSection() {
                 >
                   <Form.Item
                     name="email"
-                    label={<AuthFormLabel>이메일</AuthFormLabel>}
                     rules={[{ required: true, message: '이메일을 입력해 주세요.' }]}
                   >
-                    <Input placeholder="이메일 주소를 입력해 주세요" />
+                    <CmsInput
+                      label={<AuthFormLabel>이메일</AuthFormLabel>}
+                      inputSize="large"
+                      width="100%"
+                      placeholder="이메일 주소를 입력해 주세요"
+                    />
                   </Form.Item>
                   <Form.Item
                     name="password"
-                    label={<AuthFormLabel>비밀번호</AuthFormLabel>}
                     rules={[{ required: true, message: '비밀번호를 입력해 주세요.' }]}
                   >
-                    <Input.Password placeholder="비밀번호를 입력해 주세요" />
+                    <CmsInput
+                      label={<AuthFormLabel>비밀번호</AuthFormLabel>}
+                      type="password"
+                      inputSize="large"
+                      width="100%"
+                      placeholder="비밀번호를 입력해 주세요"
+                    />
                   </Form.Item>
                   <LoginAdminApprovalPendingNotice />
                   <Form.Item className="login-submit-actions">
-                    <LoadingButton
-                      type="primary"
-                      block
+                    <CmsButton
+                      variant="primary"
+                      size="large"
+                      width="100%"
                       className="login-submit-btn"
-                      htmlType="submit"
+                      type="submit"
                     >
                       로그인하기
-                    </LoadingButton>
-                    <Text type="secondary" className="login-api-hint">
-                      데모 폼입니다. 실제 로그인은 /login 에서 진행하세요.
-                    </Text>
+                    </CmsButton>
                   </Form.Item>
                 </Form>
                 <LoginUtilityLinks />

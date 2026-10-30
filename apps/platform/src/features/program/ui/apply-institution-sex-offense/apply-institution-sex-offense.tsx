@@ -11,15 +11,18 @@ import {
   PFTextInput,
 } from '@/shared/ui'
 import {
-  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION,
+  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS,
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES,
   INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS,
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_OPTIONS,
+  isSexOffenseInquiryMethod,
+  shouldShowSexOffenseSiteFields,
 } from '@jakorea/form-schema/program-application'
 import { ApplyFormRadioGroup } from '../apply-form-radio'
 import hostStyles from '../apply-form-field-host.module.css'
 import styles from './apply-institution-sex-offense.module.css'
 import {
+  applySexOffenseInquiryMethodChange,
   emptyInstitutionSexOffense,
   type ApplyInstitutionSexOffenseValues,
   type ApplySexOffenseSiteSubmission,
@@ -27,16 +30,19 @@ import {
 } from './apply-institution-sex-offense-answers.ts'
 
 export {
+  applySexOffenseInquiryMethodChange,
   emptyInstitutionSexOffense,
   findIncompleteSexOffenseMessage,
   findIncompleteUjatSexOffenseWriteMessage,
   omitSexOffenseInquiryAnswersIfNotRequested,
   readSexOffenseSubmissionRequest,
+  resolveApplySexOffenseInquiryCase,
   sexOffenseInquiryAnswerFromValues,
   sexOffenseSubmissionAnswerFromValues,
   sexOffenseValuesFromDraftAnswers,
   shouldShowSexOffenseInquiry,
   type ApplyInstitutionSexOffenseValues,
+  type ApplySexOffenseInquiryCase,
   type ApplySexOffenseInquiryMethod,
   type ApplySexOffenseSiteSubmission,
   type ApplySexOffenseSubmissionRequest,
@@ -68,26 +74,39 @@ export function ApplyInstitutionSexOffenseSubmission({ value, onChange }: Submis
 }
 
 export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: SubmissionProps) {
-  const showOnlineCredentials = value.siteSubmission === 'online'
+  const showSiteFields = shouldShowSexOffenseSiteFields(value.inquiryMethod)
 
   return (
     <div className={[styles.root, hostStyles.root].join(' ')}>
       <PFFormFieldTable className={[styles.table, hostStyles.root].join(' ')}>
-        <PFFormFieldRow type={showOnlineCredentials ? 'double' : 'single'}>
-          <PFFormField label="사이트 제출 방식" fullWidth={!showOnlineCredentials}>
+        <PFFormFieldRow type="single">
+          <PFFormField label="조회 방식" fullWidth>
             <ApplyFormRadioGroup
-              name="apply-sex-offense-site"
-              value={value.siteSubmission}
-              options={INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS}
-              onChange={next =>
-                onChange({
-                  ...value,
-                  siteSubmission: next as ApplySexOffenseSiteSubmission,
-                })
-              }
+              name="apply-sex-offense-inquiry"
+              value={value.inquiryMethod}
+              options={INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS}
+              onChange={next => {
+                if (!isSexOffenseInquiryMethod(next)) return
+                onChange(applySexOffenseInquiryMethodChange(value, next))
+              }}
             />
           </PFFormField>
-          {showOnlineCredentials ? (
+        </PFFormFieldRow>
+        {showSiteFields ? (
+          <PFFormFieldRow type="double">
+            <PFFormField label="사이트 제출 방식">
+              <ApplyFormRadioGroup
+                name="apply-sex-offense-site"
+                value={value.siteSubmission}
+                options={INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS}
+                onChange={next =>
+                  onChange({
+                    ...value,
+                    siteSubmission: next as ApplySexOffenseSiteSubmission,
+                  })
+                }
+              />
+            </PFFormField>
             <PFFormField label="성범죄 경력조회용 정보">
               <PFFormInlineRow>
                 <PFFormInlineSegment>
@@ -123,8 +142,8 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
                 </PFFormInlineSegment>
               </PFFormInlineRow>
             </PFFormField>
-          ) : null}
-        </PFFormFieldRow>
+          </PFFormFieldRow>
+        ) : null}
       </PFFormFieldTable>
       <div className={styles.notes}>
         <ul className={styles.noteList}>
@@ -134,15 +153,12 @@ export function ApplyInstitutionSexOffenseInquiry({ value, onChange }: Submissio
             </PFFormFieldValueText>
           ))}
         </ul>
-        <PFFormFieldValueText as="p" className={styles.caution}>
-          {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION}
-        </PFFormFieldValueText>
       </div>
     </div>
   )
 }
 
-/** UJAT 안내사항 작성 2/2 — 사이트 제출 방식 + 온라인 제출 시 조회 정보 + 안내 문구 */
+/** UJAT 안내사항 작성 2/2 — 조회 방식 3 CASE + 안내 문구 */
 export function ApplyInstitutionSexOffenseUjatWrite({ value, onChange }: SubmissionProps) {
   return (
     <ApplyInstitutionSexOffenseInquiry

@@ -95,7 +95,6 @@ import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabi
 import { memberQueryKeys, serializeMemberListFilters } from '@/features/user/api/member-query-keys'
 import { resolveDeleteUserOptions } from '@/features/user/api/resolve-delete-user-options'
 import { resolveSelectedListUsers } from '@/features/user/api/resolve-selected-list-users'
-import { fetchAllMembersPagesRemote } from '@/features/user/api/fetch-all-members-pages-remote'
 import {
   mergeListUserWithFetchedDetail,
   patchMemberListPagesWithFetchedDetail,
@@ -214,7 +213,7 @@ export function UserListPage() {
   )
 
   const { pendingFilters, handleFilterChange, applySearch,
-    hasActiveFilters, tableData,
+    hasActiveFilters,
   } = useTablePage(
     userListTablePageConfig,
     {
@@ -362,7 +361,9 @@ export function UserListPage() {
     [resolvedMemberListKind]
   )
 
-  const userExcelColumns = useMemo<ColumnsType<{ name: string; email: string; phone: string }>>(
+  const userExcelColumns = useMemo<
+    ColumnsType<{ id: string; name: string; email: string; phone: string }>
+  >(
     () => [
       { title: '이름', dataIndex: 'name', key: 'name' },
       { title: '이메일', dataIndex: 'email', key: 'email' },
@@ -379,26 +380,13 @@ export function UserListPage() {
   const userExcelData = useMemo(
     () =>
       selectedUsersForExcel.map(user => ({
+        id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone ?? '',
       })),
     [selectedUsersForExcel]
   )
-
-  const resolveUserExcelData = useCallback(async () => {
-    if (userExcelData.length > 0) return userExcelData
-
-    const users = isMembersRemoteEnabled()
-      ? await fetchAllMembersPagesRemote(listQueryFilters)
-      : tableData
-
-    return users.map(user => ({
-      name: user.name,
-      email: user.email,
-      phone: user.phone ?? '',
-    }))
-  }, [listQueryFilters, tableData, userExcelData])
 
   /**
    * URL에서 id가 빠지면(뒤로가기 등) 풀페이지·드로어를 같은 페인트 전에 닫는다.
@@ -1335,10 +1323,7 @@ export function UserListPage() {
         excelExport={{
           columns: userExcelColumns,
           data: userExcelData,
-          resolveData: resolveUserExcelData,
-          alertOnEmpty: true,
-          emptyAlertTitle: '항목 선택 안내',
-          emptyAlertContent: '엑셀로 내보낼 항목을 선택해 주세요.',
+          selectedRowKeys,
         }}
       >
         <UserList

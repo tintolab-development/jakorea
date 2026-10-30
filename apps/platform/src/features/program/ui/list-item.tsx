@@ -37,7 +37,6 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
   return (
     <MediaListRow
       thumbnailUrl={program.thumbnailUrl}
-      muted={isClosed}
       interactive
       onClick={onClick}
       className={styles.card}
@@ -51,7 +50,7 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
               <PFText
                 as="span"
                 typo="bd-lg-sb"
-                color={isClosed ? 'neutral-cool-500' : 'black'}
+                color="black"
                 className={styles.categoryLine}
               >
                 {categoryLine}
@@ -60,7 +59,7 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
             <PFText
               as="h2"
               typo="hl-lg"
-              color={isClosed ? 'neutral-cool-500' : 'black'}
+              color="black"
               className={styles.title}
             >
               {program.title}
@@ -69,8 +68,13 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
               <PFText
                 as="span"
                 typo="bd-md-md"
-                color={isClosed ? 'neutral-cool-500' : 'primary-500'}
-                className={styles.operatingPeriodText}
+                color="primary-500"
+                className={[
+                  styles.operatingPeriodText,
+                  isClosed ? styles.operatingPeriodTextClosed : null,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
                 {program.operatingPeriodLabel}
               </PFText>
@@ -83,6 +87,8 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
               educationTargetLabel={program.educationTargetLabel}
               educationForm={program.educationForm}
               educationFormLabel={program.educationFormLabel}
+              stateBadgeClassName={isClosed ? styles.closedStateBadge : undefined}
+              size="regular"
             />
             <p className={styles.recruitmentPeriod}>
               <PFText as="span" typo="bd-sm-md" color="neutral-cool-600" className={styles.recruitmentPeriodText}>
@@ -103,13 +109,14 @@ export function ProgramListItemRow({ program, activeTab, onClick }: ProgramListI
               <PFText
                 as="span"
                 typo="bd-lg-sb"
-                color={isClosed ? 'neutral-cool-500' : 'black'}
+                color="black"
                 className={styles.recruitmentDate}
               >
                 <RecruitmentPeriodValue value={program.recruitmentPeriodLabel} />
               </PFText>
             </div>
 
+            {/* 모집 완료도 행 클릭으로 상세 진입 — 회색 화살표는 시안 표기일 뿐 비활성 아님 */}
             <PFArrowButton
               variant="primary"
               size="medium"

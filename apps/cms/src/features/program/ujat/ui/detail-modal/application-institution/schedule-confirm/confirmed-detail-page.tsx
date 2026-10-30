@@ -8,6 +8,7 @@ import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message
 import { submitUjatScheduleConfirmRevisionRequest } from './submit-revision-request'
 import { shouldShowScheduleConfirmGuidanceNotes } from './types'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { UjatInstitutionApplicationActionModal } from '../list/action-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
@@ -88,7 +89,11 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: programId,
+    resolveProgramRole: () => resolveSessionProgramRole(programId),
     resolveAccessItem: () => row?.institutionName ?? 'UJAT 임시 배정 기관',
     resetDeps: [row?.id],
     controlMode: 'headerStickyNoop',
@@ -270,7 +275,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
               </Tooltip>
             )
           })()}
-          <PersonalInfoRevealButton
+          <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"

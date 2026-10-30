@@ -69,22 +69,26 @@ export function StructureLockedParagraphSection({
         <span className="form-editor-right-panel__section-title">{outline}</span>
         <Form.Item>
           <div className="form-editor-right-panel__kind-row">
-            <CmsSelect
-              width="100%"
-              value={kindValue}
-              options={kindOptions}
-              withAllOption={false}
-              onChange={noop}
-              disabled
-            />
-            <CmsSelect
-              width="100%"
-              value={detailValue}
-              options={detailOptions}
-              withAllOption={false}
-              onChange={noop}
-              disabled
-            />
+            <div className="form-editor-right-panel__kind-cell">
+              <CmsSelect
+                width="100%"
+                value={kindValue}
+                options={kindOptions}
+                withAllOption={false}
+                onChange={noop}
+                disabled
+              />
+            </div>
+            <div className="form-editor-right-panel__kind-cell">
+              <CmsSelect
+                width="100%"
+                value={detailValue}
+                options={detailOptions}
+                withAllOption={false}
+                onChange={noop}
+                disabled
+              />
+            </div>
           </div>
         </Form.Item>
         <span className="form-editor-right-panel__structure-locked-hint">

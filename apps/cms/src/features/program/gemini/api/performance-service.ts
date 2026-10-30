@@ -20,6 +20,7 @@ import { shouldUseGeminiPerformanceRemoteApi } from './performance-remote/capabi
 import { geminiPerformanceQueryKeys } from './performance-remote/query-keys'
 import {
   applyGeminiPerformanceImportRemote,
+  deleteGeminiPerformanceRowsRemote,
   prepareGeminiPerformanceImportRemote,
 } from './performance-remote/service'
 
@@ -31,6 +32,7 @@ export type GeminiPerformanceImportResult = {
   duplicateKeys: string[]
   remoteImportRows?: GeminiTrainingReportImportRow[]
   uploadRows?: GeminiPerformanceUploadRow[]
+  paidDuplicate?: boolean
 }
 
 export const geminiPerformanceService = {
@@ -69,8 +71,12 @@ export const geminiPerformanceService = {
     throw new Error(REMOTE_ONLY_MESSAGE)
   },
 
-  delete(_ids: string[]): void {
-    void _ids
+  async delete(ids: string[]): Promise<void> {
+    if (shouldUseGeminiPerformanceRemoteApi()) {
+      await deleteGeminiPerformanceRowsRemote(ids)
+      await queryClient.invalidateQueries({ queryKey: geminiPerformanceQueryKeys.list() })
+      return
+    }
     notifyProgramApiUnavailable('gemini-performance-delete', 'Gemini 실적 삭제')
     throw new Error(REMOTE_ONLY_MESSAGE)
   },

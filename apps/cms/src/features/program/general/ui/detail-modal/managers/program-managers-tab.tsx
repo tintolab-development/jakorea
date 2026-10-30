@@ -85,6 +85,8 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
     addManager,
     updateManagerRole,
     deleteManagers,
+    managersListAllowed,
+    managersListPending,
   } = useProgramManagers(programId, managersListFilters)
 
   useEffect(() => {
@@ -273,7 +275,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
         title: '권한',
         dataIndex: 'role',
         key: 'role',
-        width: 150,
+        width: 208,
         align: 'center',
         onCell: () => ({ className: STATUS_DROPDOWN_CELL_CLASSNAME }),
         render: (role: ProgramRole, record: ProgramManagerRow) => (
@@ -289,7 +291,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
             isOpen={openRoleDropdownId === record.id}
             onOpenChange={open => setOpenRoleDropdownId(open ? record.id : null)}
             emptyPlaceholder="-"
-            style={{ width: 132, minWidth: 132, maxWidth: 132 }}
+            style={{ width: 176, minWidth: 176, maxWidth: 176 }}
           />
         ),
       },
@@ -354,12 +356,16 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
     []
   )
 
-  if (loading && managerList.length === 0) {
+  if (managersListPending || (loading && managerList.length === 0)) {
     return (
       <div className="program-managers-tab program-managers-tab--loading" role="status">
         <Spin size="large" />
       </div>
     )
+  }
+
+  if (!managersListAllowed) {
+    return <div className="program-managers-tab">담당자 명단을 조회할 권한이 없습니다.</div>
   }
 
   return (
@@ -376,6 +382,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
         excelExport={{
           columns: excelColumns,
           data: filteredManagers,
+          selectedRowKeys,
         }}
         actions={
           <>

@@ -34,6 +34,7 @@ import {
   type UjatTypedDetail,
 } from '@/features/program/ujat/api/typed-detail-client'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
 import {
   createUjatBasicInfoFormDefaults,
   ujatBasicInfoFormValuesFromLegacyOverlay,
@@ -259,14 +260,23 @@ export function useUjatProgramRegistrationEditor(
         'typedEducationSchedule' in detail ? detail.typedEducationSchedule : null
       const typedBasicInfo = 'typedBasicInfo' in detail ? detail.typedBasicInfo : null
       basicInfoForm.reset(
-        typedBasicInfo != null && typeof typedBasicInfo === 'object'
-          ? (typedBasicInfo as ProgramDetailEditFormValues)
-          : ujatBasicInfoFormValuesFromLegacyOverlay(legacyOverlayRef.current)
+        mergeDevAutofillSparse(
+          basicInfoForm.getValues() as Record<string, unknown>,
+          (typedBasicInfo != null && typeof typedBasicInfo === 'object'
+            ? typedBasicInfo
+            : ujatBasicInfoFormValuesFromLegacyOverlay(legacyOverlayRef.current)) as Record<
+            string,
+            unknown
+          >
+        ) as ProgramDetailEditFormValues
       )
       educationScheduleForm.reset(
-        typedEducationSchedule != null && typeof typedEducationSchedule === 'object'
-          ? (typedEducationSchedule as UjatTypedDetail)
-          : typedDetailFromUjatOverlay(legacyOverlayRef.current)
+        mergeDevAutofillSparse(
+          educationScheduleForm.getValues() as Record<string, unknown>,
+          (typedEducationSchedule != null && typeof typedEducationSchedule === 'object'
+            ? typedEducationSchedule
+            : typedDetailFromUjatOverlay(legacyOverlayRef.current)) as Record<string, unknown>
+        ) as UjatTypedDetail
       )
     }
 

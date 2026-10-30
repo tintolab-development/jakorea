@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react'
 import path from 'path'
 import type { ProxyOptions } from 'vite'
 import { viteAppBuildDefine } from '../../scripts/vite-app-build-define'
+import {
+  FORM_TEMPLATE_RUNTIME_OPTIMIZE_DEPS_EXCLUDE,
+  formTemplateRuntimeWatchIgnored,
+} from '../../scripts/vite-form-template-runtime-watch'
 
 function withNgrokSkip(
   target: string,
@@ -53,6 +57,9 @@ export default defineConfig(({ mode }) => {
   return {
     define: viteAppBuildDefine(),
     plugins: [react()],
+    optimizeDeps: {
+      exclude: [...FORM_TEMPLATE_RUNTIME_OPTIMIZE_DEPS_EXCLUDE],
+    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
@@ -63,6 +70,9 @@ export default defineConfig(({ mode }) => {
       /** CMS(3000)와 충돌 방지 */
       port: 3001,
       proxy,
+      watch: {
+        ignored: formTemplateRuntimeWatchIgnored,
+      },
     },
     build: {
       rollupOptions: {

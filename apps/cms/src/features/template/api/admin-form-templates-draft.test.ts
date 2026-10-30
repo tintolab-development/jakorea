@@ -48,7 +48,7 @@ import {
   saveFormTemplateVersionDraftByVersionId,
 } from '@/features/template/api/admin-form-templates-service'
 
-const TEMPLATE_CODE = 'registration-general'
+const TEMPLATE_CODE = 'survey-default-custom-1'
 
 function stubLocalStorage() {
   const store: Record<string, string> = {}
@@ -144,7 +144,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     const draft = createRecruitFormInstructorDraft()
 
     await saveFormTemplateVersionDraft({
-      templateCode: 'recruitment-ujat-school',
+      templateCode: 'recruitment-ujat-school-custom-01',
       draft,
       settingsJson: {
         ujatRecruitment: { institution: { description: 'typed' } },
@@ -213,32 +213,84 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     expect(createVersionMock).not.toHaveBeenCalled()
   })
 
-  it('omits schemaJson on PUT for trained-teachers registration', async () => {
+  it('creates a new draft version directly for catalog survey without PUT', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'survey-default',
+      templateId: 7,
+      templateVersionId: 70,
+      latestVersionId: 70,
+    })
+    createVersionMock.mockResolvedValue({ templateId: 7, templateVersionId: 71, versionNo: 2 })
+    const draft = createProgramRegistrationDraft('general')
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'survey-default',
+      draft,
+    })
+
+    expect(updateRemoteMock).not.toHaveBeenCalled()
+    expect(createVersionMock).toHaveBeenCalledWith(
+      7,
+      expect.objectContaining({
+        sourceVersionId: 70,
+        schemaJson: expect.any(String),
+      })
+    )
+  })
+
+  it('creates a new draft version directly for catalog agreement without PUT', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'agreement-third-party',
+      templateId: 24,
+      templateVersionId: 64,
+      latestVersionId: 64,
+    })
+    createVersionMock.mockResolvedValue({ templateId: 24, templateVersionId: 65, versionNo: 2 })
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'agreement-third-party',
+      draft: createProgramRegistrationDraft('general'),
+    })
+
+    expect(updateRemoteMock).not.toHaveBeenCalled()
+    expect(createVersionMock).toHaveBeenCalledWith(
+      24,
+      expect.objectContaining({
+        sourceVersionId: 64,
+      })
+    )
+  })
+
+  it('blocks agreement-crime form version writes', async () => {
+    await expect(
+      saveFormTemplateVersionDraft({
+        templateCode: 'agreement-crime',
+        draft: createProgramRegistrationDraft('general'),
+      })
+    ).rejects.toThrow(/PDF 교체/)
+    expect(updateRemoteMock).not.toHaveBeenCalled()
+    expect(createVersionMock).not.toHaveBeenCalled()
+  })
+
+  it('blocks catalog registration original PUT', async () => {
     getCacheMock.mockReturnValue({
       templateCode: 'registration-trained-teachers',
       templateId: 1,
       templateVersionId: 140,
       latestVersionId: 140,
     })
-    updateRemoteMock.mockResolvedValue({})
     const draft = createProgramRegistrationDraft('trainedTeachers')
 
-    await saveFormTemplateVersionDraft({
-      templateCode: 'registration-trained-teachers',
-      draft,
-      overlay: { 'trainedTeachersRegistration.basicInfo.programTitleKo': '가나다' },
-      editorState: { programType: 'schedule' },
-    })
-
-    expect(updateRemoteMock).toHaveBeenCalledWith(
-      140,
-      expect.objectContaining({
-        extensionJson: expect.stringContaining('가나다'),
+    await expect(
+      saveFormTemplateVersionDraft({
+        templateCode: 'registration-trained-teachers',
+        draft,
+        overlay: { 'trainedTeachersRegistration.basicInfo.programTitleKo': '가나다' },
+        editorState: { programType: 'schedule' },
       })
-    )
-    const putBody = updateRemoteMock.mock.calls[0]?.[1] as { schemaJson?: string }
-    expect(putBody.schemaJson).toBeTruthy()
-    expect(putBody.schemaJson).not.toContain('가나다')
+    ).rejects.toThrow(/CATALOG 원본/)
+
+    expect(updateRemoteMock).not.toHaveBeenCalled()
   })
 
   it('omits schemaJson on version-id PUT when templateCode is registration', async () => {

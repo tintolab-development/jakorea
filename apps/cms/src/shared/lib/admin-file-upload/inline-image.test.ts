@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { uploadAdminFileMaybeMock } from '@/shared/lib/admin-file-upload/upload-maybe-mock'
 import {
   faqInlineImageOwner,
@@ -6,7 +6,9 @@ import {
   noticeInlineImageOwner,
   programInlineImageOwner,
   programPostInlineImageOwner,
+  resetProgramInlineImageDraftsForTests,
   resolveRichTextInlineImageSrc,
+  takeProgramInlineImageDraft,
 } from '@/shared/lib/admin-file-upload/inline-image'
 
 vi.mock('@/shared/lib/admin-file-upload/upload-maybe-mock', () => ({
@@ -15,6 +17,18 @@ vi.mock('@/shared/lib/admin-file-upload/upload-maybe-mock', () => ({
 }))
 
 describe('rich-text inline image owners', () => {
+  beforeEach(() => {
+    resetProgramInlineImageDraftsForTests()
+  })
+
+  it('프로그램 등록 draft 본문 이미지는 생성 후 재업로드용으로 보관한다', async () => {
+    resetProgramInlineImageDraftsForTests()
+    const file = new File(['img'], 'photo.jpg', { type: 'image/jpeg' })
+    await resolveRichTextInlineImageSrc(file, programInlineImageOwner(null))
+    expect(takeProgramInlineImageDraft(42)?.name).toBe('photo.jpg')
+    expect(takeProgramInlineImageDraft(42)).toBeUndefined()
+  })
+
   it('신규 작성은 ownerId를 null로 둔다', () => {
     expect(noticeInlineImageOwner(null).ownerId).toBeNull()
     expect(faqInlineImageOwner(null).ownerId).toBeNull()
@@ -29,6 +43,21 @@ describe('rich-text inline image owners', () => {
     expect(programInlineImageOwner(12).filePurpose).toBe('PROGRAM_INLINE_IMAGE')
     expect(programPostInlineImageOwner(12).filePurpose).toBe('PROGRAM_POST_INLINE_IMAGE')
     expect(mailTemplateInlineImageOwner(12).filePurpose).toBe('MAIL_TEMPLATE_ATTACHMENT')
+  })
+
+  it('프로그램 본문 이미지는 PROGRAM_CONTENT/PROGRAM 과 수정 시 programId를 쓴다', () => {
+    expect(programInlineImageOwner(null)).toMatchObject({
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM',
+      ownerId: null,
+      filePurpose: 'PROGRAM_INLINE_IMAGE',
+    })
+    expect(programInlineImageOwner(12)).toMatchObject({
+      ownerDomain: 'PROGRAM_CONTENT',
+      ownerType: 'PROGRAM',
+      ownerId: 12,
+      filePurpose: 'PROGRAM_INLINE_IMAGE',
+    })
   })
 
   it('에디터에는 blob 미리보기를 주고 저장용 URL은 따로 둔다', async () => {

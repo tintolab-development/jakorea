@@ -10,7 +10,7 @@ import {
 import { toValidDayjsOrNull } from '@/shared/components/date-time-picker-shared'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
 import { FieldClockIcon } from '@/shared/ui/icons'
-import '@/shared/ui/cms-datepicker.css'
+import '@jakorea/admin-ui/date/styles'
 import './paragraph-time-picker.css'
 
 export {

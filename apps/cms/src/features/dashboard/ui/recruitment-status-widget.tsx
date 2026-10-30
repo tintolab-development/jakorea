@@ -5,12 +5,14 @@
  * 모집 신청 현황 컬럼: dashboard recruitments.recruitmentStatus 라벨 (lifecycle 매핑 없음)
  */
 
-import { Card, Table, Typography } from 'antd'
+import { Card, Typography } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LoadingButton } from '@/shared/ui'
 import {
+  formatDashboardHeaderTotalCount,
   formatRecruitmentCount,
   formatRecruitmentWindowStatus,
   type DashboardRecruitmentRow,
@@ -19,6 +21,7 @@ import { useDashboardSettingsStore } from '../model/dashboard-settings-store'
 import { useRecruitmentStatusList } from '../hooks/use-recruitment-status-list'
 import { WidgetTitleWithHandle } from './widget-title-with-handle'
 import { DashboardWidgetQueryError } from './dashboard-widget-query-error'
+import { DashboardWidgetEmpty } from './dashboard-widget-empty'
 import {
   RECRUITMENT_STATUS_MORE_PATH,
   recruitmentProgramDetailPath,
@@ -39,7 +42,9 @@ export function RecruitmentStatusWidget() {
     useDashboardSettingsStore(s => s.widgetProgramIds[WIDGET_KEY]) ?? EMPTY_IDS
   const { data, isLoading: loading, isError } = useRecruitmentStatusList(allowedProgramIds)
   const programs = data?.rows ?? []
-  const equalWidth = halfColumn ? '25%' : undefined
+  /** 시안 100% 13192:232449 — 프로그램명 가변 + 200/200/200, 50% 12360:299527 — 가변 + 180/120/120 */
+  const statusColumnWidth = halfColumn ? 180 : 200
+  const countColumnWidth = halfColumn ? 120 : 200
   useLayoutEffect(() => {
     const root = cardRef.current
     if (!root) {
@@ -58,7 +63,7 @@ export function RecruitmentStatusWidget() {
     return () => mo.disconnect()
   }, [])
 
-  const totalCount = data?.totalCount ?? programs.length
+  const totalCountLabel = formatDashboardHeaderTotalCount(data?.totalCount ?? null)
 
   const columns: ColumnsType<DashboardRecruitmentRow> = useMemo(
     () => [
@@ -67,7 +72,6 @@ export function RecruitmentStatusWidget() {
         dataIndex: 'title',
         key: 'title',
         ellipsis: true,
-        width: equalWidth ?? '50%',
         align: 'center',
         render: (value: string) => (
           <span className="dashboard-widget-table__program-name" title={value}>
@@ -78,7 +82,7 @@ export function RecruitmentStatusWidget() {
       {
         title: '모집 신청 현황',
         key: 'recruitmentWindowStatus',
-        width: equalWidth ?? '17%',
+        width: statusColumnWidth,
         align: 'center',
         className: 'dashboard-widget-table__cell--status',
         render: (_: unknown, record: DashboardRecruitmentRow) =>
@@ -87,7 +91,7 @@ export function RecruitmentStatusWidget() {
       {
         title: '참여자 모집 현황',
         key: 'studentRecruitment',
-        width: equalWidth ?? '17%',
+        width: countColumnWidth,
         align: 'center',
         render: (_: unknown, record: DashboardRecruitmentRow) =>
           formatRecruitmentCount(record.participantApplied, record.participantCapacity),
@@ -95,13 +99,13 @@ export function RecruitmentStatusWidget() {
       {
         title: '봉사단 모집 현황',
         key: 'instructorRecruitment',
-        width: equalWidth ?? '16%',
+        width: countColumnWidth,
         align: 'center',
         render: (_: unknown, record: DashboardRecruitmentRow) =>
           formatRecruitmentCount(record.volunteerApplied, record.volunteerCapacity),
       },
     ],
-    [equalWidth]
+    [statusColumnWidth, countColumnWidth]
   )
 
   return (
@@ -112,7 +116,7 @@ export function RecruitmentStatusWidget() {
         <WidgetTitleWithHandle>
           <span className="widget-card-title">모집 신청 현황</span>
           <Text type="secondary" className="dashboard-widget-table__header-total-count">
-            총 {totalCount}건
+            {totalCountLabel}
           </Text>
         </WidgetTitleWithHandle>
       }
@@ -130,13 +134,14 @@ export function RecruitmentStatusWidget() {
       {isError ? (
         <DashboardWidgetQueryError />
       ) : (
-        <Table<DashboardRecruitmentRow>
+        <CmsDataTable<DashboardRecruitmentRow>
           columns={columns}
           dataSource={programs}
           rowKey="id"
           pagination={false}
           loading={loading}
-          className="dashboard-widget-table__data"
+          className="dashboard-widget-table__data cms-data-table--skip-auto-no-col"
+          emptyText={<DashboardWidgetEmpty inTable />}
           onRow={record => ({
             onClick: () => {
               navigate(recruitmentProgramDetailPath(record.id, record.programType))

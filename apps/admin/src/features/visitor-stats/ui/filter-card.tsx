@@ -9,11 +9,7 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
   FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
-import {
-  CmsButton,
-  CmsDateRangePicker,
-  CmsSelect,
-} from '@/shared/ui'
+import { CmsButton, CmsDateRangePicker, CmsSelect } from '@/shared/ui'
 import type { CmsSelectMultipleOption } from '@/shared/ui'
 
 import './section-shared.css'
@@ -30,10 +26,7 @@ type Props = {
   loading?: boolean
 }
 
-function rangeAsPicker(
-  from: string | null,
-  to: string | null
-): [Dayjs | null, Dayjs | null] {
+function rangeAsPicker(from: string | null, to: string | null): [Dayjs | null, Dayjs | null] {
   return [from ? dayjs(from) : null, to ? dayjs(to) : null]
 }
 
@@ -47,14 +40,14 @@ export function VisitorStatsFilterCard({
   loading,
 }: Props) {
   return (
-    <div className="admin-list-card visitor-stats-filter-card">
+    <div className="visitor-stats-filter-card">
       <div className="admin-filter-area">
         {unit === 'year' || unit === 'month' ? (
           <div className="admin-filter-area__field admin-filter-area__field--control">
             <p className="admin-filter-area__label">연도</p>
             <CmsSelect
               mode="multiple"
-              inputSize="large"
+              inputSize="medium"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="전체"
               allowClear
@@ -75,7 +68,7 @@ export function VisitorStatsFilterCard({
             <p className="admin-filter-area__label">월</p>
             <CmsSelect
               mode="multiple"
-              inputSize="large"
+              inputSize="medium"
               width={FILTER_CONTROL_MAX_WIDTH_PX}
               placeholder="전체"
               allowClear
@@ -95,7 +88,7 @@ export function VisitorStatsFilterCard({
           <div className="admin-filter-area__field admin-filter-area__field--date-range">
             <p className="admin-filter-area__label">기간</p>
             <CmsDateRangePicker
-              inputSize="large"
+              inputSize="medium"
               width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
               value={rangeAsPicker(pending.from, pending.to)}
               placeholder={['시작일', '종료일']}
@@ -119,7 +112,7 @@ export function VisitorStatsFilterCard({
           <CmsButton
             className="admin-filter-area__search-button"
             variant="primary"
-            size="large"
+            size="medium"
             width={FILTER_SEARCH_BUTTON_WIDTH_PX}
             type="button"
             loading={loading}

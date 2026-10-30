@@ -288,6 +288,7 @@ export function Interview2Section({
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys,
         }}
       >
         {viewMode === 'list' ? (

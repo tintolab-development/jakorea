@@ -23,8 +23,30 @@ export function InstitutionInfoTable({
   const venue =
     showPreferredEducationForm && institution.venue?.trim() ? institution.venue.trim() : ''
 
+  const showGeminiTrainingFields =
+    Boolean(institution.studentCount?.trim()) ||
+    Boolean(institution.jobTitle?.trim()) ||
+    Boolean(institution.subject?.trim())
+
   return (
     <PFFormFieldTable>
+      {showGeminiTrainingFields ? (
+        <>
+          <PFFormFieldRow type="double">
+            <PFFormField label="수강 인원" labelWidth="wider">
+              <p className={styles.fieldValue}>{displayInstitutionField(institution.studentCount)}</p>
+            </PFFormField>
+            <PFFormField label="직급" labelWidth="wider">
+              <p className={styles.fieldValue}>{displayInstitutionField(institution.jobTitle)}</p>
+            </PFFormField>
+          </PFFormFieldRow>
+          <PFFormFieldRow type="single">
+            <PFFormField label="담당 과목" labelWidth="wider" fullWidth>
+              <p className={styles.fieldValue}>{displayInstitutionField(institution.subject)}</p>
+            </PFFormField>
+          </PFFormFieldRow>
+        </>
+      ) : null}
       <PFFormFieldRow type="double">
         <PFFormField label="신청 기관명" labelWidth="wider">
           <p className={styles.fieldValue}>{displayInstitutionField(institution.name)}</p>

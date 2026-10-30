@@ -11,7 +11,7 @@
   --filter-control-range-split-between: 20px;
   /** 필터 칸 사이 gap */
   --filter-field-gap: 12px;
-  --filter-control-height: 44px;
+  --filter-control-height: 40px;
   --filter-control-min-width: 180px;
   --filter-label-height: 27px;
   --filter-label-control-gap: var(--spacing-6, 6px);
@@ -40,7 +40,6 @@
 @media (max-width: 768px) {
   :root {
     --filter-control-width: 100%;
-    --filter-control-height: 40px;
     --filter-control-min-width: 0;
   }
 }

@@ -279,7 +279,27 @@
   display: flex;
   gap: 10px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   align-items: flex-start;
+  box-sizing: border-box;
+}
+
+/* 종류·상세 셀렉트 50:50 — CmsSelect width=100% + flexShrink:0 이 행을 넘치지 않도록 래퍼에서 축소 */
+.form-editor-right-panel__kind-cell {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-editor-right-panel__kind-cell .cms-select--explicit-width,
+.form-editor-right-panel__kind-cell .cms-field--explicit-width {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex-shrink: 1 !important;
 }
 
 .form-editor-right-panel__horizontal-table-type {

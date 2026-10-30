@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { notificationDeliveryDetailQueryCache } from '@/features/notifications/api/notification-delivery-detail-cache'
 import {
   getAlimtalkSendHistoryDetail,
   getAlimtalkSendHistoryList,
@@ -23,12 +25,22 @@ export function useAlimtalkSendHistoryQuery(searchParams: URLSearchParams, enabl
 }
 
 export function useAlimtalkSendHistoryDetailQuery(deliveryId: string | null, enabled = true) {
+  const queryClient = useQueryClient()
+  const id = deliveryId ?? ''
+  const queryKey = notificationsQueryKeys.alimtalkSendHistory.detail(id)
+  useEffect(() => {
+    if (!id) return
+    return () => {
+      queryClient.removeQueries({
+        queryKey: notificationsQueryKeys.alimtalkSendHistory.detail(id),
+      })
+    }
+  }, [id, queryClient])
   return useQuery({
-    queryKey: notificationsQueryKeys.alimtalkSendHistory.detail(deliveryId ?? ''),
+    queryKey,
     queryFn: () => getAlimtalkSendHistoryDetail(deliveryId!),
     enabled: enabled && Boolean(deliveryId),
-    staleTime: 30_000,
-    retry: false,
+    ...notificationDeliveryDetailQueryCache,
   })
 }
 

@@ -88,7 +88,7 @@ export function SchoolTeacherEmploymentStatusBadge({
   )
 }
 
-/** 재직 현황 태그 드롭다운 — 교사 상세·강사(겸직) 소속 셀 공통 */
+/** 재직 현황 태그 드롭다운 — 교사 상세·교사 겸 강사 「재직 현황」 필드 공통 */
 export function SchoolTeacherEmploymentStatusDropdown({
   userId,
   employmentStatusLabel,

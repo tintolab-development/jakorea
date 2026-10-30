@@ -34,82 +34,8 @@
   min-width: 0;
 }
 
+/* 산출 내역 테이블: 지급조서 산출 내역서와 동일 (large/160 버튼 · 행 52px · min 1340) */
 .account-payment-status-detail-fullpage-modal__calc-host {
-  min-width: 1200px;
+  min-width: 1340px;
   max-width: 100%;
-}
-
-/* 산출 내역: cms-data-table 공통 패딩·타이포 — 합계 행만 시안 배경·강조 */
-/* fixed summary + measure-row 시 tbody:last-child 규칙이 안 먹어 합계 위·아래 이중 선 → 한 줄만 */
-.account-payment-status-detail-fullpage-modal
-  .account-payment-status-detail__calc-table.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-measure-row):last-child
-  > td,
-.account-payment-status-detail-fullpage-modal
-  .account-payment-status-detail__calc-table.cms-data-table
-  .ant-table-tbody
-  > tr:not(.ant-table-measure-row):nth-last-child(2)
-  > td {
-  border-bottom: none !important;
-}
-
-.account-payment-status-detail-fullpage-modal
-  .account-payment-status-detail__calc-table.cms-data-table
-  .ant-table-summary
-  .ant-table-cell {
-  box-sizing: border-box !important;
-  height: 52px !important;
-  min-height: 52px;
-  padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
-  vertical-align: middle !important;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--Netural-black, #3d3d3d);
-  border-color: var(--Border-default, #e0e0e0) !important;
-  border-top: 1px solid var(--Border-default, #e0e0e0) !important;
-  border-bottom: none !important;
-}
-
-.account-payment-status-detail-fullpage-modal
-  .account-payment-status-detail__calc-table.cms-data-table
-  .payment-order-calc-statement-modal__summary-row
-  .ant-table-cell {
-  background: #f0f7f8 !important;
-}
-
-.account-payment-status-detail-fullpage-modal
-  .account-payment-status-detail__calc-table.cms-data-table
-  .payment-order-calc-statement-modal__summary-label {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 150%;
-  color: var(--Netural-black, #3d3d3d);
-}
-
-.account-payment-status-detail-fullpage-modal
-  .account-payment-status-detail__calc-table.cms-data-table
-  .payment-order-calc-statement-modal__summary-formula {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 150%;
-}
-
-.account-payment-status-detail-fullpage-modal
-  .account-payment-status-detail__calc-table.cms-data-table
-  .payment-order-calc-statement-modal__summary-total {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 150%;
-  color: var(--JA-mint-01, #01a1af);
-}
-
-.account-payment-status-detail-fullpage-modal
-  .account-payment-status-detail__calc-table.cms-data-table.ant-table-wrapper
-  div.ant-table-summary {
-  box-shadow: none !important;
 }

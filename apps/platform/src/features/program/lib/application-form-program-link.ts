@@ -9,6 +9,7 @@ import {
   readEducationScheduleLinesForApplicationForm,
   syncApplicationScheduleChoiceParagraphsInDraft,
 } from '@jakorea/form-schema/program-application'
+import { migrateGeminiVisitingTrainingApplicationInstitutionParagraphs } from '@jakorea/form-schema/paragraph-ids/gemini-visiting-training-application-form-institution-draft'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import type { ProgramApplyFormCase } from './apply-form-case.ts'
@@ -33,6 +34,9 @@ export function applyProgramLinkedApplicationDraftPatches(
   input: ApplyProgramLinkedDraftPatchInput
 ): WritingFormDraft {
   const { applyCase, program, runtimeContext } = input
+  if (applyCase === 'institution-gemini') {
+    return migrateGeminiVisitingTrainingApplicationInstitutionParagraphs(draft)
+  }
   if (
     applyCase !== 'institution-general' &&
     applyCase !== 'individual-general' &&

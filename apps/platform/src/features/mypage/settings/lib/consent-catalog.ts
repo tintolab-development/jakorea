@@ -121,7 +121,12 @@ export const BASIC_CONSENT_ITEMS: SettingsConsentItem[] = [
 ]
 
 export function getBasicConsentItems(audience: BasicConsentAudience): SettingsConsentItem[] {
-  const items: SettingsConsentItem[] = [SERVICE_TERMS_ITEM, PRIVACY_COLLECTION_ITEM]
+  const items: SettingsConsentItem[] = [SERVICE_TERMS_ITEM]
+
+  /** 미성년은 법정대리인·아동 개인정보 동의로 대체 — 성인용 개인정보 수집·이용 항목 미노출 */
+  if (!audience.isMinor) {
+    items.push(PRIVACY_COLLECTION_ITEM)
+  }
 
   if (audience.isTeacher) {
     items.push(TEACHER_INFO_ITEM)
@@ -177,8 +182,14 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
   },
 ]
 
-/** 서버 행 → 화면 메타(제목·종류·약관 보기·유효기간) 조회용. 행 구성 자체는 서버가 결정 */
+/** 서버 행 → 화면 메타(제목·종류·약관 보기·유효기간) 조회용. 노출 여부는 audience 필터 */
 export const SETTINGS_CONSENT_CATALOG: SettingsConsentItem[] = [
-  ...getBasicConsentItems({ isTeacher: true, isMinor: true }),
+  SERVICE_TERMS_ITEM,
+  PRIVACY_COLLECTION_ITEM,
+  TEACHER_INFO_ITEM,
+  GUARDIAN_LEGAL_ITEM,
+  CHILD_PRIVACY_ITEM,
+  MARKETING_ITEM,
+  PORTRAIT_ITEM,
   ...DOCUMENT_CONSENT_ITEMS,
 ]

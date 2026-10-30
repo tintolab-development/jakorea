@@ -28,7 +28,7 @@ type LegacyGeminiRecruitmentAddFormSnapshot = {
 
 export type GeminiRecruitmentAddFormSnapshot = {
   title: string
-  announcementPublished: ParticipantRecruitmentAnnouncementPublishedValue
+  announcementPublished: ParticipantRecruitmentAnnouncementPublishedValue | ''
   educationTargetLevels: string[]
   educationTargetDetail: string
   applicationPeriodStart: string | null
@@ -59,6 +59,11 @@ export type GeminiRecruitmentAddFormSnapshot = {
   learningSupportContent: string
   additionalContentMarkdown: string
   attachmentFileNames: string[]
+  /**
+   * 업로드한 첨부 fileObjectId — attachmentFileNames와 같은 index. 저장 시 PUT /programs/{id}/attachments.
+   * undefined: 변경 없음 / null 칸: 파일명만 있는 기존 첨부
+   */
+  attachmentFileObjectIds?: Array<number | null>
   institutionSectionDescription: string
   detailSectionDescription: string
 }
@@ -86,7 +91,7 @@ type LocalSaveFile = {
 export function createDefaultGeminiRecruitmentAddFormSnapshot(): GeminiRecruitmentAddFormSnapshot {
   return {
     title: '',
-    announcementPublished: 'published',
+    announcementPublished: '',
     educationTargetLevels: [],
     educationTargetDetail: '',
     applicationPeriodStart: null,
@@ -161,6 +166,13 @@ export function normalizeGeminiRecruitmentAddFormSnapshot(
     attachmentFileNames: Array.isArray(legacy.attachmentFileNames)
       ? [...legacy.attachmentFileNames]
       : defaults.attachmentFileNames,
+    ...(Array.isArray(legacy.attachmentFileObjectIds)
+      ? {
+          attachmentFileObjectIds: legacy.attachmentFileObjectIds.map(id =>
+            typeof id === 'number' && Number.isFinite(id) ? id : null
+          ),
+        }
+      : {}),
     institutionSectionDescription:
       legacy.institutionSectionDescription ?? defaults.institutionSectionDescription,
     detailSectionDescription:

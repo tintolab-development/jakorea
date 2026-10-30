@@ -1,0 +1,108 @@
+{
+  "name": "@jakorea/admin-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+    "files": [
+    "dist",
+    "styles.d.ts",
+    "css-side-effect.d.ts"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-css.mjs",
+    "dev": "node scripts/dev.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node scripts/exports-contract.test.mjs && node scripts/select-options.test.mjs && node scripts/button-resolve.test.mjs && node scripts/no-app-alias.test.mjs && node scripts/step4-contract.test.mjs && node scripts/step5-auth-contract.test.mjs && node scripts/r51-select-height-contract.test.mjs && node scripts/r52-table-ssot-contract.test.mjs && node scripts/r52-filter-table-layout-contract.test.mjs && node scripts/r52-tabs-ssot-contract.test.mjs"
+  },
+  "peerDependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "antd": "^5.22.0",
+    "dayjs": "^1.11.13",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@ant-design/icons": "^5.5.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "antd": "^5.22.0",
+    "dayjs": "^1.11.19",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "~5.9.3"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./theme": {
+      "types": "./dist/theme/index.d.ts",
+      "import": "./dist/theme/index.js"
+    },
+    "./styles": {
+      "types": "./styles.d.ts",
+      "import": "./dist/styles/admin-ui.css"
+    },
+    "./button": {
+      "types": "./dist/button/index.d.ts",
+      "import": "./dist/button/index.js"
+    },
+    "./field": {
+      "types": "./dist/field/index.d.ts",
+      "import": "./dist/field/index.js"
+    },
+    "./input": {
+      "types": "./dist/input/index.d.ts",
+      "import": "./dist/input/index.js"
+    },
+    "./select": {
+      "types": "./dist/select/index.d.ts",
+      "import": "./dist/select/index.js"
+    },
+    "./modal": {
+      "types": "./dist/modal/index.d.ts",
+      "import": "./dist/modal/index.js"
+    },
+    "./modal/confirm.css": {
+      "types": "./css-side-effect.d.ts",
+      "import": "./dist/modal/confirm-modal.css"
+    },
+    "./tabs": {
+      "types": "./dist/tabs/index.d.ts",
+      "import": "./dist/tabs/index.js"
+    },
+    "./tabs/styles": {
+      "types": "./css-side-effect.d.ts",
+      "import": "./dist/tabs/admin-text-tabs.css"
+    },
+    "./table": {
+      "types": "./dist/table/index.d.ts",
+      "import": "./dist/table/index.js"
+    },
+    "./table/styles": {
+      "types": "./css-side-effect.d.ts",
+      "import": "./dist/table/admin-data-table.css"
+    },
+    "./empty": {
+      "types": "./dist/empty/index.d.ts",
+      "import": "./dist/empty/index.js"
+    },
+    "./date": {
+      "types": "./dist/date/index.d.ts",
+      "import": "./dist/date/index.js"
+    },
+    "./date/styles": {
+      "types": "./css-side-effect.d.ts",
+      "import": "./dist/date/admin-datepicker.css"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.js"
+    },
+    "./auth/styles": {
+      "types": "./css-side-effect.d.ts",
+      "import": "./dist/auth/admin-auth.css"
+    }
+  }
+}

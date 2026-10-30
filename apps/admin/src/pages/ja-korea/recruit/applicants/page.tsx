@@ -4,9 +4,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
 import type { Dayjs } from 'dayjs'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { applyKoreanPhoneInputChange } from '@jakorea/domain/shared/korean-phone'
 import type {
@@ -25,6 +24,7 @@ import {
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { detailFromListItem } from '@/features/recruit-applicant/api/mappers'
 import { isRecruitApplicantNotFoundError } from '@/features/recruit-applicant/api/service'
+import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
 import { RecruitApplicantDetailModal } from '@/features/recruit-applicant/ui/detail-modal'
 import { recruitApplicantQueryKeys } from '@/features/recruit-applicant/api/query-keys'
 import { RECRUIT_APPLICANTS_CHANGED_EVENT } from '@/features/recruit-applicant/api/store'
@@ -39,6 +39,7 @@ import { formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-disp
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
+import { useUrlDetailId } from '@/shared/lib/use-url-detail-id'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
   applyDateRangeToSearchParams,
@@ -56,6 +57,7 @@ import {
   CmsSelect,
   ConfirmModal,
   useCmsAlert,
+  FilterTableLayout,
 } from '@/shared/ui'
 
 import './page.css'
@@ -88,6 +90,7 @@ const INITIAL_PENDING: ApplicantPendingFilters = {
 
 const appliedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
 const confirmedSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
+const DETAIL_QUERY_KEYS = ['applicationId'] as const
 
 const JOB_OPTIONS: Array<{ value: RecruitJobInterest; label: string }> = [
   { value: 'managementPlanning', label: '경영/기획' },
@@ -203,7 +206,7 @@ const searchSyncRules: readonly TableSearchParamRule<ApplicantPendingFilters>[] 
         nextParams,
         f.confirmedRange,
         'ra_confirmed_from',
-        'ra_confirmed_to',
+        'ra_confirmed_to'
       )
     },
   },
@@ -216,14 +219,14 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 
 export function RecruitApplicantsPage() {
   const { showAlert } = useCmsAlert()
-  const location = useLocation()
-  const navigate = useNavigate()
   const {
     pendingFilters,
     setPendingFilters,
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    searchParams,
+    patchSearchParams,
   } = useListFilterUrl<ApplicantPendingFilters, RecruitApplicantListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -278,9 +281,13 @@ export function RecruitApplicantsPage() {
   const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data])
   const totalCount = listQuery.data?.totalCount ?? rows.length
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
-  const [detailId, setDetailId] = useState<string | null>(null)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
+  const { detailId, openDetail, closeDetail } = useUrlDetailId(
+    searchParams,
+    patchSearchParams,
+    DETAIL_QUERY_KEYS
+  )
   const detailQuery = useRecruitApplicantDetail(detailId)
   const remoteDetail = shouldUseRecruitApplicantRemoteApi()
 
@@ -325,56 +332,17 @@ export function RecruitApplicantsPage() {
     return listed ? detailFromListItem(listed) : null
   }, [detailId, detailQuery.data, remoteDetail, rows])
 
-  const replaceSearchParams = useCallback(
-    (mutate: (params: URLSearchParams) => void) => {
-      const params = new URLSearchParams(location.search)
-      mutate(params)
-      const next = params.toString()
-      const current = location.search.startsWith('?') ? location.search.slice(1) : location.search
-      if (next === current) return
-      navigate({ search: next ? `?${next}` : '' }, { replace: true })
-    },
-    [location.search, navigate]
-  )
-
-  const openDetail = useCallback(
-    (id: string) => {
-      setDetailId(id)
-      replaceSearchParams(params => {
-        params.set('applicationId', id)
-      })
-    },
-    [replaceSearchParams]
-  )
-
-  const closeDetail = useCallback(() => {
-    setDetailId(null)
-    replaceSearchParams(params => {
-      params.delete('applicationId')
-    })
-  }, [replaceSearchParams])
-
-  useEffect(() => {
-    const applicationId = new URLSearchParams(location.search).get('applicationId')?.trim()
-    if (!applicationId || detailId != null || listQuery.isLoading || listQuery.isFetching) return
-
-    let cancelled = false
-    queueMicrotask(() => {
-      if (!cancelled) setDetailId(applicationId)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [detailId, listQuery.isFetching, listQuery.isLoading, location.search])
-
   useEffect(() => {
     if (!remoteDetail || !detailId || !detailQuery.isError) return
     const notFound = isRecruitApplicantNotFoundError(detailQuery.error)
+    const forbidden = isAdminForbidden(detailQuery.error)
     showAlert({
-      title: notFound ? '신청을 찾을 수 없음' : '조회 실패',
-      content: notFound
-        ? '신청 정보를 찾을 수 없습니다.'
-        : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+      title: forbidden ? '권한 없음' : notFound ? '신청을 찾을 수 없음' : '조회 실패',
+      content: forbidden
+        ? '해당 신청을 조회할 권한이 없습니다.'
+        : notFound
+          ? '신청 정보를 찾을 수 없습니다.'
+          : '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
     })
     closeDetail()
   }, [closeDetail, detailId, detailQuery.error, detailQuery.isError, remoteDetail, showAlert])
@@ -521,185 +489,184 @@ export function RecruitApplicantsPage() {
         render: (value: string | null) => formatDateTimeDot(value),
       },
     ],
-    [rowNoMap],
+    [rowNoMap]
   )
 
   return (
     <div className="recruit-applicants-page">
-      <div className="admin-list-card recruit-applicants-page__filter-card">
-        <div className="admin-filter-area admin-filter-area--split recruit-applicants-page__filter">
-          <div className="admin-filter-area__head">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">처리 상태</p>
-              <CmsSelect
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.status}
-                placeholder="전체"
-                options={[
-                  { value: 'pending', label: '확인 대기' },
-                  { value: 'confirmed', label: '확인 완료' },
-                ]}
-                onChange={value =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    status: (value as StatusPending) || '',
-                  }))
-                }
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">관심 직무</p>
-              <CmsSelect
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                withAllOption
-                value={pendingFilters.jobInterest}
-                placeholder="전체"
-                options={JOB_OPTIONS}
-                onChange={value =>
-                  setPendingFilters(prev => ({
-                    ...prev,
-                    jobInterest: (value as JobPending) || '',
-                  }))
-                }
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">지원자명</p>
-              <AdminFilterTextInput
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.applicantName}
-                placeholder="지원자명을 입력하세요"
-                onChange={value => patchPendingFilters(prev => ({ ...prev, applicantName: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">연락처</p>
-              <CmsInput
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                type="tel"
-                inputMode="numeric"
-                autoComplete="tel"
-                value={pendingFilters.phone}
-                placeholder="연락처를 입력하세요"
-                onChange={event => {
-                  const result = applyKoreanPhoneInputChange(
-                    pendingFilters.phone,
-                    event.target.value,
-                    event.target.selectionStart,
-                  )
-                  event.target.value = result.formatted
-                  setPendingFilters(prev => ({ ...prev, phone: result.formatted }))
-                  requestAnimationFrame(() => {
-                    event.target.setSelectionRange(result.caret, result.caret)
-                  })
-                }}
-                onPressEnter={handleSearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <p className="admin-filter-area__label">이메일</p>
-              <AdminFilterTextInput
-                inputSize="large"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                value={pendingFilters.email}
-                placeholder="이메일을 입력하세요"
-                onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
-                onPressEnter={handleSearch}
-              />
-            </div>
-          </div>
-          <div className="admin-filter-area__bottom">
-            <div className="admin-filter-area__bottom-fields">
+      <FilterTableLayout
+        filter={
+          <div className="admin-filter-area admin-filter-area--split recruit-applicants-page__filter">
+            <div className="admin-filter-area__head">
               <div className="admin-filter-area__field admin-filter-area__field--control">
-                <p className="admin-filter-area__label">경력</p>
+                <p className="admin-filter-area__label">처리 상태</p>
                 <CmsSelect
-                  inputSize="large"
+                  inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   withAllOption
-                  value={pendingFilters.careerType}
+                  value={pendingFilters.status}
                   placeholder="전체"
-                  options={CAREER_OPTIONS}
+                  options={[
+                    { value: 'pending', label: '확인 대기' },
+                    { value: 'confirmed', label: '확인 완료' },
+                  ]}
                   onChange={value =>
                     setPendingFilters(prev => ({
                       ...prev,
-                      careerType: (value as CareerPending) || '',
+                      status: (value as StatusPending) || '',
                     }))
                   }
                 />
               </div>
-              <div className="admin-filter-area__field admin-filter-area__field--date-range">
-                <p className="admin-filter-area__label">신청일</p>
-                <CmsDateRangePicker
-                  inputSize="large"
-                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                  value={rangeAsPicker(pendingFilters.appliedRange)}
-                  placeholder={['시작일', '종료일']}
-                  allowClear
-                  onChange={dates => {
-                    if (!dates || (!dates[0] && !dates[1])) {
-                      setPendingFilters(prev => ({ ...prev, appliedRange: null }))
-                      return
-                    }
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">관심 직무</p>
+                <CmsSelect
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  value={pendingFilters.jobInterest}
+                  placeholder="전체"
+                  options={JOB_OPTIONS}
+                  onChange={value =>
                     setPendingFilters(prev => ({
                       ...prev,
-                      appliedRange: [dates[0] ?? null, dates[1] ?? null],
+                      jobInterest: (value as JobPending) || '',
                     }))
-                  }}
+                  }
                 />
               </div>
-              <div className="admin-filter-area__field admin-filter-area__field--date-range">
-                <p className="admin-filter-area__label">확인일</p>
-                <CmsDateRangePicker
-                  inputSize="large"
-                  width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
-                  value={rangeAsPicker(pendingFilters.confirmedRange)}
-                  placeholder={['시작일', '종료일']}
-                  allowClear
-                  onChange={dates => {
-                    if (!dates || (!dates[0] && !dates[1])) {
-                      setPendingFilters(prev => ({ ...prev, confirmedRange: null }))
-                      return
-                    }
-                    setPendingFilters(prev => ({
-                      ...prev,
-                      confirmedRange: [dates[0] ?? null, dates[1] ?? null],
-                    }))
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">지원자명</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.applicantName}
+                  placeholder="지원자명을 입력하세요"
+                  onChange={value =>
+                    patchPendingFilters(prev => ({ ...prev, applicantName: value }))
+                  }
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">연락처</p>
+                <CmsInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  value={pendingFilters.phone}
+                  placeholder="연락처를 입력하세요"
+                  onChange={event => {
+                    const result = applyKoreanPhoneInputChange(
+                      pendingFilters.phone,
+                      event.target.value,
+                      event.target.selectionStart
+                    )
+                    event.target.value = result.formatted
+                    setPendingFilters(prev => ({ ...prev, phone: result.formatted }))
+                    requestAnimationFrame(() => {
+                      event.target.setSelectionRange(result.caret, result.caret)
+                    })
                   }}
+                  onPressEnter={handleSearch}
+                />
+              </div>
+              <div className="admin-filter-area__field admin-filter-area__field--control">
+                <p className="admin-filter-area__label">이메일</p>
+                <AdminFilterTextInput
+                  inputSize="medium"
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  value={pendingFilters.email}
+                  placeholder="이메일을 입력하세요"
+                  onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
+                  onPressEnter={handleSearch}
                 />
               </div>
             </div>
-            <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
-                variant="primary"
-                size="large"
-                type="button"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-                onClick={handleSearch}
-              >
-                조회
-              </CmsButton>
+            <div className="admin-filter-area__bottom">
+              <div className="admin-filter-area__bottom-fields">
+                <div className="admin-filter-area__field admin-filter-area__field--control">
+                  <p className="admin-filter-area__label">경력</p>
+                  <CmsSelect
+                    inputSize="medium"
+                    width={FILTER_CONTROL_MAX_WIDTH_PX}
+                    withAllOption
+                    value={pendingFilters.careerType}
+                    placeholder="전체"
+                    options={CAREER_OPTIONS}
+                    onChange={value =>
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        careerType: (value as CareerPending) || '',
+                      }))
+                    }
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                  <p className="admin-filter-area__label">신청일</p>
+                  <CmsDateRangePicker
+                    inputSize="medium"
+                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                    value={rangeAsPicker(pendingFilters.appliedRange)}
+                    placeholder={['시작일', '종료일']}
+                    allowClear
+                    onChange={dates => {
+                      if (!dates || (!dates[0] && !dates[1])) {
+                        setPendingFilters(prev => ({ ...prev, appliedRange: null }))
+                        return
+                      }
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        appliedRange: [dates[0] ?? null, dates[1] ?? null],
+                      }))
+                    }}
+                  />
+                </div>
+                <div className="admin-filter-area__field admin-filter-area__field--date-range">
+                  <p className="admin-filter-area__label">확인일</p>
+                  <CmsDateRangePicker
+                    inputSize="medium"
+                    width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
+                    value={rangeAsPicker(pendingFilters.confirmedRange)}
+                    placeholder={['시작일', '종료일']}
+                    allowClear
+                    onChange={dates => {
+                      if (!dates || (!dates[0] && !dates[1])) {
+                        setPendingFilters(prev => ({ ...prev, confirmedRange: null }))
+                        return
+                      }
+                      setPendingFilters(prev => ({
+                        ...prev,
+                        confirmedRange: [dates[0] ?? null, dates[1] ?? null],
+                      }))
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="admin-filter-area__actions">
+                <CmsButton
+                  className="admin-filter-area__search-button"
+                  variant="primary"
+                  size="medium"
+                  width={FILTER_SEARCH_BUTTON_WIDTH_PX}
+                  type="button"
+                  onClick={handleSearch}
+                >
+                  조회
+                </CmsButton>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="admin-list-card">
-        <div className="admin-list-toolbar">
-          <div className="table-header-title--wrapper">
-            <span className="table-title">인재채용 신청 목록</span>
-            <span className="table-description">총 {formatNumberDisplay(totalCount)}건</span>
-          </div>
-          <div className="table-header-actions--wrapper">
+        }
+        title="인재채용 신청 목록"
+        description={`총 ${formatNumberDisplay(totalCount)}건`}
+        actions={
+          <>
             <CmsButton
               variant="delete"
-              size="large"
+              size="h40"
               type="button"
               loading={removeMutation.isPending}
               onClick={() => {
@@ -710,7 +677,7 @@ export function RecruitApplicantsPage() {
             </CmsButton>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               loading={confirmMutation.isPending}
               onClick={() => {
@@ -719,11 +686,11 @@ export function RecruitApplicantsPage() {
             >
               선택 확인
             </CmsButton>
-          </div>
-        </div>
-
+          </>
+        }
+      >
         <div className="recruit-applicants-page__table-scroll">
-          <Table<RecruitApplicant>
+          <CmsDataTable<RecruitApplicant>
             className="cms-data-table recruit-applicants-page__table"
             rowKey="id"
             loading={listQuery.isLoading}
@@ -745,7 +712,7 @@ export function RecruitApplicantsPage() {
             scroll={{ x: true }}
           />
         </div>
-      </div>
+      </FilterTableLayout>
 
       <RecruitApplicantDetailModal
         open={detailId != null}

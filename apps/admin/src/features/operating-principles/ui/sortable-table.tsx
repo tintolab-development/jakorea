@@ -7,7 +7,7 @@ import {
   AdminSortableTableRow,
   useAdminTableDndReorder,
 } from '@/shared/ui'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { OperatingPrinciple } from '@/entities/operating-principles/model/types'
 
@@ -33,7 +33,7 @@ export function PrinciplesSortableTable({
 
   return (
     <AdminSortableDndShell rowIds={rowIds} dndContextProps={dndContextProps}>
-      <Table<OperatingPrinciple>
+      <CmsDataTable<OperatingPrinciple>
         className="cms-data-table principles-sortable-table"
         rowKey="id"
         loading={loading}

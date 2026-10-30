@@ -229,8 +229,15 @@ export type {
 } from '../components/view-mode'
 export { SegmentedTab } from './segmented-tab'
 export type { SegmentedTabOption } from './segmented-tab'
-export { CmsTextTabs } from './cms-text-tabs'
-export type { CmsTextTabItem, CmsTextTabsProps, CmsTextTabsVariant } from './cms-text-tabs'
+export { CmsTextTabs, CmsPageTabs } from './cms-text-tabs'
+export type {
+  CmsTextTabItem,
+  CmsTextTabsProps,
+  CmsTextTabsVariant,
+  CmsPageTabItem,
+  CmsPageTabsProps,
+  CmsPageTabsSize,
+} from './cms-text-tabs'
 export {
   CalendarSet,
   CalendarMain,

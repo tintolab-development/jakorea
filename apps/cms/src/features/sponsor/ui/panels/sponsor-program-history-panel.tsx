@@ -289,6 +289,7 @@ export function SponsorProgramHistoryPanel({
         excelExport={{
           columns,
           data: filteredRows,
+          selectedRowKeys: rowSelection != null ? selectedKeys : undefined,
         }}
       >
         <div ref={tableWrapRef} className="cms-data-table-fit-scroll-wrap">

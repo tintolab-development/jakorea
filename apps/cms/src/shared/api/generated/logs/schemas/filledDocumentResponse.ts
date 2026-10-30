@@ -17,6 +17,7 @@ export interface FilledDocumentResponse {
   memberId?: number;
   consentType?: string;
   version?: string;
+  templateVersionId?: number;
   templateCode?: string;
   schemaJson?: FilledDocumentResponseSchemaJson;
   paymentBasicInfo?: PaymentStatementBasicInfo;

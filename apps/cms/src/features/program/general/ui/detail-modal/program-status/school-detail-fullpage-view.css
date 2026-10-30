@@ -411,7 +411,8 @@
   word-break: keep-all;
 }
 
-/* 배정 대기 강사 목록 — 테이블 영역 개별 스크롤, 최대 높이 365px */
+/* 배정·대기 목록 — 세로만 스크롤. overflow:auto 는 가로 스크롤포트가 되어
+ * StatusDropdown 열림 시 scroll-into-view 가로 밀림이 난다. 가로는 clip. */
 .school-detail-fullpage-view__instructor-section
   .participating-institutions-section__table-wrap.school-detail-fullpage-view__assignment-table-scroll:has(
     .cms-data-table
@@ -421,7 +422,8 @@
     .cms-data-table
   ) {
   max-height: 365px;
-  overflow: auto;
+  overflow-x: clip;
+  overflow-y: auto;
   border-radius: 8px;
   border: 1px solid var(--table-line, #e0e0e0);
   background: #fff;
@@ -491,10 +493,16 @@
   overflow: visible;
 }
 
+/*
+ * default(136) 만. tag-100(116)·tag-160(160)은 아래 전용 블록 —
+ * tag-100에 136을 씌우면 열림 시 트리거 재중앙으로 배지가 우측 밀림.
+ */
 .school-detail-fullpage-view
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-160) {
+  > td.status-dropdown-cell__cell-status:not(.status-dropdown-cell__cell-status--tag-100):not(
+    .status-dropdown-cell__cell-status--tag-160
+  ):not(.status-dropdown-cell__cell-status--payment-order-line) {
   width: 136px;
   min-width: 136px;
   max-width: 136px;
@@ -519,6 +527,32 @@
   > td.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+/* 역할 tag100: 열 116px — 닫힘/열림 동일 (열림 시 136 재중앙 밀림 방지) */
+.school-detail-fullpage-view
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status--tag-100)
+  > td.status-dropdown-cell__cell-status--tag-100 {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow: clip;
+  box-sizing: border-box !important;
+}
+
+.school-detail-fullpage-view
+  .status-dropdown-cell__status-trigger--tag-100.status-dropdown-cell__status-trigger--open {
+  width: 116px !important;
+  min-width: 116px !important;
+  max-width: 116px !important;
+  padding: 7px !important;
+  /* 테이블 scrollport 에서 box-shadow 가 scrollable overflow 를 키워 가로 밀림 */
+  box-shadow: none !important;
 }
 
 /* 역할 tag160: 열 160px (공통과 동일 스펙 — 뷰 단에서 행 높이·호버 규칙과 함께 쓰일 때 정렬 유지) */

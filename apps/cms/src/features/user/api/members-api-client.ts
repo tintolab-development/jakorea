@@ -389,12 +389,29 @@ export async function deleteMemberAdminProgramRemote(
   })
 }
 
-/** Swagger `listProgramRoles` — GET admin-accounts/{adminAccountId}/program-roles */
+/** Swagger `listProgramRoles` — GET admin-accounts/{adminAccountId}/program-roles (이력) */
 export async function fetchAdminAccountProgramRolesRemote(
   adminAccountId: number,
   params?: ListProgramRolesParams
 ): Promise<PageResponseAdminProgramAssignmentResponse> {
   return unwrapApiBody(await membersApi.listProgramRoles(adminAccountId, params))
+}
+
+/** Swagger `listActiveProgramRoles` — GET admin-accounts/{adminAccountId}/program-roles/active */
+export async function fetchAdminAccountActiveProgramRolesRemote(
+  adminAccountId: number,
+  params?: import('@/shared/api/generated/members/schemas/listActiveProgramRolesParams').ListActiveProgramRolesParams
+): Promise<
+  import('@/shared/api/generated/members/schemas/pageResponseAdminActiveProgramAssignmentResponse').PageResponseAdminActiveProgramAssignmentResponse
+> {
+  return unwrapApiBody(await membersApi.listActiveProgramRoles(adminAccountId, params))
+}
+
+/** Swagger `listSelectableRoles` — GET admin-roles/selectable (N-16 정본 역할) */
+export async function fetchSelectableAdminRolesRemote(): Promise<
+  import('@/shared/api/generated/members/schemas/adminRoleResponse').AdminRoleResponse[]
+> {
+  return unwrapApiBody(await membersApi.listSelectableRoles())
 }
 
 /** Swagger `deleteProgramRole` — DELETE admin-accounts/{adminAccountId}/program-roles/{programId} */
@@ -728,7 +745,7 @@ export async function upsertMember1365ExternalIdentifierRemote(
   return unwrapApiBody(
     await membersApi.upsertExternalIdentifier(memberId, EXTERNAL_IDENTIFIER_PROVIDER_1365, {
       externalId,
-      reason: 'CMS 관리자 회원 정보 수정',
+      reason: '회원 정보 수정',
     })
   )
 }

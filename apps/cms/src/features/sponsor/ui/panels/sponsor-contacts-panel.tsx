@@ -202,7 +202,11 @@ export function SponsorContactsPanel({
         title="담당자 목록"
         description={`${tableRows.length.toLocaleString()}건`}
         toolbarAdminAction="sponsorContactWrite"
-        excelExport={{ columns: excelColumns, data: tableRows }}
+        excelExport={{
+          columns: excelColumns,
+          data: tableRows,
+          selectedRowKeys: selectedKeys,
+        }}
         actions={
           <>
             <FilterTableToolbarButton

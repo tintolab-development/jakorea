@@ -35,7 +35,8 @@
   width: 100%;
   max-width: 1440px;
   min-width: 0;
-  overflow-x: auto;
+  max-height: 365px; /* 기획: 표 영역 365px 세로 스크롤 */
+  overflow: auto;
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--color-border-default);
@@ -67,6 +68,9 @@
 }
 
 .table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: var(--color-neutral-cool-80, #eef3f4);
   font-weight: 700;
 }
@@ -84,13 +88,24 @@
   border-bottom: none;
 }
 
+/* Figma Badge Category(역할): 셀 폭이 좁아도 배지 글자가 두 줄로 꺾이지 않게 한다 */
+.roleBadge {
+  flex-shrink: 0;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.table td:has(> .roleBadge) {
+  padding-inline: var(--spacing-8);
+}
+
 /* Figma node 11001-286932: 1440px table width */
 .assignedTable .numberColumn {
   width: 6.875%;
 }
 
 .assignedTable .roleColumn {
-  width: 7.674%;
+  width: 8.7%; /* 역할 배지(약 76px)가 PC 최소 표 폭 1080px에서도 셀 안에 들어가도록 넓힘 (기존 7.674%) */
 }
 
 .assignedTable .institutionColumn {
@@ -110,36 +125,43 @@
 }
 
 .assignedTable col:last-child {
-  width: 32.639%;
+  width: 31.613%; /* 역할 열에 넘긴 1.026%만큼 줄임 (기존 32.639%) */
 }
 
-/* Figma node 11001-286939: 1440px table width */
+/*
+ * Figma node 11001-286939 기준이지만 원래 비율 합이 106.875%라 열이 일괄 축소돼 "희망 학년"이 두 줄이 됐다.
+ * 합 100%로 다시 맞추고, 공통 열(No.·기관명·기관 소재지·배정 상태)은 배정된 기관 목록과 같은 비율을 쓴다.
+ */
 .waitingTable .numberColumn {
   width: 6.875%;
 }
 
 .waitingTable .institutionColumn {
-  width: 23.611%;
+  width: 16.667%;
 }
 
 .waitingTable .gradeColumn {
-  width: 6.91%;
+  width: 9%;
 }
 
 .waitingTable .locationColumn {
-  width: 19.41%;
+  width: 19.444%;
 }
 
 .waitingTable .distanceColumn {
-  width: 9.722%;
+  width: 12%;
 }
 
 .waitingTable col:nth-last-child(2) {
-  width: 30.451%;
+  width: 26.118%;
 }
 
 .waitingTable .statusColumn {
   width: 9.896%;
+}
+
+.waitingTable th {
+  white-space: nowrap;
 }
 
 .scheduleLines {
@@ -147,6 +169,20 @@
   flex-direction: column;
   gap: var(--spacing-4);
   align-items: center;
+}
+
+/* 배정 상태 텍스트 — 봉사 배정 현황(assignment-table.module.css) statusWaiting/statusCancelled와 같은 색 */
+.statusWaiting {
+  color: var(--color-element-orange);
+}
+
+.statusInactive {
+  color: var(--color-neutral-cool-500);
+}
+
+/* 배정 불가(UNAVAILABLE) 행 — 비활성 표시 */
+.disabledRow td {
+  color: var(--color-neutral-cool-500);
 }
 
 .empty {
@@ -181,22 +217,65 @@
   }
 
   .tableWrap {
+    container-type: inline-size;
     border-radius: var(--radius-16, 16px);
   }
 
+  /* 모바일 시안 없음: 가로 스크롤 유지 + 셀 텍스트 한 줄 고정(내용 길이만큼 표가 넓어짐) */
   .table {
-    min-width: 960px;
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
     font-size: 14px;
+  }
+
+  /* 자동 레이아웃에서 col 너비는 최소 너비로 동작: 빈 상태에서도 열이 내용 기준으로 찌그러지지 않게 한다 */
+  .table.table col {
+    width: auto;
+  }
+
+  .table.table .numberColumn {
+    width: 56px;
+  }
+
+  .table.table .roleColumn,
+  .table.table .gradeColumn,
+  .table.table .statusColumn {
+    width: 88px;
+  }
+
+  .table.table .institutionColumn {
+    width: 160px;
+  }
+
+  .table.table .locationColumn {
+    width: 240px;
+  }
+
+  .table.table .distanceColumn {
+    width: 112px;
+  }
+
+  .assignedTable.assignedTable col:last-child,
+  .waitingTable.waitingTable col:nth-last-child(2) {
+    width: 300px;
   }
 
   .table th,
   .table td {
     height: 48px;
     padding: 0 var(--spacing-12);
+    white-space: nowrap;
   }
 
   .scheduleLines {
     gap: 2px;
+  }
+
+  /* 넓어진 표 가운데가 아니라 보이는 스크롤 영역 가운데에 빈 상태 문구를 둔다 */
+  .table .emptyCell {
+    padding-inline-start: max(var(--spacing-12), calc(50cqi - 60px));
+    text-align: start;
   }
 
   .emptyCell {

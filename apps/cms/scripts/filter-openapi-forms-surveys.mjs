@@ -20,12 +20,19 @@ const FORMS_SURVEYS_PATH_PREFIXES = [
   '/api/admin/form-auto-fill-keys',
 ]
 
+const PORTAL_FORM_RUNTIME_PATHS = new Set([
+  '/api/portal/me/programs/{programId}/available-forms',
+  '/api/portal/me/programs/{programId}/form-bindings/{bindingId}/render',
+  '/api/portal/me/programs/{programId}/form-bindings/{bindingId}/responses',
+])
+
 const spec = JSON.parse(readFileSync(inputPath, 'utf8'))
 const filteredPaths = Object.fromEntries(
   Object.entries(spec.paths ?? {}).filter(
     ([path]) =>
       FORMS_SURVEYS_PATH_PREFIXES.some(prefix => path.startsWith(prefix)) ||
-      (path.startsWith('/api/admin/') && path.includes('/form-bindings'))
+      (path.startsWith('/api/admin/') && path.includes('/form-bindings')) ||
+      PORTAL_FORM_RUNTIME_PATHS.has(path)
   )
 )
 

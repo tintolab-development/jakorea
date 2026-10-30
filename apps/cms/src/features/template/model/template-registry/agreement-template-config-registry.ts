@@ -142,6 +142,10 @@ export const AGREEMENT_TEMPLATE_CONFIG_REGISTRY: Record<
   },
 }
 
+/**
+ * 템플릿 관리 authoring — 시스템 생성 동의 양식도 단락 본문 입력을 연다.
+ * 회원 fill은 `resolveAgreementWritingFormConfig`의 카탈로그 잠금을 그대로 쓴다.
+ */
 export function stripAgreementWritingFormStructureLocks(
   config: AgreementWritingFormConfig
 ): AgreementWritingFormConfig {
@@ -151,31 +155,12 @@ export function stripAgreementWritingFormStructureLocks(
     paragraphBodyOptions,
     ...editable
   } = config
-  /** 구조 잠금 해제 후에도 확인 카드(마무리+날짜+서명) 옵션은 유지 */
-  const preservedBodyOptions = preserveAgreementConfirmBodyOptions(paragraphBodyOptions)
-  return preservedBodyOptions != null
-    ? { ...editable, paragraphBodyOptions: preservedBodyOptions }
-    : editable
-}
-
-/** 구조 잠금 해제 시에도 유지할 확인 카드·숨김 단락 옵션 */
-function preserveAgreementConfirmBodyOptions(
-  options: AgreementWritingFormConfig['paragraphBodyOptions']
-): AgreementWritingFormConfig['paragraphBodyOptions'] {
-  if (options == null) return undefined
-  if (
-    options.agreementAdminProxyConfirm !== true &&
-    (options.hiddenParagraphIds == null || options.hiddenParagraphIds.size === 0)
-  ) {
-    return undefined
-  }
-  return {
-    agreementAdminProxyConfirm: options.agreementAdminProxyConfirm,
-    hiddenParagraphIds: options.hiddenParagraphIds,
-    agreementSystemParticipantName: options.agreementSystemParticipantName,
-    agreementSystemNow: options.agreementSystemNow,
-    agreementSystemDisplayMode: options.agreementSystemDisplayMode,
-  }
+  if (paragraphBodyOptions == null) return editable
+  const {
+    structureLockedAuthoringChoicePreview: _choicePreview,
+    ...keptBodyOptions
+  } = paragraphBodyOptions
+  return { ...editable, paragraphBodyOptions: keptBodyOptions }
 }
 
 export function resolveAgreementWritingFormConfig(

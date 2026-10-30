@@ -7,6 +7,7 @@ const INSTITUTION_APPLICATION_ANSWER_KEY_MARKERS = [
   'program-application-economy-seed',
   'ujat-program-application-institution-seed',
   'program-application-trained-teachers-seed',
+  'gemini-vt-inst-seed',
 ] as const
 
 export function isTrainedTeachersEducationProgram(

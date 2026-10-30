@@ -9,15 +9,15 @@ import type { FormRuntimeSubmitRequestAnswers } from './formRuntimeSubmitRequest
 import type { FormRuntimeSubmitRequestFileObjectIdsByQuestion } from './formRuntimeSubmitRequestFileObjectIdsByQuestion';
 
 export interface FormRuntimeSubmitRequest {
-  templateVersionId?: number;
-  programId?: number;
-  programFormBindingId?: number;
-  programScheduleId?: number;
-  curriculumSessionId?: number;
-  contextType?: string;
-  contextId?: number;
-  submittedByMemberId?: number;
-  submittedByAdminId?: number;
-  answers?: FormRuntimeSubmitRequestAnswers;
+  templateVersionId: number;
+  programId: number;
+  programFormBindingId: number;
+  programScheduleId?: number | null;
+  curriculumSessionId?: number | null;
+  contextType?: string | null;
+  contextId?: number | null;
+  submittedByMemberId?: number | null;
+  submittedByAdminId?: number | null;
+  answers: FormRuntimeSubmitRequestAnswers;
   fileObjectIdsByQuestion?: FormRuntimeSubmitRequestFileObjectIdsByQuestion;
 }

@@ -1,0 +1,92 @@
+/* 1사1교 진행 희망 교육 일정 — CMS 1c-1s preferred-schedule-paragraph 세로형(지망별 DetailInfoForm) */
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16, 16px);
+}
+
+.block {
+  min-width: 0;
+}
+
+.blockTitle {
+  margin: 0 0 8px;
+}
+
+.scheduleForm :global(.detail-info-form__field-content--edit) {
+  min-width: 0;
+}
+
+.inputs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 0;
+  min-width: 0;
+}
+
+.datePicker {
+  flex: 0 0 240px;
+  width: 240px;
+  max-width: 100%;
+}
+
+.sessionSelect {
+  flex: 0 0 120px;
+  width: 120px;
+}
+
+.inputs > :global(.pf-text-input) {
+  flex: 0 0 120px;
+  width: 120px;
+  min-width: 120px;
+}
+
+.timePicker {
+  flex: 0 0 168px;
+  width: 168px;
+  min-width: 168px;
+}
+
+/* form-template-host typo unset(0,2,0) 회귀 방지 — 레이아웃만 우선순위를 올린다 (apply-preferred-schedule 동일) */
+.root .inputs .unit {
+  flex-shrink: 0;
+  margin: 0 8px;
+  word-break: keep-all;
+}
+
+.root .inputs .tilde {
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
+.root .inputs .note {
+  margin-left: 8px;
+}
+
+@media (--bp-below-pc) {
+  .datePicker,
+  .sessionSelect,
+  .inputs > :global(.pf-text-input) {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .timePicker {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+
+  .inputs > :global(.detail-info-form-inputs-separator) {
+    display: none;
+  }
+
+  .root .inputs .note {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}

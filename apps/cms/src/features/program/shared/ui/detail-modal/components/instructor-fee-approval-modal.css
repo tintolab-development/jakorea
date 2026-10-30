@@ -83,12 +83,41 @@
   line-height: 150%;
 }
 
+.instructor-fee-approval-modal--with-schedule-notice.content-modal.ant-modal .ant-modal-content,
+.instructor-fee-approval-modal--with-schedule-notice.teal-header-modal .ant-modal-content {
+  height: auto;
+  min-height: 474px;
+}
+
 .instructor-fee-approval-modal__content {
   display: flex;
   flex-direction: column;
   margin-top: 20px;
   align-self: stretch;
   width: 100%;
+}
+
+.instructor-fee-approval-modal__no-schedule-notice {
+  margin: 0 0 30px;
+  padding: 16px;
+  border-radius: var(--6, 6px);
+  background: var(--Brand-500-06, rgba(1, 161, 175, 0.06));
+  color: var(--Neutral-black, #3d3d3d);
+  text-align: center;
+  font-family: Pretendard;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%; /* 24px */
+}
+
+.instructor-fee-approval-modal__field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  align-self: stretch;
+  width: 100%;
+  max-width: 100%;
 }
 
 .instructor-fee-approval-modal__field.cms-field {
@@ -126,7 +155,7 @@
   align-self: stretch;
   width: 100%;
   max-width: 100%;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .instructor-fee-approval-modal__amount-field {

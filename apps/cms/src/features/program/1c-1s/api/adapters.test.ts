@@ -59,6 +59,7 @@ describe('company-school adapters', () => {
     const request = mapCompanySchoolToCreateRequest(program)
 
     expect(request.programType).toBe(COMPANY_SCHOOL_PROGRAM_API_TYPE)
+    expect(request.recruitments).toBeUndefined()
     expect(request.startDate).toBe(program.startDate)
     expect(request.endDate).toBe(program.endDate)
     expect(request.businessStartDate).toBe(program.startDate)
@@ -859,6 +860,48 @@ describe('company-school adapters', () => {
     expect(request.applicationMethod).toBeUndefined()
     expect(request.remarks).toBeUndefined()
     expect(request.clearFields).toEqual(expect.arrayContaining(['applicationMethod', 'remarks']))
+  })
+
+  it('참여 모집 탭 중첩 문의처·지원방법만 바뀌면 최상위 contactName·applicationMethod도 보낸다 (QA #9·#12)', () => {
+    const existing: Program = {
+      ...program,
+      contactName: '기존 문의처',
+      applicationMethod: '<p>기존 지원방법</p>',
+      generalCommonInfo: {
+        ...program.generalCommonInfo,
+        participantRecruitmentInfo: {
+          contactOrganizationName: '기존 문의처',
+          applicationMethod: '<p>기존 지원방법</p>',
+        },
+      },
+    }
+    const request = mapCompanySchoolToUpdateRequest(existing, {
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        participantRecruitmentInfo: {
+          contactOrganizationName: '새 문의처',
+          contactName: '새 문의처',
+          applicationMethod: '<p>새 지원방법</p>',
+        },
+      },
+    })
+    expect(request.contactName).toBe('새 문의처')
+    expect(request.applicationMethod).toBe('<p>새 지원방법</p>')
+
+    const unchanged = mapCompanySchoolToUpdateRequest(existing, {
+      generalCommonInfo: existing.generalCommonInfo,
+    })
+    expect(unchanged.contactName).toBeUndefined()
+    expect(unchanged.applicationMethod).toBeUndefined()
+
+    const blanked = mapCompanySchoolToUpdateRequest(existing, {
+      generalCommonInfo: {
+        ...existing.generalCommonInfo,
+        participantRecruitmentInfo: { contactOrganizationName: '', applicationMethod: '' },
+      },
+    })
+    expect(blanked.contactName).toBeUndefined()
+    expect(blanked.clearFields ?? []).not.toContain('contactName')
   })
 })
 

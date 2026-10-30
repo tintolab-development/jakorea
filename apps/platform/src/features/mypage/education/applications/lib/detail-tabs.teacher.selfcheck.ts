@@ -44,6 +44,54 @@ assert.deepEqual(
 )
 assert.equal(instructorWithAssignments[0]?.label, INSTRUCTOR_ASSIGNMENT_TAB_LABEL)
 
+// 강의현황 개인형·기타 유형: 배정 현황이 항상 첫 번째, 강의 일정 탭 없음.
+const individualInstructorTabs = buildInProgressDetailTabItems({
+  ...options,
+  detailCase: 'instructor',
+  programType: 'GENERAL_INDIVIDUAL',
+  lectureReportVisible: true,
+  instructorAssignmentVisible: true,
+  instructorAssignmentWithActivityTabs: true,
+})
+assert.deepEqual(
+  individualInstructorTabs.map(item => item.key),
+  ['assignment', 'notice', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
+)
+assert.deepEqual(
+  individualInstructorTabs.map(item => item.label),
+  ['배정 현황', '안내사항', '강의보고서', '설문조사', '만족도조사', '정산현황'],
+)
+assert.ok(!individualInstructorTabs.some(item => item.label === '강의 일정'))
+assert.deepEqual(
+  buildWithdrawnDuringDetailTabItems({
+    ...options,
+    detailCase: 'instructor',
+    programType: 'GENERAL_INDIVIDUAL',
+    lectureReportVisible: true,
+    instructorAssignmentVisible: true,
+    instructorAssignmentWithActivityTabs: true,
+  }).map(item => item.key),
+  ['assignment', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
+)
+// 기관형 진행 중 포기: 배정 현황이 첫 번째, 강의 일정 탭 없음.
+assert.deepEqual(
+  buildWithdrawnDuringDetailTabItems({
+    ...options,
+    detailCase: 'instructor',
+    lectureReportVisible: true,
+    instructorAssignmentVisible: true,
+  }).map(item => item.label),
+  ['배정 현황', '강의보고서', '정산 현황'],
+)
+// 교육현황 상세(instructorAssignmentVisible 미설정)는 기존 일정 탭 유지.
+assert.deepEqual(
+  buildInProgressDetailTabItems({
+    ...options,
+    scheduleTabLabel: EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
+  }).map(item => item.key),
+  ['notice', 'schedule', 'survey', 'satisfaction', 'settlement'],
+)
+
 assert.equal(resolveVolunteerActivityDetailCase('general'), 'volunteer')
 assert.equal(resolveVolunteerActivityDetailCase('volunteer'), 'volunteer')
 assert.equal(resolveVolunteerActivityDetailCase('ujat-volunteer'), 'ujat-volunteer')
@@ -238,5 +286,28 @@ assert.deepEqual(
 )
 assert.ok(teacherInstructorProgramCase.some(item => item.key === 'lecture-report'))
 assert.ok(!general.some(item => item.key === 'lecture-report'))
+
+const geminiTeacher = buildTeacherInProgressDetailTabItems({
+  ...schoolTeacherOptions,
+  detailCase: 'gemini',
+  programType: 'GEMINI_TRAINING',
+  satisfactionConfigured: true,
+})
+assert.ok(!geminiTeacher.some(item => item.key === 'satisfaction'))
+assert.ok(geminiTeacher.some(item => item.key === 'survey'))
+
+const geminiInstructorTabs = buildInProgressDetailTabItems({
+  detailCase: 'gemini',
+  programType: 'GEMINI_TRAINING',
+  geminiInstructorActivityTabs: true,
+  lectureReportVisible: true,
+  instructorAssignmentVisible: true,
+})
+assert.deepEqual(
+  geminiInstructorTabs.map(item => item.label),
+  ['배정 현황', '정산 현황'],
+)
+assert.ok(!geminiInstructorTabs.some(item => item.key === 'notice'))
+assert.ok(!geminiInstructorTabs.some(item => item.key === 'lecture-report'))
 
 console.log('detail-tabs.teacher.selfcheck: ok')

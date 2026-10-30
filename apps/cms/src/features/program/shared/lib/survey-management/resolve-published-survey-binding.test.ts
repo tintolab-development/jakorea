@@ -4,6 +4,10 @@ const resolveFormTemplateCatalogIds = vi.fn()
 const publishFormTemplateVersionById = vi.fn()
 const fetchFormTemplateVersionsRemote = vi.fn()
 const fetchFormTemplateVersionRemote = vi.fn()
+import {
+  clearFormTemplateVersionCache,
+  upsertFormTemplateVersionCacheEntry,
+} from '@/features/template/api/form-template-version-cache'
 
 vi.mock('@/features/template/api/admin-form-templates-service', () => ({
   resolveFormTemplateCatalogIds: (...args: unknown[]) => resolveFormTemplateCatalogIds(...args),
@@ -18,6 +22,7 @@ vi.mock('@/features/template/api/form-templates-api-client', () => ({
 import {
   readSurveySubmissionPeriodFromSchema,
   readSurveyTitleFromSchema,
+  resolveExistingSurveyBindingVersion,
   resolvePublishedSurveyBinding,
   surveyBindingResolutionAlert,
 } from '@/features/program/shared/lib/survey-management/resolve-published-survey-binding'
@@ -97,6 +102,7 @@ describe('readSurveySubmissionPeriodFromSchema', () => {
 
 describe('resolvePublishedSurveyBinding', () => {
   beforeEach(() => {
+    clearFormTemplateVersionCache()
     resolveFormTemplateCatalogIds.mockReset()
     publishFormTemplateVersionById.mockReset()
     fetchFormTemplateVersionsRemote.mockReset()
@@ -147,16 +153,50 @@ describe('resolvePublishedSurveyBinding', () => {
   })
 
   it('does not publish a catalog draft from the program flow (shared data guard)', async () => {
+    upsertFormTemplateVersionCacheEntry({
+      templateCode: 'survey-student',
+      templateId: 1995,
+      templateVersionId: 352,
+      systemTemplate: true,
+      baseTemplateCode: 'survey-student',
+    })
     resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 1995, templateVersionId: 352 })
     fetchFormTemplateVersionsRemote.mockResolvedValue([
-      { templateVersionId: 352, versionNo: 1, versionStatus: 'DRAFT' },
+      { templateVersionId: 352, versionNo: 1, versionStatus: 'DRAFT', availableActions: ['PUBLISH'] },
     ])
 
-    await expect(resolvePublishedSurveyBinding('survey-period')).resolves.toEqual({
+    await expect(resolvePublishedSurveyBinding('survey-student')).resolves.toEqual({
       ok: false,
       reason: 'not_published',
     })
     expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
+  })
+
+  it('publishes a duplicated user survey draft then binds that version', async () => {
+    upsertFormTemplateVersionCacheEntry({
+      templateCode: 'survey-student-copy-196537',
+      templateId: 196537,
+      templateVersionId: 2411,
+      systemTemplate: false,
+      baseTemplateCode: 'survey-student',
+    })
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 196537, templateVersionId: 2411 })
+    fetchFormTemplateVersionsRemote.mockResolvedValue([
+      {
+        templateVersionId: 2411,
+        versionNo: 1,
+        versionStatus: 'DRAFT',
+        availableActions: ['VIEW', 'COPY_AS_DRAFT', 'EDIT', 'PUBLISH', 'DELETE_DRAFT'],
+      },
+    ])
+    publishFormTemplateVersionById.mockResolvedValue(2411)
+
+    await expect(resolvePublishedSurveyBinding('survey-student-copy-196537')).resolves.toEqual({
+      ok: true,
+      templateId: 196537,
+      templateVersionId: 2411,
+    })
+    expect(publishFormTemplateVersionById).toHaveBeenCalledWith(2411)
   })
 
   it('binds the older published version instead of publishing a newer draft', async () => {
@@ -212,9 +252,16 @@ describe('resolvePublishedSurveyBinding', () => {
   })
 })
 
+describe('resolveExistingSurveyBindingVersion', () => {
+  it('keeps the pinned binding version even when later versions exist', () => {
+    expect(resolveExistingSurveyBindingVersion({ templateVersionId: 70 })).toBe(70)
+    expect(resolveExistingSurveyBindingVersion({ templateVersionId: null })).toBeNull()
+  })
+})
+
 describe('surveyBindingResolutionAlert', () => {
   it('describes each failure reason', () => {
-    expect(surveyBindingResolutionAlert('not_published')).toContain('등록 가능한 버전')
+    expect(surveyBindingResolutionAlert('not_published')).toContain('등록 가능한 발행 버전')
     expect(surveyBindingResolutionAlert('not_found')).toContain('서버 ID')
   })
 })

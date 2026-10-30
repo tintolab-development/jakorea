@@ -48,8 +48,10 @@ function makeProgram(overrides: Partial<Program> = {}): Program {
         programDescription: '저장본 프로그램 설명',
         recruitmentGuide: '<p>저장본 모집 안내</p>',
         additionalContentHtml: '<p>저장본 추가</p>',
+        thumbnailFileObjectId: 301,
       },
     ],
+    activeRecruitmentId: 11,
     ...overrides,
   } as Program
 }
@@ -125,5 +127,21 @@ describe('buildRecruitmentEditPreviewDraft', () => {
     expect(overlayAfter).toEqual(overlayBefore)
     expect(detail.summary).toBe('폼 설명')
     expect(detail.recruitmentGuide).toBe('<p>폼 안내</p>')
+  })
+
+  it('수정 중 썸네일 overlay를 저장본 행보다 먼저 미리보기에 넣는다', () => {
+    setGeneralRecruitOverlayScope('recruitment-participant-school')
+    patchGeneralRecruitOverlay({
+      'recruit.detailInfo.thumbFileObjectId': 909,
+    })
+    const program = makeProgram()
+    const draft = buildRecruitmentEditPreviewDraft({
+      program,
+      values: programToRecruitmentTabEditValues(program, 'participant'),
+      audience: 'participant',
+    })
+
+    expect(draft.extraOverlay['recruit.detailInfo.thumbFileObjectId']).toBe(909)
+    expect(draft.program.programRecruitments?.[0]?.thumbnailFileObjectId).toBe(909)
   })
 })

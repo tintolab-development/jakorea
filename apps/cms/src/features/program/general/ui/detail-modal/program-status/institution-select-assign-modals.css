@@ -1,0 +1,36 @@
+.institution-assign-confirm {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 32px;
+}
+
+.institution-assign-confirm__message {
+  margin: 0;
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.institution-assign-confirm__message strong {
+  font-weight: 700;
+}
+
+.institution-assign-confirm__count {
+  margin: 4px 0 0;
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.institution-assign-confirm__footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}

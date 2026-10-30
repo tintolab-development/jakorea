@@ -26,6 +26,7 @@ import {
   emptyCompanySchoolApplicationFormState,
   isCompanySchoolApplicationOverlayKey,
 } from './registration-rhf-application'
+import { resolveCompanySchoolWageDefaultPaymentItemIds } from './company-school-wage-defaults'
 
 export const COMPANY_SCHOOL_REGISTRATION_OVERLAY_PREFIX = 'economyRegistration.' as const
 export const COMPANY_SCHOOL_UNSELECTED = '__all__' as const
@@ -240,21 +241,21 @@ function curriculumSessionIndex(key: string): { index: number; field: 'title' | 
 
 export function createDefaultCompanySchoolRegistrationRhfValues(): CompanySchoolRegistrationRhfValues {
   return {
-    repKo: COMPANY_SCHOOL_DEFAULT_REP_KO,
-    repEn: COMPANY_SCHOOL_DEFAULT_REP_EN,
+    repKo: '',
+    repEn: '',
     publicProgramTitle: '',
     detailedProgramId: '',
     detailedProgramName: '',
     operationRange: null,
     operationAnchorIso: null,
-    businessField: 'economy_finance',
+    businessField: '',
     sponsorId: '',
     managerContactIds: [],
-    ipOwned: 'ja',
-    courseDeliveredBy: 'ja',
-    partnerInvolvement: 'no',
-    ipsCategory: 'prepare',
-    educationCourse: COMPANY_SCHOOL_UNSELECTED,
+    ipOwned: '',
+    courseDeliveredBy: '',
+    partnerInvolvement: '',
+    ipsCategory: '',
+    educationCourse: '',
     participantCount: null,
     instructor: null,
     dispatchedSchool: null,
@@ -265,7 +266,7 @@ export function createDefaultCompanySchoolRegistrationRhfValues(): CompanySchool
     grade2DistanceFee: null,
     grade3Fee: null,
     grade3DistanceFee: null,
-    paymentItemValues: undefined,
+    paymentItemValues: resolveCompanySchoolWageDefaultPaymentItemIds(),
     curriculumSessions: COMPANY_SCHOOL_FIXED_CURRICULUM_SESSIONS.map(session => ({
       sessionLabel: session.sessionLabel,
       title: session.title,
@@ -316,8 +317,9 @@ export function rhfValuesFromCompanySchoolCanonical(
     curriculumSessions: ensureTwoSessions(common.curriculumSessions),
     educationScheduleLines: [...common.educationScheduleLines],
     generalSurveyMenuKeys: [...common.generalSurveyMenuKeys],
-    paymentItemValues:
-      common.paymentItemValues === undefined ? undefined : [...common.paymentItemValues],
+    ...(common.paymentItemValues !== undefined
+      ? { paymentItemValues: [...common.paymentItemValues] }
+      : {}),
     operationRange: common.operationRange ? { ...common.operationRange } : null,
     operationAnchorIso: common.operationAnchorIso ?? null,
     educationScheduleRange: common.educationScheduleRange
@@ -450,7 +452,7 @@ export function writeCompanySchoolRhfOverlayValue(
       return next
     }
     if (suffix === 'partnerInvolvement') {
-      next.partnerInvolvement = value === 'yes' ? 'yes' : 'no'
+      next.partnerInvolvement = value === 'yes' ? 'yes' : value === 'no' ? 'no' : ''
       return next
     }
     const field = BASIC_FIELD_BY_SUFFIX[suffix]

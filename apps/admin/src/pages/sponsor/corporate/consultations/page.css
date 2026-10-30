@@ -7,10 +7,6 @@
   min-width: 0;
 }
 
-.corp-consultations-page__filter-card {
-  margin-bottom: var(--spacing-24, 24px);
-}
-
 .corp-consultations-page__filter {
   width: 100%;
 }

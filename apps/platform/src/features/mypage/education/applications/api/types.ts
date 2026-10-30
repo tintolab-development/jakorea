@@ -145,6 +145,8 @@ export type PortalTeacherAssignmentItem = {
   assignmentId?: number | null
   instructorMemberId?: number | null
   instructorName?: string | null
+  instructorPhone?: string | null
+  instructorEmail?: string | null
   programId?: number | null
   programScheduleId?: number | null
   assignmentStatus?: 'ASSIGNED' | 'COMPLETED' | string | null
@@ -184,6 +186,16 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
   preferredScheduleBlocks?: PortalPreferredScheduleBlock[] | null
   /** ORGANIZATION 교재·배송 및 INDIVIDUAL CASE_D 강사 배정 정보. 없으면 `null`. */
   teacherAssignment?: PortalTeacherAssignment | null
+  /**
+   * 기관 신청 상세 수취 필드. 폼 answers에 기관명이 없을 때 신청 내용 표의 SSOT.
+   */
+  organizationApplication?: {
+    organizationName?: string | null
+    institutionAddress?: string | null
+    institutionAddressDetail?: string | null
+    requestedGrade?: string | null
+    teacherPosition?: string | null
+  } | null
   program?: {
     programId?: number
     title?: string

@@ -10,7 +10,7 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16, 16px);
 }
 
 /* 그랩(포인터 다운) 즉시 피드백: 드래그 활성화 전 구간의 체감 지연을 줄인다.
@@ -123,7 +123,7 @@
 .dashboard-widget-slot > .ant-card {
   flex: 1;
   min-height: 0;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16, 16px);
   overflow: hidden;
   box-sizing: border-box;
   padding: 24px;
@@ -234,7 +234,7 @@
 .dashboard-widget-slot:has(.dashboard-widget-table--recruitment) > .ant-card {
   flex: 1;
   min-height: 0;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16, 16px);
   overflow: hidden;
 }
 .dashboard-widget-slot:has(.dashboard-widget-table--recruitment)
@@ -252,15 +252,15 @@
   .ant-table-wrapper {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: auto;
+  /* 스크롤은 테두리 박스 안 .ant-table-content (dashboard-widget-table.css) */
+  overflow: hidden;
 }
 
 /* 프로그램 별 문의 현황: 슬롯 높이 안에서 카드·본문·테이블 래퍼가 flex로 채워지고 테이블 영역만 세로 스크롤 */
 .dashboard-widget-slot:has(.dashboard-widget-table--customer-inquiry) > .ant-card {
   flex: 1;
   min-height: 0;
-  border-radius: var(--radius-8);
+  border-radius: var(--radius-16, 16px);
   overflow: hidden;
 }
 .dashboard-widget-slot:has(.dashboard-widget-table--customer-inquiry)
@@ -278,8 +278,8 @@
   .ant-table-wrapper {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: auto;
-  overflow-y: auto;
+  /* 스크롤은 테두리 박스 안 .ant-table-content (dashboard-widget-table.css) */
+  overflow: hidden;
 }
 
 /* 50% 너비 슬롯: 긴 헤더 라벨 한 줄 유지를 위해 좌우 패딩 축소 */

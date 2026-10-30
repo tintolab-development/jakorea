@@ -203,6 +203,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   const assignedExportRows = useMemo(
     () =>
       assignedSchedules.map(row => ({
+        id: row.id,
         no: row.no,
         serviceRegion: row.serviceRegion,
         distanceFromHome: row.distanceFromHome,
@@ -214,6 +215,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   const waitingExportRows = useMemo(
     () =>
       waitingSchedules.map(row => ({
+        id: row.id,
         no: row.no,
         serviceRegion: row.serviceRegion,
         distanceFromHome: row.distanceFromHome,
@@ -229,6 +231,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
       columns: PARTICIPATING_INDIVIDUAL_VOLUNTEER_ASSIGNED_SCHEDULE_EXCEL_COLUMNS,
       data: assignedExportRows,
       filename: '배정된 봉사 일정',
+      selectedRowKeys: selectedAssignedKeys,
     })
 
   const { exportExcel: exportWaitingExcel, isExporting: isWaitingExcelExporting } =
@@ -236,6 +239,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
       columns: PARTICIPATING_INDIVIDUAL_VOLUNTEER_WAITING_SCHEDULE_EXCEL_COLUMNS,
       data: waitingExportRows,
       filename: '배정 대기 봉사 일정',
+      selectedRowKeys: selectedWaitingKeys,
     })
 
   const persistAssignedScheduleIds = useCallback(

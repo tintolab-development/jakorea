@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
   filterRecruitmentListForWidget,
+  formatDashboardCountLabel,
+  formatDashboardHeaderTotalCount,
   formatRecruitmentCount,
   formatRecruitmentWindowStatus,
   mapDashboardHomeResponse,
   mapKpiProgressListResponse,
+  mapNotificationUnreadCount,
   mapProgramInquiryListResponse,
   mapProgramOptionsForWidget,
   mapRecruitmentListResponse,
+  countsAfterShortcutReadOptimistic,
   readCountMapValue,
+  shouldPostDashboardShortcutRead,
+  shouldShowShortcutBadge,
 } from './dashboard-adapters'
 
 describe('mapKpiProgressListResponse', () => {
@@ -270,6 +276,76 @@ describe('mapRecruitmentListResponse', () => {
     } as never)
     expect(result.rows).toHaveLength(1)
     expect(result.totalCount).toBe(50)
+    expect(formatDashboardHeaderTotalCount(result.totalCount)).toBe('총 50건')
+  })
+
+  it('모집 유형 키 생략은 0이 아니라 하이픈이고 페이징 totalCount를 행 수로 바꾸지 않는다', () => {
+    const result = mapRecruitmentListResponse({
+      items: [
+        {
+          programId: 101,
+          nameKo: 'DASH-PART-ONLY',
+          programType: 'GENERAL_INDIVIDUAL',
+          recruitmentStatus: 'OPEN',
+          participantAppliedCount: 0,
+          participantCapacity: 30,
+          studentAppliedCount: 0,
+          studentCapacity: 30,
+        },
+        {
+          programId: 102,
+          nameKo: 'DASH-VOL-INS',
+          programType: 'UJAT',
+          recruitmentStatus: 'CLOSED',
+          volunteerAppliedCount: 0,
+          volunteerCapacity: 10,
+          instructorAppliedCount: 0,
+          instructorCapacity: 5,
+        },
+      ],
+      totalCount: 96,
+      totalElements: 96,
+    } as never)
+    expect(result.rows).toHaveLength(2)
+    expect(result.totalCount).toBe(96)
+    expect(formatDashboardHeaderTotalCount(result.totalCount)).toBe('총 96건')
+    expect(
+      formatRecruitmentCount(result.rows[0]?.participantApplied, result.rows[0]?.participantCapacity)
+    ).toBe('0 / 30')
+    expect(
+      formatRecruitmentCount(result.rows[0]?.volunteerApplied, result.rows[0]?.volunteerCapacity)
+    ).toBe('-')
+    expect(
+      formatRecruitmentCount(result.rows[1]?.participantApplied, result.rows[1]?.participantCapacity)
+    ).toBe('-')
+    expect(
+      formatRecruitmentCount(result.rows[1]?.volunteerApplied, result.rows[1]?.volunteerCapacity)
+    ).toBe('0 / 10')
+  })
+
+  it('actualParticipantCount를 참여자 신청 수로 쓰지 않는다', () => {
+    const result = mapRecruitmentListResponse({
+      items: [
+        {
+          programId: 3,
+          nameKo: 'KPI 혼용 금지',
+          actualParticipantCount: 39,
+        } as never,
+      ],
+    })
+    expect(result.rows[0]?.participantApplied).toBeNull()
+  })
+
+  it('totalCount가 없으면 items.length로 헤더를 채우지 않는다', () => {
+    const result = mapRecruitmentListResponse({
+      items: [
+        { programId: 1, nameKo: 'A' },
+        { programId: 2, nameKo: 'B' },
+      ],
+    })
+    expect(result.rows).toHaveLength(2)
+    expect(result.totalCount).toBeNull()
+    expect(formatDashboardHeaderTotalCount(result.totalCount)).toBe('총 -')
   })
 })
 
@@ -277,6 +353,56 @@ describe('readCountMapValue', () => {
   it('없는 키를 0으로 채우지 않는다', () => {
     expect(readCountMapValue({ 'programs-ujat': 9 }, 'programs-gemini')).toBeUndefined()
     expect(readCountMapValue({ 'programs-ujat': 0 }, 'programs-ujat')).toBe(0)
+  })
+})
+
+describe('shouldShowShortcutBadge', () => {
+  it('0이거나 키 없으면 숨기고 양수만 표시한다', () => {
+    const counts = {
+      'programs-general-education': 0,
+      'programs-economy': 20,
+      inquiries: 4,
+    }
+    expect(shouldShowShortcutBadge(counts, 'programs-general-education')).toBe(false)
+    expect(shouldShowShortcutBadge(counts, 'programs-gemini')).toBe(false)
+    expect(shouldShowShortcutBadge(counts, 'programs-economy')).toBe(true)
+    expect(shouldShowShortcutBadge(counts, 'inquiries')).toBe(true)
+  })
+})
+
+describe('shouldPostDashboardShortcutRead', () => {
+  it('신규 키 양수만 POST하고 대기·0·누락은 보내지 않는다', () => {
+    const counts = {
+      notices: 1,
+      faq: 0,
+      inquiries: 4,
+      'permission-requests': 1,
+    }
+    expect(shouldPostDashboardShortcutRead('notices', counts)).toBe(true)
+    expect(shouldPostDashboardShortcutRead('faq', counts)).toBe(false)
+    expect(shouldPostDashboardShortcutRead('programs-gemini', counts)).toBe(false)
+    expect(shouldPostDashboardShortcutRead('inquiries', counts)).toBe(false)
+    expect(shouldPostDashboardShortcutRead('permission-requests', counts)).toBe(false)
+  })
+})
+
+describe('countsAfterShortcutReadOptimistic', () => {
+  it('신규 키는 제거하고 대기 키는 유지한다', () => {
+    const counts = { notices: 1, faq: 2, inquiries: 4 }
+    expect(countsAfterShortcutReadOptimistic(counts, 'notices')).toEqual({
+      faq: 2,
+      inquiries: 4,
+    })
+    expect(countsAfterShortcutReadOptimistic(counts, 'inquiries')).toEqual(counts)
+  })
+})
+
+describe('mapNotificationUnreadCount', () => {
+  it('누락이면 0이 아니라 null이다', () => {
+    expect(mapNotificationUnreadCount(undefined)).toBeNull()
+    expect(mapNotificationUnreadCount(0)).toBe(0)
+    expect(formatDashboardCountLabel(null)).toBe('-')
+    expect(formatDashboardCountLabel(0)).toBe('0건')
   })
 })
 
@@ -305,15 +431,18 @@ describe('filterRecruitmentListForWidget', () => {
     expect(filtered.items?.map((i: { programId?: number }) => i.programId)).toEqual([1])
   })
 
-  it('일반 일정 위젯은 교육받은 교사를 같은 항목으로 포함한다', () => {
+  it('일반 위젯은 GENERAL/GENERAL_ORGANIZATION/GENERAL_INDIVIDUAL만 남긴다', () => {
     const filtered = filterRecruitmentListForWidget('program-schedule-general-widget', {
       items: [
-        { programId: 1, nameKo: '일반', programType: 'general' },
-        { programId: 4, nameKo: '교육받은 교사', programType: 'trained_teachers' },
+        { programId: 1, nameKo: '일반', programType: 'GENERAL' },
+        { programId: 5, nameKo: '개인', programType: 'GENERAL_INDIVIDUAL' },
+        { programId: 6, nameKo: '기관', programType: 'GENERAL_ORGANIZATION' },
+        { programId: 4, nameKo: '교육받은 교사', programType: 'TRAINED_TEACHER' },
+        { programId: 7, nameKo: '봉사자', programType: 'VOLUNTEER' },
         { programId: 2, nameKo: '1사1교', programType: 'company_school' },
       ],
     })
-    expect(filtered.items?.map((i: { programId?: number }) => i.programId)).toEqual([1, 4])
+    expect(filtered.items?.map((i: { programId?: number }) => i.programId)).toEqual([1, 5, 6])
   })
 
   it('programType 없는 위젯은 전체를 유지한다', () => {

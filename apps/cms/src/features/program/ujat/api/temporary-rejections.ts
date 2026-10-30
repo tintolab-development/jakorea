@@ -1,6 +1,10 @@
 import { temporarilyRejectUjatOrganizationApplicationsRemote } from '@/features/program/general/api/programs-api-client'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 
+/** OpenAPI에 임시 반려 취소 엔드포인트가 없다. FE에서 상태를 임의 복원하지 않는다. */
+export const UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE =
+  '임시 반려 취소 API가 없어 평가 대기로 되돌리지 않았습니다.'
+
 export function parseNumericResourceId(value: string | number | null | undefined): number | null {
   if (value == null) return null
   const numeric = typeof value === 'number' ? value : Number(value)
@@ -25,7 +29,7 @@ export async function rejectUjatOrganizationApplicationsIfRemote(input: {
   }
   await temporarilyRejectUjatOrganizationApplicationsRemote(programId, {
     applicationIds,
-    reason: input.reason.trim() || 'CMS UJAT 신청기관 임시 반려',
+    reason: input.reason.trim(),
   })
   return true
 }

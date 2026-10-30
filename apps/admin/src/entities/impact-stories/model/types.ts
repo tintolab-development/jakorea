@@ -42,6 +42,8 @@ export type ImpactStory = {
   createdAt: string
   updatedAt: string
   viewCount: number
+  /** 홈·목록 카드 섬네일 (첨부 파일과 별도) */
+  thumbnail: ImpactStoryAttachment | null
   attachments: ImpactStoryAttachment[]
   /** Optimistic locking — remote API */
   version?: number
@@ -68,6 +70,7 @@ export type ImpactStoryCreateInput = {
   isPinned: boolean
   publishedAt: string
   authorName: string
+  thumbnail: ImpactStoryAttachment | null
   attachments: ImpactStoryAttachment[]
 }
 

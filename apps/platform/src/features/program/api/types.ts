@@ -25,6 +25,9 @@ import type { PortalProgramDetail as DomainPortalProgramDetail } from '@jakorea/
 export type PortalProgramDetail = DomainPortalProgramDetail & {
   trainingRequestStartDate?: string | null
   trainingRequestEndDate?: string | null
+  /** 제미나이 최소 수강 인원. 없으면 CMS `totalParticipants`와 동일 축. */
+  minStudentCount?: number | null
+  totalParticipants?: number | null
 }
 
 /** GET /api/portal/programs 목록 행 (OpenAPI PortalProgramListItem) */

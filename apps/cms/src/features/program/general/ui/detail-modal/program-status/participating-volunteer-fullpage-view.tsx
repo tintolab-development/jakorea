@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import type { Program } from '@/types/domain'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { ParticipatingSchoolRow } from '@/features/program/general/model/participating-schools'
@@ -12,6 +13,7 @@ import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { MESSAGES } from '@/shared/constants/messages'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
@@ -134,11 +136,13 @@ export function ParticipatingVolunteerFullpageView({
           reason,
           Number.isFinite(programIdNumber) ? programIdNumber : undefined
         )
-        queryClient.setQueryData(
+        const safeDto = cacheProjectedProgramPrivacy(
+          queryClient,
           generalApplicationsQueryKeys.volunteerDetail(volunteerApplicationId),
+          program.id,
           dto
         )
-        const mapped = mapVolunteerApplicationDetailToParticipatingRow(dto, mergedVolunteer)
+        const mapped = mapVolunteerApplicationDetailToParticipatingRow(safeDto, mergedVolunteer)
         setVolunteerPatches(prev => ({
           ...prev,
           volunteerName: mapped.volunteerName,
@@ -197,7 +201,11 @@ export function ParticipatingVolunteerFullpageView({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: program.id,
+    resolveProgramRole: () => resolveSessionProgramRole(program.id),
     resolveAccessItem: resolveParticipatingVolunteerFullpageAccessItem,
     revealPersonalInfo: revealParticipatingVolunteerPersonalInfo,
     onPrivacyUnmasked: applyParticipatingVolunteerPersonalInfo,
@@ -406,7 +414,7 @@ export function ParticipatingVolunteerFullpageView({
               >
                 코멘트 작성
               </CmsButton>
-              <PersonalInfoRevealButton
+              <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"

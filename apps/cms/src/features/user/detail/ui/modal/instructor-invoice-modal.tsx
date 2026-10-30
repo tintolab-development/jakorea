@@ -2,13 +2,25 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { useCmsAlert } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { getInstructorSettlementInvoiceStatusPresentation } from '@/shared/constants/instructor-settlement-status'
-import type { InstructorSettlementListRow } from '@/features/user/detail/model/instructor-settlement-types'
+import type {
+  InstructorSettlementInvoiceLineItem,
+  InstructorSettlementListRow,
+} from '@/features/user/detail/model/instructor-settlement-types'
 import { PaymentOrderPaymentConfirmationModal } from '@/features/settlement/ui/payment-record/payment-order-payment-confirmation-modal'
 import { PaymentOrderPaymentConfirmationResultModal } from '@/features/settlement/ui/payment-record/payment-order-payment-confirmation-result-modal'
 import { PaymentOrderPaymentRejectionModal } from '@/features/settlement/ui/payment-record/payment-order-payment-rejection-modal'
 import { PaymentOrderPaymentRejectionResultModal } from '@/features/settlement/ui/payment-record/payment-order-payment-rejection-result-modal'
+import {
+  PaymentOrderCalculationBasisDetailModal,
+  usePaymentOrderCalculationBasisDetailModal,
+} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
+import {
+  computePaymentOrderCalculationSubtotalBeforeWithholding,
+} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
+import type { PaymentOrderCalculationTableRow } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import { buildPaymentOrderStatementFromInstructorInvoice } from '@/features/user/detail/lib/instructor-invoice-payment-statement-bridge'
 import {
   downloadPaymentStatementRemote,
@@ -28,6 +40,33 @@ import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endp
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './instructor-invoice-modal.css'
 
+function buildBasisDetailTableRow(input: {
+  lineId: string
+  item: Pick<InstructorSettlementInvoiceLineItem, '산정항목' | '항목설명' | '정산금액' | 'isPositive' | 'kind' | 'basisDetail'>
+  institutionName: string
+  lectureDateDisplay: string
+  lectureSessionDisplay: string
+}): PaymentOrderCalculationTableRow {
+  const amount =
+    input.item.isPositive === false
+      ? -Math.abs(input.item.정산금액)
+      : input.item.정산금액
+  return {
+    key: input.lineId,
+    blockRowSpan: 1,
+    isFirstInBlock: true,
+    institutionName: input.institutionName,
+    lectureDateDisplay: input.lectureDateDisplay,
+    lectureSessionDisplay: input.lectureSessionDisplay,
+    itemLabel: input.item.산정항목,
+    description: input.item.항목설명,
+    amount,
+    lineId: input.lineId,
+    kind: input.item.kind ?? 'lecture_fee',
+    basisDetail: input.item.basisDetail,
+  }
+}
+
 export interface InstructorInvoiceModalProps {
   open: boolean
   onClose: () => void
@@ -43,6 +82,7 @@ export function InstructorInvoiceModal({
   instructorNameKo = '',
   onSettlementUpdated,
 }: InstructorInvoiceModalProps) {
+  const { showAlert } = useCmsAlert()
   const confirmMutation = useConfirmPaymentStatementMutation()
   const rejectMutation = useRejectPaymentStatementMutation()
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false)
@@ -105,6 +145,35 @@ export function InstructorInvoiceModal({
     )
   }, [effectiveRow, trimmedName])
 
+  const basisDetailContext = useMemo(() => {
+    if (!statementData || statementData.context !== 'program') return null
+    const subtotalBeforeWithholding = computePaymentOrderCalculationSubtotalBeforeWithholding(
+      statementData.blocks
+    )
+    return {
+      lectureFeeStandardTitle: statementData.basic.lectureFeeStandardTitle,
+      withholdingDailySalaryTotalWon:
+        subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
+      remoteData: true,
+    }
+  }, [statementData])
+
+  const {
+    basisDetailOpen,
+    selectedBasisDetail,
+    handleBasisDetailClick,
+    closeBasisDetailModal,
+  } = usePaymentOrderCalculationBasisDetailModal(open, basisDetailContext)
+
+  const lectureDateParts = useMemo(() => {
+    const raw = effectiveRow?.invoice.lectureDateSessions ?? '-'
+    const parts = raw.split('|').map(s => s.trim())
+    if (parts.length >= 2) {
+      return { lectureDateDisplay: parts[0], lectureSessionDisplay: parts[1] }
+    }
+    return { lectureDateDisplay: raw, lectureSessionDisplay: '-' }
+  }, [effectiveRow?.invoice.lectureDateSessions])
+
   useEffect(() => {
     if (!open) {
       setPaymentConfirmOpen(false)
@@ -119,14 +188,18 @@ export function InstructorInvoiceModal({
     ? getInstructorSettlementInvoiceStatusPresentation(effectiveRow.invoice.paymentStatementStatus)
     : null
 
-  const hideConfirmButton =
+  /** 확인·반려는 WAITING_CONFIRM|REAPPLICATION만 가능 — 확인 완료·지급 완료에서는 CTA 숨김 */
+  const hideStatementActionButtons =
     effectiveRow?.invoice.paymentStatementStatus === 'payment_statement_verified' ||
     effectiveRow?.invoice.paymentStatementStatus === 'account_paid'
 
   const handleRemoteConfirm = async (lectureFeePaymentScheduledDateIso: string) => {
     const statementId = statementIdQuery.data
     if (statementId == null) {
-      window.alert('지급조서 확인 API에 필요한 statementId가 없습니다.')
+      showAlert({
+        title: '안내',
+        content: '지급조서 확인 API에 필요한 statementId가 없습니다.',
+      })
       return
     }
     try {
@@ -138,14 +211,20 @@ export function InstructorInvoiceModal({
       setPaymentConfirmDoneOpen(true)
       onSettlementUpdated?.()
     } catch (error) {
-      window.alert(getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'))
+      showAlert({
+        title: '안내',
+        content: getSettlementApiErrorMessage(error, '지급조서 확인 처리에 실패했습니다.'),
+      })
     }
   }
 
   const handleRemoteReject = async (payload: PaymentOrderRejectSubmitPayload) => {
     const statementId = statementIdQuery.data
     if (statementId == null) {
-      window.alert('지급조서 반려 API에 필요한 statementId가 없습니다.')
+      showAlert({
+        title: '안내',
+        content: '지급조서 반려 API에 필요한 statementId가 없습니다.',
+      })
       return
     }
     try {
@@ -160,7 +239,10 @@ export function InstructorInvoiceModal({
       setPaymentRejectDoneOpen(true)
       onSettlementUpdated?.()
     } catch (error) {
-      window.alert(getSettlementApiErrorMessage(error, '지급조서 반려 처리에 실패했습니다.'))
+      showAlert({
+        title: '안내',
+        content: getSettlementApiErrorMessage(error, '지급조서 반려 처리에 실패했습니다.'),
+      })
     }
   }
 
@@ -173,7 +255,10 @@ export function InstructorInvoiceModal({
         await downloadFromBulkEndpoint(doc.downloadUrl, `지급조서_${settlementId}`, 'pdf')
       }
     } catch (error) {
-      window.alert(getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'))
+      showAlert({
+        title: '안내',
+        content: getSettlementApiErrorMessage(error, '지급조서 다운로드에 실패했습니다.'),
+      })
     } finally {
       setDownloadLoading(false)
     }
@@ -260,7 +345,7 @@ export function InstructorInvoiceModal({
                       교통비 및 숙소비는 강사가 지급 신청한 경우에만 항목 노출됩니다.
                     </span>
                   </div>
-                  {showLineActions ? (
+                  {showLineActions && !hideStatementActionButtons ? (
                     <div className="instructor-invoice-modal__statement-actions-row" role="toolbar">
                       <CmsButton
                         variant="delete"
@@ -271,17 +356,15 @@ export function InstructorInvoiceModal({
                       >
                         신청 반려
                       </CmsButton>
-                      {!hideConfirmButton ? (
-                        <CmsButton
-                          variant="primary"
-                          size="large"
-                          className="cms-button--action"
-                          width={CMS_ACTION_BUTTON_WIDTH}
-                          onClick={() => setPaymentConfirmOpen(true)}
-                        >
-                          확인 처리
-                        </CmsButton>
-                      ) : null}
+                      <CmsButton
+                        variant="primary"
+                        size="large"
+                        className="cms-button--action"
+                        width={CMS_ACTION_BUTTON_WIDTH}
+                        onClick={() => setPaymentConfirmOpen(true)}
+                      >
+                        확인 처리
+                      </CmsButton>
                     </div>
                   ) : null}
                 </div>
@@ -331,7 +414,27 @@ export function InstructorInvoiceModal({
                                 {item.isPositive !== false ? '+' : ''}
                                 {item.정산금액.toLocaleString()}원
                               </td>
-                              <td>-</td>
+                              <td>
+                                <div className="instructor-invoice-modal__basis-detail-btn-wrap">
+                                  <CmsButton
+                                    variant="default"
+                                    size="large"
+                                    width={160}
+                                    onClick={() =>
+                                      handleBasisDetailClick(
+                                        buildBasisDetailTableRow({
+                                          lineId: `${effectiveRow.id}-${item.key}`,
+                                          item,
+                                          institutionName: effectiveRow.invoice.institutionName,
+                                          ...lectureDateParts,
+                                        })
+                                      )
+                                    }
+                                  >
+                                    상세 보기
+                                  </CmsButton>
+                                </div>
+                              </td>
                             </tr>
                           ))}
                           <tr>
@@ -340,7 +443,34 @@ export function InstructorInvoiceModal({
                             <td className="instructor-invoice-modal__amount--minus">
                               -{effectiveRow.invoice.withholdingAmount.toLocaleString()}원
                             </td>
-                            <td>-</td>
+                            <td>
+                              <div className="instructor-invoice-modal__basis-detail-btn-wrap">
+                                <CmsButton
+                                  variant="default"
+                                  size="large"
+                                  width={160}
+                                  onClick={() =>
+                                    handleBasisDetailClick(
+                                      buildBasisDetailTableRow({
+                                        lineId: `${effectiveRow.id}-withholding`,
+                                        item: {
+                                          산정항목: '원천징수',
+                                          항목설명: `원천징수 ${effectiveRow.invoice.withholdingRatePercent}%`,
+                                          정산금액: effectiveRow.invoice.withholdingAmount,
+                                          isPositive: false,
+                                          kind: 'withholding',
+                                          basisDetail: effectiveRow.invoice.withholdingBasisDetail,
+                                        },
+                                        institutionName: effectiveRow.invoice.institutionName,
+                                        ...lectureDateParts,
+                                      })
+                                    )
+                                  }
+                                >
+                                  상세 보기
+                                </CmsButton>
+                              </div>
+                            </td>
                           </tr>
                         </>
                       )}
@@ -398,6 +528,12 @@ export function InstructorInvoiceModal({
         onClose={() => setPaymentRejectDoneOpen(false)}
         data={statementData}
         reason={paymentRejectReason}
+      />
+      <PaymentOrderCalculationBasisDetailModal
+        open={basisDetailOpen}
+        detail={selectedBasisDetail}
+        onCancel={closeBasisDetailModal}
+        zIndex={1200}
       />
     </>
   )

@@ -28,4 +28,8 @@ export interface FormTemplateResponse {
   /** 최초 카탈로그 원본 templateCode. 원본은 자기 자신. null 아님. */
   baseTemplateCode?: string;
   deletable?: boolean;
+  /** CATALOG | COPY | PROGRAM. GET template write-guard SSOT. */
+  templateScope?: string | null;
+  /** PROGRAM 전용 복사본의 소유 프로그램. CATALOG/COPY는 null. */
+  ownerProgramId?: number | null;
 }

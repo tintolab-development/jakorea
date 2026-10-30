@@ -10,6 +10,7 @@ vi.mock('@/shared/config/real-api-modules', () => ({
 
 import { hasRemoteAdminJwt } from '@/entities/user/api/auth-service'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
+import { GEMINI_PERFORMANCE_LIST_PAGE_SIZE } from './client'
 import {
   GEMINI_PERFORMANCE_LIST_ENDPOINT,
   shouldUseGeminiPerformanceRemoteApi,
@@ -25,6 +26,10 @@ describe('gemini performance capabilities', () => {
 
   it('uses training-reports as list SSOT', () => {
     expect(GEMINI_PERFORMANCE_LIST_ENDPOINT).toBe('training-reports')
+  })
+
+  it('lists training reports with page size 20', () => {
+    expect(GEMINI_PERFORMANCE_LIST_PAGE_SIZE).toBe(20)
   })
 
   it('requires jwt + geminiPerformance module', () => {

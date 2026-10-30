@@ -16,15 +16,38 @@
     "instructorSettlementId": [175001, 175100]
   },
   "fiveStageScenario": {
-    "programs": ["economy-prog-001", "economy-prog-002", "economy-prog-003", "economy-prog-004", "economy-prog-005"],
+    "programs": [
+      "economy-prog-001",
+      "economy-prog-002",
+      "economy-prog-003",
+      "economy-prog-004",
+      "economy-prog-005"
+    ],
     "stages": [
       { "no": 5, "label": "신청 결과 대기", "applicationStatus": "submitted" },
       { "no": 4, "label": "반려", "applicationStatus": "rejected" },
       { "no": 3, "label": "교육 예정", "applicationStatus": "reviewing" },
-      { "no": 2, "label": "교육 진행 중", "applicationStatus": "approved", "progressStatus": "IN_PROGRESS" },
-      { "no": 1, "label": "프로그램 종료", "applicationStatus": "approved", "progressStatus": "REPORT_SUBMITTED", "lectureReport": true }
+      {
+        "no": 2,
+        "label": "교육 진행 중",
+        "applicationStatus": "approved",
+        "progressStatus": "IN_PROGRESS"
+      },
+      {
+        "no": 1,
+        "label": "프로그램 종료",
+        "applicationStatus": "approved",
+        "progressStatus": "REPORT_SUBMITTED",
+        "lectureReport": true
+      }
     ],
-    "managerNames": ["이순신 매니저", "홍길동 매니저", "김담당 매니저", "박운영 매니저", "최지원 매니저"]
+    "managerNames": [
+      "이순신 매니저",
+      "홍길동 매니저",
+      "김담당 매니저",
+      "박운영 매니저",
+      "최지원 매니저"
+    ]
   },
   "memberTypeTabs": {
     "individual": ["enrollment", "volunteer"],
@@ -102,7 +125,7 @@
       "enrollmentApplicationIds": [173041, 173042, 173043, 173044, 173045],
       "lectureApplicationIds": [173046, 173047, 173048, 173049, 173050],
       "volunteerParticipantIds": [173441, 173442, 173443, 173444, 173445],
-      "note": "권한박탈 후에도 과거 이력 조회 가능 — roles contains INSTRUCTOR_REVOKED"
+      "note": "권한 종료 후에도 과거 이력 조회 가능 — roles contains INSTRUCTOR_REVOKED"
     }
   ],
   "schoolEnrollmentShowcase": [
@@ -111,7 +134,13 @@
       "organizationId": 171501,
       "mockFeUserId": "mock-school-seoul-001",
       "historyRowIds": [174001, 174002, 174003, 174004, 174005],
-      "programIds": ["economy-prog-001", "economy-prog-002", "economy-prog-003", "economy-prog-004", "economy-prog-005"],
+      "programIds": [
+        "economy-prog-001",
+        "economy-prog-002",
+        "economy-prog-003",
+        "economy-prog-004",
+        "economy-prog-005"
+      ],
       "api": "GET /api/admin/organizations/schools/171501/program-enrollment-history",
       "certificateBulkIssueHidden": true
     },
@@ -120,7 +149,13 @@
       "organizationId": 171502,
       "mockFeUserId": "mock-school-jinwol-001",
       "historyRowIds": [174011, 174012, 174013, 174014, 174015],
-      "programIds": ["economy-prog-001", "economy-prog-002", "economy-prog-003", "economy-prog-004", "economy-prog-005"]
+      "programIds": [
+        "economy-prog-001",
+        "economy-prog-002",
+        "economy-prog-003",
+        "economy-prog-004",
+        "economy-prog-005"
+      ]
     }
   ],
   "adminProgramRoleShowcase": [
@@ -130,7 +165,13 @@
       "mockFeUserId": "mock-md-admin-171601",
       "loginEmail": "admin1@jakorea.org",
       "programRoleIds": [174501, 174502, 174503, 174504, 174505],
-      "programIds": ["economy-prog-001", "economy-prog-002", "economy-prog-003", "economy-prog-004", "economy-prog-005"],
+      "programIds": [
+        "economy-prog-001",
+        "economy-prog-002",
+        "economy-prog-003",
+        "economy-prog-004",
+        "economy-prog-005"
+      ],
       "roles": ["OWNER", "OWNER", "PARTNER", "ASSISTANT", "OWNER"],
       "api": "GET /api/admin/admin-accounts/171601/program-roles"
     }

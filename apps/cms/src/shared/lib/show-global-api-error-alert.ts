@@ -11,6 +11,15 @@ import {
   getMemberDeleteCurrentPasswordInvalidAlertOptions,
   isMemberDeleteCurrentPasswordInvalidError,
 } from '@/features/user/api/get-member-api-error'
+import {
+  shouldSkipGlobalAlertForInstructorCancelApprovalBlocked,
+  shouldSkipGlobalAlertForInstructorRevokeBlocked,
+} from '@/features/user/permission-management/lib/instructor-permission-cancel-approval-blocked'
+import {
+  isProgramDateOutsideOpenPeriodError,
+  publishProgramOperationDateFocus,
+  resolveProgramDateOutsideOpenPeriodAlert,
+} from '@/features/program/shared/lib/program-date-outside-open-period-alert'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
 import { isAdminFirstLoginOnboardingIncomplete } from '@/shared/utils/post-auth-redirect'
@@ -71,9 +80,7 @@ function shouldSkipGlobalErrorAlert(
   // access token 만료 → refresh 시도 구간 (최초 401)은 Alert 생략
   if (
     status === 401 &&
-    (code === 'UNAUTHORIZED' ||
-      code === 'TOKEN_EXPIRED' ||
-      code === 'ACCESS_TOKEN_EXPIRED') &&
+    (code === 'UNAUTHORIZED' || code === 'TOKEN_EXPIRED' || code === 'ACCESS_TOKEN_EXPIRED') &&
     !config?._retry
   ) {
     return true
@@ -82,7 +89,12 @@ function shouldSkipGlobalErrorAlert(
   return false
 }
 
-function dedupeKey(method: string, url: string, message: string, httpStatus: number | null): string {
+function dedupeKey(
+  method: string,
+  url: string,
+  message: string,
+  httpStatus: number | null
+): string {
   // 응답 없음(다운/CORS/타임아웃)은 URL별이 아니라 한 버킷으로 묶어 폭주 방지
   if (httpStatus == null) return `NETWORK:${message}`
   return `${method}:${url}:${message}`
@@ -99,9 +111,9 @@ function shouldDedupe(key: string, windowMs: number): boolean {
 export function isGlobalApiErrorAlertShown(error: unknown): boolean {
   return Boolean(
     error &&
-      typeof error === 'object' &&
-      '__cmsGlobalErrorAlertShown' in error &&
-      (error as AxiosError).__cmsGlobalErrorAlertShown
+    typeof error === 'object' &&
+    '__cmsGlobalErrorAlertShown' in error &&
+    (error as AxiosError).__cmsGlobalErrorAlertShown
   )
 }
 
@@ -135,6 +147,15 @@ export function showGlobalApiErrorAlert(
 ): boolean {
   if (shouldSkipGlobalErrorAlert(error, config)) return false
 
+  const requestUrl = config?.url ?? error.config?.url
+  if (
+    shouldSkipGlobalAlertForInstructorCancelApprovalBlocked(error, requestUrl) ||
+    shouldSkipGlobalAlertForInstructorRevokeBlocked(error, requestUrl)
+  ) {
+    markGlobalErrorAlertShown(error)
+    return false
+  }
+
   const httpStatus = error.response?.status ?? null
   if (httpStatus === 403) {
     if (isAdminFirstLoginOnboardingIncomplete()) {
@@ -148,6 +169,16 @@ export function showGlobalApiErrorAlert(
     markGlobalErrorAlertShown(error)
     cmsAlertModal.show(getMemberDeleteCurrentPasswordInvalidAlertOptions())
     return true
+  }
+
+  if (isProgramDateOutsideOpenPeriodError(error)) {
+    const dateAlert = resolveProgramDateOutsideOpenPeriodAlert(error)
+    markGlobalErrorAlertShown(error)
+    if (dateAlert) {
+      cmsAlertModal.show({ title: dateAlert.title, content: dateAlert.content })
+      publishProgramOperationDateFocus(dateAlert.focus)
+    }
+    return dateAlert != null
   }
 
   const method = (config?.method ?? error.config?.method ?? 'GET').toUpperCase()

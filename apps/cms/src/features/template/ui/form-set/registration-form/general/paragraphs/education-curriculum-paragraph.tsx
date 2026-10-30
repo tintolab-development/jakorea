@@ -14,13 +14,26 @@ import {
   ProgramRegistrationIpsTypeFields,
   type ProgramRegistrationIpsTypeValue,
 } from './program-registration-ips-type-fields'
-import { getProgramRegistrationEducationFormOptions } from './program-registration-education-form-options'
+import {
+  DEFAULT_REGISTRATION_EDUCATION_FORM,
+  getProgramRegistrationEducationFormOptions,
+} from './program-registration-education-form-options'
+import {
+  isEducationPlaceRowVisible,
+  resolveEducationPlaceCommonEducationForm,
+} from './program-registration-education-place-rules'
 import { GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   PRE_EDUCATION_SCHEDULE_LABEL,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import { IndividualPerScheduleExtraRows } from './individual-per-schedule-extra-rows'
+import {
+  EMPTY_EDUCATION_PLACE_RECORD,
+  ProgramRegistrationEducationPlacePerScheduleRow,
+  educationPlaceRecordKeyOf,
+} from './program-registration-education-place-fields'
+import { REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY } from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
 import {
   EMPTY_PROGRAM_REGISTRATION_MULTI_ROUND_ASSIGNMENT,
   ProgramRegistrationMultiRoundAssignmentFields,
@@ -124,6 +137,8 @@ type ProgramRegistrationEducationCurriculumParagraphProps = {
   preEducationDisplayMode?: 'prepend' | 'replaceFirst'
   /** 교육받은 교사 — 과제 설정 비노출 (교육일지와 구분) */
   hideAssignmentSettings?: boolean
+  /** 일반 등록·참여자 <개인> — 교육 진행 장소(일정 별 상이 시 블록 최하단) */
+  educationPlaceEnabled?: boolean
 }
 
 type ProgramRegistrationCurriculumMultiSessionRowPlan =
@@ -319,7 +334,25 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   preEducationBlockLabel = PRE_EDUCATION_SCHEDULE_LABEL,
   preEducationDisplayMode = 'prepend',
   hideAssignmentSettings = false,
+  educationPlaceEnabled = false,
 }: ProgramRegistrationEducationCurriculumParagraphProps) {
+  const [educationPlaceScheduleDetail] = useProgramRegistrationOverlayKv<string>(
+    REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
+    'common'
+  )
+  const showEducationPlacePerSchedule =
+    educationPlaceEnabled && educationPlaceScheduleDetail === 'perSchedule'
+  const educationPlaceRecordKey = educationPlaceRecordKeyOf('curriculumSession')
+  const [educationPlaceRecord] = useProgramRegistrationOverlayKv<Record<number, string>>(
+    educationPlaceRecordKey,
+    EMPTY_EDUCATION_PLACE_RECORD
+  )
+  const handleEducationPlaceChange = (index: number, next: string) => {
+    updateProgramRegistrationOverlayKey<Record<number, string>>(educationPlaceRecordKey, prev => ({
+      ...(prev ?? {}),
+      [index]: next,
+    }))
+  }
   const replaceFirstTraining =
     scheduleCurriculumPreEducation && preEducationDisplayMode === 'replaceFirst'
   const prependTraining =
@@ -359,8 +392,41 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     )
   }, [prependTraining])
 
+  // 사전 교육 교육 형태 — 라디오 표시 기본값(online)을 overlay에 기록. 미터치·자동채우기 후 0번 누락 방지
+  const preEducationEducationFormMissing = !educationFormBySession?.[PRE_EDUCATION_SESSION_INDEX]
+  useEffect(() => {
+    if (!prependTraining || !preEducationEducationFormMissing) return
+    updateProgramRegistrationOverlayKey<Record<number, string>>(
+      'generalRegistration.educationCurriculum.educationFormBySession',
+      prev =>
+        prev?.[PRE_EDUCATION_SESSION_INDEX]
+          ? prev
+          : { ...(prev ?? {}), [PRE_EDUCATION_SESSION_INDEX]: 'online' }
+    )
+  }, [prependTraining, preEducationEducationFormMissing])
+
   const educationFormForSession = (sessionIndex: number) =>
     educationFormBySession[sessionIndex] ?? 'online'
+  const [singleEducationForm] = useProgramRegistrationOverlayKv<string>(
+    'generalRegistration.typeSettings.singleEducationForm',
+    DEFAULT_REGISTRATION_EDUCATION_FORM
+  )
+  const [multiCommonEducationForm] = useProgramRegistrationOverlayKv<string>(
+    'generalRegistration.typeSettings.multiCommonEducationForm',
+    DEFAULT_REGISTRATION_EDUCATION_FORM
+  )
+  /** 교육 형태 「온라인」 행은 교육 진행 장소 숨김·필수 제외 */
+  const isEducationPlaceVisibleAt = (index: number) =>
+    isEducationPlaceRowVisible({
+      sessionRoundType,
+      educationFormScheduleDetail,
+      commonEducationForm: resolveEducationPlaceCommonEducationForm({
+        sessionRoundType,
+        singleEducationForm,
+        multiCommonEducationForm,
+      }),
+      rowEducationForm: educationFormBySession[index],
+    })
   const participationForSession = (sessionIndex: number) =>
     participationBySession[sessionIndex] ?? 'individual'
   const assignmentForRound = (roundIndex: number) =>
@@ -432,6 +498,9 @@ export function ProgramRegistrationEducationCurriculumParagraph({
       'generalRegistration.educationCurriculum.unitContentBySession',
       prev => reindexSessionRecordAfterDelete(prev ?? {}, chartIndex)
     )
+    updateProgramRegistrationOverlayKey<Record<number, string>>(educationPlaceRecordKey, prev =>
+      reindexSessionRecordAfterDelete(prev ?? {}, chartIndex)
+    )
     onDeleteCurriculumChartSession(chartIndex)
   }
 
@@ -461,6 +530,9 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     updateProgramRegistrationOverlayKey<Record<number, string>>(
       'generalRegistration.educationCurriculum.roundContentByRound',
       prev => reindexSessionRecordAfterDelete(prev ?? {}, roundIndex)
+    )
+    updateProgramRegistrationOverlayKey<Record<number, string>>(educationPlaceRecordKey, prev =>
+      reindexSessionRecordAfterDelete(prev ?? {}, roundIndex)
     )
     onDeleteCurriculumSession(roundIndex)
   }
@@ -597,7 +669,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
           const chartIndex = i + 1
           const trainingSession = isTrainingSession(chartIndex)
           const ipsValue = ipsBySession[chartIndex] ?? { category: '', detail: '' }
-          const extraRows = trainingSession ? (
+          const ipsExtraRows = trainingSession ? (
             renderLockedTrainingIpsRow()
           ) : isSingleIpsPerChart ? (
             <DetailInfoForm.Row type="single">
@@ -617,6 +689,20 @@ export function ProgramRegistrationEducationCurriculumParagraph({
               />
             </DetailInfoForm.Row>
           ) : null
+          const extraRows =
+            showEducationPlacePerSchedule && !trainingSession && isEducationPlaceVisibleAt(chartIndex) ? (
+              <>
+                {ipsExtraRows}
+                <ProgramRegistrationEducationPlacePerScheduleRow
+                  kind="curriculumSession"
+                  index={chartIndex}
+                  value={educationPlaceRecord[chartIndex] ?? ''}
+                  onChange={handleEducationPlaceChange}
+                />
+              </>
+            ) : (
+              ipsExtraRows
+            )
           return (
             <ProgramRegistrationCurriculumChartSessionBlock
               key={chartIndex}
@@ -893,6 +979,16 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                 ) : (
                   renderMultiRoundPlanExtraRows(roundIndex)
                 )}
+                {showEducationPlacePerSchedule &&
+                !trainingSession &&
+                isEducationPlaceVisibleAt(roundIndex) ? (
+                  <ProgramRegistrationEducationPlacePerScheduleRow
+                    kind="curriculumSession"
+                    index={roundIndex}
+                    value={educationPlaceRecord[roundIndex] ?? ''}
+                    onChange={handleEducationPlaceChange}
+                  />
+                ) : null}
               </DetailInfoForm>
               {roundIndex > 1 ? (
                 <ItemDeleteButton

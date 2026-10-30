@@ -12,6 +12,7 @@ import type {
   TalentDonationBanner,
   TalentDonationIntroData,
 } from '@/entities/talent-donation-intro/model/types'
+import { mapStoryResponseToDomain } from '@/features/impact-stories/api/mappers'
 import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
 import { getJAKoreaHomepageAdminAPIImpactStorySubset } from '@/shared/api/generated/impact-story/impact-story-api'
 import type { TalentSponsorshipAdminResponse } from '@/shared/api/generated/sponsorship/schemas/talentSponsorshipAdminResponse'
@@ -88,9 +89,10 @@ async function resolveInterviewStoryDisplay(
 
   try {
     const story = await getJAKoreaHomepageAdminAPIImpactStorySubset().detail1(numericId)
+    const mapped = mapStoryResponseToDomain(story)
     return {
-      linkedStoryTitle: story.title?.trim() ?? '',
-      thumbnailUrl: story.attachment?.publicUrl?.trim() ?? '',
+      linkedStoryTitle: mapped.title,
+      thumbnailUrl: mapped.thumbnail?.dataUrl?.trim() ?? '',
     }
   } catch {
     // 게시글 상세 조회가 실패해도 인터뷰 본문과 연결 ID는 유지한다.

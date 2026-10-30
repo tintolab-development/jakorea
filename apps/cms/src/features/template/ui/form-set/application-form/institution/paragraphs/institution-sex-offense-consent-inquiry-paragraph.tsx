@@ -3,22 +3,26 @@ import {
   patchInstitutionSexOffenseConsentInquiryMethod,
   patchInstitutionSexOffenseConsentSiteSubmission,
   shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph,
+  useInstitutionApplicationFormVisibilityVersion,
+  type InstitutionSexOffenseConsentInquiryMethod,
   type InstitutionSexOffenseConsentSiteSubmission,
 } from '@/features/program/general/lib/institution-application-form-visibility'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
-  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION,
+  DEFAULT_SEX_OFFENSE_INQUIRY_METHOD,
+  DEFAULT_SEX_OFFENSE_SITE_SUBMISSION,
+  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS,
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_NOTES,
   INSTITUTION_SEX_OFFENSE_CONSENT_SITE_SUBMISSION_OPTIONS,
+  isSexOffenseInquiryMethod,
+  isSexOffenseSiteSubmission,
+  shouldShowSexOffenseSiteFields,
 } from '@/features/template/lib/institution-sex-offense-consent-field-definitions'
 import { useGeneralApplicationOverlayKv } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 import './institution-sex-offense-consent-inquiry-paragraph.css'
-
-/** 조회 방식 선택 항목 제거 — 저장 값은 범죄경력회보서 사이트 이용으로 고정 */
-const FIXED_INQUIRY_METHOD = 'criminal_record_site'
 
 const nowrapSpanStyle = { whiteSpace: 'nowrap' as const, flexShrink: 0 as const }
 
@@ -36,13 +40,15 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
   /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
   choiceDisplayOnly?: boolean
 } = {}) {
+  const visibilityVersion = useInstitutionApplicationFormVisibilityVersion()
+  void visibilityVersion
   const [inquiryMethod, setInquiryMethod] = useGeneralApplicationOverlayKv<string>(
     'application.institution.sexOffense.inquiryMethod',
-    FIXED_INQUIRY_METHOD
+    DEFAULT_SEX_OFFENSE_INQUIRY_METHOD
   )
   const [siteSubmission, setSiteSubmission] = useGeneralApplicationOverlayKv<string>(
     'application.institution.sexOffense.siteSubmission',
-    'online'
+    ''
   )
   const [institutionId, setInstitutionId] = useGeneralApplicationOverlayKv(
     'application.institution.sexOffense.institutionId',
@@ -53,31 +59,88 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
     ''
   )
 
-  useEffect(() => {
-    if (inquiryMethod !== FIXED_INQUIRY_METHOD) setInquiryMethod(FIXED_INQUIRY_METHOD)
-    patchInstitutionSexOffenseConsentInquiryMethod(FIXED_INQUIRY_METHOD)
-  }, [inquiryMethod, setInquiryMethod])
+  const resolvedInquiryMethod = isSexOffenseInquiryMethod(inquiryMethod)
+    ? inquiryMethod
+    : DEFAULT_SEX_OFFENSE_INQUIRY_METHOD
+  const showSiteFields = shouldShowSexOffenseSiteFields(resolvedInquiryMethod)
 
   useEffect(() => {
+    if (choiceDisplayOnly) return
+    if (!isSexOffenseInquiryMethod(inquiryMethod)) {
+      setInquiryMethod(DEFAULT_SEX_OFFENSE_INQUIRY_METHOD)
+    }
+    patchInstitutionSexOffenseConsentInquiryMethod(
+      (isSexOffenseInquiryMethod(inquiryMethod)
+        ? inquiryMethod
+        : DEFAULT_SEX_OFFENSE_INQUIRY_METHOD) as InstitutionSexOffenseConsentInquiryMethod
+    )
+  }, [choiceDisplayOnly, inquiryMethod, setInquiryMethod])
+
+  useEffect(() => {
+    if (choiceDisplayOnly) return
+    if (!showSiteFields) return
+    if (!isSexOffenseSiteSubmission(siteSubmission)) {
+      setSiteSubmission(DEFAULT_SEX_OFFENSE_SITE_SUBMISSION)
+      return
+    }
     patchInstitutionSexOffenseConsentSiteSubmission(
       siteSubmission as InstitutionSexOffenseConsentSiteSubmission
     )
-  }, [siteSubmission])
+  }, [choiceDisplayOnly, setSiteSubmission, showSiteFields, siteSubmission])
 
   if (!shouldShowInstitutionApplicationSexOffenseConsentInquiryParagraph()) {
     return null
   }
 
-  const showOnlineCredentials = siteSubmission === 'online'
-  const displaySiteSubmission = choiceDisplayOnly ? undefined : siteSubmission
+  const displayInquiryMethod = choiceDisplayOnly ? resolvedInquiryMethod : inquiryMethod
+  const displaySiteSubmission = choiceDisplayOnly
+    ? undefined
+    : isSexOffenseSiteSubmission(siteSubmission)
+      ? siteSubmission
+      : DEFAULT_SEX_OFFENSE_SITE_SUBMISSION
   const displayInstitutionId = choiceDisplayOnly ? '' : institutionId
   const displayVerificationNumber = choiceDisplayOnly ? '' : verificationNumber
   const lockStyle = choiceDisplayOnly ? { pointerEvents: 'none' as const } : undefined
 
+  const inquiryMethodField = (
+    <DetailInfoForm.Field
+      label="조회 방식"
+      fullRow
+      edit={
+        <CmsRadioGroup
+          size="medium"
+          value={displayInquiryMethod}
+          onChange={event => {
+            if (choiceDisplayOnly) return
+            const next = event.target.value
+            if (!isSexOffenseInquiryMethod(next) || next === inquiryMethod) return
+            setInquiryMethod(next)
+            if (next === 'ja_system') {
+              setSiteSubmission('')
+              setInstitutionId('')
+              setVerificationNumber('')
+              return
+            }
+            setSiteSubmission(DEFAULT_SEX_OFFENSE_SITE_SUBMISSION)
+            setInstitutionId('')
+            setVerificationNumber('')
+          }}
+          style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+        >
+          {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_METHOD_OPTIONS.map(option => (
+            <CmsRadio size="medium" key={option.value} value={option.value}>
+              {option.label}
+            </CmsRadio>
+          ))}
+        </CmsRadioGroup>
+      }
+      view="-"
+    />
+  )
+
   const siteSubmissionField = (
     <DetailInfoForm.Field
       label="사이트 제출 방식"
-      fullRow={!showOnlineCredentials}
       edit={
         <CmsRadioGroup
           size="medium"
@@ -99,52 +162,55 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
     />
   )
 
+  const credentialsField = (
+    <DetailInfoForm.Field
+      label="성범죄 경력조회용 정보"
+      edit={
+        <div
+          className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
+          style={inlineRowStyle}
+        >
+          <span style={nowrapSpanStyle}>ID</span>
+          <CmsInput
+            inputSize="small"
+            placeholder="기관 아이디"
+            width={120}
+            value={displayInstitutionId}
+            readOnly={choiceDisplayOnly}
+            onChange={event => {
+              if (choiceDisplayOnly) return
+              setInstitutionId(event.target.value)
+            }}
+          />
+          <DetailInfoForm.InputsSeparator />
+          <span style={nowrapSpanStyle}>검증번호</span>
+          <CmsInput
+            inputSize="small"
+            placeholder="검증번호"
+            width={120}
+            value={displayVerificationNumber}
+            readOnly={choiceDisplayOnly}
+            onChange={event => {
+              if (choiceDisplayOnly) return
+              setVerificationNumber(event.target.value)
+            }}
+          />
+        </div>
+      }
+      view="-"
+    />
+  )
+
   return (
     <div className="program-application-form-institution__paragraph" style={lockStyle}>
       <DetailInfoForm title="" hideHeader mode="edit" className="program-registration-paragraph">
-        {showOnlineCredentials ? (
+        <DetailInfoForm.Row type="single">{inquiryMethodField}</DetailInfoForm.Row>
+        {showSiteFields ? (
           <DetailInfoForm.Row type="double">
             {siteSubmissionField}
-            <DetailInfoForm.Field
-              label="성범죄 경력조회용 정보"
-              edit={
-                <div
-                  className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
-                  style={inlineRowStyle}
-                >
-                  <span style={nowrapSpanStyle}>ID</span>
-                  <CmsInput
-                    inputSize="small"
-                    placeholder="기관 아이디"
-                    width={120}
-                    value={displayInstitutionId}
-                    readOnly={choiceDisplayOnly}
-                    onChange={event => {
-                      if (choiceDisplayOnly) return
-                      setInstitutionId(event.target.value)
-                    }}
-                  />
-                  <DetailInfoForm.InputsSeparator />
-                  <span style={nowrapSpanStyle}>검증번호</span>
-                  <CmsInput
-                    inputSize="small"
-                    placeholder="검증번호"
-                    width={120}
-                    value={displayVerificationNumber}
-                    readOnly={choiceDisplayOnly}
-                    onChange={event => {
-                      if (choiceDisplayOnly) return
-                      setVerificationNumber(event.target.value)
-                    }}
-                  />
-                </div>
-              }
-              view="-"
-            />
+            {credentialsField}
           </DetailInfoForm.Row>
-        ) : (
-          <DetailInfoForm.Row type="single">{siteSubmissionField}</DetailInfoForm.Row>
-        )}
+        ) : null}
       </DetailInfoForm>
       <div className="institution-sex-offense-inquiry__notes">
         <ul className="institution-sex-offense-inquiry__note-list">
@@ -152,9 +218,6 @@ export function ProgramApplicationFormInstitutionSexOffenseConsentInquiryParagra
             <li key={note}>{note}</li>
           ))}
         </ul>
-        <p className="institution-sex-offense-inquiry__caution">
-          {INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_CAUTION}
-        </p>
       </div>
     </div>
   )

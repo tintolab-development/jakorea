@@ -26,7 +26,7 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
-import { CmsRadio } from '@/shared/ui/cms-radio'
+import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
 import {
@@ -56,6 +56,12 @@ const NEED_OR_NOT_OPTIONS = [
   { value: 'required' as const, label: '필요' },
   { value: 'not_required' as const, label: '불필요' },
 ]
+
+/** 개인 참여자 면접 유무 — 등록 화면(applicant-recruit-individual-participant-info-paragraph)과 같은 문구 */
+const PARTICIPANT_INTERVIEW_OPTIONS = [
+  { value: 'yes' as const, label: '면접 있음' },
+  { value: 'no' as const, label: '면접 없음' },
+] as const
 
 const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 
@@ -337,11 +343,11 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           mode={formMode}
           className={FORM_CLASS}
         >
-          <DetailInfoForm.Row type={isTrainedTeachers ? 'double' : 'single'}>
+          <DetailInfoForm.Row type={isIndividual || isTrainedTeachers ? 'double' : 'single'}>
             <DetailInfoForm.Field
               label="공고 게시 여부"
               validationKey={`${recruitKeyPrefix}.announcementPublished`}
-              fullRow={!isTrainedTeachers}
+              fullRow={!isIndividual && !isTrainedTeachers}
               view={display.announcementPublishedLabel}
               edit={
                 isEdit && form ? (
@@ -352,13 +358,40 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       <ParticipantRecruitmentAnnouncementPublishedRadios
                         value={field.value}
                         onChange={field.onChange}
-                        size={isGeneralOrg ? 'medium' : 'large'}
                       />
                     )}
                   />
                 ) : undefined
               }
             />
+            {isIndividual ? (
+              <DetailInfoForm.Field
+                label="참여자 면접 유무"
+                view={display.interviewEnabledLabel ?? '-'}
+                edit={
+                  isEdit && form ? (
+                    <Controller
+                      name="participantRecruitmentInterviewEnabled"
+                      control={form.control}
+                      render={({ field }) => (
+                        <CmsRadioGroup
+                          size="medium"
+                          value={field.value ?? undefined}
+                          onChange={e => field.onChange(e.target.value)}
+                          className={RECRUITMENT_RADIO_CLASS}
+                        >
+                          {PARTICIPANT_INTERVIEW_OPTIONS.map(option => (
+                            <CmsRadio key={option.value} value={option.value} size="medium">
+                              {option.label}
+                            </CmsRadio>
+                          ))}
+                        </CmsRadioGroup>
+                      )}
+                    />
+                  ) : undefined
+                }
+              />
+            ) : null}
             {isTrainedTeachers ? studentListField : null}
           </DetailInfoForm.Row>
 

@@ -76,7 +76,10 @@ import {
   resolveCombinedClassMergeViewState,
 } from '@/features/program/general/lib/organization-merge-groups-mapper'
 import { isGeneralOrganizationProgram } from '@/features/program/general/lib/organization-merge-program-type'
-import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import {
+  resolveParticipatingInstitutionPreferredDisplaySessions,
+  resolveParticipatingProgressAssignedSessions,
+} from '@/features/program/general/lib/organization-education-schedule-sources'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './participating-institutions-section.css'
 
@@ -370,7 +373,9 @@ export function ParticipatingInstitutionsSection({
                   })
                 )
                 .filter(Boolean)
-            : buildParticipatingSchoolPreferredScheduleLines(record.sessions)
+            : buildParticipatingSchoolPreferredScheduleLines(
+                resolveParticipatingInstitutionPreferredDisplaySessions(record)
+              )
           if (showAssignedEducationSchedule && sessionLines.length === 0) return '-'
           const total = sessionLines.length
           const showCount = total <= 3 ? total : 2

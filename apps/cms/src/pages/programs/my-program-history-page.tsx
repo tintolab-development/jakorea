@@ -6,7 +6,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Card, Table, Space, Tabs, Spin, Timeline } from 'antd'
+import { Card, Space, Tabs, Spin, Timeline } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { ProgramCategoryBadge } from '@/shared/components/program-category-badge'
 import {
   ArrowLeftOutlined,
@@ -244,7 +245,7 @@ export function MyProgramHistoryPage() {
       children: (
         <Card>
           {settlements.length > 0 ? (
-            <Table
+            <CmsDataTable
               columns={settlementColumns}
               dataSource={settlements}
               rowKey="id"
@@ -266,7 +267,7 @@ export function MyProgramHistoryPage() {
       children: (
         <Card>
           {program.schedules.length > 0 ? (
-            <Table
+            <CmsDataTable
               columns={[
                 {
                   title: '일정명',

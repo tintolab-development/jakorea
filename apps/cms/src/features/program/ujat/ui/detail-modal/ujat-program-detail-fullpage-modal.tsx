@@ -138,6 +138,7 @@ import {
 } from './application-institution/tabs'
 import { programDetailInstitutionsEditSchema } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
+  formatUjatRegistrationRequiredFieldReasons,
   listIncompleteUjatProgramRecruitmentInterviewScheduleRequiredFields,
   listIncompleteUjatProgramRecruitmentTypedRequiredFields,
 } from '@/features/program/ujat/lib/ujat-program-registration-required-fields'
@@ -147,6 +148,7 @@ import {
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import {
+  buildRequiredFieldsIncompleteAlertContent,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
@@ -281,7 +283,10 @@ import {
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
-import { resolveSurveyShareClipboardUrl } from '@/features/program/general/api/adapters/program-survey-adapters'
+import {
+  describeSurveyShareClipboardFailure,
+  resolveSurveyShareClipboardUrl,
+} from '@/features/program/general/api/adapters/program-survey-adapters'
 import { getPlatformPublicOrigin } from '@/features/program/general/lib/public-survey-origin'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
@@ -1592,7 +1597,7 @@ export function UjatProgramDetailFullPageModal({
     program: displayProgram ?? ({} as Program),
     mapToValues: mapVolunteerRecruitmentEditValues,
     recruitmentAudience: 'volunteer',
-    recruitmentNotesField: 'otherNotes',
+    recruitmentNotesField: 'oneLineIntroduction',
     strictRemote: true,
     onSaveEdit: displayProgram
       ? async (draft, patch) => {
@@ -1820,9 +1825,12 @@ export function UjatProgramDetailFullPageModal({
     const incompleteKeys = [...typedIncompleteKeys, ...interviewIncompleteKeys]
     if (incompleteKeys.length > 0) {
       detailRequiredHighlight.report(incompleteKeys)
+      console.debug('[ujat-detail] 모집정보 필수항목 미입력:', incompleteKeys)
       void showAlert({
         title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
-        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        content: buildRequiredFieldsIncompleteAlertContent(
+          formatUjatRegistrationRequiredFieldReasons(incompleteKeys)
+        ),
       })
       return
     }
@@ -2100,13 +2108,14 @@ export function UjatProgramDetailFullPageModal({
     void (async () => {
       try {
         const response = await createGeneralProgramSurveyShareLink(programId, bindingId)
+        const platformOrigin = getPlatformPublicOrigin()
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
+          ? resolveSurveyShareClipboardUrl(response, platformOrigin)
           : null
         if (!url) {
           void showAlert({
             title: '공유',
-            content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            content: describeSurveyShareClipboardFailure(response, platformOrigin, 'survey'),
           })
           return
         }
@@ -2311,13 +2320,18 @@ export function UjatProgramDetailFullPageModal({
     void (async () => {
       try {
         const response = await createGeneralProgramSurveyShareLink(programId, bindingId)
+        const platformOrigin = getPlatformPublicOrigin()
         const url = response
-          ? resolveSurveyShareClipboardUrl(response, getPlatformPublicOrigin())
+          ? resolveSurveyShareClipboardUrl(response, platformOrigin)
           : null
         if (!url) {
           void showAlert({
             title: '공유',
-            content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+            content: describeSurveyShareClipboardFailure(
+              response,
+              platformOrigin,
+              'satisfaction'
+            ),
           })
           return
         }

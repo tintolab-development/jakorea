@@ -97,6 +97,11 @@ export function isGeminiInstitutionContactPersonParagraphId(id: string): boolean
   return id === GEMINI_CONTACT_PERSON_ID
 }
 
+/** Gemini 찾아가는 연수 강사 신청 — 연수 공문 (CMS GeminiInstructorOfficialDocumentParagraph) */
+export function isGeminiInstructorOfficialDocumentParagraphId(id: string): boolean {
+  return id === GEMINI_VISITING_TRAINING_APPLICATION_FORM_INSTRUCTOR_IDS.officialDocument
+}
+
 /** 강사 신청 — 성범죄경력 조회 동의서 제출 방법 안내 (CMS InstructorCrimeRecordParagraph) */
 export function isInstructorCrimeRecordParagraphId(id: string): boolean {
   return INSTRUCTOR_CRIME_RECORD_IDS.has(id)
@@ -206,15 +211,17 @@ function isVisibleApplicationParagraphRow(row: Record<string, unknown>): boolean
 }
 
 function paragraphHasRuntimeBindingOptions(row: Record<string, unknown>): boolean {
-  const rawItems = Array.isArray(row.items)
-    ? row.items
-    : Array.isArray(row.options)
-      ? row.options
-      : []
+  const rawItems = [
+    ...(Array.isArray(row.items) ? row.items : []),
+    ...(Array.isArray(row.options) ? row.options : []),
+    ...(Array.isArray(row.scheduleOptions) ? row.scheduleOptions : []),
+  ]
   return rawItems.some(item => {
     if (!item || typeof item !== 'object') return false
     const option = item as Record<string, unknown>
-    const id = String(option.id ?? option.option_value ?? '').trim()
+    const id = String(
+      option.id ?? option.option_value ?? option.optionValue ?? option.value ?? '',
+    ).trim()
     return id.length > 0
   })
 }
@@ -281,7 +288,10 @@ export function shouldShowEducationPlaceOnBasicInfo(paragraphId: string): boolea
   )
 }
 
-/** 일반 기관 신청 — M·E-mail은 로그인 회원 정보로 고정 */
+/** 일반 기관·1사1교 기관 신청 — M·E-mail은 로그인 회원 정보로 고정 (Tel만 입력) */
 export function shouldLockTeacherMobileEmailOnBasicInfo(paragraphId: string): boolean {
-  return paragraphId === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo
+  return (
+    paragraphId === PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo ||
+    paragraphId === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.basicInfo
+  )
 }

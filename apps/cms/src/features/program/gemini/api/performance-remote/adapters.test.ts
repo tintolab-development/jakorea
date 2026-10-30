@@ -17,6 +17,7 @@ describe('gemini performance adapters', () => {
         trainingMinutes: 90,
         classCount: 2,
         calculatedAmount: 10000,
+        accountPaymentId: 55,
         createdAt: '2026-03-02T00:00:00Z',
       },
       0
@@ -26,6 +27,43 @@ describe('gemini performance adapters', () => {
     expect(row.trainingLocation).toBe('서울초')
     expect(row.trainingHours).toBe(1.5)
     expect(row.trainingMethod).toBe('OFFLINE')
+    expect(row.participantCount).toBeNull()
+    expect(row.assistantInstructorNames).toBe('-')
+    expect(row.accountPaymentId).toBe(55)
+  })
+
+  it('maps start/end time, assistants, and participantCount from the list DTO', () => {
+    const row = mapGeminiTrainingReportItemToRow(
+      {
+        trainingReportId: 8,
+        trainingLocation: '서울',
+        trainingStartTime: '13:30:00',
+        trainingEndTime: '16:30:00',
+        participantCount: 21,
+        topic: 'Gemini 아카데미',
+        assistantInstructorNames: '곽도규, 김도영',
+        assistantInstructorCount: 2,
+        deliveryType: 'OFFLINE',
+      },
+      0
+    )
+    expect(row.detailTimeText).toBe('13:30 ~ 16:30')
+    expect(row.participantCount).toBe(21)
+    expect(row.trainingTopic).toBe('Gemini 아카데미')
+    expect(row.assistantInstructorNames).toBe('곽도규, 김도영')
+    expect(row.instructorCount).toBe(2)
+    expect(row.trainingFormat).toBe('-')
+    expect(row.trainingMethod).toBe('OFFLINE')
+  })
+
+  it('omits accountPaymentId when the list item has none', () => {
+    const row = mapGeminiTrainingReportItemToRow({ trainingReportId: 1 }, 0)
+    expect(row.accountPaymentId).toBeUndefined()
+  })
+
+  it('does not treat accountPaymentId 0 as paid', () => {
+    const row = mapGeminiTrainingReportItemToRow({ trainingReportId: 1, accountPaymentId: 0 }, 0)
+    expect(row.accountPaymentId).toBeUndefined()
   })
 
   it('maps upload+display to import row', () => {

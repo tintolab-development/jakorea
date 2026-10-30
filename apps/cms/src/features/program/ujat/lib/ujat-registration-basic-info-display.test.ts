@@ -12,7 +12,6 @@ import {
 } from './ujat-registration-basic-info-display'
 import { resolveUjatBusinessKpiDisplay } from './ujat-business-kpi-display'
 import {
-  UJAT_BASIC_INFO_REP_KO_DEFAULT,
   UJAT_DETAILED_PROGRAM_UJAT_LABEL,
   UJAT_DETAILED_PROGRAM_UJAT_VALUE,
   UJAT_SPONSOR_ALL_VALUE,
@@ -87,9 +86,14 @@ describe('resolveUjatRegistrationBasicInfoDisplay — 상세 overlay (세션 기
     expect(display.participantTypes).toBe('-')
   })
 
-  it('신규 등록 빈 폼은 대표명 기본값을 유지한다', () => {
-    const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {})
-    expect(next.mainTitle).toBe(UJAT_BASIC_INFO_REP_KO_DEFAULT)
+  it('신규 등록 빈 overlay는 대표명 기본 문구를 넣지 않는다', () => {
+    const next = applyUjatRegistrationOverlayToProgram(
+      { ...baseProgram(), title: '', mainTitle: undefined, titleEn: undefined },
+      {}
+    )
+    expect(next.mainTitle).toBeUndefined()
+    expect(next.titleEn).toBeUndefined()
+    expect(next.title).toBe('')
   })
 
   it('overlay 참여자 플래그가 없어도 상세에 학교/기관, 봉사자가 보인다', () => {
@@ -173,11 +177,10 @@ describe('UJAT 상세 공통정보 overlay 시드', () => {
 })
 
 describe('applyUjatRegistrationOverlayToProgram — detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 버그 수정 확인)', () => {
-  it('overlay가 비어 있으면 UJAT 고정값(id·name)이 그대로 Program에 반영된다', () => {
+  it('overlay가 비어 있으면 세부 프로그램 Select를 채우지 않는다', () => {
     const next = applyUjatRegistrationOverlayToProgram(baseProgram(), {})
-    expect(next.detailedProgramId).toBe(UJAT_DETAILED_PROGRAM_UJAT_VALUE)
-    expect(next.teamDivision).toBe(UJAT_DETAILED_PROGRAM_UJAT_LABEL)
-    expect(next.generalCommonInfo?.detailedProgramName).toBe(UJAT_DETAILED_PROGRAM_UJAT_LABEL)
+    expect(next.detailedProgramId).toBe('')
+    expect(next.generalCommonInfo?.detailedProgramName ?? '-').toBe('-')
   })
 
   it('사업 분야 폼 코드를 BE 마스터명으로 정규화한다', () => {

@@ -1,5 +1,21 @@
 import type { InstructorRoleKey } from '@/features/program/general/model/school-detail-types'
-import type { WaitingInstructorAssignmentStatus } from '@/features/program/general/lib/waiting-instructor-assignment'
+import {
+  WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS,
+  type WaitingInstructorAssignmentStatus,
+} from '@/features/program/general/lib/waiting-instructor-assignment'
+
+/** 개인형 배정 대기 — 공통 대기 상태 + 이 강사의 배정 취소 이력(배정 취소, 선택 불가) */
+export type ParticipatingIndividualInstructorWaitingStatus =
+  | WaitingInstructorAssignmentStatus
+  | 'assignment_cancelled'
+
+export const PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS: Record<
+  ParticipatingIndividualInstructorWaitingStatus,
+  string
+> = {
+  ...WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS,
+  assignment_cancelled: '배정 취소',
+}
 
 export type ParticipatingIndividualInstructorAssignedScheduleRow = {
   id: string
@@ -25,7 +41,8 @@ export type ParticipatingIndividualInstructorWaitingScheduleRow = {
   lectureLocation: string
   distanceFromHome: string
   scheduleLabel: string
-  assignmentStatus: WaitingInstructorAssignmentStatus
+  assignmentStatus: ParticipatingIndividualInstructorWaitingStatus
+  assignmentStatusLabel?: string
   assignedInstructorCountLabel: string
   organizationApplicationId?: string
   instructorApplicationId?: string

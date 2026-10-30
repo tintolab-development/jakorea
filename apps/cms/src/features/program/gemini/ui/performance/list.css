@@ -3,6 +3,10 @@
   max-width: 100%;
 }
 
+.gemini-performance-list__table {
+  --table-selection-column-width: 60px;
+}
+
 .gemini-performance-upload-duplicate-modal__message {
   margin: 0;
   white-space: pre-line;
@@ -16,7 +20,6 @@
 }
 
 .gemini-performance-list__table td.ant-table-cell:not(.ant-table-selection-column) > * {
-  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

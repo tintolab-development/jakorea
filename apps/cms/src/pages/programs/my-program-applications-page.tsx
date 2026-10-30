@@ -5,9 +5,11 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Card, Table, Space, Tabs } from 'antd'
+import { Card, Space } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { EyeOutlined } from '@ant-design/icons'
 import { ContentModal, EmptyState, LoadingButton } from '@/shared/ui'
+import { CmsPageTabs } from '@/shared/ui/cms-text-tabs'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { getCategoryNameByPath } from '@/shared/config/menu-config'
@@ -200,39 +202,35 @@ export function MyProgramApplicationsPage() {
       </Space>
 
       <Card>
-        <Tabs
-          activeKey={activeTab}
+        <CmsPageTabs
+          size="section"
+          aria-label="신청 상태"
+          value={activeTab}
           onChange={key => setActiveTab(key as ApplicationStatus | 'all')}
           items={statusTabs.map(tab => ({
-            key: tab.key,
-            label: (
-              <span>
-                {tab.label}
-                {tab.key !== 'all' && (
-                  <span style={{ marginLeft: 8, color: 'rgba(0, 0, 0, 0.45)' }}>
-                    ({tabCounts[tab.key as keyof typeof tabCounts] || 0})
-                  </span>
-                )}
-              </span>
-            ),
-            children:
-              filteredApplications.length === 0 ? (
-                <EmptyState description="신청한 프로그램이 없습니다." />
-              ) : (
-                <Table
-                  columns={columns}
-                  dataSource={filteredApplications}
-                  rowKey="id"
-                  loading={loading}
-                  pagination={{
-                    defaultPageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: total => `총 ${total}개`,
-                  }}
-                />
-              ),
+            value: tab.key,
+            label: tab.label,
+            count:
+              tab.key === 'all'
+                ? undefined
+                : tabCounts[tab.key as keyof typeof tabCounts] || 0,
           }))}
         />
+        {filteredApplications.length === 0 ? (
+          <EmptyState description="신청한 프로그램이 없습니다." />
+        ) : (
+          <CmsDataTable
+            columns={columns}
+            dataSource={filteredApplications}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              defaultPageSize: 10,
+              showSizeChanger: true,
+              showTotal: total => `총 ${total}개`,
+            }}
+          />
+        )}
       </Card>
 
       <ContentModal

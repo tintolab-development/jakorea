@@ -35,6 +35,7 @@ export const INDIVIDUAL_APPROVAL_SCOPE_ERROR_CODES = [
   'GENERAL_INDIVIDUAL_SCHEDULE_MULTI_REQUIRES_ALL_SCHEDULES',
   'GENERAL_INDIVIDUAL_EDUCATION_SCHEDULE_NOT_CONFIGURED',
   'GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED',
+  'GENERAL_INDIVIDUAL_PRE_EDUCATION_SCOPE_MISMATCH',
   'GENERAL_INDIVIDUAL_SCHEDULE_MODE_FIXED_DATE_ONLY',
   'EDUCATION_SCOPE_REVISION_CONFLICT',
   'EDUCATION_SCOPE_HAS_CERTIFICATE',
@@ -74,6 +75,15 @@ export type IndividualApprovalSchedulePlan = {
 }
 
 const SELECTABLE_ROLES = new Set(['EDUCATION', 'SESSION'])
+const DISPLAY_ROLES = new Set(['EDUCATION', 'SESSION', 'PRE_EDUCATION'])
+
+export const GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE =
+  '프로그램 공통정보의 필수 사전교육 일정이 아직 생성되지 않았습니다. 프로그램 저장에서 사전교육 날짜를 확인한 뒤 다시 승인하세요.'
+
+const INDIVIDUAL_APPROVAL_SCOPE_CODE_MESSAGES: Partial<Record<string, string>> = {
+  GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED:
+    GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE,
+}
 
 export const INDIVIDUAL_APPROVAL_PROGRAM_SHAPE_MISSING_MESSAGE =
   '프로그램의 교육 구조, 회차, 일정 모드를 확인할 수 없습니다.'
@@ -122,29 +132,54 @@ function normalizeToken(value: unknown): string {
   return typeof value === 'string' ? value.trim().toUpperCase() : ''
 }
 
-export function isSelectableProgramDefinedEducationSlot(
-  slot: ProgramEducationSlotResponse
-): boolean {
+function isProgramDefinedActiveSlot(slot: ProgramEducationSlotResponse): boolean {
   const scheduleId = positiveScheduleId(slot.scheduleId)
   if (scheduleId == null) return false
   if (normalizeToken(slot.scheduleOrigin) !== 'PROGRAM_DEFINED') return false
   if (normalizeToken(slot.scheduleStatus) !== 'ACTIVE') return false
+  return true
+}
+
+export function isSelectableProgramDefinedEducationSlot(
+  slot: ProgramEducationSlotResponse
+): boolean {
+  if (!isProgramDefinedActiveSlot(slot)) return false
   return SELECTABLE_ROLES.has(normalizeToken(slot.scheduleRole))
 }
 
-export function listSelectableProgramDefinedEducationSlots(
-  slots: ReadonlyArray<ProgramEducationSlotResponse> | null | undefined
+export function isDisplayableProgramDefinedEducationSlot(
+  slot: ProgramEducationSlotResponse
+): boolean {
+  if (!isProgramDefinedActiveSlot(slot)) return false
+  return DISPLAY_ROLES.has(normalizeToken(slot.scheduleRole))
+}
+
+function listProgramDefinedEducationSlots(
+  slots: ReadonlyArray<ProgramEducationSlotResponse> | null | undefined,
+  accept: (slot: ProgramEducationSlotResponse) => boolean
 ): ProgramEducationSlotResponse[] {
   const seen = new Set<number>()
   const result: ProgramEducationSlotResponse[] = []
   for (const slot of slots ?? []) {
-    if (!isSelectableProgramDefinedEducationSlot(slot)) continue
+    if (!accept(slot)) continue
     const scheduleId = positiveScheduleId(slot.scheduleId)
     if (scheduleId == null || seen.has(scheduleId)) continue
     seen.add(scheduleId)
     result.push({ ...slot, scheduleId })
   }
   return result
+}
+
+export function listSelectableProgramDefinedEducationSlots(
+  slots: ReadonlyArray<ProgramEducationSlotResponse> | null | undefined
+): ProgramEducationSlotResponse[] {
+  return listProgramDefinedEducationSlots(slots, isSelectableProgramDefinedEducationSlot)
+}
+
+export function listDisplayableProgramDefinedEducationSlots(
+  slots: ReadonlyArray<ProgramEducationSlotResponse> | null | undefined
+): ProgramEducationSlotResponse[] {
+  return listProgramDefinedEducationSlots(slots, isDisplayableProgramDefinedEducationSlot)
 }
 
 export function resolveIndividualApprovalProgramShape(input: {
@@ -243,6 +278,28 @@ function formatIndividualPreferredScheduleTitle(
     return formatCmsScheduleDisplayLabel(preferred.label!.trim())
   }
   return `신청 희망 일정 ${index + 1}`
+}
+
+export function listAssignedEducationSlotOptions(
+  slots: ReadonlyArray<ProgramEducationSlotResponse> | null | undefined
+): IndividualApprovalScheduleOption[] {
+  return listDisplayableProgramDefinedEducationSlots(slots).map(slot => {
+    const scheduleId = slot.scheduleId as number
+    const role = normalizeToken(slot.scheduleRole)
+    const title = formatIndividualEducationSlotTitle({
+      scheduleId,
+      sessionNo: role === 'PRE_EDUCATION' ? null : slot.sessionNo,
+      startAt: slot.startAt,
+      endAt: slot.endAt,
+    })
+    return {
+      key: `assigned-slot:${scheduleId}`,
+      scheduleId,
+      title: role === 'PRE_EDUCATION' ? (title === '교육 일정' ? '사전 교육' : `사전 교육 · ${title}`) : title,
+      selectable: false,
+      blockedReason: null,
+    }
+  })
 }
 
 export function listPlannedEducationSlotOptions(
@@ -565,6 +622,8 @@ export function formatIndividualApprovalScopeErrorMessage(error: unknown): strin
   const timingMessage = getNotificationTimingApiErrorMessage(error)
   if (timingMessage) return timingMessage
   const code = getApiErrorCode(error)
+  const mapped = code ? INDIVIDUAL_APPROVAL_SCOPE_CODE_MESSAGES[code] : undefined
+  if (mapped) return mapped
   const data =
     error && typeof error === 'object' && 'response' in error
       ? (error as { response?: { data?: unknown } }).response?.data

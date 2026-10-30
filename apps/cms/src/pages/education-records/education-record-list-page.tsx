@@ -32,7 +32,7 @@ import {
   performanceRecordsParamsFromSearchParams,
 } from '@/features/education-record/api/performance-filter-params'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
+import { CmsPageTabs } from '@/shared/ui/cms-text-tabs'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import './education-record-list-page.css'
 
@@ -152,14 +152,14 @@ export function EducationRecordListPage() {
         />
       ) : null}
 
-      <CmsTextTabs
+      <CmsPageTabs
         className="education-record-list-page__tabs"
-        activeKey={activeKey}
+        value={activeKey}
         onChange={handleTabChange}
-        ariaLabel="실적 관리 탭"
+        aria-label="실적 관리 탭"
         items={[
-          { key: 'data', label: '실적 데이터' },
-          { key: 'summary', label: '합계' },
+          { value: 'data', label: '실적 데이터' },
+          { value: 'summary', label: '합계' },
         ]}
         trailing={
           <ExcelButton

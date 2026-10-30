@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
@@ -13,6 +14,7 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
+import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
@@ -97,7 +99,7 @@ import {
 import './school-detail-fullpage-view.css'
 import './participating-participant-fullpage-view.css'
 
-const APPLICATION_INFO_EDIT_UNMASK_REASON = '정보 수정'
+const APPLICATION_INFO_EDIT_UNMASK_REASON = '신청 정보 수정'
 
 const APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT =
   "정보 수정 시 개인정보 마스킹이 해제되며,\n개인정보 열람 사유는 '정보 수정'으로 로그 이력에 기록됩니다.\n해당 참여자의 개인정보 열람 및 정보를 수정하시겠습니까?"
@@ -230,11 +232,13 @@ export function ParticipatingParticipantFullpageView({
     async (reason: string) => {
       if (hasIndividualApplicationId) {
         const dto = await unmaskIndividualApplicationPrivacyRemote(individualApplicationId, reason)
-        queryClient.setQueryData(
+        const safeDto = cacheProjectedProgramPrivacy(
+          queryClient,
           generalApplicationsQueryKeys.individualDetail(individualApplicationId),
+          program.id,
           dto
         )
-        const mapped = mapIndividualApplicationDetailToParticipatingRow(dto, mergedParticipant)
+        const mapped = mapIndividualApplicationDetailToParticipatingRow(safeDto, mergedParticipant)
         setParticipantPatches(prev => ({
           ...prev,
           applicantName: mapped.applicantName,
@@ -292,7 +296,11 @@ export function ParticipatingParticipantFullpageView({
     revealWithReason,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
+  programPrivacyPending,
   } = usePersonalInfoReveal({
+    privacyScope: 'program',
+    programId: program.id,
+    resolveProgramRole: () => resolveSessionProgramRole(program.id),
     resolveAccessItem: resolvePersonalInfoAccessItem,
     revealPersonalInfo: revealParticipatingParticipantPersonalInfo,
     onPrivacyUnmasked: applyParticipatingParticipantPersonalInfo,
@@ -697,7 +705,7 @@ export function ParticipatingParticipantFullpageView({
               >
                 코멘트 작성
               </CmsButton>
-              <PersonalInfoRevealButton
+              <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"

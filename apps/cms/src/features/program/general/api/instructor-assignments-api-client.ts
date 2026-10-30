@@ -81,15 +81,24 @@ export async function cancelInstructorAssignmentRemote(
 
 export async function fetchInstructorAssignmentCalendarRemote(
   programId: string,
-  params: { from: string; to: string; instructorMemberId?: string | number }
+  params: {
+    from?: string
+    to?: string
+    instructorMemberId?: string | number
+  } = {}
 ): Promise<InstructorAssignmentCalendarResponse> {
-  return unwrapApiBody(
+  const body = unwrapApiBody<InstructorAssignmentCalendarResponse | null | undefined>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/instructor-assignment-calendar`,
       method: 'GET',
       params,
     })
   )
+  return {
+    // Canonical API는 ApiResponse.data가 아닌 응답 본문을 직접 반환한다.
+    // 계약상 items는 항상 배열이어야 하며, 서버 값 외의 행은 생성하지 않는다.
+    items: Array.isArray(body?.items) ? body.items : [],
+  }
 }
 
 export async function putRepresentativeInstructorRemote(

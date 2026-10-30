@@ -1,13 +1,20 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionScheduleAssignDateBlock } from './date-block'
 import { UjatInstitutionScheduleAssignEstimationTable } from './estimation-table'
 import { useUjatInstitutionScheduleAssign } from './use-schedule-assign'
+import { collectScheduleAssignPendingInstitutionNames } from './utils'
 
 export type UjatScheduleAssignRemoteSave = () => Promise<
   | { ok: true; message?: string }
   | { ok: false; message: string }
 >
+
+export type UjatScheduleAssignBindMeta = {
+  saving: boolean
+  remoteEnabled: boolean
+  pendingInstitutionNames: string[]
+}
 
 export function UjatInstitutionScheduleAssignSection({
   regionKey,
@@ -16,7 +23,10 @@ export function UjatInstitutionScheduleAssignSection({
 }: {
   regionKey: UjatInstitutionApplicationRegionKey
   programId?: string | null
-  onBindRemoteSave?: (save: UjatScheduleAssignRemoteSave | null, meta: { saving: boolean; remoteEnabled: boolean }) => void
+  onBindRemoteSave?: (
+    save: UjatScheduleAssignRemoteSave | null,
+    meta: UjatScheduleAssignBindMeta
+  ) => void
 }) {
   const {
     assignDates,
@@ -35,10 +45,28 @@ export function UjatInstitutionScheduleAssignSection({
     remoteEnabled,
   } = useUjatInstitutionScheduleAssign(regionKey, programId)
 
+  const pendingInstitutionNames = useMemo(
+    () =>
+      collectScheduleAssignPendingInstitutionNames(
+        regionState.days,
+        organizationNamesByApplicationId
+      ),
+    [organizationNamesByApplicationId, regionState.days]
+  )
+
   useEffect(() => {
-    onBindRemoteSave?.(saveTemporarySchedules, { saving, remoteEnabled })
-    return () => onBindRemoteSave?.(null, { saving: false, remoteEnabled: false })
-  }, [onBindRemoteSave, remoteEnabled, saveTemporarySchedules, saving])
+    onBindRemoteSave?.(saveTemporarySchedules, {
+      saving,
+      remoteEnabled,
+      pendingInstitutionNames,
+    })
+    return () =>
+      onBindRemoteSave?.(null, {
+        saving: false,
+        remoteEnabled: false,
+        pendingInstitutionNames: [],
+      })
+  }, [onBindRemoteSave, pendingInstitutionNames, remoteEnabled, saveTemporarySchedules, saving])
 
   return (
     <div className="ujat-schedule-assign-section">

@@ -84,7 +84,7 @@ exports[`gemini recruit save parity (part3 step1) > seed → snapshot → gemini
   "attachmentFileNames": [
     "a.pdf",
   ],
-  "businessEndDate": "2026-11-10T00:00:00.000Z",
+  "businessEndDate": "2026-11-20T00:00:00.000Z",
   "businessStartDate": "2026-11-01T00:00:00.000Z",
   "contactEmail": "gemini@jakorea.org",
   "contactName": "담당자",

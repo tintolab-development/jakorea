@@ -1,7 +1,4 @@
-import {
-  PermissionModal,
-  type PermissionModalPayload,
-} from '@/shared/components/permission-modal'
+import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { NotifyTimingCapability } from '@/shared/lib/notify-timing-capability'
 import {
   buildProgramApplicationRejectCopy,
@@ -21,6 +18,8 @@ export type ProgramApplicationRejectModalProps = {
   zIndex?: number
   notifyTimingCapability?: NotifyTimingCapability
   notifyTimingOptions?: 'two' | 'three'
+  confirmLoading?: boolean
+  reasonPlaceholder?: string
 }
 
 export function ProgramApplicationRejectModal({
@@ -34,6 +33,8 @@ export function ProgramApplicationRejectModal({
   zIndex,
   notifyTimingCapability,
   notifyTimingOptions,
+  confirmLoading,
+  reasonPlaceholder = '반려 사유를 입력해 주세요.',
 }: ProgramApplicationRejectModalProps) {
   const copy = buildProgramApplicationRejectCopy({
     audience,
@@ -53,8 +54,9 @@ export function ProgramApplicationRejectModal({
       confirmVariant="delete"
       requireReason
       reasonLabel="반려 사유"
-      reasonPlaceholder="반려 사유를 입력해 주세요."
+      reasonPlaceholder={reasonPlaceholder}
       reasonRequiredMessage="반려 사유를 입력해 주세요."
+      confirmLoading={confirmLoading}
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}

@@ -22,13 +22,14 @@
   gap: var(--spacing-32);
 }
 
+/* PC: Figma 11001-199634 — 카테고리 30 · 제목 55(1줄) · 기간 30 (간격 8) → 배지 32(+24) → 소개(+40) */
 .loadingMain {
   display: flex;
   min-width: 0;
   flex: 1 1 auto;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--spacing-12);
+  gap: var(--spacing-8);
   order: 1;
 }
 
@@ -57,42 +58,44 @@
 }
 
 .skeletonBack {
-  width: 96px;
-  height: 28px;
+  width: 120px;
+  height: 40px;
+}
+
+.skeleton.skeletonPoster {
+  display: none;
 }
 
 .skeletonCategory {
   width: 72px;
-  height: 20px;
+  height: 30px;
 }
 
 .skeletonTitle {
   width: min(100%, 520px);
-  height: 40px;
+  height: 55px;
 }
 
-.skeletonTitleShort {
+.skeleton.skeletonTitleShort {
+  display: none;
   width: min(70%, 320px);
-  height: 40px;
 }
 
 .skeletonMeta {
   width: min(100%, 360px);
-  height: 24px;
-  margin-top: var(--spacing-8);
+  height: 30px;
 }
 
 .skeletonBadges {
   width: min(100%, 280px);
   height: 32px;
-  margin-top: 25px;
-  margin-bottom: var(--spacing-40);
+  margin-top: var(--spacing-16);
+  margin-bottom: var(--spacing-32);
 }
 
 .skeletonSummary {
   width: 100%;
-  height: 96px;
-  margin-top: var(--spacing-16);
+  height: 108px;
 }
 
 .skeletonBanner {
@@ -105,6 +108,82 @@
   width: 100%;
   height: 80px;
   border-radius: var(--radius-16);
+}
+
+/* Mobile: Figma 6772-30311 — 포스터 94×132 | 카테고리·제목·배지, 아래 기간·후원사 → 소개 */
+@media (--bp-below-pc) {
+  .loadingMain {
+    display: grid;
+    grid-template-areas:
+      'poster category'
+      'poster title'
+      'poster titleShort'
+      'poster badges'
+      'meta meta'
+      'summary summary';
+    grid-template-columns: 94px minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr auto auto;
+    gap: 0 var(--spacing-12);
+    align-items: start;
+  }
+
+  .loadingAside {
+    display: none;
+  }
+
+  .skeletonBack {
+    width: 91px;
+    height: 30px;
+  }
+
+  .skeleton.skeletonPoster {
+    display: block;
+    grid-area: poster;
+    width: 94px;
+    height: 132px;
+  }
+
+  .skeletonCategory {
+    grid-area: category;
+    width: 60px;
+    height: 16px;
+    margin-top: var(--spacing-4);
+  }
+
+  .skeletonTitle {
+    grid-area: title;
+    width: 100%;
+    height: 22px;
+    margin-top: var(--spacing-8);
+  }
+
+  .skeleton.skeletonTitleShort {
+    display: block;
+    grid-area: titleShort;
+    height: 22px;
+    margin-top: 6px;
+  }
+
+  .skeletonBadges {
+    grid-area: badges;
+    width: min(100%, 140px);
+    height: 24px;
+    align-self: end;
+    margin: var(--spacing-8) 0 0;
+  }
+
+  .skeletonMeta {
+    grid-area: meta;
+    width: min(100%, 220px);
+    height: 98px;
+    margin-top: var(--spacing-20);
+  }
+
+  .skeletonSummary {
+    grid-area: summary;
+    height: 96px;
+    margin-top: var(--spacing-20);
+  }
 }
 
 @keyframes detail-skeleton-shimmer {
@@ -204,7 +283,170 @@
   gap: var(--spacing-8);
 }
 
+/* Figma 11001:199645는 1920 단일 행(항목 nowrap)만 정의 — 좁은 폭에선 항목 단위로 줄바꿈하고
+   라벨은 끊지 않는다. 값(후원사 목록 등)은 자르지 않도록 기본 줄바꿈 유지 */
+.metaLabel {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Figma 11001-199641: 운영기간·후원사 줄 아래 24px, 배지 줄 아래 소개까지 40px */
 .badges {
-  margin-top: 25px;
+  margin-top: var(--spacing-24);
   margin-bottom: var(--spacing-40);
+}
+
+/* 모바일 전용 요소 — PC에서는 숨김 */
+.posterThumb,
+.mobileAttachments,
+.mobileApplyBar {
+  display: none;
+}
+
+/* Figma 11001-199634: 목록으로 행 40px → 본문 280px (button UA padding-block 1px 제거) */
+.back > button {
+  padding-block: 0;
+}
+
+/* ── Mobile · Figma 6772-30311 ── */
+@media (--bp-below-pc) {
+  /* 목록으로: 30px 원형 버튼 + 12px + 14px SemiBold, 아래 20px */
+  .back {
+    margin-bottom: var(--spacing-20);
+  }
+
+  .back > button {
+    gap: var(--spacing-12);
+  }
+
+  /* ProgramBackButton large(40) → small(30) 크기 — 공용 컴포넌트는 그대로, 상세 모바일에서만 */
+  .back > button > span:first-child {
+    width: 30px;
+    height: 30px;
+    padding: 7px;
+  }
+
+  .back > button > span:last-child {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    letter-spacing: 0;
+  }
+
+  /* 포스터(94×132) | 카테고리·제목·배지 → 첨부 → 운영기간·후원사(세로) */
+  .header {
+    display: grid;
+    grid-template-areas:
+      'poster categories'
+      'poster title'
+      'poster badges'
+      'attachments attachments'
+      'meta meta';
+    grid-template-columns: 94px minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto auto;
+    column-gap: var(--spacing-12);
+    margin-bottom: var(--spacing-20);
+  }
+
+  .headerMain {
+    display: contents;
+  }
+
+  .posterThumb {
+    display: flex;
+    grid-area: poster;
+    width: 94px;
+    height: 132px;
+    overflow: hidden;
+    border-radius: var(--radius-12);
+    box-shadow:
+      0 0 1.92px 0 rgb(14 42 53 / 8%),
+      0 4.48px 3.68px 0 rgb(14 42 53 / 10%);
+  }
+
+  .categories {
+    grid-area: categories;
+    padding-top: var(--spacing-4);
+  }
+
+  .categories .categoryLabel {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: normal;
+    letter-spacing: 0;
+  }
+
+  .headerMain .title {
+    grid-area: title;
+    margin-top: var(--spacing-4);
+    font-size: 20px;
+    line-height: 1.4;
+    letter-spacing: -0.4px;
+  }
+
+  .badges {
+    grid-area: badges;
+    align-self: end;
+    margin: var(--spacing-8) 0 0;
+  }
+
+  .badges .badgeList {
+    gap: var(--spacing-8) var(--spacing-4);
+  }
+
+  .mobileAttachments {
+    display: flex;
+    grid-area: attachments;
+    flex-direction: column;
+    gap: var(--spacing-8);
+    margin: var(--spacing-20) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .mobileAttachments .mobileAttachment {
+    max-width: none;
+    padding-inline: var(--spacing-12);
+    border-radius: var(--radius-12);
+  }
+
+  .meta {
+    grid-area: meta;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-20);
+    margin-top: var(--spacing-20);
+  }
+
+  .metaItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .meta .metaLabel {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: normal;
+    letter-spacing: 0;
+  }
+
+  .meta .metaValue {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: normal;
+    letter-spacing: 0;
+  }
+
+  /* 하단 신청 바 (Figma 6772-30480): 375×80 풀폭, 스크롤 중 화면 하단 고정 · 끝에서는 푸터 위에 멈춤 */
+  .mobileApplyBar {
+    position: sticky;
+    z-index: 30;
+    bottom: 0;
+    display: block;
+    width: 100%;
+  }
+
+  .mobileApplyBar .mobileApplyButton {
+    border-radius: 0;
+  }
 }

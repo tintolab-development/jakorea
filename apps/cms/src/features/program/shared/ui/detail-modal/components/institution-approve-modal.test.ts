@@ -5,7 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
-import { InstitutionApproveModal } from './institution-approve-modal'
+import {
+  InstitutionApproveModal,
+  buildInstitutionApproveMessage,
+  resolveInstitutionApproveModalTitle,
+} from './institution-approve-modal'
 
 vi.mock('@/shared/ui/cms-alert-modal-provider', () => ({
   useCmsAlert: () => ({ showAlert: vi.fn() }),
@@ -584,5 +588,52 @@ describe('InstitutionApproveModal schedule sources', () => {
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('requestedScheduleId')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
+  })
+
+  it('1사1교 신청 카피는 일정 배정 없이 프로그램 신청 승인 안내를 쓴다', async () => {
+    renderModal({
+      schoolName: 'JA초등학교',
+      scheduleConfig: null,
+      copyVariant: 'program-application',
+    })
+
+    expect(screen.getByText('프로그램 신청 승인 안내')).toBeTruthy()
+    expect(screen.getByText(/프로그램 신청을 승인하시겠습니까/)).toBeTruthy()
+    expect(screen.getByText(/승인 시 담당 교사에게 승인 알림이 발송됩니다/)).toBeTruthy()
+    expect(screen.getByText('알림 발송')).toBeTruthy()
+    expect(screen.getByText('즉시')).toBeTruthy()
+    expect(screen.getByText('발표일에 맞춰서')).toBeTruthy()
+    expect(screen.getByText('직접 설정')).toBeTruthy()
+    expect(screen.queryByText('기관 승인 안내')).toBeNull()
+    expect(screen.queryByText('배정된 일정')).toBeNull()
+    expect(screen.queryByText(/선택한 일정으로 교육이 배정/)).toBeNull()
+  })
+
+  it('일정 없는 기본 카피는 기관 승인 안내를 유지한다', () => {
+    renderModal({
+      schoolName: '테스트학교',
+      scheduleConfig: null,
+    })
+    expect(screen.getByText('기관 승인 안내')).toBeTruthy()
+    expect(screen.getByText(/프로그램 참여를 승인하시겠습니까/)).toBeTruthy()
+  })
+})
+
+describe('institution approve copy helpers', () => {
+  it('program-application 카피는 일반 프로그램과 같은 신청 문구를 쓴다', () => {
+    expect(resolveInstitutionApproveModalTitle(false, 'program-application')).toBe(
+      '프로그램 신청 승인 안내'
+    )
+    expect(buildInstitutionApproveMessage('JA초등학교', false, false, 'program-application')).toBe(
+      '**[JA초등학교]**의 프로그램 신청을 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.'
+    )
+  })
+
+  it('일반 일정 배정 카피는 기존 문구를 유지한다', () => {
+    expect(resolveInstitutionApproveModalTitle(true)).toBe('프로그램 신청 승인 안내')
+    expect(buildInstitutionApproveMessage('테스트학교', true)).toContain(
+      '승인 시 선택한 일정으로 교육이 배정되며'
+    )
+    expect(buildInstitutionApproveMessage('테스트학교')).toContain('프로그램 참여를 승인하시겠습니까')
   })
 })

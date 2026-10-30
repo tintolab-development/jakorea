@@ -356,6 +356,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     const saved = patch.generalCommonInfo?.curriculumSessions?.[0]
     expect(patch.generalCommonInfo?.scheduleCurriculumPreEducation).toBe(true)
     expect(saved?.sessionLabel).toBe('사전 교육')
+    expect(saved?.isPreEducation).toBe(true)
     expect(saved?.title).toBe('사전 워크숍')
     expect(saved?.scheduleDateLabel).toBe('26년 4월 20일(월) 9:30 ~ 12:20')
     expect(saved?.educationFormLabel).toBe('오프라인')
@@ -452,6 +453,7 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     const patch = generalCommonInfoEditValuesToProgramPatch(values, program, sponsorContext)
     const saved = patch.generalCommonInfo?.scheduleDetails?.[0]
     expect(saved?.scheduleLabel).toBe('사전 교육')
+    expect(saved?.blockKind).toBe('preEducation')
     expect(saved?.name).toBe('사전 워크숍')
 
     const merged: Program = {

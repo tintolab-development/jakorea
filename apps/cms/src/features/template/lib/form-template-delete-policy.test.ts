@@ -3,6 +3,9 @@ import {
   buildLocalDuplicateWritingTemplateCode,
   canReorderParticipantApplicationParagraphs,
   isCatalogFixedWritingFormTemplateCode,
+  isCatalogOriginalVersionWriteBlocked,
+  isCatalogSurveyOrGeneralAgreementTemplateCode,
+  isDocumentOnlyAgreementTemplateCode,
   isDuplicateWritingTemplateCode,
   isProgramScopedOperationalWritingTemplate,
   isRecruitmentOrApplicationWritingTemplateCode,
@@ -31,6 +34,18 @@ describe('form-template-delete-policy', () => {
       true
     )
     expect(shouldOmitImmutableFormSchemaJson('agreement-portrait')).toBe(false)
+  })
+
+  it('allows new catalog survey and general agreement versions but blocks operational originals', () => {
+    expect(isCatalogSurveyOrGeneralAgreementTemplateCode('survey-default')).toBe(true)
+    expect(isCatalogSurveyOrGeneralAgreementTemplateCode('agreement-third-party')).toBe(true)
+    expect(isCatalogSurveyOrGeneralAgreementTemplateCode('agreement-crime')).toBe(false)
+    expect(isCatalogOriginalVersionWriteBlocked('registration-general')).toBe(true)
+    expect(isCatalogOriginalVersionWriteBlocked('recruitment-instructor')).toBe(true)
+    expect(isCatalogOriginalVersionWriteBlocked('application-participant-school')).toBe(true)
+    expect(isCatalogOriginalVersionWriteBlocked('survey-default')).toBe(false)
+    expect(isDocumentOnlyAgreementTemplateCode('agreement-crime')).toBe(true)
+    expect(isCatalogOriginalVersionWriteBlocked('agreement-crime')).toBe(true)
   })
 
   it('identifies catalog-fixed template codes', () => {
@@ -258,6 +273,21 @@ describe('resolveAgreementWritingFormConfig', () => {
     expect(catalog?.structureLockedParagraphIds).toBeDefined()
     const editable = stripAgreementWritingFormStructureLocks(catalog!)
     expect(editable.structureLockedParagraphIds).toBeUndefined()
+    expect(editable.hideDragHandleForParagraphIds).toBeUndefined()
     expect(editable.paragraphBodyOptions?.agreementAdminProxyConfirm).toBe(true)
+    expect(editable.paragraphBodyOptions?.structureLockedAuthoringChoicePreview).toBeUndefined()
+    expect(editable.paragraphBodyOptions?.documentPreviewClassName).toBe(
+      catalog!.paragraphBodyOptions?.documentPreviewClassName
+    )
+  })
+
+  it('keeps payment-statement authoring values when unlocking catalog inputs', () => {
+    const catalog = resolveAgreementWritingFormConfig('agreement-third-party')
+    const editable = stripAgreementWritingFormStructureLocks(catalog!)
+    expect(editable.structureLockedParagraphIds).toBeUndefined()
+    expect(editable.paragraphBodyOptions?.paymentStatementBasicInfoValues).toEqual(
+      catalog!.paragraphBodyOptions?.paymentStatementBasicInfoValues
+    )
+    expect(editable.paragraphBodyOptions?.structureLockedAuthoringChoicePreview).toBeUndefined()
   })
 })

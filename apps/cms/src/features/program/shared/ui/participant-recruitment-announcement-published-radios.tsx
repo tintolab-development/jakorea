@@ -9,11 +9,11 @@ const RECRUITMENT_RADIO_CLASS = 'program-detail-info-tab__recruitment-radio'
 export function ParticipantRecruitmentAnnouncementPublishedRadios({
   value,
   onChange,
-  size = 'large',
+  size = 'medium',
 }: {
-  value: ParticipantRecruitmentAnnouncementPublishedValue | undefined
+  value: ParticipantRecruitmentAnnouncementPublishedValue | '' | undefined
   onChange: (next: ParticipantRecruitmentAnnouncementPublishedValue) => void
-  /** 참여 기관 모집 정보는 학생 명단 제출 여부와 같은 medium. 그 외 화면은 large. */
+  /** 프로그램 상세·모집 양식 수정은 14px(medium). */
   size?: CmsRadioSize
 }) {
   return (

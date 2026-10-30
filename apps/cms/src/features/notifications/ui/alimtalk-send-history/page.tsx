@@ -14,6 +14,7 @@ import type {
   AlimtalkSendHistoryPendingFilters,
   AlimtalkSendHistoryRow,
 } from '@/features/notifications/model/alimtalk-send-history/types'
+import { notificationDeliveryDetailView } from '@/features/notifications/api/notification-delivery-detail-cache'
 import { useAlimtalkSendHistoryDetailQuery, useAlimtalkSendHistoryQuery } from '@/features/notifications/hooks/use-alimtalk-send-history-query'
 import { DetailModal } from './detail-modal'
 import '@/pages/programs/program-list-page.css'
@@ -63,12 +64,8 @@ export function Page() {
   const [pendingFilters, setPendingFilters] = useState<AlimtalkSendHistoryPendingFilters>(appliedFilters)
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null)
 
-  const selectedListRow = useMemo(
-    () => rows.find(row => row.id === selectedRowId) ?? null,
-    [rows, selectedRowId]
-  )
   const detailQuery = useAlimtalkSendHistoryDetailQuery(selectedRowId, Boolean(selectedRowId))
-  const selectedRow = detailQuery.data ?? selectedListRow
+  const selectedRow = notificationDeliveryDetailView(detailQuery.data, detailQuery.isError)
 
   useEffect(() => {
     setPendingFilters(appliedFilters)

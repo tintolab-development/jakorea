@@ -3,11 +3,6 @@
   min-width: 0;
 }
 
-/* 필터 카드 ↔ 목록 카드 24px (admin-list-card margin-bottom) */
-.notices-page__filter-card {
-  margin-bottom: var(--spacing-24, 24px);
-}
-
 .notices-page__filter {
   width: 100%;
 }

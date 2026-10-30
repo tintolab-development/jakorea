@@ -44,7 +44,6 @@ import {
 import {
   ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY,
   ECONOMY_REGISTRATION_PROGRAM_TITLE_KO_DEFAULT,
-  getProgramRegistrationOverlayRecord,
   patchProgramRegistrationOverlay,
   useProgramRegistrationOverlayKv,
   updateProgramRegistrationOverlayKey,
@@ -64,8 +63,6 @@ const ECONOMY_SURVEY_ITEMS_DEFAULT = initialProgramRegistrationSurveyItems(true)
  * 필수이므로 옵션에서 제거했고, 잔존 overlay 값 판별용으로만 남긴다.
  */
 const LEGACY_DETAILED_PROGRAM_MAIN_VALUE = '__economy_1c1s_main__'
-/** 카탈로그에서 기본 선택할 세부 프로그램 라벨 (basic-info-defaults REP_KO 와 동일) */
-const DETAILED_PROGRAM_MAIN_LABEL = '1사1교 경제금융교육'
 
 function isLegacyDetailedProgramValue(value: string): boolean {
   return (
@@ -73,16 +70,9 @@ function isLegacyDetailedProgramValue(value: string): boolean {
   )
 }
 
-const IPS_PREPARE_DEFAULT = 'prepare'
-
-const BUSINESS_FIELD_DEFAULT = 'economy_finance'
-
 type OperationRangeSeal = { start: string; end: string } | null
 
-const educationCourseSelectOptions = [
-  { value: ALL_VALUE, label: '전체' },
-  ...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
-]
+const educationCourseSelectOptions = [...TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS]
 
 function EconomyOverlayTextField({
   label,
@@ -131,24 +121,24 @@ export function OneCOneSRegistrationBasicInfoParagraph({
 }: OneCOneSRegistrationBasicInfoParagraphProps) {
   const [businessField, setBusinessField] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.businessField',
-    BUSINESS_FIELD_DEFAULT
+    ''
   )
-  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.ipOwned', 'ja')
+  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.ipOwned', '')
   const [courseDeliveredBy, setCourseDeliveredBy] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.courseDeliveredBy',
-    'ja'
+    ''
   )
   const [ipsCategory, setIpsCategory] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.ipsCategory',
-    IPS_PREPARE_DEFAULT
+    ''
   )
-  const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<'yes' | 'no'>(
+  const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<'yes' | 'no' | ''>(
     'economyRegistration.basicInfo.partnerInvolvement',
-    'no'
+    ''
   )
   const [educationCourse, setEducationCourse] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.educationCourse',
-    ALL_VALUE
+    ''
   )
   
   const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<string | null>(
@@ -184,11 +174,11 @@ export function OneCOneSRegistrationBasicInfoParagraph({
 
   const [sponsorId, setSponsorId] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.sponsorId',
-    ALL_VALUE
+    ''
   )
   const [managerContactId, setManagerContactId] = useProgramRegistrationOverlayKv<string>(
     'economyRegistration.basicInfo.managerContactId',
-    ALL_VALUE
+    ''
   )
   const [managerContactIds, setManagerContactIds] = useProgramRegistrationOverlayKv<string[]>(
     'economyRegistration.basicInfo.managerContactIds',
@@ -228,15 +218,9 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     sponsorId !== ALL_VALUE && Boolean(sponsorId)
   )
 
-  const sponsorOptions = useMemo(
-    () => [{ value: ALL_VALUE, label: '전체' }, ...sponsorApiOptions],
-    [sponsorApiOptions]
-  )
+  const sponsorOptions = useMemo(() => [...sponsorApiOptions], [sponsorApiOptions])
 
   const managerOptions = useMemo(() => {
-    if (sponsorId === ALL_VALUE) {
-      return withSponsorContactUnselectedOption([{ value: ALL_VALUE, label: '전체' }])
-    }
     if (!sponsorId) return []
     const contacts = (contactsQuery.data ?? []).map(c => ({
       value: c.id,
@@ -301,30 +285,15 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     setDetailedProgramName(label)
   }
 
-  // 기본 선택: overlay 미기록 또는 과거 sentinel 만 시드. 사용자가 ''로 비운 값은 유지.
   useEffect(() => {
     if (!detailedProgramOptionsLoaded) return
-    const raw = getProgramRegistrationOverlayRecord()['economyRegistration.basicInfo.detailedProgramId']
-    if (raw === '') return
-    const current = typeof raw === 'string' ? raw.trim() : detailedProgramId.trim()
-    if (current && !isLegacyDetailedProgramValue(current)) return
-    const main = remoteDetailedProgramOptions.find(
-      o => o.label.trim() === DETAILED_PROGRAM_MAIN_LABEL
-    )
-    if (main) {
-      patchProgramRegistrationOverlay({
-        'economyRegistration.basicInfo.detailedProgramId': main.value,
-        'economyRegistration.basicInfo.detailedProgramName': main.label.trim(),
-      })
-      return
-    }
-    if (current) {
-      patchProgramRegistrationOverlay({
-        'economyRegistration.basicInfo.detailedProgramId': '',
-        'economyRegistration.basicInfo.detailedProgramName': '',
-      })
-    }
-  }, [detailedProgramId, detailedProgramOptionsLoaded, remoteDetailedProgramOptions])
+    const current = detailedProgramId.trim()
+    if (!current || !isLegacyDetailedProgramValue(current)) return
+    patchProgramRegistrationOverlay({
+      'economyRegistration.basicInfo.detailedProgramId': '',
+      'economyRegistration.basicInfo.detailedProgramName': '',
+    })
+  }, [detailedProgramId, detailedProgramOptionsLoaded])
 
   return (
     <>
@@ -462,9 +431,9 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption
+                  withAllOption={false}
                   inputSize="small"
-                  placeholder="후원사를 선택하세요"
+                  placeholder="선택하세요"
                   width={240}
                   options={sponsorOptions}
                   value={sponsorId}
@@ -539,9 +508,9 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
                 <CmsSelect
-                  withAllOption
+                  withAllOption={false}
                   inputSize="small"
-                  placeholder="교육 과정을 선택하세요"
+                  placeholder="선택하세요"
                   width={240}
                   options={educationCourseSelectOptions}
                   value={educationCourse}
@@ -559,7 +528,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="전체"
+                  placeholder="선택하세요"
                   width={240}
                   options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
                   value={ipOwned}
@@ -579,7 +548,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="전체"
+                  placeholder="선택하세요"
                   width={240}
                   options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
                   value={courseDeliveredBy}
@@ -595,7 +564,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             edit={
               <CmsRadioGroup
                 size="medium"
-                value={partnerInvolvement}
+                value={partnerInvolvement || undefined}
                 onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
               >
                 <CmsRadio size="medium" value="yes">Yes</CmsRadio>

@@ -423,6 +423,7 @@ export function AdminInquiryPage() {
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys,
         }}
       >
         {contentError ? (

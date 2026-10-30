@@ -5,6 +5,7 @@
 import { useMemo, type ReactNode } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, type CmsButtonSize } from '@/shared/ui/cms-button'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
@@ -96,7 +97,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       return
     }
     options?.onDetailClick?.()
-    window.alert('준비 중입니다.')
+    cmsAlertModal.show({ title: '안내', content: '준비 중입니다.' })
   }
 
   const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
@@ -276,7 +277,7 @@ export function PaymentOrderCalculationBreakdownTable({
       onDownloadPaymentStatement()
       return
     }
-    window.alert('준비 중입니다.')
+    cmsAlertModal.show({ title: '안내', content: '준비 중입니다.' })
   }
 
   return (

@@ -604,17 +604,31 @@ export function findMissingRequiredBottomConsentId(
   draft: WritingFormDraft | null | undefined
 ): string | null {
   if (!draft) return TRAINED_TEACHERS_REQUIRED_CONSENT_IDS[0]
-  return (
-    TRAINED_TEACHERS_REQUIRED_CONSENT_IDS.find(id => {
-      const paragraph = draft.paragraphs.find(item => item.id === id)
-      return (
-        !paragraph ||
-        !('showBottomConsent' in paragraph) ||
-        paragraph.showBottomConsent !== true ||
-        paragraph.bottomConsent !== 'agree'
-      )
-    }) ?? null
-  )
+  const idsInDraft = new Set(draft.paragraphs.map(paragraph => paragraph.id))
+  const trainedTeachersForm = TRAINED_TEACHERS_REQUIRED_CONSENT_IDS.some(id => idsInDraft.has(id))
+  if (trainedTeachersForm) {
+    return (
+      TRAINED_TEACHERS_REQUIRED_CONSENT_IDS.find(id => {
+        const paragraph = draft.paragraphs.find(item => item.id === id)
+        return (
+          !paragraph ||
+          !('showBottomConsent' in paragraph) ||
+          paragraph.showBottomConsent !== true ||
+          paragraph.bottomConsent !== 'agree'
+        )
+      }) ?? null
+    )
+  }
+
+  const requiredConsent = draft.paragraphs.find(paragraph => {
+    if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) return false
+    const required =
+      ('answerRequired' in paragraph && paragraph.answerRequired === true) ||
+      ('requiredMark' in paragraph && paragraph.requiredMark === true)
+    if (!required) return false
+    return paragraph.bottomConsent !== 'agree'
+  })
+  return requiredConsent?.id ?? null
 }
 
 export function hasMissingRequiredBottomConsent(draft: WritingFormDraft | null | undefined): boolean {
@@ -664,6 +678,17 @@ function readRuntimeScheduleChoiceRoundNumber(id: unknown, index: number): numbe
  * 서버 선택지 라벨에서 자동 기본명(`공통 교육 예정 N`)을 제거한다. id는 그대로 둔다.
  * ③이면 제거 후 `일시 | (입력순)회차`를 붙인다.
  */
+function isGeneralRequiredPreEducationChoiceLabel(label: string): boolean {
+  return label.replace(/\s+/g, '').startsWith('사전교육')
+}
+
+function withoutGeneralRequiredPreEducationChoices<T extends { label: string }>(
+  items: ReadonlyArray<T> | null
+): ReadonlyArray<T> | null {
+  if (items == null) return items
+  return items.filter(item => !isGeneralRequiredPreEducationChoiceLabel(item.label))
+}
+
 function withDisplayScheduleChoiceLabels<T extends { id?: string; label: string }>(
   items: ReadonlyArray<T> | null,
   runtime?: unknown
@@ -686,7 +711,9 @@ export function readRuntimeFixedScheduleChoiceItems(
   ...args: Parameters<typeof readRuntimeFixedScheduleChoiceItemsFromSchema>
 ): ReturnType<typeof readRuntimeFixedScheduleChoiceItemsFromSchema> {
   return withDisplayScheduleChoiceLabels(
-    readRuntimeFixedScheduleChoiceItemsFromSchema(...args),
+    withoutGeneralRequiredPreEducationChoices(
+      readRuntimeFixedScheduleChoiceItemsFromSchema(...args)
+    ),
     args[0]
   )
 }
@@ -695,7 +722,9 @@ export function readInstitutionFixedScheduleChoiceItems(
   ...args: Parameters<typeof readInstitutionFixedScheduleChoiceItemsFromSchema>
 ): ReturnType<typeof readInstitutionFixedScheduleChoiceItemsFromSchema> {
   return withDisplayScheduleChoiceLabels(
-    readInstitutionFixedScheduleChoiceItemsFromSchema(...args),
+    withoutGeneralRequiredPreEducationChoices(
+      readInstitutionFixedScheduleChoiceItemsFromSchema(...args)
+    ),
     args[0]
   )
 }
@@ -795,6 +824,110 @@ export function resolveApplyPreferredScheduleInitialBlockCount(
   return Math.min(2, maxBlocks)
 }
 
+/** Gemini 기관 신청 — 1~3지망 고정 (추가·삭제 없음) */
+export const GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT = 3
+/** Gemini 기관 신청 — 2차시 이상 최대 4차시 */
+export const GEMINI_INSTITUTION_SESSION_COUNT_MIN = 2
+export const GEMINI_INSTITUTION_SESSION_COUNT_MAX = 4
+
+export function buildGeminiInstitutionSessionSelectOptions(): { value: string; label: string }[] {
+  const options: { value: string; label: string }[] = []
+  for (
+    let sessionCount = GEMINI_INSTITUTION_SESSION_COUNT_MIN;
+    sessionCount <= GEMINI_INSTITUTION_SESSION_COUNT_MAX;
+    sessionCount += 1
+  ) {
+    options.push({ value: String(sessionCount), label: `${sessionCount}차시` })
+  }
+  return options
+}
+
+export function geminiInstitutionPreferredScheduleMapOptions(): {
+  sessionCountRange: { min: number; max: number }
+} {
+  return {
+    sessionCountRange: {
+      min: GEMINI_INSTITUTION_SESSION_COUNT_MIN,
+      max: GEMINI_INSTITUTION_SESSION_COUNT_MAX,
+    },
+  }
+}
+
+export function readGeminiTrainingRequestDateBounds(
+  program:
+    | Pick<
+        ProgramDetail,
+        | 'detailCase'
+        | 'geminiTrainingRequestStartDate'
+        | 'geminiTrainingRequestEndDate'
+      >
+    | null
+    | undefined
+): ApplyScheduleDateBounds {
+  if (!program || program.detailCase !== 'gemini') {
+    return { minScheduleDate: null, maxScheduleDate: null }
+  }
+  return {
+    minScheduleDate: readIsoDateOrNull(program.geminiTrainingRequestStartDate),
+    maxScheduleDate: readIsoDateOrNull(program.geminiTrainingRequestEndDate),
+  }
+}
+
+/** 시작·종료가 모두 있을 때만 연수 요청 가능기간으로 연다. 한쪽만 있으면 fail-closed. */
+export function isGeminiTrainingRequestPeriodConfigured(
+  bounds: ApplyScheduleDateBounds
+): boolean {
+  return bounds.minScheduleDate != null && bounds.maxScheduleDate != null
+}
+
+export function isIsoDateOutsideScheduleBounds(
+  date: string,
+  bounds: ApplyScheduleDateBounds
+): boolean {
+  const iso = readIsoDateOrNull(date)
+  if (!iso) return false
+  if (bounds.minScheduleDate != null && iso < bounds.minScheduleDate) return true
+  if (bounds.maxScheduleDate != null && iso > bounds.maxScheduleDate) return true
+  return false
+}
+
+export function hasPreferredScheduleDateOutsideBounds(
+  blocks: readonly Pick<ApplyPreferredScheduleBlock, 'date'>[],
+  bounds: ApplyScheduleDateBounds
+): boolean {
+  if (!isGeminiTrainingRequestPeriodConfigured(bounds)) {
+    return blocks.some(block => readIsoDateOrNull(block.date) != null)
+  }
+  return blocks.some(block => isIsoDateOutsideScheduleBounds(block.date, bounds))
+}
+
+export function filterItemsByScheduleDateBounds<T>(
+  items: readonly T[],
+  getDate: (item: T) => string | undefined | null,
+  bounds: ApplyScheduleDateBounds
+): T[] {
+  if (bounds.minScheduleDate == null && bounds.maxScheduleDate == null) return [...items]
+  return items.filter(item => {
+    const date = getDate(item)
+    if (!date?.trim()) return true
+    return !isIsoDateOutsideScheduleBounds(date, bounds)
+  })
+}
+
+/**
+ * Gemini 강사 강의 가능 일정.
+ * form-binding 런타임 선택지(기관 승인 후 확정 일정 포함)를 SSOT로 두고,
+ * 날짜가 있는 슬롯만 연수 요청 가능기간 밖으로 걸러 낸다.
+ */
+export function filterGeminiInstructorSlotsByTrainingRequestPeriod<T>(
+  items: readonly T[],
+  getDate: (item: T) => string | undefined | null,
+  bounds: ApplyScheduleDateBounds
+): T[] {
+  if (!isGeminiTrainingRequestPeriodConfigured(bounds)) return [...items]
+  return filterItemsByScheduleDateBounds(items, getDate, bounds)
+}
+
 export function createEmptyApplyPreferredScheduleBlocks(
   count: number
 ): ApplyPreferredScheduleBlock[] {
@@ -805,6 +938,23 @@ export function createEmptyApplyPreferredScheduleBlocks(
     startTime: '',
     endTime: '',
   }))
+}
+
+export function padPreferredScheduleBlocks(
+  blocks: readonly ApplyPreferredScheduleBlock[],
+  count: number
+): ApplyPreferredScheduleBlock[] {
+  const n = Math.max(1, Math.min(count, 10))
+  const next = blocks.slice(0, n).map(block => ({ ...block }))
+  while (next.length < n) {
+    next.push({
+      date: '',
+      classPeriod: '',
+      startTime: '',
+      endTime: '',
+    })
+  }
+  return next
 }
 
 export function resolveApplyPreferredMaxSessionsPerDay(

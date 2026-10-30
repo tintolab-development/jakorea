@@ -85,6 +85,7 @@ export function UjatEducationDocumentFillModal({
   const bindingQuery = useUjatEducationFormBindingQuery(
     programId,
     slot?.programFormBindingId ?? null,
+    slot?.templateVersionId ?? null,
     { enabled: canLoadBinding },
   )
   const responseQuery = useUjatEducationFormResponseQuery(slot?.formResponseId ?? null, {
@@ -283,7 +284,7 @@ export function UjatEducationDocumentFillModal({
     (needsExistingResponse && responseQuery.isLoading)
   const loadError =
     (canLoadBinding && bindingQuery.isError) || (needsExistingResponse && responseQuery.isError)
-  const missingPublishedTemplate =
+  const missingBindingIdentity =
     open &&
     !readOnly &&
     slot != null &&
@@ -299,7 +300,7 @@ export function UjatEducationDocumentFillModal({
         size="lg"
       >
         <div className={styles.body}>
-          {missingPublishedTemplate ? (
+          {missingBindingIdentity ? (
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
               {title} 양식이 아직 준비되지 않았습니다.
             </PFText>

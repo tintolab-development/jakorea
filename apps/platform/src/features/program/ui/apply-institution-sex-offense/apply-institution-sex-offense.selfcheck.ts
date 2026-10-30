@@ -12,6 +12,7 @@ import {
   writingFormDraftFromApplicationForm,
 } from '../../lib/application-form-draft.ts'
 import {
+  applySexOffenseInquiryMethodChange,
   emptyInstitutionSexOffense,
   findIncompleteSexOffenseMessage,
   omitSexOffenseInquiryAnswersIfNotRequested,
@@ -20,6 +21,7 @@ import {
   sexOffenseValuesFromDraftAnswers,
   shouldShowSexOffenseInquiry,
 } from './apply-institution-sex-offense-answers.ts'
+import { formatSexOffenseTeacherGuidanceValue } from '@jakorea/form-schema/program-application'
 
 const SUBMISSION = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentSubmissionRequest
 const INQUIRY = PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod
@@ -105,8 +107,13 @@ function buildSubmitAnswers(input: {
     ...emptyInstitutionSexOffense(),
     submissionRequest: input.submissionRequest,
     ...(input.includeInquiry
-      ? { siteSubmission: 'online' as const, institutionId: 'id1', verificationNumber: 'v1' }
-      : {}),
+      ? {
+          inquiryMethod: 'criminal_record_site' as const,
+          siteSubmission: 'online' as const,
+          institutionId: 'id1',
+          verificationNumber: 'v1',
+        }
+      : { inquiryMethod: 'ja_system' as const }),
   }
   const overrides: Record<string, unknown> = {
     [SUBMISSION]: sexOffenseSubmissionAnswerFromValues(sexOffense),
@@ -154,15 +161,61 @@ assert.equal(INQUIRY in leftoverNull, false)
 const requestIncomplete = findIncompleteSexOffenseMessage(emptyInstitutionSexOffense())
 assert.ok(requestIncomplete)
 
+const requestJaSystem = {
+  ...emptyInstitutionSexOffense(),
+  submissionRequest: 'request' as const,
+  inquiryMethod: 'ja_system' as const,
+}
+assert.equal(findIncompleteSexOffenseMessage(requestJaSystem), null)
+assert.deepEqual(sexOffenseInquiryAnswerFromValues(requestJaSystem), {
+  inquiryMethod: 'ja_system',
+})
+
 const requestComplete = {
   ...emptyInstitutionSexOffense(),
   submissionRequest: 'request' as const,
+  inquiryMethod: 'criminal_record_site' as const,
   siteSubmission: 'online' as const,
   institutionId: 'id1',
   verificationNumber: 'v1',
 }
 assert.equal(findIncompleteSexOffenseMessage(requestComplete), null)
 assert.equal(shouldShowSexOffenseInquiry(requestComplete), true)
+
+const requestDirect = {
+  ...requestComplete,
+  siteSubmission: 'direct' as const,
+}
+assert.equal(findIncompleteSexOffenseMessage(requestDirect), null)
+assert.deepEqual(sexOffenseInquiryAnswerFromValues(requestDirect), {
+  inquiryMethod: 'criminal_record_site',
+  siteSubmission: 'direct',
+  institutionId: 'id1',
+  verificationNumber: 'v1',
+})
+
+const switchedToJa = applySexOffenseInquiryMethodChange(requestComplete, 'ja_system')
+assert.equal(switchedToJa.inquiryMethod, 'ja_system')
+assert.equal(switchedToJa.siteSubmission, '')
+assert.equal(switchedToJa.institutionId, '')
+assert.deepEqual(sexOffenseInquiryAnswerFromValues(switchedToJa), {
+  inquiryMethod: 'ja_system',
+})
+const backToSite = applySexOffenseInquiryMethodChange(switchedToJa, 'criminal_record_site')
+assert.equal(backToSite.siteSubmission, 'direct')
+assert.equal(backToSite.institutionId, '')
+assert.equal(
+  formatSexOffenseTeacherGuidanceValue(requestJaSystem),
+  '기관이 JA 시스템 내에서 동의서 확인 후 직접 조회',
+)
+assert.equal(
+  formatSexOffenseTeacherGuidanceValue(requestDirect),
+  '직접 제출 | ID : id1 | 검증번호 : v1',
+)
+assert.equal(
+  formatSexOffenseTeacherGuidanceValue(requestComplete),
+  '온라인 제출 | ID : id1 | 검증번호 : v1',
+)
 
 const requestAnswers = buildSubmitAnswers({
   submissionRequest: 'request',
@@ -190,6 +243,21 @@ assert.ok(restoredNoSubmit)
 assert.equal(restoredNoSubmit.submissionRequest, 'no_submit')
 assert.equal(shouldShowSexOffenseInquiry(restoredNoSubmit), false)
 assert.equal(restoredNoSubmit.institutionId, '')
+
+const restoredJaSystem = sexOffenseValuesFromDraftAnswers(
+  { submissionRequest: 'request' },
+  {
+    inquiryMethod: 'ja_system',
+    institutionId: 'stale',
+    verificationNumber: 'stale',
+    siteSubmission: 'online',
+  },
+)
+assert.ok(restoredJaSystem)
+assert.equal(restoredJaSystem.inquiryMethod, 'ja_system')
+assert.equal(restoredJaSystem.siteSubmission, '')
+assert.equal(restoredJaSystem.institutionId, '')
+assert.equal(restoredJaSystem.verificationNumber, '')
 
 const economyStripped = omitSexOffenseInquiryAnswersIfNotRequested({
   [ECONOMY_SUBMISSION]: { submissionRequest: 'no_submit' },

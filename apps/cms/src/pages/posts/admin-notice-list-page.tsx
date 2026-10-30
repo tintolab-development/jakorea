@@ -342,6 +342,7 @@ export function AdminNoticeListPage() {
         excelExport={{
           columns,
           data: tableData,
+          selectedRowKeys,
         }}
       >
         {contentError ? (

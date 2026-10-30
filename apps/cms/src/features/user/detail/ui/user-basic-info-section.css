@@ -297,6 +297,7 @@
   display: inline-flex;
   box-sizing: border-box;
   align-items: center;
+  flex-wrap: nowrap;
   vertical-align: middle;
   position: relative;
   overflow: visible;
@@ -306,10 +307,16 @@
   margin-inline: 0;
 }
 
-.user-basic-info-section__admin-permission-inline .ant-dropdown-trigger,
+.user-basic-info-section__admin-permission-inline .ant-dropdown-trigger {
+  box-sizing: border-box;
+  margin: 0;
+  justify-content: center;
+  align-items: center;
+  max-width: 192px;
+}
+
 .user-basic-info-section__admin-permission-inline .status-dropdown-cell__status-trigger {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
   justify-content: center;
   align-items: center;

@@ -161,6 +161,11 @@ export function mapMfaVerifyError(
   return { kind: 'other', message: '' }
 }
 
+/** 실행자 TOTP — OpenAPI `^[0-9]{6,8}$` */
+export function isExecutorTotpCode(value: string): boolean {
+  return /^[0-9]{6,8}$/.test(value.trim())
+}
+
 export function containsMfaSecretMaterial(value: string): boolean {
   const trimmed = value.trim()
   if (/^\d{6}$/.test(trimmed)) return true
@@ -172,6 +177,13 @@ export interface AdminMfaResetRequestBody {
   recoveryType: MfaRecoveryType
   verificationReference: string
   stepUpProof: string
+}
+
+/** 관리자 상세 MFA 재발급 — 화면 입력 없이 API required 필드만 채운다. */
+export const ADMIN_DETAIL_MFA_RESET_DEFAULTS = {
+  reason: 'authenticator reissue from admin detail',
+  recoveryType: 'ADMINISTRATIVE_RECOVERY' as const satisfies MfaRecoveryType,
+  verificationReference: 'CMS-ADMIN-DETAIL',
 }
 
 export function buildMfaResetRequest(input: {
@@ -232,7 +244,7 @@ export function mapMfaResetError(
     return {
       action: 'timeout',
       message:
-        '응답을 확인하지 못했습니다. 초기화를 자동으로 다시 시도하지 않습니다. 대상 계정 상태와 운영 로그를 확인한 뒤, 결과가 불명확하면 새 인증번호로 Step-up부터 다시 진행하세요.',
+        '응답을 확인하지 못했습니다. 초기화를 자동으로 다시 시도하지 않습니다. 대상 계정 상태를 확인한 뒤 결과가 불명확하면 MFA 재발급을 다시 시도하세요.',
     }
   }
   if (
@@ -242,16 +254,36 @@ export function mapMfaResetError(
   ) {
     return {
       action: 'restart-step-up',
-      message: 'Step-up 인증이 유효하지 않습니다. 인증번호부터 다시 입력하세요.',
+      message: 'Step-up 인증이 유효하지 않습니다. MFA 재발급을 다시 시도하세요.',
+    }
+  }
+  if (code === 'MFA_RESET_STEP_UP_REQUIRED') {
+    return {
+      action: 'permission',
+      message: '실행자 MFA를 먼저 등록한 뒤 다시 시도하세요.',
     }
   }
   if (
     code === 'PERMISSION_DENIED' ||
-    code === 'MFA_RESET_SELF_FORBIDDEN' ||
     code === 'MFA_RESET_TARGET_PRIVILEGE_FORBIDDEN' ||
-    code === 'MFA_RESET_STEP_UP_REQUIRED'
+    code === 'MFA_RESET_SELF_FORBIDDEN'
   ) {
-    return { action: 'permission', message: '이 계정의 MFA를 초기화할 권한이 없습니다.' }
+    return {
+      action: 'permission',
+      message: '권한이 없거나 요청을 처리할 수 없습니다. 잠시 후 다시 시도하세요.',
+    }
+  }
+  if (code === 'MFA_VERIFICATION_FAILED') {
+    return {
+      action: 'restart-step-up',
+      message: '인증번호가 올바르지 않습니다. 인증번호부터 다시 입력하세요.',
+    }
+  }
+  if (code === 'UNAUTHORIZED' || (httpStatus === 401 && (code === 'UNKNOWN' || code === ''))) {
+    return {
+      action: 'permission',
+      message: '로그인이 만료되었습니다. 다시 로그인한 뒤 시도하세요.',
+    }
   }
   if (code === 'ACCOUNT_LOCKED') {
     return {
@@ -279,7 +311,7 @@ export function mapMfaResetError(
   if (code === 'MFA_RESET_RATE_LIMITED' || httpStatus === 429) {
     return {
       action: 'rate-limited',
-      message: '같은 시간 구간의 인증번호는 다시 보낼 수 없습니다. 다음 코드로 시도하세요.',
+      message: '요청이 너무 많습니다. 잠시 후 다시 시도하세요. 대상 MFA는 변경되지 않았습니다.',
     }
   }
   if (httpStatus === 400 || code === 'VALIDATION_ERROR') {

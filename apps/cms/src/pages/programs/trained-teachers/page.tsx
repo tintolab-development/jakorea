@@ -512,7 +512,12 @@ function TrainedTeachersProgramPageContent() {
       >
         {programListToolbarActions}
       </ProgramList>
-      <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
+      <div
+        ref={loadMoreRef}
+        className="program-list-page__load-more-sentinel"
+        aria-hidden
+        style={{ height: 1 }}
+      />
 
       <ProgramModalWhenOpen
         open={Boolean(programIdFromUrl) && !searchParams.has(TRAINED_TEACHERS_NEW_QUERY_KEY)}

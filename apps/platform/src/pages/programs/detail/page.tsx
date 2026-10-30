@@ -55,6 +55,7 @@ function ProgramDetailLoading() {
         </div>
         <div className={styles.loadingBody}>
           <div className={styles.loadingMain}>
+            <span className={[styles.skeleton, styles.skeletonPoster].join(' ')} />
             <span className={[styles.skeleton, styles.skeletonCategory].join(' ')} />
             <span className={[styles.skeleton, styles.skeletonTitle].join(' ')} />
             <span className={[styles.skeleton, styles.skeletonTitleShort].join(' ')} />
@@ -92,10 +93,14 @@ export function ProgramDetailPage() {
           ...focus,
           programType: program?.programType,
         }
-  const { gateModal, closeGateModal, isChecking, runApplyGate, missingConsents } = useProgramApplyGate(
-    programId,
-    applySelection
-  )
+  const {
+    gateModal,
+    closeGateModal,
+    isChecking,
+    runApplyGate,
+    missingConsents,
+    minorPortraitGateModalProps,
+  } = useProgramApplyGate(programId, applySelection)
   const applyOptionQuery = usePortalApplicationOption(programId, applySelection)
 
   if (isLoading && !program) {
@@ -146,9 +151,12 @@ export function ProgramDetailPage() {
       return
     }
 
-    void runApplyGate(() => {
-      navigate(applyPath)
-    })
+    void runApplyGate(
+      () => {
+        navigate(applyPath)
+      },
+      { minorPortraitReturnTo: applyPath },
+    )
   }
 
   return (
@@ -163,6 +171,7 @@ export function ProgramDetailPage() {
         kind={gateModal}
         onClose={closeGateModal}
         missingConsentTypes={missingConsents}
+        {...minorPortraitGateModalProps}
         onOpenConsents={() => {
           closeGateModal()
           navigate(programApplyGateConsentsPath)

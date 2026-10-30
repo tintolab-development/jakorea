@@ -30,6 +30,14 @@ import {
   shouldShowInstitutionApplicationMaxScheduleFields,
   shouldShowInstitutionApplicationMaxSessionsPerDayField,
 } from '@/features/program/general/lib/institution-application-program-bridge'
+import {
+  isAnnouncementPublishedChoiceMissing,
+  isAnnouncementUnpublished,
+} from '@/features/program/shared/lib/participant-recruitment-form-options'
+import {
+  INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT,
+  VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT,
+} from '@/features/program/general/lib/general-recruit-overlay-to-program'
 
 export type GeneralProgramRecruitmentRequiredFieldContext = {
   participant: ProgramRegistrationParticipantSelection
@@ -184,19 +192,21 @@ function listIncompleteInstitutionRecruitInfo(
   const reasons: string[] = []
   const K = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
   const p = 'recruit.institution'
+  const published = read(overlay, K.announcementPublished)
+  const skipSchedule = isAnnouncementUnpublished(published)
   pushReason(
     reasons,
-    isEmptyText(readText(overlay, K.announcementPublished, 'published')),
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
   pushReason(
     reasons,
-    isEmptyText(readText(overlay, K.studentListRequired, 'need')),
+    isEmptyText(readText(overlay, K.studentListRequired)),
     `${p}.studentListRequired`
   )
   pushReason(
     reasons,
-    isEmptyText(readText(overlay, K.preguidanceRequired, 'need')),
+    isEmptyText(readText(overlay, K.preguidanceRequired)),
     `${p}.preguidanceRequired`
   )
   pushReason(reasons, isEmptyNumber(read(overlay, K.maxAssignableInstructors)), `${p}.maxAssignableInstructors`)
@@ -210,12 +220,16 @@ function listIncompleteInstitutionRecruitInfo(
     pushReason(reasons, isEmptyNumber(read(overlay, K.maxSessionsPerDay)), `${p}.maxSessionsPerDay`)
   }
 
-  pushReason(reasons, isRangeSealIncomplete(read(overlay, K.programRangeSeal)), `${p}.programRangeSeal`)
+  if (!skipSchedule) {
+    pushReason(reasons, isRangeSealIncomplete(read(overlay, K.programRangeSeal)), `${p}.programRangeSeal`)
+  }
   pushReason(reasons, isEmptyStringList(read(overlay, K.targetLevels)), `${p}.targetLevels`)
   pushReason(reasons, isEmptyText(read(overlay, K.targetLevelDetail)), `${p}.targetLevelDetail`)
-  pushReason(reasons, isRangeSealIncomplete(read(overlay, K.recruitRangeSeal)), `${p}.recruitRangeSeal`)
-  pushReason(reasons, isEmptyText(read(overlay, K.finalAnnounceIso)), `${p}.finalAnnounceIso`)
-  pushReason(reasons, isEmptyText(read(overlay, K.finalAnnounceMethod)), `${p}.finalAnnounceMethod`)
+  if (!skipSchedule) {
+    pushReason(reasons, isRangeSealIncomplete(read(overlay, K.recruitRangeSeal)), `${p}.recruitRangeSeal`)
+    pushReason(reasons, isEmptyText(read(overlay, K.finalAnnounceIso)), `${p}.finalAnnounceIso`)
+    pushReason(reasons, isEmptyText(read(overlay, K.finalAnnounceMethod)), `${p}.finalAnnounceMethod`)
+  }
   pushReason(reasons, isEmptyText(read(overlay, K.inquiryContact)), `${p}.inquiryContact`)
   pushReason(reasons, isEmptyText(read(overlay, K.inquiryTel)), `${p}.inquiryTel`)
   pushReason(reasons, isEmptyText(read(overlay, K.inquiryEmail)), `${p}.inquiryEmail`)
@@ -226,17 +240,26 @@ function listIncompleteInstitutionRecruitInfo(
 function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): string[] {
   const reasons: string[] = []
   const p = 'recruit.individual'
+  const published = read(overlay, `${p}.announcementPublished`)
+  const skipSchedule = isAnnouncementUnpublished(published)
   pushReason(
     reasons,
-    isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published')),
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  const interviewRequired = readText(overlay, `${p}.interviewRequired`, 'yes')
+  // 라디오 기본값 '면접 있음'은 조작 전 스토어에 기록되지 않는다. 등록 저장(withIndividualInterviewRequiredCreateDefault)과 같이 yes 로 본다.
+  const interviewRequiredRaw = read(overlay, `${p}.interviewRequired`)
+  const interviewRequired =
+    interviewRequiredRaw == null || interviewRequiredRaw === ''
+      ? INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT
+      : readText(overlay, `${p}.interviewRequired`)
   pushReason(reasons, isEmptyText(interviewRequired), `${p}.interviewRequired`)
-  pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
+  if (!skipSchedule) {
+    pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
+  }
   pushReason(reasons, isEmptyStringList(read(overlay, `${p}.targetLevels`)), `${p}.targetLevels`)
   pushReason(reasons, isEmptyText(read(overlay, `${p}.targetLevelDetail`)), `${p}.targetLevelDetail`)
-  if (interviewRequired === 'yes') {
+  if (!skipSchedule && interviewRequired === 'yes') {
     pushReason(reasons, isEmptyText(read(overlay, `${p}.docDeadlineIso`)), `${p}.docDeadlineIso`)
     pushReason(reasons, isEmptyText(read(overlay, `${p}.docAnnounceMethod`)), `${p}.docAnnounceMethod`)
     pushReason(
@@ -246,7 +269,9 @@ function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): 
     )
     pushReason(reasons, isEmptyText(read(overlay, `${p}.interviewMethod`)), `${p}.interviewMethod`)
   }
-  pushFinalAnnounceIncomplete(reasons, overlay, p)
+  if (!skipSchedule) {
+    pushFinalAnnounceIncomplete(reasons, overlay, p)
+  }
   pushInquiryIncomplete(reasons, overlay, p)
   pushReason(reasons, isNotesIncomplete(overlay, p), `${p}.notes`)
   return reasons
@@ -255,16 +280,22 @@ function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): 
 function listIncompleteInstructorRecruitInfo(overlay: Record<string, unknown>): string[] {
   const reasons: string[] = []
   const p = 'recruit.instructor'
+  const published = read(overlay, `${p}.announcementPublished`)
+  const skipSchedule = isAnnouncementUnpublished(published)
   pushReason(
     reasons,
-    isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published')),
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
+  if (!skipSchedule) {
+    pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
+  }
   const targets = read(overlay, `${p}.recruitTargets`)
   pushReason(reasons, targets !== undefined && isEmptyStringList(targets), `${p}.recruitTargets`)
   pushReason(reasons, isEmptyText(read(overlay, `${p}.recruitTargetDetail`)), `${p}.recruitTargetDetail`)
-  pushFinalAnnounceIncomplete(reasons, overlay, p)
+  if (!skipSchedule) {
+    pushFinalAnnounceIncomplete(reasons, overlay, p)
+  }
   pushInquiryIncomplete(reasons, overlay, p)
   pushReason(reasons, isNotesIncomplete(overlay, p), `${p}.notes`)
   return reasons
@@ -324,18 +355,27 @@ function listIncompleteVolunteerRecruitInfo(
 ): string[] {
   const reasons: string[] = []
   const p = 'recruit.volunteer'
+  const published = read(overlay, `${p}.announcementPublished`)
+  const skipSchedule = isAnnouncementUnpublished(published)
   pushReason(
     reasons,
-    isEmptyText(readText(overlay, `${p}.announcementPublished`, 'published')),
+    isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  const interviewRequired = readText(overlay, `${p}.interviewRequired`, 'yes')
+  // 라디오 기본값 '면접 있음'은 조작 전 스토어에 기록되지 않는다. 등록 저장(withVolunteerInterviewRequiredCreateDefault)과 같이 yes 로 본다.
+  const interviewRequiredRaw = read(overlay, `${p}.interviewRequired`)
+  const interviewRequired =
+    interviewRequiredRaw == null || interviewRequiredRaw === ''
+      ? VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT
+      : readText(overlay, `${p}.interviewRequired`)
   pushReason(reasons, isEmptyText(interviewRequired), `${p}.interviewRequired`)
-  pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
+  if (!skipSchedule) {
+    pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
+  }
   pushReason(reasons, isEmptyStringList(read(overlay, `${p}.volunteerTargets`)), `${p}.volunteerTargets`)
   pushReason(reasons, isEmptyText(read(overlay, `${p}.volunteerTargetDetail`)), `${p}.volunteerTargetDetail`)
 
-  if (interviewRequired === 'yes') {
+  if (!skipSchedule && interviewRequired === 'yes') {
     pushReason(reasons, isEmptyText(read(overlay, `${p}.docDeadlineIso`)), `${p}.docDeadlineIso`)
     pushReason(reasons, isEmptyText(read(overlay, `${p}.docAnnounceMethod`)), `${p}.docAnnounceMethod`)
     pushReason(
@@ -346,11 +386,13 @@ function listIncompleteVolunteerRecruitInfo(
     pushReason(reasons, isEmptyText(read(overlay, `${p}.interviewMethod`)), `${p}.interviewMethod`)
   }
 
-  pushFinalAnnounceIncomplete(reasons, overlay, p)
+  if (!skipSchedule) {
+    pushFinalAnnounceIncomplete(reasons, overlay, p)
+  }
   pushInquiryIncomplete(reasons, overlay, p)
   pushReason(reasons, isNotesIncomplete(overlay, p), `${p}.notes`)
 
-  if (interviewRequired === 'yes') {
+  if (!skipSchedule && interviewRequired === 'yes') {
     reasons.push(...listIncompleteVolunteerInterviewSchedule(overlay, ctx.volunteerExceptionScheduleCount))
   }
   return reasons

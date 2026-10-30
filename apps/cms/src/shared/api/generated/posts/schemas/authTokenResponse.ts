@@ -5,6 +5,7 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AuthTokenResponseAgeGroup } from './authTokenResponseAgeGroup';
 
 /**
  * 인증 토큰 응답. 예시는 sample token이며 실제 운영 토큰을 문서에 남기지 않습니다.
@@ -28,4 +29,6 @@ export interface AuthTokenResponse {
   registeredByAdmin?: boolean;
   /** 관리자 등록 후 본인 프로필·본인인증·비밀번호 변경까지 완료했는지 여부 */
   identitySelfSignupCompletedAfterAdminRegistration?: boolean;
+  /** 회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null. */
+  ageGroup?: AuthTokenResponseAgeGroup;
 }

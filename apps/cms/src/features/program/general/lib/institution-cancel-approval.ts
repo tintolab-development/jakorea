@@ -43,20 +43,20 @@ export function buildInstitutionCancelApprovalMessage(
   variant: InstitutionCancelApprovalNotifyVariant
 ): string {
   const trimmedName = schoolName.trim() || '기관'
-  const intro = `${formatModalBracketedSubjectName(trimmedName)}의 프로그램 참여 승인을 취소하시겠습니까?`
-  const notifyCancel = formatModalBoldPhrase('발송 취소')
+  const subject = formatModalBracketedSubjectName(trimmedName)
 
+  // 공통 「프로그램 승인 취소 안내」 — 기관 문구 (승인 알림 발송 완료 / 발송 예정)
   if (variant === 'alreadySent') {
-    return `${intro}\n취소 시 입력하신 취소 사유가 저장됩니다.\n기존 승인 알림은 자동으로 ${notifyCancel}됩니다.\n취소 안내 알림은 정책에 따라 발송·예약되지 않을 수 있습니다.`
+    return `${subject}의 프로그램 참여 승인을 취소하시겠습니까?\n취소 시 입력하신 사유가 담당 교사에게 취소 사유로 안내되며, 알림이 발송됩니다.\n또한, 해당 기관은 자동으로 ${formatModalBoldPhrase('반려 처리')}됩니다.`
   }
 
-  return `${intro}\n취소 시 입력하신 취소 사유가 저장됩니다.\n기존 승인 알림은 자동으로 ${notifyCancel}됩니다.\n취소 안내 알림은 정책에 따라 발송·예약되지 않을 수 있습니다.`
+  return `${subject}의 프로그램 승인을 취소하시겠습니까?\n취소 시 입력하신 사유가 담당 교사에게 반려 사유로 안내되며, 알림이 발송됩니다.\n발송 예정인 승인 알림이 있는 경우, 자동으로 취소되며 해당 건만 발송됩니다.`
 }
 
 export function resolveInstitutionCancelApprovalReasonLabel(
-  variant: InstitutionCancelApprovalNotifyVariant
+  _variant: InstitutionCancelApprovalNotifyVariant
 ): string {
-  return variant === 'pendingNotification' ? '취소 사유(반려 사유)' : '취소 사유'
+  return '취소 사유'
 }
 
 export function patchInstitutionForCancelApproval(

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { CmsButton } from '@/shared/ui'
 
 import { checkAdminRegisterEmailAvailability } from '@/features/auth/api/admin-register-service'
+import { SOCIAL_ACCOUNT_LINK_ENABLED } from '@/features/auth/lib/social-account-link-enabled'
 import { buildJakoreaEmail, isValidJakoreaEmailLocalPart } from '@/features/auth/lib/jakorea-email'
 import type { AdminRegisterStep4Data, AdminRegisterWizardData } from '@/types/admin-register'
 
@@ -138,11 +139,15 @@ export function AdminRegisterStepEmail({
           </>
         }
         description={
-          <>
-            JA Korea 이메일 주소만 사용 가능합니다.
-            <br />
-            소셜 계정은 가입을 마친 뒤 연결할 수 있습니다.
-          </>
+          SOCIAL_ACCOUNT_LINK_ENABLED ? (
+            <>
+              JA Korea 이메일 주소만 사용 가능합니다.
+              <br />
+              소셜 계정은 가입을 마친 뒤 연결할 수 있습니다.
+            </>
+          ) : (
+            <>JA Korea 이메일 주소만 사용 가능합니다.</>
+          )
         }
       />
 

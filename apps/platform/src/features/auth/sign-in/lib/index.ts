@@ -1,1 +1,4 @@
-export { getLoginApiErrorMessage } from './get-login-api-error-message'
+export {
+  formatPortalProfileUpdateError,
+  getLoginApiErrorMessage,
+} from './get-login-api-error-message'

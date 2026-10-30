@@ -22,6 +22,8 @@ export function useSettingsConsents(): {
   isRemoteSession: boolean
   isLoading: boolean
   isError: boolean
+  /** 만 14세 미만 — profile `under14` → `ageGroup` → 생년월일 (`isMinorSettingsMember`) */
+  isMinor: boolean
   basicItems: SettingsConsentItem[]
   documentItems: SettingsConsentItem[]
 } {
@@ -50,6 +52,7 @@ export function useSettingsConsents(): {
       isRemoteSession: false,
       isLoading: false,
       isError: false,
+      isMinor: audience.isMinor,
       basicItems: getBasicConsentItems(audience),
       documentItems: ensurePinnedPaymentStatementConsentItem(DOCUMENT_CONSENT_ITEMS),
     }
@@ -61,6 +64,7 @@ export function useSettingsConsents(): {
     isRemoteSession: true,
     isLoading: query.isPending,
     isError: query.isError && !query.data,
+    isMinor: audience.isMinor,
     basicItems: filterBasicConsentItemsByAudience(built.basicItems, audience),
     documentItems: ensurePinnedPaymentStatementConsentItem(built.documentItems),
   }

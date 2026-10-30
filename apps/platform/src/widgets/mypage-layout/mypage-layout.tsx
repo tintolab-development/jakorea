@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import type { MypageLnbItem, MypageLnbItemKey } from '@/features/mypage'
+import { useMypageMember, type MypageLnbItem, type MypageLnbItemKey } from '@/features/mypage'
+import { isMinorSettingsMember } from '@/features/mypage/settings/lib/consent-visibility'
 import { useMediaQuery } from '@/shared/hooks'
 import { platformMediaQueries } from '@/shared/lib/breakpoints'
 import { Lnb, type LnbAppearance } from './lnb'
@@ -38,6 +39,9 @@ export function MypageLayout({
   children,
 }: MypageLayoutProps) {
   const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
+  const member = useMypageMember()
+  // 만 14세 미만 회원은 강사 신청 CTA 비노출 (성인·기존 노출 조건은 그대로)
+  const showInstructorApplyCta = showInstructorApply && !isMinorSettingsMember(member)
   const useMobileLnbDropdown = isBelowPc && lnbAppearance !== 'category'
   const [mobileLnbOpen, setMobileLnbOpen] = useState(false)
 
@@ -117,7 +121,7 @@ export function MypageLayout({
           {sidebarLeading ? <div className={styles.sidebarLeading}>{sidebarLeading}</div> : null}
           <Lnb
             items={lnbItems}
-            showInstructorApply={showInstructorApply}
+            showInstructorApply={showInstructorApplyCta}
             appearance={lnbAppearance}
             ariaLabel={lnbAriaLabel}
             onItemSelect={onLnbItemSelect}

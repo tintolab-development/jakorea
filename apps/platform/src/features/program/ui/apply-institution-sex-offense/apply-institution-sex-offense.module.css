@@ -22,8 +22,8 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 12px;
+  gap: 4px;
+  margin-top: 16px;
   color: var(--main-BK, #3d3d3d);
   font-family: var(--font-family-base);
   font-size: 16px;
@@ -43,12 +43,15 @@
   margin: 0;
 }
 
+.noteList > li + li {
+  margin-top: 4px;
+}
+
 .noteList > li::before {
   content: '• ';
 }
 
-.noteItem,
-.caution {
+.noteItem {
   display: block;
   margin: 0;
   color: var(--main-BK, #3d3d3d);
@@ -59,11 +62,7 @@
   letter-spacing: -0.16px;
 }
 
-/*
- * FormTemplateHost 기본 14px + typo-* inherit 보다 우선 — CMS 안내 문구와 동일 16px
- */
-:global(.form-template-host) .notes .noteItem,
-:global(.form-template-host) .notes .caution {
+:global(.form-template-host) .notes .noteItem {
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;

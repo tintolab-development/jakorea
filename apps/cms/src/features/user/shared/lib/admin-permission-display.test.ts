@@ -4,6 +4,7 @@ import {
   ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE,
   ADMIN_PERMISSION_SELECT_OPTIONS,
   ADMIN_PERMISSION_TAG_LABEL,
+  getAdminPermissionDisplayLabel,
   getAdminPermissionVariant,
   isAdminPermissionSelectComingSoon,
   roleCodeToAdminPermissionVariant,
@@ -13,6 +14,9 @@ describe('ADMIN_PERMISSION_TAG_LABEL', () => {
   it('관리자 권한 설정 영문 역할명과 맞춘다', () => {
     expect(ADMIN_PERMISSION_TAG_LABEL.manager).toBe(
       ADMIN_PERMISSION_SETTINGS_ROLE_LABELS.master
+    )
+    expect(ADMIN_PERMISSION_TAG_LABEL.accounting).toBe(
+      ADMIN_PERMISSION_SETTINGS_ROLE_LABELS['accounting-manager']
     )
     expect(ADMIN_PERMISSION_TAG_LABEL.partner).toBe(
       ADMIN_PERMISSION_SETTINGS_ROLE_LABELS['program-manager']
@@ -26,9 +30,10 @@ describe('ADMIN_PERMISSION_TAG_LABEL', () => {
       'Program Manager',
       'Program Viewer',
     ])
+    expect(ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE).toBe('accounting')
     expect(
       isAdminPermissionSelectComingSoon(ADMIN_PERMISSION_ACCOUNTING_MANAGER_SELECT_VALUE)
-    ).toBe(true)
+    ).toBe(false)
     expect(isAdminPermissionSelectComingSoon('partner')).toBe(false)
   })
 })
@@ -45,10 +50,26 @@ describe('getAdminPermissionVariant', () => {
 
   it('세션 roleCode(/api/admin/me)를 권한 유형으로 매핑한다', () => {
     expect(getAdminPermissionVariant({ roleCode: 'MASTER' })).toBe('manager')
+    expect(roleCodeToAdminPermissionVariant('ACCOUNTING_MANAGER')).toBe('accounting')
     expect(getAdminPermissionVariant({ roleCode: 'PM' })).toBe('partner')
     expect(getAdminPermissionVariant({ roleCode: 'VIEWER' })).toBe('viewer')
-    // OpenAPI MIDDLE은 세션 AdminRoleCode 밖 — 문자열 매퍼로 검증
     expect(roleCodeToAdminPermissionVariant('MIDDLE')).toBe('partner')
+  })
+
+  it('로컬 /me 원문(admin1 MASTER, pm1 MIDDLE, viewer1 VIEWER)을 표시한다', () => {
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'MASTER' })).toBe('Master')
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'MIDDLE' })).toBe('Program Manager')
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'VIEWER' })).toBe('Program Viewer')
+  })
+
+  it('roleCode 표시명을 새 권한 명칭으로 반환한다', () => {
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'MASTER' })).toBe('Master')
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'ACCOUNTING_MANAGER' })).toBe(
+      'Accounting Manager'
+    )
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'PM' })).toBe('Program Manager')
+    expect(getAdminPermissionDisplayLabel({ roleCode: 'VIEWER' })).toBe('Program Viewer')
+    expect(getAdminPermissionDisplayLabel({ adminLevel: 'ADMIN' })).toBe('Program Manager')
   })
 
   it('roleCode가 없으면 programRoles·adminLevel로 추론한다', () => {

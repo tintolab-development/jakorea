@@ -3,17 +3,37 @@
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  min-width: 0;
 }
 
 .guideBody {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
   min-width: 0;
+  padding-inline: 8px;
+  color: var(--main-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: left;
+  overflow-wrap: break-word;
 }
 
 .guideBody p {
   margin: 0;
+}
+
+.guideList {
+  margin: 24px 0;
+  padding-left: 27px;
+  list-style: disc;
+}
+
+.guideList > li + li {
+  margin-top: 8px;
+}
+
+.confirm {
+  padding: 4px;
 }
 
 /*
@@ -24,7 +44,7 @@
   display: block;
   color: var(--main-BK, #3d3d3d);
   font-family: var(--font-family-base);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 150%;
   letter-spacing: -0.16px;

@@ -117,6 +117,8 @@ function mapHeroes(
   return rows.map((hero, index) => {
     const seed = fallback[index % fallback.length]!
     const mainTitle = readString(hero.mainTitle)
+    const link = readString(hero.linkUrl)
+    const href = link ? parseHomeHref(link) : undefined
     return {
       id: hero.id != null ? `hero-${hero.id}` : seed.id,
       eyebrow: readString(hero.topText) ?? seed.eyebrow,
@@ -124,6 +126,8 @@ function mapHeroes(
       description: readString(hero.bottomText) ?? seed.description,
       placeholderBackground: seed.placeholderBackground,
       imageUrl: readString(hero.imageUrl) ?? seed.imageUrl,
+      href: href?.href,
+      external: href?.external,
     }
   })
 }

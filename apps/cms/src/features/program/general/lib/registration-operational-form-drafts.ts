@@ -55,6 +55,7 @@ import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { getRegistrationStepTemplateSelections } from '@/features/program/shared/lib/step-template-selection'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
+import { peekRegistrationWizardSessionDrafts } from '@/features/program/general/lib/registration-wizard-session-drafts'
 import {
   peekUjatApplicationInstitutionOverlayRecord,
   replaceUjatApplicationInstitutionOverlayForScope,
@@ -686,14 +687,24 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
 /**
  * 「임시 저장」— 현재 메모리 overlay를 모든 모집/신청 양식 localStorage에 기록.
  * 현재 단계 handleSave만 하면 다른 탭 상세 정보가 빠진다.
+ *
+ * `preferSessionDrafts` — 일반·TT 위저드 전용. 떠난 탭의 단락 타이틀·설명은 편집기 draft
+ * (세션 draft 맵)에만 있으므로, 활성 탭(`activeCatalogId`, 방금 handleSave로 기록)을 제외한
+ * 탭은 localStorage draft 대신 세션 draft를 쓴다. UJAT·1사1교 호출부는 옵션 없이 기존 동작.
  */
 export async function persistRegistrationOperationalOverlaysToLocal(
   programType: string,
-  variant: RegistrationOperationalDraftVariant
+  variant: RegistrationOperationalDraftVariant,
+  options?: { preferSessionDrafts?: boolean; activeCatalogId?: string }
 ): Promise<void> {
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
   const { loadRegistrationWizardFormDraft, persistRegistrationWizardFormDraft } = await import(
     '@/features/program/general/lib/registration-wizard-form-draft'
+  )
+  const sessionDraftByCatalogId = new Map(
+    options?.preferSessionDrafts === true
+      ? peekRegistrationWizardSessionDrafts().map(entry => [entry.templateCode, entry.draft])
+      : []
   )
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant, programType)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
@@ -701,7 +712,15 @@ export async function persistRegistrationOperationalOverlaysToLocal(
       programType,
       templateCode: catalogId,
     })
-    const draft = saved?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
+    const overlayKind = resolveOperationalOverlayKind(catalogId)
+    const sessionDraft =
+      catalogId !== options?.activeCatalogId &&
+      (overlayKind === 'general-recruit' ||
+        overlayKind === 'general-application' ||
+        overlayKind === 'institution-recruit')
+        ? sessionDraftByCatalogId.get(catalogId)
+        : undefined
+    const draft = sessionDraft ?? saved?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
     if (draft == null) continue
     // 공통정보(registration-*)는 handleSave가 settingsJson·RHF snapshot까지 저장한다.
     // 여기서 overlay만 다시 쓰면 국문 대표명 등 RHF 입력이 지워진다.
@@ -753,7 +772,7 @@ export async function persistRegistrationOperationalOverlaysToLocal(
       continue
     }
     const overlay = collectOperationalOverlayForCatalogId(catalogId)
-    if (overlay == null || Object.keys(overlay).length === 0) continue
+    if ((overlay == null || Object.keys(overlay).length === 0) && sessionDraft == null) continue
     await persistRegistrationWizardFormDraft({
       programType,
       templateCode: catalogId,

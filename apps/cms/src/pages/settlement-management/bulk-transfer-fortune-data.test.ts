@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import { buildBulkTransferSheetRows } from './bulk-transfer-fortune-data'
+import {
+  buildBulkTransferPreviewSheetRows,
+  buildBulkTransferSheetRows,
+} from './bulk-transfer-fortune-data'
 
 function row(
   status: AccountPaymentRow['accountPaymentStatus'],
@@ -40,5 +43,21 @@ describe('buildBulkTransferSheetRows', () => {
     expect(line?.depositBank).toBe('')
     expect(line?.depositAccount).toBe('')
     expect(line?.mobile).toBe('')
+  })
+
+  it('미리보기는 서버 마스킹 계좌·예금주를 쓰고 원문 필드는 쓰지 않는다', () => {
+    const [line] = buildBulkTransferPreviewSheetRows([
+      row('awaiting_confirmation', {
+        instructorName: '강사실명',
+        maskedAccountNo: '123-****-5678',
+        accountHolder: '강**',
+        depositAccountNumber: '123-456-789012',
+        recipientMobile: '01012345678',
+      }),
+    ])
+
+    expect(line?.depositAccount).toBe('123-****-5678')
+    expect(line?.expectedDepositor).toBe('강**')
+    expect(line?.mobile).toBe('010-****-5678')
   })
 })

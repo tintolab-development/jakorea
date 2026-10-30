@@ -82,7 +82,10 @@ const VOLUNTEER_DIRTY_FIELD_KEYS: Record<string, readonly string[]> = {
   volunteerRecruitmentContactOrganizationName: [VOLUNTEER_KEYS.contact],
   contactPhone: [VOLUNTEER_KEYS.contact],
   contactEmail: [VOLUNTEER_KEYS.contact],
-  otherNotes: [VOLUNTEER_KEYS.notes, VOLUNTEER_KEYS.otherNotes],
+  // 비고(행 remarks) ↔ notes, 기타사항(행 otherMatters) ↔ otherNotes. 서로 섞지 않는다.
+  oneLineIntroduction: [VOLUNTEER_KEYS.notes],
+  volunteerRecruitmentNotesNotApplicable: [VOLUNTEER_KEYS.notes],
+  otherNotes: [VOLUNTEER_KEYS.otherNotes],
   volunteerRecruitmentAnnouncementPublished: [VOLUNTEER_KEYS.announcementPublished],
   volunteerRecruitmentNoticeExposure: [VOLUNTEER_KEYS.noticeExposure],
 }
@@ -133,11 +136,15 @@ function overlayKeysForDirtyFormField(
   if (kind === 'institution') {
     return INSTITUTION_DIRTY_FIELD_KEYS[name] ?? []
   }
-  const sharedKeys = name.startsWith('rounds.0')
-    ? [VOLUNTEER_KEYS.recruitRange, VOLUNTEER_KEYS.recruitRangeH1, VOLUNTEER_KEYS.activityTermH1]
-    : name.startsWith('rounds.1')
-      ? [VOLUNTEER_KEYS.recruitRangeH2, VOLUNTEER_KEYS.activityTermH2]
-      : (VOLUNTEER_DIRTY_FIELD_KEYS[name] ?? [])
+  const sharedKeys = name.startsWith('rounds.0.curriculum')
+    ? [VOLUNTEER_KEYS.activityTermH1]
+    : name.startsWith('rounds.1.curriculum')
+      ? [VOLUNTEER_KEYS.activityTermH2]
+      : name.startsWith('rounds.0')
+        ? [VOLUNTEER_KEYS.recruitRange, VOLUNTEER_KEYS.recruitRangeH1]
+        : name.startsWith('rounds.1')
+          ? [VOLUNTEER_KEYS.recruitRangeH2]
+          : (VOLUNTEER_DIRTY_FIELD_KEYS[name] ?? [])
   if (volunteerHalf == null) return sharedKeys
   return sharedKeys.map(key => remapVolunteerDirtyKeyToHalf(key, volunteerHalf))
 }

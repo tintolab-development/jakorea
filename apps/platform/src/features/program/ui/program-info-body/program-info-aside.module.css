@@ -90,6 +90,12 @@
   height: 16px;
 }
 
+.applyArrow24 {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
 .cancelButton {
   display: flex;
   width: 100%;
@@ -157,5 +163,24 @@
     top: calc(100% + var(--detail-top-fab-gap-y));
     right: calc(-1 * var(--detail-top-fab-offset-x));
     bottom: auto;
+  }
+}
+
+/* 참여하기 상세(variant="participate") — Figma 11001-199747: 신청 카드 ↔ 첨부 12px */
+.participate .attachments {
+  margin-top: var(--spacing-12);
+}
+
+/* Figma 6772-30311 (Mobile): 포스터·첨부는 상세 header, 신청은 하단 고정 바(detail-view)로 이동 */
+@media (--bp-below-pc) {
+  .participate .banner,
+  .participate .applyBlock,
+  .participate .attachments {
+    display: none;
+  }
+
+  /* 하단 신청 바(80px) 위로 */
+  .participate .topFab {
+    bottom: calc(80px + var(--spacing-24));
   }
 }

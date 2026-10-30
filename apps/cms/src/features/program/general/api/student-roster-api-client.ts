@@ -45,16 +45,14 @@ export async function commitOrganizationStudentRosterRemote(
   )
 }
 
-/** POST — 학생명단 개인정보 원문 조회. `reason`은 감사 로그에 남는다. */
+/** POST — 학생명단·출석 원문. 감사 사유는 서버 고정값이며 reason을 보내지 않는다. */
 export async function fetchOrganizationStudentRosterPrivacyDetail(
-  applicationId: string | number,
-  reason: string
+  applicationId: string | number
 ): Promise<StudentRosterResponse> {
   return unwrapApiBody<StudentRosterResponse>(
     await customInstance({
       url: `${rosterUrl(applicationId)}/privacy-detail`,
       method: 'POST',
-      params: { reason },
       headers: { 'Cache-Control': 'no-store' },
     })
   )

@@ -21,6 +21,18 @@ import {
   type EducationFormTypeSettingsMode,
 } from './program-registration-education-form-options'
 import {
+  EDUCATION_PLACE_LABEL,
+  ProgramRegistrationEducationPlaceInput,
+} from './program-registration-education-place-fields'
+import {
+  isEducationPlaceTypeSettingsRowVisible,
+  resolveEducationPlaceCommonEducationForm,
+} from './program-registration-education-place-rules'
+import {
+  REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
+import {
   getProgramRegistrationOverlayRecord,
   useProgramRegistrationOverlayKv,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
@@ -47,6 +59,8 @@ type ProgramRegistrationTypeSettingsParagraphProps = {
   onIpsScheduleDetailChange: (value: ProgramRegistrationScheduleDetailKind) => void
   /** 모집 시작 이후 상세 수정에서만 true. 등록 위저드는 기본 false. */
   participationMethodLocked?: boolean
+  /** 일반 등록·참여자 <개인> — 「교육 진행 장소」 행(최하단) 노출 */
+  educationPlaceEnabled?: boolean
 }
 
 function ScheduleDetailRadioRow({
@@ -57,6 +71,7 @@ function ScheduleDetailRadioRow({
   perScheduleHint,
   validationKey,
   disabled = false,
+  required,
 }: {
   label: string
   value: ProgramRegistrationScheduleDetailKind
@@ -66,6 +81,8 @@ function ScheduleDetailRadioRow({
   perScheduleHint: string
   validationKey?: string
   disabled?: boolean
+  /** CMS 필수 라벨(*) — 편집 모드에서만 노출 */
+  required?: boolean
 }) {
   const handleChange = (e: RadioChangeEvent) => {
     onChange(e.target.value as ProgramRegistrationScheduleDetailKind)
@@ -75,6 +92,7 @@ function ScheduleDetailRadioRow({
     <DetailInfoForm.Row type="single">
       <DetailInfoForm.Field
         label={label}
+        required={required}
         validationKey={validationKey}
         fullRow
         edit={
@@ -169,7 +187,17 @@ export function ProgramRegistrationTypeSettingsParagraph({
   ipsScheduleDetail,
   onIpsScheduleDetailChange,
   participationMethodLocked = false,
+  educationPlaceEnabled = false,
 }: ProgramRegistrationTypeSettingsParagraphProps) {
+  const [educationPlaceScheduleDetail, setEducationPlaceScheduleDetail] =
+    useProgramRegistrationOverlayKv<ProgramRegistrationScheduleDetailKind>(
+      REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
+      'common'
+    )
+  const [educationPlaceAddress, setEducationPlaceAddress] = useProgramRegistrationOverlayKv<string>(
+    REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY,
+    ''
+  )
   const [ipsType, setIpsType] = useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
     'generalRegistration.typeSettings.ipsType',
     {
@@ -194,6 +222,19 @@ export function ProgramRegistrationTypeSettingsParagraph({
     'generalRegistration.typeSettings.singleParticipation',
     'individual'
   )
+
+  /** 교육 형태 「온라인」이면 교육 진행 장소 숨김·필수 제외 (일정 별 상이 교육 형태는 행 단위) */
+  const showEducationPlaceRow =
+    educationPlaceEnabled &&
+    isEducationPlaceTypeSettingsRowVisible({
+      sessionRoundType,
+      educationFormScheduleDetail,
+      commonEducationForm: resolveEducationPlaceCommonEducationForm({
+        sessionRoundType,
+        singleEducationForm,
+        multiCommonEducationForm,
+      }),
+    })
 
   const handleSessionRoundChange = (e: RadioChangeEvent) => {
     onSessionRoundTypeChange(e.target.value as ProgramRegistrationSessionRoundType)
@@ -457,6 +498,21 @@ export function ProgramRegistrationTypeSettingsParagraph({
             />
           </>
         )}
+        {showEducationPlaceRow ? (
+          <ScheduleDetailRadioRow
+            label={EDUCATION_PLACE_LABEL}
+            validationKey="typeSettings.educationPlace"
+            value={educationPlaceScheduleDetail}
+            onChange={setEducationPlaceScheduleDetail}
+            perScheduleHint={perScheduleHint}
+            commonDetailEdit={
+              <ProgramRegistrationEducationPlaceInput
+                value={educationPlaceAddress}
+                onChange={setEducationPlaceAddress}
+              />
+            }
+          />
+        ) : null}
       </DetailInfoForm>
     </>
   )

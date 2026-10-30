@@ -7,9 +7,6 @@
  */
 
 export interface StepUpRequest {
-  /**
-     * @minLength 1
-     * @pattern ^[0-9]{6,8}$
-     */
-  totpCode: string;
+  /** @pattern ^([0-9]{6,8})?$ */
+  totpCode?: string;
 }

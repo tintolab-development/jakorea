@@ -572,6 +572,100 @@ describe('일정형 사전 교육 overlay 교육 형태', () => {
       })
     )
   })
+
+  it('common이고 educationFormByDetail 0이 없어도 사전 교육 행은 온라인', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.educationScheduleCurriculum.preEducationName': '사전 교육',
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '오리엔테이션',
+        },
+      },
+      {
+        programType: 'schedule',
+        sessionRoundType: 'single',
+        scheduleCurriculumPreEducation: true,
+        scheduleCurriculumDetailCount: 1,
+        educationFormScheduleDetail: 'common',
+      }
+    )
+
+    expect(next.generalCommonInfo?.scheduleDetails?.[0]).toEqual(
+      expect.objectContaining({
+        scheduleLabel: '사전 교육',
+        educationFormLabel: '온라인',
+      })
+    )
+  })
+
+  it('perSchedule이고 educationFormByDetail 0이 없으면 사전 교육 행은 온라인', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.educationScheduleCurriculum.preEducationName': '사전 교육',
+        'generalRegistration.educationScheduleCurriculum.educationFormByDetail': {
+          1: 'offline',
+        },
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '오리엔테이션',
+        },
+      },
+      {
+        programType: 'schedule',
+        sessionRoundType: 'single',
+        scheduleCurriculumPreEducation: true,
+        scheduleCurriculumDetailCount: 1,
+        educationFormScheduleDetail: 'perSchedule',
+      }
+    )
+
+    expect(next.generalCommonInfo?.scheduleDetails?.[0]).toEqual(
+      expect.objectContaining({
+        scheduleLabel: '사전 교육',
+        educationFormLabel: '온라인',
+      })
+    )
+    expect(next.generalCommonInfo?.scheduleDetails?.[1]).toEqual(
+      expect.objectContaining({ educationFormLabel: '오프라인' })
+    )
+  })
+})
+
+describe('커리큘럼형 사전 교육 overlay 교육 형태', () => {
+  const extras = {
+    programType: 'curriculum',
+    sessionRoundType: 'multi',
+    scheduleCurriculumPreEducation: true,
+    curriculumChartSessionCount: 1,
+    curriculumSessionCount: 1,
+    educationFormScheduleDetail: 'common',
+  } as const
+
+  it('common이고 educationFormBySession 0이 없으면 사전 교육 행은 온라인', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      { 'generalRegistration.educationCurriculum.unitNameBySession': { 1: '단원1' } },
+      extras
+    )
+    expect(next.generalCommonInfo?.curriculumSessions?.[0]).toEqual(
+      expect.objectContaining({ sessionLabel: '사전 교육', educationFormLabel: '온라인' })
+    )
+  })
+
+  it('common이어도 educationFormBySession 0이 offline이면 오프라인', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      baseProgram(),
+      {
+        'generalRegistration.educationCurriculum.unitNameBySession': { 1: '단원1' },
+        'generalRegistration.educationCurriculum.educationFormBySession': { 0: 'offline' },
+      },
+      extras
+    )
+    expect(next.generalCommonInfo?.curriculumSessions?.[0]).toEqual(
+      expect.objectContaining({ sessionLabel: '사전 교육', educationFormLabel: '오프라인' })
+    )
+  })
 })
 
 describe('empty-public-title-apply-fallback', () => {

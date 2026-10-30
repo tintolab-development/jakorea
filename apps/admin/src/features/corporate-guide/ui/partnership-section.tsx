@@ -3,7 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Table } from 'antd'
+import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type {
   PartnershipStep,
@@ -174,7 +174,7 @@ export function PartnershipSectionCard({ items }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending}
@@ -183,7 +183,7 @@ export function PartnershipSectionCard({ items }: Props) {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -194,14 +194,14 @@ export function PartnershipSectionCard({ items }: Props) {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}
         </div>
       </div>
 
-      <Table<PartnershipStep>
+      <CmsDataTable<PartnershipStep>
         className="cms-data-table cms-data-table--skip-auto-no-col corporate-guide-partnership-table"
         columns={columns}
         dataSource={items}

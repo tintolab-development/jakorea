@@ -1,0 +1,87 @@
+/* UJAT 임시 배정/반려 확인 모달 6종 — 공통 ContentModal 기본값은 변경하지 않는다. */
+
+.temporary-action-modal.content-modal.ant-modal .ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  min-height: 224px;
+  height: auto;
+  padding: 24px 30px 34px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 0 25px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+
+.temporary-action-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body {
+  padding-top: 12px;
+}
+
+.temporary-action-modal.content-modal .teal-header-modal__title,
+.temporary-action-modal.content-modal .teal-header-modal__title-text {
+  color: #3d3d3d;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 150%;
+}
+
+.temporary-action-modal.content-modal .teal-header-modal__close {
+  width: 24px;
+  height: 24px;
+}
+
+.temporary-action-modal.content-modal .teal-header-modal__footer {
+  margin-top: 30px;
+  justify-content: flex-end;
+}
+
+.temporary-action-modal.content-modal .content-modal__footer-actions {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.temporary-action-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.temporary-action-modal__lead,
+.temporary-action-modal__note {
+  margin: 0;
+  color: #3d3d3d;
+  font-family: Pretendard, var(--font-family-primary, sans-serif);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.temporary-action-modal__lead strong {
+  font-weight: 700;
+}
+
+.temporary-action-modal.content-modal
+  .content-modal__footer-actions
+  .cms-button.ant-btn:not(.cms-button--footer-auto),
+.temporary-action-modal.content-modal
+  .content-modal__footer-actions
+  .admin-button.ant-btn:not(.cms-button--footer-auto) {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 6px 14px !important;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 125%;
+}
+
+.temporary-action-modal__confirm--danger.cms-button.ant-btn,
+.temporary-action-modal__confirm--danger.admin-button.ant-btn {
+  color: #c32f4a !important;
+  border-color: #c32f4a !important;
+  background: #fff !important;
+}

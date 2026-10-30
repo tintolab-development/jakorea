@@ -7,7 +7,7 @@
  */
 
 /**
- * 계좌 지급 상세 진입 시 반환하는 원문 계좌정보. 목록에는 포함하지 않습니다. GET /api/admin/account-payments/{paymentId} 성공 시 accessPurpose=정산금 지급 처리를 위함 개인정보 조회 이력이 자동 기록된 뒤에만 제공됩니다.
+ * 계좌 지급 상세 진입 시 반환하는 원문 계좌정보(bankName, accountNo, accountHolder). 목록에는 포함하지 않습니다. 성별·생년월일·연락처·이메일·자택주소는 계좌 지급 상세 계약에 없습니다. GET /api/admin/account-payments/{paymentId} 성공 시 감사 사유는 정확히 '정산금의 계좌 지급 처리를 위함'이며, 감사 저장 실패 시 이 원문을 반환하지 않습니다.
  */
 export interface AccountPaymentSensitiveDetailResponse {
   bankName?: string;

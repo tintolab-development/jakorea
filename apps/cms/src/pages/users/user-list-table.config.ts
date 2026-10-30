@@ -2,7 +2,10 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { User, UserRole } from '@/types/user'
-import type { AdminPermissionTagVariant } from '@/features/user/shared/lib/admin-permission-display'
+import {
+  isAdminPermissionTagVariant,
+  type AdminPermissionTagVariant,
+} from '@/features/user/shared/lib/admin-permission-display'
 import type { TablePageConfig } from '@/shared/components/table-system/types/table-page-config'
 import type { TableSearchParamRule } from '@/shared/hooks/use-table-search'
 import {
@@ -152,7 +155,7 @@ export function parseUserListQueryParams(searchParams: URLSearchParams): UserLis
 
 export function parseAdminPermissionVariantParam(raw: string | undefined): AdminPermissionTagVariant | '' {
   if (!raw || raw === 'ALL') return ''
-  if (raw === 'manager' || raw === 'partner' || raw === 'viewer') return raw
+  if (isAdminPermissionTagVariant(raw)) return raw
   return ''
 }
 
@@ -233,7 +236,7 @@ export function pendingToApiFilters(
   }
   if (listKind === 'admins') {
     const v = pending.adminPermissionVariant.trim()
-    if (v === 'manager' || v === 'partner' || v === 'viewer') {
+    if (isAdminPermissionTagVariant(v)) {
       api.adminPermissionVariant = v
     }
   }
@@ -362,7 +365,7 @@ export function applyUserListSearchToParams(
 
   if (nextKind === 'admins') {
     const apv = filters.adminPermissionVariant.trim()
-    if (apv === 'manager' || apv === 'partner' || apv === 'viewer') {
+    if (isAdminPermissionTagVariant(apv)) {
       nextParams.set('adminPermissionVariant', apv)
     } else {
       nextParams.delete('adminPermissionVariant')

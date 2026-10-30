@@ -217,7 +217,7 @@ export interface DashboardSettingsState {
   shortcutEnabled: Record<string, boolean>
   /** 마지막 shortcuts API의 useYn=true shortcutKey 순서 (persist 제외) */
   shortcutCatalogKeys: string[] | null
-  /** 바로가기 항목별 읽음 처리(0)만 저장. 미설정 키는 getMenuShortcutBadgeCounts() 집계를 표시 */
+  /** 로컬 바로가기 읽음 표시(레거시). remote 배지는 GET /dashboard-shortcut-badges counts만 사용 */
   shortcutBadgeCounts: Record<string, number>
   /** 위젯별 선택된 프로그램 id 목록 (위젯 key -> programId[]) */
   widgetProgramIds: Record<string, string[]>

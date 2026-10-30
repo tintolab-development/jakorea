@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildGradeOptionsForInstitution,
+  collectScheduleAssignPendingInstitutionNames,
   computeVolunteerEducationDays,
   isScheduleAssignBlockedInstitution,
   listAssignableSchoolsForDate,
@@ -55,6 +56,27 @@ describe('listAssignableSchoolsForDate', () => {
       '2027-04-30'
     )
     expect(schools).toEqual([])
+  })
+})
+
+describe('collectScheduleAssignPendingInstitutionNames', () => {
+  it('학급이 선택된 기관만 첫 등장 순으로 모은다', () => {
+    expect(
+      collectScheduleAssignPendingInstitutionNames(
+        {
+          a: {
+            rows: [
+              { institutionRowId: '1', gradeValues: ['1-1'] },
+              { institutionRowId: '2', gradeValues: [] },
+            ],
+          },
+          b: {
+            rows: [{ institutionRowId: '1', gradeValues: ['2-1'] }],
+          },
+        },
+        { '1': 'A초', '2': 'B초' }
+      )
+    ).toEqual(['A초'])
   })
 })
 

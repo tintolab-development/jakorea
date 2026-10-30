@@ -1,0 +1,37 @@
+.termRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  margin-bottom: var(--spacing-40);
+  padding: var(--spacing-16) var(--spacing-20);
+  border-radius: var(--radius-999);
+  background: var(--color-neutral-white-60);
+}
+
+.checkButton {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  text-align: left;
+}
+
+.termText {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: var(--spacing-8);
+}
+
+.optional {
+  color: var(--color-primary-500);
+}
+
+.viewButton {
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-warm-400);
+}

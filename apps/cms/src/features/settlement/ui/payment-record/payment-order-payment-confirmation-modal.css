@@ -23,25 +23,24 @@
   width: 100%;
 }
 
-/* 푸터 고정 폭(120px) 해제 — 긴 라벨 버튼 */
+/* ContentModal 푸터 140 고정 예외(cms-button--footer-auto) — 긴 확인 라벨 */
 .payment-order-payment-confirm-modal
-  .teal-header-modal__footer
-  .payment-order-payment-confirm__footer-actions
-  .ant-btn,
-.payment-order-payment-confirm-modal
-  .teal-header-modal__footer
-  .payment-order-payment-confirm__footer-actions
-  button {
-  width: auto;
-  min-width: 120px;
+  .content-modal__footer-actions
+  .cms-button.ant-btn.cms-button--footer-auto {
+  width: max-content !important;
+  min-width: max-content !important;
+  max-width: none !important;
+  flex-direction: row;
+  white-space: nowrap;
 }
 
 .payment-order-payment-confirm-modal
-  .teal-header-modal__footer
-  .payment-order-payment-confirm__footer-actions
-  .cms-button--h44 {
-  min-width: 200px;
-  width: auto;
+  .content-modal__footer-actions
+  .cms-button.ant-btn.cms-button--footer-auto
+  .cms-button__label {
+  overflow: visible;
+  text-overflow: unset;
+  max-width: none;
 }
 
 .payment-order-payment-confirm__line {

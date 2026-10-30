@@ -31,7 +31,7 @@ export type CompanySchoolRegistrationCommonCanonical = {
   managerContactIds: string[]
   ipOwned: string
   courseDeliveredBy: string
-  partnerInvolvement: 'yes' | 'no'
+  partnerInvolvement: 'yes' | 'no' | ''
   ipsCategory: string
   educationCourse: string
   participantCount: number | null

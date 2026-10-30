@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict'
 import { AxiosError } from 'axios'
 import {
+  formatPortalProfileUpdateError,
   getLoginApiErrorMessage,
   LOGIN_APPROVAL_PENDING_MESSAGE,
 } from './get-login-api-error-message.ts'
@@ -51,5 +52,18 @@ assert.equal(
 
 assert.equal(getLoginApiErrorMessage(new Error('network'), fallback), 'network')
 assert.equal(getLoginApiErrorMessage(undefined, fallback), fallback)
+
+assert.equal(
+  formatPortalProfileUpdateError(
+    axiosErr(400, {
+      error: {
+        code: 'GUARDIAN_RELATION_INVALID',
+        message: '보호자 관계를 확인해 주세요. 관계는 1~64자여야 합니다.',
+      },
+    }),
+    '회원 정보를 수정하지 못했습니다.',
+  ),
+  'GUARDIAN_RELATION_INVALID: 보호자 관계를 확인해 주세요. 관계는 1~64자여야 합니다.',
+)
 
 console.log('get-login-api-error-message.selfcheck: ok')

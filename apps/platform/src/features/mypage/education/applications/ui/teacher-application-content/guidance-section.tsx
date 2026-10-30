@@ -21,6 +21,7 @@ type GuidanceSectionProps = {
   applicationType?: ProgramApplicationType
   guidance: EducationTeacherApplicationGuidance
   showWriteLink?: boolean
+  showSexOffenseMethodRow?: boolean
 }
 
 export function GuidanceSection({
@@ -28,9 +29,11 @@ export function GuidanceSection({
   applicationType,
   guidance,
   showWriteLink = false,
+  showSexOffenseMethodRow = false,
 }: GuidanceSectionProps) {
   const navigate = useNavigate()
-  const showSexOffense = Boolean(guidance.sexOffenseConsentMethod?.trim())
+  const showSexOffense =
+    showSexOffenseMethodRow && Boolean(guidance.sexOffenseConsentMethod?.trim())
 
   return (
     <section className={styles.sectionAfterDivider} aria-label="안내사항">
@@ -52,7 +55,7 @@ export function GuidanceSection({
         ) : null}
       </div>
 
-      <PFFormFieldTable>
+      <PFFormFieldTable radius="rounded">
         {TEACHER_GUIDANCE_FIELDS.map(field => (
           <PFFormFieldRow key={field.key}>
             <PFFormField label={field.label} labelWidth="wider" fullWidth>

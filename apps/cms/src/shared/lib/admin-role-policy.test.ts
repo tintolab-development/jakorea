@@ -11,10 +11,12 @@ import {
   isProgramManagerPermissionSettingsPath,
   isSecurityLogPath,
   isTemplateManagementPath,
+  isProgramOperableAdminRoleCode,
   parseAdminRoleCode,
   resolveAdminPolicyScreen,
   resolveAdminRoleCodeFromUser,
   showAdminAccessDeniedAlert,
+  canNavigateBackInAppHistory,
   withSessionAdminRole,
 } from './admin-role-policy'
 import type { User } from '@/types/user'
@@ -45,15 +47,36 @@ function allowed(
 }
 
 describe('parseAdminRoleCode', () => {
-  it('4역할만 인식한다', () => {
+  it('정본·레거시 역할을 인식한다', () => {
     expect(parseAdminRoleCode('master')).toBe('MASTER')
     expect(parseAdminRoleCode('PM')).toBe('PM')
+    expect(parseAdminRoleCode('PROGRAM_MANAGER')).toBe('PROGRAM_MANAGER')
+    expect(parseAdminRoleCode('ACCOUNTING_MANAGER')).toBe('ACCOUNTING_MANAGER')
+    expect(parseAdminRoleCode('PROGRAM_VIEWER')).toBe('PROGRAM_VIEWER')
     expect(parseAdminRoleCode('ADMIN')).toBeNull()
   })
 
-  it('OpenAPI MIDDLE(중간 관리자)는 PARTNER로 정규화한다', () => {
-    expect(parseAdminRoleCode('MIDDLE')).toBe('PARTNER')
-    expect(parseAdminRoleCode('middle')).toBe('PARTNER')
+  it('OpenAPI MIDDLE(중간 관리자)는 PROGRAM_MANAGER로 정규화한다', () => {
+    expect(parseAdminRoleCode('MIDDLE')).toBe('PROGRAM_MANAGER')
+    expect(parseAdminRoleCode('middle')).toBe('PROGRAM_MANAGER')
+  })
+
+  it('로컬 /me 원문을 세션 정본으로 접는다', () => {
+    expect(parseAdminRoleCode('MASTER')).toBe('MASTER')
+    expect(parseAdminRoleCode('MIDDLE')).toBe('PROGRAM_MANAGER')
+    expect(parseAdminRoleCode('VIEWER')).toBe('VIEWER')
+  })
+})
+
+describe('isProgramOperableAdminRoleCode', () => {
+  it('includes N-16 managers and legacy MIDDLE/PM/PARTNER', () => {
+    expect(isProgramOperableAdminRoleCode('PROGRAM_MANAGER')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('ACCOUNTING_MANAGER')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('MIDDLE')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('PM')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('PARTNER')).toBe(true)
+    expect(isProgramOperableAdminRoleCode('MASTER')).toBe(false)
+    expect(isProgramOperableAdminRoleCode('VIEWER')).toBe(false)
   })
 })
 
@@ -61,8 +84,12 @@ describe('adminRoleCodeToLegacyAdminLevel', () => {
   it('레거시 3단계로 접는다', () => {
     expect(adminRoleCodeToLegacyAdminLevel('MASTER')).toBe('MASTER')
     expect(adminRoleCodeToLegacyAdminLevel('PM')).toBe('ADMIN')
+    expect(adminRoleCodeToLegacyAdminLevel('PROGRAM_MANAGER')).toBe('ADMIN')
+    expect(adminRoleCodeToLegacyAdminLevel('MIDDLE')).toBe('ADMIN')
+    expect(adminRoleCodeToLegacyAdminLevel('ACCOUNTING_MANAGER')).toBe('ADMIN')
     expect(adminRoleCodeToLegacyAdminLevel('PARTNER')).toBe('ADMIN')
     expect(adminRoleCodeToLegacyAdminLevel('VIEWER')).toBe('GENERAL')
+    expect(adminRoleCodeToLegacyAdminLevel('PROGRAM_VIEWER')).toBe('GENERAL')
   })
 })
 
@@ -79,7 +106,7 @@ describe('withSessionAdminRole', () => {
       updatedAt: '2026-01-01T00:00:00.000Z',
       listMetrics: { adminPermissionVariant: 'partner' },
     })
-    expect(partner.roleCode).toBe('PARTNER')
+    expect(partner.roleCode).toBe('PROGRAM_MANAGER')
     expect(partner.adminLevel).toBe('ADMIN')
 
     const viewer = withSessionAdminRole({
@@ -93,7 +120,7 @@ describe('withSessionAdminRole', () => {
       updatedAt: '2026-01-01T00:00:00.000Z',
       listMetrics: { adminPermissionVariant: 'viewer' },
     })
-    expect(viewer.roleCode).toBe('VIEWER')
+    expect(viewer.roleCode).toBe('PROGRAM_VIEWER')
     expect(viewer.adminLevel).toBe('GENERAL')
   })
 })
@@ -142,6 +169,8 @@ describe('canAdminAction 표 규칙', () => {
   it('대시보드 개인화 저장은 VIEWER 허용, PARTNER 차단', () => {
     expect(allowed('MASTER', 'dashboardWrite')).toBe(true)
     expect(allowed('PM', 'dashboardWrite')).toBe(true)
+    expect(allowed('PROGRAM_MANAGER', 'dashboardWrite')).toBe(true)
+    expect(allowed('MIDDLE', 'dashboardWrite')).toBe(true)
     expect(allowed('VIEWER', 'dashboardWrite')).toBe(true)
     expect(allowed('PARTNER', 'dashboardWrite')).toBe(false)
   })
@@ -165,19 +194,28 @@ describe('canAdminAction 표 규칙', () => {
     expect(allowed('PARTNER', 'download')).toBe(true)
   })
 
-  it('일반 개인정보 열람은 뷰어만 차단', () => {
+  it('회원 관리 일반 개인정보는 Master·Accounting·Program Manager만', () => {
     expect(allowed('MASTER', 'pii')).toBe(true)
-    expect(allowed('PM', 'pii')).toBe(true)
-    expect(allowed('PARTNER', 'pii')).toBe(true)
+    expect(allowed('ACCOUNTING_MANAGER', 'pii')).toBe(true)
+    expect(allowed('PROGRAM_MANAGER', 'pii')).toBe(true)
+    expect(allowed('PM', 'pii')).toBe(false)
+    expect(allowed('PARTNER', 'pii')).toBe(false)
+    // 읽기 별칭. 신규 쓰기 경로의 MIDDLE 거절과 별개다.
+    expect(allowed('MIDDLE', 'pii')).toBe(true)
     expect(allowed('VIEWER', 'pii')).toBe(false)
+    expect(allowed('PROGRAM_VIEWER', 'pii')).toBe(false)
   })
 
-  it('주민번호·계좌는 파트너·뷰어 차단', () => {
+  it('전역 주민번호·계좌 원문은 Master만', () => {
     for (const action of ['piiRrn', 'piiAccount'] as const) {
       expect(allowed('MASTER', action)).toBe(true)
-      expect(allowed('PM', action)).toBe(true)
+      expect(allowed('ACCOUNTING_MANAGER', action)).toBe(false)
+      expect(allowed('PROGRAM_MANAGER', action)).toBe(false)
+      expect(allowed('PM', action)).toBe(false)
       expect(allowed('PARTNER', action)).toBe(false)
+      expect(allowed('MIDDLE', action)).toBe(false)
       expect(allowed('VIEWER', action)).toBe(false)
+      expect(allowed('PROGRAM_VIEWER', action)).toBe(false)
     }
   })
 
@@ -291,15 +329,34 @@ describe('showAdminAccessDeniedAlert', () => {
 
   it('온보딩 미완료면 권한 안내를 띄우지 않는다', () => {
     onboarding.incomplete = true
-    showAdminAccessDeniedAlert()
+    expect(showAdminAccessDeniedAlert()).toBe(false)
     expect(cmsAlertModal.show).not.toHaveBeenCalled()
   })
 
   it('온보딩이 끝났으면 권한 안내를 띄운다', () => {
-    showAdminAccessDeniedAlert()
+    expect(showAdminAccessDeniedAlert()).toBe(true)
     expect(cmsAlertModal.show).toHaveBeenCalledWith({
       title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
       content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+      onConfirm: undefined,
     })
+  })
+
+  it('확인 콜백을 안내 모달에 넘긴다', () => {
+    const onConfirm = vi.fn()
+    expect(showAdminAccessDeniedAlert({ onConfirm })).toBe(true)
+    expect(cmsAlertModal.show).toHaveBeenCalledWith({
+      title: ADMIN_ACCESS_DENIED_ALERT_TITLE,
+      content: ADMIN_ACCESS_DENIED_ALERT_CONTENT,
+      onConfirm,
+    })
+  })
+})
+
+describe('canNavigateBackInAppHistory', () => {
+  it('React Router idx가 있을 때만 앱 안에서 뒤로 간다', () => {
+    expect(canNavigateBackInAppHistory(undefined)).toBe(false)
+    expect(canNavigateBackInAppHistory({ idx: 0 })).toBe(false)
+    expect(canNavigateBackInAppHistory({ idx: 1 })).toBe(true)
   })
 })

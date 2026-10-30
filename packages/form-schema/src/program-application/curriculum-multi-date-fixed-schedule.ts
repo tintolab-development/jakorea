@@ -167,7 +167,8 @@ function hasFixedScheduleLineSessionSuffix(label: string): boolean {
 }
 
 /**
- * 커리큘럼·단일·날짜 고정 일정 — 예정일 줄 i(입력 순서)는 i+1차시다. 라벨 `일시 | (i+1)차시`.
+ * 커리큘럼·단일·날짜 고정 일정 — 모든 예정일 줄에 커리큘럼 총 차시 수(마지막 차시)를 같게 붙인다.
+ * 라벨 `일시 | N차시` (N = 커리큘럼 차시 개수, 예정일 줄 수·입력 순서와 무관).
  * 차시가 1개면 일시만. lineIndex를 모르면 educationScheduleLines에서 같은 줄을 찾고, 없으면 일시만.
  */
 export function appendCurriculumSingleDateFixedScheduleSessionSuffix(
@@ -197,7 +198,7 @@ export function appendCurriculumSingleDateFixedScheduleSessionSuffix(
       ? lineIndex
       : expandEducationScheduleChoiceSlots(visibility.educationScheduleLines).indexOf(trimmed)
   if (index < 0) return trimmed
-  return `${trimmed} | ${index + 1}차시`
+  return `${trimmed} | ${sessions}차시`
 }
 
 const FIXED_SCHEDULE_ROUND_SUFFIX_RE = /\|\s*\d+\s*회차(?:\s*\(\s*\d+\s*차시\s*\))?\s*$/

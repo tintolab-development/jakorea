@@ -1,5 +1,7 @@
 import { GEMINI_VISITING_TRAINING_RECRUIT_FORM_IDS } from '@/features/template/model/gemini-visiting-training-recruit-form-draft'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import { mergeDevAutofillSparse } from '@/features/program/shared/lib/merge-dev-autofill-sparse'
+import { isAnnouncementUnpublished } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import {
   GEMINI_RECRUIT_FIELD_KEYS,
   getGeminiRecruitFormRecord,
@@ -144,7 +146,12 @@ export function seedGeminiRecruitmentOverlaysFromSnapshot(
   snapshot: GeminiRecruitmentAddFormSnapshot,
   templateCode?: string | null
 ): void {
-  replaceGeminiRecruitFormExact(seedGeminiRecruitFieldsFromDetail(snapshot))
+  replaceGeminiRecruitFormExact(
+    mergeDevAutofillSparse(
+      getGeminiRecruitFormRecord(),
+      seedGeminiRecruitFieldsFromDetail(snapshot)
+    )
+  )
   replaceRecruitDetailInfoIntoGeneralStore(
     {
       [resolveRecruitDetailTextFieldOverlayKey(DETAIL_PREFIX, '프로그램 설명')]:
@@ -171,12 +178,16 @@ export function isGeminiRecruitmentInstitutionComplete(
   snapshot: GeminiRecruitmentAddFormSnapshot
 ): boolean {
   const count = snapshot.minStudentCount ?? 0
+  const skipPeriods = isAnnouncementUnpublished(snapshot.announcementPublished)
   return (
     snapshot.title.trim().length > 0 &&
+    (snapshot.announcementPublished === 'published' ||
+      snapshot.announcementPublished === 'unpublished') &&
     snapshot.educationTargetLevels.length > 0 &&
     snapshot.educationTargetDetail.trim().length > 0 &&
-    Boolean(snapshot.applicationPeriodStart && snapshot.applicationPeriodEnd) &&
-    Boolean(snapshot.trainingRequestPeriodStart && snapshot.trainingRequestPeriodEnd) &&
+    (skipPeriods || Boolean(snapshot.applicationPeriodStart && snapshot.applicationPeriodEnd)) &&
+    (skipPeriods ||
+      Boolean(snapshot.trainingRequestPeriodStart && snapshot.trainingRequestPeriodEnd)) &&
     count >= 1 &&
     (snapshot.educationForm === 'online' || snapshot.educationForm === 'offline') &&
     snapshot.inquiryContactName.trim().length > 0 &&

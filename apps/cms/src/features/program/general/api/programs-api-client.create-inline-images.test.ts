@@ -18,7 +18,7 @@ vi.mock('@/features/program/shared/api/program-inline-images', () => ({
     syncProgramInlineImagesKeepProgram(...args),
 }))
 
-import { createAdminProgramRemote } from './programs-api-client'
+import { createAdminProgramRemote, updateAdminProgramRemote } from './programs-api-client'
 
 describe('createAdminProgramRemote inline-images 실패', () => {
   beforeEach(() => {
@@ -37,17 +37,47 @@ describe('createAdminProgramRemote inline-images 실패', () => {
       }
       return { success: true, data: {} }
     })
-    syncProgramInlineImagesKeepProgram.mockResolvedValue('failed')
+    syncProgramInlineImagesKeepProgram.mockRejectedValue(new Error('bind failed'))
 
-    const created = await createAdminProgramRemote({
+    const payload = {
       title: '[BOT-TEST] keep',
       programType: 'GENERAL_ORGANIZATION',
       description: '<img src="/api/admin/files/1/content">',
-    } as never)
+    } as never
 
-    expect(created.id).toBe(186359)
-    expect(syncProgramInlineImagesKeepProgram).toHaveBeenCalledWith(186359, expect.any(Array))
+    await expect(createAdminProgramRemote(payload)).rejects.toThrow('bind failed')
+    expect(syncProgramInlineImagesKeepProgram).toHaveBeenCalledWith(186359, payload)
     const methods = customInstance.mock.calls.map(call => call[0]?.method)
     expect(methods).not.toContain('DELETE')
+  })
+})
+
+describe('updateAdminProgramRemote inline-images', () => {
+  beforeEach(() => {
+    customInstance.mockReset()
+    syncProgramInlineImagesKeepProgram.mockReset()
+    syncProgramInlineImages.mockReset()
+  })
+
+  it('PATCH 응답이 아니라 저장 payload만 sync에 넘긴다', async () => {
+    customInstance.mockResolvedValue({
+      success: true,
+      data: { id: 12, additionalContentHtml: '<img src="file-object:999" />' },
+    })
+    syncProgramInlineImages.mockResolvedValue(undefined)
+    const payload = { additionalContentHtml: '<p></p>' }
+
+    await updateAdminProgramRemote('12', payload as never)
+
+    expect(syncProgramInlineImages).toHaveBeenCalledWith('12', payload)
+  })
+
+  it('이미지 연결 실패 시 수정 완료로 반환하지 않는다', async () => {
+    customInstance.mockResolvedValue({ success: true, data: { id: 12 } })
+    syncProgramInlineImages.mockRejectedValue(new Error('bind failed'))
+
+    await expect(
+      updateAdminProgramRemote('12', { additionalContentHtml: '<p></p>' } as never)
+    ).rejects.toThrow('bind failed')
   })
 })

@@ -231,7 +231,8 @@ function PinnedFormCardInner({
               isSelected,
               updateParagraph,
               structureLockedParagraphIds,
-              hideParagraphRequiredChrome
+              hideParagraphRequiredChrome,
+              paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn
             )
           : undefined
       }
@@ -464,7 +465,8 @@ function SortableMiddleFormCardInner({
                 isSelected,
                 updateParagraph,
                 structureLockedParagraphIds,
-                hideParagraphRequiredChrome
+                hideParagraphRequiredChrome,
+                paragraphBodyOptions?.lockSurveyWritingPeriodToggleOn
               )
             : undefined
         }

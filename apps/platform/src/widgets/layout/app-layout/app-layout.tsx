@@ -44,6 +44,7 @@ export function AppLayout({
   const isMypage = isMypageHome || layout === 'mypage-subpage'
   const isHero = layout === 'hero'
   const isAuth = layout === 'auth'
+  const isMemberConversionBody = pathname.startsWith('/auth/member-conversion')
   const isPublicForm = layout === 'public-form'
   const isHome = layout === 'home'
   const isSupport = layout === 'support'
@@ -94,22 +95,24 @@ export function AppLayout({
   const mainContent = useContentShell ? (
     <ContentShell>{children}</ContentShell>
   ) : isAuth ? (
-    <AuthPageShell>{children}</AuthPageShell>
+    <AuthPageShell fill={isMemberConversionBody}>{children}</AuthPageShell>
   ) : (
     children
   )
 
-  const mainClassName = isMypage
-    ? styles.mainMypage
-    : isHome
-      ? styles.mainHome
-      : isSupportHero
-        ? styles.mainSupport
-        : isIntroduction
-          ? styles.mainIntroduction
-          : isPublicForm
-            ? styles.mainPublic
-            : styles.main
+  const mainClassName = isMemberConversionBody
+    ? styles.mainFill
+    : isMypage
+      ? styles.mainMypage
+      : isHome
+        ? styles.mainHome
+        : isSupportHero
+          ? styles.mainSupport
+          : isIntroduction
+            ? styles.mainIntroduction
+            : isPublicForm
+              ? styles.mainPublic
+              : styles.main
 
   return (
     <div className={styles.layout}>

@@ -99,7 +99,11 @@ import {
   resolveTrainedTeachersIpsTypeView,
   shouldShowSessionIpsSummary,
 } from '@/features/program/trained-teachers/lib/common-info-display'
-import { validateTrainedTeachersCommonInfoDraft } from '@/features/program/trained-teachers/lib/validate-trained-teachers-common-info-draft'
+import { resolveTrainedTeachersCommonInfoDraftValidationAlert } from '@/features/program/trained-teachers/lib/validate-trained-teachers-common-info-draft'
+import {
+  isOutsideEducationOperationRange,
+  toEducationOperationDayjs,
+} from '@/features/program/shared/lib/education-schedule-change'
 import {
   applyTrainedTeachersProgressGroupsToScheduleDetails,
   buildTrainedTeachersCommonInfoSaveSlices,
@@ -1640,8 +1644,18 @@ function TrainedTeachersScheduleSettingsSection({
   const hideForScheduleMulti = educationStructure === 'schedule' && sessionRound === 'multi'
   const watchedLines = isFormEdit ? (form.watch('educationScheduleLines') ?? []) : undefined
   const watchedMode = isFormEdit ? (form.watch('educationScheduleMode') ?? 'date') : undefined
+  const watchedOperationStart = isFormEdit ? form.watch('startDate') : undefined
+  const watchedOperationEnd = isFormEdit ? form.watch('endDate') : undefined
   const lines = watchedLines ?? commonInfo.educationScheduleLines ?? []
   const scheduleMode = watchedMode ?? commonInfo.educationScheduleMode ?? 'date'
+  const operationStartBound = toEducationOperationDayjs(
+    isFormEdit ? (watchedOperationStart ?? operationStart) : operationStart
+  )
+  const operationEndBound = toEducationOperationDayjs(
+    isFormEdit ? (watchedOperationEnd ?? operationEnd) : operationEnd
+  )
+  const disableOutsideOperation = (date: Dayjs) =>
+    isOutsideEducationOperationRange(date, operationStartBound, operationEndBound)
 
   const appendLineIfNew = (line: string) => {
     if (!form) return
@@ -1761,6 +1775,7 @@ function TrainedTeachersScheduleSettingsSection({
                     }}
                     onRangeChange={handleScheduleRangeApply}
                     width={240}
+                    disabledDate={disableOutsideOperation}
                   />
                 ) : (
                   <ParagraphDatePicker inputSize="small"
@@ -1774,6 +1789,7 @@ function TrainedTeachersScheduleSettingsSection({
                     onChange={setPeriodDate}
                     onRangeChange={handleScheduleRangeApply}
                     width={360}
+                    disabledDate={disableOutsideOperation}
                   />
                 )
               }
@@ -2061,17 +2077,19 @@ export function TrainedTeachersCommonInfoView({
         const curriculumSessions = slices.extraCommonInfo.curriculumSessions
 
         if (draft) {
-          const draftValidationMessage = validateTrainedTeachersCommonInfoDraft({
+          const draftValidationAlert = resolveTrainedTeachersCommonInfoDraftValidationAlert({
             educationStructure: persistStructure,
             sessionRound: persistRound,
             scheduleDetails: draft.scheduleDetails,
             progressGroupsByDetail: draft.progressGroupsByDetail,
             educationScheduleLines: form?.getValues('educationScheduleLines'),
+            operationStart: form?.getValues('startDate') ?? program.startDate,
+            operationEnd: form?.getValues('endDate') ?? program.endDate,
           })
-          if (draftValidationMessage) {
+          if (draftValidationAlert) {
             void showAlert({
-              title: '입력 확인',
-              content: draftValidationMessage,
+              title: draftValidationAlert.title,
+              content: draftValidationAlert.content,
             })
             return
           }

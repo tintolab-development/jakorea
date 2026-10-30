@@ -98,7 +98,10 @@ export interface ProgramCreateRequest {
   additionalContentHtml?: string;
   recruitmentGuide?: string;
   learningSupportContent?: string;
-  otherMatters?: string;
+  /** 비고. Gemini 찾아가는 연수 모집의 geminiRecruitment.notes 저장 필드. 해당없음이면 생략/null. */
+  remarks?: string | null;
+  /** 기타사항. 강사·봉사자 모집용. Gemini 찾아가는 연수 모집에는 입력란이 없다. 전환 기간에는 Gemini가 otherMatters/notes로 보낸 비고를 remarks로 받는다. */
+  otherMatters?: string | null;
   recruitmentTargetDetail?: string;
   attachmentFileNames?: string[];
   rounds?: ProgramRoundRequest[];

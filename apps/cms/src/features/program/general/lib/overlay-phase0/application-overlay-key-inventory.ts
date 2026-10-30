@@ -174,7 +174,7 @@ export const APPLICATION_OVERLAY_KEY_INVENTORY: readonly ApplicationOverlayKeyEn
     required: true,
     preview: true,
     bridge: false,
-    notes: '1사1교 등록 완료 필수. 일반은 선택 UI',
+    notes: '1사1교 등록 완료 필수. 기본값 ja_system. 일반은 선택 UI',
     ...FORM_VERSION_AND_DRAFT,
   },
   {
@@ -183,9 +183,10 @@ export const APPLICATION_OVERLAY_KEY_INVENTORY: readonly ApplicationOverlayKeyEn
     kind: 'static',
     input: 'institution-sex-offense-consent-inquiry-paragraph',
     defaultValue: "''",
-    required: true,
+    required: false,
     preview: true,
     bridge: false,
+    notes: 'inquiryMethod가 criminal_record_site일 때 필수. ja_system이면 저장하지 않음',
     ...FORM_VERSION_AND_DRAFT,
   },
   {
@@ -197,7 +198,7 @@ export const APPLICATION_OVERLAY_KEY_INVENTORY: readonly ApplicationOverlayKeyEn
     required: false,
     preview: true,
     bridge: false,
-    notes: 'inquiryMethod 값에 따라 1사1교에서 필수',
+    notes: 'inquiryMethod가 criminal_record_site일 때 1사1교에서 필수. ja_system이면 비움',
     ...FORM_VERSION_AND_DRAFT,
   },
   {
@@ -209,6 +210,7 @@ export const APPLICATION_OVERLAY_KEY_INVENTORY: readonly ApplicationOverlayKeyEn
     required: false,
     preview: true,
     bridge: false,
+    notes: 'inquiryMethod가 criminal_record_site일 때 1사1교에서 필수. ja_system이면 비움',
     ...FORM_VERSION_AND_DRAFT,
   },
   {

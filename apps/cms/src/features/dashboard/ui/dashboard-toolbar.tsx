@@ -1,5 +1,5 @@
 /**
- * 대시보드 상단 툴바 (인사말, 진행 프로젝트 수, 설정 버튼)
+ * 대시보드 상단 툴바 (인사말, 진행 프로그램 수, 설정 버튼)
  */
 
 import { CmsButton } from '@/shared/ui'
@@ -35,7 +35,7 @@ export function DashboardToolbar({
           {userName} {roleLabel}님, 반갑습니다!
         </span>
         <span className="dashboard-toolbar-description">
-          진행 프로젝트 {activeProgramsCount == null ? '-' : activeProgramsCount}건
+          진행 프로그램 {activeProgramsCount == null ? '-' : activeProgramsCount}건
         </span>
       </div>
       <div className="dashboard-toolbar-right">

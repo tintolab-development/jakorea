@@ -22,6 +22,7 @@ import {
   resolveScheduleTypeDetailedProgramNameFromDetails,
 } from '@/features/program/general/lib/detail-common-info-display'
 import { omitMirroredDetailedProgramMasterIdFromCommonInfo } from '@/features/program/general/lib/detailed-program-request-id'
+import { overlayWithEducationPlaceCommonInfoFallback } from '@/features/program/general/lib/education-place-common-info-fallback'
 import { parseWageGradeAmountToFormString } from '@/features/program/general/lib/wage-display'
 import { resolvePublicProgramTitle } from '@/features/program/shared/lib/public-program-title'
 import {
@@ -51,6 +52,7 @@ import {
   coerceScheduleDetailsToEventLayout,
   inferScheduleDetailBlockKind,
   isPreEducationCurriculumSession,
+  isPreEducationScheduleBlock,
   relabelScheduleDetailFormRowsByKind,
   shouldDisableEducationSchedulePeriodMode,
   trimTrailingBlankRegularCurriculumSessions,
@@ -77,6 +79,17 @@ import {
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-options'
 import { getProgramRegistrationEducationFormOptions } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import { findEducationScheduleLinesOutsideOperationRange } from '@/features/program/shared/lib/education-schedule-change'
+import {
+  isEducationPlaceRowVisible,
+  isEducationPlaceTypeSettingsRowVisible,
+  type EducationPlaceVisibilityInput,
+} from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-place-rules'
+import {
+  REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY,
+  REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY,
+} from '@/features/program/general/lib/overlay-phase1/registration-wizard-overlay-path-map'
 
 const curriculumSessionSchema = z.object({
   sessionLabel: z.string(),
@@ -89,6 +102,8 @@ const curriculumSessionSchema = z.object({
   ipsCategory: z.enum(['inspire', 'prepare', 'succeed', '']).optional(),
   ipsDetail: z.string().optional(),
   scheduleDate: z.string().optional(),
+  /** 교육 진행 장소 일정 별 상이 — 회차/차시 주소 (overlay sidecar) */
+  educationPlace: z.string().optional(),
 })
 
 const scheduleGroupTimeSchema = z.object({
@@ -108,6 +123,8 @@ const scheduleDetailFormSchema = z.object({
   participationMethod: z.enum(['individual', 'team']).optional(),
   ipsCategory: z.enum(['inspire', 'prepare', 'succeed', '']).optional(),
   ipsDetail: z.string().optional(),
+  /** 교육 진행 장소 일정 별 상이 — 세부 일정 주소 (overlay sidecar) */
+  educationPlace: z.string().optional(),
 })
 
 const participantTypeSchema = z.object({
@@ -119,6 +136,60 @@ const participantTypeSchema = z.object({
 
 function isBlankText(value: string | undefined | null): boolean {
   return value == null || value.trim() === ''
+}
+
+export const EDUCATION_PLACE_REQUIRED_MESSAGE = '교육 진행 장소를 입력해주세요'
+
+type EducationPlaceFormSlice = Pick<
+  GeneralProgramCommonInfoEditFormValues,
+  | 'participantIndividual'
+  | 'participantOrganization'
+  | 'sessionRound'
+  | 'educationForm'
+  | 'educationFormScheduleDetail'
+>
+
+/** 상세 공통 정보 — 교육 진행 장소 대상 (참여자 <개인>, 기관 미선택). 등록 위저드와 동일 */
+export function isGeneralCommonInfoEducationPlaceEnabled(
+  values: Pick<EducationPlaceFormSlice, 'participantIndividual' | 'participantOrganization'>
+): boolean {
+  return isGeneralIndividualParticipantSelection(
+    values.participantIndividual === true,
+    values.participantOrganization === true
+  )
+}
+
+function educationPlaceVisibilityFromFormValues(
+  values: EducationPlaceFormSlice
+): EducationPlaceVisibilityInput {
+  return {
+    sessionRoundType: values.sessionRound,
+    educationFormScheduleDetail: values.educationFormScheduleDetail,
+    commonEducationForm: values.educationForm,
+  }
+}
+
+/** 유형 설정 「교육 진행 장소」 행 노출 — 교육 형태 「온라인」이면 숨김 */
+export function isGeneralCommonInfoEducationPlaceRowVisible(values: EducationPlaceFormSlice): boolean {
+  return (
+    isGeneralCommonInfoEducationPlaceEnabled(values) &&
+    isEducationPlaceTypeSettingsRowVisible(educationPlaceVisibilityFromFormValues(values))
+  )
+}
+
+/** 회차/세부 일정 행 「교육 진행 장소」 노출 (일정 별 상이). 사전 교육 행은 호출부에서 제외 */
+export function isGeneralCommonInfoEducationPlaceSessionVisible(
+  values: EducationPlaceFormSlice & { educationPlaceScheduleDetail?: string },
+  rowEducationForm: string | undefined
+): boolean {
+  return (
+    isGeneralCommonInfoEducationPlaceEnabled(values) &&
+    values.educationPlaceScheduleDetail === 'perSchedule' &&
+    isEducationPlaceRowVisible({
+      ...educationPlaceVisibilityFromFormValues(values),
+      rowEducationForm,
+    })
+  )
 }
 
 function isIpsTypeIncomplete(category: string | undefined, detail: string | undefined): boolean {
@@ -202,6 +273,10 @@ export const generalProgramCommonInfoEditSchema = z
     scheduleCurriculumPreEducation: z.boolean(),
     educationScheduleMode: z.enum(['date', 'period']).default('date'),
     educationScheduleLines: z.array(z.string()),
+    /** 교육 진행 장소 — 일정 공통 / 일정 별 상이 (개인 대상, overlay sidecar) */
+    educationPlaceScheduleDetail: z.enum(['common', 'perSchedule']).optional(),
+    /** 교육 진행 장소 — 일정 공통 주소 */
+    educationPlaceAddress: z.string().optional(),
   })
   .merge(participantTypeSchema)
   .superRefine((data, ctx) => {
@@ -432,7 +507,7 @@ export const generalProgramCommonInfoEditSchema = z
       const groupCount =
         data.sessionRound === 'multi' ? 1 : Math.max(1, data.scheduleGroupCount ?? 1)
       data.scheduleDetails.forEach((detail, index) => {
-        const isPre = detail.blockKind === 'preEducation'
+        const isPre = isPreEducationScheduleBlock(detail)
         if (isBlankText(detail.name)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -518,6 +593,61 @@ export const generalProgramCommonInfoEditSchema = z
           })
         }
       })
+    }
+
+    // 교육 진행 장소 — 개인 대상 필수. 교육 형태 「온라인」 행은 숨김·필수 제외. 사전 교육 제외.
+    if (isGeneralCommonInfoEducationPlaceEnabled(data)) {
+      const visibility = educationPlaceVisibilityFromFormValues(data)
+      const placeRows: Array<{
+        path: 'curriculumSessions' | 'scheduleDetails'
+        index: number
+        educationForm?: string
+        educationPlace?: string
+      }> =
+        data.educationStructure === 'schedule'
+          ? data.scheduleDetails
+              .map((detail, index) => ({ detail, index }))
+              .filter(({ detail }) => !isPreEducationScheduleBlock(detail))
+              .map(({ detail, index }) => ({
+                path: 'scheduleDetails' as const,
+                index,
+                educationForm: detail.educationForm,
+                educationPlace: detail.educationPlace,
+              }))
+          : data.curriculumSessions
+              .map((session, index) => ({ session, index }))
+              .filter(({ session }) => !isPreEducationCurriculumSession(session))
+              .map(({ session, index }) => ({
+                path: 'curriculumSessions' as const,
+                index,
+                educationForm: session.educationForm,
+                educationPlace: session.educationPlace,
+              }))
+      const visibleRows = placeRows.filter(row =>
+        isEducationPlaceRowVisible({ ...visibility, rowEducationForm: row.educationForm })
+      )
+      if (data.educationPlaceScheduleDetail === 'perSchedule') {
+        visibleRows.forEach(row => {
+          if (!isBlankText(row.educationPlace)) return
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: EDUCATION_PLACE_REQUIRED_MESSAGE,
+            path: [row.path, row.index, 'educationPlace'],
+          })
+        })
+      } else if (
+        isEducationPlaceTypeSettingsRowVisible(visibility) &&
+        (visibility.educationFormScheduleDetail !== 'perSchedule' ||
+          data.sessionRound !== 'multi' ||
+          visibleRows.length > 0) &&
+        isBlankText(data.educationPlaceAddress)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: EDUCATION_PLACE_REQUIRED_MESSAGE,
+          path: ['educationPlaceAddress'],
+        })
+      }
     }
 
     const hideEducationSchedule =
@@ -677,7 +807,9 @@ export function resolveScheduleDetailsFormState(
   }
 
   const scheduleDetails = raw.map((d, i) => {
-    const blockKind = inferScheduleDetailBlockKind(d.scheduleLabel ?? '')
+    const blockKind = isPreEducationScheduleBlock(d)
+      ? 'preEducation'
+      : (d.blockKind ?? inferScheduleDetailBlockKind(d.scheduleLabel ?? ''))
     const groupTimes = d.progressTimeSummary
       ? parseScheduleProgressTimeSummary(d.progressTimeSummary)
       : emptyScheduleGroupTimes(1)
@@ -1700,6 +1832,139 @@ function resolveWageFromProgram(
   }
 }
 
+function overlayTextAt(record: Record<number, unknown>, index: number): string {
+  const value = record[index]
+  return typeof value === 'string' ? value : ''
+}
+
+/** 커리큘럼 overlay 행 인덱스 — 사전 교육=0, 본 회차/차시는 1부터 */
+function overlayIndexForCurriculumSession(
+  sessions: ReadonlyArray<{ sessionLabel?: string; isPreEducation?: boolean }>,
+  index: number
+): number {
+  if (isPreEducationCurriculumSession(sessions[index] ?? {})) return 0
+  return sessions.slice(0, index).filter(s => !isPreEducationCurriculumSession(s)).length + 1
+}
+
+/** 상세 공통 정보 — overlay sidecar 교육 진행 장소 → 폼 값 */
+function educationPlaceEditValuesFromProgram(
+  program: Program,
+  curriculumSessions: GeneralProgramCommonInfoEditFormValues['curriculumSessions'],
+  scheduleDetails: GeneralProgramCommonInfoEditFormValues['scheduleDetails']
+): Pick<
+  GeneralProgramCommonInfoEditFormValues,
+  'educationPlaceScheduleDetail' | 'educationPlaceAddress' | 'curriculumSessions' | 'scheduleDetails'
+> {
+  // 재조회 우선순위: overlay 모드/주소/행 값 → 없으면 BE 복사본 generalCommonInfo
+  const overlay = overlayWithEducationPlaceCommonInfoFallback(
+    program.registrationOverlay,
+    program.generalCommonInfo
+  )
+  const bySession = readOverlayIndexRecord<unknown>(
+    overlay,
+    REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY
+  )
+  const byDetail = readOverlayIndexRecord<unknown>(
+    overlay,
+    REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY
+  )
+  const address = overlay?.[REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY]
+  return {
+    educationPlaceScheduleDetail:
+      overlay?.[REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY] === 'perSchedule'
+        ? 'perSchedule'
+        : 'common',
+    educationPlaceAddress: typeof address === 'string' ? address : '',
+    curriculumSessions: curriculumSessions.map((session, index) =>
+      isPreEducationCurriculumSession(session)
+        ? session
+        : {
+            ...session,
+            educationPlace: overlayTextAt(
+              bySession,
+              overlayIndexForCurriculumSession(curriculumSessions, index)
+            ),
+          }
+    ),
+    scheduleDetails: scheduleDetails.map((detail, index) =>
+      isPreEducationScheduleBlock(detail)
+        ? detail
+        : {
+            ...detail,
+            educationPlace: overlayTextAt(
+              byDetail,
+              overlayIpsIndexForScheduleDetail(scheduleDetails, index)
+            ),
+          }
+    ),
+  }
+}
+
+/**
+ * 폼 교육 진행 장소 → overlay sidecar 4키. 숨긴 행(온라인)·사전 교육 값은 지우지 않고 유지한다.
+ * 변경이 없으면 undefined.
+ */
+export function educationPlaceRegistrationOverlayFromEditValues(
+  values: GeneralProgramCommonInfoEditFormValues,
+  existing: Program
+): Record<string, unknown> | undefined {
+  if (!isGeneralCommonInfoEducationPlaceEnabled(values)) return undefined
+  const overlay = existing.registrationOverlay ?? {}
+  const scheduleDetail = values.educationPlaceScheduleDetail ?? 'common'
+  const address = values.educationPlaceAddress ?? ''
+  const next: Record<string, unknown> = {
+    [REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY]: scheduleDetail,
+    [REGISTRATION_WIZARD_EDUCATION_PLACE_ADDRESS_KEY]: address,
+  }
+  const prevBySession = readOverlayIndexRecord<unknown>(
+    overlay,
+    REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY
+  )
+  const prevByDetail = readOverlayIndexRecord<unknown>(
+    overlay,
+    REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY
+  )
+  if (values.educationStructure === 'schedule') {
+    const byDetail: Record<number, unknown> = { ...prevByDetail }
+    values.scheduleDetails.forEach((detail, index) => {
+      if (isPreEducationScheduleBlock(detail)) return
+      byDetail[overlayIpsIndexForScheduleDetail(values.scheduleDetails, index)] =
+        detail.educationPlace ?? ''
+    })
+    next[REGISTRATION_WIZARD_EDUCATION_PLACE_BY_DETAIL_KEY] = byDetail
+  } else {
+    const bySession: Record<number, unknown> = { ...prevBySession }
+    values.curriculumSessions.forEach((session, index) => {
+      if (isPreEducationCurriculumSession(session)) return
+      bySession[overlayIndexForCurriculumSession(values.curriculumSessions, index)] =
+        session.educationPlace ?? ''
+    })
+    next[REGISTRATION_WIZARD_EDUCATION_PLACE_BY_SESSION_KEY] = bySession
+  }
+  const changed = Object.entries(next).some(([key, value]) => {
+    const prev = overlay[key]
+    if (value != null && typeof value === 'object') {
+      const prevRecord = prev != null && typeof prev === 'object' ? prev : {}
+      const nextEntries = Object.entries(value as Record<string, unknown>).filter(
+        ([, v]) => (typeof v === 'string' ? v : '') !== ''
+      )
+      const prevEntries = Object.entries(prevRecord as Record<string, unknown>).filter(
+        ([, v]) => (typeof v === 'string' ? v : '') !== ''
+      )
+      if (nextEntries.length !== prevEntries.length) return true
+      return nextEntries.some(
+        ([k, v]) => (prevRecord as Record<string, unknown>)[k] !== v
+      )
+    }
+    if (key === REGISTRATION_WIZARD_EDUCATION_PLACE_SCHEDULE_DETAIL_KEY) {
+      return (prev === 'perSchedule' ? 'perSchedule' : 'common') !== value
+    }
+    return (typeof prev === 'string' ? prev : '') !== value
+  })
+  if (!changed) return undefined
+  return { ...overlay, ...next }
+}
+
 export function programToGeneralCommonInfoEditValues(
   program: Program,
   context: GeneralProgramSponsorEditContext = EMPTY_SPONSOR_CONTEXT,
@@ -1727,7 +1992,7 @@ export function programToGeneralCommonInfoEditValues(
     context
   )
 
-  return {
+  const values: GeneralProgramCommonInfoEditFormValues = {
     mainTitle: program.mainTitle?.trim() ?? '',
     titleEn: program.titleEn?.trim() ?? '',
     announcementTitle:
@@ -1785,6 +2050,14 @@ export function programToGeneralCommonInfoEditValues(
       ? 'date'
       : (commonInfo.educationScheduleMode ?? 'date'),
     educationScheduleLines: [...(commonInfo.educationScheduleLines ?? [])],
+  }
+  return {
+    ...values,
+    ...educationPlaceEditValuesFromProgram(
+      program,
+      values.curriculumSessions,
+      values.scheduleDetails
+    ),
   }
 }
 
@@ -2016,6 +2289,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
                 sessionLabel: '사전 교육',
                 title: s.title.trim() || '사전 교육',
                 description: '',
+                isPreEducation: true,
                 scheduleDateLabel: s.scheduleDate?.trim() || undefined,
                 assignmentEnabled: false,
                 assignmentPeriod: undefined,
@@ -2069,14 +2343,12 @@ export function generalCommonInfoEditValuesToProgramPatch(
               scheduleLabel: d.scheduleLabel,
               name: d.name.trim(),
             }
-            if (
-              d.blockKind === 'preEducation' ||
-              inferScheduleDetailBlockKind(d.scheduleLabel) === 'preEducation'
-            ) {
+            if (isPreEducationScheduleBlock(d)) {
               return {
                 ...row,
                 scheduleLabel: '사전 교육',
                 name: d.name.trim() || '사전 교육',
+                blockKind: 'preEducation' as const,
                 scheduleDateLabel: d.scheduleDate?.trim() || undefined,
                 assignmentEnabled: false,
                 assignmentPeriod: undefined,
@@ -2095,6 +2367,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
             ) {
               return {
                 ...row,
+                blockKind: 'event' as const,
                 scheduleDateLabel: d.scheduleDate?.trim() || undefined,
                 assignmentEnabled:
                   values.participantOrganization || values.sessionRound === 'single'
@@ -2125,6 +2398,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
             }
             return {
               ...row,
+              blockKind: 'sub' as const,
               progressTimeSummary: buildScheduleProgressTimeSummary(d.groupTimes),
               scheduleDateLabel: persistSubScheduleDateLabel({
                 formScheduleDate: d.scheduleDate,
@@ -2168,6 +2442,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
   const generalCommonInfo = isScheduleType
     ? omitMirroredDetailedProgramMasterIdFromCommonInfo(generalCommonInfoForPatch)
     : generalCommonInfoForPatch
+  const educationPlaceOverlay = educationPlaceRegistrationOverlayFromEditValues(values, existing)
 
   return {
     title: representativeTitleKo || existing.title,
@@ -2209,6 +2484,7 @@ export function generalCommonInfoEditValuesToProgramPatch(
     ...(manager?.name && !manager.name.includes('*') ? { managerName: manager.name } : {}),
     ...(manager?.phone && !manager.phone.includes('*') ? { contactPhone: manager.phone } : {}),
     generalCommonInfo,
+    ...(educationPlaceOverlay ? { registrationOverlay: educationPlaceOverlay } : {}),
   }
 }
 

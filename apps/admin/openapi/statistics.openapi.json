@@ -5266,8 +5266,9 @@
           "version"
         ]
       },
-      "StatusResponse": {
+      "PublicApplicationNotificationStatusResponse": {
         "type": "object",
+        "description": "Public-application mail outbox row. Recipient emails are never returned.",
         "properties": {
           "id": {
             "type": "integer",
@@ -5281,7 +5282,16 @@
             "enum": [
               "CAREER_TALENT_APPLICATION",
               "CORPORATE_CONSULTATION",
-              "TALENT_APPLICATION"
+              "TALENT_APPLICATION",
+              "CAREER_POSTING_DEADLINE"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "EMAIL",
+              "ALIMTALK",
+              "SYSTEM"
             ]
           },
           "aggregateId": {
@@ -5306,11 +5316,67 @@
           "lastError": {
             "type": "string"
           },
+          "providerMessageId": {
+            "type": "string",
+            "description": "NHN messageId after provider acceptance. Null until accepted.",
+            "nullable": true
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
           },
           "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "HomepageAdminSystemNotificationItem": {
+        "type": "object",
+        "description": "Homepage-admin in-app inbox item. Distinct from public-application outbox history.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventKey": {
+            "type": "string"
+          },
+          "notificationType": {
+            "type": "string",
+            "enum": [
+              "CAREER_TALENT_APPLICATION",
+              "CORPORATE_CONSULTATION",
+              "TALENT_APPLICATION",
+              "CAREER_POSTING_DEADLINE"
+            ]
+          },
+          "aggregateId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "actionLabel": {
+            "type": "string"
+          },
+          "actionPath": {
+            "type": "string"
+          },
+          "read": {
+            "type": "boolean"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Set when the caller marks this row read. Distinct from outbox SENT.",
+            "nullable": true
+          },
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           }
@@ -7859,6 +7925,10 @@
             "type": "string",
             "nullable": true
           },
+          "attachmentUrl": {
+            "type": "string",
+            "nullable": true
+          },
           "authorName": {
             "type": "string"
           },
@@ -8941,6 +9011,15 @@
             "items": {
               "$ref": "#/components/schemas/FooterPartnerResponse"
             }
+          }
+        }
+      },
+      "HomepageAdminSystemNotificationUnreadCount": {
+        "type": "object",
+        "properties": {
+          "unreadCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

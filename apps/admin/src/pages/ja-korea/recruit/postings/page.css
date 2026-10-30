@@ -3,10 +3,6 @@
   min-width: 0;
 }
 
-.recruit-postings-page__filter-card {
-  margin-bottom: var(--spacing-24, 24px);
-}
-
 .recruit-postings-page__filter {
   width: 100%;
 }

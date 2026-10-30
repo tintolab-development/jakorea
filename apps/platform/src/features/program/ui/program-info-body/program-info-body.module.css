@@ -126,6 +126,22 @@
   min-width: 0;
 }
 
+/* 교육 장소 | 값 — 긴 주소는 구분선 오른쪽에서 줄바꿈 (모바일 포함) */
+.sessionMeta .sessionMetaDivided {
+  flex-wrap: nowrap;
+}
+
+.sessionMeta .sessionMetaDivided > span:first-child {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.sessionMeta .sessionMetaDivided > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
 .sessionLabel {
   color: var(--color-primary-500);
 }
@@ -235,8 +251,16 @@
   --rt-content-line-height: 1.6;
   --rt-content-paragraph-margin: 0.5em;
 
+  max-height: none;
   overflow: visible;
   padding: 0;
+}
+
+.extraSectionRichText :global(.rich-text-content img),
+.extraSectionRichText :global(.rich-text-content .rich-text-content__image) {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 .contact {
@@ -279,5 +303,184 @@
   .body .detail {
     flex: 0 0 959px;
     width: 959px;
+  }
+}
+
+/* ── 참여하기 상세(variant="participate") — Figma 11001-199634 (PC) / 6772-30311 (Mobile) ── */
+
+/* 기본정보 카드 테두리 border/default #d9d9d9 */
+.participate .basicInfo {
+  border-color: var(--color-border-default);
+}
+
+/* 차시: "1차시" + 8px + 제목 */
+.participate .sessionTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-8);
+}
+
+.participate .sessionLabel {
+  flex-shrink: 0;
+}
+
+/* 기본정보 → 세부내용 60px */
+.participate .detailContent {
+  margin-top: var(--spacing-60);
+}
+
+.participate .detailContentBody {
+  gap: var(--spacing-32);
+}
+
+.participate .extraSections,
+.participate .contact,
+.participate .schedules {
+  margin-top: 0;
+}
+
+/* 문의처: 이름 │ Tel : … │ E-mail : … (구분선 1×13, #3d3d3d 50%) */
+.participate .contactParts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.participate .contactDivider {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1px;
+  height: 13px;
+  margin-inline: var(--spacing-8);
+  overflow: hidden;
+  background: var(--color-neutral-black);
+  font-size: 0;
+  opacity: 0.5;
+}
+
+/* 지원방법: 세부내용 컬럼 마지막 (Figma 11001:199949) */
+.participate .applicationMethod {
+  margin-top: 0;
+}
+
+@media (--bp-below-pc) {
+  /* 모바일은 aside가 비어 있어(포스터·신청은 detail-view header·하단 바) 간격 제거 */
+  .body.participate {
+    gap: 0;
+  }
+
+  /* 소개: 16px / 150% · neutral/warm/700, 아래 기본정보 카드까지 32px */
+  .participate .summary {
+    padding-bottom: var(--spacing-32);
+  }
+
+  .participate .summaryText {
+    color: var(--color-neutral-warm-700);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    letter-spacing: -0.16px;
+  }
+
+  .participate .detailContent {
+    margin-top: var(--spacing-32);
+  }
+
+  /* 모바일 Figma 6772-30462: 문의처는 쉼표 구분 */
+  .participate .contactParts {
+    display: block;
+  }
+
+  .participate .contactDivider {
+    display: inline;
+    width: auto;
+    height: auto;
+    margin-inline: 0;
+    background: none;
+    font-size: inherit;
+    opacity: 1;
+  }
+
+  /* 지원방법 (Figma 6772-30465): 세로 배치, 16px 패딩, radius 12, 문의처 아래 20px */
+  .participate .applicationMethod {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: var(--spacing-8);
+    margin-top: var(--spacing-20);
+    padding: var(--spacing-16);
+    border-radius: var(--radius-12);
+  }
+
+  .participate .applicationMethodLabel {
+    font-size: 13px;
+    line-height: 1.4;
+    letter-spacing: 0;
+  }
+
+  .participate .applicationMethodValue {
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: 0;
+  }
+
+  /* 기본정보 (Figma 6772-30657): 패딩 16, 블록 간 20, 필드 행 20 / 열 32 */
+  .participate .basicInfo {
+    gap: var(--spacing-20);
+    padding: var(--spacing-16);
+  }
+
+  .participate .infoFields {
+    column-gap: var(--spacing-32);
+    row-gap: var(--spacing-20);
+  }
+
+  /* 라벨 13 Medium / 140% · cool-600, 값 14 Medium / 160% */
+  .participate .infoItem > :first-child,
+  .participate .recruitmentCard > :first-child,
+  .participate .extraSection > h3 {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0;
+  }
+
+  .participate .infoItem > :last-child,
+  .participate .session > p,
+  .participate .infoBlock > span,
+  .participate .scheduleCard > span,
+  .participate .extraSectionBody,
+  .participate .contact > :last-child {
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: 0;
+  }
+
+  /* 차시 박스: 패딩 16, radius 12 (차시 간 16 + 구분선 + 16 은 공통 규칙 유지) */
+  .participate .sessions {
+    padding: var(--spacing-16);
+  }
+
+  /* 세부내용 (Figma 6772-30401): 블록 간 20 */
+  .participate .detailContent {
+    gap: var(--spacing-20);
+  }
+
+  .participate .recruitmentCard,
+  .participate .scheduleCard {
+    padding: var(--spacing-16);
+  }
+
+  .participate .extraSections {
+    gap: var(--spacing-20);
+    margin-top: var(--spacing-20);
+  }
+
+  .participate .extraSectionRichText {
+    --rt-content-font-size: 14px;
+  }
+
+  .participate .contact {
+    margin-top: var(--spacing-20);
   }
 }

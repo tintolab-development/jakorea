@@ -7,7 +7,7 @@ import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-inst
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 
 /**
- * 강사 권한 박탈 후 CMS User 스냅샷.
+ * 강사 권한 종료 후 CMS User 스냅샷.
  * 상세 유형(강사/겸직)은 유지하고 `INSTRUCTOR` → `INSTRUCTOR_REVOKED`.
  * 강사 목록에서는 제외되고 전체 회원 목록에만 남는다.
  */
