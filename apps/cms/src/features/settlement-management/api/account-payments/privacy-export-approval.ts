@@ -11,10 +11,7 @@ export const RAW_SETTLEMENT_EXPORT_DOMAIN = {
   'tax-report': 'SETTLEMENT_TAX_REPORT',
 } as const
 
-export type PrivacyExportApprovalCreateBody = PrivacyExportApprovalRequestCreate & {
-  /** 정산 원문. 서버가 발급한 scopeToken. 클라이언트 해시로 대체하지 않는다. */
-  scopeToken?: string
-}
+export type PrivacyExportApprovalCreateBody = PrivacyExportApprovalRequestCreate
 
 export async function createPrivacyExportApprovalRemote(
   body: PrivacyExportApprovalCreateBody
