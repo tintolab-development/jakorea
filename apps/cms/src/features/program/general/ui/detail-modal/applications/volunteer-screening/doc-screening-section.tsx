@@ -6,6 +6,11 @@ import {
   FilterTableToolbarButton,
 } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import { IndividualApproveScopeModal } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
+import { ProgramApplicationRejectModal } from '@/features/program/shared/ui/detail-modal/components/program-application-reject-modal'
+import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
+import { GeneralVolunteerApplicationBulkApproveModal } from './general-volunteer-application-bulk-approve-modal'
+import { canSelectVolunteerApplicationForDecision } from './general-volunteer-application-decision-actions'
 import { GeneralVolunteerDocumentApproveModal } from './general-volunteer-document-approve-modal'
 import { GeneralVolunteerDocumentBulkApproveModal } from './general-volunteer-document-bulk-approve-modal'
 import { GeneralVolunteerDocumentBulkRejectModal } from './general-volunteer-document-bulk-reject-modal'
@@ -67,7 +72,12 @@ export function GeneralVolunteerDocScreeningSection({
     openApproveModal,
     openRejectModal,
     handleApproveModalConfirm,
+    handleApplicationApproveConfirm,
     handleRejectModalConfirm,
+    approvePreferredSchedules,
+    approveConfirmLoading,
+    bulkApproveSubjectName,
+    bulkRejectSubjectName,
     cancelApprovalVolunteer,
     cancelRejectVolunteer,
     closeCancelApprovalModal,
@@ -123,7 +133,7 @@ export function GeneralVolunteerDocScreeningSection({
     [openApplicantDetail]
   )
 
-  const approveRejectModals = (
+  const approveRejectModals = interviewEnabled ? (
     <>
       <GeneralVolunteerDocumentApproveModal
         open={approveModalVolunteer != null}
@@ -134,6 +144,30 @@ export function GeneralVolunteerDocScreeningSection({
       <GeneralVolunteerDocumentRejectModal
         open={rejectModalVolunteer != null}
         volunteerName={rejectModalVolunteer?.name ?? ''}
+        onCancel={closeRejectModal}
+        onConfirm={handleRejectModalConfirm}
+      />
+    </>
+  ) : (
+    <>
+      {program ? (
+        <IndividualApproveScopeModal
+          open={approveModalVolunteer != null}
+          participantName={approveModalVolunteer?.name ?? ''}
+          programId={programId}
+          program={program}
+          preferredEducationSchedules={approvePreferredSchedules}
+          confirmLoading={approveConfirmLoading}
+          onCancel={closeApproveModal}
+          onConfirm={handleApplicationApproveConfirm}
+        />
+      ) : null}
+      <ProgramApplicationRejectModal
+        open={rejectModalVolunteer != null}
+        audience="member"
+        variant="single"
+        subjectName={rejectModalVolunteer?.name ?? ''}
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
         onCancel={closeRejectModal}
         onConfirm={handleRejectModalConfirm}
       />
@@ -164,7 +198,7 @@ export function GeneralVolunteerDocScreeningSection({
     </>
   )
 
-  const listBulkModals = (
+  const listBulkModals = interviewEnabled ? (
     <>
       <GeneralVolunteerDocumentBulkApproveModal
         open={bulkApproveOpen}
@@ -175,6 +209,26 @@ export function GeneralVolunteerDocScreeningSection({
       <GeneralVolunteerDocumentBulkRejectModal
         open={bulkRejectOpen}
         selectionCount={selectedRowKeys.length}
+        onCancel={closeBulkRejectModal}
+        onConfirm={handleBulkRejectConfirm}
+      />
+    </>
+  ) : (
+    <>
+      <GeneralVolunteerApplicationBulkApproveModal
+        open={bulkApproveOpen}
+        subjectName={bulkApproveSubjectName}
+        selectionCount={selectedRowKeys.length}
+        onCancel={closeBulkApproveModal}
+        onConfirm={handleBulkApproveConfirm}
+      />
+      <ProgramApplicationRejectModal
+        open={bulkRejectOpen}
+        audience="member"
+        variant="bulk"
+        subjectName={bulkRejectSubjectName}
+        selectionCount={selectedRowKeys.length}
+        notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
         onCancel={closeBulkRejectModal}
         onConfirm={handleBulkRejectConfirm}
       />
@@ -277,9 +331,9 @@ export function GeneralVolunteerDocScreeningSection({
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
                 getCheckboxProps: record => ({
-                  disabled: !isDocumentScreeningPendingForBulkSelect(
-                    record.documentScreeningStatus
-                  ),
+                  disabled: interviewEnabled
+                    ? !isDocumentScreeningPendingForBulkSelect(record.documentScreeningStatus)
+                    : !canSelectVolunteerApplicationForDecision(record),
                 }),
               }}
               onRow={record => ({
