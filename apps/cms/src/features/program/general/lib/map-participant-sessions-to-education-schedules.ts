@@ -2,6 +2,7 @@ import type { ParticipatingInstructorEducationScheduleRow } from '@/features/pro
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import { normalizeDashboardScheduleDeliveryStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import { getSeoulCalendarDate } from '@/shared/utils/date'
 
 function mapSessionProgressStatus(
   raw?: string | null
@@ -12,13 +13,22 @@ function mapSessionProgressStatus(
   return 'scheduled'
 }
 
+/** UTC 등 시간대가 명시된 ISO 시각은 KST 달력일로, 그 외는 앞 10자리를 그대로 쓴다. */
+function toSeoulCalendarDate(startAt: string): string {
+  if (/T.*(Z|[+-]\d{2}:?\d{2})$/i.test(startAt)) {
+    const parsed = new Date(startAt)
+    if (!Number.isNaN(parsed.getTime())) return getSeoulCalendarDate(parsed)
+  }
+  return startAt.slice(0, 10)
+}
+
 function formatSessionProgressLabel(session: SessionProgress, index: number): string {
   const parts: string[] = []
   if (session.sessionNo != null) parts.push(`${session.sessionNo}차시`)
   const scheduleName = toDisplayEducationScheduleName(session.scheduleName)
   if (scheduleName) parts.push(scheduleName)
   if (session.startAt?.trim()) {
-    const date = session.startAt.slice(0, 10).replace(/-/g, '.')
+    const date = toSeoulCalendarDate(session.startAt.trim()).replace(/-/g, '.')
     parts.push(date)
   }
   if (parts.length === 0) return `교육 일정 ${index + 1}`
