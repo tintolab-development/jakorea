@@ -7,6 +7,7 @@ import {
   mapOrganizationScheduleAssignmentSlotsToAssignedSessions,
   readPreferredEducationSchedulesForScope,
   resolveParticipatingInstitutionApplicationScheduleSessions,
+  resolveParticipatingInstitutionPreferredDisplaySessions,
   resolveParticipatingProgressAssignedSessions,
   resolveParticipatingSchoolHopeSessions,
 } from './organization-education-schedule-sources'
@@ -175,6 +176,62 @@ describe('organization-education-schedule-sources', () => {
         organizationApplicationId: '99',
       })
     ).toHaveLength(0)
+  })
+
+  it('1사1교 참여 기관은 빈 sessions여도 preferred 희망 일정을 표시한다', () => {
+    const preferred = [
+      {
+        scheduleId: null,
+        round: 1,
+        startAt: '2026-12-22T18:00:00Z',
+        endAt: '2026-12-22T21:00:00Z',
+        label: null,
+        unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' as const,
+        educationDate: '2026-12-23',
+      },
+      {
+        scheduleId: null,
+        round: 2,
+        startAt: '2026-12-29T19:00:00Z',
+        endAt: '2026-12-29T22:00:00Z',
+        label: null,
+        unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' as const,
+        educationDate: '2026-12-30',
+      },
+    ]
+    const row: ParticipatingSchoolRow = {
+      id: '1695027',
+      no: 1,
+      schoolName: 'QA 제휴학교',
+      region: '서울특별시 중구',
+      educationGrade: '2학년',
+      classCount: 3,
+      studentCount: 24,
+      lectureRound: '',
+      textbookStatus: 'not_applicable',
+      approvalStatus: 'approved',
+      teacherName: '최지원',
+      instructors: '',
+      programId: '186473',
+      organizationApplicationId: '1691546',
+      sessions: undefined,
+      preferredEducationSchedules: preferred,
+      hopeEducationSessions: buildHopeEducationSessionsFromPreferred(preferred),
+    }
+    const display = resolveParticipatingInstitutionPreferredDisplaySessions(row)
+    expect(display).toHaveLength(2)
+    expect(display[0]?.date).toBe('2026.12.23')
+    expect(display[0]?.timeRange).toBe('03:00 ~ 06:00')
+    expect(display[1]?.date).toBe('2026.12.30')
+    expect(
+      resolveParticipatingInstitutionApplicationScheduleSessions({
+        isCompanySchool: true,
+        isGeneralOrganization: false,
+        assignedSessions: [],
+        participantSessions: [],
+        hopeSessions: display,
+      })
+    ).toEqual(display)
   })
 
   it('maps OSA slots to assigned sessions for one organizationApplicationId only', () => {

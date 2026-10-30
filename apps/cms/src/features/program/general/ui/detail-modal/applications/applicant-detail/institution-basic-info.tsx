@@ -58,6 +58,7 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { resolveAffiliatedFinancialCompanyDisplay } from '@/features/program/1c-1s/lib/affiliated-financial-company-display'
 import { SponsorNameById } from '@/features/sponsor/ui/sponsor-name-by-id'
 import {
+  alignCompanySchoolScheduleDates,
   buildCompanySchoolPreferredScheduleBlocks,
   parseCompanySchoolRequestedScheduleMemo,
 } from '@/features/program/1c-1s/lib/company-school-preferred-schedule-blocks'
@@ -334,13 +335,24 @@ export function ApplicantGeneralInstitutionBasicInfo({
     () =>
       isCompanySchool
         ? buildCompanySchoolPreferredScheduleBlocks(
-            /** requested-schedules 가 비면 서버 `requestedScheduleMemo` 를 읽는다 */
-            requestedHopeSchedulesQuery.data && requestedHopeSchedulesQuery.data.length > 0
-              ? requestedHopeSchedulesQuery.data
-              : parseCompanySchoolRequestedScheduleMemo(institution.desiredEducationPeriod)
+            /**
+             * 교시·시간: requested-schedules, 비면 `requestedScheduleMemo`(참고용) 해석.
+             * 날짜: `preferredEducationSchedules[].educationDate`(SSOT)로 맞춘다.
+             */
+            alignCompanySchoolScheduleDates(
+              requestedHopeSchedulesQuery.data && requestedHopeSchedulesQuery.data.length > 0
+                ? requestedHopeSchedulesQuery.data
+                : parseCompanySchoolRequestedScheduleMemo(institution.desiredEducationPeriod),
+              institution.preferredEducationSchedules
+            )
           )
         : [],
-    [isCompanySchool, requestedHopeSchedulesQuery.data, institution.desiredEducationPeriod]
+    [
+      isCompanySchool,
+      requestedHopeSchedulesQuery.data,
+      institution.desiredEducationPeriod,
+      institution.preferredEducationSchedules,
+    ]
   )
   const sessions = useMemo(() => {
     const preferred = institution.preferredEducationSchedules ?? []

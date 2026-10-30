@@ -606,6 +606,47 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[0]?.timeRange).toContain('~')
   })
 
+  it('maps participant preferredEducationSchedules when sessions are empty', () => {
+    const row = mapParticipantToParticipatingSchoolRow(
+      {
+        participantId: 1695027,
+        organizationApplicationId: 1691546,
+        sourceApplicationId: 1691546,
+        organizationName: 'QA 제휴학교',
+        grade: '2',
+        sessions: [],
+        preferredEducationSchedules: [
+          {
+            scheduleId: null,
+            round: 1,
+            startAt: '2026-12-22T18:00:00Z',
+            endAt: '2026-12-22T21:00:00Z',
+            label: null,
+            unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH',
+            educationDate: '2026-12-23',
+          },
+          {
+            scheduleId: null,
+            round: 2,
+            startAt: '2026-12-29T19:00:00Z',
+            endAt: '2026-12-29T22:00:00Z',
+            label: null,
+            unresolvedReason: 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH',
+            educationDate: '2026-12-30',
+          },
+        ],
+      } as never,
+      0,
+      '186473'
+    )
+    expect(row.sessions).toBeUndefined()
+    expect(row.preferredEducationSchedules).toHaveLength(2)
+    expect(row.hopeEducationSessions).toHaveLength(2)
+    expect(row.hopeEducationSessions?.[0]?.date).toBe('2026.12.23')
+    expect(row.hopeEducationSessions?.[0]?.timeRange).toBe('03:00 ~ 06:00')
+    expect(row.hopeEducationSessions?.[1]?.date).toBe('2026.12.30')
+  })
+
   it.each([
     ['BEFORE_SHIPPING', 'preparing'],
     ['SHIPPING', 'shipping'],

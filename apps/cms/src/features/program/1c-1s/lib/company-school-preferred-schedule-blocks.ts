@@ -117,3 +117,50 @@ export function parseCompanySchoolRequestedScheduleMemo(
   }
   return out
 }
+
+type PreferredEducationDateSource = {
+  round?: number | null
+  startAt?: string | null
+  educationDate?: string | null
+}
+
+/** Instant → Asia/Seoul 달력일 `YYYY-MM-DD` (UTC slice 금지) */
+export function seoulDateFromInstant(raw: string | null | undefined): string | null {
+  const text = raw?.trim()
+  if (!text) return null
+  const date = new Date(text)
+  if (Number.isNaN(date.getTime())) return null
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date)
+}
+
+/** 희망 교육일: `educationDate` 우선, null인 레거시만 `startAt` Seoul 달력일 */
+export function resolvePreferredEducationDate(
+  schedule: PreferredEducationDateSource | null | undefined
+): string | null {
+  const educationDate = schedule?.educationDate?.trim()
+  if (educationDate && /^\d{4}-\d{2}-\d{2}$/.test(educationDate)) return educationDate
+  return seoulDateFromInstant(schedule?.startAt)
+}
+
+/**
+ * 교시·시간은 requested-schedules(또는 메모), 날짜는 `preferredEducationSchedules`(SSOT) 기준으로 맞춘다.
+ * 지망 매칭: round === preferenceOrder, 없으면 같은 순번. 순서는 바꾸지 않는다.
+ */
+export function alignCompanySchoolScheduleDates(
+  schedules: readonly RequestedScheduleResponse[],
+  preferred: readonly PreferredEducationDateSource[] | null | undefined
+): RequestedScheduleResponse[] {
+  const list = preferred ?? []
+  if (list.length === 0) return [...schedules]
+  return schedules.map((schedule, index) => {
+    const order = positiveInt(schedule.preferenceOrder) ?? index + 1
+    const matched = list.find(item => item.round === order) ?? list[index]
+    const date = resolvePreferredEducationDate(matched)
+    return date ? { ...schedule, requestedDate: date } : schedule
+  })
+}
