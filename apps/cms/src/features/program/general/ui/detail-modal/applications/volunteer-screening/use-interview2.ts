@@ -31,10 +31,7 @@ import {
   notifyProgramApiUnavailable,
   useNotifyProgramApiUnavailableOnce,
 } from '@/features/program/shared/lib/program-api-unavailable'
-import {
-  GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS,
-  type GeneralSecondInterviewScreeningStatus,
-} from '@/features/program/general/lib/volunteer-screening-constants'
+import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
 import { useGeneralVolunteerInterview2Columns } from './interview2-columns'
 import type {
   PermissionModalNotifyTiming,
@@ -56,7 +53,6 @@ import {
   requestGeneralVolunteerInterview2BulkPass,
   isGeneralVolunteerInterview2SelectableForResult,
 } from './general-volunteer-interview2-actions'
-import type { GeneralInterview2BulkPassConfirmPayload } from './general-volunteer-interview2-bulk-pass-modal'
 import {
   guardGeneralVolunteerInterview2Evaluation,
   guardGeneralVolunteerInterview2Fail,
@@ -394,30 +390,27 @@ export function useGeneralVolunteerInterview2({
   }, [])
 
   const confirmBulkPass = useCallback(
-    async (payload: GeneralInterview2BulkPassConfirmPayload) => {
+    async (payload: PermissionModalPayload) => {
       const ids = selectedRowKeys.map(String)
       const ok = await applySecondInterviewStatus(
         ids,
-        payload.passType,
+        'pass',
         undefined,
         toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
       )
       setBulkPassModalOpen(false)
       if (!ok) return
-      const passTypeLabel =
-        GENERAL_INTERVIEW2_BULK_PASS_TYPE_OPTIONS.find(option => option.value === payload.passType)
-          ?.label ?? payload.passType
       const notifyLabel =
         payload.notifyTiming === 'immediate'
           ? '즉시'
           : payload.notifyTiming === 'on_announcement'
             ? '발표일에 맞춰서'
-            : (payload.manualNotifyAt
-                ? formatYmdHmWithKoreanWeekday(payload.manualNotifyAt)
-                : '직접 설정')
+            : payload.manualNotifyAt
+              ? formatYmdHmWithKoreanWeekday(payload.manualNotifyAt)
+              : '직접 설정'
       showAlert({
         title: '일괄 합격',
-        content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel})`,
+        content: `선택한 ${ids.length}건이 합격 처리되었습니다. (알림: ${notifyLabel})`,
       })
       setSelectedRowKeys([])
     },
@@ -669,6 +662,8 @@ export function useGeneralVolunteerInterview2({
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount: selectedRowKeys.length,
+    bulkPassSubjectName:
+      list.find(row => selectedRowKeys.map(String).includes(row.id))?.name ?? '',
     bulkFailModalOpen,
     closeBulkFailModal,
     confirmBulkFail,

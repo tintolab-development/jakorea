@@ -24,7 +24,7 @@ import {
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterview2BulkFailCompleteModal } from './general-volunteer-interview2-bulk-fail-complete-modal'
 import { GeneralVolunteerInterview2BulkFailModal } from './general-volunteer-interview2-bulk-fail-modal'
-import { GeneralVolunteerInterview2BulkPassModal } from './general-volunteer-interview2-bulk-pass-modal'
+import { GeneralVolunteerApplicationBulkApproveModal } from './general-volunteer-application-bulk-approve-modal'
 import { GeneralVolunteerInterview2FailCompleteModal } from './general-volunteer-interview2-fail-complete-modal'
 import { GeneralVolunteerInterview2FailModal } from './general-volunteer-interview2-fail-modal'
 import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer-interview2-pass-complete-modal'
@@ -81,6 +81,7 @@ export function GeneralVolunteerInterview2Section({
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount,
+    bulkPassSubjectName,
     bulkFailModalOpen,
     closeBulkFailModal,
     confirmBulkFail,
@@ -217,9 +218,10 @@ export function GeneralVolunteerInterview2Section({
   )
 
   const bulkPassModal = (
-    <GeneralVolunteerInterview2BulkPassModal
+    <GeneralVolunteerApplicationBulkApproveModal
       open={bulkPassModalOpen}
-      count={bulkPassCount}
+      subjectName={bulkPassSubjectName}
+      selectionCount={bulkPassCount}
       onCancel={closeBulkPassModal}
       onConfirm={confirmBulkPass}
     />
