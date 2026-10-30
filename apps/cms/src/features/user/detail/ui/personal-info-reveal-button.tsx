@@ -27,12 +27,11 @@ export type PersonalInfoRevealButtonProps = {
   width?: number | string
 }
 
-function resolveLabel(
-  labelMode: PersonalInfoRevealButtonLabelMode,
-  revealed: boolean
-): string {
+function resolveLabel(labelMode: PersonalInfoRevealButtonLabelMode, revealed: boolean): string {
   if (labelMode === 'toggle') {
-    return revealed ? PERSONAL_INFO_REVEAL_BUTTON_LABEL.mask : PERSONAL_INFO_REVEAL_BUTTON_LABEL.reveal
+    return revealed
+      ? PERSONAL_INFO_REVEAL_BUTTON_LABEL.mask
+      : PERSONAL_INFO_REVEAL_BUTTON_LABEL.reveal
   }
   return PERSONAL_INFO_REVEAL_BUTTON_LABEL.reveal
 }
@@ -49,7 +48,6 @@ export function PersonalInfoRevealButton({
   style,
   cmsVariant = 'primary',
   cmsSize = 'large',
-  width = 160,
 }: PersonalInfoRevealButtonProps) {
   if (labelMode === 'revealOnly' && revealed) {
     return null
@@ -62,7 +60,6 @@ export function PersonalInfoRevealButton({
       type="button"
       variant={cmsVariant}
       size={cmsSize}
-      width={width}
       className={className}
       style={style}
       disabled={disabled}
