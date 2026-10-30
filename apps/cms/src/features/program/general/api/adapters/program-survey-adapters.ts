@@ -65,18 +65,54 @@ export function isProgramSurveyManagementFormBinding(binding: ProgramFormBinding
   return false
 }
 
+type SurveyShareLinkClipboardSource = {
+  shareToken?: string | null
+  accessMode?: string | null
+  formPath?: string | null
+}
+
+function readPublicSurveyShareToken(response: SurveyShareLinkClipboardSource): string | null {
+  const direct = response.shareToken?.trim()
+  if (direct) return direct
+  const formPath = response.formPath?.trim() ?? ''
+  const match = /\/public\/surveys\/([^/?#]+)/i.exec(formPath)
+  const fromPath = match?.[1]?.trim()
+  if (!fromPath) return null
+  try {
+    return decodeURIComponent(fromPath)
+  } catch {
+    return fromPath
+  }
+}
+
 export function resolveSurveyShareClipboardUrl(
-  response: {
-    shareToken?: string | null
-    accessMode?: string | null
-  },
+  response: SurveyShareLinkClipboardSource,
   platformOrigin: string | null | undefined
 ): string | null {
   if (response.accessMode?.trim().toUpperCase() !== 'PUBLIC_ANONYMOUS') return null
-  const token = response.shareToken?.trim()
+  const token = readPublicSurveyShareToken(response)
   const origin = platformOrigin?.trim().replace(/\/$/, '')
   if (!origin || !token) return null
   return `${origin}/surveys/share/${encodeURIComponent(token)}`
+}
+
+export function describeSurveyShareClipboardFailure(
+  response: SurveyShareLinkClipboardSource | null | undefined,
+  platformOrigin: string | null | undefined,
+  kind: 'survey' | 'satisfaction' = 'survey'
+): string {
+  const subject = kind === 'satisfaction' ? '만족도조사' : '설문'
+  if (response?.accessMode?.trim().toUpperCase() === 'MEMBER_AUTHENTICATED') {
+    return `회원 전용 ${subject}는 비로그인 공유 링크를 만들 수 없습니다.`
+  }
+  const origin = platformOrigin?.trim()
+  if (!origin) {
+    return '사용자 홈페이지 주소(VITE_PLATFORM_PUBLIC_ORIGIN)가 없어 공유 링크를 만들지 못했습니다. CMS 환경 변수를 확인한 뒤 개발 서버를 다시 시작해 주세요.'
+  }
+  if (!response || !readPublicSurveyShareToken(response)) {
+    return '공개 공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.'
+  }
+  return '공개 공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.'
 }
 
 type SurveyExpectedRespondentSource = {
