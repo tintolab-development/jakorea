@@ -39,6 +39,26 @@ export function isScheduleAssignBlockedInstitution(
   return BLOCKED_ASSIGN_STATUSES.has(row.tempAssignmentStatus)
 }
 
+export function collectScheduleAssignPendingInstitutionNames(
+  days: Record<
+    string,
+    { rows: Array<{ institutionRowId?: string | null; gradeValues: readonly string[] }> }
+  >,
+  namesById: Record<string, string>
+): string[] {
+  const ids: string[] = []
+  const seen = new Set<string>()
+  for (const day of Object.values(days)) {
+    for (const row of day.rows) {
+      const id = row.institutionRowId?.trim()
+      if (!id || row.gradeValues.length === 0 || seen.has(id)) continue
+      seen.add(id)
+      ids.push(id)
+    }
+  }
+  return ids.map(id => namesById[id]?.trim() || id)
+}
+
 /**
  * 해당 날짜에 배정 가능한 기관.
  * 목록 일괄 「임시 배정」은 상태 PATCH를 하지 않으므로 SUBMITTED(평가 대기)도 포함한다.
