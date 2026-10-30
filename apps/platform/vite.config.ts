@@ -70,7 +70,8 @@ export default defineConfig(({ mode }) => {
   const cmsTarget =
     env.VITE_API_SERVER?.trim() ||
     env.VITE_DEV_PROXY_TARGET?.trim() ||
-    env.VITE_NGROK_SERVER?.trim()
+    env.VITE_NGROK_SERVER?.trim() ||
+    'http://localhost:8080'
   /** Homepage Admin (JAHOMEADMINBACK) — `/api/public/main` 등. 미설정 시 8081 */
   const homepageTarget =
     env.VITE_HOMEPAGE_API_SERVER?.trim() || 'http://localhost:8081'
