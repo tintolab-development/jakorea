@@ -589,6 +589,11 @@ export default function AccountPaymentsPage() {
     []
   )
 
+  const rawExportSelectedRows = useMemo(() => {
+    const keySet = new Set(selectedRowKeys.map(String))
+    return filteredRows.filter(row => keySet.has(String(row.id)))
+  }, [filteredRows, selectedRowKeys])
+
   /** 화면에는 `총 n건만` 표기. 기획상 집계 구간은 전년 12월 ~ 당해 12월이며 연도가 바뀌면 갱신(API·데이터 연동 시 반영). */
   const total = filteredRows.length
 
@@ -681,11 +686,9 @@ export default function AccountPaymentsPage() {
         showAdminAccessDeniedAlert()
         return
       }
-      const rows = resolveToolbarFormIssueRows(kind)
-      if (rows == null) return
       setRawExport({ mode: 'request', kind })
     },
-    [canRequestRawExport, resolveToolbarFormIssueRows]
+    [canRequestRawExport]
   )
 
   const openBulkTransferPreview = useCallback(() => {
@@ -1217,9 +1220,8 @@ export default function AccountPaymentsPage() {
         open={rawExport != null}
         mode={rawExport?.mode ?? 'request'}
         kind={rawExport?.kind ?? 'bulk-transfer'}
-        fromDate={listQueryFilters.fromDate}
-        toDate={listQueryFilters.toDate}
         sessionAdminAccountId={user?.adminAccountId ?? null}
+        selectedRows={rawExportSelectedRows}
         onRequestExport={submitPreparedExport}
         onClose={() => setRawExport(null)}
       />

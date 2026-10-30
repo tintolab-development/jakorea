@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
   ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT,
+  assertSelectedRawExportDisabled,
   buildAccountPaymentExportRequest,
   buildRawAccountPaymentExportRequest,
+  isUnfilteredFullRawExportBody,
 } from './build-account-payment-export-request'
 
 describe('buildAccountPaymentExportRequest', () => {
@@ -88,20 +90,40 @@ describe('buildAccountPaymentExportRequest', () => {
 })
 
 describe('buildRawAccountPaymentExportRequest', () => {
-  it('승인 reference와 기간 필터 전체 범위로 원본 export를 만든다', () => {
+  it('무필터 전체 원본은 상태·기간·프로그램·선택 ID를 넣지 않는다', () => {
     const body = buildRawAccountPaymentExportRequest({
       kind: 'tax-report',
       approvalReference: 'apr-1',
-      fromDate: '2026-01-01',
-      toDate: '2026-12-31',
     })
     expect(body.rawPrivacyIncluded).toBe(true)
     expect(body.exportPolicy).toBe('RAW_PRIVACY_APPROVAL_REQUIRED')
     expect(body.approvalReference).toBe('apr-1')
     expect(body.programId).toBeUndefined()
+    expect(body.instructorMemberId).toBeUndefined()
     expect(body.settlementIds).toEqual([])
     expect(body.accountPaymentIds).toEqual([])
-    expect(body.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_PAID)
+    expect(body.status).toBeUndefined()
+    expect(body.fromDate).toBeUndefined()
+    expect(body.toDate).toBeUndefined()
+    expect(isUnfilteredFullRawExportBody(body)).toBe(true)
+  })
+
+  it('마스킹 발급의 기간·상태 필터를 원본 전체에 복사하지 않는다', () => {
+    const masked = buildAccountPaymentExportRequest({
+      kind: 'bulk-transfer',
+      selection: { kind: 'all' },
+      fromDate: '2026-08-01',
+      toDate: '2026-08-31',
+    })
+    expect(masked.status).toBe(ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT)
+    expect(masked.fromDate).toBe('2026-08-01')
+    const raw = buildRawAccountPaymentExportRequest({
+      kind: 'bulk-transfer',
+      approvalReference: 'apr-2',
+    })
+    expect(raw.status).toBeUndefined()
+    expect(raw.fromDate).toBeUndefined()
+    expect(raw.toDate).toBeUndefined()
   })
 
   it('승인 reference가 없으면 요청을 만들지 않는다', () => {
@@ -111,5 +133,12 @@ describe('buildRawAccountPaymentExportRequest', () => {
         approvalReference: '  ',
       })
     ).toThrow(/승인 reference/)
+  })
+
+  it('서버 hash가 없으면 선택 원본을 만들지 않는다', () => {
+    expect(() => assertSelectedRawExportDisabled({})).toThrow(/searchSnapshotHash/)
+    expect(() =>
+      assertSelectedRawExportDisabled({ searchSnapshotHash: 'abc', rowCount: 0 })
+    ).toThrow(/rowCount/)
   })
 })

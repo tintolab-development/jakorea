@@ -47,6 +47,10 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
     '원천징수 세율 입력값을 확인해 주세요. 퍼센트 단위로 0 이상 100 이하를 입력해야 합니다.',
   [SETTLEMENT_CONFIG_WITHHOLDING_AMOUNT_INVALID]:
     '원천징수 금액 입력값을 확인해 주세요. 0 이상의 원 단위 금액을 입력해야 합니다.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_REQUIRED:
+    '선택·필터 원본 발급은 서버 발급 범위 확인(scopeToken)이 필요합니다.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_INVALID: '발급 범위 확인이 유효하지 않습니다. 범위를 다시 확인해 주세요.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_EXPIRED: '발급 범위 확인이 만료되었습니다. 범위를 다시 확인해 주세요.',
 }
 
 function readAxiosResponse(error: unknown): { status?: number; data?: unknown } | null {
