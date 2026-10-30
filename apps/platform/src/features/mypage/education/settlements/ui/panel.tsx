@@ -14,7 +14,12 @@ import {
   readInstructorBusinessIncomeLabel,
   readInstructorFeeGradeLabel,
 } from '../lib/instructor-settlement-summary'
-import { displayGeminiSummaryField } from '../lib/gemini-settlement-status'
+import {
+  displayGeminiBusinessIncome,
+  displayGeminiProcessingStatus,
+  displayGeminiSummaryField,
+  resolveGeminiFeeBasisDisplay,
+} from '../lib/gemini-settlement-status'
 import { filterItemsUpToLastParticipatedSession } from '../../applications/lib/display-status'
 import { EducationSessionList } from '../../shared'
 import { EDUCATION_SETTLEMENT_PAGE_SIZE } from '../model/types'
@@ -34,6 +39,7 @@ import {
 } from '../lib/settlement-status-ui'
 import { EducationSettlementRow } from './row'
 import { EducationSettlementSummary } from './summary'
+import { GeminiSettlementTable } from './gemini-settlement-table'
 import styles from './panel.module.css'
 
 type EducationSettlementPanelProps = {
@@ -91,6 +97,15 @@ export function EducationSettlementPanel({
     remoteSettlements.items,
   ])
 
+  /** 제미나이 정산 현황 표: 서버 순서 그대로, 활동 포기 시 마지막 참여 회차까지만 */
+  const geminiRows = useMemo(() => {
+    if (!isGemini) return []
+    const visibleIds = new Set(allItems.map(item => item.id))
+    return geminiSettlements.scheduleItems.filter((row, index) =>
+      visibleIds.has(row.scheduleId != null ? String(row.scheduleId) : `gemini-schedule-${index + 1}`),
+    )
+  }, [allItems, geminiSettlements.scheduleItems, isGemini])
+
   const totalElements = allItems.length
   const totalPages = Math.max(1, Math.ceil(totalElements / EDUCATION_SETTLEMENT_PAGE_SIZE))
   const requestedSessionIndex = useMemo(
@@ -113,17 +128,18 @@ export function EducationSettlementPanel({
     : totalElements
   const documentKind = resolveSettlementDocumentKind(applicationType)
   const processLabel = isGemini
-    ? displayGeminiSummaryField(geminiSettlements.summary?.paymentStatementProcessingStatus)
+    ? displayGeminiProcessingStatus(geminiSettlements.summary)
     : resolvePaymentStatementProcessLabel(allItems, {
         variant: documentKind === 'payment_statement' ? 'payment_statement' : 'receipt',
       })
-  const feeGradeLabel = isGemini
-    ? displayGeminiSummaryField(geminiSettlements.summary?.lectureFeeBasis)
+  const geminiFeeBasis = isGemini ? resolveGeminiFeeBasisDisplay(geminiSettlements.summary) : null
+  const feeGradeLabel = geminiFeeBasis
+    ? geminiFeeBasis.fallback
     : documentKind === 'payment_statement'
       ? readInstructorFeeGradeLabel(profileQuery.data)
       : undefined
   const businessIncomeLabel = isGemini
-    ? displayGeminiSummaryField(geminiSettlements.summary?.businessIncomeLabel)
+    ? displayGeminiBusinessIncome(geminiSettlements.summary)
     : documentKind === 'payment_statement'
       ? readInstructorBusinessIncomeLabel(profileQuery.data)
       : undefined
@@ -207,39 +223,45 @@ export function EducationSettlementPanel({
         totalCount={totalCount}
         feeGradeLabel={feeGradeLabel}
         businessIncomeLabel={businessIncomeLabel}
+        layout={isGemini ? 'gemini' : 'default'}
+        feeBasisItems={geminiFeeBasis?.items}
       />
-      <EducationSessionList
-        title="정산 현황"
-        totalCount={totalElements}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-        emptyMessage={
-          !isGemini && remoteSettlements.individualEmpty
-            ? INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE
-            : '정산 현황이 없어요'
-        }
-        emptyDescription="정산 대상 일정이 생기면 이곳에서 확인할 수 있어요."
-      >
-        {pageItems.map(item => (
-          <EducationSettlementRow
-            key={item.id}
-            item={item}
-            applicationId={applicationId}
-            applicationType={applicationType ?? undefined}
-            documentKind={documentKind}
-            area={area}
-            operationEndAt={operationEnd}
-            hideInstructorWrite={isGemini}
-            onReceiptWrite={handleReceiptWrite}
-            initialRejectOpen={
-              shouldOpenRejectReason &&
-              item.status === 'rejected' &&
-              rejectReasonSessionId === String(item.id)
-            }
-          />
-        ))}
-      </EducationSessionList>
+      {isGemini ? (
+        <GeminiSettlementTable rows={geminiRows} />
+      ) : (
+        <EducationSessionList
+          title="정산 현황"
+          totalCount={totalElements}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          emptyMessage={
+            !isGemini && remoteSettlements.individualEmpty
+              ? INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE
+              : '정산 현황이 없어요'
+          }
+          emptyDescription="정산 대상 일정이 생기면 이곳에서 확인할 수 있어요."
+        >
+          {pageItems.map(item => (
+            <EducationSettlementRow
+              key={item.id}
+              item={item}
+              applicationId={applicationId}
+              applicationType={applicationType ?? undefined}
+              documentKind={documentKind}
+              area={area}
+              operationEndAt={operationEnd}
+              hideInstructorWrite={isGemini}
+              onReceiptWrite={handleReceiptWrite}
+              initialRejectOpen={
+                shouldOpenRejectReason &&
+                item.status === 'rejected' &&
+                rejectReasonSessionId === String(item.id)
+              }
+            />
+          ))}
+        </EducationSessionList>
+      )}
       <PaymentStatementPreConsentModal
         open={receiptConsent.modalOpen}
         onCancel={receiptConsent.closeModal}
