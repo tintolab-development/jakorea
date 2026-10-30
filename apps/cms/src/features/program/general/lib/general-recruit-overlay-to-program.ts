@@ -41,6 +41,7 @@ import {
   applyRecruitmentRowCopy,
   resolveRecruitmentOtherMatters,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import { RECRUIT_INTERVIEW_REQUIRED_DEFAULT } from '@/features/program/general/lib/recruit-radio-defaults'
 
 type RangeSeal = { start?: string | null; end?: string | null }
 
@@ -121,8 +122,8 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
   },
 } as const
 
-/** 개인 모집 「참여자 면접 유무」 화면 기본값 — `applicant-recruit-individual-participant-info-paragraph` 라디오 기본값과 같다. */
-export const INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT = 'yes'
+/** 개인 모집 「참여자 면접 유무」 화면 기본값 — 정본은 `recruit-radio-defaults` */
+export const INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT = RECRUIT_INTERVIEW_REQUIRED_DEFAULT
 
 /**
  * 등록(create) 전용. 개인 참여자를 고른 등록에서 라디오를 건드리지 않으면 기본 '면접 있음'이
@@ -139,8 +140,8 @@ export function withIndividualInterviewRequiredCreateDefault(
   return { ...overlay, [key]: INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT }
 }
 
-/** 봉사 모집 「봉사자 면접 유무」 화면 기본값 — `recruit-form-volunteer-info-paragraph` 라디오 기본값과 같다. */
-export const VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT = 'yes'
+/** 봉사 모집 「봉사자 면접 유무」 화면 기본값 — 정본은 `recruit-radio-defaults` */
+export const VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT = RECRUIT_INTERVIEW_REQUIRED_DEFAULT
 
 /**
  * 등록(create) 전용. 봉사자를 고른 등록에서 라디오를 건드리지 않으면 기본 '면접 있음'이 스토어에 기록되지 않아
