@@ -10,7 +10,15 @@ import {
   type ResultsListParams,
 } from '@/features/result'
 import { useDebouncedValue } from '@/shared/hooks'
-import { PFDivider, PFLoadingSpinner, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
+import {
+  PFDivider,
+  PFLoadingSpinner,
+  PFPagination,
+  PFSearchInput,
+  PFTabs,
+  PFText,
+  PublicContentPageStatus,
+} from '@/shared/ui'
 import styles from './page.module.css'
 import { useNavigate } from 'react-router-dom'
 
@@ -119,15 +127,21 @@ export function ResultsPage() {
 
         <div className={styles.list}>
           {remoteList.isPending ? (
-            <PFLoadingSpinner centered label="결과를 불러오는 중" />
+            <PublicContentPageStatus layout="list">
+              <PFLoadingSpinner label="결과를 불러오는 중" />
+            </PublicContentPageStatus>
           ) : remoteList.isError ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              결과를 불러오지 못했어요.
-            </PFText>
+            <PublicContentPageStatus layout="list">
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                결과를 불러오지 못했어요.
+              </PFText>
+            </PublicContentPageStatus>
           ) : pageItems.length === 0 ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              {params.q.trim() ? '검색 결과가 없습니다.' : '등록된 결과가 없습니다.'}
-            </PFText>
+            <PublicContentPageStatus layout="list">
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                {params.q.trim() ? '검색 결과가 없습니다.' : '등록된 결과가 없습니다.'}
+              </PFText>
+            </PublicContentPageStatus>
           ) : (
             pageItems.map(item => (
               <ResultListItemRow

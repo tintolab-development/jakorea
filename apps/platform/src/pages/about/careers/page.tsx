@@ -17,7 +17,16 @@ import {
   type CareersListParams,
 } from '@/features/careers'
 import { useDebouncedValue } from '@/shared/hooks'
-import { PFDivider, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
+import {
+  PFDivider,
+  PFLoadingSpinner,
+  PFPagination,
+  PFSearchInput,
+  PFTabs,
+  PFText,
+  PublicContentPageLoading,
+  PublicContentPageStatus,
+} from '@/shared/ui'
 import styles from './page.module.css'
 
 const TAB_ITEMS = CAREERS_TAB_ITEMS.map(item => ({ key: item.key, label: item.label }))
@@ -35,7 +44,7 @@ export function CareersPage() {
     page: params.page,
     enabled: !isTalentTab,
   })
-  const { view } = usePublicCareerGuide()
+  const { view, isPending: isGuidePending } = usePublicCareerGuide()
   const thriveValues = view.thriveValues
   const featuredStories = view.featuredStories
   const hero = view.hero
@@ -62,6 +71,10 @@ export function CareersPage() {
       return merged
     })
   }, [debouncedQ])
+
+  if (isGuidePending) {
+    return <PublicContentPageLoading label="채용 안내 정보를 불러오는 중" />
+  }
 
   const updateParams = (next: Partial<CareersListParams>) => {
     const merged = { ...params, ...next }
@@ -186,10 +199,16 @@ export function CareersPage() {
               </div>
 
               <div className={styles.list}>
-                {postings.isPending ? null : postings.jobs.length === 0 ? (
-                  <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-                    검색 결과가 없습니다.
-                  </PFText>
+                {postings.isPending ? (
+                  <PublicContentPageStatus layout="list">
+                    <PFLoadingSpinner label="채용 공고를 불러오는 중" />
+                  </PublicContentPageStatus>
+                ) : postings.jobs.length === 0 ? (
+                  <PublicContentPageStatus layout="list">
+                    <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                      검색 결과가 없습니다.
+                    </PFText>
+                  </PublicContentPageStatus>
                 ) : (
                   postings.jobs.map(item => (
                     <JobListItemRow
