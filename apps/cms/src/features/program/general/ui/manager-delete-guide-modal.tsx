@@ -13,6 +13,8 @@ export interface ManagerDeleteGuideModalProps {
   onConfirm: () => void
   /** 삭제할 담당자 이름 목록 */
   managerNames: string[]
+  confirmLoading?: boolean
+  afterOpenChange?: (open: boolean) => void
 }
 
 const MANAGER_DELETE_IMPACT_LINE =
@@ -153,6 +155,8 @@ export function ManagerDeleteGuideModal({
   onCancel,
   onConfirm,
   managerNames,
+  confirmLoading,
+  afterOpenChange,
 }: ManagerDeleteGuideModalProps) {
   const lines = buildManagerMessageLines(managerNames)
   return (
@@ -163,6 +167,8 @@ export function ManagerDeleteGuideModal({
       title={resolveManagerDeleteModalTitle(managerNames.length)}
       lines={lines}
       confirmText="삭제"
+      confirmLoading={confirmLoading}
+      afterOpenChange={afterOpenChange}
     />
   )
 }
