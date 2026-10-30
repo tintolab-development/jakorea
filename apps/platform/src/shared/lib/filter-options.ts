@@ -5,11 +5,6 @@ import { PARTICIPANT_TYPE_OPTIONS } from '@jakorea/domain/recruitment/participan
 
 export const educationTargetFilterOptions = withAllFilter(EDUCATION_TARGET_OPTIONS)
 
-/** 원장 프로그램 유형 필터 — UJAT 공개 목록 조회 */
-export const programTypeFilterOptions = withAllFilter([
-  { value: 'UJAT', label: 'UJAT' },
-])
-
 /** 목록 모집현황 — 모집 예정 / 모집 중 / 모집 완료 */
 export const recruitmentStatusFilterOptions = withAllFilter([
   { value: RECRUITMENT_STATUS.scheduled, label: '모집 예정' },

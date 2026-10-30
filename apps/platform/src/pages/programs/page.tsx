@@ -18,7 +18,6 @@ import {
 import {
   educationFormFilterOptions,
   educationTargetFilterOptions,
-  programTypeFilterOptions,
   recruitmentStatusFilterOptions,
   recruitmentTargetFilterOptions,
 } from '@/shared/lib/filter-options'
@@ -147,11 +146,6 @@ export function ProgramsPage() {
         }
         filters={
           <>
-            <PFSearchFilter
-              label="프로그램 유형"
-              options={programTypeFilterOptions}
-              {...bindFilter('programType')}
-            />
             <PFSearchFilter
               label="모집대상"
               options={recruitmentTargetFilterOptions}
