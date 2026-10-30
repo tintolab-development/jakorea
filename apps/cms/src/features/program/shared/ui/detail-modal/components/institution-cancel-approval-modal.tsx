@@ -41,16 +41,14 @@ export function InstitutionCancelApprovalModal({
       open={open}
       variant="reject"
       className="institution-cancel-approval-modal"
-      title="기관 승인 취소 안내"
+      title="프로그램 승인 취소 안내"
       message={buildInstitutionCancelApprovalMessage(schoolName, variant)}
       confirmLabel="승인 취소"
       confirmVariant="delete"
       requireReason
       reasonLabel={resolveInstitutionCancelApprovalReasonLabel(variant)}
-      reasonPlaceholder="취소 사유를 입력해 주세요."
+      reasonPlaceholder="취소 사유를 입력해 주세요"
       reasonRequiredMessage="취소 사유를 입력해 주세요."
-      notifyTimingOptions={variant === 'alreadySent' ? 'two' : 'three'}
-      notifyBeforeReason
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}
