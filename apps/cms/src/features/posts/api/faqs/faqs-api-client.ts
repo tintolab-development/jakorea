@@ -1,12 +1,8 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import {
-  assertBulkDeleteSucceeded,
-  forEachBulkIdChunk,
-} from '@/features/data-management/api/bulk-delete'
+import { deletePostsByBulkIdsOrEach } from '@/features/posts/api/shared/posts-bulk-delete'
 import { customInstance } from '@/shared/api/orval-mutator'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
 import type {
-  BulkActionResponse,
   CategoryRequest,
   FaqCategoriesParams,
   FaqRequest,
@@ -49,17 +45,10 @@ export async function deleteFaqRemote(id: string): Promise<void> {
 
 /** Swagger `bulkDeleteFaqs` — `POST /api/admin/content/faqs/bulk-delete` */
 export async function bulkDeleteFaqsRemote(ids: string[]): Promise<void> {
-  await forEachBulkIdChunk(ids, async chunk => {
-    const numericIds = chunk
-      .map(id => Number(id))
-      .filter(id => Number.isFinite(id) && id > 0)
-    if (numericIds.length !== chunk.length) {
-      throw new Error('삭제할 FAQ ID가 올바르지 않습니다.')
-    }
-    const result = unwrapApiBody<BulkActionResponse>(
-      await postsApi.bulkDeleteFaqs({ ids: numericIds })
-    )
-    assertBulkDeleteSucceeded(result, 'FAQ 일괄 삭제에 실패했습니다.')
+  await deletePostsByBulkIdsOrEach(ids, {
+    bulk: numericIds => postsApi.bulkDeleteFaqs({ ids: numericIds }),
+    each: id => deleteFaqRemote(id),
+    failedMessage: 'FAQ 일괄 삭제에 실패했습니다.',
   })
 }
 

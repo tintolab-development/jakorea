@@ -1,8 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import {
-  assertBulkDeleteSucceeded,
-  forEachBulkIdChunk,
-} from '@/features/data-management/api/bulk-delete'
+import { deletePostsByBulkIdsOrEach } from '@/features/posts/api/shared/posts-bulk-delete'
 import { customInstance } from '@/shared/api/orval-mutator'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
 import type { NoticeWriteRequest } from '@/features/posts/api/notices/adapters/notice-adapters'
@@ -21,7 +18,6 @@ import type {
   NoticesParams,
   PageResponseMapStringObject,
   PageResponseNoticeResponse,
-  BulkActionResponse,
 } from '@/shared/api/generated/posts/schemas'
 
 const postsApi = getJAKoreaCMSBackendAPIPostsSubset()
@@ -57,17 +53,10 @@ export async function deleteNoticeRemote(id: string): Promise<void> {
 
 /** Swagger `bulkDeleteNotices` — `POST /api/admin/content/notices/bulk-delete` */
 export async function bulkDeleteNoticesRemote(ids: string[]): Promise<void> {
-  await forEachBulkIdChunk(ids, async chunk => {
-    const numericIds = chunk
-      .map(id => Number(id))
-      .filter(id => Number.isFinite(id) && id > 0)
-    if (numericIds.length !== chunk.length) {
-      throw new Error('삭제할 공지 ID가 올바르지 않습니다.')
-    }
-    const result = unwrapApiBody<BulkActionResponse>(
-      await postsApi.bulkDeleteNotices({ ids: numericIds })
-    )
-    assertBulkDeleteSucceeded(result, '공지사항 일괄 삭제에 실패했습니다.')
+  await deletePostsByBulkIdsOrEach(ids, {
+    bulk: numericIds => postsApi.bulkDeleteNotices({ ids: numericIds }),
+    each: id => deleteNoticeRemote(id),
+    failedMessage: '공지사항 일괄 삭제에 실패했습니다.',
   })
 }
 
