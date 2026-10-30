@@ -7,6 +7,7 @@ import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-v
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
+import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
 import {
@@ -237,11 +238,20 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     resolveAccessItem,
     revealPersonalInfo: revealVolunteerPersonalInfo,
     onPrivacyUnmasked: payload => {
-      setUnmaskedOverlay(payload as UjatVolunteerApplicantRow)
+      setUnmaskedOverlay(
+        sanitizeProgramPrivacyOverlay(
+          applicant.programId,
+          payload as UjatVolunteerApplicantRow
+        )
+      )
     },
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
   })
+
+  useEffect(() => {
+    if (!personalInfoRevealed) setUnmaskedOverlay(null)
+  }, [personalInfoRevealed])
 
   const assignInterviewLabel = useMemo(() => {
     if (applicant.interviewAssignmentStatus === 'assigned') return '면접일 재배정'

@@ -12,6 +12,7 @@ import { mapVolunteerApplicationDetailToApplicantRow } from '@/features/program/
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
+import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import {
   APPLICATION_ACTION_CANCEL_APPROVAL,
@@ -312,11 +313,20 @@ export function GeneralVolunteerApplicantDetailView(
     resolveAccessItem,
     revealPersonalInfo: revealVolunteerPersonalInfo,
     onPrivacyUnmasked: payload => {
-      setUnmaskedOverlay(payload as GeneralVolunteerApplicantRow)
+      setUnmaskedOverlay(
+        sanitizeProgramPrivacyOverlay(
+          applicant.programId,
+          payload as GeneralVolunteerApplicantRow
+        )
+      )
     },
     resetDeps: [applicant.id],
     controlMode: 'headerStickyNoop',
   })
+
+  useEffect(() => {
+    if (!personalInfoRevealed) setUnmaskedOverlay(null)
+  }, [personalInfoRevealed])
 
   const assignInterviewLabel = useMemo(() => {
     if (applicant.interviewAssignmentStatus === 'assigned') return '면접일 재배정'
