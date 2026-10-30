@@ -45,6 +45,10 @@ import {
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import { resolveMypagePreferredScheduleLines } from '@/features/mypage/education/applications/lib/mypage-preferred-schedule-lines'
+import {
+  groupScheduleLinesByDate,
+  resolveVolunteerApplicationExtrasFromAnswers,
+} from '@/features/mypage/education/applications/lib/volunteer-application-extras-from-answers'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from '../../education/detail/page.module.css'
 
@@ -253,6 +257,11 @@ export function MypageVolunteerDetailPage() {
     [application, program, routeApplicationType],
   )
 
+  const volunteerApplicationExtras = useMemo(
+    () => resolveVolunteerApplicationExtrasFromAnswers(application?.applicationAnswers),
+    [application?.applicationAnswers],
+  )
+
   useEffect(() => {
     const hasRemoteToken = isRemoteApiConfigured() && Boolean(getAccessToken())
     if (hasRemoteToken) {
@@ -417,8 +426,11 @@ export function MypageVolunteerDetailPage() {
     canShowEducationApplicationContent(application.displayStatus) ? (
       <EducationApplicationContent
         selfIntroMotivation={application.selfIntroMotivation}
-        preferredEducationScheduleLines={preferredEducationScheduleLines}
+        preferredEducationScheduleLines={groupScheduleLinesByDate(preferredEducationScheduleLines)}
         alwaysShowPreferredSchedule
+        scheduleSummaryTitle="봉사 진행 가능 일정"
+        freeTextSections={volunteerApplicationExtras.freeTextSections}
+        infoFields={volunteerApplicationExtras.infoFields}
       />
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

@@ -1,5 +1,9 @@
 import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFText } from '@/shared/ui'
 import type { GeminiOfficialDocumentDisplay } from '../lib/official-document-from-answers'
+import type {
+  VolunteerApplicationInfoField,
+  VolunteerApplicationTextSection,
+} from '../lib/volunteer-application-extras-from-answers'
 import { InstructorAvailableSchedulesSection } from './instructor-available-schedules-section'
 import { PipeSeparatedInlineText } from './pipe-separated-inline-text'
 import styles from './content.module.css'
@@ -17,6 +21,15 @@ type EducationApplicationContentProps = {
   instructorAvailableScheduleUnresolved?: boolean
   availableScheduleTitle?: string
   officialDocument?: GeminiOfficialDocumentDisplay | null
+  /** 봉사 신청 — 자유 작성 항목 전체. 있으면 `selfIntroMotivation` 단일 섹션 대신 노출 */
+  freeTextSections?: readonly VolunteerApplicationTextSection[]
+  /** 봉사 신청 — JA 봉사 경험 여부·이전 참여 프로그램 (라벨/값 블록) */
+  infoFields?: readonly VolunteerApplicationInfoField[]
+  /**
+   * 봉사 신청 (Figma 11005:340435) — 「진행 희망 교육 일정 N」 카드 여러 개 대신
+   * 제목 + 일정 줄 목록 단일 카드. 미지정이면 기존 카드 목록 그대로.
+   */
+  scheduleSummaryTitle?: string
 }
 
 function resolvePreferredScheduleLines(label: string | undefined): string[] {
@@ -37,8 +50,22 @@ export function EducationApplicationContent({
   instructorAvailableScheduleUnresolved = false,
   availableScheduleTitle,
   officialDocument,
+  freeTextSections,
+  infoFields,
+  scheduleSummaryTitle,
 }: EducationApplicationContentProps) {
   const intro = selfIntroMotivation?.trim() ?? ''
+  const textSections: VolunteerApplicationTextSection[] =
+    freeTextSections && freeTextSections.length > 0
+      ? [...freeTextSections]
+      : intro
+        ? [{ key: 'self-intro', title: '자기소개 및 지원동기', body: intro }]
+        : []
+  const infoRows: VolunteerApplicationTextSection[] = (infoFields ?? []).map(row => ({
+    key: row.key,
+    title: row.label,
+    body: row.value,
+  }))
   const instructorLines = instructorAvailableScheduleLines ?? []
   const scheduleLines = instructorLines.length > 0 || instructorAvailableScheduleUnresolved
     ? []
@@ -47,13 +74,14 @@ export function EducationApplicationContent({
       : resolvePreferredScheduleLines(preferredEducationScheduleLabel)
   const displayScheduleLines =
     alwaysShowPreferredSchedule && scheduleLines.length === 0 ? ['-'] : scheduleLines
-  const hasIntro = intro.length > 0
+  const hasIntro = textSections.length > 0
+  const hasInfoRows = infoRows.length > 0
   const hasInstructorSchedule = instructorLines.length > 0 || instructorAvailableScheduleUnresolved
   const hasSchedule = alwaysShowPreferredSchedule || displayScheduleLines.length > 0
 
   const hasOfficialDocument = Boolean(officialDocument)
 
-  if (!hasIntro && !hasSchedule && !hasInstructorSchedule && !hasOfficialDocument) {
+  if (!hasIntro && !hasInfoRows && !hasSchedule && !hasInstructorSchedule && !hasOfficialDocument) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
         신청 내용이 없습니다.
@@ -72,16 +100,16 @@ export function EducationApplicationContent({
         </PFFormFieldTable>
       ) : null}
 
-      {hasIntro ? (
-        <section className={styles.intro}>
+      {[...infoRows, ...textSections].map(section => (
+        <section key={section.key} className={styles.intro}>
           <PFText as="h2" typo="bd-sm-rg" color="neutral-cool-600" className={styles.introTitle}>
-            자기소개 및 지원동기
+            {section.title}
           </PFText>
           <PFText as="p" typo="bd-md-md" color="black" className={styles.introBody}>
-            {intro}
+            {section.body}
           </PFText>
         </section>
-      ) : null}
+      ))}
 
       {hasInstructorSchedule ? (
         <InstructorAvailableSchedulesSection
@@ -91,7 +119,31 @@ export function EducationApplicationContent({
         />
       ) : null}
 
-      {hasSchedule ? (
+      {hasSchedule && scheduleSummaryTitle ? (
+        <section
+          className={[styles.scheduleCard, styles.scheduleSummaryCard].join(' ')}
+          aria-label={scheduleSummaryTitle}
+        >
+          <PFText as="h2" typo="bd-md-sb" color="black" className={styles.scheduleCardTitle}>
+            {scheduleSummaryTitle}
+          </PFText>
+          <div className={styles.scheduleSummaryLines}>
+            {displayScheduleLines.map((line, index) => (
+              <PFText
+                key={`schedule-summary-${index + 1}`}
+                as="p"
+                typo="bd-md-rg"
+                color="black"
+                className={styles.scheduleSummaryLine}
+              >
+                {line}
+              </PFText>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {hasSchedule && !scheduleSummaryTitle ? (
         <div className={styles.scheduleList}>
           {displayScheduleLines.map((line, index) => {
             return (

@@ -12,7 +12,8 @@ export function resolveMypagePreferredScheduleLines(input: {
   answers?: Record<string, unknown> | null
   preferredEducationScheduleLabel?: string
   preferredScheduleOptionValues?: readonly string[]
-  program?: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules'>
+  program?: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules'> &
+    Partial<Pick<ProgramDetail, 'scheduleOptionLookup'>>
 }): string[] {
   const lookup = programDetailToPreferredScheduleLookup(input.program)
 

@@ -6,6 +6,7 @@ import type {
   ProgramDetail,
   ProgramDetailCase,
   ProgramEventSchedule,
+  ProgramScheduleOptionLookupRow,
   ProgramExtraSection,
   ProgramLabeledValue,
   ProgramListItem,
@@ -583,6 +584,27 @@ function mapEventSchedules(schedules: PortalSchedule[] | undefined) {
         ...(schedule.scheduleId != null ? { scheduleId: schedule.scheduleId } : {}),
         ...(readString(schedule.startAt) ? { startAt: readString(schedule.startAt)! } : {}),
         ...(readString(schedule.endAt) ? { endAt: readString(schedule.endAt)! } : {}),
+      },
+    ]
+  })
+}
+
+/** 신청 내용 `schedule:{id}` 해석용 — 공개 여부·정렬과 무관하게 서버 순서 그대로 */
+export function mapPortalScheduleOptionLookup(
+  schedules: PortalSchedule[] | undefined,
+): ProgramScheduleOptionLookupRow[] {
+  return (schedules ?? []).flatMap(schedule => {
+    const scheduleId = schedule.scheduleId
+    if (typeof scheduleId !== 'number' || !Number.isFinite(scheduleId)) return []
+    const startAt = readString(schedule.startAt)
+    const endAt = readString(schedule.endAt)
+    const scheduleName = toDisplayEducationScheduleName(schedule.scheduleName)
+    return [
+      {
+        scheduleId,
+        ...(startAt ? { startAt } : {}),
+        ...(endAt ? { endAt } : {}),
+        ...(scheduleName ? { scheduleName } : {}),
       },
     ]
   })
@@ -1545,6 +1567,7 @@ export function mapPortalProgramDetail(
     ),
     sessions,
     eventSchedules,
+    scheduleOptionLookup: mapPortalScheduleOptionLookup(remote.schedules),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(
       selected?.ambiguous
