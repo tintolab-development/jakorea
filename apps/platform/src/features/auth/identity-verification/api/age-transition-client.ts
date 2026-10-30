@@ -1,7 +1,8 @@
+import type { AxiosRequestConfig } from 'axios'
 import { createIdentityVerificationClient } from '@jakorea/identity-verification'
 import { axiosClient } from '@/shared/api/axios-instance'
 import { isIdentityVerificationRemoteEnabled } from '@/shared/config/identity-verification-remote-capabilities'
-import { ageTransitionPaths } from '@/features/auth/age-transition/api/endpoints'
+import { identityVerificationPaths } from '@/shared/config/identity-verification-paths'
 
 function createIdempotencyKey() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -10,27 +11,25 @@ function createIdempotencyKey() {
   return `age14-nice-${Date.now()}`
 }
 
+type ForceAuthConfig = AxiosRequestConfig & { forceAuth?: boolean }
+
 /**
- * 만 14세 회원 전환 전용 NICE.
- * 회원가입 `POST /api/auth/verification-sessions/identity/nice/start` 와 다르다.
- * OpenAPI: POST /api/portal/me/age-transition/nice/start — body 없음, Idempotency-Key optional.
+ * 만 14세 회원 전환 본인인증.
+ * 회원가입과 같은 NICE 팝업 진입점이지만 flow는 AGE14_TRANSITION.
+ * POST /api/auth/verification-sessions/identity/nice/start
+ * (POST /api/portal/me/age-transition/nice/start 가 아님)
  */
 export const ageTransitionIdentityVerificationClient = createIdentityVerificationClient({
   http: {
-    post: (url, _body) =>
-      axiosClient.post(url, undefined, {
+    post: (url, body) =>
+      axiosClient.post(url, body, {
+        forceAuth: true,
         headers: { 'Idempotency-Key': createIdempotencyKey() },
-      }),
-    get: (url, config) => axiosClient.get(url, config),
+      } as ForceAuthConfig),
+    get: (url, config) =>
+      axiosClient.get(url, { ...config, forceAuth: true } as ForceAuthConfig),
   },
-  paths: {
-    niceStart: ageTransitionPaths.niceStart,
-    identitySession: ageTransitionPaths.niceStatus,
-    identityProfile: (sessionId, profileToken) => {
-      void profileToken
-      return ageTransitionPaths.niceStatus(sessionId)
-    },
-  },
+  paths: identityVerificationPaths,
   routes: {
     callbackPath: '/auth/sign-up/identity/callback',
     mockPath: '/auth/sign-up/identity/mock',
@@ -41,6 +40,5 @@ export const ageTransitionIdentityVerificationClient = createIdentityVerificatio
   remoteOnly: true,
   storagePrefix: 'platform_age14_identity',
   omitExpectedProfileOnStart: true,
-  omitStartRequestBody: true,
   optionalStatusToken: true,
 })
