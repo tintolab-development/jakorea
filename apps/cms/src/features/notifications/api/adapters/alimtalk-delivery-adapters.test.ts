@@ -49,6 +49,20 @@ describe('alimtalk-delivery-adapters (4-2)', () => {
     expect(row?.phoneTemplate.buttons.some(button => button.name === '자세히 보기')).toBe(true)
   })
 
+  it('keeps detail recipient name and contact plaintext without remasking', () => {
+    const row = mapDeliveryDetailResponse({
+      delivery: {
+        deliveryId: 303,
+        recipientName: '홍길동',
+        recipientContactMasked: '010-2222-3333',
+        sendStatus: 'SENT',
+      },
+    })
+    expect(row?.receiverName).toBe('홍길동')
+    expect(row?.receiverPhone).toBe('010-2222-3333')
+    expect(row?.receiverInfo).toBe('홍길동 | 010-2222-3333')
+  })
+
   it('변수 누락 실패: SEND_FAILED + failedReason, 발송/수신일시 빈 값', () => {
     const row = mapDeliveryToSendHistoryRow({
       deliveryId: 202,
