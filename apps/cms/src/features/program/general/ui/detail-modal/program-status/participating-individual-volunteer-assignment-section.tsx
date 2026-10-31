@@ -24,6 +24,8 @@ import {
   PARTICIPATING_INDIVIDUAL_VOLUNTEER_WAITING_SCHEDULE_EXCEL_COLUMNS,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment-export'
 import {
+  collectAssignedPreEducationScheduleIds,
+  mergeEducationScopeScheduleIdsPreservingPreEducation,
   resolveVolunteerAssignmentDistanceCellLabel,
   VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment'
@@ -36,8 +38,15 @@ import { WAITING_INSTRUCTOR_ASSIGNMENT_STATUS_LABELS } from '@/features/program/
 import { participatingScheduleTableColumnLayout } from '@/features/program/general/lib/participating-institutions-table'
 import { ParticipatingVolunteerUnassignConfirmModal } from './participating-volunteer-unassign-confirm-modal'
 import { ParticipatingVolunteerUnassignCompleteModal } from './participating-volunteer-unassign-complete-modal'
-import { saveGeneralParticipantEducationScope } from '@/features/program/general/api/admin-program-progress-service'
+import {
+  fetchGeneralParticipantEducationScope,
+  saveGeneralParticipantEducationScope,
+} from '@/features/program/general/api/admin-program-progress-service'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  EDUCATION_SCOPE_PUT_PRE_EDUCATION_MERGE_PENDING_MESSAGE,
+} from '@/features/program/general/lib/individual-approval-education-scope'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
 
@@ -78,6 +87,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     assignedSchedules: remoteAssignedSchedules,
     waitingSchedules: remoteWaitingSchedules,
     scopeQuery,
+    schedulesQuery,
     invalidateScope,
   } = useParticipatingIndividualVolunteerAssignment({ program, volunteer })
 
@@ -252,14 +262,35 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         return false
       }
       try {
+        // PUT PRE_ED merge는 BE 대기. GET 현재 scope의 PRE_ED id를 본교육 선택과 union한다.
+        const latest = await fetchGeneralParticipantEducationScope(program.id, volunteer.id)
+        const preEducationScheduleIds = collectAssignedPreEducationScheduleIds({
+          currentScheduleIds: latest.scheduleIds ?? [],
+          programSchedules: schedulesQuery.data?.schedules ?? [],
+        })
+        const scheduleIds = mergeEducationScopeScheduleIdsPreservingPreEducation({
+          nextScheduleIds: nextIds,
+          preEducationScheduleIds,
+        })
         await saveGeneralParticipantEducationScope(program.id, volunteer.id, {
-          scheduleIds: nextIds,
-          expectedRevision: scopeQuery.data?.revision ?? 0,
+          scheduleIds,
+          expectedRevision: latest.revision ?? 0,
           reason,
         })
         await invalidateScope()
         return true
-      } catch {
+      } catch (error) {
+        const code = getApiErrorCode(error)
+        if (
+          code === 'GENERAL_INDIVIDUAL_PRE_EDUCATION_SCOPE_MISMATCH' ||
+          code === 'EDUCATION_SCOPE_SCHEDULE_NOT_AVAILABLE'
+        ) {
+          showAlert({
+            title: '안내',
+            content: EDUCATION_SCOPE_PUT_PRE_EDUCATION_MERGE_PENDING_MESSAGE,
+          })
+          return false
+        }
         showAlert({
           title: '안내',
           content: '봉사 배정 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
@@ -267,7 +298,14 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         return false
       }
     },
-    [invalidateScope, program.id, remoteEnabled, scopeQuery.data?.revision, showAlert, volunteer.id]
+    [
+      invalidateScope,
+      program.id,
+      remoteEnabled,
+      schedulesQuery.data?.schedules,
+      showAlert,
+      volunteer.id,
+    ]
   )
 
   const handleUnassignClick = useCallback(() => {
@@ -293,9 +331,15 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
   const handleUnassignConfirm = useCallback(
     async (payload: PermissionModalPayload) => {
       if (selectedAssignedKeys.length === 0) return
-      const removedRows = assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id))
+      const removedRows = assignedSchedules.filter(
+        r => selectedAssignedKeys.includes(r.id) && r.preEducation !== true
+      )
       const nextIds = assignedSchedules
-        .filter(r => !selectedAssignedKeys.includes(r.id) && r.scheduleId != null)
+        .filter(
+          r =>
+            r.scheduleId != null &&
+            (r.preEducation === true || !selectedAssignedKeys.includes(r.id))
+        )
         .map(r => r.scheduleId as number)
       const ok = await persistAssignedScheduleIds(nextIds, payload.reason.trim() || '봉사 배정 해제')
       if (!ok) return
@@ -423,6 +467,9 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
               selectedRowKeys: selectedAssignedKeys,
               onChange: keys => setSelectedAssignedKeys(keys),
+              getCheckboxProps: record => ({
+                disabled: record.preEducation === true,
+              }),
             }}
             columns={assignedColumns}
             dataSource={assignedSchedules}
