@@ -14,6 +14,7 @@ export type {
   EducationTeacherDeliveryStatus,
   EducationTeacherPreferredSchedule,
   EducationUjatApplicationContent,
+  EducationUjatVolunteerApplicationContent,
   EducationUjatApplicationInstitution,
   EducationUjatClassTimeBlock,
   EducationUjatGradeBlock,
@@ -134,6 +135,8 @@ export { UjatScheduleBanner } from './ui/ujat-schedule-banner'
 export { UjatRevisionNotice } from './ui/ujat-revision-notice'
 export { UjatApplicationContent } from './ui/ujat-application-content'
 export type { UjatApplicationContentProps } from './ui/ujat-application-content'
+export { UjatVolunteerApplicationContent } from './ui/ujat-volunteer-application-content'
+export type { UjatVolunteerApplicationContentProps } from './ui/ujat-volunteer-application-content'
 export {
   APPLICATION_TYPES_BY_SCOPE,
   useCancelMyProgramApplicationMutation,

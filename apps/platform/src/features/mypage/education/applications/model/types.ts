@@ -153,6 +153,8 @@ export type EducationApplicationListItem = {
   ujatAssignmentRevision?: number
   /** 교사 UJAT 신청 내용 탭 — 학년별 신청·수업시간 */
   ujatApplicationContent?: EducationUjatApplicationContent
+  /** UJAT 봉사자 신청 내용 — 지역·대학·전공·경력·유입 경로 */
+  ujatVolunteerApplicationContent?: EducationUjatVolunteerApplicationContent
   /** UJAT 기관 상세 전용 CMS 확정 배정 일정. 신청 당시 희망 일정과 별도 SSOT. */
   ujatTemporarySchedule?: EducationUjatTemporarySchedule
 }
@@ -243,6 +245,16 @@ export type EducationUjatApplicationContent = {
   institution: EducationUjatApplicationInstitution
   gradeBlocks: EducationUjatGradeBlock[]
   classTimeBlocks: EducationUjatClassTimeBlock[]
+}
+
+/** UJAT 봉사자 마이페이지 신청 내용 — 기본 정보 필드(표시 문구) */
+export type EducationUjatVolunteerApplicationContent = {
+  preferredRegion: string
+  universityName: string
+  gradeLabel: string
+  major: string
+  educationExperienceLabel: string
+  applicationRouteLabel: string
 }
 
 export type EducationUjatTemporaryScheduleSlot = {
