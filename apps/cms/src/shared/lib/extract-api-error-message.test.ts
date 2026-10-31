@@ -162,6 +162,34 @@ describe('extractApiErrorMessage', () => {
       })
     ).toBe('먼저 임시 일정을 배정하고 기관 확인을 완료해 주세요.')
   })
+
+  it('UJAT_REGION_CLASS_CAPACITY_EXCEEDED는 details 정원·배정 예정 수를 안내한다', () => {
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        message: '지역별 정원을 초과하여 배정할 수 없습니다.',
+        error: {
+          code: 'UJAT_REGION_CLASS_CAPACITY_EXCEEDED',
+          message: '지역별 정원을 초과하여 배정할 수 없습니다.',
+          field: 'educationRegionCode',
+          details: {
+            maxCount: '5',
+            semesterType: 'SECOND_HALF',
+            educationRegionCode: 'SEOUL',
+            projectedCount: '6',
+          },
+        },
+      })
+    ).toBe(
+      '서울 2학기 학급 정원(5개)을 초과합니다. (배정 예정 6개)\n학급 수를 줄이거나 다른 일정·지역으로 변경해 주세요.'
+    )
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        error: { code: 'UJAT_REGION_CLASS_CAPACITY_EXCEEDED' },
+      })
+    ).toBe('선택한 지역·반기의 잔여 학급 정원을 초과했습니다. 지역 또는 일정을 변경해 주세요.')
+  })
 })
 
 describe('getApiErrorCode / getApiErrorHttpStatus', () => {

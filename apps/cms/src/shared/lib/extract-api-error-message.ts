@@ -53,15 +53,61 @@ const UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES: Record<string, string> = {
   UJAT_ASSIGNMENT_LOCKED: '기관이 확인한 일정은 수정할 수 없습니다. 수정 요청 후 다시 배정하세요.',
 }
 
+const UJAT_REGION_CODE_LABEL: Record<string, string> = {
+  SEOUL: '서울',
+  GYEONGGI_SOUTH: '경기(남부)',
+  INCHEON: '인천',
+  DAEJEON: '대전',
+  DAEGU: '대구',
+  BUSAN: '부산',
+  GWANGJU: '광주',
+  JEONBUK_JEONJU: '전북(전주)',
+}
+
+function formatUjatSemesterTypeLabel(raw: string | undefined): string | undefined {
+  const value = raw?.trim().toUpperCase()
+  if (!value) return undefined
+  if (value === 'FIRST_HALF' || value === 'H1' || value === 'FIRST') return '1학기'
+  if (value === 'SECOND_HALF' || value === 'H2' || value === 'SECOND') return '2학기'
+  return raw?.trim()
+}
+
+/** `UJAT_REGION_CLASS_CAPACITY_EXCEEDED` — details.maxCount / projectedCount 반영 */
+export function formatUjatRegionClassCapacityExceededMessage(
+  details?: Record<string, string | undefined> | null
+): string {
+  const maxCount = details?.maxCount?.trim()
+  const projectedCount = details?.projectedCount?.trim()
+  const regionCode = details?.educationRegionCode?.trim().toUpperCase()
+  const regionLabel = regionCode
+    ? UJAT_REGION_CODE_LABEL[regionCode] ?? regionCode
+    : undefined
+  const semesterLabel = formatUjatSemesterTypeLabel(details?.semesterType)
+
+  if (maxCount && projectedCount) {
+    const subject = [regionLabel, semesterLabel].filter(Boolean).join(' ')
+    const head = subject
+      ? `${subject} 학급 정원(${maxCount}개)을 초과합니다.`
+      : `지역·반기 학급 정원(${maxCount}개)을 초과합니다.`
+    return `${head} (배정 예정 ${projectedCount}개)\n학급 수를 줄이거나 다른 일정·지역으로 변경해 주세요.`
+  }
+
+  return UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES.UJAT_REGION_CLASS_CAPACITY_EXCEEDED
+}
+
 function resolveUjatInstitutionWorkflowErrorMessage(
   code: string,
-  field?: string
+  field?: string,
+  details?: Record<string, string | undefined> | null
 ): string | undefined {
   if (code === 'UJAT_WORKFLOW_STATE_CONFLICT') {
     if (field === 'status') {
       return UJAT_REVISION_REQUEST_DUPLICATE_MESSAGE
     }
     return UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE
+  }
+  if (code === 'UJAT_REGION_CLASS_CAPACITY_EXCEEDED') {
+    return formatUjatRegionClassCapacityExceededMessage(details)
   }
   return UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES[code]
 }
@@ -110,7 +156,10 @@ export function extractApiErrorMessage(
 ): string {
   const code = extractApiErrorCode(data)
   const field = extractApiErrorField(data)
-  const ujatWorkflowMessage = code ? resolveUjatInstitutionWorkflowErrorMessage(code, field) : undefined
+  const details = extractApiErrorDetails(data)
+  const ujatWorkflowMessage = code
+    ? resolveUjatInstitutionWorkflowErrorMessage(code, field, details)
+    : undefined
   if (ujatWorkflowMessage) {
     return ujatWorkflowMessage
   }
