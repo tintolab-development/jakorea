@@ -35,7 +35,11 @@ import {
   hydrateParticipatingParticipantCertificateProfile,
 } from '@/features/program/general/lib/participating-individual-participant-certificate'
 import { hydrateParticipatingIndividualLectureAttendanceSessions } from '@/features/program/general/lib/participating-individual-participant-lecture-attendance'
-import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
+import {
+  CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+  getCertificateEligibilityErrorMessage,
+  resolveCertificateIssuePrecheckMessage,
+} from '@/features/program/shared/api/certificate-serial-api'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -132,6 +136,7 @@ export function ParticipatingParticipantsSection({
   const [certificateExportContext, setCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
+  const [certificateEligibilityChecking, setCertificateEligibilityChecking] = useState(false)
 
   const hasStudentSatisfactionSurvey = useMemo(
     () =>
@@ -206,7 +211,7 @@ export function ParticipatingParticipantsSection({
     applyFilters(pendingFilters)
   }
 
-  const handleCertificateIssueClick = useCallback(() => {
+  const handleCertificateIssueClick = useCallback(async () => {
     const selectedCount = selectedRowKeys.length
     if (selectedCount === 0) {
       showAlert({ title: '안내', content: STUDENT_CERTIFICATE_ISSUE_SELECT_ONE_ALERT_MESSAGE })
@@ -219,18 +224,36 @@ export function ParticipatingParticipantsSection({
       })
       return
     }
-    if (certificateExportActive || program == null) return
+    if (certificateExportActive || certificateEligibilityChecking || program == null) return
 
     const selectedId = String(selectedRowKeys[0])
     const participant = filteredParticipants.find(row => row.id === selectedId)
     if (participant == null) return
 
-    if (!isWithinStudentCertificateIssuancePeriod(participant.participationAppliedAt)) {
-      return
+    setCertificateEligibilityChecking(true)
+    try {
+      const blockMessage = await resolveCertificateIssuePrecheckMessage(participant.id)
+      if (blockMessage) {
+        showAlert({ title: '안내', content: blockMessage })
+        return
+      }
+      setCertificateIssueModalOpen(true)
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: getCertificateEligibilityErrorMessage(error) || CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+      })
+    } finally {
+      setCertificateEligibilityChecking(false)
     }
-
-    setCertificateIssueModalOpen(true)
-  }, [certificateExportActive, filteredParticipants, program, selectedRowKeys, showAlert])
+  }, [
+    certificateEligibilityChecking,
+    certificateExportActive,
+    filteredParticipants,
+    program,
+    selectedRowKeys,
+    showAlert,
+  ])
 
   const handleCertificateIssueModalCancel = useCallback(() => {
     setCertificateIssueModalOpen(false)
@@ -360,8 +383,10 @@ export function ParticipatingParticipantsSection({
             <FilterTableToolbarButton
               variant="secondary"
               icon={<ButtonDownloadIcon />}
-              disabled={certificateExportActive}
-              onClick={handleCertificateIssueClick} >
+              disabled={certificateExportActive || certificateEligibilityChecking}
+              onClick={() => {
+                void handleCertificateIssueClick()
+              }} >
               수료증/참여인증서 발급
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (

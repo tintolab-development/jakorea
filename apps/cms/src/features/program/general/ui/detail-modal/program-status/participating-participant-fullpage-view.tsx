@@ -70,7 +70,18 @@ import {
   buildParticipatingSchoolSessionKey,
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
-import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
+import {
+  CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+  certificateIssuePrecheckBlockMessage,
+} from '@/features/program/shared/lib/certificate-eligibility'
+import {
+  CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+  fetchCertificateEligibility,
+  getCertificateEligibilityErrorMessage,
+  resolveCertificateIssuePrecheckMessage,
+} from '@/features/program/shared/api/certificate-serial-api'
+import { parseCertificateSerialInt64 } from '@/features/program/shared/lib/certificate-serial'
+import { cmsQueryKeys } from '@/shared/api/query-keys'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import {
@@ -148,6 +159,7 @@ export function ParticipatingParticipantFullpageView({
   const [certificateExportContext, setCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
+  const [certificateEligibilityChecking, setCertificateEligibilityChecking] = useState(false)
   const availableTabKeys = useMemo(() => getParticipantDetailTabKeys(program), [program])
   const visibleActiveTab = availableTabKeys.includes(activeTab) ? activeTab : 'application'
 
@@ -165,6 +177,23 @@ export function ParticipatingParticipantFullpageView({
 
   const sessions = mergedParticipant.sessions ?? []
   const isActivityWithdrawn = mergedParticipant.activityWithdrawn === true
+
+  const certificateParticipantId = parseCertificateSerialInt64(mergedParticipant.id)
+  const certificateEligibilityQuery = useQuery({
+    queryKey: cmsQueryKeys.certificates.eligibility(
+      certificateParticipantId ?? 0,
+      CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION
+    ),
+    queryFn: () =>
+      fetchCertificateEligibility({
+        participantId: certificateParticipantId as number,
+        certificateType: CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+      }),
+    enabled: certificateParticipantId != null,
+  })
+  const certificateIssueBlockMessage = certificateIssuePrecheckBlockMessage(
+    certificateEligibilityQuery.data
+  )
 
   const educationScopeQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.educationScope(program.id, mergedParticipant.id),
@@ -489,14 +518,39 @@ export function ParticipatingParticipantFullpageView({
     ]
   )
 
-  const handleCertificateIssueClick = useCallback(() => {
-    if (certificateExportActive) return
-    if (!isWithinStudentCertificateIssuancePeriod(mergedParticipant.participationAppliedAt)) {
+  const handleCertificateIssueClick = useCallback(async () => {
+    if (certificateExportActive || certificateEligibilityChecking || isApplicationInfoEditing) {
       return
     }
-    if (isApplicationInfoEditing) return
-    setCertificateIssueModalOpen(true)
-  }, [certificateExportActive, isApplicationInfoEditing, mergedParticipant.participationAppliedAt])
+    if (certificateIssueBlockMessage) {
+      showAlert({ title: '안내', content: certificateIssueBlockMessage })
+      return
+    }
+    setCertificateEligibilityChecking(true)
+    try {
+      const blockMessage = await resolveCertificateIssuePrecheckMessage(mergedParticipant.id)
+      if (blockMessage) {
+        showAlert({ title: '안내', content: blockMessage })
+        return
+      }
+      setCertificateIssueModalOpen(true)
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content:
+          getCertificateEligibilityErrorMessage(error) || CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+      })
+    } finally {
+      setCertificateEligibilityChecking(false)
+    }
+  }, [
+    certificateEligibilityChecking,
+    certificateExportActive,
+    certificateIssueBlockMessage,
+    isApplicationInfoEditing,
+    mergedParticipant.id,
+    showAlert,
+  ])
 
   const handleCertificateIssueModalCancel = useCallback(() => {
     setCertificateIssueModalOpen(false)
@@ -686,11 +740,12 @@ export function ParticipatingParticipantFullpageView({
                     icon={<ButtonDownloadIcon />}
                     disabled={
                       certificateExportActive ||
-                      !isWithinStudentCertificateIssuancePeriod(
-                        mergedParticipant.participationAppliedAt
-                      )
+                      certificateEligibilityChecking ||
+                      certificateIssueBlockMessage != null
                     }
-                    onClick={handleCertificateIssueClick} >
+                    onClick={() => {
+                      void handleCertificateIssueClick()
+                    }} >
                     수료증/참여인증서 발급
                   </CmsButton>
                 </>
