@@ -174,6 +174,19 @@ assert.equal(
   '학교·기관 회원만 신청할 수 있습니다.',
 )
 assert.equal(
+  messageForApplicationBlockedReason('SCHOOL_TEACHER_ROLE_REQUIRED'),
+  '학교 교사 회원만 기관 신청을 할 수 있습니다.',
+)
+assert.equal(
+  getProgramApplicationApiErrorMessage(
+    axiosErr({
+      success: false,
+      error: { code: 'SCHOOL_TEACHER_ROLE_REQUIRED', message: 'SCHOOL_TEACHER_ROLE_REQUIRED' },
+    }),
+  ),
+  '학교 교사 회원만 기관 신청을 할 수 있습니다.',
+)
+assert.equal(
   messageForApplicationBlockedReason('COLLEGE_STUDENT_REQUIRED'),
   '대학생 모집 프로그램은 재학 중인 대학생 회원만 신청할 수 있습니다.',
 )

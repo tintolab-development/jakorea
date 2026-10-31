@@ -82,6 +82,7 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   APPLICATION_TYPE_NOT_ALLOWED: '해당 모집에 허용되지 않은 지원 유형입니다.',
   RECRUITMENT_NOT_OPEN: '현재 신청할 수 없는 모집입니다.',
   ORGANIZATION_MEMBERSHIP_REQUIRED: '학교·기관 회원만 신청할 수 있습니다.',
+  SCHOOL_TEACHER_ROLE_REQUIRED: '학교 교사 회원만 기관 신청을 할 수 있습니다.',
   APPROVED_INSTRUCTOR_REQUIRED: '승인된 강사만 신청할 수 있습니다.',
   MEMBER_NOT_ACTIVE: '활성 회원만 신청할 수 있습니다.',
   APPLICATION_ALREADY_SUBMITTED: '이미 제출한 신청이 있습니다.',
