@@ -26,6 +26,7 @@ import { resolveVolunteerInterview2CancelPassButtonLabel } from '@/features/prog
 import {
   shouldShowVolunteerInterviewAvailabilitySection,
   shouldShowVolunteerManagerEvaluationSection,
+  volunteerApplicationDecisionButtonLabels,
 } from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { GeneralVolunteerApplicantBasicInfo } from './basic-info'
 import { GeneralVolunteerApplicantManagerEvaluationSection } from './manager-evaluation-section'
@@ -445,6 +446,7 @@ export function GeneralVolunteerApplicantDetailView(
   const canDocumentApprove = canPerformApplicationAction(applicant.availableActions, 'APPROVE')
   const canDocumentReject = canPerformApplicationAction(applicant.availableActions, 'REJECT')
   const showPendingDocumentActions = canDocumentApprove || canDocumentReject
+  const decisionButtonLabels = volunteerApplicationDecisionButtonLabels(interviewEnabled)
 
   return (
     <div className="general-volunteer-applicant-detail">
@@ -476,7 +478,7 @@ export function GeneralVolunteerApplicantDetailView(
                   variant="delete"
                   size="large"
                   onClick={onDocumentReject} >
-                  서류 반려
+                  {decisionButtonLabels.reject}
                 </CmsButton>
               ) : null}
               {canDocumentApprove ? (
@@ -485,7 +487,7 @@ export function GeneralVolunteerApplicantDetailView(
                   variant="secondary"
                   size="large"
                   onClick={onDocumentApprove} >
-                  서류 승인
+                  {decisionButtonLabels.approve}
                 </CmsButton>
               ) : null}
             </>
