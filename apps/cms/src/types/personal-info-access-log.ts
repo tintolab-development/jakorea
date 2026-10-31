@@ -10,6 +10,8 @@ export interface PersonalInfoAccessLog {
   accessorName: string
   accessedAt: DateValue
   ipAddress: string
+  result: string
+  traceId: string
 }
 
 export interface PersonalInfoAccessLogFilters {

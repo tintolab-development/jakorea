@@ -16,6 +16,8 @@ export interface SystemIssueDetailResponse {
   actorType?: string;
   actorId?: number;
   message?: string;
+  /** ClientErrorMessageResolver 한글. 매핑 없으면 일반 서버 오류 문구 */
+  messageKo?: string;
   detailSummary?: string;
   featureKey?: string;
   requestId?: number;
