@@ -21,7 +21,8 @@ describe('mapProgramHistoryResponse', () => {
     ['초등학생', 'elementary'],
     ['middle_school', 'middle'],
     ['고등학교', 'high'],
-    ['대학생', 'college'],
+    ['대학생', 'university'],
+    ['college', 'university'],
     ['성인', 'adult'],
   ] as const)('교육 대상 응답 %s를 %s로 표준화한다', (educationTarget, expected) => {
     const row = mapProgramHistoryResponse({ educationTarget })
@@ -36,7 +37,8 @@ describe('mapProgramHistoryResponse', () => {
   it.each([
     ['elementary,middle', ['elementary', 'middle']],
     ['초등학생 / 고등학생', ['elementary', 'high']],
-    ['["college","adult"]', ['college', 'adult']],
+    ['["college","adult"]', ['university', 'adult']],
+    ['["university","adult"]', ['university', 'adult']],
   ])('복수 교육 대상 응답 %s를 표준 목록으로 변환한다', (educationTarget, expected) => {
     expect(mapProgramHistoryResponse({ educationTarget }).educationTargets).toEqual(expected)
   })

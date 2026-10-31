@@ -72,7 +72,7 @@ export type SponsorProgramEducationTarget =
   | 'elementary'
   | 'middle'
   | 'high'
-  | 'college'
+  | 'university'
   | 'adult'
   | 'unknown'
 
