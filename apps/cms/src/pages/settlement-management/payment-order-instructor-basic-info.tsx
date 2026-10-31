@@ -117,9 +117,7 @@ export function PaymentOrderInstructorBasicInfo({
           <PersonalInfoRevealButton
             labelMode="toggle"
             revealed={personalInfoRevealed}
-            width={160}
-            onClick={onPersonalInfoButtonClick}
-          />
+            onClick={onPersonalInfoButtonClick} />
         }
       >
         <DetailInfoForm.Row type="double">

@@ -329,16 +329,13 @@ export function GeminiRecruitmentDetailFullPageModal({
                       idleVariant="secondary"
                       onEdit={handleInfoEditClick}
                       onCancel={handleInfoCancel}
-                      onSave={handleInfoSaveClick}
-                    />
+                      onSave={handleInfoSaveClick} />
                   ) : null}
                   <CmsButton
                     type="button"
                     variant="primary"
-                    size="large"
-                    className="program-detail-fullpage-modal__program-preview-btn"
-                    onClick={handlePreview}
-                  >
+                    size="large" className="program-detail-fullpage-modal__program-preview-btn"
+                    onClick={handlePreview} >
                     미리보기
                   </CmsButton>
                 </div>

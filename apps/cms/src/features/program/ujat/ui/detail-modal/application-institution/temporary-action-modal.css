@@ -62,13 +62,10 @@
 
 .temporary-action-modal.content-modal
   .content-modal__footer-actions
-  .cms-button.ant-btn:not(.cms-button--footer-auto),
+  .cms-button.ant-btn,
 .temporary-action-modal.content-modal
   .content-modal__footer-actions
-  .admin-button.ant-btn:not(.cms-button--footer-auto) {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
+  .admin-button.ant-btn {
   height: 40px !important;
   min-height: 40px !important;
   max-height: 40px !important;

@@ -88,8 +88,7 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
             size="large"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
-            onClick={() => void handleDownload()}
-          >
+            onClick={() => void handleDownload()} >
             엑셀 다운로드
           </CmsButton>
         </>

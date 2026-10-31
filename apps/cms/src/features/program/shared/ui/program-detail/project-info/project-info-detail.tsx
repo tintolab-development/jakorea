@@ -193,8 +193,7 @@ function ProjectInfoDetailTabsRow({
       disabled={disabled}
       onEdit={onInfoEdit}
       onCancel={onCancel}
-      onSave={onSave}
-    />
+      onSave={onSave} />
   )
 
   const trailing =
@@ -211,7 +210,7 @@ function ProjectInfoDetailTabsRow({
               : activeTab === 'instructors'
                 ? editInfoButton(isEditModeInstructors, onInstructorsSave)
                 : null}
-        <CmsButton width={180} onClick={onPreview}>
+        <CmsButton onClick={onPreview}>
           프로그램 상세 미리보기
         </CmsButton>
       </>
@@ -254,8 +253,7 @@ function ProjectInfoHiddenTabsInfoActions({
           disabled={editDisabled}
           onEdit={onInfoEdit}
           onCancel={onCancel}
-          onSave={onInfoSave}
-        />
+          onSave={onInfoSave} />
       </BusinessPeriodExtendToolbar>
     </div>
   )

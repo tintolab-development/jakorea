@@ -172,16 +172,14 @@ export function Volunteer1365PreviewModal({
             variant="secondary"
             size="large"
             disabled={!canUseRaw || busy}
-            onClick={() => void handlePreview()}
-          >
+            onClick={() => void handlePreview()} >
             원문 미리보기
           </CmsButton>
           <CmsButton
             variant="primary"
             size="large"
             disabled={!canUseRaw || busy}
-            onClick={() => void handleDownload()}
-          >
+            onClick={() => void handleDownload()} >
             JSON 다운로드
           </CmsButton>
         </>

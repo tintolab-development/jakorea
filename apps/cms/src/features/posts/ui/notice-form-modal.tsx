@@ -352,9 +352,7 @@ export function NoticeFormModal({
               <CmsButton
                 variant="delete"
                 size="h40"
-                className="cms-button--footer-auto"
-                onClick={handleRequestDelete}
-              >
+                onClick={handleRequestDelete} >
                 삭제
               </CmsButton>
             ) : null}
@@ -362,18 +360,14 @@ export function NoticeFormModal({
               <CmsButton
                 variant="secondary"
                 size="h40"
-                className="cms-button--footer-auto"
-                onClick={handleCancel}
-              >
+                onClick={handleCancel} >
                 취소
               </CmsButton>
               <CmsButton
                 variant="primary"
                 size="h40"
-                className="cms-button--footer-auto"
                 adminAction="write"
-                onClick={() => form.submit()}
-              >
+                onClick={() => form.submit()} >
                 {submitLabel}
               </CmsButton>
             </div>

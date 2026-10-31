@@ -386,8 +386,7 @@ export function SchoolSearch({
           type="button"
           variant="secondary"
           size="small"
-          onClick={() => handleSelectNeis(record)}
-        >
+          onClick={() => handleSelectNeis(record)} >
           선택
         </CmsButton>
       ),
@@ -438,8 +437,7 @@ export function SchoolSearch({
           type="button"
           variant="secondary"
           size="small"
-          onClick={() => handleSelectUniversity(record)}
-        >
+          onClick={() => handleSelectUniversity(record)} >
           선택
         </CmsButton>
       ),
@@ -544,11 +542,9 @@ export function SchoolSearch({
             <CmsButton
               type="button"
               variant="primary"
-              size="medium"
-              className="school-search__search-btn"
+              size="medium" className="school-search__search-btn"
               disabled={loading}
-              onClick={handleSearch}
-            >
+              onClick={handleSearch} >
               검색
             </CmsButton>
           </Flex>

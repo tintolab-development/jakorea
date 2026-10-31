@@ -40,21 +40,17 @@ export function MemberAdminCommentModal({
             type="button"
             variant="secondary"
             size="medium"
-            width={120}
             disabled={loading}
-            onClick={onCancel}
-          >
+            onClick={onCancel} >
             취소
           </CmsButton>
           <CmsButton
             type="button"
             variant="primary"
             size="medium"
-            width={120}
             loading={loading}
             disabled={!canConfirm}
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             코멘트 작성
           </CmsButton>
         </>

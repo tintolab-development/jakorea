@@ -327,8 +327,7 @@ export function TemplatePreviewModal({
                         adminAction="download"
                         loading={pdfLoading}
                         disabled={pdfLoading || pageCount === 0}
-                        onClick={() => void handlePdfDownload()}
-                      >
+                        onClick={() => void handlePdfDownload()} >
                         문서 다운로드
                       </CmsButton>
                     ) : null}

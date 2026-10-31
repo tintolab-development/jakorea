@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Space, Spin } from 'antd'
 import { useCmsAlert } from '@/shared/ui'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -242,11 +242,8 @@ export function UjatInstitutionApplicationDetailPage({
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             loading={actionLoading}
-            onClick={() => setPendingAction('application_reject')}
-          >
+            onClick={() => setPendingAction('application_reject')} >
             신청 반려
           </CmsButton>
           {row.tempAssignmentStatus === 'evaluation_pending' ? (
@@ -254,11 +251,8 @@ export function UjatInstitutionApplicationDetailPage({
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
               loading={actionLoading}
-              onClick={() => setPendingTempKind('temp_reject')}
-            >
+              onClick={() => setPendingTempKind('temp_reject')} >
               임시 반려
             </CmsButton>
           ) : null}
@@ -267,11 +261,8 @@ export function UjatInstitutionApplicationDetailPage({
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={180}
               loading={actionLoading}
-              onClick={() => setPendingTempKind('temp_assign_cancel')}
-            >
+              onClick={() => setPendingTempKind('temp_assign_cancel')} >
               임시 배정 취소
             </CmsButton>
           ) : null}
@@ -280,11 +271,8 @@ export function UjatInstitutionApplicationDetailPage({
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={180}
               loading={actionLoading}
-              onClick={() => setPendingTempKind('temp_reject_cancel')}
-            >
+              onClick={() => setPendingTempKind('temp_reject_cancel')} >
               임시 반려 취소
             </CmsButton>
           ) : null}
@@ -295,12 +283,9 @@ export function UjatInstitutionApplicationDetailPage({
               type="button"
               variant="secondary"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
               loading={actionLoading}
               disabled={!workflowReady || workflow.primaryDisabled}
-              onClick={handlePrimaryAction}
-            >
+              onClick={handlePrimaryAction} >
               {workflow.primaryAction === 'open_schedule_assign' ? '임시 배정' : workflow.primaryLabel}
             </CmsButton>
           ) : null}
@@ -309,9 +294,7 @@ export function UjatInstitutionApplicationDetailPage({
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </Space>
       </div>
 

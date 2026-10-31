@@ -434,8 +434,7 @@ export function BoardPanel() {
                   size="h40"
                   type="button"
                   onClick={handleCancelEdit}
-                  disabled={bulkUpdateMutation.isPending}
-                >
+                  disabled={bulkUpdateMutation.isPending} >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -445,8 +444,7 @@ export function BoardPanel() {
                   loading={bulkUpdateMutation.isPending}
                   onClick={() => {
                     void handleSave()
-                  }}
-                >
+                  }} >
                   저장
                 </CmsButton>
               </>
@@ -457,8 +455,7 @@ export function BoardPanel() {
                   size="h40"
                   type="button"
                   onClick={handleDeleteClick}
-                  disabled={removeMutation.isPending}
-                >
+                  disabled={removeMutation.isPending} >
                   선택 삭제
                 </CmsButton>
                 <CmsButton
@@ -466,16 +463,14 @@ export function BoardPanel() {
                   size="h40"
                   type="button"
                   onClick={handleStartEdit}
-                  disabled={rows.length === 0}
-                >
+                  disabled={rows.length === 0} >
                   구성원 수정
                 </CmsButton>
                 <CmsButton
                   variant="primary"
                   size="h40"
                   type="button"
-                  onClick={() => setRegisterOpen(true)}
-                >
+                  onClick={() => setRegisterOpen(true)} >
                   구성원 등록
                 </CmsButton>
               </>

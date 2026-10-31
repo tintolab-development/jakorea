@@ -189,7 +189,7 @@ function MemberConsentCrimeDocumentView({
                 <span className="template-preview-modal__notice-text">
                   {SYNTHETIC_PREVIEW_NOTICE}
                 </span>
-                <CmsButton variant="secondary" size="medium" width={120} onClick={onClose}>
+                <CmsButton variant="secondary" size="medium" onClick={onClose}>
                   닫기
                 </CmsButton>
               </div>
@@ -205,8 +205,7 @@ function MemberConsentCrimeDocumentView({
                   icon={<ButtonDownloadIcon />}
                   onClick={() => void handleDownload()}
                   size="medium"
-                  disabled={!displaySrc}
-                >
+                  disabled={!displaySrc} >
                   문서 다운로드
                 </CmsButton>
               </div>

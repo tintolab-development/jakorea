@@ -73,8 +73,7 @@ export function UjatEducationProgressInstitutionsSection({
                 type="button"
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={() => setViewMode('calendar')}
-              >
+                onClick={() => setViewMode('calendar')} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
@@ -82,8 +81,7 @@ export function UjatEducationProgressInstitutionsSection({
                 type="button"
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={() => setViewMode('table')}
-              >
+                onClick={() => setViewMode('table')} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}

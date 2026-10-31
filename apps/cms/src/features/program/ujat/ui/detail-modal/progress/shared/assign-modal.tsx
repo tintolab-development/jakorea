@@ -330,8 +330,7 @@ function AssignModalShell({
         size="large"
         type="button"
         disabled={!canConfirm}
-        onClick={onConfirm}
-      >
+        onClick={onConfirm} >
         {confirmLabel}
       </CmsButton>
     </div>

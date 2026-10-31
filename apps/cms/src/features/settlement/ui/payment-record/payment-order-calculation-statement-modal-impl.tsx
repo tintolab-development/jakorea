@@ -369,16 +369,14 @@ export function PaymentOrderCalculationStatementModalImpl({
                   variant="delete"
                   size="medium"
                   disabled={rejectMutation.isPending}
-                  onClick={() => setPaymentRejectOpen(true)}
-                >
+                  onClick={() => setPaymentRejectOpen(true)} >
                   신청 반려
                 </CmsButton>
                 <CmsButton
                   variant="primary"
                   size="medium"
                   disabled={confirmMutation.isPending}
-                  onClick={() => setPaymentConfirmOpen(true)}
-                >
+                  onClick={() => setPaymentConfirmOpen(true)} >
                   확인 처리
                 </CmsButton>
               </>

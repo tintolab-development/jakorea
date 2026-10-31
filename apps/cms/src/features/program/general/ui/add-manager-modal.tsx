@@ -172,8 +172,7 @@ export function AddManagerModal({
         variant="primary"
         size="large"
         loading={confirmLoading}
-        onClick={() => form.submit()}
-      >
+        onClick={() => form.submit()} >
         추가 등록
       </CmsButton>
     </>

@@ -29,9 +29,7 @@ export function UjatEducationRegionDeleteModal({
             variant="delete"
             size="medium"
             type="button"
-            className="cms-button--footer-auto"
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             교육 지역 삭제
           </CmsButton>
         </>

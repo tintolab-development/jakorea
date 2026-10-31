@@ -298,8 +298,7 @@ export function RawSettlementExportApprovalModal({
                   setMessage(rawExportFailureMessage(error, '발급 범위 확인에 실패했습니다.'))
                 })
                 .finally(() => setBusy(false))
-            }}
-          >
+            }} >
             발급 범위 확인
           </CmsButton>
           {scopeSummary ? (

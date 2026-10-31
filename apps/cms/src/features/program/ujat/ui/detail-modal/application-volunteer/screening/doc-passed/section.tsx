@@ -200,8 +200,7 @@ export function DocPassedSection({
               type="button"
               variant="secondary"
               icon={<ButtonCalendarIcon />}
-              onClick={handleViewCalendar}
-            >
+              onClick={handleViewCalendar} >
               캘린더 뷰로 보기
             </FilterTableToolbarButton>
           ) : (
@@ -209,8 +208,7 @@ export function DocPassedSection({
               type="button"
               variant="secondary"
               icon={<ButtonListIcon />}
-              onClick={handleViewList}
-            >
+              onClick={handleViewList} >
               리스트로 보기
             </FilterTableToolbarButton>
           )

@@ -315,8 +315,7 @@ export function InstructorPaymentTab({
               variant="default"
               size="medium"
               disabled={record.status === 'none' || isInstructorSettlementInactive(record.status)}
-              onClick={() => openInvoice(record)}
-            >
+              onClick={() => openInvoice(record)} >
               상세 보기
             </CmsButton>
           </div>
@@ -431,43 +430,36 @@ export function InstructorPaymentTab({
               <CmsButton
                 variant="secondary"
                 size="large"
-                width="auto"
                 icon={<ButtonCalendarIcon />}
                 onClick={() => {
                   const today = dayjs()
                   setCurrentMonth(today.startOf('month'))
                   setCalendarSelectedDate(today)
                   setViewMode('calendar')
-                }}
-              >
+                }} >
                 캘린더 뷰로 보기
               </CmsButton>
             ) : (
               <CmsButton
                 variant="secondary"
                 size="large"
-                width="auto"
                 icon={<ButtonListIcon />}
-                onClick={() => setViewMode('list')}
-              >
+                onClick={() => setViewMode('list')} >
                 리스트 뷰로 보기
               </CmsButton>
             )}
             <CmsButton
               variant="primary"
               size="large"
-              width="auto"
               icon={<ButtonDownloadIcon />}
               loading={bulkDownloadLoading}
-              onClick={() => void handleBulkDownload()}
-            >
+              onClick={() => void handleBulkDownload()} >
               지급조서 발급
             </CmsButton>
             <ExcelButton
               loading={excelExporting}
               disabled={settlementsLoading || settlementsQueryLoading}
-              onClick={() => void exportExcel()}
-            />
+              onClick={() => void exportExcel()} />
           </div>
         </div>
 

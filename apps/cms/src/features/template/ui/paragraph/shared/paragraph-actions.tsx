@@ -2,9 +2,6 @@ import type { MouseEvent } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ButtonAddIcon, ButtonCopyIcon, ButtonDeleteIcon } from '@/shared/ui/icons/ButtonIcons'
 
-/** 템플릿 단락 카드 푸터 — large+icon 기본 180px 대신 시안 140×44 */
-const PARAGRAPH_CARD_ACTION_BUTTON_CLASS = 'cms-button--action'
-
 export type FormParagraphCardActionHandlers = {
   onAdd?: () => void
   onDuplicate?: () => void
@@ -50,13 +47,11 @@ export function FormParagraphCardActions({
           variant="primary"
           type="button"
           size="large"
-          className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
           disabled={addItemOff}
           onClick={e => {
             stopCardClick(e)
             onAddItem()
-          }}
-        >
+          }} >
           + 항목 추가
         </CmsButton>
       ) : null}
@@ -64,42 +59,36 @@ export function FormParagraphCardActions({
         variant="secondary"
         type="button"
         size="large"
-        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<ButtonAddIcon />}
         disabled={addOff}
         onClick={e => {
           stopCardClick(e)
           onAdd?.()
-        }}
-      >
+        }} >
         단락 추가
       </CmsButton>
       <CmsButton
         variant="secondary"
         type="button"
         size="large"
-        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<ButtonCopyIcon />}
         disabled={dupOff}
         onClick={e => {
           stopCardClick(e)
           onDuplicate?.()
-        }}
-      >
+        }} >
         단락 복제
       </CmsButton>
       <CmsButton
         variant="secondary"
         type="button"
         size="large"
-        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<ButtonDeleteIcon />}
         disabled={delOff}
         onClick={e => {
           stopCardClick(e)
           onDelete?.()
-        }}
-      >
+        }} >
         단락 삭제
       </CmsButton>
     </>
@@ -124,42 +113,36 @@ export function FormParagraphCardActionsMinimal({
         variant="secondary"
         type="button"
         size="large"
-        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<ButtonAddIcon />}
         disabled={addOff}
         onClick={e => {
           stopCardClick(e)
           onAdd?.()
-        }}
-      >
+        }} >
         단락 추가
       </CmsButton>
       <CmsButton
         variant="secondary"
         type="button"
         size="large"
-        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<ButtonCopyIcon />}
         disabled={dupOff}
         onClick={e => {
           stopCardClick(e)
           onDuplicate?.()
-        }}
-      >
+        }} >
         단락 복제
       </CmsButton>
       <CmsButton
         variant="secondary"
         type="button"
         size="large"
-        className={PARAGRAPH_CARD_ACTION_BUTTON_CLASS}
         icon={<ButtonDeleteIcon />}
         disabled={delOff}
         onClick={e => {
           stopCardClick(e)
           onDelete?.()
-        }}
-      >
+        }} >
         단락 삭제
       </CmsButton>
     </>

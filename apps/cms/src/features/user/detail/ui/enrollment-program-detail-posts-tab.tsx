@@ -379,10 +379,8 @@ export function EnrollmentProgramDetailPostsTab({
         <div className="enrollment-program-detail-modal__posts-tab-toolbar">
           <CmsButton
             variant="primary"
-            size="medium"
-            className="enrollment-program-detail-modal__posts-tab-btn"
-            onClick={() => setPostWriteModalOpen(true)}
-          >
+            size="medium" className="enrollment-program-detail-modal__posts-tab-btn"
+            onClick={() => setPostWriteModalOpen(true)} >
             게시글 등록
           </CmsButton>
         </div>

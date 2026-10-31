@@ -32,26 +32,6 @@
   justify-content: flex-end;
 }
 
-/* 취소는 ContentModal 푸터 기본 140×44. 확인 라벨은 footer-auto로 가변 폭 */
-.payment-order-batch-confirm-modal
-  .content-modal__footer-actions
-  .cms-button.ant-btn.cms-button--footer-auto {
-  width: max-content !important;
-  min-width: max-content !important;
-  max-width: none !important;
-  flex-direction: row;
-  white-space: nowrap;
-}
-
-.payment-order-batch-confirm-modal
-  .content-modal__footer-actions
-  .cms-button.ant-btn.cms-button--footer-auto
-  .cms-button__label {
-  overflow: visible;
-  text-overflow: unset;
-  max-width: none;
-}
-
 .payment-order-batch-confirm-modal .teal-header-modal__body {
   margin-top: 16px;
   padding-top: 0 !important;

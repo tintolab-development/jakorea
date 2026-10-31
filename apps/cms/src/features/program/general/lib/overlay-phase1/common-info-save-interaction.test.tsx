@@ -77,8 +77,7 @@ describe('GENERAL_COMMON_INFO_SAVE_INTERACTION', () => {
         isEditing
         onEdit={vi.fn()}
         onCancel={vi.fn()}
-        onSave={onSave}
-      />
+        onSave={onSave} />
     )
     fireEvent.click(screen.getByRole('button', { name: '정보 수정' }))
     expect(onSave).toHaveBeenCalledTimes(1)

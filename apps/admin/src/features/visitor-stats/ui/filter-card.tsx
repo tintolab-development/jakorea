@@ -7,7 +7,6 @@ import type { VisitorStatsFilter, VisitorStatsUnit } from '@/entities/visitor-st
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CmsButton, CmsDateRangePicker, CmsSelect } from '@/shared/ui'
 import type { CmsSelectMultipleOption } from '@/shared/ui'
@@ -109,15 +108,12 @@ export function VisitorStatsFilterCard({
         ) : null}
 
         <div className="admin-filter-area__actions">
-          <CmsButton
-            className="admin-filter-area__search-button"
+          <CmsButton className="admin-filter-area__search-button"
             variant="primary"
             size="medium"
-            width={FILTER_SEARCH_BUTTON_WIDTH_PX}
             type="button"
             loading={loading}
-            onClick={onSearch}
-          >
+            onClick={onSearch} >
             조회
           </CmsButton>
         </div>

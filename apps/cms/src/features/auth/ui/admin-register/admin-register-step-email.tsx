@@ -191,10 +191,10 @@ export function AdminRegisterStepEmail({
         </Form.Item>
 
         <div className="auth-actions" style={{ marginTop: '40px' }}>
-          <CmsButton variant="primary" size="h52" type="submit" width="100%" disabled={!canProceed}>
+          <CmsButton variant="primary" size="h52" type="submit" disabled={!canProceed}>
             다음
           </CmsButton>
-          <CmsButton variant="default" size="h52" width="100%" onClick={onBack}>
+          <CmsButton variant="default" size="h52" onClick={onBack}>
             이전으로
           </CmsButton>
         </div>

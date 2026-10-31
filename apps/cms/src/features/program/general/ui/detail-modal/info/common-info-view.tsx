@@ -3216,11 +3216,9 @@ function CurriculumSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={180}
               disabled={curriculumChartSessionAtMax}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddSession}
-            >
+              onClick={handleAddSession} >
               {isMultiRoundCurriculum ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
             </CmsButton>
           </div>
@@ -4514,10 +4512,8 @@ function ScheduleProgressEditSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={160}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddDetail}
-            >
+              onClick={handleAddDetail} >
               강의 행사 일정 추가
             </CmsButton>
           ) : isMultiRound || !allowProgressGroupAdd ? (
@@ -4525,10 +4521,8 @@ function ScheduleProgressEditSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={160}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddDetail}
-            >
+              onClick={handleAddDetail} >
               강의 세부 일정 추가
             </CmsButton>
           ) : (
@@ -4537,23 +4531,19 @@ function ScheduleProgressEditSection({
                 type="button"
                 variant="secondary"
                 size="medium"
-                width={160}
                 disabled={
                   scheduleGroupCount >= PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
                 }
                 icon={<ButtonClockIcon />}
-                onClick={handleAddGroup}
-              >
+                onClick={handleAddGroup} >
                 진행 그룹 구분 추가
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
                 size="medium"
-                width={160}
                 icon={<ButtonAddIcon aria-hidden />}
-                onClick={handleAddDetail}
-              >
+                onClick={handleAddDetail} >
                 강의 세부 일정 추가
               </CmsButton>
             </>
@@ -5195,8 +5185,7 @@ export function GeneralProgramDetailCommonInfoView({
               disabled={editDisabled}
               onEdit={onEdit ?? (() => {})}
               onCancel={onCancel ?? (() => {})}
-              onSave={onSave ?? (() => {})}
-            />
+              onSave={onSave ?? (() => {})} />
           </BusinessPeriodExtendToolbar>
         </div>
       )}

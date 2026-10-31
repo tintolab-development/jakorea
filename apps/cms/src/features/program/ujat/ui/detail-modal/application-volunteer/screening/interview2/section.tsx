@@ -2,7 +2,6 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEven
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
-  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   FilterTableToolbarButton,
 } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
@@ -247,19 +246,13 @@ export function Interview2Section({
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--application-list-bulk"
-              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
-              onClick={handleBulkFail}
-            >
+              onClick={handleBulkFail} >
               선택 불합격
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              className="cms-button--application-list-bulk"
-              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
-              onClick={handleBulkPass}
-            >
+              onClick={handleBulkPass} >
               선택 합격
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
@@ -268,8 +261,7 @@ export function Interview2Section({
                 variant="secondary"
                 style={{ minWidth: 180 }}
                 icon={<ButtonCalendarIcon />}
-                onClick={handleViewCalendar}
-              >
+                onClick={handleViewCalendar} >
                 캘린더뷰 보기
               </FilterTableToolbarButton>
             ) : (
@@ -278,8 +270,7 @@ export function Interview2Section({
                 variant="secondary"
                 style={{ minWidth: 180 }}
                 icon={<ButtonListIcon />}
-                onClick={handleViewList}
-              >
+                onClick={handleViewList} >
                 리스트로 보기
               </FilterTableToolbarButton>
             )}

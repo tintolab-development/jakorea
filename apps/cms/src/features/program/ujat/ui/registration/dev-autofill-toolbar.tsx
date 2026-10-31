@@ -106,8 +106,7 @@ export function UjatDevAutofillToolbar({
         type="button"
         loading={running}
         disabled={running}
-        onClick={() => void handleAutofill()}
-      >
+        onClick={() => void handleAutofill()} >
         자동입력(개발용)
       </CmsButton>
     </div>

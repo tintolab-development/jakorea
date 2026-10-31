@@ -278,7 +278,6 @@
 .ujat-program-detail-fullpage-modal
   .ujat-survey-poll-empty__register-button.cms-button.ant-btn.cms-button--h44 {
   display: flex;
-  width: 180px;
   height: 44px;
   padding: 0 31px !important;
   flex-direction: column;

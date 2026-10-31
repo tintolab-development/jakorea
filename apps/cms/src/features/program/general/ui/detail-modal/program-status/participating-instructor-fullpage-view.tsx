@@ -1457,21 +1457,18 @@ export function ParticipatingInstructorFullpageView({
                 disabled={
                   isActivityWithdrawn || applicationInfoEdit.isEditing || activityWithdrawSubmitting
                 }
-                onClick={handleRequestActivityWithdraw}
-              >
+                onClick={handleRequestActivityWithdraw} >
                 활동 포기
               </CmsButton>
               <CmsButton
                 variant="secondary"
                 size="h40"
                 icon={<ButtonDownloadIcon />}
-                onClick={handleActivityCertificateIssueClick}
-              >
+                onClick={handleActivityCertificateIssueClick} >
                 활동인증서 발급
               </CmsButton>
               <ProgramEditInfoActions
                 size="h40"
-                width={false}
                 isEditing={applicationInfoEdit.isEditing}
                 saving={applicationInfoEdit.isSaving}
                 idleVariant="secondary"
@@ -1479,23 +1476,19 @@ export function ParticipatingInstructorFullpageView({
                 onCancel={applicationInfoEdit.cancelEdit}
                 onSave={() => {
                   void applicationInfoEdit.saveEdit()
-                }}
-              />
+                }} />
               <CmsButton
                 variant="primary"
                 size="h40"
                 disabled={applicationInfoEdit.isEditing}
-                onClick={handleAdminCommentEditEnter}
-              >
+                onClick={handleAdminCommentEditEnter} >
                 코멘트 작성
               </CmsButton>
               <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"
-                width="auto"
-                onClick={handlePrivacyToggleClick}
-              />
+                onClick={handlePrivacyToggleClick} />
             </>
           ) : null
         }
@@ -1555,14 +1548,12 @@ export function ParticipatingInstructorFullpageView({
                           assignedSchools.some(row => row.role === 'lead') ? 'assistant' : 'lead'
                         )
                         setAssignGuideSessionIds([])
-                      }}
-                    >
+                      }} >
                       추가 배정
                     </CmsButton>
                     <ExcelButton
                       onClick={exportAssignedSchoolsExcel}
-                      loading={isAssignedSchoolsExcelExporting}
-                    />
+                      loading={isAssignedSchoolsExcelExporting} />
                   </div>
                 </div>
                 <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
@@ -1605,8 +1596,7 @@ export function ParticipatingInstructorFullpageView({
                     </CmsButton>
                     <ExcelButton
                       onClick={exportWaitingSchoolsExcel}
-                      loading={isWaitingSchoolsExcelExporting}
-                    />
+                      loading={isWaitingSchoolsExcelExporting} />
                   </div>
                 </div>
                 <div className="participating-institutions-section__table-wrap participating-instructor-fullpage-view__waiting-table-scroll">

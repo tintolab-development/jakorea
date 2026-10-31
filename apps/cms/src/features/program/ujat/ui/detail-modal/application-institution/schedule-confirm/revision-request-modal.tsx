@@ -48,10 +48,10 @@ export function UjatScheduleConfirmRevisionRequestModal({
       description={`**[${institutionName}]** 담당교사님에게 전달한 수정사항을 작성해 주세요.`}
       footer={
         <div className="ujat-schedule-confirm-revision-request-modal__footer">
-          <CmsButton variant="secondary" size="large" type="button" width={140} onClick={handleCancel}>
+          <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" type="button" width={140} onClick={handleConfirm}>
+          <CmsButton variant="primary" size="large" type="button" onClick={handleConfirm}>
             수정 요청
           </CmsButton>
         </div>

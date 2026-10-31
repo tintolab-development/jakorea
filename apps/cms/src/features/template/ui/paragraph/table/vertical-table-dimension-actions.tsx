@@ -24,12 +24,10 @@ export function VerticalTableDimensionActions({
         variant="primary"
         type="button"
         size="large"
-        width={140}
         icon={<ButtonAddIcon />}
         disabled={disabled}
         title="테이블 최하단에 한 줄(행)을 추가합니다."
-        onClick={() => onUpdate(verticalTableAddRow(paragraph))}
-      >
+        onClick={() => onUpdate(verticalTableAddRow(paragraph))} >
         행 추가
       </CmsButton>
     </div>

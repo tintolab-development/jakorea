@@ -188,11 +188,9 @@ export function TemplateFullpageModal({
         <CmsButton
           variant="secondary"
           icon={<ButtonDownloadIcon />}
-          onClick={onDownloadDocument}
-          className="full-page-modal__download-btn"
+          onClick={onDownloadDocument} className="full-page-modal__download-btn"
           disabled={downloadDocumentLoading}
-          aria-busy={downloadDocumentLoading}
-        >
+          aria-busy={downloadDocumentLoading} >
           문서 다운로드
         </CmsButton>
         {showPreview ? (
@@ -333,12 +331,9 @@ export function TemplateFullpageModal({
                   key={action.label}
                   type="button"
                   size="large"
-                  width={180}
-                  variant={action.variant === 'secondary' ? 'secondary' : undefined}
-                  className="full-page-modal__footer-cta-btn"
+                  variant={action.variant === 'secondary' ? 'secondary' : undefined} className="full-page-modal__footer-cta-btn"
                   disabled={action.disabled}
-                  onClick={action.onClick}
-                >
+                  onClick={action.onClick} >
                   {action.variant === 'secondary' ? <LeftOutlined aria-hidden /> : null}
                   <span>{action.label}</span>
                   {action.variant !== 'secondary' && action.showArrow === true ? (

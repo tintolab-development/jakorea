@@ -222,13 +222,11 @@ export function PaymentOrderInstructorSettlementTable({
         render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) => (
           <CmsButton
             variant="default"
-            size="small"
-            className="payment-order-program-status-detail__detail-btn"
+            size="small" className="payment-order-program-status-detail__detail-btn"
             onClick={e => {
               e.stopPropagation()
               onOpenCalculationStatement(row)
-            }}
-          >
+            }} >
             상세 보기
           </CmsButton>
         ),
@@ -315,16 +313,14 @@ export function PaymentOrderInstructorSettlementTable({
               onClick={() => {
                 if (selectedRowKeys.length === 0) return
                 setBatchConfirmOpen(true)
-              }}
-            >
+              }} >
               일괄 확인
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
-              onClick={() => {}}
-            >
+              onClick={() => {}} >
               지급조서 발급
             </FilterTableToolbarButton>
           </>

@@ -178,8 +178,7 @@ export function NotificationModal({
                       variant="default"
                       size="small"
                       onClick={() => onConfirm(notification)}
-                      style={{ backgroundColor: '#f5f5f5', borderColor: '#d9d9d9' }}
-                    >
+                      style={{ backgroundColor: '#f5f5f5', borderColor: '#d9d9d9' }} >
                       확인하기
                     </CmsButton>
                   ) : null}

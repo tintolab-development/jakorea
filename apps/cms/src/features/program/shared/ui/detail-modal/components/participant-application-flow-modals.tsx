@@ -23,7 +23,7 @@ import type { NotifyTimingCapability } from '@/shared/lib/notify-timing-capabili
 import { ContentModal } from '@/shared/ui/content-modal'
 import { AlertModal } from '@/shared/ui/alert-modal'
 import { MESSAGES } from '@/shared/constants/messages'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 import './instructor-bulk-approve-modal.css'
 import './instructor-approval-complete-modal.css'
 import './instructor-reject-complete-modal.css'
@@ -349,21 +349,15 @@ function ParticipantCancelRejectPendingNotificationModal({
           <CmsButton
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             type="button"
-            onClick={onCancel}
-          >
+            onClick={onCancel} >
             취소
           </CmsButton>
           <CmsButton
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             type="button"
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             반려 취소
           </CmsButton>
         </>

@@ -265,10 +265,8 @@ export function UjatEducationProgressVolunteersSection({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              width={180}
               icon={<ButtonDownloadIcon />}
-              onClick={handleActivityCertificateIssueClick}
-            >
+              onClick={handleActivityCertificateIssueClick} >
               활동인증서 발급
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
@@ -276,24 +274,20 @@ export function UjatEducationProgressVolunteersSection({
               variant="secondary"
               icon={<ButtonDownloadIcon />}
               disabled={studentCertificateExportActive}
-              onClick={handleStudentCertificateIssueClick}
-            >
+              onClick={handleStudentCertificateIssueClick} >
               수료증/참여인증서 발급
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
               icon={<ButtonDownloadIcon />}
-              onClick={() => setVolunteer1365PreviewOpen(true)}
-            >
+              onClick={() => setVolunteer1365PreviewOpen(true)} >
               1365 봉사시간 등록 양식
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               type="button"
               variant="primary"
-              width={140}
-              onClick={handleRegisterVolunteerClick}
-            >
+              onClick={handleRegisterVolunteerClick} >
               봉사자 등록
             </FilterTableToolbarButton>
           </div>

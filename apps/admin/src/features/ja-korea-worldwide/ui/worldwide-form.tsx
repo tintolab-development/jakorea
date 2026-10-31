@@ -92,8 +92,7 @@ export function WorldwideFormCard({ data }: Props) {
                 size="large"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending}
-              >
+                disabled={saveMutation.isPending} >
                 취소
               </CmsButton>
               <CmsButton
@@ -103,8 +102,7 @@ export function WorldwideFormCard({ data }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }}
-              >
+                }} >
                 저장
               </CmsButton>
             </>

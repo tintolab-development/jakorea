@@ -90,15 +90,12 @@ export function useGeneralVolunteerDocPassedColumns({
             <CmsButton
               type="button"
               variant="secondary"
-              size="small"
-              width={120}
-              className="general-volunteer-doc-passed__assign-btn"
+              size="small" className="general-volunteer-doc-passed__assign-btn"
               disabled={withdrawn}
               onClick={e => {
                 e.stopPropagation()
                 onAssignInterview(record)
-              }}
-            >
+              }} >
               {label}
             </CmsButton>
           )

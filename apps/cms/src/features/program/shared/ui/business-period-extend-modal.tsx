@@ -123,8 +123,7 @@ export function BusinessPeriodExtendModal({
             disabled={!canSubmit}
             onClick={() => {
               void handleSubmit()
-            }}
-          >
+            }} >
             연장
           </CmsButton>
         </>

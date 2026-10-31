@@ -49,14 +49,12 @@ export function TemplateCustomFieldImageUpload({
           <CmsButton
             type="button"
             variant="secondary"
-            size="large"
-            className="template-custom-fields-form__logo-file-btn"
+            size="large" className="template-custom-fields-form__logo-file-btn"
             loading={uploading}
             disabled={uploading}
             tabIndex={uploading ? undefined : -1}
             onClick={() => openFilePicker(fileInputRef.current)}
-            aria-label={`${fieldLabel} 파일 선택`}
-          >
+            aria-label={`${fieldLabel} 파일 선택`} >
             파일 변경
           </CmsButton>
         </span>

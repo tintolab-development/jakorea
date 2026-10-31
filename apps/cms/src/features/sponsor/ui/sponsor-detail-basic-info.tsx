@@ -426,8 +426,7 @@ export function SponsorContactsSection({
             variant="delete"
             size="medium"
             onClick={onDeleteClick}
-            disabled={selectedContactKeys.length === 0}
-          >
+            disabled={selectedContactKeys.length === 0} >
             담당자 삭제
           </CmsButton>
           <CmsButton variant="primary" size="medium" onClick={onRegisterClick}>

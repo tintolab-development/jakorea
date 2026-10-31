@@ -216,9 +216,7 @@ export function EnrollmentStatusDetailModal({
             <CmsButton
               variant="secondary"
               size="medium"
-              onClick={handleGoToDetail}
-              className="enrollment-status-detail-modal__detail-link"
-            >
+              onClick={handleGoToDetail} className="enrollment-status-detail-modal__detail-link" >
               프로그램 상세 바로가기
             </CmsButton>
           </div>

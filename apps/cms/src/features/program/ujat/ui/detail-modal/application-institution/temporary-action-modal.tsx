@@ -55,22 +55,18 @@ export function TemporaryActionModal({
             type="button"
             variant="secondary"
             size="medium"
-            width={120}
             disabled={loading}
-            onClick={handleCancel}
-          >
+            onClick={handleCancel} >
             취소
           </CmsButton>
           <CmsButton
             type="button"
             variant={danger ? 'secondary' : 'primary'}
             size="medium"
-            width={120}
             className={danger ? 'temporary-action-modal__confirm--danger' : undefined}
             loading={loading}
             disabled={loading}
-            onClick={handleConfirm}
-          >
+            onClick={handleConfirm} >
             {copy.confirmLabel}
           </CmsButton>
         </>

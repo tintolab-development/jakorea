@@ -668,8 +668,7 @@ export function ParticipatingParticipantFullpageView({
                   activityWithdrawSubmitting ||
                   activityWithdrawScheduleOptions.length === 0
                 }
-                onClick={handleRequestActivityWithdraw}
-              >
+                onClick={handleRequestActivityWithdraw} >
                 활동 포기
               </CmsButton>
               <CmsButton
@@ -683,49 +682,41 @@ export function ParticipatingParticipantFullpageView({
                     mergedParticipant.participationAppliedAt
                   )
                 }
-                onClick={handleCertificateIssueClick}
-              >
+                onClick={handleCertificateIssueClick} >
                 수료증/참여인증서 발급
               </CmsButton>
               <ProgramEditInfoActions
                 size="h40"
-                width={false}
                 isEditing={isApplicationInfoEditing}
                 onEdit={requestStartApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
-                }}
-              />
+                }} />
               <CmsButton
                 variant="primary"
                 size="h40"
                 disabled={isApplicationInfoEditing}
-                onClick={handleAdminCommentEditEnter}
-              >
+                onClick={handleAdminCommentEditEnter} >
                 코멘트 작성
               </CmsButton>
               <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"
-                width="auto"
-                onClick={openPersonalInfoRevealConfirm}
-              />
+                onClick={openPersonalInfoRevealConfirm} />
             </>
           ) : visibleActiveTab === 'attendance' ? (
             <>
               <CmsButton
                 variant="secondary"
                 size="h40"
-                onClick={() => attendanceSectionRef.current?.openAttendanceCorrectionModal()}
-              >
+                onClick={() => attendanceSectionRef.current?.openAttendanceCorrectionModal()} >
                 출결 정정
               </CmsButton>
               <ExcelButton
                 size="h40"
-                onClick={() => attendanceSectionRef.current?.exportExcel()}
-              />
+                onClick={() => attendanceSectionRef.current?.exportExcel()} />
             </>
           ) : visibleActiveTab === 'assignments' ? (
             <>
@@ -733,8 +724,7 @@ export function ParticipatingParticipantFullpageView({
                 <CmsButton
                   variant="secondary"
                   size="h40"
-                  onClick={() => assignmentSectionRef.current?.openTeamChangeModal()}
-                >
+                  onClick={() => assignmentSectionRef.current?.openTeamChangeModal()} >
                   팀 변경
                 </CmsButton>
               ) : null}
@@ -743,8 +733,7 @@ export function ParticipatingParticipantFullpageView({
                 size="h40"
                 icon={<ButtonDownloadIcon />}
                 adminAction="download"
-                onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()}
-              >
+                onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()} >
                 과제 일괄 다운로드
               </CmsButton>
               <ExcelButton onClick={() => assignmentSectionRef.current?.exportExcel()} />

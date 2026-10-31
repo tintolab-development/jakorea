@@ -24,11 +24,8 @@ export function UjatSurveyPreStartState({
           <p className="ujat-survey-registered-empty-state__title">{title}</p>
           <p className="ujat-survey-registered-empty-state__description">{description}</p>
         </div>
-        <CmsButton
-          className="ujat-survey-pre-start-state__preview-button"
-          width={180}
-          onClick={onOpenTemplatePreview}
-        >
+        <CmsButton className="ujat-survey-pre-start-state__preview-button"
+          onClick={onOpenTemplatePreview} >
           {previewButtonLabel}
         </CmsButton>
       </div>

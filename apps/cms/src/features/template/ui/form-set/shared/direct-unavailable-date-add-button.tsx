@@ -274,7 +274,6 @@ export function DirectUnavailableDateAddButton({
         <CmsButton
           type="button"
           size="medium"
-          width={180}
           disabled={disabled}
           icon={<DirectUnavailableDateAddIcon />}
           onClick={() => {
@@ -295,8 +294,7 @@ export function DirectUnavailableDateAddButton({
             // 제외 대상 요일·공휴일에 걸린 개별 날짜는 칩/선택에서 제거
             setSelectedDates(filterEnabledDateValues(draftSelected, openDisabledDate))
             setOpen(true)
-          }}
-        >
+          }} >
           진행 불가일 직접 추가
         </CmsButton>
         {appliedDatesDisplay === 'chips' && appliedDateItems.length > 0 ? (
@@ -332,16 +330,13 @@ export function DirectUnavailableDateAddButton({
               type="button"
               variant="secondary"
               size="medium"
-              width={120}
-              onClick={closeModal}
-            >
+              onClick={closeModal} >
               취소
             </CmsButton>
             <CmsButton
               type="button"
               variant="primary"
               size="medium"
-              width={120}
               onClick={() => {
                 const nextDates = selectedDates.filter(v => {
                   if (RECURRING_TOKEN_SET.has(v)) return false
@@ -356,8 +351,7 @@ export function DirectUnavailableDateAddButton({
                   onExclusionChange(exclusionStateFromModalSelectedDates(selectedDates))
                 }
                 closeModal()
-              }}
-            >
+              }} >
               설정
             </CmsButton>
           </div>

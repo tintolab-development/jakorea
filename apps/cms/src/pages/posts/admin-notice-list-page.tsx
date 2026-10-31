@@ -328,8 +328,7 @@ export function AdminNoticeListPage() {
           <>
             <FilterTableToolbarButton
               variant="delete"
-              onClick={handleBulkDelete}
-            >
+              onClick={handleBulkDelete} >
               공지사항 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>

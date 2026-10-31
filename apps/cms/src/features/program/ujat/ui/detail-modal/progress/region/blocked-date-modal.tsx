@@ -102,8 +102,7 @@ export function RegionBlockedDateModal({
         size="large"
         type="button"
         disabled={!canConfirm}
-        onClick={handleConfirm}
-      >
+        onClick={handleConfirm} >
         배정 불가 설정
       </CmsButton>
     </div>

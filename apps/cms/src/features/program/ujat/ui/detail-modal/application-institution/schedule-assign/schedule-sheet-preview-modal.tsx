@@ -132,8 +132,7 @@ export function UjatInstitutionScheduleSheetPreviewModal({
           </CmsButton>
           <ExcelButton
             disabled={exporting}
-            onClick={() => void handleExcelDownload()}
-          />
+            onClick={() => void handleExcelDownload()} />
         </>
       }
     >

@@ -10,7 +10,6 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import {
-  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   FilterTableToolbarButton,
   useCmsAlert,
 } from '@/shared/ui'
@@ -453,20 +452,14 @@ export function GeminiInstitutionApplicationTab({
             <div className="program-application-list-toolbar">
               <FilterTableToolbarButton
                 variant="delete"
-                className="cms-button--application-list-bulk"
-                width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                 disabled={rejectDisabled}
-                onClick={handleBulkReject}
-              >
+                onClick={handleBulkReject} >
                 선택 반려
               </FilterTableToolbarButton>
               <FilterTableToolbarButton
                 variant="secondary"
-                className="cms-button--application-list-bulk"
-                width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                 disabled={approveDisabled}
-                onClick={handleBulkApprove}
-              >
+                onClick={handleBulkApprove} >
                 선택 승인
               </FilterTableToolbarButton>
             </div>

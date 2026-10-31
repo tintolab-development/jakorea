@@ -110,13 +110,11 @@ export function ProgramRegistrationCurriculumTitleActions({
             type="button"
             variant="secondary"
             size="medium"
-            width={160}
             icon={<ButtonAddIcon aria-hidden />}
             onClick={e => {
               e.stopPropagation()
               onAddScheduleCurriculumDetail()
-            }}
-          >
+            }} >
             강의 행사 일정 추가
           </CmsButton>
         </TitleActionsWrap>
@@ -131,13 +129,11 @@ export function ProgramRegistrationCurriculumTitleActions({
             type="button"
             variant="secondary"
             size="medium"
-            width={160}
             icon={<ButtonAddIcon aria-hidden />}
             onClick={e => {
               e.stopPropagation()
               onAddScheduleCurriculumDetail()
-            }}
-          >
+            }} >
             강의 세부 일정 추가
           </CmsButton>
         </TitleActionsWrap>
@@ -153,28 +149,24 @@ export function ProgramRegistrationCurriculumTitleActions({
           type="button"
           variant="secondary"
           size="medium"
-          width={160}
           disabled={groupAtMax}
           icon={<ButtonClockIcon />}
           onClick={e => {
             e.stopPropagation()
             if (groupAtMax) return
             onAddScheduleCurriculumGroup()
-          }}
-        >
+          }} >
           진행 그룹 구분 추가
         </CmsButton>
         <CmsButton
           type="button"
           variant="secondary"
           size="medium"
-          width={160}
           icon={<ButtonAddIcon aria-hidden />}
           onClick={e => {
             e.stopPropagation()
             onAddScheduleCurriculumDetail()
-          }}
-        >
+          }} >
           강의 세부 일정 추가
         </CmsButton>
       </TitleActionsWrap>
@@ -191,7 +183,6 @@ export function ProgramRegistrationCurriculumTitleActions({
         type="button"
         variant="secondary"
         size="medium"
-        width={isMulti ? 160 : 180}
         disabled={restrictCurriculumSessionStructure || curriculumChartSessionAtMax}
         icon={<ButtonAddIcon aria-hidden />}
         onClick={e => {
@@ -199,8 +190,7 @@ export function ProgramRegistrationCurriculumTitleActions({
           if (restrictCurriculumSessionStructure || curriculumChartSessionAtMax) return
           if (isMulti) onAddCurriculumSession()
           else onAddCurriculumChartSession()
-        }}
-      >
+        }} >
         {isMulti ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
       </CmsButton>
     </TitleActionsWrap>

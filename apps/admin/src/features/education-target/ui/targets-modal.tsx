@@ -106,8 +106,7 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={saveMutation.isPending}
-          >
+            disabled={saveMutation.isPending} >
             닫기
           </CmsButton>
           <CmsButton
@@ -118,8 +117,7 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
             disabled={saveMutation.isPending || rows.length === 0}
             onClick={() => {
               void handleSave()
-            }}
-          >
+            }} >
             교육대상 설정
           </CmsButton>
         </>

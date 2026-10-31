@@ -210,9 +210,7 @@ export function AccountPaymentStatusDetailFullPageModal({
                     <CmsButton
                       variant="primary"
                       size="large"
-                      width={160}
-                      onClick={() => setPaymentCompleteConfirmOpen(true)}
-                    >
+                      onClick={() => setPaymentCompleteConfirmOpen(true)} >
                       지급 완료 처리
                     </CmsButton>
                   )

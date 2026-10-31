@@ -9,7 +9,7 @@ import { useVolunteerApplicationDetailEnrichment } from '@/features/program/gene
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
 import { mapVolunteerApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -168,10 +168,7 @@ function Interview2VolunteerApplicantDetail({
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onCancelInterviewPass}
-            >
+              onClick={onCancelInterviewPass} >
               {cancelFinalPassButtonLabel}
             </CmsButton>
           ) : null}
@@ -180,10 +177,7 @@ function Interview2VolunteerApplicantDetail({
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onCancelInterviewFail}
-            >
+              onClick={onCancelInterviewFail} >
               불합격 취소
             </CmsButton>
           ) : null}
@@ -194,10 +188,7 @@ function Interview2VolunteerApplicantDetail({
                   type="button"
                   variant="delete"
                   size="large"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
-                  onClick={onWithdrawActivity}
-                >
+                  onClick={onWithdrawActivity} >
                   활동 포기
                 </CmsButton>
               ) : null}
@@ -205,32 +196,23 @@ function Interview2VolunteerApplicantDetail({
                 type="button"
                 variant="delete"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onInterviewFail}
-              >
+                onClick={onInterviewFail} >
                 면접 불합격
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onInterviewPass}
-              >
+                onClick={onInterviewPass} >
                 면접 합격
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="primary"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
                 onClick={() => {
                   void handleInterviewEvaluationClick()
-                }}
-              >
+                }} >
                 면접 평가
               </CmsButton>
             </>
@@ -240,9 +222,7 @@ function Interview2VolunteerApplicantDetail({
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </div>
       </div>
 
@@ -385,10 +365,7 @@ export function GeneralVolunteerApplicantDetailView(
                 type="button"
                 variant="delete"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onCancelDocumentApproval}
-              >
+                onClick={onCancelDocumentApproval} >
                 승인 취소
               </CmsButton>
             ) : null}
@@ -397,10 +374,7 @@ export function GeneralVolunteerApplicantDetailView(
                 type="button"
                 variant="delete"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onCancelDocumentRejection}
-              >
+                onClick={onCancelDocumentRejection} >
                 반려 취소
               </CmsButton>
             ) : null}
@@ -409,10 +383,7 @@ export function GeneralVolunteerApplicantDetailView(
                 type="button"
                 variant="delete"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onWithdrawActivity}
-              >
+                onClick={onWithdrawActivity} >
                 활동 포기
               </CmsButton>
             ) : null}
@@ -420,10 +391,7 @@ export function GeneralVolunteerApplicantDetailView(
               type="button"
               variant="secondary"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onAssignInterview}
-            >
+              onClick={onAssignInterview} >
               {assignInterviewLabel}
             </CmsButton>
             <PersonalInfoRevealButton disabled={programPrivacyPending}
@@ -431,9 +399,7 @@ export function GeneralVolunteerApplicantDetailView(
               revealed={personalInfoRevealed}
               cmsVariant="primary"
               cmsSize="large"
-              width={180}
-              onClick={openPersonalInfoRevealConfirm}
-            />
+              onClick={openPersonalInfoRevealConfirm} />
           </div>
         </div>
 
@@ -489,10 +455,7 @@ export function GeneralVolunteerApplicantDetailView(
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onCancelDocumentApproval}
-            >
+              onClick={onCancelDocumentApproval} >
               승인 취소
             </CmsButton>
           ) : null}
@@ -501,10 +464,7 @@ export function GeneralVolunteerApplicantDetailView(
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onCancelDocumentRejection}
-            >
+              onClick={onCancelDocumentRejection} >
               반려 취소
             </CmsButton>
           ) : null}
@@ -515,10 +475,7 @@ export function GeneralVolunteerApplicantDetailView(
                   type="button"
                   variant="delete"
                   size="large"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
-                  onClick={onDocumentReject}
-                >
+                  onClick={onDocumentReject} >
                   서류 반려
                 </CmsButton>
               ) : null}
@@ -527,10 +484,7 @@ export function GeneralVolunteerApplicantDetailView(
                   type="button"
                   variant="secondary"
                   size="large"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
-                  onClick={onDocumentApprove}
-                >
+                  onClick={onDocumentApprove} >
                   서류 승인
                 </CmsButton>
               ) : null}
@@ -541,9 +495,7 @@ export function GeneralVolunteerApplicantDetailView(
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </div>
       </div>
 

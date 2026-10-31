@@ -70,23 +70,12 @@
 /* 프로그램 별 정산 목록(강사 상세): 산출 내역 상세 보기 140×40 */
 .payment-order-detail-filter-table
   .payment-order-detail-filter-table__breakdown-btn--140x40.cms-button.cms-button--h44.ant-btn {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
   height: 40px !important;
   min-height: 40px !important;
   max-height: 40px !important;
   padding-left: 8px !important;
   padding-right: 8px !important;
   box-sizing: border-box !important;
-}
-
-/* 강사 별 정산 목록(프로그램 상세): 산출 내역 상세 보기 180px 유지 */
-.payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--180.cms-button.cms-button--h44.ant-btn {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
 }
 
 /*

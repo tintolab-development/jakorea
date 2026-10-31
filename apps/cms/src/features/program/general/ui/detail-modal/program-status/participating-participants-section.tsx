@@ -361,24 +361,21 @@ export function ParticipatingParticipantsSection({
               variant="secondary"
               icon={<ButtonDownloadIcon />}
               disabled={certificateExportActive}
-              onClick={handleCertificateIssueClick}
-            >
+              onClick={handleCertificateIssueClick} >
               수료증/참여인증서 발급
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={() => setViewMode('calendar')}
-              >
+                onClick={() => setViewMode('calendar')} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={() => setViewMode('list')}
-              >
+                onClick={() => setViewMode('list')} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}

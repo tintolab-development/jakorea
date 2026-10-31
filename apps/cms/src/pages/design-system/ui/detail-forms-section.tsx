@@ -40,15 +40,13 @@ export function DetailFormsSection() {
           <CmsButton
             variant={mode === 'view' ? 'primary' : 'secondary'}
             size="medium"
-            onClick={() => setMode('view')}
-          >
+            onClick={() => setMode('view')} >
             view
           </CmsButton>
           <CmsButton
             variant={mode === 'edit' ? 'primary' : 'secondary'}
             size="medium"
-            onClick={() => setMode('edit')}
-          >
+            onClick={() => setMode('edit')} >
             edit
           </CmsButton>
         </div>

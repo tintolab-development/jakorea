@@ -9,7 +9,7 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Tabs } from 'antd'
 import { useForm, useFieldArray, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, CmsInput, CmsRadio, CmsTextArea } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsRadio, CmsTextArea } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -464,8 +464,7 @@ export function SchoolDetailModal({
         <CmsButton
           variant="primary"
           size="medium"
-          onClick={basicInfoForm.handleSubmit(handleBasicSave)}
-        >
+          onClick={basicInfoForm.handleSubmit(handleBasicSave)} >
           저장
         </CmsButton>
       </div>
@@ -748,15 +747,13 @@ export function SchoolDetailModal({
                         variant="primary"
                         size="medium"
                         disabled={!isInstructorDirty}
-                        onClick={() => handleInstructorSubmit(handleInstructorSave)()}
-                      >
+                        onClick={() => handleInstructorSubmit(handleInstructorSave)()} >
                         저장
                       </CmsButton>
                       <CmsButton
                         variant="primary"
                         size="medium"
-                        onClick={() => setAddInstructorAssignModalOpen(true)}
-                      >
+                        onClick={() => setAddInstructorAssignModalOpen(true)} >
                         추가 배정
                       </CmsButton>
                     </>
@@ -765,15 +762,13 @@ export function SchoolDetailModal({
                       <CmsButton
                         variant="secondary"
                         size="medium"
-                        onClick={handleInstructorEditStart}
-                      >
+                        onClick={handleInstructorEditStart} >
                         수정
                       </CmsButton>
                       <CmsButton
                         variant="primary"
                         size="medium"
-                        onClick={() => setAddInstructorAssignModalOpen(true)}
-                      >
+                        onClick={() => setAddInstructorAssignModalOpen(true)} >
                         추가 배정
                       </CmsButton>
                     </>
@@ -864,19 +859,13 @@ export function SchoolDetailModal({
                       <CmsButton
                         variant="delete"
                         size="large"
-                        className="cms-button--action"
-                        width={CMS_ACTION_BUTTON_WIDTH}
-                        onClick={() => {}}
-                      >
+                        onClick={() => {}} >
                         반려
                       </CmsButton>
                       <CmsButton
                         variant="primary"
                         size="large"
-                        className="cms-button--action"
-                        width={CMS_ACTION_BUTTON_WIDTH}
-                        onClick={() => {}}
-                      >
+                        onClick={() => {}} >
                         승인
                       </CmsButton>
                     </div>
@@ -886,12 +875,9 @@ export function SchoolDetailModal({
                       <CmsButton
                         variant="delete"
                         size="large"
-                        className="cms-button--action"
-                        width={CMS_ACTION_BUTTON_WIDTH}
                         disabled={isCancelApprovalDisabled}
                         title={cancelApprovalDisabledReason ?? undefined}
-                        onClick={() => setCancelApprovalConfirmOpen(true)}
-                      >
+                        onClick={() => setCancelApprovalConfirmOpen(true)} >
                         승인 취소
                       </CmsButton>
                     </div>

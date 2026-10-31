@@ -28,13 +28,11 @@ vi.mock('@/shared/ui', async () => {
       disabled,
       variant,
       size: _size,
-      width: _width,
       ...props
     }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
       loading?: boolean
       variant?: string
       size?: string
-      width?: number
     }) =>
       create(
         'button',
@@ -43,10 +41,6 @@ vi.mock('@/shared/ui', async () => {
       ),
   }
 })
-
-vi.mock('@/shared/ui/cms-button', () => ({
-  CMS_ACTION_BUTTON_WIDTH: 140,
-}))
 
 afterEach(cleanup)
 
@@ -187,8 +181,7 @@ describe('일반 공통정보 수정 검증 UX', () => {
         isEditing
         onEdit={vi.fn()}
         onCancel={vi.fn()}
-        onSave={onSave}
-      />
+        onSave={onSave} />
     )
     fireEvent.click(screen.getByRole('button', { name: '정보 수정' }))
     expect(onSave).toHaveBeenCalledOnce()

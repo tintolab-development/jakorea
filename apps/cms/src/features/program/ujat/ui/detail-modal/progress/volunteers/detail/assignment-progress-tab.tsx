@@ -410,24 +410,21 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
               type="button"
               variant="delete"
               size="h40"
-              onClick={openCancelModal}
-            >
+              onClick={openCancelModal} >
               배정 취소
             </CmsButton>
             <CmsButton
               type="button"
               variant="secondary"
               size="h40"
-              onClick={openAttendanceCorrectionModal}
-            >
+              onClick={openAttendanceCorrectionModal} >
               출결 정정
             </CmsButton>
             <CmsButton
               type="button"
               variant="primary"
               size="h40"
-              onClick={openAssignModal}
-            >
+              onClick={openAssignModal} >
               파트너 및 교육 배정
             </CmsButton>
             <ExcelButton onClick={exportExcel} loading={isExporting} />

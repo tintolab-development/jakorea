@@ -233,8 +233,7 @@ export function InstructorList({
           <CmsButton
             icon={<ButtonDownloadIcon />}
             onClick={() => setDownloadModalOpen(true)}
-            disabled={data.length === 0}
-          >
+            disabled={data.length === 0} >
             다운로드 ({data.length}건)
           </CmsButton>
         )}

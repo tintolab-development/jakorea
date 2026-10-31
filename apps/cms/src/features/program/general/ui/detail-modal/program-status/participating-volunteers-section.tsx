@@ -605,31 +605,27 @@ export function ParticipatingVolunteersSection({
             <FilterTableToolbarButton
               variant="secondary"
               icon={<ButtonDownloadIcon />}
-              onClick={handleActivityCertificateIssueClick}
-            >
+              onClick={handleActivityCertificateIssueClick} >
               활동확인서 발급
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={handleCalendarView}
-              >
+                onClick={handleCalendarView} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={handleListView}
-              >
+                onClick={handleListView} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}
             <FilterTableToolbarButton
               variant="primary"
-              onClick={handleRegisterEmployeeVolunteerClick}
-            >
+              onClick={handleRegisterEmployeeVolunteerClick} >
               임직원 자원봉사자 등록
             </FilterTableToolbarButton>
             <FilterTableToolbarButton variant="primary" onClick={handleRegisterVolunteerClick}>

@@ -737,16 +737,14 @@ export function SmsTemplateList() {
               variant="delete"
               type="button"
               disabled={deletableCheckedCount === 0 || busy}
-              onClick={handleRequestDelete}
-            >
+              onClick={handleRequestDelete} >
               선택 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="secondary"
               type="button"
               disabled={!editCategoryId || busy}
-              onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })}
-            >
+              onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })} >
               카테고리 수정
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
@@ -758,16 +756,14 @@ export function SmsTemplateList() {
                   mode: 'add',
                   categoryId: targetCategoryForAdd(selection, templates),
                 })
-              }
-            >
+              } >
               카테고리 추가
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               type="button"
               disabled={busy}
-              onClick={handleOpenCreate}
-            >
+              onClick={handleOpenCreate} >
               템플릿 등록
             </FilterTableToolbarButton>
           </>
@@ -785,8 +781,7 @@ export function SmsTemplateList() {
               variant="secondary"
               size="large"
               type="button"
-              onClick={() => void treeQuery.refetch()}
-            >
+              onClick={() => void treeQuery.refetch()} >
               다시 시도
             </CmsButton>
           </div>

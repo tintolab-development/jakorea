@@ -89,8 +89,7 @@ function ConsentFieldEdit({
             size="medium"
             type="button"
             disabled={value !== 'agree'}
-            onClick={onDocumentAction}
-          >
+            onClick={onDocumentAction} >
             {documentButton === 'edit' ? '동의서 수정' : '동의서 작성'}
           </CmsButton>
         </>

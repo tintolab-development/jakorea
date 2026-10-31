@@ -10,7 +10,6 @@ import type { ImpactStory, ImpactStoryListFilter } from '@/entities/impact-stori
 import { useImpactStoriesList } from '@/features/impact-stories/api/hooks'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CmsButton, CmsInput, CmsSelect, ContentModal } from '@/shared/ui'
 
@@ -127,14 +126,11 @@ function PickerBody({
           />
         </div>
         <div className="admin-filter-area__actions">
-          <CmsButton
-            className="admin-filter-area__search-button"
+          <CmsButton className="admin-filter-area__search-button"
             variant="primary"
             size="large"
             type="button"
-            width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-            onClick={handleSearch}
-          >
+            onClick={handleSearch} >
             검색
           </CmsButton>
         </div>

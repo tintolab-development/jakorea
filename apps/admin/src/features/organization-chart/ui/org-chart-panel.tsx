@@ -82,8 +82,7 @@ export function OrganizationChartPanel() {
               variant="primary"
               size="h40"
               type="button"
-              onClick={handleOpenEdit}
-            >
+              onClick={handleOpenEdit} >
               수정
             </CmsButton>
           </div>

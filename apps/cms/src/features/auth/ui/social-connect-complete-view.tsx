@@ -32,11 +32,11 @@ export function SocialConnectCompleteView({
         </div>
 
         <div className="auth-actions register-complete__actions">
-          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
+          <CmsButton variant="primary" size="h52" onClick={onGoLogin}>
             로그인하기
           </CmsButton>
           {SOCIAL_ACCOUNT_LINK_ENABLED ? (
-            <CmsButton variant="default" size="h52" width="100%" onClick={onConnectMore}>
+            <CmsButton variant="default" size="h52" onClick={onConnectMore}>
               다른 소셜 계정도 연결하기
             </CmsButton>
           ) : null}

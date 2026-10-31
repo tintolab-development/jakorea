@@ -138,8 +138,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending}
-              >
+                disabled={saveMutation.isPending} >
                 취소
               </CmsButton>
               <CmsButton
@@ -149,8 +148,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }}
-              >
+                }} >
                 저장
               </CmsButton>
             </>

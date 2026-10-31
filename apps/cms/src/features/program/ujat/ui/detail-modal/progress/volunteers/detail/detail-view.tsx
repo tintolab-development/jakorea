@@ -252,8 +252,7 @@ export function UjatEducationProgressVolunteerDetailView({
         variant="delete"
         size="h40"
         disabled={activityWithdrawScheduleOptions.length === 0}
-        onClick={handleRequestActivityWithdraw}
-      >
+        onClick={handleRequestActivityWithdraw} >
         활동 포기
       </CmsButton>
       <CmsButton
@@ -261,8 +260,7 @@ export function UjatEducationProgressVolunteerDetailView({
         variant="secondary"
         size="h40"
         icon={<ButtonDownloadIcon />}
-        onClick={() => setActivityCertPreviewOpen(true)}
-      >
+        onClick={() => setActivityCertPreviewOpen(true)} >
         활동인증서 발급
       </CmsButton>
       <CmsButton
@@ -271,34 +269,28 @@ export function UjatEducationProgressVolunteerDetailView({
         size="h40"
         icon={<ButtonDownloadIcon />}
         disabled={studentCertificateExportActive}
-        onClick={() => setStudentCertificateIssueModalOpen(true)}
-      >
+        onClick={() => setStudentCertificateIssueModalOpen(true)} >
         수료증/참여인증서 발급
       </CmsButton>
       <ProgramEditInfoActions
         size="h40"
-        width={false}
         isEditing={isEditing}
         onEdit={handleEnterEdit}
         onCancel={handleCancelEdit}
-        onSave={handleSaveEdit}
-      />
+        onSave={handleSaveEdit} />
       <CmsButton
         type="button"
         variant="primary"
         size="h40"
         disabled={isEditing}
-        onClick={handleAdminCommentEditEnter}
-      >
+        onClick={handleAdminCommentEditEnter} >
         코멘트 작성
       </CmsButton>
       <PersonalInfoRevealButton disabled={programPrivacyPending}
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
         onClick={openPersonalInfoRevealConfirm}
-        cmsSize="h40"
-        width="auto"
-      />
+        cmsSize="h40" />
     </>
   )
 

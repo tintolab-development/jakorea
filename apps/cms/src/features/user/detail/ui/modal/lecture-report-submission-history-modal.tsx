@@ -226,8 +226,7 @@ export function LectureReportSubmissionHistoryModal({
             icon={<ButtonDownloadIcon />}
             loading={bulkDownloading}
             disabled={memberId == null || applicationId == null}
-            onClick={() => void handleBulkDownload()}
-          >
+            onClick={() => void handleBulkDownload()} >
             강의보고서 일괄 다운로드
           </CmsButton>
         </>

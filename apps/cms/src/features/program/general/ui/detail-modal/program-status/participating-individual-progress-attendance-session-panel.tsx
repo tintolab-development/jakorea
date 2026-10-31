@@ -175,8 +175,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
             type="button"
             variant="secondary"
             size="h40"
-            onClick={handleOpenCorrectionModal}
-          >
+            onClick={handleOpenCorrectionModal} >
             출결 정정
           </CmsButton>
           <ExcelButton loading={isExporting} onClick={exportExcel} />

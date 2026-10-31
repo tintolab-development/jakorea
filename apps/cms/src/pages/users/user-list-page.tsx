@@ -1279,8 +1279,7 @@ export function UserListPage() {
                   setBulkDeleteUsers(toDelete)
                 }
                 setDeleteModalOpen(true)
-              }}
-            >
+              }} >
               {resolvedMemberListKind === 'institutions'
                 ? '학교 삭제'
                 : resolvedMemberListKind === 'instructors'
@@ -1308,8 +1307,7 @@ export function UserListPage() {
                   return
                 }
                 window.alert('준비 중입니다')
-              }}
-            >
+              }} >
               {resolvedMemberListKind === 'institutions'
                 ? '학교 등록'
                 : resolvedMemberListKind === 'instructors'

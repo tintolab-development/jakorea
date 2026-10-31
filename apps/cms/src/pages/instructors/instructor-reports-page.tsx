@@ -236,16 +236,14 @@ export function InstructorReportsPage() {
             <CmsButton
               size="small"
               icon={<ButtonAddIcon />}
-              onClick={() => handleView(record)}
-            >
+              onClick={() => handleView(record)} >
               작성
             </CmsButton>
           ) : record.status === 'REJECTED' ? (
             <CmsButton
               size="small"
               icon={<ButtonAddIcon />}
-              onClick={() => handleView(record)}
-            >
+              onClick={() => handleView(record)} >
               다시 작성
             </CmsButton>
           ) : (

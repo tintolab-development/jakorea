@@ -66,13 +66,11 @@ export function InterviewSectionCard({ items }: Props) {
           <CmsButton
             variant="secondary"
             size="medium"
-            width={100}
             type="button"
             onClick={e => {
               e.stopPropagation()
               setPicker({ type: 'edit', item: record })
-            }}
-          >
+            }} >
             수정
           </CmsButton>
         ),
@@ -143,8 +141,7 @@ export function InterviewSectionCard({ items }: Props) {
             size="h40"
             type="button"
             loading={removeMutation.isPending}
-            onClick={handleDeleteClick}
-          >
+            onClick={handleDeleteClick} >
             선택 삭제
           </CmsButton>
           {atLimit ? null : (
@@ -153,8 +150,7 @@ export function InterviewSectionCard({ items }: Props) {
               size="h40"
               type="button"
               disabled={pickerLoading}
-              onClick={() => setPicker({ type: 'add' })}
-            >
+              onClick={() => setPicker({ type: 'add' })} >
               추가
             </CmsButton>
           )}

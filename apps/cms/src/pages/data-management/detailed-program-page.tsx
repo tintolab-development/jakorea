@@ -513,8 +513,7 @@ export default function DetailedProgramPage() {
               <FilterTableToolbarButton
                 variant="secondary"
                 onClick={handleCancelEdit}
-                disabled={savePending}
-              >
+                disabled={savePending} >
                 취소
               </FilterTableToolbarButton>
             ) : null}
@@ -522,15 +521,13 @@ export default function DetailedProgramPage() {
               variant="secondary"
               onClick={isEditMode ? handleSave : enterEditMode}
               disabled={isEditMode && savePending}
-              loading={isEditMode && savePending}
-            >
+              loading={isEditMode && savePending} >
               정보 수정
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               onClick={handleAddClick}
-              disabled={isEditMode}
-            >
+              disabled={isEditMode} >
               신규 등록
             </FilterTableToolbarButton>
           </>

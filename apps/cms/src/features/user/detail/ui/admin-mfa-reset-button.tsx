@@ -117,11 +117,9 @@ export function AdminMfaResetButton({ target }: { target: Omit<User, 'password'>
       <CmsButton
         size="h32"
         variant="secondary"
-        width={100}
         loading={submitting}
         disabled={submitting}
-        onClick={() => void runReset()}
-      >
+        onClick={() => void runReset()} >
         MFA 재발급
       </CmsButton>
     </>

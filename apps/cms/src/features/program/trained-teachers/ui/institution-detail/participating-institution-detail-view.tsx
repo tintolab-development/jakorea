@@ -695,8 +695,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 size="medium"
                 onClick={() => {
                   void applicationDetailQuery.refetch()
-                }}
-              >
+                }} >
                 다시 시도
               </CmsButton>
             </div>
@@ -723,13 +722,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 variant="delete"
                 size="h40"
                 disabled={isActivityWithdrawn || isApplicationInfoEditing}
-                onClick={handleRequestActivityWithdraw}
-              >
+                onClick={handleRequestActivityWithdraw} >
                 활동 포기
               </CmsButton>
               <ProgramEditInfoActions
                 size="h40"
-                width={false}
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
                 disabled={
@@ -742,15 +739,13 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
-                }}
-              />
+                }} />
               {showAdminCommentSection ? (
                 <CmsButton
                   variant="primary"
                   size="h40"
                   disabled={isApplicationInfoEditing}
-                  onClick={handleAdminCommentEditEnter}
-                >
+                  onClick={handleAdminCommentEditEnter} >
                   코멘트 작성
                 </CmsButton>
               ) : null}
@@ -758,9 +753,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 labelMode="toggle"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"
-                width="auto"
-                onClick={handlePrivacyToggleClick}
-              />
+                onClick={handlePrivacyToggleClick} />
             </>
           ) : null
         }

@@ -63,13 +63,12 @@ export function RegionAssignmentDownloadModal({
 
   const footer = (
     <div className="ujat-region-assignment-download-modal__footer">
-      <CmsButton variant="secondary" size="medium" width={120} onClick={handleCancel}>
+      <CmsButton variant="secondary" size="medium" onClick={handleCancel}>
         취소
       </CmsButton>
       <ExcelButton
         disabled={selectedColumnIds.length === 0 || exporting}
-        onClick={() => void handleDownload()}
-      />
+        onClick={() => void handleDownload()} />
     </div>
   )
 

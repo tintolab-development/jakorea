@@ -57,8 +57,7 @@ export function UjatEducationRegionRegisterModal({
             size="medium"
             type="button"
             disabled={!name.trim()}
-            onClick={handleSubmit}
-          >
+            onClick={handleSubmit} >
             등록
           </CmsButton>
         </>

@@ -2,7 +2,6 @@ import { useCallback, useMemo, type CSSProperties, type MouseEvent } from 'react
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
-  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   FilterTableToolbarButton,
 } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
@@ -290,19 +289,13 @@ export function GeneralVolunteerDocScreeningSection({
               <FilterTableToolbarButton
                 type="button"
                 variant="delete"
-                className="cms-button--application-list-bulk"
-                width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
-                onClick={handleBulkReject}
-              >
+                onClick={handleBulkReject} >
                 선택 반려
               </FilterTableToolbarButton>
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                className="cms-button--application-list-bulk"
-                width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
-                onClick={handleBulkApprove}
-              >
+                onClick={handleBulkApprove} >
                 선택 승인
               </FilterTableToolbarButton>
             </div>

@@ -214,24 +214,21 @@ export function SponsorContactsPanel({
               onClick={handleDeleteClick}
               disabled={!canWrite || isEditing || isDeleting}
               loading={isDeleting}
-              adminAction="sponsorContactWrite"
-            >
+              adminAction="sponsorContactWrite" >
               담당자 삭제
             </FilterTableToolbarButton>
             {canWrite ? (
               <FilterTableToolbarButton
                 variant="secondary"
                 onClick={() => void handleToggleEdit()}
-                disabled={isSavingEdits}
-              >
+                disabled={isSavingEdits} >
                 정보 수정
               </FilterTableToolbarButton>
             ) : null}
             <FilterTableToolbarButton
               variant="primary"
               onClick={handleRegisterClick}
-              disabled={isEditing}
-            >
+              disabled={isEditing} >
               담당자 등록
             </FilterTableToolbarButton>
           </>

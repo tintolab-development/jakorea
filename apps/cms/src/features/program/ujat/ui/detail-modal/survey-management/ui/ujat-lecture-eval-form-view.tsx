@@ -74,12 +74,9 @@ export function UjatLectureEvalFormView({
       </div>
       {showSubmitButton ? (
         <div className="ujat-lecture-eval-form__footer">
-          <CmsButton
-            className="ujat-lecture-eval-form__submit-button"
-            width="100%"
+          <CmsButton className="ujat-lecture-eval-form__submit-button"
             size="large"
-            onClick={onSubmitClick}
-          >
+            onClick={onSubmitClick} >
             {submitButtonLabel}
           </CmsButton>
         </div>

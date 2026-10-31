@@ -98,14 +98,12 @@ export function useUjatVolunteerDocPassedColumns({
               type="button"
               variant="secondary"
               size="medium"
-              width={120}
               style={{ flexShrink: 0 }}
               disabled={record.interviewAssignmentStatus === 'withdrawn'}
               onClick={e => {
                 e.stopPropagation()
                 onAssignInterview(record)
-              }}
-            >
+              }} >
               {label}
             </CmsButton>
           )

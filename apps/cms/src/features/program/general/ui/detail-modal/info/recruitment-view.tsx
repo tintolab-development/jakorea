@@ -212,17 +212,14 @@ export function GeneralProgramRecruitmentView({
                     idleVariant="secondary"
                     onEdit={onEdit}
                     onCancel={onCancel}
-                    onSave={onSave}
-                  />
+                    onSave={onSave} />
                 ) : null}
                 {onOpenRecruitmentPreview ? (
                   <CmsButton
                     type="button"
                     variant="primary"
-                    size="large"
-                    className="recruitment-view__preview-btn"
-                    onClick={handleOpenPreview}
-                  >
+                    size="large" className="recruitment-view__preview-btn"
+                    onClick={handleOpenPreview} >
                     미리보기
                   </CmsButton>
                 ) : null}

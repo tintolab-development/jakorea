@@ -406,8 +406,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
                 if (addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
-              }}
-            >
+              }} >
               추가 배정
             </CmsButton>
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
@@ -499,8 +498,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             <CmsButton
               variant="secondary"
               size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)}
-            >
+              onClick={() => setSelectAssignConfirmOpen(false)} >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
@@ -535,8 +533,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
               onClick={() => {
                 setAddAssignModalOpen(false)
                 setAddAssignWaitingRowId(null)
-              }}
-            >
+              }} >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleAddAssignConfirm}>

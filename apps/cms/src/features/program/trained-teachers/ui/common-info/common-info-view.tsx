@@ -2180,8 +2180,7 @@ export function TrainedTeachersCommonInfoView({
             onCancel={onCancel ?? (() => {})}
             onSave={handleSave}
             saving={saving || persistPending}
-            disabled={editDisabled}
-          />
+            disabled={editDisabled} />
         </BusinessPeriodExtendToolbar>
       </div>
 

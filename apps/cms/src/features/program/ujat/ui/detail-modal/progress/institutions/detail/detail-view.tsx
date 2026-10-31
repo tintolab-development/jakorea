@@ -248,25 +248,21 @@ export function UjatEducationProgressInstitutionDetailView({
               variant="delete"
               size="h40"
               disabled={activityWithdrawn}
-              onClick={handleRequestWithdraw}
-            >
+              onClick={handleRequestWithdraw} >
               활동 포기
             </CmsButton>
             <ProgramEditInfoActions
               size="h40"
-              width={false}
               isEditing={isApplicationInfoEditing}
               onEdit={handleApplicationInfoButtonClick}
               onCancel={handleApplicationInfoCancel}
-              onSave={handleApplicationInfoButtonClick}
-            />
+              onSave={handleApplicationInfoButtonClick} />
             <CmsButton
               type="button"
               variant="primary"
               size="h40"
               disabled={isApplicationInfoEditing}
-              onClick={handleAdminCommentEditEnter}
-            >
+              onClick={handleAdminCommentEditEnter} >
               코멘트 작성
             </CmsButton>
             <PersonalInfoRevealButton disabled={programPrivacyPending}
@@ -274,9 +270,7 @@ export function UjatEducationProgressInstitutionDetailView({
               revealed={personalInfoRevealed}
               cmsVariant="primary"
               cmsSize="h40"
-              width="auto"
-              onClick={openPersonalInfoRevealConfirm}
-            />
+              onClick={openPersonalInfoRevealConfirm} />
           </div>
         ) : null}
 
@@ -293,10 +287,8 @@ export function UjatEducationProgressInstitutionDetailView({
             <CmsButton
               type="button"
               variant="primary"
-              size="medium"
-              className="ujat-education-progress-institution-detail__posts-register-btn"
-              onClick={() => setPostWriteModalOpen(true)}
-            >
+              size="medium" className="ujat-education-progress-institution-detail__posts-register-btn"
+              onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>
           </div>

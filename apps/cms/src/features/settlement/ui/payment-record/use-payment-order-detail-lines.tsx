@@ -829,8 +829,7 @@ export function usePaymentOrderDetailLinesController(
               } else {
                 onOpenCalculationStatement(row as PaymentOrderAdminInstructorDetailProgramRow)
               }
-            }}
-          >
+            }} >
             상세 보기
           </CmsButton>
         ),

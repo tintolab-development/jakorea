@@ -223,8 +223,7 @@ export function YearlyBusinessPanel({
               variant="secondary"
               size="h40"
               onClick={() => void handleToggleEdit()}
-              disabled={isSaving}
-            >
+              disabled={isSaving} >
               후원정보 수정
             </CmsButton>
           ) : null}

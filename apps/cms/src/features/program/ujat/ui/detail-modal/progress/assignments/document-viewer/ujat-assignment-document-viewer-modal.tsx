@@ -268,19 +268,15 @@ export function UjatAssignmentDocumentViewerModal({
       <CmsButton
         variant="primary"
         size="medium"
-        width={120}
-        onClick={handleFeedbackButtonClick}
-      >
+        onClick={handleFeedbackButtonClick} >
         {submittedFeedback != null ? '피드백 보기' : '피드백 작성'}
       </CmsButton>
       <CmsButton
         variant="primary"
         size="medium"
-        width={140}
         icon={<ButtonDownloadIcon />}
         disabled={pdfLoading}
-        onClick={() => void handleDownloadPdf()}
-      >
+        onClick={() => void handleDownloadPdf()} >
         파일 다운로드
       </CmsButton>
     </div>

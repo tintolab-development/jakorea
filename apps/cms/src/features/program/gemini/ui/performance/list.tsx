@@ -565,9 +565,7 @@ export function GeminiPerformanceList() {
           showBulkDelete ? (
             <FilterTableToolbarButton
               variant="delete"
-              width={120}
-              onClick={handleBulkDeleteClick}
-            >
+              onClick={handleBulkDeleteClick} >
               선택 삭제
             </FilterTableToolbarButton>
           ) : null
@@ -582,9 +580,7 @@ export function GeminiPerformanceList() {
             {canWrite ? (
               <FilterTableToolbarButton
                 variant="secondary"
-                width="auto"
-                onClick={() => void downloadGeminiPerformanceUploadTemplate()}
-              >
+                onClick={() => void downloadGeminiPerformanceUploadTemplate()} >
                 업로드 양식 다운로드
               </FilterTableToolbarButton>
             ) : null}
@@ -601,10 +597,8 @@ export function GeminiPerformanceList() {
               ) : null}
               <FilterTableToolbarButton
                 variant="primary"
-                width={140}
                 tabIndex={canWrite ? -1 : undefined}
-                onClick={handleAddReportClick}
-              >
+                onClick={handleAddReportClick} >
                 연수 보고서 등록
               </FilterTableToolbarButton>
             </span>

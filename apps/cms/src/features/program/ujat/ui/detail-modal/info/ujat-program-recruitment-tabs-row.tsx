@@ -44,15 +44,13 @@ export function UjatProgramRecruitmentTabsRow({
             disabled={!canEdit && !isEditMode}
             onEdit={onEdit}
             onCancel={onCancel}
-            onSave={onSave}
-          />
+            onSave={onSave} />
           {onOpenPreview ? (
             <CmsButton
               type="button"
               variant="primary"
               size="large"
-              onClick={() => onOpenPreview(activeTab)}
-            >
+              onClick={() => onOpenPreview(activeTab)} >
               미리보기
             </CmsButton>
           ) : null}

@@ -338,8 +338,7 @@ function SponsorDetailFullPageModalInner({
                 variant="secondary"
                 size="large"
                 onClick={handleToggleBasicInfoClick}
-                adminAction="sponsorWrite"
-              >
+                adminAction="sponsorWrite" >
                 정보 수정
               </CmsButton>
               <CmsButton
@@ -348,8 +347,7 @@ function SponsorDetailFullPageModalInner({
                 icon={<ButtonDownloadIcon />}
                 loading={logoBulkDownloading}
                 onClick={handleLogoBulkDownload}
-                adminAction="download"
-              >
+                adminAction="download" >
                 로고 일괄 다운로드
               </CmsButton>
             </div>

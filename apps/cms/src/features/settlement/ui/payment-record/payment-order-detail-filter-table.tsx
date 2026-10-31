@@ -125,13 +125,11 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
           <>
             <FilterTableToolbarButton
               variant="secondary"
-              width={160}
               disabled={!canBatchConfirm}
               onClick={() => {
                 if (!canBatchConfirm) return
                 setBatchConfirmOpen(true)
-              }}
-            >
+              }} >
               일괄 확인
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
@@ -139,8 +137,7 @@ export function PaymentOrderDetailFilterTable(props: PaymentOrderDetailFilterTab
               style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
               disabled={selectedRowKeys.length === 0}
-              onClick={handlePaymentStatementIssue}
-            >
+              onClick={handlePaymentStatementIssue} >
               지급조서 발급
             </FilterTableToolbarButton>
           </>

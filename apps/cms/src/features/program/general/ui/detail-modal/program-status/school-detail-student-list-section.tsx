@@ -1069,16 +1069,14 @@ export function SchoolDetailStudentListSection({
         variant="secondary"
         icon={<ButtonCheckIcon />}
         disabled={portraitConsentDownloading}
-        onClick={handlePortraitConsentConfirmClick}
-      >
+        onClick={handlePortraitConsentConfirmClick} >
         초상권 동의 확인
       </FilterTableToolbarButton>
       <FilterTableToolbarButton
         variant="secondary"
         icon={<ButtonDownloadIcon />}
         disabled={certificateExportActive}
-        onClick={handleCertificateIssueClick}
-      >
+        onClick={handleCertificateIssueClick} >
         수료증/참여인증서 발급
       </FilterTableToolbarButton>
       {!readOnly ? (
@@ -1092,8 +1090,7 @@ export function SchoolDetailStudentListSection({
             onCancel={handleStudentListCancel}
             onSave={() => {
               void handleStudentListSave()
-            }}
-          />
+            }} />
           <FilterTableToolbarButton variant="primary" onClick={handleOpenAddStudentModal}>
             학생 추가
           </FilterTableToolbarButton>
@@ -1103,8 +1100,7 @@ export function SchoolDetailStudentListSection({
           {onEditInfo && (
             <FilterTableToolbarButton
               variant={PROGRAM_EDIT_INFO_BUTTON_PROPS.variant}
-              onClick={onEditInfo}
-            >
+              onClick={onEditInfo} >
               {PROGRAM_EDIT_INFO_BUTTON_LABEL}
             </FilterTableToolbarButton>
           )}

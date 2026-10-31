@@ -53,7 +53,6 @@ import '@/pages/users/user-list-page.css'
 import './member-program-lecture-history.css'
 import {
   CmsButton,
-  CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH,
   DeleteGuideModal,
   ProgramHistoryDeleteBlockedModal,
   buildProgramProgressHistoryDeleteGuide,
@@ -503,8 +502,7 @@ export function MemberProgramLectureHistory({
                 disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
                   if (onOpenAssignment) onOpenAssignment(record)
-                }}
-              >
+                }} >
                 내역 보기
               </CmsButton>
             </span>
@@ -561,8 +559,7 @@ export function MemberProgramLectureHistory({
                   if (onViewLectureReport) onViewLectureReport(record)
                   setLectureReportHistoryTarget(record)
                   setLectureReportHistoryModalOpen(true)
-                }}
-              >
+                }} >
                 내역 보기
               </CmsButton>
             </span>
@@ -639,8 +636,7 @@ export function MemberProgramLectureHistory({
                 <FilterTableToolbarButton
                   variant="delete"
                   disabled={selectedRowKeys.length === 0}
-                  onClick={handleOpenHistoryDeleteModal}
-                >
+                  onClick={handleOpenHistoryDeleteModal} >
                   이력 삭제
                 </FilterTableToolbarButton>
               ) : null}
@@ -648,13 +644,11 @@ export function MemberProgramLectureHistory({
                 showCertificateBulkIssue && (
                   <FilterTableToolbarButton
                     variant="secondary"
-                    width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
                     icon={<ButtonDownloadIcon />}
                     disabled={selectedRowKeys.length === 0}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
-                    }
-                  >
+                    } >
                     수료증/참여인증서 발급
                   </FilterTableToolbarButton>
                 )}
@@ -662,24 +656,20 @@ export function MemberProgramLectureHistory({
                 <>
                   <FilterTableToolbarButton
                     variant="secondary"
-                    width={180}
                     disabled={selectedRowKeys.length === 0}
                     icon={<ButtonDownloadIcon />}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
-                    }
-                  >
+                    } >
                     활동인증서 발급
                   </FilterTableToolbarButton>
                   <FilterTableToolbarButton
                     variant="secondary"
-                    width={CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH}
                     icon={<ButtonDownloadIcon />}
                     disabled={selectedRowKeys.length === 0}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
-                    }
-                  >
+                    } >
                     수료증/참여인증서 발급
                   </FilterTableToolbarButton>
                 </>
@@ -687,27 +677,23 @@ export function MemberProgramLectureHistory({
               {mode === 'instructorLecture' && showCertificateBulkIssue && (
                 <FilterTableToolbarButton
                   variant="secondary"
-                  width={180}
                   disabled={selectedRowKeys.length === 0}
                   icon={<ButtonDownloadIcon />}
                   onClick={() =>
                     openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
-                  }
-                >
+                  } >
                   활동인증서 발급
                 </FilterTableToolbarButton>
               )}
               {mode === 'instructorLecture' && memberId != null && isMembersRemoteEnabled() && (
                 <FilterTableToolbarButton
                   variant="secondary"
-                  icon={<ButtonDownloadIcon />}
-                  className="member-program-lecture-history__bulk-lecture-report-download cms-button--no-label-ellipsis"
+                  icon={<ButtonDownloadIcon />} className="member-program-lecture-history__bulk-lecture-report-download"
                   loading={allLectureReportsDownloading}
                   disabled={allLectureReportsDownloading}
                   onClick={() => {
                     void handleDownloadAllLectureReports()
-                  }}
-                >
+                  }} >
                   전체 강의보고서 일괄 다운로드
                 </FilterTableToolbarButton>
               )}

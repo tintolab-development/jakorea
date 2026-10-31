@@ -16,8 +16,6 @@ export interface ProgramEditInfoActionsProps {
   useToolbarButton?: boolean
   /** 미지정 시 large(h44). 상세 탭 액션은 h40 */
   size?: CmsButtonSize
-  /** false면 고정 폭을 쓰지 않는다 */
-  width?: number | string | false
 }
 
 /** 조회/편집 상태 모두 단일 「정보 수정」 버튼을 사용하고 색상으로 동작을 구분한다. */
@@ -30,7 +28,6 @@ export function ProgramEditInfoActions({
   idleVariant = 'secondary',
   useToolbarButton = false,
   size,
-  width,
 }: ProgramEditInfoActionsProps) {
   const resolvedVariant = isEditing ? 'secondary' : idleVariant
   const shared = {
@@ -47,14 +44,10 @@ export function ProgramEditInfoActions({
   }
 
   const resolvedSize = size ?? PROGRAM_EDIT_INFO_BUTTON_PROPS.size
-  const widthProp =
-    width === false ? {} : { width: width ?? PROGRAM_EDIT_INFO_BUTTON_PROPS.width }
 
   return (
     <CmsButton
       size={resolvedSize}
-      {...widthProp}
-      {...shared}
-    />
+      {...shared} />
   )
 }

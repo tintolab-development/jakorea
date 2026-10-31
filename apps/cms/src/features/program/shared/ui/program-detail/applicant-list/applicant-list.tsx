@@ -5,7 +5,6 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
-  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   showApplicationApprovalCompletedAlert,
   showApplicationRejectionCompletedAlert,
   useCmsAlert,
@@ -2415,26 +2414,19 @@ export function ApplicantList({
               <div className="program-application-list-toolbar">
                 <FilterTableToolbarButton
                   variant="delete"
-                  className="cms-button--application-list-bulk"
-                  width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
-                  onClick={handleBulkRejectClick}
-                >
+                  onClick={handleBulkRejectClick} >
                   선택 반려
                 </FilterTableToolbarButton>
                 <FilterTableToolbarButton
                   variant="secondary"
-                  className="cms-button--application-list-bulk"
-                  width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
-                  onClick={handleBulkApproveClick}
-                >
+                  onClick={handleBulkApproveClick} >
                   선택 승인
                 </FilterTableToolbarButton>
                 {showApplicationListViewToggle && displayViewMode === 'table' && (
                   <FilterTableToolbarButton
                     icon={<ButtonCalendarIcon />}
                     variant="secondary"
-                    onClick={handleViewCalendar}
-                  >
+                    onClick={handleViewCalendar} >
                     캘린더 뷰로 보기
                   </FilterTableToolbarButton>
                 )}
@@ -2442,8 +2434,7 @@ export function ApplicantList({
                   <FilterTableToolbarButton
                     variant="secondary"
                     icon={<ButtonListIcon />}
-                    onClick={handleViewList}
-                  >
+                    onClick={handleViewList} >
                     리스트 뷰로 보기
                   </FilterTableToolbarButton>
                 )}

@@ -54,9 +54,7 @@ export function BusinessPeriodExtendToolbar({
             type="button"
             variant="primary"
             size="large"
-            className="cms-button--toolbar-auto"
-            onClick={() => setOpen(true)}
-          >
+            onClick={() => setOpen(true)} >
             {BUSINESS_PERIOD_EXTEND_BUTTON_LABEL}
           </CmsButton>
         ) : null}

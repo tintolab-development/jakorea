@@ -14,13 +14,11 @@ vi.mock('@/shared/ui', async () => {
       disabled,
       variant,
       size: _size,
-      width: _width,
       ...props
     }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
       loading?: boolean
       variant?: string
       size?: string
-      width?: number
     }) =>
       create(
         'button',
@@ -29,10 +27,6 @@ vi.mock('@/shared/ui', async () => {
       ),
   }
 })
-
-vi.mock('@/shared/ui/cms-button', () => ({
-  CMS_ACTION_BUTTON_WIDTH: 140,
-}))
 
 afterEach(cleanup)
 

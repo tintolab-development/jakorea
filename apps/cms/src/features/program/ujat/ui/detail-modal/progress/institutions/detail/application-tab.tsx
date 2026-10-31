@@ -174,8 +174,7 @@ export function UjatEducationProgressInstitutionApplicationTab({
               type="button"
               variant="secondary"
               size="h40"
-              onClick={() => setAddClassModalOpen(true)}
-            >
+              onClick={() => setAddClassModalOpen(true)} >
               학급 추가
             </CmsButton>
           </div>

@@ -33,12 +33,9 @@ export function UjatSurveySubmittedState({
           <p className="ujat-survey-submitted-state__title">{title}</p>
           <p className="ujat-survey-submitted-state__description">{description}</p>
         </div>
-        <CmsButton
-          className="ujat-survey-submitted-state__edit-button"
-          width={180}
+        <CmsButton className="ujat-survey-submitted-state__edit-button"
           disabled={!canEdit}
-          onClick={onEditClick}
-        >
+          onClick={onEditClick} >
           {editButtonLabel}
         </CmsButton>
       </div>
