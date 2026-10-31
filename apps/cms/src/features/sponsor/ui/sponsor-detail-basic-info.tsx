@@ -28,6 +28,7 @@ import {
 } from '@/shared/ui'
 import { FileDownloadRowIcon } from '@/shared/ui/icons/FileDownloadRowIcon'
 import { downloadSponsorLogos } from '@/features/sponsor/lib/download-sponsor-logos'
+import { toSponsorDateOnly } from '@/features/sponsor/lib/to-sponsor-date-only'
 import { sponsorLogoFallbackFileName } from '@/features/sponsor/lib/sponsor-logo-files'
 import {
   mergeSponsorLogoFiles,
@@ -245,7 +246,7 @@ export function SponsorBasicInfoSection({
               onChange={date =>
                 onChange(prev => ({
                   ...prev,
-                  sponsorshipStartDate: date ? date.startOf('day').toISOString() : undefined,
+                  sponsorshipStartDate: toSponsorDateOnly(date),
                 }))
               }
               placeholder="후원 시작일을 입력하세요"
