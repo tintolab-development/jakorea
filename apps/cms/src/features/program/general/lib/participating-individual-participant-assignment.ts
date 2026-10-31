@@ -16,6 +16,7 @@ import type {
   ParticipatingIndividualParticipantAssignmentSubmission,
 } from '@/features/program/general/lib/participating-individual-participant-assignment-types'
 import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
 
 function isSubmissionCountedAsSubmitted(
   submission: ParticipatingIndividualParticipantAssignmentSubmission
@@ -118,7 +119,9 @@ function resolveParticipantTeamFields(participant: ParticipatingIndividualPartic
 }
 
 /**
- * 참여자 상세 과제 관리 — education-scope 배정 일정(사전교육 포함)만 행으로 만든다.
+ * 참여자 상세 과제 관리 — education-scope 배정 본교육만 행으로 만든다.
+ * 사전교육은 출석 탭과 달리 과제 회차가 아니므로 넣지 않는다(제출기한 밀림 방지).
+ * 일정 라벨은 round가 아니라 scheduleId로 붙인다. 사전교육이 없어도 동일하게 동작한다.
  */
 export function buildParticipatingIndividualParticipantAssignmentRowsFromAssigned(input: {
   assignedSessions: readonly ParticipatingSchoolSession[]
@@ -126,40 +129,42 @@ export function buildParticipatingIndividualParticipantAssignmentRowsFromAssigne
   program: Program
 }): ParticipatingIndividualParticipantAssignmentRow[] {
   const { teamRole, teamName, isTeamSchedule } = resolveParticipantTeamFields(input.participant)
+  const rows: ParticipatingIndividualParticipantAssignmentRow[] = []
 
-  return input.assignedSessions.flatMap((session, index) => {
+  for (const session of input.assignedSessions) {
+    if (isProgramSchedulePreEducation(session)) continue
     const scheduleId =
       typeof session.resolvedScheduleId === 'number' &&
       Number.isFinite(session.resolvedScheduleId) &&
       session.resolvedScheduleId > 0
         ? String(session.resolvedScheduleId)
         : null
-    if (scheduleId == null) return []
+    if (scheduleId == null) continue
 
     const educationProgress = mapDashboardScheduleDeliveryToEducationProgress(
       session.deliveryScheduleStatus ??
         (session.status === 'completed' ? 'COMPLETED' : 'SCHEDULED')
     )
-    return [
-      {
-        id: `asg-${input.participant.id}-${scheduleId}`,
-        scheduleId,
-        sessionOrder: index + 1,
-        teamRole,
-        teamName,
-        scheduleLabel: formatParticipatingIndividualParticipantAttendanceScheduleLabel(
-          input.program,
-          session
-        ),
-        assignmentPeriodLabel: null,
-        submission: { kind: 'none' as const },
-        educationProgress,
-        countsTowardAssignmentDenominator: educationProgress === 'completed',
-        isTeamSchedule,
-        countsTowardSurveyDenominator: false,
-      } satisfies ParticipatingIndividualParticipantAssignmentRow,
-    ]
-  })
+    rows.push({
+      id: `asg-${input.participant.id}-${scheduleId}`,
+      scheduleId,
+      sessionOrder: rows.length + 1,
+      teamRole,
+      teamName,
+      scheduleLabel: formatParticipatingIndividualParticipantAttendanceScheduleLabel(
+        input.program,
+        session
+      ),
+      assignmentPeriodLabel: null,
+      submission: { kind: 'none' as const },
+      educationProgress,
+      countsTowardAssignmentDenominator: educationProgress === 'completed',
+      isTeamSchedule,
+      countsTowardSurveyDenominator: false,
+    })
+  }
+
+  return rows
 }
 
 export function applyTeamNameFromSessionOrder(

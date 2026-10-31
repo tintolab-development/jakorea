@@ -9,7 +9,7 @@ import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/prog
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
-import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -779,15 +779,6 @@ export function ParticipatingParticipantFullpageView({
                   팀 변경
                 </CmsButton>
               ) : null}
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                icon={<ButtonDownloadIcon />}
-                adminAction="download"
-                onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()} >
-                과제 일괄 다운로드
-              </CmsButton>
-              <ExcelButton onClick={() => assignmentSectionRef.current?.exportExcel()} />
             </>
           ) : null
         }

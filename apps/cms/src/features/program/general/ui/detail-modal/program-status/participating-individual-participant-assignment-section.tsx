@@ -9,10 +9,13 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components/status-dropdown-cell'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import '@/shared/components/detail-info-form/detail-info-form.css'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
-import { useCmsAlert } from '@/shared/ui'
+import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { handleError } from '@/shared/utils/error-handler'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
@@ -718,7 +721,17 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         onSearch={() => {}}
         title="과제 및 설문 제출 내역"
         description={`총 ${rows.length}건`}
-        hideExcelDownload
+        actions={
+          <FilterTableToolbarButton
+            variant="secondary"
+            icon={<ButtonDownloadIcon />}
+            adminAction="download"
+            onClick={handleBulkDownloadAssignments}
+          >
+            과제 일괄 다운로드
+          </FilterTableToolbarButton>
+        }
+        onExcelDownload={exportExcel}
       >
         <div className="participating-individual-participant-assignment-section__table-outer assignment-submission-modal__table-outer">
           <CmsDataTable<ParticipatingIndividualParticipantAssignmentRow & { no: number }>
@@ -733,31 +746,24 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         </div>
       </FilterTableLayout>
 
-      <section className="program-detail-fullpage-modal__info-tab-block">
-        <h3 className="program-detail-info-tab__section-title">과제 및 설문 제출 현황</h3>
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-            <colgroup>
-              <col style={{ width: '200px' }} />
-              <col />
-              <col style={{ width: '200px' }} />
-              <col />
-            </colgroup>
-            <tbody>
-              <tr>
-                <th scope="row">과제 제출률</th>
-                <td>
-                  <ProgramAttendanceRateValue
-                    countLabel={`${summary.assignmentSubmittedCount} / ${summary.assignmentTotalCount}건`}
-                  />
-                </td>
-                <th scope="row">설문 제출률</th>
-                <td>{`${summary.surveySubmittedCount} / ${summary.surveyTotalCount}건`}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DetailInfoForm title="과제 및 설문 제출 현황" mode="view">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="과제 제출률"
+            view={
+              <ProgramAttendanceRateValue
+                countLabel={`${summary.assignmentSubmittedCount} / ${summary.assignmentTotalCount}건`}
+              />
+            }
+            readOnlyDisplay
+          />
+          <DetailInfoForm.Field
+            label="설문 제출률"
+            view={`${summary.surveySubmittedCount} / ${summary.surveyTotalCount}건`}
+            readOnlyDisplay
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
 
       <ParticipatingIndividualParticipantTeamChangeModal
         open={teamChangeModalOpen}
