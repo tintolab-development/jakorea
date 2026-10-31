@@ -40,6 +40,7 @@ import {
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_MESSAGE,
   GEMINI_PERFORMANCE_REGISTER_BLOCKED_TITLE,
 } from '../../lib/performance/import-popup-copy'
+import { downloadGeminiPerformanceUploadTemplate } from '../../lib/performance/download-upload-template'
 import { useGeminiPerformanceRows } from '../../hooks/use-gemini-performance-rows'
 import { GEMINI_PERFORMANCE_FILTER_FIELDS } from '../../model/performance/filter-fields'
 import type {
@@ -580,9 +581,7 @@ export function GeminiPerformanceList() {
           showBulkDelete ? (
             <FilterTableToolbarButton
               variant="delete"
-              width={120}
-              onClick={handleBulkDeleteClick}
-            >
+              onClick={handleBulkDeleteClick} >
               선택 삭제
             </FilterTableToolbarButton>
           ) : null
@@ -595,24 +594,31 @@ export function GeminiPerformanceList() {
         actionsAfterExcel={
           <span className="file-upload-picker">
             {canWrite ? (
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                className="file-upload-picker__input"
-                aria-label="연수 보고서 등록"
-                onChange={event => void handleFileChange(event)}
-              />
+              <FilterTableToolbarButton
+                variant="secondary"
+                onClick={() => void downloadGeminiPerformanceUploadTemplate()} >
+                업로드 양식 다운로드
+              </FilterTableToolbarButton>
             ) : null}
-            <FilterTableToolbarButton
-              variant="primary"
-              width={140}
-              tabIndex={canWrite ? -1 : undefined}
-              disabled={!canWrite || importing}
-              onClick={handleAddReportClick}
-            >
-              연수 보고서 등록
-            </FilterTableToolbarButton>
+            <span className="file-upload-picker">
+              {canWrite ? (
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="file-upload-picker__input"
+                  aria-label="연수 보고서 등록"
+                  onChange={event => void handleFileChange(event)}
+                />
+              ) : null}
+              <FilterTableToolbarButton
+                variant="primary"
+                tabIndex={canWrite ? -1 : undefined}
+                disabled={!canWrite || importing}
+                onClick={handleAddReportClick} >
+                연수 보고서 등록
+              </FilterTableToolbarButton>
+            </span>
           </span>
         }
       >

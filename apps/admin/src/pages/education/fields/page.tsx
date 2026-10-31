@@ -275,8 +275,7 @@ export function EducationFieldsPage() {
                   size="h40"
                   type="button"
                   onClick={handleCancelEdit}
-                  disabled={saveMutation.isPending}
-                >
+                  disabled={saveMutation.isPending} >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -286,8 +285,7 @@ export function EducationFieldsPage() {
                   loading={saveMutation.isPending}
                   onClick={() => {
                     void handleSave()
-                  }}
-                >
+                  }} >
                   저장
                 </CmsButton>
               </>
@@ -297,8 +295,7 @@ export function EducationFieldsPage() {
                 size="h40"
                 type="button"
                 onClick={handleStartEdit}
-                disabled={docQuery.isLoading || fields.length === 0}
-              >
+                disabled={docQuery.isLoading || fields.length === 0} >
                 수정
               </CmsButton>
             )}

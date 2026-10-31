@@ -50,8 +50,7 @@ export function AdminConfirmModal({
             size={footerButtonSize}
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             {cancelText}
           </AdminButton>
           <AdminButton
@@ -60,8 +59,7 @@ export function AdminConfirmModal({
             type="button"
             onClick={onConfirm}
             loading={confirmLoading}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             {confirmText}
           </AdminButton>
         </>

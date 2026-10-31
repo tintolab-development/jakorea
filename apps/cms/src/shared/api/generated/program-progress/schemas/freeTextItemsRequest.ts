@@ -9,7 +9,7 @@ import type { FreeTextItemRequest } from './freeTextItemRequest';
 
 export interface FreeTextItemsRequest {
   /**
-     * @minItems 4
+     * @minItems 0
      * @maxItems 4
      */
   items: FreeTextItemRequest[];

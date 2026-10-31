@@ -122,20 +122,16 @@ export function UjatInstitutionScheduleAssignPage({
             <CmsButton
               type="button"
               variant="secondary"
-              width={180}
               disabled={contentLoading}
-              onClick={handleOpenScheduleSheet}
-            >
+              onClick={handleOpenScheduleSheet} >
               임시 교육 일정표 확인
             </CmsButton>
             {canWrite ? (
             <CmsButton
               type="button"
               variant="primary"
-              width={140}
               disabled={contentLoading || saving || confirmLoading}
-              onClick={requestSaveConfirm}
-            >
+              onClick={requestSaveConfirm} >
               임시 배정 저장
             </CmsButton>
             ) : null}

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CMS_ACTION_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
@@ -105,8 +105,6 @@ export function UjatInstitutionApplicationList({
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkApplicationReject}
             >
               선택 신청 반려
@@ -114,8 +112,6 @@ export function UjatInstitutionApplicationList({
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkTempReject}
             >
               선택 임시 반려
@@ -123,8 +119,6 @@ export function UjatInstitutionApplicationList({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              className="cms-button--action"
-              width={180}
               onClick={handleBulkTempAssign}
             >
               선택 임시 배정
@@ -136,8 +130,7 @@ export function UjatInstitutionApplicationList({
                 type="button"
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={() => setViewMode('calendar')}
-              >
+                onClick={() => setViewMode('calendar')} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
@@ -145,8 +138,7 @@ export function UjatInstitutionApplicationList({
                 type="button"
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={() => setViewMode('table')}
-              >
+                onClick={() => setViewMode('table')} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}

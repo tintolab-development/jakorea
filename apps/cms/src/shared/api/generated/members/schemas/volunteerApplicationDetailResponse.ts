@@ -20,6 +20,10 @@ export interface VolunteerApplicationDetailResponse {
   recruitmentId?: number;
   memberId?: number;
   applicationStatus?: string;
+  /** 면접 상태. 배정 직후 ASSIGNED, 이후 PARTIALLY_EVALUATED|EVALUATED. 배정 전이면 PENDING/WAITING 등 저장된 값 */
+  interviewStatus?: string | null;
+  /** 현재 유효 면접 배정 상태. 배정 전이면 null */
+  interviewAssignmentStatus?: string | null;
   submittedAt?: string;
   updatedAt?: string;
   availableActions?: string[];

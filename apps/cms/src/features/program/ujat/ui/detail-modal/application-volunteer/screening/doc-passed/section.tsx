@@ -196,7 +196,6 @@ export function DocPassedSection({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              width={160}
               icon={<ButtonCalendarIcon />}
               onClick={handleViewCalendar}
             >
@@ -206,7 +205,6 @@ export function DocPassedSection({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              width={160}
               icon={<ButtonListIcon />}
               onClick={handleViewList}
             >

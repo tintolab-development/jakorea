@@ -147,8 +147,8 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         key="basic-info-cancel"
         size="large"
         variant="secondary"
-        onClick={pageShell.onCancelBasicInfoEdit}
-      >
+        disabled={pageShell.basicInfoSaveLoading}
+        onClick={pageShell.onCancelBasicInfoEdit} >
         취소
       </CmsButton>
       <CmsButton
@@ -158,8 +158,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         loading={pageShell.basicInfoSaveLoading}
         onClick={() => {
           void pageShell.onSaveBasicInfoEdit()
-        }}
-      >
+        }} >
         저장
       </CmsButton>
     </>
@@ -170,8 +169,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
       key="basic-info-edit"
       size="large"
       variant="secondary"
-      onClick={pageShell.onStartBasicInfoEdit}
-    >
+      onClick={pageShell.onStartBasicInfoEdit} >
       정보 수정
     </CmsButton>
   ) : null
@@ -182,8 +180,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
       size="large"
       variant="primary"
       disabled={isCommentEditing}
-      onClick={pageShell.onStartAdminCommentEdit}
-    >
+      onClick={pageShell.onStartAdminCommentEdit} >
       코멘트 작성
     </CmsButton>
   ) : null
@@ -197,22 +194,17 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         revealed={personalInfoRevealed}
         cmsVariant={personalInfoButton.variant}
         cmsSize="large"
-        width={160}
-        onClick={personalInfoButton.onClick}
-      />
+        onClick={personalInfoButton.onClick} />
     ) : null
 
-  const headerActionsForLayout = isProfileEditing
-    ? actions.filter(a => a.key !== 'school-delete' && a.key !== 'withdraw')
-    : actions
+  const headerActionsForLayout = isProfileEditing ? [] : actions
 
   const actionButtons = headerActionsForLayout.map(action => (
     <CmsButton
       size="large"
       key={action.key}
       variant={actionConfigToCmsVariant(action.variant)}
-      onClick={action.onClick}
-    >
+      onClick={action.onClick} >
       {action.label}
     </CmsButton>
   ))

@@ -3,7 +3,10 @@
  * nested `*RecruitmentInfo` 라벨·프로그램 컬럼이 옛값이면 행으로 맞춘다.
  */
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
-import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  formatDateRange,
+  formatDateOnly,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   pickRecruitmentCopyRow,
   type RecruitmentCopyAudience,
@@ -44,8 +47,10 @@ export function operationPeriodLabelFromWindow(
   row: ProgramRecruitmentWindow | undefined
 ): string | undefined {
   if (!row?.operationStartDate || !row?.operationEndDate) return undefined
-  const label = formatDateRange(row.operationStartDate, row.operationEndDate)
-  return label === '-' ? undefined : label
+  const start = formatDateOnly(row.operationStartDate)
+  const end = formatDateOnly(row.operationEndDate)
+  if (start === '-' || end === '-') return undefined
+  return `${start} ~ ${end}`
 }
 
 function patchNestedFromRow(

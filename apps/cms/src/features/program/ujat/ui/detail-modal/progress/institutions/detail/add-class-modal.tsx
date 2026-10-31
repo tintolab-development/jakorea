@@ -219,8 +219,7 @@ export function UjatEducationProgressAddClassModal({
         size="large"
         type="button"
         disabled={!hasChanges}
-        onClick={handleConfirm}
-      >
+        onClick={handleConfirm} >
         학급 추가
       </CmsButton>
     </div>
@@ -262,11 +261,8 @@ export function UjatEducationProgressAddClassModal({
                 <CmsButton
                   type="button"
                   variant="delete"
-                  size="medium"
-                  width={80}
-                  className="add-class-modal__action-btn"
-                  onClick={() => handleRemovePendingRow(row.id)}
-                >
+                  size="medium" className="add-class-modal__action-btn"
+                  onClick={() => handleRemovePendingRow(row.id)} >
                   삭제
                 </CmsButton>
               </div>
@@ -297,11 +293,8 @@ export function UjatEducationProgressAddClassModal({
               <CmsButton
                 type="button"
                 variant="secondary"
-                size="medium"
-                width={80}
-                className="add-class-modal__action-btn"
-                onClick={handleRegisterDraft}
-              >
+                size="medium" className="add-class-modal__action-btn"
+                onClick={handleRegisterDraft} >
                 등록
               </CmsButton>
             </div>

@@ -296,8 +296,7 @@ export function RegisterEmployeeVolunteerModal({
         size="large"
         onClick={() => void handleSubmit()}
         loading={submitting}
-        disabled={submitting}
-      >
+        disabled={submitting} >
         등록
       </CmsButton>
     </>

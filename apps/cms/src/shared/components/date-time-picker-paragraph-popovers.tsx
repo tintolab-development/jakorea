@@ -427,9 +427,7 @@ export function ParagraphDatePickerPopover({
                   type="button"
                   variant="primary"
                   size="medium"
-                  width="80px"
-                  onClick={onApply}
-                >
+                  onClick={onApply} >
                   설정
                 </CmsButton>
               </div>
@@ -593,10 +591,8 @@ export function ParagraphTimePickerPopover({
             type="button"
             variant="primary"
             size="medium"
-            width="80px"
             onClick={onApply}
-            disabled={disabled}
-          >
+            disabled={disabled} >
             설정
           </CmsButton>
         </div>

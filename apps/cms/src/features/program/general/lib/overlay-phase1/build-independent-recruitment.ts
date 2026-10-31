@@ -7,6 +7,7 @@ import {
   operationalOverlayKeyPrefixesForCatalogId,
 } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-keys'
+import { sanitizeRecruitAnnouncementOverlay } from '@/features/program/general/lib/participant-recruitment-announcement-request'
 import { applyIndependentRecruitmentFormValues } from './recruitment-domain'
 import { orderOverlayKeys } from './common-info-domain'
 import type {
@@ -97,7 +98,10 @@ export function buildIndependentRecruitmentDraft(
     ),
   }
   const catalogOverlays = splitIndependentRecruitmentCatalogOverlays(sourceOverlay)
-  const persistOverlay = orderOverlayKeys(sourceOverlay, input.sidecars?.overlayKeyOrder)
+  const persistOverlay = orderOverlayKeys(
+    sanitizeRecruitAnnouncementOverlay(sourceOverlay, input.baseline),
+    input.sidecars?.overlayKeyOrder
+  )
 
   return {
     programDraft,

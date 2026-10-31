@@ -113,8 +113,7 @@ export function UjatEducationProgressAttendanceSection({
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
-                onClick={() => openFirstSessionCorrection?.()}
-              >
+                onClick={() => openFirstSessionCorrection?.()} >
                 출결 정정
               </FilterTableToolbarButton>
               <ExcelButton loading={isFirstSessionExporting} onClick={exportFirstSessionExcel} />

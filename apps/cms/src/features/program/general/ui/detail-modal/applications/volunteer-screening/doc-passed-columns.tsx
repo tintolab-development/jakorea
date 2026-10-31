@@ -94,7 +94,6 @@ export function useGeneralVolunteerDocPassedColumns({
               type="button"
               variant="secondary"
               size="small"
-              width={120}
               className="general-volunteer-doc-passed__assign-btn"
               disabled={disabled}
               onClick={e => {

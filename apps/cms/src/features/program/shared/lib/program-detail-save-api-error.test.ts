@@ -21,4 +21,22 @@ describe('resolveProgramDetailSaveApiFormField', () => {
       })
     ).toBeUndefined()
   })
+
+  it('maps SCHEDULE_LINE_UNPARSEABLE to the schedule date field', () => {
+    expect(
+      resolveProgramDetailSaveApiFormField({
+        apiField: 'scheduleDateLabel',
+        message:
+          '교육 일정 날짜/시간 형식을 해석할 수 없습니다. scheduleDetails[1] scheduleDateLabel=2026.13.40(목)',
+        errorCode: 'SCHEDULE_LINE_UNPARSEABLE',
+      })
+    ).toBe('scheduleDetails.1.scheduleDate')
+    expect(
+      resolveProgramDetailSaveApiFormField({
+        apiField: 'schedules',
+        message: '일정형 일반 프로그램에는 유효한 교육 일정이 필요합니다.',
+        errorCode: 'GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED',
+      })
+    ).toBe('educationScheduleLines')
+  })
 })

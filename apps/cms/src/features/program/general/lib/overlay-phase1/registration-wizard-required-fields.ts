@@ -4,7 +4,10 @@
  */
 import { z } from 'zod'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
-import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features/template/lib/education-schedule-line-clock-required'
+import {
+  isEducationScheduleProgressLineMissingOrWithoutClock,
+  isEducationScheduleProgressLinePersistBlocked,
+} from '@/features/template/lib/education-schedule-line-clock-required'
 import { educationScheduleLineSerializationIssue } from '@/features/template/lib/format-education-schedule-line'
 import {
   DEFAULT_REGISTRATION_EDUCATION_FORM,
@@ -68,18 +71,38 @@ function hasAudience(ctx: GeneralProgramRegistrationRequiredFieldContext): boole
   )
 }
 
-function resolveCommonEducationForm(values: RegistrationWizardUiValues): string {
+function resolveCommonEducationForm(
+  values: RegistrationWizardUiValues,
+  sessionRoundType: string | undefined
+): string {
+  if (sessionRoundType === 'multi') {
+    return (
+      values.multiCommonEducationForm.trim() ||
+      values.singleEducationForm.trim() ||
+      DEFAULT_REGISTRATION_EDUCATION_FORM
+    )
+  }
   return (
-    values.multiCommonEducationForm.trim() ||
     values.singleEducationForm.trim() ||
+    values.multiCommonEducationForm.trim() ||
     DEFAULT_REGISTRATION_EDUCATION_FORM
   )
 }
 
-function resolveCommonParticipation(values: RegistrationWizardUiValues): string {
+function resolveCommonParticipation(
+  values: RegistrationWizardUiValues,
+  sessionRoundType: string | undefined
+): string {
+  if (sessionRoundType === 'multi') {
+    return (
+      values.multiCommonParticipation.trim() ||
+      values.singleParticipation.trim() ||
+      DEFAULT_REGISTRATION_PARTICIPATION
+    )
+  }
   return (
-    values.multiCommonParticipation.trim() ||
     values.singleParticipation.trim() ||
+    values.multiCommonParticipation.trim() ||
     DEFAULT_REGISTRATION_PARTICIPATION
   )
 }
@@ -196,14 +219,14 @@ export function listIncompleteRegistrationWizardRequiredFields(
     pushReason(
       reasons,
       resolved.educationFormScheduleDetail === 'common' &&
-        isEmptyText(resolveCommonEducationForm(values)),
+        isEmptyText(resolveCommonEducationForm(values, resolved.sessionRoundType)),
       'typeSettings.multiCommonEducationForm'
     )
     pushReason(
       reasons,
       showParticipation &&
         resolved.participationScheduleDetail === 'common' &&
-        isEmptyText(resolveCommonParticipation(values)),
+        isEmptyText(resolveCommonParticipation(values, resolved.sessionRoundType)),
       'typeSettings.multiCommonParticipation'
     )
   }
@@ -268,7 +291,8 @@ export function listIncompleteRegistrationWizardRequiredFields(
       )
       pushReason(
         reasons,
-        isEducationScheduleProgressLineMissingOrWithoutClock(curriculum.preEducationScheduleLine),
+        isEducationScheduleProgressLineMissingOrWithoutClock(curriculum.preEducationScheduleLine) ||
+          isEducationScheduleProgressLinePersistBlocked(curriculum.preEducationScheduleLine),
         'curriculum.preEducationScheduleLine'
       )
     }
@@ -294,7 +318,7 @@ export function listIncompleteRegistrationWizardRequiredFields(
           reasons,
           isEducationScheduleProgressLineMissingOrWithoutClock(
             schedule.scheduleDateByDetailIso[index]
-          ),
+          ) || isEducationScheduleProgressLinePersistBlocked(schedule.scheduleDateByDetailIso[index]),
           `scheduleCurriculum.scheduleDate[${index}]`
         )
       } else {
@@ -324,7 +348,8 @@ export function listIncompleteRegistrationWizardRequiredFields(
       )
       pushReason(
         reasons,
-        isEducationScheduleProgressLineMissingOrWithoutClock(schedule.scheduleDateByDetailIso[0]),
+        isEducationScheduleProgressLineMissingOrWithoutClock(schedule.scheduleDateByDetailIso[0]) ||
+          isEducationScheduleProgressLinePersistBlocked(schedule.scheduleDateByDetailIso[0]),
         'scheduleCurriculum.preEducationScheduleDate'
       )
     }

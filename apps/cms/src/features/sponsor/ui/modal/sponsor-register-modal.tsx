@@ -136,8 +136,7 @@ export function SponsorRegisterModal({
             type="button"
             disabled={!canSubmit || submitting}
             loading={submitting}
-            onClick={handleSubmit}
-          >
+            onClick={handleSubmit} >
             신규 등록
           </CmsButton>
         </>

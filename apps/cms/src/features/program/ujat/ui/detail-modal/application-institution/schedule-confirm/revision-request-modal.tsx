@@ -65,9 +65,8 @@ export function UjatScheduleConfirmRevisionRequestModal({
         <div className="ujat-schedule-confirm-revision-request-modal__footer">
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="large"
             type="button"
-            width={120}
             disabled={confirmLoading}
             onClick={handleCancel}
           >
@@ -75,9 +74,8 @@ export function UjatScheduleConfirmRevisionRequestModal({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="medium"
+            size="large"
             type="button"
-            width={120}
             loading={confirmLoading}
             disabled={confirmLoading || !canSubmit}
             onClick={handleConfirm}

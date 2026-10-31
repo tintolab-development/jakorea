@@ -945,7 +945,7 @@ export function IssuanceFormTab() {
               onReorderItems={items => applyOrderedCards(items.map(item => item.id))}
             >
               <span className="full-page-modal__nav-title">문서 설정</span>
-              <CmsButton variant="default" size="medium" width="100%">
+              <CmsButton variant="default" size="medium">
                 시트 내 필드
               </CmsButton>
             </TemplateModalRightNavigation>

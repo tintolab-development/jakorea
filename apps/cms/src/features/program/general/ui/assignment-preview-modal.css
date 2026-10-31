@@ -66,17 +66,6 @@
 
 .assignment-preview-modal
   .content-modal__footer-actions
-  .assignment-preview-modal__footer-btn--close.cms-button.ant-btn {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-}
-
-.assignment-preview-modal
-  .content-modal__footer-actions
   .assignment-preview-modal__footer-btn--download.cms-button.ant-btn {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
   gap: 8px;
 }

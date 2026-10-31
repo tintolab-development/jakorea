@@ -11,5 +11,6 @@ export type ValidationErrorResponse = {
   success?: unknown;
   data?: unknown;
   message?: unknown;
+  detail?: unknown;
   error?: ValidationErrorResponseError;
 };

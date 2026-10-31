@@ -623,16 +623,14 @@ export function AlimtalkTemplateList({
               variant="delete"
               type="button"
               disabled={!canDeleteSelection || busy}
-              onClick={handleRequestDelete}
-            >
+              onClick={handleRequestDelete} >
               선택 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="secondary"
               type="button"
               disabled={!editCategoryId || busy}
-              onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })}
-            >
+              onClick={() => setCategoryModal({ mode: 'edit', categoryId: editCategoryId })} >
               카테고리 수정
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
@@ -644,8 +642,7 @@ export function AlimtalkTemplateList({
                   mode: 'add',
                   categoryId: targetCategoryForAdd(selection, templates),
                 })
-              }
-            >
+              } >
               카테고리 추가
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
@@ -653,8 +650,7 @@ export function AlimtalkTemplateList({
               type="button"
               onClick={() =>
                 window.open(resolveNhnConsoleUrl(selectedTemplate), '_blank', 'noopener,noreferrer')
-              }
-            >
+              } >
               템플릿 등록
             </FilterTableToolbarButton>
           </>

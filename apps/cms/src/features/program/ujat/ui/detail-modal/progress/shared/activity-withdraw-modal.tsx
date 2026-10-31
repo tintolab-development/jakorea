@@ -90,8 +90,7 @@ export function UjatEducationProgressActivityWithdrawModal({
         type="button"
         loading={submitting}
         disabled={!canConfirm || submitting}
-        onClick={handleConfirm}
-      >
+        onClick={handleConfirm} >
         활동 포기
       </CmsButton>
     </div>

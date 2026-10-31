@@ -1,5 +1,5 @@
 ---
-description: CMS·Admin 공통 — 목록 필터 영역 치수 (240 · gap 12 · 조회 160×40)
+description: CMS·Admin 공통 — 목록 필터 영역 치수 (240 · gap 12 · 조회 높이 40)
 globs:
   - apps/cms/src/**/*.{tsx,ts,css}
   - apps/admin/src/**/*.{tsx,ts,css}
@@ -18,13 +18,13 @@ alwaysApply: false
 | 컨트롤 높이 | **40px** (CmsField M) | `--filter-control-height` |
 | 필터 칸 사이 gap | **12px** | `--filter-field-gap` |
 | 레이블·컨트롤 gap | **6px** | `--filter-label-control-gap` |
-| 조회 버튼 | **160×40px** | `FILTER_SEARCH_BUTTON_WIDTH_PX` |
+| 조회 버튼 | **높이 40px** · 폭은 CmsButton medium min-width + 라벨 | — |
 | 분리형 dateRange · selectPair 열 | **500px** (2×240+20) | `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX` |
 
 ## 금지 (양 앱 공통)
 
 - 단일 검색·셀렉트를 행 fill 로 늘림 (`flex: 1 1 0`, `width: 100%` → 컨트롤이 240을 넘거나 칸 갭만 과다)
-- 조회 버튼 폭을 medium 기본만 쓰고 **160 미지정**
+- 조회 버튼 폭을 px로 고정 (`width` prop · `--filter-search-button-width` · 160px 래퍼)
 - 입력 중 live-apply (키마다 목록·URL 변경) — [list-filter-url-sync.mdc](./list-filter-url-sync.mdc)
 
 ## 앱 구현 경로

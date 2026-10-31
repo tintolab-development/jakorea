@@ -254,18 +254,14 @@ export function RecipientManualModal({
               type="button"
               variant="cancel"
               size="small"
-              width={80}
-              onClick={() => handleCancelInput(record.key)}
-            >
+              onClick={() => handleCancelInput(record.key)} >
               취소
             </CmsButton>
             <CmsButton
               type="button"
               variant="secondary"
               size="small"
-              width={80}
-              onClick={() => handleRegister(record.key)}
-            >
+              onClick={() => handleRegister(record.key)} >
               등록
             </CmsButton>
           </div>
@@ -275,18 +271,14 @@ export function RecipientManualModal({
               type="button"
               variant="cancel"
               size="small"
-              width={80}
-              onClick={() => handleEdit(record.key)}
-            >
+              onClick={() => handleEdit(record.key)} >
               수정
             </CmsButton>
             <CmsButton
               type="button"
               variant="delete"
               size="small"
-              width={80}
-              onClick={() => handleDelete(record.key)}
-            >
+              onClick={() => handleDelete(record.key)} >
               삭제
             </CmsButton>
           </div>

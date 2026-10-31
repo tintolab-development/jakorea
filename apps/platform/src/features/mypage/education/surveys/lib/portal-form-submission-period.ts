@@ -1,4 +1,5 @@
-import { getApplicationApiErrorCode } from '@/features/program/lib/application-api-error'
+import { getApplicationApiErrorCode } from '../../../../program/lib/application-api-error.ts'
+import { toSeoulDateOnly } from '../../../../../shared/lib/format-display-date.ts'
 import type { TitleWithPeriodParagraph } from '@jakorea/form-schema/writing-form'
 import {
   resolveTitleEndPeriodMode,
@@ -64,8 +65,8 @@ export function mergePortalFormSubmissionPeriodFields(
     ...entry,
     submissionStartAt,
     submissionEndAt,
-    startAt: entry.startAt?.trim() ? entry.startAt : titleStart?.slice(0, 10),
-    endAt: entry.endAt?.trim() ? entry.endAt : titleEnd?.slice(0, 10),
+    startAt: entry.startAt?.trim() ? entry.startAt : toSeoulDateOnly(titleStart),
+    endAt: entry.endAt?.trim() ? entry.endAt : toSeoulDateOnly(titleEnd),
   }
 }
 

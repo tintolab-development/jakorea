@@ -177,11 +177,9 @@ export function ParticipatingVolunteerActivityCertificatePreviewModal({
       <CmsButton
         variant="primary"
         size="medium"
-        width={140}
         icon={<ButtonDownloadIcon />}
         disabled={isPdfDownloading || isAllocatingSerial || isUnmasking}
-        onClick={() => void handleDownloadPdf()}
-      >
+        onClick={() => void handleDownloadPdf()} >
         파일 다운로드
       </CmsButton>
     </div>

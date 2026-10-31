@@ -79,18 +79,16 @@ export function BusinessAreaManagementModal({
       render: (_: unknown, row) =>
         editingId === row.id ? (
           <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
-            <CmsButton type="button" variant="default" size="h32" width={80} onClick={cancelEdit}>
+            <CmsButton type="button" variant="default" size="h32" onClick={cancelEdit}>
               취소
             </CmsButton>
             <CmsButton
               type="button"
               variant="secondary"
               size="h32"
-              width={80}
               onClick={() => {
                 void submitEdit()
-              }}
-            >
+              }} >
               등록
             </CmsButton>
           </div>
@@ -100,20 +98,16 @@ export function BusinessAreaManagementModal({
               type="button"
               variant="default"
               size="h32"
-              width={80}
-              onClick={() => startEdit(row)}
-            >
+              onClick={() => startEdit(row)} >
               수정
             </CmsButton>
             <CmsButton
               type="button"
               variant="delete"
               size="h32"
-              width={80}
               onClick={() => {
                 void requestDelete(row)
-              }}
-            >
+              }} >
               삭제
             </CmsButton>
           </div>
@@ -128,8 +122,7 @@ export function BusinessAreaManagementModal({
         size="h40"
         type="button"
         onClick={ctrl.handleClose}
-        disabled={ctrl.saving || ctrl.loading}
-      >
+        disabled={ctrl.saving || ctrl.loading} >
         닫기
       </CmsButton>
       <CmsButton
@@ -137,8 +130,7 @@ export function BusinessAreaManagementModal({
         size="h40"
         type="button"
         onClick={ctrl.openCompose}
-        disabled={ctrl.saving || ctrl.loading}
-      >
+        disabled={ctrl.saving || ctrl.loading} >
         항목 추가
       </CmsButton>
       <CmsButton
@@ -146,8 +138,7 @@ export function BusinessAreaManagementModal({
         size="h40"
         type="button"
         onClick={ctrl.applySettings}
-        disabled={ctrl.saving || ctrl.loading}
-      >
+        disabled={ctrl.saving || ctrl.loading} >
         저장
       </CmsButton>
     </>
@@ -200,20 +191,16 @@ export function BusinessAreaManagementModal({
                                 type="button"
                                 variant="default"
                                 size="h32"
-                                width={80}
-                                onClick={ctrl.cancelNew}
-                              >
+                                onClick={ctrl.cancelNew} >
                                 취소
                               </CmsButton>
                               <CmsButton
                                 type="button"
                                 variant="secondary"
                                 size="h32"
-                                width={80}
                                 onClick={() => {
                                   void ctrl.submitNew()
-                                }}
-                              >
+                                }} >
                                 등록
                               </CmsButton>
                             </div>

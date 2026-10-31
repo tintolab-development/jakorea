@@ -236,45 +236,42 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'application' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            {canWrite ? (
-            <CmsButton
-              type="button"
-              variant="delete"
-              size="h40"
-              disabled={activityWithdrawn}
-              onClick={handleRequestWithdraw}
-            >
-              활동 포기
-            </CmsButton>
+            {!isApplicationInfoEditing && canWrite ? (
+              <CmsButton
+                type="button"
+                variant="delete"
+                size="h40"
+                disabled={activityWithdrawn}
+                onClick={handleRequestWithdraw} >
+                활동 포기
+              </CmsButton>
             ) : null}
             <ProgramEditInfoActions
               canWrite={canWrite}
               size="h40"
-              width={false}
               isEditing={isApplicationInfoEditing}
               onEdit={handleApplicationInfoButtonClick}
               onCancel={handleApplicationInfoCancel}
-              onSave={handleApplicationInfoButtonClick}
-            />
-            {canWrite ? (
-            <CmsButton
-              type="button"
-              variant="primary"
-              size="h40"
-              disabled={isApplicationInfoEditing}
-              onClick={handleAdminCommentEditEnter}
-            >
-              코멘트 작성
-            </CmsButton>
+              onSave={handleApplicationInfoButtonClick} />
+            {!isApplicationInfoEditing ? (
+              <>
+                {canWrite ? (
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size="h40"
+                    onClick={handleAdminCommentEditEnter} >
+                    코멘트 작성
+                  </CmsButton>
+                ) : null}
+                <PersonalInfoRevealButton disabled={programPrivacyPending}
+                  labelMode="stickyReveal"
+                  revealed={personalInfoRevealed}
+                  cmsVariant="primary"
+                  cmsSize="h40"
+                  onClick={openPersonalInfoRevealConfirm} />
+              </>
             ) : null}
-            <PersonalInfoRevealButton disabled={programPrivacyPending}
-              labelMode="stickyReveal"
-              revealed={personalInfoRevealed}
-              cmsVariant="primary"
-              cmsSize="h40"
-              width="auto"
-              onClick={openPersonalInfoRevealConfirm}
-            />
           </div>
         ) : null}
 
@@ -294,10 +291,8 @@ export function UjatEducationProgressInstitutionDetailView({
             <CmsButton
               type="button"
               variant="primary"
-              size="medium"
-              className="ujat-education-progress-institution-detail__posts-register-btn"
-              onClick={() => setPostWriteModalOpen(true)}
-            >
+              size="medium" className="ujat-education-progress-institution-detail__posts-register-btn"
+              onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>
             ) : null}

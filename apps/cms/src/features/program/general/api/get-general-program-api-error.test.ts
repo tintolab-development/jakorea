@@ -516,3 +516,57 @@ describe('getGeneralProgramApiErrorMessage inline images', () => {
     ).toContain('AVAILABLE·CLEAN')
   })
 })
+
+describe('schedule line API errors', () => {
+  it('SCHEDULE_LINE_UNPARSEABLE 코드만 오면 FE 안내를 쓴다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: { success: false, error: { code: 'SCHEDULE_LINE_UNPARSEABLE' } },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('교육 일정 날짜/시간 형식을 해석할 수 없습니다. 날짜와 시간을 확인해 주세요.')
+  })
+
+  it('GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED는 사전교육만으로는 부족함을 안내한다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              success: false,
+              error: { code: 'GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('사전교육만으로는 일정형 요건을 충족하지 않습니다')
+  })
+
+  it('서버 한글 메시지가 있으면 그대로 쓴다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              success: false,
+              error: {
+                code: 'SCHEDULE_LINE_UNPARSEABLE',
+                message:
+                  '교육 일정 날짜/시간 형식을 해석할 수 없습니다. 날짜와 시간을 확인해 주세요. scheduleDetails[1] scheduleDateLabel=2026.13.40(목)',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('scheduleDetails[1]')
+  })
+})

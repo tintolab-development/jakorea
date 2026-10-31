@@ -1,5 +1,10 @@
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import type { GeneralIndividualApplicantDetail } from '@/features/program/general/model/individual-applicant'
+import {
+  extractApiErrorMessage,
+  getApiErrorCode,
+  getApiErrorHttpStatus,
+} from '@/shared/lib/extract-api-error-message'
 
 type TeamDetailSlice = Pick<
   GeneralIndividualApplicantDetail,
@@ -166,4 +171,23 @@ export function resolveIndividualApplicationTeamDetail(input: {
     : mergeTeamDetailSlices(fromForm, fromApi)
 
   return merged
+}
+
+export const INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT = {
+  title: '팀 정보 수정 안내',
+  content: '참여자 신청 승인 후에 팀 정보를 변경할 수 있습니다.',
+} as const
+
+export function isIndividualApplicationApprovedOnlyUpdateError(error: unknown): boolean {
+  const code = (getApiErrorCode(error) ?? '').toUpperCase()
+  if (code.includes('NOT_APPROVED')) return true
+  const responseData =
+    error && typeof error === 'object' && 'response' in error
+      ? (error as { response?: { data?: unknown } }).response?.data
+      : undefined
+  const message = extractApiErrorMessage(responseData, {
+    httpStatus: getApiErrorHttpStatus(error),
+    fallback: '',
+  })
+  return message.includes('승인된 개인 신청에서만')
 }

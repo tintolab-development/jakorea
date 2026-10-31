@@ -1,4 +1,5 @@
 import {
+  educationScheduleLineSerializationIssue,
   educationScheduleRangeHasClock,
   parseEducationScheduleLineToRange,
   parseStoredEducationScheduleRange,
@@ -23,6 +24,15 @@ export function isEducationScheduleProgressLineMissingOrWithoutClock(
   const trimmed = line?.trim()
   if (!trimmed) return true
   return !isEducationScheduleProgressLineWithRequiredClock(trimmed)
+}
+
+/** 달력에 없는 날짜 등 서버 형식으로 보낼 수 없으면 true */
+export function isEducationScheduleProgressLinePersistBlocked(
+  line: string | null | undefined
+): boolean {
+  const trimmed = line?.trim()
+  if (!trimmed) return false
+  return educationScheduleLineSerializationIssue(trimmed) != null
 }
 
 /** 비어 있거나 파싱 불가면 true — 일정형 진행 일정(날짜만) 검증용 */

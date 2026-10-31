@@ -84,4 +84,23 @@ describe('registration-wizard-required-fields', () => {
     })
     expect(compared.rhf).toEqual(compared.overlay)
   })
+
+  it('일정형 복수 — 여러 날+시각 진행 일정은 필수 키를 내지 않는다', () => {
+    const values = createDefaultRegistrationWizardUiValues({
+      programType: 'schedule',
+      sessionRoundType: 'multi',
+      participant: orgCtx.participant,
+    })
+    values.schedule.eventNameByDetail = { 1: '세부 01' }
+    values.schedule.scheduleDateByDetailIso = {
+      1: '2026.11.05(목) 11:00 ~ 2026.11.06(금) 18:00',
+    }
+    const keys = listIncompleteRegistrationWizardRequiredFields(values, {
+      ...orgCtx,
+      programType: 'schedule',
+      sessionRoundType: 'multi',
+      scheduleCurriculumDetailCount: 1,
+    })
+    expect(keys).not.toContain('scheduleCurriculum.scheduleDate[1]')
+  })
 })

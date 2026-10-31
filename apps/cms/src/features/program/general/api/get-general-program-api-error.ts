@@ -22,6 +22,7 @@ import {
   programEditWindowErrorMessage,
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
+import { resolveProgramScheduleLineErrorMessage } from '@/features/program/shared/lib/program-schedule-line-error'
 
 const BUSINESS_START_LOCK_PATTERN =
   /business_start_date|schedule lock|only be modified before/i
@@ -230,6 +231,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (code === 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD') {
     return '모집·운영 기간이 사업(오픈) 기간 밖입니다. 모집 창은 모집 행으로만 저장되고, 신청일·프로그램 운영일은 사업 기간 안에 있을 때만 함께 전송됩니다.'
   }
+  const scheduleLineMessage = resolveProgramScheduleLineErrorMessage(
+    code,
+    extractRawApiMessage(error)
+  )
+  if (scheduleLineMessage) return scheduleLineMessage
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(
     code,
     extractRawApiMessage(error)

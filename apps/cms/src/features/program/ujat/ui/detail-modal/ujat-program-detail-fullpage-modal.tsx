@@ -2935,6 +2935,7 @@ export function UjatProgramDetailFullPageModal({
                   <BusinessPeriodExtendToolbar
                     program={displayProgram}
                     editDisabled={!canEditInfo && !isEditModeInfo}
+                    hideExtend={isEditModeInfo}
                   >
                     <ProgramEditInfoActions
                       canWrite={canWrite}
@@ -2945,8 +2946,7 @@ export function UjatProgramDetailFullPageModal({
                       onCancel={handleInfoCancel}
                       onSave={() => {
                         void handleInfoSave()
-                      }}
-                    />
+                      }} />
                   </BusinessPeriodExtendToolbar>
                 </div>
               </div>
@@ -3298,20 +3298,16 @@ export function UjatProgramDetailFullPageModal({
             <CmsButton
               variant="secondary"
               size="medium"
-              width={120}
               type="button"
-              onClick={handleCloseSurveyDeleteModal}
-            >
+              onClick={handleCloseSurveyDeleteModal} >
               취소
             </CmsButton>
             <CmsButton
               variant="delete"
               size="medium"
-              width={120}
               type="button"
               disabled={surveyDeleteConfirmWord.trim() !== '삭제'}
-              onClick={handleConfirmSurveyDelete}
-            >
+              onClick={handleConfirmSurveyDelete} >
               설문 삭제
             </CmsButton>
           </>
@@ -3338,17 +3334,14 @@ export function UjatProgramDetailFullPageModal({
             <CmsButton
               variant="secondary"
               size="medium"
-              width={120}
               type="button"
               onClick={handleCloseSatisfactionCreateModal}
-              disabled={submittingSatisfactionSurvey}
-            >
+              disabled={submittingSatisfactionSurvey} >
               취소
             </CmsButton>
             <CmsButton
               variant="primary"
               size="medium"
-              width={120}
               type="button"
               onClick={() => {
                 void handleSubmitSatisfactionSurvey()
@@ -3356,8 +3349,7 @@ export function UjatProgramDetailFullPageModal({
               disabled={
                 selectedSatisfactionTemplateId == null || selectedSatisfactionTemplateId === ''
               }
-              loading={submittingSatisfactionSurvey}
-            >
+              loading={submittingSatisfactionSurvey} >
               신규 등록
             </CmsButton>
           </>
@@ -3390,20 +3382,16 @@ export function UjatProgramDetailFullPageModal({
             <CmsButton
               variant="secondary"
               size="medium"
-              width={120}
               type="button"
-              onClick={handleCloseSatisfactionDeleteModal}
-            >
+              onClick={handleCloseSatisfactionDeleteModal} >
               취소
             </CmsButton>
             <CmsButton
               variant="delete"
               size="medium"
-              width={120}
               type="button"
               disabled={satisfactionDeleteConfirmWord.trim() !== '삭제'}
-              onClick={handleConfirmSatisfactionDelete}
-            >
+              onClick={handleConfirmSatisfactionDelete} >
               만족도조사 삭제
             </CmsButton>
           </>
@@ -3430,24 +3418,20 @@ export function UjatProgramDetailFullPageModal({
             <CmsButton
               variant="secondary"
               size="medium"
-              width={120}
               type="button"
               onClick={handleCloseLectureEvalCreateModal}
-              disabled={submittingLectureEvalSurvey}
-            >
+              disabled={submittingLectureEvalSurvey} >
               {UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.cancelButton}
             </CmsButton>
             <CmsButton
               variant="primary"
               size="medium"
-              width={120}
               type="button"
               onClick={() => {
                 void handleSubmitLectureEvalRegister()
               }}
               disabled={selectedLectureEvalTemplateId == null || selectedLectureEvalTemplateId === ''}
-              loading={submittingLectureEvalSurvey}
-            >
+              loading={submittingLectureEvalSurvey} >
               {UJAT_LECTURE_EVAL_REGISTER_MODAL_COPY.confirmButton}
             </CmsButton>
           </>
@@ -3476,10 +3460,8 @@ export function UjatProgramDetailFullPageModal({
           <CmsButton
             variant="secondary"
             size="medium"
-            width={120}
             type="button"
-            onClick={handleCloseLectureEvalIncompleteModal}
-          >
+            onClick={handleCloseLectureEvalIncompleteModal} >
             {UJAT_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.confirmButton}
           </CmsButton>
         }

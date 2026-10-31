@@ -152,8 +152,7 @@ function HeroFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit}
-          >
+            onClick={handleSubmit} >
             수정
           </CmsButton>
         </>

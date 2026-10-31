@@ -479,43 +479,45 @@ export function UjatEducationProgressVolunteerDetailView({
 
   const applicationHeaderActions = (
     <>
-      {canWrite ? (
-      <CmsButton
-        type="button"
-        variant="delete"
-        size="h40"
-        disabled={givingUp}
-        onClick={handleRequestActivityWithdraw}
-      >
-        활동 포기
-      </CmsButton>
+      {!isEditing ? (
+        <>
+          {canWrite ? (
+            <CmsButton
+              type="button"
+              variant="delete"
+              size="h40"
+              disabled={givingUp || activityWithdrawScheduleOptions.length === 0}
+              onClick={handleRequestActivityWithdraw} >
+              활동 포기
+            </CmsButton>
+          ) : null}
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="h40"
+            icon={<ButtonDownloadIcon />}
+            disabled={certificateIssueDisabled}
+            title={certificateProgressBlockReason ?? undefined}
+            onClick={handleActivityCertificateIssueClick}
+          >
+            활동인증서 발급
+          </CmsButton>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="h40"
+            icon={<ButtonDownloadIcon />}
+            disabled={certificateIssueDisabled}
+            title={certificateProgressBlockReason ?? undefined}
+            onClick={handleStudentCertificateIssueClick}
+          >
+            수료증/참여인증서 발급
+          </CmsButton>
+        </>
       ) : null}
-      <CmsButton
-        type="button"
-        variant="secondary"
-        size="h40"
-        icon={<ButtonDownloadIcon />}
-        disabled={certificateIssueDisabled}
-        title={certificateProgressBlockReason ?? undefined}
-        onClick={handleActivityCertificateIssueClick}
-      >
-        활동인증서 발급
-      </CmsButton>
-      <CmsButton
-        type="button"
-        variant="secondary"
-        size="h40"
-        icon={<ButtonDownloadIcon />}
-        disabled={certificateIssueDisabled}
-        title={certificateProgressBlockReason ?? undefined}
-        onClick={handleStudentCertificateIssueClick}
-      >
-        수료증/참여인증서 발급
-      </CmsButton>
       <ProgramEditInfoActions
         canWrite={canWrite}
         size="h40"
-        width={false}
         isEditing={isEditing}
         saving={savingRegion}
         disabled={savingRegion}
@@ -523,26 +525,25 @@ export function UjatEducationProgressVolunteerDetailView({
         onCancel={handleCancelEdit}
         onSave={() => {
           void handleSaveEdit()
-        }}
-      />
-      {canWrite ? (
-      <CmsButton
-        type="button"
-        variant="primary"
-        size="h40"
-        disabled={isEditing}
-        onClick={handleAdminCommentEditEnter}
-      >
-        코멘트 작성
-      </CmsButton>
+        }} />
+      {!isEditing ? (
+        <>
+          {canWrite ? (
+            <CmsButton
+              type="button"
+              variant="primary"
+              size="h40"
+              onClick={handleAdminCommentEditEnter} >
+              코멘트 작성
+            </CmsButton>
+          ) : null}
+          <PersonalInfoRevealButton disabled={programPrivacyPending}
+            labelMode="stickyReveal"
+            revealed={personalInfoRevealed}
+            onClick={openPersonalInfoRevealConfirm}
+            cmsSize="h40" />
+        </>
       ) : null}
-      <PersonalInfoRevealButton disabled={programPrivacyPending}
-        labelMode="stickyReveal"
-        revealed={personalInfoRevealed}
-        onClick={openPersonalInfoRevealConfirm}
-        cmsSize="h40"
-        width="auto"
-      />
     </>
   )
 

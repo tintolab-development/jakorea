@@ -96,11 +96,9 @@ export function PostsAttachmentsSection() {
         <CmsButton
           variant="primary"
           size="medium"
-          className="cms-button--toolbar-auto"
-          style={{ width: 'auto', minWidth: 140, maxWidth: 'none' }}
+          style={{ minWidth: 140, maxWidth: 'none' }}
           onClick={() => setPostDetailOpen(true)}
-          disabled={!demoPost}
-        >
+          disabled={!demoPost} >
           게시글 상세 열기
         </CmsButton>
         <PostDetailModal

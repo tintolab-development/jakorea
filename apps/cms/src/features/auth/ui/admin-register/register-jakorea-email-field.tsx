@@ -44,13 +44,10 @@ export function RegisterJakoreaEmailField({
       <span className="register-email-field__domain">{JAKOREA_EMAIL_DOMAIN}</span>
       <CmsButton
         variant="secondary"
-        size="large"
-        width={120}
-        className="register-email-field__check-btn"
+        size="large" className="register-email-field__check-btn"
         loading={checking}
         disabled={disabled || !value.trim()}
-        onClick={onCheckDuplicate}
-      >
+        onClick={onCheckDuplicate} >
         중복확인
       </CmsButton>
     </div>

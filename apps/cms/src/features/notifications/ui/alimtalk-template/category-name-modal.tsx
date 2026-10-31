@@ -54,17 +54,15 @@ export function CategoryNameModal({
       size="compact"
       footer={
         <>
-          <CmsButton variant="secondary" size="h40" width={120} type="button" onClick={onCancel}>
+          <CmsButton variant="secondary" size="h40" type="button" onClick={onCancel}>
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
             size="h40"
-            width={120}
             type="button"
             disabled={!canSubmit}
-            onClick={() => onSubmit(trimmed)}
-          >
+            onClick={() => onSubmit(trimmed)} >
             {view.mode === 'add' ? '카테고리 추가' : '수정'}
           </CmsButton>
         </>

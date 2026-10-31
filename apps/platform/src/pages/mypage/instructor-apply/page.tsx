@@ -15,6 +15,7 @@ import {
   MYPAGE_PATH,
   useCurrentInstructorRoleRequestQuery,
   useInstructorApplyLockedBasic,
+  useMypageMember,
 } from '@/features/mypage'
 import { InstructorApplyPendingTitle } from './instructor-apply-pending-title'
 import { InstructorApplyRejectedTitle } from './instructor-apply-status-title'
@@ -37,10 +38,17 @@ export function MypageInstructorApplyPage() {
   const [reapplyAfterReject, setReapplyAfterReject] = useState(reapplyFromQuery)
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const { isLoading, isError, lockedBasic } = useInstructorApplyLockedBasic()
+  const member = useMypageMember()
   const remoteSession = isRemoteApiConfigured() && Boolean(getAccessToken())
   const currentRequestQuery = useCurrentInstructorRoleRequestQuery({ enabled: remoteSession })
-  const canSubmit = canSubmitInstructorRoleRequest(currentRequestQuery.data)
-  const statusMessage = getInstructorRoleRequestStatusMessage(currentRequestQuery.data)
+  const submitContext = {
+    isApprovedInstructor: member.profile === 'instructor_only' || member.profile === 'instructor_dual',
+  }
+  const canSubmit = canSubmitInstructorRoleRequest(currentRequestQuery.data, submitContext)
+  const statusMessage = getInstructorRoleRequestStatusMessage(
+    currentRequestQuery.data,
+    submitContext,
+  )
   const isPendingReview =
     remoteSession && isInstructorRoleRequestPendingReview(currentRequestQuery.data)
   const isRejected =
@@ -71,7 +79,9 @@ export function MypageInstructorApplyPage() {
   }
 
   const isPageLoading =
-    isLoading || (remoteSession && currentRequestQuery.isPending && !currentRequestQuery.data)
+    isLoading ||
+    member.isLoading ||
+    (remoteSession && currentRequestQuery.isPending && !currentRequestQuery.data)
 
   return (
     <>

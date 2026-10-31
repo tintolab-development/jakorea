@@ -2,9 +2,10 @@
  * 모집 유형별 「프로그램 운영 기간」 — 사업 `Program.startDate`/`endDate`와 분리
  */
 import dayjs from 'dayjs'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import type { GeneralRecruitDetailAudience } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import type { ProgramDetailRecruitmentAudience } from '@/features/program/shared/lib/apply-recruitment-additional-content-html'
-import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
+import { formatDateOnly } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 
@@ -35,9 +36,12 @@ export function parseDisplayPeriodLabelToIsoRange(
     .map(part => part.replace(/\([^)]*\)/g, '').trim())
     .filter(Boolean)
   if (parts.length < 2) return {}
-  const start = dayjs(parts[0])
-  const end = dayjs(parts[1])
+  const start = dayjs(parts[0].replace(/\./g, '-'))
+  const end = dayjs(parts[1].replace(/\./g, '-'))
   if (!start.isValid() || !end.isValid()) return {}
+  if (dateRangeUsesClockTime(start, end)) {
+    return { start: start.toISOString(), end: end.toISOString() }
+  }
   return {
     start: start.startOf('day').toISOString(),
     end: end.startOf('day').toISOString(),
@@ -75,11 +79,10 @@ export function audienceOperationPeriodLabelFromRecruitmentRow(
 ): string | undefined {
   const row = recruitmentRowForAudience(program, audience)
   if (!row?.operationStartDate && !row?.operationEndDate) return undefined
-  const label = formatDateRange(
-    row.operationStartDate ? String(row.operationStartDate) : undefined,
-    row.operationEndDate ? String(row.operationEndDate) : undefined
-  )
-  return label === '-' ? undefined : label
+  const start = row.operationStartDate ? formatDateOnly(String(row.operationStartDate)) : '-'
+  const end = row.operationEndDate ? formatDateOnly(String(row.operationEndDate)) : '-'
+  if (start === '-' || end === '-') return undefined
+  return `${start} ~ ${end}`
 }
 
 /** 조회 SSOT 우선순위: recruitment 행 operation 날짜 → nested operationPeriodLabel */

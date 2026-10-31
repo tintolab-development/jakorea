@@ -21,7 +21,9 @@ export {
 import {
   approveIndividualApplicationRemote,
   approveIndividualApplicationWithEducationScopeRemote,
+  approveVolunteerApplicationWithEducationScopeRemote,
   bulkApproveIndividualApplicationsWithEducationScopeRemote,
+  bulkApproveVolunteerApplicationsWithEducationScopeRemote,
   bulkRejectIndividualApplicationsRemote,
   approveInstructorApplicationRemote,
   approveOrganizationApplicationRemote,
@@ -657,6 +659,24 @@ export async function submitGeneralVolunteerFinalResult(
 ): Promise<ApplicationDecisionResponse> {
   assertApplicationsRemoteReady()
   return submitVolunteerFinalResultRemote(applicationId, payload)
+}
+
+export async function approveGeneralVolunteerApplicationWithEducationScope(
+  applicationId: string,
+  payload: import('@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeRequest').IndividualApprovalWithScopeRequest
+) {
+  assertApplicationsRemoteReady()
+  return approveVolunteerApplicationWithEducationScopeRemote(applicationId, payload)
+}
+
+export async function bulkApproveGeneralVolunteerApplicationsWithEducationScope(
+  payload: {
+    reason: string
+    targets: import('@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget').IndividualApprovalWithScopeBulkTarget[]
+  } & import('@/features/program/general/api/applications-api-client').OrganizationDecisionNotifyRequest
+) {
+  assertApplicationsRemoteReady()
+  return bulkApproveVolunteerApplicationsWithEducationScopeRemote(payload)
 }
 
 /**

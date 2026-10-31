@@ -655,9 +655,7 @@ export function ProgramApplicantsTab({
                     type="button"
                     variant="primary"
                     size="large"
-                    width={160}
-                    onClick={handleSearch}
-                  >
+                    onClick={handleSearch} >
                     조회
                   </CmsButton>
                 </Col>
@@ -681,17 +679,13 @@ export function ProgramApplicantsTab({
                   <CmsButton
                     variant="delete"
                     size="h40"
-                    className="cms-button--application-list-bulk"
-                    onClick={handleSchoolBulkRejectClick}
-                  >
+                    onClick={handleSchoolBulkRejectClick} >
                     선택 반려
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
                     size="h40"
-                    className="cms-button--application-list-bulk"
-                    onClick={handleSchoolBulkApproveClick}
-                  >
+                    onClick={handleSchoolBulkApproveClick} >
                     선택 승인
                   </CmsButton>
                 </div>
@@ -741,17 +735,13 @@ export function ProgramApplicantsTab({
                   <CmsButton
                     variant="delete"
                     size="h40"
-                    className="cms-button--application-list-bulk"
-                    onClick={handleInstructorBulkRejectClick}
-                  >
+                    onClick={handleInstructorBulkRejectClick} >
                     선택 반려
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
                     size="h40"
-                    className="cms-button--application-list-bulk"
-                    onClick={handleInstructorBulkApproveClick}
-                  >
+                    onClick={handleInstructorBulkApproveClick} >
                     선택 승인
                   </CmsButton>
                 </div>

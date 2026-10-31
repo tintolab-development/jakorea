@@ -27,8 +27,7 @@ export function InstructorJaEvaluationGradeField({
       adminAction="write"
       onClick={() => {
         onOpenJaGradeEvaluation?.()
-      }}
-    >
+      }} >
       등급 평가
     </CmsButton>
   )

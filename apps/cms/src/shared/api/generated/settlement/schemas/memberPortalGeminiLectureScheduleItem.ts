@@ -26,4 +26,10 @@ export interface MemberPortalGeminiLectureScheduleItem {
   institutionAddress?: string | null;
   /** 자택-기관 거리(km) 숫자. distance_status=CALCULATED이고 distance_km가 있을 때만. 문자열 아님. 없으면 null */
   distanceFromHome?: string | null;
+  /** 해당 일정(연수 실적)에 연결된 account_payment.payment_status 정규화 값. 지급 건이 없으면 null */
+  accountPaymentStatus?: string | null;
+  /** 화면 표시용 정산 상태 라벨. 예: 계좌 지급 완료, 확인 대기 중. 지급 건이 없으면 null */
+  settlementStatusLabel?: string | null;
+  /** 정산 예정 금액(원 단위 정수). 연결된 지급 건이 없거나 산정 전이면 null */
+  expectedAmount?: number | null;
 }

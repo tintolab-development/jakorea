@@ -198,8 +198,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="secondary"
             size="h40"
             icon={<ButtonDownloadIcon />}
-            onClick={handleOpenDownloadModal}
-          >
+            onClick={handleOpenDownloadModal} >
             배정표 다운로드
           </CmsButton>
           <CmsButton
@@ -207,8 +206,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="delete"
             size="h40"
             disabled={isMutating}
-            onClick={handleOpenBlockedDateModal}
-          >
+            onClick={handleOpenBlockedDateModal} >
             배정 불가일 설정
           </CmsButton>
           <CmsButton
@@ -216,8 +214,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="secondary"
             size="h40"
             disabled={isMutating}
-            onClick={handleOpenAttendanceManagerModal}
-          >
+            onClick={handleOpenAttendanceManagerModal} >
             출결 담당자 설정
           </CmsButton>
           <CmsButton
@@ -225,8 +222,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="primary"
             size="h40"
             disabled={isMutating}
-            onClick={handleOpenDirectAssignModal}
-          >
+            onClick={handleOpenDirectAssignModal} >
             교육일 직접 배정
           </CmsButton>
           <CmsButton
@@ -234,8 +230,7 @@ export function UjatEducationProgressRegionAssignmentSection({
             variant="primary"
             size="h40"
             disabled={isMutating}
-            onClick={handleAutoAssign}
-          >
+            onClick={handleAutoAssign} >
             교육일 자동 배정
           </CmsButton>
           </>

@@ -324,8 +324,7 @@ function PopupFormBody({
                   type="button"
                   onClick={() => setDeleteConfirmOpen(true)}
                   disabled={confirmLoading || deleteLoading}
-                  loading={deleteLoading}
-                >
+                  loading={deleteLoading} >
                   팝업 삭제
                 </CmsButton>
               ) : null}
@@ -336,8 +335,7 @@ function PopupFormBody({
                 size="large"
                 type="button"
                 onClick={onCancel}
-                disabled={confirmLoading || deleteLoading}
-              >
+                disabled={confirmLoading || deleteLoading} >
                 취소
               </CmsButton>
               <CmsButton
@@ -346,8 +344,7 @@ function PopupFormBody({
                 type="button"
                 loading={confirmLoading}
                 disabled={confirmLoading || deleteLoading}
-                onClick={handlePrimaryAction}
-              >
+                onClick={handlePrimaryAction} >
                 {primaryLabel}
               </CmsButton>
             </div>

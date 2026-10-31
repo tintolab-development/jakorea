@@ -199,11 +199,9 @@ export function PaymentStatementIssuanceViewModal({
       <CmsButton
         variant="primary"
         size="medium"
-        width={140}
         icon={<ButtonDownloadIcon />}
         disabled={pdfLoading}
-        onClick={() => void handleDownloadPdf()}
-      >
+        onClick={() => void handleDownloadPdf()} >
         파일 다운로드
       </CmsButton>
     </div>

@@ -81,8 +81,7 @@ export function ModalsExtendedSection() {
               onClick={() => {
                 setTermsAgreed(false)
                 setTermsViewType(type)
-              }}
-            >
+              }} >
               {TERMS_VIEW_LIST_LABELS[type]}
             </CmsButton>
           ))}
@@ -115,16 +114,14 @@ export function ModalsExtendedSection() {
               variant="secondary"
               size="medium"
               type="button"
-              onClick={() => setContentOpen(false)}
-            >
+              onClick={() => setContentOpen(false)} >
               취소
             </CmsButton>
             <CmsButton
               variant="primary"
               size="medium"
               type="button"
-              onClick={() => setContentOpen(false)}
-            >
+              onClick={() => setContentOpen(false)} >
               확인
             </CmsButton>
           </>

@@ -218,7 +218,6 @@ import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-p
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
@@ -720,10 +719,6 @@ function BasicInfoSection({
                   const start = toDayjs(field.value)
                   const end = toDayjs(endDateValue)
                   const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
-                  const operationRangeWithTime =
-                    operationRange == null
-                      ? false
-                      : dateRangeUsesClockTime(operationRange[0], operationRange[1])
 
                   return (
                     <div className="detail-info-form-inputs-wrapper-no-gap">
@@ -735,8 +730,9 @@ function BasicInfoSection({
                         width="100%"
                         placeholder="사업 운영 기간을 선택하세요"
                         preferPeriodModeInPopover
+                        showTimeToggle={false}
                         appliedSurfaceRange={operationRange}
-                        appliedSurfaceWithTime={operationRangeWithTime}
+                        appliedSurfaceWithTime={false}
                         onRangeChange={range => {
                           field.onChange(toIso(range[0]))
                           editForm.setValue('endDate', toIso(range[1]), {
@@ -3216,11 +3212,9 @@ function CurriculumSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={180}
               disabled={curriculumChartSessionAtMax}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddSession}
-            >
+              onClick={handleAddSession} >
               {isMultiRoundCurriculum ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
             </CmsButton>
           </div>
@@ -4514,10 +4508,8 @@ function ScheduleProgressEditSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={160}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddDetail}
-            >
+              onClick={handleAddDetail} >
               강의 행사 일정 추가
             </CmsButton>
           ) : isMultiRound || !allowProgressGroupAdd ? (
@@ -4525,10 +4517,8 @@ function ScheduleProgressEditSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={160}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddDetail}
-            >
+              onClick={handleAddDetail} >
               강의 세부 일정 추가
             </CmsButton>
           ) : (
@@ -4537,23 +4527,19 @@ function ScheduleProgressEditSection({
                 type="button"
                 variant="secondary"
                 size="medium"
-                width={160}
                 disabled={
                   scheduleGroupCount >= PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
                 }
                 icon={<ButtonClockIcon />}
-                onClick={handleAddGroup}
-              >
+                onClick={handleAddGroup} >
                 진행 그룹 구분 추가
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
                 size="medium"
-                width={160}
                 icon={<ButtonAddIcon aria-hidden />}
-                onClick={handleAddDetail}
-              >
+                onClick={handleAddDetail} >
                 강의 세부 일정 추가
               </CmsButton>
             </>
@@ -5188,15 +5174,17 @@ export function GeneralProgramDetailCommonInfoView({
     <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
       {(canWrite || isEditMode) && (
         <div className="detail-common-info-view__header">
-          <BusinessPeriodExtendToolbar program={program} editDisabled={editDisabled}>
+          <BusinessPeriodExtendToolbar
+            program={program}
+            editDisabled={editDisabled}
+            hideExtend={isEditMode} >
             <ProgramEditInfoActions
               isEditing={isEditMode}
               idleVariant="secondary"
               disabled={editDisabled}
               onEdit={onEdit ?? (() => {})}
               onCancel={onCancel ?? (() => {})}
-              onSave={onSave ?? (() => {})}
-            />
+              onSave={onSave ?? (() => {})} />
           </BusinessPeriodExtendToolbar>
         </div>
       )}

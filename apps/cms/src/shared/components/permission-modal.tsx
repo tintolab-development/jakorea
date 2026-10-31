@@ -355,8 +355,7 @@ export function PermissionModal({
                 Boolean(unsupportedNotifyMessage) ||
                 notifyScheduleNotReady
               }
-              onClick={handleConfirm}
-            >
+              onClick={handleConfirm} >
               {confirmLabel}
             </CmsButton>
           </div>

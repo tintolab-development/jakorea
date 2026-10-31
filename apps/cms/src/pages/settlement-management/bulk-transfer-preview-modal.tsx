@@ -91,11 +91,9 @@ export function BulkTransferPreviewModal({
           <CmsButton
             variant="primary"
             size="h40"
-            width={140}
             icon={<ButtonDownloadIcon />}
             adminAction="download"
-            onClick={() => void handleDownload()}
-          >
+            onClick={() => void handleDownload()} >
             엑셀 다운로드
           </CmsButton>
         </>

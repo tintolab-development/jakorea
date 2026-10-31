@@ -88,8 +88,7 @@ export function PermissionRequestReviewModal({
         variant={action === 'reject' ? 'delete' : 'primary'}
         type="submit"
         form="permission-review-form"
-        loading={submitting}
-      >
+        loading={submitting} >
         {action === 'approve' ? '승인' : '거부'}
       </CmsButton>
     </Space>

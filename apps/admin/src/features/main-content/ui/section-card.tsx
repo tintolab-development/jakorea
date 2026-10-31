@@ -42,8 +42,7 @@ export function MainContentSectionCard({
                 size="large"
                 type="button"
                 onClick={onCancel}
-                disabled={saving}
-              >
+                disabled={saving} >
                 취소
               </CmsButton>
               <CmsButton
@@ -51,8 +50,7 @@ export function MainContentSectionCard({
                 size="large"
                 type="button"
                 loading={saving}
-                onClick={onSave}
-              >
+                onClick={onSave} >
                 저장
               </CmsButton>
             </>

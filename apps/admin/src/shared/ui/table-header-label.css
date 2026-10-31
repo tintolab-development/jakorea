@@ -57,31 +57,16 @@
 }
 
 /*
- * 목록·카드 툴바 액션 버튼 — 140×40 (CmsButton h40)
- * 모달 푸터 content-modal__footer-actions 는 140×44 유지
- * 의도적 예외:
- * - `.cms-button--toolbar-auto` / `.cms-button--footer-auto` — 가변 폭
- * - `.excel-button` — icon 180×40
+ * 목록·카드 툴바 액션 버튼 — 높이 40 (폭은 라벨 + size min-width)
+ * 엑셀은 아이콘+라벨 row 레이아웃만 유지
  */
-.table-header-actions--wrapper
-  .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto):not(
-    .excel-button
-  ),
-.admin-list-toolbar
-  > .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto):not(
-    .excel-button
-  ),
-.hac-panel__toolbar-buttons
-  .cms-button.ant-btn:not(.cms-button--footer-auto):not(.cms-button--toolbar-auto):not(
-    .excel-button
-  ) {
+.table-header-actions--wrapper .cms-button.ant-btn:not(.excel-button),
+.admin-list-toolbar > .cms-button.ant-btn:not(.excel-button),
+.hac-panel__toolbar-buttons .cms-button.ant-btn:not(.excel-button) {
   display: inline-flex !important;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
   height: 40px !important;
   min-height: 40px !important;
   max-height: 40px !important;
@@ -94,18 +79,12 @@
   box-sizing: border-box;
 }
 
-.table-header-actions--wrapper
-  .cms-button.ant-btn.cms-button--has-icon:not(.cms-button--footer-auto):not(
-    .cms-button--toolbar-auto
-  ):not(.excel-button),
-.hac-panel__toolbar-buttons
-  .cms-button.ant-btn.cms-button--has-icon:not(.cms-button--footer-auto):not(
-    .cms-button--toolbar-auto
-  ):not(.excel-button) {
+.table-header-actions--wrapper .cms-button.ant-btn.cms-button--has-icon:not(.excel-button),
+.hac-panel__toolbar-buttons .cms-button.ant-btn.cms-button--has-icon:not(.excel-button) {
   flex-direction: row;
 }
 
-/* 엑셀 다운로드 — icon 180×40 */
+/* 엑셀 다운로드 — 아이콘+라벨 row, 높이 40 */
 .table-header-actions--wrapper .cms-button.ant-btn.excel-button,
 .admin-list-toolbar > .cms-button.ant-btn.excel-button,
 .hac-panel__toolbar-buttons .cms-button.ant-btn.excel-button {
@@ -113,9 +92,6 @@
   flex-direction: row !important;
   justify-content: center;
   align-items: center;
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
   height: 40px !important;
   min-height: 40px !important;
   max-height: 40px !important;

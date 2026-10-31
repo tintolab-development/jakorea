@@ -57,6 +57,8 @@ import {
 import {
   formatDisplayDate,
   formatDisplayDateRange,
+  formatDisplayDateTime,
+  formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
   parseScheduleDisplayLabel,
 } from '../../../shared/lib/format-display-date.ts'
@@ -734,7 +736,7 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
         phases.push({
           label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.documentPass),
           value: withRecruitmentMethod(
-            formatDisplayDate(documentAt),
+            formatDisplayDateTime(documentAt) || formatDisplayDate(documentAt),
             interviewOn ? row.documentPassAnnouncementMethod : null,
           ),
         })
@@ -745,7 +747,8 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
         phases.push({
           label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.interview),
           value: withRecruitmentMethod(
-            formatRange(interviewStart, interviewEnd),
+            formatDisplayDateTimeRange(interviewStart, interviewEnd, { empty: '-' }) ||
+              formatRange(interviewStart, interviewEnd),
             interviewOn ? row.interviewMethod : null,
           ),
         })
@@ -755,7 +758,10 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
     if (finalAt) {
       phases.push({
         label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.finalPass),
-        value: withRecruitmentMethod(formatDisplayDate(finalAt), row.finalPassAnnouncementMethod),
+        value: withRecruitmentMethod(
+          formatDisplayDateTime(finalAt) || formatDisplayDate(finalAt),
+          row.finalPassAnnouncementMethod,
+        ),
       })
     }
     return phases

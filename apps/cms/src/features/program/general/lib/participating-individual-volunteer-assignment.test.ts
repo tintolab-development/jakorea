@@ -3,7 +3,9 @@ import { generalProgramProgressQueryKeys } from '@/features/program/general/api/
 import {
   buildIndividualVolunteerAssignmentRowsFromEducationScope,
   canBuildIndividualVolunteerAssignmentRows,
+  collectAssignedPreEducationScheduleIds,
   formatVolunteerAssignmentDistanceKm,
+  mergeEducationScopeScheduleIdsPreservingPreEducation,
   resolveVolunteerAssignmentDistanceCellLabel,
   VOLUNTEER_ASSIGNMENT_DISTANCE_CALCULATING_LABEL,
 } from '@/features/program/general/lib/participating-individual-volunteer-assignment'
@@ -220,5 +222,37 @@ describe('education-scope query key', () => {
     const detail = generalProgramProgressQueryKeys.educationScope('186089', '1694746')
     const prefix = generalProgramProgressQueryKeys.educationScopes()
     expect(detail.slice(0, prefix.length)).toEqual([...prefix])
+  })
+})
+
+describe('PUT education-scope PRE_ED union (BE merge 대기)', () => {
+  const schedules = [
+    { scheduleId: 187590, scheduleRole: 'PRE_EDUCATION', educationSlotKey: 'general-pre-education:1' },
+    { scheduleId: 9001, scheduleRole: 'EDUCATION' },
+    { scheduleId: 9002, scheduleRole: 'EDUCATION' },
+  ]
+
+  it('keeps only PRE_ED ids that are already on the current scope', () => {
+    expect(
+      collectAssignedPreEducationScheduleIds({
+        currentScheduleIds: [187590, 9001],
+        programSchedules: schedules,
+      })
+    ).toEqual([187590])
+    expect(
+      collectAssignedPreEducationScheduleIds({
+        currentScheduleIds: [9001],
+        programSchedules: schedules,
+      })
+    ).toEqual([])
+  })
+
+  it('unions current PRE_ED onto the next main-education ids', () => {
+    expect(
+      mergeEducationScopeScheduleIdsPreservingPreEducation({
+        nextScheduleIds: [9002],
+        preEducationScheduleIds: [187590],
+      })
+    ).toEqual([9002, 187590])
   })
 })

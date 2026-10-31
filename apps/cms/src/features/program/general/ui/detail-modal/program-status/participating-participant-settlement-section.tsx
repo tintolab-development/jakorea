@@ -106,8 +106,7 @@ export function ParticipatingParticipantSettlementSection({
               variant="default"
               size="h40"
               disabled={!record.canOpenDetail || !remoteEnabled}
-              onClick={() => setDetailApplicationId(record.settlementApplicationId)}
-            >
+              onClick={() => setDetailApplicationId(record.settlementApplicationId)} >
               상세
             </CmsButton>
           </div>
@@ -155,8 +154,7 @@ export function ParticipatingParticipantSettlementSection({
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={rows.length === 0 || isError}
-          />
+            disabled={rows.length === 0 || isError} />
         </div>
       </div>
 

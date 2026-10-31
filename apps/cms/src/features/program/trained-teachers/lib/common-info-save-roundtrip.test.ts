@@ -427,4 +427,38 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
       'lecture_evaluation',
     ])
   })
+
+  it('일정 점 표기 라벨을 서버 형식으로 보낸다', () => {
+    const json = serializeTrainedTeacherServiceDetailJson({
+      ...baseProgram(),
+      generalProgramEducationStructure: 'schedule',
+      generalCommonInfo: {
+        ...baseProgram().generalCommonInfo,
+        educationScheduleLines: ['2026.11.05(목) 10:00 ~ 11:00'],
+        scheduleDetails: [
+          {
+            scheduleLabel: '행사 일정 01',
+            blockKind: 'event',
+            name: '교사 연수',
+            scheduleDateLabel: '2026.11.05(목) 10:00 ~ 11:00',
+          },
+        ],
+      },
+    })
+    const envelope = JSON.parse(json) as {
+      program?: {
+        generalCommonInfo?: {
+          educationScheduleLines?: string[]
+          scheduleDetails?: Array<{ scheduleDateLabel?: string; blockKind?: string }>
+        }
+      }
+    }
+    expect(envelope.program?.generalCommonInfo?.educationScheduleLines).toEqual([
+      '26년 11월 5일(목) 10:00 ~ 11:00',
+    ])
+    expect(envelope.program?.generalCommonInfo?.scheduleDetails?.[0]?.scheduleDateLabel).toBe(
+      '26년 11월 5일(목) 10:00 ~ 11:00'
+    )
+    expect(envelope.program?.generalCommonInfo?.scheduleDetails?.[0]?.blockKind).toBe('event')
+  })
 })

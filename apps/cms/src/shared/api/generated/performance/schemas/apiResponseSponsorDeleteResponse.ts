@@ -20,4 +20,6 @@ export interface ApiResponseSponsorDeleteResponse {
   message?: string | null;
   /** 구조화된 오류 정보. 성공 응답에서는 null입니다. */
   error?: ErrorDetail | null;
+  /** RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다. */
+  detail?: string | null;
 }

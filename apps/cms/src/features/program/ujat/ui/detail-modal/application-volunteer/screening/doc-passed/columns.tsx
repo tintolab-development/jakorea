@@ -106,8 +106,7 @@ export function useUjatVolunteerDocPassedColumns({
             <CmsButton
               type="button"
               variant="secondary"
-              size="h32"
-              width={120}
+              size="medium"
               style={{ flexShrink: 0 }}
               disabled={disabled}
               onClick={e => {

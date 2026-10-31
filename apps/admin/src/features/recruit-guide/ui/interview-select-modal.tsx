@@ -14,7 +14,6 @@ import { useImpactStoriesPagedList } from '@/features/impact-stories/api/hooks'
 import type { InterviewSaveItem } from '@/entities/recruit-guide/model/types'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CmsButton, CmsInput, CmsSelect, ContentModal } from '@/shared/ui'
 
@@ -179,9 +178,7 @@ export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect 
           variant="primary"
           size="large"
           type="button"
-          width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-          onClick={handleSearch}
-        >
+          onClick={handleSearch} >
           검색
         </CmsButton>
       </div>

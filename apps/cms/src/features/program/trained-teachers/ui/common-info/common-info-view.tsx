@@ -2172,7 +2172,10 @@ export function TrainedTeachersCommonInfoView({
     <>
     <div className="trained-teachers-common-info program-detail-fullpage-modal__info-tab">
       <div className="trained-teachers-common-info__header">
-        <BusinessPeriodExtendToolbar program={displayProgram} editDisabled={editDisabled}>
+        <BusinessPeriodExtendToolbar
+          program={displayProgram}
+          editDisabled={editDisabled}
+          hideExtend={isEditMode} >
           <ProgramEditInfoActions
             isEditing={isEditMode}
             idleVariant="secondary"
@@ -2180,8 +2183,7 @@ export function TrainedTeachersCommonInfoView({
             onCancel={onCancel ?? (() => {})}
             onSave={handleSave}
             saving={saving || persistPending}
-            disabled={editDisabled}
-          />
+            disabled={editDisabled} />
         </BusinessPeriodExtendToolbar>
       </div>
 

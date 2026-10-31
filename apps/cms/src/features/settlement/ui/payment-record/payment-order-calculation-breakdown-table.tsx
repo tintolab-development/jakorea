@@ -85,9 +85,8 @@ export function getPaymentOrderCalculationColumns(options?: {
   onDetailClick?: () => void
   /** 강의 진행 일자 열의 세션 구간: `round`이면 차시 → 회차 (계좌 지급 현황 상세 등) */
   lectureSessionSegmentLabel?: 'session' | 'round'
-  /** 산정 기준 상세 · 지급조서 발급 버튼 (기본 large / 160px) */
+  /** 산정 기준 상세 · 지급조서 발급 버튼 (기본 large) */
   actionButtonSize?: CmsButtonSize
-  actionButtonWidth?: number
   /** 산출 내역서(1340px)와 계좌 지급 현황(1200px)의 열 폭 프리셋 */
   columnWidthPreset?: 'statement-modal' | 'compact'
 }): ColumnsType<PaymentOrderCalculationTableRow> {
@@ -102,7 +101,6 @@ export function getPaymentOrderCalculationColumns(options?: {
 
   const sessionLabelMode = options?.lectureSessionSegmentLabel ?? 'session'
   const actionButtonSize = options?.actionButtonSize ?? 'large'
-  const actionButtonWidth = options?.actionButtonWidth ?? 160
   const columnWidthPreset = options?.columnWidthPreset ?? 'statement-modal'
   const columnWidths =
     columnWidthPreset === 'statement-modal'
@@ -185,9 +183,7 @@ export function getPaymentOrderCalculationColumns(options?: {
           <CmsButton
             variant="default"
             size={actionButtonSize}
-            width={actionButtonWidth}
-            onClick={() => handleBasisDetailClick(row)}
-          >
+            onClick={() => handleBasisDetailClick(row)} >
             상세 보기
           </CmsButton>
         </div>
@@ -214,9 +210,8 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   onBasisDetailClick?: (row: PaymentOrderCalculationTableRow) => void
   /** 산출 내역 상세 제목 옆 안내 문구 */
   detailDescription?: string
-  /** 산정 기준 상세 · 지급조서 발급 버튼 (기본 large / 160px) */
+  /** 산정 기준 상세 · 지급조서 발급 버튼 (기본 large) */
   actionButtonSize?: CmsButtonSize
-  actionButtonWidth?: number
   /** 산출 내역서(1340px)와 계좌 지급 현황(1200px)의 열 폭 프리셋 */
   columnWidthPreset?: 'statement-modal' | 'compact'
   /**
@@ -237,7 +232,6 @@ export function PaymentOrderCalculationBreakdownTable({
   onBasisDetailClick,
   detailDescription,
   actionButtonSize = 'large',
-  actionButtonWidth = 160,
   columnWidthPreset,
   tableCellSpec = 'statement-modal',
 }: PaymentOrderCalculationBreakdownTableProps) {
@@ -258,14 +252,12 @@ export function PaymentOrderCalculationBreakdownTable({
         lectureSessionSegmentLabel,
         onBasisDetailClick,
         actionButtonSize,
-        actionButtonWidth,
         columnWidthPreset: resolvedColumnWidthPreset,
       }),
     [
       lectureSessionSegmentLabel,
       onBasisDetailClick,
       actionButtonSize,
-      actionButtonWidth,
       resolvedColumnWidthPreset,
     ]
   )
@@ -329,7 +321,6 @@ export function PaymentOrderCalculationBreakdownTable({
                 <CmsButton
                   variant="primary"
                   size={actionButtonSize}
-                  width={actionButtonWidth}
                   icon={<ButtonDownloadIcon />}
                   disabled={paymentStatementIssueDisabled}
                   title={
@@ -337,8 +328,7 @@ export function PaymentOrderCalculationBreakdownTable({
                       ? '지급조서 확인 완료 또는 계좌 지급 완료 건만 발급할 수 있습니다.'
                       : undefined
                   }
-                  onClick={handleDownload}
-                >
+                  onClick={handleDownload} >
                   지급조서 발급
                 </CmsButton>
               </CmsDataTable.Summary.Cell>

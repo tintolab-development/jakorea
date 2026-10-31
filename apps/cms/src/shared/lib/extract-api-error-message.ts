@@ -2,6 +2,7 @@ import {
   programEditWindowErrorMessage,
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
+import { resolveProgramScheduleLineErrorMessage } from '@/features/program/shared/lib/program-schedule-line-error'
 
 /** 백엔드 공통 에러 envelope (`success: false`, RFC7807식 `detail` 포함) */
 export type ApiErrorEnvelope = {
@@ -172,7 +173,9 @@ export function extractApiErrorMessage(
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
   }
   const envelope = asEnvelope(data)
-  const serverMessage = readApiErrorEnvelopeText(data)
+  const serverMessage = readApiErrorEnvelopeText(data) ?? envelope?.error?.message?.trim()
+  const scheduleLineMessage = resolveProgramScheduleLineErrorMessage(code, serverMessage)
+  if (scheduleLineMessage) return scheduleLineMessage
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(code, serverMessage)
   if (policyMessage) return policyMessage
 

@@ -6,13 +6,11 @@ import { CmsButton, type CmsButtonVariant } from './cms-button'
 import './cms-modal.css'
 
 const DEFAULT_WIDTH = 600
-const DEFAULT_BUTTON_WIDTH = 120
 
 export interface CmsModalButton {
   label: string
   onClick: () => void
   variant?: CmsButtonVariant
-  width?: number | string
   loading?: boolean
   disabled?: boolean
 }
@@ -50,12 +48,10 @@ function renderFooter(buttons: readonly CmsModalButton[]) {
           key={`${button.label}-${index}`}
           variant={resolveButtonVariant(button, index, buttons.length)}
           size="medium"
-          width={button.width ?? DEFAULT_BUTTON_WIDTH}
           type="button"
           onClick={button.onClick}
           loading={button.loading}
-          disabled={button.disabled}
-        >
+          disabled={button.disabled} >
           {button.label}
         </CmsButton>
       ))}

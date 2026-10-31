@@ -96,8 +96,8 @@ export type EducationScheduleItem = {
 export type EducationScheduleTeamInfo = {
   /** 팀장 / 팀원 / 개인 (알 수 없는 코드는 원문) */
   roleLabel: string
-  /** 팀명. 없으면 '-' */
-  teamName: string
+  /** 팀명. INDIVIDUAL·라벨 없음이면 생략하고 카드에 팀명 칸을 그리지 않는다. '-' 로 채우지 않는다. */
+  teamName?: string
 }
 
 export const EDUCATION_SCHEDULE_PAGE_SIZE = 7

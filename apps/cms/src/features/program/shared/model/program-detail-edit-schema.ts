@@ -1379,6 +1379,16 @@ function recruitAudienceScalar<T>(
   return value ?? existingValue
 }
 
+function recruitAudienceScalarAny<T>(
+  value: T | undefined,
+  existingValue: T | undefined,
+  activeAudience: ProgramDetailRecruitmentAudience | undefined,
+  fieldAudiences: ProgramDetailRecruitmentAudience[]
+): T | undefined {
+  if (activeAudience && fieldAudiences.includes(activeAudience)) return value
+  return value ?? existingValue
+}
+
 function resolveRecruitmentOperationPeriodLabels(
   values: ProgramDetailEditFormValues,
   existing: import('@/types/domain').Program,
@@ -2086,35 +2096,35 @@ export function detailEditValuesToProgramPatch(
       recruitmentAudience,
       'instructor'
     ),
-    documentPassAnnouncementDate: recruitAudienceScalar(
+    documentPassAnnouncementDate: recruitAudienceScalarAny(
       values.documentPassAnnouncementDate,
       existing.documentPassAnnouncementDate,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
-    documentPassAnnouncementMethod: recruitAudienceScalar(
+    documentPassAnnouncementMethod: recruitAudienceScalarAny(
       values.documentPassAnnouncementMethod,
       existing.documentPassAnnouncementMethod,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
-    interviewStartDate: recruitAudienceScalar(
+    interviewStartDate: recruitAudienceScalarAny(
       values.interviewStartDate,
       existing.interviewStartDate,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
-    interviewEndDate: recruitAudienceScalar(
+    interviewEndDate: recruitAudienceScalarAny(
       values.interviewEndDate,
       existing.interviewEndDate,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
-    interviewMethod: recruitAudienceScalar(
+    interviewMethod: recruitAudienceScalarAny(
       values.interviewMethod,
       existing.interviewMethod,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
     finalPassAnnouncementDate:
       recruitmentAudience === 'instructor' || recruitmentAudience === 'volunteer'

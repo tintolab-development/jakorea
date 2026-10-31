@@ -7,7 +7,7 @@ import {
   resolveEducationScheduleProgressStatus,
   shouldShowEducationAssignment,
 } from '../lib/schedule-rules'
-import { resolveEducationScheduleDateLabel } from '../lib/format'
+import { resolveEducationScheduleRowDateLabel } from '../lib/format'
 import checkOnSmallUrl from '@/shared/assets/icons/check-mint-small.svg'
 import {
   EducationSessionCard,
@@ -38,7 +38,7 @@ export function EducationScheduleRow({
   showAbsenceReason = true,
 }: EducationScheduleRowProps) {
   const progress = resolveEducationScheduleProgressStatus(item.heldAt)
-  const heldLabel = resolveEducationScheduleDateLabel(item)
+  const heldLabel = resolveEducationScheduleRowDateLabel(item)
   const showAssignment = assignmentAllowed && shouldShowEducationAssignment(item)
   const hasOperationalSchedule = item.scheduleId !== null
   const showAbsenceSubmit =
@@ -53,8 +53,9 @@ export function EducationScheduleRow({
 
   return (
     <>
-      <EducationSessionCard>
+      <EducationSessionCard className={styles.card}>
         <EducationSessionCardHeader
+          mobileStack
           badge={
             <PFStateBadge size="small" tone={progress === 'completed' ? 'success' : 'progress'}>
               {EDUCATION_SCHEDULE_PROGRESS_LABEL[progress]}
@@ -77,15 +78,19 @@ export function EducationScheduleRow({
                       {item.team.roleLabel}
                     </PFText>
                   </span>
-                  <span className={styles.teamDivider} aria-hidden="true" />
-                  <span className={styles.teamField}>
-                    <PFText as="span" typo="bd-lg-rg" color="neutral-cool-500">
-                      팀명
-                    </PFText>
-                    <PFText as="span" typo="bd-lg-rg" color="black">
-                      {item.team.teamName}
-                    </PFText>
-                  </span>
+                  {item.team.teamName ? (
+                    <>
+                      <span className={styles.teamDivider} aria-hidden="true" />
+                      <span className={styles.teamField}>
+                        <PFText as="span" typo="bd-lg-rg" color="neutral-cool-500">
+                          팀명
+                        </PFText>
+                        <PFText as="span" typo="bd-lg-rg" color="black">
+                          {item.team.teamName}
+                        </PFText>
+                      </span>
+                    </>
+                  ) : null}
                 </span>
               ) : null}
             </>
@@ -97,6 +102,7 @@ export function EducationScheduleRow({
                   type="button"
                   variant="secondary"
                   size="large"
+                  className={styles.rowButton}
                   onClick={() => onAbsenceReasonSubmit(item)}
                 >
                   결석 사유 제출하기

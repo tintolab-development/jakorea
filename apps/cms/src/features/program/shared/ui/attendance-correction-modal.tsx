@@ -184,8 +184,7 @@ export function ProgramAttendanceCorrectionModal({
                   evidenceFileObjectIds,
                 })
               })()
-            }}
-          >
+            }} >
             출결 정정
           </CmsButton>
         </div>

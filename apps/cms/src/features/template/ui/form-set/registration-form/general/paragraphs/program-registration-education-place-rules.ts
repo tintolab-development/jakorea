@@ -46,7 +46,11 @@ export function resolveEducationPlaceCommonEducationForm(input: {
       DEFAULT_REGISTRATION_EDUCATION_FORM
     )
   }
-  return nonEmptyText(input.singleEducationForm) || DEFAULT_REGISTRATION_EDUCATION_FORM
+  return (
+    nonEmptyText(input.singleEducationForm) ||
+    nonEmptyText(input.multiCommonEducationForm) ||
+    DEFAULT_REGISTRATION_EDUCATION_FORM
+  )
 }
 
 export type EducationPlaceVisibilityInput = {

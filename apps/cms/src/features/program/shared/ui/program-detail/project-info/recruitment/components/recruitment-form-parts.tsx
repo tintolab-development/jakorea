@@ -11,7 +11,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
-  formatDateOnly,
+  formatDateWithOptionalTime,
   formatDateRange,
   INTERVIEW_METHOD_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -96,7 +96,7 @@ export function ProgramDetailDateMethodReadRow({
 }) {
   const methodText = method?.trim()
   if (!dateIso) return methodText || '-'
-  const dateLabel = formatDateOnly(dateIso)
+  const dateLabel = formatDateWithOptionalTime(dateIso)
   const methodLabel = methodText || '-'
   return (
     <div className="program-detail-info-tab__contact-inline">

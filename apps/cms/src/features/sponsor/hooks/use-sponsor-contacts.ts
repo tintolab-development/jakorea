@@ -45,6 +45,7 @@ export interface UseSponsorContactsReturn {
   isDeleting: boolean
   draftRows: SponsorContactRow[]
   startEdit: (rows: SponsorContactRow[]) => void
+  cancelEdit: () => void
   updateDraft: (rowId: string, patch: Partial<SponsorContactRow>) => void
   saveEdits: () => Promise<'saved' | 'invalid' | 'invalid-format' | 'failed'>
   handleRegister: (payload: SponsorContactRegisterPayload) => void | Promise<void>
@@ -227,6 +228,12 @@ export function useSponsorContacts(
     setIsEditing(true)
   }, [canWrite])
 
+  const cancelEdit = useCallback((): void => {
+    if (isSavingEdits) return
+    setDraftRows([])
+    setIsEditing(false)
+  }, [isSavingEdits])
+
   const updateDraft = useCallback((rowId: string, patch: Partial<SponsorContactRow>): void => {
     setDraftRows(prev => prev.map(row => (row.id === rowId ? { ...row, ...patch } : row)))
   }, [])
@@ -281,6 +288,7 @@ export function useSponsorContacts(
     isDeleting,
     draftRows,
     startEdit,
+    cancelEdit,
     updateDraft,
     saveEdits,
     handleRegister,

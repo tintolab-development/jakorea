@@ -52,8 +52,7 @@ export function EducationScheduleChangeModal({
                   return next ? shiftEducationScheduleLineToDate(line, next) : line
                 })
               )
-            }
-          >
+            } >
             일정 변경
           </CmsButton>
         </div>

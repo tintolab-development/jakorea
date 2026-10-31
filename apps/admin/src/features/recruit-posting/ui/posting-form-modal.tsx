@@ -357,8 +357,7 @@ export function RecruitPostingFormModal({
                 size="large"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
+                onClick={() => setDeleteConfirmOpen(true)} >
                 공고 삭제
               </CmsButton>
             ) : null}
@@ -368,8 +367,7 @@ export function RecruitPostingFormModal({
                 size="large"
                 type="button"
                 disabled={confirmLoading || deleteLoading}
-                onClick={onCancel}
-              >
+                onClick={onCancel} >
                 취소
               </CmsButton>
               <CmsButton
@@ -377,8 +375,7 @@ export function RecruitPostingFormModal({
                 size="large"
                 type="button"
                 loading={confirmLoading}
-                onClick={handleSubmit}
-              >
+                onClick={handleSubmit} >
                 {submitLabel}
               </CmsButton>
             </div>

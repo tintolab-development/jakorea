@@ -236,11 +236,13 @@ export function isPreEducationScheduleBlock(detail: {
   isPreEducation?: boolean
   preEducation?: boolean
 }): boolean {
+  if (detail.blockKind === 'event' || detail.blockKind === 'sub') return false
   if (detail.isPreEducation === true || detail.preEducation === true) return true
   if (isGeneralPreEducationKindToken(detail.blockKind)) return true
   if (isGeneralPreEducationKindToken(detail.scheduleKind)) return true
   if (isGeneralPreEducationKindToken(detail.scheduleRole)) return true
-  return isGeneralPreEducationName(detail.scheduleLabel) || isGeneralPreEducationName(detail.name)
+  // 이름 휴리스틱 금지. 레거시는 구조 라벨(scheduleLabel)만.
+  return isGeneralPreEducationName(detail.scheduleLabel)
 }
 
 export function isScheduleMultiAllPerSchedule(
@@ -475,14 +477,9 @@ export function applySchedulePreEducationBlock(
   }
 
   const existingPre = details.find(d => isPreEducationScheduleBlock(d))
-  const convertedFirst =
-    !existingPre && withoutPre[0]?.name?.trim() === PRE_EDUCATION_SCHEDULE_LABEL
-      ? withoutPre[0]
-      : undefined
-  const rest = convertedFirst ? withoutPre.slice(1) : withoutPre
+  const rest = withoutPre
   const preSource =
     existingPre ??
-    convertedFirst ??
     createEmptyScheduleDetailBlock(0, {
       blockKind: 'preEducation',
       groupCount: options.groupCount,

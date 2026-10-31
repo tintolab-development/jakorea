@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Space, Spin, Tooltip } from 'antd'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
@@ -253,20 +253,15 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             loading={actionLoading}
             disabled={isTerminal}
-            onClick={() => setPendingReject(true)}
-          >
+            onClick={() => setPendingReject(true)} >
             신청 반려
           </CmsButton>
           <CmsButton
             type="button"
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             style={APPROVE_BUTTON_STYLE}
             loading={actionLoading}
             disabled={approveOrReassignDisabled}
@@ -277,8 +272,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
                 return
               }
               if (workflow.canFinalApprove) setPendingApprove(true)
-            }}
-          >
+            }} >
             {approveOrReassignLabel}
           </CmsButton>
           {(() => {
@@ -288,14 +282,11 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
                 type="button"
                 variant="primary"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
                 disabled={revisionDisabled}
                 onClick={() => {
                   if (revisionDisabled) return
                   setPendingRevisionRequest(true)
-                }}
-              >
+                }} >
                 수정 요청
               </CmsButton>
             )
@@ -315,9 +306,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </Space>
       </div>
 

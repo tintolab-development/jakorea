@@ -1,7 +1,6 @@
 /* 교육 학년 및 학급 변경 — 시안(200×44, mint fill, white 16px/600) */
 .assignment-tab__change-btn.cms-button.ant-btn {
   display: flex !important;
-  width: 200px !important;
   height: 44px;
   padding: 6px 16px !important;
   flex-direction: column;

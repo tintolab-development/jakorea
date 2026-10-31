@@ -61,7 +61,6 @@ export function TemporaryActionModal({
             type="button"
             variant="secondary"
             size="medium"
-            width="auto"
             disabled={loading}
             onClick={handleCancel}
           >
@@ -71,7 +70,6 @@ export function TemporaryActionModal({
             type="button"
             variant={danger ? 'secondary' : 'primary'}
             size="medium"
-            width="auto"
             className={danger ? 'temporary-action-modal__confirm--danger' : undefined}
             loading={loading}
             disabled={loading}

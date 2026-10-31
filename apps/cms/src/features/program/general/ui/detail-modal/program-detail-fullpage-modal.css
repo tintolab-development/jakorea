@@ -116,8 +116,6 @@
 .program-detail-fullpage-modal
   .program-detail-fullpage-modal__program-preview-btn.cms-button.ant-btn {
   display: flex;
-  width: 180px;
-  min-width: 180px;
   height: 44px;
   min-height: 44px;
   padding: 0 31px;

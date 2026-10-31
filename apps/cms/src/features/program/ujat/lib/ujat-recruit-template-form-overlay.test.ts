@@ -961,4 +961,42 @@ describe('UJAT recruit form overlay', () => {
       selectedSlotKeys: ['keep-h2'],
     })
   })
+
+  it('기관 overlay 발표일을 등록 시각 시드보다 우선한다', () => {
+    const now = '2026-10-31T08:42:54.872Z'
+    const overlayIso = '2026-11-02T15:00:00.000Z'
+    const applied = applyUjatRecruitInstitutionOverlayOntoProgram(
+      {
+        ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+        createdAt: now,
+        updatedAt: now,
+        resultAnnouncementDate: now,
+      },
+      {
+        [INSTITUTION_KEYS.resultAnnounce]: { date: overlayIso, method: '홈페이지 공지' },
+      },
+      { preferOverlay: false }
+    )
+    expect(applied.resultAnnouncementDate).toBe(overlayIso)
+  })
+
+  it('봉사자 overlay 최종 발표일을 등록 시각 시드보다 우선한다', () => {
+    const now = '2026-10-31T08:42:54.872Z'
+    const overlayIso = '2026-11-02T15:00:00.000Z'
+    const applied = applyUjatRecruitVolunteerOverlayOntoProgram(
+      {
+        ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+        createdAt: now,
+        updatedAt: now,
+        resultAnnouncementDate: now,
+        finalPassAnnouncementDate: now,
+      },
+      {
+        [VOLUNTEER_KEYS.finalAnnounce]: { date: overlayIso, method: '홈페이지 공지' },
+      },
+      { preferOverlay: false }
+    )
+    expect(applied.resultAnnouncementDate).toBe(overlayIso)
+    expect(applied.finalPassAnnouncementDate).toBe(overlayIso)
+  })
 })

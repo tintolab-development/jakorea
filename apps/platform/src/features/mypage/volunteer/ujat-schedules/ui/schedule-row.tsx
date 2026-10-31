@@ -110,11 +110,26 @@ export function UjatVolunteerScheduleRow({
           ) : null}
         </div>
         <div className={styles.actions}>
+          {/* PC 미만 전용: Figma 6810:78493 — 출석하기를 full width 버튼으로 (PC는 우측 아이콘 버튼) */}
+          <PFButton
+            type="button"
+            variant="primary"
+            size="large"
+            className={[styles.rowButton, styles.checkInMobile].join(' ')}
+            disabled={!canCheckIn || onCheckIn == null}
+            onClick={() => {
+              if (!canCheckIn || onCheckIn == null) return
+              onCheckIn(item)
+            }}
+          >
+            출석하기
+          </PFButton>
           <div className={styles.actionButtons}>
             <PFButton
               type="button"
               variant="secondary"
               size="large"
+              className={styles.rowButton}
               disabled={!canSubmitAbsence}
               onClick={() => {
                 if (!canSubmitAbsence) return
@@ -127,6 +142,7 @@ export function UjatVolunteerScheduleRow({
               type="button"
               variant="secondary"
               size="large"
+              className={styles.rowButton}
               disabled={!canViewAttendance || onViewAttendance == null}
               onClick={() => {
                 if (!canViewAttendance || onViewAttendance == null) return

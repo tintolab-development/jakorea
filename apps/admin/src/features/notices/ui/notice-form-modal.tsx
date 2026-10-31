@@ -275,8 +275,7 @@ export function NoticeFormModal({
                 size="large"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
+                onClick={() => setDeleteConfirmOpen(true)} >
                 공지사항 삭제
               </CmsButton>
             ) : null}
@@ -286,8 +285,7 @@ export function NoticeFormModal({
                 size="large"
                 type="button"
                 disabled={confirmLoading || deleteLoading}
-                onClick={onCancel}
-              >
+                onClick={onCancel} >
                 취소
               </CmsButton>
               <CmsButton
@@ -295,8 +293,7 @@ export function NoticeFormModal({
                 size="large"
                 type="button"
                 loading={confirmLoading}
-                onClick={handleSubmit}
-              >
+                onClick={handleSubmit} >
                 {submitLabel}
               </CmsButton>
             </div>

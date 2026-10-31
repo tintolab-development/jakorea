@@ -285,6 +285,10 @@
       "description": "수료증/참여인증서 발급, 이력, 차단 사유 API"
     },
     {
+      "name": "기타 API",
+      "description": "UJAT 기관 마이페이지 배정 탭 API"
+    },
+    {
       "name": "공개 콘텐츠",
       "description": "Public Content 관련 관리자 API"
     },
@@ -331,6 +335,10 @@
     {
       "name": "파일 관리",
       "description": "파일 메타데이터, 스캔 상태, 다운로드 claim, 삭제/파기 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "회원이 요청한 생성 파일 작업 조회"
     },
     {
       "name": "기타 API",
@@ -4653,6 +4661,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -4689,6 +4703,11 @@
             },
             "description": "전이 충돌 등 부가 컨텍스트. 없으면 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail. message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다."
           }
         }
       },
@@ -5491,6 +5510,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -5573,6 +5598,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -5736,6 +5767,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -5804,6 +5841,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -5870,6 +5913,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -5954,6 +6003,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -6361,6 +6416,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -6598,6 +6659,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -6688,6 +6755,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -6910,6 +6983,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -7174,6 +7253,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -7431,6 +7516,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -7480,6 +7571,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -7569,6 +7666,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -7727,6 +7830,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -8101,6 +8210,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -8198,6 +8313,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -8284,6 +8405,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -8701,6 +8828,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -8857,6 +8990,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -9109,6 +9248,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -9204,6 +9349,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -10641,6 +10792,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -11901,6 +12058,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -11942,6 +12105,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -11968,6 +12137,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -12031,6 +12206,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -12086,6 +12267,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -13701,6 +13888,16 @@
           "applicationStatus": {
             "type": "string"
           },
+          "interviewStatus": {
+            "type": "string",
+            "description": "면접 상태. 배정 직후 ASSIGNED, 이후 PARTIALLY_EVALUATED|EVALUATED. 배정 전이면 PENDING/WAITING 등 저장된 값",
+            "nullable": true
+          },
+          "interviewAssignmentStatus": {
+            "type": "string",
+            "description": "현재 유효 면접 배정 상태. 배정 전이면 null",
+            "nullable": true
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time"
@@ -13883,13 +14080,13 @@
           },
           "notifyTiming": {
             "type": "string",
-            "description": "최종 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL",
+            "description": "최종 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL | SCHEDULED. SCHEDULED는 MANUAL과 동일하며 scheduledAt 필수.",
             "example": "ON_ANNOUNCEMENT"
           },
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
-            "description": "notifyTiming=MANUAL일 때 필수. 현재 시각 이후 ISO-8601"
+            "description": "notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -13967,6 +14164,45 @@
           }
         }
       },
+      "IndividualApprovalWithScopeRequest": {
+        "type": "object",
+        "description": "개인 신청 승인 및 교육 일정 확정. timing을 생략하면 승인 알림을 즉시 발송합니다.",
+        "properties": {
+          "confirmedScheduleIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 1000,
+            "minItems": 0
+          },
+          "expectedScopeRevision": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
+            "example": "SCHEDULED"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
+          }
+        },
+        "required": [
+          "confirmedScheduleIds",
+          "expectedScopeRevision",
+          "reason"
+        ]
+      },
       "BulkResultRequest": {
         "type": "object",
         "description": "다건 선발 결과 처리 요청",
@@ -13998,12 +14234,12 @@
           },
           "notifyTiming": {
             "type": "string",
-            "description": "결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL. 생략하면 즉시 발송"
+            "description": "결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL | SCHEDULED. SCHEDULED는 MANUAL과 동일. 생략하면 즉시 발송"
           },
           "scheduledAt": {
             "type": "string",
             "format": "date-time",
-            "description": "notifyTiming=MANUAL일 때 필수. 현재 시각 이후 ISO-8601"
+            "description": "notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
         "required": [
@@ -14034,6 +14270,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -14084,6 +14326,65 @@
             "type": "string"
           }
         }
+      },
+      "IndividualApprovalWithScopeBulkRequest": {
+        "type": "object",
+        "description": "확정된 교육 범위를 포함하는 개인 신청 일괄 승인 요청입니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.",
+        "properties": {
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Target"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "timing": {
+            "type": "string",
+            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 발표일은 대상 프로그램별로 서버가 계산합니다."
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
+          }
+        },
+        "required": [
+          "reason",
+          "targets"
+        ]
+      },
+      "Target": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "confirmedScheduleIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 1000,
+            "minItems": 0
+          },
+          "expectedScopeRevision": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "required": [
+          "applicationId",
+          "confirmedScheduleIds",
+          "expectedScopeRevision"
+        ]
       },
       "MemberDetailResponse": {
         "type": "object",
@@ -15224,6 +15525,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -15341,6 +15648,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -15440,6 +15753,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -15577,6 +15896,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -15796,6 +16121,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -15952,6 +16283,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -16048,6 +16385,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -16148,6 +16491,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -16293,6 +16642,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -16431,6 +16786,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -16567,10 +16928,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -17547,7 +17908,7 @@
               "$ref": "#/components/schemas/FreeTextItemRequest"
             },
             "maxItems": 4,
-            "minItems": 4
+            "minItems": 0
           }
         },
         "required": [
@@ -17581,6 +17942,31 @@
           "programYear"
         ]
       },
+      "PreviousUjatTermRequest": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string",
+            "minLength": 1
+          },
+          "year": {
+            "type": "string",
+            "minLength": 1
+          },
+          "certificateFileIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "nullable": true
+          }
+        },
+        "required": [
+          "term",
+          "year"
+        ]
+      },
       "VolunteerParticipantRegisterRequest": {
         "type": "object",
         "properties": {
@@ -17591,6 +17977,7 @@
           "volunteerKind": {
             "type": "string",
             "default": "GENERAL",
+            "description": "GENERAL|EMPLOYEE만 허용합니다. UJAT 전용 kind는 없습니다. CMS 진행 추가 등록은 GENERAL만 처리하고 EMPLOYEE는 CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY입니다.",
             "enum": [
               "GENERAL",
               "EMPLOYEE"
@@ -17618,11 +18005,12 @@
           },
           "id1365": {
             "type": "string",
-            "description": "회원에 1365 ID가 없을 때만",
+            "description": "회원 프로필에 1365가 없을 때만 필수. 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다.",
             "nullable": true
           },
           "jaProgramExperienceConsentRequest": {
             "type": "string",
+            "description": "일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.",
             "enum": [
               "REQUESTED",
               "NOT_REQUESTED"
@@ -17632,6 +18020,33 @@
           "previousJaProgram": {
             "$ref": "#/components/schemas/PreviousJaProgramRequest"
           },
+          "previousUjatTerm": {
+            "description": "UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있을 때만 보내고 파일명만으로는 보내지 않습니다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PreviousUjatTermRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "description": "UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다.",
+            "nullable": true
+          },
+          "applicationType": {
+            "type": "string",
+            "description": "UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다.",
+            "enum": [
+              "NEW",
+              "UJAT_GRADUATE",
+              "new",
+              "ujat-graduate"
+            ],
+            "nullable": true
+          },
           "freeTextItems": {
             "$ref": "#/components/schemas/FreeTextItemsRequest"
           },
@@ -17639,24 +18054,6 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 5
-          },
-          "previousUjatTerm": {
-            "$ref": "#/components/schemas/VolunteerPreviousUjatTermRequest"
-          },
-          "educationRegionCode": {
-            "type": "string",
-            "nullable": true,
-            "description": "UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null."
-          },
-          "applicationType": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              "NEW",
-              "UJAT_GRADUATE",
-              "new",
-              "ujat-graduate"
-            ]
           }
         },
         "required": [
@@ -17936,11 +18333,27 @@
             "minItems": 1
           },
           "reason": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "maxLength": 2000
+            "type": "string",
+            "description": "호환용 선택 필드. CMS 임시 반려 확인 모달은 사유를 보내지 않는다. 생략·null·빈 문자열을 허용하며 실제 신청 REJECTED 사유와 무관하다.",
+            "maxLength": 2000,
+            "minLength": 0,
+            "nullable": true
+          }
+        },
+        "required": [
+          "applicationIds"
+        ]
+      },
+      "TemporaryRejectionCancelRequest": {
+        "type": "object",
+        "properties": {
+          "applicationIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "minItems": 1
           }
         },
         "required": [
@@ -18371,6 +18784,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -18621,6 +19040,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -18704,6 +19129,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -18769,6 +19200,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -18831,6 +19268,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -19105,6 +19548,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -20846,6 +21295,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -20900,6 +21355,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -20961,6 +21422,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -21156,6 +21623,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -21224,6 +21697,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -21331,6 +21810,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -21561,8 +22046,8 @@
           },
           "textbookName": {
             "type": "string",
-            "nullable": true,
-            "description": "학년 블록에 저장된 교재명. 없으면 null."
+            "description": "학년 블록에 저장된 교재명. 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다.",
+            "nullable": true
           },
           "textbookNameEn": {
             "type": "string",
@@ -21571,22 +22056,24 @@
           "kitCount": {
             "type": "integer",
             "format": "int32",
+            "description": "학년 블록에 저장된 키트 수. 없으면 null.",
             "nullable": true
           },
           "bookCount": {
             "type": "integer",
             "format": "int32",
+            "description": "학년 블록에 저장된 권수. 없으면 null.",
             "nullable": true
           },
           "textbookDeliveryStatus": {
             "type": "string",
-            "nullable": true,
             "enum": [
               "PREPARING",
               "SHIPPING",
               "DELIVERED",
               "NOT_APPLICABLE"
-            ]
+            ],
+            "nullable": true
           }
         }
       },
@@ -21875,31 +22362,31 @@
           },
           "textbookNameEn": {
             "type": "string",
-            "nullable": true,
-            "description": "신청에 연결된 교재 영문명. 없으면 null."
+            "description": "신청에 연결된 교재 영문명. 교재가 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다.",
+            "nullable": true
           },
           "textbookDeliveryStatus": {
             "type": "string",
-            "nullable": true,
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
             "enum": [
               "PREPARING",
               "SHIPPING",
               "DELIVERED",
               "NOT_APPLICABLE"
             ],
-            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다."
+            "nullable": true
           },
           "kitCount": {
             "type": "integer",
             "format": "int32",
-            "nullable": true,
-            "description": "저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생수/24로 계산하지 않습니다."
+            "description": "저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다.",
+            "nullable": true
           },
           "bookCount": {
             "type": "integer",
             "format": "int32",
-            "nullable": true,
-            "description": "저장된 교재 권수. 없으면 null."
+            "description": "저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다.",
+            "nullable": true
           }
         }
       },
@@ -22159,6 +22646,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -22212,6 +22705,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -22326,6 +22825,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -22519,6 +23024,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -22600,6 +23111,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -22667,6 +23184,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -22721,6 +23244,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -22763,6 +23292,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -22813,6 +23348,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -22933,6 +23474,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -23038,24 +23585,6 @@
           "targets"
         ]
       },
-      "Target": {
-        "type": "object",
-        "properties": {
-          "accountType": {
-            "type": "string",
-            "description": "MEMBER 또는 ADMIN_ACCOUNT",
-            "minLength": 1
-          },
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          }
-        },
-        "required": [
-          "accountType",
-          "id"
-        ]
-      },
       "AccountDirectoryBulkDeleteResponse": {
         "type": "object",
         "properties": {
@@ -23108,6 +23637,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -23211,6 +23746,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -23398,6 +23939,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -23477,6 +24024,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -24649,6 +25202,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -24696,6 +25255,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -24874,77 +25439,6 @@
           }
         }
       },
-      "IndividualApprovalWithScopeRequest": {
-        "type": "object",
-        "description": "개인 신청 승인 및 교육 일정 확정. timing을 생략하면 승인 알림을 즉시 발송합니다.",
-        "properties": {
-          "confirmedScheduleIds": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "maxItems": 1000,
-            "minItems": 0
-          },
-          "expectedScopeRevision": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 500,
-            "minLength": 0
-          },
-          "timing": {
-            "type": "string",
-            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. ON_ANNOUNCEMENT는 프로그램 발표일 기준으로 서버가 예약합니다.",
-            "example": "SCHEDULED"
-          },
-          "scheduledAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
-          }
-        },
-        "required": [
-          "confirmedScheduleIds",
-          "expectedScopeRevision",
-          "reason"
-        ]
-      },
-      "IndividualApprovalWithScopeBulkRequest": {
-        "type": "object",
-        "description": "확정된 교육 범위를 포함하는 개인 신청 일괄 승인 요청입니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.",
-        "properties": {
-          "targets": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Target"
-            },
-            "maxItems": 100,
-            "minItems": 0
-          },
-          "reason": {
-            "type": "string",
-            "maxLength": 500,
-            "minLength": 0
-          },
-          "timing": {
-            "type": "string",
-            "description": "IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. 생략하면 IMMEDIATE. 발표일은 대상 프로그램별로 서버가 계산합니다."
-          },
-          "scheduledAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
-          }
-        },
-        "required": [
-          "reason",
-          "targets"
-        ]
-      },
       "GeneratedFileJobRequest": {
         "type": "object",
         "properties": {
@@ -24987,6 +25481,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -25024,7 +25524,7 @@
           },
           "duplicateStrategy": {
             "type": "string",
-            "description": "overwrite=동일 키 행 덮어쓰기. append=미지급 중복 시 신규 insert. 계좌 지급완료 중복이 있으면 overwrite·append 모두 요청 전체 미커밋. 소문자 허용.",
+            "description": "overwrite=미지급 동일 키 upsert. append=미지급 중복 시 신규 insert. 기존 실적이 계좌 지급완료(PAID)인 중복이 하나라도 있으면 overwrite·append 모두 요청 전체 미커밋 (FAILED+GEMINI_TRAINING_REPORT_ACCOUNT_PAID, 부분 커밋 없음). 소문자 허용.",
             "enum": [
               "overwrite",
               "append",
@@ -25169,7 +25669,7 @@
           },
           "status": {
             "type": "string",
-            "description": "대소문자 고정. 행 검증 실패 또는 계좌 지급완료 중복 차단(overwrite·append 무관)만 FAILED.",
+            "description": "대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등 진짜 검증 실패. GEMINI_INSTRUCTOR_NOT_MATCHED(이름·연락처 있으나 미매칭)는 FAILED가 아니라 SUCCESS+paymentExclusionReason.",
             "enum": [
               "SUCCESS",
               "FAILED"
@@ -25214,11 +25714,12 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재(회원 검증·계좌 지급 생략, 실적만 등록)",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭",
             "enum": [
               "ZERO_CALCULATED_FEE",
               "GEMINI_WAGE_RATE_NOT_CONFIGURED",
-              "GEMINI_INSTRUCTOR_IDENTITY_BLANK"
+              "GEMINI_INSTRUCTOR_IDENTITY_BLANK",
+              "GEMINI_INSTRUCTOR_NOT_MATCHED"
             ],
             "nullable": true
           }
@@ -27489,6 +27990,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -27554,6 +28061,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -27702,6 +28215,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -27844,6 +28363,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -28120,6 +28645,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -28211,6 +28742,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -28901,6 +29438,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -28983,6 +29526,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -29650,6 +30199,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -29678,6 +30233,43 @@
           "birthDate",
           "gender"
         ]
+      },
+      "VolunteerActivityRegionUpdateRequest": {
+        "type": "object",
+        "description": "봉사자 신청 희망 교육 활동 지역 수정. educationRegionCode는 지역 마스터 code(예: seoul, SEOUL, gyeonggi_south). 한글 라벨 금지.",
+        "properties": {
+          "educationRegionCode": {
+            "type": "string",
+            "description": "ujat_education_region.code. 대소문자·하이픈/언더스코어는 마스터 code로 정규화한다.",
+            "example": "seoul",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        },
+        "required": [
+          "educationRegionCode"
+        ]
+      },
+      "VolunteerActivityRegionUpdateResponse": {
+        "type": "object",
+        "description": "봉사자 신청 희망 교육 활동 지역 수정 결과. GET 목록 preferredRegion/preferredRegionCode 및 상세 ujat.preferredActivityRegion과 같다.",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "봉사자 신청 id"
+          },
+          "preferredRegion": {
+            "type": "string",
+            "description": "지역 마스터 라벨. 목록 preferredRegion·상세 ujat.preferredActivityRegion과 동일",
+            "example": "서울"
+          },
+          "preferredRegionCode": {
+            "type": "string",
+            "description": "저장된 지역 마스터 code. 요청 seoul은 SEOUL로 정규화. 목록 preferredRegionCode와 동일",
+            "example": "SEOUL"
+          }
+        }
       },
       "AdminMemberBasicInfoUpdateRequest": {
         "type": "object",
@@ -30297,6 +30889,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -30429,6 +31027,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -30849,19 +31453,6 @@
           }
         }
       },
-      "VolunteerActivityRegionUpdateRequest": {
-        "type": "object",
-        "required": [
-          "educationRegionCode"
-        ],
-        "properties": {
-          "educationRegionCode": {
-            "type": "string",
-            "maxLength": 100,
-            "description": "ujat_education_region.code. 예: seoul, SEOUL, gyeonggi_south. 한글 라벨 금지. 저장·응답은 마스터 code."
-          }
-        }
-      },
       "TrainedTeacherProgramDetailRequest": {
         "type": "object",
         "properties": {
@@ -30910,6 +31501,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -31009,6 +31606,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -31122,6 +31725,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -31239,6 +31848,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -31427,6 +32042,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -31586,6 +32207,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -31776,6 +32403,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -31857,6 +32490,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -31891,6 +32530,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -32028,6 +32673,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -32141,6 +32792,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -32483,6 +33140,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -32552,6 +33215,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -32608,6 +33277,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -34131,6 +34806,11 @@
             "description": "1차 서류 합격자 발표 시각. interviewEnabled가 true일 때만 의미가 있습니다. 없으면 null입니다.",
             "nullable": true
           },
+          "documentPassAnnouncementMethod": {
+            "type": "string",
+            "description": "1차 서류 합격 발표 방법. interviewEnabled가 true이고 해당 모집 행 overlay에 값이 있을 때만 채웁니다. 빈 문자열은 null.",
+            "nullable": true
+          },
           "interviewStartAt": {
             "type": "string",
             "format": "date-time",
@@ -34143,10 +34823,20 @@
             "description": "2차 면접 기간 끝. 없으면 null입니다.",
             "nullable": true
           },
+          "interviewMethod": {
+            "type": "string",
+            "description": "면접 방식. interviewEnabled가 true이고 해당 모집 행 overlay에 값이 있을 때만 채웁니다. 빈 문자열은 null.",
+            "nullable": true
+          },
           "finalPassAnnouncementAt": {
             "type": "string",
             "format": "date-time",
             "description": "최종 합격자 발표 시각. 면접이 없어도 값이 있으면 내려줍니다. 없으면 null입니다.",
+            "nullable": true
+          },
+          "finalPassAnnouncementMethod": {
+            "type": "string",
+            "description": "최종 합격 발표 방법. 해당 모집 행 overlay에 값이 있으면 면접 여부와 무관하게 채웁니다. 빈 문자열은 null.",
             "nullable": true
           },
           "programDescription": {
@@ -34757,6 +35447,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -36999,6 +37695,22 @@
           }
         }
       },
+      "MemberPortalGeminiLectureFeeBasisItem": {
+        "type": "object",
+        "properties": {
+          "classCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "인정 차시. 1~4 오름차순"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "해당 차시 고정 강사비(원). 단가 미설정이면 null. 0원은 0",
+            "nullable": true
+          }
+        }
+      },
       "MemberPortalGeminiSettlementSummary": {
         "type": "object",
         "description": "제미나이 정산 현황 상단. 지급조서는 CMS 연수 실적·계좌 지급 결과 기준이며 강사가 별도 신청하지 않는다.",
@@ -37054,6 +37766,13 @@
             "type": "string",
             "description": "인정 차시별 고정 강사비 표시. 예: 인정 2차시 고정 강사비 170000원. 단가 없으면 단가 미설정",
             "nullable": true
+          },
+          "lectureFeeBasisItems": {
+            "type": "array",
+            "description": "제미나이 차시별 강사비 단가 목록. 1~4차시 오름차순. 없으면 []. null이 아니다",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalGeminiLectureFeeBasisItem"
+            }
           },
           "accountPaymentStatus": {
             "type": "string",
@@ -37131,6 +37850,22 @@
             "type": "string",
             "format": "double",
             "description": "자택-기관 거리(km) 숫자. distance_status=CALCULATED이고 distance_km가 있을 때만. 문자열 아님. 없으면 null",
+            "nullable": true
+          },
+          "accountPaymentStatus": {
+            "type": "string",
+            "description": "해당 일정(연수 실적)에 연결된 account_payment.payment_status 정규화 값. 지급 건이 없으면 null",
+            "nullable": true
+          },
+          "settlementStatusLabel": {
+            "type": "string",
+            "description": "화면 표시용 정산 상태 라벨. 예: 계좌 지급 완료, 확인 대기 중. 지급 건이 없으면 null",
+            "nullable": true
+          },
+          "expectedAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "정산 예정 금액(원 단위 정수). 연결된 지급 건이 없거나 산정 전이면 null",
             "nullable": true
           }
         }
@@ -37262,6 +37997,125 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ExpenseReceiptItem"
+            }
+          }
+        }
+      },
+      "MemberPortalUjatClassAssignmentRow": {
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "grade": {
+            "type": "string",
+            "example": "1",
+            "nullable": true
+          },
+          "gradeLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "example": "2",
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "classNo": {
+            "type": "string",
+            "nullable": true
+          },
+          "volunteerAName": {
+            "type": "string",
+            "nullable": true
+          },
+          "volunteerA": {
+            "type": "string",
+            "nullable": true
+          },
+          "volunteerBName": {
+            "type": "string",
+            "nullable": true
+          },
+          "volunteerB": {
+            "type": "string",
+            "nullable": true
+          },
+          "textbookName": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "준비 수량(학급 학생 수).",
+            "nullable": true
+          },
+          "textbookQuantity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "textbookQuantityLabel": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "MemberPortalUjatClassAssignmentSchedule": {
+        "type": "object",
+        "properties": {
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "scheduleStartAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "교육일 시작. Asia/Seoul offset.",
+            "example": "2026-04-03T00:00:00+09:00",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "description": "Asia/Seoul YYYY-MM-DD. FE가 date를 읽을 때 사용.",
+            "example": "2026-04-03",
+            "nullable": true
+          },
+          "attendanceManagerName": {
+            "type": "string",
+            "description": "해당 일정의 출결 담당자 이름. 없으면 null.",
+            "nullable": true
+          },
+          "consentDocumentsDownloadPath": {
+            "type": "string",
+            "description": "동의서 일괄 다운로드 GET path. JA 시스템 확인 요청이 있고 배정 봉사자가 있을 때만 채운다. 없으면 null.",
+            "example": "/api/portal/me/program-applications/ORGANIZATION/1/class-assignments/11/consent-documents",
+            "nullable": true
+          },
+          "rows": {
+            "type": "array",
+            "description": "학급 행. 없으면 [].",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalUjatClassAssignmentRow"
+            }
+          }
+        }
+      },
+      "MemberPortalUjatClassAssignmentsResponse": {
+        "type": "object",
+        "description": "UJAT 기관 마이페이지 배정 탭. schedules는 항상 배열이며 배정이 없으면 [].",
+        "properties": {
+          "schedules": {
+            "type": "array",
+            "description": "일정별 학급 배정. 없으면 []. null 금지.",
+            "items": {
+              "$ref": "#/components/schemas/MemberPortalUjatClassAssignmentSchedule"
             }
           }
         }
@@ -37756,6 +38610,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -38633,6 +39493,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -38699,6 +39565,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -41880,6 +42752,21 @@
             "description": "목록용 마스킹 이메일. 원문이 없으면 null",
             "nullable": true
           },
+          "homeAddress": {
+            "type": "string",
+            "description": "자택 주소. 목록은 항상 MASKED: 시/도만 반환하거나 시/도를 판별할 수 없으면 null. 시군구·동·상세로 채우지 않음. preferredRegion(희망 교육 지역)과 다른 필드이며 대체하지 않음",
+            "nullable": true
+          },
+          "homeAddressSido": {
+            "type": "string",
+            "description": "자택 시/도. 저장된 region_sido 또는 주소에서 인식된 시/도. 없으면 null",
+            "nullable": true
+          },
+          "homeAddressSigungu": {
+            "type": "string",
+            "description": "자택 시군구. 저장된 region_sigungu. 없으면 null. 목록에서 무조건 null로 두지 않음. preferredRegion과 다른 필드",
+            "nullable": true
+          },
           "applicationStatus": {
             "type": "string"
           },
@@ -43933,6 +44820,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -44003,6 +44896,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -44085,6 +44984,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -44860,6 +45765,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -45550,6 +46461,12 @@
               "type": "string"
             }
           },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AbsenceReasonAttachmentItem"
+            }
+          },
           "submittedAt": {
             "type": "string",
             "format": "date-time"
@@ -45561,6 +46478,27 @@
           "reviewedByAdminId": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "AbsenceReasonAttachmentItem": {
+        "type": "object",
+        "properties": {
+          "attachmentId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "program_absence_reason_submission_file.id"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileName": {
+            "type": "string"
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "CMS GET download path for this attachment. null when attachmentId is missing."
           }
         }
       },
@@ -45875,6 +46813,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -47719,11 +48663,6 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
-        "required": [
-          "categoryCode",
-          "categoryLabel",
-          "variables"
-        ],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -47744,16 +48683,6 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
-        "required": [
-          "key",
-          "token",
-          "requiresProgram",
-          "enabled",
-          "programGroups",
-          "recruitmentTypes",
-          "participantTypes",
-          "memberTypes"
-        ],
         "properties": {
           "key": {
             "type": "string",
@@ -47767,8 +48696,8 @@
           },
           "description": {
             "type": "string",
-            "nullable": true,
-            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
+            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null",
+            "nullable": true
           },
           "requiresProgram": {
             "type": "boolean",
@@ -47780,63 +48709,46 @@
           },
           "programGroups": {
             "type": "array",
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
+            }
           },
           "recruitmentTypes": {
             "type": "array",
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
+            }
           },
           "participantTypes": {
             "type": "array",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            },
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
+              "type": "string"
+            }
           },
           "memberTypes": {
             "type": "array",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            },
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
+              "type": "string"
+            }
           },
           "sourceMode": {
             "type": "string",
-            "nullable": true,
             "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
             "enum": [
               "SERVER_RESOLVED",
               "MANUAL_ALLOWED",
               "EVENT_ONLY"
-            ]
+            ],
+            "nullable": true
           }
         }
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
-        "required": [
-          "totalCount",
-          "categories",
-          "systemManualSendQaEnabled"
-        ],
         "properties": {
           "totalCount": {
             "type": "integer",
@@ -49101,6 +50013,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -49343,11 +50261,12 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재(회원 검증·계좌 지급 생략, 실적만 등록)",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재로 실적만 등록, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭으로 실적만 등록",
             "enum": [
               "ZERO_CALCULATED_FEE",
               "GEMINI_WAGE_RATE_NOT_CONFIGURED",
-              "GEMINI_INSTRUCTOR_IDENTITY_BLANK"
+              "GEMINI_INSTRUCTOR_IDENTITY_BLANK",
+              "GEMINI_INSTRUCTOR_NOT_MATCHED"
             ],
             "nullable": true
           }
@@ -50878,6 +51797,22 @@
               "IN_PROGRESS",
               "COMPLETED"
             ]
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "program_schedule.schedule_kind. PRE_EDUCATION은 출석·대시보드에 포함되고 신청/배정 후보에서는 제외합니다.",
+            "enum": [
+              "PRE_EDUCATION",
+              "EDUCATION",
+              "CLOSING",
+              "SESSION"
+            ],
+            "nullable": true
+          },
+          "educationSlotKey": {
+            "type": "string",
+            "description": "program_schedule.education_slot_key",
+            "nullable": true
           }
         }
       },
@@ -51913,6 +52848,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -51955,6 +52896,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -51996,6 +52943,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -52031,6 +52984,12 @@
           "error": {
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
             "nullable": true
           }
         }
@@ -52084,6 +53043,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -52099,102 +53064,6 @@
           },
           "status": {
             "type": "string"
-          }
-        }
-      },
-      "OrganizationApplicationSession": {
-        "type": "object",
-        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열"
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "grade": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "className": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "classLabel": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "OrganizationApplicationSessionResponse": {
-        "type": "object",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "requestedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "resolvedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "scheduleUnresolved": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true
           }
         }
       },
@@ -52233,47 +53102,6 @@
             "$ref": "#/components/schemas/ScopeResponse"
           }
         }
-      },
-      "VolunteerActivityRegionUpdateResponse": {
-        "type": "object",
-        "properties": {
-          "applicationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "preferredRegion": {
-            "type": "string",
-            "description": "마스터 라벨. GET 목록 preferredRegion 및 상세 ujat.preferredActivityRegion과 동일",
-            "nullable": true
-          },
-          "preferredRegionCode": {
-            "type": "string",
-            "description": "마스터 code. GET 목록 preferredRegionCode와 동일",
-            "nullable": true
-          }
-        }
-      },
-      "VolunteerPreviousUjatTermRequest": {
-        "type": "object",
-        "required": [
-          "term",
-          "year"
-        ],
-        "properties": {
-          "term": {
-            "type": "string"
-          },
-          "year": {
-            "type": "string"
-          },
-          "certificateFileIds": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            }
-          }
-        }
       }
     },
     "responses": {
@@ -52288,6 +53116,9 @@
                 },
                 "data": {},
                 "message": {
+                  "example": "인증이 필요하거나 토큰이 만료되었습니다."
+                },
+                "detail": {
                   "example": "인증이 필요하거나 토큰이 만료되었습니다."
                 },
                 "error": {
@@ -52327,6 +53158,9 @@
                 "message": {
                   "example": "현재 계정에 필요한 권한이 없습니다."
                 },
+                "detail": {
+                  "example": "현재 계정에 필요한 권한이 없습니다."
+                },
                 "error": {
                   "properties": {
                     "code": {
@@ -52362,6 +53196,9 @@
                 },
                 "data": {},
                 "message": {
+                  "example": "요청한 리소스를 찾을 수 없습니다."
+                },
+                "detail": {
                   "example": "요청한 리소스를 찾을 수 없습니다."
                 },
                 "error": {
@@ -52401,6 +53238,9 @@
                 "message": {
                   "example": "상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다."
                 },
+                "detail": {
+                  "example": "상태 전이, 중복 처리, 동시성 정책 때문에 요청을 처리할 수 없습니다."
+                },
                 "error": {
                   "properties": {
                     "code": {
@@ -52438,6 +53278,9 @@
                 "message": {
                   "example": "요청 파라미터 또는 본문 값이 유효하지 않습니다."
                 },
+                "detail": {
+                  "example": "요청 파라미터 또는 본문 값이 유효하지 않습니다."
+                },
                 "error": {
                   "properties": {
                     "code": {
@@ -52473,6 +53316,9 @@
                 },
                 "data": {},
                 "message": {
+                  "example": "서버 내부 오류입니다. 운영 로그와 traceId를 확인하세요."
+                },
+                "detail": {
                   "example": "서버 내부 오류입니다. 운영 로그와 traceId를 확인하세요."
                 },
                 "error": {

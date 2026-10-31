@@ -24,7 +24,6 @@ export type PersonalInfoRevealButtonProps = {
   style?: CSSProperties
   cmsVariant?: CmsButtonVariant
   cmsSize?: CmsButtonSize
-  width?: number | string
 }
 
 function resolveLabel(labelMode: PersonalInfoRevealButtonLabelMode, revealed: boolean): string {
@@ -63,8 +62,7 @@ export function PersonalInfoRevealButton({
       className={className}
       style={style}
       disabled={disabled}
-      onClick={onClick}
-    >
+      onClick={onClick} >
       {children}
     </CmsButton>
   )

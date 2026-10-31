@@ -11,6 +11,8 @@ export type ParticipatingIndividualVolunteerAssignedScheduleRow = {
   distanceFromHome: string
   scheduleLabel: string
   scheduleId?: number
+  /** GET education-scope에 붙은 PRE_ED — 배정 후보 체크·배정 취소 대상이 아니다 */
+  preEducation?: boolean
 }
 
 export type ParticipatingIndividualVolunteerWaitingScheduleRow = {

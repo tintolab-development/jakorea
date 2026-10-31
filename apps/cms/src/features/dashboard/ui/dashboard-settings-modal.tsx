@@ -398,8 +398,7 @@ export function DashboardSettingsModal({ open, onCancel }: DashboardSettingsModa
         size="large"
         adminAction="dashboardWrite"
         onClick={handleApply}
-        loading={isSaving}
-      >
+        loading={isSaving} >
         저장
       </CmsButton>
     </>

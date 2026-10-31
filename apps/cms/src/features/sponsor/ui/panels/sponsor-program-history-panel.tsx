@@ -280,8 +280,7 @@ export function SponsorProgramHistoryPanel({
               variant="delete"
               onClick={handleDeleteProgramHistory}
               disabled={!canWrite || deleteDisabled}
-              loading={deleteDisabled}
-            >
+              loading={deleteDisabled} >
               이력 삭제
             </FilterTableToolbarButton>
           ) : null

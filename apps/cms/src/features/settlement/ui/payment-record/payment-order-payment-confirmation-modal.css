@@ -23,26 +23,6 @@
   width: 100%;
 }
 
-/* ContentModal 푸터 140 고정 예외(cms-button--footer-auto) — 긴 확인 라벨 */
-.payment-order-payment-confirm-modal
-  .content-modal__footer-actions
-  .cms-button.ant-btn.cms-button--footer-auto {
-  width: max-content !important;
-  min-width: max-content !important;
-  max-width: none !important;
-  flex-direction: row;
-  white-space: nowrap;
-}
-
-.payment-order-payment-confirm-modal
-  .content-modal__footer-actions
-  .cms-button.ant-btn.cms-button--footer-auto
-  .cms-button__label {
-  overflow: visible;
-  text-overflow: unset;
-  max-width: none;
-}
-
 .payment-order-payment-confirm__line {
   margin: 0;
   font-size: var(--font-size-16, 16px);

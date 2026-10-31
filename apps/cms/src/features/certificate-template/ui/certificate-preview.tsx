@@ -223,9 +223,7 @@ export function CertificatePreview({
           icon={<ButtonDownloadIcon />}
           onClick={handleDownload}
           loading={generating}
-          disabled={disabled || !backgroundImageUrl}
-          width="100%"
-        >
+          disabled={disabled || !backgroundImageUrl} >
           PDF 다운로드
         </CmsButton>
       </Space>

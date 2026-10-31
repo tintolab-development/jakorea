@@ -307,15 +307,13 @@ export function withUjatProgramApplicationFormInstitutionGradeInfoTitleTrailing(
         type="button"
         variant="secondary"
         size="medium"
-        width={160}
         icon={<ButtonAddIcon aria-hidden />}
         disabled={!applicationGradeAddEnabled}
         onClick={e => {
           e.stopPropagation()
           if (!applicationGradeAddEnabled) return
           o.onAddApplicationGrade()
-        }}
-      >
+        }} >
         신청 학년 추가
       </CmsButton>
     ),
@@ -344,15 +342,13 @@ export function withUjatProgramApplicationFormInstitutionGradeClassTimeTitleTrai
         type="button"
         variant="secondary"
         size="medium"
-        width={160}
         icon={<ButtonAddIcon aria-hidden />}
         disabled={!classTimeAddEnabled}
         onClick={e => {
           e.stopPropagation()
           if (!classTimeAddEnabled) return
           o.onAddClassTimeBlock()
-        }}
-      >
+        }} >
         수업 진행 시간 추가
       </CmsButton>
     ),
@@ -456,14 +452,12 @@ export function withProgramApplicationFormVolunteerTitleTrailing(
           type="button"
           variant="secondary"
           size="medium"
-          width={160}
           disabled={opts?.exceptionScheduleAddDisabled}
           icon={<ButtonAddIcon aria-hidden />}
           onClick={e => {
             e.stopPropagation()
             opts?.onAddExceptionSchedule?.()
-          }}
-        >
+          }} >
           예외 일정 추가
         </CmsButton>
       </div>

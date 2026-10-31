@@ -136,29 +136,23 @@ export function TemplateSelectModal<T extends SendTemplatePickerItem>({
               <CmsButton
                 type="button"
                 variant="default"
-                size="small"
-                width={80}
-                className="send-template-select-modal__action-btn send-template-select-modal__action-btn--preview"
+                size="small" className="send-template-select-modal__action-btn send-template-select-modal__action-btn--preview"
                 onClick={event => {
                   event.stopPropagation()
                   onPreview(record)
-                }}
-              >
+                }} >
                 미리보기
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
-                size="small"
-                width={80}
-                className="send-template-select-modal__action-btn send-template-select-modal__action-btn--use"
+                size="small" className="send-template-select-modal__action-btn send-template-select-modal__action-btn--use"
                 disabled={!canUse}
                 aria-describedby={reasonId}
                 onClick={event => {
                   event.stopPropagation()
                   handleUse(record)
-                }}
-              >
+                }} >
                 {useButtonLabel}
               </CmsButton>
             </div>

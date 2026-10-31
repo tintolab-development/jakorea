@@ -76,8 +76,7 @@ export function InstructorPermissionStatusResetConfirmModal({
             variant={fromStatus === 'APPROVED' ? 'delete' : 'primary'}
             size="medium"
             type="button"
-            onClick={handleConfirm}
-          >
+            onClick={handleConfirm} >
             {actionLabel}
           </CmsButton>
         </div>

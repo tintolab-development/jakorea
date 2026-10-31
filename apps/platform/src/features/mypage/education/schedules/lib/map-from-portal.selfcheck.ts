@@ -88,7 +88,7 @@ assert.equal(assignmentOn.assignment.status, 'feedback')
 assert.equal(assignmentOn.assignment.formResponseId, 88)
 assert.equal(assignmentOn.assignment.files?.length, 2)
 const assignmentSubmissions = assignmentOn.assignment.files ?? []
-assert.equal(assignmentSubmissions[0]?.id, 'file-1')
+assert.equal(assignmentSubmissions[0]?.id, 'file-501')
 assert.equal(assignmentSubmissions[1]?.id, 'url-2')
 if (assignmentSubmissions[0]?.kind === 'file') {
   assert.equal(assignmentSubmissions[0].fileObjectId, 501)
@@ -205,7 +205,7 @@ const teamIndividual = mapPortalEducationSchedule(
   { scheduleId: 21, teamRole: 'INDIVIDUAL', teamName: null },
   0,
 )
-assert.deepEqual(teamIndividual.team, { roleLabel: '개인', teamName: '-' })
+assert.deepEqual(teamIndividual.team, { roleLabel: '개인' })
 
 const nonTeamProgram = mapPortalEducationSchedule({ scheduleId: 22, teamName: '무시' }, 0)
 assert.equal(nonTeamProgram.team, undefined)
@@ -223,5 +223,43 @@ const instructorAssignment = mapPortalEducationSchedule(
   { applicationType: 'INSTRUCTOR' },
 )
 assert.equal(instructorAssignment.assignment, undefined)
+
+// 일정형 사전교육 블록 — scheduleName 없이 title·blockKind 만 오는 응답 (신청 1694714 형태)
+const preEducationMeta = {
+  educationStructure: 'SCHEDULE',
+  sessionRound: 'MULTI',
+  applicationType: 'INDIVIDUAL',
+} as const
+const preEducation = mapPortalEducationSchedule(
+  {
+    scheduleId: 187614,
+    title: '사전 교육',
+    startAt: '2026-10-31T12:20:00Z',
+    endAt: '2026-10-31T12:22:00Z',
+    attendanceStatus: 'PRESENT',
+    blockKind: 'PRE_EDUCATION',
+    teamRole: null,
+    teamName: null,
+  },
+  0,
+  preEducationMeta,
+)
+assert.equal(preEducation.rowLabel, '사전교육')
+assert.equal(preEducation.progressTimeLabel, '2026년 10월 31일(토) 21:20 ~ 21:22')
+assert.equal(preEducation.team, undefined)
+
+const subBlock = mapPortalEducationSchedule(
+  {
+    scheduleId: 187612,
+    title: '개인일정',
+    startAt: '2026-10-31T12:25:00Z',
+    endAt: '2026-10-31T12:30:00Z',
+    blockKind: 'SUB',
+  },
+  1,
+  preEducationMeta,
+)
+// scheduleName 이 없으면 title(CMS 일정명)을 라벨로 쓴다
+assert.equal(subBlock.rowLabel, '개인일정')
 
 console.log('map-from-portal.selfcheck: ok')

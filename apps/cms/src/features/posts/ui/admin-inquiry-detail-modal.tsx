@@ -101,8 +101,7 @@ export function AdminInquiryDetailModal({
         variant="delete"
         size="medium"
         onClick={handleDelete}
-        disabled={!detail || isAnswerRegistered}
-      >
+        disabled={!detail || isAnswerRegistered} >
         삭제
       </CmsButton>
       <div className="admin-inquiry-detail-modal__footer-right">
@@ -114,8 +113,7 @@ export function AdminInquiryDetailModal({
           size="medium"
           onClick={handleReplySubmit}
           adminAction="send"
-          disabled={!detail || isAnswerRegistered || replyMutation.isPending}
-        >
+          disabled={!detail || isAnswerRegistered || replyMutation.isPending} >
           답변 등록
         </CmsButton>
       </div>

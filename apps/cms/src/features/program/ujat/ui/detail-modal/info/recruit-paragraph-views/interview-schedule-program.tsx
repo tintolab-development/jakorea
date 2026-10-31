@@ -177,11 +177,9 @@ export function UjatRecruitInterviewScheduleProgramView({
                 type="button"
                 variant="secondary"
                 size="medium"
-                width={160}
                 disabled={exceptionScheduleAddDisabled}
                 icon={<ButtonAddIcon aria-hidden />}
-                onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])}
-              >
+                onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])} >
                 예외 일정 추가
               </CmsButton>
             </div>

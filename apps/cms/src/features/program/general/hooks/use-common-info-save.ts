@@ -27,6 +27,12 @@ import { showUpdateCompletedAlert } from '@/shared/ui'
 import type { GeneralProgramUpdateSerializeOptions } from '@/features/program/general/api/adapters/general-program-adapters'
 import { createGeneralProgramCommonInfoIndependentSave } from '@/features/program/general/lib/overlay-phase1/common-info-independent-save'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
+import {
+  getGeneralProgramApiErrorCode,
+  getGeneralProgramApiErrorMessage,
+} from '@/features/program/general/api/get-general-program-api-error'
+import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
+import { resolveProgramDetailSaveApiFormField } from '@/features/program/shared/lib/program-detail-save-api-error'
 
 export const TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND =
   'trained-teachers-dedicated-path' as const
@@ -137,6 +143,16 @@ export function useGeneralProgramCommonInfoSave({
       showUpdateCompletedAlert()
       return { ok: true }
     } catch (error) {
+      const message = getGeneralProgramApiErrorMessage(error, '')
+      const field = resolveProgramDetailSaveApiFormField({
+        apiField: getApiErrorField(error),
+        message,
+        errorCode: getGeneralProgramApiErrorCode(error),
+      })
+      if (field && message) {
+        form.setError(field as never, { type: 'server', message })
+        form.setFocus(field as never)
+      }
       return { ok: false, kind: 'api', error }
     } finally {
       savingRef.current = false

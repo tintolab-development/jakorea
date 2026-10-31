@@ -72,10 +72,8 @@ export function FindPasswordForm({
           <CmsButton
             variant="primary"
             size="h52"
-            width="100%"
             loading={isIdentityLoading}
-            onClick={onIdentityVerify}
-          >
+            onClick={onIdentityVerify} >
             본인인증 후 비밀번호 찾기
           </CmsButton>
         </div>

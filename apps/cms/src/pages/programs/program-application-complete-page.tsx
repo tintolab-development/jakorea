@@ -60,8 +60,7 @@ export function ProgramApplicationCompletePage() {
           <CmsButton
             key="list"
             icon={<FileSearchOutlined />}
-            onClick={() => navigate(getApplicationListPath())}
-          >
+            onClick={() => navigate(getApplicationListPath())} >
             신청 내역 확인
           </CmsButton>,
           <CmsButton key="home" variant="default" onClick={() => navigate(getRedirectPathByRole(user))}>

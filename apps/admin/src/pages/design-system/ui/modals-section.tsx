@@ -37,8 +37,7 @@ export function ModalsSection() {
                 title: '선택 항목 없음',
                 content: '삭제할 배너를 선택해 주세요.',
               })
-            }
-          >
+            } >
             useCmsAlert
           </CmsButton>
         </div>

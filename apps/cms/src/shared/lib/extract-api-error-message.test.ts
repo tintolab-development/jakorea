@@ -237,3 +237,20 @@ describe('isApiWorkflowConflictError', () => {
     expect(isApiWorkflowConflictError(new Error('Network Error'))).toBe(false)
   })
 })
+
+describe('schedule line error codes', () => {
+  it('코드만 있으면 FE 한글 안내를 쓴다', () => {
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        error: { code: 'SCHEDULE_LINE_UNPARSEABLE' },
+      })
+    ).toBe('교육 일정 날짜/시간 형식을 해석할 수 없습니다. 날짜와 시간을 확인해 주세요.')
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        error: { code: 'GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED' },
+      })
+    ).toContain('유효한 교육 일정이 필요합니다')
+  })
+})

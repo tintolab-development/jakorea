@@ -61,7 +61,7 @@ export function UjatVolunteerInterviewAssignCompleteModal({
       className="ujat-volunteer-interview-assign-complete-modal"
       description={`**[${applicantName}]** 님의 ${descriptionAction}`}
       footer={
-        <CmsButton variant="secondary" size="h40" width={120} type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="h40" type="button" onClick={onClose}>
           확인
         </CmsButton>
       }

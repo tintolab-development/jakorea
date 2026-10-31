@@ -626,9 +626,19 @@ export type GeneralAssignmentSubmissionListResponse = {
 }
 
 const GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE = 20
+const GENERAL_ASSIGNMENT_SUBMISSIONS_MAX_PAGES = 50
 
-/** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
-export async function fetchProgramAssignmentSubmissionsRemote(
+function readAssignmentSubmissionScheduleItems(
+  body: unknown
+): GeneralAssignmentSubmissionScheduleDto[] {
+  if (Array.isArray(body)) return body
+  if (body == null || typeof body !== 'object') return []
+  const record = body as Record<string, unknown>
+  const raw = record.items ?? record.content ?? record.schedules
+  return Array.isArray(raw) ? (raw as GeneralAssignmentSubmissionScheduleDto[]) : []
+}
+
+async function fetchProgramAssignmentSubmissionsPage(
   programId: string,
   params?: {
     scheduleId?: string
@@ -645,9 +655,7 @@ export async function fetchProgramAssignmentSubmissionsRemote(
     size: params?.size ?? GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE,
     ...params,
   }
-  const body = await unwrapApiBody<
-    GeneralAssignmentSubmissionListResponse | GeneralAssignmentSubmissionScheduleDto[]
-  >(
+  const body = await unwrapApiBody<unknown>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/assignment-submissions`,
       method: 'GET',
@@ -655,10 +663,47 @@ export async function fetchProgramAssignmentSubmissionsRemote(
     })
   )
   if (Array.isArray(body)) return { items: body }
+  if (body == null || typeof body !== 'object') return { items: [] }
+  const record = body as GeneralAssignmentSubmissionListResponse
   return {
-    ...body,
-    items: body.items ?? [],
+    ...record,
+    items: readAssignmentSubmissionScheduleItems(body),
   }
+}
+
+/** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
+export async function fetchProgramAssignmentSubmissionsRemote(
+  programId: string,
+  params?: {
+    scheduleId?: string
+    memberName?: string
+    affiliation?: string
+    grade?: string
+    submissionStatus?: 'NOT_SUBMITTED' | 'SUBMITTED'
+    page?: number
+    size?: number
+  }
+): Promise<GeneralAssignmentSubmissionListResponse> {
+  const first = await fetchProgramAssignmentSubmissionsPage(programId, params)
+  const pageSize = params?.size ?? first.size ?? GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE
+  const items = [...(first.items ?? [])]
+  const totalPages =
+    first.totalPages ??
+    (first.totalElements != null ? Math.ceil(first.totalElements / pageSize) : 1)
+  const shouldPage =
+    params?.page == null &&
+    (totalPages > 1 || (first.totalElements != null && first.totalElements > items.length))
+  if (!shouldPage) return { ...first, items }
+
+  for (let page = 1; page < totalPages && page < GENERAL_ASSIGNMENT_SUBMISSIONS_MAX_PAGES; page += 1) {
+    const next = await fetchProgramAssignmentSubmissionsPage(programId, {
+      ...params,
+      page,
+      size: pageSize,
+    })
+    items.push(...(next.items ?? []))
+  }
+  return { ...first, items }
 }
 
 /** POST /api/admin/programs/{programId}/submission-teams */

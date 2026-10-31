@@ -184,10 +184,8 @@ export function UjatEducationProgressChangeClassModal({
         variant="primary"
         size="large"
         type="button"
-        width={200}
         disabled={!canConfirm}
-        onClick={handleConfirm}
-      >
+        onClick={handleConfirm} >
         변경사항 적용
       </CmsButton>
     </div>
@@ -235,13 +233,11 @@ export function UjatEducationProgressChangeClassModal({
             type="button"
             variant="delete"
             size="medium"
-            width={80}
             disabled={!someRowsSelected}
-            onClick={handleRemoveSelectedRows}
-          >
+            onClick={handleRemoveSelectedRows} >
             삭제
           </CmsButton>
-          <CmsButton type="button" variant="secondary" size="medium" width={80} onClick={handleAddRow}>
+          <CmsButton type="button" variant="secondary" size="medium" onClick={handleAddRow}>
             추가
           </CmsButton>
         </div>

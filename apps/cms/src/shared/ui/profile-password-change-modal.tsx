@@ -198,8 +198,7 @@ export function ProfilePasswordChangeModal({
             loading={submitting}
             onClick={() => {
               void handleChangeComplete()
-            }}
-          >
+            }} >
             변경 완료
           </CmsButton>
         </>

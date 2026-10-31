@@ -4,7 +4,7 @@ import type {
   UjatVolunteerInterviewEvaluationPayload,
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
@@ -123,45 +123,33 @@ function Interview2ApplicantDetail({
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
-            onClick={onWithdrawActivity}
-          >
+            onClick={onWithdrawActivity} >
             활동 포기
           </CmsButton>
           <CmsButton
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             disabled={interviewNotEnded}
-            onClick={onInterviewFail}
-          >
+            onClick={onInterviewFail} >
             면접 불합격
           </CmsButton>
           <CmsButton
             type="button"
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             disabled={interviewNotEnded}
-            onClick={onInterviewPass}
-          >
+            onClick={onInterviewPass} >
             면접 합격
           </CmsButton>
           <CmsButton
             type="button"
             variant="primary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             disabled={interviewNotEnded && !isEvaluationEditing}
             onClick={() => {
               void handleInterviewEvaluationClick()
-            }}
-          >
+            }} >
             면접 평가
           </CmsButton>
             </>
@@ -172,9 +160,7 @@ function Interview2ApplicantDetail({
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </div>
       </div>
 
@@ -294,18 +280,13 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onWithdrawActivity}
-            >
+              onClick={onWithdrawActivity} >
               활동 포기
             </CmsButton>
             <CmsButton
               type="button"
               variant="secondary"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
               disabled={assignInterviewDisabled}
               onClick={onAssignInterview}
             >
@@ -319,9 +300,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
               revealed={personalInfoRevealed}
               cmsVariant="primary"
               cmsSize="large"
-              width={180}
-              onClick={openPersonalInfoRevealConfirm}
-            />
+              onClick={openPersonalInfoRevealConfirm} />
           </div>
         </div>
 
@@ -360,8 +339,6 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={onDocumentReject}
           >
             서류 반려
@@ -370,8 +347,6 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             type="button"
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={onDocumentApprove}
           >
             서류 승인
@@ -384,7 +359,6 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
             onClick={openPersonalInfoRevealConfirm}
           />
         </div>

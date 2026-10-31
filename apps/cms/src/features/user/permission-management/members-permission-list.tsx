@@ -47,7 +47,7 @@ import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
 import {
-  CmsButton, CMS_ACTION_BUTTON_WIDTH, ContentModal, useCmsAlert,
+  CmsButton, ContentModal, useCmsAlert,
   FilterTableToolbarButton
 } from '@/shared/ui'
 
@@ -641,18 +641,12 @@ export const MembersPermissionList = forwardRef<
           <>
             <FilterTableToolbarButton
               variant="delete"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={bulkReject}
-            >
+              onClick={bulkReject} >
               신청 반려
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="secondary"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={bulkApprove}
-            >
+              onClick={bulkApprove} >
               신청 승인
             </FilterTableToolbarButton>
           </>
@@ -702,8 +696,7 @@ export const MembersPermissionList = forwardRef<
                 variant="secondary"
                 size="medium"
                 type="button"
-                onClick={() => setBulkApproveBlockedSelectedCount(null)}
-              >
+                onClick={() => setBulkApproveBlockedSelectedCount(null)} >
                 확인
               </CmsButton>
             }
@@ -724,8 +717,7 @@ export const MembersPermissionList = forwardRef<
                 variant="secondary"
                 size="medium"
                 type="button"
-                onClick={() => setBulkRejectBlockedSelectedCount(null)}
-              >
+                onClick={() => setBulkRejectBlockedSelectedCount(null)} >
                 확인
               </CmsButton>
             }

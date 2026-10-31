@@ -778,6 +778,40 @@ export async function bulkApproveIndividualApplicationsWithEducationScopeRemote(
   )
 }
 
+/**
+ * POST /api/admin/volunteer-applications/{applicationId}/approve-with-education-scope
+ * 면접 없는 봉사자 최종 합격. confirmedScheduleIds는 본교육 ID만(사전교육은 서버가 붙임).
+ */
+export async function approveVolunteerApplicationWithEducationScopeRemote(
+  applicationId: string,
+  payload: IndividualApprovalWithScopeRequest
+): Promise<IndividualApprovalWithScopeResult> {
+  return unwrapApiBody<IndividualApprovalWithScopeResult>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/approve-with-education-scope`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
+ * POST /api/admin/volunteer-applications/bulk-approve-with-education-scope
+ * 면접 없는 봉사자 일괄 합격. target.confirmedScheduleIds는 본교육 ID만.
+ */
+export async function bulkApproveVolunteerApplicationsWithEducationScopeRemote(payload: {
+  reason: string
+  targets: IndividualApprovalWithScopeBulkTarget[]
+} & OrganizationDecisionNotifyRequest): Promise<BulkActionResponse> {
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/volunteer-applications/bulk-approve-with-education-scope',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
 export async function rejectIndividualApplicationRemote(
   applicationId: string,
   payload: ApplicationRejectRequest

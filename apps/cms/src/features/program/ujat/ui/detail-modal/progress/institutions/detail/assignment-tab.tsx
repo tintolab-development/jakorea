@@ -148,11 +148,8 @@ export function UjatEducationProgressInstitutionAssignmentChangeButton({
     <CmsButton
       type="button"
       variant="primary"
-      size="large"
-      width={200}
-      className="assignment-tab__change-btn"
-      onClick={onClick}
-    >
+      size="large" className="assignment-tab__change-btn"
+      onClick={onClick} >
       교육 학년 및 학급 변경
     </CmsButton>
   )

@@ -42,21 +42,15 @@ export function SurveyNoResponseState({
         </div>
         <div className="survey-management-status-state__actions">
           {showDeleteButton ? (
-            <CmsButton
-              className="survey-management-status-state__delete-button"
+            <CmsButton className="survey-management-status-state__delete-button"
               variant="delete"
-              width={140}
               disabled={!canDelete}
-              onClick={onDeleteClick}
-            >
+              onClick={onDeleteClick} >
               {deleteButtonLabel}
             </CmsButton>
           ) : null}
-          <CmsButton
-            className="survey-management-status-state__preview-button"
-            width={180}
-            onClick={onOpenTemplatePreview}
-          >
+          <CmsButton className="survey-management-status-state__preview-button"
+            onClick={onOpenTemplatePreview} >
             {previewButtonLabel}
           </CmsButton>
         </div>

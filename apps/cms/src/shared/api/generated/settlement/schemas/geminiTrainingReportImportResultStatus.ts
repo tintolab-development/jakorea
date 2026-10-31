@@ -7,7 +7,7 @@
  */
 
 /**
- * 대소문자 고정. 행 검증 실패 또는 계좌 지급완료 중복 차단(overwrite·append 무관)만 FAILED.
+ * 대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등 진짜 검증 실패. GEMINI_INSTRUCTOR_NOT_MATCHED(이름·연락처 있으나 미매칭)는 FAILED가 아니라 SUCCESS+paymentExclusionReason.
  */
 export type GeminiTrainingReportImportResultStatus = typeof GeminiTrainingReportImportResultStatus[keyof typeof GeminiTrainingReportImportResultStatus];
 

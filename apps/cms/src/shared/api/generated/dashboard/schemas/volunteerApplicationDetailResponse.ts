@@ -20,6 +20,10 @@ export interface VolunteerApplicationDetailResponse {
   recruitmentId?: number;
   memberId?: number;
   applicationStatus?: string;
+  /** 면접 상태. 배정 직후 ASSIGNED, 이후 PARTIALLY_EVALUATED|EVALUATED. 배정 전이면 PENDING/WAITING 등 저장된 값 */
+  interviewStatus?: string | null;
+  /** 현재 유효 면접 배정 상태. 배정 전이면 null */
+  interviewAssignmentStatus?: string | null;
   submittedAt?: string;
   updatedAt?: string;
   availableActions?: string[];
@@ -37,10 +41,6 @@ export interface VolunteerApplicationDetailResponse {
      * @minimum 0
      */
   interviewAvailabilityCount?: number;
-  /** 면접 운영 상태. ASSIGNED | PARTIALLY_EVALUATED | EVALUATED | COMPLETED | WITHDRAWN | WAITING | NOT_REQUIRED */
-  interviewStatus?: string;
-  /** DB 면접 배정 상태. 배정 전에는 null. ASSIGNED | PARTIALLY_EVALUATED | EVALUATED | COMPLETED */
-  interviewAssignmentStatus?: string;
   interviewAssignmentId?: number;
   assignedInterviewSlotId?: number;
   assignedInterviewStartAt?: string;

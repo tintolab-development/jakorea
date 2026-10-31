@@ -14,6 +14,8 @@ import type {
 import { countLectureAttendanceHeldAndAttended } from '@/features/program/general/lib/lecture-attendance-count'
 import { isScheduleAttendanceOpenForDisplay } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import { isGeneralProgressAttendanceSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
+import { PRE_EDUCATION_LECTURE_ROUND_NUMBER } from '@/features/program/general/lib/lecture-attendance-session-identity'
 import { mapOrganizationScheduleAssignmentSlotsToAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import {
@@ -52,6 +54,7 @@ type LectureRoundRow = {
   scheduleId: number
   roundNumber: number
   schedule?: DashboardProgramScheduleResponse
+  preEducation?: boolean
 }
 
 function dashboardScheduleById(
@@ -84,16 +87,23 @@ function toProgramSchedule(schedule: DashboardProgramScheduleResponse): ProgramS
 function educationSessionRoundRows(
   schedules: readonly DashboardProgramScheduleResponse[]
 ): LectureRoundRow[] {
+  // 사전교육(sessionNo=null)은 회차 0 — 본교육 회차 폴백 번호를 밀지 않고, 정렬 시 앞에 온다.
+  let mainEducationIndex = 0
   return schedules
     .filter(isGeneralProgressAttendanceSessionSchedule)
-    .flatMap((schedule, index) => {
+    .flatMap(schedule => {
+      const preEducation = isProgramSchedulePreEducation(schedule)
+      const index = preEducation ? mainEducationIndex : mainEducationIndex++
       const scheduleId = schedule.scheduleId
       if (scheduleId == null || !Number.isFinite(scheduleId) || scheduleId <= 0) return []
       return [
         {
           schedule,
           scheduleId: Math.trunc(scheduleId),
-          roundNumber: schedule.sessionNo ?? index + 1,
+          roundNumber: preEducation
+            ? PRE_EDUCATION_LECTURE_ROUND_NUMBER
+            : (schedule.sessionNo ?? index + 1),
+          ...(preEducation ? { preEducation: true } : {}),
         },
       ]
     })
@@ -121,10 +131,13 @@ function assignedRoundRows(
     const scheduleId = session.resolvedScheduleId
     if (scheduleId == null || seen.has(scheduleId)) continue
     seen.add(scheduleId)
+    const schedule = scheduleById.get(scheduleId)
+    const preEducation = schedule != null && isProgramSchedulePreEducation(schedule)
     rows.push({
       scheduleId,
-      roundNumber: session.round,
-      schedule: scheduleById.get(scheduleId),
+      roundNumber: preEducation ? PRE_EDUCATION_LECTURE_ROUND_NUMBER : session.round,
+      schedule,
+      ...(preEducation ? { preEducation: true } : {}),
     })
   }
   return rows
@@ -154,6 +167,7 @@ function toLectureSession(
     scheduleId: row.scheduleId,
     status: mine ? mapApiStatusToLecture(mine.status) : 'not_held',
     ...(isLectureRecordingOpen(row.schedule) ? { recordingOpen: true } : {}),
+    ...(row.preEducation ? { preEducation: true } : {}),
   }
 }
 
@@ -175,7 +189,18 @@ export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
           programId: input.programId,
           organizationApplicationId,
         })
-  const roundRows = assignedRows.length > 0 ? assignedRows : educationSessionRoundRows(schedules)
+  // 기관 신청이 있으면 분모는 active OSA 배정 일정만(사전교육 포함). 미배정 프로그램 일정으로 폴백하지 않는다.
+  const roundRows = organizationApplicationId
+    ? assignedRows
+    : educationSessionRoundRows(schedules)
+
+  if (roundRows.length === 0) {
+    return {
+      studentName: input.studentName,
+      attendanceRatePercent: 0,
+      sessions: [],
+    }
+  }
 
   const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
     input.programId,

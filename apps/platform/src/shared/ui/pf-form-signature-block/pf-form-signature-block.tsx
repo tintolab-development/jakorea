@@ -7,6 +7,7 @@ import {
 } from '../pf-electronic-signature-modal'
 import { ensureSignatureFontsReady } from '../pf-electronic-signature-modal/signature-fonts'
 import { usePFFormDraftSignatureOptional } from '../pf-form-draft-signature'
+import { formatPaddedKoreanSeoulDate } from '@/shared/lib/format-display-date'
 import {
   createFormSignatureValue,
   formatFormSignatureDate,
@@ -14,13 +15,6 @@ import {
 } from './normalize-form-signature'
 import styles from './pf-form-signature-block.module.css'
 import type { PFFormSignatureBlockHandle, PFFormSignatureBlockProps } from './types'
-
-function formatConsentDate(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}년 ${month}월 ${day}일`
-}
 
 function resolveSignatureFontStyle(fontStyleCode?: string) {
   if (!fontStyleCode) return null
@@ -45,7 +39,7 @@ export const PFFormSignatureBlock = forwardRef<
 
   const signDateLabel = signed
     ? formatFormSignatureDate(storedSignature)
-    : formatConsentDate(new Date())
+    : formatPaddedKoreanSeoulDate(new Date())
 
   const fontStyle = resolveSignatureFontStyle(storedSignature?.fontStyleCode)
   const signatureLabel =

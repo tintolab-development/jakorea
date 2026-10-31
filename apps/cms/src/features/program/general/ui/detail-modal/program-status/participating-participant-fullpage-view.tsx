@@ -22,7 +22,11 @@ import {
   unmaskIndividualApplicationPrivacyRemote,
   updateIndividualApplication,
 } from '@/features/program/general/api/applications-api-client'
-import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
+import {
+  INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT,
+  isIndividualApplicationApprovedOnlyUpdateError,
+  resolveIndividualApplicationTeamDetail,
+} from '@/features/program/general/lib/individual-application-team-detail'
 import {
   extractApiErrorMessage,
   getApiErrorHttpStatus,
@@ -623,17 +627,21 @@ export function ParticipatingParticipantFullpageView({
           queryKey: generalApplicationsQueryKeys.individualDetail(individualApplicationId),
         })
       } catch (error) {
-        const responseData =
-          error && typeof error === 'object' && 'response' in error
-            ? (error as { response?: { data?: unknown } }).response?.data
-            : undefined
-        void showAlert({
-          title: '팀 역할 저장 실패',
-          content: extractApiErrorMessage(responseData, {
-            httpStatus: getApiErrorHttpStatus(error),
-            fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
-          }),
-        })
+        if (isIndividualApplicationApprovedOnlyUpdateError(error)) {
+          void showAlert(INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT)
+        } else {
+          const responseData =
+            error && typeof error === 'object' && 'response' in error
+              ? (error as { response?: { data?: unknown } }).response?.data
+              : undefined
+          void showAlert({
+            title: '팀 역할 저장 실패',
+            content: extractApiErrorMessage(responseData, {
+              httpStatus: getApiErrorHttpStatus(error),
+              fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
+            }),
+          })
+        }
         throw error
       }
     },
@@ -659,73 +667,69 @@ export function ParticipatingParticipantFullpageView({
         trailing={
           visibleActiveTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="h40"
-                disabled={
-                  isActivityWithdrawn ||
-                  isApplicationInfoEditing ||
-                  activityWithdrawSubmitting ||
-                  activityWithdrawScheduleOptions.length === 0
-                }
-                onClick={handleRequestActivityWithdraw}
-              >
-                활동 포기
-              </CmsButton>
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                icon={<ButtonDownloadIcon />}
-                disabled={
-                  certificateExportActive ||
-                  isApplicationInfoEditing ||
-                  !isWithinStudentCertificateIssuancePeriod(
-                    mergedParticipant.participationAppliedAt
-                  )
-                }
-                onClick={handleCertificateIssueClick}
-              >
-                수료증/참여인증서 발급
-              </CmsButton>
+              {!isApplicationInfoEditing ? (
+                <>
+                  <CmsButton
+                    variant="delete"
+                    size="h40"
+                    disabled={
+                      isActivityWithdrawn ||
+                      activityWithdrawSubmitting ||
+                      activityWithdrawScheduleOptions.length === 0
+                    }
+                    onClick={handleRequestActivityWithdraw} >
+                    활동 포기
+                  </CmsButton>
+                  <CmsButton
+                    variant="secondary"
+                    size="h40"
+                    icon={<ButtonDownloadIcon />}
+                    disabled={
+                      certificateExportActive ||
+                      !isWithinStudentCertificateIssuancePeriod(
+                        mergedParticipant.participationAppliedAt
+                      )
+                    }
+                    onClick={handleCertificateIssueClick} >
+                    수료증/참여인증서 발급
+                  </CmsButton>
+                </>
+              ) : null}
               <ProgramEditInfoActions
                 size="h40"
-                width={false}
                 isEditing={isApplicationInfoEditing}
                 onEdit={requestStartApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
-                }}
-              />
-              <CmsButton
-                variant="primary"
-                size="h40"
-                disabled={isApplicationInfoEditing}
-                onClick={handleAdminCommentEditEnter}
-              >
-                코멘트 작성
-              </CmsButton>
-              <PersonalInfoRevealButton disabled={programPrivacyPending}
-                labelMode="stickyReveal"
-                revealed={personalInfoRevealed}
-                cmsSize="h40"
-                width="auto"
-                onClick={openPersonalInfoRevealConfirm}
-              />
+                }} />
+              {!isApplicationInfoEditing ? (
+                <>
+                  <CmsButton
+                    variant="primary"
+                    size="h40"
+                    onClick={handleAdminCommentEditEnter} >
+                    코멘트 작성
+                  </CmsButton>
+                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                    labelMode="stickyReveal"
+                    revealed={personalInfoRevealed}
+                    cmsSize="h40"
+                    onClick={openPersonalInfoRevealConfirm} />
+                </>
+              ) : null}
             </>
           ) : visibleActiveTab === 'attendance' ? (
             <>
               <CmsButton
                 variant="secondary"
                 size="h40"
-                onClick={() => attendanceSectionRef.current?.openAttendanceCorrectionModal()}
-              >
+                onClick={() => attendanceSectionRef.current?.openAttendanceCorrectionModal()} >
                 출결 정정
               </CmsButton>
               <ExcelButton
                 size="h40"
-                onClick={() => attendanceSectionRef.current?.exportExcel()}
-              />
+                onClick={() => attendanceSectionRef.current?.exportExcel()} />
             </>
           ) : visibleActiveTab === 'assignments' ? (
             <>
@@ -733,8 +737,7 @@ export function ParticipatingParticipantFullpageView({
                 <CmsButton
                   variant="secondary"
                   size="h40"
-                  onClick={() => assignmentSectionRef.current?.openTeamChangeModal()}
-                >
+                  onClick={() => assignmentSectionRef.current?.openTeamChangeModal()} >
                   팀 변경
                 </CmsButton>
               ) : null}
@@ -743,8 +746,7 @@ export function ParticipatingParticipantFullpageView({
                 size="h40"
                 icon={<ButtonDownloadIcon />}
                 adminAction="download"
-                onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()}
-              >
+                onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()} >
                 과제 일괄 다운로드
               </CmsButton>
               <ExcelButton onClick={() => assignmentSectionRef.current?.exportExcel()} />

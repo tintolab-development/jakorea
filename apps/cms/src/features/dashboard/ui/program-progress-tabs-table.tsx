@@ -57,8 +57,7 @@ function ProgramProgressStatusFilterDropdown({
           onClick={() => {
             clearFilters?.()
             confirm()
-          }}
-        >
+          }} >
           초기화
         </CmsButton>
       </Space>

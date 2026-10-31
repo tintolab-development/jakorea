@@ -253,14 +253,12 @@ function SocialConnectProviderListInner({
               </p>
               <CmsButton
                 variant="default"
-                size="small"
-                className="social-connect-provider-list__action-btn cms-button--no-label-ellipsis"
+                size="small" className="social-connect-provider-list__action-btn"
                 loading={isLoading}
                 disabled={loadingProvider !== null && !isLoading}
                 onClick={() =>
                   isConnected ? handleDisconnectRequest(provider) : handleConnectRequest(provider)
-                }
-              >
+                } >
                 {isConnected ? '해제하기' : '연결하기'}
               </CmsButton>
             </li>

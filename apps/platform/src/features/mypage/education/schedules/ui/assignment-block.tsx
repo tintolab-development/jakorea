@@ -146,6 +146,7 @@ export function EducationScheduleAssignmentBlock({
         statusTone={guide.statusTone}
         message={guide.message}
         description={assignment.periodLabel}
+        mobileStack
         actions={
           <div className={styles.actions}>
             {guide.showFeedbackButton ? (

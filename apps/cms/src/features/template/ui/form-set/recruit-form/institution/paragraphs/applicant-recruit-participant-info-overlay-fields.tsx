@@ -18,7 +18,6 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import {
   RecruitInquiryContactRow,
   RecruitNotesRow,
@@ -352,12 +351,6 @@ export const ApplicantRecruitProgramPeriodField = memo(
       }
       setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
     }
-    const programRangeWithTime = useMemo(
-      () =>
-        programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1]),
-      [programRange]
-    )
-
     return (
       <DetailInfoForm.Field
         label="프로그램 운영 기간"
@@ -373,8 +366,9 @@ export const ApplicantRecruitProgramPeriodField = memo(
               placeholder="운영 기간을 선택하세요"
               preferPeriodModeInPopover
               suppressAutoTodayWhenEmpty
+              showTimeToggle={false}
               appliedSurfaceRange={programRange}
-              appliedSurfaceWithTime={programRangeWithTime}
+              appliedSurfaceWithTime={false}
               onRangeChange={range => setProgramRange(range)}
               onChange={next => {
                 if (next == null) return

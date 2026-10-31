@@ -2096,10 +2096,8 @@ export function SettlementItemSettingDetailModal({
           <CmsButton
             variant="primary"
             size="large"
-            width={160}
             onClick={() => void handleSave()}
-            disabled={saving || !detailValid}
-          >
+            disabled={saving || !detailValid} >
             저장
           </CmsButton>
         </>

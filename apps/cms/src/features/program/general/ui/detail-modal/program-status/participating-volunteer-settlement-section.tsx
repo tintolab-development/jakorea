@@ -236,8 +236,7 @@ export function ParticipatingVolunteerSettlementSection({
               variant="default"
               size="h40"
               disabled={!record.canViewPaymentStatement || !remoteEnabled}
-              onClick={() => paymentStatementView.handleOpen(record)}
-            >
+              onClick={() => paymentStatementView.handleOpen(record)} >
               지급조서 보기
             </CmsButton>
           </div>
@@ -279,15 +278,13 @@ export function ParticipatingVolunteerSettlementSection({
             size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
-            onClick={() => void handleBulkDownloadPaymentStatements()}
-          >
+            onClick={() => void handleBulkDownloadPaymentStatements()} >
             지급조서 일괄 다운로드
           </CmsButton>
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={displayRows.length === 0}
-          />
+            disabled={displayRows.length === 0} />
         </div>
       </div>
 

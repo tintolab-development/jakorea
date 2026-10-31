@@ -77,11 +77,6 @@ export function RecruitFormVolunteerInfoParagraph() {
     }
     setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
-  const programRangeWithTime = useMemo(
-    () => (programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1])),
-    [programRange]
-  )
-
   const [recruitAnchorIso, setRecruitAnchorIso] = useVolunteerRecruitField<string | null>(
     'recruit.volunteer.recruitAnchorIso',
     null
@@ -247,8 +242,9 @@ export function RecruitFormVolunteerInfoParagraph() {
                   placeholder="프로그램 운영 기간을 선택하세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
+                  showTimeToggle={false}
                   appliedSurfaceRange={programRange}
-                  appliedSurfaceWithTime={programRangeWithTime}
+                  appliedSurfaceWithTime={false}
                   onRangeChange={range => setProgramRange(range)}
                   onChange={next => {
                     if (next == null) return

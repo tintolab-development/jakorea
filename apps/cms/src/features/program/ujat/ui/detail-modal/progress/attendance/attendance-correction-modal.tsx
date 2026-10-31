@@ -145,8 +145,7 @@ export function UjatAttendanceCorrectionModal({
         size="large"
         type="button"
         disabled={!canConfirm}
-        onClick={handleConfirm}
-      >
+        onClick={handleConfirm} >
         출결 정정
       </CmsButton>
     </div>

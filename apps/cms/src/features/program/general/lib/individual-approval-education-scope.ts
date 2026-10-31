@@ -18,6 +18,7 @@ import {
   generalProgramProgressQueryKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
 import { generalProgramQueryKeys } from '@/features/program/general/api/general-program-query-keys'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
 import {
   extractApiErrorDetails,
   extractApiErrorMessage,
@@ -54,6 +55,9 @@ export type IndividualApprovalAssignmentKind =
   | 'preferred-at-least-one'
   | 'all-program-slots'
 
+/** 개인 참여자는 단일 회차에서 1일정. 봉사자는 회차와 무관하게 희망 일정을 여러 개 배정할 수 있다. */
+export type IndividualApprovalScheduleAudience = 'individual' | 'volunteer'
+
 export type IndividualApprovalProgramShape = {
   educationStructure: IndividualApprovalEducationStructure
   sessionRound: IndividualApprovalSessionRound
@@ -79,11 +83,31 @@ const SELECTABLE_ROLES = new Set(['EDUCATION', 'SESSION'])
 const DISPLAY_ROLES = new Set(['EDUCATION', 'SESSION', 'PRE_EDUCATION'])
 
 export const GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE =
-  '프로그램 공통정보의 필수 사전교육 일정이 아직 생성되지 않았습니다. 프로그램 저장에서 사전교육 날짜를 확인한 뒤 다시 승인하세요.'
+  '사전교육 일정이 아직 준비되지 않았습니다. 프로그램 저장/동기화 후 다시 시도해 주세요.'
 
-const INDIVIDUAL_APPROVAL_SCOPE_CODE_MESSAGES: Partial<Record<string, string>> = {
+/** PUT education-scope PRE_ED merge는 BE 대기(항목 9). 거절 코드를 일정 선택 오류로 오인하지 않는다. */
+export const EDUCATION_SCOPE_PUT_PRE_EDUCATION_MERGE_PENDING_MESSAGE =
+  '사전교육은 승인 API로만 연결됩니다. BE 수정 대기'
+
+/** 서버 message가 비어 있을 때만 쓰는 FE 폴백 문구 (서버 문구 우선) */
+const INDIVIDUAL_APPROVAL_SCOPE_CODE_FALLBACK_MESSAGES: Partial<Record<string, string>> = {
   GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED:
     GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE,
+  GENERAL_INDIVIDUAL_PRE_EDUCATION_SCOPE_MISMATCH:
+    EDUCATION_SCOPE_PUT_PRE_EDUCATION_MERGE_PENDING_MESSAGE,
+}
+
+function readTrimmedString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+/** 응답 envelope의 서버 message (`error.message` 우선, 없으면 최상위 `message`). code와 같으면 빈 값 */
+function readServerErrorMessage(data: unknown, code: string): string {
+  if (data == null || typeof data !== 'object') return ''
+  const envelope = data as { message?: unknown; error?: { message?: unknown } | null }
+  const message =
+    readTrimmedString(envelope.error?.message) || readTrimmedString(envelope.message)
+  return message === code ? '' : message
 }
 
 export const INDIVIDUAL_APPROVAL_PROGRAM_SHAPE_MISSING_MESSAGE =
@@ -145,6 +169,7 @@ export function isSelectableProgramDefinedEducationSlot(
   slot: ProgramEducationSlotResponse
 ): boolean {
   if (!isProgramDefinedActiveSlot(slot)) return false
+  if (isProgramSchedulePreEducation(slot)) return false
   return SELECTABLE_ROLES.has(normalizeToken(slot.scheduleRole))
 }
 
@@ -152,6 +177,7 @@ export function isDisplayableProgramDefinedEducationSlot(
   slot: ProgramEducationSlotResponse
 ): boolean {
   if (!isProgramDefinedActiveSlot(slot)) return false
+  if (isProgramSchedulePreEducation(slot)) return true
   return DISPLAY_ROLES.has(normalizeToken(slot.scheduleRole))
 }
 
@@ -217,6 +243,36 @@ export function individualApprovalProgramShapeFromProgram(program: {
     sessionRound: program?.generalProgramSessionRound,
     educationScheduleMode: program?.generalCommonInfo?.educationScheduleMode,
   })
+}
+
+/** 일정형·복수회차 — 전 일정 자동 배정이라 참여자·기관 일괄 승인을 허용한다. */
+export function isGeneralScheduleMultiSessionProgram(
+  program: Parameters<typeof individualApprovalProgramShapeFromProgram>[0]
+): boolean {
+  const shape = individualApprovalProgramShapeFromProgram(program)
+  if (shape == null || 'blockedReason' in shape) return false
+  return shape.educationStructure === 'SCHEDULE' && shape.sessionRound === 'MULTI'
+}
+
+/** 일괄 승인 본문에 넣을 본교육(EDUCATION/SESSION) id. PRE_EDUCATION 제외. */
+export function listMainEducationScheduleIdsForBulkApprove(
+  slots: ReadonlyArray<ProgramEducationSlotResponse> | null | undefined
+): number[] {
+  return listSelectableProgramDefinedEducationSlots(slots).map(slot => slot.scheduleId as number)
+}
+
+export function buildIndividualScheduleMultiBulkApprovalTargets(input: {
+  applicationIds: ReadonlyArray<string | number>
+  scheduleIds: ReadonlyArray<number>
+}): Array<{ applicationId: string; confirmedScheduleIds: number[] }> {
+  const confirmedScheduleIds = uniquePositiveIds(input.scheduleIds) ?? []
+  return input.applicationIds
+    .map(id => String(id).trim())
+    .filter(id => id.length > 0)
+    .map(applicationId => ({
+      applicationId,
+      confirmedScheduleIds: [...confirmedScheduleIds],
+    }))
 }
 
 function formatInstantRange(startAt?: string | null, endAt?: string | null): string | null {
@@ -286,22 +342,18 @@ export function listAssignedEducationSlotOptions(
 ): IndividualApprovalScheduleOption[] {
   return listDisplayableProgramDefinedEducationSlots(slots).map(slot => {
     const scheduleId = slot.scheduleId as number
-    const role = normalizeToken(slot.scheduleRole)
-    const title = formatIndividualEducationSlotTitle({
-      scheduleId,
-      sessionNo: role === 'PRE_EDUCATION' ? null : slot.sessionNo,
-      startAt: slot.startAt,
-      endAt: slot.endAt,
-    })
+    const preEducation = isProgramSchedulePreEducation(slot)
     return {
       key: `assigned-slot:${scheduleId}`,
       scheduleId,
-      title:
-        role === 'PRE_EDUCATION'
-          ? title === '교육 일정'
-            ? PRE_EDUCATION_DISPLAY_LABEL
-            : `${PRE_EDUCATION_DISPLAY_LABEL} · ${title}`
-          : title,
+      title: preEducation
+        ? PRE_EDUCATION_DISPLAY_LABEL
+        : formatIndividualEducationSlotTitle({
+            scheduleId,
+            sessionNo: slot.sessionNo,
+            startAt: slot.startAt,
+            endAt: slot.endAt,
+          }),
       selectable: false,
       blockedReason: null,
     }
@@ -354,13 +406,25 @@ export function listIndividualPreferredScheduleOptions(
 }
 
 function assignmentKind(
-  shape: IndividualApprovalProgramShape
+  shape: IndividualApprovalProgramShape,
+  audience: IndividualApprovalScheduleAudience = 'individual'
 ): IndividualApprovalAssignmentKind {
   if (shape.educationStructure === 'SCHEDULE' && shape.sessionRound === 'MULTI') {
     return 'all-program-slots'
   }
-  if (shape.sessionRound === 'MULTI') return 'preferred-at-least-one'
+  if (audience === 'volunteer' || shape.sessionRound === 'MULTI') return 'preferred-at-least-one'
   return 'preferred-exact-one'
+}
+
+export function nextIndividualApprovalScheduleIds(
+  plan: IndividualApprovalSchedulePlan,
+  prev: ReadonlyArray<number>,
+  scheduleId: number
+): number[] {
+  if (plan.kind === 'preferred-exact-one') return [scheduleId]
+  if (plan.kind === 'all-program-slots') return [...plan.lockedScheduleIds]
+  if (prev.includes(scheduleId)) return prev.filter(id => id !== scheduleId)
+  return [...prev, scheduleId]
 }
 
 function preferredOption(
@@ -390,6 +454,7 @@ export function buildIndividualApprovalSchedulePlan(input: {
   preferred?: ReadonlyArray<PreferredEducationSchedule> | null
   slots?: ReadonlyArray<ProgramEducationSlotResponse> | null
   slotsResolved: boolean
+  audience?: IndividualApprovalScheduleAudience
 }): IndividualApprovalSchedulePlan {
   if (!input.slotsResolved) {
     return { kind: null, blockedReason: null, options: [], lockedScheduleIds: [] }
@@ -406,7 +471,7 @@ export function buildIndividualApprovalSchedulePlan(input: {
   const selectableIds = new Set(
     selectable.map(slot => positiveScheduleId(slot.scheduleId)).filter((id): id is number => id != null)
   )
-  const kind = assignmentKind(input.program)
+  const kind = assignmentKind(input.program, input.audience ?? 'individual')
   if (kind === 'all-program-slots') {
     if (selectable.length === 0) {
       return {
@@ -628,12 +693,15 @@ export function formatIndividualApprovalScopeErrorMessage(error: unknown): strin
   const timingMessage = getNotificationTimingApiErrorMessage(error)
   if (timingMessage) return timingMessage
   const code = getApiErrorCode(error)
-  const mapped = code ? INDIVIDUAL_APPROVAL_SCOPE_CODE_MESSAGES[code] : undefined
-  if (mapped) return mapped
   const data =
     error && typeof error === 'object' && 'response' in error
       ? (error as { response?: { data?: unknown } }).response?.data
       : undefined
+  const fallback = code ? INDIVIDUAL_APPROVAL_SCOPE_CODE_FALLBACK_MESSAGES[code] : undefined
+  if (code === 'GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED' && fallback) {
+    return fallback
+  }
+  if (code && fallback) return readServerErrorMessage(data, code) || fallback
   const message = extractApiErrorMessage(data, {
     httpStatus: getApiErrorHttpStatus(error),
     fallback: '교육 일정 승인에 실패했습니다. 신청과 교육 일정을 다시 확인해 주세요.',

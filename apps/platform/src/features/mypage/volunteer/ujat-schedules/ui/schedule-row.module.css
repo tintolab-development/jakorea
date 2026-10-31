@@ -116,6 +116,11 @@
   gap: var(--spacing-16);
 }
 
+/* PC: 출석하기는 우측 아이콘 버튼만 */
+.actions .checkInMobile {
+  display: none;
+}
+
 @media (--bp-pc-up) {
   .actions {
     gap: var(--spacing-40);
@@ -123,5 +128,47 @@
 
   .divider {
     display: block;
+  }
+}
+
+/* Mobile — Figma 6810:78493 「03. 봉사현황 상세_출결 현황 (Mobile 375)」 card */
+@media (--bp-below-pc) {
+  article.card {
+    padding: var(--spacing-16);
+  }
+
+  .head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-16);
+  }
+
+  .identity {
+    flex: 0 0 auto;
+  }
+
+  .actions,
+  .actionButtons {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-12);
+  }
+
+  .checkIn {
+    display: none;
+  }
+
+  .actions .checkInMobile.checkInMobile {
+    display: inline-flex;
+  }
+
+  /* Figma Mobile / Button: 52px · radius 16 · 16px SemiBold */
+  .actions .rowButton.rowButton {
+    width: 100%;
+    height: 52px;
+    border-radius: var(--radius-16);
+    font-size: 16px;
+    font-weight: 600;
   }
 }

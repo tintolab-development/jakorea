@@ -99,8 +99,7 @@ export function BannerSectionCard({ banner }: Props) {
             variant="primary"
             size="h40"
             type="button"
-            onClick={() => setModalOpen(true)}
-          >
+            onClick={() => setModalOpen(true)} >
             수정
           </CmsButton>
         </div>

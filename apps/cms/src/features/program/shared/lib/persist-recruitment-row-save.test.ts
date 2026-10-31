@@ -370,6 +370,29 @@ describe('persist-recruitment-row-save', () => {
     expect(body?.volunteerTargets).toEqual(['university', 'adult'])
   })
 
+  it('참여자 최종 발표 수정은 모집 행 finalPassAnnouncementAt에 싣는다', () => {
+    const program = orgProgram()
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft: program,
+      patch: { resultAnnouncementDate: '2026-11-10T01:00:00.000Z' },
+      audience: 'participant',
+    })
+    expect(body?.finalPassAnnouncementAt).toBe('2026-11-10T01:00:00.000Z')
+  })
+
+  it('참여자 서류 발표를 비우면 clearFields에 documentPassAnnouncementAt을 넣는다', () => {
+    const program = orgProgram()
+    const body = buildProgramRecruitmentRowSaveRequest({
+      baseline: program,
+      draft: program,
+      patch: { documentPassAnnouncementDate: undefined },
+      audience: 'participant',
+    })
+    expect(body?.clearFields).toContain('documentPassAnnouncementAt')
+    expect(body?.documentPassAnnouncementAt).toBeUndefined()
+  })
+
   it('재조회 nested가 옛값이면 저장한 참여자·참여 기관 모집 정보를 화면에 남긴다', () => {
     const program = orgProgram()
     const next = applySavedRecruitmentOntoProgram({

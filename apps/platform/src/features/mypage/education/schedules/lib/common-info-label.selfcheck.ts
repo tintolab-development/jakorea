@@ -141,4 +141,46 @@ assert.equal(
 )
 assert.equal(resolveEducationScheduleRowLabel({}), EDUCATION_SCHEDULE_EMPTY_LABEL)
 
+// 일정형 사전교육 블록: scheduleName 이 null 이어도 「사전교육」
+assert.equal(
+  resolveEducationScheduleRowLabel({ educationStructure: 'SCHEDULE', blockKind: 'PRE_EDUCATION' }),
+  '사전교육',
+)
+assert.equal(
+  resolveEducationScheduleRowLabel({
+    educationStructure: 'SCHEDULE',
+    blockKind: 'PRE_EDUCATION',
+    scheduleName: '오리엔테이션',
+  }),
+  '오리엔테이션',
+)
+assert.equal(
+  resolveEducationScheduleRowLabel({ educationStructure: 'SCHEDULE', blockKind: 'SUB' }),
+  EDUCATION_SCHEDULE_EMPTY_LABEL,
+)
+// 일정형: scheduleName 이 없으면 title(CMS 일정명)
+assert.equal(
+  resolveEducationScheduleRowLabel({ educationStructure: 'SCHEDULE', blockKind: 'SUB', title: '팀일정111' }),
+  '팀일정111',
+)
+assert.equal(
+  resolveEducationScheduleRowLabel({
+    educationStructure: 'SCHEDULE',
+    blockKind: 'SUB',
+    scheduleName: '개회식',
+    title: '팀일정111',
+  }),
+  '개회식',
+)
+// 사전교육은 title 보다 「사전교육」 표기 우선
+assert.equal(
+  resolveEducationScheduleRowLabel({ educationStructure: 'SCHEDULE', blockKind: 'PRE_EDUCATION', title: '사전 교육' }),
+  '사전교육',
+)
+// 커리큘럼형은 blockKind 를 쓰지 않는다
+assert.equal(
+  resolveEducationScheduleRowLabel({ educationStructure: 'CURRICULUM', blockKind: 'PRE_EDUCATION' }),
+  EDUCATION_SCHEDULE_EMPTY_LABEL,
+)
+
 console.log('common-info-label.selfcheck: ok')

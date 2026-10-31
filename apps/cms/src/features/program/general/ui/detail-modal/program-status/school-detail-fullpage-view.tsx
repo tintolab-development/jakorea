@@ -2367,23 +2367,17 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         trailing={
           activeTab === 'application' ? (
             <>
-              {showActivityWithdrawButton ? (
+              {!isApplicationInfoEditing && showActivityWithdrawButton ? (
                 <CmsButton
                   variant="delete"
                   size="h40"
-                  disabled={
-                    !canRequestActivityWithdraw ||
-                    isApplicationInfoEditing ||
-                    activityWithdrawSubmitting
-                  }
-                  onClick={handleRequestActivityWithdraw}
-                >
+                  disabled={!canRequestActivityWithdraw || activityWithdrawSubmitting}
+                  onClick={handleRequestActivityWithdraw} >
                   활동 포기
                 </CmsButton>
               ) : null}
               <ProgramEditInfoActions
                 size="h40"
-                width={false}
                 isEditing={isApplicationInfoEditing}
                 idleVariant="secondary"
                 onEdit={requestStartApplicationInfoEdit}
@@ -2394,33 +2388,30 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                       combinedClassProcess.openGradeRequiredAlert()
                     }
                   })
-                }}
-              />
-              {showAdminCommentSection ? (
-                <CmsButton
-                  variant="primary"
-                  size="h40"
-                  disabled={isApplicationInfoEditing}
-                  onClick={handleAdminCommentEditEnter}
-                >
-                  코멘트 작성
-                </CmsButton>
+                }} />
+              {!isApplicationInfoEditing ? (
+                <>
+                  {showAdminCommentSection ? (
+                    <CmsButton
+                      variant="primary"
+                      size="h40"
+                      onClick={handleAdminCommentEditEnter} >
+                      코멘트 작성
+                    </CmsButton>
+                  ) : null}
+                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                    labelMode="toggle"
+                    revealed={personalInfoRevealed}
+                    cmsSize="h40"
+                    onClick={handlePrivacyToggleClick} />
+                </>
               ) : null}
-              <PersonalInfoRevealButton disabled={programPrivacyPending}
-                labelMode="toggle"
-                revealed={personalInfoRevealed}
-                cmsSize="h40"
-                width="auto"
-                onClick={handlePrivacyToggleClick}
-              />
             </>
           ) : activeTab === 'posts' ? (
             <CmsButton
               variant="primary"
-              size="medium"
-              className="school-detail-fullpage-view__posts-register-btn"
-              onClick={() => setPostWriteModalOpen(true)}
-            >
+              size="medium" className="school-detail-fullpage-view__posts-register-btn"
+              onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>
           ) : null
@@ -2579,22 +2570,19 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                   </CmsButton>
                   <CmsButton
                     variant="secondary"
-                    size="h40"
-                    className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
+                    size="h40" className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
                     onClick={() => {
                       if (currentAssignedCount >= requiredInstructorCount) {
                         setAddAssignOverflowOpen(true)
                       } else {
                         setAddAssignModalOpen(true)
                       }
-                    }}
-                  >
+                    }} >
                     추가 배정
                   </CmsButton>
                   <ExcelButton
                     onClick={exportAssignedInstructorsExcel}
-                    loading={isAssignedInstructorsExcelExporting}
-                  />
+                    loading={isAssignedInstructorsExcelExporting} />
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__assignment-table-scroll">
@@ -2626,16 +2614,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                 <div className="info-section-buttons--wrapper">
                   <CmsButton
                     variant="secondary"
-                    size="h40"
-                    className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
-                    onClick={handleSelectAssignClick}
-                  >
+                    size="h40" className="school-detail-fullpage-view__btn-assign participating-institutions-section__btn-approve"
+                    onClick={handleSelectAssignClick} >
                     선택 배정
                   </CmsButton>
                   <ExcelButton
                     onClick={exportWaitingInstructorsExcel}
-                    loading={isWaitingInstructorsExcelExporting}
-                  />
+                    loading={isWaitingInstructorsExcelExporting} />
                 </div>
               </div>
               <div className="participating-institutions-section__table-wrap school-detail-fullpage-view__waiting-table-scroll">

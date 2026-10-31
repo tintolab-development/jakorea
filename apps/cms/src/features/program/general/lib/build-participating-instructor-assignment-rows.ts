@@ -27,6 +27,7 @@ import { getParticipatingSchoolAssignmentSessions } from '@/features/program/gen
 import { hasAssignableOrganizationInstructorSchedule } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
 
 function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
   const fromSessions = buildParticipatingSchoolSessionLines(
@@ -539,9 +540,12 @@ export function buildParticipatingInstructorWaitingScheduleRowsFromBoard(input: 
     instructorsBySchedule.set(scheduleKey, members)
   }
 
+  // 필수 사전교육(PRE_EDUCATION)은 강사 배정 후보가 아니다 — scheduleRole null(레거시)은 유지.
   const waiting = input.schedules.filter(
     (schedule): schedule is ProgramScheduleResponse & { id: number } =>
-      schedule.id != null && !ownScheduleIds.has(String(schedule.id))
+      schedule.id != null &&
+      !ownScheduleIds.has(String(schedule.id)) &&
+      !isProgramSchedulePreEducation(schedule)
   )
   const n = waiting.length
   return waiting.map((schedule, index) => {

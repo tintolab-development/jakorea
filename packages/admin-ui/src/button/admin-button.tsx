@@ -21,6 +21,7 @@ type AdminButtonPropsOmit =
   | 'color'
   | 'className'
   | 'style'
+  | 'width'
 
 const ANTD_SIZE: Record<ReturnType<typeof resolveAdminButtonSize>, ButtonProps['size']> = {
   h52: 'large',
@@ -30,14 +31,9 @@ const ANTD_SIZE: Record<ReturnType<typeof resolveAdminButtonSize>, ButtonProps['
   h32: 'small',
 }
 
-export const ADMIN_ACTION_BUTTON_WIDTH = 140
-export const ADMIN_APPLICATION_LIST_BULK_BUTTON_WIDTH = 120
-export const ADMIN_CERTIFICATE_ISSUE_BUTTON_WIDTH = 210
-
 export interface AdminButtonProps extends Omit<ButtonProps, AdminButtonPropsOmit> {
   variant?: AdminButtonVariant
   size?: AdminButtonSize
-  width?: number | string
   icon?: ReactNode
   iconPosition?: 'start' | 'end'
   children?: ReactNode
@@ -51,7 +47,6 @@ export const AdminButton = forwardRef<HTMLButtonElement, AdminButtonProps>(
     {
       variant = 'primary',
       size = 'large',
-      width,
       icon,
       iconPosition = 'start',
       children,
@@ -66,23 +61,6 @@ export const AdminButton = forwardRef<HTMLButtonElement, AdminButtonProps>(
     ref
   ) => {
     const hasIcon = icon != null
-    const resolvedWidth = width == null ? undefined : typeof width === 'number' ? `${width}px` : width
-    const isFluidWidth =
-      resolvedWidth === 'auto' ||
-      resolvedWidth === 'max-content' ||
-      resolvedWidth === 'fit-content' ||
-      resolvedWidth === 'min-content'
-    const widthStyle: CSSProperties | undefined =
-      resolvedWidth == null
-        ? undefined
-        : isFluidWidth
-          ? {
-              width: resolvedWidth === 'auto' ? 'max-content' : resolvedWidth,
-              minWidth: 'fit-content',
-              maxWidth: 'none',
-            }
-          : { width: resolvedWidth, minWidth: resolvedWidth, maxWidth: resolvedWidth }
-
     const resolvedSize = resolveAdminButtonSize(size)
     const resolvedVariant = resolveAdminButtonVariant(variant)
     const isLoading = typeof loading === 'object' ? true : Boolean(loading)
@@ -117,7 +95,7 @@ export const AdminButton = forwardRef<HTMLButtonElement, AdminButtonProps>(
         className={cn}
         disabled={disabled}
         aria-busy={isLoading || undefined}
-        style={{ outline: 'none', ...widthStyle, ...style }}
+        style={{ outline: 'none', ...style }}
         {...rest}
         onClick={handleClick}
       >

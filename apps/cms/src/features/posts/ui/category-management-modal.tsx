@@ -105,18 +105,14 @@ export function CategoryManagementModal({
               type="button"
               variant="default"
               size="h32"
-              width={80}
-              onClick={cancelEdit}
-            >
+              onClick={cancelEdit} >
               취소
             </CmsButton>
             <CmsButton
               type="button"
               variant="secondary"
               size="h32"
-              width={80}
-              onClick={submitEdit}
-            >
+              onClick={submitEdit} >
               등록
             </CmsButton>
           </div>
@@ -126,18 +122,14 @@ export function CategoryManagementModal({
               type="button"
               variant="default"
               size="h32"
-              width={80}
-              onClick={() => startEdit(row)}
-            >
+              onClick={() => startEdit(row)} >
               수정
             </CmsButton>
             <CmsButton
               type="button"
               variant="delete"
               size="h32"
-              width={80}
-              onClick={() => requestDeleteCategory(row)}
-            >
+              onClick={() => requestDeleteCategory(row)} >
               삭제
             </CmsButton>
           </div>
@@ -150,30 +142,24 @@ export function CategoryManagementModal({
       <CmsButton
         variant="default"
         size="h40"
-        className="cms-button--footer-auto"
         type="button"
-        onClick={ctrl.handleClose}
-      >
+        onClick={ctrl.handleClose} >
         닫기
       </CmsButton>
       <CmsButton
         variant="secondary"
         size="h40"
-        className="cms-button--footer-auto"
         type="button"
-        onClick={ctrl.openCompose}
-      >
+        onClick={ctrl.openCompose} >
         항목 추가
       </CmsButton>
       <CmsButton
         variant="primary"
         size="h40"
-        className="cms-button--footer-auto"
         type="button"
         onClick={() => void ctrl.applySettings()}
         loading={ctrl.isSaving}
-        disabled={ctrl.isSaving}
-      >
+        disabled={ctrl.isSaving} >
         저장
       </CmsButton>
     </>
@@ -226,18 +212,14 @@ export function CategoryManagementModal({
                                 type="button"
                                 variant="default"
                                 size="h32"
-                                width={80}
-                                onClick={ctrl.cancelNew}
-                              >
+                                onClick={ctrl.cancelNew} >
                                 취소
                               </CmsButton>
                               <CmsButton
                                 type="button"
                                 variant="secondary"
                                 size="h32"
-                                width={80}
-                                onClick={ctrl.submitNew}
-                              >
+                                onClick={ctrl.submitNew} >
                                 등록
                               </CmsButton>
                             </div>

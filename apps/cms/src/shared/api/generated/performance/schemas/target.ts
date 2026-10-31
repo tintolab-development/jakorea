@@ -7,10 +7,11 @@
  */
 
 export interface Target {
+  applicationId: number;
   /**
-     * MEMBER 또는 ADMIN_ACCOUNT
-     * @minLength 1
+     * @minItems 0
+     * @maxItems 1000
      */
-  accountType: string;
-  id: number;
+  confirmedScheduleIds: number[];
+  expectedScopeRevision: number;
 }

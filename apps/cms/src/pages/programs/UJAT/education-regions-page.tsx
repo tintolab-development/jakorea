@@ -5,8 +5,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import {
-  FilterTableLayout, CmsButton, CmsInput, CmsRadio, CmsRadioGroup,
-  FilterTableToolbarButton
+  FilterTableLayout,
+  CmsButton,
+  CmsInput,
+  CmsRadio,
+  CmsRadioGroup,
+  FilterTableToolbarButton,
 } from '@/shared/ui'
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
@@ -374,22 +378,17 @@ export default function UjatEducationRegionsPage() {
               <CmsButton
                 variant="default"
                 size="medium"
-                width={100}
                 adminAction="delete"
-                loading={
-                  deleteMutation.isPending && deleteTarget?.id === record.id
-                }
+                loading={deleteMutation.isPending && deleteTarget?.id === record.id}
                 onClick={e => {
                   e.stopPropagation()
                   handleDeleteRequest(record)
-                }}
-              >
+                }} >
                 삭제
               </CmsButton>
               <CmsButton
                 variant="secondary"
                 size="medium"
-                width={100}
                 adminAction="write"
                 loading={isEditing ? updateMutation.isPending : false}
                 disabled={isEditing ? !editDraft.name.trim() : false}
@@ -400,8 +399,7 @@ export default function UjatEducationRegionsPage() {
                     return
                   }
                   startEdit(record)
-                }}
-              >
+                }} >
                 {isEditing ? '저장' : '수정'}
               </CmsButton>
             </div>
@@ -429,11 +427,9 @@ export default function UjatEducationRegionsPage() {
   const toolbarActions = canWrite ? (
     <FilterTableToolbarButton
       variant="secondary"
-      width={160}
       adminAction="write"
       loading={createMutation.isPending}
-      onClick={() => setRegisterOpen(true)}
-    >
+      onClick={() => setRegisterOpen(true)} >
       교육 지역 등록
     </FilterTableToolbarButton>
   ) : null

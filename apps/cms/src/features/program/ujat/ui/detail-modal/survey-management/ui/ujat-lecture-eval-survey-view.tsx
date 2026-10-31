@@ -72,23 +72,17 @@ export function UjatLectureEvalSurveyView({
 
   const trailingActions =
     canWrite && activeTab === 'eval' && showForm && !submitted ? (
-      <CmsButton
-        className="ujat-lecture-eval-survey__submit-trailing"
-        width={180}
-        onClick={onSubmitClick}
-      >
+      <CmsButton className="ujat-lecture-eval-survey__submit-trailing"
+        onClick={onSubmitClick} >
         {UJAT_LECTURE_EVAL_ACTION_LABELS.submit}
       </CmsButton>
     ) : activeTab === 'results' && resultsAccessible ? (
-      <CmsButton
-        className="ujat-lecture-eval-survey__download-trailing cms-button--no-label-ellipsis"
+      <CmsButton className="ujat-lecture-eval-survey__download-trailing"
         variant="secondary"
         size="large"
-        width="auto"
         icon={<ButtonDownloadIcon />}
         disabled={!downloadEnabled || downloadingResults}
-        onClick={onDownloadResultsClick}
-      >
+        onClick={onDownloadResultsClick} >
         {UJAT_LECTURE_EVAL_ACTION_LABELS.download}
       </CmsButton>
     ) : null

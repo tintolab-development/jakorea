@@ -298,6 +298,7 @@ export default function AccountPaymentsPage() {
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
   const canRequestRawExport = accountPaymentsRemote && sessionRoleCode === 'ACCOUNTING_MANAGER'
+  const canApproveRawExport = accountPaymentsRemote && sessionRoleCode === 'MASTER'
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
   const bulkTransferExportMutation = useBulkTransferExportMutation()
   const taxReportExportMutation = useTaxReportExportMutation()
@@ -843,67 +844,66 @@ export default function AccountPaymentsPage() {
         {viewMode === 'list' ? (
           <FilterTableToolbarButton
             variant="secondary"
-            width="auto"
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonCalendarIcon />}
             type="button"
-            onClick={() => setViewMode('calendar')}
-          >
+            onClick={() => setViewMode('calendar')} >
             캘린더 뷰로 보기
           </FilterTableToolbarButton>
         ) : (
           <FilterTableToolbarButton
             variant="secondary"
-            width="auto"
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonListIcon />}
             type="button"
-            onClick={() => setViewMode('list')}
-          >
+            onClick={() => setViewMode('list')} >
             리스트 뷰로 보기
           </FilterTableToolbarButton>
         )}
         <FilterTableToolbarButton
           variant="primary"
-          width="auto"
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
           type="button"
-          onClick={openBulkTransferPreview}
-        >
+          onClick={openBulkTransferPreview} >
           대량이체 양식 발급
         </FilterTableToolbarButton>
         <FilterTableToolbarButton
           variant="primary"
-          width="auto"
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
           type="button"
-          onClick={openTaxFilingPreview}
-        >
+          onClick={openTaxFilingPreview} >
           세금 신고 양식 발급
         </FilterTableToolbarButton>
         {canRequestRawExport ? (
           <>
             <FilterTableToolbarButton
               variant="secondary"
-              width="auto"
               style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
               type="button"
-              onClick={() => openRawExportRequest('bulk-transfer')}
-            >
+              onClick={() => openRawExportRequest('bulk-transfer')} >
               대량이체 전체 원본 승인
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="secondary"
-              width="auto"
               style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
               type="button"
-              onClick={() => openRawExportRequest('tax-report')}
-            >
+              onClick={() => openRawExportRequest('tax-report')} >
               세금신고 전체 원본 승인
             </FilterTableToolbarButton>
           </>
+        ) : null}
+        {canApproveRawExport ? (
+          <FilterTableToolbarButton
+            variant="secondary"
+            style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
+            type="button"
+            onClick={() =>
+              setRawExport({ mode: 'approve', kind: 'bulk-transfer' })
+            } >
+            원본 양식 승인
+          </FilterTableToolbarButton>
         ) : null}
       </>
     ),
@@ -912,6 +912,7 @@ export default function AccountPaymentsPage() {
       openBulkTransferPreview,
       openTaxFilingPreview,
       canRequestRawExport,
+      canApproveRawExport,
       openRawExportRequest,
     ]
   )
@@ -922,8 +923,7 @@ export default function AccountPaymentsPage() {
         <FilterTableToolbarButton
           variant="primary"
           type="button"
-          onClick={openAccountPaymentConfirmFromSelection}
-        >
+          onClick={openAccountPaymentConfirmFromSelection} >
           일괄 지급 처리
         </FilterTableToolbarButton>
       ) : null,

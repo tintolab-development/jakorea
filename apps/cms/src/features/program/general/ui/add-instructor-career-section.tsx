@@ -78,12 +78,10 @@ export function CareerDetailSection() {
           <CmsButton
             type="button"
             variant="primary"
-            size="medium"
-            className="add-instructor-modal__add-btn"
+            size="medium" className="add-instructor-modal__add-btn"
             onClick={() => {
               addCareerRef.current?.({})
-            }}
-          >
+            }} >
             항목 추가
           </CmsButton>
         </div>

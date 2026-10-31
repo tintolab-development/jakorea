@@ -55,10 +55,8 @@ export function SendRequestCompletedModal({
           <CmsButton
             variant="primary"
             size="medium"
-            width={140}
             type="button"
-            onClick={handleViewHistory}
-          >
+            onClick={handleViewHistory} >
             발송 이력 조회
           </CmsButton>
         </>

@@ -238,12 +238,9 @@ export function UjatInstitutionScheduleSheetPreviewModal({
           </CmsButton>
           {canWrite ? (
           <ExcelButton
-            size="large"
             disabled={exporting || remoteLoading}
             loading={exporting}
-            className="cms-button--footer-auto cms-button--no-label-ellipsis ujat-schedule-sheet-preview-modal__excel-btn"
-            onClick={() => void handleExcelDownload()}
-          />
+            onClick={() => void handleExcelDownload()} />
           ) : null}
         </>
       }

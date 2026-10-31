@@ -29,3 +29,14 @@ export function volunteerApplicationApprovalStatusLabel(
 ): string {
   return APPROVAL_STATUS_LABELS[mapVolunteerDocumentStatusToApprovalStatus(status)]
 }
+
+/** 신청 상세 헤더 CTA — 면접 없음은 참여 승인/반려, 면접 있음은 1차 서류 */
+export function volunteerApplicationDecisionButtonLabels(interviewEnabled: boolean): {
+  reject: string
+  approve: string
+} {
+  if (!interviewEnabled) {
+    return { reject: '참여 반려', approve: '참여 승인' }
+  }
+  return { reject: '서류 반려', approve: '서류 승인' }
+}

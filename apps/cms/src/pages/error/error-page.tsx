@@ -75,28 +75,22 @@ export function ErrorPage() {
             <CmsButton
               variant="secondary"
               size="medium"
-              className="cms-button--footer-auto"
               icon={<ArrowLeftOutlined />}
-              onClick={() => navigate(-1)}
-            >
+              onClick={() => navigate(-1)} >
               이전 페이지
             </CmsButton>
             <CmsButton
               variant="secondary"
               size="medium"
-              className="cms-button--footer-auto"
               icon={<ReloadOutlined />}
-              onClick={() => window.location.reload()}
-            >
+              onClick={() => window.location.reload()} >
               새로고침
             </CmsButton>
             <CmsButton
               variant="primary"
               size="medium"
-              className="cms-button--footer-auto"
               icon={<HomeOutlined />}
-              onClick={() => navigate('/')}
-            >
+              onClick={() => navigate('/')} >
               홈으로 이동
             </CmsButton>
           </Space>

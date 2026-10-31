@@ -1,6 +1,10 @@
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
-import { dateRangeUsesClockTime } from './date-range-clock'
+import {
+  dateRangeUsesClockTime,
+  optionalDateRangeUsesClockTime,
+  optionalDateUsesClockTime,
+} from './date-range-clock'
 
 describe('dateRangeUsesClockTime', () => {
   it('00:00 ~ 00:00 은 시간 없음', () => {
@@ -31,5 +35,17 @@ describe('dateRangeUsesClockTime', () => {
     const start = dayjs('2026-10-05').startOf('day')
     const end = dayjs('2026-10-05').hour(10).minute(0).second(0).millisecond(0)
     expect(dateRangeUsesClockTime(start, end)).toBe(true)
+  })
+})
+
+describe('optionalDate*UsesClockTime', () => {
+  it('비어 있거나 한쪽만 있으면 false', () => {
+    expect(optionalDateRangeUsesClockTime(null, dayjs('2026-10-05'))).toBe(false)
+    expect(optionalDateUsesClockTime(null)).toBe(false)
+  })
+
+  it('단일 시각이 있으면 true', () => {
+    expect(optionalDateUsesClockTime(dayjs('2026-10-05').hour(9).minute(30))).toBe(true)
+    expect(optionalDateUsesClockTime(dayjs('2026-10-05').startOf('day'))).toBe(false)
   })
 })

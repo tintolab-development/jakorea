@@ -56,4 +56,11 @@ export type ParticipatingIndividualProgressAttendanceSessionGroup = {
   /** 출결 정정·표시 가능 회차 (일정 시작 전·진행 대기는 false) */
   attendanceRecordingOpen: boolean
   participants: ParticipatingIndividualProgressAttendanceParticipantRow[]
+  /**
+   * 대시보드 일정 `scheduleRole` (PRE_EDUCATION | EDUCATION | SESSION | CLOSING).
+   * null = 서버 미제공(레거시) — EDUCATION으로 간주하지 않는다.
+   */
+  scheduleRole?: string | null
+  /** 대시보드 일정 `educationSlotKey` (예: general-pre-education:1). null = 미제공 */
+  educationSlotKey?: string | null
 }
