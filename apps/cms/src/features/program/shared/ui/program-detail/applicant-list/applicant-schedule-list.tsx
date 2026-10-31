@@ -1,3 +1,4 @@
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { Empty } from 'antd'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import type { Dayjs } from 'dayjs'
@@ -173,7 +174,7 @@ export function ApplicantScheduleList({
                         style={
                           color
                             ? {
-                                backgroundColor: color.bg,
+                                backgroundColor: calendarListItemBackground(color.bg),
                                 border: `1px solid ${color.border}`,
                               }
                             : undefined
@@ -293,7 +294,7 @@ export function ApplicantScheduleList({
                 style={
                   color
                     ? {
-                        backgroundColor: color.bg,
+                        backgroundColor: calendarListItemBackground(color.bg),
                         border: `1px solid ${color.border}`,
                       }
                     : undefined

@@ -4,14 +4,17 @@
 
 .calendar-preview-popover {
   display: flex;
-  width: 294px;
+  /* 피그마 14894:25941 — border #e0e0e0 · radius 12 · padding 16 · 최대 폭 400 */
+  width: max-content;
+  min-width: 294px;
+  max-width: min(400px, 92vw);
   max-height: 250px;
   padding: 16px;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
   border-radius: 12px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--Border-default, #e0e0e0);
   background: #fff;
   box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
   box-sizing: border-box;

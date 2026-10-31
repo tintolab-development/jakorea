@@ -1,3 +1,4 @@
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import type { CSSProperties } from 'react'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
 import {
@@ -34,7 +35,7 @@ export function CalendarListItemContentSettlement({
       className="settlement-list-item"
       style={
         {
-          backgroundColor: colors.bg,
+          backgroundColor: calendarListItemBackground(colors.bg),
           border: `1px solid ${colors.border}`,
           '--settlement-list-card-bg': colors.bg,
           '--settlement-list-card-border': colors.border,

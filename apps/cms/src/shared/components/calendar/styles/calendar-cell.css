@@ -10,7 +10,8 @@
   min-height: var(--calendar-cell-min-height, 124px);
   height: auto;
   max-height: none;
-  padding: 8px;
+  /* 피그마 Calendar/Cell — padding 6 7 6 6 */
+  padding: 6px 7px 6px 6px;
   overflow: hidden;
   background: var(--main-WT, #fff);
   box-sizing: border-box;
