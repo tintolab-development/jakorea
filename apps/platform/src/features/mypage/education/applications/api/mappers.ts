@@ -279,7 +279,7 @@ export function mapPortalProgramApplicationListItem(
     thumbnailUrl,
     displayStatus,
     detailCase,
-    ...(row.pendingSurveyCount != null && row.pendingSurveyCount > 0
+    ...(typeof row.pendingSurveyCount === 'number' && Number.isFinite(row.pendingSurveyCount)
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),
     ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
@@ -324,6 +324,12 @@ function resolveInterviewFields(
     hasInterview,
     ...(interviewAtLabel ? { interviewAtLabel } : {}),
   }
+}
+
+function readSummaryCount(summary: unknown, key: string): number | undefined {
+  if (!summary || typeof summary !== 'object' || Array.isArray(summary)) return undefined
+  const value = (summary as Record<string, unknown>)[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
 function normalizeApplicationAnswers(raw: unknown): Record<string, unknown> {
@@ -552,6 +558,20 @@ export function mapPortalProgramApplicationDetail(
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
   if (detail.certificateAvailable != null) {
     mapped.certificateAvailable = detail.certificateAvailable
+  }
+  if (typeof detail.capabilities?.canSubmitSatisfaction === 'boolean') {
+    mapped.canSubmitSatisfaction = detail.capabilities.canSubmitSatisfaction
+  }
+  if (typeof detail.capabilities?.canSubmitSurvey === 'boolean') {
+    mapped.canSubmitSurvey = detail.capabilities.canSubmitSurvey
+  }
+  const satisfactionPendingCount = readSummaryCount(detail.summary, 'satisfactionPendingCount')
+  if (satisfactionPendingCount != null) {
+    mapped.satisfactionPendingCount = satisfactionPendingCount
+  }
+  const surveyPendingCount = readSummaryCount(detail.summary, 'surveyPendingCount')
+  if (surveyPendingCount != null) {
+    mapped.surveyPendingCount = surveyPendingCount
   }
   if (detail.program) {
     mapped.programConfig = {

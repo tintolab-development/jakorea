@@ -99,7 +99,19 @@ assert.equal(
 )
 assert.equal(
   resolvePortalFormSubmissionPeriodBlockReason({ canSubmit: false }, new Date()),
-  'closed',
+  null,
+)
+
+assert.equal(
+  mapPortalFormListItem({
+    bindingId: 190289,
+    status: 'NOT_SUBMITTED',
+    responseStatus: 'APPROVED',
+    formResponseId: 11,
+    canSubmit: false,
+    canResubmit: false,
+  })?.status,
+  'submitted',
 )
 
 const titleParagraph = {

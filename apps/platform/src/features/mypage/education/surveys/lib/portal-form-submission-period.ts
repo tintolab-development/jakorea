@@ -104,8 +104,6 @@ export function resolvePortalFormSubmissionPeriodBlockReason(
     if (!Number.isNaN(end.getTime()) && at > end) return 'closed'
   }
 
-  if (entry.canSubmit === false) return 'closed'
-
   return null
 }
 

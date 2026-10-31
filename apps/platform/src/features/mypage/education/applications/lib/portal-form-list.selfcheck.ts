@@ -199,4 +199,15 @@ assert.equal(mappedAssignment?.bindingId, 21)
 assert.equal(mappedAssignment?.canSubmit, true)
 assert.equal(mappedAssignment?.canResubmit, false)
 
+const submittedByResponse = mapPortalFormListItemToSurveyEntry({
+  bindingId: 190289,
+  status: 'NOT_SUBMITTED',
+  responseStatus: 'APPROVED',
+  formResponseId: 1852101,
+  canSubmit: false,
+  canResubmit: false,
+})
+assert.equal(submittedByResponse?.status, 'submitted')
+assert.equal(submittedByResponse?.responseStatus, 'APPROVED')
+
 console.log('portal-form-list.selfcheck: ok')

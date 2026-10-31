@@ -125,8 +125,18 @@ export function mapPortalFormListItemToSurveyEntry(
   if (bindingId == null) return null
 
   const status = (item.status ?? '').toUpperCase()
+  const responseStatus = (item.responseStatus ?? '').trim().toUpperCase()
   const formResponseId = item.formResponseId ?? item.latestFormResponseId ?? undefined
-  const submitted = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
+  const submittedByStatus = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
+  const submittedByResponse = ['SUBMITTED', 'COMPLETED', 'DONE', 'APPROVED'].includes(
+    responseStatus,
+  )
+  const submittedByEvidence =
+    formResponseId != null &&
+    item.canSubmit !== true &&
+    item.canResubmit !== true &&
+    responseStatus !== 'REJECTED'
+  const submitted = submittedByStatus || submittedByResponse || submittedByEvidence
   const targetScope = item.targetScope?.trim() || undefined
   const targetScopeId =
     typeof item.targetScopeId === 'number' && Number.isFinite(item.targetScopeId)
@@ -159,6 +169,7 @@ export function mapPortalFormListItemToSurveyEntry(
     bindingId: resolveCanonicalPortalFormBindingId(item) ?? undefined,
     canSubmit: item.canSubmit === true,
     canResubmit: item.canResubmit === true,
+    ...(responseStatus ? { responseStatus } : {}),
     revisionNo: item.revisionNo,
     retentionExpiresAt: item.retentionExpiresAt,
   }

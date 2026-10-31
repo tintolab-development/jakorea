@@ -142,6 +142,14 @@ export type EducationApplicationListItem = {
   certificateAvailable?: boolean
   /** 미응답 설문 수 — 포털 신청 목록·상세 `pendingSurveyCount` */
   pendingSurveyCount?: number
+  /** 상세 `summary.satisfactionPendingCount` — 로컬 추정 금지 */
+  satisfactionPendingCount?: number
+  /** 상세 `capabilities.canSubmitSatisfaction` — false면 만족도 작성 CTA 숨김 */
+  canSubmitSatisfaction?: boolean
+  /** 상세 `capabilities.canSubmitSurvey` — false면 설문 작성 CTA 숨김 */
+  canSubmitSurvey?: boolean
+  /** 상세 `summary.surveyPendingCount` — 로컬 추정 금지 */
+  surveyPendingCount?: number
   /**
    * UJAT 기관 일정협의 배너 — Portal `supplement.ujat.portalBannerState`.
    * 재계산하지 않고 서버 값만 전달한다.

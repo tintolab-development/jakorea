@@ -26,6 +26,7 @@ export type EducationSurveyListEntry = {
   bindingId?: number
   canSubmit?: boolean
   canResubmit?: boolean
+  responseStatus?: string
   revisionNo?: number
   retentionExpiresAt?: string | null
 }

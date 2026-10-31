@@ -100,6 +100,12 @@ const contractErrorCases = [
   ['ASSIGNMENT_SUBMISSION_NOT_ALLOWED', '해당 회차에는 과제를 제출할 수 없습니다.'],
   ['ASSIGNMENT_ALREADY_SUBMITTED', '이미 과제를 제출했습니다.'],
   ['ASSIGNMENT_RESUBMIT_NOT_ALLOWED', '과제 수정 제출이 허용되지 않습니다.'],
+  ['FORM_SUBMISSION_CLOSED', '설문 작성 기간이 종료되었습니다.'],
+  [
+    'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
+    '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+  ],
+  ['ISSUANCE_PERIOD_EXPIRED', '수료증 발급 기간이 만료되었습니다.'],
 ] as const
 
 for (const [code, message] of contractErrorCases) {

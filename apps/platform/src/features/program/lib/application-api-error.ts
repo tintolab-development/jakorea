@@ -146,6 +146,8 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   UJAT_INTERVIEW_SCORE_INVALID: 'UJAT 면접 점수는 평가자별 1~5점 정수만 입력할 수 있습니다.',
   UJAT_VOLUNTEER_INTERVIEW_REQUIRED: 'UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.',
   FORM_RESUBMISSION_DEADLINE_PASSED: '수정 제출 기한이 종료되었습니다.',
+  FORM_SUBMISSION_NOT_STARTED: '아직 설문 작성 기간이 시작되지 않았습니다.',
+  FORM_SUBMISSION_CLOSED: '설문 작성 기간이 종료되었습니다.',
   FORM_SUBMISSION_ACTIVITY_ABANDONED:
     '활동 포기 이후에는 교육계획서·교육일지를 새로 제출하거나 수정할 수 없습니다.',
   PARTICIPATION_REQUIRED: '최종 합격 후 배정된 교육일에 대해 작성할 수 있습니다.',
@@ -168,6 +170,11 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   ASSIGNMENT_ALREADY_SUBMITTED: '이미 과제를 제출했습니다.',
   ASSIGNMENT_NOT_SUBMITTED: '제출된 과제가 없습니다.',
   ASSIGNMENT_RESUBMIT_NOT_ALLOWED: '과제 수정 제출이 허용되지 않습니다.',
+  CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE:
+    '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+  ISSUANCE_PERIOD_EXPIRED: '수료증 발급 기간이 만료되었습니다.',
+  PARTICIPANT_NOT_COMPLETED: '수료 조건을 충족하지 않아 발급할 수 없습니다.',
+  PORTAL_CERTIFICATE_ISSUANCE_NOT_READY: '수료증을 아직 발급할 수 없습니다.',
 }
 
 export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =
