@@ -1,3 +1,4 @@
+import { toSeoulDateOnly } from '../../../../../shared/lib/format-display-date.ts'
 import type {
   PortalAvailableProgramForm,
   PortalFormListItem,
@@ -140,8 +141,8 @@ export function mapPortalFormListItemToSurveyEntry(
     id: String(bindingId),
     title: item.title?.trim() || '설문',
     status: submitted ? 'submitted' : 'in_progress',
-    startAt: item.submissionStartAt?.slice(0, 10),
-    endAt: item.submissionEndAt?.slice(0, 10),
+    startAt: toSeoulDateOnly(item.submissionStartAt),
+    endAt: toSeoulDateOnly(item.submissionEndAt),
     submissionStartAt: item.submissionStartAt ?? undefined,
     submissionEndAt: item.submissionEndAt ?? undefined,
     createdAt: item.submissionStartAt ?? undefined,

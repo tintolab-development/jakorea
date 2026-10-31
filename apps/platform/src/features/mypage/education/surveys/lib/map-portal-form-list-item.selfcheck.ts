@@ -16,6 +16,8 @@ import {
 assert.equal(slicePortalFormDate(null), undefined)
 assert.equal(slicePortalFormDate(''), undefined)
 assert.equal(slicePortalFormDate('2026-10-20T00:00:00Z'), '2026-10-20')
+assert.equal(slicePortalFormDate('2026-10-31T15:30:00Z'), '2026-11-01')
+assert.equal(slicePortalFormDate('2026-10-31'), '2026-10-31')
 
 assert.equal(mapPortalFormListItem({}), null)
 assert.equal(mapPortalFormListItem({ title: 'x' }), null)
@@ -108,6 +110,21 @@ const titleParagraph = {
   endPeriodMode: 'custom',
   endAt: '2026-10-20T23:59:59+09:00',
 } as import('@jakorea/form-schema/writing-form').TitleWithPeriodParagraph
+
+assert.equal(
+  mergePortalFormSubmissionPeriodFields(
+    { canSubmit: true },
+    {
+      kind: 'description',
+      variant: 'survey_title_with_period',
+      id: 'boundary',
+      surveyTitle: '설문',
+      startPeriodMode: 'custom',
+      startAt: '2026-10-31T15:30:00Z',
+    } as import('@jakorea/form-schema/writing-form').TitleWithPeriodParagraph,
+  ).startAt,
+  '2026-11-01',
+)
 
 const titleOnlyEnd = mergePortalFormSubmissionPeriodFields({ canSubmit: true }, titleParagraph)
 assert.equal(

@@ -4,7 +4,7 @@ import {
   resolveTitleStartPeriodMode,
   titlePeriodEndDisplayText,
 } from '@jakorea/form-schema/writing-form'
-import { formatDisplayDate } from '@/shared/lib/format-display-date'
+import { formatDisplayDate, toSeoulDateOnly } from '@/shared/lib/format-display-date'
 import { PFText } from '@/shared/ui'
 import styles from './survey-header.module.css'
 
@@ -15,7 +15,8 @@ type EducationSurveyHeaderProps = {
 }
 
 function formatKoreanDatePart(raw: string): string | null {
-  const label = formatDisplayDate(raw.slice(0, 10))
+  const dateOnly = toSeoulDateOnly(raw)
+  const label = formatDisplayDate(dateOnly ?? raw)
   return label || null
 }
 

@@ -27,6 +27,16 @@ const entry = mapPortalFormListItemToSurveyEntry({
 assert.equal(entry?.id, '99')
 assert.equal(entry?.formResponseId, 501)
 assert.equal(entry?.status, 'submitted')
+assert.equal(entry?.startAt, '2026-10-01')
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 100,
+    status: 'NOT_SUBMITTED',
+    submissionStartAt: '2026-10-31T15:30:00Z',
+    submissionEndAt: '2026-10-31T15:30:00Z',
+  })?.startAt,
+  '2026-11-01',
+)
 
 assert.equal(isPortalSurveyFormType('SURVEY'), true)
 assert.equal(isPortalSurveyFormType('SATISFACTION'), false)

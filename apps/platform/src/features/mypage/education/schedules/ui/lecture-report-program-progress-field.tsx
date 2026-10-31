@@ -1,6 +1,6 @@
 import type { LectureReportProgramProgressParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
-import { formatDisplayDate } from '@/shared/lib/format-display-date'
+import { formatDisplayDate, toSeoulDateOnly } from '@/shared/lib/format-display-date'
 import {
   PFFormField,
   PFFormFieldRow,
@@ -24,7 +24,8 @@ function displayValue(value: string | undefined): string {
 function formatEducationDate(value: string | undefined): string {
   const trimmed = value?.trim() ?? ''
   if (!trimmed) return ''
-  const label = formatDisplayDate(trimmed.slice(0, 10))
+  const dateOnly = toSeoulDateOnly(trimmed)
+  const label = formatDisplayDate(dateOnly ?? trimmed)
   return label || trimmed
 }
 

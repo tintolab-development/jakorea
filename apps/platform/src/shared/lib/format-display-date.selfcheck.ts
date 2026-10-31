@@ -8,8 +8,11 @@ import {
   formatDisplayDateRangeCompact,
   formatDisplayDateTime,
   formatDisplayDateTimeRange,
+  formatDottedSeoulDateTime,
+  formatPaddedKoreanSeoulDate,
   normalizeScheduleDisplayLabel,
   parseScheduleDisplayLabel,
+  toSeoulDateOnly,
 } from './format-display-date.ts'
 
 assert.equal(formatDisplayDate('2026-04-20'), '2026년 4월 20일(월)')
@@ -82,5 +85,17 @@ const parsed = parseScheduleDisplayLabel('26년 4월 20일(월) 9:30 ~ 12:20 | 2
 assert.equal(parsed.dateKey, '2026-04-20')
 assert.equal(parsed.timeRange, '09:30 ~ 12:20')
 assert.equal(parsed.sessionLabel, '2차시')
+
+assert.equal(formatDottedSeoulDateTime('2026-10-31T07:30:08Z'), '2026.10.31 16:30')
+assert.equal(formatDottedSeoulDateTime('2026-10-31T15:30:00Z'), '2026.11.01 00:30')
+assert.equal(formatDottedSeoulDateTime('2026-10-31T16:30:08+09:00'), '2026.10.31 16:30')
+assert.equal(formatDottedSeoulDateTime('2026-10-31'), '2026.10.31')
+assert.equal(formatDottedSeoulDateTime('2026-10-31 16:30'), '2026.10.31 16:30')
+assert.equal(formatDottedSeoulDateTime(''), undefined)
+assert.equal(formatDottedSeoulDateTime('not-a-date'), undefined)
+assert.equal(toSeoulDateOnly('2026-10-31T15:30:00Z'), '2026-11-01')
+assert.equal(toSeoulDateOnly('2026-10-31'), '2026-10-31')
+assert.equal(formatDisplayDate(toSeoulDateOnly('2026-10-31T15:30:00Z') ?? ''), '2026년 11월 1일(일)')
+assert.equal(formatPaddedKoreanSeoulDate('2026-10-31T15:30:00Z'), '2026년 11월 01일')
 
 console.log('format-display-date.selfcheck: ok')
