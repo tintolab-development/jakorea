@@ -134,6 +134,48 @@ export function mapApiApplicationStatusToApprovalStatus(
   return 'pending'
 }
 
+/** 면접 파이프라인에서 BE가 유지하는 applicationStatus 별칭 — 프로그램 승인 현황용 */
+const INDIVIDUAL_APPLICATION_APPROVED_ALIASES = new Set([
+  'DOCUMENT_PASSED',
+  'PASS',
+  'PASSED',
+  'FINAL_APPROVED',
+  'INTERVIEW_PASSED',
+])
+
+/**
+ * 일반 개인 신청 목록·상세 「프로그램 승인 현황」.
+ * 면접 있음이면 applicationStatus가 WAITING_REVIEW로 남고 document/final 결과가 먼저 바뀐다.
+ */
+export function mapIndividualApplicationToApprovalStatus(input: {
+  applicationStatus?: string | null
+  documentStatus?: string | null
+  finalResultStatus?: string | null
+  reserveRank?: number | null
+}): ApplicantApprovalStatusKey {
+  const fromApplication = mapApiApplicationStatusToApprovalStatus(
+    input.applicationStatus ?? undefined
+  )
+  if (fromApplication !== 'pending') return fromApplication
+
+  const applicationNormalized = input.applicationStatus?.trim().toUpperCase() ?? ''
+  if (INDIVIDUAL_APPLICATION_APPROVED_ALIASES.has(applicationNormalized)) {
+    return 'approved'
+  }
+
+  const finalResult = mapApiFinalResultToSecondInterviewStatus(
+    input.finalResultStatus,
+    input.reserveRank
+  )
+  if (finalResult === 'pass') return 'approved'
+  if (finalResult === 'fail') return 'rejected'
+
+  const document = mapApiDocumentStatusToScreeningStatus(input.documentStatus)
+  if (document === 'pass') return 'approved'
+  if (document === 'fail') return 'rejected'
+  return 'pending'
+}
+
 export function mapApprovalStatusToApiFilter(
   status?: ApplicantApprovalStatusKey
 ): string | undefined {
@@ -1295,7 +1337,12 @@ export function mapIndividualApplicationToApplicantRow(
     educationGrade: readIndividualApplicationListGrade(dto),
     homeAddress: dto.homeAddressSummary?.trim() || '',
     appliedAt: dto.submittedAt,
-    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    approvalStatus: mapIndividualApplicationToApprovalStatus({
+      applicationStatus: dto.applicationStatus,
+      documentStatus: dto.documentStatus,
+      finalResultStatus: dto.finalResultStatus,
+      reserveRank: dto.reserveRank,
+    }),
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     adminComment: dto.managerComment ?? undefined,
@@ -1357,7 +1404,12 @@ export function mapIndividualApplicationDetailToApplicantRow(
       ? formatApplicantGradeLabel(profile?.affiliationGrade) || base.educationGrade || ''
       : '',
     homeAddress: profile?.homeAddress?.trim() || base.homeAddress || '',
-    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    approvalStatus: mapIndividualApplicationToApprovalStatus({
+      applicationStatus: dto.applicationStatus,
+      documentStatus: screening?.documentStatus,
+      finalResultStatus: screening?.finalResultStatus,
+      reserveRank: screening?.reserveRank,
+    }),
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,
     preferredEducationSchedules:
