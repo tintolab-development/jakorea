@@ -285,7 +285,6 @@ export function UniversitySearch({
               options={getSidoOptions()}
               onChange={handleSidoChange}
               inputSize="medium"
-              width={140}
               withAllOption
             />
             <CmsSelect
@@ -297,7 +296,6 @@ export function UniversitySearch({
                 setCurrentPage(1)
               }}
               inputSize="medium"
-              width={140}
               disabled={!sido}
               withAllOption
             />
@@ -312,7 +310,6 @@ export function UniversitySearch({
                 reset()
               }}
               inputSize="medium"
-              width={140}
               withAllOption={false}
             />
             <span className="school-search__keyword-wrap">
