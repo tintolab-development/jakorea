@@ -39,12 +39,18 @@ export const queryKeys = {
   programSchedules: (programId: string) =>
     [...queryKeys.all, 'program-schedules', programId] as const,
   typedDetail: (programId: string) => [...queryKeys.all, 'typed-detail', programId] as const,
+  volunteerApplicationsRoot: (programId: string) =>
+    [...queryKeys.applications(), 'volunteers', programId] as const,
   volunteerApplications: (
     programId: string,
     half: UjatVolunteerRecruitHalf,
     stage: UjatVolunteerApplicationsStage = 'doc1',
     query: ApplicationsListQuery = {}
-  ) => [...queryKeys.applications(), 'volunteers', programId, { half, stage, query }] as const,
+  ) => [...queryKeys.volunteerApplicationsRoot(programId), { half, stage, query }] as const,
+  volunteerApplicationComments: (programId: string, applicationId: string) =>
+    [...queryKeys.volunteerApplicationsRoot(programId), 'comments', applicationId] as const,
+  volunteerApplicationDetail: (applicationId: string) =>
+    [...queryKeys.applications(), 'volunteer-detail', applicationId] as const,
   execution: () => [...queryKeys.all, 'execution'] as const,
   allocationMatrix: (
     programId: string,

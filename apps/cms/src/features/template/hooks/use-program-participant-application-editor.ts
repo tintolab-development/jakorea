@@ -222,6 +222,7 @@ import type {
   UjatApplicationGradeDetail,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import {
+  getUjatApplicationVolunteerOverlayRecord,
   resetUjatApplicationVolunteerOverlay,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
@@ -270,6 +271,8 @@ import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/prog
 import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import { getRecruitTypedInterviewRecord } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import type { Program } from '@/types/domain'
+
+export { getUjatApplicationVolunteerOverlayRecord }
 
 const VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY = 'recruit.volunteer.interviewRequired'
 

@@ -13,7 +13,11 @@ import {
   mapSecondInterviewStatusToFinalResultPayload,
   giveUpGeneralVolunteerApplication,
 } from '@/features/program/general/api/admin-applications-service'
-import type { InterviewAssignmentEvaluationPayload } from '@/features/program/general/api/applications-api-client'
+import {
+  patchVolunteerApplicationActivityRegionRemote,
+  type InterviewAssignmentEvaluationPayload,
+} from '@/features/program/general/api/applications-api-client'
+import type { VolunteerActivityRegionUpdateResponse } from '@/shared/api/generated/dashboard/schemas/volunteerActivityRegionUpdateResponse'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -76,10 +80,22 @@ export async function submitUjatVolunteerFinalResultsRemote(
 
 export async function giveUpUjatVolunteerApplicationRemote(
   applicationId: string,
-  reason: string
+  reason: string,
+  options?: { stopScheduleId?: number }
 ): Promise<void> {
   assertUjatVolunteerMutationsRemoteReady()
-  await giveUpGeneralVolunteerApplication(applicationId, { reason: reason.trim() })
+  await giveUpGeneralVolunteerApplication(applicationId, {
+    reason: reason.trim(),
+    ...(options?.stopScheduleId != null ? { stopScheduleId: options.stopScheduleId } : {}),
+  })
+}
+
+export async function patchUjatVolunteerPreferredRegionRemote(
+  applicationId: string,
+  educationRegionCode: string
+): Promise<VolunteerActivityRegionUpdateResponse> {
+  assertUjatVolunteerMutationsRemoteReady()
+  return patchVolunteerApplicationActivityRegionRemote(applicationId, { educationRegionCode })
 }
 
 export async function submitUjatVolunteerInterviewEvaluationRemote(

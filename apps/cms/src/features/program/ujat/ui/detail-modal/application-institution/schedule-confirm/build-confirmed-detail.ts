@@ -13,6 +13,7 @@ import { formatUjatPreferredEducationDateDisplay } from '../education-schedule'
 import { formatUjatGradeClassDisplayLabelFromParts } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import type { UjatInstitutionApplicationRow } from '../list/types'
 import type { UjatInstitutionApplicationDetail } from '../detail/detail-types'
+import type { UjatInstitutionApplicationGradeBlockDetail } from '../detail/detail-types'
 import type {
   ScheduleConfirmTextbookInfo,
   UjatScheduleConfirmConfirmedDetail,
@@ -50,18 +51,43 @@ function formatKitSummary(kits: number | null | undefined, quantity: number | nu
   return [kitLabel, quantityLabel].filter(Boolean).join(' ').trim()
 }
 
+function numericOrNull(value: number | null | undefined): number | null {
+  return typeof value === 'number' ? value : null
+}
+
+function hasOwnGradeTextbook(block: UjatInstitutionApplicationGradeBlockDetail): boolean {
+  return (
+    block.textbookName !== undefined ||
+    block.textbookNameEn !== undefined ||
+    block.kitCount !== undefined ||
+    block.bookCount !== undefined ||
+    block.textbookDeliveryStatus !== undefined
+  )
+}
+
 function mapTextbookForGrade(
   dto: UjatOrganizationApplicationDetail | null | undefined,
-  gradeLabel: string
+  block: UjatInstitutionApplicationGradeBlockDetail
 ): ScheduleConfirmTextbookInfo | null {
-  if (!dto) return null
-  const textbookGrade = dto.textbookGrade?.trim()
-  if (textbookGrade && textbookGrade !== gradeLabel) return null
+  const useBlock = hasOwnGradeTextbook(block)
+  const rootGrade = dto?.textbookGrade?.trim()
+  if (!useBlock && rootGrade && rootGrade !== block.gradeLabel) return null
 
-  const textbookName = displayOrDash(dto.textbookDisplayLabel ?? dto.textbookName)
-  const kitSummary = formatKitSummary(dto.textbookKits, dto.textbookQuantity)
+  const textbookName = displayOrDash(
+    useBlock ? block.textbookName : (dto?.textbookDisplayLabel ?? dto?.textbookName)
+  )
+  const kitSummary = formatKitSummary(
+    useBlock
+      ? numericOrNull(block.kitCount)
+      : numericOrNull(dto?.kitCount) ?? numericOrNull(dto?.textbookKits),
+    useBlock
+      ? numericOrNull(block.bookCount)
+      : numericOrNull(dto?.bookCount) ?? numericOrNull(dto?.textbookQuantity)
+  )
   const deliveryStatus = mapDeliveryStatus(
-    ownString(dto, 'textbookDeliveryStatus') ?? ownString(dto, 'deliveryStatus')
+    useBlock
+      ? block.textbookDeliveryStatus
+      : ownString(dto, 'textbookDeliveryStatus') ?? ownString(dto, 'deliveryStatus')
   )
 
   if (textbookName === '-' && !kitSummary && !deliveryStatus) return null
@@ -174,7 +200,7 @@ export function buildUjatScheduleConfirmConfirmedDetail(
     otherRequests: displayOrDash(baseDetail.otherRequests),
     gradeEducationBlocks: baseDetail.gradeBlocks.map(block => ({
       ...block,
-      textbook: mapTextbookForGrade(dto, block.gradeLabel),
+      textbook: mapTextbookForGrade(dto, block),
     })),
     classTimeRows: baseDetail.classTimeRows,
     educationScheduleDays: buildEducationScheduleDaysFromTemporarySchedule(temporarySchedule),

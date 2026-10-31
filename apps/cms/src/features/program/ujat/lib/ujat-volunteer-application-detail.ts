@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchVolunteerApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
 import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
 import type { Profile } from '@/shared/api/generated/dashboard/schemas/profile'
@@ -150,7 +151,7 @@ export function useUjatVolunteerApplicationDetailEnrichment(
 ): UjatVolunteerApplicantRow {
   const applicationId = Number(row.id)
   const detailQuery = useQuery({
-    queryKey: ['ujat', 'volunteer-application-detail', row.id],
+    queryKey: ujatQueryKeys.volunteerApplicationDetail(row.id),
     queryFn: () => fetchVolunteerApplicationDetailRemote(String(row.id)),
     enabled: Number.isFinite(applicationId) && applicationId > 0,
     staleTime: 30_000,

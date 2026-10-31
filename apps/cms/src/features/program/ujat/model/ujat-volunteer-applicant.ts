@@ -34,6 +34,8 @@ export interface UjatVolunteerApplicantRow {
   /** 목록 DTO에 학년이 없으면 빈 문자열. 1학년으로 채우지 않는다. */
   grade: UjatVolunteerGrade | ''
   preferredRegion: UjatVolunteerPreferredRegion
+  /** 목록 DTO `preferredRegionCode`. 셀렉트 value. 없으면 라벨에서 매핑 */
+  preferredRegionCode?: string | null
   contact: string
   email: string
   contactRaw: string

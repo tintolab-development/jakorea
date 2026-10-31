@@ -224,7 +224,6 @@ import {
   buildLectureEvalFormDraft,
   canEditLectureEvalResponse,
   draftToLectureEvalPollResponse,
-  UJAT_LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT,
   UJAT_LECTURE_EVAL_SURVEY_PARAGRAPH_BODY_OPTIONS,
   UJAT_LECTURE_EVAL_TEMPLATE_ID,
   validateLectureEvalFormDraft,
@@ -2674,19 +2673,6 @@ export function UjatProgramDetailFullPageModal({
 
     setLectureEvalSubmitted(true)
     setLectureEvalResponses([pollResponse])
-    setLectureEvalSurvey(prev => {
-      if (prev == null) return prev
-      const nextStatus =
-        UJAT_LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT && prev.status === 'in_progress'
-          ? 'finished'
-          : prev.status
-      return {
-        ...prev,
-        status: nextStatus,
-        responseCount: 1,
-        participantTotal: Math.max(prev.participantTotal, 1),
-      }
-    })
   }, [lectureEvalSurvey, programId, queryClient, showAlert, surveysRemote])
 
   const handleLectureEvalEditResponse = useCallback(() => {

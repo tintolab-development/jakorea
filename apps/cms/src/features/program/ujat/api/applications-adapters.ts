@@ -303,11 +303,28 @@ function mapRemoteGradeBlocks(
         studentCount: room.studentCount ?? 0,
       }
     })
-    return {
+    const mapped: UjatInstitutionApplicationDetail['gradeBlocks'][number] = {
       gradeLabel: block.gradeLabel?.trim() || '-',
       classCount: block.classCount ?? 0,
       classes,
     }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookName')) {
+      mapped.textbookName = typeof block.textbookName === 'string' ? block.textbookName : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookNameEn')) {
+      mapped.textbookNameEn = typeof block.textbookNameEn === 'string' ? block.textbookNameEn : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'kitCount')) {
+      mapped.kitCount = typeof block.kitCount === 'number' ? block.kitCount : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'bookCount')) {
+      mapped.bookCount = typeof block.bookCount === 'number' ? block.bookCount : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookDeliveryStatus')) {
+      mapped.textbookDeliveryStatus =
+        typeof block.textbookDeliveryStatus === 'string' ? block.textbookDeliveryStatus : null
+    }
+    return mapped
   })
 }
 
@@ -419,6 +436,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
   })
 
   const preferredRegion = dto.preferredRegion?.trim() || ''
+  const preferredRegionCode = dto.preferredRegionCode?.trim() || null
   const grade = mapVolunteerGrade(dto.grade)
   const hasEducationExperience =
     typeof dto.hasEducationExperience === 'boolean' ? dto.hasEducationExperience : null
@@ -444,6 +462,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     name: displayTextOrDash(dto.memberName),
     grade,
     preferredRegion,
+    preferredRegionCode,
     contact: displayTextOrDash(dto.contact),
     email: displayTextOrDash(dto.email),
     contactRaw: '',

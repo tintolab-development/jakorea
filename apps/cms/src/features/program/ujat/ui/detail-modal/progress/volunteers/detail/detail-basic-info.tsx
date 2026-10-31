@@ -79,10 +79,10 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
   preferredRegionDraft?: UjatVolunteerPreferredRegion
   onPreferredRegionDraftChange?: (next: UjatVolunteerPreferredRegion) => void
 }) {
-  const { labels: preferredRegionLabels } = useUjatEducationRegions()
-  const preferredRegionSelectOptions = preferredRegionLabels.map(region => ({
-    label: region,
-    value: region,
+  const { regions } = useUjatEducationRegions()
+  const preferredRegionSelectOptions = regions.map(region => ({
+    label: region.label,
+    value: region.key,
   }))
 
   const contactDisplay = maskSensitive ? applicant.contact : applicant.contactRaw
@@ -142,7 +142,7 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
           width={240}
           withAllOption={false}
           placeholder="지역 선택"
-          value={preferredRegionDraft ?? applicant.preferredRegion}
+          value={preferredRegionDraft ?? applicant.preferredRegionCode ?? ''}
           onChange={value =>
             onPreferredRegionDraftChange?.(String(value) as UjatVolunteerPreferredRegion)
           }

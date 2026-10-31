@@ -120,6 +120,36 @@ describe('UJAT 기관 신청 상세 adapter', () => {
     expect(detail.preferredEducationDates).toEqual(['2026-04-24', '2026-05-08'])
   })
 
+  it('학년 블록 교재는 서버 값만 쓰고 없으면 null을 유지한다', () => {
+    const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
+      id: 3,
+      organizationName: '진월초등학교',
+      applicationStatus: 'SUBMITTED',
+    })
+    const detail = enrichUjatInstitutionDetailFromRemote(row, {
+      gradeBlocks: [
+        {
+          gradeLabel: '6학년',
+          classCount: 2,
+          classes: [{ classNo: '1반', studentCount: 24 }],
+          textbookName: null,
+          textbookNameEn: null,
+          kitCount: null,
+          bookCount: null,
+          textbookDeliveryStatus: null,
+        },
+      ],
+    })
+
+    expect(detail.gradeBlocks[0]).toMatchObject({
+      gradeLabel: '6학년',
+      textbookName: null,
+      kitCount: null,
+      bookCount: null,
+      textbookDeliveryStatus: null,
+    })
+  })
+
   it('preferredEducationDates가 비면 preferredEducationSchedules 달력일을 쓴다', () => {
     const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
       id: 4,
@@ -268,6 +298,7 @@ describe('UJAT 봉사자 목록 adapter', () => {
         memberName: '김봉사',
         grade: '3학년',
         preferredRegion: '서울',
+        preferredRegionCode: 'SEOUL',
         contact: '010-****-1234',
         email: 'a***@school.kr',
         hasEducationExperience: true,
@@ -285,6 +316,7 @@ describe('UJAT 봉사자 목록 adapter', () => {
     expect(row.name).toBe('김봉사')
     expect(row.grade).toBe('3학년')
     expect(row.preferredRegion).toBe('서울')
+    expect(row.preferredRegionCode).toBe('SEOUL')
     expect(row.contact).toBe('010-****-1234')
     expect(row.essayIntro).toBe('지원동기 원문')
     expect(row.essayEducationExperience).toBe('교육경험 원문')

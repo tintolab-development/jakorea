@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
@@ -8,11 +9,16 @@ import { resolveSessionProgramRole } from '@/entities/program/lib/program-privac
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { clearUjatVolunteerApplicantsMockCache } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import {
-  parseEducationProgressVolunteerProfileId,
-  patchUjatVolunteerMockProfilePreferredRegion,
-} from '@/features/program/ujat/model/ujat-volunteer-profile'
+  giveUpUjatVolunteerApplicationRemote,
+  patchUjatVolunteerPreferredRegionRemote,
+} from '@/features/program/ujat/api/volunteer-mutations'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
+import { parseVolunteerApplicationNumericId } from '@/features/program/ujat/lib/volunteer-application-id'
+import { resolvePreferredRegionEducationCode } from '@/features/program/ujat/lib/resolve-preferred-region-education-code'
 import {
   UJAT_EDU_PROGRESS_VOLUNTEER_DETAIL_TAB_LABELS,
   type UjatEducationProgressVolunteerDetailTab,
@@ -25,6 +31,7 @@ import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certific
 import { StudentCertificatePdfExportHost } from '@/features/program/general/ui/detail-modal/program-status/student-certificate-pdf-export-host'
 import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { getVolunteerActivityRegionErrorMessage } from '@/features/program/ujat/lib/volunteer-activity-region-error'
 import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
@@ -60,10 +67,13 @@ export function UjatEducationProgressVolunteerDetailView({
   onDetailSaved?: () => void
 }) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const { regions } = useUjatEducationRegions()
   const [isEditing, setIsEditing] = useState(false)
-  const [preferredRegionDraft, setPreferredRegionDraft] = useState<UjatVolunteerPreferredRegion>(
-    detail.applicant.preferredRegion
-  )
+  const [savingRegion, setSavingRegion] = useState(false)
+  const [savingComment, setSavingComment] = useState(false)
+  const [givingUp, setGivingUp] = useState(false)
+  const [preferredRegionDraft, setPreferredRegionDraft] = useState<UjatVolunteerPreferredRegion>('')
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
   const [adminComment, setAdminComment] = useState(detail.adminComment)
   const [adminCommentDraft, setAdminCommentDraft] = useState(detail.adminComment)
@@ -75,9 +85,22 @@ export function UjatEducationProgressVolunteerDetailView({
   const [studentCertificateExportActive, setStudentCertificateExportActive] = useState(false)
   const [withdrawnScheduleRowIds, setWithdrawnScheduleRowIds] = useState<string[]>([])
 
+  const preferredRegionCodeDraft = useMemo(
+    () =>
+      resolvePreferredRegionEducationCode(
+        detail.applicant.preferredRegionCode?.trim() || detail.applicant.preferredRegion,
+        regions
+      ) ?? '',
+    [
+      detail.applicant.preferredRegion,
+      detail.applicant.preferredRegionCode,
+      regions,
+    ]
+  )
+
   useEffect(() => {
     setIsEditing(false)
-    setPreferredRegionDraft(detail.applicant.preferredRegion)
+    setPreferredRegionDraft(preferredRegionCodeDraft)
     setAdminComment(detail.adminComment)
     setAdminCommentDraft(detail.adminComment)
     setAdminCommentModalOpen(false)
@@ -87,13 +110,33 @@ export function UjatEducationProgressVolunteerDetailView({
     setStudentCertificateExportContext(null)
     setStudentCertificateExportActive(false)
     setWithdrawnScheduleRowIds([])
-  }, [detail.volunteerId, detail.applicant.preferredRegion, detail.adminComment])
+  }, [detail.volunteerId, detail.adminComment, preferredRegionCodeDraft])
 
   const activityWithdrawScheduleOptions = useMemo(
     () =>
       getVolunteerActivityWithdrawScheduleOptions(detail.volunteerId, withdrawnScheduleRowIds),
     [detail.volunteerId, withdrawnScheduleRowIds]
   )
+
+  const applicationNumericId = parseVolunteerApplicationNumericId(detail.volunteerId)
+  const remoteReady = shouldUseUjatApplicationsRemoteApi()
+
+  const invalidateVolunteerRemote = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ujatQueryKeys.volunteerApplicationsRoot(program.id),
+    })
+    await queryClient.invalidateQueries({
+      queryKey: ujatQueryKeys.volunteerApplicationComments(program.id, detail.volunteerId),
+    })
+    await queryClient.invalidateQueries({
+      queryKey: ujatQueryKeys.volunteerApplicationDetail(detail.volunteerId),
+    })
+    if (applicationNumericId != null) {
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.volunteerApplicationDetail(String(applicationNumericId)),
+      })
+    }
+  }, [applicationNumericId, detail.volunteerId, program.id, queryClient])
 
   const handleRequestActivityWithdraw = useCallback(() => {
     setActivityWithdrawModalOpen(true)
@@ -104,19 +147,64 @@ export function UjatEducationProgressVolunteerDetailView({
   }, [])
 
   const handleConfirmActivityWithdraw = useCallback(
-    (payload: UjatEducationProgressActivityWithdrawPayload) => {
-      setWithdrawnScheduleRowIds(prev =>
-        prev.includes(payload.stopScheduleRowId)
-          ? prev
-          : [...prev, payload.stopScheduleRowId]
-      )
-      setActivityWithdrawModalOpen(false)
-      showAlert({
-        title: '활동 포기',
-        content: `${detail.applicant.name} 봉사자가 활동 포기 처리되었습니다.`,
-      })
+    async (payload: UjatEducationProgressActivityWithdrawPayload) => {
+      if (applicationNumericId == null || !remoteReady) {
+        showAlert({
+          title: '저장 실패',
+          content: '봉사자 신청 API가 활성화되지 않았거나 신청 ID가 올바르지 않습니다.',
+        })
+        return
+      }
+      const stopScheduleId = Number(payload.stopScheduleRowId)
+      const hasStopSchedule =
+        payload.stopScheduleRowId != null &&
+        Number.isSafeInteger(stopScheduleId) &&
+        stopScheduleId > 0
+      const scheduleLabel = activityWithdrawScheduleOptions.find(
+        option => option.value === payload.stopScheduleRowId
+      )?.label
+      setGivingUp(true)
+      try {
+        await giveUpUjatVolunteerApplicationRemote(
+          String(applicationNumericId),
+          scheduleLabel ? `활동 포기 (${scheduleLabel})` : '활동 포기',
+          hasStopSchedule ? { stopScheduleId } : undefined
+        )
+        if (payload.stopScheduleRowId) {
+          setWithdrawnScheduleRowIds(prev =>
+            prev.includes(payload.stopScheduleRowId!)
+              ? prev
+              : [...prev, payload.stopScheduleRowId!]
+          )
+        }
+        setActivityWithdrawModalOpen(false)
+        await invalidateVolunteerRemote()
+        onDetailSaved?.()
+        showAlert({
+          title: '활동 포기',
+          content: `${detail.applicant.name} 봉사자가 활동 포기 처리되었습니다.`,
+        })
+      } catch (error) {
+        showAlert({
+          title: '활동 포기 처리 실패',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '활동 포기 처리에 실패했습니다. 다시 시도해 주세요.'
+          ),
+        })
+      } finally {
+        setGivingUp(false)
+      }
     },
-    [detail.applicant.name, showAlert]
+    [
+      activityWithdrawScheduleOptions,
+      applicationNumericId,
+      detail.applicant.name,
+      invalidateVolunteerRemote,
+      onDetailSaved,
+      remoteReady,
+      showAlert,
+    ]
   )
 
   const resolveAccessItem = useCallback(
@@ -150,23 +238,45 @@ export function UjatEducationProgressVolunteerDetailView({
   )
 
   const handleEnterEdit = () => {
-    setPreferredRegionDraft(detail.applicant.preferredRegion)
+    setPreferredRegionDraft(preferredRegionCodeDraft)
     setIsEditing(true)
   }
 
-  const handleSaveEdit = () => {
-    const profileId = parseEducationProgressVolunteerProfileId(detail.volunteerId)
-    if (profileId) {
-      patchUjatVolunteerMockProfilePreferredRegion(profileId, preferredRegionDraft)
-      clearUjatVolunteerApplicantsMockCache()
-      onDetailSaved?.()
+  const handleSaveEdit = async () => {
+    if (applicationNumericId == null || !remoteReady) {
+      showAlert({
+        title: '저장 실패',
+        content: '봉사자 신청 API가 활성화되지 않았거나 신청 ID가 올바르지 않습니다.',
+      })
+      return
     }
-    setIsEditing(false)
-    showUpdateCompletedAlert()
+    const educationRegionCode = resolvePreferredRegionEducationCode(preferredRegionDraft, regions)
+    if (!educationRegionCode) {
+      showAlert({
+        title: '저장 실패',
+        content: '희망 교육 활동 지역을 선택해 주세요.',
+      })
+      return
+    }
+    setSavingRegion(true)
+    try {
+      await patchUjatVolunteerPreferredRegionRemote(String(applicationNumericId), educationRegionCode)
+      await invalidateVolunteerRemote()
+      onDetailSaved?.()
+      setIsEditing(false)
+      showUpdateCompletedAlert()
+    } catch (error) {
+      showAlert({
+        title: '저장 실패',
+        content: getVolunteerActivityRegionErrorMessage(error),
+      })
+    } finally {
+      setSavingRegion(false)
+    }
   }
 
   const handleCancelEdit = () => {
-    setPreferredRegionDraft(detail.applicant.preferredRegion)
+    setPreferredRegionDraft(preferredRegionCodeDraft)
     setIsEditing(false)
   }
 
@@ -176,14 +286,50 @@ export function UjatEducationProgressVolunteerDetailView({
     setAdminCommentModalOpen(true)
   }, [adminComment, isEditing])
 
-  const handleAdminCommentSave = useCallback(() => {
-    setAdminComment(adminCommentDraft.trim())
-    setAdminCommentModalOpen(false)
-    showAlert({
-      title: '코멘트 저장',
-      content: '관리자 코멘트가 저장되었습니다.',
-    })
-  }, [adminCommentDraft, showAlert])
+  const handleAdminCommentSave = useCallback(async () => {
+    if (applicationNumericId == null || !remoteReady) {
+      showAlert({
+        title: '저장 실패',
+        content: '봉사자 신청 API가 활성화되지 않았거나 신청 ID가 올바르지 않습니다.',
+      })
+      return
+    }
+    setSavingComment(true)
+    try {
+      const result = await upsertAdminCommentByTargetRemote({
+        targetType: 'VOLUNTEER_APPLICATION',
+        targetId: applicationNumericId,
+        screenCode: 'VOLUNTEER_APPLICATION',
+        comment: adminCommentDraft,
+      })
+      const nextComment = result.commentText ?? ''
+      setAdminComment(nextComment)
+      setAdminCommentDraft(nextComment)
+      setAdminCommentModalOpen(false)
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.volunteerApplicationComments(program.id, detail.volunteerId),
+      })
+      showAlert({
+        title: '코멘트 저장',
+        content: '관리자 코멘트가 저장되었습니다.',
+      })
+    } catch (error) {
+      showAlert({
+        title: '저장 실패',
+        content: getGeneralProgramApiErrorMessage(error, '관리자 코멘트를 저장하지 못했습니다.'),
+      })
+    } finally {
+      setSavingComment(false)
+    }
+  }, [
+    adminCommentDraft,
+    applicationNumericId,
+    detail.volunteerId,
+    program.id,
+    queryClient,
+    remoteReady,
+    showAlert,
+  ])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -251,7 +397,7 @@ export function UjatEducationProgressVolunteerDetailView({
         type="button"
         variant="delete"
         size="h40"
-        disabled={activityWithdrawScheduleOptions.length === 0}
+        disabled={givingUp}
         onClick={handleRequestActivityWithdraw}
       >
         활동 포기
@@ -279,9 +425,13 @@ export function UjatEducationProgressVolunteerDetailView({
         size="h40"
         width={false}
         isEditing={isEditing}
+        saving={savingRegion}
+        disabled={savingRegion}
         onEdit={handleEnterEdit}
         onCancel={handleCancelEdit}
-        onSave={handleSaveEdit}
+        onSave={() => {
+          void handleSaveEdit()
+        }}
       />
       <CmsButton
         type="button"
@@ -345,8 +495,12 @@ export function UjatEducationProgressVolunteerDetailView({
         open={activityWithdrawModalOpen}
         participantName={detail.applicant.name}
         scheduleOptions={activityWithdrawScheduleOptions}
+        requireSchedule={activityWithdrawScheduleOptions.length > 0}
+        submitting={givingUp}
         onCancel={handleCancelActivityWithdraw}
-        onConfirm={handleConfirmActivityWithdraw}
+        onConfirm={payload => {
+          void handleConfirmActivityWithdraw(payload)
+        }}
       />
       <ParticipatingVolunteerActivityCertificatePreviewModal
         open={activityCertPreviewOpen}
@@ -371,9 +525,12 @@ export function UjatEducationProgressVolunteerDetailView({
       <MemberAdminCommentModal
         open={adminCommentModalOpen}
         value={adminCommentDraft}
+        loading={savingComment}
         onChange={setAdminCommentDraft}
         onCancel={handleAdminCommentModalCancel}
-        onConfirm={handleAdminCommentSave}
+        onConfirm={() => {
+          void handleAdminCommentSave()
+        }}
       />
     </div>
   )

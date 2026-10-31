@@ -63,6 +63,8 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_FREE_TEXT_INVALID: '자유 작성 항목 글자 수를 확인해 주세요.',
   VOLUNTEER_RECRUITMENT_NOT_CONFIGURED:
     '이 프로그램에 봉사 모집·신청 양식이 설정되지 않았습니다. 프로그램 모집 설정을 확인해 주세요.',
+  VOLUNTEER_APPLICATION_TYPE_INVALID: '지원 형태를 확인해 주세요.',
+  UJAT_EDUCATION_REGION_CODE_UNKNOWN: '등록되지 않은 교육 지역입니다. 지역 목록을 다시 확인해 주세요.',
   CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY:
     '진행 현황 봉사자 추가 등록은 일반 봉사자만 지원합니다.',
   EMPLOYEE_VOLUNTEER_ORGANIZATION_SCOPE_REQUIRED:

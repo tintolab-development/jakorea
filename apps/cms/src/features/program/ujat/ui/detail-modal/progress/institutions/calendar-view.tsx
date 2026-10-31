@@ -28,8 +28,12 @@ import '../../application-institution/list/calendar-view.css'
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
-function defaultCalendarDate(half: EducationProgressHalfKey): Dayjs {
-  return half === 'h1' ? dayjs('2026-04-03') : dayjs('2026-09-11')
+function firstEventDateOrToday(events: Array<{ startDate?: string }>): Dayjs {
+  const first = events
+    .map(event => dayjs(event.startDate))
+    .filter(date => date.isValid())
+    .sort((a, b) => a.valueOf() - b.valueOf())[0]
+  return first ?? dayjs()
 }
 
 function extractInstitutionFromCalendarItem(
@@ -94,22 +98,24 @@ export function UjatEducationProgressInstitutionsCalendarView({
   rows: UjatEducationProgressInstitutionRow[]
   half: EducationProgressHalfKey
 }) {
-  const initialDate = defaultCalendarDate(half)
   const events = useMemo(
     () => buildUjatEducationProgressInstitutionCalendarEvents(rows),
     [rows]
   )
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
+  const initialDate = useMemo(() => {
+    void half
+    return firstEventDateOrToday(events)
+  }, [events, half])
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => initialDate)
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => initialDate.startOf('month'))
   const [selectedSchools, setSelectedSchools] = useState<string[]>([])
 
   useEffect(() => {
-    const next = defaultCalendarDate(half)
-    setSelectedDate(next)
-    setCurrentMonth(next.startOf('month'))
-  }, [half])
+    setSelectedDate(initialDate)
+    setCurrentMonth(initialDate.startOf('month'))
+  }, [initialDate])
 
   const dayEvents = useMemo((): UjatEducationProgressInstitutionCalendarEvent[] => {
     return events.filter(event => {
@@ -178,10 +184,10 @@ export function UjatEducationProgressInstitutionsCalendarView({
   }, [])
 
   const handleTodayClick = useCallback(() => {
-    const today = defaultCalendarDate(half)
+    const today = dayjs()
     setSelectedDate(today)
     setCurrentMonth(today.startOf('month'))
-  }, [half])
+  }, [])
 
   return (
     <div className="calendar-set calendar-set--page-scroll">

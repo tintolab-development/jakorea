@@ -93,9 +93,22 @@ export function UjatInstitutionScheduleConfirmCalendarView({
   const events = useMemo(() => buildUjatScheduleConfirmCalendarEvents(rows), [rows])
   const { buildResolvedColorMap } = useApplicantCalendarColorMaps(events)
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => dayjs('2026-04-03'))
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => dayjs('2026-04-01'))
+  const initialDate = useMemo(() => {
+    const first = events
+      .map(event => dayjs(event.startDate))
+      .filter(date => date.isValid())
+      .sort((a, b) => a.valueOf() - b.valueOf())[0]
+    return first ?? dayjs()
+  }, [events])
+
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => initialDate)
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => initialDate.startOf('month'))
   const [selectedSchools, setSelectedSchools] = useState<string[]>([])
+
+  useEffect(() => {
+    setSelectedDate(initialDate)
+    setCurrentMonth(initialDate.startOf('month'))
+  }, [initialDate])
 
   const dayEvents = useMemo((): UjatScheduleConfirmCalendarEvent[] => {
     return events.filter(event => {
@@ -164,7 +177,7 @@ export function UjatInstitutionScheduleConfirmCalendarView({
   }, [])
 
   const handleTodayClick = useCallback(() => {
-    const today = dayjs('2026-04-03')
+    const today = dayjs()
     setSelectedDate(today)
     setCurrentMonth(today.startOf('month'))
   }, [])

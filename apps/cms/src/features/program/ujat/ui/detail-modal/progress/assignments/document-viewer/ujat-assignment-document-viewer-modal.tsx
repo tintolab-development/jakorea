@@ -208,36 +208,39 @@ export function UjatAssignmentDocumentViewerModal({
   const handleFeedbackSubmit = useCallback(
     async (feedback: string) => {
       const responseId = target?.formResponseId
-      if (
-        responseId != null &&
-        Number.isFinite(responseId) &&
-        shouldUseFormsSurveysRemoteApi()
-      ) {
-        if (createFeedbackMutation.isPending) return
-        try {
-          const result = await createFeedbackMutation.mutateAsync({
-            responseId,
-            body: { content: feedback },
-          })
-          setSubmittedFeedback(result.content?.trim() || feedback)
-          setFeedbackMode(null)
-          showAlert({
-            title: '안내',
-            content: '피드백을 등록했습니다. 회원에게 확인 요청 알림이 발송됩니다.',
-          })
-        } catch (error) {
-          handleError(error, { context: 'ujatDocumentViewerModal.createFeedback' })
-          showAlert({
-            title: '등록 실패',
-            content: getFormResponseFeedbackErrorMessage(error),
-          })
-        }
+      if (responseId == null || !Number.isFinite(responseId)) {
+        showAlert({
+          title: '저장 불가',
+          content: '과제 응답 ID가 없어 피드백을 저장할 수 없습니다.',
+        })
         return
       }
-
-      // formResponseId 없는 mock/로컬 미리보기: UI만 반영
-      setSubmittedFeedback(feedback)
-      setFeedbackMode(null)
+      if (!shouldUseFormsSurveysRemoteApi()) {
+        showAlert({
+          title: '저장 불가',
+          content: '피드백 API를 사용할 수 없습니다. API 연동을 확인해 주세요.',
+        })
+        return
+      }
+      if (createFeedbackMutation.isPending) return
+      try {
+        const result = await createFeedbackMutation.mutateAsync({
+          responseId,
+          body: { content: feedback },
+        })
+        setSubmittedFeedback(result.content?.trim() || feedback)
+        setFeedbackMode(null)
+        showAlert({
+          title: '안내',
+          content: '피드백을 등록했습니다. 회원에게 확인 요청 알림이 발송됩니다.',
+        })
+      } catch (error) {
+        handleError(error, { context: 'ujatDocumentViewerModal.createFeedback' })
+        showAlert({
+          title: '등록 실패',
+          content: getFormResponseFeedbackErrorMessage(error),
+        })
+      }
     },
     [createFeedbackMutation, showAlert, target?.formResponseId]
   )

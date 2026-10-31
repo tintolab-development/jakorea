@@ -3,10 +3,7 @@ import { useCmsAlert } from '@/shared/ui'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
-import {
-  isUjatInstitutionApplicationRegionKey,
-  type UjatInstitutionApplicationRegionKey,
-} from '../list/regions'
+import { type UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
 import {
   UjatInstitutionScheduleAssignSection,
@@ -106,7 +103,7 @@ export function UjatInstitutionScheduleAssignPage({
         activeKey={activeRegion}
         onChange={key => {
           const next = String(key)
-          if (isUjatInstitutionApplicationRegionKey(next)) setActiveRegion(next)
+          if (next.trim()) setActiveRegion(next)
         }}
         wrap
         items={regionTabs.map(region => ({
