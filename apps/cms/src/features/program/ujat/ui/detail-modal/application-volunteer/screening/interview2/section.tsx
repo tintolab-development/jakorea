@@ -332,6 +332,9 @@ export function Interview2Section({
           {isFetchingNextPage ? <Spin size="small" /> : null}
         </div>
       </FilterTableLayout>
+      {viewMode === 'calendar' ? (
+        <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+      ) : null}
     </div>
   )
 }
