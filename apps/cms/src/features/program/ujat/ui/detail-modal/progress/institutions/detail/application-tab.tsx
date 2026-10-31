@@ -300,7 +300,7 @@ export function UjatEducationProgressInstitutionApplicationTab({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="성범죄 경력 조회서 요청"
+            label="성범죄경력 조회서 요청"
             fullRow
             view={renderCriminalRecordCheckRequest(detail.guidance.criminalRecordCheckRequest)}
           />

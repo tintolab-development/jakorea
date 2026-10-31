@@ -55,7 +55,7 @@ export interface SchoolDetailForModal {
   computerInRoom?: string
   /** 주차 공간 여부 및 위치 */
   parkingInfo?: string
-  /** 성범죄 경력 조회서 요청 */
+  /** 성범죄경력 조회서 요청 */
   criminalCheckRequest?: string
   lectureRound: string
   textbookName?: string

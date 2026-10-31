@@ -304,7 +304,7 @@ export function ApplicantInstitutionBasicInfo({
                 value2={detail?.mealInfo ?? '-'}
               />
               <TableRowTwoCols
-                label1="성범죄 경력 조회서 요청"
+                label1="성범죄경력 조회서 요청"
                 value1={sexOffenseRequestDisplay}
                 label2="성범죄 경력 조회서"
                 value2={
