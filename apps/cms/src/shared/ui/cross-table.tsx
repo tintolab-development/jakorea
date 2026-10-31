@@ -8,12 +8,21 @@ export type CrossTableRow = {
   cells: readonly ReactNode[]
 }
 
+/** 열 헤더 — `colSpan`으로 동일 날짜 등 그룹 헤더를 표현 */
+export type CrossTableColumnHeader = {
+  content: ReactNode
+  colSpan?: number
+}
+
 export type CrossTableProps = {
   /** 1행 1열 — 행·열 교차 라벨 */
   corner: ReactNode
-  /** 1행 열 헤더 (corner 제외) */
-  columnHeaders: ReactNode[]
-  /** 본문 행 — 행 헤더 + 데이터 셀 */
+  /**
+   * 1행 열 헤더 (corner 제외).
+   * 문자열/노드 배열 또는 `{ content, colSpan }` — colSpan 합 = 본문 leaf 열 수.
+   */
+  columnHeaders: ReadonlyArray<ReactNode | CrossTableColumnHeader>
+  /** 본문 행 — 행 헤더 + 데이터 셀 (leaf 열 수와 동일) */
   rows: CrossTableRow[]
   className?: string
   /**
@@ -32,8 +41,23 @@ function getRowKey(row: CrossTableRow, index: number): string {
   return String(index)
 }
 
-function getColumnHeaderKey(header: ReactNode, index: number): string {
-  if (typeof header === 'string' || typeof header === 'number') return String(header)
+function normalizeColumnHeader(header: ReactNode | CrossTableColumnHeader): CrossTableColumnHeader {
+  if (
+    header != null &&
+    typeof header === 'object' &&
+    !Array.isArray(header) &&
+    'content' in header
+  ) {
+    const colSpan = header.colSpan != null && header.colSpan > 0 ? Math.trunc(header.colSpan) : 1
+    return { content: header.content, colSpan }
+  }
+  return { content: header as ReactNode, colSpan: 1 }
+}
+
+function getColumnHeaderKey(header: CrossTableColumnHeader, index: number): string {
+  if (typeof header.content === 'string' || typeof header.content === 'number') {
+    return `${String(header.content)}-${index}`
+  }
   return String(index)
 }
 
@@ -50,25 +74,29 @@ export function CrossTable({
     .filter(Boolean)
     .join(' ')
 
+  const normalizedHeaders = columnHeaders.map(normalizeColumnHeader)
+  const leafColumnCount = normalizedHeaders.reduce((sum, header) => sum + (header.colSpan ?? 1), 0)
+
   return (
     <div className={rootClass} style={style}>
       <table className="cross-table__table" aria-label={ariaLabel}>
         <colgroup>
           <col className="cross-table__label-col" />
-          {columnHeaders.map((_, index) => (
+          {Array.from({ length: leafColumnCount }, (_, index) => (
             <col key={index} />
           ))}
         </colgroup>
         <thead>
           <tr>
             <th className="cross-table__cell cross-table__cell--corner">{corner}</th>
-            {columnHeaders.map((header, index) => (
+            {normalizedHeaders.map((header, index) => (
               <th
                 key={getColumnHeaderKey(header, index)}
                 className="cross-table__cell cross-table__cell--column-header"
                 scope="col"
+                {...((header.colSpan ?? 1) > 1 ? { colSpan: header.colSpan } : {})}
               >
-                {header}
+                {header.content}
               </th>
             ))}
           </tr>
