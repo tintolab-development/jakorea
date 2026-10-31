@@ -30,14 +30,14 @@ describe('ujat education-regions adapters', () => {
     })
   })
 
-  it('maps null audit names to empty strings for UI dash', () => {
+  it('maps missing audit names to empty strings for UI dash', () => {
     expect(
       mapEducationRegionResponse({
         id: 1,
         code: 'busan',
         nameKo: '부산',
-        createdByName: null,
-        updatedByName: null,
+        createdByName: undefined,
+        updatedByName: undefined,
       })
     ).toMatchObject({
       createdByName: '',

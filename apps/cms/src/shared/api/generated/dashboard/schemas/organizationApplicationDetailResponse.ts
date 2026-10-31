@@ -107,12 +107,12 @@ export interface OrganizationApplicationDetailResponse {
   assignedInstructorCount?: number | null;
   /** UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null. */
   operatingStudentCount?: number | null;
-  /** 신청에 연결된 교재 영문명. 없으면 null. */
+  /** 신청에 연결된 교재 영문명. 교재가 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다. */
   textbookNameEn?: string | null;
   /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
   textbookDeliveryStatus?: OrganizationApplicationDetailResponseTextbookDeliveryStatus;
-  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생수/24로 계산하지 않습니다. */
+  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다. */
   kitCount?: number | null;
-  /** 저장된 교재 권수. 없으면 null. */
+  /** 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다. */
   bookCount?: number | null;
 }

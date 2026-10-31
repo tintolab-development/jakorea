@@ -1613,11 +1613,11 @@
           },
           "canSubmit": {
             "type": "boolean",
-            "description": "최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다."
+            "description": "최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 팀 참여 일정도 팀원 각자가 동일 규칙을 쓴다(팀장 전용 아님). 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다."
           },
           "canResubmit": {
             "type": "boolean",
-            "description": "수정 제출 가능. 제출 이력 있음, 마감 전, 본인 제출, form_response.response_status가 SUBMITTED 또는 REJECTED일 때 true. APPROVED/COMPLETED면 false. GET /api/portal/me/form-responses/{formResponseId}/feedback 의 canResubmit과 동일 규칙."
+            "description": "수정 제출 가능. 제출 이력 있음, 마감 전, 본인이 낸 제출, form_response.response_status가 SUBMITTED 또는 REJECTED일 때 true. APPROVED/COMPLETED면 false. 팀 일정도 본인 제출만 수정한다. GET /api/portal/me/form-responses/{formResponseId}/feedback 의 canResubmit과 동일 규칙."
           },
           "responseStatus": {
             "type": "string",
@@ -2333,9 +2333,15 @@
             "type": "string",
             "format": "date-time"
           },
+          "createdByName": {
+            "type": "string"
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "updatedByName": {
+            "type": "string"
           }
         }
       },
@@ -29558,6 +29564,45 @@
               "PUBLISHED"
             ],
             "nullable": true
+          },
+          "expectedUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "낙관적 동시성 토큰. GET 응답의 updatedAt과 같아야 한다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다.",
+            "nullable": true
+          }
+        }
+      },
+      "ApiResponseProgramResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProgramResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -37347,7 +37392,8 @@
           },
           "cancelled": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "표시상태가 '신청 취소'인 건수. 활동 포기는 포함하지 않는다(giveUp)."
           },
           "inProgress": {
             "type": "integer",
@@ -37359,7 +37405,13 @@
           },
           "giveUp": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "표시상태가 '활동 포기'인 건수."
+          },
+          "ended": {
+            "type": "integer",
+            "format": "int64",
+            "description": "마이페이지 교육·봉사 현황 「종료」 탭과 동일: 진행 완료+활동 포기+신청 반려+신청 취소."
           }
         }
       },
@@ -47626,6 +47678,9 @@
           "message": {
             "type": "string"
           },
+          "messageKo": {
+            "type": "string"
+          },
           "detailSummary": {
             "type": "string"
           },
@@ -47708,6 +47763,12 @@
             "format": "date-time"
           },
           "ipAddress": {
+            "type": "string"
+          },
+          "result": {
+            "type": "string"
+          },
+          "traceId": {
             "type": "string"
           }
         }
