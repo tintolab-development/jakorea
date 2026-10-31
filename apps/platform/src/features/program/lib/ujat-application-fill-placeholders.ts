@@ -5,6 +5,7 @@ import {
 } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import {
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
+  applyUjatVolunteerSubmitConfirmationCohort,
   migrateUjatProgramApplicationVolunteerChoiceParagraphs,
 } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
@@ -87,10 +88,8 @@ function replaceVolunteerGradeHintYear(
 
 function replaceVolunteerSubmitConfirmationCohort(
   draft: WritingFormDraft,
-  year: number,
   cohort: string | null,
 ): WritingFormDraft {
-  const replacement = cohort ? `${cohort}기` : `${year}기`
   return {
     ...draft,
     paragraphs: draft.paragraphs.map(paragraph => {
@@ -104,7 +103,7 @@ function replaceVolunteerSubmitConfirmationCohort(
         ...paragraph,
         items: paragraph.items.map(item => ({
           ...item,
-          label: item.label.replace(/UJAT N기|UJAT \d+기/g, `UJAT ${replacement}`),
+          label: applyUjatVolunteerSubmitConfirmationCohort(item.label, cohort),
         })),
       }
     }),
@@ -129,7 +128,6 @@ export function preparePortalUjatApplicationDraft(
       year,
       semester,
     ),
-    year,
     cohort,
   )
 }

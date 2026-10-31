@@ -1,4 +1,7 @@
-import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
+import {
+  UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS,
+  UJAT_PROGRAM_APPLICATION_INSTITUTION_APPLICATION_REGION_ITEMS,
+} from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import {
   formatDisplayClockLabel,
   formatDisplayDate,
@@ -390,13 +393,71 @@ function formatTeacherContact(row: Record<string, unknown>): string {
     .join(' | ')
 }
 
+const INSTITUTION_REGION_CODE_TO_SLUG: Record<string, string> = {
+  SEOUL: 'seoul',
+  DAEGU: 'daegu',
+  DAEJEON: 'daejeon',
+  INCHEON: 'incheon',
+  BUSAN: 'busan',
+  GWANGJU: 'gwangju',
+  GYEONGGI_SOUTH: 'gyeonggi-south',
+  JEONBUK: 'jeonbuk-jeonju',
+  JEONBUK_JEONJU: 'jeonbuk-jeonju',
+  JEONJU: 'jeonbuk-jeonju',
+}
+
+const APPLICATION_REGION_SLUG_MARKER = '-application-region-'
+
+function mapApplicationRegionLabel(raw: unknown): string {
+  const record = asRecord(raw)
+  const token = record
+    ? readTrimmed(record.label) ||
+      readTrimmed(record.selectedLabel) ||
+      readTrimmed(record.value) ||
+      readTrimmed(record.id) ||
+      readTrimmed(record.selectedIds) ||
+      (Array.isArray(record.selectedIds) ? readTrimmed(record.selectedIds[0]) : '')
+    : Array.isArray(raw)
+      ? readTrimmed(raw[0])
+      : readTrimmed(raw)
+  if (!token) return ''
+  const items = UJAT_PROGRAM_APPLICATION_INSTITUTION_APPLICATION_REGION_ITEMS
+  const byExact = items.find(item => item.id === token || item.label === token)
+  if (byExact) return byExact.label
+  const code = token.trim().toUpperCase().replace(/-/g, '_')
+  const aliasSlug = INSTITUTION_REGION_CODE_TO_SLUG[code]
+  const normalized = aliasSlug ?? token.trim().toLowerCase().replace(/_/g, '-')
+  const bySlug = items.find(item => {
+    const index = item.id.lastIndexOf(APPLICATION_REGION_SLUG_MARKER)
+    const slug = index >= 0 ? item.id.slice(index + APPLICATION_REGION_SLUG_MARKER.length) : item.id
+    return slug === normalized || item.id.endsWith(normalized) || item.id.endsWith(`-${normalized}`)
+  })
+  return bySlug?.label ?? token
+}
+
 function mapInstitution(
   answers: Record<string, unknown>,
 ): EducationUjatApplicationInstitution {
   const basicRaw = answers[UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo]
   const row = asRecord(basicRaw) ?? {}
   const name = readTrimmed(row.schoolName)
-  const address = readTrimmed(row.regionLabel) || readTrimmed(row.organizationRegion)
+  const address =
+    readTrimmed(row.address) ||
+    readTrimmed(row.schoolAddress) ||
+    readTrimmed(row.regionLabel) ||
+    readTrimmed(row.organizationRegion)
+  const applicationOverlay = asRecord(answers.ujatApplication)
+  const applicationRegion = mapApplicationRegionLabel(
+    answers[UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion] ??
+      answers['ujatApplication.applicationRegion'] ??
+      applicationOverlay?.applicationRegion ??
+      row['ujatApplication.applicationRegion'] ??
+      row.applicationRegion ??
+      answers.educationRegion ??
+      answers.educationRegionCode ??
+      row.educationRegion ??
+      row.educationRegionCode,
+  )
   const addressDetail =
     readTrimmed(row.addressDetail) ||
     readTrimmed(row.detailAddress) ||
@@ -408,6 +469,7 @@ function mapInstitution(
 
   return {
     name,
+    applicationRegion,
     address,
     addressDetail,
     teacherContact,
@@ -419,6 +481,7 @@ export function hasUjatApplicationContent(content: EducationUjatApplicationConte
   if (!content) return false
   const institutionFilled = [
     content.institution.name,
+    content.institution.applicationRegion,
     content.institution.address,
     content.institution.addressDetail,
     content.institution.teacherContact,

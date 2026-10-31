@@ -16,6 +16,8 @@ const OVERLAY = {
   applicationRoute: 'ujatVolunteerApplication.applicationRoute',
   applicationRouteOther: 'ujatVolunteerApplication.applicationRouteOther',
   hasExperience: 'ujatVolunteerApplication.hasExperience',
+  previousYear: 'ujatVolunteerApplication.previousYear',
+  previousTerm: 'ujatVolunteerApplication.previousTerm',
 } as const
 
 const EMPTY: EducationUjatVolunteerApplicationContent = {
@@ -25,7 +27,24 @@ const EMPTY: EducationUjatVolunteerApplicationContent = {
   major: '',
   educationExperienceLabel: '',
   applicationRouteLabel: '',
+  previousTermLabel: '',
+  interviewScheduleLabel: '',
 }
+
+const REGION_CODE_TO_SLUG: Record<string, string> = {
+  SEOUL: 'seoul',
+  DAEGU: 'daegu',
+  DAEJEON: 'daejeon',
+  INCHEON: 'incheon',
+  BUSAN: 'busan',
+  GWANGJU: 'gwangju',
+  GYEONGGI_SOUTH: 'gyeonggi-south',
+  JEONBUK: 'jeonbuk-jeonju',
+  JEONBUK_JEONJU: 'jeonbuk-jeonju',
+  JEONJU: 'jeonbuk-jeonju',
+}
+
+const PREFERRED_REGION_SLUG_MARKER = '-preferred-region-'
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null
@@ -74,13 +93,87 @@ function unwrapChoice(raw: unknown): string {
   return readTrimmed(raw)
 }
 
+function regionItemSlug(id: string, marker: string): string {
+  const index = id.lastIndexOf(marker)
+  return index >= 0 ? id.slice(index + marker.length) : id
+}
+
 function mapRegionLabel(raw: unknown): string {
   const token = unwrapChoice(raw)
   if (!token) return ''
-  const byId = UJAT_PROGRAM_APPLICATION_VOLUNTEER_PREFERRED_REGION_ITEMS.find(
-    item => item.id === token || item.label === token,
-  )
-  return byId?.label ?? token
+  const items = UJAT_PROGRAM_APPLICATION_VOLUNTEER_PREFERRED_REGION_ITEMS
+  const byExact = items.find(item => item.id === token || item.label === token)
+  if (byExact) return byExact.label
+
+  const code = token.trim().toUpperCase().replace(/-/g, '_')
+  const aliasSlug = REGION_CODE_TO_SLUG[code]
+  const normalized = (aliasSlug ?? token.trim().toLowerCase().replace(/_/g, '-')).replace(/^-/, '')
+  const bySlug = items.find(item => {
+    const slug = regionItemSlug(item.id, PREFERRED_REGION_SLUG_MARKER)
+    return slug === normalized || item.id.endsWith(normalized) || item.id.endsWith(`-${normalized}`)
+  })
+  return bySlug?.label ?? token
+}
+
+function isOpaqueScheduleToken(value: string): boolean {
+  const trimmed = value.trim()
+  return /^(interview-slot|schedule):/i.test(trimmed)
+}
+
+function mapInterviewSlotToken(raw: unknown): string {
+  const record = asRecord(raw)
+  if (record) {
+    return (
+      readTrimmed(record.label) ||
+      readTrimmed(record.selectedLabel) ||
+      mapInterviewSlotToken(record.value)
+    )
+  }
+  const text = readTrimmed(raw)
+  if (!text || isOpaqueScheduleToken(text)) return ''
+  return text
+}
+
+function mapInterviewScheduleLabel(raw: unknown): string {
+  if (Array.isArray(raw)) {
+    return raw.map(mapInterviewSlotToken).filter(Boolean).join('\n')
+  }
+  const record = asRecord(raw)
+  if (!record) return mapInterviewSlotToken(raw)
+  const summary = readTrimmed(record.summary)
+  if (summary) {
+    return summary
+      .split('|')
+      .map(part => part.trim())
+      .filter(part => part && !isOpaqueScheduleToken(part))
+      .join('\n')
+  }
+  if (Array.isArray(record.selectedLabels)) {
+    const labels = record.selectedLabels.map(item => readTrimmed(item)).filter(label => label && !isOpaqueScheduleToken(label))
+    if (labels.length > 0) return labels.join('\n')
+  }
+  return ''
+}
+
+function withUnit(value: string, unit: '기' | '년'): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  return trimmed.endsWith(unit) ? trimmed : `${trimmed}${unit}`
+}
+
+function mapPreviousTermLabel(answers: Record<string, unknown>, paragraphId: string): string {
+  const raw = pickDeep(answers, [OVERLAY.previousTerm, paragraphId, 'previousTerm', 'activityTerm'])
+  const record = asRecord(raw)
+  const termRaw = record
+    ? readTrimmed(record.activityTerm) || readTrimmed(record.term) || readTrimmed(record.previousTerm)
+    : readTrimmed(raw)
+  const yearFromRecord = record
+    ? readTrimmed(record.activityYear) || readTrimmed(record.previousYear) || readTrimmed(record.year)
+    : ''
+  const yearRaw =
+    yearFromRecord ||
+    readTrimmed(pickDeep(answers, [OVERLAY.previousYear, 'previousYear', 'activityYear']))
+  return [withUnit(termRaw, '기'), withUnit(yearRaw, '년')].filter(Boolean).join(' ')
 }
 
 function mapGradeLabel(raw: unknown): string {
@@ -183,6 +276,11 @@ export function buildUjatVolunteerApplicationProfileFromAnswers(
     routeOther ?? basic?.applicationRouteOther,
   )
 
+  const previousTermLabel = mapPreviousTermLabel(answers, ids.previousTerm)
+  const interviewScheduleLabel = mapInterviewScheduleLabel(
+    pickDeep(answers, [ids.interviewSchedule, 'interviewSchedule', 'interviewPreferredSlots']),
+  )
+
   const content: EducationUjatVolunteerApplicationContent = {
     preferredRegion,
     universityName,
@@ -190,6 +288,8 @@ export function buildUjatVolunteerApplicationProfileFromAnswers(
     major,
     educationExperienceLabel,
     applicationRouteLabel,
+    previousTermLabel,
+    interviewScheduleLabel,
   }
   return hasUjatVolunteerApplicationProfile(content) ? content : undefined
 }

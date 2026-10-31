@@ -2488,6 +2488,34 @@ assert.equal(
   assert.ok(phaseValue(twoTerms, '봉사자2 1차 서류 합격자 발표')?.endsWith(', 이메일 안내'))
   assert.ok(!phaseValue(twoTerms, '봉사자2 최종 합격자 발표')?.includes(', '))
 
+  const halfTerms = mapPortalProgramDetail({
+    programId: 186483,
+    title: '상·하반기 recruitTerm',
+    recruitments: [
+      {
+        ...volunteerRow,
+        recruitmentId: 187017,
+        recruitTerm: 'FIRST_HALF',
+        finalPassAnnouncementMethod: '문자 안내',
+      },
+      {
+        ...volunteerRow,
+        recruitmentId: 187018,
+        recruitTerm: 'SECOND_HALF',
+        documentPassAnnouncementAt: '2026-08-02T15:00:00Z',
+        finalPassAnnouncementAt: '2026-08-12T15:00:00Z',
+        documentPassAnnouncementMethod: '이메일 안내',
+        finalPassAnnouncementMethod: null,
+      },
+    ],
+  })
+  assert.ok(phaseValue(halfTerms, '상반기 봉사자 모집'))
+  assert.ok(phaseValue(halfTerms, '하반기 봉사자 모집'))
+  assert.ok(phaseValue(halfTerms, '상반기 봉사자 최종 합격자 발표')?.endsWith(', 문자 안내'))
+  assert.ok(phaseValue(halfTerms, '하반기 봉사자 1차 서류 합격자 발표')?.endsWith(', 이메일 안내'))
+  assert.equal(phaseValue(halfTerms, '봉사자1 최종 합격자 발표'), undefined)
+  assert.equal(phaseValue(halfTerms, '봉사자2 1차 서류 합격자 발표'), undefined)
+
   // 참여자·강사 행도 봉사자와 같은 통일 라벨 (지원님 결정 2026-10-30)
   const participantLabels = mapPortalProgramDetail({
     programId: 186299,

@@ -119,6 +119,8 @@ assert.deepEqual(mappedVolunteerAnswers.ujatVolunteerApplicationContent, {
   major: '경영학',
   educationExperienceLabel: '있음',
   applicationRouteLabel: '인스타그램',
+  previousTermLabel: '',
+  interviewScheduleLabel: '',
 })
 
 const teacherOrganization = mapPortalProgramApplicationDetail({

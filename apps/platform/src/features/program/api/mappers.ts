@@ -676,6 +676,14 @@ const RECRUITMENT_SELECTION_PHASE_LABELS = {
   finalPass: '최종 합격자 발표',
 } as const
 
+/** 봉사자 행의 상·하반기. 없으면 null — 호출부는 기존 `봉사자1`/`봉사자2`로 떨어진다. */
+function volunteerHalfRoleTag(row: PortalRecruitment): string | null {
+  if (recruitmentRoleShort(row.recruitmentType) !== '봉사자') return null
+  const term = readString(row.recruitTerm)?.toUpperCase()
+  const termLabel = term ? TERM_LABEL[term] : undefined
+  return termLabel ? `${termLabel} 봉사자` : null
+}
+
 function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
   const rows = recruitments ?? []
   const qualify = rows.length > 1
@@ -691,11 +699,14 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
     const seen = (typeSeen.get(typeKey) ?? 0) + 1
     typeSeen.set(typeKey, seen)
     const role = recruitmentRoleShort(row.recruitmentType)
+    const halfTag = volunteerHalfRoleTag(row)
     const roleTag =
-      qualify && (typeCounts.get(typeKey) ?? 0) > 1 ? `${role}${seen}` : qualify ? role : null
+      halfTag ??
+      (qualify && (typeCounts.get(typeKey) ?? 0) > 1 ? `${role}${seen}` : qualify ? role : null)
     const selectionLabel = (base: string) => (roleTag ? `${roleTag} ${base}` : base)
-    const periodLabel =
-      roleTag && (typeCounts.get(typeKey) ?? 0) > 1
+    const periodLabel = halfTag
+      ? `${halfTag} 모집`
+      : roleTag && (typeCounts.get(typeKey) ?? 0) > 1
         ? `${roleTag} 모집 기간`
         : recruitmentTypeLabel(row.recruitmentType)
 

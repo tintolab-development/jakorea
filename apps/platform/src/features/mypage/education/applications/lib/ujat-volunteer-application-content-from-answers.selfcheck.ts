@@ -36,6 +36,35 @@ assert.equal(nested?.gradeLabel, '휴학생')
 assert.equal(nested?.major, '교육학')
 assert.equal(nested?.educationExperienceLabel, '없음')
 assert.equal(nested?.applicationRouteLabel, '학과 게시판')
+assert.equal(nested?.previousTermLabel, '')
+assert.equal(nested?.interviewScheduleLabel, '')
+
+const codedRegion = buildUjatVolunteerApplicationProfileFromAnswers({
+  'ujatVolunteerApplication.preferredRegion': 'DAEGU',
+  'ujatVolunteerApplication.universityName': '대구대학교',
+})
+assert.equal(codedRegion?.preferredRegion, '대구')
+
+const suffixRegion = buildUjatVolunteerApplicationProfileFromAnswers({
+  preferredRegion: 'seoul',
+  universityName: '서울대학교',
+})
+assert.equal(suffixRegion?.preferredRegion, '서울')
+
+const graduate = buildUjatVolunteerApplicationProfileFromAnswers({
+  [UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.previousTerm]: {
+    activityTerm: '8',
+    activityYear: '2025',
+  },
+  [UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.interviewSchedule]: {
+    selectedSlotIds: ['interview-slot:1'],
+    selectedLabels: ['2026년 4월 3일(금) 10:00 ~ 10:30'],
+    summary: '2026년 4월 3일(금) 10:00 ~ 10:30',
+  },
+  'ujatVolunteerApplication.universityName': '수료대학교',
+})
+assert.equal(graduate?.previousTermLabel, '8기 2025년')
+assert.equal(graduate?.interviewScheduleLabel, '2026년 4월 3일(금) 10:00 ~ 10:30')
 
 assert.equal(buildUjatVolunteerApplicationProfileFromAnswers({}), undefined)
 

@@ -218,6 +218,8 @@ export type EducationTeacherApplicationContent = {
 
 export type EducationUjatApplicationInstitution = {
   name: string
+  /** 교육 지역(신청 지역). 기관 소재지(address)와 별도 */
+  applicationRegion: string
   address: string
   addressDetail: string
   teacherContact: string
@@ -255,6 +257,10 @@ export type EducationUjatVolunteerApplicationContent = {
   major: string
   educationExperienceLabel: string
   applicationRouteLabel: string
+  /** 수료자 — 이전 UJAT 활동 기수. 없으면 빈 문자열 */
+  previousTermLabel: string
+  /** 면접 진행 가능 일정. 없으면 빈 문자열 */
+  interviewScheduleLabel: string
 }
 
 export type EducationUjatTemporaryScheduleSlot = {

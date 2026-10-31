@@ -429,6 +429,8 @@ export function MypageVolunteerDetailPage() {
       selfIntroMotivation={application.selfIntroMotivation}
       preferredEducationScheduleLines={preferredEducationScheduleLines}
       alwaysShowPreferredSchedule
+      freeTextSections={volunteerApplicationExtras.freeTextSections}
+      infoFields={volunteerApplicationExtras.infoFields}
     />
   ) : (
     <EducationApplicationContent
