@@ -179,10 +179,12 @@ export function MypageEducationSettlementConfirmPage() {
     documentKind === 'receipt'
       ? '영수증 제출 전에 정보가 맞는지 확인해 주세요.'
       : '지급조서 신청 전에 정보가 맞는지 확인해 주세요.'
+  const titleInnerClassName =
+    documentKind === 'receipt' ? `${styles.inner} ${styles.titleCentered}` : styles.inner
 
   if (remoteSettlements.individualDisabled) {
     return (
-      <PFFormPage aria-label={title} className={styles.page} innerClassName={styles.inner} title={title}>
+      <PFFormPage aria-label={title} className={styles.page} innerClassName={titleInnerClassName} title={title}>
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           {INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE}
         </PFText>
@@ -262,7 +264,7 @@ export function MypageEducationSettlementConfirmPage() {
     <PFFormPage
       aria-label={documentKind === 'receipt' ? '영수증 신청 내용 확인' : '지급조서 신청 내용 확인'}
       className={styles.page}
-      innerClassName={styles.inner}
+      innerClassName={titleInnerClassName}
       title={title}
     >
       <EducationSettlementConfirmView

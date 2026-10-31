@@ -219,6 +219,7 @@ export function EducationSettlementPanel({
     <div className={styles.shell}>
       <EducationSettlementSummary
         processLabel={processLabel}
+        processTitle={documentKind === 'receipt' ? '영수증 처리 현황' : '지급조서 처리 현황'}
         completedCount={completedCount}
         totalCount={totalCount}
         feeGradeLabel={feeGradeLabel}

@@ -11,7 +11,7 @@ export type SettlementStatusUiConfig = {
   markTone?: 'success' | 'alert' | 'neutral'
   statusLabel?: string
   statusTone?: 'submitted' | 'unsubmitted'
-  guideVariant?: 'default' | 'submitted'
+  guideVariant?: 'default' | 'submitted' | 'feedback'
   cardTone?: 'default' | 'danger'
   amountKind?: SettlementAmountKind
   actionHint?: string
@@ -162,7 +162,8 @@ export function resolveSettlementStatusUi(
       markLabel: '신청 반려',
       markTone: 'alert',
       amountKind: 'expected',
-      cardTone: 'danger',
+      cardTone: kind === 'receipt' ? undefined : 'danger',
+      guideVariant: kind === 'receipt' ? 'feedback' : undefined,
       writeLabel: kind === 'payment_statement' ? '지급조서 재신청' : '영수증 재신청',
       viewLabel: copy.viewLabel,
       actions: ['reject-reason', 'reapply'],
