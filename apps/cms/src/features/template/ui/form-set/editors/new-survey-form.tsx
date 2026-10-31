@@ -179,6 +179,7 @@ function NewSurveyFormInner() {
         await persistWritingFormTemplateDraft({
           templateId: nextTemplateId,
           draft,
+          publishAfterSave: true,
         })
 
         await queryClient.invalidateQueries({

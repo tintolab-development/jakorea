@@ -105,6 +105,23 @@ export function isCatalogSurveyOrGeneralAgreementTemplateCode(
   return category === 'SURVEY' || (category === 'AGREEMENT' && code !== 'agreement-crime')
 }
 
+/** 템플릿 관리 저장 후 자동 발행 대상(설문·일반 동의서). 등록·모집·신청·성범죄·발급은 제외. */
+export function isSurveyOrGeneralAgreementPublishTarget(
+  templateCode: string | undefined | null,
+  options?: { baseTemplateCode?: string | null }
+): boolean {
+  const code = templateCode?.trim() ?? ''
+  if (code === '') return false
+  if (isCatalogOriginalVersionWriteBlocked(code)) return false
+  if (isCatalogSurveyOrGeneralAgreementTemplateCode(code)) return true
+  const base = options?.baseTemplateCode?.trim() ?? ''
+  if (base !== '' && isCatalogSurveyOrGeneralAgreementTemplateCode(base)) return true
+  const lower = code.toLowerCase()
+  if (lower.startsWith('survey-')) return true
+  if (lower.startsWith('agreement-') && lower !== 'agreement-crime') return true
+  return false
+}
+
 export function isCatalogOperationalWritingTemplateCode(
   templateCode: string | undefined | null
 ): boolean {
