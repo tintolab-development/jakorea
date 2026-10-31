@@ -301,13 +301,13 @@ export function useGeneralVolunteerInterview2({
         undefined,
         toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
       )
-      setPassModalVolunteer(null)
+      closePassModal()
       if (!ok) return
       setFinalResultNotifyById(prev => ({ ...prev, [id]: payload.notifyTiming }))
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
       setPassCompleteVolunteerName(volunteerName)
     },
-    [applySecondInterviewStatus, passModalVolunteer]
+    [applySecondInterviewStatus, closePassModal, passModalVolunteer]
   )
 
   const handleFailModalConfirm = useCallback(
