@@ -49,6 +49,7 @@ import {
 } from '@/features/program/general/model/participating-schools'
 import { SchoolDetailAddInstructorAssignModal } from './school-detail-add-instructor-assign-modal'
 import { SchoolDetailAssignCompleteModal } from './school-detail-assign-complete-modal'
+import { useProgramInstructorApplications } from '@/features/program/general/hooks/use-program-instructor-applications'
 import { buildProgramApprovedInstructorAssignOptions } from '../../../lib/school-add-instructor-assign'
 import { SchoolDetailStudentListSection } from './school-detail-student-list-section'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
@@ -233,10 +234,15 @@ export function SchoolDetailModal({
     [detail?.instructors]
   )
 
-  const addInstructorAssignOptions = useMemo(() => {
-    if (!programId) return []
-    return buildProgramApprovedInstructorAssignOptions(programId, assignedInstructorNames)
-  }, [programId, assignedInstructorNames])
+  const instructorApplications = useProgramInstructorApplications(programId)
+  const addInstructorAssignOptions = useMemo(
+    () =>
+      buildProgramApprovedInstructorAssignOptions(
+        instructorApplications.rows,
+        assignedInstructorNames
+      ),
+    [assignedInstructorNames, instructorApplications.rows]
+  )
 
   const handleAddInstructorAssign = (
     instructorId: string,

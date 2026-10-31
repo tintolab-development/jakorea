@@ -18,6 +18,8 @@ export interface ProgramEditInfoActionsProps {
   size?: CmsButtonSize
   /** false면 고정 폭을 쓰지 않는다 */
   width?: number | string | false
+  /** false면 정보 수정 버튼을 숨긴다. 조회 전용(GENERAL) 관리자 */
+  canWrite?: boolean
 }
 
 /** 조회/편집 상태 모두 단일 「정보 수정」 버튼을 사용하고 색상으로 동작을 구분한다. */
@@ -31,7 +33,10 @@ export function ProgramEditInfoActions({
   useToolbarButton = false,
   size,
   width,
+  canWrite = true,
 }: ProgramEditInfoActionsProps) {
+  if (!canWrite) return null
+
   const resolvedVariant = isEditing ? 'secondary' : idleVariant
   const shared = {
     variant: resolvedVariant,

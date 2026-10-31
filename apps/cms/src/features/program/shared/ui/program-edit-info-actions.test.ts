@@ -75,4 +75,10 @@ describe('ProgramEditInfoActions', () => {
 
     expect(screen.getByRole('button', { name: '정보 수정' }).hasAttribute('disabled')).toBe(true)
   })
+
+  it('쓰기 권한이 없으면 정보 수정 버튼을 렌더하지 않는다', () => {
+    renderActions({ canWrite: false })
+
+    expect(screen.queryByRole('button', { name: '정보 수정' })).toBeNull()
+  })
 })

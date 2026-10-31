@@ -18,10 +18,6 @@ import {
 import {
   patchApplicantInstructorForApprovalStatus,
   patchApplicantInstructorForNotificationResend,
-  updateApplicantInstructorApprovalStatus,
-  updateApplicantInstructorCancelApproval,
-  updateApplicantInstructorCancelRejection,
-  updateApplicantInstructorNotificationResend,
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import {
@@ -1326,7 +1322,6 @@ export function ApplicantList({
                 r.id === id ? patchApplicantInstructorForApprovalStatus(r, 'rejected') : r
               )
             )
-            updateApplicantInstructorApprovalStatus(id, 'rejected')
             showApplicationRejectionCompletedAlert()
           }}
           onCancelApproval={id => {
@@ -1999,7 +1994,6 @@ export function ApplicantList({
               }
               return next
             })
-            updateApplicantInstructorApprovalStatus(id, 'rejected', notifyOptions)
             showApplicationRejectionCompletedAlert()
           }
           void run()
@@ -2049,7 +2043,6 @@ export function ApplicantList({
             }
             return next
           })
-          updateApplicantInstructorCancelApproval(id, notifyOptions)
           setInstructorCancelApprovalComplete({
             instructorName: name,
             cancellationReason: payload.reason,
@@ -2104,7 +2097,6 @@ export function ApplicantList({
             }
             return next
           })
-          updateApplicantInstructorCancelRejection(id, notifyOptions)
           setInstructorCancelRejectComplete({ instructorName: name })
         }}
       />
@@ -2195,7 +2187,6 @@ export function ApplicantList({
               }
               return next
             })
-            updateApplicantInstructorNotificationResend(id, notifyOptions)
             return
           }
 
@@ -2388,7 +2379,6 @@ export function ApplicantList({
             }
             setInstructorApprovalTarget(null)
             applyLocalApproval()
-            updateApplicantInstructorApprovalStatus(id, 'approved', notifyOptions)
             showApplicationApprovalCompletedAlert()
           }
           void run()
