@@ -30,6 +30,29 @@ assert.deepEqual(
     canShowFormBody: true,
     canWrite: true,
   }),
+  { type: 'submitted' },
+)
+
+assert.deepEqual(
+  resolveEducationSurveyFillNotice({
+    kind: 'satisfaction',
+    status: 'submitted',
+    periodBlockReason: null,
+    canShowFormBody: true,
+    canWrite: false,
+  }),
+  { type: 'submitted' },
+)
+
+assert.deepEqual(
+  resolveEducationSurveyFillNotice({
+    kind: 'satisfaction',
+    status: 'submitted',
+    periodBlockReason: null,
+    canShowFormBody: true,
+    canWrite: true,
+    rewriteRequested: true,
+  }),
   { type: 'none' },
 )
 

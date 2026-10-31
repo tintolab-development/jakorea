@@ -32,5 +32,5 @@ export type EducationSurveyListEntry = {
 }
 
 export function educationSurveyListStatusLabel(status: EducationSurveyListStatus): string {
-  return status === 'in_progress' ? '진행중' : '제출완료'
+  return status === 'in_progress' ? '진행중' : '제출 완료'
 }

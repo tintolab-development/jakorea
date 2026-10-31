@@ -155,6 +155,7 @@ export function EducationSurveyFillPanel({
   )
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
+  const [rewriteEntryId, setRewriteEntryId] = useState<string | null>(null)
 
   useEffect(() => {
     if (surveyList.length === 0) return
@@ -167,6 +168,7 @@ export function EducationSurveyFillPanel({
     [surveyList, selectedId],
   )
   const selectedEntryId = selectedEntry?.id ?? ''
+  const rewriteRequested = rewriteEntryId === selectedEntryId
   const listHasForm = selectedEntry?.form != null
   const canFetchRemoteForm =
     remoteForms.enabled &&
@@ -452,20 +454,39 @@ export function EducationSurveyFillPanel({
   }
 
   const renderSubmittedNotice = () => {
-    if (showList) {
-      return (
-        <div className={styles.periodNoticeLayout}>
-          <EducationSurveyList
-            items={surveyList}
-            selectedId={selectedEntry?.id ?? selectedId}
-            onSelect={setSelectedId}
-          />
-          <EducationSurveySubmittedPanel kind={kind} layout="inline" />
-        </div>
-      )
-    }
+    const submittedBody = (
+      <div className={styles.body}>
+        <EducationSurveySubmittedPanel
+          kind={kind}
+          titleParagraph={titleParagraph}
+          surveyCreatedAt={surveyCreatedAt}
+          canRewrite={canWrite}
+          onRewrite={() => {
+            if (!canWrite) return
+            setRewriteEntryId(selectedEntryId)
+          }}
+        />
+      </div>
+    )
 
-    return <EducationSurveySubmittedPanel kind={kind} />
+    return (
+      <div className={styles.shell}>
+        <div className={showList ? styles.layoutWithList : styles.inner}>
+          {showList ? (
+            <>
+              <EducationSurveyList
+                items={surveyList}
+                selectedId={selectedEntry?.id ?? selectedId}
+                onSelect={setSelectedId}
+              />
+              {submittedBody}
+            </>
+          ) : (
+            submittedBody
+          )}
+        </div>
+      </div>
+    )
   }
 
   if (!remoteForms.enabled) {
@@ -496,6 +517,7 @@ export function EducationSurveyFillPanel({
     periodBlockReason: effectivePeriodBlockReason,
     canShowFormBody,
     canWrite,
+    rewriteRequested,
   })
 
   if (fillNotice.type === 'submitted') {
