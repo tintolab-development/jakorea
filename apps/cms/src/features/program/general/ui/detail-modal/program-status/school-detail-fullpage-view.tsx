@@ -2922,7 +2922,9 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           <div className="program-detail-fullpage-modal__info-tab school-detail-fullpage-view__posts-tab-wrap">
             <EnrollmentProgramDetailPostsTab
               program={program}
-              schoolId={detail.id}
+              schoolId={
+                row.organizationApplicationId?.trim() || detail.id
+              }
               showWriteButtonInSection={false}
               writeModalOpen={postWriteModalOpen}
               onWriteModalOpenChange={setPostWriteModalOpen}

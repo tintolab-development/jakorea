@@ -236,7 +236,12 @@ export function useGeneralProgramPosts(programId: string | undefined) {
     isRemoteDataSource: remoteEnabled && !query.isError,
     invalidatePosts,
     removeDeletedPost,
-    createPost: async (payload: { title?: string; content: string; visibilityType?: string }) => {
+    createPost: async (payload: {
+      title?: string
+      content: string
+      visibilityType?: string
+      organizationApplicationId?: number
+    }) => {
       if (!programId || !remoteEnabled) return null
       const result = await createGeneralProgramPost(programId, payload)
       await invalidatePosts()

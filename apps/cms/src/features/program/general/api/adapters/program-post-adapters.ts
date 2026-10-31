@@ -92,6 +92,25 @@ function mapVisibilityToAudience(visibilityType: string | undefined): string[] |
     .filter(Boolean)
 }
 
+/** API `organizationApplicationId` → domain `schoolId` (참여 기관 상세 필터·작성 스코프) */
+export function mapOrganizationApplicationIdToSchoolId(
+  organizationApplicationId: number | null | undefined
+): string | undefined {
+  if (organizationApplicationId == null) return undefined
+  if (!Number.isFinite(organizationApplicationId) || organizationApplicationId <= 0) return undefined
+  return String(organizationApplicationId)
+}
+
+export function parseOrganizationApplicationIdFromSchoolId(
+  schoolId: string | null | undefined
+): number | undefined {
+  const raw = schoolId?.trim()
+  if (!raw) return undefined
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed) || parsed <= 0) return undefined
+  return parsed
+}
+
 export function mapProgramPostListItemToDomain(
   dto: ProgramPostListItemResponse & WithCreatedByDisplayName,
   programId: string
@@ -101,6 +120,7 @@ export function mapProgramPostListItemToDomain(
   return {
     id: String(dto.postId ?? ''),
     programId,
+    schoolId: mapOrganizationApplicationIdToSchoolId(dto.organizationApplicationId),
     authorName: resolvePostAuthorName(
       nullToUndefined(dto.createdByActorType),
       nullToUndefined(dto.createdByActorId),
@@ -132,6 +152,7 @@ export function mapProgramPostResponseToDomain(
   return {
     id: String(dto.postId ?? dto.id ?? ''),
     programId: dto.programId != null ? String(dto.programId) : programId,
+    schoolId: mapOrganizationApplicationIdToSchoolId(dto.organizationApplicationId),
     authorName: resolvePostAuthorName(
       nullToUndefined(dto.createdByActorType),
       nullToUndefined(dto.createdByActorId),
