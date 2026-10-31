@@ -13,7 +13,6 @@ import {
 } from '../list/action-modal'
 import { TemporaryActionModal } from '../temporary-action-modal'
 import type { UjatTemporaryActionKind } from '../temporary-action-copy'
-import { UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE } from '@/features/program/ujat/api/temporary-rejections'
 import { releaseUjatTemporarySchedules } from '../list/temp-release'
 import {
   getUjatInstitutionTempRejectCompleteContent,
@@ -48,6 +47,7 @@ export function UjatInstitutionApplicationDetailPage({
     approveRemote,
     rejectRemote,
     tempRejectRemote,
+    tempRejectCancelRemote,
     workflow,
     workflowReady,
   } = useUjatInstitutionApplicationDetail({ institutionId, programId })
@@ -155,13 +155,19 @@ export function UjatInstitutionApplicationDetailPage({
 
   const handleTempActionConfirm = useCallback(async () => {
     if (!pendingTempKind || !row) return
-    if (pendingTempKind === 'temp_reject_cancel') {
-      setPendingTempKind(null)
-      showAlert({ title: '안내', content: UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE })
-      return
-    }
     setActionLoading(true)
     try {
+      if (pendingTempKind === 'temp_reject_cancel') {
+        await tempRejectCancelRemote()
+        setPendingTempKind(null)
+        onStatusUpdated()
+        onBack()
+        showAlert({
+          title: '안내',
+          content: '임시 반려가 취소되었습니다.',
+        })
+        return
+      }
       if (pendingTempKind === 'temp_reject') {
         await tempRejectRemote()
         setPendingTempKind(null)
@@ -212,6 +218,7 @@ export function UjatInstitutionApplicationDetailPage({
     programId,
     row,
     showAlert,
+    tempRejectCancelRemote,
     tempRejectRemote,
   ])
 

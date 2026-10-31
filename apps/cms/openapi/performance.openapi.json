@@ -16855,14 +16855,15 @@
             "minItems": 1
           },
           "reason": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 0
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
           }
         },
         "required": [
-          "applicationIds",
-          "reason"
+          "applicationIds"
         ]
       },
       "OrganizationProgressRemovalRequest": {

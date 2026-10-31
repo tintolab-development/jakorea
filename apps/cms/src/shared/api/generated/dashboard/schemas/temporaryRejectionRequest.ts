@@ -10,8 +10,9 @@ export interface TemporaryRejectionRequest {
   /** @minItems 1 */
   applicationIds: number[];
   /**
-     * @minLength 0
+     * 호환용 optional. omit/null/"" 허용. FE는 보내지 않는다.
+     * @nullable
      * @maxLength 2000
      */
-  reason: string;
+  reason?: string | null;
 }

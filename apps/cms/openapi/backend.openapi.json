@@ -66735,6 +66735,55 @@
           }
         ]
       }
+    },
+    "/api/admin/programs/{programId}/ujat/organization-applications/temporary-rejections:cancel": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "UJAT 신청기관 임시 반려 취소",
+        "description": "TEMP_REJECTED만 취소 가능. 활성 임시 슬롯이 있으면 TEMP_ASSIGNED, 없으면 EVALUATION_PENDING. reason/notify 없음.",
+        "operationId": "cancelTemporaryRejections",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemporaryRejectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "UJAT_TEMPORARY_REJECTION_CANCEL_NOT_ALLOWED or conflict"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -81728,14 +81777,15 @@
             "minItems": 1
           },
           "reason": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 0
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
           }
         },
         "required": [
-          "applicationIds",
-          "reason"
+          "applicationIds"
         ]
       },
       "OrganizationProgressRemovalRequest": {

@@ -21,8 +21,8 @@ import {
   UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
 } from './temp-assign-complete'
 import {
+  cancelUjatOrganizationTemporaryRejectionsIfRemote,
   rejectUjatOrganizationApplicationsIfRemote,
-  UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE,
 } from '@/features/program/ujat/api/temporary-rejections'
 import { removeUjatScheduleAssignInstitutionRows } from '../schedule-assign/store'
 import { buildUjatTempReleaseResultAlert, releaseUjatTemporarySchedules } from './temp-release'
@@ -337,9 +337,43 @@ export function useUjatInstitutionApplicationList(
   }, [tempActionLoading, tempReleasing])
 
   const confirmBulkTempRejectCancel = useCallback(async () => {
-    setPendingTempAction(null)
-    showAlert({ title: '안내', content: UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE })
-  }, [showAlert])
+    const rows = eligibleTempRejectCancelRows
+    const ids = rows.map(row => row.id)
+    if (ids.length === 0 || tempActionLoading) return
+    setTempActionLoading(true)
+    try {
+      const persisted = await cancelUjatOrganizationTemporaryRejectionsIfRemote({
+        programId,
+        applicationIds: ids,
+      })
+      if (!persisted) {
+        showAlert({
+          title: '안내',
+          content: '원격 API가 비활성 상태라 임시 반려를 취소하지 않았습니다.',
+        })
+        return
+      }
+      setSelectedRowKeys([])
+      setPendingTempAction(null)
+      showAlert({
+        title: '안내',
+        content:
+          ids.length === 1
+            ? '임시 반려가 취소되었습니다. 목록 상태를 새로고침합니다.'
+            : `${ids.length}개 기관의 임시 반려가 취소되었습니다. 목록 상태를 새로고침합니다.`,
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.organizationApplicationsRoot(String(programId ?? '')),
+      })
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: readApiErrorAlertMessage(error, '신청기관 임시 반려 취소에 실패했습니다.'),
+      })
+    } finally {
+      setTempActionLoading(false)
+    }
+  }, [eligibleTempRejectCancelRows, programId, queryClient, showAlert, tempActionLoading])
 
   const confirmTempRelease = useCallback(async () => {
     if (!programId) return
