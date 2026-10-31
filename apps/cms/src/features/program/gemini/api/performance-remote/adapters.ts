@@ -65,7 +65,7 @@ export function mapGeminiTrainingReportItemToRow(
   const instructorName = instructorNameTrimmed
     ? instructorNameTrimmed
     : identityBlank
-      ? '미기재'
+      ? '-'
       : dash(dto.instructorName)
   return {
     id: toId(dto.trainingReportId),

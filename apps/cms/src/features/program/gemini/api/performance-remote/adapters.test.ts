@@ -61,7 +61,7 @@ describe('gemini performance adapters', () => {
     expect(row.accountPaymentId).toBeUndefined()
   })
 
-  it('maps blank-instructor SUCCESS exclusion to 미기재 and keeps paymentExclusionReason', () => {
+  it('maps blank-instructor SUCCESS exclusion to - and keeps paymentExclusionReason', () => {
     const row = mapGeminiTrainingReportItemToRow(
       {
         trainingReportId: 12001,
@@ -75,7 +75,7 @@ describe('gemini performance adapters', () => {
       },
       0
     )
-    expect(row.instructorName).toBe('미기재')
+    expect(row.instructorName).toBe('-')
     expect(row.instructorMemberId).toBeUndefined()
     expect(row.accountPaymentId).toBeUndefined()
     expect(row.paymentExclusionReason).toBe('GEMINI_INSTRUCTOR_IDENTITY_BLANK')
