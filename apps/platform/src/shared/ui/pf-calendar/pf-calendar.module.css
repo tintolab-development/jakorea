@@ -551,3 +551,82 @@
     padding-inline: 2px;
   }
 }
+
+/*
+ * PC 미만: 날짜 탭 시 일정 팝업
+ * Figma 6810:60823 「01-6. 마이페이지 홈_일정 팝업 (Mobile 375)」 — dim + 전체 높이 sheet-panel
+ */
+.mobilePopupBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  background: rgb(61 61 61 / 50%);
+}
+
+.popoverMobile {
+  display: flex;
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  max-height: none;
+  padding: var(--spacing-32) var(--spacing-28);
+  gap: var(--spacing-28);
+  border: 0;
+  border-radius: 0;
+  background: var(--color-neutral-white);
+  box-shadow: none;
+}
+
+.popoverMobile .popoverTitle {
+  padding: 0;
+}
+
+.popoverMobile .popoverDateGroup {
+  gap: var(--spacing-8);
+}
+
+/* Figma: 20px / SemiBold / 140% / -0.4px */
+.popoverMobile .popoverDateText {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 140%;
+  letter-spacing: -0.4px;
+}
+
+/* Figma: Body/Medium/medium */
+.popoverMobile .popoverWeekdayText {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+.popoverMobile .popoverClose {
+  width: 28px;
+  height: 28px;
+}
+
+.popoverMobile .popoverClose img {
+  width: 17px;
+  height: 17px;
+}
+
+.popoverMobile .popoverItem {
+  padding: var(--spacing-8) 0;
+}
+
+.popoverMobile .popoverItem:hover {
+  background: transparent;
+}
+
+.popoverMobile .popoverEventTime {
+  max-width: none;
+}

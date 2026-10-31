@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useMediaQuery } from '@/shared/hooks'
 import { platformMediaQueries } from '@/shared/lib'
 import { PFButton } from '@/shared/ui/pf-button'
@@ -85,6 +86,29 @@ export function PFCalendar({
   )
   const [hoveredDateKey, setHoveredDateKey] = useState<string | null>(null)
   const [dismissedDateKey, setDismissedDateKey] = useState<string | null>(null)
+  /** PC 미만: 일정 있는 날짜 탭 시 팝업으로 일정 노출 (PC는 hover 팝오버 유지) */
+  const [mobilePopupDate, setMobilePopupDate] = useState<Date | null>(null)
+  const mobilePopupEvents = useMemo(
+    () => (mobilePopupDate ? getCalendarEventsOnDate(events, mobilePopupDate) : []),
+    [events, mobilePopupDate],
+  )
+  const isMobilePopupOpen = !isPc && mobilePopupDate !== null && mobilePopupEvents.length > 0
+
+  useEffect(() => {
+    if (!isMobilePopupOpen) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobilePopupDate(null)
+    }
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isMobilePopupOpen])
 
   const selectedDate = value ? startOfDay(value) : uncontrolledSelected
   const viewMonth = month ? toMonthStart(month) : uncontrolledMonth
@@ -127,6 +151,68 @@ export function PFCalendar({
   }
 
   const rootClassName = [styles.calendar, className].filter(Boolean).join(' ')
+
+  /** 날짜 헤더 + 일정 목록 — PC hover 팝오버와 모바일 팝업이 같은 마크업 사용 */
+  const renderPopoverCard = (
+    date: Date,
+    dayEvents: PFCalendarEvent[],
+    onClose: () => void,
+    extraClassName?: string,
+  ) => {
+    const popoverDate = formatPopoverDate(date)
+
+    return (
+      <div
+        className={[styles.popover, extraClassName].filter(Boolean).join(' ')}
+        role="dialog"
+        aria-modal={extraClassName ? true : undefined}
+        aria-label={`${popoverDate.monthDay} ${popoverDate.weekday} 일정`}
+        onClick={event => event.stopPropagation()}
+      >
+        <div className={styles.popoverTitle}>
+          <div className={styles.popoverDateGroup}>
+            <PFText as="span" typo="bd-md-bd" className={styles.popoverDateText}>
+              {popoverDate.monthDay}
+            </PFText>
+            <PFText as="span" typo="bd-sm-md" className={styles.popoverWeekdayText}>
+              {popoverDate.weekday}
+            </PFText>
+          </div>
+          <button
+            type="button"
+            className={styles.popoverClose}
+            aria-label="일정 팝오버 닫기"
+            onClick={event => {
+              event.stopPropagation()
+              onClose()
+            }}
+          >
+            <img src={closeIconUrl} alt="" width={12} height={12} />
+          </button>
+        </div>
+
+        <div className={styles.popoverList}>
+          {dayEvents.map(event => (
+            <div key={event.id} className={styles.popoverItem}>
+              <PFText as="span" typo="label-md" className={styles.popoverProgram}>
+                {event.programName}
+              </PFText>
+              <div className={styles.popoverMeta}>
+                <PFText as="span" typo="bd-md-sb" className={styles.popoverEventTitle}>
+                  {event.title}
+                </PFText>
+                {event.time ? (
+                  <PFText as="span" typo="bd-md-rg" className={styles.popoverEventTime}>
+                    {event.time}
+                  </PFText>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <section className={rootClassName} aria-label="캘린더">
@@ -215,7 +301,6 @@ export function PFCalendar({
                         ? styles.daySat
                         : styles.dayCurrent
                   const overflow = week.overflowByCol[col]
-                  const popoverDate = formatPopoverDate(day.date)
 
                   return (
                     <div
@@ -243,7 +328,10 @@ export function PFCalendar({
                           .join(' ')}
                         aria-label={`${day.date.getFullYear()}년 ${day.date.getMonth() + 1}월 ${day.day}일`}
                         aria-pressed={selected}
-                        onClick={() => handleSelectDay(day.date)}
+                        onClick={() => {
+                          handleSelectDay(day.date)
+                          if (!isPc && hasEvents) setMobilePopupDate(day.date)
+                        }}
                       >
                         <span
                           className={[
@@ -275,71 +363,11 @@ export function PFCalendar({
                         ) : null}
                       </button>
 
-                      {showPopover ? (
-                        <div
-                          className={styles.popover}
-                          role="dialog"
-                          aria-label={`${popoverDate.monthDay} ${popoverDate.weekday} 일정`}
-                        >
-                          <div className={styles.popoverTitle}>
-                            <div className={styles.popoverDateGroup}>
-                              <PFText as="span" typo="bd-md-bd" className={styles.popoverDateText}>
-                                {popoverDate.monthDay}
-                              </PFText>
-                              <PFText
-                                as="span"
-                                typo="bd-sm-md"
-                                className={styles.popoverWeekdayText}
-                              >
-                                {popoverDate.weekday}
-                              </PFText>
-                            </div>
-                            <button
-                              type="button"
-                              className={styles.popoverClose}
-                              aria-label="일정 팝오버 닫기"
-                              onClick={event => {
-                                event.stopPropagation()
-                                setDismissedDateKey(dateKey)
-                              }}
-                            >
-                              <img src={closeIconUrl} alt="" width={12} height={12} />
-                            </button>
-                          </div>
-
-                          <div className={styles.popoverList}>
-                            {dayEvents.map(event => (
-                              <div key={event.id} className={styles.popoverItem}>
-                                <PFText
-                                  as="span"
-                                  typo="label-md"
-                                  className={styles.popoverProgram}
-                                >
-                                  {event.programName}
-                                </PFText>
-                                <div className={styles.popoverMeta}>
-                                  <PFText
-                                    as="span"
-                                    typo="bd-md-sb"
-                                    className={styles.popoverEventTitle}
-                                  >
-                                    {event.title}
-                                  </PFText>
-                                  {event.time ? (
-                                    <PFText
-                                      as="span"
-                                      typo="bd-md-rg"
-                                      className={styles.popoverEventTime}
-                                    >
-                                      {event.time}
-                                    </PFText>
-                                  ) : null}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
+                      {showPopover
+                        ? renderPopoverCard(day.date, dayEvents, () =>
+                            setDismissedDateKey(dateKey),
+                          )
+                        : null}
                     </div>
                   )
                 })}
@@ -371,6 +399,23 @@ export function PFCalendar({
           )
         })}
       </div>
+
+      {isMobilePopupOpen && mobilePopupDate
+        ? createPortal(
+            <div
+              className={styles.mobilePopupBackdrop}
+              onClick={() => setMobilePopupDate(null)}
+            >
+              {renderPopoverCard(
+                mobilePopupDate,
+                mobilePopupEvents,
+                () => setMobilePopupDate(null),
+                styles.popoverMobile,
+              )}
+            </div>,
+            document.body,
+          )
+        : null}
     </section>
   )
 }
