@@ -102,7 +102,7 @@ function mapMenu(raw: unknown): SiteFooterMenu | null {
   if (key === 'TERMS') return { key, label, kind: 'terms' }
   if (key === 'PRIVACY') return { key, label, kind: 'privacy' }
   if (key === 'DIRECTIONS') {
-    return { key, label, kind: 'directions', href: '/about/directions' }
+    return { key, label: '오시는 길', kind: 'directions', href: '/about/directions' }
   }
   if (!EXTERNAL_MENU_CODES.has(key)) return null
 

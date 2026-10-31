@@ -25,7 +25,7 @@ const remote = mapPublicFooter({
     },
     {
       menuCode: 'DIRECTIONS',
-      label: '오시는 길',
+      label: '오시는길',
       linkType: 'INTERNAL',
       displayOrder: 3,
     },
@@ -67,6 +67,7 @@ const remote = mapPublicFooter({
 
 assert.ok(remote)
 assert.equal(remote.source, 'remote')
+assert.equal(remote.menus.find(menu => menu.key === 'DIRECTIONS')?.label, '오시는 길')
 assert.equal(remote.menus.length, 6)
 assert.equal(remote.menus.at(-1)?.label, '온라인 학습관리')
 assert.equal(
