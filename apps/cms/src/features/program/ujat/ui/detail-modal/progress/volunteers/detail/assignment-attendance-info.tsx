@@ -1,6 +1,9 @@
+import { useCallback } from 'react'
 import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { useCmsAlert } from '@/shared/ui'
+import { downloadAbsenceEvidenceFile } from '@/features/program/general/api/absence-reasons'
 import { ProgramAttendanceAbsenceReasons } from '@/features/program/shared/ui/program-attendance-absence-reasons'
+import type { ProgramAttendanceAbsenceReasonItem } from '@/features/program/shared/ui/program-attendance-absence-reasons'
 import { CompletionStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
 import {
   hasExcusedAbsenceInAssignmentRows,
@@ -24,9 +27,28 @@ export function UjatEducationProgressVolunteerAssignmentAttendanceInfo({
   const { showAlert } = useCmsAlert()
   const showAbsenceReasonBlock = hasExcusedAbsenceInAssignmentRows(assignmentRows)
 
-  const showComingSoon = () => {
+  const showComingSoon = useCallback(() => {
     showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
-  }
+  }, [showAlert])
+
+  const handleFileDownload = useCallback(
+    (item: ProgramAttendanceAbsenceReasonItem) => {
+      const fileObjectId = item.fileObjectIds?.find(id => typeof id === 'number')
+      if (fileObjectId == null) {
+        // BE가 fileObjectId를 주지 않으면 downloadAbsenceEvidenceFile을 호출할 수 없다.
+        showComingSoon()
+        return
+      }
+      const fileName = item.fileName?.trim() || `증빙서류-${fileObjectId}`
+      void downloadAbsenceEvidenceFile(fileObjectId, fileName).catch(() => {
+        showAlert({
+          title: '안내',
+          content: '증빙 서류 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+      })
+    },
+    [showAlert, showComingSoon]
+  )
 
   return (
     <div className="program-attendance-detail">
@@ -62,7 +84,7 @@ export function UjatEducationProgressVolunteerAssignmentAttendanceInfo({
         <ProgramAttendanceAbsenceReasons
           reasons={absenceReasons}
           emptyMessage={ABSENCE_REASON_EMPTY_MESSAGE}
-          onFileDownload={showComingSoon}
+          onFileDownload={handleFileDownload}
         />
       ) : null}
     </div>

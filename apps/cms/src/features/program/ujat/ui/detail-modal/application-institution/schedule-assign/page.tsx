@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { useCmsAlert } from '@/shared/ui'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { type UjatInstitutionApplicationRegionKey } from '../list/regions'
@@ -21,6 +22,7 @@ export function UjatInstitutionScheduleAssignPage({
   programId?: string | null
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const { regions: regionTabs } = useUjatEducationRegions()
   const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false)
@@ -126,6 +128,7 @@ export function UjatInstitutionScheduleAssignPage({
             >
               임시 교육 일정표 확인
             </CmsButton>
+            {canWrite ? (
             <CmsButton
               type="button"
               variant="primary"
@@ -135,6 +138,7 @@ export function UjatInstitutionScheduleAssignPage({
             >
               임시 배정 저장
             </CmsButton>
+            ) : null}
           </>
         }
       />

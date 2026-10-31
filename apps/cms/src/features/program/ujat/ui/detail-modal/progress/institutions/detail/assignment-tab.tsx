@@ -1,10 +1,14 @@
 import { useMemo } from 'react'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import type { UjatEducationProgressInstitutionDetail } from './types'
 import type { AssignmentClassRow, AssignmentScheduleSection } from './assignment-data'
 import { buildAssignmentScheduleSections } from './assignment-data'
+import { useInstitutionAssignmentSources } from './use-institution-assignment'
+import type { EducationProgressHalfKey } from '../../tabs'
 import './assignment-tab.css'
 
 type AssignmentExcelRow = {
@@ -37,6 +41,7 @@ function buildAssignmentExcelRows(rows: AssignmentClassRow[]): AssignmentExcelRo
 }
 
 function AssignmentSchedulePanel({ section }: { section: AssignmentScheduleSection }) {
+  const canWrite = useUjatCanWrite()
   const excelRows = useMemo(() => buildAssignmentExcelRows(section.rows), [section.rows])
   const { exportExcel, isExporting } = useTableExcelExport({
     columns: ASSIGNMENT_EXCEL_COLUMNS,
@@ -60,7 +65,7 @@ function AssignmentSchedulePanel({ section }: { section: AssignmentScheduleSecti
           </span>
           <span className="table-description">총 {section.totalClassCount}학급</span>
         </h3>
-        <ExcelButton onClick={exportExcel} loading={isExporting} />
+        {canWrite ? <ExcelButton onClick={exportExcel} loading={isExporting} /> : null}
       </div>
 
       <div className="assignment-tab__table-wrap">
@@ -102,16 +107,30 @@ function AssignmentSchedulePanel({ section }: { section: AssignmentScheduleSecti
 
 export function UjatEducationProgressInstitutionAssignmentTab({
   detail,
+  programId,
   dataRevision = 0,
 }: {
   detail: UjatEducationProgressInstitutionDetail
+  programId: string
   dataRevision?: number
 }) {
-  const sections = useMemo(() => buildAssignmentScheduleSections(detail), [detail, dataRevision])
+  const assignment = useInstitutionAssignmentSources({
+    programId,
+    institutionId: detail.institutionId,
+    half: detail.half as EducationProgressHalfKey,
+  })
+  const sections = useMemo(
+    () => buildAssignmentScheduleSections(detail, assignment.sources),
+    [assignment.sources, detail, dataRevision]
+  )
 
   return (
     <div className="ujat-education-progress-institution-detail__content assignment-tab">
-      {sections.length === 0 ? (
+      {assignment.isLoading ? (
+        <div className="page-content-loading" role="status">
+          <Spin />
+        </div>
+      ) : sections.length === 0 ? (
         <p className="assignment-tab__empty">등록된 교육 일정이 없습니다.</p>
       ) : (
         sections.map(section => <AssignmentSchedulePanel key={section.scheduleId} section={section} />)

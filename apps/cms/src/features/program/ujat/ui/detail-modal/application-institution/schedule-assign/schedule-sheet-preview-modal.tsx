@@ -12,6 +12,7 @@ import {
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { ExcelButton, useCmsAlert } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { CrossTable } from '@/shared/ui/cross-table'
 import type { CrossTableColumnHeader, CrossTableRow } from '@/shared/ui/cross-table'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
@@ -95,6 +96,7 @@ export function UjatInstitutionScheduleSheetPreviewModal({
   programId?: string | null
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
 
   const applicationsQuery = useInfiniteQuery({
@@ -234,6 +236,7 @@ export function UjatInstitutionScheduleSheetPreviewModal({
           <CmsButton variant="secondary" size="large" onClick={onCancel}>
             닫기
           </CmsButton>
+          {canWrite ? (
           <ExcelButton
             size="large"
             disabled={exporting || remoteLoading}
@@ -241,6 +244,7 @@ export function UjatInstitutionScheduleSheetPreviewModal({
             className="cms-button--footer-auto cms-button--no-label-ellipsis ujat-schedule-sheet-preview-modal__excel-btn"
             onClick={() => void handleExcelDownload()}
           />
+          ) : null}
         </>
       }
     >

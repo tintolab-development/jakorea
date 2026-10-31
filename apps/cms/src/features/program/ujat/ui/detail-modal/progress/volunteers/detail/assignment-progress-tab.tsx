@@ -1,25 +1,27 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
-import { getUjatVolunteerAssignmentProgressBundle } from './volunteer-assignment-data'
 import { UjatEducationProgressVolunteerAssignmentAttendanceInfo } from './assignment-attendance-info'
 import { UjatEducationProgressVolunteerAssignmentTable } from './assignment-table'
 import { UjatVolunteerAssignmentAssignModal } from './assign-modal'
 import { ProgramAttendanceCorrectionModal } from '@/features/program/shared/ui/attendance-correction-modal'
 import type { ProgramAttendanceCorrectionConfirmPayload } from '@/features/program/shared/lib/attendance-correction-types'
 import { UJAT_ATTENDANCE_STATUS_LABEL, UJAT_ATTENDANCE_STATUS_ORDER } from '../../attendance/types'
+import type { EducationProgressHalfKey } from '../../tabs'
 import {
-  applyVolunteerAssignmentConfirm,
   formatScheduleShortDateLabel,
   getUjatVolunteerAssignmentAssignModalData,
 } from './volunteer-assign-modal-data'
-import { mergeVolunteerActivityWithdrawnRows, sortVolunteerAssignmentRows } from './volunteer-assignment-data'
+import { mergeVolunteerActivityWithdrawnRows } from './volunteer-assignment-data'
+import { useVolunteerAssignmentProgress } from './use-assignment-progress'
+import { usePartnerRecommendationOptions } from './use-partner-recommendation'
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import {
   isVolunteerAssignmentClassWithdrawn,
-  type UjatVolunteerAssignmentAbsenceReason,
   type UjatVolunteerAssignmentProgressRow,
 } from './assignment-types'
 import './assignment.css'
@@ -112,23 +114,31 @@ const ASSIGNMENT_PROGRESS_EXPORT_COLUMNS: ColumnsType<AssignmentProgressExportRo
 ]
 
 export function UjatEducationProgressVolunteerAssignmentProgressTab({
+  programId,
+  half,
   volunteerId,
+  memberId,
+  regionKey,
   volunteerName,
   withdrawnScheduleRowIds = [],
 }: {
+  programId: string
+  half: EducationProgressHalfKey
   volunteerId: string
+  memberId?: string | null
+  regionKey?: string | null
   volunteerName: string
   withdrawnScheduleRowIds?: ReadonlyArray<string>
 }) {
   const { showAlert } = useCmsAlert()
-  const bundle = useMemo(() => getUjatVolunteerAssignmentProgressBundle(volunteerId), [volunteerId])
-
-  const [rows, setRows] = useState(() =>
-    mergeVolunteerActivityWithdrawnRows(bundle.rows, withdrawnScheduleRowIds)
+  const progress = useVolunteerAssignmentProgress({ programId, half, memberId, regionKey })
+  const bundle = progress.bundle
+  const rows = useMemo(
+    () => mergeVolunteerActivityWithdrawnRows(bundle.rows, withdrawnScheduleRowIds),
+    [bundle.rows, withdrawnScheduleRowIds]
   )
-  const [absenceReasons, setAbsenceReasons] = useState<UjatVolunteerAssignmentAbsenceReason[]>(
-    () => bundle.absenceReasons
-  )
+  const absenceReasons = bundle.absenceReasons
+  const canWrite = useUjatCanWrite()
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [assignTargetRowId, setAssignTargetRowId] = useState<string | null>(null)
@@ -140,8 +150,14 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
   >(null)
 
   useEffect(() => {
-    setRows(mergeVolunteerActivityWithdrawnRows(bundle.rows, withdrawnScheduleRowIds))
-    setAbsenceReasons(bundle.absenceReasons)
+    if (!progress.isError) return
+    showAlert({
+      title: '목록 조회 실패',
+      content: '교육 배정 및 출결 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+    })
+  }, [progress.isError, showAlert])
+
+  useEffect(() => {
     setSelectedRowKeys([])
     setAssignModalOpen(false)
     setAssignTargetRowId(null)
@@ -149,7 +165,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
     setCancelTargetRowId(null)
     setAttendanceCorrectionModalOpen(false)
     setAttendanceCorrectionTargetRowId(null)
-  }, [bundle.absenceReasons, bundle.rows, volunteerId, withdrawnScheduleRowIds])
+  }, [volunteerId])
 
   const getSingleSelectedRow = useCallback(() => {
     if (selectedRowKeys.length !== 1) {
@@ -243,10 +259,21 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
     [assignTargetRowId, rows]
   )
 
-  const assignModalData = useMemo(
-    () => (assignTargetRow ? getUjatVolunteerAssignmentAssignModalData(assignTargetRow) : null),
-    [assignTargetRow]
-  )
+  const partnerRecommendation = usePartnerRecommendationOptions({
+    programId,
+    scheduleId: assignTargetRow?.scheduleId,
+    organizationApplicationId: assignTargetRow?.organizationApplicationId,
+    enabled: assignModalOpen && assignTargetRow != null,
+  })
+
+  const assignModalData = useMemo(() => {
+    if (!assignTargetRow) return null
+    const classOptions = progress.assignOptionsByRowId[assignTargetRow.id]?.classOptions
+    return getUjatVolunteerAssignmentAssignModalData(assignTargetRow, {
+      classOptions,
+      partnerOptions: partnerRecommendation.partnerOptions,
+    })
+  }, [assignTargetRow, partnerRecommendation.partnerOptions, progress.assignOptionsByRowId])
 
   const cancelTargetRow = useMemo(
     () => (cancelTargetRowId ? (rows.find(row => row.id === cancelTargetRowId) ?? null) : null),
@@ -262,62 +289,69 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
   )
 
   const handleCancelAssignmentConfirm = useCallback(
-    (_payload: PermissionModalPayload) => {
+    (payload: PermissionModalPayload) => {
       if (!cancelTargetRow) return
+      if (cancelTargetRow.scheduleId == null || !cancelTargetRow.assignmentGroupId) {
+        showAlert({
+          title: '안내',
+          content: '배정 정보를 확인할 수 없어 취소할 수 없습니다.',
+        })
+        return
+      }
 
-      setRows(prev =>
-        sortVolunteerAssignmentRows(
-          prev.map(row => {
-            if (row.id !== cancelTargetRow.id) return row
-            return {
-              ...row,
-              assignedInstitution: { kind: 'dash' as const },
-              partner: { kind: 'dash' as const },
-              classDisplay: { kind: 'dash' as const },
-              attendance: { kind: 'dash' as const },
-              educationPlanSubmitted: false,
-              educationLogSubmitted: false,
-              educationProgress: 'scheduled' as const,
-            }
+      void progress.cancelAssignment(cancelTargetRow, payload.reason).then(
+        () => {
+          setCancelModalOpen(false)
+          setCancelTargetRowId(null)
+          setSelectedRowKeys([])
+          showAlert({
+            title: '안내',
+            content: '교육 배정이 취소되었습니다.',
           })
-        )
+        },
+        () => {
+          // 실패 토스트는 mutation onError. 조회 데이터는 그대로 둔다.
+        }
       )
-      setCancelModalOpen(false)
-      setCancelTargetRowId(null)
-      setSelectedRowKeys([])
-      showAlert({
-        title: '안내',
-        content: '교육 배정이 취소되었습니다.',
-      })
     },
-    [cancelTargetRow, showAlert]
+    [cancelTargetRow, progress, showAlert]
   )
 
   const handleAssignConfirm = useCallback(
     (payload: { classValue: string; partnerId: string }) => {
       if (!assignTargetRow || !assignModalData) return
+      const classLabel =
+        assignModalData.mode === 'partner'
+          ? assignModalData.fixedClassLabel
+          : (assignModalData.classOptions.find(option => option.value === payload.classValue)
+              ?.label ?? null)
 
-      setRows(prev =>
-        sortVolunteerAssignmentRows(
-          applyVolunteerAssignmentConfirm(prev, {
-            scheduleRowId: assignTargetRow.id,
-            mode: assignModalData.mode,
-            classValue: payload.classValue,
-            partnerId: payload.partnerId,
-          })
+      void progress
+        .confirmAssignment({
+          row: assignTargetRow,
+          mode: assignModalData.mode,
+          classValue: payload.classValue,
+          partnerId: payload.partnerId,
+          classLabel,
+        })
+        .then(
+          () => {
+            setAssignModalOpen(false)
+            setAssignTargetRowId(null)
+            showAlert({
+              title: '안내',
+              content:
+                assignModalData.mode === 'education'
+                  ? '교육 배정이 완료되었습니다.'
+                  : '파트너 배정이 완료되었습니다.',
+            })
+          },
+          () => {
+            // 실패 토스트는 mutation onError. 이전 배정 행을 유지한다.
+          }
         )
-      )
-      setAssignModalOpen(false)
-      setAssignTargetRowId(null)
-      showAlert({
-        title: '안내',
-        content:
-          assignModalData.mode === 'education'
-            ? '교육 배정이 완료되었습니다.'
-            : '파트너 배정이 완료되었습니다.',
-      })
     },
-    [assignModalData, assignTargetRow, showAlert]
+    [assignModalData, assignTargetRow, progress, showAlert]
   )
 
   const ujatAttendanceCorrectionStatusOptions = useMemo(
@@ -332,73 +366,47 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
   const handleAttendanceCorrectionConfirm = useCallback(
     (payload: ProgramAttendanceCorrectionConfirmPayload) => {
       if (!attendanceCorrectionTargetRow) return
+      if (
+        attendanceCorrectionTargetRow.scheduleId == null ||
+        attendanceCorrectionTargetRow.participantId == null
+      ) {
+        showAlert({
+          title: '안내',
+          content: '출결을 정정할 일정 정보를 확인할 수 없습니다.',
+        })
+        return
+      }
 
-      setRows(prev =>
-        sortVolunteerAssignmentRows(
-          prev.map(row => {
-            if (row.id !== attendanceCorrectionTargetRow.id) return row
-
-            if (payload.status === 'late') {
-              return {
-                ...row,
-                attendance: { kind: 'late', time: payload.attendanceTime ?? '8:30' },
-              }
-            }
-            if (payload.status === 'absence') {
-              return {
-                ...row,
-                attendance: { kind: 'absence' },
-              }
-            }
-            if (payload.status === 'excused_absence') {
-              return {
-                ...row,
-                attendance: { kind: 'excused_absence' },
-              }
-            }
-            return {
-              ...row,
-              attendance: { kind: 'present' },
-            }
+      void progress.correctAttendance(attendanceCorrectionTargetRow, payload).then(
+        () => {
+          setAttendanceCorrectionModalOpen(false)
+          setAttendanceCorrectionTargetRowId(null)
+          showAlert({
+            title: '안내',
+            content: '출결이 정정되었습니다.',
           })
-        )
-      )
-
-      setAbsenceReasons(prev => {
-        const nextWithoutCurrent = prev.filter(
-          item =>
-            item.scheduleRowId !== attendanceCorrectionTargetRow.id &&
-            item.id !== `abs-${attendanceCorrectionTargetRow.id}`
-        )
-
-        if (payload.status !== 'excused_absence') {
-          return nextWithoutCurrent
+        },
+        () => {
+          // 실패 토스트는 mutation onError. 이전 출결을 유지한다.
         }
-
-        return [
-          ...nextWithoutCurrent,
-          {
-            id: `abs-${attendanceCorrectionTargetRow.id}`,
-            scheduleRowId: attendanceCorrectionTargetRow.id,
-            dateLabel: formatScheduleShortDateLabel(attendanceCorrectionTargetRow.scheduleLabel),
-            reason: payload.reason,
-            fileName: payload.evidenceFileName,
-          },
-        ]
-      })
-
-      setAttendanceCorrectionModalOpen(false)
-      setAttendanceCorrectionTargetRowId(null)
-      showAlert({
-        title: '안내',
-        content: '출결이 정정되었습니다.',
-      })
+      )
     },
-    [attendanceCorrectionTargetRow, showAlert]
+    [attendanceCorrectionTargetRow, progress, showAlert]
   )
+
+  if (progress.isLoading) {
+    return (
+      <div className="flex min-h-[240px] w-full items-center justify-center" role="status">
+        <Spin />
+      </div>
+    )
+  }
 
   return (
     <div className="ujat-volunteer-assignment-progress-tab">
+      {progress.isParticipantUnresolved ? (
+        <p role="status">봉사자 참가 정보를 확인하지 못해 배정 현황을 표시할 수 없습니다.</p>
+      ) : null}
       <section className="ujat-volunteer-assignment-progress-tab__table-section">
         <div className="table-header-actions">
           <div className="table-header-title--wrapper">
@@ -406,10 +414,13 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <span className="table-description">{rows.length}건</span>
           </div>
           <div className="info-section-buttons--wrapper">
+            {canWrite ? (
+              <>
             <CmsButton
               type="button"
               variant="delete"
               size="h40"
+              disabled={progress.isMutating}
               onClick={openCancelModal}
             >
               배정 취소
@@ -431,6 +442,8 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
               파트너 및 교육 배정
             </CmsButton>
             <ExcelButton onClick={exportExcel} loading={isExporting} />
+              </>
+            ) : null}
           </div>
         </div>
         <UjatEducationProgressVolunteerAssignmentTable
@@ -455,6 +468,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             setCancelTargetRowId(null)
           }}
           onConfirm={handleCancelAssignmentConfirm}
+          confirmLoading={progress.isMutating}
           variant="reject"
           title="교육 배정 취소"
           message={`**[${volunteerName}]** 봉사자의 **[${formatScheduleShortDateLabel(cancelTargetRow.scheduleLabel)}]** 배정을 취소하시겠습니까?\n취소 시 입력하신 취소 사유가 봉사자에게 전달되며, 알림이 발송됩니다.`}

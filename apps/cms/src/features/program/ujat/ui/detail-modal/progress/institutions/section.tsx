@@ -1,6 +1,7 @@
 import { useEffect, useMemo, type MouseEvent } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { FilterTableToolbarButton } from '@/shared/ui'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { EducationProgressHalfKey } from '../tabs'
@@ -22,6 +23,7 @@ export function UjatEducationProgressInstitutionsSection({
   half: EducationProgressHalfKey
   onOpenDetail?: (institutionId: string) => void
 }) {
+  const canWrite = useUjatCanWrite()
   const {
     pendingFilters,
     handleFilterChange,
@@ -89,10 +91,14 @@ export function UjatEducationProgressInstitutionsSection({
             )}
           </div>
         }
-        excelExport={{
-          columns,
-          data: tableData,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+              }
+            : undefined
+        }
       >
         {viewMode === 'table' ? (
           <div ref={tableWrapRef} className="ujat-education-progress-institutions__table-wrap">

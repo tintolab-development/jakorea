@@ -2,6 +2,7 @@ import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { FilterTableToolbarButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { buildUjatVolunteerDocPassedFilterRows } from './filter-fields'
@@ -37,6 +38,7 @@ export function DocPassedSection({
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: DocPassedSectionProps) {
+  const canWrite = useUjatCanWrite()
   const { labels: educationRegionLabels } = useUjatEducationRegions()
   const filterFields = useMemo(
     () => buildUjatVolunteerDocPassedFilterRows()[0] ?? [],
@@ -210,10 +212,14 @@ export function DocPassedSection({
             </FilterTableToolbarButton>
           )
         }
-        excelExport={{
-          columns,
-          data: tableData,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+              }
+            : undefined
+        }
       >
         {viewMode === 'list' ? (
           <div className="ujat-volunteer-doc-passed__table-wrap">

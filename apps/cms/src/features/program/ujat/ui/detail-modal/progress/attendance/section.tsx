@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ExcelButton, FilterTableToolbarButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
@@ -26,6 +27,7 @@ export function UjatEducationProgressAttendanceSection({
   programId: string
   half: EducationProgressHalfKey
 }) {
+  const canWrite = useUjatCanWrite()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
   )
@@ -106,6 +108,8 @@ export function UjatEducationProgressAttendanceSection({
         actions={
           firstSessionTitle != null ? (
             <div className="program-application-list-toolbar">
+              {canWrite ? (
+                <>
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
@@ -114,6 +118,8 @@ export function UjatEducationProgressAttendanceSection({
                 출결 정정
               </FilterTableToolbarButton>
               <ExcelButton loading={isFirstSessionExporting} onClick={exportFirstSessionExcel} />
+                </>
+              ) : null}
             </div>
           ) : null
         }

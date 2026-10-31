@@ -12,6 +12,7 @@ import {
 import { useCmsAlert,
   FilterTableToolbarButton
 } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-activity-certificate-preview-modal'
@@ -55,6 +56,7 @@ export function UjatEducationProgressVolunteersSection({
   onBindRegisterVolunteer?: (register: (memberId: string) => void) => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const [searchParams] = useSearchParams()
   const eduVolDetailId = searchParams.get(UJAT_EDU_VOL_ID_PARAM)
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
@@ -288,6 +290,7 @@ export function UjatEducationProgressVolunteersSection({
             >
               1365 봉사시간 등록 양식
             </FilterTableToolbarButton>
+            {canWrite ? (
             <FilterTableToolbarButton
               type="button"
               variant="primary"
@@ -296,13 +299,18 @@ export function UjatEducationProgressVolunteersSection({
             >
               봉사자 등록
             </FilterTableToolbarButton>
+            ) : null}
           </div>
         }
-        excelExport={{
-          columns,
-          data: tableData,
-          selectedRowKeys,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+                selectedRowKeys,
+              }
+            : undefined
+        }
       >
         <div ref={tableWrapRef} className="ujat-education-progress-volunteers__table-wrap">
           <CmsDataTable<UjatEducationProgressVolunteerRow>

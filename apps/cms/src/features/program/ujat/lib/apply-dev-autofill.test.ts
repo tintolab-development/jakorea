@@ -64,7 +64,8 @@ const INSTITUTION_CODE = 'recruitment-ujat-school'
 function deps(overrides: Partial<ResolvedUjatDevDependencies> = {}): ResolvedUjatDevDependencies {
   return {
     regions: listUjatEducationRegionsActive(),
-    sponsor: { sponsorId: '__all__', contactId: '__all__' },
+    /** 등록 필수 — 「전체」(__all__)는 더 이상 허용하지 않는다 */
+    sponsor: { sponsorId: '1001', contactId: '2001' },
     instructorId: '501',
     paymentItemValues: ['p-1'],
     holidayDateKeys: new Set(),
@@ -172,7 +173,8 @@ describe.each(UJAT_DEV_AUTOFILL_CASE_IDS)('%s — 6단계 적용', caseId => {
   it('Request — 기관 1 + H1 1 + H2 1 행을 만들고 각 반기 모집·면접 기간은 해당 반기 값만 쓴다', async () => {
     const result = await apply(caseId)
     const plan = buildUjatDevDatePlan(caseId, YEAR)
-    const iso = (key: string) => new Date(`${key}T00:00:00`).toISOString()
+    /** BE LocalDate 계약 — Asia/Seoul 달력일 YYYY-MM-DD */
+    const calendar = (key: string) => key
     const rows = createRequest(result).recruitments ?? []
 
     expect(rows).toHaveLength(3)
@@ -197,10 +199,10 @@ describe.each(UJAT_DEV_AUTOFILL_CASE_IDS)('%s — 6단계 적용', caseId => {
         status: 'ACTIVE',
         selectionMethod: 'ADMIN_REVIEW',
         interviewEnabled: true,
-        startAt: iso(plan.halves[half].recruit.start),
-        endAt: iso(plan.halves[half].recruit.end),
-        interviewStartAt: iso(plan.halves[half].interview.start),
-        interviewEndAt: iso(plan.halves[half].interview.end),
+        startAt: calendar(plan.halves[half].recruit.start),
+        endAt: calendar(plan.halves[half].recruit.end),
+        interviewStartAt: calendar(plan.halves[half].interview.start),
+        interviewEndAt: calendar(plan.halves[half].interview.end),
       })
     }
     expect(h2?.interviewStartAt).not.toBe(h1?.interviewStartAt)
@@ -322,8 +324,17 @@ describe('안전 장치', () => {
   })
 
   it('참조 데이터 조회 중 다시 누르면 막는다', async () => {
-    const first = applyUjatDevAutofillCase({ caseId: 'REG-01', businessYear: YEAR })
+    let releaseDependencies!: (value: ResolvedUjatDevDependencies) => void
+    const deferredDependencies = new Promise<ResolvedUjatDevDependencies>(resolve => {
+      releaseDependencies = resolve
+    })
+    const first = applyUjatDevAutofillCase({
+      caseId: 'REG-01',
+      businessYear: YEAR,
+      dependencies: deferredDependencies,
+    })
     await expect(apply('REG-02')).rejects.toMatchObject({ code: 'ALREADY_RUNNING' })
+    releaseDependencies(deps())
     const result = await first
     expect(result.caseId).toBe('REG-01')
     expect(customInstanceMock).not.toHaveBeenCalled()

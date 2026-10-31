@@ -12,6 +12,7 @@ import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { guardAdminAction } from '@/shared/lib/admin-role-policy'
 import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
 import { shouldUseUjatEducationRegionsRemoteApi } from '@/features/program/ujat/api/education-regions/capabilities'
@@ -65,6 +66,7 @@ function coerceRadioBoolean(raw: unknown): boolean {
 
 export default function UjatEducationRegionsPage() {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const roleCode = useSessionAdminRoleCode()
   const remoteEnabled = shouldUseUjatEducationRegionsRemoteApi()
   const listQuery = useUjatEducationRegionsList()
@@ -202,6 +204,7 @@ export default function UjatEducationRegionsPage() {
 
   const handleReorder = useCallback(
     (reorderedVisible: UjatEducationRegion[]) => {
+      if (!canWrite) return
       if (!guardAdminAction({ roleCode, action: 'write' })) return
       if (editingId) return
       const visibleIds = reorderedVisible.map(row => row.id)
@@ -223,7 +226,7 @@ export default function UjatEducationRegionsPage() {
         void listQuery.refetch()
       })
     },
-    [editingId, listQuery, reorderMutation, roleCode, rows, showAlert]
+    [canWrite, editingId, listQuery, reorderMutation, roleCode, rows, showAlert]
   )
 
   const handleRegister = useCallback(
@@ -418,7 +421,12 @@ export default function UjatEducationRegionsPage() {
     ]
   )
 
-  const toolbarActions = (
+  const visibleColumns = useMemo(
+    () => (canWrite ? columns : columns.filter(column => column.key !== 'actions')),
+    [canWrite, columns]
+  )
+
+  const toolbarActions = canWrite ? (
     <FilterTableToolbarButton
       variant="secondary"
       width={160}
@@ -428,7 +436,7 @@ export default function UjatEducationRegionsPage() {
     >
       교육 지역 등록
     </FilterTableToolbarButton>
-  )
+  ) : null
 
   return (
     <div className="program-list-page">
@@ -441,14 +449,18 @@ export default function UjatEducationRegionsPage() {
         title="교육 지역"
         description={`총 ${filteredRows.length.toLocaleString()}건`}
         actions={toolbarActions}
-        excelExport={{
-          columns,
-          data: filteredRows,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns: visibleColumns,
+                data: filteredRows,
+              }
+            : undefined
+        }
       >
         <UjatEducationRegionsSortableTable
           rows={filteredRows}
-          columns={columns}
+          columns={visibleColumns}
           loading={filteredQuery.isFetching && filteredRows.length === 0}
           onRowsReorder={handleReorder}
         />

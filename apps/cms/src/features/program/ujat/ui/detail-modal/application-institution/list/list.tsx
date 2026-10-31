@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { CMS_ACTION_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
 import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
@@ -25,6 +26,7 @@ export function UjatInstitutionApplicationList({
   onOpenScheduleAssign?: () => void
   programId?: string | null
 }) {
+  const canWrite = useUjatCanWrite()
   const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
@@ -102,6 +104,8 @@ export function UjatInstitutionApplicationList({
         description={`${totalElements}건`}
         actions={
           <div className="ujat-institution-application-list__actions">
+            {canWrite ? (
+              <>
             <FilterTableToolbarButton
               type="button"
               variant="delete"
@@ -109,7 +113,7 @@ export function UjatInstitutionApplicationList({
               width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkApplicationReject}
             >
-              선택 신청 반려
+              신청 반려
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               type="button"
@@ -130,7 +134,7 @@ export function UjatInstitutionApplicationList({
                 onOpenScheduleAssign?.()
               }}
             >
-              임시 일정 배정
+              선택 임시 배정
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               type="button"
@@ -152,6 +156,8 @@ export function UjatInstitutionApplicationList({
             >
               선택 임시 반려 취소
             </FilterTableToolbarButton>
+              </>
+            ) : null}
             {viewMode === 'table' ? (
               <FilterTableToolbarButton
                 type="button"
@@ -173,11 +179,15 @@ export function UjatInstitutionApplicationList({
             )}
           </div>
         }
-        excelExport={{
-          columns,
-          data: tableData,
-          selectedRowKeys,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+                selectedRowKeys,
+              }
+            : undefined
+        }
       >
         {viewMode === 'table' ? (
           <div className="ujat-institution-application-list__table-wrap">

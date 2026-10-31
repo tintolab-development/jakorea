@@ -11,6 +11,7 @@ import './ujat-program-recruitment.css'
 export function UjatProgramRecruitmentTabsRow({
   activeTab,
   onSelectTab,
+  canWrite = true,
   canEdit,
   isEditMode,
   onEdit,
@@ -20,6 +21,7 @@ export function UjatProgramRecruitmentTabsRow({
 }: {
   activeTab: UjatRecruitTabKey
   onSelectTab: (tab: UjatRecruitTabKey) => void
+  canWrite?: boolean
   canEdit: boolean
   isEditMode: boolean
   onEdit: () => void
@@ -39,6 +41,7 @@ export function UjatProgramRecruitmentTabsRow({
       trailing={
         <div className="ujat-program-recruitment-tabs-row__actions">
           <ProgramEditInfoActions
+            canWrite={canWrite}
             isEditing={isEditMode}
             idleVariant="secondary"
             disabled={!canEdit && !isEditMode}

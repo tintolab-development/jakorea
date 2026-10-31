@@ -4,6 +4,7 @@ import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -43,6 +44,7 @@ import {
   type UjatEducationProgressActivityWithdrawPayload,
 } from '../../shared/activity-withdraw-modal'
 import { getVolunteerActivityWithdrawScheduleOptions } from './volunteer-assignment-data'
+import { useVolunteerAssignmentProgress } from './use-assignment-progress'
 import {
   UjatEducationProgressVolunteerAssignmentProgressTab,
 } from './assignment-progress-tab'
@@ -67,6 +69,7 @@ export function UjatEducationProgressVolunteerDetailView({
   onDetailSaved?: () => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const queryClient = useQueryClient()
   const { regions } = useUjatEducationRegions()
   const [isEditing, setIsEditing] = useState(false)
@@ -112,10 +115,20 @@ export function UjatEducationProgressVolunteerDetailView({
     setWithdrawnScheduleRowIds([])
   }, [detail.volunteerId, detail.adminComment, preferredRegionCodeDraft])
 
+  const assignmentProgress = useVolunteerAssignmentProgress({
+    programId: program.id,
+    half: detail.half,
+    memberId: detail.applicant.memberId ?? detail.row.memberId,
+    regionKey: detail.row.regionKey,
+  })
+
   const activityWithdrawScheduleOptions = useMemo(
     () =>
-      getVolunteerActivityWithdrawScheduleOptions(detail.volunteerId, withdrawnScheduleRowIds),
-    [detail.volunteerId, withdrawnScheduleRowIds]
+      getVolunteerActivityWithdrawScheduleOptions(
+        assignmentProgress.bundle.rows,
+        withdrawnScheduleRowIds
+      ),
+    [assignmentProgress.bundle.rows, withdrawnScheduleRowIds]
   )
 
   const applicationNumericId = parseVolunteerApplicationNumericId(detail.volunteerId)
@@ -393,6 +406,7 @@ export function UjatEducationProgressVolunteerDetailView({
 
   const applicationHeaderActions = (
     <>
+      {canWrite ? (
       <CmsButton
         type="button"
         variant="delete"
@@ -402,6 +416,7 @@ export function UjatEducationProgressVolunteerDetailView({
       >
         활동 포기
       </CmsButton>
+      ) : null}
       <CmsButton
         type="button"
         variant="secondary"
@@ -422,6 +437,7 @@ export function UjatEducationProgressVolunteerDetailView({
         수료증/참여인증서 발급
       </CmsButton>
       <ProgramEditInfoActions
+        canWrite={canWrite}
         size="h40"
         width={false}
         isEditing={isEditing}
@@ -433,6 +449,7 @@ export function UjatEducationProgressVolunteerDetailView({
           void handleSaveEdit()
         }}
       />
+      {canWrite ? (
       <CmsButton
         type="button"
         variant="primary"
@@ -442,6 +459,7 @@ export function UjatEducationProgressVolunteerDetailView({
       >
         코멘트 작성
       </CmsButton>
+      ) : null}
       <PersonalInfoRevealButton disabled={programPrivacyPending}
         labelMode="stickyReveal"
         revealed={personalInfoRevealed}
@@ -482,7 +500,11 @@ export function UjatEducationProgressVolunteerDetailView({
           />
         ) : (
           <UjatEducationProgressVolunteerAssignmentProgressTab
+            programId={program.id}
+            half={detail.half}
             volunteerId={detail.volunteerId}
+            memberId={detail.applicant.memberId ?? detail.row.memberId}
+            regionKey={detail.row.regionKey}
             volunteerName={detail.applicant.name}
             withdrawnScheduleRowIds={withdrawnScheduleRowIds}
           />

@@ -134,7 +134,7 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
     },
     {
       key: 'preferredRegion',
-      label: '희망 교육 활동 지역',
+      label: '교육 활동 지역',
       children: isEditing ? (
         <CmsSelect
           className="ujat-education-progress-volunteer-detail__preferred-region-select"

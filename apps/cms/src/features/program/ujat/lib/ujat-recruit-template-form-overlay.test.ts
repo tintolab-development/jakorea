@@ -501,6 +501,28 @@ describe('UJAT recruit form overlay', () => {
     expect(resolveUjatRecruitAnnouncementTitle(program, 'volunteer_h2')).toBe('-')
   })
 
+  it('fixture의 반기 recruitRange·H2 publicTitle만 해당 반기 폼에 넣는다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      programRecruitments: [],
+    }
+    const sourceOverlay = {
+      'ujat.recruit.volunteer.h1.publicTitle': '상반기 봉사자 모집',
+      'ujat.recruit.volunteer.h2.publicTitle': '하반기 봉사자 모집',
+      [VOLUNTEER_KEYS.recruitRangeH1]: { start: '2027-02-01', end: '2027-02-28' },
+      [VOLUNTEER_KEYS.recruitRangeH2]: { start: '2027-08-01', end: '2027-08-31' },
+    }
+    const h1 = programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h1', { sourceOverlay })
+    const h2 = programToUjatRecruitTemplateFormValues(program, 'volunteer', 'h2', { sourceOverlay })
+    expect(h1.announcementTitle).toBe('상반기 봉사자 모집')
+    expect(h2.announcementTitle).toBe('하반기 봉사자 모집')
+    expect(h1.volunteerApplicationStartDate).toBe('2027-02-01')
+    expect(h1.volunteerApplicationEndDate).toBe('2027-02-28')
+    expect(h2.volunteerApplicationStartDate).toBe('2027-08-01')
+    expect(h2.volunteerApplicationEndDate).toBe('2027-08-31')
+    expect(h1.volunteerApplicationStartDate).not.toBe(h2.volunteerApplicationStartDate)
+  })
+
   it('참여 기관·봉사자 상하반기 안내는 recruitments[] 행을 쓰고 공통 문장으로 채우지 않는다', () => {
     const program = {
       ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,

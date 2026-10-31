@@ -167,6 +167,7 @@ import { getRecruitTypedInterviewRecord } from '@/features/template/ui/form-set/
 import { ujatVolunteerRecruitInterviewNamespace } from '@/features/program/ujat/lib/ujat-recruit-volunteer-half-overlay'
 import { beginBlockingOverlay } from '@/shared/ui/blocking-overlay-store'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { BusinessPeriodExtendToolbar } from '@/features/program/shared/ui/business-period-extend-toolbar'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import {
@@ -708,6 +709,7 @@ export function UjatProgramDetailFullPageModal({
   )
   const loading = onUpdateProgram ? externalLoading : legacyLoading
   const sponsorName = onUpdateProgram ? externalSponsorName : legacySponsorName
+  const canWrite = useUjatCanWrite()
 
   const displayProgram = useMemo(() => {
     // externalLoading 중 목록 시드로 본문 채우지 않음
@@ -1319,7 +1321,10 @@ export function UjatProgramDetailFullPageModal({
   )
 
   const editTab = searchParams.get(EDIT_PARAM)
-  const canEditInfo = useMemo(() => canUjatProgramInfoEdit(displayProgram), [displayProgram])
+  const canEditInfo = useMemo(
+    () => canWrite && canUjatProgramInfoEdit(displayProgram),
+    [canWrite, displayProgram],
+  )
   const isEditModeInfo =
     open &&
     activeLnb === 'info' &&
@@ -2875,7 +2880,7 @@ export function UjatProgramDetailFullPageModal({
             surveyItems={surveyItems}
             onSelectChildTab={setLnbTab}
             footer={
-              onRequestDelete && displayProgram ? (
+              canWrite && onRequestDelete && displayProgram ? (
                 <ProgramDetailLnbDeleteButton onClick={() => onRequestDelete(displayProgram)} />
               ) : null
             }
@@ -2902,6 +2907,7 @@ export function UjatProgramDetailFullPageModal({
                     editDisabled={!canEditInfo && !isEditModeInfo}
                   >
                     <ProgramEditInfoActions
+                      canWrite={canWrite}
                       isEditing={isEditModeInfo}
                       idleVariant="secondary"
                       disabled={!canEditInfo && !isEditModeInfo}
@@ -2929,6 +2935,7 @@ export function UjatProgramDetailFullPageModal({
               <UjatProgramRecruitmentTabsRow
                 activeTab={activeRecruitTab}
                 onSelectTab={selectRecruitTab}
+                canWrite={canWrite}
                 canEdit
                 isEditMode={isRecruitEditMode}
                 onEdit={handleRecruitmentEdit}
@@ -3133,6 +3140,7 @@ export function UjatProgramDetailFullPageModal({
                   title={UJAT_SURVEY_POLL_EMPTY_COPY.title}
                   description={UJAT_SURVEY_POLL_EMPTY_COPY.description}
                   registerButtonLabel={UJAT_SURVEY_POLL_EMPTY_COPY.registerButton}
+                  showRegisterButton={canWrite}
                   onRegisterClick={handleOpenSurveyCreateModal}
                 />
               ) : (
@@ -3148,6 +3156,7 @@ export function UjatProgramDetailFullPageModal({
                         <UjatSurveyRegisteredActions
                           survey={activeRegisteredSurvey}
                           labels={UJAT_SURVEY_POLL_ACTION_LABELS}
+                          showAddButton={canWrite}
                           onShareClick={handleShareRegisteredSurvey}
                           onAddClick={handleOpenSurveyCreateModal}
                           onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}
@@ -3165,7 +3174,8 @@ export function UjatProgramDetailFullPageModal({
                       description={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.description}
                       deleteButtonLabel={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.deleteButton}
                       previewButtonLabel={UJAT_SURVEY_POLL_NO_RESPONSE_COPY.previewButton}
-                      canDelete={activeRegisteredSurvey.status === 'before_start'}
+                      canDelete={canWrite && activeRegisteredSurvey.status === 'before_start'}
+                      showDeleteButton={canWrite}
                       embedded
                       onDeleteClick={handleOpenSurveyDeleteModal}
                       onOpenTemplatePreview={handleOpenRegisteredSurveyTemplatePreview}

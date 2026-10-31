@@ -5,6 +5,7 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -92,6 +93,7 @@ function Interview2ApplicantDetail({
   onInterviewPass?: () => void
   onSaveInterviewEvaluation?: (payload: UjatVolunteerInterviewEvaluationPayload) => Promise<boolean>
 }) {
+  const canWrite = useUjatCanWrite()
   const evaluationSectionRef = useRef<InterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
   const interviewNotEnded = resolveUjatEffectiveSecondInterviewStatus(applicant) === 'waiting'
@@ -114,6 +116,8 @@ function Interview2ApplicantDetail({
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
+          {canWrite ? (
+            <>
           <CmsButton
             type="button"
             variant="delete"
@@ -159,6 +163,8 @@ function Interview2ApplicantDetail({
           >
             면접 평가
           </CmsButton>
+            </>
+          ) : null}
           <PersonalInfoRevealButton
             disabled={programPrivacyPending}
             labelMode="stickyReveal"
@@ -193,6 +199,7 @@ function Interview2ApplicantDetail({
 }
 
 export function ApplicantDetailView(props: ApplicantDetailViewProps) {
+  const canWrite = useUjatCanWrite()
   const applicantEnriched = useUjatVolunteerApplicationDetailEnrichment(props.applicant)
   const [unmaskedOverlay, setUnmaskedOverlay] = useState<UjatVolunteerApplicantRow | null>(null)
 
@@ -272,6 +279,8 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
       <div className="applicant-detail">
         <div className="applicant-detail__header">
           <div className="program-detail-fullpage-modal__header-actions">
+            {canWrite ? (
+              <>
             <CmsButton
               type="button"
               variant="delete"
@@ -292,6 +301,8 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             >
               {assignInterviewLabel}
             </CmsButton>
+              </>
+            ) : null}
             <PersonalInfoRevealButton
               disabled={programPrivacyPending}
               labelMode="stickyReveal"
@@ -333,12 +344,16 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
+          {canWrite ? (
+            <>
           <CmsButton type="button" variant="delete" size="large" onClick={onDocumentReject}>
             서류 반려
           </CmsButton>
           <CmsButton type="button" variant="secondary" size="large" onClick={onDocumentApprove}>
             서류 승인
           </CmsButton>
+            </>
+          ) : null}
           <PersonalInfoRevealButton
             disabled={programPrivacyPending}
             labelMode="stickyReveal"

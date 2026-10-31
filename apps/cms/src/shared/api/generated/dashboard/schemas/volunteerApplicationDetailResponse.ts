@@ -37,8 +37,9 @@ export interface VolunteerApplicationDetailResponse {
      * @minimum 0
      */
   interviewAvailabilityCount?: number;
+  /** 면접 운영 상태. ASSIGNED | PARTIALLY_EVALUATED | EVALUATED | COMPLETED | WITHDRAWN | WAITING | NOT_REQUIRED */
   interviewStatus?: string;
-  /** DB 면접 배정 상태. 배정 전에는 null */
+  /** DB 면접 배정 상태. 배정 전에는 null. ASSIGNED | PARTIALLY_EVALUATED | EVALUATED | COMPLETED */
   interviewAssignmentStatus?: string;
   interviewAssignmentId?: number;
   assignedInterviewSlotId?: number;

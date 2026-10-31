@@ -147,7 +147,7 @@ export function UjatAttendanceCorrectionModal({
         disabled={!canConfirm}
         onClick={handleConfirm}
       >
-        정정
+        출결 정정
       </CmsButton>
     </div>
   )

@@ -32,7 +32,7 @@ const REGIONS = [
 function deps(overrides: Partial<ResolvedUjatDevDependencies> = {}): ResolvedUjatDevDependencies {
   return {
     regions: REGIONS,
-    sponsor: { sponsorId: '__all__', contactId: '__all__' },
+    sponsor: { sponsorId: '1001', contactId: '2001' },
     instructorId: '501',
     paymentItemValues: ['p-1'],
     holidayDateKeys: new Set(),
@@ -148,6 +148,15 @@ describe.each(UJAT_DEV_AUTOFILL_CASE_IDS)('%s Fixture 공통 불변식', caseId 
     expect(fixture.registration['ujat.basicInfo.programManagementName']).toBe(
       `DEV-UJAT-${caseId.replace('-', '')}-${YEAR}-샘플01`
     )
+    expect(fixture.registration['ujat.basicInfo.sponsorId']).toBe('1001')
+    expect(fixture.registration['ujat.basicInfo.sponsorContactId']).toBe('2001')
+    expect(fixture.registration['ujat.basicInfo.educationVenueKind']).toBe('inside')
+    const preferred = fixture.applicationInstitution.overlay[
+      'ujatApplication.preferredScheduleSelectedIds'
+    ] as string[]
+    expect(preferred).toHaveLength(2)
+    expect(preferred[0]).toMatch(/^h1:\d{4}-\d{2}-\d{2}$/)
+    expect(preferred[1]).toMatch(/^h2:\d{4}-\d{2}-\d{2}$/)
   })
 })
 

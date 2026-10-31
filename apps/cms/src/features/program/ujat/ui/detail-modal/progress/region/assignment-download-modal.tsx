@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentModal, CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { RegionAssignmentTableData } from './types'
 import './assignment-download-modal.css'
@@ -18,6 +19,7 @@ export function RegionAssignmentDownloadModal({
   onCancel,
 }: RegionAssignmentDownloadModalProps) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const [selectedColumnIds, setSelectedColumnIds] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
 
@@ -66,10 +68,12 @@ export function RegionAssignmentDownloadModal({
       <CmsButton variant="secondary" size="medium" width={120} onClick={handleCancel}>
         취소
       </CmsButton>
+      {canWrite ? (
       <ExcelButton
         disabled={selectedColumnIds.length === 0 || exporting}
         onClick={() => void handleDownload()}
       />
+      ) : null}
     </div>
   )
 

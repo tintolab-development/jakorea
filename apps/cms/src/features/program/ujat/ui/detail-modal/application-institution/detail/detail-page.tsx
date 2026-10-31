@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Space, Spin } from 'antd'
 import { useCmsAlert } from '@/shared/ui'
 import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -40,6 +41,7 @@ export function UjatInstitutionApplicationDetailPage({
   onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const {
     row,
     detail,
@@ -245,6 +247,8 @@ export function UjatInstitutionApplicationDetailPage({
     <div className="ujat-institution-application-detail-page">
       <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
+          {canWrite ? (
+          <>
           <CmsButton
             type="button"
             variant="delete"
@@ -310,6 +314,8 @@ export function UjatInstitutionApplicationDetailPage({
             >
               {workflow.primaryAction === 'open_schedule_assign' ? '임시 배정' : workflow.primaryLabel}
             </CmsButton>
+          ) : null}
+          </>
           ) : null}
           <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"

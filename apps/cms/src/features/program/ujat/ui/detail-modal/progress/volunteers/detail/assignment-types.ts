@@ -50,6 +50,14 @@ export type UjatVolunteerAssignmentProgressRow = {
   educationProgress: UjatVolunteerEducationProgressDisplay
   /** 봉사 활동 포기 상태(역할·보기 등 제한). 배정 학급 `활동 포기`와 별도일 수 있음 */
   isWithdrawn: boolean
+  /** 배정·출결 mutation 식별자. 표시용 값이 아니다. */
+  scheduleId?: number
+  educationSlotId?: number | null
+  assignmentGroupId?: string | null
+  organizationApplicationId?: number | null
+  participantId?: number
+  /** 이 봉사자가 조의 secondary이면 true */
+  selfIsSecondary?: boolean
 }
 
 /** 배정 학급 열이 `활동 포기`인 행 — 하단 고정·흰색 오버레이 */
@@ -66,6 +74,8 @@ export type UjatVolunteerAssignmentAbsenceReason = {
   reason: string
   /** 없으면 `-` 표기 */
   fileName?: string | null
+  fileObjectIds?: number[]
+  originalFileNames?: Array<string | null>
 }
 
 export function hasExcusedAbsenceInAssignmentRows(

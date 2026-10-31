@@ -50,6 +50,63 @@ function inferTimeUnitFromSlotKeys(keys: unknown): '15' | '30' | '60' | undefine
   return undefined
 }
 
+function parseSlotKeyBounds(key: string): { startMs: number; endMs: number } | null {
+  const [startRaw, endRaw] = key.split('-')
+  const startMs = Number(startRaw)
+  const endMs = Number(endRaw)
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return null
+  return { startMs, endMs }
+}
+
+/** 면접 기간(날짜) 밖 슬롯 키를 제거하고, 남은 키로 interviewTimeRange를 다시 맞춘다. */
+function pruneInterviewSlotsToRange(
+  overlay: Record<string, unknown>,
+  ns: string,
+  range: RangeSeal
+): void {
+  const rangeStart = dayjs(range.start).startOf('day')
+  const rangeEnd = dayjs(range.end).endOf('day')
+  if (!rangeStart.isValid() || !rangeEnd.isValid()) return
+
+  const rawKeys = overlay[`${ns}.selectedSlotKeys`]
+  const keys = Array.isArray(rawKeys)
+    ? rawKeys.filter((item): item is string => typeof item === 'string')
+    : []
+  const kept = keys.filter(key => {
+    const bounds = parseSlotKeyBounds(key)
+    if (!bounds) return false
+    const slotDay = dayjs(bounds.startMs)
+    return (
+      slotDay.isValid() &&
+      !slotDay.isBefore(rangeStart, 'day') &&
+      !slotDay.isAfter(rangeEnd, 'day')
+    )
+  })
+  overlay[`${ns}.selectedSlotKeys`] = kept
+
+  if (kept.length === 0) {
+    overlay[`${ns}.interviewTimeRange`] = []
+    return
+  }
+
+  let minStart = Number.POSITIVE_INFINITY
+  let maxEnd = Number.NEGATIVE_INFINITY
+  for (const key of kept) {
+    const bounds = parseSlotKeyBounds(key)
+    if (!bounds) continue
+    minStart = Math.min(minStart, bounds.startMs)
+    maxEnd = Math.max(maxEnd, bounds.endMs)
+  }
+  if (!Number.isFinite(minStart) || !Number.isFinite(maxEnd)) {
+    overlay[`${ns}.interviewTimeRange`] = []
+    return
+  }
+  overlay[`${ns}.interviewTimeRange`] = [
+    new Date(minStart).toISOString(),
+    new Date(maxEnd).toISOString(),
+  ]
+}
+
 function halfHasInterviewSelection(overlay: Record<string, unknown>, half: UjatVolunteerRecruitHalf): boolean {
   const ns = ujatVolunteerRecruitInterviewNamespace(half)
   return (
@@ -80,6 +137,11 @@ export function completeUjatRecruitDateSelections(
     const sealKey = ujatVolunteerRecruitInterviewRangeSealKey(half)
     const formRange = readCompleteRangeSeal(next[ujatVolunteerHalfOverlayKey(half, 'interviewRange')])
     if (formRange) next[sealKey] = formRange
+
+    const activeRange = formRange ?? readCompleteRangeSeal(next[sealKey])
+    if (activeRange && Array.isArray(next[`${ns}.selectedSlotKeys`])) {
+      pruneInterviewSlotsToRange(next, ns, activeRange)
+    }
 
     if (halfHasInterviewSelection(next, half) && next[`${ns}.timeUnit`] == null) {
       next[`${ns}.timeUnit`] =

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { CmsButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { InterviewAssignmentStatusText } from '../shared/interview-assignment-status-text'
 
 const CENTER_CELL_CLASS = 'ujat-volunteer-doc-passed__center-cell'
@@ -13,22 +14,24 @@ export function useUjatVolunteerDocPassedColumns({
 }: {
   onAssignInterview: (row: UjatVolunteerApplicantRow) => void
 }) {
-  return useMemo(
-    (): ColumnsType<UjatVolunteerApplicantRow> => [
+  const canWrite = useUjatCanWrite()
+  return useMemo((): ColumnsType<UjatVolunteerApplicantRow> => {
+    const columns: ColumnsType<UjatVolunteerApplicantRow> = [
       {
         title: 'No.',
         key: 'no',
         width: 80,
-        align: 'center',
+        align: 'center' as const,
         className: CENTER_CELL_CLASS,
-        render: (_value, _record, index) => index + 1,
+        render: (_value: unknown, _record: UjatVolunteerApplicantRow, index: number) =>
+          index + 1,
       },
       {
         title: '신청 봉사자명',
         dataIndex: 'name',
         key: 'name',
         width: 140,
-        align: 'center',
+        align: 'center' as const,
         className: CENTER_CELL_CLASS,
       },
       {
@@ -36,23 +39,24 @@ export function useUjatVolunteerDocPassedColumns({
         dataIndex: 'preferredRegion',
         key: 'preferredRegion',
         width: 168,
-        align: 'center',
+        align: 'center' as const,
         className: CENTER_CELL_CLASS,
       },
       {
         title: '면접 가능 일정 수',
         key: 'interviewSlotCount',
         width: 140,
-        align: 'center',
+        align: 'center' as const,
         className: CENTER_CELL_CLASS,
-        render: (_value, record) => `${record.interviewSlotCount}개`,
+        render: (_value: unknown, record: UjatVolunteerApplicantRow) =>
+          `${record.interviewSlotCount}개`,
       },
       {
         title: '연락처',
         dataIndex: 'contact',
         key: 'contact',
         width: 140,
-        align: 'center',
+        align: 'center' as const,
         ellipsis: true,
         className: CENTER_CELL_CLASS,
       },
@@ -61,7 +65,7 @@ export function useUjatVolunteerDocPassedColumns({
         dataIndex: 'email',
         key: 'email',
         width: 220,
-        align: 'center',
+        align: 'center' as const,
         ellipsis: true,
         className: CENTER_CELL_CLASS,
       },
@@ -69,18 +73,18 @@ export function useUjatVolunteerDocPassedColumns({
         title: '교육 진행 경험',
         key: 'educationExperience',
         width: 140,
-        align: 'center',
+        align: 'center' as const,
         className: CENTER_CELL_CLASS,
-        render: (_value, record) =>
+        render: (_value: unknown, record: UjatVolunteerApplicantRow) =>
           record.hasEducationExperience == null ? '-' : record.hasEducationExperience ? 'O' : 'X',
       },
       {
         title: '면접일 배정 현황',
         key: 'interviewAssignmentStatus',
         width: 140,
-        align: 'center',
+        align: 'center' as const,
         className: CENTER_CELL_CLASS,
-        render: (_value, record) => (
+        render: (_value: unknown, record: UjatVolunteerApplicantRow) => (
           <InterviewAssignmentStatusText status={record.interviewAssignmentStatus} />
         ),
       },
@@ -88,9 +92,9 @@ export function useUjatVolunteerDocPassedColumns({
         title: '면접일 배정',
         key: 'interviewAssignmentAction',
         width: 160,
-        align: 'center',
+        align: 'center' as const,
         className: CENTER_CELL_CLASS,
-        render: (_value, record) => {
+        render: (_value: unknown, record: UjatVolunteerApplicantRow) => {
           const label =
             record.interviewAssignmentStatus === 'assigned' ? '면접일 재배정' : '면접일 배정'
           return (
@@ -111,7 +115,7 @@ export function useUjatVolunteerDocPassedColumns({
           )
         },
       },
-    ],
-    [onAssignInterview]
-  )
+    ]
+    return columns.filter(column => canWrite || column.key !== 'interviewAssignmentAction')
+  }, [canWrite, onAssignInterview])
 }

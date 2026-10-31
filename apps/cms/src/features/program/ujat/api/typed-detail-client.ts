@@ -1,6 +1,7 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
 import type { UjatBasicInfoFormValues } from '@/features/program/ujat/lib/ujat-basic-info-form'
+import { normalizeUjatTypedDetailForWrite } from '@/features/program/ujat/lib/ujat-typed-detail'
 
 /**
  * JABACK UJAT Typed detail v1.
@@ -167,7 +168,7 @@ export async function replaceUjatTypedDetailRemote(
   const response = await customInstance<unknown>({
     url: `/api/admin/programs/${encodeURIComponent(programId)}/ujat/typed-detail`,
     method: 'PUT',
-    data: detail,
+    data: normalizeUjatTypedDetailForWrite(detail),
   })
   return unwrapApiBody<UjatTypedDetail>(response)
 }

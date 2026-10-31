@@ -4,8 +4,10 @@ import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../applic
 import { getUjatScheduleAssignRegionState } from '../../../application-institution/schedule-assign/store'
 import { calculateGradeTextbookSupply } from './textbook'
 import {
-  getAttendanceManagerForSchedule,
-  getVolunteersForClass,
+  attendanceManagerForScheduleFromSources,
+  scheduleIdForInstitutionDate,
+  volunteersForClassFromSources,
+  type InstitutionAssignmentSources,
 } from './institution-assignment-data'
 import type { UjatEducationProgressInstitutionDetail } from './types'
 
@@ -82,7 +84,9 @@ function getGradeValuesForSchedule(
 
 function buildRowsForSchedule(
   detail: UjatEducationProgressInstitutionDetail,
-  isoDate: string
+  isoDate: string,
+  sources: InstitutionAssignmentSources | null,
+  scheduleId: number | null
 ): AssignmentClassRow[] {
   const institutionRow = getUjatInstitutionApplicationRowById(detail.institutionId)
   if (!institutionRow) return []
@@ -95,12 +99,10 @@ function buildRowsForSchedule(
   const gradeBlocks = detail.applicationDetail.gradeBlocks
 
   const rows: AssignmentClassRow[] = sections.map(section => {
-    const volunteers = getVolunteersForClass(
-      detail.institutionId,
-      isoDate,
-      section.gradeLabel,
-      section.classNo
-    )
+    const volunteers =
+      sources && scheduleId != null
+        ? volunteersForClassFromSources(sources, scheduleId, section.gradeLabel, section.classNo)
+        : { volunteerA: '-', volunteerB: '-' }
     const textbook = resolveGradeTextbook(gradeBlocks, section.gradeLabel)
 
     return {
@@ -138,18 +140,23 @@ function parseIsoDateFromScheduleId(scheduleId: string, institutionId: string): 
 }
 
 export function buildAssignmentScheduleSections(
-  detail: UjatEducationProgressInstitutionDetail
+  detail: UjatEducationProgressInstitutionDetail,
+  sources: InstitutionAssignmentSources | null = null
 ): AssignmentScheduleSection[] {
   return detail.confirmedScheduleRows.map(schedule => {
     const isoDate = parseIsoDateFromScheduleId(schedule.id, detail.institutionId)
-    const rows = buildRowsForSchedule(detail, isoDate)
-    const manager = getAttendanceManagerForSchedule(detail.institutionId, isoDate)
+    const numericScheduleId = sources ? scheduleIdForInstitutionDate(sources, isoDate) : null
+    const rows = buildRowsForSchedule(detail, isoDate, sources, numericScheduleId)
+    const attendanceManagerLabel =
+      sources && numericScheduleId != null
+        ? attendanceManagerForScheduleFromSources(sources, numericScheduleId)
+        : '미정'
 
     return {
       scheduleId: schedule.id,
       isoDate,
       dateDisplay: schedule.dateDisplay,
-      attendanceManagerLabel: manager ?? '미정',
+      attendanceManagerLabel,
       totalClassCount: rows.length,
       rows,
     }

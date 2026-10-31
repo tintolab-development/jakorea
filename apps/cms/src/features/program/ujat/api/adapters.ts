@@ -103,6 +103,7 @@ import {
   buildUjatTypedDetailForCreate,
   normalizeUjatTypedDetailForWrite,
   parseStoredUjatTypedDetail,
+  ujatTypedDate,
   UJAT_TYPED_DETAIL_ROOT_KEY,
 } from '@/features/program/ujat/lib/ujat-typed-detail'
 import { resolveProgramListDeleteBlocked } from '@/features/program/shared/lib/program-delete-eligibility'
@@ -257,10 +258,30 @@ function typedDetailHasScheduleRows(detail?: UjatTypedDetail): boolean {
   )
 }
 
+/** Instant·모집 창 시각 필드 — ISO 유지. Date는 toISOString. */
 function dateValue(value: Date | string | undefined): string | undefined {
-  if (value instanceof Date) return value.toISOString()
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return undefined
+    return value.toISOString()
+  }
   if (typeof value !== 'string') return undefined
   return value.trim() ? value : undefined
+}
+
+/**
+ * BE LocalDate / 사업·운영 일자 — Asia/Seoul 달력일 `YYYY-MM-DD`.
+ * Date·ISO instant는 UTC 날짜가 아니라 서울 날짜로 보낸다(하루 밀림 방지).
+ */
+function dateOnlyValue(value: Date | string | undefined): string | undefined {
+  if (value == null) return undefined
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return undefined
+    return ujatTypedDate(value) ?? undefined
+  }
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  return ujatTypedDate(trimmed) ?? trimmed
 }
 
 /** GET echo — 빈 title을 대표명·시드 문구로 채우지 않는다. */
@@ -303,8 +324,8 @@ function applicationDatesInsideBusiness(program: Program): {
 function calendarDateInsideBusiness(date: string | undefined, program: Program): boolean {
   const day = toOperationCalendarDate(date)
   if (!day) return false
-  const start = toOperationCalendarDate(dateValue(program.startDate))
-  const end = toOperationCalendarDate(dateValue(program.endDate))
+  const start = toOperationCalendarDate(dateOnlyValue(program.startDate))
+  const end = toOperationCalendarDate(dateOnlyValue(program.endDate))
   if (start && day < start) return false
   if (end && day > end) return false
   return true
@@ -320,8 +341,8 @@ function pickOperationDatesInsideBusiness(
   operationStartDate?: string,
   operationEndDate?: string
 ): { operationStartDate?: string; operationEndDate?: string } {
-  const start = dateValue(operationStartDate)
-  const end = dateValue(operationEndDate)
+  const start = dateOnlyValue(operationStartDate)
+  const end = dateOnlyValue(operationEndDate)
   return {
     ...(start && calendarDateInsideBusiness(start, program) ? { operationStartDate: start } : {}),
     ...(end && calendarDateInsideBusiness(end, program) ? { operationEndDate: end } : {}),
@@ -418,13 +439,13 @@ function recruitmentRow(input: {
     ...(source?.remarksNotApplicable != null
       ? { remarksNotApplicable: source.remarksNotApplicable }
       : {}),
+    ...(source?.finalPassAnnouncementAt !== undefined
+      ? { finalPassAnnouncementAt: source.finalPassAnnouncementAt }
+      : {}),
     ...(input.recruitmentType === ProgramRecruitmentRequestRecruitmentType.VOLUNTEER
       ? {
           ...(source?.documentPassAnnouncementAt !== undefined
             ? { documentPassAnnouncementAt: source.documentPassAnnouncementAt }
-            : {}),
-          ...(source?.finalPassAnnouncementAt !== undefined
-            ? { finalPassAnnouncementAt: source.finalPassAnnouncementAt }
             : {}),
           ...(source?.noticeExposureTiming !== undefined
             ? { noticeExposureTiming: source.noticeExposureTiming }
@@ -471,10 +492,10 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       applicationType: 'ORGANIZATION',
       startAt: institutionStart,
       endAt: institutionEnd,
-      operationStartDate: dateValue(
+      operationStartDate: dateOnlyValue(
         institution?.operationStartDate ?? undefined
       ),
-      operationEndDate: dateValue(
+      operationEndDate: dateOnlyValue(
         institution?.operationEndDate ?? undefined
       ),
       maxCount: program.participatingSchoolCount ?? program.approvedStudentCount,
@@ -487,9 +508,9 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
       applicationType: 'VOLUNTEER',
       startAt: volunteerStart,
       endAt: volunteerEnd,
-      operationStartDate: dateValue(h1?.operationStartDate ?? undefined),
-      operationEndDate: dateValue(h1?.operationEndDate ?? undefined),
-      maxCount: program.generalVolunteers ?? program.ujatFirstHalfVolunteerCount,
+      operationStartDate: dateOnlyValue(h1?.operationStartDate ?? undefined),
+      operationEndDate: dateOnlyValue(h1?.operationEndDate ?? undefined),
+      maxCount: program.ujatFirstHalfVolunteerCount ?? program.generalVolunteers,
       recruitTerm: ProgramRecruitmentRequestRecruitTerm.FIRST_HALF,
       ...(h1?.id != null ? { id: h1.id } : {}),
       ...ujatVolunteerInterviewFields(program, h1),
@@ -506,12 +527,11 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
         id: row.id,
         startAt: dateValue(row.startAt ?? undefined),
         endAt: dateValue(row.endAt ?? undefined),
-        operationStartDate: dateValue(row.operationStartDate ?? undefined),
-        operationEndDate: dateValue(row.operationEndDate ?? undefined),
+        operationStartDate: dateOnlyValue(row.operationStartDate ?? undefined),
+        operationEndDate: dateOnlyValue(row.operationEndDate ?? undefined),
+        maxCount: program.ujatSecondHalfVolunteerCount ?? program.generalVolunteers,
         recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
-        interviewEnabled: row.interviewEnabled === true,
-        interviewStartAt: dateValue(row.interviewStartAt ?? undefined),
-        interviewEndAt: dateValue(row.interviewEndAt ?? undefined),
+        ...ujatVolunteerInterviewFields(program, row),
         source: row,
       })
     )
@@ -617,13 +637,11 @@ function withUjatCreateSecondHalfVolunteerRow(
       applicationType: 'VOLUNTEER',
       startAt: dateValue(h2Row.startAt ?? undefined),
       endAt: dateValue(h2Row.endAt ?? undefined),
-      operationStartDate: dateValue(h2Row.operationStartDate ?? undefined),
-      operationEndDate: dateValue(h2Row.operationEndDate ?? undefined),
-      maxCount: program.ujatSecondHalfVolunteerCount,
+      operationStartDate: dateOnlyValue(h2Row.operationStartDate ?? undefined),
+      operationEndDate: dateOnlyValue(h2Row.operationEndDate ?? undefined),
+      maxCount: program.ujatSecondHalfVolunteerCount ?? program.generalVolunteers,
       recruitTerm: ProgramRecruitmentRequestRecruitTerm.SECOND_HALF,
-      interviewEnabled: h2Row.interviewEnabled !== false,
-      interviewStartAt: dateValue(h2Row.interviewStartAt ?? undefined),
-      interviewEndAt: dateValue(h2Row.interviewEndAt ?? undefined),
+      ...ujatVolunteerInterviewFields(program, h2Row),
       source: h2Row,
     }),
   ]
@@ -658,9 +676,9 @@ function withUjatCreateRowCopy(
     const programRange = recordOf((program.ujatRegistrationOverlay ?? {})[programRangeKey])
     // Typed recruitment row가 있으면 Overlay programRange로 덮지 않는다.
     const operationStartDate =
-      row.operationStartDate ?? dateValue(programRange?.start as string | undefined)
+      row.operationStartDate ?? dateOnlyValue(programRange?.start as string | undefined)
     const operationEndDate =
-      row.operationEndDate ?? dateValue(programRange?.end as string | undefined)
+      row.operationEndDate ?? dateOnlyValue(programRange?.end as string | undefined)
     return {
       ...(kind === 'institution' ? row : rowWithoutInterview),
       announcementTitle: publicTitle !== '-' ? publicTitle : undefined,
@@ -1207,10 +1225,10 @@ function coreRequest(
     format: program.format,
     category: program.category,
     description: program.description,
-    startDate: dateValue(program.startDate),
-    endDate: dateValue(program.endDate),
-    businessStartDate: dateValue(program.startDate),
-    businessEndDate: dateValue(program.endDate),
+    startDate: dateOnlyValue(program.startDate),
+    endDate: dateOnlyValue(program.endDate),
+    businessStartDate: dateOnlyValue(program.startDate),
+    businessEndDate: dateOnlyValue(program.endDate),
     educationStructure: resolveUjatEducationStructure(program),
     applicationStartDate: applicationDates.applicationStartDate,
     applicationEndDate: applicationDates.applicationEndDate,
@@ -1262,8 +1280,8 @@ function coreRequest(
     attachmentFileNames: program.attachmentFileNames,
     rounds: program.rounds.map(round => ({
       roundNumber: round.roundNumber,
-      startDate: dateValue(round.startDate),
-      endDate: dateValue(round.endDate),
+      startDate: dateOnlyValue(round.startDate),
+      endDate: dateOnlyValue(round.endDate),
       capacity: round.capacity,
       classCount: round.classCount,
       status: round.status,
@@ -1315,10 +1333,10 @@ function patchRequest(
   if (has('category')) body.category = merged.category
   if (has('description')) body.description = merged.description
   if (has('startDate') || has('endDate')) {
-    body.startDate = dateValue(merged.startDate)
-    body.endDate = dateValue(merged.endDate)
-    body.businessStartDate = dateValue(merged.startDate)
-    body.businessEndDate = dateValue(merged.endDate)
+    body.startDate = dateOnlyValue(merged.startDate)
+    body.endDate = dateOnlyValue(merged.endDate)
+    body.businessStartDate = dateOnlyValue(merged.startDate)
+    body.businessEndDate = dateOnlyValue(merged.endDate)
   }
   if (
     has('applicationStartDate') ||
@@ -1417,8 +1435,8 @@ function patchRequest(
   if (has('rounds')) {
     body.rounds = merged.rounds.map(round => ({
       roundNumber: round.roundNumber,
-      startDate: dateValue(round.startDate),
-      endDate: dateValue(round.endDate),
+      startDate: dateOnlyValue(round.startDate),
+      endDate: dateOnlyValue(round.endDate),
       capacity: round.capacity,
       classCount: round.classCount,
       status: round.status,
@@ -1515,8 +1533,8 @@ export function toCreateRequest(
       withUjatCreateSecondHalfVolunteerRow(coreWithoutDetail.recruitments ?? undefined, copySource),
       copySource
     ),
-    businessStartDate: dateValue(program.startDate),
-    businessEndDate: dateValue(program.endDate),
+    businessStartDate: dateOnlyValue(program.startDate),
+    businessEndDate: dateOnlyValue(program.endDate),
     autoApplyDefaultFormBindings: true,
   }) as ProgramCreateRequest
 }
