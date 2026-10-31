@@ -56,7 +56,15 @@ describe('GENERAL 사전교육 판별', () => {
     expect(isPreEducationCurriculumSession({ sessionLabel: '사전교육 1회차' })).toBe(true)
     expect(
       isPreEducationScheduleBlock({ scheduleLabel: '세부 일정 01', name: '사전 교육' })
-    ).toBe(true)
+    ).toBe(false)
+    expect(
+      isPreEducationScheduleBlock({
+        blockKind: 'event',
+        scheduleLabel: '행사 일정 01',
+        name: '사전교육 워크숍',
+      })
+    ).toBe(false)
+    expect(isPreEducationScheduleBlock({ scheduleLabel: '사전 교육' })).toBe(true)
     expect(isPreEducationScheduleBlock({ blockKind: 'preEducation' })).toBe(true)
     expect(isPreEducationScheduleBlock({ isPreEducation: true })).toBe(true)
   })

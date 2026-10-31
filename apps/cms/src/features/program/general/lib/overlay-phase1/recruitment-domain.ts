@@ -26,6 +26,8 @@ import dayjs from 'dayjs'
 function isEphemeralThumbPreviewUrl(url: string | null | undefined): boolean {
   return Boolean(url?.trim().startsWith('blob:'))
 }
+import { participantFlagsFromGeneralProgram } from '@/features/program/general/lib/participant-audience-selection'
+import { coalesceResultAnnouncementDate } from '@/features/program/shared/lib/resolve-result-announcement-date'
 import type {
   InstructorRecruitmentValues,
   RecruitDetailHtml,
@@ -34,6 +36,14 @@ import type {
   VolunteerInterviewValues,
   VolunteerRecruitmentValues,
 } from './recruitment-form-values'
+
+function pickParticipantOverlayValue<T>(
+  organization: boolean,
+  institutionValue: T | undefined,
+  individualValue: T | undefined
+): T | undefined {
+  return organization ? (institutionValue ?? individualValue) : (individualValue ?? institutionValue)
+}
 
 const TARGET_LEVEL_VALUES = new Set<string>(['elementary', 'middle', 'high', 'university', 'adult'])
 
@@ -284,21 +294,37 @@ export function applyIndependentRecruitmentFormValues(
   if (!hasAny) return program
 
   const keepRecruitmentRows = (program.programRecruitments?.length ?? 0) > 0
+  const preferInstitution = participantFlagsFromGeneralProgram(program).organization === true
 
   const participantRecruitRange = keepRecruitmentRows
     ? undefined
-    : (institution?.recruitRangeSeal ?? individual?.recruitRangeSeal)
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        institution?.recruitRangeSeal,
+        individual?.recruitRangeSeal
+      )
   const participantProgramRange = keepRecruitmentRows
     ? undefined
-    : (institution?.programRangeSeal ?? individual?.programRangeSeal)
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        institution?.programRangeSeal,
+        individual?.programRangeSeal
+      )
   const instructorRecruitRange = keepRecruitmentRows ? undefined : instructor?.recruitRangeSeal
   const instructorProgramRange = keepRecruitmentRows ? undefined : instructor?.programRangeSeal
   const volunteerRecruitRange = keepRecruitmentRows ? undefined : volunteer?.recruitRangeSeal
   const volunteerProgramRange = keepRecruitmentRows ? undefined : volunteer?.programRangeSeal
 
-  const targetLevels =
-    parseTargetLevels(institution?.targetLevels) ?? parseTargetLevels(individual?.targetLevels)
-  const targetLevelDetail = institution?.targetLevelDetail ?? individual?.targetLevelDetail
+  const targetLevels = pickParticipantOverlayValue(
+    preferInstitution,
+    parseTargetLevels(institution?.targetLevels),
+    parseTargetLevels(individual?.targetLevels)
+  )
+  const targetLevelDetail = pickParticipantOverlayValue(
+    preferInstitution,
+    institution?.targetLevelDetail,
+    individual?.targetLevelDetail
+  )
 
   const instructorTargetsRaw = instructor?.recruitTargets
   const instructorTargets =
@@ -315,13 +341,25 @@ export function applyIndependentRecruitmentFormValues(
 
   const participantContact = keepRecruitmentRows
     ? undefined
-    : (institution?.inquiryContact ?? individual?.inquiryContact)
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        institution?.inquiryContact,
+        individual?.inquiryContact
+      )
   const participantTel = keepRecruitmentRows
     ? undefined
-    : (institution?.inquiryTel ?? individual?.inquiryTel)
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        institution?.inquiryTel,
+        individual?.inquiryTel
+      )
   const participantEmail = keepRecruitmentRows
     ? undefined
-    : (institution?.inquiryEmail ?? individual?.inquiryEmail)
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        institution?.inquiryEmail,
+        individual?.inquiryEmail
+      )
   const instructorContact = keepRecruitmentRows ? undefined : instructor?.inquiryContact
   const instructorTel = keepRecruitmentRows ? undefined : instructor?.inquiryTel
   const instructorEmail = keepRecruitmentRows ? undefined : instructor?.inquiryEmail
@@ -330,7 +368,7 @@ export function applyIndependentRecruitmentFormValues(
   const volunteerEmail = keepRecruitmentRows ? undefined : volunteer?.inquiryEmail
 
   const html = firstHtml(
-    institution?.detailHtml ?? individual?.detailHtml,
+    pickParticipantOverlayValue(preferInstitution, institution?.detailHtml, individual?.detailHtml),
     instructor?.detailHtml,
     volunteer?.detailHtml
   )
@@ -441,11 +479,17 @@ export function applyIndependentRecruitmentFormValues(
     )
   }
 
-  const participantHtml = institution?.detailHtml ?? individual?.detailHtml
+  const participantHtml = pickParticipantOverlayValue(
+    preferInstitution,
+    institution?.detailHtml,
+    individual?.detailHtml
+  )
   const participantDescription = participantHtml?.programDescription
   const participantGuide = participantHtml?.recruitmentGuide
   const participantMethod = participantHtml?.applicationMethod
-  const participantRemarks = institution?.notes ?? individual?.notes ?? participantHtml?.otherNotes
+  const participantRemarks =
+    pickParticipantOverlayValue(preferInstitution, institution?.notes, individual?.notes) ??
+    participantHtml?.otherNotes
   if (participantDescription) {
     participantInfo.programDescription = coalesceString(
       participantInfo.programDescription,
@@ -490,15 +534,24 @@ export function applyIndependentRecruitmentFormValues(
   }
 
   const institutionAnnouncementPublished =
-    institution?.announcementPublished ??
-    individual?.announcementPublished ??
-    (participantRecruitRange || participantContact ? true : undefined)
+    pickParticipantOverlayValue(
+      preferInstitution,
+      institution?.announcementPublished,
+      individual?.announcementPublished
+    ) ?? (participantRecruitRange || participantContact ? true : undefined)
   const institutionPreguidance = institution?.preguidanceRequired
   const institutionStudentList = institution?.studentListRequired
   const institutionCertificate = institution?.certificateProvided
-  const participantFinalAnnounceIso = institution?.finalAnnounceIso ?? individual?.finalAnnounceIso
-  const participantFinalAnnounceMethod =
-    institution?.finalAnnounceMethod ?? individual?.finalAnnounceMethod
+  const participantFinalAnnounceIso = pickParticipantOverlayValue(
+    preferInstitution,
+    institution?.finalAnnounceIso,
+    individual?.finalAnnounceIso
+  )
+  const participantFinalAnnounceMethod = pickParticipantOverlayValue(
+    preferInstitution,
+    institution?.finalAnnounceMethod,
+    individual?.finalAnnounceMethod
+  )
   const participantFinalAnnouncementLabel = formatAnnouncementLabel(
     participantFinalAnnounceIso,
     participantFinalAnnounceMethod
@@ -582,8 +635,11 @@ export function applyIndependentRecruitmentFormValues(
       participantInfo.resultAnnouncementLabel = nextFinal
     }
   }
-  const overlayParticipantNotesNA =
-    institution?.notesNotApplicable ?? individual?.notesNotApplicable
+  const overlayParticipantNotesNA = pickParticipantOverlayValue(
+    preferInstitution,
+    institution?.notesNotApplicable,
+    individual?.notesNotApplicable
+  )
   if (overlayParticipantNotesNA !== undefined) {
     const nextNotesNA = coalesceBool(
       participantInfo.notesNotApplicable,
@@ -748,7 +804,7 @@ export function applyIndependentRecruitmentFormValues(
     ),
     oneLineIntroduction: coalesceString(
       program.oneLineIntroduction,
-      individual?.notes ?? institution?.notes,
+      pickParticipantOverlayValue(preferInstitution, institution?.notes, individual?.notes),
       preferOverlay
     ),
     targetLevels: nextTargetLevels,
@@ -803,11 +859,13 @@ export function applyIndependentRecruitmentFormValues(
       institutionStudentList,
       preferOverlay
     ) as Program['studentListRequired'],
-    resultAnnouncementDate: coalesceIso(
-      program.resultAnnouncementDate,
-      participantFinalAnnounceIso ?? volunteerFinalAnnounceIso,
-      preferOverlay
-    ),
+    resultAnnouncementDate: coalesceResultAnnouncementDate({
+      overlayIso: participantFinalAnnounceIso ?? volunteerFinalAnnounceIso,
+      programDate: program.resultAnnouncementDate,
+      createdAt: program.createdAt,
+      updatedAt: program.updatedAt,
+      preferOverlay,
+    }),
     resultAnnouncementMethod: coalesceString(
       program.resultAnnouncementMethod,
       participantFinalAnnounceMethod ?? volunteerFinalAnnounceMethod,

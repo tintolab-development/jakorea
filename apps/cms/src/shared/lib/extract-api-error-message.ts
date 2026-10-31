@@ -2,6 +2,7 @@ import {
   programEditWindowErrorMessage,
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
+import { resolveProgramScheduleLineErrorMessage } from '@/features/program/shared/lib/program-schedule-line-error'
 
 /** 백엔드 공통 에러 envelope (`success: false`, `error: { code, message, traceId }`) */
 export type ApiErrorEnvelope = {
@@ -97,6 +98,8 @@ export function extractApiErrorMessage(
   }
   const envelope = asEnvelope(data)
   const serverMessage = envelope?.error?.message?.trim() || envelope?.message?.trim()
+  const scheduleLineMessage = resolveProgramScheduleLineErrorMessage(code, serverMessage)
+  if (scheduleLineMessage) return scheduleLineMessage
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(code, serverMessage)
   if (policyMessage) return policyMessage
 

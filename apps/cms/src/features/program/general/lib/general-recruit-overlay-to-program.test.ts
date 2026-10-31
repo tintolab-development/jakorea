@@ -66,10 +66,14 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(next.description).toBe('모집 양식 프로그램 설명')
   })
 
-  it('기관 비고(recruit.notes)가 leftover individual.notes보다 우선한다', () => {
+  it('기관 프로그램이면 leftover individual.notes보다 기관 비고가 우선한다', () => {
     const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
     const next = applyGeneralRecruitOverlayToProgram(
-      baseProgram(),
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'organization',
+        generalParticipantTypes: ['school_institution'],
+      },
       {
         [inst.notes]: '테스토 비고',
         [GENERAL_RECRUIT_OVERLAY_KEYS.individual.notes]: '일정은 학교 사정에 따라 조율할 수 있습니다.',
@@ -79,6 +83,24 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
 
     expect(next.remarks).toBe('테스토 비고')
     expect(next.generalCommonInfo?.participantRecruitmentInfo?.remarks).toBe('테스토 비고')
+  })
+
+  it('개인 프로그램이면 leftover 기관 키보다 개인 비고가 우선한다', () => {
+    const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
+    const next = applyGeneralRecruitOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+      },
+      {
+        [inst.notes]: '기관 leftover',
+        [GENERAL_RECRUIT_OVERLAY_KEYS.individual.notes]: '개인 비고',
+      },
+      { preferOverlay: true }
+    )
+
+    expect(next.remarks).toBe('개인 비고')
   })
 
   it('짧은 overlay 교육 대상이 프로그램의 복수 대상을 덮지 않는다', () => {
@@ -221,6 +243,27 @@ describe('applyGeneralRecruitOverlayToProgram', () => {
     expect(participantInfo?.finalAnnouncementLabel).toContain('문자 안내')
     expect(next.resultAnnouncementDate).toBe('2026-05-01T00:00:00+09:00')
     expect(next.resultAnnouncementMethod).toBe('문자 안내')
+  })
+
+  it('시드된 now보다 overlay 발표일을 쓴다 (preferOverlay false)', () => {
+    const now = '2026-10-31T08:42:54.872Z'
+    const overlayIso = '2026-11-02T15:00:00.000Z'
+    const next = applyGeneralRecruitOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+        createdAt: now,
+        updatedAt: now,
+        resultAnnouncementDate: now,
+      },
+      {
+        [GENERAL_RECRUIT_OVERLAY_KEYS.individual.finalAnnounceIso]: overlayIso,
+        [GENERAL_RECRUIT_OVERLAY_KEYS.individual.finalAnnounceMethod]: '홈페이지 공지',
+      },
+      { preferOverlay: false }
+    )
+    expect(next.resultAnnouncementDate).toBe(overlayIso)
   })
 
   it('maps instructor final pass announcement from overlay to nested info and program columns', () => {

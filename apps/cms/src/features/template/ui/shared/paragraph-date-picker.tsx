@@ -172,6 +172,10 @@ interface ParagraphDatePickerRangeProps extends ParagraphDatePickerBaseProps {
   value: ParagraphRangeValue
   onChange: (next: ParagraphRangeValue) => void
   placeholder?: [string, string]
+  /** false면 시간 토글 숨김(모집 기간). 기본 true. */
+  showTimeToggle?: boolean
+  /** 저장된 기간에 시각이 있으면 토글·표시를 복원한다. 기본 false. */
+  appliedSurfaceWithTime?: boolean
 }
 
 interface ParagraphDatePickerSingleProps extends ParagraphDatePickerBaseProps {
@@ -1161,6 +1165,8 @@ function ParagraphDatePickerRangeBridge({
   disabled,
   readOnly,
   disabledDate,
+  showTimeToggle = true,
+  appliedSurfaceWithTime = false,
 }: {
   rootRef: RefObject<HTMLDivElement | null>
   value: ParagraphRangeValue
@@ -1171,6 +1177,8 @@ function ParagraphDatePickerRangeBridge({
   disabled?: boolean
   readOnly?: boolean
   disabledDate?: (date: Dayjs) => boolean
+  showTimeToggle?: boolean
+  appliedSurfaceWithTime?: boolean
 }) {
   const valueRef = useRef(value)
   valueRef.current = value
@@ -1211,7 +1219,8 @@ function ParagraphDatePickerRangeBridge({
       readOnly={readOnly}
       disabledDate={disabledDate}
       appliedSurfaceRange={appliedSurfaceRange}
-      appliedSurfaceWithTime={false}
+      appliedSurfaceWithTime={appliedSurfaceWithTime}
+      showTimeToggle={showTimeToggle}
       preferPeriodModeInPopover={false}
       suppressAutoTodayWhenEmpty={false}
     />
@@ -1269,6 +1278,8 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           disabled={disabled}
           readOnly={readOnly}
           disabledDate={composedDisabledDate}
+          showTimeToggle={props.showTimeToggle ?? true}
+          appliedSurfaceWithTime={props.appliedSurfaceWithTime ?? false}
         />
       ) : (
         <ParagraphDatePickerSingleInner

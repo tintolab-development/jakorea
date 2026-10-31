@@ -8,6 +8,8 @@ import {
   getProgramLifecycleLabel,
   PROGRAM_LIFECYCLE_STATUS_SELECT_ORDER,
 } from '@/shared/constants/status'
+import dayjs from 'dayjs'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import {
   formatDateDotWithWeekday,
   formatDateRangeDotWithWeekday,
@@ -30,6 +32,12 @@ export function formatDateOnly(d: DateValue | undefined): string {
 
 export function formatDateRange(start: DateValue | undefined, end: DateValue | undefined): string {
   if (!start || !end) return '-'
+  const startAt = dayjs(start)
+  const endAt = dayjs(end)
+  if (!startAt.isValid() || !endAt.isValid()) return '-'
+  if (dateRangeUsesClockTime(startAt, endAt)) {
+    return `${formatDateTimeDotWithWeekday(start)} ~ ${formatDateTimeDotWithWeekday(end)}`
+  }
   return formatDateRangeDotWithWeekday(start, end)
 }
 

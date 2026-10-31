@@ -21,6 +21,8 @@ import {
   serializeEducationScheduleLineForServer,
   serializeEducationScheduleLinesForServer,
   shiftEducationScheduleLineToDate,
+  BLOCK_MULTI_DAY_EDUCATION_SCHEDULE_WITH_CLOCK,
+  normalizeEducationScheduleDateLabelForCms,
 } from '@/features/template/lib/format-education-schedule-line'
 
 const april20 = dayjs('2026-04-20')
@@ -430,6 +432,47 @@ describe('serializeEducationScheduleLineForServer', () => {
       '2026.11.06(금) ~ 2026.11.12(목)'
     )
     expect(parseEducationScheduleLineForCms('협의 후 확정')).toBe('협의 후 확정')
+  })
+
+  it('186504 점 표기 라벨은 서버 형식으로 보내고 CMS로 되돌린다', () => {
+    const cms = '2026.11.05(목) 10:00 ~ 11:00'
+    expect(serializeEducationScheduleLineForServer(cms)).toBe('26년 11월 5일(목) 10:00 ~ 11:00')
+    expect(parseEducationScheduleLineForCms(cms)).toBe(cms)
+    expect(parseEducationScheduleLineForCms('26년 11월 5일(목) 10:00 ~ 11:00')).toBe(cms)
+  })
+
+  it('여러 날+시각 CMS 줄은 서버 형식으로 보낸다', () => {
+    const cms = '2026.11.05(목) 11:00 ~ 2026.11.06(금) 18:00'
+    expect(BLOCK_MULTI_DAY_EDUCATION_SCHEDULE_WITH_CLOCK).toBe(false)
+    expect(educationScheduleLineSerializationIssue(cms)).toBeNull()
+    expect(serializeEducationScheduleLineForServer(cms)).toBe(
+      '26년 11월 5일(목) 11:00 ~ 26년 11월 6일(금) 18:00'
+    )
+    expect(
+      educationScheduleLineSerializationIssue('26년 11월 5일(목) 11:00 ~ 26년 11월 6일(금) 18:00')
+    ).toBeNull()
+    expect(educationScheduleLineSerializationIssue('2026.11.05(목) 10:00 ~ 11:00')).toBeNull()
+    expect(educationScheduleLineSerializationIssue('2026.11.05(목) ~ 2026.11.06(금)')).toBeNull()
+  })
+
+  it('깨진 월일 점 표기는 저장 전 검증에서 막는다', () => {
+    expect(educationScheduleLineSerializationIssue('2026.13.40(목) 10:00 ~ 11:00')).toBe(
+      EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE
+    )
+    expect(serializeEducationScheduleLineForServer('2026.13.40(목) 10:00 ~ 11:00')).toBe(
+      '2026.13.40(목) 10:00 ~ 11:00'
+    )
+  })
+})
+
+describe('normalizeEducationScheduleDateLabelForCms', () => {
+  it('시간 포함 점 표기를 Invalid로 만들지 않는다', () => {
+    expect(normalizeEducationScheduleDateLabelForCms('2026.11.05(목) 10:00 ~ 11:00')).toBe(
+      '2026.11.05(목) 10:00 ~ 11:00'
+    )
+    expect(normalizeEducationScheduleDateLabelForCms('26년 11월 5일(목) 10:00 ~ 11:00')).toBe(
+      '2026.11.05(목) 10:00 ~ 11:00'
+    )
   })
 })
 

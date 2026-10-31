@@ -45,6 +45,7 @@ import {
   EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE,
   getProgramRegistrationEducationFormOptions,
   isParticipantSelectionEducationFormInOverlay,
+  resolveGeneralRegistrationCommonEducationForm,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-education-form-options'
 import {
   overlayIpsIndexForScheduleDetail,
@@ -706,20 +707,20 @@ export function resolveGeneralProgramScheduleDetailsForView(
   })
 }
 
-const REGISTRATION_OVERLAY_COMMON_EDUCATION_FORM_KEYS = [
-  'generalRegistration.typeSettings.multiCommonEducationForm',
-  'generalRegistration.typeSettings.singleEducationForm',
-  'generalRegistration.typeSettings.educationForm',
-] as const
-
 function overlayRegistrationEducationFormValue(
-  overlay: Record<string, unknown>
+  overlay: Record<string, unknown>,
+  sessionRoundType?: string
 ): string | undefined {
-  for (const key of REGISTRATION_OVERLAY_COMMON_EDUCATION_FORM_KEYS) {
+  const hasKey = [
+    'generalRegistration.typeSettings.multiCommonEducationForm',
+    'generalRegistration.typeSettings.singleEducationForm',
+    'generalRegistration.typeSettings.educationForm',
+  ].some(key => {
     const raw = overlay[key]
-    if (typeof raw === 'string' && raw.trim()) return raw.trim()
-  }
-  return undefined
+    return typeof raw === 'string' && raw.trim() !== ''
+  })
+  if (!hasKey) return undefined
+  return resolveGeneralRegistrationCommonEducationForm(overlay, sessionRoundType)
 }
 
 function educationFormLabelFromRegistrationValue(value: string): string {
@@ -757,7 +758,7 @@ function applyCurriculumSessionsFromRegistrationOverlay<
 /** 조회 — `generalCommonInfo.educationFormLabel`·overlay·행 값을 등록 폼·수정 모드와 동일하게 맞춘다. */
 function applyRegistrationEducationFormLabelToCommonInfo<
   T extends NonNullable<Program['generalCommonInfo']>,
->(common: T, overlay: Record<string, unknown> | undefined): T {
+>(common: T, overlay: Record<string, unknown> | undefined, program: Program): T {
   if (isParticipantSelectionEducationFormInOverlay(overlay)) {
     const label = educationFormLabelFromRegistrationValue(
       EDUCATION_FORM_PARTICIPANT_SELECTION_VALUE
@@ -783,7 +784,11 @@ function applyRegistrationEducationFormLabelToCommonInfo<
     return common
   }
 
-  const overlayValue = overlayRegistrationEducationFormValue(overlay)
+  const overlayValue = overlayRegistrationEducationFormValue(
+    overlay,
+    extrasFromGeneralProgram({ ...program, generalCommonInfo: common, registrationOverlay: overlay })
+      .sessionRoundType
+  )
   if (!overlayValue) return common
 
   const label = educationFormLabelFromRegistrationValue(overlayValue).trim()
@@ -809,7 +814,8 @@ export function resolveGeneralProgramCommonInfo(
         applyCurriculumSessionsFromRegistrationOverlay(withScheduleLines, program, overlay),
         overlay
       ),
-      overlay
+      overlay,
+      program
     )
   }
 
@@ -911,7 +917,8 @@ export function resolveGeneralProgramCommonInfo(
   }
   return applyRegistrationEducationFormLabelToCommonInfo(
     applyRegistrationWageOverlayToCommonInfo(fallback, overlay),
-    overlay
+    overlay,
+    program
   )
 }
 

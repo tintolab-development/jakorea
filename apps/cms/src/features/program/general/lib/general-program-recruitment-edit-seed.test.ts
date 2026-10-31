@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  formatDateRange,
+  resolvePersistedProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { GENERAL_RECRUIT_OVERLAY_KEYS } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import {
   replaceGeneralRecruitOverlay,
@@ -441,5 +445,19 @@ describe('parse helpers', () => {
     const range = parseDisplayPeriodLabelToIsoRange('2026.04.03(금) ~ 2026.11.20(금)')
     expect(range.start).toBeTruthy()
     expect(range.end).toBeTruthy()
+  })
+
+  it('parseDisplayPeriodLabelToIsoRange keeps clock when present', () => {
+    const range = parseDisplayPeriodLabelToIsoRange(
+      '2026.04.03(금) 09:30 ~ 2026.11.20(금) 18:00'
+    )
+    expect(dayjs(range.start).format('YYYY-MM-DD HH:mm')).toBe('2026-04-03 09:30')
+    expect(dayjs(range.end).format('YYYY-MM-DD HH:mm')).toBe('2026-11-20 18:00')
+  })
+
+  it('formatDateRange keeps clock when present', () => {
+    expect(
+      formatDateRange('2026-04-03T09:30:00+09:00', '2026-11-20T18:00:00+09:00')
+    ).toBe('2026.04.03(금) 09:30 ~ 2026.11.20(금) 18:00')
   })
 })

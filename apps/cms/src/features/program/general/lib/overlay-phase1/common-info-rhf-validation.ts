@@ -11,6 +11,7 @@ import {
   generalProgramCommonInfoEditSchema,
   type GeneralProgramCommonInfoEditFormValues,
 } from '@/features/program/general/model/common-info-edit-schema'
+import { EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE } from '@/features/template/lib/format-education-schedule-line'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
@@ -115,13 +116,20 @@ export function classifyGeneralCommonInfoValidationAlert(
   const requiredIssues = issues.filter(
     issue =>
       issue.message !== EDUCATION_SCHEDULE_OUTSIDE_OPERATION_RANGE_MESSAGE &&
-      issue.message !== EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE
+      issue.message !== EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE &&
+      issue.message !== EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE
   )
   if (requiredIssues.length > 0) return 'required-incomplete'
   if (issues.some(issue => issue.message === EDUCATION_SCHEDULE_OUTSIDE_OPERATION_RANGE_MESSAGE)) {
     return 'operation-range'
   }
-  if (issues.some(issue => issue.message === EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE)) {
+  if (
+    issues.some(
+      issue =>
+        issue.message === EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE ||
+        issue.message === EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE
+    )
+  ) {
     return 'clock-required'
   }
   return 'required-incomplete'

@@ -142,4 +142,62 @@ describe('buildGeneralProgramCreateFromWizardRhf', () => {
     expect(result.program.generalCommonInfo?.educationFormLabel).toBe('온라인')
     expect(result.program.generalCommonInfo?.participationMethod).toBe('individual')
   })
+
+  it('최종 합격자 발표일은 overlay ISO이며 등록 시각 시드를 쓰지 않는다', () => {
+    const overlayIso = '2026-11-02T15:00:00.000Z'
+    const filled = filledCurriculumValues()
+    const result = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-announce',
+      uiValues: {
+        ...filled,
+        recruitmentKv: {
+          ...filled.recruitmentKv,
+          'recruit.finalAnnounceIso': overlayIso,
+          'recruit.finalAnnounceMethod': '홈페이지 공지',
+        },
+      },
+    })
+    expect(result.program.resultAnnouncementDate).toBe(overlayIso)
+    expect(result.program.resultAnnouncementDate).not.toBe(result.program.createdAt)
+    expect(result.program.resultAnnouncementDate).not.toBe(result.program.updatedAt)
+    const detail = JSON.parse(result.createRequest.serviceDetailJson ?? '{}') as {
+      resultAnnouncementDate?: string
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(detail.resultAnnouncementDate).toBe(overlayIso)
+    expect(detail.registration?.overlay?.['recruit.finalAnnounceIso']).toBe(overlayIso)
+  })
+
+  it('시간 토글 14:00 ISO를 그대로 CREATE에 싣는다', () => {
+    const overlayIso = '2026-11-02T05:00:00.000Z'
+    const filled = filledCurriculumValues()
+    const result = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-announce-clock',
+      uiValues: {
+        ...filled,
+        recruitmentKv: {
+          ...filled.recruitmentKv,
+          'recruit.finalAnnounceIso': overlayIso,
+        },
+      },
+    })
+    expect(result.program.resultAnnouncementDate).toBe(overlayIso)
+    const detail = JSON.parse(result.createRequest.serviceDetailJson ?? '{}') as {
+      resultAnnouncementDate?: string
+    }
+    expect(detail.resultAnnouncementDate).toBe(overlayIso)
+  })
+
+  it('발표일 미입력이면 CREATE에 등록 시각을 넣지 않는다', () => {
+    const result = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-announce-empty',
+      uiValues: filledCurriculumValues(),
+    })
+    expect(result.program.resultAnnouncementDate).toBeUndefined()
+    expect(result.program.resultAnnouncementDate).not.toBe(result.program.createdAt)
+    const detail = JSON.parse(result.createRequest.serviceDetailJson ?? '{}') as {
+      resultAnnouncementDate?: string
+    }
+    expect(detail.resultAnnouncementDate).toBeUndefined()
+  })
 })

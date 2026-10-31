@@ -118,50 +118,72 @@ describe('applyEducationFormTypeSettingsModeChange', () => {
 })
 
 describe('resolveGeneralRegistrationCommonEducationForm', () => {
-  it('복수회차 키를 우선한다', () => {
+  const overlay = {
+    'generalRegistration.typeSettings.multiCommonEducationForm': 'hybrid',
+    'generalRegistration.typeSettings.singleEducationForm': 'offline',
+  }
+
+  it('단일 회차면 stale multi보다 single 값을 쓴다', () => {
+    expect(resolveGeneralRegistrationCommonEducationForm(overlay, 'single')).toBe('offline')
+  })
+
+  it('복수 회차면 multi 값을 쓴다', () => {
+    expect(resolveGeneralRegistrationCommonEducationForm(overlay, 'multi')).toBe('hybrid')
+  })
+
+  it('회차 유형이 없으면 단일 키를 먼저 본다', () => {
+    expect(resolveGeneralRegistrationCommonEducationForm(overlay)).toBe('offline')
+  })
+
+  it('단일 회차에서 single이 비면 multi fallback', () => {
     expect(
-      resolveGeneralRegistrationCommonEducationForm({
-        'generalRegistration.typeSettings.multiCommonEducationForm': 'hybrid',
-        'generalRegistration.typeSettings.singleEducationForm': 'offline',
-      })
+      resolveGeneralRegistrationCommonEducationForm(
+        {
+          'generalRegistration.typeSettings.multiCommonEducationForm': 'hybrid',
+          'generalRegistration.typeSettings.singleEducationForm': '',
+        },
+        'single'
+      )
     ).toBe('hybrid')
   })
 
-  it('복수회차 키가 비면 단일 회차 값으로 본다', () => {
-    expect(
-      resolveGeneralRegistrationCommonEducationForm({
-        'generalRegistration.typeSettings.multiCommonEducationForm': '',
-        'generalRegistration.typeSettings.singleEducationForm': 'offline',
-      })
-    ).toBe('offline')
-  })
-
-  it('둘 다 없으면 단일 회차 기본값 online', () => {
-    expect(resolveGeneralRegistrationCommonEducationForm({})).toBe('online')
+  it('둘 다 없으면 online', () => {
+    expect(resolveGeneralRegistrationCommonEducationForm({}, 'single')).toBe('online')
   })
 })
 
 describe('resolveGeneralRegistrationCommonParticipation', () => {
-  it('복수회차 키를 우선한다', () => {
+  const overlay = {
+    'generalRegistration.typeSettings.multiCommonParticipation': 'team',
+    'generalRegistration.typeSettings.singleParticipation': 'individual',
+  }
+
+  it('단일 회차면 stale multi보다 single 값을 쓴다', () => {
+    expect(resolveGeneralRegistrationCommonParticipation(overlay, 'single')).toBe('individual')
+  })
+
+  it('복수 회차면 multi 값을 쓴다', () => {
+    expect(resolveGeneralRegistrationCommonParticipation(overlay, 'multi')).toBe('team')
+  })
+
+  it('회차 유형이 없으면 단일 키를 먼저 본다', () => {
+    expect(resolveGeneralRegistrationCommonParticipation(overlay)).toBe('individual')
+  })
+
+  it('복수 회차에서 multi가 비면 single fallback', () => {
     expect(
-      resolveGeneralRegistrationCommonParticipation({
-        'generalRegistration.typeSettings.multiCommonParticipation': 'team',
-        'generalRegistration.typeSettings.singleParticipation': 'individual',
-      })
+      resolveGeneralRegistrationCommonParticipation(
+        {
+          'generalRegistration.typeSettings.multiCommonParticipation': '',
+          'generalRegistration.typeSettings.singleParticipation': 'team',
+        },
+        'multi'
+      )
     ).toBe('team')
   })
 
-  it('복수회차 키가 비면 단일 회차 값으로 본다', () => {
-    expect(
-      resolveGeneralRegistrationCommonParticipation({
-        'generalRegistration.typeSettings.multiCommonParticipation': '',
-        'generalRegistration.typeSettings.singleParticipation': 'team',
-      })
-    ).toBe('team')
-  })
-
-  it('둘 다 없으면 단일 회차 기본값 individual', () => {
-    expect(resolveGeneralRegistrationCommonParticipation({})).toBe('individual')
+  it('둘 다 없으면 individual', () => {
+    expect(resolveGeneralRegistrationCommonParticipation({}, 'multi')).toBe('individual')
   })
 })
 

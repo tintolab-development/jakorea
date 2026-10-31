@@ -35,6 +35,7 @@ import {
 import { getGeneralParticipantTypes } from '@/features/program/general/lib/detail-meta'
 import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features/template/lib/education-schedule-line-clock-required'
 import { educationScheduleLineSerializationIssue } from '@/features/template/lib/format-education-schedule-line'
+import { GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/shared/lib/program-schedule-line-error'
 import {
   isSponsorContactUnselected,
   resolveSponsorContactIdsForEdit,
@@ -444,16 +445,25 @@ export const generalProgramCommonInfoEditSchema = z
             path: ['curriculumSessions', index, 'scheduleDate'],
           })
         }
-        if (
-          isPre &&
-          !isBlankText(session.scheduleDate) &&
-          isEducationScheduleProgressLineMissingOrWithoutClock(session.scheduleDate)
-        ) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE,
-            path: ['curriculumSessions', index, 'scheduleDate'],
-          })
+        if (isPre && !isBlankText(session.scheduleDate)) {
+          if (isEducationScheduleProgressLineMissingOrWithoutClock(session.scheduleDate)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE,
+              path: ['curriculumSessions', index, 'scheduleDate'],
+            })
+          } else {
+            const persistMessage = educationScheduleLineSerializationIssue(
+              session.scheduleDate ?? ''
+            )
+            if (persistMessage) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: persistMessage,
+                path: ['curriculumSessions', index, 'scheduleDate'],
+              })
+            }
+          }
         }
         if (educationFormDetail === 'perSchedule' && !isPre && isBlankText(session.educationForm)) {
           ctx.addIssue({
@@ -503,6 +513,12 @@ export const generalProgramCommonInfoEditSchema = z
           message: '교육 진행(일정형) 세부 일정을 추가해주세요',
           path: ['scheduleDetails'],
         })
+      } else if (!data.scheduleDetails.some(detail => !isPreEducationScheduleBlock(detail))) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED_MESSAGE,
+          path: ['scheduleDetails'],
+        })
       }
       const groupCount =
         data.sessionRound === 'multi' ? 1 : Math.max(1, data.scheduleGroupCount ?? 1)
@@ -529,6 +545,17 @@ export const generalProgramCommonInfoEditSchema = z
               message: EDUCATION_SCHEDULE_CLOCK_REQUIRED_MESSAGE,
               path: ['scheduleDetails', index, 'scheduleDate'],
             })
+          } else {
+            const persistMessage = educationScheduleLineSerializationIssue(
+              detail.scheduleDate ?? ''
+            )
+            if (persistMessage) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: persistMessage,
+                path: ['scheduleDetails', index, 'scheduleDate'],
+              })
+            }
           }
         } else {
           const slots = detail.groupTimes ?? []

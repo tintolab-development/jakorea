@@ -396,7 +396,7 @@ function scheduleOverlayFromProgram(program: Program): Record<string, unknown> {
   let dataIndex = 0
 
   rows.forEach(row => {
-    const isPre = row.scheduleLabel.includes('사전') || row.scheduleLabel.includes('연수')
+    const isPre = isPreEducationScheduleBlock(row)
     const index = isPre ? 0 : dataIndex + 1
     if (!isPre) dataIndex += 1
     eventNameByDetail[index] = row.name
@@ -780,12 +780,17 @@ export function buildGeneralRegistrationOverlayFromProgram(
     [`${KPI}.dispatchedSchool`]: null,
     [`${KPI}.dispatchedClass`]: null,
     ...wageOverlayFromProgram(program),
-    [`${TYPE}.singleEducationForm`]:
-      educationFormValueFromLabel(common?.educationFormLabel) ?? 'online',
-    [`${TYPE}.multiCommonEducationForm`]:
-      educationFormValueFromLabel(common?.educationFormLabel) ?? 'online',
-    [`${TYPE}.singleParticipation`]: common?.participationMethod ?? 'individual',
-    [`${TYPE}.multiCommonParticipation`]: common?.participationMethod ?? 'individual',
+    ...(extras.sessionRoundType === 'multi'
+      ? {
+          [`${TYPE}.multiCommonEducationForm`]:
+            educationFormValueFromLabel(common?.educationFormLabel) ?? 'online',
+          [`${TYPE}.multiCommonParticipation`]: common?.participationMethod ?? 'individual',
+        }
+      : {
+          [`${TYPE}.singleEducationForm`]:
+            educationFormValueFromLabel(common?.educationFormLabel) ?? 'online',
+          [`${TYPE}.singleParticipation`]: common?.participationMethod ?? 'individual',
+        }),
     [`${TYPE}.ipsType`]: {
       category: commonIps.category || reverseIpsCategory(program.ips),
       detail: commonIps.detail,
