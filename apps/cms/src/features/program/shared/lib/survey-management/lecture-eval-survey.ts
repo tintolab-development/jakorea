@@ -30,7 +30,7 @@ export const LECTURE_EVAL_TABS = [
 ]
 
 /** 제출 시 mock 설문 종료·결과 탭 접근 (API 연동 전) */
-export const LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT = true
+export const LECTURE_EVAL_DEV_AUTO_FINISH_ON_SUBMIT = false
 
 export const LECTURE_EVAL_STRUCTURE_LOCKED_IDS = new Set<string>([
   DEFAULT_SURVEY_PARAGRAPH_IDS.title,
