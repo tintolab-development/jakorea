@@ -1,9 +1,4 @@
-import { parseEducationProgressVolunteerProfileId } from '@/features/program/ujat/model/ujat-volunteer-profile'
-import type { UjatVolunteerMockProfileId } from '@/features/program/ujat/model/ujat-volunteer-profile'
-import type {
-  UjatVolunteerAssignmentProgressBundle,
-  UjatVolunteerAssignmentProgressRow,
-} from './assignment-types'
+import type { UjatVolunteerAssignmentProgressRow } from './assignment-types'
 
 function withdrawScheduleValue(row: UjatVolunteerAssignmentProgressRow): string {
   return row.scheduleId != null ? String(row.scheduleId) : row.id
@@ -60,23 +55,4 @@ export function sortVolunteerAssignmentRows(
   const active = rows.filter(row => row.classDisplay.kind !== 'withdrawn')
   const classWithdrawn = rows.filter(row => row.classDisplay.kind === 'withdrawn')
   return [...active, ...classWithdrawn]
-}
-
-export function getUjatVolunteerAssignmentProgressBundle(
-  _volunteerRowId: string
-): UjatVolunteerAssignmentProgressBundle {
-  return {
-    rows: [],
-    attendanceSummary: {
-      completionStatus: '교육 진행 전',
-      lateCountLabel: '0회',
-    },
-    absenceReasons: [],
-  }
-}
-
-export function resolveProfileIdFromVolunteerRowId(
-  volunteerRowId: string
-): UjatVolunteerMockProfileId | null {
-  return parseEducationProgressVolunteerProfileId(volunteerRowId)
 }

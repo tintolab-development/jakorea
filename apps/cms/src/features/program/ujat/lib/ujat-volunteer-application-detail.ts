@@ -108,6 +108,12 @@ function readProjection(application: unknown): UjatProjection | null {
   return ujat as UjatProjection
 }
 
+function readScheduleChangeCancelCount(application: unknown): number | null {
+  if (!application || typeof application !== 'object') return null
+  const value = (application as { scheduleChangeCancelCount?: unknown }).scheduleChangeCancelCount
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
+}
+
 function applyVolunteerProfile(
   row: UjatVolunteerApplicantRow,
   profile: Profile | null | undefined,
@@ -137,7 +143,7 @@ export function applyUjatVolunteerApplicationDetail(
   application: unknown,
   profile?: Profile | null,
 ): UjatVolunteerApplicantRow {
-  return applyVolunteerProfile(
+  const next = applyVolunteerProfile(
     applyUjatVolunteerProjection(
       row,
       readProjection(application),
@@ -145,6 +151,9 @@ export function applyUjatVolunteerApplicationDetail(
     ),
     profile,
   )
+  const scheduleChangeCancelCount = readScheduleChangeCancelCount(application)
+  if (scheduleChangeCancelCount == null) return next
+  return { ...next, scheduleChangeCancelCount }
 }
 
 /** UJAT 봉사자 상세 — 공용 volunteer-applications 상세의 ujat projection·첨부 */

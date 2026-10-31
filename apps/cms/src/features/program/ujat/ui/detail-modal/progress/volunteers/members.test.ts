@@ -73,9 +73,10 @@ describe('fetchUjatEducationProgressVolunteerMemberCandidates', () => {
       size: 20,
     })
     expect(options.map(o => o.volunteerName)).toEqual(['김봉사자'])
+    expect(options.map(o => o.memberId)).toEqual(['11'])
   })
 
-  it('이름·memberId로 이미 등록된 후보만 제외한다', async () => {
+  it('이름·숫자 memberId로 이미 등록된 후보만 제외한다', async () => {
     fetchAllCmsMembersAndAdminsPageRemote.mockResolvedValueOnce({
       items: [
         {
@@ -114,20 +115,30 @@ describe('fetchUjatEducationProgressVolunteerMemberCandidates', () => {
       ['23']
     )
 
-    expect(options.map(o => o.memberId)).toEqual(['keep'])
+    expect(options.map(o => o.memberId)).toEqual(['21'])
   })
+
 })
 
 describe('mapVolunteerUserToMemberCandidate', () => {
-  it('회원 id와 이름을 셀렉트 옵션으로 매핑한다', () => {
+  it('숫자 memberId를 셀렉트 옵션으로 보존한다', () => {
     expect(
       mapVolunteerUserToMemberCandidate(
-        user({ id: 'uuid-1', name: '테스트', phone: '010-0000-0000' })
+        user({ id: 'uuid-1', memberId: 190094, name: '테스트', phone: '010-0000-0000' })
       )
     ).toMatchObject({
-      memberId: 'uuid-1',
+      memberId: '190094',
       volunteerName: '테스트',
       mobile: '010-0000-0000',
     })
+  })
+
+  it('UUID만 있는 사용자는 null을 반환한다', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(
+      mapVolunteerUserToMemberCandidate(user({ id: 'uuid-only', name: '테스트' }))
+    ).toBeNull()
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
   })
 })

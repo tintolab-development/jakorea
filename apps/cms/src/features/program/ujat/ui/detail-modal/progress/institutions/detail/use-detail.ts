@@ -22,15 +22,7 @@ import {
   parseGradeClassSectionValue,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
-
-const DEFAULT_GUIDANCE = {
-  deviceAvailability: '-',
-  waitingAreaGuide: '-',
-  leftoverTextbookDisposal: '-',
-  parkingAndNotes: '-',
-  snackAvailability: '-',
-  criminalRecordCheckRequest: '-',
-} as const
+import { mapUjatOrganizationGuidanceNotes } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/build-confirmed-detail'
 
 function buildConfirmedEducationScheduleRows(
   institutionId: string,
@@ -86,6 +78,7 @@ export function useUjatEducationProgressInstitutionDetail(input: {
     const row = applicationDetail.row
     const application = applicationDetail.detail
     if (!row || !application) return null
+    const guidanceNotes = mapUjatOrganizationGuidanceNotes(applicationDetail.remoteDetail)
     return {
       institutionId,
       half,
@@ -99,9 +92,23 @@ export function useUjatEducationProgressInstitutionDetail(input: {
         half,
         scheduleDates
       ),
-      guidance: { ...DEFAULT_GUIDANCE },
+      guidance: {
+        deviceAvailability: guidanceNotes.searchDeviceGrade6,
+        waitingAreaGuide: guidanceNotes.waitingArea,
+        leftoverTextbookDisposal: guidanceNotes.textbookDisposalLocation,
+        parkingAndNotes: guidanceNotes.otherSpecialNotes,
+        snackAvailability: guidanceNotes.snackAvailability,
+        criminalRecordCheckRequest: guidanceNotes.sexOffenderCheck,
+      },
     }
-  }, [applicationDetail.detail, applicationDetail.row, half, institutionId, scheduleDates])
+  }, [
+    applicationDetail.detail,
+    applicationDetail.remoteDetail,
+    applicationDetail.row,
+    half,
+    institutionId,
+    scheduleDates,
+  ])
 
   return {
     detail,

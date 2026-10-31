@@ -11,6 +11,7 @@ import type { UjatVolunteerAddRegistrationConsentState } from './terms-consent-s
 export type UjatEducationProgressVolunteerAddRegistrationFormProps = {
   vm: ProgramParticipantApplicationEditorViewModel
   memberId: string
+  programId?: string | number | null
   consents: UjatVolunteerAddRegistrationConsentState
   onConsentsChange: (next: UjatVolunteerAddRegistrationConsentState) => void
 }
@@ -18,6 +19,7 @@ export type UjatEducationProgressVolunteerAddRegistrationFormProps = {
 export function UjatEducationProgressVolunteerAddRegistrationForm({
   vm,
   memberId,
+  programId,
   consents,
   onConsentsChange,
 }: UjatEducationProgressVolunteerAddRegistrationFormProps) {
@@ -29,6 +31,7 @@ export function UjatEducationProgressVolunteerAddRegistrationForm({
           section={section}
           vm={vm}
           memberId={memberId}
+          programId={programId}
           consents={consents}
           onConsentsChange={onConsentsChange}
         />

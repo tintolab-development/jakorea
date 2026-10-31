@@ -28,6 +28,7 @@ export type UjatVolunteerAddRegistrationFormSectionRendererProps = {
   section: UjatVolunteerAddRegistrationSectionDefinition
   vm: ProgramParticipantApplicationEditorViewModel
   memberId: string
+  programId?: string | number | null
   consents: UjatVolunteerAddRegistrationConsentState
   onConsentsChange: (next: UjatVolunteerAddRegistrationConsentState) => void
 }
@@ -97,6 +98,7 @@ export function UjatVolunteerAddRegistrationFormSectionRenderer({
   section,
   vm,
   memberId,
+  programId,
   consents,
   onConsentsChange,
 }: UjatVolunteerAddRegistrationFormSectionRendererProps) {
@@ -149,7 +151,7 @@ export function UjatVolunteerAddRegistrationFormSectionRenderer({
             required={section.required}
             description={description}
           />
-          <PluginBody />
+          <PluginBody programId={programId} />
         </section>
       )
     }

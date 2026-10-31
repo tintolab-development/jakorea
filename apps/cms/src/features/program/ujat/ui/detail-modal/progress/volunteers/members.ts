@@ -4,6 +4,7 @@ import { fetchAllCmsMembersAndAdminsPageRemote } from '@/features/user/api/membe
 import { isMembersRemoteEnabled } from '@/features/user/api/member-remote-capabilities'
 import { USER_AFFILIATION_PIPE_SEP } from '@/features/user/detail/lib/admin-provisioned-member-basic-info-draft'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
+import { parseUjatVolAddMemberIdParam } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
 import type { User } from '@/types/user'
@@ -59,11 +60,27 @@ function parseGradeFromAffiliation(affiliation: string | undefined): UjatEducati
   return normalizeVolunteerGrade(gradePart)
 }
 
+function resolveNumericMemberIdString(user: Omit<User, 'password'>): string | null {
+  if (user.memberId != null) {
+    return parseUjatVolAddMemberIdParam(String(user.memberId))
+  }
+  return null
+}
+
+/** 후보 셀렉트 value = BE register `memberId`(숫자). UUID만 있으면 제외. */
 export function mapVolunteerUserToMemberCandidate(
   user: Omit<User, 'password'>
-): UjatEducationProgressVolunteerMemberCandidate {
+): UjatEducationProgressVolunteerMemberCandidate | null {
+  const memberId = resolveNumericMemberIdString(user)
+  if (memberId == null) {
+    console.warn(
+      '[ujat-volunteer-candidates] skip user without numeric memberId',
+      user.id
+    )
+    return null
+  }
   return {
-    memberId: user.id,
+    memberId,
     volunteerName: user.name,
     grade: parseGradeFromAffiliation(user.affiliation),
     regionKey: parseRegionKeyFromAddress(user.detailAddress),
@@ -108,16 +125,20 @@ export async function fetchUjatEducationProgressVolunteerMemberCandidates(
   }
   const users = await fetchVolunteerDirectoryMembers()
   const excludedNames = new Set(excludeVolunteerNames.map(name => name.trim()).filter(Boolean))
-  const excludedIds = new Set(excludeMemberIds.map(id => id.trim()).filter(Boolean))
-  return users
-    .filter(user => {
-      if (excludedNames.has(user.name.trim())) return false
-      if (excludedIds.has(user.id) || (user.memberId != null && excludedIds.has(String(user.memberId)))) {
-        return false
-      }
-      return true
-    })
-    .map(mapVolunteerUserToMemberCandidate)
+  const excludedIds = new Set(
+    excludeMemberIds
+      .map(id => parseUjatVolAddMemberIdParam(id))
+      .filter((id): id is string => id != null)
+  )
+  const candidates: UjatEducationProgressVolunteerMemberCandidate[] = []
+  for (const user of users) {
+    if (excludedNames.has(user.name.trim())) continue
+    const numericId = resolveNumericMemberIdString(user)
+    if (numericId != null && excludedIds.has(numericId)) continue
+    const candidate = mapVolunteerUserToMemberCandidate(user)
+    if (candidate) candidates.push(candidate)
+  }
+  return candidates
 }
 
 export async function buildUjatEducationProgressVolunteerRowFromMember(
@@ -125,14 +146,18 @@ export async function buildUjatEducationProgressVolunteerRowFromMember(
   memberId: string,
   nextNo: number
 ): Promise<UjatEducationProgressVolunteerRow | null> {
-  const user = await getUserById(memberId)
+  const numericMemberId = parseUjatVolAddMemberIdParam(memberId)
+  if (numericMemberId == null) return null
+
+  const user = await getUserById(memberId, { memberId: Number(numericMemberId) })
   if (!user) return null
   if (user.roles?.length && !memberRolesIncludeVolunteer(user.roles)) return null
 
   const member = mapVolunteerUserToMemberCandidate(user)
+  if (!member) return null
 
   return {
-    id: `${half}-vol-added-${memberId}`,
+    id: `${half}-vol-added-${numericMemberId}`,
     no: nextNo,
     volunteerName: member.volunteerName,
     grade: member.grade,
@@ -142,5 +167,6 @@ export async function buildUjatEducationProgressVolunteerRowFromMember(
     email: member.email,
     totalAssignedDays: null,
     assignmentStatus: 'assignment_waiting',
+    memberId: numericMemberId,
   }
 }

@@ -190,12 +190,13 @@ export function DocPassedSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="봉사자 1차 서류 합격자 목록"
-        description={`${count.toLocaleString()}건`}
+        description={`총 ${count.toLocaleString()}건`}
         actions={
           viewMode === 'list' ? (
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
+              width={160}
               icon={<ButtonCalendarIcon />}
               onClick={handleViewCalendar}
             >
@@ -205,6 +206,7 @@ export function DocPassedSection({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
+              width={160}
               icon={<ButtonListIcon />}
               onClick={handleViewList}
             >

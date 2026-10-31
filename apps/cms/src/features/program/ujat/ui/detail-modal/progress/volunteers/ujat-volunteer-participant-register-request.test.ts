@@ -109,7 +109,7 @@ describe('buildUjatVolunteerParticipantRegisterRequest', () => {
     expect(result.request.educationRegionCode).toBe('busan')
   })
 
-  it('sends previousUjatTerm certificateFileIds only when overlay values are file ids', () => {
+  it('maps previousTermFileObjectIds to certificateFileIds', () => {
     const result = buildUjatVolunteerParticipantRegisterRequest({
       memberId: 12,
       paragraphs: agreeDraftParagraphs(),
@@ -118,7 +118,8 @@ describe('buildUjatVolunteerParticipantRegisterRequest', () => {
         [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience]: 'yes',
         [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm]: '5기',
         [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousYear]: '2025',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]: ['9001'],
+        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]: ['certificate.pdf'],
+        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileObjectIds]: [9001],
         [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: 'seoul',
       }),
       applicationType: 'new',
@@ -129,6 +130,28 @@ describe('buildUjatVolunteerParticipantRegisterRequest', () => {
       term: '5기',
       year: '2025',
       certificateFileIds: ['9001'],
+    })
+  })
+
+  it('omits certificateFileIds when none uploaded', () => {
+    const result = buildUjatVolunteerParticipantRegisterRequest({
+      memberId: 12,
+      paragraphs: agreeDraftParagraphs(),
+      terms: agreedTerms,
+      overlay: overlayWithFreeText({
+        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience]: 'yes',
+        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm]: '5기',
+        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousYear]: '2025',
+        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]: ['certificate.pdf'],
+        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: 'seoul',
+      }),
+      applicationType: 'new',
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.request.previousUjatTerm).toEqual({
+      term: '5기',
+      year: '2025',
     })
   })
 })

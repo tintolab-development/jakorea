@@ -26,13 +26,22 @@ import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-ke
 import {
   notifyProgramApiUnavailable,
 } from '@/features/program/shared/lib/program-api-unavailable'
+import { parseUjatVolAddMemberIdParam } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import { UjatEducationProgressVolunteerAddRegistrationForm } from './add-registration-form'
 import {
   EMPTY_UJAT_VOLUNTEER_ADD_REGISTRATION_CONSENTS,
   type UjatVolunteerAddRegistrationConsentState,
 } from './terms-consent-section'
 import { buildUjatVolunteerParticipantRegisterRequest } from './ujat-volunteer-participant-register-request'
+import { hasIncompleteUjatPreviousTermUploads } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/paragraphs/ujat-program-application-volunteer-previous-term-paragraph'
+import { UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-keys'
 import './add-registration-view.css'
+
+/** 등록 submit 전 memberId 검증 — 단위 테스트용 export */
+export function resolveVolunteerRegisterMemberId(memberId: string): number | null {
+  const parsed = parseUjatVolAddMemberIdParam(memberId)
+  return parsed == null ? null : Number(parsed)
+}
 
 const UJAT_VOLUNTEER_APPLICATION_TEMPLATE_ID = 'application-ujat-volunteer'
 
@@ -83,8 +92,8 @@ export function UjatEducationProgressVolunteerAddRegistrationView({
 
   const handleComplete = async () => {
     if (submitting) return
-    const numericMemberId = Number(memberId)
-    if (!memberId || !Number.isFinite(numericMemberId) || numericMemberId <= 0) {
+    const numericMemberId = resolveVolunteerRegisterMemberId(memberId)
+    if (numericMemberId == null) {
       showAlert({ title: '안내', content: '등록할 봉사자를 다시 선택해 주세요.' })
       return
     }
@@ -99,11 +108,24 @@ export function UjatEducationProgressVolunteerAddRegistrationView({
       return
     }
 
+    const overlay = getUjatApplicationVolunteerOverlayRecord()
+    if (
+      hasIncompleteUjatPreviousTermUploads(
+        overlay[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
+      )
+    ) {
+      showAlert({
+        title: '안내',
+        content: '수료증 업로드가 끝나지 않았거나 실패한 파일이 있습니다. 확인 후 다시 시도해 주세요.',
+      })
+      return
+    }
+
     const built = buildUjatVolunteerParticipantRegisterRequest({
       memberId: numericMemberId,
       paragraphs: participantVm.draft.paragraphs,
       terms: consents,
-      overlay: getUjatApplicationVolunteerOverlayRecord(),
+      overlay,
       applicationType: participantVm.ujatVolunteerApplicationType,
     })
     if (!built.ok) {
@@ -137,6 +159,7 @@ export function UjatEducationProgressVolunteerAddRegistrationView({
         <UjatEducationProgressVolunteerAddRegistrationForm
           vm={participantVm}
           memberId={memberId}
+          programId={program.id}
           consents={consents}
           onConsentsChange={setConsents}
         />
