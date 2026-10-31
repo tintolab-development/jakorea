@@ -298,7 +298,7 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(detail.lectureTimeDisplay).not.toBe('2차시')
   })
 
-  it('remote lectureFeeTier 합성은 급수 모달로 되돌린다', () => {
+  it('remote lectureFeeTier 합성은 급수 모달로 되돌리되 강의 시간은 calculationDetail 없으면 -', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
       {
         kind: 'lecture_fee',
@@ -327,10 +327,10 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(detail?.layout).toBe('lectureFeeTier')
     if (detail?.layout !== 'lectureFeeTier') return
     expect(detail.categoryLabel).toBe('1급 강사비')
-    expect(detail.lectureTimeDisplay).toBe('1차시')
+    expect(detail.lectureTimeDisplay).toBe('-')
   })
 
-  it('일정명이어도 sessionOrdinal이 있으면 N차시로 강의 시간을 채운다', () => {
+  it('context.sessionOrdinal·lectureSessionDisplay로 모달 강의 시간을 채우지 않는다', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
       {
         kind: 'lecture_fee',
@@ -345,19 +345,27 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(detail?.layout).toBe('lectureFeeTier')
     if (detail?.layout !== 'lectureFeeTier') return
     expect(detail.categoryLabel).toBe('-')
-    expect(detail.lectureTimeDisplay).toBe('1차시')
+    expect(detail.lectureTimeDisplay).toBe('-')
   })
 
-  it('순수 차시·회차 표기는 강의 시간으로 쓴다', () => {
+  it('calculationDetail basisDetail의 canonical 차시만 모달 강의 시간으로 쓴다', () => {
     const bySession = resolvePaymentOrderCalculationBasisDetailForRow(
       {
         kind: 'lecture_fee',
         itemLabel: '강사비',
         amount: 500000,
         lineId: 'lecture-session-1',
-        lectureSessionDisplay: '1차시',
+        lectureSessionDisplay: '14:30 ~ 16:30',
+        basisDetail: {
+          layout: 'lectureFeeTier',
+          tier: '2',
+          categoryLabel: '2급 강사비',
+          feeAssessmentWon: 500000,
+          lectureTimeDisplay: '1차시',
+          totalWon: 500000,
+        },
       },
-      { lectureFeeStandardTitle: 'BUSINESS_INCOME' }
+      { lectureFeeStandardTitle: '2급 강사비' }
     )
     expect(bySession?.layout).toBe('lectureFeeTier')
     if (bySession?.layout === 'lectureFeeTier') {
@@ -371,6 +379,14 @@ describe('payment-order-calculation-basis-detail', () => {
         amount: 500000,
         lineId: 'lecture-round-1',
         lectureSessionDisplay: '3회차',
+        basisDetail: {
+          layout: 'lectureFeeTier',
+          tier: '2',
+          categoryLabel: '2급 강사비',
+          feeAssessmentWon: 500000,
+          lectureTimeDisplay: '3회차',
+          totalWon: 500000,
+        },
       },
       { lectureFeeStandardTitle: '2급 강사비' }
     )
@@ -378,6 +394,30 @@ describe('payment-order-calculation-basis-detail', () => {
     if (byRound?.layout === 'lectureFeeTier') {
       expect(byRound.lectureTimeDisplay).toBe('3회차')
     }
+  })
+
+  it('제미나이 calculationDetail이 있으면 시계열 lectureSessionDisplay를 무시하고 2차시를 쓴다', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '강사비',
+        amount: 170000,
+        lineId: 'lecture-gemini-185986',
+        lectureSessionDisplay: '14:30 ~ 16:30',
+        basisDetail: {
+          layout: 'lectureFeeGemini',
+          categoryLabel: '제미나이 강사비',
+          lectureTimeDisplay: '2차시',
+          feeAssessmentWon: 170000,
+        },
+      },
+      { lectureFeeStandardTitle: '제미나이 강사비', remoteData: true }
+    )
+    expect(detail?.layout).toBe('lectureFeeGemini')
+    if (detail?.layout !== 'lectureFeeGemini') return
+    expect(detail.categoryLabel).toBe('제미나이 강사비')
+    expect(detail.feeAssessmentWon).toBe(170000)
+    expect(detail.lectureTimeDisplay).toBe('2차시')
   })
 
   it('row.basisDetail 없어도 강의비·원천징수 등은 산정 기준 상세를 만든다 (교통비는 서버 basis만)', () => {
@@ -397,6 +437,9 @@ describe('payment-order-calculation-basis-detail', () => {
       })
       expect(detail, row.itemLabel).toBeDefined()
       expect(isSupportedBasisDetailLayout(detail), row.itemLabel).toBe(true)
+      if (row.kind === 'lecture_fee' && detail && 'lectureTimeDisplay' in detail) {
+        expect(detail.lectureTimeDisplay).toBe('-')
+      }
     }
 
     const travelWithoutBasis = resolvePaymentOrderCalculationBasisDetailForRow({

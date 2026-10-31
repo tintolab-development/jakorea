@@ -181,6 +181,66 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.blocks[0]?.institutionName).toBe('서울 성동고등학교')
     expect(mapped.totalAmount).toBe(100_000)
     expect(mapped.basic.paidAtDisplay).toBe('2026. 10. 16(금)')
+    expect(mapped.blocks[0]?.lines[0]?.basisDetail).toBeUndefined()
+  })
+
+  it('제미나이 calculationDetail → basisDetail 강의 시간 2차시 (시계열 lectureSessionDisplay 무시)', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: {
+        accountPaymentId: 185986,
+        memberId: 190031,
+        instructorName: '강하늘',
+        sourceType: 'GEMINI_TRAINING_REPORT',
+        netPaymentAmount: 170_000,
+        sessionOrdinal: 2,
+        sessionLabel: '2차시',
+        paymentStatus: 'PAID',
+      },
+      settlement: {
+        wageItemType: 'GEMINI',
+        lectureFeeStandardTitle: '제미나이 강사비',
+        lectureFeeStandardAmount: 170_000,
+        sessionOrdinal: 2,
+        lectureSessionDisplay: '14:30 ~ 16:30',
+        institutionName: '왕남초등학교',
+        programNameKo: '이건희',
+        items: [
+          {
+            type: 'instructor_fee',
+            description: '제미나이 강사비',
+            amount: 170_000,
+            calculationDetail: {
+              layout: 'lectureFeeGemini',
+              title: '강사비 산정 기준 상세',
+              resultAmount: 170_000,
+              basisJson: JSON.stringify({
+                layout: 'lectureFeeGemini',
+                itemType: 'LECTURE_FEE',
+                wageItemType: 'GEMINI',
+                categoryLabel: '제미나이 강사비',
+                feeAssessmentWon: 170_000,
+                amount: 170_000,
+                sessionOrdinal: 2,
+                lectureTimeDisplay: '2차시',
+              }),
+            },
+          },
+        ],
+        totalAmount: 170_000,
+      },
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi(
+      { ...baseRow, id: '185986', accountPaymentId: 185986 },
+      detail
+    )
+    const line = mapped.blocks[0]?.lines[0]
+    expect(mapped.blocks[0]?.lectureSessionDisplay).toBe('14:30 ~ 16:30')
+    expect(line?.basisDetail?.layout).toBe('lectureFeeGemini')
+    if (line?.basisDetail?.layout !== 'lectureFeeGemini') return
+    expect(line.basisDetail.lectureTimeDisplay).toBe('2차시')
+    expect(line.basisDetail.feeAssessmentWon).toBe(170_000)
+    expect(line.basisDetail.categoryLabel).toBe('제미나이 강사비')
   })
 
   it('미지급 상태에서는 paidAt가 있어도 이체 완료일을 -로 표시한다', () => {

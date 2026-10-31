@@ -99,10 +99,18 @@ export function AccountPaymentStatusDetailFullPageModal({
     const subtotalBeforeWithholding = detail
       ? computePaymentOrderCalculationSubtotalBeforeWithholding(detail.blocks)
       : 0
+    const amountDigits = detail?.basic.lectureFeeStandardAmount?.replace(/[^\d]/g, '')
+    const lectureFeeStandardAmountWon = amountDigits ? Number(amountDigits) : undefined
     return {
       lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
       withholdingDailySalaryTotalWon:
         subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
+      /** remote calculationDetail만 모달 강의 시간 SSOT — sessionOrdinal fallback 금지 */
+      remoteData: true,
+      lectureFeeStandardAmountWon:
+        lectureFeeStandardAmountWon != null && Number.isFinite(lectureFeeStandardAmountWon)
+          ? lectureFeeStandardAmountWon
+          : undefined,
     }
   }, [detail])
 

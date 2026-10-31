@@ -298,7 +298,6 @@ export default function AccountPaymentsPage() {
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
   const canRequestRawExport = accountPaymentsRemote && sessionRoleCode === 'ACCOUNTING_MANAGER'
-  const canApproveRawExport = accountPaymentsRemote && sessionRoleCode === 'MASTER'
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
   const bulkTransferExportMutation = useBulkTransferExportMutation()
   const taxReportExportMutation = useTaxReportExportMutation()
@@ -906,19 +905,6 @@ export default function AccountPaymentsPage() {
             </FilterTableToolbarButton>
           </>
         ) : null}
-        {canApproveRawExport ? (
-          <FilterTableToolbarButton
-            variant="secondary"
-            width="auto"
-            style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
-            type="button"
-            onClick={() =>
-              setRawExport({ mode: 'approve', kind: 'bulk-transfer' })
-            }
-          >
-            원본 양식 승인
-          </FilterTableToolbarButton>
-        ) : null}
       </>
     ),
     [
@@ -926,7 +912,6 @@ export default function AccountPaymentsPage() {
       openBulkTransferPreview,
       openTaxFilingPreview,
       canRequestRawExport,
-      canApproveRawExport,
       openRawExportRequest,
     ]
   )

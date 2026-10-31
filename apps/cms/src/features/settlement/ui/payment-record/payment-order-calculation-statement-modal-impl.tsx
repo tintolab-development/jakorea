@@ -34,10 +34,7 @@ import {
   PaymentOrderCalculationBasisDetailModal,
   usePaymentOrderCalculationBasisDetailModal,
 } from './payment-order-calculation-basis-detail-modal'
-import {
-  computePaymentOrderCalculationSubtotalBeforeWithholding,
-  isCanonicalLectureSessionDisplay,
-} from './payment-order-calculation-basis-detail'
+import { computePaymentOrderCalculationSubtotalBeforeWithholding } from './payment-order-calculation-basis-detail'
 import { PaymentOrderCalculationStatementInstructorBasicSection } from './payment-order-calculation-statement-instructor-basic-section'
 import { PaymentOrderCalculationStatementProgramBasicSection } from './payment-order-calculation-statement-program-basic-section'
 
@@ -106,10 +103,6 @@ export function PaymentOrderCalculationStatementModalImpl({
       return null
     }
     const subtotalBeforeWithholding = computePaymentOrderCalculationSubtotalBeforeWithholding(data.blocks)
-    const firstSessionDisplay = data.blocks[0]?.lectureSessionDisplay?.trim()
-    const canonicalSessionMatch = isCanonicalLectureSessionDisplay(firstSessionDisplay)
-      ? firstSessionDisplay.match(/^(\d+)/u)
-      : null
     const amountDigits = data.basic.lectureFeeStandardAmount?.replace(/[^\d]/g, '')
     const lectureFeeStandardAmountWon = amountDigits ? Number(amountDigits) : undefined
     return {
@@ -117,7 +110,7 @@ export function PaymentOrderCalculationStatementModalImpl({
       withholdingDailySalaryTotalWon:
         subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
       remoteData: paymentOrdersRemote,
-      sessionOrdinal: canonicalSessionMatch ? Number(canonicalSessionMatch[1]) : undefined,
+      // 모달 강의 시간 = calculationDetail만. lectureSessionDisplay/sessionOrdinal 합성 금지.
       lectureFeeStandardAmountWon:
         lectureFeeStandardAmountWon != null && Number.isFinite(lectureFeeStandardAmountWon)
           ? lectureFeeStandardAmountWon

@@ -5,6 +5,7 @@ import {
   lectureFeeTitleFromGradeOrWage,
   mapLectureFeeCalculationDetailToBasisDetail,
   mapTransportationCalculationDetailToBasisDetail,
+  resolveCanonicalLectureSessionDisplay,
   type PaymentOrderCalculationBasisDetail,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import type { SettlementFrontendCalculationDetailResponse } from '@/shared/api/generated/settlement/schemas'
@@ -302,7 +303,10 @@ export function mapCalculationDetailToBasisDetail(
       isSupportedBasisDetailLayout(coerced as PaymentOrderCalculationBasisDetail) &&
       hasTypedBasisDetailFields(coerced)
     ) {
-      return coerced as PaymentOrderCalculationBasisDetail
+      return normalizeTypedLectureFeeBasisDetail(
+        coerced as PaymentOrderCalculationBasisDetail,
+        candidate
+      )
     }
   }
 
@@ -310,4 +314,36 @@ export function mapCalculationDetailToBasisDetail(
   if (lectureFee) return lectureFee
 
   return mapRemoteCalculationDetail(detail)
+}
+
+/**
+ * typed basisJson의 lectureTimeDisplay가 시계열·일정명이면 sessionOrdinal → N차시로 정규화.
+ * calculationDetail 밖(payment/settlement) ordinal은 쓰지 않는다.
+ */
+function normalizeTypedLectureFeeBasisDetail(
+  detail: PaymentOrderCalculationBasisDetail,
+  source: unknown
+): PaymentOrderCalculationBasisDetail {
+  if (
+    detail.layout !== 'lectureFeeTier' &&
+    detail.layout !== 'lectureFeeSpecial' &&
+    detail.layout !== 'lectureFeeGemini'
+  ) {
+    return detail
+  }
+
+  const record = isRecord(source) ? source : undefined
+  const sessionOrdinalRaw = record?.sessionOrdinal
+  const sessionOrdinal =
+    typeof sessionOrdinalRaw === 'number' && Number.isFinite(sessionOrdinalRaw)
+      ? sessionOrdinalRaw
+      : typeof sessionOrdinalRaw === 'string' && sessionOrdinalRaw.trim() !== ''
+        ? Number(sessionOrdinalRaw)
+        : undefined
+  const lectureTimeDisplay = resolveCanonicalLectureSessionDisplay(
+    detail.lectureTimeDisplay,
+    sessionOrdinal != null && Number.isFinite(sessionOrdinal) ? sessionOrdinal : null
+  )
+  if (lectureTimeDisplay === detail.lectureTimeDisplay) return detail
+  return { ...detail, lectureTimeDisplay }
 }
