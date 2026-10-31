@@ -23,5 +23,6 @@ export interface AttendanceItemResponse {
   volunteer1365DurationLabel?: string;
   checkedByMemberId?: number;
   memberCheckedInAt?: string;
+  /** ADMIN | MEMBER_SELF | SYSTEM. SYSTEM은 일정 시작 자동 출석. UI 배지로 쓰지 않음. */
   checkInSource?: string;
 }

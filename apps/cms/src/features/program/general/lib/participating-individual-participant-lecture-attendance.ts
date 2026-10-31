@@ -2,6 +2,7 @@ import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/s
 import type { LectureAttendanceSession, LectureAttendanceStatusKey } from '@/features/program/general/model/school-detail-types'
 import {
   fetchAttendancesByScheduleIdsRemote,
+  fetchParticipantEducationScopeRemote,
   fetchProgramSchedulesViaDashboardRemote,
 } from '@/features/program/general/api/program-progress-api-client'
 import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
@@ -77,25 +78,40 @@ export async function hydrateParticipatingIndividualLectureAttendanceSessions(in
   const participantId = Number(input.participantId)
   if (!Number.isFinite(participantId)) return input.existing
 
+  const scope = await fetchParticipantEducationScopeRemote(input.programId, input.participantId)
+  const assignedIds: number[] = []
+  const seen = new Set<number>()
+  for (const raw of scope.scheduleIds ?? []) {
+    if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) continue
+    const scheduleId = Math.trunc(raw)
+    if (seen.has(scheduleId)) continue
+    seen.add(scheduleId)
+    assignedIds.push(scheduleId)
+  }
+  if (assignedIds.length === 0) return []
+
   const schedules = await fetchProgramSchedulesViaDashboardRemote(input.programId)
+  const scheduleById = new Map(
+    schedules
+      .filter(
+        (schedule): schedule is typeof schedule & { scheduleId: number } =>
+          schedule.scheduleId != null && Number.isFinite(schedule.scheduleId)
+      )
+      .map(schedule => [Math.trunc(schedule.scheduleId), schedule] as const)
+  )
   let mainEducationIndex = 0
-  const withIds = schedules
-    .map(schedule => {
-      const preEducation = isProgramSchedulePreEducation(schedule)
-      const index = preEducation ? mainEducationIndex : mainEducationIndex++
-      return {
-        scheduleId: schedule.scheduleId,
-        roundNumber: preEducation
-          ? PRE_EDUCATION_LECTURE_ROUND_NUMBER
-          : (schedule.sessionNo ?? index + 1),
-        preEducation,
-      }
-    })
-    .filter(
-      (row): row is { scheduleId: number; roundNumber: number; preEducation: boolean } =>
-        row.scheduleId != null && Number.isFinite(Number(row.scheduleId))
-    )
-    .sort((a, b) => a.roundNumber - b.roundNumber)
+  const withIds = assignedIds.map(scheduleId => {
+    const schedule = scheduleById.get(scheduleId)
+    const preEducation = schedule != null && isProgramSchedulePreEducation(schedule)
+    const index = preEducation ? mainEducationIndex : mainEducationIndex++
+    return {
+      scheduleId,
+      roundNumber: preEducation
+        ? PRE_EDUCATION_LECTURE_ROUND_NUMBER
+        : (schedule?.sessionNo ?? index + 1),
+      preEducation,
+    }
+  }).sort((a, b) => a.roundNumber - b.roundNumber)
 
   const scheduleIdList = withIds.map(row => row.scheduleId)
   const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
@@ -103,15 +119,16 @@ export async function hydrateParticipatingIndividualLectureAttendanceSessions(in
     scheduleIdList
   )
 
-  return withIds.flatMap(row => {
+  return withIds.map(row => {
     const items = attendancesByScheduleId[String(row.scheduleId)]
-    if (!Array.isArray(items) || items.length === 0) return []
-    const mine = items.find(item => Number(item.participantId) === participantId)
-    return [{
+    const mine = Array.isArray(items)
+      ? items.find(item => Number(item.participantId) === participantId)
+      : undefined
+    return {
       roundNumber: row.roundNumber,
       scheduleId: row.scheduleId,
       status: mapParticipantAttendanceStatusToLectureCertificate(mine?.status) ?? 'not_held',
       ...(row.preEducation ? { preEducation: true } : {}),
-    }]
+    }
   })
 }

@@ -131,10 +131,13 @@ function assignedRoundRows(
     const scheduleId = session.resolvedScheduleId
     if (scheduleId == null || seen.has(scheduleId)) continue
     seen.add(scheduleId)
+    const schedule = scheduleById.get(scheduleId)
+    const preEducation = schedule != null && isProgramSchedulePreEducation(schedule)
     rows.push({
       scheduleId,
-      roundNumber: session.round,
-      schedule: scheduleById.get(scheduleId),
+      roundNumber: preEducation ? PRE_EDUCATION_LECTURE_ROUND_NUMBER : session.round,
+      schedule,
+      ...(preEducation ? { preEducation: true } : {}),
     })
   }
   return rows
@@ -186,7 +189,18 @@ export async function fetchStudentLectureAttendanceByParticipantRemote(input: {
           programId: input.programId,
           organizationApplicationId,
         })
-  const roundRows = assignedRows.length > 0 ? assignedRows : educationSessionRoundRows(schedules)
+  // 기관 신청이 있으면 분모는 active OSA 배정 일정만(사전교육 포함). 미배정 프로그램 일정으로 폴백하지 않는다.
+  const roundRows = organizationApplicationId
+    ? assignedRows
+    : educationSessionRoundRows(schedules)
+
+  if (roundRows.length === 0) {
+    return {
+      studentName: input.studentName,
+      attendanceRatePercent: 0,
+      sessions: [],
+    }
+  }
 
   const attendancesByScheduleId = await fetchAttendancesByScheduleIdsRemote(
     input.programId,

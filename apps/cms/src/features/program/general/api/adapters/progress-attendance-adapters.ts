@@ -39,6 +39,9 @@ import {
 } from '@/features/program/shared/lib/program-schedule-canonical'
 import { PRE_EDUCATION_DISPLAY_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 
+/** GET AttendanceItemResponse.checkInSource. UI 배지로는 쓰지 않는다. */
+export type AttendanceCheckInSource = 'ADMIN' | 'MEMBER_SELF' | 'SYSTEM' | null
+
 const UI_TO_API_STATUS: Record<ParticipatingIndividualProgressAttendanceStatus, string> = {
   present: 'PRESENT',
   late: 'LATE',

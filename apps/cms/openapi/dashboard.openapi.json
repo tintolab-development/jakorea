@@ -7639,7 +7639,8 @@
             "format": "date-time"
           },
           "checkInSource": {
-            "type": "string"
+            "type": "string",
+            "description": "ADMIN | MEMBER_SELF | SYSTEM. SYSTEM은 일정 시작 자동 출석. FE는 배지 없이 status만 표시."
           }
         }
       },

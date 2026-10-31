@@ -154,6 +154,25 @@ describe('student-lecture-attendance-api', () => {
     expect(fetchOrganizationScheduleAssignmentsRemoteMock).not.toHaveBeenCalled()
   })
 
+  it('does not fall back to unassigned program schedules when OSA assignment is empty', async () => {
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 10, sessionNo: 1 },
+      { scheduleId: 11, sessionNo: 2 },
+    ])
+    fetchOrganizationScheduleAssignmentsRemoteMock.mockResolvedValue([])
+
+    const detail = await fetchStudentLectureAttendanceByParticipantRemote({
+      programId: '1',
+      participantId: 77,
+      studentName: '김학생',
+      organizationApplicationId: '501',
+    })
+
+    expect(detail.sessions).toEqual([])
+    expect(detail.attendanceRatePercent).toBe(0)
+    expect(fetchAttendancesByScheduleIdsRemoteMock).not.toHaveBeenCalled()
+  })
+
   it('uses organization assigned schedules and still shows rounds without attendance', async () => {
     fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
       { scheduleId: 10, sessionNo: 1, startAt: '2020-01-01T09:00:00+09:00' },
