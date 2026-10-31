@@ -29,6 +29,7 @@ export function SettingsWithdrawGuideModal({
 
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       size="md"
       title={SETTINGS_WITHDRAW_GUIDE.title}

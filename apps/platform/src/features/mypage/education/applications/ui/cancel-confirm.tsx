@@ -24,7 +24,13 @@ export function EducationCancelConfirm({
       ? getProgramApplicationApiErrorMessage(error, '신청 취소에 실패했습니다. 잠시 후 다시 시도해 주세요.')
       : null
   return (
-    <PFModal open={open} size="sm" onClose={onCancel} closeOnBackdropClick={!pending}>
+    <PFModal
+      open={open}
+      size="sm"
+      onClose={onCancel}
+      closeOnBackdropClick={!pending}
+      showCloseButton={false}
+    >
       <div className={styles.content}>
         <div className={styles.textBlock}>
           <PFText as="div" typo="hl-lg" color="black" className={styles.title}>

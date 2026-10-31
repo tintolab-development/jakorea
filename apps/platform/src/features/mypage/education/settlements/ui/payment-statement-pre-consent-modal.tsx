@@ -21,7 +21,13 @@ export function PaymentStatementPreConsentModal({
   onWriteConsent,
 }: PaymentStatementPreConsentModalProps) {
   return (
-    <PFModal open={open} size="sm" onClose={onCancel} mobilePlacement="center">
+    <PFModal
+      open={open}
+      size="sm"
+      onClose={onCancel}
+      mobilePlacement="center"
+      showCloseButton={false}
+    >
       <div className={styles.content}>
         <div className={styles.textBlock}>
           <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>

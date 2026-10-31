@@ -101,6 +101,7 @@ export function StudentsPanelCertificateModal({
   return (
     <>
       <PFModal
+        showCloseButton={false}
         open={open}
         size="lg"
         mobilePlacement="full"

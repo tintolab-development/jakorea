@@ -39,6 +39,7 @@ export function TermsViewModal({
 
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       onClose={onClose}
       ariaLabelledBy={titleId}
