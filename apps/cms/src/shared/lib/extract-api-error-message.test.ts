@@ -8,14 +8,14 @@ import {
 } from './extract-api-error-message'
 
 describe('extractApiErrorMessage', () => {
-  it('top-level message를 서버 문자열 그대로 반환한다', () => {
+  it('error.message를 top-level message보다 우선한다', () => {
     expect(
       extractApiErrorMessage({
         success: false,
         message: 'CONFLICT: ADMIN_EMAIL_ALREADY_EXISTS',
         error: { code: 'CONFLICT', message: 'ADMIN_EMAIL_ALREADY_EXISTS' },
       })
-    ).toBe('CONFLICT: ADMIN_EMAIL_ALREADY_EXISTS')
+    ).toBe('ADMIN_EMAIL_ALREADY_EXISTS')
   })
 
   it('top-level message가 없으면 error.message를 그대로 반환한다', () => {
@@ -75,7 +75,7 @@ describe('extractApiErrorMessage', () => {
           traceId: '665a7c8aa9a34fd59bac13d8beb969af',
         },
       })
-    ).toBe('CONFLICT: ADMIN_EMAIL_ALREADY_EXISTS')
+    ).toBe('ADMIN_EMAIL_ALREADY_EXISTS')
   })
 
   it('UJAT P0 코드는 서버 메시지가 코드일 때 한글 안내로 바꾼다', () => {
@@ -116,6 +116,35 @@ describe('extractApiErrorMessage', () => {
         },
         { httpStatus: 409 }
       )
+    ).toBe('서류 합격 처리된 신청은 담당자 평가를 변경할 수 없습니다.')
+  })
+
+  it('body.detail → error.detail → error.message 순으로 읽는다', () => {
+    expect(
+      extractApiErrorMessage(
+        {
+          success: false,
+          message: 'fallback message',
+          detail: '면접이 아직 종료되지 않았습니다.',
+          error: {
+            code: 'INTERVIEW_NOT_ENDED',
+            message: 'nested message',
+            detail: 'nested detail',
+          },
+        },
+        { httpStatus: 409 }
+      )
+    ).toBe('면접이 아직 종료되지 않았습니다.')
+    expect(
+      extractApiErrorMessage({
+        success: false,
+        message: 'fallback message',
+        error: {
+          code: 'DOCUMENT_EVALUATION_LOCKED',
+          message: 'nested message',
+          detail: '서류 합격 처리된 신청은 담당자 평가를 변경할 수 없습니다.',
+        },
+      })
     ).toBe('서류 합격 처리된 신청은 담당자 평가를 변경할 수 없습니다.')
   })
 

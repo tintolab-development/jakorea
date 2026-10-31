@@ -3,13 +3,16 @@ import {
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
 
-/** 백엔드 공통 에러 envelope (`success: false`, `error: { code, message, traceId }`) */
+/** 백엔드 공통 에러 envelope (`success: false`, RFC7807식 `detail` 포함) */
 export type ApiErrorEnvelope = {
   success?: boolean
   message?: string
+  /** RFC7807 / ApiResponse 업무 문구. `message`와 같다. */
+  detail?: string
   error?: {
     code?: string
     message?: string
+    detail?: string
     field?: string | null
     traceId?: string
     /** 키가 없을 수 있음 — 서버는 빈 값을 null 대신 생략한다. */
@@ -75,6 +78,28 @@ function asEnvelope(data: unknown): ApiErrorEnvelope | null {
   return data as ApiErrorEnvelope
 }
 
+function trimText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/**
+ * 성공이 아닌 응답 문구: body.detail → error.detail → error.message → body.message.
+ * 상태코드 고정 문구보다 서버 업무 문구를 우선한다.
+ */
+export function readApiErrorEnvelopeText(data: unknown): string | undefined {
+  const envelope = asEnvelope(data)
+  if (!envelope) {
+    if (typeof data === 'string' && data.trim()) return data.trim()
+    return undefined
+  }
+  return (
+    trimText(envelope.detail) ||
+    trimText(envelope.error?.detail) ||
+    trimText(envelope.error?.message) ||
+    trimText(envelope.message)
+  )
+}
+
 /**
  * Axios `response.data` 등 백엔드 에러 body에서 사용자 표시용 메시지를 추출합니다.
  * 서버가 내려준 문자열을 **가공하지 않고** 그대로 사용합니다.
@@ -96,7 +121,7 @@ export function extractApiErrorMessage(
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
   }
   const envelope = asEnvelope(data)
-  const serverMessage = envelope?.error?.message?.trim() || envelope?.message?.trim()
+  const serverMessage = readApiErrorEnvelopeText(data)
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(code, serverMessage)
   if (policyMessage) return policyMessage
 
@@ -108,25 +133,16 @@ export function extractApiErrorMessage(
     return ujatMapped
   }
 
-  if (envelope) {
-    const top = envelope.message?.trim()
-    if (top && !(ujatMapped && top === code)) return top
-    if (ujatMapped) return ujatMapped
-
-    const nested = envelope.error?.message?.trim()
-    if (nested) return nested
-
-    const nestedCode = envelope.error?.code?.trim()
-    if (nestedCode) return nestedCode
+  if (serverMessage && !(ujatMapped && serverMessage === code)) {
+    return serverMessage
   }
+  if (ujatMapped) return ujatMapped
+
+  const nestedCode = envelope?.error?.code?.trim()
+  if (nestedCode) return nestedCode
 
   if (typeof data === 'string' && data.trim()) {
     return data.trim()
-  }
-
-  if (data && typeof data === 'object') {
-    const detail = (data as { detail?: unknown }).detail
-    if (typeof detail === 'string' && detail.trim()) return detail.trim()
   }
 
   const status = options?.httpStatus

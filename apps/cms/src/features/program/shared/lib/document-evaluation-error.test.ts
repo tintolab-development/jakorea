@@ -6,6 +6,27 @@ import {
 } from './document-evaluation-error'
 
 describe('readDocumentEvaluationErrorMessage', () => {
+  it('백엔드 error.detail을 error.message보다 우선한다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          message: 'generic',
+          detail: '서류 합격 처리된 신청은 담당자 평가를 변경할 수 없습니다.',
+          error: {
+            code: 'DOCUMENT_EVALUATION_LOCKED',
+            message: 'nested generic',
+            detail: '서류 합격 처리된 신청은 담당자 평가를 변경할 수 없습니다.',
+          },
+        },
+      },
+    }
+    expect(readDocumentEvaluationErrorMessage(error)).toBe(
+      '서류 합격 처리된 신청은 담당자 평가를 변경할 수 없습니다.'
+    )
+  })
+
   it('백엔드 error.message를 그대로 쓴다', () => {
     const error = {
       response: {
