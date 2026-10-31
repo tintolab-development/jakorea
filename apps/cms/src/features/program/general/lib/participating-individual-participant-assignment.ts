@@ -2,7 +2,9 @@ import type {
   ParticipatingIndividualParticipantRow,
   ParticipatingIndividualSurveyViewKey,
 } from '@/features/program/general/model/participating-individual-participants'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
+import { formatParticipatingIndividualParticipantAttendanceScheduleLabel } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
 import type {
   ParticipatingIndividualProgressAssignmentSessionGroup,
   ParticipatingIndividualProgressAssignmentSubmission,
@@ -93,7 +95,71 @@ export function getParticipatingIndividualParticipantAssignmentBundle(
 export function sortParticipatingIndividualParticipantAssignmentRows(
   rows: ParticipatingIndividualParticipantAssignmentRow[]
 ): ParticipatingIndividualParticipantAssignmentRow[] {
-  return [...rows].sort((a, b) => b.sessionOrder - a.sessionOrder)
+  return [...rows].sort((a, b) => a.sessionOrder - b.sessionOrder)
+}
+
+function resolveParticipantTeamFields(participant: ParticipatingIndividualParticipantRow): {
+  teamRole: ParticipatingIndividualParticipantAssignmentRow['teamRole']
+  teamName: string
+  isTeamSchedule: boolean
+} {
+  const teamName = participant.detail?.teamName?.trim() || '-'
+  const teamRole =
+    participant.detail?.teamRole === 'leader'
+      ? ('leader' as const)
+      : participant.detail?.teamRole === 'member'
+        ? ('member' as const)
+        : ('individual' as const)
+  return {
+    teamRole,
+    teamName: teamRole !== 'individual' ? teamName : '-',
+    isTeamSchedule: teamRole !== 'individual',
+  }
+}
+
+/**
+ * 참여자 상세 과제 관리 — education-scope 배정 일정(사전교육 포함)만 행으로 만든다.
+ */
+export function buildParticipatingIndividualParticipantAssignmentRowsFromAssigned(input: {
+  assignedSessions: readonly ParticipatingSchoolSession[]
+  participant: ParticipatingIndividualParticipantRow
+  program: Program
+}): ParticipatingIndividualParticipantAssignmentRow[] {
+  const { teamRole, teamName, isTeamSchedule } = resolveParticipantTeamFields(input.participant)
+
+  return input.assignedSessions.flatMap((session, index) => {
+    const scheduleId =
+      typeof session.resolvedScheduleId === 'number' &&
+      Number.isFinite(session.resolvedScheduleId) &&
+      session.resolvedScheduleId > 0
+        ? String(session.resolvedScheduleId)
+        : null
+    if (scheduleId == null) return []
+
+    const educationProgress = mapDashboardScheduleDeliveryToEducationProgress(
+      session.deliveryScheduleStatus ??
+        (session.status === 'completed' ? 'COMPLETED' : 'SCHEDULED')
+    )
+    return [
+      {
+        id: `asg-${input.participant.id}-${scheduleId}`,
+        scheduleId,
+        sessionOrder: index + 1,
+        teamRole,
+        teamName,
+        scheduleLabel: formatParticipatingIndividualParticipantAttendanceScheduleLabel(
+          input.program,
+          session
+        ),
+        assignmentPeriodLabel: null,
+        submission: { kind: 'none' as const },
+        educationProgress,
+        countsTowardAssignmentDenominator: educationProgress === 'completed',
+        isTeamSchedule,
+        countsTowardSurveyDenominator: false,
+      } satisfies ParticipatingIndividualParticipantAssignmentRow,
+    ]
+  })
 }
 
 export function applyTeamNameFromSessionOrder(
@@ -142,9 +208,58 @@ export function mergeParticipantDetailAssignmentRowsWithRemote(input: {
     })
   }
 
-  const localByScheduleId = new Map<string, ParticipatingIndividualParticipantAssignmentRow>()
-  for (const row of input.localRows) {
-    if (row.scheduleId) localByScheduleId.set(row.scheduleId, row)
+  const remoteByScheduleId = new Map(
+    input.remoteSessions.map(session => [session.id, session] as const)
+  )
+
+  const overlayLocalRow = (
+    local: ParticipatingIndividualParticipantAssignmentRow
+  ): ParticipatingIndividualParticipantAssignmentRow => {
+    if (!local.scheduleId) return local
+    const remote = remoteByScheduleId.get(local.scheduleId)
+    const remoteParticipant = remote?.participants.find(
+      item => item.participantId === input.participantId
+    )
+    if (remoteParticipant == null) {
+      return {
+        ...local,
+        assignmentPeriodLabel:
+          remote?.assignmentPeriodLabel?.trim() || local.assignmentPeriodLabel,
+      }
+    }
+    const submission = mapRemoteSubmissionToDetail(remoteParticipant.submission)
+    return {
+      ...local,
+      assignmentPeriodLabel:
+        remote?.assignmentPeriodLabel?.trim() || local.assignmentPeriodLabel,
+      submission,
+      educationProgress:
+        remoteParticipant.submission.kind === 'scheduled'
+          ? 'scheduled'
+          : local.educationProgress === 'scheduled'
+            ? 'scheduled'
+            : 'completed',
+      countsTowardAssignmentDenominator: remoteParticipant.submission.kind !== 'scheduled',
+    }
+  }
+
+  if (input.localRows.length > 0) {
+    const withFiles = input.localRows.map(overlayLocalRow)
+    const matchedParticipants = input.remoteSessions.flatMap(session =>
+      session.participants.filter(item => item.participantId === input.participantId)
+    )
+    const surveyKey =
+      matchedParticipants.find(item => item.surveyResponse)?.surveyResponse ??
+      input.surveyResponse
+    const satisfactionKey =
+      matchedParticipants.find(item => item.satisfactionResponse)?.satisfactionResponse ??
+      input.satisfactionResponse
+    return appendParticipantSurveyViewRows({
+      participantId: input.participantId,
+      rows: withFiles,
+      surveyResponse: surveyKey,
+      satisfactionResponse: satisfactionKey,
+    })
   }
 
   const merged: ParticipatingIndividualParticipantAssignmentRow[] = []
@@ -154,30 +269,25 @@ export function mergeParticipantDetailAssignmentRowsWithRemote(input: {
     )
     // 팀 일정 과제는 참가자별 제출. 다른 팀원(팀장) 파일을 이 행에 복사하지 않는다.
     if (!remoteParticipant) continue
-    const local = localByScheduleId.get(remote.id)
     const submission = mapRemoteSubmissionToDetail(remoteParticipant.submission)
     merged.push({
-      id: local?.id ?? `asg-${input.participantId}-${remote.id}`,
+      id: `asg-${input.participantId}-${remote.id}`,
       scheduleId: remote.id,
       sessionOrder: remote.round,
-      teamRole: local?.teamRole ?? 'individual',
-      teamName: local?.teamName ?? '-',
-      scheduleLabel: local?.scheduleLabel || remote.filterLabel,
-      assignmentPeriodLabel:
-        remote.assignmentPeriodLabel?.trim() || local?.assignmentPeriodLabel || null,
+      teamRole: 'individual',
+      teamName: '-',
+      scheduleLabel: remote.filterLabel,
+      assignmentPeriodLabel: remote.assignmentPeriodLabel?.trim() || null,
       submission,
       educationProgress:
         remoteParticipant.submission.kind === 'scheduled' ? 'scheduled' : 'completed',
       countsTowardAssignmentDenominator: remoteParticipant.submission.kind !== 'scheduled',
-      isTeamSchedule: local?.isTeamSchedule ?? false,
-      countsTowardSurveyDenominator: local?.countsTowardSurveyDenominator ?? false,
+      isTeamSchedule: false,
+      countsTowardSurveyDenominator: false,
     })
   }
 
-  const withFiles =
-    merged.length > 0
-      ? sortParticipatingIndividualParticipantAssignmentRows(merged)
-      : input.localRows
+  const withFiles = sortParticipatingIndividualParticipantAssignmentRows(merged)
 
   const matchedParticipants = input.remoteSessions.flatMap(session =>
     session.participants.filter(item => item.participantId === input.participantId)

@@ -20,12 +20,14 @@ import type { Program } from '@/types/domain'
 import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE } from '@/features/program/general/lib/assignment-team-role-tag'
 import {
   applyTeamNameFromSessionOrder,
+  buildParticipatingIndividualParticipantAssignmentRowsFromAssigned,
   buildParticipatingIndividualParticipantAssignmentSummary,
   collectParticipantAssignmentDownloadableFiles,
   getParticipatingIndividualParticipantAssignmentBundle,
   mergeParticipantDetailAssignmentRowsWithRemote,
   sortParticipatingIndividualParticipantAssignmentRows,
 } from '@/features/program/general/lib/participating-individual-participant-assignment'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { fetchGeneralProgressAssignmentBundle } from '@/features/program/general/api/admin-program-progress-service'
 import { fetchGeneralProgramSurveyResponseDetail } from '@/features/program/general/api/admin-general-programs-service'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -109,6 +111,8 @@ function lectureProgressClassName(
 export interface ParticipatingIndividualParticipantAssignmentSectionProps {
   program: Program
   participant: ParticipatingIndividualParticipantRow
+  assignedSessions?: readonly ParticipatingSchoolSession[]
+  assignedSessionsLoading?: boolean
   /** 서버가 `TEAM_FEATURE_NOT_APPLICABLE`을 돌려줘 팀 UI를 숨겨야 할 때 */
   onTeamFeatureNotApplicable?: () => void
 }
@@ -117,7 +121,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   ParticipatingIndividualParticipantAssignmentSectionHandle,
   ParticipatingIndividualParticipantAssignmentSectionProps
 >(function ParticipatingIndividualParticipantAssignmentSection(
-  { program, participant, onTeamFeatureNotApplicable },
+  { program, participant, assignedSessions = [], assignedSessionsLoading = false, onTeamFeatureNotApplicable },
   ref
 ) {
   const { showAlert } = useCmsAlert()
@@ -184,11 +188,22 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           participants: assignmentSubmissionsQuery.data.giveUpParticipants,
         })
       : []
+    const assignedRows = assignedSessionsLoading
+      ? []
+      : buildParticipatingIndividualParticipantAssignmentRowsFromAssigned({
+          assignedSessions,
+          participant,
+          program,
+        })
+    const localRows =
+      assignedRows.length > 0
+        ? assignedRows
+        : remoteEnabled
+          ? []
+          : offlineBundle.rows
     const withSubmissions = mergeParticipantDetailAssignmentRowsWithRemote({
       participantId: participant.id,
-      localRows: remoteEnabled
-        ? []
-        : sortParticipatingIndividualParticipantAssignmentRows(offlineBundle.rows),
+      localRows,
       remoteSessions,
       surveyResponse: participant.surveyResponse,
       satisfactionResponse: participant.satisfactionResponse,
@@ -203,9 +218,11 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
       teamRole: row.isTeamSchedule ? teamRole : row.teamRole,
     }))
   }, [
+    assignedSessions,
+    assignedSessionsLoading,
     assignmentSubmissionsQuery.data,
     offlineBundle.rows,
-    participant.id,
+    participant,
     remoteEnabled,
     submissionTeamQuery.data,
     participant.satisfactionResponse,
@@ -230,7 +247,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     () =>
       rows.map((row, index) => ({
         ...row,
-        no: rows.length - index,
+        no: index + 1,
       })),
     [rows]
   )

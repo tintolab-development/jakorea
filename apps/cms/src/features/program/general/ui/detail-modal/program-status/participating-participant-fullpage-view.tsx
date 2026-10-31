@@ -93,10 +93,7 @@ import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/moda
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { handleError } from '@/shared/utils/error-handler'
 import { ApplicantGeneralIndividualBasicInfo } from '../applications/applicant-detail/individual-basic-info'
-import {
-  ParticipatingIndividualParticipantAttendanceSection,
-  type ParticipatingIndividualParticipantAttendanceSectionHandle,
-} from './participating-individual-participant-attendance-section'
+import { ParticipatingIndividualParticipantAttendanceSection } from './participating-individual-participant-attendance-section'
 import {
   ParticipatingIndividualParticipantAssignmentSection,
   type ParticipatingIndividualParticipantAssignmentSectionHandle,
@@ -139,8 +136,6 @@ export function ParticipatingParticipantFullpageView({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
-  const attendanceSectionRef =
-    useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
   const assignmentSectionRef =
     useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
   const [submissionTeamRejected, setSubmissionTeamRejected] = useState(false)
@@ -774,18 +769,6 @@ export function ParticipatingParticipantFullpageView({
                 </>
               ) : null}
             </>
-          ) : visibleActiveTab === 'attendance' ? (
-            <>
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                onClick={() => attendanceSectionRef.current?.openAttendanceCorrectionModal()} >
-                출결 정정
-              </CmsButton>
-              <ExcelButton
-                size="h40"
-                onClick={() => attendanceSectionRef.current?.exportExcel()} />
-            </>
           ) : visibleActiveTab === 'assignments' ? (
             <>
               {submissionTeamApplicable ? (
@@ -843,7 +826,6 @@ export function ParticipatingParticipantFullpageView({
             aria-label="출석 관리"
           >
             <ParticipatingIndividualParticipantAttendanceSection
-              ref={attendanceSectionRef}
               program={program}
               participant={mergedParticipant}
               assignedSessions={progressScheduleSessions}
@@ -859,6 +841,8 @@ export function ParticipatingParticipantFullpageView({
               ref={assignmentSectionRef}
               program={program}
               participant={mergedParticipant}
+              assignedSessions={progressScheduleSessions}
+              assignedSessionsLoading={progressScheduleSessionsLoading}
               onTeamFeatureNotApplicable={handleSubmissionTeamNotApplicable}
             />
           </div>
