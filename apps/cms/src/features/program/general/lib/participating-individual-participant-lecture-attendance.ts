@@ -4,6 +4,8 @@ import {
   fetchAttendancesByScheduleIdsRemote,
   fetchProgramSchedulesViaDashboardRemote,
 } from '@/features/program/general/api/program-progress-api-client'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
+import { PRE_EDUCATION_LECTURE_ROUND_NUMBER } from '@/features/program/general/lib/lecture-attendance-session-identity'
 
 const SCHEDULE_PROGRESS_STATUSES = new Set([
   'COMPLETED',
@@ -44,15 +46,22 @@ export function mapParticipantAttendanceStatusToLectureCertificate(
 export function mapSessionProgressToLectureAttendanceSessions(
   sessions: SessionProgress[] | undefined | null
 ): LectureAttendanceSession[] {
-  return [...(sessions ?? [])].flatMap((session, index) => {
+  // 사전교육(scheduleRole=PRE_EDUCATION)은 회차 0·「사전교육」 — 본교육 회차 폴백을 밀지 않는다.
+  let mainEducationIndex = 0
+  return [...(sessions ?? [])].flatMap(session => {
+    const preEducation = isProgramSchedulePreEducation(session)
+    const index = preEducation ? mainEducationIndex : mainEducationIndex++
     const status = mapParticipantAttendanceStatusToLectureCertificate(session.attendanceStatus)
     if (status == null) return []
     const scheduleId = session.scheduleId ?? session.resolvedScheduleId
     return [
       {
-        roundNumber: session.sessionNo ?? index + 1,
+        roundNumber: preEducation
+          ? PRE_EDUCATION_LECTURE_ROUND_NUMBER
+          : (session.sessionNo ?? index + 1),
         status,
         ...(scheduleId != null ? { scheduleId } : {}),
+        ...(preEducation ? { preEducation: true } : {}),
       },
     ]
   })
@@ -69,13 +78,21 @@ export async function hydrateParticipatingIndividualLectureAttendanceSessions(in
   if (!Number.isFinite(participantId)) return input.existing
 
   const schedules = await fetchProgramSchedulesViaDashboardRemote(input.programId)
+  let mainEducationIndex = 0
   const withIds = schedules
-    .map((schedule, index) => ({
-      scheduleId: schedule.scheduleId,
-      roundNumber: schedule.sessionNo ?? index + 1,
-    }))
+    .map(schedule => {
+      const preEducation = isProgramSchedulePreEducation(schedule)
+      const index = preEducation ? mainEducationIndex : mainEducationIndex++
+      return {
+        scheduleId: schedule.scheduleId,
+        roundNumber: preEducation
+          ? PRE_EDUCATION_LECTURE_ROUND_NUMBER
+          : (schedule.sessionNo ?? index + 1),
+        preEducation,
+      }
+    })
     .filter(
-      (row): row is { scheduleId: number; roundNumber: number } =>
+      (row): row is { scheduleId: number; roundNumber: number; preEducation: boolean } =>
         row.scheduleId != null && Number.isFinite(Number(row.scheduleId))
     )
     .sort((a, b) => a.roundNumber - b.roundNumber)
@@ -94,6 +111,7 @@ export async function hydrateParticipatingIndividualLectureAttendanceSessions(in
       roundNumber: row.roundNumber,
       scheduleId: row.scheduleId,
       status: mapParticipantAttendanceStatusToLectureCertificate(mine?.status) ?? 'not_held',
+      ...(row.preEducation ? { preEducation: true } : {}),
     }]
   })
 }

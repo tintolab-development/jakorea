@@ -33,6 +33,11 @@ import {
   isGeneralScheduleSingleDateProgram,
   resolveGeneralScheduleSingleDateDetailName,
 } from '@/features/program/general/lib/general-progress-date-schedule-lead'
+import {
+  isProgramSchedulePreEducation,
+  readProgramScheduleCanonicalFields,
+} from '@/features/program/shared/lib/program-schedule-canonical'
+import { PRE_EDUCATION_DISPLAY_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 
 const UI_TO_API_STATUS: Record<ParticipatingIndividualProgressAttendanceStatus, string> = {
   present: 'PRESENT',
@@ -125,9 +130,12 @@ function formatScheduleHeader(
   headerPrefix: string
 } {
   const round = schedule.sessionNo ?? index + 1
-  const scheduleDirect = isGeneralScheduleSingleDateProgram(program)
-  const leadLabel =
-    program && scheduleDirect
+  // 사전교육 행은 sessionNo=null — 회차 번호로 공통 정보를 찾지 않고 「일시 ㅣ 사전교육」으로 표시한다.
+  const preEducation = isProgramSchedulePreEducation(schedule)
+  const scheduleDirect = preEducation || isGeneralScheduleSingleDateProgram(program)
+  const leadLabel = preEducation
+    ? PRE_EDUCATION_DISPLAY_LABEL
+    : program && scheduleDirect
       ? resolveGeneralScheduleSingleDateDetailName(program, schedule)
       : program
         ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
@@ -135,7 +143,7 @@ function formatScheduleHeader(
   const built = buildGeneralProgressSessionTableHeader({
     round,
     leadLabel,
-    scheduleName: schedule.scheduleName,
+    scheduleName: preEducation ? null : schedule.scheduleName,
     startAt: schedule.startAt,
     endAt: schedule.endAt,
     allDay: schedule.allDay,
@@ -235,9 +243,14 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
   })
   const roster = individuals.length > 0 ? individuals : params.participants
 
+  // sessionNo 없는 본교육 행의 회차 폴백은 사전교육 행을 세지 않는다(서버 순서 유지).
+  let mainEducationIndex = 0
   return params.schedules
     .filter(isGeneralProgressAttendanceSessionSchedule)
-    .map((schedule, index) => {
+    .map(schedule => {
+      const index = isProgramSchedulePreEducation(schedule)
+        ? mainEducationIndex
+        : mainEducationIndex++
       const scheduleId = String(schedule.scheduleId)
       const attendances = params.attendancesByScheduleId[scheduleId] ?? []
       const byParticipant = new Map(
@@ -247,9 +260,12 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
       )
       const header = formatScheduleHeader(schedule, index, params.program)
       const attendanceRecordingOpen = isScheduleAttendanceOpenForDisplay(schedule)
+      const canonical = readProgramScheduleCanonicalFields(schedule)
       return {
         id: scheduleId,
         ...header,
+        scheduleRole: canonical.scheduleRole ?? null,
+        educationSlotKey: canonical.educationSlotKey ?? null,
         scheduleEducationProgress: mapDashboardScheduleDeliveryToEducationProgress(
           schedule.scheduleStatus
         ),

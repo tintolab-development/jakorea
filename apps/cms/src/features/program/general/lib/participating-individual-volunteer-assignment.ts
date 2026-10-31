@@ -26,6 +26,7 @@ import type { Program } from '@/types/domain'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { ParticipantEducationScopeScheduleEnrich } from '@/features/program/general/api/program-progress-api-client'
 import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
 
 /** 프로그램 공통 정보 진행 장소 — 개인형 봉사 지역 폴백 */
 export function resolveProgramVolunteerServiceRegionFallback(program: Program): string | undefined {
@@ -440,6 +441,8 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
         })
         return
       }
+      // 필수 사전교육은 서버 자동 배정 — 배정 대기(선택 후보)로 노출하지 않는다.
+      if (isProgramSchedulePreEducation(schedule)) return
       const hopeSchedule: WaitingInstructorHopeSchedule = {
         hopeDate: `${session.date}(${session.dayOfWeek})`,
         hopeTime: session.timeRange,

@@ -96,7 +96,7 @@ describe('individual approval education scope', () => {
     expect(validateIndividualApprovalScheduleSelection(plan, [11, 13]).ok).toBe(false)
   })
 
-  it('maps GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED as a failed approval', () => {
+  it('shows the server message for GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED', () => {
     const error = {
       response: {
         status: 409,
@@ -106,6 +106,26 @@ describe('individual approval education scope', () => {
           error: {
             code: 'GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED',
             message: '필수 사전교육의 프로그램 일정을 확인할 수 없습니다.',
+            field: 'confirmedScheduleIds',
+          },
+        },
+      },
+    }
+    expect(formatIndividualApprovalScopeErrorMessage(error)).toBe(
+      '필수 사전교육의 프로그램 일정을 확인할 수 없습니다.'
+    )
+  })
+
+  it('falls back to the FE text when the pre-education 409 has no server message', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          message: '',
+          error: {
+            code: 'GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED',
+            message: '  ',
             field: 'confirmedScheduleIds',
           },
         },

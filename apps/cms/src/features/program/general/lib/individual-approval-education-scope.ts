@@ -81,9 +81,23 @@ const DISPLAY_ROLES = new Set(['EDUCATION', 'SESSION', 'PRE_EDUCATION'])
 export const GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE =
   '프로그램 공통정보의 필수 사전교육 일정이 아직 생성되지 않았습니다. 프로그램 저장에서 사전교육 날짜를 확인한 뒤 다시 승인하세요.'
 
-const INDIVIDUAL_APPROVAL_SCOPE_CODE_MESSAGES: Partial<Record<string, string>> = {
+/** 서버 message가 비어 있을 때만 쓰는 FE 폴백 문구 (서버 문구 우선) */
+const INDIVIDUAL_APPROVAL_SCOPE_CODE_FALLBACK_MESSAGES: Partial<Record<string, string>> = {
   GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED:
     GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE,
+}
+
+function readTrimmedString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+/** 응답 envelope의 서버 message (`error.message` 우선, 없으면 최상위 `message`). code와 같으면 빈 값 */
+function readServerErrorMessage(data: unknown, code: string): string {
+  if (data == null || typeof data !== 'object') return ''
+  const envelope = data as { message?: unknown; error?: { message?: unknown } | null }
+  const message =
+    readTrimmedString(envelope.error?.message) || readTrimmedString(envelope.message)
+  return message === code ? '' : message
 }
 
 export const INDIVIDUAL_APPROVAL_PROGRAM_SHAPE_MISSING_MESSAGE =
@@ -628,12 +642,12 @@ export function formatIndividualApprovalScopeErrorMessage(error: unknown): strin
   const timingMessage = getNotificationTimingApiErrorMessage(error)
   if (timingMessage) return timingMessage
   const code = getApiErrorCode(error)
-  const mapped = code ? INDIVIDUAL_APPROVAL_SCOPE_CODE_MESSAGES[code] : undefined
-  if (mapped) return mapped
   const data =
     error && typeof error === 'object' && 'response' in error
       ? (error as { response?: { data?: unknown } }).response?.data
       : undefined
+  const fallback = code ? INDIVIDUAL_APPROVAL_SCOPE_CODE_FALLBACK_MESSAGES[code] : undefined
+  if (code && fallback) return readServerErrorMessage(data, code) || fallback
   const message = extractApiErrorMessage(data, {
     httpStatus: getApiErrorHttpStatus(error),
     fallback: '교육 일정 승인에 실패했습니다. 신청과 교육 일정을 다시 확인해 주세요.',

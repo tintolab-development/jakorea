@@ -90,6 +90,18 @@ export function isLegacyProgramScheduleWithoutEducationSlotKey(
   return educationSlotKey == null && scheduleRole == null
 }
 
+export const PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION = 'PRE_EDUCATION' as const
+
+/**
+ * 필수 사전교육 일정 행(scheduleRole=PRE_EDUCATION). 서버가 승인 시 자동 배정하므로
+ * 강사·봉사·기관 배정 후보와 승인 confirmedScheduleIds에는 넣지 않는다.
+ * scheduleRole 없음(null)은 사전교육이 아니다 — 기존 동작 유지.
+ */
+export function isProgramSchedulePreEducation(schedule: unknown): boolean {
+  const { scheduleRole } = readProgramScheduleCanonicalFields(schedule)
+  return String(scheduleRole ?? '').trim().toUpperCase() === PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION
+}
+
 export const PROGRAM_SCHEDULE_ROLE_EDUCATION = 'EDUCATION' as const
 export const PROGRAM_SCHEDULE_ROLE_SESSION = 'SESSION' as const
 

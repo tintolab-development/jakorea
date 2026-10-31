@@ -14,6 +14,8 @@ import type {
 import { countLectureAttendanceHeldAndAttended } from '@/features/program/general/lib/lecture-attendance-count'
 import { isScheduleAttendanceOpenForDisplay } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import { isGeneralProgressAttendanceSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
+import { PRE_EDUCATION_LECTURE_ROUND_NUMBER } from '@/features/program/general/lib/lecture-attendance-session-identity'
 import { mapOrganizationScheduleAssignmentSlotsToAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import {
@@ -52,6 +54,7 @@ type LectureRoundRow = {
   scheduleId: number
   roundNumber: number
   schedule?: DashboardProgramScheduleResponse
+  preEducation?: boolean
 }
 
 function dashboardScheduleById(
@@ -84,16 +87,23 @@ function toProgramSchedule(schedule: DashboardProgramScheduleResponse): ProgramS
 function educationSessionRoundRows(
   schedules: readonly DashboardProgramScheduleResponse[]
 ): LectureRoundRow[] {
+  // 사전교육(sessionNo=null)은 회차 0 — 본교육 회차 폴백 번호를 밀지 않고, 정렬 시 앞에 온다.
+  let mainEducationIndex = 0
   return schedules
     .filter(isGeneralProgressAttendanceSessionSchedule)
-    .flatMap((schedule, index) => {
+    .flatMap(schedule => {
+      const preEducation = isProgramSchedulePreEducation(schedule)
+      const index = preEducation ? mainEducationIndex : mainEducationIndex++
       const scheduleId = schedule.scheduleId
       if (scheduleId == null || !Number.isFinite(scheduleId) || scheduleId <= 0) return []
       return [
         {
           schedule,
           scheduleId: Math.trunc(scheduleId),
-          roundNumber: schedule.sessionNo ?? index + 1,
+          roundNumber: preEducation
+            ? PRE_EDUCATION_LECTURE_ROUND_NUMBER
+            : (schedule.sessionNo ?? index + 1),
+          ...(preEducation ? { preEducation: true } : {}),
         },
       ]
     })
@@ -154,6 +164,7 @@ function toLectureSession(
     scheduleId: row.scheduleId,
     status: mine ? mapApiStatusToLecture(mine.status) : 'not_held',
     ...(isLectureRecordingOpen(row.schedule) ? { recordingOpen: true } : {}),
+    ...(row.preEducation ? { preEducation: true } : {}),
   }
 }
 
