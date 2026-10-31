@@ -1,5 +1,12 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import { fetchBlobOnce } from '@/shared/lib/download-attachment'
+import {
+  normalizePortalEducationJournalList,
+  type PortalEducationJournal,
+} from './education-journals-normalize'
+
+export { normalizePortalEducationJournalList }
+export type { PortalEducationJournal }
 
 const EDUCATION_JOURNAL_FILE_PURPOSE = 'EDUCATION_JOURNAL'
 const EDUCATION_JOURNAL_DOWNLOAD_PURPOSE = '교육일지 제출 파일 확인'
@@ -18,21 +25,6 @@ function educationJournalsPath(programId: string, organizationApplicationId: str
   return `/api/portal/me/programs/${encodeURIComponent(programId)}/organization-applications/${encodeURIComponent(organizationApplicationId)}/education-journals`
 }
 
-export type PortalEducationJournal = {
-  journalId?: number
-  programId?: number
-  organizationApplicationId?: number
-  submittedByMemberId?: number
-  fileObjectId?: number
-  journalTitle?: string
-  journalMemo?: string
-  originalFilename?: string
-  submittedAt?: string
-  createdAt?: string
-  updatedAt?: string
-  availableActions?: string[]
-}
-
 export type PortalEducationJournalDownload = {
   fileObjectId?: number
   downloadUrl?: string
@@ -49,8 +41,7 @@ export async function fetchPortalEducationJournals(
     educationJournalsPath(programId, organizationApplicationId),
     { signal },
   )
-  const body = unwrapEnvelope<PortalEducationJournal[] | { items?: PortalEducationJournal[] }>(data)
-  return Array.isArray(body) ? body : body?.items ?? []
+  return normalizePortalEducationJournalList(data)
 }
 
 export async function submitPortalEducationJournal(input: {
