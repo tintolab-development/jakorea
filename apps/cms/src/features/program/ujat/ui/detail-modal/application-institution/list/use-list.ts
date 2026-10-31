@@ -46,6 +46,7 @@ import { bulkRejectGeneralOrganizationApplications } from '@/features/program/ge
 import { toTimedBulkNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 
 /** 필터 조건은 모두 서버 query로 보낸다. 응답이 다른 지역 코드를 섞어 보낼 때만 탭 기준으로 거른다. */
 function filterRowsByRegion(
@@ -257,7 +258,6 @@ export function useUjatInstitutionApplicationList(
       const persisted = await rejectUjatOrganizationApplicationsIfRemote({
         programId,
         applicationIds: ids,
-        reason: '',
       })
       if (!persisted) {
         showAlert({
@@ -280,7 +280,7 @@ export function useUjatInstitutionApplicationList(
     } catch (error) {
       showAlert({
         title: '안내',
-        content: error instanceof Error ? error.message : '신청기관 임시 반려에 실패했습니다.',
+        content: readApiErrorAlertMessage(error, '신청기관 임시 반려에 실패했습니다.'),
       })
     } finally {
       setTempActionLoading(false)

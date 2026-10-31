@@ -787,7 +787,7 @@ export async function deleteAdminProgramManagerRemote(
 /** POST /api/admin/programs/{programId}/ujat/organization-applications/temporary-rejections */
 export async function temporarilyRejectUjatOrganizationApplicationsRemote(
   programId: number,
-  body: { applicationIds: number[]; reason: string }
+  body: { applicationIds: number[]; reason?: string }
 ): Promise<unknown> {
   return unwrapApiBody(
     await customInstance({

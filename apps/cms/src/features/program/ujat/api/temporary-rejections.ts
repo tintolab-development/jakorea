@@ -14,7 +14,6 @@ export function parseNumericResourceId(value: string | number | null | undefined
 export async function rejectUjatOrganizationApplicationsIfRemote(input: {
   programId?: string | number | null
   applicationIds: Array<string | number>
-  reason: string
 }): Promise<boolean> {
   const programId = parseNumericResourceId(input.programId)
   const applicationIds = input.applicationIds
@@ -29,7 +28,6 @@ export async function rejectUjatOrganizationApplicationsIfRemote(input: {
   }
   await temporarilyRejectUjatOrganizationApplicationsRemote(programId, {
     applicationIds,
-    reason: input.reason.trim(),
   })
   return true
 }

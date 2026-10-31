@@ -144,11 +144,10 @@ export function useUjatInstitutionApplicationDetail(input: {
       })
       await invalidate()
     },
-    tempRejectRemote: async (reason: string) => {
+    tempRejectRemote: async () => {
       const persisted = await rejectUjatOrganizationApplicationsIfRemote({
         programId,
         applicationIds: [institutionId],
-        reason,
       })
       if (!persisted) {
         throw new Error('원격 API가 비활성 상태라 임시 반려를 반영하지 않았습니다.')

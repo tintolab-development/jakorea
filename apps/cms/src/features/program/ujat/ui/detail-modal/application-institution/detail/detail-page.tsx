@@ -163,7 +163,7 @@ export function UjatInstitutionApplicationDetailPage({
     setActionLoading(true)
     try {
       if (pendingTempKind === 'temp_reject') {
-        await tempRejectRemote('')
+        await tempRejectRemote()
         setPendingTempKind(null)
         onStatusUpdated()
         onBack()
@@ -327,6 +327,7 @@ export function UjatInstitutionApplicationDetailPage({
           variant="single"
           institutionName={row.institutionName}
           selectionCount={1}
+          confirmLoading={actionLoading}
           onCancel={() => setPendingAction(null)}
           onConfirm={handleActionConfirm}
         />
