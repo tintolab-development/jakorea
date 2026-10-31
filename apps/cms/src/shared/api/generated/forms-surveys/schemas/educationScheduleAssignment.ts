@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { EducationScheduleAssignmentResponseStatus } from './educationScheduleAssignmentResponseStatus';
 import type { EducationScheduleAssignmentStatus } from './educationScheduleAssignmentStatus';
 import type { EducationScheduleAssignmentSubmission } from './educationScheduleAssignmentSubmission';
 
@@ -24,6 +25,8 @@ export interface EducationScheduleAssignment {
   submissions?: EducationScheduleAssignmentSubmission[] | null;
   /** 최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다. */
   canSubmit?: boolean;
-  /** 수정 제출 가능. 제출 이력 있음, 마감 전, 본인 제출, status SUBMITTED 또는 FEEDBACK일 때 true. */
+  /** 수정 제출 가능. 제출 이력 있음, 마감 전, 본인 제출, form_response.response_status가 SUBMITTED 또는 REJECTED일 때 true. APPROVED/COMPLETED면 false. GET /api/portal/me/form-responses/{formResponseId}/feedback 의 canResubmit과 동일 규칙. */
   canResubmit?: boolean;
+  /** 제출본 form_response.response_status. 미제출이면 null. APPROVED/REJECTED/SUBMITTED/COMPLETED 등. status(FEEDBACK 등)와 별도로 승인 여부를 구분한다. */
+  responseStatus?: EducationScheduleAssignmentResponseStatus;
 }

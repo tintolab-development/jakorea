@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 
+export * from './apiResponse';
 export * from './apiResponseEmployeeVolunteerCountSetResponse';
 export * from './employeeVolunteerCountEntryRequest';
 export * from './employeeVolunteerCountEntryResponse';
@@ -28,8 +29,8 @@ export * from './volunteerParticipantRegisterRequest';
 export * from './volunteerParticipantRegisterRequestApplicationType';
 export * from './volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest';
 export * from './volunteerParticipantRegisterRequestPersonalInfoConsent';
+export * from './volunteerParticipantRegisterRequestRecruitHalf';
 export * from './volunteerParticipantRegisterRequestRegistrationChannel';
 export * from './volunteerParticipantRegisterRequestThirdPartyConsent';
 export * from './volunteerParticipantRegisterRequestVolunteerKind';
 export * from './volunteerParticipantRegisterResponse';
-export * from './volunteerPreviousUjatTermRequest';

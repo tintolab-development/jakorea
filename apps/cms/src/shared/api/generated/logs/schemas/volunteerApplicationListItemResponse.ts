@@ -7,6 +7,7 @@
  */
 import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
 import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
+import type { VolunteerApplicationListItemResponseFinalResultStatus } from './volunteerApplicationListItemResponseFinalResultStatus';
 import type { VolunteerApplicationListItemResponseRecruitHalf } from './volunteerApplicationListItemResponseRecruitHalf';
 
 /**
@@ -37,7 +38,8 @@ export interface VolunteerApplicationListItemResponse {
   applicationStatus?: string;
   documentStatus?: string;
   interviewStatus?: string;
-  finalResultStatus?: string;
+  /** DB final_result_status 원문. PASS|FAIL|RESERVE|WAITING. 목록 쿼리 finalResultStatus=APPROVED는 PASS로 매핑되어 이 값이 PASS인 행을 포함한다(응답을 APPROVED로 바꾸지 않음). */
+  finalResultStatus?: VolunteerApplicationListItemResponseFinalResultStatus;
   reserveRank?: number;
   isReparticipation?: boolean;
   giveUpYn?: boolean;
