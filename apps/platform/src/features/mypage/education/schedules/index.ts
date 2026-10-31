@@ -1,6 +1,7 @@
 export type {
   EducationAssignmentResponseStatus,
   EducationAssignmentSubmitStatus,
+  EducationCurriculumSession,
   EducationScheduleAssignment,
   EducationScheduleAssignmentFile,
   EducationScheduleAssignmentSubmissionKind,

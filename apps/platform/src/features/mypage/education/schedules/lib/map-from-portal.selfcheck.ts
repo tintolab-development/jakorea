@@ -303,4 +303,47 @@ const subBlock = mapPortalEducationSchedule(
 // scheduleName 이 없으면 title(CMS 일정명)을 라벨로 쓴다
 assert.equal(subBlock.rowLabel, '개인일정')
 
+const singleCurriculumDay = mapPortalEducationSchedule(
+  {
+    scheduleId: 187626,
+    title: '공통 교육 예정 1',
+    sessionLabel: '1차시',
+    content: '1차시만 매칭된 레거시 본문',
+    curriculumSessions: [
+      {
+        sessionNo: 1,
+        sessionLabel: '1차시',
+        title: '1단원 나를 발견하는 진로 탐색',
+        content: '1차시 내용',
+      },
+      {
+        sessionNo: 2,
+        sessionLabel: '2차시',
+        title: '2단원 나를 보여주는 커리어 포트폴리오',
+        content: '2차시 내용',
+      },
+    ],
+  },
+  0,
+  { educationStructure: 'CURRICULUM', sessionRound: 'SINGLE' },
+)
+assert.equal(singleCurriculumDay.sessionLabel, '1차시')
+assert.equal(singleCurriculumDay.content, '1차시만 매칭된 레거시 본문')
+assert.equal(singleCurriculumDay.curriculumSessions?.length, 2)
+assert.equal(singleCurriculumDay.curriculumSessions?.[1]?.sessionLabel, '2차시')
+
+const omittedSessions = mapPortalEducationSchedule(
+  { scheduleId: 1, sessionLabel: '1회차', content: '레거시' },
+  0,
+  { educationStructure: 'CURRICULUM', sessionRound: 'MULTI' },
+)
+assert.equal(omittedSessions.curriculumSessions, undefined)
+assert.equal(omittedSessions.content, '레거시')
+
+const emptySessions = mapPortalEducationSchedule(
+  { scheduleId: 2, sessionLabel: '1차시', content: '폴백', curriculumSessions: [] },
+  0,
+)
+assert.equal(emptySessions.curriculumSessions, undefined)
+
 console.log('map-from-portal.selfcheck: ok')

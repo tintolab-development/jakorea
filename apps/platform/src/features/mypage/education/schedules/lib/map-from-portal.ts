@@ -1,4 +1,5 @@
 import type {
+  PortalEducationCurriculumSession,
   PortalEducationSchedule,
   PortalEducationScheduleAssignment,
   PortalEducationScheduleGroupTime,
@@ -21,6 +22,7 @@ import {
 import type {
   EducationAssignmentResponseStatus,
   EducationAssignmentSubmitStatus,
+  EducationCurriculumSession,
   EducationScheduleAssignment,
   EducationScheduleAssignmentFile,
   EducationScheduleAttendanceStatus,
@@ -169,6 +171,28 @@ function mapSubmissions(
   return files.length > 0 ? files : undefined
 }
 
+function mapCurriculumSessions(
+  sessions: PortalEducationCurriculumSession[] | null | undefined,
+): EducationCurriculumSession[] | undefined {
+  if (!Array.isArray(sessions) || sessions.length === 0) return undefined
+  const mapped = sessions.map((session, index) => {
+    const sessionNo =
+      typeof session.sessionNo === 'number' && Number.isFinite(session.sessionNo)
+        ? session.sessionNo
+        : index + 1
+    const sessionLabel = optionalText(session.sessionLabel)
+    const title = optionalText(session.title)
+    const content = optionalText(session.content)
+    return {
+      sessionNo,
+      ...(sessionLabel ? { sessionLabel } : {}),
+      ...(title ? { title } : {}),
+      ...(content ? { content } : {}),
+    } satisfies EducationCurriculumSession
+  })
+  return mapped.length > 0 ? mapped : undefined
+}
+
 function mapAssignment(
   assignment: PortalEducationScheduleAssignment | null | undefined,
 ): EducationScheduleAssignment | undefined {
@@ -258,6 +282,7 @@ export function mapPortalEducationSchedule(
     attendanceStatus === 'present' ||
     attendanceStatus === 'late'
   const absenceReason = hideAbsenceReason ? undefined : optionalText(item.absenceReason)
+  const curriculumSessions = mapCurriculumSessions(item.curriculumSessions)
 
   return {
     id,
@@ -277,6 +302,7 @@ export function mapPortalEducationSchedule(
     ...(sessionLabel ? { sessionLabel } : {}),
     ...(scheduleLabel ? { scheduleLabel } : {}),
     ...(optionalText(item.content) ? { content: item.content!.trim() } : {}),
+    ...(curriculumSessions ? { curriculumSessions } : {}),
     ...(progressTimeLabel ? { progressTimeLabel } : {}),
     ...(assignment ? { assignment } : {}),
     ...(availableActions ? { availableActions } : {}),

@@ -28,6 +28,14 @@ export type EducationAssignmentResponseStatus =
   | 'REJECTED'
   | 'COMPLETED'
 
+/** 커리큘럼형 단일 회차 — 그날 진행하는 전 차시 */
+export type EducationCurriculumSession = {
+  sessionNo: number
+  sessionLabel?: string | null
+  title?: string | null
+  content?: string | null
+}
+
 export type EducationScheduleAssignmentSubmissionKind = 'file' | 'url'
 
 export type EducationScheduleAssignmentFile =
@@ -94,6 +102,11 @@ export type EducationScheduleItem = {
   scheduleLabel?: string
   /** 교육내용 */
   content?: string
+  /**
+   * 커리큘럼형 단일 회차 — 그날 전 차시.
+   * 없거나 [] 이면 sessionLabel/content fallback.
+   */
+  curriculumSessions?: EducationCurriculumSession[] | null
   /** 진행 시간 표시. 없으면 Row가 heldAt 포맷 */
   progressTimeLabel?: string
   assignment?: EducationScheduleAssignment

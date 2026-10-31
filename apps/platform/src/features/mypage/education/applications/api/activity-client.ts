@@ -162,6 +162,13 @@ export type PortalEducationScheduleGroupTime = {
   endTime?: string
 }
 
+export type PortalEducationCurriculumSession = {
+  sessionNo?: number
+  sessionLabel?: string | null
+  title?: string | null
+  content?: string | null
+}
+
 export type PortalEducationSchedule = {
   scheduleId?: number | null
   sessionNo?: number
@@ -190,6 +197,11 @@ export type PortalEducationSchedule = {
   teamRole?: string | null
   /** 팀 프로그램 회차별 팀명. 개인 참여면 null */
   teamName?: string | null
+  /**
+   * 커리큘럼형 단일 회차에서 이 일정(하루)에 진행하는 전 차시.
+   * 그 외 구조는 omit/null/[] — FE는 기존 sessionLabel·content fallback.
+   */
+  curriculumSessions?: PortalEducationCurriculumSession[] | null
 }
 
 export type PortalScheduleAttendanceDetail = {
