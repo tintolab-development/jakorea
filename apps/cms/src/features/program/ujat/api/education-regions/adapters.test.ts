@@ -15,6 +15,8 @@ describe('ujat education-regions adapters', () => {
         displayOrder: 1,
         activeYn: true,
         createdAt: '2026-01-01T00:00:00.000Z',
+        createdByName: '김등록',
+        updatedByName: '이수정',
       })
     ).toMatchObject({
       id: '3',
@@ -23,6 +25,23 @@ describe('ujat education-regions adapters', () => {
       sortOrder: 1,
       active: true,
       hasUsageHistory: false,
+      createdByName: '김등록',
+      updatedByName: '이수정',
+    })
+  })
+
+  it('maps null audit names to empty strings for UI dash', () => {
+    expect(
+      mapEducationRegionResponse({
+        id: 1,
+        code: 'busan',
+        nameKo: '부산',
+        createdByName: null,
+        updatedByName: null,
+      })
+    ).toMatchObject({
+      createdByName: '',
+      updatedByName: '',
     })
   })
 
@@ -42,6 +61,7 @@ describe('ujat education-regions adapters', () => {
           active: true,
           name: '서울',
           createdByName: '',
+          updatedByName: '',
           createdAt: '',
           hasUsageHistory: false,
         },
