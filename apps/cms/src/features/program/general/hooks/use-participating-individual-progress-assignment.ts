@@ -7,12 +7,12 @@ import { generalProgramProgressQueryKeys } from '@/features/program/general/api/
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildParticipatingIndividualProgressAssignmentFilterFields } from '@/features/program/general/lib/participating-individual-progress-assignment-filter-fields'
-import { filterProgressAssignmentParticipantsForDisplay } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
+import { filterProgressAssignmentSessionGroups } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
+import { resolveProgressAttendanceScheduleDateRanges } from '@/features/program/general/lib/progress-attendance-schedule-date-ranges'
 import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL,
   type ParticipatingIndividualProgressAssignmentFilters,
   type ParticipatingIndividualProgressAssignmentParticipantRow,
-  type ParticipatingIndividualProgressAssignmentSessionGroup,
 } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 
 export const EMPTY_PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTERS: ParticipatingIndividualProgressAssignmentFilters =
@@ -23,23 +23,6 @@ export const EMPTY_PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTERS: Partici
     educationGrade: PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL,
     submissionStatus: PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL,
   }
-
-function filterSessionGroups(
-  sessions: ParticipatingIndividualProgressAssignmentSessionGroup[],
-  filters: ParticipatingIndividualProgressAssignmentFilters
-) {
-  const filteredBySchedule =
-    filters.educationSchedule === PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL
-      ? sessions
-      : sessions.filter(session => session.filterValue === filters.educationSchedule)
-
-  return filteredBySchedule
-    .map(session => ({
-      ...session,
-      participants: filterProgressAssignmentParticipantsForDisplay(session.participants, filters),
-    }))
-    .filter(session => session.participants.length > 0)
-}
 
 export function useParticipatingIndividualProgressAssignment(program: Program) {
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
@@ -59,9 +42,18 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
       ...EMPTY_PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTERS,
     }))
 
+  const scheduleDateRanges = useMemo(
+    () => resolveProgressAttendanceScheduleDateRanges(program),
+    [program]
+  )
+
   const remoteQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.assignmentSubmissions(String(program.id)),
-    queryFn: () => fetchGeneralProgressAssignmentBundle(String(program.id)),
+    queryKey: [
+      ...generalProgramProgressQueryKeys.assignmentSubmissions(String(program.id)),
+      'schedule-date-ranges',
+      scheduleDateRanges.map(range => `${range.dateFrom}~${range.dateTo}`).join(','),
+    ],
+    queryFn: () => fetchGeneralProgressAssignmentBundle(String(program.id), scheduleDateRanges),
     enabled: remoteEnabled,
     staleTime: 15_000,
     retry: false,
@@ -72,6 +64,8 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
     return buildProgressAssignmentSessionsFromRemote(remoteQuery.data, {
       program,
       giveUpParticipants: remoteQuery.data.giveUpParticipants,
+      schedules: remoteQuery.data.schedules,
+      participants: remoteQuery.data.giveUpParticipants,
     })
   }, [program, remoteEnabled, remoteQuery.data])
 
@@ -92,7 +86,7 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
 
   const sessionGroups = useMemo(() => {
     if (!isRemoteDataSource || !remoteSessions) return []
-    return filterSessionGroups(remoteSessions, appliedFilters)
+    return filterProgressAssignmentSessionGroups(remoteSessions, appliedFilters)
   }, [appliedFilters, isRemoteDataSource, remoteSessions])
 
   const handleFilterChange = useCallback((key: string, value: string) => {

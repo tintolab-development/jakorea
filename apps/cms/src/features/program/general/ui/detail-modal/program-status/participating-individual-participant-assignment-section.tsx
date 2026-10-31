@@ -62,6 +62,7 @@ import {
   saveGeneralParticipantSubmissionTeam,
 } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { resolveProgressAttendanceScheduleDateRanges } from '@/features/program/general/lib/progress-attendance-schedule-date-ranges'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import {
   notifyProgramApiUnavailable,
@@ -157,9 +158,18 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     }
   }, [markTeamFeatureNotApplicable, submissionTeamQuery.error])
 
+  const scheduleDateRanges = useMemo(
+    () => resolveProgressAttendanceScheduleDateRanges(program),
+    [program]
+  )
+
   const assignmentSubmissionsQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.assignmentSubmissions(program.id),
-    queryFn: () => fetchGeneralProgressAssignmentBundle(program.id),
+    queryKey: [
+      ...generalProgramProgressQueryKeys.assignmentSubmissions(program.id),
+      'schedule-date-ranges',
+      scheduleDateRanges.map(range => `${range.dateFrom}~${range.dateTo}`).join(','),
+    ],
+    queryFn: () => fetchGeneralProgressAssignmentBundle(program.id, scheduleDateRanges),
     enabled: remoteEnabled,
     staleTime: 15_000,
     retry: false,
@@ -170,6 +180,8 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
       ? buildProgressAssignmentSessionsFromRemote(assignmentSubmissionsQuery.data, {
           program,
           giveUpParticipants: assignmentSubmissionsQuery.data.giveUpParticipants,
+          schedules: assignmentSubmissionsQuery.data.schedules,
+          participants: assignmentSubmissionsQuery.data.giveUpParticipants,
         })
       : []
     const withSubmissions = mergeParticipantDetailAssignmentRowsWithRemote({

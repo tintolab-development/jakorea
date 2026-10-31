@@ -8,6 +8,8 @@ import type {
   GeneralAssignmentSubmissionParticipantDto,
   GeneralAssignmentSubmissionScheduleDto,
 } from '@/features/program/general/api/program-progress-api-client'
+import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
+import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
@@ -182,6 +184,41 @@ function mapSubmission(
   return { kind: 'not_submitted' }
 }
 
+function scheduleIdMatches(value: number | null | undefined, scheduleId: string): boolean {
+  return value != null && String(value) === scheduleId
+}
+
+function participantBelongsToAssignmentSchedule(
+  participant: ParticipantListItemResponse,
+  scheduleId: string
+): boolean {
+  return (participant.sessions ?? []).some(
+    session =>
+      scheduleIdMatches(session.scheduleId, scheduleId) ||
+      scheduleIdMatches(session.resolvedScheduleId, scheduleId)
+  )
+}
+
+function mapRosterParticipantToAssignmentDto(
+  participant: ParticipantListItemResponse
+): GeneralAssignmentSubmissionParticipantDto {
+  return {
+    participantId: participant.participantId,
+    memberName: participant.memberName,
+    gender: participant.gender,
+    birthDate: participant.birthDate,
+    affiliation: participant.organizationName,
+    organizationName: participant.organizationName,
+    grade: participant.grade,
+    submissionStatus: 'NOT_SUBMITTED',
+    remarkKind: 'NONE',
+    files: [],
+    links: [],
+    giveUpAt: participant.giveUpAt,
+    participantStatus: participant.participantStatus,
+  }
+}
+
 function mapParticipantRow(
   participant: GeneralAssignmentSubmissionParticipantDto
 ): ParticipatingIndividualProgressAssignmentParticipantRow {
@@ -214,11 +251,39 @@ function mapParticipantRow(
   }
 }
 
+function mapScheduleGroup(
+  schedule: GeneralAssignmentSubmissionScheduleDto,
+  index: number,
+  options?: {
+    program?: Program | null
+    giveUpById?: Map<string, GiveUpParticipantLookup>
+  }
+): ParticipatingIndividualProgressAssignmentSessionGroup {
+  const header = formatScheduleHeader(schedule, index, options?.program)
+  const giveUpById = options?.giveUpById ?? new Map()
+  return {
+    id: String(schedule.scheduleId),
+    ...header,
+    participants: (schedule.participants ?? [])
+      .filter(participant => {
+        const lookup = giveUpById.get(String(participant.participantId))
+        return !shouldHideGiveUpParticipantFromSchedule({
+          giveUpAt: participant.giveUpAt ?? lookup?.giveUpAt,
+          participantStatus: participant.participantStatus ?? lookup?.participantStatus,
+          scheduleStartAt: schedule.startAt,
+        })
+      })
+      .map(mapParticipantRow),
+  }
+}
+
 export function buildProgressAssignmentSessionsFromRemote(
   data: GeneralAssignmentSubmissionListResponse,
   options?: {
     program?: Program | null
     giveUpParticipants?: GiveUpParticipantLookup[] | null
+    schedules?: DashboardProgramScheduleResponse[] | null
+    participants?: ParticipantListItemResponse[] | null
   }
 ): ParticipatingIndividualProgressAssignmentSessionGroup[] {
   const giveUpById = new Map(
@@ -226,23 +291,66 @@ export function buildProgressAssignmentSessionsFromRemote(
       .filter(item => item.participantId != null)
       .map(item => [String(item.participantId), item] as const)
   )
-  return (data.items ?? [])
+  const roster = (options?.participants ?? []).filter(participant => {
+    const type = (participant.participantType ?? '').toUpperCase()
+    return type === 'INDIVIDUAL' || type === 'STUDENT' || type === 'PARTICIPANT' || type === ''
+  })
+  const rosterHasAssignedSessions = roster.some(participant =>
+    (participant.sessions ?? []).some(
+      session => session.scheduleId != null || session.resolvedScheduleId != null
+    )
+  )
+  const rosterForSchedule = (scheduleId: string) =>
+    rosterHasAssignedSessions
+      ? roster.filter(participant => participantBelongsToAssignmentSchedule(participant, scheduleId))
+      : roster
+
+  const fromApi = (data.items ?? [])
     .filter(isGeneralProgressEducationSessionSchedule)
     .map((schedule, index) => {
-      const header = formatScheduleHeader(schedule, index, options?.program)
-      return {
-        id: String(schedule.scheduleId),
-        ...header,
-        participants: (schedule.participants ?? [])
-          .filter(participant => {
-            const lookup = giveUpById.get(String(participant.participantId))
-            return !shouldHideGiveUpParticipantFromSchedule({
-              giveUpAt: participant.giveUpAt ?? lookup?.giveUpAt,
-              participantStatus: participant.participantStatus ?? lookup?.participantStatus,
-              scheduleStartAt: schedule.startAt,
-            })
-          })
-          .map(mapParticipantRow),
-      }
+      const group = mapScheduleGroup(schedule, index, { program: options?.program, giveUpById })
+      if (group.participants.length > 0) return group
+      return mapScheduleGroup(
+        {
+          ...schedule,
+          participants: rosterForSchedule(group.id).map(mapRosterParticipantToAssignmentDto),
+        },
+        index,
+        { program: options?.program, giveUpById }
+      )
+    })
+  if (fromApi.length > 0) return fromApi
+  const overlayByScheduleId = new Map(
+    (data.items ?? [])
+      .filter(item => item.scheduleId != null)
+      .map(item => [String(item.scheduleId), item] as const)
+  )
+
+  let mainEducationIndex = 0
+  return (options?.schedules ?? [])
+    .filter(isGeneralProgressEducationSessionSchedule)
+    .map(schedule => {
+      const index = mainEducationIndex++
+      const scheduleId = String(schedule.scheduleId)
+      const overlay = overlayByScheduleId.get(scheduleId)
+      const participants =
+        overlay?.participants && overlay.participants.length > 0
+          ? overlay.participants
+          : rosterForSchedule(scheduleId).map(mapRosterParticipantToAssignmentDto)
+      return mapScheduleGroup(
+        {
+          scheduleId: schedule.scheduleId,
+          sessionNo: schedule.sessionNo ?? overlay?.sessionNo,
+          scheduleName: overlay?.scheduleName ?? schedule.scheduleName,
+          startAt: overlay?.startAt ?? schedule.startAt,
+          endAt: overlay?.endAt ?? schedule.endAt,
+          assignmentEnabled: overlay?.assignmentEnabled,
+          assignmentPeriodStart: overlay?.assignmentPeriodStart,
+          assignmentPeriodEnd: overlay?.assignmentPeriodEnd,
+          participants,
+        },
+        index,
+        { program: options?.program, giveUpById }
+      )
     })
 }

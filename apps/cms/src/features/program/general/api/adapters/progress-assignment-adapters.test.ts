@@ -235,4 +235,77 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
     expect(sessions[0]?.participants.map(row => row.name)).toEqual(['포기자', '진행자'])
     expect(sessions[1]?.participants.map(row => row.name)).toEqual(['진행자'])
   })
+
+  it('fills assignment sessions that arrived without participants from the progress roster', () => {
+    const sessions = buildProgressAssignmentSessionsFromRemote(
+      {
+        items: [
+          {
+            scheduleId: 901,
+            sessionNo: 1,
+            startAt: '2026-01-09T00:20:00Z',
+            endAt: '2026-01-09T02:20:00Z',
+            participants: [],
+          },
+        ],
+      },
+      {
+        participants: [
+          {
+            participantId: 21,
+            memberName: '김제이',
+            participantType: 'INDIVIDUAL',
+            organizationName: '제이초등학교',
+            grade: '3학년',
+          },
+        ],
+      }
+    )
+
+    expect(sessions).toHaveLength(1)
+    expect(sessions[0]?.participants.map(row => row.name)).toEqual(['김제이'])
+    expect(sessions[0]?.participants[0]?.submission).toEqual({ kind: 'not_submitted' })
+  })
+
+  it('falls back to education schedules and participant roster when assignment items are empty', () => {
+    const sessions = buildProgressAssignmentSessionsFromRemote(
+      { items: [] },
+      {
+        schedules: [
+          {
+            scheduleId: 801,
+            sessionNo: 1,
+            scheduleName: '1회차',
+            startAt: '2026-01-09T00:20:00Z',
+            endAt: '2026-01-09T02:20:00Z',
+            scheduleRole: 'EDUCATION',
+          },
+          {
+            scheduleId: 802,
+            sessionNo: 2,
+            scheduleName: '2회차',
+            startAt: '2026-01-12T00:20:00Z',
+            endAt: '2026-01-12T02:20:00Z',
+            scheduleRole: 'SESSION',
+          },
+        ],
+        participants: [
+          {
+            participantId: 11,
+            memberName: '김제이',
+            participantType: 'INDIVIDUAL',
+            organizationName: '제이초등학교',
+            grade: '3학년',
+            gender: 'FEMALE',
+            birthDate: '2000-01-01',
+          },
+        ],
+      }
+    )
+
+    expect(sessions.map(session => session.id)).toEqual(['801', '802'])
+    expect(sessions[0]?.participants.map(row => row.name)).toEqual(['김제이'])
+    expect(sessions[0]?.participants[0]?.submission).toEqual({ kind: 'not_submitted' })
+    expect(sessions[1]?.participants.map(row => row.name)).toEqual(['김제이'])
+  })
 })
