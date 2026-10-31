@@ -124,6 +124,11 @@ export function extractApiErrorMessage(
     return data.trim()
   }
 
+  if (data && typeof data === 'object') {
+    const detail = (data as { detail?: unknown }).detail
+    if (typeof detail === 'string' && detail.trim()) return detail.trim()
+  }
+
   const status = options?.httpStatus
   if (status === 403) return '요청에 필요한 권한이 없습니다.'
   if (status === 404) return '요청한 정보를 찾을 수 없습니다.'

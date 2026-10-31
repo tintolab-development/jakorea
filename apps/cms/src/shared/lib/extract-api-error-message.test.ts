@@ -105,6 +105,20 @@ describe('extractApiErrorMessage', () => {
     ).toBe('이미 신청·배정 또는 교육 운영 이력이 있는 프로그램은 교육구조를 변경할 수 없습니다.')
   })
 
+  it('RFC7807 detail 문자열을 상태 fallback보다 우선한다', () => {
+    expect(
+      extractApiErrorMessage(
+        {
+          type: 'about:blank',
+          title: 'Conflict',
+          status: 409,
+          detail: '서류 합격 처리된 신청은 담당자 평가를 변경할 수 없습니다.',
+        },
+        { httpStatus: 409 }
+      )
+    ).toBe('서류 합격 처리된 신청은 담당자 평가를 변경할 수 없습니다.')
+  })
+
   it('UJAT_WORKFLOW_STATE_CONFLICT는 field에 따라 안내를 구분한다', () => {
     expect(
       extractApiErrorMessage({

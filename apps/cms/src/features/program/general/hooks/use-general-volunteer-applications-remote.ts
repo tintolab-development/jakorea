@@ -44,6 +44,11 @@ import {
 import { validateApplicationGiveUpReason } from '@/features/program/shared/lib/application-give-up'
 import { mergeGeneralVolunteerApplicantListRows } from '@/features/program/general/lib/general-volunteer-applications-list-merge'
 import { getNotificationScheduleError } from '@/shared/lib/notification-schedule'
+import {
+  DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+  readDocumentEvaluationErrorMessage,
+  shouldShowDocumentEvaluationErrorAlert,
+} from '@/features/program/shared/lib/document-evaluation-error'
 
 export type GeneralVolunteerApplicationsStage = 'doc1' | 'docPassed' | 'interview2'
 
@@ -57,26 +62,6 @@ type UseGeneralVolunteerApplicationsRemoteOptions = {
   /** 서버 필터 (volunteer 전용). 지정 시 query key에 포함 */
   listQuery?: ApplicationsListQuery
   setList: Dispatch<SetStateAction<GeneralVolunteerApplicantRow[]>>
-}
-
-function getDocumentEvaluationErrorMessage(error: unknown): string {
-  const status =
-    error && typeof error === 'object' && 'response' in error
-      ? (error as { response?: { status?: number } }).response?.status
-      : undefined
-  switch (status) {
-    case 403:
-      return '이 프로그램에 접근할 권한이 없거나 본인에게 배정되지 않은 담당자 슬롯입니다.'
-    case 404:
-      return '봉사자 신청 정보를 찾을 수 없습니다.'
-    case 409:
-      return '최종 서류 결과가 확정되어 담당자 평가를 수정할 수 없습니다.'
-    case 400:
-    case 422:
-      return '담당자 평가값이 올바르지 않습니다.'
-    default:
-      return '담당자 평가 저장 중 오류가 발생했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
-  }
 }
 
 export function useGeneralVolunteerApplicationsRemote({
@@ -246,10 +231,12 @@ export function useGeneralVolunteerApplicationsRemote({
         return true
       } catch (error) {
         await invalidateApplications()
-        showAlert({
-          title: '평가 저장 실패',
-          content: getDocumentEvaluationErrorMessage(error),
-        })
+        if (shouldShowDocumentEvaluationErrorAlert(error)) {
+          showAlert({
+            title: DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+            content: readDocumentEvaluationErrorMessage(error),
+          })
+        }
         return false
       }
     },

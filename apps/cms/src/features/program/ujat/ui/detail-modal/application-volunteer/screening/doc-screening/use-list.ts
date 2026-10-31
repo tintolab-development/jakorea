@@ -9,6 +9,11 @@ import {
   type UjatVolunteerApplicantRow,
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+  readDocumentEvaluationErrorMessage,
+  shouldShowDocumentEvaluationErrorAlert,
+} from '@/features/program/shared/lib/document-evaluation-error'
 import { listUjatVolunteerApplicationsPage } from '@/features/program/ujat/api/applications-service'
 import { buildUjatVolunteerDoc1ListQuery } from '@/features/program/ujat/api/applications-list-query'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
@@ -209,14 +214,16 @@ export function useUjatVolunteerDocScreening({
     (id: string, evaluation: UjatManagerEvaluation) => {
       const previousEvaluation = list.find(row => row.id === id)?.managerAEvaluation
       updateRow(id, { managerAEvaluation: evaluation })
-      void updateUjatVolunteerDocumentEvaluationRemote(id, 'A', evaluation).catch(() => {
+      void updateUjatVolunteerDocumentEvaluationRemote(id, 'A', evaluation).catch(error => {
         if (previousEvaluation != null) {
           updateRow(id, { managerAEvaluation: previousEvaluation })
         }
-        showAlert({
-          title: '담당자 평가 저장 실패',
-          content: '담당자 A 평가를 저장하지 못했습니다. 다시 시도해 주세요.',
-        })
+        if (shouldShowDocumentEvaluationErrorAlert(error)) {
+          showAlert({
+            title: DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+            content: readDocumentEvaluationErrorMessage(error),
+          })
+        }
         void invalidateVolunteerLists()
       })
     },
@@ -227,14 +234,16 @@ export function useUjatVolunteerDocScreening({
     (id: string, evaluation: UjatManagerEvaluation) => {
       const previousEvaluation = list.find(row => row.id === id)?.managerBEvaluation
       updateRow(id, { managerBEvaluation: evaluation })
-      void updateUjatVolunteerDocumentEvaluationRemote(id, 'B', evaluation).catch(() => {
+      void updateUjatVolunteerDocumentEvaluationRemote(id, 'B', evaluation).catch(error => {
         if (previousEvaluation != null) {
           updateRow(id, { managerBEvaluation: previousEvaluation })
         }
-        showAlert({
-          title: '담당자 평가 저장 실패',
-          content: '담당자 B 평가를 저장하지 못했습니다. 다시 시도해 주세요.',
-        })
+        if (shouldShowDocumentEvaluationErrorAlert(error)) {
+          showAlert({
+            title: DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+            content: readDocumentEvaluationErrorMessage(error),
+          })
+        }
         void invalidateVolunteerLists()
       })
     },
