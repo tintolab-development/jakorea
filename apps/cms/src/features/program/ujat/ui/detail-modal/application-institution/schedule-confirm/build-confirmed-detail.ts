@@ -144,16 +144,64 @@ export function buildEducationScheduleDaysFromTemporarySchedule(
     }))
 }
 
+/**
+ * 간식 제공 가능 여부 — 시안 표시값 `가능` / `불가`.
+ * wire: possible|impossible · 포털 라디오 문구 · 한글 단축.
+ */
+export function mapSnackAvailabilityLabel(raw: string | null | undefined): string | null {
+  const snack = raw?.trim().toLowerCase() ?? ''
+  if (!snack) return null
+  if (
+    snack === 'possible' ||
+    snack === '가능' ||
+    snack.includes('가능합니다') ||
+    snack === 'yes'
+  ) {
+    return '가능'
+  }
+  if (
+    snack === 'impossible' ||
+    snack === '불가' ||
+    snack === '불가능' ||
+    snack.includes('불가능합니다') ||
+    snack === 'no'
+  ) {
+    return '불가'
+  }
+  return raw?.trim() || null
+}
+
 function mapSnackAvailability(dto: UjatOrganizationApplicationDetail | null | undefined): string {
-  const snack = ownString(dto, 'snackAvailability')?.trim().toLowerCase()
-  if (snack === 'possible' || snack === '가능') return '가능'
-  if (snack === 'impossible' || snack === '불가' || snack === '불가능') return '불가'
-  const snackNotice = ownString(dto, 'snackNotice')
-  if (snackNotice?.trim()) return snackNotice.trim()
+  // OpenAPI: snackAvailability = possible|impossible|null. mealNotice와 혼용하지 않는다.
+  // 스펙 필드가 생성 타입에 아직 없을 수 있어 ownString으로만 읽는다.
+  const fromField = mapSnackAvailabilityLabel(ownString(dto, 'snackAvailability'))
+  if (fromField) return fromField
+  const fromNotice = mapSnackAvailabilityLabel(ownString(dto, 'snackNotice'))
+  if (fromNotice) return fromNotice
   return '-'
 }
 
-function mapGuidanceNotes(
+function mapSexOffenderCheckLabel(raw: string | null | undefined): string {
+  const trimmed = raw?.trim()
+  if (!trimmed) return '-'
+  const parts = trimmed
+    .split('|')
+    .map(part => part.trim())
+    .filter(Boolean)
+  // wire enum만 온 경우 시안 라벨로
+  if (parts.length === 1) {
+    const token = parts[0]!.toLowerCase().replace(/-/g, '_')
+    if (token === 'online' || token === 'online_submit') return '온라인 제출'
+    if (token === 'direct' || token === 'direct_submit') return '직접 제출'
+    if (token === 'ja_system') return 'JA 시스템 내에서 동의서 확인'
+    if (token === 'no_submit') return '동의서 미제출'
+    if (token === 'request') return '동의서 제출 요청'
+  }
+  return trimmed
+}
+
+/** 안내 사항 — detail API 프로젝션만 사용 (mealNotice≠간식). */
+export function mapUjatOrganizationGuidanceNotes(
   dto: UjatOrganizationApplicationDetail | null | undefined
 ): UjatScheduleConfirmGuidanceNotes {
   return {
@@ -164,7 +212,7 @@ function mapGuidanceNotes(
     ),
     otherSpecialNotes: displayOrDash(dto?.parkingInfo),
     snackAvailability: mapSnackAvailability(dto),
-    sexOffenderCheck: displayOrDash(ownString(dto, 'sexOffenseCheckRequest')),
+    sexOffenderCheck: mapSexOffenderCheckLabel(ownString(dto, 'sexOffenseCheckRequest')),
   }
 }
 
@@ -203,7 +251,8 @@ export function buildUjatScheduleConfirmConfirmedDetail(
       textbook: mapTextbookForGrade(dto, block),
     })),
     classTimeRows: baseDetail.classTimeRows,
+    preferredEducationDates: [...(baseDetail.preferredEducationDates ?? [])],
     educationScheduleDays: buildEducationScheduleDaysFromTemporarySchedule(temporarySchedule),
-    guidanceNotes: mapGuidanceNotes(dto),
+    guidanceNotes: mapUjatOrganizationGuidanceNotes(dto),
   }
 }

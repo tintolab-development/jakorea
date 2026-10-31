@@ -10,6 +10,7 @@ export type UjatTemporaryScheduleSlotRequest = {
   scheduleId: number
   grade: string
   className: string
+  /** 0 전송 가능 — 서버가 gradeBlocks grade+className 매칭으로 채움. FE가 gradeBlocks로 보완하지 않음. */
   studentCount: number
 }
 
@@ -33,6 +34,7 @@ export type UjatOrganizationScheduleSlotResponse = {
   grade?: string | null
   className?: string | null
   classLabel?: string | null
+  /** GET hydrate 포함. FE는 gradeBlocks로 덮어쓰지 않는다. */
   studentCount?: number | null
   assignmentStatus?: string | null
   scheduleStartAt?: string | null

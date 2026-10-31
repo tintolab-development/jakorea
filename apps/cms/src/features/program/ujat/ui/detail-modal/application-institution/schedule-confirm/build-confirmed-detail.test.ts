@@ -49,7 +49,7 @@ const baseDetail: UjatInstitutionApplicationDetail = {
     },
   ],
   classTimeRows: [],
-  preferredEducationDates: [],
+  preferredEducationDates: ['2026-11-06', '2026-11-13', '2026-11-20'],
 }
 
 describe('buildEducationScheduleDaysFromTemporarySchedule', () => {
@@ -124,7 +124,31 @@ describe('buildUjatScheduleConfirmConfirmedDetail', () => {
       snackAvailability: '가능',
       sexOffenderCheck: '온라인 제출 | ID : tinto | 검증번호 : 940412',
     })
+    expect(detail?.preferredEducationDates).toEqual([
+      '2026-11-06',
+      '2026-11-13',
+      '2026-11-20',
+    ])
     expect(detail?.educationScheduleDays).toEqual([])
+  })
+
+  it('간식·성범죄 wire/폼 원문을 시안 라벨로 정규화한다', () => {
+    const snackPortal = buildUjatScheduleConfirmConfirmedDetail(row, baseDetail, {
+      snackAvailability: '네, 가능합니다.',
+      sexOffenseCheckRequest:
+        '동의서 제출 요청 | 범죄경력회보서 사이트 이용 | 온라인 제출 | 기관 ID tinto | 검증번호 940412',
+    } as never)
+    expect(snackPortal?.guidanceNotes.snackAvailability).toBe('가능')
+    expect(snackPortal?.guidanceNotes.sexOffenderCheck).toBe(
+      '동의서 제출 요청 | 범죄경력회보서 사이트 이용 | 온라인 제출 | 기관 ID tinto | 검증번호 940412'
+    )
+
+    const snackNo = buildUjatScheduleConfirmConfirmedDetail(row, baseDetail, {
+      snackAvailability: 'impossible',
+      sexOffenseCheckRequest: 'online',
+    } as never)
+    expect(snackNo?.guidanceNotes.snackAvailability).toBe('불가')
+    expect(snackNo?.guidanceNotes.sexOffenderCheck).toBe('온라인 제출')
   })
 
   it('안내 필드가 없으면 - 이고 기본 교재명으로 채우지 않는다', () => {

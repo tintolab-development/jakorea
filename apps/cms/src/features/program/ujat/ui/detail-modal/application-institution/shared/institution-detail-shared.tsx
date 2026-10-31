@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react'
+import { formatCompanySchoolSexOffenseParts } from '@/features/program/1c-1s/lib/company-school-sex-offense-display'
 import { CrossTable } from '@/shared/ui/cross-table'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { UjatInstitutionApplicationClassTimeRowDetail } from '../detail/detail-types'
@@ -18,13 +19,14 @@ export function PipeSeparatedValues({ parts }: { parts: ReactNode[] }) {
   )
 }
 
+/**
+ * 성범죄 경력 조회서 요청 — 시안 `온라인 제출 | ID : … | 검증번호 : …`
+ * (폼 원문 `동의서 제출 요청 | 기관 ID …` 등도 formatCompanySchoolSexOffenseParts로 정규화)
+ */
 export function renderCriminalRecordCheckRequest(value: string) {
-  const parts = value
-    .split('|')
-    .map(part => part.trim())
-    .filter(Boolean)
-
-  if (parts.length <= 1) return value || '-'
+  const parts = formatCompanySchoolSexOffenseParts(value)
+  if (parts.length === 0) return value?.trim() || '-'
+  if (parts.length === 1) return parts[0]
 
   return (
     <PipeSeparatedValues

@@ -44,6 +44,7 @@ import {
   applyTemporaryScheduleSlotsToDraft,
   buildTemporaryScheduleSaveRequest,
   collectStudentCountByClass,
+  serializeRemoteTemporaryScheduleSlots,
   serializeTemporaryScheduleSlots,
 } from './temporary-schedule-mapper'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
@@ -179,6 +180,7 @@ export function useUjatInstitutionScheduleAssign(
         hydratedSignatureByInstitutionRef.current = new Map()
         const organizationNames: Record<string, string> = {}
         const byApp = new Map<string, typeof slots>()
+        const remoteSlotsByApp = new Map<string, typeof slots>()
         for (const slot of slots) {
           const appId = slot.organizationApplicationId
           if (appId == null) continue
@@ -203,6 +205,7 @@ export function useUjatInstitutionScheduleAssign(
           if (!matchedRegion) continue
           const counts = collectStudentCountByClass(appSlots, appId)
           for (const [key, value] of counts) studentCountByClassRef.current.set(key, value)
+          remoteSlotsByApp.set(appId, appSlots)
           draft = applyTemporaryScheduleSlotsToDraft({
             regionState: draft,
             institutionRowId: appId,
@@ -222,6 +225,7 @@ export function useUjatInstitutionScheduleAssign(
             const detailSlots = detail.slots ?? []
             const counts = collectStudentCountByClass(detailSlots, appId)
             for (const [key, value] of counts) studentCountByClassRef.current.set(key, value)
+            if (detailSlots.length > 0) remoteSlotsByApp.set(appId, detailSlots)
             draft = applyTemporaryScheduleSlotsToDraft({
               regionState: draft,
               institutionRowId: appId,
@@ -232,6 +236,8 @@ export function useUjatInstitutionScheduleAssign(
             // 미배정 가능
           }
         }
+
+        // studentCount는 API slots[].studentCount만 사용 (BE hydrate SSOT). gradeBlocks FE 보완 금지.
 
         try {
           const estimates = await fetchUjatPlanningEstimates(String(programId))
@@ -247,6 +253,15 @@ export function useUjatInstitutionScheduleAssign(
             ...regionAppIds,
           ])
           for (const institutionId of institutionIds) {
+            const remoteSlots = remoteSlotsByApp.get(institutionId) ?? []
+            if (remoteSlots.length > 0) {
+              // 서버 응답 studentCount(hydrate 포함) 서명
+              signatures.set(
+                institutionId,
+                serializeRemoteTemporaryScheduleSlots(remoteSlots)
+              )
+              continue
+            }
             const body = buildTemporaryScheduleSaveRequest({
               regionKey,
               regionState: draft,
@@ -474,8 +489,18 @@ export function useUjatInstitutionScheduleAssign(
           continue
         }
         try {
-          await putUjatTemporarySchedule(String(programId), institutionId, body)
-          hydratedSignatureByInstitutionRef.current.set(institutionId, nextSignature)
+          const saved = await putUjatTemporarySchedule(String(programId), institutionId, body)
+          const savedSlots = saved.slots ?? []
+          const savedCounts = collectStudentCountByClass(savedSlots, institutionId)
+          for (const [key, value] of savedCounts) {
+            studentCountByClassRef.current.set(key, value)
+          }
+          hydratedSignatureByInstitutionRef.current.set(
+            institutionId,
+            savedSlots.length > 0
+              ? serializeRemoteTemporaryScheduleSlots(savedSlots)
+              : nextSignature
+          )
           results.push({ institutionId, name, ok: true })
         } catch (error) {
           results.push({

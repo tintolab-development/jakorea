@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { ContentModal, CmsButton } from '@/shared/ui'
+import { ContentModal, CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
 import './revision-request-modal.css'
 
@@ -13,6 +13,7 @@ export type UjatScheduleConfirmRevisionRequestModalProps = {
   institutionName: string
   onCancel: () => void
   onConfirm: (payload: UjatScheduleConfirmRevisionRequestModalPayload) => void
+  confirmLoading?: boolean
 }
 
 export function UjatScheduleConfirmRevisionRequestModal({
@@ -20,8 +21,12 @@ export function UjatScheduleConfirmRevisionRequestModal({
   institutionName,
   onCancel,
   onConfirm,
+  confirmLoading = false,
 }: UjatScheduleConfirmRevisionRequestModalProps) {
+  const { showAlert } = useCmsAlert()
   const [message, setMessage] = useState('')
+  const displayName = institutionName.trim() || '기관'
+  const canSubmit = message.trim().length > 0
 
   useEffect(() => {
     if (!open) return
@@ -29,13 +34,23 @@ export function UjatScheduleConfirmRevisionRequestModal({
   }, [open])
 
   const handleCancel = useCallback(() => {
+    if (confirmLoading) return
     setMessage('')
     onCancel()
-  }, [onCancel])
+  }, [confirmLoading, onCancel])
 
   const handleConfirm = useCallback(() => {
-    onConfirm({ message: message.trim() })
-  }, [message, onConfirm])
+    if (confirmLoading) return
+    const trimmed = message.trim()
+    if (!trimmed) {
+      showAlert({
+        title: '필수 항목 미입력 안내',
+        content: '수정사항을 작성해 주세요.',
+      })
+      return
+    }
+    onConfirm({ message: trimmed })
+  }, [confirmLoading, message, onConfirm, showAlert])
 
   return (
     <ContentModal
@@ -45,13 +60,28 @@ export function UjatScheduleConfirmRevisionRequestModal({
       width={800}
       className="ujat-schedule-confirm-revision-request-modal"
       wrapClassName="ujat-schedule-confirm-revision-request-modal-wrap"
-      description={`**[${institutionName}]** 담당교사님에게 전달한 수정사항을 작성해 주세요.`}
+      description={`**[${displayName}]**의 담당 교사에게 전달할 수정사항을 작성해 주세요.`}
       footer={
         <div className="ujat-schedule-confirm-revision-request-modal__footer">
-          <CmsButton variant="secondary" size="large" type="button" width={140} onClick={handleCancel}>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            width={120}
+            disabled={confirmLoading}
+            onClick={handleCancel}
+          >
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="large" type="button" width={140} onClick={handleConfirm}>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            type="button"
+            width={120}
+            loading={confirmLoading}
+            disabled={confirmLoading || !canSubmit}
+            onClick={handleConfirm}
+          >
             수정 요청
           </CmsButton>
         </div>
@@ -65,7 +95,8 @@ export function UjatScheduleConfirmRevisionRequestModal({
       >
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="수정 요청"
+            label="수정사항"
+            required
             fullRow
             edit={
               <CmsTextArea
@@ -75,7 +106,7 @@ export function UjatScheduleConfirmRevisionRequestModal({
                 value={message}
                 onChange={event => setMessage(event.target.value)}
                 placeholder="수정사항을 작성해 주세요"
-                aria-label="수정 요청"
+                aria-label="수정사항"
                 className="ujat-schedule-confirm-revision-request-modal__textarea"
               />
             }
