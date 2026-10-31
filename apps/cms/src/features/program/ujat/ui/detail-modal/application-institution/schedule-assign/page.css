@@ -188,3 +188,162 @@
 .ujat-schedule-assign-estimation .ujat-schedule-assign-estimation__table tbody .cross-table__cell {
   height: 60px;
 }
+
+/* Skeleton — 지역 탭 전환 시 높이 유지 */
+.ujat-schedule-assign-skeleton__bone {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-neutral, #fafafa) 25%,
+    var(--color-border-skeleton, #f0f0f0) 50%,
+    var(--color-bg-neutral, #fafafa) 75%
+  );
+  background-size: 200% 100%;
+  animation: ujat-schedule-assign-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.ujat-schedule-assign-skeleton__date-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-skeleton__date-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+}
+
+.ujat-schedule-assign-skeleton__bone--title {
+  width: 96px;
+  height: 24px;
+}
+
+.ujat-schedule-assign-skeleton__bone--button {
+  width: 120px;
+  height: 40px;
+  border-radius: 6px;
+}
+
+.ujat-schedule-assign-skeleton__row {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 60px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ujat-schedule-assign-skeleton__row .ujat-schedule-assign-skeleton__bone {
+  border-radius: 0;
+  animation: none;
+  background: var(--color-bg-neutral, #f5f7f8);
+}
+
+.ujat-schedule-assign-skeleton__bone--label {
+  flex: 0 0 120px;
+  width: 120px;
+  min-height: 60px;
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  background: var(--BG-header, #f5f7f8);
+}
+
+.ujat-schedule-assign-skeleton__bone--field {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 60px;
+  margin: 12px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-neutral, #fafafa) 25%,
+    var(--color-border-skeleton, #f0f0f0) 50%,
+    var(--color-bg-neutral, #fafafa) 75%
+  );
+  background-size: 200% 100%;
+  animation: ujat-schedule-assign-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.ujat-schedule-assign-skeleton__bone--total {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 60px;
+  margin: 12px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-neutral, #fafafa) 25%,
+    var(--color-border-skeleton, #f0f0f0) 50%,
+    var(--color-bg-neutral, #fafafa) 75%
+  );
+  background-size: 200% 100%;
+  animation: ujat-schedule-assign-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.ujat-schedule-assign-skeleton__estimation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ujat-schedule-assign-skeleton__estimation-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 28px;
+}
+
+.ujat-schedule-assign-skeleton__bone--hint {
+  width: 280px;
+  max-width: 50%;
+  height: 16px;
+}
+
+.ujat-schedule-assign-skeleton__table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.ujat-schedule-assign-skeleton__table-row {
+  display: grid;
+  grid-template-columns: 180px repeat(4, minmax(0, 1fr));
+  align-items: center;
+  min-height: 60px;
+  border-top: 1px solid var(--table-line, #e0e0e0);
+  padding: 0 12px;
+  column-gap: 12px;
+}
+
+.ujat-schedule-assign-skeleton__table-row--head {
+  min-height: 52px;
+  border-top: none;
+  background: var(--BG-header, #f5f7f8);
+}
+
+.ujat-schedule-assign-skeleton__bone--cell {
+  width: 100%;
+  height: 20px;
+}
+
+@keyframes ujat-schedule-assign-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

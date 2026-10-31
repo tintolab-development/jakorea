@@ -86,11 +86,34 @@ export function listTempAssignedSchoolsForDate(
   return listAssignableSchoolsForDate(rows, regionKey, isoDate)
 }
 
+/**
+ * BE `UjatRegionCapacityService.planningEstimates` 와 동일:
+ * volunteers <= 0 → null, else (totalClassCount * 2.0) / volunteers (반올림 없음).
+ * 필수 입력(1일 최대 학급 수·봉사단 수) 미기입 시에도 계산하지 않는다.
+ */
 export function computeVolunteerEducationDays(
   expectedClassCount: number,
-  expectedVolunteerCount: number
+  expectedVolunteerCount: number,
+  requiredInputsEntered = true
 ): number | null {
+  if (!requiredInputsEntered) return null
   if (!Number.isFinite(expectedVolunteerCount) || !Number.isFinite(expectedClassCount)) return null
-  if (expectedVolunteerCount <= 0 || expectedClassCount <= 0) return null
-  return Math.round((expectedClassCount * 2) / expectedVolunteerCount)
+  if (expectedVolunteerCount <= 0) return null
+  return (expectedClassCount * 2) / expectedVolunteerCount
+}
+
+/** 양수 소수점이 0으로 오인되지 않도록 표시. 부동소수 노이즈만 정리. */
+export function formatVolunteerEducationDays(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return '-'
+  if (value === 0) return '0'
+  const normalized = Math.round(value * 1e10) / 1e10
+  if (Number.isInteger(normalized)) return String(normalized)
+  return String(normalized)
+}
+
+export function isScheduleAssignEstimationInputsEntered(
+  maxClassesPerDay: string,
+  expectedVolunteerCount: string
+): boolean {
+  return maxClassesPerDay.trim() !== '' && expectedVolunteerCount.trim() !== ''
 }

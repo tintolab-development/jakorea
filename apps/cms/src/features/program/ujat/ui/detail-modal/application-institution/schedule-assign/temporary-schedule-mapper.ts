@@ -127,7 +127,9 @@ export function buildTemporaryScheduleSaveRequest(input: {
   }
 }
 
-function gradeClassValueFromSlot(slot: UjatOrganizationScheduleSlotResponse): string | null {
+export function gradeClassValueFromSlot(
+  slot: UjatOrganizationScheduleSlotResponse
+): string | null {
   const gradeRaw = slot.grade?.trim()
   if (!gradeRaw) return null
   const gradeLabel = /^\d+$/.test(gradeRaw) ? `${gradeRaw}학년` : gradeRaw

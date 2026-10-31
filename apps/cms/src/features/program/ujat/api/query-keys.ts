@@ -30,7 +30,10 @@ export const queryKeys = {
       'temporary-schedule',
       institutionId,
     ] as const,
-  organizationScheduleAssignments: (programId: string, educationRegionCode: string) =>
+  organizationScheduleAssignments: (
+    programId: string,
+    educationRegionCode: string = 'ALL'
+  ) =>
     [
       ...queryKeys.organizationApplicationsRoot(programId),
       'schedule-assignments',
@@ -52,6 +55,8 @@ export const queryKeys = {
   volunteerApplicationDetail: (applicationId: string) =>
     [...queryKeys.applications(), 'volunteer-detail', applicationId] as const,
   execution: () => [...queryKeys.all, 'execution'] as const,
+  planningEstimates: (programId: string) =>
+    [...queryKeys.execution(), 'planning-estimates', programId] as const,
   allocationMatrix: (
     programId: string,
     educationRegionCode: string,

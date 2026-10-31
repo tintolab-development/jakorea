@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import type { UjatInstitutionApplicationRegionKey } from '../list/regions'
 import { UjatInstitutionScheduleAssignDateBlock } from './date-block'
 import { UjatInstitutionScheduleAssignEstimationTable } from './estimation-table'
+import { UjatInstitutionScheduleAssignSectionSkeleton } from './section-skeleton'
 import { useUjatInstitutionScheduleAssign } from './use-schedule-assign'
 import { collectScheduleAssignPendingInstitutionNames } from './utils'
 
@@ -12,6 +13,7 @@ export type UjatScheduleAssignRemoteSave = () => Promise<
 
 export type UjatScheduleAssignBindMeta = {
   saving: boolean
+  contentLoading: boolean
   remoteEnabled: boolean
   pendingInstitutionNames: string[]
 }
@@ -41,6 +43,7 @@ export function UjatInstitutionScheduleAssignSection({
     semesterClassTotals,
     volunteerEducationDays,
     saveTemporarySchedules,
+    contentLoading,
     saving,
     remoteEnabled,
   } = useUjatInstitutionScheduleAssign(regionKey, programId)
@@ -57,16 +60,29 @@ export function UjatInstitutionScheduleAssignSection({
   useEffect(() => {
     onBindRemoteSave?.(saveTemporarySchedules, {
       saving,
+      contentLoading,
       remoteEnabled,
-      pendingInstitutionNames,
+      pendingInstitutionNames: contentLoading ? [] : pendingInstitutionNames,
     })
     return () =>
       onBindRemoteSave?.(null, {
         saving: false,
+        contentLoading: false,
         remoteEnabled: false,
         pendingInstitutionNames: [],
       })
-  }, [onBindRemoteSave, pendingInstitutionNames, remoteEnabled, saveTemporarySchedules, saving])
+  }, [
+    contentLoading,
+    onBindRemoteSave,
+    pendingInstitutionNames,
+    remoteEnabled,
+    saveTemporarySchedules,
+    saving,
+  ])
+
+  if (contentLoading) {
+    return <UjatInstitutionScheduleAssignSectionSkeleton />
+  }
 
   return (
     <div className="ujat-schedule-assign-section">
@@ -92,7 +108,6 @@ export function UjatInstitutionScheduleAssignSection({
       <hr className="ujat-schedule-assign-section__divider" aria-hidden />
 
       <UjatInstitutionScheduleAssignEstimationTable
-        maxClassesPerDay={regionState.maxClassesPerDay}
         estimation={regionState.estimation}
         semesterClassTotals={semesterClassTotals}
         volunteerEducationDays={volunteerEducationDays}

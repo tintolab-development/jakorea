@@ -4,6 +4,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import type { UjatInstitutionEducationSemesterKey } from '../education-schedule'
 import type { UjatScheduleAssignRegionState } from './types'
+import { formatVolunteerEducationDays } from './utils'
 
 const SEMESTER_ROWS: ReadonlyArray<{ key: UjatInstitutionEducationSemesterKey; label: string }> = [
   { key: 'h1', label: '1학기' },
@@ -16,12 +17,6 @@ const COLUMN_HEADERS = [
   '봉사단 수',
   '봉사단 교육 진행일 수',
 ] as const
-
-const EMPTY_COMPUTED_VALUE = '-'
-
-function formatComputedDays(value: number | null): string {
-  return value != null && Number.isFinite(value) ? String(value) : EMPTY_COMPUTED_VALUE
-}
 
 function ComputedCell({
   filled,
@@ -46,18 +41,19 @@ function ComputedCell({
 }
 
 export function UjatInstitutionScheduleAssignEstimationTable({
-  maxClassesPerDay,
   estimation,
   semesterClassTotals,
   volunteerEducationDays,
   onMaxClassesPerDayChange,
   onExpectedVolunteerCountChange,
 }: {
-  maxClassesPerDay: string
   estimation: UjatScheduleAssignRegionState['estimation']
   semesterClassTotals: Record<UjatInstitutionEducationSemesterKey, number>
   volunteerEducationDays: Record<UjatInstitutionEducationSemesterKey, number | null>
-  onMaxClassesPerDayChange: (value: string) => void
+  onMaxClassesPerDayChange: (
+    semester: UjatInstitutionEducationSemesterKey,
+    value: string
+  ) => void
   onExpectedVolunteerCountChange: (
     semester: UjatInstitutionEducationSemesterKey,
     value: string
@@ -109,9 +105,9 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                       min={0}
                       inputSize="small"
                       width="100%"
-                      placeholder="예상 최대 학급 수를 입력하세요"
-                      value={maxClassesPerDay}
-                      onValueChange={onMaxClassesPerDayChange}
+                      placeholder="예상 최대 학급 수를 입력해 주세요"
+                      value={estimation[semester.key].maxClassesPerDay}
+                      onValueChange={value => onMaxClassesPerDayChange(semester.key, value)}
                     />
                   </td>
                   <td className="cross-table__cell cross-table__cell--data">
@@ -128,7 +124,7 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                       min={0}
                       inputSize="small"
                       width="100%"
-                      placeholder="예상 봉사단 인원을 입력하세요"
+                      placeholder="예상 봉사단 인원을 입력해 주세요"
                       value={estimation[semester.key].expectedVolunteerCount}
                       onValueChange={value =>
                         onExpectedVolunteerCountChange(semester.key, value)
@@ -138,9 +134,9 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                   <td className="cross-table__cell cross-table__cell--data">
                     <ComputedCell
                       filled={volunteerEducationDays[semester.key] != null}
-                      placeholder={EMPTY_COMPUTED_VALUE}
+                      placeholder="예상 봉사단 교육 진행일 수"
                     >
-                      {formatComputedDays(volunteerEducationDays[semester.key])}
+                      {formatVolunteerEducationDays(volunteerEducationDays[semester.key])}
                     </ComputedCell>
                   </td>
                 </tr>

@@ -26,6 +26,7 @@ export function UjatInstitutionScheduleAssignPage({
   const [scheduleSheetOpen, setScheduleSheetOpen] = useState(false)
   const [scheduleSheetRefreshKey, setScheduleSheetRefreshKey] = useState(0)
   const [saving, setSaving] = useState(false)
+  const [contentLoading, setContentLoading] = useState(false)
   const [remoteEnabled, setRemoteEnabled] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [confirmLoading, setConfirmLoading] = useState(false)
@@ -36,6 +37,7 @@ export function UjatInstitutionScheduleAssignPage({
     (save: UjatScheduleAssignRemoteSave | null, meta: UjatScheduleAssignBindMeta) => {
       saveRef.current = save
       setSaving(meta.saving)
+      setContentLoading(meta.contentLoading)
       setRemoteEnabled(meta.remoteEnabled)
       setPendingInstitutionNames(meta.pendingInstitutionNames)
     },
@@ -82,14 +84,17 @@ export function UjatInstitutionScheduleAssignPage({
     try {
       const result = await saveRef.current()
       if (!result.ok) {
-        showAlert({ title: '저장 결과', content: result.message })
+        showAlert({
+          title: '저장 실패',
+          content: result.message?.trim() || '임시 배정 저장에 실패했습니다. 다시 시도해 주세요.',
+        })
         return
       }
       commitUjatScheduleAssignDraft(activeRegion)
       setConfirmOpen(false)
       showAlert({
-        title: '저장 결과',
-        content: result.message?.trim() || '임시 배정 내용이 저장되었습니다.',
+        title: '저장 완료',
+        content: '저장되었습니다.',
       })
     } finally {
       setConfirmLoading(false)
@@ -116,6 +121,7 @@ export function UjatInstitutionScheduleAssignPage({
               type="button"
               variant="secondary"
               width={180}
+              disabled={contentLoading}
               onClick={handleOpenScheduleSheet}
             >
               임시 교육 일정표 확인
@@ -124,7 +130,7 @@ export function UjatInstitutionScheduleAssignPage({
               type="button"
               variant="primary"
               width={140}
-              disabled={saving || confirmLoading}
+              disabled={contentLoading || saving || confirmLoading}
               onClick={requestSaveConfirm}
             >
               임시 배정 저장
