@@ -1,4 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { deletePostsByBulkIdsOrEach } from '@/features/posts/api/shared/posts-bulk-delete'
 import { getJAKoreaCMSBackendAPIPostsSubset } from '@/shared/api/generated/posts/posts-api'
 import { customInstance } from '@/shared/api/orval-mutator'
 import type {
@@ -67,11 +68,11 @@ export async function deleteInquiryRemote(id: string): Promise<void> {
 }
 
 export async function bulkDeleteInquiriesRemote(ids: string[]): Promise<void> {
-  const numericIds = ids.map(pathId).filter((id): id is number => Number.isFinite(id))
-  if (numericIds.length === 0) {
-    throw new Error('삭제할 문의 ID가 올바르지 않습니다.')
-  }
-  await postsApi.bulkDelete2({ ids: numericIds })
+  await deletePostsByBulkIdsOrEach(ids, {
+    bulk: numericIds => postsApi.bulkDelete2({ ids: numericIds }),
+    each: id => deleteInquiryRemote(id),
+    failedMessage: '문의 일괄 삭제에 실패했습니다.',
+  })
 }
 
 function categoryPathId(id: string): string {

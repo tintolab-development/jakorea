@@ -16,7 +16,7 @@ export interface MemberPortalConsentCompleteRequest {
   programEligible?: boolean;
   /** Completed authored form for portrait, payment statement, facilitator pledge, and administrative information consents */
   filledDocument?: FilledDocumentRequest;
-  /** Deprecated compatibility field. Current policy rejects evidence uploads with CONSENT_EVIDENCE_FILE_NOT_ALLOWED */
+  /** CRIMINAL_HISTORY_CHECK_CONSENT 전용, confirm 및 CLEAN 검사를 마친 원본 PDF fileObjectId */
   evidenceFileObjectId?: number;
   /**
      * 만 14세 미만 PORTRAIT_RIGHTS complete 시 필수. POST /api/portal/me/guardian-verifications 이후 VERIFIED 조회에서 받은 one-time token.

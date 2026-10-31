@@ -19,8 +19,7 @@ import {
   setDevAuthLoggedIn,
   setDevMemberProfile,
 } from '@/shared/lib'
-import { PFText } from '@/shared/ui'
-import styles from './page.module.css'
+import { PFLoadingSpinner } from '@/shared/ui'
 
 export function SocialLoginCompletePage() {
   const navigate = useNavigate()
@@ -98,11 +97,5 @@ export function SocialLoginCompletePage() {
     })
   }, [navigate, searchParams])
 
-  return (
-    <section className={styles.loading}>
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-500">
-        소셜 로그인 처리 중…
-      </PFText>
-    </section>
-  )
+  return <PFLoadingSpinner centered label="소셜 로그인 처리 중" />
 }

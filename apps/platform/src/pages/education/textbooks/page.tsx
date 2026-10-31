@@ -16,7 +16,14 @@ import {
   type TextbookSortKey,
   type TextbooksListParams,
 } from '@/features/textbook'
-import { PFButton, PFLoadingSpinner, PFPagination, PFTabs, PFText } from '@/shared/ui'
+import {
+  PFButton,
+  PFLoadingSpinner,
+  PFPagination,
+  PFTabs,
+  PFText,
+  PublicContentPageStatus,
+} from '@/shared/ui'
 import styles from './page.module.css'
 
 export function TextbooksPage() {
@@ -107,16 +114,18 @@ export function TextbooksPage() {
         </header>
 
         {directory.isPending ? (
-          <PFLoadingSpinner centered label="교육 콘텐츠를 불러오는 중" />
+          <PublicContentPageStatus layout="list">
+            <PFLoadingSpinner label="교육 콘텐츠를 불러오는 중" />
+          </PublicContentPageStatus>
         ) : directory.isError ? (
-          <div className={styles.status}>
+          <PublicContentPageStatus layout="list">
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
               교육 콘텐츠를 불러오지 못했습니다.
             </PFText>
             <PFButton variant="tertiary" size="large" onClick={directory.refetch}>
               다시 시도
             </PFButton>
-          </div>
+          </PublicContentPageStatus>
         ) : (
           <div className={styles.directory}>
             {themeSections.map(section => (
@@ -151,23 +160,27 @@ export function TextbooksPage() {
           </div>
 
           {list.isPending ? (
-            <PFLoadingSpinner centered label="교육 콘텐츠를 불러오는 중" />
+            <PublicContentPageStatus layout="list">
+              <PFLoadingSpinner label="교육 콘텐츠를 불러오는 중" />
+            </PublicContentPageStatus>
           ) : list.isError ? (
-            <div className={styles.status}>
+            <PublicContentPageStatus layout="list">
               <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
                 교육 콘텐츠를 불러오지 못했습니다.
               </PFText>
               <PFButton variant="tertiary" size="large" onClick={list.refetch}>
                 다시 시도
               </PFButton>
-            </div>
+            </PublicContentPageStatus>
           ) : (
             <>
               <div className={styles.list}>
                 {list.items.length === 0 ? (
-                  <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-                    검색 결과가 없습니다.
-                  </PFText>
+                  <PublicContentPageStatus layout="list">
+                    <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                      검색 결과가 없습니다.
+                    </PFText>
+                  </PublicContentPageStatus>
                 ) : (
                   list.items.map(item => (
                     <ContentListItem

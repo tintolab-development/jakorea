@@ -47,6 +47,7 @@ export interface AdminContentModalProps {
   wrapClassName?: string
   rootClassName?: string
   modalStyles?: ModalProps['styles']
+  afterOpenChange?: (open: boolean) => void
 }
 
 export function AdminContentModal({
@@ -68,6 +69,7 @@ export function AdminContentModal({
   wrapClassName,
   rootClassName,
   modalStyles,
+  afterOpenChange,
 }: AdminContentModalProps) {
   const resolvedClassName = [
     'content-modal',
@@ -99,6 +101,7 @@ export function AdminContentModal({
       wrapClassName={wrapClassName}
       rootClassName={rootClassName}
       styles={modalStyles}
+      afterOpenChange={afterOpenChange}
     >
       {description != null && description !== '' ? (
         <div className="content-modal__description">

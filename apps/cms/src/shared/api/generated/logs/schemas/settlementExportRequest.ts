@@ -57,19 +57,19 @@ export interface SettlementExportRequest {
      */
   approvalReference?: string;
   /**
-     * 화면에서 선택한 정산 ID(settlement.id). 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다. 계좌 지급 ID(account_payment.id)를 넣으면 안 됩니다.
+     * 화면에서 선택한 정산 ID(settlement.id). 지정하면 필터 결과 중 해당 정산만 발급하며, 미지급/누락/권한 밖 ID가 섞이면 발급하지 않습니다. 계좌 지급 ID(account_payment.id)를 넣으면 안 됩니다. settlementIds와 accountPaymentIds가 모두 빈 배열이거나 생략되고 프로그램·강사·기간·상태 필터도 없으면 권한 안 전체 대상(전체 범위)입니다. 선택 건 발급은 승인 rowCount와 searchSnapshotHash가 이 조회 범위와 같을 때만 가능합니다.
      * @minItems 0
      * @maxItems 5000
      * @items.minimum 1
      */
   settlementIds?: number[];
   /**
-     * 정산과 연결되지 않은 직접 계좌 지급 ID(account_payment.id, 예: Gemini 교육 보고서 지급). 대량이체에서만 허용하며 settlement 연결 지급 ID가 섞이면 발급하지 않습니다. 미지정 시 빈 배열입니다.
+     * 정산과 연결되지 않은 직접 계좌 지급 ID(account_payment.id, 예: Gemini 교육 보고서 지급). 대량이체에서만 허용하며 settlement 연결 지급 ID가 섞이면 발급하지 않습니다. 미지정 시 빈 배열입니다. settlementIds와 함께 둘 다 빈 배열이면 상태별 전체 대상이며, 승인에 searchSnapshotHash가 없으면 이 전체 범위만 발급됩니다. 선택 ID보다 넓은 원문은 같은 approvalReference로 발급할 수 없습니다.
      * @minItems 0
      * @maxItems 5000
      * @items.minimum 1
      */
   accountPaymentIds?: number[];
-  rawPrivacyApprovalValid?: boolean;
   dateRangeValid?: boolean;
+  rawPrivacyApprovalValid?: boolean;
 }

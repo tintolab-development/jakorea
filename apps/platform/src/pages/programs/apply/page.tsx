@@ -358,7 +358,10 @@ import {
   readUjatSubmitConfirmationItem,
 } from '@/features/program/ui/apply-ujat-institution-submit-confirmation/apply-ujat-institution-submit-confirmation'
 import { preparePortalUjatApplicationDraft } from '@/features/program/lib/ujat-application-fill-placeholders'
-import { readUjatPreferredEducationScheduleOptions } from '@/features/program/lib/ujat-preferred-education-schedule-options'
+import {
+  readUjatPreferredEducationScheduleOptions,
+  resolveUjatPreferredScheduleSelectedOptions,
+} from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
 import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
@@ -1693,6 +1696,7 @@ export function ProgramApplyPage() {
             options={ujatPreferredScheduleOptions}
             selectedIds={ujatPreferredScheduleIds}
             onChange={setUjatPreferredScheduleIds}
+            optionsReady={applicationFormQuery.status === 'ready'}
           />
         )
       }
@@ -2579,14 +2583,15 @@ export function ProgramApplyPage() {
         : null
       const preferredScheduleBlocks = isUjatInstitutionApplyFormCase(applyCase)
         ? toPortalPreferredScheduleBlocks(
-            ujatPreferredScheduleOptions
-              .filter(option => ujatPreferredScheduleIds.includes(option.id))
-              .map(option => ({
-                date: option.date,
-                classPeriod: '',
-                startTime: '',
-                endTime: '',
-              })),
+            resolveUjatPreferredScheduleSelectedOptions(
+              ujatPreferredScheduleIds,
+              ujatPreferredScheduleOptions,
+            ).map(option => ({
+              date: option.date,
+              classPeriod: '',
+              startTime: '',
+              endTime: '',
+            })),
             { dateFieldsOnly: true }
           )
         : showPreferredScheduleInput &&

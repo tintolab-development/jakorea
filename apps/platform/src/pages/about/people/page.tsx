@@ -4,7 +4,13 @@ import {
   PEOPLE_HERO_TITLE,
   usePublicPeople,
 } from '@/features/people'
-import { PFButton, PFDivider, PFLoadingSpinner, PFText } from '@/shared/ui'
+import {
+  PFButton,
+  PFDivider,
+  PFLoadingSpinner,
+  PFText,
+  PublicContentPageStatus,
+} from '@/shared/ui'
 import styles from './page.module.css'
 
 export function PeoplePage() {
@@ -26,20 +32,24 @@ export function PeoplePage() {
         </header>
 
         {isPending ? (
-          <PFLoadingSpinner centered label="함께하는 사람들 정보를 불러오는 중" />
+          <PublicContentPageStatus layout="list">
+            <PFLoadingSpinner label="함께하는 사람들 정보를 불러오는 중" />
+          </PublicContentPageStatus>
         ) : isError ? (
-          <div className={styles.status}>
+          <PublicContentPageStatus layout="list">
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
               함께하는 사람들 정보를 불러오지 못했습니다.
             </PFText>
             <PFButton variant="tertiary" size="large" onClick={refetch}>
               다시 시도
             </PFButton>
-          </div>
+          </PublicContentPageStatus>
         ) : view == null ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
-            등록된 정보가 없습니다.
-          </PFText>
+          <PublicContentPageStatus layout="list">
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              등록된 정보가 없습니다.
+            </PFText>
+          </PublicContentPageStatus>
         ) : (
           <>
             {view.imageUrl ? (

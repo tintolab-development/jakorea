@@ -16,6 +16,7 @@ export interface NotificationDeliveryResponse {
   recipientActorId?: number;
   /** 발송 채널 유형(ALIMTALK|SMS|EMAIL) */
   channelType?: string;
+  /** 목록 GET: 마스킹된 수신 연락처. 상세 GET: 감사 성공 후 원문. 레거시 필드명을 유지합니다. */
   recipientContactMasked?: string;
   templateCodeSnapshot?: string;
   deliveryStatus?: string;
@@ -47,6 +48,7 @@ export interface NotificationDeliveryResponse {
   sendTiming?: string;
   senderDisplayName?: string;
   senderKey?: string;
+  /** 수신자 이름. 2026-10-26 정책상 일반 이름은 마스킹하지 않습니다. */
   recipientName?: string;
   /** 템플릿 표시명. EMAIL 메일 제목(renderedTitle)과 다름 — 제목 위장 금지. */
   templateDisplayName?: string;

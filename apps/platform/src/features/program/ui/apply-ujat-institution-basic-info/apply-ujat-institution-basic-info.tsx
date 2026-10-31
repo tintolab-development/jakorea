@@ -293,29 +293,33 @@ export function ApplyUjatInstitutionBasicInfo({
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
         <PFFormField label="기타 요청사항">
-          <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-            <PFCheckbox
-              checked={value.otherRequestsNotApplicable}
-              onCheckedChange={checked =>
-                patch({
-                  otherRequestsNotApplicable: checked,
-                  otherRequests: checked ? '' : value.otherRequests,
-                })
-              }
-            >
-              해당 없음
-            </PFCheckbox>
+          <PFFormInlineRow className={styles.otherRequestsRow}>
+            <PFFormInlineSegment className={styles.otherRequestsCheck}>
+              <PFCheckbox
+                checked={value.otherRequestsNotApplicable}
+                onCheckedChange={checked =>
+                  patch({
+                    otherRequestsNotApplicable: checked,
+                    otherRequests: checked ? '' : value.otherRequests,
+                  })
+                }
+              >
+                해당 없음
+              </PFCheckbox>
+            </PFFormInlineSegment>
             <PFFormInlineSeparator />
-            <PFTextarea
-              variant="formPage"
-              width="100%"
-              rows={1}
-              disabled={value.otherRequestsNotApplicable}
-              placeholder="기타 요청사항을 입력해 주세요."
-              value={value.otherRequests}
-              onValueChange={next => patch({ otherRequests: next })}
-            />
-          </div>
+            <PFFormInlineSegment className={styles.otherRequestsInput}>
+              <PFTextarea
+                variant="formPage"
+                width="100%"
+                rows={1}
+                disabled={value.otherRequestsNotApplicable}
+                placeholder="기타 요청사항을 입력해 주세요."
+                value={value.otherRequests}
+                onValueChange={next => patch({ otherRequests: next })}
+              />
+            </PFFormInlineSegment>
+          </PFFormInlineRow>
         </PFFormField>
       </PFFormFieldRow>
     </PFFormFieldTable>

@@ -297,11 +297,11 @@ export const PRIVACY_NOTICE_CONTENT: TermsDocumentContent = {
         rows: [
           {
             id: 'name',
-            cells: { label: '개인정보 보호책임자 성명', value: '클라이언트 확인 필요' },
+            cells: { label: '개인정보 보호책임자 성명', value: '-' },
           },
-          { id: 'role', cells: { label: '직책/부서', value: '클라이언트 확인 필요' } },
-          { id: 'phone', cells: { label: '연락처', value: '클라이언트 확인 필요' } },
-          { id: 'email', cells: { label: '이메일', value: '클라이언트 확인 필요' } },
+          { id: 'role', cells: { label: '직책/부서', value: '-' } },
+          { id: 'phone', cells: { label: '연락처', value: '-' } },
+          { id: 'email', cells: { label: '이메일', value: '-' } },
         ],
       },
     },
@@ -327,8 +327,8 @@ export const PRIVACY_NOTICE_CONTENT: TermsDocumentContent = {
           { key: 'value', label: '내용' },
         ],
         rows: [
-          { id: 'effective', cells: { label: '시행일', value: '클라이언트 확인 필요' } },
-          { id: 'revised', cells: { label: '최종 개정일', value: '클라이언트 확인 필요' } },
+          { id: 'effective', cells: { label: '시행일', value: '-' } },
+          { id: 'revised', cells: { label: '최종 개정일', value: '-' } },
           {
             id: 'notice',
             cells: { label: '변경 고지 방법', value: '웹사이트 공지사항 또는 서비스 화면 고지' },

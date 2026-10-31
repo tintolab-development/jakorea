@@ -9,6 +9,14 @@ export function toBulkNumericIds(ids: string[]): number[] {
   })
 }
 
+/** BulkIdsRequest Long id. UUID·접두 문자열은 null. */
+export function parseBulkPositiveIntegerId(id: string): number | null {
+  const trimmed = id.trim()
+  if (!/^[1-9]\d*$/.test(trimmed)) return null
+  const parsed = Number(trimmed)
+  return Number.isSafeInteger(parsed) ? parsed : null
+}
+
 export function assertBulkDeleteSucceeded(
   result: BulkActionResponse | undefined,
   fallbackMessage: string

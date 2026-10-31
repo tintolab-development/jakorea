@@ -16,12 +16,17 @@ assert.equal(all.keyword, undefined)
 assert.equal(all.programType, undefined)
 assert.equal(all.sort, 'LATEST')
 
+const leftoverProgramType = toPortalProgramListQuery(
+  { ...DEFAULT_PROGRAMS_LIST_PARAMS, programType: 'UJAT', programTypeValues: ['UJAT'] },
+  10,
+)
+assert.equal(leftoverProgramType.programType, undefined)
+
 const filtered = toPortalProgramListQuery(
   {
     ...DEFAULT_PROGRAMS_LIST_PARAMS,
     category: 'youth',
     q: '금융',
-    programType: 'UJAT',
     recruitmentStatus: 'scheduled',
     educationForm: 'online',
     educationTarget: 'university',
@@ -34,7 +39,7 @@ const filtered = toPortalProgramListQuery(
 )
 assert.equal(filtered.portalTab, 'YOUTH_YOUNG')
 assert.equal(filtered.keyword, '금융')
-assert.equal(filtered.programType, 'UJAT')
+assert.equal(filtered.programType, undefined)
 assert.equal(filtered.recruitmentStatus, 'UPCOMING')
 assert.equal(filtered.educationMethod, 'ONLINE')
 assert.equal(filtered.recruitmentTarget, 'high')

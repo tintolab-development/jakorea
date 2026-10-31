@@ -22,7 +22,7 @@ export interface NotificationCatalogVariableItem {
   /** 삽입 허용 SSOT(값 존재와 무관). FE 재계산 금지. true여도 원천 데이터 없으면 발송 실패 가능. */
   enabled?: boolean;
   /** 허용 프로그램 유형 그룹. 비면 제한 없음 */
-  programGroups?: string[];
+  programGroups: string[];
   /** 필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음 */
   recruitmentTypes?: string[];
   /** 허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER. */

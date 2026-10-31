@@ -289,9 +289,8 @@ export type ProgramsListParams = {
   q: string
   /** 모집 유형 직접 조회용 URL 상태. 기본 목록에서는 생략한다. */
   applicationType?: PortalApplicationType
-  /** 원장 프로그램 유형 필터 (예: UJAT) */
+  /** 목록 기본값 호환용. 참여하기 목록 필터·API에는 쓰지 않는다. */
   programType: string
-  /** URL/API에 반복값으로 복원된 프로그램 유형 필터. 기존 단일 선택 UI는 programType을 사용한다. */
   programTypeValues?: string[]
   /** 모집대상 필터 — 초등~성인 (탭과 분리) */
   recruitmentTarget: string

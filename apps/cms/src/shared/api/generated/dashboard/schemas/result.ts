@@ -5,10 +5,11 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
-import type { ApplicationDecisionResponse } from './applicationDecisionResponse';
-import type { ScopeResponse } from './scopeResponse';
 
 export interface Result {
-  decision?: ApplicationDecisionResponse;
-  educationScope?: ScopeResponse;
+  status?: string;
+  guardianConsentRowsDeleted?: number;
+  guardianSessionRowsDeleted?: number;
+  guardianIdentitySessionRowsDeleted?: number;
+  blockCode?: string;
 }

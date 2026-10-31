@@ -16,6 +16,7 @@ const PROGRAM_PROGRESS_EXACT_PATHS = new Set([
   '/api/admin/programs/{programId}/participant-register-candidates',
   '/api/admin/programs/{programId}/volunteer-participants/register',
   '/api/admin/programs/{programId}/employee-volunteer-counts',
+  '/api/admin/programs/{programId}/participants/{participantId}/1365-registration-form',
 ])
 
 function collectSchemaNames(node, names = new Set()) {

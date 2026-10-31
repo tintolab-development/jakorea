@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { PFText } from '@/shared/ui'
+import { PFLoadingSpinner, PFText } from '@/shared/ui'
 import { isAdminProvisionedIdentityConfirmPending } from '@/features/auth/admin-registered'
 import {
   buildIdentityCallbackKey,
@@ -71,11 +71,5 @@ export function SignUpIdentityCallbackPage() {
     )
   }
 
-  return (
-    <div className={styles.fallback}>
-      <PFText as="p" typo="bd-md-md" color="neutral-warm-600">
-        본인인증을 확인하는 중이에요…
-      </PFText>
-    </div>
-  )
+  return <PFLoadingSpinner centered label="본인인증 확인 중" />
 }

@@ -71,11 +71,6 @@ export function toPortalProgramListQuery(
 ): PortalProgramListQuery {
   const category = params.category
   const portalTab = category === 'all' ? undefined : PORTAL_TAB[category]
-  const programType = mappedFilterValue(
-    params.programType,
-    params.programTypeValues,
-    value => value.toUpperCase(),
-  )
   const recruitmentStatus = mappedFilterValue(
     params.recruitmentStatus,
     params.recruitmentStatusValues,
@@ -105,7 +100,6 @@ export function toPortalProgramListQuery(
     keyword: omitAll(params.q),
     portalTab,
     applicationType: params.applicationType,
-    programType,
     recruitmentStatus,
     recruitmentTarget: recruitmentTargetFilter,
     educationTarget: educationTargetFilter,

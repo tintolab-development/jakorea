@@ -8,7 +8,12 @@ import {
   RevenueTable,
   usePublicTransparency,
 } from '@/features/transparency'
-import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import {
+  PFButton,
+  PFText,
+  PublicContentPageLoading,
+  PublicContentPageStatus,
+} from '@/shared/ui'
 import styles from './page.module.css'
 
 export function TransparencyPage() {
@@ -17,9 +22,7 @@ export function TransparencyPage() {
   if (isPending) {
     return (
       <section className={styles.page}>
-        <div className={styles.content}>
-          <PFLoadingSpinner centered label="투명경영 정보를 불러오는 중" />
-        </div>
+        <PublicContentPageLoading label="투명경영 정보를 불러오는 중" />
       </section>
     )
   }
@@ -27,14 +30,14 @@ export function TransparencyPage() {
   if (isError || !view) {
     return (
       <section className={styles.page}>
-        <div className={styles.content}>
+        <PublicContentPageStatus>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             투명경영 정보를 불러오지 못했습니다.
           </PFText>
           <PFButton variant="tertiary" size="large" onClick={refetch}>
             다시 시도
           </PFButton>
-        </div>
+        </PublicContentPageStatus>
       </section>
     )
   }

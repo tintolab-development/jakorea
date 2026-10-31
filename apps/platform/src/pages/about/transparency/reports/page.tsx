@@ -11,7 +11,14 @@ import {
   type TransparencyReportsListParams,
 } from '@/features/transparency'
 import { useDebouncedValue } from '@/shared/hooks'
-import { PFLoadingSpinner, PFPagination, PFSearchInput, PFTabs, PFText } from '@/shared/ui'
+import {
+  PFLoadingSpinner,
+  PFPagination,
+  PFSearchInput,
+  PFTabs,
+  PFText,
+  PublicContentPageStatus,
+} from '@/shared/ui'
 import styles from './page.module.css'
 
 const PAGE_CONFIG: Record<
@@ -149,15 +156,21 @@ export function TransparencyReportsPage({ type }: TransparencyReportsPageProps) 
           </div>
 
           {listQuery.isError ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              보고서 목록을 불러오지 못했습니다.
-            </PFText>
+            <PublicContentPageStatus layout="list">
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                보고서 목록을 불러오지 못했습니다.
+              </PFText>
+            </PublicContentPageStatus>
           ) : listQuery.isPending ? (
-            <PFLoadingSpinner centered label="보고서 목록을 불러오는 중" />
+            <PublicContentPageStatus layout="list">
+              <PFLoadingSpinner label="보고서 목록을 불러오는 중" />
+            </PublicContentPageStatus>
           ) : listQuery.items.length === 0 ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              검색 결과가 없습니다.
-            </PFText>
+            <PublicContentPageStatus layout="list">
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                검색 결과가 없습니다.
+              </PFText>
+            </PublicContentPageStatus>
           ) : (
             <div
               className={[styles.grid, type === 'annual' ? styles.gridAnnual : styles.gridAudit].join(

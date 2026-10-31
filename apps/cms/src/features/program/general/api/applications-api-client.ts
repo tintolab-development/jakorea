@@ -7,7 +7,7 @@ import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/da
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { IndividualApprovalWithScopeBulkTarget } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget'
 import type { IndividualApprovalWithScopeRequest } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeRequest'
-import type { Result as IndividualApprovalWithScopeResult } from '@/shared/api/generated/dashboard/schemas/result'
+import type { IndividualApprovalWithScopeResult } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeResult'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { TimedBulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/timedBulkIdsRequest'
 import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas/bulkResultRequest'

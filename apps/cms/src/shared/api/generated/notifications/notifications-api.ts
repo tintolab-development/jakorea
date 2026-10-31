@@ -1823,7 +1823,7 @@ const listNotificationDeliveries = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 2026-09-23 Notion send-history detail: unmasked recipient identity/contact with automatic privacy access audit.
+ * - 검토 메모: CMS-26: MASTER/PM/AM 감사 성공 후 원문. PROGRAM_VIEWER 403. 목록 GET은 마스킹.
  * @summary 알림톡/문자/메일 발송 이력 상세 조회
  */
 const getNotificationDelivery = (
