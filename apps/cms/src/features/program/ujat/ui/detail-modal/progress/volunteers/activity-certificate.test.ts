@@ -4,8 +4,10 @@ import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildLectureAttendanceSessionsFromBundle,
   buildStudentCertificateContextFromUjatVolunteer,
+  describeUjatCertificateProgressBlock,
   formatLectureAttendanceFromBundle,
   resolveAssignedInstitutionNamesFromBundle,
+  UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT,
 } from './activity-certificate'
 import type { UjatVolunteerAssignmentProgressBundle } from './detail/assignment-types'
 import type { UjatEducationProgressVolunteerDetail } from './detail/volunteer-detail-data'
@@ -351,5 +353,29 @@ describe('activity-certificate builders', () => {
     })
 
     expect(formatLectureAttendanceFromBundle(bundle)).toBe('2/3')
+  })
+})
+
+describe('describeUjatCertificateProgressBlock', () => {
+  it('blocks issuance when there is no assignment (FE-R3)', () => {
+    expect(
+      describeUjatCertificateProgressBlock({
+        isLoading: false,
+        isError: false,
+        isParticipantUnresolved: false,
+        hasNoAssignment: true,
+      })
+    ).toBe(UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT)
+  })
+
+  it('does not block when assignment rows exist', () => {
+    expect(
+      describeUjatCertificateProgressBlock({
+        isLoading: false,
+        isError: false,
+        isParticipantUnresolved: false,
+        hasNoAssignment: false,
+      })
+    ).toBeNull()
   })
 })

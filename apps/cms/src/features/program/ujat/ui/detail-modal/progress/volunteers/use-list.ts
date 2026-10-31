@@ -77,9 +77,10 @@ function mapApplicantToProgressVolunteer(
 ): UjatEducationProgressVolunteerRow {
   const regionKey = mapRegionKey(row)
   const withdrawn = row.interviewAssignmentStatus === 'withdrawn'
-  const completed =
-    row.secondInterviewScreeningStatus === 'pass' ||
-    row.secondInterviewScreeningStatus === 'completed'
+  const totalAssignedDays =
+    typeof row.totalAssignedDays === 'number' ? row.totalAssignedDays : null
+  // 교육 배정 현황 = 실제 배정일 수 (면접 합격≠배정 완료). CMS 추가등록 PASS도 배정 0이면 대기.
+  const hasAssignment = (totalAssignedDays ?? 0) > 0
 
   return {
     id: row.id,
@@ -93,10 +94,10 @@ function mapApplicantToProgressVolunteer(
     memberId: row.memberId,
     birthDate: row.birthDate,
     id1365: row.id1365,
-    totalAssignedDays: typeof row.totalAssignedDays === 'number' ? row.totalAssignedDays : null,
+    totalAssignedDays,
     assignmentStatus: withdrawn
       ? 'activity_abandoned'
-      : completed
+      : hasAssignment
         ? 'assignment_completed'
         : 'assignment_waiting',
   }
@@ -129,8 +130,9 @@ export function useUjatEducationProgressVolunteers(
 
   const listQuery = useMemo(() => {
     const keyword = appliedFilters.volunteerName.trim() || undefined
+    // BE VolunteerFinalResult = PASS|FAIL|RESERVE (APPROVED 별칭은 이 목록에서 빈 결과)
     return {
-      finalResultStatus: 'APPROVED' as const,
+      finalResultStatus: 'PASS' as const,
       ...(keyword ? { keyword } : {}),
     }
   }, [appliedFilters.volunteerName])

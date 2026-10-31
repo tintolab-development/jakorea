@@ -176,11 +176,14 @@ export function describeUjatCertificateProgressBlock(input: {
   isLoading: boolean
   isError: boolean
   isParticipantUnresolved: boolean
+  /** 배정 행 0건이면 발급 차단 (FE-R3) */
+  hasNoAssignment?: boolean
 }): string | null {
   if (input.isLoading) return '배정/출결 정보를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.'
   if (input.isError) return '배정/출결 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.'
   if (input.isParticipantUnresolved) {
     return '봉사자 참가자를 확인할 수 없어 인증서를 발급할 수 없습니다.'
   }
+  if (input.hasNoAssignment) return UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT
   return null
 }
