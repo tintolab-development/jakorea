@@ -44,4 +44,11 @@ describe('withExpectedUpdatedAt', () => {
     expect(withExpectedUpdatedAt({ title: '예시' }, undefined)).toEqual({ title: '예시' })
     expect(withExpectedUpdatedAt({ title: '예시' }, '  ')).toEqual({ title: '예시' })
   })
+
+  it('serializes Date updatedAt to ISO', () => {
+    expect(withExpectedUpdatedAt({ title: '예시' }, new Date('2026-11-01T00:00:00.000Z'))).toEqual({
+      title: '예시',
+      expectedUpdatedAt: '2026-11-01T00:00:00.000Z',
+    })
+  })
 })

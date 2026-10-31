@@ -27,12 +27,21 @@ export function readProgramAuditNames(dto: unknown): ProgramAuditNameFields {
   }
 }
 
+function readExpectedUpdatedAt(updatedAt: string | Date | null | undefined): string | undefined {
+  if (updatedAt == null) return undefined
+  if (updatedAt instanceof Date) {
+    return Number.isNaN(updatedAt.getTime()) ? undefined : updatedAt.toISOString()
+  }
+  const trimmed = updatedAt.trim()
+  return trimmed || undefined
+}
+
 /** PATCH `/api/admin/programs/{id}` 낙관적 잠금. GET `updatedAt`이 있을 때만 실어 보낸다. */
 export function withExpectedUpdatedAt<T extends object>(
   body: T,
-  updatedAt: string | null | undefined
+  updatedAt: string | Date | null | undefined
 ): T & { expectedUpdatedAt?: string } {
-  const expectedUpdatedAt = updatedAt?.trim()
+  const expectedUpdatedAt = readExpectedUpdatedAt(updatedAt)
   if (!expectedUpdatedAt) return body
   return { ...body, expectedUpdatedAt }
 }
