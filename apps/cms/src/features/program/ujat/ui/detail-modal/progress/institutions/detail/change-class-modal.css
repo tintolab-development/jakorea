@@ -37,13 +37,14 @@
 .content-modal.ujat-education-progress-change-class-modal.teal-header-modal .ant-modal-content {
   display: flex;
   width: 600px;
-  max-height: calc(100vh - 32px);
-  padding: 26px 30px 34px;
+  height: 494px;
+  max-height: min(494px, calc(100vh - 32px));
+  padding: 24px 30px 34px;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
@@ -66,7 +67,7 @@
   align-items: stretch;
   min-height: 0;
   margin-top: 0 !important;
-  padding-top: 16px;
+  padding-top: 12px;
   gap: 0;
   overflow: hidden;
 }
@@ -79,12 +80,9 @@
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 150%;
-}
-
-.ujat-education-progress-change-class-modal__description p {
-  margin: 0;
+  white-space: pre-line;
 }
 
 .content-modal.ujat-education-progress-change-class-modal .teal-header-modal__footer {
@@ -105,25 +103,38 @@
 }
 
 .ujat-education-progress-change-class-modal__apply-date-label {
-  color: var(--main-BK, #3d3d3d);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--content-secondary, #525252);
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 140%;
+}
+
+.ujat-education-progress-change-class-modal__required {
+  color: var(--status-red-main, #c32f4a);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .ujat-education-progress-change-class-modal__apply-date-field .cms-select {
   width: 100%;
+  max-width: 100%;
 }
 
+/* Figma: toolbar 32 + gap 10 + table(44+56)=100 → section 142. 추가 행은 스크롤 */
 .ujat-education-progress-change-class-modal__table-section {
   display: flex;
   width: 100%;
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
 }
 
@@ -132,26 +143,39 @@
   width: 100%;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
+  height: 32px;
+}
+
+.ujat-education-progress-change-class-modal__toolbar-btn.cms-button.ant-btn {
+  min-width: 80px;
+  width: 80px;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 8px 10px !important;
+  font-size: 14px;
 }
 
 .ujat-education-progress-change-class-modal__table {
   display: flex;
   width: 100%;
   flex-direction: column;
-  border-top: 1px solid var(--table-line, #e0e0e0);
-  border-left: 1px solid var(--table-line, #e0e0e0);
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 10px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
   overflow: hidden;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
+  /* header 44 + 1 row 56; max ~3 rows before scroll */
+  min-height: 100px;
+  max-height: 212px;
+  box-sizing: border-box;
 }
 
 .ujat-education-progress-change-class-modal__table-scroll {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
+  max-height: 212px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -163,6 +187,7 @@
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr);
   align-items: stretch;
+  width: 100%;
 }
 
 .ujat-education-progress-change-class-modal__header-row {
@@ -179,6 +204,7 @@
   border-right: 1px solid var(--table-line, #e0e0e0);
   border-bottom: 1px solid var(--table-line, #e0e0e0);
   min-width: 0;
+  overflow: hidden;
 }
 
 .ujat-education-progress-change-class-modal__header-cell:last-child,
@@ -187,17 +213,23 @@
 }
 
 .ujat-education-progress-change-class-modal__header-cell {
-  min-height: 50px;
-  padding: 10px 12px;
+  height: 44px;
+  min-height: 44px;
+  padding: 4px 12px;
   justify-content: center;
-  background: #f5f6f7;
+  background-image: linear-gradient(
+      90deg,
+      rgba(231, 235, 239, 0.6) 0%,
+      rgba(231, 235, 239, 0.6) 100%
+    ),
+    linear-gradient(90deg, #fff 0%, #fff 100%);
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%;
+  line-height: 150%;
 }
 
 .ujat-education-progress-change-class-modal__header-cell--checkbox,
@@ -207,26 +239,67 @@
 }
 
 .ujat-education-progress-change-class-modal__body-cell {
-  min-height: 64px;
-  padding: 10px 12px;
+  height: 56px;
+  min-height: 56px;
+  padding: 10px;
 }
 
 .ujat-education-progress-change-class-modal__class-fields {
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
 }
 
-.ujat-education-progress-change-class-modal__class-fields .cms-select {
+.ujat-education-progress-change-class-modal__field {
+  display: flex;
   flex: 1 1 0;
+  align-items: center;
   min-width: 0;
+  height: 36px;
 }
 
-.ujat-education-progress-change-class-modal__class-fields .cms-input {
-  flex: 1 1 0;
-  min-width: 0;
+.ujat-education-progress-change-class-modal__field-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 13px;
+  background: #3d3d3d;
+  opacity: 0.5;
+}
+
+.ujat-education-progress-change-class-modal__field .cms-select,
+.ujat-education-progress-change-class-modal__field .cms-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  flex: 1 1 0% !important;
+  flex-grow: 1 !important;
+  flex-shrink: 1 !important;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.ujat-education-progress-change-class-modal__field .cms-select.cms-select--explicit-width {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.ujat-education-progress-change-class-modal__field .cms-select .ant-select,
+.ujat-education-progress-change-class-modal__field .cms-select .ant-select-selector {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.ujat-education-progress-change-class-modal__field .cms-select--small,
+.ujat-education-progress-change-class-modal__field .cms-input--small {
+  height: 36px;
+}
+
+.ujat-education-progress-change-class-modal__field .cms-select--small .ant-select-selector {
+  height: 36px !important;
+  align-items: center;
 }
 
 .ujat-education-progress-change-class-modal__footer {
@@ -234,7 +307,19 @@
   width: 100%;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.content-modal.ujat-education-progress-change-class-modal
+  .content-modal__footer-actions
+  .cms-button.ant-btn {
+  width: 120px;
+  min-width: 120px;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 6px 16px !important;
+  font-size: 14px;
 }
 
 .ujat-education-progress-change-class-modal__form-error {

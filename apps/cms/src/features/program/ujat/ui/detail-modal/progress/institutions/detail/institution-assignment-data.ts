@@ -1,3 +1,4 @@
+import { toSeoulYmd } from '@/features/program/ujat/api/applications-adapters'
 import {
   fetchUjatAllocationMatrix,
   fetchUjatPartnerAssignments,
@@ -14,6 +15,17 @@ export type InstitutionAssignmentSources = {
 
 const UNASSIGNED_VOLUNTEER = '-'
 const UNASSIGNED_MANAGER = '미정'
+
+/** 엄격 숫자 비교 — API number vs URL string "1691554" 불일치로 0건 되는 것 방지 */
+export function sameOrganizationApplicationId(
+  left: number | string | null | undefined,
+  right: number | string | null | undefined
+): boolean {
+  if (left == null || right == null) return false
+  const a = typeof left === 'number' ? left : Number(left)
+  const b = typeof right === 'number' ? right : Number(right)
+  return Number.isFinite(a) && Number.isFinite(b) && a === b
+}
 
 function isCancelledAssignment(assignment: UjatPartnerAssignmentResponse): boolean {
   if (assignment.cancelledAt) return true
@@ -84,7 +96,10 @@ export function volunteersForClassFromSources(
   const assignment = activeAssignments(sources.partnerAssignmentsByScheduleId[String(scheduleId)]).find(
     item =>
       (item.organizationApplicationId == null ||
-        item.organizationApplicationId === sources.organizationApplicationId) &&
+        sameOrganizationApplicationId(
+          item.organizationApplicationId,
+          sources.organizationApplicationId
+        )) &&
       assignmentClassMatches(item.classLabel, gradeLabel, classNo)
   )
   if (assignment) {
@@ -99,7 +114,10 @@ export function volunteersForClassFromSources(
       cell =>
         cell.scheduleId === scheduleId &&
         (cell.organizationApplicationId == null ||
-          cell.organizationApplicationId === sources.organizationApplicationId) &&
+          sameOrganizationApplicationId(
+            cell.organizationApplicationId,
+            sources.organizationApplicationId
+          )) &&
         assignmentClassMatches(cell.classLabel, gradeLabel, classNo)
     )
   )
@@ -120,7 +138,10 @@ export function attendanceManagerForScheduleFromSources(
     item =>
       item.attendanceManagerParticipantId != null &&
       (item.organizationApplicationId == null ||
-        item.organizationApplicationId === sources.organizationApplicationId)
+        sameOrganizationApplicationId(
+          item.organizationApplicationId,
+          sources.organizationApplicationId
+        ))
   )?.attendanceManagerParticipantId
 
   if (managerId != null) {
@@ -133,16 +154,21 @@ export function attendanceManagerForScheduleFromSources(
         cell.scheduleId === scheduleId &&
         cell.attendanceManager === true &&
         (cell.organizationApplicationId == null ||
-          cell.organizationApplicationId === sources.organizationApplicationId)
+          sameOrganizationApplicationId(
+            cell.organizationApplicationId,
+            sources.organizationApplicationId
+          ))
     )
   )
   return fromCell?.volunteerName?.trim() || UNASSIGNED_MANAGER
 }
 
+/**
+ * educationStartAt → Asia/Seoul 달력일 YYYY-MM-DD.
+ * ❌ `value.slice(0, 10)` — KST 자정 UTC 저장 시 하루 밀림
+ */
 export function isoDateFromScheduleValue(value: string | null | undefined): string {
-  if (!value) return ''
-  const day = value.slice(0, 10)
-  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : ''
+  return toSeoulYmd(value) ?? ''
 }
 
 export function scheduleIdForInstitutionDate(
@@ -151,10 +177,40 @@ export function scheduleIdForInstitutionDate(
 ): number | null {
   const column = (sources.matrix.columns ?? []).find(item => {
     if (item.scheduleId == null) return false
-    if (item.organizationApplicationId !== sources.organizationApplicationId) return false
+    if (
+      !sameOrganizationApplicationId(
+        item.organizationApplicationId,
+        sources.organizationApplicationId
+      )
+    ) {
+      return false
+    }
     return isoDateFromScheduleValue(item.educationStartAt) === isoDate
   })
   return column?.scheduleId ?? null
+}
+
+export function organizationMatrixColumns(sources: InstitutionAssignmentSources) {
+  return (sources.matrix.columns ?? []).filter(column =>
+    sameOrganizationApplicationId(
+      column.organizationApplicationId,
+      sources.organizationApplicationId
+    )
+  )
+}
+
+export function activePartnerAssignmentsForSchedule(
+  sources: InstitutionAssignmentSources,
+  scheduleId: number
+): UjatPartnerAssignmentResponse[] {
+  return activeAssignments(sources.partnerAssignmentsByScheduleId[String(scheduleId)]).filter(
+    item =>
+      item.organizationApplicationId == null ||
+      sameOrganizationApplicationId(
+        item.organizationApplicationId,
+        sources.organizationApplicationId
+      )
+  )
 }
 
 export async function loadInstitutionAssignmentSources(input: {
@@ -168,7 +224,12 @@ export async function loadInstitutionAssignmentSources(input: {
   const scheduleIds = [
     ...new Set(
       (matrix.columns ?? [])
-        .filter(column => column.organizationApplicationId === input.organizationApplicationId)
+        .filter(column =>
+          sameOrganizationApplicationId(
+            column.organizationApplicationId,
+            input.organizationApplicationId
+          )
+        )
         .map(column => column.scheduleId)
         .filter((scheduleId): scheduleId is number => scheduleId != null)
     ),
