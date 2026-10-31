@@ -4,6 +4,7 @@
  */
 
 import type { QueryClient } from '@tanstack/react-query'
+import { PRE_EDUCATION_DISPLAY_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 import type { ProgramEducationSlotResponse } from '@/shared/api/generated/dashboard/schemas/programEducationSlotResponse'
 import type { IndividualApprovalWithScopeBulkTarget } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget'
 import type { IndividualApprovalWithScopeRequest } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeRequest'
@@ -295,7 +296,12 @@ export function listAssignedEducationSlotOptions(
     return {
       key: `assigned-slot:${scheduleId}`,
       scheduleId,
-      title: role === 'PRE_EDUCATION' ? (title === '교육 일정' ? '사전 교육' : `사전 교육 · ${title}`) : title,
+      title:
+        role === 'PRE_EDUCATION'
+          ? title === '교육 일정'
+            ? PRE_EDUCATION_DISPLAY_LABEL
+            : `${PRE_EDUCATION_DISPLAY_LABEL} · ${title}`
+          : title,
       selectable: false,
       blockedReason: null,
     }

@@ -4,6 +4,7 @@ import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/gen
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
 import { formatStudentGradeClassColumnLabel } from '@/features/program/general/lib/student-registered-grade-class-options'
+import { isPreEducationScheduleBlock } from '@/features/program/general/lib/schedule-detail-form'
 import type { Program } from '@/types/domain'
 import {
   SCHOOL_ATTENDANCE_FILTER_ALL,
@@ -30,6 +31,9 @@ export interface SchoolDetailAttendanceSessionHeaderParts {
  * 출석 관리 회차/일정 선행 라벨.
  * - 커리큘럼형: curriculumSessions[].sessionLabel (예: 1회차, 1차시) — 없으면 `${round}회차`
  * - 일정형: scheduleDetails[].name — 없으면 scheduleLabel → 세부 일정 NN
+ * - 사전 교육 행은 회차 번호(sessionNo)에 포함되지 않으므로 round 매칭에서 뺀다.
+ *   (BE 교육 슬롯도 사전 교육을 만들지 않는다. 사전 교육 행이 round 1 자리를 차지해
+ *   본 교육 1회차 헤더에 사전 교육 이름이 붙던 문제 방지)
  */
 export function resolveSchoolDetailAttendanceSessionLeadLabel(
   program: Program,
@@ -44,7 +48,9 @@ export function resolveSchoolDetailAttendanceSessionLeadLabel(
   })
 
   if (educationStructure === 'schedule') {
-    const detail = commonInfo.scheduleDetails?.[round - 1]
+    const detail = (commonInfo.scheduleDetails ?? []).filter(
+      row => !isPreEducationScheduleBlock(row)
+    )[round - 1]
     const name = detail?.name?.trim()
     if (name) return name
     const scheduleLabel = detail?.scheduleLabel?.trim()
@@ -52,7 +58,15 @@ export function resolveSchoolDetailAttendanceSessionLeadLabel(
     return `세부 일정 ${String(round).padStart(2, '0')}`
   }
 
-  const sessionLabel = commonInfo.curriculumSessions?.[round - 1]?.sessionLabel?.trim()
+  const sessionLabel = (commonInfo.curriculumSessions ?? [])
+    .filter(
+      session =>
+        !isPreEducationScheduleBlock({
+          isPreEducation: session.isPreEducation,
+          scheduleLabel: session.sessionLabel,
+        })
+    )
+    [round - 1]?.sessionLabel?.trim()
   if (sessionLabel) return sessionLabel
   return `${round}회차`
 }

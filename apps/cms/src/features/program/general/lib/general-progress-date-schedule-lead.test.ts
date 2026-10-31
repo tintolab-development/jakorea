@@ -67,24 +67,61 @@ describe('general-progress-date-schedule-lead (⑤ 일정형·단일·날짜)', 
     expect(isGeneralScheduleSingleDateProgram(null)).toBe(false)
   })
 
-  it('needs the 세부 일정 date and a group time to both match; skips 사전 교육', () => {
+  it('matches a regular 세부 일정 by group time only — 186486 all 6 schedules get the name', () => {
     const program = scheduleSingleDateProgram()
-    // 10/30·10/31: 그룹 시간은 같지만 세부 일정 날짜(11/16)와 다름
-    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[0]!)).toBe('')
-    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[3]!)).toBe('')
-    // 11/16 09:30~11:30(그룹 B) · 13:30~15:30(그룹 A)
-    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[4]!)).toBe(NAME)
-    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[5]!)).toBe(NAME)
-    // 사전 교육 시간(10/30 12:00~13:08)은 이름을 붙이지 않음
+    // 세부 일정 진행 일정 날짜(11/16)는 보지 않고 그룹 A 13:30~15:30 · 그룹 B 09:30~11:30만 본다.
+    expect(
+      SCHEDULES_186486.map(schedule => resolveGeneralScheduleSingleDateDetailName(program, schedule))
+    ).toEqual([NAME, NAME, NAME, NAME, NAME, NAME])
+    // 그룹 시간과 다른 시각은 이름 없음(세부 일정 라벨 시각 10:00~12:00도 쓰지 않음)
+    expect(
+      resolveGeneralScheduleSingleDateDetailName(program, {
+        startAt: '2026-11-16T01:00:00Z',
+        endAt: '2026-11-16T03:00:00Z',
+      })
+    ).toBe('')
+  })
+
+  it('names a 사전교육 schedule 「사전교육」 (block date·time match or scheduleRole)', () => {
+    const program = scheduleSingleDateProgram()
+    // 사전 교육 블록 진행 일정(10/30 12:00~13:08)과 날짜·시각이 같은 일정
     expect(
       resolveGeneralScheduleSingleDateDetailName(program, {
         startAt: '2026-10-30T03:00:00Z',
         endAt: '2026-10-30T04:08:00Z',
       })
-    ).toBe('')
+    ).toBe('사전교육')
+    // 서버가 scheduleRole=PRE_EDUCATION을 주면 시각과 무관하게 「사전교육」
+    expect(
+      resolveGeneralScheduleSingleDateDetailName(program, {
+        startAt: '2026-12-01T00:30:00Z',
+        endAt: '2026-12-01T02:30:00Z',
+        scheduleRole: 'PRE_EDUCATION',
+      } as { startAt: string; endAt: string })
+    ).toBe('사전교육')
   })
 
-  it('does not append a name when the 세부 일정 date is unknown', () => {
+  it('renders a 사전교육 row as 「일시 ㅣ 사전교육」 on attendance', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        { scheduleId: 190001, sessionNo: 7, scheduleName: '사전 교육', startAt: '2026-10-30T03:00:00Z', endAt: '2026-10-30T04:08:00Z', allDay: false, scheduleStatus: 'COMPLETED' },
+        { scheduleId: 190002, sessionNo: 8, scheduleName: '공통 교육 예정 8', startAt: '2026-10-30T03:00:00Z', endAt: '2026-10-30T04:08:00Z', allDay: false, scheduleStatus: 'COMPLETED' },
+      ],
+      participants: [],
+      attendancesByScheduleId: {},
+      program: scheduleSingleDateProgram(),
+    })
+    expect(sessions.map(session => session.headerTitle)).toEqual([
+      '2026.10.30(금) 12:00 ~ 13:08 ㅣ 사전교육',
+      '2026.10.30(금) 12:00 ~ 13:08 ㅣ 사전교육',
+    ])
+    expect(sessions.map(session => session.filterLabel)).toEqual(
+      sessions.map(session => session.headerTitle)
+    )
+    expect(sessions[0]?.headerPrefix.startsWith('2026.10.30(금) 12:00 ~ 13:08 ㅣ 사전교육 | ')).toBe(true)
+  })
+
+  it('still matches by group time when the 세부 일정 date is unknown', () => {
     const program = scheduleSingleDateProgram()
     program.generalCommonInfo!.scheduleDetails = [
       {
@@ -93,7 +130,31 @@ describe('general-progress-date-schedule-lead (⑤ 일정형·단일·날짜)', 
         progressTimeSummary: '그룹 A : 13:30 ~ 15:30 | 그룹 B : 09:30 ~ 11:30',
       },
     ]
+    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[4]!)).toBe(NAME)
+    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[0]!)).toBe(NAME)
+  })
+
+  it('does not match a regular 세부 일정 without group times', () => {
+    const program = scheduleSingleDateProgram()
+    program.generalCommonInfo!.scheduleDetails = [
+      { name: NAME, scheduleLabel: '세부 일정 01', scheduleDateLabel: '2026.11.16(월) 09:30 ~ 11:30' },
+    ]
     expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[4]!)).toBe('')
+  })
+
+  it('appends nothing when two different 세부 일정 have the same group time (any date)', () => {
+    const program = scheduleSingleDateProgram()
+    program.generalCommonInfo!.scheduleDetails!.push({
+      name: '다른 세부 일정',
+      scheduleLabel: '세부 일정 02',
+      scheduleDateLabel: '2026.12.01(화)',
+      progressTimeSummary: '그룹 A : 13:30 ~ 15:30',
+    })
+    // 13:30~15:30은 두 세부 일정이 겹쳐 이름 없음, 09:30~11:30은 하나만 맞음
+    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[1]!)).toBe('')
+    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[5]!)).toBe('')
+    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[0]!)).toBe(NAME)
+    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[4]!)).toBe(NAME)
   })
 
   it('appends nothing when two different 세부 일정 match the same date·time', () => {
@@ -108,12 +169,19 @@ describe('general-progress-date-schedule-lead (⑤ 일정형·단일·날짜)', 
     expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[5]!)).toBe(NAME)
   })
 
-  it('accepts 진행 일정 date + time and the 26년 M월 D일 format', () => {
+  it('matches a 사전 교육 block by date + time, including the 26년 M월 D일 format', () => {
     const program = scheduleSingleDateProgram()
     program.generalCommonInfo!.scheduleDetails = [
-      { name: '행사', scheduleLabel: '세부 일정 01', scheduleDateLabel: '26년 10월 31일(토) 09:30 ~ 11:30' },
+      {
+        name: '사전 교육',
+        blockKind: 'preEducation',
+        scheduleLabel: '사전 교육',
+        scheduleDateLabel: '26년 10월 31일(토) 09:30 ~ 11:30',
+      },
     ]
-    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[2]!)).toBe('행사')
+    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[2]!)).toBe('사전교육')
+    // 같은 시각이라도 날짜가 다르면 사전교육이 아님
+    expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[0]!)).toBe('')
     expect(resolveGeneralScheduleSingleDateDetailName(program, SCHEDULES_186486[3]!)).toBe('')
   })
 
@@ -128,18 +196,22 @@ describe('general-progress-date-schedule-lead (⑤ 일정형·단일·날짜)', 
       '187543', '187542', '187545', '187544', '187541', '187540',
     ])
     expect(sessions.map(session => session.headerTitle)).toEqual([
-      '2026.10.30(금)',
-      '2026.10.30(금)',
-      '2026.10.31(토)',
-      '2026.10.31(토)',
-      `2026.11.16(월) ㅣ ${NAME}`,
-      `2026.11.16(월) ㅣ ${NAME}`,
+      `2026.10.30(금) 09:30 ~ 11:30 ㅣ ${NAME}`,
+      `2026.10.30(금) 13:30 ~ 15:30 ㅣ ${NAME}`,
+      `2026.10.31(토) 09:30 ~ 11:30 ㅣ ${NAME}`,
+      `2026.10.31(토) 13:30 ~ 15:30 ㅣ ${NAME}`,
+      `2026.11.16(월) 09:30 ~ 11:30 ㅣ ${NAME}`,
+      `2026.11.16(월) 13:30 ~ 15:30 ㅣ ${NAME}`,
     ])
+    // 필터 라벨은 제목과 같다.
+    expect(sessions.map(session => session.filterLabel)).toEqual(
+      sessions.map(session => session.headerTitle)
+    )
     expect(sessions.map(session => session.filterLabel)).toEqual([
-      '2026.10.30(금) 09:30 ~ 11:30',
-      '2026.10.30(금) 13:30 ~ 15:30',
-      '2026.10.31(토) 09:30 ~ 11:30',
-      '2026.10.31(토) 13:30 ~ 15:30',
+      `2026.10.30(금) 09:30 ~ 11:30 ㅣ ${NAME}`,
+      `2026.10.30(금) 13:30 ~ 15:30 ㅣ ${NAME}`,
+      `2026.10.31(토) 09:30 ~ 11:30 ㅣ ${NAME}`,
+      `2026.10.31(토) 13:30 ~ 15:30 ㅣ ${NAME}`,
       `2026.11.16(월) 09:30 ~ 11:30 ㅣ ${NAME}`,
       `2026.11.16(월) 13:30 ~ 15:30 ㅣ ${NAME}`,
     ])
@@ -148,6 +220,43 @@ describe('general-progress-date-schedule-lead (⑤ 일정형·단일·날짜)', 
     ])
     expect(sessions.every(session => session.headerScheduleSummary === '2시간 (오프라인)')).toBe(true)
     expect(sessions.some(session => /세부 일정|공통 교육 예정|회차| : /u.test(session.headerPrefix))).toBe(false)
+    // 화면 옆 표기는 제목에 시간이 이미 있으면 시간을 뺀다(패널 규칙: 제목에 포함되는지로 판단).
+    expect(sessions.every(session => session.headerTitle.includes(session.headerPeriodRangeLabel))).toBe(true)
+    // 엑셀 머리글: 시간은 제목에 한 번만, 옆 요약은 `2시간 (오프라인)`만.
+    expect(sessions[4]?.headerPrefix).toBe(`2026.11.16(월) 09:30 ~ 11:30 ㅣ ${NAME} | 2시간 (오프라인)`)
+    expect(sessions[0]?.headerPrefix).toBe(`2026.10.30(금) 09:30 ~ 11:30 ㅣ ${NAME} | 2시간 (오프라인)`)
+  })
+
+  it('keeps a PRE_EDUCATION schedule on attendance (server order) but not on the assignment tab', () => {
+    const preEducation = {
+      scheduleId: 190003,
+      sessionNo: 7,
+      scheduleName: '사전 교육',
+      startAt: '2026-10-30T03:00:00Z',
+      endAt: '2026-10-30T04:08:00Z',
+      allDay: false,
+      scheduleStatus: 'COMPLETED',
+      scheduleRole: 'PRE_EDUCATION',
+    } as DashboardProgramScheduleResponse
+    const attendance = buildProgressAttendanceSessionsFromRemote({
+      schedules: [SCHEDULES_186486[0]!, preEducation, SCHEDULES_186486[4]!],
+      participants: [],
+      attendancesByScheduleId: {},
+      program: scheduleSingleDateProgram(),
+    })
+    expect(attendance.map(session => session.id)).toEqual(['187543', '190003', '187541'])
+    expect(attendance[1]?.headerTitle).toBe('2026.10.30(금) 12:00 ~ 13:08 ㅣ 사전교육')
+
+    const assignment = buildProgressAssignmentSessionsFromRemote(
+      {
+        items: [
+          { ...SCHEDULES_186486[0]!, assignmentEnabled: true, participants: [] },
+          { ...preEducation, assignmentEnabled: false, participants: [] },
+        ],
+      },
+      { program: scheduleSingleDateProgram() }
+    )
+    expect(assignment.map(session => session.id)).toEqual(['187543'])
   })
 
   it('uses the same 일시 ㅣ 일정명 header on the assignment tab', () => {
@@ -161,8 +270,8 @@ describe('general-progress-date-schedule-lead (⑤ 일정형·단일·날짜)', 
       { program: scheduleSingleDateProgram() }
     )
     expect(sessions.map(session => session.headerTitle)).toEqual([
-      '2026.10.30(금)',
-      `2026.11.16(월) ㅣ ${NAME}`,
+      `2026.10.30(금) 09:30 ~ 11:30 ㅣ ${NAME}`,
+      `2026.11.16(월) 09:30 ~ 11:30 ㅣ ${NAME}`,
     ])
     expect(sessions.some(session => /세부 일정|공통 교육 예정|회차/u.test(session.headerPrefix))).toBe(false)
   })

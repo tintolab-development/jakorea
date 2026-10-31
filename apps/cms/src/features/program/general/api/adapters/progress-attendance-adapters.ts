@@ -25,7 +25,7 @@ import {
 import { mapApiGenderToStudentGenderKey } from '@/features/program/general/api/adapters/student-roster-adapters'
 import { STUDENT_GENDER_LABELS } from '@/features/program/general/model/school-detail-types'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
-import { isGeneralProgressEducationSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
+import { isGeneralProgressAttendanceSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
 import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
 import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
@@ -236,7 +236,7 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
   const roster = individuals.length > 0 ? individuals : params.participants
 
   return params.schedules
-    .filter(isGeneralProgressEducationSessionSchedule)
+    .filter(isGeneralProgressAttendanceSessionSchedule)
     .map((schedule, index) => {
       const scheduleId = String(schedule.scheduleId)
       const attendances = params.attendancesByScheduleId[scheduleId] ?? []

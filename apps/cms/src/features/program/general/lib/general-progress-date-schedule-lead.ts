@@ -3,7 +3,11 @@ import {
   resolveGeneralProgramCommonInfo,
   resolveGeneralProgramScheduleDetailsForView,
 } from '@/features/program/general/lib/detail-common-info-display'
-import { isPreEducationScheduleBlock } from '@/features/program/general/lib/schedule-detail-form'
+import {
+  isPreEducationScheduleBlock,
+  PRE_EDUCATION_DISPLAY_LABEL,
+} from '@/features/program/general/lib/schedule-detail-form'
+import { readProgramScheduleCanonicalFields } from '@/features/program/shared/lib/program-schedule-canonical'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type { GeneralProgramScheduleDetailRow, Program } from '@/types/domain'
 
@@ -82,12 +86,12 @@ function seoulParts(iso: string | null | undefined): { dateKey: string; clock: s
 }
 
 /**
- * 세부 일정이 이 일정에 해당하는지 — 날짜와 시작·종료 시각이 모두 같아야 한다.
- * - 날짜: 세부 일정 진행 일정(`scheduleDateLabel`). 공통 정보에 없으면 등록 overlay
+ * 사전 교육 블록이 이 일정에 해당하는지 — 날짜와 시작·종료 시각이 모두 같아야 한다.
+ * - 날짜: 사전 교육 진행 일정(`scheduleDateLabel`, 실제 입력값). 공통 정보에 없으면 등록 overlay
  *   `scheduleDateByDetailIso`(조회 리졸버). 날짜를 얻을 수 없으면 매칭하지 않는다.
- * - 시각: 그룹별 진행 시간(`progressTimeSummary`) 또는 진행 일정 라벨의 시각.
+ * - 시각: 진행 시간(`progressTimeSummary`) 또는 진행 일정 라벨의 시각.
  */
-function scheduleDetailMatchesSchedule(
+function preEducationBlockMatchesSchedule(
   detail: GeneralProgramScheduleDetailRow,
   dateKey: string,
   clockRange: string
@@ -102,13 +106,33 @@ function scheduleDetailMatchesSchedule(
 }
 
 /**
- * ⑤ 일정에 덧붙일 세부 일정명. 사전 교육 블록·기본명은 제외.
+ * 일반 세부 일정이 이 일정에 해당하는지 — 그룹별 진행 시간(시작·종료)만 본다.
+ * ⑤의 실제 날짜는 「교육 진행 일정 설정」이 정하므로 세부 일정의 진행 일정 날짜
+ * (`scheduleDateLabel` / `scheduleDateByDetailIso`)는 매칭에 쓰지 않는다.
+ * 그룹 진행 시간(`progressTimeSummary` ← overlay `groupTimesByDetail`)이 없으면 매칭하지 않는다.
+ */
+function regularDetailMatchesScheduleTime(
+  detail: GeneralProgramScheduleDetailRow,
+  clockRange: string
+): boolean {
+  return readClockRanges(detail.progressTimeSummary).includes(clockRange)
+}
+
+function isPreEducationScheduleRole(schedule: object): boolean {
+  const { scheduleRole } = readProgramScheduleCanonicalFields(schedule)
+  return String(scheduleRole ?? '').trim().toUpperCase() === 'PRE_EDUCATION'
+}
+
+/**
+ * ⑤ 일정에 덧붙일 세부 일정명. 기본명은 제외.
+ * 사전교육 일정(scheduleRole=PRE_EDUCATION, 또는 날짜·시각이 맞는 사전 교육 블록)의 일정명은 「사전교육」.
  * 맞는 세부 일정이 없거나 서로 다른 이름이 둘 이상 맞으면 빈 문자열(일시만).
  */
 export function resolveGeneralScheduleSingleDateDetailName(
   program: Program,
   schedule: { startAt?: string | null; endAt?: string | null }
 ): string {
+  if (isPreEducationScheduleRole(schedule)) return PRE_EDUCATION_DISPLAY_LABEL
   const start = seoulParts(schedule.startAt)
   const end = seoulParts(schedule.endAt)
   if (!start || !end) return ''
@@ -119,10 +143,14 @@ export function resolveGeneralScheduleSingleDateDetailName(
   )
   const names = new Set<string>()
   for (const detail of details) {
-    if (isPreEducationScheduleBlock(detail)) continue
-    const name = toDisplayEducationScheduleName(detail.name)
+    const name = isPreEducationScheduleBlock(detail)
+      ? PRE_EDUCATION_DISPLAY_LABEL
+      : toDisplayEducationScheduleName(detail.name)
     if (!name) continue
-    if (scheduleDetailMatchesSchedule(detail, start.dateKey, clockRange)) names.add(name)
+    const matches = isPreEducationScheduleBlock(detail)
+      ? preEducationBlockMatchesSchedule(detail, start.dateKey, clockRange)
+      : regularDetailMatchesScheduleTime(detail, clockRange)
+    if (matches) names.add(name)
   }
   const [only] = [...names]
   return names.size === 1 && only ? only : ''
