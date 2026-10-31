@@ -710,7 +710,10 @@ assert.equal(
   '온/오프라인'
 )
 assert.equal(scheduleMulti.eventSchedules[0]?.blockKind, 'preEducation')
-assert.equal(scheduleMulti.eventSchedules[0]?.scheduleLabel, '행사 일정 01')
+// 사전 교육 행 — 세부/행사 일정 번호 대신 「사전교육」, 입력한 일정명은 그대로 붙인다.
+assert.equal(scheduleMulti.eventSchedules[0]?.scheduleLabel, '사전교육')
+assert.equal(scheduleMulti.eventSchedules[0]?.name, '오리엔테이션')
+assert.equal(scheduleMulti.eventSchedules[1]?.scheduleLabel, '행사 일정 02')
 assert.equal(scheduleMulti.eventSchedules[0]?.educationFormLabel, '온라인')
 assert.equal(scheduleMulti.eventSchedules[0]?.dateLabel, '2026년 9월 29일(화)')
 assert.equal(scheduleMulti.eventSchedules[1]?.educationFormLabel, '오프라인')
@@ -798,7 +801,7 @@ assert.equal(
   organization.basicInfoFields.some(field => field.label === '참여 방식'),
   false
 )
-assert.equal(organization.sessions[0]?.sessionLabel, '사전 교육')
+assert.equal(organization.sessions[0]?.sessionLabel, '사전교육')
 
 const uppercaseMultiRound = mapPortalProgramDetail({
   programId: 186012,
@@ -2249,6 +2252,8 @@ assert.equal(
   false
 )
 assert.equal(educationPlacePerSchedule.eventSchedules[0]?.educationPlaceLabel, undefined)
+assert.equal(educationPlacePerSchedule.eventSchedules[0]?.scheduleLabel, '사전교육')
+assert.equal(educationPlacePerSchedule.eventSchedules[1]?.scheduleLabel, '행사 일정 01')
 assert.equal(educationPlacePerSchedule.eventSchedules[1]?.educationPlaceLabel, '서울 강남구')
 assert.equal(educationPlacePerSchedule.eventSchedules[2]?.educationPlaceLabel, '경기 성남시')
 
@@ -2266,6 +2271,35 @@ const educationPlacePerScheduleCurriculum = mapPortalProgramDetail({
 })
 assert.ok(educationPlacePerScheduleCurriculum)
 assert.equal(educationPlacePerScheduleCurriculum.sessions[0]?.educationPlaceLabel, undefined)
+assert.equal(educationPlacePerScheduleCurriculum.sessions[0]?.sessionLabel, '사전교육')
+assert.equal(educationPlacePerScheduleCurriculum.sessions[1]?.sessionLabel, '1차시')
+
+// 사전 교육 일정명이 기본값(사전 교육)이면 「사전교육 사전 교육」으로 겹치지 않게 이름을 비운다.
+const preEducationDefaultName = mapPortalProgramDetail({
+  programId: 186486,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '사전교육 기본 이름',
+  educationStructure: 'schedule',
+  sessionRound: 'single',
+  scheduleDetails: [
+    {
+      scheduleLabel: '사전 교육',
+      blockKind: 'preEducation',
+      name: '사전 교육',
+      scheduleDateLabel: '2026.10.30(금) 12:00 ~ 13:08',
+    },
+    {
+      scheduleLabel: '세부 일정 01',
+      name: '필요와 욕구, 현명한 소비',
+      scheduleDateLabel: '2026.11.16(월) 10:00 ~ 12:00',
+    },
+  ],
+})
+assert.ok(preEducationDefaultName)
+assert.equal(preEducationDefaultName.eventSchedules[0]?.scheduleLabel, '사전교육')
+assert.equal(preEducationDefaultName.eventSchedules[0]?.name, '')
+assert.equal(preEducationDefaultName.eventSchedules[1]?.scheduleLabel, '세부 일정 01')
+assert.equal(preEducationDefaultName.eventSchedules[1]?.name, '필요와 욕구, 현명한 소비')
 assert.equal(educationPlacePerScheduleCurriculum.sessions[1]?.educationPlaceLabel, '대전 유성구')
 
 // 새 필드가 없으면 기존 순서(venue → 첫 일정 주소) 유지.

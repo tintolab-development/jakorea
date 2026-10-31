@@ -883,6 +883,9 @@ type EducationProgressRowVisibility = {
   showEducationPlace: boolean
 }
 
+/** 사전 교육 행 제목 표시(붙여쓰기). 일정명·회차명 대신 이 이름만 보인다. */
+const PORTAL_PRE_EDUCATION_DISPLAY_LABEL = '사전교육'
+
 /** 사전 교육 행에는 교육 장소를 싣지 않는다. */
 function isPortalPreEducationRow(row: {
   blockKind?: string
@@ -925,7 +928,9 @@ function mapPortalCurriculumSessions(
       : undefined
     const educationPlaceLabel = educationPlaceRowLabel(session, rows)
     return {
-      sessionLabel: session.sessionLabel ?? '',
+      sessionLabel: isPortalPreEducationRow(session)
+        ? PORTAL_PRE_EDUCATION_DISPLAY_LABEL
+        : (session.sessionLabel ?? ''),
       title: session.title ?? '',
       description: session.description ?? '',
       ...(dateLabel ? { dateLabel: normalizeScheduleDisplayLabel(dateLabel) } : {}),
@@ -965,8 +970,10 @@ function mapPortalScheduleDetails(
   if (structure !== 'schedule') return []
   return (details ?? []).flatMap(detail => {
     const rawScheduleLabel = detail.scheduleLabel?.trim() ?? ''
-    const scheduleLabel =
-      isMultiSessionRound(sessionRound)
+    const isPreEducation = isPortalPreEducationRow(detail)
+    const scheduleLabel = isPreEducation
+      ? PORTAL_PRE_EDUCATION_DISPLAY_LABEL
+      : isMultiSessionRound(sessionRound)
         ? rawScheduleLabel.replace(/^세부\s*일정/, '행사 일정')
         : rawScheduleLabel
     const timeSummary =
@@ -991,7 +998,12 @@ function mapPortalScheduleDetails(
       ? optionalText(detail.assignmentPeriod)
       : undefined
     const educationPlaceLabel = educationPlaceRowLabel(detail, rows)
-    const name = toDisplayEducationScheduleName(detail.name) ?? ''
+    const displayName = toDisplayEducationScheduleName(detail.name) ?? ''
+    // 사전 교육 행 — 제목이 이미 「사전교육」이면 같은 이름을 한 번 더 붙이지 않는다.
+    const name =
+      isPreEducation && displayName.replace(/\s+/g, '') === PORTAL_PRE_EDUCATION_DISPLAY_LABEL
+        ? ''
+        : displayName
     if (
       !name &&
       !dateLabel &&
