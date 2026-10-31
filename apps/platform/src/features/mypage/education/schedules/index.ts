@@ -17,6 +17,7 @@ export {
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
   resolveEducationAssignmentGuide,
   resolveEducationScheduleProgressStatus,
+  shouldDisableEducationAssignmentSubmit,
   resolveEducationScheduleRowProgressStatus,
   shouldShowEducationAssignment,
 } from './lib/schedule-rules'

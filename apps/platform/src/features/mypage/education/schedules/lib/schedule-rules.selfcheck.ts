@@ -4,6 +4,7 @@ import {
   EDUCATION_ASSIGNMENT_APPROVED_COPY,
   resolveEducationAssignmentGuide,
   resolveEducationScheduleProgressStatus,
+  shouldDisableEducationAssignmentSubmit,
   resolveEducationScheduleRowProgressStatus,
   shouldDisplayEducationAbsenceReason,
 } from './schedule-rules.ts'
@@ -128,5 +129,13 @@ const rejectedClosedGuide = resolveEducationAssignmentGuide('feedback', openEnd,
 assert.equal(rejectedClosedGuide.message, '담당자의 피드백이 있어요')
 assert.equal(rejectedClosedGuide.showSubmitButton, true)
 assert.equal(rejectedClosedGuide.submitDisabled, true)
+
+const closedEnd = '2020-01-01T00:00:00+09:00'
+assert.equal(shouldDisableEducationAssignmentSubmit('not_submitted', closedEnd), false)
+assert.equal(shouldDisableEducationAssignmentSubmit('submitted', openEnd), false)
+assert.equal(shouldDisableEducationAssignmentSubmit('submitted', closedEnd), true)
+assert.equal(shouldDisableEducationAssignmentSubmit('revision_submitted', closedEnd), true)
+assert.equal(shouldDisableEducationAssignmentSubmit('revision_submitted', openEnd), false)
+assert.equal(shouldDisableEducationAssignmentSubmit('feedback', closedEnd), false)
 
 console.log('schedule-rules.selfcheck: ok')

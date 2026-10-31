@@ -166,6 +166,16 @@ function isDeadlinePassed(submitEndAt: string, now: Date): boolean {
   return now.getTime() > end.getTime()
 }
 
+/** 과제 제출하기 비활성 — 제출 완료이면서 제출 기한이 지난 경우만 */
+export function shouldDisableEducationAssignmentSubmit(
+  status: EducationAssignmentSubmitStatus,
+  submitEndAt: string,
+  now = new Date(),
+): boolean {
+  if (status !== 'submitted' && status !== 'revision_submitted') return false
+  return isDeadlinePassed(submitEndAt, now)
+}
+
 export type ResolveEducationAssignmentGuideOptions = {
   responseStatus?: string | null
   canResubmit?: boolean

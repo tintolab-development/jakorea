@@ -199,7 +199,6 @@ export function EducationScheduleRow({
             sessionHeading={sessionHeading}
             applicationType={applicationType}
             applicationId={applicationId}
-            availableActions={item.availableActions}
           />
         ) : null}
       </EducationSessionCard>
