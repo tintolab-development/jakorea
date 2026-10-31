@@ -10,6 +10,8 @@ export const UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS = {
   previousTerm: 'ujatVolunteerApplication.previousTerm',
   previousYear: 'ujatVolunteerApplication.previousYear',
   previousTermFileNames: 'ujatVolunteerApplication.previousTermFileNames',
+  /** 업로드 완료된 수료증 fileObjectId (표시용 previousTermFileNames와 인덱스 정렬) */
+  previousTermFileObjectIds: 'ujatVolunteerApplication.previousTermFileObjectIds',
   hasExperience: 'ujatVolunteerApplication.hasExperience',
 } as const
 
@@ -23,6 +25,7 @@ export function stripUjatApplicationVolunteerProgramOnlyFields(
 ): Record<string, unknown> {
   const next = { ...record }
   delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
+  delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileObjectIds]
   for (const key of Object.keys(next)) {
     if (key.startsWith('ujatVolunteerApplication.freeText.')) {
       delete next[key]

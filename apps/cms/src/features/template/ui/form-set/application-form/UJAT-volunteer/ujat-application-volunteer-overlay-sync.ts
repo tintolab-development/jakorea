@@ -38,6 +38,7 @@ export function getUjatApplicationVolunteerProgramOverlayRecord(): Record<string
   const record = getUjatApplicationVolunteerOverlayRecord()
   const next = { ...record }
   delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
+  delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileObjectIds]
   return next
 }
 

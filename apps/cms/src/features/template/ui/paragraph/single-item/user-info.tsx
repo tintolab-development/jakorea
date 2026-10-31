@@ -9,7 +9,7 @@ const DEFAULT_USER_INFO_FIELDS = DEFAULT_USER_INFO_FIELD_CATALOG
 
 /** 미리보기 전용 예시 값 — 실제 응답 연동 전까지 고정 문구 */
 const USER_INFO_PREVIEW_SAMPLE_BY_KEY: Record<string, string> = {
-  name: '홍길동',
+  name: '이름예시',
   gender: '남',
   birthDate: '1990-01-01',
   phone: '010-0000-0000',

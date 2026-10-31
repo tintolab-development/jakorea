@@ -80,7 +80,7 @@ describe('UJAT 기관 신청 동적 필드', () => {
     expect(buildProgramLinkedScheduleOptions({})).toEqual([])
   })
 
-  it('연동 후보 id는 반기 접두를 쓰고 mock 금요일 id와 섞이지 않는다', () => {
+  it('연동 후보 id는 반기 접두를 쓰고 placeholder id와 섞이지 않는다', () => {
     const h1 = ujatHalfScheduleOverlayKeys('h1')
     const options = buildProgramLinkedScheduleOptions({
       [h1.eventRange]: { start: '2026-04-03T00:00:00.000Z', end: '2026-04-03T00:00:00.000Z' },

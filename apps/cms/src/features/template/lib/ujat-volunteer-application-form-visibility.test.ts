@@ -29,6 +29,20 @@ describe('UJAT 봉사자 신청 Form 지원 형태별 단락 visibility', () => 
   })
 
   it('모집 활동 기수로 제출 확인 문구를 치환하고 기수를 모르면 N기를 뺀다', () => {
+    // BE runtimeContext.activityTerm: "1기" / "2기" (기 접미사 포함)
+    expect(
+      resolveUjatVolunteerSubmitConfirmationItemLabel(
+        '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT로 지원합니다.',
+        '1기'
+      )
+    ).toContain('UJAT 1기로')
+    expect(
+      resolveUjatVolunteerSubmitConfirmationItemLabel(
+        '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT로 지원합니다.',
+        '2기'
+      )
+    ).toContain('UJAT 2기로')
+    // 구 카탈로그 placeholder·N기 — 기수 없으면 문장에서 뺀다
     expect(
       resolveUjatVolunteerSubmitConfirmationItemLabel(
         '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT {{UJAT_COHORT}}로 지원합니다.',

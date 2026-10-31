@@ -33,65 +33,21 @@ const DISPLAY_ONLY_PREFERRED_DATES_HINT = '신청자가 선택한 진행 희망�
 const AUTHORING_SCHEDULE_PLACEHOLDER_HINT =
   '프로그램 등록 시 관리자가 설정한 진행 일정이 노출됩니다.'
 
-/**
- * 사용자 미리보기에서 선택할 수 있는 일정 후보.
- * 등록 위저드의 연동 모드에서는 아래 후보를 사용하지 않고 공통정보 overlay를 표시한다.
- */
-const MOCK_FRIDAY_SCHEDULE_OPTIONS: readonly { id: string; display: string }[] = (() => {
-  const rows: { id: string; display: string }[] = []
-  const fridays: Array<[number, number, number]> = [
-    [2026, 4, 3],
-    [2026, 4, 10],
-    [2026, 4, 17],
-    [2026, 4, 24],
-    [2026, 5, 1],
-    [2026, 5, 8],
-    [2026, 5, 15],
-    [2026, 5, 22],
-    [2026, 5, 29],
-    [2026, 6, 5],
-    [2026, 6, 12],
-    [2026, 6, 19],
-    [2026, 6, 26],
-    [2026, 7, 3],
-    [2026, 7, 10],
-    [2026, 7, 17],
-    [2026, 7, 24],
-    [2026, 7, 31],
-    [2026, 8, 7],
-    [2026, 8, 14],
-    [2026, 8, 21],
-    [2026, 8, 28],
-    [2026, 9, 4],
-    [2026, 9, 11],
-    [2026, 9, 18],
-    [2026, 9, 25],
-    [2026, 10, 2],
-    [2026, 10, 9],
-    [2026, 10, 16],
-    [2026, 10, 23],
-    [2026, 10, 30],
-    [2026, 11, 6],
-    [2026, 11, 13],
-    [2026, 11, 20],
-    [2026, 11, 27],
-  ]
-  for (const [y, m, d] of fridays) {
-    const cursor = dayjs(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`)
-    rows.push({
-      id: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-      display: formatKoreanYearMonthDayWithWeekday(cursor),
-    })
-  }
-  return rows
-})()
+export const PREVIEW_PLACEHOLDER_SCHEDULE_HINT =
+  '프로그램에 연결하면 교육 일정이 표시됩니다.'
 
-const INITIAL_SELECTED_IDS = new Set<string>([
-  '2026-04-24',
-  '2026-05-08',
-  '2026-10-30',
-  '2026-11-20',
-])
+/**
+ * 템플릿 미리보기용 placeholder 일정 (실제 날짜 없음).
+ * 등록 위저드 programLinkedPreview 는 overlay 연동 일정을 사용한다.
+ */
+export const PREVIEW_PLACEHOLDER_SCHEDULE_OPTIONS: readonly { id: string; display: string }[] = [
+  { id: 'preview-schedule-1', display: '예시) 1회차 일정' },
+  { id: 'preview-schedule-2', display: '예시) 2회차 일정' },
+  { id: 'preview-schedule-3', display: '예시) 3회차 일정' },
+  { id: 'preview-schedule-4', display: '예시) 4회차 일정' },
+]
+
+const INITIAL_SELECTED_IDS = new Set<string>(['preview-schedule-1', 'preview-schedule-3'])
 
 type PreferredScheduleOption = { id: string; display: string }
 
@@ -219,7 +175,7 @@ type UjatProgramApplicationPreferredEducationScheduleParagraphProps = {
  * UJAT 프로그램 학교 신청 폼 — 진행 희망 교육 일정
  * - 템플릿 편집(`authoring`): 봉사자 모집 일정 안내 박스 + 희망일 행 안내 문구
  * - 등록 위저드 연동: 공통정보 상·하반기 금요일(불가일 제외)
- * - 미리보기 등(`user`): mock 일정 그리드 + 선택 반영
+ * - 미리보기 등(`user`): placeholder 일정 그리드 + 선택 반영
  */
 export function UjatProgramApplicationPreferredEducationScheduleParagraph({
   paragraphInteractionMode = 'authoring',
@@ -250,7 +206,7 @@ export function UjatProgramApplicationPreferredEducationScheduleParagraph({
 
   const scheduleOptions = programLinkedPreview
     ? linkedScheduleOptions
-    : MOCK_FRIDAY_SCHEDULE_OPTIONS
+    : PREVIEW_PLACEHOLDER_SCHEDULE_OPTIONS
   const orderedSelected = useMemo(
     () => scheduleOptions.filter(o => selectedIds.has(o.id)),
     [scheduleOptions, selectedIds]
@@ -306,9 +262,10 @@ export function UjatProgramApplicationPreferredEducationScheduleParagraph({
 
   return (
     <div className="program-registration-paragraph">
+      <ProgramApplicationScheduleTemplateHintParagraph hintText={PREVIEW_PLACEHOLDER_SCHEDULE_HINT} />
       <div className="ujat-preferred-education-schedule__grid-wrap">
         <PreferredScheduleChipGrid
-          options={MOCK_FRIDAY_SCHEDULE_OPTIONS}
+          options={PREVIEW_PLACEHOLDER_SCHEDULE_OPTIONS}
           selectedIds={selectedIds}
           onToggle={toggle}
           interactive={chipInteractive}

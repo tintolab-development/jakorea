@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -12,6 +13,7 @@ import {
   UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
   useUjatApplicationVolunteerOverlayKv,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
+import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
   '- 파일은 최대 15M까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
@@ -20,9 +22,26 @@ const CERTIFICATE_GUIDE_LINES = [
 
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
 
+const TEMPLATE_UPLOAD_DISABLED_HINT = '프로그램에서 등록 시 첨부 가능합니다.'
+
+export type UjatPreviousTermAttachmentRow = {
+  fileName: string
+  fileObjectId?: number
+  status: 'uploading' | 'uploaded' | 'failed'
+  error?: string
+}
+
+function displayLabelForAttachment(row: UjatPreviousTermAttachmentRow): string {
+  if (row.status === 'uploading') return `${row.fileName} (업로드 중)`
+  if (row.status === 'failed') return `${row.fileName} (실패${row.error ? `: ${row.error}` : ''})`
+  return row.fileName
+}
+
 /** UJAT 프로그램 봉사자 신청 폼 — 이전 UJAT 활동 기수 */
 export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
   programLinkedPreview?: boolean
+  /** 추가 등록·프로그램 연동 시 PROGRAM owner id. 없으면 업로드 비활성 */
+  programId?: string | number | null
 }) {
   const [term, setTerm] = useUjatApplicationVolunteerOverlayKv<string>(
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm,
@@ -32,11 +51,48 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
     UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousYear,
     ''
   )
-  const [fileNames, setFileNames] = useUjatApplicationVolunteerOverlayKv<string[]>(
-    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames,
+  const [attachments, setAttachments] = useUjatApplicationVolunteerOverlayKv<
+    UjatPreviousTermAttachmentRow[]
+  >(UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames, [])
+
+  // 레거시: string[] 파일명만 저장된 경우 → 행으로 정규화 (id 없음)
+  const normalizedAttachments = useMemo(() => {
+    if (!Array.isArray(attachments)) return [] as UjatPreviousTermAttachmentRow[]
+    return attachments.map(item => {
+      if (item && typeof item === 'object' && 'fileName' in item) {
+        return item as UjatPreviousTermAttachmentRow
+      }
+      const fileName = String(item ?? '').trim()
+      return {
+        fileName,
+        status: 'failed' as const,
+        error: '다시 첨부해 주세요',
+      }
+    })
+  }, [attachments])
+
+  const [, setFileObjectIds] = useUjatApplicationVolunteerOverlayKv<number[]>(
+    UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileObjectIds,
     []
   )
-  const fileUploadDisabled = props?.programLinkedPreview === true
+
+  const syncIds = (rows: UjatPreviousTermAttachmentRow[]) => {
+    setAttachments(rows)
+    setFileObjectIds(
+      rows.flatMap(row =>
+        row.status === 'uploaded' && row.fileObjectId != null ? [row.fileObjectId] : []
+      )
+    )
+  }
+
+  const numericProgramId = parseFileObjectId(props?.programId)
+  const fileUploadDisabled =
+    props?.programLinkedPreview === true || numericProgramId == null
+
+  const uploadHint =
+    numericProgramId == null && props?.programLinkedPreview !== true
+      ? TEMPLATE_UPLOAD_DISABLED_HINT
+      : undefined
 
   return (
     <DetailInfoForm title="이전 UJAT 활동 기수" hideHeader mode="edit">
@@ -73,39 +129,99 @@ export function UjatProgramApplicationVolunteerPreviousTermParagraph(props?: {
           label="수료증 첨부"
           fullRow
           edit={
-            <ParagraphFileUpload
-              accept={CERTIFICATE_ACCEPT}
-              multiple
-              disabled={fileUploadDisabled}
-              guideLines={CERTIFICATE_GUIDE_LINES}
-              fileNames={fileUploadDisabled ? undefined : fileNames}
-              onFilesChange={
-                fileUploadDisabled
-                  ? undefined
-                  : files => {
-                      setFileNames([...fileNames, ...files.map(file => file.name)])
-                      const owner = buildAdminFileOwner(
-                        ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
-                        1,
-                        ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
-                      )
-                      void (async () => {
-                        for (const file of files) {
-                          await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
-                        }
-                      })()
-                    }
-              }
-              onRemoveFile={
-                fileUploadDisabled
-                  ? undefined
-                  : index => setFileNames(fileNames.filter((_, i) => i !== index))
-              }
-            />
+            <>
+              {uploadHint ? (
+                <p className="form-editor-template-field-hint-text" role="status">
+                  {uploadHint}
+                </p>
+              ) : null}
+              <ParagraphFileUpload
+                accept={CERTIFICATE_ACCEPT}
+                multiple
+                disabled={fileUploadDisabled}
+                guideLines={CERTIFICATE_GUIDE_LINES}
+                fileNames={
+                  fileUploadDisabled
+                    ? undefined
+                    : normalizedAttachments.map(displayLabelForAttachment)
+                }
+                onFilesChange={
+                  fileUploadDisabled
+                    ? undefined
+                    : files => {
+                        const owner = buildAdminFileOwner(
+                          ADMIN_FILE_OWNER.PROGRAM,
+                          numericProgramId,
+                          ADMIN_FILE_PURPOSE.VOLUNTEER_APPLICATION_EVIDENCE
+                        )
+                        const placeholders: UjatPreviousTermAttachmentRow[] = files.map(file => ({
+                          fileName: file.name,
+                          status: 'uploading',
+                        }))
+                        const base = [...normalizedAttachments, ...placeholders]
+                        syncIds(base)
+                        void (async () => {
+                          let next = [...base]
+                          for (let i = 0; i < files.length; i += 1) {
+                            const rowIndex = normalizedAttachments.length + i
+                            try {
+                              const result = await uploadAdminFileMaybeMock({
+                                file: files[i]!,
+                                owner,
+                              })
+                              next = next.map((row, index) =>
+                                index === rowIndex
+                                  ? {
+                                      fileName: files[i]!.name,
+                                      fileObjectId: result.fileObjectId,
+                                      status: 'uploaded' as const,
+                                    }
+                                  : row
+                              )
+                            } catch (error) {
+                              const message =
+                                error instanceof Error && error.message.trim()
+                                  ? error.message
+                                  : '업로드에 실패했습니다.'
+                              next = next.map((row, index) =>
+                                index === rowIndex
+                                  ? {
+                                      fileName: files[i]!.name,
+                                      status: 'failed' as const,
+                                      error: message,
+                                    }
+                                  : row
+                              )
+                            }
+                            syncIds(next)
+                          }
+                        })()
+                      }
+                }
+                onRemoveFile={
+                  fileUploadDisabled
+                    ? undefined
+                    : index => syncIds(normalizedAttachments.filter((_, i) => i !== index))
+                }
+              />
+            </>
           }
           view="-"
         />
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )
+}
+
+export function hasIncompleteUjatPreviousTermUploads(
+  attachments: unknown
+): boolean {
+  if (!Array.isArray(attachments)) return false
+  return attachments.some(item => {
+    if (item && typeof item === 'object' && 'status' in item) {
+      const status = (item as UjatPreviousTermAttachmentRow).status
+      return status === 'uploading' || status === 'failed'
+    }
+    return true
+  })
 }
