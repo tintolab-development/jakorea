@@ -653,6 +653,7 @@ export * from './individualApplicationUpdateRequest';
 export * from './individualApplicationUpdateResponse';
 export * from './individualApprovalWithScopeBulkRequest';
 export * from './individualApprovalWithScopeRequest';
+export * from './individualApprovalWithScopeResult';
 export * from './individualDocumentEvaluationRequest';
 export * from './individualDocumentEvaluationResponse';
 export * from './individualMemberDetailResponse';

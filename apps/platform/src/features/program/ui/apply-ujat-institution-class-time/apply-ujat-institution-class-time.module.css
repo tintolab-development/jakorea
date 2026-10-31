@@ -2,9 +2,32 @@
   width: 100%;
 }
 
+.table {
+  width: 100%;
+}
+
 .gradeRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.periodPair {
+  width: 100%;
+  min-width: 0;
+}
+
+.table .compactPeriodRow {
+  grid-template-columns: 120px minmax(0, 1fr) 120px minmax(0, 1fr);
+}
+
+@media (--bp-below-pc) {
+  .table .compactPeriodRow {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+  }
 }

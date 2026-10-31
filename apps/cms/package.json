@@ -111,6 +111,7 @@
     "filter:openapi:certificates": "node scripts/filter-openapi-certificates.mjs",
     "patch:openapi:member-permission-p0": "node scripts/patch-openapi-member-permission-p0.mjs",
     "patch:openapi:instructor-ja-grade-policy": "node scripts/patch-openapi-instructor-ja-grade-policy.mjs",
+    "patch:openapi:individual-approval-with-scope-result": "node scripts/patch-openapi-individual-approval-with-scope-result.mjs",
     "merge:openapi:notification-template-variables": "node scripts/merge-openapi-notification-template-variables-from-be.mjs",
     "merge:openapi:organization-notification-resend": "node scripts/merge-openapi-organization-notification-resend-from-be.mjs",
     "patch:openapi:notification-template-variables": "node scripts/patch-openapi-notification-template-variables.mjs",
@@ -129,7 +130,7 @@
     "package:members-be-handoff": "node scripts/package-members-be-handoff.mjs",
     "package:member-management-seed-handoff": "node scripts/package-member-management-seed-handoff.mjs",
     "smoke:member-management-be": "node scripts/member-management-be-smoke.mjs",
-    "generate:api": "pnpm merge:openapi:organization-notification-resend && pnpm merge:openapi:notification-template-variables && pnpm patch:openapi:notification-template-variables && pnpm patch:openapi:instructor-ja-grade-policy && pnpm filter:openapi:dashboard && pnpm filter:openapi:logs && pnpm filter:openapi:data-management && pnpm filter:openapi:posts && pnpm filter:openapi:settlement && pnpm filter:openapi:members && pnpm filter:openapi:notifications && pnpm patch:openapi:notification-send-batch-create-request && pnpm filter:openapi:performance && pnpm filter:openapi:forms-surveys && pnpm filter:openapi:certificates && pnpm filter:openapi:program-progress && orval --config orval.config.ts",
+    "generate:api": "pnpm merge:openapi:organization-notification-resend && pnpm merge:openapi:notification-template-variables && pnpm patch:openapi:notification-template-variables && pnpm patch:openapi:instructor-ja-grade-policy && pnpm patch:openapi:individual-approval-with-scope-result && pnpm filter:openapi:dashboard && pnpm filter:openapi:logs && pnpm filter:openapi:data-management && pnpm filter:openapi:posts && pnpm filter:openapi:settlement && pnpm filter:openapi:members && pnpm filter:openapi:notifications && pnpm patch:openapi:notification-send-batch-create-request && pnpm filter:openapi:performance && pnpm filter:openapi:forms-surveys && pnpm filter:openapi:certificates && pnpm filter:openapi:program-progress && orval --config orval.config.ts",
     "generate:api:watch": "orval --config orval.config.ts --watch openapi/dashboard.openapi.json"
   },
   "dependencies": {

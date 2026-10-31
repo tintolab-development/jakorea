@@ -6,7 +6,13 @@ import {
   type EntrepreneurshipProgramId,
 } from '@/features/education-entrepreneurship'
 import { useEducationProgramIntroView } from '@/features/education-intro/api/hooks'
-import { PFButton, PFLoadingSpinner, PFTabs, PFText } from '@/shared/ui'
+import {
+  PFButton,
+  PFTabs,
+  PFText,
+  PublicContentPageLoading,
+  PublicContentPageStatus,
+} from '@/shared/ui'
 import styles from './page.module.css'
 
 export function EducationEntrepreneurshipPage() {
@@ -34,6 +40,30 @@ export function EducationEntrepreneurshipPage() {
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  if (isPending) {
+    return (
+      <section className={styles.page}>
+        <PublicContentPageLoading label="프로그램 소개를 불러오는 중" />
+      </section>
+    )
+  }
+
+  if (isError) {
+    return (
+      <section className={styles.page}>
+        <div className={styles.pageBackground} aria-hidden="true" />
+        <PublicContentPageStatus>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            프로그램 소개를 불러오지 못했습니다.
+          </PFText>
+          <PFButton variant="tertiary" size="large" onClick={refetch}>
+            다시 시도
+          </PFButton>
+        </PublicContentPageStatus>
+      </section>
+    )
+  }
+
   return (
     <section className={styles.page}>
       <div className={styles.pageBackground} aria-hidden="true" />
@@ -52,21 +82,12 @@ export function EducationEntrepreneurshipPage() {
           </PFText>
         </header>
 
-        {isPending ? (
-          <PFLoadingSpinner centered label="프로그램 소개를 불러오는 중" />
-        ) : isError ? (
-          <div className={styles.status}>
+        {programs.length === 0 ? (
+          <PublicContentPageStatus layout="inline">
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-              프로그램 소개를 불러오지 못했습니다.
+              등록된 프로그램이 없습니다.
             </PFText>
-            <PFButton variant="tertiary" size="large" onClick={refetch}>
-              다시 시도
-            </PFButton>
-          </div>
-        ) : programs.length === 0 ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
-            등록된 프로그램이 없습니다.
-          </PFText>
+          </PublicContentPageStatus>
         ) : (
           <>
         <div className={styles.tabs}>

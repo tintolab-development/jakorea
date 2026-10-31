@@ -10,10 +10,15 @@ import {
   ThriveSection,
 } from '@/features/history'
 import { usePublicJaHistoryPage } from '@/features/history/api/hooks'
+import { PublicContentPageLoading } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function HistoryPage() {
-  const { view } = usePublicJaHistoryPage()
+  const { view, isPending } = usePublicJaHistoryPage()
+
+  if (isPending) {
+    return <PublicContentPageLoading label="JA 역사 정보를 불러오는 중" />
+  }
 
   return (
     <div className={styles.page}>

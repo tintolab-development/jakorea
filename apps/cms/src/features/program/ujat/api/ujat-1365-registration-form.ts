@@ -1,18 +1,10 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import type { Ujat1365RegistrationFormResponse as GeneratedUjat1365RegistrationFormResponse } from '@/shared/api/generated/program-progress/schemas/ujat1365RegistrationFormResponse'
 
 export type Ujat1365RegistrationMode = 'PREVIEW' | 'DOWNLOAD'
 
-export type Ujat1365RegistrationFormResponse = {
-  programId?: number
-  participantId?: number
-  memberId?: number
-  name?: string | null
-  birthDate?: string | null
-  external1365Id?: string | null
-  volunteerMinutes?: number | null
-  mode?: string
-}
+export type Ujat1365RegistrationFormResponse = GeneratedUjat1365RegistrationFormResponse
 
 export async function fetchUjat1365RegistrationFormRemote(input: {
   programId: string | number

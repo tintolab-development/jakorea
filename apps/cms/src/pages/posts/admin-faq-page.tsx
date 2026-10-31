@@ -35,6 +35,7 @@ import {
   useCmsAlert,
   FilterTableToolbarButton,
 } from '@/shared/ui'
+import { selectedPostRowKeysToBulkIds } from '@/features/posts/lib/posts-bulk-delete-ids'
 import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { CategoryManagementModal } from '@/features/posts/ui/category-management-modal'
@@ -150,7 +151,7 @@ function AdminFAQPage() {
   }, [canWrite, selectedRowKeys.length, showAlert])
 
   const handleConfirmBulkDelete = useCallback(async () => {
-    const ids = selectedRowKeys.map(k => String(k))
+    const ids = selectedPostRowKeysToBulkIds(selectedRowKeys, tableData)
     if (ids.length === 0) {
       setBulkDeleteConfirmOpen(false)
       return
@@ -165,7 +166,7 @@ function AdminFAQPage() {
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
       setActionResultOpen(true)
     }
-  }, [bulkDeleteMutation, selectedRowKeys])
+  }, [bulkDeleteMutation, selectedRowKeys, tableData])
 
   const handleRegister = useCallback(() => {
     if (!canWrite) return

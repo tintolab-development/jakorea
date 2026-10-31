@@ -31,12 +31,18 @@ vi.mock('@/shared/ui/cms-alert-modal-provider', () => ({
 }))
 
 const loadConsentSignedSignatureBlobRemote = vi.fn()
+const fetchConsentSignedDocumentRemote = vi.fn()
+const fetchConsentOriginalFileBlobRemote = vi.fn()
 vi.mock('@/features/user/api/members-api-client', async importOriginal => {
   const actual = await importOriginal<typeof import('@/features/user/api/members-api-client')>()
   return {
     ...actual,
     loadConsentSignedSignatureBlobRemote: (...args: unknown[]) =>
       loadConsentSignedSignatureBlobRemote(...args),
+    fetchConsentSignedDocumentRemote: (...args: unknown[]) =>
+      fetchConsentSignedDocumentRemote(...args),
+    fetchConsentOriginalFileBlobRemote: (...args: unknown[]) =>
+      fetchConsentOriginalFileBlobRemote(...args),
   }
 })
 
@@ -63,6 +69,13 @@ describe('member consent filled document rendering', () => {
     reset.mockReset()
     loadConsentSignedSignatureBlobRemote.mockReset()
     loadConsentSignedSignatureBlobRemote.mockResolvedValue(null)
+    fetchConsentSignedDocumentRemote.mockReset()
+    fetchConsentOriginalFileBlobRemote.mockReset()
+    fetchConsentSignedDocumentRemote.mockResolvedValue({
+      originalFileObjectId: 88,
+      originalDownloadApi: '/api/admin/files/88/sensitive-downloads',
+    })
+    fetchConsentOriginalFileBlobRemote.mockResolvedValue(null)
   })
 
   it.each(cases)('$title renders the server-filled schema in the A4 document view', async item => {
@@ -100,9 +113,46 @@ describe('member consent filled document rendering', () => {
     expect(document.body.textContent).not.toContain('MOCK_FILLED')
   })
 
-  it('keeps crime consent unavailable without presenting the signed snapshot as an uploaded original', async () => {
-    renderModal({ templateId: 'agreement-crime', consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT', filledDocumentAvailable: true, documentAgreed: true })
-    await waitFor(() => expect(document.body.textContent).toContain('원본'))
+  it('loads the crime consent original after privacy reason instead of filled-document', async () => {
+    fetchConsentOriginalFileBlobRemote.mockResolvedValue(
+      new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' })
+    )
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-crime-original')
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    renderModal({
+      templateId: 'agreement-crime',
+      consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+      filledDocumentAvailable: true,
+      documentAgreed: true,
+    })
+    const reason = document.querySelector('.user-personal-info-reveal-confirm-modal') as HTMLElement
+    const input = reason.querySelector('textarea, input')
+    if (input) fireEvent.change(input, { target: { value: 'authorized review' } })
+    const buttons = [...(reason.closest('.ant-modal') ?? reason).querySelectorAll('button')]
+    fireEvent.click(buttons[buttons.length - 1]!)
+    await waitFor(() => expect(fetchConsentSignedDocumentRemote).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(fetchConsentOriginalFileBlobRemote).toHaveBeenCalledTimes(1))
+    expect(mutateAsync).not.toHaveBeenCalled()
+    await waitFor(() => {
+      expect(document.querySelector('.crime-consent-doc-modal__a4-outer')).toBeTruthy()
+    })
+  })
+
+  it('shows crime original unavailable when signed-document has no uploaded file', async () => {
+    renderModal({
+      templateId: 'agreement-crime',
+      consentType: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+      filledDocumentAvailable: true,
+      documentAgreed: true,
+    })
+    const reason = document.querySelector('.user-personal-info-reveal-confirm-modal') as HTMLElement
+    const input = reason.querySelector('textarea, input')
+    if (input) fireEvent.change(input, { target: { value: 'authorized review' } })
+    const buttons = [...(reason.closest('.ant-modal') ?? reason).querySelectorAll('button')]
+    fireEvent.click(buttons[buttons.length - 1]!)
+    await waitFor(() =>
+      expect(document.body.textContent).toContain('제출된 성범죄 경력조회 동의서 원본을 불러올 수 없습니다.')
+    )
     expect(mutateAsync).not.toHaveBeenCalled()
     expect(document.querySelector('.crime-consent-doc-modal__a4-outer img')).toBeNull()
   })

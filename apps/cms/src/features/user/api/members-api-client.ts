@@ -731,6 +731,26 @@ export async function fetchConsentEvidenceBlobRemote(
   }
 }
 
+const CRIME_ORIGINAL_FALLBACK_FILENAME = '성범죄_경력조회_동의서.pdf'
+
+/** 성범죄 업로드 원본. signed-document의 originalDownloadApi + SENSITIVE_FILE_DOWNLOAD. */
+export async function fetchConsentOriginalFileBlobRemote(
+  signed: SignedConsentDocumentResponse,
+  reason: string
+): Promise<Blob | null> {
+  if (signed.originalFileObjectId == null) return null
+  try {
+    const blob = await loadSensitiveAdminFileBlob({
+      fileObjectId: signed.originalFileObjectId,
+      reason,
+      claimPath: signed.originalDownloadApi,
+    })
+    return blobWithEvidenceMime(blob, CRIME_ORIGINAL_FALLBACK_FILENAME)
+  } catch {
+    return null
+  }
+}
+
 /** signed-document originalFileObjectId → 민감 파일 relay. 없으면 filled evidence 폴백. */
 export async function fetchConsentCrimeOriginalBlobRemote(input: {
   memberId: number
@@ -746,14 +766,8 @@ export async function fetchConsentCrimeOriginalBlobRemote(input: {
       { reason: input.reason },
       input.consentRecordId
     )
-    if (signed.originalFileObjectId != null) {
-      const blob = await loadSensitiveAdminFileBlob({
-        fileObjectId: signed.originalFileObjectId,
-        reason: input.reason,
-        claimPath: signed.originalDownloadApi,
-      })
-      return blobWithEvidenceMime(blob, 'crime-consent.pdf')
-    }
+    const original = await fetchConsentOriginalFileBlobRemote(signed, input.reason)
+    if (original != null) return original
   } catch {
     /* filled evidence 폴백 */
   }

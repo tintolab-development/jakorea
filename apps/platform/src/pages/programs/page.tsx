@@ -18,7 +18,6 @@ import {
 import {
   educationFormFilterOptions,
   educationTargetFilterOptions,
-  programTypeFilterOptions,
   recruitmentStatusFilterOptions,
   recruitmentTargetFilterOptions,
 } from '@/shared/lib/filter-options'
@@ -30,6 +29,7 @@ import {
   PFSearchInput,
   PFTabs,
   PFText,
+  PublicContentPageStatus,
 } from '@/shared/ui'
 import jaArrowUrl from '@/shared/assets/brand/ja-arrow.svg'
 import { SkeletonBlock } from '@/shared/ui/skeleton-block'
@@ -147,11 +147,6 @@ export function ProgramsPage() {
         filters={
           <>
             <PFSearchFilter
-              label="프로그램 유형"
-              options={programTypeFilterOptions}
-              {...bindFilter('programType')}
-            />
-            <PFSearchFilter
               label="모집대상"
               options={recruitmentTargetFilterOptions}
               {...bindFilter('recruitmentTarget')}
@@ -200,13 +195,17 @@ export function ProgramsPage() {
           {isPending ? (
             <ProgramListSkeleton />
           ) : isError ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              프로그램을 불러오지 못했습니다.
-            </PFText>
+            <PublicContentPageStatus layout="list">
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                프로그램을 불러오지 못했습니다.
+              </PFText>
+            </PublicContentPageStatus>
           ) : pageItems.length === 0 ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              등록된 프로그램이 없습니다.
-            </PFText>
+            <PublicContentPageStatus layout="list">
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                등록된 프로그램이 없습니다.
+              </PFText>
+            </PublicContentPageStatus>
           ) : (
             pageItems.map(program => (
               <ProgramListItemRow

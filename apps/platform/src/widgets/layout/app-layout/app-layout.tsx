@@ -49,6 +49,7 @@ export function AppLayout({
   const isHome = layout === 'home'
   const isSupport = layout === 'support'
   const isIntroduction = layout === 'introduction'
+  const isFull = layout === 'full'
   /** 재능기부 신청 폼 — 히어로 오버레이(음수 margin·투명 헤더) 제외 */
   const isSupportHero = isSupport && !isTalentDonationApplyPath(pathname)
   /** 상세는 자체 셸을 쓰므로 ContentShell을 한 번 더 씌우지 않는다. 목록과 같은 레이아웃에 두어 헤더가 다시 마운트되지 않게 한다. */
@@ -100,7 +101,8 @@ export function AppLayout({
     children
   )
 
-  const mainClassName = isMemberConversionBody
+  const mainClassName =
+    isMemberConversionBody || isAuth || isFull
     ? styles.mainFill
     : isMypage
       ? styles.mainMypage

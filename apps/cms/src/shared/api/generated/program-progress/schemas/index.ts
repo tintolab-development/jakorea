@@ -20,6 +20,8 @@ export * from './pageResponseProgramParticipantRegisterCandidateResponse';
 export * from './participantRegisterCandidatesParams';
 export * from './previousJaProgramRequest';
 export * from './programParticipantRegisterCandidateResponse';
+export * from './ujat1365RegistrationFormParams';
+export * from './ujat1365RegistrationFormResponse';
 export * from './volunteerParticipantRegisterRequest';
 export * from './volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest';
 export * from './volunteerParticipantRegisterRequestPersonalInfoConsent';

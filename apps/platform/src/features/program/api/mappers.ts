@@ -1004,6 +1004,7 @@ function mapPortalScheduleDetails(
       isPreEducation && displayName.replace(/\s+/g, '') === PORTAL_PRE_EDUCATION_DISPLAY_LABEL
         ? ''
         : displayName
+
     if (
       !name &&
       !dateLabel &&

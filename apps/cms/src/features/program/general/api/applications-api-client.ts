@@ -7,6 +7,7 @@ import type { ApplicationDecisionCancelRequest } from '@/shared/api/generated/da
 import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import type { IndividualApprovalWithScopeBulkTarget } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeBulkTarget'
 import type { IndividualApprovalWithScopeRequest } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeRequest'
+import type { IndividualApprovalWithScopeResult } from '@/shared/api/generated/dashboard/schemas/individualApprovalWithScopeResult'
 import type { BulkDecisionRequest } from '@/shared/api/generated/dashboard/schemas/bulkDecisionRequest'
 import type { TimedBulkIdsRequest } from '@/shared/api/generated/dashboard/schemas/timedBulkIdsRequest'
 import type { BulkResultRequest } from '@/shared/api/generated/dashboard/schemas/bulkResultRequest'
@@ -146,15 +147,7 @@ export type InstructorApplicationApprovalCancellationRequest = {
   faultParty?: 'USER' | 'ADMIN' | null
 }
 
-/**
- * POST …/approve-with-education-scope 본문.
- * 실행 중 OpenAPI `Result`는 AGE14 guardian cleanup DTO와 이름이 충돌해
- * decision/educationScope가 빠지므로 generated Result를 쓰지 않는다.
- */
-export type IndividualApprovalWithScopeResult = {
-  decision?: ApplicationDecisionResponse
-  educationScope?: { scheduleIds?: number[] }
-}
+export type { IndividualApprovalWithScopeResult }
 
 export type InstructorApplicationUpdatePayload = {
   managerComment?: string | null

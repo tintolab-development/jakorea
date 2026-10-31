@@ -16567,10 +16567,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -52141,6 +52141,18 @@
               "USER",
               "ADMIN"
             ]
+          }
+        }
+      },
+      "IndividualApprovalWithScopeResult": {
+        "type": "object",
+        "description": "개인 신청 교육 범위 승인 응답. Springdoc Result 이름 충돌을 피하기 위해 FE에서 분리한다.",
+        "properties": {
+          "decision": {
+            "$ref": "#/components/schemas/ApplicationDecisionResponse"
+          },
+          "educationScope": {
+            "$ref": "#/components/schemas/ScopeResponse"
           }
         }
       }

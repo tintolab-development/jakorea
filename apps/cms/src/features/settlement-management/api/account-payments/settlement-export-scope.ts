@@ -1,6 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
-import type { SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
+import type { Scope, SettlementExportRequest } from '@/shared/api/generated/settlement/schemas'
 import {
   ACCOUNT_PAYMENT_EXPORT_STATUS_PAID,
   ACCOUNT_PAYMENT_EXPORT_STATUS_WAITING_PAYMENT,
@@ -11,15 +11,7 @@ import type { AccountPaymentRow } from '@/features/settlement-management/model/a
 
 export type SettlementExportType = 'BULK_TRANSFER' | 'TAX_REPORT'
 
-export type SettlementExportScope = {
-  exportType?: string
-  fullCorpus?: boolean
-  effectiveStatus?: string | null
-  searchSnapshotHash?: string
-  rowCount?: number
-  scopeToken?: string
-  expiresAtEpochSecond?: number
-}
+export type SettlementExportScope = Scope
 
 const SCOPE_REASON = '계좌 지급 확인 — 원본 발급 범위 확인'
 const SCOPE_PURPOSE = '정산 관리 대량이체·세금신고 원본 양식'

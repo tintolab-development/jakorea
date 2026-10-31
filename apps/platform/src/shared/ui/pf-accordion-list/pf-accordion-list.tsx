@@ -1,6 +1,7 @@
 import chevronDownBlackUrl from '@/shared/assets/icons/chevron-down-black.svg'
 import { PFCategoryBadge, PFText } from '@/shared/ui'
 import { PFLoadingSpinner } from '../pf-loading-spinner'
+import { PublicContentPageStatus } from '../public-content-page-loading/public-content-page-status'
 import styles from './pf-accordion-list.module.css'
 
 export type PFAccordionListItem = {
@@ -33,13 +34,15 @@ export function PFAccordionList({
   if (items.length === 0) {
     return (
       <div className={rootClassName}>
-        {loading ? (
-          <PFLoadingSpinner centered label="목록을 불러오는 중" />
-        ) : (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-            {emptyMessage}
-          </PFText>
-        )}
+        <PublicContentPageStatus layout="list">
+          {loading ? (
+            <PFLoadingSpinner label="목록을 불러오는 중" />
+          ) : (
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              {emptyMessage}
+            </PFText>
+          )}
+        </PublicContentPageStatus>
       </div>
     )
   }
