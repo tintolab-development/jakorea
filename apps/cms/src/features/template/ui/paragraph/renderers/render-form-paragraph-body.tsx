@@ -828,7 +828,7 @@ export function renderFormParagraphBody(
           ? options?.ujatProgramApplicationFormVolunteer?.recruitCohortLabel
           : undefined
       const resolveItemDisplayLabel =
-        ujatVolunteerRecruitCohort &&
+        paragraphInteractionMode === 'user' &&
         options?.ujatProgramApplicationFormVolunteer?.enabled === true &&
         isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed(p.id)
           ? (item: { id: string; label: string }) =>
