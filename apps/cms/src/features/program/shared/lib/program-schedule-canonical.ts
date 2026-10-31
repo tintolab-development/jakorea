@@ -92,14 +92,29 @@ export function isLegacyProgramScheduleWithoutEducationSlotKey(
 
 export const PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION = 'PRE_EDUCATION' as const
 
+const GENERAL_PRE_EDUCATION_SLOT_KEY_PREFIX = 'general-pre-education:'
+
 /**
- * 필수 사전교육 일정 행(scheduleRole=PRE_EDUCATION). 서버가 승인 시 자동 배정하므로
- * 강사·봉사·기관 배정 후보와 승인 confirmedScheduleIds에는 넣지 않는다.
- * scheduleRole 없음(null)은 사전교육이 아니다 — 기존 동작 유지.
+ * 필수 사전교육 일정 행.
+ * scheduleRole/scheduleKind PRE_EDUCATION 또는 educationSlotKey `general-pre-education:` 접두.
+ * 서버가 승인 시 자동 배정하므로 강사·봉사·기관 배정 후보와 승인 confirmedScheduleIds에는 넣지 않는다.
+ * scheduleRole 없음(null)만으로는 사전교육이 아니다 — 기존 레거시 동작 유지.
  */
 export function isProgramSchedulePreEducation(schedule: unknown): boolean {
-  const { scheduleRole } = readProgramScheduleCanonicalFields(schedule)
-  return String(scheduleRole ?? '').trim().toUpperCase() === PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION
+  const { scheduleRole, educationSlotKey } = readProgramScheduleCanonicalFields(schedule)
+  if (String(scheduleRole ?? '').trim().toUpperCase() === PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION) {
+    return true
+  }
+  const slotKey = educationSlotKey?.trim().toLowerCase() ?? ''
+  if (slotKey.startsWith(GENERAL_PRE_EDUCATION_SLOT_KEY_PREFIX)) return true
+  if (schedule != null && typeof schedule === 'object') {
+    const raw = schedule as Record<string, unknown>
+    const kind = readNullableString(raw.scheduleKind) ?? readNullableString(raw.schedule_kind)
+    if (String(kind ?? '').trim().toUpperCase() === PROGRAM_SCHEDULE_ROLE_PRE_EDUCATION) {
+      return true
+    }
+  }
+  return false
 }
 
 export const PROGRAM_SCHEDULE_ROLE_EDUCATION = 'EDUCATION' as const
@@ -161,6 +176,7 @@ function isMultiDayAllDayPeriodWindow(schedule: unknown): boolean {
 export function isProgramScheduleRoleAllowedForNewEducationAssignment(
   schedule: unknown
 ): boolean {
+  if (isProgramSchedulePreEducation(schedule)) return false
   const { scheduleRole } = readProgramScheduleCanonicalFields(schedule)
   if (scheduleRole == null) return true
   const normalized = String(scheduleRole).trim().toUpperCase()

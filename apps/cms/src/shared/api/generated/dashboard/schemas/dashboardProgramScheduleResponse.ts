@@ -22,4 +22,8 @@ export interface DashboardProgramScheduleResponse {
   address?: string;
   /** 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. program_schedule.schedule_status 컬럼과 다를 수 있음. 출석 코드와 혼용하지 않음. */
   scheduleStatus?: DashboardProgramScheduleResponseScheduleStatus;
+  /** PRE_EDUCATION | EDUCATION | CLOSING | SESSION. 사전교육 행은 PRE_EDUCATION. */
+  scheduleRole?: string;
+  /** 예: general-pre-education:1, general-common-line:1 */
+  educationSlotKey?: string;
 }

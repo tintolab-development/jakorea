@@ -51512,6 +51512,14 @@
               "IN_PROGRESS",
               "COMPLETED"
             ]
+          },
+          "scheduleRole": {
+            "type": "string",
+            "description": "PRE_EDUCATION | EDUCATION | CLOSING | SESSION. 사전교육 행은 PRE_EDUCATION."
+          },
+          "educationSlotKey": {
+            "type": "string",
+            "description": "예: general-pre-education:1, general-common-line:1"
           }
         }
       },

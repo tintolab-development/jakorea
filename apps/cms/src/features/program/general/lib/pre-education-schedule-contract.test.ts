@@ -48,6 +48,9 @@ function mainDashboardRow(
 describe('isProgramSchedulePreEducation', () => {
   it('PRE_EDUCATION만 참, null 역할(레거시)은 사전교육이 아니다', () => {
     expect(isProgramSchedulePreEducation({ scheduleRole: 'PRE_EDUCATION' })).toBe(true)
+    expect(isProgramSchedulePreEducation({ educationSlotKey: 'general-pre-education:1' })).toBe(
+      true
+    )
     expect(isProgramSchedulePreEducation({ scheduleRole: 'EDUCATION' })).toBe(false)
     expect(isProgramSchedulePreEducation({ scheduleRole: null })).toBe(false)
     expect(isProgramSchedulePreEducation({})).toBe(false)

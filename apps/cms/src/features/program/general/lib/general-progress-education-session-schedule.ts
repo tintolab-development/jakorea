@@ -1,5 +1,6 @@
 import {
   isMultiDayAllDayPeriodWindowForSurvey,
+  isProgramSchedulePreEducation,
   readProgramScheduleCanonicalFields,
 } from '@/features/program/shared/lib/program-schedule-canonical'
 
@@ -32,6 +33,7 @@ function isEducationSessionScheduleWithRoles(
     return false
   }
 
+  if (isProgramSchedulePreEducation(schedule)) return options.includePreEducation
   const { scheduleRole } = readProgramScheduleCanonicalFields(schedule)
   if (scheduleRole == null) return true
   const role = String(scheduleRole).trim().toUpperCase()
