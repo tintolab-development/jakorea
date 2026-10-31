@@ -1,8 +1,15 @@
 /* UJAT 기관 캘린더 — page-scroll sticky는 `calendar-layout.css` `.calendar-set--page-scroll` */
 
-/* 일정 strip 제목 — 강조색(학교별 팔레트) 미적용, 기본 검정 */
+/* 일정 strip 제목 — 강조색(학교별 팔레트) 미적용, 기본 검정 · 보조(지역)는 0.6 */
 .ujat-institution-application-list .calendar-event-title,
-.ujat-institution-application-list .calendar-event-title--with-divider {
-  color: var(--main-BK, #3d3d3d) !important;
+.ujat-institution-application-list .calendar-event-title--with-divider,
+.ujat-schedule-confirm-list .calendar-event-title,
+.ujat-schedule-confirm-list .calendar-event-title--with-divider {
+  color: var(--Neutral-black, #3d3d3d) !important;
+}
+
+.ujat-institution-application-list .calendar-event-title__right,
+.ujat-schedule-confirm-list .calendar-event-title__right {
+  opacity: 0.6;
 }
 

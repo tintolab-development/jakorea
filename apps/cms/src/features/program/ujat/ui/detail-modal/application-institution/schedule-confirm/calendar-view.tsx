@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
@@ -10,6 +10,8 @@ import {
   type CalendarInstitutionApplicationListRow,
   type CalendarItem,
 } from '@/shared/components/calendar'
+import type { RenderCalendarMonthEventContent } from '@/shared/components/calendar/model/calendar-month-cell-row'
+import { CalendarMonthEventTitleWithDivider } from '@/shared/components/calendar/ui/calendar-month-event-title'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
@@ -104,6 +106,7 @@ export function UjatInstitutionScheduleConfirmCalendarView({
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => initialDate)
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => initialDate.startOf('month'))
   const [selectedSchools, setSelectedSchools] = useState<string[]>([])
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
 
   useEffect(() => {
     setSelectedDate(initialDate)
@@ -191,6 +194,25 @@ export function UjatInstitutionScheduleConfirmCalendarView({
     [onOpenDetail, rows]
   )
 
+  const renderMonthEventContent: RenderCalendarMonthEventContent = useCallback(({ row, colors }) => {
+    const nested = row.sourceEvent?.original as
+      | { originalItem?: UjatScheduleConfirmCalendarOriginalItem }
+      | UjatScheduleConfirmCalendarOriginalItem
+      | undefined
+    const item =
+      nested && typeof nested === 'object' && 'originalItem' in nested
+        ? nested.originalItem
+        : (nested as UjatScheduleConfirmCalendarOriginalItem | undefined)
+    const left = item?.institutionName ?? String(row.sourceEvent.title ?? '')
+    const right = item?.regionLabel?.trim() || undefined
+    return (
+      <CalendarMonthEventTitleWithDivider
+        parts={{ left, right }}
+        accentColor={colors.text}
+      />
+    )
+  }, [])
+
   return (
     <div className="calendar-set calendar-set--page-scroll">
       <div className="calendar-main-container">
@@ -204,11 +226,12 @@ export function UjatInstitutionScheduleConfirmCalendarView({
           onSelectDate={handleDateSelect}
           onMonthChange={handleMonthChange}
           onTodayClick={handleTodayClick}
-          selectedRowKeys={[]}
+          selectedRowKeys={selectedRowKeys}
           eventsTooltipScope="full-day"
           eventsTooltipTrigger="cell"
           formatEventsOverflowText={n => `외 ${n}개의 항목`}
           previewTooltipContent={renderScheduleConfirmPreviewTooltipContent}
+          renderMonthEventContent={renderMonthEventContent}
         />
       </div>
 
@@ -217,8 +240,8 @@ export function UjatInstitutionScheduleConfirmCalendarView({
           mode="institutionApplication"
           selectedDate={selectedDate}
           rows={listRows}
-          selectedRowKeys={[]}
-          onSelectionChange={() => {}}
+          selectedRowKeys={selectedRowKeys}
+          onSelectionChange={setSelectedRowKeys}
           onRowClick={onOpenDetail ? handleListRowClick : undefined}
           resolveRowColors={resolveRowColors}
         />

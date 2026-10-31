@@ -131,6 +131,11 @@
   background: rgba(1, 161, 175, 0.06);
 }
 
+/* 피그마 check area — 선택 행 체크박스 영역 mint tint */
+.calendar-list-item--selected .calendar-list-item__checkbox {
+  background: rgba(1, 161, 175, 0.06);
+}
+
 .calendar-list-item__checkbox .ant-checkbox-wrapper {
   align-items: center;
   margin-inline-end: 0;
