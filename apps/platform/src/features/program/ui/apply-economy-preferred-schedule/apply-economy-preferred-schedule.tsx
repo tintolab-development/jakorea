@@ -68,7 +68,7 @@ function ScheduleTimeRow({
               aria-label={`${label} 시작`}
               value={start}
               onValueChange={onStartChange}
-              width={168}
+              width={120}
               className={styles.timePicker}
             />
             <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={styles.tilde}>
@@ -79,7 +79,7 @@ function ScheduleTimeRow({
               aria-label={`${label} 종료`}
               value={end}
               onValueChange={onEndChange}
-              width={168}
+              width={120}
               className={styles.timePicker}
             />
             {note ? (
@@ -131,7 +131,7 @@ function ScheduleBlock({
                   variant="formPage"
                   size="large"
                   picker="date"
-                  width={240}
+                  width={260}
                   className={styles.datePicker}
                   placeholder="희망 교육 날짜를 선택해 주세요"
                   value={block.date}

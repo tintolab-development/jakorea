@@ -13,6 +13,7 @@ import {
   PFFormInlineSeparator,
   PFSelect,
   PFText,
+  PFTextarea,
   PFTextInput,
 } from '@/shared/ui'
 import styles from './apply-trained-teachers-basic-info.module.css'
@@ -181,7 +182,7 @@ export function ApplyTrainedTeachersBasicInfo({
           <PFSelect
             variant="formPage"
             size="large"
-            width={200}
+            width={120}
             placeholder="학년 선택"
             options={APPLICATION_GRADE_OPTIONS}
             value={value.applicationGrade || undefined}
@@ -407,10 +408,11 @@ export function ApplyTrainedTeachersBasicInfo({
 
       <PFFormFieldRow type="single">
         <PFFormField label="신청 사유">
-          <PFTextInput
+          <PFTextarea
             variant="formPage"
             size="large"
             width="100%"
+            rows={1}
             placeholder="신청 사유를 입력해 주세요."
             value={value.applicationReason}
             onValueChange={next => patch({ applicationReason: next })}
@@ -420,10 +422,11 @@ export function ApplyTrainedTeachersBasicInfo({
 
       <PFFormFieldRow type="single">
         <PFFormField label="기타 요청사항">
-          <PFTextInput
+          <PFTextarea
             variant="formPage"
             size="large"
             width="100%"
+            rows={1}
             placeholder="기타 요청사항을 입력해 주세요."
             value={value.otherRequests}
             onValueChange={next => patch({ otherRequests: next })}

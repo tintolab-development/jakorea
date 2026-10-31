@@ -28,8 +28,8 @@
 }
 
 .datePicker {
-  flex: 0 0 240px;
-  width: 240px;
+  flex: 0 0 260px;
+  width: 260px;
   max-width: 100%;
 }
 
@@ -45,9 +45,9 @@
 }
 
 .timePicker {
-  flex: 0 0 168px;
-  width: 168px;
-  min-width: 168px;
+  flex: 0 0 120px;
+  width: 120px;
+  min-width: 120px;
 }
 
 /* form-template-host typo unset(0,2,0) 회귀 방지 — 레이아웃만 우선순위를 올린다 (apply-preferred-schedule 동일) */

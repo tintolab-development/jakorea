@@ -205,7 +205,8 @@
   align-self: stretch;
   overflow: hidden;
   border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: var(--radius-16);
+  /* 소비 화면에서 토큰만 바꿀 수 있는 훅 — 미지정 시 기존 값 그대로 */
+  border-radius: var(--pf-form-field-table-radius, var(--radius-16));
   background: var(--color-neutral-white);
 }
 
@@ -285,7 +286,7 @@
   gap: 2px;
   padding: 10px;
   border-right: 1px solid var(--table-line, #e0e0e0);
-  background: #f5f6f7;
+  background: var(--pf-form-field-label-bg, #f5f6f7);
 }
 
 .fieldLabelWide {
@@ -314,7 +315,7 @@
   flex: 1 0 0;
   align-items: center;
   gap: 12px;
-  padding: 12px;
+  padding: var(--pf-form-field-content-padding, 12px);
 }
 
 /* 세로형 단락 — 상단 라벨 / 하단 값 */
@@ -397,7 +398,7 @@
   min-height: auto;
   flex: 1 1 auto;
   align-items: stretch;
-  padding: 12px 16px;
+  padding: var(--pf-form-field-content-vertical-padding, 12px 16px);
 }
 
 .fieldValueText {
