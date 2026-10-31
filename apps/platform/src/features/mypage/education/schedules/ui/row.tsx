@@ -53,8 +53,9 @@ export function EducationScheduleRow({
 
   return (
     <>
-      <EducationSessionCard>
+      <EducationSessionCard className={styles.card}>
         <EducationSessionCardHeader
+          mobileStack
           badge={
             <PFStateBadge size="small" tone={progress === 'completed' ? 'success' : 'progress'}>
               {EDUCATION_SCHEDULE_PROGRESS_LABEL[progress]}
@@ -97,6 +98,7 @@ export function EducationScheduleRow({
                   type="button"
                   variant="secondary"
                   size="large"
+                  className={styles.rowButton}
                   onClick={() => onAbsenceReasonSubmit(item)}
                 >
                   결석 사유 제출하기
