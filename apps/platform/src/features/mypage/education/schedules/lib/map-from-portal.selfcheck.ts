@@ -17,8 +17,24 @@ assert.equal(withId.id, '12')
 assert.equal(withId.sessionNumber, 2)
 assert.equal(withId.title, '1차 교육')
 assert.equal(withId.heldAt, '2026-04-04T10:00:00+09:00')
+assert.equal(withId.endAt, '2026-04-04T12:00:00+09:00')
 assert.equal(withId.attendanceStatus, 'present')
+assert.equal(withId.absenceReason, undefined)
 assert.equal(withId.assignment, undefined)
+
+const lateCorrected = mapPortalEducationSchedule(
+  {
+    scheduleId: 187626,
+    attendanceStatus: 'LATE',
+    absenceReasonStatus: 'NOT_REQUIRED',
+    absenceReason: '예전 결석 사유',
+    availableActions: ['VIEW_ATTENDANCE'],
+  },
+  0,
+)
+assert.equal(lateCorrected.attendanceStatus, 'late')
+assert.equal(lateCorrected.absenceReasonStatus, 'NOT_REQUIRED')
+assert.equal(lateCorrected.absenceReason, undefined)
 
 const noScheduleId = mapPortalEducationSchedule(
   {
@@ -74,6 +90,7 @@ const assignmentOn = mapPortalEducationSchedule(
       status: 'FEEDBACK',
       canSubmit: false,
       canResubmit: true,
+      responseStatus: 'REJECTED',
       formResponseId: 88,
       submissions: [
         { id: 501, kind: 'FILE', fileName: '과제.pdf' },
@@ -86,6 +103,7 @@ const assignmentOn = mapPortalEducationSchedule(
 assert.ok(assignmentOn.assignment)
 assert.equal(assignmentOn.assignment.status, 'feedback')
 assert.equal(assignmentOn.assignment.formResponseId, 88)
+assert.equal(assignmentOn.assignment.responseStatus, 'REJECTED')
 assert.equal(assignmentOn.assignment.files?.length, 2)
 const assignmentSubmissions = assignmentOn.assignment.files ?? []
 assert.equal(assignmentSubmissions[0]?.id, 'file-501')
@@ -98,6 +116,29 @@ if (assignmentSubmissions[1]?.kind === 'url') {
 }
 assert.equal(assignmentOn.assignment.canSubmit, false)
 assert.equal(assignmentOn.assignment.canResubmit, true)
+
+const assignmentApproved = mapPortalEducationSchedule(
+  {
+    sessionNo: 3,
+    startAt: '2026-04-05T10:00:00',
+    title: '2차 교육',
+    assignment: {
+      enabled: true,
+      submitStartAt: '2026-04-03T15:00:00',
+      submitEndAt: '2026-04-10T18:00:00',
+      status: 'FEEDBACK',
+      canSubmit: false,
+      canResubmit: false,
+      responseStatus: 'APPROVED',
+      formResponseId: 99,
+    },
+  },
+  2,
+)
+assert.ok(assignmentApproved.assignment)
+assert.equal(assignmentApproved.assignment.status, 'feedback')
+assert.equal(assignmentApproved.assignment.responseStatus, 'APPROVED')
+assert.equal(assignmentApproved.assignment.canResubmit, false)
 assert.equal(assignmentOff.assignment, undefined)
 assert.ok(assignmentOn.assignment.periodLabel.includes('~'))
 

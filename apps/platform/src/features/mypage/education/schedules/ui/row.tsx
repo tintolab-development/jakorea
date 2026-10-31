@@ -4,7 +4,8 @@ import {
   canSubmitEducationAbsenceReason,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
-  resolveEducationScheduleProgressStatus,
+  resolveEducationScheduleRowProgressStatus,
+  shouldDisplayEducationAbsenceReason,
   shouldShowEducationAssignment,
 } from '../lib/schedule-rules'
 import { resolveEducationScheduleRowDateLabel } from '../lib/format'
@@ -37,19 +38,32 @@ export function EducationScheduleRow({
   onAbsenceReasonSubmit,
   showAbsenceReason = true,
 }: EducationScheduleRowProps) {
-  const progress = resolveEducationScheduleProgressStatus(item.heldAt)
+  const progress = resolveEducationScheduleRowProgressStatus(item)
   const heldLabel = resolveEducationScheduleRowDateLabel(item)
   const showAssignment = assignmentAllowed && shouldShowEducationAssignment(item)
   const hasOperationalSchedule = item.scheduleId !== null
   const showAbsenceSubmit =
     onAbsenceReasonSubmit != null &&
     hasOperationalSchedule &&
-    canSubmitEducationAbsenceReason(progress, item.attendanceStatus, item.availableActions)
+    canSubmitEducationAbsenceReason(
+      progress,
+      item.attendanceStatus,
+      item.availableActions,
+      item.absenceReasonStatus,
+    )
   const attendance = hasOperationalSchedule ? item.attendanceStatus : null
   const subtitle = item.rowLabel?.trim() || '-'
   const sessionHeading = subtitle === '-' ? heldLabel : `${heldLabel}, ${subtitle}`
   const absenceReason =
-    showAbsenceReason && hasOperationalSchedule ? item.absenceReason?.trim() : undefined
+    showAbsenceReason &&
+    hasOperationalSchedule &&
+    shouldDisplayEducationAbsenceReason(
+      item.attendanceStatus,
+      item.absenceReasonStatus,
+      item.absenceReason,
+    )
+      ? item.absenceReason?.trim()
+      : undefined
 
   return (
     <>
@@ -149,6 +163,7 @@ export function EducationScheduleRow({
             sessionHeading={sessionHeading}
             applicationType={applicationType}
             applicationId={applicationId}
+            availableActions={item.availableActions}
           />
         ) : null}
       </EducationSessionCard>

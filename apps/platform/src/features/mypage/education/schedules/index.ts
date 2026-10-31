@@ -1,4 +1,5 @@
 export type {
+  EducationAssignmentResponseStatus,
   EducationAssignmentSubmitStatus,
   EducationScheduleAssignment,
   EducationScheduleAssignmentFile,
@@ -10,10 +11,12 @@ export type {
 export { EDUCATION_SCHEDULE_PAGE_SIZE } from './model/types'
 export {
   canSubmitEducationAbsenceReason,
+  EDUCATION_ASSIGNMENT_APPROVED_COPY,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
   resolveEducationAssignmentGuide,
   resolveEducationScheduleProgressStatus,
+  resolveEducationScheduleRowProgressStatus,
   shouldShowEducationAssignment,
 } from './lib/schedule-rules'
 export { formatEducationScheduleHeldAt } from './lib/format'

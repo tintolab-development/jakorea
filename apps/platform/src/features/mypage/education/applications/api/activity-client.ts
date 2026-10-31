@@ -151,6 +151,8 @@ export type PortalEducationScheduleAssignment = {
   canSubmit?: boolean
   /** 수정 제출 가능 여부 (서버 판단) */
   canResubmit?: boolean
+  /** form_response.response_status — 미제출이면 null/생략 */
+  responseStatus?: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | null
   formResponseId?: number
   submissions?: PortalEducationScheduleAssignmentSubmission[]
 }
@@ -194,6 +196,7 @@ export type PortalScheduleAttendanceDetail = {
   scheduleId?: number | null
   attendanceStatus?: string | null
   absenceReason?: string | null
+  absenceReasonStatus?: string | null
   classLabel?: string | null
   assignmentStatus?: string | null
   assignmentRole?: string | null
@@ -342,6 +345,8 @@ export type PortalFormListItem = {
   revisionNo?: number
   canSubmit?: boolean
   canResubmit?: boolean
+  /** form_response.response_status — SUBMITTED / APPROVED / REJECTED 등 */
+  responseStatus?: string | null
   retentionExpiresAt?: string | null
   /** Read-only compatibility aliases. Do not use for new assignment match/submit. */
   programFormBindingId?: number

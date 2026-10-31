@@ -19,6 +19,7 @@ import {
   normalizeScheduleDisplayLabel,
 } from '../../../../../shared/lib/format-display-date.ts'
 import type {
+  EducationAssignmentResponseStatus,
   EducationAssignmentSubmitStatus,
   EducationScheduleAssignment,
   EducationScheduleAssignmentFile,
@@ -73,6 +74,23 @@ function mapAttendance(
       return 'excused'
     default:
       return null
+  }
+}
+
+function mapAssignmentResponseStatus(
+  value: string | null | undefined,
+): EducationAssignmentResponseStatus | undefined {
+  switch ((value ?? '').trim().toUpperCase()) {
+    case 'SUBMITTED':
+      return 'SUBMITTED'
+    case 'APPROVED':
+      return 'APPROVED'
+    case 'REJECTED':
+      return 'REJECTED'
+    case 'COMPLETED':
+      return 'COMPLETED'
+    default:
+      return undefined
   }
 }
 
@@ -162,6 +180,7 @@ function mapAssignment(
       ? normalizeScheduleDisplayLabel(assignment.periodLabel!)
       : undefined) ?? formatPeriodLabel(submitStartAt, submitEndAt)
   const files = mapSubmissions(assignment)
+  const responseStatus = mapAssignmentResponseStatus(assignment.responseStatus)
   return {
     submitStartAt,
     submitEndAt,
@@ -171,6 +190,7 @@ function mapAssignment(
     ...(typeof assignment.canResubmit === 'boolean'
       ? { canResubmit: assignment.canResubmit }
       : {}),
+    ...(responseStatus ? { responseStatus } : {}),
     ...(assignment.formResponseId != null ? { formResponseId: assignment.formResponseId } : {}),
     ...(files ? { files } : {}),
   }
@@ -213,6 +233,7 @@ export function mapPortalEducationSchedule(
     blockKind: item.blockKind,
   })
   const heldAt = optionalText(item.startAt ?? undefined) ?? ''
+  const endAt = optionalText(item.endAt ?? undefined)
   const progressTimeLabel =
     (optionalText(item.progressTimeLabel)
       ? normalizeScheduleDisplayLabel(item.progressTimeLabel!)
@@ -230,6 +251,13 @@ export function mapPortalEducationSchedule(
   const classLabel = optionalText(item.classLabel)
   const locationName = optionalText(item.locationName)
   const team = mapTeamInfo(item.teamRole, item.teamName)
+  const attendanceStatus = mapAttendance(item.attendanceStatus)
+  const absenceReasonStatus = optionalText(item.absenceReasonStatus)?.toUpperCase()
+  const hideAbsenceReason =
+    absenceReasonStatus === 'NOT_REQUIRED' ||
+    attendanceStatus === 'present' ||
+    attendanceStatus === 'late'
+  const absenceReason = hideAbsenceReason ? undefined : optionalText(item.absenceReason)
 
   return {
     id,
@@ -240,10 +268,12 @@ export function mapPortalEducationSchedule(
         : {}),
     sessionNumber,
     heldAt,
+    ...(endAt ? { endAt } : {}),
     title,
     rowLabel,
-    attendanceStatus: mapAttendance(item.attendanceStatus),
-    ...(optionalText(item.absenceReason) ? { absenceReason: item.absenceReason!.trim() } : {}),
+    attendanceStatus,
+    ...(absenceReason ? { absenceReason } : {}),
+    ...(absenceReasonStatus ? { absenceReasonStatus } : {}),
     ...(sessionLabel ? { sessionLabel } : {}),
     ...(scheduleLabel ? { scheduleLabel } : {}),
     ...(optionalText(item.content) ? { content: item.content!.trim() } : {}),

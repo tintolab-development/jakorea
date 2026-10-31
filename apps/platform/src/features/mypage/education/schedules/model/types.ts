@@ -21,6 +21,13 @@ export type EducationAssignmentSubmitStatus =
   | 'feedback'
   | 'revision_submitted'
 
+/** form_response.response_status — 미제출이면 null/생략 */
+export type EducationAssignmentResponseStatus =
+  | 'SUBMITTED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'COMPLETED'
+
 export type EducationScheduleAssignmentSubmissionKind = 'file' | 'url'
 
 export type EducationScheduleAssignmentFile =
@@ -52,6 +59,11 @@ export type EducationScheduleAssignment = {
   canSubmit?: boolean
   /** 서버 수정 제출 가능 여부. 없으면 상태·기한 안내 규칙으로 판단 */
   canResubmit?: boolean
+  /**
+   * form_response.response_status (BE B1 optional).
+   * FEEDBACK + APPROVED 이면 수정 제출 CTA를 숨긴다.
+   */
+  responseStatus?: EducationAssignmentResponseStatus | null
   files?: EducationScheduleAssignmentFile[]
   /** Wave11 portal GET feedback — 있을 때만 원격 조회 */
   formResponseId?: number
@@ -65,13 +77,17 @@ export type EducationScheduleItem = {
   sessionNumber: number
   /** 교육 진행일 (ISO date or datetime). 없으면 빈 문자열 — 날짜 폴백은 Row */
   heldAt: string
+  /** 교육 종료 시각 (ISO). 있으면 행 뱃지 완료 판정에 사용 */
+  endAt?: string
   /** 공통정보 차시/단원명/일정명. 없으면 '-' (정산·UJAT 등 공용) */
   title: string
   /** 교육일정 카드 라벨 — 커리큘럼형 회차명, 일정형 일정명. 없으면 '-' */
   rowLabel?: string
   attendanceStatus: EducationScheduleAttendanceStatus | null
-  /** 사유 불참 시 사유 */
+  /** 사유 불참 시 사유. NOT_REQUIRED 이면 매핑하지 않는다. */
   absenceReason?: string
+  /** Portal `absenceReasonStatus` — NOT_REQUIRED | NOT_SUBMITTED | SUBMITTED */
+  absenceReasonStatus?: string
   /** 커리큘럼 차시/회차 라벨 (`1차시` / `1회차`) */
   sessionLabel?: string
   /** 일정형 블록 라벨 (`세부 일정 01` / `행사 일정 01`) */

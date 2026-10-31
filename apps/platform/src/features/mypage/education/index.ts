@@ -102,6 +102,7 @@ export {
   EducationNoticeStats,
 } from './notices'
 export type {
+  EducationAssignmentResponseStatus,
   EducationAssignmentSubmitStatus,
   EducationScheduleAssignment,
   EducationScheduleAssignmentFile,
@@ -117,6 +118,7 @@ export {
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
   resolveEducationAssignmentGuide,
   resolveEducationScheduleProgressStatus,
+  resolveEducationScheduleRowProgressStatus,
   shouldShowEducationAssignment,
   formatEducationScheduleHeldAt,
   EducationSchedulePanel,
