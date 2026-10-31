@@ -148,8 +148,9 @@ export const EDUCATION_ASSIGNMENT_APPROVED_COPY = {
 } as const
 
 /**
- * 과제 제출 버튼 활성화 여부는 제출 기간을 FE에서 재계산하지 않고
- * 교육일정 API가 내려준 canSubmit/canResubmit만 신뢰한다.
+ * 과제 제출 버튼 활성화 — 팀 역할과 무관하게
+ * 교육일정 API의 canSubmit/canResubmit 또는 availableActions SUBMIT_ASSIGNMENT만 신뢰한다.
+ * 마감·미제출 여부는 FE에서 재계산하지 않는다.
  */
 export function canSubmitEducationAssignment(
   assignment: Pick<EducationScheduleAssignment, 'canSubmit' | 'canResubmit'>,
@@ -164,16 +165,6 @@ function isDeadlinePassed(submitEndAt: string, now: Date): boolean {
   const end = new Date(submitEndAt)
   if (Number.isNaN(end.getTime())) return false
   return now.getTime() > end.getTime()
-}
-
-/** 과제 제출하기 비활성 — 제출 완료이면서 제출 기한이 지난 경우만 */
-export function shouldDisableEducationAssignmentSubmit(
-  status: EducationAssignmentSubmitStatus,
-  submitEndAt: string,
-  now = new Date(),
-): boolean {
-  if (status !== 'submitted' && status !== 'revision_submitted') return false
-  return isDeadlinePassed(submitEndAt, now)
 }
 
 export type ResolveEducationAssignmentGuideOptions = {

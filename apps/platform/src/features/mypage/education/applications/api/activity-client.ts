@@ -147,9 +147,12 @@ export type PortalEducationScheduleAssignment = {
   submitEndAt?: string | null
   periodLabel?: string
   status?: PortalAssignmentStatus | string
-  /** 최초 제출 가능 여부 (서버 판단) */
+  /**
+   * 최초 제출 가능. 팀/개인 동일·역할 무관.
+   * 기간 내·미제출·본인 참여면 MEMBER도 true.
+   */
   canSubmit?: boolean
-  /** 수정 제출 가능 여부 (서버 판단) */
+  /** 수정 제출 가능. 팀 역할 무관, 본인 제출만 true. */
   canResubmit?: boolean
   /** form_response.response_status — 미제출이면 null/생략 */
   responseStatus?: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | null
@@ -193,9 +196,9 @@ export type PortalEducationSchedule = {
   surveyCount?: number
   absenceReasonStatus?: string
   availableActions?: string[]
-  /** 팀 프로그램 회차별 역할 LEADER | MEMBER | INDIVIDUAL. 팀 프로그램이 아니면 null */
+  /** 팀 프로그램 회차별 역할 LEADER | MEMBER | INDIVIDUAL. 표시용. 제출 권한 판단에 쓰지 않는다. */
   teamRole?: string | null
-  /** 팀 프로그램 회차별 팀명. 개인 참여면 null */
+  /** 팀 프로그램 회차별 팀명. 표시용. 개인 참여면 null */
   teamName?: string | null
   /**
    * 커리큘럼형 단일 회차에서 이 일정(하루)에 진행하는 전 차시.

@@ -59,7 +59,8 @@ describe('portal education schedule contract', () => {
         blockKind: 'EVENT',
         teamRole: 'MEMBER',
         teamName: '아자자',
-        assignment: { enabled: true, status: 'NOT_SUBMITTED', canSubmit: false },
+        availableActions: ['SUBMIT_ASSIGNMENT'],
+        assignment: { enabled: true, status: 'NOT_SUBMITTED', canSubmit: true, canResubmit: false },
       },
       2,
     )
@@ -68,7 +69,13 @@ describe('portal education schedule contract', () => {
     expect(individualEvent.team).toEqual({ roleLabel: '개인' })
     expect(teamEvent.team).toEqual({ roleLabel: '팀원', teamName: '아자자' })
     expect(canSubmitEducationAssignment(individualEvent.assignment!, 'submit')).toBe(true)
-    expect(canSubmitEducationAssignment(teamEvent.assignment!, 'submit')).toBe(false)
+    expect(
+      canSubmitEducationAssignment(
+        teamEvent.assignment!,
+        'submit',
+        teamEvent.availableActions,
+      ),
+    ).toBe(true)
   })
 
   it('does not create assignment UI data for instructor or volunteer schedules', () => {

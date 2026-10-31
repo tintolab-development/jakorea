@@ -223,7 +223,7 @@ alwaysApply: false
   - 피드백: `담당자의 과제 피드백이 있어요` + 피드백 확인 / 수정 제출하기
   - 수정제출완료: 라벨 + `과제 수정 제출이 완료되었어요` · 제출 버튼 disabled
   - 제출 완료 시 파일 목록 위 구분선(`--color-border-default`)
-- 제출 완료+마감 or 수정제출완료 → 과제 제출하기 **disabled**
+- 과제 제출하기 활성은 서버 `canSubmit`/`canResubmit` 또는 `availableActions`의 `SUBMIT_ASSIGNMENT`. 팀 역할(LEADER/MEMBER)로 숨기거나 끄지 않는다. 마감만 보고 켜지 않는다.
 - 과제 제출·피드백·결석 사유 팝업: UI 후속(현재 준비 중 alert)
 
 ## 설문조사 · 만족도조사 탭

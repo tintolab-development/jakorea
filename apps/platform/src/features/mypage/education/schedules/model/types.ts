@@ -63,9 +63,14 @@ export type EducationScheduleAssignment = {
   /** 화면용 기한 라벨 (예: 2026년 04월 03일(금) 15:00 ~ 2026년 04월 10일(금) 18:00) */
   periodLabel: string
   status: EducationAssignmentSubmitStatus
-  /** 서버 최초 제출 가능 여부. 없으면 상태·기한 안내 규칙으로 판단 */
+  /**
+   * 서버 최초 제출 가능 여부. 팀/개인 동일, 역할(LEADER/MEMBER)과 무관.
+   * 기간 내·미제출·본인 참여면 MEMBER도 true. FE는 팀 역할로 재계산하지 않는다.
+   */
   canSubmit?: boolean
-  /** 서버 수정 제출 가능 여부. 없으면 상태·기한 안내 규칙으로 판단 */
+  /**
+   * 서버 수정 제출 가능 여부. 팀 역할 무관, **본인이 낸 제출**만 true.
+   */
   canResubmit?: boolean
   /**
    * form_response.response_status (BE B1 optional).

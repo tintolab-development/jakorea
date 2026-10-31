@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import type { EducationScheduleAssignment, EducationScheduleAssignmentFile } from '../model/types'
 import {
+  canSubmitEducationAssignment,
   resolveEducationAssignmentGuide,
-  shouldDisableEducationAssignmentSubmit,
 } from '../lib/schedule-rules'
 import attachFileUrl from '../image/icon/attach-file-24.svg'
 import portalBlackUrl from '@/shared/assets/icons/portal-black.svg'
@@ -67,6 +67,7 @@ type EducationScheduleAssignmentBlockProps = {
   sessionHeading: string
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
+  availableActions?: readonly string[]
 }
 
 export function EducationScheduleAssignmentBlock({
@@ -75,6 +76,7 @@ export function EducationScheduleAssignmentBlock({
   sessionHeading,
   applicationType,
   applicationId,
+  availableActions,
 }: EducationScheduleAssignmentBlockProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
@@ -93,12 +95,19 @@ export function EducationScheduleAssignmentBlock({
   const isRevision = assignment.status === 'submitted' || assignment.status === 'feedback'
   const isSubmitted =
     assignment.status === 'submitted' || assignment.status === 'revision_submitted'
-  const showSubmitButton = guide.showSubmitButton !== false
+  const submitPermitted =
+    scheduleId != null &&
+    scheduleId > 0 &&
+    canSubmitEducationAssignment(
+      assignment,
+      isRevision ? 'revise' : 'submit',
+      availableActions,
+    )
+  const showSubmitButton =
+    guide.showSubmitButton !== false &&
+    (assignment.status !== 'feedback' || submitPermitted)
+  const canSubmitFiles = showSubmitButton && submitPermitted
   const uploading = filesMutation.isPending
-  const submitLocked = shouldDisableEducationAssignmentSubmit(
-    assignment.status,
-    assignment.submitEndAt,
-  )
   // 제출물은 신청 일정 GET 응답의 submissions만 사용한다. 예시·로컬 파일은 여기서 만들지 않는다.
   const remoteFiles = assignment.files ?? EMPTY_ASSIGNMENT_FILES
   const hasRemoteFiles = remoteFiles.length > 0
@@ -172,7 +181,7 @@ export function EducationScheduleAssignmentBlock({
                 type="button"
                 variant="primary"
                 size="large"
-                disabled={submitLocked || uploading}
+                disabled={!canSubmitFiles || uploading}
                 aria-busy={uploading}
                 onClick={() => setSubmitOpen(true)}
               >
@@ -240,7 +249,7 @@ export function EducationScheduleAssignmentBlock({
         open={feedbackOpen}
         sessionHeading={sessionHeading}
         body={feedbackBody}
-        canRevise={isRevision && !uploading}
+        canRevise={isRevision && canSubmitFiles && !uploading}
         onClose={() => setFeedbackOpen(false)}
         onRevise={() => {
           setFeedbackOpen(false)
