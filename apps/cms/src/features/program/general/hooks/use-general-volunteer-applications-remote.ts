@@ -44,6 +44,15 @@ import {
 import { validateApplicationGiveUpReason } from '@/features/program/shared/lib/application-give-up'
 import { mergeGeneralVolunteerApplicantListRows } from '@/features/program/general/lib/general-volunteer-applications-list-merge'
 import { getNotificationScheduleError } from '@/shared/lib/notification-schedule'
+import {
+  DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+  readDocumentEvaluationErrorMessage,
+  shouldShowDocumentEvaluationErrorAlert,
+} from '@/features/program/shared/lib/document-evaluation-error'
+import {
+  readInterviewDecisionErrorAlert,
+  shouldSkipLocalApiErrorAlert,
+} from '@/features/program/shared/lib/interview-not-ended'
 
 export type GeneralVolunteerApplicationsStage = 'doc1' | 'docPassed' | 'interview2'
 
@@ -57,26 +66,6 @@ type UseGeneralVolunteerApplicationsRemoteOptions = {
   /** 서버 필터 (volunteer 전용). 지정 시 query key에 포함 */
   listQuery?: ApplicationsListQuery
   setList: Dispatch<SetStateAction<GeneralVolunteerApplicantRow[]>>
-}
-
-function getDocumentEvaluationErrorMessage(error: unknown): string {
-  const status =
-    error && typeof error === 'object' && 'response' in error
-      ? (error as { response?: { status?: number } }).response?.status
-      : undefined
-  switch (status) {
-    case 403:
-      return '이 프로그램에 접근할 권한이 없거나 본인에게 배정되지 않은 담당자 슬롯입니다.'
-    case 404:
-      return '봉사자 신청 정보를 찾을 수 없습니다.'
-    case 409:
-      return '최종 서류 결과가 확정되어 담당자 평가를 수정할 수 없습니다.'
-    case 400:
-    case 422:
-      return '담당자 평가값이 올바르지 않습니다.'
-    default:
-      return '담당자 평가 저장 중 오류가 발생했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
-  }
 }
 
 export function useGeneralVolunteerApplicationsRemote({
@@ -152,9 +141,11 @@ export function useGeneralVolunteerApplicationsRemote({
     await Promise.all([
       queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.volunteerList(programId),
+        refetchType: 'all',
       }),
       queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.volunteerDetails(),
+        refetchType: 'all',
       }),
     ])
   }, [programId, queryClient, subjectKind])
@@ -162,15 +153,18 @@ export function useGeneralVolunteerApplicationsRemote({
   const notifyRemoteFailure = useCallback(
     (error: unknown) => {
       console.debug('applications remote decision failed', error)
+      if (shouldSkipLocalApiErrorAlert(error)) return
       const data = (error as { response?: { data?: unknown } } | null)?.response?.data
       const scheduleError = getNotificationScheduleError(error)
+      const interviewAlert = readInterviewDecisionErrorAlert(error, '처리 실패')
       showAlert({
-        title: '처리 실패',
+        title: interviewAlert.title,
         content:
           scheduleError?.message ??
           formatApplicationEligibilityConflictMessage(error) ??
           formatApplicationDecisionCancelConflictMessage(error) ??
           formatApplicationStatusConflictMessage(error) ??
+          interviewAlert.content ??
           extractApiErrorMessage(data, {
             httpStatus: getApiErrorHttpStatus(error),
             fallback:
@@ -192,10 +186,18 @@ export function useGeneralVolunteerApplicationsRemote({
       scheduledAt?: string
     ) => {
       if (!remoteEnabled) return false
+      const failReason = reason?.trim()
+      if (result === 'FAIL' && !failReason) {
+        showAlert({
+          title: '요청 오류',
+          content: '반려 사유를 입력해 주세요.',
+        })
+        return false
+      }
       try {
         const payload = {
           result,
-          reason: result === 'FAIL' ? reason?.trim() || '반려' : reason,
+          ...(result === 'FAIL' ? { reason: failReason } : reason ? { reason } : {}),
           ...toScreeningResultNotifyFields({
             notifyTiming: notifyTiming?.trim().toUpperCase(),
             scheduledAt,
@@ -246,10 +248,12 @@ export function useGeneralVolunteerApplicationsRemote({
         return true
       } catch (error) {
         await invalidateApplications()
-        showAlert({
-          title: '평가 저장 실패',
-          content: getDocumentEvaluationErrorMessage(error),
-        })
+        if (shouldShowDocumentEvaluationErrorAlert(error)) {
+          showAlert({
+            title: DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+            content: readDocumentEvaluationErrorMessage(error),
+          })
+        }
         return false
       }
     },
@@ -321,16 +325,10 @@ export function useGeneralVolunteerApplicationsRemote({
         return 'ok'
       } catch (error) {
         console.debug('interview evaluation failed', error)
-        showAlert({
-          title: '면접 평가 실패',
-          content: extractApiErrorMessage(
-            (error as { response?: { data?: unknown } } | null)?.response?.data,
-            {
-              httpStatus: getApiErrorHttpStatus(error),
-              fallback: '면접 평가 저장 중 오류가 발생했습니다. 다시 시도해 주세요.',
-            }
-          ),
-        })
+        if (!shouldSkipLocalApiErrorAlert(error)) {
+          const alert = readInterviewDecisionErrorAlert(error, '면접 평가 실패')
+          showAlert(alert)
+        }
         return 'error'
       }
     },

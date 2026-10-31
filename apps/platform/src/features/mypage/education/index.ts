@@ -83,6 +83,7 @@ export {
   shouldShowDocumentPassBanner,
   UjatScheduleBanner,
   UjatApplicationContent,
+  UjatVolunteerApplicationContent,
 } from './applications'
 export { UjatVolunteerAssignmentPanel } from './ujat-assignments'
 export type {

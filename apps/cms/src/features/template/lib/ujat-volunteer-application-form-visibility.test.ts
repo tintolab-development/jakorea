@@ -28,12 +28,18 @@ describe('UJAT 봉사자 신청 Form 지원 형태별 단락 visibility', () => 
     ).toBeUndefined()
   })
 
-  it('모집 활동 기수로 제출 확인 문구의 N기를 치환한다', () => {
+  it('모집 활동 기수로 제출 확인 문구를 치환하고 기수를 모르면 N기를 뺀다', () => {
     expect(
       resolveUjatVolunteerSubmitConfirmationItemLabel(
-        '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT N기로 지원합니다.',
+        '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT {{UJAT_COHORT}}로 지원합니다.',
         '8'
       )
     ).toContain('UJAT 8기로')
+    expect(
+      resolveUjatVolunteerSubmitConfirmationItemLabel(
+        '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT N기로 지원합니다.',
+        undefined
+      )
+    ).toBe('네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT로 지원합니다.')
   })
 })

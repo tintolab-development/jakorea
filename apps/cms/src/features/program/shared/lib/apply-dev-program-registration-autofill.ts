@@ -1622,9 +1622,13 @@ function buildUjatOverlay(
   sample: DevAutofillSample,
   resolved: { sponsorId: string; contactId: string }
 ): Record<string, unknown> {
-  const sponsorId = resolved.sponsorId || UJAT_SPONSOR_ALL_VALUE
+  // 등록 필수값은 「전체」(__all__)를 허용하지 않는다. 실후원사가 없으면 빈 값으로 두고 수동 입력을 유도한다.
+  const rawSponsor = resolved.sponsorId.trim()
+  const rawContact = resolved.contactId.trim()
+  const sponsorId =
+    rawSponsor && rawSponsor !== UJAT_SPONSOR_ALL_VALUE ? rawSponsor : ''
   const contactId =
-    resolved.contactId || (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
+    sponsorId && rawContact && rawContact !== UJAT_SPONSOR_ALL_VALUE ? rawContact : ''
   return {
     'ujat.basicInfo.repKo': sample.titleKo,
     'ujat.basicInfo.repEn': sample.titleEn,
@@ -1642,6 +1646,7 @@ function buildUjatOverlay(
     'ujat.basicInfo.courseDeliveredBy': sample.courseDeliveredBy,
     'ujat.basicInfo.ipsCategory': sample.ipsCategory,
     'ujat.basicInfo.partnerInvolvement': sample.partnerInvolvement,
+    'ujat.basicInfo.educationVenueKind': sample.venueKind || 'inside',
     'ujat.basicInfo.sponsorId': sponsorId,
     'ujat.basicInfo.sponsorContactId': contactId,
     'ujat.basicInfo.sponsorContactIds': contactId ? [contactId] : [],
@@ -1890,6 +1895,22 @@ const UJAT_APPLICATION_VOLUNTEER_TEMPLATE_CODE = 'application-ujat-volunteer'
  * 있다. 따라서 현재 탭의 store만 patch하지 않고 두 신청 탭의 scope를 모두
  * 채워 두어, 모집 → 신청 → 모집 왕복 후에도 처음 진입한 것처럼 표시한다.
  */
+function seedUjatPreferredScheduleSelectedIds(): string[] {
+  const registration = getUjatProgramRegistrationOverlayRecord()
+  const selected: string[] = []
+  for (const half of ['h1', 'h2'] as const) {
+    const range = registration[`ujat.${half}.event.range`] as
+      | { start?: string; end?: string }
+      | undefined
+    const start = range?.start ? dayjs(range.start).startOf('day') : null
+    if (start == null || !start.isValid()) continue
+    let friday = start
+    while (friday.day() !== 5) friday = friday.add(1, 'day')
+    selected.push(`${half}:${friday.format('YYYY-MM-DD')}`)
+  }
+  return selected
+}
+
 function seedUjatApplicationAutofill(): void {
   const region = listUjatEducationRegionsActive()[0]?.label ?? '서울'
   const gradeBlockId = 'ujat-dev-grade-1'
@@ -1899,6 +1920,8 @@ function seedUjatApplicationAutofill(): void {
 
   const institutionOverlay = {
     [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.applicationRegion]: region,
+    [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.preferredScheduleSelectedIds]:
+      seedUjatPreferredScheduleSelectedIds(),
     [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.gradeDetailByBlock]: {
       [gradeBlockId]: {
         classCountInput: '2',
@@ -2108,7 +2131,8 @@ export async function applyDevProgramRegistrationAutofill(
   )
 
   if (variant === 'ujat') {
-    const resolved = await resolveSponsorAndContact(true)
+    // 「전체」 sentinel은 등록 필수 검증에 실패한다 — 실후원사만 사용한다.
+    const resolved = await resolveSponsorAndContact(false)
     const contactSelectId = toSponsorContactSelectValue(
       resolved.sponsorId,
       resolved.contactId,

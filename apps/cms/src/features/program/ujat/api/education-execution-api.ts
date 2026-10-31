@@ -402,6 +402,52 @@ export async function deleteUjatScheduleUnavailability(
   })
 }
 
+export type UjatPartnerRecommendationCandidate = {
+  participantId?: number | null
+  memberId?: number | null
+  volunteerName?: string | null
+  totalAssignedDays?: number | null
+  assignmentDayCount?: number | null
+  hasPartnerHistoryWithVolunteer?: boolean | null
+}
+
+export type UjatPartnerRecommendationResponse = {
+  programId?: number | null
+  scheduleId?: number | null
+  organizationApplicationId?: number | null
+  candidates?: UjatPartnerRecommendationCandidate[] | null
+  items?: UjatPartnerRecommendationCandidate[] | null
+}
+
+/**
+ * GET /api/admin/program-execution/programs/{programId}/schedules/{scheduleId}/ujat/partner-recommendation
+ * organizationApplicationId 는 선택 쿼리.
+ */
+export async function fetchUjatPartnerRecommendation(
+  programId: string,
+  scheduleId: string | number,
+  organizationApplicationId?: number
+): Promise<UjatPartnerRecommendationCandidate[]> {
+  const body = await unwrapApiBody<
+    | UjatPartnerRecommendationCandidate[]
+    | UjatPartnerRecommendationResponse
+  >(
+    await customInstance({
+      url: executionProgramPath(
+        programId,
+        `/schedules/${encodeURIComponent(String(scheduleId))}/ujat/partner-recommendation`
+      ),
+      method: 'GET',
+      params:
+        organizationApplicationId != null
+          ? { organizationApplicationId }
+          : undefined,
+    })
+  )
+  if (Array.isArray(body)) return body
+  return body.candidates ?? body.items ?? []
+}
+
 export async function fetchUjatPartnerAssignments(
   programId: string,
   scheduleId: string | number,

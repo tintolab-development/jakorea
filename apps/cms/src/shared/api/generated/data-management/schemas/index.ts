@@ -1584,6 +1584,7 @@ export * from './volunteerParticipantRegisterRequestRegistrationChannel';
 export * from './volunteerParticipantRegisterRequestThirdPartyConsent';
 export * from './volunteerParticipantRegisterRequestVolunteerKind';
 export * from './volunteerParticipantRegisterResponse';
+export * from './volunteerPreviousUjatTermRequest';
 export * from './volunteerRow';
 export * from './volunteerSubmissionRow';
 export * from './volunteerUnavailabilityRequest';

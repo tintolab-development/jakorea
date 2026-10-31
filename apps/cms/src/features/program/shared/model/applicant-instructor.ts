@@ -331,37 +331,4 @@ export function patchApplicantInstructorForNotificationResend(
   }
 }
 
-/** Mock 시드 제거 */
-export const MOCK_APPLICANT_INSTRUCTORS: ApplicantInstructorRow[] = []
-
-export function getApplicantInstructorsByProgramId(_programId?: string): ApplicantInstructorRow[] {
-  return []
-}
-
-export function updateApplicantInstructorApprovalStatus(
-  _instructorId: string,
-  _approvalStatus: ApplicantInstructorApprovalStatusKey,
-  _notifyOptions?: ApplicantInstructorApprovalNotifyOptions
-): void {}
-
-export function updateApplicantInstructorCancelApproval(
-  _instructorId: string,
-  _notifyOptions: ApplicantInstructorApprovalNotifyOptions
-): void {}
-
-export function updateApplicantInstructorCancelRejection(
-  _instructorId: string,
-  _notifyOptions?: ApplicantInstructorApprovalNotifyOptions
-): void {}
-
-export function updateApplicantInstructorNotificationResend(
-  _instructorId: string,
-  _notifyOptions: ApplicantInstructorApprovalNotifyOptions
-): void {}
-
-export function patchApplicantInstructorDetail(
-  _instructorId: string,
-  _payload: ApplicantInstructorDetailSavePayload
-): ApplicantInstructorRow | null {
-  return null
-}
+/** 신청 강사 목록·승인 상태는 instructor-applications API가 정본이다. 로컬 시드는 두지 않는다. */

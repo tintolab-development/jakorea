@@ -4,7 +4,6 @@ import {
   getGeneralParticipantDocPassedApplicants,
   getGeneralParticipantInterview2Applicants,
 } from '@/features/program/general/model/individual-applicant'
-import { getApplicantInstructorsByProgramId } from '@/features/program/shared/model/applicant-instructor'
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import type { GeneralDetailLnbKey } from '@/features/program/general/lib/detail-url'
@@ -42,15 +41,8 @@ export function resolveGeneralApplicantDetailMetaFromUrl(params: {
   }
 
   if (activeLnb === 'instructor_applications') {
-    const instructor = getApplicantInstructorsByProgramId(programId).find(
-      row => row.id === applicantId
-    )
-    if (!instructor) return null
-    return {
-      title: `강사 신청 상세 (${instructor.instructorName})`,
-      breadcrumbLabel: instructor.instructorName,
-      kind: 'instructor',
-    }
+    // 강사 신청 상세 제목은 목록 행(instructor-applications API)에서 전달한다.
+    return null
   }
 
   if (activeLnb !== 'institution_applications') return null

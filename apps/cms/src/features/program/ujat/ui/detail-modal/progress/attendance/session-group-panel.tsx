@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import {
   UJAT_ATTENDANCE_SESSION_EXCEL_COLUMNS,
   buildUjatAttendanceSessionExcelRows,
@@ -65,6 +66,7 @@ export function UjatAttendanceSessionGroupPanel({
   onBindOpenCorrection?: (openCorrection: () => void) => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const [correctionModalOpen, setCorrectionModalOpen] = useState(false)
   const [workingRows, setWorkingRows] = useState<UjatAttendanceVolunteerRow[]>(() =>
     cloneAttendanceVolunteerRows(getSessionVolunteers(session.id))
@@ -130,10 +132,14 @@ export function UjatAttendanceSessionGroupPanel({
         <div className="table-header-actions ujat-attendance-session-group__header">
           <UjatAttendanceSessionGroupHeader session={session} totalCount={displayRows.length} />
           <div className="info-section-buttons--wrapper">
+            {canWrite ? (
+              <>
             <CmsButton type="button" variant="secondary" size="h40" onClick={openCorrectionModal}>
               출결 정정
             </CmsButton>
             <ExcelButton loading={isExporting} onClick={exportExcel} />
+              </>
+            ) : null}
           </div>
         </div>
       ) : null}

@@ -2,10 +2,7 @@
  * 참여 기관 상세 — 강사 추가 배정 모달용 옵션·일정 비활성 판별
  */
 
-import {
-  getApplicantInstructorsByProgramId,
-  type ApplicantInstructorRow,
-} from '@/features/program/shared/model/applicant-instructor'
+import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
 import type { ParticipatingInstructorRow } from '@/features/program/general/model/participating-instructors'
 import type {
   ParticipatingSchoolRow,
@@ -89,7 +86,7 @@ function isSessionDisabledForInstructor(params: {
   slotKey: string
   dateKey: string | null
   instructorId?: string
-  applicantInstructors: ApplicantInstructorRow[]
+  applicantInstructors: readonly ApplicantInstructorRow[]
   participatingList: ParticipatingInstructorRow[]
   currentSchoolId: string
   currentSchoolName: string
@@ -148,17 +145,13 @@ function isSessionDisabledForInstructor(params: {
   return false
 }
 
-function instructorsForProgram(programId: string): ApplicantInstructorRow[] {
-  return getApplicantInstructorsByProgramId(programId)
-}
-
 /** 해당 프로그램에 승인된 강사만 선택 목록에 노출 (학교 신청 단위 아님) */
 export function buildProgramApprovedInstructorAssignOptions(
-  programId: string,
+  instructors: readonly ApplicantInstructorRow[],
   assignedInstructorNames: Iterable<string>
 ): SchoolAddInstructorAssignOption[] {
   const assignedNames = new Set(assignedInstructorNames)
-  return instructorsForProgram(programId)
+  return instructors
     .filter(row => row.approvalStatus === 'approved' && !assignedNames.has(row.instructorName))
     .map(row => ({
       value: row.id,
@@ -171,27 +164,25 @@ export function buildProgramApprovedInstructorAssignOptions(
 
 /** 기관 신청 교육일 → 배정일 태그 (강사 선택 시 일정 불가·타 기관 배정일 비활성) */
 export function buildSchoolAddInstructorAssignSessionOptions(params: {
-  programId: string
   schoolId: string
   schoolName: string
   sessions: ParticipatingSchoolSession[] | undefined | null
   selectedInstructorId?: string
+  applicantInstructors?: readonly ApplicantInstructorRow[]
   participatingInstructorList: ParticipatingInstructorRow[]
   participatingSchoolList?: ParticipatingSchoolRow[]
 }): InstructorAssignSessionOption[] {
   const {
-    programId,
     schoolId,
     schoolName,
     sessions,
     selectedInstructorId,
+    applicantInstructors = [],
     participatingInstructorList,
     participatingSchoolList = [],
   } = params
 
   if (!sessions?.length) return []
-
-  const applicantInstructors = instructorsForProgram(programId)
 
   return sessions.map(session => {
     const dateLabel = formatScheduleDateLabel(session.date, session.dayOfWeek)
@@ -225,22 +216,20 @@ export function buildSchoolAddInstructorAssignSessionOptions(params: {
 }
 
 function findApplicantInstructorByName(
-  programId: string,
+  instructors: readonly ApplicantInstructorRow[],
   instructorName: string
 ): ApplicantInstructorRow | undefined {
-  return instructorsForProgram(programId).find(
-    row => row.instructorName === instructorName
-  )
+  return instructors.find(row => row.instructorName === instructorName)
 }
 
 /** 배정 대기 강사가 프로그램 단위 승인을 받았는지 (선택 배정 플로우 분기) */
 export function isWaitingInstructorProgramApproved(
   instructorName: string,
   participatingInstructor: ParticipatingInstructorRow | undefined,
-  programId: string
+  instructors: readonly ApplicantInstructorRow[] = []
 ): boolean {
   if (participatingInstructor?.initialApproval === false) return false
-  const applicant = findApplicantInstructorByName(programId, instructorName)
+  const applicant = findApplicantInstructorByName(instructors, instructorName)
   if (applicant) return applicant.approvalStatus === 'approved'
   return participatingInstructor?.initialApproval ?? true
 }
@@ -248,9 +237,9 @@ export function isWaitingInstructorProgramApproved(
 export function resolveWaitingInstructorFeeGradeLabel(
   instructorName: string,
   participatingInstructor: ParticipatingInstructorRow | undefined,
-  programId: string
+  instructors: readonly ApplicantInstructorRow[] = []
 ): string | undefined {
-  const applicant = findApplicantInstructorByName(programId, instructorName)
+  const applicant = findApplicantInstructorByName(instructors, instructorName)
   return (
     applicant?.instructorFeeGradeLabel ?? participatingInstructor?.instructorFeeGradeLabel
   )

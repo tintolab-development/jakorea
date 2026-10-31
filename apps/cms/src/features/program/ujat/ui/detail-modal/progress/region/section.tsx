@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useRegionAssignment } from './use-region-assignment'
 import { CmsButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
@@ -37,6 +38,7 @@ export function UjatEducationProgressRegionAssignmentSection({
   programId: string
   half: EducationProgressHalfKey
 }) {
+  const canWrite = useUjatCanWrite()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
   )
@@ -189,6 +191,8 @@ export function UjatEducationProgressRegionAssignmentSection({
         </div>
 
         <div className="table-header-actions--wrapper">
+          {canWrite ? (
+          <>
           <CmsButton
             type="button"
             variant="secondary"
@@ -229,6 +233,8 @@ export function UjatEducationProgressRegionAssignmentSection({
             onClick={handleAutoAssign} >
             교육일 자동 배정
           </CmsButton>
+          </>
+          ) : null}
         </div>
       </div>
 

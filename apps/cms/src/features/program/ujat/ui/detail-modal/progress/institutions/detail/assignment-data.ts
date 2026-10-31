@@ -2,10 +2,12 @@ import { getUjatInstitutionApplicationRowById } from '@/features/program/ujat/mo
 import { parseGradeClassSectionValue } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import { getUjatScheduleAssignRegionState } from '../../../application-institution/schedule-assign/store'
-import { UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE } from './textbook'
+import { calculateGradeTextbookSupply } from './textbook'
 import {
-  getAttendanceManagerForSchedule,
-  getVolunteersForClass,
+  attendanceManagerForScheduleFromSources,
+  scheduleIdForInstitutionDate,
+  volunteersForClassFromSources,
+  type InstitutionAssignmentSources,
 } from './institution-assignment-data'
 import type { UjatEducationProgressInstitutionDetail } from './types'
 
@@ -29,23 +31,19 @@ export type AssignmentScheduleSection = {
   rows: AssignmentClassRow[]
 }
 
-function findStudentCount(
+function resolveGradeTextbook(
   gradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>,
-  gradeLabel: string,
-  classNo: number
-): number | null {
+  gradeLabel: string
+): { textbookName: string; textbookQuantityLabel: string } {
   const block = gradeBlocks.find(item => item.gradeLabel === gradeLabel)
-  const classRow = block?.classes.find(item => item.classNo === classNo)
-  return classRow?.studentCount ?? null
-}
-
-function resolveTextbookName(gradeLabel: string): string {
-  return UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE[gradeLabel] ?? '-'
-}
-
-function formatTextbookQuantity(studentCount: number | null): string {
-  if (studentCount == null) return '-'
-  return `${studentCount}권`
+  if (!block) return { textbookName: '-', textbookQuantityLabel: '-' }
+  const supply = calculateGradeTextbookSupply(block)
+  const textbookQuantityLabel =
+    supply.bookCount != null ? `${supply.bookCount}권` : supply.kitCount != null ? `${supply.kitCount}키트` : '-'
+  return {
+    textbookName: supply.textbookName,
+    textbookQuantityLabel,
+  }
 }
 
 function compareGradeClass(
@@ -86,7 +84,9 @@ function getGradeValuesForSchedule(
 
 function buildRowsForSchedule(
   detail: UjatEducationProgressInstitutionDetail,
-  isoDate: string
+  isoDate: string,
+  sources: InstitutionAssignmentSources | null,
+  scheduleId: number | null
 ): AssignmentClassRow[] {
   const institutionRow = getUjatInstitutionApplicationRowById(detail.institutionId)
   if (!institutionRow) return []
@@ -99,13 +99,11 @@ function buildRowsForSchedule(
   const gradeBlocks = detail.applicationDetail.gradeBlocks
 
   const rows: AssignmentClassRow[] = sections.map(section => {
-    const studentCount = findStudentCount(gradeBlocks, section.gradeLabel, section.classNo)
-    const volunteers = getVolunteersForClass(
-      detail.institutionId,
-      isoDate,
-      section.gradeLabel,
-      section.classNo
-    )
+    const volunteers =
+      sources && scheduleId != null
+        ? volunteersForClassFromSources(sources, scheduleId, section.gradeLabel, section.classNo)
+        : { volunteerA: '-', volunteerB: '-' }
+    const textbook = resolveGradeTextbook(gradeBlocks, section.gradeLabel)
 
     return {
       gradeLabel: section.gradeLabel,
@@ -114,8 +112,8 @@ function buildRowsForSchedule(
       gradeRowSpan: 0,
       volunteerA: volunteers.volunteerA,
       volunteerB: volunteers.volunteerB,
-      textbookName: resolveTextbookName(section.gradeLabel),
-      textbookQuantityLabel: formatTextbookQuantity(studentCount),
+      textbookName: textbook.textbookName,
+      textbookQuantityLabel: textbook.textbookQuantityLabel,
     }
   })
 
@@ -142,18 +140,23 @@ function parseIsoDateFromScheduleId(scheduleId: string, institutionId: string): 
 }
 
 export function buildAssignmentScheduleSections(
-  detail: UjatEducationProgressInstitutionDetail
+  detail: UjatEducationProgressInstitutionDetail,
+  sources: InstitutionAssignmentSources | null = null
 ): AssignmentScheduleSection[] {
   return detail.confirmedScheduleRows.map(schedule => {
     const isoDate = parseIsoDateFromScheduleId(schedule.id, detail.institutionId)
-    const rows = buildRowsForSchedule(detail, isoDate)
-    const manager = getAttendanceManagerForSchedule(detail.institutionId, isoDate)
+    const numericScheduleId = sources ? scheduleIdForInstitutionDate(sources, isoDate) : null
+    const rows = buildRowsForSchedule(detail, isoDate, sources, numericScheduleId)
+    const attendanceManagerLabel =
+      sources && numericScheduleId != null
+        ? attendanceManagerForScheduleFromSources(sources, numericScheduleId)
+        : '미정'
 
     return {
       scheduleId: schedule.id,
       isoDate,
       dateDisplay: schedule.dateDisplay,
-      attendanceManagerLabel: manager ?? '미정',
+      attendanceManagerLabel,
       totalClassCount: rows.length,
       rows,
     }

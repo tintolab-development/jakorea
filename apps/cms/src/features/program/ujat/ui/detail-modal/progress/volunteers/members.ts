@@ -28,7 +28,7 @@ function parseRegionKeyFromAddress(address: string | undefined): UjatInstitution
   if (a.includes('부산')) return 'busan'
   if (a.includes('광주')) return 'gwangju'
   if (a.includes('전주') || a.includes('전북')) return 'jeonbuk_jeonju'
-  return 'seoul'
+  return ''
 }
 
 function normalizeVolunteerGrade(raw: string): UjatEducationProgressVolunteerGrade {

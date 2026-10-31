@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Space, Spin } from 'antd'
-import { useCmsAlert } from '@/shared/ui'
-import { CmsButton } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
@@ -13,7 +13,6 @@ import {
 } from '../list/action-modal'
 import { TemporaryActionModal } from '../temporary-action-modal'
 import type { UjatTemporaryActionKind } from '../temporary-action-copy'
-import { UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE } from '@/features/program/ujat/api/temporary-rejections'
 import { releaseUjatTemporarySchedules } from '../list/temp-release'
 import {
   getUjatInstitutionTempRejectCompleteContent,
@@ -41,6 +40,7 @@ export function UjatInstitutionApplicationDetailPage({
   onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const {
     row,
     detail,
@@ -48,6 +48,7 @@ export function UjatInstitutionApplicationDetailPage({
     approveRemote,
     rejectRemote,
     tempRejectRemote,
+    tempRejectCancelRemote,
     workflow,
     workflowReady,
   } = useUjatInstitutionApplicationDetail({ institutionId, programId })
@@ -155,15 +156,21 @@ export function UjatInstitutionApplicationDetailPage({
 
   const handleTempActionConfirm = useCallback(async () => {
     if (!pendingTempKind || !row) return
-    if (pendingTempKind === 'temp_reject_cancel') {
-      setPendingTempKind(null)
-      showAlert({ title: '안내', content: UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE })
-      return
-    }
     setActionLoading(true)
     try {
+      if (pendingTempKind === 'temp_reject_cancel') {
+        await tempRejectCancelRemote()
+        setPendingTempKind(null)
+        onStatusUpdated()
+        onBack()
+        showAlert({
+          title: '안내',
+          content: '임시 반려가 취소되었습니다.',
+        })
+        return
+      }
       if (pendingTempKind === 'temp_reject') {
-        await tempRejectRemote('')
+        await tempRejectRemote()
         setPendingTempKind(null)
         onStatusUpdated()
         onBack()
@@ -212,6 +219,7 @@ export function UjatInstitutionApplicationDetailPage({
     programId,
     row,
     showAlert,
+    tempRejectCancelRemote,
     tempRejectRemote,
   ])
 
@@ -238,6 +246,8 @@ export function UjatInstitutionApplicationDetailPage({
     <div className="ujat-institution-application-detail-page">
       <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
+          {canWrite ? (
+          <>
           <CmsButton
             type="button"
             variant="delete"
@@ -289,6 +299,8 @@ export function UjatInstitutionApplicationDetailPage({
               {workflow.primaryAction === 'open_schedule_assign' ? '임시 배정' : workflow.primaryLabel}
             </CmsButton>
           ) : null}
+          </>
+          ) : null}
           <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
@@ -310,6 +322,7 @@ export function UjatInstitutionApplicationDetailPage({
           variant="single"
           institutionName={row.institutionName}
           selectionCount={1}
+          confirmLoading={actionLoading}
           onCancel={() => setPendingAction(null)}
           onConfirm={handleActionConfirm}
         />

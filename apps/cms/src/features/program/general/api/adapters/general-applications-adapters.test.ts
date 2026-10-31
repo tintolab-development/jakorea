@@ -34,6 +34,7 @@ import {
   mapParticipantToParticipatingSchoolRow,
   mapParticipantToParticipatingVolunteerRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
+  mapVolunteerInterviewAssignmentFromWire,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
   parseGeneralProgramServiceDetailJson,
@@ -1736,6 +1737,30 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.teamMemberCount).toBe(4)
     expect(row.detail?.teamMemberCountSelect).toBe('4')
     expect(row.detail?.teamRole).toBe('member')
+  })
+
+  it('maps GET assignment wire: INTERVIEW_ASSIGNED / ASSIGNED / PARTIALLY_EVALUATED', () => {
+    expect(
+      mapVolunteerInterviewAssignmentFromWire({
+        applicationStatus: 'INTERVIEW_ASSIGNED',
+        interviewStatus: 'ASSIGNED',
+        interviewAssignmentStatus: 'ASSIGNED',
+      })
+    ).toBe('assigned')
+    expect(
+      mapVolunteerInterviewAssignmentFromWire({
+        applicationStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'PARTIALLY_EVALUATED',
+        interviewAssignmentStatus: 'PARTIALLY_EVALUATED',
+      })
+    ).toBe('assigned')
+    expect(
+      mapVolunteerInterviewAssignmentFromWire({
+        applicationStatus: 'DOCUMENT_PASSED',
+        interviewStatus: undefined,
+        interviewAssignmentStatus: null,
+      })
+    ).toBe('waiting')
   })
 
   it('keeps evaluated interviews in the assigned state so they stay on the 2nd interview list', () => {

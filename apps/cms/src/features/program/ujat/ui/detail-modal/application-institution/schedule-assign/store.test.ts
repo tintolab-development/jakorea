@@ -9,8 +9,10 @@ import {
 describe('removeUjatScheduleAssignInstitutionRows', () => {
   it('해제된 기관 행만 저장·편집 상태에서 지우고, 빈 날짜에는 빈 행을 남긴다', () => {
     replaceUjatScheduleAssignRegionState('seoul', {
-      maxClassesPerDay: '',
-      estimation: { h1: { expectedVolunteerCount: '' }, h2: { expectedVolunteerCount: '' } },
+      estimation: {
+        h1: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+        h2: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+      },
       days: {
         '2026-04-03': {
           isoDate: '2026-04-03',

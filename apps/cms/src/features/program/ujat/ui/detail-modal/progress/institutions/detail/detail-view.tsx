@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Program } from '@/types/domain'
 import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
@@ -46,6 +47,7 @@ export function UjatEducationProgressInstitutionDetailView({
   onSelectTab: (tab: UjatEducationProgressInstitutionDetailTab) => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [changeClassModalOpen, setChangeClassModalOpen] = useState(false)
@@ -243,7 +245,7 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'application' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            {!isApplicationInfoEditing ? (
+            {!isApplicationInfoEditing && canWrite ? (
               <CmsButton
                 type="button"
                 variant="delete"
@@ -254,6 +256,7 @@ export function UjatEducationProgressInstitutionDetailView({
               </CmsButton>
             ) : null}
             <ProgramEditInfoActions
+              canWrite={canWrite}
               size="h40"
               isEditing={isApplicationInfoEditing}
               onEdit={handleApplicationInfoButtonClick}
@@ -261,13 +264,15 @@ export function UjatEducationProgressInstitutionDetailView({
               onSave={handleApplicationInfoButtonClick} />
             {!isApplicationInfoEditing ? (
               <>
-                <CmsButton
-                  type="button"
-                  variant="primary"
-                  size="h40"
-                  onClick={handleAdminCommentEditEnter} >
-                  코멘트 작성
-                </CmsButton>
+                {canWrite ? (
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size="h40"
+                    onClick={handleAdminCommentEditEnter} >
+                    코멘트 작성
+                  </CmsButton>
+                ) : null}
                 <PersonalInfoRevealButton disabled={programPrivacyPending}
                   labelMode="stickyReveal"
                   revealed={personalInfoRevealed}
@@ -281,14 +286,17 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'assignment' ? (
           <div className="program-detail-fullpage-modal__header-actions">
+            {canWrite ? (
             <UjatEducationProgressInstitutionAssignmentChangeButton
               onClick={() => setChangeClassModalOpen(true)}
             />
+            ) : null}
           </div>
         ) : null}
 
         {activeTab === 'posts' ? (
           <div className="program-detail-fullpage-modal__header-actions">
+            {canWrite ? (
             <CmsButton
               type="button"
               variant="primary"
@@ -296,6 +304,7 @@ export function UjatEducationProgressInstitutionDetailView({
               onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -324,6 +333,7 @@ export function UjatEducationProgressInstitutionDetailView({
           <div className="program-detail-fullpage-modal__info-tab">
             <UjatEducationProgressInstitutionAssignmentTab
               detail={detailWithGradeBlocks}
+              programId={program.id}
               dataRevision={assignmentDataRevision}
             />
           </div>

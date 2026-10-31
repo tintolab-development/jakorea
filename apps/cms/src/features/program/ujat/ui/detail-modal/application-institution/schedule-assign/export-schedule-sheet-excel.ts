@@ -4,7 +4,11 @@
 
 import ExcelJS from '@zurmokeeper/exceljs'
 import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
-import type { ScheduleSheetPreviewColumn, ScheduleSheetPreviewRegion } from './build-schedule-sheet-preview'
+import {
+  groupScheduleSheetPreviewColumnsByDate,
+  type ScheduleSheetPreviewColumn,
+  type ScheduleSheetPreviewRegion,
+} from './build-schedule-sheet-preview'
 
 const CORNER_LABEL = '배정 기관 / 날짜'
 const ROW_LABELS = ['기관명', '배정 학급', '총 학급 수'] as const
@@ -82,11 +86,22 @@ function applyDataCellStyle(cell: ExcelJS.Cell, options?: { wrapText?: boolean }
 function addRegionWorksheet(workbook: ExcelJS.Workbook, region: ScheduleSheetPreviewRegion): void {
   const sheet = workbook.addWorksheet(sanitizeSheetName(region.regionLabel))
   const { columns } = region
+  const dateGroups = groupScheduleSheetPreviewColumnsByDate(columns)
 
   const dateHeaderRow = sheet.addRow([CORNER_LABEL, ...columns.map(column => column.dateTitle)])
   dateHeaderRow.eachCell(cell => {
     cell.style = HEADER_STYLE
   })
+
+  // 시안과 동일 — 같은 날짜 기관이 여러 열이면 날짜 헤더 셀 병합
+  let leafCol = 2
+  for (const group of dateGroups) {
+    const span = group.columns.length
+    if (span > 1) {
+      sheet.mergeCells(1, leafCol, 1, leafCol + span - 1)
+    }
+    leafCol += span
+  }
 
   const institutionRow = sheet.addRow([ROW_LABELS[0], ...columns.map(column => column.institutionName)])
   applyRowHeaderStyle(institutionRow.getCell(1))

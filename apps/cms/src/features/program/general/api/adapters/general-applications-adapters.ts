@@ -1521,6 +1521,28 @@ export function mapApiVolunteerInterviewStatusToAssignmentStatus(
   return status?.trim().toUpperCase() === 'NOT_REQUIRED' ? 'not_required' : 'waiting'
 }
 
+/** 목록·상세 GET — interviewAssignmentStatus · interviewStatus · applicationStatus 순 */
+export function mapVolunteerInterviewAssignmentFromWire(input: {
+  interviewStatus?: string | null
+  interviewAssignmentStatus?: string | null
+  applicationStatus?: string | null
+  giveUpYn?: boolean
+}): GeneralInterviewAssignmentStatus {
+  if (input.giveUpYn) return 'withdrawn'
+  const fields = [
+    input.interviewAssignmentStatus,
+    input.interviewStatus,
+    input.applicationStatus,
+  ]
+  let notRequired = false
+  for (const field of fields) {
+    const mapped = mapApiVolunteerInterviewStatusToAssignmentStatus(field, false)
+    if (mapped === 'assigned' || mapped === 'withdrawn') return mapped
+    if (mapped === 'not_required') notRequired = true
+  }
+  return notRequired ? 'not_required' : 'waiting'
+}
+
 export function mapApiFinalResultToSecondInterviewStatus(
   status?: string | null,
   reserveRank?: number | null
@@ -1615,10 +1637,12 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     availableActions: dto.availableActions ?? [],
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
-    interviewAssignmentStatus: mapApiVolunteerInterviewStatusToAssignmentStatus(
-      dto.interviewStatus,
-      dto.giveUpYn
-    ),
+    interviewAssignmentStatus: mapVolunteerInterviewAssignmentFromWire({
+      interviewStatus: dto.interviewStatus,
+      interviewAssignmentStatus: dto.interviewAssignmentStatus,
+      applicationStatus: dto.applicationStatus,
+      giveUpYn: dto.giveUpYn,
+    }),
     programId: toId(dto.programId) || programId,
     englishName: '',
     gender: '',
@@ -1630,6 +1654,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
     interviewAssignmentId:
       enriched.interviewAssignmentId != null ? Number(enriched.interviewAssignmentId) : undefined,
+    assignedInterviewStartAt: enriched.assignedInterviewStartAt?.trim() || undefined,
     assignedInterviewEndAt: enriched.assignedInterviewEndAt?.trim() || undefined,
     ...interviewSlots,
     ...assigned,
@@ -1657,9 +1682,30 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     dto.assignedInterviewEndAt
   )
   const canEditEvaluation = dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
+  const assignmentFromWire = mapVolunteerInterviewAssignmentFromWire({
+    interviewStatus: dto.interviewStatus,
+    interviewAssignmentStatus: dto.interviewAssignmentStatus,
+    applicationStatus: dto.applicationStatus,
+    giveUpYn: screening?.giveUpYn,
+  })
+  const interviewAssignmentStatus =
+    assignmentFromWire !== 'waiting'
+      ? assignmentFromWire
+      : dto.assignedInterviewSlotId != null
+        ? 'assigned'
+        : base.interviewAssignmentStatus === 'not_required'
+          ? 'not_required'
+          : assignmentFromWire
   return {
     ...base,
-    assignedInterviewEndAt: dto.assignedInterviewEndAt?.trim() || base.assignedInterviewEndAt,
+    assignedInterviewStartAt:
+      dto.assignedInterviewStartAt === null
+        ? undefined
+        : dto.assignedInterviewStartAt?.trim() || base.assignedInterviewStartAt,
+    assignedInterviewEndAt:
+      dto.assignedInterviewEndAt === null
+        ? undefined
+        : dto.assignedInterviewEndAt?.trim() || base.assignedInterviewEndAt,
     ...readGeneralVolunteerProjection(dto.application, base),
     id: toId(dto.id) || base.id,
     memberId: dto.memberId ?? base.memberId,
@@ -1684,14 +1730,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
-    interviewAssignmentStatus: mapApiVolunteerInterviewStatusToAssignmentStatus(
-      dto.assignedInterviewSlotId != null
-        ? 'ASSIGNED'
-        : base.interviewAssignmentStatus === 'not_required'
-          ? 'NOT_REQUIRED'
-          : 'WAITING_ASSIGNMENT',
-      screening?.giveUpYn
-    ),
+    interviewAssignmentStatus,
     programId: toId(dto.programId) || base.programId,
     gender: toGenderLabelOrRaw(profile?.gender) || base.gender,
     birthDate: profile?.birthDate?.trim() || base.birthDate,
@@ -1709,8 +1748,11 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     interviewEvaluationRemark:
       screening?.interviewEvaluationRemark ?? base.interviewEvaluationRemark,
     assignedInterviewDateLabel:
-      assigned.assignedInterviewDateLabel ?? base.assignedInterviewDateLabel,
-    assignedInterviewTime: assigned.assignedInterviewTime ?? base.assignedInterviewTime,
+      assigned.assignedInterviewDateLabel ??
+      (dto.assignedInterviewStartAt == null ? undefined : base.assignedInterviewDateLabel),
+    assignedInterviewTime:
+      assigned.assignedInterviewTime ??
+      (dto.assignedInterviewStartAt == null ? undefined : base.assignedInterviewTime),
   }
 }
 

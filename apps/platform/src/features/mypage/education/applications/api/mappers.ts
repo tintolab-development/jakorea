@@ -12,6 +12,7 @@ import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-applica
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
 import { readUjatPortalBannerState, readUjatRevisionReason } from '../lib/ujat-portal-banner'
 import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
+import { buildUjatVolunteerApplicationProfileFromAnswers } from '../lib/ujat-volunteer-application-content-from-answers'
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
@@ -654,6 +655,11 @@ export function mapPortalProgramApplicationDetail(
       preferredScheduleBlocks: detail.preferredScheduleBlocks,
     })
     if (ujatContent) mapped.ujatApplicationContent = ujatContent
+  }
+
+  if (mapped.detailCase === 'ujat-volunteer') {
+    const volunteerProfile = buildUjatVolunteerApplicationProfileFromAnswers(answers)
+    if (volunteerProfile) mapped.ujatVolunteerApplicationContent = volunteerProfile
   }
 
   return mapped

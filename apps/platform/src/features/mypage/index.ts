@@ -130,6 +130,7 @@ export {
   shouldShowDocumentPassBanner,
   UjatScheduleBanner,
   UjatApplicationContent,
+  UjatVolunteerApplicationContent,
   UjatVolunteerAssignmentPanel,
 } from './education'
 export {

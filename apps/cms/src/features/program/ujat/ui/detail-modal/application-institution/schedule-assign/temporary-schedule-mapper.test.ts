@@ -6,10 +6,9 @@ import {
 import type { UjatScheduleAssignRegionState } from './types'
 
 const draft: UjatScheduleAssignRegionState = {
-  maxClassesPerDay: '',
   estimation: {
-    h1: { expectedVolunteerCount: '' },
-    h2: { expectedVolunteerCount: '' },
+    h1: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+    h2: { maxClassesPerDay: '', expectedVolunteerCount: '' },
   },
   days: {
     '2027-04-30': {

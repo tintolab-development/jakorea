@@ -368,9 +368,9 @@ function keyOf(date: Dayjs): string {
   return date.format('YYYY-MM-DD')
 }
 
-/** 로컬 자정 ISO — 화면 date picker가 만드는 값과 같다 */
+/** 달력일 YYYY-MM-DD — BE LocalDate·typed-detail 쓰기 계약과 동일 */
 function iso(key: string): string {
-  return toDay(key).toISOString()
+  return keyOf(toDay(key))
 }
 
 function isoRange(range: UjatDevDateRange): { start: string; end: string } {
@@ -531,14 +531,34 @@ function regionCapacity(
   return { h1: semester('h1'), h2: semester('h2') }
 }
 
-function toSponsorOverlay(sponsor: ResolvedUjatDevDependencies['sponsor']): Record<string, unknown> {
-  const sponsorId = sponsor.sponsorId.trim() || UJAT_SPONSOR_ALL_VALUE
-  const contactId =
-    sponsor.contactId.trim() || (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
+function toSponsorOverlay(sponsor: ResolvedUjatDevDependencies['sponsor']): {
+  overlay: Record<string, unknown>
+  needsManual: boolean
+} {
+  const sponsorId = sponsor.sponsorId.trim()
+  const contactId = sponsor.contactId.trim()
+  const invalid =
+    !sponsorId ||
+    sponsorId === UJAT_SPONSOR_ALL_VALUE ||
+    !contactId ||
+    contactId === UJAT_SPONSOR_ALL_VALUE
+  if (invalid) {
+    return {
+      overlay: {
+        'ujat.basicInfo.sponsorId': '',
+        'ujat.basicInfo.sponsorContactId': '',
+        'ujat.basicInfo.sponsorContactIds': [],
+      },
+      needsManual: true,
+    }
+  }
   return {
-    'ujat.basicInfo.sponsorId': sponsorId,
-    'ujat.basicInfo.sponsorContactId': contactId,
-    'ujat.basicInfo.sponsorContactIds': contactId ? [contactId] : [],
+    overlay: {
+      'ujat.basicInfo.sponsorId': sponsorId,
+      'ujat.basicInfo.sponsorContactId': contactId,
+      'ujat.basicInfo.sponsorContactIds': [contactId],
+    },
+    needsManual: false,
   }
 }
 
@@ -560,9 +580,24 @@ function interviewClock(day: string, hour: number, minute = 0): Dayjs {
   return toDay(day).hour(hour).minute(minute).second(0).millisecond(0)
 }
 
+function preferredScheduleSelectedIds(
+  plan: UjatDevDatePlan,
+  holidayDateKeys: ReadonlySet<string>
+): string[] {
+  const selected: string[] = []
+  for (const half of HALVES) {
+    const available = listAvailableEducationFridays(plan.halves[half], holidayDateKeys)
+    const pick = available[Math.min(1, Math.max(0, available.length - 1))]
+    if (pick) selected.push(`${half}:${pick}`)
+  }
+  return selected
+}
+
 function buildApplicationInstitution(
   profile: CaseProfile,
-  regions: readonly UjatDevAutofillRegion[]
+  regions: readonly UjatDevAutofillRegion[],
+  plan: UjatDevDatePlan,
+  holidayDateKeys: ReadonlySet<string>
 ): UjatDevAutofillFixture['applicationInstitution'] {
   const AK = UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS
   const blocks =
@@ -595,6 +630,7 @@ function buildApplicationInstitution(
   }
   const overlay: Record<string, unknown> = {
     [AK.applicationRegion]: regions[0]!.label,
+    [AK.preferredScheduleSelectedIds]: preferredScheduleSelectedIds(plan, holidayDateKeys),
     [AK.gradeDetailByBlock]: Object.fromEntries(
       blocks.map(block => [
         block.id,
@@ -719,6 +755,10 @@ export function buildUjatDevAutofillFixture(
   if (dependencies.paymentItemValues.length === 0) {
     manualInputRequired.push('wage.paymentItemValues')
   }
+  const sponsorOverlay = toSponsorOverlay(dependencies.sponsor)
+  if (sponsorOverlay.needsManual) {
+    manualInputRequired.push('basicInfo.sponsorId')
+  }
 
   const institutionCopy = recruitCopy(title, '참여 학교')
   const recruitInstitution: Record<string, unknown> = {
@@ -818,7 +858,8 @@ export function buildUjatDevAutofillFixture(
     'ujat.basicInfo.courseDeliveredBy': 'ja',
     'ujat.basicInfo.ipsCategory': 'prepare',
     'ujat.basicInfo.partnerInvolvement': 'no',
-    ...toSponsorOverlay(dependencies.sponsor),
+    'ujat.basicInfo.educationVenueKind': 'inside',
+    ...sponsorOverlay.overlay,
     'ujat.basicInfo.participant.individual': false,
     'ujat.basicInfo.participant.organization': true,
     'ujat.basicInfo.participant.teacher': false,
@@ -843,7 +884,12 @@ export function buildUjatDevAutofillFixture(
     recruitInstitution,
     recruitVolunteer,
     recruitGeneral,
-    applicationInstitution: buildApplicationInstitution(profile, regions),
+    applicationInstitution: buildApplicationInstitution(
+      profile,
+      regions,
+      plan,
+      dependencies.holidayDateKeys
+    ),
     applicationVolunteer: buildApplicationVolunteer(profile, regions, businessYear),
     manualInputRequired,
   }

@@ -1,19 +1,7 @@
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 
-/** UJAT 초등 프로그램 학년별 교재명(mock) */
-export const UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE: Record<string, string> = {
-  '1학년': '우리가족',
-  '2학년': '우리마을',
-  '3학년': '우리지역',
-  '4학년': '우리나라',
-  '5학년': '우리세계',
-  '6학년': '우리가족',
-}
-
-export const UJAT_ELEMENTARY_BOOKS_PER_KIT = 24
-
-/** UJAT 교육 진행 참여 기관 상세 — 교재 배송 상태 라벨 */
+/** UJAT 교육 진행 참여 기관 상세 — 교재 배송 상태 라벨. 서버 저장값이 없으면 배지를 그리지 않는다. */
 export const UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS: Record<TextbookStatusKey, string> = {
   preparing: '배송전',
   shipping: '배송 중',
@@ -23,29 +11,47 @@ export const UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS: Record<TextbookStat
 
 export type UjatEducationProgressInstitutionTextbookSupply = {
   textbookName: string
-  kitCount: number
-  bookCount: number
-  status: TextbookStatusKey
+  kitCount: number | null
+  bookCount: number | null
+  status: TextbookStatusKey | null
+}
+
+export function mapUjatTextbookDeliveryStatus(
+  value: string | null | undefined
+): TextbookStatusKey | null {
+  const normalized = value?.trim().toUpperCase().replace(/-/g, '_')
+  if (normalized === 'PREPARING' || normalized === 'BEFORE_SHIPPING' || normalized === 'BEFORE_DELIVERY') {
+    return 'preparing'
+  }
+  if (normalized === 'SHIPPING' || normalized === 'IN_TRANSIT') return 'shipping'
+  if (normalized === 'DELIVERED' || normalized === 'COMPLETE') return 'delivered'
+  if (normalized === 'NOT_APPLICABLE') return 'not_applicable'
+  return null
+}
+
+function displayOrDash(value: string | null | undefined): string {
+  return value?.trim() || '-'
 }
 
 export function calculateGradeTextbookSupply(
   gradeBlock: UjatInstitutionApplicationGradeBlockDetail
 ): UjatEducationProgressInstitutionTextbookSupply {
-  const studentTotal = gradeBlock.classes.reduce((sum, row) => sum + row.studentCount, 0)
-  const kitCount =
-    studentTotal > 0 ? Math.ceil(studentTotal / UJAT_ELEMENTARY_BOOKS_PER_KIT) : 0
-  const bookCount = kitCount * UJAT_ELEMENTARY_BOOKS_PER_KIT
-  const textbookName = UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE[gradeBlock.gradeLabel] ?? '-'
-
   return {
-    textbookName,
-    kitCount,
-    bookCount,
-    status: 'preparing',
+    textbookName: displayOrDash(gradeBlock.textbookName),
+    kitCount: typeof gradeBlock.kitCount === 'number' ? gradeBlock.kitCount : null,
+    bookCount: typeof gradeBlock.bookCount === 'number' ? gradeBlock.bookCount : null,
+    status: mapUjatTextbookDeliveryStatus(gradeBlock.textbookDeliveryStatus),
   }
 }
 
-export function formatGradeTextbookSupplyDisplay(supply: UjatEducationProgressInstitutionTextbookSupply): string {
-  if (supply.kitCount <= 0) return '-'
-  return `${supply.textbookName} | ${supply.kitCount}키트 (${supply.bookCount}권)`
+export function formatGradeTextbookSupplyDisplay(
+  supply: UjatEducationProgressInstitutionTextbookSupply
+): string {
+  const kitLabel = supply.kitCount != null ? `${supply.kitCount}키트` : ''
+  const bookLabel = supply.bookCount != null ? `(${supply.bookCount}권)` : ''
+  const quantity = [kitLabel, bookLabel].filter(Boolean).join(' ').trim()
+  if (supply.textbookName === '-' && !quantity) return '-'
+  if (supply.textbookName === '-') return quantity || '-'
+  if (!quantity) return supply.textbookName
+  return `${supply.textbookName} | ${quantity}`
 }

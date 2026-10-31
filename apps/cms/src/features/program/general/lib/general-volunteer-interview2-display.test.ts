@@ -66,6 +66,24 @@ describe('parseGeneralInterviewSlotEndFromRow', () => {
     expect(end?.format('YYYY-MM-DD HH:mm')).toBe('2026-04-10 11:00')
   })
 
+  it('treats end_at <= start_at as waiting (unparseable slot)', () => {
+    const end = parseGeneralInterviewSlotEndFromRow({
+      assignedInterviewStartAt: '2026-11-19T01:30:00Z',
+      assignedInterviewEndAt: '2026-11-19T01:30:00Z',
+    })
+    expect(end).toBeNull()
+    expect(
+      resolveGeneralEffectiveSecondInterviewStatus(
+        {
+          interviewAssignmentStatus: 'assigned',
+          assignedInterviewStartAt: '2026-11-19T01:30:00Z',
+          assignedInterviewEndAt: '2026-11-19T01:30:00Z',
+        } as GeneralVolunteerApplicantRow,
+        dayjs('2026-12-01T00:00:00Z')
+      )
+    ).toBe('waiting')
+  })
+
   it('falls back to label parsing when endAt missing', () => {
     const end = parseGeneralInterviewSlotEndFromRow({
       assignedInterviewDateLabel: '2026.04.10',

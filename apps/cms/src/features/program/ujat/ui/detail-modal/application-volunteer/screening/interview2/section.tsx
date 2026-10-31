@@ -1,9 +1,10 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type MouseEvent } from 'react'
+import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
   FilterTableToolbarButton,
 } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type {
@@ -18,17 +19,17 @@ import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-m
 import { useApplicantDetail, type ApplicantDetailMetaChangeHandler } from '../applicant/use-detail'
 import { ApplicantDetailView } from '../applicant/detail-view'
 import { UjatVolunteerInterview2BulkPassModal } from './bulk-pass-modal'
+import { GeneralVolunteerInterview2FailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-fail-modal'
+import { GeneralVolunteerInterview2BulkFailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-bulk-fail-modal'
 import { UjatVolunteerInterview2CalendarView } from './calendar-view'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
-import { UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X } from './columns'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
+import type { ColumnsType } from 'antd/es/table'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { ButtonCalendarIcon, ButtonListIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-
-const noopApplyDocumentScreeningStatus = () => undefined
-const noopShowDocumentScreeningConfirm = () => undefined
 
 export interface Interview2SectionProps {
   programId: string
@@ -43,9 +44,7 @@ export function Interview2Section({
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: Interview2SectionProps) {
-  const tableWrapRef = useRef<HTMLDivElement>(null)
-  const [tableScrollX, setTableScrollX] = useState(UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X)
-
+  const canWrite = useUjatCanWrite()
   const {
     list,
     pendingFilters,
@@ -68,6 +67,9 @@ export function Interview2Section({
     bulkPassCount,
     interview2Confirm,
     closeInterview2Confirm,
+    failModal,
+    closeFailModal,
+    confirmInterview2Fail,
     filterRowsSource,
     requestWithdrawActivity,
     cancelWithdrawActivity,
@@ -93,10 +95,8 @@ export function Interview2Section({
     half,
     list,
     detailVariant: 'interview2',
-    applyDocumentScreeningStatus: noopApplyDocumentScreeningStatus,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
-    showDocumentScreeningConfirm: noopShowDocumentScreeningConfirm,
   })
 
   const filterFields = useMemo(
@@ -105,6 +105,11 @@ export function Interview2Section({
         includeInterviewDate: viewMode === 'list',
       })[0] ?? [],
     [filterRowsSource, viewMode]
+  )
+
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    { enabled: viewMode === 'list', includeSelection: true }
   )
 
   const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
@@ -116,20 +121,6 @@ export function Interview2Section({
       })),
     [half, scheduleDates]
   )
-
-  useLayoutEffect(() => {
-    const el = tableWrapRef.current
-    if (!el) return
-    const minW = UJAT_VOLUNTEER_INTERVIEW2_TABLE_SCROLL_X
-    const update = () => {
-      const w = el.getBoundingClientRect().width
-      setTableScrollX(Math.max(minW, Math.floor(w)))
-    }
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
 
   const handleRowClick = useCallback(
     (record: UjatVolunteerApplicantRow, e: MouseEvent) => {
@@ -206,6 +197,27 @@ export function Interview2Section({
     />
   )
 
+  const interview2FailModal =
+    failModal != null && failModal.ids.length === 1 ? (
+      <GeneralVolunteerInterview2FailModal
+        open
+        volunteerName={failModal.volunteerName}
+        onCancel={closeFailModal}
+        onConfirm={payload => {
+          void confirmInterview2Fail(payload)
+        }}
+      />
+    ) : failModal != null ? (
+      <GeneralVolunteerInterview2BulkFailModal
+        open
+        selectionCount={failModal.ids.length}
+        onCancel={closeFailModal}
+        onConfirm={payload => {
+          void confirmInterview2Fail(payload)
+        }}
+      />
+    ) : null
+
   if (selectedApplicant) {
     return (
       <>
@@ -218,6 +230,7 @@ export function Interview2Section({
           onSaveInterviewEvaluation={handleDetailSaveInterviewEvaluation}
         />
         {interview2ConfirmModal}
+        {interview2FailModal}
         {withdrawConfirmModal}
         {bulkPassModal}
       </>
@@ -227,6 +240,7 @@ export function Interview2Section({
   return (
     <div className="ujat-volunteer-interview2 applicant-details">
       {interview2ConfirmModal}
+      {interview2FailModal}
       {withdrawConfirmModal}
       {bulkPassModal}
       <FilterTableLayout
@@ -243,6 +257,8 @@ export function Interview2Section({
         description={`${count.toLocaleString()}건`}
         actions={
           <div className="ujat-volunteer-interview2__actions">
+            {canWrite ? (
+              <>
             <FilterTableToolbarButton
               type="button"
               variant="delete"
@@ -255,6 +271,8 @@ export function Interview2Section({
               onClick={handleBulkPass} >
               선택 합격
             </FilterTableToolbarButton>
+              </>
+            ) : null}
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 type="button"
@@ -276,11 +294,15 @@ export function Interview2Section({
             )}
           </div>
         }
-        excelExport={{
-          columns,
-          data: tableData,
-          selectedRowKeys,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+                selectedRowKeys,
+              }
+            : undefined
+        }
       >
         {viewMode === 'list' ? (
           <div ref={tableWrapRef} className="ujat-volunteer-interview2__table-wrap">
@@ -290,7 +312,8 @@ export function Interview2Section({
               columns={columns}
               dataSource={tableData}
               pagination={false}
-              scroll={{ x: tableScrollX }}
+              tableLayout="fixed"
+              scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
               rowSelection={{
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
@@ -323,6 +346,9 @@ export function Interview2Section({
           {isFetchingNextPage ? <Spin size="small" /> : null}
         </div>
       </FilterTableLayout>
+      {viewMode === 'calendar' ? (
+        <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+      ) : null}
     </div>
   )
 }

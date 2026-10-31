@@ -297,4 +297,8 @@ export type {
   AlimtalkNestedLine,
 } from './alimtalk-nested-table'
 export { CrossTable } from './cross-table'
-export type { CrossTableProps, CrossTableRow } from './cross-table'
+export type {
+  CrossTableColumnHeader,
+  CrossTableProps,
+  CrossTableRow,
+} from './cross-table'

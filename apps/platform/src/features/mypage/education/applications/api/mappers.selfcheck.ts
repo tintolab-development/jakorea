@@ -92,6 +92,36 @@ assert.equal(mapped.recruitmentId, 186674)
 assert.equal(mapped.title, '신청 상세 API 제목')
 assert.equal(mapped.detailCase, 'ujat-volunteer')
 assert.equal(mapped.ujatPortalBannerState, undefined)
+assert.equal(mapped.ujatVolunteerApplicationContent, undefined)
+
+const mappedVolunteerAnswers = mapPortalProgramApplicationDetail({
+  applicationId: 1691621,
+  applicationType: 'VOLUNTEER',
+  programId: 186290,
+  programTitle: 'UJAT 봉사자 신청 내용',
+  programGroup: 'UJAT',
+  applicationStatus: 'SUBMITTED',
+  displayStatus: '승인대기',
+  answers: {
+    'ujatVolunteerApplication.preferredRegion': '서울',
+    'ujatVolunteerApplication.universityName': '한국대학교',
+    'ujatVolunteerApplication.grade': '2',
+    'ujatVolunteerApplication.major': '경영학',
+    'ujatVolunteerApplication.hasExperience': 'yes',
+    'ujatVolunteerApplication.applicationRoute': 'instagram',
+  },
+})
+assert.ok(mappedVolunteerAnswers)
+assert.deepEqual(mappedVolunteerAnswers.ujatVolunteerApplicationContent, {
+  preferredRegion: '서울',
+  universityName: '한국대학교',
+  gradeLabel: '2학년',
+  major: '경영학',
+  educationExperienceLabel: '있음',
+  applicationRouteLabel: '인스타그램',
+  previousTermLabel: '',
+  interviewScheduleLabel: '',
+})
 
 const teacherOrganization = mapPortalProgramApplicationDetail({
   applicationId: 1691483,

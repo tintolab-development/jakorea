@@ -274,6 +274,20 @@ function filledParagraphContentScore(document: Record<string, unknown>): number 
 }
 
 /** CMS 등록본이 중첩 schemaJson 에만 있을 때 — 문단 수, 그다음 채워진 셀을 고른다. */
+function ujatPreferredEducationDateOptionRows(runtime: Record<string, unknown>): unknown[] | undefined {
+  const rows: unknown[] = []
+  let found = false
+  const push = (value: unknown) => {
+    if (!Array.isArray(value)) return
+    found = true
+    rows.push(...value)
+  }
+  push(runtime.ujatPreferredEducationDateOptions)
+  const audience = runtime.audienceApplication
+  if (isRecord(audience)) push(audience.ujatPreferredEducationDateOptions)
+  return found ? rows : undefined
+}
+
 function scoreRuntimeContext(runtime: unknown): number {
   if (!isRecord(runtime)) return 0
   let score = 0
@@ -290,6 +304,8 @@ function scoreRuntimeContext(runtime: unknown): number {
   if (isRecord(audience) && Array.isArray(audience.hiddenQuestionKeys)) {
     score += audience.hiddenQuestionKeys.length * 0.01
   }
+  const dates = ujatPreferredEducationDateOptionRows(runtime)
+  if (dates) score += dates.length
   return score
 }
 
@@ -306,25 +322,28 @@ function pickBestRuntimeContext(candidates: readonly unknown[]): unknown | undef
   return best
 }
 
-/** pick 한 runtimeContext에 다른 후보의 UJAT 희망일 배열을 합친다. */
+/**
+ * pick 한 runtimeContext에 다른 후보의 UJAT 희망일 배열을 붙인다.
+ * 정본 객체가 이미 배열(빈 배열 포함)을 갖고 있으면 더 긴 후보로 덮지 않는다.
+ */
 function mergeUjatPreferredEducationDateOptions(
   best: unknown,
   candidates: readonly unknown[],
 ): unknown {
   if (!isRecord(best)) return best
+  if (Array.isArray(best.ujatPreferredEducationDateOptions)) return best
   let dates: unknown[] | undefined
   let dateLen = -1
   for (const candidate of candidates) {
     if (!isRecord(candidate)) continue
-    const next = candidate.ujatPreferredEducationDateOptions
-    if (!Array.isArray(next)) continue
+    const next = ujatPreferredEducationDateOptionRows(candidate)
+    if (!next) continue
     if (next.length > dateLen) {
       dates = next
       dateLen = next.length
     }
   }
   if (!dates) return best
-  if (best.ujatPreferredEducationDateOptions === dates) return best
   return { ...best, ujatPreferredEducationDateOptions: dates }
 }
 

@@ -25,6 +25,8 @@ import type { PageResponseOrganizationApplicationListItemResponse } from '@/shar
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
+import type { VolunteerActivityRegionUpdateRequest } from '@/shared/api/generated/dashboard/schemas/volunteerActivityRegionUpdateRequest'
+import type { VolunteerActivityRegionUpdateResponse } from '@/shared/api/generated/dashboard/schemas/volunteerActivityRegionUpdateResponse'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 import type { IndividualApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateRequest'
 import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
@@ -432,6 +434,26 @@ export async function fetchVolunteerApplicationDetailRemote(
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}`,
       method: 'GET',
     })
+  )
+}
+
+/**
+ * 봉사자 희망 교육 활동 지역 수정.
+ * OpenAPI operationId: `updateVolunteerApplicationActivityRegion`
+ */
+export async function patchVolunteerApplicationActivityRegionRemote(
+  applicationId: string,
+  payload: VolunteerActivityRegionUpdateRequest
+): Promise<VolunteerActivityRegionUpdateResponse> {
+  const numericApplicationId = Number(applicationId)
+  if (!Number.isSafeInteger(numericApplicationId) || numericApplicationId <= 0) {
+    throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
+  }
+  return unwrapApiBody<VolunteerActivityRegionUpdateResponse>(
+    await generalApplicationsDashboardApi.updateVolunteerApplicationActivityRegion(
+      numericApplicationId,
+      payload
+    )
   )
 }
 

@@ -16,6 +16,7 @@ import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edi
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { useProgramInstructorApplications } from '@/features/program/general/hooks/use-program-instructor-applications'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -751,6 +752,10 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     enabled: assignmentBoardRemoteEnabled,
     staleTime: 30_000,
   })
+  const instructorApplications = useProgramInstructorApplications(
+    programId,
+    activeTab === 'instructors'
+  )
   const assignmentBoard = occupiedLectureDatesQuery.data
   const occupiedLectureDatesByInstructorId = assignmentBoard?.occupiedLectureDatesByInstructorId
   const queryClient = useQueryClient()
@@ -1762,7 +1767,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       const participating = instructorList.find(
         r => r.id === getWaitingInstructorRowInstructorId(w)
       )
-      return !isWaitingInstructorProgramApproved(w.instructorName, participating, programId)
+      return !isWaitingInstructorProgramApproved(
+        w.instructorName,
+        participating,
+        instructorApplications.rows
+      )
     })
 
     if (unapprovedRows.length > 0) {
@@ -1783,7 +1792,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         instructorFeeGradeLabel: resolveWaitingInstructorFeeGradeLabel(
           target.instructorName,
           participating,
-          programId
+          instructorApplications.rows
         ),
       })
       setSelectAssignNewGuideOpen(true)
@@ -1791,7 +1800,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
     }
 
     setSelectAssignConfirmOpen(true)
-  }, [selectedWaitingRows, instructorList, programId, showAlert])
+  }, [instructorApplications.rows, selectedWaitingRows, instructorList, showAlert])
 
   /** 배정 취소 확인 모달에서 "배정 취소" 클릭 시 */
   const handleUnassignConfirm = useCallback(

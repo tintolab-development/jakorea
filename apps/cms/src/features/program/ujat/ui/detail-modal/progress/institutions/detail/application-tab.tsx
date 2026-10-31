@@ -7,6 +7,7 @@ import { formatNumberDisplay } from '@/shared/utils'
 import { InstitutionTeacherEdit } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { withProgramDetailTdDivider, renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { UjatInstitutionTeacherInfoValue } from '../../../application-institution/detail/detail-display'
 import {
@@ -61,6 +62,7 @@ export function UjatEducationProgressInstitutionApplicationTab({
   onAdminCommentDraftChange: (next: string) => void
 }) {
   const currentUser = useAuthStore(state => state.user)
+  const canWrite = canPerformWriteAction(currentUser)
   const showAdminCommentSection = isCmsAdminUser(currentUser)
   const { applicationDetail } = detail
   const [addClassModalOpen, setAddClassModalOpen] = useState(false)
@@ -170,13 +172,15 @@ export function UjatEducationProgressInstitutionApplicationTab({
             </h2>
           </div>
           <div className="detail-info-form__header-trailing">
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="h40"
-              onClick={() => setAddClassModalOpen(true)} >
-              학급 추가
-            </CmsButton>
+            {canWrite ? (
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="h40"
+                onClick={() => setAddClassModalOpen(true)} >
+                학급 추가
+              </CmsButton>
+            ) : null}
           </div>
         </header>
         <div className="ujat-education-progress-institution-detail__grade-info-stack">
@@ -213,11 +217,13 @@ export function UjatEducationProgressInstitutionApplicationTab({
                         <span>
                           {renderDetailInfoPipeSeparated(formatGradeTextbookSupplyDisplay(textbook))}
                         </span>
-                        <span
-                          className={`ujat-education-progress-institution-detail__textbook-badge ujat-education-progress-institution-detail__textbook-badge--${textbook.status}`}
-                        >
-                          {UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS[textbook.status]}
-                        </span>
+                        {textbook.status ? (
+                          <span
+                            className={`ujat-education-progress-institution-detail__textbook-badge ujat-education-progress-institution-detail__textbook-badge--${textbook.status}`}
+                          >
+                            {UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS[textbook.status]}
+                          </span>
+                        ) : null}
                       </span>
                     }
                   />

@@ -48,6 +48,7 @@ import {
   normalizeScheduleDisplayLabel,
 } from '../../../shared/lib/format-display-date.ts'
 import { toDisplayEducationScheduleName } from '../../../shared/lib/education-schedule-name.ts'
+import { mapUjatEducationHalfRangesFromSchedules } from './ujat-preferred-education-schedule-options.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -863,6 +864,9 @@ export function mapCmsProgramToPlatformDetail(
       detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
         ? mapUjatPublicEventSchedules(program)
         : mapEventSchedules(program),
+    ...(detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
+      ? { ujatEducationHalfRanges: mapUjatEducationHalfRangesFromSchedules(program.schedules) }
+      : {}),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(program, detailCase, appStart, appEnd),
     educationSchedules: mapEducationSchedules(program, detailCase),

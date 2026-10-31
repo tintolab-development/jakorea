@@ -8,6 +8,7 @@ import {
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
+  UjatVolunteerApplicationContent,
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
@@ -422,16 +423,29 @@ export function MypageVolunteerDetailPage() {
       ? (withdrawnDuringKeys[0] ?? 'schedule')
       : (inProgressKeys[0] ?? 'notice')
 
+  const volunteerApplicationBody = isUjatVolunteer ? (
+    <UjatVolunteerApplicationContent
+      profile={application.ujatVolunteerApplicationContent}
+      selfIntroMotivation={application.selfIntroMotivation}
+      preferredEducationScheduleLines={preferredEducationScheduleLines}
+      alwaysShowPreferredSchedule
+      freeTextSections={volunteerApplicationExtras.freeTextSections}
+      infoFields={volunteerApplicationExtras.infoFields}
+    />
+  ) : (
+    <EducationApplicationContent
+      selfIntroMotivation={application.selfIntroMotivation}
+      preferredEducationScheduleLines={groupScheduleLinesByDate(preferredEducationScheduleLines)}
+      alwaysShowPreferredSchedule
+      scheduleSummaryTitle="봉사 진행 가능 일정"
+      freeTextSections={volunteerApplicationExtras.freeTextSections}
+      infoFields={volunteerApplicationExtras.infoFields}
+    />
+  )
+
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
-      <EducationApplicationContent
-        selfIntroMotivation={application.selfIntroMotivation}
-        preferredEducationScheduleLines={groupScheduleLinesByDate(preferredEducationScheduleLines)}
-        alwaysShowPreferredSchedule
-        scheduleSummaryTitle="봉사 진행 가능 일정"
-        freeTextSections={volunteerApplicationExtras.freeTextSections}
-        infoFields={volunteerApplicationExtras.infoFields}
-      />
+      volunteerApplicationBody
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
         신청 내용 화면은 준비 중입니다.
@@ -449,6 +463,7 @@ export function MypageVolunteerDetailPage() {
           lastParticipatedSession={lastParticipatedSession}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          applicationInfoBody={isUjatVolunteer ? volunteerApplicationBody : undefined}
         />
       )
     }

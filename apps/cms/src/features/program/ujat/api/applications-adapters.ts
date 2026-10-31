@@ -23,6 +23,7 @@ import type {
   UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
+import { mapVolunteerInterviewAssignmentFromWire } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { findUjatEducationRegionKeyByCode } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
@@ -87,12 +88,32 @@ export function toSeoulYmd(value: string | null | undefined): string | null {
   return SEOUL_YMD.format(parsed)
 }
 
-function isoDatesFromStartAts(
-  items: ReadonlyArray<{ startAt?: string | null } | undefined> | null | undefined
+const ISO_YMD = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * 희망일 달력 SSOT: OpenAPI `educationDate`(Asia/Seoul).
+ * null인 레거시만 `startAt`을 Seoul로 환산한다. UTC 날짜 절단 금지.
+ */
+export function preferredEducationIsoFromSchedule(item: {
+  educationDate?: string | null
+  startAt?: string | null
+} | null | undefined): string | null {
+  const educationDate = item?.educationDate?.trim()
+  if (educationDate && ISO_YMD.test(educationDate)) return educationDate
+  return toSeoulYmd(item?.startAt)
+}
+
+function isoDatesFromPreferredSchedules(
+  items:
+    | ReadonlyArray<
+        { educationDate?: string | null; startAt?: string | null } | undefined
+      >
+    | null
+    | undefined
 ): string[] {
   const dates: string[] = []
   for (const item of items ?? []) {
-    const iso = toSeoulYmd(item?.startAt)
+    const iso = preferredEducationIsoFromSchedule(item)
     if (iso && !dates.includes(iso)) dates.push(iso)
   }
   return dates.sort()
@@ -103,7 +124,7 @@ function preferredScheduleIdByIsoFromSchedules(
 ): Record<string, number> {
   const ids: Record<string, number> = {}
   for (const item of preferred ?? []) {
-    const iso = toSeoulYmd(item?.startAt)
+    const iso = preferredEducationIsoFromSchedule(item)
     const scheduleId = item?.scheduleId
     const unresolved = item?.unresolvedReason?.trim().toUpperCase() ?? ''
     if (!iso) continue
@@ -147,7 +168,7 @@ function scheduleSlotsFromPreferredDates(
   preferred: OrganizationApplicationListItemResponse['preferredEducationSchedules']
 ): UjatInstitutionApplicationRow['scheduleSlots'] {
   const slots = buildEmptyScheduleSlots()
-  for (const iso of isoDatesFromStartAts(preferred)) {
+  for (const iso of isoDatesFromPreferredSchedules(preferred)) {
     slots[iso] = 'O'
   }
   return slots
@@ -186,7 +207,7 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     preferredScheduleIdByIso: preferredScheduleIdByIsoFromSchedules(
       dto.preferredEducationSchedules
     ),
-    sessionIsoDates: isoDatesFromStartAts(dto.sessions),
+    sessionIsoDates: isoDatesFromPreferredSchedules(dto.sessions),
     teacherName: displayTextOrDash(dto.teacherName),
     scheduleConfirmStatus: parseUjatScheduleConfirmStatus(dto.scheduleConfirmStatus),
     assignedInstructorCount: dto.assignedInstructorCount ?? null,
@@ -284,7 +305,7 @@ function mapPreferredEducationDates(
     : []
   if (fromDates.length > 0) return fromDates.map(item => item.trim())
 
-  const fromSchedules = isoDatesFromStartAts(dto.preferredEducationSchedules)
+  const fromSchedules = isoDatesFromPreferredSchedules(dto.preferredEducationSchedules)
   if (fromSchedules.length > 0) return fromSchedules
   if (hasDates) return []
   return fallback
@@ -303,11 +324,28 @@ function mapRemoteGradeBlocks(
         studentCount: room.studentCount ?? 0,
       }
     })
-    return {
+    const mapped: UjatInstitutionApplicationDetail['gradeBlocks'][number] = {
       gradeLabel: block.gradeLabel?.trim() || '-',
       classCount: block.classCount ?? 0,
       classes,
     }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookName')) {
+      mapped.textbookName = typeof block.textbookName === 'string' ? block.textbookName : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookNameEn')) {
+      mapped.textbookNameEn = typeof block.textbookNameEn === 'string' ? block.textbookNameEn : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'kitCount')) {
+      mapped.kitCount = typeof block.kitCount === 'number' ? block.kitCount : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'bookCount')) {
+      mapped.bookCount = typeof block.bookCount === 'number' ? block.bookCount : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookDeliveryStatus')) {
+      mapped.textbookDeliveryStatus =
+        typeof block.textbookDeliveryStatus === 'string' ? block.textbookDeliveryStatus : null
+    }
+    return mapped
   })
 }
 
@@ -346,7 +384,7 @@ function mapVolunteerGrade(value: unknown): UjatVolunteerGrade | '' {
   return typeof value === 'string' ? (value.trim() as UjatVolunteerGrade | '') : ''
 }
 
-function formatAssignedInterviewFromIso(
+export function formatAssignedInterviewFromIso(
   startAt?: string | null,
   endAt?: string | null
 ): { assignedInterviewDateLabel?: string; assignedInterviewTime?: string } {
@@ -419,6 +457,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
   })
 
   const preferredRegion = dto.preferredRegion?.trim() || ''
+  const preferredRegionCode = dto.preferredRegionCode?.trim() || null
   const grade = mapVolunteerGrade(dto.grade)
   const hasEducationExperience =
     typeof dto.hasEducationExperience === 'boolean' ? dto.hasEducationExperience : null
@@ -444,6 +483,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     name: displayTextOrDash(dto.memberName),
     grade,
     preferredRegion,
+    preferredRegionCode,
     contact: displayTextOrDash(dto.contact),
     email: displayTextOrDash(dto.email),
     contactRaw: '',
@@ -460,10 +500,17 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
     documentScreeningStatus: projection.documentScreeningStatus,
     interviewSlotCount: dto.interviewAvailabilityCount ?? interviewAvailability.length,
-    interviewAssignmentStatus:
-      dto.interviewAssignmentStatus?.trim().toUpperCase() === 'ASSIGNED'
-        ? 'assigned'
-        : projection.interviewAssignmentStatus,
+    interviewAssignmentStatus: (() => {
+      const fromWire = mapVolunteerInterviewAssignmentFromWire({
+        interviewStatus: dto.interviewStatus,
+        interviewAssignmentStatus: dto.interviewAssignmentStatus,
+        applicationStatus: dto.applicationStatus,
+        giveUpYn: dto.giveUpYn,
+      })
+      return fromWire === 'waiting' || fromWire === 'not_required'
+        ? projection.interviewAssignmentStatus
+        : fromWire
+    })(),
     programId: toId(dto.programId) || programId,
     half: fromUjatRecruitHalfApi(dto.recruitHalf, half),
     ...(dto.interviewAssignmentId != null
@@ -485,6 +532,8 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     managerBScore: scoreB,
     totalScore:
       scoreA != null && scoreB != null ? scoreA + scoreB : scoreA != null ? scoreA : scoreB,
+    assignedInterviewStartAt: dto.assignedInterviewStartAt?.trim() || undefined,
+    assignedInterviewEndAt: dto.assignedInterviewEndAt?.trim() || undefined,
     ...assigned,
   }
 }

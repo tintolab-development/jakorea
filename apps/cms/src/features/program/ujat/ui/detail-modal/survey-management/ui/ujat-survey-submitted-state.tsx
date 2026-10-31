@@ -7,6 +7,8 @@ export type UjatSurveySubmittedStateProps = {
   description: string
   editButtonLabel: string
   canEdit: boolean
+  /** false면 수정 버튼을 숨긴다 */
+  showEditButton?: boolean
   onEditClick: () => void
   className?: string
   icon?: ReactNode
@@ -17,6 +19,7 @@ export function UjatSurveySubmittedState({
   description,
   editButtonLabel,
   canEdit,
+  showEditButton = true,
   onEditClick,
   className,
   icon,
@@ -33,11 +36,13 @@ export function UjatSurveySubmittedState({
           <p className="ujat-survey-submitted-state__title">{title}</p>
           <p className="ujat-survey-submitted-state__description">{description}</p>
         </div>
-        <CmsButton className="ujat-survey-submitted-state__edit-button"
-          disabled={!canEdit}
-          onClick={onEditClick} >
-          {editButtonLabel}
-        </CmsButton>
+        {showEditButton ? (
+          <CmsButton className="ujat-survey-submitted-state__edit-button"
+            disabled={!canEdit}
+            onClick={onEditClick} >
+            {editButtonLabel}
+          </CmsButton>
+        ) : null}
       </div>
     </div>
   )

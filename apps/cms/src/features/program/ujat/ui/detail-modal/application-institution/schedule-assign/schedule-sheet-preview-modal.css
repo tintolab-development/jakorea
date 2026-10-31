@@ -1,9 +1,45 @@
+/* 푸터 엑셀 — ContentModal 140 고정·action 말줄임 해제, 아이콘+「엑셀 다운로드」 전체 표시 */
+.ujat-schedule-sheet-preview-modal
+  .content-modal__footer-actions
+  .ujat-schedule-sheet-preview-modal__excel-btn.cms-button.ant-btn {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 140px !important;
+  max-width: none !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  padding: 6px 16px !important;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
 .ujat-schedule-sheet-preview-modal__body {
   display: flex;
   flex-direction: column;
   padding-top: 30px;
   gap: 30px;
   min-width: 0;
+}
+
+.ujat-schedule-sheet-preview-modal__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+}
+
+.ujat-schedule-sheet-preview-modal__empty {
+  margin: 0;
+  padding: 48px 16px;
+  text-align: center;
+  color: rgba(61, 61, 61, 0.65);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .ujat-schedule-sheet-preview-modal__region {
@@ -30,6 +66,7 @@
 
 .ujat-schedule-sheet-preview-modal__cross-table .cross-table__cell--column-header {
   min-width: 160px;
+  font-weight: 700;
 }
 
 .ujat-schedule-sheet-preview-modal__cross-table .cross-table__cell--data {

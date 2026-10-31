@@ -824,6 +824,39 @@
           }
         }
       }
+    },
+    "/api/portal/me/generated-files/jobs/{jobId}": {
+      "get": {
+        "operationId": "getMyGeneratedFileJob",
+        "summary": "내 생성 파일 작업 조회",
+        "description": "로그인 회원이 요청한 작업만 반환합니다. 다른 회원 jobId와 없는 jobId는 404 GENERATED_FILE_JOB_NOT_FOUND입니다. 스키마는 관리자 GeneratedFileJobResponse와 같고 requestPayloadJson과 resultSnapshotJson은 null입니다. jobStatus는 REQUESTED, PROCESSING, RENDERING, COMPLETED, FAILED입니다. 파일 다운로드는 fileObjectId로 기존 포털 download-requests를 사용합니다.",
+        "responses": {
+          "200": {
+            "description": "본인 생성 파일 작업",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedFileJobResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "GENERATED_FILE_JOB_NOT_FOUND"
+          }
+        },
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1054,6 +1087,49 @@
         "required": [
           "items"
         ]
+      },
+      "GeneratedFileJobResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "jobType": {
+            "type": "string"
+          },
+          "sourceDomain": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "jobStatus": {
+            "type": "string"
+          },
+          "fileObjectId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "requestPayloadJson": {
+            "type": "string"
+          },
+          "resultSnapshotJson": {
+            "type": "string"
+          },
+          "failureReason": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "PageResponseProgramParticipantRegisterCandidateResponse": {
         "type": "object",
@@ -1300,6 +1376,24 @@
             "type": "string",
             "maxLength": 500,
             "minLength": 5
+          },
+          "previousUjatTerm": {
+            "$ref": "#/components/schemas/VolunteerPreviousUjatTermRequest"
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null."
+          },
+          "applicationType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "NEW",
+              "UJAT_GRADUATE",
+              "new",
+              "ujat-graduate"
+            ]
           }
         },
         "required": [
@@ -1330,6 +1424,28 @@
           },
           "participantStatus": {
             "type": "string"
+          }
+        }
+      },
+      "VolunteerPreviousUjatTermRequest": {
+        "type": "object",
+        "required": [
+          "term",
+          "year"
+        ],
+        "properties": {
+          "term": {
+            "type": "string"
+          },
+          "year": {
+            "type": "string"
+          },
+          "certificateFileIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
           }
         }
       }

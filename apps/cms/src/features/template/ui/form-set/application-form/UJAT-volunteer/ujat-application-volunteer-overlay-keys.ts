@@ -13,11 +13,20 @@ export const UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS = {
   hasExperience: 'ujatVolunteerApplication.hasExperience',
 } as const
 
+export function ujatVolunteerFreeTextOverlayKey(questionId: string): string {
+  return `ujatVolunteerApplication.freeText.${questionId}`
+}
+
 /** 수료증 파일 등 지원자 런타임 응답 — 프로그램 생성용 overlay에서 뺀다. */
 export function stripUjatApplicationVolunteerProgramOnlyFields(
   record: Record<string, unknown>
 ): Record<string, unknown> {
   const next = { ...record }
   delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
+  for (const key of Object.keys(next)) {
+    if (key.startsWith('ujatVolunteerApplication.freeText.')) {
+      delete next[key]
+    }
+  }
   return next
 }

@@ -7,6 +7,7 @@ import { UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS } from './ujat-application-volu
 export {
   UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
   stripUjatApplicationVolunteerProgramOnlyFields,
+  ujatVolunteerFreeTextOverlayKey,
 } from './ujat-application-volunteer-overlay-keys'
 
 const store = createScopedOverlayStore()

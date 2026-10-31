@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { ProgramDetail } from '@/features/program'
 import { EducationInProgressNoticePanel } from '@/features/mypage/education/notices'
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
@@ -12,6 +13,7 @@ type VolunteerNoticePanelProps = {
   lastParticipatedSession?: number
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
+  applicationInfoBody?: ReactNode
 }
 
 export function VolunteerNoticePanel({
@@ -23,6 +25,7 @@ export function VolunteerNoticePanel({
   lastParticipatedSession,
   applicationType,
   applicationId,
+  applicationInfoBody,
 }: VolunteerNoticePanelProps) {
   const showInstitutionGuide = program.programAudience === 'organization'
 
@@ -35,6 +38,7 @@ export function VolunteerNoticePanel({
       alwaysShowPreferredSchedule={alwaysShowPreferredSchedule}
       applicationType={applicationType}
       applicationId={applicationId}
+      applicationInfoBody={applicationInfoBody}
       leading={
         showInstitutionGuide ? (
           <VolunteerInstitutionGuide lastParticipatedSession={lastParticipatedSession} />

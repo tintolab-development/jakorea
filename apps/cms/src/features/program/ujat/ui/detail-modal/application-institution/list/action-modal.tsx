@@ -25,6 +25,7 @@ export type UjatInstitutionApplicationActionModalProps = {
   selectionCount: number
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
+  confirmLoading?: boolean
 }
 
 function getModalCopy(
@@ -83,6 +84,7 @@ export function UjatInstitutionApplicationActionModal({
   selectionCount,
   onCancel,
   onConfirm,
+  confirmLoading = false,
 }: UjatInstitutionApplicationActionModalProps) {
   if (action === 'application_reject') {
     return (
@@ -95,6 +97,7 @@ export function UjatInstitutionApplicationActionModal({
         onCancel={onCancel}
         onConfirm={onConfirm}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        confirmLoading={confirmLoading}
       />
     )
   }
@@ -116,6 +119,7 @@ export function UjatInstitutionApplicationActionModal({
       reasonPlaceholder={copy.reasonPlaceholder}
       reasonRequiredMessage={copy.reasonRequiredMessage}
       notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+      confirmLoading={confirmLoading}
     />
   )
 }

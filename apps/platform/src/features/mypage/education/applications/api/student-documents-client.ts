@@ -33,6 +33,7 @@ import type {
 
 const ORGANIZATION_APPLICATIONS_PATH = '/api/portal/me/organization-applications'
 
+/** GET /api/portal/me/generated-files/jobs/{jobId} — operationId getMyGeneratedFileJob. admin 경로는 쓰지 않는다. */
 const GENERATED_FILE_JOB_POLLING_PATH = (jobId: number) =>
   `/api/portal/me/generated-files/jobs/${encodeURIComponent(String(jobId))}`
 const GENERATED_FILE_JOB_POLL_INTERVAL_MS = 1_000

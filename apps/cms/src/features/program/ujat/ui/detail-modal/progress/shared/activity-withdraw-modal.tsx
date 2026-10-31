@@ -12,7 +12,7 @@ const ACTIVITY_WITHDRAW_CONFIRM_PLACEHOLDER =
   '활동 포기 처리하시려면 해당란에 [활동 포기]를 입력해 주세요.'
 
 export type UjatEducationProgressActivityWithdrawPayload = {
-  stopScheduleRowId: string
+  stopScheduleRowId?: string
 }
 
 export type UjatEducationProgressActivityWithdrawScheduleOption = {
@@ -25,6 +25,9 @@ export type UjatEducationProgressActivityWithdrawModalProps = {
   /** 기관명 또는 봉사자명 */
   participantName: string
   scheduleOptions: ReadonlyArray<UjatEducationProgressActivityWithdrawScheduleOption>
+  /** 기본 true. false면 일정 없이 확인 가능(stopScheduleId 생략) */
+  requireSchedule?: boolean
+  submitting?: boolean
   onCancel: () => void
   onConfirm: (payload: UjatEducationProgressActivityWithdrawPayload) => void
 }
@@ -33,6 +36,8 @@ export function UjatEducationProgressActivityWithdrawModal({
   open,
   participantName,
   scheduleOptions,
+  requireSchedule = true,
+  submitting = false,
   onCancel,
   onConfirm,
 }: UjatEducationProgressActivityWithdrawModalProps) {
@@ -48,11 +53,11 @@ export function UjatEducationProgressActivityWithdrawModal({
   const hasScheduleOptions = scheduleOptions.length > 0
 
   const canConfirm = useMemo(() => {
-    if (!hasScheduleOptions) return false
     if (confirmKeyword.trim() !== ACTIVITY_WITHDRAW_CONFIRM_VALUE) return false
-    if (!stopScheduleRowId) return false
+    if (!requireSchedule) return true
+    if (!hasScheduleOptions || !stopScheduleRowId) return false
     return scheduleOptions.some(option => option.value === stopScheduleRowId)
-  }, [confirmKeyword, hasScheduleOptions, scheduleOptions, stopScheduleRowId])
+  }, [confirmKeyword, hasScheduleOptions, requireSchedule, scheduleOptions, stopScheduleRowId])
 
   const handleCancel = useCallback(() => {
     setConfirmKeyword('')
@@ -61,22 +66,30 @@ export function UjatEducationProgressActivityWithdrawModal({
   }, [onCancel])
 
   const handleConfirm = useCallback(() => {
-    if (!canConfirm || !stopScheduleRowId) return
-    onConfirm({ stopScheduleRowId })
+    if (!canConfirm) return
+    if (requireSchedule && !stopScheduleRowId) return
+    onConfirm(stopScheduleRowId ? { stopScheduleRowId } : {})
     setConfirmKeyword('')
     setStopScheduleRowId(undefined)
-  }, [canConfirm, onConfirm, stopScheduleRowId])
+  }, [canConfirm, onConfirm, requireSchedule, stopScheduleRowId])
 
   const footer = (
     <div className="ujat-education-progress-activity-withdraw-modal__footer">
-      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
+      <CmsButton
+        variant="secondary"
+        size="large"
+        type="button"
+        disabled={submitting}
+        onClick={handleCancel}
+      >
         취소
       </CmsButton>
       <CmsButton
         variant="delete"
         size="large"
         type="button"
-        disabled={!canConfirm}
+        loading={submitting}
+        disabled={!canConfirm || submitting}
         onClick={handleConfirm} >
         활동 포기
       </CmsButton>

@@ -1,3 +1,4 @@
+import type { UjatPartnerRecommendationCandidate } from '@/features/program/ujat/api/education-execution-api'
 import type { UjatVolunteerAssignmentProgressRow } from './assignment-types'
 
 export type UjatVolunteerAssignmentAssignModalMode = 'education' | 'partner'
@@ -50,6 +51,27 @@ export function formatPartnerOptionLabel(candidate: UjatVolunteerPartnerCandidat
   return `${candidate.name} (배정일 : ${candidate.assignmentDayCount}일)`
 }
 
+export function partnerOptionsFromRecommendation(
+  candidates: readonly UjatPartnerRecommendationCandidate[] | null | undefined
+): Array<{ value: string; label: string }> {
+  const mapped: UjatVolunteerPartnerCandidate[] = []
+  for (const candidate of candidates ?? []) {
+    if (candidate.participantId == null) continue
+    const name = candidate.volunteerName?.trim()
+    if (!name) continue
+    mapped.push({
+      id: String(candidate.participantId),
+      name,
+      assignmentDayCount: candidate.assignmentDayCount ?? candidate.totalAssignedDays ?? 0,
+      hasPartnerHistoryWithVolunteer: candidate.hasPartnerHistoryWithVolunteer === true,
+    })
+  }
+  return sortPartnerCandidates(mapped).map(candidate => ({
+    value: candidate.id,
+    label: formatPartnerOptionLabel(candidate),
+  }))
+}
+
 export function resolveVolunteerAssignmentAssignModalMode(
   row: UjatVolunteerAssignmentProgressRow
 ): UjatVolunteerAssignmentAssignModalMode {
@@ -63,12 +85,19 @@ function getVacantClassOptions(_scheduleRowId: string): UjatVolunteerClassAssign
   return []
 }
 
-function getPartnerSelectOptions(): Array<{ value: string; label: string }> {
-  return []
+function getPartnerSelectOptions(
+  candidates?: readonly UjatPartnerRecommendationCandidate[]
+): Array<{ value: string; label: string }> {
+  return partnerOptionsFromRecommendation(candidates)
 }
 
 export function getUjatVolunteerAssignmentAssignModalData(
-  row: UjatVolunteerAssignmentProgressRow
+  row: UjatVolunteerAssignmentProgressRow,
+  options?: {
+    classOptions?: UjatVolunteerClassAssignOption[]
+    partnerOptions?: Array<{ value: string; label: string }>
+    partnerCandidates?: readonly UjatPartnerRecommendationCandidate[]
+  }
 ): UjatVolunteerAssignmentAssignModalData {
   const mode = resolveVolunteerAssignmentAssignModalMode(row)
   const fixedClassLabel =
@@ -79,8 +108,10 @@ export function getUjatVolunteerAssignmentAssignModalData(
     scheduleRowId: row.id,
     scheduleDateLabel: formatScheduleShortDateLabel(row.scheduleLabel),
     fixedClassLabel,
-    classOptions: mode === 'education' ? getVacantClassOptions(row.id) : [],
-    partnerOptions: getPartnerSelectOptions(),
+    classOptions:
+      mode === 'education' ? (options?.classOptions ?? getVacantClassOptions(row.id)) : [],
+    partnerOptions:
+      options?.partnerOptions ?? getPartnerSelectOptions(options?.partnerCandidates),
     defaultInstitutionName: DEFAULT_INSTITUTION,
   }
 }

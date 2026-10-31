@@ -794,28 +794,80 @@ export type PaymentOrderCalculationBasisDetailResolveContext = {
   withholdingDailySalaryTotalWon?: number
   /** true이면 서버 calculationDetail이 없는 항목에 mock 기준을 만들지 않는다. */
   remoteData?: boolean
+  /**
+   * @deprecated 모달 「강의 시간」은 calculationDetail(basisJson)만 사용한다.
+   * payment/settlement.sessionOrdinal · lectureSessionDisplay로 채우지 않는다.
+   */
   sessionOrdinal?: number | null
   /** 책정 금액 정본 — 있으면 모달 급수 산정 금액에 우선 */
   lectureFeeStandardAmountWon?: number | null
 }
 
-function resolveLectureTimeDisplayForRow(
-  row: {
-    basisDetail?: PaymentOrderCalculationBasisDetail
-    lectureSessionDisplay?: string
-  },
-  context?: PaymentOrderCalculationBasisDetailResolveContext | null
-): string {
+/**
+ * 모달 강의 시간 SSOT = calculationDetail → basisDetail.lectureTimeDisplay(canonical)만.
+ * row.lectureSessionDisplay · context.sessionOrdinal fallback 금지.
+ */
+function resolveLectureTimeDisplayForRow(row: {
+  basisDetail?: PaymentOrderCalculationBasisDetail
+}): string {
   if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
     const fromDetail = row.basisDetail.lectureTimeDisplay.trim()
     if (fromDetail && fromDetail !== '-' && isCanonicalLectureSessionDisplay(fromDetail)) {
       return fromDetail
     }
   }
-  return resolveCanonicalLectureSessionDisplay(
-    row.lectureSessionDisplay,
-    context?.sessionOrdinal
-  )
+  return '-'
+}
+
+function enrichLectureFeeBasisDetailFromContext(
+  detail:
+    | PaymentOrderCalculationBasisDetailLectureFeeTier
+    | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+    | PaymentOrderCalculationBasisDetailLectureFeeGemini,
+  row: {
+    kind: string
+    itemLabel: string
+    amount: number
+    basisDetail?: PaymentOrderCalculationBasisDetail
+  },
+  context?: PaymentOrderCalculationBasisDetailResolveContext | null
+):
+  | PaymentOrderCalculationBasisDetailLectureFeeTier
+  | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+  | PaymentOrderCalculationBasisDetailLectureFeeGemini {
+  const lectureTimeDisplay = resolveLectureTimeDisplayForRow(row)
+  const categoryLabel = resolveLectureFeeStandardTitleForRow(row, context)
+  const amountWon = context?.lectureFeeStandardAmountWon
+  let next = detail
+  if (
+    lectureTimeDisplay !== '-' &&
+    (!next.lectureTimeDisplay.trim() || next.lectureTimeDisplay.trim() === '-')
+  ) {
+    next = { ...next, lectureTimeDisplay }
+  } else if (
+    next.lectureTimeDisplay.trim() &&
+    next.lectureTimeDisplay.trim() !== '-' &&
+    !isCanonicalLectureSessionDisplay(next.lectureTimeDisplay)
+  ) {
+    next = { ...next, lectureTimeDisplay: '-' }
+  }
+  if (
+    !isGenericLectureFeeCategoryLabel(categoryLabel) &&
+    isGenericLectureFeeCategoryLabel(next.categoryLabel)
+  ) {
+    next = { ...next, categoryLabel }
+    if (next.layout === 'lectureFeeTier') {
+      next = { ...next, tier: resolveLectureFeeTier(categoryLabel) }
+    }
+  }
+  if (amountWon != null && amountWon > 0) {
+    if (next.layout === 'lectureFeeGemini') {
+      next = { ...next, feeAssessmentWon: amountWon }
+    } else {
+      next = { ...next, feeAssessmentWon: amountWon, totalWon: amountWon }
+    }
+  }
+  return next
 }
 
 /** 행 payload·기본정보로 산정 기준 상세 fallback 생성 (mock/API 공통) */
@@ -832,6 +884,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
 ): PaymentOrderCalculationBasisDetail | undefined {
   // 표시용 원격 snapshot은 기존 호환 fallback보다 우선한다.
   // BE lectureFeeTier 합성(title/resultAmount만)이 remote로 떨어진 경우는 급수 모달로 되돌린다.
+  // 강의 시간은 calculationDetail에 없으므로 「-」(sessionOrdinal/lectureSessionDisplay 합성 금지).
   if (row.basisDetail?.layout === 'remote') {
     const sourceLayout = row.basisDetail.sourceLayout
     if (
@@ -843,42 +896,18 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
       return buildLectureFeeBasisDetailFromStandardTitle(
         resolveLectureFeeStandardTitleForRow(row, context),
         context?.lectureFeeStandardAmountWon ?? row.amount,
-        resolveLectureTimeDisplayForRow(row, context)
+        resolveLectureTimeDisplayForRow(row)
       )
     }
     return row.basisDetail
   }
 
+  // calculationDetail → basisDetail이 있으면 모달 강의 시간·구분은 그걸 SSOT로 쓴다.
+  if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
+    return enrichLectureFeeBasisDetailFromContext(row.basisDetail, row, context)
+  }
+
   if (context?.remoteData && row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
-    if (isLectureFeeBasisDetail(row.basisDetail)) {
-      const lectureTimeDisplay = resolveLectureTimeDisplayForRow(row, context)
-      const categoryLabel = resolveLectureFeeStandardTitleForRow(row, context)
-      const amountWon = context.lectureFeeStandardAmountWon
-      let next = row.basisDetail
-      if (
-        lectureTimeDisplay !== '-' &&
-        (!next.lectureTimeDisplay.trim() || next.lectureTimeDisplay.trim() === '-')
-      ) {
-        next = { ...next, lectureTimeDisplay }
-      }
-      if (
-        !isGenericLectureFeeCategoryLabel(categoryLabel) &&
-        isGenericLectureFeeCategoryLabel(next.categoryLabel)
-      ) {
-        next = { ...next, categoryLabel }
-        if (next.layout === 'lectureFeeTier') {
-          next = { ...next, tier: resolveLectureFeeTier(categoryLabel) }
-        }
-      }
-      if (amountWon != null && amountWon > 0) {
-        if (next.layout === 'lectureFeeGemini') {
-          next = { ...next, feeAssessmentWon: amountWon }
-        } else {
-          next = { ...next, feeAssessmentWon: amountWon, totalWon: amountWon }
-        }
-      }
-      return next
-    }
     return row.basisDetail
   }
 
@@ -893,7 +922,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return buildLectureFeeBasisDetailFromStandardTitle(
       resolveLectureFeeStandardTitleForRow(row, context),
       row.amount,
-      resolveLectureTimeDisplayForRow(row, context)
+      resolveLectureTimeDisplayForRow(row)
     )
   }
 

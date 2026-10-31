@@ -5,19 +5,23 @@ import type {
   UjatVolunteerAssignmentProgressRow,
 } from './assignment-types'
 
+function withdrawScheduleValue(row: UjatVolunteerAssignmentProgressRow): string {
+  return row.scheduleId != null ? String(row.scheduleId) : row.id
+}
+
 export function getVolunteerActivityWithdrawScheduleOptions(
-  volunteerRowId: string,
+  rows: readonly UjatVolunteerAssignmentProgressRow[],
   additionalWithdrawnRowIds: ReadonlyArray<string> = []
 ): { value: string; label: string }[] {
   const withdrawnIdSet = new Set(additionalWithdrawnRowIds)
-  const { rows } = getUjatVolunteerAssignmentProgressBundle(volunteerRowId)
 
   return rows
-    .filter(
-      row => row.classDisplay.kind !== 'withdrawn' && !withdrawnIdSet.has(row.id)
-    )
+    .filter(row => {
+      if (row.classDisplay.kind === 'withdrawn') return false
+      return !withdrawnIdSet.has(row.id) && !withdrawnIdSet.has(withdrawScheduleValue(row))
+    })
     .map(row => ({
-      value: row.id,
+      value: withdrawScheduleValue(row),
       label: row.scheduleLabel,
     }))
 }
@@ -34,7 +38,10 @@ export function mergeVolunteerActivityWithdrawnRows(
 
   return sortVolunteerAssignmentRows(
     rows.map(row => {
-      if (!withdrawnIdSet.has(row.id) || row.classDisplay.kind === 'withdrawn') {
+      const matches =
+        withdrawnIdSet.has(row.id) ||
+        (row.scheduleId != null && withdrawnIdSet.has(String(row.scheduleId)))
+      if (!matches || row.classDisplay.kind === 'withdrawn') {
         return row
       }
 

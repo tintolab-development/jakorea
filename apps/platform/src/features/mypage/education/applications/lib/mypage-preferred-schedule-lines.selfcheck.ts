@@ -65,4 +65,9 @@ const volunteerFromSummaryOnly = resolveMypagePreferredScheduleLines({
 assert.equal(volunteerFromSummaryOnly.length, 1)
 assert.ok(volunteerFromSummaryOnly[0]?.includes('10월'))
 
+const withoutEmptyCards = resolveMypagePreferredScheduleLines({
+  preferredEducationScheduleLabel: '진행 희망 교육 일정 1 -\n-\n2026년 4월 20일(월) 09:30 ~ 12:00',
+})
+assert.deepEqual(withoutEmptyCards, ['2026년 4월 20일(월) 09:30 ~ 12:00'])
+
 console.log('mypage-preferred-schedule-lines.selfcheck: ok')

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Space, Spin, Tooltip } from 'antd'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { postUjatScheduleChangeRequest } from '@/features/program/ujat/api/temporary-schedule-api'
@@ -47,6 +48,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const [pendingReject, setPendingReject] = useState(false)
   const [pendingApprove, setPendingApprove] = useState(false)
   const [pendingRevisionRequest, setPendingRevisionRequest] = useState(false)
@@ -216,6 +218,8 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     <div className="ujat-institution-application-detail-page">
       <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
+          {canWrite ? (
+          <>
           <CmsButton
             type="button"
             variant="delete"
@@ -266,6 +270,8 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
               </Tooltip>
             )
           })()}
+          </>
+          ) : null}
           <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}

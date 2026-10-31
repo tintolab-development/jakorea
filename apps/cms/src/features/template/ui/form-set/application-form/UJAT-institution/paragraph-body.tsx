@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import type { ParagraphBodyInteractionMode } from '@/features/template/ui/paragraph/renderers/paragraph-body-interaction-mode'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 import { UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@/features/template/model/ujat-program-application-form-institution-draft'
 import { UjatProgramApplicationBasicInfoParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-basic-info-paragraph'
 import { UjatProgramApplicationGradeInfoParagraph } from '@/features/template/ui/form-set/application-form/UJAT-institution/paragraphs/ujat-program-application-grade-info-paragraph'
@@ -19,7 +20,8 @@ export function renderUjatProgramApplicationFormInstitutionParagraphBody(
   gradeClassTime?: UjatProgramApplicationGradeClassTimeParagraphOptions | null,
   paragraphInteractionMode: ParagraphBodyInteractionMode = 'authoring',
   programLinkedPreview = false,
-  choiceDisplayOnly = false
+  choiceDisplayOnly = false,
+  typedDetail?: UjatTypedDetail | null
 ): ReactNode | null {
   if (!enabled) return null
   switch (paragraph.id) {
@@ -54,6 +56,7 @@ export function renderUjatProgramApplicationFormInstitutionParagraphBody(
           paragraphInteractionMode={paragraphInteractionMode}
           programLinkedPreview={programLinkedPreview}
           choiceDisplayOnly={choiceDisplayOnly}
+          typedDetail={typedDetail}
         />
       )
     default:

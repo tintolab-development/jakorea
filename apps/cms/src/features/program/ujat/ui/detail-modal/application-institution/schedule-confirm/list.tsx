@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { FilterTableToolbarButton } from '@/shared/ui'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
@@ -19,6 +20,7 @@ export function UjatInstitutionScheduleConfirmList({
   programId?: string | null
   onOpenDetail: (row: UjatScheduleConfirmRow) => void
 }) {
+  const canWrite = useUjatCanWrite()
   const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
@@ -81,10 +83,14 @@ export function UjatInstitutionScheduleConfirmList({
             )}
           </div>
         }
-        excelExport={{
-          columns,
-          data: tableData,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+              }
+            : undefined
+        }
       >
         {viewMode === 'table' ? (
           <div ref={tableWrapRef} className="ujat-schedule-confirm-list__table-wrap">

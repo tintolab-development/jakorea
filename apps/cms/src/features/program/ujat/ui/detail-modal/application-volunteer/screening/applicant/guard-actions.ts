@@ -1,5 +1,31 @@
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import {
+  isUjatInterviewTotalScoreUnevaluated,
+  resolveUjatEffectiveSecondInterviewStatus,
+} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview2/display'
+import { INTERVIEW_RESULT_NOT_ENDED_ALERT } from '@/features/program/shared/lib/interview-not-ended'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+
+export { INTERVIEW_RESULT_NOT_ENDED_ALERT }
+
+const INTERVIEW_EVALUATION_REQUIRED_ALERT = {
+  title: '면접 평가 진행 안내',
+  content: '면접 평가 진행 후 합격 혹은 불합격 처리가 가능합니다.',
+  confirmLabel: '닫기',
+} as const
+
+function guardUjatVolunteerInterview2Evaluated(row: UjatVolunteerApplicantRow): boolean {
+  if (!isUjatInterviewTotalScoreUnevaluated(row)) return true
+  cmsAlertModal.show({ ...INTERVIEW_EVALUATION_REQUIRED_ALERT })
+  return false
+}
+
+/** 배정 면접 종료 전(면접 진행 대기) — 합격·불합격·평가 모두 차단 */
+function guardUjatVolunteerInterview2NotEnded(row: UjatVolunteerApplicantRow): boolean {
+  if (resolveUjatEffectiveSecondInterviewStatus(row) !== 'waiting') return true
+  cmsAlertModal.show({ ...INTERVIEW_RESULT_NOT_ENDED_ALERT })
+  return false
+}
 
 export function guardUjatVolunteerWithdrawActivity(row: UjatVolunteerApplicantRow): boolean {
   if (row.interviewAssignmentStatus !== 'withdrawn') return true
@@ -44,7 +70,8 @@ export function guardUjatVolunteerInterview2Fail(row: UjatVolunteerApplicantRow)
     })
     return false
   }
-  return true
+  if (!guardUjatVolunteerInterview2NotEnded(row)) return false
+  return guardUjatVolunteerInterview2Evaluated(row)
 }
 
 export function guardUjatVolunteerInterview2Pass(row: UjatVolunteerApplicantRow): boolean {
@@ -63,7 +90,8 @@ export function guardUjatVolunteerInterview2Pass(row: UjatVolunteerApplicantRow)
     })
     return false
   }
-  return true
+  if (!guardUjatVolunteerInterview2NotEnded(row)) return false
+  return guardUjatVolunteerInterview2Evaluated(row)
 }
 
 export function guardUjatVolunteerInterview2Evaluation(row: UjatVolunteerApplicantRow): boolean {
@@ -82,7 +110,7 @@ export function guardUjatVolunteerInterview2Evaluation(row: UjatVolunteerApplica
     })
     return false
   }
-  return true
+  return guardUjatVolunteerInterview2NotEnded(row)
 }
 
 export function alertUjatVolunteerInterviewAssignSlotRequired(): void {

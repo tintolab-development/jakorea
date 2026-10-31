@@ -351,6 +351,7 @@ export function PermissionModal({
               disabled={
                 confirmLoading ||
                 confirmDisabled ||
+                (requireReason && !reason.trim()) ||
                 Boolean(unsupportedNotifyMessage) ||
                 notifyScheduleNotReady
               }

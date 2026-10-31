@@ -60,6 +60,30 @@ describe('buildUjatVolunteerDocPassedListQuery', () => {
 })
 
 describe('buildUjatVolunteerInterview2ListQuery', () => {
+  it('sends interviewStage SECOND_ROUND with documentStatus PASS', () => {
+    expect(
+      buildUjatVolunteerInterview2ListQuery({
+        ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
+      })
+    ).toEqual({
+      documentStatus: 'PASS',
+      interviewStage: 'SECOND_ROUND',
+    })
+  })
+
+  it('maps waiting to effectiveSecondInterviewStatus', () => {
+    expect(
+      buildUjatVolunteerInterview2ListQuery({
+        ...DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
+        secondInterviewScreeningStatus: 'waiting',
+      })
+    ).toEqual({
+      documentStatus: 'PASS',
+      interviewStage: 'SECOND_ROUND',
+      effectiveSecondInterviewStatus: 'WAITING',
+    })
+  })
+
   it('maps final result and withdrawn interview status', () => {
     expect(
       buildUjatVolunteerInterview2ListQuery({
@@ -68,6 +92,7 @@ describe('buildUjatVolunteerInterview2ListQuery', () => {
       })
     ).toEqual({
       documentStatus: 'PASS',
+      interviewStage: 'SECOND_ROUND',
       finalResultStatus: 'RESERVE',
     })
 

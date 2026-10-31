@@ -120,6 +120,36 @@ describe('UJAT 기관 신청 상세 adapter', () => {
     expect(detail.preferredEducationDates).toEqual(['2026-04-24', '2026-05-08'])
   })
 
+  it('학년 블록 교재는 서버 값만 쓰고 없으면 null을 유지한다', () => {
+    const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
+      id: 3,
+      organizationName: '진월초등학교',
+      applicationStatus: 'SUBMITTED',
+    })
+    const detail = enrichUjatInstitutionDetailFromRemote(row, {
+      gradeBlocks: [
+        {
+          gradeLabel: '6학년',
+          classCount: 2,
+          classes: [{ classNo: '1반', studentCount: 24 }],
+          textbookName: null,
+          textbookNameEn: null,
+          kitCount: null,
+          bookCount: null,
+          textbookDeliveryStatus: null,
+        },
+      ],
+    })
+
+    expect(detail.gradeBlocks[0]).toMatchObject({
+      gradeLabel: '6학년',
+      textbookName: null,
+      kitCount: null,
+      bookCount: null,
+      textbookDeliveryStatus: null,
+    })
+  })
+
   it('preferredEducationDates가 비면 preferredEducationSchedules 달력일을 쓴다', () => {
     const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
       id: 4,
@@ -156,6 +186,31 @@ describe('UJAT 기관 신청 목록 adapter', () => {
     expect(row.scheduleSlots['2026-11-04']).toBe('O')
     expect(row.preferredScheduleIdByIso).toEqual({})
     expect(row.sessionIsoDates).toEqual(['2026-11-11'])
+  })
+
+  it('educationDate가 있으면 startAt보다 날짜 열 O에 우선한다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 31,
+        organizationName: '기관',
+        applicationStatus: 'SUBMITTED',
+        preferredEducationSchedules: [
+          {
+            startAt: '2026-11-20T00:00:00+09:00',
+            educationDate: '2026-11-06',
+          },
+          {
+            startAt: null,
+            educationDate: '2026-11-13',
+          },
+        ],
+      },
+      0
+    )
+
+    expect(row.scheduleSlots['2026-11-06']).toBe('O')
+    expect(row.scheduleSlots['2026-11-13']).toBe('O')
+    expect(row.scheduleSlots['2026-11-20']).toBeUndefined()
   })
 
   it('SUBMITTED는 applicationStatus만으로 임시 배정 배지를 만들지 않는다', () => {
@@ -268,6 +323,7 @@ describe('UJAT 봉사자 목록 adapter', () => {
         memberName: '김봉사',
         grade: '3학년',
         preferredRegion: '서울',
+        preferredRegionCode: 'SEOUL',
         contact: '010-****-1234',
         email: 'a***@school.kr',
         hasEducationExperience: true,
@@ -285,6 +341,7 @@ describe('UJAT 봉사자 목록 adapter', () => {
     expect(row.name).toBe('김봉사')
     expect(row.grade).toBe('3학년')
     expect(row.preferredRegion).toBe('서울')
+    expect(row.preferredRegionCode).toBe('SEOUL')
     expect(row.contact).toBe('010-****-1234')
     expect(row.essayIntro).toBe('지원동기 원문')
     expect(row.essayEducationExperience).toBe('교육경험 원문')
@@ -433,6 +490,24 @@ describe('UJAT 봉사자 목록 adapter', () => {
     )
     expect(
       mapStatus({ applicationStatus: 'INTERVIEW_ASSIGNED' }).interviewAssignmentStatus
+    ).toBe('assigned')
+    expect(
+      mapStatus({
+        applicationStatus: 'INTERVIEW_ASSIGNED',
+        documentStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'ASSIGNED',
+        interviewAssignmentStatus: 'ASSIGNED',
+        assignedInterviewStartAt: '2026-11-19T01:00:00Z',
+        assignedInterviewEndAt: '2026-11-19T01:30:00Z',
+        interviewAssignmentId: 10001,
+      }).assignedInterviewEndAt
+    ).toBe('2026-11-19T01:30:00Z')
+    expect(
+      mapStatus({
+        interviewAssignmentStatus: 'PARTIALLY_EVALUATED',
+        interviewStatus: 'PARTIALLY_EVALUATED',
+        documentStatus: 'DOCUMENT_PASSED',
+      }).interviewAssignmentStatus
     ).toBe('assigned')
     expect(mapStatus({ applicationStatus: 'FINAL_SELECTED' }).secondInterviewScreeningStatus).toBe(
       'pass'

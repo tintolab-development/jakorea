@@ -18,6 +18,8 @@ export interface ProgramEditInfoActionsProps {
   useToolbarButton?: boolean
   /** 미지정 시 large(h44). 상세 탭 액션은 h40 */
   size?: CmsButtonSize
+  /** false면 정보 수정 버튼을 숨긴다. 조회 전용(GENERAL) 관리자 */
+  canWrite?: boolean
 }
 
 /** 조회: 「정보 수정」 / 수정: 「취소」「저장」만 조건부 렌더 */
@@ -31,8 +33,10 @@ export function ProgramEditInfoActions({
   idleVariant = 'secondary',
   useToolbarButton = false,
   size,
+  canWrite = true,
 }: ProgramEditInfoActionsProps) {
   const resolvedSize = size ?? PROGRAM_EDIT_INFO_BUTTON_PROPS.size
+  if (!canWrite) return null
 
   if (!isEditing) {
     if (useToolbarButton) {

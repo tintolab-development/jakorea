@@ -22,6 +22,24 @@ if (institutionConfirm?.kind === 'single_item' && institutionConfirm.variant ===
   assert.equal(institutionConfirm.items[0]?.label.includes('2NNN'), false)
 }
 
+const volunteerUnknown = preparePortalUjatApplicationDraft(
+  createUjatProgramApplicationFormVolunteerDraft(),
+  now,
+)
+const volunteerUnknownConfirm = volunteerUnknown.paragraphs.find(
+  paragraph => paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.submitConfirmation,
+)
+if (
+  volunteerUnknownConfirm?.kind === 'single_item' &&
+  volunteerUnknownConfirm.variant === 'multiple_choice'
+) {
+  assert.equal(
+    volunteerUnknownConfirm.items[0]?.label.includes('N기'),
+    false,
+  )
+  assert.match(volunteerUnknownConfirm.items[0]?.label ?? '', /UJAT로 지원합니다/)
+}
+
 const volunteer = preparePortalUjatApplicationDraft(
   createUjatProgramApplicationFormVolunteerDraft(),
   now,

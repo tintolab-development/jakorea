@@ -36,6 +36,11 @@ export type PortalVolunteerInterviewSchedule = {
 export type PortalRecruitment = {
   recruitmentId?: number
   recruitmentType?: string
+  /**
+   * UJAT 봉사자 모집 반기. `FIRST_HALF` / `SECOND_HALF`.
+   * 없으면 복수 봉사자 모집 행은 `봉사자1` / `봉사자2`로 표시한다.
+   */
+  recruitTerm?: string | null
   targetType?: string
   status?: string
   startAt?: string

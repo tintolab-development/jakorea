@@ -7,6 +7,15 @@ import {
 import { resolveInstructorAvailableScheduleLines } from './instructor-available-schedule-from-answers.ts'
 import { programDetailToPreferredScheduleLookup } from './teacher-preferred-schedules.ts'
 
+const BLANK_PREFERRED_SCHEDULE_LINE = /^(?:-|–|—|진행 희망 교육 일정\s*\d+\s*[-–—]?)$/
+
+/** 날짜·시간이 없는 `진행 희망 교육 일정 1 -` 같은 빈 줄은 신청 내용 카드로 만들지 않는다. */
+export function filterBlankMypagePreferredScheduleLines(lines: readonly string[]): string[] {
+  return lines
+    .map(line => line.trim())
+    .filter(line => line.length > 0 && !BLANK_PREFERRED_SCHEDULE_LINE.test(line))
+}
+
 export function resolveMypagePreferredScheduleLines(input: {
   applicationType?: ProgramApplicationType
   answers?: Record<string, unknown> | null
@@ -24,7 +33,7 @@ export function resolveMypagePreferredScheduleLines(input: {
       preferredScheduleOptionValues: input.preferredScheduleOptionValues,
       program: lookup,
     })
-    if (slotPickerLines.length > 0) return slotPickerLines
+    if (slotPickerLines.length > 0) return filterBlankMypagePreferredScheduleLines(slotPickerLines)
   }
 
   const fromAnswers = resolvePreferredScheduleLabelsFromAnswers({
@@ -32,7 +41,7 @@ export function resolveMypagePreferredScheduleLines(input: {
     preferredScheduleOptionValues: input.preferredScheduleOptionValues,
     ...lookup,
   })
-  if (fromAnswers.length > 0) return fromAnswers
+  if (fromAnswers.length > 0) return filterBlankMypagePreferredScheduleLines(fromAnswers)
 
   const display = resolvePreferredEducationScheduleDisplayLabel({
     preferredEducationScheduleLabel: input.preferredEducationScheduleLabel,
@@ -40,8 +49,10 @@ export function resolveMypagePreferredScheduleLines(input: {
     ...lookup,
   })
   if (!display?.trim()) return []
-  return display
-    .split('\n')
-    .map(line => line.trim())
-    .filter(Boolean)
+  return filterBlankMypagePreferredScheduleLines(
+    display
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean),
+  )
 }

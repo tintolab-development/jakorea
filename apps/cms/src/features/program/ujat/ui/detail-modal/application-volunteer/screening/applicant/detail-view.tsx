@@ -5,6 +5,7 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { CmsButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -23,6 +24,7 @@ import {
   InterviewEvaluationSection,
   type InterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
+import { resolveUjatEffectiveSecondInterviewStatus } from '../interview2/display'
 import { guardUjatVolunteerInterview2Evaluation } from './guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -91,8 +93,10 @@ function Interview2ApplicantDetail({
   onInterviewPass?: () => void
   onSaveInterviewEvaluation?: (payload: UjatVolunteerInterviewEvaluationPayload) => Promise<boolean>
 }) {
+  const canWrite = useUjatCanWrite()
   const evaluationSectionRef = useRef<InterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
+  const interviewNotEnded = resolveUjatEffectiveSecondInterviewStatus(applicant) === 'waiting'
 
   useEffect(() => {
     setIsEvaluationEditing(false)
@@ -112,6 +116,8 @@ function Interview2ApplicantDetail({
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
+          {canWrite ? (
+            <>
           <CmsButton
             type="button"
             variant="delete"
@@ -123,6 +129,7 @@ function Interview2ApplicantDetail({
             type="button"
             variant="delete"
             size="large"
+            disabled={interviewNotEnded}
             onClick={onInterviewFail} >
             면접 불합격
           </CmsButton>
@@ -130,6 +137,7 @@ function Interview2ApplicantDetail({
             type="button"
             variant="secondary"
             size="large"
+            disabled={interviewNotEnded}
             onClick={onInterviewPass} >
             면접 합격
           </CmsButton>
@@ -137,11 +145,14 @@ function Interview2ApplicantDetail({
             type="button"
             variant="primary"
             size="large"
+            disabled={interviewNotEnded && !isEvaluationEditing}
             onClick={() => {
               void handleInterviewEvaluationClick()
             }} >
             면접 평가
           </CmsButton>
+            </>
+          ) : null}
           <PersonalInfoRevealButton
             disabled={programPrivacyPending}
             labelMode="stickyReveal"
@@ -174,6 +185,7 @@ function Interview2ApplicantDetail({
 }
 
 export function ApplicantDetailView(props: ApplicantDetailViewProps) {
+  const canWrite = useUjatCanWrite()
   const applicantEnriched = useUjatVolunteerApplicationDetailEnrichment(props.applicant)
   const [unmaskedOverlay, setUnmaskedOverlay] = useState<UjatVolunteerApplicantRow | null>(null)
 
@@ -253,6 +265,8 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
       <div className="applicant-detail">
         <div className="applicant-detail__header">
           <div className="program-detail-fullpage-modal__header-actions">
+            {canWrite ? (
+              <>
             <CmsButton
               type="button"
               variant="delete"
@@ -267,6 +281,8 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
               onClick={onAssignInterview} >
               {assignInterviewLabel}
             </CmsButton>
+              </>
+            ) : null}
             <PersonalInfoRevealButton
               disabled={programPrivacyPending}
               labelMode="stickyReveal"
@@ -306,12 +322,16 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
+          {canWrite ? (
+            <>
           <CmsButton type="button" variant="delete" size="large" onClick={onDocumentReject}>
             서류 반려
           </CmsButton>
           <CmsButton type="button" variant="secondary" size="large" onClick={onDocumentApprove}>
             서류 승인
           </CmsButton>
+            </>
+          ) : null}
           <PersonalInfoRevealButton
             disabled={programPrivacyPending}
             labelMode="stickyReveal"

@@ -30,6 +30,7 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/individual-applications/{applicationId}/document-evaluations/{managerSlot}',
   '/api/admin/volunteer-applications/{applicationId}/document-evaluations/{managerSlot}',
   '/api/admin/volunteer-applications/{applicationId}',
+  '/api/admin/volunteer-applications/{applicationId}/activity-region',
   '/api/admin/organization-applications/{applicationId}',
   '/api/admin/organization-applications/{applicationId}/notifications/resend',
   '/api/admin/instructor-applications/{applicationId}',

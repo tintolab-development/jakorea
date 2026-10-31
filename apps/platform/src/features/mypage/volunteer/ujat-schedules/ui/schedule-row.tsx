@@ -149,7 +149,7 @@ export function UjatVolunteerScheduleRow({
                 onViewAttendance(item)
               }}
             >
-              출석현황 보기
+              출석 현황 보기
             </PFButton>
           </div>
           <span className={styles.divider} aria-hidden="true" />
