@@ -28,6 +28,7 @@ import {
   type PortalRecruitmentFocus,
 } from '../lib/portal-recruitment.ts'
 import { readCanonicalPreEducationNoticeFlag } from '../lib/portal-application-hidden-paragraph-ids.ts'
+import { mapUjatEducationHalfRangesFromSchedules } from '../lib/ujat-preferred-education-schedule-options.ts'
 import type {
   PortalCurriculum,
   PortalEducationCurriculumSession,
@@ -1605,6 +1606,9 @@ export function mapPortalProgramDetail(
     ),
     sessions,
     eventSchedules,
+    ...(isUjatDetailCase
+      ? { ujatEducationHalfRanges: mapUjatEducationHalfRangesFromSchedules(remote.schedules) }
+      : {}),
     scheduleOptionLookup: mapPortalScheduleOptionLookup(remote.schedules),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(

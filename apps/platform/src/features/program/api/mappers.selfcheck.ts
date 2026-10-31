@@ -408,6 +408,21 @@ assert.deepEqual(
   ],
 )
 assert.equal(ujatTermSchedules.educationSchedules.length, 0)
+assert.deepEqual(
+  ujatTermSchedules.ujatEducationHalfRanges,
+  [
+    {
+      half: 'h1',
+      startAt: '2026-04-10T01:00:00Z',
+      endAt: '2026-04-10T03:00:00Z',
+    },
+    {
+      half: 'h2',
+      startAt: '2026-09-10T01:00:00Z',
+      endAt: '2026-09-10T03:00:00Z',
+    },
+  ],
+)
 
 // UJAT can carry the generic education-progress projection while its public
 // half/pre-education/closing rows still arrive through schedules[]. The latter
