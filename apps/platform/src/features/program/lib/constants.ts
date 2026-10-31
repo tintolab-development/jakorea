@@ -57,7 +57,6 @@ export const OPERATING_PERIOD_FILTER_OPTIONS = [
 ] as const
 
 export const PROGRAM_FILTER_KEYS = [
-  'programType',
   'recruitmentTarget',
   'recruitmentStatus',
   'operatingPeriod',

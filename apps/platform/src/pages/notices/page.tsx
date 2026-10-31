@@ -11,7 +11,14 @@ import {
   type NoticesListParams,
 } from '@/features/notice'
 import { useDebouncedValue } from '@/shared/hooks'
-import { PFDivider, PFLoadingSpinner, PFPagination, PFSearchInput, PFText } from '@/shared/ui'
+import {
+  PFDivider,
+  PFLoadingSpinner,
+  PFPagination,
+  PFSearchInput,
+  PFText,
+  PublicContentPageStatus,
+} from '@/shared/ui'
 import styles from './page.module.css'
 
 const SEARCH_DEBOUNCE_MS = 500
@@ -94,11 +101,15 @@ export function NoticesPage() {
 
         <div className={styles.list}>
           {list.isPending ? (
-            <PFLoadingSpinner centered label="공지사항을 불러오는 중" />
+            <PublicContentPageStatus layout="list">
+              <PFLoadingSpinner label="공지사항을 불러오는 중" />
+            </PublicContentPageStatus>
           ) : list.items.length === 0 ? (
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.empty}>
-              검색 결과가 없습니다.
-            </PFText>
+            <PublicContentPageStatus layout="list">
+              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                검색 결과가 없습니다.
+              </PFText>
+            </PublicContentPageStatus>
           ) : (
             list.items.map(item => (
               <NoticeListItemRow

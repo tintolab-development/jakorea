@@ -760,6 +760,26 @@ export async function fetchConsentCrimeOriginalBlobRemote(input: {
   return fetchConsentEvidenceBlobRemote(input.filled, input.reason)
 }
 
+const CRIME_ORIGINAL_FALLBACK_FILENAME = '성범죄_경력조회_동의서.pdf'
+
+/** 성범죄 업로드 원본. signed-document의 originalDownloadApi + SENSITIVE_FILE_DOWNLOAD. */
+export async function fetchConsentOriginalFileBlobRemote(
+  signed: SignedConsentDocumentResponse,
+  reason: string
+): Promise<Blob | null> {
+  if (signed.originalFileObjectId == null) return null
+  try {
+    const blob = await loadSensitiveAdminFileBlob({
+      fileObjectId: signed.originalFileObjectId,
+      reason,
+      claimPath: signed.originalDownloadApi,
+    })
+    return blobWithEvidenceMime(blob, CRIME_ORIGINAL_FALLBACK_FILENAME)
+  } catch {
+    return null
+  }
+}
+
 export async function fetchMemberExternalIdentifiersRemote(
   memberId: number
 ): Promise<ExternalIdentifierResponse[]> {

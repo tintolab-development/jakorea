@@ -24,6 +24,7 @@ export interface AdminTealHeaderModalProps {
   wrapClassName?: string
   rootClassName?: string
   styles?: ModalProps['styles']
+  afterOpenChange?: (open: boolean) => void
 }
 
 export function AdminTealHeaderModal({
@@ -44,6 +45,7 @@ export function AdminTealHeaderModal({
   wrapClassName,
   rootClassName,
   styles,
+  afterOpenChange,
 }: AdminTealHeaderModalProps) {
   const width = widthProp ?? ADMIN_MODAL_SIZE_WIDTH[size]
   const isFull = size === 'full'
@@ -75,6 +77,7 @@ export function AdminTealHeaderModal({
       maskClosable
       centered={false}
       zIndex={zIndex}
+      afterOpenChange={afterOpenChange}
       getContainer={() => document.body}
     >
       {!hideHeader && (

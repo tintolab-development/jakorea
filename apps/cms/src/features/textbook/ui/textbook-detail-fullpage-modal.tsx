@@ -226,6 +226,7 @@ function TextbookDetailFullPageModalInner({
                   edit={
                     <CmsSelect
                       inputSize="small"
+                      withAllOption={false}
                       value={editForm.businessArea}
                       onChange={value =>
                         setEditForm(prev =>

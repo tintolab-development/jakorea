@@ -76,15 +76,7 @@ function parseOperatingPeriodFilter(value: string | null): string {
 
 /** 기간 기반 3단 모집현황 필터 */
 const VALID_RECRUITMENT_STATUS = new Set(['recruiting', 'closed', 'scheduled', 'all'])
-const VALID_PROGRAM_TYPES = new Set(['all', 'UJAT'])
 const VALID_APPLICATION_TYPES = new Set(['INDIVIDUAL', 'ORGANIZATION', 'INSTRUCTOR', 'VOLUNTEER'])
-
-function parseProgramTypeFilter(value: string | null): string {
-  const normalized = value?.trim().toUpperCase()
-  return normalized && VALID_PROGRAM_TYPES.has(normalized)
-    ? normalized
-    : DEFAULT_PROGRAMS_LIST_PARAMS.programType
-}
 
 function parseApplicationTypeFilter(value: string | null): PortalApplicationType | undefined {
   const normalized = value?.trim().toUpperCase()
@@ -140,12 +132,6 @@ function appendFilterValues(
 export function readProgramsListParams(search = window.location.search): ProgramsListParams {
   const params = new URLSearchParams(search)
   const applicationType = parseApplicationTypeFilter(params.get('applicationType'))
-  const programType = readRepeatedFilter(
-    params,
-    'programType',
-    parseProgramTypeFilter,
-    DEFAULT_PROGRAMS_LIST_PARAMS.programType,
-  )
   const recruitmentTarget = readRepeatedFilter(
     params,
     'recruitmentTarget',
@@ -175,8 +161,7 @@ export function readProgramsListParams(search = window.location.search): Program
     category: parseCategory(params.get('category')),
     q: params.get('q') ?? DEFAULT_PROGRAMS_LIST_PARAMS.q,
     ...(applicationType ? { applicationType } : {}),
-    programType: programType.value,
-    ...(programType.values ? { programTypeValues: programType.values } : {}),
+    programType: DEFAULT_PROGRAMS_LIST_PARAMS.programType,
     recruitmentTarget: recruitmentTarget.value,
     ...(recruitmentTarget.values ? { recruitmentTargetValues: recruitmentTarget.values } : {}),
     recruitmentStatus: recruitmentStatus.value,
@@ -203,13 +188,6 @@ export function buildProgramsListPath(params: ProgramsListParams) {
   if (params.applicationType) {
     searchParams.set('applicationType', params.applicationType)
   }
-  appendFilterValues(
-    searchParams,
-    'programType',
-    params.programType,
-    params.programTypeValues,
-    DEFAULT_PROGRAMS_LIST_PARAMS.programType,
-  )
   appendFilterValues(
     searchParams,
     'recruitmentTarget',

@@ -24,11 +24,33 @@
   .ant-table-thead
   > tr
   > th:not(.ant-table-cell-scrollbar),
-.admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr > td {
+.admin-notice-list-page__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td {
   box-sizing: border-box !important;
   padding: 12px 16px !important;
   text-align: center;
   vertical-align: middle !important;
+}
+
+/* empty placeholder — 페이지 td 패딩 override가 empty 셀에 들어가면 hover 시 높이 shift */
+.admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr.ant-table-placeholder,
+.admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr.ant-table-placeholder:hover {
+  cursor: default !important;
+}
+
+.admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr.ant-table-placeholder > td,
+.admin-notice-list-page__table.cms-data-table .ant-table-tbody > tr.ant-table-placeholder:hover > td {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-bottom: none !important;
+  border-right: none !important;
+  background: var(--color-bg-base, #fff) !important;
 }
 
 .admin-notice-list-page__table.cms-data-table .ant-table-thead > tr > th {

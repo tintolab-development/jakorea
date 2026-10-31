@@ -4,7 +4,7 @@ import {
   KakaoMapEmbed,
   usePublicDirections,
 } from '@/features/directions'
-import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFText, PublicContentPageStatus } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function DirectionsPage() {
@@ -26,16 +26,18 @@ export function DirectionsPage() {
         </header>
 
         {isPending ? (
-          <PFLoadingSpinner centered label="오시는 길 정보를 불러오는 중" />
+          <PublicContentPageStatus layout="list">
+            <PFLoadingSpinner label="오시는 길 정보를 불러오는 중" />
+          </PublicContentPageStatus>
         ) : isError ? (
-          <div className={styles.status}>
+          <PublicContentPageStatus layout="list">
             <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
               오시는 길 정보를 불러오지 못했습니다.
             </PFText>
             <PFButton variant="tertiary" size="large" onClick={refetch}>
               다시 시도
             </PFButton>
-          </div>
+          </PublicContentPageStatus>
         ) : (
           <>
             <div className={styles.mapSection}>
@@ -46,9 +48,11 @@ export function DirectionsPage() {
               {info ? (
                 <DirectionsInfoSection info={info} />
               ) : (
-                <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-                  등록된 정보가 없습니다.
-                </PFText>
+                <PublicContentPageStatus layout="list">
+                  <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                    등록된 정보가 없습니다.
+                  </PFText>
+                </PublicContentPageStatus>
               )}
             </div>
           </>
