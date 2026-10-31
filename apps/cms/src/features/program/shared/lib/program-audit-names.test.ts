@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { omitProgramAuditNameFields, readProgramAuditNames } from './program-audit-names'
+import {
+  omitProgramAuditNameFields,
+  readProgramAuditNames,
+  withExpectedUpdatedAt,
+} from './program-audit-names'
 
 describe('readProgramAuditNames', () => {
   it('reads trimmed names from a detail payload', () => {
@@ -25,5 +29,19 @@ describe('readProgramAuditNames', () => {
         updatedByName: 'JSON수정',
       })
     ).toEqual({ title: '예시' })
+  })
+})
+
+describe('withExpectedUpdatedAt', () => {
+  it('adds GET updatedAt for program PATCH lock', () => {
+    expect(withExpectedUpdatedAt({ title: '예시' }, ' 2026-11-01T00:00:00+09:00 ')).toEqual({
+      title: '예시',
+      expectedUpdatedAt: '2026-11-01T00:00:00+09:00',
+    })
+  })
+
+  it('omits expectedUpdatedAt when GET updatedAt is missing', () => {
+    expect(withExpectedUpdatedAt({ title: '예시' }, undefined)).toEqual({ title: '예시' })
+    expect(withExpectedUpdatedAt({ title: '예시' }, '  ')).toEqual({ title: '예시' })
   })
 })

@@ -115,4 +115,6 @@ export interface ProgramUpdateRequest {
   clearFields?: string[];
   /** Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다. */
   draftStatus?: ProgramUpdateRequestDraftStatus;
+  /** 직전 GET `updatedAt`. 불일치 시 409 PROGRAM_CONCURRENTLY_MODIFIED. 생략 시 last-write-wins */
+  expectedUpdatedAt?: string;
 }

@@ -27,6 +27,16 @@ export function readProgramAuditNames(dto: unknown): ProgramAuditNameFields {
   }
 }
 
+/** PATCH `/api/admin/programs/{id}` 낙관적 잠금. GET `updatedAt`이 있을 때만 실어 보낸다. */
+export function withExpectedUpdatedAt<T extends object>(
+  body: T,
+  updatedAt: string | null | undefined
+): T & { expectedUpdatedAt?: string } {
+  const expectedUpdatedAt = updatedAt?.trim()
+  if (!expectedUpdatedAt) return body
+  return { ...body, expectedUpdatedAt }
+}
+
 /** JSON 파싱 결과를 Program에 펼칠 때 등록자·수정자를 최상위 응답으로만 남긴다. */
 export function omitProgramAuditNameFields<T extends object>(
   source: T
