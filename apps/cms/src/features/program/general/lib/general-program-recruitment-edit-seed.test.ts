@@ -53,6 +53,35 @@ describe('programToRecruitmentTabEditValues volunteer nested seed', () => {
   })
 })
 
+describe('programToRecruitmentTabEditValues participant row interview seed', () => {
+  it('참여자 행 interviewStartAt/EndAt를 폼 시드에 넣는다', () => {
+    const program = {
+      id: '186526',
+      title: '개인 면접',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      backendProgramType: 'GENERAL_INDIVIDUAL',
+      interviewStartDate: '',
+      interviewEndDate: '',
+      programRecruitments: [
+        {
+          id: 1,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'INDIVIDUAL',
+          interviewEnabled: true,
+          interviewStartAt: '2026-12-13T15:00:00Z',
+          interviewEndAt: '2026-12-13T15:00:00Z',
+        },
+      ],
+    } as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'participant')
+    expect(String(values.interviewStartDate)).toContain('2026-12-13T15:00:00')
+    expect(String(values.interviewEndDate)).toContain('2026-12-13T15:00:00')
+  })
+})
+
 describe('resolveGeneralProgramForRecruitmentEdit', () => {
   it('strict remote 모드에서는 브라우저 in-memory 모집 overlay를 사용하지 않는다', () => {
     replaceGeneralRecruitOverlay({
