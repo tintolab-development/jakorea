@@ -120,6 +120,14 @@ const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
   UJAT_VOLUNTEER_INTERVIEW_REQUIRED: 'UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.',
 }
 
+/** 수료증·참여인증서 — 서버 message가 비거나 code만 있을 때 */
+const CERTIFICATE_ISSUE_ERROR_MESSAGES: Record<string, string> = {
+  CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE:
+    '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+  ISSUANCE_PERIOD_EXPIRED: '수료증 발급 기간이 만료되었습니다.',
+  PARTICIPANT_NOT_COMPLETED: '수료 조건을 충족하지 않아 발급할 수 없습니다.',
+}
+
 function asEnvelope(data: unknown): ApiErrorEnvelope | null {
   if (!data || typeof data !== 'object') return null
   return data as ApiErrorEnvelope
@@ -185,10 +193,20 @@ export function extractApiErrorMessage(
     return ujatMapped
   }
 
-  if (serverMessage && !(ujatMapped && serverMessage === code)) {
+  const certificateMapped = code ? CERTIFICATE_ISSUE_ERROR_MESSAGES[code] : undefined
+  if (certificateMapped && (!serverMessage || serverMessage === code)) {
+    return certificateMapped
+  }
+
+  if (
+    serverMessage &&
+    !(ujatMapped && serverMessage === code) &&
+    !(certificateMapped && serverMessage === code)
+  ) {
     return serverMessage
   }
   if (ujatMapped) return ujatMapped
+  if (certificateMapped) return certificateMapped
 
   const nestedCode = envelope?.error?.code?.trim()
   if (nestedCode) return nestedCode

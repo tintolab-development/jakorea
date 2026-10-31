@@ -20,4 +20,10 @@ export const cmsQueryKeys = {
     /** 현재 관리자/사용자 프로필 */
     me: () => [...cmsQueryKeys.auth.all(), 'me'] as const,
   },
+
+  certificates: {
+    all: () => [...cmsQueryKeys.all, 'certificates'] as const,
+    eligibility: (participantId: number, certificateType: string) =>
+      [...cmsQueryKeys.certificates.all(), 'eligibility', participantId, certificateType] as const,
+  },
 } as const
