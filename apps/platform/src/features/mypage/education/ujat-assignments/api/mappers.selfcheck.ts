@@ -79,4 +79,42 @@ const flat = mapPortalUjatClassAssignments({
 assert.equal(flat[0]?.dateLabel, '2026.04.17(금)')
 assert.equal(flat[0]?.rows[0]?.classLabel, '1반')
 
+const emptySchedulesIgnoresFlat = mapPortalUjatClassAssignments({
+  schedules: [],
+  slots: [
+    {
+      scheduleId: 99,
+      date: '2026-04-03',
+      grade: '1',
+      className: '9',
+      volunteerAName: '가짜',
+    },
+  ],
+})
+assert.equal(emptySchedulesIgnoresFlat.length, 0)
+
+const dateWinsOverStartAt = mapPortalUjatClassAssignments({
+  schedules: [
+    {
+      scheduleId: 12,
+      scheduleStartAt: '2026-04-04T00:00:00+09:00',
+      date: '2026-04-03',
+      rows: [
+        {
+          slotId: 10,
+          gradeLabel: '1',
+          classNo: '2',
+          volunteerA: '김도영',
+          volunteerB: null,
+          textbookName: null,
+        },
+      ],
+    },
+  ],
+})
+assert.equal(dateWinsOverStartAt[0]?.dateLabel, '2026.04.03(금)')
+assert.equal(dateWinsOverStartAt[0]?.rows[0]?.classLabel, '2반')
+assert.equal(dateWinsOverStartAt[0]?.rows[0]?.volunteerB, '-')
+assert.equal(dateWinsOverStartAt[0]?.rows[0]?.textbookName, '-')
+
 console.log('ujat-assignments mappers.selfcheck: ok')
