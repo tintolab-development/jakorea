@@ -245,6 +245,36 @@ export function individualApprovalProgramShapeFromProgram(program: {
   })
 }
 
+/** 일정형·복수회차 — 전 일정 자동 배정이라 참여자·기관 일괄 승인을 허용한다. */
+export function isGeneralScheduleMultiSessionProgram(
+  program: Parameters<typeof individualApprovalProgramShapeFromProgram>[0]
+): boolean {
+  const shape = individualApprovalProgramShapeFromProgram(program)
+  if (shape == null || 'blockedReason' in shape) return false
+  return shape.educationStructure === 'SCHEDULE' && shape.sessionRound === 'MULTI'
+}
+
+/** 일괄 승인 본문에 넣을 본교육(EDUCATION/SESSION) id. PRE_EDUCATION 제외. */
+export function listMainEducationScheduleIdsForBulkApprove(
+  slots: ReadonlyArray<ProgramEducationSlotResponse> | null | undefined
+): number[] {
+  return listSelectableProgramDefinedEducationSlots(slots).map(slot => slot.scheduleId as number)
+}
+
+export function buildIndividualScheduleMultiBulkApprovalTargets(input: {
+  applicationIds: ReadonlyArray<string | number>
+  scheduleIds: ReadonlyArray<number>
+}): Array<{ applicationId: string; confirmedScheduleIds: number[] }> {
+  const confirmedScheduleIds = uniquePositiveIds(input.scheduleIds) ?? []
+  return input.applicationIds
+    .map(id => String(id).trim())
+    .filter(id => id.length > 0)
+    .map(applicationId => ({
+      applicationId,
+      confirmedScheduleIds: [...confirmedScheduleIds],
+    }))
+}
+
 function formatInstantRange(startAt?: string | null, endAt?: string | null): string | null {
   const range = formatOrganizationScheduleRangeLabel(startAt, endAt)
   return range || null

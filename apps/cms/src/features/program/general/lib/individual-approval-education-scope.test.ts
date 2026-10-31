@@ -8,6 +8,8 @@ import {
   buildIndividualApprovalSchedulePlan,
   buildIndividualApprovalWithScopeRequest,
   buildIndividualBulkApprovalWithScopeRequest,
+  normalizeIndividualApprovalReason,
+  INDIVIDUAL_APPROVAL_DEFAULT_REASON,
   defaultIndividualApprovalScheduleIds,
   describeApprovedEducationScope,
   formatIndividualApprovalScopeErrorMessage,
@@ -16,6 +18,9 @@ import {
   listAssignedEducationSlotOptions,
   isRejectedEducationScheduleSelectionError,
   listSelectableProgramDefinedEducationSlots,
+  listMainEducationScheduleIdsForBulkApprove,
+  buildIndividualScheduleMultiBulkApprovalTargets,
+  isGeneralScheduleMultiSessionProgram,
   nextIndividualApprovalScheduleIds,
   parseRejectedEducationScheduleIds,
   resolveIndividualApprovalProgramShape,
@@ -74,6 +79,53 @@ function planFor(
     audience,
   })
 }
+
+describe('isGeneralScheduleMultiSessionProgram', () => {
+  it('is true only for SCHEDULE + MULTI', () => {
+    expect(
+      isGeneralScheduleMultiSessionProgram({
+        generalProgramEducationStructure: 'schedule',
+        generalProgramSessionRound: 'multi',
+        generalCommonInfo: { educationScheduleMode: 'date' },
+      })
+    ).toBe(true)
+    expect(
+      isGeneralScheduleMultiSessionProgram({
+        generalProgramEducationStructure: 'curriculum',
+        generalProgramSessionRound: 'multi',
+        generalCommonInfo: { educationScheduleMode: 'date' },
+      })
+    ).toBe(false)
+    expect(
+      isGeneralScheduleMultiSessionProgram({
+        generalProgramEducationStructure: 'schedule',
+        generalProgramSessionRound: 'single',
+        generalCommonInfo: { educationScheduleMode: 'date' },
+      })
+    ).toBe(false)
+    expect(isGeneralScheduleMultiSessionProgram(null)).toBe(false)
+  })
+})
+
+describe('schedule-multi bulk approval targets', () => {
+  it('copies main-education ids onto every application and omits PRE_EDUCATION', () => {
+    const scheduleIds = listMainEducationScheduleIdsForBulkApprove([
+      slot(31),
+      slot(32, { sessionNo: 2 }),
+      slot(7000, { scheduleRole: 'PRE_EDUCATION', educationSlotKey: 'general-pre-education:1' }),
+    ])
+    expect(scheduleIds).toEqual([31, 32])
+    expect(
+      buildIndividualScheduleMultiBulkApprovalTargets({
+        applicationIds: ['12345', '12346'],
+        scheduleIds,
+      })
+    ).toEqual([
+      { applicationId: '12345', confirmedScheduleIds: [31, 32] },
+      { applicationId: '12346', confirmedScheduleIds: [31, 32] },
+    ])
+  })
+})
 
 describe('individual approval education scope', () => {
   it('keeps only active program-defined education or session slots', () => {
@@ -355,6 +407,29 @@ describe('individual approval education scope', () => {
     const plan = planFor('SCHEDULE', 'MULTI', [], [slot(61, { scheduleStatus: 'CANCELLED' })])
     expect(plan.blockedReason).toContain('교육 일정')
     expect(defaultIndividualApprovalScheduleIds(plan)).toEqual([])
+  })
+
+  it('fills blank bulk reason so the server NotBlank check passes', () => {
+    expect(normalizeIndividualApprovalReason('')).toEqual({
+      ok: true,
+      reason: INDIVIDUAL_APPROVAL_DEFAULT_REASON,
+    })
+    expect(
+      buildIndividualBulkApprovalWithScopeRequest({
+        reason: '',
+        targets: [{ applicationId: 1694709, confirmedScheduleIds: [187604] }],
+      })
+    ).toEqual({
+      ok: true,
+      reason: INDIVIDUAL_APPROVAL_DEFAULT_REASON,
+      targets: [
+        {
+          applicationId: 1694709,
+          confirmedScheduleIds: [187604],
+          expectedScopeRevision: 0,
+        },
+      ],
+    })
   })
 
   it('keeps each bulk target schedule list instead of copying one selection', () => {

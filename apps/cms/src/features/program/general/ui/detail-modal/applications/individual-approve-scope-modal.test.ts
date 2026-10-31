@@ -107,9 +107,8 @@ describe('IndividualApproveScopeModal', () => {
     expect(screen.getByText('프로그램 신청 승인 안내')).toBeTruthy()
     expect(screen.getByText(/김참여자/)).toBeTruthy()
     expect(screen.getByText(/회원에게 승인 알림이 발송됩니다/)).toBeTruthy()
-    expect(screen.getByText('배정일')).toBeTruthy()
+    expect(screen.getByText('배정된 일정')).toBeTruthy()
     expect(screen.queryByText('교육 진행 예정일')).toBeNull()
-    expect(screen.getByText('신청일')).toBeTruthy()
     submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([168351])
@@ -174,6 +173,7 @@ describe('IndividualApproveScopeModal', () => {
     fireEvent.click(await screen.findByRole('button', { name: /첫째 일정/ }))
     fireEvent.click(screen.getByRole('button', { name: /둘째 일정/ }))
     expect(screen.getByText('교육은 여러 개의 일정에 배정할 수 있습니다.')).toBeTruthy()
+    expect(screen.getByText('배정된 일정')).toBeTruthy()
     submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([21, 22])
@@ -192,7 +192,7 @@ describe('IndividualApproveScopeModal', () => {
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([168371])
   })
 
-  it('SCHEDULE / MULTI submits every program-defined slot without a preference', async () => {
+  it('SCHEDULE / MULTI hides 배정일 and submits every program-defined slot', async () => {
     fetchSlots.mockResolvedValue([
       educationSlot(31, { sessionNo: 1 }),
       educationSlot(32, { sessionNo: 2 }),
@@ -201,12 +201,15 @@ describe('IndividualApproveScopeModal', () => {
       program: programOf('schedule', 'multi'),
       preferredEducationSchedules: [],
     })
-    expect(await screen.findByText('신청 희망 교육 일정이 없습니다.')).toBeTruthy()
-    expect(
-      screen.getByText('일정형 복수 회차는 프로그램에 정의된 교육 일정 전체를 배정합니다.')
-    ).toBeTruthy()
+    await waitFor(() =>
+      expect((screen.getByRole('button', { name: '승인' }) as HTMLButtonElement).disabled).toBe(
+        false
+      )
+    )
+    expect(screen.queryByText('배정일')).toBeNull()
+    expect(screen.queryByText('배정된 일정')).toBeNull()
+    expect(screen.queryByText('교육 일정을 지정해주세요.')).toBeNull()
     expect(screen.queryByText('교육 진행 예정일')).toBeNull()
-    expect(screen.getAllByText(/2026\.11\.05\(목\)/).length).toBeGreaterThan(0)
     submitApproval()
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([31, 32])

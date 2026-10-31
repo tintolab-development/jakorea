@@ -52,14 +52,18 @@ import { ApplicantCalendarView } from './applicant-calendar-view'
 import { mapApplicantDataToCalendarEvents } from './applicant-calendar-events'
 import { ApplicantsDetailContents, type ApplicantType } from './applicants-detail-contents'
 import { GeneralParticipantApplicantDetailView } from '@/features/program/general/ui/detail-modal/applications/participant-screening/participant-applicant-detail-view'
+import { IndividualApproveScopeModal } from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
+import { IndividualApplicationBulkApproveModal } from '@/features/program/general/ui/detail-modal/applications/individual-application-bulk-approve-modal'
 import {
-  IndividualApproveScopeModal,
-  IndividualBulkApproveScopeModal,
-} from '@/features/program/general/ui/detail-modal/applications/individual-approve-scope-modal'
-import {
+  INDIVIDUAL_APPROVAL_NO_SLOTS_MESSAGE,
+  buildIndividualScheduleMultiBulkApprovalTargets,
+  formatIndividualApprovalScopeErrorMessage,
+  isGeneralScheduleMultiSessionProgram,
   isRejectedEducationScheduleSelectionError,
+  listMainEducationScheduleIdsForBulkApprove,
   parseRejectedEducationScheduleIds,
 } from '@/features/program/general/lib/individual-approval-education-scope'
+import { fetchAdminProgramEducationSlotsRemote } from '@/features/program/general/api/program-schedules-api-client'
 import type { ApplicantDetailMeta } from './use-applicants-detail'
 import { InstructorFeeApprovalModal } from '@/features/program/shared/ui/detail-modal/components/instructor-fee-approval-modal'
 import { InstructorLectureAssignModal } from '@/features/program/shared/ui/detail-modal/components/instructor-lecture-assign-modal'
@@ -503,6 +507,7 @@ export function ApplicantList({
     menu === 'individual-applications' && detailVariant === 'general'
   const requiresIndividualApprovalScope =
     useGeneralParticipantActionModal && program != null && isGeneralIndividualProgram(program)
+  const allowsScheduleMultiBulkApprove = isGeneralScheduleMultiSessionProgram(program)
 
   const lockBulkCheckboxToPending =
     useGeneralInstitutionActionModal ||
@@ -817,18 +822,6 @@ export function ApplicantList({
     )
   }, [individualList, participantApproveTarget, selectedItem])
 
-  const participantScopeBulkApplicants = useMemo(
-    () =>
-      individualList
-        .filter(row => selectedRowKeys.map(String).includes(row.id))
-        .map(row => ({
-          id: row.id,
-          name: row.applicantName,
-          preferredEducationSchedules: row.preferredEducationSchedules,
-        })),
-    [individualList, selectedRowKeys]
-  )
-
   const submitIndividualScopeApproval = useCallback(
     async (input: {
       reason: string
@@ -933,6 +926,10 @@ export function ApplicantList({
         setInstitutionApproveTarget({ id: single.id, name: single.schoolName })
         return
       }
+      if (institutionColumnPreset === 'general-detail' && allowsScheduleMultiBulkApprove) {
+        setInstitutionBulkApproveOpen(true)
+        return
+      }
       if (institutionColumnPreset === 'general-detail' || isTrainedTeacherProgram) {
         showAlert(BULK_APPLICATION_APPROVE_UNAVAILABLE_ALERT)
         return
@@ -946,7 +943,7 @@ export function ApplicantList({
         setParticipantApproveTarget({ id: single.id, name: single.applicantName })
         return
       }
-      if (requiresIndividualApprovalScope) {
+      if (allowsScheduleMultiBulkApprove) {
         setParticipantScopeBulkOpen(true)
         return
       }
@@ -1400,6 +1397,7 @@ export function ApplicantList({
       />
       <InstitutionBulkApproveModal
         open={institutionBulkApproveOpen}
+        subjectName={firstSelectedInstitutionName}
         selectionCount={selectedRowKeys.length}
         onCancel={() => setInstitutionBulkApproveOpen(false)}
         onConfirm={payload => {
@@ -1681,24 +1679,52 @@ export function ApplicantList({
           })
         }}
       />
-      <IndividualBulkApproveScopeModal
-        open={requiresIndividualApprovalScope && participantScopeBulkOpen}
-        applicants={participantScopeBulkApplicants}
-        programId={programId}
-        program={program}
+      <IndividualApplicationBulkApproveModal
+        open={allowsScheduleMultiBulkApprove && participantScopeBulkOpen}
+        subjectName={firstSelectedParticipantName}
+        selectionCount={selectedRowKeys.length}
         confirmLoading={individualScopeSubmitting}
         onCancel={() => {
           if (individualScopeSubmitting) return
           setParticipantScopeBulkOpen(false)
         }}
-        onConfirm={payload =>
-          submitIndividualScopeApproval({
-            reason: payload.reason,
-            targets: payload.targets,
-            notifyTiming: payload.notifyTiming,
-            manualNotifyAt: payload.manualNotifyAt,
-          })
-        }
+        onConfirm={payload => {
+          void (async () => {
+            const trimmedProgramId = programId?.trim() ?? ''
+            if (!trimmedProgramId) {
+              showAlert({
+                title: '승인 불가',
+                content: INDIVIDUAL_APPROVAL_NO_SLOTS_MESSAGE,
+              })
+              return
+            }
+            try {
+              const slots = await fetchAdminProgramEducationSlotsRemote(trimmedProgramId)
+              const scheduleIds = listMainEducationScheduleIdsForBulkApprove(slots)
+              if (scheduleIds.length === 0) {
+                showAlert({
+                  title: '승인 불가',
+                  content: INDIVIDUAL_APPROVAL_NO_SLOTS_MESSAGE,
+                })
+                return
+              }
+              await submitIndividualScopeApproval({
+                reason: payload.reason,
+                targets: buildIndividualScheduleMultiBulkApprovalTargets({
+                  applicationIds: selectedRowKeys.map(String),
+                  scheduleIds,
+                }),
+                notifyTiming: payload.notifyTiming,
+                manualNotifyAt: payload.manualNotifyAt,
+              })
+            } catch (error) {
+              showAlert({
+                title: '승인 불가',
+                content: formatIndividualApprovalScopeErrorMessage(error),
+              })
+            }
+          })()
+        }}
       />
       <ParticipantApproveModal
         open={!requiresIndividualApprovalScope && participantApproveTarget != null}

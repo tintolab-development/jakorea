@@ -233,51 +233,53 @@ export function IndividualEducationScheduleSections({
           {ORGANIZATION_EDUCATION_MULTIPLE_SCHEDULE_HINT}
         </p>
       ) : null}
-      <div className="institution-approve-modal__assigned">
-        <DetailInfoForm title="" hideHeader mode="edit">
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="배정일"
-              edit={
-                assignedIds.length > 0 ? (
-                  <div className="institution-approve-modal__assigned-list">
-                    {assignedIds.map(scheduleId => {
-                      const title = assignedOptionTitle(
-                        scheduleId,
-                        plannedOptions,
-                        preferredOptions,
-                        assignedOptions
-                      )
-                      const card = formatOrganizationApproveScheduleCard({ label: title })
-                      const chipTitle = card.title || title
-                      return (
-                        <div
-                          key={`assigned:${scheduleId}`}
-                          className="institution-approve-modal__assigned-item"
-                        >
-                          <span>{chipTitle}</span>
-                          {!assignedLocked && onToggle ? (
-                            <ItemDeleteButton
-                              className="item-delete-button"
-                              aria-label={`${chipTitle} 배정 삭제`}
-                              onClick={() => onToggle(scheduleId)}
-                            />
-                          ) : null}
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <span className="institution-approve-modal__assigned-empty">
-                    {assignedEmptyLabel}
-                  </span>
-                )
-              }
-              view={null}
-            />
-          </DetailInfoForm.Row>
-        </DetailInfoForm>
-      </div>
+      {plan.kind === 'all-program-slots' && assignedLocked ? null : (
+        <div className="institution-approve-modal__assigned">
+          <DetailInfoForm title="" hideHeader mode="edit">
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="배정된 일정"
+                edit={
+                  assignedIds.length > 0 ? (
+                    <div className="institution-approve-modal__assigned-list">
+                      {assignedIds.map(scheduleId => {
+                        const title = assignedOptionTitle(
+                          scheduleId,
+                          plannedOptions,
+                          preferredOptions,
+                          assignedOptions
+                        )
+                        const card = formatOrganizationApproveScheduleCard({ label: title })
+                        const chipTitle = card.title || title
+                        return (
+                          <div
+                            key={`assigned:${scheduleId}`}
+                            className="institution-approve-modal__assigned-item"
+                          >
+                            <span>{chipTitle}</span>
+                            {!assignedLocked && onToggle ? (
+                              <ItemDeleteButton
+                                className="item-delete-button"
+                                aria-label={`${chipTitle} 배정 삭제`}
+                                onClick={() => onToggle(scheduleId)}
+                              />
+                            ) : null}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <span className="institution-approve-modal__assigned-empty">
+                      {assignedEmptyLabel}
+                    </span>
+                  )
+                }
+                view={null}
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        </div>
+      )}
     </>
   )
 }
