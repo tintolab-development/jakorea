@@ -6,6 +6,7 @@ import {
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
 } from '@/shared/lib/education-schedule-name'
+import { readProgramScheduleCanonicalFields } from '@/features/program/shared/lib/program-schedule-canonical'
 import { formatApplicantSchoolApprovalNotificationSentAt } from '@/features/program/shared/model/applicant-institution'
 import type {
   ApplicantInstructorLectureFeeBasisType,
@@ -1213,6 +1214,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
     })
     .map((session, index) => {
+      const canonical = readProgramScheduleCanonicalFields(session)
       const scheduleName = toDisplayEducationScheduleName(session.scheduleName) || ''
       const start = session.startAt ? new Date(session.startAt) : null
       const end = session.endAt ? new Date(session.endAt) : null
@@ -1250,6 +1252,9 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         requestedScheduleId: session.requestedScheduleId ?? undefined,
         scheduleUnresolved,
         startAt: session.startAt?.trim() || undefined,
+        ...(scheduleName ? { scheduleName } : {}),
+        ...(canonical.scheduleRole ? { scheduleRole: String(canonical.scheduleRole) } : {}),
+        ...(canonical.educationSlotKey ? { educationSlotKey: canonical.educationSlotKey } : {}),
       }
     })
 }
