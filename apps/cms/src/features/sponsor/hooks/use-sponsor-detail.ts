@@ -29,6 +29,8 @@ export interface UseSponsorDetailReturn {
     next: NonNullable<SponsorManagementRow['sponsorshipStatus']>
   ) => Promise<void>
   handleToggleBasicInfoEdit: (canWrite: boolean) => Promise<'saved' | 'invalid' | 'idle'>
+  handleCancelBasicInfoEdit: () => void
+  basicInfoSaveLoading: boolean
   programHistoryDeleteDisabled: boolean
   refetchDetail: () => Promise<unknown>
   isLoading: boolean
@@ -197,6 +199,12 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     [basicInfo, detail, isEditingBasicInfo, sponsor.id, updateBasicInfoMutation]
   )
 
+  const handleCancelBasicInfoEdit = useCallback((): void => {
+    if (updateBasicInfoMutation.isPending) return
+    setBasicInfo(buildBasicInfoEditStateFromDetail(detail))
+    setIsEditingBasicInfo(false)
+  }, [detail, updateBasicInfoMutation.isPending])
+
   return {
     detail,
     basicInfo,
@@ -209,6 +217,8 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     handleBasicInfoChange,
     handleSponsorshipStatusChange,
     handleToggleBasicInfoEdit,
+    handleCancelBasicInfoEdit,
+    basicInfoSaveLoading: updateBasicInfoMutation.isPending,
     programHistoryDeleteDisabled: deleteProgramHistoriesMutation.isPending,
     refetchDetail: () => detailQuery.refetch(),
     isLoading: isAwaitingDetail,

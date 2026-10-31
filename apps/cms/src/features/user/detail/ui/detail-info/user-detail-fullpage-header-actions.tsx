@@ -147,6 +147,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         key="basic-info-cancel"
         size="large"
         variant="secondary"
+        disabled={pageShell.basicInfoSaveLoading}
         onClick={pageShell.onCancelBasicInfoEdit} >
         취소
       </CmsButton>
@@ -196,9 +197,7 @@ export function UserDetailFullPageHeaderActions(props: UserDetailFullPageHeaderA
         onClick={personalInfoButton.onClick} />
     ) : null
 
-  const headerActionsForLayout = isProfileEditing
-    ? actions.filter(a => a.key !== 'school-delete' && a.key !== 'withdraw')
-    : actions
+  const headerActionsForLayout = isProfileEditing ? [] : actions
 
   const actionButtons = headerActionsForLayout.map(action => (
     <CmsButton

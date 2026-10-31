@@ -503,6 +503,10 @@ export default function TextbookPage() {
           if (!detailTextbookId) return
           setDetailRoute(detailTextbookId, 'edit')
         }}
+        onCancel={() => {
+          if (!detailTextbookId) return
+          setDetailRoute(detailTextbookId, 'view')
+        }}
         onSave={async payload => {
           if (!detailTextbookId) return
           if (

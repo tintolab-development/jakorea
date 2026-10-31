@@ -218,16 +218,39 @@ export function YearlyBusinessPanel({
           <span className="info-section-desc">{`${tableRows.length.toLocaleString('ko-KR')}건`}</span>
         </div>
         <div className="info-section-buttons--wrapper">
-          {canWrite ? (
-            <CmsButton
-              variant="secondary"
-              size="h40"
-              onClick={() => void handleToggleEdit()}
-              disabled={isSaving} >
-              후원정보 수정
-            </CmsButton>
-          ) : null}
-          <ExcelButton onClick={() => void exportExcel()} loading={isExporting} />
+          {isEditing ? (
+            <>
+              <CmsButton
+                variant="secondary"
+                size="h40"
+                disabled={isSaving}
+                onClick={() => {
+                  setDraftRows(displayRows.map(row => ({ ...row })))
+                  setIsEditing(false)
+                }} >
+                취소
+              </CmsButton>
+              <CmsButton
+                variant="primary"
+                size="h40"
+                loading={isSaving}
+                onClick={() => void handleToggleEdit()} >
+                저장
+              </CmsButton>
+            </>
+          ) : (
+            <>
+              {canWrite ? (
+                <CmsButton
+                  variant="secondary"
+                  size="h40"
+                  onClick={() => void handleToggleEdit()} >
+                  후원정보 수정
+                </CmsButton>
+              ) : null}
+              <ExcelButton onClick={() => void exportExcel()} loading={isExporting} />
+            </>
+          )}
         </div>
       </div>
       <div className="yearly-business-panel__summary">
