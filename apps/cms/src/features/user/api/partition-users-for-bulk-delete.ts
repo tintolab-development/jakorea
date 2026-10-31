@@ -1,5 +1,4 @@
 import { AccountDirectoryItemResponseAccountType } from '@/shared/api/generated/members/schemas/accountDirectoryItemResponseAccountType'
-import type { Target } from '@/shared/api/generated/members/schemas/target'
 import { getMemberIdByUuid } from '@/features/user/api/member-id-registry'
 import { parseOrganizationIdFromUserId } from '@/features/user/api/map-school-organization-to-user'
 import { parseMemberIdFromUserId } from '@/features/user/detail/lib/resolve-member-detail-restore-hint'
@@ -13,10 +12,19 @@ function resolveOrganizationId(user: Omit<User, 'password'>): number | undefined
   return user.organizationId ?? parseOrganizationIdFromUserId(user.id)
 }
 
+/**
+ * 전체 탭 혼합 삭제 대상.
+ * 생성 스키마 `Target`은 신청 일괄 승인 항목과 이름이 겹치므로, 삭제 응답 `TargetResult`와 같은 accountType·id를 쓴다.
+ */
+export type AccountDirectoryBulkDeleteTarget = {
+  accountType: AccountDirectoryItemResponseAccountType
+  id: number
+}
+
 /** 전체 탭 혼합 삭제 — typed targets */
 export function toAccountDirectoryBulkDeleteTargets(
   users: Omit<User, 'password'>[]
-): Target[] {
+): AccountDirectoryBulkDeleteTarget[] {
   return users.map(user => {
     if (user.role === 'ADMIN' || user.adminAccountId != null) {
       const id = user.adminAccountId

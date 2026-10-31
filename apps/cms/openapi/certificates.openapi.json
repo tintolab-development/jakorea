@@ -285,6 +285,10 @@
       "description": "수료증/참여인증서 발급, 이력, 차단 사유 API"
     },
     {
+      "name": "기타 API",
+      "description": "UJAT 기관 마이페이지 배정 탭 API"
+    },
+    {
       "name": "공개 콘텐츠",
       "description": "Public Content 관련 관리자 API"
     },
@@ -331,6 +335,10 @@
     {
       "name": "파일 관리",
       "description": "파일 메타데이터, 스캔 상태, 다운로드 claim, 삭제/파기 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "회원이 요청한 생성 파일 작업 조회"
     },
     {
       "name": "기타 API",

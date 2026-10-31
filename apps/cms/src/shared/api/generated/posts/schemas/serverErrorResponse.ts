@@ -11,5 +11,6 @@ export type ServerErrorResponse = {
   success?: unknown;
   data?: unknown;
   message?: unknown;
+  detail?: unknown;
   error?: ServerErrorResponseError;
 };

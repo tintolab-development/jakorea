@@ -285,6 +285,10 @@
       "description": "수료증/참여인증서 발급, 이력, 차단 사유 API"
     },
     {
+      "name": "기타 API",
+      "description": "UJAT 기관 마이페이지 배정 탭 API"
+    },
+    {
       "name": "공개 콘텐츠",
       "description": "Public Content 관련 관리자 API"
     },
@@ -331,6 +335,10 @@
     {
       "name": "파일 관리",
       "description": "파일 메타데이터, 스캔 상태, 다운로드 claim, 삭제/파기 API"
+    },
+    {
+      "name": "기타 API",
+      "description": "회원이 요청한 생성 파일 작업 조회"
     },
     {
       "name": "기타 API",
@@ -605,7 +613,7 @@
           "신청/프로그램 워크플로우"
         ],
         "summary": "CMS 참여 봉사자 추가 등록(신청서·동의·승인)",
-        "description": "### 이 API가 하는 일\n- CMS 참여 봉사자 추가 등록(신청서·동의·승인)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/volunteer-participants/register`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 처리 기준 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Creates volunteer application form_response SUBMITTED then APPROVED participant for education-scope",
+        "description": "### 이 API가 하는 일\n- CMS 참여 봉사자 추가 등록(신청서·동의·승인)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/volunteer-participants/register`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 처리 기준 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: GENERAL keeps previous-JA and 4 free-text items. UJAT GENERAL CMS_PROGRESS_ADD creates APPROVED volunteer participant and PASS application without interview or member consent overwrite",
         "operationId": "registerVolunteerParticipant",
         "parameters": [
           {
@@ -844,6 +852,12 @@
             "$ref": "#/components/schemas/ErrorDetail",
             "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
           }
         }
       },
@@ -994,6 +1008,11 @@
             },
             "description": "전이 충돌 등 부가 컨텍스트. 없으면 null입니다.",
             "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail. message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다."
           }
         }
       },
@@ -1029,7 +1048,7 @@
               "$ref": "#/components/schemas/FreeTextItemRequest"
             },
             "maxItems": 4,
-            "minItems": 4
+            "minItems": 0
           }
         },
         "required": [
@@ -1088,6 +1107,31 @@
           "certificateFileIds",
           "programName",
           "programYear"
+        ]
+      },
+      "PreviousUjatTermRequest": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string",
+            "minLength": 1
+          },
+          "year": {
+            "type": "string",
+            "minLength": 1
+          },
+          "certificateFileIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "nullable": true
+          }
+        },
+        "required": [
+          "term",
+          "year"
         ]
       },
       "ProgramParticipantRegisterCandidateResponse": {
@@ -1179,6 +1223,7 @@
           "volunteerKind": {
             "type": "string",
             "default": "GENERAL",
+            "description": "GENERAL|EMPLOYEE만 허용합니다. UJAT 전용 kind는 없습니다. CMS 진행 추가 등록은 GENERAL만 처리하고 EMPLOYEE는 CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY입니다.",
             "enum": [
               "GENERAL",
               "EMPLOYEE"
@@ -1206,11 +1251,12 @@
           },
           "id1365": {
             "type": "string",
-            "description": "회원에 1365 ID가 없을 때만",
+            "description": "회원 프로필에 1365가 없을 때만 필수. 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다.",
             "nullable": true
           },
           "jaProgramExperienceConsentRequest": {
             "type": "string",
+            "description": "일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.",
             "enum": [
               "REQUESTED",
               "NOT_REQUESTED"
@@ -1219,6 +1265,33 @@
           },
           "previousJaProgram": {
             "$ref": "#/components/schemas/PreviousJaProgramRequest"
+          },
+          "previousUjatTerm": {
+            "description": "UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있을 때만 보내고 파일명만으로는 보내지 않습니다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PreviousUjatTermRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "educationRegionCode": {
+            "type": "string",
+            "description": "UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다.",
+            "nullable": true
+          },
+          "applicationType": {
+            "type": "string",
+            "description": "UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다.",
+            "enum": [
+              "NEW",
+              "UJAT_GRADUATE",
+              "new",
+              "ujat-graduate"
+            ],
+            "nullable": true
           },
           "freeTextItems": {
             "$ref": "#/components/schemas/FreeTextItemsRequest"

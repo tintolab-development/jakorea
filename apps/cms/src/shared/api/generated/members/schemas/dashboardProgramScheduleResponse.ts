@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { DashboardProgramScheduleResponseScheduleRole } from './dashboardProgramScheduleResponseScheduleRole';
 import type { DashboardProgramScheduleResponseScheduleStatus } from './dashboardProgramScheduleResponseScheduleStatus';
 
 export interface DashboardProgramScheduleResponse {
@@ -22,4 +23,8 @@ export interface DashboardProgramScheduleResponse {
   address?: string;
   /** 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. program_schedule.schedule_status 컬럼과 다를 수 있음. 출석 코드와 혼용하지 않음. */
   scheduleStatus?: DashboardProgramScheduleResponseScheduleStatus;
+  /** program_schedule.schedule_kind. PRE_EDUCATION은 출석·대시보드에 포함되고 신청/배정 후보에서는 제외합니다. */
+  scheduleRole?: DashboardProgramScheduleResponseScheduleRole;
+  /** program_schedule.education_slot_key */
+  educationSlotKey?: string | null;
 }

@@ -7,6 +7,8 @@
  */
 import type { FreeTextItemsRequest } from './freeTextItemsRequest';
 import type { PreviousJaProgramRequest } from './previousJaProgramRequest';
+import type { PreviousUjatTermRequest } from './previousUjatTermRequest';
+import type { VolunteerParticipantRegisterRequestApplicationType } from './volunteerParticipantRegisterRequestApplicationType';
 import type { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from './volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest';
 import type { VolunteerParticipantRegisterRequestPersonalInfoConsent } from './volunteerParticipantRegisterRequestPersonalInfoConsent';
 import type { VolunteerParticipantRegisterRequestRegistrationChannel } from './volunteerParticipantRegisterRequestRegistrationChannel';
@@ -15,17 +17,27 @@ import type { VolunteerParticipantRegisterRequestVolunteerKind } from './volunte
 
 export interface VolunteerParticipantRegisterRequest {
   memberId: number;
+  /** GENERAL|EMPLOYEE만 허용합니다. UJAT 전용 kind는 없습니다. CMS 진행 추가 등록은 GENERAL만 처리하고 EMPLOYEE는 CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY입니다. */
   volunteerKind?: VolunteerParticipantRegisterRequestVolunteerKind;
   registrationChannel?: VolunteerParticipantRegisterRequestRegistrationChannel;
   /** @minLength 1 */
   personalInfoConsent: VolunteerParticipantRegisterRequestPersonalInfoConsent;
   /** @minLength 1 */
   thirdPartyConsent: VolunteerParticipantRegisterRequestThirdPartyConsent;
-  /** 회원에 1365 ID가 없을 때만 */
+  /** 회원 프로필에 1365가 없을 때만 필수. 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다. */
   id1365?: string | null;
-  /** @minLength 1 */
+  /**
+     * 일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.
+     * @minLength 1
+     */
   jaProgramExperienceConsentRequest: VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest;
   previousJaProgram?: PreviousJaProgramRequest;
+  /** UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있을 때만 보내고 파일명만으로는 보내지 않습니다. */
+  previousUjatTerm?: PreviousUjatTermRequest | null;
+  /** UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다. */
+  educationRegionCode?: string | null;
+  /** UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다. */
+  applicationType?: VolunteerParticipantRegisterRequestApplicationType;
   freeTextItems?: FreeTextItemsRequest;
   /**
      * @minLength 5

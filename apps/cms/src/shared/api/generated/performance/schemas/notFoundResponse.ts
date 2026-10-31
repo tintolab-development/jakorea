@@ -11,5 +11,6 @@ export type NotFoundResponse = {
   success?: unknown;
   data?: unknown;
   message?: unknown;
+  detail?: unknown;
   error?: NotFoundResponseError;
 };
