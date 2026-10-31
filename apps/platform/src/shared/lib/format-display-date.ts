@@ -239,7 +239,11 @@ export function formatDisplayDate(input: Date | string | null | undefined): stri
 export function formatDisplayDateTime(input: Date | string | null | undefined): string {
   if (input == null || input === '') return ''
   const parts = parseSource(input, 'datetime')
-  return parts ? formatDateTimeParts(parts) : ''
+  if (!parts) return ''
+  if (!parts.hasTime || (parts.hour === 0 && parts.minute === 0 && parts.second === 0)) {
+    return formatDisplayDateParts(parts)
+  }
+  return formatDateTimeParts(parts)
 }
 
 export function formatDisplayDateRange(
@@ -289,8 +293,8 @@ export function formatDisplayDateTimeRange(
   const startParts = start == null || start === '' ? null : parseSource(start, 'datetime')
   const endParts = end == null || end === '' ? null : parseSource(end, 'datetime')
   if (!startParts && !endParts) return empty
-  if (startParts && !endParts) return formatDateTimeParts(startParts)
-  if (!startParts && endParts) return formatDateTimeParts(endParts)
+  if (startParts && !endParts) return formatDisplayDateTime(start)
+  if (!startParts && endParts) return formatDisplayDateTime(end)
   return formatRangeParts(startParts!, endParts!, options.dateOnly === true)
 }
 
@@ -299,7 +303,9 @@ function formatRangeParts(
   end: DisplayDateTimeParts,
   dateOnly: boolean,
 ): string {
-  if (dateOnly || (!start.hasTime && !end.hasTime)) {
+  const startClock = start.hasTime && !(start.hour === 0 && start.minute === 0 && start.second === 0)
+  const endClock = end.hasTime && !(end.hour === 0 && end.minute === 0 && end.second === 0)
+  if (dateOnly || (!startClock && !endClock)) {
     return formatDisplayDateRange(
       `${start.year}-${String(start.month).padStart(2, '0')}-${String(start.day).padStart(2, '0')}`,
       `${end.year}-${String(end.month).padStart(2, '0')}-${String(end.day).padStart(2, '0')}`,

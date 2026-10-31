@@ -23,8 +23,52 @@ describe('portal education schedule contract', () => {
 
     expect(leader.team).toEqual({ roleLabel: '팀장', teamName: '드림메이커스' })
     expect(member.team).toEqual({ roleLabel: '팀원', teamName: '변경 팀' })
-    expect(individual.team).toEqual({ roleLabel: '개인', teamName: '-' })
+    expect(individual.team).toEqual({ roleLabel: '개인' })
     expect(nonTeam.team).toBeUndefined()
+  })
+
+  it('maps per-schedule team fields for mixed individual/team events without copying answers', () => {
+    const preEducation = mapPortalEducationSchedule(
+      {
+        scheduleId: 187614,
+        scheduleLabel: '사전 교육',
+        scheduleName: '사전 교육',
+        blockKind: 'PRE_EDUCATION',
+        teamRole: null,
+        teamName: null,
+      },
+      0,
+    )
+    const individualEvent = mapPortalEducationSchedule(
+      {
+        scheduleId: 187612,
+        scheduleLabel: '행사 일정 01',
+        scheduleName: '개인일정111',
+        blockKind: 'EVENT',
+        teamRole: 'INDIVIDUAL',
+        teamName: null,
+        assignment: { enabled: true, status: 'NOT_SUBMITTED', canSubmit: true },
+      },
+      1,
+    )
+    const teamEvent = mapPortalEducationSchedule(
+      {
+        scheduleId: 187613,
+        scheduleLabel: '행사 일정 02',
+        scheduleName: '팀일정111',
+        blockKind: 'EVENT',
+        teamRole: 'MEMBER',
+        teamName: '아자자',
+        assignment: { enabled: true, status: 'NOT_SUBMITTED', canSubmit: false },
+      },
+      2,
+    )
+
+    expect(preEducation.team).toBeUndefined()
+    expect(individualEvent.team).toEqual({ roleLabel: '개인' })
+    expect(teamEvent.team).toEqual({ roleLabel: '팀원', teamName: '아자자' })
+    expect(canSubmitEducationAssignment(individualEvent.assignment!, 'submit')).toBe(true)
+    expect(canSubmitEducationAssignment(teamEvent.assignment!, 'submit')).toBe(false)
   })
 
   it('does not create assignment UI data for instructor or volunteer schedules', () => {

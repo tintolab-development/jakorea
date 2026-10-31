@@ -17,7 +17,7 @@ import {
 import {
   formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
-} from '@/shared/lib/format-display-date'
+} from '../../../../../shared/lib/format-display-date.ts'
 import type {
   EducationAssignmentSubmitStatus,
   EducationScheduleAssignment,
@@ -39,9 +39,10 @@ function mapTeamInfo(
 ): EducationScheduleTeamInfo | undefined {
   const role = optionalText(teamRole ?? undefined)?.toUpperCase()
   if (!role) return undefined
+  const name = optionalText(teamName ?? undefined)
   return {
     roleLabel: TEAM_ROLE_LABEL[role] ?? role,
-    teamName: optionalText(teamName ?? undefined) ?? '-',
+    ...(name ? { teamName: name } : {}),
   }
 }
 
@@ -208,6 +209,8 @@ export function mapPortalEducationSchedule(
     educationStructure: meta?.educationStructure,
     sessionLabel: item.sessionLabel,
     scheduleName: item.scheduleName,
+    title: stripDefaultEducationSlotNameFromLabel(item.title),
+    blockKind: item.blockKind,
   })
   const heldAt = optionalText(item.startAt ?? undefined) ?? ''
   const progressTimeLabel =
