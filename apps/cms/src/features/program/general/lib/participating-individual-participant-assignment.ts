@@ -152,6 +152,7 @@ export function mergeParticipantDetailAssignmentRowsWithRemote(input: {
     const remoteParticipant = remote.participants.find(
       item => item.participantId === input.participantId
     )
+    // 팀 일정 과제는 참가자별 제출. 다른 팀원(팀장) 파일을 이 행에 복사하지 않는다.
     if (!remoteParticipant) continue
     const local = localByScheduleId.get(remote.id)
     const submission = mapRemoteSubmissionToDetail(remoteParticipant.submission)
