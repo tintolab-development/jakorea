@@ -214,11 +214,13 @@ export function UjatEducationProgressInstitutionApplicationTab({
                         <span>
                           {renderDetailInfoPipeSeparated(formatGradeTextbookSupplyDisplay(textbook))}
                         </span>
-                        <span
-                          className={`ujat-education-progress-institution-detail__textbook-badge ujat-education-progress-institution-detail__textbook-badge--${textbook.status}`}
-                        >
-                          {UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS[textbook.status]}
-                        </span>
+                        {textbook.status ? (
+                          <span
+                            className={`ujat-education-progress-institution-detail__textbook-badge ujat-education-progress-institution-detail__textbook-badge--${textbook.status}`}
+                          >
+                            {UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS[textbook.status]}
+                          </span>
+                        ) : null}
                       </span>
                     }
                   />

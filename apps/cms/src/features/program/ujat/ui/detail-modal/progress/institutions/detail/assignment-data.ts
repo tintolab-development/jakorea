@@ -2,7 +2,7 @@ import { getUjatInstitutionApplicationRowById } from '@/features/program/ujat/mo
 import { parseGradeClassSectionValue } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import { getUjatScheduleAssignRegionState } from '../../../application-institution/schedule-assign/store'
-import { UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE } from './textbook'
+import { calculateGradeTextbookSupply } from './textbook'
 import {
   getAttendanceManagerForSchedule,
   getVolunteersForClass,
@@ -29,23 +29,19 @@ export type AssignmentScheduleSection = {
   rows: AssignmentClassRow[]
 }
 
-function findStudentCount(
+function resolveGradeTextbook(
   gradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>,
-  gradeLabel: string,
-  classNo: number
-): number | null {
+  gradeLabel: string
+): { textbookName: string; textbookQuantityLabel: string } {
   const block = gradeBlocks.find(item => item.gradeLabel === gradeLabel)
-  const classRow = block?.classes.find(item => item.classNo === classNo)
-  return classRow?.studentCount ?? null
-}
-
-function resolveTextbookName(gradeLabel: string): string {
-  return UJAT_ELEMENTARY_TEXTBOOK_BY_GRADE[gradeLabel] ?? '-'
-}
-
-function formatTextbookQuantity(studentCount: number | null): string {
-  if (studentCount == null) return '-'
-  return `${studentCount}권`
+  if (!block) return { textbookName: '-', textbookQuantityLabel: '-' }
+  const supply = calculateGradeTextbookSupply(block)
+  const textbookQuantityLabel =
+    supply.bookCount != null ? `${supply.bookCount}권` : supply.kitCount != null ? `${supply.kitCount}키트` : '-'
+  return {
+    textbookName: supply.textbookName,
+    textbookQuantityLabel,
+  }
 }
 
 function compareGradeClass(
@@ -99,13 +95,13 @@ function buildRowsForSchedule(
   const gradeBlocks = detail.applicationDetail.gradeBlocks
 
   const rows: AssignmentClassRow[] = sections.map(section => {
-    const studentCount = findStudentCount(gradeBlocks, section.gradeLabel, section.classNo)
     const volunteers = getVolunteersForClass(
       detail.institutionId,
       isoDate,
       section.gradeLabel,
       section.classNo
     )
+    const textbook = resolveGradeTextbook(gradeBlocks, section.gradeLabel)
 
     return {
       gradeLabel: section.gradeLabel,
@@ -114,8 +110,8 @@ function buildRowsForSchedule(
       gradeRowSpan: 0,
       volunteerA: volunteers.volunteerA,
       volunteerB: volunteers.volunteerB,
-      textbookName: resolveTextbookName(section.gradeLabel),
-      textbookQuantityLabel: formatTextbookQuantity(studentCount),
+      textbookName: textbook.textbookName,
+      textbookQuantityLabel: textbook.textbookQuantityLabel,
     }
   })
 
