@@ -84,7 +84,8 @@ import './applicants-detail-contents.css'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
+  PROGRAM_EDIT_INFO_CANCEL_LABEL,
+  PROGRAM_EDIT_INFO_SAVE_LABEL,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -135,6 +136,7 @@ type ApplicantHeaderActionItem = {
   variant: CmsButtonVariant
   label: string
   disabled?: boolean
+  loading?: boolean
   title?: string
   onClick?: () => void
   /** 기본 `filter` — 개인정보 상세보기 등은 `filter-wide` */
@@ -177,6 +179,7 @@ function ApplicantHeaderActionsExtra({
             variant={a.variant}
             size="large"
             disabled={a.disabled}
+            loading={a.loading}
             title={a.title}
             onClick={a.onClick} >
             {a.label}
@@ -213,24 +216,43 @@ function headerBtnCancelApproval(
   }
 }
 
-function headerBtnEditInfo(
-  onEnterEdit: () => void,
-  onSaveEdit: () => void,
-  isEditing: boolean,
-  disabled = false
-): ApplicantHeaderActionItem {
+function headerBtnEditInfo(onEnterEdit: () => void, disabled = false): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
     variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
     disabled,
-    onClick: disabled
-      ? undefined
-      : resolveProgramEditInfoClick(isEditing, {
-          onEnterEdit,
-          onSaveEdit,
-        }),
+    onClick: disabled ? undefined : onEnterEdit,
   }
+}
+
+function headerBtnCancelEdit(onCancel: () => void, saving = false): ApplicantHeaderActionItem {
+  return {
+    key: 'cancel-edit',
+    variant: 'secondary',
+    label: PROGRAM_EDIT_INFO_CANCEL_LABEL,
+    disabled: saving,
+    onClick: saving ? undefined : onCancel,
+  }
+}
+
+function headerBtnSaveEdit(onSave: () => void, saving = false): ApplicantHeaderActionItem {
+  return {
+    key: 'save-edit',
+    variant: 'primary',
+    label: PROGRAM_EDIT_INFO_SAVE_LABEL,
+    loading: saving,
+    disabled: saving,
+    onClick: saving ? undefined : onSave,
+  }
+}
+
+function headerEditModeActions(
+  onCancel: () => void,
+  onSave: () => void,
+  saving = false
+): ApplicantHeaderActionItem[] {
+  return [headerBtnCancelEdit(onCancel, saving), headerBtnSaveEdit(onSave, saving)]
 }
 
 function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
@@ -350,16 +372,22 @@ function resolveApplicantHeaderItems(params: {
   cancelApprovalState: { disabled: boolean; reason: string | null }
   isGeneralInstitutionEditEnabled?: boolean
   isEditingInstitutionDetail?: boolean
+  isSavingInstitutionDetail?: boolean
   onEnterInstitutionEdit?: () => void
   onSaveInstitutionEdit?: () => void
+  onCancelInstitutionEdit?: () => void
   isGeneralIndividualEditEnabled?: boolean
   isEditingIndividualDetail?: boolean
+  isSavingIndividualDetail?: boolean
   onEnterIndividualEdit?: () => void
   onSaveIndividualEdit?: () => void
+  onCancelIndividualEdit?: () => void
   isGeneralInstructorEditEnabled?: boolean
   isEditingInstructorDetail?: boolean
+  isSavingInstructorDetail?: boolean
   onEnterInstructorEdit?: () => void
   onSaveInstructorEdit?: () => void
+  onCancelInstructorEdit?: () => void
   isAdminCommentWriteEnabled?: boolean
   onEnterAdminCommentEdit?: () => void
   individualAvailableActions?: string[]
@@ -390,16 +418,21 @@ function resolveApplicantHeaderItems(params: {
     cancelApprovalState,
     isGeneralInstitutionEditEnabled = false,
     isEditingInstitutionDetail = false,
+    isSavingInstitutionDetail = false,
     onEnterInstitutionEdit,
     onSaveInstitutionEdit,
+    onCancelInstitutionEdit,
     isGeneralIndividualEditEnabled = false,
     isEditingIndividualDetail = false,
+    isSavingIndividualDetail = false,
     onEnterIndividualEdit,
     onSaveIndividualEdit,
+    onCancelIndividualEdit,
     isGeneralInstructorEditEnabled = false,
     isEditingInstructorDetail = false,
     onEnterInstructorEdit,
     onSaveInstructorEdit,
+    onCancelInstructorEdit,
     isAdminCommentWriteEnabled = false,
     onEnterAdminCommentEdit,
     individualAvailableActions,
@@ -415,13 +448,17 @@ function resolveApplicantHeaderItems(params: {
   }
 
   if (isApprovedInstitution) {
+    if (isEditingInstitutionDetail && onCancelInstitutionEdit && onSaveInstitutionEdit) {
+      return headerEditModeActions(
+        onCancelInstitutionEdit,
+        onSaveInstitutionEdit,
+        isSavingInstitutionDetail
+      )
+    }
+
     const editButton =
-      isGeneralInstitutionEditEnabled && onEnterInstitutionEdit && onSaveInstitutionEdit
-        ? headerBtnEditInfo(
-            onEnterInstitutionEdit,
-            onSaveInstitutionEdit,
-            isEditingInstitutionDetail
-          )
+      isGeneralInstitutionEditEnabled && onEnterInstitutionEdit
+        ? headerBtnEditInfo(onEnterInstitutionEdit)
         : headerBtnEditInfoDisabled()
 
     const items: ApplicantHeaderActionItem[] = []
@@ -443,6 +480,14 @@ function resolveApplicantHeaderItems(params: {
   }
 
   if (isApprovedIndividual) {
+    if (isEditingIndividualDetail && onCancelIndividualEdit && onSaveIndividualEdit) {
+      return headerEditModeActions(
+        onCancelIndividualEdit,
+        onSaveIndividualEdit,
+        isSavingIndividualDetail
+      )
+    }
+
     const items: ApplicantHeaderActionItem[] = []
 
     if (onCancelApproval && individualAvailableActions?.includes('CANCEL_APPROVAL')) {
@@ -464,10 +509,8 @@ function resolveApplicantHeaderItems(params: {
       )
     }
 
-    if (isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit) {
-      items.push(
-        headerBtnEditInfo(onEnterIndividualEdit, onSaveIndividualEdit, isEditingIndividualDetail)
-      )
+    if (isGeneralIndividualEditEnabled && onEnterIndividualEdit) {
+      items.push(headerBtnEditInfo(onEnterIndividualEdit))
     }
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
@@ -478,13 +521,13 @@ function resolveApplicantHeaderItems(params: {
     return items
   }
   if (isApprovedInstructor) {
+    if (isEditingInstructorDetail && onCancelInstructorEdit && onSaveInstructorEdit) {
+      return headerEditModeActions(onCancelInstructorEdit, onSaveInstructorEdit)
+    }
+
     const editButton =
-      isGeneralInstructorEditEnabled && onEnterInstructorEdit && onSaveInstructorEdit
-        ? headerBtnEditInfo(
-            onEnterInstructorEdit,
-            onSaveInstructorEdit,
-            isEditingInstructorDetail
-          )
+      isGeneralInstructorEditEnabled && onEnterInstructorEdit
+        ? headerBtnEditInfo(onEnterInstructorEdit)
         : headerBtnEditInfoPreparing()
 
     const items: ApplicantHeaderActionItem[] = []
@@ -1397,7 +1440,9 @@ export function ApplicantsDetailContents({
       cancelApprovalState,
       isGeneralInstitutionEditEnabled,
       isEditingInstitutionDetail: institutionDetailEdit.isEditing,
+      isSavingInstitutionDetail: institutionDetailEdit.isSaving,
       onEnterInstitutionEdit: institutionDetailEdit.enterEdit,
+      onCancelInstitutionEdit: institutionDetailEdit.cancelEdit,
       onSaveInstitutionEdit: () => {
         void institutionDetailEdit.saveEdit().then(result => {
           if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
@@ -1407,13 +1452,16 @@ export function ApplicantsDetailContents({
       },
       isGeneralIndividualEditEnabled,
       isEditingIndividualDetail: individualDetailEdit.isEditing,
+      isSavingIndividualDetail: individualDetailEdit.isSaving,
       onEnterIndividualEdit: requestStartIndividualEdit,
+      onCancelIndividualEdit: individualDetailEdit.cancelEdit,
       onSaveIndividualEdit: () => {
         individualDetailEdit.saveEdit()
       },
       isGeneralInstructorEditEnabled,
       isEditingInstructorDetail: instructorDetailEdit.isEditing,
       onEnterInstructorEdit: instructorDetailEdit.enterEdit,
+      onCancelInstructorEdit: instructorDetailEdit.cancelEdit,
       onSaveInstructorEdit: () => {
         instructorDetailEdit.saveEdit()
       },
@@ -1447,13 +1495,18 @@ export function ApplicantsDetailContents({
     applicantId,
     isApprovedInstitution,
     institutionDetailEdit.enterEdit,
+    institutionDetailEdit.cancelEdit,
     institutionDetailEdit.isEditing,
+    institutionDetailEdit.isSaving,
     institutionDetailEdit.saveEdit,
     combinedClassProcess.openGradeRequiredAlert,
     individualDetailEdit.isEditing,
+    individualDetailEdit.isSaving,
+    individualDetailEdit.cancelEdit,
     individualDetailEdit.saveEdit,
     requestStartIndividualEdit,
     instructorDetailEdit.enterEdit,
+    instructorDetailEdit.cancelEdit,
     instructorDetailEdit.isEditing,
     instructorDetailEdit.saveEdit,
     isGeneralInstitutionEditEnabled,

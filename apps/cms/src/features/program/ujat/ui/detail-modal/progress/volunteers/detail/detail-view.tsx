@@ -247,50 +247,57 @@ export function UjatEducationProgressVolunteerDetailView({
 
   const applicationHeaderActions = (
     <>
-      <CmsButton
-        type="button"
-        variant="delete"
-        size="h40"
-        disabled={activityWithdrawScheduleOptions.length === 0}
-        onClick={handleRequestActivityWithdraw} >
-        활동 포기
-      </CmsButton>
-      <CmsButton
-        type="button"
-        variant="secondary"
-        size="h40"
-        icon={<ButtonDownloadIcon />}
-        onClick={() => setActivityCertPreviewOpen(true)} >
-        활동인증서 발급
-      </CmsButton>
-      <CmsButton
-        type="button"
-        variant="secondary"
-        size="h40"
-        icon={<ButtonDownloadIcon />}
-        disabled={studentCertificateExportActive}
-        onClick={() => setStudentCertificateIssueModalOpen(true)} >
-        수료증/참여인증서 발급
-      </CmsButton>
+      {!isEditing ? (
+        <>
+          <CmsButton
+            type="button"
+            variant="delete"
+            size="h40"
+            disabled={activityWithdrawScheduleOptions.length === 0}
+            onClick={handleRequestActivityWithdraw} >
+            활동 포기
+          </CmsButton>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="h40"
+            icon={<ButtonDownloadIcon />}
+            onClick={() => setActivityCertPreviewOpen(true)} >
+            활동인증서 발급
+          </CmsButton>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="h40"
+            icon={<ButtonDownloadIcon />}
+            disabled={studentCertificateExportActive}
+            onClick={() => setStudentCertificateIssueModalOpen(true)} >
+            수료증/참여인증서 발급
+          </CmsButton>
+        </>
+      ) : null}
       <ProgramEditInfoActions
         size="h40"
         isEditing={isEditing}
         onEdit={handleEnterEdit}
         onCancel={handleCancelEdit}
         onSave={handleSaveEdit} />
-      <CmsButton
-        type="button"
-        variant="primary"
-        size="h40"
-        disabled={isEditing}
-        onClick={handleAdminCommentEditEnter} >
-        코멘트 작성
-      </CmsButton>
-      <PersonalInfoRevealButton disabled={programPrivacyPending}
-        labelMode="stickyReveal"
-        revealed={personalInfoRevealed}
-        onClick={openPersonalInfoRevealConfirm}
-        cmsSize="h40" />
+      {!isEditing ? (
+        <>
+          <CmsButton
+            type="button"
+            variant="primary"
+            size="h40"
+            onClick={handleAdminCommentEditEnter} >
+            코멘트 작성
+          </CmsButton>
+          <PersonalInfoRevealButton disabled={programPrivacyPending}
+            labelMode="stickyReveal"
+            revealed={personalInfoRevealed}
+            onClick={openPersonalInfoRevealConfirm}
+            cmsSize="h40" />
+        </>
+      ) : null}
     </>
   )
 

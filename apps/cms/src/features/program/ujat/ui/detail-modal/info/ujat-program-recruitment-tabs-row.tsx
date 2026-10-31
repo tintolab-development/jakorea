@@ -45,7 +45,7 @@ export function UjatProgramRecruitmentTabsRow({
             onEdit={onEdit}
             onCancel={onCancel}
             onSave={onSave} />
-          {onOpenPreview ? (
+          {onOpenPreview && !isEditMode ? (
             <CmsButton
               type="button"
               variant="primary"

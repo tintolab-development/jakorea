@@ -2914,6 +2914,7 @@ export function UjatProgramDetailFullPageModal({
                   <BusinessPeriodExtendToolbar
                     program={displayProgram}
                     editDisabled={!canEditInfo && !isEditModeInfo}
+                    hideExtend={isEditModeInfo}
                   >
                     <ProgramEditInfoActions
                       isEditing={isEditModeInfo}

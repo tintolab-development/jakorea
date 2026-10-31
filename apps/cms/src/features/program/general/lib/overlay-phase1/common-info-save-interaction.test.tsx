@@ -70,7 +70,7 @@ describe('GENERAL_COMMON_INFO_SAVE_INTERACTION', () => {
     ).toBe(false)
   })
 
-  it('편집 중 정보 수정 클릭은 onSave에 도달한다', () => {
+  it('편집 중 저장 클릭은 onSave에 도달한다', () => {
     const onSave = vi.fn()
     render(
       <ProgramEditInfoActions
@@ -79,7 +79,7 @@ describe('GENERAL_COMMON_INFO_SAVE_INTERACTION', () => {
         onCancel={vi.fn()}
         onSave={onSave} />
     )
-    fireEvent.click(screen.getByRole('button', { name: '정보 수정' }))
+    fireEvent.click(screen.getByRole('button', { name: '저장' }))
     expect(onSave).toHaveBeenCalledTimes(1)
   })
 

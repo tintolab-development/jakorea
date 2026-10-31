@@ -196,11 +196,20 @@ function ProjectInfoDetailTabsRow({
       onSave={onSave} />
   )
 
+  const isEditingCurrentTab =
+    (activeTab === 'info' && isEditModeInfo) ||
+    (activeTab === 'institutions' && isEditModeInstitutions) ||
+    (activeTab === 'instructors' && isEditModeInstructors) ||
+    (activeTab === 'volunteers' && isEditModeVolunteers)
+
   const trailing =
     displayProgram != null ? (
       <>
         {activeTab === 'info' ? (
-          <BusinessPeriodExtendToolbar program={displayProgram} editDisabled={infoEditDisabled}>
+          <BusinessPeriodExtendToolbar
+            program={displayProgram}
+            editDisabled={infoEditDisabled}
+            hideExtend={isEditModeInfo} >
             {editInfoButton(isEditModeInfo, onInfoSave, infoEditDisabled)}
           </BusinessPeriodExtendToolbar>
         ) : activeTab === 'institutions'
@@ -210,9 +219,11 @@ function ProjectInfoDetailTabsRow({
               : activeTab === 'instructors'
                 ? editInfoButton(isEditModeInstructors, onInstructorsSave)
                 : null}
-        <CmsButton onClick={onPreview}>
-          프로그램 상세 미리보기
-        </CmsButton>
+        {!isEditingCurrentTab ? (
+          <CmsButton onClick={onPreview}>
+            프로그램 상세 미리보기
+          </CmsButton>
+        ) : null}
       </>
     ) : undefined
 
@@ -246,7 +257,10 @@ function ProjectInfoHiddenTabsInfoActions({
 
   return (
     <div className="project-info-detail__hidden-tabs-info-actions">
-      <BusinessPeriodExtendToolbar program={program} editDisabled={editDisabled}>
+      <BusinessPeriodExtendToolbar
+        program={program}
+        editDisabled={editDisabled}
+        hideExtend={isEditModeInfo} >
         <ProgramEditInfoActions
           isEditing={isEditModeInfo}
           idleVariant="secondary"

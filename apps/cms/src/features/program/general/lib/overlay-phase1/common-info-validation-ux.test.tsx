@@ -174,7 +174,7 @@ describe('일반 공통정보 수정 검증 UX', () => {
     ).not.toContain('detail-info-form__field--required-incomplete')
   })
 
-  it('VAL-13 편집 중 정보 수정 클릭은 onSave를 한 번 호출한다', () => {
+  it('VAL-13 편집 중 저장 클릭은 onSave를 한 번 호출한다', () => {
     const onSave = vi.fn()
     render(
       <ProgramEditInfoActions
@@ -183,7 +183,7 @@ describe('일반 공통정보 수정 검증 UX', () => {
         onCancel={vi.fn()}
         onSave={onSave} />
     )
-    fireEvent.click(screen.getByRole('button', { name: '정보 수정' }))
+    fireEvent.click(screen.getByRole('button', { name: '저장' }))
     expect(onSave).toHaveBeenCalledOnce()
   })
 })

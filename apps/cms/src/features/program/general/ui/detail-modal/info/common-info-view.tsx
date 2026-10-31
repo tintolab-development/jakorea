@@ -5178,7 +5178,10 @@ export function GeneralProgramDetailCommonInfoView({
     <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
       {(canWrite || isEditMode) && (
         <div className="detail-common-info-view__header">
-          <BusinessPeriodExtendToolbar program={program} editDisabled={editDisabled}>
+          <BusinessPeriodExtendToolbar
+            program={program}
+            editDisabled={editDisabled}
+            hideExtend={isEditMode} >
             <ProgramEditInfoActions
               isEditing={isEditMode}
               idleVariant="secondary"

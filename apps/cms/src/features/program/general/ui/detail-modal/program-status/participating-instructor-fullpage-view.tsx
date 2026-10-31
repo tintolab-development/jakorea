@@ -1451,22 +1451,24 @@ export function ParticipatingInstructorFullpageView({
         trailing={
           effectiveTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="h40"
-                disabled={
-                  isActivityWithdrawn || applicationInfoEdit.isEditing || activityWithdrawSubmitting
-                }
-                onClick={handleRequestActivityWithdraw} >
-                활동 포기
-              </CmsButton>
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                icon={<ButtonDownloadIcon />}
-                onClick={handleActivityCertificateIssueClick} >
-                활동인증서 발급
-              </CmsButton>
+              {!applicationInfoEdit.isEditing ? (
+                <>
+                  <CmsButton
+                    variant="delete"
+                    size="h40"
+                    disabled={isActivityWithdrawn || activityWithdrawSubmitting}
+                    onClick={handleRequestActivityWithdraw} >
+                    활동 포기
+                  </CmsButton>
+                  <CmsButton
+                    variant="secondary"
+                    size="h40"
+                    icon={<ButtonDownloadIcon />}
+                    onClick={handleActivityCertificateIssueClick} >
+                    활동인증서 발급
+                  </CmsButton>
+                </>
+              ) : null}
               <ProgramEditInfoActions
                 size="h40"
                 isEditing={applicationInfoEdit.isEditing}
@@ -1477,18 +1479,21 @@ export function ParticipatingInstructorFullpageView({
                 onSave={() => {
                   void applicationInfoEdit.saveEdit()
                 }} />
-              <CmsButton
-                variant="primary"
-                size="h40"
-                disabled={applicationInfoEdit.isEditing}
-                onClick={handleAdminCommentEditEnter} >
-                코멘트 작성
-              </CmsButton>
-              <PersonalInfoRevealButton disabled={programPrivacyPending}
-                labelMode="stickyReveal"
-                revealed={personalInfoRevealed}
-                cmsSize="h40"
-                onClick={handlePrivacyToggleClick} />
+              {!applicationInfoEdit.isEditing ? (
+                <>
+                  <CmsButton
+                    variant="primary"
+                    size="h40"
+                    onClick={handleAdminCommentEditEnter} >
+                    코멘트 작성
+                  </CmsButton>
+                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                    labelMode="stickyReveal"
+                    revealed={personalInfoRevealed}
+                    cmsSize="h40"
+                    onClick={handlePrivacyToggleClick} />
+                </>
+              ) : null}
             </>
           ) : null
         }

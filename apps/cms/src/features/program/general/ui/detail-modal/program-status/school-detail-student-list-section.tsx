@@ -1065,20 +1065,24 @@ export function SchoolDetailStudentListSection({
 
   const studentListToolbarActions = (
     <div className="school-detail-student-list-section__toolbar-actions program-application-list-toolbar">
-      <FilterTableToolbarButton
-        variant="secondary"
-        icon={<ButtonCheckIcon />}
-        disabled={portraitConsentDownloading}
-        onClick={handlePortraitConsentConfirmClick} >
-        초상권 동의 확인
-      </FilterTableToolbarButton>
-      <FilterTableToolbarButton
-        variant="secondary"
-        icon={<ButtonDownloadIcon />}
-        disabled={certificateExportActive}
-        onClick={handleCertificateIssueClick} >
-        수료증/참여인증서 발급
-      </FilterTableToolbarButton>
+      {!isStudentListEditMode ? (
+        <>
+          <FilterTableToolbarButton
+            variant="secondary"
+            icon={<ButtonCheckIcon />}
+            disabled={portraitConsentDownloading}
+            onClick={handlePortraitConsentConfirmClick} >
+            초상권 동의 확인
+          </FilterTableToolbarButton>
+          <FilterTableToolbarButton
+            variant="secondary"
+            icon={<ButtonDownloadIcon />}
+            disabled={certificateExportActive}
+            onClick={handleCertificateIssueClick} >
+            수료증/참여인증서 발급
+          </FilterTableToolbarButton>
+        </>
+      ) : null}
       {!readOnly ? (
         <>
           <ProgramEditInfoActions
@@ -1091,9 +1095,11 @@ export function SchoolDetailStudentListSection({
             onSave={() => {
               void handleStudentListSave()
             }} />
-          <FilterTableToolbarButton variant="primary" onClick={handleOpenAddStudentModal}>
-            학생 추가
-          </FilterTableToolbarButton>
+          {!isStudentListEditMode ? (
+            <FilterTableToolbarButton variant="primary" onClick={handleOpenAddStudentModal}>
+              학생 추가
+            </FilterTableToolbarButton>
+          ) : null}
         </>
       ) : (
         <>

@@ -718,13 +718,15 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
         trailing={
           activeTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="h40"
-                disabled={isActivityWithdrawn || isApplicationInfoEditing}
-                onClick={handleRequestActivityWithdraw} >
-                활동 포기
-              </CmsButton>
+              {!isApplicationInfoEditing ? (
+                <CmsButton
+                  variant="delete"
+                  size="h40"
+                  disabled={isActivityWithdrawn}
+                  onClick={handleRequestActivityWithdraw} >
+                  활동 포기
+                </CmsButton>
+              ) : null}
               <ProgramEditInfoActions
                 size="h40"
                 isEditing={isApplicationInfoEditing}
@@ -740,20 +742,23 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                 onSave={() => {
                   void saveApplicationInfoEdit()
                 }} />
-              {showAdminCommentSection ? (
-                <CmsButton
-                  variant="primary"
-                  size="h40"
-                  disabled={isApplicationInfoEditing}
-                  onClick={handleAdminCommentEditEnter} >
-                  코멘트 작성
-                </CmsButton>
+              {!isApplicationInfoEditing ? (
+                <>
+                  {showAdminCommentSection ? (
+                    <CmsButton
+                      variant="primary"
+                      size="h40"
+                      onClick={handleAdminCommentEditEnter} >
+                      코멘트 작성
+                    </CmsButton>
+                  ) : null}
+                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                    labelMode="toggle"
+                    revealed={personalInfoRevealed}
+                    cmsSize="h40"
+                    onClick={handlePrivacyToggleClick} />
+                </>
               ) : null}
-              <PersonalInfoRevealButton disabled={programPrivacyPending}
-                labelMode="toggle"
-                revealed={personalInfoRevealed}
-                cmsSize="h40"
-                onClick={handlePrivacyToggleClick} />
             </>
           ) : null
         }

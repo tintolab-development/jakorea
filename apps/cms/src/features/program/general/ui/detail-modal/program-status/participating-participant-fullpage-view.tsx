@@ -659,32 +659,34 @@ export function ParticipatingParticipantFullpageView({
         trailing={
           visibleActiveTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="h40"
-                disabled={
-                  isActivityWithdrawn ||
-                  isApplicationInfoEditing ||
-                  activityWithdrawSubmitting ||
-                  activityWithdrawScheduleOptions.length === 0
-                }
-                onClick={handleRequestActivityWithdraw} >
-                활동 포기
-              </CmsButton>
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                icon={<ButtonDownloadIcon />}
-                disabled={
-                  certificateExportActive ||
-                  isApplicationInfoEditing ||
-                  !isWithinStudentCertificateIssuancePeriod(
-                    mergedParticipant.participationAppliedAt
-                  )
-                }
-                onClick={handleCertificateIssueClick} >
-                수료증/참여인증서 발급
-              </CmsButton>
+              {!isApplicationInfoEditing ? (
+                <>
+                  <CmsButton
+                    variant="delete"
+                    size="h40"
+                    disabled={
+                      isActivityWithdrawn ||
+                      activityWithdrawSubmitting ||
+                      activityWithdrawScheduleOptions.length === 0
+                    }
+                    onClick={handleRequestActivityWithdraw} >
+                    활동 포기
+                  </CmsButton>
+                  <CmsButton
+                    variant="secondary"
+                    size="h40"
+                    icon={<ButtonDownloadIcon />}
+                    disabled={
+                      certificateExportActive ||
+                      !isWithinStudentCertificateIssuancePeriod(
+                        mergedParticipant.participationAppliedAt
+                      )
+                    }
+                    onClick={handleCertificateIssueClick} >
+                    수료증/참여인증서 발급
+                  </CmsButton>
+                </>
+              ) : null}
               <ProgramEditInfoActions
                 size="h40"
                 isEditing={isApplicationInfoEditing}
@@ -693,18 +695,21 @@ export function ParticipatingParticipantFullpageView({
                 onSave={() => {
                   void saveApplicationInfoEdit()
                 }} />
-              <CmsButton
-                variant="primary"
-                size="h40"
-                disabled={isApplicationInfoEditing}
-                onClick={handleAdminCommentEditEnter} >
-                코멘트 작성
-              </CmsButton>
-              <PersonalInfoRevealButton disabled={programPrivacyPending}
-                labelMode="stickyReveal"
-                revealed={personalInfoRevealed}
-                cmsSize="h40"
-                onClick={openPersonalInfoRevealConfirm} />
+              {!isApplicationInfoEditing ? (
+                <>
+                  <CmsButton
+                    variant="primary"
+                    size="h40"
+                    onClick={handleAdminCommentEditEnter} >
+                    코멘트 작성
+                  </CmsButton>
+                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                    labelMode="stickyReveal"
+                    revealed={personalInfoRevealed}
+                    cmsSize="h40"
+                    onClick={openPersonalInfoRevealConfirm} />
+                </>
+              ) : null}
             </>
           ) : visibleActiveTab === 'attendance' ? (
             <>

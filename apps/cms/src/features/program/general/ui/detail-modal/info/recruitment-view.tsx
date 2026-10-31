@@ -214,7 +214,7 @@ export function GeneralProgramRecruitmentView({
                     onCancel={onCancel}
                     onSave={onSave} />
                 ) : null}
-                {onOpenRecruitmentPreview ? (
+                {onOpenRecruitmentPreview && !isEditMode ? (
                   <CmsButton
                     type="button"
                     variant="primary"

@@ -243,34 +243,39 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'application' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            <CmsButton
-              type="button"
-              variant="delete"
-              size="h40"
-              disabled={activityWithdrawn}
-              onClick={handleRequestWithdraw} >
-              활동 포기
-            </CmsButton>
+            {!isApplicationInfoEditing ? (
+              <CmsButton
+                type="button"
+                variant="delete"
+                size="h40"
+                disabled={activityWithdrawn}
+                onClick={handleRequestWithdraw} >
+                활동 포기
+              </CmsButton>
+            ) : null}
             <ProgramEditInfoActions
               size="h40"
               isEditing={isApplicationInfoEditing}
               onEdit={handleApplicationInfoButtonClick}
               onCancel={handleApplicationInfoCancel}
               onSave={handleApplicationInfoButtonClick} />
-            <CmsButton
-              type="button"
-              variant="primary"
-              size="h40"
-              disabled={isApplicationInfoEditing}
-              onClick={handleAdminCommentEditEnter} >
-              코멘트 작성
-            </CmsButton>
-            <PersonalInfoRevealButton disabled={programPrivacyPending}
-              labelMode="stickyReveal"
-              revealed={personalInfoRevealed}
-              cmsVariant="primary"
-              cmsSize="h40"
-              onClick={openPersonalInfoRevealConfirm} />
+            {!isApplicationInfoEditing ? (
+              <>
+                <CmsButton
+                  type="button"
+                  variant="primary"
+                  size="h40"
+                  onClick={handleAdminCommentEditEnter} >
+                  코멘트 작성
+                </CmsButton>
+                <PersonalInfoRevealButton disabled={programPrivacyPending}
+                  labelMode="stickyReveal"
+                  revealed={personalInfoRevealed}
+                  cmsVariant="primary"
+                  cmsSize="h40"
+                  onClick={openPersonalInfoRevealConfirm} />
+              </>
+            ) : null}
           </div>
         ) : null}
 

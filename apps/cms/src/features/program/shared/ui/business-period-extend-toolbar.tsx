@@ -18,12 +18,15 @@ import './business-period-extend-toolbar.css'
 export interface BusinessPeriodExtendToolbarProps {
   program: Program
   editDisabled?: boolean
+  /** 정보 수정 모드 — 사업기간 연장 등 부가 액션 미노출 */
+  hideExtend?: boolean
   children: ReactNode
 }
 
 export function BusinessPeriodExtendToolbar({
   program,
   editDisabled = false,
+  hideExtend = false,
   children,
 }: BusinessPeriodExtendToolbarProps) {
   const queryClient = useQueryClient()
@@ -49,7 +52,7 @@ export function BusinessPeriodExtendToolbar({
     <>
       <div className="business-period-extend-toolbar">
         {editControl}
-        {showExtend ? (
+        {showExtend && !hideExtend ? (
           <CmsButton
             type="button"
             variant="primary"

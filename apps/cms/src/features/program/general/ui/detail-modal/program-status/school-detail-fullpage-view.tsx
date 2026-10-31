@@ -2358,15 +2358,11 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         trailing={
           activeTab === 'application' ? (
             <>
-              {showActivityWithdrawButton ? (
+              {!isApplicationInfoEditing && showActivityWithdrawButton ? (
                 <CmsButton
                   variant="delete"
                   size="h40"
-                  disabled={
-                    !canRequestActivityWithdraw ||
-                    isApplicationInfoEditing ||
-                    activityWithdrawSubmitting
-                  }
+                  disabled={!canRequestActivityWithdraw || activityWithdrawSubmitting}
                   onClick={handleRequestActivityWithdraw} >
                   활동 포기
                 </CmsButton>
@@ -2384,20 +2380,23 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
                     }
                   })
                 }} />
-              {showAdminCommentSection ? (
-                <CmsButton
-                  variant="primary"
-                  size="h40"
-                  disabled={isApplicationInfoEditing}
-                  onClick={handleAdminCommentEditEnter} >
-                  코멘트 작성
-                </CmsButton>
+              {!isApplicationInfoEditing ? (
+                <>
+                  {showAdminCommentSection ? (
+                    <CmsButton
+                      variant="primary"
+                      size="h40"
+                      onClick={handleAdminCommentEditEnter} >
+                      코멘트 작성
+                    </CmsButton>
+                  ) : null}
+                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                    labelMode="toggle"
+                    revealed={personalInfoRevealed}
+                    cmsSize="h40"
+                    onClick={handlePrivacyToggleClick} />
+                </>
               ) : null}
-              <PersonalInfoRevealButton disabled={programPrivacyPending}
-                labelMode="toggle"
-                revealed={personalInfoRevealed}
-                cmsSize="h40"
-                onClick={handlePrivacyToggleClick} />
             </>
           ) : activeTab === 'posts' ? (
             <CmsButton
