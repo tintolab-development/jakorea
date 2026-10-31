@@ -1,5 +1,5 @@
 import { toSeoulDateOnly } from '../../../../../shared/lib/format-display-date.ts'
-import { mapPortalFormListItemToSurveyEntry } from '../../applications/lib/portal-form-list'
+import { mapPortalFormListItemToSurveyEntry } from '../../applications/lib/portal-form-list.ts'
 import type { PortalFormListItem } from '../../applications/api/activity-client'
 import type { EducationSurveyListEntry } from './survey-list-types'
 

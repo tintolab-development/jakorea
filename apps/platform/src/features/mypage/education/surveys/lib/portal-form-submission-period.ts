@@ -5,7 +5,7 @@ import {
   resolveTitleEndPeriodMode,
   resolveTitleStartPeriodMode,
 } from '@jakorea/form-schema/writing-form'
-import type { EducationSurveyListEntry } from './survey-list-types'
+import type { EducationSurveyListEntry, EducationSurveyListStatus } from './survey-list-types.ts'
 
 function startOfLocalDay(dateStr: string): Date {
   const [y, m, d] = dateStr.split('-').map(part => Number(part))
@@ -41,6 +41,19 @@ export function isPortalFormSubmissionPeriodOpen(
   at: Date = new Date(),
 ): boolean {
   return resolvePortalFormSubmissionPeriodBlockReason(entry, at) == null
+}
+
+/** 미제출 목록 배지. 작성 시작 시각 이전이면 진행중이 아니다. */
+export function resolveEducationSurveyListStatus(
+  submitted: boolean,
+  entry: PeriodFields,
+  at: Date = new Date(),
+): EducationSurveyListStatus {
+  if (submitted) return 'submitted'
+  if (resolvePortalFormSubmissionPeriodBlockReason(entry, at) === 'not_started') {
+    return 'before_start'
+  }
+  return 'in_progress'
 }
 
 /** 미제출 설문·만족도 — 작성 기간 밖일 때 안내 문구 분기 */

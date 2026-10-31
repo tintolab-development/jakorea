@@ -76,6 +76,26 @@ assert.deepEqual(
   { type: 'none' },
 )
 
+assert.deepEqual(
+  resolveEducationSurveyFillNotice({
+    kind: 'survey',
+    status: 'in_progress',
+    periodBlockReason: 'not_started',
+    canShowFormBody: true,
+  }),
+  { type: 'period', reason: 'not_started' },
+)
+
+assert.deepEqual(
+  resolveEducationSurveyFillNotice({
+    kind: 'survey',
+    status: 'before_start',
+    periodBlockReason: 'not_started',
+    canShowFormBody: false,
+  }),
+  { type: 'period', reason: 'not_started' },
+)
+
 assert.equal(
   portalFormSubmissionPeriodBlockMessage('closed', 'satisfaction'),
   '만족도조사 작성 기간이 종료되었습니다.',

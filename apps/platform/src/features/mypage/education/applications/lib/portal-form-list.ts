@@ -3,6 +3,7 @@ import type {
   PortalAvailableProgramForm,
   PortalFormListItem,
 } from '../api/activity-client'
+import { resolveEducationSurveyListStatus } from '../../surveys/lib/portal-form-submission-period.ts'
 import type { EducationSurveyListEntry } from '../../surveys/lib/survey-list-types'
 
 export const PORTAL_SURVEY_FORM_TYPE_QUERIES = ['SURVEY', 'QUESTIONNAIRE'] as const
@@ -147,14 +148,22 @@ export function mapPortalFormListItemToSurveyEntry(
       ? Math.trunc(item.scheduleId)
       : undefined
 
+  const submissionStartAt = item.submissionStartAt ?? undefined
+  const submissionEndAt = item.submissionEndAt ?? undefined
+
   return {
     id: String(bindingId),
     title: item.title?.trim() || '설문',
-    status: submitted ? 'submitted' : 'in_progress',
+    status: resolveEducationSurveyListStatus(submitted, {
+      submissionStartAt,
+      submissionEndAt,
+      startAt: toSeoulDateOnly(item.submissionStartAt),
+      endAt: toSeoulDateOnly(item.submissionEndAt),
+    }),
     startAt: toSeoulDateOnly(item.submissionStartAt),
     endAt: toSeoulDateOnly(item.submissionEndAt),
-    submissionStartAt: item.submissionStartAt ?? undefined,
-    submissionEndAt: item.submissionEndAt ?? undefined,
+    submissionStartAt,
+    submissionEndAt,
     createdAt: item.submissionStartAt ?? undefined,
     templateVersionId: item.templateVersionId,
     formType: item.formType,

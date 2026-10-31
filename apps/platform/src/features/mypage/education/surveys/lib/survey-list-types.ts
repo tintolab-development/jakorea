@@ -1,4 +1,4 @@
-export type EducationSurveyListStatus = 'in_progress' | 'submitted'
+export type EducationSurveyListStatus = 'before_start' | 'in_progress' | 'submitted'
 
 export type EducationSurveyListEntry = {
   id: string
@@ -32,5 +32,6 @@ export type EducationSurveyListEntry = {
 }
 
 export function educationSurveyListStatusLabel(status: EducationSurveyListStatus): string {
+  if (status === 'before_start') return '시작 전'
   return status === 'in_progress' ? '진행중' : '제출 완료'
 }
