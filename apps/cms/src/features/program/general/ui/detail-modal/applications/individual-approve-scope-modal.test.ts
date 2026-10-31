@@ -117,6 +117,29 @@ describe('IndividualApproveScopeModal', () => {
     expect(onConfirm.mock.calls[0]?.[0].reason).toBe('교육 일정 확정')
   })
 
+  it('volunteer CURRICULUM / SINGLE keeps every selected preferred schedule', async () => {
+    fetchSlots.mockResolvedValue([
+      educationSlot(1, { sessionNo: 1 }),
+      educationSlot(2, { sessionNo: 2, startAt: '2026-11-06T00:00:00Z' }),
+    ])
+    const { onConfirm } = renderSingle({
+      scheduleAssignmentAudience: 'volunteer',
+      preferredEducationSchedules: [
+        preferred(1, '첫째 일정'),
+        { ...preferred(2, '둘째 일정'), round: 2, startAt: '2026-11-06T00:00:00Z' },
+      ],
+    })
+    const first = await screen.findByRole('button', { name: /첫째 일정/ })
+    const second = screen.getByRole('button', { name: /둘째 일정/ })
+    fireEvent.click(first)
+    fireEvent.click(second)
+    expect(first.getAttribute('aria-pressed')).toBe('true')
+    expect(second.getAttribute('aria-pressed')).toBe('true')
+    submitApproval()
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0].confirmedScheduleIds).toEqual([1, 2])
+  })
+
   it('CURRICULUM / SINGLE replaces the previous choice so two ids are not submitted', async () => {
     fetchSlots.mockResolvedValue([
       educationSlot(1, { sessionNo: 1 }),

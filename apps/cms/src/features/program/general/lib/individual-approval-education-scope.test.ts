@@ -16,9 +16,11 @@ import {
   listAssignedEducationSlotOptions,
   isRejectedEducationScheduleSelectionError,
   listSelectableProgramDefinedEducationSlots,
+  nextIndividualApprovalScheduleIds,
   parseRejectedEducationScheduleIds,
   resolveIndividualApprovalProgramShape,
   validateIndividualApprovalScheduleSelection,
+  type IndividualApprovalScheduleAudience,
 } from './individual-approval-education-scope'
 
 function slot(
@@ -57,7 +59,8 @@ function planFor(
   structure: 'CURRICULUM' | 'SCHEDULE',
   round: 'SINGLE' | 'MULTI',
   preferredSchedules: PreferredEducationSchedule[],
-  slots: ProgramEducationSlotResponse[]
+  slots: ProgramEducationSlotResponse[],
+  audience: IndividualApprovalScheduleAudience = 'individual'
 ) {
   return buildIndividualApprovalSchedulePlan({
     program: resolveIndividualApprovalProgramShape({
@@ -68,6 +71,7 @@ function planFor(
     preferred: preferredSchedules,
     slots,
     slotsResolved: true,
+    audience,
   })
 }
 
@@ -89,8 +93,7 @@ describe('individual approval education scope', () => {
   it('assigned display includes PRE_EDUCATION but approval selection does not', () => {
     const slots = [slot(11), slot(13, { scheduleRole: 'PRE_EDUCATION', educationSlotKey: 'general-pre-education:1' })]
     expect(listAssignedEducationSlotOptions(slots).map(item => item.scheduleId)).toEqual([11, 13])
-    expect(listAssignedEducationSlotOptions(slots)[1]?.title).toMatch(/^사전교육 · /)
-    expect(listAssignedEducationSlotOptions(slots)[1]?.title).not.toContain('사전 교육')
+    expect(listAssignedEducationSlotOptions(slots)[1]?.title).toBe('사전교육')
     const plan = planFor('SCHEDULE', 'MULTI', [], slots)
     expect(plan.lockedScheduleIds).toEqual([11])
     expect(validateIndividualApprovalScheduleSelection(plan, [11, 13]).ok).toBe(false)
@@ -112,7 +115,7 @@ describe('individual approval education scope', () => {
       },
     }
     expect(formatIndividualApprovalScopeErrorMessage(error)).toBe(
-      '필수 사전교육의 프로그램 일정을 확인할 수 없습니다.'
+      GENERAL_INDIVIDUAL_PRE_EDUCATION_NOT_CONFIGURED_MESSAGE
     )
   })
 
@@ -164,6 +167,22 @@ describe('individual approval education scope', () => {
         expectedScopeRevision: 0,
         reason: '교육 일정 확정',
       },
+    })
+  })
+
+  it('lets volunteer CURRICULUM / SINGLE keep more than one preferred schedule', () => {
+    const plan = planFor(
+      'CURRICULUM',
+      'SINGLE',
+      [preferred(1), preferred(2, { round: 2 })],
+      [slot(1), slot(2, { sessionNo: 2 })],
+      'volunteer'
+    )
+    expect(plan.kind).toBe('preferred-at-least-one')
+    expect(nextIndividualApprovalScheduleIds(plan, [1], 2)).toEqual([1, 2])
+    expect(validateIndividualApprovalScheduleSelection(plan, [1, 2])).toEqual({
+      ok: true,
+      confirmedScheduleIds: [1, 2],
     })
   })
 

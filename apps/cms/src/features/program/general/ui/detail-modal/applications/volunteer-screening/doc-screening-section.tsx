@@ -157,6 +157,7 @@ export function GeneralVolunteerDocScreeningSection({
           program={program}
           preferredEducationSchedules={approvePreferredSchedules}
           confirmLoading={approveConfirmLoading}
+          scheduleAssignmentAudience="volunteer"
           onCancel={closeApproveModal}
           onConfirm={handleApplicationApproveConfirm}
         />
