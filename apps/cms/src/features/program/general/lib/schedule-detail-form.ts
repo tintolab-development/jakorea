@@ -21,6 +21,9 @@ export type ScheduleDetailBlockKind = 'sub' | 'event' | 'preEducation'
 
 export const PRE_EDUCATION_SCHEDULE_LABEL = '사전 교육'
 
+/** 화면 표시용 사전교육 이름(붙여쓰기). 저장값·기본값은 PRE_EDUCATION_SCHEDULE_LABEL을 그대로 쓴다. */
+export const PRE_EDUCATION_DISPLAY_LABEL = '사전교육'
+
 /** 교육 진행 일정 설정 — 「교육 진행 일정 선택」 날짜 지정 팝오버 시간 입력 */
 export function shouldDisableEducationScheduleSelectionTimeInput(input: {
   educationStructure: 'curriculum' | 'schedule'
@@ -202,6 +205,16 @@ export function compactGeneralPreEducationName(value: string | undefined | null)
 /** 백엔드와 동일: 공백 제거 후 `사전교육`으로 시작. 교사연수·UJAT 봉사자 사전교육은 해당하지 않음 */
 export function isGeneralPreEducationName(value: string | undefined | null): boolean {
   return compactGeneralPreEducationName(value).startsWith('사전교육')
+}
+
+/**
+ * 블록 제목 표시용 — 일반 사전 교육 기본 라벨(공백 무관 「사전교육」)만 「사전교육」으로 바꾼다.
+ * 교육받은 교사 「교육 연수」 등 다른 라벨은 그대로 둔다.
+ */
+export function toPreEducationDisplayLabel(label: string): string {
+  return compactGeneralPreEducationName(label) === PRE_EDUCATION_DISPLAY_LABEL
+    ? PRE_EDUCATION_DISPLAY_LABEL
+    : label
 }
 
 function isGeneralPreEducationKindToken(value: string | undefined | null): boolean {
