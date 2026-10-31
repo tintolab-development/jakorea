@@ -13,7 +13,7 @@ import type {
 } from '@/features/program/general/model/school-detail-types'
 import { countLectureAttendanceHeldAndAttended } from '@/features/program/general/lib/lecture-attendance-count'
 import { isScheduleAttendanceOpenForDisplay } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
-import { isGeneralProgressEducationSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
+import { isGeneralProgressAttendanceSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
 import { mapOrganizationScheduleAssignmentSlotsToAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
 import { fetchOrganizationScheduleAssignmentsRemote } from '@/features/program/general/api/organization-schedule-assignments-api-client'
 import {
@@ -85,7 +85,7 @@ function educationSessionRoundRows(
   schedules: readonly DashboardProgramScheduleResponse[]
 ): LectureRoundRow[] {
   return schedules
-    .filter(isGeneralProgressEducationSessionSchedule)
+    .filter(isGeneralProgressAttendanceSessionSchedule)
     .flatMap((schedule, index) => {
       const scheduleId = schedule.scheduleId
       if (scheduleId == null || !Number.isFinite(scheduleId) || scheduleId <= 0) return []

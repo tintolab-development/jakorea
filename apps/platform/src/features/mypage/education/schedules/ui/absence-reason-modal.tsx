@@ -459,6 +459,7 @@ export function EducationAbsenceReasonModal({
 
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       title="결석 사유 제출하기"
       className={styles.modal}

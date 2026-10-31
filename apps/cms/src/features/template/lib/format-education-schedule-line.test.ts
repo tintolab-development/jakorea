@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
 import {
   buildEducationScheduleLinesFromDateAndGroupTimes,
+  chronologicalEducationScheduleLineIndexes,
   educationScheduleLinesFromSelectionRangeApply,
   countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
@@ -429,5 +430,48 @@ describe('serializeEducationScheduleLineForServer', () => {
       '2026.11.06(금) ~ 2026.11.12(목)'
     )
     expect(parseEducationScheduleLineForCms('협의 후 확정')).toBe('협의 후 확정')
+  })
+})
+
+describe('chronologicalEducationScheduleLineIndexes', () => {
+  it('puts a newly added earlier time on the same day first (11/10 23:00 → add 09:00)', () => {
+    const lines = ['2026.11.10(화) 23:00 ~ 23:50', '2026.11.10(화) 09:00 ~ 10:00']
+    expect(chronologicalEducationScheduleLineIndexes(lines)).toEqual([1, 0])
+  })
+
+  it('orders 186486-style lines by date then start time (group 13:30 / 09:30)', () => {
+    const lines = [
+      '2026.11.16(월) 13:30 ~ 15:30',
+      '2026.11.16(월) 09:30 ~ 11:30',
+      '2026.10.30(금) 13:30 ~ 15:30',
+      '2026.10.30(금) 09:30 ~ 11:30',
+      '26년 10월 31일(토) 13:30 ~ 15:30',
+      '26년 10월 31일(토) 09:30 ~ 11:30',
+    ]
+    expect(chronologicalEducationScheduleLineIndexes(lines).map(i => lines[i])).toEqual([
+      '2026.10.30(금) 09:30 ~ 11:30',
+      '2026.10.30(금) 13:30 ~ 15:30',
+      '26년 10월 31일(토) 09:30 ~ 11:30',
+      '26년 10월 31일(토) 13:30 ~ 15:30',
+      '2026.11.16(월) 09:30 ~ 11:30',
+      '2026.11.16(월) 13:30 ~ 15:30',
+    ])
+  })
+
+  it('keeps unreadable lines at the end and ties in original order', () => {
+    const lines = [
+      '미정',
+      '2026.11.10(화) 09:00 ~ 10:00',
+      '',
+      '2026.11.10(화) 09:00 ~ 10:00',
+      '2026.11.09(월)',
+    ]
+    expect(chronologicalEducationScheduleLineIndexes(lines)).toEqual([4, 1, 3, 0, 2])
+  })
+
+  it('does not mutate the input', () => {
+    const lines = ['2026.11.10(화) 23:00 ~ 23:50', '2026.11.10(화) 09:00 ~ 10:00']
+    chronologicalEducationScheduleLineIndexes(lines)
+    expect(lines).toEqual(['2026.11.10(화) 23:00 ~ 23:50', '2026.11.10(화) 09:00 ~ 10:00'])
   })
 })

@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { APPLICANT_ID_PARAM } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-constants'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import {
-  screeningDoc1DetailTitle,
+  resolveGeneralVolunteerDocScreeningDetailMeta,
   screeningDocPassedDetailTitle,
   screeningInterview2DetailTitle,
   type ScreeningSubjectKind,
@@ -20,14 +20,19 @@ export type GeneralVolunteerApplicantDetailMetaChangeHandler = (
   meta: GeneralVolunteerApplicantDetailMeta | null
 ) => void
 
-function getDetailTitle(
+function getDetailMeta(
   variant: GeneralVolunteerApplicantDetailVariant,
   name: string,
+  interviewEnabled: boolean,
   subjectKind: ScreeningSubjectKind = 'volunteer'
-): string {
-  if (variant === 'doc_passed') return screeningDocPassedDetailTitle(subjectKind, name)
-  if (variant === 'interview2') return screeningInterview2DetailTitle(subjectKind, name)
-  return screeningDoc1DetailTitle(subjectKind, name)
+): { title: string; breadcrumbLabel: string } {
+  if (variant === 'doc_passed') {
+    return { title: screeningDocPassedDetailTitle(subjectKind, name), breadcrumbLabel: name }
+  }
+  if (variant === 'interview2') {
+    return { title: screeningInterview2DetailTitle(subjectKind, name), breadcrumbLabel: name }
+  }
+  return resolveGeneralVolunteerDocScreeningDetailMeta(name, interviewEnabled)
 }
 
 export function useGeneralVolunteerApplicantDetail({
@@ -35,6 +40,7 @@ export function useGeneralVolunteerApplicantDetail({
   list,
   variant,
   subjectKind = 'volunteer',
+  interviewEnabled = true,
   loading = false,
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
@@ -43,6 +49,8 @@ export function useGeneralVolunteerApplicantDetail({
   list: GeneralVolunteerApplicantRow[]
   variant: GeneralVolunteerApplicantDetailVariant
   subjectKind?: ScreeningSubjectKind
+  /** 봉사자 면접 여부. false면 1차 서류 심사 대상자 상세 대신 신청 상세 제목 */
+  interviewEnabled?: boolean
   loading?: boolean
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: GeneralVolunteerApplicantDetailMetaChangeHandler
@@ -96,13 +104,16 @@ export function useGeneralVolunteerApplicantDetail({
     if (!onVolunteerApplicantDetailMetaChange) return
     onVolunteerApplicantDetailMetaChange(
       selectedApplicant
-        ? {
-            title: getDetailTitle(variant, selectedApplicant.name, subjectKind),
-            breadcrumbLabel: selectedApplicant.name,
-          }
+        ? getDetailMeta(variant, selectedApplicant.name, interviewEnabled, subjectKind)
         : null
     )
-  }, [onVolunteerApplicantDetailMetaChange, selectedApplicant, subjectKind, variant])
+  }, [
+    interviewEnabled,
+    onVolunteerApplicantDetailMetaChange,
+    selectedApplicant,
+    subjectKind,
+    variant,
+  ])
 
   useEffect(() => {
     const applicantId = searchParams.get(APPLICANT_ID_PARAM)

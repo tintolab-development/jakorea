@@ -144,7 +144,6 @@ export function BusinessAreaManagementModal({
       <CmsButton
         variant="primary"
         size="h40"
-        className="cms-button--footer-auto"
         type="button"
         onClick={ctrl.applySettings}
         disabled={ctrl.saving || ctrl.loading}

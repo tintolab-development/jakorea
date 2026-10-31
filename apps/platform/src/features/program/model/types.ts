@@ -111,6 +111,14 @@ export type ProgramEventSchedule = {
   educationPlaceLabel?: string
 }
 
+export type ProgramScheduleOptionLookupRow = {
+  scheduleId: number
+  startAt?: string
+  endAt?: string
+  /** 자동 기본명(「공통 교육 예정 N」 등)은 제외된 표시용 일정명 */
+  scheduleName?: string
+}
+
 export type ProgramLabeledValue = {
   label: string
   value: string
@@ -249,6 +257,11 @@ export type ProgramDetail = ProgramListItem & {
   sessions: ProgramSession[]
   /** 일정형 세부·행사 일정 (커리큘럼형이면 빈 배열) */
   eventSchedules: ProgramEventSchedule[]
+  /**
+   * Portal `schedules[]` 원본 (scheduleId 보유 행, 서버 순서) — 신청 내용 `schedule:{id}` 해석 전용.
+   * 일정형 projected `scheduleDetails`는 scheduleId가 없어 eventSchedules만으로는 해석되지 않는다.
+   */
+  scheduleOptionLookup?: ProgramScheduleOptionLookupRow[]
   recruitmentPhaseGroupLabel: string
   recruitmentPhases: ProgramLabeledValue[]
   /** 세부내용 「교육 일정 N」 카드 — 보통 educationScheduleLines */

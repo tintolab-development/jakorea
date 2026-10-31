@@ -65,6 +65,20 @@
   background: var(--color-neutral-cool-50);
 }
 
+.scheduleSummaryCard {
+  border-radius: var(--radius-12);
+}
+
+.scheduleSummaryLines {
+  display: flex;
+  flex-direction: column;
+}
+
+.scheduleSummaryLine {
+  margin: 0;
+  line-height: 1.5;
+}
+
 .scheduleCardTitle {
   margin: 0;
 }

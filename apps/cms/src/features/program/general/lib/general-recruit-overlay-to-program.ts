@@ -41,6 +41,7 @@ import {
   applyRecruitmentRowCopy,
   resolveRecruitmentOtherMatters,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import { RECRUIT_INTERVIEW_REQUIRED_DEFAULT } from '@/features/program/general/lib/recruit-radio-defaults'
 
 type RangeSeal = { start?: string | null; end?: string | null }
 
@@ -121,13 +122,12 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
   },
 } as const
 
-/** 개인 모집 「참여자 면접 유무」 화면 기본값 — `applicant-recruit-individual-participant-info-paragraph` 라디오 기본값과 같다. */
-export const INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT = 'yes'
+/** 개인 모집 「참여자 면접 유무」 화면 기본값 — 정본은 `recruit-radio-defaults` */
+export const INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT = RECRUIT_INTERVIEW_REQUIRED_DEFAULT
 
 /**
- * 등록(create) 전용. 개인 참여자를 고른 등록에서 라디오를 건드리지 않으면 기본 '면접 있음'이
- * 스토어에 기록되지 않아 overlay 키가 비고 `generalParticipantInterviewEnabled`가 빠진다.
- * 화면에 보이던 기본값을 create 스냅샷에만 채운다. 개인 미선택·키가 이미 있으면 그대로 반환.
+ * 개인 모집 면접 키만 채우는 하위 헬퍼. 화면 기본값 정본은 `withGeneralRecruitRadioDefaults`.
+ * 개인 미선택·키가 이미 있으면 그대로 반환.
  */
 export function withIndividualInterviewRequiredCreateDefault(
   overlay: Record<string, unknown>,
@@ -139,12 +139,11 @@ export function withIndividualInterviewRequiredCreateDefault(
   return { ...overlay, [key]: INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT }
 }
 
-/** 봉사 모집 「봉사자 면접 유무」 화면 기본값 — `recruit-form-volunteer-info-paragraph` 라디오 기본값과 같다. */
-export const VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT = 'yes'
+/** 봉사 모집 「봉사자 면접 유무」 화면 기본값 — 정본은 `recruit-radio-defaults` */
+export const VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT = RECRUIT_INTERVIEW_REQUIRED_DEFAULT
 
 /**
- * 등록(create) 전용. 봉사자를 고른 등록에서 라디오를 건드리지 않으면 기본 '면접 있음'이 스토어에 기록되지 않아
- * `generalVolunteerInterviewEnabled`·봉사 행 `interviewEnabled` 가 false 로 저장되던 문제. 화면 기본값을 create 스냅샷에만 채운다.
+ * 봉사 모집 면접 키만 채우는 하위 헬퍼. 화면 기본값 정본은 `withGeneralRecruitRadioDefaults`.
  */
 export function withVolunteerInterviewRequiredCreateDefault(
   overlay: Record<string, unknown>,

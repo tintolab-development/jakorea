@@ -126,9 +126,3 @@ export function guardGeneralVolunteerInterview2Evaluation(row: GeneralVolunteerA
   return guardGeneralVolunteerInterview2NotEnded(row)
 }
 
-export function alertGeneralVolunteerInterview2BulkPassTypeRequired(): void {
-  cmsAlertModal.show({
-    title: '일괄 합격 안내',
-    content: '합격 유형을 선택해 주세요.',
-  })
-}

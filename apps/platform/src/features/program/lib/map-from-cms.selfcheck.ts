@@ -442,15 +442,15 @@ function testIndCurriculumScheduleCases() {
     interviewEndDate: '2026-05-15T00:00:00+09:00',
   })
   assert.equal(withInterview.detailCase, 'general')
-  assert.ok(withInterview.recruitmentPhases.some(p => p.label === '1차 합격자 발표일'))
-  assert.ok(withInterview.recruitmentPhases.some(p => p.label === '면접 기간'))
+  assert.ok(withInterview.recruitmentPhases.some(p => p.label === '1차 서류 합격자 발표'))
+  assert.ok(withInterview.recruitmentPhases.some(p => p.label === '2차 면접 기간'))
 
   const withoutInterview = mapCmsProgramToPlatformDetail({
     ...soloInd,
     interviewEnabled: false,
   })
-  assert.ok(!withoutInterview.recruitmentPhases.some(p => p.label === '1차 합격자 발표일'))
-  assert.ok(!withoutInterview.recruitmentPhases.some(p => p.label === '면접 기간'))
+  assert.ok(!withoutInterview.recruitmentPhases.some(p => p.label === '1차 서류 합격자 발표'))
+  assert.ok(!withoutInterview.recruitmentPhases.some(p => p.label === '2차 면접 기간'))
 }
 
 function testMerge() {

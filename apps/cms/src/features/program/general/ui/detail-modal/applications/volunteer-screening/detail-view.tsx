@@ -23,6 +23,10 @@ import {
   hasExplicitApplicationAction,
 } from '@/features/program/shared/lib/application-available-actions'
 import { resolveVolunteerInterview2CancelPassButtonLabel } from '@/features/program/general/lib/volunteer-interview2-cancel-pass'
+import {
+  shouldShowVolunteerInterviewAvailabilitySection,
+  shouldShowVolunteerManagerEvaluationSection,
+} from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { GeneralVolunteerApplicantBasicInfo } from './basic-info'
 import { GeneralVolunteerApplicantManagerEvaluationSection } from './manager-evaluation-section'
 import { GeneralVolunteerApplicantInterviewAvailability } from './interview-availability'
@@ -40,6 +44,8 @@ export type GeneralVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_pass
 type DocScreeningDetailProps = {
   variant?: 'doc_screening'
   applicant: GeneralVolunteerApplicantRow
+  /** 봉사자 면접 여부. false면 신청 상세 구성(평가·면접 일정 숨김) */
+  interviewEnabled?: boolean
   onDocumentReject?: () => void
   onDocumentApprove?: () => void
   onCancelDocumentApproval?: () => void
@@ -447,6 +453,7 @@ export function GeneralVolunteerApplicantDetailView(
   }
 
   const {
+    interviewEnabled = true,
     onDocumentReject,
     onDocumentApprove,
     onCancelDocumentApproval,
@@ -457,6 +464,9 @@ export function GeneralVolunteerApplicantDetailView(
     onManagerBEvaluationChange,
     updatingManagerEvaluation,
   } = props
+  const showManagerEvaluation = shouldShowVolunteerManagerEvaluationSection(interviewEnabled)
+  const showInterviewAvailability =
+    shouldShowVolunteerInterviewAvailabilitySection(interviewEnabled)
 
   const canCancelDocumentApproval = canPerformApplicationAction(
     applicant.availableActions,
@@ -541,16 +551,21 @@ export function GeneralVolunteerApplicantDetailView(
         <GeneralVolunteerApplicantBasicInfo
           applicant={applicant}
           maskSensitive={!personalInfoRevealed}
+          statusRow={interviewEnabled ? 'document_screening' : 'program_approval'}
         />
-        <GeneralVolunteerApplicantManagerEvaluationSection
-          applicant={applicant}
-          openManagerDropdown={openManagerDropdown}
-          setOpenManagerDropdown={setOpenManagerDropdown}
-          onManagerAEvaluationChange={onManagerAEvaluationChange}
-          onManagerBEvaluationChange={onManagerBEvaluationChange}
-          updatingManagerEvaluation={updatingManagerEvaluation}
-        />
-        <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
+        {showManagerEvaluation ? (
+          <GeneralVolunteerApplicantManagerEvaluationSection
+            applicant={applicant}
+            openManagerDropdown={openManagerDropdown}
+            setOpenManagerDropdown={setOpenManagerDropdown}
+            onManagerAEvaluationChange={onManagerAEvaluationChange}
+            onManagerBEvaluationChange={onManagerBEvaluationChange}
+            updatingManagerEvaluation={updatingManagerEvaluation}
+          />
+        ) : null}
+        {showInterviewAvailability ? (
+          <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
+        ) : null}
         <GeneralVolunteerApplicantEssaySections applicant={applicant} />
       </div>
 

@@ -1,7 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   buildEconomyAutofillDatePlan,
-  buildEconomyAutofillPreferredScheduleBlocks,
   selectEconomyRegistrationAutofillPhrases,
   type EconomyAutofillPhraseSelection,
 } from '@/features/program/1c-1s/lib/dev-autofill-phrases'
@@ -9,6 +8,7 @@ import {
   collectCompanySchoolApplicationFormState,
   companySchoolApplicationEditorState,
 } from '@/features/program/1c-1s/lib/application-form-state'
+import { withEmptyCompanySchoolApplicationPreferredSchedule } from '@/features/program/1c-1s/lib/registration-rhf-application'
 import {
   fillBlankApplicationFormThirdPartyRecipients,
   seedDevAutofillApplicationThirdPartyRecipients,
@@ -1976,17 +1976,16 @@ function seedUjatApplicationAutofill(): void {
 
 const ECONOMY_APPLICATION_TEMPLATE_CODE = 'application-economy' as const
 
-/** 1사1교 개발용 자동입력의 신청 단계 seed — 1·2지망을 교육/사업 운영기간 안에 둔다. */
-function seedEconomyApplicationAutofill(range: RangeIso): void {
-  const schedule = buildEconomyAutofillPreferredScheduleBlocks(range)
-  const application = collectCompanySchoolApplicationFormState(
-    peekGeneralApplicationOverlayRecord(ECONOMY_APPLICATION_TEMPLATE_CODE)
+/** 1사1교 등록 위저드 신청 폼은 템플릿 — 희망 일정은 빈 칸으로 둔다. */
+function seedEconomyApplicationAutofill(_range: RangeIso): void {
+  const application = withEmptyCompanySchoolApplicationPreferredSchedule(
+    collectCompanySchoolApplicationFormState(
+      peekGeneralApplicationOverlayRecord(ECONOMY_APPLICATION_TEMPLATE_CODE)
+    )
   )
-  application.schedule = schedule
-
   const overlay = {
-    'application.economy.schedule.first': { ...schedule.first },
-    'application.economy.schedule.second': { ...schedule.second },
+    'application.economy.schedule.first': { ...application.schedule.first },
+    'application.economy.schedule.second': { ...application.schedule.second },
   }
   replaceGeneralApplicationOverlayForScope(ECONOMY_APPLICATION_TEMPLATE_CODE, overlay)
 

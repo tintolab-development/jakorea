@@ -12,6 +12,7 @@ import {
   buildProgressAttendanceSessionsFromRemote,
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
+import { resolveProgressAttendanceScheduleDateRanges } from '@/features/program/general/lib/progress-attendance-schedule-date-ranges'
 import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildParticipatingIndividualProgressAttendanceFilterFields } from '@/features/program/general/lib/participating-individual-progress-attendance-filter-fields'
@@ -77,9 +78,18 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
       ...EMPTY_PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTERS,
     }))
 
+  const scheduleDateRanges = useMemo(
+    () => resolveProgressAttendanceScheduleDateRanges(program),
+    [program]
+  )
+
   const remoteQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
-    queryFn: () => fetchGeneralProgressAttendanceBundle(String(program.id)),
+    queryKey: [
+      ...generalProgramProgressQueryKeys.schedules(String(program.id)),
+      'schedule-date-ranges',
+      scheduleDateRanges.map(range => `${range.dateFrom}~${range.dateTo}`).join(','),
+    ],
+    queryFn: () => fetchGeneralProgressAttendanceBundle(String(program.id), scheduleDateRanges),
     enabled: remoteEnabled,
     staleTime: 15_000,
     retry: false,

@@ -56,6 +56,11 @@ const PROGRAM_PROGRESS_STATIC_VIEW = '일정에 따라 진행 현황이 자동�
 
 const ALL_VALUE = '__all__'
 const EMPTY_MANAGER_CONTACT_IDS: string[] = []
+
+function asUnselectedSelectValue(value: string | null | undefined): string {
+  const trimmed = value?.trim() ?? ''
+  return !trimmed || trimmed === ALL_VALUE ? '' : trimmed
+}
 const ECONOMY_SURVEY_ITEMS_DEFAULT = initialProgramRegistrationSurveyItems(true)
 
 /**
@@ -213,15 +218,16 @@ export function OneCOneSRegistrationBasicInfoParagraph({
   const sponsorApiOptions = sponsorCatalogQuery.options
   const sponsorOptionsLoading =
     catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
+  const selectedSponsorId = asUnselectedSelectValue(sponsorId)
   const contactsQuery = useSponsorContactsQuery(
-    sponsorId === ALL_VALUE ? null : sponsorId,
-    sponsorId !== ALL_VALUE && Boolean(sponsorId)
+    selectedSponsorId || null,
+    Boolean(selectedSponsorId)
   )
 
   const sponsorOptions = useMemo(() => [...sponsorApiOptions], [sponsorApiOptions])
 
   const managerOptions = useMemo(() => {
-    if (!sponsorId) return []
+    if (!selectedSponsorId) return []
     const contacts = (contactsQuery.data ?? []).map(c => ({
       value: c.id,
       label: formatSponsorManagerSelectLabel({
@@ -233,31 +239,36 @@ export function OneCOneSRegistrationBasicInfoParagraph({
       }),
     }))
     return withSponsorContactUnselectedOption(contacts)
-  }, [contactsQuery.data, sponsorId])
+  }, [contactsQuery.data, selectedSponsorId])
 
   const selectedManagerContactIds = useMemo(() => {
+    if (!selectedSponsorId) return []
     if (Array.isArray(managerContactIds) && managerContactIds.length > 0) {
       const unique = [
-        ...new Set(managerContactIds.map(String).map(id => id.trim()).filter(Boolean)),
+        ...new Set(
+          managerContactIds
+            .map(String)
+            .map(id => id.trim())
+            .filter(id => id && id !== ALL_VALUE)
+        ),
       ]
       if (unique.some(id => isSponsorContactUnselected(id))) {
         return [SPONSOR_CONTACT_UNSELECTED_VALUE]
       }
-      return unique
+      if (unique.length > 0) return unique
     }
     if (isSponsorContactUnselected(managerContactId)) {
       return [SPONSOR_CONTACT_UNSELECTED_VALUE]
     }
-    if (managerContactId && managerContactId !== ALL_VALUE) return [managerContactId]
-    if (managerContactId === ALL_VALUE && sponsorId === ALL_VALUE) return [ALL_VALUE]
-    if (sponsorId && sponsorId !== ALL_VALUE) return [SPONSOR_CONTACT_UNSELECTED_VALUE]
-    return []
-  }, [managerContactId, managerContactIds, sponsorId])
+    const contactId = asUnselectedSelectValue(managerContactId)
+    if (contactId) return [contactId]
+    return [SPONSOR_CONTACT_UNSELECTED_VALUE]
+  }, [managerContactId, managerContactIds, selectedSponsorId])
 
   const applyManagerContactIds = (next: string[]) => {
     const unique = normalizeSponsorContactUnselectedSelection(next, selectedManagerContactIds)
     setManagerContactIds(unique)
-    setManagerContactId(unique[0] ?? (sponsorId === ALL_VALUE ? ALL_VALUE : ''))
+    setManagerContactId(unique[0] ?? '')
   }
 
   useEffect(() => {
@@ -434,16 +445,16 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="선택하세요"
+                  placeholder="후원사를 선택하세요"
                   width={240}
                   options={sponsorOptions}
-                  value={sponsorId}
+                  value={selectedSponsorId}
                   loading={sponsorOptionsLoading}
                   onOpenChange={onSelectOpenChange}
                   onChange={v => {
-                    const next = String(v ?? '')
+                    const next = asUnselectedSelectValue(String(v ?? ''))
                     setSponsorId(next)
-                    applyManagerContactIds(next === ALL_VALUE ? [ALL_VALUE] : [])
+                    applyManagerContactIds([])
                   }}
                 />
               </div>
@@ -465,7 +476,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   optionFilterProp="label"
                   options={managerOptions}
                   value={selectedManagerContactIds}
-                  disabled={!sponsorId}
+                  disabled={!selectedSponsorId}
                   loading={sponsorOptionsLoading}
                   onOpenChange={onSelectOpenChange}
                   onChange={v => {

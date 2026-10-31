@@ -654,9 +654,9 @@ export async function submitGeneralIndividualDocumentResultBulk(
 export async function submitGeneralVolunteerFinalResult(
   applicationId: string,
   payload: VolunteerFinalResultRequest & ScreeningResultNotifyFields
-): Promise<void> {
+): Promise<ApplicationDecisionResponse> {
   assertApplicationsRemoteReady()
-  await submitVolunteerFinalResultRemote(applicationId, payload)
+  return submitVolunteerFinalResultRemote(applicationId, payload)
 }
 
 /**

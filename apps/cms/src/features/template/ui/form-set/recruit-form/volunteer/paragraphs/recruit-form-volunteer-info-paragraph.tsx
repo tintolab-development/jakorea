@@ -8,6 +8,10 @@ import {
   VOLUNTEER_TARGET_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import {
+  RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
+  RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
+} from '@/features/program/general/lib/recruit-radio-defaults'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { useVolunteerRecruitField } from '@/features/template/ui/form-set/recruit-form/volunteer/volunteer-recruit-form-rhf'
@@ -43,11 +47,11 @@ export function RecruitFormVolunteerInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
     useVolunteerRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
       'recruit.volunteer.announcementPublished',
-      'published'
+      RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
     )
   const [interviewRequired, setInterviewRequired] = useVolunteerRecruitField<string>(
     'recruit.volunteer.interviewRequired',
-    'yes'
+    RECRUIT_INTERVIEW_REQUIRED_DEFAULT
   )
 
   const [programAnchorIso, setProgramAnchorIso] = useVolunteerRecruitField<string | null>(

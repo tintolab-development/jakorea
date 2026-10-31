@@ -13,6 +13,10 @@ import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/gene
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
 import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
 import {
+  isGeneralScheduleSingleDateProgram,
+  resolveGeneralScheduleSingleDateDetailName,
+} from '@/features/program/general/lib/general-progress-date-schedule-lead'
+import {
   formatIndividualProgressAssignmentAffiliationGradeLabel,
   formatIndividualProgressAssignmentGenderBirthLabel,
 } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
@@ -61,6 +65,7 @@ function resolveAssignmentPeriodLabel(
 ): string {
   const fromApi = formatPeriodLabel(schedule.assignmentPeriodStart, schedule.assignmentPeriodEnd)
   if (fromApi) return fromApi
+  if (isGeneralScheduleSingleDateProgram(program)) return ''
   const common = program ? resolveGeneralProgramCommonInfo(program) : null
   const fromCurriculum = common?.curriculumSessions?.[round - 1]?.assignmentPeriod?.trim()
   if (fromCurriculum) return formatCmsScheduleDisplayLabel(fromCurriculum)
@@ -80,9 +85,13 @@ function formatScheduleHeader(
   const hasTimeRange = start?.isValid() === true && end?.isValid() === true
   const isAllDay =
     hasTimeRange && start.format('HH:mm') === '00:00' && end.format('HH:mm') === '00:00'
-  const leadLabel = program
-    ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
-    : `${round}회차`
+  const scheduleDirect = isGeneralScheduleSingleDateProgram(program)
+  const leadLabel =
+    program && scheduleDirect
+      ? resolveGeneralScheduleSingleDateDetailName(program, schedule)
+      : program
+        ? resolveSchoolDetailAttendanceSessionLeadLabel(program, round)
+        : `${round}회차`
   const built = buildGeneralProgressSessionTableHeader({
     round,
     leadLabel,
@@ -91,6 +100,7 @@ function formatScheduleHeader(
     endAt: schedule.endAt,
     allDay: isAllDay,
     program,
+    scheduleDirect,
   })
   return {
     round,

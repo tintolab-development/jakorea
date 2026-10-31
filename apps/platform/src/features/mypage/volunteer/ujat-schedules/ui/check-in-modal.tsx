@@ -53,6 +53,7 @@ export function UjatCheckInModal({
 
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       onClose={onClose}
       title="출석하기"

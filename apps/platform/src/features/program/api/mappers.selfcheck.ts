@@ -7,6 +7,7 @@
 import assert from 'node:assert/strict'
 import type { PortalProgramDetail } from './types.ts'
 import {
+  withRecruitmentMethod,
   mapPortalProgramDetail,
   mapPortalProgramListItem,
   parsePortalProgramId,
@@ -346,7 +347,7 @@ const withSelection = mapPortalProgramDetail({
 assert.ok(withSelection)
 assert.equal(withSelection.applicationMethodValue, '홈페이지 온라인 신청')
 assert.equal(
-  withSelection.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
+  withSelection.recruitmentPhases.some(phase => phase.label === '1차 서류 합격자 발표'),
   false
 )
 assert.equal(
@@ -709,7 +710,10 @@ assert.equal(
   '온/오프라인'
 )
 assert.equal(scheduleMulti.eventSchedules[0]?.blockKind, 'preEducation')
-assert.equal(scheduleMulti.eventSchedules[0]?.scheduleLabel, '행사 일정 01')
+// 사전 교육 행 — 세부/행사 일정 번호 대신 「사전교육」, 입력한 일정명은 그대로 붙인다.
+assert.equal(scheduleMulti.eventSchedules[0]?.scheduleLabel, '사전교육')
+assert.equal(scheduleMulti.eventSchedules[0]?.name, '오리엔테이션')
+assert.equal(scheduleMulti.eventSchedules[1]?.scheduleLabel, '행사 일정 02')
 assert.equal(scheduleMulti.eventSchedules[0]?.educationFormLabel, '온라인')
 assert.equal(scheduleMulti.eventSchedules[0]?.dateLabel, '2026년 9월 29일(화)')
 assert.equal(scheduleMulti.eventSchedules[1]?.educationFormLabel, '오프라인')
@@ -797,7 +801,7 @@ assert.equal(
   organization.basicInfoFields.some(field => field.label === '참여 방식'),
   false
 )
-assert.equal(organization.sessions[0]?.sessionLabel, '사전 교육')
+assert.equal(organization.sessions[0]?.sessionLabel, '사전교육')
 
 const uppercaseMultiRound = mapPortalProgramDetail({
   programId: 186012,
@@ -1034,11 +1038,11 @@ assert.equal(
   '교재와 활동지를 제공합니다.'
 )
 assert.equal(
-  participantCatalog.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
+  participantCatalog.recruitmentPhases.some(phase => phase.label === '1차 서류 합격자 발표'),
   false
 )
 assert.equal(
-  participantCatalog.recruitmentPhases.some(phase => phase.label === '면접 기간'),
+  participantCatalog.recruitmentPhases.some(phase => phase.label === '2차 면접 기간'),
   false
 )
 assert.equal(
@@ -1882,11 +1886,11 @@ assert.equal(
   false
 )
 assert.equal(
-  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
+  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '1차 서류 합격자 발표'),
   false
 )
 assert.equal(
-  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '면접 기간'),
+  volunteerInterviewOff.recruitmentPhases.some(phase => phase.label === '2차 면접 기간'),
   false
 )
 assert.equal(
@@ -1924,15 +1928,15 @@ assert.ok(multiRecruitmentPhases)
 const multiPhaseLabels = multiRecruitmentPhases.recruitmentPhases.map(phase => phase.label)
 assert.equal(new Set(multiPhaseLabels).size, multiPhaseLabels.length)
 assert.equal(
-  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '강사 1차 합격자 발표일'),
+  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '강사 1차 서류 합격자 발표'),
   true
 )
 assert.equal(
-  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '봉사자 면접 기간'),
+  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '봉사자 2차 면접 기간'),
   true
 )
 assert.equal(
-  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '1차 합격자 발표일'),
+  multiRecruitmentPhases.recruitmentPhases.some(phase => phase.label === '1차 서류 합격자 발표'),
   false
 )
 
@@ -2248,6 +2252,8 @@ assert.equal(
   false
 )
 assert.equal(educationPlacePerSchedule.eventSchedules[0]?.educationPlaceLabel, undefined)
+assert.equal(educationPlacePerSchedule.eventSchedules[0]?.scheduleLabel, '사전교육')
+assert.equal(educationPlacePerSchedule.eventSchedules[1]?.scheduleLabel, '행사 일정 01')
 assert.equal(educationPlacePerSchedule.eventSchedules[1]?.educationPlaceLabel, '서울 강남구')
 assert.equal(educationPlacePerSchedule.eventSchedules[2]?.educationPlaceLabel, '경기 성남시')
 
@@ -2265,6 +2271,35 @@ const educationPlacePerScheduleCurriculum = mapPortalProgramDetail({
 })
 assert.ok(educationPlacePerScheduleCurriculum)
 assert.equal(educationPlacePerScheduleCurriculum.sessions[0]?.educationPlaceLabel, undefined)
+assert.equal(educationPlacePerScheduleCurriculum.sessions[0]?.sessionLabel, '사전교육')
+assert.equal(educationPlacePerScheduleCurriculum.sessions[1]?.sessionLabel, '1차시')
+
+// 사전 교육 일정명이 기본값(사전 교육)이면 「사전교육 사전 교육」으로 겹치지 않게 이름을 비운다.
+const preEducationDefaultName = mapPortalProgramDetail({
+  programId: 186486,
+  programType: 'GENERAL_INDIVIDUAL',
+  title: '사전교육 기본 이름',
+  educationStructure: 'schedule',
+  sessionRound: 'single',
+  scheduleDetails: [
+    {
+      scheduleLabel: '사전 교육',
+      blockKind: 'preEducation',
+      name: '사전 교육',
+      scheduleDateLabel: '2026.10.30(금) 12:00 ~ 13:08',
+    },
+    {
+      scheduleLabel: '세부 일정 01',
+      name: '필요와 욕구, 현명한 소비',
+      scheduleDateLabel: '2026.11.16(월) 10:00 ~ 12:00',
+    },
+  ],
+})
+assert.ok(preEducationDefaultName)
+assert.equal(preEducationDefaultName.eventSchedules[0]?.scheduleLabel, '사전교육')
+assert.equal(preEducationDefaultName.eventSchedules[0]?.name, '')
+assert.equal(preEducationDefaultName.eventSchedules[1]?.scheduleLabel, '세부 일정 01')
+assert.equal(preEducationDefaultName.eventSchedules[1]?.name, '필요와 욕구, 현명한 소비')
 assert.equal(educationPlacePerScheduleCurriculum.sessions[1]?.educationPlaceLabel, '대전 유성구')
 
 // 새 필드가 없으면 기존 순서(venue → 첫 일정 주소) 유지.
@@ -2317,5 +2352,155 @@ assert.equal(
   ),
   '1'
 )
+
+// ── QA #57·#65: 모집 행 발표·면접 방법(CMS 원문 라벨) — 날짜 뒤 「, 」 (Figma 11001:200154·200159·200164)
+{
+  assert.equal(withRecruitmentMethod('D', '홈페이지 공지'), 'D, 홈페이지 공지')
+  assert.equal(withRecruitmentMethod('D', null), 'D')
+  assert.equal(withRecruitmentMethod('D', undefined), 'D')
+  assert.equal(withRecruitmentMethod('D', '   '), 'D')
+
+  const phaseValue = (detail: ReturnType<typeof mapPortalProgramDetail>, label: string) =>
+    detail?.recruitmentPhases.find(phase => phase.label === label)?.value
+  const volunteerRow = {
+    recruitmentId: 187017,
+    recruitmentType: 'VOLUNTEER',
+    applicationTypes: ['VOLUNTEER'],
+    startAt: '2026-03-01T00:00:00Z',
+    endAt: '2026-03-10T00:00:00Z',
+    interviewEnabled: true,
+    documentPassAnnouncementAt: '2026-03-15T15:00:00Z',
+    interviewStartAt: '2026-03-17T15:00:00Z',
+    interviewEndAt: '2026-03-19T15:00:00Z',
+    finalPassAnnouncementAt: '2026-03-22T15:00:00Z',
+  }
+
+  // 1) 방법 있음 → 날짜, 방법 (원문 그대로)
+  const withMethods = mapPortalProgramDetail({
+    programId: 186298,
+    title: '방법 있음',
+    recruitments: [
+      {
+        ...volunteerRow,
+        documentPassAnnouncementMethod: '홈페이지 공지',
+        interviewMethod: '온/오프라인',
+        finalPassAnnouncementMethod: '문자 안내',
+      },
+    ],
+  })
+  assert.ok(phaseValue(withMethods, '1차 서류 합격자 발표')?.endsWith(', 홈페이지 공지'))
+  assert.ok(phaseValue(withMethods, '2차 면접 기간')?.endsWith(', 온/오프라인'))
+  assert.ok(phaseValue(withMethods, '최종 합격자 발표')?.endsWith(', 문자 안내'))
+
+  // 2) null → 날짜만, 3) 키 없음 → 날짜만 (두 결과가 같아야 함)
+  const nullMethods = mapPortalProgramDetail({
+    programId: 186482,
+    title: '방법 null',
+    recruitments: [
+      {
+        ...volunteerRow,
+        documentPassAnnouncementMethod: null,
+        interviewMethod: null,
+        finalPassAnnouncementMethod: null,
+      },
+    ],
+  })
+  const missingMethods = mapPortalProgramDetail({
+    programId: 186482,
+    title: '방법 키 없음',
+    recruitments: [{ ...volunteerRow }],
+  })
+  assert.ok(nullMethods && missingMethods)
+  assert.deepEqual(nullMethods.recruitmentPhases, missingMethods.recruitmentPhases)
+  for (const phase of nullMethods.recruitmentPhases) assert.ok(!phase.value.includes(', '))
+  assert.equal(
+    phaseValue(withMethods, '최종 합격자 발표'),
+    `${phaseValue(nullMethods, '최종 합격자 발표')}, 문자 안내`
+  )
+
+  // 4) interviewEnabled !== true → 서류 발표 방법·면접 방식 숨김, 최종 방법은 표시
+  const interviewOffMethods = mapPortalProgramDetail({
+    programId: 8732,
+    title: '면접 없음',
+    recruitments: [
+      {
+        ...volunteerRow,
+        interviewEnabled: false,
+        documentPassAnnouncementMethod: '홈페이지 공지',
+        interviewMethod: '온라인',
+        finalPassAnnouncementMethod: '문자 안내',
+      },
+    ],
+  })
+  assert.equal(phaseValue(interviewOffMethods, '1차 서류 합격자 발표'), undefined)
+  assert.equal(phaseValue(interviewOffMethods, '2차 면접 기간'), undefined)
+  assert.ok(phaseValue(interviewOffMethods, '최종 합격자 발표')?.endsWith(', 문자 안내'))
+  const interviewNullMethods = mapPortalProgramDetail({
+    programId: 8733,
+    title: '면접 여부 null',
+    recruitments: [
+      {
+        ...volunteerRow,
+        interviewEnabled: null,
+        documentPassAnnouncementMethod: '홈페이지 공지',
+        interviewMethod: '온라인',
+        finalPassAnnouncementMethod: null,
+      },
+    ],
+  })
+  assert.ok(phaseValue(interviewNullMethods, '1차 서류 합격자 발표'))
+  assert.ok(!phaseValue(interviewNullMethods, '1차 서류 합격자 발표')?.includes('홈페이지 공지'))
+  assert.ok(!phaseValue(interviewNullMethods, '2차 면접 기간')?.includes('온라인'))
+
+  // 5) 행 섞임 없음 — 상·하반기 행이 각자 값만 사용
+  const twoTerms = mapPortalProgramDetail({
+    programId: 186482,
+    title: '상·하반기',
+    recruitments: [
+      { ...volunteerRow, recruitmentId: 187017, finalPassAnnouncementMethod: '문자 안내' },
+      {
+        ...volunteerRow,
+        recruitmentId: 187018,
+        documentPassAnnouncementAt: '2026-08-02T15:00:00Z',
+        finalPassAnnouncementAt: '2026-08-12T15:00:00Z',
+        documentPassAnnouncementMethod: '이메일 안내',
+        finalPassAnnouncementMethod: null,
+      },
+    ],
+  })
+  assert.ok(phaseValue(twoTerms, '봉사자1 최종 합격자 발표')?.endsWith(', 문자 안내'))
+  assert.ok(!phaseValue(twoTerms, '봉사자1 1차 서류 합격자 발표')?.includes('이메일 안내'))
+  assert.ok(phaseValue(twoTerms, '봉사자2 1차 서류 합격자 발표')?.endsWith(', 이메일 안내'))
+  assert.ok(!phaseValue(twoTerms, '봉사자2 최종 합격자 발표')?.includes(', '))
+
+  // 참여자·강사 행도 봉사자와 같은 통일 라벨 (지원님 결정 2026-10-30)
+  const participantLabels = mapPortalProgramDetail({
+    programId: 186299,
+    title: '참여자 라벨',
+    recruitments: [{ ...volunteerRow, recruitmentType: 'PARTICIPANT', applicationTypes: ['PARTICIPANT'] }],
+  })
+  assert.ok(phaseValue(participantLabels, '1차 서류 합격자 발표'))
+  assert.ok(phaseValue(participantLabels, '2차 면접 기간'))
+  assert.ok(phaseValue(participantLabels, '최종 합격자 발표'))
+  assert.equal(phaseValue(participantLabels, '1차 합격자 발표일'), undefined)
+  assert.equal(phaseValue(participantLabels, '면접 기간'), undefined)
+  const instructorLabels = mapPortalProgramDetail({
+    programId: 186300,
+    title: '강사 라벨',
+    recruitments: [{ ...volunteerRow, recruitmentType: 'INSTRUCTOR', applicationTypes: ['INSTRUCTOR'] }],
+  })
+  assert.ok(phaseValue(instructorLabels, '1차 서류 합격자 발표'))
+  assert.ok(phaseValue(instructorLabels, '2차 면접 기간'))
+  const participantNoInterview = mapPortalProgramDetail({
+    programId: 186301,
+    title: '참여자 면접 없음',
+    recruitments: [
+      { ...volunteerRow, recruitmentType: 'PARTICIPANT', applicationTypes: ['PARTICIPANT'], interviewEnabled: false },
+    ],
+  })
+  assert.equal(phaseValue(participantNoInterview, '1차 서류 합격자 발표'), undefined)
+  assert.equal(phaseValue(participantNoInterview, '2차 면접 기간'), undefined)
+  assert.ok(phaseValue(participantNoInterview, '최종 합격자 발표'))
+}
 
 console.log('program portal mappers.selfcheck: ok')

@@ -215,9 +215,16 @@ export async function bulkUpsertProgramAttendancesRemote(
   )
 }
 
+/** 일정 시작일 범위(포함, YYYY-MM-DD Asia/Seoul). 없으면 BE 기본 범위(이번 달). */
+export interface ProgramScheduleDateRange {
+  dateFrom: string
+  dateTo: string
+}
+
 /** GET /api/admin/dashboard/program-schedules — 프로그램 일정 목록(출석 세션 옵션용). P2-2 전용 schedules list 대체. */
 export async function fetchProgramSchedulesViaDashboardRemote(
-  programId: string
+  programId: string,
+  dateRange?: ProgramScheduleDateRange | null
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
 > {
@@ -225,7 +232,10 @@ export async function fetchProgramSchedulesViaDashboardRemote(
     '@/features/dashboard/api/dashboard-api-client'
   )
   const body = await fetchDashboardProgramSchedulesRemote(
-    toDashboardQueryParams({ programIds: [programId] })
+    toDashboardQueryParams({
+      programIds: [programId],
+      ...(dateRange ? { extra: { dateFrom: dateRange.dateFrom, dateTo: dateRange.dateTo } } : {}),
+    })
   )
   return body.items ?? []
 }

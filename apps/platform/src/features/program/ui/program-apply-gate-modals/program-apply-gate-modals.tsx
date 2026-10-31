@@ -5,8 +5,6 @@ import {
   MYPAGE_VOLUNTEER_PATH,
 } from '@/features/mypage/lib/constants'
 import { PortraitGuardianInfoModal } from '@/features/mypage/settings/ui/portrait-guardian-info-modal'
-import { useMediaQuery } from '@/shared/hooks'
-import { platformMediaQueries } from '@/shared/lib'
 import { PFButton, PFModal, PFText } from '@/shared/ui'
 import type { ProgramRequiredConsentVariant } from '../../hooks/use-program-apply-gate'
 import type { ProgramMinorPortraitFlowProps } from '../../hooks/use-program-minor-portrait-gate'
@@ -87,7 +85,13 @@ export function ProgramApplyGateModals({
         </>
       ) : null}
 
-      <PFModal open={kind === 'not-eligible'} size="sm" onClose={onClose} mobilePlacement="full">
+      <PFModal
+        open={kind === 'not-eligible'}
+        size="sm"
+        onClose={onClose}
+        mobilePlacement="full"
+        showCloseButton={false}
+      >
         <div className={styles.content}>
           <div className={styles.textBlock}>
             <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
@@ -110,7 +114,13 @@ export function ProgramApplyGateModals({
         </div>
       </PFModal>
 
-      <PFModal open={kind === 'already-applied'} size="sm" onClose={onClose} mobilePlacement="full">
+      <PFModal
+        open={kind === 'already-applied'}
+        size="sm"
+        onClose={onClose}
+        mobilePlacement="full"
+        showCloseButton={false}
+      >
         <div className={styles.content}>
           <div className={styles.textBlock}>
             <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
@@ -157,16 +167,8 @@ export function ProgramApplyRequiredConsentModal({
 }: ProgramApplyRequiredConsentModalProps) {
   // 시안: 서약서가 섞이면 '서약 및 동의' 문구, 동의서만이면 '동의' 문구
   const includesPledge = missingConsentTypes.includes('FACILITATOR_PLEDGE')
-  // PC 팝업은 기존처럼 닫기(X) 없음. 모바일 전체 화면은 다른 전체 화면 팝업과 같이 닫기(X) 노출.
-  const isBelowPc = useMediaQuery(platformMediaQueries.belowPc)
   return (
-    <PFModal
-      open={open}
-      size="sm"
-      onClose={onClose}
-      mobilePlacement="full"
-      showCloseButton={isBelowPc}
-    >
+    <PFModal open={open} size="sm" onClose={onClose} mobilePlacement="full" showCloseButton={false}>
       <div className={`${styles.content} ${styles.requiredConsentContent}`}>
         <div className={styles.textBlock}>
           <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
@@ -228,7 +230,7 @@ export function ProgramApplyCompleteModal({
   onViewApplications,
 }: ProgramApplyCompleteModalProps) {
   return (
-    <PFModal open={open} size="sm" onClose={onClose} mobilePlacement="full">
+    <PFModal open={open} size="sm" onClose={onClose} mobilePlacement="full" showCloseButton={false}>
       <div className={styles.content}>
         <div className={styles.textBlock}>
           <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>

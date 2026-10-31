@@ -1,6 +1,10 @@
 import { useMemo } from 'react'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import {
+  RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
+  RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
+} from '@/features/program/general/lib/recruit-radio-defaults'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
@@ -39,11 +43,11 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
     useIndividualRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
       'recruit.individual.announcementPublished',
-      'published'
+      RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
     )
   const [interviewRequired, setInterviewRequired] = useIndividualRecruitField<string>(
     'recruit.individual.interviewRequired',
-    'yes'
+    RECRUIT_INTERVIEW_REQUIRED_DEFAULT
   )
 
   const [programAnchorIso, setProgramAnchorIso] = useIndividualRecruitField<string | null>(

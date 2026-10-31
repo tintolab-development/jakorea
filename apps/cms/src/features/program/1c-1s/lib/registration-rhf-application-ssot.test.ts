@@ -26,6 +26,7 @@ import {
   omitCompanySchoolApplicationOverlayKeys,
   persistCompanySchoolPreferredScheduleBlock,
   serializeCompanySchoolApplicationForFormVersion,
+  withEmptyCompanySchoolApplicationPreferredSchedule,
 } from './registration-rhf-application'
 import { serializeCompanySchoolRecruitmentForFormVersion } from './registration-rhf-recruitment'
 import { serializeCompanySchoolRegistrationForFormVersion } from './serialize-registration-overlay-from-canonical'
@@ -216,6 +217,22 @@ describe('1사1교 등록 기관 신청 RHF SSOT', () => {
         'application.economy.previousYearParticipation': '',
       }).application.previousYearParticipation
     ).toBe('')
+  })
+
+  it('등록 위저드 희망 일정은 빈 칸이 기본값이다', () => {
+    const empty = emptyCompanySchoolApplicationFormState()
+    expect(empty.schedule.first.date).toBeNull()
+    expect(empty.schedule.first.session).toBe('')
+    expect(empty.schedule.second.date).toBeNull()
+    const cleared = withEmptyCompanySchoolApplicationPreferredSchedule(filledApplication())
+    expect(cleared.schedule.first).toEqual(empty.schedule.first)
+    expect(cleared.schedule.second).toEqual(empty.schedule.second)
+    expect(cleared.basicInfo.applicationGrade).toBe('3')
+    const overlay = serializeCompanySchoolApplicationForFormVersion(cleared)
+    expect(overlay['application.economy.schedule.first']).toEqual(empty.schedule.first)
+    expect(readCompanySchoolApplicationEditorState(companySchoolApplicationEditorState(filledApplication()))?.schedule).toEqual(
+      empty.schedule
+    )
   })
 
   it('1·2지망 일정은 primitive이고 Dayjs/Blob/circular이 없다', () => {

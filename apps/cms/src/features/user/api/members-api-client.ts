@@ -731,35 +731,6 @@ export async function fetchConsentEvidenceBlobRemote(
   }
 }
 
-/** signed-document originalFileObjectId → 민감 파일 relay. 없으면 filled evidence 폴백. */
-export async function fetchConsentCrimeOriginalBlobRemote(input: {
-  memberId: number
-  consentType: string
-  reason: string
-  consentRecordId?: number
-  filled: FilledDocumentResponse
-}): Promise<Blob | null> {
-  try {
-    const signed = await fetchConsentSignedDocumentRemote(
-      input.memberId,
-      input.consentType,
-      { reason: input.reason },
-      input.consentRecordId
-    )
-    if (signed.originalFileObjectId != null) {
-      const blob = await loadSensitiveAdminFileBlob({
-        fileObjectId: signed.originalFileObjectId,
-        reason: input.reason,
-        claimPath: signed.originalDownloadApi,
-      })
-      return blobWithEvidenceMime(blob, 'crime-consent.pdf')
-    }
-  } catch {
-    /* filled evidence 폴백 */
-  }
-  return fetchConsentEvidenceBlobRemote(input.filled, input.reason)
-}
-
 const CRIME_ORIGINAL_FALLBACK_FILENAME = '성범죄_경력조회_동의서.pdf'
 
 /** 성범죄 업로드 원본. signed-document의 originalDownloadApi + SENSITIVE_FILE_DOWNLOAD. */
@@ -778,6 +749,29 @@ export async function fetchConsentOriginalFileBlobRemote(
   } catch {
     return null
   }
+}
+
+/** signed-document originalFileObjectId → 민감 파일 relay. 없으면 filled evidence 폴백. */
+export async function fetchConsentCrimeOriginalBlobRemote(input: {
+  memberId: number
+  consentType: string
+  reason: string
+  consentRecordId?: number
+  filled: FilledDocumentResponse
+}): Promise<Blob | null> {
+  try {
+    const signed = await fetchConsentSignedDocumentRemote(
+      input.memberId,
+      input.consentType,
+      { reason: input.reason },
+      input.consentRecordId
+    )
+    const original = await fetchConsentOriginalFileBlobRemote(signed, input.reason)
+    if (original != null) return original
+  } catch {
+    /* filled evidence 폴백 */
+  }
+  return fetchConsentEvidenceBlobRemote(input.filled, input.reason)
 }
 
 export async function fetchMemberExternalIdentifiersRemote(

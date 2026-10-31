@@ -117,6 +117,7 @@ export function OneToOneInquiryWriteModal({
 
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       size="md"
       title="1:1 문의 작성하기"

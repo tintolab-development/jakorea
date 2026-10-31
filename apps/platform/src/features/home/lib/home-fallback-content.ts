@@ -40,9 +40,9 @@ export const HOME_HERO_SLIDES: readonly HomeHeroSlide[] = [
     id: 'hero-1',
     eyebrow: 'JA KOREA',
     titleLines: ['청소년의 가능성이', '더 넓은 세상과 만납니다'],
-    description: 'JA는 학생들이 멘토와 연결되어 실제 세상을 경험하며 배울 수 있는 교육 기회를 제공합니다.',
-    placeholderBackground:
-      'linear-gradient(115deg, #16323c 0%, #22404d 45%, #285f74 100%)',
+    description:
+      'JA는 학생들이 멘토와 연결되어 실제 세상을 경험하며 배울 수 있는 교육 기회를 제공합니다.',
+    placeholderBackground: 'linear-gradient(115deg, #16323c 0%, #22404d 45%, #285f74 100%)',
     imageUrl: TEMP_HERO_IMAGE_URL,
   },
   {
@@ -50,8 +50,7 @@ export const HOME_HERO_SLIDES: readonly HomeHeroSlide[] = [
     eyebrow: 'JA KOREA',
     titleLines: ['경제교육으로 여는', '청소년의 내일'],
     description: '전국 200여 개 지역에서 전문 봉사자·교사·강사가 청소년의 배움과 함께합니다.',
-    placeholderBackground:
-      'linear-gradient(115deg, #1c3a46 0%, #285f74 55%, #01a1af 130%)',
+    placeholderBackground: 'linear-gradient(115deg, #1c3a46 0%, #285f74 55%, #01a1af 130%)',
     imageUrl: TEMP_HERO_IMAGE_URL,
   },
   {
@@ -59,8 +58,7 @@ export const HOME_HERO_SLIDES: readonly HomeHeroSlide[] = [
     eyebrow: 'JA KOREA',
     titleLines: ['배움의 기회를', '모든 청소년에게'],
     description: '기업과 지역사회가 함께 만드는 실질적인 경제·금융·진로 교육을 경험해 보세요.',
-    placeholderBackground:
-      'linear-gradient(115deg, #22404d 0%, #337791 60%, #46b17b 140%)',
+    placeholderBackground: 'linear-gradient(115deg, #22404d 0%, #337791 60%, #46b17b 140%)',
     imageUrl: TEMP_HERO_IMAGE_URL,
   },
 ]
@@ -76,7 +74,7 @@ export type HomeAchievementStat = {
 export const HOME_ACHIEVEMENT_STATS: readonly HomeAchievementStat[] = [
   { label: '전국 교육 네트워크 분포', value: '200', unit: '지역+' },
   { label: '전문 협업 학교, 기관, 단체', value: '1000', unit: '개+' },
-  { label: '전문 봉사자,교사, 강사', value: '3000', unit: '명+' },
+  { label: '전문 봉사자, 교사, 강사', value: '3000', unit: '명+' },
 ]
 
 export const HOME_ACHIEVEMENT_HIGHLIGHT: HomeAchievementStat = {

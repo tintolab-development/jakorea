@@ -15,9 +15,12 @@ import {
   type GeneralEssayColumnKey,
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
+import { ApprovalStatusText } from '@/shared/components/approval-status-text'
+import { mapVolunteerDocumentStatusToApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { GeneralDocumentScreeningStatusText, GeneralManagerEvaluationBadge } from './status-text'
 
 const NAME_COLUMN_WIDTH = 140
+const HOME_ADDRESS_COLUMN_WIDTH = 200
 const CONTACT_COLUMN_WIDTH = 200
 const EMAIL_COLUMN_WIDTH = 200
 const JA_VOLUNTEER_EXPERIENCE_COLUMN_WIDTH = 160
@@ -27,17 +30,33 @@ const NO_COLUMN_WIDTH = 80
 const MANAGER_EVAL_COLUMN_WIDTH = 200
 const DOCUMENT_STATUS_COLUMN_WIDTH = 160
 
-export const GENERAL_DOC_SCREENING_TABLE_SCROLL_X =
+const GENERAL_DOC_SCREENING_TABLE_SCROLL_X_BASE =
   SELECTION_COLUMN_WIDTH +
   NO_COLUMN_WIDTH +
   NAME_COLUMN_WIDTH +
   CONTACT_COLUMN_WIDTH +
   EMAIL_COLUMN_WIDTH +
   JA_VOLUNTEER_EXPERIENCE_COLUMN_WIDTH +
-  MANAGER_EVAL_COLUMN_WIDTH +
-  MANAGER_EVAL_COLUMN_WIDTH +
   DOCUMENT_STATUS_COLUMN_WIDTH +
   Object.values(GENERAL_ESSAY_COLUMN_DEFAULT_WIDTHS).reduce((sum, width) => sum + width, 0)
+
+export const GENERAL_DOC_SCREENING_TABLE_SCROLL_X =
+  GENERAL_DOC_SCREENING_TABLE_SCROLL_X_BASE + MANAGER_EVAL_COLUMN_WIDTH * 2
+
+const GENERAL_VOLUNTEER_APPLICATION_TABLE_SCROLL_X =
+  SELECTION_COLUMN_WIDTH +
+  NO_COLUMN_WIDTH +
+  NAME_COLUMN_WIDTH +
+  HOME_ADDRESS_COLUMN_WIDTH +
+  CONTACT_COLUMN_WIDTH +
+  EMAIL_COLUMN_WIDTH +
+  DOCUMENT_STATUS_COLUMN_WIDTH
+
+export function resolveGeneralDocScreeningTableScrollX(interviewEnabled: boolean): number {
+  return interviewEnabled
+    ? GENERAL_DOC_SCREENING_TABLE_SCROLL_X
+    : GENERAL_VOLUNTEER_APPLICATION_TABLE_SCROLL_X
+}
 
 const CENTER_CELL_CLASS = 'general-volunteer-screening__center-cell'
 const NOWRAP_CELL_CLASS = 'general-volunteer-screening__nowrap-cell'
@@ -67,12 +86,14 @@ function renderEssayCell(value: string | undefined, record: GeneralVolunteerAppl
 }
 
 export function useGeneralVolunteerDocScreeningColumns({
+  interviewEnabled = true,
   onManagerAEvaluationChange,
   onManagerBEvaluationChange,
   openManagerDropdown,
   setOpenManagerDropdown,
   updatingManagerEvaluation,
 }: {
+  interviewEnabled?: boolean
   onManagerAEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   onManagerBEvaluationChange: (id: string, evaluation: GeneralManagerEvaluation) => void
   openManagerDropdown: { rowId: string; manager: 'A' | 'B' } | null
@@ -80,6 +101,86 @@ export function useGeneralVolunteerDocScreeningColumns({
   updatingManagerEvaluation: string | null
 }): ColumnsType<GeneralVolunteerApplicantRow> {
   return useMemo(() => {
+    if (!interviewEnabled) {
+      return [
+        {
+          title: 'No.',
+          dataIndex: 'no',
+          key: 'no',
+          width: NO_COLUMN_WIDTH,
+          minWidth: NO_COLUMN_WIDTH,
+          align: 'center',
+          fixed: 'left',
+          onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+          onCell: () => ({ className: CENTER_CELL_CLASS }),
+        },
+        {
+          title: '신청 봉사자명',
+          dataIndex: 'name',
+          key: 'name',
+          width: NAME_COLUMN_WIDTH,
+          minWidth: NAME_COLUMN_WIDTH,
+          align: 'center',
+          fixed: 'left',
+          ellipsis: { showTitle: true },
+          onHeaderCell: () => ({ className: `${CENTER_CELL_CLASS} ${NAME_CELL_CLASS}` }),
+          onCell: () => ({
+            className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS} ${NAME_CELL_CLASS}`,
+          }),
+        },
+        {
+          title: '자택 주소지',
+          dataIndex: 'homeAddress',
+          key: 'homeAddress',
+          width: HOME_ADDRESS_COLUMN_WIDTH,
+          minWidth: HOME_ADDRESS_COLUMN_WIDTH,
+          align: 'center',
+          ellipsis: { showTitle: true },
+          onHeaderCell: () => ({ className: CENTER_CELL_CLASS }),
+          onCell: () => ({ className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS}` }),
+          render: (value: string | undefined) => value?.trim() || '-',
+        },
+        {
+          title: '연락처',
+          dataIndex: 'contact',
+          key: 'contact',
+          width: CONTACT_COLUMN_WIDTH,
+          minWidth: CONTACT_COLUMN_WIDTH,
+          align: 'center',
+          ellipsis: { showTitle: true },
+          onHeaderCell: () => ({ className: `${CENTER_CELL_CLASS} ${CONTACT_CELL_CLASS}` }),
+          onCell: () => ({
+            className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS} ${CONTACT_CELL_CLASS}`,
+          }),
+        },
+        {
+          title: '이메일',
+          dataIndex: 'email',
+          key: 'email',
+          width: EMAIL_COLUMN_WIDTH,
+          minWidth: EMAIL_COLUMN_WIDTH,
+          align: 'center',
+          ellipsis: { showTitle: true },
+          onHeaderCell: () => ({ className: `${CENTER_CELL_CLASS} ${EMAIL_CELL_CLASS}` }),
+          onCell: () => ({
+            className: `${CENTER_CELL_CLASS} ${NOWRAP_CELL_CLASS} ${EMAIL_CELL_CLASS}`,
+          }),
+        },
+        {
+          title: '프로그램 승인 현황',
+          dataIndex: 'documentScreeningStatus',
+          key: 'documentScreeningStatus',
+          width: DOCUMENT_STATUS_COLUMN_WIDTH,
+          minWidth: DOCUMENT_STATUS_COLUMN_WIDTH,
+          align: 'center',
+          onCell: () => ({ className: 'general-volunteer-screening__screening-status-cell' }),
+          render: (status: GeneralVolunteerApplicantRow['documentScreeningStatus']) => (
+            <ApprovalStatusText status={mapVolunteerDocumentStatusToApprovalStatus(status)} />
+          ),
+        },
+      ]
+    }
+
     const essayColumns: ColumnsType<GeneralVolunteerApplicantRow> = (
       Object.keys(GENERAL_VOLUNTEER_ESSAY_COLUMN_TITLES) as GeneralEssayColumnKey[]
     ).map(key => {
@@ -253,6 +354,7 @@ export function useGeneralVolunteerDocScreeningColumns({
       },
     ]
   }, [
+    interviewEnabled,
     onManagerAEvaluationChange,
     onManagerBEvaluationChange,
     openManagerDropdown,

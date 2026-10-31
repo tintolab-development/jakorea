@@ -16,3 +16,39 @@
   display: inline;
   min-width: 0;
 }
+
+/* 제미나이(Figma 11001-287013): 1행 3칸(라벨 250px) — PC에서만 3열, 그 아래는 공통 세로 배치 */
+@media (--bp-pc-up) {
+  .section .geminiTable .geminiTripleRow {
+    grid-template-columns:
+      250px minmax(0, 1fr)
+      250px minmax(0, 1fr)
+      250px minmax(0, 1fr);
+  }
+
+  .section .geminiTable .geminiTripleRow > :nth-child(3) {
+    border-left: 1px solid var(--table-line, #e0e0e0);
+  }
+}
+
+/* Figma 11001-286941 강의비 책정 기준: 항목 간격 4px 12px, 14px 세로 구분선 */
+.feeBasisList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.feeBasisItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.feeBasisDivider {
+  width: 1px;
+  height: 14px;
+  flex-shrink: 0;
+  background: var(--color-border-default);
+}

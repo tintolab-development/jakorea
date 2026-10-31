@@ -61,6 +61,27 @@ describe('student-lecture-attendance-api', () => {
     expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('p1', [10, 11], {})
   })
 
+  it('includes 사전교육(PRE_EDUCATION) schedules like other education sessions', async () => {
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 9, sessionNo: 1, scheduleRole: 'PRE_EDUCATION' },
+      { scheduleId: 10, sessionNo: 2, scheduleRole: 'EDUCATION' },
+      { scheduleId: 12, sessionNo: 3, scheduleRole: 'CLOSING' },
+    ])
+    fetchAttendancesByScheduleIdsRemoteMock.mockResolvedValue({
+      '9': [{ participantId: 77, status: 'PRESENT' }],
+      '10': [{ participantId: 77, status: 'PRESENT' }],
+    })
+
+    const detail = await fetchStudentLectureAttendanceByParticipantRemote({
+      programId: 'p1',
+      participantId: 77,
+      studentName: '김학생',
+    })
+
+    expect(detail.sessions.map(session => session.scheduleId)).toEqual([9, 10])
+    expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('p1', [9, 10], {})
+  })
+
   it('bulk 출석 조회 실패 시 오류를 전파한다', async () => {
     fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
       { scheduleId: 10, sessionNo: 1 },

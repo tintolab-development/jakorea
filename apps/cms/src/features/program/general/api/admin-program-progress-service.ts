@@ -333,10 +333,38 @@ export async function fetchAllProgramProgressParticipants(programId: string) {
 }
 
 /**
+ * 365일 이하 구간별로 순서대로 조회해 이어 붙인다(구간 경계 일정은 처음 나온 것만).
+ * 구간이 없으면 BE 기본 범위 1회. 각 구간은 서버 순서(start_at, id) 그대로.
+ */
+async function fetchProgramSchedulesInDateRanges(
+  programId: string,
+  ranges: readonly import('@/features/program/general/api/program-progress-api-client').ProgramScheduleDateRange[] | null | undefined
+) {
+  if (!ranges || ranges.length === 0) return fetchProgramSchedulesViaDashboardRemote(programId)
+  const merged: Awaited<ReturnType<typeof fetchProgramSchedulesViaDashboardRemote>> = []
+  const seen = new Set<string>()
+  for (const range of ranges) {
+    const items = await fetchProgramSchedulesViaDashboardRemote(programId, range)
+    for (const item of items) {
+      const key = item.scheduleId != null ? String(item.scheduleId) : null
+      if (key != null) {
+        if (seen.has(key)) continue
+        seen.add(key)
+      }
+      merged.push(item)
+    }
+  }
+  return merged
+}
+
+/**
  * dashboard program-schedules + schedule attendances + participants.
  * mock/null 폴백 없음.
  */
-export async function fetchGeneralProgressAttendanceBundle(programId: string): Promise<{
+export async function fetchGeneralProgressAttendanceBundle(
+  programId: string,
+  scheduleDateRanges?: readonly import('@/features/program/general/api/program-progress-api-client').ProgramScheduleDateRange[] | null
+): Promise<{
   schedules: import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
   participants: import('@/shared/api/generated/dashboard/schemas/participantListItemResponse').ParticipantListItemResponse[]
   attendancesByScheduleId: Record<
@@ -346,7 +374,7 @@ export async function fetchGeneralProgressAttendanceBundle(programId: string): P
 }> {
   assertProgramProgressRemoteReady()
   const [schedules, participantItems] = await Promise.all([
-    fetchProgramSchedulesViaDashboardRemote(programId),
+    fetchProgramSchedulesInDateRanges(programId, scheduleDateRanges),
     fetchAllProgramProgressParticipants(programId),
   ])
   const scheduleIdList = schedules

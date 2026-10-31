@@ -89,7 +89,8 @@ describe('individual approval education scope', () => {
   it('assigned display includes PRE_EDUCATION but approval selection does not', () => {
     const slots = [slot(11), slot(13, { scheduleRole: 'PRE_EDUCATION', educationSlotKey: 'general-pre-education:1' })]
     expect(listAssignedEducationSlotOptions(slots).map(item => item.scheduleId)).toEqual([11, 13])
-    expect(listAssignedEducationSlotOptions(slots)[1]?.title).toContain('사전 교육')
+    expect(listAssignedEducationSlotOptions(slots)[1]?.title).toMatch(/^사전교육 · /)
+    expect(listAssignedEducationSlotOptions(slots)[1]?.title).not.toContain('사전 교육')
     const plan = planFor('SCHEDULE', 'MULTI', [], slots)
     expect(plan.lockedScheduleIds).toEqual([11])
     expect(validateIndividualApprovalScheduleSelection(plan, [11, 13]).ok).toBe(false)

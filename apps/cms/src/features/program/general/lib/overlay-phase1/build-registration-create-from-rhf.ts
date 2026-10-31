@@ -6,10 +6,7 @@ import dayjs from 'dayjs'
 import type { Program, ProgramCategory } from '@/types/domain'
 import { mapGeneralProgramToCreateRequest } from '@/features/program/general/api/adapters/general-program-adapters'
 import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
-import {
-  withIndividualInterviewRequiredCreateDefault,
-  withVolunteerInterviewRequiredCreateDefault,
-} from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import { withGeneralRecruitRadioDefaults } from '@/features/program/general/lib/recruit-radio-defaults'
 import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
 import type { GeneralRegistrationEditorExtras } from '@/features/program/general/lib/registration-overlay-to-program'
 import type { ProgramRegistrationParticipantState } from '@/features/template/ui/form-set/registration-form/general/paragraph-body'
@@ -253,12 +250,11 @@ export function buildGeneralProgramCreateFromWizardRhf(args: {
     },
   })
   const participant = participantFromWizardUi(args.uiValues)
-  const selectedRecruitKv = withVolunteerInterviewRequiredCreateDefault(
-    withIndividualInterviewRequiredCreateDefault(
-      selectRecruitmentKvForParticipant(args.uiValues.recruitmentKv, participant),
-      participant.individual === true
-    ),
-    participant.volunteer === true
+  // 라디오를 건드리지 않아 화면 기본값만 보이던 공고 게시·명단·사전안내·면접 유무를 필수 검사와 같은 값으로 채운다.
+  const selectedRecruitKv = withGeneralRecruitRadioDefaults(
+    selectRecruitmentKvForParticipant(args.uiValues.recruitmentKv, participant),
+    participant,
+    { wizardKv: true }
   )
   const mediaPersist = pickRecruitMediaPersistOverlay(
     collectSelectedRecruitOverlaysForProgram(independent.programDraft)

@@ -58,6 +58,31 @@ export function screeningDoc1DetailTitle(kind: ScreeningSubjectKind, name: strin
     : `봉사자 1차 서류 심사 대상자 상세 (${name})`
 }
 
+/** 봉사자 면접 없음 — 상세 모달 제목 */
+export function screeningVolunteerApplicationDetailTitle(name: string): string {
+  return `봉사자 신청 상세 (${name})`
+}
+
+/** 봉사자 면접 없음 — 상세 마지막 브레드크럼 (이름 없음) */
+export const SCREENING_VOLUNTEER_APPLICATION_DETAIL_BREADCRUMB = '봉사자 신청 상세'
+
+/** 1차 서류 심사 화면: 면접 ON이면 심사 대상자 상세, OFF이면 신청 상세 */
+export function resolveGeneralVolunteerDocScreeningDetailMeta(
+  name: string,
+  interviewEnabled: boolean
+): { title: string; breadcrumbLabel: string } {
+  if (!interviewEnabled) {
+    return {
+      title: screeningVolunteerApplicationDetailTitle(name),
+      breadcrumbLabel: SCREENING_VOLUNTEER_APPLICATION_DETAIL_BREADCRUMB,
+    }
+  }
+  return {
+    title: screeningDoc1DetailTitle('volunteer', name),
+    breadcrumbLabel: name,
+  }
+}
+
 /** 참여자 면접 심사 탭별 상세 모달 제목 (activeTab 기준) */
 export function resolveGeneralParticipantApplicantDetailTitle(
   activeTab: string,

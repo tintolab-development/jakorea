@@ -213,7 +213,15 @@ export function PFModal({
           </button>
         ) : null}
         {title ? (
-          <PFText as="div" typo="hl-lg" color="black" id={titleId} className={styles.title}>
+          <PFText
+            as="div"
+            typo="hl-lg"
+            color="black"
+            id={titleId}
+            className={[styles.title, showCloseButton ? styles.titleWithClose : undefined]
+              .filter(Boolean)
+              .join(' ')}
+          >
             {title}
           </PFText>
         ) : null}

@@ -21,6 +21,7 @@ import {
   isScheduleEducationAndIpsBothPerSchedule,
   PRE_EDUCATION_SCHEDULE_LABEL,
   shouldUseScheduleEventBlockLayout,
+  toPreEducationDisplayLabel,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import {
@@ -378,6 +379,8 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     'generalRegistration.educationScheduleCurriculum.participationByDetail',
     {}
   )
+  // 블록 제목 표시만 「사전교육」 — overlay 기본 일정명은 preEducationBlockLabel 그대로 기록한다.
+  const preEducationHeadingLabel = toPreEducationDisplayLabel(preEducationBlockLabel)
   // UI 기본 일정명을 overlay에 기록 — 미터치 시에도 등록 완료·검증에 반영
   useEffect(() => {
     if (!scheduleCurriculumPreEducation) return
@@ -1018,7 +1021,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
     prependTraining ? (
       <div key="pre-education" className="program-registration-schedule-curriculum__block">
         <div className="program-registration-schedule-curriculum__session-heading">
-          ■ {preEducationBlockLabel}
+          ■ {preEducationHeadingLabel}
         </div>
         <div className="program-registration-curriculum__session-row">
           <div className="program-registration-schedule-curriculum__session-panel">
@@ -1057,7 +1060,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
         {Array.from({ length: detailCount }, (_, i) => {
           const n = i + 1
           const isTrainingDetail = replaceFirstTraining && n === 1
-          const eventHeading = isTrainingDetail ? preEducationBlockLabel : `행사 일정 ${pad2(n)}`
+          const eventHeading = isTrainingDetail ? preEducationHeadingLabel : `행사 일정 ${pad2(n)}`
           return (
             <div key={n} className="program-registration-schedule-curriculum__block">
               {showEventHeadings || isTrainingDetail ? (
@@ -1122,7 +1125,7 @@ export function ProgramRegistrationEducationScheduleCurriculumParagraph({
       {Array.from({ length: detailCount }, (_, i) => {
         const n = i + 1
         const isTrainingDetail = replaceFirstTraining && n === 1
-        const detailHeading = isTrainingDetail ? preEducationBlockLabel : `세부 일정 ${pad2(n)}`
+        const detailHeading = isTrainingDetail ? preEducationHeadingLabel : `세부 일정 ${pad2(n)}`
         return (
           <div key={n} className="program-registration-schedule-curriculum__block">
             {detailCount > 1 || scheduleCurriculumPreEducation || isTrainingDetail ? (

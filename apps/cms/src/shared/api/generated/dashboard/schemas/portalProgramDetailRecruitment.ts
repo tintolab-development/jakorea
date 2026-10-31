@@ -51,6 +51,12 @@ export interface PortalProgramDetailRecruitment {
   interviewEndAt?: string | null;
   /** @nullable */
   finalPassAnnouncementAt?: string | null;
+  /** @nullable */
+  documentPassAnnouncementMethod?: string | null;
+  /** @nullable */
+  interviewMethod?: string | null;
+  /** @nullable */
+  finalPassAnnouncementMethod?: string | null;
   /**
      * 이 행 값. 비어 있으면 null.
      * @nullable

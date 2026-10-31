@@ -93,6 +93,7 @@ export function SettingsChangePasswordModal({ open, onClose }: SettingsChangePas
   return (
     <>
       <PFModal
+        showCloseButton={false}
         open={open}
         size="md"
         title="비밀번호 변경"

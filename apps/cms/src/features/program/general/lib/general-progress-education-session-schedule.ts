@@ -17,12 +17,10 @@ function hasPhysicalScheduleId(schedule: object): boolean {
   return typeof id === 'number' && Number.isFinite(id) && id > 0
 }
 
-/**
- * 일반 프로그램 진행 현황 출석·과제 회차 테이블 대상.
- * 커리큘럼/운영 기간 창(다일 all-day, sessionNo=1이어도)은 수업 일정이 아니다.
- * 응답에 allDay가 없어도 startAt~endAt이 24시간을 넘으면 기간 창으로 본다.
- */
-export function isGeneralProgressEducationSessionSchedule(schedule: unknown): boolean {
+function isEducationSessionScheduleWithRoles(
+  schedule: unknown,
+  options: { includePreEducation: boolean }
+): boolean {
   if (schedule == null || typeof schedule !== 'object') return false
   if (!hasPhysicalScheduleId(schedule)) return false
   if (isMultiDayAllDayPeriodWindowForSurvey(schedule)) return false
@@ -37,6 +35,24 @@ export function isGeneralProgressEducationSessionSchedule(schedule: unknown): bo
   const { scheduleRole } = readProgramScheduleCanonicalFields(schedule)
   if (scheduleRole == null) return true
   const role = String(scheduleRole).trim().toUpperCase()
-  if (role === 'PRE_EDUCATION' || role === 'CLOSING') return false
+  if (role === 'PRE_EDUCATION') return options.includePreEducation
+  if (role === 'CLOSING') return false
   return role === 'EDUCATION' || role === 'SESSION'
+}
+
+/**
+ * 일반 프로그램 진행 현황 과제 회차 테이블 대상(사전교육·종료 일정 제외).
+ * 커리큘럼/운영 기간 창(다일 all-day, sessionNo=1이어도)은 수업 일정이 아니다.
+ * 응답에 allDay가 없어도 startAt~endAt이 24시간을 넘으면 기간 창으로 본다.
+ */
+export function isGeneralProgressEducationSessionSchedule(schedule: unknown): boolean {
+  return isEducationSessionScheduleWithRoles(schedule, { includePreEducation: false })
+}
+
+/**
+ * 출석 관리 대상 — 사전교육(PRE_EDUCATION) 일정도 다른 교육 일정과 똑같이 포함한다.
+ * (사전교육은 신청 가능·배정 가능 일정 후보에서만 빠진다.)
+ */
+export function isGeneralProgressAttendanceSessionSchedule(schedule: unknown): boolean {
+  return isEducationSessionScheduleWithRoles(schedule, { includePreEducation: true })
 }
