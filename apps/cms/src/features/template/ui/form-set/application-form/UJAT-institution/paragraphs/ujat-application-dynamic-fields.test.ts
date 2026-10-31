@@ -6,6 +6,7 @@ import { normalizeUjatApplicationGradeDetailForClassCount } from './ujat-program
 import { buildProgramLinkedScheduleOptions } from './ujat-program-application-preferred-education-schedule-paragraph'
 import { ujatEducationScheduleSettingsOverlayKeys } from '@/features/program/ujat/lib/ujat-education-schedule-settings-types'
 import { ujatHalfScheduleOverlayKeys } from '@/features/program/ujat/lib/ujat-half-education-schedule-types'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 
 describe('UJAT 기관 신청 동적 필드', () => {
   it('학급 수를 줄이면 제거된 반의 번호와 학생 수를 함께 정리한다', () => {
@@ -85,5 +86,46 @@ describe('UJAT 기관 신청 동적 필드', () => {
       [h1.eventRange]: { start: '2026-04-03T00:00:00.000Z', end: '2026-04-03T00:00:00.000Z' },
     })
     expect(options).toEqual([{ id: 'h1:2026-04-03', display: '2026년 4월 3일(금)' }])
+  })
+
+  it('저장된 typed MAIN_EDUCATION 구간이 있으면 overlay 반기를 덮지 않는다', () => {
+    const h1 = ujatHalfScheduleOverlayKeys('h1')
+    const overlay = {
+      [h1.eventRange]: { start: '2026-10-02T00:00:00.000Z', end: '2026-10-09T00:00:00.000Z' },
+    }
+    const typedDetail: UjatTypedDetail = {
+      schemaVersion: 1,
+      halfPlans: [
+        {
+          semesterType: 'FIRST_HALF',
+          stages: [
+            {
+              stage: 'MAIN_EDUCATION',
+              rows: [
+                {
+                  startDate: '2026-04-03',
+                  endDate: '2026-04-17',
+                  excludedDates: ['2026-04-10'],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    expect(buildProgramLinkedScheduleOptions(overlay, typedDetail).map(option => option.id)).toEqual(
+      ['h1:2026-04-03', 'h1:2026-04-17']
+    )
+  })
+
+  it('typed MAIN_EDUCATION 구간이 없으면 위저드 overlay 반기를 쓴다', () => {
+    const h1 = ujatHalfScheduleOverlayKeys('h1')
+    const overlay = {
+      [h1.eventRange]: { start: '2026-04-03T00:00:00.000Z', end: '2026-04-03T00:00:00.000Z' },
+    }
+    const typedDetail: UjatTypedDetail = { schemaVersion: 1, halfPlans: [] }
+    expect(buildProgramLinkedScheduleOptions(overlay, typedDetail)).toEqual([
+      { id: 'h1:2026-04-03', display: '2026년 4월 3일(금)' },
+    ])
   })
 })

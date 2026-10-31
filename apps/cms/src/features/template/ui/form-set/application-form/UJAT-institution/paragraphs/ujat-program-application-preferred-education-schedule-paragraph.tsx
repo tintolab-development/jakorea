@@ -16,7 +16,12 @@ import {
   getUjatProgramRegistrationOverlayVersion,
   subscribeUjatProgramRegistrationOverlay,
 } from '@/features/template/ui/form-set/registration-form/UJAT/ujat-program-registration-overlay-sync'
-import { resolveUjatEducationScheduleSettingsSemesterDisplay } from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
+import {
+  hasUjatTypedMainEducationRange,
+  resolveUjatEducationScheduleSettingsSemesterDisplay,
+  resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail,
+} from '@/features/program/ujat/lib/ujat-education-schedule-settings-display'
 import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-date-korean-weekday'
 
 /** 템플릿 편집(authoring) — 교육 진행 희망일 값 영역 */
@@ -95,11 +100,15 @@ type PreferredScheduleOption = { id: string; display: string }
  * 기관은 연 1회 신청하므로 상·하반기 금요일을 반기 구분 없이 날짜순 한 목록으로 노출한다.
  */
 export function buildProgramLinkedScheduleOptions(
-  overlay: Record<string, unknown>
+  overlay: Record<string, unknown>,
+  typedDetail?: UjatTypedDetail | null
 ): PreferredScheduleOption[] {
+  const useTyped = hasUjatTypedMainEducationRange(typedDetail)
   const options: Array<PreferredScheduleOption & { dateKey: string }> = []
   for (const half of ['h1', 'h2'] as const) {
-    const display = resolveUjatEducationScheduleSettingsSemesterDisplay(half, overlay)
+    const display = useTyped
+      ? resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail(half, typedDetail)
+      : resolveUjatEducationScheduleSettingsSemesterDisplay(half, overlay)
     const start = display.eventRange.start ? dayjs(display.eventRange.start).startOf('day') : null
     const end = display.eventRange.end ? dayjs(display.eventRange.end).startOf('day') : null
     if (start == null || end == null || !start.isValid() || !end.isValid()) continue
@@ -203,6 +212,7 @@ type UjatProgramApplicationPreferredEducationScheduleParagraphProps = {
   paragraphInteractionMode?: ParagraphBodyInteractionMode
   programLinkedPreview?: boolean
   choiceDisplayOnly?: boolean
+  typedDetail?: UjatTypedDetail | null
 }
 
 /**
@@ -215,6 +225,7 @@ export function UjatProgramApplicationPreferredEducationScheduleParagraph({
   paragraphInteractionMode = 'authoring',
   programLinkedPreview = false,
   choiceDisplayOnly = false,
+  typedDetail = null,
 }: UjatProgramApplicationPreferredEducationScheduleParagraphProps) {
   const registrationOverlayVersion = useSyncExternalStore(
     subscribeUjatProgramRegistrationOverlay,
@@ -222,8 +233,9 @@ export function UjatProgramApplicationPreferredEducationScheduleParagraph({
     getUjatProgramRegistrationOverlayVersion
   )
   const linkedScheduleOptions = useMemo(
-    () => buildProgramLinkedScheduleOptions(getUjatProgramRegistrationOverlayRecord()),
-    [registrationOverlayVersion]
+    () =>
+      buildProgramLinkedScheduleOptions(getUjatProgramRegistrationOverlayRecord(), typedDetail),
+    [registrationOverlayVersion, typedDetail]
   )
 
   const [selectedIdList, setSelectedIdList] = useUjatApplicationInstitutionOverlayKv<string[]>(

@@ -271,8 +271,17 @@ import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/prog
 import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import { getRecruitTypedInterviewRecord } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import type { Program } from '@/types/domain'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
 
 export { getUjatApplicationVolunteerOverlayRecord }
+
+function readUjatTypedDetailFromLinkedProgram(
+  program: Program | null | undefined
+): UjatTypedDetail | undefined {
+  if (program == null) return undefined
+  const typed = (program as Program & { ujatTypedDetail?: UjatTypedDetail }).ujatTypedDetail
+  return typed
+}
 
 const VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY = 'recruit.volunteer.interviewRequired'
 
@@ -2137,6 +2146,10 @@ export function useProgramParticipantApplicationEditor(
           ? { enabled: true as const, isTemplateAuthoringMode: true as const }
           : undefined,
       ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
+      ujatPreferredEducationScheduleTypedDetail:
+        variant === 'ujat-application-institution'
+          ? readUjatTypedDetailFromLinkedProgram(linkedProgram)
+          : undefined,
       ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
       hiddenParagraphIds: (() => {
         if (variant === 'ujat-application-volunteer') {
