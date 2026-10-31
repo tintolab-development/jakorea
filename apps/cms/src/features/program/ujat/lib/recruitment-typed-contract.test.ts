@@ -8,7 +8,9 @@ import {
   mapUjatVolunteerTargetsToApi,
   overlayRecordToInterviewConfig,
   parseRecruitmentInterviewConfig,
+  typedFieldsFromRecruitmentFormValues,
 } from './recruitment-typed-contract'
+import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 
 dayjs.extend(utc)
 dayjs.extend(timezone)
@@ -19,6 +21,37 @@ describe('mapUjatVolunteerTargetsToApi', () => {
       'elementary',
       '기타',
     ])
+  })
+})
+
+describe('typedFieldsFromRecruitmentFormValues', () => {
+  it('institution kind는 resultAnnouncementDate를 finalPassAnnouncementAt으로 매핑한다', () => {
+    const fields = typedFieldsFromRecruitmentFormValues(
+      {
+        resultAnnouncementDate: '2026-03-16',
+        participantRecruitmentAnnouncementPublished: 'published',
+        participantRecruitmentNotesNotApplicable: 'applicable',
+      } as ProgramDetailEditFormValues,
+      'institution'
+    )
+    expect(fields.finalPassAnnouncementAt).toBe('2026-03-16')
+    expect(fields.announcementPublished).toBe(true)
+    expect(fields.remarksNotApplicable).toBe(false)
+  })
+
+  it('volunteer kind는 finalPassAnnouncementDate를 finalPassAnnouncementAt으로 매핑한다', () => {
+    const fields = typedFieldsFromRecruitmentFormValues(
+      {
+        finalPassAnnouncementDate: '2026-03-23',
+        documentPassAnnouncementDate: '2026-03-16',
+        volunteerRecruitmentAnnouncementPublished: 'published',
+        volunteerRecruitmentNotesNotApplicable: 'applicable',
+        volunteerTargets: ['university'],
+      } as ProgramDetailEditFormValues,
+      'volunteer'
+    )
+    expect(fields.finalPassAnnouncementAt).toBe('2026-03-23')
+    expect(fields.documentPassAnnouncementAt).toBe('2026-03-16')
   })
 })
 

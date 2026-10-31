@@ -64,6 +64,7 @@ import {
   UJAT_EDU_VOL_TAB_PARAM,
   isUjatEducationProgressVolunteersTab,
   parseUjatEduVolTab,
+  parseUjatVolAddMemberIdParam,
   type UjatDetailLnbKey,
   type UjatEducationProgressInstitutionDetailTab,
   type UjatEducationProgressVolunteerDetailTab,
@@ -327,11 +328,11 @@ const UJAT_NESTED_DETAIL_QUERY_PARAMS = [
   UJAT_EDU_VOL_TAB_PARAM,
 ] as const
 
-const UJAT_REGISTERED_SURVEY_MOCK: UjatRegisteredSurvey[] = []
+const EMPTY_UJAT_REGISTERED_SURVEYS: UjatRegisteredSurvey[] = []
 
-const UJAT_SATISFACTION_SURVEY_MOCK: UjatSatisfactionSurveyByAudience = {}
+const EMPTY_UJAT_SATISFACTION_SURVEYS: UjatSatisfactionSurveyByAudience = {}
 
-const UJAT_LECTURE_EVAL_SURVEY_MOCK: UjatRegisteredSurvey | null = null
+const EMPTY_UJAT_LECTURE_EVAL_SURVEY: UjatRegisteredSurvey | null = null
 
 function buildUjatRegionCapacityUpserts(program: Program): UjatRegionCapacityUpsert[] {
   return ujatRegionCapacityUpsertsFromState(program.ujatRegionCapacity)
@@ -529,12 +530,15 @@ function normalizeUjatDetailParams(
   }
 
   const volAddMemberIdRaw = next.get(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+  const volAddMemberIdParsed = parseUjatVolAddMemberIdParam(volAddMemberIdRaw)
   if (
     lnb !== 'education_progress' ||
     !isUjatEducationProgressVolunteersTab(tab) ||
-    !volAddMemberIdRaw?.trim()
+    volAddMemberIdParsed == null
   ) {
     next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+  } else if (volAddMemberIdRaw !== volAddMemberIdParsed) {
+    next.set(UJAT_VOL_ADD_MEMBER_ID_PARAM, volAddMemberIdParsed)
   }
 
   if (!shouldKeepUjatInstitutionApplicationViewParams(lnb, tab)) {
@@ -808,13 +812,13 @@ export function UjatProgramDetailFullPageModal({
   const [downloadingPollResults, setDownloadingPollResults] = useState(false)
   const pollResultsExportRef = useRef<HTMLDivElement>(null)
   const [registeredSurveys, setRegisteredSurveys] = useState<UjatRegisteredSurvey[]>(
-    UJAT_REGISTERED_SURVEY_MOCK
+    EMPTY_UJAT_REGISTERED_SURVEYS
   )
   const [activeRegisteredSurveyId, setActiveRegisteredSurveyId] = useState<string | null>(
-    UJAT_REGISTERED_SURVEY_MOCK[0]?.id ?? null
+    EMPTY_UJAT_REGISTERED_SURVEYS[0]?.id ?? null
   )
   const [satisfactionSurveysByAudience, setSatisfactionSurveysByAudience] =
-    useState<UjatSatisfactionSurveyByAudience>(UJAT_SATISFACTION_SURVEY_MOCK)
+    useState<UjatSatisfactionSurveyByAudience>(EMPTY_UJAT_SATISFACTION_SURVEYS)
   const [activeSatisfactionAudience, setActiveSatisfactionAudience] =
     useState<UjatSatisfactionAudienceKey>('teacher')
   const [satisfactionCreateModalOpen, setSatisfactionCreateModalOpen] = useState(false)
@@ -836,7 +840,7 @@ export function UjatProgramDetailFullPageModal({
     null
   )
   const [lectureEvalSurvey, setLectureEvalSurvey] = useState<UjatRegisteredSurvey | null>(
-    UJAT_LECTURE_EVAL_SURVEY_MOCK
+    EMPTY_UJAT_LECTURE_EVAL_SURVEY
   )
   const [lectureEvalSubmitted, setLectureEvalSubmitted] = useState(false)
   const [lectureEvalFormDraft, setLectureEvalFormDraft] = useState<WritingFormDraft | null>(null)
@@ -1127,7 +1131,9 @@ export function UjatProgramDetailFullPageModal({
     ? parseUjatEduInstTab(searchParams)
     : ('application' as UjatEducationProgressInstitutionDetailTab)
 
-  const volAddMemberIdEarly = open ? searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM) : null
+  const volAddMemberIdEarly = open
+    ? parseUjatVolAddMemberIdParam(searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM))
+    : null
 
   const eduVolunteerHalf =
     activeTab.startsWith('edu_h2') ? 'h2' : activeTab.startsWith('edu_h1') ? 'h1' : null
@@ -1910,7 +1916,9 @@ export function UjatProgramDetailFullPageModal({
     )
   }, [location.pathname, navigate, onClose, searchParams])
 
-  const volAddMemberId = open ? searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM) : null
+  const volAddMemberId = open
+    ? parseUjatVolAddMemberIdParam(searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM))
+    : null
 
   const handleOpenSurveyCreateModal = useCallback(() => {
     setSelectedSurveyTemplateId(null)
@@ -2055,6 +2063,13 @@ export function UjatProgramDetailFullPageModal({
         void showAlert({ title: '삭제 실패', content: result.message })
         return
       }
+      return
+    }
+    if (!import.meta.env.DEV) {
+      void showAlert({
+        title: '삭제 불가',
+        content: '설문 삭제는 remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+      })
       return
     }
     setRegisteredSurveys(prev => {
@@ -2264,6 +2279,13 @@ export function UjatProgramDetailFullPageModal({
         void showAlert({ title: '삭제 실패', content: result.message })
         return
       }
+      return
+    }
+    if (!import.meta.env.DEV) {
+      void showAlert({
+        title: '삭제 불가',
+        content: '만족도조사 삭제는 remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+      })
       return
     }
     setSatisfactionSurveysByAudience(prev => {
@@ -2674,6 +2696,12 @@ export function UjatProgramDetailFullPageModal({
         })
         return
       }
+    } else if (!import.meta.env.DEV) {
+      void showAlert({
+        title: '제출 불가',
+        content: '강의평가 제출은 remote API가 활성화된 환경에서만 이용할 수 있습니다.',
+      })
+      return
     }
 
     setLectureEvalSubmitted(true)
@@ -2736,12 +2764,14 @@ export function UjatProgramDetailFullPageModal({
 
   const openVolAddRegistration = useCallback(
     (memberId: string) => {
+      const parsedMemberId = parseUjatVolAddMemberIdParam(memberId)
+      if (parsedMemberId == null) return
       const next = new URLSearchParams(searchParams)
       if (programId) next.set('programId', programId)
       next.set(LNB_PARAM, 'education_progress')
       const halfTab = activeTab.startsWith('edu_h2') ? 'edu_h2_volunteers' : 'edu_h1_volunteers'
       next.set(TAB_PARAM, halfTab)
-      next.set(UJAT_VOL_ADD_MEMBER_ID_PARAM, memberId)
+      next.set(UJAT_VOL_ADD_MEMBER_ID_PARAM, parsedMemberId)
       next.delete(UJAT_INST_APP_ID_PARAM)
       next.delete(UJAT_APPLICANT_ID_PARAM)
       next.delete(UJAT_EDU_INST_ID_PARAM)

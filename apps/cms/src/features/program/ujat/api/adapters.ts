@@ -268,6 +268,40 @@ function dateValue(value: Date | string | undefined): string | undefined {
   return value.trim() ? value : undefined
 }
 
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000
+
+/** ISO·날짜 문자열 → KST 달력일 YYYY-MM-DD. */
+function kstCalendarDateKey(value: string): string | undefined {
+  const text = value.trim()
+  if (!text) return undefined
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text
+  const ms = Date.parse(text)
+  if (Number.isNaN(ms)) return undefined
+  return new Date(ms + KST_OFFSET_MS).toISOString().slice(0, 10)
+}
+
+/**
+ * 모집 창 startAt/endAt — 날짜만(`YYYY-MM-DD`)이면 KST 하루 시작/끝 UTC ISO로 확장.
+ * 이미 시각이 있는 Instant는 그대로 둔다(봉사자 행 기존 직렬화 유지).
+ */
+function recruitmentWindowInstant(
+  value: Date | string | undefined,
+  edge: 'start' | 'end'
+): string | undefined {
+  const raw = dateValue(value)
+  if (!raw) return undefined
+  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) return raw
+  if (value instanceof Date) return value.toISOString()
+  const dateKey = kstCalendarDateKey(raw)
+  if (!dateKey) return raw
+  const [y, m, d] = dateKey.split('-').map(Number)
+  const ms =
+    edge === 'start'
+      ? Date.UTC(y, m - 1, d, 0, 0, 0, 0) - KST_OFFSET_MS
+      : Date.UTC(y, m - 1, d, 23, 59, 59, 999) - KST_OFFSET_MS
+  return new Date(ms).toISOString()
+}
+
 /**
  * BE LocalDate / 사업·운영 일자 — Asia/Seoul 달력일 `YYYY-MM-DD`.
  * Date·ISO instant는 UTC 날짜가 아니라 서울 날짜로 보낸다(하루 밀림 방지).
@@ -470,8 +504,14 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
   const institution = (program.programRecruitments ?? []).find(
     row => (row.recruitmentType ?? '').toUpperCase() === 'PARTICIPANT'
   )
-  const institutionStart = dateValue(institution?.startAt ?? program.applicationStartDate)
-  const institutionEnd = dateValue(institution?.endAt ?? program.applicationEndDate)
+  const institutionStart = recruitmentWindowInstant(
+    institution?.startAt ?? program.applicationStartDate,
+    'start'
+  )
+  const institutionEnd = recruitmentWindowInstant(
+    institution?.endAt ?? program.applicationEndDate,
+    'end'
+  )
   const volunteers = (program.programRecruitments ?? [])
     .filter(row => (row.recruitmentType ?? '').toUpperCase() === 'VOLUNTEER')
     .slice()
@@ -483,8 +523,14 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
   const h1 =
     volunteers.find(row => row.recruitTerm === 'FIRST_HALF') ??
     (volunteers.every(row => row.recruitTerm == null) ? volunteers[0] : undefined)
-  const volunteerStart = dateValue(h1?.startAt ?? program.volunteerApplicationStartDate)
-  const volunteerEnd = dateValue(h1?.endAt ?? program.volunteerApplicationEndDate)
+  const volunteerStart = recruitmentWindowInstant(
+    h1?.startAt ?? program.volunteerApplicationStartDate,
+    'start'
+  )
+  const volunteerEnd = recruitmentWindowInstant(
+    h1?.endAt ?? program.volunteerApplicationEndDate,
+    'end'
+  )
   const rows = [
     recruitmentRow({
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.PARTICIPANT,
@@ -525,8 +571,8 @@ export function mapUjatProgramRecruitmentsToRequest(program: Program): ProgramRe
         targetType: 'COLLEGE_STUDENT',
         applicationType: 'VOLUNTEER',
         id: row.id,
-        startAt: dateValue(row.startAt ?? undefined),
-        endAt: dateValue(row.endAt ?? undefined),
+        startAt: recruitmentWindowInstant(row.startAt ?? undefined, 'start'),
+        endAt: recruitmentWindowInstant(row.endAt ?? undefined, 'end'),
         operationStartDate: dateOnlyValue(row.operationStartDate ?? undefined),
         operationEndDate: dateOnlyValue(row.operationEndDate ?? undefined),
         maxCount: program.ujatSecondHalfVolunteerCount ?? program.generalVolunteers,
@@ -561,15 +607,18 @@ export function buildUjatNewVolunteerHalfRowRequests(
         row.recruitTerm != null &&
         !savedTerms.has(row.recruitTerm)
     )
-    .map(row => ({
+    .map(row => {
+      const startAt = recruitmentWindowInstant(row.startAt ?? undefined, 'start')
+      const endAt = recruitmentWindowInstant(row.endAt ?? undefined, 'end')
+      return {
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
       targetType: 'COLLEGE_STUDENT',
       applicationType: 'VOLUNTEER',
       recruitTerm: row.recruitTerm,
       status: ProgramRecruitmentRequestStatus.ACTIVE,
       selectionMethod: 'ADMIN_REVIEW',
-      ...(row.startAt ? { startAt: row.startAt } : {}),
-      ...(row.endAt ? { endAt: row.endAt } : {}),
+      ...(startAt ? { startAt } : {}),
+      ...(endAt ? { endAt } : {}),
       ...(row.announcementTitle != null ? { announcementTitle: row.announcementTitle } : {}),
       ...(row.programDescription != null ? { programDescription: row.programDescription } : {}),
       ...(row.recruitmentGuide != null ? { recruitmentGuide: row.recruitmentGuide } : {}),
@@ -607,7 +656,8 @@ export function buildUjatNewVolunteerHalfRowRequests(
         : {}),
       ...(row.volunteerTargets !== undefined ? { volunteerTargets: row.volunteerTargets } : {}),
       ...(row.interviewConfig !== undefined ? { interviewConfig: row.interviewConfig } : {}),
-    })) as ProgramRecruitmentRequest[]
+    }
+    }) as ProgramRecruitmentRequest[]
   return omitRecruitmentOperationDatesOutsideBusiness(built, existing) as ProgramRecruitmentRequest[]
 }
 
@@ -635,8 +685,8 @@ function withUjatCreateSecondHalfVolunteerRow(
       recruitmentType: ProgramRecruitmentRequestRecruitmentType.VOLUNTEER,
       targetType: 'COLLEGE_STUDENT',
       applicationType: 'VOLUNTEER',
-      startAt: dateValue(h2Row.startAt ?? undefined),
-      endAt: dateValue(h2Row.endAt ?? undefined),
+      startAt: recruitmentWindowInstant(h2Row.startAt ?? undefined, 'start'),
+      endAt: recruitmentWindowInstant(h2Row.endAt ?? undefined, 'end'),
       operationStartDate: dateOnlyValue(h2Row.operationStartDate ?? undefined),
       operationEndDate: dateOnlyValue(h2Row.operationEndDate ?? undefined),
       maxCount: program.ujatSecondHalfVolunteerCount ?? program.generalVolunteers,
