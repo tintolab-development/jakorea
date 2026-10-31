@@ -57,6 +57,7 @@ export type UjatPreferredEducationDateOption = {
 
 export type PortalFormRuntimeContext = {
   interviewEnabled?: boolean
+  /** application-ujat-school: 항상 배열. 후보 없으면 []. null 금지. */
   ujatPreferredEducationDateOptions?: UjatPreferredEducationDateOption[]
   activityTerm?: string | null
   ujatActivityTerm?: string | null
