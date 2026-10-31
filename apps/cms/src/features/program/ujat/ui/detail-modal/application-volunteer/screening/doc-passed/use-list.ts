@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  mergeUjatVolunteerApplicantQueryRow,
   sortUjatVolunteerDocPassedApplicants,
   type UjatVolunteerApplicantRow,
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
@@ -9,6 +10,10 @@ import { listUjatVolunteerApplicationsPage } from '@/features/program/ujat/api/a
 import { buildUjatVolunteerDocPassedListQuery } from '@/features/program/ujat/api/applications-list-query'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import {
+  invalidateUjatVolunteerApplicationLists,
+  patchUjatVolunteerApplicationListCaches,
+} from '@/features/program/ujat/api/volunteer-application-list-cache'
 import { giveUpUjatVolunteerApplicationRemote } from '@/features/program/ujat/api/volunteer-mutations'
 import { assignGeneralVolunteerInterview } from '@/features/program/general/api/admin-applications-service'
 import { toInterviewAssignNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
@@ -138,14 +143,17 @@ export function useUjatVolunteerDocPassed({
 
   useEffect(() => {
     setList(previous =>
-      queriedRows.map(row => previous.find(current => current.id === row.id) ?? row)
+      queriedRows.map(row =>
+        mergeUjatVolunteerApplicantQueryRow(
+          previous.find(current => current.id === row.id),
+          row
+        )
+      )
     )
   }, [queriedRows])
 
   const invalidateVolunteerLists = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: [...ujatQueryKeys.applications(), 'volunteers', programId],
-    })
+    await invalidateUjatVolunteerApplicationLists(queryClient, programId)
   }, [programId, queryClient])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
@@ -233,12 +241,22 @@ export function useUjatVolunteerDocPassed({
           payload.notifyTiming,
           payload.manualNotifyAt
         )
-        await assignGeneralVolunteerInterview({
+        const assignment = await assignGeneralVolunteerInterview({
           programId,
           applicationId: target.id,
           ...slotTimes,
           ...assignNotify,
         })
+        const assignmentPatch: Partial<UjatVolunteerApplicantRow> = {
+          interviewAssignmentStatus: 'assigned',
+          assignedInterviewDateLabel: payload.dateLabel,
+          assignedInterviewTime: payload.timeRange,
+          ...(assignment.interviewAssignmentId != null
+            ? { interviewAssignmentId: assignment.interviewAssignmentId }
+            : {}),
+        }
+        patchUjatVolunteerApplicationListCaches(queryClient, programId, target.id, assignmentPatch)
+        updateRow(target.id, assignmentPatch)
         await invalidateVolunteerLists()
       } catch (error) {
         console.debug('ujat interview assign remote failed', error)
@@ -253,11 +271,6 @@ export function useUjatVolunteerDocPassed({
         assignInFlightRef.current = false
       }
 
-      updateRow(target.id, {
-        interviewAssignmentStatus: 'assigned',
-        assignedInterviewDateLabel: payload.dateLabel,
-        assignedInterviewTime: payload.timeRange,
-      })
       setAssignFlow({
         type: 'complete',
         applicantName: target.name,
@@ -265,7 +278,7 @@ export function useUjatVolunteerDocPassed({
         payload,
       })
     },
-    [invalidateVolunteerLists, programId, showAlert, updateRow]
+    [invalidateVolunteerLists, programId, queryClient, showAlert, updateRow]
   )
 
   const closeAssignCompleteModal = useCallback(() => {
