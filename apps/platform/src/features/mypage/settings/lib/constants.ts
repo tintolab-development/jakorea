@@ -16,10 +16,10 @@ export const SETTINGS_WITHDRAW_GUIDE = {
   reason: '회원 요청에 의한 탈퇴',
 } as const
 
-/** 로컬/dev 조회 mock — 시안 일반회원 필드셋 */
+/** 로컬/dev 조회 mock — 시안 일반회원 필드셋 (PROD name tree-shake) */
 export const MOCK_SETTINGS_PROFILE = {
   joinedAt: '2026-09-15',
-  name: '홍길동',
+  name: import.meta.env.DEV ? '이름예시' : '',
   phone: '010-1234-5678',
   birthDate: '1999-01-01',
   gender: 'M',
@@ -46,7 +46,7 @@ export const MOCK_TEACHER_SETTINGS_PROFILE = {
 } as const
 
 export const MOCK_SETTINGS_GUARDIAN = {
-  name: '홍길동',
+  name: import.meta.env.DEV ? '이름예시' : '',
   phone: '010-1234-5678',
   relationship: '아빠',
 } as const

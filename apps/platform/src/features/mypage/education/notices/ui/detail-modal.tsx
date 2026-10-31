@@ -186,7 +186,11 @@ export function EducationInProgressNoticeDetailModal({
     [applicationId, applicationType, notice?.inlineImages, noticeId]
   )
   const { displayName: memberDisplayName } = useMypageMember()
-  const currentUserName = isRemote ? memberDisplayName : MOCK_MYPAGE_USER_NAME
+  const currentUserName = isRemote
+    ? memberDisplayName
+    : import.meta.env.DEV
+      ? MOCK_MYPAGE_USER_NAME
+      : ''
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null)
   /** 댓글 입력창에서 고른 반응 — 전송 시 반영 (CMS comment-composer 와 동일) */
   const [draftEmojiIndex, setDraftEmojiIndex] = useState<number | null>(null)

@@ -5,6 +5,7 @@ import {
   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION,
   INSTITUTION_SEX_OFFENSE_CONSENT_SUBMISSION_SECTION,
 } from '@jakorea/form-schema/program-application'
+import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import type { ProgramDetailCase } from '@/features/program'
 import { PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE } from '@/features/program/lib/program-apply-messages'
 import {
@@ -18,6 +19,7 @@ import {
   emptyUjatInstitutionGuidanceExtras,
   UJAT_CLASSROOM_SETTING_FIELD,
   UJAT_CLASSROOM_SETTING_OPTIONS,
+  UJAT_GUIDANCE_INTRO_TITLE,
   UJAT_SNACK_AVAILABILITY_OPTIONS,
   UJAT_SNACK_FIELD,
   type ApplyUjatInstitutionGuidanceExtras,
@@ -26,6 +28,7 @@ import {
   ApplyInstitutionSexOffenseInquiry,
   ApplyInstitutionSexOffenseSubmission,
   ApplyInstitutionSexOffenseUjatWrite,
+  normalizeUjatSexOffenseWriteValues,
   shouldShowSexOffenseInquiry,
   type ApplyInstitutionSexOffenseValues,
 } from '@/features/program/ui/apply-institution-sex-offense/apply-institution-sex-offense'
@@ -42,8 +45,6 @@ import {
   resolveUjatTemporaryScheduleConfirmErrorMessage,
   UJAT_STALE_REVISION_ALERT_MESSAGE,
 } from '../lib/institution-guidance-errors'
-import { UjatTemporaryScheduleSummary } from './ujat-progress-confirm-form'
-import type { EducationUjatTemporarySchedule } from '../model/types'
 import {
   resolveOrganizationGuidancePatchBlockedMessage,
   type OrganizationGuidancePatchPortalContext,
@@ -63,7 +64,7 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { FormTemplateHost, ParagraphCard } from '@/features/form-template'
 import { institutionGuidanceParagraphHeading } from '@/features/program/ui/apply-institution-guidance/institution-guidance-paragraph-heading'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton } from '@/shared/ui'
 import styles from './institution-guidance-write-form.module.css'
 
 type EducationInstitutionGuidanceWriteFormProps = {
@@ -78,7 +79,6 @@ type EducationInstitutionGuidanceWriteFormProps = {
   submitPeriodLabel?: string
   ujatAcknowledgedSchedule?: UjatAcknowledgedSchedule | null
   scheduleRevisionDrift?: boolean
-  temporarySchedule?: EducationUjatTemporarySchedule
 }
 
 export function EducationInstitutionGuidanceWriteForm({
@@ -91,7 +91,6 @@ export function EducationInstitutionGuidanceWriteForm({
   submitPeriodLabel,
   ujatAcknowledgedSchedule,
   scheduleRevisionDrift = false,
-  temporarySchedule,
 }: EducationInstitutionGuidanceWriteFormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -130,7 +129,10 @@ export function EducationInstitutionGuidanceWriteForm({
       return
     }
     const nextSexOffense = isUjat
-      ? { ...sexOffense, submissionRequest: sexOffense.submissionRequest || 'request' }
+      ? normalizeUjatSexOffenseWriteValues({
+          ...sexOffense,
+          submissionRequest: sexOffense.submissionRequest || 'request',
+        })
       : sexOffense
     const state: TeacherInstitutionGuidanceFormState = {
       guidance,
@@ -265,27 +267,18 @@ export function EducationInstitutionGuidanceWriteForm({
   return (
     <>
       <FormTemplateHost surface="platformUser">
-        <div className={styles.paragraphStack}>
-          {isUjat ? <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} /> : null}
+        <div
+          className={[styles.paragraphStack, isUjat ? styles.paragraphStackGuidance : undefined]
+            .filter(Boolean)
+            .join(' ')}
+        >
           {isUjat ? (
-            <ParagraphCard
-              dataParagraphId="ujat-institution-guidance-intro"
-              editableHeading={institutionGuidanceParagraphHeading(
-                'UJAT 프로그램_기관 안내 사항 작성',
-                '',
-                { required: false },
-              )}
-            >
-              {submitPeriodLabel?.trim() ? (
-                <PFText as="p" typo="bd-md-md" color="black">
-                  {`제출 기간 : ${submitPeriodLabel.trim()}`}
-                </PFText>
-              ) : (
-                <PFText as="p" typo="bd-md-md" color="black">
-                  제출 기간 : -
-                </PFText>
-              )}
-            </ParagraphCard>
+            <div className={styles.introCard} data-paragraph-id="ujat-institution-guidance-intro">
+              <p className={styles.introTitle}>{UJAT_GUIDANCE_INTRO_TITLE}</p>
+              <p className={styles.introPeriod}>
+                {`제출 기간 : ${submitPeriodLabel?.trim() || '-'}`}
+              </p>
+            </div>
           ) : null}
 
           <ApplyInstitutionGuidance
@@ -318,10 +311,12 @@ export function EducationInstitutionGuidanceWriteForm({
               </ParagraphCard>
 
               <ParagraphCard
-                dataParagraphId="institution-sex-offense-ujat-write"
+                dataParagraphId={
+                  PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.sexOffenseConsentInquiryMethod
+                }
                 editableHeading={institutionGuidanceParagraphHeading(
                   INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.title,
-                  INSTITUTION_SEX_OFFENSE_CONSENT_INQUIRY_SECTION.description,
+                  '성범죄 경력 조회 동의서 제출 방식을 선택해 주세요. 온라인 제출 선택 시 기관 ID와 검증번호를 함께 전달해 주세요.',
                 )}
               >
                 <ApplyInstitutionSexOffenseUjatWrite value={sexOffense} onChange={setSexOffense} />

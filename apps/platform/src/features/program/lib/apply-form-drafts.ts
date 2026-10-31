@@ -87,12 +87,6 @@ function createSeedDraftForApplyCase(applyCase: ProgramApplyFormCase): WritingFo
   }
 }
 
-export function getMockApplyFormCase(
-  program: ProgramApplyFormCaseInput
-): ProgramApplyFormCase {
-  return resolveProgramApplyFormCase(program)
-}
-
 /**
  * 프로그램 → 신청 폼 draft (mock).
  * 케이스 해석 후 CMS templateCode와 동일한 시드 draft를 반환한다.

@@ -59,6 +59,12 @@ export type PortalFormRuntimeContext = {
   interviewEnabled?: boolean
   /** application-ujat-school: 항상 배열. 후보 없으면 []. null 금지. */
   ujatPreferredEducationDateOptions?: UjatPreferredEducationDateOption[]
+  /**
+   * UJAT 봉사자 form-binding — BE 2026-10-31.
+   * FIRST_HALF → `"1기"`, SECOND_HALF → `"2기"`.
+   * recruitmentId/recruitTerm 없으면 필드 자체가 없을 수 있다(omit).
+   * 없으면 제출 확인 문구에 기수를 넣지 않는다(N기·placeholder 노출 금지).
+   */
   activityTerm?: string | null
   ujatActivityTerm?: string | null
   [key: string]: unknown

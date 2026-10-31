@@ -29,6 +29,8 @@ import {
   programApplyGateMemberSettingsPath,
   shouldHideApplyPageBlockedBanner,
   useProgramApplyGate,
+  getCmsRegistrationFixtureById,
+  mapCmsProgramToPlatformDetail,
 } from '@/features/program'
 import { usePortalProfileQuery } from '@/features/auth/sign-in/hooks/use-portal-profile-query'
 import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
@@ -243,6 +245,7 @@ import {
   findIncompleteUjatSexOffenseWriteMessage,
   emptyInstitutionSexOffense,
   findIncompleteSexOffenseMessage,
+  normalizeUjatSexOffenseWriteValues,
   sexOffenseInquiryAnswerFromValues,
   sexOffenseSubmissionAnswerFromValues,
   sexOffenseValuesFromDraftAnswers,
@@ -361,7 +364,7 @@ import {
 } from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
-import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
+import { isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
 import { normalizeScheduleDisplayLabel } from '@/shared/lib/format-display-date'
 import {
   PFAlertModal,
@@ -374,6 +377,13 @@ import {
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  APPLY_GATE_CONFIG_ERROR_MESSAGE,
+  APPLY_GATE_LOGIN_SUBMIT_MESSAGE,
+  APPLY_GATE_NOT_FOUND_MESSAGE,
+  resolveApplyGate,
+  type ProgramApplyDetailStatus,
+} from './apply-gate'
 
 function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
   return { date: '', classPeriod: '', startTime: '', endTime: '' }
@@ -447,8 +457,34 @@ export function ProgramApplyPage() {
   const fromPath = new URLSearchParams(search).get('from') ?? undefined
   const [isReady, setIsReady] = useState(false)
   const programId = getProgramIdFromPath()
-  const { program, isLoading, status } = useProgramDetail(programId, { fresh: true, focus })
+  const { program: remoteProgram, isLoading, status } = useProgramDetail(programId, {
+    fresh: true,
+    focus,
+  })
   const numericProgramId = parsePortalProgramId(programId)
+  const devMockApplyEnabled = import.meta.env.DEV && !isRemoteApiConfigured()
+  const devMockProgram = useMemo(() => {
+    if (!devMockApplyEnabled || numericProgramId == null) return undefined
+    const fixture = getCmsRegistrationFixtureById(String(numericProgramId))
+    return fixture ? mapCmsProgramToPlatformDetail(fixture) : undefined
+  }, [devMockApplyEnabled, numericProgramId])
+  const program = remoteProgram ?? devMockProgram ?? undefined
+  const detailStatusForGate: ProgramApplyDetailStatus = devMockApplyEnabled
+    ? program
+      ? 'ready'
+      : numericProgramId != null
+        ? 'not-found'
+        : status
+    : status
+  let applyGate = resolveApplyGate({
+    hasAccessToken: Boolean(getAccessToken()),
+    remoteConfigured: isRemoteApiConfigured(),
+    numericProgramId,
+    status: detailStatusForGate,
+  })
+  if (devMockApplyEnabled && applyGate === 'config-error') {
+    applyGate = program ? 'ready' : 'not-found'
+  }
   const remoteApplyEnabled =
     isRemoteApiConfigured() &&
     numericProgramId != null &&
@@ -507,13 +543,17 @@ export function ProgramApplyPage() {
       return
     }
 
-    if (!getDevAuthLoggedIn()) {
+    if (applyGate === 'login-required') {
       navigate(resolveLoginRequiredPath(`/programs/${programId}/apply${search}`))
       return
     }
 
+    if (applyGate === 'loading') {
+      return
+    }
+
     setIsReady(true)
-  }, [navigate, programId, search])
+  }, [applyGate, navigate, programId, search])
 
   useEffect(() => {
     if (
@@ -1076,32 +1116,31 @@ export function ProgramApplyPage() {
             ...program,
             applicationType: focusedApplicationType,
           })
-          const programLinkedDraft = applyProgramLinkedApplicationDraftPatches(
-            preparePortalUjatApplicationDraft(
-              remoteDraft,
-              new Date(),
-              coerceApplicationFormDocument(remoteForm)?.runtimeContext,
-            ),
-            {
-              applyCase: applyCaseForDraft,
-              program,
-              runtimeContext: coerceApplicationFormDocument(remoteForm)?.runtimeContext,
-            }
-          )
+          const runtimeContext = coerceApplicationFormDocument(remoteForm)?.runtimeContext
+          // binding merge가 items(확인 문구)를 카탈로그 원문으로 덮을 수 있어
+          // 기수·연도 치환은 merge 이후에 다시 적용한다.
           const bindingMergedDraft =
             isVolunteerApplyFormCase(applyCaseForDraft) ||
             applyCaseForDraft === 'instructor' ||
             applyCaseForDraft === 'instructor-gemini'
-              ? mergeApplicationBindingRuntimeParagraphs(programLinkedDraft, remoteForm)
-              : programLinkedDraft
+              ? mergeApplicationBindingRuntimeParagraphs(remoteDraft, remoteForm)
+              : remoteDraft
+          const programLinkedDraft = applyProgramLinkedApplicationDraftPatches(
+            preparePortalUjatApplicationDraft(bindingMergedDraft, new Date(), runtimeContext),
+            {
+              applyCase: applyCaseForDraft,
+              program,
+              runtimeContext,
+            }
+          )
           setDraft(
             applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
-              ? prepareIndividualApplicationDraft(bindingMergedDraft, {
+              ? prepareIndividualApplicationDraft(programLinkedDraft, {
                   keepParagraphIds: interviewBindingParagraph
                     ? new Set([interviewBindingParagraph.id])
                     : undefined,
                 })
-              : bindingMergedDraft
+              : programLinkedDraft
           )
           const draftAnswers = remoteForm.draftAnswers
           const interviewParagraph = findDraftParagraph(
@@ -1396,6 +1435,10 @@ export function ProgramApplyPage() {
       return
     }
 
+    if (!devMockApplyEnabled) {
+      return
+    }
+
     const mockKey = `mock:${program.id}:${focusedApplicationType ?? ''}`
     if (hydratedFormKeyRef.current === mockKey) return
     hydratedFormKeyRef.current = mockKey
@@ -1440,6 +1483,7 @@ export function ProgramApplyPage() {
   }, [
     program,
     programId,
+    devMockApplyEnabled,
     remoteApplyEnabled,
     applicationFormQuery.status,
     applicationFormQuery.blockedReason,
@@ -2347,8 +2391,48 @@ export function ProgramApplyPage() {
       applicationFormQuery.status === 'error' ||
       applicationFormQuery.status === 'ready')
 
-  if (!isReady || isLoading || formLoading || !program) {
+  const gateLoading =
+    applyGate === 'loading' ||
+    !isReady ||
+    (applyGate === 'ready' && isLoading && !devMockApplyEnabled) ||
+    formLoading
+
+  if (gateLoading) {
     return <ProgramApplyLoading />
+  }
+
+  if (applyGate === 'login-required') {
+    return <ProgramApplyLoading />
+  }
+
+  if (applyGate === 'config-error') {
+    return (
+      <section className={[shell.page, styles.page].join(' ')}>
+        <div className={shell.inner}>
+          <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+            프로그램 신청하기
+          </PFText>
+          <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.blockedNotice}>
+            {APPLY_GATE_CONFIG_ERROR_MESSAGE}
+          </PFText>
+        </div>
+      </section>
+    )
+  }
+
+  if (applyGate === 'not-found' || !program) {
+    return (
+      <section className={[shell.page, styles.page].join(' ')}>
+        <div className={shell.inner}>
+          <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+            프로그램 신청하기
+          </PFText>
+          <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.blockedNotice}>
+            {APPLY_GATE_NOT_FOUND_MESSAGE}
+          </PFText>
+        </div>
+      </section>
+    )
   }
 
   if (!displayDraft && !remoteFormUnavailable) {
@@ -2908,12 +2992,15 @@ export function ProgramApplyPage() {
         isApplicationSexOffenseSubmissionParagraphId
       )
       if (sexOffenseParagraph) {
-        const sexOffenseError = isUjatInstitutionApplyFormCase(applyCase)
-          ? findIncompleteUjatSexOffenseWriteMessage({
+        const sexOffenseForValidate = isUjatInstitutionApplyFormCase(applyCase)
+          ? normalizeUjatSexOffenseWriteValues({
               ...sexOffense,
               submissionRequest: sexOffense.submissionRequest || 'request',
             })
-          : findIncompleteSexOffenseMessage(sexOffense)
+          : sexOffense
+        const sexOffenseError = isUjatInstitutionApplyFormCase(applyCase)
+          ? findIncompleteUjatSexOffenseWriteMessage(sexOffenseForValidate)
+          : findIncompleteSexOffenseMessage(sexOffenseForValidate)
         if (sexOffenseError) {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
@@ -3195,9 +3282,15 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(guidanceParagraph)] =
           guidanceAnswerFromValues(guidanceAnswers)
       }
+      const sexOffenseForSubmit = isUjatInstitutionApplyFormCase(applyCase)
+        ? normalizeUjatSexOffenseWriteValues({
+            ...sexOffense,
+            submissionRequest: sexOffense.submissionRequest || 'request',
+          })
+        : sexOffense
       if (sexOffenseParagraph) {
         overrides[resolveApplicationAnswerKey(sexOffenseParagraph)] =
-          sexOffenseSubmissionAnswerFromValues(sexOffense)
+          sexOffenseSubmissionAnswerFromValues(sexOffenseForSubmit)
       }
       if (instructorCrimeParagraph && instructorCrimeRecord.confirmed) {
         overrides[resolveApplicationAnswerKey(instructorCrimeParagraph)] =
@@ -3271,13 +3364,13 @@ export function ProgramApplyPage() {
         displayDraft,
         isApplicationSexOffenseInquiryParagraphId
       )
-      if (inquiryParagraph && shouldShowSexOffenseInquiry(sexOffense)) {
+      if (inquiryParagraph && shouldShowSexOffenseInquiry(sexOffenseForSubmit)) {
         overrides[resolveApplicationAnswerKey(inquiryParagraph)] =
-          sexOffenseInquiryAnswerFromValues(sexOffense)
+          sexOffenseInquiryAnswerFromValues(sexOffenseForSubmit)
       }
 
       const omitParagraphIds = new Set<string>()
-      if (inquiryParagraph && !shouldShowSexOffenseInquiry(sexOffense)) {
+      if (inquiryParagraph && !shouldShowSexOffenseInquiry(sexOffenseForSubmit)) {
         omitParagraphIds.add(inquiryParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(inquiryParagraph))
       }
@@ -3429,6 +3522,10 @@ export function ProgramApplyPage() {
         setGateModal(null)
         setCompleteModalOpen(true)
       } catch (error) {
+        if (getQueryRetryHttpStatus(error) === 401) {
+          setSubmitAlert({ description: APPLY_GATE_LOGIN_SUBMIT_MESSAGE })
+          return
+        }
         const message = getProgramApplicationApiErrorMessage(error)
         const promptSettingsGrade = isIndividualApplicationEnrolledGradeRequiredError(error)
         const errorCode = getApplicationApiErrorCode(error)
@@ -3514,7 +3611,11 @@ export function ProgramApplyPage() {
       })
       return
     }
-    setCompleteModalOpen(true)
+    setSubmitAlert({
+      description: isRemoteApiConfigured()
+        ? APPLY_GATE_LOGIN_SUBMIT_MESSAGE
+        : APPLY_GATE_CONFIG_ERROR_MESSAGE,
+    })
   }
 
   const visibleInstructorCrimeParagraph = displayDraft
@@ -3535,9 +3636,16 @@ export function ProgramApplyPage() {
           <ProgramBackButton size="large" label="이전으로" onClick={handleBack} />
         </div>
 
-        <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
-          프로그램 신청하기
-        </PFText>
+        <div className={styles.titleRow}>
+          <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+            프로그램 신청하기
+          </PFText>
+          {devMockApplyEnabled && displayDraft ? (
+            <span className={styles.devMockBadge} aria-label="개발용 mock 신청 양식">
+              DEV MOCK
+            </span>
+          ) : null}
+        </div>
 
         <div className={styles.summary}>
           <PFText as="h2" typo="hl-sm" color="black">

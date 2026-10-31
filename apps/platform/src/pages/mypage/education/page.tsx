@@ -12,7 +12,6 @@ import {
   showInstructorApplyCta,
   useMypageMember,
   useMypagePageAuthReady,
-  isSchoolTeacherMypageProfile,
   type EducationApplicationListParams,
   type EducationApplicationTab,
   type MypageLnbItemKey,
@@ -31,9 +30,8 @@ export function MypageEducationPage() {
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile, 'education')
-  const educationStatusAudience = isSchoolTeacherMypageProfile(member.profile)
-    ? ('teacher' as const)
-    : ('general' as const)
+  /** 교육현황 진행 상태 라벨 — 승인 대기/진행중/진행 완료/활동 포기/신청 반려 (Figma·SSOT) */
+  const educationStatusAudience = 'teacher' as const
 
   useEffect(() => {
     const onPopState = () => {

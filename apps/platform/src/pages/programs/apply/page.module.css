@@ -12,9 +12,28 @@
   margin-bottom: var(--spacing-40);
 }
 
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+  margin-bottom: var(--spacing-40);
+}
+
 .pageTitle {
   margin: 0;
-  margin-bottom: var(--spacing-40);
+}
+
+.devMockBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-8);
+  background: var(--color-warning-100, #fff4e5);
+  color: var(--color-warning-800, #8a4b00);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .summary {

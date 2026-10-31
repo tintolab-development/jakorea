@@ -17,9 +17,12 @@ import hostStyles from '../apply-form-field-host.module.css'
 import blockStyles from '../apply-preferred-schedule/apply-preferred-schedule.module.css'
 import styles from './apply-ujat-institution-grade-info.module.css'
 
-const GRADE_OPTIONS = Array.from({ length: 6 }, (_, index) => ({
-  value: String(index + 1),
-  label: `${index + 1}학년`,
+/** UJAT 초등 신청 학년 — 1~6 고정 (수업 시간 체크박스·학년 셀렉트 공통) */
+export const UJAT_INSTITUTION_GRADE_VALUES = ['1', '2', '3', '4', '5', '6'] as const
+
+const GRADE_OPTIONS = UJAT_INSTITUTION_GRADE_VALUES.map(value => ({
+  value,
+  label: `${value}학년`,
 }))
 
 const MAX_CLASS_COUNT = 40
@@ -183,12 +186,13 @@ export function ApplyUjatInstitutionGradeInfo({
         return (
           <div key={block.id} className={blockStyles.blockRow}>
             <div className={blockStyles.blockBody}>
-              <PFText as="p" typo="bd-md-sb" color="black" className={blockStyles.blockTitle}>
-                {rankTitle}
-              </PFText>
-              <PFFormFieldTable className={[styles.table, hostStyles.root].join(' ')}>
+              <p className={blockStyles.blockTitle}>{rankTitle}</p>
+              <PFFormFieldTable
+                radius="rounded"
+                className={[styles.table, hostStyles.root].join(' ')}
+              >
                 <PFFormFieldRow type="single">
-                  <PFFormField label="신청 학년 및 학급 수" fullWidth>
+                  <PFFormField label="신청 학년 및 학급 수" labelWidth="wider" fullWidth>
                     <PFFormInlineRow>
                       <PFFormInlineSegment>
                         <PFSelect
@@ -224,7 +228,7 @@ export function ApplyUjatInstitutionGradeInfo({
                   </PFFormField>
                 </PFFormFieldRow>
                 <PFFormFieldRow type="single">
-                  <PFFormField label="학급 별 학생 수" fullWidth>
+                  <PFFormField label="학급 별 학생 수" labelWidth="wider" fullWidth>
                     {classCount < 1 ? (
                       <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
                         총 학급 수를 먼저 입력해 주세요.

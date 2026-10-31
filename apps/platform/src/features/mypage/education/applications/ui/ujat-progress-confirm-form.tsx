@@ -8,10 +8,7 @@ import {
   resolveUjatInstitutionApplyIncomplete,
 } from '@/features/program/lib/ujat-institution-apply-incomplete'
 import { coerceApplicationFormDocument } from '@/features/program/lib/application-form-draft'
-import {
-  readUjatPreferredEducationScheduleOptions,
-  readUjatPreferredEducationScheduleOptionsFromSubmittedAnswer,
-} from '@/features/program/lib/ujat-preferred-education-schedule-options'
+import { resolveUjatProgressConfirmPreferredEducationScheduleOptions } from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import {
   ApplyUjatInstitutionBasicInfo,
   emptyUjatInstitutionBasicInfo,
@@ -59,15 +56,8 @@ import {
   resolveInstitutionGuidanceErrorMessage,
   UJAT_STALE_REVISION_ALERT_MESSAGE,
 } from '../lib/institution-guidance-errors'
+import { UJAT_PROGRESS_CONFIRM_COPY as COPY } from '../lib/ujat-progress-confirm-copy'
 import styles from './institution-guidance-write-form.module.css'
-
-const CONFIRM_HEADING = '상기 내용을 모두 확인하였으며 현재 답변으로 제출합니다.'
-const CONFIRM_DESCRIPTION =
-  '교육 일정과 학년 정보는 담당자와 협의된 내용으로 작성되어야 하며, 협의사항과 다를 경우 담당자가 수정 요청을 드릴 수 있습니다.'
-const CONFIRM_RADIO_LABEL =
-  '네. 상기 내용 모두 확인하였으며, 해당 내용으로 교육을 진행합니다.'
-const PREFERRED_DESCRIPTION =
-  '금요일 1교시~4교시에 진행되며, 4교시 모두 교육 진행이 가능해야 합니다. * 참여 가능한 모든 일정을 선택해 주시면, 선택해 주신 일정 중에서 조정하여 교육이 진행될 예정입니다.'
 
 type UjatProgressConfirmFormProps = {
   applicationId: string
@@ -78,6 +68,8 @@ type UjatProgressConfirmFormProps = {
   isRevision: boolean
   temporarySchedule?: EducationUjatTemporarySchedule
   assignmentRevision?: number
+  /** GET 상세 `supplement.ujat.preferredEducationDateOptions` — render 후보 없을 때 SSOT */
+  preferredEducationDateOptions?: readonly unknown[] | null
 }
 
 function pickAnswer(answers: Record<string, unknown> | undefined, keys: readonly string[]): unknown {
@@ -100,8 +92,8 @@ export function UjatTemporaryScheduleSummary({
     <ParagraphCard
       dataParagraphId="ujat-temporary-assigned-schedule"
       editableHeading={institutionGuidanceParagraphHeading(
-        '관리자 배정 일정',
-        '관리자가 배정한 교육 일정입니다. 신청 당시 희망 일정과 다를 수 있습니다.',
+        COPY.temporarySchedule.title,
+        COPY.temporarySchedule.description,
         { required: false },
       )}
     >
@@ -126,7 +118,10 @@ export function UjatTemporaryScheduleSummary({
                 {[
                   gradeLabel,
                   slot.className,
-                  slot.studentCount != null ? `${slot.studentCount}명` : null,
+                  // 0은 CMS 임시배정 미기입 계약값 — "0명"으로 오해하지 않도록 생략
+                  slot.studentCount != null && slot.studentCount > 0
+                    ? `${slot.studentCount}명`
+                    : null,
                 ]
                   .filter(Boolean)
                   .join(' · ') || '학급 정보 없음'}
@@ -148,21 +143,18 @@ export function UjatProgressConfirmForm({
   isRevision,
   temporarySchedule,
   assignmentRevision,
+  preferredEducationDateOptions,
 }: UjatProgressConfirmFormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const formRender = usePortalMeFormBindingRender(programId, formBindingId)
-  const preferredAnswer = pickAnswer(answers, [
-    UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule,
-  ])
   const preferredOptions = useMemo(() => {
     const document = coerceApplicationFormDocument(formRender.document)
-    const fromRuntime = readUjatPreferredEducationScheduleOptions({
+    return resolveUjatProgressConfirmPreferredEducationScheduleOptions({
       runtimeContext: document?.runtimeContext ?? formRender.document?.runtimeContext,
+      supplementPreferredEducationDateOptions: preferredEducationDateOptions,
     })
-    if (fromRuntime.length > 0) return fromRuntime
-    return readUjatPreferredEducationScheduleOptionsFromSubmittedAnswer(preferredAnswer)
-  }, [formRender.document, preferredAnswer])
+  }, [formRender.document, preferredEducationDateOptions])
 
   const [basicInfo, setBasicInfo] = useState<ApplyUjatInstitutionBasicInfoValues>(
     () =>
@@ -305,10 +297,13 @@ export function UjatProgressConfirmForm({
     <>
       <FormTemplateHost surface="platformUser">
         <div ref={formRootRef} className={styles.paragraphStack}>
-          <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} />
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.basicInfo}
-            editableHeading={institutionGuidanceParagraphHeading('1. 기본 정보', '설명이 노출됩니다.')}
+            editableHeading={institutionGuidanceParagraphHeading(
+              COPY.basicInfo.title,
+              COPY.basicInfo.description,
+              { titleLeading: COPY.basicInfo.leading },
+            )}
           >
             <ApplyUjatInstitutionBasicInfo value={basicInfo} onChange={setBasicInfo} />
           </ParagraphCard>
@@ -316,14 +311,15 @@ export function UjatProgressConfirmForm({
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeApplicationInfo}
             editableHeading={institutionGuidanceParagraphHeading(
-              '2. 학년 별 신청 정보',
-              '신청 학년 별 학급 수 및 학생 수를 작성해주세요.',
+              COPY.gradeInfo.title,
+              COPY.gradeInfo.description,
               {
+                titleLeading: COPY.gradeInfo.leading,
                 titleTrailing: (
                   <ApplyPreferredScheduleAddButton
                     onClick={() => setGradeBlocks(appendUjatInstitutionGradeBlock)}
                   >
-                    신청 학년 추가
+                    {COPY.gradeInfo.addButton}
                   </ApplyPreferredScheduleAddButton>
                 ),
               },
@@ -335,14 +331,15 @@ export function UjatProgressConfirmForm({
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.gradeClassTime}
             editableHeading={institutionGuidanceParagraphHeading(
-              '3. 학년 별 수업 시간',
-              '신청 학년 별 수업 진행 시간을 작성해주세요.',
+              COPY.classTime.title,
+              COPY.classTime.description,
               {
+                titleLeading: COPY.classTime.leading,
                 titleTrailing: (
                   <ApplyPreferredScheduleAddButton
                     onClick={() => setClassTimeBlocks(appendUjatInstitutionClassTimeBlock)}
                   >
-                    수업 진행 시간 추가
+                    {COPY.classTime.addButton}
                   </ApplyPreferredScheduleAddButton>
                 ),
               },
@@ -358,8 +355,9 @@ export function UjatProgressConfirmForm({
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.preferredEducationSchedule}
             editableHeading={institutionGuidanceParagraphHeading(
-              '4. 진행 희망 교육 일정',
-              PREFERRED_DESCRIPTION,
+              COPY.preferredSchedule.title,
+              COPY.preferredSchedule.description,
+              { titleLeading: COPY.preferredSchedule.leading },
             )}
           >
             <ApplyUjatInstitutionPreferredSchedule
@@ -373,14 +371,14 @@ export function UjatProgressConfirmForm({
           <ParagraphCard
             dataParagraphId={UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.submitConfirmation}
             editableHeading={institutionGuidanceParagraphHeading(
-              CONFIRM_HEADING,
-              CONFIRM_DESCRIPTION,
+              COPY.confirm.title,
+              COPY.confirm.description,
+              { titleLeading: COPY.confirm.leading },
             )}
           >
-            <UjatTemporaryScheduleSummary temporarySchedule={temporarySchedule} />
             <ApplyUjatInstitutionSubmitConfirmation
               control="radio"
-              label={CONFIRM_RADIO_LABEL}
+              label={COPY.confirm.radioLabel}
               checked={confirmed}
               onCheckedChange={setConfirmed}
             />
@@ -398,7 +396,11 @@ export function UjatProgressConfirmForm({
             void handleContinue()
           }}
         >
-          {saving ? '저장 중…' : isRevision ? '안내사항 수정하기' : '안내사항 작성하기'}
+          {saving
+            ? COPY.cta.saving
+            : isRevision
+              ? COPY.cta.continueRevision
+              : COPY.cta.continue}
         </PFButton>
       </div>
 

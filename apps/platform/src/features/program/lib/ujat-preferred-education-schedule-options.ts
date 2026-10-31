@@ -84,6 +84,31 @@ function collectUjatPreferredEducationDateOptionRows(runtime: unknown): unknown[
   return rows
 }
 
+/** runtimeContext(또는 audience)에 후보 배열 키가 있으면 true. 빈 `[]`도 true. */
+export function hasUjatPreferredEducationDateOptionsKey(runtime: unknown): boolean {
+  const record = asRecord(runtime)
+  if (!record) return false
+  if (Array.isArray(record.ujatPreferredEducationDateOptions)) return true
+  const audience = asRecord(record.audienceApplication)
+  return Array.isArray(audience?.ujatPreferredEducationDateOptions)
+}
+
+/**
+ * 후보 배열을 그대로 파싱한다. `{ id, date, label }` 행 또는 runtimeContext 형태.
+ * 반기 금요일 전개·선택분만으로 보완하지 않는다.
+ */
+export function parseUjatPreferredEducationDateOptionRows(
+  rows: readonly unknown[] | null | undefined,
+): UjatPreferredEducationScheduleOption[] {
+  if (!Array.isArray(rows)) return []
+  return dedupeOptionsPreserveOrder(
+    rows.flatMap(row => {
+      const option = parseRuntimeOption(row)
+      return option ? [option] : []
+    }),
+  )
+}
+
 function sortOptions(
   options: UjatPreferredEducationScheduleOption[],
 ): UjatPreferredEducationScheduleOption[] {
@@ -237,9 +262,31 @@ export function resolveUjatApplyPreferredEducationScheduleOptions(input: {
   runtimeContext?: unknown
   halfRanges?: readonly UjatEducationHalfRange[] | null
 }): UjatPreferredEducationScheduleOption[] {
+  void input.halfRanges
   return readUjatPreferredEducationScheduleOptions({
     runtimeContext: input.runtimeContext,
   })
+}
+
+/**
+ * 임시배정 1단계 칩 SSOT.
+ * 1) me/render runtimeContext.ujatPreferredEducationDateOptions (키 있으면 빈 배열도 채택)
+ * 2) supplement.ujat.preferredEducationDateOptions
+ * 반기 금요일·선택분 answers 로 보완하지 않는다.
+ */
+export function resolveUjatProgressConfirmPreferredEducationScheduleOptions(input: {
+  runtimeContext?: unknown
+  supplementPreferredEducationDateOptions?: readonly unknown[] | null
+}): UjatPreferredEducationScheduleOption[] {
+  if (hasUjatPreferredEducationDateOptionsKey(input.runtimeContext)) {
+    return readUjatPreferredEducationScheduleOptions({
+      runtimeContext: input.runtimeContext,
+    })
+  }
+  if (Array.isArray(input.supplementPreferredEducationDateOptions)) {
+    return parseUjatPreferredEducationDateOptionRows(input.supplementPreferredEducationDateOptions)
+  }
+  return []
 }
 
 /**

@@ -151,6 +151,15 @@ export type EducationApplicationListItem = {
   ujatRevisionReason?: string
   /** 화면에 표시 중인 배정 revision — confirm POST body */
   ujatAssignmentRevision?: number
+  /**
+   * `supplement.ujat.preferredEducationDateOptions` — 제출 후 희망일 후보 SSOT.
+   * 항상 배열(없으면 `[]`). 반기 금요일 FE 전개로 보완하지 않는다.
+   */
+  ujatPreferredEducationDateOptions?: Array<{
+    id: string
+    date: string
+    label: string
+  }>
   /** 교사 UJAT 신청 내용 탭 — 학년별 신청·수업시간 */
   ujatApplicationContent?: EducationUjatApplicationContent
   /** UJAT 봉사자 신청 내용 — 지역·대학·전공·경력·유입 경로 */

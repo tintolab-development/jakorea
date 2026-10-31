@@ -868,11 +868,7 @@ export function MypageEducationDetailPage() {
             educationTargetLabel={program.educationTargetLabel}
             educationForm={program.educationForm}
             educationFormLabel={program.educationFormLabel}
-            statusAudience={
-              isTeacher || shouldUseUjatApplicationContent(application.detailCase)
-                ? 'teacher'
-                : 'general'
-            }
+            statusAudience="teacher"
           />
         }
         aside={
@@ -889,7 +885,7 @@ export function MypageEducationDetailPage() {
         }
       />
 
-      {ujatScheduleBanner ? (
+      {ujatScheduleBanner && appliedSection === 'application' ? (
         <UjatScheduleBanner
           copy={ujatScheduleBanner}
           onActivate={

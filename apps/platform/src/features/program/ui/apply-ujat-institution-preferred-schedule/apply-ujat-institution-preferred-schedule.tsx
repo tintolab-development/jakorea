@@ -11,6 +11,7 @@ import {
   PFFormInlineSeparatedFields,
   PFText,
 } from '@/shared/ui'
+import hostStyles from '../apply-form-field-host.module.css'
 import slotStyles from '../apply-instructor-available-schedule/apply-instructor-available-schedule.module.css'
 import styles from './apply-ujat-institution-preferred-schedule.module.css'
 
@@ -122,7 +123,7 @@ export function ApplyUjatInstitutionPreferredSchedule({
           })
         )}
       </div>
-      <PFFormFieldTable>
+      <PFFormFieldTable radius="rounded" className={hostStyles.root}>
         <PFFormFieldRow type="single">
           <PFFormField label="교육 진행 희망일" labelWidth="wider" fullWidth>
             {selected.length === 0 ? (

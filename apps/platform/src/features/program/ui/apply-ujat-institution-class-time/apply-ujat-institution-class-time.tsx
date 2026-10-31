@@ -6,16 +6,19 @@ import {
   PFFormPeriodPair,
   PFFormPeriodTilde,
   PFItemDeleteButton,
-  PFText,
   PFTimeInput,
 } from '@/shared/ui'
 import formStyles from '@/shared/ui/pf-form/pf-form.module.css'
 import hostStyles from '../apply-form-field-host.module.css'
-import type { ApplyUjatGradeBlock } from '../apply-ujat-institution-grade-info/apply-ujat-institution-grade-info'
+import {
+  UJAT_INSTITUTION_GRADE_VALUES,
+  type ApplyUjatGradeBlock,
+} from '../apply-ujat-institution-grade-info/apply-ujat-institution-grade-info'
 import blockStyles from '../apply-preferred-schedule/apply-preferred-schedule.module.css'
 import styles from './apply-ujat-institution-class-time.module.css'
 
 const PERIOD_IDS = ['period1', 'period2', 'period3', 'period4'] as const
+const TIME_INPUT_WIDTH = 120
 
 export type ApplyUjatClassTimePeriod = { start: string; end: string }
 
@@ -228,11 +231,11 @@ function PeriodTimePair({
   onChange: (next: ApplyUjatClassTimePeriod) => void
 }) {
   return (
-    <PFFormPeriodPair className={[formStyles.periodPairFill, styles.periodPair].join(' ')}>
+    <PFFormPeriodPair className={[formStyles.periodPair, styles.periodPair].join(' ')}>
       <PFTimeInput
         variant="formPage"
         size="large"
-        width="100%"
+        width={TIME_INPUT_WIDTH}
         placeholder="수업 시작"
         value={start}
         onValueChange={next => onChange({ start: next, end })}
@@ -241,7 +244,7 @@ function PeriodTimePair({
       <PFTimeInput
         variant="formPage"
         size="large"
-        width="100%"
+        width={TIME_INPUT_WIDTH}
         placeholder="수업 종료"
         value={end}
         onValueChange={next => onChange({ start, end: next })}
@@ -255,7 +258,8 @@ export function ApplyUjatInstitutionClassTime({
   onChange,
   gradeBlocks,
 }: ApplyUjatInstitutionClassTimeProps) {
-  const grades = uniqueGrades(gradeBlocks)
+  /** 피그마: 전체+1~6 항상 노출. 신청 학년만 선택 가능, 타 블록 점유·미신청은 disabled */
+  const appliedGrades = new Set(uniqueGrades(gradeBlocks))
 
   const patchBlock = (id: string, partial: Partial<ApplyUjatClassTimeBlock>) => {
     onChange(value.map(block => (block.id === id ? { ...block, ...partial } : block)))
@@ -288,23 +292,22 @@ export function ApplyUjatInstitutionClassTime({
   return (
     <div className={blockStyles.root}>
       {value.map((block, blockIndex) => {
-        const eligible = grades.filter(grade => {
-          const takenElsewhere = value.some(
-            other => other.id !== block.id && other.checkedGrades[grade],
-          )
-          return !takenElsewhere
+        const eligible = UJAT_INSTITUTION_GRADE_VALUES.filter(grade => {
+          if (!appliedGrades.has(grade)) return false
+          return !value.some(other => other.id !== block.id && other.checkedGrades[grade])
         })
         const allChecked = eligible.length > 0 && eligible.every(grade => block.checkedGrades[grade])
         const rankTitle = `수업 진행 시간 ${String(blockIndex + 1).padStart(2, '0')}`
         return (
           <div key={block.id} className={blockStyles.blockRow}>
             <div className={blockStyles.blockBody}>
-              <PFText as="p" typo="bd-md-sb" color="black" className={blockStyles.blockTitle}>
-                {rankTitle}
-              </PFText>
-              <PFFormFieldTable className={[styles.table, hostStyles.root].join(' ')}>
+              <p className={blockStyles.blockTitle}>{rankTitle}</p>
+              <PFFormFieldTable
+                radius="rounded"
+                className={[styles.table, hostStyles.root].join(' ')}
+              >
                 <PFFormFieldRow type="single">
-                  <PFFormField label="해당 학년" fullWidth>
+                  <PFFormField label="해당 학년" labelWidth="wider" fullWidth>
                     <div className={styles.gradeRow}>
                       <PFCheckbox
                         checked={allChecked}
@@ -317,10 +320,11 @@ export function ApplyUjatInstitutionClassTime({
                       >
                         전체
                       </PFCheckbox>
-                      {grades.map(grade => {
-                        const disabled = value.some(
+                      {UJAT_INSTITUTION_GRADE_VALUES.map(grade => {
+                        const takenElsewhere = value.some(
                           other => other.id !== block.id && other.checkedGrades[grade],
                         )
+                        const disabled = !appliedGrades.has(grade) || takenElsewhere
                         return (
                           <PFCheckbox
                             key={`${block.id}-${grade}`}
@@ -337,9 +341,13 @@ export function ApplyUjatInstitutionClassTime({
                     </div>
                   </PFFormField>
                 </PFFormFieldRow>
-                <PFFormFieldRow type="double" className={styles.compactPeriodRow}>
+                <PFFormFieldRow type="double">
                   {PERIOD_IDS.slice(0, 2).map(periodId => (
-                    <PFFormField key={periodId} label={`${periodId.replace('period', '')}교시`}>
+                    <PFFormField
+                      key={periodId}
+                      label={`${periodId.replace('period', '')}교시`}
+                      labelWidth="wider"
+                    >
                       <PeriodTimePair
                         start={block.periods[periodId]?.start ?? ''}
                         end={block.periods[periodId]?.end ?? ''}
@@ -348,9 +356,13 @@ export function ApplyUjatInstitutionClassTime({
                     </PFFormField>
                   ))}
                 </PFFormFieldRow>
-                <PFFormFieldRow type="double" className={styles.compactPeriodRow}>
+                <PFFormFieldRow type="double">
                   {PERIOD_IDS.slice(2).map(periodId => (
-                    <PFFormField key={periodId} label={`${periodId.replace('period', '')}교시`}>
+                    <PFFormField
+                      key={periodId}
+                      label={`${periodId.replace('period', '')}교시`}
+                      labelWidth="wider"
+                    >
                       <PeriodTimePair
                         start={block.periods[periodId]?.start ?? ''}
                         end={block.periods[periodId]?.end ?? ''}

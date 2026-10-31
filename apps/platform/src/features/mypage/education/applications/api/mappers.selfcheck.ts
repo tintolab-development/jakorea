@@ -256,6 +256,10 @@ const ujatOrg = mapPortalProgramApplicationDetail({
     ujat: {
       portalBannerState: 'ACTION_REQUIRED',
       assignmentRevision: 3,
+      preferredEducationDateOptions: [
+        { id: 'h1:2026-11-06', date: '2026-11-06', label: '2026년 11월 6일(금)' },
+        { id: 'h2:2026-11-13', date: '2026-11-13', label: '2026년 11월 13일(금)' },
+      ],
       temporarySchedule: {
         slots: [
           {
@@ -276,6 +280,10 @@ assert.equal(ujatOrg.detailCase, 'ujat-participant')
 assert.equal(ujatOrg.ujatPortalBannerState, 'ACTION_REQUIRED')
 assert.equal(ujatOrg.ujatAssignmentRevision, 3)
 assert.equal(ujatOrg.ujatRevisionReason, undefined)
+assert.deepEqual(ujatOrg.ujatPreferredEducationDateOptions, [
+  { id: 'h1:2026-11-06', date: '2026-11-06', label: '2026년 11월 6일(금)' },
+  { id: 'h2:2026-11-13', date: '2026-11-13', label: '2026년 11월 13일(금)' },
+])
 assert.deepEqual(ujatOrg.ujatTemporarySchedule, {
   slots: [
     {

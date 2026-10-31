@@ -13,9 +13,13 @@ import {
 } from '../../lib/application-form-draft.ts'
 import {
   applySexOffenseInquiryMethodChange,
+  applyUjatSexOffenseWriteChoice,
   emptyInstitutionSexOffense,
   findIncompleteSexOffenseMessage,
+  findIncompleteUjatSexOffenseWriteMessage,
+  normalizeUjatSexOffenseWriteValues,
   omitSexOffenseInquiryAnswersIfNotRequested,
+  resolveUjatSexOffenseWriteChoice,
   sexOffenseInquiryAnswerFromValues,
   sexOffenseSubmissionAnswerFromValues,
   sexOffenseValuesFromDraftAnswers,
@@ -276,5 +280,51 @@ const hiddenInquiry = omitRuntimeHiddenAnswers(
   paragraphConditionals,
 )
 assert.equal(INQUIRY in hiddenInquiry, false)
+
+assert.equal(resolveUjatSexOffenseWriteChoice(emptyInstitutionSexOffense()), '')
+assert.ok(findIncompleteUjatSexOffenseWriteMessage(emptyInstitutionSexOffense()))
+
+const ujatDirect = applyUjatSexOffenseWriteChoice(emptyInstitutionSexOffense(), 'direct')
+assert.equal(resolveUjatSexOffenseWriteChoice(ujatDirect), 'direct')
+assert.equal(ujatDirect.inquiryMethod, 'ja_system')
+assert.equal(ujatDirect.siteSubmission, '')
+assert.equal(findIncompleteUjatSexOffenseWriteMessage(ujatDirect), null)
+assert.deepEqual(sexOffenseInquiryAnswerFromValues(ujatDirect), { inquiryMethod: 'ja_system' })
+assert.equal(
+  formatSexOffenseTeacherGuidanceValue(ujatDirect),
+  '기관이 JA 시스템 내에서 동의서 확인 후 직접 조회',
+)
+
+const ujatOnlineIncomplete = applyUjatSexOffenseWriteChoice(emptyInstitutionSexOffense(), 'online')
+assert.equal(resolveUjatSexOffenseWriteChoice(ujatOnlineIncomplete), 'online')
+assert.ok(findIncompleteUjatSexOffenseWriteMessage(ujatOnlineIncomplete))
+const ujatOnline = {
+  ...ujatOnlineIncomplete,
+  institutionId: 'org-a',
+  verificationNumber: 'v-1',
+}
+assert.equal(findIncompleteUjatSexOffenseWriteMessage(ujatOnline), null)
+assert.deepEqual(sexOffenseInquiryAnswerFromValues(ujatOnline), {
+  inquiryMethod: 'criminal_record_site',
+  siteSubmission: 'online',
+  institutionId: 'org-a',
+  verificationNumber: 'v-1',
+})
+assert.equal(
+  formatSexOffenseTeacherGuidanceValue(ujatOnline),
+  '온라인 제출 | ID : org-a | 검증번호 : v-1',
+)
+
+const legacySiteDirect = normalizeUjatSexOffenseWriteValues({
+  ...emptyInstitutionSexOffense(),
+  submissionRequest: 'request',
+  inquiryMethod: 'criminal_record_site',
+  siteSubmission: 'direct',
+  institutionId: 'legacy',
+  verificationNumber: 'legacy-v',
+})
+assert.equal(legacySiteDirect.inquiryMethod, 'ja_system')
+assert.equal(legacySiteDirect.siteSubmission, '')
+assert.equal(legacySiteDirect.institutionId, '')
 
 console.log('apply-institution-sex-offense.selfcheck: ok')

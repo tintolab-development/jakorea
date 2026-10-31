@@ -13,7 +13,7 @@ import styles from './list-item.module.css'
 type EducationApplicationListItemRowProps = {
   item: EducationApplicationListItem
   onClick: () => void
-  /** 교사 회원 교육현황 — 승인대기 등 라벨 분기 */
+  /** 교육현황은 `teacher`(승인 대기 세트). 봉사·강의현황은 기본 `general`. */
   statusAudience?: EducationDisplayStatusAudience
 }
 
