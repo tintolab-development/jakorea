@@ -79,7 +79,7 @@ describe('admin file upload', () => {
     const file = new File(['pdf'], 'form.pdf', { type: 'application/pdf' })
     await expect(
       uploadToS3('https://s3.example/upload', file, { 'Content-Type': 'application/pdf' })
-    ).rejects.toThrow('Presigned URL CORS')
+    ).rejects.toThrow('파일을 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.')
   })
 
   it('상대 경로 uploadUrl은 현재 origin 기준으로 해석한다', () => {
@@ -470,7 +470,9 @@ describe('admin file upload', () => {
     vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
 
     const file = new File(['xy'], 'form.pdf', { type: 'application/pdf' })
-    await expect(uploadAdminFile({ file, owner: OWNER })).rejects.toThrow('S3 파일 업로드 실패: 403')
+    await expect(uploadAdminFile({ file, owner: OWNER })).rejects.toThrow(
+      '파일을 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+    )
     expect(customInstance).toHaveBeenCalledTimes(1)
   })
 
@@ -486,7 +488,9 @@ describe('admin file upload', () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError('Failed to fetch'))
 
     const file = new File(['xy'], 'form.pdf', { type: 'application/pdf' })
-    await expect(uploadAdminFile({ file, owner: OWNER })).rejects.toThrow('Presigned URL CORS')
+    await expect(uploadAdminFile({ file, owner: OWNER })).rejects.toThrow(
+      '파일을 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+    )
     expect(customInstance).toHaveBeenCalledTimes(1)
   })
 })
