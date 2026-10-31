@@ -22,13 +22,26 @@ export const UJAT_INTERVIEW_TOTAL_SCORE_MIN = 1
 export const UJAT_INTERVIEW_TOTAL_SCORE_MAX = 10
 export const UJAT_INTERVIEW2_STATUS_POLL_MS = 60_000
 
+function hasValidInterviewEvaluatorScore(score: number | null | undefined): boolean {
+  return score != null && Number.isFinite(score)
+}
+
+/** 유효 점수 제출 평가자 수 < 2 — 합격·불합격 가드와 동일 */
+export function isUjatInterviewTotalScoreUnevaluated(
+  row: Pick<UjatVolunteerApplicantRow, 'managerAScore' | 'managerBScore'>
+): boolean {
+  let count = 0
+  if (hasValidInterviewEvaluatorScore(row.managerAScore)) count += 1
+  if (hasValidInterviewEvaluatorScore(row.managerBScore)) count += 1
+  return count < 2
+}
+
 export function computeUjatInterviewTotalScore(
   row: Pick<UjatVolunteerApplicantRow, 'managerAScore' | 'managerBScore'>
 ): number | null {
-  const { managerAScore, managerBScore } = row
-  if (managerAScore == null || managerBScore == null) return null
+  if (isUjatInterviewTotalScoreUnevaluated(row)) return null
 
-  const total = managerAScore + managerBScore
+  const total = (row.managerAScore ?? 0) + (row.managerBScore ?? 0)
   if (total < UJAT_INTERVIEW_TOTAL_SCORE_MIN || total > UJAT_INTERVIEW_TOTAL_SCORE_MAX) {
     return null
   }
