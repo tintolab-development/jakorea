@@ -1609,7 +1609,7 @@ export function mapGeneralProgramToUpdateRequest(
       : mapProgramCoreFieldsToRequest(program)
   return withExpectedUpdatedAt(
     omitTypedVolunteerInterviewKeysFromUpdateRequest(body, baselineProgram),
-    program.updatedAt
+    baselineProgram.updatedAt
   )
 }
 

@@ -100,6 +100,37 @@ describe('createGeneralProgramCommonInfoIndependentSave', () => {
     ).toEqual([1, 2])
   })
 
+  it('PATCH expectedUpdatedAt는 GET baseline revision을 그대로 쓰고 draft에 now()를 넣지 않는다', () => {
+    const serverRevision = '2026-10-31T12:10:00.059740Z'
+    const existing = { ...baseProgram(), updatedAt: serverRevision }
+    const values = programToGeneralCommonInfoEditValues(existing)
+    const save = createGeneralProgramCommonInfoIndependentSave({
+      values: { ...values, announcementTitle: '수정 공고' },
+      program: existing,
+    })
+    expect(save.programDraft.updatedAt).toBe(serverRevision)
+    const body = mapGeneralProgramToUpdateRequest(
+      save.programDraft,
+      save.patch,
+      existing,
+      save.serializeOptions
+    )
+    expect(body.expectedUpdatedAt).toBe(serverRevision)
+  })
+
+  it('draft updatedAt이 잘못 덮여 있어도 baseline GET revision으로 PATCH 잠금을 보낸다', () => {
+    const serverRevision = '2026-10-31T12:10:00.059740Z'
+    const staleDraftRevision = '2026-10-31T22:01:10.140Z'
+    const existing = { ...baseProgram(), updatedAt: serverRevision }
+    const poisonedDraft: Program = { ...existing, updatedAt: staleDraftRevision }
+    const body = mapGeneralProgramToUpdateRequest(
+      poisonedDraft,
+      { title: '제목만' },
+      existing
+    )
+    expect(body.expectedUpdatedAt).toBe(serverRevision)
+  })
+
   it('구조 변경 시 이전 nested [] 와 신규 nested 배열을 함께 보낸다', () => {
     const existing = baseProgram()
     const values = programToGeneralCommonInfoEditValues(existing)
