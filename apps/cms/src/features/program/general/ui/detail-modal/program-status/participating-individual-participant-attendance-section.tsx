@@ -10,19 +10,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
-import { useCmsAlert } from '@/shared/ui'
+import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import {
+  buildAbsenceReasonsFromRows,
   buildParticipatingIndividualParticipantAttendanceRowsFromAssigned,
   buildParticipatingIndividualParticipantAttendanceSummary,
+  mergeParticipatingIndividualAbsenceReasons,
 } from '@/features/program/general/lib/participating-individual-participant-attendance'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
-import {
-  formatParticipatingIndividualParticipantAttendanceShortDateLabel,
-  resolveParticipatingIndividualParticipantAbsenceDateLabel,
-} from '@/features/program/general/lib/participating-individual-participant-attendance-display'
+import { resolveParticipatingIndividualParticipantAbsenceDateLabel } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
 import { PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-participant-attendance-export'
 import type {
   ParticipatingIndividualParticipantAbsenceReason,
@@ -179,9 +178,6 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
   ])
 
   const [rows, setRows] = useState(() => sourceRows)
-  const [absenceReasons, setAbsenceReasons] = useState<
-    ParticipatingIndividualParticipantAbsenceReason[]
-  >([])
   const [attendanceCorrectionModalOpen, setAttendanceCorrectionModalOpen] = useState(false)
   const programNumericId = parseFileObjectId(program.id)
   const absenceReasonQuery = useQuery({
@@ -211,18 +207,6 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
 
   useEffect(() => {
     setRows(sourceRows)
-    setAbsenceReasons(
-      sourceRows
-        .filter(row => row.attendanceStatus === 'excused_absence' && row.remark?.trim())
-        .map(row => ({
-          id: `abs-${row.id}`,
-          scheduleRowId: row.id,
-          dateLabel: formatParticipatingIndividualParticipantAttendanceShortDateLabel(
-            row.scheduleLabel
-          ),
-          reason: row.remark!.trim(),
-        }))
-    )
     setAttendanceCorrectionModalOpen(false)
   }, [participant.id, sourceRows])
 
@@ -295,7 +279,7 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     () =>
       rows.map((row, index) => ({
         ...row,
-        no: rows.length - index,
+        no: index + 1,
       })),
     [rows]
   )
@@ -346,15 +330,30 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       }
 
       const patch = mapCorrectionPayloadToAttendanceStatus(payload, targetRow)
+      const previousRows = rows
+      setRows(current =>
+        current.map(row =>
+          row.id === payload.scheduleRowId
+            ? {
+                ...row,
+                attendanceStatus: patch.attendanceStatus,
+                attendanceRecorded: true,
+                lateTime: patch.lateTime,
+                remark: patch.remark,
+              }
+            : row
+        )
+      )
       void saveMutation.mutateAsync({ scheduleId, patch }).then(
         () => {
           setAttendanceCorrectionModalOpen(false)
           showAlert({
-            title: '안내',
-            content: '출결이 정정되었습니다.',
+            title: '정정 완료',
+            content: '정정되었습니다.',
           })
         },
         error => {
+          setRows(previousRows)
           if (isGlobalApiErrorAlertShown(error)) return
           if (isAttendanceRecordingNotOpenError(error)) return
           if (isInvalidAttendanceArrivalTimeError(error)) return
@@ -444,7 +443,15 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         onSearch={() => {}}
         title="출석 내역"
         description={`총 ${rows.length}건`}
-        hideExcelDownload
+        actions={
+          <FilterTableToolbarButton
+            variant="secondary"
+            onClick={handleOpenAttendanceCorrectionModal}
+          >
+            출결 정정
+          </FilterTableToolbarButton>
+        }
+        onExcelDownload={exportExcel}
       >
         <div className="program-attendance-detail__table-outer">
           <ParticipatingIndividualParticipantAttendanceTable rows={rows} />
@@ -474,7 +481,10 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       </DetailInfoForm>
 
       <ProgramAttendanceAbsenceReasons
-        reasons={remoteAbsenceReasons ?? absenceReasons}
+        reasons={mergeParticipatingIndividualAbsenceReasons(
+          remoteAbsenceReasons,
+          buildAbsenceReasonsFromRows(rows)
+        )}
         onFileDownload={handleAbsenceFileDownload}
       />
 

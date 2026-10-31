@@ -59,7 +59,7 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   useEffect(() => {
     if (!open) return
     setScheduleRowId(undefined)
-    setStatus(undefined)
+    setStatus('present')
     setReason('')
     setEvidenceFiles([])
   }, [open, scheduleOptions])
@@ -190,9 +190,12 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
             <CmsSelect
               inputSize="large"
               width={170}
-              value={status ?? ''}
+              withAllOption={false}
+              value={status ?? 'present'}
               options={[...PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS]}
-              onChange={value => setStatus(parseProgramAttendanceCorrectionStatus(value))}
+              onChange={value =>
+                setStatus(parseProgramAttendanceCorrectionStatus(value) ?? 'present')
+              }
               aria-label="출결 현황"
             />
           </div>

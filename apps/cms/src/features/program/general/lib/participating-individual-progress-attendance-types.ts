@@ -34,8 +34,13 @@ export type ParticipatingIndividualProgressAttendanceParticipantRow = {
   educationGrade: string
   contact?: string
   email?: string
-  /** 출석 API에 기록이 있을 때만 설정 */
+  /** 출석 관리 목록 표시용. 일정 시작 전이면 비움 */
   attendanceStatus?: ParticipatingIndividualProgressAttendanceStatus
+  /**
+   * 출석 API status. 일정 시작 전 숨김과 무관.
+   * 참여자 상세 출석 내역·정정 반영에만 쓴다.
+   */
+  persistedAttendanceStatus?: ParticipatingIndividualProgressAttendanceStatus
   attendanceRecorded: boolean
   lateTime?: string
   remark?: string

@@ -2,12 +2,13 @@ import type { ParticipatingIndividualParticipantRow } from '@/features/program/g
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import type { Program } from '@/types/domain'
 import { getProgramProgressDisplayStatus } from '@/shared/constants/status'
-import { programEnrollmentDisplayConfig } from '@/shared/constants/status'
+import { normalizeGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 import {
   formatParticipatingIndividualParticipantAttendanceScheduleLabel,
   formatParticipatingIndividualParticipantAttendanceShortDateLabel,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
 import type {
+  ParticipatingIndividualParticipantAbsenceReason,
   ParticipatingIndividualParticipantAttendanceBundle,
   ParticipatingIndividualParticipantAttendanceRow,
   ParticipatingIndividualParticipantAttendanceStatus,
@@ -20,7 +21,26 @@ import type {
   ParticipatingIndividualProgressAttendanceStatus,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
 
+function isRecordedAttendanceCountedAsPresent(
+  row: ParticipatingIndividualParticipantAttendanceRow
+): boolean {
+  return (
+    row.attendanceRecorded &&
+    (row.attendanceStatus === 'present' || row.attendanceStatus === 'late')
+  )
+}
+
+function resolveLastAssignedRow(
+  rows: ParticipatingIndividualParticipantAttendanceRow[]
+): ParticipatingIndividualParticipantAttendanceRow | undefined {
+  return rows.reduce<ParticipatingIndividualParticipantAttendanceRow | undefined>((last, row) => {
+    if (last == null) return row
+    return row.assignedIndex >= last.assignedIndex ? row : last
+  }, undefined)
+}
+
 function resolveCompletionStatusLabel(
+  rows: ParticipatingIndividualParticipantAttendanceRow[],
   participant: ParticipatingIndividualParticipantRow,
   program: Program
 ): string {
@@ -29,15 +49,26 @@ function resolveCompletionStatusLabel(
   }
 
   const progressStatus = getProgramProgressDisplayStatus(program)
-  const progressLabel = programEnrollmentDisplayConfig.labels[progressStatus]
+  const educationStarted = rows.some(row => row.educationProgress === 'completed')
 
-  if (progressLabel === '프로그램 종료') {
+  if (progressStatus !== 'PROGRAM_ENDED') {
+    return educationStarted ? '교육 진행 중' : '교육 진행 전'
+  }
+
+  const lastRow = resolveLastAssignedRow(rows)
+  const lastSessionCompleted = lastRow != null && isRecordedAttendanceCountedAsPresent(lastRow)
+  const hasRegularAbsence = rows.some(
+    row => row.attendanceRecorded && row.attendanceStatus === 'absent'
+  )
+  const satisfactionRequired = normalizeGeneralSurveyMenuKeys(
+    program.generalSurveyMenuKeys ?? []
+  ).includes('satisfaction')
+  const surveyCompleted = !satisfactionRequired || participant.satisfactionSurveyCompleted
+
+  if (lastSessionCompleted && !hasRegularAbsence && surveyCompleted) {
     return '수료 완료'
   }
-  if (progressLabel === '프로그램 진행 중') {
-    return '교육 진행 중'
-  }
-  return '교육 진행 전'
+  return '수료 불가'
 }
 
 export function buildParticipatingIndividualParticipantAttendanceSummary(
@@ -45,19 +76,16 @@ export function buildParticipatingIndividualParticipantAttendanceSummary(
   participant: ParticipatingIndividualParticipantRow,
   program: Program
 ): ParticipatingIndividualParticipantAttendanceSummary {
-  const lateCount = rows.filter(row => row.attendanceStatus === 'late').length
-  const attendedCount = rows.filter(row => row.attendanceStatus === 'present').length
-  const heldCount = rows.filter(
-    row =>
-      row.educationProgress === 'completed' &&
-      row.attendanceStatus !== 'withdrawn' &&
-      row.attendanceStatus !== 'pending'
+  const lateCount = rows.filter(
+    row => row.attendanceRecorded && row.attendanceStatus === 'late'
   ).length
+  const attendedCount = rows.filter(isRecordedAttendanceCountedAsPresent).length
+  const totalCount = rows.length
 
   return {
-    completionStatusLabel: resolveCompletionStatusLabel(participant, program),
+    completionStatusLabel: resolveCompletionStatusLabel(rows, participant, program),
     lateCountLabel: `${lateCount}회`,
-    attendanceRateCountLabel: `${attendedCount} / ${Math.max(heldCount, 1)}건`,
+    attendanceRateCountLabel: `${attendedCount} / ${totalCount}건`,
   }
 }
 
@@ -83,7 +111,7 @@ function isAssignedSessionWithdrawn(
 
 /**
  * 참여자 상세 출석 관리 — education-scope 배정 일정만 행으로 만든다.
- * 프로그램 전체 출석 bundle에 없는 배정 일정도 pending 행으로 남긴다.
+ * 프로그램 전체 출석 bundle에 없는 배정 일정도 출석(기본값) 행으로 남긴다.
  */
 export function buildParticipatingIndividualParticipantAttendanceRowsFromAssigned(input: {
   assignedSessions: readonly ParticipatingSchoolSession[]
@@ -108,28 +136,30 @@ export function buildParticipatingIndividualParticipantAttendanceRowsFromAssigne
     const self = attendanceSession?.participants.find(
       row => row.participantId === input.participant.id
     )
-    const recordedStatus =
-      self?.attendanceRecorded && self.attendanceStatus != null
-        ? mapProgressStatusToDetailStatus(self.attendanceStatus)
-        : 'pending'
+    const persistedStatus = self?.persistedAttendanceStatus ?? self?.attendanceStatus
+    const attendanceRecorded = persistedStatus != null
+    const recordedStatus = attendanceRecorded
+      ? mapProgressStatusToDetailStatus(persistedStatus)
+      : 'present'
     const educationProgress =
       attendanceSession?.scheduleEducationProgress ??
       mapDashboardScheduleDeliveryToEducationProgress(
         session.deliveryScheduleStatus ??
           (session.status === 'completed' ? 'COMPLETED' : 'SCHEDULED')
       )
+    const withdrawn = isAssignedSessionWithdrawn(input.participant, session, index)
 
     return [
       {
         id: scheduleId,
         scheduleId,
+        assignedIndex: index,
         scheduleLabel: formatParticipatingIndividualParticipantAttendanceScheduleLabel(
           input.program,
           session
         ),
-        attendanceStatus: isAssignedSessionWithdrawn(input.participant, session, index)
-          ? 'withdrawn'
-          : recordedStatus,
+        attendanceStatus: withdrawn ? 'withdrawn' : recordedStatus,
+        attendanceRecorded: withdrawn ? false : attendanceRecorded,
         lateTime: self?.lateTime,
         remark: self?.remark,
         educationProgress,
@@ -164,14 +194,16 @@ function buildRowsFromParticipantSessions(
           : `att-${participant.id}-${index}`,
       scheduleId:
         session.resolvedScheduleId != null ? String(session.resolvedScheduleId) : null,
+      assignedIndex: index,
       scheduleLabel: formatParticipatingIndividualParticipantAttendanceScheduleLabel(program, session),
-      attendanceStatus: isWithdrawn ? 'withdrawn' : 'pending',
+      attendanceStatus: isWithdrawn ? 'withdrawn' : 'present',
+      attendanceRecorded: false,
       educationProgress: sessionProgress,
     }
   })
 }
 
-function buildAbsenceReasonsFromRows(
+export function buildAbsenceReasonsFromRows(
   rows: ParticipatingIndividualParticipantAttendanceRow[]
 ): ParticipatingIndividualParticipantAttendanceBundle['absenceReasons'] {
   return rows
@@ -195,6 +227,22 @@ export function getParticipatingIndividualParticipantAttendanceBundle(
     summary: buildParticipatingIndividualParticipantAttendanceSummary(rows, participant, program),
     absenceReasons: buildAbsenceReasonsFromRows(rows),
   }
+}
+
+export function mergeParticipatingIndividualAbsenceReasons(
+  remote: ParticipatingIndividualParticipantAbsenceReason[] | null,
+  fromRows: ParticipatingIndividualParticipantAbsenceReason[]
+): ParticipatingIndividualParticipantAbsenceReason[] {
+  if (remote == null) return fromRows
+  const bySchedule = new Map(
+    remote.map(item => [item.scheduleRowId, item] as const)
+  )
+  for (const local of fromRows) {
+    if (!bySchedule.has(local.scheduleRowId)) {
+      bySchedule.set(local.scheduleRowId, local)
+    }
+  }
+  return [...bySchedule.values()]
 }
 
 export function sortParticipatingIndividualParticipantAttendanceRows(
