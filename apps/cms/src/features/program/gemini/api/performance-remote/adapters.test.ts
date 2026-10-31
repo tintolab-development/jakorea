@@ -61,6 +61,47 @@ describe('gemini performance adapters', () => {
     expect(row.accountPaymentId).toBeUndefined()
   })
 
+  it('maps blank-instructor SUCCESS exclusion to 미기재 and keeps paymentExclusionReason', () => {
+    const row = mapGeminiTrainingReportItemToRow(
+      {
+        trainingReportId: 12001,
+        instructorMemberId: undefined,
+        instructorName: undefined,
+        trainingLocation: '서울초',
+        trainingDate: '2026-04-01',
+        paymentExclusionReason: 'GEMINI_INSTRUCTOR_IDENTITY_BLANK',
+        accountPaymentId: null,
+        calculatedAmount: 50000,
+      },
+      0
+    )
+    expect(row.instructorName).toBe('미기재')
+    expect(row.instructorMemberId).toBeUndefined()
+    expect(row.accountPaymentId).toBeUndefined()
+    expect(row.paymentExclusionReason).toBe('GEMINI_INSTRUCTOR_IDENTITY_BLANK')
+    expect(row.calculatedAmount).toBe(50000)
+  })
+
+  it('passes through NOT_MATCHED paymentExclusionReason and keeps instructor name', () => {
+    const row = mapGeminiTrainingReportItemToRow(
+      {
+        trainingReportId: 186512,
+        instructorMemberId: undefined,
+        instructorName: '정현익스펙토페트로눔',
+        trainingLocation: '서울개운초등학교',
+        trainingDate: '2026-10-01',
+        paymentExclusionReason: 'GEMINI_INSTRUCTOR_NOT_MATCHED',
+        accountPaymentId: null,
+        calculatedAmount: 170000,
+      },
+      0
+    )
+    expect(row.instructorName).toBe('정현익스펙토페트로눔')
+    expect(row.instructorMemberId).toBeUndefined()
+    expect(row.accountPaymentId).toBeUndefined()
+    expect(row.paymentExclusionReason).toBe('GEMINI_INSTRUCTOR_NOT_MATCHED')
+  })
+
   it('does not treat accountPaymentId 0 as paid', () => {
     const row = mapGeminiTrainingReportItemToRow({ trainingReportId: 1, accountPaymentId: 0 }, 0)
     expect(row.accountPaymentId).toBeUndefined()
@@ -115,5 +156,52 @@ describe('gemini performance adapters', () => {
     expect(importRow.participantCount).toBe(10)
     expect(importRow.trainingMinutes).toBeUndefined()
     expect(importRow.schoolOrOrganizationName).toBe('학교')
+  })
+
+  it('omits instructor identity fields when name and contact are both blank', () => {
+    const display: GeminiPerformanceRow = {
+      id: 'tmp',
+      no: 1,
+      createdAt: '2026-01-01T00:00:00Z',
+      duplicateKey: 'k',
+      trainingLocation: '서울초',
+      trainingDate: '2026-04-01',
+      participantCount: 10,
+      detailTimeText: '10:00~11:00',
+      trainingHours: 1,
+      trainingTopic: '주제',
+      instructorName: '',
+      assistantInstructorNames: '',
+      instructorCount: 0,
+      trainingFormat: '강의',
+      trainingMethod: 'OFFLINE',
+      contact: '',
+    }
+    const importRow = mapUploadAndDisplayToImportRow(
+      {
+        timestamp: '',
+        instructorName: '',
+        assistantInstructorNames: '',
+        trainingFormat: '강의',
+        contact: '',
+        email: '',
+        school: '서울초',
+        paymentDestination: '',
+        trainingLocation: '서울초',
+        trainingDate: '2026-04-01',
+        trainingStartTime: '10:00',
+        trainingEndTime: '11:00',
+        classCount: 2,
+        participantCount: 10,
+      },
+      display
+    )
+    expect(importRow.instructorMemberId).toBeUndefined()
+    expect(importRow.instructorName).toBeUndefined()
+    expect(importRow.instructorPhone).toBeUndefined()
+    expect(importRow.instructorEmail).toBeUndefined()
+    expect(importRow.trainingDate).toBe('2026-04-01')
+    expect(importRow.trainingLocation).toBe('서울초')
+    expect(importRow.trainingSessionCount).toBe(2)
   })
 })

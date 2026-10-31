@@ -10,7 +10,7 @@ import type { GeminiTrainingReportImportResultStatus } from './geminiTrainingRep
 
 export interface GeminiTrainingReportImportResult {
   rowNumber?: number;
-  /** 대소문자 고정. 행 검증 실패 또는 지급완료 overwrite 차단만 FAILED. */
+  /** 대소문자 고정. 행 검증 실패 또는 계좌 지급완료 중복 차단(overwrite·append 무관)만 FAILED. */
   status?: GeminiTrainingReportImportResultStatus;
   message?: string;
   trainingReportId?: number;
@@ -22,6 +22,6 @@ export interface GeminiTrainingReportImportResult {
   assistantInstructorCount?: number;
   deliveryType?: string;
   duplicate?: boolean;
-  /** 계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정 */
+  /** 계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재(회원 검증·계좌 지급 생략, 실적만 등록), GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처는 있으나 회원 미매칭(실적만 등록, 지급·정산 없음) */
   paymentExclusionReason?: GeminiTrainingReportImportResultPaymentExclusionReason;
 }

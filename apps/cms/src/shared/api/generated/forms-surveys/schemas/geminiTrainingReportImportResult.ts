@@ -10,7 +10,7 @@ import type { GeminiTrainingReportImportResultStatus } from './geminiTrainingRep
 
 export interface GeminiTrainingReportImportResult {
   rowNumber?: number;
-  /** 대소문자 고정. 행 검증 실패 또는 지급완료 overwrite 차단만 FAILED. */
+  /** 대소문자 고정. 행 검증 실패 또는 계좌 지급완료 중복 차단(overwrite·append 무관)만 FAILED. */
   status?: GeminiTrainingReportImportResultStatus;
   message?: string;
   trainingReportId?: number;

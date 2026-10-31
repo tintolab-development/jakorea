@@ -10,6 +10,6 @@ import type { GeminiTrainingReportImportRow } from './geminiTrainingReportImport
 
 export interface GeminiTrainingReportImportRequest {
   rows?: GeminiTrainingReportImportRow[];
-  /** overwrite=동일 키 행 덮어쓰기(지급완료면 요청 전체 미커밋). append=중복이어도 신규 insert. 소문자 허용. */
+  /** overwrite=동일 키 행 덮어쓰기. append=미지급 중복 시 신규 insert. 계좌 지급완료 중복이 있으면 overwrite·append 모두 요청 전체 미커밋. 소문자 허용. */
   duplicateStrategy?: GeminiTrainingReportImportRequestDuplicateStrategy;
 }

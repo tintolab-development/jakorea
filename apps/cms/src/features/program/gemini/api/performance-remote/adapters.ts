@@ -10,6 +10,8 @@ import {
   toJavaLocalTime,
   toKoreanPhone,
 } from '@/features/program/gemini/lib/performance/import-wire-values'
+import { isGeminiInstructorIdentityBlank } from '@/features/program/gemini/lib/performance/instructor-identity'
+import { isGeminiInstructorIdentityBlankExclusion } from '@/features/program/gemini/lib/performance/payment-exclusion'
 import { resolveTrainingMethod } from '@/features/program/gemini/lib/performance/resolve-training-method'
 
 function toId(value: number | string | undefined): string {
@@ -58,6 +60,13 @@ export function mapGeminiTrainingReportItemToRow(
   const hours =
     minutes != null && minutes > 0 ? Math.round((minutes / 60) * 10) / 10 : null
   const assistantNames = dto.assistantInstructorNames?.trim() || ''
+  const instructorNameTrimmed = dto.instructorName?.trim() ?? ''
+  const identityBlank = isGeminiInstructorIdentityBlankExclusion(dto.paymentExclusionReason)
+  const instructorName = instructorNameTrimmed
+    ? instructorNameTrimmed
+    : identityBlank
+      ? '미기재'
+      : dash(dto.instructorName)
   return {
     id: toId(dto.trainingReportId),
     no: index + 1,
@@ -69,14 +78,14 @@ export function mapGeminiTrainingReportItemToRow(
     detailTimeText: formatDetailTimeText(dto),
     trainingHours: hours,
     trainingTopic: dash(dto.topic) !== '-' ? dash(dto.topic) : dash(dto.programNameKo),
-    instructorName: dash(dto.instructorName),
+    instructorName,
     assistantInstructorNames: dash(assistantNames),
     instructorCount:
       dto.assistantInstructorCount != null
         ? dto.assistantInstructorCount
         : assistantNames
           ? assistantNames.split(/[,，]/).filter(part => part.trim()).length
-          : dto.instructorName?.trim()
+          : instructorNameTrimmed
             ? 1
             : null,
     trainingFormat: '-',
@@ -86,6 +95,7 @@ export function mapGeminiTrainingReportItemToRow(
       dto.instructorMemberId != null ? String(dto.instructorMemberId) : undefined,
     calculatedAmount: dto.calculatedAmount ?? null,
     classCount: dto.classCount ?? null,
+    paymentExclusionReason: dto.paymentExclusionReason ?? null,
     ...(dto.accountPaymentId != null &&
     Number.isFinite(dto.accountPaymentId) &&
     dto.accountPaymentId > 0
@@ -98,13 +108,29 @@ export function mapUploadAndDisplayToImportRow(
   upload: GeminiPerformanceUploadRow,
   display: GeminiPerformanceRow
 ): GeminiTrainingReportImportRow {
+  const instructorBlank = isGeminiInstructorIdentityBlank(
+    upload.instructorName,
+    upload.contact
+  )
   const memberId = display.instructorMemberId ? Number(display.instructorMemberId) : undefined
+
+  // 강사명·연락처 모두 미기재 → 신원 필드를 생략해 BE가「실적만」분기로 보낸다.
+  // 부분 기재는 필드를 보내 BE가 기존 NAME_AND_PHONE_REQUIRED / NOT_MATCHED로 거절한다.
+  const instructorFields: Pick<
+    GeminiTrainingReportImportRow,
+    'instructorMemberId' | 'instructorEmail' | 'instructorPhone' | 'instructorName'
+  > = instructorBlank
+    ? {}
+    : {
+        instructorMemberId:
+          memberId != null && Number.isFinite(memberId) ? memberId : undefined,
+        instructorEmail: upload.email.trim() || undefined,
+        instructorPhone: toKoreanPhone(upload.contact),
+        instructorName: upload.instructorName.trim() || undefined,
+      }
+
   return {
-    instructorMemberId:
-      memberId != null && Number.isFinite(memberId) ? memberId : undefined,
-    instructorEmail: upload.email.trim() || undefined,
-    instructorPhone: toKoreanPhone(upload.contact),
-    instructorName: upload.instructorName.trim() || undefined,
+    ...instructorFields,
     assistantInstructorNames: upload.assistantInstructorNames.trim() || undefined,
     trainingLocation: upload.trainingLocation.trim() || undefined,
     schoolOrOrganizationName: upload.school.trim() || undefined,

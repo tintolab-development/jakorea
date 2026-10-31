@@ -55,3 +55,14 @@ export function findDuplicateKeys(
     .map(row => row.duplicateKey)
     .filter(key => existingKeys.has(key))
 }
+
+/** 업로드 파일 안에서 동일 duplicateKey가 두 번 이상인 키 */
+export function findWithinFileDuplicateKeys(incoming: GeminiPerformanceRow[]): string[] {
+  const seen = new Set<string>()
+  const dups: string[] = []
+  for (const row of incoming) {
+    if (seen.has(row.duplicateKey)) dups.push(row.duplicateKey)
+    else seen.add(row.duplicateKey)
+  }
+  return dups
+}

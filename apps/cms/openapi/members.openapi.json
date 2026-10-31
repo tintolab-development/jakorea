@@ -29388,7 +29388,7 @@
           },
           "duplicateStrategy": {
             "type": "string",
-            "description": "overwrite=동일 키 행 덮어쓰기(지급완료면 요청 전체 미커밋). append=중복이어도 신규 insert. 소문자 허용.",
+            "description": "overwrite=동일 키 행 덮어쓰기. append=미지급 중복 시 신규 insert. 계좌 지급완료 중복이 있으면 overwrite·append 모두 요청 전체 미커밋. 소문자 허용.",
             "enum": [
               "overwrite",
               "append",
@@ -29533,7 +29533,7 @@
           },
           "status": {
             "type": "string",
-            "description": "대소문자 고정. 행 검증 실패 또는 지급완료 overwrite 차단만 FAILED.",
+            "description": "대소문자 고정. 행 검증 실패 또는 계좌 지급완료 중복 차단(overwrite·append 무관)만 FAILED.",
             "enum": [
               "SUCCESS",
               "FAILED"
@@ -29578,10 +29578,11 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재(회원 검증·계좌 지급 생략, 실적만 등록)",
             "enum": [
               "ZERO_CALCULATED_FEE",
-              "GEMINI_WAGE_RATE_NOT_CONFIGURED"
+              "GEMINI_WAGE_RATE_NOT_CONFIGURED",
+              "GEMINI_INSTRUCTOR_IDENTITY_BLANK"
             ],
             "nullable": true
           }
@@ -53706,10 +53707,11 @@
           },
           "paymentExclusionReason": {
             "type": "string",
-            "description": "계좌 지급 제외 사유. 지급 대상이면 null",
+            "description": "계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재(회원 검증·계좌 지급 생략, 실적만 등록)",
             "enum": [
               "ZERO_CALCULATED_FEE",
-              "GEMINI_WAGE_RATE_NOT_CONFIGURED"
+              "GEMINI_WAGE_RATE_NOT_CONFIGURED",
+              "GEMINI_INSTRUCTOR_IDENTITY_BLANK"
             ],
             "nullable": true
           }
