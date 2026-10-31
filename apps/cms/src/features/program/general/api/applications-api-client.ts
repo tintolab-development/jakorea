@@ -241,6 +241,9 @@ export async function fetchOrganizationApplicationsRemote(
 /**
  * 기관 신청 상세 — OpenAPI `OrganizationApplicationDetailResponse` +
  * UJAT hydrate용 보조 필드(목록·레거시 호환).
+ *
+ * snackAvailability / sexOffenseCheckRequest / leftoverTextbookDisposal 는
+ * OpenAPI detail 프로젝션 필드(SSOT). form-response·local fallback 없음.
  */
 export type OrganizationApplicationDetailDto = OrganizationApplicationDetailResponse & {
   managerComment?: string | null

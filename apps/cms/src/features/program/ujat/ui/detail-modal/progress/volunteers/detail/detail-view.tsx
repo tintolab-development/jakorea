@@ -39,7 +39,6 @@ import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
   describeUjatCertificateProgressBlock,
-  UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT,
 } from '../activity-certificate'
 import type { UjatEducationProgressVolunteerDetail } from './volunteer-detail-data'
 import { UjatEducationProgressVolunteerApplicationTab } from './application-tab'
@@ -378,6 +377,7 @@ export function UjatEducationProgressVolunteerDetailView({
     isLoading: assignmentProgress.isLoading,
     isError: assignmentProgress.isError,
     isParticipantUnresolved: assignmentProgress.isParticipantUnresolved,
+    hasNoAssignment: assignmentProgress.bundle.rows.length === 0,
   })
   const certificateIssueDisabled =
     certificateProgressBlockReason != null || studentCertificateExportActive
@@ -392,39 +392,22 @@ export function UjatEducationProgressVolunteerDetailView({
       showAlert({ title: '안내', content: certificateProgressBlockReason })
       return
     }
-    if (assignmentProgress.bundle.rows.length === 0) {
-      showAlert({ title: '안내', content: UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT })
-      return
-    }
     setActivityCertPreviewOpen(true)
-  }, [assignmentProgress.bundle.rows.length, certificateProgressBlockReason, showAlert])
+  }, [certificateProgressBlockReason, showAlert])
 
   const handleStudentCertificateIssueClick = useCallback(() => {
     if (certificateProgressBlockReason != null) {
       showAlert({ title: '안내', content: certificateProgressBlockReason })
       return
     }
-    if (assignmentProgress.bundle.rows.length === 0) {
-      showAlert({ title: '안내', content: UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT })
-      return
-    }
     if (studentCertificateExportActive) return
     setStudentCertificateIssueModalOpen(true)
-  }, [
-    assignmentProgress.bundle.rows.length,
-    certificateProgressBlockReason,
-    showAlert,
-    studentCertificateExportActive,
-  ])
+  }, [certificateProgressBlockReason, showAlert, studentCertificateExportActive])
 
   const handleStudentCertificateIssueConfirm = useCallback(
     async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
       if (certificateProgressBlockReason != null) {
         showAlert({ title: '안내', content: certificateProgressBlockReason })
-        return
-      }
-      if (assignmentProgress.bundle.rows.length === 0) {
-        showAlert({ title: '안내', content: UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT })
         return
       }
       let context = buildStudentCertificateContextFromUjatVolunteer({
@@ -592,6 +575,7 @@ export function UjatEducationProgressVolunteerDetailView({
 
       <UjatEducationProgressActivityWithdrawModal
         open={activityWithdrawModalOpen}
+        subjectKind="person"
         participantName={detail.applicant.name}
         scheduleOptions={activityWithdrawScheduleOptions}
         requireSchedule={activityWithdrawScheduleOptions.length > 0}

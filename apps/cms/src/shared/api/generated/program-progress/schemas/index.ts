@@ -21,7 +21,6 @@ export * from './get1Params';
 export * from './pageResponseProgramParticipantRegisterCandidateResponse';
 export * from './participantRegisterCandidatesParams';
 export * from './previousJaProgramRequest';
-export * from './previousUjatTermRequest';
 export * from './programParticipantRegisterCandidateResponse';
 export * from './ujat1365RegistrationFormParams';
 export * from './ujat1365RegistrationFormResponse';

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ContentModal, CmsButton, CmsCheckbox } from '@/shared/ui'
-import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { fetchUjatEducationClasses } from '@/features/program/ujat/api/education-classes-api'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import type { EducationProgressHalfKey } from '../../tabs'
 import type { UjatEducationProgressInstitutionDetail } from './types'
@@ -10,6 +13,7 @@ import {
   UNASSIGNED_GRADE_LABEL,
   buildChangeClassScheduleOptions,
   buildExistingClassOptions,
+  buildExistingClassOptionsFromEducationClasses,
   buildMappingFromRowFields,
   validateChangeClassRows,
   type ChangeClassConfirmPayload,
@@ -25,6 +29,11 @@ const NEW_GRADE_OPTIONS = [
   })),
   { value: UNASSIGNED_GRADE_VALUE, label: UNASSIGNED_GRADE_LABEL },
 ]
+
+const NEW_CLASS_OPTIONS = Array.from({ length: 20 }, (_, index) => ({
+  value: String(index + 1),
+  label: `${index + 1}반`,
+}))
 
 type ChangeClassRowState = {
   id: string
@@ -50,32 +59,62 @@ function createEmptyRow(): ChangeClassRowState {
   }
 }
 
+export type ChangeClassRemoteScheduleRow = {
+  id: string
+  dateDisplay: string
+  isoDate?: string
+  /** matrix scheduleId — remapping applyFromScheduleId */
+  numericScheduleId?: number | null
+}
+
 export type UjatEducationProgressChangeClassModalProps = {
   open: boolean
+  programId: string
   half: EducationProgressHalfKey
   detail: UjatEducationProgressInstitutionDetail
   gradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>
+  remoteScheduleRows?: ReadonlyArray<ChangeClassRemoteScheduleRow>
+  confirming?: boolean
   onCancel: () => void
-  onConfirm: (payload: ChangeClassConfirmPayload) => void
+  onConfirm: (payload: ChangeClassConfirmPayload) => void | Promise<void>
 }
 
 export function UjatEducationProgressChangeClassModal({
   open,
+  programId,
   half,
   detail,
   gradeBlocks,
+  remoteScheduleRows = [],
+  confirming = false,
   onCancel,
   onConfirm,
 }: UjatEducationProgressChangeClassModalProps) {
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+
+  const educationClassesQuery = useQuery({
+    queryKey: [
+      ...ujatQueryKeys.organizationDetail(programId, detail.institutionId),
+      'education-classes',
+    ],
+    queryFn: () => fetchUjatEducationClasses(programId, detail.institutionId),
+    enabled: open && remoteEnabled && Boolean(detail.institutionId),
+    staleTime: 30_000,
+    retry: false,
+  })
+
   const scheduleOptions = useMemo(
-    () => buildChangeClassScheduleOptions(detail, half),
-    [detail, half]
+    () => buildChangeClassScheduleOptions(detail, half, remoteScheduleRows),
+    [detail, half, remoteScheduleRows]
   )
 
-  const existingClassOptions = useMemo(
-    () => buildExistingClassOptions(gradeBlocks),
-    [gradeBlocks]
-  )
+  const existingClassOptions = useMemo(() => {
+    const remoteClasses = educationClassesQuery.data?.classes
+    if (remoteClasses && remoteClasses.length > 0) {
+      return buildExistingClassOptionsFromEducationClasses(remoteClasses)
+    }
+    return buildExistingClassOptions(gradeBlocks)
+  }, [educationClassesQuery.data?.classes, gradeBlocks])
 
   const scheduleSelectDisabled = scheduleOptions.length <= 1
 
@@ -99,17 +138,19 @@ export function UjatEducationProgressChangeClassModal({
   const headerCheckboxIndeterminate = someRowsSelected && !allRowsSelected
 
   const canConfirm = useMemo(() => {
+    if (confirming) return false
     if (!applyScheduleRowId) return false
     if (!scheduleOptions.some(option => option.value === applyScheduleRowId)) return false
     return validateChangeClassRows(rows) == null
-  }, [applyScheduleRowId, rows, scheduleOptions])
+  }, [applyScheduleRowId, confirming, rows, scheduleOptions])
 
   const handleCancel = useCallback(() => {
+    if (confirming) return
     setRows([createEmptyRow()])
     setFormError(null)
     setApplyScheduleRowId(undefined)
     onCancel()
-  }, [onCancel])
+  }, [confirming, onCancel])
 
   const handleToggleAllRows = useCallback((checked: boolean) => {
     setRows(prev => prev.map(row => ({ ...row, selected: checked })))
@@ -136,7 +177,7 @@ export function UjatEducationProgressChangeClassModal({
     setFormError(null)
   }, [])
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = useCallback(async () => {
     const validationError = validateChangeClassRows(rows)
     if (validationError) {
       setFormError(validationError)
@@ -165,28 +206,60 @@ export function UjatEducationProgressChangeClassModal({
       return
     }
 
-    onConfirm({
+    const remoteRow = remoteScheduleRows.find(row => row.id === selectedSchedule.value)
+    const numericScheduleId =
+      remoteRow?.numericScheduleId != null && Number.isFinite(remoteRow.numericScheduleId)
+        ? Number(remoteRow.numericScheduleId)
+        : null
+    const expectedRevision = educationClassesQuery.data?.revision
+    if (
+      remoteEnabled &&
+      (expectedRevision == null || !Number.isFinite(expectedRevision))
+    ) {
+      setFormError('교육 학급 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
+      return
+    }
+
+    await onConfirm({
       applyScheduleRowId: selectedSchedule.value,
+      applyFromScheduleId: numericScheduleId,
       applyIsoDate: selectedSchedule.isoDate,
+      expectedRevision:
+        expectedRevision != null && Number.isFinite(expectedRevision) ? expectedRevision : null,
       mappings,
     })
-    setRows([createEmptyRow()])
-    setFormError(null)
-    setApplyScheduleRowId(undefined)
-  }, [applyScheduleRowId, onConfirm, rows, scheduleOptions])
+  }, [
+    applyScheduleRowId,
+    educationClassesQuery.data?.revision,
+    onConfirm,
+    remoteEnabled,
+    remoteScheduleRows,
+    rows,
+    scheduleOptions,
+  ])
 
   const footer = (
     <div className="ujat-education-progress-change-class-modal__footer">
-      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
+      <CmsButton
+        variant="secondary"
+        size="h40"
+        type="button"
+        disabled={confirming}
+        onClick={handleCancel}
+      >
         취소
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="h40"
         type="button"
         disabled={!canConfirm}
-        onClick={handleConfirm} >
-        변경사항 적용
+        loading={confirming}
+        onClick={() => {
+          void handleConfirm()
+        }}
+      >
+        변경
       </CmsButton>
     </div>
   )
@@ -202,20 +275,23 @@ export function UjatEducationProgressChangeClassModal({
       wrapClassName="ujat-education-progress-change-class-modal-wrap"
       footer={footer}
       description={
-        '변경할 기존 학급과 신규 학급 정보를 입력해 주세요.\n기존 학급의 교육만 취소할 시 변경 학급의 학년 선택에서 "미배정"을 선택해 주세요.'
+        "기존 학급과 변경할 학급 정보를 입력해 주세요.\n기존 학급의 교육만 취소하려면 변경할 학급의 학년을 '미배정'으로 선택해 주세요."
       }
     >
       <div className="ujat-education-progress-change-class-modal__apply-date-field">
         <span className="ujat-education-progress-change-class-modal__apply-date-label">
           변경사항 적용일
+          <span className="ujat-education-progress-change-class-modal__required" aria-hidden>
+            *
+          </span>
         </span>
         <CmsSelect
-          inputSize="large"
+          inputSize="medium"
           width="100%"
           withAllOption={false}
           placeholder="변경사항 적용일을 선택해 주세요"
           value={applyScheduleRowId}
-          disabled={scheduleOptions.length === 0 || scheduleSelectDisabled}
+          disabled={scheduleOptions.length === 0 || scheduleSelectDisabled || confirming}
           onChange={value =>
             setApplyScheduleRowId(value == null ? undefined : String(value))
           }
@@ -232,12 +308,21 @@ export function UjatEducationProgressChangeClassModal({
           <CmsButton
             type="button"
             variant="delete"
-            size="medium"
-            disabled={!someRowsSelected}
-            onClick={handleRemoveSelectedRows} >
+            size="h32"
+            className="ujat-education-progress-change-class-modal__toolbar-btn"
+            disabled={!someRowsSelected || confirming}
+            onClick={handleRemoveSelectedRows}
+          >
             삭제
           </CmsButton>
-          <CmsButton type="button" variant="secondary" size="medium" onClick={handleAddRow}>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="h32"
+            className="ujat-education-progress-change-class-modal__toolbar-btn"
+            disabled={confirming}
+            onClick={handleAddRow}
+          >
             추가
           </CmsButton>
         </div>
@@ -249,12 +334,15 @@ export function UjatEducationProgressChangeClassModal({
                 <CmsCheckbox
                   checked={allRowsSelected}
                   indeterminate={headerCheckboxIndeterminate}
+                  disabled={confirming}
                   onChange={event => handleToggleAllRows(event.target.checked)}
                   aria-label="전체 선택"
                 />
               </div>
               <div className="ujat-education-progress-change-class-modal__header-cell">기존 학급</div>
-              <div className="ujat-education-progress-change-class-modal__header-cell">변경 학급</div>
+              <div className="ujat-education-progress-change-class-modal__header-cell">
+                변경할 학급
+              </div>
             </div>
 
             {rows.map(row => {
@@ -268,106 +356,131 @@ export function UjatEducationProgressChangeClassModal({
                   <div className="ujat-education-progress-change-class-modal__body-cell ujat-education-progress-change-class-modal__body-cell--checkbox">
                     <CmsCheckbox
                       checked={row.selected}
+                      disabled={confirming}
                       onChange={event => handleToggleRow(row.id, event.target.checked)}
                       aria-label="행 선택"
                     />
                   </div>
                   <div className="ujat-education-progress-change-class-modal__body-cell">
                     <div className="ujat-education-progress-change-class-modal__class-fields">
-                      <CmsSelect
-                        inputSize="medium"
-                        width="100%"
-                        withAllOption={false}
-                        placeholder="학년"
-                        value={row.existingGrade}
-                        onChange={value => {
-                          const grade = value == null ? undefined : String(value)
-                          setRows(prev =>
-                            prev.map(item =>
-                              item.id === row.id
-                                ? {
-                                    ...item,
-                                    existingGrade: grade,
-                                    existingClassNo: undefined,
-                                  }
-                                : item
+                      <div className="ujat-education-progress-change-class-modal__field">
+                        <CmsSelect
+                          inputSize="small"
+                          width="100%"
+                          withAllOption={false}
+                          placeholder="학년"
+                          value={row.existingGrade}
+                          disabled={confirming}
+                          onChange={value => {
+                            const grade = value == null ? undefined : String(value)
+                            setRows(prev =>
+                              prev.map(item =>
+                                item.id === row.id
+                                  ? {
+                                      ...item,
+                                      existingGrade: grade,
+                                      existingClassNo: undefined,
+                                    }
+                                  : item
+                              )
                             )
-                          )
-                          setFormError(null)
-                        }}
-                        options={existingClassOptions.gradeOptions}
-                        aria-label="기존 학년"
+                            setFormError(null)
+                          }}
+                          options={existingClassOptions.gradeOptions}
+                          aria-label="기존 학년"
+                        />
+                      </div>
+                      <span
+                        className="ujat-education-progress-change-class-modal__field-divider"
+                        aria-hidden
                       />
-                      <CmsSelect
-                        inputSize="medium"
-                        width="100%"
-                        withAllOption={false}
-                        placeholder="학급"
-                        value={row.existingClassNo}
-                        disabled={!row.existingGrade}
-                        onChange={value => {
-                          setRows(prev =>
-                            prev.map(item =>
-                              item.id === row.id
-                                ? {
-                                    ...item,
-                                    existingClassNo:
-                                      value == null ? undefined : String(value),
-                                  }
-                                : item
+                      <div className="ujat-education-progress-change-class-modal__field">
+                        <CmsSelect
+                          inputSize="small"
+                          width="100%"
+                          withAllOption={false}
+                          placeholder="학급"
+                          value={row.existingClassNo}
+                          disabled={!row.existingGrade || confirming}
+                          onChange={value => {
+                            setRows(prev =>
+                              prev.map(item =>
+                                item.id === row.id
+                                  ? {
+                                      ...item,
+                                      existingClassNo:
+                                        value == null ? undefined : String(value),
+                                    }
+                                  : item
+                              )
                             )
-                          )
-                          setFormError(null)
-                        }}
-                        options={classOptions}
-                        aria-label="기존 학급"
-                      />
+                            setFormError(null)
+                          }}
+                          options={classOptions}
+                          aria-label="기존 학급"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="ujat-education-progress-change-class-modal__body-cell">
                     <div className="ujat-education-progress-change-class-modal__class-fields">
-                      <CmsSelect
-                        inputSize="medium"
-                        width="100%"
-                        withAllOption={false}
-                        placeholder="학년"
-                        value={row.newGrade}
-                        onChange={value => {
-                          const grade = value == null ? undefined : String(value)
-                          setRows(prev =>
-                            prev.map(item =>
-                              item.id === row.id
-                                ? {
-                                    ...item,
-                                    newGrade: grade,
-                                    newClassNo:
-                                      grade === UNASSIGNED_GRADE_VALUE ? '' : item.newClassNo,
-                                  }
-                                : item
+                      <div className="ujat-education-progress-change-class-modal__field">
+                        <CmsSelect
+                          inputSize="small"
+                          width="100%"
+                          withAllOption={false}
+                          placeholder="학년"
+                          value={row.newGrade}
+                          disabled={confirming}
+                          onChange={value => {
+                            const grade = value == null ? undefined : String(value)
+                            setRows(prev =>
+                              prev.map(item =>
+                                item.id === row.id
+                                  ? {
+                                      ...item,
+                                      newGrade: grade,
+                                      newClassNo:
+                                        grade === UNASSIGNED_GRADE_VALUE ? '' : item.newClassNo,
+                                    }
+                                  : item
+                              )
                             )
-                          )
-                          setFormError(null)
-                        }}
-                        options={NEW_GRADE_OPTIONS}
-                        aria-label="변경 학년"
+                            setFormError(null)
+                          }}
+                          options={NEW_GRADE_OPTIONS}
+                          aria-label="변경 학년"
+                        />
+                      </div>
+                      <span
+                        className="ujat-education-progress-change-class-modal__field-divider"
+                        aria-hidden
                       />
-                      <CmsNumericInput
-                        mode="numericText"
-                        inputSize="medium"
-                        width="100%"
-                        placeholder="학급"
-                        value={row.newClassNo}
-                        disabled={isNewClassDisabled}
-                        onValueChange={value => {
-                          setRows(prev =>
-                            prev.map(item =>
-                              item.id === row.id ? { ...item, newClassNo: value } : item
+                      <div className="ujat-education-progress-change-class-modal__field">
+                        <CmsSelect
+                          inputSize="small"
+                          width="100%"
+                          withAllOption={false}
+                          placeholder="학급"
+                          value={row.newClassNo || undefined}
+                          disabled={isNewClassDisabled || confirming}
+                          onChange={value => {
+                            setRows(prev =>
+                              prev.map(item =>
+                                item.id === row.id
+                                  ? {
+                                      ...item,
+                                      newClassNo: value == null ? '' : String(value),
+                                    }
+                                  : item
+                              )
                             )
-                          )
-                          setFormError(null)
-                        }}
-                        aria-label="변경 학급"
-                      />
+                            setFormError(null)
+                          }}
+                          options={NEW_CLASS_OPTIONS}
+                          aria-label="변경 학급"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -377,7 +490,10 @@ export function UjatEducationProgressChangeClassModal({
         </div>
 
         {formError ? (
-          <p className="form-editor-template-field-hint-text ujat-education-progress-change-class-modal__form-error" role="alert">
+          <p
+            className="form-editor-template-field-hint-text ujat-education-progress-change-class-modal__form-error"
+            role="alert"
+          >
             {formError}
           </p>
         ) : null}

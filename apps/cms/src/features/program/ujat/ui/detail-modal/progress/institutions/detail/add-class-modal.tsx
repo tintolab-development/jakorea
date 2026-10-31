@@ -80,8 +80,8 @@ function ClassRowFields({
     <div className="add-class-modal__inputs">
       <div className="add-class-modal__field-grade">
         <CmsSelect
-          inputSize="medium"
-          width={110}
+          inputSize="small"
+          width={120}
           withAllOption={false}
           placeholder="신청 학년"
           value={grade}
@@ -93,8 +93,8 @@ function ClassRowFields({
       </div>
       <div className="add-class-modal__field-class">
         <CmsSelect
-          inputSize="medium"
-          width="100%"
+          inputSize="small"
+          width={120}
           withAllOption={false}
           placeholder="신청 학급"
           value={classNo}
@@ -104,20 +104,22 @@ function ClassRowFields({
           aria-label={classAriaLabel}
         />
       </div>
-      <div className="add-class-modal__field-student">
-        <CmsNumericInput
-          mode="integer"
-          min={1}
-          inputSize="medium"
-          width={110}
-          placeholder="총 학생 수"
-          value={studentCount}
-          readOnly={readOnly}
-          onValueChange={value => onStudentCountChange?.(value)}
-          aria-label={studentCountAriaLabel}
-        />
+      <div className="add-class-modal__field-student-wrap">
+        <div className="add-class-modal__field-student">
+          <CmsNumericInput
+            mode="integer"
+            min={1}
+            inputSize="small"
+            width={120}
+            placeholder="총 학생 수"
+            value={studentCount}
+            readOnly={readOnly}
+            onValueChange={value => onStudentCountChange?.(value)}
+            aria-label={studentCountAriaLabel}
+          />
+        </div>
+        <span className="add-class-modal__unit">명</span>
       </div>
-      <span className="add-class-modal__unit">명</span>
     </div>
   )
 }
@@ -211,16 +213,17 @@ export function UjatEducationProgressAddClassModal({
 
   const footer = (
     <div className="add-class-modal__footer">
-      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="h40" type="button" onClick={handleCancel}>
         취소
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="h40"
         type="button"
         disabled={!hasChanges}
-        onClick={handleConfirm} >
-        학급 추가
+        onClick={handleConfirm}
+      >
+        저장
       </CmsButton>
     </div>
   )
@@ -261,8 +264,10 @@ export function UjatEducationProgressAddClassModal({
                 <CmsButton
                   type="button"
                   variant="delete"
-                  size="medium" className="add-class-modal__action-btn"
-                  onClick={() => handleRemovePendingRow(row.id)} >
+                  size="h32"
+                  className="add-class-modal__action-btn"
+                  onClick={() => handleRemovePendingRow(row.id)}
+                >
                   삭제
                 </CmsButton>
               </div>
@@ -293,8 +298,10 @@ export function UjatEducationProgressAddClassModal({
               <CmsButton
                 type="button"
                 variant="secondary"
-                size="medium" className="add-class-modal__action-btn"
-                onClick={handleRegisterDraft} >
+                size="h32"
+                className="add-class-modal__action-btn"
+                onClick={handleRegisterDraft}
+              >
                 등록
               </CmsButton>
             </div>

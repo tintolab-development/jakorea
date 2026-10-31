@@ -1,51 +1,46 @@
 import { describe, expect, it } from 'vitest'
-import {
-  resolveEnrollmentProgramFilesList,
-  resolveEnrollmentProgramPostsList,
-} from './enrollment-program-posts-source'
+import type { ProgramPost } from '@/types/domain'
+import { resolveEnrollmentProgramPostsList } from './enrollment-program-posts-source'
 
-describe('enrollment-program-posts-source (remote)', () => {
-  it('remote + postsOverride 없으면 빈 posts를 반환한다', () => {
-    const posts = resolveEnrollmentProgramPostsList({
-      membersRemote: true,
-      postsOverride: null,
-      programId: 'prog-1',
-    })
-    expect(posts).toEqual([])
-  })
+function post(partial: Partial<ProgramPost> & Pick<ProgramPost, 'id'>): ProgramPost {
+  return {
+    programId: '186495',
+    authorName: 'JA',
+    content: '본문',
+    read: true,
+    viewCount: 0,
+    reactionCount: 0,
+    commentCount: 0,
+    attachmentCount: 0,
+    publishedAt: '2026-01-01T00:00:00Z',
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+    ...partial,
+  }
+}
 
-  it('remote + postsOverride가 있으면 주입 목록을 사용한다', () => {
-    const posts = resolveEnrollmentProgramPostsList({
+describe('resolveEnrollmentProgramPostsList', () => {
+  it('schoolId가 있으면 해당 기관 게시글만 남긴다', () => {
+    const list = resolveEnrollmentProgramPostsList({
       membersRemote: true,
+      programId: '186495',
+      schoolId: '1691554',
       postsOverride: [
-        {
-          id: 'api-post-1',
-          programId: 'prog-1',
-          title: 'API 게시글',
-          content: 'from api',
-          authorName: '관리자',
-          read: true,
-          viewCount: 0,
-          reactionCount: 0,
-          commentCount: 0,
-          attachmentCount: 0,
-          postType: 'notice',
-          publishedAt: '2026-02-01',
-          createdAt: '2026-02-01',
-          updatedAt: '2026-02-01',
-        },
+        post({ id: '1', schoolId: '1691554' }),
+        post({ id: '2', schoolId: '999' }),
+        post({ id: '3' }),
       ],
-      programId: 'prog-1',
     })
-    expect(posts[0]?.title).toBe('API 게시글')
+    expect(list.map(item => item.id)).toEqual(['1'])
   })
 
-  it('remote + postsOverride 없으면 빈 files를 반환한다', () => {
-    const files = resolveEnrollmentProgramFilesList({
+  it('schoolId가 없으면 override 전체를 반환한다', () => {
+    const override = [post({ id: '1' }), post({ id: '2', schoolId: '1691554' })]
+    const list = resolveEnrollmentProgramPostsList({
       membersRemote: true,
-      postsOverride: null,
-      programId: 'prog-1',
+      programId: '186495',
+      postsOverride: override,
     })
-    expect(files).toEqual([])
+    expect(list).toHaveLength(2)
   })
 })

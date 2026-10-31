@@ -144,6 +144,45 @@ export function buildEducationScheduleDaysFromTemporarySchedule(
     }))
 }
 
+export type ProgressConfirmedScheduleHalf = 'h1' | 'h2'
+
+/**
+ * 교육 진행 기관 상세 「진행 교육 일정」— temporary-schedule slots SSOT.
+ * 로컬 schedule-assign store에 의존하지 않는다.
+ */
+export function buildProgressConfirmedScheduleRowsFromTemporarySchedule(input: {
+  institutionId: string
+  half: ProgressConfirmedScheduleHalf
+  temporarySchedule: UjatOrganizationScheduleResponse | null | undefined
+  resolveHalf: (isoDate: string) => ProgressConfirmedScheduleHalf | null
+  formatDateDisplay: (isoDate: string) => string
+}): Array<{ id: string; dateDisplay: string; classLabels: string[] }> {
+  const grouped = new Map<string, string[]>()
+
+  for (const slot of input.temporarySchedule?.slots ?? []) {
+    const iso = toSeoulYmd(slot.scheduleStartAt)
+    if (!iso) continue
+    if (input.resolveHalf(iso) !== input.half) continue
+    const label = slotClassLabel(slot)
+    if (!label) continue
+    const labels = grouped.get(iso) ?? []
+    if (!labels.includes(label)) labels.push(label)
+    grouped.set(iso, labels)
+  }
+
+  return [...grouped.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([iso, labels]) => ({
+      id: `${input.institutionId}-${iso}`,
+      dateDisplay: input.formatDateDisplay(iso),
+      classLabels: [...labels].sort((a, b) => {
+        const left = classLabelSortKey(a)
+        const right = classLabelSortKey(b)
+        return left.grade - right.grade || left.classNo - right.classNo
+      }),
+    }))
+}
+
 /**
  * 간식 제공 가능 여부 — 시안 표시값 `가능` / `불가`.
  * wire: possible|impossible · 포털 라디오 문구 · 한글 단축.
@@ -172,13 +211,10 @@ export function mapSnackAvailabilityLabel(raw: string | null | undefined): strin
 }
 
 function mapSnackAvailability(dto: UjatOrganizationApplicationDetail | null | undefined): string {
-  // OpenAPI: snackAvailability = possible|impossible|null. mealNotice와 혼용하지 않는다.
-  // 스펙 필드가 생성 타입에 아직 없을 수 있어 ownString으로만 읽는다.
-  const fromField = mapSnackAvailabilityLabel(ownString(dto, 'snackAvailability'))
-  if (fromField) return fromField
-  const fromNotice = mapSnackAvailabilityLabel(ownString(dto, 'snackNotice'))
-  if (fromNotice) return fromNotice
-  return '-'
+  // UJAT snackAvailability = possible|impossible. mealNotice(잔여교재 meal)와 혼용하지 않는다.
+  return (
+    mapSnackAvailabilityLabel(dto?.snackAvailability ?? ownString(dto, 'snackAvailability')) ?? '-'
+  )
 }
 
 function mapSexOffenderCheckLabel(raw: string | null | undefined): string {
@@ -200,7 +236,7 @@ function mapSexOffenderCheckLabel(raw: string | null | undefined): string {
   return trimmed
 }
 
-/** 안내 사항 — detail API 프로젝션만 사용 (mealNotice≠간식). */
+/** 안내 사항 — Admin organization-application detail 프로젝션만 SSOT. form/local fallback 없음. */
 export function mapUjatOrganizationGuidanceNotes(
   dto: UjatOrganizationApplicationDetail | null | undefined
 ): UjatScheduleConfirmGuidanceNotes {
@@ -208,11 +244,15 @@ export function mapUjatOrganizationGuidanceNotes(
     searchDeviceGrade6: displayOrDash(dto?.computerInRoom),
     waitingArea: displayOrDash(dto?.waitingRoomLocation),
     textbookDisposalLocation: displayOrDash(
-      ownString(dto, 'leftoverTextbookDisposal') ?? dto?.mealNotice
+      dto?.leftoverTextbookDisposal ??
+        ownString(dto, 'leftoverTextbookDisposal') ??
+        dto?.mealNotice
     ),
     otherSpecialNotes: displayOrDash(dto?.parkingInfo),
     snackAvailability: mapSnackAvailability(dto),
-    sexOffenderCheck: mapSexOffenderCheckLabel(ownString(dto, 'sexOffenseCheckRequest')),
+    sexOffenderCheck: mapSexOffenderCheckLabel(
+      dto?.sexOffenseCheckRequest ?? ownString(dto, 'sexOffenseCheckRequest')
+    ),
   }
 }
 

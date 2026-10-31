@@ -7,6 +7,21 @@ import {
   parseGradeClassSectionValue,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
 import { patchUjatScheduleAssignDay } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-assign/store'
+import {
+  gradeClassValueFromSlot,
+  normalizeClassNameForSlot,
+  normalizeGradeNumberFromLabel,
+} from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-assign/temporary-schedule-mapper'
+import {
+  isoDateFromScheduleInstant,
+  type UjatOrganizationScheduleSlotResponse,
+  type UjatTemporaryScheduleSlotRequest,
+} from '@/features/program/ujat/api/temporary-schedule-api'
+import type {
+  UjatEducationClassRemappingItemRequest,
+  UjatEducationClassRemappingRequest,
+} from '@/features/program/ujat/api/education-classes-api'
+import type { EducationClassResponse } from '@/shared/api/generated/dashboard/schemas/educationClassResponse'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import type { EducationProgressHalfKey } from '../../tabs'
 import type { UjatEducationProgressInstitutionDetail } from './types'
@@ -40,7 +55,11 @@ export type ChangeClassMapping = {
 
 export type ChangeClassConfirmPayload = {
   applyScheduleRowId: string
+  /** matrix/API numeric schedule id — remapping applyFromScheduleId */
+  applyFromScheduleId: number | null
   applyIsoDate: string
+  /** GET education-classes.revision — remapping expectedRevision */
+  expectedRevision: number | null
   mappings: ChangeClassMapping[]
 }
 
@@ -58,18 +77,40 @@ function parseIsoDateFromScheduleId(scheduleId: string, institutionId: string): 
 
 export function buildChangeClassScheduleOptions(
   detail: UjatEducationProgressInstitutionDetail,
-  _half: EducationProgressHalfKey
+  _half: EducationProgressHalfKey,
+  remoteScheduleRows: ReadonlyArray<{
+    id: string
+    dateDisplay: string
+    isoDate?: string
+  }> = []
 ): ChangeClassScheduleOption[] {
   void _half
   const today = getUjatEducationProgressToday().startOf('day')
+  const byIso = new Map<string, ChangeClassScheduleOption>()
 
-  return detail.confirmedScheduleRows
-    .map(row => ({
+  for (const row of detail.confirmedScheduleRows) {
+    const isoDate = parseIsoDateFromScheduleId(row.id, detail.institutionId)
+    byIso.set(isoDate, {
       value: row.id,
       label: row.dateDisplay,
-      isoDate: parseIsoDateFromScheduleId(row.id, detail.institutionId),
-    }))
+      isoDate,
+    })
+  }
+
+  for (const row of remoteScheduleRows) {
+    const isoDate =
+      row.isoDate?.trim() || parseIsoDateFromScheduleId(row.id, detail.institutionId)
+    if (!isoDate || byIso.has(isoDate)) continue
+    byIso.set(isoDate, {
+      value: row.id,
+      label: row.dateDisplay,
+      isoDate,
+    })
+  }
+
+  return [...byIso.values()]
     .filter(option => dayjs(option.isoDate).isSameOrAfter(today, 'day'))
+    .sort((a, b) => a.isoDate.localeCompare(b.isoDate))
 }
 
 export type ExistingClassSelectOptions = {
@@ -77,28 +118,10 @@ export type ExistingClassSelectOptions = {
   classOptionsByGrade: Record<string, Array<{ value: string; label: string }>>
 }
 
-export function buildExistingClassOptions(
-  gradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>
+function finalizeExistingClassOptions(
+  gradeSet: Set<string>,
+  classOptionsByGrade: Record<string, Array<{ value: string; label: string }>>
 ): ExistingClassSelectOptions {
-  const rows = flattenExistingClasses(gradeBlocks)
-  const gradeSet = new Set<string>()
-  const classOptionsByGrade: Record<string, Array<{ value: string; label: string }>> = {}
-
-  for (const row of rows) {
-    const gradeValue = row.gradeLabel.replace(/학년$/, '').trim()
-    gradeSet.add(gradeValue)
-    if (!classOptionsByGrade[gradeValue]) {
-      classOptionsByGrade[gradeValue] = []
-    }
-    const classValue = String(row.classNo)
-    if (!classOptionsByGrade[gradeValue].some(option => option.value === classValue)) {
-      classOptionsByGrade[gradeValue].push({
-        value: classValue,
-        label: `${row.classNo}반`,
-      })
-    }
-  }
-
   const gradeOptions = [...gradeSet]
     .sort((a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10))
     .map(value => ({ value, label: `${value}학년` }))
@@ -110,6 +133,135 @@ export function buildExistingClassOptions(
   }
 
   return { gradeOptions, classOptionsByGrade }
+}
+
+function pushExistingClassOption(
+  gradeSet: Set<string>,
+  classOptionsByGrade: Record<string, Array<{ value: string; label: string }>>,
+  gradeLabel: string,
+  classNo: number
+) {
+  const gradeValue = gradeLabel.replace(/학년$/, '').trim()
+  if (!gradeValue || !Number.isFinite(classNo) || classNo < 1) return
+  gradeSet.add(gradeValue)
+  if (!classOptionsByGrade[gradeValue]) {
+    classOptionsByGrade[gradeValue] = []
+  }
+  const classValue = String(classNo)
+  if (!classOptionsByGrade[gradeValue].some(option => option.value === classValue)) {
+    classOptionsByGrade[gradeValue].push({
+      value: classValue,
+      label: `${classNo}반`,
+    })
+  }
+}
+
+export function buildExistingClassOptions(
+  gradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>
+): ExistingClassSelectOptions {
+  const rows = flattenExistingClasses(gradeBlocks)
+  const gradeSet = new Set<string>()
+  const classOptionsByGrade: Record<string, Array<{ value: string; label: string }>> = {}
+
+  for (const row of rows) {
+    pushExistingClassOption(gradeSet, classOptionsByGrade, row.gradeLabel, row.classNo)
+  }
+
+  return finalizeExistingClassOptions(gradeSet, classOptionsByGrade)
+}
+
+/** education-classes GET → 기존 학급 셀렉트 옵션 */
+export function buildExistingClassOptionsFromEducationClasses(
+  classes: ReadonlyArray<EducationClassResponse>
+): ExistingClassSelectOptions {
+  const gradeSet = new Set<string>()
+  const classOptionsByGrade: Record<string, Array<{ value: string; label: string }>> = {}
+
+  for (const item of classes) {
+    const gradeRaw = item.grade?.trim()
+    if (!gradeRaw) continue
+    const gradeValue = normalizeGradeNumberFromLabel(gradeRaw) ?? gradeRaw.replace(/학년$/, '')
+    const className = item.className ?? item.classLabel
+    const classNoMatch = String(className ?? '').match(/(\d+)/)
+    const classNo = classNoMatch ? Number.parseInt(classNoMatch[1]!, 10) : NaN
+    pushExistingClassOption(gradeSet, classOptionsByGrade, `${gradeValue}학년`, classNo)
+  }
+
+  return finalizeExistingClassOptions(gradeSet, classOptionsByGrade)
+}
+
+function mappingKey(gradeLabel: string, classNo: number): string {
+  return toGradeClassSectionValue({ gradeLabel, classNo })
+}
+
+function slotMatchesMapping(
+  slot: UjatOrganizationScheduleSlotResponse,
+  mapping: ChangeClassMapping
+): boolean {
+  const value = gradeClassValueFromSlot(slot)
+  if (!value) return false
+  return value === mappingKey(mapping.existingGradeLabel, mapping.existingClassNo)
+}
+
+/**
+ * 적용일 이후 슬롯 remap 순수 변환.
+ * BE education-class-remapping 계약이 생기기 전 로컬/어댑터 검증용.
+ * temporary-schedule PUT·education-classes POST·schedule-change-request 로 저장하지 말 것.
+ */
+export function remapTemporaryScheduleSlotsForClassChange(
+  slots: ReadonlyArray<UjatOrganizationScheduleSlotResponse>,
+  payload: ChangeClassConfirmPayload
+): UjatTemporaryScheduleSlotRequest[] {
+  const applyDay = dayjs(payload.applyIsoDate).startOf('day')
+  const out: UjatTemporaryScheduleSlotRequest[] = []
+
+  for (const slot of slots) {
+    if (slot.scheduleId == null) continue
+    const gradeRaw = slot.grade?.trim()
+    if (!gradeRaw) continue
+    const className = normalizeClassNameForSlot(slot.className ?? slot.classLabel)
+    if (!className) continue
+
+    const slotIso =
+      isoDateFromScheduleInstant(slot.scheduleStartAt) ??
+      isoDateFromScheduleInstant(slot.scheduleEndAt)
+    const isFromApplyDate =
+      !slotIso || dayjs(slotIso).isSameOrAfter(applyDay, 'day')
+
+    let nextGrade =
+      normalizeGradeNumberFromLabel(gradeRaw) ?? (/^\d+$/.test(gradeRaw) ? gradeRaw : gradeRaw)
+    let nextClassName = className
+    let drop = false
+
+    if (isFromApplyDate) {
+      for (const mapping of payload.mappings) {
+        if (!slotMatchesMapping(slot, mapping)) continue
+        if (mapping.newGradeLabel == null || mapping.newClassNo == null) {
+          drop = true
+          break
+        }
+        nextGrade =
+          normalizeGradeNumberFromLabel(mapping.newGradeLabel) ??
+          mapping.newGradeLabel.replace(/학년$/, '')
+        nextClassName = normalizeClassNameForSlot(mapping.newClassNo) ?? nextClassName
+        break
+      }
+    }
+
+    if (drop) continue
+
+    out.push({
+      scheduleId: Number(slot.scheduleId),
+      grade: nextGrade,
+      className: nextClassName,
+      studentCount:
+        typeof slot.studentCount === 'number' && Number.isFinite(slot.studentCount)
+          ? slot.studentCount
+          : 0,
+    })
+  }
+
+  return out
 }
 
 function mappingToOldValue(mapping: ChangeClassMapping): string {
@@ -171,6 +323,60 @@ export function applyClassChangesToSchedules(
       }),
     }))
   }
+}
+
+function gradeWireFromLabel(gradeLabel: string): string {
+  return normalizeGradeNumberFromLabel(gradeLabel) ?? gradeLabel.replace(/학년$/, '').trim()
+}
+
+function classNameWireFromNo(classNo: number): string {
+  return normalizeClassNameForSlot(classNo) ?? `${classNo}반`
+}
+
+export function mappingToRemappingItem(
+  mapping: ChangeClassMapping
+): UjatEducationClassRemappingItemRequest {
+  const fromGrade = gradeWireFromLabel(mapping.existingGradeLabel)
+  const fromClassName = classNameWireFromNo(mapping.existingClassNo)
+  if (mapping.newGradeLabel == null || mapping.newClassNo == null) {
+    return {
+      fromGrade,
+      fromClassName,
+      toGrade: null,
+      toClassName: null,
+      unassign: true,
+    }
+  }
+  return {
+    fromGrade,
+    fromClassName,
+    toGrade: gradeWireFromLabel(mapping.newGradeLabel),
+    toClassName: classNameWireFromNo(mapping.newClassNo),
+    unassign: false,
+  }
+}
+
+/**
+ * ChangeClassConfirmPayload → POST education-class-remappings body.
+ * applyFromScheduleId(numeric) + applyFromDate + expectedRevision 필수.
+ */
+export function buildEducationClassRemappingRequest(
+  payload: ChangeClassConfirmPayload
+): UjatEducationClassRemappingRequest | null {
+  if (payload.expectedRevision == null || !Number.isFinite(payload.expectedRevision)) {
+    return null
+  }
+  if (payload.mappings.length === 0) return null
+
+  const body: UjatEducationClassRemappingRequest = {
+    expectedRevision: payload.expectedRevision,
+    applyFromDate: payload.applyIsoDate,
+    mappings: payload.mappings.map(mappingToRemappingItem),
+  }
+  if (payload.applyFromScheduleId != null && Number.isFinite(payload.applyFromScheduleId)) {
+    body.applyFromScheduleId = payload.applyFromScheduleId
+  }
+  return body
 }
 
 export function applyClassChangesToGradeBlocks(
@@ -286,7 +492,7 @@ export function validateChangeClassRows(
     if (row.newGrade !== UNASSIGNED_GRADE_VALUE) {
       const classNo = Number.parseInt(row.newClassNo.replace(/\D/g, ''), 10)
       if (!Number.isFinite(classNo) || classNo < 1) {
-        return `${rowNum}번째 행의 변경 학급을 입력해 주세요.`
+        return `${rowNum}번째 행의 변경 학급을 선택해 주세요.`
       }
       if (classNo > 20) {
         return `${rowNum}번째 행의 학급은 20반 이하로 입력해 주세요.`

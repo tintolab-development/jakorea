@@ -1,5 +1,9 @@
 import { Fragment, type ReactNode } from 'react'
 import { formatCompanySchoolSexOffenseParts } from '@/features/program/1c-1s/lib/company-school-sex-offense-display'
+import {
+  ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 import { CrossTable } from '@/shared/ui/cross-table'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import type { UjatInstitutionApplicationClassTimeRowDetail } from '../detail/detail-types'
@@ -20,20 +24,17 @@ export function PipeSeparatedValues({ parts }: { parts: ReactNode[] }) {
 }
 
 /**
- * 성범죄 경력 조회서 요청 — 시안 `온라인 제출 | ID : … | 검증번호 : …`
- * (폼 원문 `동의서 제출 요청 | 기관 ID …` 등도 formatCompanySchoolSexOffenseParts로 정규화)
+ * 성범죄경력 조회서 요청 — 1사1교·일반 기관 상세와 동일
+ * (`ProgramDetailTdSegmentWrap` + `withProgramDetailTdDivider`, 시안 `온라인 제출 | ID : … | 검증번호 : …`)
+ * 폼 원문 `동의서 제출 요청 | 기관 ID …` 등도 formatCompanySchoolSexOffenseParts로 정규화
  */
 export function renderCriminalRecordCheckRequest(value: string) {
   const parts = formatCompanySchoolSexOffenseParts(value)
   if (parts.length === 0) return value?.trim() || '-'
-  if (parts.length === 1) return parts[0]
-
   return (
-    <PipeSeparatedValues
-      parts={parts.map(part => (
-        <span key={part}>{part}</span>
-      ))}
-    />
+    <ProgramDetailTdSegmentWrap>
+      {parts.length === 1 ? parts[0] : withProgramDetailTdDivider(parts)}
+    </ProgramDetailTdSegmentWrap>
   )
 }
 

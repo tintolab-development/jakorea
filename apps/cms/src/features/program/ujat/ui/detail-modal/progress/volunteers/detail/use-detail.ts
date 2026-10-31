@@ -44,9 +44,10 @@ function mapApplicantToProgressRow(
     ? (applicant.grade as UjatEducationProgressVolunteerRow['grade'])
     : ''
   const withdrawn = applicant.interviewAssignmentStatus === 'withdrawn'
-  const completed =
-    applicant.secondInterviewScreeningStatus === 'pass' ||
-    applicant.secondInterviewScreeningStatus === 'completed'
+  const totalAssignedDays =
+    typeof applicant.totalAssignedDays === 'number' ? applicant.totalAssignedDays : null
+  // 교육 배정 현황 = 실제 배정일 수 (면접 합격≠배정 완료)
+  const hasAssignment = (totalAssignedDays ?? 0) > 0
 
   return {
     id: applicant.id,
@@ -57,10 +58,10 @@ function mapApplicantToProgressRow(
     regionLabel: getUjatEducationRegionLabel(regionKey, regionKey),
     mobile: applicant.contact,
     email: applicant.email,
-    totalAssignedDays: typeof applicant.totalAssignedDays === 'number' ? applicant.totalAssignedDays : null,
+    totalAssignedDays,
     assignmentStatus: withdrawn
       ? 'activity_abandoned'
-      : completed
+      : hasAssignment
         ? 'assignment_completed'
         : 'assignment_waiting',
   }
@@ -78,13 +79,13 @@ export function useUjatEducationProgressVolunteerDetail(input: {
   const remoteQuery = useInfiniteQuery({
     queryKey: [
       ...ujatQueryKeys.volunteerApplications(programId, recruitHalf, 'interview2', {
-        finalResultStatus: 'APPROVED',
+        finalResultStatus: 'PASS',
       }),
       'edu-progress-detail',
     ] as const,
     queryFn: ({ pageParam }) =>
       listUjatVolunteerApplicationsPage(programId, recruitHalf, pageParam, {
-        finalResultStatus: 'APPROVED',
+        finalResultStatus: 'PASS',
       }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),

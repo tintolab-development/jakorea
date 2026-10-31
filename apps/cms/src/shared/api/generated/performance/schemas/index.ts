@@ -887,6 +887,8 @@ export * from './notificationCaseItem';
 export * from './notificationCasePage';
 export * from './notificationCatalogCategory';
 export * from './notificationCatalogVariableItem';
+export * from './notificationCatalogVariableItemMemberTypesItem';
+export * from './notificationCatalogVariableItemParticipantTypesItem';
 export * from './notificationCatalogVariableItemSourceMode';
 export * from './notificationDeliveryDetailResponse';
 export * from './notificationDeliveryDetailResponsePreview';
@@ -935,6 +937,8 @@ export * from './organizationApplicationListItemResponseRequestedEducationFormat
 export * from './organizationApplicationListItemResponseScheduleConfirmStatus';
 export * from './organizationApplicationNotificationResendRequest';
 export * from './organizationApplicationRejectRequest';
+export * from './organizationApplicationSession';
+export * from './organizationApplicationSessionResponse';
 export * from './organizationApplicationUpdateRequest';
 export * from './organizationGuidanceAnswersPatchRequest';
 export * from './organizationGuidanceAnswersPatchRequestAnswers';

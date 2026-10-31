@@ -34,51 +34,59 @@
 }
 
 .content-modal.ujat-education-progress-activity-withdraw-modal.ant-modal .ant-modal-content,
-.content-modal.ujat-education-progress-activity-withdraw-modal.teal-header-modal .ant-modal-content {
+.content-modal.ujat-education-progress-activity-withdraw-modal.teal-header-modal
+  .ant-modal-content {
   display: flex;
   width: 600px;
-  height: 391px;
-  padding: 26px 30px 34px 30px;
+  height: 442px;
+  max-height: min(442px, calc(100vh - 32px));
+  padding: 24px 30px 34px;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .content-modal.ujat-education-progress-activity-withdraw-modal .ant-modal-body {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .content-modal.ujat-education-progress-activity-withdraw-modal .teal-header-modal__body {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   min-height: 0;
-  margin-top: 0;
+  margin-top: 0 !important;
+  padding-top: 12px;
   gap: 0;
-  overflow: visible;
-  padding-top: 16px;
-}
-
-.content-modal.ujat-education-progress-activity-withdraw-modal
-  .teal-header-modal__body:has(> .content-modal__description) {
-  padding-top: 16px;
+  overflow: hidden;
 }
 
 .content-modal.ujat-education-progress-activity-withdraw-modal .content-modal__description {
-  margin: 0;
+  flex-shrink: 0;
+  margin: 0 0 30px;
   width: 100%;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  white-space: pre-line;
+}
+
+.content-modal.ujat-education-progress-activity-withdraw-modal .content-modal__description strong {
+  font-weight: 700;
 }
 
 .content-modal.ujat-education-progress-activity-withdraw-modal .teal-header-modal__footer {
@@ -88,44 +96,18 @@
   flex-shrink: 0;
 }
 
-.ujat-education-progress-activity-withdraw-modal__description {
-  margin: 0;
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 150%;
-}
-
-.ujat-education-progress-activity-withdraw-modal__description strong {
-  font-weight: 700;
-}
-
 .ujat-education-progress-activity-withdraw-modal__form {
   display: flex;
   width: 100%;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 30px;
-  margin-top: 16px;
+  flex: 0 0 auto;
 }
 
-.ujat-education-progress-activity-withdraw-modal__field {
-  display: flex;
+.ujat-education-progress-activity-withdraw-modal__form > .cms-field,
+.ujat-education-progress-activity-withdraw-modal__form > .cms-choice-field {
   width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.ujat-education-progress-activity-withdraw-modal__label {
-  color: var(--main-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 .ujat-education-progress-activity-withdraw-modal__footer {
@@ -133,10 +115,17 @@
   width: 100%;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.ujat-education-progress-activity-withdraw-modal__form .cms-input,
-.ujat-education-progress-activity-withdraw-modal__field .cms-select {
-  width: 100%;
+.content-modal.ujat-education-progress-activity-withdraw-modal
+  .content-modal__footer-actions
+  .cms-button.ant-btn {
+  width: 120px;
+  min-width: 120px;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 6px 16px !important;
+  font-size: 14px;
 }

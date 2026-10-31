@@ -72,7 +72,7 @@ async function listAllApprovedVolunteers(
   let page = 0
   for (;;) {
     const result = await listUjatVolunteerApplicationsPage(programId, half, page, {
-      finalResultStatus: 'APPROVED',
+      finalResultStatus: 'PASS',
     })
     rows.push(...result.rows)
     if (!result.hasMore || page > 40) break
