@@ -94,6 +94,14 @@ describe('extractApiErrorMessage', () => {
     ).toBe('같은 UJAT 프로그램에 이미 신청한 학교입니다.')
   })
 
+  it('VOLUNTEER_INTERVIEW_CONFLICT는 평가 후 재배정 불가 안내로 바꾼다', () => {
+    expect(
+      extractApiErrorMessage({
+        error: { code: 'VOLUNTEER_INTERVIEW_CONFLICT', message: 'VOLUNTEER_INTERVIEW_CONFLICT' },
+      })
+    ).toBe('면접 평가가 진행·완료된 신청은 재배정할 수 없습니다.')
+  })
+
   it('교육구조 Guard 코드는 서버 영문보다 FE 한글 안내를 쓴다', () => {
     expect(
       extractApiErrorMessage({

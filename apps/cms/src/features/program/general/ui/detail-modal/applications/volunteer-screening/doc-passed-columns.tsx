@@ -4,6 +4,7 @@ import { CmsButton } from '@/shared/ui'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { screeningApplicantNameLabel, type ScreeningSubjectKind } from '@/features/program/general/lib/screening-subject-kind'
 import { PARTICIPANT_APPLICANT_NAME_COL_WIDTH } from '@/features/program/general/lib/participant-screening-table-widths'
+import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { GeneralInterviewAssignmentStatusText } from './status-text'
 
 const CENTER_CELL_CLASS = 'general-volunteer-doc-passed__center-cell'
@@ -83,9 +84,11 @@ export function useGeneralVolunteerDocPassedColumns({
         align: 'center',
         className: CENTER_CELL_CLASS,
         render: (_value, record) => {
-          const withdrawn = record.interviewAssignmentStatus === 'withdrawn'
-          const label =
-            record.interviewAssignmentStatus === 'assigned' ? '면접일 재배정' : '면접일 배정'
+          const isAssigned = record.interviewAssignmentStatus === 'assigned'
+          const label = isAssigned ? '면접일 재배정' : '면접일 배정'
+          const disabled =
+            record.interviewAssignmentStatus === 'withdrawn' ||
+            (isAssigned && !canReassignVolunteerInterviewAssignment(record))
           return (
             <CmsButton
               type="button"
@@ -93,7 +96,7 @@ export function useGeneralVolunteerDocPassedColumns({
               size="small"
               width={120}
               className="general-volunteer-doc-passed__assign-btn"
-              disabled={withdrawn}
+              disabled={disabled}
               onClick={e => {
                 e.stopPropagation()
                 onAssignInterview(record)

@@ -1,13 +1,15 @@
 import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { CmsButton } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { InterviewAssignmentStatusText } from '../shared/interview-assignment-status-text'
 
 const CENTER_CELL_CLASS = 'ujat-volunteer-doc-passed__center-cell'
 
-export const DOC_PASSED_TABLE_SCROLL_X = 72 + 140 + 168 + 140 + 140 + 220 + 140 + 140 + 136
+/** Figma 4082:97956 Table / Horizontal — 80+160+180+160+231+215+180+180+160 = 1546 */
+export const DOC_PASSED_TABLE_SCROLL_X = 80 + 160 + 180 + 160 + 231 + 215 + 180 + 180 + 160
 
 export function useUjatVolunteerDocPassedColumns({
   onAssignInterview,
@@ -30,7 +32,7 @@ export function useUjatVolunteerDocPassedColumns({
         title: '신청 봉사자명',
         dataIndex: 'name',
         key: 'name',
-        width: 140,
+        width: 160,
         align: 'center' as const,
         className: CENTER_CELL_CLASS,
       },
@@ -38,14 +40,14 @@ export function useUjatVolunteerDocPassedColumns({
         title: '희망 교육 활동 지역',
         dataIndex: 'preferredRegion',
         key: 'preferredRegion',
-        width: 168,
+        width: 180,
         align: 'center' as const,
         className: CENTER_CELL_CLASS,
       },
       {
         title: '면접 가능 일정 수',
         key: 'interviewSlotCount',
-        width: 140,
+        width: 160,
         align: 'center' as const,
         className: CENTER_CELL_CLASS,
         render: (_value: unknown, record: UjatVolunteerApplicantRow) =>
@@ -55,7 +57,7 @@ export function useUjatVolunteerDocPassedColumns({
         title: '연락처',
         dataIndex: 'contact',
         key: 'contact',
-        width: 140,
+        width: 231,
         align: 'center' as const,
         ellipsis: true,
         className: CENTER_CELL_CLASS,
@@ -64,15 +66,15 @@ export function useUjatVolunteerDocPassedColumns({
         title: '이메일',
         dataIndex: 'email',
         key: 'email',
-        width: 220,
+        width: 215,
         align: 'center' as const,
         ellipsis: true,
         className: CENTER_CELL_CLASS,
       },
       {
-        title: '교육 진행 경험',
+        title: '교육 진행 경험 여부',
         key: 'educationExperience',
-        width: 140,
+        width: 180,
         align: 'center' as const,
         className: CENTER_CELL_CLASS,
         render: (_value: unknown, record: UjatVolunteerApplicantRow) =>
@@ -81,7 +83,7 @@ export function useUjatVolunteerDocPassedColumns({
       {
         title: '면접일 배정 현황',
         key: 'interviewAssignmentStatus',
-        width: 140,
+        width: 180,
         align: 'center' as const,
         className: CENTER_CELL_CLASS,
         render: (_value: unknown, record: UjatVolunteerApplicantRow) => (
@@ -95,16 +97,19 @@ export function useUjatVolunteerDocPassedColumns({
         align: 'center' as const,
         className: CENTER_CELL_CLASS,
         render: (_value: unknown, record: UjatVolunteerApplicantRow) => {
-          const label =
-            record.interviewAssignmentStatus === 'assigned' ? '면접일 재배정' : '면접일 배정'
+          const isAssigned = record.interviewAssignmentStatus === 'assigned'
+          const label = isAssigned ? '면접일 재배정' : '면접일 배정'
+          const disabled =
+            record.interviewAssignmentStatus === 'withdrawn' ||
+            (isAssigned && !canReassignVolunteerInterviewAssignment(record))
           return (
             <CmsButton
               type="button"
               variant="secondary"
-              size="medium"
+              size="h32"
               width={120}
               style={{ flexShrink: 0 }}
-              disabled={record.interviewAssignmentStatus === 'withdrawn'}
+              disabled={disabled}
               onClick={e => {
                 e.stopPropagation()
                 onAssignInterview(record)

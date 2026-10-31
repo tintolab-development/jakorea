@@ -25,6 +25,7 @@ import {
   type InterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
 import { resolveUjatEffectiveSecondInterviewStatus } from '../interview2/display'
+import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { guardUjatVolunteerInterview2Evaluation } from './guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -256,6 +257,14 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     return '면접일 배정'
   }, [applicant.interviewAssignmentStatus])
 
+  const assignInterviewDisabled = useMemo(() => {
+    if (applicant.interviewAssignmentStatus === 'withdrawn') return true
+    if (applicant.interviewAssignmentStatus === 'assigned') {
+      return !canReassignVolunteerInterviewAssignment(applicant)
+    }
+    return false
+  }, [applicant])
+
   if (isInterview2Props(props)) {
     return (
       <Interview2ApplicantDetail
@@ -297,6 +306,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
               size="large"
               className="cms-button--action"
               width={CMS_ACTION_BUTTON_WIDTH}
+              disabled={assignInterviewDisabled}
               onClick={onAssignInterview}
             >
               {assignInterviewLabel}
@@ -346,10 +356,24 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
         <div className="program-detail-fullpage-modal__header-actions">
           {canWrite ? (
             <>
-          <CmsButton type="button" variant="delete" size="large" onClick={onDocumentReject}>
+          <CmsButton
+            type="button"
+            variant="delete"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={onDocumentReject}
+          >
             서류 반려
           </CmsButton>
-          <CmsButton type="button" variant="secondary" size="large" onClick={onDocumentApprove}>
+          <CmsButton
+            type="button"
+            variant="secondary"
+            size="large"
+            className="cms-button--action"
+            width={CMS_ACTION_BUTTON_WIDTH}
+            onClick={onDocumentApprove}
+          >
             서류 승인
           </CmsButton>
             </>
@@ -360,6 +384,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
+            width={180}
             onClick={openPersonalInfoRevealConfirm}
           />
         </div>
