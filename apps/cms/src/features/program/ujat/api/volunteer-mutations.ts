@@ -3,6 +3,7 @@
  * (일반 `admin-applications-service` 재사용, UJAT UI에서만 호출)
  */
 
+import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import {
   submitGeneralVolunteerDocumentResult,
   submitGeneralVolunteerDocumentResultBulk,
@@ -33,18 +34,20 @@ export function assertUjatVolunteerMutationsRemoteReady(): void {
 export async function submitUjatVolunteerDocumentResultsRemote(
   applicationIds: string[],
   status: 'pass' | 'fail',
-  reason?: string
-): Promise<void> {
+  reason?: string,
+  notify?: { notifyTiming?: string; scheduledAt?: string }
+): Promise<BulkActionResponse | void> {
   assertUjatVolunteerMutationsRemoteReady()
   const payload = {
     result: status === 'pass' ? ('PASS' as const) : ('FAIL' as const),
     reason,
+    ...toScreeningResultNotifyFields(notify),
   }
   if (applicationIds.length === 1) {
     await submitGeneralVolunteerDocumentResult(applicationIds[0]!, payload)
     return
   }
-  await submitGeneralVolunteerDocumentResultBulk(applicationIds, payload)
+  return submitGeneralVolunteerDocumentResultBulk(applicationIds, payload)
 }
 
 export async function updateUjatVolunteerDocumentEvaluationRemote(
@@ -64,7 +67,7 @@ export async function submitUjatVolunteerFinalResultsRemote(
   >,
   reason?: string,
   notify?: { notifyTiming?: string; scheduledAt?: string }
-): Promise<void> {
+): Promise<BulkActionResponse | void> {
   assertUjatVolunteerMutationsRemoteReady()
   const payload = mapSecondInterviewStatusToFinalResultPayload(
     status,
@@ -75,7 +78,7 @@ export async function submitUjatVolunteerFinalResultsRemote(
     await submitGeneralVolunteerFinalResult(applicationIds[0]!, payload)
     return
   }
-  await submitGeneralVolunteerFinalResultBulk(applicationIds, payload)
+  return submitGeneralVolunteerFinalResultBulk(applicationIds, payload)
 }
 
 export async function giveUpUjatVolunteerApplicationRemote(

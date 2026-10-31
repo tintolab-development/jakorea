@@ -5,7 +5,6 @@ import {
   CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   FilterTableToolbarButton,
 } from '@/shared/ui'
-import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
@@ -19,6 +18,7 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import './section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
+import { UjatVolunteerDocumentResultModal } from './document-result-modal'
 
 const TABLE_SCROLL_X = computeDocScreeningTableScrollX(UJAT_ESSAY_COLUMN_DEFAULT_WIDTHS)
 
@@ -44,7 +44,6 @@ export function DocScreeningSection({
 
   const {
     list,
-    applyDocumentScreeningStatus,
     pendingFilters,
     handleFilterChange,
     handleSearch,
@@ -55,9 +54,20 @@ export function DocScreeningSection({
     handleBulkReject,
     handleBulkApprove,
     excelExport,
-    showDocumentScreeningConfirm,
-    documentScreeningConfirm,
-    closeDocumentScreeningConfirm,
+    approveModalVolunteer,
+    rejectModalVolunteer,
+    bulkApproveOpen,
+    bulkRejectOpen,
+    openApproveModal,
+    openRejectModal,
+    closeApproveModal,
+    closeRejectModal,
+    closeBulkApproveModal,
+    closeBulkRejectModal,
+    handleApproveModalConfirm,
+    handleRejectModalConfirm,
+    handleBulkApproveConfirm,
+    handleBulkRejectConfirm,
     count,
     openManagerDropdown,
     setOpenManagerDropdown,
@@ -84,10 +94,10 @@ export function DocScreeningSection({
       half,
       list,
       detailVariant: 'doc_screening',
-      applyDocumentScreeningStatus,
       onRegisterApplicantCloseHandler,
       onVolunteerApplicantDetailMetaChange,
-      showDocumentScreeningConfirm,
+      onRequestDocumentApprove: openApproveModal,
+      onRequestDocumentReject: openRejectModal,
     })
 
   const handleRowClick = useCallback(
@@ -106,27 +116,47 @@ export function DocScreeningSection({
     [openApplicantDetail]
   )
 
-  const documentScreeningConfirmModal =
-    documentScreeningConfirm != null ? (
-      <ConfirmModal
-        open
-        title={documentScreeningConfirm.title}
-        content={documentScreeningConfirm.content}
-        confirmText={documentScreeningConfirm.confirmText}
-        cancelText="취소"
-        danger={documentScreeningConfirm.danger}
-        onConfirm={() => {
-          documentScreeningConfirm.onConfirm()
-          closeDocumentScreeningConfirm()
-        }}
-        onCancel={closeDocumentScreeningConfirm}
+  const documentResultModals = (
+    <>
+      <UjatVolunteerDocumentResultModal
+        open={approveModalVolunteer != null}
+        action="approve"
+        variant="single"
+        volunteerName={approveModalVolunteer?.name ?? ''}
+        onCancel={closeApproveModal}
+        onConfirm={handleApproveModalConfirm}
       />
-    ) : null
+      <UjatVolunteerDocumentResultModal
+        open={rejectModalVolunteer != null}
+        action="reject"
+        variant="single"
+        volunteerName={rejectModalVolunteer?.name ?? ''}
+        onCancel={closeRejectModal}
+        onConfirm={handleRejectModalConfirm}
+      />
+      <UjatVolunteerDocumentResultModal
+        open={bulkApproveOpen}
+        action="approve"
+        variant="bulk"
+        selectionCount={selectedRowKeys.length}
+        onCancel={closeBulkApproveModal}
+        onConfirm={handleBulkApproveConfirm}
+      />
+      <UjatVolunteerDocumentResultModal
+        open={bulkRejectOpen}
+        action="reject"
+        variant="bulk"
+        selectionCount={selectedRowKeys.length}
+        onCancel={closeBulkRejectModal}
+        onConfirm={handleBulkRejectConfirm}
+      />
+    </>
+  )
 
   if (selectedApplicant) {
     return (
       <>
-        {documentScreeningConfirmModal}
+        {documentResultModals}
         <ApplicantDetailView
           variant="doc_screening"
           applicant={selectedApplicant}
@@ -143,7 +173,7 @@ export function DocScreeningSection({
 
   return (
     <>
-      {documentScreeningConfirmModal}
+      {documentResultModals}
       <div className="ujat-volunteer-doc-screening applicant-details">
         <FilterTableLayout
           bordered={false}

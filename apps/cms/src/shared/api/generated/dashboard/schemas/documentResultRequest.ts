@@ -14,8 +14,8 @@ export interface DocumentResultRequest {
   /** 서류 결과. PASS/DOCUMENT_PASSED 또는 FAIL/REJECTED */
   result: DocumentResultRequestResult;
   /**
-     * 반려 사유. FAIL인 경우 필수
-     * @minLength 0
+     * 반려 사유. FAIL인 경우 필수 1~500
+     * @minLength 1
      * @maxLength 500
      */
   reason?: string;

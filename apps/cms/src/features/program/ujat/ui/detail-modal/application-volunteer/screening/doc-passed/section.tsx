@@ -24,9 +24,6 @@ import '../doc-screening/section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
-const noopApplyDocumentScreeningStatus = () => undefined
-const noopShowDocumentScreeningConfirm = () => undefined
-
 export interface DocPassedSectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
@@ -84,10 +81,8 @@ export function DocPassedSection({
     half,
     list,
     detailVariant: 'doc_passed',
-    applyDocumentScreeningStatus: noopApplyDocumentScreeningStatus,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
-    showDocumentScreeningConfirm: noopShowDocumentScreeningConfirm,
   })
 
   const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
