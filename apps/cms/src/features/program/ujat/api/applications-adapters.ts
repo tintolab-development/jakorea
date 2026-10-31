@@ -88,12 +88,32 @@ export function toSeoulYmd(value: string | null | undefined): string | null {
   return SEOUL_YMD.format(parsed)
 }
 
-function isoDatesFromStartAts(
-  items: ReadonlyArray<{ startAt?: string | null } | undefined> | null | undefined
+const ISO_YMD = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * 희망일 달력 SSOT: OpenAPI `educationDate`(Asia/Seoul).
+ * null인 레거시만 `startAt`을 Seoul로 환산한다. UTC 날짜 절단 금지.
+ */
+export function preferredEducationIsoFromSchedule(item: {
+  educationDate?: string | null
+  startAt?: string | null
+} | null | undefined): string | null {
+  const educationDate = item?.educationDate?.trim()
+  if (educationDate && ISO_YMD.test(educationDate)) return educationDate
+  return toSeoulYmd(item?.startAt)
+}
+
+function isoDatesFromPreferredSchedules(
+  items:
+    | ReadonlyArray<
+        { educationDate?: string | null; startAt?: string | null } | undefined
+      >
+    | null
+    | undefined
 ): string[] {
   const dates: string[] = []
   for (const item of items ?? []) {
-    const iso = toSeoulYmd(item?.startAt)
+    const iso = preferredEducationIsoFromSchedule(item)
     if (iso && !dates.includes(iso)) dates.push(iso)
   }
   return dates.sort()
@@ -104,7 +124,7 @@ function preferredScheduleIdByIsoFromSchedules(
 ): Record<string, number> {
   const ids: Record<string, number> = {}
   for (const item of preferred ?? []) {
-    const iso = toSeoulYmd(item?.startAt)
+    const iso = preferredEducationIsoFromSchedule(item)
     const scheduleId = item?.scheduleId
     const unresolved = item?.unresolvedReason?.trim().toUpperCase() ?? ''
     if (!iso) continue
@@ -148,7 +168,7 @@ function scheduleSlotsFromPreferredDates(
   preferred: OrganizationApplicationListItemResponse['preferredEducationSchedules']
 ): UjatInstitutionApplicationRow['scheduleSlots'] {
   const slots = buildEmptyScheduleSlots()
-  for (const iso of isoDatesFromStartAts(preferred)) {
+  for (const iso of isoDatesFromPreferredSchedules(preferred)) {
     slots[iso] = 'O'
   }
   return slots
@@ -187,7 +207,7 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     preferredScheduleIdByIso: preferredScheduleIdByIsoFromSchedules(
       dto.preferredEducationSchedules
     ),
-    sessionIsoDates: isoDatesFromStartAts(dto.sessions),
+    sessionIsoDates: isoDatesFromPreferredSchedules(dto.sessions),
     teacherName: displayTextOrDash(dto.teacherName),
     scheduleConfirmStatus: parseUjatScheduleConfirmStatus(dto.scheduleConfirmStatus),
     assignedInstructorCount: dto.assignedInstructorCount ?? null,
@@ -285,7 +305,7 @@ function mapPreferredEducationDates(
     : []
   if (fromDates.length > 0) return fromDates.map(item => item.trim())
 
-  const fromSchedules = isoDatesFromStartAts(dto.preferredEducationSchedules)
+  const fromSchedules = isoDatesFromPreferredSchedules(dto.preferredEducationSchedules)
   if (fromSchedules.length > 0) return fromSchedules
   if (hasDates) return []
   return fallback

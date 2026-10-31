@@ -188,6 +188,31 @@ describe('UJAT 기관 신청 목록 adapter', () => {
     expect(row.sessionIsoDates).toEqual(['2026-11-11'])
   })
 
+  it('educationDate가 있으면 startAt보다 날짜 열 O에 우선한다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 31,
+        organizationName: '기관',
+        applicationStatus: 'SUBMITTED',
+        preferredEducationSchedules: [
+          {
+            startAt: '2026-11-20T00:00:00+09:00',
+            educationDate: '2026-11-06',
+          },
+          {
+            startAt: null,
+            educationDate: '2026-11-13',
+          },
+        ],
+      },
+      0
+    )
+
+    expect(row.scheduleSlots['2026-11-06']).toBe('O')
+    expect(row.scheduleSlots['2026-11-13']).toBe('O')
+    expect(row.scheduleSlots['2026-11-20']).toBeUndefined()
+  })
+
   it('SUBMITTED는 applicationStatus만으로 임시 배정 배지를 만들지 않는다', () => {
     const row = mapOrganizationApplicationToUjatInstitutionRow(
       {
