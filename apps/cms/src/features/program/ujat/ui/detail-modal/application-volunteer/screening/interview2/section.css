@@ -33,11 +33,16 @@
   gap: 8px;
 }
 
+/*
+ * 가로 스크롤은 열이 래퍼보다 넓을 때만 Ant Table(.ant-table-content)이 만든다.
+ * 래퍼 overflow-x: auto + scroll.x(뷰포트 너비)면 의미 없는 가로 스크롤이 생긴다.
+ */
 .ujat-volunteer-interview2__table-wrap {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 /* No. 컬럼: 정렬 활성 시 파란 헤더 배경 제거(다른 헤더와 동일) */

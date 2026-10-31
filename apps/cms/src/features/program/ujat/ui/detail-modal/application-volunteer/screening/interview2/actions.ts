@@ -20,13 +20,11 @@ export function patchUjatVolunteerInterview2ListStatus(
 }
 
 export function confirmUjatVolunteerInterview2Fail({
-  showConfirm,
   count,
-  onConfirm,
+  onOpen,
 }: {
-  showConfirm: (options: UjatInterview2ConfirmRequest) => void
   count: number
-  onConfirm: () => void
+  onOpen: () => void
 }): void {
   if (count === 0) {
     cmsAlertModal.show({
@@ -35,16 +33,7 @@ export function confirmUjatVolunteerInterview2Fail({
     })
     return
   }
-  showConfirm({
-    title: count === 1 ? '면접 불합격' : '선택 불합격',
-    content:
-      count === 1
-        ? '해당 지원자를 면접 불합격 처리하시겠습니까?'
-        : `선택한 ${count}건을 면접 불합격 처리하시겠습니까?`,
-    confirmText: '불합격',
-    danger: true,
-    onConfirm,
-  })
+  onOpen()
 }
 
 export function confirmUjatVolunteerInterview2Pass({
