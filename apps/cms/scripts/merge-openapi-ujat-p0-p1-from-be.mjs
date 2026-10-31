@@ -32,6 +32,12 @@ const DETAIL_EXTRA_PROPS = [
   'textbookDeliveryStatus',
   'kitCount',
   'bookCount',
+  /** UJAT guidance / 성범죄 detail 프로젝션 (Admin organization-application detail) */
+  'snackAvailability',
+  'sexOffenseCheckRequest',
+  'leftoverTextbookDisposal',
+  /** parkingInfo description: 성범죄는 sexOffenseCheckRequest 정식 필드 */
+  'parkingInfo',
 ]
 const GRADE_BLOCK_EXTRA_PROPS = [
   'textbookName',

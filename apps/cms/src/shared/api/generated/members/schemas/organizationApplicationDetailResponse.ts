@@ -9,6 +9,7 @@ import type { ClassTimeRow } from './classTimeRow';
 import type { GradeBlock } from './gradeBlock';
 import type { OrganizationApplicationDetailResponsePreviousYearParticipation } from './organizationApplicationDetailResponsePreviousYearParticipation';
 import type { OrganizationApplicationDetailResponseScheduleConfirmStatus } from './organizationApplicationDetailResponseScheduleConfirmStatus';
+import type { OrganizationApplicationDetailResponseSnackAvailability } from './organizationApplicationDetailResponseSnackAvailability';
 import type { OrganizationApplicationDetailResponseTextbookDeliveryStatus } from './organizationApplicationDetailResponseTextbookDeliveryStatus';
 import type { PreferredEducationScheduleResponse } from './preferredEducationScheduleResponse';
 import type { SessionResponse } from './sessionResponse';
@@ -65,7 +66,7 @@ export interface OrganizationApplicationDetailResponse {
   mealProvided?: boolean;
   /** 식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null. */
   mealNotice?: string | null;
-  /** 기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락). */
+  /** 기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. */
   parkingInfo?: string | null;
   textbookGrade?: string;
   textbookKits?: number;
@@ -97,12 +98,18 @@ export interface OrganizationApplicationDetailResponse {
   assignedInstructorCount?: number | null;
   /** UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null. */
   operatingStudentCount?: number | null;
-  /** 신청에 연결된 교재 영문명. 교재가 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다. */
+  /** 신청에 연결된 교재 영문명. 없으면 null. */
   textbookNameEn?: string | null;
   /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
   textbookDeliveryStatus?: OrganizationApplicationDetailResponseTextbookDeliveryStatus;
-  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다. */
+  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생수/24로 계산하지 않습니다. */
   kitCount?: number | null;
-  /** 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다. */
+  /** 저장된 교재 권수. 없으면 null. */
   bookCount?: number | null;
+  /** 간식(ABC초콜릿) 제공 가능 여부. Portal guidance snackAvailability(possible|impossible)에서 응답 필드로 프로젝션. 없으면 null. 빈 문자열 금지. mealProvided/mealNotice와 혼용하지 않음(UJAT meal 키는 잔여교재 배출 장소). */
+  snackAvailability?: OrganizationApplicationDetailResponseSnackAvailability;
+  /** 성범죄 경력 조회서 요청 표시 문구. form sex-offense submission+inquiry 답을 Portal formatSexOffenseTeacherGuidanceValue와 동일 포맷으로 직렬화해 응답 필드로 프로젝션(원본은 form/application-answers, 영속 전용 컬럼 없음). 없으면 null. 빈 문자열·'-'로 채우지 않음. */
+  sexOffenseCheckRequest?: string | null;
+  /** UJAT 잔여교재 배출 장소. Portal guidance meal 답을 프로젝션. UJAT이 아니면 null. 없으면 mealNotice 스냅샷으로 fallback 가능. snackAvailability와 동일 필드로 쓰지 않음. */
+  leftoverTextbookDisposal?: string | null;
 }

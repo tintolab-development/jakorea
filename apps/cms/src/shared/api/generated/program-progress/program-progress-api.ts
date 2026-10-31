@@ -247,6 +247,19 @@ const ujat1365RegistrationForm = (
     }
 
 /**
+ * 로그인 회원이 요청한 작업만 반환합니다. 다른 회원 jobId와 없는 jobId는 404 GENERATED_FILE_JOB_NOT_FOUND입니다. 스키마는 관리자 GeneratedFileJobResponse와 같고 requestPayloadJson과 resultSnapshotJson은 null입니다. jobStatus는 REQUESTED, PROCESSING, RENDERING, COMPLETED, FAILED입니다. 파일 다운로드는 fileObjectId로 기존 포털 download-requests를 사용합니다.
+ * @summary 내 생성 파일 작업 조회
+ */
+const getMyGeneratedFileJob = (
+    jobId: number,
+ options?: SecondParameter<typeof customInstance<GeneratedFileJobResponse>>,) => {
+      return customInstance<GeneratedFileJobResponse>(
+      {url: `/api/portal/me/generated-files/jobs/${jobId}`, method: 'GET'
+    },
+      options);
+    }
+
+/**
  * ### 이 API가 하는 일
  * - 봉사자 추가 등록 후보 조회
  * - API 분류: 내부 처리 또는 보조 API
@@ -301,23 +314,10 @@ const participantRegisterCandidates = (
       options);
     }
 
-/**
- * 로그인 회원이 요청한 작업만 반환합니다. 다른 회원 jobId와 없는 jobId는 404 GENERATED_FILE_JOB_NOT_FOUND입니다. 스키마는 관리자 GeneratedFileJobResponse와 같고 requestPayloadJson과 resultSnapshotJson은 null입니다. jobStatus는 REQUESTED, PROCESSING, RENDERING, COMPLETED, FAILED입니다. 파일 다운로드는 fileObjectId로 기존 포털 download-requests를 사용합니다.
- * @summary 내 생성 파일 작업 조회
- */
-const getMyGeneratedFileJob = (
-    jobId: number,
- options?: SecondParameter<typeof customInstance<GeneratedFileJobResponse>>,) => {
-      return customInstance<GeneratedFileJobResponse>(
-      {url: `/api/portal/me/generated-files/jobs/${jobId}`, method: 'GET'
-    },
-      options);
-    }
-
-return {get1,replace2,registerVolunteerParticipant,ujat1365RegistrationForm,participantRegisterCandidates,getMyGeneratedFileJob}};
+return {get1,replace2,registerVolunteerParticipant,ujat1365RegistrationForm,getMyGeneratedFileJob,participantRegisterCandidates}};
 export type Get1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['get1']>>>
 export type Replace2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['replace2']>>>
 export type RegisterVolunteerParticipantResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['registerVolunteerParticipant']>>>
 export type Ujat1365RegistrationFormResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['ujat1365RegistrationForm']>>>
-export type ParticipantRegisterCandidatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['participantRegisterCandidates']>>>
 export type GetMyGeneratedFileJobResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['getMyGeneratedFileJob']>>>
+export type ParticipantRegisterCandidatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['participantRegisterCandidates']>>>

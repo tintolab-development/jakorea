@@ -1591,6 +1591,22 @@ const resendGeminiOrganizationApplicationNotification = (
     }
 
 /**
+ * UJAT 봉사자 신청 preferred-region을 지역 마스터 code로 저장한다. 요청 seoul은 SEOUL로 정규화한다. 한글 라벨은 400. form_response.raw_answers_jsonb와 form_response_answer를 함께 갱신한다. 연결된 참여자가 있고 오늘 이후(또는 시작일 미정) 활성 배정이 있으면 UJAT_VOLUNTEER_REGION_CHANGE_HAS_ACTIVE_ASSIGNMENTS(409). 지난 배정만 있으면 허용. 같은 지역이면 변경 없이 200. 성공 본문의 preferredRegion/preferredRegionCode는 GET 목록·상세 ujat.preferredActivityRegion과 같다.
+ * @summary 봉사자 신청 희망 교육 활동 지역 수정
+ */
+const updateVolunteerApplicationActivityRegion = (
+    applicationId: number,
+    volunteerActivityRegionUpdateRequest: VolunteerActivityRegionUpdateRequest,
+ options?: SecondParameter<typeof customInstance<VolunteerActivityRegionUpdateResponse>>,) => {
+      return customInstance<VolunteerActivityRegionUpdateResponse>(
+      {url: `/api/admin/volunteer-applications/${applicationId}/activity-region`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: volunteerActivityRegionUpdateRequest
+    },
+      options);
+    }
+
+/**
  * ### 이 API가 하는 일
  * - 기관 신청 상세 조회
  * - API 분류: 내부 처리 또는 보조 API
@@ -3283,23 +3299,7 @@ const dashboardHome = (
       options);
     }
 
-/**
- * UJAT 봉사자 신청 preferred-region을 지역 마스터 code로 저장한다. 요청 seoul은 SEOUL로 정규화한다. 한글 라벨은 400. form_response.raw_answers_jsonb와 form_response_answer를 함께 갱신한다. 연결된 참여자가 있고 오늘 이후(또는 시작일 미정) 활성 배정이 있으면 UJAT_VOLUNTEER_REGION_CHANGE_HAS_ACTIVE_ASSIGNMENTS(409). 지난 배정만 있으면 허용. 같은 지역이면 변경 없이 200. 성공 본문의 preferredRegion/preferredRegionCode는 GET 목록·상세 ujat.preferredActivityRegion과 같다.
- * @summary 봉사자 신청 희망 교육 활동 지역 수정
- */
-const updateVolunteerApplicationActivityRegion = (
-    applicationId: number,
-    volunteerActivityRegionUpdateRequest: VolunteerActivityRegionUpdateRequest,
- options?: SecondParameter<typeof customInstance<VolunteerActivityRegionUpdateResponse>>,) => {
-      return customInstance<VolunteerActivityRegionUpdateResponse>(
-      {url: `/api/admin/volunteer-applications/${applicationId}/activity-region`, method: 'PATCH',
-      headers: {'Content-Type': 'application/json', },
-      data: volunteerActivityRegionUpdateRequest
-    },
-      options);
-    }
-
-return {recordVolunteerDocumentEvaluation,getUjatTypedDetail,replaceUjatTypedDetail,patchUjatTypedDetail,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list13,getDashboardShortcutBadges,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome,updateVolunteerApplicationActivityRegion}};
+return {recordVolunteerDocumentEvaluation,getUjatTypedDetail,replaceUjatTypedDetail,patchUjatTypedDetail,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,updateVolunteerApplicationActivityRegion,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list13,getDashboardShortcutBadges,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
 export type GetUjatTypedDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getUjatTypedDetail']>>>
 export type ReplaceUjatTypedDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['replaceUjatTypedDetail']>>>
@@ -3327,6 +3327,7 @@ export type UnmaskIndividualApplicationDetailResult = NonNullable<Awaited<Return
 export type ResendIndividualApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendIndividualApplicationNotification']>>>
 export type BulkIndividualDocumentResultResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['bulkIndividualDocumentResult']>>>
 export type ResendGeminiOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendGeminiOrganizationApplicationNotification']>>>
+export type UpdateVolunteerApplicationActivityRegionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updateVolunteerApplicationActivityRegion']>>>
 export type OrganizationApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplicationDetail']>>>
 export type UpdateOrganizationApplicationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updateOrganizationApplication']>>>
 export type MarkRead2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['markRead2']>>>
@@ -3358,4 +3359,3 @@ export type DashboardProgramInquiriesResult = NonNullable<Awaited<ReturnType<Ret
 export type DashboardNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardNotificationCount']>>>
 export type DashboardKpiProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardKpiProgress']>>>
 export type DashboardHomeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardHome']>>>
-export type UpdateVolunteerApplicationActivityRegionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updateVolunteerApplicationActivityRegion']>>>

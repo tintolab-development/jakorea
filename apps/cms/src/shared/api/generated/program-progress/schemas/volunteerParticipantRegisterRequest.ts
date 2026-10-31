@@ -7,13 +7,13 @@
  */
 import type { FreeTextItemsRequest } from './freeTextItemsRequest';
 import type { PreviousJaProgramRequest } from './previousJaProgramRequest';
-import type { PreviousUjatTermRequest } from './previousUjatTermRequest';
 import type { VolunteerParticipantRegisterRequestApplicationType } from './volunteerParticipantRegisterRequestApplicationType';
 import type { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from './volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest';
 import type { VolunteerParticipantRegisterRequestPersonalInfoConsent } from './volunteerParticipantRegisterRequestPersonalInfoConsent';
 import type { VolunteerParticipantRegisterRequestRegistrationChannel } from './volunteerParticipantRegisterRequestRegistrationChannel';
 import type { VolunteerParticipantRegisterRequestThirdPartyConsent } from './volunteerParticipantRegisterRequestThirdPartyConsent';
 import type { VolunteerParticipantRegisterRequestVolunteerKind } from './volunteerParticipantRegisterRequestVolunteerKind';
+import type { VolunteerPreviousUjatTermRequest } from './volunteerPreviousUjatTermRequest';
 
 export interface VolunteerParticipantRegisterRequest {
   memberId: number;
@@ -32,11 +32,9 @@ export interface VolunteerParticipantRegisterRequest {
      */
   jaProgramExperienceConsentRequest: VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest;
   previousJaProgram?: PreviousJaProgramRequest;
-  /** UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있을 때만 보내고 파일명만으로는 보내지 않습니다. */
-  previousUjatTerm?: PreviousUjatTermRequest | null;
-  /** UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다. */
+  previousUjatTerm?: VolunteerPreviousUjatTermRequest;
+  /** UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null. */
   educationRegionCode?: string | null;
-  /** UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다. */
   applicationType?: VolunteerParticipantRegisterRequestApplicationType;
   freeTextItems?: FreeTextItemsRequest;
   /**
