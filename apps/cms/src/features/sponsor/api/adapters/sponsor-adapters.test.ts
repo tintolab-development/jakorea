@@ -9,6 +9,7 @@ import {
   parseSponsorContactType,
   shouldPersistYearlyBusinessRow,
   toSponsorContactRequest,
+  toSponsorContactUpdateRequest,
   toSponsorRequestFromBasicInfo,
   toSponsorRequestFromRegister,
   toYearlyBusinessRequest,
@@ -338,6 +339,68 @@ describe('yearly business adapters', () => {
     expect(rows.map(row => row.year)).toEqual([2025, 2024, 2023])
     expect(rows.find(row => row.year === 2024)?.id).toBe('yb-1')
     expect(rows.find(row => row.year === 2025)?.id).toBe('')
+  })
+})
+
+describe('toSponsorContactUpdateRequest', () => {
+  const baseRow = {
+    id: 'c-1',
+    name: '테스트담당자',
+    department: '부서',
+    position: '직함',
+    officePhone: '02-0000-0000',
+    phone: '010-0000-0000',
+    email: 'test@example.com',
+    companyAddress: '회사주소',
+    memo: '비고',
+    registeredAt: '2026-02-10T00:15:00.000Z',
+    contactType: 'lead' as const,
+  }
+
+  it('sends emptied companyAddress and memo as empty strings', () => {
+    expect(
+      toSponsorContactUpdateRequest({
+        ...baseRow,
+        companyAddress: '  ',
+        memo: '',
+      })
+    ).toEqual({
+      name: '테스트담당자',
+      department: '부서',
+      position: '직함',
+      officePhone: '02-0000-0000',
+      mobilePhone: '010-0000-0000',
+      email: 'test@example.com',
+      companyAddress: '',
+      memo: '',
+      primary: true,
+      contactType: 'lead',
+    })
+  })
+
+  it('omits optional contact fields that were not loaded', () => {
+    expect(
+      toSponsorContactUpdateRequest({
+        ...baseRow,
+        department: undefined as unknown as string,
+        position: undefined as unknown as string,
+        officePhone: undefined as unknown as string,
+        email: undefined as unknown as string,
+        companyAddress: undefined as unknown as string,
+        memo: undefined as unknown as string,
+      })
+    ).toEqual({
+      name: '테스트담당자',
+      department: undefined,
+      position: undefined,
+      officePhone: undefined,
+      mobilePhone: '010-0000-0000',
+      email: undefined,
+      companyAddress: undefined,
+      memo: undefined,
+      primary: true,
+      contactType: 'lead',
+    })
   })
 })
 

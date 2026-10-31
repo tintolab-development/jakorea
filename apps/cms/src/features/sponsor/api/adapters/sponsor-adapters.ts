@@ -362,6 +362,12 @@ function optionalContactText(value: string | undefined): string | undefined {
   return trimmed || undefined
 }
 
+/** Update only: keep loaded empty strings so BE COALESCE does not retain the previous value. */
+function persistableContactText(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined
+  return value.trim()
+}
+
 export function toSponsorContactRequest(
   payload: SponsorContactRegisterPayload,
   contactType: SponsorContactRow['contactType']
@@ -385,13 +391,13 @@ export function toSponsorContactUpdateRequest(
 ): SponsorContactRequest {
   return {
     name: row.name.trim(),
-    department: optionalContactText(row.department),
-    position: optionalContactText(row.position),
-    officePhone: optionalContactText(row.officePhone),
+    department: persistableContactText(row.department),
+    position: persistableContactText(row.position),
+    officePhone: persistableContactText(row.officePhone),
     mobilePhone: row.phone.trim(),
-    email: optionalContactText(row.email),
-    companyAddress: optionalContactText(row.companyAddress),
-    memo: optionalContactText(row.memo),
+    email: persistableContactText(row.email),
+    companyAddress: persistableContactText(row.companyAddress),
+    memo: persistableContactText(row.memo),
     primary: row.contactType === 'lead',
     contactType: row.contactType,
   }
