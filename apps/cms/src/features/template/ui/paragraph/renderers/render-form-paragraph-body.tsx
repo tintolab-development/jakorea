@@ -940,6 +940,7 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isUserInfoFieldSelectEditMode}
           layout={isUserLikeVisible ? 'previewTable' : 'chips'}
+          answerEditable={paragraphInteractionMode === 'user'}
           previewValues={
             options?.userInfoPreviewValues ??
             (p.kind === 'single_item' && p.variant === 'user_info' ? p.fieldAnswers : undefined)

@@ -1,10 +1,15 @@
 import { findWritingTemplateRowByDefinitionId } from '@/features/template/lib/writing-template-create-helpers'
 import {
   DEFAULT_SURVEY_PARAGRAPH_IDS,
+  getUserInfoSelectedEntries,
+  isUserInfoParagraph,
   normalizeWritingFormDraft,
+  type MultipleChoiceParagraph,
   type ScaleTypeParagraph,
   type ShortEssayParagraph,
+  type StarRateParagraph,
   type TitleWithPeriodParagraph,
+  type UserInfoParagraph,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -46,9 +51,6 @@ const LECTURE_EVAL_MOCK_PERIOD = {
   startAt: '2026-09-15',
   endAt: '2026-10-05',
 } as const
-
-const LECTURE_EVAL_RESPONDENT_NAME = '응답자'
-const LECTURE_EVAL_RESPONDENT_REGION = '서울특별시 강서구 화곡동'
 
 export type ResolveLectureEvalWritingDraftOptions = {
   clearAnswers?: boolean
@@ -156,6 +158,22 @@ function getShortEssayText(paragraph: ShortEssayParagraph): string {
   return paragraph.bodyText.trim()
 }
 
+function getMultipleChoiceAnswer(paragraph: MultipleChoiceParagraph): string {
+  if (paragraph.allowMultiple) {
+    return (paragraph.selectedPreviewMultipleIds ?? []).filter(id => id.trim() !== '').join(',')
+  }
+  return paragraph.selectedPreviewSingleId?.trim() ?? ''
+}
+
+function collectUserInfoAnswers(paragraph: UserInfoParagraph): Record<string, string> {
+  const next: Record<string, string> = {}
+  for (const field of getUserInfoSelectedEntries(paragraph)) {
+    const value = paragraph.fieldAnswers?.[field.key]?.trim() ?? ''
+    if (value !== '') next[field.key] = value
+  }
+  return next
+}
+
 export function getLectureEvalPeriodEndAt(formDraft: WritingFormDraft | null | undefined): string | null {
   if (formDraft == null) return LECTURE_EVAL_MOCK_PERIOD.endAt
   const title = formDraft.paragraphs.find(
@@ -206,6 +224,8 @@ export function buildLectureEvalSubmittedPollResponse(
 
 export function draftToLectureEvalPollResponse(draft: WritingFormDraft): SurveyPollRawResponse {
   const answers: Record<string, string> = {}
+  let respondentName = ''
+  let addressRegion = ''
 
   for (const paragraph of draft.paragraphs) {
     if (paragraph.kind !== 'single_item') continue
@@ -223,13 +243,33 @@ export function draftToLectureEvalPollResponse(draft: WritingFormDraft): SurveyP
       if (text !== '') {
         answers[paragraph.id] = text
       }
+      continue
+    }
+
+    if (paragraph.variant === 'multiple_choice') {
+      const value = getMultipleChoiceAnswer(paragraph)
+      if (value !== '') answers[paragraph.id] = value
+      continue
+    }
+
+    if (paragraph.variant === 'star_rate') {
+      const stars = (paragraph as StarRateParagraph).selectedPreviewStars
+      if (stars != null) answers[paragraph.id] = String(stars)
+      continue
+    }
+
+    if (isUserInfoParagraph(paragraph)) {
+      const fieldAnswers = collectUserInfoAnswers(paragraph)
+      Object.assign(answers, fieldAnswers)
+      respondentName = fieldAnswers.name ?? respondentName
+      addressRegion = fieldAnswers.addressRegion ?? addressRegion
     }
   }
 
   return {
     respondentId: 'lecture-eval-admin',
-    respondentName: LECTURE_EVAL_RESPONDENT_NAME,
-    addressRegion: LECTURE_EVAL_RESPONDENT_REGION,
+    respondentName,
+    addressRegion,
     answers,
   }
 }
@@ -266,6 +306,30 @@ export function applyLectureEvalAnswersToDraft(
             : paragraph.items
         return { ...paragraph, bodyText: value, items }
       }
+      if (paragraph.variant === 'multiple_choice') {
+        if (paragraph.allowMultiple) {
+          return {
+            ...paragraph,
+            selectedPreviewMultipleIds: value.split(',').filter(id => id !== ''),
+          }
+        }
+        return { ...paragraph, selectedPreviewSingleId: value }
+      }
+      if (paragraph.variant === 'star_rate') {
+        const stars = Number(value)
+        return {
+          ...paragraph,
+          selectedPreviewStars: Number.isFinite(stars) ? stars : paragraph.selectedPreviewStars,
+        }
+      }
+      if (isUserInfoParagraph(paragraph)) {
+        const fieldAnswers = { ...(paragraph.fieldAnswers ?? {}) }
+        for (const field of getUserInfoSelectedEntries(paragraph)) {
+          const fieldValue = answers[field.key]
+          if (fieldValue != null) fieldAnswers[field.key] = fieldValue
+        }
+        return { ...paragraph, fieldAnswers }
+      }
       return paragraph
     }),
   }
@@ -286,6 +350,29 @@ export function validateLectureEvalFormDraft(draft: WritingFormDraft): LectureEv
       if (getShortEssayText(paragraph) === '') {
         const title = paragraph.paragraphTitle.trim() || '주관식 문항'
         return { valid: false, message: `${title}에 답변을 입력해 주세요.` }
+      }
+    }
+
+    if (paragraph.variant === 'multiple_choice' && paragraph.answerRequired !== false) {
+      if (getMultipleChoiceAnswer(paragraph) === '') {
+        const title = paragraph.paragraphTitle.trim() || '객관식 문항'
+        return { valid: false, message: `${title}에 답변해 주세요.` }
+      }
+    }
+
+    if (paragraph.variant === 'star_rate' && paragraph.answerRequired !== false) {
+      if ((paragraph as StarRateParagraph).selectedPreviewStars == null) {
+        const title = paragraph.paragraphTitle.trim() || '별점 문항'
+        return { valid: false, message: `${title}에 답변해 주세요.` }
+      }
+    }
+
+    if (isUserInfoParagraph(paragraph) && paragraph.answerRequired !== false) {
+      const entries = getUserInfoSelectedEntries(paragraph)
+      for (const field of entries) {
+        if ((paragraph.fieldAnswers?.[field.key] ?? '').trim() === '') {
+          return { valid: false, message: `${field.label}을 입력해 주세요.` }
+        }
       }
     }
   }
