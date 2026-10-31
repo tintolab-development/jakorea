@@ -155,13 +155,22 @@ export function parseGeneralInterviewSlotEnd(
 export function parseGeneralInterviewSlotEndFromRow(
   row: Pick<
     GeneralVolunteerApplicantRow,
-    'assignedInterviewEndAt' | 'assignedInterviewDateLabel' | 'assignedInterviewTime'
+    | 'assignedInterviewEndAt'
+    | 'assignedInterviewStartAt'
+    | 'assignedInterviewDateLabel'
+    | 'assignedInterviewTime'
   >
 ): Dayjs | null {
   const endAt = row.assignedInterviewEndAt?.trim()
   if (endAt) {
     const parsed = dayjs(endAt)
-    if (parsed.isValid()) return parsed
+    if (!parsed.isValid()) return null
+    const startAt = row.assignedInterviewStartAt?.trim()
+    if (startAt) {
+      const start = dayjs(startAt)
+      if (start.isValid() && !parsed.isAfter(start)) return null
+    }
+    return parsed
   }
   return parseGeneralInterviewSlotEnd(row.assignedInterviewDateLabel, row.assignedInterviewTime)
 }
@@ -222,6 +231,7 @@ export function resolveGeneralEffectiveSecondInterviewStatus(
     | 'secondInterviewScreeningStatus'
     | 'assignedInterviewDateLabel'
     | 'assignedInterviewTime'
+    | 'assignedInterviewStartAt'
     | 'assignedInterviewEndAt'
   >,
   now: Dayjs = dayjs()

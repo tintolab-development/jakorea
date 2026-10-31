@@ -14516,6 +14516,14 @@
             "description": "interviewAvailability 항목 수",
             "minimum": 0
           },
+          "interviewStatus": {
+            "type": "string",
+            "description": "면접 운영 상태. ASSIGNED | PARTIALLY_EVALUATED | EVALUATED | COMPLETED | WITHDRAWN | WAITING | NOT_REQUIRED"
+          },
+          "interviewAssignmentStatus": {
+            "type": "string",
+            "description": "DB 면접 배정 상태. 배정 전에는 null. ASSIGNED | PARTIALLY_EVALUATED | EVALUATED | COMPLETED"
+          },
           "interviewAssignmentId": {
             "type": "integer",
             "format": "int64"

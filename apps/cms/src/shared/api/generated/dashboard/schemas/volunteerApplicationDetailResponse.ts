@@ -37,6 +37,9 @@ export interface VolunteerApplicationDetailResponse {
      * @minimum 0
      */
   interviewAvailabilityCount?: number;
+  interviewStatus?: string;
+  /** DB 면접 배정 상태. 배정 전에는 null */
+  interviewAssignmentStatus?: string;
   interviewAssignmentId?: number;
   assignedInterviewSlotId?: number;
   assignedInterviewStartAt?: string;

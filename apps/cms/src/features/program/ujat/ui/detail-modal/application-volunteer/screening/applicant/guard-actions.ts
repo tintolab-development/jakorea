@@ -3,18 +3,15 @@ import {
   isUjatInterviewTotalScoreUnevaluated,
   resolveUjatEffectiveSecondInterviewStatus,
 } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview2/display'
+import { INTERVIEW_RESULT_NOT_ENDED_ALERT } from '@/features/program/shared/lib/interview-not-ended'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+
+export { INTERVIEW_RESULT_NOT_ENDED_ALERT }
 
 const INTERVIEW_EVALUATION_REQUIRED_ALERT = {
   title: '면접 평가 진행 안내',
   content: '면접 평가 진행 후 합격 혹은 불합격 처리가 가능합니다.',
   confirmLabel: '닫기',
-} as const
-
-export const INTERVIEW_RESULT_NOT_ENDED_ALERT = {
-  title: '면접 결과 처리 안내',
-  content:
-    '면접이 아직 종료되지 않았습니다.\n면접 종료 후 담당자 평가가 완료되면 합격·불합격 처리가 가능합니다.',
 } as const
 
 function guardUjatVolunteerInterview2Evaluated(row: UjatVolunteerApplicantRow): boolean {

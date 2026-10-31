@@ -35,6 +35,7 @@ import {
   GeneralVolunteerApplicantInterviewEvaluationSection,
   type GeneralVolunteerApplicantInterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
+import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { guardGeneralVolunteerInterview2Evaluation } from './general-volunteer-applicant-guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -131,6 +132,8 @@ function Interview2VolunteerApplicantDetail({
 }) {
   const evaluationSectionRef = useRef<GeneralVolunteerApplicantInterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
+  const interviewNotEnded =
+    resolveGeneralEffectiveSecondInterviewStatus(applicant) === 'waiting'
   const canCancelFinalPass = hasExplicitApplicationAction(
     applicant.availableActions,
     APPLICATION_ACTION_CANCEL_FINAL_PASS
@@ -207,6 +210,7 @@ function Interview2VolunteerApplicantDetail({
                 size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
+                disabled={interviewNotEnded}
                 onClick={onInterviewFail}
               >
                 면접 불합격
@@ -217,6 +221,7 @@ function Interview2VolunteerApplicantDetail({
                 size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
+                disabled={interviewNotEnded}
                 onClick={onInterviewPass}
               >
                 면접 합격
@@ -227,6 +232,7 @@ function Interview2VolunteerApplicantDetail({
                 size="large"
                 className="cms-button--action"
                 width={CMS_ACTION_BUTTON_WIDTH}
+                disabled={interviewNotEnded && !isEvaluationEditing}
                 onClick={() => {
                   void handleInterviewEvaluationClick()
                 }}

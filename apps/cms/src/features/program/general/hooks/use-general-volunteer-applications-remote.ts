@@ -49,6 +49,10 @@ import {
   readDocumentEvaluationErrorMessage,
   shouldShowDocumentEvaluationErrorAlert,
 } from '@/features/program/shared/lib/document-evaluation-error'
+import {
+  readInterviewDecisionErrorAlert,
+  shouldSkipLocalApiErrorAlert,
+} from '@/features/program/shared/lib/interview-not-ended'
 
 export type GeneralVolunteerApplicationsStage = 'doc1' | 'docPassed' | 'interview2'
 
@@ -137,9 +141,11 @@ export function useGeneralVolunteerApplicationsRemote({
     await Promise.all([
       queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.volunteerList(programId),
+        refetchType: 'all',
       }),
       queryClient.invalidateQueries({
         queryKey: generalApplicationsQueryKeys.volunteerDetails(),
+        refetchType: 'all',
       }),
     ])
   }, [programId, queryClient, subjectKind])
@@ -147,15 +153,18 @@ export function useGeneralVolunteerApplicationsRemote({
   const notifyRemoteFailure = useCallback(
     (error: unknown) => {
       console.debug('applications remote decision failed', error)
+      if (shouldSkipLocalApiErrorAlert(error)) return
       const data = (error as { response?: { data?: unknown } } | null)?.response?.data
       const scheduleError = getNotificationScheduleError(error)
+      const interviewAlert = readInterviewDecisionErrorAlert(error, '처리 실패')
       showAlert({
-        title: '처리 실패',
+        title: interviewAlert.title,
         content:
           scheduleError?.message ??
           formatApplicationEligibilityConflictMessage(error) ??
           formatApplicationDecisionCancelConflictMessage(error) ??
           formatApplicationStatusConflictMessage(error) ??
+          interviewAlert.content ??
           extractApiErrorMessage(data, {
             httpStatus: getApiErrorHttpStatus(error),
             fallback:
@@ -177,10 +186,18 @@ export function useGeneralVolunteerApplicationsRemote({
       scheduledAt?: string
     ) => {
       if (!remoteEnabled) return false
+      const failReason = reason?.trim()
+      if (result === 'FAIL' && !failReason) {
+        showAlert({
+          title: '요청 오류',
+          content: '반려 사유를 입력해 주세요.',
+        })
+        return false
+      }
       try {
         const payload = {
           result,
-          reason: result === 'FAIL' ? reason?.trim() || '반려' : reason,
+          ...(result === 'FAIL' ? { reason: failReason } : reason ? { reason } : {}),
           ...toScreeningResultNotifyFields({
             notifyTiming: notifyTiming?.trim().toUpperCase(),
             scheduledAt,
@@ -308,16 +325,10 @@ export function useGeneralVolunteerApplicationsRemote({
         return 'ok'
       } catch (error) {
         console.debug('interview evaluation failed', error)
-        showAlert({
-          title: '면접 평가 실패',
-          content: extractApiErrorMessage(
-            (error as { response?: { data?: unknown } } | null)?.response?.data,
-            {
-              httpStatus: getApiErrorHttpStatus(error),
-              fallback: '면접 평가 저장 중 오류가 발생했습니다. 다시 시도해 주세요.',
-            }
-          ),
-        })
+        if (!shouldSkipLocalApiErrorAlert(error)) {
+          const alert = readInterviewDecisionErrorAlert(error, '면접 평가 실패')
+          showAlert(alert)
+        }
         return 'error'
       }
     },

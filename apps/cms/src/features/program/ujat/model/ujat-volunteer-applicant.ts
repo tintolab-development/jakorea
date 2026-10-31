@@ -76,6 +76,8 @@ export interface UjatVolunteerApplicantRow {
   evidenceAttachments?: VolunteerApplicationEvidenceAttachment[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
+  assignedInterviewStartAt?: string
+  assignedInterviewEndAt?: string
   /** 목록 DTO `interviewAssignmentId`. 평가 POST에 사용 */
   interviewAssignmentId?: number
   secondInterviewScreeningStatus?: UjatSecondInterviewScreeningStatus
@@ -196,6 +198,17 @@ export function patchUjatVolunteerInterviewAssignmentWithdrawn(
   return rows.map(row =>
     row.id === id ? { ...row, interviewAssignmentStatus: 'withdrawn' as const } : row
   )
+}
+
+/**
+ * 목록 query 동기화 — 서버 행이 정본.
+ * 로컬 배정 optimistic은 GET이 waiting이면 되돌린다.
+ */
+export function mergeUjatVolunteerApplicantQueryRow(
+  _previous: UjatVolunteerApplicantRow | undefined,
+  incoming: UjatVolunteerApplicantRow
+): UjatVolunteerApplicantRow {
+  return incoming
 }
 
 export function formatUjatVolunteerApplicationType(type: UjatVolunteerApplicationType): string {

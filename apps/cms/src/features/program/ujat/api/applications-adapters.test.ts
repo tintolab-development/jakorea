@@ -466,6 +466,24 @@ describe('UJAT 봉사자 목록 adapter', () => {
     expect(
       mapStatus({ applicationStatus: 'INTERVIEW_ASSIGNED' }).interviewAssignmentStatus
     ).toBe('assigned')
+    expect(
+      mapStatus({
+        applicationStatus: 'INTERVIEW_ASSIGNED',
+        documentStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'ASSIGNED',
+        interviewAssignmentStatus: 'ASSIGNED',
+        assignedInterviewStartAt: '2026-11-19T01:00:00Z',
+        assignedInterviewEndAt: '2026-11-19T01:30:00Z',
+        interviewAssignmentId: 10001,
+      }).assignedInterviewEndAt
+    ).toBe('2026-11-19T01:30:00Z')
+    expect(
+      mapStatus({
+        interviewAssignmentStatus: 'PARTIALLY_EVALUATED',
+        interviewStatus: 'PARTIALLY_EVALUATED',
+        documentStatus: 'DOCUMENT_PASSED',
+      }).interviewAssignmentStatus
+    ).toBe('assigned')
     expect(mapStatus({ applicationStatus: 'FINAL_SELECTED' }).secondInterviewScreeningStatus).toBe(
       'pass'
     )

@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchVolunteerApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
+import { mapVolunteerInterviewAssignmentFromWire } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { formatAssignedInterviewFromIso } from '@/features/program/ujat/api/applications-adapters'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
 import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
@@ -160,10 +162,41 @@ export function useUjatVolunteerApplicationDetailEnrichment(
 
   return useMemo(() => {
     if (!detailQuery.data) return row
-    return applyUjatVolunteerApplicationDetail(
-      row,
-      detailQuery.data.application,
-      detailQuery.data.profile,
+    const dto = detailQuery.data
+    const enriched = applyUjatVolunteerApplicationDetail(row, dto.application, dto.profile)
+    const assignment = mapVolunteerInterviewAssignmentFromWire({
+      interviewStatus: dto.interviewStatus,
+      interviewAssignmentStatus: dto.interviewAssignmentStatus,
+      applicationStatus: dto.applicationStatus,
+      giveUpYn: dto.screening?.giveUpYn,
+    })
+    const assigned = formatAssignedInterviewFromIso(
+      dto.assignedInterviewStartAt,
+      dto.assignedInterviewEndAt
     )
+    return {
+      ...enriched,
+      interviewAssignmentStatus:
+        assignment === 'waiting' || assignment === 'not_required'
+          ? enriched.interviewAssignmentStatus
+          : assignment,
+      ...(dto.interviewAssignmentId != null
+        ? { interviewAssignmentId: dto.interviewAssignmentId }
+        : {}),
+      assignedInterviewStartAt:
+        dto.assignedInterviewStartAt === null
+          ? undefined
+          : dto.assignedInterviewStartAt?.trim() || enriched.assignedInterviewStartAt,
+      assignedInterviewEndAt:
+        dto.assignedInterviewEndAt === null
+          ? undefined
+          : dto.assignedInterviewEndAt?.trim() || enriched.assignedInterviewEndAt,
+      assignedInterviewDateLabel:
+        assigned.assignedInterviewDateLabel ??
+        (dto.assignedInterviewStartAt == null ? undefined : enriched.assignedInterviewDateLabel),
+      assignedInterviewTime:
+        assigned.assignedInterviewTime ??
+        (dto.assignedInterviewStartAt == null ? undefined : enriched.assignedInterviewTime),
+    }
   }, [detailQuery.data, row])
 }

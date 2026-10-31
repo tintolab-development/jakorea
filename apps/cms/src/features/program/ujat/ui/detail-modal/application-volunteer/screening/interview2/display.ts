@@ -69,6 +69,29 @@ function parseUjatInterviewSlotEnd(
     .millisecond(0)
 }
 
+function parseUjatInterviewSlotEndFromRow(
+  row: Pick<
+    UjatVolunteerApplicantRow,
+    | 'assignedInterviewEndAt'
+    | 'assignedInterviewStartAt'
+    | 'assignedInterviewDateLabel'
+    | 'assignedInterviewTime'
+  >
+): Dayjs | null {
+  const endAt = row.assignedInterviewEndAt?.trim()
+  if (endAt) {
+    const end = dayjs(endAt)
+    if (!end.isValid()) return null
+    const startAt = row.assignedInterviewStartAt?.trim()
+    if (startAt) {
+      const start = dayjs(startAt)
+      if (start.isValid() && !end.isAfter(start)) return null
+    }
+    return end
+  }
+  return parseUjatInterviewSlotEnd(row.assignedInterviewDateLabel, row.assignedInterviewTime)
+}
+
 export function resolveUjatEffectiveSecondInterviewStatus(
   row: UjatVolunteerApplicantRow,
   now: Dayjs = dayjs()
@@ -78,7 +101,7 @@ export function resolveUjatEffectiveSecondInterviewStatus(
   const stored = row.secondInterviewScreeningStatus
   if (stored && MANUAL_SECOND_INTERVIEW_STATUSES.has(stored)) return stored
 
-  const slotEnd = parseUjatInterviewSlotEnd(row.assignedInterviewDateLabel, row.assignedInterviewTime)
+  const slotEnd = parseUjatInterviewSlotEndFromRow(row)
   if (!slotEnd) return 'waiting'
 
   return now.isBefore(slotEnd) ? 'waiting' : 'completed'

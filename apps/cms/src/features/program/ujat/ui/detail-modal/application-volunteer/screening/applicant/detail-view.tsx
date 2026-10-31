@@ -23,6 +23,7 @@ import {
   InterviewEvaluationSection,
   type InterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
+import { resolveUjatEffectiveSecondInterviewStatus } from '../interview2/display'
 import { guardUjatVolunteerInterview2Evaluation } from './guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -93,6 +94,7 @@ function Interview2ApplicantDetail({
 }) {
   const evaluationSectionRef = useRef<InterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
+  const interviewNotEnded = resolveUjatEffectiveSecondInterviewStatus(applicant) === 'waiting'
 
   useEffect(() => {
     setIsEvaluationEditing(false)
@@ -128,6 +130,7 @@ function Interview2ApplicantDetail({
             size="large"
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
+            disabled={interviewNotEnded}
             onClick={onInterviewFail}
           >
             면접 불합격
@@ -138,6 +141,7 @@ function Interview2ApplicantDetail({
             size="large"
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
+            disabled={interviewNotEnded}
             onClick={onInterviewPass}
           >
             면접 합격
@@ -148,6 +152,7 @@ function Interview2ApplicantDetail({
             size="large"
             className="cms-button--action"
             width={CMS_ACTION_BUTTON_WIDTH}
+            disabled={interviewNotEnded && !isEvaluationEditing}
             onClick={() => {
               void handleInterviewEvaluationClick()
             }}

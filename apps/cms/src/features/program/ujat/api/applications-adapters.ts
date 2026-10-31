@@ -23,6 +23,7 @@ import type {
   UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
+import { mapVolunteerInterviewAssignmentFromWire } from '@/features/program/general/api/adapters/general-applications-adapters'
 import { findUjatEducationRegionKeyByCode } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
@@ -363,7 +364,7 @@ function mapVolunteerGrade(value: unknown): UjatVolunteerGrade | '' {
   return typeof value === 'string' ? (value.trim() as UjatVolunteerGrade | '') : ''
 }
 
-function formatAssignedInterviewFromIso(
+export function formatAssignedInterviewFromIso(
   startAt?: string | null,
   endAt?: string | null
 ): { assignedInterviewDateLabel?: string; assignedInterviewTime?: string } {
@@ -479,10 +480,17 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
     documentScreeningStatus: projection.documentScreeningStatus,
     interviewSlotCount: dto.interviewAvailabilityCount ?? interviewAvailability.length,
-    interviewAssignmentStatus:
-      dto.interviewAssignmentStatus?.trim().toUpperCase() === 'ASSIGNED'
-        ? 'assigned'
-        : projection.interviewAssignmentStatus,
+    interviewAssignmentStatus: (() => {
+      const fromWire = mapVolunteerInterviewAssignmentFromWire({
+        interviewStatus: dto.interviewStatus,
+        interviewAssignmentStatus: dto.interviewAssignmentStatus,
+        applicationStatus: dto.applicationStatus,
+        giveUpYn: dto.giveUpYn,
+      })
+      return fromWire === 'waiting' || fromWire === 'not_required'
+        ? projection.interviewAssignmentStatus
+        : fromWire
+    })(),
     programId: toId(dto.programId) || programId,
     half: fromUjatRecruitHalfApi(dto.recruitHalf, half),
     ...(dto.interviewAssignmentId != null
@@ -504,6 +512,8 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     managerBScore: scoreB,
     totalScore:
       scoreA != null && scoreB != null ? scoreA + scoreB : scoreA != null ? scoreA : scoreB,
+    assignedInterviewStartAt: dto.assignedInterviewStartAt?.trim() || undefined,
+    assignedInterviewEndAt: dto.assignedInterviewEndAt?.trim() || undefined,
     ...assigned,
   }
 }
