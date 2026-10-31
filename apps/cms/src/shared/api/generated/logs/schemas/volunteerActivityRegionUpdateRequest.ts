@@ -8,7 +8,7 @@
 
 export interface VolunteerActivityRegionUpdateRequest {
   /**
-     * @minLength 0
+     * ujat_education_region.code. 예: seoul, SEOUL, gyeonggi_south. 한글 라벨 금지. 저장·응답은 마스터 code.
      * @maxLength 100
      */
   educationRegionCode: string;

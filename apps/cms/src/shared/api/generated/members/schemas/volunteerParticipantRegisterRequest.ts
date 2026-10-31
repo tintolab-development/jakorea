@@ -7,11 +7,13 @@
  */
 import type { FreeTextItemsRequest } from './freeTextItemsRequest';
 import type { PreviousJaProgramRequest } from './previousJaProgramRequest';
+import type { VolunteerParticipantRegisterRequestApplicationType } from './volunteerParticipantRegisterRequestApplicationType';
 import type { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from './volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest';
 import type { VolunteerParticipantRegisterRequestPersonalInfoConsent } from './volunteerParticipantRegisterRequestPersonalInfoConsent';
 import type { VolunteerParticipantRegisterRequestRegistrationChannel } from './volunteerParticipantRegisterRequestRegistrationChannel';
 import type { VolunteerParticipantRegisterRequestThirdPartyConsent } from './volunteerParticipantRegisterRequestThirdPartyConsent';
 import type { VolunteerParticipantRegisterRequestVolunteerKind } from './volunteerParticipantRegisterRequestVolunteerKind';
+import type { VolunteerPreviousUjatTermRequest } from './volunteerPreviousUjatTermRequest';
 
 export interface VolunteerParticipantRegisterRequest {
   memberId: number;
@@ -32,4 +34,8 @@ export interface VolunteerParticipantRegisterRequest {
      * @maxLength 500
      */
   reason: string;
+  previousUjatTerm?: VolunteerPreviousUjatTermRequest;
+  /** UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null. */
+  educationRegionCode?: string | null;
+  applicationType?: VolunteerParticipantRegisterRequestApplicationType;
 }

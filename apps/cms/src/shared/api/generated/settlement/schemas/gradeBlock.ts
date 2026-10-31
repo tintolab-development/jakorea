@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ClassRoom } from './classRoom';
+import type { GradeBlockTextbookDeliveryStatus } from './gradeBlockTextbookDeliveryStatus';
 
 /**
  * 학년 한 묶음. classes[].classNo가 실제 등록 반의 SSOT입니다. classes가 비어 있으면 classCount는 신청 메타일 뿐 반 번호 목록이 아닙니다.
@@ -14,4 +15,10 @@ export interface GradeBlock {
   gradeLabel?: string | null;
   classCount?: number | null;
   classes?: ClassRoom[];
+  /** 학년 블록에 저장된 교재명. 없으면 null. */
+  textbookName?: string | null;
+  textbookNameEn?: string | null;
+  kitCount?: number | null;
+  bookCount?: number | null;
+  textbookDeliveryStatus?: GradeBlockTextbookDeliveryStatus;
 }
