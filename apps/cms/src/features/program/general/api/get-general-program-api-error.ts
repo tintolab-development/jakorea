@@ -59,6 +59,12 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_THIRD_PARTY_CONSENT_REQUIRED: '개인정보 제3자 정보 제공·이용에 동의해 주세요.',
   VOLUNTEER_PREVIOUS_JA_REQUIRED:
     '동의서 제출 요청 시 이전 참여 JA 봉사 프로그램 정보와 증빙서류가 필요합니다.',
+  VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID:
+    '이전 기수 수료증 파일이 올바르지 않습니다. 본인이 업로드한 신청 증빙(스캔 완료)만 연결할 수 있습니다.',
+  VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN:
+    '이전 기수 수료증 파일의 보안 검사가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.',
+  VOLUNTEER_PREVIOUS_UJAT_FILE_QUESTION_MISSING:
+    '이전 기수 수료증을 연결할 신청서 문항을 찾을 수 없습니다. 프로그램 신청 양식 바인딩을 확인해 주세요.',
   VOLUNTEER_FREE_TEXT_REQUIRED: '자유 작성 항목을 모두 작성해 주세요.',
   VOLUNTEER_FREE_TEXT_INVALID: '자유 작성 항목 글자 수를 확인해 주세요.',
   VOLUNTEER_RECRUITMENT_NOT_CONFIGURED:

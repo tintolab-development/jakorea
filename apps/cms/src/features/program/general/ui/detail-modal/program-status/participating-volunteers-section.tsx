@@ -776,6 +776,7 @@ export function ParticipatingVolunteersSection({
       <ParticipatingVolunteerAddRegistrationModal
         open={volunteerConsentOpen}
         memberId={pendingVolunteerMemberId}
+        programId={program?.id}
         hideBasicInfoSection={pendingVolunteerHasId1365}
         onClose={handleVolunteerConsentClose}
         onConfirm={handleVolunteerRegisterSubmit}

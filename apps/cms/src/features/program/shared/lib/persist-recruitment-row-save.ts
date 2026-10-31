@@ -425,12 +425,12 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   if (typeof row.contentRevision === 'number') {
     typedBody.expectedRevision = row.contentRevision
   }
+  if (row.finalPassAnnouncementAt !== undefined) {
+    typedBody.finalPassAnnouncementAt = row.finalPassAnnouncementAt
+  }
   if (audience === 'volunteer') {
     if (row.documentPassAnnouncementAt !== undefined) {
       typedBody.documentPassAnnouncementAt = row.documentPassAnnouncementAt
-    }
-    if (row.finalPassAnnouncementAt !== undefined) {
-      typedBody.finalPassAnnouncementAt = row.finalPassAnnouncementAt
     }
     if (row.noticeExposureTiming !== undefined) {
       typedBody.noticeExposureTiming = row.noticeExposureTiming

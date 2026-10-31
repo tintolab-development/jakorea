@@ -422,18 +422,8 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
   }, [absenceReasonQuery.data, assignedScheduleIdSet, participant.id, participant.memberId, rows])
 
   const handleAbsenceFileDownload = useCallback(
-    (item: ProgramAttendanceAbsenceReasonItem) => {
-      const ids = item.fileObjectIds ?? []
-      if (ids.length === 0) return
-      void (async () => {
-        for (let index = 0; index < ids.length; index += 1) {
-          const fileObjectId = ids[index]
-          if (fileObjectId == null) continue
-          const fileName =
-            item.originalFileNames?.[index]?.trim() || item.fileName || `증빙서류-${fileObjectId}`
-          await downloadAbsenceEvidenceFile(fileObjectId, fileName)
-        }
-      })().catch(() => {
+    (_item: ProgramAttendanceAbsenceReasonItem, fileObjectId: number, fileName: string) => {
+      void downloadAbsenceEvidenceFile(fileObjectId, fileName).catch(() => {
         showAlert({
           title: '안내',
           content: '증빙 서류 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
