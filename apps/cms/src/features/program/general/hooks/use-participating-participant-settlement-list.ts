@@ -12,6 +12,7 @@ import {
   type IndividualSettlementReviewListRow,
 } from '@/features/program/general/lib/map-individual-settlement-review-rows'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 
@@ -19,6 +20,7 @@ import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message
 export function useParticipatingParticipantSettlementList(input: {
   programId: string
   participant: Pick<ParticipatingIndividualParticipantRow, 'id' | 'memberId' | 'sessions'>
+  assignedSessions?: ReadonlyArray<ParticipatingSchoolSession>
   enabled?: boolean
 }): {
   remoteEnabled: boolean
@@ -51,8 +53,13 @@ export function useParticipatingParticipantSettlementList(input: {
   })
 
   const assignedSessions = useMemo(
-    () => assignedSessionsForIndividualSettlementReview(input.participant.sessions),
-    [input.participant.sessions]
+    () =>
+      assignedSessionsForIndividualSettlementReview(
+        input.assignedSessions && input.assignedSessions.length > 0
+          ? input.assignedSessions
+          : input.participant.sessions
+      ),
+    [input.assignedSessions, input.participant.sessions]
   )
 
   const listReady = queryEnabled && reviewsQuery.isSuccess

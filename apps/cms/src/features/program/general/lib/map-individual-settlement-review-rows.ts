@@ -8,12 +8,15 @@ import {
   normalizeIndividualSettlementReviewStatus,
 } from '@/features/program/general/lib/individual-settlement-review-status'
 import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '@/features/program/general/lib/participating-individual-progress-schedule-sessions'
+import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
+import type { ParticipatingIndividualInstructorLectureProgress } from '@/features/program/general/lib/participating-individual-instructor-lecture-report-types'
 
 export type IndividualSettlementReviewListRow = {
   id: string
   no: number
   programScheduleId: number | null
   educationScheduleLabel: string
+  lectureProgress: ParticipatingIndividualInstructorLectureProgress
   status: string
   statusLabel: string
   totalAmount: number | null
@@ -29,6 +32,16 @@ export type IndividualSettlementReviewListRow = {
 function positiveId(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
   return Math.trunc(value)
+}
+
+function sessionLectureProgress(
+  session: ParticipatingSchoolSession | undefined
+): ParticipatingIndividualInstructorLectureProgress {
+  if (session == null) return 'scheduled'
+  return mapDashboardScheduleDeliveryToEducationProgress(
+    session.deliveryScheduleStatus ??
+      (session.status === 'completed' ? 'COMPLETED' : 'SCHEDULED')
+  )
 }
 
 function sessionScheduleLabel(session: ParticipatingSchoolSession): string {
@@ -141,6 +154,7 @@ export function mapIndividualSettlementReviewListRows(input: {
       no: rows.length + 1,
       programScheduleId: scheduleId,
       educationScheduleLabel: sessionScheduleLabel(session),
+      lectureProgress: sessionLectureProgress(session),
       orphanApplication: false,
       ...mapApplicationFields(application),
     })
@@ -158,6 +172,7 @@ export function mapIndividualSettlementReviewListRows(input: {
       no: rows.length + 1,
       programScheduleId: scheduleId,
       educationScheduleLabel: applicationScheduleLabel(item),
+      lectureProgress: 'scheduled',
       orphanApplication: true,
       ...mapApplicationFields(item),
     })

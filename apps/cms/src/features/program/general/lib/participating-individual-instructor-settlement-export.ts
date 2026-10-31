@@ -7,6 +7,8 @@ import {
   resolveIndividualSettlementExportAmount,
 } from '@/features/program/general/lib/participating-individual-instructor-settlement-display'
 import type { ParticipatingInstructorSettlementApiRow } from '@/features/program/general/lib/map-settlement-to-participating-instructor-settlement-row'
+import type { IndividualSettlementReviewListRow } from '@/features/program/general/lib/map-individual-settlement-review-rows'
+import { individualSettlementTableProcessingLabel } from '@/features/program/general/lib/individual-settlement-review-status'
 
 export const PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<ParticipatingInstructorSettlementApiRow> =
   [
@@ -30,7 +32,7 @@ export const PARTICIPATING_INDIVIDUAL_INSTRUCTOR_SETTLEMENT_EXCEL_COLUMNS: Colum
   },
 ]
 
-export const PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<ParticipatingInstructorSettlementApiRow> =
+export const PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<IndividualSettlementReviewListRow> =
   [
     { title: 'No.', dataIndex: 'no', key: 'no' },
     { title: '교육 진행 일정', dataIndex: 'educationScheduleLabel', key: 'educationScheduleLabel' },
@@ -42,12 +44,12 @@ export const PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS: ColumnsType<Par
     },
     {
       title: '지급조서 처리 현황',
-      key: 'paymentStatementStatus',
-      render: (_value, record) => resolveIndividualPaymentStatementExportLabel(record),
+      key: 'status',
+      render: (_value, record) => individualSettlementTableProcessingLabel(record.status),
     },
     {
       title: '정산 예정 금액',
-      key: 'scheduledSettlementAmount',
-      render: (_value, record) => resolveIndividualSettlementExportAmount(record),
+      dataIndex: 'totalAmountLabel',
+      key: 'totalAmountLabel',
     },
   ]

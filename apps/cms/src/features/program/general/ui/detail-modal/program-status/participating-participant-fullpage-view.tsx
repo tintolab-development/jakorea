@@ -845,6 +845,8 @@ export function ParticipatingParticipantFullpageView({
             <ParticipatingParticipantSettlementSection
               program={program}
               participant={mergedParticipant}
+              assignedSessions={progressScheduleSessions}
+              assignedSessionsLoading={progressScheduleSessionsLoading}
             />
           </div>
         ) : null}
