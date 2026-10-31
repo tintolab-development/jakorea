@@ -11,6 +11,7 @@ describe('toSeoulYmd', () => {
   it('uses Asia/Seoul calendar day', () => {
     expect(toSeoulYmd('2026-10-16T00:00:00+09:00')).toBe('2026-10-16')
     expect(toSeoulYmd('2026-10-16T15:00:00Z')).toBe('2026-10-17')
+    expect(toSeoulYmd('2026-11-05T15:00:00Z')).toBe('2026-11-06')
   })
 })
 
