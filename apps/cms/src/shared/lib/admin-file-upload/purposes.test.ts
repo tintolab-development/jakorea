@@ -11,6 +11,12 @@ function uploadFile(name: string, type: string): File {
   return new File(['xlsx-bytes'], name, { type })
 }
 
+describe('ADMIN_FILE_PURPOSE', () => {
+  it('includes VOLUNTEER_APPLICATION_EVIDENCE', () => {
+    expect(ADMIN_FILE_PURPOSE.VOLUNTEER_APPLICATION_EVIDENCE).toBe('VOLUNTEER_APPLICATION_EVIDENCE')
+  })
+})
+
 describe('adminFileUploadAllowsNullOwnerId', () => {
   it('문자 발송 MMS 요청 첨부는 NOTIFICATION/MMS_BATCH + MMS_IMAGE에서만 ownerId null을 허용한다', () => {
     expect(

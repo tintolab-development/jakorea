@@ -227,7 +227,7 @@ export const applicationService = {
   },
 }
 
-const MOCK_MANAGER_NAMES = ['이순신 매니저', '홍길동 매니저', '김담당 매니저', '박운영 매니저', '최지원 매니저']
+const MOCK_MANAGER_NAMES = ['이순신 매니저', '김회원 매니저', '김담당 매니저', '박운영 매니저', '최지원 매니저']
 
 function hash(s: string): number {
   let h = 0
