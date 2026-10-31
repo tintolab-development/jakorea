@@ -94,7 +94,7 @@ export type EducationApplicationListItem = {
   operatingPeriodLabel: string
   recruitmentStatus: RecruitmentStatus
   educationTargetLabel: string
-  educationForm: EducationForm
+  educationForm?: EducationForm
   educationFormLabel: string
   thumbnailUrl?: string
   displayStatus: EducationDisplayStatus

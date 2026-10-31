@@ -17,6 +17,9 @@ const generalOrganization = mapPortalProgramApplicationListItem({
 })
 assert.ok(generalOrganization)
 assert.equal(generalOrganization.categoryLabel, '기관')
+assert.equal(generalOrganization.educationTargetLabel, '')
+assert.equal(generalOrganization.educationFormLabel, '')
+assert.equal(generalOrganization.educationForm, undefined)
 
 const generalYouth = mapPortalProgramApplicationListItem({
   applicationId: 2,

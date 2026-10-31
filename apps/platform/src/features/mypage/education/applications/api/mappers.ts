@@ -273,9 +273,9 @@ export function mapPortalProgramApplicationListItem(
       recruitmentEndAt: row.recruitmentEndAt,
       displayStatus,
     }),
-    educationTargetLabel: '전체',
-    educationForm: 'offline',
-    educationFormLabel: '오프라인',
+    // TODO(BE): 목록 응답에 교육대상·교육형태 필드가 추가되면 여기서 매핑 (상세와 같은 라벨 함수 사용)
+    educationTargetLabel: '',
+    educationFormLabel: '',
     thumbnailUrl,
     displayStatus,
     detailCase,
