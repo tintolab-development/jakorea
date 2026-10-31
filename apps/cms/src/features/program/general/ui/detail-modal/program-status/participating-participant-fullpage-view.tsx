@@ -22,7 +22,11 @@ import {
   unmaskIndividualApplicationPrivacyRemote,
   updateIndividualApplication,
 } from '@/features/program/general/api/applications-api-client'
-import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
+import {
+  INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT,
+  isIndividualApplicationApprovedOnlyUpdateError,
+  resolveIndividualApplicationTeamDetail,
+} from '@/features/program/general/lib/individual-application-team-detail'
 import {
   extractApiErrorMessage,
   getApiErrorHttpStatus,
@@ -623,17 +627,21 @@ export function ParticipatingParticipantFullpageView({
           queryKey: generalApplicationsQueryKeys.individualDetail(individualApplicationId),
         })
       } catch (error) {
-        const responseData =
-          error && typeof error === 'object' && 'response' in error
-            ? (error as { response?: { data?: unknown } }).response?.data
-            : undefined
-        void showAlert({
-          title: '팀 역할 저장 실패',
-          content: extractApiErrorMessage(responseData, {
-            httpStatus: getApiErrorHttpStatus(error),
-            fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
-          }),
-        })
+        if (isIndividualApplicationApprovedOnlyUpdateError(error)) {
+          void showAlert(INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT)
+        } else {
+          const responseData =
+            error && typeof error === 'object' && 'response' in error
+              ? (error as { response?: { data?: unknown } }).response?.data
+              : undefined
+          void showAlert({
+            title: '팀 역할 저장 실패',
+            content: extractApiErrorMessage(responseData, {
+              httpStatus: getApiErrorHttpStatus(error),
+              fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
+            }),
+          })
+        }
         throw error
       }
     },
