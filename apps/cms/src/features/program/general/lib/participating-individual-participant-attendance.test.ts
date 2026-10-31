@@ -41,7 +41,7 @@ function participant(
     satisfactionSurveyCompleted: false,
     participationAppliedAt: '2026-03-01',
     ...overrides,
-  } as ParticipatingIndividualParticipantRow
+  } as unknown as ParticipatingIndividualParticipantRow
 }
 
 function attendanceSession(
@@ -202,6 +202,41 @@ describe('buildParticipatingIndividualParticipantAttendanceRowsFromAssigned', ()
     expect(rows[0]?.attendanceStatus).toBe('excused_absence')
     expect(rows[0]?.attendanceRecorded).toBe(true)
     expect(rows[0]?.remark).toBe('병원 진료')
+  })
+
+  it('counts PRESENT from attendancesByScheduleId even when session groups are missing', () => {
+    const rows = buildParticipatingIndividualParticipantAttendanceRowsFromAssigned({
+      assignedSessions: [
+        assignedSession(187612, { educationScheduleLabel: '개인일정111' }),
+        assignedSession(187613, {
+          date: '2026.10.31',
+          educationScheduleLabel: '팀일정111',
+        }),
+        assignedSession(187614, {
+          date: '2026.10.31',
+          educationScheduleLabel: '사전교육',
+        }),
+      ],
+      attendanceSessions: [],
+      attendancesByScheduleId: {
+        '187612': [{ participantId: 1695039, status: 'PRESENT' }],
+        '187613': [{ participantId: 1695039, status: 'PRESENT' }],
+        '187614': [{ participantId: 1695039, status: 'PRESENT' }],
+      },
+      participant: participant({ id: '1695039' }),
+      program,
+    })
+
+    expect(rows).toHaveLength(3)
+    expect(rows.every(row => row.attendanceRecorded)).toBe(true)
+    expect(rows.every(row => row.attendanceStatus === 'present')).toBe(true)
+    expect(
+      buildParticipatingIndividualParticipantAttendanceSummary(
+        rows,
+        participant({ id: '1695039' }),
+        { id: '186507', lifecycleStatus: 'in_progress' } as Program
+      ).attendanceRateCountLabel
+    ).toBe('3 / 3건')
   })
 
   it('skips assigned sessions without a resolved schedule id', () => {

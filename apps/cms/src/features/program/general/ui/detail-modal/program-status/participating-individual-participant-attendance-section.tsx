@@ -39,6 +39,8 @@ import {
   fetchProgramAbsenceReasons,
 } from '@/features/program/general/api/absence-reasons'
 import { parseFileObjectId } from '@/shared/lib/admin-file-upload'
+import { resolveProgressAttendanceScheduleDateRanges } from '@/features/program/general/lib/progress-attendance-schedule-date-ranges'
+import { fetchAttendancesByScheduleIdsRemote } from '@/features/program/general/api/program-progress-api-client'
 import { ProgramAttendanceRateValue } from '@/features/program/shared/ui/program-attendance-rate-value'
 import { CompletionStatusText } from '@/features/program/shared/ui/program-attendance-status-text'
 import { ParticipatingIndividualParticipantAttendanceTable } from './participating-individual-participant-attendance-table'
@@ -63,7 +65,10 @@ import {
 import { handleError } from '@/shared/utils/error-handler'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { isGlobalApiErrorAlertShown } from '@/shared/lib/show-global-api-error-alert'
-import { isAttendanceRecordingNotOpenError } from '@/features/program/general/lib/attendance-recording-not-open'
+import {
+  ATTENDANCE_CORRECTION_NOT_OPEN_ALERT,
+  isAttendanceRecordingNotOpenError,
+} from '@/features/program/general/lib/attendance-recording-not-open'
 import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
   isInvalidAttendanceArrivalTimeError,
@@ -85,7 +90,7 @@ function mapCorrectionPayloadToAttendanceStatus(
   if (payload.status === 'late') {
     return {
       attendanceStatus: 'late',
-      lateTime: existingRow.lateTime ?? '9:00',
+      lateTime: payload.lateTime?.trim() || existingRow.lateTime || '9:00',
       remark: undefined,
     }
   }
@@ -145,10 +150,49 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     '참여자 상세 · 출석 관리'
   )
 
+  const scheduleDateRanges = useMemo(
+    () =>
+      resolveProgressAttendanceScheduleDateRanges(
+        program,
+        assignedSessions.flatMap(session => [
+          session.date,
+          session.startAt,
+          session.scheduleLabel,
+          session.educationScheduleLabel,
+        ])
+      ),
+    [assignedSessions, program]
+  )
+
+  const assignedScheduleIds = useMemo(
+    () =>
+      assignedSessions
+        .map(session => session.resolvedScheduleId)
+        .filter((id): id is number => typeof id === 'number' && Number.isFinite(id) && id > 0),
+    [assignedSessions]
+  )
+
+  const assignedScheduleIdsKey = assignedScheduleIds.slice().sort((a, b) => a - b).join(',')
+
   const remoteQuery = useQuery({
-    queryKey: generalProgramProgressQueryKeys.schedules(String(program.id)),
-    queryFn: () => fetchGeneralProgressAttendanceBundle(String(program.id)),
+    queryKey: [
+      ...generalProgramProgressQueryKeys.schedules(String(program.id)),
+      'schedule-date-ranges',
+      scheduleDateRanges.map(range => `${range.dateFrom}~${range.dateTo}`).join(','),
+    ],
+    queryFn: () => fetchGeneralProgressAttendanceBundle(String(program.id), scheduleDateRanges),
     enabled: remoteEnabled,
+    staleTime: 15_000,
+    retry: false,
+  })
+
+  const assignedAttendancesQuery = useQuery({
+    queryKey: generalProgramProgressQueryKeys.programAttendancesBulk(
+      String(program.id),
+      assignedScheduleIdsKey
+    ),
+    queryFn: () => fetchAttendancesByScheduleIdsRemote(String(program.id), assignedScheduleIds),
+    enabled: remoteEnabled && assignedScheduleIds.length > 0 && !assignedSessionsLoading,
     staleTime: 15_000,
     retry: false,
   })
@@ -161,17 +205,27 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
     })
   }, [program, remoteEnabled, remoteQuery.data])
 
+  const attendancesByScheduleId = useMemo(
+    () => ({
+      ...(remoteQuery.data?.attendancesByScheduleId ?? {}),
+      ...(assignedAttendancesQuery.data ?? {}),
+    }),
+    [assignedAttendancesQuery.data, remoteQuery.data?.attendancesByScheduleId]
+  )
+
   const sourceRows = useMemo(() => {
     if (assignedSessionsLoading) return []
     return buildParticipatingIndividualParticipantAttendanceRowsFromAssigned({
       assignedSessions,
       attendanceSessions: remoteSessions,
+      attendancesByScheduleId,
       participant,
       program,
     })
   }, [
     assignedSessions,
     assignedSessionsLoading,
+    attendancesByScheduleId,
     participant,
     program,
     remoteSessions,
@@ -266,7 +320,10 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       })
     },
     onError: error => {
-      if (isAttendanceRecordingNotOpenError(error)) return
+      if (isAttendanceRecordingNotOpenError(error)) {
+        showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
+        return
+      }
       if (isInvalidAttendanceArrivalTimeError(error)) {
         showAlert({ title: '안내', content: ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE })
         return
@@ -329,6 +386,11 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         return
       }
 
+      if (targetRow.educationProgress === 'scheduled') {
+        showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
+        return
+      }
+
       const patch = mapCorrectionPayloadToAttendanceStatus(payload, targetRow)
       const previousRows = rows
       setRows(current =>
@@ -354,8 +416,11 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
         },
         error => {
           setRows(previousRows)
+          if (isAttendanceRecordingNotOpenError(error)) {
+            showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
+            return
+          }
           if (isGlobalApiErrorAlertShown(error)) return
-          if (isAttendanceRecordingNotOpenError(error)) return
           if (isInvalidAttendanceArrivalTimeError(error)) return
           showAlert({
             title: '안내',

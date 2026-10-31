@@ -20,6 +20,9 @@ import type {
   ParticipatingIndividualProgressAttendanceSessionGroup,
   ParticipatingIndividualProgressAttendanceStatus,
 } from '@/features/program/general/lib/participating-individual-progress-attendance-types'
+import type { AttendanceItemResponse } from '@/shared/api/generated/dashboard/schemas/attendanceItemResponse'
+import { mapApiAttendanceStatusToUi } from '@/features/program/general/api/adapters/progress-attendance-adapters'
+import { formatArrivalTimeForDisplay } from '@/shared/lib/attendance-arrival-time'
 
 function isRecordedAttendanceCountedAsPresent(
   row: ParticipatingIndividualParticipantAttendanceRow
@@ -113,9 +116,18 @@ function isAssignedSessionWithdrawn(
  * 참여자 상세 출석 관리 — education-scope 배정 일정만 행으로 만든다.
  * 프로그램 전체 출석 bundle에 없는 배정 일정도 출석(기본값) 행으로 남긴다.
  */
+function attendanceItemMatchesParticipant(
+  item: AttendanceItemResponse,
+  participant: ParticipatingIndividualParticipantRow
+): boolean {
+  if (item.participantId == null) return false
+  return String(item.participantId) === String(participant.id)
+}
+
 export function buildParticipatingIndividualParticipantAttendanceRowsFromAssigned(input: {
   assignedSessions: readonly ParticipatingSchoolSession[]
   attendanceSessions?: readonly ParticipatingIndividualProgressAttendanceSessionGroup[] | null
+  attendancesByScheduleId?: Record<string, AttendanceItemResponse[]> | null
   participant: ParticipatingIndividualParticipantRow
   program: Program
 }): ParticipatingIndividualParticipantAttendanceRow[] {
@@ -136,7 +148,12 @@ export function buildParticipatingIndividualParticipantAttendanceRowsFromAssigne
     const self = attendanceSession?.participants.find(
       row => row.participantId === input.participant.id
     )
-    const persistedStatus = self?.persistedAttendanceStatus ?? self?.attendanceStatus
+    const attendanceItem = (input.attendancesByScheduleId?.[scheduleId] ?? []).find(item =>
+      attendanceItemMatchesParticipant(item, input.participant)
+    )
+    const itemStatus = mapApiAttendanceStatusToUi(attendanceItem?.status)
+    const persistedStatus =
+      itemStatus ?? self?.persistedAttendanceStatus ?? self?.attendanceStatus
     const attendanceRecorded = persistedStatus != null
     const recordedStatus = attendanceRecorded
       ? mapProgressStatusToDetailStatus(persistedStatus)
@@ -160,8 +177,11 @@ export function buildParticipatingIndividualParticipantAttendanceRowsFromAssigne
         ),
         attendanceStatus: withdrawn ? 'withdrawn' : recordedStatus,
         attendanceRecorded: withdrawn ? false : attendanceRecorded,
-        lateTime: self?.lateTime,
-        remark: self?.remark,
+        lateTime:
+          itemStatus === 'late'
+            ? formatArrivalTimeForDisplay(attendanceItem?.arrivalTime)
+            : self?.lateTime,
+        remark: attendanceItem?.absenceReason ?? self?.remark,
         educationProgress,
       } satisfies ParticipatingIndividualParticipantAttendanceRow,
     ]

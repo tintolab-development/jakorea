@@ -27,6 +27,18 @@
   gap: 10px;
 }
 
+.participating-individual-attendance-correction-modal__late-time {
+  width: 100%;
+}
+
+.participating-individual-attendance-correction-modal__late-time .cms-datepicker {
+  width: 100%;
+}
+
+.content-modal.participating-individual-attendance-correction-modal .ant-modal-content {
+  overflow: visible;
+}
+
 .participating-individual-attendance-correction-modal__reason-table-wrap {
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 8px;
