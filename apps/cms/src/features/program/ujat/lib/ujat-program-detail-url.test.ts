@@ -7,6 +7,7 @@ import {
   isUjatVolunteerApplicantDetailTab,
   parseUjatEduInstTab,
   parseUjatEduVolTab,
+  parseUjatVolAddMemberIdParam,
   resolveUjatDetailLnbFromSearchParams,
 } from './ujat-program-detail-url'
 
@@ -58,5 +59,13 @@ describe('UJAT 프로그램 상세 URL 계약', () => {
 
     expect(parseUjatEduInstTab(new URLSearchParams('eduInstTab=unknown'))).toBe('application')
     expect(parseUjatEduVolTab(new URLSearchParams('eduVolTab=unknown'))).toBe('application')
+  })
+
+  it('volAddMemberId는 양의 정수만 허용한다', () => {
+    expect(parseUjatVolAddMemberIdParam('190094')).toBe('190094')
+    expect(parseUjatVolAddMemberIdParam('550e8400-e29b-41d4-a716-446655440000')).toBeNull()
+    expect(parseUjatVolAddMemberIdParam('0')).toBeNull()
+    expect(parseUjatVolAddMemberIdParam('-1')).toBeNull()
+    expect(parseUjatVolAddMemberIdParam(null)).toBeNull()
   })
 })

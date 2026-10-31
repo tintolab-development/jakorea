@@ -2,10 +2,9 @@ import { useCallback, useState } from 'react'
 import { Space, Spin } from 'antd'
 import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
-import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
+import { useUjatInstitutionTeacherPrivacyReveal } from '../shared/use-institution-teacher-privacy-reveal'
 import { UjatInstitutionApplicationDetailView } from './detail-view'
 import {
   UjatInstitutionApplicationActionModal,
@@ -16,7 +15,13 @@ import type { UjatTemporaryActionKind } from '../temporary-action-copy'
 import { releaseUjatTemporarySchedules } from '../list/temp-release'
 import {
   getUjatInstitutionTempRejectCompleteContent,
+  UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
+  UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
+  UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_CONTENT,
+  UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_TITLE,
   UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
+  UJAT_INSTITUTION_TEMP_REJECT_CANCEL_COMPLETE_CONTENT,
+  UJAT_INSTITUTION_TEMP_REJECT_CANCEL_COMPLETE_TITLE,
 } from '../list/temp-assign-complete'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
@@ -57,14 +62,11 @@ export function UjatInstitutionApplicationDetailPage({
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal,
-  programPrivacyPending,
-  } = usePersonalInfoReveal({
-    privacyScope: 'program',
-    programId: programId,
-    resolveProgramRole: () => resolveSessionProgramRole(programId),
-    resolveAccessItem: () => row?.institutionName ?? 'UJAT 신청 기관',
-    resetDeps: [row?.id],
-    controlMode: 'headerStickyNoop',
+    programPrivacyPending,
+  } = useUjatInstitutionTeacherPrivacyReveal({
+    institutionId,
+    programId,
+    accessItemLabel: row?.institutionName ?? 'UJAT 신청 기관',
   })
 
   const [pendingAction, setPendingAction] = useState<UjatInstitutionApplicationModalAction | null>(
@@ -76,13 +78,13 @@ export function UjatInstitutionApplicationDetailPage({
   const handlePrimaryAction = useCallback(() => {
     if (!workflowReady || workflow.primaryDisabled) return
     if (workflow.primaryAction === 'open_schedule_assign') {
-      onOpenScheduleAssign?.()
+      setPendingTempKind('temp_assign')
       return
     }
     if (workflow.primaryAction === 'final_approve') {
       setPendingAction('application_approve')
     }
-  }, [onOpenScheduleAssign, workflow.primaryAction, workflow.primaryDisabled, workflowReady])
+  }, [workflow.primaryAction, workflow.primaryDisabled, workflowReady])
 
   const handleFinalApprove = useCallback(
     (payload?: PermissionModalPayload) => {
@@ -128,16 +130,28 @@ export function UjatInstitutionApplicationDetailPage({
       handleFinalApprove(payload)
       return
     }
+    const reason = payload.reason.trim()
+    if (!reason) {
+      showAlert({
+        title: '필수 항목 미입력 안내',
+        content: '반려 사유를 입력해 주세요.',
+      })
+      return
+    }
     void (async () => {
       setActionLoading(true)
       try {
         await rejectRemote(
-          payload.reason ?? 'CMS UJAT 신청기관 신청 반려',
+          reason,
           toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
         )
         setPendingAction(null)
         onStatusUpdated()
         onBack()
+        showAlert({
+          title: UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
+          content: UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
+        })
       } catch (error) {
         showAlert({
           title: '안내',
@@ -156,6 +170,11 @@ export function UjatInstitutionApplicationDetailPage({
 
   const handleTempActionConfirm = useCallback(async () => {
     if (!pendingTempKind || !row) return
+    if (pendingTempKind === 'temp_assign') {
+      setPendingTempKind(null)
+      onOpenScheduleAssign?.()
+      return
+    }
     setActionLoading(true)
     try {
       if (pendingTempKind === 'temp_reject_cancel') {
@@ -164,8 +183,8 @@ export function UjatInstitutionApplicationDetailPage({
         onStatusUpdated()
         onBack()
         showAlert({
-          title: '안내',
-          content: '임시 반려가 취소되었습니다.',
+          title: UJAT_INSTITUTION_TEMP_REJECT_CANCEL_COMPLETE_TITLE,
+          content: UJAT_INSTITUTION_TEMP_REJECT_CANCEL_COMPLETE_CONTENT,
         })
         return
       }
@@ -200,8 +219,8 @@ export function UjatInstitutionApplicationDetailPage({
         onStatusUpdated()
         onBack()
         showAlert({
-          title: '안내',
-          content: '임시 배정이 취소되어 평가 대기로 돌아갔습니다.',
+          title: UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_TITLE,
+          content: UJAT_INSTITUTION_TEMP_ASSIGN_CANCEL_COMPLETE_CONTENT,
         })
       }
     } catch (error) {
@@ -214,6 +233,7 @@ export function UjatInstitutionApplicationDetailPage({
     }
   }, [
     onBack,
+    onOpenScheduleAssign,
     onStatusUpdated,
     pendingTempKind,
     programId,

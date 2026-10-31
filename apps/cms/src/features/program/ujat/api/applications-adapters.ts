@@ -24,6 +24,7 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
 import { mapVolunteerInterviewAssignmentFromWire } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { pickVolunteerInterviewAssignmentApiStatus } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { findUjatEducationRegionKeyByCode } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
@@ -511,6 +512,11 @@ export function mapVolunteerApplicationToUjatApplicantRow(
         ? projection.interviewAssignmentStatus
         : fromWire
     })(),
+    interviewAssignmentApiStatus: pickVolunteerInterviewAssignmentApiStatus(
+      dto.interviewAssignmentStatus,
+      dto.interviewStatus,
+      dto.applicationStatus
+    ),
     programId: toId(dto.programId) || programId,
     half: fromUjatRecruitHalfApi(dto.recruitHalf, half),
     ...(dto.interviewAssignmentId != null

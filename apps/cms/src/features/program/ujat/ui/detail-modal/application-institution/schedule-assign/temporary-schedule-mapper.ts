@@ -49,6 +49,52 @@ export function collectStudentCountByClass(
   return map
 }
 
+export function normalizeGradeNumberFromLabel(gradeLabel: string | null | undefined): string | null {
+  const raw = gradeLabel?.trim()
+  if (!raw) return null
+  const digits = raw.replace(/[^0-9]/g, '')
+  return digits || raw
+}
+
+/** classNo "1" | "1반" | 1 → 슬롯 className "1반" */
+export function normalizeClassNameForSlot(
+  classNo: string | number | null | undefined
+): string | null {
+  if (classNo == null) return null
+  const raw = String(classNo).trim()
+  if (!raw) return null
+  const match = raw.match(/(\d+)/)
+  if (match) return `${match[1]}반`
+  return raw.endsWith('반') ? raw : `${raw}반`
+}
+
+/** 서버 응답 슬롯 서명 — API studentCount만 사용 (BE hydrate SSOT) */
+export function serializeRemoteTemporaryScheduleSlots(
+  slots: readonly UjatOrganizationScheduleSlotResponse[]
+): string {
+  const normalized: UjatTemporaryScheduleSlotRequest[] = []
+  for (const slot of slots) {
+    if (slot.scheduleId == null) continue
+    const gradeRaw = slot.grade?.trim()
+    if (!gradeRaw) continue
+    const grade = /^\d+$/.test(gradeRaw)
+      ? gradeRaw
+      : normalizeGradeNumberFromLabel(gradeRaw) ?? gradeRaw
+    const className = normalizeClassNameForSlot(slot.className ?? slot.classLabel)
+    if (!className) continue
+    normalized.push({
+      scheduleId: Number(slot.scheduleId),
+      grade,
+      className,
+      studentCount:
+        typeof slot.studentCount === 'number' && Number.isFinite(slot.studentCount)
+          ? slot.studentCount
+          : 0,
+    })
+  }
+  return serializeTemporaryScheduleSlots(normalized)
+}
+
 export function serializeTemporaryScheduleSlots(
   slots: readonly UjatTemporaryScheduleSlotRequest[]
 ): string {

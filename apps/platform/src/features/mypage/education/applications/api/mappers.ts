@@ -627,6 +627,16 @@ export function mapPortalProgramApplicationDetail(
   if (ujatTemporarySchedule) {
     mapped.ujatTemporarySchedule = ujatTemporarySchedule
   }
+  const preferredEducationDateOptions = detail.supplement?.ujat?.preferredEducationDateOptions
+  if (Array.isArray(preferredEducationDateOptions)) {
+    mapped.ujatPreferredEducationDateOptions = preferredEducationDateOptions.flatMap(row => {
+      const id = typeof row?.id === 'string' ? row.id.trim() : ''
+      const date = typeof row?.date === 'string' ? row.date.trim() : ''
+      const label = typeof row?.label === 'string' ? row.label.trim() : ''
+      if (!id || !date) return []
+      return [{ id, date, label: label || date }]
+    })
+  }
 
   const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview

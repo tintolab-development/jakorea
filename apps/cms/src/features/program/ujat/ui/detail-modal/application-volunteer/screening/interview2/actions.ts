@@ -1,7 +1,12 @@
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { buildInterview2ProcessedSelectionAlert } from '@/features/program/general/lib/application-processed-selection-alert'
 import type { UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { patchUjatVolunteerSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import {
+  isUjatVolunteerInterview2SelectableForResult,
+  type UjatVolunteerInterview2ResultSelectRow,
+} from './display'
 
 export type UjatInterview2ConfirmRequest = {
   title: string
@@ -63,13 +68,31 @@ export function confirmUjatVolunteerInterview2Pass({
   })
 }
 
-/** 목록 일괄 합격 — 선택 건수 검증 후 BulkPassModal 오픈 */
-export function openUjatVolunteerInterview2BulkPassModal(onOpen: () => void, count: number): void {
-  if (count === 0) {
+function hasProcessedInterview2Selection(
+  rows: readonly UjatVolunteerInterview2ResultSelectRow[]
+): boolean {
+  return rows.some(row => !isUjatVolunteerInterview2SelectableForResult(row))
+}
+
+/** 목록 일괄 합격 — 선택 건수·이미 처리 행 검증 후 BulkPassModal 오픈 */
+export function openUjatVolunteerInterview2BulkPassModal({
+  selectedIds,
+  selectedRows,
+  onOpen,
+}: {
+  selectedIds: string[]
+  selectedRows: readonly UjatVolunteerInterview2ResultSelectRow[]
+  onOpen: () => void
+}): void {
+  if (selectedIds.length === 0) {
     cmsAlertModal.show({
       title: '항목 선택 안내',
       content: '합격 처리할 항목을 선택해 주세요.',
     })
+    return
+  }
+  if (hasProcessedInterview2Selection(selectedRows)) {
+    cmsAlertModal.show(buildInterview2ProcessedSelectionAlert('volunteer'))
     return
   }
   onOpen()

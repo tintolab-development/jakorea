@@ -71,6 +71,8 @@ export interface GeneralVolunteerApplicantRow {
   documentCancelRejectionReason?: string
   interviewSlotCount: number
   interviewAssignmentStatus: GeneralInterviewAssignmentStatus
+  /** wire `interviewAssignmentStatus`/`interviewStatus` — 재배정 가능 판별용 (EVALUATED 등) */
+  interviewAssignmentApiStatus?: string | null
   programId: string
   englishName: string
   gender: string

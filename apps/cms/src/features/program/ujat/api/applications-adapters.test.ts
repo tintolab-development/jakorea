@@ -507,8 +507,11 @@ describe('UJAT 봉사자 목록 adapter', () => {
         interviewAssignmentStatus: 'PARTIALLY_EVALUATED',
         interviewStatus: 'PARTIALLY_EVALUATED',
         documentStatus: 'DOCUMENT_PASSED',
-      }).interviewAssignmentStatus
-    ).toBe('assigned')
+      })
+    ).toMatchObject({
+      interviewAssignmentStatus: 'assigned',
+      interviewAssignmentApiStatus: 'PARTIALLY_EVALUATED',
+    })
     expect(mapStatus({ applicationStatus: 'FINAL_SELECTED' }).secondInterviewScreeningStatus).toBe(
       'pass'
     )

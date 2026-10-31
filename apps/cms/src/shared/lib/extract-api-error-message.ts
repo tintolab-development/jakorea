@@ -118,6 +118,8 @@ const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
   UJAT_ORGANIZATION_ALREADY_APPLIED: '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
   UJAT_INTERVIEW_SCORE_INVALID: 'UJAT 면접 점수는 평가자별 1~5점 정수만 입력할 수 있습니다.',
   UJAT_VOLUNTEER_INTERVIEW_REQUIRED: 'UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.',
+  /** 평가 후 면접 재배정 — 서버 409 `VOLUNTEER_INTERVIEW_CONFLICT` */
+  VOLUNTEER_INTERVIEW_CONFLICT: '면접 평가가 진행·완료된 신청은 재배정할 수 없습니다.',
 }
 
 /** 수료증·참여인증서 — 서버 message가 비거나 code만 있을 때 */

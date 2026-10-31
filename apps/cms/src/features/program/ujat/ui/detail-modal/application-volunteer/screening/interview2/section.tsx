@@ -19,6 +19,7 @@ import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-m
 import { useApplicantDetail, type ApplicantDetailMetaChangeHandler } from '../applicant/use-detail'
 import { ApplicantDetailView } from '../applicant/detail-view'
 import { UjatVolunteerInterview2BulkPassModal } from './bulk-pass-modal'
+import { isUjatVolunteerInterview2SelectableForResult } from './display'
 import { GeneralVolunteerInterview2FailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-fail-modal'
 import { GeneralVolunteerInterview2BulkFailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-bulk-fail-modal'
 import { UjatVolunteerInterview2CalendarView } from './calendar-view'
@@ -65,6 +66,7 @@ export function Interview2Section({
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount,
+    bulkPassSubjectName,
     interview2Confirm,
     closeInterview2Confirm,
     failModal,
@@ -191,6 +193,7 @@ export function Interview2Section({
   const bulkPassModal = (
     <UjatVolunteerInterview2BulkPassModal
       open={bulkPassModalOpen}
+      subjectName={bulkPassSubjectName}
       count={bulkPassCount}
       onCancel={closeBulkPassModal}
       onConfirm={confirmBulkPass}
@@ -317,6 +320,9 @@ export function Interview2Section({
               rowSelection={{
                 selectedRowKeys,
                 onChange: keys => setSelectedRowKeys(keys),
+                getCheckboxProps: record => ({
+                  disabled: !isUjatVolunteerInterview2SelectableForResult(record),
+                }),
               }}
               rowClassName={record =>
                 record.interviewAssignmentStatus === 'withdrawn'

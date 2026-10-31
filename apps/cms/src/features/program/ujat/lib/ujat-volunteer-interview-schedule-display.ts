@@ -172,7 +172,7 @@ function interviewScheduleFromOverlay(
 export function resolveUjatVolunteerInterviewScheduleDisplay(
   program: Program,
   half?: UjatVolunteerRecruitHalf,
-  options?: { allowMockFallback?: boolean; allowOverlayFallback?: boolean }
+  options?: { allowOverlayFallback?: boolean }
 ): UjatVolunteerInterviewScheduleData {
   const row = half ? pickUjatVolunteerRecruitmentRow(program, half) : undefined
   const fromTyped = interviewScheduleFromConfig(row?.interviewConfig, half)
@@ -220,7 +220,7 @@ export function resolveUjatVolunteerInterviewScheduleDisplay(
 export function resolveUjatVolunteerInterviewScheduleEditSeed(
   program: Program,
   half?: UjatVolunteerRecruitHalf,
-  options?: { allowMockFallback?: boolean; allowOverlayFallback?: boolean }
+  options?: { allowOverlayFallback?: boolean }
 ): VolunteerInterviewScheduleEditSeed | undefined {
   const row = half ? pickUjatVolunteerRecruitmentRow(program, half) : undefined
   const fromTyped = interviewScheduleFromConfig(row?.interviewConfig, half)

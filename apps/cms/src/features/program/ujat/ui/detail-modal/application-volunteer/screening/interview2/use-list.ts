@@ -30,7 +30,6 @@ import type {
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import {
   DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
@@ -324,11 +323,14 @@ export function useUjatVolunteerInterview2({
   )
 
   const handleBulkPass = useCallback(() => {
-    openUjatVolunteerInterview2BulkPassModal(
-      () => setBulkPassModalOpen(true),
-      selectedRowKeys.length
-    )
-  }, [selectedRowKeys.length])
+    const ids = selectedRowKeys.map(String)
+    const selectedRows = list.filter(row => ids.includes(row.id))
+    openUjatVolunteerInterview2BulkPassModal({
+      selectedIds: ids,
+      selectedRows,
+      onOpen: () => setBulkPassModalOpen(true),
+    })
+  }, [list, selectedRowKeys])
 
   const closeBulkPassModal = useCallback(() => {
     setBulkPassModalOpen(false)
@@ -341,6 +343,7 @@ export function useUjatVolunteerInterview2({
       const ok = await applySecondInterviewStatus(ids, payload.passType, undefined, notify)
       setBulkPassModalOpen(false)
       if (!ok) return
+      setSelectedRowKeys([])
       const passTypeLabel =
         UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS.find(option => option.value === payload.passType)
           ?.label ?? payload.passType
@@ -349,9 +352,9 @@ export function useUjatVolunteerInterview2({
           ? '즉시'
           : payload.notifyTiming === 'on_announcement'
             ? '발표일에 맞춰서'
-            : (payload.manualNotifyAt
-                ? formatYmdHmWithKoreanWeekday(payload.manualNotifyAt)
-                : '직접 설정')
+            : payload.manualNotifyAt
+              ? payload.manualNotifyAt.format('YYYY.MM.DD HH:mm')
+              : '직접 설정'
       showAlert({
         title: '일괄 합격',
         content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel})`,
@@ -518,6 +521,8 @@ export function useUjatVolunteerInterview2({
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount: selectedRowKeys.length,
+    bulkPassSubjectName:
+      list.find(row => selectedRowKeys.map(String).includes(row.id))?.name ?? '',
     interview2Confirm,
     closeInterview2Confirm,
     failModal,

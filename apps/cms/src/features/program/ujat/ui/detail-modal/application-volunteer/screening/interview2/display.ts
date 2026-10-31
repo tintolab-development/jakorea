@@ -92,8 +92,20 @@ function parseUjatInterviewSlotEndFromRow(
   return parseUjatInterviewSlotEnd(row.assignedInterviewDateLabel, row.assignedInterviewTime)
 }
 
+export type UjatVolunteerInterview2ResultSelectRow = Pick<
+  UjatVolunteerApplicantRow,
+  | 'interviewAssignmentStatus'
+  | 'secondInterviewScreeningStatus'
+  | 'assignedInterviewDateLabel'
+  | 'assignedInterviewTime'
+  | 'assignedInterviewStartAt'
+  | 'assignedInterviewEndAt'
+  | 'managerAScore'
+  | 'managerBScore'
+>
+
 export function resolveUjatEffectiveSecondInterviewStatus(
-  row: UjatVolunteerApplicantRow,
+  row: UjatVolunteerInterview2ResultSelectRow,
   now: Dayjs = dayjs()
 ): UjatEffectiveSecondInterviewStatus {
   if (row.interviewAssignmentStatus === 'withdrawn') return 'withdrawn'
@@ -105,6 +117,33 @@ export function resolveUjatEffectiveSecondInterviewStatus(
   if (!slotEnd) return 'waiting'
 
   return now.isBefore(slotEnd) ? 'waiting' : 'completed'
+}
+
+/** 선택 합격/불합격 가능 — 면접 종료·평가 완료·최종 결과 미입력 */
+export function isUjatVolunteerInterview2EffectiveStatusSelectableForResult(
+  status: UjatEffectiveSecondInterviewStatus
+): boolean {
+  if (status === 'withdrawn') return false
+  if (
+    status === 'pass' ||
+    status === 'fail' ||
+    status === 'reserve1' ||
+    status === 'reserve2' ||
+    status === 'reserve3' ||
+    status === 'reserve4'
+  ) {
+    return false
+  }
+  return status === 'completed'
+}
+
+export function isUjatVolunteerInterview2SelectableForResult(
+  row: UjatVolunteerInterview2ResultSelectRow
+): boolean {
+  if (isUjatInterviewTotalScoreUnevaluated(row)) return false
+  return isUjatVolunteerInterview2EffectiveStatusSelectableForResult(
+    resolveUjatEffectiveSecondInterviewStatus(row)
+  )
 }
 
 export function matchesUjatInterview2ScoreFilter(

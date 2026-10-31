@@ -109,6 +109,10 @@ function readVolunteerApplicationType(value: string | undefined): ProgramApplica
   return value === 'VOLUNTEER' ? 'VOLUNTEER' : null
 }
 
+function assertNever(_x: never): never {
+  throw new Error('unreachable')
+}
+
 function buildDetailPath(
   applicationId: string,
   section: DetailSection,
@@ -453,7 +457,8 @@ export function MypageVolunteerDetailPage() {
     )
 
   const renderActivityBody = (active: EducationActivitySection) => {
-    if (active === 'notice' && isActivityStatus) {
+    if (active === 'notice') {
+      if (!isActivityStatus) return null
       return (
         <VolunteerNoticePanel
           program={program}
@@ -536,11 +541,15 @@ export function MypageVolunteerDetailPage() {
         />
       )
     }
-    return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
-        준비 중입니다.
-      </PFText>
-    )
+    if (
+      active === 'assignment' ||
+      active === 'lecture-report' ||
+      active === 'educationJournal' ||
+      active === 'students'
+    ) {
+      return null
+    }
+    return assertNever(active)
   }
 
   return (

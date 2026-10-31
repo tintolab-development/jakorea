@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { FEATURE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants'
 import { useCmsAlert } from '@/shared/ui'
 import { downloadAbsenceEvidenceFile } from '@/features/program/general/api/absence-reasons'
 import { ProgramAttendanceAbsenceReasons } from '@/features/program/shared/ui/program-attendance-absence-reasons'
@@ -27,19 +26,8 @@ export function UjatEducationProgressVolunteerAssignmentAttendanceInfo({
   const { showAlert } = useCmsAlert()
   const showAbsenceReasonBlock = hasExcusedAbsenceInAssignmentRows(assignmentRows)
 
-  const showComingSoon = useCallback(() => {
-    showAlert({ title: '안내', content: FEATURE_COMING_SOON_ALERT_MESSAGE })
-  }, [showAlert])
-
   const handleFileDownload = useCallback(
-    (item: ProgramAttendanceAbsenceReasonItem) => {
-      const fileObjectId = item.fileObjectIds?.find(id => typeof id === 'number')
-      if (fileObjectId == null) {
-        // BE가 fileObjectId를 주지 않으면 downloadAbsenceEvidenceFile을 호출할 수 없다.
-        showComingSoon()
-        return
-      }
-      const fileName = item.fileName?.trim() || `증빙서류-${fileObjectId}`
+    (_item: ProgramAttendanceAbsenceReasonItem, fileObjectId: number, fileName: string) => {
       void downloadAbsenceEvidenceFile(fileObjectId, fileName).catch(() => {
         showAlert({
           title: '안내',
@@ -47,7 +35,7 @@ export function UjatEducationProgressVolunteerAssignmentAttendanceInfo({
         })
       })
     },
-    [showAlert, showComingSoon]
+    [showAlert]
   )
 
   return (

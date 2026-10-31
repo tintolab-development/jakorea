@@ -22,13 +22,34 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 16px;
+  gap: var(--spacing-4, 4px);
+  margin-top: var(--spacing-16, 16px);
+  padding-inline: var(--spacing-4, 4px);
   color: var(--main-BK, #3d3d3d);
   font-family: var(--font-family-base);
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
+}
+
+.footnote {
+  display: block;
+  margin: var(--spacing-12, 12px) 0 0;
+  color: var(--main-BK, #3d3d3d);
+  font-family: var(--font-family-base);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+:global(.form-template-host) .notes .footnote {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  color: var(--main-BK, #3d3d3d);
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
 }
 
 .noteList {

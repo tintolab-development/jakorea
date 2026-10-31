@@ -27,4 +27,22 @@ describe('mergeDevAutofillSparse', () => {
       mergeDevAutofillSparse({ ids: [] as string[] }, { ids: ['p-1'] })
     ).toEqual({ ids: ['p-1'] })
   })
+
+  it('rounds처럼 부분만 찬 중첩 배열은 빈 칸(curriculum)만 채운다', () => {
+    expect(
+      mergeDevAutofillSparse(
+        {
+          rounds: [{ startDate: '2026-03-01', curriculum: '' }],
+          volunteerApplicationStartDate: '',
+        },
+        {
+          rounds: [{ startDate: '2026-03-02', curriculum: '1' }],
+          volunteerApplicationStartDate: '2026-03-02',
+        }
+      )
+    ).toEqual({
+      rounds: [{ startDate: '2026-03-01', curriculum: '1' }],
+      volunteerApplicationStartDate: '2026-03-02',
+    })
+  })
 })

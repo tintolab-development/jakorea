@@ -9,11 +9,15 @@
 
 .grid {
   display: grid;
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
   margin: 0;
+  padding: var(--spacing-16, 16px);
   gap: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-radius: var(--radius-24, 24px);
+  background: var(--color-neutral-cool-50, #f5f7f7);
 }
 
 .empty {

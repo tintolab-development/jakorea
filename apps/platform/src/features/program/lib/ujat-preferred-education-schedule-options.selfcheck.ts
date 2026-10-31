@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict'
 import {
   expandUjatPreferredEducationScheduleOptionsFromHalfRanges,
+  hasUjatPreferredEducationDateOptionsKey,
   mapUjatEducationHalfRangesFromSchedules,
   readUjatPreferredEducationScheduleOptions,
   readUjatPreferredEducationScheduleOptionsFromSubmittedAnswer,
   resolveUjatApplyPreferredEducationScheduleOptions,
   resolveUjatPreferredScheduleSelectedOptions,
+  resolveUjatProgressConfirmPreferredEducationScheduleOptions,
 } from './ujat-preferred-education-schedule-options.ts'
 
 function testRuntimeOptionsUseIdAndLabel() {
@@ -146,6 +148,39 @@ function testHalfRangeFridaysInclusiveSeoul() {
   )
 }
 
+function testProgressConfirmUsesRenderThenSupplementWithoutHalfRanges() {
+  assert.equal(
+    hasUjatPreferredEducationDateOptionsKey({
+      ujatPreferredEducationDateOptions: [],
+    }),
+    true,
+  )
+  const emptyFromRender = resolveUjatProgressConfirmPreferredEducationScheduleOptions({
+    runtimeContext: { ujatPreferredEducationDateOptions: [] },
+    supplementPreferredEducationDateOptions: [
+      { id: 'h1:2026-11-06', date: '2026-11-06', label: '11월 6일' },
+    ],
+  })
+  assert.deepEqual(emptyFromRender, [])
+
+  const fromSupplement = resolveUjatProgressConfirmPreferredEducationScheduleOptions({
+    runtimeContext: { educationScheduleLines: ['ignored'] },
+    supplementPreferredEducationDateOptions: [
+      { id: 'h1:2026-11-06', date: '2026-11-06', label: '11월 6일' },
+    ],
+  })
+  assert.deepEqual(
+    fromSupplement.map(option => option.id),
+    ['h1:2026-11-06'],
+  )
+
+  const missingBoth = resolveUjatProgressConfirmPreferredEducationScheduleOptions({
+    runtimeContext: {},
+    supplementPreferredEducationDateOptions: null,
+  })
+  assert.deepEqual(missingBoth, [])
+}
+
 testRuntimeOptionsUseIdAndLabel()
 testEmptyArrayDoesNotInventFridays()
 testMissingFieldIsEmpty()
@@ -155,4 +190,5 @@ testDatetimeAndIdOnlyRowsParse()
 testEmptyRuntimeDoesNotUseEducationHalfRanges()
 testNonEmptyRuntimeWinsOverHalfRanges()
 testHalfRangeFridaysInclusiveSeoul()
+testProgressConfirmUsesRenderThenSupplementWithoutHalfRanges()
 console.log('ujat-preferred-education-schedule-options: ok')

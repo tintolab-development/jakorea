@@ -37,6 +37,7 @@ import {
   type GeneralVolunteerApplicantInterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
 import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
+import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { guardGeneralVolunteerInterview2Evaluation } from './general-volunteer-applicant-guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -326,6 +327,15 @@ export function GeneralVolunteerApplicantDetailView(
     return '면접일 배정'
   }, [applicant.interviewAssignmentStatus])
 
+  const assignInterviewDisabled = useMemo(() => {
+    if (applicant.interviewAssignmentStatus === 'withdrawn') return true
+    if (applicant.interviewAssignmentStatus === 'not_required') return true
+    if (applicant.interviewAssignmentStatus === 'assigned') {
+      return !canReassignVolunteerInterviewAssignment(applicant)
+    }
+    return false
+  }, [applicant])
+
   if (isInterview2Props(props)) {
     return (
       <Interview2VolunteerApplicantDetail
@@ -398,7 +408,9 @@ export function GeneralVolunteerApplicantDetailView(
               type="button"
               variant="secondary"
               size="large"
-              onClick={onAssignInterview} >
+              disabled={assignInterviewDisabled}
+              onClick={onAssignInterview}
+            >
               {assignInterviewLabel}
             </CmsButton>
             <PersonalInfoRevealButton disabled={programPrivacyPending}

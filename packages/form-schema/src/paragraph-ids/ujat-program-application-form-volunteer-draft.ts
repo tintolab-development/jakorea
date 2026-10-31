@@ -249,7 +249,9 @@ function createSubmitConfirmationMultipleChoiceParagraph(): MultipleChoiceParagr
     items: [
       {
         id: SUBMIT_CONFIRMATION_OPTION_ID,
-        label: `${UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_PREFIX} ${UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_COHORT_PLACEHOLDER}로 지원합니다.`,
+        // 시드에는 플레이스홀더를 넣지 않는다(FormTemplateSystemFieldGuard 409).
+        // 기수 치환은 작성·포털 렌더 시 applyUjatVolunteerSubmitConfirmationCohort만 사용.
+        label: formatUjatVolunteerSubmitConfirmationLabel(null),
       },
     ],
     selectedPreviewSingleId: null,

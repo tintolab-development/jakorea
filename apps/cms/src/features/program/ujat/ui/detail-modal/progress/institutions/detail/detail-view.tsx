@@ -6,8 +6,7 @@ import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
-import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
+import { useUjatInstitutionTeacherPrivacyReveal } from '../../../application-institution/shared/use-institution-teacher-privacy-reveal'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import {
   UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TAB_LABELS,
@@ -107,23 +106,15 @@ export function UjatEducationProgressInstitutionDetailView({
     [addressDetail, adminComment, detail, gradeBlocks, teacherContact]
   )
 
-  const resolveAccessItem = useCallback(
-    () => `${detail.institutionName} 참여 기관 신청 정보`,
-    [detail.institutionName]
-  )
-
   const {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
-  } = usePersonalInfoReveal({
-    privacyScope: 'program',
+    programPrivacyPending,
+  } = useUjatInstitutionTeacherPrivacyReveal({
+    institutionId: detail.institutionId,
     programId: program.id,
-    resolveProgramRole: () => resolveSessionProgramRole(program.id),
-    resolveAccessItem,
-    resetDeps: [detail.institutionId, detail.half],
-    controlMode: 'headerStickyNoop',
+    accessItemLabel: `${detail.institutionName} 참여 기관 신청 정보`,
   })
 
   const tabKeys = useMemo(

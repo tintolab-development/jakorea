@@ -1,6 +1,7 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { DeliveryStatusBadge } from '@/shared/components/delivery-status-badge'
 import { formatNumberDisplay } from '@/shared/utils'
+import { formatUjatPreferredEducationDateDisplay } from '../education-schedule'
 import { UjatInstitutionScheduleConfirmStatusBadge } from './status-badge'
 import {
   ClassTimeTable,
@@ -65,7 +66,7 @@ export function UjatScheduleConfirmConfirmedDetailView({
 }: {
   detail: UjatScheduleConfirmConfirmedDetail
   personalInfoRevealed: boolean
-  /** `institution_confirmed` · `approval_completed`일 때만 true */
+  /** `institution_confirmed` · `approval_completed`일 때 true */
   showGuidanceNotes?: boolean
 }) {
   const { guidanceNotes } = detail
@@ -180,6 +181,26 @@ export function UjatScheduleConfirmConfirmedDetailView({
             <ClassTimeTable rows={detail.classTimeRows} />
           </DetailInfoForm.Row>
         )}
+      </DetailInfoForm>
+
+      <DetailInfoForm title="진행 희망 교육 일정" mode="view">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="교육 진행 희망일"
+            fullRow
+            view={
+              detail.preferredEducationDates.length > 0 ? (
+                <PipeSeparatedValues
+                  parts={detail.preferredEducationDates.map(date => (
+                    <span key={date}>{formatUjatPreferredEducationDateDisplay(date)}</span>
+                  ))}
+                />
+              ) : (
+                '-'
+              )
+            }
+          />
+        </DetailInfoForm.Row>
       </DetailInfoForm>
 
       <DetailInfoForm title="진행 교육 일정" mode="view">

@@ -56,6 +56,8 @@ export interface UjatVolunteerApplicantRow {
   documentScreeningStatus: UjatDocumentScreeningStatus
   interviewSlotCount: number
   interviewAssignmentStatus: UjatInterviewAssignmentStatus
+  /** wire `interviewAssignmentStatus`/`interviewStatus` — 재배정 가능 판별용 (EVALUATED 등) */
+  interviewAssignmentApiStatus?: string | null
   programId: string
   half: UjatVolunteerRecruitHalf
   englishName: string
@@ -94,8 +96,6 @@ export type UjatVolunteerInterviewEvaluationPayload = {
   managerBScore: number | null
   interviewEvaluationRemark: string
 }
-
-export function clearUjatVolunteerApplicantsMockCache(): void {}
 
 export function getUjatVolunteerApplicants(
   _programId?: string,

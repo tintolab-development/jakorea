@@ -17,7 +17,7 @@ export type MailPreviewAttachment = {
 
 /** 시안 미리보기용 샘플 수신자 */
 export const MAIL_PREVIEW_SAMPLE_RECIPIENT = {
-  name: '홍길동',
+  name: '수신자',
   email: 'gildong@jakorea.org',
   extraCount: 914,
 } as const

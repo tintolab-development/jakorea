@@ -20,10 +20,15 @@ function currentAcademicSemester(now: Date): 1 | 2 {
   return month >= 3 && month <= 8 ? 1 : 2
 }
 
+/**
+ * BE `form.runtimeContext.activityTerm` — `"1기"` / `"2기"` (기 접미사 포함).
+ * 없거나 빈 값이면 null → 확인 문구에서 기수 자리를 뺀다.
+ */
 function readUjatActivityTerm(runtimeContext: unknown): string | null {
   const runtime = asRecord(runtimeContext)
   if (!runtime) return null
   const audience = asRecord(runtime.audienceApplication)
+  // SSOT: form.runtimeContext.activityTerm. 하위 키는 레거시 호환.
   const candidates = [
     runtime.activityTerm,
     runtime.ujatActivityTerm,

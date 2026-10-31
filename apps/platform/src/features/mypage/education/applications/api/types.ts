@@ -84,6 +84,13 @@ export const UJAT_PORTAL_BANNER_STATES = {
 export type UjatPortalBannerState =
   (typeof UJAT_PORTAL_BANNER_STATES)[keyof typeof UJAT_PORTAL_BANNER_STATES]
 
+/** OpenAPI `MemberPortalUjatApplicationSupplement.preferredEducationDateOptions` 항목 */
+export type PortalUjatPreferredEducationDateOption = {
+  id?: string
+  date?: string
+  label?: string
+}
+
 /** OpenAPI `UjatApplicationSupplement` — 포털 배너는 `portalBannerState`만 사용 */
 export type PortalUjatApplicationSupplement = {
   temporaryAssignmentStatus?: string
@@ -93,6 +100,11 @@ export type PortalUjatApplicationSupplement = {
   assignmentRevision?: number
   assignmentLocked?: boolean
   portalBannerState?: UjatPortalBannerState | string
+  /**
+   * 제출 후에도 항상 배열. 후보 없으면 `[]`.
+   * 1단계 희망 교육일 칩 SSOT (me/render runtimeContext와 동일 계약).
+   */
+  preferredEducationDateOptions?: PortalUjatPreferredEducationDateOption[] | null
   /** 상세 조회 전용 CMS 임시 배정 일정. 신청 당시 희망 일정과 별도 SSOT. */
   temporarySchedule?: PortalUjatTemporarySchedule | null
   /** CMS 일정 수정 요청 `reason`. OpenAPI 미기재 시에도 응답에 있으면 표시 */

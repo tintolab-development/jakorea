@@ -61,11 +61,9 @@ export function UjatRecruitInterviewScheduleProgramView({
   isTemplateAuthoring?: boolean
 }) {
   const display = resolveUjatVolunteerInterviewScheduleDisplay(program, volunteerHalf, {
-    allowMockFallback: !isTemplateAuthoring,
     allowOverlayFallback: isTemplateAuthoring,
   })
   const editSeed = resolveUjatVolunteerInterviewScheduleEditSeed(program, volunteerHalf, {
-    allowMockFallback: !isTemplateAuthoring,
     allowOverlayFallback: isTemplateAuthoring,
   })
   const interviewNamespace = volunteerHalf

@@ -74,19 +74,25 @@ export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
               guideLines={CERTIFICATE_GUIDE_LINES}
               fileNames={fileNames}
               onFilesChange={files => {
+                const programId = Number(_props.programId)
+                const ownerId =
+                  Number.isSafeInteger(programId) && programId > 0 ? programId : null
+                if (ownerId == null) return
                 const owner = buildAdminFileOwner(
-                  ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
-                  1,
-                  ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
+                  ADMIN_FILE_OWNER.PROGRAM,
+                  ownerId,
+                  ADMIN_FILE_PURPOSE.VOLUNTEER_APPLICATION_EVIDENCE
                 )
                 void (async () => {
                   const ids: string[] = []
                   for (const file of files) {
-                    const result = await uploadAdminFileMaybeMock({ file, owner }).catch(
-                      () => undefined
-                    )
-                    if (result?.fileObjectId != null) {
-                      ids.push(String(result.fileObjectId))
+                    try {
+                      const result = await uploadAdminFileMaybeMock({ file, owner })
+                      if (result.fileObjectId != null) {
+                        ids.push(String(result.fileObjectId))
+                      }
+                    } catch {
+                      // 실패한 파일은 id 목록에 넣지 않는다 — 등록 시 필수 검증이 막는다.
                     }
                   }
                   appendPreviousJaCertificateFileIds(ids)

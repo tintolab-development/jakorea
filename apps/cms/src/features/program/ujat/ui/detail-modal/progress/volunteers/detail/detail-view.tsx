@@ -8,6 +8,8 @@ import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
+import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/program-my-assignment'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
@@ -36,6 +38,8 @@ import { getVolunteerActivityRegionErrorMessage } from '@/features/program/ujat/
 import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
+  describeUjatCertificateProgressBlock,
+  UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT,
 } from '../activity-certificate'
 import type { UjatEducationProgressVolunteerDetail } from './volunteer-detail-data'
 import { UjatEducationProgressVolunteerApplicationTab } from './application-tab'
@@ -225,16 +229,38 @@ export function UjatEducationProgressVolunteerDetailView({
     [detail.applicant.name]
   )
 
+  const revealVolunteerPersonalInfo = useCallback(
+    async (reason: string) => {
+      if (applicationNumericId == null) {
+        throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
+      }
+      const programIdNumber = Number(program.id)
+      const dto = await unmaskVolunteerApplicationPrivacyRemote(
+        String(applicationNumericId),
+        reason,
+        Number.isSafeInteger(programIdNumber) ? programIdNumber : undefined
+      )
+      return cacheProjectedProgramPrivacy(
+        queryClient,
+        ujatQueryKeys.volunteerApplicationDetail(detail.volunteerId),
+        program.id,
+        dto
+      )
+    },
+    [applicationNumericId, detail.volunteerId, program.id, queryClient]
+  )
+
   const {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
+    programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
     programId: program.id,
     resolveProgramRole: () => resolveSessionProgramRole(program.id),
     resolveAccessItem,
+    revealPersonalInfo: revealVolunteerPersonalInfo,
     resetDeps: [detail.volunteerId, detail.half],
     controlMode: 'headerStickyNoop',
   })
@@ -348,17 +374,64 @@ export function UjatEducationProgressVolunteerDetailView({
     setAdminCommentModalOpen(false)
   }, [])
 
+  const certificateProgressBlockReason = describeUjatCertificateProgressBlock({
+    isLoading: assignmentProgress.isLoading,
+    isError: assignmentProgress.isError,
+    isParticipantUnresolved: assignmentProgress.isParticipantUnresolved,
+  })
+  const certificateIssueDisabled =
+    certificateProgressBlockReason != null || studentCertificateExportActive
+
   const activityCertificateVolunteer = useMemo(
-    () => buildActivityCertificateVolunteerFromUjatDetail(detail),
-    [detail]
+    () => buildActivityCertificateVolunteerFromUjatDetail(detail, assignmentProgress.bundle),
+    [assignmentProgress.bundle, detail]
   )
+
+  const handleActivityCertificateIssueClick = useCallback(() => {
+    if (certificateProgressBlockReason != null) {
+      showAlert({ title: '안내', content: certificateProgressBlockReason })
+      return
+    }
+    if (assignmentProgress.bundle.rows.length === 0) {
+      showAlert({ title: '안내', content: UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT })
+      return
+    }
+    setActivityCertPreviewOpen(true)
+  }, [assignmentProgress.bundle.rows.length, certificateProgressBlockReason, showAlert])
+
+  const handleStudentCertificateIssueClick = useCallback(() => {
+    if (certificateProgressBlockReason != null) {
+      showAlert({ title: '안내', content: certificateProgressBlockReason })
+      return
+    }
+    if (assignmentProgress.bundle.rows.length === 0) {
+      showAlert({ title: '안내', content: UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT })
+      return
+    }
+    if (studentCertificateExportActive) return
+    setStudentCertificateIssueModalOpen(true)
+  }, [
+    assignmentProgress.bundle.rows.length,
+    certificateProgressBlockReason,
+    showAlert,
+    studentCertificateExportActive,
+  ])
 
   const handleStudentCertificateIssueConfirm = useCallback(
     async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      if (certificateProgressBlockReason != null) {
+        showAlert({ title: '안내', content: certificateProgressBlockReason })
+        return
+      }
+      if (assignmentProgress.bundle.rows.length === 0) {
+        showAlert({ title: '안내', content: UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT })
+        return
+      }
       let context = buildStudentCertificateContextFromUjatVolunteer({
         detail,
         program,
         issuanceReasonLabel: reasonLabel,
+        bundle: assignmentProgress.bundle,
       })
       const memberId = Number(detail.applicant.memberId ?? detail.row.memberId)
       if (Number.isSafeInteger(memberId) && memberId > 0) {
@@ -386,7 +459,7 @@ export function UjatEducationProgressVolunteerDetailView({
       setStudentCertificateExportContext(context)
       setStudentCertificateExportActive(true)
     },
-    [detail, program, showAlert]
+    [assignmentProgress.bundle, certificateProgressBlockReason, detail, program, showAlert]
   )
 
   const handleStudentCertificateExportComplete = useCallback(
@@ -423,7 +496,10 @@ export function UjatEducationProgressVolunteerDetailView({
             variant="secondary"
             size="h40"
             icon={<ButtonDownloadIcon />}
-            onClick={() => setActivityCertPreviewOpen(true)} >
+            disabled={certificateIssueDisabled}
+            title={certificateProgressBlockReason ?? undefined}
+            onClick={handleActivityCertificateIssueClick}
+          >
             활동인증서 발급
           </CmsButton>
           <CmsButton
@@ -431,8 +507,10 @@ export function UjatEducationProgressVolunteerDetailView({
             variant="secondary"
             size="h40"
             icon={<ButtonDownloadIcon />}
-            disabled={studentCertificateExportActive}
-            onClick={() => setStudentCertificateIssueModalOpen(true)} >
+            disabled={certificateIssueDisabled}
+            title={certificateProgressBlockReason ?? undefined}
+            onClick={handleStudentCertificateIssueClick}
+          >
             수료증/참여인증서 발급
           </CmsButton>
         </>

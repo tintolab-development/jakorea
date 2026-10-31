@@ -46,7 +46,7 @@ export function ApplyUjatInstitutionSubmitConfirmation({
             onClick={() => onCheckedChange(!checked)}
             onChange={() => onCheckedChange(true)}
           />
-          <PFText as="span" typo="bd-md-rg" color={checked ? 'primary-500' : 'black'}>
+          <PFText as="span" typo="bd-lg-sb" color={checked ? 'primary-500' : 'black'}>
             {label}
           </PFText>
         </label>

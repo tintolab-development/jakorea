@@ -107,4 +107,23 @@ describe('applyUjatVolunteerProjection', () => {
     })
     expect(next.homeAddress).toBe('서울특별시')
   })
+
+  it('application.scheduleChangeCancelCount를 성명 옆 배지용으로 반영한다', () => {
+    const next = applyUjatVolunteerApplicationDetail(
+      row,
+      {
+        scheduleChangeCancelCount: 1,
+        ujat: { applicationType: 'ujat-graduate', previousActivityTerm: '30', previousActivityYear: '2023' },
+        attachments: [certificate],
+      },
+      null,
+    )
+    expect(next.scheduleChangeCancelCount).toBe(1)
+    expect(next.applicationType).toBe('ujat-graduate')
+    expect(next.previousUjatActivity).toEqual({
+      term: '30',
+      year: '2023',
+      certificateFileName: 'certificate.pdf',
+    })
+  })
 })

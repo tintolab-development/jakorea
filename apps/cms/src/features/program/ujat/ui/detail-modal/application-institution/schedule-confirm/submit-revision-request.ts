@@ -2,6 +2,10 @@ import {
   isApiWorkflowConflictError,
   readApiErrorAlertMessage,
 } from '@/shared/lib/extract-api-error-message'
+import {
+  UJAT_REVISION_REQUEST_COMPLETE_ALERT_CONTENT,
+  UJAT_REVISION_REQUEST_COMPLETE_ALERT_TITLE,
+} from './revision-request-complete'
 
 export const UJAT_REVISION_REQUEST_FAIL_ALERT_TITLE = '수정 요청 실패'
 export const UJAT_REVISION_REQUEST_FAIL_ALERT_FALLBACK =
@@ -15,7 +19,6 @@ export async function submitUjatScheduleConfirmRevisionRequest(input: {
   onStatusUpdated: () => void
   closeModal: () => void
   showAlert: (alert: { title: string; content: string }) => void
-  institutionName: string
 }): Promise<SubmitUjatScheduleConfirmRevisionRequestResult> {
   try {
     await input.request()
@@ -36,8 +39,8 @@ export async function submitUjatScheduleConfirmRevisionRequest(input: {
   input.onStatusUpdated()
   input.closeModal()
   input.showAlert({
-    title: '수정 요청',
-    content: `[${input.institutionName}] 담당교사님에게 수정 요청이 전달되었습니다.`,
+    title: UJAT_REVISION_REQUEST_COMPLETE_ALERT_TITLE,
+    content: UJAT_REVISION_REQUEST_COMPLETE_ALERT_CONTENT,
   })
   return 'success'
 }

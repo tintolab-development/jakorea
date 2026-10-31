@@ -24,6 +24,7 @@ import './participating-volunteer-add-registration-modal.css'
 export interface ParticipatingVolunteerAddRegistrationModalProps {
   open: boolean
   memberId: string | null
+  programId?: string | number | null
   /** true — 선택한 회원에 1365 ID가 이미 등록됨(기본 정보 단락 숨김) */
   hideBasicInfoSection?: boolean
   onClose: () => void
@@ -38,6 +39,7 @@ const CONSENT_PARAGRAPH_IDS = new Set<string>([
 function ParticipatingVolunteerAddRegistrationModalBody({
   open,
   memberId,
+  programId,
   hideBasicInfoSection,
   onClose,
   onConfirm,
@@ -114,8 +116,9 @@ function ParticipatingVolunteerAddRegistrationModalBody({
     () => ({
       jaVolunteerExperience,
       hideBasicInfoSection: hideBasicInfoSection ?? false,
+      programId,
     }),
-    [jaVolunteerExperience, hideBasicInfoSection]
+    [jaVolunteerExperience, hideBasicInfoSection, programId]
   )
 
   const footer = (

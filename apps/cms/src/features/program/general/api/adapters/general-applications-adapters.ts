@@ -68,6 +68,7 @@ import type {
   GeneralManagerEvaluation,
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
+import { pickVolunteerInterviewAssignmentApiStatus } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import {
   formatRequestedSchedulesPeriodLabel,
   mapRequestedSchedulesToSessions,
@@ -1643,6 +1644,11 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
       applicationStatus: dto.applicationStatus,
       giveUpYn: dto.giveUpYn,
     }),
+    interviewAssignmentApiStatus: pickVolunteerInterviewAssignmentApiStatus(
+      dto.interviewAssignmentStatus,
+      dto.interviewStatus,
+      dto.applicationStatus
+    ),
     programId: toId(dto.programId) || programId,
     englishName: '',
     gender: '',
@@ -1731,6 +1737,12 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
     interviewAssignmentStatus,
+    interviewAssignmentApiStatus:
+      pickVolunteerInterviewAssignmentApiStatus(
+        dto.interviewAssignmentStatus,
+        dto.interviewStatus,
+        dto.applicationStatus
+      ) ?? base.interviewAssignmentApiStatus,
     programId: toId(dto.programId) || base.programId,
     gender: toGenderLabelOrRaw(profile?.gender) || base.gender,
     birthDate: profile?.birthDate?.trim() || base.birthDate,

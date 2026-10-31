@@ -43,13 +43,13 @@
 .temporary-action-modal__body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .temporary-action-modal__lead,
 .temporary-action-modal__note {
   margin: 0;
-  color: #3d3d3d;
+  color: var(--Neutral-black, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 16px;
   font-weight: 500;

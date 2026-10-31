@@ -47,7 +47,7 @@ const LECTURE_EVAL_MOCK_PERIOD = {
   endAt: '2026-10-05',
 } as const
 
-const LECTURE_EVAL_RESPONDENT_NAME = '홍길동'
+const LECTURE_EVAL_RESPONDENT_NAME = '응답자'
 const LECTURE_EVAL_RESPONDENT_REGION = '서울특별시 강서구 화곡동'
 
 export type ResolveLectureEvalWritingDraftOptions = {

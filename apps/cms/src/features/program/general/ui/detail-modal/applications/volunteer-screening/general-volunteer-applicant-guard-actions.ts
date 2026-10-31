@@ -4,6 +4,10 @@ import {
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { INTERVIEW_RESULT_NOT_ENDED_ALERT } from '@/features/program/shared/lib/interview-not-ended'
+import {
+  canReassignVolunteerInterviewAssignment,
+  VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT,
+} from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
 
 export { INTERVIEW_RESULT_NOT_ENDED_ALERT }
@@ -44,12 +48,21 @@ export function guardGeneralVolunteerAssignInterview(row: GeneralVolunteerApplic
     })
     return false
   }
-  if (row.interviewAssignmentStatus !== 'withdrawn') return true
-  cmsAlertModal.show({
-    title: '면접일 배정 안내',
-    content: '활동 포기한 봉사자에게는 면접일을 배정할 수 없습니다.',
-  })
-  return false
+  if (row.interviewAssignmentStatus === 'withdrawn') {
+    cmsAlertModal.show({
+      title: '면접일 배정 안내',
+      content: '활동 포기한 봉사자에게는 면접일을 배정할 수 없습니다.',
+    })
+    return false
+  }
+  if (
+    row.interviewAssignmentStatus === 'assigned' &&
+    !canReassignVolunteerInterviewAssignment(row)
+  ) {
+    cmsAlertModal.show({ ...VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT })
+    return false
+  }
+  return true
 }
 
 function guardGeneralVolunteerInterview2Withdrawn(

@@ -19,6 +19,7 @@ import {
   readSettlementOverviewParams,
   SETTLEMENT_OVERVIEW_VIEW_ITEMS,
   SettlementOverview,
+  useSettlementOverviewQuery,
   type SettlementOverviewPageData,
   type SettlementOverviewParams,
   type SettlementOverviewView,
@@ -29,11 +30,17 @@ import statusListTabsStyles from '@/features/mypage/shared/ui/mypage-status-list
 import { MypageLayout } from '@/widgets/mypage-layout'
 import styles from './page.module.css'
 
+/**
+ * 정산 현황.
+ * 강사·강사겸교사 LNB 전용. 비강사는 /mypage로 리다이렉트(현 기획 유지 — 변경 시 기획 확인).
+ * 데이터: remote GET settlement-applications + individual-settlements schedules.
+ * ?fixture=1 은 DEV 전용 샘플만.
+ */
 export function MypageSettlementPage() {
   const navigate = useNavigate()
   const isAuthReady = useMypagePageAuthReady(MYPAGE_SETTLEMENT_PATH)
   const [params, setParams] = useState(readSettlementOverviewParams)
-  const [data, setData] = useState<SettlementOverviewPageData>(EMPTY_SETTLEMENT_OVERVIEW)
+  const [fixtureData, setFixtureData] = useState<SettlementOverviewPageData | null>(null)
   const member = useMypageMember()
   const { isChecking, isRedirecting } = useAdminRegisteredNoticeRedirect()
   const lnbItems = getMypageLnbItems(member.profile, 'settlement')
@@ -56,14 +63,33 @@ export function MypageSettlementPage() {
 
   useEffect(() => {
     let cancelled = false
+    if (!params.fixture) {
+      setFixtureData(null)
+      return
+    }
     void loadDevSettlementFixture().then(fixture => {
       if (cancelled) return
-      setData(fixture ?? EMPTY_SETTLEMENT_OVERVIEW)
+      setFixtureData(fixture)
     })
     return () => {
       cancelled = true
     }
   }, [params.fixture])
+
+  const remoteQuery = useSettlementOverviewQuery({
+    enabled:
+      isAuthReady &&
+      !member.isLoading &&
+      !isChecking &&
+      !isRedirecting &&
+      isInstructor,
+    month: params.month,
+    fixture: params.fixture,
+  })
+
+  const data: SettlementOverviewPageData = params.fixture
+    ? (fixtureData ?? EMPTY_SETTLEMENT_OVERVIEW)
+    : (remoteQuery.data ?? EMPTY_SETTLEMENT_OVERVIEW)
 
   const updateParams = (next: Partial<SettlementOverviewParams>) => {
     const merged = { ...params, ...next }
@@ -79,7 +105,15 @@ export function MypageSettlementPage() {
     navigateMypageLnb(navigate, key)
   }
 
-  if (!isAuthReady || isChecking || isRedirecting || member.isLoading || !isInstructor) {
+  const showBoot =
+    !isAuthReady ||
+    isChecking ||
+    isRedirecting ||
+    member.isLoading ||
+    !isInstructor ||
+    (!params.fixture && remoteQuery.isLoading)
+
+  if (showBoot) {
     return (
       <MypageLayout variant="subpage" lnbItems={lnbItems} onLnbItemSelect={handleLnbItemSelect}>
         <MypageLayoutBootSkeleton />
@@ -108,7 +142,19 @@ export function MypageSettlementPage() {
         ariaLabel="정산 현황 보기"
       />
 
-      <SettlementOverview params={params} data={data} onParamsChange={updateParams} />
+      <SettlementOverview
+        params={params}
+        data={data}
+        onParamsChange={updateParams}
+        onRefresh={
+          params.fixture
+            ? undefined
+            : () => {
+                void remoteQuery.refetch()
+              }
+        }
+        refreshing={remoteQuery.isFetching}
+      />
     </MypageLayout>
   )
 }

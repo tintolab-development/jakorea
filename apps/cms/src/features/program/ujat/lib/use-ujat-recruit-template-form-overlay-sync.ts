@@ -522,13 +522,16 @@ export function useUjatRecruitTemplateFormOverlaySync(
     return () => subscription.unsubscribe()
   }, [form, kind, volunteerHalf])
 
-  // 모집 단계의 주요 필드는 RHF 값을 렌더링하고, DEV 자동입력은 overlay를
-  // 갱신한다. 버튼을 현재 모집 단계에서 누른 경우 overlay만 바뀌고 RHF가
-  // 기존 빈 값을 계속 들고 있던 문제를 자동입력 완료 이벤트에서 한 번만
-  // 재수화해 해결한다. 일반적인 사용자 입력 변경에는 반응하지 않아
-  // 입력 중인 값이 되돌아가지 않는다.
+  // 등록 위저드는 `use-ujat-program-registration-flow`가 typedRecruitment로 RHF를
+  // 채운다. 여기서 programRef만으로 재수화하면 빈 모집 기간·기수로 덮어쓴다.
+  // typedRecruitment가 없는 경로(양식 authoring 등)만 overlay/program으로 재수화한다.
   useEffect(() => {
-    const handleDevAutofillComplete = () => {
+    const handleDevAutofillComplete = (event: Event) => {
+      const detail =
+        event instanceof CustomEvent && event.detail != null && typeof event.detail === 'object'
+          ? (event.detail as { typedRecruitment?: unknown })
+          : null
+      if (detail?.typedRecruitment != null) return
       readyRef.current = false
       form.reset(programToUjatRecruitTemplateFormValues(programRef.current, kind, volunteerHalf), {
         keepDefaultValues: false,

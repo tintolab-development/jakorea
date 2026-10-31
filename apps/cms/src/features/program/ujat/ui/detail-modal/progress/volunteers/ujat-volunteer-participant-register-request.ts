@@ -68,11 +68,29 @@ function resolveEducationRegionCode(overlay: Record<string, unknown>): string | 
 }
 
 function certificateFileIdsFromOverlay(overlay: Record<string, unknown>): string[] {
+  const ids = overlay[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileObjectIds]
+  if (Array.isArray(ids)) {
+    return ids
+      .map(value => {
+        const n = typeof value === 'number' ? value : Number(String(value).trim())
+        return Number.isSafeInteger(n) && n > 0 ? String(n) : ''
+      })
+      .filter(Boolean)
+  }
+  // 레거시: 파일명 배열에 숫자 문자열이 들어 있던 경우
   const raw = overlay[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
   if (!Array.isArray(raw)) return []
   return raw
-    .map(value => String(value).trim())
-    .filter(value => /^\d+$/.test(value))
+    .map(value => {
+      if (value && typeof value === 'object' && 'fileObjectId' in value) {
+        const id = (value as { fileObjectId?: unknown }).fileObjectId
+        const n = typeof id === 'number' ? id : Number(id)
+        return Number.isSafeInteger(n) && n > 0 ? String(n) : ''
+      }
+      const text = String(value).trim()
+      return /^\d+$/.test(text) ? text : ''
+    })
+    .filter(Boolean)
 }
 
 function mapRegisterApplicationType(

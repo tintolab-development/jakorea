@@ -1018,6 +1018,36 @@ describe('UJAT API policy', () => {
 })
 
 describe('mapUjatProgramRecruitmentsToRequest', () => {
+  it('기관 모집 날짜만 오면 KST 하루 시작·끝 Instant로 보내고 finalPassAnnouncementAt을 보존한다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          startAt: '2026-03-02',
+          endAt: '2026-03-13',
+          finalPassAnnouncementAt: '2026-03-16',
+        },
+        {
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          startAt: '2026-03-01T15:00:00.000Z',
+          endAt: '2026-03-13T14:59:59.999Z',
+        },
+      ],
+    })
+    const institution = rows.find(row => row.recruitmentType === 'PARTICIPANT')
+    const volunteer = rows.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(institution?.startAt).toBe('2026-03-01T15:00:00.000Z')
+    expect(institution?.endAt).toBe('2026-03-13T14:59:59.999Z')
+    expect(institution?.finalPassAnnouncementAt).toBe('2026-03-16')
+    // 이미 Instant인 봉사자 행은 재직렬화하지 않는다
+    expect(volunteer?.startAt).toBe('2026-03-01T15:00:00.000Z')
+    expect(volunteer?.endAt).toBe('2026-03-13T14:59:59.999Z')
+  })
+
   it('봉사자 정원이 0이어도 maxCount를 보낸다', () => {
     const rows = mapUjatProgramRecruitmentsToRequest({
       ...program,
@@ -1578,8 +1608,8 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
     )
     const participant = request.recruitments?.find(row => row.recruitmentType === 'PARTICIPANT')
     expect(participant).toMatchObject({
-      startAt: '2026-08-01',
-      endAt: '2026-08-31',
+      startAt: '2026-07-31T15:00:00.000Z',
+      endAt: '2026-08-31T14:59:59.999Z',
       operationStartDate: '2027-03-01',
     })
     expect(participant).not.toHaveProperty('operationEndDate')

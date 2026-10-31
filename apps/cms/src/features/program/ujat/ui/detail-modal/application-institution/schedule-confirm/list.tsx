@@ -56,6 +56,7 @@ export function UjatInstitutionScheduleConfirmList({
       <FilterTableLayout
         className="ujat-schedule-confirm-list__filter-layout"
         bordered={false}
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}

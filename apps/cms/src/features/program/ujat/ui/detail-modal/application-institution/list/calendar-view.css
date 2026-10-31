@@ -1,5 +1,50 @@
 /* UJAT 기관 캘린더 — page-scroll sticky는 `calendar-layout.css` `.calendar-set--page-scroll` */
 
+/*
+ * 풀페이지 모달 page-scroll: 좌측 메인 내부 스크롤 금지(스크롤은 `__main`만).
+ * 우측 sticky 리스트는 뷰포트보다 클 때만 743px — 짧으면 뷰포트에 맞춰 축소
+ * (calendar-sub-right-list.md · sticky max-height에서 하단 52px 차감).
+ */
+.ujat-institution-application-list .calendar-set--page-scroll > .calendar-main-container,
+.ujat-institution-application-list
+  .calendar-set--page-scroll
+  > .calendar-main-container
+  > .calendar-main,
+.ujat-schedule-confirm-list .calendar-set--page-scroll > .calendar-main-container,
+.ujat-schedule-confirm-list
+  .calendar-set--page-scroll
+  > .calendar-main-container
+  > .calendar-main {
+  overflow: visible;
+  /*
+   * 공통 month min-height(863)가 Ant 그리드 실높이보다 크면 카드 하단 빈 여백만
+   * 페이지 스크롤로 이어짐. 셀 `min-height: 124`는 유지하고 카드는 콘텐츠 높이에 맞춘다.
+   */
+  min-height: 0;
+  height: auto;
+}
+
+.ujat-institution-application-list .calendar-set--page-scroll > .calendar-sub-right-list,
+.ujat-schedule-confirm-list .calendar-set--page-scroll > .calendar-sub-right-list {
+  /*
+   * 헤더(~90) + sticky top(16) + 하단 spacer(52)를 뺀 가용 높이.
+   * 가용 높이가 743 이상이면 공통 토큰 유지.
+   */
+  --ujat-calendar-sub-right-viewport-max: calc(
+    100dvh - 90px - var(--calendar-set-sticky-top, 16px) -
+      var(--detail-fullpage-padding-bottom, 52px)
+  );
+  height: min(
+    var(--calendar-sub-right-list-height),
+    var(--ujat-calendar-sub-right-viewport-max)
+  );
+  min-height: 0;
+  max-height: min(
+    var(--calendar-sub-right-list-height),
+    var(--ujat-calendar-sub-right-viewport-max)
+  );
+}
+
 /* 일정 strip 제목 — 강조색(학교별 팔레트) 미적용, 기본 검정 · 보조(지역)는 0.6 */
 .ujat-institution-application-list .calendar-event-title,
 .ujat-institution-application-list .calendar-event-title--with-divider,

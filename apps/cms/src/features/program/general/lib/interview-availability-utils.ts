@@ -1,12 +1,21 @@
-import type {
-  GeneralVolunteerApplicantRow,
-  GeneralVolunteerInterviewAvailabilityDay,
-} from '@/features/program/general/model/volunteer-applicant'
 import {
   normalizeTimeRangeKey,
   parseInterviewDisplayDateLabel,
 } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview-assign/schedule-utils'
 import { parseUjatInterviewDateLabel } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/shared/interview-calendar-events'
+
+export type InterviewAvailabilityDay = {
+  dateLabel: string
+  slots: string[]
+}
+
+/** 일반·UJAT 봉사자 상세 — 배정 슬롯 표시에 필요한 최소 필드 */
+export type InterviewAvailabilityAssignee = {
+  interviewAssignmentStatus: string | null | undefined
+  assignedInterviewDateLabel?: string
+  assignedInterviewTime?: string
+  interviewAvailability: InterviewAvailabilityDay[]
+}
 
 function parseInterviewDateLabel(label: string) {
   return parseUjatInterviewDateLabel(label) ?? parseInterviewDisplayDateLabel(label)
@@ -20,7 +29,10 @@ function dateLabelsMatch(a: string, b: string): boolean {
 }
 
 export function isAssignedInterviewSlot(
-  applicant: GeneralVolunteerApplicantRow,
+  applicant: Pick<
+    InterviewAvailabilityAssignee,
+    'interviewAssignmentStatus' | 'assignedInterviewDateLabel' | 'assignedInterviewTime'
+  >,
   dateLabel: string,
   slot: string
 ): boolean {
@@ -30,16 +42,14 @@ export function isAssignedInterviewSlot(
   return normalizeTimeRangeKey(applicant.assignedInterviewTime) === normalizeTimeRangeKey(slot)
 }
 
-export function countInterviewAvailabilitySlots(
-  days: GeneralVolunteerInterviewAvailabilityDay[]
-): number {
+export function countInterviewAvailabilitySlots(days: InterviewAvailabilityDay[]): number {
   return days.reduce((sum, day) => sum + day.slots.length, 0)
 }
 
 /** 배정·재배정 확정 슬롯을 면접 진행 가능 일정 목록에 반영 — 상세 `(배정)` 표시용 */
 export function mergeAssignedInterviewIntoAvailability(
-  applicant: GeneralVolunteerApplicantRow
-): GeneralVolunteerInterviewAvailabilityDay[] {
+  applicant: InterviewAvailabilityAssignee
+): InterviewAvailabilityDay[] {
   const {
     interviewAvailability,
     interviewAssignmentStatus,

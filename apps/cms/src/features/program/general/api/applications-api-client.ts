@@ -247,8 +247,6 @@ export type OrganizationApplicationDetailDto = OrganizationApplicationDetailResp
   regionSido?: string | null
   regionSigungu?: string | null
   grade?: string | null
-  /** UJAT 기관 확인. CHECKING | CONFIRMED | REVISION_REQUESTED. 비대상이면 null. */
-  institutionConfirmationStatus?: string | null
   /** 기관 확인 후 일정 수정 잠금 시각. 없으면 null. */
   assignmentLockedAt?: string | null
   /** Portal 일정 협의 배너. 관리자 버튼은 상태 필드가 우선이다. */

@@ -12,29 +12,56 @@ export type ProgramAttendanceAbsenceReasonItem = {
 }
 
 const DEFAULT_EMPTY_MESSAGE = '사유 기재 후 불참한 이력이 없습니다.'
+const NO_ATTACHMENT_LABEL = '첨부 없음'
 
 export interface ProgramAttendanceAbsenceReasonsProps {
   reasons: ProgramAttendanceAbsenceReasonItem[]
   emptyMessage?: string
-  onFileDownload?: (item: ProgramAttendanceAbsenceReasonItem) => void
+  onFileDownload?: (
+    item: ProgramAttendanceAbsenceReasonItem,
+    fileObjectId: number,
+    fileName: string
+  ) => void
+}
+
+function resolveEvidenceFileName(
+  item: ProgramAttendanceAbsenceReasonItem,
+  fileObjectId: number,
+  index: number
+): string {
+  return (
+    item.originalFileNames?.[index]?.trim() ||
+    item.fileName?.trim() ||
+    `증빙서류-${fileObjectId}`
+  )
 }
 
 function renderEvidenceCell(
   item: ProgramAttendanceAbsenceReasonItem,
-  onFileDownload?: (item: ProgramAttendanceAbsenceReasonItem) => void
+  onFileDownload?: ProgramAttendanceAbsenceReasonsProps['onFileDownload']
 ) {
-  if (!item.fileName) {
-    return <span className="program-attendance-absence-reasons__dash">-</span>
+  const fileObjectIds = item.fileObjectIds?.filter((id): id is number => typeof id === 'number') ?? []
+  if (fileObjectIds.length === 0) {
+    return <span className="program-attendance-absence-reasons__no-attachment">{NO_ATTACHMENT_LABEL}</span>
   }
+
   return (
-    <button
-      type="button"
-      className="program-attendance-absence-reasons__file"
-      onClick={() => onFileDownload?.(item)}
-    >
-      <AttachmentDownloadIcon className="program-attendance-absence-reasons__file-icon" />
-      <span className="program-attendance-absence-reasons__file-name">{item.fileName}</span>
-    </button>
+    <div className="program-attendance-absence-reasons__files">
+      {fileObjectIds.map((fileObjectId, index) => {
+        const fileName = resolveEvidenceFileName(item, fileObjectId, index)
+        return (
+          <button
+            key={`${item.id}-${fileObjectId}-${index}`}
+            type="button"
+            className="program-attendance-absence-reasons__file"
+            onClick={() => onFileDownload?.(item, fileObjectId, fileName)}
+          >
+            <AttachmentDownloadIcon className="program-attendance-absence-reasons__file-icon" />
+            <span className="program-attendance-absence-reasons__file-name">{fileName}</span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
