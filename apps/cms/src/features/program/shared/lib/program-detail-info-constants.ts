@@ -30,8 +30,53 @@ export function formatDateOnly(d: DateValue | undefined): string {
   return formatDateDotWithWeekday(d)
 }
 
+const SEOUL_DATE_TIME_PARTS = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Seoul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+
+function seoulClockParts(value: DateValue): { date: string; hour: number; minute: number } | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (/^\d{4}[.-]\d{1,2}[.-]\d{1,2}$/.test(trimmed)) return null
+  }
+  const date = value instanceof Date ? value : new Date(String(value))
+  if (Number.isNaN(date.getTime())) return null
+  const parts = SEOUL_DATE_TIME_PARTS.formatToParts(date)
+  const year = parts.find(part => part.type === 'year')?.value
+  const month = parts.find(part => part.type === 'month')?.value
+  const day = parts.find(part => part.type === 'day')?.value
+  const hour = Number(parts.find(part => part.type === 'hour')?.value)
+  const minute = Number(parts.find(part => part.type === 'minute')?.value)
+  if (!year || !month || !day || !Number.isFinite(hour) || !Number.isFinite(minute)) return null
+  return { date: `${year}.${month}.${day}`, hour, minute }
+}
+
+/** KST 00:00이면 날짜만, 그 외 `YYYY.MM.DD HH:mm` */
+export function formatDateWithOptionalTime(d: DateValue | undefined): string {
+  if (!d) return '-'
+  const clock = seoulClockParts(d)
+  if (!clock || (clock.hour === 0 && clock.minute === 0)) return formatDateOnly(d)
+  return `${clock.date} ${String(clock.hour).padStart(2, '0')}:${String(clock.minute).padStart(2, '0')}`
+}
+
 export function formatDateRange(start: DateValue | undefined, end: DateValue | undefined): string {
   if (!start || !end) return '-'
+  const startClock = seoulClockParts(start)
+  const endClock = seoulClockParts(end)
+  const startHasClock = Boolean(startClock && (startClock.hour !== 0 || startClock.minute !== 0))
+  const endHasClock = Boolean(endClock && (endClock.hour !== 0 || endClock.minute !== 0))
+  if (startHasClock || endHasClock) {
+    if (startClock && endClock && startClock.date === endClock.date) {
+      return `${startClock.date} ${String(startClock.hour).padStart(2, '0')}:${String(startClock.minute).padStart(2, '0')} ~ ${String(endClock.hour).padStart(2, '0')}:${String(endClock.minute).padStart(2, '0')}`
+    }
+    return `${formatDateWithOptionalTime(start)} ~ ${formatDateWithOptionalTime(end)}`
+  }
   const startAt = dayjs(start)
   const endAt = dayjs(end)
   if (!startAt.isValid() || !endAt.isValid()) return '-'

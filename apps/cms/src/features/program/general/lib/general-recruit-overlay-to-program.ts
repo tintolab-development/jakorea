@@ -898,11 +898,14 @@ export function applyGeneralRecruitOverlayToProgram(
 
   const individualFinalAnnounceIso = overlayString(overlay, keys.individual.finalAnnounceIso)
   const individualFinalAnnounceMethod = overlayString(overlay, keys.individual.finalAnnounceMethod)
-  const individualDocDeadlineIso = overlayString(overlay, keys.individual.docDeadlineIso)
-  const individualDocAnnounceMethod = overlayString(overlay, keys.individual.docAnnounceMethod)
   const individualInterviewEnabled = keepRecruitmentRows
     ? undefined
     : overlayYesNoBool(overlay, keys.individual.interviewRequired)
+  const individualDocDeadlineIso =
+    individualInterviewEnabled === false
+      ? undefined
+      : overlayString(overlay, keys.individual.docDeadlineIso)
+  const individualDocAnnounceMethod = overlayString(overlay, keys.individual.docAnnounceMethod)
   const individualInterviewRange = keepRecruitmentRows
     ? undefined
     : individualInterviewEnabled === false
@@ -1328,11 +1331,16 @@ export function applyGeneralRecruitOverlayToProgram(
   const volunteerInterviewEnabled = keepRecruitmentRows
     ? undefined
     : overlayYesNoBool(overlay, keys.volunteer.interviewRequired)
-  const volunteerDocDeadlineIso = overlayString(overlay, keys.volunteer.docDeadlineIso)
+  const volunteerDocDeadlineIso =
+    volunteerInterviewEnabled === false
+      ? undefined
+      : overlayString(overlay, keys.volunteer.docDeadlineIso)
   const volunteerDocAnnounceMethod = overlayString(overlay, keys.volunteer.docAnnounceMethod)
   const volunteerInterviewRange = keepRecruitmentRows
     ? undefined
-    : readRangeSeal(overlay, keys.volunteer.interviewRangeSeal)
+    : volunteerInterviewEnabled === false
+      ? undefined
+      : readRangeSeal(overlay, keys.volunteer.interviewRangeSeal)
   const volunteerInterviewMethod = overlayString(overlay, keys.volunteer.interviewMethod)
   const volunteerFinalAnnounceIso = overlayString(overlay, keys.volunteer.finalAnnounceIso)
   const volunteerFinalAnnounceMethod = overlayString(overlay, keys.volunteer.finalAnnounceMethod)

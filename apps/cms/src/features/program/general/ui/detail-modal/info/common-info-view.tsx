@@ -218,7 +218,6 @@ import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-p
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
@@ -720,10 +719,6 @@ function BasicInfoSection({
                   const start = toDayjs(field.value)
                   const end = toDayjs(endDateValue)
                   const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
-                  const operationRangeWithTime =
-                    operationRange == null
-                      ? false
-                      : dateRangeUsesClockTime(operationRange[0], operationRange[1])
 
                   return (
                     <div className="detail-info-form-inputs-wrapper-no-gap">
@@ -735,8 +730,9 @@ function BasicInfoSection({
                         width="100%"
                         placeholder="사업 운영 기간을 선택하세요"
                         preferPeriodModeInPopover
+                        showTimeToggle={false}
                         appliedSurfaceRange={operationRange}
-                        appliedSurfaceWithTime={operationRangeWithTime}
+                        appliedSurfaceWithTime={false}
                         onRangeChange={range => {
                           field.onChange(toIso(range[0]))
                           editForm.setValue('endDate', toIso(range[1]), {

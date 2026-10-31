@@ -138,6 +138,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                   mode="single"
                   presetMode="date"
                   customizable={false}
+                  suppressAutoTodayWhenEmpty
                   value={toDayjs(field.value)}
                   appliedSurfaceWithTime={optionalDateUsesClockTime(toDayjs(field.value))}
                   onChange={d => field.onChange(d ? d.toISOString() : undefined)}
@@ -251,6 +252,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                   mode="single"
                   presetMode="date"
                   customizable={false}
+                  suppressAutoTodayWhenEmpty
                   value={toDayjs(field.value)}
                   appliedSurfaceWithTime={optionalDateUsesClockTime(toDayjs(field.value))}
                   onChange={d => field.onChange(d ? d.toISOString() : undefined)}
@@ -360,6 +362,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                     render={({ field }) => (
                       <ParagraphDatePicker inputSize="small"
                         mode="range"
+                        showTimeToggle={false}
                         value={[
                           toDayjs(field.value as string | Date | undefined),
                           toDayjs(
@@ -369,15 +372,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                               | undefined
                           ),
                         ]}
-                        appliedSurfaceWithTime={optionalDateRangeUsesClockTime(
-                          toDayjs(field.value as string | Date | undefined),
-                          toDayjs(
-                            form.watch('volunteerProgramOperationEndDate') as
-                              | string
-                              | Date
-                              | undefined
-                          )
-                        )}
+                        appliedSurfaceWithTime={false}
                         onChange={([start, end]) => {
                           field.onChange(start ? start.toISOString() : '')
                           form.setValue(

@@ -81,7 +81,11 @@ import {
   omitProgramAuditNameFields,
   readProgramAuditNames,
 } from '@/features/program/shared/lib/program-audit-names'
-import { resolveAudienceProgramOperationIsoRange } from '@/features/program/general/lib/general-program-recruitment-operation-period'
+import {
+  resolveAudienceProgramOperationIsoRange,
+  toOperationCalendarDate,
+} from '@/features/program/general/lib/general-program-recruitment-operation-period'
+import { participantRecruitmentAnnouncementRequestFields } from '@/features/program/general/lib/participant-recruitment-announcement-request'
 import { resolveGeneralRecruitDetailDisplayProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import {
@@ -707,8 +711,8 @@ function recruitmentOperationRequestDates(
         : 'participant'
   const iso = resolveAudienceProgramOperationIsoRange(program, audience)
   return {
-    operationStartDate: toRequestDate(iso.start),
-    operationEndDate: toRequestDate(iso.end),
+    operationStartDate: toOperationCalendarDate(iso.start),
+    operationEndDate: toOperationCalendarDate(iso.end),
   }
 }
 
@@ -734,6 +738,7 @@ export function mapGeneralProgramRecruitmentsToRequest(
       ...recruitmentOperationRequestDates(program, 'PARTICIPANT'),
       maxCount: program.totalParticipants ?? program.approvedStudentCount ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
+      ...participantRecruitmentAnnouncementRequestFields(program, 'ORGANIZATION'),
     })
   }
 
@@ -747,6 +752,7 @@ export function mapGeneralProgramRecruitmentsToRequest(
       ...recruitmentOperationRequestDates(program, 'PARTICIPANT'),
       maxCount: program.totalParticipants ?? program.approvedStudentCount ?? undefined,
       selectionMethod: 'ADMIN_REVIEW',
+      ...participantRecruitmentAnnouncementRequestFields(program, 'INDIVIDUAL'),
     })
   }
 
@@ -1049,8 +1055,8 @@ function mapProgramCoreFieldsToRequest(program: Program): ProgramUpdateRequestBo
     description: program.description,
     startDate: toRequestDate(program.startDate),
     endDate: toRequestDate(program.endDate),
-    businessStartDate: toRequestDate(program.startDate),
-    businessEndDate: toRequestDate(program.endDate),
+    businessStartDate: toOperationCalendarDate(program.startDate) ?? toRequestDate(program.startDate),
+    businessEndDate: toOperationCalendarDate(program.endDate) ?? toRequestDate(program.endDate),
     ...applicationDatesInsideBusinessPeriod(program),
     recruitments: mapGeneralProgramRecruitmentsToRequest(program),
     businessArea,
@@ -1130,8 +1136,9 @@ export function mapGeneralProgramToCreateRequest(program: Program): ProgramCreat
       program.generalProgramAudience,
       program.generalParticipantTypes
     ),
-    businessStartDate: toRequestDate(program.startDate),
-    businessEndDate: toRequestDate(program.endDate),
+    businessStartDate:
+      toOperationCalendarDate(program.startDate) ?? toRequestDate(program.startDate),
+    businessEndDate: toOperationCalendarDate(program.endDate) ?? toRequestDate(program.endDate),
     autoApplyDefaultFormBindings: true,
   }) as ProgramCreateRequestBody
   return withTypedVolunteerInterviewConfigForCreate(body, program)

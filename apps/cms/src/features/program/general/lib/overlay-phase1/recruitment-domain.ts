@@ -271,10 +271,6 @@ function interviewScheduleFromValues(
   }
 }
 
-function assignIf(info: Record<string, unknown>, key: string, next: string | undefined): void {
-  if (next) info[key] = next
-}
-
 export function applyIndependentRecruitmentFormValues(
   program: Program,
   values: RecruitmentFormValues,
@@ -770,21 +766,24 @@ export function applyIndependentRecruitmentFormValues(
 
   const instructorFinalAnnounceIso = instructor?.finalAnnounceIso
   const instructorFinalAnnounceMethod = instructor?.finalAnnounceMethod
-  const volunteerDocDeadlineIso = volunteer?.docDeadlineIso
+  const volunteerDocDeadlineIso =
+    volunteerInterviewEnabled === false ? undefined : volunteer?.docDeadlineIso
   const volunteerDocAnnounceMethod = volunteer?.docAnnounceMethod
-  const volunteerInterviewRange = keepRecruitmentRows ? undefined : volunteer?.interviewRangeSeal
+  const volunteerInterviewRange =
+    keepRecruitmentRows || volunteerInterviewEnabled === false
+      ? undefined
+      : volunteer?.interviewRangeSeal
   const volunteerInterviewMethod = volunteer?.interviewMethod
   const volunteerFinalAnnounceIso = volunteer?.finalAnnounceIso
   const volunteerFinalAnnounceMethod = volunteer?.finalAnnounceMethod
-  const individualDocDeadlineIso = individual?.docDeadlineIso
+  const individualDocDeadlineIso =
+    individualInterviewEnabled === false ? undefined : individual?.docDeadlineIso
   const individualDocAnnounceMethod = individual?.docAnnounceMethod
   const individualInterviewRange =
     keepRecruitmentRows || individualInterviewEnabled === false
       ? undefined
       : individual?.interviewRangeSeal
   const individualInterviewMethod = individual?.interviewMethod
-
-  void assignIf
 
   return {
     ...program,

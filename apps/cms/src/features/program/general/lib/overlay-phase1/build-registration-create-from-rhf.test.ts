@@ -188,6 +188,73 @@ describe('buildGeneralProgramCreateFromWizardRhf', () => {
     expect(detail.resultAnnouncementDate).toBe(overlayIso)
   })
 
+  it('개인 면접 있음이면 CREATE 모집 행에 발표·면접 시각을 싣는다', () => {
+    const filled = filledCurriculumValues()
+    const result = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-announce-scope',
+      uiValues: {
+        ...filled,
+        extras: {
+          ...filled.extras,
+          participant: {
+            individual: true,
+            organization: false,
+            teacherInstructor: false,
+            volunteer: false,
+          },
+        },
+        recruitmentKv: {
+          'recruit.individual.interviewRequired': 'yes',
+          'recruit.individual.docDeadlineIso': '2026-11-09T02:00:00.000Z',
+          'recruit.individual.interviewRangeSeal': {
+            start: '2026-11-09T04:00:00.000Z',
+            end: '2026-11-09T06:00:00.000Z',
+          },
+          'recruit.individual.finalAnnounceIso': '2026-11-09T07:30:00.000Z',
+        },
+      },
+    })
+    const row = result.createRequest.recruitments?.find(item => item.targetType === 'INDIVIDUAL')
+    expect(row).toMatchObject({
+      interviewEnabled: true,
+      documentPassAnnouncementAt: '2026-11-09T02:00:00.000Z',
+      interviewStartAt: '2026-11-09T04:00:00.000Z',
+      interviewEndAt: '2026-11-09T06:00:00.000Z',
+      finalPassAnnouncementAt: '2026-11-09T07:30:00.000Z',
+    })
+    expect(result.program.resultAnnouncementDate).toBe('2026-11-09T07:30:00.000Z')
+    expect(result.persistOverlay['recruit.individual.finalAnnounceIso']).toBe(
+      '2026-11-09T07:30:00.000Z'
+    )
+  })
+
+  it('면접 없음이면 서류 발표 시드를 persist overlay에서 뺀다', () => {
+    const filled = filledCurriculumValues()
+    const result = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-announce-off',
+      uiValues: {
+        ...filled,
+        extras: {
+          ...filled.extras,
+          participant: {
+            individual: true,
+            organization: false,
+            teacherInstructor: false,
+            volunteer: false,
+          },
+        },
+        recruitmentKv: {
+          'recruit.individual.interviewRequired': 'no',
+          'recruit.individual.docDeadlineIso': '2026-10-31T12:00:35.429Z',
+        },
+      },
+    })
+    const row = result.createRequest.recruitments?.find(item => item.targetType === 'INDIVIDUAL')
+    expect(row?.interviewEnabled).toBe(false)
+    expect(row?.documentPassAnnouncementAt).toBeUndefined()
+    expect(result.persistOverlay['recruit.individual.docDeadlineIso']).toBeUndefined()
+  })
+
   it('발표일 미입력이면 CREATE에 등록 시각을 넣지 않는다', () => {
     const result = buildGeneralProgramCreateFromWizardRhf({
       id: 'local-announce-empty',

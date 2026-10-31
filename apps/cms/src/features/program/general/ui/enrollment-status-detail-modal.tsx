@@ -16,8 +16,8 @@ import { getCapacity } from '../lib/program-helpers'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   getRecruitmentStatus,
-  formatDateOnly,
   formatDateRange,
+  formatDateWithOptionalTime,
 } from '../../shared/lib/program-detail-info-constants'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
@@ -366,7 +366,7 @@ export function EnrollmentStatusDetailModal({
                   <td>
                     {program.resultAnnouncementDate
                       ? renderDetailInfoPipeSeparated(
-                          `${formatDateOnly(program.resultAnnouncementDate)} | ${program.resultAnnouncementMethod ?? '-'}`
+                          `${formatDateWithOptionalTime(program.resultAnnouncementDate)} | ${program.resultAnnouncementMethod ?? '-'}`
                         )
                       : '-'}
                   </td>
