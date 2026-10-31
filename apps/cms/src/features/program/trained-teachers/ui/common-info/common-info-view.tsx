@@ -101,7 +101,7 @@ import {
 } from '@/features/program/trained-teachers/lib/common-info-display'
 import { resolveTrainedTeachersCommonInfoDraftValidationAlert } from '@/features/program/trained-teachers/lib/validate-trained-teachers-common-info-draft'
 import {
-  isOutsideEducationOperationRange,
+  isEducationScheduleSelectionDateDisabled,
   toEducationOperationDayjs,
 } from '@/features/program/shared/lib/education-schedule-change'
 import {
@@ -1654,8 +1654,9 @@ function TrainedTeachersScheduleSettingsSection({
   const operationEndBound = toEducationOperationDayjs(
     isFormEdit ? (watchedOperationEnd ?? operationEnd) : operationEnd
   )
+  // 사업 운영 기간 밖 + 오늘 이전 비활성
   const disableOutsideOperation = (date: Dayjs) =>
-    isOutsideEducationOperationRange(date, operationStartBound, operationEndBound)
+    isEducationScheduleSelectionDateDisabled(date, operationStartBound, operationEndBound)
 
   const appendLineIfNew = (line: string) => {
     if (!form) return

@@ -22,6 +22,10 @@ import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { PROGRAM_REGISTRATION_GENERAL_SECTION_META } from '@/features/template/ui/form-set/registration-form/general/program-registration-general-section-meta'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
+import {
+  isEducationScheduleSelectionDateDisabled,
+  toEducationOperationDayjs,
+} from '@/features/program/shared/lib/education-schedule-change'
 
 const ROUND_DELIVERY_OPTIONS: { value: RoundDeliveryType; label: string }[] = [
   { value: 'online', label: '온라인' },
@@ -346,6 +350,15 @@ export function EducationScheduleSettingsSection({
     ? (formLines ?? resolveCompanySchoolEducationScheduleLines(program))
     : resolveCompanySchoolEducationScheduleLines(program)
   const scheduleRange = parseCompanySchoolScheduleLineToRange(lines[0])
+  // 「사업 운영 기간」(startDate~endDate) 밖 + 오늘 이전 비활성
+  const operationStartBound = toEducationOperationDayjs(
+    isFormEdit ? form.watch('startDate') : program.startDate
+  )
+  const operationEndBound = toEducationOperationDayjs(
+    isFormEdit ? form.watch('endDate') : program.endDate
+  )
+  const disableScheduleSelectionDate = (date: Dayjs) =>
+    isEducationScheduleSelectionDateDisabled(date, operationStartBound, operationEndBound)
 
   const handleScheduleRangeChange = (range: [Dayjs | null, Dayjs | null]) => {
     if (!form) return
@@ -386,6 +399,7 @@ export function EducationScheduleSettingsSection({
                 appliedSurfaceWithTime={false}
                 width={320}
                 placeholder="진행 기간을 선택하세요"
+                disabledDate={disableScheduleSelectionDate}
                 onRangeChange={range => handleScheduleRangeChange(range)}
                 onChange={next => {
                   if (next == null) {

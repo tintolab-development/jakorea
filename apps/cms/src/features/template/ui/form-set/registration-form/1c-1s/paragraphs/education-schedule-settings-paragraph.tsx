@@ -10,6 +10,12 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { patchInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { useProgramRegistrationOverlayKv } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
+import {
+  educationOperationRangeSealKeyFromSchedulePrefix,
+  isEducationScheduleSelectionDateDisabled,
+  toEducationOperationDayjs,
+  type EducationOperationRangeSeal,
+} from '@/features/program/shared/lib/education-schedule-change'
 import '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-paragraph.css'
 
 function isValidDayjs(d: Dayjs | null | undefined): d is Dayjs {
@@ -31,6 +37,17 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
   const [dateRangeSeal, setDateRangeSeal] = useProgramRegistrationOverlayKv<
     { start: string; end: string } | null
   >(`${overlayKeyPrefix}.dateRangeSeal`, null)
+  // 「사업 운영 기간」(economyRegistration.basicInfo.operationRangeSeal) 밖 + 오늘 이전 비활성
+  const [operationRangeSeal] = useProgramRegistrationOverlayKv<EducationOperationRangeSeal>(
+    educationOperationRangeSealKeyFromSchedulePrefix(overlayKeyPrefix),
+    null
+  )
+  const disableScheduleSelectionDate = (date: Dayjs) =>
+    isEducationScheduleSelectionDateDisabled(
+      date,
+      toEducationOperationDayjs(operationRangeSeal?.start),
+      toEducationOperationDayjs(operationRangeSeal?.end)
+    )
 
   const appliedRange = useMemo((): [Dayjs, Dayjs] | null => {
     if (dateRangeSeal == null) return null
@@ -81,6 +98,7 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
                 appliedSurfaceWithTime={false}
                 width={320}
                 placeholder="진행 기간을 선택하세요"
+                disabledDate={disableScheduleSelectionDate}
                 onRangeChange={range => persistRange(range)}
                 onChange={next => {
                   if (next == null) persistRange(null)

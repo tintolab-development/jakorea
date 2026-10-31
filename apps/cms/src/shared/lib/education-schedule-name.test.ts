@@ -29,6 +29,14 @@ describe('education schedule default name', () => {
     expect(toDisplayEducationScheduleName('공통 교육 예정 안내문')).toBe('공통 교육 예정 안내문')
   })
 
+  it('shows a 사전교육 schedule name as 「사전교육」 only', () => {
+    expect(toDisplayEducationScheduleName('사전 교육')).toBe('사전교육')
+    expect(toDisplayEducationScheduleName(' 사전  교육 ')).toBe('사전교육')
+    expect(toDisplayEducationScheduleName('사전교육')).toBe('사전교육')
+    expect(toDisplayEducationScheduleName('사전 교육 안내')).toBe('사전 교육 안내')
+    expect(toDisplayEducationScheduleName('교육 연수')).toBe('교육 연수')
+  })
+
   it('strips the default name from composed labels and keeps custom names', () => {
     expect(stripDefaultEducationSlotNameFromLabel('2026.11.06 18:38 ~ 19:38 | 공통 교육 예정 3')).toBe(
       '2026.11.06 18:38 ~ 19:38'
