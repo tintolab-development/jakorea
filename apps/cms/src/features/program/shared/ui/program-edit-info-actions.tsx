@@ -5,6 +5,7 @@ import {
   PROGRAM_EDIT_INFO_CANCEL_LABEL,
   PROGRAM_EDIT_INFO_SAVE_LABEL,
 } from '@/features/program/shared/lib/program-edit-info-button'
+import './program-edit-info-actions.css'
 
 export interface ProgramEditInfoActionsProps {
   isEditing: boolean
@@ -65,7 +66,7 @@ export function ProgramEditInfoActions({
 
   if (useToolbarButton) {
     return (
-      <>
+      <span className="program-edit-info-actions">
         <FilterTableToolbarButton
           variant="secondary"
           disabled={disabled || saving}
@@ -81,12 +82,12 @@ export function ProgramEditInfoActions({
           aria-label={PROGRAM_EDIT_INFO_SAVE_LABEL} >
           {PROGRAM_EDIT_INFO_SAVE_LABEL}
         </FilterTableToolbarButton>
-      </>
+      </span>
     )
   }
 
   return (
-    <>
+    <span className="program-edit-info-actions">
       <CmsButton
         size={resolvedSize}
         variant="secondary"
@@ -104,6 +105,6 @@ export function ProgramEditInfoActions({
         aria-label={PROGRAM_EDIT_INFO_SAVE_LABEL} >
         {PROGRAM_EDIT_INFO_SAVE_LABEL}
       </CmsButton>
-    </>
+    </span>
   )
 }
