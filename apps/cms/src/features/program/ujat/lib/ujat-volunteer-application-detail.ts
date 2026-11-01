@@ -6,8 +6,9 @@ import { formatAssignedInterviewFromIso } from '@/features/program/ujat/api/appl
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
 import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
-import type { Profile } from '@/shared/api/generated/dashboard/schemas/profile'
+import type { VolunteerApplicationProfile } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationProfile'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
+import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { mapUjatVolunteerGradeLabel } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 
@@ -116,11 +117,19 @@ function readScheduleChangeCancelCount(application: unknown): number | null {
 
 function applyVolunteerProfile(
   row: UjatVolunteerApplicantRow,
-  profile: Profile | null | undefined,
+  profile: VolunteerApplicationProfile | null | undefined,
 ): UjatVolunteerApplicantRow {
   if (!profile) return row
   const contact = text(profile.contact)
   const email = text(profile.email)
+  /**
+   * 학교 재학·소속은 profile 전용. application.ujat.universityName/grade 로 채우지 않는다.
+   * API null → 표시 레이어 `-` (여기서 ''로만 두고 ujat로 보완하지 않음).
+   */
+  const schoolEnrollmentStatus =
+    toSchoolEnrollmentStatusLabelOrRaw(profile.schoolEnrollmentStatus) ?? ''
+  const affiliationSchool = text(profile.affiliationSchool)
+  const affiliationGrade = text(profile.affiliationGrade)
   return {
     ...row,
     name: text(profile.name) || row.name,
@@ -134,6 +143,9 @@ function applyVolunteerProfile(
     id1365: text(profile.external1365Id) || row.id1365,
     /** MASKED는 homeAddress(시/도) 또는 homeAddressSido. sigungu로 보완하지 않음. */
     homeAddress: text(profile.homeAddress) || text(profile.homeAddressSido) || row.homeAddress,
+    schoolEnrollmentStatus,
+    affiliationSchool,
+    affiliationGrade,
   }
 }
 
@@ -141,7 +153,7 @@ function applyVolunteerProfile(
 export function applyUjatVolunteerApplicationDetail(
   row: UjatVolunteerApplicantRow,
   application: unknown,
-  profile?: Profile | null,
+  profile?: VolunteerApplicationProfile | null,
 ): UjatVolunteerApplicantRow {
   const next = applyVolunteerProfile(
     applyUjatVolunteerProjection(

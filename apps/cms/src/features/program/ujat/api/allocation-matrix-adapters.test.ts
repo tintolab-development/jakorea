@@ -74,6 +74,24 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     expect(table.rows[1]?.cells[0]).toMatchObject({ kind: 'empty', blockedEmpty: true })
   })
 
+  it('organizationRegion null 은 빈 문자열 invent 없이 UI - 로 표시한다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        columns: [
+          {
+            ...MATRIX.columns![0],
+            organizationRegion: null,
+            educationStartAt: '2026-11-05T15:00:00Z',
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.columns[0]?.location).toBe('-')
+    expect(table.columns[0]?.isoDate).toBe('2026-11-06')
+  })
+
   it('배정 불가 셀에 BE unavailability 대체자 이름을 붙인다', () => {
     const matrix: UjatAllocationMatrixResponse = {
       ...MATRIX,
@@ -141,6 +159,183 @@ describe('mapAllocationMatrixToRegionTableData', () => {
       },
     })
     expect(table.rows[0]?.cells[0]).toEqual({ kind: 'empty', blockedEmpty: true })
+  })
+
+  it('classCount만 있고 org/cell 슬롯이 없으면 classSlots를 invent하지 않는다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        columns: [{ ...MATRIX.columns![0]!, classCount: 3 }],
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김미배정',
+            cells: [{ columnKey: '10:100', scheduleId: 10, unavailable: false }],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.columns[0]?.classSlots).toEqual([])
+    expect(table.rows[0]?.cells[0]).toEqual({ kind: 'empty' })
+  })
+
+  it('org temporary slots가 있으면 educationSlotId invent 없이 그대로 쓴다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        columns: [{ ...MATRIX.columns![0]!, classCount: 5 }],
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김미배정',
+            cells: [{ columnKey: '10:100', scheduleId: 10 }],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+      orgSlots: [
+        {
+          slotId: 901,
+          scheduleId: 10,
+          organizationApplicationId: 100,
+          grade: '2',
+          className: '1반',
+          classLabel: '2-1',
+        },
+        {
+          slotId: 902,
+          scheduleId: 10,
+          organizationApplicationId: 100,
+          classLabel: '2-2',
+        },
+      ],
+    })
+    expect(table.columns[0]?.classSlots).toEqual([
+      { id: '901', classLabel: '2-1' },
+      { id: '902', classLabel: '2-2' },
+    ])
+  })
+
+  it('needsReassignment·singleAssignment 셀 플래그를 매핑한다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김단독',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                educationSlotId: 501,
+                classLabel: '3-1',
+                singleAssignment: true,
+                needsReassignment: true,
+                attendanceManager: false,
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows[0]?.cells[0]).toMatchObject({
+      kind: 'assigned',
+      classLabel: '3-1',
+      isSolo: true,
+      isInvalidAssignment: true,
+      isAttendanceManager: false,
+    })
+  })
+
+  it('columnKey가 없어도 scheduleId·organizationApplicationId로 셀을 매칭한다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김봉사',
+            cells: [
+              {
+                scheduleId: 10,
+                organizationApplicationId: 100,
+                educationSlotId: 501,
+                classLabel: '3-1',
+                unavailable: false,
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows[0]?.cells[0]).toMatchObject({
+      kind: 'assigned',
+      classLabel: '3-1',
+    })
+  })
+
+  it('cell.classLabel이 비면 동일 educationSlotId org temporary slot 라벨을 쓴다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김봉사',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                educationSlotId: 901,
+                classLabel: null,
+                unavailable: false,
+                assignmentStatus: 'ASSIGNED',
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+      orgSlots: [
+        {
+          slotId: 901,
+          scheduleId: 10,
+          organizationApplicationId: 100,
+          classLabel: '2-1',
+        },
+      ],
+    })
+    expect(table.rows[0]?.cells[0]).toMatchObject({
+      kind: 'assigned',
+      classLabel: '2-1',
+    })
+  })
+
+  it('columns가 비면 교육일 없는 빈 표로 두고 봉사자만 있는 반쪽 표를 만들지 않는다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        programId: 1,
+        educationRegionCode: 'SEOUL',
+        semesterType: 'FIRST_HALF',
+        columns: [],
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김봉사',
+            totalAssignedDays: 1,
+            cells: [],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.columns).toEqual([])
+    expect(table.rows).toHaveLength(1)
+    expect(table.rows[0]?.cells).toEqual([])
   })
 })
 

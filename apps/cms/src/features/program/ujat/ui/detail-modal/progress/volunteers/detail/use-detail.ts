@@ -64,6 +64,7 @@ function mapApplicantToProgressRow(
       : hasAssignment
         ? 'assignment_completed'
         : 'assignment_waiting',
+    ...(applicant.memberId ? { memberId: applicant.memberId } : {}),
   }
 }
 

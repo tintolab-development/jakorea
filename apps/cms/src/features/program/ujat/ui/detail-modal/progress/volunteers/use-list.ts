@@ -159,17 +159,16 @@ export function useUjatEducationProgressVolunteers(
   const allRows = useMemo(() => (remoteEnabled ? remoteRows : []), [remoteEnabled, remoteRows])
 
   const loadMemberOptions = useCallback(async () => {
-    const excludedNames = allRows.map(r => r.volunteerName)
     const excludedIds = allRows
       .map(r => r.memberId?.trim())
       .filter((id): id is string => Boolean(id))
     const options = await fetchUjatEducationProgressVolunteerMemberCandidates(
-      excludedNames,
+      programId,
       excludedIds
     )
     setMemberOptions(options)
     return options
-  }, [allRows])
+  }, [allRows, programId])
 
   const tableData = useMemo(
     () => filterRows(allRows, appliedFilters),
@@ -201,7 +200,7 @@ export function useUjatEducationProgressVolunteers(
     [programId, queryClient]
   )
 
-  const syncRowsFromMock = useCallback(() => {
+  const refreshVolunteerList = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: ujatQueryKeys.volunteerApplicationsRoot(programId),
     })
@@ -219,6 +218,6 @@ export function useUjatEducationProgressVolunteers(
     memberOptions,
     loadMemberOptions,
     addVolunteerFromMember,
-    syncRowsFromMock,
+    refreshVolunteerList,
   }
 }

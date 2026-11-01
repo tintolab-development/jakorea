@@ -4,6 +4,7 @@
 
 import dayjs from 'dayjs'
 import { formatArrivalTimeForDisplay } from '@/shared/lib/attendance-arrival-time'
+import { toSeoulYmd } from '@/features/program/ujat/api/applications-adapters'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
 import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
@@ -70,9 +71,8 @@ function formatDateLabel(iso: string | null | undefined): string {
 }
 
 function formatIsoDate(iso: string | null | undefined): string {
-  if (!iso) return ''
-  const d = dayjs(iso)
-  return d.isValid() ? d.format('YYYY-MM-DD') : ''
+  // Asia/Seoul 달력일. ❌ UTC slice(0,10) / 로컬 TZ 의존 dayjs.format
+  return toSeoulYmd(iso) ?? ''
 }
 
 function formatTimeRange(iso: string | null | undefined): string {
@@ -82,9 +82,54 @@ function formatTimeRange(iso: string | null | undefined): string {
   return `${d.format('HH:mm')}~`
 }
 
+function slotLabelFromOrg(slot: OrgSlot): string {
+  return (
+    slot.classLabel?.trim() ||
+    [slot.grade, slot.className].filter(Boolean).join('-') ||
+    (slot.slotId != null ? `학급 ${slot.slotId}` : '')
+  )
+}
+
+/** matrix cell.classLabel → 동일 educationSlotId의 org temporary-schedule 라벨 (invent 금지) */
+function resolveClassLabel(
+  cell: UjatAllocationCellDto | undefined,
+  orgSlots: OrgSlot[]
+): string {
+  const fromCell = cell?.classLabel?.trim()
+  if (fromCell) return fromCell
+  const slotId = cell?.educationSlotId
+  if (slotId == null) return ''
+  const slot = orgSlots.find(item => item.slotId === slotId)
+  return slot ? slotLabelFromOrg(slot) : ''
+}
+
+/**
+ * columnKey 우선, 없으면 scheduleId(+organizationApplicationId)로 매칭.
+ * 봉사자 상세 assignment-progress-adapter.cellForColumn 과 동일 계약.
+ */
+function cellForColumn(
+  volunteer: UjatAllocationVolunteerRowDto,
+  column: UjatAllocationColumnDto
+): UjatAllocationCellDto | undefined {
+  const columnKey = column.columnKey?.trim()
+  return (volunteer.cells ?? []).find(cell => {
+    if (columnKey && cell.columnKey === columnKey) return true
+    if (cell.scheduleId == null || cell.scheduleId !== column.scheduleId) return false
+    if (
+      column.organizationApplicationId != null &&
+      cell.organizationApplicationId != null &&
+      cell.organizationApplicationId !== column.organizationApplicationId
+    ) {
+      return false
+    }
+    return true
+  })
+}
+
 function mapCell(
   cell: UjatAllocationCellDto | undefined,
-  substituteName?: string
+  substituteName?: string,
+  orgSlots: OrgSlot[] = []
 ): RegionAssignmentCell {
   if (!cell) return { kind: 'empty' }
   if (cell.unavailable) {
@@ -92,8 +137,20 @@ function mapCell(
       ? { kind: 'empty', blockedEmpty: true, substituteName }
       : { kind: 'empty', blockedEmpty: true }
   }
-  const label = cell.classLabel?.trim()
-  if (!label) return { kind: 'empty' }
+  const label = resolveClassLabel(cell, orgSlots)
+  if (!label) {
+    // 재배정 필요인데 학급 라벨이 비어도 빨간 표기로 남긴다 (출석 세션과 동일)
+    if (cell.needsReassignment === true) {
+      return {
+        kind: 'assigned',
+        classLabel: '-',
+        isAttendanceManager: cell.attendanceManager === true,
+        isSolo: cell.singleAssignment === true,
+        isInvalidAssignment: true,
+      }
+    }
+    return { kind: 'empty' }
+  }
   return {
     kind: 'assigned',
     classLabel: label,
@@ -142,16 +199,11 @@ function buildClassSlotsForColumn(
       }
     }
   }
-  if (seen.size > 0) return [...seen.values()]
-
-  const count = column.classCount ?? 0
-  return Array.from({ length: count }, (_, index) => ({
-    id: `${columnKey || 'col'}-slot-${index + 1}`,
-    classLabel: `${index + 1}반`,
-  }))
+  // classCount로 N반 invent 금지 — org slots / 배정 cell의 educationSlotId만 SSOT
+  return [...seen.values()]
 }
 
-/** 배정 불가 셀이 있는 scheduleId — 대체자 조회(GET unavailability) 대상 */
+/** 참여 불가 셀이 있는 scheduleId — 대체자 조회(GET unavailability) 대상 */
 export function collectUnavailableScheduleIds(matrix: UjatAllocationMatrixResponse): string[] {
   const ids = new Set<string>()
   for (const volunteer of matrix.volunteers ?? []) {
@@ -219,14 +271,12 @@ export function mapAllocationMatrixToRegionTableData(params: {
 
   const rows: RegionAssignmentVolunteerRow[] = volunteersDto.map(volunteer => {
     const participantId = String(volunteer.participantId ?? '')
-    const cellsByKey = new Map(
-      (volunteer.cells ?? [])
-        .filter(c => c.columnKey)
-        .map(c => [String(c.columnKey), c] as const)
-    )
-    const cells = columns.map(column => {
-      const cell = cellsByKey.get(column.id)
-      return mapCell(cell, resolveSubstituteName(participantId, cell))
+    const cells = columns.map((column, columnIndex) => {
+      const columnDto = columnsDto[columnIndex]
+      const cell = columnDto
+        ? cellForColumn(volunteer, columnDto)
+        : (volunteer.cells ?? []).find(item => item.columnKey === column.id)
+      return mapCell(cell, resolveSubstituteName(participantId, cell), orgSlots)
     })
     return {
       id: participantId,

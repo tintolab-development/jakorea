@@ -13,6 +13,7 @@
   padding: 0;
 }
 
+/* Figma: 필터↔목록 디바이더 구간 */
 .ujat-education-progress-volunteers__filter-layout .filter-table-layout__divider {
   padding: 32px 0;
 }
@@ -22,6 +23,8 @@
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
 }
 
 .ujat-education-progress-volunteers__table-wrap {
@@ -39,7 +42,9 @@
   max-width: 100%;
 }
 
-.ujat-education-progress-volunteers__table-wrap .ujat-education-progress-volunteers__table table.ant-table {
+.ujat-education-progress-volunteers__table-wrap
+  .ujat-education-progress-volunteers__table
+  table.ant-table {
   table-layout: fixed !important;
   width: 100% !important;
   min-width: 100%;
@@ -47,4 +52,11 @@
 
 .ujat-education-progress-volunteers__table--clickable .ant-table-tbody > tr {
   cursor: pointer;
+}
+
+/* selection 열 — Figma 60px */
+.ujat-education-progress-volunteers__table.cms-data-table .ant-table-selection-column {
+  width: 60px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
 }

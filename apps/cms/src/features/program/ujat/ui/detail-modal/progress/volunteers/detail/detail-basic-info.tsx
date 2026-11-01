@@ -1,13 +1,20 @@
 import type { ReactNode } from 'react'
+import type { Program } from '@/types/domain'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { formatUjatVolunteerApplicationType } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
-import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import {
+  formatUjatVolunteerApplicationRoute,
+  formatUjatVolunteerBirthDateAndAge,
+  formatUjatVolunteerUniversityDisplay,
+  type UjatVolunteerPreferredRegion,
+} from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import {
   withProgramDetailTdDivider,
   ProgramDetailTdSegmentWrap,
 } from '@/features/program/shared/ui/program-detail-td-divider'
+import { UjatProgramListProgressCell } from '@/features/program/ujat/ui/list/ujat-program-list-progress-cell'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import '@/features/program/shared/ui/program-detail/project-info/project-info-form-shared.css'
 import './detail.css'
@@ -55,24 +62,26 @@ function toTableRows(
   return rows
 }
 
-function formatBirthDateAndAge(birthDate: string, age: number): string {
-  if (!birthDate || birthDate === '—') return '—'
-  const formatted = birthDate.replace(/\./g, '. ')
-  if (!age) return formatted
-  return `${formatted} (만 ${age}세)`
+function maskId1365(id: string): string {
+  if (!id || id === '—' || id === '-') return id || '-'
+  if (id.length <= 4) return '*'.repeat(id.length)
+  return `${id.slice(0, 4)}***`
 }
 
-function formatUniversityDisplay(universityName: string, _maskSensitive?: boolean): string {
-  return universityName
+function displayOrDash(value: string | null | undefined): string {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : '-'
 }
 
 export function UjatEducationProgressVolunteerDetailBasicInfo({
+  program,
   applicant,
   maskSensitive,
   isEditing = false,
   preferredRegionDraft,
   onPreferredRegionDraftChange,
 }: {
+  program: Program
   applicant: UjatVolunteerApplicantRow
   maskSensitive: boolean
   isEditing?: boolean
@@ -87,12 +96,25 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
 
   const contactDisplay = maskSensitive ? applicant.contact : applicant.contactRaw
   const emailDisplay = maskSensitive ? applicant.email : applicant.emailRaw
-  const universityDisplay = formatUniversityDisplay(applicant.universityName, maskSensitive)
+  const id1365Display = maskSensitive ? maskId1365(applicant.id1365) : applicant.id1365
+  const universityDisplay = formatUjatVolunteerUniversityDisplay(
+    applicant.universityName,
+    maskSensitive
+  )
   const universityGradeDisplay = withProgramDetailTdDivider([universityDisplay, applicant.grade])
   const genderBirthDisplay = withProgramDetailTdDivider([
     applicant.gender,
-    formatBirthDateAndAge(applicant.birthDate, applicant.age),
+    formatUjatVolunteerBirthDateAndAge(applicant.birthDate, applicant.age),
   ])
+  const hasAffiliation =
+    Boolean(applicant.affiliationSchool.trim()) || Boolean(applicant.affiliationGrade.trim())
+  const affiliationDisplay = hasAffiliation
+    ? withProgramDetailTdDivider([applicant.affiliationSchool, applicant.affiliationGrade])
+    : '-'
+  const applicationRouteDisplay = formatUjatVolunteerApplicationRoute(
+    applicant.applicationRoute,
+    applicant.applicationRouteOther
+  )
 
   const nameCell =
     applicant.scheduleChangeCancelCount > 0 ? (
@@ -107,21 +129,38 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
       applicant.name
     )
 
+  /** Figma 4082:109120 — 참여 봉사자 상세 · 신청 정보 필드 순서 */
   const basicInfoItems = [
+    {
+      key: 'programProgress',
+      label: '프로그램 진행 현황',
+      children: <UjatProgramListProgressCell program={program} />,
+      span: 2 as const,
+    },
     { key: 'name', label: '성명', children: nameCell },
-    { key: 'id1365', label: '1365 ID', children: applicant.id1365 },
-    { key: 'contact', label: '연락처', children: contactDisplay },
-    { key: 'email', label: '이메일', children: emailDisplay },
     {
       key: 'genderBirth',
       label: '성별 및 생년월일',
       children: <ProgramDetailTdSegmentWrap>{genderBirthDisplay}</ProgramDetailTdSegmentWrap>,
     },
     {
-      key: 'applicationType',
-      label: '지원 형태',
-      children: formatUjatVolunteerApplicationType(applicant.applicationType),
+      key: 'schoolEnrollment',
+      label: '학교 재학 여부',
+      children: displayOrDash(applicant.schoolEnrollmentStatus),
     },
+    {
+      key: 'affiliation',
+      label: '소속',
+      children: <ProgramDetailTdSegmentWrap>{affiliationDisplay}</ProgramDetailTdSegmentWrap>,
+    },
+    { key: 'contact', label: '연락처', children: displayOrDash(contactDisplay) },
+    { key: 'email', label: '이메일', children: displayOrDash(emailDisplay) },
+    {
+      key: 'homeAddress',
+      label: '자택 주소지',
+      children: displayOrDash(applicant.homeAddress),
+    },
+    { key: 'id1365', label: '1365 ID', children: displayOrDash(id1365Display) },
     {
       key: 'educationExperience',
       label: '교육 진행 경험 여부',
@@ -134,7 +173,7 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
     },
     {
       key: 'preferredRegion',
-      label: '교육 활동 지역',
+      label: '희망 교육 활동 지역',
       children: isEditing ? (
         <CmsSelect
           className="ujat-education-progress-volunteer-detail__preferred-region-select"
@@ -150,7 +189,7 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
           aria-label="희망 교육 활동 지역"
         />
       ) : (
-        applicant.preferredRegion
+        displayOrDash(applicant.preferredRegion)
       ),
     },
     {
@@ -158,13 +197,22 @@ export function UjatEducationProgressVolunteerDetailBasicInfo({
       label: '대학교 및 학년',
       children: <ProgramDetailTdSegmentWrap>{universityGradeDisplay}</ProgramDetailTdSegmentWrap>,
     },
-    { key: 'major', label: '대학 전공', children: applicant.major },
-    { key: 'applicationRoute', label: '지원 경로', children: applicant.applicationRoute, span: 2 as const },
+    { key: 'major', label: '대학 전공', children: displayOrDash(applicant.major) },
+    {
+      key: 'applicationType',
+      label: '지원 형태',
+      children: formatUjatVolunteerApplicationType(applicant.applicationType),
+    },
+    {
+      key: 'applicationRoute',
+      label: '지원 경로',
+      children: displayOrDash(applicationRouteDisplay),
+    },
   ]
 
   return (
     <div className="program-detail-fullpage-modal__info-tab-block">
-      <h3 className="program-detail-info-tab__section-title">봉사자 기본 정보</h3>
+      <h3 className="program-detail-info-tab__section-title">기본 정보</h3>
       <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
         <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
           <colgroup>

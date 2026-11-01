@@ -147,6 +147,7 @@ export function useUjatVolunteerInterview2({
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
   const [failModal, setFailModal] = useState<{ ids: string[]; volunteerName: string } | null>(null)
+  const [resultCompleteKind, setResultCompleteKind] = useState<'pass' | 'fail' | null>(null)
   const [now, setNow] = useState(() => dayjs())
   const finalResultInFlightRef = useRef(false)
 
@@ -178,6 +179,8 @@ export function useUjatVolunteerInterview2({
     setSelectedRowKeys([])
     setWithdrawTargetId(null)
     setBulkPassModalOpen(false)
+    setFailModal(null)
+    setResultCompleteKind(null)
     setNow(dayjs())
   }, [programId, half])
 
@@ -318,9 +321,14 @@ export function useUjatVolunteerInterview2({
       )
       setFailModal(null)
       if (!ok) return
+      setResultCompleteKind('fail')
     },
     [applySecondInterviewStatus, failModal]
   )
+
+  const closeResultCompleteModal = useCallback(() => {
+    setResultCompleteKind(null)
+  }, [])
 
   const handleBulkPass = useCallback(() => {
     const ids = selectedRowKeys.map(String)
@@ -369,7 +377,13 @@ export function useUjatVolunteerInterview2({
       confirmUjatVolunteerInterview2Pass({
         showConfirm: showInterview2Confirm,
         count: 1,
-        onConfirm: () => applySecondInterviewStatus([row.id], 'pass'),
+        onConfirm: () => {
+          void (async () => {
+            const ok = await applySecondInterviewStatus([row.id], 'pass')
+            if (!ok) return
+            setResultCompleteKind('pass')
+          })()
+        },
       })
     },
     [applySecondInterviewStatus, showInterview2Confirm]
@@ -528,6 +542,8 @@ export function useUjatVolunteerInterview2({
     failModal,
     closeFailModal,
     confirmInterview2Fail,
+    resultCompleteKind,
+    closeResultCompleteModal,
     filterRowsSource: list,
     requestWithdrawActivity,
     cancelWithdrawActivity,

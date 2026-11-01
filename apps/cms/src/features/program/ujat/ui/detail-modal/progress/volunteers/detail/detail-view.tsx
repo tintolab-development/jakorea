@@ -89,8 +89,6 @@ export function UjatEducationProgressVolunteerDetailView({
   const [studentCertificateExportContext, setStudentCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [studentCertificateExportActive, setStudentCertificateExportActive] = useState(false)
-  const [withdrawnScheduleRowIds, setWithdrawnScheduleRowIds] = useState<string[]>([])
-
   const preferredRegionCodeDraft = useMemo(
     () =>
       resolvePreferredRegionEducationCode(
@@ -115,7 +113,6 @@ export function UjatEducationProgressVolunteerDetailView({
     setStudentCertificateIssueModalOpen(false)
     setStudentCertificateExportContext(null)
     setStudentCertificateExportActive(false)
-    setWithdrawnScheduleRowIds([])
   }, [detail.volunteerId, detail.adminComment, preferredRegionCodeDraft])
 
   const assignmentProgress = useVolunteerAssignmentProgress({
@@ -126,12 +123,8 @@ export function UjatEducationProgressVolunteerDetailView({
   })
 
   const activityWithdrawScheduleOptions = useMemo(
-    () =>
-      getVolunteerActivityWithdrawScheduleOptions(
-        assignmentProgress.bundle.rows,
-        withdrawnScheduleRowIds
-      ),
-    [assignmentProgress.bundle.rows, withdrawnScheduleRowIds]
+    () => getVolunteerActivityWithdrawScheduleOptions(assignmentProgress.bundle.rows),
+    [assignmentProgress.bundle.rows]
   )
 
   const applicationNumericId = parseVolunteerApplicationNumericId(detail.volunteerId)
@@ -152,6 +145,13 @@ export function UjatEducationProgressVolunteerDetailView({
         queryKey: ujatQueryKeys.volunteerApplicationDetail(String(applicationNumericId)),
       })
     }
+    // 활동 포기 후 배정표·출결은 remote matrix giveUp이 SSOT. 로컬 invent만 남기지 않는다.
+    await queryClient.invalidateQueries({
+      queryKey: ujatQueryKeys.volunteerAssignmentProgressRoot(program.id),
+    })
+    await queryClient.invalidateQueries({
+      queryKey: ujatQueryKeys.allocationMatrixRoot(program.id),
+    })
   }, [applicationNumericId, detail.volunteerId, program.id, queryClient])
 
   const handleRequestActivityWithdraw = useCallback(() => {
@@ -186,13 +186,6 @@ export function UjatEducationProgressVolunteerDetailView({
           scheduleLabel ? `활동 포기 (${scheduleLabel})` : '활동 포기',
           hasStopSchedule ? { stopScheduleId } : undefined
         )
-        if (payload.stopScheduleRowId) {
-          setWithdrawnScheduleRowIds(prev =>
-            prev.includes(payload.stopScheduleRowId!)
-              ? prev
-              : [...prev, payload.stopScheduleRowId!]
-          )
-        }
         setActivityWithdrawModalOpen(false)
         await invalidateVolunteerRemote()
         onDetailSaved?.()
@@ -550,6 +543,7 @@ export function UjatEducationProgressVolunteerDetailView({
       <div className="ujat-education-progress-volunteer-detail__content">
         {activeTab === 'application' ? (
           <UjatEducationProgressVolunteerApplicationTab
+            program={program}
             detail={detail}
             adminComment={adminComment}
             maskSensitive={maskSensitive}
@@ -566,7 +560,6 @@ export function UjatEducationProgressVolunteerDetailView({
             memberId={detail.applicant.memberId ?? detail.row.memberId}
             regionKey={detail.row.regionKey}
             volunteerName={detail.applicant.name}
-            withdrawnScheduleRowIds={withdrawnScheduleRowIds}
           />
         )}
       </div>

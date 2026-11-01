@@ -51,6 +51,16 @@ export interface UjatVolunteerApplicantRow {
   totalAssignedDays: number | null
   /** 상세·unmask `profile.homeAddress`. MASKED는 시/도, UNMASKED는 원문 */
   homeAddress: string
+  /**
+   * 회원 프로필 학교 재학 여부 표시값.
+   * `profile.schoolEnrollmentStatus` → `toSchoolEnrollmentStatusLabelOrRaw`. null/없음 → '' (UI `-`).
+   * application.ujat 대학 필드로 채우지 않는다.
+   */
+  schoolEnrollmentStatus: string
+  /** 회원 프로필 소속 학교명. `profile.affiliationSchool`만. 대학명과 별개 */
+  affiliationSchool: string
+  /** 회원 프로필 소속 학년. `profile.affiliationGrade`만. UjatProjection.grade(대학 학년)와 별개 */
+  affiliationGrade: string
   managerAEvaluation: UjatManagerEvaluation
   managerBEvaluation: UjatManagerEvaluation
   documentScreeningStatus: UjatDocumentScreeningStatus

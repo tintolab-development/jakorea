@@ -22,6 +22,7 @@ import { UjatVolunteerInterview2BulkPassModal } from './bulk-pass-modal'
 import { isUjatVolunteerInterview2SelectableForResult } from './display'
 import { GeneralVolunteerInterview2FailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-fail-modal'
 import { GeneralVolunteerInterview2BulkFailModal } from '@/features/program/general/ui/detail-modal/applications/volunteer-screening/general-volunteer-interview2-bulk-fail-modal'
+import { UjatInterview2ResultCompleteModal } from './result-complete-modal'
 import { UjatVolunteerInterview2CalendarView } from './calendar-view'
 import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
@@ -72,6 +73,8 @@ export function Interview2Section({
     failModal,
     closeFailModal,
     confirmInterview2Fail,
+    resultCompleteKind,
+    closeResultCompleteModal,
     filterRowsSource,
     requestWithdrawActivity,
     cancelWithdrawActivity,
@@ -221,6 +224,14 @@ export function Interview2Section({
       />
     ) : null
 
+  const resultCompleteModal = (
+    <UjatInterview2ResultCompleteModal
+      open={resultCompleteKind != null}
+      kind={resultCompleteKind}
+      onClose={closeResultCompleteModal}
+    />
+  )
+
   if (selectedApplicant) {
     return (
       <>
@@ -236,6 +247,7 @@ export function Interview2Section({
         {interview2FailModal}
         {withdrawConfirmModal}
         {bulkPassModal}
+        {resultCompleteModal}
       </>
     )
   }
@@ -246,6 +258,7 @@ export function Interview2Section({
       {interview2FailModal}
       {withdrawConfirmModal}
       {bulkPassModal}
+      {resultCompleteModal}
       <FilterTableLayout
         bordered={false}
         className="ujat-volunteer-interview2__filter-layout"

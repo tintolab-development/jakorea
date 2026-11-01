@@ -128,6 +128,10 @@ describe('UJAT 기관 신청 상세 adapter', () => {
       applicationStatus: 'SUBMITTED',
     })
     const detail = enrichUjatInstitutionDetailFromRemote(row, {
+      textbookName: '우리가족',
+      textbookKits: 9,
+      textbookQuantity: 216,
+      textbookGrade: '1학년',
       gradeBlocks: [
         {
           gradeLabel: '6학년',
@@ -149,6 +153,95 @@ describe('UJAT 기관 신청 상세 adapter', () => {
       bookCount: null,
       textbookDeliveryStatus: null,
     })
+  })
+
+  it('숫자 gradeLabel과 명시 null 교재는 루트로 덮지 않고 정규화만 한다', () => {
+    const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
+      id: 32,
+      organizationName: '진월초등학교',
+      applicationStatus: 'SUBMITTED',
+    })
+    const detail = enrichUjatInstitutionDetailFromRemote(row, {
+      textbookName: 'UJAT 초등 경제교육 교재 05',
+      textbookDisplayLabel: 'UJAT 초등 경제교육 교재 05 초등학생',
+      textbookGrade: '2',
+      textbookKits: 2,
+      textbookQuantity: 41,
+      textbookDeliveryStatus: 'PREPARING',
+      gradeBlocks: [
+        {
+          gradeLabel: '2',
+          classCount: 2,
+          classes: [
+            { classNo: '1반', studentCount: 20 },
+            { classNo: '2반', studentCount: 21 },
+          ],
+          textbookName: 'UJAT 초등 경제교육 교재 05',
+          kitCount: 2,
+          bookCount: 41,
+          textbookDeliveryStatus: 'PREPARING',
+        },
+        {
+          gradeLabel: '6',
+          classCount: 1,
+          classes: [{ classNo: '8반', studentCount: 20 }],
+          textbookName: null,
+          kitCount: null,
+          bookCount: null,
+        },
+      ],
+    })
+
+    expect(detail.gradeBlocks[0]).toMatchObject({
+      gradeLabel: '2학년',
+      textbookName: 'UJAT 초등 경제교육 교재 05',
+      kitCount: 2,
+      bookCount: 41,
+    })
+    expect(detail.gradeBlocks[1]).toMatchObject({
+      gradeLabel: '6학년',
+      textbookName: null,
+      kitCount: null,
+      bookCount: null,
+    })
+  })
+
+  it('학년 블록에 교재 키가 없으면 루트 교재를 textbookGrade 일치 학년에만 반영한다', () => {
+    const row = mapOrganizationApplicationDetailToUjatInstitutionRow({
+      id: 31,
+      organizationName: '진월초등학교',
+      applicationStatus: 'SUBMITTED',
+    })
+    const detail = enrichUjatInstitutionDetailFromRemote(row, {
+      textbookDisplayLabel: '우리가족',
+      textbookKits: 9,
+      textbookQuantity: 216,
+      textbookGrade: '2학년',
+      gradeBlocks: [
+        {
+          gradeLabel: '2학년',
+          classCount: 2,
+          classes: [
+            { classNo: '1반', studentCount: 24 },
+            { classNo: '2반', studentCount: 24 },
+          ],
+        },
+        {
+          gradeLabel: '3학년',
+          classCount: 1,
+          classes: [{ classNo: '1반', studentCount: 20 }],
+        },
+      ],
+    })
+
+    expect(detail.gradeBlocks[0]).toMatchObject({
+      gradeLabel: '2학년',
+      textbookName: '우리가족',
+      kitCount: 9,
+      bookCount: 216,
+    })
+    expect(detail.gradeBlocks[1]?.textbookName).toBeUndefined()
+    expect(detail.gradeBlocks[1]?.kitCount).toBeUndefined()
   })
 
   it('preferredEducationDates가 비면 preferredEducationSchedules 달력일을 쓴다', () => {
