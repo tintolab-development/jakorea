@@ -98,7 +98,7 @@ describe('개인 수료증 API 계약', () => {
     ).toEqual({ kind: 'hidden' })
   })
 
-  it('목록 certificateAvailable 또는 ISSUE_CERTIFICATE를 투영한다', () => {
+  it('목록은 certificateAvailable을 복사하고 ISSUE_CERTIFICATE는 availableActions로 둔다', () => {
     expect(
       mapPortalProgramApplicationListItem({
         applicationId: 1694716,
@@ -112,34 +112,34 @@ describe('개인 수료증 API 계약', () => {
         availableActions: ['ISSUE_CERTIFICATE'],
       })?.certificateAvailable,
     ).toBe(true)
-    expect(
-      mapPortalProgramApplicationListItem({
-        applicationId: 1694719,
-        applicationType: 'INDIVIDUAL',
-        programId: 186514,
-        programType: 'GENERAL_INDIVIDUAL',
-        programGroup: 'GENERAL',
-        programTitle: '미발급',
-        displayStatus: '진행 완료',
-        certificateAvailable: false,
-        availableActions: ['ISSUE_CERTIFICATE'],
-      })?.certificateAvailable,
-    ).toBe(true)
+    const actionOnly = mapPortalProgramApplicationListItem({
+      applicationId: 1694719,
+      applicationType: 'INDIVIDUAL',
+      programId: 186514,
+      programType: 'GENERAL_INDIVIDUAL',
+      programGroup: 'GENERAL',
+      programTitle: '미발급',
+      displayStatus: '진행 완료',
+      certificateAvailable: false,
+      availableActions: ['ISSUE_CERTIFICATE'],
+    })
+    expect(actionOnly?.certificateAvailable).toBe(false)
+    expect(actionOnly?.availableActions).toEqual(['ISSUE_CERTIFICATE'])
   })
 
-  it('상세는 루트 certificateAvailable을 쓰지 않고 canIssueCertificate만 본다', () => {
-    expect(
-      mapPortalProgramApplicationDetail({
-        applicationId: 1694716,
-        applicationType: 'INDIVIDUAL',
-        programId: 186513,
-        programTitle: '플래그',
-        programGroup: 'GENERAL',
-        displayStatus: '진행 완료',
-        certificateAvailable: true,
-        capabilities: { canIssueCertificate: false },
-      })?.certificateAvailable,
-    ).toBe(false)
+  it('상세는 목록 certificateAvailable을 덮지 않고 canIssueCertificate·participantId를 쓴다', () => {
+    const blocked = mapPortalProgramApplicationDetail({
+      applicationId: 1694716,
+      applicationType: 'INDIVIDUAL',
+      programId: 186513,
+      programTitle: '플래그',
+      programGroup: 'GENERAL',
+      displayStatus: '진행 완료',
+      certificateAvailable: true,
+      capabilities: { canIssueCertificate: false },
+    })
+    expect(blocked?.canIssueCertificate).toBe(false)
+    expect(blocked?.certificateAvailable).toBe(true)
     const issued = mapPortalProgramApplicationDetail({
       applicationId: 1694716,
       applicationType: 'INDIVIDUAL',
@@ -148,9 +148,11 @@ describe('개인 수료증 API 계약', () => {
       programGroup: 'GENERAL',
       displayStatus: '진행 완료',
       capabilities: { canIssueCertificate: true },
-      participation: { certificateStatus: 'COMPLETION_ISSUED' },
+      participation: { participantId: 1695042, certificateStatus: 'COMPLETION_ISSUED' },
     })
-    expect(issued?.certificateAvailable).toBe(true)
+    expect(issued?.certificateAvailable).toBeUndefined()
+    expect(issued?.canIssueCertificate).toBe(true)
+    expect(issued?.participantId).toBe(1695042)
     expect(issued?.certificateStatus).toBe('COMPLETION_ISSUED')
   })
 })

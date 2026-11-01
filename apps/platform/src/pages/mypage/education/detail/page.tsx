@@ -24,6 +24,7 @@ import {
   EducationSettlementPanel,
   EducationStudentsPanel,
   EducationSurveySection,
+  EducationPersonalCertificatePanel,
   DocumentPassBanner,
   hasTeacherMypageProfile,
   isSchoolTeacherMypageProfile,
@@ -80,8 +81,7 @@ import {
   resolveTeacherApplicationProgramGroup,
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
-import { CertificateIssueCta } from '@/features/mypage/education/applications/ui/certificate-issue-cta'
-import { shouldShowDetailCertificateCta } from '@/features/mypage/education/applications/lib/certificate-cta'
+import { shouldShowPersonalCertificateAction } from '@/features/mypage/education/applications/lib/personal-certificate-eligibility'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import {
   resolveVisibleUjatScheduleBanner,
@@ -682,17 +682,16 @@ export function MypageEducationDetailPage() {
       application.applicationType ?? routeApplicationType ?? resolvedApplicationType,
     hasTeacherAssignment: Boolean(application.teacherAssignment),
   })
-  const showDetailCertificateCta =
+  const showPersonalCertificatePanel =
     !isProgramApplicationStatus &&
     !isWithdrawnDuring &&
     isActivityStatus &&
-    shouldShowDetailCertificateCta({
+    shouldShowPersonalCertificateAction({
       isTeacher,
       applicationType: routeApplicationType ?? application.applicationType,
       programType: application.programType ?? application.programConfig?.programType ?? program.programType,
       programGroup: application.programGroup,
       detailCase: application.detailCase,
-      canIssueCertificate: application.certificateAvailable,
     })
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection =
@@ -910,22 +909,26 @@ export function MypageEducationDetailPage() {
                 application.displayStatus === 'in_progress' ? sexOffenseInquiryCase : undefined
               }
             />
-          ) : showDetailCertificateCta ? (
-            <CertificateIssueCta
-              isTeacher={isTeacher}
-              applicationType={routeApplicationType ?? application.applicationType}
-              applicationId={application.id}
+          ) : showPersonalCertificatePanel ? (
+            <EducationPersonalCertificatePanel
               programId={application.programId ?? program.id}
-              programTitle={program.title}
-              programType={application.programType ?? application.programConfig?.programType ?? program.programType}
+              applicationId={application.id}
+              applicationType={
+                application.applicationType ?? routeApplicationType ?? resolvedApplicationType
+              }
+              programType={
+                application.programType ?? application.programConfig?.programType ?? program.programType
+              }
               programGroup={application.programGroup}
               detailCase={application.detailCase}
-              canIssueCertificate={application.certificateAvailable}
+              isTeacher={isTeacher}
               certificateStatus={application.certificateStatus}
+              canIssueCertificateHint={application.canIssueCertificate}
+              participantIdHint={application.participantId}
             />
           ) : undefined
         }
-        asideAlign={!showTeacherAssignment && showDetailCertificateCta ? 'end' : 'start'}
+        asideAlign={!showTeacherAssignment && showPersonalCertificatePanel ? 'end' : 'start'}
       />
 
       {ujatScheduleBanner && appliedSection === 'application' ? (
