@@ -21,11 +21,6 @@ export const GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS = [
   { key: 'student', label: '학생' },
 ] as const satisfies ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>>
 
-export const GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS = [
-  { key: 'volunteer_h1', label: '상반기 봉사자' },
-  { key: 'volunteer_h2', label: '하반기 봉사자' },
-] as const satisfies ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>>
-
 export const GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS = [
   { key: 'individual', label: '참여자' },
 ] as const satisfies ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>>
@@ -154,19 +149,10 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
   }
 
   if (isGeneralIndividualProgram(program)) {
-    if (programHasVolunteerParticipant(program)) {
-      return GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS
-    }
     return GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS
   }
 
-  const tabs: SurveyAudienceTab<GeneralSatisfactionAudienceKey>[] = [{ key: 'teacher', label: '교사' }]
-  if (programHasVolunteerParticipant(program)) {
-    tabs.push(...GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS)
-  } else {
-    tabs.push({ key: 'student', label: '학생' })
-  }
-  return tabs
+  return GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS
 }
 
 export function programHasGeneralSatisfactionSurvey(program: Program): boolean {
