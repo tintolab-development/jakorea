@@ -20,6 +20,9 @@ export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCe
 
   return (
     <span className="ujat-region-assignment-table__assignment">
+      {cell.isAttendanceManager ? (
+        <span className="ujat-region-assignment-table__attendance-badge">출결</span>
+      ) : null}
       <span
         className={[
           'ujat-region-assignment-table__class-label',
@@ -31,9 +34,6 @@ export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCe
       >
         {formatUjatGradeClassDisplayLabel(cell.classLabel)}
       </span>
-      {cell.isAttendanceManager ? (
-        <span className="ujat-region-assignment-table__attendance-badge">출결</span>
-      ) : null}
     </span>
   )
 }
