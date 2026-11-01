@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   buildSettlementTabPath,
   buildSettlementWritePath,
   clearSettlementWriteDraft,
+  EducationSettlementApplicationDocumentView,
   EducationSettlementConfirmView,
   loadSettlementWriteDraft,
   readSettlementRouteApplicationType,
   resolveSettlementAreaFromPathname,
   resolveSettlementDocumentKind,
+  useSettlementApplicationDocumentQuery,
   type SettlementWriteDraftLocationState,
 } from '@/features/mypage/education/settlements'
 import {
@@ -17,13 +19,10 @@ import {
 } from '@/features/mypage/education/applications'
 import {
   useApplicationSettlementsQuery,
-  useIndividualSettlementDetailQuery,
   useSubmitIndividualSettlementMutation,
 } from '@/features/mypage/education/applications/api/activity-hooks'
-import { mapIndividualSettlementDetailToDraft } from '@/features/mypage/education/settlements/lib/map-individual-settlement-detail'
 import { overlaySettlementBasicWithPaymentConsent } from '@/features/mypage/education/settlements/lib/map-payment-statement-basic-info'
 import { usePaymentStatementConsentBasicInfo } from '@/features/mypage/education/settlements/hooks/use-payment-statement-consent-basic-info'
-import { useInstructorApplyLockedBasic } from '@/features/mypage/instructor-apply'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import {
   buildIndividualSettlementResubmitRequest,
@@ -39,6 +38,12 @@ import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { PFAlertModal, PFFormPage, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 
+function readRevisionNoParam(raw: string | null): number | null {
+  if (!raw) return null
+  const n = Number(raw)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
 export function MypageEducationSettlementConfirmPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -49,6 +54,7 @@ export function MypageEducationSettlementConfirmPage() {
   const [searchParams] = useSearchParams()
   const sessionId = searchParams.get('sessionId') ?? ''
   const viewMode = searchParams.get('mode') === 'view'
+  const revisionNo = readRevisionNoParam(searchParams.get('revisionNo'))
   const remoteEnabled = isRemoteApiConfigured()
   const routeApplicationType =
     readSettlementRouteApplicationType(applicationTypeParam) ??
@@ -74,8 +80,7 @@ export function MypageEducationSettlementConfirmPage() {
     { programType },
   )
   const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
-  const { lockedBasic } = useInstructorApplyLockedBasic()
-  const consentBasicQuery = usePaymentStatementConsentBasicInfo(true)
+  const consentBasicQuery = usePaymentStatementConsentBasicInfo(!viewMode)
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
 
@@ -85,61 +90,51 @@ export function MypageEducationSettlementConfirmPage() {
   }, [remoteSettlements.enabled, remoteSettlements.items, sessionId])
 
   const storedDraft = useMemo(() => {
+    if (viewMode) return null
     const state = location.state as SettlementWriteDraftLocationState | null
     if (state?.draft && state.draft.meta.applicationId === applicationId) {
       return state.draft
     }
     if (!applicationId || !sessionId) return null
     return loadSettlementWriteDraft(applicationId, sessionId)
-  }, [applicationId, location.state, sessionId])
-  const detailQuery = useIndividualSettlementDetailQuery(
-    useIndividualSettlementApi && (viewMode || storedDraft == null)
-      ? session?.settlementApplicationId
-      : null,
-  )
+  }, [applicationId, location.state, sessionId, viewMode])
+
+  const documentApiKind =
+    documentKind === 'receipt' ? ('individual' as const) : ('instructor' as const)
+  const documentId = session?.settlementApplicationId ?? null
+  const documentQuery = useSettlementApplicationDocumentQuery({
+    kind: documentApiKind,
+    documentId,
+    revisionNo,
+    enabled: viewMode,
+  })
+  const refreshDocument = useCallback(() => documentQuery.refetch(), [documentQuery.refetch])
+
   const draft = useMemo(() => {
-    const mapped =
-      storedDraft ??
-      (viewMode && detailQuery.detail
-        ? mapIndividualSettlementDetailToDraft({
-            detail: detailQuery.detail,
-            applicationId,
-            name: lockedBasic.name,
-            homeAddress: lockedBasic.homeAddress,
-            homeAddressDetail: lockedBasic.homeAddressDetail,
-          })
-        : null)
-    if (!mapped) return mapped
+    if (viewMode) return null
+    if (!storedDraft) return null
     return {
-      ...mapped,
-      basic: overlaySettlementBasicWithPaymentConsent(mapped.basic, consentBasicQuery.basic),
+      ...storedDraft,
+      basic: overlaySettlementBasicWithPaymentConsent(storedDraft.basic, consentBasicQuery.basic),
     }
-  }, [
-    applicationId,
-    consentBasicQuery.basic,
-    detailQuery.detail,
-    documentKind,
-    lockedBasic.homeAddress,
-    lockedBasic.homeAddressDetail,
-    lockedBasic.name,
-    storedDraft,
-    viewMode,
-  ])
+  }, [consentBasicQuery.basic, storedDraft, viewMode])
 
   useEffect(() => {
     if (!applicationId || !sessionId) {
       navigate(buildSettlementTabPath(applicationId, area, applicationType), { replace: true })
       return
     }
-    if (!draft && !viewMode) {
+    if (viewMode) {
+      if (!remoteSettlements.isLoading && !session) {
+        navigate(buildSettlementTabPath(applicationId, area, applicationType), { replace: true })
+      }
+      return
+    }
+    if (!draft) {
       navigate(
         buildSettlementWritePath({ applicationId, sessionId, area, applicationType }),
         { replace: true },
       )
-      return
-    }
-    if (viewMode && !storedDraft && !remoteSettlements.isLoading && !session) {
-      navigate(buildSettlementTabPath(applicationId, area, applicationType), { replace: true })
     }
   }, [
     applicationId,
@@ -147,31 +142,63 @@ export function MypageEducationSettlementConfirmPage() {
     draft,
     navigate,
     remoteSettlements.isLoading,
-    session?.settlementApplicationId,
+    session,
     sessionId,
-    storedDraft,
     viewMode,
     applicationType,
-    documentKind,
   ])
 
-  if (!draft) {
-    if (viewMode && documentKind === 'payment_statement' && session) {
-      return (
-        <PFFormPage
-          aria-label="지급조서 확인"
-          className={styles.page}
-          innerClassName={styles.inner}
-          title="지급조서 확인"
-        >
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            {detailQuery.isLoading
-              ? '지급조서를 불러오는 중입니다.'
-              : '지급조서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'}
-          </PFText>
-        </PFFormPage>
-      )
+  if (viewMode) {
+    const pageTitle =
+      documentKind === 'receipt' ? '영수증 확인하기' : '지급조서 확인하기'
+    if (!session || documentId == null) {
+      if (remoteSettlements.isLoading) {
+        return (
+          <PFFormPage
+            aria-label={pageTitle}
+            className={styles.page}
+            innerClassName={styles.innerDocument}
+            title={pageTitle}
+          >
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              정산 신청서를 불러오는 중입니다.
+            </PFText>
+          </PFFormPage>
+        )
+      }
+      return null
     }
+
+    return (
+      <PFFormPage
+        aria-label={pageTitle}
+        className={styles.page}
+        innerClassName={styles.innerDocument}
+        title={pageTitle}
+      >
+        {documentQuery.isLoading ? (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            정산 신청서를 불러오는 중입니다.
+          </PFText>
+        ) : documentQuery.document ? (
+          <EducationSettlementApplicationDocumentView
+            document={documentQuery.document}
+            refreshing={documentQuery.isFetching}
+            onRefreshDocument={refreshDocument}
+            onBack={() =>
+              navigate(buildSettlementTabPath(applicationId, area, applicationType))
+            }
+          />
+        ) : (
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            정산 신청서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </PFText>
+        )}
+      </PFFormPage>
+    )
+  }
+
+  if (!draft) {
     return null
   }
 
@@ -249,10 +276,6 @@ export function MypageEducationSettlementConfirmPage() {
   }
 
   const handleBack = () => {
-    if (viewMode) {
-      navigate(buildSettlementTabPath(applicationId, area, applicationType))
-      return
-    }
     navigate(buildSettlementWritePath({ applicationId, sessionId, area, applicationType }), {
       state: { draft },
     })
@@ -270,7 +293,7 @@ export function MypageEducationSettlementConfirmPage() {
         programTitle={application?.title}
         session={session}
         submitting={submitMutation.isPending}
-        readOnly={viewMode}
+        readOnly={false}
         onComplete={handleComplete}
         onBack={handleBack}
       />
