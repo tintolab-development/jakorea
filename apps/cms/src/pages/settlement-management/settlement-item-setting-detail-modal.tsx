@@ -1939,6 +1939,8 @@ export interface SettlementItemSettingDetailModalProps {
   ) => Promise<void>
   item: SettlementItemSettingRow | null
   saving?: boolean
+  /** false면 입력·저장 비활성 (SETTLEMENT_WRITE 없음) */
+  canEdit?: boolean
 }
 
 export function SettlementItemSettingDetailModal({
@@ -1949,6 +1951,7 @@ export function SettlementItemSettingDetailModal({
   onSaveRemote,
   item,
   saving = false,
+  canEdit = true,
 }: SettlementItemSettingDetailModalProps) {
   const show = open && item !== null
   const snapshotRef = useRef<(() => SettlementItemSettingDetail | null) | null>(null)
@@ -2097,7 +2100,7 @@ export function SettlementItemSettingDetailModal({
             variant="primary"
             size="large"
             onClick={() => void handleSave()}
-            disabled={saving || !detailValid} >
+            disabled={saving || !detailValid || !canEdit} >
             저장
           </CmsButton>
         </>
