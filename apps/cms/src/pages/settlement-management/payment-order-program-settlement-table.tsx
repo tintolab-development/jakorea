@@ -7,9 +7,9 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
-  CmsButton,
   FilterTableToolbarButton
 } from '@/shared/ui'
+import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -220,15 +220,12 @@ export function PaymentOrderProgramSettlementTable({
         width: 196,
         align: 'center',
         render: (_: unknown, row: PaymentOrderAdminProgramDetailInstructorRow) => (
-          <CmsButton
-            variant="default"
-            size="small" className="payment-order-program-status-detail__detail-btn"
+          <CalculationDetailViewButton
             onClick={e => {
               e.stopPropagation()
               onOpenCalculationStatement(row)
-            }} >
-            상세 보기
-          </CmsButton>
+            }}
+          />
         ),
       },
     ],

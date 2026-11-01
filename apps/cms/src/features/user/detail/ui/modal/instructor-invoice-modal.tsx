@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { useCmsAlert } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { getInstructorSettlementInvoiceStatusPresentation } from '@/shared/constants/instructor-settlement-status'
@@ -410,9 +411,7 @@ export function InstructorInvoiceModal({
                               </td>
                               <td>
                                 <div className="instructor-invoice-modal__basis-detail-btn-wrap">
-                                  <CmsButton
-                                    variant="default"
-                                    size="large"
+                                  <CalculationDetailViewButton
                                     onClick={() =>
                                       handleBasisDetailClick(
                                         buildBasisDetailTableRow({
@@ -422,9 +421,8 @@ export function InstructorInvoiceModal({
                                           ...lectureDateParts,
                                         })
                                       )
-                                    } >
-                                    상세 보기
-                                  </CmsButton>
+                                    }
+                                  />
                                 </div>
                               </td>
                             </tr>
@@ -437,9 +435,7 @@ export function InstructorInvoiceModal({
                             </td>
                             <td>
                               <div className="instructor-invoice-modal__basis-detail-btn-wrap">
-                                <CmsButton
-                                  variant="default"
-                                  size="large"
+                                <CalculationDetailViewButton
                                   onClick={() =>
                                     handleBasisDetailClick(
                                       buildBasisDetailTableRow({
@@ -456,9 +452,8 @@ export function InstructorInvoiceModal({
                                         ...lectureDateParts,
                                       })
                                     )
-                                  } >
-                                  상세 보기
-                                </CmsButton>
+                                  }
+                                />
                               </div>
                             </td>
                           </tr>
