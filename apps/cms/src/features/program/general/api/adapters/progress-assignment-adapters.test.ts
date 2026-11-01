@@ -267,28 +267,10 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
     expect(sessions[0]?.participants[0]?.submission).toEqual({ kind: 'not_submitted' })
   })
 
-  it('falls back to education schedules and participant roster when assignment items are empty', () => {
+  it('does not invent schedules from dashboard when assignment items are empty', () => {
     const sessions = buildProgressAssignmentSessionsFromRemote(
       { items: [] },
       {
-        schedules: [
-          {
-            scheduleId: 801,
-            sessionNo: 1,
-            scheduleName: '1회차',
-            startAt: '2026-01-09T00:20:00Z',
-            endAt: '2026-01-09T02:20:00Z',
-            scheduleRole: 'EDUCATION',
-          },
-          {
-            scheduleId: 802,
-            sessionNo: 2,
-            scheduleName: '2회차',
-            startAt: '2026-01-12T00:20:00Z',
-            endAt: '2026-01-12T02:20:00Z',
-            scheduleRole: 'SESSION',
-          },
-        ],
         participants: [
           {
             participantId: 11,
@@ -303,9 +285,109 @@ describe('buildProgressAssignmentSessionsFromRemote', () => {
       }
     )
 
-    expect(sessions.map(session => session.id)).toEqual(['801', '802'])
-    expect(sessions[0]?.participants.map(row => row.name)).toEqual(['김제이'])
+    expect(sessions).toEqual([])
+  })
+
+  it('keeps BE scheduleId groups, periods, and submissions without remapping (program 186507)', () => {
+    const sessions = buildProgressAssignmentSessionsFromRemote({
+      items: [
+        {
+          scheduleId: 187614,
+          sessionNo: null,
+          scheduleName: '사전 교육',
+          startAt: '2026-10-29T15:00:00Z',
+          endAt: '2026-10-30T14:59:59.999Z',
+          assignmentEnabled: false,
+          assignmentPeriodStart: '2026-10-30T15:00:00Z',
+          assignmentPeriodEnd: '2026-10-31T14:59:59.999Z',
+          participants: [],
+        },
+        {
+          scheduleId: 187612,
+          sessionNo: 1,
+          scheduleName: '개인일정111',
+          startAt: '2026-10-30T15:00:00Z',
+          endAt: '2026-10-31T14:59:59.999Z',
+          assignmentEnabled: true,
+          assignmentPeriodStart: '2026-10-30T15:00:00Z',
+          assignmentPeriodEnd: '2026-10-31T14:59:59.999Z',
+          participants: [
+            {
+              participantId: 1695037,
+              memberName: '한서윤',
+              submissionStatus: 'NOT_SUBMITTED',
+              files: [],
+            },
+          ],
+        },
+        {
+          scheduleId: 187613,
+          sessionNo: 2,
+          scheduleName: '팀일정111',
+          startAt: '2026-10-31T15:00:00Z',
+          endAt: '2026-11-01T14:59:59.999Z',
+          assignmentEnabled: true,
+          assignmentPeriodStart: '2026-10-31T15:00:00Z',
+          assignmentPeriodEnd: '2026-11-01T14:59:59.999Z',
+          participants: [
+            {
+              participantId: 1695037,
+              memberName: '한서윤',
+              submissionStatus: 'SUBMITTED',
+              files: [
+                {
+                  fileObjectId: 55,
+                  originalFileName: '팀과제.pdf',
+                  downloadable: true,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    expect(sessions.map(session => session.id)).toEqual(['187612', '187613'])
+    expect(sessions[0]?.filterValue).toBe('187612')
+    expect(sessions[1]?.filterValue).toBe('187613')
+    // Asia/Seoul calendar days from BE Z instants (15:00Z = local midnight)
+    expect(sessions[0]?.assignmentPeriodLabel).toMatch(/2026\.10\.3[01]/)
+    expect(sessions[1]?.assignmentPeriodLabel).toMatch(/2026\.11\.0?1|2026\.10\.31/)
+    expect(sessions[0]?.assignmentPeriodLabel).not.toBe(sessions[1]?.assignmentPeriodLabel)
     expect(sessions[0]?.participants[0]?.submission).toEqual({ kind: 'not_submitted' })
-    expect(sessions[1]?.participants.map(row => row.name)).toEqual(['김제이'])
+    expect(sessions[1]?.participants[0]?.submission).toMatchObject({
+      kind: 'submitted',
+      fileName: '팀과제.pdf',
+      fileObjectId: 55,
+    })
+  })
+
+  it('does not fill missing assignment periods from curriculum by round index', () => {
+    const sessions = buildProgressAssignmentSessionsFromRemote(
+      {
+        items: [
+          {
+            scheduleId: 501,
+            sessionNo: 1,
+            startAt: '2026-10-20T01:00:00Z',
+            endAt: '2026-10-20T03:00:00Z',
+            assignmentEnabled: true,
+            participants: [],
+          },
+        ],
+      },
+      {
+        program: {
+          id: 'p1',
+          generalCommonInfo: {
+            curriculumSessions: [
+              { sessionLabel: '1회차', assignmentPeriod: '2026-01-01 ~ 2026-01-07' },
+            ],
+          },
+        } as never,
+      }
+    )
+
+    expect(sessions[0]?.assignmentPeriodLabel).toBe('')
   })
 })

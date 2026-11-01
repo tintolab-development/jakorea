@@ -74,4 +74,14 @@ describe('filterProgressAssignmentSessionGroups', () => {
     expect(result.map(item => item.id)).toEqual(['2'])
     expect(result[0]?.participants).toEqual([])
   })
+
+  it('filters by BE scheduleId (e.g. 187613) without remapping', () => {
+    const result = filterProgressAssignmentSessionGroups(
+      [session('187612', [rosterRow]), session('187613', [rosterRow])],
+      { ...EMPTY_FILTERS, educationSchedule: '187613' }
+    )
+
+    expect(result.map(item => item.id)).toEqual(['187613'])
+    expect(result[0]?.filterValue).toBe('187613')
+  })
 })
