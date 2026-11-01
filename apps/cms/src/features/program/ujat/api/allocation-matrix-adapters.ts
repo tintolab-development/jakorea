@@ -134,7 +134,7 @@ function mapCell(
   if (status === 'ASSIGNED' || needsReassignment || label) {
     return {
       kind: 'assigned',
-      classLabel: label || '-',
+      classLabel: label || '—',
       isAttendanceManager: cell.attendanceManager === true,
       isSolo: cell.singleAssignment === true,
       isInvalidAssignment: needsReassignment,
@@ -324,13 +324,14 @@ export function buildUjatAttendanceSessionsFromMatrix(params: {
         const arrival = attendance?.arrivalTime
         return {
           id: participantId,
-          name: v.volunteerName?.trim() || `봉사자 ${participantId}`,
+          // VolunteerRow에 phone/email 없음 → 렌더 레이어 `-`만. 다른 API로 보완 금지
+          name: v.volunteerName?.trim() || '-',
           assignedClass: findAssignedClassLabel(v, columnKey),
           contact: '-',
           email: '-',
           status,
           checkInTime: formatArrivalTimeForDisplay(arrival),
-          excusedReason: attendance?.absenceReason || undefined,
+          excusedReason: attendance?.absenceReason?.trim() || undefined,
           isDropout: v.giveUp === true,
         }
       })

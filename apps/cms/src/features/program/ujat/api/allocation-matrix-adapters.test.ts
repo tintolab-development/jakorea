@@ -311,7 +311,120 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     })
     expect(table.rows[0]?.cells[0]).toMatchObject({
       kind: 'assigned',
-      classLabel: '-',
+      classLabel: '—',
+    })
+  })
+
+  it('FIRST_HALF columns=[]이면 cells=[]이고 totalAssignedDays 응답(0)을 그대로 둔다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        programId: 186495,
+        educationRegionCode: 'SEOUL',
+        semesterType: 'FIRST_HALF',
+        columns: [],
+        volunteers: [
+          {
+            participantId: 1,
+            volunteerName: '김민수',
+            totalAssignedDays: 0,
+            cells: [],
+          },
+          {
+            participantId: 2,
+            volunteerName: '이서연',
+            totalAssignedDays: 0,
+            cells: [],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.columns).toEqual([])
+    expect(table.rows.map(row => row.totalAssignedDays)).toEqual([0, 0])
+    expect(table.rows.every(row => row.cells.length === 0)).toBe(true)
+  })
+
+  it('SECOND_HALF ASSIGNED classLabel(2학년 1반/2반)을 matrix 응답 그대로 유지한다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        programId: 186495,
+        educationRegionCode: 'SEOUL',
+        semesterType: 'SECOND_HALF',
+        columns: [
+          {
+            columnKey: '187580:1',
+            scheduleId: 187580,
+            organizationApplicationId: 1,
+            educationStartAt: '2026-09-04T09:00:00+09:00',
+            organizationName: '제이초등학교',
+            organizationRegion: '강서구',
+          },
+          {
+            columnKey: '187581:1',
+            scheduleId: 187581,
+            organizationApplicationId: 1,
+            educationStartAt: '2026-09-11T09:00:00+09:00',
+            organizationName: '제이초등학교',
+            organizationRegion: '강서구',
+          },
+        ],
+        volunteers: [
+          {
+            participantId: 1,
+            volunteerName: '김민수',
+            totalAssignedDays: 1,
+            cells: [
+              {
+                columnKey: '187580:1',
+                scheduleId: 187580,
+                classLabel: '2학년 1반',
+                unavailable: false,
+                assignmentStatus: 'ASSIGNED',
+              },
+              {
+                columnKey: '187581:1',
+                scheduleId: 187581,
+                classLabel: null,
+                unavailable: false,
+                assignmentStatus: 'UNASSIGNED',
+              },
+            ],
+          },
+          {
+            participantId: 2,
+            volunteerName: '이서연',
+            totalAssignedDays: 1,
+            cells: [
+              {
+                columnKey: '187580:1',
+                scheduleId: 187580,
+                classLabel: null,
+                unavailable: false,
+                assignmentStatus: 'UNASSIGNED',
+              },
+              {
+                columnKey: '187581:1',
+                scheduleId: 187581,
+                classLabel: '2학년 2반',
+                unavailable: false,
+                assignmentStatus: 'ASSIGNED',
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.columns.map(column => column.scheduleId)).toEqual(['187580', '187581'])
+    expect(table.rows[0]?.totalAssignedDays).toBe(1)
+    expect(table.rows[0]?.cells[0]).toMatchObject({
+      kind: 'assigned',
+      classLabel: '2학년 1반',
+    })
+    expect(table.rows[1]?.totalAssignedDays).toBe(1)
+    expect(table.rows[1]?.cells[1]).toMatchObject({
+      kind: 'assigned',
+      classLabel: '2학년 2반',
     })
   })
 

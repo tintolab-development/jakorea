@@ -45,6 +45,9 @@ export function UjatEducationProgressAttendanceSection({
     resetRegionState,
     saveSessionVolunteers,
     getSessionVolunteers,
+    isLoading,
+    isError,
+    isRemote,
   } = useUjatEducationProgressAttendance(programId, half, activeRegion)
 
   const firstSession = sessionGroups[0]
@@ -123,7 +126,17 @@ export function UjatEducationProgressAttendanceSection({
           ) : null
         }
       >
-        {sessionGroups.length === 0 ? (
+        {isLoading ? (
+          <div className="ujat-education-progress-attendance__empty">출석 정보를 불러오는 중입니다.</div>
+        ) : isError ? (
+          <div className="ujat-education-progress-attendance__empty" role="alert">
+            출석 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </div>
+        ) : !isRemote ? (
+          <div className="ujat-education-progress-attendance__empty">
+            원격 API를 사용할 수 없어 출석 목록을 표시하지 않습니다.
+          </div>
+        ) : sessionGroups.length === 0 ? (
           <div className="ujat-education-progress-attendance__empty">조회 결과가 없습니다.</div>
         ) : (
           <div className="ujat-education-progress-attendance__groups">
