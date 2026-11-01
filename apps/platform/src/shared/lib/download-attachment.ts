@@ -145,6 +145,14 @@ async function fetchAttachmentBlob(
   return fetchBlobOnce(signedUrl, requiredHeaders)
 }
 
+/** Portal public file download 등 JSON `{ downloadUrl }` 래퍼를 한 번 더 따라간다. */
+export async function fetchResolvedAttachmentBlob(
+  url: string,
+  requiredHeaders?: Record<string, string>,
+): Promise<Blob> {
+  return fetchAttachmentBlob(url.trim(), requiredHeaders)
+}
+
 /**
  * 첨부 다운로드. 실 URL은 blob으로 받아 파일명으로 저장한다.
  * 없거나 `#`이면 확장자에 맞는 MIME의 빈 Blob을 저장한다.
