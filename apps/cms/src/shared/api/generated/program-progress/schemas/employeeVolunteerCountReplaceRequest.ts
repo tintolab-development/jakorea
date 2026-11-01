@@ -8,9 +8,11 @@
 import type { EmployeeVolunteerCountEntryRequest } from './employeeVolunteerCountEntryRequest';
 
 export interface EmployeeVolunteerCountReplaceRequest {
-  /** @nullable */
-  organizationApplicationId?: number | null;
-  /** @minItems 1 */
+  organizationApplicationId?: number;
+  /**
+     * @minItems 1
+     * @maxItems 2147483647
+     */
   entries: EmployeeVolunteerCountEntryRequest[];
   /**
      * @minLength 5

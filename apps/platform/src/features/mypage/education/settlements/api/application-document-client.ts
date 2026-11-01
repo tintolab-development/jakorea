@@ -1,6 +1,13 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import type { SettlementApplicationDocumentResponse } from './application-document-types'
 
+export type SettlementApplicationDocumentAttachmentDownload = {
+  fileObjectId?: number
+  downloadUrl?: string
+  expiresAt?: string
+  requiredHeaders?: Record<string, string>
+}
+
 /**
  * 강사 신청서 GET만 ApiResponse 래퍼를 쓴다.
  * 개인 일정 GET은 SettlementApplicationDocumentResponse 직접 반환 — unwrap 강제 금지.
@@ -26,7 +33,7 @@ export type FetchSettlementApplicationDocumentParams = {
  */
 export async function fetchIndividualSettlementApplicationDocument(
   settlementApplicationId: number,
-  params?: FetchSettlementApplicationDocumentParams,
+  params?: FetchSettlementApplicationDocumentParams
 ): Promise<SettlementApplicationDocumentResponse> {
   const { data } = await axiosClient.get<SettlementApplicationDocumentResponse>(
     `/api/portal/me/individual-settlements/${settlementApplicationId}/application-document`,
@@ -36,7 +43,7 @@ export async function fetchIndividualSettlementApplicationDocument(
         params?.revisionNo != null && params.revisionNo > 0
           ? { revisionNo: params.revisionNo }
           : undefined,
-    },
+    }
   )
   return data
 }
@@ -47,7 +54,7 @@ export async function fetchIndividualSettlementApplicationDocument(
  */
 export async function fetchInstructorSettlementApplicationDocument(
   applicationId: number,
-  params?: FetchSettlementApplicationDocumentParams,
+  params?: FetchSettlementApplicationDocumentParams
 ): Promise<SettlementApplicationDocumentResponse> {
   const { data } = await axiosClient.get<unknown>(
     `/api/portal/me/settlement-applications/${applicationId}/application-document`,
@@ -57,7 +64,18 @@ export async function fetchInstructorSettlementApplicationDocument(
         params?.revisionNo != null && params.revisionNo > 0
           ? { revisionNo: params.revisionNo }
           : undefined,
-    },
+    }
   )
   return unwrapInstructorDocumentEnvelope(data)
+}
+
+/** 정산 신청서 첨부는 현재 회원 포털 파일 다운로드 정책을 사용한다. */
+export async function requestSettlementApplicationDocumentAttachmentDownload(
+  fileObjectId: number
+): Promise<SettlementApplicationDocumentAttachmentDownload> {
+  const { data } = await axiosClient.post<unknown>(
+    `/api/portal/me/files/${encodeURIComponent(String(fileObjectId))}/download-requests`,
+    { purpose: 'settlement-application-document' }
+  )
+  return unwrapInstructorDocumentEnvelope(data) as SettlementApplicationDocumentAttachmentDownload
 }

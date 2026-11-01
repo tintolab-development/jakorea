@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import type { SettlementApplicationDocumentResponse } from '../api/application-document-types'
+import { requestSettlementApplicationDocumentAttachmentDownload } from '../api/application-document-client'
 import {
   buildSettlementDocumentBasicRows,
   buildSettlementDocumentCalcRows,
@@ -11,7 +12,7 @@ import {
   settlementDocumentPayDeductionLabel,
   warnIfSettlementDocumentTotalMismatch,
 } from '../lib/format-application-document'
-import { resolveSettlementDocumentAttachmentViewUrl } from '../lib/resolve-attachment-view-url'
+import { fetchPortalSignedDownloadBlob } from '@/shared/lib/portal-signed-download-fetch'
 import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import styles from './application-document-view.module.css'
 
@@ -22,15 +23,22 @@ type EducationSettlementApplicationDocumentViewProps = {
   refreshing?: boolean
 }
 
-function isImageContentType(contentType: string | null, fileName: string | null): boolean {
-  if (contentType?.toLowerCase().startsWith('image/')) return true
-  const name = fileName?.toLowerCase() ?? ''
-  return /\.(png|jpe?g|gif|webp|bmp)$/.test(name)
+function saveAttachmentBlob(fileName: string, blob: Blob): void {
+  const objectUrl = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = objectUrl
+  anchor.download = fileName || '첨부파일'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
 }
 
-function isPdfContentType(contentType: string | null, fileName: string | null): boolean {
-  if (contentType?.toLowerCase().includes('pdf')) return true
-  return (fileName?.toLowerCase() ?? '').endsWith('.pdf')
+function formatAttachmentSize(fileSize: number | undefined): string | null {
+  if (!Number.isFinite(fileSize) || fileSize == null || fileSize < 0) return null
+  if (fileSize < 1024) return `${fileSize} B`
+  if (fileSize < 1024 * 1024) return `${Math.round(fileSize / 1024)} KB`
+  return `${(fileSize / (1024 * 1024)).toFixed(1)} MB`
 }
 
 export function EducationSettlementApplicationDocumentView({
@@ -39,37 +47,48 @@ export function EducationSettlementApplicationDocumentView({
   onRefreshDocument,
   refreshing = false,
 }: EducationSettlementApplicationDocumentViewProps) {
-  const refreshOnceRef = useRef(false)
+  const [downloadingAttachmentId, setDownloadingAttachmentId] = useState<number | null>(null)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
 
   useEffect(() => {
     warnIfSettlementDocumentTotalMismatch(document)
   }, [document])
 
-  useEffect(() => {
-    const expires = document.attachments
-      .map(item => Date.parse(item.viewUrlExpiresAt))
-      .filter(value => Number.isFinite(value))
-    if (expires.length === 0) return
-    const soonest = Math.min(...expires)
-    const delay = Math.max(5_000, soonest - Date.now() - 30_000)
-    const timer = window.setTimeout(() => {
-      void onRefreshDocument()
-    }, delay)
-    return () => window.clearTimeout(timer)
-  }, [document.attachments, onRefreshDocument])
-
-  const handleAttachmentError = () => {
-    if (refreshOnceRef.current || refreshing) return
-    refreshOnceRef.current = true
-    void Promise.resolve(onRefreshDocument()).finally(() => {
-      window.setTimeout(() => {
-        refreshOnceRef.current = false
-      }, 2_000)
-    })
+  const handleAttachmentDownload = async (
+    attachment: SettlementApplicationDocumentResponse['attachments'][number]
+  ) => {
+    const fileObjectId = attachment.fileObjectId
+    const validFileObjectId =
+      typeof fileObjectId === 'number' && Number.isSafeInteger(fileObjectId) && fileObjectId > 0
+        ? fileObjectId
+        : null
+    if (validFileObjectId == null || downloadingAttachmentId != null) {
+      return
+    }
+    const fileName = attachment.originalFileName?.trim() || `첨부파일-${validFileObjectId}`
+    setDownloadingAttachmentId(validFileObjectId)
+    setAttachmentError(null)
+    try {
+      const resolved =
+        await requestSettlementApplicationDocumentAttachmentDownload(validFileObjectId)
+      const downloadUrl = resolved.downloadUrl?.trim()
+      if (!downloadUrl) throw new Error('download url missing')
+      const blob = await fetchPortalSignedDownloadBlob(downloadUrl, resolved.requiredHeaders, {
+        acceptAnyContent: true,
+      })
+      if (blob.size < 1 || /\bjson\b/i.test(blob.type)) {
+        throw new Error('empty attachment')
+      }
+      saveAttachmentBlob(fileName, blob)
+    } catch {
+      setAttachmentError('첨부파일 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      void Promise.resolve(onRefreshDocument()).catch(() => undefined)
+    } finally {
+      setDownloadingAttachmentId(null)
+    }
   }
 
-  const showCalc =
-    document.documentType === 'PAYMENT_STATEMENT' && document.calcInfo != null
+  const showCalc = document.documentType === 'PAYMENT_STATEMENT' && document.calcInfo != null
   const basicRows = buildSettlementDocumentBasicRows(document.basicInfo)
   const calcRows = showCalc ? buildSettlementDocumentCalcRows(document.calcInfo!) : []
 
@@ -161,51 +180,47 @@ export function EducationSettlementApplicationDocumentView({
             첨부
           </PFText>
           <ul className={styles.attachmentList}>
-            {document.attachments.map(attachment => {
-              const label = attachment.fileName?.trim() || `첨부 ${attachment.fileObjectId}`
-              const viewUrl = resolveSettlementDocumentAttachmentViewUrl(attachment.viewUrl)
-              const image = isImageContentType(attachment.contentType, attachment.fileName)
-              const pdf = isPdfContentType(attachment.contentType, attachment.fileName)
+            {document.attachments.map((attachment, index) => {
+              const fileObjectId = attachment.fileObjectId
+              const label =
+                attachment.originalFileName?.trim() ||
+                (fileObjectId != null ? `첨부 ${fileObjectId}` : `첨부 ${index + 1}`)
+              const size = formatAttachmentSize(attachment.fileSize)
               return (
-                <li key={attachment.fileObjectId} className={styles.attachmentItem}>
-                  <PFText as="p" typo="bd-sm-md" color="neutral-cool-600" className={styles.attachmentName}>
+                <li
+                  key={`${attachment.submissionFileId ?? fileObjectId ?? 'attachment'}-${index}`}
+                  className={styles.attachmentItem}
+                >
+                  <PFText
+                    as="p"
+                    typo="bd-sm-md"
+                    color="neutral-cool-600"
+                    className={styles.attachmentName}
+                  >
                     {label}
                   </PFText>
-                  {image ? (
-                    <a
-                      className={styles.attachmentLink}
-                      href={viewUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <img
-                        className={styles.attachmentImage}
-                        src={viewUrl}
-                        alt={label}
-                        onError={handleAttachmentError}
-                      />
-                    </a>
-                  ) : pdf ? (
-                    <iframe
-                      className={styles.attachmentFrame}
-                      title={label}
-                      src={viewUrl}
-                      onError={handleAttachmentError}
-                    />
-                  ) : (
-                    <a
+                  {size || attachment.contentType ? (
+                    <span className={styles.attachmentMeta}>
+                      {[attachment.contentType, size].filter(Boolean).join(' · ')}
+                    </span>
+                  ) : null}
+                  {fileObjectId != null ? (
+                    <button
+                      type="button"
                       className={styles.attachmentOpen}
-                      href={viewUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                      disabled={downloadingAttachmentId === fileObjectId || refreshing}
+                      onClick={() => void handleAttachmentDownload(attachment)}
                     >
-                      새 탭에서 열기
-                    </a>
+                      {downloadingAttachmentId === fileObjectId ? '다운로드 중...' : '다운로드'}
+                    </button>
+                  ) : (
+                    <span className={styles.attachmentMeta}>다운로드할 파일 정보가 없습니다.</span>
                   )}
                 </li>
               )
             })}
           </ul>
+          {attachmentError ? <p className={styles.attachmentError}>{attachmentError}</p> : null}
         </section>
       ) : null}
 

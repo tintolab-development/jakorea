@@ -8,8 +8,8 @@
 import type {
   CertificateDownloadLogRequest,
   CertificateDownloadLogResponse,
-  CertificateSerialAllocateApiResponse,
-  CertificateSerialAllocateRequest
+  CertificateSerialAllocateRequest,
+  CertificateSerialAllocateResponse
 } from './schemas';
 
 import { customInstance } from '../../orval-mutator';
@@ -20,23 +20,49 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
   export const getJAKoreaCMSBackendAPICertificatesSubset = () => {
 /**
- * FE html2canvas PDF 다운로드 직전 YY-JA-NNNNN 고유번호를 장부에 확정합니다. 서버는 PDF를 만들지 않고 번호만 발급합니다. 미리보기 오픈 시에는 호출하지 않습니다. 호출할 때마다 연간 일련을 올려 새 번호를 발급합니다.
- * @summary 인증서 고유번호 발급
- */
-const allocateCertificateSerial = (
-    certificateSerialAllocateRequest: CertificateSerialAllocateRequest,
- options?: SecondParameter<typeof customInstance<CertificateSerialAllocateApiResponse>>,) => {
-      return customInstance<CertificateSerialAllocateApiResponse>(
-      {url: `/api/admin/certificates/issues/serial`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: certificateSerialAllocateRequest
-    },
-      options);
-    }
-
-/**
- * 인증서 PDF 다운로드 감사 이력을 기록하고 GET /api/admin/logs/file-access 목록에도 파일명·사용자·IP·일시 행을 남깁니다. CMS는 POST /api/admin/logs/file-access 를 호출하지 않습니다.
- * @summary 증명서 다운로드 로그 기록
+ * ### 이 API가 하는 일
+ * - POST /api/admin/certificates/issues/{issueId}/download-logs
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 프로그램 진행현황 (`null`)
+ * - 프론트 담당 영역: 프로그램-progress (`program-progress`)
+ * - 호출 방식: `POST /api/admin/certificates/issues/{issueId}/download-logs`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: 폼 상태 or 선택 행 action payload
+ * - 응답 사용 위치: 변경 결과 then 관련 조회 키 갱신
+ * - 프론트 조회 키: `post_admin_certificates_issues_issueId_download-logs`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 목데이터 대체: 임시 목데이터/localStorage 상태를 program-progress API 상태/캐시로 대체합니다.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: 별도 세부 권한 없음
+ * - 접근 범위: 별도 접근 범위 제한 없음
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: UNKNOWN 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 수료증/참여인증서는 발급 상태와 다운로드 이력을 함께 확인합니다. `COMPLETION_ISSUED`, `PARTICIPATION_ISSUED`, `ISSUED`는 발급 완료 배지로 표시합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: Auto-synced from implemented controller route
+ * @summary POST /api/admin/certificates/issues/{issueId}/download-logs
  */
 const logDownload = (
     issueId: number,
@@ -50,6 +76,60 @@ const logDownload = (
       options);
     }
 
-return {allocateCertificateSerial,logDownload}};
-export type AllocateCertificateSerialResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPICertificatesSubset>['allocateCertificateSerial']>>>
+/**
+ * ### 이 API가 하는 일
+ * - 인증서 고유번호 발급
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
+ * - 호출 방식: `POST /api/admin/certificates/issues/serial`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
+ * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
+ * - 프론트 조회 키: 화면별 조회 키 정책에 따름
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 준비 상태 정보 없음
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 스테이징 기본 검증 대상
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: CERTIFICATE_WRITE 권한 필요
+ * - 접근 범위: GLOBAL 범위 정책
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: NOT_APPLICABLE 개인정보 정책
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 수료증/참여인증서는 발급 상태와 다운로드 이력을 함께 확인합니다. `COMPLETION_ISSUED`, `PARTICIPATION_ISSUED`, `ISSUED`는 발급 완료 배지로 표시합니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: 2026-09-02 certificate document serial handoff
+ * @summary 인증서 고유번호 발급
+ */
+const allocateCertificateSerial = (
+    certificateSerialAllocateRequest: CertificateSerialAllocateRequest,
+ options?: SecondParameter<typeof customInstance<CertificateSerialAllocateResponse>>,) => {
+      return customInstance<CertificateSerialAllocateResponse>(
+      {url: `/api/admin/certificates/issues/serial`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: certificateSerialAllocateRequest
+    },
+      options);
+    }
+
+return {logDownload,allocateCertificateSerial}};
 export type LogDownloadResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPICertificatesSubset>['logDownload']>>>
+export type AllocateCertificateSerialResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPICertificatesSubset>['allocateCertificateSerial']>>>

@@ -140,8 +140,29 @@
 }
 
 .attachmentOpen {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
   color: var(--color-primary-600);
   text-decoration: underline;
+}
+
+.attachmentOpen:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.attachmentMeta {
+  color: var(--color-neutral-cool-500);
+  font-size: 12px;
+}
+
+.attachmentError {
+  margin: 0;
+  color: var(--color-status-error-default);
+  font-size: 13px;
 }
 
 .actions {
