@@ -278,7 +278,7 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     })
   })
 
-  it('cell.classLabel이 비면 동일 educationSlotId org temporary slot 라벨을 쓴다', () => {
+  it('ASSIGNED인데 cell.classLabel이 비면 org temporary slot으로 백필하지 않고 —만 둔다', () => {
     const table = mapAllocationMatrixToRegionTableData({
       matrix: {
         ...MATRIX,
@@ -311,8 +311,73 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     })
     expect(table.rows[0]?.cells[0]).toMatchObject({
       kind: 'assigned',
-      classLabel: '2-1',
+      classLabel: '-',
     })
+  })
+
+  it('UNASSIGNED는 빈 칸이고 REASSIGNMENT_REQUIRED는 무효 배정으로 표시한다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김미배정',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                unavailable: false,
+                assignmentStatus: 'UNASSIGNED',
+              },
+            ],
+          },
+          {
+            participantId: 202,
+            volunteerName: '이재배정',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                classLabel: '2학년 1반',
+                unavailable: false,
+                assignmentStatus: 'REASSIGNMENT_REQUIRED',
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows[0]?.cells[0]).toEqual({ kind: 'empty' })
+    expect(table.rows[1]?.cells[0]).toMatchObject({
+      kind: 'assigned',
+      classLabel: '2학년 1반',
+      isInvalidAssignment: true,
+    })
+  })
+
+  it('volunteers[].totalAssignedDays는 응답 값을 그대로 쓰고 cells로 재계산하지 않는다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        programId: 1,
+        educationRegionCode: 'SEOUL',
+        semesterType: 'FIRST_HALF',
+        columns: [],
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김봉사',
+            totalAssignedDays: 3,
+            cells: [],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.columns).toEqual([])
+    expect(table.rows[0]?.totalAssignedDays).toBe(3)
+    expect(table.rows[0]?.cells).toEqual([])
   })
 
   it('columns가 비면 교육일 없는 빈 표로 두고 봉사자만 있는 반쪽 표를 만들지 않는다', () => {

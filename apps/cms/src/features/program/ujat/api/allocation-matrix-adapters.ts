@@ -82,30 +82,10 @@ function formatTimeRange(iso: string | null | undefined): string {
   return `${d.format('HH:mm')}~`
 }
 
-function slotLabelFromOrg(slot: OrgSlot): string {
-  return (
-    slot.classLabel?.trim() ||
-    [slot.grade, slot.className].filter(Boolean).join('-') ||
-    (slot.slotId != null ? `학급 ${slot.slotId}` : '')
-  )
-}
-
-/** matrix cell.classLabel → 동일 educationSlotId의 org temporary-schedule 라벨 (invent 금지) */
-function resolveClassLabel(
-  cell: UjatAllocationCellDto | undefined,
-  orgSlots: OrgSlot[]
-): string {
-  const fromCell = cell?.classLabel?.trim()
-  if (fromCell) return fromCell
-  const slotId = cell?.educationSlotId
-  if (slotId == null) return ''
-  const slot = orgSlots.find(item => item.slotId === slotId)
-  return slot ? slotLabelFromOrg(slot) : ''
-}
-
 /**
  * columnKey 우선, 없으면 scheduleId(+organizationApplicationId)로 매칭.
  * 봉사자 상세 assignment-progress-adapter.cellForColumn 과 동일 계약.
+ * scheduleId만으로 열을 invent 하지 않는다.
  */
 function cellForColumn(
   volunteer: UjatAllocationVolunteerRowDto,
@@ -126,10 +106,13 @@ function cellForColumn(
   })
 }
 
+/**
+ * 셀 표시 라벨은 allocation-matrix cell.classLabel만 사용.
+ * org temporary-schedule / partner-assignment 등으로 ASSIGNED 라벨을 백필하지 않는다.
+ */
 function mapCell(
   cell: UjatAllocationCellDto | undefined,
-  substituteName?: string,
-  orgSlots: OrgSlot[] = []
+  substituteName?: string
 ): RegionAssignmentCell {
   if (!cell) return { kind: 'empty' }
   if (cell.unavailable) {
@@ -137,27 +120,28 @@ function mapCell(
       ? { kind: 'empty', blockedEmpty: true, substituteName }
       : { kind: 'empty', blockedEmpty: true }
   }
-  const label = resolveClassLabel(cell, orgSlots)
-  if (!label) {
-    // 재배정 필요인데 학급 라벨이 비어도 빨간 표기로 남긴다 (출석 세션과 동일)
-    if (cell.needsReassignment === true) {
-      return {
-        kind: 'assigned',
-        classLabel: '-',
-        isAttendanceManager: cell.attendanceManager === true,
-        isSolo: cell.singleAssignment === true,
-        isInvalidAssignment: true,
-      }
-    }
+
+  const status = (cell.assignmentStatus ?? '').trim().toUpperCase()
+  const needsReassignment =
+    cell.needsReassignment === true || status === 'REASSIGNMENT_REQUIRED'
+  const label = cell.classLabel?.trim() || ''
+
+  if (status === 'UNASSIGNED') {
     return { kind: 'empty' }
   }
-  return {
-    kind: 'assigned',
-    classLabel: label,
-    isAttendanceManager: cell.attendanceManager === true,
-    isSolo: cell.singleAssignment === true,
-    isInvalidAssignment: cell.needsReassignment === true,
+
+  // ASSIGNED / 재배정 필요 / 라벨 있음 → 배정 셀. 라벨이 비면 "—"만 (다른 API 보완 금지)
+  if (status === 'ASSIGNED' || needsReassignment || label) {
+    return {
+      kind: 'assigned',
+      classLabel: label || '-',
+      isAttendanceManager: cell.attendanceManager === true,
+      isSolo: cell.singleAssignment === true,
+      isInvalidAssignment: needsReassignment,
+    }
   }
+
+  return { kind: 'empty' }
 }
 
 function buildClassSlotsForColumn(
@@ -276,7 +260,7 @@ export function mapAllocationMatrixToRegionTableData(params: {
       const cell = columnDto
         ? cellForColumn(volunteer, columnDto)
         : (volunteer.cells ?? []).find(item => item.columnKey === column.id)
-      return mapCell(cell, resolveSubstituteName(participantId, cell), orgSlots)
+      return mapCell(cell, resolveSubstituteName(participantId, cell))
     })
     return {
       id: participantId,
