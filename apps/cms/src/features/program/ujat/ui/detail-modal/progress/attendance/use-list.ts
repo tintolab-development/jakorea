@@ -229,7 +229,12 @@ export function useUjatEducationProgressAttendance(
       })
       showAlert({ title: '안내', content: '출석이 저장되었습니다.' })
     },
-    onError: error => {
+    onError: (error, variables) => {
+      setLocalOverrides(prev => {
+        const next = { ...prev }
+        delete next[variables.sessionId]
+        return next
+      })
       showAlert({
         title: '오류',
         content: isInvalidAttendanceArrivalTimeError(error)
