@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import type { ProgramDetailCase } from '@/features/program'
+import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import { availabilityReasonMessage } from '../api/personal-certificate-client'
 import {
@@ -71,14 +72,11 @@ export function EducationPersonalCertificatePanel({
     if (!availability || typeof canIssueCertificateHint !== 'boolean') return
     const expected = availability.available === true || availability.canDownload === true
     if (expected !== canIssueCertificateHint) {
-      console.warn(
-        '[personal-certificate] canIssueCertificate hint mismatch; availability wins',
-        {
-          canIssueCertificateHint,
-          available: availability.available,
-          canDownload: availability.canDownload,
-        },
-      )
+      console.warn('[personal-certificate] canIssueCertificate hint mismatch; availability wins', {
+        canIssueCertificateHint,
+        available: availability.available,
+        canDownload: availability.canDownload,
+      })
     }
   }, [availability, canIssueCertificateHint])
 
@@ -89,20 +87,14 @@ export function EducationPersonalCertificatePanel({
     (availability?.existingIssueId != null && Number(availability.existingIssueId) > 0
       ? Number(availability.existingIssueId)
       : null)
-  const canDownload =
-    availability?.canDownload === true ||
-    existingIssueId != null
-  // 이미 ISSUED면 재발급 POST 금지 — download만.
+  const issued = existingIssueId != null
   const canIssueNew =
-    availability?.available === true &&
-    availability?.canDownload !== true &&
-    existingIssueId == null
+    !issued && availability?.available === true && availability?.canDownload !== true
   const actionable = isPersonalCertificateActionable(availability) || localIssueId != null
   const participantId =
     (availability?.participantId != null && Number(availability.participantId) > 0
       ? Number(availability.participantId)
-      : null) ??
-    (participantIdHint != null && participantIdHint > 0 ? participantIdHint : null)
+      : null) ?? (participantIdHint != null && participantIdHint > 0 ? participantIdHint : null)
 
   const statusLabel = labelForPortalCertificateStatus(certificateStatus)
   const reason =
@@ -122,7 +114,7 @@ export function EducationPersonalCertificatePanel({
       setAlertMessage(
         error instanceof Error && error.message.trim()
           ? error.message
-          : '수료증을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          : '수료증을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.'
       )
     }
   }
@@ -157,19 +149,9 @@ export function EducationPersonalCertificatePanel({
       setAlertMessage(
         error instanceof Error && error.message.trim()
           ? error.message
-          : '수료증을 발급하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          : '수료증을 발급하지 못했습니다. 잠시 후 다시 시도해 주세요.'
       )
     }
-  }
-
-  if (availabilityQuery.isLoading && !availability) {
-    return (
-      <section className={styles.panel} aria-label="수료증">
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          수료증 발급 가능 여부를 확인하는 중입니다.
-        </PFText>
-      </section>
-    )
   }
 
   if (!actionable) {
@@ -190,47 +172,21 @@ export function EducationPersonalCertificatePanel({
   }
 
   return (
-    <section className={styles.panel} aria-label="수료증">
-      <div className={styles.copy}>
-        <PFText as="h2" typo="hl-sm" color="black" className={styles.title}>
-          수료증
-        </PFText>
-        {statusLabel ? (
-          <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.status}>
-            {statusLabel}
-          </PFText>
-        ) : null}
-        {reason && !canDownload ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.reason}>
-            {reason}
-          </PFText>
-        ) : (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.reason}>
-            {canDownload
-              ? '발급된 수료증을 다운로드할 수 있습니다.'
-              : '수료 조건을 충족하여 수료증을 발급할 수 있습니다.'}
-          </PFText>
-        )}
-      </div>
+    <section aria-label="수료증">
       <div className={styles.actions}>
-        {canDownload && existingIssueId != null ? (
-          <PFButton
-            type="button"
-            variant="certificate"
-            disabled={busy}
-            onClick={() => void handleDownload(existingIssueId)}
+        {issued || canIssueNew ? (
+          <CertificateActionButton
+            disabled={busy || (!issued && participantId == null)}
+            onClick={() => {
+              if (existingIssueId != null) {
+                void handleDownload(existingIssueId)
+                return
+              }
+              void handleIssue()
+            }}
           >
-            수료증 다운로드
-          </PFButton>
-        ) : canIssueNew ? (
-          <PFButton
-            type="button"
-            variant="certificate"
-            disabled={busy || participantId == null}
-            onClick={() => void handleIssue()}
-          >
-            수료증 발급
-          </PFButton>
+            {issued ? '수료증 다운로드' : '수료증 발급하기'}
+          </CertificateActionButton>
         ) : null}
       </div>
       <PFAlertModal
@@ -241,5 +197,35 @@ export function EducationPersonalCertificatePanel({
         onConfirm={() => setAlertMessage('')}
       />
     </section>
+  )
+}
+
+function CertificateActionButton({
+  disabled,
+  onClick,
+  children,
+}: {
+  disabled: boolean
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <PFButton
+      type="button"
+      variant="certificate"
+      disabled={disabled}
+      className={styles.actionButton}
+      onClick={onClick}
+    >
+      {children}
+      <img
+        className={styles.actionIllustration}
+        src={illustDiplomaUrl}
+        alt=""
+        width={48}
+        height={48}
+        aria-hidden="true"
+      />
+    </PFButton>
   )
 }
