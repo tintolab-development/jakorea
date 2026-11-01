@@ -227,10 +227,9 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
     interviewEnabled?: boolean | null
   }
   participation?: {
-    participantId?: number
     status?: string
     completionStatus?: string
-    /** 표시용. 발급 CTA 최종 판정은 availability API */
+    participantId?: number
     certificateStatus?: string
   }
   summary?: {
@@ -241,7 +240,6 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
     canCancelApplication?: boolean
     canSubmitSatisfaction?: boolean
     canSubmitSurvey?: boolean
-    /** available || canDownload 와 동일해야 함. CTA SSOT는 availability */
     canIssueCertificate?: boolean
   }
 }

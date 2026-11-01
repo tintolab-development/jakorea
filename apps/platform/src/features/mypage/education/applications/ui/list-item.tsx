@@ -2,16 +2,13 @@ import type { EducationApplicationListItem } from '../model/types'
 import { ProgramStatusBadges } from '@/features/program/ui/program-status-badges'
 import { MediaListRow } from '@/shared/ui/media-list-row'
 import { PFText } from '@/shared/ui'
+import { shouldShowListCertificateEntry } from '../lib/certificate-cta'
 import {
   EDUCATION_DISPLAY_STATUS_TONE_CLASS,
   getEducationDisplayStatusLabel,
   getEducationDisplayStatusTone,
   type EducationDisplayStatusAudience,
 } from '../lib/display-status'
-import {
-  hasIssueCertificateListAction,
-  shouldShowPersonalCertificateAction,
-} from '../lib/personal-certificate-eligibility'
 import styles from './list-item.module.css'
 
 type EducationApplicationListItemRowProps = {
@@ -34,15 +31,15 @@ export function EducationApplicationListItemRow({
     audience: statusAudience,
   })
   const statusClassName = [styles.status, statusToneClass].filter(Boolean).join(' ')
-  const showCertificateHint =
-    shouldShowPersonalCertificateAction({
-      isTeacher,
-      applicationType: item.applicationType,
-      programType: item.programType,
-      programGroup: item.programGroup,
-      detailCase: item.detailCase,
-    }) &&
-    (item.certificateAvailable === true || hasIssueCertificateListAction(item.availableActions))
+  const showCertificateEntry = shouldShowListCertificateEntry({
+    isTeacher,
+    applicationType: item.applicationType,
+    programType: item.programType,
+    programGroup: item.programGroup,
+    detailCase: item.detailCase,
+    certificateAvailable: item.certificateAvailable,
+    availableActions: item.availableActions,
+  })
 
   return (
     <MediaListRow
@@ -66,6 +63,11 @@ export function EducationApplicationListItemRow({
             <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>
               {item.title}
             </PFText>
+            {showCertificateEntry ? (
+              <PFText as="span" typo="bd-md-md" color="primary-500" className={styles.certificateEntry}>
+                수료증
+              </PFText>
+            ) : null}
             <div className={styles.periodBlock}>
               <PFText as="span" typo="bd-md-md" color="primary-700" className={styles.periodLabel}>
                 모집기간
@@ -82,11 +84,6 @@ export function EducationApplicationListItemRow({
                 {item.operatingPeriodLabel}
               </PFText>
             </div>
-            {showCertificateHint ? (
-              <PFText as="p" typo="bd-sm-md" color="primary-700" className={styles.certificateHint}>
-                수료증 발급·다운로드 가능
-              </PFText>
-            ) : null}
           </div>
 
           <ProgramStatusBadges

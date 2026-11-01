@@ -24,7 +24,6 @@ import {
   EducationSettlementPanel,
   EducationStudentsPanel,
   EducationSurveySection,
-  EducationPersonalCertificatePanel,
   DocumentPassBanner,
   hasTeacherMypageProfile,
   isSchoolTeacherMypageProfile,
@@ -81,6 +80,8 @@ import {
   resolveTeacherApplicationProgramGroup,
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
+import { CertificateIssueCta } from '@/features/mypage/education/applications/ui/certificate-issue-cta'
+import { shouldShowDetailCertificateCta } from '@/features/mypage/education/applications/lib/certificate-cta'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import {
   resolveVisibleUjatScheduleBanner,
@@ -959,6 +960,27 @@ export function MypageEducationDetailPage() {
         </>
       ) : isActivityStatus ? (
         <>
+          {shouldShowDetailCertificateCta({
+            isTeacher,
+            applicationType: routeApplicationType ?? application.applicationType,
+            programType: application.programType ?? application.programConfig?.programType ?? program.programType,
+            programGroup: application.programGroup,
+            detailCase: application.detailCase,
+            canIssueCertificate: application.certificateAvailable,
+          }) ? (
+            <CertificateIssueCta
+              isTeacher={isTeacher}
+              applicationType={routeApplicationType ?? application.applicationType}
+              applicationId={application.id}
+              programId={application.programId ?? program.id}
+              programTitle={program.title}
+              programType={application.programType ?? application.programConfig?.programType ?? program.programType}
+              programGroup={application.programGroup}
+              detailCase={application.detailCase}
+              canIssueCertificate={application.certificateAvailable}
+              certificateStatus={application.certificateStatus}
+            />
+          ) : null}
           <PFTabs
             className={styles.tabs}
             items={inProgressTabItems}
@@ -969,22 +991,6 @@ export function MypageEducationDetailPage() {
             ariaLabel="진행중 교육 상세 탭"
           />
           <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
-          <EducationPersonalCertificatePanel
-            programId={program.id}
-            applicationId={application.id}
-            applicationType={
-              application.applicationType ?? routeApplicationType ?? resolvedApplicationType
-            }
-            programType={
-              application.programType ?? application.programConfig?.programType ?? program.programType
-            }
-            programGroup={application.programGroup}
-            detailCase={application.detailCase}
-            isTeacher={isTeacher}
-            certificateStatus={application.certificateStatus}
-            canIssueCertificateHint={application.canIssueCertificate}
-            participantIdHint={application.participantId}
-          />
         </>
       ) : (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
