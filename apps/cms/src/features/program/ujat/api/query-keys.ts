@@ -71,8 +71,9 @@ export const queryKeys = {
       educationRegionCode,
       semesterType,
     ] as const,
+  assignmentSubmissionsAll: () => [...queryKeys.execution(), 'assignment-submissions'] as const,
   assignmentSubmissionsRoot: (programId: string) =>
-    [...queryKeys.execution(), 'assignment-submissions', programId] as const,
+    [...queryKeys.assignmentSubmissionsAll(), programId] as const,
   assignmentSubmissions: (
     programId: string,
     educationRegionCode: string,

@@ -24,6 +24,7 @@ import { RegionBlockedDateModal } from './blocked-date-modal'
 import {
   getRegionBlockedDateSubstituteVolunteerOptionsFromData,
   getRegionBlockedDateVolunteerOptionsFromData,
+  regionUnavailabilityRequiresReplacement,
   getRegionDirectAssignClassOptionsFromData,
   getRegionEducationDateOptionsFromData,
 } from './region-assignment-options'
@@ -98,6 +99,12 @@ export function UjatEducationProgressRegionAssignmentSection({
     [tableData]
   )
 
+  const getBlockedDateRequiresReplacement = useCallback(
+    (volunteerId: string, blockedDateLabels: string[]) =>
+      regionUnavailabilityRequiresReplacement(tableData, volunteerId, blockedDateLabels),
+    [tableData]
+  )
+
   const attendanceManagerScheduleItems = useMemo(
     () => getRegionAttendanceManagerScheduleItemsFromData(tableData),
     [tableData]
@@ -143,7 +150,7 @@ export function UjatEducationProgressRegionAssignmentSection({
     (payload: {
       volunteerId: string
       blockedDateLabels: string[]
-      substituteVolunteerId: string
+      substituteVolunteerId?: string
     }) => {
       confirmBlockedDate(payload)
       setBlockedDateModalOpen(false)
@@ -296,6 +303,7 @@ export function UjatEducationProgressRegionAssignmentSection({
         open={blockedDateModalOpen}
         volunteerOptions={blockedDateVolunteerOptions}
         educationDateOptions={educationDateOptions}
+        getRequiresReplacement={getBlockedDateRequiresReplacement}
         getSubstituteVolunteerOptions={getBlockedDateSubstituteVolunteerOptions}
         onCancel={handleCloseBlockedDateModal}
         onConfirm={handleConfirmBlockedDate}

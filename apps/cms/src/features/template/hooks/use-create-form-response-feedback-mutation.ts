@@ -22,7 +22,16 @@ export function useCreateFormResponseFeedbackMutation() {
       createFormResponseFeedbackRemote(responseId, body),
     retry: false,
     onSuccess: (created, { responseId }) => {
-      queryClient.setQueryData(formResponseQueryKeys.feedback(responseId), created)
+      queryClient.setQueryData(formResponseQueryKeys.feedback(responseId), {
+        formResponseId: responseId,
+        feedbacks: [
+          {
+            feedbackId: created.feedbackId ?? null,
+            content: created.content ?? null,
+            createdAt: created.createdAt ?? null,
+          },
+        ],
+      })
       // 회원 과제 제출 목록(responseStatus 등) — 모달 열림 시에만 캐시된 좁은 키
       void queryClient.invalidateQueries({
         queryKey: ['member-detail-assignment-submissions'],

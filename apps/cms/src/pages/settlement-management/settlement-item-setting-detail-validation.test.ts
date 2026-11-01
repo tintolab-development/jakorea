@@ -8,6 +8,8 @@ import {
 describe('settlement withholding detail validation', () => {
   it('세율은 0~100 및 소수 둘째 자리까지 허용한다', () => {
     expect(validateWithholdingRate('0')).toBeNull()
+    expect(validateWithholdingRate('6')).toBeNull()
+    expect(validateWithholdingRate('55')).toBeNull()
     expect(validateWithholdingRate('3.3')).toBeNull()
     expect(validateWithholdingRate('100.00')).toBeNull()
     expect(validateWithholdingRate('-0.01')).not.toBeNull()

@@ -1,5 +1,18 @@
 import type { SettlementItemType } from '@/types/domain'
 
+/** 정산 설정 공제 항목의 Figma/API canonical label. */
+export const SETTLEMENT_WITHHOLDING_ITEM_LABEL = '원천징수세액' as const
+export const LEGACY_SETTLEMENT_WITHHOLDING_ITEM_LABEL = '일용근로자 원천징수세액' as const
+
+export function normalizeSettlementWithholdingItemLabel(value: string | undefined): string | undefined {
+  if (value == null) return undefined
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  return trimmed === LEGACY_SETTLEMENT_WITHHOLDING_ITEM_LABEL
+    ? SETTLEMENT_WITHHOLDING_ITEM_LABEL
+    : trimmed
+}
+
 /** `SettlementFrontendItemResponse.type` / 정산 항목 enum → 화면 라벨 */
 export const SETTLEMENT_ITEM_TYPE_LABELS: Record<SettlementItemType, string> = {
   instructor_fee: '강사비',

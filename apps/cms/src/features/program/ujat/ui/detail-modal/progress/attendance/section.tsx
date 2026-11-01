@@ -43,7 +43,8 @@ export function UjatEducationProgressAttendanceSection({
     filterFields,
     sessionGroups,
     resetRegionState,
-    saveSessionVolunteers,
+    correctSessionVolunteerAttendance,
+    savingSessionId,
     getSessionVolunteers,
     isLoading,
     isError,
@@ -146,7 +147,8 @@ export function UjatEducationProgressAttendanceSection({
                 session={session}
                 appliedFilters={appliedFilters}
                 getSessionVolunteers={getSessionVolunteers}
-                onSave={saveSessionVolunteers}
+                onSave={correctSessionVolunteerAttendance}
+                saving={savingSessionId === session.id}
                 showHeader={session.id !== sessionGroups[0]?.id}
                 onBindOpenCorrection={
                   session.id === sessionGroups[0]?.id

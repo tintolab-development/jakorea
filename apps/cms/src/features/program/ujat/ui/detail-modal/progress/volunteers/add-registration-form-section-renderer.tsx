@@ -1,13 +1,13 @@
 /**
  * 교육 진행 > 참여 봉사자 — 추가 등록 폼 섹션 렌더러 (로컬)
- * draft 단락 본문(`renderFormParagraphBody`) + 전용 plugin·custom 섹션 통합
  */
 
-import { resolveUjatVolunteerRuntimeHiddenParagraphIds } from '@/features/template/lib/ujat-volunteer-application-form-visibility'
 import type { ProgramParticipantApplicationEditorViewModel } from '@/features/template/hooks/use-program-participant-application-editor'
 import type { WritingFormParagraph } from '@/features/template/model/writing-form-draft.schema'
+import { UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS } from '@/features/template/model/ujat-program-application-form-volunteer-draft'
 import { normalizeHorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { renderFormParagraphBody } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
+import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
+import { resolveVolunteerConsentHorizontalTableInteractionProps } from '@/features/program/shared/lib/volunteer-add-registration-consent-horizontal-table'
 import { UjatEducationProgressVolunteerBasicInfoSection } from './basic-info-section'
 import {
   UjatVolunteerAddRegistrationSectionHeader,
@@ -33,42 +33,6 @@ export type UjatVolunteerAddRegistrationFormSectionRendererProps = {
   onConsentsChange: (next: UjatVolunteerAddRegistrationConsentState) => void
 }
 
-function buildRenderParagraphBodyOptions(vm: ProgramParticipantApplicationEditorViewModel) {
-  return {
-    structureLockedParagraphIds: vm.structureLockedParagraphIds,
-    structureLockedAuthoringChoicePreview: true as const,
-    paragraphInteractionMode: 'user' as const,
-    ujatProgramApplicationFormVolunteer: {
-      enabled: true,
-      applicationType: vm.ujatVolunteerApplicationType,
-      onApplicationTypeChange: vm.setUjatVolunteerApplicationType,
-      recruitCohortLabel:
-        vm.leftPanelParagraphBodyOptions?.ujatProgramApplicationFormVolunteer?.recruitCohortLabel,
-    },
-    hiddenParagraphIds: resolveUjatVolunteerRuntimeHiddenParagraphIds(vm.ujatVolunteerApplicationType),
-  }
-}
-
-function renderDraftParagraphBody(
-  paragraph: WritingFormParagraph,
-  vm: ProgramParticipantApplicationEditorViewModel
-) {
-  return renderFormParagraphBody(paragraph, vm.updateParagraph, true, 'horizontal_table', {
-    ...buildRenderParagraphBodyOptions(vm),
-  })
-}
-
-function resolveDescriptionFromParagraph(
-  paragraph: WritingFormParagraph | undefined,
-  fallback?: string
-): string | undefined {
-  if (paragraph?.variant === 'horizontal_table') {
-    const fromDraft = resolveUjatVolunteerSeedSectionDescription(paragraph.paragraphDescription)
-    if (fromDraft) return fromDraft
-  }
-  return fallback
-}
-
 function DraftParagraphSection({
   paragraph,
   vm,
@@ -80,7 +44,10 @@ function DraftParagraphSection({
 
   const hp = normalizeHorizontalTableParagraph(paragraph)
   const description = resolveUjatVolunteerSeedSectionDescription(hp.paragraphDescription)
-  const body = renderDraftParagraphBody(paragraph, vm)
+  const tableInteraction = resolveVolunteerConsentHorizontalTableInteractionProps(
+    hp.id,
+    UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent
+  )
 
   return (
     <section className="ujat-volunteer-add-registration__section">
@@ -89,9 +56,26 @@ function DraftParagraphSection({
         required={hp.requiredMark}
         description={description}
       />
-      <div className="ujat-volunteer-add-registration__template-block">{body}</div>
+      <div className="ujat-volunteer-add-registration__template-block">
+        <HorizontalTableParagraphBody
+          paragraph={hp}
+          onChange={next => vm.updateParagraph(hp.id, () => next)}
+          {...tableInteraction}
+        />
+      </div>
     </section>
   )
+}
+
+function resolveDescriptionFromParagraph(
+  paragraph: WritingFormParagraph | undefined,
+  fallback?: string
+): string | undefined {
+  if (paragraph?.variant === 'horizontal_table') {
+    const fromDraft = resolveUjatVolunteerSeedSectionDescription(paragraph.paragraphDescription)
+    if (fromDraft) return fromDraft
+  }
+  return fallback
 }
 
 export function UjatVolunteerAddRegistrationFormSectionRenderer({

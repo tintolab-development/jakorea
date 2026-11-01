@@ -13,6 +13,7 @@ import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/t
 import { MultipleChoice } from '@/features/template/ui/paragraph/single-item/multiple-choice'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
 import { PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS } from '@/features/program/general/lib/participating-volunteer-add-registration-draft'
+import { resolveVolunteerConsentHorizontalTableInteractionProps } from '@/features/program/shared/lib/volunteer-add-registration-consent-horizontal-table'
 import { resolveParticipatingVolunteerSeedSectionDescription } from './add-registration-section-header'
 import {
   PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_PLUGIN_BODIES,
@@ -20,9 +21,6 @@ import {
   type ParticipatingVolunteerAddRegistrationSectionDefinition,
 } from './add-registration-form-section-config'
 import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
-
-/** 제3자 동의 표 — 「제공받는 곳」(0열)만 입력, 나머지 열·헤더는 고정 */
-const THIRD_PARTY_LOCKED_BODY_COLUMN_INDEXES: ReadonlySet<number> = new Set([1, 2, 3])
 
 export type ParticipatingVolunteerAddRegistrationFormSectionRendererProps = {
   section: ParticipatingVolunteerAddRegistrationSectionDefinition
@@ -59,8 +57,10 @@ function HorizontalTableDraftParagraphSection({
   onChange: (next: HorizontalTableParagraph) => void
 }) {
   const description = resolveParticipatingVolunteerSeedSectionDescription(paragraph.paragraphDescription)
-  const isThirdParty =
-    paragraph.id === PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.thirdPartyConsent
+  const tableInteraction = resolveVolunteerConsentHorizontalTableInteractionProps(
+    paragraph.id,
+    PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.thirdPartyConsent
+  )
 
   return (
     <section className="participating-volunteer-add-registration-modal__section">
@@ -75,11 +75,7 @@ function HorizontalTableDraftParagraphSection({
         <HorizontalTableParagraphBody
           paragraph={paragraph}
           onChange={onChange}
-          isEditMode={isThirdParty}
-          tableCanvasInteractive={false}
-          lockedBodyColumnIndexes={isThirdParty ? THIRD_PARTY_LOCKED_BODY_COLUMN_INDEXES : undefined}
-          bottomConsentPreviewInAuthoring
-          paragraphInteractionMode="user"
+          {...tableInteraction}
         />
       </div>
     </section>
@@ -178,6 +174,9 @@ export function ParticipatingVolunteerAddRegistrationFormSectionRenderer({
             'participating-volunteer-add-registration-modal__section',
             section.body === 'basic-info'
               ? 'participating-volunteer-add-registration-modal__section--basic-info'
+              : '',
+            section.body === 'free-text'
+              ? 'participating-volunteer-add-registration-modal__section--free-text'
               : '',
           ]
             .filter(Boolean)

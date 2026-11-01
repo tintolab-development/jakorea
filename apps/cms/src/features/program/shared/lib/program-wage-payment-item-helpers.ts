@@ -12,10 +12,15 @@ import {
   type PaymentItemCatalogState,
 } from '@/features/template/lib/template-registration-payment-item-options'
 import type { CmsSelectMultipleOption } from '@/shared/ui/cms-select-multiple'
+import {
+  LEGACY_SETTLEMENT_WITHHOLDING_ITEM_LABEL,
+  SETTLEMENT_WITHHOLDING_ITEM_LABEL,
+} from '@/shared/constants/settlement-item-type'
 
 export const PROGRAM_WAGE_PAYMENT_ITEM_NONE_VALUE = '__payment_none__' as const
 export const PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL = '해당없음' as const
-export const PROGRAM_WAGE_DEDUCTION_LABEL = '일용근로자 원천징수세액' as const
+export const PROGRAM_WAGE_DEDUCTION_LABEL = SETTLEMENT_WITHHOLDING_ITEM_LABEL
+export const LEGACY_PROGRAM_WAGE_DEDUCTION_LABEL = LEGACY_SETTLEMENT_WITHHOLDING_ITEM_LABEL
 
 const PAYMENT_ITEM_CODE_RE = /^(p|w|d)-\d+$/i
 

@@ -17,6 +17,12 @@ import {
   useUploadPublicCorporateConsultationAttachments,
 } from '../api/hooks'
 import type { PublicCorporateConsultationCreateRequest } from '../api/types'
+import {
+  CORPORATE_DONATION_INQUIRY_PRIVACY_AGREEMENT_LABEL,
+  CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_FIELD_LABEL,
+  CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_INTRO,
+  CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_SECTIONS,
+} from '../lib/privacy-consent'
 import styles from './inquiry-modal.module.css'
 
 type InquiryValues = {
@@ -162,7 +168,7 @@ export function CorporateDonationInquiryModal({
   const {
     control,
     clearErrors,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
     handleSubmit: handleFormSubmit,
     reset,
   } = useForm<InquiryValues>({
@@ -502,31 +508,91 @@ export function CorporateDonationInquiryModal({
                     checked ? true : '개인정보 수집·이용에 동의해 주세요.',
                 }}
                 render={({ field, fieldState }) => (
-                  <div
-                    className={[
-                      styles.consentRow,
-                      fieldState.error ? styles.consentError : undefined,
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    <PFCheckbox
-                      checked={field.value}
-                      onCheckedChange={checked => {
-                        field.onChange(checked)
-                        setFormError(null)
-                      }}
-                      label="개인정보 수집·이용 동의"
-                      disabled={isBusy}
-                    />
+                  <div className={styles.privacySection}>
+                    <div className={styles.privacyLabelRow}>
+                      <PFText as="span" typo="label-md" color="neutral-warm-600">
+                        {CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_FIELD_LABEL}
+                      </PFText>
+                      <PFText as="span" typo="label-md" color="error" aria-hidden>
+                        *
+                      </PFText>
+                    </div>
+                    <div className={styles.privacyContent}>
+                      <div
+                        className={styles.privacyBox}
+                        role="region"
+                        aria-label="개인정보 수집 및 이용 안내"
+                      >
+                        <PFText
+                          as="p"
+                          typo="bd-sm-sb"
+                          color="neutral-cool-700"
+                          className={styles.privacyIntro}
+                        >
+                          {CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_INTRO}
+                        </PFText>
+                        {CORPORATE_DONATION_INQUIRY_PRIVACY_CONSENT_SECTIONS.map(section => (
+                          <div key={section.heading} className={styles.privacyBlock}>
+                            <PFText
+                              as="p"
+                              typo="bd-sm-sb"
+                              color="neutral-cool-700"
+                              className={styles.privacyHeading}
+                            >
+                              {section.heading}
+                            </PFText>
+                            {section.paragraphs.map(paragraph => (
+                              <PFText
+                                key={paragraph}
+                                as="p"
+                                typo="caption-rg"
+                                color="neutral-cool-700"
+                                className={styles.privacyParagraph}
+                              >
+                                {paragraph}
+                              </PFText>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                      <div
+                        className={[
+                          styles.privacyAgreementBar,
+                          fieldState.error ? styles.privacyAgreementError : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        <PFCheckbox
+                          checked={field.value}
+                          onCheckedChange={checked => {
+                            field.onChange(checked)
+                            setFormError(null)
+                          }}
+                          disabled={isBusy}
+                          className={styles.privacyCheckbox}
+                        >
+                          <PFText
+                            as="span"
+                            typo="bd-lg-sb"
+                            color="neutral-cool-700"
+                            className={styles.privacyAgreementLabel}
+                          >
+                            {CORPORATE_DONATION_INQUIRY_PRIVACY_AGREEMENT_LABEL}
+                          </PFText>
+                        </PFCheckbox>
+                      </div>
+                    </div>
+                    <div className={styles.privacyErrorSlot} aria-live="polite">
+                      {fieldState.error ? (
+                        <PFText as="p" typo="bd-sm-rg" color="error" className={styles.error}>
+                          {fieldState.error.message}
+                        </PFText>
+                      ) : null}
+                    </div>
                   </div>
                 )}
               />
-              {errors.privacyConsent ? (
-                <PFText as="p" typo="bd-sm-rg" color="error" className={styles.error}>
-                  {errors.privacyConsent.message}
-                </PFText>
-              ) : null}
               {formError ? (
                 <PFText as="p" typo="bd-sm-md" color="error" className={styles.error}>
                   {formError}

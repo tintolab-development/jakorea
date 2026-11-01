@@ -82,8 +82,8 @@
   overflow: hidden;
 }
 
-.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table__shell {
-  border-radius: 8px;
+.ujat-volunteer-add-registration__template-block .form-editor-horizontal-table {
+  border-radius: var(--8, 8px);
 }
 
 .ujat-volunteer-add-registration__template-block .form-editor-horizontal-table__th,

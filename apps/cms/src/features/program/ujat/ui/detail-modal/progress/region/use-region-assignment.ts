@@ -34,11 +34,16 @@ import {
   buildDirectAssignSuccessMessage,
   resolveRegionAssignmentErrorMessage,
 } from './region-assignment-messages'
+import { resolveRegionUnavailabilityErrorMessage } from './region-unavailability-messages'
 import {
   getRegionAssignmentTableDataFromStore,
   setRegionAssignmentTableData,
 } from './region-assignment-store'
-import { selectRegionUnavailabilityScheduleIds } from './region-assignment-options'
+import {
+  regionUnavailabilityRequiresReplacement,
+  regionUnavailabilityRequiresReplacementForDate,
+  selectRegionUnavailabilityScheduleIds,
+} from './region-assignment-options'
 import type { RegionAssignmentTableData } from './types'
 
 function emptyTable(
@@ -165,24 +170,47 @@ export function useRegionAssignment(
   const blockedDateMutation = useMutation({
     mutationFn: async (payload: RegionBlockedDateModalPayload) => {
       const participantId = Number(payload.volunteerId)
-      const replacementParticipantId = Number(payload.substituteVolunteerId)
       if (!Number.isFinite(participantId)) throw new Error('INVALID_PARTICIPANT')
 
-      const scheduleIds = selectRegionUnavailabilityScheduleIds(
+      const uniqueDateLabels = [...new Set(payload.blockedDateLabels)]
+      if (uniqueDateLabels.length === 0) throw new Error('NO_SCHEDULES_FOR_DATES')
+
+      const needsAnyReplacement = regionUnavailabilityRequiresReplacement(
         tableData,
         payload.volunteerId,
-        payload.blockedDateLabels
+        uniqueDateLabels
       )
-      if (scheduleIds.length === 0) throw new Error('NO_SCHEDULES_FOR_DATES')
+      const replacementParticipantId = Number(payload.substituteVolunteerId)
+      if (needsAnyReplacement && !Number.isFinite(replacementParticipantId)) {
+        throw new Error('REPLACEMENT_REQUIRED')
+      }
 
-      for (const scheduleId of scheduleIds) {
-        await postUjatScheduleUnavailability(programId, scheduleId, {
-          participantId,
-          replacementParticipantId: Number.isFinite(replacementParticipantId)
-            ? replacementParticipantId
-            : null,
-          reason: 'CMS 참여 불가일 설정',
-        })
+      for (const dateLabel of uniqueDateLabels) {
+        const [scheduleId] = selectRegionUnavailabilityScheduleIds(
+          tableData,
+          payload.volunteerId,
+          [dateLabel]
+        )
+        if (!scheduleId) throw new Error('NO_SCHEDULES_FOR_DATES')
+
+        const needsReplacement = regionUnavailabilityRequiresReplacementForDate(
+          tableData,
+          payload.volunteerId,
+          dateLabel
+        )
+
+        if (needsReplacement) {
+          await postUjatScheduleUnavailability(programId, scheduleId, {
+            participantId,
+            replacementParticipantId,
+            reason: 'CMS 참여 불가일 설정',
+          })
+        } else {
+          await postUjatScheduleUnavailability(programId, scheduleId, {
+            participantId,
+            reason: 'CMS 참여 불가일 설정',
+          })
+        }
       }
     },
     onSuccess: async () => {
@@ -190,7 +218,14 @@ export function useRegionAssignment(
       showAlert({ title: '안내', content: '참여 불가일이 설정되었습니다.' })
     },
     onError: error => {
-      showMutationError(error, '참여 불가일 설정에 실패했습니다.')
+      showAlert({
+        title: '오류',
+        content: resolveRegionUnavailabilityErrorMessage(
+          error,
+          '참여 불가일 설정에 실패했습니다.'
+        ),
+      })
+      void invalidateMatrix()
     },
   })
 

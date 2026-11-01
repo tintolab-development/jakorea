@@ -12,7 +12,7 @@ export interface ModalSpecTableRadioOption<T extends string = string> {
 }
 
 export interface ModalSpecTableRadioCellProps<T extends string = string> {
-  value: T
+  value: T | undefined
   onChange: (value: T) => void
   options: ModalSpecTableRadioOption<T>[]
   'aria-label'?: string

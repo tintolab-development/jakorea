@@ -32,4 +32,9 @@ export const PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS = new Set<s
   UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.thirdPartyConsent,
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection,
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
+  /** 일반 프로그램 — 참여 봉사자·강사 추가 등록(관리자 대리 작성) */
+  'participating-volunteer-add-registration-personal-info',
+  'participating-volunteer-add-registration-third-party',
+  'participating-instructor-add-consent-personal-info',
+  'participating-instructor-add-consent-third-party',
 ])

@@ -3,6 +3,8 @@ import {
   getRegionBlockedDateSubstituteVolunteerOptionsFromData,
   getRegionDirectAssignClassOptionsFromData,
   mapRegionDirectAssignCandidateOptions,
+  regionUnavailabilityRequiresReplacement,
+  regionUnavailabilityRequiresReplacementForDate,
   selectRegionUnavailabilityScheduleIds,
 } from './region-assignment-options'
 import type { RegionAssignmentCell, RegionAssignmentTableData } from './types'
@@ -118,6 +120,23 @@ describe('selectRegionUnavailabilityScheduleIds', () => {
   it('그 날 배정이 없으면 그 날 첫 일정을 고른다', () => {
     const data = table([{ id: '1', name: '김', cells: [EMPTY, EMPTY, EMPTY] }])
     expect(selectRegionUnavailabilityScheduleIds(data, '1', ['4/3'])).toEqual(['10'])
+  })
+})
+
+describe('regionUnavailabilityRequiresReplacementForDate', () => {
+  it('선택한 날짜 column 에만 ASSIGNED 가 있을 때 true', () => {
+    const data = table([
+      { id: 'v', name: '봉사', cells: [assigned('3-1'), EMPTY, EMPTY] },
+    ])
+    expect(regionUnavailabilityRequiresReplacementForDate(data, 'v', '4/3')).toBe(true)
+    expect(regionUnavailabilityRequiresReplacementForDate(data, 'v', '4/10')).toBe(false)
+  })
+
+  it('다른 날짜에만 배정돼 있으면 불가일 날짜에는 false', () => {
+    const data = table([
+      { id: 'v', name: '봉사', cells: [assigned('3-1'), EMPTY, EMPTY] },
+    ])
+    expect(regionUnavailabilityRequiresReplacement(data, 'v', ['4/10'])).toBe(false)
   })
 })
 

@@ -22,6 +22,7 @@ import {
   isStructureLockedPartialShortEssayParagraph,
   isStructureLockedPartialTextParagraph,
 } from '@/features/template/lib/structure-locked-paragraph-hint'
+import { PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS } from '@/features/template/lib/personal-info-horizontal-table-disclaimer-paragraph-ids'
 import { ExplanationSystem } from '@/features/template/ui/paragraph/explanation/system'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import {
@@ -504,6 +505,9 @@ export function renderFormParagraphBody(
       const lockedBodyColumnIndexes = structureLockedPartialTextEdit
         ? getStructureLockedPartialLockedBodyColumnIndexes(hp.id, hp.columnHeaders.length)
         : undefined
+      const lockColumnHeaders =
+        PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(hp.id) &&
+        !tableCanvasInteractive
       return (
         <HorizontalTableParagraphBody
           paragraph={p}
@@ -511,6 +515,7 @@ export function renderFormParagraphBody(
           isEditMode={isEditMode}
           tableCanvasInteractive={tableCanvasInteractive}
           lockedBodyColumnIndexes={lockedBodyColumnIndexes}
+          lockColumnHeaders={lockColumnHeaders}
           allowDisclaimerBottomTextEdit={
             structureLockedPartialTextEdit && isStructureLockedPartialDisclaimerEdit(hp.id)
           }

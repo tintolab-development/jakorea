@@ -8,13 +8,15 @@ const MODAL_Z_INDEX = 1100
 export type RegionBlockedDateModalPayload = {
   volunteerId: string
   blockedDateLabels: string[]
-  substituteVolunteerId: string
+  /** 활성 배정이 있는 불가일이 있을 때만 전송 */
+  substituteVolunteerId?: string
 }
 
 export type RegionBlockedDateModalProps = {
   open: boolean
   volunteerOptions: ReadonlyArray<{ value: string; label: string }>
   educationDateOptions: ReadonlyArray<{ value: string; label: string }>
+  getRequiresReplacement: (volunteerId: string, blockedDateLabels: string[]) => boolean
   getSubstituteVolunteerOptions: (
     volunteerId: string,
     blockedDateLabels: string[]
@@ -38,6 +40,7 @@ export function RegionBlockedDateModal({
   open,
   volunteerOptions,
   educationDateOptions,
+  getRequiresReplacement,
   getSubstituteVolunteerOptions,
   onCancel,
   onConfirm,
@@ -47,37 +50,46 @@ export function RegionBlockedDateModal({
   const [substituteVolunteerId, setSubstituteVolunteerId] = useState<string | undefined>(
     undefined
   )
+  const [formError, setFormError] = useState<string | null>(null)
+
+  const requiresReplacement = useMemo(() => {
+    if (!volunteerId || blockedDateLabels.length === 0) return false
+    return getRequiresReplacement(volunteerId, blockedDateLabels)
+  }, [blockedDateLabels, getRequiresReplacement, volunteerId])
 
   const substituteVolunteerOptions = useMemo(() => {
-    if (!volunteerId || blockedDateLabels.length === 0) return []
+    if (!requiresReplacement || !volunteerId || blockedDateLabels.length === 0) return []
     return getSubstituteVolunteerOptions(volunteerId, blockedDateLabels)
-  }, [blockedDateLabels, getSubstituteVolunteerOptions, volunteerId])
+  }, [blockedDateLabels, getRequiresReplacement, getSubstituteVolunteerOptions, requiresReplacement, volunteerId])
 
   useEffect(() => {
     if (!open) return
     setVolunteerId(undefined)
     setBlockedDateLabels([])
     setSubstituteVolunteerId(undefined)
+    setFormError(null)
   }, [open])
 
   useEffect(() => {
     setSubstituteVolunteerId(undefined)
-  }, [volunteerId, blockedDateLabels])
+    setFormError(null)
+  }, [volunteerId, blockedDateLabels, requiresReplacement])
 
   const canConfirm = useMemo(() => {
-    if (!volunteerId || blockedDateLabels.length === 0 || !substituteVolunteerId) {
+    if (!volunteerId || blockedDateLabels.length === 0) return false
+    if (
+      !volunteerOptions.some(option => option.value === volunteerId) ||
+      !blockedDateLabels.every(label => educationDateOptions.some(option => option.value === label))
+    ) {
       return false
     }
-    return (
-      volunteerOptions.some(option => option.value === volunteerId) &&
-      blockedDateLabels.every(label =>
-        educationDateOptions.some(option => option.value === label)
-      ) &&
-      substituteVolunteerOptions.some(option => option.value === substituteVolunteerId)
-    )
+    if (!requiresReplacement) return true
+    if (!substituteVolunteerId) return false
+    return substituteVolunteerOptions.some(option => option.value === substituteVolunteerId)
   }, [
     blockedDateLabels,
     educationDateOptions,
+    requiresReplacement,
     substituteVolunteerId,
     substituteVolunteerOptions,
     volunteerId,
@@ -88,20 +100,39 @@ export function RegionBlockedDateModal({
     setVolunteerId(undefined)
     setBlockedDateLabels([])
     setSubstituteVolunteerId(undefined)
+    setFormError(null)
     onCancel()
   }, [onCancel])
 
   const handleConfirm = useCallback(() => {
-    if (!canConfirm || !volunteerId || !substituteVolunteerId) return
+    if (!volunteerId || blockedDateLabels.length === 0) return
+    if (requiresReplacement) {
+      if (!substituteVolunteerId) {
+        setFormError('배정된 교육이 있는 날짜에는 대체 봉사자를 선택해 주세요.')
+        return
+      }
+      if (!substituteVolunteerOptions.some(option => option.value === substituteVolunteerId)) {
+        setFormError('선택한 대체 봉사자를 다시 확인해 주세요.')
+        return
+      }
+    }
     onConfirm({
       volunteerId,
       blockedDateLabels,
-      substituteVolunteerId,
+      substituteVolunteerId: requiresReplacement ? substituteVolunteerId : undefined,
     })
     setVolunteerId(undefined)
     setBlockedDateLabels([])
     setSubstituteVolunteerId(undefined)
-  }, [blockedDateLabels, canConfirm, onConfirm, substituteVolunteerId, volunteerId])
+    setFormError(null)
+  }, [
+    blockedDateLabels,
+    onConfirm,
+    requiresReplacement,
+    substituteVolunteerId,
+    substituteVolunteerOptions,
+    volunteerId,
+  ])
 
   const footer = (
     <div className="ujat-assignment-assign-modal__footer">
@@ -182,34 +213,44 @@ export function RegionBlockedDateModal({
           />
         </div>
 
-        <div className="ujat-assignment-assign-modal__field">
-          <RequiredLabel>대체 봉사자</RequiredLabel>
-          <CmsSelect
-            inputSize="large"
-            width="100%"
-            withAllOption={false}
-            placeholder={
-              !volunteerId
-                ? '봉사자를 먼저 선택해 주세요'
-                : blockedDateLabels.length === 0
-                  ? '참여 불가일을 먼저 선택해 주세요'
-                  : substituteVolunteerOptions.length === 0
-                    ? '선택 가능한 대체 봉사자가 없습니다'
-                    : '대체 봉사자를 선택해 주세요'
-            }
-            value={substituteVolunteerId}
-            disabled={
-              !volunteerId ||
-              blockedDateLabels.length === 0 ||
-              substituteVolunteerOptions.length === 0
-            }
-            onChange={value =>
-              setSubstituteVolunteerId(value == null ? undefined : String(value))
-            }
-            options={[...substituteVolunteerOptions]}
-            aria-label="대체 봉사자"
-          />
-        </div>
+        {volunteerId && blockedDateLabels.length > 0 && !requiresReplacement ? (
+          <p className="form-editor-template-field-hint-text" role="status">
+            선택한 교육일에 배정이 없습니다. 활동 불가만 등록되며 자동 배정에서 제외됩니다.
+          </p>
+        ) : null}
+
+        {requiresReplacement ? (
+          <div className="ujat-assignment-assign-modal__field">
+            <RequiredLabel>대체 봉사자</RequiredLabel>
+            <CmsSelect
+              inputSize="large"
+              width="100%"
+              withAllOption={false}
+              placeholder={
+                substituteVolunteerOptions.length === 0
+                  ? '선택 가능한 대체 봉사자가 없습니다'
+                  : '대체 봉사자를 선택해 주세요'
+              }
+              value={substituteVolunteerId}
+              disabled={substituteVolunteerOptions.length === 0}
+              onChange={value => {
+                setSubstituteVolunteerId(value == null ? undefined : String(value))
+                setFormError(null)
+              }}
+              options={[...substituteVolunteerOptions]}
+              aria-label="대체 봉사자"
+            />
+          </div>
+        ) : null}
+
+        {formError ? (
+          <p
+            className="form-editor-template-field-hint-text ujat-assignment-assign-modal__form-error"
+            role="alert"
+          >
+            {formError}
+          </p>
+        ) : null}
       </div>
     </ContentModal>
   )

@@ -81,6 +81,26 @@
   width: 100%;
 }
 
+.ujat-add-volunteer-modal__member-select,
+.ujat-add-volunteer-modal__member-select.cms-select--clearable {
+  --cms-select-suffix-w: var(--cms-icon-size, 22px);
+}
+
+.ujat-add-volunteer-modal__member-select .cms-select__chevron {
+  display: none;
+}
+
+.ujat-add-volunteer-modal__member-select .ant-select-prefix {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-inline-end: var(--cms-control-gap, 8px);
+}
+
+.ujat-add-volunteer-modal__member-select .ant-select-prefix .cms-field__icon {
+  color: var(--Content-tertiary, #85969d);
+}
+
 .ujat-add-volunteer-modal__required {
   margin-left: var(--spacing-4);
   color: var(--color-required-mark, #c32f4a);

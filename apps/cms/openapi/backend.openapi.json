@@ -50964,9 +50964,10 @@
               "SUBMITTED",
               "APPROVED",
               "DEADLINE_MISSED",
+              "FEEDBACK_REQUESTED",
               "REVISED"
             ],
-            "description": "REVISED는 관리자 수정요청(REJECTED) 또는 revision_no>1 재제출을 의미합니다."
+            "description": "FEEDBACK_REQUESTED=피드백 전달 후 미재제출. REVISED=피드백 이후 재제출(revision_no>1 등)."
           },
           "submittedAt": {
             "type": "string",

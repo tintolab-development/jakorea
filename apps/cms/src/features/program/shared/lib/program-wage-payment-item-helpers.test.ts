@@ -5,6 +5,7 @@ import {
   programPaymentItemLabelsFromIds,
   resolveProgramPaymentItemIdsFromLabels,
   resolveProgramPaymentItemLabel,
+  resolveProgramWageDeductionLabel,
 } from './program-wage-payment-item-helpers'
 
 describe('지급 항목 선택 라벨', () => {
@@ -55,5 +56,9 @@ describe('지급 항목 선택 라벨', () => {
   it('옵션 목록에 p-3이 있으면 코드가 아니라 항목명이 있다', () => {
     const options = getProgramWagePaymentItemOptions()
     expect(options.find(o => o.value === 'p-3')?.label).toBe('숙박비')
+  })
+
+  it('공제 항목 canonical label은 원천징수세액이다', () => {
+    expect(resolveProgramWageDeductionLabel(['p-1'])).toBe('원천징수세액')
   })
 })

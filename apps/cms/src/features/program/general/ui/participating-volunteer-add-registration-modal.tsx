@@ -139,6 +139,7 @@ function ParticipatingVolunteerAddRegistrationModalBody({
       title="봉사자 추가 등록"
       width={1200}
       footer={footer}
+      titleBodyGap="none"
       className="participating-volunteer-add-registration-modal"
       zIndex={1100}
     >
