@@ -7,18 +7,24 @@ import {
   displaySettlementDocumentText,
   formatSettlementDocumentAmount,
   formatSettlementDocumentLectureDate,
+  formatSettlementDocumentSignedAmount,
   formatSettlementDocumentTotalLabel,
   isSettlementDocumentDeductionLine,
+  settlementDocumentFirstColumnHeader,
+  settlementDocumentFirstColumnValue,
+  settlementDocumentLinesSectionTitle,
   settlementDocumentPayDeductionLabel,
   warnIfSettlementDocumentTotalMismatch,
 } from '../lib/format-application-document'
 import { fetchPortalSignedDownloadBlob } from '@/shared/lib/portal-signed-download-fetch'
-import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import styles from './application-document-view.module.css'
+
+export type SettlementApplicationDocumentPage = 'summary' | 'attachments'
 
 type EducationSettlementApplicationDocumentViewProps = {
   document: SettlementApplicationDocumentResponse
-  onBack: () => void
+  programTitle?: string | null
+  page?: SettlementApplicationDocumentPage
   onRefreshDocument: () => void | Promise<unknown>
   refreshing?: boolean
 }
@@ -41,9 +47,22 @@ function formatAttachmentSize(fileSize: number | undefined): string | null {
   return `${(fileSize / (1024 * 1024)).toFixed(1)} MB`
 }
 
+function pairInfoRows(
+  rows: Array<{ label: string; value: string }>,
+): Array<[ { label: string; value: string }, { label: string; value: string } | null ]> {
+  const pairs: Array<
+    [{ label: string; value: string }, { label: string; value: string } | null]
+  > = []
+  for (let i = 0; i < rows.length; i += 2) {
+    pairs.push([rows[i]!, rows[i + 1] ?? null])
+  }
+  return pairs
+}
+
 export function EducationSettlementApplicationDocumentView({
   document,
-  onBack,
+  programTitle,
+  page = 'summary',
   onRefreshDocument,
   refreshing = false,
 }: EducationSettlementApplicationDocumentViewProps) {
@@ -91,45 +110,136 @@ export function EducationSettlementApplicationDocumentView({
   const showCalc = document.documentType === 'PAYMENT_STATEMENT' && document.calcInfo != null
   const basicRows = buildSettlementDocumentBasicRows(document.basicInfo)
   const calcRows = showCalc ? buildSettlementDocumentCalcRows(document.calcInfo!) : []
+  const firstColumnHeader = settlementDocumentFirstColumnHeader(document.documentType)
+  const linesTitle = settlementDocumentLinesSectionTitle(document.documentType)
+
+  if (page === 'attachments') {
+    return (
+      <div className={styles.body}>
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>첨부</h2>
+          {document.attachments.length === 0 ? (
+            <p className={styles.attachmentMeta}>첨부 없음</p>
+          ) : (
+            <ul className={styles.attachmentList}>
+              {document.attachments.map((attachment, index) => {
+                const fileObjectId = attachment.fileObjectId
+                const label =
+                  attachment.originalFileName?.trim() ||
+                  (fileObjectId != null ? `첨부 ${fileObjectId}` : `첨부 ${index + 1}`)
+                const size = formatAttachmentSize(attachment.fileSize)
+                return (
+                  <li
+                    key={`${attachment.submissionFileId ?? fileObjectId ?? 'attachment'}-${index}`}
+                    className={styles.attachmentItem}
+                  >
+                    <p className={styles.attachmentName}>{label}</p>
+                    {size || attachment.contentType ? (
+                      <span className={styles.attachmentMeta}>
+                        {[attachment.contentType, size].filter(Boolean).join(' · ')}
+                      </span>
+                    ) : null}
+                    {fileObjectId != null ? (
+                      <button
+                        type="button"
+                        className={styles.attachmentOpen}
+                        disabled={downloadingAttachmentId === fileObjectId || refreshing}
+                        onClick={() => void handleAttachmentDownload(attachment)}
+                      >
+                        {downloadingAttachmentId === fileObjectId ? '다운로드 중...' : '다운로드'}
+                      </button>
+                    ) : (
+                      <span className={styles.attachmentMeta}>다운로드할 파일 정보가 없습니다.</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+          {attachmentError ? <p className={styles.attachmentError}>{attachmentError}</p> : null}
+        </section>
+      </div>
+    )
+  }
 
   return (
-    <div className={styles.page}>
-      <header className={styles.docHeader}>
-        <PFText as="h1" typo="hd-sm" color="black" className={styles.docTitle}>
-          {document.title.trim() || 'JA KOREA 정산 신청서'}
-        </PFText>
-      </header>
-
+    <div className={styles.body}>
       <section className={styles.section}>
-        <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
-          기본 정보
-        </PFText>
-        <PFInfoReview rows={basicRows} accentFirstRow={false} />
+        <h2 className={styles.sectionTitle}>기본 정보</h2>
+        <div className={styles.infoTableWrap}>
+          <table className={styles.infoTable}>
+            <tbody>
+              {pairInfoRows(basicRows).map(([left, right]) => (
+                <tr key={left.label}>
+                  <th scope="row">{left.label}</th>
+                  <td>{left.value}</td>
+                  {right ? (
+                    <>
+                      <th scope="row">{right.label}</th>
+                      <td>{right.value}</td>
+                    </>
+                  ) : (
+                    <>
+                      <th scope="row" />
+                      <td />
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       {showCalc ? (
         <section className={styles.section}>
-          <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
-            강의비 산출 정보
-          </PFText>
-          <PFInfoReview rows={calcRows} accentFirstRow={false} />
+          <h2 className={styles.sectionTitle}>강의비 산출 정보</h2>
+          <div className={styles.infoTableWrap}>
+            <table className={styles.infoTable}>
+              <tbody>
+                {pairInfoRows(calcRows).map(([left, right]) => (
+                  <tr key={left.label}>
+                    <th scope="row">{left.label}</th>
+                    <td>{left.value}</td>
+                    {right ? (
+                      <>
+                        <th scope="row">{right.label}</th>
+                        <td>{right.value}</td>
+                      </>
+                    ) : (
+                      <>
+                        <th scope="row" />
+                        <td />
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       ) : null}
 
       <section className={styles.section}>
-        <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
-          강의비 산출 내역
-        </PFText>
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
+        <h2 className={styles.sectionTitle}>{linesTitle}</h2>
+        <div className={styles.linesWrap}>
+          <table className={styles.linesTable}>
+            <colgroup>
+              <col className={styles.colProgram} />
+              <col className={styles.colDate} />
+              <col className={styles.colPay} />
+              <col className={styles.colCategory} />
+              <col className={styles.colItem} />
+              <col className={styles.colAmount} />
+            </colgroup>
             <thead>
               <tr>
-                <th scope="col">참여 기관명</th>
-                <th scope="col">강의 진행 일자</th>
+                <th scope="col">{firstColumnHeader}</th>
+                <th scope="col">교육 진행 일자</th>
                 <th scope="col">지급/공제</th>
                 <th scope="col">구분</th>
-                <th scope="col">항목명</th>
-                <th scope="col">금액</th>
+                <th scope="col">항목 설명</th>
+                <th scope="col">정산 금액</th>
               </tr>
             </thead>
             <tbody>
@@ -147,13 +257,19 @@ export function EducationSettlementApplicationDocumentView({
                       key={`${line.category ?? ''}-${line.description ?? ''}-${index}`}
                       className={deduction ? styles.deductionRow : undefined}
                     >
-                      <td>{displaySettlementDocumentText(line.institutionName)}</td>
+                      <td>
+                        {settlementDocumentFirstColumnValue(
+                          document.documentType,
+                          line,
+                          programTitle,
+                        )}
+                      </td>
                       <td>{formatSettlementDocumentLectureDate(line)}</td>
                       <td>{settlementDocumentPayDeductionLabel(line)}</td>
                       <td>{displaySettlementDocumentText(line.category)}</td>
                       <td>{displaySettlementDocumentText(line.description)}</td>
                       <td className={styles.amountCell}>
-                        {formatSettlementDocumentAmount(line.amount)}
+                        {formatSettlementDocumentSignedAmount(line.amount)}
                       </td>
                     </tr>
                   )
@@ -161,11 +277,12 @@ export function EducationSettlementApplicationDocumentView({
               )}
             </tbody>
             <tfoot>
-              <tr>
-                <td colSpan={5} className={styles.totalLabel}>
+              <tr className={styles.summaryRow}>
+                <th scope="row">합계</th>
+                <td colSpan={4} className={styles.summaryFormula}>
                   {formatSettlementDocumentTotalLabel(document.total)}
                 </td>
-                <td className={styles.amountCell}>
+                <td className={`${styles.amountCell} ${styles.summaryTotal}`}>
                   {formatSettlementDocumentAmount(document.total.amount)}
                 </td>
               </tr>
@@ -173,62 +290,6 @@ export function EducationSettlementApplicationDocumentView({
           </table>
         </div>
       </section>
-
-      {document.attachments.length > 0 ? (
-        <section className={styles.section}>
-          <PFText as="h2" typo="form-section-title" color="black" className={styles.sectionTitle}>
-            첨부
-          </PFText>
-          <ul className={styles.attachmentList}>
-            {document.attachments.map((attachment, index) => {
-              const fileObjectId = attachment.fileObjectId
-              const label =
-                attachment.originalFileName?.trim() ||
-                (fileObjectId != null ? `첨부 ${fileObjectId}` : `첨부 ${index + 1}`)
-              const size = formatAttachmentSize(attachment.fileSize)
-              return (
-                <li
-                  key={`${attachment.submissionFileId ?? fileObjectId ?? 'attachment'}-${index}`}
-                  className={styles.attachmentItem}
-                >
-                  <PFText
-                    as="p"
-                    typo="bd-sm-md"
-                    color="neutral-cool-600"
-                    className={styles.attachmentName}
-                  >
-                    {label}
-                  </PFText>
-                  {size || attachment.contentType ? (
-                    <span className={styles.attachmentMeta}>
-                      {[attachment.contentType, size].filter(Boolean).join(' · ')}
-                    </span>
-                  ) : null}
-                  {fileObjectId != null ? (
-                    <button
-                      type="button"
-                      className={styles.attachmentOpen}
-                      disabled={downloadingAttachmentId === fileObjectId || refreshing}
-                      onClick={() => void handleAttachmentDownload(attachment)}
-                    >
-                      {downloadingAttachmentId === fileObjectId ? '다운로드 중...' : '다운로드'}
-                    </button>
-                  ) : (
-                    <span className={styles.attachmentMeta}>다운로드할 파일 정보가 없습니다.</span>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-          {attachmentError ? <p className={styles.attachmentError}>{attachmentError}</p> : null}
-        </section>
-      ) : null}
-
-      <div className={styles.actions}>
-        <PFButton type="button" variant="tertiary" size="xlarge" width="100%" onClick={onBack}>
-          이전
-        </PFButton>
-      </div>
     </div>
   )
 }
