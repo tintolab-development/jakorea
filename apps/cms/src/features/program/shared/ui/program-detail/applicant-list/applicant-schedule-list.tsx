@@ -152,11 +152,14 @@ export function ApplicantScheduleList({
                       inst.address,
                       (inst as ApplicantInstructorRow).distanceKm
                     )
+                    const row = inst as ApplicantInstructorRow
                     const { dispatchCount, longDistanceCount } =
-                      getInstructorScheduleDispatchStats(instructorName)
+                      getInstructorScheduleDispatchStats({
+                        programDispatchCount: row.programDispatchCount,
+                        programLongDistanceDispatchCount: row.programLongDistanceDispatchCount,
+                      })
                     const isLongDistance = isInstructorLongDistance({
-                      distanceKm,
-                      longDistanceYn: (inst as ApplicantInstructorRow).longDistanceYn,
+                      longDistanceYn: row.longDistanceYn,
                     })
                     return (
                       <div
@@ -272,12 +275,13 @@ export function ApplicantScheduleList({
               originalItem?.address as string | undefined,
               (originalItem as ApplicantInstructorRow | undefined)?.distanceKm
             )
-            const { dispatchCount, longDistanceCount } =
-              getInstructorScheduleDispatchStats(instructorName)
+            const originalRow = originalItem as ApplicantInstructorRow | undefined
+            const { dispatchCount, longDistanceCount } = getInstructorScheduleDispatchStats({
+              programDispatchCount: originalRow?.programDispatchCount,
+              programLongDistanceDispatchCount: originalRow?.programLongDistanceDispatchCount,
+            })
             const isLongDistance = isInstructorLongDistance({
-              distanceKm,
-              longDistanceYn: (originalItem as ApplicantInstructorRow | undefined)
-                ?.longDistanceYn,
+              longDistanceYn: originalRow?.longDistanceYn,
             })
 
             return (

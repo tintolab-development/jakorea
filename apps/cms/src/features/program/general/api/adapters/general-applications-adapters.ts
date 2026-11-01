@@ -888,6 +888,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     rejectionReason: readRuntimeString(dto, 'rejectReason'),
     distanceKm: readRuntimeNumber(dto, 'distanceKm'),
     longDistanceYn: readRuntimeBoolean(dto, 'longDistance'),
+    programDispatchCount: readRuntimeNumber(dto, 'programDispatchCount'),
+    programLongDistanceDispatchCount: readRuntimeNumber(dto, 'programLongDistanceDispatchCount'),
     availableActions: dto.availableActions,
   }
 }
@@ -1044,6 +1046,9 @@ export function mapInstructorApplicationDetailToApplicantRow(
       dto.longDistance !== undefined && dto.longDistance !== null
         ? dto.longDistance
         : base.longDistanceYn,
+    // dispatch 집계는 list item 전용 — detail 응답에 없음. 목록 hydrate 값 유지.
+    programDispatchCount: base.programDispatchCount,
+    programLongDistanceDispatchCount: base.programLongDistanceDispatchCount,
     managerComment: dto.managerComment ?? base.managerComment,
     availableActions: dto.availableActions ?? base.availableActions,
     preferredScheduleSlots,

@@ -10,7 +10,7 @@ BE 핸드오프: JABACK `docs/frontend/company-school-primary-seed-handoff-2026-
 - Primary ID `170001`–`170003` · `ONE-0*` 제목 → `isCompanySchoolProgram` / 상세 LNB(봉사 숨김)
 - 목록 overview·예정 필터: `SCHEDULED`∪`RECRUITING` (id 중복 제거) — 카드 건수와 목록 집합 동일
 - 기관 신청: `GET …/requested-schedules` → `sessions` / 희망일정 표시
-- 강사 신청: `distanceKm` / `longDistance`(API) 우선, threshold 100km(시드 컬럼)
+- 강사 신청: `distanceKm` / `longDistance`(API·표기 전용). 장거리 표기는 BE `longDistance`(편도 > 200km, SettlementAmountPolicy.isLongDistanceDisplay). FE km 판정 금지. 장거리 단가 대체는 1사1교 정산/배정 snapshot만
 - 1일1교: `instructor-assignments` + `programs/{id}/schedules`로 점유일·배정 보드 (mock 제거)
 - 배정 create: `POST …/instructor-assignments` (`requestedScheduleId` / `resolvedScheduleId` 매핑)
 

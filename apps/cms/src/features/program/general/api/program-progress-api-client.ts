@@ -456,6 +456,8 @@ export type ParticipantEducationScopeScheduleEnrich = {
    * 자택과 장소가 같아 서버가 0km 이하로 버린 경우. FE는 재계산하지 않는다.
    */
   distanceKm?: number | null
+  /** 장거리 표기 전용(단가 아님). 없으면 FE는 접미어를 붙이지 않는다. */
+  longDistance?: boolean | null
   /** 동일 scheduleId VOLUNTEER education-scope 인원. 항상 number, 0 포함 (omit 금지) */
   assignedVolunteerCount: number
 }
