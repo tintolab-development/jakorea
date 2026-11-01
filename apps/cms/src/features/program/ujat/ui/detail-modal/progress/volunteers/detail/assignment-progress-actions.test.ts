@@ -5,6 +5,7 @@ import {
   postUjatDirectAssignment,
   postUjatPartnerAssignmentCancel,
   postUjatPartnerAssignmentConfirm,
+  putUjatAttendanceManager,
 } from '@/features/program/ujat/api/education-execution-api'
 import { queryKeys } from '@/features/program/ujat/api/query-keys'
 import {
@@ -12,6 +13,7 @@ import {
   confirmVolunteerAssignment,
   correctVolunteerAttendance,
   invalidateVolunteerAssignmentQueries,
+  updateVolunteerScheduleRole,
   volunteerAssignmentInvalidationQueryKeys,
 } from './assignment-progress-actions'
 
@@ -20,6 +22,7 @@ vi.mock('@/features/program/ujat/api/education-execution-api', () => ({
   postUjatPartnerAssignmentConfirm: vi.fn(),
   postUjatDirectAssignment: vi.fn(),
   bulkUpsertUjatAttendances: vi.fn(),
+  putUjatAttendanceManager: vi.fn(),
 }))
 
 describe('volunteer assignment mutations', () => {
@@ -28,6 +31,7 @@ describe('volunteer assignment mutations', () => {
     vi.mocked(postUjatPartnerAssignmentConfirm).mockReset().mockResolvedValue({} as never)
     vi.mocked(postUjatDirectAssignment).mockReset().mockResolvedValue({} as never)
     vi.mocked(bulkUpsertUjatAttendances).mockReset().mockResolvedValue({})
+    vi.mocked(putUjatAttendanceManager).mockReset().mockResolvedValue(undefined)
   })
 
   it('배정 취소는 partner assignment cancel을 호출한다', async () => {
@@ -36,11 +40,25 @@ describe('volunteer assignment mutations', () => {
       scheduleId: 10,
       assignmentGroupId: 'grp-1',
       reason: '일정 변경',
+      timing: 'IMMEDIATE',
+      scheduledAt: null,
     })
 
     expect(postUjatPartnerAssignmentCancel).toHaveBeenCalledWith('42', 10, 'grp-1', {
       reason: '일정 변경',
+      timing: 'IMMEDIATE',
+      scheduledAt: null,
     })
+  })
+
+  it('미발송 취소는 빈 body로 cancel을 호출한다', async () => {
+    await cancelVolunteerAssignment({
+      programId: '42',
+      scheduleId: 10,
+      assignmentGroupId: 'grp-1',
+    })
+
+    expect(postUjatPartnerAssignmentCancel).toHaveBeenCalledWith('42', 10, 'grp-1', {})
   })
 
   it('교육 배정은 직접 배정 후 파트너 확정을 호출한다', async () => {
@@ -134,6 +152,26 @@ describe('volunteer assignment mutations', () => {
         },
       ],
     })
+  })
+
+  it('출결 담당 지정은 attendance-manager PUT에 participantId를 보낸다', async () => {
+    await updateVolunteerScheduleRole({
+      programId: '42',
+      scheduleId: 10,
+      participantId: 7,
+      role: 'attendance_manager',
+    })
+    expect(putUjatAttendanceManager).toHaveBeenCalledWith('42', 10, { participantId: 7 })
+  })
+
+  it('해당 없음은 attendance-manager PUT에 participantId null을 보낸다', async () => {
+    await updateVolunteerScheduleRole({
+      programId: '42',
+      scheduleId: 10,
+      participantId: 7,
+      role: 'none',
+    })
+    expect(putUjatAttendanceManager).toHaveBeenCalledWith('42', 10, { participantId: null })
   })
 
   it('성공 후 봉사자 배정·파트너·불참 사유 쿼리를 무효화한다', async () => {

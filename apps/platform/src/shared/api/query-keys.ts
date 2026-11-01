@@ -643,5 +643,21 @@ export const platformQueryKeys = {
         'detail',
         settlementApplicationId,
       ] as const,
+    /**
+     * 제출 revision 정산 신청서 문서 — application-document (Class G: viewUrl ~5분)
+     * kind: individual | instructor
+     */
+    settlementApplicationDocument: (
+      kind: 'individual' | 'instructor',
+      documentId: number,
+      revisionNo?: number | null,
+    ) =>
+      [
+        ...platformQueryKeys.mypage.all(),
+        'settlement-application-document',
+        kind,
+        documentId,
+        revisionNo ?? 'latest',
+      ] as const,
   },
 } as const

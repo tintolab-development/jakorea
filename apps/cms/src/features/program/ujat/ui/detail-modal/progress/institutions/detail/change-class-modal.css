@@ -28,15 +28,15 @@
   transform: translate(-50%, -50%) !important;
   margin: 0 !important;
   padding-bottom: 0 !important;
-  width: min(600px, calc(100vw - 32px)) !important;
-  max-width: min(600px, calc(100vw - 32px)) !important;
+  width: min(640px, calc(100vw - 32px)) !important;
+  max-width: min(640px, calc(100vw - 32px)) !important;
   box-sizing: border-box !important;
 }
 
 .content-modal.ujat-education-progress-change-class-modal.ant-modal .ant-modal-content,
 .content-modal.ujat-education-progress-change-class-modal.teal-header-modal .ant-modal-content {
   display: flex;
-  width: 600px;
+  width: 640px;
   height: 494px;
   max-height: min(494px, calc(100vh - 32px));
   padding: 24px 30px 34px;
@@ -248,15 +248,17 @@
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 8px;
   min-width: 0;
 }
 
 .ujat-education-progress-change-class-modal__field {
   display: flex;
-  flex: 1 1 0;
+  flex: 0 0 auto;
   align-items: center;
-  min-width: 0;
+  width: 112px;
+  min-width: 112px;
   height: 36px;
 }
 
@@ -270,26 +272,31 @@
 
 .ujat-education-progress-change-class-modal__field .cms-select,
 .ujat-education-progress-change-class-modal__field .cms-input {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  flex: 1 1 0% !important;
-  flex-grow: 1 !important;
-  flex-shrink: 1 !important;
+  width: 112px !important;
+  min-width: 112px !important;
+  max-width: 112px !important;
+  flex: 0 0 112px !important;
   height: 36px;
   box-sizing: border-box;
 }
 
 .ujat-education-progress-change-class-modal__field .cms-select.cms-select--explicit-width {
-  width: 100% !important;
-  min-width: 0 !important;
+  width: 112px !important;
+  min-width: 112px !important;
 }
 
 .ujat-education-progress-change-class-modal__field .cms-select .ant-select,
 .ujat-education-progress-change-class-modal__field .cms-select .ant-select-selector {
   width: 100% !important;
-  min-width: 0 !important;
+  min-width: 0;
   max-width: 100%;
+}
+
+/* 콤팩트 셀: clear 미사용 — 선택 라벨(2학년/미배정) 텍스트 영역 확보 */
+.ujat-education-progress-change-class-modal__field .cms-select.cms-control--small {
+  --cms-control-pl: 10px;
+  --cms-control-pr: 8px;
+  --cms-control-gap: 4px;
 }
 
 .ujat-education-progress-change-class-modal__field .cms-select--small,
@@ -300,6 +307,12 @@
 .ujat-education-progress-change-class-modal__field .cms-select--small .ant-select-selector {
   height: 36px !important;
   align-items: center;
+}
+
+.ujat-education-progress-change-class-modal__field .cms-select .ant-select-selection-item,
+.ujat-education-progress-change-class-modal__field .cms-select .ant-select-selection-placeholder {
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .ujat-education-progress-change-class-modal__footer {

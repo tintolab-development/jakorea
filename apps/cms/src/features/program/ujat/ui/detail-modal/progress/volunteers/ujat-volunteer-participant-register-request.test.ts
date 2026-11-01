@@ -8,6 +8,7 @@ import {
   ujatVolunteerFreeTextOverlayKey,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-keys'
 import { PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
+import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
 import { EMPTY_UJAT_VOLUNTEER_ADD_REGISTRATION_CONSENTS } from './terms-consent-section'
 import { buildUjatVolunteerParticipantRegisterRequest } from './ujat-volunteer-participant-register-request'
 
@@ -21,6 +22,21 @@ function agreeDraftParagraphs() {
       return { ...paragraph, bottomConsent: 'agree' as const }
     }
     return paragraph
+  })
+}
+
+function withThirdPartyRecipient(
+  paragraphs: ReturnType<typeof agreeDraftParagraphs>,
+  recipient: string
+) {
+  return paragraphs.map(paragraph => {
+    if (paragraph.id !== UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent) {
+      return paragraph
+    }
+    const table = paragraph as HorizontalTableParagraph
+    const row = [...(table.fieldDataRows?.[0] ?? [])]
+    row[0] = { kind: 'text', value: recipient }
+    return { ...table, fieldDataRows: [row] }
   })
 }
 
@@ -77,12 +93,29 @@ describe('buildUjatVolunteerParticipantRegisterRequest', () => {
     expect(result.request.volunteerKind).toBe('GENERAL')
     expect(result.request.personalInfoConsent).toBe('AGREE')
     expect(result.request.thirdPartyConsent).toBe('AGREE')
+    // UJAT 시드 기본값 「배정된 교육 대상 학교」 — 있으면 wire에 포함(생략도 가능)
+    expect(result.request.thirdPartyRecipient).toBe('배정된 교육 대상 학교')
     expect(result.request.jaProgramExperienceConsentRequest).toBe('NOT_REQUESTED')
     expect(result.request.applicationType).toBe('NEW')
     expect(result.request.educationRegionCode).toBe('seoul')
     expect(result.request.id1365).toBe('id-1365')
     expect(result.request.freeTextItems?.items).toHaveLength(4)
     expect(result.request.previousJaProgram).toBeUndefined()
+  })
+
+  it('omits thirdPartyRecipient when UJAT recipient cell is empty', () => {
+    const result = buildUjatVolunteerParticipantRegisterRequest({
+      memberId: 12,
+      paragraphs: withThirdPartyRecipient(agreeDraftParagraphs(), ''),
+      terms: agreedTerms,
+      overlay: overlayWithFreeText({
+        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: '서울',
+      }),
+      applicationType: 'new',
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.request.thirdPartyRecipient).toBeUndefined()
   })
 
   it('omits freeTextItems for UJAT graduate and does not require previousJaProgram', () => {

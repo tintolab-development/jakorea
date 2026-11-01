@@ -9,11 +9,26 @@ export function UjatEducationProgressSummarySection({
 }: {
   programId?: string | null
 }) {
-  const { schoolSummary, volunteerSummary, loading } = useUjatEducationProgressSummary(programId)
+  const { schoolSummary, volunteerSummary, loading, isError, isRemote } =
+    useUjatEducationProgressSummary(programId)
   if (loading) {
     return (
       <div className="ujat-edu-progress-summary" role="status">
         <Spin size="large" />
+      </div>
+    )
+  }
+  if (!isRemote) {
+    return (
+      <div className="ujat-edu-progress-summary" role="status">
+        원격 API를 사용할 수 없어 교육 진행 요약을 표시하지 않습니다.
+      </div>
+    )
+  }
+  if (isError) {
+    return (
+      <div className="ujat-edu-progress-summary" role="alert">
+        교육 진행 요약을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
       </div>
     )
   }

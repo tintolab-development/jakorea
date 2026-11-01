@@ -78,6 +78,12 @@ describe('getRegionDirectAssignClassOptionsFromData', () => {
       label: '4/3 ｜ 3학년 3반 (A초)',
     })
   })
+
+  it('classSlots가 비면 직접 배정 옵션을 invent하지 않는다', () => {
+    const data = table([{ id: '1', name: '김', cells: [EMPTY, EMPTY, EMPTY] }])
+    data.columns = data.columns.map(column => ({ ...column, classSlots: [] }))
+    expect(getRegionDirectAssignClassOptionsFromData(data)).toEqual([])
+  })
 })
 
 describe('mapRegionDirectAssignCandidateOptions', () => {

@@ -142,8 +142,7 @@ export async function exportRegionAssignmentExcel(
       const excelCell = bodyRow.getCell(colNumber)
       const assignmentCell = selectedCells[colNumber - 3]
       const isBlockedEmpty =
-        assignmentCell?.kind === 'empty' &&
-        (assignmentCell.blockedEmpty || selectedColumns[colNumber - 3]?.column.isBlockedDate)
+        assignmentCell?.kind === 'empty' && assignmentCell.blockedEmpty === true
 
       applyBodyStyle(excelCell, {
         fill: row.isWithdrawnVolunteer ? WITHDRAWN_FILL : isBlockedEmpty ? BLOCKED_FILL : undefined,

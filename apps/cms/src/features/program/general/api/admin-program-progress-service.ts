@@ -393,18 +393,14 @@ export async function fetchGeneralProgressAttendanceBundle(
   }
 }
 
-/** 일반 개인 진행 현황 · 과제 관리. mock/null 폴백 없음. */
-export async function fetchGeneralProgressAssignmentBundle(
-  programId: string,
-  scheduleDateRanges?: readonly import('@/features/program/general/api/program-progress-api-client').ProgramScheduleDateRange[] | null
-) {
+/** 일반 개인 진행 현황 · 과제 관리. mock/null 폴백 없음. items[].scheduleId 정본만 사용. */
+export async function fetchGeneralProgressAssignmentBundle(programId: string) {
   assertProgramProgressRemoteReady()
-  const [submissions, giveUpParticipants, schedules] = await Promise.all([
+  const [submissions, giveUpParticipants] = await Promise.all([
     fetchProgramAssignmentSubmissionsRemote(programId),
     fetchAllProgramProgressParticipants(programId),
-    fetchProgramSchedulesInDateRanges(programId, scheduleDateRanges),
   ])
-  return { ...submissions, giveUpParticipants, schedules }
+  return { ...submissions, giveUpParticipants }
 }
 
 export async function fetchGeneralProgramLectureReports(programId: string): Promise<unknown[]> {

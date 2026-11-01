@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
+import { Spin } from 'antd'
 import { useRegionAssignment } from './use-region-assignment'
-import { CmsButton } from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
@@ -22,9 +23,9 @@ import {
 import { RegionBlockedDateModal } from './blocked-date-modal'
 import {
   getRegionBlockedDateSubstituteVolunteerOptionsFromData,
-  getRegionBlockedDateVolunteerOptions,
+  getRegionBlockedDateVolunteerOptionsFromData,
   getRegionDirectAssignClassOptionsFromData,
-  getRegionEducationDateOptions,
+  getRegionEducationDateOptionsFromData,
 } from './region-assignment-options'
 import { useDirectAssignCandidates } from './use-direct-assign-candidates'
 import { RegionAutoAssignResultBanner } from './auto-assign-result-banner'
@@ -51,6 +52,8 @@ export function UjatEducationProgressRegionAssignmentSection({
   const {
     tableData,
     tableVersion,
+    isLoading,
+    isError,
     isRemote,
     autoAssignResultSummary,
     dismissAutoAssignResult,
@@ -76,13 +79,13 @@ export function UjatEducationProgressRegionAssignmentSection({
   })
 
   const blockedDateVolunteerOptions = useMemo(
-    () => getRegionBlockedDateVolunteerOptions(activeRegion),
-    [activeRegion, tableVersion]
+    () => getRegionBlockedDateVolunteerOptionsFromData(tableData),
+    [tableData, tableVersion]
   )
 
   const educationDateOptions = useMemo(
-    () => getRegionEducationDateOptions(activeRegion),
-    [activeRegion, tableVersion]
+    () => getRegionEducationDateOptionsFromData(tableData),
+    [tableData, tableVersion]
   )
 
   const getBlockedDateSubstituteVolunteerOptions = useCallback(
@@ -99,6 +102,10 @@ export function UjatEducationProgressRegionAssignmentSection({
     () => getRegionAttendanceManagerScheduleItemsFromData(tableData),
     [tableData]
   )
+
+  /** 교육일 컬럼이 없으면 배정표를 그리지 않는다 (봉사자만 오고 columns=[]인 BE 반기 필터 응답 포함) */
+  const hasScheduleColumns = tableData.columns.length > 0
+  const actionsDisabled = isLoading || isError || isMutating || !hasScheduleColumns
 
   const handleOpenDirectAssignModal = useCallback(() => {
     setDirectAssignModalOpen(true)
@@ -187,53 +194,56 @@ export function UjatEducationProgressRegionAssignmentSection({
       <div className="table-header-actions">
         <div className="table-header-title--wrapper">
           <div className="table-title">{tableData.regionLabel} 지역 교육 배정</div>
-          <span className="table-description">총 {tableData.volunteerCount}명</span>
+          <span className="table-description">
+            총 {hasScheduleColumns ? tableData.volunteerCount : 0}명
+          </span>
         </div>
 
         <div className="table-header-actions--wrapper">
           {canWrite ? (
-          <>
-          <CmsButton
-            type="button"
-            variant="secondary"
-            size="h40"
-            icon={<ButtonDownloadIcon />}
-            onClick={handleOpenDownloadModal} >
-            배정표 다운로드
-          </CmsButton>
-          <CmsButton
-            type="button"
-            variant="delete"
-            size="h40"
-            disabled={isMutating}
-            onClick={handleOpenBlockedDateModal} >
-            배정 불가일 설정
-          </CmsButton>
-          <CmsButton
-            type="button"
-            variant="secondary"
-            size="h40"
-            disabled={isMutating}
-            onClick={handleOpenAttendanceManagerModal} >
-            출결 담당자 설정
-          </CmsButton>
-          <CmsButton
-            type="button"
-            variant="primary"
-            size="h40"
-            disabled={isMutating}
-            onClick={handleOpenDirectAssignModal} >
-            교육일 직접 배정
-          </CmsButton>
-          <CmsButton
-            type="button"
-            variant="primary"
-            size="h40"
-            disabled={isMutating}
-            onClick={handleAutoAssign} >
-            교육일 자동 배정
-          </CmsButton>
-          </>
+            <>
+              <FilterTableToolbarButton
+                type="button"
+                variant="secondary"
+                icon={<ButtonDownloadIcon />}
+                disabled={isLoading || isError || !hasScheduleColumns}
+                onClick={handleOpenDownloadModal}
+              >
+                배정표 다운로드
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton
+                type="button"
+                variant="delete"
+                disabled={actionsDisabled}
+                onClick={handleOpenBlockedDateModal}
+              >
+                참여 불가일 설정
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton
+                type="button"
+                variant="secondary"
+                disabled={actionsDisabled}
+                onClick={handleOpenAttendanceManagerModal}
+              >
+                출결 담당자 설정
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton
+                type="button"
+                variant="primary"
+                disabled={actionsDisabled}
+                onClick={handleOpenDirectAssignModal}
+              >
+                교육일 직접 배정
+              </FilterTableToolbarButton>
+              <FilterTableToolbarButton
+                type="button"
+                variant="primary"
+                disabled={actionsDisabled}
+                onClick={handleAutoAssign}
+              >
+                교육일 자동 배정
+              </FilterTableToolbarButton>
+            </>
           ) : null}
         </div>
       </div>
@@ -245,7 +255,23 @@ export function UjatEducationProgressRegionAssignmentSection({
         />
       ) : null}
 
-      <RegionAssignmentTable data={tableData} />
+      {isLoading ? (
+        <div className="ujat-education-progress-region-assignment__state">
+          <Spin size="large" />
+        </div>
+      ) : isError ? (
+        <div className="ujat-education-progress-region-assignment__state" role="alert">
+          지역별 교육 배정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </div>
+      ) : !hasScheduleColumns ? (
+        <div className="ujat-education-progress-region-assignment__state">
+          {isRemote
+            ? '해당 반기·지역 확정 교육 일정 없음'
+            : '원격 API를 사용할 수 없어 배정표를 표시하지 않습니다.'}
+        </div>
+      ) : (
+        <RegionAssignmentTable data={tableData} />
+      )}
 
       <RegionAssignmentDownloadModal
         open={downloadModalOpen}

@@ -21,8 +21,8 @@ export type UjatAssignmentAssignSelectOption = {
 }
 
 const VOLUNTEER_MODAL_TITLE: Record<UjatVolunteerAssignmentAssignModalMode, string> = {
-  education: '교육 배정',
-  partner: '파트너 배정',
+  education: '교육 배정 안내',
+  partner: '파트너 배정 안내',
 }
 
 export type UjatVolunteerAssignmentAssignModalProps = {
@@ -33,6 +33,8 @@ export type UjatVolunteerAssignmentAssignModalProps = {
   scheduleDateLabel: string
   classOptions: ReadonlyArray<UjatAssignmentAssignSelectOption>
   partnerOptions: ReadonlyArray<UjatAssignmentAssignSelectOption>
+  /** GET partner-recommendation 로딩 — 후보 invent 없이 대기 */
+  partnerOptionsLoading?: boolean
   fixedClassLabel?: string | null
   onCancel: () => void
   onConfirm: (payload: { classValue: string; partnerId: string }) => void
@@ -74,6 +76,7 @@ function UjatVolunteerAssignModalContent({
   scheduleDateLabel,
   classOptions,
   partnerOptions,
+  partnerOptionsLoading = false,
   fixedClassLabel = null,
   onCancel,
   onConfirm,
@@ -92,17 +95,27 @@ function UjatVolunteerAssignModalContent({
 
   const description = useMemo(() => {
     if (isPartnerMode) {
-      return `**[${volunteerName}]** 봉사자의 **[${scheduleDateLabel}]** 교육 파트너로 배정할 봉사자를 선택해 주세요.`
+      return `**[${volunteerName}]** 님의 **${scheduleDateLabel}** 교육을 함께할 파트너를 선택해 주세요`
     }
-    return `**[${volunteerName}]** 봉사자를 **[${scheduleDateLabel}]** 교육에 배정하시겠습니까?`
-  }, [isPartnerMode, scheduleDateLabel, volunteerName])
+    if (classOptions.length === 0) {
+      return '배정 가능한 미배정 학급이 없습니다. 기관 임시일정의 학급 슬롯을 확인해 주세요.'
+    }
+    return `**[${volunteerName}]** 님을 **${scheduleDateLabel}** 교육에 배정하시겠습니까?`
+  }, [classOptions.length, isPartnerMode, scheduleDateLabel, volunteerName])
 
   const canConfirm = useMemo(() => {
-    if (!partnerId) return false
+    if (partnerOptionsLoading || !partnerId) return false
     if (isPartnerMode) return Boolean(fixedClassLabel)
     if (!classValue) return false
     return classOptions.some(option => option.value === classValue)
-  }, [classOptions, classValue, fixedClassLabel, isPartnerMode, partnerId])
+  }, [
+    classOptions,
+    classValue,
+    fixedClassLabel,
+    isPartnerMode,
+    partnerId,
+    partnerOptionsLoading,
+  ])
 
   const handleCancel = useCallback(() => {
     setClassValue(undefined)
@@ -119,7 +132,7 @@ function UjatVolunteerAssignModalContent({
   }, [canConfirm, classValue, fixedClassLabel, isPartnerMode, onConfirm, partnerId])
 
   const firstField = (
-    <AssignModalField label="배정 학급">
+    <AssignModalField label="배정 학급" required={!isPartnerMode}>
       {isPartnerMode ? (
         <CmsSelect
           inputSize="large"
@@ -147,17 +160,23 @@ function UjatVolunteerAssignModalContent({
   )
 
   const secondField = (
-    <AssignModalField label={isPartnerMode ? '파트너' : '파트너명'}>
+    <AssignModalField label="파트너" required>
       <CmsSelect
         inputSize="large"
         width="100%"
         withAllOption={false}
-        placeholder="배정할 파트너를 선택해 주세요"
+        placeholder={
+          partnerOptionsLoading
+            ? '파트너 후보를 불러오는 중…'
+            : partnerOptions.length === 0
+              ? '선택 가능한 파트너가 없습니다'
+              : '배정할 파트너를 선택해 주세요'
+        }
         value={partnerId}
-        disabled={partnerOptions.length === 0}
+        disabled={partnerOptionsLoading || partnerOptions.length === 0}
         onChange={value => setPartnerId(value == null ? undefined : String(value))}
         options={[...partnerOptions]}
-        aria-label={isPartnerMode ? '파트너' : '파트너명'}
+        aria-label="파트너"
       />
     </AssignModalField>
   )
@@ -186,7 +205,7 @@ function resolveRegionDirectVolunteerPlaceholder(input: {
   if (!input.classSlotId) return '교육 학급을 먼저 선택해 주세요'
   if (input.loading) return '배정 가능한 봉사자를 불러오는 중입니다'
   if (input.optionCount === 0) return '배정 가능한 봉사자가 없습니다'
-  return '배정할 봉사자명을 선택해 주세요'
+  return '배정할 봉사자를 선택해 주세요'
 }
 
 function UjatRegionDirectAssignModalContent({
@@ -242,23 +261,25 @@ function UjatRegionDirectAssignModalContent({
   return (
     <AssignModalShell
       open={open}
-      title="교육일 직접 배정"
+      title="교육일 직접 배정 안내"
       description={
-        isSecondaryAssign
-          ? `**[${existingPrimaryVolunteerName}]** 봉사자 1인이 배정된 학급입니다. 함께 진행할 두 번째 봉사자를 선택해 주세요.`
-          : '직접 배정할 교육 학급을 선택 후 봉사자를 배정해 주세요.'
+        classOptions.length === 0
+          ? '배정 가능한 교육 학급이 없습니다. 기관 임시일정의 학급 슬롯을 확인해 주세요.'
+          : isSecondaryAssign
+            ? `**[${existingPrimaryVolunteerName}]** 봉사자 1인이 배정된 학급입니다. 함께 진행할 두 번째 봉사자를 선택해 주세요.`
+            : '교육 학급을 선택 후 봉사자를 배정해 주세요.'
       }
-      confirmLabel={isSecondaryAssign ? '두 번째 봉사자 배정' : '직접 배정'}
+      confirmLabel="배정"
       canConfirm={canConfirm}
       onCancel={handleCancel}
       onConfirm={handleConfirm}
     >
-      <AssignModalField label="교육 학급">
+      <AssignModalField label="교육 학급" required>
         <CmsSelect
           inputSize="large"
           width="100%"
           withAllOption={false}
-          placeholder="직접 배정할 교육 학급을 선택해 주세요"
+          placeholder="교육 학급을 선택해 주세요"
           value={classSlotId}
           disabled={classOptions.length === 0}
           onChange={value => selectClassSlot(value == null ? undefined : String(value))}
@@ -266,7 +287,7 @@ function UjatRegionDirectAssignModalContent({
           aria-label="교육 학급"
         />
       </AssignModalField>
-      <AssignModalField label={isSecondaryAssign ? '두 번째 봉사자' : '봉사자명'}>
+      <AssignModalField label={isSecondaryAssign ? '두 번째 봉사자' : '봉사자'} required>
         <CmsSelect
           inputSize="large"
           width="100%"
@@ -280,7 +301,7 @@ function UjatRegionDirectAssignModalContent({
           disabled={!classSlotId || volunteerOptionsLoading || volunteerOptions.length === 0}
           onChange={value => setVolunteerId(value == null ? undefined : String(value))}
           options={[...volunteerOptions]}
-          aria-label={isSecondaryAssign ? '두 번째 봉사자' : '봉사자명'}
+          aria-label={isSecondaryAssign ? '두 번째 봉사자' : '봉사자'}
         />
         {classSlotId && volunteerOptionsError ? (
           <span className="ujat-assignment-assign-modal__error" role="alert">
@@ -292,10 +313,25 @@ function UjatRegionDirectAssignModalContent({
   )
 }
 
-function AssignModalField({ label, children }: { label: string; children: ReactNode }) {
+function AssignModalField({
+  label,
+  required = false,
+  children,
+}: {
+  label: string
+  required?: boolean
+  children: ReactNode
+}) {
   return (
     <div className="ujat-assignment-assign-modal__field">
-      <span className="ujat-assignment-assign-modal__label">{label}</span>
+      <span className="ujat-assignment-assign-modal__label">
+        {label}
+        {required ? (
+          <span className="ujat-assignment-assign-modal__required" aria-hidden>
+            *
+          </span>
+        ) : null}
+      </span>
       {children}
     </div>
   )

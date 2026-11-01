@@ -51,6 +51,12 @@ export type ChangeClassMapping = {
   existingClassNo: number
   newGradeLabel: string | null
   newClassNo: number | null
+  /**
+   * GET education-classes 원문 grade/className.
+   * remapping from* 는 정규화 값이 아니라 카탈로그 문자열을 그대로 보낸다.
+   */
+  existingWireGrade?: string
+  existingWireClassName?: string
 }
 
 export type ChangeClassConfirmPayload = {
@@ -113,14 +119,26 @@ export function buildChangeClassScheduleOptions(
     .sort((a, b) => a.isoDate.localeCompare(b.isoDate))
 }
 
+export type ExistingClassWireRef = {
+  grade: string
+  className: string
+}
+
 export type ExistingClassSelectOptions = {
   gradeOptions: Array<{ value: string; label: string }>
   classOptionsByGrade: Record<string, Array<{ value: string; label: string }>>
+  /** `${gradeSelectValue}:${classSelectValue}` → GET education-classes 원문 */
+  wireBySelectKey: Record<string, ExistingClassWireRef>
+}
+
+export function emptyExistingClassSelectOptions(): ExistingClassSelectOptions {
+  return { gradeOptions: [], classOptionsByGrade: {}, wireBySelectKey: {} }
 }
 
 function finalizeExistingClassOptions(
   gradeSet: Set<string>,
-  classOptionsByGrade: Record<string, Array<{ value: string; label: string }>>
+  classOptionsByGrade: Record<string, Array<{ value: string; label: string }>>,
+  wireBySelectKey: Record<string, ExistingClassWireRef> = {}
 ): ExistingClassSelectOptions {
   const gradeOptions = [...gradeSet]
     .sort((a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10))
@@ -132,14 +150,16 @@ function finalizeExistingClassOptions(
     )
   }
 
-  return { gradeOptions, classOptionsByGrade }
+  return { gradeOptions, classOptionsByGrade, wireBySelectKey }
 }
 
 function pushExistingClassOption(
   gradeSet: Set<string>,
   classOptionsByGrade: Record<string, Array<{ value: string; label: string }>>,
   gradeLabel: string,
-  classNo: number
+  classNo: number,
+  wire?: ExistingClassWireRef,
+  wireBySelectKey?: Record<string, ExistingClassWireRef>
 ) {
   const gradeValue = gradeLabel.replace(/학년$/, '').trim()
   if (!gradeValue || !Number.isFinite(classNo) || classNo < 1) return
@@ -153,6 +173,9 @@ function pushExistingClassOption(
       value: classValue,
       label: `${classNo}반`,
     })
+  }
+  if (wire && wireBySelectKey) {
+    wireBySelectKey[`${gradeValue}:${classValue}`] = wire
   }
 }
 
@@ -170,24 +193,104 @@ export function buildExistingClassOptions(
   return finalizeExistingClassOptions(gradeSet, classOptionsByGrade)
 }
 
-/** education-classes GET → 기존 학급 셀렉트 옵션 */
+/**
+ * remap fromClassName 용 wire.
+ * className 우선. classLabel 전체("2학년 1반")를 넣지 않고, 반 번호만 추출한다.
+ */
+export function resolveEducationClassWireClassName(
+  item: Pick<EducationClassResponse, 'className' | 'classLabel'>
+): string | null {
+  const className = item.className?.trim()
+  if (className) return className
+  const label = item.classLabel?.trim()
+  if (!label) return null
+  if (/^\d+$/.test(label)) return `${label}반`
+  if (/^\d+반$/.test(label)) return label
+  const match = label.match(/(\d+)\s*반/)
+  if (match) return `${match[1]}반`
+  return null
+}
+
+/** 학급 셀렉트 표시 — classLabel 의 반 부분 우선, 없으면 className */
+export function resolveEducationClassDisplayClassLabel(
+  item: Pick<EducationClassResponse, 'className' | 'classLabel'>,
+  wireClassName: string
+): string {
+  const label = item.classLabel?.trim()
+  if (label) {
+    if (/^\d+반$/.test(label) || /^\d+$/.test(label)) {
+      return normalizeClassNameForSlot(label) ?? wireClassName
+    }
+    const match = label.match(/(\d+)\s*반/)
+    if (match) return `${match[1]}반`
+  }
+  return normalizeClassNameForSlot(wireClassName) ?? wireClassName
+}
+
+/**
+ * education-classes GET → 기존 학급 셀렉트.
+ * select value = GET grade / className 원문 (remap body 와 동일).
+ */
 export function buildExistingClassOptionsFromEducationClasses(
   classes: ReadonlyArray<EducationClassResponse>
 ): ExistingClassSelectOptions {
-  const gradeSet = new Set<string>()
+  const gradeMeta = new Map<string, { sortKey: number; label: string }>()
   const classOptionsByGrade: Record<string, Array<{ value: string; label: string }>> = {}
+  const wireBySelectKey: Record<string, ExistingClassWireRef> = {}
 
   for (const item of classes) {
     const gradeRaw = item.grade?.trim()
     if (!gradeRaw) continue
-    const gradeValue = normalizeGradeNumberFromLabel(gradeRaw) ?? gradeRaw.replace(/학년$/, '')
-    const className = item.className ?? item.classLabel
-    const classNoMatch = String(className ?? '').match(/(\d+)/)
-    const classNo = classNoMatch ? Number.parseInt(classNoMatch[1]!, 10) : NaN
-    pushExistingClassOption(gradeSet, classOptionsByGrade, `${gradeValue}학년`, classNo)
+    const wireClassName = resolveEducationClassWireClassName(item)
+    if (!wireClassName) continue
+
+    const sortKey = Number.parseInt(
+      normalizeGradeNumberFromLabel(gradeRaw) ?? gradeRaw.replace(/학년$/, ''),
+      10
+    )
+    const gradeLabel = Number.isFinite(sortKey) ? `${sortKey}학년` : gradeRaw
+    if (!gradeMeta.has(gradeRaw)) {
+      gradeMeta.set(gradeRaw, { sortKey: Number.isFinite(sortKey) ? sortKey : 999, label: gradeLabel })
+    }
+
+    if (!classOptionsByGrade[gradeRaw]) {
+      classOptionsByGrade[gradeRaw] = []
+    }
+    if (!classOptionsByGrade[gradeRaw].some(option => option.value === wireClassName)) {
+      classOptionsByGrade[gradeRaw].push({
+        value: wireClassName,
+        label: resolveEducationClassDisplayClassLabel(item, wireClassName),
+      })
+    }
+    wireBySelectKey[`${gradeRaw}:${wireClassName}`] = {
+      grade: gradeRaw,
+      className: wireClassName,
+    }
   }
 
-  return finalizeExistingClassOptions(gradeSet, classOptionsByGrade)
+  const gradeOptions = [...gradeMeta.entries()]
+    .sort((a, b) => a[1].sortKey - b[1].sortKey || a[0].localeCompare(b[0], 'ko'))
+    .map(([value, meta]) => ({ value, label: meta.label }))
+
+  for (const gradeValue of Object.keys(classOptionsByGrade)) {
+    classOptionsByGrade[gradeValue].sort((a, b) => {
+      const aNo = Number.parseInt(a.value.replace(/\D/g, ''), 10)
+      const bNo = Number.parseInt(b.value.replace(/\D/g, ''), 10)
+      if (Number.isFinite(aNo) && Number.isFinite(bNo) && aNo !== bNo) return aNo - bNo
+      return a.value.localeCompare(b.value, 'ko')
+    })
+  }
+
+  return { gradeOptions, classOptionsByGrade, wireBySelectKey }
+}
+
+export function resolveExistingClassWire(
+  options: ExistingClassSelectOptions,
+  existingGrade: string | undefined,
+  existingClassNo: string | undefined
+): ExistingClassWireRef | null {
+  if (!existingGrade || !existingClassNo) return null
+  return options.wireBySelectKey[`${existingGrade}:${existingClassNo}`] ?? null
 }
 
 function mappingKey(gradeLabel: string, classNo: number): string {
@@ -336,8 +439,10 @@ function classNameWireFromNo(classNo: number): string {
 export function mappingToRemappingItem(
   mapping: ChangeClassMapping
 ): UjatEducationClassRemappingItemRequest {
-  const fromGrade = gradeWireFromLabel(mapping.existingGradeLabel)
-  const fromClassName = classNameWireFromNo(mapping.existingClassNo)
+  const fromGrade =
+    mapping.existingWireGrade?.trim() || gradeWireFromLabel(mapping.existingGradeLabel)
+  const fromClassName =
+    mapping.existingWireClassName?.trim() || classNameWireFromNo(mapping.existingClassNo)
   if (mapping.newGradeLabel == null || mapping.newClassNo == null) {
     return {
       fromGrade,
@@ -425,7 +530,8 @@ export function buildMappingFromRowFields(
   existingGrade: string | undefined,
   existingClassNo: string | undefined,
   newGrade: string | undefined,
-  newClassNo: string
+  newClassNo: string,
+  wire?: ExistingClassWireRef | null
 ): ChangeClassMapping | null {
   if (!existingGrade || !existingClassNo || !newGrade) return null
 
@@ -433,12 +539,18 @@ export function buildMappingFromRowFields(
   const existingClassNoNum = Number.parseInt(existingClassNo, 10)
   if (!Number.isFinite(existingClassNoNum) || existingClassNoNum < 1) return null
 
+  const wireFields =
+    wire?.grade && wire.className
+      ? { existingWireGrade: wire.grade, existingWireClassName: wire.className }
+      : {}
+
   if (newGrade === UNASSIGNED_GRADE_VALUE) {
     return {
       existingGradeLabel,
       existingClassNo: existingClassNoNum,
       newGradeLabel: null,
       newClassNo: null,
+      ...wireFields,
     }
   }
 
@@ -450,6 +562,7 @@ export function buildMappingFromRowFields(
     existingClassNo: existingClassNoNum,
     newGradeLabel: formatGradeLabelFromValue(newGrade),
     newClassNo: newClassNoNum,
+    ...wireFields,
   }
 }
 
@@ -466,14 +579,73 @@ export function isSameClassMapping(
   return existingGrade === newGrade && Number.parseInt(existingClassNo, 10) === classNo
 }
 
+export type ChangeClassRowFields = {
+  existingGrade?: string
+  existingClassNo?: string
+  newGrade?: string
+  newClassNo: string
+}
+
+export function existingClassKey(
+  grade: string | undefined,
+  classNo: string | undefined
+): string | null {
+  if (!grade || !classNo) return null
+  return `${grade}:${classNo}`
+}
+
+/** 기존 학급·변경 학급 필수 입력이 채워졌는지 (동일 학급 여부는 검사하지 않음) */
+export function isChangeClassRowComplete(row: ChangeClassRowFields): boolean {
+  if (!row.existingGrade || !row.existingClassNo || !row.newGrade) return false
+  if (row.newGrade === UNASSIGNED_GRADE_VALUE) return true
+  const classNo = Number.parseInt(row.newClassNo.replace(/\D/g, ''), 10)
+  return Number.isFinite(classNo) && classNo >= 1 && classNo <= 20
+}
+
+export function countAvailableExistingClasses(
+  options: ExistingClassSelectOptions
+): number {
+  return Object.values(options.classOptionsByGrade).reduce(
+    (sum, classOptions) => sum + classOptions.length,
+    0
+  )
+}
+
+export function collectUsedExistingClassKeys(
+  rows: ReadonlyArray<ChangeClassRowFields>,
+  excludeIndex?: number
+): Set<string> {
+  const keys = new Set<string>()
+  rows.forEach((row, index) => {
+    if (excludeIndex != null && index === excludeIndex) return
+    const key = existingClassKey(row.existingGrade, row.existingClassNo)
+    if (key) keys.add(key)
+  })
+  return keys
+}
+
+/**
+ * 「추가」 가능 여부. 미완성 행이 있거나 기존 학급 수 상한을 넘으면 거부.
+ */
+export function getChangeClassAddRowBlockReason(
+  rows: ReadonlyArray<ChangeClassRowFields>,
+  availableExistingClassCount: number
+): string | null {
+  if (rows.some(row => !isChangeClassRowComplete(row))) {
+    return '입력 중인 행의 학급 정보를 모두 선택한 뒤 추가해 주세요.'
+  }
+  if (availableExistingClassCount <= 0) {
+    return '변경할 기존 학급이 없습니다.'
+  }
+  if (rows.length >= availableExistingClassCount) {
+    return '변경 가능한 기존 학급 수만큼만 추가할 수 있습니다.'
+  }
+  return null
+}
+
 /** Validates row fields; returns error message or null */
 export function validateChangeClassRows(
-  rows: Array<{
-    existingGrade?: string
-    existingClassNo?: string
-    newGrade?: string
-    newClassNo: string
-  }>
+  rows: ReadonlyArray<ChangeClassRowFields>
 ): string | null {
   const existingKeys = new Set<string>()
 

@@ -150,7 +150,12 @@ export type UjatDirectAssignmentResponse = {
 }
 
 export type UjatAttendanceManagerUpdateRequest = {
-  participantId: number
+  /**
+   * 출결 담당 participantId.
+   * - number: 지정
+   * - null: 해당 교육일 출결 담당 해제 (키를 빼고 undefined로 보내지 말 것)
+   */
+  participantId: number | null
 }
 
 export type UjatVolunteerUnavailabilityRequest = {
@@ -192,10 +197,21 @@ export type UjatPartnerAssignmentResponse = {
   assignedAt?: string | null
   cancelledAt?: string | null
   cancelReason?: string | null
+  /**
+   * 배정 알림 발송 여부(서버 SSOT).
+   * false: 발송 전(예약 PENDING 포함) → 간단 확인 취소
+   * true: 발송 후 → 사유+알림 취소
+   */
+  assignmentNotificationSent?: boolean
 }
 
+/** AssignmentCancelRequest — 배정 알림 발송 전에는 reason 생략 가능 */
 export type UjatAssignmentCancelRequest = {
   reason?: string | null
+  /** IMMEDIATE | SCHEDULED. 배정 알림 발송 후에만 사용 */
+  timing?: 'IMMEDIATE' | 'SCHEDULED' | null
+  /** timing=SCHEDULED 일 때 예약 시각. IMMEDIATE면 null/omit */
+  scheduledAt?: string | null
 }
 
 export type UjatAttendanceItemDto = {
@@ -253,6 +269,7 @@ export async function fetchUjatAllocationMatrix(
 export type UjatAssignmentDocumentStatus =
   | 'NOT_SUBMITTED'
   | 'SUBMITTED'
+  | 'APPROVED'
   | 'REVISED'
   | 'DEADLINE_MISSED'
 
@@ -342,13 +359,15 @@ export async function putUjatAttendanceManager(
   scheduleId: string | number,
   body: UjatAttendanceManagerUpdateRequest
 ): Promise<void> {
+  // participantId: null 은 JSON null로 유지. undefined/omit 금지(담당 해제 누락).
+  const participantId = body.participantId === undefined ? null : body.participantId
   await customInstance({
     url: executionUjatPath(
       programId,
       `/schedules/${encodeURIComponent(String(scheduleId))}/attendance-manager`
     ),
     method: 'PUT',
-    data: body,
+    data: { participantId },
   })
 }
 

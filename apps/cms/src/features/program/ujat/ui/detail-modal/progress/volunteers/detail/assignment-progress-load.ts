@@ -11,6 +11,7 @@ import {
   fetchUjatPartnerAssignments,
   type UjatSemesterType,
 } from '@/features/program/ujat/api/education-execution-api'
+import { fetchUjatOrganizationScheduleAssignments } from '@/features/program/ujat/api/temporary-schedule-api'
 import {
   buildVolunteerAssignmentProgressView,
   UNRESOLVED_VOLUNTEER_ASSIGNMENT_BUNDLE,
@@ -84,18 +85,25 @@ export async function loadVolunteerAssignmentProgress(input: {
     : { sessions: [] }
 
   const scheduleIds = collectScheduleIds(matrix.columns ?? [], submissions.sessions ?? [])
-  const [partnerEntries, attendancesByScheduleId, absenceReasons] = await Promise.all([
-    Promise.all(
-      scheduleIds.map(
-        async scheduleId =>
-          [String(scheduleId), await fetchUjatPartnerAssignments(input.programId, scheduleId)] as const
-      )
-    ),
-    scheduleIds.length > 0
-      ? fetchUjatAttendancesByScheduleIds(input.programId, scheduleIds)
-      : Promise.resolve({}),
-    loadAbsenceReasons(input.programId),
-  ])
+  const [partnerEntries, attendancesByScheduleId, absenceReasons, orgAssignments] =
+    await Promise.all([
+      Promise.all(
+        scheduleIds.map(
+          async scheduleId =>
+            [
+              String(scheduleId),
+              await fetchUjatPartnerAssignments(input.programId, scheduleId),
+            ] as const
+        )
+      ),
+      scheduleIds.length > 0
+        ? fetchUjatAttendancesByScheduleIds(input.programId, scheduleIds)
+        : Promise.resolve({}),
+      loadAbsenceReasons(input.programId),
+      fetchUjatOrganizationScheduleAssignments(input.programId, {
+        ...(submissionsRegion ? { educationRegionCode: submissionsRegion } : {}),
+      }).catch(() => ({ content: [] as const })),
+    ])
 
   const view = buildVolunteerAssignmentProgressView({
     participantId,
@@ -105,6 +113,7 @@ export async function loadVolunteerAssignmentProgress(input: {
     partnerAssignmentsByScheduleId: Object.fromEntries(partnerEntries),
     attendancesByScheduleId,
     absenceReasons,
+    orgSlots: orgAssignments.content ?? [],
   })
 
   return {

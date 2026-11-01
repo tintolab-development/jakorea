@@ -4,16 +4,17 @@ import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-
 import { UjatEducationProgressVolunteerAssignmentStatusLabel } from './assignment-status-label'
 import type { UjatEducationProgressVolunteerRow } from './types'
 
+/** Figma 4082:108069 Table / Horizontal header 폭 */
 const COL = {
-  selection: 48,
+  selection: 60,
   no: 80,
-  name: 120,
-  grade: 100,
-  region: 120,
-  mobile: 140,
-  email: 180,
-  totalDays: 140,
-  status: 120,
+  name: 160,
+  grade: 140,
+  region: 180,
+  mobile: 200,
+  email: 220,
+  totalDays: 160,
+  status: 180,
 } as const
 
 function formatTotalAssignedDays(days: number | null): string {
@@ -47,6 +48,7 @@ export function useUjatEducationProgressVolunteerColumns(): ColumnsType<UjatEduc
         key: 'volunteerName',
         width: COL.name,
         align: 'center',
+        ellipsis: true,
       },
       {
         title: '봉사자 학년',
@@ -68,6 +70,7 @@ export function useUjatEducationProgressVolunteerColumns(): ColumnsType<UjatEduc
         key: 'mobile',
         width: COL.mobile,
         align: 'center',
+        ellipsis: true,
         render: (mobile: string) => displayServerPiiAsIs(mobile),
       },
       {
@@ -76,6 +79,7 @@ export function useUjatEducationProgressVolunteerColumns(): ColumnsType<UjatEduc
         key: 'email',
         width: COL.email,
         align: 'center',
+        ellipsis: true,
         render: (email: string) => displayServerPiiAsIs(email),
       },
       {

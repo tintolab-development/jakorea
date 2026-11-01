@@ -5,25 +5,22 @@
  * Filtered for CMS general program progress Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { FreeTextItemsRequest } from './freeTextItemsRequest';
-import type { PreviousJaProgramRequest } from './previousJaProgramRequest';
-import type { PreviousUjatTermRequest } from './previousUjatTermRequest';
+import type { VolunteerFreeTextItemsRequest } from './volunteerFreeTextItemsRequest';
 import type { VolunteerParticipantRegisterRequestApplicationType } from './volunteerParticipantRegisterRequestApplicationType';
 import type { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from './volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest';
 import type { VolunteerParticipantRegisterRequestPersonalInfoConsent } from './volunteerParticipantRegisterRequestPersonalInfoConsent';
-import type { VolunteerParticipantRegisterRequestRecruitHalf } from './volunteerParticipantRegisterRequestRecruitHalf';
 import type { VolunteerParticipantRegisterRequestRegistrationChannel } from './volunteerParticipantRegisterRequestRegistrationChannel';
 import type { VolunteerParticipantRegisterRequestThirdPartyConsent } from './volunteerParticipantRegisterRequestThirdPartyConsent';
 import type { VolunteerParticipantRegisterRequestVolunteerKind } from './volunteerParticipantRegisterRequestVolunteerKind';
+import type { VolunteerPreviousJaProgramRequest } from './volunteerPreviousJaProgramRequest';
+import type { VolunteerPreviousUjatTermRequest } from './volunteerPreviousUjatTermRequest';
 
 export interface VolunteerParticipantRegisterRequest {
   memberId: number;
-  /** GENERAL|EMPLOYEE만 허용합니다. UJAT 전용 kind는 없습니다. CMS 진행 추가 등록은 GENERAL만 처리하고 EMPLOYEE는 CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY입니다. */
   volunteerKind?: VolunteerParticipantRegisterRequestVolunteerKind;
+  /** @nullable */
   registrationChannel?: VolunteerParticipantRegisterRequestRegistrationChannel;
-  /** @minLength 1 */
   personalInfoConsent: VolunteerParticipantRegisterRequestPersonalInfoConsent;
-  /** @minLength 1 */
   thirdPartyConsent: VolunteerParticipantRegisterRequestThirdPartyConsent;
   /**
      * 제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. 일반(GENERAL*) 프로그램 CMS_PROGRESS_ADD에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).
@@ -31,23 +28,23 @@ export interface VolunteerParticipantRegisterRequest {
      * @maxLength 200
      */
   thirdPartyRecipient?: string | null;
-  /** 회원 프로필에 1365가 없을 때만 필수. 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다. */
-  id1365?: string | null;
   /**
-     * 일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.
-     * @minLength 1
+     * 회원에 1365가 없을 때만 필수. 있으면 회원 1365 식별자에 저장하고 consent-records는 덮어쓰지 않습니다.
+     * @nullable
      */
+  id1365?: string | null;
+  /** 일반 프로그램은 JA 진행 경험. UJAT는 교육 진행 경험 여부이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다. */
   jaProgramExperienceConsentRequest: VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest;
-  previousJaProgram?: PreviousJaProgramRequest;
-  /** UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다. */
-  previousUjatTerm?: PreviousUjatTermRequest | null;
-  /** UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다. */
+  previousJaProgram?: VolunteerPreviousJaProgramRequest;
+  previousUjatTerm?: VolunteerPreviousUjatTermRequest;
+  /**
+     * UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null.
+     * @nullable
+     */
   educationRegionCode?: string | null;
-  /** UJAT 봉사자 모집 반기. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다. */
-  recruitHalf?: VolunteerParticipantRegisterRequestRecruitHalf;
-  /** UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다. */
+  /** @nullable */
   applicationType?: VolunteerParticipantRegisterRequestApplicationType;
-  freeTextItems?: FreeTextItemsRequest;
+  freeTextItems?: VolunteerFreeTextItemsRequest;
   /**
      * @minLength 5
      * @maxLength 500

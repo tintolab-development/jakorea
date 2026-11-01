@@ -137,7 +137,7 @@ function ParticipatingVolunteerAddRegistrationModalBody({
       open={open}
       onCancel={onClose}
       title="봉사자 추가 등록"
-      width={1400}
+      width={1200}
       footer={footer}
       className="participating-volunteer-add-registration-modal"
       zIndex={1100}

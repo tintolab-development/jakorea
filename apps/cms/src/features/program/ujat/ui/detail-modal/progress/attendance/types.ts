@@ -36,7 +36,7 @@ export type UjatAttendanceVolunteerRow = {
   lateMinutes?: number
   checkInTime?: string
   excusedReason?: string
-  /** 활동 포기자 — 해당 세션에 출석 이력이 있을 때만 mock 목록에 포함 */
+  /** 활동 포기자 — 해당 세션에 출석 처리가 있을 때만 목록 노출 */
   isDropout: boolean
 }
 

@@ -80,3 +80,8 @@
 .ujat-add-volunteer-modal__field .cms-select {
   width: 100%;
 }
+
+.ujat-add-volunteer-modal__required {
+  margin-left: var(--spacing-4);
+  color: var(--color-required-mark, #c32f4a);
+}

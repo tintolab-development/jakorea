@@ -8,9 +8,7 @@ import type {
   GeneralAssignmentSubmissionParticipantDto,
   GeneralAssignmentSubmissionScheduleDto,
 } from '@/features/program/general/api/program-progress-api-client'
-import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { ParticipantListItemResponse } from '@/shared/api/generated/dashboard/schemas/participantListItemResponse'
-import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { shouldHideGiveUpParticipantFromSchedule } from '@/features/program/general/lib/general-progress-give-up-visibility'
 import { buildGeneralProgressSessionTableHeader } from '@/features/program/general/lib/general-progress-session-table-header'
 import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
@@ -60,20 +58,13 @@ function formatPeriodLabel(start?: string | null, end?: string | null): string {
   return single ? formatCmsScheduleDisplayLabel(single) : ''
 }
 
-function resolveAssignmentPeriodLabel(
-  schedule: GeneralAssignmentSubmissionScheduleDto,
-  round: number,
-  program?: Program | null
-): string {
-  const fromApi = formatPeriodLabel(schedule.assignmentPeriodStart, schedule.assignmentPeriodEnd)
-  if (fromApi) return fromApi
-  if (isGeneralScheduleSingleDateProgram(program)) return ''
-  const common = program ? resolveGeneralProgramCommonInfo(program) : null
-  const fromCurriculum = common?.curriculumSessions?.[round - 1]?.assignmentPeriod?.trim()
-  if (fromCurriculum) return formatCmsScheduleDisplayLabel(fromCurriculum)
-  const fromDetail = common?.scheduleDetails?.[round - 1]?.assignmentPeriod?.trim()
-  if (fromDetail) return formatCmsScheduleDisplayLabel(fromDetail)
-  return ''
+/** BE `assignmentPeriodStart/End` only — no curriculum/index remapping. */
+function resolveAssignmentPeriodLabel(schedule: GeneralAssignmentSubmissionScheduleDto): string {
+  return formatPeriodLabel(schedule.assignmentPeriodStart, schedule.assignmentPeriodEnd)
+}
+
+function isAssignmentEnabledSchedule(schedule: GeneralAssignmentSubmissionScheduleDto): boolean {
+  return schedule.assignmentEnabled !== false
 }
 
 function formatScheduleHeader(
@@ -112,7 +103,7 @@ function formatScheduleHeader(
     headerDateLabel: built.dateLabel,
     headerScheduleSummary: built.headerScheduleSummary,
     headerPeriodRangeLabel: built.headerPeriodRangeLabel,
-    assignmentPeriodLabel: resolveAssignmentPeriodLabel(schedule, round, program),
+    assignmentPeriodLabel: resolveAssignmentPeriodLabel(schedule),
     headerPrefix: built.headerPrefix,
   }
 }
@@ -282,7 +273,6 @@ export function buildProgressAssignmentSessionsFromRemote(
   options?: {
     program?: Program | null
     giveUpParticipants?: GiveUpParticipantLookup[] | null
-    schedules?: DashboardProgramScheduleResponse[] | null
     participants?: ParticipantListItemResponse[] | null
   }
 ): ParticipatingIndividualProgressAssignmentSessionGroup[] {
@@ -305,8 +295,11 @@ export function buildProgressAssignmentSessionsFromRemote(
       ? roster.filter(participant => participantBelongsToAssignmentSchedule(participant, scheduleId))
       : roster
 
-  const fromApi = (data.items ?? [])
+  // Render only BE assignment-submissions items keyed by scheduleId.
+  // Do not invent/remap schedules from dashboard schedules or curriculum index.
+  return (data.items ?? [])
     .filter(isGeneralProgressEducationSessionSchedule)
+    .filter(isAssignmentEnabledSchedule)
     .map((schedule, index) => {
       const group = mapScheduleGroup(schedule, index, { program: options?.program, giveUpById })
       if (group.participants.length > 0) return group
@@ -314,40 +307,6 @@ export function buildProgressAssignmentSessionsFromRemote(
         {
           ...schedule,
           participants: rosterForSchedule(group.id).map(mapRosterParticipantToAssignmentDto),
-        },
-        index,
-        { program: options?.program, giveUpById }
-      )
-    })
-  if (fromApi.length > 0) return fromApi
-  const overlayByScheduleId = new Map(
-    (data.items ?? [])
-      .filter(item => item.scheduleId != null)
-      .map(item => [String(item.scheduleId), item] as const)
-  )
-
-  let mainEducationIndex = 0
-  return (options?.schedules ?? [])
-    .filter(isGeneralProgressEducationSessionSchedule)
-    .map(schedule => {
-      const index = mainEducationIndex++
-      const scheduleId = String(schedule.scheduleId)
-      const overlay = overlayByScheduleId.get(scheduleId)
-      const participants =
-        overlay?.participants && overlay.participants.length > 0
-          ? overlay.participants
-          : rosterForSchedule(scheduleId).map(mapRosterParticipantToAssignmentDto)
-      return mapScheduleGroup(
-        {
-          scheduleId: schedule.scheduleId,
-          sessionNo: schedule.sessionNo ?? overlay?.sessionNo,
-          scheduleName: overlay?.scheduleName ?? schedule.scheduleName,
-          startAt: overlay?.startAt ?? schedule.startAt,
-          endAt: overlay?.endAt ?? schedule.endAt,
-          assignmentEnabled: overlay?.assignmentEnabled,
-          assignmentPeriodStart: overlay?.assignmentPeriodStart,
-          assignmentPeriodEnd: overlay?.assignmentPeriodEnd,
-          participants,
         },
         index,
         { program: options?.program, giveUpById }

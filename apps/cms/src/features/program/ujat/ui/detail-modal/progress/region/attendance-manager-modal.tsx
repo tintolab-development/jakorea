@@ -86,9 +86,15 @@ export function RegionAttendanceManagerModal({
   const footer = (
     <div className="ujat-region-attendance-manager-modal__footer">
       <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
-        취소
+        닫기
       </CmsButton>
-      <CmsButton variant="primary" size="large" type="button" onClick={handleSave}>
+      <CmsButton
+        variant="primary"
+        size="large"
+        type="button"
+        disabled={scheduleItems.length === 0}
+        onClick={handleSave}
+      >
         저장
       </CmsButton>
     </div>
@@ -104,56 +110,64 @@ export function RegionAttendanceManagerModal({
       className="ujat-region-attendance-manager-modal"
       wrapClassName="ujat-region-attendance-manager-modal-wrap"
       footer={footer}
-      description="교육 진행일정 별로 출결 담당자를 지정해 주세요."
+      description="교육 일정별로 출결 담당자를 지정해 주세요."
     >
       <div className="ujat-region-attendance-manager-modal__scroll">
-        <DetailInfoForm
-          title="출결 담당자 설정"
-          hideHeader
-          mode="edit"
-          className="ujat-region-attendance-manager-modal__form"
-        >
-          {scheduleItemRows.map(row => (
-            <DetailInfoForm.Row
-              key={row.map(item => item.columnId).join('-')}
-              type="double"
-              className={
-                row.length === 1 ? 'ujat-region-attendance-manager-modal__row--single-item' : undefined
-              }
-            >
-              {row.map(item => (
-                <DetailInfoForm.Field
-                  key={item.columnId}
-                  label={item.label}
-                  labelWidth={240}
-                  view={selections[item.columnId] ?? '-'}
-                  edit={
-                    <CmsSelect
-                      inputSize="small"
-                      width="100%"
-                      withAllOption={false}
-                      placeholder={
-                        item.volunteerOptions.length === 0
-                          ? '배정된 봉사자가 없습니다'
-                          : '출결 담당자를 선택해 주세요'
-                      }
-                      value={selections[item.columnId]}
-                      disabled={item.volunteerOptions.length === 0}
-                      onChange={value =>
-                        setSelections(prev => ({
-                          ...prev,
-                          [item.columnId]: value == null ? undefined : String(value),
-                        }))
-                      }
-                      options={[...item.volunteerOptions]}
-                      aria-label={`${item.label} 출결 담당자`}
-                    />
-                  }
-                />
-              ))}
-            </DetailInfoForm.Row>
-          ))}
-        </DetailInfoForm>
+        {scheduleItems.length === 0 ? (
+          <p className="ujat-region-attendance-manager-modal__empty" role="status">
+            출결 담당자를 지정할 교육 일정이 없습니다.
+          </p>
+        ) : (
+          <DetailInfoForm
+            title="출결 담당자 설정"
+            hideHeader
+            mode="edit"
+            className="ujat-region-attendance-manager-modal__form"
+          >
+            {scheduleItemRows.map(row => (
+              <DetailInfoForm.Row
+                key={row.map(item => item.columnId).join('-')}
+                type="double"
+                className={
+                  row.length === 1
+                    ? 'ujat-region-attendance-manager-modal__row--single-item'
+                    : undefined
+                }
+              >
+                {row.map(item => (
+                  <DetailInfoForm.Field
+                    key={item.columnId}
+                    label={item.label}
+                    labelWidth={240}
+                    view={selections[item.columnId] ?? '-'}
+                    edit={
+                      <CmsSelect
+                        inputSize="small"
+                        width="100%"
+                        withAllOption={false}
+                        placeholder={
+                          item.volunteerOptions.length === 0
+                            ? '배정된 봉사자가 없습니다'
+                            : '출결 담당자를 선택해 주세요'
+                        }
+                        value={selections[item.columnId]}
+                        disabled={item.volunteerOptions.length === 0}
+                        onChange={value =>
+                          setSelections(prev => ({
+                            ...prev,
+                            [item.columnId]: value == null ? undefined : String(value),
+                          }))
+                        }
+                        options={[...item.volunteerOptions]}
+                        aria-label={`${item.label} 출결 담당자`}
+                      />
+                    }
+                  />
+                ))}
+              </DetailInfoForm.Row>
+            ))}
+          </DetailInfoForm>
+        )}
       </div>
     </ContentModal>
   )

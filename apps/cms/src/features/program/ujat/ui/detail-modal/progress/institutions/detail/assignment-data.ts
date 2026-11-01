@@ -47,18 +47,36 @@ const EMPTY_ASSIGNMENT_PAIRS = '배정된 봉사자/학급 페어가 없습니�
 const EMPTY_ASSIGNMENT_WITH_CLASS_COUNT = (classCount: number) =>
   `확정 학급 ${classCount}개 · 봉사자 미배정`
 
+/** "2" / "2학년" 등 BE·학급 파서 gradeLabel 표기 차이를 숫자로 맞춘다 */
+function sameAssignmentGradeLabel(left: string, right: string): boolean {
+  const a = Number.parseInt(left, 10)
+  const b = Number.parseInt(right, 10)
+  if (Number.isFinite(a) && Number.isFinite(b)) return a === b
+  return left.trim() === right.trim()
+}
+
+function formatAssignmentTextbookQuantityLabel(input: {
+  kitCount: number | null
+  bookCount: number | null
+}): string {
+  const kitLabel = input.kitCount != null ? `${input.kitCount}키트` : ''
+  const bookLabel = input.bookCount != null ? `(${input.bookCount}권)` : ''
+  if (kitLabel && bookLabel) return `${kitLabel} ${bookLabel}`
+  if (kitLabel) return kitLabel
+  if (input.bookCount != null) return `${input.bookCount}권`
+  return '-'
+}
+
 function resolveGradeTextbook(
   gradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>,
   gradeLabel: string
 ): { textbookName: string; textbookQuantityLabel: string } {
-  const block = gradeBlocks.find(item => item.gradeLabel === gradeLabel)
+  const block = gradeBlocks.find(item => sameAssignmentGradeLabel(item.gradeLabel, gradeLabel))
   if (!block) return { textbookName: '-', textbookQuantityLabel: '-' }
   const supply = calculateGradeTextbookSupply(block)
-  const textbookQuantityLabel =
-    supply.bookCount != null ? `${supply.bookCount}권` : supply.kitCount != null ? `${supply.kitCount}키트` : '-'
   return {
     textbookName: supply.textbookName,
-    textbookQuantityLabel,
+    textbookQuantityLabel: formatAssignmentTextbookQuantityLabel(supply),
   }
 }
 
@@ -163,18 +181,22 @@ function resolveGradeValuesForSchedule(input: {
   scheduleId: number | null
   confirmedClassLabels?: readonly string[]
 }): GradeClassSection[] {
-  const institutionRow = getUjatInstitutionApplicationRowById(input.detail.institutionId)
-  const fromLocal = institutionRow
-    ? getGradeValuesFromLocalStore(input.detail.institutionId, institutionRow.regionKey, input.isoDate)
-    : []
-  if (fromLocal.length > 0) return fromLocal
-
+  // partner / matrix classLabel 이 있으면 학급 행 SSOT. temporary-schedule·로컬 store 로 덮지 않는다.
   if (input.sources && input.scheduleId != null) {
     const fromRemote = getGradeValuesFromSources(input.sources, input.scheduleId)
     if (fromRemote.length > 0) return fromRemote
   }
 
-  return getGradeValuesFromConfirmedLabels(input.confirmedClassLabels)
+  const fromConfirmed = getGradeValuesFromConfirmedLabels(input.confirmedClassLabels)
+  if (fromConfirmed.length > 0) return fromConfirmed
+
+  const institutionRow = getUjatInstitutionApplicationRowById(input.detail.institutionId)
+  if (!institutionRow) return []
+  return getGradeValuesFromLocalStore(
+    input.detail.institutionId,
+    institutionRow.regionKey,
+    input.isoDate
+  )
 }
 
 function applyGradeRowSpans(rows: AssignmentClassRow[]): AssignmentClassRow[] {

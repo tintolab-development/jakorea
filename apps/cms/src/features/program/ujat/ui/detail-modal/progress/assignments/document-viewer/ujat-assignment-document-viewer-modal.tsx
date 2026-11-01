@@ -1,4 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Spin } from 'antd'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -19,6 +21,10 @@ import {
 import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
 import { shouldUseFormsSurveysRemoteApi } from '@/features/template/api/admin-form-templates-service'
+import {
+  getFormResponseDocumentSnapshotRemote,
+  getFormResponseRemote,
+} from '@/features/program/general/api/form-responses-api-client'
 import { useCreateFormResponseFeedbackMutation } from '@/features/template/hooks/use-create-form-response-feedback-mutation'
 import { getFormResponseFeedbackErrorMessage } from '@/features/template/lib/form-response-feedback-error'
 import { UjatAssignmentFeedbackModal, type UjatFeedbackModalMode } from './ujat-assignment-feedback-modal'
@@ -26,7 +32,7 @@ import {
   buildUjatDocumentFileName,
   type UjatDocumentViewerTarget,
 } from './ujat-document-viewer-types'
-import { createVolunteerFilledDraft } from './ujat-document-volunteer-draft'
+import { createSubmittedDocumentDraft } from './ujat-document-volunteer-draft'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -86,31 +92,25 @@ function PreviewPageNextIcon() {
   )
 }
 
-function getEducationTargetLabel(institutionName: string): string {
-  if (institutionName.includes('초등')) return '초등학교'
-  if (institutionName.includes('중학')) return '중학교'
-  if (institutionName.includes('고등')) return '고등학교'
-  return '-'
-}
-
+/** 목록 API에 있는 값만 채우고, 없는 필드는 `-`(렌더). 기관명 추정·프로그램명 invent 금지 */
 function buildVolunteerUserInfoPreviewValues(
   target: UjatDocumentViewerTarget
 ): Record<string, string> {
   return {
-    name: target.volunteerName,
+    name: target.volunteerName?.trim() || '-',
     gender: '-',
     birthDate: '-',
     phone: '-',
     email: '-',
-    addressRegion: target.regionLabel,
+    addressRegion: target.regionLabel?.trim() || '-',
     addressDetail: '-',
-    affiliation: target.institutionName,
-    applicantType: '봉사자',
-    programName: 'UJAT',
+    affiliation: target.institutionName?.trim() || '-',
+    applicantType: '-',
+    programName: '-',
     period: '-',
-    institutionName: target.institutionName,
-    institutionRegion: target.regionLabel,
-    educationTarget: getEducationTargetLabel(target.institutionName),
+    institutionName: target.institutionName?.trim() || '-',
+    institutionRegion: target.regionLabel?.trim() || '-',
+    educationTarget: '-',
     educationGrade: formatUjatGradeClassDisplayLabel(target.assignedClass),
     teamName: '-',
     teamPartnerName: '-',
@@ -124,6 +124,8 @@ export function UjatAssignmentDocumentViewerModal({
 }: UjatAssignmentDocumentViewerModalProps) {
   const { showAlert } = useCmsAlert()
   const createFeedbackMutation = useCreateFormResponseFeedbackMutation()
+  const formsRemote = shouldUseFormsSurveysRemoteApi()
+  const formResponseId = target?.formResponseId
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0)
   const [feedbackMode, setFeedbackMode] = useState<UjatFeedbackModalMode | null>(null)
@@ -132,14 +134,35 @@ export function UjatAssignmentDocumentViewerModal({
 
   const pdfHostRef = useRef<HTMLDivElement>(null)
 
+  const documentQuery = useQuery({
+    queryKey: ['cms', 'form-responses', 'document-viewer', formResponseId ?? 'none'] as const,
+    enabled: open && formsRemote && formResponseId != null && Number.isFinite(formResponseId),
+    retry: false,
+    staleTime: 15_000,
+    queryFn: async () => {
+      const id = Number(formResponseId)
+      const [response, snapshot] = await Promise.all([
+        getFormResponseRemote(id),
+        getFormResponseDocumentSnapshotRemote(id).catch(() => null),
+      ])
+      return { response, snapshot }
+    },
+  })
+
   const draft = useMemo(() => {
-    if (!target) return null
-    return createVolunteerFilledDraft(target)
-  }, [target])
+    if (!target || formResponseId == null) return null
+    if (!documentQuery.data) return null
+    const answers =
+      documentQuery.data.snapshot?.answers ?? documentQuery.data.response.answers ?? []
+    return createSubmittedDocumentDraft({
+      docType: target.docType,
+      answers,
+    })
+  }, [documentQuery.data, formResponseId, target])
 
   const a4Variant = target?.docType === 'plan' ? 'plan' : 'journal'
   const ujatA4Preview = useMemo(() => {
-    if (target == null) return null
+    if (target == null || draft == null) return null
     return createUjatEducationIssuanceA4Preview({
       variant: a4Variant,
       userInfoPreviewValues: buildVolunteerUserInfoPreviewValues(target),
@@ -147,7 +170,7 @@ export function UjatAssignmentDocumentViewerModal({
         ? { journalInstitutionName: target.institutionName }
         : {}),
     })
-  }, [a4Variant, target])
+  }, [a4Variant, draft, target])
   const previewParagraphs = useMemo(
     () =>
       getA4PreviewParagraphs(
@@ -278,7 +301,7 @@ export function UjatAssignmentDocumentViewerModal({
         variant="primary"
         size="medium"
         icon={<ButtonDownloadIcon />}
-        disabled={pdfLoading}
+        disabled={pdfLoading || draft == null}
         onClick={() => void handleDownloadPdf()} >
         파일 다운로드
       </CmsButton>
@@ -323,46 +346,64 @@ export function UjatAssignmentDocumentViewerModal({
               {actionButtons}
             </div>
 
-            <div className="ujat-doc-viewer-modal__workspace">
-              <div className="ujat-doc-viewer-modal__page">
-                <A4DocumentPageLayout title={surveyTitle} pageIndex={safePageIndex}>
-                  <FormDocumentPreviewBody
-                    paragraphs={currentPageParagraphs}
-                    allParagraphs={allParagraphs}
-                    titleNumbering={titleNumbering}
-                    editorKind="survey"
-                    overflowParagraphIds={overflowParagraphIds}
-                    renderMode={a4RenderMode}
-                    paragraphBodyOptions={paragraphBodyOptions}
-                    paragraphGapPx={a4ParagraphGapPx}
-                  />
-                </A4DocumentPageLayout>
+            {formResponseId == null ? (
+              <div className="ujat-doc-viewer-modal__workspace" role="alert">
+                제출 문서 ID(formResponseId)가 없어 본문을 표시할 수 없습니다.
               </div>
+            ) : !formsRemote ? (
+              <div className="ujat-doc-viewer-modal__workspace" role="alert">
+                원격 API를 사용할 수 없어 제출 문서를 불러오지 않습니다.
+              </div>
+            ) : documentQuery.isLoading ? (
+              <div className="ujat-doc-viewer-modal__workspace" role="status">
+                <Spin size="large" />
+              </div>
+            ) : documentQuery.isError || draft == null ? (
+              <div className="ujat-doc-viewer-modal__workspace" role="alert">
+                제출 문서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+              </div>
+            ) : (
+              <div className="ujat-doc-viewer-modal__workspace">
+                <div className="ujat-doc-viewer-modal__page">
+                  <A4DocumentPageLayout title={surveyTitle} pageIndex={safePageIndex}>
+                    <FormDocumentPreviewBody
+                      paragraphs={currentPageParagraphs}
+                      allParagraphs={allParagraphs}
+                      titleNumbering={titleNumbering}
+                      editorKind="survey"
+                      overflowParagraphIds={overflowParagraphIds}
+                      renderMode={a4RenderMode}
+                      paragraphBodyOptions={paragraphBodyOptions}
+                      paragraphGapPx={a4ParagraphGapPx}
+                    />
+                  </A4DocumentPageLayout>
+                </div>
 
-              <div className="ujat-doc-viewer-modal__page-nav">
-                <button
-                  type="button"
-                  className="ujat-doc-viewer-modal__page-nav-btn"
-                  onClick={handlePrevPage}
-                  disabled={safePageIndex === 0}
-                  aria-label="이전 페이지"
-                >
-                  <PreviewPagePrevIcon />
-                </button>
-                <span className="ujat-doc-viewer-modal__page-indicator">
-                  {safePageIndex + 1}/{totalPages}
-                </span>
-                <button
-                  type="button"
-                  className="ujat-doc-viewer-modal__page-nav-btn"
-                  onClick={handleNextPage}
-                  disabled={safePageIndex >= totalPages - 1}
-                  aria-label="다음 페이지"
-                >
-                  <PreviewPageNextIcon />
-                </button>
+                <div className="ujat-doc-viewer-modal__page-nav">
+                  <button
+                    type="button"
+                    className="ujat-doc-viewer-modal__page-nav-btn"
+                    onClick={handlePrevPage}
+                    disabled={safePageIndex === 0}
+                    aria-label="이전 페이지"
+                  >
+                    <PreviewPagePrevIcon />
+                  </button>
+                  <span className="ujat-doc-viewer-modal__page-indicator">
+                    {safePageIndex + 1}/{totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    className="ujat-doc-viewer-modal__page-nav-btn"
+                    onClick={handleNextPage}
+                    disabled={safePageIndex >= totalPages - 1}
+                    aria-label="다음 페이지"
+                  >
+                    <PreviewPageNextIcon />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
             <div className="full-page-modal__body-bottom" aria-hidden="true" />
           </div>
         </div>

@@ -91,7 +91,7 @@ export function UjatEducationProgressVolunteersSection({
     memberOptions,
     loadMemberOptions,
     addVolunteerFromMember,
-    syncRowsFromMock,
+    refreshVolunteerList,
   } = useUjatEducationProgressVolunteers(program.id, half)
 
   const selectedVolunteerId = selectedRowKeys.length === 1 ? String(selectedRowKeys[0]) : ''
@@ -113,9 +113,9 @@ export function UjatEducationProgressVolunteersSection({
 
   useEffect(() => {
     if (!eduVolDetailId) {
-      syncRowsFromMock()
+      refreshVolunteerList()
     }
-  }, [eduVolDetailId, syncRowsFromMock])
+  }, [eduVolDetailId, refreshVolunteerList])
 
   useEffect(() => {
     onBindRegisterVolunteer?.(addVolunteerFromMember)
@@ -333,7 +333,7 @@ export function UjatEducationProgressVolunteersSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="참여 봉사자 목록"
-        description={`${tableData.length}건`}
+        description={`총 ${tableData.length.toLocaleString()}건`}
         actions={
           <div className="ujat-education-progress-volunteers__actions program-application-list-toolbar">
             <FilterTableToolbarButton
@@ -358,16 +358,18 @@ export function UjatEducationProgressVolunteersSection({
               type="button"
               variant="secondary"
               icon={<ButtonDownloadIcon />}
-              onClick={() => setVolunteer1365PreviewOpen(true)} >
+              onClick={() => setVolunteer1365PreviewOpen(true)}
+            >
               1365 봉사시간 등록 양식
             </FilterTableToolbarButton>
             {canWrite ? (
-            <FilterTableToolbarButton
-              type="button"
-              variant="primary"
-              onClick={handleRegisterVolunteerClick} >
-              봉사자 등록
-            </FilterTableToolbarButton>
+              <FilterTableToolbarButton
+                type="button"
+                variant="primary"
+                onClick={handleRegisterVolunteerClick}
+              >
+                봉사자 등록
+              </FilterTableToolbarButton>
             ) : null}
           </div>
         }

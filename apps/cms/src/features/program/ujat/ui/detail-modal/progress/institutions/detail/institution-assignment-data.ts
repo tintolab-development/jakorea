@@ -69,21 +69,32 @@ function activeAssignments(
   return (assignments ?? []).filter(item => !isCancelledAssignment(item))
 }
 
+function asParticipantId(value: number | string | null | undefined): number | null {
+  if (value == null) return null
+  const id = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(id) ? id : null
+}
+
 export function volunteerNameByParticipantId(
   matrix: UjatAllocationMatrixResponse
 ): Map<number, string> {
   const names = new Map<number, string>()
   for (const volunteer of matrix.volunteers ?? []) {
-    if (volunteer.participantId == null) continue
+    const participantId = asParticipantId(volunteer.participantId)
+    if (participantId == null) continue
     const name = volunteer.volunteerName?.trim()
-    if (name) names.set(volunteer.participantId, name)
+    if (name) names.set(participantId, name)
   }
   return names
 }
 
-function displayName(names: ReadonlyMap<number, string>, participantId: number | null | undefined): string {
-  if (participantId == null) return UNASSIGNED_VOLUNTEER
-  return names.get(participantId)?.trim() || UNASSIGNED_VOLUNTEER
+function displayName(
+  names: ReadonlyMap<number, string>,
+  participantId: number | string | null | undefined
+): string {
+  const id = asParticipantId(participantId)
+  if (id == null) return UNASSIGNED_VOLUNTEER
+  return names.get(id)?.trim() || UNASSIGNED_VOLUNTEER
 }
 
 export function volunteersForClassFromSources(
@@ -121,9 +132,16 @@ export function volunteersForClassFromSources(
         assignmentClassMatches(cell.classLabel, gradeLabel, classNo)
     )
   )
+  const nameFromVolunteer = (
+    volunteer: (typeof matched)[number] | undefined
+  ): string => {
+    const fromRow = volunteer?.volunteerName?.trim()
+    if (fromRow) return fromRow
+    return displayName(names, volunteer?.participantId)
+  }
   return {
-    volunteerA: displayName(names, matched[0]?.participantId),
-    volunteerB: displayName(names, matched[1]?.participantId),
+    volunteerA: nameFromVolunteer(matched[0]),
+    volunteerB: nameFromVolunteer(matched[1]),
   }
 }
 
@@ -144,8 +162,9 @@ export function attendanceManagerForScheduleFromSources(
         ))
   )?.attendanceManagerParticipantId
 
-  if (managerId != null) {
-    return names.get(managerId)?.trim() || UNASSIGNED_MANAGER
+  const resolvedManagerId = asParticipantId(managerId)
+  if (resolvedManagerId != null) {
+    return names.get(resolvedManagerId)?.trim() || UNASSIGNED_MANAGER
   }
 
   const fromCell = (sources.matrix.volunteers ?? []).find(volunteer =>

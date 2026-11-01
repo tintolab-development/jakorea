@@ -1584,6 +1584,7 @@ export * from './volunteerApplicationDetailResponse';
 export * from './volunteerApplicationListItemResponse';
 export * from './volunteerApplicationListItemResponseFinalResultStatus';
 export * from './volunteerApplicationListItemResponseRecruitHalf';
+export * from './volunteerApplicationProfile';
 export * from './volunteerApplicationsFinalResultStatus';
 export * from './volunteerApplicationsParams';
 export * from './volunteerApplicationsRecruitHalf';

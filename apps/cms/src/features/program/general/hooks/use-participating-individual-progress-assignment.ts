@@ -8,7 +8,6 @@ import { useProgramProgressRemoteEnabledForSurface } from '@/features/program/1c
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import { buildParticipatingIndividualProgressAssignmentFilterFields } from '@/features/program/general/lib/participating-individual-progress-assignment-filter-fields'
 import { filterProgressAssignmentSessionGroups } from '@/features/program/general/lib/participating-individual-progress-assignment-display'
-import { resolveProgressAttendanceScheduleDateRanges } from '@/features/program/general/lib/progress-attendance-schedule-date-ranges'
 import {
   PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL,
   type ParticipatingIndividualProgressAssignmentFilters,
@@ -42,18 +41,9 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
       ...EMPTY_PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTERS,
     }))
 
-  const scheduleDateRanges = useMemo(
-    () => resolveProgressAttendanceScheduleDateRanges(program),
-    [program]
-  )
-
   const remoteQuery = useQuery({
-    queryKey: [
-      ...generalProgramProgressQueryKeys.assignmentSubmissions(String(program.id)),
-      'schedule-date-ranges',
-      scheduleDateRanges.map(range => `${range.dateFrom}~${range.dateTo}`).join(','),
-    ],
-    queryFn: () => fetchGeneralProgressAssignmentBundle(String(program.id), scheduleDateRanges),
+    queryKey: generalProgramProgressQueryKeys.assignmentSubmissions(String(program.id)),
+    queryFn: () => fetchGeneralProgressAssignmentBundle(String(program.id)),
     enabled: remoteEnabled,
     staleTime: 15_000,
     retry: false,
@@ -64,7 +54,6 @@ export function useParticipatingIndividualProgressAssignment(program: Program) {
     return buildProgressAssignmentSessionsFromRemote(remoteQuery.data, {
       program,
       giveUpParticipants: remoteQuery.data.giveUpParticipants,
-      schedules: remoteQuery.data.schedules,
       participants: remoteQuery.data.giveUpParticipants,
     })
   }, [program, remoteEnabled, remoteQuery.data])

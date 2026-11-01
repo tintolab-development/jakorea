@@ -12,6 +12,11 @@ import {
   findUjatEducationRegionKeyByCode,
   findUjatEducationRegionKeyByLabel,
 } from '@/features/program/ujat/lib/ujat-education-regions'
+import {
+  includeThirdPartyRecipientInWire,
+  resolveThirdPartyRecipientCellValue,
+  VOLUNTEER_THIRD_PARTY_RECIPIENT_MAX_LENGTH,
+} from '@/features/program/general/lib/participating-volunteer-participant-register-request'
 import type { VolunteerParticipantRegisterRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequest'
 import { VolunteerParticipantRegisterRequestApplicationType } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestApplicationType'
 import { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest'
@@ -28,6 +33,9 @@ import {
 import type { UjatVolunteerAddRegistrationConsentState } from './terms-consent-section'
 
 const REGISTER_REASON = 'CMS UJAT 참여 봉사자 추가 등록'
+
+/** UJAT 시드 제3자 표 「제공받는 곳」 placeholder — 미입력으로 취급 */
+const UJAT_THIRD_PARTY_RECIPIENT_PLACEHOLDER = '제공받는 곳을 입력해 주세요'
 
 const REQUIRED_TERMS_FIELDS = [
   { key: 'serviceTerms' as const, label: '서비스 이용약관' },
@@ -154,6 +162,25 @@ export function buildUjatVolunteerParticipantRegisterRequest(
     }
   }
 
+  /** UJAT는 thirdPartyRecipient 생략 가능. 값이 있으면 동일 wire로 저장. */
+  const thirdPartyRecipient = includeThirdPartyRecipientInWire
+    ? resolveThirdPartyRecipientCellValue(
+        input.paragraphs,
+        UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent,
+        [UJAT_THIRD_PARTY_RECIPIENT_PLACEHOLDER]
+      )
+    : null
+  if (
+    thirdPartyRecipient != null &&
+    thirdPartyRecipient.length > VOLUNTEER_THIRD_PARTY_RECIPIENT_MAX_LENGTH
+  ) {
+    return {
+      ok: false,
+      title: '안내',
+      message: `제공받는 기관명은 ${VOLUNTEER_THIRD_PARTY_RECIPIENT_MAX_LENGTH}자 이내로 입력해 주세요.`,
+    }
+  }
+
   const hasExperience = overlayString(input.overlay, UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience)
   const jaProgramExperienceConsentRequest =
     hasExperience === 'yes'
@@ -200,6 +227,9 @@ export function buildUjatVolunteerParticipantRegisterRequest(
     jaProgramExperienceConsentRequest,
     applicationType,
     reason: REGISTER_REASON,
+  }
+  if (thirdPartyRecipient) {
+    request.thirdPartyRecipient = thirdPartyRecipient
   }
   if (freeTextItems.length > 0) {
     request.freeTextItems = { items: freeTextItems }

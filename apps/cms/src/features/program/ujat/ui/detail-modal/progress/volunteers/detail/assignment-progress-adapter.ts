@@ -12,6 +12,8 @@ import type {
   UjatAttendanceItemDto,
   UjatPartnerAssignmentResponse,
 } from '@/features/program/ujat/api/education-execution-api'
+import type { UjatOrganizationScheduleSlotResponse as OrgSlot } from '@/features/program/ujat/api/temporary-schedule-api'
+import { formatAssignmentShortDate } from '../../assignments/assignment-submissions-adapter'
 import type {
   UjatVolunteerAssignmentAbsenceReason,
   UjatVolunteerAssignmentAttendanceSummary,
@@ -40,6 +42,8 @@ export type VolunteerAssignmentProgressSources = {
   partnerAssignmentsByScheduleId: Record<string, UjatPartnerAssignmentResponse[]>
   attendancesByScheduleId: Record<string, UjatAttendanceItemDto[]>
   absenceReasons: ProgramAbsenceReasonItem[]
+  /** 기관 임시일정 슬롯 — 교육 배정 모달의 미배정 학급 옵션 SSOT */
+  orgSlots?: readonly OrgSlot[]
 }
 
 export type VolunteerAssignmentProgressView = {
@@ -161,33 +165,114 @@ function numericSlotId(value: number | null | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
-function classOptionsForSchedule(
+function slotLabelFromOrg(slot: OrgSlot): string {
+  return (
+    slot.classLabel?.trim() ||
+    [slot.grade, slot.className].filter(Boolean).join('-') ||
+    (slot.slotId != null ? `학급 ${slot.slotId}` : '')
+  )
+}
+
+/** 일정·슬롯별 배정 인원 — matrix cell + 활성 partner assignment */
+function countAssigneesForEducationSlot(
   matrix: UjatAllocationMatrixResponse,
+  partnerAssignments: readonly UjatPartnerAssignmentResponse[],
   scheduleId: number,
-  partnerAssignments: readonly UjatPartnerAssignmentResponse[]
-): UjatVolunteerClassAssignOption[] {
-  const seen = new Map<string, UjatVolunteerClassAssignOption>()
-  const add = (slotId: number | null | undefined, label: string | null | undefined) => {
-    const id = numericSlotId(slotId)
-    const text = label?.trim()
-    if (id == null || !text) return
-    const value = String(id)
-    if (!seen.has(value)) seen.set(value, { value, label: text })
-  }
+  educationSlotId: number
+): number {
+  const participantIds = new Set<number>()
 
   for (const column of matrix.columns ?? []) {
     if (column.scheduleId !== scheduleId) continue
     for (const volunteer of matrix.volunteers ?? []) {
+      if (volunteer.participantId == null || volunteer.giveUp === true) continue
       const cell = cellForColumn(volunteer, column)
-      add(cell?.educationSlotId, cell?.classLabel)
+      if (cell?.educationSlotId === educationSlotId && cell.classLabel?.trim()) {
+        participantIds.add(volunteer.participantId)
+      }
     }
   }
+
   for (const assignment of partnerAssignments) {
     if (isCancelledAssignment(assignment.status) || assignment.cancelledAt) continue
     if (assignment.scheduleId != null && assignment.scheduleId !== scheduleId) continue
-    add(assignment.educationSlotId, assignment.classLabel)
+    if (assignment.educationSlotId !== educationSlotId) continue
+    if (assignment.primaryParticipantId != null) {
+      participantIds.add(assignment.primaryParticipantId)
+    }
+    if (assignment.secondaryParticipantId != null) {
+      participantIds.add(assignment.secondaryParticipantId)
+    }
   }
-  return [...seen.values()]
+
+  return participantIds.size
+}
+
+/**
+ * 교육 배정 모달용 학급 — 해당 일정 미배정(0인) 슬롯만.
+ * org temporary-schedule slots 우선, 없으면 matrix/partner에만 있는 슬롯은 채우지 않는다(invent 금지).
+ */
+function classOptionsForSchedule(
+  matrix: UjatAllocationMatrixResponse,
+  scheduleId: number,
+  organizationApplicationId: number | null | undefined,
+  partnerAssignments: readonly UjatPartnerAssignmentResponse[],
+  orgSlots: readonly OrgSlot[]
+): UjatVolunteerClassAssignOption[] {
+  const fromOrg = orgSlots.filter(slot => {
+    if (slot.scheduleId !== scheduleId || slot.slotId == null) return false
+    if (
+      organizationApplicationId != null &&
+      slot.organizationApplicationId != null &&
+      slot.organizationApplicationId !== organizationApplicationId
+    ) {
+      return false
+    }
+    return true
+  })
+
+  const candidates: UjatVolunteerClassAssignOption[] = []
+  if (fromOrg.length > 0) {
+    for (const slot of fromOrg) {
+      const id = numericSlotId(slot.slotId)
+      const label = slotLabelFromOrg(slot)
+      if (id == null || !label) continue
+      candidates.push({ value: String(id), label })
+    }
+  } else {
+    // org slots가 비면 cell/partner에 이미 찍힌 슬롯만 후보(미배정 필터로 대부분 제외될 수 있음)
+    const seen = new Map<string, UjatVolunteerClassAssignOption>()
+    const add = (slotId: number | null | undefined, label: string | null | undefined) => {
+      const id = numericSlotId(slotId)
+      const text = label?.trim()
+      if (id == null || !text) return
+      const value = String(id)
+      if (!seen.has(value)) seen.set(value, { value, label: text })
+    }
+    for (const column of matrix.columns ?? []) {
+      if (column.scheduleId !== scheduleId) continue
+      for (const volunteer of matrix.volunteers ?? []) {
+        const cell = cellForColumn(volunteer, column)
+        add(cell?.educationSlotId, cell?.classLabel)
+      }
+    }
+    for (const assignment of partnerAssignments) {
+      if (isCancelledAssignment(assignment.status) || assignment.cancelledAt) continue
+      if (assignment.scheduleId != null && assignment.scheduleId !== scheduleId) continue
+      add(assignment.educationSlotId, assignment.classLabel)
+    }
+    candidates.push(...seen.values())
+  }
+
+  return candidates.filter(
+    option =>
+      countAssigneesForEducationSlot(
+        matrix,
+        partnerAssignments,
+        scheduleId,
+        Number(option.value)
+      ) === 0
+  )
 }
 
 function buildPartnerOptions(
@@ -345,15 +430,22 @@ export function buildVolunteerAssignmentProgressView(
       item => item.participantId === participantId
     )
 
-    const classLabel =
-      cell?.classLabel?.trim() ||
-      partnerAssignment?.classLabel?.trim() ||
-      submission?.volunteer.assignedClass?.trim() ||
-      ''
+    // 배정 학급 SSOT: allocation-matrix cell.classLabel만. partner-assignment/submissions 백필 금지.
+    const assignmentStatus = (cell?.assignmentStatus ?? '').trim().toUpperCase()
+    const needsReassignment =
+      cell?.needsReassignment === true || assignmentStatus === 'REASSIGNMENT_REQUIRED'
+    const rawClassLabel = cell?.classLabel?.trim() || ''
     const abandoned =
       volunteer?.giveUp === true || submission?.volunteer.activityAbandoned === true
+    const assignedFromMatrix =
+      !abandoned &&
+      (assignmentStatus === 'ASSIGNED' || needsReassignment || rawClassLabel.length > 0)
+    const classLabel = assignedFromMatrix ? rawClassLabel || '—' : ''
+    // 기관명: matrix column 우선. submissions-only 행(매트릭스에 없는 일정)만 submission 기관명.
     const institutionName =
-      draft.column?.organizationName?.trim() || submission?.volunteer.institutionName?.trim() || ''
+      draft.column?.organizationName?.trim() ||
+      (draft.column == null ? submission?.volunteer.institutionName?.trim() || '' : '') ||
+      ''
     const selfIsSecondary = partnerAssignment?.secondaryParticipantId === participantId
     const partnerParticipantId = selfIsSecondary
       ? partnerAssignment?.primaryParticipantId
@@ -365,8 +457,8 @@ export function buildVolunteerAssignmentProgressView(
     const log = submission?.volunteer.log
     const planSubmitted = isDocumentSubmitted(plan?.status)
     const logSubmitted = isDocumentSubmitted(log?.status)
-    const attendance = mapAttendance(attendanceItem)
-    const assigned = !abandoned && classLabel.length > 0
+    const attendance = abandoned ? ({ kind: 'withdrawn' } as const) : mapAttendance(attendanceItem)
+    const assigned = assignedFromMatrix
 
     let educationProgress: UjatVolunteerAssignmentProgressRow['educationProgress'] = 'dash'
     if (assigned) {
@@ -400,11 +492,13 @@ export function buildVolunteerAssignmentProgressView(
         : assigned
           ? { kind: 'class', label: classLabel }
           : { kind: 'dash' },
-      attendance: abandoned ? { kind: 'dash' } : attendance,
+      attendance,
       educationPlanSubmitted: planSubmitted,
       educationLogSubmitted: logSubmitted,
       educationPlanFormResponseId: formResponseId(plan?.formResponseId),
       educationLogFormResponseId: formResponseId(log?.formResponseId),
+      educationPlanSubmittedDateLabel: formatAssignmentShortDate(plan?.submittedAt) ?? '',
+      educationLogSubmittedDateLabel: formatAssignmentShortDate(log?.submittedAt) ?? '',
       educationProgress: abandoned ? 'dash' : educationProgress,
       isWithdrawn: abandoned,
       scheduleId: draft.scheduleId,
@@ -417,6 +511,8 @@ export function buildVolunteerAssignmentProgressView(
         null,
       participantId,
       selfIsSecondary,
+      // 서버 필드만 전달. assignedAt·로컬 플래그로 추정하지 않는다.
+      assignmentNotificationSent: partnerAssignment?.assignmentNotificationSent,
     }
   })
 
@@ -427,6 +523,7 @@ export function buildVolunteerAssignmentProgressView(
     }
   }
 
+  const orgSlots = sources.orgSlots ?? []
   const assignOptionsByRowId: Record<string, VolunteerAssignmentAssignOptions> = {}
   for (const row of rows) {
     if (row.scheduleId == null) continue
@@ -434,7 +531,9 @@ export function buildVolunteerAssignmentProgressView(
       classOptions: classOptionsForSchedule(
         matrix,
         row.scheduleId,
-        sources.partnerAssignmentsByScheduleId[String(row.scheduleId)] ?? []
+        row.organizationApplicationId,
+        sources.partnerAssignmentsByScheduleId[String(row.scheduleId)] ?? [],
+        orgSlots
       ),
       partnerOptions,
     }
