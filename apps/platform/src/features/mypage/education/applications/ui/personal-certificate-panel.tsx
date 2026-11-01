@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { ProgramDetailCase } from '@/features/program'
 import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
-import { availabilityReasonMessage } from '../api/personal-certificate-client'
+import { PFAlertModal, PFButton } from '@/shared/ui'
 import {
   useDownloadPersonalCertificateMutation,
   useIssuePersonalCertificateMutation,
@@ -10,7 +9,6 @@ import {
 } from '../api/personal-certificate-hooks'
 import { readPortalCertificateIssueId } from '../api/personal-certificate-types'
 import type { ProgramApplicationType } from '../api/types'
-import { labelForPortalCertificateStatus } from '../lib/certificate-status-label'
 import {
   isPersonalCertificateActionable,
   shouldShowPersonalCertificateAction,
@@ -39,7 +37,6 @@ export function EducationPersonalCertificatePanel({
   programGroup,
   detailCase,
   isTeacher,
-  certificateStatus,
   canIssueCertificateHint,
   participantIdHint,
 }: EducationPersonalCertificatePanelProps) {
@@ -96,11 +93,6 @@ export function EducationPersonalCertificatePanel({
       ? Number(availability.participantId)
       : null) ?? (participantIdHint != null && participantIdHint > 0 ? participantIdHint : null)
 
-  const statusLabel = labelForPortalCertificateStatus(certificateStatus)
-  const reason =
-    availabilityReasonMessage(availability) ??
-    (availabilityQuery.isError ? '수료증 발급 가능 여부를 확인하지 못했습니다.' : null)
-
   const busy =
     availabilityQuery.isLoading ||
     availabilityQuery.isFetching ||
@@ -154,22 +146,8 @@ export function EducationPersonalCertificatePanel({
     }
   }
 
-  if (!actionable) {
-    // 자격 없음: reasonMessage(또는 조회 실패)가 있을 때만 안내. NOT_ELIGIBLE 배지만으로 패널을 항상 띄우지 않음.
-    if (!reason) return null
-    return (
-      <section className={styles.panel} aria-label="수료증">
-        {statusLabel ? (
-          <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.status}>
-            {statusLabel}
-          </PFText>
-        ) : null}
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.reason}>
-          {reason}
-        </PFText>
-      </section>
-    )
-  }
+  // 발급·다운로드가 가능할 때만 노출. 불가 사유(발급 불가 등)는 헤더에 띄우지 않는다.
+  if (!actionable) return null
 
   return (
     <section aria-label="수료증">
