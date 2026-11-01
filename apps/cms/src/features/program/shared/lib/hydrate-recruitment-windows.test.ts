@@ -9,6 +9,7 @@ import { resolveGeneralProgramInstructorRecruitmentDisplay } from '@/features/pr
 import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
 import { programToRecruitmentTabEditValues } from '@/features/program/general/lib/general-program-recruitment-edit-seed'
 import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
+import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 
 function programWithRows(): Program {
   return {
@@ -193,6 +194,56 @@ describe('개인 참여자 2차 면접 기간 — 행 SSOT', () => {
     expect(formatDateRange(display.interviewStartDate, display.interviewEndDate)).toContain(
       '2026.12.14'
     )
+  })
+
+  it('행 면접 기간 + overlay 면접 방식이 상세 display에 있다', () => {
+    const program = individualParticipantInterviewProgram()
+    program.interviewStartDate = undefined
+    program.interviewEndDate = undefined
+    program.interviewMethod = undefined
+    program.programRecruitments = [
+      {
+        id: 1,
+        recruitmentType: 'PARTICIPANT',
+        applicationType: 'INDIVIDUAL',
+        interviewEnabled: true,
+        interviewStartAt: '2026-11-05T15:00:00Z',
+        interviewEndAt: '2026-11-07T14:59:59.999Z',
+      },
+    ]
+    program.registrationOverlay = {
+      'recruit.individual.interviewMethod': '온라인',
+    }
+    const hydrated = hydrateRecruitmentWindowsOntoProgram(program)
+    const merged = applyGeneralRecruitOverlayToProgram(
+      hydrated,
+      program.registrationOverlay as Record<string, unknown>,
+      { preferOverlay: false }
+    )
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(merged)
+    expect(String(display.interviewStartDate)).toContain('2026-11-05T15:00:00')
+    expect(String(display.interviewEndDate)).toContain('2026-11-07T14:59:59.999Z')
+    expect(display.interviewMethod).toBe('온라인')
+    expect(formatDateRange(display.interviewStartDate, display.interviewEndDate)).not.toBe('-')
+  })
+
+  it('종료만 null인 옛 행은 시작일만 올리고 종료 컬럼은 비워 둔다', () => {
+    const program = individualParticipantInterviewProgram()
+    program.interviewStartDate = undefined
+    program.interviewEndDate = undefined
+    program.programRecruitments = [
+      {
+        id: 1,
+        recruitmentType: 'PARTICIPANT',
+        applicationType: 'INDIVIDUAL',
+        interviewEnabled: true,
+        interviewStartAt: '2026-11-10T15:00:00Z',
+        interviewEndAt: null,
+      },
+    ]
+    const hydrated = hydrateRecruitmentWindowsOntoProgram(program)
+    expect(String(hydrated.interviewStartDate)).toContain('2026-11-10T15:00:00')
+    expect(hydrated.interviewEndDate).toBeUndefined()
   })
 
   it('기관 참여자 행의 면접 시각은 program 컬럼으로 올리지 않는다', () => {

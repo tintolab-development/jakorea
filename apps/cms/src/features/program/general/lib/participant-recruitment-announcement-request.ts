@@ -53,6 +53,20 @@ function usableIso(
   return iso
 }
 
+/** 면접 기간 종료(23:59:59.999 포함). 초·밀리초 휴리스틱은 쓰지 않고, 생성·수정 시각과 같은 시드만 버린다. */
+function usableRangeEndIso(
+  value: string | Date | null | undefined,
+  timestamps?: { createdAt?: string | Date | null; updatedAt?: string | Date | null }
+): string | undefined {
+  if (value == null) return undefined
+  const iso = typeof value === 'string' ? value.trim() : value.toISOString()
+  if (!iso) return undefined
+  const created = timestamps?.createdAt != null ? String(timestamps.createdAt).trim() : ''
+  const updated = timestamps?.updatedAt != null ? String(timestamps.updatedAt).trim() : ''
+  if ((created && iso === created) || (updated && iso === updated)) return undefined
+  return iso
+}
+
 function participantTypes(program: Program): string[] {
   return program.generalParticipantTypes ?? []
 }
@@ -138,7 +152,7 @@ function announcementFromKeys(
     (interviewEnabled === true ? fallback.documentPassAnnouncementAt : undefined)
   const range = keys.interviewRangeSeal ? overlayRange(overlay, keys.interviewRangeSeal) : undefined
   const interviewStartAt = usableIso(range?.start, timestamps) ?? fallback.interviewStartAt
-  const interviewEndAt = usableIso(range?.end, timestamps) ?? fallback.interviewEndAt
+  const interviewEndAt = usableRangeEndIso(range?.end, timestamps) ?? fallback.interviewEndAt
   if (documentPassAnnouncementAt) out.documentPassAnnouncementAt = documentPassAnnouncementAt
   if (interviewStartAt) out.interviewStartAt = interviewStartAt
   if (interviewEndAt) out.interviewEndAt = interviewEndAt
@@ -165,7 +179,7 @@ export function participantRecruitmentAnnouncementRequestFields(
     interviewEnabled: program.generalParticipantInterviewEnabled,
     documentPassAnnouncementAt: usableIso(program.documentPassAnnouncementDate, stamps),
     interviewStartAt: usableIso(program.interviewStartDate, stamps),
-    interviewEndAt: usableIso(program.interviewEndDate, stamps),
+    interviewEndAt: usableRangeEndIso(program.interviewEndDate, stamps),
     finalPassAnnouncementAt: usableIso(program.resultAnnouncementDate, stamps),
   }
 

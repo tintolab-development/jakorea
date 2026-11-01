@@ -111,13 +111,17 @@ export function ProgramDetailInterviewReadRow({
   start,
   end,
   method,
+  allowMissingEnd = false,
 }: {
   start?: string | Date | null
   end?: string | Date | null
   method?: string | null
+  /** 참여자 2차 면접: 종료가 null인 옛 행은 시작일 하루로 표시한다. 봉사자·강사는 기본값(둘 다 있어야 표시). */
+  allowMissingEnd?: boolean
 }) {
-  if (!start || !end) return '-'
-  const range = formatDateRange(start, end)
+  if (!start) return '-'
+  if (!end && !allowMissingEnd) return '-'
+  const range = formatDateRange(start, end ?? start)
   const raw = method?.trim()
   const methodLabel = raw
     ? (INTERVIEW_METHOD_OPTIONS.find(o => o.value === raw)?.label ?? raw)
