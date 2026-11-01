@@ -229,6 +229,8 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
   participation?: {
     status?: string
     completionStatus?: string
+    participantId?: number
+    certificateStatus?: string
   }
   summary?: {
     satisfactionPendingCount?: number | null
@@ -238,5 +240,6 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
     canCancelApplication?: boolean
     canSubmitSatisfaction?: boolean
     canSubmitSurvey?: boolean
+    canIssueCertificate?: boolean
   }
 }

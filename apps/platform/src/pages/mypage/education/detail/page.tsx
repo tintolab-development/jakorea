@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { resolveEducationIncomingDeeplinkBouncePath } from '@/features/mypage/education/applications/lib/education-application-route'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
@@ -79,6 +80,7 @@ import {
   resolveTeacherApplicationProgramGroup,
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
+import { CertificateIssueCta } from '@/features/mypage/education/applications/ui/certificate-issue-cta'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import {
   resolveVisibleUjatScheduleBanner,
@@ -171,8 +173,15 @@ export function MypageEducationDetailPage() {
     applicationType?: string
   }>()
   const routeApplicationType = readEducationApplicationType(applicationType)
+  const incomingDeeplinkBouncePath = resolveEducationIncomingDeeplinkBouncePath(
+    applicationType,
+    applicationId,
+  )
   const { applicationType: probedApplicationType, isProbing: isProbingApplicationType } =
-    useProbeEducationApplicationType(applicationId, routeApplicationType)
+    useProbeEducationApplicationType(
+      incomingDeeplinkBouncePath ? '' : applicationId,
+      routeApplicationType,
+    )
   const resolvedApplicationType = routeApplicationType ?? probedApplicationType
   const remoteDetailEnabled = isRemoteApiConfigured() && resolvedApplicationType != null
   const [isAuthReady, setIsAuthReady] = useState(false)
@@ -435,6 +444,11 @@ export function MypageEducationDetailPage() {
     showTeacherInstitutionGuidanceOnTab,
     teacherApplicationContent,
   ])
+
+  useEffect(() => {
+    if (!incomingDeeplinkBouncePath) return
+    navigate(`${incomingDeeplinkBouncePath}${location.search}`, { replace: true })
+  }, [incomingDeeplinkBouncePath, location.search, navigate])
 
   useEffect(() => {
     if (!probedApplicationType || routeApplicationType || !applicationId) return
@@ -945,6 +959,18 @@ export function MypageEducationDetailPage() {
         </>
       ) : isActivityStatus ? (
         <>
+          {!isTeacher &&
+          (routeApplicationType ?? application.applicationType) === 'INDIVIDUAL' &&
+          application.displayStatus === 'completed' ? (
+            <CertificateIssueCta
+              isTeacher={isTeacher}
+              applicationType={routeApplicationType ?? application.applicationType}
+              applicationId={application.id}
+              displayStatus={application.displayStatus}
+              programId={application.programId ?? program.id}
+              programTitle={program.title}
+            />
+          ) : null}
           <PFTabs
             className={styles.tabs}
             items={inProgressTabItems}

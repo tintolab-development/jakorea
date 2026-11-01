@@ -138,7 +138,7 @@ export type EducationApplicationListItem = {
   teacherAssignment?: EducationTeacherAssignment
   /** 교사 회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
   teacherApplicationContent?: EducationTeacherApplicationContent
-  /** 수료증 발급 가능 — 포털 신청 상세 `certificateAvailable` */
+  /** 수료증 발급 가능 — 포털 신청 상세 `capabilities.canIssueCertificate` (노출 판단에 쓰지 않음) */
   certificateAvailable?: boolean
   /** 미응답 설문 수 — 포털 신청 목록·상세 `pendingSurveyCount` */
   pendingSurveyCount?: number

@@ -556,8 +556,8 @@ export function mapPortalProgramApplicationDetail(
     displayStatus,
   })
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
-  if (detail.certificateAvailable != null) {
-    mapped.certificateAvailable = detail.certificateAvailable
+  if (detail.capabilities?.canIssueCertificate != null) {
+    mapped.certificateAvailable = detail.capabilities.canIssueCertificate
   }
   if (typeof detail.capabilities?.canSubmitSatisfaction === 'boolean') {
     mapped.canSubmitSatisfaction = detail.capabilities.canSubmitSatisfaction

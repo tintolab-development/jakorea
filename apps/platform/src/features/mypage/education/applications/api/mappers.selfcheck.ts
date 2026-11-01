@@ -448,4 +448,16 @@ assert.equal(satisfactionFlags?.satisfactionPendingCount, 0)
 assert.equal(satisfactionFlags?.surveyPendingCount, 0)
 assert.equal(satisfactionFlags?.pendingSurveyCount, 0)
 
+const certificateCapabilityFalse = mapPortalProgramApplicationDetail({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programTitle: '수료증 상세 플래그',
+  programGroup: 'GENERAL',
+  displayStatus: '진행 완료',
+  certificateAvailable: true,
+  capabilities: { canIssueCertificate: false },
+})
+assert.equal(certificateCapabilityFalse?.certificateAvailable, false)
+
 console.log('portal application mappers.selfcheck: ok')
