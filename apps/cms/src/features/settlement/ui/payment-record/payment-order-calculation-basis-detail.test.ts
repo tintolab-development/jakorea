@@ -16,6 +16,7 @@ import {
   resolveBasisDetailModalTitle,
   resolveLodgingBasisDetailTotalWon,
   resolveMealBasisDetailTotalWon,
+  mapLectureFeeCalculationDetailToBasisDetail,
   resolvePaymentOrderCalculationBasisDetailForRow,
   resolveTravelBasisDetailTotalWon,
   resolveWithholdingBasisDetailAmountWon,
@@ -394,6 +395,81 @@ describe('payment-order-calculation-basis-detail', () => {
     if (byRound?.layout === 'lectureFeeTier') {
       expect(byRound.lectureTimeDisplay).toBe('3회차')
     }
+  })
+
+  it('lectureTimeDisplay(차시)가 있으면 hours보다 차시를 우선한다', () => {
+    const detail = mapLectureFeeCalculationDetailToBasisDetail({
+      layout: 'lectureFeeTier',
+      resultAmount: 500_000,
+      basisJson: JSON.stringify({
+        layout: 'lectureFeeTier',
+        itemType: 'LECTURE_FEE',
+        feeGrade: 'GRADE_1',
+        categoryLabel: '1급 강사비',
+        amount: 500_000,
+        sessionOrdinal: 1,
+        lectureTimeDisplay: '1차시',
+        hours: 2,
+      }),
+    })
+    expect(detail?.layout).toBe('lectureFeeTier')
+    if (detail?.layout !== 'lectureFeeTier') return
+    expect(detail.lectureTimeDisplay).toBe('1차시')
+  })
+
+  it('차시·회차가 없고 hours만 있으면 강의 시간에 N시간을 쓴다', () => {
+    const detail = mapLectureFeeCalculationDetailToBasisDetail({
+      layout: 'lectureFeeTier',
+      resultAmount: 500_000,
+      basisJson: JSON.stringify({
+        layout: 'lectureFeeTier',
+        itemType: 'LECTURE_FEE',
+        feeGrade: 'GRADE_1',
+        categoryLabel: '1급 강사비',
+        amount: 500_000,
+        hours: 2,
+      }),
+    })
+    expect(detail?.layout).toBe('lectureFeeTier')
+    if (detail?.layout !== 'lectureFeeTier') return
+    expect(detail.lectureTimeDisplay).toBe('2시간')
+
+    const resolved = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'lecture_fee',
+        itemLabel: '강사비',
+        amount: 500_000,
+        lineId: 'lecture-hours-only',
+        lectureSessionDisplay: '14:30 ~ 16:30',
+        basisDetail: detail,
+      },
+      { lectureFeeStandardTitle: '1급 강사비', remoteData: true }
+    )
+    expect(resolved?.layout).toBe('lectureFeeTier')
+    if (resolved?.layout !== 'lectureFeeTier') return
+    expect(resolved.lectureTimeDisplay).toBe('2시간')
+  })
+
+  it('원천징수 행에 lectureFeeTier basisDetail이 있어도 원천징수 모달로 연결한다', () => {
+    const detail = resolvePaymentOrderCalculationBasisDetailForRow(
+      {
+        kind: 'withholding',
+        itemLabel: '원천징수',
+        amount: -2228,
+        lineId: 'withholding-mismatched-lecture',
+        lectureSessionDisplay: '1차시',
+        basisDetail: {
+          layout: 'lectureFeeTier',
+          tier: '1',
+          categoryLabel: '1급 강사비',
+          feeAssessmentWon: 500000,
+          lectureTimeDisplay: '1차시',
+          totalWon: 500000,
+        },
+      },
+      { withholdingDailySalaryTotalWon: 300000, remoteData: true }
+    )
+    expect(detail?.layout).toBe('withholding')
   })
 
   it('제미나이 calculationDetail이 있으면 시계열 lectureSessionDisplay를 무시하고 2차시를 쓴다', () => {

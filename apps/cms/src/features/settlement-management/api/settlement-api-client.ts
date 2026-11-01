@@ -89,10 +89,14 @@ export async function fetchSettlementAggregatesRemote(
   return Array.isArray(data) ? data : []
 }
 
+/** OpenAPI 감사 문구 정본 — 계좌 지급 상세 GET `reason` 쿼리 */
+export const ACCOUNT_PAYMENT_DETAIL_AUDIT_REASON = '정산금의 계좌 지급 처리를 위함'
+
 export async function fetchAccountPaymentDetailRemote(
-  paymentId: number
+  paymentId: number,
+  reason: string = ACCOUNT_PAYMENT_DETAIL_AUDIT_REASON
 ): Promise<AccountPaymentDetailResponse> {
-  return unwrapApiBody(await settlementApi.getAccountPayment(paymentId))
+  return unwrapApiBody(await settlementApi.getAccountPayment(paymentId, { reason }))
 }
 
 export async function downloadPaymentStatementRemote(

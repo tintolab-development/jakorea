@@ -320,7 +320,10 @@ export function mapLectureFeeCalculationDetailToBasisDetail(
   if (!detail) return undefined
 
   const candidates: Record<string, unknown>[] = []
-  if (detail.basisJson?.trim()) {
+  const basisJsonRaw = detail.basisJson as unknown
+  if (basisJsonRaw && typeof basisJsonRaw === 'object' && !Array.isArray(basisJsonRaw)) {
+    candidates.push(basisJsonRaw as Record<string, unknown>)
+  } else if (typeof detail.basisJson === 'string' && detail.basisJson.trim()) {
     try {
       const parsed: unknown = JSON.parse(detail.basisJson)
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
@@ -346,16 +349,20 @@ export function mapLectureFeeCalculationDetailToBasisDetail(
     const wageItemType = stringValue(recordValue(candidate, 'wageItemType'))
     const title =
       lectureFeeTitleFromGradeOrWage(feeGrade, wageItemType) ??
+      stringValue(recordValue(candidate, 'categoryLabel', 'itemName')) ??
       (layout === 'lectureFeeSpecial' ? SPECIAL_LECTURE_FEE_TITLE : undefined) ??
       (layout === 'lectureFeeGemini' ? GEMINI_LECTURE_FEE_TITLE : undefined)
     const amount =
       numberValue(recordValue(candidate, 'amount', 'feeAssessmentWon', 'totalWon')) ??
       detail.resultAmount
     const sessionOrdinal = numberValue(recordValue(candidate, 'sessionOrdinal'))
-    const lectureTimeDisplay = resolveCanonicalLectureSessionDisplay(
-      stringValue(recordValue(candidate, 'lectureTimeDisplay')),
-      sessionOrdinal
-    )
+    const hours = numberValue(recordValue(candidate, 'hours'))
+    // 모달 강의 시간: canonical 차시·회차 → sessionOrdinal → hours(N시간). 시계열·일정명 금지.
+    const lectureTimeDisplay = resolveLectureTimeDisplayFromCalculationFields({
+      lectureTimeDisplay: stringValue(recordValue(candidate, 'lectureTimeDisplay')),
+      sessionOrdinal,
+      hours,
+    })
     if (amount == null && !title && lectureTimeDisplay === '-') continue
 
     const fee = amount ?? 0
@@ -773,6 +780,14 @@ export function isCanonicalLectureSessionDisplay(raw: string | undefined): boole
   return /^\d+\s*(?:~\s*\d+\s*)?(?:차시|회차)$/u.test(trimmed)
 }
 
+/** 모달 「강의 시간」에 쓸 수 있는 표기 — 차시·회차 또는 N시간 */
+export function isUsableLectureTimeDisplay(raw: string | undefined): boolean {
+  const trimmed = raw?.trim()
+  if (!trimmed || trimmed === '-') return false
+  if (isCanonicalLectureSessionDisplay(trimmed)) return true
+  return /^\d+(?:\.\d+)?\s*시간$/u.test(trimmed)
+}
+
 /** lectureSessionDisplay가 일정명이면 파싱하지 않고 sessionOrdinal → N차시 */
 export function resolveCanonicalLectureSessionDisplay(
   lectureSessionDisplay?: string | null,
@@ -784,6 +799,29 @@ export function resolveCanonicalLectureSessionDisplay(
   }
   if (sessionOrdinal != null && Number.isFinite(sessionOrdinal) && sessionOrdinal > 0) {
     return `${Math.trunc(sessionOrdinal)}차시`
+  }
+  return '-'
+}
+
+/**
+ * calculationDetail(basisJson) 필드만으로 모달 강의 시간을 만든다.
+ * 우선순위: canonical 차시·회차 → sessionOrdinal → hours(N시간).
+ */
+export function resolveLectureTimeDisplayFromCalculationFields(input: {
+  lectureTimeDisplay?: string | null
+  sessionOrdinal?: number | null
+  hours?: number | null
+}): string {
+  const fromSession = resolveCanonicalLectureSessionDisplay(
+    input.lectureTimeDisplay,
+    input.sessionOrdinal
+  )
+  if (fromSession !== '-') return fromSession
+  const rawDisplay = input.lectureTimeDisplay?.trim()
+  if (rawDisplay && isUsableLectureTimeDisplay(rawDisplay)) return rawDisplay
+  if (input.hours != null && Number.isFinite(input.hours) && input.hours > 0) {
+    const hours = input.hours
+    return Number.isInteger(hours) ? `${Math.trunc(hours)}시간` : `${hours}시간`
   }
   return '-'
 }
@@ -804,7 +842,7 @@ export type PaymentOrderCalculationBasisDetailResolveContext = {
 }
 
 /**
- * 모달 강의 시간 SSOT = calculationDetail → basisDetail.lectureTimeDisplay(canonical)만.
+ * 모달 강의 시간 SSOT = calculationDetail → basisDetail.lectureTimeDisplay(usable)만.
  * row.lectureSessionDisplay · context.sessionOrdinal fallback 금지.
  */
 function resolveLectureTimeDisplayForRow(row: {
@@ -812,7 +850,7 @@ function resolveLectureTimeDisplayForRow(row: {
 }): string {
   if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
     const fromDetail = row.basisDetail.lectureTimeDisplay.trim()
-    if (fromDetail && fromDetail !== '-' && isCanonicalLectureSessionDisplay(fromDetail)) {
+    if (fromDetail && fromDetail !== '-' && isUsableLectureTimeDisplay(fromDetail)) {
       return fromDetail
     }
   }
@@ -847,7 +885,7 @@ function enrichLectureFeeBasisDetailFromContext(
   } else if (
     next.lectureTimeDisplay.trim() &&
     next.lectureTimeDisplay.trim() !== '-' &&
-    !isCanonicalLectureSessionDisplay(next.lectureTimeDisplay)
+    !isUsableLectureTimeDisplay(next.lectureTimeDisplay)
   ) {
     next = { ...next, lectureTimeDisplay: '-' }
   }
@@ -902,13 +940,27 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return row.basisDetail
   }
 
-  // calculationDetail → basisDetail이 있으면 모달 강의 시간·구분은 그걸 SSOT로 쓴다.
-  if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
+  // 강의비 행만 lectureFee* basisDetail을 모달에 연결한다.
+  // BE가 withholding 등에 lectureFeeTier calculationDetail을 붙여도 강사비 모달로 열지 않는다.
+  if (
+    isLectureFeeCalculationRow(row) &&
+    row.basisDetail &&
+    isLectureFeeBasisDetail(row.basisDetail)
+  ) {
     return enrichLectureFeeBasisDetailFromContext(row.basisDetail, row, context)
   }
 
-  if (context?.remoteData && row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
-    return row.basisDetail
+  const matchedBasisDetail =
+    row.basisDetail && isLectureFeeBasisDetail(row.basisDetail) && !isLectureFeeCalculationRow(row)
+      ? undefined
+      : row.basisDetail
+
+  if (
+    context?.remoteData &&
+    matchedBasisDetail &&
+    isSupportedBasisDetailLayout(matchedBasisDetail)
+  ) {
+    return matchedBasisDetail
   }
 
   // 원격 응답에 교통비 스냅샷·basisJson이 없으면 산출 금액만 표시하고 미연결 안내를 띄운다.
@@ -935,8 +987,8 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     if (context?.remoteData) return undefined
   }
 
-  if (row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
-    return row.basisDetail
+  if (matchedBasisDetail && isSupportedBasisDetailLayout(matchedBasisDetail)) {
+    return matchedBasisDetail
   }
 
   if (context?.remoteData) {

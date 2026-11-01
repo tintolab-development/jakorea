@@ -521,7 +521,7 @@ export function InstructorInvoiceModal({
         open={basisDetailOpen}
         detail={selectedBasisDetail}
         onCancel={closeBasisDetailModal}
-        zIndex={1200}
+        zIndex={1400}
       />
     </>
   )
