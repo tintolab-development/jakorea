@@ -38,6 +38,11 @@ export function BulkTransferPreviewModal({
   rows,
   serverExport,
 }: BulkTransferPreviewModalProps) {
+  const usesServerFile = serverExport?.deliveryMethod === 'SERVER_FILE'
+  const serverFileReady =
+    usesServerFile &&
+    serverExport?.fileObjectId != null &&
+    Number.isFinite(serverExport.fileObjectId)
   const sheetData: Sheet[] = useMemo(() => {
     const sheet = buildBulkTransferFortuneSheet(rows)
     return [sheet]
@@ -46,6 +51,14 @@ export function BulkTransferPreviewModal({
   const handleDownload = useCallback(async () => {
     try {
       if (serverExport?.deliveryMethod === 'SERVER_FILE') {
+        if (serverExport.fileObjectId == null) {
+          cmsAlertModal.show({
+            title: '다운로드 불가',
+            content:
+              '대량이체 서버 파일이 아직 준비되지 않았습니다. 목록에서 「대량이체 양식 발급」을 다시 눌러 주세요.',
+          })
+          return
+        }
         await downloadIssuedSettlementExportFile({
           serverExport,
           filenamePrefix: '대량이체',
@@ -57,7 +70,7 @@ export function BulkTransferPreviewModal({
         cmsAlertModal.show({
           title: '다운로드 불가',
           content:
-            '승인된 서버 파일이 준비된 뒤에만 대량이체 양식을 받을 수 있습니다. 원본 파일을 브라우저에서 만들지 않습니다.',
+            '서버 발급 파일이 준비된 뒤에만 대량이체 양식을 받을 수 있습니다. 브라우저에서 엑셀을 만들지 않습니다.',
         })
         return
       }
@@ -93,6 +106,7 @@ export function BulkTransferPreviewModal({
             size="h40"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
+            disabled={usesServerFile && !serverFileReady}
             onClick={() => void handleDownload()} >
             엑셀 다운로드
           </CmsButton>

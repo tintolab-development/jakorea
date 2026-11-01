@@ -203,15 +203,33 @@ export async function requestTaxReportExportRemote(
   )
 }
 
-/** 비동기 Worker export가 준비될 때까지 이력의 동일 export만 재조회한다. */
+/** sensitive SERVER_FILE 다운로드는 downloadUrl 대신 fileObjectId로 받는다. */
+export function isSettlementExportFileReady(
+  exportHistory: SettlementExportHistoryResponse | null | undefined
+): boolean {
+  if (exportHistory == null) return false
+  if (exportHistory.pollingStatus === 'FAILED' || exportHistory.exportStatus === 'FAILED') {
+    return false
+  }
+  if (exportHistory.fileObjectId != null && Number.isFinite(exportHistory.fileObjectId)) {
+    return true
+  }
+  return Boolean(exportHistory.downloadUrl?.trim())
+}
+
+/**
+ * 비동기 Worker export가 준비될 때까지 이력의 동일 export만 재조회한다.
+ * SERVER_FILE 민감 다운로드는 fileObjectId 존재를 완료 조건으로 본다.
+ */
 export async function waitForSettlementExportDownload(
   requested: SettlementExportHistoryResponse,
   options: { attempts?: number; intervalMs?: number } = {}
 ): Promise<SettlementExportHistoryResponse> {
-  if (requested.downloadUrl || requested.deliveryMethod !== 'SERVER_FILE') return requested
+  if (requested.deliveryMethod !== 'SERVER_FILE') return requested
+  if (isSettlementExportFileReady(requested)) return requested
   if (requested.exportHistoryId == null) return requested
 
-  const attempts = options.attempts ?? 10
+  const attempts = options.attempts ?? 30
   const intervalMs = options.intervalMs ?? 500
   let latest = requested
   for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -224,11 +242,32 @@ export async function waitForSettlementExportDownload(
     const found = page.items?.find(item => item.exportHistoryId === requested.exportHistoryId)
     if (!found) continue
     latest = found
-    if (found.downloadUrl || found.pollingStatus === 'FAILED' || found.exportStatus === 'FAILED') {
+    if (
+      isSettlementExportFileReady(found) ||
+      found.pollingStatus === 'FAILED' ||
+      found.exportStatus === 'FAILED'
+    ) {
       return found
     }
   }
   return latest
+}
+
+/** remote 양식 발급 후 모달/다운로드 진입 전 SERVER_FILE + fileObjectId를 강제한다. */
+export function assertSettlementServerExportReady(
+  exportHistory: SettlementExportHistoryResponse | null | undefined,
+  fallbackMessage = '서버 파일이 준비되지 않았습니다. 클라이언트 파일로 대체하지 않습니다.'
+): SettlementExportHistoryResponse {
+  if (exportHistory == null) {
+    throw new Error(fallbackMessage)
+  }
+  if (exportHistory.pollingStatus === 'FAILED' || exportHistory.exportStatus === 'FAILED') {
+    throw new Error(exportHistory.failureReason || '정산 파일 생성에 실패했습니다.')
+  }
+  if (exportHistory.deliveryMethod !== 'SERVER_FILE' || !isSettlementExportFileReady(exportHistory)) {
+    throw new Error(fallbackMessage)
+  }
+  return exportHistory
 }
 
 export async function fetchSettlementExportHistoriesRemote(
