@@ -10,6 +10,7 @@ export function ConsentWriteRadioGroup({
   onChange,
   readOnly = false,
   documentTone = false,
+  size = 'default',
 }: {
   name: string
   value: ConsentChoice
@@ -17,10 +18,16 @@ export function ConsentWriteRadioGroup({
   readOnly?: boolean
   /** A4 문서 — 선택값은 유지하고 청록 강조만 제거 */
   documentTone?: boolean
+  /** `large` — 지급조서 작성 화면 표 하단 동의 (Figma Radio 24px · Body/Large/semibold) */
+  size?: 'default' | 'large'
 }) {
   return (
     <div
-      className={[styles.radioGroup, documentTone ? styles.radioGroupDocument : undefined]
+      className={[
+        styles.radioGroup,
+        documentTone ? styles.radioGroupDocument : undefined,
+        size === 'large' ? styles.radioGroupLarge : undefined,
+      ]
         .filter(Boolean)
         .join(' ')}
       role="radiogroup"
@@ -41,7 +48,7 @@ export function ConsentWriteRadioGroup({
           />
           <PFText
             as="span"
-            typo="bd-md-rg"
+            typo={size === 'large' ? 'bd-lg-sb' : 'bd-md-rg'}
             color={documentTone ? 'black' : value === option.value ? 'primary-500' : 'black'}
           >
             {option.label}

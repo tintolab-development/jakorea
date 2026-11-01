@@ -686,6 +686,18 @@ export function MypageEducationDetailPage() {
       application.applicationType ?? routeApplicationType ?? resolvedApplicationType,
     hasTeacherAssignment: Boolean(application.teacherAssignment),
   })
+  const showDetailCertificateCta =
+    !isProgramApplicationStatus &&
+    !isWithdrawnDuring &&
+    isActivityStatus &&
+    shouldShowDetailCertificateCta({
+      isTeacher,
+      applicationType: routeApplicationType ?? application.applicationType,
+      programType: application.programType ?? application.programConfig?.programType ?? program.programType,
+      programGroup: application.programGroup,
+      detailCase: application.detailCase,
+      canIssueCertificate: application.certificateAvailable,
+    })
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection =
     isActivitySection(section) &&
@@ -902,8 +914,22 @@ export function MypageEducationDetailPage() {
                 application.displayStatus === 'in_progress' ? sexOffenseInquiryCase : undefined
               }
             />
+          ) : showDetailCertificateCta ? (
+            <CertificateIssueCta
+              isTeacher={isTeacher}
+              applicationType={routeApplicationType ?? application.applicationType}
+              applicationId={application.id}
+              programId={application.programId ?? program.id}
+              programTitle={program.title}
+              programType={application.programType ?? application.programConfig?.programType ?? program.programType}
+              programGroup={application.programGroup}
+              detailCase={application.detailCase}
+              canIssueCertificate={application.certificateAvailable}
+              certificateStatus={application.certificateStatus}
+            />
           ) : undefined
         }
+        asideAlign={!showTeacherAssignment && showDetailCertificateCta ? 'end' : 'start'}
       />
 
       {ujatScheduleBanner && appliedSection === 'application' ? (

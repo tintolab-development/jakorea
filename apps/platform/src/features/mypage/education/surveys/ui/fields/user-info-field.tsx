@@ -1,3 +1,4 @@
+import styles from './user-info-field.module.css'
 import type { UserInfoFieldEntry } from '@jakorea/form-schema/writing-form'
 import { PFFormField, PFFormFieldRow, PFFormFieldTable } from '@/shared/ui'
 import { EMPTY_SETTINGS_VALUE } from '@/features/mypage/settings/lib/constants'
@@ -15,7 +16,7 @@ export function SurveyUserInfoField({ entries, values }: SurveyUserInfoFieldProp
     rows.push(entries.slice(index, index + 2))
   }
   return (
-    <div role="group" aria-label="설문자 정보">
+    <div className={styles.root} role="group" aria-label="설문자 정보">
       <PFFormFieldTable>
         {rows.map(row => (
           <PFFormFieldRow key={row[0].key} type={row.length === 2 ? 'double' : 'single'}>

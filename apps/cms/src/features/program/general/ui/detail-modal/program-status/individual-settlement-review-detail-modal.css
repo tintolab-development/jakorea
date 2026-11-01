@@ -45,6 +45,21 @@
   gap: 10px;
 }
 
+.individual-settlement-review-detail-modal__receipt-list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.individual-settlement-review-detail-modal__receipt-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .individual-settlement-review-reject-modal__form .detail-info-form__field {
   --detail-info-label-w: 120px !important;
 }

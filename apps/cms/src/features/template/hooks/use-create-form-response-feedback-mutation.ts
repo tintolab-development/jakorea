@@ -11,7 +11,7 @@ type CreateFormResponseFeedbackVariables = {
 
 /**
  * POST /api/admin/form-responses/{responseId}/feedback
- * — 성공 시 해당 response feedback detail만 seed. 광범위 invalidate 없음.
+ * — 성공 시 해당 response feedback detail만 refetch. 광범위 invalidate 없음.
  * — 409(STATUS_INVALID): 상태가 바뀐 것이므로 제출 목록 refetch → CTA 재계산.
  */
 export function useCreateFormResponseFeedbackMutation() {

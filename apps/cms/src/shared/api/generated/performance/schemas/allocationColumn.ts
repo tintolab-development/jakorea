@@ -12,7 +12,8 @@ export interface AllocationColumn {
   educationStartAt?: string;
   organizationApplicationId?: number;
   organizationName?: string;
-  organizationRegion?: string;
+  /** 기관 시군구 또는 시/도. 없으면 null(빈 문자열 금지) */
+  organizationRegion?: string | null;
   educationRegionCode?: string;
   classCount?: number;
 }

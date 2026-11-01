@@ -10,6 +10,7 @@
   box-sizing: border-box;
   height: min(var(--max-height-modal-scroll, 880px), calc(100vh - 48px));
   height: min(var(--max-height-modal-scroll, 880px), calc(100dvh - 48px));
+  /* Figma Popup / Multiple / w1200 — pt24 · px30 · pb34 */
   padding: 24px 30px 34px;
 }
 

@@ -21,6 +21,7 @@
 
 .sectionTitle {
   margin: 0;
+
   padding-bottom: var(--spacing-16);
   border-bottom: 2px solid var(--color-primary-500);
 }

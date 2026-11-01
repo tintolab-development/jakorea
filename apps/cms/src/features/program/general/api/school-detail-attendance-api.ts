@@ -104,14 +104,13 @@ function resolveSessionGroupDisplayId(
 function mapRosterStudentToAttendanceRow(
   student: SchoolDetailStudentRow,
   index: number,
-  total: number,
   attendance: AttendanceItemResponse | undefined
 ): SchoolDetailAttendanceStudentRow {
   const recordedApiStatus = attendance?.status?.trim() ? attendance.status.trim() : null
   const status = mapApiStatusToSchoolSessionAttendance(attendance?.status)
   return {
     id: student.id,
-    no: total - index,
+    no: index + 1,
     name: student.name,
     gender: student.gender,
     genderMask: student.genderMask,
@@ -197,7 +196,6 @@ export function buildSchoolDetailAttendanceSessionGroups(input: {
         return mapRosterStudentToAttendanceRow(
           student,
           index,
-          visibleStudents.length,
           participantId != null ? byParticipant.get(participantId) : undefined
         )
       }),

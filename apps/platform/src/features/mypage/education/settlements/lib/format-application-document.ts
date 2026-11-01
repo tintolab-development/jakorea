@@ -75,7 +75,44 @@ export function formatSettlementDocumentLectureDate(
   if (date === SETTLEMENT_DOCUMENT_EMPTY) {
     return session ? session : SETTLEMENT_DOCUMENT_EMPTY
   }
-  return session ? `${date} ${session}` : date
+  return session ? `${date} | ${session}` : date
+}
+
+export function formatSettlementDocumentSignedAmount(
+  amount: number | null | undefined,
+): string {
+  if (amount == null || !Number.isFinite(amount)) return SETTLEMENT_DOCUMENT_EMPTY
+  if (amount < 0) return formatSettlementDocumentAmount(amount)
+  return `+${amount.toLocaleString('ko-KR')}원`
+}
+
+export function isReceiptSettlementDocument(
+  documentType: SettlementApplicationDocumentResponse['documentType'],
+): boolean {
+  return documentType === 'RECEIPT_SETTLEMENT'
+}
+
+export function settlementDocumentLinesSectionTitle(
+  documentType: SettlementApplicationDocumentResponse['documentType'],
+): string {
+  return isReceiptSettlementDocument(documentType) ? '영수증 산출 내역' : '강의비 산출 내역'
+}
+
+export function settlementDocumentFirstColumnHeader(
+  documentType: SettlementApplicationDocumentResponse['documentType'],
+): string {
+  return isReceiptSettlementDocument(documentType) ? '프로그램명' : '참여 기관명'
+}
+
+export function settlementDocumentFirstColumnValue(
+  documentType: SettlementApplicationDocumentResponse['documentType'],
+  line: SettlementApplicationDocumentLine,
+  programTitle?: string | null,
+): string {
+  if (isReceiptSettlementDocument(documentType)) {
+    return displaySettlementDocumentText(programTitle)
+  }
+  return displaySettlementDocumentText(line.institutionName)
 }
 
 export function buildSettlementDocumentBasicRows(

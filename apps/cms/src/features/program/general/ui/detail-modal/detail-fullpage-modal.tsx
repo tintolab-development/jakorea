@@ -2565,6 +2565,7 @@ export function GeneralProgramDetailFullPageModal({
                     onClearParticipantId={() => setParticipantId(null)}
                     onParticipantDetailOpen={name => setParticipantDetailTitle(name)}
                     onParticipantDetailClose={() => setParticipantDetailTitle(null)}
+                    onNavigateToSurveyCategory={handleProgressAssignmentSurveyNavigate}
                   />
                 ) : (
                   <ParticipatingInstitutionsSection

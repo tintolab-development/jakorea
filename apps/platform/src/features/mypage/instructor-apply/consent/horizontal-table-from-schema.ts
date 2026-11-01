@@ -47,3 +47,17 @@ function isHorizontalTableEmphasizedBodyCell(paragraphId: string, colIndex: numb
   }
   return false
 }
+
+/**
+ * 지급조서 사전 동의서 작성 화면 — Figma(11240:61561) 굵게 강조 열.
+ * A4 미리보기·CMS는 `isHorizontalTableEmphasizedBodyCell` 유지.
+ */
+export function resolvePaymentStatementWriteEmphasizedColumns(
+  paragraphId: string
+): readonly number[] | undefined {
+  if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection) return [1, 2]
+  if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection) return [0, 2]
+  if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty) return [0, 2, 3]
+  if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty) return [0, 1, 2, 3]
+  return undefined
+}

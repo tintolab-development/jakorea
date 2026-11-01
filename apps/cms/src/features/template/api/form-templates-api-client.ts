@@ -1,7 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import type { FormResponseFeedbackListResponse } from '@/features/template/lib/form-response-feedback-list'
 import { getJAKoreaCMSBackendAPIFormsSurveysSubset } from '@/shared/api/generated/forms-surveys/forms-surveys-api'
-import customInstance from '@/shared/api/orval-mutator'
 import type {
   FormResponseFeedbackCreateRequest,
   FormResponseFeedbackResponse,
@@ -120,10 +119,5 @@ export async function createFormResponseFeedbackRemote(
 export async function getFormResponseFeedbackRemote(
   responseId: number
 ): Promise<FormResponseFeedbackListResponse> {
-  return unwrapApiBody(
-    await customInstance({
-      url: `/api/admin/form-responses/${encodeURIComponent(String(responseId))}/feedback`,
-      method: 'GET',
-    })
-  )
+  return unwrapApiBody(await formsSurveysApi.getFeedback(responseId))
 }

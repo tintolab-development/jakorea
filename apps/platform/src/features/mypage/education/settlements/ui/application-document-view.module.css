@@ -1,86 +1,138 @@
-.page {
+.body {
   display: flex;
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-24);
-}
-
-.docHeader {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  flex-direction: column;
-  gap: var(--spacing-8);
-}
-
-.docTitle {
-  margin: 0;
-  text-align: center;
+  gap: 40px;
 }
 
 .section {
   display: flex;
-  box-sizing: border-box;
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-16);
-  padding: var(--spacing-20);
-  border-radius: var(--radius-24);
-  background: var(--color-neutral-white);
-  box-shadow: var(--shadow-card-lg);
+  gap: 16px;
 }
 
 .sectionTitle {
   margin: 0;
-  padding-bottom: var(--spacing-16);
-  border-bottom: 2px solid var(--color-primary-500);
+  padding-bottom: 12px;
+  border-bottom: 3px solid #01a1af;
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 150%;
 }
 
-.tableWrap {
+.infoTableWrap,
+.linesWrap {
   width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.table {
-  width: 100%;
-  min-width: 640px;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.table th,
-.table td {
   box-sizing: border-box;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border-default);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.infoTable,
+.linesTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  background: #fff;
+}
+
+.infoTable th,
+.infoTable td,
+.linesTable th,
+.linesTable td {
+  box-sizing: border-box;
+  min-height: 64px;
+  padding: 12px 20px;
   vertical-align: middle;
+  border: none;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
+  line-height: 150%;
+}
+
+.infoTable th:last-child,
+.infoTable td:last-child,
+.linesTable th:last-child,
+.linesTable td:last-child {
+  border-right: none;
+}
+
+.infoTable tr:last-child th,
+.infoTable tr:last-child td,
+.linesTable tbody tr:last-child td,
+.linesTable tfoot tr:last-child th,
+.linesTable tfoot tr:last-child td {
+  border-bottom: none;
+}
+
+.infoTable th {
+  width: 18%;
+  background: #f5f6f7;
+  font-weight: 700;
+  text-align: center;
+}
+
+.infoTable td {
+  width: 32%;
+  background: #fff;
+  font-weight: 500;
+  text-align: left;
   word-break: break-word;
 }
 
-.table th {
-  background: var(--color-neutral-cool-50, #f5f7f7);
-  font-size: 13px;
-  font-weight: 600;
+.linesTable thead th {
+  background: #f5f6f7;
+  font-weight: 700;
   text-align: center;
-  color: var(--color-neutral-cool-700, #3d4650);
 }
 
-.table td {
-  font-size: 13px;
+.linesTable tbody td {
+  background: #fff;
+  font-weight: 500;
   text-align: center;
-  color: var(--color-neutral-cool-900, #1a1f26);
+  word-break: break-word;
+}
+
+.colProgram {
+  width: 18%;
+}
+
+.colDate {
+  width: 22%;
+}
+
+.colPay,
+.colCategory {
+  width: 12%;
+}
+
+.colItem {
+  width: 20%;
+}
+
+.colAmount {
+  width: 16%;
 }
 
 .emptyCell {
-  color: var(--color-neutral-cool-500);
+  color: #3d3d3d;
+  opacity: 0.5;
 }
 
 .deductionRow td {
-  color: var(--color-status-error-default);
+  color: var(--color-status-error-default, #d92d20);
 }
 
 .amountCell {
@@ -88,10 +140,26 @@
   white-space: nowrap;
 }
 
-.totalLabel {
-  font-weight: 600;
-  text-align: right;
-  background: var(--color-neutral-cool-50, #f5f7f7);
+.summaryRow th,
+.summaryRow td {
+  background: linear-gradient(0deg, rgba(1, 161, 175, 0.1) 0%, rgba(1, 161, 175, 0.1) 100%), #fff;
+  font-weight: 500;
+}
+
+.summaryRow th {
+  font-weight: 700;
+  text-align: center;
+}
+
+.summaryFormula {
+  text-align: center;
+}
+
+.summaryTotal {
+  color: #01a1af;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 
 .attachmentList {
@@ -100,59 +168,49 @@
   padding: 0;
   list-style: none;
   flex-direction: column;
-  gap: var(--spacing-16);
+  gap: 20px;
 }
 
 .attachmentItem {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: var(--spacing-8);
+  gap: 8px;
 }
 
 .attachmentName {
   margin: 0;
-}
-
-.attachmentLink {
-  display: block;
-  width: 100%;
-  min-width: 0;
-}
-
-.attachmentImage {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-12);
-  border: 1px solid var(--color-border-default);
-  object-fit: contain;
-  background: var(--color-neutral-cool-50, #f5f7f7);
-}
-
-.attachmentFrame {
-  display: block;
-  width: 100%;
-  min-height: 360px;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-12);
-  background: var(--color-neutral-cool-50, #f5f7f7);
+  color: #3d3d3d;
+  font-family: Pretendard, sans-serif;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .attachmentOpen {
-  color: var(--color-primary-600);
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #01a1af;
+  font-family: Pretendard, sans-serif;
+  font-size: 20px;
   text-decoration: underline;
 }
 
-.actions {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  gap: var(--spacing-12);
+.attachmentOpen:disabled {
+  cursor: default;
+  opacity: 0.6;
 }
 
-@media (--bp-pc-up) {
-  .table {
-    min-width: 0;
-  }
+.attachmentMeta {
+  color: #6b7280;
+  font-size: 18px;
+}
+
+.attachmentError {
+  margin: 0;
+  color: var(--color-status-error-default, #d92d20);
+  font-size: 20px;
 }

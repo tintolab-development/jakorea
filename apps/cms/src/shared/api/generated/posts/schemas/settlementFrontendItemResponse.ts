@@ -13,8 +13,8 @@ export interface SettlementFrontendItemResponse {
   description?: string;
   amount?: number;
   calculationDetail?: SettlementFrontendCalculationDetailResponse;
-  /** 소득 구분 코드. BUSINESS_INCOME / OTHER_INCOME / DAILY_EMPLOYMENT_INCOME. 항목에 없으면 null */
+  /** 소득 구분 코드. 원천징수(withholding) 행에만 설정. BUSINESS_INCOME / OTHER_INCOME / DAILY_EMPLOYMENT_INCOME(레거시 스냅샷). 비과세·강사비·경비 행은 항상 null. */
   taxIncomeType?: string | null;
-  /** 소득 구분 화면 라벨. 사업소득 | 기타소득 | 일용근로소득. taxIncomeType과 1:1. 없으면 null(FE는 -) */
+  /** 소득 구분 화면 라벨. taxIncomeType과 1:1. 원천징수 행 외에는 null(FE는 -). */
   taxIncomeTypeDisplay?: string | null;
 }
