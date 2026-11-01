@@ -364,7 +364,6 @@ export function ParticipatingParticipantFullpageView({
     isEditing: isApplicationInfoEditing,
     draft,
     validationErrors,
-    textbookOptions,
     enterEdit: enterApplicationInfoEdit,
     cancelEdit: cancelApplicationInfoEdit,
     saveEdit: saveApplicationInfoEdit,
@@ -804,7 +803,6 @@ export function ParticipatingParticipantFullpageView({
                 draft={isApplicationInfoEditing ? (draft ?? undefined) : undefined}
                 onDraftChange={isApplicationInfoEditing ? updateDraft : undefined}
                 validationErrors={validationErrors}
-                textbookOptions={textbookOptions}
                 onTeamRoleChange={
                   shouldUseGeneralApplicationsRemoteApi() && hasIndividualApplicationId
                     ? saveTeamRole
