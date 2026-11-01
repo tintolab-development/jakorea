@@ -25,11 +25,26 @@ export const PARTICIPANT_NOT_COMPLETED_MESSAGE =
 export const PORTAL_CERTIFICATE_ISSUANCE_NOT_READY_MESSAGE =
   '수료증을 아직 발급할 수 없습니다.'
 
+export const CERTIFICATE_RENDER_HISTORICAL_DATA_INCOMPLETE =
+  'CERTIFICATE_RENDER_HISTORICAL_DATA_INCOMPLETE' as const
+
+export const CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE =
+  'CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE' as const
+
+export const CERTIFICATE_RENDER_HISTORICAL_DATA_INCOMPLETE_MESSAGE =
+  '이름 또는 프로그램명이 없어 수료증을 만들 수 없습니다.'
+
+export const CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE_MESSAGE =
+  '수료증 양식 또는 서버 설정에 문제가 있습니다. 관리자에게 문의해 주세요.'
+
 const CERTIFICATE_REASON_FALLBACK_BY_CODE: Record<string, string> = {
   [CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE]: CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE,
   [ISSUANCE_PERIOD_EXPIRED]: ISSUANCE_PERIOD_EXPIRED_MESSAGE,
   [PARTICIPANT_NOT_COMPLETED]: PARTICIPANT_NOT_COMPLETED_MESSAGE,
   [PORTAL_CERTIFICATE_ISSUANCE_NOT_READY]: PORTAL_CERTIFICATE_ISSUANCE_NOT_READY_MESSAGE,
+  [CERTIFICATE_RENDER_HISTORICAL_DATA_INCOMPLETE]:
+    CERTIFICATE_RENDER_HISTORICAL_DATA_INCOMPLETE_MESSAGE,
+  [CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE]: CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE_MESSAGE,
 }
 
 export function messageForPortalCertificateReasonCode(
@@ -38,4 +53,11 @@ export function messageForPortalCertificateReasonCode(
   if (!reasonCode?.trim()) return null
   const normalized = reasonCode.trim().toUpperCase()
   return CERTIFICATE_REASON_FALLBACK_BY_CODE[normalized] ?? null
+}
+
+/** CERTIFICATE_RENDER 실패·발급 API error.code */
+export function messageForPortalCertificateRenderErrorCode(
+  errorCode: string | null | undefined,
+): string | null {
+  return messageForPortalCertificateReasonCode(errorCode)
 }

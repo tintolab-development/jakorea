@@ -11,7 +11,11 @@ import type {
 } from '@/shared/api/generated/performance/schemas'
 import customInstance from '@/shared/api/orval-mutator'
 import { axiosClient } from '@/shared/instance/axios-instance'
-import { downloadBlob, generateFilename } from '@/shared/utils/file-download'
+import {
+  downloadBlob,
+  fileNameFromContentDisposition,
+  generateFilename,
+} from '@/shared/utils/file-download'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { resolveAdminRoleCodeFromUser, showAdminAccessDeniedAlert } from '@/shared/lib/admin-role-policy'
 import type { AxiosRequestConfig } from 'axios'
@@ -114,19 +118,6 @@ function readHeader(headers: unknown, name: string): string | undefined {
   return typeof direct === 'string' ? direct : undefined
 }
 
-function filenameFromContentDisposition(value: string | undefined, fallback: string): string {
-  if (!value) return fallback
-  const utf8 = value.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
-  if (utf8) {
-    try {
-      return decodeURIComponent(utf8.replace(/^"|"$/g, ''))
-    } catch {
-      return utf8.replace(/^"|"$/g, '')
-    }
-  }
-  return value.match(/filename="?([^";]+)"?/i)?.[1]?.trim() || fallback
-}
-
 async function readExportDispatchBody(value: unknown): Promise<unknown> {
   if (typeof Blob !== 'undefined' && value instanceof Blob) {
     const text = await value.text()
@@ -226,7 +217,7 @@ export async function exportPerformanceRecordsRemote(
     skipGlobalErrorAlert: true,
   } as AxiosRequestConfig & { skipGlobalErrorAlert: boolean })
 
-  const filename = filenameFromContentDisposition(
+  const filename = fileNameFromContentDisposition(
     readHeader(response.headers, 'content-disposition'),
     fallbackFilename
   )

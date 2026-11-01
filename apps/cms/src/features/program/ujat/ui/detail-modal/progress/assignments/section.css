@@ -1,7 +1,15 @@
 .ujat-education-progress-assignments {
   --ujat-assignment-status-completed-color: var(--Netural-black, #3d3d3d);
   --ujat-assignment-status-not-submitted-color: var(--Status-red-main, #c32f4a);
-  --ujat-assignment-status-deadline-missed-color: var(--Status-purple-main, #8457ce);
+  --ujat-assignment-status-deadline-missed-color: var(--Status-green-main, #1e8c29);
+}
+
+.ujat-education-progress-assignments__groups {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  min-width: 0;
 }
 
 .ujat-education-progress-assignments__session-group {
@@ -12,39 +20,18 @@
 }
 
 .ujat-education-progress-assignments__session-header {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  margin: 0;
-  gap: 0;
+  width: 100%;
   min-width: 0;
 }
 
-.ujat-education-progress-assignments__session-leading {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  min-width: 0;
-}
-
-.ujat-education-progress-assignments__session-date {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-.ujat-education-progress-assignments__session-meta {
+.ujat-education-progress-assignments__empty {
+  padding: 48px 16px;
   color: var(--default-BK, #3d3d3d);
   font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-}
-
-.ujat-education-progress-assignments__session-divider.app-divider-vertical {
-  margin: 0 10px;
-  flex-shrink: 0;
-  align-self: flex-end;
+  text-align: center;
+  opacity: 0.6;
 }
 
 .ujat-education-progress-assignments__table-wrap {
@@ -90,12 +77,9 @@
   white-space: pre-line;
   text-align: center;
   color: var(--main-BK, #3d3d3d);
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 500;
   line-height: 150%;
-}
-
-.ujat-education-progress-assignments__remarks-dash {
-  color: var(--main-BK, #3d3d3d);
 }
 
 .ujat-education-progress-assignments__table
@@ -115,4 +99,10 @@
   > td.ujat-volunteer-assignment-table__plan-log-cell {
   text-align: center !important;
   vertical-align: middle !important;
+}
+
+.ujat-education-progress-assignments__table
+  .ujat-volunteer-assignment-table__plan-log-cell-inner
+  .cms-button {
+  width: 100%;
 }

@@ -916,10 +916,16 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
   )
 }
 
-/** 숙박비(p-3·p-7): 조건(104px) + 산정(일·금액·증빙). p-7만 산정 금액 라벨「지급액」 */
-function SettlementItemSettingDetailLodgingBody({ itemId }: { itemId: string }) {
+/** 숙박비(LODGING_GENERAL·LODGING_1C1S): 조건(104px) + 산정(박·금액·증빙) */
+function SettlementItemSettingDetailLodgingBody({
+  itemId,
+  paymentItemType,
+}: {
+  itemId: string
+  paymentItemType?: string
+}) {
   const detail = useSettlementItemSettingDetailSource(itemId)
-  const isLodgingOneToOne = itemId === 'p-7'
+  const isLodgingOneToOne = paymentItemType?.trim().toUpperCase() === 'LODGING_1C1S'
 
   const [qualificationText, setQualificationText] = useState(() =>
     linesToEditableText(detail.qualificationLines)
@@ -939,7 +945,7 @@ function SettlementItemSettingDetailLodgingBody({ itemId }: { itemId: string }) 
       return {
         ...merged,
         layout: 'lodging' as const,
-        basisUnit: '일',
+        basisUnit: '박',
         basisHours: Number.parseInt(basisDaysStr, 10) || 0,
         compareKind: 'standard',
         maxLimitWon: parseWonStringToNumber(maxLimitStr),
@@ -1005,7 +1011,7 @@ function SettlementItemSettingDetailLodgingBody({ itemId }: { itemId: string }) 
                   onValueChange={setBasisDaysStr}
                 />
               </div>
-              <span className="modal-spec-table__suffix-text">일 기준</span>
+              <span className="modal-spec-table__suffix-text">박 기준</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow
@@ -1050,9 +1056,9 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
   const [maxLimitStr, setMaxLimitStr] = useState(() =>
     formatWonDisplay(detail.maxLimitWon ?? null)
   )
-  const [evidenceSubmission, setEvidenceSubmission] = useState<SettlementItemEvidenceSubmission>(
-    () => (detail.evidenceSubmission ?? 'required') as SettlementItemEvidenceSubmission
-  )
+  const [evidenceSubmission, setEvidenceSubmission] = useState<
+    SettlementItemEvidenceSubmission | undefined
+  >(() => detail.evidenceSubmission)
 
   useRegisterSettlementDetailSnapshot(
     () => {
@@ -1369,7 +1375,7 @@ function SettlementItemSettingDetailMeetingAttendanceBody({ itemId }: { itemId: 
   )
 }
 
-/** 일용근로자 원천징수세액(d-1): 조건·근로소득공제·소득세율 */
+/** 원천징수세액(d-1): 조건·근로소득공제·소득 유형별 원천징수율 */
 function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { itemId: string }) {
   const detail = useSettlementItemSettingDetailSource(itemId)
   const setDetailValid = useContext(SettlementDetailValidationContext)
@@ -1383,6 +1389,9 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
   const [earnedDeductionStr, setEarnedDeductionStr] = useState(() =>
     formatWonDisplay(detail.withholdingEarnedIncomeDeductionWon ?? null)
   )
+  const [rateDailyWorkerStr, setRateDailyWorkerStr] = useState(() =>
+    formatPercentField(detail.withholdingTaxRateDailyWorker ?? null)
+  )
   const [rateBusinessStr, setRateBusinessStr] = useState(() =>
     formatPercentField(detail.withholdingTaxRateBusiness ?? null)
   )
@@ -1395,14 +1404,19 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
   const [rateInterviewStr, setRateInterviewStr] = useState(() =>
     formatPercentField(detail.withholdingTaxRateInterview ?? null)
   )
+  const [taxCreditRateStr, setTaxCreditRateStr] = useState(() =>
+    formatPercentField(detail.withholdingEarnedIncomeTaxCreditRate ?? null)
+  )
   const [inputErrors, setInputErrors] = useState<WithholdingInputErrors>(() => ({
     ...EMPTY_WITHHOLDING_INPUT_ERRORS,
     exclusionMax: validateWithholdingAmount(exclusionMaxStr),
     earnedDeduction: validateWithholdingAmount(earnedDeductionStr),
+    rateDailyWorker: validateWithholdingRate(rateDailyWorkerStr),
     rateBusiness: validateWithholdingRate(rateBusinessStr),
     rateOther: validateWithholdingRate(rateOtherStr),
     ratePrize: validateWithholdingRate(ratePrizeStr),
     rateInterview: validateWithholdingRate(rateInterviewStr),
+    taxCreditRate: validateWithholdingRate(taxCreditRateStr),
   }))
 
   const updateInput = (
@@ -1441,10 +1455,12 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
         remarkLines: merged.remarkLines,
         withholdingExclusionMaxWon: parseWonStringToNumber(exclusionMaxStr),
         withholdingEarnedIncomeDeductionWon: parseWonStringToNumber(earnedDeductionStr),
+        withholdingTaxRateDailyWorker: parsePercentToNullableNumber(rateDailyWorkerStr),
         withholdingTaxRateBusiness: parsePercentToNullableNumber(rateBusinessStr),
         withholdingTaxRateOther: parsePercentToNullableNumber(rateOtherStr),
         withholdingTaxRatePrize: parsePercentToNullableNumber(ratePrizeStr),
         withholdingTaxRateInterview: parsePercentToNullableNumber(rateInterviewStr),
+        withholdingEarnedIncomeTaxCreditRate: parsePercentToNullableNumber(taxCreditRateStr),
       }
     },
     [
@@ -1452,10 +1468,12 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
       qualificationText,
       exclusionMaxStr,
       earnedDeductionStr,
+      rateDailyWorkerStr,
       rateBusinessStr,
       rateOtherStr,
       ratePrizeStr,
       rateInterviewStr,
+      taxCreditRateStr,
       inputErrors,
     ]
   )
@@ -1479,13 +1497,12 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               aria-label="공제 요건"
             />
           </ModalSpecTableRow>
-          <ModalSpecTableRow label="소액 부징수 범위" labelVariant="basis">
+          <ModalSpecTableRow label="소액부징수 기준" labelVariant="basis">
             <div className="modal-spec-table__field-row modal-spec-table__field-row--withholding-inline">
               <span className="modal-spec-table__suffix-text">원천징수세액이</span>
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
-                  allowNegative
                   inputSize="medium"
                   value={exclusionMaxStr}
                   error={Boolean(inputErrors.exclusionMax)}
@@ -1496,7 +1513,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="소액 부징수 원천징수세액 한도(원)"
                 />
               </div>
-              <span className="modal-spec-table__suffix-text">원 이하인 경우, 미징수</span>
+              <span className="modal-spec-table__suffix-text">원 미만인 경우, 미징수</span>
             </div>
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1510,12 +1527,11 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           근로소득공제
         </h3>
         <ModalSpecTable aria-label="근로소득공제">
-          <ModalSpecTableRow label="근로소득공제비용" labelVariant="basis">
+          <ModalSpecTableRow label="1일 근로소득공제액" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap modal-spec-table__input-wrap--w160">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
-                  allowNegative
                   inputSize="medium"
                   suffix="원"
                   value={earnedDeductionStr}
@@ -1524,7 +1540,47 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   onValueChange={value =>
                     updateInput('earnedDeduction', value, setEarnedDeductionStr, validateWithholdingAmount)
                   }
-                  aria-label="근로소득공제비용"
+                  aria-label="1일 근로소득공제액"
+                />
+              </div>
+            </div>
+          </ModalSpecTableRow>
+          <ModalSpecTableRow label="일용근로소득 세율" labelVariant="basis">
+            <div className="modal-spec-table__field-row">
+              <div className="modal-spec-table__input-wrap">
+                <SettlementItemBasisNumericInput
+                  mode="decimal"
+                  groupThousands={false}
+                  precision={2}
+                  inputSize="medium"
+                  suffix="%"
+                  value={rateDailyWorkerStr}
+                  error={Boolean(inputErrors.rateDailyWorker)}
+                  message={inputErrors.rateDailyWorker ?? undefined}
+                  onValueChange={value =>
+                    updateInput('rateDailyWorker', value, setRateDailyWorkerStr, validateWithholdingRate)
+                  }
+                  aria-label="일용근로소득 세율"
+                />
+              </div>
+            </div>
+          </ModalSpecTableRow>
+          <ModalSpecTableRow label="근로소득세액공제율" labelVariant="basis">
+            <div className="modal-spec-table__field-row">
+              <div className="modal-spec-table__input-wrap">
+                <SettlementItemBasisNumericInput
+                  mode="decimal"
+                  groupThousands={false}
+                  precision={2}
+                  inputSize="medium"
+                  suffix="%"
+                  value={taxCreditRateStr}
+                  error={Boolean(inputErrors.taxCreditRate)}
+                  message={inputErrors.taxCreditRate ?? undefined}
+                  onValueChange={value =>
+                    updateInput('taxCreditRate', value, setTaxCreditRateStr, validateWithholdingRate)
+                  }
+                  aria-label="근로소득세액공제율"
                 />
               </div>
             </div>
@@ -1537,15 +1593,14 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           id="settlement-withholding-rates-label"
           className="settlement-item-setting-detail-modal__section-label"
         >
-          소득세율
+          소득 유형별 원천징수율
         </h3>
-        <ModalSpecTable aria-label="소득세율">
+        <ModalSpecTable aria-label="소득 유형별 원천징수율">
           <ModalSpecTableRow label="사업소득" labelVariant="basis">
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
-                  allowNegative
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
@@ -1566,7 +1621,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
-                  allowNegative
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
@@ -1587,7 +1641,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
-                  allowNegative
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
@@ -1617,7 +1670,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
                   mode="decimal"
-                  allowNegative
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
@@ -1866,7 +1918,13 @@ function SettlementItemSettingDetailSimpleLayoutBody({ itemId }: { itemId: strin
 }
 
 /** item.id 가 바뀔 때마다 key 로 리마운트되어 목업 기준으로 초기화됨 */
-function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
+function SettlementItemSettingDetailModalBody({
+  itemId,
+  paymentItemType,
+}: {
+  itemId: string
+  paymentItemType?: string
+}) {
   const detail = useSettlementItemSettingDetailSource(itemId)
   const isTier1 = detail.layout === 'tier1'
 
@@ -1899,7 +1957,12 @@ function SettlementItemSettingDetailModalBody({ itemId }: { itemId: string }) {
   }
 
   if (detail.layout === 'lodging') {
-    return <SettlementItemSettingDetailLodgingBody itemId={itemId} />
+    return (
+      <SettlementItemSettingDetailLodgingBody
+        itemId={itemId}
+        paymentItemType={paymentItemType}
+      />
+    )
   }
 
   if (detail.layout === 'meal') {
@@ -1985,9 +2048,6 @@ export function SettlementItemSettingDetailModal({
       setSaveError({ message: '금액·시간·비율은 0으로 저장할 수 없습니다.' })
       return
     }
-    if (snap) {
-      persistDetail(item.id, snap)
-    }
     const titleToSave = headerTitle.trim() !== '' ? headerTitle.trim() : item.title
     const meta = {
       title: titleToSave,
@@ -2004,7 +2064,11 @@ export function SettlementItemSettingDetailModal({
         })
         return
       }
+      persistDetail(item.id, snap)
     } else {
+      if (snap) {
+        persistDetail(item.id, snap)
+      }
       onSaveItemMeta?.(item.id, meta)
     }
     onSave?.(item.id)
@@ -2127,7 +2191,13 @@ export function SettlementItemSettingDetailModal({
               {saveError.message || '저장할 수 없습니다.'}
             </div>
           ) : null}
-          {item ? <SettlementItemSettingDetailModalBody key={item.id} itemId={item.id} /> : null}
+          {item ? (
+            <SettlementItemSettingDetailModalBody
+              key={item.id}
+              itemId={item.id}
+              paymentItemType={item.paymentItemType}
+            />
+          ) : null}
         </SettlementDetailSnapshotRefContext.Provider>
       </SettlementDetailValidationContext.Provider>
     </ContentModal>

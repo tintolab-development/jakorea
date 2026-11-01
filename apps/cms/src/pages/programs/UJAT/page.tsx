@@ -33,6 +33,7 @@ import {
   REGISTRATION_DRAFT_MODE_QUERY_KEY,
 } from '@/features/program/shared/lib/registration-draft-notice'
 import { assertRegistrationWizardRemoteReady } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
+import { buildProgramListSearchParamsAfterRegistrationComplete } from '@/features/program/shared/lib/post-registration-search-params'
 import {
   RegistrationDraftNoticeModal,
   type RegistrationDraftNoticeChoice,
@@ -261,10 +262,17 @@ function UjatProgramListPageContent() {
     setSearchParams(next, { replace: true })
   }, [closeWritingUserPreview, pNorm, searchParams, setSearchParams])
 
-  const handleUjatProgramRegistrationSaved = useCallback((_program: Program) => {
-    void programsQuery.refetch()
-    handleCloseUjatProgramRegistrationFullpage()
-  }, [handleCloseUjatProgramRegistrationFullpage, programsQuery])
+  const handleUjatProgramRegistrationSaved = useCallback(
+    (program: Program) => {
+      void programsQuery.refetch()
+      closeWritingUserPreview()
+      setSearchParams(
+        prev => buildProgramListSearchParamsAfterRegistrationComplete(prev, program.id),
+        { replace: true }
+      )
+    },
+    [closeWritingUserPreview, programsQuery, setSearchParams]
+  )
 
   const userPreviewSyncParams = useMemo(
     () => ({ userPreview: searchParams.get('userPreview') ?? undefined }),

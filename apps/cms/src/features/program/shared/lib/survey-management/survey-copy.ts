@@ -90,7 +90,7 @@ export const GENERAL_SURVEY_POLL_DOWNLOAD_MODAL_COPY = {
   pdfLabel: 'PDF',
   cancelButton: '취소',
   downloadButton: '다운로드',
-} as const
+} as const satisfies SurveyResultsDownloadModalCopy
 
 export const GENERAL_SATISFACTION_EMPTY_COPY = {
   title: '아직 등록된 만족도조사가 없습니다.',
@@ -132,6 +132,15 @@ export const GENERAL_SATISFACTION_ACTION_LABELS = {
   preview: '설문 양식 보기',
 } as const satisfies SurveyActionLabels
 
+export const GENERAL_SATISFACTION_DOWNLOAD_MODAL_COPY = {
+  title: '만족도조사 결과 다운로드',
+  description: '다운로드할 파일 형식을 선택해 주세요.',
+  excelLabel: '엑셀',
+  pdfLabel: 'PDF',
+  cancelButton: '취소',
+  downloadButton: '다운로드',
+} as const satisfies SurveyResultsDownloadModalCopy
+
 export const GENERAL_STUDENT_SATISFACTION_ACTION_LABELS = {
   share: '학생 만족도조사 공유',
   download: '학생 만족도조사 결과 다운로드',
@@ -158,8 +167,7 @@ export const GENERAL_LECTURE_EVAL_PRE_START_COPY = {
 
 export const GENERAL_LECTURE_EVAL_SUBMITTED_COPY = {
   title: '강의평가 답변이 완료 되었습니다.',
-  description:
-    '결과는 결과 탭에서 확인해주세요. 답변은 설문 기한 종료 전까지 수정 가능합니다.',
+  description: '결과는 결과 탭에서 확인해주세요. 답변은 설문 기한 종료 전까지 수정 가능합니다.',
   editButton: '답변 수정하기',
 } as const satisfies LectureEvalSubmittedCopy
 
@@ -170,8 +178,7 @@ export const GENERAL_LECTURE_EVAL_ACTION_LABELS = {
 
 export const GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY = {
   title: '강의평가 미완료 안내',
-  description:
-    '아직 강의 평가가 종료되지 않았습니다.\n설문이 종료된 이후 다시 확인해 주세요.',
+  description: '아직 강의 평가가 종료되지 않았습니다.\n설문이 종료된 이후 다시 확인해 주세요.',
   confirmButton: '확인',
 } as const
 

@@ -20,6 +20,7 @@ import {
 import { stripBannerQueryKeys } from '@/features/strip-banner/api/query-keys'
 import { listStripBannersService } from '@/features/strip-banner/api/service'
 import { stripBannerMutationFailureAlert } from '@/features/strip-banner/lib/mutation-failure-alert'
+import { buildPublishPeriodExpiredAlert, isPublishPeriodExpired } from '@/shared/lib/publish-period'
 import { STRIP_BANNERS_CHANGED_EVENT } from '@/features/strip-banner/api/store'
 import { formatDateDot } from '@/shared/lib/format-display'
 import {
@@ -260,6 +261,11 @@ export function StripBannersPage() {
 
   const handleToggleActive = useCallback(
     (id: string, isActive: boolean) => {
+      const target = rows.find(row => row.id === id)
+      if (isActive && isPublishPeriodExpired(target?.periodEnd)) {
+        showAlert(buildPublishPeriodExpiredAlert('띠배너는'))
+        return
+      }
       void setActiveMutation.mutateAsync({ id, isActive }).catch(error => {
         showAlert(
           stripBannerMutationFailureAlert(
@@ -271,7 +277,7 @@ export function StripBannersPage() {
         void listQuery.refetch()
       })
     },
-    [listQuery, setActiveMutation, showAlert]
+    [listQuery, rows, setActiveMutation, showAlert]
   )
 
   const openCreate = useCallback(() => {

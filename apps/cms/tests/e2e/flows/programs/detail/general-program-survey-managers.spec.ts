@@ -204,7 +204,7 @@ test.describe('일반 프로그램 설문 Phase4', () => {
     expect(hasTeacher || hasStudent, 'CASE-24 만족도에 교사/학생 탭이 있어야 함').toBe(true)
   })
 
-  test('4.4) CASE-20 — 만족도 봉사자', async ({ page }) => {
+  test('4.4) CASE-20 — 일반 프로그램 만족도에 UJAT 상·하반기 봉사자 탭이 없다', async ({ page }) => {
     test.setTimeout(180_000)
     await page.goto('/programs/general')
     await expectAuthenticatedShell(page)
@@ -221,11 +221,13 @@ test.describe('일반 프로그램 설문 Phase4', () => {
       await detail.expectContentSettled()
     }
 
-    const hasVolunteer = await page
-      .getByText(/봉사자/)
-      .first()
-      .isVisible()
-      .catch(() => false)
-    expect(hasVolunteer, 'CASE-20 만족도에 봉사자 audience가 있어야 함').toBe(true)
+    await expect(
+      page.getByText('상반기 봉사자', { exact: true }),
+      'CASE-20 일반 만족도에 UJAT 상반기 봉사자 탭이 없어야 함'
+    ).toHaveCount(0)
+    await expect(
+      page.getByText('하반기 봉사자', { exact: true }),
+      'CASE-20 일반 만족도에 UJAT 하반기 봉사자 탭이 없어야 함'
+    ).toHaveCount(0)
   })
 })

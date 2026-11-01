@@ -10,10 +10,12 @@ import {
   isAssignmentPlanViewEnabled,
   resolveAssignmentSubmissionStatus,
 } from './assignment-display'
-import type { UjatAssignmentVolunteerRow } from './types'
+import type { UjatAssignmentReportState, UjatAssignmentVolunteerRow } from './types'
 import { UjatAssignmentDocumentViewerModal } from './document-viewer/ujat-assignment-document-viewer-modal'
-import type { UjatDocumentViewerTarget } from './document-viewer/ujat-document-viewer-types'
-import { parseSubmittedDate } from './document-viewer/ujat-document-viewer-types'
+import type {
+  UjatDocumentViewerDocType,
+  UjatDocumentViewerTarget,
+} from './document-viewer/ujat-document-viewer-types'
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import '../volunteers/detail/assignment.css'
 import './section.css'
@@ -30,7 +32,7 @@ function renderPlanLogViewButton(
       <CmsButton
         type="button"
         variant="default"
-        size="medium"
+        size="small"
         disabled={!enabled}
         onClick={enabled ? onView : undefined} >
         {label}
@@ -51,16 +53,15 @@ function renderSubmissionStatus(row: UjatAssignmentVolunteerRow) {
 }
 
 function renderRemarks(row: UjatAssignmentVolunteerRow) {
-  const text = formatAssignmentRemarks(row)
-  if (text === '-') {
-    return <span className="ujat-education-progress-assignments__remarks-dash">-</span>
-  }
   return (
-    <span className="ujat-education-progress-assignments__remarks">{text}</span>
+    <span className="ujat-education-progress-assignments__remarks">
+      {formatAssignmentRemarks(row)}
+    </span>
   )
 }
 
-export const UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X = 1180
+/** 고정 열 합(1140) + 비고 최소 폭 */
+export const UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X = 1366
 
 export function UjatEducationProgressAssignmentTable({
   rows,
@@ -71,31 +72,20 @@ export function UjatEducationProgressAssignmentTable({
 }) {
   const [viewerTarget, setViewerTarget] = useState<UjatDocumentViewerTarget | null>(null)
 
-  const openPlanViewer = useCallback(
-    (record: UjatAssignmentVolunteerRow) => {
+  const openViewer = useCallback(
+    (
+      record: UjatAssignmentVolunteerRow,
+      docType: UjatDocumentViewerDocType,
+      report: UjatAssignmentReportState
+    ) => {
       setViewerTarget({
-        docType: 'plan',
+        docType,
         volunteerName: record.name,
         regionLabel,
         institutionName: record.institutionName,
         assignedClass: formatUjatGradeClassDisplayLabel(record.assignedClass),
-        submittedDateLabel: parseSubmittedDate(record.plan.submittedDateLabel),
-        formResponseId: record.plan.formResponseId,
-      })
-    },
-    [regionLabel]
-  )
-
-  const openLogViewer = useCallback(
-    (record: UjatAssignmentVolunteerRow) => {
-      setViewerTarget({
-        docType: 'log',
-        volunteerName: record.name,
-        regionLabel,
-        institutionName: record.institutionName,
-        assignedClass: formatUjatGradeClassDisplayLabel(record.assignedClass),
-        submittedDateLabel: parseSubmittedDate(record.log.submittedDateLabel),
-        formResponseId: record.log.formResponseId,
+        submittedDateLabel: report.submittedDateLabel ?? '',
+        formResponseId: report.formResponseId,
       })
     },
     [regionLabel]
@@ -122,14 +112,15 @@ export function UjatEducationProgressAssignmentTable({
         title: '봉사자명',
         dataIndex: 'name',
         key: 'name',
-        width: 120,
+        width: 140,
         align: 'center',
+        ellipsis: true,
       },
       {
         title: '배정 기관',
         dataIndex: 'institutionName',
         key: 'institutionName',
-        width: 140,
+        width: 180,
         align: 'center',
         ellipsis: true,
       },
@@ -137,14 +128,14 @@ export function UjatEducationProgressAssignmentTable({
         title: '배정 학급',
         dataIndex: 'assignedClass',
         key: 'assignedClass',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (assignedClass: string) => formatUjatGradeClassDisplayLabel(assignedClass),
       },
       {
         title: '제출 현황',
         key: 'submissionStatus',
-        width: 168,
+        width: 240,
         align: 'center',
         render: (_: unknown, record: UjatAssignmentVolunteerRow) =>
           renderSubmissionStatus(record),
@@ -152,7 +143,7 @@ export function UjatEducationProgressAssignmentTable({
       {
         title: '교육 계획서',
         key: 'educationPlan',
-        width: 168,
+        width: 180,
         align: 'center',
         onHeaderCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
         onCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
@@ -160,13 +151,13 @@ export function UjatEducationProgressAssignmentTable({
           renderPlanLogViewButton(
             '교육 계획서 보기',
             isAssignmentPlanViewEnabled(record.plan),
-            () => openPlanViewer(record)
+            () => openViewer(record, 'plan', record.plan)
           ),
       },
       {
         title: '교육 일지',
         key: 'educationLog',
-        width: 168,
+        width: 180,
         align: 'center',
         onHeaderCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
         onCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
@@ -174,18 +165,17 @@ export function UjatEducationProgressAssignmentTable({
           renderPlanLogViewButton(
             '교육일지 보기',
             isAssignmentLogViewEnabled(record.log),
-            () => openLogViewer(record)
+            () => openViewer(record, 'log', record.log)
           ),
       },
       {
         title: '비고',
         key: 'remarks',
-        width: 220,
         align: 'center',
         render: (_: unknown, record: UjatAssignmentVolunteerRow) => renderRemarks(record),
       },
     ],
-    [openPlanViewer, openLogViewer]
+    [openViewer]
   )
 
   return (

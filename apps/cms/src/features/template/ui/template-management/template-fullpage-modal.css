@@ -566,7 +566,8 @@
   background-color: var(--main-WT, #fff) !important;
 }
 
-/* 하단 CTA — 양식 최하단 단락 아래 32px, 본문 스크롤 흐름(고정 float 없음) */
+/* 하단 CTA — 양식 최하단 단락 아래 32px, 본문 스크롤 흐름(고정 float 없음).
+   우측 커스텀 필드가 있으면 그 열 우측 끝(contents max-width)에 맞춘다. */
 .full-page-modal--registration-user-mode .full-page-modal__footer-cta {
   flex-shrink: 0;
   align-self: center;
@@ -580,6 +581,11 @@
   margin-inline: auto;
   margin-top: 32px;
   box-sizing: border-box;
+}
+
+/* 커스텀 필드 없음: 단락 열 우측 끝과 동일. registration-user-mode 폭이 더 넓어 버튼이 단락 밖으로 나가던 것 방지 */
+.full-page-modal--registration-user-mode.full-page-modal--no-right-nav .full-page-modal__footer-cta {
+  max-width: var(--full-page-modal-left-column-width);
 }
 
 .full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn.cms-button.ant-btn {

@@ -1,45 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Spin } from 'antd'
-import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
 import type { EducationProgressHalfKey } from '../tabs'
 import {
-  assignmentSubmissionStatusLabel,
-  formatAssignmentRemarks,
-  resolveAssignmentSubmissionStatus,
-} from './assignment-display'
-import { filterAssignmentVolunteersForDisplay } from './use-list'
-import {
+  UjatAssignmentSessionExcelButton,
   UjatAssignmentSessionGroupHeader,
   UjatAssignmentSessionGroupPanel,
 } from './session-group-panel'
 import { useUjatEducationProgressAssignments } from './use-list'
-import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import './section.css'
-
-type UjatAssignmentExcelRow = {
-  sessionLabel: string
-  no: number
-  name: string
-  institutionName: string
-  assignedClass: string
-  submissionStatusLabel: string
-  remarks: string
-}
-
-const UJAT_ASSIGNMENT_EXCEL_COLUMNS: ColumnsType<UjatAssignmentExcelRow> = [
-  { title: '교육 일정', dataIndex: 'sessionLabel', key: 'sessionLabel' },
-  { title: 'No.', dataIndex: 'no', key: 'no' },
-  { title: '봉사자명', dataIndex: 'name', key: 'name' },
-  { title: '배정 기관', dataIndex: 'institutionName', key: 'institutionName' },
-  { title: '배정 학급', dataIndex: 'assignedClass', key: 'assignedClass' },
-  { title: '제출 현황', dataIndex: 'submissionStatusLabel', key: 'submissionStatusLabel' },
-  { title: '비고', dataIndex: 'remarks', key: 'remarks' },
-]
 
 export function UjatEducationProgressAssignmentsSection({
   programId,
@@ -49,63 +22,30 @@ export function UjatEducationProgressAssignmentsSection({
   half: EducationProgressHalfKey
 }) {
   const canWrite = useUjatCanWrite()
+  const { regions } = useUjatEducationRegions()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
   )
 
   const {
     pendingFilters,
-    appliedFilters,
     handleFilterChange,
     handleSearch,
     filterFields,
     sessionGroups,
+    hasActiveFilters,
     resetRegionState,
-    loading,
+    isLoading,
+    isError,
+    isRemote,
   } = useUjatEducationProgressAssignments(programId, half, activeRegion)
 
-  const assignmentExcelRows = useMemo(() => {
-    const rows: UjatAssignmentExcelRow[] = []
+  const regionLabel = useMemo(
+    () => regions.find(region => region.key === activeRegion)?.label ?? activeRegion,
+    [activeRegion, regions]
+  )
 
-    for (const session of sessionGroups) {
-      const volunteers = filterAssignmentVolunteersForDisplay(
-        session.volunteers,
-        appliedFilters
-      )
-      const total = volunteers.length
-      volunteers.forEach((volunteer, index) => {
-        rows.push({
-          sessionLabel: session.dateLabel,
-          no: total - index,
-          name: volunteer.name,
-          institutionName: volunteer.institutionName,
-          assignedClass: formatUjatGradeClassDisplayLabel(volunteer.assignedClass),
-          submissionStatusLabel: assignmentSubmissionStatusLabel(
-            resolveAssignmentSubmissionStatus(volunteer)
-          ),
-          remarks: formatAssignmentRemarks(volunteer),
-        })
-      })
-    }
-
-    return rows
-  }, [appliedFilters, sessionGroups])
-
-  const firstSessionTitle = useMemo(() => {
-    const [firstSession] = sessionGroups
-    if (!firstSession) return null
-    const firstSessionRows = filterAssignmentVolunteersForDisplay(
-      firstSession.volunteers,
-      appliedFilters
-    )
-
-    return (
-      <UjatAssignmentSessionGroupHeader
-        session={firstSession}
-        totalCount={firstSessionRows.length}
-      />
-    )
-  }, [appliedFilters, sessionGroups])
+  const firstSession = sessionGroups[0]
 
   useEffect(() => {
     resetRegionState()
@@ -118,11 +58,6 @@ export function UjatEducationProgressAssignmentsSection({
         onChange={setActiveRegion}
       />
 
-      {loading ? (
-        <div className="flex min-h-[200px] items-center justify-center">
-          <Spin size="large" />
-        </div>
-      ) : (
       <FilterTableLayout
         className="ujat-education-progress-assignments__filter-layout"
         bordered={false}
@@ -131,34 +66,40 @@ export function UjatEducationProgressAssignmentsSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         showFilter
-        title={firstSessionTitle}
-        excelExport={
-          canWrite
-            ? {
-                columns: UJAT_ASSIGNMENT_EXCEL_COLUMNS,
-                data: assignmentExcelRows,
-              }
-            : undefined
+        title={firstSession ? <UjatAssignmentSessionGroupHeader session={firstSession} /> : null}
+        hideExcelDownload
+        actions={
+          firstSession && canWrite ? (
+            <UjatAssignmentSessionExcelButton session={firstSession} regionLabel={regionLabel} />
+          ) : null
         }
+        contentLoading={isLoading}
       >
-        {sessionGroups.length === 0 ? (
+        {isError ? (
+          <div className="ujat-education-progress-assignments__empty" role="alert">
+            과제 제출 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+          </div>
+        ) : !isRemote ? (
           <div className="ujat-education-progress-assignments__empty">
-            {loading ? '불러오는 중입니다.' : '조회 결과가 없습니다.'}
+            원격 API를 사용할 수 없어 과제 제출 목록을 표시하지 않습니다.
+          </div>
+        ) : sessionGroups.length === 0 ? (
+          <div className="ujat-education-progress-assignments__empty">
+            {hasActiveFilters ? '검색 결과가 없습니다.' : '등록된 교육 일정이 없습니다.'}
           </div>
         ) : (
           <div className="ujat-education-progress-assignments__groups">
-            {sessionGroups.map(session => (
+            {sessionGroups.map((session, index) => (
               <UjatAssignmentSessionGroupPanel
                 key={session.id}
                 session={session}
-                appliedFilters={appliedFilters}
-                showHeader={session.id !== sessionGroups[0]?.id}
+                regionLabel={regionLabel}
+                showHeader={index > 0}
               />
             ))}
           </div>
         )}
       </FilterTableLayout>
-      )}
     </div>
   )
 }

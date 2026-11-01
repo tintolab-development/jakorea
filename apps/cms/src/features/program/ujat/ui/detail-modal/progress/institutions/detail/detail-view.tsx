@@ -21,6 +21,10 @@ import {
 } from '@/features/program/ujat/api/education-classes-api'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
+import {
+  isUjatClassRemapInlineFormErrorCode,
+  UJAT_CLASS_REMAP_ERROR_TITLES,
+} from '@/features/program/ujat/lib/ujat-class-remap-api-error'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
@@ -75,24 +79,6 @@ const CLASS_ADD_ERROR_TITLES: Record<string, string> = {
   ORGANIZATION_APPLICATION_NOT_FOUND: '기관 신청을 찾을 수 없습니다',
 }
 
-const CLASS_REMAP_ERROR_TITLES: Record<string, string> = {
-  UJAT_CLASS_REMAP_APPLY_FROM_IN_PAST: '적용일을 확인할 수 없습니다',
-  UJAT_CLASS_REMAP_INVALID_MAPPING: '학급 변경 정보가 올바르지 않습니다',
-  UJAT_CLASS_REMAP_DUPLICATE_FROM: '동일한 기존 학급이 중복되었습니다',
-  UJAT_CLASS_REMAP_SAME_CLASS: '기존 학급과 변경 학급이 동일합니다',
-  UJAT_CLASS_REMAP_FROM_NOT_FOUND: '기존 학급을 찾을 수 없습니다',
-  UJAT_CLASS_REMAP_APPLY_DATE_MISMATCH: '적용 일정과 날짜가 일치하지 않습니다',
-  ORGANIZATION_APPLICATION_NOT_FOUND: '기관 신청을 찾을 수 없습니다',
-  SCHEDULE_NOT_FOUND: '교육 일정을 찾을 수 없습니다',
-  UJAT_CLASS_REMAP_REVISION_CONFLICT: '학급 정보가 변경되었습니다',
-  UJAT_CLASS_REMAP_HAS_VOLUNTEER_ASSIGNMENTS: '봉사자 배정이 있어 변경할 수 없습니다',
-  UJAT_CLASS_REMAP_TARGET_SLOT_CONFLICT: '변경 대상 학급이 충돌합니다',
-  INVALID_MAPPING: '학급 변경 정보가 올바르지 않습니다',
-  DUPLICATE_FROM: '동일한 기존 학급이 중복되었습니다',
-  SAME_CLASS: '기존 학급과 변경 학급이 동일합니다',
-  FROM_NOT_FOUND: '기존 학급을 찾을 수 없습니다',
-  APPLY_DATE_MISMATCH: '적용 일정과 날짜가 일치하지 않습니다',
-}
 
 export function UjatEducationProgressInstitutionDetailView({
   detail,
@@ -403,13 +389,15 @@ export function UjatEducationProgressInstitutionDetailView({
           if (code === 'UJAT_CLASS_REMAP_REVISION_CONFLICT') {
             await invalidateAfterClassRemap(programId, detail.institutionId)
             showAlert({
-              title: CLASS_REMAP_ERROR_TITLES.UJAT_CLASS_REMAP_REVISION_CONFLICT,
+              title: UJAT_CLASS_REMAP_ERROR_TITLES.UJAT_CLASS_REMAP_REVISION_CONFLICT,
               content:
                 '다른 작업으로 학급 정보가 변경되었습니다. 교육 학급 목록을 다시 불러왔습니다. 기존 학급을 다시 선택한 뒤 저장해 주세요.',
             })
+          } else if (isUjatClassRemapInlineFormErrorCode(code)) {
+            throw error
           } else {
             showAlert({
-              title: (code && CLASS_REMAP_ERROR_TITLES[code]) || '학급 변경 실패',
+              title: (code && UJAT_CLASS_REMAP_ERROR_TITLES[code]) || '학급 변경 실패',
               content: readApiErrorAlertMessage(
                 error,
                 '교육 학년 및 학급 변경을 저장하지 못했습니다.'
@@ -600,7 +588,7 @@ export function UjatEducationProgressInstitutionDetailView({
             <CmsButton
               type="button"
               variant="primary"
-              size="medium" className="ujat-education-progress-institution-detail__posts-register-btn"
+              size="large"
               onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>

@@ -112,6 +112,7 @@ export {
   EducationDetailHeaderLayout,
   EducationStudentsPanel,
   EducationJournalPanel,
+  EducationPersonalCertificatePanel,
   TeacherEducationAssignmentAside,
   hasTeacherAssignmentAsideContent,
   shouldMountTeacherEducationAssignmentAside,

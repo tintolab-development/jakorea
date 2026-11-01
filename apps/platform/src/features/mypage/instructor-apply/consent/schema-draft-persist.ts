@@ -19,8 +19,6 @@ export type SchemaConsentWriteState = {
     templateVersionId?: number | null
     templateCode?: string | null
   }
-  /** agreement-crime — CMS와 동일: 업로드 완료 여부 */
-  crimeDocumentUploaded?: boolean
 }
 
 function canUseSessionStorage(): boolean {
@@ -35,8 +33,11 @@ export function loadSchemaConsentWriteState(
   try {
     const raw = window.sessionStorage.getItem(`${DRAFT_STORAGE_PREFIX}${key}`)
     if (!raw) return fallback
-    const parsed = JSON.parse(raw) as SchemaConsentWriteState
-    if (parsed?.draft == null || typeof parsed.draft !== 'object') return fallback
+    const stored = JSON.parse(raw) as SchemaConsentWriteState & Record<string, unknown>
+    if (stored?.draft == null || typeof stored.draft !== 'object') return fallback
+    // 성범죄 원본 업로드 상태는 화면 세션에만 둔다. 예전 session 값은 복원하지 않는다.
+    const { crimeDocumentUploaded: _legacyCrimeUploaded, ...parsed } = stored
+    void _legacyCrimeUploaded
     return {
       ...fallback,
       ...parsed,

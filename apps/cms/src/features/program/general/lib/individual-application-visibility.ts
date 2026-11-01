@@ -35,6 +35,27 @@ function isParticipantInterviewProgram(program: Program | null | undefined): boo
   return getGeneralParticipantInterviewEnabled(program)
 }
 
+/**
+ * 개인 신청 상세 대기 헤더 CTA.
+ * 면접 없음(또는 참여자 신청 목록 main): 참여 승인/반려.
+ * 면접 있음 1차 서류(doc1): 서류 승인/반려.
+ */
+export function individualApplicationDecisionButtonLabels(
+  interviewDocumentStage: boolean
+): { reject: string; approve: string } {
+  if (!interviewDocumentStage) {
+    return { reject: '참여 반려', approve: '참여 승인' }
+  }
+  return { reject: '서류 반려', approve: '서류 승인' }
+}
+
+export function isIndividualInterviewDocumentDecisionStage(
+  program: Program | null | undefined,
+  screeningStage: IndividualApplicantScreeningStage = 'main'
+): boolean {
+  return isParticipantInterviewProgram(program) && screeningStage === 'doc1'
+}
+
 /** 1차 서류 심사 대상자 상세 — 담당자 서류 평가 */
 export function shouldShowIndividualManagerEvaluationSection(
   program: Program | null | undefined,

@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { act, cleanup, render } from '@testing-library/react'
+import { act, cleanup, render, waitFor } from '@testing-library/react'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -75,6 +75,31 @@ describe('ParagraphDatePicker surface sync', () => {
       document.querySelector('button')?.click()
     })
     expect(onChange).toHaveBeenCalledTimes(1)
+  })
+
+  it('appliedSurfaceWithTime이 false여도 구간에 시각이 있으면 트리거에 시간을 보여 준다', async () => {
+    const range: [dayjs.Dayjs, dayjs.Dayjs] = [
+      dayjs('2026-04-20T09:00:00'),
+      dayjs('2026-04-20T12:00:00'),
+    ]
+    render(
+      <ParagraphDatePicker
+        mode="single"
+        presetMode="period"
+        customizable={false}
+        suppressAutoTodayWhenEmpty
+        value={range[0]}
+        appliedSurfaceRange={range}
+        appliedSurfaceWithTime={false}
+        onChange={() => undefined}
+        onRangeChange={() => undefined}
+      />
+    )
+    await waitFor(() => {
+      expect(document.querySelector('.paragraph-date-picker__trigger-text')?.textContent).toContain(
+        '09:00 ~ 12:00'
+      )
+    })
   })
 
   it('range 피커는 showTimeToggle=false를 받아도 렌더된다', () => {

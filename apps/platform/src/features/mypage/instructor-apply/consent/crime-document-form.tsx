@@ -1,4 +1,6 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
   PFAlertModal,
   PFButton,
@@ -7,63 +9,82 @@ import {
   PFItemDeleteButton,
   PFText,
 } from '@/shared/ui'
-import {
-  formatSingleFileUploadHint,
-  validateUploadFileSize,
-} from '@/shared/lib/file-upload-policy'
+import { formatSingleFileUploadHint } from '@/shared/lib/file-upload-policy'
 import { submitPortalCrimeConsentComplete } from '../../settings/lib/submit-portal-consent-document'
 import type { InstructorApplyConsentKey } from './catalog'
-import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
 import { downloadCrimeConsentFormDocument } from './crime-consent-form-document'
+import {
+  canRecheckCrimeConsentOriginalFile,
+  classifyCrimeConsentOriginalFile,
+  CRIME_CONSENT_MESSAGES,
+  CRIME_CONSENT_ORIGINAL_ACCEPT,
+  CRIME_CONSENT_ORIGINAL_FILE_PURPOSE,
+  CRIME_CONSENT_ORIGINAL_UPLOAD_POLICY,
+  CrimeConsentOriginalNotReadyError,
+  validateCrimeConsentOriginalFile,
+} from './crime-consent-original'
+import { createCrimeConsentSubmitSession } from './crime-consent-submit'
+import {
+  isAbortError,
+  resolveCrimeConsentSubmitErrorMessage,
+  resolveCrimeConsentUploadErrorMessage,
+} from './crime-consent-error'
 import { markInstructorApplyConsentAgreed } from './form-persist'
 import type { ConsentWriteSubmitContext } from './write-form'
-import { uploadMemberPortalFile } from '../api/member-file-upload'
+import {
+  MemberFileScanTimeoutError,
+  uploadMemberPortalFile,
+  waitForMemberPortalFileAvailable,
+  type MemberFileUploadStatus,
+} from '../api/member-file-upload'
 import styles from './consent-form.module.css'
 
-const CRIME_CONSENT_UPLOAD_ACCEPT =
-  'application/pdf,image/jpeg,image/png,.pdf,.jpg,.jpeg,.png'
-const CRIME_CONSENT_FILE_TYPE_ALERT_MESSAGE = 'PDF, JPG, PNG 파일만 업로드할 수 있습니다.'
-const PDF_FILE_NAME_PATTERN = /\.pdf$/i
-const IMAGE_FILE_NAME_PATTERN = /\.(jpe?g|png)$/i
-
 const CRIME_CONSENT_UPLOAD_HINTS = [
-  formatSingleFileUploadHint('PDF, JPG, PNG'),
+  formatSingleFileUploadHint('PDF'),
   '첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
-function isCrimeConsentUploadFile(file: File): boolean {
-  const mime = file.type.trim().toLowerCase()
-  if (mime === 'application/pdf' || mime === 'image/jpeg' || mime === 'image/png') {
-    return true
-  }
-  return PDF_FILE_NAME_PATTERN.test(file.name) || IMAGE_FILE_NAME_PATTERN.test(file.name)
-}
+const UPLOADING_MESSAGE = '동의서를 업로드하는 중입니다. 잠시만 기다려 주세요.'
 
-/** CMS `MemberConsentCrimeModal`과 동일 — A4 문서 업로드 후 제출 */
-const PORTAL_SUBMIT_FAILED_MESSAGE =
-  '동의서를 제출하지 못했어요. 잠시 후 다시 시도해 주세요.'
+/** 원본 PDF 업로드 상태. `fileObjectId`는 CLEAN+AVAILABLE을 확인한 `ready`에서만 제출에 쓴다. */
+type CrimeOriginalUpload =
+  | { status: 'idle' }
+  | { status: 'uploading'; fileName: string; phase: MemberFileUploadStatus }
+  | { status: 'scanPending'; fileName: string; fileObjectId: number }
+  | { status: 'ready'; fileName: string; fileObjectId: number }
 
 export function CrimeConsentDocumentForm({
   consentKey,
-  uploaded,
-  onUploadedChange,
   onComplete,
-  incomplete,
   submitContext = 'instructorApply',
   portalSubmitEnabled = false,
 }: {
   consentKey: InstructorApplyConsentKey
-  uploaded: boolean
-  onUploadedChange: (uploaded: boolean) => void
   onComplete: () => void
-  incomplete: boolean
   submitContext?: ConsentWriteSubmitContext
   portalSubmitEnabled?: boolean
 }) {
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
+  const [upload, setUpload] = useState<CrimeOriginalUpload>({ status: 'idle' })
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const queryClient = useQueryClient()
+  const uploadSeqRef = useRef(0)
+  const uploadAbortRef = useRef<AbortController | null>(null)
+  const submittingRef = useRef(false)
+  /** 응답을 못 받은 complete를 같은 문서·같은 파일로 다시 보내기 위한 이력 (메모리 전용) */
+  const submitSessionRef = useRef(createCrimeConsentSubmitSession())
+
+  /** 진행 중 업로드·검사를 끊고 이후 늦게 도착한 응답을 무시한다. */
+  const invalidateUpload = useCallback(() => {
+    uploadSeqRef.current += 1
+    uploadAbortRef.current?.abort()
+    uploadAbortRef.current = null
+    return uploadSeqRef.current
+  }, [])
+
+  useEffect(() => () => {
+    invalidateUpload()
+  }, [invalidateUpload])
 
   const handleDownloadForm = useCallback(() => {
     void downloadCrimeConsentFormDocument().catch(error => {
@@ -71,62 +92,151 @@ export function CrimeConsentDocumentForm({
     })
   }, [])
 
-  const handleFileSelect = (file: File) => {
-    if (!isCrimeConsentUploadFile(file)) {
-      setAlertMessage(CRIME_CONSENT_FILE_TYPE_ALERT_MESSAGE)
-      return
-    }
-    const sizeError = validateUploadFileSize(file)
-    if (sizeError) {
-      setAlertMessage(sizeError)
-      return
-    }
-    setUploading(true)
-    void uploadMemberPortalFile({ file, filePurpose: 'CRIMINAL_HISTORY_EVIDENCE' })
-      .then(() => {
-        setUploadedFileName(file.name)
-        onUploadedChange(true)
+  const runWithUploadSession = (
+    fileName: string,
+    initialPhase: MemberFileUploadStatus,
+    task: (session: {
+      signal: AbortSignal
+      onStatusChange: (phase: MemberFileUploadStatus) => void
+    }) => Promise<number>,
+  ) => {
+    const seq = invalidateUpload()
+    const controller = new AbortController()
+    uploadAbortRef.current = controller
+    const isCurrent = () => uploadSeqRef.current === seq
+    setUpload({ status: 'uploading', fileName, phase: initialPhase })
+
+    void task({
+      signal: controller.signal,
+      onStatusChange: phase => {
+        if (isCurrent()) setUpload({ status: 'uploading', fileName, phase })
+      },
+    })
+      .then(fileObjectId => {
+        if (!isCurrent()) return
+        setUpload({ status: 'ready', fileName, fileObjectId })
       })
-      .catch(() => {
-        onUploadedChange(false)
-        setUploadedFileName(null)
-        setAlertMessage('증빙 서류 업로드에 실패했습니다. 잠시 후 다시 시도해 주세요.')
+      .catch(error => {
+        if (!isCurrent() || isAbortError(error)) return
+        if (
+          error instanceof MemberFileScanTimeoutError &&
+          error.fileObjectId != null &&
+          (error.lastFile == null || canRecheckCrimeConsentOriginalFile(error.lastFile))
+        ) {
+          setUpload({ status: 'scanPending', fileName, fileObjectId: error.fileObjectId })
+          setAlertMessage(resolveCrimeConsentUploadErrorMessage(error))
+          return
+        }
+        setUpload({ status: 'idle' })
+        setAlertMessage(
+          error instanceof MemberFileScanTimeoutError
+            ? CRIME_CONSENT_MESSAGES.fileNotReady
+            : resolveCrimeConsentUploadErrorMessage(error),
+        )
       })
       .finally(() => {
-        setUploading(false)
+        if (isCurrent()) uploadAbortRef.current = null
       })
+  }
+
+  const handleFileSelect = (file: File) => {
+    if (submittingRef.current) return
+    const validationError = validateCrimeConsentOriginalFile(file)
+    if (validationError) {
+      setAlertMessage(validationError)
+      return
+    }
+    runWithUploadSession(file.name, 'PREPARING', ({ signal, onStatusChange }) =>
+      uploadMemberPortalFile({
+        file,
+        filePurpose: CRIME_CONSENT_ORIGINAL_FILE_PURPOSE,
+        policy: CRIME_CONSENT_ORIGINAL_UPLOAD_POLICY,
+        signal,
+        onStatusChange,
+        classify: classifyCrimeConsentOriginalFile,
+      }),
+    )
+  }
+
+  const handleRecheckScan = () => {
+    if (submittingRef.current || upload.status !== 'scanPending') return
+    const { fileName, fileObjectId } = upload
+    runWithUploadSession(fileName, 'SCANNING', ({ signal, onStatusChange }) =>
+      waitForMemberPortalFileAvailable(fileObjectId, {
+        signal,
+        onStatusChange,
+        classify: classifyCrimeConsentOriginalFile,
+      }),
+    )
   }
 
   const handleRemoveFile = () => {
-    if (uploading || isSubmitting) return
-    setUploadedFileName(null)
-    onUploadedChange(false)
+    if (submittingRef.current) return
+    invalidateUpload()
+    setUpload({ status: 'idle' })
   }
 
   const handleSubmit = () => {
-    if (isSubmitting) return
-    if (incomplete) {
-      setAlertMessage(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
+    if (submittingRef.current) return
+    if (upload.status === 'uploading') {
+      setAlertMessage(upload.phase === 'SCANNING' ? CRIME_CONSENT_MESSAGES.scanning : UPLOADING_MESSAGE)
       return
     }
-    if (portalSubmitEnabled) {
-      setIsSubmitting(true)
-      void submitPortalCrimeConsentComplete(consentKey)
-        .then(() => {
-          if (submitContext === 'instructorApply') {
-            markInstructorApplyConsentAgreed(consentKey)
-          }
-          onComplete()
-        })
-        .catch(() => setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE))
-        .finally(() => setIsSubmitting(false))
+    if (upload.status === 'scanPending') {
+      setAlertMessage(CRIME_CONSENT_MESSAGES.scanTimeout)
       return
     }
-    markInstructorApplyConsentAgreed(consentKey)
-    onComplete()
+    if (upload.status !== 'ready') {
+      setAlertMessage(CRIME_CONSENT_MESSAGES.fileRequired)
+      return
+    }
+    if (!portalSubmitEnabled) {
+      markInstructorApplyConsentAgreed(consentKey)
+      onComplete()
+      return
+    }
+
+    const { fileName, fileObjectId } = upload
+    const seq = uploadSeqRef.current
+    submittingRef.current = true
+    setIsSubmitting(true)
+    void submitPortalCrimeConsentComplete(consentKey, {
+      evidenceFileObjectId: fileObjectId,
+      session: submitSessionRef.current,
+    })
+      .then(() => {
+        if (submitContext === 'instructorApply') {
+          markInstructorApplyConsentAgreed(consentKey)
+        }
+        void queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
+        onComplete()
+      })
+      .catch(error => {
+        if (uploadSeqRef.current === seq && error instanceof CrimeConsentOriginalNotReadyError) {
+          setUpload(
+            error.reason === 'pending'
+              ? { status: 'scanPending', fileName, fileObjectId }
+              : { status: 'idle' },
+          )
+        }
+        setAlertMessage(resolveCrimeConsentSubmitErrorMessage(error))
+      })
+      .finally(() => {
+        submittingRef.current = false
+        setIsSubmitting(false)
+      })
   }
 
-  const showUploadedFile = uploaded && uploadedFileName != null && uploadedFileName.trim() !== ''
+  const attachedFileName = upload.status === 'idle' ? null : upload.fileName
+  const uploading = upload.status === 'uploading'
+  const statusMessage =
+    upload.status === 'uploading'
+      ? upload.phase === 'SCANNING'
+        ? CRIME_CONSENT_MESSAGES.scanning
+        : UPLOADING_MESSAGE
+      : upload.status === 'scanPending'
+        ? CRIME_CONSENT_MESSAGES.scanTimeout
+        : null
 
   return (
     <>
@@ -156,7 +266,7 @@ export function CrimeConsentDocumentForm({
         <PFFormSection
           title="2. 작성한 동의서 업로드"
           required
-          description="작성 및 서명이 완료된 동의서를 업로드해 주세요."
+          description="작성 및 서명이 완료된 동의서를 PDF로 업로드해 주세요."
         >
           <section className={styles.crimeAttachSection} aria-label="동의서 파일 첨부">
             <PFText as="p" typo="label-md" color="neutral-warm-600" className={styles.crimeAttachLabel}>
@@ -164,7 +274,7 @@ export function CrimeConsentDocumentForm({
             </PFText>
             <PFFormFileAttach
               className={styles.crimeAttachButton}
-              accept={CRIME_CONSENT_UPLOAD_ACCEPT}
+              accept={CRIME_CONSENT_ORIGINAL_ACCEPT}
               buttonLabel="동의서 업로드"
               buttonVariant="tertiary"
               buttonSize="xlarge"
@@ -183,7 +293,7 @@ export function CrimeConsentDocumentForm({
                 </li>
               ))}
             </ul>
-            {showUploadedFile ? (
+            {attachedFileName ? (
               <ul className={styles.crimeAttachList} aria-label="첨부된 동의서">
                 <li className={styles.crimeAttachListRow}>
                   <PFText
@@ -191,17 +301,33 @@ export function CrimeConsentDocumentForm({
                     typo="bd-md-md"
                     color="black"
                     className={styles.crimeAttachFileName}
-                    title={uploadedFileName}
+                    title={attachedFileName}
                   >
-                    {uploadedFileName}
+                    {attachedFileName}
                   </PFText>
                   <PFItemDeleteButton
-                    aria-label={`${uploadedFileName} 삭제`}
-                    disabled={uploading || isSubmitting}
+                    aria-label={`${attachedFileName} 삭제`}
+                    disabled={isSubmitting}
                     onClick={handleRemoveFile}
                   />
                 </li>
               </ul>
+            ) : null}
+            {statusMessage ? (
+              <PFText as="p" typo="label-md" color="neutral-cool-500" role="status">
+                {statusMessage}
+              </PFText>
+            ) : null}
+            {upload.status === 'scanPending' ? (
+              <PFButton
+                size="large"
+                variant="secondary"
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleRecheckScan}
+              >
+                검사 상태 확인
+              </PFButton>
             ) : null}
           </section>
         </PFFormSection>
@@ -211,7 +337,7 @@ export function CrimeConsentDocumentForm({
             size="xlarge"
             width={240}
             type="button"
-            disabled={isSubmitting}
+            disabled={isSubmitting || uploading}
             onClick={handleSubmit}
           >
             {isSubmitting ? '제출 중…' : '작성완료'}

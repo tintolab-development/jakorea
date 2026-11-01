@@ -8,6 +8,7 @@ import { useRef, useState, type CSSProperties } from 'react'
 import { CalendarOutlined } from '@ant-design/icons'
 import { DatePicker } from 'antd'
 import type { Dayjs } from 'dayjs'
+import { cmsControlSizeClass } from '@jakorea/admin-ui'
 import { CMS_DATE_TIME_PICKER_DEFAULT_Z_INDEX } from '@/shared/constants/modal-z-index'
 import type { CmsControlSize } from './cms-control-size'
 import { formatAppDatepickerRangePlain } from './app-datepicker'
@@ -25,6 +26,7 @@ export type CmsPeriodDatePickerProps = {
   disabled?: boolean
   className?: string
   allowClear?: boolean
+  disabledDate?: (current: Dayjs) => boolean
 }
 
 /** 모달·테이블 행 위로 뜨도록 body 포탈 (CmsDatePicker와 동일) */
@@ -42,6 +44,7 @@ export function CmsPeriodDatePicker({
   disabled = false,
   className,
   allowClear = true,
+  disabledDate,
 }: CmsPeriodDatePickerProps) {
   const [open, setOpen] = useState(false)
   /** 패널이 열린 동안의 선택 초안 (controlled value와 충돌 방지) */
@@ -71,8 +74,13 @@ export function CmsPeriodDatePicker({
     'cms-datepicker',
     'cms-period-datepicker',
     `cms-datepicker--${inputSize}`,
+    cmsControlSizeClass(inputSize),
+    'cms-field__box',
     width != null && 'cms-datepicker--explicit-width',
     disabled && 'cms-datepicker--disabled',
+    disabled && 'cms-field__box--disabled',
+    hasValue && 'cms-field__box--filled',
+    open && 'cms-field__box--active',
     open && 'cms-period-datepicker--open',
     className,
   ]
@@ -122,7 +130,7 @@ export function CmsPeriodDatePicker({
         }
       }}
     >
-      <CalendarOutlined className="cms-datepicker__calendar-icon" aria-hidden />
+      <CalendarOutlined className="cms-field__icon cms-datepicker__calendar-icon" aria-hidden />
       <span
         className={[
           'cms-period-datepicker__text',
@@ -172,6 +180,7 @@ export function CmsPeriodDatePicker({
         }}
         allowClear={allowClear}
         disabled={disabled}
+        disabledDate={disabledDate}
         inputReadOnly
         getPopupContainer={periodDatePickerPopupContainer}
         styles={{

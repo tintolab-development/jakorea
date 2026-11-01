@@ -5,7 +5,13 @@
  */
 
 import { useMemo, useState, useRef, useEffect } from 'react'
-import { CmsButton, AttachmentClipIcon, DeleteGuideModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  AttachmentClipIcon,
+  CmsTableEmptyState,
+  DeleteGuideModal,
+  useCmsAlert,
+} from '@/shared/ui'
 import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
 import { Input, Dropdown, Popover, type MenuProps } from 'antd'
@@ -379,7 +385,7 @@ export function EnrollmentProgramDetailPostsTab({
         <div className="enrollment-program-detail-modal__posts-tab-toolbar">
           <CmsButton
             variant="primary"
-            size="medium" className="enrollment-program-detail-modal__posts-tab-btn"
+            size="large"
             onClick={() => setPostWriteModalOpen(true)} >
             게시글 등록
           </CmsButton>
@@ -388,15 +394,12 @@ export function EnrollmentProgramDetailPostsTab({
       <div className="enrollment-program-detail-modal__posts-tab-body">
       <div className="enrollment-program-detail-modal__posts-tab-column enrollment-program-detail-modal__posts-tab-column--left">
         {posts.length === 0 ? (
-          <div className="enrollment-program-detail-modal__posts-empty" role="status">
-            <div className="enrollment-program-detail-modal__posts-empty-text">
-              <p className="enrollment-program-detail-modal__posts-empty-title">
-                등록된 게시글이 없습니다
-              </p>
-              <p className="enrollment-program-detail-modal__posts-empty-desc">
-                새로운 게시글이 등록되면 확인 가능합니다.
-              </p>
-            </div>
+          <div className="enrollment-program-detail-modal__posts-empty">
+            <CmsTableEmptyState
+              variant="no-data"
+              title="등록된 게시글이 없습니다"
+              description="게시글이 등록되면 이곳에 목록이 표시됩니다."
+            />
           </div>
         ) : (
           <div className="enrollment-program-detail-modal__posts-list">
@@ -564,10 +567,10 @@ export function EnrollmentProgramDetailPostsTab({
           {allFiles.length === 0 ? (
             <div className="enrollment-program-detail-modal__files-empty" role="status">
               <p className="enrollment-program-detail-modal__files-empty-title">
-                첨부된 파일이 없어요
+                첨부된 파일이 없습니다.
               </p>
               <p className="enrollment-program-detail-modal__files-empty-desc">
-                첨부파일이 등록되면 확인 가능합니다.
+                첨부 파일이 등록되면 확인 가능합니다.
               </p>
             </div>
           ) : filteredFiles.length === 0 ? (

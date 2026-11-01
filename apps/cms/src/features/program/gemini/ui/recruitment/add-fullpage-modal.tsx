@@ -18,6 +18,11 @@ import { useGeminiRecruitmentAddTemplateFlow } from '../../hooks/use-recruitment
 import { formatGeminiRecruitmentDraftError, formatGeminiRecruitmentRegisterError } from '../../lib/recruitment/mutation-error'
 import { removeGeminiRecruitmentAddDraft } from '../../lib/recruitment/add-local-save'
 import { GEMINI_RECRUITMENT_DEFAULT_TEMPLATE_CODE } from '../../lib/recruitment/add-template'
+import { GEMINI_RECRUITMENT_ADD_PARAM } from '../../lib/recruitment/add-url'
+import {
+  GEMINI_RECRUITMENT_ID_PARAM,
+  GEMINI_RECRUITMENT_LNB_PARAM,
+} from '../../lib/recruitment/detail-url'
 import { GeminiRecruitmentAddCloseConfirmModal } from './add-close-confirm-modal'
 import { GeminiRecruitmentAddPreviewModal } from './add-preview-modal'
 import { HideParagraphSelectionChromeContext } from '@/features/template/context/paragraph-selection-chrome-context'
@@ -42,7 +47,7 @@ export function GeminiRecruitmentAddFullpageModal({
 }) {
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const skipDraftRestore = shouldSkipRegistrationDraftRestore(
     searchParams.get(REGISTRATION_DRAFT_MODE_QUERY_KEY)
@@ -56,6 +61,7 @@ export function GeminiRecruitmentAddFullpageModal({
     typeof form.buildSaveSnapshot
   > | null>(null)
   const createdDraftIdRef = useRef<string | null>(null)
+  const pendingDetailIdRef = useRef<string | null>(null)
   const [draftSaveSuccessOpen, setDraftSaveSuccessOpen] = useState(false)
   const [completeSuccessOpen, setCompleteSuccessOpen] = useState(false)
 
@@ -65,6 +71,7 @@ export function GeminiRecruitmentAddFullpageModal({
     setDraftSaveSuccessOpen(false)
     setCompleteSuccessOpen(false)
     createdDraftIdRef.current = null
+    pendingDetailIdRef.current = null
   }, [open])
 
   const handleDraftSave = useCallback(async () => {
@@ -97,6 +104,7 @@ export function GeminiRecruitmentAddFullpageModal({
     const endOverlay = beginBlockingOverlay()
     try {
       const existingId = createdDraftIdRef.current
+      let createdId = existingId
       if (existingId) {
         await geminiRecruitmentService.publishExisting(existingId, snapshot)
         await queryClient.invalidateQueries({
@@ -104,6 +112,7 @@ export function GeminiRecruitmentAddFullpageModal({
         })
       } else {
         const created = await geminiRecruitmentService.register(snapshot)
+        createdId = created.id ?? null
         if (created.id && created.detail) {
           queryClient.setQueryData(
             geminiVisitingTrainingQueryKeys.recruitmentDetail(created.id),
@@ -111,6 +120,7 @@ export function GeminiRecruitmentAddFullpageModal({
           )
         }
       }
+      pendingDetailIdRef.current = createdId?.trim() || null
       removeGeminiRecruitmentAddDraft()
       createdDraftIdRef.current = null
       invalidateGeminiRecruitmentListCaches(queryClient)
@@ -126,9 +136,23 @@ export function GeminiRecruitmentAddFullpageModal({
   }, [form, queryClient, showAlert])
 
   const handleCompleteSuccessConfirm = useCallback(() => {
+    const createdId = pendingDetailIdRef.current
+    pendingDetailIdRef.current = null
     setCompleteSuccessOpen(false)
-    onClose()
-  }, [onClose])
+    setSearchParams(
+      prev => {
+        const next = new URLSearchParams(prev)
+        next.delete(GEMINI_RECRUITMENT_ADD_PARAM)
+        next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
+        if (createdId) {
+          next.set(GEMINI_RECRUITMENT_ID_PARAM, createdId)
+          next.delete(GEMINI_RECRUITMENT_LNB_PARAM)
+        }
+        return next
+      },
+      { replace: true }
+    )
+  }, [setSearchParams])
 
   const handleRequestClose = useCallback(() => {
     setCloseConfirmOpen(true)

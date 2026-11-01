@@ -7,7 +7,7 @@ import type {
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type { EducationProgressHalfKey } from '../tabs'
 import { formatAssignmentDateLabel } from './assignment-display'
-import { formatDateDot } from '@/shared/utils/date'
+import { formatDateDot, formatDateDotWithWeekday } from '@/shared/utils/date'
 import type {
   UjatAssignmentReportState,
   UjatAssignmentReportStatus,
@@ -22,32 +22,44 @@ const SEOUL_YMD_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 })
 
-/** ISO 시각 또는 `YYYY-MM-DD` → Asia/Seoul `YYYY.MM.DD` */
-export function formatAssignmentShortDate(value: string | null | undefined): string | undefined {
+/** ISO 시각 또는 `YYYY-MM-DD` → Asia/Seoul 달력일 `YYYY-MM-DD` */
+function toSeoulYmd(value: string | null | undefined): string | undefined {
   const raw = value?.trim()
   if (!raw) return undefined
-  let ymd = raw
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const date = new Date(raw)
-    if (Number.isNaN(date.getTime())) return undefined
-    ymd = SEOUL_YMD_FORMATTER.format(date)
-  }
-  const [y, m, d] = ymd.split('-')
-  if (!y || !m || !d) return undefined
-  return formatDateDot(`${y}-${m}-${d}`)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return undefined
+  return SEOUL_YMD_FORMATTER.format(date)
 }
 
-function formatPeriodLabel(period: UjatAssignmentDatePeriodDto | null | undefined): string {
-  const from = formatAssignmentShortDate(period?.from)
-  const to = formatAssignmentShortDate(period?.to)
+/** ISO 시각 또는 `YYYY-MM-DD` → Asia/Seoul `YYYY.MM.DD` */
+export function formatAssignmentShortDate(value: string | null | undefined): string | undefined {
+  const ymd = toSeoulYmd(value)
+  return ymd ? formatDateDot(ymd) : undefined
+}
+
+/** ISO 시각 또는 `YYYY-MM-DD` → Asia/Seoul `YYYY.MM.DD(요일)` */
+export function formatAssignmentWeekdayDate(value: string | null | undefined): string | undefined {
+  const ymd = toSeoulYmd(value)
+  return ymd ? formatDateDotWithWeekday(ymd) : undefined
+}
+
+/** BE `planSubmissionPeriod` / `logSubmissionPeriod` — inclusive Asia/Seoul 달력 범위. */
+export function formatAssignmentPeriodLabel(
+  period: UjatAssignmentDatePeriodDto | null | undefined
+): string {
+  const from = formatAssignmentWeekdayDate(period?.from)
+  const to = formatAssignmentWeekdayDate(period?.to)
   if (!from && !to) return '-'
+  if (from === to) return from ?? '-'
   return `${from ?? '-'} ~ ${to ?? '-'}`
 }
 
-function toReportStatus(raw: string | null | undefined): UjatAssignmentReportStatus {
-  switch (raw?.trim().toUpperCase()) {
+function toReportStatus(dto: UjatAssignmentDocumentDto | null | undefined): UjatAssignmentReportStatus {
+  switch (dto?.status?.trim().toUpperCase()) {
     case 'SUBMITTED':
     case 'APPROVED':
+    case 'FEEDBACK_REQUESTED':
       // OpenAPI APPROVED = 관리자 승인 제출본 → 목록에서는 제출 완료로 표기
       return 'submitted'
     case 'REVISED':
@@ -60,7 +72,8 @@ function toReportStatus(raw: string | null | undefined): UjatAssignmentReportSta
 }
 
 function toReportState(dto: UjatAssignmentDocumentDto | null | undefined): UjatAssignmentReportState {
-  const status = toReportStatus(dto?.status)
+  const rawStatus = dto?.status?.trim().toUpperCase()
+  const status = toReportStatus(dto)
   if (status === 'not_submitted') return { status }
   const formResponseId =
     typeof dto?.formResponseId === 'number' && Number.isFinite(dto.formResponseId)
@@ -68,9 +81,11 @@ function toReportState(dto: UjatAssignmentDocumentDto | null | undefined): UjatA
       : undefined
   return {
     status,
-    submittedDateLabel: formatAssignmentShortDate(dto?.submittedAt),
+    submittedDateLabel: formatAssignmentWeekdayDate(dto?.submittedAt),
     feedbackDeliveredDateLabel:
-      status === 'revised' ? undefined : formatAssignmentShortDate(dto?.feedbackDeliveredAt),
+      rawStatus === 'FEEDBACK_REQUESTED'
+        ? formatAssignmentWeekdayDate(dto?.feedbackDeliveredAt)
+        : undefined,
     formResponseId,
   }
 }
@@ -110,8 +125,8 @@ export function buildUjatAssignmentSessionsFromResponse(params: {
         half,
         isoDate,
         dateLabel: formatAssignmentDateLabel(isoDate),
-        planSubmissionPeriodLabel: formatPeriodLabel(session.planSubmissionPeriod),
-        logSubmissionPeriodLabel: formatPeriodLabel(session.logSubmissionPeriod),
+        planSubmissionPeriodLabel: formatAssignmentPeriodLabel(session.planSubmissionPeriod),
+        logSubmissionPeriodLabel: formatAssignmentPeriodLabel(session.logSubmissionPeriod),
         volunteers: (session.volunteers ?? []).map((volunteer, index) =>
           toVolunteerRow(volunteer, id, index)
         ),

@@ -8,6 +8,7 @@ import {
 import type {
   DeductionItemResponse,
   PaymentItemResponse,
+  SettlementConfigResponse,
   WageItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
 
@@ -54,6 +55,11 @@ function readNumber(value: unknown): number | null {
   return null
 }
 
+function readOptionalNumber(record: Record<string, unknown>, key: string): number | null | undefined {
+  if (!Object.prototype.hasOwnProperty.call(record, key)) return undefined
+  return readNumber(record[key])
+}
+
 function firstNumber(...values: unknown[]): number | null {
   for (const value of values) {
     const n = readNumber(value)
@@ -78,9 +84,7 @@ export function evidenceRequiredYnFromSubmission(
   return null
 }
 
-function readTransportMode(
-  value: unknown
-): SettlementItemSettingDetail['transportCommuteMode'] {
+function readTransportMode(value: unknown): SettlementItemSettingDetail['transportCommuteMode'] {
   if (value === 'private_car' || value === 'public_transit' || value === 'user_choice') {
     return value
   }
@@ -90,7 +94,6 @@ function readTransportMode(
 function normalizeLayout(layout: string | undefined): SettlementItemSettingDetail['layout'] {
   const normalized = layout?.trim()
   if (!normalized) return 'simple'
-  if (normalized === 'volunteerActivity') return 'meal'
   return normalized as SettlementItemSettingDetail['layout']
 }
 
@@ -115,15 +118,37 @@ function fillEmptyFromCatalog(
     geminiSession3Won: mapped.geminiSession3Won ?? catalog.geminiSession3Won,
     geminiSession4Won: mapped.geminiSession4Won ?? catalog.geminiSession4Won,
     withholdingExclusionMaxWon:
-      mapped.withholdingExclusionMaxWon ?? catalog.withholdingExclusionMaxWon,
+      mapped.withholdingExclusionMaxWon === undefined
+        ? catalog.withholdingExclusionMaxWon
+        : mapped.withholdingExclusionMaxWon,
     withholdingEarnedIncomeDeductionWon:
-      mapped.withholdingEarnedIncomeDeductionWon ?? catalog.withholdingEarnedIncomeDeductionWon,
+      mapped.withholdingEarnedIncomeDeductionWon === undefined
+        ? catalog.withholdingEarnedIncomeDeductionWon
+        : mapped.withholdingEarnedIncomeDeductionWon,
+    withholdingTaxRateDailyWorker:
+      mapped.withholdingTaxRateDailyWorker === undefined
+        ? catalog.withholdingTaxRateDailyWorker
+        : mapped.withholdingTaxRateDailyWorker,
     withholdingTaxRateBusiness:
-      mapped.withholdingTaxRateBusiness ?? catalog.withholdingTaxRateBusiness,
-    withholdingTaxRateOther: mapped.withholdingTaxRateOther ?? catalog.withholdingTaxRateOther,
-    withholdingTaxRatePrize: mapped.withholdingTaxRatePrize ?? catalog.withholdingTaxRatePrize,
+      mapped.withholdingTaxRateBusiness === undefined
+        ? catalog.withholdingTaxRateBusiness
+        : mapped.withholdingTaxRateBusiness,
+    withholdingTaxRateOther:
+      mapped.withholdingTaxRateOther === undefined
+        ? catalog.withholdingTaxRateOther
+        : mapped.withholdingTaxRateOther,
+    withholdingTaxRatePrize:
+      mapped.withholdingTaxRatePrize === undefined
+        ? catalog.withholdingTaxRatePrize
+        : mapped.withholdingTaxRatePrize,
     withholdingTaxRateInterview:
-      mapped.withholdingTaxRateInterview ?? catalog.withholdingTaxRateInterview,
+      mapped.withholdingTaxRateInterview === undefined
+        ? catalog.withholdingTaxRateInterview
+        : mapped.withholdingTaxRateInterview,
+    withholdingEarnedIncomeTaxCreditRate:
+      mapped.withholdingEarnedIncomeTaxCreditRate === undefined
+        ? catalog.withholdingEarnedIncomeTaxCreditRate
+        : mapped.withholdingEarnedIncomeTaxCreditRate,
   }
 }
 
@@ -178,7 +203,10 @@ export function mapWageItemToSettingDetail(item: WageItemResponse): SettlementIt
 
   const mapped: SettlementItemSettingDetail = {
     layout,
-    basisUnit: item.calculationUnit?.trim() || (extra.calculation_unit as string | undefined)?.trim() || '전체',
+    basisUnit:
+      item.calculationUnit?.trim() ||
+      (extra.calculation_unit as string | undefined)?.trim() ||
+      '전체',
     basisHours,
     compareKind,
     maxLimitWon,
@@ -205,7 +233,9 @@ export function mapWageItemToSettingDetail(item: WageItemResponse): SettlementIt
   )
 }
 
-export function mapPaymentItemToSettingDetail(item: PaymentItemResponse): SettlementItemSettingDetail {
+export function mapPaymentItemToSettingDetail(
+  item: PaymentItemResponse
+): SettlementItemSettingDetail {
   const extra = asRecord(item)
   const detail = parseDetailJson(item.detailJson ?? extra.detail_json)
   const layout = normalizeLayout(item.layout ?? (extra.layout as string | undefined))
@@ -226,10 +256,20 @@ export function mapPaymentItemToSettingDetail(item: PaymentItemResponse): Settle
 
   const mapped: SettlementItemSettingDetail = {
     layout,
-    basisUnit: layout === 'transport' ? '거리' : layout === 'lodging' ? '일' : '시간',
-    basisHours: layout === 'transport' ? (minKm ?? 30) : 1,
+    basisUnit: layout === 'transport' ? '거리' : layout === 'lodging' ? '박' : '시간',
+    basisHours:
+      layout === 'transport'
+        ? (minKm ?? 30)
+        : layout === 'lodging'
+          ? (readNumber(detail.basisHours) ?? 1)
+          : 1,
     compareKind: 'standard',
-    maxLimitWon: firstNumber(item.maxLimitWon, item.maxAmount, extra.max_limit_won, detail.maxLimitWon),
+    maxLimitWon: firstNumber(
+      item.maxLimitWon,
+      item.maxAmount,
+      extra.max_limit_won,
+      detail.maxLimitWon
+    ),
     basicFeeWon: null,
     longDistanceFeeWon: null,
     qualificationLines:
@@ -256,7 +296,8 @@ export function mapPaymentItemToSettingDetail(item: PaymentItemResponse): Settle
 }
 
 export function mapDeductionItemToSettingDetail(
-  item: DeductionItemResponse
+  item: DeductionItemResponse,
+  config?: Pick<SettlementConfigResponse, 'earnedIncomeDeduction' | 'smallTaxExemptionThreshold'>
 ): SettlementItemSettingDetail {
   const extra = asRecord(item)
   const detail = parseDetailJson(item.detailJson ?? extra.detail_json)
@@ -278,14 +319,34 @@ export function mapDeductionItemToSettingDetail(
       detail.qualificationLines,
       detail.qualification_lines
     ),
-    remarkLines: firstLines(extra.remarkLines, extra.remark_lines, detail.remarkLines, detail.remark_lines),
-    withholdingExclusionMaxWon: readNumber(detail.withholdingExclusionMaxWon),
-    withholdingEarnedIncomeDeductionWon: readNumber(detail.withholdingEarnedIncomeDeductionWon),
-    withholdingTaxRateBusiness: readNumber(detail.withholdingTaxRateBusiness),
-    withholdingTaxRateOther: readNumber(detail.withholdingTaxRateOther),
-    withholdingTaxRatePrize: readNumber(detail.withholdingTaxRatePrize),
-    withholdingTaxRateInterview: readNumber(detail.withholdingTaxRateInterview),
+    remarkLines: firstLines(
+      extra.remarkLines,
+      extra.remark_lines,
+      detail.remarkLines,
+      detail.remark_lines
+    ),
+    withholdingExclusionMaxWon: readOptionalNumber(detail, 'withholdingExclusionMaxWon'),
+    withholdingEarnedIncomeDeductionWon: readOptionalNumber(
+      detail,
+      'withholdingEarnedIncomeDeductionWon'
+    ),
+    withholdingTaxRateDailyWorker: readOptionalNumber(detail, 'withholdingTaxRateDailyWorker'),
+    withholdingTaxRateBusiness: readOptionalNumber(detail, 'withholdingTaxRateBusiness'),
+    withholdingTaxRateOther: readOptionalNumber(detail, 'withholdingTaxRateOther'),
+    withholdingTaxRatePrize: readOptionalNumber(detail, 'withholdingTaxRatePrize'),
+    withholdingTaxRateInterview: readOptionalNumber(detail, 'withholdingTaxRateInterview'),
+    withholdingEarnedIncomeTaxCreditRate: readOptionalNumber(
+      detail,
+      'withholdingEarnedIncomeTaxCreditRate'
+    ),
   }
 
-  return fillEmptyFromCatalog(mapped, getCatalogSettlementItemSettingDetailForDeduction())
+  const catalog = getCatalogSettlementItemSettingDetailForDeduction()
+  return fillEmptyFromCatalog(mapped, {
+    ...catalog,
+    withholdingExclusionMaxWon:
+      config?.smallTaxExemptionThreshold ?? catalog.withholdingExclusionMaxWon,
+    withholdingEarnedIncomeDeductionWon:
+      config?.earnedIncomeDeduction ?? catalog.withholdingEarnedIncomeDeductionWon,
+  })
 }

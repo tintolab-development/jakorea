@@ -599,6 +599,13 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      certificateAvailability: (programId: string, certificateType = 'AUTO') =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'certificate-availability',
+          programId,
+          certificateType,
+        ] as const,
     },
     /** 정산 신청 목록 — GET /api/portal/me/settlement-applications (Class C) */
     settlementApplications: () =>

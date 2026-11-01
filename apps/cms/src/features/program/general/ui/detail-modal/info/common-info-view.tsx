@@ -2328,6 +2328,9 @@ function MultiRoundCurriculumSessionForm({
             control={editForm.control}
             render={({ field: periodField }) => {
               const appliedRange = parseEducationScheduleLineToRange(periodField.value)
+              const appliedWithTime = Boolean(
+                appliedRange && educationScheduleRangeHasClock(appliedRange)
+              )
               return (
                 <ParagraphDatePicker
                   inputSize="small"
@@ -2339,6 +2342,7 @@ function MultiRoundCurriculumSessionForm({
                   value={appliedRange?.[0] ?? null}
                   onChange={() => {}}
                   appliedSurfaceRange={appliedRange}
+                  appliedSurfaceWithTime={appliedWithTime}
                   onRangeChange={([start, end]) => {
                     periodField.onChange(formatEducationScheduleLineFromRange([start, end]))
                     if (!assignmentEnabled) {
@@ -3594,6 +3598,9 @@ function ScheduleEventPerScheduleExtraEditRows({
             control={editForm.control}
             render={({ field: periodField }) => {
               const appliedRange = parseEducationScheduleLineToRange(periodField.value)
+              const appliedWithTime = Boolean(
+                appliedRange && educationScheduleRangeHasClock(appliedRange)
+              )
               return (
                 <ParagraphDatePicker
                   inputSize="small"
@@ -3605,6 +3612,7 @@ function ScheduleEventPerScheduleExtraEditRows({
                   value={appliedRange?.[0] ?? null}
                   onChange={() => {}}
                   appliedSurfaceRange={appliedRange}
+                  appliedSurfaceWithTime={appliedWithTime}
                   onRangeChange={([start, end]) => {
                     periodField.onChange(formatEducationScheduleLineFromRange([start, end]))
                     if (!assignmentEnabled) {
@@ -3967,6 +3975,9 @@ function ScheduleDetailEditBlock({
         control={editForm.control}
         render={({ field: periodField }) => {
           const appliedRange = parseEducationScheduleLineToRange(periodField.value)
+          const appliedWithTime = Boolean(
+            appliedRange && educationScheduleRangeHasClock(appliedRange)
+          )
           return (
             <ParagraphDatePicker
               inputSize="small"
@@ -3978,6 +3989,7 @@ function ScheduleDetailEditBlock({
               value={appliedRange?.[0] ?? null}
               onChange={() => {}}
               appliedSurfaceRange={appliedRange}
+              appliedSurfaceWithTime={appliedWithTime}
               onRangeChange={([start, end]) => {
                 periodField.onChange(formatEducationScheduleLineFromRange([start, end]))
                 if (!assignmentEnabled) {

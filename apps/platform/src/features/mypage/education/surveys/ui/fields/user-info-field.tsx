@@ -1,7 +1,7 @@
+import styles from './user-info-field.module.css'
 import type { UserInfoFieldEntry } from '@jakorea/form-schema/writing-form'
 import { PFFormField, PFFormFieldRow, PFFormFieldTable } from '@/shared/ui'
 import { EMPTY_SETTINGS_VALUE } from '@/features/mypage/settings/lib/constants'
-import styles from './user-info-field.module.css'
 
 type SurveyUserInfoFieldProps = {
   entries: readonly UserInfoFieldEntry[]

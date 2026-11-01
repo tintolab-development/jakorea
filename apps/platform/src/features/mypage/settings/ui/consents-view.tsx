@@ -15,6 +15,7 @@ import {
 } from '@/shared/ui'
 import {
   fetchPortalConsent,
+  fetchPortalConsents,
   putPortalMarketingConsent,
   withdrawPortalConsentByType,
   withdrawPortalConsentDocument,
@@ -31,12 +32,20 @@ import {
   parseConsentWithdrawError,
   resolveConsentWithdrawTarget,
 } from '../lib/consent-withdraw'
-import { formatConsentDate, SETTINGS_CONSENT_TYPE_BY_ID } from '../lib/map-consents'
+import {
+  buildConsentItemsFromSummaries,
+  formatConsentDate,
+  SETTINGS_CONSENT_TYPE_BY_ID,
+} from '../lib/map-consents'
 import {
   isSettingsDocumentConsentItemId,
   settingsConsentItemIdToWriteKey,
 } from '../lib/settings-consent-key'
-import { downloadSubmittedCrimeConsent } from '../lib/download-submitted-crime-consent'
+import {
+  CrimeConsentDownloadError,
+  downloadSubmittedCrimeConsent,
+} from '../lib/download-submitted-crime-consent'
+import { CRIME_CONSENT_MESSAGES } from '../../instructor-apply/consent/crime-consent-original'
 import { EMPTY_SETTINGS_VALUE } from '../lib/constants'
 import {
   PortraitGuardianVerificationCancelledError,
@@ -63,6 +72,12 @@ const DOWNLOAD_FAILED_MESSAGE =
 const MARKETING_FAILED_MESSAGE =
   '마케팅 정보 수신 동의 변경에 실패했어요. 잠시 후 다시 시도해 주세요.'
 const MARKETING_CONFLICT_MESSAGE = CONSENT_WITHDRAW_CONFLICT_MESSAGE
+const CRIME_ORIGINAL_MISSING_COPY = {
+  title: '원본 동의서 제출이 필요해요',
+  description: CRIME_CONSENT_MESSAGES.signedFileNotReady,
+  submitLabel: '원본 동의서 제출',
+  closeLabel: '닫기',
+}
 
 const MARKETING_AGREE_COPY = {
   title: '마케팅 정보 수신에 동의할까요?',
@@ -429,6 +444,8 @@ export function SettingsConsentsView() {
     withdrawnAt: string
   } | null>(null)
   const [documentPreviewItem, setDocumentPreviewItem] = useState<SettingsConsentItem | null>(null)
+  const [crimeOriginalMissingOpen, setCrimeOriginalMissingOpen] = useState(false)
+  const crimeDownloadingRef = useRef(false)
   /** 미성년 초상권 — 보호자 본인인증 단계 (1: confirm, 2: info, 4: verifiedAt) */
   const [portraitGuardianStep, setPortraitGuardianStep] = useState<'confirm' | 'info' | null>(null)
   const [portraitGuardianRelation, setPortraitGuardianRelation] = useState('')
@@ -521,13 +538,59 @@ export function SettingsConsentsView() {
     }
   }
 
-  const handleDownloadDocument = (item: SettingsConsentItem) => {
-    if (item.id !== 'sexOffenseCheck' || item.documentId == null) {
+  /** 원본 재제출로 문서가 바뀔 수 있어, 다운로드 직전 GET /me/consents의 documentId만 쓴다. */
+  const resolveLatestCrimeConsentDocumentId = async (): Promise<number | null | undefined> => {
+    const summaries = await queryClient.fetchQuery({
+      queryKey: platformQueryKeys.mypage.consents(),
+      queryFn: ({ signal }) => fetchPortalConsents(signal),
+      staleTime: 0,
+    })
+    return buildConsentItemsFromSummaries(summaries).documentItems.find(
+      next => next.id === 'sexOffenseCheck',
+    )?.documentId
+  }
+
+  const downloadCrimeConsent = async (item: SettingsConsentItem) => {
+    let documentId: number | null | undefined = item.documentId
+    if (consents.isRemoteSession) {
+      try {
+        documentId = await resolveLatestCrimeConsentDocumentId()
+      } catch {
+        setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+        return
+      }
+    }
+    if (documentId == null) {
       setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
       return
     }
-    void downloadSubmittedCrimeConsent(item.documentId).catch(() => {
+    try {
+      await downloadSubmittedCrimeConsent(documentId)
+    } catch (error) {
+      if (
+        error instanceof CrimeConsentDownloadError &&
+        error.code === 'PORTAL_CONSENT_SIGNED_FILE_NOT_READY'
+      ) {
+        setCrimeOriginalMissingOpen(true)
+        return
+      }
+      setNotice({
+        title: '다운로드 실패',
+        description:
+          error instanceof CrimeConsentDownloadError ? error.message : DOWNLOAD_FAILED_MESSAGE,
+      })
+    }
+  }
+
+  const handleDownloadDocument = (item: SettingsConsentItem) => {
+    if (item.id !== 'sexOffenseCheck') {
       setNotice({ title: '다운로드 실패', description: DOWNLOAD_FAILED_MESSAGE })
+      return
+    }
+    if (crimeDownloadingRef.current) return
+    crimeDownloadingRef.current = true
+    void downloadCrimeConsent(item).finally(() => {
+      crimeDownloadingRef.current = false
     })
   }
 
@@ -830,6 +893,20 @@ export function SettingsConsentsView() {
           )
         }}
         onClose={() => setPortraitGuardianVerifiedAt(null)}
+      />
+
+      <ConsentWithdrawConfirm
+        open={crimeOriginalMissingOpen}
+        mode="agree"
+        title={CRIME_ORIGINAL_MISSING_COPY.title}
+        description={CRIME_ORIGINAL_MISSING_COPY.description}
+        cancelLabel={CRIME_ORIGINAL_MISSING_COPY.closeLabel}
+        confirmLabel={CRIME_ORIGINAL_MISSING_COPY.submitLabel}
+        onCancel={() => setCrimeOriginalMissingOpen(false)}
+        onConfirm={() => {
+          setCrimeOriginalMissingOpen(false)
+          navigateToWriteDocument('sexOffenseCheck')
+        }}
       />
 
       <PFAlertModal

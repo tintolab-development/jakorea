@@ -18,6 +18,7 @@ import {
 import { popupQueryKeys } from '@/features/popup/api/query-keys'
 import { listPopupsService } from '@/features/popup/api/service'
 import { popupMutationFailureAlert } from '@/features/popup/lib/mutation-failure-alert'
+import { buildPublishPeriodExpiredAlert, isPublishPeriodExpired } from '@/shared/lib/publish-period'
 import { POPUPS_CHANGED_EVENT } from '@/features/popup/api/store'
 import { PopupFormModal, type PopupFormValues } from '@/features/popup/ui/form-modal'
 import { formatDateDot, formatDateRangeDot } from '@/shared/lib/format-display'
@@ -268,6 +269,11 @@ export function PopupsPage() {
 
   const handleToggleActive = useCallback(
     (id: string, isActive: boolean) => {
+      const target = rows.find(row => row.id === id)
+      if (isActive && isPublishPeriodExpired(target?.periodEnd)) {
+        showAlert(buildPublishPeriodExpiredAlert('팝업은'))
+        return
+      }
       void setActiveMutation.mutateAsync({ id, isActive }).catch(error => {
         showAlert(
           popupMutationFailureAlert(
@@ -279,7 +285,7 @@ export function PopupsPage() {
         void listQuery.refetch()
       })
     },
-    [listQuery, setActiveMutation, showAlert]
+    [listQuery, rows, setActiveMutation, showAlert]
   )
 
   const openCreate = useCallback(() => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   mergeInstructorDetailFromMaskedMember,
   mergeInstructorDetailFromPrivacyUnmask,
@@ -20,6 +20,15 @@ const baseDetail: PaymentOrderAdminInstructorDetail = {
 }
 
 describe('mergeInstructorDetailFromPrivacyUnmask', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-02T12:00:00+09:00'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('unmask 응답의 연락처·계좌·성별·생년월일을 상세에 반영한다', () => {
     const merged = mergeInstructorDetailFromPrivacyUnmask(baseDetail, {
       member: {
@@ -46,7 +55,7 @@ describe('mergeInstructorDetailFromPrivacyUnmask', () => {
       bankName: '국민',
       accountNumber: '1234567890',
       accountHolder: '김원문',
-      genderBirthDisplay: '남성 | 1985. 03. 12',
+      genderBirthDisplay: '남성 | 1985. 03. 12 (만 41세)',
     })
   })
 
@@ -56,6 +65,15 @@ describe('mergeInstructorDetailFromPrivacyUnmask', () => {
 })
 
 describe('mergeInstructorDetailFromMaskedMember', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-02T12:00:00+09:00'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('마스킹 GET의 성별·생년월일을 조회 전 헤더에 채운다', () => {
     const merged = mergeInstructorDetailFromMaskedMember(baseDetail, {
       member: {
@@ -65,7 +83,7 @@ describe('mergeInstructorDetailFromMaskedMember', () => {
         email: 'e2e-settle-***@local.demo',
       },
     })
-    expect(merged.genderBirthDisplay).toBe('** | 1985-**-**')
+    expect(merged.genderBirthDisplay).toBe('** | 1985.**.** (만 41세)')
     expect(merged.phone).toBe('010-****-2201')
   })
 })

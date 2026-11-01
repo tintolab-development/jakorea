@@ -7,7 +7,11 @@ import type {
   PaymentOrderCalculationStatementLine,
   PaymentOrderCalculationStatementSessionBlock,
 } from '@/features/settlement-management/model/payment-order-admin-list'
-import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { toApiBirthDate } from '@/features/user/api/map-member-gender-birth'
+import {
+  formatBirthDisplayWithManAge,
+  formatGenderBirthDisplayLine,
+} from '@/features/user/api/format-gender-birth-display'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type {
@@ -187,34 +191,12 @@ function displayOrDash(value: string | null | undefined): string {
   return trimmed ? trimmed : '-'
 }
 
-function formatBirthDisplay(
-  birthDate: string | null | undefined,
-  birthYear: number | null | undefined
-): string {
-  const dateRaw = birthDate?.trim()
-  if (dateRaw) {
-    const api = toApiBirthDate(dateRaw)
-    if (api) {
-      const [y, m, d] = api.split('-')
-      if (y && m && d) return `${y}. ${m}. ${d}`
-    }
-    return dateRaw
-  }
-  if (birthYear != null && Number.isFinite(birthYear)) {
-    return `${birthYear}. **. **`
-  }
-  return '-'
-}
-
 function formatGenderBirthDisplay(
   gender: string | null | undefined,
   birthDate: string | null | undefined,
   birthYear: number | null | undefined
 ): string {
-  const genderPart = toDisplayGender(gender)
-  const birthPart = formatBirthDisplay(birthDate, birthYear)
-  if (genderPart === '-' && birthPart === '-') return '-'
-  return `${genderPart} | ${birthPart}`
+  return formatGenderBirthDisplayLine(gender, birthDate, { birthYear })
 }
 
 function formatHomeAddressDisplay(
@@ -279,14 +261,20 @@ export function applyMaskedInstructorMemberToAccountPaymentDetail(
   if (!instructor) return detail
   const member = instructor.member
   const address = formatHomeAddressDisplay(instructor.profile?.homeAddress)
-  const birthApi = toApiBirthDate(member?.birthDate)
   const birthYear =
-    member?.birthYear ?? (birthApi ? Number(birthApi.slice(0, 4)) : undefined)
+    member?.birthYear ??
+    (member?.birthDate ? Number(toApiBirthDate(member.birthDate)?.slice(0, 4)) : undefined)
   const genderPart = member?.gender?.trim() ? '**' : '-'
-  const birthPart =
-    birthYear != null && Number.isFinite(birthYear) ? `${birthYear}. **. **` : '-'
+  const birthPart = formatBirthDisplayWithManAge(member?.birthDate, {
+    birthYear,
+    forceMaskedDate: true,
+  })
   const genderBirthDisplay =
-    genderPart === '-' && birthPart === '-' ? '-' : `${genderPart} | ${birthPart}`
+    member != null
+      ? genderPart === '-' && birthPart === '-'
+        ? '-'
+        : `${genderPart} | ${birthPart}`
+      : detail.basic.genderBirthDisplay
 
   return {
     ...detail,

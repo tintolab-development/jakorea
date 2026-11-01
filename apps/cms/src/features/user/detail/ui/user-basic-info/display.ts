@@ -1,6 +1,6 @@
 import { formatKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 import { createElement, type ReactNode } from 'react'
-import dayjs, { type Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import type { User } from '@/types/user'
 import type { DateValue } from '@/types'
 import { MASKING_POLICY } from '@/shared/constants/download-policy'
@@ -12,7 +12,8 @@ import {
   toInstructorFeeGradeDisplayLabel,
 } from '@/features/user/api/map-instructor-activity-display'
 import { DetailInfoFormTdDivider } from '@/shared/components/detail-info-form'
-import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { formatBirthDisplayWithManAge } from '@/features/user/api/format-gender-birth-display'
 import { SCHOOL_ENROLLMENT_STATUS_LABELS } from '@/features/user/api/map-school-enrollment-status'
 import { resolveInstructorMemberProfile } from '@/entities/user/lib/resolve-instructor-member-profile'
 import {
@@ -23,37 +24,15 @@ import {
 
 const GRADE_LIKE_AFFILIATION_TAIL = /학년|담임/
 
-/** 만 나이 — 생일이 지나지 않았으면 연차에서 1을 뺀다 */
-function manAgeFromDayjs(birth: Dayjs): number | null {
-  const today = dayjs()
-  let age = today.year() - birth.year()
-  if (
-    today.month() < birth.month() ||
-    (today.month() === birth.month() && today.date() < birth.date())
-  ) {
-    age -= 1
-  }
-  return age >= 0 ? age : null
-}
-
-function parseBirthDayjs(birthDate: DateValue | undefined): Dayjs | null {
-  if (birthDate == null || birthDate === '') return null
+/** 개인 회원 — 현재 학교 재학 여부 */
+function formatBirthDateAndManAge(birthDate: DateValue | undefined): string {
+  if (birthDate == null || birthDate === '') return '-'
   if (birthDate instanceof Date) {
     const parsed = dayjs(birthDate)
-    return parsed.isValid() ? parsed : null
+    if (!parsed.isValid()) return '-'
+    return formatBirthDisplayWithManAge(parsed.format('YYYY-MM-DD'))
   }
-  const normalized = toApiBirthDate(String(birthDate)) ?? String(birthDate).trim()
-  const parsed = dayjs(normalized)
-  return parsed.isValid() ? parsed : null
-}
-
-/** 시안: `1990. 09. 15 (만 35세)` */
-function formatBirthDateAndManAge(birthDate: DateValue | undefined): string {
-  const parsed = parseBirthDayjs(birthDate)
-  if (!parsed) return '-'
-  const formatted = parsed.format('YYYY. MM. DD')
-  const age = manAgeFromDayjs(parsed)
-  return age != null ? `${formatted} (만 ${age}세)` : formatted
+  return formatBirthDisplayWithManAge(String(birthDate))
 }
 
 export function formatGenderBirthLine(user: Omit<User, 'password'>): string {

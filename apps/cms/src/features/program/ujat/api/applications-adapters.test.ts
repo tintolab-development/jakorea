@@ -375,6 +375,29 @@ describe('UJAT 기관 신청 목록 adapter', () => {
     expect(row.totalClassCount).toBe(3)
   })
 
+  it('반 카탈로그 숫자 학년 라벨은 n학년으로 정규화한다', () => {
+    const row = mapOrganizationApplicationToUjatInstitutionRow(
+      {
+        id: 15,
+        organizationName: '학교',
+        applicationStatus: 'SUBMITTED',
+        gradeBlocks: [
+          { gradeLabel: '1', classCount: 1 },
+          { gradeLabel: '2', classCount: 2 },
+          { gradeLabel: '5학년', classCount: 1 },
+        ],
+      },
+      0
+    )
+
+    expect(row.gradeClassCounts).toEqual([
+      { gradeLabel: '1학년', classCount: 1 },
+      { gradeLabel: '2학년', classCount: 2 },
+      { gradeLabel: '5학년', classCount: 1 },
+    ])
+    expect(row.totalClassCount).toBe(4)
+  })
+
   it('gradeBlocks가 null이면 requestedClassCount로 학급 줄을 만들지 않는다', () => {
     const row = mapOrganizationApplicationToUjatInstitutionRow(
       {

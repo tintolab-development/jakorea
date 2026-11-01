@@ -89,12 +89,15 @@ function formatParagraphDatePickerTriggerDisplay(
   surfaceAppliedWithTime: boolean
 ): string | null {
   const resolvedValue = toValidDayjsOrNull(value)
-  const empty = resolvedValue == null && surfaceRange == null && !surfaceAppliedWithTime
+  const rangeHasClock =
+    surfaceRange != null && dateRangeUsesClockTime(surfaceRange[0], surfaceRange[1])
+  const showClock = surfaceAppliedWithTime || rangeHasClock
+  const empty = resolvedValue == null && surfaceRange == null && !showClock
   if (empty) return null
 
   const eff = resolvedValue ?? dayjs()
 
-  if (surfaceRange != null && surfaceAppliedWithTime) {
+  if (surfaceRange != null && showClock) {
     const [a, b] = surfaceRange
     const da = formatAppDatepickerDisplay(a)
     const db = formatAppDatepickerDisplay(b)
@@ -108,7 +111,7 @@ function formatParagraphDatePickerTriggerDisplay(
   if (surfaceRange != null) {
     return `${formatAppDatepickerDisplay(surfaceRange[0])} ~ ${formatAppDatepickerDisplay(surfaceRange[1])}`
   }
-  if (surfaceAppliedWithTime) {
+  if (showClock) {
     return `${formatAppDatepickerDisplay(eff)} ${formatTriggerClock(eff)}`
   }
   return formatAppDatepickerDisplay(eff)
@@ -487,8 +490,6 @@ function ParagraphDatePickerSingleInner({
 
   const appliedSurfaceRangeRef = useRef(appliedSurfaceRange)
   appliedSurfaceRangeRef.current = appliedSurfaceRange
-  const appliedSurfaceWithTimeRef = useRef(appliedSurfaceWithTime)
-  appliedSurfaceWithTimeRef.current = appliedSurfaceWithTime
 
   const appliedSurfaceSyncKey = useMemo(() => {
     if (!hasExternalSurfaceControl) return 'uncontrolled'
@@ -502,7 +503,6 @@ function ParagraphDatePickerSingleInner({
     if (open) return
     if (!hasExternalSurfaceControl) return
     const currentRange = appliedSurfaceRangeRef.current
-    const currentWithTime = appliedSurfaceWithTimeRef.current
     if (currentRange != null && currentRange[0]?.isValid() && currentRange[1]?.isValid()) {
       const [a, b] = currentRange
       setSurfaceRange(prev =>
@@ -510,7 +510,7 @@ function ParagraphDatePickerSingleInner({
           ? prev
           : [a, b]
       )
-      const withTime = Boolean(currentWithTime) && dateRangeUsesClockTime(a, b)
+      const withTime = dateRangeUsesClockTime(a, b)
       setSurfaceAppliedWithTime(prev => (prev === withTime ? prev : withTime))
       const nextPeriodOn = resolveSchedulePeriodOnFromStoredRange([a, b], withTime, {
         presetMode,

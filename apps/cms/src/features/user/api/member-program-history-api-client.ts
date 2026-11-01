@@ -2,7 +2,14 @@ import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import type { MemberLectureReportResponse } from '@/shared/api/generated/members/schemas/memberLectureReportResponse'
 import type { FormSubmissionFileDownloadResponse } from '@/shared/api/generated/forms-surveys/schemas/formSubmissionFileDownloadResponse'
+import type { AxiosRequestConfig, AxiosResponse } from 'axios'
 import customInstance from '@/shared/api/orval-mutator'
+import { axiosClient } from '@/shared/instance/axios-instance'
+import { hydrateAxiosBlobError } from '@/shared/lib/admin-file-upload/attachments'
+import {
+  extractApiErrorDetails,
+  extractApiErrorMessage,
+} from '@/shared/lib/extract-api-error-message'
 import {
   downloadFromBulkEndpoint,
   type BulkDownloadEndpointResponse,
@@ -63,6 +70,85 @@ export async function bulkDownloadMemberAssignmentSubmissionsRemote(
       data: body,
     })
   )
+}
+
+export type MemberApplicationType = 'INDIVIDUAL' | 'VOLUNTEER' | 'INSTRUCTOR' | 'ORGANIZATION'
+
+export type MemberApplicationAssignmentFilesZip = {
+  zip: Blob
+  /** 응답 `Content-Disposition` 원문. 없으면 null. */
+  contentDisposition: string | null
+}
+
+function readContentDisposition(headers: unknown): string | null {
+  if (!headers || typeof headers !== 'object') return null
+  for (const [key, value] of Object.entries(headers as Record<string, unknown>)) {
+    if (key.toLowerCase() !== 'content-disposition') continue
+    return typeof value === 'string' && value.trim() ? value : null
+  }
+  return null
+}
+
+/**
+ * POST .../assignment-files/download — 서버가 신청 건의 현재 과제 제출 파일을 재조회해 ZIP으로 내려준다.
+ * 저장 파일명(`Content-Disposition`)이 필요해 생성 클라이언트 대신 응답 전체를 받는다.
+ * 오류 응답(JSON)은 blob으로 오므로 `error.response.data`를 객체로 복원해 던진다.
+ */
+export async function downloadMemberApplicationAssignmentFilesZipRemote(input: {
+  memberId: number
+  applicationId: number
+  applicationType: MemberApplicationType
+}): Promise<MemberApplicationAssignmentFilesZip> {
+  let response: AxiosResponse<unknown>
+  try {
+    response = await axiosClient.request<unknown>({
+      url: `${memberApplicationUrl(input.memberId, input.applicationId)}/assignment-files/download`,
+      method: 'POST',
+      params: { applicationType: input.applicationType },
+      headers: { Accept: 'application/zip, application/json' },
+      responseType: 'blob',
+      skipGlobalErrorAlert: true,
+    } as AxiosRequestConfig & { skipGlobalErrorAlert: boolean })
+  } catch (error) {
+    throw await hydrateAxiosBlobError(error)
+  }
+  const payload = response.data
+  if (!(payload instanceof Blob) || payload.size < 1 || payload.type.includes('json')) {
+    throw new Error('과제 파일 ZIP을 받지 못했습니다.')
+  }
+  return { zip: payload, contentDisposition: readContentDisposition(response.headers) }
+}
+
+const ASSIGNMENT_FILES_DOWNLOAD_FALLBACK_MESSAGE =
+  '과제 일괄 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+
+/**
+ * 과제 ZIP 오류 안내 — `error.details`의 회차·일정·파일명을 서버 message 앞에 붙인다.
+ * 키가 없으면 해당 조각을 생략하고, details가 없으면 message만 쓴다.
+ */
+export function formatAssignmentFilesDownloadErrorMessage(error: unknown): string {
+  const response = (error as { response?: { status?: number; data?: unknown } } | null)?.response
+  if (!response) {
+    return error instanceof Error && error.message.trim()
+      ? error.message.trim()
+      : ASSIGNMENT_FILES_DOWNLOAD_FALLBACK_MESSAGE
+  }
+  const message = extractApiErrorMessage(response.data, {
+    httpStatus: response.status,
+    fallback: ASSIGNMENT_FILES_DOWNLOAD_FALLBACK_MESSAGE,
+  })
+  const details = extractApiErrorDetails(response.data)
+  const sessionNo = details.sessionNo?.trim()
+  const scheduleName = details.scheduleName?.trim()
+  const originalFileName = details.originalFileName?.trim()
+  const location = [
+    sessionNo ? `${sessionNo}회차` : null,
+    scheduleName ? `(${scheduleName})` : null,
+    originalFileName ? `'${originalFileName}'` : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return location ? `${location} — ${message}` : message
 }
 
 /** REQ-015 — POST .../lecture-reports/bulk-download */

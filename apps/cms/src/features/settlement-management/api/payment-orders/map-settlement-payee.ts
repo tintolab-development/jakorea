@@ -1,11 +1,10 @@
 /**
  * SettlementFrontendResponse.payee (MASKED) → 산출 내역서·지급조서 발급 기본정보
  * 목록/다른 API로 PII 보완 금지 — payee만 SSOT.
+ * BE가 마스킹한 문자열을 그대로 표시한다. FE 마스킹·블러·날짜 재포맷을 덧씌우지 않는다.
  */
 
 import type { SettlementFrontendPayeeResponse } from '@/shared/api/generated/settlement/schemas'
-import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
-import { addressDisplayForStatementBlur } from '@/features/settlement-management/model/payment-order-admin-list'
 
 function presentOrEmpty(value: string | null | undefined): string {
   return value?.trim() ?? ''
@@ -30,8 +29,8 @@ export function formatPayeeGenderBirthDisplay(
   payee: NonNullable<SettlementFrontendPayeeResponse> | null | undefined
 ): string {
   if (!payee) return '-'
-  const genderPart = toDisplayGender(payee.gender)
-  const birthPart = presentOrEmpty(payee.birthDate) || '-'
+  const genderPart = displayOrDash(payee.gender)
+  const birthPart = displayOrDash(payee.birthDate)
   if (genderPart === '-' && birthPart === '-') return '-'
   return `${genderPart} | ${birthPart}`
 }
@@ -57,7 +56,6 @@ export type SettlementPayeeInstructorBasicFields = {
   phoneDisplay: string
   emailDisplay: string
   addressDisplay: string
-  addressBlurredTail?: string
   addressRoad: string
   addressDetail: string
   settlementAccountBankNumberPart: string
@@ -92,12 +90,6 @@ export function mapSettlementPayeeToInstructorBasicFields(
 
   if (!hasAny) return null
 
-  const addressFull = formatPayeeHomeAddressDisplay(payee)
-  const { addressDisplay, addressBlurredTail } =
-    addressFull === '-'
-      ? { addressDisplay: '-', addressBlurredTail: undefined }
-      : addressDisplayForStatementBlur(addressFull)
-
   const bankAndNumber = [presentOrEmpty(payee.bankName), presentOrEmpty(payee.accountNumber)]
     .filter(Boolean)
     .join(' ')
@@ -106,8 +98,7 @@ export function mapSettlementPayeeToInstructorBasicFields(
     nameEn: displayOrDash(payee.nameEn),
     phoneDisplay: displayOrDash(payee.phone),
     emailDisplay: displayOrDash(payee.email),
-    addressDisplay,
-    addressBlurredTail,
+    addressDisplay: formatPayeeHomeAddressDisplay(payee),
     addressRoad: presentOrEmpty(payee.addressRoad),
     addressDetail: presentOrEmpty(payee.addressDetail),
     settlementAccountBankNumberPart: bankAndNumber || '—',

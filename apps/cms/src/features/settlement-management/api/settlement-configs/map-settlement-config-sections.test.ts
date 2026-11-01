@@ -45,5 +45,8 @@ describe('mapSettlementConfigToSections', () => {
     expect(paymentRows[0]?.iconKey).toBe('pay_transport')
     expect(paymentRows[1]?.iconKey).toBe('pay_activity')
     expect(paymentRows[1]?.layout).toBe('meal')
+    const deduction = sections.find(s => s.kind === 'deduction')?.items[0]
+    expect(deduction?.title).toBe('원천징수세액')
+    expect(deduction?.description).toBe('소득 유형별 원천징수 기준과 세율을 설정합니다.')
   })
 })
