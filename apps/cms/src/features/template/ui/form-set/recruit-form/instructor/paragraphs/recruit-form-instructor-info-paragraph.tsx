@@ -4,8 +4,10 @@ import type { Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { INSTRUCTOR_TARGET_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import {
+  RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
+} from '@/features/program/general/lib/recruit-radio-defaults'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { useInstructorRecruitField } from '@/features/template/ui/form-set/recruit-form/instructor/instructor-recruit-form-rhf'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsCheckbox } from '@/shared/ui/cms-checkbox'
@@ -62,7 +64,7 @@ export function RecruitFormInstructorInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
     useInstructorRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
       'recruit.instructor.announcementPublished',
-      'published'
+      RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
     )
   const [recruitTargets, setRecruitTargets] = useInstructorRecruitField<string[]>(
     'recruit.instructor.recruitTargets',
@@ -92,11 +94,6 @@ export function RecruitFormInstructorInfoParagraph() {
     }
     setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
-  const programRangeWithTime = useMemo(
-    () => (programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1])),
-    [programRange]
-  )
-
   const [recruitAnchorIso, setRecruitAnchorIso] = useInstructorRecruitField<string | null>(
     'recruit.instructor.recruitAnchorIso',
     null
@@ -189,8 +186,9 @@ export function RecruitFormInstructorInfoParagraph() {
                 placeholder="프로그램 운영 기간을 선택하세요"
                 preferPeriodModeInPopover
                 suppressAutoTodayWhenEmpty
+                showTimeToggle={false}
                 appliedSurfaceRange={programRange}
-                appliedSurfaceWithTime={programRangeWithTime}
+                appliedSurfaceWithTime={false}
                 onRangeChange={range => setProgramRange(range)}
                 onChange={next => {
                   if (next == null) return

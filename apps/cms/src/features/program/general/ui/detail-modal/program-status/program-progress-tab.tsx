@@ -7,7 +7,6 @@ import { useMemo, useState, useEffect } from 'react'
 import { Card, Row, Col, Select } from 'antd'
 import {
   CmsButton,
-  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
   FilterTableToolbarButton,
 } from '@/shared/ui'
 import { ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE } from '@/shared/constants/messages'
@@ -566,9 +565,7 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     type="button"
                     variant="primary"
                     size="large"
-                    width={160}
-                    onClick={handleSearch}
-                  >
+                    onClick={handleSearch} >
                     조회
                   </CmsButton>
                 </Col>
@@ -600,11 +597,8 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                 <div className="program-progress-tab__table-actions program-application-list-toolbar">
                   <FilterTableToolbarButton
                     variant="delete"
-                    className="cms-button--application-list-bulk"
-                    width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                     disabled={selectedSchoolRowKeys.length === 0}
-                    onClick={handleSchoolDeleteClick}
-                  >
+                    onClick={handleSchoolDeleteClick} >
                     학교 삭제
                   </FilterTableToolbarButton>
                 </div>
@@ -656,23 +650,18 @@ export function ProgramProgressTab({ programId }: ProgramProgressTabProps) {
                     icon={<ButtonDownloadIcon />}
                     onClick={() =>
                       window.alert(ACTIVITY_CERTIFICATE_ISSUE_COMING_SOON_ALERT_MESSAGE)
-                    }
-                  >
+                    } >
                     활동확인서 발급
                   </FilterTableToolbarButton>
                   <FilterTableToolbarButton
                     variant="delete"
-                    className="cms-button--application-list-bulk"
-                    width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
                     disabled={selectedInstructorRowKeys.length === 0}
-                    onClick={handleInstructorDeleteClick}
-                  >
+                    onClick={handleInstructorDeleteClick} >
                     강사 삭제
                   </FilterTableToolbarButton>
                   <FilterTableToolbarButton
                     variant="primary"
-                    onClick={() => setAddInstructorModalOpen(true)}
-                  >
+                    onClick={() => setAddInstructorModalOpen(true)} >
                     강사 등록
                   </FilterTableToolbarButton>
                 </div>

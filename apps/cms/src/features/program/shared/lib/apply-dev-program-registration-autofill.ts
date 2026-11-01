@@ -1,7 +1,6 @@
 import dayjs, { type Dayjs } from 'dayjs'
 import {
   buildEconomyAutofillDatePlan,
-  buildEconomyAutofillPreferredScheduleBlocks,
   selectEconomyRegistrationAutofillPhrases,
   type EconomyAutofillPhraseSelection,
 } from '@/features/program/1c-1s/lib/dev-autofill-phrases'
@@ -9,6 +8,7 @@ import {
   collectCompanySchoolApplicationFormState,
   companySchoolApplicationEditorState,
 } from '@/features/program/1c-1s/lib/application-form-state'
+import { withEmptyCompanySchoolApplicationPreferredSchedule } from '@/features/program/1c-1s/lib/registration-rhf-application'
 import {
   fillBlankApplicationFormThirdPartyRecipients,
   seedDevAutofillApplicationThirdPartyRecipients,
@@ -637,7 +637,10 @@ function patchRecruitDatePlan(
       : {}),
   }
   applyDevAutofillRecruitOverlayPartials(args.variant, args.participant, {
-    institution: institutionPartial,
+    institution:
+      args.variant === 'economy' || args.participant?.organization === true
+        ? institutionPartial
+        : undefined,
     general: generalPartial,
   })
 }
@@ -1300,14 +1303,19 @@ function buildGeneralLikeOverlay(
           category: sample.ipsCategory,
           detail: sample.ipsDetail,
         },
-    [`${typeSettingsPrefix}.singleEducationForm`]: typeSettings.educationForm,
-    [`${typeSettingsPrefix}.multiCommonEducationForm`]: typeSettings.educationForm,
-    [`${typeSettingsPrefix}.educationForm`]: typeSettings.educationForm,
+    ...(layout.sessionRoundType === 'multi'
+      ? {
+          [`${typeSettingsPrefix}.multiCommonEducationForm`]: typeSettings.educationForm,
+          [`${typeSettingsPrefix}.multiCommonParticipation`]: typeSettings.participation,
+        }
+      : {
+          [`${typeSettingsPrefix}.singleEducationForm`]: typeSettings.educationForm,
+          [`${typeSettingsPrefix}.educationForm`]: typeSettings.educationForm,
+          [`${typeSettingsPrefix}.singleParticipation`]: typeSettings.participation,
+        }),
     // 개인 대상 교육 진행 장소 (일정 공통). 온라인이면 저장 본문에서 빠진다
     [`${typeSettingsPrefix}.educationPlaceScheduleDetail`]: 'common',
     [`${typeSettingsPrefix}.educationPlaceAddress`]: '서울특별시 중구 세종대로 110',
-    [`${typeSettingsPrefix}.singleParticipation`]: typeSettings.participation,
-    [`${typeSettingsPrefix}.multiCommonParticipation`]: typeSettings.participation,
     [`${curriculumPrefix}.unitNameBySession`]: indexRecord(chartCount, index =>
       unitText(sample, index, 'name')
     ),
@@ -1614,9 +1622,13 @@ function buildUjatOverlay(
   sample: DevAutofillSample,
   resolved: { sponsorId: string; contactId: string }
 ): Record<string, unknown> {
-  const sponsorId = resolved.sponsorId || UJAT_SPONSOR_ALL_VALUE
+  // 등록 필수값은 「전체」(__all__)를 허용하지 않는다. 실후원사가 없으면 빈 값으로 두고 수동 입력을 유도한다.
+  const rawSponsor = resolved.sponsorId.trim()
+  const rawContact = resolved.contactId.trim()
+  const sponsorId =
+    rawSponsor && rawSponsor !== UJAT_SPONSOR_ALL_VALUE ? rawSponsor : ''
   const contactId =
-    resolved.contactId || (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
+    sponsorId && rawContact && rawContact !== UJAT_SPONSOR_ALL_VALUE ? rawContact : ''
   return {
     'ujat.basicInfo.repKo': sample.titleKo,
     'ujat.basicInfo.repEn': sample.titleEn,
@@ -1634,6 +1646,7 @@ function buildUjatOverlay(
     'ujat.basicInfo.courseDeliveredBy': sample.courseDeliveredBy,
     'ujat.basicInfo.ipsCategory': sample.ipsCategory,
     'ujat.basicInfo.partnerInvolvement': sample.partnerInvolvement,
+    'ujat.basicInfo.educationVenueKind': sample.venueKind || 'inside',
     'ujat.basicInfo.sponsorId': sponsorId,
     'ujat.basicInfo.sponsorContactId': contactId,
     'ujat.basicInfo.sponsorContactIds': contactId ? [contactId] : [],
@@ -1882,6 +1895,22 @@ const UJAT_APPLICATION_VOLUNTEER_TEMPLATE_CODE = 'application-ujat-volunteer'
  * 있다. 따라서 현재 탭의 store만 patch하지 않고 두 신청 탭의 scope를 모두
  * 채워 두어, 모집 → 신청 → 모집 왕복 후에도 처음 진입한 것처럼 표시한다.
  */
+function seedUjatPreferredScheduleSelectedIds(): string[] {
+  const registration = getUjatProgramRegistrationOverlayRecord()
+  const selected: string[] = []
+  for (const half of ['h1', 'h2'] as const) {
+    const range = registration[`ujat.${half}.event.range`] as
+      | { start?: string; end?: string }
+      | undefined
+    const start = range?.start ? dayjs(range.start).startOf('day') : null
+    if (start == null || !start.isValid()) continue
+    let friday = start
+    while (friday.day() !== 5) friday = friday.add(1, 'day')
+    selected.push(`${half}:${friday.format('YYYY-MM-DD')}`)
+  }
+  return selected
+}
+
 function seedUjatApplicationAutofill(): void {
   const region = listUjatEducationRegionsActive()[0]?.label ?? '서울'
   const gradeBlockId = 'ujat-dev-grade-1'
@@ -1891,6 +1920,8 @@ function seedUjatApplicationAutofill(): void {
 
   const institutionOverlay = {
     [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.applicationRegion]: region,
+    [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.preferredScheduleSelectedIds]:
+      seedUjatPreferredScheduleSelectedIds(),
     [UJAT_APPLICATION_INSTITUTION_OVERLAY_KEYS.gradeDetailByBlock]: {
       [gradeBlockId]: {
         classCountInput: '2',
@@ -1976,17 +2007,16 @@ function seedUjatApplicationAutofill(): void {
 
 const ECONOMY_APPLICATION_TEMPLATE_CODE = 'application-economy' as const
 
-/** 1사1교 개발용 자동입력의 신청 단계 seed — 1·2지망을 교육/사업 운영기간 안에 둔다. */
-function seedEconomyApplicationAutofill(range: RangeIso): void {
-  const schedule = buildEconomyAutofillPreferredScheduleBlocks(range)
-  const application = collectCompanySchoolApplicationFormState(
-    peekGeneralApplicationOverlayRecord(ECONOMY_APPLICATION_TEMPLATE_CODE)
+/** 1사1교 등록 위저드 신청 폼은 템플릿 — 희망 일정은 빈 칸으로 둔다. */
+function seedEconomyApplicationAutofill(_range: RangeIso): void {
+  const application = withEmptyCompanySchoolApplicationPreferredSchedule(
+    collectCompanySchoolApplicationFormState(
+      peekGeneralApplicationOverlayRecord(ECONOMY_APPLICATION_TEMPLATE_CODE)
+    )
   )
-  application.schedule = schedule
-
   const overlay = {
-    'application.economy.schedule.first': { ...schedule.first },
-    'application.economy.schedule.second': { ...schedule.second },
+    'application.economy.schedule.first': { ...application.schedule.first },
+    'application.economy.schedule.second': { ...application.schedule.second },
   }
   replaceGeneralApplicationOverlayForScope(ECONOMY_APPLICATION_TEMPLATE_CODE, overlay)
 
@@ -2101,7 +2131,8 @@ export async function applyDevProgramRegistrationAutofill(
   )
 
   if (variant === 'ujat') {
-    const resolved = await resolveSponsorAndContact(true)
+    // 「전체」 sentinel은 등록 필수 검증에 실패한다 — 실후원사만 사용한다.
+    const resolved = await resolveSponsorAndContact(false)
     const contactSelectId = toSponsorContactSelectValue(
       resolved.sponsorId,
       resolved.contactId,
@@ -2198,9 +2229,7 @@ export async function applyDevProgramRegistrationAutofill(
         detail: sample.ipsDetail,
       },
       'generalRegistration.typeSettings.singleEducationForm': typeSettings.educationForm,
-      'generalRegistration.typeSettings.multiCommonEducationForm': typeSettings.educationForm,
       'generalRegistration.typeSettings.singleParticipation': typeSettings.participation,
-      'generalRegistration.typeSettings.multiCommonParticipation': typeSettings.participation,
     })
     seedEconomyApplicationAutofill(sample.periodRange)
     return {

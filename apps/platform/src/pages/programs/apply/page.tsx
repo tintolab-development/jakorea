@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
@@ -29,6 +29,8 @@ import {
   programApplyGateMemberSettingsPath,
   shouldHideApplyPageBlockedBanner,
   useProgramApplyGate,
+  getCmsRegistrationFixtureById,
+  mapCmsProgramToPlatformDetail,
 } from '@/features/program'
 import { usePortalProfileQuery } from '@/features/auth/sign-in/hooks/use-portal-profile-query'
 import { getQueryRetryHttpStatus } from '@/shared/lib/query-retry'
@@ -166,19 +168,16 @@ import {
   buildEnabledDatesFromEducationScheduleLines,
   mergeApplyScheduleVisibilityFields,
   findMissingRequiredBottomConsentId,
-  hasPreferredScheduleDateOutsideRuntime,
   hasPreferredScheduleDateOutsideBounds,
+  hasPreferredScheduleDateOutsideEducationConstraint,
+  resolveEducationScheduleApplyConstraint,
+  PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
+  PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
   isGeminiTrainingRequestPeriodConfigured,
-  isRuntimeScheduleNotConfigured,
   readGeminiTrainingRequestDateBounds,
   isTrainedTeachersOrganizationPeriodDateRequests,
-  readInstitutionAllowedSchedulePeriods,
-  readInstitutionApplyScheduleDateBounds,
   readInstitutionFixedScheduleChoiceItems,
   readRuntimeFixedScheduleChoiceItems,
-  resolveRuntimeScheduleDateBounds,
-  resolveRuntimeScheduleEnabledDates,
-  resolveInstitutionAllowedScheduleEnabledDates,
   readApplicationScheduleRecruitmentLimitsFromRuntime,
   normalizeInstitutionFixedScheduleAnswerTokens,
   isApplyScheduleParagraphForcedHidden,
@@ -187,6 +186,11 @@ import {
   readApplyFixedScheduleChoiceIds,
   resolveApplyScheduleChoiceAnswerKey,
   resolveHiddenScheduleAutoSubmitIds,
+  excludePreEducationScheduleChoices,
+  shouldExcludePreEducationFromApplyFixedSchedule,
+  shouldBlockApplyForEmptyFixedSchedule,
+  APPLY_EMPTY_FIXED_SCHEDULE_ALERT_TITLE,
+  APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES,
   buildApplyPreferredSessionSelectOptions,
   buildGeminiInstitutionSessionSelectOptions,
   createEmptyApplyPreferredScheduleBlocks,
@@ -246,6 +250,7 @@ import {
   findIncompleteUjatSexOffenseWriteMessage,
   emptyInstitutionSexOffense,
   findIncompleteSexOffenseMessage,
+  normalizeUjatSexOffenseWriteValues,
   sexOffenseInquiryAnswerFromValues,
   sexOffenseSubmissionAnswerFromValues,
   sexOffenseValuesFromDraftAnswers,
@@ -364,7 +369,7 @@ import {
 } from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import { FormTemplateHost, FormTemplateRenderer } from '@/features/form-template'
 import { getAccessToken } from '@/shared/lib/auth-token'
-import { getDevAuthLoggedIn, isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
+import { isRemoteApiConfigured, resolveLoginRequiredPath } from '@/shared/lib'
 import { normalizeScheduleDisplayLabel } from '@/shared/lib/format-display-date'
 import {
   PFAlertModal,
@@ -377,6 +382,13 @@ import {
 import shell from '../program-page-shell.module.css'
 import styles from './page.module.css'
 import { useLocation, useNavigate } from 'react-router-dom'
+import {
+  APPLY_GATE_CONFIG_ERROR_MESSAGE,
+  APPLY_GATE_LOGIN_SUBMIT_MESSAGE,
+  APPLY_GATE_NOT_FOUND_MESSAGE,
+  resolveApplyGate,
+  type ProgramApplyDetailStatus,
+} from './apply-gate'
 
 function createEmptyPreferredBlock(): ApplyPreferredScheduleBlock {
   return { date: '', classPeriod: '', startTime: '', endTime: '' }
@@ -450,8 +462,34 @@ export function ProgramApplyPage() {
   const fromPath = new URLSearchParams(search).get('from') ?? undefined
   const [isReady, setIsReady] = useState(false)
   const programId = getProgramIdFromPath()
-  const { program, isLoading, status } = useProgramDetail(programId, { fresh: true, focus })
+  const { program: remoteProgram, isLoading, status } = useProgramDetail(programId, {
+    fresh: true,
+    focus,
+  })
   const numericProgramId = parsePortalProgramId(programId)
+  const devMockApplyEnabled = import.meta.env.DEV && !isRemoteApiConfigured()
+  const devMockProgram = useMemo(() => {
+    if (!devMockApplyEnabled || numericProgramId == null) return undefined
+    const fixture = getCmsRegistrationFixtureById(String(numericProgramId))
+    return fixture ? mapCmsProgramToPlatformDetail(fixture) : undefined
+  }, [devMockApplyEnabled, numericProgramId])
+  const program = remoteProgram ?? devMockProgram ?? undefined
+  const detailStatusForGate: ProgramApplyDetailStatus = devMockApplyEnabled
+    ? program
+      ? 'ready'
+      : numericProgramId != null
+        ? 'not-found'
+        : status
+    : status
+  let applyGate = resolveApplyGate({
+    hasAccessToken: Boolean(getAccessToken()),
+    remoteConfigured: isRemoteApiConfigured(),
+    numericProgramId,
+    status: detailStatusForGate,
+  })
+  if (devMockApplyEnabled && applyGate === 'config-error') {
+    applyGate = program ? 'ready' : 'not-found'
+  }
   const remoteApplyEnabled =
     isRemoteApiConfigured() &&
     numericProgramId != null &&
@@ -510,13 +548,17 @@ export function ProgramApplyPage() {
       return
     }
 
-    if (!getDevAuthLoggedIn()) {
+    if (applyGate === 'login-required') {
       navigate(resolveLoginRequiredPath(`/programs/${programId}/apply${search}`))
       return
     }
 
+    if (applyGate === 'loading') {
+      return
+    }
+
     setIsReady(true)
-  }, [navigate, programId, search])
+  }, [applyGate, navigate, programId, search])
 
   useEffect(() => {
     if (
@@ -641,7 +683,8 @@ export function ProgramApplyPage() {
   >(emptyUjatInstitutionClassTimeBlocks)
   const [ujatPreferredScheduleIds, setUjatPreferredScheduleIds] = useState<string[]>([])
   const [submitAlert, setSubmitAlert] = useState<{
-    description: string
+    title?: string
+    description: ReactNode
     promptSettingsGrade?: boolean
   } | null>(null)
   const [submitErrorField, setSubmitErrorField] = useState<string | null>(null)
@@ -804,30 +847,29 @@ export function ProgramApplyPage() {
       ),
     [applicationFormDocument, institutionScheduleParagraph]
   )
-  const institutionScheduleDateBounds = useMemo(
-    () =>
-      readInstitutionApplyScheduleDateBounds(
-        applicationFormDocument?.runtimeContext,
-        institutionScheduleParagraph
-      ),
-    [applicationFormDocument, institutionScheduleParagraph]
+  const applyScheduleParagraphForcedHidden = isApplyScheduleParagraphForcedHidden(
+    applicationScheduleVisibility,
   )
-  const institutionAllowedSchedulePeriods = useMemo(
+  const applyEducationFixedScheduleChoices = useMemo(
     () =>
-      readInstitutionAllowedSchedulePeriods(
-        applicationFormDocument?.runtimeContext,
-        institutionScheduleParagraph
-      ),
-    [applicationFormDocument, institutionScheduleParagraph]
+      shouldExcludePreEducationFromApplyFixedSchedule({
+        applyCase,
+        scheduleInputMode: institutionScheduleInputMode,
+        scheduleParagraphForcedHidden: applyScheduleParagraphForcedHidden,
+      })
+        ? excludePreEducationScheduleChoices(
+            institutionRuntimeFixedScheduleChoices,
+            program?.scheduleOptionLookup,
+          )
+        : institutionRuntimeFixedScheduleChoices,
+    [
+      applyCase,
+      applyScheduleParagraphForcedHidden,
+      institutionRuntimeFixedScheduleChoices,
+      institutionScheduleInputMode,
+      program?.scheduleOptionLookup,
+    ],
   )
-  const institutionScheduleRequiresRuntimePeriods =
-    applyCase === 'institution-general' && institutionScheduleInputMode === 'date_time_requests'
-  const institutionScheduleEnabledDates = useMemo(() => {
-    return resolveInstitutionAllowedScheduleEnabledDates(
-      institutionAllowedSchedulePeriods,
-      institutionScheduleRequiresRuntimePeriods
-    )
-  }, [institutionAllowedSchedulePeriods, institutionScheduleRequiresRuntimePeriods])
   /**
    * CMS 개인 신청은 기간 지정 지망 UI가 없다 (institution-schedule 전용).
    * 일반 기관 + 기간 지정(또는 render `date_time_requests`)일 때만 1·2지망을 덮어쓴다.
@@ -871,6 +913,44 @@ export function ProgramApplyPage() {
     showGeneralPreferredSchedule ||
     showEconomyPreferredSchedule ||
     showGeminiInstitutionApply
+  const economyEducationScheduleConstraint = useMemo(
+    () =>
+      resolveEducationScheduleApplyConstraint({
+        educationScheduleRange: program?.educationScheduleRange,
+        failClosed: showEconomyPreferredSchedule,
+      }),
+    [program?.educationScheduleRange, showEconomyPreferredSchedule]
+  )
+  const institutionEducationScheduleConstraint = useMemo(
+    () =>
+      resolveEducationScheduleApplyConstraint({
+        runtime: applicationFormDocument?.runtimeContext,
+        paragraph: institutionScheduleParagraph,
+        educationScheduleRange: program?.educationScheduleRange,
+        failClosed: showGeneralPreferredSchedule,
+      }),
+    [
+      applicationFormDocument?.runtimeContext,
+      institutionScheduleParagraph,
+      program?.educationScheduleRange,
+      showGeneralPreferredSchedule,
+    ]
+  )
+  const trainedTeachersEducationScheduleConstraint = useMemo(
+    () =>
+      resolveEducationScheduleApplyConstraint({
+        runtime: applicationFormRuntimeContext,
+        paragraph: trainedTeachersScheduleParagraph,
+        educationScheduleRange: program?.educationScheduleRange,
+        failClosed: useTrainedTeachersOperatingPeriod,
+      }),
+    [
+      applicationFormRuntimeContext,
+      program?.educationScheduleRange,
+      trainedTeachersScheduleParagraph,
+      useTrainedTeachersOperatingPeriod,
+    ]
+  )
   const institutionPreferredSessionSelect = useMemo(() => {
     if (!program || (!showGeneralPreferredSchedule && !showGeminiInstitutionApply)) {
       return { show: false, options: [] as { value: string; label: string }[] }
@@ -937,44 +1017,6 @@ export function ProgramApplyPage() {
     educationScheduleLinesForApply,
     showTrainedTeachersPreferredSchedule,
   ])
-  const trainedTeachersScheduleDateBounds = useMemo(() => {
-    if (!useTrainedTeachersOperatingPeriod) {
-      return { minScheduleDate: null, maxScheduleDate: null }
-    }
-    return resolveRuntimeScheduleDateBounds(
-      applicationFormRuntimeContext,
-      trainedTeachersScheduleParagraph
-    )
-  }, [
-    applicationFormRuntimeContext,
-    trainedTeachersScheduleParagraph,
-    useTrainedTeachersOperatingPeriod,
-  ])
-  const trainedTeachersScheduleEnabledDates = useMemo(() => {
-    if (!useTrainedTeachersOperatingPeriod) return null
-    return resolveRuntimeScheduleEnabledDates(
-      applicationFormRuntimeContext,
-      true,
-      trainedTeachersScheduleParagraph
-    )
-  }, [
-    applicationFormRuntimeContext,
-    trainedTeachersScheduleParagraph,
-    useTrainedTeachersOperatingPeriod,
-  ])
-  const trainedTeachersScheduleNotConfigured = useMemo(
-    () =>
-      useTrainedTeachersOperatingPeriod &&
-      isRuntimeScheduleNotConfigured(
-        applicationFormRuntimeContext,
-        trainedTeachersScheduleParagraph
-      ),
-    [
-      applicationFormRuntimeContext,
-      trainedTeachersScheduleParagraph,
-      useTrainedTeachersOperatingPeriod,
-    ]
-  )
   const trainedTeachersFixedScheduleChoiceItems = trainedTeachersRuntimeFixedScheduleChoices ?? []
   const applicationRecruitmentLimits = useMemo(
     () => readApplicationScheduleRecruitmentLimitsFromRuntime(applicationFormRuntimeContext),
@@ -1103,32 +1145,31 @@ export function ProgramApplyPage() {
             ...program,
             applicationType: focusedApplicationType,
           })
-          const programLinkedDraft = applyProgramLinkedApplicationDraftPatches(
-            preparePortalUjatApplicationDraft(
-              remoteDraft,
-              new Date(),
-              coerceApplicationFormDocument(remoteForm)?.runtimeContext,
-            ),
-            {
-              applyCase: applyCaseForDraft,
-              program,
-              runtimeContext: coerceApplicationFormDocument(remoteForm)?.runtimeContext,
-            }
-          )
+          const runtimeContext = coerceApplicationFormDocument(remoteForm)?.runtimeContext
+          // binding merge가 items(확인 문구)를 카탈로그 원문으로 덮을 수 있어
+          // 기수·연도 치환은 merge 이후에 다시 적용한다.
           const bindingMergedDraft =
             isVolunteerApplyFormCase(applyCaseForDraft) ||
             applyCaseForDraft === 'instructor' ||
             applyCaseForDraft === 'instructor-gemini'
-              ? mergeApplicationBindingRuntimeParagraphs(programLinkedDraft, remoteForm)
-              : programLinkedDraft
+              ? mergeApplicationBindingRuntimeParagraphs(remoteDraft, remoteForm)
+              : remoteDraft
+          const programLinkedDraft = applyProgramLinkedApplicationDraftPatches(
+            preparePortalUjatApplicationDraft(bindingMergedDraft, new Date(), runtimeContext),
+            {
+              applyCase: applyCaseForDraft,
+              program,
+              runtimeContext,
+            }
+          )
           setDraft(
             applyCaseForDraft === 'individual-general' || applyCaseForDraft === 'individual-team'
-              ? prepareIndividualApplicationDraft(bindingMergedDraft, {
+              ? prepareIndividualApplicationDraft(programLinkedDraft, {
                   keepParagraphIds: interviewBindingParagraph
                     ? new Set([interviewBindingParagraph.id])
                     : undefined,
                 })
-              : bindingMergedDraft
+              : programLinkedDraft
           )
           const draftAnswers = remoteForm.draftAnswers
           const interviewParagraph = findDraftParagraph(
@@ -1423,6 +1464,10 @@ export function ProgramApplyPage() {
       return
     }
 
+    if (!devMockApplyEnabled) {
+      return
+    }
+
     const mockKey = `mock:${program.id}:${focusedApplicationType ?? ''}`
     if (hydratedFormKeyRef.current === mockKey) return
     hydratedFormKeyRef.current = mockKey
@@ -1467,6 +1512,7 @@ export function ProgramApplyPage() {
   }, [
     program,
     programId,
+    devMockApplyEnabled,
     remoteApplyEnabled,
     applicationFormQuery.status,
     applicationFormQuery.blockedReason,
@@ -1850,8 +1896,10 @@ export function ProgramApplyPage() {
           <ApplyEconomyPreferredSchedule
             value={economyPreferredBlocks}
             onChange={setEconomyPreferredBlocks}
-            minDate={program?.educationScheduleRange?.start ?? null}
-            maxDate={program?.educationScheduleRange?.end ?? null}
+            minDate={economyEducationScheduleConstraint.minDate}
+            maxDate={economyEducationScheduleConstraint.maxDate}
+            enabledDates={economyEducationScheduleConstraint.enabledDates}
+            disabled={!economyEducationScheduleConstraint.configured}
           />
         )
       }
@@ -1876,9 +1924,9 @@ export function ProgramApplyPage() {
                   ? geminiTrainingRequestDateBounds.minScheduleDate
                   : null
                 : useInstitutionScheduleBounds
-                  ? institutionScheduleDateBounds.minScheduleDate
+                  ? institutionEducationScheduleConstraint.minDate
                   : useTrainedTeachersOperatingPeriod
-                    ? trainedTeachersScheduleDateBounds.minScheduleDate
+                    ? trainedTeachersEducationScheduleConstraint.minDate
                     : null
             }
             maxDate={
@@ -1887,22 +1935,25 @@ export function ProgramApplyPage() {
                   ? geminiTrainingRequestDateBounds.maxScheduleDate
                   : null
                 : useInstitutionScheduleBounds
-                  ? institutionScheduleDateBounds.maxScheduleDate
+                  ? institutionEducationScheduleConstraint.maxDate
                   : useTrainedTeachersOperatingPeriod
-                    ? trainedTeachersScheduleDateBounds.maxScheduleDate
+                    ? trainedTeachersEducationScheduleConstraint.maxDate
                     : null
             }
             enabledDates={
               useInstitutionScheduleBounds
-                ? institutionScheduleEnabledDates
+                ? institutionEducationScheduleConstraint.enabledDates
                 : useTrainedTeachersOperatingPeriod
-                  ? trainedTeachersScheduleEnabledDates
+                  ? trainedTeachersEducationScheduleConstraint.enabledDates
                 : showTrainedTeachersApply
                   ? trainedTeachersEnabledDates
                   : null
             }
             disabled={
-              trainedTeachersScheduleNotConfigured ||
+              (useInstitutionScheduleBounds &&
+                !institutionEducationScheduleConstraint.configured) ||
+              (useTrainedTeachersOperatingPeriod &&
+                !trainedTeachersEducationScheduleConstraint.configured) ||
               (showGeminiInstitutionApply && !geminiTrainingRequestPeriodConfigured)
             }
             showSessionSelect={
@@ -1941,7 +1992,7 @@ export function ProgramApplyPage() {
         const runtimeFixedChoiceItems =
           isApplyScheduleChoiceParagraphId(paragraph.id) &&
           institutionScheduleInputMode === 'fixed_schedule_options'
-            ? (institutionRuntimeFixedScheduleChoices?.map(item => ({
+            ? (applyEducationFixedScheduleChoices?.map(item => ({
                 id: item.id,
                 label: item.label,
               })) ?? [])
@@ -2136,12 +2187,10 @@ export function ProgramApplyPage() {
       showPreferredScheduleInput,
       institutionPreferredSessionSelect,
       showPreferredEducationForm,
-      institutionScheduleDateBounds.minScheduleDate,
-      institutionScheduleDateBounds.maxScheduleDate,
-      institutionScheduleEnabledDates,
       trainedTeachersEnabledDates,
-      trainedTeachersScheduleEnabledDates,
-      trainedTeachersScheduleNotConfigured,
+      economyEducationScheduleConstraint,
+      institutionEducationScheduleConstraint,
+      trainedTeachersEducationScheduleConstraint,
       trainedTeachersDateOnlyPreferred,
       isTrainedTeachersFixedScheduleOptions,
       trainedTeachersFixedScheduleChoiceItems,
@@ -2149,6 +2198,7 @@ export function ProgramApplyPage() {
       applicationRecruitmentLimits,
       applicationFormDocument,
       institutionRuntimeFixedScheduleChoices,
+      applyEducationFixedScheduleChoices,
       institutionScheduleInputMode,
       profileSchoolLocked,
       profileSchool,
@@ -2194,7 +2244,9 @@ export function ProgramApplyPage() {
 
       const atPreferredScheduleMax = preferredBlocks.length >= preferredScheduleMaxBlocks
       const scheduleInputDisabled =
-        showTrainedTeachersPreferredSchedule && trainedTeachersScheduleNotConfigured
+        showTrainedTeachersPreferredSchedule &&
+        useTrainedTeachersOperatingPeriod &&
+        !trainedTeachersEducationScheduleConstraint.configured
 
       return (
         <ApplyPreferredScheduleAddButton
@@ -2216,8 +2268,9 @@ export function ProgramApplyPage() {
       showPreferredScheduleInput,
       preferredBlocks.length,
       preferredScheduleMaxBlocks,
-      trainedTeachersScheduleNotConfigured,
       showTrainedTeachersPreferredSchedule,
+      useTrainedTeachersOperatingPeriod,
+      trainedTeachersEducationScheduleConstraint,
     ]
   )
 
@@ -2368,8 +2421,48 @@ export function ProgramApplyPage() {
       applicationFormQuery.status === 'error' ||
       applicationFormQuery.status === 'ready')
 
-  if (!isReady || isLoading || formLoading || !program) {
+  const gateLoading =
+    applyGate === 'loading' ||
+    !isReady ||
+    (applyGate === 'ready' && isLoading && !devMockApplyEnabled) ||
+    formLoading
+
+  if (gateLoading) {
     return <ProgramApplyLoading />
+  }
+
+  if (applyGate === 'login-required') {
+    return <ProgramApplyLoading />
+  }
+
+  if (applyGate === 'config-error') {
+    return (
+      <section className={[shell.page, styles.page].join(' ')}>
+        <div className={shell.inner}>
+          <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+            프로그램 신청하기
+          </PFText>
+          <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.blockedNotice}>
+            {APPLY_GATE_CONFIG_ERROR_MESSAGE}
+          </PFText>
+        </div>
+      </section>
+    )
+  }
+
+  if (applyGate === 'not-found' || !program) {
+    return (
+      <section className={[shell.page, styles.page].join(' ')}>
+        <div className={shell.inner}>
+          <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+            프로그램 신청하기
+          </PFText>
+          <PFText as="p" typo="bd-md-md" color="neutral-cool-700" className={styles.blockedNotice}>
+            {APPLY_GATE_NOT_FOUND_MESSAGE}
+          </PFText>
+        </div>
+      </section>
+    )
   }
 
   if (!displayDraft && !remoteFormUnavailable) {
@@ -2420,6 +2513,38 @@ export function ProgramApplyPage() {
       }
       setSubmitAlert({ description: blockedMessage })
       return
+    }
+    {
+      const scheduleParagraph = pickApplyScheduleChoiceParagraph(
+        displayDraft.paragraphs,
+        Array.isArray(applicationFormDocument?.paragraphs)
+          ? applicationFormDocument.paragraphs
+          : undefined,
+      )
+      if (
+        shouldBlockApplyForEmptyFixedSchedule({
+          applyCase,
+          scheduleInputMode: institutionScheduleInputMode,
+          scheduleChoiceHidden: isApplyScheduleChoiceHiddenInSet(
+            hiddenParagraphIds,
+            scheduleParagraph,
+          ),
+          scheduleParagraphForcedHidden: applyScheduleParagraphForcedHidden,
+          educationScheduleChoices: applyEducationFixedScheduleChoices,
+        })
+      ) {
+        setSubmitAlert({
+          title: APPLY_EMPTY_FIXED_SCHEDULE_ALERT_TITLE,
+          description: (
+            <>
+              {APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES[0]}
+              <br />
+              {APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES[1]}
+            </>
+          ),
+        })
+        return
+      }
     }
     // 제출 직전 필수 동의 재확인 — 진입 후 철회·만료된 경우도 막는다. 조회 실패는 서버 응답에 맡긴다.
     if (remoteApplyEnabled && applicationFormQuery.bundle?.option.canApply !== false) {
@@ -2532,10 +2657,7 @@ export function ProgramApplyPage() {
       const applyScheduleChoiceIdsRaw = readApplyFixedScheduleChoiceIds({
         runtime: applicationFormDocument?.runtimeContext,
         paragraph: applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
-        runtimeChoices: readRuntimeFixedScheduleChoiceItems(
-          applicationFormDocument?.runtimeContext,
-          applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
-        ),
+        runtimeChoices: applyEducationFixedScheduleChoices,
         program: applicationScheduleVisibility,
         educationScheduleLines: educationScheduleLinesForApply,
       })
@@ -2549,8 +2671,16 @@ export function ProgramApplyPage() {
           : applyScheduleChoiceIdsRaw
       const hiddenScheduleAutoSubmitIds = resolveHiddenScheduleAutoSubmitIds({
         hidden: applyScheduleChoiceHidden,
-        forcedHidden: isApplyScheduleParagraphForcedHidden(applicationScheduleVisibility),
-        choiceIds: applyScheduleChoiceIds,
+        forcedHidden: applyScheduleParagraphForcedHidden,
+        choiceIds: applyScheduleParagraphForcedHidden
+          ? readApplyFixedScheduleChoiceIds({
+              runtime: applicationFormDocument?.runtimeContext,
+              paragraph: applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
+              runtimeChoices: institutionRuntimeFixedScheduleChoices,
+              program: applicationScheduleVisibility,
+              educationScheduleLines: educationScheduleLinesForApply,
+            })
+          : applyScheduleChoiceIds,
       })
       const applyScheduleChoiceAnswerKey = resolveApplyScheduleChoiceAnswerKey(
         applyCase,
@@ -2603,10 +2733,13 @@ export function ProgramApplyPage() {
             : toPortalPreferredScheduleBlocks(preferredBlocks, preferredScheduleMapOptions)
           : undefined
       if (showPreferredScheduleInput && !skipPreferredScheduleInput) {
-        if (trainedTeachersScheduleNotConfigured) {
+        if (
+          useTrainedTeachersOperatingPeriod &&
+          !trainedTeachersEducationScheduleConstraint.configured
+        ) {
           setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
           setSubmitAlert({
-            description: '신청 가능한 교육 일정이 설정되지 않았습니다. 관리자에게 확인해 주세요.',
+            description: PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
           })
           return
         }
@@ -2617,17 +2750,74 @@ export function ProgramApplyPage() {
           return
         }
         if (!isTrainedTeachersFixedScheduleTarget) {
+          if (showEconomyPreferredSchedule) {
+            const economyPreferredParagraph =
+              displayDraft.paragraphs.find(paragraph =>
+                isApplicationPreferredScheduleParagraphId(paragraph.id)
+              ) ?? undefined
+            if (!economyEducationScheduleConstraint.configured) {
+              if (economyPreferredParagraph) setSubmitErrorField(economyPreferredParagraph.id)
+              setSubmitAlert({
+                description: PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
+              })
+              return
+            }
+            if (
+              hasPreferredScheduleDateOutsideEducationConstraint(
+                economyPreferredBlocks,
+                economyEducationScheduleConstraint
+              )
+            ) {
+              if (economyPreferredParagraph) setSubmitErrorField(economyPreferredParagraph.id)
+              setSubmitAlert({
+                description: PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
+              })
+              return
+            }
+          }
+          if (
+            showGeneralPreferredSchedule &&
+            !institutionEducationScheduleConstraint.configured
+          ) {
+            setSubmitErrorField(institutionScheduleParagraph?.id ?? null)
+            setSubmitAlert({
+              description: PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
+            })
+            return
+          }
+          if (
+            showGeneralPreferredSchedule &&
+            hasPreferredScheduleDateOutsideEducationConstraint(
+              preferredBlocks,
+              institutionEducationScheduleConstraint
+            )
+          ) {
+            setSubmitErrorField(institutionScheduleParagraph?.id ?? null)
+            setSubmitAlert({
+              description: PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
+            })
+            return
+          }
           if (
             useTrainedTeachersOperatingPeriod &&
-            hasPreferredScheduleDateOutsideRuntime(
+            !trainedTeachersEducationScheduleConstraint.configured
+          ) {
+            setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
+            setSubmitAlert({
+              description: PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
+            })
+            return
+          }
+          if (
+            useTrainedTeachersOperatingPeriod &&
+            hasPreferredScheduleDateOutsideEducationConstraint(
               preferredBlocks,
-              applicationFormRuntimeContext,
-              trainedTeachersScheduleParagraph
+              trainedTeachersEducationScheduleConstraint
             )
           ) {
             setSubmitErrorField(trainedTeachersScheduleParagraph?.id ?? null)
             setSubmitAlert({
-              description: '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
+              description: PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
             })
             return
           }
@@ -2742,7 +2932,7 @@ export function ProgramApplyPage() {
         ) {
           const selectableCount = Math.max(
             scheduleParagraph.items.length,
-            institutionRuntimeFixedScheduleChoices?.length ?? 0
+            applyEducationFixedScheduleChoices?.length ?? 0
           )
           const selected = normalizeInstitutionFixedScheduleAnswerTokens(
             scheduleParagraph.selectedPreviewMultipleIds ?? [],
@@ -2869,12 +3059,15 @@ export function ProgramApplyPage() {
         isApplicationSexOffenseSubmissionParagraphId
       )
       if (sexOffenseParagraph) {
-        const sexOffenseError = isUjatInstitutionApplyFormCase(applyCase)
-          ? findIncompleteUjatSexOffenseWriteMessage({
+        const sexOffenseForValidate = isUjatInstitutionApplyFormCase(applyCase)
+          ? normalizeUjatSexOffenseWriteValues({
               ...sexOffense,
               submissionRequest: sexOffense.submissionRequest || 'request',
             })
-          : findIncompleteSexOffenseMessage(sexOffense)
+          : sexOffense
+        const sexOffenseError = isUjatInstitutionApplyFormCase(applyCase)
+          ? findIncompleteUjatSexOffenseWriteMessage(sexOffenseForValidate)
+          : findIncompleteSexOffenseMessage(sexOffenseForValidate)
         if (sexOffenseError) {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
@@ -3067,7 +3260,7 @@ export function ProgramApplyPage() {
         applyCase === 'institution-general' &&
         institutionScheduleInputMode === 'fixed_schedule_options' &&
         !applyScheduleChoiceHidden &&
-        institutionRuntimeFixedScheduleChoices == null
+        applyEducationFixedScheduleChoices == null
       ) {
         setSubmitAlert({
           description: '신청 가능한 교육 일정을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -3156,9 +3349,15 @@ export function ProgramApplyPage() {
         overrides[resolveApplicationAnswerKey(guidanceParagraph)] =
           guidanceAnswerFromValues(guidanceAnswers)
       }
+      const sexOffenseForSubmit = isUjatInstitutionApplyFormCase(applyCase)
+        ? normalizeUjatSexOffenseWriteValues({
+            ...sexOffense,
+            submissionRequest: sexOffense.submissionRequest || 'request',
+          })
+        : sexOffense
       if (sexOffenseParagraph) {
         overrides[resolveApplicationAnswerKey(sexOffenseParagraph)] =
-          sexOffenseSubmissionAnswerFromValues(sexOffense)
+          sexOffenseSubmissionAnswerFromValues(sexOffenseForSubmit)
       }
       if (instructorCrimeParagraph && instructorCrimeRecord.confirmed) {
         overrides[resolveApplicationAnswerKey(instructorCrimeParagraph)] =
@@ -3232,13 +3431,13 @@ export function ProgramApplyPage() {
         displayDraft,
         isApplicationSexOffenseInquiryParagraphId
       )
-      if (inquiryParagraph && shouldShowSexOffenseInquiry(sexOffense)) {
+      if (inquiryParagraph && shouldShowSexOffenseInquiry(sexOffenseForSubmit)) {
         overrides[resolveApplicationAnswerKey(inquiryParagraph)] =
-          sexOffenseInquiryAnswerFromValues(sexOffense)
+          sexOffenseInquiryAnswerFromValues(sexOffenseForSubmit)
       }
 
       const omitParagraphIds = new Set<string>()
-      if (inquiryParagraph && !shouldShowSexOffenseInquiry(sexOffense)) {
+      if (inquiryParagraph && !shouldShowSexOffenseInquiry(sexOffenseForSubmit)) {
         omitParagraphIds.add(inquiryParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(inquiryParagraph))
       }
@@ -3390,6 +3589,10 @@ export function ProgramApplyPage() {
         setGateModal(null)
         setCompleteModalOpen(true)
       } catch (error) {
+        if (getQueryRetryHttpStatus(error) === 401) {
+          setSubmitAlert({ description: APPLY_GATE_LOGIN_SUBMIT_MESSAGE })
+          return
+        }
         const message = getProgramApplicationApiErrorMessage(error)
         const promptSettingsGrade = isIndividualApplicationEnrolledGradeRequiredError(error)
         const errorCode = getApplicationApiErrorCode(error)
@@ -3475,7 +3678,11 @@ export function ProgramApplyPage() {
       })
       return
     }
-    setCompleteModalOpen(true)
+    setSubmitAlert({
+      description: isRemoteApiConfigured()
+        ? APPLY_GATE_LOGIN_SUBMIT_MESSAGE
+        : APPLY_GATE_CONFIG_ERROR_MESSAGE,
+    })
   }
 
   const visibleInstructorCrimeParagraph = displayDraft
@@ -3496,9 +3703,16 @@ export function ProgramApplyPage() {
           <ProgramBackButton size="large" label="이전으로" onClick={handleBack} />
         </div>
 
-        <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
-          프로그램 신청하기
-        </PFText>
+        <div className={styles.titleRow}>
+          <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+            프로그램 신청하기
+          </PFText>
+          {devMockApplyEnabled && displayDraft ? (
+            <span className={styles.devMockBadge} aria-label="개발용 mock 신청 양식">
+              DEV MOCK
+            </span>
+          ) : null}
+        </div>
 
         <div className={styles.summary}>
           <PFText as="h2" typo="hl-sm" color="black">
@@ -3593,7 +3807,7 @@ export function ProgramApplyPage() {
       />
       <PFAlertModal
         open={submitAlert != null}
-        title="안내"
+        title={submitAlert?.title ?? '안내'}
         description={submitAlert?.description}
         onConfirm={dismissSubmitAlert}
       >

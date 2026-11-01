@@ -228,8 +228,7 @@ export function UniversitySearch({
           type="button"
           variant="secondary"
           size="small"
-          onClick={() => handleSelect(record)}
-        >
+          onClick={() => handleSelect(record)} >
           선택
         </CmsButton>
       ),
@@ -285,7 +284,6 @@ export function UniversitySearch({
               options={getSidoOptions()}
               onChange={handleSidoChange}
               inputSize="medium"
-              width={140}
               withAllOption
             />
             <CmsSelect
@@ -297,7 +295,6 @@ export function UniversitySearch({
                 setCurrentPage(1)
               }}
               inputSize="medium"
-              width={140}
               disabled={!sido}
               withAllOption
             />
@@ -312,7 +309,6 @@ export function UniversitySearch({
                 reset()
               }}
               inputSize="medium"
-              width={140}
               withAllOption={false}
             />
             <span className="school-search__keyword-wrap">
@@ -337,11 +333,9 @@ export function UniversitySearch({
             <CmsButton
               type="button"
               variant="primary"
-              size="medium"
-              className="school-search__search-btn"
+              size="medium" className="school-search__search-btn"
               disabled={!canSearch || loading}
-              onClick={handleSearch}
-            >
+              onClick={handleSearch} >
               검색
             </CmsButton>
           </Flex>

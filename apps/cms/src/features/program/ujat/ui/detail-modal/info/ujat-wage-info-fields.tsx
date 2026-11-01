@@ -3,6 +3,7 @@ import { Controller, type UseFormReturn } from 'react-hook-form'
 import {
   normalizeUjatPaymentItemSelection,
   remapUjatWagePaymentItemOptions,
+  resolveUjatDefaultPaymentItemValues,
   resolveUjatWageDeductionLabel,
   type UjatWageInfoDisplay,
 } from '@/features/program/ujat/lib/ujat-wage-info-display'
@@ -12,9 +13,8 @@ import {
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsButton } from '@/shared/ui/cms-button'
-import { resolveUjatDefaultPaymentItemValues } from '@/features/program/ujat/lib/ujat-wage-info-display'
+import { CmsSelect } from '@/shared/ui/cms-select'
 
 export function UjatWageInfoFields({
   mode,

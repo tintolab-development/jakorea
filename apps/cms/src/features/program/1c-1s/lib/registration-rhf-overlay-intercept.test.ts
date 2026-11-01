@@ -52,6 +52,19 @@ describe('1사1교 등록 overlay intercept', () => {
     resetProgramRegistrationOverlayStoreForTests()
   })
 
+  it('빈 후원사·담당자는 __all__이 아니라 빈 값이다', () => {
+    const values = createDefaultCompanySchoolRegistrationRhfValues()
+    expect(
+      readCompanySchoolRhfOverlayValue(values, 'economyRegistration.basicInfo.sponsorId')
+    ).toBe('')
+    expect(
+      readCompanySchoolRhfOverlayValue(values, 'economyRegistration.basicInfo.managerContactId')
+    ).toBe('')
+    expect(
+      readCompanySchoolRhfOverlayValue(values, 'economyRegistration.basicInfo.managerContactIds')
+    ).toEqual([])
+  })
+
   it('담당자 ID overlay snapshot은 동일 값이면 참조가 유지된다', () => {
     const values = createDefaultCompanySchoolRegistrationRhfValues()
     const first = readCompanySchoolRhfOverlayValue(

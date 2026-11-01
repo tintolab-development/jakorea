@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import dayjs from 'dayjs'
 import type { Program } from '@/types/domain'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
-import { resolvePersistedProgramTargetLevels } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  formatDateRange,
+  resolvePersistedProgramTargetLevels,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import { GENERAL_RECRUIT_OVERLAY_KEYS } from '@/features/program/general/lib/general-recruit-overlay-to-program'
 import {
   replaceGeneralRecruitOverlay,
@@ -46,6 +50,35 @@ describe('programToRecruitmentTabEditValues volunteer nested seed', () => {
     expect(values.finalPassAnnouncementMethod).toBe('문자')
     expect(String(values.documentPassAnnouncementDate)).toContain('2026-11-05')
     expect(String(values.interviewStartDate)).toContain('2026-11-10')
+  })
+})
+
+describe('programToRecruitmentTabEditValues participant row interview seed', () => {
+  it('참여자 행 interviewStartAt/EndAt를 폼 시드에 넣는다', () => {
+    const program = {
+      id: '186526',
+      title: '개인 면접',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      backendProgramType: 'GENERAL_INDIVIDUAL',
+      interviewStartDate: '',
+      interviewEndDate: '',
+      programRecruitments: [
+        {
+          id: 1,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'INDIVIDUAL',
+          interviewEnabled: true,
+          interviewStartAt: '2026-12-13T15:00:00Z',
+          interviewEndAt: '2026-12-13T15:00:00Z',
+        },
+      ],
+    } as Program
+
+    const values = programToRecruitmentTabEditValues(program, 'participant')
+    expect(String(values.interviewStartDate)).toContain('2026-12-13T15:00:00')
+    expect(String(values.interviewEndDate)).toContain('2026-12-13T15:00:00')
   })
 })
 
@@ -441,5 +474,19 @@ describe('parse helpers', () => {
     const range = parseDisplayPeriodLabelToIsoRange('2026.04.03(금) ~ 2026.11.20(금)')
     expect(range.start).toBeTruthy()
     expect(range.end).toBeTruthy()
+  })
+
+  it('parseDisplayPeriodLabelToIsoRange keeps clock when present', () => {
+    const range = parseDisplayPeriodLabelToIsoRange(
+      '2026.04.03(금) 09:30 ~ 2026.11.20(금) 18:00'
+    )
+    expect(dayjs(range.start).format('YYYY-MM-DD HH:mm')).toBe('2026-04-03 09:30')
+    expect(dayjs(range.end).format('YYYY-MM-DD HH:mm')).toBe('2026-11-20 18:00')
+  })
+
+  it('formatDateRange keeps clock when present', () => {
+    expect(
+      formatDateRange('2026-04-03T09:30:00+09:00', '2026-11-20T18:00:00+09:00')
+    ).toBe('2026.04.03(금) 09:30 ~ 2026.11.20(금) 18:00')
   })
 })

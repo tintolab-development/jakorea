@@ -1,3 +1,4 @@
+import { formatDottedSeoulDateTime } from '../../../../shared/lib/format-display-date.ts'
 import type { PortalConsentSummary } from '../api/consents.ts'
 import {
   DOCUMENT_CONSENT_ITEMS,
@@ -35,17 +36,15 @@ const MEMBER_TYPE_BASIC_CONSENT_TYPES = new Set([
   'CHILD_PRIVACY_COLLECTION',
 ])
 
-/** ISO `2026-07-03T09:23:00` → `2026.07.03 09:23` */
+/** ISO instant는 서울 시각. `Z` 없는 날짜·시각 문자열은 벽시계 그대로. */
 export function formatConsentAgreedAt(value: string | null | undefined): string | undefined {
-  const matched = value?.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/)
-  if (!matched) return undefined
-  const date = `${matched[1]}.${matched[2]}.${matched[3]}`
-  return matched[4] ? `${date} ${matched[4]}:${matched[5]}` : date
+  return formatDottedSeoulDateTime(value)
 }
 
-/** ISO → `2026.07.03` (철회 완료 팝업 일자) */
+/** ISO → `2026.07.03` (철회 완료 팝업 일자, 서울 달력) */
 export function formatConsentDate(value: string | null | undefined): string | undefined {
-  return formatConsentAgreedAt(value)?.slice(0, 10)
+  const formatted = formatConsentAgreedAt(value)
+  return formatted ? formatted.slice(0, 10) : undefined
 }
 
 function normalizeConsentType(value: string | undefined): string {

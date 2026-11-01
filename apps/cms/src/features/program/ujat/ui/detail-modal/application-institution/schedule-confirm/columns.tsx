@@ -7,17 +7,14 @@ import {
   type UjatScheduleConfirmRow,
 } from './types'
 
+/** Figma 4082:91349 Table / Horizontal 열 폭 */
 const COL = {
   no: 80,
-  institution: 180,
-  /** 「일정 확인 현황」·「기관 확인 완료」+ 좌우 패딩 */
+  institution: 260,
   status: 160,
-  /** 「교육 진행 확정 일정」복수 일자 줄바꿈 */
-  confirmedSchedule: 280,
-  /** 「N학급」+ 좌우 패딩 */
-  gradeYear: 100,
-  /** 「총 교육 학급」헤더 */
-  total: 140,
+  confirmedSchedule: 466,
+  gradeYear: 120,
+  total: 120,
   teacher: 120,
 } as const
 
@@ -85,9 +82,17 @@ export function useUjatScheduleConfirmColumns(): ColumnsType<UjatScheduleConfirm
         dataIndex: 'confirmedScheduleDisplay',
         key: 'confirmedScheduleDisplay',
         width: COL.confirmedSchedule,
+        align: 'center',
+        ellipsis: true,
         ...cellClass(CONFIRMED_SCHEDULE_CELL_CLASS),
-        render: (value: UjatScheduleConfirmRow['confirmedScheduleDisplay']) =>
-          value?.trim() || '-',
+        render: (value: UjatScheduleConfirmRow['confirmedScheduleDisplay']) => {
+          const text = value?.trim() || '-'
+          return (
+            <span className="ujat-schedule-confirm-list__confirmed-schedule-text" title={text}>
+              {text}
+            </span>
+          )
+        },
       },
       ...UJAT_SCHEDULE_CONFIRM_GRADE_YEAR_LABELS.map(gradeLabel => ({
         title: gradeLabel,

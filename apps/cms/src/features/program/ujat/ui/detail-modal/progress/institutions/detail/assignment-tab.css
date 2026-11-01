@@ -1,10 +1,10 @@
-/* 교육 학년 및 학급 변경 — 시안(200×44, mint fill, white 16px/600) */
+/* Figma 4082:102959 — 헤더 액션 버튼 (엑셀 160 / 학년·학급 변경 180, h44 mint) */
+.assignment-tab__excel-btn.cms-button.ant-btn,
 .assignment-tab__change-btn.cms-button.ant-btn {
-  display: flex !important;
-  width: 200px !important;
+  display: inline-flex !important;
   height: 44px;
-  padding: 6px 16px !important;
-  flex-direction: column;
+  min-height: 44px;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   gap: 6px;
@@ -20,6 +20,19 @@
   line-height: 150%;
 }
 
+.assignment-tab__excel-btn.cms-button.ant-btn {
+  min-width: 160px;
+  padding: 8px 20px 8px 14px !important;
+}
+
+.assignment-tab__change-btn.cms-button.ant-btn {
+  min-width: 180px;
+  padding: 8px 20px !important;
+}
+
+.assignment-tab__excel-btn.cms-button.ant-btn:hover,
+.assignment-tab__excel-btn.cms-button.ant-btn:focus,
+.assignment-tab__excel-btn.cms-button.ant-btn:active,
 .assignment-tab__change-btn.cms-button.ant-btn:hover,
 .assignment-tab__change-btn.cms-button.ant-btn:focus,
 .assignment-tab__change-btn.cms-button.ant-btn:active {
@@ -34,7 +47,8 @@
   gap: 32px;
 }
 
-.assignment-tab__empty {
+.assignment-tab__empty,
+.assignment-tab__schedule-empty {
   margin: 0;
   color: var(--color-text-secondary, #8c8c8c);
   font-family: Pretendard, sans-serif;
@@ -42,50 +56,75 @@
   line-height: 150%;
 }
 
+.assignment-tab__schedule-empty {
+  padding: 20px 8px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  background: var(--color-bg-base, #fff);
+  text-align: center;
+}
+
 .assignment-tab__section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  width: 100%;
 }
 
-.assignment-tab__schedule-toolbar {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
+/* Figma Title: date 18/700 + meta 14/500 50% + 1×12 divider */
 .assignment-tab__schedule-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 10px;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   min-width: 0;
-  flex: 1 1 auto;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 150%;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.assignment-tab__schedule-date {
+  margin: 0;
   color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+  white-space: nowrap;
 }
 
 .assignment-tab__schedule-meta {
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard;
-  font-size: 16px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.assignment-tab__schedule-meta-item {
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 24px */
+  line-height: 150%;
+  white-space: nowrap;
+}
+
+.assignment-tab__schedule-meta-divider {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  flex-shrink: 0;
+  background: rgba(61, 61, 61, 0.5);
 }
 
 .assignment-tab__table-wrap {
   overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-8);
-  background: var(--color-bg-base);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: var(--radius-8, 8px);
+  background: var(--color-bg-base, #fff);
 }
 
 .assignment-tab__table {
@@ -97,28 +136,33 @@
 
 .assignment-tab__table th,
 .assignment-tab__table td {
-  height: 48px;
-  padding: 12px 16px;
+  height: 54px;
+  padding: 12px 20px;
   text-align: center;
   vertical-align: middle;
   border: 0;
-  border-right: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
+  border-right: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
   font-size: 16px;
-  line-height: 150%;
+  line-height: normal;
   box-sizing: border-box;
 }
 
 .assignment-tab__table th {
-  background: #f5f6f7;
+  background: var(--BG-header, var(--table-th-bg, #f5f6f7));
   font-weight: 700;
 }
 
 .assignment-tab__table td {
   background: #fff;
   font-weight: 500;
+}
+
+.assignment-tab__table col.assignment-tab__col-grade,
+.assignment-tab__table col.assignment-tab__col-class {
+  width: 200px;
 }
 
 .assignment-tab__table tr > :last-child {
@@ -132,7 +176,6 @@
 .assignment-tab__grade-cell {
   text-align: center;
   vertical-align: middle;
-
   border: none !important;
-  border-right: 1px solid var(--color-border) !important;
+  border-right: 1px solid var(--table-line, #e0e0e0) !important;
 }

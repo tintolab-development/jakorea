@@ -36,8 +36,7 @@ export function ProfilePage() {
           <CmsButton
             variant="primary"
             icon={<EditOutlined />}
-            onClick={() => setProfileEditModalOpen(true)}
-          >
+            onClick={() => setProfileEditModalOpen(true)} >
             수정하기
           </CmsButton>
         </div>

@@ -28,13 +28,14 @@ export type UjatEducationProgressInstitutionRow = {
 export type UjatEducationProgressInstitutionFilters = {
   institutionName: string
   educationRegion: string
-  educationScheduleIso: string
+  /** 교육 진행 일정 — 다중 선택 ISO. 빈 배열은 전체 */
+  educationScheduleIsoDates: string[]
   teacherName: string
 }
 
 export const EMPTY_UJAT_EDU_PROGRESS_INSTITUTION_FILTERS: UjatEducationProgressInstitutionFilters = {
   institutionName: '',
   educationRegion: '',
-  educationScheduleIso: '',
+  educationScheduleIsoDates: [],
   teacherName: '',
 }

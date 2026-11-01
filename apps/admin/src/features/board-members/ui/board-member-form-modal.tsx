@@ -114,8 +114,7 @@ function BoardMemberFormBody({
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             취소
           </CmsButton>
           <CmsButton
@@ -124,8 +123,7 @@ function BoardMemberFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit}
-          >
+            onClick={handleSubmit} >
             구성원 등록
           </CmsButton>
         </>

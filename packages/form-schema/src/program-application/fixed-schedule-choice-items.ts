@@ -118,6 +118,8 @@ export function institutionFixedScheduleOptionToken(item: Record<string, unknown
 export type RuntimeFixedScheduleChoiceItem = {
   id: string
   label: string
+  /** runtime 원본. 없으면 token에서만 해석한다. */
+  scheduleId?: number
 }
 
 /**
@@ -166,7 +168,18 @@ export function readRuntimeFixedScheduleChoiceItems(
     const label = String(
       item.label ?? item.option_label ?? item.scheduleId ?? item.startAt ?? normalizedId,
     ).trim()
-    items.push({ id: normalizedId, label: label || normalizedId })
+    const scheduleIdRaw = item.scheduleId
+    const scheduleId =
+      typeof scheduleIdRaw === 'number' && Number.isFinite(scheduleIdRaw)
+        ? scheduleIdRaw
+        : typeof scheduleIdRaw === 'string' && scheduleIdRaw.trim()
+          ? Number(scheduleIdRaw)
+          : undefined
+    items.push({
+      id: normalizedId,
+      label: label || normalizedId,
+      ...(scheduleId != null && Number.isFinite(scheduleId) ? { scheduleId } : {}),
+    })
   }
   return items
 }

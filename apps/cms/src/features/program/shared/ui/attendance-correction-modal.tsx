@@ -47,6 +47,15 @@ export type ProgramAttendanceCorrectionModalProps = {
   initialAttendance: ProgramAttendanceCorrectionInitialValue
   /** 모달 설명 문구 역할 명사 — 기본 봉사자, 개인 참여자 상세는 참여자 */
   subjectRoleNoun?: string
+  /**
+   * 설명 문장 오버라이드. 지정 시 subjectRoleNoun 기본 문장 대신 사용.
+   * `\n` 개행, `**텍스트**` 굵게.
+   */
+  description?: string
+  /** 필드 라벨 — 기본 `교육 출결 현황` */
+  fieldLabel?: string
+  /** 확인 버튼 라벨 — 기본 `출결 정정` */
+  confirmLabel?: string
   /** 출결 상태 셀렉트 옵션 — 미지정 시 사유 불참 라벨 기본 */
   statusOptions?: ReadonlyArray<ProgramAttendanceCorrectionStatusOption>
   /** 증빙 ownerId. 프로그램 id 나 1 이 아니다 */
@@ -61,6 +70,9 @@ export function ProgramAttendanceCorrectionModal({
   scheduleDateLabel,
   initialAttendance,
   subjectRoleNoun = '봉사자',
+  description,
+  fieldLabel = '교육 출결 현황',
+  confirmLabel = '출결 정정',
   statusOptions = PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
   evidenceScheduleId,
   onCancel,
@@ -115,7 +127,10 @@ export function ProgramAttendanceCorrectionModal({
       title="출결 정정"
       width={600}
       className="program-attendance-correction-modal"
-      description={`**[${subjectName}]** ${subjectRoleNoun}의 **[${scheduleDateLabel}]** 출석 현황을 정정하시겠습니까?`}
+      description={
+        description ??
+        `**[${subjectName}]** ${subjectRoleNoun}의 **[${scheduleDateLabel}]** 출석 현황을 정정하시겠습니까?`
+      }
       footer={
         <div className="program-attendance-correction-modal__footer">
           <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
@@ -184,16 +199,20 @@ export function ProgramAttendanceCorrectionModal({
                   evidenceFileObjectIds,
                 })
               })()
-            }}
-          >
-            출결 정정
+            }} >
+            {confirmLabel}
           </CmsButton>
         </div>
       }
     >
       <div className="program-attendance-correction-modal__content">
         <div className="program-attendance-correction-modal__field">
-          <span className="program-attendance-correction-modal__label">교육 출결 현황</span>
+          <span className="program-attendance-correction-modal__label">
+            {fieldLabel}
+            <span className="program-attendance-correction-modal__required" aria-hidden>
+              *
+            </span>
+          </span>
           <div className="program-attendance-correction-modal__status-row">
             <CmsSelect
               inputSize="large"
@@ -204,7 +223,7 @@ export function ProgramAttendanceCorrectionModal({
               onChange={value =>
                 setStatus((value as ProgramAttendanceCorrectionStatus) ?? 'present')
               }
-              aria-label="교육 출결 현황"
+              aria-label={fieldLabel}
             />
             <ParagraphTimePicker
               className="program-attendance-correction-modal__time-picker"

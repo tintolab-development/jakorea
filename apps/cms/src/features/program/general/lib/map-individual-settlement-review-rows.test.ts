@@ -13,6 +13,7 @@ import {
   formatIndividualSettlementWon,
   INDIVIDUAL_SETTLEMENT_LODGING_NOT_PAYABLE_LABEL,
   individualSettlementReviewStatusLabel,
+  individualSettlementTableProcessingLabel,
   isIndividualSettlementLodgingType,
   latestIndividualSettlementReviewRevision,
 } from './individual-settlement-review-status'
@@ -144,6 +145,7 @@ describe('mapIndividualSettlementReviewListRows', () => {
     expect(rows).toHaveLength(2)
     expect(rows[0]).toMatchObject({
       programScheduleId: 187231,
+      lectureProgress: 'scheduled',
       status: 'SUBMITTED',
       statusLabel: '확인 대기 중',
       totalAmount: 49999,
@@ -154,6 +156,7 @@ describe('mapIndividualSettlementReviewListRows', () => {
     })
     expect(rows[1]).toMatchObject({
       programScheduleId: 187232,
+      lectureProgress: 'scheduled',
       status: 'NONE',
       statusLabel: '미신청',
       totalAmount: null,
@@ -248,6 +251,21 @@ describe('individual settlement review detail display', () => {
         revisions: [{ ...reviewDetail.revisions![0]!, status: 'WITHDRAWN' }],
       })
     ).toBe(false)
+  })
+
+  it('maps completed delivery status to 진행 완료', () => {
+    const rows = mapIndividualSettlementReviewListRows({
+      assignedSessions: [
+        session(187231, { status: 'completed', deliveryScheduleStatus: 'COMPLETED' }),
+      ],
+      applications: [submittedApplication],
+    })
+    expect(rows[0]?.lectureProgress).toBe('completed')
+  })
+
+  it('shows 해당 없음 for unsubmitted processing status', () => {
+    expect(individualSettlementTableProcessingLabel('NONE')).toBe('해당 없음')
+    expect(individualSettlementTableProcessingLabel('SUBMITTED')).toBe('확인 대기 중')
   })
 
   it('does not promote APPROVED or PAID to account payment labels', () => {

@@ -482,6 +482,15 @@ describe('listIncompleteUjatProgramRecruitmentTypedRequiredFields', () => {
     ).toEqual([])
   })
 
+  it('게시인데 회차 날짜만 있고 봉사자 모집기간이 비면 미완료이다', () => {
+    const volunteerH1 = filledTypedVolunteer('published')
+    volunteerH1.volunteerApplicationStartDate = ''
+    volunteerH1.volunteerApplicationEndDate = ''
+    expect(
+      listIncompleteUjatProgramRecruitmentTypedRequiredFields({ volunteerH1 })
+    ).toContain('recruit.volunteer.h1.recruitRangeSeal')
+  })
+
   it.each(['published', 'unpublished'] as const)(
     '%s에서 비고를 비우면 같은 필드로 미완료이다',
     published => {

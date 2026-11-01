@@ -22,13 +22,26 @@ export const UJAT_INTERVIEW_TOTAL_SCORE_MIN = 1
 export const UJAT_INTERVIEW_TOTAL_SCORE_MAX = 10
 export const UJAT_INTERVIEW2_STATUS_POLL_MS = 60_000
 
+function hasValidInterviewEvaluatorScore(score: number | null | undefined): boolean {
+  return score != null && Number.isFinite(score)
+}
+
+/** 유효 점수 제출 평가자 수 < 2 — 합격·불합격 가드와 동일 */
+export function isUjatInterviewTotalScoreUnevaluated(
+  row: Pick<UjatVolunteerApplicantRow, 'managerAScore' | 'managerBScore'>
+): boolean {
+  let count = 0
+  if (hasValidInterviewEvaluatorScore(row.managerAScore)) count += 1
+  if (hasValidInterviewEvaluatorScore(row.managerBScore)) count += 1
+  return count < 2
+}
+
 export function computeUjatInterviewTotalScore(
   row: Pick<UjatVolunteerApplicantRow, 'managerAScore' | 'managerBScore'>
 ): number | null {
-  const { managerAScore, managerBScore } = row
-  if (managerAScore == null || managerBScore == null) return null
+  if (isUjatInterviewTotalScoreUnevaluated(row)) return null
 
-  const total = managerAScore + managerBScore
+  const total = (row.managerAScore ?? 0) + (row.managerBScore ?? 0)
   if (total < UJAT_INTERVIEW_TOTAL_SCORE_MIN || total > UJAT_INTERVIEW_TOTAL_SCORE_MAX) {
     return null
   }
@@ -56,8 +69,43 @@ function parseUjatInterviewSlotEnd(
     .millisecond(0)
 }
 
+function parseUjatInterviewSlotEndFromRow(
+  row: Pick<
+    UjatVolunteerApplicantRow,
+    | 'assignedInterviewEndAt'
+    | 'assignedInterviewStartAt'
+    | 'assignedInterviewDateLabel'
+    | 'assignedInterviewTime'
+  >
+): Dayjs | null {
+  const endAt = row.assignedInterviewEndAt?.trim()
+  if (endAt) {
+    const end = dayjs(endAt)
+    if (!end.isValid()) return null
+    const startAt = row.assignedInterviewStartAt?.trim()
+    if (startAt) {
+      const start = dayjs(startAt)
+      if (start.isValid() && !end.isAfter(start)) return null
+    }
+    return end
+  }
+  return parseUjatInterviewSlotEnd(row.assignedInterviewDateLabel, row.assignedInterviewTime)
+}
+
+export type UjatVolunteerInterview2ResultSelectRow = Pick<
+  UjatVolunteerApplicantRow,
+  | 'interviewAssignmentStatus'
+  | 'secondInterviewScreeningStatus'
+  | 'assignedInterviewDateLabel'
+  | 'assignedInterviewTime'
+  | 'assignedInterviewStartAt'
+  | 'assignedInterviewEndAt'
+  | 'managerAScore'
+  | 'managerBScore'
+>
+
 export function resolveUjatEffectiveSecondInterviewStatus(
-  row: UjatVolunteerApplicantRow,
+  row: UjatVolunteerInterview2ResultSelectRow,
   now: Dayjs = dayjs()
 ): UjatEffectiveSecondInterviewStatus {
   if (row.interviewAssignmentStatus === 'withdrawn') return 'withdrawn'
@@ -65,10 +113,37 @@ export function resolveUjatEffectiveSecondInterviewStatus(
   const stored = row.secondInterviewScreeningStatus
   if (stored && MANUAL_SECOND_INTERVIEW_STATUSES.has(stored)) return stored
 
-  const slotEnd = parseUjatInterviewSlotEnd(row.assignedInterviewDateLabel, row.assignedInterviewTime)
+  const slotEnd = parseUjatInterviewSlotEndFromRow(row)
   if (!slotEnd) return 'waiting'
 
   return now.isBefore(slotEnd) ? 'waiting' : 'completed'
+}
+
+/** 선택 합격/불합격 가능 — 면접 종료·평가 완료·최종 결과 미입력 */
+export function isUjatVolunteerInterview2EffectiveStatusSelectableForResult(
+  status: UjatEffectiveSecondInterviewStatus
+): boolean {
+  if (status === 'withdrawn') return false
+  if (
+    status === 'pass' ||
+    status === 'fail' ||
+    status === 'reserve1' ||
+    status === 'reserve2' ||
+    status === 'reserve3' ||
+    status === 'reserve4'
+  ) {
+    return false
+  }
+  return status === 'completed'
+}
+
+export function isUjatVolunteerInterview2SelectableForResult(
+  row: UjatVolunteerInterview2ResultSelectRow
+): boolean {
+  if (isUjatInterviewTotalScoreUnevaluated(row)) return false
+  return isUjatVolunteerInterview2EffectiveStatusSelectableForResult(
+    resolveUjatEffectiveSecondInterviewStatus(row)
+  )
 }
 
 export function matchesUjatInterview2ScoreFilter(

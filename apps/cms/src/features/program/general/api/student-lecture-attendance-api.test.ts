@@ -61,6 +61,53 @@ describe('student-lecture-attendance-api', () => {
     expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('p1', [10, 11], {})
   })
 
+  it('includes 사전교육(PRE_EDUCATION) schedules like other education sessions', async () => {
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 9, sessionNo: 1, scheduleRole: 'PRE_EDUCATION' },
+      { scheduleId: 10, sessionNo: 2, scheduleRole: 'EDUCATION' },
+      { scheduleId: 12, sessionNo: 3, scheduleRole: 'CLOSING' },
+    ])
+    fetchAttendancesByScheduleIdsRemoteMock.mockResolvedValue({
+      '9': [{ participantId: 77, status: 'PRESENT' }],
+      '10': [{ participantId: 77, status: 'PRESENT' }],
+    })
+
+    const detail = await fetchStudentLectureAttendanceByParticipantRemote({
+      programId: 'p1',
+      participantId: 77,
+      studentName: '김학생',
+    })
+
+    expect(detail.sessions.map(session => session.scheduleId)).toEqual([9, 10])
+    expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('p1', [9, 10], {})
+  })
+
+  it('sessionNo=null 사전교육은 회차 0·preEducation으로 앞에 두고 본교육 회차는 그대로', async () => {
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 7000, sessionNo: null, scheduleRole: 'PRE_EDUCATION' },
+      { scheduleId: 10, sessionNo: 1, scheduleRole: 'EDUCATION' },
+      { scheduleId: 11, sessionNo: 2, scheduleRole: 'EDUCATION' },
+    ])
+    fetchAttendancesByScheduleIdsRemoteMock.mockResolvedValue({
+      '7000': [{ participantId: 77, status: 'ABSENT' }],
+      '10': [{ participantId: 77, status: 'PRESENT' }],
+    })
+
+    const detail = await fetchStudentLectureAttendanceByParticipantRemote({
+      programId: 'p1',
+      participantId: 77,
+      studentName: '김학생',
+    })
+
+    expect(detail.sessions).toEqual([
+      { roundNumber: 0, scheduleId: 7000, status: 'absent', preEducation: true },
+      { roundNumber: 1, scheduleId: 10, status: 'attended' },
+      { roundNumber: 2, scheduleId: 11, status: 'not_held' },
+    ])
+    // 출석률 분모에 사전교육 포함 (진행 2건 중 출석 1건)
+    expect(detail.attendanceRatePercent).toBe(50)
+  })
+
   it('bulk 출석 조회 실패 시 오류를 전파한다', async () => {
     fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
       { scheduleId: 10, sessionNo: 1 },
@@ -105,6 +152,25 @@ describe('student-lecture-attendance-api', () => {
     ])
     expect(detail.attendanceRatePercent).toBe(100)
     expect(fetchOrganizationScheduleAssignmentsRemoteMock).not.toHaveBeenCalled()
+  })
+
+  it('does not fall back to unassigned program schedules when OSA assignment is empty', async () => {
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 10, sessionNo: 1 },
+      { scheduleId: 11, sessionNo: 2 },
+    ])
+    fetchOrganizationScheduleAssignmentsRemoteMock.mockResolvedValue([])
+
+    const detail = await fetchStudentLectureAttendanceByParticipantRemote({
+      programId: '1',
+      participantId: 77,
+      studentName: '김학생',
+      organizationApplicationId: '501',
+    })
+
+    expect(detail.sessions).toEqual([])
+    expect(detail.attendanceRatePercent).toBe(0)
+    expect(fetchAttendancesByScheduleIdsRemoteMock).not.toHaveBeenCalled()
   })
 
   it('uses organization assigned schedules and still shows rounds without attendance', async () => {

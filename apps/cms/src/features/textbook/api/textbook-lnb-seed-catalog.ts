@@ -38,7 +38,7 @@ const INITIAL_TEXTBOOK_ROWS: TextbookSeedRow[] = [
     grade: '전학년',
     textbookName: 'JA MY Business',
     useStatus: 'USED',
-    registrant: '홍길동',
+    registrant: '등록자',
     registeredAt: '2026-03-30T01:10:32',
   },
   {

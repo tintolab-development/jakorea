@@ -63,7 +63,7 @@ export function AccountPaymentStatusDetailBasicInfo({ basic }: AccountPaymentSta
     >
       <DetailInfoForm
         title="기본 정보"
-        className="account-payment-status-detail-fullpage-modal__detail-form-card payment-order-instructor-status-detail__detail-form"
+        className="account-payment-status-detail-fullpage-modal__detail-form-card"
       >
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
@@ -118,7 +118,7 @@ export function AccountPaymentStatusDetailBasicInfo({ basic }: AccountPaymentSta
       <DetailInfoForm
         title="프로그램·지급 정보"
         hideHeader
-        className="account-payment-status-detail-fullpage-modal__detail-form-card payment-order-instructor-status-detail__detail-form"
+        className="account-payment-status-detail-fullpage-modal__detail-form-card"
       >
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field label="프로그램명" view={<span>{basic.programName}</span>} />
@@ -143,8 +143,8 @@ export function AccountPaymentStatusDetailBasicInfo({ basic }: AccountPaymentSta
             }
           />
           <DetailInfoForm.Field
-            label="이체 완료일"
-            view={<span>{basic.paidAtDisplay}</span>}
+            label="이체 예정일"
+            view={<span>{basic.transferScheduledDateDisplay || '-'}</span>}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

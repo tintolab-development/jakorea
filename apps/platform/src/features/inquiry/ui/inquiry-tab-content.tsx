@@ -10,7 +10,8 @@ import {
   type OneToOneInquiryItem,
   type OneToOneInquiryWritePayload,
 } from '@/features/inquiry'
-import { PFButton, PFPagination, PFText } from '@/shared/ui'
+import { PFButton, PFModal, PFPagination, PFText } from '@/shared/ui'
+import cancelConfirmStyles from '@/features/mypage/education/applications/ui/cancel-confirm.module.css'
 import {
   getInquiryApiErrorMessage,
   INQUIRY_DELETE_ERROR_FALLBACK,
@@ -53,6 +54,7 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [inquiryError, setInquiryError] = useState<string | null>(null)
   const remoteDetail = useMyInquiryDetailQuery(remoteInquiries.enabled ? expandedId : null)
   const writeOptions = useInquiryWriteOptionsQuery(remoteInquiries.enabled)
@@ -77,8 +79,20 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
     currentPage * INQUIRY_PAGE_SIZE
   )
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (deletingId) return
+    setInquiryError(null)
+    setPendingDeleteId(id)
+  }
+
+  const handleCancelDelete = () => {
+    if (deletingId) return
+    setPendingDeleteId(null)
+  }
+
+  const handleConfirmDelete = async () => {
+    const id = pendingDeleteId
+    if (!id || deletingId) return
     setInquiryError(null)
     if (remoteInquiries.enabled) {
       setDeletingId(id)
@@ -93,6 +107,7 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
     } else {
       setLocalItems(previous => previous.filter(item => item.id !== id))
     }
+    setPendingDeleteId(null)
     if (expandedId === id) {
       setExpandedId(null)
     }
@@ -155,6 +170,47 @@ export function InquiryTabContent({ params, onParamsChange }: InquiryTabContentP
           />
         </div>
       ) : null}
+
+      <PFModal
+        open={pendingDeleteId !== null}
+        size="sm"
+        onClose={handleCancelDelete}
+        closeOnBackdropClick={!deletingId}
+        showCloseButton={false}
+      >
+        <div className={cancelConfirmStyles.content}>
+          <div className={cancelConfirmStyles.textBlock}>
+            <PFText as="div" typo="hl-lg" color="black" className={cancelConfirmStyles.title}>
+              문의를 삭제할까요?
+            </PFText>
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={cancelConfirmStyles.description}>
+              삭제한 문의는 되돌릴 수 없습니다.
+            </PFText>
+          </div>
+          <div className={cancelConfirmStyles.actions}>
+            <PFButton
+              type="button"
+              variant="tertiary"
+              size="xlarge"
+              disabled={deletingId !== null}
+              onClick={handleCancelDelete}
+            >
+              취소
+            </PFButton>
+            <PFButton
+              type="button"
+              variant="primary"
+              size="xlarge"
+              disabled={deletingId !== null}
+              onClick={() => {
+                void handleConfirmDelete()
+              }}
+            >
+              삭제
+            </PFButton>
+          </div>
+        </div>
+      </PFModal>
 
       <OneToOneInquiryWriteModal
         open={isWriteModalOpen}

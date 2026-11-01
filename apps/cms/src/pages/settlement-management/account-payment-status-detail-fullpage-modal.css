@@ -34,8 +34,114 @@
   min-width: 0;
 }
 
-/* 산출 내역 테이블: 지급조서 산출 내역서와 동일 (large/160 버튼 · 행 52px · min 1340) */
+/* Figma 12432:442293 — 제목 18/140, 카드 간격 10, 섹션 간격 32 */
+.account-payment-status-detail-fullpage-modal .detail-info-form__title,
+.account-payment-status-detail-fullpage-modal .info-section-title {
+  font-size: 18px;
+  line-height: 140%;
+  padding: 0 8px;
+}
+
+.account-payment-status-detail-fullpage-modal .detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.account-payment-status-detail-fullpage-modal .detail-info-form__header-lead {
+  height: auto;
+  min-height: 0;
+}
+
+.account-payment-status-detail-fullpage-modal__complete-btn.cms-button.ant-btn {
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+}
+
 .account-payment-status-detail-fullpage-modal__calc-host {
-  min-width: 1340px;
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
+}
+
+.account-payment-status-detail-fullpage-modal__calc-host
+  .payment-order-calc-statement-modal__detail-header {
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+/* 산출 표: 열 180 / 260 / 140 / flex / 180 / 200, 셀 12px, 본문 14/150, 외곽 radius 8 */
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table.ant-table-wrapper
+  .ant-table-container {
+  border: 1px solid var(--table-line, #e0e0e0) !important;
+  border-radius: 8px;
+}
+
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table.ant-table-middle
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell,
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table.ant-table-middle
+  .ant-table-tbody
+  > tr
+  > td.ant-table-cell,
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-summary
+  .ant-table-cell {
+  padding: 8px 12px !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table.payment-order-calc-statement-modal__table.ant-table-wrapper
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell {
+  font-weight: 700;
+}
+
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table.ant-table-wrapper
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row) {
+  height: 54px;
+  min-height: 54px;
+}
+
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table
+  .payment-order-calc-statement-modal__amount--positive,
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table
+  .payment-order-calc-statement-modal__amount--negative,
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table
+  .payment-order-calc-statement-modal__summary-label,
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table
+  .payment-order-calc-statement-modal__summary-formula,
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table
+  .payment-order-calc-statement-modal__summary-total {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--Neutral-black, #3d3d3d);
+}
+
+.account-payment-status-detail-fullpage-modal
+  .account-payment-status-detail__calc-table
+  .ant-table-summary
+  .cms-button.ant-btn {
+  width: 100%;
+  max-width: 100%;
+  height: 32px !important;
+  min-height: 32px !important;
 }

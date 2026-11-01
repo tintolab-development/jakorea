@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
 import {
   applyGeneralRegistrationOverlayToProgram,
+  buildEnrichedScheduleDetails,
   normalizeRegistrationOverlayForApply,
+  resolveProgramDatesFromOperationRangeSeal,
 } from './registration-overlay-to-program'
 import type { Program } from '@/types/domain'
 
@@ -721,3 +723,109 @@ describe('empty-public-title-apply-fallback', () => {
     expect(next.generalCommonInfo?.announcementTitle).toBe('새 공고명')
   })
 })
+
+describe('applyGeneralRegistrationOverlayToProgram education form round scope', () => {
+  const extras = {
+    programType: 'curriculum' as const,
+    sessionRoundType: 'single' as const,
+    educationScheduleMode: 'date' as const,
+    educationFormScheduleDetail: 'common' as const,
+    participationScheduleDetail: 'common' as const,
+    ipsScheduleDetail: 'common' as const,
+    curriculumChartSessionCount: 1,
+    participantOrganization: false,
+    participantIndividual: true,
+  }
+
+  it('단일 회차면 stale multi 오프라인보다 화면 single 온라인을 저장한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+        generalProgramSessionRound: 'single',
+      },
+      {
+        'generalRegistration.typeSettings.singleEducationForm': 'online',
+        'generalRegistration.typeSettings.multiCommonEducationForm': 'offline',
+      },
+      extras
+    )
+    expect(next.generalCommonInfo?.educationFormLabel).toBe('온라인')
+    expect(next.type).toBe('online')
+  })
+
+  it('186503처럼 두 키가 모두 오프라인이면 오프라인 라벨을 유지한다', () => {
+    const next = applyGeneralRegistrationOverlayToProgram(
+      {
+        ...baseProgram(),
+        generalProgramAudience: 'individual',
+        generalParticipantTypes: ['individual'],
+        generalProgramSessionRound: 'single',
+      },
+      {
+        'generalRegistration.typeSettings.singleEducationForm': 'offline',
+        'generalRegistration.typeSettings.multiCommonEducationForm': 'offline',
+      },
+      extras
+    )
+    expect(next.generalCommonInfo?.educationFormLabel).toBe('오프라인')
+    expect(next.type).toBe('offline')
+  })
+})
+
+describe('buildEnrichedScheduleDetails date labels', () => {
+  it('점 표기 진행 일정의 시각을 유지한다', () => {
+    const rows = buildEnrichedScheduleDetails(
+      {
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '세부 01',
+          2: '세부 02',
+        },
+        'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+          1: '2026.11.05(목) 10:00 ~ 11:00',
+          2: '2026.11.06(금)',
+        },
+      },
+      {
+        programType: 'schedule',
+        sessionRoundType: 'multi',
+        educationScheduleMode: 'date',
+        educationFormScheduleDetail: 'perSchedule',
+        participationScheduleDetail: 'common',
+        ipsScheduleDetail: 'common',
+        scheduleCurriculumDetailCount: 2,
+        participantOrganization: true,
+      }
+    )
+    expect(rows[0]?.scheduleDateLabel).toBe('2026.11.05(목) 10:00 ~ 11:00')
+    expect(rows[1]?.scheduleDateLabel).toBe('2026.11.06(금)')
+  })
+})
+
+describe('resolveProgramDatesFromOperationRangeSeal', () => {
+  it('시간 ON이면 ISO 시각을 유지한다', () => {
+    const start = '2026-05-01T00:30:00.000Z'
+    const end = '2026-11-30T09:00:00.000Z'
+    expect(
+      resolveProgramDatesFromOperationRangeSeal({
+        'generalRegistration.basicInfo.operationRangeSeal': { start, end },
+      })
+    ).toEqual({ startDate: start, endDate: end })
+  })
+
+  it('시간 OFF면 하루 시작·끝으로 맞춘다', () => {
+    const start = dayjs('2026-05-01').startOf('day').toISOString()
+    const end = dayjs('2026-11-30').startOf('day').toISOString()
+    const resolved = resolveProgramDatesFromOperationRangeSeal({
+      'generalRegistration.basicInfo.operationRangeSeal': { start, end },
+    })
+    expect(dayjs(resolved?.startDate).format('YYYY-MM-DD HH:mm')).toBe(
+      dayjs('2026-05-01').startOf('day').format('YYYY-MM-DD HH:mm')
+    )
+    expect(dayjs(resolved?.endDate).format('YYYY-MM-DD HH:mm')).toBe(
+      dayjs('2026-11-30').endOf('day').format('YYYY-MM-DD HH:mm')
+    )
+  })
+})
+

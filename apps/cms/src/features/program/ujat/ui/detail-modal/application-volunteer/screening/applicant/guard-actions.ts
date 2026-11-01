@@ -1,5 +1,35 @@
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
+import {
+  isUjatInterviewTotalScoreUnevaluated,
+  resolveUjatEffectiveSecondInterviewStatus,
+} from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/interview2/display'
+import { INTERVIEW_RESULT_NOT_ENDED_ALERT } from '@/features/program/shared/lib/interview-not-ended'
+import {
+  canReassignVolunteerInterviewAssignment,
+  VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT,
+} from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+
+export { INTERVIEW_RESULT_NOT_ENDED_ALERT }
+
+const INTERVIEW_EVALUATION_REQUIRED_ALERT = {
+  title: '면접 평가 진행 안내',
+  content: '면접 평가 진행 후 합격 혹은 불합격 처리가 가능합니다.',
+  confirmLabel: '닫기',
+} as const
+
+function guardUjatVolunteerInterview2Evaluated(row: UjatVolunteerApplicantRow): boolean {
+  if (!isUjatInterviewTotalScoreUnevaluated(row)) return true
+  cmsAlertModal.show({ ...INTERVIEW_EVALUATION_REQUIRED_ALERT })
+  return false
+}
+
+/** 배정 면접 종료 전(면접 진행 대기) — 합격·불합격·평가 모두 차단 */
+function guardUjatVolunteerInterview2NotEnded(row: UjatVolunteerApplicantRow): boolean {
+  if (resolveUjatEffectiveSecondInterviewStatus(row) !== 'waiting') return true
+  cmsAlertModal.show({ ...INTERVIEW_RESULT_NOT_ENDED_ALERT })
+  return false
+}
 
 export function guardUjatVolunteerWithdrawActivity(row: UjatVolunteerApplicantRow): boolean {
   if (row.interviewAssignmentStatus !== 'withdrawn') return true
@@ -11,12 +41,21 @@ export function guardUjatVolunteerWithdrawActivity(row: UjatVolunteerApplicantRo
 }
 
 export function guardUjatVolunteerAssignInterview(row: UjatVolunteerApplicantRow): boolean {
-  if (row.interviewAssignmentStatus !== 'withdrawn') return true
-  cmsAlertModal.show({
-    title: '면접일 배정 안내',
-    content: '활동 포기한 봉사자에게는 면접일을 배정할 수 없습니다.',
-  })
-  return false
+  if (row.interviewAssignmentStatus === 'withdrawn') {
+    cmsAlertModal.show({
+      title: '면접일 배정 안내',
+      content: '활동 포기한 봉사자에게는 면접일을 배정할 수 없습니다.',
+    })
+    return false
+  }
+  if (
+    row.interviewAssignmentStatus === 'assigned' &&
+    !canReassignVolunteerInterviewAssignment(row)
+  ) {
+    cmsAlertModal.show({ ...VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT })
+    return false
+  }
+  return true
 }
 
 function guardUjatVolunteerInterview2Withdrawn(row: UjatVolunteerApplicantRow, actionTitle: string): boolean {
@@ -44,7 +83,8 @@ export function guardUjatVolunteerInterview2Fail(row: UjatVolunteerApplicantRow)
     })
     return false
   }
-  return true
+  if (!guardUjatVolunteerInterview2NotEnded(row)) return false
+  return guardUjatVolunteerInterview2Evaluated(row)
 }
 
 export function guardUjatVolunteerInterview2Pass(row: UjatVolunteerApplicantRow): boolean {
@@ -63,7 +103,8 @@ export function guardUjatVolunteerInterview2Pass(row: UjatVolunteerApplicantRow)
     })
     return false
   }
-  return true
+  if (!guardUjatVolunteerInterview2NotEnded(row)) return false
+  return guardUjatVolunteerInterview2Evaluated(row)
 }
 
 export function guardUjatVolunteerInterview2Evaluation(row: UjatVolunteerApplicantRow): boolean {
@@ -82,7 +123,7 @@ export function guardUjatVolunteerInterview2Evaluation(row: UjatVolunteerApplica
     })
     return false
   }
-  return true
+  return guardUjatVolunteerInterview2NotEnded(row)
 }
 
 export function alertUjatVolunteerInterviewAssignSlotRequired(): void {

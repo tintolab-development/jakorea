@@ -5,10 +5,11 @@
  * Filtered for CMS general program progress Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { Ujat1365RegistrationFormMode } from './ujat1365RegistrationFormMode';
 
 export type Ujat1365RegistrationFormParams = {
 /**
- * 쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.
+ * PREVIEW 또는 DOWNLOAD
  */
-mode?: string;
+mode?: Ujat1365RegistrationFormMode;
 };

@@ -115,10 +115,6 @@
   background: #fff;
 }
 
-.cms-modal.content-modal .content-modal__footer-actions {
-  gap: 8px;
-}
-
 .cms-modal__content {
   flex-shrink: 0;
   align-self: stretch;

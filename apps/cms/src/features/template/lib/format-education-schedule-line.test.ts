@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import dayjs from 'dayjs'
 import {
   buildEducationScheduleLinesFromDateAndGroupTimes,
+  chronologicalEducationScheduleLineIndexes,
   educationScheduleLinesFromSelectionRangeApply,
   countUniqueEducationScheduleCalendarDays,
   educationScheduleAppliedSurfaceRange,
@@ -20,6 +21,8 @@ import {
   serializeEducationScheduleLineForServer,
   serializeEducationScheduleLinesForServer,
   shiftEducationScheduleLineToDate,
+  BLOCK_MULTI_DAY_EDUCATION_SCHEDULE_WITH_CLOCK,
+  normalizeEducationScheduleDateLabelForCms,
 } from '@/features/template/lib/format-education-schedule-line'
 
 const april20 = dayjs('2026-04-20')
@@ -429,5 +432,89 @@ describe('serializeEducationScheduleLineForServer', () => {
       '2026.11.06(금) ~ 2026.11.12(목)'
     )
     expect(parseEducationScheduleLineForCms('협의 후 확정')).toBe('협의 후 확정')
+  })
+
+  it('186504 점 표기 라벨은 서버 형식으로 보내고 CMS로 되돌린다', () => {
+    const cms = '2026.11.05(목) 10:00 ~ 11:00'
+    expect(serializeEducationScheduleLineForServer(cms)).toBe('26년 11월 5일(목) 10:00 ~ 11:00')
+    expect(parseEducationScheduleLineForCms(cms)).toBe(cms)
+    expect(parseEducationScheduleLineForCms('26년 11월 5일(목) 10:00 ~ 11:00')).toBe(cms)
+  })
+
+  it('여러 날+시각 CMS 줄은 서버 형식으로 보낸다', () => {
+    const cms = '2026.11.05(목) 11:00 ~ 2026.11.06(금) 18:00'
+    expect(BLOCK_MULTI_DAY_EDUCATION_SCHEDULE_WITH_CLOCK).toBe(false)
+    expect(educationScheduleLineSerializationIssue(cms)).toBeNull()
+    expect(serializeEducationScheduleLineForServer(cms)).toBe(
+      '26년 11월 5일(목) 11:00 ~ 26년 11월 6일(금) 18:00'
+    )
+    expect(
+      educationScheduleLineSerializationIssue('26년 11월 5일(목) 11:00 ~ 26년 11월 6일(금) 18:00')
+    ).toBeNull()
+    expect(educationScheduleLineSerializationIssue('2026.11.05(목) 10:00 ~ 11:00')).toBeNull()
+    expect(educationScheduleLineSerializationIssue('2026.11.05(목) ~ 2026.11.06(금)')).toBeNull()
+  })
+
+  it('깨진 월일 점 표기는 저장 전 검증에서 막는다', () => {
+    expect(educationScheduleLineSerializationIssue('2026.13.40(목) 10:00 ~ 11:00')).toBe(
+      EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE
+    )
+    expect(serializeEducationScheduleLineForServer('2026.13.40(목) 10:00 ~ 11:00')).toBe(
+      '2026.13.40(목) 10:00 ~ 11:00'
+    )
+  })
+})
+
+describe('normalizeEducationScheduleDateLabelForCms', () => {
+  it('시간 포함 점 표기를 Invalid로 만들지 않는다', () => {
+    expect(normalizeEducationScheduleDateLabelForCms('2026.11.05(목) 10:00 ~ 11:00')).toBe(
+      '2026.11.05(목) 10:00 ~ 11:00'
+    )
+    expect(normalizeEducationScheduleDateLabelForCms('26년 11월 5일(목) 10:00 ~ 11:00')).toBe(
+      '2026.11.05(목) 10:00 ~ 11:00'
+    )
+  })
+})
+
+describe('chronologicalEducationScheduleLineIndexes', () => {
+  it('puts a newly added earlier time on the same day first (11/10 23:00 → add 09:00)', () => {
+    const lines = ['2026.11.10(화) 23:00 ~ 23:50', '2026.11.10(화) 09:00 ~ 10:00']
+    expect(chronologicalEducationScheduleLineIndexes(lines)).toEqual([1, 0])
+  })
+
+  it('orders 186486-style lines by date then start time (group 13:30 / 09:30)', () => {
+    const lines = [
+      '2026.11.16(월) 13:30 ~ 15:30',
+      '2026.11.16(월) 09:30 ~ 11:30',
+      '2026.10.30(금) 13:30 ~ 15:30',
+      '2026.10.30(금) 09:30 ~ 11:30',
+      '26년 10월 31일(토) 13:30 ~ 15:30',
+      '26년 10월 31일(토) 09:30 ~ 11:30',
+    ]
+    expect(chronologicalEducationScheduleLineIndexes(lines).map(i => lines[i])).toEqual([
+      '2026.10.30(금) 09:30 ~ 11:30',
+      '2026.10.30(금) 13:30 ~ 15:30',
+      '26년 10월 31일(토) 09:30 ~ 11:30',
+      '26년 10월 31일(토) 13:30 ~ 15:30',
+      '2026.11.16(월) 09:30 ~ 11:30',
+      '2026.11.16(월) 13:30 ~ 15:30',
+    ])
+  })
+
+  it('keeps unreadable lines at the end and ties in original order', () => {
+    const lines = [
+      '미정',
+      '2026.11.10(화) 09:00 ~ 10:00',
+      '',
+      '2026.11.10(화) 09:00 ~ 10:00',
+      '2026.11.09(월)',
+    ]
+    expect(chronologicalEducationScheduleLineIndexes(lines)).toEqual([4, 1, 3, 0, 2])
+  })
+
+  it('does not mutate the input', () => {
+    const lines = ['2026.11.10(화) 23:00 ~ 23:50', '2026.11.10(화) 09:00 ~ 10:00']
+    chronologicalEducationScheduleLineIndexes(lines)
+    expect(lines).toEqual(['2026.11.10(화) 23:00 ~ 23:50', '2026.11.10(화) 09:00 ~ 10:00'])
   })
 })

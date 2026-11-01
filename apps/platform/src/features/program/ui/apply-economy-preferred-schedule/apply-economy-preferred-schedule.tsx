@@ -100,9 +100,19 @@ type BlockProps = {
   onPatch: (patch: Partial<EconomyPreferredScheduleBlock>) => void
   minDate?: string | null
   maxDate?: string | null
+  enabledDates?: ReadonlySet<string> | null
+  disabled?: boolean
 }
 
-function ScheduleBlock({ title, block, onPatch, minDate, maxDate }: BlockProps) {
+function ScheduleBlock({
+  title,
+  block,
+  onPatch,
+  minDate,
+  maxDate,
+  enabledDates,
+  disabled = false,
+}: BlockProps) {
   const secondClassPeriod = resolveEconomySecondClassPeriod(block.firstClassPeriod)
   return (
     <div className={styles.block}>
@@ -127,6 +137,8 @@ function ScheduleBlock({ title, block, onPatch, minDate, maxDate }: BlockProps) 
                   value={block.date}
                   minDate={minDate}
                   maxDate={maxDate}
+                  enabledDates={enabledDates}
+                  disabled={disabled}
                   onValueChange={next => onPatch({ date: next })}
                 />
                 <DetailInfoForm.InputsSeparator />
@@ -139,6 +151,7 @@ function ScheduleBlock({ title, block, onPatch, minDate, maxDate }: BlockProps) 
                   aria-label={`${title} 희망 차시`}
                   options={SESSION_OPTIONS}
                   value={block.session || undefined}
+                  disabled={disabled}
                   onValueChange={next =>
                     onPatch({
                       session: (next === '1' || next === '2'
@@ -182,10 +195,19 @@ type Props = {
   onChange: (next: EconomyPreferredScheduleBlock[]) => void
   minDate?: string | null
   maxDate?: string | null
+  enabledDates?: ReadonlySet<string> | null
+  disabled?: boolean
 }
 
 /** 1사1교 진행 희망 교육 일정 — 1·2지망 고정 (추가·삭제 없음) */
-export function ApplyEconomyPreferredSchedule({ value, onChange, minDate = null, maxDate = null }: Props) {
+export function ApplyEconomyPreferredSchedule({
+  value,
+  onChange,
+  minDate = null,
+  maxDate = null,
+  enabledDates = null,
+  disabled = false,
+}: Props) {
   const blocks = Array.from(
     { length: ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT },
     (_, index) => value[index] ?? createEmptyEconomyPreferredScheduleBlock()
@@ -209,6 +231,8 @@ export function ApplyEconomyPreferredSchedule({ value, onChange, minDate = null,
           onPatch={patch => patchBlock(index, patch)}
           minDate={minDate}
           maxDate={maxDate}
+          enabledDates={enabledDates}
+          disabled={disabled}
         />
       ))}
     </div>

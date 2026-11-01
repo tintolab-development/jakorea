@@ -9,7 +9,7 @@ import { useVolunteerApplicationDetailEnrichment } from '@/features/program/gene
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { unmaskVolunteerApplicationPrivacyRemote } from '@/features/program/general/api/applications-api-client'
 import { mapVolunteerApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -23,6 +23,11 @@ import {
   hasExplicitApplicationAction,
 } from '@/features/program/shared/lib/application-available-actions'
 import { resolveVolunteerInterview2CancelPassButtonLabel } from '@/features/program/general/lib/volunteer-interview2-cancel-pass'
+import {
+  shouldShowVolunteerInterviewAvailabilitySection,
+  shouldShowVolunteerManagerEvaluationSection,
+  volunteerApplicationDecisionButtonLabels,
+} from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { GeneralVolunteerApplicantBasicInfo } from './basic-info'
 import { GeneralVolunteerApplicantManagerEvaluationSection } from './manager-evaluation-section'
 import { GeneralVolunteerApplicantInterviewAvailability } from './interview-availability'
@@ -31,6 +36,8 @@ import {
   GeneralVolunteerApplicantInterviewEvaluationSection,
   type GeneralVolunteerApplicantInterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
+import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
+import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { guardGeneralVolunteerInterview2Evaluation } from './general-volunteer-applicant-guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -40,6 +47,8 @@ export type GeneralVolunteerApplicantDetailVariant = 'doc_screening' | 'doc_pass
 type DocScreeningDetailProps = {
   variant?: 'doc_screening'
   applicant: GeneralVolunteerApplicantRow
+  /** 봉사자 면접 여부. false면 신청 상세 구성(평가·면접 일정 숨김) */
+  interviewEnabled?: boolean
   onDocumentReject?: () => void
   onDocumentApprove?: () => void
   onCancelDocumentApproval?: () => void
@@ -125,6 +134,8 @@ function Interview2VolunteerApplicantDetail({
 }) {
   const evaluationSectionRef = useRef<GeneralVolunteerApplicantInterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
+  const interviewNotEnded =
+    resolveGeneralEffectiveSecondInterviewStatus(applicant) === 'waiting'
   const canCancelFinalPass = hasExplicitApplicationAction(
     applicant.availableActions,
     APPLICATION_ACTION_CANCEL_FINAL_PASS
@@ -162,10 +173,7 @@ function Interview2VolunteerApplicantDetail({
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onCancelInterviewPass}
-            >
+              onClick={onCancelInterviewPass} >
               {cancelFinalPassButtonLabel}
             </CmsButton>
           ) : null}
@@ -174,10 +182,7 @@ function Interview2VolunteerApplicantDetail({
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onCancelInterviewFail}
-            >
+              onClick={onCancelInterviewFail} >
               불합격 취소
             </CmsButton>
           ) : null}
@@ -188,10 +193,7 @@ function Interview2VolunteerApplicantDetail({
                   type="button"
                   variant="delete"
                   size="large"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
-                  onClick={onWithdrawActivity}
-                >
+                  onClick={onWithdrawActivity} >
                   활동 포기
                 </CmsButton>
               ) : null}
@@ -199,32 +201,26 @@ function Interview2VolunteerApplicantDetail({
                 type="button"
                 variant="delete"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onInterviewFail}
-              >
+                disabled={interviewNotEnded}
+                onClick={onInterviewFail} >
                 면접 불합격
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onInterviewPass}
-              >
+                disabled={interviewNotEnded}
+                onClick={onInterviewPass} >
                 면접 합격
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="primary"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
+                disabled={interviewNotEnded && !isEvaluationEditing}
                 onClick={() => {
                   void handleInterviewEvaluationClick()
-                }}
-              >
+                }} >
                 면접 평가
               </CmsButton>
             </>
@@ -234,9 +230,7 @@ function Interview2VolunteerApplicantDetail({
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </div>
       </div>
 
@@ -333,6 +327,15 @@ export function GeneralVolunteerApplicantDetailView(
     return '면접일 배정'
   }, [applicant.interviewAssignmentStatus])
 
+  const assignInterviewDisabled = useMemo(() => {
+    if (applicant.interviewAssignmentStatus === 'withdrawn') return true
+    if (applicant.interviewAssignmentStatus === 'not_required') return true
+    if (applicant.interviewAssignmentStatus === 'assigned') {
+      return !canReassignVolunteerInterviewAssignment(applicant)
+    }
+    return false
+  }, [applicant])
+
   if (isInterview2Props(props)) {
     return (
       <Interview2VolunteerApplicantDetail
@@ -379,10 +382,7 @@ export function GeneralVolunteerApplicantDetailView(
                 type="button"
                 variant="delete"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onCancelDocumentApproval}
-              >
+                onClick={onCancelDocumentApproval} >
                 승인 취소
               </CmsButton>
             ) : null}
@@ -391,10 +391,7 @@ export function GeneralVolunteerApplicantDetailView(
                 type="button"
                 variant="delete"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onCancelDocumentRejection}
-              >
+                onClick={onCancelDocumentRejection} >
                 반려 취소
               </CmsButton>
             ) : null}
@@ -403,10 +400,7 @@ export function GeneralVolunteerApplicantDetailView(
                 type="button"
                 variant="delete"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                onClick={onWithdrawActivity}
-              >
+                onClick={onWithdrawActivity} >
                 활동 포기
               </CmsButton>
             ) : null}
@@ -414,8 +408,7 @@ export function GeneralVolunteerApplicantDetailView(
               type="button"
               variant="secondary"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
+              disabled={assignInterviewDisabled}
               onClick={onAssignInterview}
             >
               {assignInterviewLabel}
@@ -425,9 +418,7 @@ export function GeneralVolunteerApplicantDetailView(
               revealed={personalInfoRevealed}
               cmsVariant="primary"
               cmsSize="large"
-              width={180}
-              onClick={openPersonalInfoRevealConfirm}
-            />
+              onClick={openPersonalInfoRevealConfirm} />
           </div>
         </div>
 
@@ -447,6 +438,7 @@ export function GeneralVolunteerApplicantDetailView(
   }
 
   const {
+    interviewEnabled = true,
     onDocumentReject,
     onDocumentApprove,
     onCancelDocumentApproval,
@@ -457,6 +449,9 @@ export function GeneralVolunteerApplicantDetailView(
     onManagerBEvaluationChange,
     updatingManagerEvaluation,
   } = props
+  const showManagerEvaluation = shouldShowVolunteerManagerEvaluationSection(interviewEnabled)
+  const showInterviewAvailability =
+    shouldShowVolunteerInterviewAvailabilitySection(interviewEnabled)
 
   const canCancelDocumentApproval = canPerformApplicationAction(
     applicant.availableActions,
@@ -469,6 +464,7 @@ export function GeneralVolunteerApplicantDetailView(
   const canDocumentApprove = canPerformApplicationAction(applicant.availableActions, 'APPROVE')
   const canDocumentReject = canPerformApplicationAction(applicant.availableActions, 'REJECT')
   const showPendingDocumentActions = canDocumentApprove || canDocumentReject
+  const decisionButtonLabels = volunteerApplicationDecisionButtonLabels(interviewEnabled)
 
   return (
     <div className="general-volunteer-applicant-detail">
@@ -479,10 +475,7 @@ export function GeneralVolunteerApplicantDetailView(
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onCancelDocumentApproval}
-            >
+              onClick={onCancelDocumentApproval} >
               승인 취소
             </CmsButton>
           ) : null}
@@ -491,10 +484,7 @@ export function GeneralVolunteerApplicantDetailView(
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onCancelDocumentRejection}
-            >
+              onClick={onCancelDocumentRejection} >
               반려 취소
             </CmsButton>
           ) : null}
@@ -505,11 +495,8 @@ export function GeneralVolunteerApplicantDetailView(
                   type="button"
                   variant="delete"
                   size="large"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
-                  onClick={onDocumentReject}
-                >
-                  서류 반려
+                  onClick={onDocumentReject} >
+                  {decisionButtonLabels.reject}
                 </CmsButton>
               ) : null}
               {canDocumentApprove ? (
@@ -517,11 +504,8 @@ export function GeneralVolunteerApplicantDetailView(
                   type="button"
                   variant="secondary"
                   size="large"
-                  className="cms-button--action"
-                  width={CMS_ACTION_BUTTON_WIDTH}
-                  onClick={onDocumentApprove}
-                >
-                  서류 승인
+                  onClick={onDocumentApprove} >
+                  {decisionButtonLabels.approve}
                 </CmsButton>
               ) : null}
             </>
@@ -531,9 +515,7 @@ export function GeneralVolunteerApplicantDetailView(
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </div>
       </div>
 
@@ -541,16 +523,21 @@ export function GeneralVolunteerApplicantDetailView(
         <GeneralVolunteerApplicantBasicInfo
           applicant={applicant}
           maskSensitive={!personalInfoRevealed}
+          statusRow={interviewEnabled ? 'document_screening' : 'program_approval'}
         />
-        <GeneralVolunteerApplicantManagerEvaluationSection
-          applicant={applicant}
-          openManagerDropdown={openManagerDropdown}
-          setOpenManagerDropdown={setOpenManagerDropdown}
-          onManagerAEvaluationChange={onManagerAEvaluationChange}
-          onManagerBEvaluationChange={onManagerBEvaluationChange}
-          updatingManagerEvaluation={updatingManagerEvaluation}
-        />
-        <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
+        {showManagerEvaluation ? (
+          <GeneralVolunteerApplicantManagerEvaluationSection
+            applicant={applicant}
+            openManagerDropdown={openManagerDropdown}
+            setOpenManagerDropdown={setOpenManagerDropdown}
+            onManagerAEvaluationChange={onManagerAEvaluationChange}
+            onManagerBEvaluationChange={onManagerBEvaluationChange}
+            updatingManagerEvaluation={updatingManagerEvaluation}
+          />
+        ) : null}
+        {showInterviewAvailability ? (
+          <GeneralVolunteerApplicantInterviewAvailability applicant={applicant} />
+        ) : null}
         <GeneralVolunteerApplicantEssaySections applicant={applicant} />
       </div>
 

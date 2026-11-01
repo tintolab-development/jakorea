@@ -15,7 +15,10 @@ import { mapOrganizationApplicationDetailToUjatInstitutionRow } from '@/features
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { fetchUjatTemporarySchedule } from '@/features/program/ujat/api/temporary-schedule-api'
-import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
+import {
+  cancelUjatOrganizationTemporaryRejectionsIfRemote,
+  rejectUjatOrganizationApplicationsIfRemote,
+} from '@/features/program/ujat/api/temporary-rejections'
 import {
   UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE,
   readUjatInstitutionWorkflowInput,
@@ -144,14 +147,23 @@ export function useUjatInstitutionApplicationDetail(input: {
       })
       await invalidate()
     },
-    tempRejectRemote: async (reason: string) => {
+    tempRejectRemote: async () => {
       const persisted = await rejectUjatOrganizationApplicationsIfRemote({
         programId,
         applicationIds: [institutionId],
-        reason,
       })
       if (!persisted) {
         throw new Error('원격 API가 비활성 상태라 임시 반려를 반영하지 않았습니다.')
+      }
+      await invalidate()
+    },
+    tempRejectCancelRemote: async () => {
+      const persisted = await cancelUjatOrganizationTemporaryRejectionsIfRemote({
+        programId,
+        applicationIds: [institutionId],
+      })
+      if (!persisted) {
+        throw new Error('원격 API가 비활성 상태라 임시 반려를 취소하지 않았습니다.')
       }
       await invalidate()
     },

@@ -61,7 +61,7 @@ export function UjatAttendanceDetailModal({
   const dateLabel = item?.heldAt ? formatUjatAttendanceRosterDate(item.heldAt) : null
 
   return (
-    <PFModal open={open} onClose={onClose} title="출석현황 보기" size="lg">
+    <PFModal open={open} onClose={onClose} title="출석 현황 보기" size="lg">
       <div className={styles.body}>
         {!canViewAttendance ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">

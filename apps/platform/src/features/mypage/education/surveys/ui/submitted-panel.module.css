@@ -1,0 +1,50 @@
+.stack {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-60);
+}
+
+.complete {
+  display: flex;
+  box-sizing: border-box;
+  width: min(100%, 413px);
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-8);
+  text-align: center;
+}
+
+.illustrationWrap {
+  display: flex;
+  width: 100px;
+  height: 100px;
+  flex: 0 0 100px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.illustration {
+  display: block;
+  width: 120px;
+  height: 120px;
+  max-width: none;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+}
+
+.description {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.rewriteButton {
+  border-radius: var(--radius-12);
+}

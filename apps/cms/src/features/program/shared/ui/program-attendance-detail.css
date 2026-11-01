@@ -56,7 +56,9 @@
   align-items: center;
   gap: 4px;
 }
-
+.program-attendance-detail__rate-count {
+  font-weight: 700;
+}
 .program-attendance-detail__rate-note {
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
@@ -104,7 +106,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 150%;
 }

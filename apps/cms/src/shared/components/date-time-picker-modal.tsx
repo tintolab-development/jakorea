@@ -255,10 +255,8 @@ export function DateTimePickerPopover({
                   type="button"
                   variant="primary"
                   size="medium"
-                  width="80px"
                   disabled={disabled}
-                  onClick={handleApply}
-                >
+                  onClick={handleApply} >
                   {applyLabel}
                 </CmsButton>
               </div>

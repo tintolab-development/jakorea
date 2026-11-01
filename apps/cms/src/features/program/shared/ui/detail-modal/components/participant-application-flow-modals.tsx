@@ -21,7 +21,9 @@ import {
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import type { NotifyTimingCapability } from '@/shared/lib/notify-timing-capability'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { AlertModal } from '@/shared/ui/alert-modal'
+import { MESSAGES } from '@/shared/constants/messages'
+import { CmsButton } from '@/shared/ui/cms-button'
 import './instructor-bulk-approve-modal.css'
 import './instructor-approval-complete-modal.css'
 import './instructor-reject-complete-modal.css'
@@ -287,14 +289,13 @@ export function ParticipantCancelApprovalModal({
 }
 
 export function buildParticipantCancelApprovalCompleteDescription(
-  participantName: string,
-  cancellationReason: string
+  _participantName: string,
+  _cancellationReason: string
 ): string {
-  const trimmedName = participantName.trim() || '참여자'
-  const trimmedReason = cancellationReason.trim() || '-'
-  return `${formatModalBracketedSubjectName(trimmedName, '참여자')}의 프로그램 참여 ${formatModalBoldPhrase('승인 취소')} 되었습니다.\n(사유 : ${trimmedReason})`
+  return MESSAGES.success.cancelled
 }
 
+/** Figma 「Popup / Text / w600 / 공통 완료」 — 취소 완료 / 취소되었습니다. */
 export function ParticipantCancelApprovalCompleteModal({
   open,
   participantName,
@@ -309,25 +310,13 @@ export function ParticipantCancelApprovalCompleteModal({
   zIndex?: number
 }) {
   return (
-    <ContentModal
+    <AlertModal
       open={open}
-      onCancel={onClose}
-      title="참여자 승인 취소 완료"
-      width={MODAL_WIDTH}
+      onClose={onClose}
+      title="취소 완료"
+      content={buildParticipantCancelApprovalCompleteDescription(participantName, cancellationReason)}
       zIndex={zIndex}
-      className="participant-cancel-approval-complete-modal"
-      description={buildParticipantCancelApprovalCompleteDescription(
-        participantName,
-        cancellationReason
-      )}
-      footer={
-        <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
-          확인
-        </CmsButton>
-      }
-    >
-      {null}
-    </ContentModal>
+    />
   )
 }
 
@@ -360,21 +349,15 @@ function ParticipantCancelRejectPendingNotificationModal({
           <CmsButton
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             type="button"
-            onClick={onCancel}
-          >
+            onClick={onCancel} >
             취소
           </CmsButton>
           <CmsButton
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             type="button"
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             반려 취소
           </CmsButton>
         </>

@@ -3,6 +3,7 @@
  * (일반 `admin-applications-service` 재사용, UJAT UI에서만 호출)
  */
 
+import type { BulkActionResponse } from '@/shared/api/generated/dashboard/schemas/bulkActionResponse'
 import {
   submitGeneralVolunteerDocumentResult,
   submitGeneralVolunteerDocumentResultBulk,
@@ -13,7 +14,11 @@ import {
   mapSecondInterviewStatusToFinalResultPayload,
   giveUpGeneralVolunteerApplication,
 } from '@/features/program/general/api/admin-applications-service'
-import type { InterviewAssignmentEvaluationPayload } from '@/features/program/general/api/applications-api-client'
+import {
+  patchVolunteerApplicationActivityRegionRemote,
+  type InterviewAssignmentEvaluationPayload,
+} from '@/features/program/general/api/applications-api-client'
+import type { VolunteerActivityRegionUpdateResponse } from '@/shared/api/generated/dashboard/schemas/volunteerActivityRegionUpdateResponse'
 import { toScreeningResultNotifyFields } from '@/features/program/general/api/screening-notify-fields'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
@@ -29,18 +34,20 @@ export function assertUjatVolunteerMutationsRemoteReady(): void {
 export async function submitUjatVolunteerDocumentResultsRemote(
   applicationIds: string[],
   status: 'pass' | 'fail',
-  reason?: string
-): Promise<void> {
+  reason?: string,
+  notify?: { notifyTiming?: string; scheduledAt?: string }
+): Promise<BulkActionResponse | void> {
   assertUjatVolunteerMutationsRemoteReady()
   const payload = {
     result: status === 'pass' ? ('PASS' as const) : ('FAIL' as const),
     reason,
+    ...toScreeningResultNotifyFields(notify),
   }
   if (applicationIds.length === 1) {
     await submitGeneralVolunteerDocumentResult(applicationIds[0]!, payload)
     return
   }
-  await submitGeneralVolunteerDocumentResultBulk(applicationIds, payload)
+  return submitGeneralVolunteerDocumentResultBulk(applicationIds, payload)
 }
 
 export async function updateUjatVolunteerDocumentEvaluationRemote(
@@ -60,7 +67,7 @@ export async function submitUjatVolunteerFinalResultsRemote(
   >,
   reason?: string,
   notify?: { notifyTiming?: string; scheduledAt?: string }
-): Promise<void> {
+): Promise<BulkActionResponse | void> {
   assertUjatVolunteerMutationsRemoteReady()
   const payload = mapSecondInterviewStatusToFinalResultPayload(
     status,
@@ -71,15 +78,27 @@ export async function submitUjatVolunteerFinalResultsRemote(
     await submitGeneralVolunteerFinalResult(applicationIds[0]!, payload)
     return
   }
-  await submitGeneralVolunteerFinalResultBulk(applicationIds, payload)
+  return submitGeneralVolunteerFinalResultBulk(applicationIds, payload)
 }
 
 export async function giveUpUjatVolunteerApplicationRemote(
   applicationId: string,
-  reason: string
+  reason: string,
+  options?: { stopScheduleId?: number }
 ): Promise<void> {
   assertUjatVolunteerMutationsRemoteReady()
-  await giveUpGeneralVolunteerApplication(applicationId, { reason: reason.trim() })
+  await giveUpGeneralVolunteerApplication(applicationId, {
+    reason: reason.trim(),
+    ...(options?.stopScheduleId != null ? { stopScheduleId: options.stopScheduleId } : {}),
+  })
+}
+
+export async function patchUjatVolunteerPreferredRegionRemote(
+  applicationId: string,
+  educationRegionCode: string
+): Promise<VolunteerActivityRegionUpdateResponse> {
+  assertUjatVolunteerMutationsRemoteReady()
+  return patchVolunteerApplicationActivityRegionRemote(applicationId, { educationRegionCode })
 }
 
 export async function submitUjatVolunteerInterviewEvaluationRemote(

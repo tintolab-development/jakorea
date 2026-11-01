@@ -197,6 +197,43 @@ function createThirdPartyConsentParagraph(): HorizontalTableParagraph {
 const SUBMIT_CONFIRMATION_OPTION_ID =
   'ujat-program-application-volunteer-submit-confirmation-yes' as const
 
+/** 시드·작성 화면이 기수를 끼워 넣는 자리. 기수를 모르면 문장에서 뺀다. */
+export const UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_COHORT_PLACEHOLDER = '{{UJAT_COHORT}}' as const
+
+const UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_PREFIX =
+  '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT' as const
+
+/**
+ * 제출 확인 문구. cohort가 없으면 `N기`를 붙이지 않는다.
+ * 예: `대학생경제교육봉사단 UJAT로 지원합니다.`
+ */
+export function formatUjatVolunteerSubmitConfirmationLabel(
+  cohort?: string | number | null
+): string {
+  const raw = cohort == null ? '' : String(cohort).trim().replace(/기$/, '')
+  if (
+    !raw ||
+    raw === 'N' ||
+    raw === UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_COHORT_PLACEHOLDER
+  ) {
+    return `${UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_PREFIX}로 지원합니다.`
+  }
+  return `${UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_PREFIX} ${raw}기로 지원합니다.`
+}
+
+/** 시드 placeholder·구 `N기` 문구를 기수 라벨로 바꾼다. 기수를 모르면 N기를 뺀다. */
+export function applyUjatVolunteerSubmitConfirmationCohort(
+  label: string,
+  cohort?: string | number | null
+): string {
+  const usesPlaceholder =
+    label.includes(UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_COHORT_PLACEHOLDER) ||
+    label.includes('N기') ||
+    label.includes(UJAT_VOLUNTEER_SUBMIT_CONFIRMATION_PREFIX)
+  if (!usesPlaceholder) return label
+  return formatUjatVolunteerSubmitConfirmationLabel(cohort)
+}
+
 function createSubmitConfirmationMultipleChoiceParagraph(): MultipleChoiceParagraph {
   return {
     id: UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.submitConfirmation,
@@ -212,7 +249,9 @@ function createSubmitConfirmationMultipleChoiceParagraph(): MultipleChoiceParagr
     items: [
       {
         id: SUBMIT_CONFIRMATION_OPTION_ID,
-        label: '네, 상기 내용 모두 확인하였으며, 대학생경제교육봉사단 UJAT N기로 지원합니다.',
+        // 시드에는 플레이스홀더를 넣지 않는다(FormTemplateSystemFieldGuard 409).
+        // 기수 치환은 작성·포털 렌더 시 applyUjatVolunteerSubmitConfirmationCohort만 사용.
+        label: formatUjatVolunteerSubmitConfirmationLabel(null),
       },
     ],
     selectedPreviewSingleId: null,

@@ -1,0 +1,13 @@
+.ujat-volunteer-applicant-interview-availability__slot--assigned {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--Brand-500, #00a0af);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, system-ui, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 21px */
+}

@@ -7,22 +7,23 @@
  */
 
 .applicant-detail {
+  /* Figma 4082:99532 — Table / Vertical / Cell Medium label 180 · header #E7EBEF 60% · radius 8 */
   --ujat-volunteer-detail-table-line: var(--table-line, #e0e0e0);
-  --ujat-volunteer-detail-label-bg: #f5f6f7;
+  --ujat-volunteer-detail-label-bg: #f3f5f7;
   --ujat-volunteer-detail-value-bg: #fff;
-  --ujat-volunteer-detail-label-w: 200px;
+  --ujat-volunteer-detail-label-w: 180px;
   /* 기본 정보 격자 — 성명(140) + 서브라벨(80) = 서류 심사 현황 th와 동일 */
   --ujat-volunteer-detail-grid-name-group-w: 140px;
   --ujat-volunteer-detail-grid-name-sub-w: 80px;
   --ujat-volunteer-detail-grid-label-block-w: 220px;
   --ujat-volunteer-detail-grid-pair-label-w: 220px;
-  /* 테이블 필드 th / 라벨 셀 텍스트 */
+  /* 테이블 필드 th / 라벨 셀 텍스트 — Figma Pretendard Bold 14 / 1.5 */
   --ujat-volunteer-detail-field-label-color: var(--default-BK, #3d3d3d);
   --ujat-volunteer-detail-field-label-font-family: Pretendard, sans-serif;
-  --ujat-volunteer-detail-field-label-font-size: 16px;
+  --ujat-volunteer-detail-field-label-font-size: 14px;
   --ujat-volunteer-detail-field-label-font-style: normal;
   --ujat-volunteer-detail-field-label-font-weight: 700;
-  --ujat-volunteer-detail-field-label-line-height: 140%;
+  --ujat-volunteer-detail-field-label-line-height: 150%;
   width: 100%;
   min-width: 0;
 }
@@ -91,7 +92,7 @@
 /* program-detail-info-tab / detail-info-form 외곽 */
 .applicant-detail .program-detail-info-tab__table-wrapper {
   border: 1px solid var(--ujat-volunteer-detail-table-line);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--ujat-volunteer-detail-value-bg);
 }
 
@@ -117,9 +118,9 @@
 .applicant-detail .program-detail-info-tab__table td {
   background: var(--ujat-volunteer-detail-value-bg);
   color: var(--default-BK, #3d3d3d);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 140%;
+  line-height: 150%;
   min-width: 0 !important;
 }
 
@@ -141,7 +142,7 @@
 /* 격자형 기본 정보 — applicant-instructor 테이블을 DetailInfoForm 톤에 맞춤 */
 .applicant-detail .applicant-detail__grid-table-wrap {
   border: 1px solid var(--ujat-volunteer-detail-table-line);
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: clip;
   background: var(--ujat-volunteer-detail-value-bg);
 }
@@ -171,8 +172,8 @@
   .applicant-instructor-basic-info__cell {
   border-color: var(--ujat-volunteer-detail-table-line);
   padding: 12px 16px;
-  font-size: 16px;
-  line-height: 140%;
+  font-size: 14px;
+  line-height: 150%;
 }
 
 .applicant-detail

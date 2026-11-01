@@ -79,9 +79,9 @@ describe('instructor-cancel-approval', () => {
 })
 
 describe('instructor-cancel-approval-complete-modal', () => {
-  it('완료 메시지에 사유를 포함한다', () => {
+  it('완료 메시지는 Figma 공통 완료 문구다', () => {
     expect(buildInstructorCancelApprovalCompleteDescription('박틴토', '인원 초과')).toBe(
-      '[**박틴토**] 강사님의 프로그램 참여 **승인 취소** 되었습니다.\n(사유 : 인원 초과)'
+      '취소되었습니다.'
     )
   })
 })

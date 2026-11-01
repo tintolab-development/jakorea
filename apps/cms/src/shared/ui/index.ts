@@ -125,12 +125,7 @@ export {
 } from './app-datepicker'
 export type { AppDatePickerProps, AppDateRangePickerProps } from './app-datepicker'
 export { LoadingButton } from './loading-button'
-export {
-  CmsButton,
-  CMS_ACTION_BUTTON_WIDTH,
-  CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH,
-  CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH,
-} from './cms-button'
+export { CmsButton } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
 export { CmsCircleAddButton } from './cms-circle-add-button'
 export type { CmsCircleAddButtonProps } from './cms-circle-add-button'
@@ -302,4 +297,8 @@ export type {
   AlimtalkNestedLine,
 } from './alimtalk-nested-table'
 export { CrossTable } from './cross-table'
-export type { CrossTableProps, CrossTableRow } from './cross-table'
+export type {
+  CrossTableColumnHeader,
+  CrossTableProps,
+  CrossTableRow,
+} from './cross-table'

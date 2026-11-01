@@ -143,8 +143,7 @@ export function SponsorContactRegisterModal({
             variant="primary"
             size="large"
             loading={submitting}
-            onClick={() => handleSubmit(handleValidSubmit, handleInvalidSubmit)()}
-          >
+            onClick={() => handleSubmit(handleValidSubmit, handleInvalidSubmit)()} >
             등록
           </CmsButton>
         </>

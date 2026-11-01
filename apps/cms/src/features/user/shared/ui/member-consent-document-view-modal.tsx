@@ -15,7 +15,7 @@ import { CrimeConsentDocumentPreview } from '@/features/template/ui/template-man
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
 import { useConsentFilledDocumentMutation } from '@/features/user/api/hooks/use-consent-filled-document-mutation'
 import {
-  fetchConsentEvidenceBlobRemote,
+  fetchConsentCrimeOriginalBlobRemote,
   fetchConsentOriginalFileBlobRemote,
   fetchConsentSignedDocumentRemote,
   loadConsentSignedSignatureBlobRemote,
@@ -189,7 +189,7 @@ function MemberConsentCrimeDocumentView({
                 <span className="template-preview-modal__notice-text">
                   {SYNTHETIC_PREVIEW_NOTICE}
                 </span>
-                <CmsButton variant="secondary" size="medium" width={120} onClick={onClose}>
+                <CmsButton variant="secondary" size="medium" onClick={onClose}>
                   닫기
                 </CmsButton>
               </div>
@@ -205,8 +205,7 @@ function MemberConsentCrimeDocumentView({
                   icon={<ButtonDownloadIcon />}
                   onClick={() => void handleDownload()}
                   size="medium"
-                  disabled={!displaySrc}
-                >
+                  disabled={!displaySrc} >
                   문서 다운로드
                 </CmsButton>
               </div>
@@ -508,7 +507,13 @@ export function MemberConsentDocumentViewModal({
             return
           }
           try {
-            const blob = await fetchConsentEvidenceBlobRemote(response, reason)
+            const blob = await fetchConsentCrimeOriginalBlobRemote({
+              memberId,
+              consentType: consentType.trim(),
+              reason,
+              consentRecordId,
+              filled: response,
+            })
             if (blob == null || blob.size < 1) {
               setLoadFailed(true)
               return

@@ -7,6 +7,7 @@
  */
 import type { MemberPortalUjatTemporarySchedule } from './memberPortalUjatTemporarySchedule';
 import type { UjatApplicationSupplementPortalBannerState } from './ujatApplicationSupplementPortalBannerState';
+import type { UjatApplicationSupplementPreferredEducationDateOptionsItem } from './ujatApplicationSupplementPreferredEducationDateOptionsItem';
 
 /**
  * CMS와 동일한 program_organization_application 기반 UJAT 신청 workflow 상태
@@ -32,4 +33,6 @@ export interface UjatApplicationSupplement {
   revisionRequestedAt?: string | null;
   /** CMS 임시배정 확정 슬롯. GET /api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule 의 slots과 같은 일정 SSOT입니다. 신청 당시 answers 희망일과 별도 필드입니다. 목록은 null. 상세는 항상 객체를 주며 슬롯 없으면 slots=[]. 모집 공통값·educationScheduleLines·금요일 생성으로 채우지 않습니다. */
   temporarySchedule?: MemberPortalUjatTemporarySchedule | null;
+  /** UJAT 희망 교육일 후보 SSOT. GET /api/portal/programs/{programId}/form-bindings/{bindingId} 및 GET /api/portal/me/programs/{programId}/form-bindings/{bindingId}/render 의 runtimeContext.ujatPreferredEducationDateOptions와 동일 규칙(id h1:|h2:YYYY-MM-DD, date, label). 후보 없으면 []. 키를 생략하지 않습니다. 목록 응답은 null(상세 전용). Asia/Seoul 오늘 이전 금요일은 제외하며 APPLICATION_ALREADY_SUBMITTED와 무관하게 노출합니다. */
+  preferredEducationDateOptions?: UjatApplicationSupplementPreferredEducationDateOptionsItem[] | null;
 }

@@ -16,8 +16,8 @@ import { getCapacity } from '../lib/program-helpers'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   getRecruitmentStatus,
-  formatDateOnly,
   formatDateRange,
+  formatDateWithOptionalTime,
 } from '../../shared/lib/program-detail-info-constants'
 import { RecruitmentStatusBadge } from '@/shared/ui/recruitment-status-badge'
 import { getProgramLifecycleLabel } from '@/shared/constants/status'
@@ -216,9 +216,7 @@ export function EnrollmentStatusDetailModal({
             <CmsButton
               variant="secondary"
               size="medium"
-              onClick={handleGoToDetail}
-              className="enrollment-status-detail-modal__detail-link"
-            >
+              onClick={handleGoToDetail} className="enrollment-status-detail-modal__detail-link" >
               프로그램 상세 바로가기
             </CmsButton>
           </div>
@@ -368,7 +366,7 @@ export function EnrollmentStatusDetailModal({
                   <td>
                     {program.resultAnnouncementDate
                       ? renderDetailInfoPipeSeparated(
-                          `${formatDateOnly(program.resultAnnouncementDate)} | ${program.resultAnnouncementMethod ?? '-'}`
+                          `${formatDateWithOptionalTime(program.resultAnnouncementDate)} | ${program.resultAnnouncementMethod ?? '-'}`
                         )
                       : '-'}
                   </td>

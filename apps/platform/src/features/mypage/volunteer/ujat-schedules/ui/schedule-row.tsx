@@ -57,7 +57,12 @@ export function UjatVolunteerScheduleRow({
     !readOnly &&
     onAbsenceReasonSubmit != null &&
     hasOperationalSchedule &&
-    canSubmitEducationAbsenceReason(progress, item.attendanceStatus, item.availableActions)
+    canSubmitEducationAbsenceReason(
+      progress,
+      item.attendanceStatus,
+      item.availableActions,
+      item.absenceReasonStatus,
+    )
   const school = item.locationName?.trim()
   const classLabel = item.classLabel?.trim()
   const unassigned = !isAssignedUjatSchedule(item) && !school && !classLabel
@@ -110,30 +115,44 @@ export function UjatVolunteerScheduleRow({
           ) : null}
         </div>
         <div className={styles.actions}>
+          {/* PC 미만 전용: Figma 6810:78493 — 출석하기를 full width 버튼으로 (PC는 우측 아이콘 버튼) */}
+          <PFButton
+            type="button"
+            variant="primary"
+            size="large"
+            className={[styles.rowButton, styles.checkInMobile].join(' ')}
+            disabled={!canCheckIn || onCheckIn == null}
+            onClick={() => {
+              if (!canCheckIn || onCheckIn == null) return
+              onCheckIn(item)
+            }}
+          >
+            출석하기
+          </PFButton>
           <div className={styles.actionButtons}>
+            {canSubmitAbsence ? (
+              <PFButton
+                type="button"
+                variant="secondary"
+                size="large"
+                className={styles.rowButton}
+                onClick={() => onAbsenceReasonSubmit?.(item)}
+              >
+                결석 사유 제출하기
+              </PFButton>
+            ) : null}
             <PFButton
               type="button"
               variant="secondary"
               size="large"
-              disabled={!canSubmitAbsence}
-              onClick={() => {
-                if (!canSubmitAbsence) return
-                onAbsenceReasonSubmit?.(item)
-              }}
-            >
-              결석 사유 제출하기
-            </PFButton>
-            <PFButton
-              type="button"
-              variant="secondary"
-              size="large"
+              className={styles.rowButton}
               disabled={!canViewAttendance || onViewAttendance == null}
               onClick={() => {
                 if (!canViewAttendance || onViewAttendance == null) return
                 onViewAttendance(item)
               }}
             >
-              출석현황 보기
+              출석 현황 보기
             </PFButton>
           </div>
           <span className={styles.divider} aria-hidden="true" />

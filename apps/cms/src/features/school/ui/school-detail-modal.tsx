@@ -173,8 +173,7 @@ export function SchoolDetailModal({
                   onDeleteMembers(selectedTeacherKeys as string[])
                   setSelectedTeacherKeys([])
                 }}
-                disabled={selectedTeacherKeys.length === 0}
-              >
+                disabled={selectedTeacherKeys.length === 0} >
                 회원 삭제
               </CmsButton>
             )}

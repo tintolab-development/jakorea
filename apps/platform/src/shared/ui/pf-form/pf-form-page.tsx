@@ -73,20 +73,21 @@ export function PFFormPage({
           ) : null}
         </header>
 
-        {programSummary ? (
-          <div className={styles.programSummary}>
-            <PFText as="h2" typo="hl-sm" color="black">
-              {programSummary.title}
-            </PFText>
-            {programSummary.period ? (
-              <PFText as="p" typo="bd-md-md" color="primary-500">
-                {programSummary.period}
+        <div className={styles.content}>
+          {programSummary ? (
+            <div className={styles.programSummary}>
+              <PFText as="h2" typo="hl-sm" color="black">
+                {programSummary.title}
               </PFText>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className={styles.content}>{children}</div>
+              {programSummary.period ? (
+                <PFText as="p" typo="bd-md-md" color="primary-500">
+                  {programSummary.period}
+                </PFText>
+              ) : null}
+            </div>
+          ) : null}
+          {children}
+        </div>
       </div>
     </section>
   )

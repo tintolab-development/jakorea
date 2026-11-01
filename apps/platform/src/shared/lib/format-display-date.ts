@@ -13,12 +13,14 @@ const SEOUL_PARTS = new Intl.DateTimeFormat('en-US', {
   day: 'numeric',
   hour: 'numeric',
   minute: 'numeric',
+  second: 'numeric',
   hourCycle: 'h23',
 })
 
 const ISO_DATE_ONLY_RE = /^(\d{4})-(\d{2})-(\d{2})$/
 const ISO_DATETIME_RE =
-  /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?/
+  /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?/
+const ISO_EXPLICIT_TZ_RE = /(?:Z|[+-]\d{2}:?\d{2})\s*$/i
 const WEEKDAY_PAREN_RE = /(?:\s*\([일월화수목금토]\))?/
 const KOREAN_DATE_RE = new RegExp(
   String.raw`(\d{2,4})년\s*(\d{1,2})월\s*(\d{1,2})일${WEEKDAY_PAREN_RE.source}`,
@@ -37,6 +39,7 @@ export type DisplayDateTimeParts = {
   day: number
   hour: number
   minute: number
+  second: number
   hasTime: boolean
 }
 
@@ -74,6 +77,7 @@ function seoulPartsFromDate(date: Date, hasTime: boolean): DisplayDateTimeParts 
   const day = value('day')
   const hour = value('hour')
   const minute = value('minute')
+  const second = value('second')
   if (!isValidYmd(year, month, day)) return null
   return {
     year,
@@ -81,23 +85,104 @@ function seoulPartsFromDate(date: Date, hasTime: boolean): DisplayDateTimeParts 
     day,
     hour: Number.isFinite(hour) ? hour : 0,
     minute: Number.isFinite(minute) ? minute : 0,
+    second: Number.isFinite(second) ? second : 0,
     hasTime,
   }
 }
 
 function calendarParts(year: number, month: number, day: number): DisplayDateTimeParts | null {
   if (!isValidYmd(year, month, day)) return null
-  return { year, month, day, hour: 0, minute: 0, hasTime: false }
+  return { year, month, day, hour: 0, minute: 0, second: 0, hasTime: false }
 }
 
 function withTime(
   parts: DisplayDateTimeParts,
   hour: number,
   minute: number,
+  second = 0,
 ): DisplayDateTimeParts | null {
   if (!Number.isInteger(hour) || hour < 0 || hour > 23) return null
   if (!Number.isInteger(minute) || minute < 0 || minute > 59) return null
-  return { ...parts, hour, minute, hasTime: true }
+  if (!Number.isInteger(second) || second < 0 || second > 59) return null
+  return { ...parts, hour, minute, second, hasTime: true }
+}
+
+function pad2(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+function hasExplicitTimeZone(value: string): boolean {
+  return ISO_EXPLICIT_TZ_RE.test(value.trim())
+}
+
+/**
+ * ISO instant(`Z`/offset)는 서울 달력·시각으로 변환한다.
+ * 시간대가 없는 `YYYY-MM-DD` / `YYYY-MM-DD[T ]HH:mm` 은 서버 KST 벽시계로 보고 그대로 둔다.
+ */
+export function toSeoulDisplayParts(
+  input: Date | string | null | undefined,
+): DisplayDateTimeParts | null {
+  if (input == null || input === '') return null
+  if (input instanceof Date) return seoulPartsFromDate(input, true)
+  const trimmed = input.trim()
+  if (!trimmed) return null
+
+  const dateOnly = parseIsoDateOnly(trimmed)
+  if (dateOnly) return dateOnly
+
+  const isoDateTime = ISO_DATETIME_RE.exec(trimmed)
+  if (isoDateTime) {
+    if (hasExplicitTimeZone(trimmed)) {
+      return seoulPartsFromDate(new Date(trimmed), true)
+    }
+    const base = calendarParts(
+      Number(isoDateTime[1]),
+      Number(isoDateTime[2]),
+      Number(isoDateTime[3]),
+    )
+    if (!base) return null
+    return withTime(
+      base,
+      Number(isoDateTime[4]),
+      Number(isoDateTime[5]),
+      isoDateTime[6] != null ? Number(isoDateTime[6]) : 0,
+    )
+  }
+
+  if (trimmed.includes('T')) {
+    return seoulPartsFromDate(new Date(trimmed), true)
+  }
+  return null
+}
+
+/** ISO instant → 서울 달력 `YYYY-MM-DD`. 날짜만 오면 그대로. */
+export function toSeoulDateOnly(input: Date | string | null | undefined): string | undefined {
+  const parts = toSeoulDisplayParts(input)
+  if (!parts) return undefined
+  return `${parts.year}-${pad2(parts.month)}-${pad2(parts.day)}`
+}
+
+/** `YYYY.MM.DD` 또는 `YYYY.MM.DD HH:mm` (동의일시 등). */
+export function formatDottedSeoulDateTime(
+  input: Date | string | null | undefined,
+  options: { seconds?: boolean } = {},
+): string | undefined {
+  const parts = toSeoulDisplayParts(input)
+  if (!parts) return undefined
+  const date = `${parts.year}.${pad2(parts.month)}.${pad2(parts.day)}`
+  if (!parts.hasTime) return date
+  const clock = `${pad2(parts.hour)}:${pad2(parts.minute)}`
+  if (options.seconds) return `${date} ${clock}:${pad2(parts.second)}`
+  return `${date} ${clock}`
+}
+
+/** `YYYY년 MM월 DD일` (서명란). */
+export function formatPaddedKoreanSeoulDate(
+  input: Date | string | null | undefined,
+): string {
+  const parts = toSeoulDisplayParts(input)
+  if (!parts) return ''
+  return `${parts.year}년 ${pad2(parts.month)}월 ${pad2(parts.day)}일`
 }
 
 export function formatDisplayClock(hour: number, minute: number): string {
@@ -139,7 +224,7 @@ function parseSource(input: Date | string, mode: 'date' | 'datetime'): DisplayDa
   }
   const fromLabel = parseInstantFromSegment(trimmed)
   if (fromLabel) {
-    return mode === 'date' ? { ...fromLabel, hasTime: false, hour: 0, minute: 0 } : fromLabel
+    return mode === 'date' ? { ...fromLabel, hasTime: false, hour: 0, minute: 0, second: 0 } : fromLabel
   }
   const date = new Date(trimmed)
   return seoulPartsFromDate(date, mode === 'datetime')
@@ -154,7 +239,11 @@ export function formatDisplayDate(input: Date | string | null | undefined): stri
 export function formatDisplayDateTime(input: Date | string | null | undefined): string {
   if (input == null || input === '') return ''
   const parts = parseSource(input, 'datetime')
-  return parts ? formatDateTimeParts(parts) : ''
+  if (!parts) return ''
+  if (!parts.hasTime || (parts.hour === 0 && parts.minute === 0 && parts.second === 0)) {
+    return formatDisplayDateParts(parts)
+  }
+  return formatDateTimeParts(parts)
 }
 
 export function formatDisplayDateRange(
@@ -204,8 +293,8 @@ export function formatDisplayDateTimeRange(
   const startParts = start == null || start === '' ? null : parseSource(start, 'datetime')
   const endParts = end == null || end === '' ? null : parseSource(end, 'datetime')
   if (!startParts && !endParts) return empty
-  if (startParts && !endParts) return formatDateTimeParts(startParts)
-  if (!startParts && endParts) return formatDateTimeParts(endParts)
+  if (startParts && !endParts) return formatDisplayDateTime(start)
+  if (!startParts && endParts) return formatDisplayDateTime(end)
   return formatRangeParts(startParts!, endParts!, options.dateOnly === true)
 }
 
@@ -214,7 +303,9 @@ function formatRangeParts(
   end: DisplayDateTimeParts,
   dateOnly: boolean,
 ): string {
-  if (dateOnly || (!start.hasTime && !end.hasTime)) {
+  const startClock = start.hasTime && !(start.hour === 0 && start.minute === 0 && start.second === 0)
+  const endClock = end.hasTime && !(end.hour === 0 && end.minute === 0 && end.second === 0)
+  if (dateOnly || (!startClock && !endClock)) {
     return formatDisplayDateRange(
       `${start.year}-${String(start.month).padStart(2, '0')}-${String(start.day).padStart(2, '0')}`,
       `${end.year}-${String(end.month).padStart(2, '0')}-${String(end.day).padStart(2, '0')}`,
@@ -254,7 +345,7 @@ function parseTimeOnly(raw: string): DisplayDateTimeParts | null {
   if (!match) return null
   const clock = parseClock(match[0])
   if (!clock) return null
-  return { year: 1970, month: 1, day: 1, hour: clock.hour, minute: clock.minute, hasTime: true }
+  return { year: 1970, month: 1, day: 1, hour: clock.hour, minute: clock.minute, second: 0, hasTime: true }
 }
 
 function parseInstantFromSegment(segment: string): DisplayDateTimeParts | null {
@@ -345,7 +436,7 @@ function parseRangeBody(text: string): { start: DisplayDateTimeParts; end?: Disp
   const rightTime = parseTimeOnly(rightRaw)
   if (rightTime) {
     const end = withTime(left, rightTime.hour, rightTime.minute)
-    return end ? { start: left.hasTime ? left : { ...left, hour: 0, minute: 0, hasTime: true }, end } : null
+    return end ? { start: left.hasTime ? left : { ...left, hour: 0, minute: 0, second: 0, hasTime: true }, end } : null
   }
   const right = parseInstantFromSegment(rightRaw)
   if (!right) return null

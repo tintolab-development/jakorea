@@ -2,6 +2,7 @@
  * 일반 프로그램 봉사자 2차 면접 대상자 캘린더 뷰
  */
 
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { useMemo, useCallback, type Key } from 'react'
 import { EmptyState } from '@/shared/ui'
 import type { Dayjs } from 'dayjs'
@@ -91,7 +92,7 @@ function GeneralVolunteerInterview2CalendarRightList({
                 .join(' ')}
               data-has-color="true"
               style={{
-                backgroundColor: colors.bg,
+                backgroundColor: calendarListItemBackground(colors.bg),
                 border: `1px solid ${colors.border}`,
               }}
               onClick={() => onRowClick(row)}

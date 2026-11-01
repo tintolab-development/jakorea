@@ -67,6 +67,7 @@ type EducationScheduleAssignmentBlockProps = {
   sessionHeading: string
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
+  availableActions?: readonly string[]
 }
 
 export function EducationScheduleAssignmentBlock({
@@ -75,6 +76,7 @@ export function EducationScheduleAssignmentBlock({
   sessionHeading,
   applicationType,
   applicationId,
+  availableActions,
 }: EducationScheduleAssignmentBlockProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
@@ -86,20 +88,35 @@ export function EducationScheduleAssignmentBlock({
     enabled: feedbackOpen,
   })
 
-  const guide = resolveEducationAssignmentGuide(assignment.status, assignment.submitEndAt)
+  const guide = resolveEducationAssignmentGuide(assignment.status, assignment.submitEndAt, new Date(), {
+    responseStatus: assignment.responseStatus,
+    canResubmit: assignment.canResubmit,
+  })
   const isRevision = assignment.status === 'submitted' || assignment.status === 'feedback'
   const isSubmitted =
     assignment.status === 'submitted' || assignment.status === 'revision_submitted'
-  const canSubmitFiles =
+  const submitPermitted =
     scheduleId != null &&
     scheduleId > 0 &&
-    canSubmitEducationAssignment(assignment, isRevision ? 'revise' : 'submit')
+    canSubmitEducationAssignment(
+      assignment,
+      isRevision ? 'revise' : 'submit',
+      availableActions,
+    )
+  const showSubmitButton =
+    guide.showSubmitButton !== false &&
+    (assignment.status !== 'feedback' || submitPermitted)
+  const canSubmitFiles = showSubmitButton && submitPermitted
   const uploading = filesMutation.isPending
   // 제출물은 신청 일정 GET 응답의 submissions만 사용한다. 예시·로컬 파일은 여기서 만들지 않는다.
   const remoteFiles = assignment.files ?? EMPTY_ASSIGNMENT_FILES
   const hasRemoteFiles = remoteFiles.length > 0
   const blockVariant =
-    assignment.status === 'feedback' ? 'feedback' : isSubmitted ? 'submitted' : 'default'
+    assignment.status === 'feedback' && showSubmitButton
+      ? 'feedback'
+      : isSubmitted || (assignment.status === 'feedback' && !showSubmitButton)
+        ? 'submitted'
+        : 'default'
 
   const remoteFeedbackText = useMemo(() => {
     const items = feedbackQuery.data?.feedbacks ?? []
@@ -146,6 +163,7 @@ export function EducationScheduleAssignmentBlock({
         statusTone={guide.statusTone}
         message={guide.message}
         description={assignment.periodLabel}
+        mobileStack
         actions={
           <div className={styles.actions}>
             {guide.showFeedbackButton ? (
@@ -158,16 +176,18 @@ export function EducationScheduleAssignmentBlock({
                 피드백 확인
               </PFButton>
             ) : null}
-            <PFButton
-              type="button"
-              variant="primary"
-              size="large"
-              disabled={!canSubmitFiles || uploading}
-              aria-busy={uploading}
-              onClick={() => setSubmitOpen(true)}
-            >
-              {uploading ? '업로드 중' : guide.submitLabel}
-            </PFButton>
+            {showSubmitButton ? (
+              <PFButton
+                type="button"
+                variant="primary"
+                size="large"
+                disabled={!canSubmitFiles || uploading}
+                aria-busy={uploading}
+                onClick={() => setSubmitOpen(true)}
+              >
+                {uploading ? '업로드 중' : guide.submitLabel}
+              </PFButton>
+            ) : null}
           </div>
         }
       >

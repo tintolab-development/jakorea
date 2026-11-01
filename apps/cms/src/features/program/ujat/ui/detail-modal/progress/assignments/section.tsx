@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
@@ -47,6 +48,7 @@ export function UjatEducationProgressAssignmentsSection({
   programId: string
   half: EducationProgressHalfKey
 }) {
+  const canWrite = useUjatCanWrite()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
   )
@@ -130,10 +132,14 @@ export function UjatEducationProgressAssignmentsSection({
         onSearch={handleSearch}
         showFilter
         title={firstSessionTitle}
-        excelExport={{
-          columns: UJAT_ASSIGNMENT_EXCEL_COLUMNS,
-          data: assignmentExcelRows,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns: UJAT_ASSIGNMENT_EXCEL_COLUMNS,
+                data: assignmentExcelRows,
+              }
+            : undefined
+        }
       >
         {sessionGroups.length === 0 ? (
           <div className="ujat-education-progress-assignments__empty">

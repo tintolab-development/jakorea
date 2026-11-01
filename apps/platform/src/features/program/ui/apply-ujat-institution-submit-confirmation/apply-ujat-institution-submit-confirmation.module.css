@@ -14,21 +14,21 @@
 }
 
 .radioOption input {
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   margin: 0;
   accent-color: var(--color-primary-500);
 }
 
-:global(.form-template-host) .radioOption :global(.typo-bd-md-rg) {
+:global(.form-template-host) .radioOption :global(.typo-bd-lg-sb) {
   font-family: var(--font-family-base);
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 18px;
+  font-weight: 600;
   line-height: 150%;
-  letter-spacing: -0.16px;
+  letter-spacing: -0.18px;
   color: var(--color-neutral-black);
 }
 
-:global(.form-template-host) .radioOption:has(input:checked) :global(.typo-bd-md-rg) {
+:global(.form-template-host) .radioOption:has(input:checked) :global(.typo-bd-lg-sb) {
   color: var(--color-primary-500);
 }

@@ -371,6 +371,10 @@ assert.equal(
   '2026년 01월 15일 오후 3:00',
 )
 assert.equal(
+  formatCareerPublishedAtDetailLabel('2026-01-15T15:00:00Z'),
+  '2026년 01월 16일 오전 12:00',
+)
+assert.equal(
   formatCareerRecruitPeriodLabel('2026-04-03', '2026-11-20'),
   '2026년 4월 3일(금) ~ 2026년 11월 20일(금)',
 )

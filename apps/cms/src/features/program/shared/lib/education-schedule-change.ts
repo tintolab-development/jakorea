@@ -35,6 +35,38 @@ export function isOutsideEducationOperationRange(
   return false
 }
 
+function seoulTodayDateKey(now: Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now)
+}
+
+/** 캘린더 날짜(달력 칸)가 서울 기준 오늘보다 앞인지. 오늘은 선택 가능. */
+export function isBeforeEducationScheduleSeoulToday(date: Dayjs, now: Date = new Date()): boolean {
+  if (!date.isValid()) return false
+  return date.format('YYYY-MM-DD') < seoulTodayDateKey(now)
+}
+
+/**
+ * 「교육 진행 일정 설정」 캘린더 비활성 날짜 — 사업 운영 기간 밖 + 오늘(서울) 이전.
+ * - 운영 기간이 비어 있으면 그쪽 경계는 제한하지 않는다(시작만/종료만 있으면 있는 쪽만).
+ * - 이미 저장된 예정일은 지우지 않는다 — 새로 고르는 날짜만 막는다.
+ */
+export function isEducationScheduleSelectionDateDisabled(
+  date: Dayjs,
+  operationStart: Dayjs | null,
+  operationEnd: Dayjs | null,
+  now: Date = new Date()
+): boolean {
+  return (
+    isOutsideEducationOperationRange(date, operationStart, operationEnd) ||
+    isBeforeEducationScheduleSeoulToday(date, now)
+  )
+}
+
 export type EducationScheduleChangePeriodIssue = {
   index: number
   fromDate: string

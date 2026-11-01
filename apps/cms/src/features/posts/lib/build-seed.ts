@@ -6,7 +6,7 @@ export const POSTS_SEED_LABEL = 'posts-fe-mock-v1'
 export type PostsApiVisibilityStatus = 'published' | '임시저장' | 'archived'
 
 const ASSIGNED_ADMIN_NAME_TO_ID: Record<string, number> = {
-  홍길동: 10,
+  이름예시: 10,
   김담당: 11,
   이운영: 12,
   박지원: 13,

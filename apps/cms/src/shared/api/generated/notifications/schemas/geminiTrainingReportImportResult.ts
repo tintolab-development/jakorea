@@ -10,7 +10,7 @@ import type { GeminiTrainingReportImportResultStatus } from './geminiTrainingRep
 
 export interface GeminiTrainingReportImportResult {
   rowNumber?: number;
-  /** 대소문자 고정. 행 검증 실패 또는 지급완료 overwrite 차단만 FAILED. */
+  /** 대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등 진짜 검증 실패. GEMINI_INSTRUCTOR_NOT_MATCHED(이름·연락처 있으나 미매칭)는 FAILED가 아니라 SUCCESS+paymentExclusionReason. */
   status?: GeminiTrainingReportImportResultStatus;
   message?: string;
   trainingReportId?: number;
@@ -22,6 +22,6 @@ export interface GeminiTrainingReportImportResult {
   assistantInstructorCount?: number;
   deliveryType?: string;
   duplicate?: boolean;
-  /** 계좌 지급 제외 사유. 지급 대상이면 null. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정 */
+  /** 계좌 지급 제외 사유. 지급 대상이면 null. SUCCESS와 함께 오면 회원 검증 생략·계좌지급/정산 미생성·실적만. ZERO_CALCULATED_FEE=산출 강사비 0원, GEMINI_WAGE_RATE_NOT_CONFIGURED=해당 연수 유형·차시 단가 미설정, GEMINI_INSTRUCTOR_IDENTITY_BLANK=강사명·연락처 완전 미기재, GEMINI_INSTRUCTOR_NOT_MATCHED=이름·연락처 있으나 강사 회원 미매칭 */
   paymentExclusionReason?: GeminiTrainingReportImportResultPaymentExclusionReason;
 }

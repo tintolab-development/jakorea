@@ -33,8 +33,7 @@ export function LogResultToolbar({
         <ExcelButton
           loading={excelLoading}
           disabled={excelDisabled}
-          onClick={onExcelDownload}
-        />
+          onClick={onExcelDownload} />
       </div>
     </div>
   )

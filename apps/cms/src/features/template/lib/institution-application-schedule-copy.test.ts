@@ -145,7 +145,7 @@ describe('institution preferred schedule card copy', () => {
     expect(shouldUseInstitutionPreferredScheduleCardCopy(bridge)).toBe(false)
     expect(shouldUseInstitutionFixedScheduleCardCopy(bridge)).toBe(true)
     expect(resolveInstitutionFixedScheduleDescription(bridge)).toBe(
-      'N차시*N회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+      '진행 가능한 일정을 모두 선택해 주세요.'
     )
     expect(
       resolveInstitutionFixedScheduleDescription({
@@ -155,6 +155,22 @@ describe('institution preferred schedule card copy', () => {
       })
     ).toBe('2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.')
     expect(resolveInstitutionPreferredScheduleInitialBlockCount(bridge)).toBe(1)
+  })
+
+  it('템플릿 작성 화면은 프로그램 연동 미리보기와 분리한다', () => {
+    expect(
+      shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+        PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+        'authoring'
+      )
+    ).toBe(true)
+    expect(
+      shouldUseProgramApplicationScheduleTemplateAuthoringMode(
+        PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.scheduleChoice,
+        'authoring',
+        { programLinkedInstitutionApplicationForm: true }
+      )
+    ).toBe(false)
   })
 
   it('커리큘럼 + 복수 + 날짜 지정 — N차시*N회 설명(1회차 차시 기준)', () => {

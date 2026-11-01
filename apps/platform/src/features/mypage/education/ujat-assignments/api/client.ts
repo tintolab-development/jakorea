@@ -1,5 +1,4 @@
 import { axiosClient } from '@/shared/api/axios-instance'
-import { readDownloadUrlFromJsonBlob } from '@/shared/lib/download-attachment'
 import type { ProgramApplicationType } from '../../applications/api/types'
 
 const APPLICATIONS_PATH = '/api/portal/me/program-applications'
@@ -27,7 +26,7 @@ export type PortalUjatClassAssignmentRow = {
   gradeLabel?: string | null
   className?: string | null
   classLabel?: string | null
-  classNo?: number | null
+  classNo?: number | string | null
   volunteerAName?: string | null
   volunteerBName?: string | null
   volunteerA?: string | null
@@ -65,6 +64,7 @@ export type PortalUjatClassAssignmentsResponse = {
 /**
  * UJAT 기관 봉사자 배정 현황 — GET .../class-assignments
  * 학급·봉사자 A/B·교재는 이 응답만 SSOT. 신청 answers·프로그램 상세로 채우지 않는다.
+ * 200 `schedules`만 사용. 404는 신청 없음이며 빈 목록으로 바꾸지 않는다.
  */
 export async function fetchUjatClassAssignments(
   applicationType: ProgramApplicationType,
@@ -75,7 +75,9 @@ export async function fetchUjatClassAssignments(
     `${applicationPath(applicationType, applicationId)}/class-assignments`,
     { signal },
   )
-  return unwrapEnvelope<PortalUjatClassAssignmentsResponse>(data) ?? {}
+  const unwrapped = unwrapEnvelope<PortalUjatClassAssignmentsResponse>(data)
+  if (!unwrapped || typeof unwrapped !== 'object') return { schedules: [] }
+  return unwrapped
 }
 
 function saveBlob(fileName: string, blob: Blob) {
@@ -99,23 +101,18 @@ function isBlob(value: unknown): value is Blob {
  */
 export async function downloadUjatClassAssignmentConsentDocuments(
   downloadPath: string,
-  fallbackFileName = '성범죄경력_조회_동의서.zip',
+  fallbackFileName = 'ujat-volunteer-consents.zip',
 ): Promise<void> {
   const path = downloadPath.trim()
   if (!path) throw new Error('다운로드 경로가 없습니다.')
 
-  const { data } = await axiosClient.get<unknown>(path, { responseType: 'blob' })
+  const { data } = await axiosClient.get<unknown>(path, {
+    responseType: 'blob',
+    headers: { Accept: 'application/zip' },
+  })
   if (!isBlob(data)) {
     throw new Error('동의서 파일을 받지 못했습니다.')
   }
-
-  const signedUrl = await readDownloadUrlFromJsonBlob(data)
-  if (signedUrl) {
-    const { data: file } = await axiosClient.get<Blob>(signedUrl, { responseType: 'blob' })
-    saveBlob(fallbackFileName, file)
-    return
-  }
-
   if (/\bjson\b/i.test(data.type) || data.size === 0) {
     throw new Error('동의서 다운로드에 실패했습니다.')
   }

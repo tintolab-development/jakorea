@@ -57,7 +57,7 @@ export function GeminiInstructorOfficialDocumentParagraph() {
       <div className="detail-info-form--text" style={{ marginTop: 16 }}>
         개인정보를 제외한 필요한 정보 리스트를 작성해주세요.
         <br />
-        (O) 이름, 소속(학교), 연수예정일시, 연수인원 / (X) 홍길동, 한국초등학교, 2024-8-15, 15명
+        (O) 이름, 소속(학교), 연수예정일시, 연수인원 / (X) 이름예시, 한국초등학교, 2024-8-15, 15명
       </div>
     </div>
   )

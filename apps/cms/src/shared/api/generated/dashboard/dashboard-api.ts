@@ -72,6 +72,8 @@ import type {
   TrainedTeacherOrganizationApplicationResponse,
   UjatTypedDetail,
   Update,
+  VolunteerActivityRegionUpdateRequest,
+  VolunteerActivityRegionUpdateResponse,
   VolunteerApplicationDetailResponse,
   VolunteerApplicationsParams,
   VolunteerDocumentEvaluationRequest,
@@ -1584,6 +1586,64 @@ const resendGeminiOrganizationApplicationNotification = (
       {url: `/api/admin/gemini/trainings/organization-applications/${applicationId}/notifications/resend`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: organizationApplicationNotificationResendRequest
+    },
+      options);
+    }
+
+/**
+ * ### 이 API가 하는 일
+ * - 봉사자 신청 희망 교육 활동 지역 수정
+ * - API 분류: 내부 처리 또는 보조 API
+ * - 사용하는 화면: 봉사자/UJAT/면접 (`null`)
+ * - 프론트 담당 영역: volunteer-interviews (`volunteer-interviews`)
+ * - 호출 방식: `PATCH /api/admin/volunteer-applications/{applicationId}/activity-region`
+ *
+ * ### 화면/프론트 사용 기준
+ * - 요청값 출처: educationRegionCode region master code
+ * - 응답 사용 위치: preferredRegion and preferredRegionCode then invalidate volunteer application queries
+ * - 프론트 조회 키: `patch_api_admin_volunteer-applications_applicationId_activity-region`
+ * - 구현 상태: 구현 완료
+ * - 로컬/스테이징 준비도: 라우트 준비 완료
+ * - 외부 연동 확인: 외부 연동 대기 없음
+ * - 스테이징 점검 기준: 기본 스모크 검증 대상
+ * - 목데이터 대체: No localStorage persistence; use canonical volunteer application region API and invalidate list/detail after mutation.
+ * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
+ *
+ * ### 권한/보안
+ * - 호출 가능 계정: 관리자 계정
+ * - 필요 권한: APPLICATION_WRITE 권한 필요
+ * - 접근 범위: 담당 프로그램 범위 내에서만 가능
+ * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
+ *
+ * ### 개인정보/감사 정책
+ * - 개인정보 노출 기준: 개인정보 없음
+ * - 감사로그 저장: 필수
+ * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
+ *
+ * ### 상태값/화면 배지 기준
+ * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
+ * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
+ * ### Swagger에서 확인할 때
+ * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
+ * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
+ * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
+ *
+ * ### 프론트 구현 참고
+ * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
+ * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
+ * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
+ * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
+ * - 검토 메모: UJAT volunteer detail preferred-region write; form_response + answer + participant region
+ * @summary 봉사자 신청 희망 교육 활동 지역 수정
+ */
+const updateVolunteerApplicationActivityRegion = (
+    applicationId: number,
+    volunteerActivityRegionUpdateRequest: VolunteerActivityRegionUpdateRequest,
+ options?: SecondParameter<typeof customInstance<VolunteerActivityRegionUpdateResponse>>,) => {
+      return customInstance<VolunteerActivityRegionUpdateResponse>(
+      {url: `/api/admin/volunteer-applications/${applicationId}/activity-region`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: volunteerActivityRegionUpdateRequest
     },
       options);
     }
@@ -3281,7 +3341,7 @@ const dashboardHome = (
       options);
     }
 
-return {recordVolunteerDocumentEvaluation,getUjatTypedDetail,replaceUjatTypedDetail,patchUjatTypedDetail,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list13,getDashboardShortcutBadges,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+return {recordVolunteerDocumentEvaluation,getUjatTypedDetail,replaceUjatTypedDetail,patchUjatTypedDetail,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,updateVolunteerApplicationActivityRegion,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list13,getDashboardShortcutBadges,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
 export type GetUjatTypedDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getUjatTypedDetail']>>>
 export type ReplaceUjatTypedDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['replaceUjatTypedDetail']>>>
@@ -3309,6 +3369,7 @@ export type UnmaskIndividualApplicationDetailResult = NonNullable<Awaited<Return
 export type ResendIndividualApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendIndividualApplicationNotification']>>>
 export type BulkIndividualDocumentResultResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['bulkIndividualDocumentResult']>>>
 export type ResendGeminiOrganizationApplicationNotificationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['resendGeminiOrganizationApplicationNotification']>>>
+export type UpdateVolunteerApplicationActivityRegionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updateVolunteerApplicationActivityRegion']>>>
 export type OrganizationApplicationDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['organizationApplicationDetail']>>>
 export type UpdateOrganizationApplicationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['updateOrganizationApplication']>>>
 export type MarkRead2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['markRead2']>>>

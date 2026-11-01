@@ -17,7 +17,7 @@ export const EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, stri
   rejected: '신청 반려',
 }
 
-/** 교사 회원 교육현황 — 승인 전 구간은 「승인 대기」로 통일 */
+/** 교육현황 표시 라벨 — 승인 전 구간은 「승인 대기」로 통일 (봉사·강의현황 general과 구분) */
 export const TEACHER_EDUCATION_DISPLAY_STATUS_LABEL: Record<EducationDisplayStatus, string> = {
   waiting_result: '승인 대기',
   document_passed: '승인 대기',

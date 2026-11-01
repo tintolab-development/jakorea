@@ -10,8 +10,6 @@ import {
   getMinimumManualNotifyAt,
   isFutureNotificationTime,
 } from '@/shared/lib/notification-schedule'
-import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
-import { alertUjatVolunteerInterview2BulkPassTypeRequired } from '../applicant/guard-actions'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsRadio } from '@/shared/ui/cms-radio'
@@ -31,13 +29,35 @@ export type UjatInterview2BulkPassConfirmPayload = {
 
 export type UjatVolunteerInterview2BulkPassModalProps = {
   open: boolean
+  subjectName: string
   count: number
   onCancel: () => void
   onConfirm: (payload: UjatInterview2BulkPassConfirmPayload) => void
 }
 
+/** 시안 10014:39937 — `[이름] 님 외 N명` 카피 */
+export function buildUjatVolunteerInterview2BulkPassCopy({
+  subjectName,
+  selectionCount,
+}: {
+  subjectName: string
+  selectionCount: number
+}): { title: string; description: string } {
+  const name = subjectName.trim() || '회원'
+  const rest = Math.max(0, selectionCount - 1)
+  return {
+    title: '면접 일괄 합격 안내',
+    description: `**[${name}] 님 외 ${rest}명**의 면접 결과를 합격 처리하시겠습니까?\n합격 시 회원에게 합격 알림이 발송됩니다.`,
+  }
+}
+
+function formatManualNotifySummary(value: Dayjs): string {
+  return value.format('YYYY.MM.DD HH:mm')
+}
+
 export function UjatVolunteerInterview2BulkPassModal({
   open,
+  subjectName,
   count,
   onCancel,
   onConfirm,
@@ -51,6 +71,11 @@ export function UjatVolunteerInterview2BulkPassModal({
 
   const modalContentRef = useRef<HTMLDivElement>(null)
   const manualRadioAnchorRef = useRef<HTMLSpanElement>(null)
+
+  const copy = buildUjatVolunteerInterview2BulkPassCopy({
+    subjectName,
+    selectionCount: count,
+  })
 
   useEffect(() => {
     if (!open) return
@@ -75,7 +100,7 @@ export function UjatVolunteerInterview2BulkPassModal({
 
   const handleConfirm = () => {
     if (!passType) {
-      alertUjatVolunteerInterview2BulkPassTypeRequired()
+      setPassTypeError('합격 유형을 선택해 주세요.')
       return
     }
     if (notifyTiming === 'manual' && !manualNotifyAt) {
@@ -100,17 +125,17 @@ export function UjatVolunteerInterview2BulkPassModal({
       <ContentModal
         open={open}
         onCancel={onCancel}
-        title="봉사자 일괄 합격 안내"
+        title={copy.title}
         width={600}
         className="ujat-volunteer-interview2-bulk-pass-modal"
         zIndex={MODAL_Z_INDEX}
-        description={`선택한 **${count}**개의 모든 봉사자의 면접 심사를 일괄 합격 처리하시겠습니까?\n합격 시 봉사자에게 개별로 승인 알림이 발송됩니다.`}
+        description={copy.description}
         footer={
           <div className="ujat-volunteer-interview2-bulk-pass-modal__footer">
-            <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
+            <CmsButton variant="secondary" size="h40" type="button" onClick={onCancel}>
               취소
             </CmsButton>
-            <CmsButton variant="primary" size="medium" type="button" onClick={handleConfirm}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleConfirm}>
               합격
             </CmsButton>
           </div>
@@ -118,12 +143,17 @@ export function UjatVolunteerInterview2BulkPassModal({
       >
         <div ref={modalContentRef} className="ujat-volunteer-interview2-bulk-pass-modal__content">
           <div className="ujat-volunteer-interview2-bulk-pass-modal__field">
-            <span className="ujat-volunteer-interview2-bulk-pass-modal__label">합격 유형</span>
+            <span className="ujat-volunteer-interview2-bulk-pass-modal__label">
+              합격 유형
+              <span className="ujat-volunteer-interview2-bulk-pass-modal__required" aria-hidden="true">
+                *
+              </span>
+            </span>
             <CmsSelect
               inputSize="large"
               width="100%"
               withAllOption={false}
-              placeholder="합격 유형을 선택해 주세요."
+              placeholder="합격 유형을 선택해 주세요"
               value={passType ?? undefined}
               options={[...UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS]}
               onChange={value => {
@@ -139,7 +169,12 @@ export function UjatVolunteerInterview2BulkPassModal({
           </div>
 
           <div className="ujat-volunteer-interview2-bulk-pass-modal__notify-field">
-            <span className="ujat-volunteer-interview2-bulk-pass-modal__label">알림 발송</span>
+            <span className="ujat-volunteer-interview2-bulk-pass-modal__label">
+              알림 발송
+              <span className="ujat-volunteer-interview2-bulk-pass-modal__required" aria-hidden="true">
+                *
+              </span>
+            </span>
             <CmsRadio.Group
               size="large"
               value={notifyTiming}
@@ -149,7 +184,7 @@ export function UjatVolunteerInterview2BulkPassModal({
             >
               <CmsRadio value="immediate">즉시</CmsRadio>
               <CmsRadio value="on_announcement">발표일에 맞춰서</CmsRadio>
-              <span ref={manualRadioAnchorRef} className="permission-reject-modal__manual-anchor">
+              <span ref={manualRadioAnchorRef} className="ujat-volunteer-interview2-bulk-pass-modal__manual-anchor">
                 <CmsRadio
                   value="manual"
                   onClick={() => {
@@ -163,7 +198,7 @@ export function UjatVolunteerInterview2BulkPassModal({
                   {notifyTiming === 'manual' && manualNotifyAt != null ? (
                     <span className="ujat-volunteer-interview2-bulk-pass-modal__manual-summary">
                       {' '}
-                      ({formatYmdHmWithKoreanWeekday(manualNotifyAt)})
+                      ({formatManualNotifySummary(manualNotifyAt)})
                     </span>
                   ) : null}
                 </CmsRadio>

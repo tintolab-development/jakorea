@@ -15,4 +15,6 @@ export interface PersonalInfoAccessLogFrontendResponse {
   accessorName?: string;
   accessedAt?: string;
   ipAddress?: string;
+  result?: string;
+  traceId?: string;
 }

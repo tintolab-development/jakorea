@@ -4,7 +4,9 @@
  */
 
 import dayjs from 'dayjs'
-import { formatDateDotWithWeekday, formatNumberDisplay } from '@/shared/utils'
+import { formatNumberDisplay } from '@/shared/utils'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
+import { normalizeEducationScheduleDateLabelForCms } from '@/features/template/lib/format-education-schedule-line'
 import type {
   GeneralProgramCurriculumSessionRow,
   GeneralProgramScheduleDetailKind,
@@ -171,9 +173,15 @@ export function resolveProgramDatesFromOperationRangeSeal(
   if (overlay == null) return null
   const seal = readOperationRangeSeal(overlay)
   if (!seal) return null
+  const start = dayjs(seal.start)
+  const end = dayjs(seal.end)
+  if (!start.isValid() || !end.isValid()) return null
+  if (dateRangeUsesClockTime(start, end)) {
+    return { startDate: start.toISOString(), endDate: end.toISOString() }
+  }
   return {
-    startDate: dayjs(seal.start).startOf('day').toISOString(),
-    endDate: dayjs(seal.end).endOf('day').toISOString(),
+    startDate: start.startOf('day').toISOString(),
+    endDate: end.endOf('day').toISOString(),
   }
 }
 
@@ -461,11 +469,7 @@ export function buildCurriculumSessionsFromRegistrationOverlay(
 }
 
 function formatScheduleDateLabel(iso: string | null | undefined): string | undefined {
-  if (!iso?.trim()) return undefined
-  const d = dayjs(iso)
-  if (!d.isValid()) return iso.trim()
-  const label = formatDateDotWithWeekday(d)
-  return label === '-' ? iso.trim() : label
+  return normalizeEducationScheduleDateLabelForCms(iso)
 }
 
 /** 상세 조회 — registration overlay → 일정형 scheduleDetails (저장본이 비어 있을 때) */
@@ -528,6 +532,7 @@ export function buildEnrichedScheduleDetails(
     const ips = ipsByDetail[n]
     return {
       ...row,
+      blockKind: 'event' as const,
       scheduleDateLabel: formatScheduleDateLabel(dates[n]),
       progressTimeSummary: slots.length > 0 ? buildScheduleProgressTimeSummary(slots) : undefined,
       assignmentEnabled: hideAssignment ? false : Boolean(assignment?.enabled),
@@ -776,14 +781,17 @@ export function applyGeneralRegistrationOverlayToProgram(
   const ipsDetailKind = extras.ipsScheduleDetail ?? 'common'
 
   const commonEducationForm =
-    resolveGeneralRegistrationCommonEducationForm(overlay) ||
+    resolveGeneralRegistrationCommonEducationForm(overlay, extras.sessionRoundType) ||
     overlayString(overlay, `${TYPE}.educationForm`) ||
     'online'
   const participantFlags = participantFlagsFromCompleteExtras(extras)
   const hideParticipation = extras.participantOrganization === true
   const commonParticipation = hideParticipation
     ? undefined
-    : (resolveGeneralRegistrationCommonParticipation(overlay) as 'individual' | 'team')
+    : (resolveGeneralRegistrationCommonParticipation(
+        overlay,
+        extras.sessionRoundType
+      ) as 'individual' | 'team')
 
   const programTypeFromForm =
     commonEducationForm === 'online'

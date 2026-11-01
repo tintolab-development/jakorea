@@ -54,3 +54,59 @@ describe('강사 모집 문의처 — 강사 행이 없을 때 (1사1교 QA #13)
     expect(display.contactOrganizationName).toBe('-')
   })
 })
+
+describe('강사 모집 기간·현황 — 강사 행이 없을 때 (1사1교 186473)', () => {
+  it('참여 행만 있으면 중첩 라벨과 스칼라 날짜로 기간·현황을 표시한다', () => {
+    const display = resolveGeneralProgramInstructorRecruitmentDisplay({
+      instructorApplicationStartDate: '2000-01-01T00:00:00.000Z',
+      instructorApplicationEndDate: '2999-12-31T14:59:59.999Z',
+      programRecruitments: [
+        {
+          id: 1,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          startAt: '2026-10-29T15:00:00Z',
+          endAt: '2027-10-10T14:59:59.999Z',
+          operationStartDate: '2026-10-30',
+          operationEndDate: '2027-11-30',
+        },
+      ],
+      generalCommonInfo: {
+        instructorRecruitmentInfo: {
+          recruitmentPeriodLabel: '2026.10.30(금) ~ 2026.12.31(목)',
+          operationPeriodLabel: '2026.10.30(금) ~ 2027.11.10(수)',
+        },
+      },
+    } as unknown as Program)
+    expect(display.operationPeriodLabel).toBe('2026.10.30(금) ~ 2027.11.10(수)')
+    expect(display.recruitmentPeriodLabel).toBe('2026.10.30(금) ~ 2026.12.31(목)')
+    expect(display.recruitmentStatusLifecycle).toBe('recruiting_instructors')
+    expect(display.recruitmentStatusLabel).not.toBe('-')
+  })
+
+  it('강사 행이 있으면 중첩 라벨·스칼라 날짜 대신 행 값만 쓴다', () => {
+    const display = resolveGeneralProgramInstructorRecruitmentDisplay({
+      instructorApplicationStartDate: '2000-01-01T00:00:00.000Z',
+      instructorApplicationEndDate: '2999-12-31T14:59:59.999Z',
+      programRecruitments: [
+        {
+          id: 2,
+          recruitmentType: 'INSTRUCTOR',
+          applicationType: 'INSTRUCTOR',
+          startAt: '2001-01-01T00:00:00Z',
+          endAt: '2001-12-31T14:59:59.999Z',
+        },
+      ],
+      generalCommonInfo: {
+        instructorRecruitmentInfo: {
+          recruitmentPeriodLabel: '중첩 모집 기간',
+          operationPeriodLabel: '중첩 운영 기간',
+        },
+      },
+    } as unknown as Program)
+    expect(display.recruitmentPeriodLabel).not.toBe('중첩 모집 기간')
+    expect(display.recruitmentPeriodLabel).toContain('2001')
+    expect(display.operationPeriodLabel).toBe('-')
+    expect(display.recruitmentStatusLifecycle).toBe('education_completed')
+  })
+})

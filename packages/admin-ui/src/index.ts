@@ -10,9 +10,6 @@ export {
 
 export {
   AdminButton,
-  ADMIN_ACTION_BUTTON_WIDTH,
-  ADMIN_APPLICATION_LIST_BULK_BUTTON_WIDTH,
-  ADMIN_CERTIFICATE_ISSUE_BUTTON_WIDTH,
   resolveAdminButtonSize,
   resolveAdminButtonVariant,
   type AdminButtonProps,

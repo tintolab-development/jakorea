@@ -16,6 +16,10 @@ import type { GeneralApplicationTabKey } from '@/features/program/general/lib/ap
 import { programForApplicationFormEditor } from '@/features/program/general/lib/operational-form-bindings'
 import { resolveGeneralApplicationTemplateName } from '@/features/program/general/lib/resolve-application-template-name'
 import { useProgramApplicationFormLoadSource } from '@/features/program/general/hooks/use-application-form-load-source'
+import {
+  shouldRequireRemoteApplicationDraft,
+  shouldShowApplicationFormPreviewLoading,
+} from '@/features/program/general/lib/application-form-preview-loading'
 import { getTemplateIdForParticipantApplicationVariant } from '@/features/template/lib/participant-application-template-id'
 import {
   WRITING_FORM_TEMPLATE_SAVE_EVENT,
@@ -93,6 +97,7 @@ export function ApplicationFormPreviewPanel({
       variant === 'volunteer',
     templateVersionId: formSource.templateVersionId,
     preferLocalDraft: formSource.preferLocalDraft,
+    requireRemoteDraft: shouldRequireRemoteApplicationDraft(formSource.templateVersionId),
   })
 
   useEffect(() => {
@@ -147,7 +152,20 @@ export function ApplicationFormPreviewPanel({
 
   if (!active) return null
 
-  if (vm.isDraftLoading) {
+  if (vm.remoteDraftLoadError != null) {
+    return (
+      <div className="application-view__preview-panel" role="alert">
+        원격 신청 양식을 불러올 수 없습니다.
+      </div>
+    )
+  }
+
+  if (
+    shouldShowApplicationFormPreviewLoading({
+      bindingsLoading: formSource.bindingsLoading,
+      isDraftLoading: vm.isDraftLoading,
+    })
+  ) {
     return (
       <div className="application-view__preview-panel application-view__preview-panel--loading">
         <FormDraftLoading />

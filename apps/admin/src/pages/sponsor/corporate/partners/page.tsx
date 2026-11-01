@@ -33,7 +33,6 @@ import {
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import {
   CMS_TABLE_NO_COL_CLASS,
@@ -375,13 +374,11 @@ export function CorporatePartnersPage() {
           <CmsButton
             variant="secondary"
             size="medium"
-            width={88}
             type="button"
             onClick={e => {
               e.stopPropagation()
               openEdit(record)
-            }}
-          >
+            }} >
             수정
           </CmsButton>
         ),
@@ -448,14 +445,11 @@ export function CorporatePartnersPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
+              <CmsButton className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 type="button"
-                onClick={handleSearch}
-              >
+                onClick={handleSearch} >
                 조회
               </CmsButton>
             </div>
@@ -470,8 +464,7 @@ export function CorporatePartnersPage() {
               size="h40"
               type="button"
               onClick={handleDeleteClick}
-              disabled={removeMutation.isPending}
-            >
+              disabled={removeMutation.isPending} >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

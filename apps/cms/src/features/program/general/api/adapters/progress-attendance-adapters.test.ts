@@ -300,7 +300,37 @@ describe('progress-attendance-adapters', () => {
     const row = sessions[0]?.participants[0]
     expect(row?.attendanceRecorded).toBe(false)
     expect(row?.attendanceStatus).toBeUndefined()
+    expect(row?.persistedAttendanceStatus).toBe('present')
     expect(sessions[0]?.attendanceRecordingOpen).toBe(false)
+  })
+
+  it('shows SYSTEM auto-check-in PRESENT as 출석 after start, with no source badge field', () => {
+    const sessions = buildProgressAttendanceSessionsFromRemote({
+      schedules: [
+        {
+          scheduleId: 9001,
+          sessionNo: 1,
+          scheduleStatus: 'IN_PROGRESS',
+          startAt: '2026-10-01T10:00:00+09:00',
+        },
+      ],
+      participants: [{ participantId: 1695036, memberName: '개인', participantType: 'INDIVIDUAL' }],
+      attendancesByScheduleId: {
+        '9001': [
+          {
+            participantId: 1695036,
+            status: 'PRESENT',
+            checkInSource: 'SYSTEM',
+            checkedByAdminId: undefined,
+          },
+        ],
+      },
+    })
+
+    const row = sessions[0]?.participants[0]
+    expect(row?.attendanceRecorded).toBe(true)
+    expect(row?.attendanceStatus).toBe('present')
+    expect(row).not.toHaveProperty('checkInSource')
   })
 
   it('opens attendance after start time even when schedule status is still SCHEDULED', () => {

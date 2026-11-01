@@ -27,8 +27,8 @@ export interface BulkResultRequest {
   reason?: string;
   /** 예비 합격 순위. 다건 요청에서는 모든 대상에 동일 순위를 적용하지 않으므로 현재 미지원 */
   reserveRank?: number;
-  /** 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL. 생략하면 즉시 발송 */
+  /** 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL | SCHEDULED. SCHEDULED는 MANUAL과 동일. 생략하면 즉시 발송 */
   notifyTiming?: string;
-  /** notifyTiming=MANUAL일 때 필수. 현재 시각 이후 ISO-8601 */
+  /** notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
   scheduledAt?: string;
 }

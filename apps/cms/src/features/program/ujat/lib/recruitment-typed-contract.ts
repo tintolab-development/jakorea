@@ -257,6 +257,8 @@ export function typedFieldsFromRecruitmentFormValues(
         announcementPublishedFromFormValue(values.participantRecruitmentAnnouncementPublished) ??
         null,
       remarksNotApplicable: values.participantRecruitmentNotesNotApplicable === 'not_applicable',
+      // 기관 폼의 최종 합격자 발표일 → 수정 경로(adapters finalPassAnnouncementAt)와 동일
+      finalPassAnnouncementAt: values.resultAnnouncementDate?.trim() || null,
     }
   }
   return {
@@ -280,12 +282,13 @@ export function assignUjatTypedRecruitmentRequestFields(
   if (row.announcementPublished != null) body.announcementPublished = row.announcementPublished
   if (row.remarksNotApplicable != null) body.remarksNotApplicable = row.remarksNotApplicable
   if (row.contentRevision != null) body.expectedRevision = row.contentRevision
+  // 기관·봉사자 모두 최종 발표일을 보낸다 (생성·수정 경로 동일)
+  if (row.finalPassAnnouncementAt !== undefined) {
+    body.finalPassAnnouncementAt = row.finalPassAnnouncementAt
+  }
   if (audience !== 'volunteer') return
   if (row.documentPassAnnouncementAt !== undefined) {
     body.documentPassAnnouncementAt = row.documentPassAnnouncementAt
-  }
-  if (row.finalPassAnnouncementAt !== undefined) {
-    body.finalPassAnnouncementAt = row.finalPassAnnouncementAt
   }
   if (row.noticeExposureTiming !== undefined) {
     body.noticeExposureTiming = row.noticeExposureTiming

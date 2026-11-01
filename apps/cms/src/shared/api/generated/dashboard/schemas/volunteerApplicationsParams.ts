@@ -5,6 +5,8 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { VolunteerApplicationsFinalResultStatus } from './volunteerApplicationsFinalResultStatus';
+import type { VolunteerApplicationsRecruitHalf } from './volunteerApplicationsRecruitHalf';
 
 export type VolunteerApplicationsParams = {
 /**
@@ -24,9 +26,9 @@ interviewStatus?: string;
  */
 interviewStage?: string;
 /**
- * 상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.
+ * 최종 결과 필터. PASS|FAIL|RESERVE|WAITING. APPROVED|FINAL_SELECTED→PASS, REJECTED→FAIL 매핑. 응답 필드는 DB 원문(PASS). 알 수 없으면 400.
  */
-finalResultStatus?: string;
+finalResultStatus?: VolunteerApplicationsFinalResultStatus;
 /**
  * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
  */
@@ -44,9 +46,9 @@ managerAEvaluation?: string;
  */
 managerBEvaluation?: string;
 /**
- * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * 상·하반기. program_recruitment.recruit_term의 FIRST_HALF|SECOND_HALF(VOLUNTEER). 모집 시작일 순이 아님. register body.recruitHalf와 같아야 해당 탭에 노출.
  */
-recruitHalf?: string;
+recruitHalf?: VolunteerApplicationsRecruitHalf;
 /**
  * 대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.
  */

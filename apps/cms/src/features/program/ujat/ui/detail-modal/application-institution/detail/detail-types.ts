@@ -9,6 +9,11 @@ export type UjatInstitutionApplicationGradeBlockDetail = {
   gradeLabel: string
   classCount: number
   classes: UjatInstitutionApplicationGradeClassDetail[]
+  textbookName?: string | null
+  textbookNameEn?: string | null
+  kitCount?: number | null
+  bookCount?: number | null
+  textbookDeliveryStatus?: string | null
 }
 
 export type UjatInstitutionApplicationClassTimeRowDetail = {

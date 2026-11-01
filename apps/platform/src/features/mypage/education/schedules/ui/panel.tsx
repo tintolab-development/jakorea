@@ -94,7 +94,8 @@ export function EducationSchedulePanel({
           canSubmitEducationAbsenceReason(
             resolveEducationScheduleProgressStatus(item.heldAt),
             item.attendanceStatus,
-            item.availableActions
+            item.availableActions,
+            item.absenceReasonStatus,
           )
       ),
     [allItems]

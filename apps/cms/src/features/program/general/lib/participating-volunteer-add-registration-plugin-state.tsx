@@ -4,10 +4,15 @@ import { PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS } from '@jakorea/form-schema/para
 
 export type ParticipatingVolunteerFreeTextId = ProgramVolunteerFreeTextQuestion['id']
 
+export type ParticipatingVolunteerCertificateFile = {
+  fileObjectId: string
+  fileName: string
+}
+
 export type ParticipatingVolunteerPreviousJaProgramValues = {
   programYear: string
   programName: string
-  certificateFileIds: string[]
+  certificateFiles: ParticipatingVolunteerCertificateFile[]
 }
 
 export type ParticipatingVolunteerAddRegistrationPluginValues = {
@@ -29,7 +34,7 @@ const EMPTY_PLUGIN_VALUES: ParticipatingVolunteerAddRegistrationPluginValues = {
   previousJaProgram: {
     programYear: '',
     programName: '',
-    certificateFileIds: [],
+    certificateFiles: [],
   },
   freeTextById: { ...EMPTY_FREE_TEXT },
 }
@@ -39,7 +44,7 @@ type ParticipatingVolunteerAddRegistrationPluginState = {
   setId1365: (value: string) => void
   setPreviousJaProgramYear: (value: string) => void
   setPreviousJaProgramName: (value: string) => void
-  appendPreviousJaCertificateFileIds: (fileIds: string[]) => void
+  appendPreviousJaCertificateFiles: (files: ParticipatingVolunteerCertificateFile[]) => void
   removePreviousJaCertificateFileAt: (index: number) => void
   setFreeText: (id: ParticipatingVolunteerFreeTextId, value: string) => void
   reset: () => void
@@ -85,23 +90,26 @@ export function ParticipatingVolunteerAddRegistrationPluginProvider({
     }))
   }, [])
 
-  const appendPreviousJaCertificateFileIds = useCallback((fileIds: string[]) => {
-    if (fileIds.length === 0) return
-    setValues(prev => ({
-      ...prev,
-      previousJaProgram: {
-        ...prev.previousJaProgram,
-        certificateFileIds: [...prev.previousJaProgram.certificateFileIds, ...fileIds],
-      },
-    }))
-  }, [])
+  const appendPreviousJaCertificateFiles = useCallback(
+    (files: ParticipatingVolunteerCertificateFile[]) => {
+      if (files.length === 0) return
+      setValues(prev => ({
+        ...prev,
+        previousJaProgram: {
+          ...prev.previousJaProgram,
+          certificateFiles: [...prev.previousJaProgram.certificateFiles, ...files],
+        },
+      }))
+    },
+    []
+  )
 
   const removePreviousJaCertificateFileAt = useCallback((index: number) => {
     setValues(prev => ({
       ...prev,
       previousJaProgram: {
         ...prev.previousJaProgram,
-        certificateFileIds: prev.previousJaProgram.certificateFileIds.filter((_, i) => i !== index),
+        certificateFiles: prev.previousJaProgram.certificateFiles.filter((_, i) => i !== index),
       },
     }))
   }, [])
@@ -119,7 +127,7 @@ export function ParticipatingVolunteerAddRegistrationPluginProvider({
       setId1365,
       setPreviousJaProgramYear,
       setPreviousJaProgramName,
-      appendPreviousJaCertificateFileIds,
+      appendPreviousJaCertificateFiles,
       removePreviousJaCertificateFileAt,
       setFreeText,
       reset,
@@ -129,7 +137,7 @@ export function ParticipatingVolunteerAddRegistrationPluginProvider({
       setId1365,
       setPreviousJaProgramYear,
       setPreviousJaProgramName,
-      appendPreviousJaCertificateFileIds,
+      appendPreviousJaCertificateFiles,
       removePreviousJaCertificateFileAt,
       setFreeText,
       reset,

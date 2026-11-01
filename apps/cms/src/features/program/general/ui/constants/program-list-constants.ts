@@ -181,7 +181,6 @@ export const programListTargetLevelOptions = [
   { value: 'middle', label: '중학생' },
   { value: 'high', label: '고등학생' },
   { value: 'university', label: '대학생' },
-  { value: 'college', label: '대학생' },
   { value: 'adult', label: '성인' },
 ]
 

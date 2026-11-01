@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal, CmsButton } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
+import { useComposedRegistrationBusinessPeriodDisabledDate } from '@/features/program/shared/ui/registration/registration-business-period-constraint'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { shiftEducationScheduleLineToDate } from '@/features/template/lib/format-education-schedule-line'
 import './education-schedule-change-modal.css'
@@ -19,6 +20,7 @@ export function EducationScheduleChangeModal({
   onConfirm: (nextLines: string[]) => void
 }) {
   const [changedDates, setChangedDates] = useState<Record<number, Dayjs | null>>({})
+  const disabledDate = useComposedRegistrationBusinessPeriodDisabledDate()
 
   useEffect(() => {
     if (open) setChangedDates({})
@@ -50,8 +52,7 @@ export function EducationScheduleChangeModal({
                   return next ? shiftEducationScheduleLineToDate(line, next) : line
                 })
               )
-            }
-          >
+            } >
             일정 변경
           </CmsButton>
         </div>
@@ -78,6 +79,7 @@ export function EducationScheduleChangeModal({
                     value={changedDates[index] ?? null}
                     placeholder="변경 일정을 선택해 주세요"
                     style={{ width: '100%' }}
+                    disabledDate={disabledDate}
                     onChange={date =>
                       setChangedDates(prev => ({
                         ...prev,

@@ -500,8 +500,7 @@ export function InstructorProfileFormBody({
       size="h32"
       adminAction="write"
       disabled={!onOpenJaGradeEvaluation}
-      onClick={() => onOpenJaGradeEvaluation?.()}
-    >
+      onClick={() => onOpenJaGradeEvaluation?.()} >
       등급 평가
     </CmsButton>
   )

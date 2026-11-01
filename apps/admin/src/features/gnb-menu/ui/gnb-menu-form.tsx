@@ -287,8 +287,7 @@ export function GnbMenuFormCard({ data }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending}
-              >
+                disabled={saveMutation.isPending} >
                 취소
               </CmsButton>
               <CmsButton
@@ -299,8 +298,7 @@ export function GnbMenuFormCard({ data }: Props) {
                 disabled={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }}
-              >
+                }} >
                 저장
               </CmsButton>
             </>

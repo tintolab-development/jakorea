@@ -97,9 +97,18 @@ const contractErrorCases = [
   ],
   ['ASSIGNMENT_SUBMISSION_NOT_STARTED', '과제 제출 기간이 아직 시작되지 않았습니다.'],
   ['ASSIGNMENT_SUBMISSION_CLOSED', '과제 제출 기간이 종료되었습니다.'],
-  ['ASSIGNMENT_SUBMISSION_NOT_ALLOWED', '해당 회차에는 과제를 제출할 수 없습니다.'],
-  ['ASSIGNMENT_ALREADY_SUBMITTED', '이미 과제를 제출했습니다.'],
-  ['ASSIGNMENT_RESUBMIT_NOT_ALLOWED', '과제 수정 제출이 허용되지 않습니다.'],
+  ['ASSIGNMENT_SUBMISSION_NOT_ALLOWED', '참여 중인 교육일정에서만 과제를 제출할 수 있습니다.'],
+  ['ASSIGNMENT_SUBMISSION_UNAVAILABLE', '현재 상태에서는 과제를 제출할 수 없습니다.'],
+  ['ASSIGNMENT_ALREADY_SUBMITTED', '이미 제출한 과제입니다. 수정 제출을 이용해 주세요.'],
+  ['ASSIGNMENT_NOT_SUBMITTED', '제출한 과제가 없습니다.'],
+  ['ASSIGNMENT_NOT_ENABLED', '과제가 설정되지 않은 교육일정입니다.'],
+  ['ASSIGNMENT_RESUBMIT_NOT_ALLOWED', '현재 상태에서는 과제를 수정 제출할 수 없습니다.'],
+  ['FORM_SUBMISSION_CLOSED', '설문 작성 기간이 종료되었습니다.'],
+  [
+    'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
+    '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+  ],
+  ['ISSUANCE_PERIOD_EXPIRED', '수료증 발급 기간이 만료되었습니다.'],
 ] as const
 
 for (const [code, message] of contractErrorCases) {
@@ -166,6 +175,19 @@ assert.equal(messageForApplicationBlockedReason('VOLUNTEER_RECRUITMENT_TARGET_MI
 assert.equal(
   messageForApplicationBlockedReason('ORGANIZATION_MEMBERSHIP_REQUIRED'),
   '학교·기관 회원만 신청할 수 있습니다.',
+)
+assert.equal(
+  messageForApplicationBlockedReason('SCHOOL_TEACHER_ROLE_REQUIRED'),
+  '학교 교사 회원만 기관 신청을 할 수 있습니다.',
+)
+assert.equal(
+  getProgramApplicationApiErrorMessage(
+    axiosErr({
+      success: false,
+      error: { code: 'SCHOOL_TEACHER_ROLE_REQUIRED', message: 'SCHOOL_TEACHER_ROLE_REQUIRED' },
+    }),
+  ),
+  '학교 교사 회원만 기관 신청을 할 수 있습니다.',
 )
 assert.equal(
   messageForApplicationBlockedReason('COLLEGE_STUDENT_REQUIRED'),

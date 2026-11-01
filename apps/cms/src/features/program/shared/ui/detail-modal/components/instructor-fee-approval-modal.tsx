@@ -161,8 +161,7 @@ export function InstructorFeeApprovalModal({
               size="large"
               type="button"
               disabled={!canConfirm || submitting}
-              onClick={handleConfirm}
-            >
+              onClick={handleConfirm} >
               {submitting ? '승인 중...' : '승인'}
             </CmsButton>
           </div>

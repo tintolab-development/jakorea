@@ -117,8 +117,7 @@ export function ModalsSection() {
             onClick={() => {
               setContentSize('default')
               setContentOpen(true)
-            }}
-          >
+            }} >
             ContentModal 열기
           </CmsButton>
         </div>
@@ -137,8 +136,7 @@ export function ModalsSection() {
               onClick={() => {
                 setContentSize(size)
                 setContentOpen(true)
-              }}
-            >
+              }} >
               {size} · {width}px · {usage}
             </CmsButton>
           ))}
@@ -182,8 +180,7 @@ export function ModalsSection() {
                 title: '알림',
                 content: '작업이 완료되었습니다.\n(useCmsAlert)',
               })
-            }
-          >
+            } >
             useCmsAlert
           </CmsButton>
           <CmsButton
@@ -193,8 +190,7 @@ export function ModalsSection() {
                 title: '알림',
                 content: '작업이 완료되었습니다.\n(cmsAlertModal.show)',
               })
-            }
-          >
+            } >
             cmsAlertModal (비 React)
           </CmsButton>
         </div>

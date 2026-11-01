@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { isInstructorPermissionRevoked } from '@/features/user/shared/lib/member-list-display'
 import { hasProgramAssignmentHistory } from '@/features/user/shared/lib/has-program-assignment-history'
@@ -86,22 +86,16 @@ export function PermissionHeaderActions({
         <>
           <CmsButton
             variant="delete"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={() => {
               onPermissionReject?.({ userId: displayUser.id, permissionRole })
-            }}
-          >
+            }} >
             신청 반려
           </CmsButton>
           <CmsButton
             variant="secondary"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             onClick={() => {
               onPermissionApprove?.({ userId: displayUser.id, permissionRole })
-            }}
-          >
+            }} >
             신청 승인
           </CmsButton>
         </>
@@ -109,24 +103,19 @@ export function PermissionHeaderActions({
       {approvalStatus === 'REJECTED' && permissionRole !== 'instructor' ? (
         <CmsButton
           variant="delete"
-          className="cms-button--action"
-          width={CMS_ACTION_BUTTON_WIDTH}
           onClick={() => {
             onPermissionResetToPending?.({
               userId: displayUser.id,
               permissionRole,
               fromStatus: 'REJECTED',
             })
-          }}
-        >
+          }} >
           반려 취소
         </CmsButton>
       ) : null}
       {approvalStatus === 'APPROVED' ? (
         <CmsButton
           variant="delete"
-          className="cms-button--action"
-          width={CMS_ACTION_BUTTON_WIDTH}
           disabled={approvalCancelBlocked}
           title={
             approvalCancelBlocked
@@ -140,8 +129,7 @@ export function PermissionHeaderActions({
               permissionRole,
               fromStatus: 'APPROVED',
             })
-          }}
-        >
+          }} >
           승인 취소
         </CmsButton>
       ) : null}
@@ -151,8 +139,7 @@ export function PermissionHeaderActions({
           size="large"
           variant="primary"
           disabled={isCommentEditing}
-          onClick={pageShell.onStartAdminCommentEdit}
-        >
+          onClick={pageShell.onStartAdminCommentEdit} >
           코멘트 작성
         </CmsButton>
       ) : null}
@@ -162,9 +149,7 @@ export function PermissionHeaderActions({
           revealed={personalInfoRevealed}
           cmsVariant={personalInfoButton.variant}
           cmsSize="large"
-          width={180}
-          onClick={personalInfoButton.onClick}
-        />
+          onClick={personalInfoButton.onClick} />
       ) : null}
     </div>
   )

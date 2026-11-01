@@ -84,11 +84,9 @@ export function CertificateTextFieldsEditor({
               <CmsButton
                 variant="delete"
                 size="small"
-                width="auto"
                 icon={<ButtonDeleteIcon />}
                 onClick={() => handleRemoveField(field.id)}
-                disabled={disabled}
-              />
+                disabled={disabled} />
             </Space>
 
             <Input

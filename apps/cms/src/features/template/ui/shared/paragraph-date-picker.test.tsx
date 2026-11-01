@@ -76,4 +76,16 @@ describe('ParagraphDatePicker surface sync', () => {
     })
     expect(onChange).toHaveBeenCalledTimes(1)
   })
+
+  it('range 피커는 showTimeToggle=false를 받아도 렌더된다', () => {
+    render(
+      <ParagraphDatePicker
+        mode="range"
+        value={[dayjs(START), dayjs(END)]}
+        showTimeToggle={false}
+        onChange={() => undefined}
+      />
+    )
+    expect(document.querySelector('.paragraph-date-picker')).not.toBeNull()
+  })
 })

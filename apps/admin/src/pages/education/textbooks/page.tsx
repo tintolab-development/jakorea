@@ -31,7 +31,6 @@ import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import {
   CMS_TABLE_NO_COL_CLASS,
@@ -623,14 +622,11 @@ export function EducationTextbooksPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
+              <CmsButton className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 type="button"
-                onClick={handleSearch}
-              >
+                onClick={handleSearch} >
                 조회
               </CmsButton>
             </div>
@@ -645,17 +641,14 @@ export function EducationTextbooksPage() {
               size="h40"
               type="button"
               onClick={handleBulkDeleteClick}
-              disabled={removeMutation.isPending}
-            >
+              disabled={removeMutation.isPending} >
               선택 삭제
             </CmsButton>
             <CmsButton
               variant="secondary"
               size="h40"
               type="button"
-              className="cms-button--toolbar-auto"
-              onClick={() => setTargetsOpen(true)}
-            >
+              onClick={() => setTargetsOpen(true)} >
               교육 대상 관리
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

@@ -21,8 +21,7 @@ export function ItemAddButton({
       type="button"
       size="medium"
       className={['item-add-button', className].filter(Boolean).join(' ')}
-      onClick={onClick}
-    >
+      onClick={onClick} >
       {children}
     </CmsButton>
   )

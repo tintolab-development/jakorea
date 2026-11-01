@@ -20,8 +20,7 @@ export function RegistrationDevAutofillButton({ onClick }: RegistrationDevAutofi
         } else {
           window.dispatchEvent(new Event('cms:registration-dev-autofill-complete'))
         }
-      }}
-    >
+      }} >
       자동입력(개발용)
     </CmsButton>
   )

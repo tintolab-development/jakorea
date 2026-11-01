@@ -267,16 +267,23 @@ export function resolveTravelBasisDetailTotalWon(
 }
 
 export function mapTransportationSnapshotToBasisDetail(
-  snapshot?: SettlementTransportationSnapshotResponse | null
+  snapshot?:
+    | (SettlementTransportationSnapshotResponse & { fuelCostWon?: number | null })
+    | null
 ): PaymentOrderCalculationBasisDetailTransportSnapshot | undefined {
   if (!snapshot) return undefined
 
+  const fuelCostWon =
+    snapshot.fuelCostWon != null && Number.isFinite(snapshot.fuelCostWon)
+      ? snapshot.fuelCostWon
+      : undefined
   const hasDistanceOrProvider =
     Boolean(snapshot.provider?.trim()) ||
     snapshot.oneWayDistanceKm != null ||
     snapshot.roundTripDistanceKm != null ||
     snapshot.tollAmount != null ||
     Boolean(snapshot.fuelType?.trim()) ||
+    fuelCostWon != null ||
     Boolean(snapshot.snapshotAt)
   const hasValue = hasDistanceOrProvider || snapshot.calculatedTransportAmount != null
   if (!hasValue) return undefined
@@ -288,6 +295,7 @@ export function mapTransportationSnapshotToBasisDetail(
     roundTripDistanceKm: snapshot.roundTripDistanceKm,
     tollAmount: snapshot.tollAmount,
     fuelType: snapshot.fuelType?.trim() || undefined,
+    fuelCostWon,
     calculatedTransportAmount: snapshot.calculatedTransportAmount,
     snapshotAt: snapshot.snapshotAt,
     distanceSnapshotUnlinked: !hasDistanceOrProvider,
@@ -320,7 +328,10 @@ export function mapLectureFeeCalculationDetailToBasisDetail(
   if (!detail) return undefined
 
   const candidates: Record<string, unknown>[] = []
-  if (detail.basisJson?.trim()) {
+  const basisJsonRaw = detail.basisJson as unknown
+  if (basisJsonRaw && typeof basisJsonRaw === 'object' && !Array.isArray(basisJsonRaw)) {
+    candidates.push(basisJsonRaw as Record<string, unknown>)
+  } else if (typeof detail.basisJson === 'string' && detail.basisJson.trim()) {
     try {
       const parsed: unknown = JSON.parse(detail.basisJson)
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
@@ -346,16 +357,20 @@ export function mapLectureFeeCalculationDetailToBasisDetail(
     const wageItemType = stringValue(recordValue(candidate, 'wageItemType'))
     const title =
       lectureFeeTitleFromGradeOrWage(feeGrade, wageItemType) ??
+      stringValue(recordValue(candidate, 'categoryLabel', 'itemName')) ??
       (layout === 'lectureFeeSpecial' ? SPECIAL_LECTURE_FEE_TITLE : undefined) ??
       (layout === 'lectureFeeGemini' ? GEMINI_LECTURE_FEE_TITLE : undefined)
     const amount =
       numberValue(recordValue(candidate, 'amount', 'feeAssessmentWon', 'totalWon')) ??
       detail.resultAmount
     const sessionOrdinal = numberValue(recordValue(candidate, 'sessionOrdinal'))
-    const lectureTimeDisplay = resolveCanonicalLectureSessionDisplay(
-      stringValue(recordValue(candidate, 'lectureTimeDisplay')),
-      sessionOrdinal
-    )
+    const hours = numberValue(recordValue(candidate, 'hours'))
+    // 모달 강의 시간: canonical 차시·회차 → sessionOrdinal → hours(N시간). 시계열·일정명 금지.
+    const lectureTimeDisplay = resolveLectureTimeDisplayFromCalculationFields({
+      lectureTimeDisplay: stringValue(recordValue(candidate, 'lectureTimeDisplay')),
+      sessionOrdinal,
+      hours,
+    })
     if (amount == null && !title && lectureTimeDisplay === '-') continue
 
     const fee = amount ?? 0
@@ -580,6 +595,78 @@ export function resolveActivityBasisDetailTotalWon(
   return detail.totalWon
 }
 
+/**
+ * BE calculationDetail/basisJson의 원천징수 숫자만 매핑한다.
+ * 빠진 항목을 FE 세율·공제 공식으로 채우지 않는다.
+ */
+export function mapWithholdingCalculationDetailToBasisDetail(
+  detail?: SettlementFrontendCalculationDetailResponse | null
+): PaymentOrderCalculationBasisDetailWithholding | undefined {
+  if (!detail) return undefined
+
+  const candidates: Record<string, unknown>[] = []
+  const basisJsonRaw = detail.basisJson as unknown
+  if (basisJsonRaw && typeof basisJsonRaw === 'object' && !Array.isArray(basisJsonRaw)) {
+    candidates.push(basisJsonRaw as Record<string, unknown>)
+  } else if (typeof detail.basisJson === 'string' && detail.basisJson.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(detail.basisJson)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        candidates.push(parsed as Record<string, unknown>)
+      }
+    } catch {
+      // invalid JSON — typed withholding 없음
+    }
+  }
+  candidates.push(detail as unknown as Record<string, unknown>)
+
+  for (const candidate of candidates) {
+    const itemType = stringValue(recordValue(candidate, 'itemType'))?.toUpperCase()
+    const layout = stringValue(recordValue(candidate, 'layout'))
+    const looksLikeWithholding =
+      itemType === 'WITHHOLDING' ||
+      layout === 'withholding' ||
+      recordValue(candidate, 'withholdingTaxAmountWon') != null ||
+      recordValue(candidate, 'dailySalaryTotalWon') != null
+    if (!looksLikeWithholding) continue
+
+    const dailySalaryTotalWon = numberValue(recordValue(candidate, 'dailySalaryTotalWon'))
+    const earnedIncomeDeductionWon = numberValue(
+      recordValue(candidate, 'earnedIncomeDeductionWon')
+    )
+    const incomeTaxRatePercent = numberValue(recordValue(candidate, 'incomeTaxRatePercent'))
+    const incomeTaxWon = numberValue(recordValue(candidate, 'incomeTaxWon'))
+    const earnedIncomeTaxCreditWon = numberValue(
+      recordValue(candidate, 'earnedIncomeTaxCreditWon')
+    )
+    const withholdingTaxAmountWon = numberValue(
+      recordValue(candidate, 'withholdingTaxAmountWon')
+    )
+    if (
+      dailySalaryTotalWon == null ||
+      earnedIncomeDeductionWon == null ||
+      incomeTaxRatePercent == null ||
+      incomeTaxWon == null ||
+      earnedIncomeTaxCreditWon == null ||
+      withholdingTaxAmountWon == null
+    ) {
+      continue
+    }
+
+    return {
+      layout: 'withholding',
+      dailySalaryTotalWon,
+      earnedIncomeDeductionWon,
+      incomeTaxRatePercent,
+      incomeTaxWon,
+      earnedIncomeTaxCreditWon,
+      withholdingTaxAmountWon,
+    }
+  }
+
+  return undefined
+}
+
 /** mock·데모 — 1일 급여 총액 기준 원천징수 산정 (소득세 3.3% · 근로소득세액공제) */
 export function buildWithholdingBasisDetail(
   dailySalaryTotalWon: number
@@ -773,6 +860,14 @@ export function isCanonicalLectureSessionDisplay(raw: string | undefined): boole
   return /^\d+\s*(?:~\s*\d+\s*)?(?:차시|회차)$/u.test(trimmed)
 }
 
+/** 모달 「강의 시간」에 쓸 수 있는 표기 — 차시·회차 또는 N시간 */
+export function isUsableLectureTimeDisplay(raw: string | undefined): boolean {
+  const trimmed = raw?.trim()
+  if (!trimmed || trimmed === '-') return false
+  if (isCanonicalLectureSessionDisplay(trimmed)) return true
+  return /^\d+(?:\.\d+)?\s*시간$/u.test(trimmed)
+}
+
 /** lectureSessionDisplay가 일정명이면 파싱하지 않고 sessionOrdinal → N차시 */
 export function resolveCanonicalLectureSessionDisplay(
   lectureSessionDisplay?: string | null,
@@ -788,34 +883,109 @@ export function resolveCanonicalLectureSessionDisplay(
   return '-'
 }
 
+/**
+ * calculationDetail(basisJson) 필드만으로 모달 강의 시간을 만든다.
+ * 우선순위: canonical 차시·회차 → sessionOrdinal → hours(N시간).
+ */
+export function resolveLectureTimeDisplayFromCalculationFields(input: {
+  lectureTimeDisplay?: string | null
+  sessionOrdinal?: number | null
+  hours?: number | null
+}): string {
+  const fromSession = resolveCanonicalLectureSessionDisplay(
+    input.lectureTimeDisplay,
+    input.sessionOrdinal
+  )
+  if (fromSession !== '-') return fromSession
+  const rawDisplay = input.lectureTimeDisplay?.trim()
+  if (rawDisplay && isUsableLectureTimeDisplay(rawDisplay)) return rawDisplay
+  if (input.hours != null && Number.isFinite(input.hours) && input.hours > 0) {
+    const hours = input.hours
+    return Number.isInteger(hours) ? `${Math.trunc(hours)}시간` : `${hours}시간`
+  }
+  return '-'
+}
+
 export type PaymentOrderCalculationBasisDetailResolveContext = {
   lectureFeeStandardTitle?: string
   /** 원천징수 fallback — 세전 1일 급여 총액 */
   withholdingDailySalaryTotalWon?: number
   /** true이면 서버 calculationDetail이 없는 항목에 mock 기준을 만들지 않는다. */
   remoteData?: boolean
+  /**
+   * @deprecated 모달 「강의 시간」은 calculationDetail(basisJson)만 사용한다.
+   * payment/settlement.sessionOrdinal · lectureSessionDisplay로 채우지 않는다.
+   */
   sessionOrdinal?: number | null
   /** 책정 금액 정본 — 있으면 모달 급수 산정 금액에 우선 */
   lectureFeeStandardAmountWon?: number | null
 }
 
-function resolveLectureTimeDisplayForRow(
-  row: {
-    basisDetail?: PaymentOrderCalculationBasisDetail
-    lectureSessionDisplay?: string
-  },
-  context?: PaymentOrderCalculationBasisDetailResolveContext | null
-): string {
+/**
+ * 모달 강의 시간 SSOT = calculationDetail → basisDetail.lectureTimeDisplay(usable)만.
+ * row.lectureSessionDisplay · context.sessionOrdinal fallback 금지.
+ */
+function resolveLectureTimeDisplayForRow(row: {
+  basisDetail?: PaymentOrderCalculationBasisDetail
+}): string {
   if (row.basisDetail && isLectureFeeBasisDetail(row.basisDetail)) {
     const fromDetail = row.basisDetail.lectureTimeDisplay.trim()
-    if (fromDetail && fromDetail !== '-' && isCanonicalLectureSessionDisplay(fromDetail)) {
+    if (fromDetail && fromDetail !== '-' && isUsableLectureTimeDisplay(fromDetail)) {
       return fromDetail
     }
   }
-  return resolveCanonicalLectureSessionDisplay(
-    row.lectureSessionDisplay,
-    context?.sessionOrdinal
-  )
+  return '-'
+}
+
+function enrichLectureFeeBasisDetailFromContext(
+  detail:
+    | PaymentOrderCalculationBasisDetailLectureFeeTier
+    | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+    | PaymentOrderCalculationBasisDetailLectureFeeGemini,
+  row: {
+    kind: string
+    itemLabel: string
+    amount: number
+    basisDetail?: PaymentOrderCalculationBasisDetail
+  },
+  context?: PaymentOrderCalculationBasisDetailResolveContext | null
+):
+  | PaymentOrderCalculationBasisDetailLectureFeeTier
+  | PaymentOrderCalculationBasisDetailLectureFeeSpecial
+  | PaymentOrderCalculationBasisDetailLectureFeeGemini {
+  const lectureTimeDisplay = resolveLectureTimeDisplayForRow(row)
+  const categoryLabel = resolveLectureFeeStandardTitleForRow(row, context)
+  const amountWon = context?.lectureFeeStandardAmountWon
+  let next = detail
+  if (
+    lectureTimeDisplay !== '-' &&
+    (!next.lectureTimeDisplay.trim() || next.lectureTimeDisplay.trim() === '-')
+  ) {
+    next = { ...next, lectureTimeDisplay }
+  } else if (
+    next.lectureTimeDisplay.trim() &&
+    next.lectureTimeDisplay.trim() !== '-' &&
+    !isUsableLectureTimeDisplay(next.lectureTimeDisplay)
+  ) {
+    next = { ...next, lectureTimeDisplay: '-' }
+  }
+  if (
+    !isGenericLectureFeeCategoryLabel(categoryLabel) &&
+    isGenericLectureFeeCategoryLabel(next.categoryLabel)
+  ) {
+    next = { ...next, categoryLabel }
+    if (next.layout === 'lectureFeeTier') {
+      next = { ...next, tier: resolveLectureFeeTier(categoryLabel) }
+    }
+  }
+  if (amountWon != null && amountWon > 0) {
+    if (next.layout === 'lectureFeeGemini') {
+      next = { ...next, feeAssessmentWon: amountWon }
+    } else {
+      next = { ...next, feeAssessmentWon: amountWon, totalWon: amountWon }
+    }
+  }
+  return next
 }
 
 /** 행 payload·기본정보로 산정 기준 상세 fallback 생성 (mock/API 공통) */
@@ -832,6 +1002,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
 ): PaymentOrderCalculationBasisDetail | undefined {
   // 표시용 원격 snapshot은 기존 호환 fallback보다 우선한다.
   // BE lectureFeeTier 합성(title/resultAmount만)이 remote로 떨어진 경우는 급수 모달로 되돌린다.
+  // 강의 시간은 calculationDetail에 없으므로 「-」(sessionOrdinal/lectureSessionDisplay 합성 금지).
   if (row.basisDetail?.layout === 'remote') {
     const sourceLayout = row.basisDetail.sourceLayout
     if (
@@ -843,43 +1014,33 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
       return buildLectureFeeBasisDetailFromStandardTitle(
         resolveLectureFeeStandardTitleForRow(row, context),
         context?.lectureFeeStandardAmountWon ?? row.amount,
-        resolveLectureTimeDisplayForRow(row, context)
+        resolveLectureTimeDisplayForRow(row)
       )
     }
     return row.basisDetail
   }
 
-  if (context?.remoteData && row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
-    if (isLectureFeeBasisDetail(row.basisDetail)) {
-      const lectureTimeDisplay = resolveLectureTimeDisplayForRow(row, context)
-      const categoryLabel = resolveLectureFeeStandardTitleForRow(row, context)
-      const amountWon = context.lectureFeeStandardAmountWon
-      let next = row.basisDetail
-      if (
-        lectureTimeDisplay !== '-' &&
-        (!next.lectureTimeDisplay.trim() || next.lectureTimeDisplay.trim() === '-')
-      ) {
-        next = { ...next, lectureTimeDisplay }
-      }
-      if (
-        !isGenericLectureFeeCategoryLabel(categoryLabel) &&
-        isGenericLectureFeeCategoryLabel(next.categoryLabel)
-      ) {
-        next = { ...next, categoryLabel }
-        if (next.layout === 'lectureFeeTier') {
-          next = { ...next, tier: resolveLectureFeeTier(categoryLabel) }
-        }
-      }
-      if (amountWon != null && amountWon > 0) {
-        if (next.layout === 'lectureFeeGemini') {
-          next = { ...next, feeAssessmentWon: amountWon }
-        } else {
-          next = { ...next, feeAssessmentWon: amountWon, totalWon: amountWon }
-        }
-      }
-      return next
-    }
-    return row.basisDetail
+  // 강의비 행만 lectureFee* basisDetail을 모달에 연결한다.
+  // BE가 withholding 등에 lectureFeeTier calculationDetail을 붙여도 강사비 모달로 열지 않는다.
+  if (
+    isLectureFeeCalculationRow(row) &&
+    row.basisDetail &&
+    isLectureFeeBasisDetail(row.basisDetail)
+  ) {
+    return enrichLectureFeeBasisDetailFromContext(row.basisDetail, row, context)
+  }
+
+  const matchedBasisDetail =
+    row.basisDetail && isLectureFeeBasisDetail(row.basisDetail) && !isLectureFeeCalculationRow(row)
+      ? undefined
+      : row.basisDetail
+
+  if (
+    context?.remoteData &&
+    matchedBasisDetail &&
+    isSupportedBasisDetailLayout(matchedBasisDetail)
+  ) {
+    return matchedBasisDetail
   }
 
   // 원격 응답에 교통비 스냅샷·basisJson이 없으면 산출 금액만 표시하고 미연결 안내를 띄운다.
@@ -893,21 +1054,21 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return buildLectureFeeBasisDetailFromStandardTitle(
       resolveLectureFeeStandardTitleForRow(row, context),
       row.amount,
-      resolveLectureTimeDisplayForRow(row, context)
+      resolveLectureTimeDisplayForRow(row)
     )
   }
 
-  // 원천징수: 원격이어도 소계(실지급 전 합)가 있으면 요율 산출 UI를 표시한다.
+  // 원천징수: 원격은 BE withholding 필드만. 소계로 3.3%를 재계산하지 않는다.
   if (row.kind === 'withholding' || row.itemLabel === '원천징수') {
+    if (context?.remoteData) return undefined
     const dailyTotal = context?.withholdingDailySalaryTotalWon
     if (dailyTotal && dailyTotal > 0) {
       return buildWithholdingBasisDetail(dailyTotal)
     }
-    if (context?.remoteData) return undefined
   }
 
-  if (row.basisDetail && isSupportedBasisDetailLayout(row.basisDetail)) {
-    return row.basisDetail
+  if (matchedBasisDetail && isSupportedBasisDetailLayout(matchedBasisDetail)) {
+    return matchedBasisDetail
   }
 
   if (context?.remoteData) {

@@ -1,3 +1,4 @@
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { useCallback, useMemo, type ComponentType, type Key, type ReactNode } from 'react'
 import { Empty } from 'antd'
 import type { Dayjs } from 'dayjs'
@@ -175,7 +176,7 @@ function CalendarSubRightProgramList({
               className="calendar-list-item"
               data-has-color="true"
               style={{
-                backgroundColor: color.bg,
+                backgroundColor: calendarListItemBackground(color.bg),
                 border: `1px solid ${color.border}`,
               }}
               onClick={() => onItemClick(program)}
@@ -240,7 +241,7 @@ function CalendarSubRightInstitutionApplicationList({
                 .join(' ')}
               data-has-color="true"
               style={{
-                backgroundColor: colors.bg,
+                backgroundColor: calendarListItemBackground(colors.bg),
                 border: `1px solid ${colors.border}`,
               }}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
@@ -385,7 +386,7 @@ export function CalendarSubRightGeneralInstitutionApplicationList({
               .join(' ')}
             data-has-color="true"
             style={{
-              backgroundColor: colors.bg,
+              backgroundColor: calendarListItemBackground(colors.bg),
               border: `1px solid ${colors.border}`,
             }}
             onClick={() => onRowClick(row)}
@@ -455,7 +456,7 @@ export function CalendarSubRightGeneralInstructorApplicationList({
               .join(' ')}
             data-has-color="true"
             style={{
-              backgroundColor: colors.bg,
+              backgroundColor: calendarListItemBackground(colors.bg),
               border: `1px solid ${colors.border}`,
             }}
             onClick={() => onRowClick(row)}
@@ -525,7 +526,7 @@ export function CalendarSubRightGeneralIndividualApplicationList({
               .join(' ')}
             data-has-color="true"
             style={{
-              backgroundColor: colors.bg,
+              backgroundColor: calendarListItemBackground(colors.bg),
               border: `1px solid ${colors.border}`,
             }}
             onClick={() => onRowClick(row)}
@@ -606,7 +607,6 @@ export function CalendarSubRightGeneralProgramEventList({
       ) : (
         dayEvents.map(event => {
           const colors = resolveEventColors?.(event) ?? SCHEDULE_COLORS[0]
-          const accent = colors.accent ?? colors.bg
           return (
             <div
               key={String(event.id)}
@@ -619,8 +619,8 @@ export function CalendarSubRightGeneralProgramEventList({
                 .join(' ')}
               data-has-color="true"
               style={{
-                backgroundColor: `color-mix(in srgb, ${accent} 6%, transparent)`,
-                border: `1px solid color-mix(in srgb, ${accent} 10%, transparent)`,
+                backgroundColor: calendarListItemBackground(colors.bg),
+                border: `1px solid ${colors.border}`,
               }}
               onClick={() => onEventClick(event.originalItem)}
             >
@@ -688,7 +688,7 @@ export function CalendarSubRightVolunteerInterviewList({
               className="calendar-list-item"
               data-has-color="true"
               style={{
-                backgroundColor: colors.bg,
+                backgroundColor: calendarListItemBackground(colors.bg),
                 border: `1px solid ${colors.border}`,
               }}
               onClick={() => onRowClick(row)}
@@ -751,7 +751,7 @@ export function CalendarSubRightVolunteerInterview2List({
                 .join(' ')}
               data-has-color="true"
               style={{
-                backgroundColor: colors.bg,
+                backgroundColor: calendarListItemBackground(colors.bg),
                 border: `1px solid ${colors.border}`,
               }}
               onClick={() => onRowClick(row)}

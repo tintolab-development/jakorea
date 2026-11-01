@@ -55,7 +55,7 @@ export interface SchoolDetailForModal {
   computerInRoom?: string
   /** 주차 공간 여부 및 위치 */
   parkingInfo?: string
-  /** 성범죄 경력 조회서 요청 */
+  /** 성범죄경력 조회서 요청 */
   criminalCheckRequest?: string
   lectureRound: string
   textbookName?: string
@@ -205,6 +205,11 @@ export interface LectureAttendanceSession {
    * 기록이 없어도 정정 모드에서 출석/결석/지각을 고를 수 있다.
    */
   recordingOpen?: boolean
+  /**
+   * 필수 사전교육 일정(scheduleRole=PRE_EDUCATION). 라벨은 「사전교육」, roundNumber는 0(회차 아님).
+   * 출석률 분모에는 다른 교육 일정과 같이 포함한다.
+   */
+  preEducation?: boolean
 }
 
 export interface LectureAttendanceDetail {

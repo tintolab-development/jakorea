@@ -40,7 +40,7 @@ scheduleDate?: string;
  */
 temporaryAssignmentStatus?: string;
 /**
- * 쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달
+ * 교육 진행 상·하반기 필터. FIRST_HALF|SECOND_HALF. 학교 연 1회 신청은 응답 recruitHalf=null. 쿼리는 확정 session 교육일(schedule 이름 또는 Asia/Seoul 달력월 1–6/7–12)이 해당 학기에 속하면 포함. sessions가 비어 있는 행은 누락 방지로 양 half에 포함. 양 half에 걸친 sessions는 요청 half마다 포함(OR). program_recruitment.recruit_term 컬럼 등호는 쓰지 않는다.
  */
 recruitHalf?: string;
 /**

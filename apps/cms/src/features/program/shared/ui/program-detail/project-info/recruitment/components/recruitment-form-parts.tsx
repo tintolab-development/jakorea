@@ -11,7 +11,7 @@ import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-dat
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
-  formatDateOnly,
+  formatDateWithOptionalTime,
   formatDateRange,
   INTERVIEW_METHOD_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -96,7 +96,7 @@ export function ProgramDetailDateMethodReadRow({
 }) {
   const methodText = method?.trim()
   if (!dateIso) return methodText || '-'
-  const dateLabel = formatDateOnly(dateIso)
+  const dateLabel = formatDateWithOptionalTime(dateIso)
   const methodLabel = methodText || '-'
   return (
     <div className="program-detail-info-tab__contact-inline">
@@ -111,13 +111,17 @@ export function ProgramDetailInterviewReadRow({
   start,
   end,
   method,
+  allowMissingEnd = false,
 }: {
   start?: string | Date | null
   end?: string | Date | null
   method?: string | null
+  /** 참여자 2차 면접: 종료가 null인 옛 행은 시작일 하루로 표시한다. 봉사자·강사는 기본값(둘 다 있어야 표시). */
+  allowMissingEnd?: boolean
 }) {
-  if (!start || !end) return '-'
-  const range = formatDateRange(start, end)
+  if (!start) return '-'
+  if (!end && !allowMissingEnd) return '-'
+  const range = formatDateRange(start, end ?? start)
   const raw = method?.trim()
   const methodLabel = raw
     ? (INTERVIEW_METHOD_OPTIONS.find(o => o.value === raw)?.label ?? raw)

@@ -192,6 +192,8 @@ export type RenderFormParagraphBodyOptions = {
     | GeminiVisitingTrainingApplicationFormInstructorBodyOptions
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
+  /** 저장된 UJAT 프로그램 GET typed halfPlans — 희망일 칩은 overlay보다 이 값을 우선 */
+  ujatPreferredEducationScheduleTypedDetail?: UjatTypedDetail | null
   /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormVolunteer?: UjatProgramApplicationVolunteerBodyOptions
   /** UJAT 프로그램 학교 신청 폼 — 학년 별 신청 정보(블록 수·카드 헤더「+ 신청 학년 추가」) */
@@ -550,6 +552,9 @@ export function renderFormParagraphBody(
           programApplicationFormGeminiInstitution={options?.programApplicationFormGeminiInstitution}
           programApplicationFormGeminiInstructor={options?.programApplicationFormGeminiInstructor}
           ujatProgramApplicationFormInstitution={options?.ujatProgramApplicationFormInstitution}
+          ujatPreferredEducationScheduleTypedDetail={
+            options?.ujatPreferredEducationScheduleTypedDetail
+          }
           ujatProgramApplicationFormVolunteer={options?.ujatProgramApplicationFormVolunteer}
           ujatProgramApplicationGradeInfo={options?.ujatProgramApplicationGradeInfo}
           ujatProgramApplicationGradeClassTime={options?.ujatProgramApplicationGradeClassTime}
@@ -823,7 +828,7 @@ export function renderFormParagraphBody(
           ? options?.ujatProgramApplicationFormVolunteer?.recruitCohortLabel
           : undefined
       const resolveItemDisplayLabel =
-        ujatVolunteerRecruitCohort &&
+        paragraphInteractionMode === 'user' &&
         options?.ujatProgramApplicationFormVolunteer?.enabled === true &&
         isUjatProgramApplicationVolunteerSingleOptionMultipleChoiceSeed(p.id)
           ? (item: { id: string; label: string }) =>
@@ -935,6 +940,7 @@ export function renderFormParagraphBody(
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={isUserInfoFieldSelectEditMode}
           layout={isUserLikeVisible ? 'previewTable' : 'chips'}
+          answerEditable={paragraphInteractionMode === 'user'}
           previewValues={
             options?.userInfoPreviewValues ??
             (p.kind === 'single_item' && p.variant === 'user_info' ? p.fieldAnswers : undefined)

@@ -34,14 +34,11 @@ export function LoginSocialAlreadyLinkedView({
       <div className="login-social-already-linked__actions">
         <CmsButton
           variant="primary"
-          size="h52"
-          width="100%"
-          className="login-submit-btn"
-          onClick={onConnectOtherSocial}
-        >
+          size="h52" className="login-submit-btn"
+          onClick={onConnectOtherSocial} >
           다른 소셜 계정 연결하기
         </CmsButton>
-        <CmsButton variant="default" size="h52" width="100%" onClick={onEmailLogin}>
+        <CmsButton variant="default" size="h52" onClick={onEmailLogin}>
           이메일로 로그인하기
         </CmsButton>
       </div>

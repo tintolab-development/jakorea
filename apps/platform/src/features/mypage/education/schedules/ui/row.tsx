@@ -4,10 +4,16 @@ import {
   canSubmitEducationAbsenceReason,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
-  resolveEducationScheduleProgressStatus,
+  resolveEducationScheduleRowProgressStatus,
+  shouldDisplayEducationAbsenceReason,
   shouldShowEducationAssignment,
 } from '../lib/schedule-rules'
-import { resolveEducationScheduleDateLabel } from '../lib/format'
+import { resolveEducationScheduleRowDateLabel } from '../lib/format'
+import {
+  educationCurriculumSessionSummaryLabel,
+  hasEducationCurriculumSessions,
+  visibleEducationCurriculumSessions,
+} from '../lib/curriculum-sessions'
 import checkOnSmallUrl from '@/shared/assets/icons/check-mint-small.svg'
 import {
   EducationSessionCard,
@@ -37,24 +43,47 @@ export function EducationScheduleRow({
   onAbsenceReasonSubmit,
   showAbsenceReason = true,
 }: EducationScheduleRowProps) {
-  const progress = resolveEducationScheduleProgressStatus(item.heldAt)
-  const heldLabel = resolveEducationScheduleDateLabel(item)
+  const progress = resolveEducationScheduleRowProgressStatus(item)
+  const heldLabel = resolveEducationScheduleRowDateLabel(item)
   const showAssignment = assignmentAllowed && shouldShowEducationAssignment(item)
   const hasOperationalSchedule = item.scheduleId !== null
   const showAbsenceSubmit =
     onAbsenceReasonSubmit != null &&
     hasOperationalSchedule &&
-    canSubmitEducationAbsenceReason(progress, item.attendanceStatus, item.availableActions)
+    canSubmitEducationAbsenceReason(
+      progress,
+      item.attendanceStatus,
+      item.availableActions,
+      item.absenceReasonStatus,
+    )
   const attendance = hasOperationalSchedule ? item.attendanceStatus : null
-  const subtitle = item.rowLabel?.trim() || '-'
+  const curriculumSessions = hasEducationCurriculumSessions(item.curriculumSessions)
+    ? visibleEducationCurriculumSessions(item.curriculumSessions)
+    : []
+  const showCurriculumSessions = curriculumSessions.length > 0
+  const sessionSummary = showCurriculumSessions
+    ? educationCurriculumSessionSummaryLabel(curriculumSessions)
+    : undefined
+  const subtitle = showCurriculumSessions
+    ? sessionSummary || '전 차시'
+    : item.rowLabel?.trim() || '-'
   const sessionHeading = subtitle === '-' ? heldLabel : `${heldLabel}, ${subtitle}`
   const absenceReason =
-    showAbsenceReason && hasOperationalSchedule ? item.absenceReason?.trim() : undefined
+    showAbsenceReason &&
+    hasOperationalSchedule &&
+    shouldDisplayEducationAbsenceReason(
+      item.attendanceStatus,
+      item.absenceReasonStatus,
+      item.absenceReason,
+    )
+      ? item.absenceReason?.trim()
+      : undefined
 
   return (
     <>
-      <EducationSessionCard>
+      <EducationSessionCard className={styles.card}>
         <EducationSessionCardHeader
+          mobileStack
           badge={
             <PFStateBadge size="small" tone={progress === 'completed' ? 'success' : 'progress'}>
               {EDUCATION_SCHEDULE_PROGRESS_LABEL[progress]}
@@ -77,15 +106,19 @@ export function EducationScheduleRow({
                       {item.team.roleLabel}
                     </PFText>
                   </span>
-                  <span className={styles.teamDivider} aria-hidden="true" />
-                  <span className={styles.teamField}>
-                    <PFText as="span" typo="bd-lg-rg" color="neutral-cool-500">
-                      팀명
-                    </PFText>
-                    <PFText as="span" typo="bd-lg-rg" color="black">
-                      {item.team.teamName}
-                    </PFText>
-                  </span>
+                  {item.team.teamName ? (
+                    <>
+                      <span className={styles.teamDivider} aria-hidden="true" />
+                      <span className={styles.teamField}>
+                        <PFText as="span" typo="bd-lg-rg" color="neutral-cool-500">
+                          팀명
+                        </PFText>
+                        <PFText as="span" typo="bd-lg-rg" color="black">
+                          {item.team.teamName}
+                        </PFText>
+                      </span>
+                    </>
+                  ) : null}
                 </span>
               ) : null}
             </>
@@ -97,6 +130,7 @@ export function EducationScheduleRow({
                   type="button"
                   variant="secondary"
                   size="large"
+                  className={styles.rowButton}
                   onClick={() => onAbsenceReasonSubmit(item)}
                 >
                   결석 사유 제출하기
@@ -130,7 +164,29 @@ export function EducationScheduleRow({
           }
         />
 
-        {item.content ? (
+        {showCurriculumSessions ? (
+          <ul className={styles.sessions}>
+            {curriculumSessions.map(session => {
+              const label = session.sessionLabel?.trim()
+              const title = session.title?.trim()
+              const content = session.content?.trim()
+              return (
+                <li key={`${session.sessionNo}-${label ?? title ?? ''}`} className={styles.session}>
+                  {label || title ? (
+                    <PFText as="p" typo="bd-lg-sb" color="black" className={styles.sessionHeading}>
+                      {[label, title].filter(Boolean).join(' · ')}
+                    </PFText>
+                  ) : null}
+                  {content ? (
+                    <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+                      {content}
+                    </PFText>
+                  ) : null}
+                </li>
+              )
+            })}
+          </ul>
+        ) : item.content ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             {item.content}
           </PFText>
@@ -143,6 +199,7 @@ export function EducationScheduleRow({
             sessionHeading={sessionHeading}
             applicationType={applicationType}
             applicationId={applicationId}
+            availableActions={item.availableActions}
           />
         ) : null}
       </EducationSessionCard>

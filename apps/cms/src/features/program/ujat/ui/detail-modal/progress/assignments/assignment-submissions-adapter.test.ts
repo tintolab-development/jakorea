@@ -116,6 +116,36 @@ describe('buildUjatAssignmentSessionsFromResponse', () => {
     )
   })
 
+  it('APPROVED는 제출 완료(submitted)로 매핑한다', () => {
+    const [session] = buildUjatAssignmentSessionsFromResponse({
+      regionKey: 'seoul',
+      half: 'h1',
+      response: {
+        sessions: [
+          {
+            scheduleId: 3,
+            educationDate: '2026-05-01',
+            volunteers: [
+              {
+                participantId: 7,
+                plan: {
+                  status: 'APPROVED',
+                  submittedAt: '2026-04-20T09:00:00+09:00',
+                  formResponseId: 77,
+                },
+                log: { status: 'NOT_SUBMITTED' },
+              },
+            ],
+          },
+        ],
+      },
+    })
+    expect(session.volunteers[0]?.plan).toMatchObject({
+      status: 'submitted',
+      formResponseId: 77,
+    })
+  })
+
   it('sessions 없으면 빈 배열', () => {
     expect(
       buildUjatAssignmentSessionsFromResponse({ regionKey: 'seoul', half: 'h1', response: {} })

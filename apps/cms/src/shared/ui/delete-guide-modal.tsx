@@ -129,8 +129,7 @@ export function DeleteGuideModal({
               if (canConfirm && !confirmLoading) {
                 onConfirm(isPasswordMode || needsTypedConfirm ? confirmInput : undefined)
               }
-            }}
-          >
+            }} >
             {confirmText}
           </CmsButton>
         </>

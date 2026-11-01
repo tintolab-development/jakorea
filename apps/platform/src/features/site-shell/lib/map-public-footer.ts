@@ -41,7 +41,7 @@ export const SITE_FOOTER_FALLBACK: SiteFooterView = {
   menus: [
     { key: 'TERMS', label: '이용약관', kind: 'terms' },
     { key: 'PRIVACY', label: '개인정보처리방침', kind: 'privacy' },
-    { key: 'DIRECTIONS', label: '오시는길', kind: 'directions', href: '/about/directions' },
+    { key: 'DIRECTIONS', label: '오시는 길', kind: 'directions', href: '/about/directions' },
     { key: 'NTS_DISCLOSURE', label: '국세청 공시 및 공개 내역', kind: 'noop' },
     { key: 'NTS_EVASION_REPORT', label: '국세청 탈세 제보', kind: 'noop' },
     { key: 'DONATION', label: '후원하기', kind: 'noop' },
@@ -102,7 +102,7 @@ function mapMenu(raw: unknown): SiteFooterMenu | null {
   if (key === 'TERMS') return { key, label, kind: 'terms' }
   if (key === 'PRIVACY') return { key, label, kind: 'privacy' }
   if (key === 'DIRECTIONS') {
-    return { key, label, kind: 'directions', href: '/about/directions' }
+    return { key, label: '오시는 길', kind: 'directions', href: '/about/directions' }
   }
   if (!EXTERNAL_MENU_CODES.has(key)) return null
 

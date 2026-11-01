@@ -10,6 +10,8 @@ type EducationSessionGuideBlockProps = {
   description?: string
   actions?: ReactNode
   children?: ReactNode
+  /** PC 미만에서 문구·버튼을 세로로 쌓고 버튼을 꽉 채움 (opt-in, 기본 off) */
+  mobileStack?: boolean
 }
 
 export function EducationSessionGuideBlock({
@@ -20,11 +22,13 @@ export function EducationSessionGuideBlock({
   description,
   actions,
   children,
+  mobileStack = false,
 }: EducationSessionGuideBlockProps) {
   const blockClassName = [
     styles.block,
     variant === 'submitted' ? styles.submitted : undefined,
     variant === 'feedback' ? styles.feedback : undefined,
+    mobileStack ? styles.mobileStack : undefined,
   ]
     .filter(Boolean)
     .join(' ')

@@ -94,7 +94,7 @@ export type EducationApplicationListItem = {
   operatingPeriodLabel: string
   recruitmentStatus: RecruitmentStatus
   educationTargetLabel: string
-  educationForm: EducationForm
+  educationForm?: EducationForm
   educationFormLabel: string
   thumbnailUrl?: string
   displayStatus: EducationDisplayStatus
@@ -138,10 +138,29 @@ export type EducationApplicationListItem = {
   teacherAssignment?: EducationTeacherAssignment
   /** 교사 회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
   teacherApplicationContent?: EducationTeacherApplicationContent
-  /** 수료증 발급 가능 — 포털 신청 상세 `certificateAvailable` */
+  /** 목록 `programType` — 수료증 개인 CTA에서 교사·제미나이 제외 */
+  programType?: string
+  /** 목록 `programGroup` */
+  programGroup?: string
+  /**
+   * 목록 `certificateAvailable` 또는 상세 `capabilities.canIssueCertificate`.
+   * true = 발급 가능 또는 이미 발급되어 다운로드 가능. 상세 루트 `certificateAvailable`은 쓰지 않는다.
+   */
   certificateAvailable?: boolean
+  /** 상세 `participation.certificateStatus` */
+  certificateStatus?: string
+  /** 목록 `availableActions` */
+  availableActions?: string[]
   /** 미응답 설문 수 — 포털 신청 목록·상세 `pendingSurveyCount` */
   pendingSurveyCount?: number
+  /** 상세 `summary.satisfactionPendingCount` — 로컬 추정 금지 */
+  satisfactionPendingCount?: number
+  /** 상세 `capabilities.canSubmitSatisfaction` — false면 만족도 작성 CTA 숨김 */
+  canSubmitSatisfaction?: boolean
+  /** 상세 `capabilities.canSubmitSurvey` — false면 설문 작성 CTA 숨김 */
+  canSubmitSurvey?: boolean
+  /** 상세 `summary.surveyPendingCount` — 로컬 추정 금지 */
+  surveyPendingCount?: number
   /**
    * UJAT 기관 일정협의 배너 — Portal `supplement.ujat.portalBannerState`.
    * 재계산하지 않고 서버 값만 전달한다.
@@ -151,8 +170,19 @@ export type EducationApplicationListItem = {
   ujatRevisionReason?: string
   /** 화면에 표시 중인 배정 revision — confirm POST body */
   ujatAssignmentRevision?: number
+  /**
+   * `supplement.ujat.preferredEducationDateOptions` — 제출 후 희망일 후보 SSOT.
+   * 항상 배열(없으면 `[]`). 반기 금요일 FE 전개로 보완하지 않는다.
+   */
+  ujatPreferredEducationDateOptions?: Array<{
+    id: string
+    date: string
+    label: string
+  }>
   /** 교사 UJAT 신청 내용 탭 — 학년별 신청·수업시간 */
   ujatApplicationContent?: EducationUjatApplicationContent
+  /** UJAT 봉사자 신청 내용 — 지역·대학·전공·경력·유입 경로 */
+  ujatVolunteerApplicationContent?: EducationUjatVolunteerApplicationContent
   /** UJAT 기관 상세 전용 CMS 확정 배정 일정. 신청 당시 희망 일정과 별도 SSOT. */
   ujatTemporarySchedule?: EducationUjatTemporarySchedule
 }
@@ -216,6 +246,8 @@ export type EducationTeacherApplicationContent = {
 
 export type EducationUjatApplicationInstitution = {
   name: string
+  /** 교육 지역(신청 지역). 기관 소재지(address)와 별도 */
+  applicationRegion: string
   address: string
   addressDetail: string
   teacherContact: string
@@ -243,6 +275,20 @@ export type EducationUjatApplicationContent = {
   institution: EducationUjatApplicationInstitution
   gradeBlocks: EducationUjatGradeBlock[]
   classTimeBlocks: EducationUjatClassTimeBlock[]
+}
+
+/** UJAT 봉사자 마이페이지 신청 내용 — 기본 정보 필드(표시 문구) */
+export type EducationUjatVolunteerApplicationContent = {
+  preferredRegion: string
+  universityName: string
+  gradeLabel: string
+  major: string
+  educationExperienceLabel: string
+  applicationRouteLabel: string
+  /** 수료자 — 이전 UJAT 활동 기수. 없으면 빈 문자열 */
+  previousTermLabel: string
+  /** 면접 진행 가능 일정. 없으면 빈 문자열 */
+  interviewScheduleLabel: string
 }
 
 export type EducationUjatTemporaryScheduleSlot = {

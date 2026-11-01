@@ -12,6 +12,7 @@ import {
 import { useCmsAlert,
   FilterTableToolbarButton
 } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import type { ParticipatingVolunteerDetailRow } from '@/features/program/general/lib/participating-volunteer-detail'
 import { ParticipatingVolunteerActivityCertificatePreviewModal } from '@/features/program/general/ui/detail-modal/program-status/participating-volunteer-activity-certificate-preview-modal'
@@ -28,7 +29,12 @@ import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-err
 import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
+  UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT,
 } from './activity-certificate'
+import { loadVolunteerAssignmentProgress } from './detail/assignment-progress-load'
+import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
+import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
+import type { UjatVolunteerAssignmentProgressBundle } from './detail/assignment-types'
 import { buildUjatEducationProgressVolunteerFilterFields } from './filter-fields'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import { useUjatEducationProgressVolunteerDetail } from './detail/use-detail'
@@ -55,6 +61,7 @@ export function UjatEducationProgressVolunteersSection({
   onBindRegisterVolunteer?: (register: (memberId: string) => void) => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const [searchParams] = useSearchParams()
   const eduVolDetailId = searchParams.get(UJAT_EDU_VOL_ID_PARAM)
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
@@ -64,6 +71,7 @@ export function UjatEducationProgressVolunteersSection({
   const [studentCertificateExportContext, setStudentCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [studentCertificateExportActive, setStudentCertificateExportActive] = useState(false)
+  const [certificateProgressLoading, setCertificateProgressLoading] = useState(false)
   const [volunteer1365PreviewOpen, setVolunteer1365PreviewOpen] = useState(false)
   const { regions: educationRegions } = useUjatEducationRegions()
   const filterFields = useMemo(
@@ -83,7 +91,7 @@ export function UjatEducationProgressVolunteersSection({
     memberOptions,
     loadMemberOptions,
     addVolunteerFromMember,
-    syncRowsFromMock,
+    refreshVolunteerList,
   } = useUjatEducationProgressVolunteers(program.id, half)
 
   const selectedVolunteerId = selectedRowKeys.length === 1 ? String(selectedRowKeys[0]) : ''
@@ -105,9 +113,9 @@ export function UjatEducationProgressVolunteersSection({
 
   useEffect(() => {
     if (!eduVolDetailId) {
-      syncRowsFromMock()
+      refreshVolunteerList()
     }
-  }, [eduVolDetailId, syncRowsFromMock])
+  }, [eduVolDetailId, refreshVolunteerList])
 
   useEffect(() => {
     onBindRegisterVolunteer?.(addVolunteerFromMember)
@@ -147,6 +155,57 @@ export function UjatEducationProgressVolunteersSection({
       })
   }, [loadMemberOptions, showAlert])
 
+  const loadSelectedVolunteerProgressBundle = useCallback(async (): Promise<
+    UjatVolunteerAssignmentProgressBundle | null
+  > => {
+    const detail = selectedVolunteerDetail
+    if (!detail) {
+      showAlert({
+        title: '안내',
+        content: '선택한 봉사자 정보를 확인할 수 없습니다.',
+      })
+      return null
+    }
+    const memberId = String(detail.applicant.memberId ?? detail.row.memberId ?? '').trim()
+    if (!memberId) {
+      showAlert({
+        title: '안내',
+        content: '봉사자 회원 정보를 확인할 수 없어 인증서를 발급할 수 없습니다.',
+      })
+      return null
+    }
+    const regionKey = detail.row.regionKey?.trim() ?? ''
+    setCertificateProgressLoading(true)
+    try {
+      const progress = await loadVolunteerAssignmentProgress({
+        programId: program.id,
+        memberId,
+        semesterType: toUjatRecruitHalfApi(half),
+        educationRegionCode: regionKey ? toUjatEducationRegionCode(regionKey) : undefined,
+      })
+      if (progress.participantId == null) {
+        showAlert({
+          title: '안내',
+          content: '봉사자 참가자를 확인할 수 없어 인증서를 발급할 수 없습니다.',
+        })
+        return null
+      }
+      if (progress.bundle.rows.length === 0) {
+        showAlert({ title: '안내', content: UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT })
+        return null
+      }
+      return progress.bundle
+    } catch {
+      showAlert({
+        title: '안내',
+        content: '배정/출결 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.',
+      })
+      return null
+    } finally {
+      setCertificateProgressLoading(false)
+    }
+  }, [half, program.id, selectedVolunteerDetail, showAlert])
+
   const handleActivityCertificateIssueClick = useCallback(() => {
     if (selectedRowKeys.length !== 1) {
       showAlert({
@@ -166,8 +225,14 @@ export function UjatEducationProgressVolunteersSection({
       return
     }
 
-    setActivityCertificateVolunteer(buildActivityCertificateVolunteerFromUjatDetail(detail))
-  }, [selectedRowKeys, selectedVolunteerDetail, showAlert])
+    void (async () => {
+      const bundle = await loadSelectedVolunteerProgressBundle()
+      if (bundle == null) return
+      setActivityCertificateVolunteer(
+        buildActivityCertificateVolunteerFromUjatDetail(detail, bundle)
+      )
+    })()
+  }, [loadSelectedVolunteerProgressBundle, selectedRowKeys, selectedVolunteerDetail, showAlert])
 
   const handleStudentCertificateIssueClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
@@ -181,10 +246,15 @@ export function UjatEducationProgressVolunteersSection({
       })
       return
     }
-    if (studentCertificateExportActive) return
+    if (studentCertificateExportActive || certificateProgressLoading) return
 
     setStudentCertificateIssueModalOpen(true)
-  }, [selectedRowKeys, showAlert, studentCertificateExportActive])
+  }, [
+    certificateProgressLoading,
+    selectedRowKeys,
+    showAlert,
+    studentCertificateExportActive,
+  ])
 
   const handleStudentCertificateIssueConfirm = useCallback(
     async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
@@ -198,10 +268,14 @@ export function UjatEducationProgressVolunteersSection({
         return
       }
 
+      const bundle = await loadSelectedVolunteerProgressBundle()
+      if (bundle == null) return
+
       let context = buildStudentCertificateContextFromUjatVolunteer({
         detail,
         program,
         issuanceReasonLabel: reasonLabel,
+        bundle,
       })
       const memberId = Number(detail.applicant.memberId ?? detail.row.memberId)
       if (Number.isSafeInteger(memberId) && memberId > 0) {
@@ -230,7 +304,7 @@ export function UjatEducationProgressVolunteersSection({
       setStudentCertificateExportContext(context)
       setStudentCertificateExportActive(true)
     },
-    [program, selectedVolunteerDetail, showAlert]
+    [loadSelectedVolunteerProgressBundle, program, selectedVolunteerDetail, showAlert]
   )
 
   const handleStudentCertificateExportComplete = useCallback(
@@ -259,14 +333,14 @@ export function UjatEducationProgressVolunteersSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="참여 봉사자 목록"
-        description={`${tableData.length}건`}
+        description={`총 ${tableData.length.toLocaleString()}건`}
         actions={
           <div className="ujat-education-progress-volunteers__actions program-application-list-toolbar">
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              width={180}
               icon={<ButtonDownloadIcon />}
+              disabled={certificateProgressLoading}
               onClick={handleActivityCertificateIssueClick}
             >
               활동인증서 발급
@@ -275,7 +349,7 @@ export function UjatEducationProgressVolunteersSection({
               type="button"
               variant="secondary"
               icon={<ButtonDownloadIcon />}
-              disabled={studentCertificateExportActive}
+              disabled={studentCertificateExportActive || certificateProgressLoading}
               onClick={handleStudentCertificateIssueClick}
             >
               수료증/참여인증서 발급
@@ -288,21 +362,26 @@ export function UjatEducationProgressVolunteersSection({
             >
               1365 봉사시간 등록 양식
             </FilterTableToolbarButton>
-            <FilterTableToolbarButton
-              type="button"
-              variant="primary"
-              width={140}
-              onClick={handleRegisterVolunteerClick}
-            >
-              봉사자 등록
-            </FilterTableToolbarButton>
+            {canWrite ? (
+              <FilterTableToolbarButton
+                type="button"
+                variant="primary"
+                onClick={handleRegisterVolunteerClick}
+              >
+                봉사자 등록
+              </FilterTableToolbarButton>
+            ) : null}
           </div>
         }
-        excelExport={{
-          columns,
-          data: tableData,
-          selectedRowKeys,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+                selectedRowKeys,
+              }
+            : undefined
+        }
       >
         <div ref={tableWrapRef} className="ujat-education-progress-volunteers__table-wrap">
           <CmsDataTable<UjatEducationProgressVolunteerRow>

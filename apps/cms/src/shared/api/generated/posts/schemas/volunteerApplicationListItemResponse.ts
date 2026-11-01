@@ -7,6 +7,7 @@
  */
 import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
 import type { InterviewEvaluationSummary } from './interviewEvaluationSummary';
+import type { VolunteerApplicationListItemResponseFinalResultStatus } from './volunteerApplicationListItemResponseFinalResultStatus';
 import type { VolunteerApplicationListItemResponseRecruitHalf } from './volunteerApplicationListItemResponseRecruitHalf';
 
 /**
@@ -28,10 +29,17 @@ export interface VolunteerApplicationListItemResponse {
   contact?: string | null;
   /** 목록용 마스킹 이메일. 원문이 없으면 null */
   email?: string | null;
+  /** 자택 주소. 목록은 항상 MASKED: 시/도만 반환하거나 시/도를 판별할 수 없으면 null. 시군구·동·상세로 채우지 않음. preferredRegion(희망 교육 지역)과 다른 필드이며 대체하지 않음 */
+  homeAddress?: string | null;
+  /** 자택 시/도. 저장된 region_sido 또는 주소에서 인식된 시/도. 없으면 null */
+  homeAddressSido?: string | null;
+  /** 자택 시군구. 저장된 region_sigungu. 없으면 null. 목록에서 무조건 null로 두지 않음. preferredRegion과 다른 필드 */
+  homeAddressSigungu?: string | null;
   applicationStatus?: string;
   documentStatus?: string;
   interviewStatus?: string;
-  finalResultStatus?: string;
+  /** DB final_result_status 원문. PASS|FAIL|RESERVE|WAITING. 목록 쿼리 finalResultStatus=APPROVED는 PASS로 매핑되어 이 값이 PASS인 행을 포함한다(응답을 APPROVED로 바꾸지 않음). */
+  finalResultStatus?: VolunteerApplicationListItemResponseFinalResultStatus;
   reserveRank?: number;
   isReparticipation?: boolean;
   giveUpYn?: boolean;

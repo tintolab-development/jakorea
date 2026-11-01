@@ -16,7 +16,8 @@ export function mapEducationRegionResponse(
     sortOrder: dto.displayOrder ?? 0,
     active: dto.activeYn !== false,
     name,
-    createdByName: '',
+    createdByName: dto.createdByName?.trim() ?? '',
+    updatedByName: dto.updatedByName?.trim() ?? '',
     createdAt: dto.createdAt ?? new Date().toISOString(),
     hasUsageHistory: false,
   }

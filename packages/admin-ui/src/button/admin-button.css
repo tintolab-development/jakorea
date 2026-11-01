@@ -143,13 +143,6 @@
   padding-inline: calc(var(--Spacing-10, 10px) - 1px) calc(var(--Spacing-6, 6px) - 1px) !important;
 }
 
-/* 승인·반려 등 텍스트 액션 — 폭 140 고정 */
-.cms-button.cms-button--action.ant-btn {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-}
-
 /* ----- content ----- */
 .cms-button.ant-btn .btn-loading-only__content {
   display: inline-flex;
@@ -192,18 +185,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: inherit;
-}
-
-/** 라벨 말줄임 없음 — 고정 `width`와 함께 쓸 때 라벨이 잘리지 않게 */
-.cms-button.ant-btn.cms-button--no-label-ellipsis {
-  max-width: none;
-}
-
-.cms-button.ant-btn.cms-button--no-label-ellipsis .cms-button__label {
-  overflow: visible;
-  text-overflow: unset;
-  max-width: none;
-  flex-shrink: 0;
 }
 
 /* antd icon 슬롯(잔여)은 레이아웃에서 제외 — 비주얼 아이콘은 `cms-button__icon` */

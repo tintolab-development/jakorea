@@ -238,14 +238,12 @@ export function InstitutionPreferredScheduleCardTitleTrailing({
       type="button"
       variant="secondary"
       size="medium"
-      className="cms-button--no-label-ellipsis"
       disabled={atMax}
       icon={<ButtonAddIcon />}
       onClick={event => {
         event.stopPropagation()
         addInstitutionPreferredScheduleBlock()
-      }}
-    >
+      }} >
       희망 교육 일정 추가
     </CmsButton>
   )

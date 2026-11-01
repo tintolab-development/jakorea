@@ -57,7 +57,8 @@ import {
 } from '@/pages/settlement-management/payment-order-detail-fullpage-shared'
 import { sumCountablePaymentOrderLineAmounts } from '@/features/settlement-management/api/payment-orders/payment-order-line-amounts'
 import { renderLineProcessingStatusText } from '@/pages/settlement-management/payment-order-detail-aggregate-status'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useCmsAlert } from '@/shared/ui'
+import { CalculationDetailViewButton } from './calculation-detail-view-button'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -814,14 +815,7 @@ export function usePaymentOrderDetailLinesController(
         width: w.breakdown,
         align: 'center',
         render: (_: unknown, row: PaymentOrderDetailLineRow) => (
-          <CmsButton
-            variant="default"
-            size="large"
-            className={
-              mode === 'instructor'
-                ? 'payment-order-detail-filter-table__breakdown-btn--140x40'
-                : 'payment-order-detail-filter-table__breakdown-btn--180'
-            }
+          <CalculationDetailViewButton
             onClick={e => {
               e.stopPropagation()
               if (mode === 'program') {
@@ -830,9 +824,7 @@ export function usePaymentOrderDetailLinesController(
                 onOpenCalculationStatement(row as PaymentOrderAdminInstructorDetailProgramRow)
               }
             }}
-          >
-            상세 보기
-          </CmsButton>
+          />
         ),
       },
     ]

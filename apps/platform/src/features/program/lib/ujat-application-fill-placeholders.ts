@@ -5,6 +5,7 @@ import {
 } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-institution-draft'
 import {
   UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
+  applyUjatVolunteerSubmitConfirmationCohort,
   migrateUjatProgramApplicationVolunteerChoiceParagraphs,
 } from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
@@ -19,10 +20,15 @@ function currentAcademicSemester(now: Date): 1 | 2 {
   return month >= 3 && month <= 8 ? 1 : 2
 }
 
+/**
+ * BE `form.runtimeContext.activityTerm` — `"1기"` / `"2기"` (기 접미사 포함).
+ * 없거나 빈 값이면 null → 확인 문구에서 기수 자리를 뺀다.
+ */
 function readUjatActivityTerm(runtimeContext: unknown): string | null {
   const runtime = asRecord(runtimeContext)
   if (!runtime) return null
   const audience = asRecord(runtime.audienceApplication)
+  // SSOT: form.runtimeContext.activityTerm. 하위 키는 레거시 호환.
   const candidates = [
     runtime.activityTerm,
     runtime.ujatActivityTerm,
@@ -87,10 +93,8 @@ function replaceVolunteerGradeHintYear(
 
 function replaceVolunteerSubmitConfirmationCohort(
   draft: WritingFormDraft,
-  year: number,
   cohort: string | null,
 ): WritingFormDraft {
-  const replacement = cohort ? `${cohort}기` : `${year}기`
   return {
     ...draft,
     paragraphs: draft.paragraphs.map(paragraph => {
@@ -104,7 +108,7 @@ function replaceVolunteerSubmitConfirmationCohort(
         ...paragraph,
         items: paragraph.items.map(item => ({
           ...item,
-          label: item.label.replace(/UJAT N기|UJAT \d+기/g, `UJAT ${replacement}`),
+          label: applyUjatVolunteerSubmitConfirmationCohort(item.label, cohort),
         })),
       }
     }),
@@ -129,7 +133,6 @@ export function preparePortalUjatApplicationDraft(
       year,
       semester,
     ),
-    year,
     cohort,
   )
 }

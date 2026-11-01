@@ -84,10 +84,7 @@ export function EditorSection() {
           <CmsButton
             variant="secondary"
             size="medium"
-            width="auto"
-            className="cms-button--no-label-ellipsis"
-            onClick={() => setPreviewMarkdown(api?.getMarkdown() ?? DEMO_MARKDOWN)}
-          >
+            onClick={() => setPreviewMarkdown(api?.getMarkdown() ?? DEMO_MARKDOWN)} >
             에디터 내용으로 미리보기 갱신
           </CmsButton>
           <div className="ds-editor-demo__viewer">
@@ -107,15 +104,12 @@ export function EditorSection() {
               key={label}
               variant="secondary"
               size="small"
-              width="auto"
               type="button"
-              className="cms-button--no-label-ellipsis"
               onMouseDown={event => event.preventDefault()}
               onClick={() => {
                 if (!mailEditor) return
                 insertMailVariableInEditor(mailEditor, label)
-              }}
-            >
+              }} >
               {`#{${label}}`}
             </CmsButton>
           ))}
@@ -131,10 +125,7 @@ export function EditorSection() {
           <CmsButton
             variant="secondary"
             size="medium"
-            width="auto"
-            className="cms-button--no-label-ellipsis"
-            onClick={() => setPreviewHtml(mailApi?.getHTML() ?? MAIL_VARIABLE_DEMO_HTML)}
-          >
+            onClick={() => setPreviewHtml(mailApi?.getHTML() ?? MAIL_VARIABLE_DEMO_HTML)} >
             변수 본문으로 미리보기 갱신
           </CmsButton>
           <div className="ds-editor-demo__viewer">

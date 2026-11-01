@@ -696,24 +696,21 @@ export function ParticipatingInstructorsSection({
             <FilterTableToolbarButton
               variant="secondary"
               icon={<ButtonDownloadIcon />}
-              onClick={handleActivityCertificateIssueClick}
-            >
+              onClick={handleActivityCertificateIssueClick} >
               활동인증서 발급
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={handleCalendarView}
-              >
+                onClick={handleCalendarView} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={handleListView}
-              >
+                onClick={handleListView} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}
@@ -728,8 +725,7 @@ export function ParticipatingInstructorsSection({
                   return
                 }
                 setAddInstructorModalOpen(true)
-              }}
-            >
+              }} >
               강사 등록
             </FilterTableToolbarButton>
           </div>

@@ -42,6 +42,8 @@ export interface GeneralVolunteerApplicantRow {
   email: string
   contactRaw: string
   emailRaw: string
+  /** 목록·상세 `homeAddressSummary`/`homeAddress`. 없으면 빈 문자열 */
+  homeAddress?: string
   id1365: string
   scheduleChangeCancelCount: number
   applicationType: GeneralVolunteerApplicationType
@@ -69,6 +71,8 @@ export interface GeneralVolunteerApplicantRow {
   documentCancelRejectionReason?: string
   interviewSlotCount: number
   interviewAssignmentStatus: GeneralInterviewAssignmentStatus
+  /** wire `interviewAssignmentStatus`/`interviewStatus` — 재배정 가능 판별용 (EVALUATED 등) */
+  interviewAssignmentApiStatus?: string | null
   programId: string
   englishName: string
   gender: string
@@ -80,6 +84,8 @@ export interface GeneralVolunteerApplicantRow {
   interviewAvailability: GeneralVolunteerInterviewAvailabilityDay[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
+  /** 활성 면접 슬롯 시작 시각(ISO-8601, BE `interview_slot.start_at`) */
+  assignedInterviewStartAt?: string
   /** 활성 면접 슬롯 종료 시각(ISO-8601, BE `interview_slot.end_at`) */
   assignedInterviewEndAt?: string
   /** BE 면접 배정 ID — 면접 평가 API path용 */

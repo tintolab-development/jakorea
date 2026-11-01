@@ -25,7 +25,6 @@ import { PopupDragHandle, PopupsSortableTable } from '@/features/popup/ui/sortab
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -450,13 +449,11 @@ export function PopupsPage() {
           <CmsButton
             variant="secondary"
             size="medium"
-            width={88}
             type="button"
             onClick={e => {
               e.stopPropagation()
               openDetail(record)
-            }}
-          >
+            }} >
             수정
           </CmsButton>
         ),
@@ -531,14 +528,11 @@ export function PopupsPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
+              <CmsButton className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 type="button"
-                onClick={handleSearch}
-              >
+                onClick={handleSearch} >
                 조회
               </CmsButton>
             </div>
@@ -558,8 +552,7 @@ export function PopupsPage() {
               size="h40"
               type="button"
               onClick={handleDeleteClick}
-              loading={removeMutation.isPending && !formOpen}
-            >
+              loading={removeMutation.isPending && !formOpen} >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

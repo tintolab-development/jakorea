@@ -41,16 +41,14 @@ export function GeneralVolunteerDocumentCancelApprovalModal({
       open={open}
       variant="reject"
       className="general-volunteer-document-cancel-approval-modal"
-      title="봉사자 1차 승인 취소 안내"
+      title="1차 서류 승인 취소 안내"
       message={buildVolunteerDocumentCancelApprovalMessage(volunteerName, variant)}
       confirmLabel="승인 취소"
       confirmVariant="delete"
       requireReason
       reasonLabel={resolveVolunteerDocumentCancelApprovalReasonLabel(variant)}
-      reasonPlaceholder="취소 사유를 입력해 주세요."
+      reasonPlaceholder="취소 사유를 입력해 주세요"
       reasonRequiredMessage="취소 사유를 입력해 주세요."
-      notifyTimingOptions={variant === 'alreadySent' ? 'two' : 'three'}
-      notifyBeforeReason
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}

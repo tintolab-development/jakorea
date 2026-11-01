@@ -18,6 +18,11 @@ export function buildGeneralVolunteerInterview2PassMessage(volunteerName: string
   return `${subject} 봉사자의 면접 심사를 합격 처리하시겠습니까?\n합격 시 봉사자에게 승인 알림이 발송됩니다.`
 }
 
+export function buildGeneralVolunteerInterview2PassWithScopeMessage(volunteerName: string): string {
+  const subject = formatModalBracketedSubjectName(volunteerName, '봉사자')
+  return `${subject} 봉사자의 면접 심사를 합격 처리하시겠습니까?\n합격 시 선택한 일정으로 배정되며, 봉사자에게 승인 알림이 발송됩니다.`
+}
+
 export function GeneralVolunteerInterview2PassModal({
   open,
   volunteerName,

@@ -86,9 +86,7 @@ export function RegionAssignmentTable({ data }: { data: RegionAssignmentTableDat
                 </th>
                 {row.cells.slice(0, columns.length).map((cell, cellIndex) => {
                   const column = columns[cellIndex]
-                  const isBlockedCell =
-                    column?.isBlockedDate ||
-                    (cell.kind === 'empty' && cell.blockedEmpty)
+                  const isBlockedCell = cell.kind === 'empty' && cell.blockedEmpty
 
                   return (
                     <td

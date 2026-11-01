@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
@@ -9,6 +10,7 @@ import {
   ADMIN_FILE_OWNER,
   ADMIN_FILE_PURPOSE,
   buildAdminFileOwner,
+  parseFileObjectId,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
 
@@ -19,8 +21,25 @@ const CERTIFICATE_GUIDE_LINES = [
 
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
 
+const TEMPLATE_UPLOAD_DISABLED_HINT = '프로그램에서 등록 시 첨부 가능합니다.'
+
+type AttachmentRow = {
+  fileName: string
+  fileObjectId?: number
+  status: 'uploading' | 'uploaded' | 'failed'
+  error?: string
+}
+
+function displayLabel(row: AttachmentRow): string {
+  if (row.status === 'uploading') return `${row.fileName} (업로드 중)`
+  if (row.status === 'failed') return `${row.fileName} (실패${row.error ? `: ${row.error}` : ''})`
+  return row.fileName
+}
+
 /** 프로그램 봉사자 신청 폼 — 이전 참여 JA 봉사 프로그램 */
-export function VolunteerPreviousJaProgramParagraph() {
+export function VolunteerPreviousJaProgramParagraph(props?: {
+  programId?: string | number | null
+}) {
   const [applicationYear, setApplicationYear] = useGeneralApplicationOverlayKv(
     'application.volunteer.previousProgram.applicationYear',
     ''
@@ -33,6 +52,25 @@ export function VolunteerPreviousJaProgramParagraph() {
     'application.volunteer.previousProgram.fileNames',
     []
   )
+  const [fileObjectIds] = useGeneralApplicationOverlayKv<number[]>(
+    'application.volunteer.previousProgram.fileObjectIds',
+    []
+  )
+  const [pendingRows, setPendingRows] = useState<AttachmentRow[]>([])
+
+  const numericProgramId = parseFileObjectId(props?.programId)
+  const uploadDisabled = numericProgramId == null
+
+  const uploadedRows: AttachmentRow[] = useMemo(() => {
+    return fileNames.map((fileName, index) => ({
+      fileName,
+      fileObjectId: fileObjectIds[index],
+      status: fileObjectIds[index] != null ? ('uploaded' as const) : ('failed' as const),
+      error: fileObjectIds[index] == null ? '다시 첨부해 주세요' : undefined,
+    }))
+  }, [fileNames, fileObjectIds])
+
+  const allRows = [...uploadedRows, ...pendingRows]
 
   return (
     <DetailInfoForm title="이전 참여 JA 봉사 프로그램" hideHeader mode="edit">
@@ -70,34 +108,89 @@ export function VolunteerPreviousJaProgramParagraph() {
           label="증빙서류 첨부"
           fullRow
           edit={
-            <ParagraphFileUpload
-              accept={CERTIFICATE_ACCEPT}
-              multiple
-              guideLines={CERTIFICATE_GUIDE_LINES}
-              fileNames={fileNames}
-              onFilesChange={files => {
-                updateGeneralApplicationOverlayKey<string[]>(
-                  'application.volunteer.previousProgram.fileNames',
-                  prev => [...(prev ?? []), ...files.map(file => file.name)]
-                )
-                const owner = buildAdminFileOwner(
-                  ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
-                  1,
-                  ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
-                )
-                void (async () => {
-                  for (const file of files) {
-                    await uploadAdminFileMaybeMock({ file, owner }).catch(() => undefined)
-                  }
-                })()
-              }}
-              onRemoveFile={index => {
-                updateGeneralApplicationOverlayKey<string[]>(
-                  'application.volunteer.previousProgram.fileNames',
-                  prev => (prev ?? []).filter((_, i) => i !== index)
-                )
-              }}
-            />
+            <>
+              {uploadDisabled ? (
+                <p className="form-editor-template-field-hint-text" role="status">
+                  {TEMPLATE_UPLOAD_DISABLED_HINT}
+                </p>
+              ) : null}
+              <ParagraphFileUpload
+                accept={CERTIFICATE_ACCEPT}
+                multiple
+                disabled={uploadDisabled}
+                guideLines={CERTIFICATE_GUIDE_LINES}
+                fileNames={uploadDisabled ? undefined : allRows.map(displayLabel)}
+                onFilesChange={
+                  uploadDisabled
+                    ? undefined
+                    : files => {
+                        const owner = buildAdminFileOwner(
+                          ADMIN_FILE_OWNER.PROGRAM,
+                          numericProgramId,
+                          ADMIN_FILE_PURPOSE.VOLUNTEER_APPLICATION_EVIDENCE
+                        )
+                        const placeholders: AttachmentRow[] = files.map(file => ({
+                          fileName: file.name,
+                          status: 'uploading',
+                        }))
+                        setPendingRows(prev => [...prev, ...placeholders])
+                        void (async () => {
+                          for (let i = 0; i < files.length; i += 1) {
+                            const file = files[i]!
+                            try {
+                              const result = await uploadAdminFileMaybeMock({ file, owner })
+                              setPendingRows(prev =>
+                                prev.filter(
+                                  row =>
+                                    !(row.fileName === file.name && row.status === 'uploading')
+                                )
+                              )
+                              updateGeneralApplicationOverlayKey<string[]>(
+                                'application.volunteer.previousProgram.fileNames',
+                                prev => [...(prev ?? []), file.name]
+                              )
+                              updateGeneralApplicationOverlayKey<number[]>(
+                                'application.volunteer.previousProgram.fileObjectIds',
+                                prev => [...(prev ?? []), result.fileObjectId]
+                              )
+                            } catch (error) {
+                              const message =
+                                error instanceof Error && error.message.trim()
+                                  ? error.message
+                                  : '업로드에 실패했습니다.'
+                              setPendingRows(prev =>
+                                prev.map(row =>
+                                  row.fileName === file.name && row.status === 'uploading'
+                                    ? { ...row, status: 'failed', error: message }
+                                    : row
+                                )
+                              )
+                            }
+                          }
+                        })()
+                      }
+                }
+                onRemoveFile={
+                  uploadDisabled
+                    ? undefined
+                    : index => {
+                        if (index < uploadedRows.length) {
+                          updateGeneralApplicationOverlayKey<string[]>(
+                            'application.volunteer.previousProgram.fileNames',
+                            prev => (prev ?? []).filter((_, i) => i !== index)
+                          )
+                          updateGeneralApplicationOverlayKey<number[]>(
+                            'application.volunteer.previousProgram.fileObjectIds',
+                            prev => (prev ?? []).filter((_, i) => i !== index)
+                          )
+                          return
+                        }
+                        const pendingIndex = index - uploadedRows.length
+                        setPendingRows(prev => prev.filter((_, i) => i !== pendingIndex))
+                      }
+                }
+              />
+            </>
           }
           view="-"
         />

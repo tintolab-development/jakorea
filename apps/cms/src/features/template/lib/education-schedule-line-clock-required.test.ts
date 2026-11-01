@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isEducationScheduleProgressLineMissing,
   isEducationScheduleProgressLineMissingOrWithoutClock,
+  isEducationScheduleProgressLinePersistBlocked,
   isEducationScheduleProgressLineWithRequiredClock,
 } from '@/features/template/lib/education-schedule-line-clock-required'
 
@@ -44,5 +45,22 @@ describe('isEducationScheduleProgressLineMissingOrWithoutClock', () => {
     expect(
       isEducationScheduleProgressLineMissingOrWithoutClock('26년 4월 20일(월) 10:00 ~ 12:00')
     ).toBe(false)
+  })
+})
+
+describe('isEducationScheduleProgressLinePersistBlocked', () => {
+  it('깨진 월일은 막고 여러 날+시각은 허용한다', () => {
+    expect(
+      isEducationScheduleProgressLinePersistBlocked('2026.13.40(목) 10:00 ~ 11:00')
+    ).toBe(true)
+    expect(
+      isEducationScheduleProgressLinePersistBlocked(
+        '2026.11.05(목) 11:00 ~ 2026.11.06(금) 18:00'
+      )
+    ).toBe(false)
+    expect(
+      isEducationScheduleProgressLinePersistBlocked('2026.11.05(목) 10:00 ~ 11:00')
+    ).toBe(false)
+    expect(isEducationScheduleProgressLinePersistBlocked('')).toBe(false)
   })
 })

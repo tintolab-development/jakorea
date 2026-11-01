@@ -362,8 +362,7 @@ export function SiteInfoFormCard({ data }: Props) {
               disabled={saveMutation.isPending}
               onClick={() => {
                 void handleSave()
-              }}
-            >
+              }} >
               저장
             </CmsButton>
           ) : (

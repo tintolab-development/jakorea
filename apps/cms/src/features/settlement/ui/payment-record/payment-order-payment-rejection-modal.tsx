@@ -100,8 +100,7 @@ export function PaymentOrderPaymentRejectionModal({
               variant="secondary"
               size="medium"
               onClick={onCancel}
-              disabled={confirmLoading}
-            >
+              disabled={confirmLoading} >
               취소
             </CmsButton>
             <CmsButton
@@ -119,8 +118,7 @@ export function PaymentOrderPaymentRejectionModal({
                       ? scheduledAt.format('YYYY-MM-DDTHH:mm:ss')
                       : undefined,
                 })
-              }}
-            >
+              }} >
               반려
             </CmsButton>
           </div>

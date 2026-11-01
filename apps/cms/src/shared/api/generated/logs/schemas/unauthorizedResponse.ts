@@ -11,5 +11,6 @@ export type UnauthorizedResponse = {
   success?: unknown;
   data?: unknown;
   message?: unknown;
+  detail?: unknown;
   error?: UnauthorizedResponseError;
 };

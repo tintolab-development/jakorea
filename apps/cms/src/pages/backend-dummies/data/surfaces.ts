@@ -460,7 +460,7 @@ export const SURFACE_ROWS: readonly SurfaceRow[] = [
     gateKeys: [],
     mockFiles: ['ujat-survey-poll-responses-mock.ts'],
     apiPaths: [],
-    notes: 'UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT',
+    notes: 'UJAT survey poll responses (API)',
   },
   {
     id: 'ujat-managers',

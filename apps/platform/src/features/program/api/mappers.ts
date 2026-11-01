@@ -6,6 +6,7 @@ import type {
   ProgramDetail,
   ProgramDetailCase,
   ProgramEventSchedule,
+  ProgramScheduleOptionLookupRow,
   ProgramExtraSection,
   ProgramLabeledValue,
   ProgramListItem,
@@ -27,6 +28,7 @@ import {
   type PortalRecruitmentFocus,
 } from '../lib/portal-recruitment.ts'
 import { readCanonicalPreEducationNoticeFlag } from '../lib/portal-application-hidden-paragraph-ids.ts'
+import { mapUjatEducationHalfRangesFromSchedules } from '../lib/ujat-preferred-education-schedule-options.ts'
 import type {
   PortalCurriculum,
   PortalEducationCurriculumSession,
@@ -55,6 +57,8 @@ import {
 import {
   formatDisplayDate,
   formatDisplayDateRange,
+  formatDisplayDateTime,
+  formatDisplayDateTimeRange,
   normalizeScheduleDisplayLabel,
   parseScheduleDisplayLabel,
 } from '../../../shared/lib/format-display-date.ts'
@@ -588,6 +592,29 @@ function mapEventSchedules(schedules: PortalSchedule[] | undefined) {
   })
 }
 
+/** 신청 내용 `schedule:{id}` 해석용 — 공개 여부·정렬과 무관하게 서버 순서 그대로 */
+export function mapPortalScheduleOptionLookup(
+  schedules: PortalSchedule[] | undefined,
+): ProgramScheduleOptionLookupRow[] {
+  return (schedules ?? []).flatMap(schedule => {
+    const scheduleId = schedule.scheduleId
+    if (typeof scheduleId !== 'number' || !Number.isFinite(scheduleId)) return []
+    const startAt = readString(schedule.startAt)
+    const endAt = readString(schedule.endAt)
+    const scheduleName = toDisplayEducationScheduleName(schedule.scheduleName)
+    const scheduleKind = readString(schedule.scheduleKind)?.toUpperCase()
+    return [
+      {
+        scheduleId,
+        ...(startAt ? { startAt } : {}),
+        ...(endAt ? { endAt } : {}),
+        ...(scheduleName ? { scheduleName } : {}),
+        ...(scheduleKind ? { scheduleKind } : {}),
+      },
+    ]
+  })
+}
+
 function mapUjatPublicEventSchedules(schedules: PortalSchedule[] | undefined) {
   return visibleSchedules(schedules)
     .slice()
@@ -636,6 +663,31 @@ function venueFromSchedules(schedules: PortalSchedule[] | undefined): string {
   return parts.join(' ')
 }
 
+/** 모집 행 발표·면접 방법(CMS 원문 라벨)을 날짜 뒤 「, 」로 붙인다(Figma 사용자 플랫폼 11001:200151 등). null·키 없음·공백이면 날짜만. */
+export function withRecruitmentMethod(dateText: string, method: string | null | undefined): string {
+  const label = typeof method === 'string' ? method.trim() : ''
+  return label ? `${dateText}, ${label}` : dateText
+}
+
+/**
+ * 프로그램 상세 「모집 및 선발 일정」 단계 라벨 — 모든 모집 유형(참여자·강사·봉사자·UJAT) 공통.
+ * Figma 사용자 플랫폼(tiDywBHEhTkruOHjh1ctuT) 봉사자 상세 기준 11001:200152·200157·200162.
+ * CMS 미리보기 경로 map-from-cms.ts 도 같은 문구를 쓴다. CMS 화면 라벨과는 별개.
+ */
+const RECRUITMENT_SELECTION_PHASE_LABELS = {
+  documentPass: '1차 서류 합격자 발표',
+  interview: '2차 면접 기간',
+  finalPass: '최종 합격자 발표',
+} as const
+
+/** 봉사자 행의 상·하반기. 없으면 null — 호출부는 기존 `봉사자1`/`봉사자2`로 떨어진다. */
+function volunteerHalfRoleTag(row: PortalRecruitment): string | null {
+  if (recruitmentRoleShort(row.recruitmentType) !== '봉사자') return null
+  const term = readString(row.recruitTerm)?.toUpperCase()
+  const termLabel = term ? TERM_LABEL[term] : undefined
+  return termLabel ? `${termLabel} 봉사자` : null
+}
+
 function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
   const rows = recruitments ?? []
   const qualify = rows.length > 1
@@ -651,11 +703,14 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
     const seen = (typeSeen.get(typeKey) ?? 0) + 1
     typeSeen.set(typeKey, seen)
     const role = recruitmentRoleShort(row.recruitmentType)
+    const halfTag = volunteerHalfRoleTag(row)
     const roleTag =
-      qualify && (typeCounts.get(typeKey) ?? 0) > 1 ? `${role}${seen}` : qualify ? role : null
+      halfTag ??
+      (qualify && (typeCounts.get(typeKey) ?? 0) > 1 ? `${role}${seen}` : qualify ? role : null)
     const selectionLabel = (base: string) => (roleTag ? `${roleTag} ${base}` : base)
-    const periodLabel =
-      roleTag && (typeCounts.get(typeKey) ?? 0) > 1
+    const periodLabel = halfTag
+      ? `${halfTag} 모집`
+      : roleTag && (typeCounts.get(typeKey) ?? 0) > 1
         ? `${roleTag} 모집 기간`
         : recruitmentTypeLabel(row.recruitmentType)
 
@@ -670,6 +725,8 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
         ]
       : []
     const interviewOff = row.interviewEnabled === false
+    /** 서류 발표 방법·면접 방식은 면접 운영 행(interviewEnabled === true)만 표시 */
+    const interviewOn = row.interviewEnabled === true
     const hasInterviewDates = Boolean(
       readString(row.documentPassAnnouncementAt ?? undefined) ||
         readString(row.interviewStartAt ?? undefined) ||
@@ -679,24 +736,34 @@ function mapRecruitmentPhases(recruitments: PortalRecruitment[] | undefined) {
       const documentAt = toDate(row.documentPassAnnouncementAt ?? undefined)
       if (documentAt) {
         phases.push({
-          label: selectionLabel('1차 합격자 발표일'),
-          value: formatDisplayDate(documentAt),
+          label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.documentPass),
+          value: withRecruitmentMethod(
+            formatDisplayDateTime(documentAt) || formatDisplayDate(documentAt),
+            interviewOn ? row.documentPassAnnouncementMethod : null,
+          ),
         })
       }
       const interviewStart = toDate(row.interviewStartAt ?? undefined)
       const interviewEnd = toDate(row.interviewEndAt ?? undefined)
       if (interviewStart || interviewEnd) {
         phases.push({
-          label: selectionLabel('면접 기간'),
-          value: formatRange(interviewStart, interviewEnd),
+          label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.interview),
+          value: withRecruitmentMethod(
+            formatDisplayDateTimeRange(interviewStart, interviewEnd, { empty: '-' }) ||
+              formatRange(interviewStart, interviewEnd),
+            interviewOn ? row.interviewMethod : null,
+          ),
         })
       }
     }
     const finalAt = toDate(row.finalPassAnnouncementAt ?? undefined)
     if (finalAt) {
       phases.push({
-        label: selectionLabel('최종 합격자 발표'),
-        value: formatDisplayDate(finalAt),
+        label: selectionLabel(RECRUITMENT_SELECTION_PHASE_LABELS.finalPass),
+        value: withRecruitmentMethod(
+          formatDisplayDateTime(finalAt) || formatDisplayDate(finalAt),
+          row.finalPassAnnouncementMethod,
+        ),
       })
     }
     return phases
@@ -836,6 +903,9 @@ type EducationProgressRowVisibility = {
   showEducationPlace: boolean
 }
 
+/** 사전 교육 행 제목 표시(붙여쓰기). 일정명·회차명 대신 이 이름만 보인다. */
+const PORTAL_PRE_EDUCATION_DISPLAY_LABEL = '사전교육'
+
 /** 사전 교육 행에는 교육 장소를 싣지 않는다. */
 function isPortalPreEducationRow(row: {
   blockKind?: string
@@ -878,7 +948,9 @@ function mapPortalCurriculumSessions(
       : undefined
     const educationPlaceLabel = educationPlaceRowLabel(session, rows)
     return {
-      sessionLabel: session.sessionLabel ?? '',
+      sessionLabel: isPortalPreEducationRow(session)
+        ? PORTAL_PRE_EDUCATION_DISPLAY_LABEL
+        : (session.sessionLabel ?? ''),
       title: session.title ?? '',
       description: session.description ?? '',
       ...(dateLabel ? { dateLabel: normalizeScheduleDisplayLabel(dateLabel) } : {}),
@@ -918,8 +990,10 @@ function mapPortalScheduleDetails(
   if (structure !== 'schedule') return []
   return (details ?? []).flatMap(detail => {
     const rawScheduleLabel = detail.scheduleLabel?.trim() ?? ''
-    const scheduleLabel =
-      isMultiSessionRound(sessionRound)
+    const isPreEducation = isPortalPreEducationRow(detail)
+    const scheduleLabel = isPreEducation
+      ? PORTAL_PRE_EDUCATION_DISPLAY_LABEL
+      : isMultiSessionRound(sessionRound)
         ? rawScheduleLabel.replace(/^세부\s*일정/, '행사 일정')
         : rawScheduleLabel
     const timeSummary =
@@ -944,7 +1018,13 @@ function mapPortalScheduleDetails(
       ? optionalText(detail.assignmentPeriod)
       : undefined
     const educationPlaceLabel = educationPlaceRowLabel(detail, rows)
-    const name = toDisplayEducationScheduleName(detail.name) ?? ''
+    const displayName = toDisplayEducationScheduleName(detail.name) ?? ''
+    // 사전 교육 행 — 제목이 이미 「사전교육」이면 같은 이름을 한 번 더 붙이지 않는다.
+    const name =
+      isPreEducation && displayName.replace(/\s+/g, '') === PORTAL_PRE_EDUCATION_DISPLAY_LABEL
+        ? ''
+        : displayName
+
     if (
       !name &&
       !dateLabel &&
@@ -1545,6 +1625,10 @@ export function mapPortalProgramDetail(
     ),
     sessions,
     eventSchedules,
+    ...(isUjatDetailCase
+      ? { ujatEducationHalfRanges: mapUjatEducationHalfRangesFromSchedules(remote.schedules) }
+      : {}),
+    scheduleOptionLookup: mapPortalScheduleOptionLookup(remote.schedules),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(
       selected?.ambiguous

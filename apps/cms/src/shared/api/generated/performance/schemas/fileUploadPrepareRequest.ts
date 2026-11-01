@@ -28,7 +28,7 @@ export interface FileUploadPrepareRequest {
      */
   ownerId?: number;
   /**
-     * 파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다.
+     * 파일 업무 목적. privacy/retention/download 정책은 서버가 이 값으로 결정합니다. VOLUNTEER_APPLICATION_EVIDENCE는 PROGRAM/APPLICATION 또는 PROGRAM/PROGRAM owner, JPG/PNG/PDF 20MB, PRIVATE_SENSITIVE. CERTIFICATE_ASSET은 CONTENT/CERTIFICATE_TEMPLATE owner만 허용합니다.
      * @minLength 0
      * @maxLength 80
      */

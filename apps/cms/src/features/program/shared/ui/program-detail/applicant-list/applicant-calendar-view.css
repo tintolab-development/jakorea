@@ -27,7 +27,7 @@
 
 .applicant-schedule-item--selected {
   background: var(--default-WT, #fff) !important;
-  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  border: 2px solid #00a0af !important;
 }
 
 .applicant-schedule-item-title {

@@ -45,37 +45,33 @@ function saveBlobFile(fileName: string, blob: Blob): void {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
 }
 
-async function fetchCrimeConsentOriginalContent(documentId: number): Promise<Blob | null> {
-  try {
-    const res = await axiosClient.get(
-      `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}/content`,
-      { responseType: 'blob' },
-    )
-    const blob = res.data
-    if (!(blob instanceof Blob) || blob.size === 0) return null
-    if (blob.type.includes('json') || blob.type.includes('text/html')) return null
-    return blob
-  } catch {
-    return null
-  }
+function isUsableFileBlob(data: unknown): data is Blob {
+  return data instanceof Blob && data.size > 0 && !data.type.toLowerCase().includes('application/json')
 }
 
 /**
- * 업로드한 성범죄 경력조회 동의서 원본 다운로드.
- * GET …/content 가 우선이고, 없으면 기존 download-requests 를 쓴다.
- * `signedFileObjectId`는 회원 소유 파일이 아니므로 `/me/files/{id}/download-requests`는 403이다.
+ * 제출한 성범죄 동의서 원본 다운로드.
+ * 1) GET .../content — 소유자 원본 PDF relay (OpenAPI streamOriginal)
+ * 2) POST .../download-requests — 서명 보관본 Signed URL 폴백
+ * `signedFileObjectId` + `/me/files/{id}/download-requests`는 403.
  */
 export async function downloadSubmittedCrimeConsent(documentId: number): Promise<void> {
-  const original = await fetchCrimeConsentOriginalContent(documentId)
-  if (original) {
-    saveBlobFile(ensureFileName(FALLBACK_FILE_NAME, original), original)
-    return
+  const documentPath = `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}`
+  try {
+    const res = await axiosClient.get(documentPath + '/content', {
+      responseType: 'blob',
+    })
+    if (isUsableFileBlob(res.data)) {
+      saveBlobFile(ensureFileName(FALLBACK_FILE_NAME, res.data), res.data)
+      return
+    }
+  } catch {
+    /* download-requests 폴백 */
   }
 
-  const res = await axiosClient.post(
-    `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}/download-requests`,
-    { purpose: DOWNLOAD_PURPOSE },
-  )
+  const res = await axiosClient.post(documentPath + '/download-requests', {
+    purpose: DOWNLOAD_PURPOSE,
+  })
   const body = unwrapEnvelope<ConsentDocumentDownload>(res.data)
   const url = body.downloadUrl?.trim()
   if (!url) throw new Error('download url missing')

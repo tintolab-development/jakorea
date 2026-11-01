@@ -154,7 +154,7 @@ function resolveVariantDefaults(variant: PermissionModalVariant): {
     confirmLabel: '반려',
     confirmVariant: 'delete',
     reasonLabel: '반려 사유',
-    reasonPlaceholder: '반려 사유를 입력해 주세요.',
+    reasonPlaceholder: '반려 사유를 입력해 주세요',
     reasonRequiredMessage: '반려 사유를 입력해 주세요.',
   }
 }
@@ -351,11 +351,11 @@ export function PermissionModal({
               disabled={
                 confirmLoading ||
                 confirmDisabled ||
+                (requireReason && !reason.trim()) ||
                 Boolean(unsupportedNotifyMessage) ||
                 notifyScheduleNotReady
               }
-              onClick={handleConfirm}
-            >
+              onClick={handleConfirm} >
               {confirmLabel}
             </CmsButton>
           </div>

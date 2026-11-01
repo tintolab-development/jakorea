@@ -28,7 +28,11 @@ export interface UseSponsorDetailReturn {
   handleSponsorshipStatusChange: (
     next: NonNullable<SponsorManagementRow['sponsorshipStatus']>
   ) => Promise<void>
-  handleToggleBasicInfoEdit: (canWrite: boolean) => Promise<'saved' | 'invalid' | 'idle'>
+  handleToggleBasicInfoEdit: (
+    canWrite: boolean
+  ) => Promise<'saved' | 'invalid' | 'idle' | 'failed'>
+  handleCancelBasicInfoEdit: () => void
+  basicInfoSaveLoading: boolean
   programHistoryDeleteDisabled: boolean
   refetchDetail: () => Promise<unknown>
   isLoading: boolean
@@ -165,7 +169,7 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
   )
 
   const handleToggleBasicInfoEdit = useCallback(
-    async (canWrite: boolean): Promise<'saved' | 'invalid' | 'idle'> => {
+    async (canWrite: boolean): Promise<'saved' | 'invalid' | 'idle' | 'failed'> => {
       if (!canWrite || !basicInfo) return 'idle'
       if (isEditingBasicInfo) {
         const nameKo = basicInfo.nameDisplayKo.trim()
@@ -185,7 +189,7 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
             'sponsorDetail basicInfo save failed',
             getDataManagementApiErrorMessage(error, '기본 정보 저장에 실패했습니다.')
           )
-          return 'idle'
+          return 'failed'
         }
         setIsEditingBasicInfo(false)
         return 'saved'
@@ -196,6 +200,12 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     },
     [basicInfo, detail, isEditingBasicInfo, sponsor.id, updateBasicInfoMutation]
   )
+
+  const handleCancelBasicInfoEdit = useCallback((): void => {
+    if (updateBasicInfoMutation.isPending) return
+    setBasicInfo(buildBasicInfoEditStateFromDetail(detail))
+    setIsEditingBasicInfo(false)
+  }, [detail, updateBasicInfoMutation.isPending])
 
   return {
     detail,
@@ -209,6 +219,8 @@ export function useSponsorDetail(sponsor: SponsorManagementRow): UseSponsorDetai
     handleBasicInfoChange,
     handleSponsorshipStatusChange,
     handleToggleBasicInfoEdit,
+    handleCancelBasicInfoEdit,
+    basicInfoSaveLoading: updateBasicInfoMutation.isPending,
     programHistoryDeleteDisabled: deleteProgramHistoriesMutation.isPending,
     refetchDetail: () => detailQuery.refetch(),
     isLoading: isAwaitingDetail,

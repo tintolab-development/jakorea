@@ -83,8 +83,7 @@ export function NoticeDeleteConfirmModal({
             size="h40"
             onClick={onConfirm}
             loading={confirmLoading}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             {confirmLabel}
           </CmsButton>
         </>

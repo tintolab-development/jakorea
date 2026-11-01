@@ -4,7 +4,8 @@ import type {
   UjatVolunteerInterviewEvaluationPayload,
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatManagerEvaluation } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui'
+import { CmsButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { sanitizeProgramPrivacyOverlay } from '@/features/program/shared/lib/program-my-assignment'
@@ -23,6 +24,8 @@ import {
   InterviewEvaluationSection,
   type InterviewEvaluationSectionHandle,
 } from './interview-evaluation-section'
+import { resolveUjatEffectiveSecondInterviewStatus } from '../interview2/display'
+import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { guardUjatVolunteerInterview2Evaluation } from './guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
@@ -54,9 +57,7 @@ type Interview2DetailProps = {
   onInterviewFail?: () => void
   onInterviewPass?: () => void
   /** 인라인 면접 평가 저장. 편집 중 「면접 평가」 재클릭 시 호출 */
-  onSaveInterviewEvaluation?: (
-    payload: UjatVolunteerInterviewEvaluationPayload
-  ) => Promise<boolean>
+  onSaveInterviewEvaluation?: (payload: UjatVolunteerInterviewEvaluationPayload) => Promise<boolean>
 }
 
 export type ApplicantDetailViewProps =
@@ -64,15 +65,11 @@ export type ApplicantDetailViewProps =
   | DocPassedDetailProps
   | Interview2DetailProps
 
-function isDocPassedProps(
-  props: ApplicantDetailViewProps
-): props is DocPassedDetailProps {
+function isDocPassedProps(props: ApplicantDetailViewProps): props is DocPassedDetailProps {
   return props.variant === 'doc_passed'
 }
 
-function isInterview2Props(
-  props: ApplicantDetailViewProps
-): props is Interview2DetailProps {
+function isInterview2Props(props: ApplicantDetailViewProps): props is Interview2DetailProps {
   return props.variant === 'interview2'
 }
 
@@ -95,12 +92,12 @@ function Interview2ApplicantDetail({
   onWithdrawActivity?: () => void
   onInterviewFail?: () => void
   onInterviewPass?: () => void
-  onSaveInterviewEvaluation?: (
-    payload: UjatVolunteerInterviewEvaluationPayload
-  ) => Promise<boolean>
+  onSaveInterviewEvaluation?: (payload: UjatVolunteerInterviewEvaluationPayload) => Promise<boolean>
 }) {
+  const canWrite = useUjatCanWrite()
   const evaluationSectionRef = useRef<InterviewEvaluationSectionHandle>(null)
   const [isEvaluationEditing, setIsEvaluationEditing] = useState(false)
+  const interviewNotEnded = resolveUjatEffectiveSecondInterviewStatus(applicant) === 'waiting'
 
   useEffect(() => {
     setIsEvaluationEditing(false)
@@ -120,56 +117,50 @@ function Interview2ApplicantDetail({
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
+          {canWrite ? (
+            <>
           <CmsButton
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
-            onClick={onWithdrawActivity}
-          >
+            onClick={onWithdrawActivity} >
             활동 포기
           </CmsButton>
           <CmsButton
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
-            onClick={onInterviewFail}
-          >
+            disabled={interviewNotEnded}
+            onClick={onInterviewFail} >
             면접 불합격
           </CmsButton>
           <CmsButton
             type="button"
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
-            onClick={onInterviewPass}
-          >
+            disabled={interviewNotEnded}
+            onClick={onInterviewPass} >
             면접 합격
           </CmsButton>
           <CmsButton
             type="button"
             variant="primary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
+            disabled={interviewNotEnded && !isEvaluationEditing}
             onClick={() => {
               void handleInterviewEvaluationClick()
-            }}
-          >
+            }} >
             면접 평가
           </CmsButton>
-          <PersonalInfoRevealButton disabled={programPrivacyPending}
+            </>
+          ) : null}
+          <PersonalInfoRevealButton
+            disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </div>
       </div>
 
@@ -195,6 +186,7 @@ function Interview2ApplicantDetail({
 }
 
 export function ApplicantDetailView(props: ApplicantDetailViewProps) {
+  const canWrite = useUjatCanWrite()
   const applicantEnriched = useUjatVolunteerApplicationDetailEnrichment(props.applicant)
   const [unmaskedOverlay, setUnmaskedOverlay] = useState<UjatVolunteerApplicantRow | null>(null)
 
@@ -215,22 +207,18 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
       const response = await unmaskVolunteerApplicationPrivacyRemote(
         applicant.id,
         reason,
-        Number.isSafeInteger(programId) ? programId : undefined,
+        Number.isSafeInteger(programId) ? programId : undefined
       )
-      return applyUjatVolunteerApplicationDetail(
-        applicant,
-        response.application,
-        response.profile,
-      )
+      return applyUjatVolunteerApplicationDetail(applicant, response.application, response.profile)
     },
-    [applicant],
+    [applicant]
   )
 
   const {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
+    programPrivacyPending,
   } = usePersonalInfoReveal({
     privacyScope: 'program',
     programId: applicant.programId,
@@ -239,10 +227,7 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     revealPersonalInfo: revealVolunteerPersonalInfo,
     onPrivacyUnmasked: payload => {
       setUnmaskedOverlay(
-        sanitizeProgramPrivacyOverlay(
-          applicant.programId,
-          payload as UjatVolunteerApplicantRow
-        )
+        sanitizeProgramPrivacyOverlay(applicant.programId, payload as UjatVolunteerApplicantRow)
       )
     },
     resetDeps: [applicant.id],
@@ -257,6 +242,14 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     if (applicant.interviewAssignmentStatus === 'assigned') return '면접일 재배정'
     return '면접일 배정'
   }, [applicant.interviewAssignmentStatus])
+
+  const assignInterviewDisabled = useMemo(() => {
+    if (applicant.interviewAssignmentStatus === 'withdrawn') return true
+    if (applicant.interviewAssignmentStatus === 'assigned') {
+      return !canReassignVolunteerInterviewAssignment(applicant)
+    }
+    return false
+  }, [applicant])
 
   if (isInterview2Props(props)) {
     return (
@@ -281,34 +274,33 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
       <div className="applicant-detail">
         <div className="applicant-detail__header">
           <div className="program-detail-fullpage-modal__header-actions">
+            {canWrite ? (
+              <>
             <CmsButton
               type="button"
               variant="delete"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={onWithdrawActivity}
-            >
+              onClick={onWithdrawActivity} >
               활동 포기
             </CmsButton>
             <CmsButton
               type="button"
               variant="secondary"
               size="large"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
+              disabled={assignInterviewDisabled}
               onClick={onAssignInterview}
             >
               {assignInterviewLabel}
             </CmsButton>
-            <PersonalInfoRevealButton disabled={programPrivacyPending}
+              </>
+            ) : null}
+            <PersonalInfoRevealButton
+              disabled={programPrivacyPending}
               labelMode="stickyReveal"
               revealed={personalInfoRevealed}
               cmsVariant="primary"
               cmsSize="large"
-              width={180}
-              onClick={openPersonalInfoRevealConfirm}
-            />
+              onClick={openPersonalInfoRevealConfirm} />
           </div>
         </div>
 
@@ -341,12 +333,12 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
     <div className="applicant-detail">
       <div className="applicant-detail__header">
         <div className="program-detail-fullpage-modal__header-actions">
+          {canWrite ? (
+            <>
           <CmsButton
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={160}
             onClick={onDocumentReject}
           >
             서류 반려
@@ -355,28 +347,25 @@ export function ApplicantDetailView(props: ApplicantDetailViewProps) {
             type="button"
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={160}
             onClick={onDocumentApprove}
           >
             서류 승인
           </CmsButton>
-          <PersonalInfoRevealButton disabled={programPrivacyPending}
+            </>
+          ) : null}
+          <PersonalInfoRevealButton
+            disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={200}
             onClick={openPersonalInfoRevealConfirm}
           />
         </div>
       </div>
 
       <div className="applicant-detail__body applicant-info-section">
-        <ApplicantBasicInfo
-          applicant={applicant}
-          maskSensitive={!personalInfoRevealed}
-        />
+        <ApplicantBasicInfo applicant={applicant} maskSensitive={!personalInfoRevealed} />
         <ManagerEvaluationSection
           applicant={applicant}
           openManagerDropdown={openManagerDropdown}

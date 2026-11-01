@@ -34,7 +34,7 @@ export function ProgramApplicationRejectModal({
   notifyTimingCapability,
   notifyTimingOptions,
   confirmLoading,
-  reasonPlaceholder = '반려 사유를 입력해 주세요.',
+  reasonPlaceholder = '반려 사유를 입력해 주세요',
 }: ProgramApplicationRejectModalProps) {
   const copy = buildProgramApplicationRejectCopy({
     audience,
@@ -51,7 +51,8 @@ export function ProgramApplicationRejectModal({
       title={copy.title}
       message={copy.message}
       confirmLabel="반려"
-      confirmVariant="delete"
+      /** 시안: 활성 시 teal primary · 사유 미입력 시 disabled(회색 solid) */
+      confirmVariant="primary"
       requireReason
       reasonLabel="반려 사유"
       reasonPlaceholder={reasonPlaceholder}

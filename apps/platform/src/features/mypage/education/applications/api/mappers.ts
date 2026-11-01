@@ -10,8 +10,10 @@ import {
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
+import { listRowCertificateAvailable } from '../lib/certificate-cta'
 import { readUjatPortalBannerState, readUjatRevisionReason } from '../lib/ujat-portal-banner'
 import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
+import { buildUjatVolunteerApplicationProfileFromAnswers } from '../lib/ujat-volunteer-application-content-from-answers'
 import type {
   EducationApplicationListItem,
   EducationDisplayStatus,
@@ -272,13 +274,17 @@ export function mapPortalProgramApplicationListItem(
       recruitmentEndAt: row.recruitmentEndAt,
       displayStatus,
     }),
-    educationTargetLabel: '전체',
-    educationForm: 'offline',
-    educationFormLabel: '오프라인',
+    // TODO(BE): 목록 응답에 교육대상·교육형태 필드가 추가되면 여기서 매핑 (상세와 같은 라벨 함수 사용)
+    educationTargetLabel: '',
+    educationFormLabel: '',
     thumbnailUrl,
     displayStatus,
     detailCase,
-    ...(row.pendingSurveyCount != null && row.pendingSurveyCount > 0
+    programType: row.programType,
+    programGroup: row.programGroup,
+    certificateAvailable: listRowCertificateAvailable(row),
+    ...(row.availableActions ? { availableActions: row.availableActions } : {}),
+    ...(typeof row.pendingSurveyCount === 'number' && Number.isFinite(row.pendingSurveyCount)
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),
     ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
@@ -323,6 +329,12 @@ function resolveInterviewFields(
     hasInterview,
     ...(interviewAtLabel ? { interviewAtLabel } : {}),
   }
+}
+
+function readSummaryCount(summary: unknown, key: string): number | undefined {
+  if (!summary || typeof summary !== 'object' || Array.isArray(summary)) return undefined
+  const value = (summary as Record<string, unknown>)[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined
 }
 
 function normalizeApplicationAnswers(raw: unknown): Record<string, unknown> {
@@ -549,8 +561,22 @@ export function mapPortalProgramApplicationDetail(
     displayStatus,
   })
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
-  if (detail.certificateAvailable != null) {
-    mapped.certificateAvailable = detail.certificateAvailable
+  mapped.certificateAvailable = detail.capabilities?.canIssueCertificate === true
+  const certificateStatus = detail.participation?.certificateStatus?.trim()
+  if (certificateStatus) mapped.certificateStatus = certificateStatus
+  if (typeof detail.capabilities?.canSubmitSatisfaction === 'boolean') {
+    mapped.canSubmitSatisfaction = detail.capabilities.canSubmitSatisfaction
+  }
+  if (typeof detail.capabilities?.canSubmitSurvey === 'boolean') {
+    mapped.canSubmitSurvey = detail.capabilities.canSubmitSurvey
+  }
+  const satisfactionPendingCount = readSummaryCount(detail.summary, 'satisfactionPendingCount')
+  if (satisfactionPendingCount != null) {
+    mapped.satisfactionPendingCount = satisfactionPendingCount
+  }
+  const surveyPendingCount = readSummaryCount(detail.summary, 'surveyPendingCount')
+  if (surveyPendingCount != null) {
+    mapped.surveyPendingCount = surveyPendingCount
   }
   if (detail.program) {
     mapped.programConfig = {
@@ -606,6 +632,16 @@ export function mapPortalProgramApplicationDetail(
   if (ujatTemporarySchedule) {
     mapped.ujatTemporarySchedule = ujatTemporarySchedule
   }
+  const preferredEducationDateOptions = detail.supplement?.ujat?.preferredEducationDateOptions
+  if (Array.isArray(preferredEducationDateOptions)) {
+    mapped.ujatPreferredEducationDateOptions = preferredEducationDateOptions.flatMap(row => {
+      const id = typeof row?.id === 'string' ? row.id.trim() : ''
+      const date = typeof row?.date === 'string' ? row.date.trim() : ''
+      const label = typeof row?.label === 'string' ? row.label.trim() : ''
+      if (!id || !date) return []
+      return [{ id, date, label: label || date }]
+    })
+  }
 
   const interview = resolveInterviewFields(detail, displayStatus)
   mapped.hasInterview = interview.hasInterview
@@ -654,6 +690,11 @@ export function mapPortalProgramApplicationDetail(
       preferredScheduleBlocks: detail.preferredScheduleBlocks,
     })
     if (ujatContent) mapped.ujatApplicationContent = ujatContent
+  }
+
+  if (mapped.detailCase === 'ujat-volunteer') {
+    const volunteerProfile = buildUjatVolunteerApplicationProfileFromAnswers(answers)
+    if (volunteerProfile) mapped.ujatVolunteerApplicationContent = volunteerProfile
   }
 
   return mapped

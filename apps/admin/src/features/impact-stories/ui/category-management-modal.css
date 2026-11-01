@@ -248,9 +248,6 @@
 /* 행 액션(수정/삭제/취소/등록) — medium 패딩 유지 */
 .is-category-modal__action-btn.cms-button.ant-btn {
   box-sizing: border-box !important;
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
   height: 40px !important;
   padding: 6px 14px !important;
   border-radius: 6px !important;

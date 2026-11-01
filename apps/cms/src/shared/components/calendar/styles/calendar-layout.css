@@ -245,6 +245,20 @@
 .calendar-set--page-scroll {
   --calendar-set-sticky-top: 16px;
   margin-top: 0;
+  /* 상세 · 캘린더뷰 (피그마 14741:1545) shell — split-card와 동일: 1px Border/default · radius 16 */
+  --calendar-shell-border: 1px solid var(--Border-default, #e0e0e0);
+  --calendar-shell-radius: 16px;
+}
+
+/* 상세 · 캘린더뷰 — 메인 캘린더·우측 목록 카드 padding 20 (월간·주간 동일, split-card와 동일) */
+.calendar-set--page-scroll > .calendar-main-container > .calendar-main,
+.calendar-set--page-scroll > .calendar-main-container > .calendar-main:has(.calendar-week--time-grid) {
+  padding: 20px;
+  gap: var(--calendar-main-header-body-gap, 10px);
+}
+
+.calendar-set--page-scroll > .calendar-sub-right-list > .calendar-list {
+  padding: 20px;
 }
 
 .calendar-set--page-scroll:not(:has(.calendar-sub-left)) > .calendar-main-container,

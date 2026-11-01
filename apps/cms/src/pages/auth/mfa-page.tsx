@@ -294,11 +294,9 @@ export function MfaPage() {
               variant="primary"
               size="h52"
               type="submit"
-              width="100%"
               loading={verifying}
               disabled={isLocked || otpCode.length !== OTP_LENGTH}
-              icon={<SafetyOutlined />}
-            >
+              icon={<SafetyOutlined />} >
               인증하기
             </CmsButton>
 
@@ -306,11 +304,9 @@ export function MfaPage() {
               variant="default"
               size="h52"
               onClick={() => void loadProvisioning()}
-              width="100%"
               loading={provisioningLoading}
               disabled={isLocked || !showQrSetup}
-              icon={<ReloadOutlined />}
-            >
+              icon={<ReloadOutlined />} >
               QR 코드 다시 불러오기
             </CmsButton>
           </Space>

@@ -21,7 +21,7 @@ export function RegisterCompleteView({ onGoLogin }: RegisterCompleteViewProps) {
         </p>
 
         <div className="auth-actions register-complete__actions">
-          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
+          <CmsButton variant="primary" size="h52" onClick={onGoLogin}>
             로그인 화면 돌아가기
           </CmsButton>
         </div>

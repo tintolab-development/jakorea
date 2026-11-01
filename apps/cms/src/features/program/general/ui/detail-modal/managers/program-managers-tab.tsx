@@ -418,15 +418,13 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
             <FilterTableToolbarButton
               variant="delete"
               loading={isMutating && deleteGuideModalOpen}
-              onClick={handleDeleteClick}
-            >
+              onClick={handleDeleteClick} >
               담당자 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               disabled={isMutating}
-              onClick={() => setAddModalOpen(true)}
-            >
+              onClick={() => setAddModalOpen(true)} >
               담당자 등록
             </FilterTableToolbarButton>
           </>

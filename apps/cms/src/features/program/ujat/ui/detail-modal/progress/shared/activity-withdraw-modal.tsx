@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ContentModal, CmsButton } from '@/shared/ui'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { ContentModal, CmsButton, CmsRadio } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import {
+  buildActivityWithdrawGuideDescription,
+  type ActivityWithdrawGuideSubjectKind,
+} from '@/features/program/shared/lib/activity-withdraw-schedule'
+import type { ApplicationGiveUpRequestFaultParty } from '@/shared/api/generated/dashboard/schemas/applicationGiveUpRequestFaultParty'
+import { ApplicationGiveUpRequestFaultParty as FaultParty } from '@/shared/api/generated/dashboard/schemas/applicationGiveUpRequestFaultParty'
 import './activity-withdraw-modal.css'
 
 const MODAL_Z_INDEX = 1100
 
-const ACTIVITY_WITHDRAW_CONFIRM_VALUE = '활동 포기'
-
-const ACTIVITY_WITHDRAW_CONFIRM_PLACEHOLDER =
-  '활동 포기 처리하시려면 해당란에 [활동 포기]를 입력해 주세요.'
-
 export type UjatEducationProgressActivityWithdrawPayload = {
-  stopScheduleRowId: string
+  stopScheduleRowId?: string
+  faultParty: ApplicationGiveUpRequestFaultParty
 }
 
 export type UjatEducationProgressActivityWithdrawScheduleOption = {
@@ -24,7 +25,12 @@ export type UjatEducationProgressActivityWithdrawModalProps = {
   open: boolean
   /** 기관명 또는 봉사자명 */
   participantName: string
+  /** 본문 `[이름] 님의` / `[기관명]의` */
+  subjectKind?: ActivityWithdrawGuideSubjectKind
   scheduleOptions: ReadonlyArray<UjatEducationProgressActivityWithdrawScheduleOption>
+  /** 기본 true. false면 일정 없이 확인 가능(stopScheduleId 생략) */
+  requireSchedule?: boolean
+  submitting?: boolean
   onCancel: () => void
   onConfirm: (payload: UjatEducationProgressActivityWithdrawPayload) => void
 }
@@ -32,51 +38,66 @@ export type UjatEducationProgressActivityWithdrawModalProps = {
 export function UjatEducationProgressActivityWithdrawModal({
   open,
   participantName,
+  subjectKind = 'institution',
   scheduleOptions,
+  requireSchedule = true,
+  submitting = false,
   onCancel,
   onConfirm,
 }: UjatEducationProgressActivityWithdrawModalProps) {
-  const [confirmKeyword, setConfirmKeyword] = useState('')
   const [stopScheduleRowId, setStopScheduleRowId] = useState<string | undefined>(undefined)
+  const [faultParty, setFaultParty] = useState<ApplicationGiveUpRequestFaultParty>(FaultParty.USER)
 
   useEffect(() => {
     if (!open) return
-    setConfirmKeyword('')
     setStopScheduleRowId(undefined)
+    setFaultParty(FaultParty.USER)
   }, [open])
 
   const hasScheduleOptions = scheduleOptions.length > 0
 
   const canConfirm = useMemo(() => {
-    if (!hasScheduleOptions) return false
-    if (confirmKeyword.trim() !== ACTIVITY_WITHDRAW_CONFIRM_VALUE) return false
-    if (!stopScheduleRowId) return false
+    if (submitting) return false
+    if (!requireSchedule) return true
+    if (!hasScheduleOptions || !stopScheduleRowId) return false
     return scheduleOptions.some(option => option.value === stopScheduleRowId)
-  }, [confirmKeyword, hasScheduleOptions, scheduleOptions, stopScheduleRowId])
+  }, [hasScheduleOptions, requireSchedule, scheduleOptions, stopScheduleRowId, submitting])
 
   const handleCancel = useCallback(() => {
-    setConfirmKeyword('')
+    if (submitting) return
     setStopScheduleRowId(undefined)
+    setFaultParty(FaultParty.USER)
     onCancel()
-  }, [onCancel])
+  }, [onCancel, submitting])
 
   const handleConfirm = useCallback(() => {
-    if (!canConfirm || !stopScheduleRowId) return
-    onConfirm({ stopScheduleRowId })
-    setConfirmKeyword('')
+    if (!canConfirm) return
+    if (requireSchedule && !stopScheduleRowId) return
+    onConfirm({
+      ...(stopScheduleRowId ? { stopScheduleRowId } : {}),
+      faultParty,
+    })
     setStopScheduleRowId(undefined)
-  }, [canConfirm, onConfirm, stopScheduleRowId])
+    setFaultParty(FaultParty.USER)
+  }, [canConfirm, faultParty, onConfirm, requireSchedule, stopScheduleRowId])
 
   const footer = (
     <div className="ujat-education-progress-activity-withdraw-modal__footer">
-      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
+      <CmsButton
+        variant="secondary"
+        size="h40"
+        type="button"
+        disabled={submitting}
+        onClick={handleCancel}
+      >
         취소
       </CmsButton>
       <CmsButton
-        variant="delete"
-        size="large"
+        variant="primary"
+        size="h40"
         type="button"
-        disabled={!canConfirm}
+        loading={submitting}
+        disabled={!canConfirm || submitting}
         onClick={handleConfirm}
       >
         활동 포기
@@ -94,35 +115,41 @@ export function UjatEducationProgressActivityWithdrawModal({
       className="ujat-education-progress-activity-withdraw-modal"
       wrapClassName="ujat-education-progress-activity-withdraw-modal-wrap"
       footer={footer}
-      description={`**[${participantName}]**의 프로그램 참여 활동을 포기 처리하시겠습니까?\n활동을 중단할 교육 일정을 선택해 주세요`}
+      description={buildActivityWithdrawGuideDescription(participantName, subjectKind)}
     >
       <div className="ujat-education-progress-activity-withdraw-modal__form">
-        <CmsInput
-          inputSize="large"
+        <CmsSelect
+          label="교육 일정"
+          required
+          inputSize="medium"
           width="100%"
-          placeholder={ACTIVITY_WITHDRAW_CONFIRM_PLACEHOLDER}
-          value={confirmKeyword}
-          onChange={event => setConfirmKeyword(event.target.value)}
-          autoComplete="off"
-          aria-label="활동 포기 확인 입력"
+          withAllOption={false}
+          placeholder="활동 포기 처리할 일정을 선택해 주세요"
+          value={stopScheduleRowId}
+          disabled={!hasScheduleOptions || submitting}
+          onChange={value => setStopScheduleRowId(value == null ? undefined : String(value))}
+          options={[...scheduleOptions]}
+          aria-label="교육 일정"
         />
-
-        <div className="ujat-education-progress-activity-withdraw-modal__field">
-          <span className="ujat-education-progress-activity-withdraw-modal__label">활동 중단일</span>
-          <CmsSelect
-            inputSize="large"
-            width="100%"
-            withAllOption={false}
-            placeholder="활동 중단일을 선택해 주세요"
-            value={stopScheduleRowId}
-            disabled={!hasScheduleOptions}
-            onChange={value =>
-              setStopScheduleRowId(value == null ? undefined : String(value))
-            }
-            options={[...scheduleOptions]}
-            aria-label="활동 중단일"
-          />
-        </div>
+        <CmsRadio.Group
+          label="귀책 사유"
+          required
+          size="medium"
+          value={faultParty}
+          disabled={submitting}
+          onChange={event => {
+            const next = event.target.value
+            if (next !== FaultParty.USER && next !== FaultParty.ADMIN) return
+            setFaultParty(next)
+          }}
+        >
+          <CmsRadio value={FaultParty.USER} size="medium">
+            사용자 귀책
+          </CmsRadio>
+          <CmsRadio value={FaultParty.ADMIN} size="medium">
+            관리자 귀책
+          </CmsRadio>
+        </CmsRadio.Group>
       </div>
     </ContentModal>
   )

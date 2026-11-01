@@ -74,6 +74,15 @@ function errorMessage(error: unknown): string {
   if (message.includes('EDUCATION_JOURNAL_DUPLICATE')) {
     return '이미 제출한 교육일지 파일입니다.'
   }
+  if (message.includes('EDUCATION_JOURNAL_ACCESS_DENIED')) {
+    return '이 신청의 교육일지를 조회할 권한이 없습니다.'
+  }
+  if (message.includes('ORGANIZATION_APPLICATION_NOT_FOUND')) {
+    return '기관 신청을 찾을 수 없습니다.'
+  }
+  if (message.includes('EDUCATION_JOURNAL_APPLICATION_NOT_APPROVED')) {
+    return '승인 완료된 기관 신청만 교육일지를 제출할 수 있습니다.'
+  }
   return message || '교육일지 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
 }
 

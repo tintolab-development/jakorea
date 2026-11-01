@@ -154,8 +154,7 @@ export function PreviewModal({
                   type="button"
                   onClick={handleUse}
                   disabled={Boolean(onUse) && !canApply}
-                  aria-describedby={unusableReasonId}
-                >
+                  aria-describedby={unusableReasonId} >
                   템플릿 사용
                 </CmsButton>
               </div>

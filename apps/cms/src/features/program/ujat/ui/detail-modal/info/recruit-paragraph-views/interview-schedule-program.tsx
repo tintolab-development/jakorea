@@ -61,11 +61,9 @@ export function UjatRecruitInterviewScheduleProgramView({
   isTemplateAuthoring?: boolean
 }) {
   const display = resolveUjatVolunteerInterviewScheduleDisplay(program, volunteerHalf, {
-    allowMockFallback: !isTemplateAuthoring,
     allowOverlayFallback: isTemplateAuthoring,
   })
   const editSeed = resolveUjatVolunteerInterviewScheduleEditSeed(program, volunteerHalf, {
-    allowMockFallback: !isTemplateAuthoring,
     allowOverlayFallback: isTemplateAuthoring,
   })
   const interviewNamespace = volunteerHalf
@@ -139,12 +137,16 @@ export function UjatRecruitInterviewScheduleProgramView({
     })
     return () => {
       const live = getRecruitTypedInterviewRecord()
-      if (live) {
+      const prefix = `${ns}.`
+      const belongsToThisHalf =
+        live != null &&
+        (Object.keys(live).length === 0 || Object.keys(live).some(key => key.startsWith(prefix)))
+      if (live && belongsToThisHalf) {
         form.setValue('volunteerInterviewConfig', overlayRecordToInterviewConfig(live, ns), {
           shouldDirty: true,
         })
+        setRecruitTypedInterviewRecordBridge(null)
       }
-      setRecruitTypedInterviewRecordBridge(null)
     }
   }, [
     form,
@@ -179,11 +181,9 @@ export function UjatRecruitInterviewScheduleProgramView({
                 type="button"
                 variant="secondary"
                 size="medium"
-                width={160}
                 disabled={exceptionScheduleAddDisabled}
                 icon={<ButtonAddIcon aria-hidden />}
-                onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])}
-              >
+                onClick={() => setExceptionBlockKeys(prev => [...prev, Date.now()])} >
                 예외 일정 추가
               </CmsButton>
             </div>

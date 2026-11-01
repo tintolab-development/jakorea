@@ -697,8 +697,7 @@ export function TableFilterGroup({
         size="medium"
         type="button"
         onClick={flushSearchToParentAndSearch}
-        loading={loading}
-      >
+        loading={loading} >
         조회
       </CmsButton>
       {extra}

@@ -5,6 +5,7 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AttendanceItemResponseCheckInSource } from './attendanceItemResponseCheckInSource';
 import type { AttendanceItemResponseStatus } from './attendanceItemResponseStatus';
 
 export interface AttendanceItemResponse {
@@ -23,5 +24,6 @@ export interface AttendanceItemResponse {
   volunteer1365DurationLabel?: string;
   checkedByMemberId?: number;
   memberCheckedInAt?: string;
-  checkInSource?: string;
+  /** 출석 기록 출처. ADMIN=관리자 정정/저장, MEMBER_SELF=회원 셀프 체크인, SYSTEM=일정 시작 자동 출석. */
+  checkInSource?: AttendanceItemResponseCheckInSource;
 }

@@ -834,8 +834,7 @@ export function AddUserIndividual({
               size="medium"
               type="button"
               onClick={onCancel}
-              disabled={loading}
-            >
+              disabled={loading} >
               닫기
             </CmsButton>
             <CmsButton variant="primary" size="medium" type="submit" disabled={loading}>

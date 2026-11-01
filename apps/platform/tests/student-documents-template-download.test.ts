@@ -20,6 +20,9 @@ describe('student documents portrait consent template download', () => {
 
     expect(queuedJob?.id).toBe(101)
     expect(isPortraitConsentTemplateJobPending(queuedJob)).toBe(true)
+    expect(isPortraitConsentTemplateJobPending({ jobStatus: 'REQUESTED' })).toBe(true)
+    expect(isPortraitConsentTemplateJobPending({ jobStatus: 'PROCESSING' })).toBe(true)
+    expect(isPortraitConsentTemplateJobPending({ jobStatus: 'RENDERING' })).toBe(true)
     expect(isPortraitConsentTemplateJobCompleted({ jobStatus: 'COMPLETED' })).toBe(true)
     expect(isPortraitConsentTemplateJobFailed({ jobStatus: 'FAILED' })).toBe(true)
   })

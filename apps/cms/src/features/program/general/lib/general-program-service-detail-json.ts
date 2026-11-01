@@ -3,6 +3,7 @@ import { pickDisplayValue } from '@/features/program/general/lib/detail-value-he
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
 import { stripHiddenEducationPlaceFromRegistrationOverlay } from '@/features/program/general/lib/education-place-overlay-persist'
+import { stripHiddenTypeSettingsFromRegistrationOverlay } from '@/features/program/general/lib/type-settings-overlay-persist'
 import { buildRegistrationOverlayForPersist } from '@/features/program/shared/lib/public-program-title'
 import {
   buildGeneralRegistrationOverlayFromProgram,
@@ -11,9 +12,7 @@ import {
 import { resyncGeneralRecruitOverlayFromProgram } from '@/features/program/general/lib/general-recruit-overlay-from-program'
 import {
   parseEducationScheduleLineForCms,
-  parseEducationScheduleLinesForCms,
   serializeEducationScheduleLineForServer,
-  serializeEducationScheduleLinesForServer,
 } from '@/features/template/lib/format-education-schedule-line'
 import { GENERAL_REGISTRATION_OVERLAY_SCHEDULE_LINES_KEY } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-keys'
 import { resolveGeneralSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
@@ -30,6 +29,11 @@ import {
   omitRootRegistrationOverlay,
   resolvedRegistrationOverlayOrUndefined,
 } from '@/features/program/shared/lib/resolve-registration-overlay'
+import { resolveProgramResultAnnouncementDate } from '@/features/program/shared/lib/resolve-result-announcement-date'
+import {
+  inferScheduleDetailBlockKind,
+  isPreEducationScheduleBlock,
+} from '@/features/program/general/lib/schedule-detail-form'
 
 export const GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION = 1 as const
 
@@ -541,24 +545,80 @@ function withNestedSsotOverlayFallback(
   }
 }
 
-function commonInfoWithServerEducationScheduleLines(
-  common: Program['generalCommonInfo']
+function mapCommonInfoEducationScheduleDateLabels(
+  common: Program['generalCommonInfo'],
+  mapLine: (line: string) => string
 ): Program['generalCommonInfo'] {
-  if (!common?.educationScheduleLines) return common
+  if (!common) return common
+  let changed = false
+  const nextLine = (label: string | undefined) => {
+    if (typeof label !== 'string' || !label.trim()) return label
+    const mapped = mapLine(label)
+    if (mapped !== label) changed = true
+    return mapped
+  }
+  const educationScheduleLines = common.educationScheduleLines?.map(line => {
+    if (typeof line !== 'string') return line
+    const mapped = mapLine(line)
+    if (mapped !== line) changed = true
+    return mapped
+  })
+  const mapRows = <T extends { scheduleDateLabel?: string }>(rows: T[] | undefined): T[] | undefined => {
+    if (!rows) return rows
+    return rows.map(row => {
+      const scheduleDateLabel = nextLine(row.scheduleDateLabel)
+      if (scheduleDateLabel === row.scheduleDateLabel) return row
+      return { ...row, scheduleDateLabel }
+    })
+  }
+  const scheduleDetails = mapRows(common.scheduleDetails)
+  const curriculumSessions = mapRows(common.curriculumSessions)
+  if (!changed) return common
   return {
     ...common,
-    educationScheduleLines: serializeEducationScheduleLinesForServer(common.educationScheduleLines),
+    ...(educationScheduleLines ? { educationScheduleLines } : {}),
+    ...(scheduleDetails ? { scheduleDetails } : {}),
+    ...(curriculumSessions ? { curriculumSessions } : {}),
   }
+}
+
+export function commonInfoWithServerEducationScheduleLines(
+  common: Program['generalCommonInfo']
+): Program['generalCommonInfo'] {
+  return mapCommonInfoEducationScheduleDateLabels(common, serializeEducationScheduleLineForServer)
+}
+
+function stampScheduleDetailBlockKindsForPersist(
+  common: Program['generalCommonInfo'],
+  program: Pick<Program, 'generalProgramEducationStructure' | 'generalProgramSessionRound'>
+): Program['generalCommonInfo'] {
+  const rows = common?.scheduleDetails
+  if (!rows?.length) return common
+  const forceEvent =
+    program.generalProgramEducationStructure === 'schedule' &&
+    program.generalProgramSessionRound === 'multi'
+  let changed = false
+  const scheduleDetails = rows.map(row => {
+    if (row.blockKind === 'preEducation' || row.blockKind === 'event' || row.blockKind === 'sub') {
+      return row
+    }
+    const blockKind = isPreEducationScheduleBlock(row)
+      ? ('preEducation' as const)
+      : forceEvent
+        ? ('event' as const)
+        : inferScheduleDetailBlockKind(row.scheduleLabel ?? '') === 'event'
+          ? ('event' as const)
+          : ('sub' as const)
+    changed = true
+    return { ...row, blockKind }
+  })
+  return changed ? { ...common, scheduleDetails } : common
 }
 
 function commonInfoWithCmsEducationScheduleLines(
   common: Program['generalCommonInfo']
 ): Program['generalCommonInfo'] {
-  if (!common?.educationScheduleLines) return common
-  return {
-    ...common,
-    educationScheduleLines: parseEducationScheduleLinesForCms(common.educationScheduleLines),
-  }
+  return mapCommonInfoEducationScheduleDateLabels(common, parseEducationScheduleLineForCms)
 }
 
 function registrationOverlayWithMappedScheduleLines(
@@ -623,14 +683,17 @@ export function serializeGeneralProgramServiceDetailJson(
     !isTrainedTeachersDetailProgram(program)
       ? omitMirroredDetailedProgramMasterIdFromCommonInfo(withAudienceRule)
       : withAudienceRule
-  const generalCommonInfo = omitEmptyVolunteerInterviewPeriod(
-    commonInfoWithServerEducationScheduleLines(
-      omitColumnTargetLevelsFromCommonInfo(
-        options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
-          ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
-          : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
+  const generalCommonInfo = stampScheduleDetailBlockKindsForPersist(
+    omitEmptyVolunteerInterviewPeriod(
+      commonInfoWithServerEducationScheduleLines(
+        omitColumnTargetLevelsFromCommonInfo(
+          options?.omitRecruitmentWindow && !options?.keepNestedRecruitmentInfo
+            ? omitRecruitmentWindowFromCommonInfo(commonAfterScheduleMasterStrip)
+            : withVolunteerInterviewSchedulePeriod(program, commonAfterScheduleMasterStrip)
+        )
       )
-    )
+    ),
+    program
   )
   const nestedProgram: Program = {
     ...program,
@@ -676,6 +739,11 @@ export function serializeGeneralProgramServiceDetailJson(
   registrationOverlay = registrationOverlayWithServerEducationScheduleLines(registrationOverlay)
   // 숨긴 교육 진행 장소(온라인 행·기관 대상)는 폼에만 두고 저장 본문에서 뺀다
   registrationOverlay = stripHiddenEducationPlaceFromRegistrationOverlay(registrationOverlay, nestedProgram)
+  // 숨긴 회차 유형 라디오(단일↔복수 stale)도 저장 본문에서 뺀다
+  registrationOverlay = stripHiddenTypeSettingsFromRegistrationOverlay(
+    registrationOverlay,
+    nestedProgram
+  )
   const persistedTargetLevels = resolvePersistedProgramTargetLevels(program)
   const payload: GeneralProgramServiceDetailJsonV1 = {
     schemaVersion: GENERAL_PROGRAM_SERVICE_DETAIL_JSON_VERSION,
@@ -692,7 +760,14 @@ export function serializeGeneralProgramServiceDetailJson(
     instructorApplicationEndDate: program.instructorApplicationEndDate,
     volunteerApplicationStartDate: program.volunteerApplicationStartDate,
     volunteerApplicationEndDate: program.volunteerApplicationEndDate,
-    resultAnnouncementDate: program.resultAnnouncementDate,
+    resultAnnouncementDate: resolveProgramResultAnnouncementDate(
+      nestedProgram,
+      {
+        ...(registrationOverlay ?? {}),
+        ...(program.registrationOverlay ?? {}),
+      },
+      false
+    ),
     resultAnnouncementMethod: program.resultAnnouncementMethod,
     studentListRequired: isIndividual ? 'not_required' : program.studentListRequired,
     generalParticipantInterviewEnabled: program.generalParticipantInterviewEnabled,

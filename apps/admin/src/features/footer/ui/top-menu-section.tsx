@@ -218,8 +218,7 @@ export function FooterTopMenuSection() {
                 size="h40"
                 type="button"
                 onClick={handleCancelEdit}
-                disabled={saveMutation.isPending}
-              >
+                disabled={saveMutation.isPending} >
                 취소
               </CmsButton>
               <CmsButton
@@ -229,8 +228,7 @@ export function FooterTopMenuSection() {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }}
-              >
+                }} >
                 저장
               </CmsButton>
             </>
@@ -240,8 +238,7 @@ export function FooterTopMenuSection() {
               size="h40"
               type="button"
               onClick={handleStartEdit}
-              disabled={listQuery.isLoading || rows.length === 0}
-            >
+              disabled={listQuery.isLoading || rows.length === 0} >
               수정
             </CmsButton>
           )}

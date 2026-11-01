@@ -279,7 +279,7 @@ export function createIdentityVerificationClient(
         sessionId,
         provider: 'NICE',
         status: VERIFIED_SESSION_STATUS,
-        name: pending?.name?.trim() || '홍길동',
+        name: pending?.name?.trim() || '이름예시',
         phone: '010-1234-5678',
         birthDate: pending?.birthDate ? toApiBirthDate(pending.birthDate) : undefined,
         gender: pending?.gender,
@@ -315,7 +315,7 @@ export function createIdentityVerificationClient(
     return {
       sessionId: input.sessionId,
       sessionUuid: String(input.sessionId),
-      verifiedName: pending?.name?.trim() || '홍길동',
+      verifiedName: pending?.name?.trim() || '이름예시',
       verifiedPhone: '010-1234-5678',
       verifiedBirthDate: input.birthDate ? toVerifiedBirthDate(input.birthDate) : undefined,
       verifiedGender: input.gender,

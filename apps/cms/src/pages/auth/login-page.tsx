@@ -364,13 +364,10 @@ export function LoginPage() {
                     <Form.Item className="login-submit-actions">
                       <CmsButton
                         variant="primary"
-                        size="h52"
-                        width="100%"
-                        className="login-submit-btn"
+                        size="h52" className="login-submit-btn"
                         loading={loading && loginMode === 'api'}
                         disabled={isLocked || !apiLoginAvailable}
-                        onClick={() => handleLoginClick('api')}
-                      >
+                        onClick={() => handleLoginClick('api')} >
                         로그인하기
                       </CmsButton>
                     </Form.Item>
@@ -395,8 +392,7 @@ export function LoginPage() {
                                 email: account.email,
                                 password: account.password,
                               })
-                            }}
-                          >
+                            }} >
                             {account.label}
                           </CmsButton>
                         ))}

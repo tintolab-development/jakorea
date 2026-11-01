@@ -22,7 +22,7 @@ export const statusOptions: Array<{ value: TemplateStatus; label: string }> = [
 ]
 
 export const defaultSampleValues: Record<string, string> = {
-  name: '홍길동',
+  name: '이름예시',
   programTitle: '금융교육 봉사 프로그램',
   date: '2026-01-09',
   time: '10:00',

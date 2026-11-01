@@ -5,6 +5,7 @@ import { announcementPublishedFromFormValue } from '@/features/program/shared/li
 import { loadUjatRecruitInstitutionTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { coalesceResultAnnouncementDate } from '@/features/program/shared/lib/resolve-result-announcement-date'
 
 export { UJAT_RECRUIT_INSTITUTION_OVERLAY_KEYS }
 
@@ -190,7 +191,13 @@ export function applyUjatRecruitInstitutionOverlayOntoProgram(
         : program.applicationStartDate,
     applicationEndDate:
       preferOverlay && recruitRange?.end?.trim() ? recruitRange.end : program.applicationEndDate,
-    resultAnnouncementDate: result?.date?.trim() ? result.date : program.resultAnnouncementDate,
+    resultAnnouncementDate: coalesceResultAnnouncementDate({
+      overlayIso: result?.date,
+      programDate: program.resultAnnouncementDate,
+      createdAt: program.createdAt,
+      updatedAt: program.updatedAt,
+      preferOverlay,
+    }),
     resultAnnouncementMethod: result?.method?.trim()
       ? result.method
       : program.resultAnnouncementMethod,
@@ -278,10 +285,13 @@ export function applyUjatRecruitInstitutionTemplateDefaults(program: Program): P
       recruitRange?.start ?? undefined
     ),
     applicationEndDate: coalesceIsoDate(program.applicationEndDate, recruitRange?.end ?? undefined),
-    resultAnnouncementDate: coalesceIsoDate(
-      program.resultAnnouncementDate,
-      result?.date ?? undefined
-    ),
+    resultAnnouncementDate: coalesceResultAnnouncementDate({
+      overlayIso: result?.date,
+      programDate: program.resultAnnouncementDate,
+      createdAt: program.createdAt,
+      updatedAt: program.updatedAt,
+      preferOverlay: false,
+    }),
     resultAnnouncementMethod: coalesceString(
       program.resultAnnouncementMethod,
       result?.method

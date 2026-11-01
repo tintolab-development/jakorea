@@ -15,6 +15,7 @@ import {
   fetchMemberPrivacyUnmask,
   PrivacyUnmaskApiError,
 } from '@/features/logs/api/privacy-unmask-fetcher'
+import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
 import {
   fetchAdminAccountPrivacyUnmask,
   fetchInstructorRoleRequestPrivacyUnmask,
@@ -180,9 +181,9 @@ async function revealPersonalInfoWithAudit(
 
   if (shouldUseLogsRemoteApi() && memberIdRaw) {
     try {
-      await fetchMemberPrivacyUnmask(memberIdRaw, reason)
+      const payload = await fetchMemberPrivacyUnmask(memberIdRaw, reason)
       void queryClient.invalidateQueries({ queryKey: logsQueryKeys.privacyAccessAll() })
-      return { ok: true, role }
+      return { ok: true, payload, role }
     } catch (error) {
       const message =
         error instanceof PrivacyUnmaskApiError
@@ -191,6 +192,15 @@ async function revealPersonalInfoWithAudit(
       cmsAlertModal.show({ title: '열람 실패', content: message })
       return { ok: false }
     }
+  }
+
+  // 실서버( remote API 설정됨 )에서는 unmask 대상 없이 성공 처리하지 않는다.
+  if (isRealApiModuleEnabled('members') || isRealApiModuleEnabled('logs')) {
+    cmsAlertModal.show({
+      title: '열람 실패',
+      content: '개인정보 원문 조회 대상이 없습니다.',
+    })
+    return { ok: false }
   }
 
   trackPersonalInfoAccess(resolveAccessItem(), reason)

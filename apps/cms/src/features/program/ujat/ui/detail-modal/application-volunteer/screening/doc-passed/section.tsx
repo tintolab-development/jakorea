@@ -2,6 +2,7 @@ import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { FilterTableToolbarButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { buildUjatVolunteerDocPassedFilterRows } from './filter-fields'
@@ -24,9 +25,6 @@ import '../doc-screening/section.css'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail.css'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
-const noopApplyDocumentScreeningStatus = () => undefined
-const noopShowDocumentScreeningConfirm = () => undefined
-
 export interface DocPassedSectionProps {
   programId: string
   half: UjatVolunteerRecruitHalf
@@ -40,6 +38,7 @@ export function DocPassedSection({
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
 }: DocPassedSectionProps) {
+  const canWrite = useUjatCanWrite()
   const { labels: educationRegionLabels } = useUjatEducationRegions()
   const filterFields = useMemo(
     () => buildUjatVolunteerDocPassedFilterRows()[0] ?? [],
@@ -84,10 +83,8 @@ export function DocPassedSection({
     half,
     list,
     detailVariant: 'doc_passed',
-    applyDocumentScreeningStatus: noopApplyDocumentScreeningStatus,
     onRegisterApplicantCloseHandler,
     onVolunteerApplicantDetailMetaChange,
-    showDocumentScreeningConfirm: noopShowDocumentScreeningConfirm,
   })
 
   const { dates: scheduleDates } = useUjatProgramScheduleDates(programId)
@@ -193,7 +190,7 @@ export function DocPassedSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         title="봉사자 1차 서류 합격자 목록"
-        description={`${count.toLocaleString()}건`}
+        description={`총 ${count.toLocaleString()}건`}
         actions={
           viewMode === 'list' ? (
             <FilterTableToolbarButton
@@ -215,10 +212,14 @@ export function DocPassedSection({
             </FilterTableToolbarButton>
           )
         }
-        excelExport={{
-          columns,
-          data: tableData,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+              }
+            : undefined
+        }
       >
         {viewMode === 'list' ? (
           <div className="ujat-volunteer-doc-passed__table-wrap">
@@ -256,6 +257,9 @@ export function DocPassedSection({
           {isFetchingNextPage ? <Spin size="small" /> : null}
         </div>
       </FilterTableLayout>
+      {viewMode === 'calendar' ? (
+        <div className="applicant-details__calendar-page-bottom-spacer" aria-hidden />
+      ) : null}
       {withdrawConfirmModal}
       {assignInterviewModal}
       {assignCompleteModal}

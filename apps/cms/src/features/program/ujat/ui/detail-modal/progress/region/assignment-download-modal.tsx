@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ContentModal, CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import type { RegionAssignmentTableData } from './types'
 import './assignment-download-modal.css'
@@ -18,6 +19,7 @@ export function RegionAssignmentDownloadModal({
   onCancel,
 }: RegionAssignmentDownloadModalProps) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const [selectedColumnIds, setSelectedColumnIds] = useState<string[]>([])
   const [exporting, setExporting] = useState(false)
 
@@ -63,13 +65,15 @@ export function RegionAssignmentDownloadModal({
 
   const footer = (
     <div className="ujat-region-assignment-download-modal__footer">
-      <CmsButton variant="secondary" size="medium" width={120} onClick={handleCancel}>
+      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
         취소
       </CmsButton>
-      <ExcelButton
-        disabled={selectedColumnIds.length === 0 || exporting}
-        onClick={() => void handleDownload()}
-      />
+      {canWrite ? (
+        <ExcelButton
+          disabled={selectedColumnIds.length === 0 || exporting || educationDateOptions.length === 0}
+          onClick={() => void handleDownload()}
+        />
+      ) : null}
     </div>
   )
 
@@ -83,25 +87,35 @@ export function RegionAssignmentDownloadModal({
       className="ujat-region-assignment-download-modal"
       wrapClassName="ujat-region-assignment-download-modal-wrap"
       footer={footer}
-      description="표기할 교육 진행일정을 선택해 주세요."
+      description="배정표에 포함할 교육 일정을 선택해 주세요"
     >
       <div className="ujat-region-assignment-download-modal__form">
         <div className="ujat-region-assignment-download-modal__field">
-          <span className="ujat-region-assignment-download-modal__label">교육 진행일정</span>
+          <span className="ujat-region-assignment-download-modal__label">
+            교육 일정
+            <span className="ujat-region-assignment-download-modal__required" aria-hidden>
+              *
+            </span>
+          </span>
           <CmsSelect
             mode="multiple"
             inputSize="large"
             width="100%"
             withAllOption={false}
             allowClear
-            placeholder="파일에 표기할 교육 진행 일정을 선택해 주세요"
+            placeholder={
+              educationDateOptions.length === 0
+                ? '선택 가능한 교육 일정이 없습니다'
+                : '교육 일정을 선택해 주세요'
+            }
             value={selectedColumnIds}
+            disabled={educationDateOptions.length === 0}
             options={educationDateOptions}
             onChange={value => {
               const next = Array.isArray(value) ? value.map(String) : []
               setSelectedColumnIds(next)
             }}
-            aria-label="교육 진행일정"
+            aria-label="교육 일정"
           />
         </div>
       </div>

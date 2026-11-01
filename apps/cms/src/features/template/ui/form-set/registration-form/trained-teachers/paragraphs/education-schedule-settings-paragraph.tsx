@@ -10,7 +10,7 @@ import { EducationSchedulePreviewLines } from '@/features/template/ui/shared/edu
 import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import {
   educationOperationRangeSealKeyFromSchedulePrefix,
-  isOutsideEducationOperationRange,
+  isEducationScheduleSelectionDateDisabled,
   toEducationOperationDayjs,
   type EducationOperationRangeSeal,
 } from '@/features/program/shared/lib/education-schedule-change'
@@ -52,8 +52,9 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
     educationOperationRangeSealKeyFromSchedulePrefix(overlayKeyPrefix),
     null
   )
+  // 사업 운영 기간 밖 + 오늘 이전 비활성
   const disableOutsideOperation = (date: Dayjs) =>
-    isOutsideEducationOperationRange(
+    isEducationScheduleSelectionDateDisabled(
       date,
       toEducationOperationDayjs(operationRangeSeal?.start),
       toEducationOperationDayjs(operationRangeSeal?.end)

@@ -43,4 +43,30 @@ assert.equal(
 )
 assert.equal(parsePortalProfileResponse({ name: '성인', guardian: {} }).guardian, undefined)
 
+assert.equal(
+  parsePortalProfileResponse({
+    memberId: 190102,
+    memberType: 'TEACHER',
+    teacher: true,
+    instructor: false,
+    instructorProfile: null,
+  }).instructorProfile,
+  undefined,
+)
+assert.equal(
+  parsePortalProfileResponse({
+    memberType: 'TEACHER',
+    instructor: false,
+    instructorProfile: {},
+  }).instructorProfile,
+  undefined,
+)
+assert.equal(
+  parsePortalProfileResponse({
+    instructor: true,
+    instructorProfile: { profile: { memberType: 'SCHOOL_TEACHER' } },
+  }).instructorProfile?.profile?.memberType,
+  'SCHOOL_TEACHER',
+)
+
 console.log('parse-portal-member.selfcheck: ok')

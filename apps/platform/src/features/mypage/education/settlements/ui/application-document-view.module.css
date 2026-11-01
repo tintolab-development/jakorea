@@ -1,0 +1,158 @@
+.page {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-24);
+}
+
+.docHeader {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.docTitle {
+  margin: 0;
+  text-align: center;
+}
+
+.section {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  padding: var(--spacing-20);
+  border-radius: var(--radius-24);
+  background: var(--color-neutral-white);
+  box-shadow: var(--shadow-card-lg);
+}
+
+.sectionTitle {
+  margin: 0;
+  padding-bottom: var(--spacing-16);
+  border-bottom: 2px solid var(--color-primary-500);
+}
+
+.tableWrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-default);
+  vertical-align: middle;
+  word-break: break-word;
+}
+
+.table th {
+  background: var(--color-neutral-cool-50, #f5f7f7);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-neutral-cool-700, #3d4650);
+}
+
+.table td {
+  font-size: 13px;
+  text-align: center;
+  color: var(--color-neutral-cool-900, #1a1f26);
+}
+
+.emptyCell {
+  color: var(--color-neutral-cool-500);
+}
+
+.deductionRow td {
+  color: var(--color-status-error-default);
+}
+
+.amountCell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.totalLabel {
+  font-weight: 600;
+  text-align: right;
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.attachmentList {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.attachmentItem {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.attachmentName {
+  margin: 0;
+}
+
+.attachmentLink {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.attachmentImage {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-12);
+  border: 1px solid var(--color-border-default);
+  object-fit: contain;
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.attachmentFrame {
+  display: block;
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-12);
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}
+
+.attachmentOpen {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--spacing-12);
+}
+
+@media (--bp-pc-up) {
+  .table {
+    min-width: 0;
+  }
+}

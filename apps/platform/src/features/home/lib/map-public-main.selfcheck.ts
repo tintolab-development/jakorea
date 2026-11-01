@@ -39,7 +39,7 @@ const fallback: HomeMainFallback = {
   stats: [
     { label: '전국 교육 네트워크 분포', value: '200', unit: '지역+' },
     { label: '전문 협업 학교, 기관, 단체', value: '1000', unit: '개+' },
-    { label: '전문 봉사자,교사, 강사', value: '3000', unit: '명+' },
+    { label: '전문 봉사자, 교사, 강사', value: '3000', unit: '명+' },
   ],
   highlight: { label: '교육 수혜자 청소년들의 수', value: '90,000', unit: '여명' },
   performanceBottomText: null,
@@ -75,7 +75,7 @@ assert.equal(empty.programs.length, 0)
 
 const emptyLists = mergePublicMainWithFallback(
   { heroes: [], stripBanners: [], sponsors: [], socialLinks: [], education: { programs: [] } },
-  fallback,
+  fallback
 )
 assert.equal(emptyLists.source, 'remote')
 assert.equal(emptyLists.heroes.length, 0)
@@ -132,9 +132,11 @@ const merged = mergePublicMainWithFallback(
     },
     performance: { networkDistributionCount: 200, youthBeneficiaryCount: 90000 },
     donation: { cta1Url: 'https://www.jakorea.org/support/individual' },
-    stripBanners: [{ id: 1, displayOrder: 1, bannerText: '경제교육 봉사자 모집 중', linkUrl: '/programs' }],
+    stripBanners: [
+      { id: 1, displayOrder: 1, bannerText: '경제교육 봉사자 모집 중', linkUrl: '/programs' },
+    ],
   },
-  fallback,
+  fallback
 )
 
 assert.equal(merged.heroes.length, 1)
@@ -176,7 +178,7 @@ const featuredNoImage = mergePublicMainWithFallback(
       },
     },
   },
-  featuredFallback,
+  featuredFallback
 )
 assert.equal(featuredNoImage.featuredStory?.imageUrl, '/card-minjae.png')
 assert.equal(featuredNoImage.featuredStory?.featuredImageUrl, '/card-minjae.png')
@@ -190,7 +192,7 @@ const featuredEmptyImage = mergePublicMainWithFallback(
       },
     },
   },
-  featuredFallback,
+  featuredFallback
 )
 assert.equal(featuredEmptyImage.featuredStory?.imageUrl, '/card-minjae.png')
 
@@ -228,7 +230,7 @@ const mappedPopups = mergePublicMainWithFallback(
       },
     ],
   },
-  fallback,
+  fallback
 )
 assert.equal(mappedPopups.popups.length, 2)
 assert.equal(mappedPopups.popups[0]?.id, '1')
@@ -250,7 +252,7 @@ const expiredOnly = mergePublicMainWithFallback(
       },
     ],
   },
-  fallback,
+  fallback
 )
 assert.equal(expiredOnly.source, 'remote')
 assert.equal(expiredOnly.strips.length, 0)

@@ -1,3 +1,4 @@
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import {
   UJAT_INSTITUTION_SCHEDULE_CONFIRM_CALENDAR_STATUS_LABEL,
   type UjatScheduleConfirmRow,
@@ -5,6 +6,7 @@ import {
 
 export type UjatScheduleConfirmCalendarOriginalItem = UjatScheduleConfirmRow & {
   schoolName: string
+  regionLabel: string
   calendarTotalClassSummary: string
   calendarScheduleDetail: string
 }
@@ -18,14 +20,19 @@ export type UjatScheduleConfirmCalendarEvent = {
 }
 
 function formatCalendarMeta(row: UjatScheduleConfirmRow): {
+  regionLabel: string
   calendarTotalClassSummary: string
   calendarScheduleDetail: string
 } {
   const calendarTotalClassSummary =
-    row.totalEducationClassCount > 0 ? `총 ${row.totalEducationClassCount}개 학급` : ''
+    row.totalEducationClassCount > 0 ? `총 ${row.totalEducationClassCount}개의 학급` : ''
   const calendarScheduleDetail =
     row.confirmedScheduleDisplay !== '-' ? row.confirmedScheduleDisplay : ''
-  return { calendarTotalClassSummary, calendarScheduleDetail }
+  return {
+    regionLabel: getUjatEducationRegionLabel(row.regionKey, ''),
+    calendarTotalClassSummary,
+    calendarScheduleDetail,
+  }
 }
 
 export function buildUjatScheduleConfirmCalendarEvents(

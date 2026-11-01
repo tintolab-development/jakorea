@@ -6,7 +6,7 @@
 
 import {
   INSTRUCTOR_FEE_TABLE,
-  LONG_DISTANCE_THRESHOLD_KM,
+  COMPANY_SCHOOL_LONG_DISTANCE_FEE_THRESHOLD_KM,
   TRANSPORT_FEE_POLICY,
   ACCOMMODATION_FEE,
   TAX_RATES,
@@ -65,14 +65,18 @@ export function calculateSettlement(
   }
 
   // 1. 강사료 계산
-  const isLongDistance = distance >= LONG_DISTANCE_THRESHOLD_KM
+  // 장거리 단가 대체는 1사1교(isSpecialProgram) + 편도 > 200km 만.
+  // 표기용 longDistance와 분리 — 일반 프로그램은 거리와 무관하게 기본 단가.
+  // 운영 SSOT는 BE calculationDetail; 이 함수는 my-settlement 레거시 FE 산출용.
+  const isLongDistanceFeeApplied =
+    isSpecialProgram && distance > COMPANY_SCHOOL_LONG_DISTANCE_FEE_THRESHOLD_KM
   const feeTable = INSTRUCTOR_FEE_TABLE[sessions as keyof typeof INSTRUCTOR_FEE_TABLE]
   
   if (!feeTable) {
     throw new Error(`지원하지 않는 차시 수입니다: ${sessions} (1~6차시만 지원)`)
   }
   
-  const instructorFee = isLongDistance ? feeTable.longDistance : feeTable.base
+  const instructorFee = isLongDistanceFeeApplied ? feeTable.longDistance : feeTable.base
 
   // 2. 교통비 계산 (프로그램별 규칙 적용)
   let transportTotal = 0
@@ -145,7 +149,8 @@ export function calculateSettlement(
     breakdown: {
       sessions,
       distance,
-      isLongDistance,
+      /** 장거리 단가 적용 여부 (표기 플래그와 별개) */
+      isLongDistance: isLongDistanceFeeApplied,
       fuelCost,
       tollFee,
       transportFeeApplicable,
@@ -189,10 +194,19 @@ export function isTransportFeeApplicable(distance: number): boolean {
 }
 
 /**
- * 장거리 여부 확인
+ * 1사1교 장거리 단가 적용 여부 (레거시 FE 산출용).
+ * 표기용 longDistance와 별개 — 일반 프로그램은 항상 false.
  */
-export function isLongDistance(distance: number): boolean {
-  return distance >= LONG_DISTANCE_THRESHOLD_KM
+export function isLongDistanceFeeApplied(
+  distance: number,
+  isSpecialProgram = false
+): boolean {
+  return isSpecialProgram && distance > COMPANY_SCHOOL_LONG_DISTANCE_FEE_THRESHOLD_KM
+}
+
+/** @deprecated isLongDistanceFeeApplied 사용. 표기/단가 혼동 방지. */
+export function isLongDistance(distance: number, isSpecialProgram = false): boolean {
+  return isLongDistanceFeeApplied(distance, isSpecialProgram)
 }
 
 /**
@@ -206,10 +220,13 @@ export function validateSettlementResult(
   const errors: string[] = []
 
   // 1. 강사료 검증
-  const isLongDistance = params.distance >= LONG_DISTANCE_THRESHOLD_KM
+  const longDistanceFee = isLongDistanceFeeApplied(
+    params.distance,
+    params.isSpecialProgram ?? false
+  )
   const feeTable = INSTRUCTOR_FEE_TABLE[params.sessions as keyof typeof INSTRUCTOR_FEE_TABLE]
   if (feeTable) {
-    const expectedInstructorFee = isLongDistance ? feeTable.longDistance : feeTable.base
+    const expectedInstructorFee = longDistanceFee ? feeTable.longDistance : feeTable.base
     if (result.instructorFee !== expectedInstructorFee) {
       errors.push(`강사료 불일치: 예상 ${expectedInstructorFee}, 실제 ${result.instructorFee}`)
     }

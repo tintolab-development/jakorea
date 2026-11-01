@@ -9,18 +9,33 @@ import {
 } from './application-content-from-answers.ts'
 
 export function programDetailToPreferredScheduleLookup(
-  program: Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules'> | undefined,
+  program:
+    | (Pick<ProgramDetail, 'educationScheduleLines' | 'eventSchedules'> &
+        Partial<Pick<ProgramDetail, 'scheduleOptionLookup'>>)
+    | undefined,
 ): Pick<PreferredScheduleProgramLookup, 'educationScheduleLines' | 'schedules'> {
   if (!program) return {}
+  const fromEventSchedules = (program.eventSchedules ?? []).map(row => ({
+    scheduleId: row.scheduleId,
+    startAt: row.startAt,
+    endAt: row.endAt,
+    scheduleName: row.name,
+    dateLabel: row.dateLabel,
+  }))
+  /**
+   * 일정형(scheduleDetails) 프로그램은 eventSchedules에 scheduleId가 없다.
+   * Portal `schedules[]` 원본을 뒤에 붙여 `schedule:{id}` 토큰을 해석한다 (eventSchedules 우선).
+   */
+  const fromPortalSchedules = (program.scheduleOptionLookup ?? []).map(row => ({
+    scheduleId: row.scheduleId,
+    startAt: row.startAt,
+    endAt: row.endAt,
+    scheduleName: row.scheduleName,
+  }))
+  const schedules = [...fromEventSchedules, ...fromPortalSchedules]
   return {
     educationScheduleLines: program.educationScheduleLines,
-    schedules: program.eventSchedules?.map(row => ({
-      scheduleId: row.scheduleId,
-      startAt: row.startAt,
-      endAt: row.endAt,
-      scheduleName: row.name,
-      dateLabel: row.dateLabel,
-    })),
+    ...(program.eventSchedules || program.scheduleOptionLookup ? { schedules } : {}),
   }
 }
 

@@ -105,10 +105,9 @@ export function UjatInstitutionScheduleAssignDateBlock({
                       label={formatScheduleAssignSchoolLabel(index, day.rows.length)}
                       view="-"
                       edit={
-                        <div className="detail-info-form-inputs-wrapper-no-gap">
+                        <div className="detail-info-form-inputs-wrapper-no-gap ujat-schedule-assign-date-block__school-inputs">
                           <CmsSelect
                             inputSize="small"
-                            width="100%"
                             placeholder="학교 선택"
                             options={schoolSelectOptions}
                             value={row.institutionRowId ?? undefined}
@@ -122,7 +121,6 @@ export function UjatInstitutionScheduleAssignDateBlock({
                           <DetailInfoForm.InputsSeparator />
                           <CmsSelect
                             inputSize="small"
-                            width="100%"
                             mode="multiple"
                             withAllOption={false}
                             placeholder="배정 학급을 선택하세요"

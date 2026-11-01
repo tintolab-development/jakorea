@@ -48,6 +48,7 @@ export interface TextbookDetailFullPageModalProps {
   mode: 'view' | 'edit'
   onClose: () => void
   onEdit: () => void
+  onCancel: () => void
   onSave: (payload: TextbookCreateInput) => void
 }
 
@@ -76,6 +77,7 @@ function TextbookDetailFullPageModalInner({
   mode,
   onClose,
   onEdit,
+  onCancel,
   onSave,
 }: TextbookDetailFullPageModalInnerProps) {
   const location = useLocation()
@@ -120,6 +122,11 @@ function TextbookDetailFullPageModalInner({
     onSave(payload)
   }
 
+  const handleCancel = () => {
+    if (textbook) setEditForm(toEditForm(textbook))
+    onCancel()
+  }
+
   const showBody = Boolean(textbook && editForm) && !isDetailLoading && !isDetailError
 
   return (
@@ -151,9 +158,20 @@ function TextbookDetailFullPageModalInner({
       contentExtra={
         showBody ? (
           <div className="textbook-detail-fullpage-modal__header-actions">
-            <CmsButton variant="secondary" size="large" onClick={isEditMode ? handleSave : onEdit}>
-              정보 수정{' '}
-            </CmsButton>
+            {isEditMode ? (
+              <>
+                <CmsButton variant="secondary" size="large" onClick={handleCancel}>
+                  취소
+                </CmsButton>
+                <CmsButton variant="primary" size="large" onClick={handleSave}>
+                  저장
+                </CmsButton>
+              </>
+            ) : (
+              <CmsButton variant="secondary" size="large" onClick={onEdit}>
+                정보 수정
+              </CmsButton>
+            )}
           </div>
         ) : null
       }

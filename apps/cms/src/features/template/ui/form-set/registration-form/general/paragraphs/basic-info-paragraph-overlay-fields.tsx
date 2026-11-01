@@ -32,7 +32,6 @@ import {
 } from '@/features/template/ui/form-set/registration-form/shared/registration-overlay-fields'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import {
   TRAINED_TEACHERS_REGISTRATION_ALL_VALUE,
   normalizeTrainedTeachersAllSelectValue,
@@ -96,12 +95,6 @@ export const ProgramRegistrationBasicInfoOperationRangeField = memo(
       }
       setOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
     }
-    const operationRangeWithTime = useMemo(
-      () =>
-        operationRange == null ? false : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
-      [operationRange]
-    )
-
     return (
       <DetailInfoForm.Field
         label="사업 운영 기간"
@@ -116,8 +109,10 @@ export const ProgramRegistrationBasicInfoOperationRangeField = memo(
               placeholder="사업 운영 기간을 선택하세요"
               preferPeriodModeInPopover
               suppressAutoTodayWhenEmpty
+              excludeBusinessPeriodConstraint
+              showTimeToggle={false}
               appliedSurfaceRange={operationRange}
-              appliedSurfaceWithTime={operationRangeWithTime}
+              appliedSurfaceWithTime={false}
               onRangeChange={range => setOperationRange(range)}
               onChange={next => {
                 if (next == null) return

@@ -1,5 +1,5 @@
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsInput } from '@/shared/ui/cms-input'
+import { CmsInput, CmsSelect } from '@/shared/ui'
 import { ParagraphFileUpload } from '@/features/template/ui/shared/paragraph-file-upload'
 import { useParticipatingVolunteerAddRegistrationPluginState } from '@/features/program/general/lib/participating-volunteer-add-registration-plugin-state'
 import type { ParticipatingVolunteerAddRegistrationSectionContext } from './add-registration-form-types'
@@ -11,26 +11,41 @@ import {
 } from '@/shared/lib/admin-file-upload'
 
 const CERTIFICATE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG, PDF 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '- 파일은 PDF, JPG, PNG 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
+  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 const CERTIFICATE_ACCEPT = '.jpg,.jpeg,.png,.pdf'
+const CERTIFICATE_MAX_FILES = 10
+
+function buildProgramYearOptions(): { value: string; label: string }[] {
+  const currentYear = new Date().getFullYear()
+  const years: { value: string; label: string }[] = []
+  for (let year = currentYear; year >= currentYear - 15; year -= 1) {
+    years.push({ value: String(year), label: String(year) })
+  }
+  return years
+}
+
+const PROGRAM_YEAR_OPTIONS = buildProgramYearOptions()
 
 /** 참여 봉사자 추가 등록 — 이전 참여 JA 봉사 프로그램 plugin 본문 */
 export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
-  _props: ParticipatingVolunteerAddRegistrationSectionContext
+  props: ParticipatingVolunteerAddRegistrationSectionContext
 ) {
   const {
     values,
     setPreviousJaProgramYear,
     setPreviousJaProgramName,
-    appendPreviousJaCertificateFileIds,
+    appendPreviousJaCertificateFiles,
     removePreviousJaCertificateFileAt,
   } = useParticipatingVolunteerAddRegistrationPluginState()
 
   const { previousJaProgram } = values
-  const fileNames = previousJaProgram.certificateFileIds.map(id => `파일 ${id}`)
+  const remainingSlots = Math.max(
+    0,
+    CERTIFICATE_MAX_FILES - previousJaProgram.certificateFiles.length
+  )
 
   return (
     <DetailInfoForm title="이전 참여 JA 봉사 프로그램" hideHeader mode="edit">
@@ -40,19 +55,21 @@ export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
           fullRow
           edit={
             <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-              <CmsInput
+              <CmsSelect
                 inputSize="small"
-                width="100%"
-                style={{ flex: '3 1 0', minWidth: 0 }}
+                width={140}
+                withAllOption={false}
                 placeholder="진행년도"
-                value={previousJaProgram.programYear}
-                onChange={e => setPreviousJaProgramYear(e.target.value)}
+                value={previousJaProgram.programYear || undefined}
+                options={PROGRAM_YEAR_OPTIONS}
+                onChange={value => setPreviousJaProgramYear(value == null ? '' : String(value))}
+                getPopupContainer={() => document.body}
               />
               <DetailInfoForm.InputsSeparator />
               <CmsInput
                 inputSize="small"
                 width="100%"
-                style={{ flex: '7 1 0', minWidth: 0 }}
+                style={{ flex: '1 1 0', minWidth: 0 }}
                 placeholder="참여한 봉사 프로그램명을 입력해 주세요"
                 value={previousJaProgram.programName}
                 onChange={e => setPreviousJaProgramName(e.target.value)}
@@ -72,24 +89,35 @@ export function ParticipatingVolunteerAddRegistrationPreviousJaProgramParagraph(
               accept={CERTIFICATE_ACCEPT}
               multiple
               guideLines={CERTIFICATE_GUIDE_LINES}
-              fileNames={fileNames}
+              fileNames={previousJaProgram.certificateFiles.map(file => file.fileName)}
               onFilesChange={files => {
+                if (remainingSlots <= 0) return
+                const programId = Number(props.programId)
+                const ownerId =
+                  Number.isSafeInteger(programId) && programId > 0 ? programId : null
+                if (ownerId == null) return
                 const owner = buildAdminFileOwner(
-                  ADMIN_FILE_OWNER.CERTIFICATE_TEMPLATE,
-                  1,
-                  ADMIN_FILE_PURPOSE.CERTIFICATE_ASSET
+                  ADMIN_FILE_OWNER.PROGRAM,
+                  ownerId,
+                  ADMIN_FILE_PURPOSE.VOLUNTEER_APPLICATION_EVIDENCE
                 )
+                const accepted = files.slice(0, remainingSlots)
                 void (async () => {
-                  const ids: string[] = []
-                  for (const file of files) {
-                    const result = await uploadAdminFileMaybeMock({ file, owner }).catch(
-                      () => undefined
-                    )
-                    if (result?.fileObjectId != null) {
-                      ids.push(String(result.fileObjectId))
+                  const uploaded: { fileObjectId: string; fileName: string }[] = []
+                  for (const file of accepted) {
+                    try {
+                      const result = await uploadAdminFileMaybeMock({ file, owner })
+                      if (result.fileObjectId != null) {
+                        uploaded.push({
+                          fileObjectId: String(result.fileObjectId),
+                          fileName: file.name,
+                        })
+                      }
+                    } catch {
+                      // 실패한 파일은 id 목록에 넣지 않는다 — 등록 시 필수 검증이 막는다.
                     }
                   }
-                  appendPreviousJaCertificateFileIds(ids)
+                  appendPreviousJaCertificateFiles(uploaded)
                 })()
               }}
               onRemoveFile={index => removePreviousJaCertificateFileAt(index)}

@@ -1,4 +1,5 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import {
   UJAT_EDU_PROGRESS_VOLUNTEER_ASSIGNMENT_STATUS_LABEL,
@@ -37,8 +38,8 @@ export function buildUjatEducationProgressVolunteerFilterFields(): FilterFieldCo
       key: 'volunteerName',
       type: 'search',
       label: '봉사자명',
-      placeholder: '봉사자명을 입력하세요',
-      width: '25%',
+      placeholder: '봉사자명을 입력해 주세요',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {
       key: 'grade',
@@ -46,7 +47,7 @@ export function buildUjatEducationProgressVolunteerFilterFields(): FilterFieldCo
       label: '봉사자 학년',
       placeholder: '전체',
       options: gradeOptions,
-      width: '25%',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {
       key: 'regionKey',
@@ -54,7 +55,7 @@ export function buildUjatEducationProgressVolunteerFilterFields(): FilterFieldCo
       label: '교육 활동 지역',
       placeholder: '전체',
       options: regionOptions,
-      width: '25%',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {
       key: 'assignmentStatus',
@@ -62,10 +63,11 @@ export function buildUjatEducationProgressVolunteerFilterFields(): FilterFieldCo
       label: '교육 배정 현황',
       placeholder: '전체',
       options: assignmentStatusOptions,
-      width: '25%',
+      width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
   ]
 }
 
 /** @deprecated `buildUjatEducationProgressVolunteerFilterFields()` */
-export const UJAT_EDU_PROGRESS_VOLUNTEER_FILTER_FIELDS = buildUjatEducationProgressVolunteerFilterFields()
+export const UJAT_EDU_PROGRESS_VOLUNTEER_FILTER_FIELDS =
+  buildUjatEducationProgressVolunteerFilterFields()

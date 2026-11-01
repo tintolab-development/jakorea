@@ -576,13 +576,11 @@ export type TypedRecruitmentValidationInput = {
 
 function formVolunteerRecruitmentRange(
   values: Partial<ProgramDetailEditFormValues>,
-  half: UjatVolunteerRecruitHalf
+  _half: UjatVolunteerRecruitHalf
 ): { start?: unknown; end?: unknown } {
-  const index = half === 'h1' ? 0 : 1
-  const round = values.rounds?.[index]
   return {
-    start: round?.startDate || values.volunteerApplicationStartDate,
-    end: round?.endDate || values.volunteerApplicationEndDate,
+    start: values.volunteerApplicationStartDate,
+    end: values.volunteerApplicationEndDate,
   }
 }
 

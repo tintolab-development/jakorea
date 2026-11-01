@@ -215,6 +215,7 @@
   letter-spacing: -0.2px;
 }
 
+/* Figma Body/Medium/bold */
 .typo-form-field-label {
   font-family: var(--font-family-base);
   color: var(--default-BK, #3d3d3d);
@@ -222,5 +223,6 @@
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
-  line-height: 140%; /* 22.4px */
+  line-height: 150%;
+  letter-spacing: -0.16px;
 }

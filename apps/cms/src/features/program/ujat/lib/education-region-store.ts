@@ -46,7 +46,8 @@ function buildSeedRegions(): UjatEducationRegion[] {
     sortOrder: index + 1,
     active: true,
     name: row.name,
-    createdByName: '홍길동',
+    createdByName: '이름예시',
+    updatedByName: '이름예시',
     createdAt: new Date(base.getTime() + index * 60_000).toISOString(),
     hasUsageHistory: row.hasUsageHistory ?? false,
   }))
@@ -115,7 +116,8 @@ export function createUjatEducationRegion(input: UjatEducationRegionCreateInput)
     sortOrder: file.items.length + 1,
     active: input.active,
     name: trimmed,
-    createdByName: input.createdByName?.trim() || '홍길동',
+    createdByName: input.createdByName?.trim() || '관리자',
+    updatedByName: input.createdByName?.trim() || '관리자',
     createdAt: now,
     hasUsageHistory: false,
   }

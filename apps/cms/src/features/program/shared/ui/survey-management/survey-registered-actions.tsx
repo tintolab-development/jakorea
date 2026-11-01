@@ -53,20 +53,14 @@ export function SurveyRegisteredActions({
     return (
       <div className={rootClassName}>
         {showShareButton ? (
-          <CmsButton
-            className="survey-management-registered-actions__share-button"
-            width={layout === 'satisfaction' ? 180 : 160}
-            onClick={onShareClick}
-          >
+          <CmsButton className="survey-management-registered-actions__share-button"
+            onClick={onShareClick} >
             {labels.share}
           </CmsButton>
         ) : null}
         {showAddButton && onAddClick != null && labels.add != null ? (
-          <CmsButton
-            className="survey-management-registered-actions__add-button"
-            width={160}
-            onClick={onAddClick}
-          >
+          <CmsButton className="survey-management-registered-actions__add-button"
+            onClick={onAddClick} >
             {labels.add}
           </CmsButton>
         ) : null}
@@ -76,40 +70,29 @@ export function SurveyRegisteredActions({
 
   return (
     <div className={rootClassName}>
-      <CmsButton
-        className="survey-management-registered-actions__download-button cms-button--no-label-ellipsis"
+      <CmsButton className="survey-management-registered-actions__download-button"
         variant="secondary"
         size="large"
-        width="auto"
         icon={<ButtonDownloadIcon />}
         disabled={!downloadEnabled}
-        onClick={onDownloadClick}
-      >
+        onClick={onDownloadClick} >
         {labels.download}
       </CmsButton>
-      <CmsButton
-        className="survey-management-registered-actions__preview-button"
+      <CmsButton className="survey-management-registered-actions__preview-button"
         variant="secondary"
         size="large"
-        onClick={onOpenTemplatePreview}
-      >
+        onClick={onOpenTemplatePreview} >
         {labels.preview}
       </CmsButton>
       {showShareButton ? (
-        <CmsButton
-          className="survey-management-registered-actions__share-button"
-          width={layout === 'satisfaction' ? 180 : 160}
-          onClick={onShareClick}
-        >
+        <CmsButton className="survey-management-registered-actions__share-button"
+          onClick={onShareClick} >
           {labels.share}
         </CmsButton>
       ) : null}
       {showAddButton && onAddClick != null && labels.add != null ? (
-        <CmsButton
-          className="survey-management-registered-actions__add-button"
-          width={160}
-          onClick={onAddClick}
-        >
+        <CmsButton className="survey-management-registered-actions__add-button"
+          onClick={onAddClick} >
           {labels.add}
         </CmsButton>
       ) : null}

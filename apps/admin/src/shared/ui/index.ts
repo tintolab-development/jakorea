@@ -2,7 +2,7 @@
  * 공통 UI 컴포넌트 export (CMS 디자인 시스템 미니멀 포트)
  */
 
-export { CmsButton, CMS_ACTION_BUTTON_WIDTH, CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH } from './cms-button'
+export { CmsButton } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
 
 export { ExcelButton } from './excel-button'

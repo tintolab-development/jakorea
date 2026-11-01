@@ -15,5 +15,7 @@ export interface UjatEducationRegionResponse {
   activeYn?: boolean;
   hasUsageHistory?: boolean;
   createdAt?: string;
+  createdByName?: string;
   updatedAt?: string;
+  updatedByName?: string;
 }

@@ -10,6 +10,7 @@ import { TableFilterGroup, type FilterFieldConfig } from '@/shared/components/ta
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsButton } from '@/shared/ui/cms-button'
+import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { ExcelButton } from '@/shared/ui/excel-button'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -311,14 +312,10 @@ export function InstructorPaymentTab({
         align: 'center',
         render: (_: unknown, record) => (
           <div className="instructor-payment-tab__detail-action-cell">
-            <CmsButton
-              variant="default"
-              size="medium"
+            <CalculationDetailViewButton
               disabled={record.status === 'none' || isInstructorSettlementInactive(record.status)}
               onClick={() => openInvoice(record)}
-            >
-              상세 보기
-            </CmsButton>
+            />
           </div>
         ),
       },
@@ -431,43 +428,36 @@ export function InstructorPaymentTab({
               <CmsButton
                 variant="secondary"
                 size="large"
-                width="auto"
                 icon={<ButtonCalendarIcon />}
                 onClick={() => {
                   const today = dayjs()
                   setCurrentMonth(today.startOf('month'))
                   setCalendarSelectedDate(today)
                   setViewMode('calendar')
-                }}
-              >
+                }} >
                 캘린더 뷰로 보기
               </CmsButton>
             ) : (
               <CmsButton
                 variant="secondary"
                 size="large"
-                width="auto"
                 icon={<ButtonListIcon />}
-                onClick={() => setViewMode('list')}
-              >
+                onClick={() => setViewMode('list')} >
                 리스트 뷰로 보기
               </CmsButton>
             )}
             <CmsButton
               variant="primary"
               size="large"
-              width="auto"
               icon={<ButtonDownloadIcon />}
               loading={bulkDownloadLoading}
-              onClick={() => void handleBulkDownload()}
-            >
+              onClick={() => void handleBulkDownload()} >
               지급조서 발급
             </CmsButton>
             <ExcelButton
               loading={excelExporting}
               disabled={settlementsLoading || settlementsQueryLoading}
-              onClick={() => void exportExcel()}
-            />
+              onClick={() => void exportExcel()} />
           </div>
         </div>
 

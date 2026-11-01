@@ -6,6 +6,7 @@ import { bugIssueHistoryFilterFields } from '@/features/download/model/bug-issue
 import { bugIssueHistoryTablePageConfig } from '@/features/download/model/bug-issue-history-table.config'
 import {
   exportBugIssueLogs,
+  getBugIssueLogDetail,
   getLogsApiErrorMessage,
 } from '@/features/logs/api/admin-logs-service'
 import { bugIssueLogsParamsFromSearchParams } from '@/features/logs/api/logs-filter-params'
@@ -19,8 +20,8 @@ import {
   useTablePage,
 } from '@/shared/components/table-system/model/use-table-page'
 import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
-import { useCmsAlert } from '@/shared/ui'
-import type { BugIssueLog } from '@/types/bug-issue-log'
+import { CmsModal, useCmsAlert } from '@/shared/ui'
+import type { BugIssueLog, BugIssueLogDetail } from '@/types/bug-issue-log'
 import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
@@ -104,6 +105,26 @@ export default function BugIssueHistoryPage() {
 
   const { showAlert } = useCmsAlert()
   const [isExporting, setIsExporting] = useState(false)
+  const [detail, setDetail] = useState<BugIssueLogDetail | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
+
+  const openDetail = useCallback(
+    async (row: BugIssueLog) => {
+      if (!remoteEnabled || detailLoading) return
+      setDetailLoading(true)
+      try {
+        setDetail(await getBugIssueLogDetail(row.id))
+      } catch (error) {
+        showAlert({
+          title: '안내',
+          content: getLogsApiErrorMessage(error, '버그/이슈 상세를 불러오지 못했습니다.'),
+        })
+      } finally {
+        setDetailLoading(false)
+      }
+    },
+    [detailLoading, remoteEnabled, showAlert]
+  )
   const exportExcel = useCallback(async () => {
     if (!remoteEnabled || isExporting) return
     setIsExporting(true)
@@ -152,10 +173,58 @@ export default function BugIssueHistoryPage() {
             columns={columns}
             dataSource={tableData}
             pagination={false}
+            onRow={record => ({
+              onClick: () => {
+                void openDetail(record)
+              },
+              style: { cursor: 'pointer' },
+            })}
           />
           <div ref={loadMoreRef} aria-hidden style={{ height: 1 }} />
         </>
       )}
+      <CmsModal
+        open={detail != null}
+        onClose={() => setDetail(null)}
+        title="버그/이슈 상세"
+        width={720}
+        buttons={[{ label: '확인', onClick: () => setDetail(null) }]}
+      >
+        {detail ? (
+          <div style={{ display: 'grid', gap: 8, textAlign: 'left' }}>
+            <p>
+              <strong>한글 설명</strong>
+              <br />
+              {detail.messageKo}
+            </p>
+            <p>
+              <strong>원시 코드</strong>
+              <br />
+              {detail.message}
+            </p>
+            <p>
+              <strong>API 경로</strong>
+              <br />
+              {detail.apiPath}
+            </p>
+            <p>
+              <strong>기능</strong>
+              <br />
+              {detail.featureKey}
+            </p>
+            <p>
+              <strong>화면</strong>
+              <br />
+              {detail.screenKey}
+            </p>
+            <p>
+              <strong>행위자</strong>
+              <br />
+              {detail.actorTypeLabel}
+            </p>
+          </div>
+        ) : null}
+      </CmsModal>
     </FilterTableLayout>
   )
 }

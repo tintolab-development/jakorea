@@ -120,12 +120,6 @@
   box-sizing: border-box;
 }
 
-.school-search__table.cms-data-table .school-search__col-select .cms-button {
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
-}
-
 .school-search__pagination {
   display: flex;
   justify-content: center;

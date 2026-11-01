@@ -229,6 +229,7 @@ export function EducationProgramNoticeWriteModal({
   return (
     <>
       <PFModal
+        showCloseButton={false}
         open={open}
         onClose={submitting ? () => {} : onClose}
         title={editing ? '안내사항 수정하기' : '안내사항 작성하기'}

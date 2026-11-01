@@ -7,6 +7,7 @@ import { UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS } from './ujat-application-volu
 export {
   UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
   stripUjatApplicationVolunteerProgramOnlyFields,
+  ujatVolunteerFreeTextOverlayKey,
 } from './ujat-application-volunteer-overlay-keys'
 
 const store = createScopedOverlayStore()
@@ -37,6 +38,7 @@ export function getUjatApplicationVolunteerProgramOverlayRecord(): Record<string
   const record = getUjatApplicationVolunteerOverlayRecord()
   const next = { ...record }
   delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]
+  delete next[UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileObjectIds]
   return next
 }
 

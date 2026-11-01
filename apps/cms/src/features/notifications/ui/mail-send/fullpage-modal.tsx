@@ -579,28 +579,22 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                 <CmsButton
                   variant="cancel"
                   size="large"
-                  width={140}
                   type="button"
-                  onClick={handleClose}
-                >
+                  onClick={handleClose} >
                   취소
                 </CmsButton>
                 <CmsButton
                   variant="secondary"
                   size="large"
-                  width={140}
                   type="button"
-                  onClick={handlePreview}
-                >
+                  onClick={handlePreview} >
                   미리보기
                 </CmsButton>
                 <CmsButton
                   variant="primary"
                   size="large"
-                  width={140}
                   type="button"
-                  onClick={handleSend}
-                >
+                  onClick={handleSend} >
                   메일 발송
                 </CmsButton>
               </div>
@@ -738,8 +732,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         variant="delete"
                         size="h40"
                         type="button"
-                        onClick={handleDeleteSelected}
-                      >
+                        onClick={handleDeleteSelected} >
                         선택 삭제
                       </CmsButton>
                       {isWithoutProgram ? (
@@ -747,8 +740,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                           variant="secondary"
                           size="h40"
                           type="button"
-                          onClick={handleOpenRecipientManual}
-                        >
+                          onClick={handleOpenRecipientManual} >
                           수신자 직접 입력
                         </CmsButton>
                       ) : null}
@@ -756,8 +748,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         variant="secondary"
                         size="h40"
                         type="button"
-                        onClick={handleOpenRecipientSelect}
-                      >
+                        onClick={handleOpenRecipientSelect} >
                         수신자 설정
                       </CmsButton>
                     </div>

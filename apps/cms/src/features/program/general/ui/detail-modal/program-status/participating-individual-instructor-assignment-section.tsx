@@ -623,8 +623,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
                 if (addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
-              }}
-            >
+              }} >
               추가 배정
             </CmsButton>
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
@@ -742,8 +741,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
               onClick={() => {
                 setAddAssignModalOpen(false)
                 setAddAssignWaitingRowId(null)
-              }}
-            >
+              }} >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleAddAssignSchedulePicked}>

@@ -172,8 +172,7 @@ export function MySettlementDetailPage() {
                   icon={<CheckCircleOutlined />}
                   onClick={handleConfirmPaymentStatement}
                   loading={confirming}
-                  size="large"
-                >
+                  size="large" >
                   지급조서 확인 완료
                 </CmsButton>
               }
@@ -340,8 +339,7 @@ export function MySettlementDetailPage() {
                         size="small"
                         onClick={() => {
                           // TODO: 파일 미리보기 API 연결
-                        }}
-                      >
+                        }} >
                         미리보기
                       </CmsButton>
                       <CmsButton
@@ -350,8 +348,7 @@ export function MySettlementDetailPage() {
                         size="small"
                         onClick={() => {
                           // TODO: 파일 다운로드 API 연결
-                        }}
-                      >
+                        }} >
                         다운로드
                       </CmsButton>
                     </Space>

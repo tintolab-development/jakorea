@@ -1,4 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { customInstance } from '@/shared/api/orval-mutator'
+import type { CertificateEligibilityResponse } from '@/shared/api/generated/forms-surveys/schemas/certificateEligibilityResponse'
 import { getJAKoreaCMSBackendAPICertificatesSubset } from '@/shared/api/generated/certificates/certificates-api'
 import type { CertificateDownloadLogRequest } from '@/shared/api/generated/certificates/schemas/certificateDownloadLogRequest'
 import type { CertificateDownloadLogResponse } from '@/shared/api/generated/certificates/schemas/certificateDownloadLogResponse'
@@ -6,7 +8,10 @@ import type { CertificateSerialAllocateRequest } from '@/shared/api/generated/ce
 import type { CertificateSerialAllocateResponse } from '@/shared/api/generated/certificates/schemas/certificateSerialAllocateResponse'
 import { getJAKoreaCMSBackendAPIMembersSubset } from '@/shared/api/generated/members/members-api'
 import type { CertificateRosterSerialAllocateRequest } from '@/shared/api/generated/members/schemas/certificateRosterSerialAllocateRequest'
-import { extractApiErrorMessage } from '@/shared/lib/extract-api-error-message'
+import {
+  extractApiErrorCode,
+  extractApiErrorMessage,
+} from '@/shared/lib/extract-api-error-message'
 import {
   CERTIFICATE_SERIAL_ISSUANCE_FORM_TEMPLATE,
   CERTIFICATE_SERIAL_ISSUANCE_PROGRAM,
@@ -18,6 +23,11 @@ import {
   parseIssuedCertificateSerial,
   type CertificateSerialSubject,
 } from '@/features/program/shared/lib/certificate-serial'
+import {
+  CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+  certificateIssuePrecheckBlockMessage,
+  messageForCertificateReasonCode,
+} from '@/features/program/shared/lib/certificate-eligibility'
 
 const certificatesApi = getJAKoreaCMSBackendAPICertificatesSubset()
 const membersApi = getJAKoreaCMSBackendAPIMembersSubset()
@@ -29,6 +39,61 @@ export const CERTIFICATE_SERIAL_ALLOCATE_FALLBACK =
 
 export const CERTIFICATE_DOWNLOAD_LOG_FALLBACK =
   '파일 다운로드 이력을 기록하지 못했습니다. PDF를 생성하지 않았습니다.'
+
+export const CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK =
+  '수료증 발급 가능 여부를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+
+export function getCertificateEligibilityErrorMessage(error: unknown): string {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const axiosErr = error as { response?: { status?: number; data?: unknown } }
+    const code = extractApiErrorCode(axiosErr.response?.data)
+    const consentMessage = messageForCertificateReasonCode(code)
+    const extracted = extractApiErrorMessage(axiosErr.response?.data, {
+      httpStatus: axiosErr.response?.status,
+      fallback: CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+    })
+    if (consentMessage && (!extracted || extracted === code)) return consentMessage
+    return extracted
+  }
+  if (error instanceof Error && error.message.trim()) return error.message
+  return CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK
+}
+
+/** `GET /api/admin/certificates/eligibility` */
+export async function fetchCertificateEligibility(params: {
+  participantId: number
+  certificateType?: string
+}): Promise<CertificateEligibilityResponse> {
+  return unwrapApiBody(
+    await customInstance<unknown>(
+      {
+        url: '/api/admin/certificates/eligibility',
+        method: 'GET',
+        params: {
+          participantId: params.participantId,
+          certificateType: params.certificateType ?? CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+        },
+      },
+      { skipGlobalErrorAlert: true }
+    )
+  )
+}
+
+/**
+ * 발급 CTA 전 서버 eligibility만 본다. 동의 근거·기간 만료면 안내 문구, 통과면 null.
+ * participantId를 파싱할 수 없으면 조회를 건너뛴다(발급 API 409에 맡김).
+ */
+export async function resolveCertificateIssuePrecheckMessage(
+  participantId: string | number | null | undefined
+): Promise<string | null> {
+  const parsed = parseCertificateSerialInt64(participantId)
+  if (parsed == null) return null
+  const eligibility = await fetchCertificateEligibility({
+    participantId: parsed,
+    certificateType: CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+  })
+  return certificateIssuePrecheckBlockMessage(eligibility)
+}
 
 export class CertificateSerialAllocateError extends Error {
   constructor(message: string) {
@@ -44,17 +109,23 @@ export function getCertificateSerialAllocateErrorMessage(error: unknown): string
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosErr = error as { response?: { status?: number; data?: unknown } }
     const data = axiosErr.response?.data
+    const code = extractApiErrorCode(data)
+    const consentMessage = messageForCertificateReasonCode(code)
     if (data != null && typeof data === 'object') {
       const envelope = data as {
         message?: unknown
-        error?: { message?: unknown }
+        error?: { message?: unknown; code?: unknown }
       }
       const nested =
         typeof envelope.error?.message === 'string' ? envelope.error.message.trim() : ''
-      if (nested) return nested
       const top = typeof envelope.message === 'string' ? envelope.message.trim() : ''
-      if (top) return top
+      const serverText = nested || top
+      if (consentMessage && (!serverText || serverText === code)) {
+        return consentMessage
+      }
+      if (serverText) return serverText
     }
+    if (consentMessage) return consentMessage
     return extractApiErrorMessage(axiosErr.response?.data, {
       httpStatus: axiosErr.response?.status,
       fallback: CERTIFICATE_SERIAL_ALLOCATE_FALLBACK,
@@ -161,7 +232,7 @@ export async function allocateCertificateSerial(
   return {
     serialNumber,
     issueId,
-    ...(typeof body?.reused === 'boolean' ? { reused: body.reused } : {}),
+    reused: typeof body?.reused === 'boolean' ? body.reused : false,
   }
 }
 

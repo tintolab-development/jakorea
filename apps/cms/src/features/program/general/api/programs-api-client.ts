@@ -787,14 +787,29 @@ export async function deleteAdminProgramManagerRemote(
 /** POST /api/admin/programs/{programId}/ujat/organization-applications/temporary-rejections */
 export async function temporarilyRejectUjatOrganizationApplicationsRemote(
   programId: number,
-  body: { applicationIds: number[]; reason: string }
+  body: { applicationIds: number[] }
 ): Promise<unknown> {
   return unwrapApiBody(
     await customInstance({
       url: `/api/admin/programs/${programId}/ujat/organization-applications/temporary-rejections`,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      data: body,
+      data: { applicationIds: body.applicationIds },
+    })
+  )
+}
+
+/** POST /api/admin/programs/{programId}/ujat/organization-applications/temporary-rejections:cancel */
+export async function cancelUjatOrganizationTemporaryRejectionsRemote(
+  programId: number,
+  body: { applicationIds: number[] }
+): Promise<unknown> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${programId}/ujat/organization-applications/temporary-rejections:cancel`,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      data: { applicationIds: body.applicationIds },
     })
   )
 }

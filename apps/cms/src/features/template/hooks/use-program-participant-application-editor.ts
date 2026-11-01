@@ -222,6 +222,7 @@ import type {
   UjatApplicationGradeDetail,
 } from '@/features/template/ui/form-set/application-form/UJAT-institution/ujat-application-institution-overlay-sync'
 import {
+  getUjatApplicationVolunteerOverlayRecord,
   resetUjatApplicationVolunteerOverlay,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 import {
@@ -270,6 +271,17 @@ import { UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM } from '@/features/prog
 import { programToUjatRecruitTemplateFormValues } from '@/features/program/ujat/lib/use-ujat-recruit-template-form-overlay-sync'
 import { getRecruitTypedInterviewRecord } from '@/features/template/ui/form-set/application-form/volunteer/lib/interview-schedule-overlay-sync'
 import type { Program } from '@/types/domain'
+import type { UjatTypedDetail } from '@/features/program/ujat/api/typed-detail-client'
+
+export { getUjatApplicationVolunteerOverlayRecord }
+
+function readUjatTypedDetailFromLinkedProgram(
+  program: Program | null | undefined
+): UjatTypedDetail | undefined {
+  if (program == null) return undefined
+  const typed = (program as Program & { ujatTypedDetail?: UjatTypedDetail }).ujatTypedDetail
+  return typed
+}
 
 const VOLUNTEER_INTERVIEW_REQUIRED_OVERLAY_KEY = 'recruit.volunteer.interviewRequired'
 
@@ -2134,6 +2146,10 @@ export function useProgramParticipantApplicationEditor(
           ? { enabled: true as const, isTemplateAuthoringMode: true as const }
           : undefined,
       ujatProgramApplicationFormInstitution: variant === 'ujat-application-institution',
+      ujatPreferredEducationScheduleTypedDetail:
+        variant === 'ujat-application-institution'
+          ? readUjatTypedDetailFromLinkedProgram(linkedProgram)
+          : undefined,
       ujatProgramApplicationFormVolunteer: ujatProgramApplicationFormVolunteerOptions,
       hiddenParagraphIds: (() => {
         if (variant === 'ujat-application-volunteer') {
@@ -2142,6 +2158,8 @@ export function useProgramParticipantApplicationEditor(
           })
         }
         if (variant === 'instructor') return undefined
+        // 등록 위저드는 linkedProgram이 항상 있다. 봉사자 모집 면접 단락은 overlay/RHF 면접 유무가 정본.
+        if (variant === 'recruit-volunteer') return recruitVolunteerHiddenParagraphIds
         if (linkedProgram != null) {
           return resolveGeneralApplicationFormHiddenParagraphIds(variant, {
             program: linkedProgram,
@@ -2151,7 +2169,6 @@ export function useProgramParticipantApplicationEditor(
           })
         }
         if (variant === 'volunteer') return volunteerApplicationHiddenParagraphIds
-        if (variant === 'recruit-volunteer') return recruitVolunteerHiddenParagraphIds
         if (variant === 'individual') return individualApplicationHiddenParagraphIds
         if (variant === 'economy-application-institution') return economyApplicationHiddenParagraphIds
         return institutionApplicationHiddenParagraphIds

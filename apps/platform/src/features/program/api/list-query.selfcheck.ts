@@ -78,6 +78,12 @@ assert.equal(filtered.operatingTo, '2026-12-31')
 assert.equal(filtered.sort, 'CLOSING_SOON')
 assert.equal(filtered.page, 2)
 
+const nameSorted = toPortalProgramListQuery(
+  { ...DEFAULT_PROGRAMS_LIST_PARAMS, sort: 'name' },
+  10,
+)
+assert.equal(nameSorted.sort, 'NAME')
+
 const volunteer = toPortalProgramListQuery(
   { ...DEFAULT_PROGRAMS_LIST_PARAMS, q: 'DEV-UJAT-REG05-2027-샘플01', applicationType: 'VOLUNTEER' },
   10,

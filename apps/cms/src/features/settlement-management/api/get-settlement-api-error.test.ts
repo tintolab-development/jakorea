@@ -2,9 +2,19 @@ import { describe, expect, it } from 'vitest'
 import {
   getSettlementConfigErrorField,
   getSettlementApiErrorMessage,
+  getSettlementApiErrorCode,
+  getNormalizedSettlementApiError,
   isSettlementExportAlreadyDownloadedError,
   isSettlementExportReissueRequiredError,
   isPaymentStatementStatusConflictError,
+  isTaxReportIdentityOrSnapshotMissingError,
+  normalizeSettlementApiErrorCode,
+  LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
+  TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE,
+  SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED_MESSAGE,
+  SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID_MESSAGE,
+  SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED_MESSAGE,
+  GEMINI_TRAINING_REPORT_MISSING_MESSAGE,
 } from './get-settlement-api-error'
 
 describe('getSettlementApiErrorMessage', () => {
@@ -151,5 +161,144 @@ describe('getSettlementApiErrorMessage', () => {
     }
     expect(getSettlementConfigErrorField(rateError)).toBe('withholdingRate')
     expect(getSettlementConfigErrorField(amountError)).toBe('withholdingAmount')
+  })
+
+  it('GEMINI_TRAINING_REPORT_MISSING → 실적 시각 누락 안내', () => {
+    const error = {
+      response: {
+        status: 500,
+        data: {
+          message: '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          error: { code: 'GEMINI_TRAINING_REPORT_MISSING' },
+        },
+      },
+    }
+    expect(getSettlementApiErrorCode(error)).toBe('GEMINI_TRAINING_REPORT_MISSING')
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      GEMINI_TRAINING_REPORT_MISSING_MESSAGE
+    )
+  })
+
+  it('409 LEGACY_GEMINI_TAX_SNAPSHOT_MISSING(+count/ids) → Gemini 스냅샷 안내', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          error: { code: 'LEGACY_GEMINI_TAX_SNAPSHOT_MISSING:count=2;ids=101,102' },
+        },
+      },
+    }
+    expect(isTaxReportIdentityOrSnapshotMissingError(error)).toBe(true)
+    expect(getSettlementApiErrorCode(error)).toBe('LEGACY_GEMINI_TAX_SNAPSHOT_MISSING')
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      `${LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE} (지급 ID: 101, 102)`
+    )
+  })
+
+  it('409 TAX_REPORT_REQUIRED_IDENTITY_MISSING → 신원정보 누락 안내', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          message: '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          error: { code: 'TAX_REPORT_REQUIRED_IDENTITY_MISSING:count=1;ids=302' },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      `${TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE} (지급 ID: 302)`
+    )
+  })
+
+  it('정정 단가·단위·차시 오류를 FE 한국어로 매핑한다', () => {
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: { error: { code: 'SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED' } },
+          },
+        },
+        'fallback'
+      )
+    ).toBe(SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED_MESSAGE)
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: { error: { code: 'SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID' } },
+          },
+        },
+        'fallback'
+      )
+    ).toBe(SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID_MESSAGE)
+    expect(
+      getSettlementApiErrorMessage(
+        {
+          response: {
+            status: 409,
+            data: { error: { code: 'SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED' } },
+          },
+        },
+        'fallback'
+      )
+    ).toBe(SETTLEMENT_CORRECTION_CLASS_COUNT_REQUIRED_MESSAGE)
+  })
+})
+
+describe('normalizeSettlementApiErrorCode', () => {
+  it('접미사 없는 코드는 stableCode만 반환한다', () => {
+    expect(normalizeSettlementApiErrorCode('PAYMENT_STATEMENT_STATUS_CONFLICT')).toEqual({
+      rawCode: 'PAYMENT_STATEMENT_STATUS_CONFLICT',
+      stableCode: 'PAYMENT_STATEMENT_STATUS_CONFLICT',
+      missingCount: null,
+      paymentIds: [],
+    })
+  })
+
+  it('count/ids 접미사를 파싱하고 중복·비숫자를 버린다', () => {
+    expect(
+      normalizeSettlementApiErrorCode(
+        'LEGACY_GEMINI_TAX_SNAPSHOT_MISSING:count=2;ids=101,101,abc,102,-3'
+      )
+    ).toEqual({
+      rawCode: 'LEGACY_GEMINI_TAX_SNAPSHOT_MISSING:count=2;ids=101,101,abc,102,-3',
+      stableCode: 'LEGACY_GEMINI_TAX_SNAPSHOT_MISSING',
+      missingCount: 2,
+      paymentIds: [101, 102],
+    })
+  })
+
+  it('잘못된 count/ids여도 stableCode는 유지한다', () => {
+    expect(normalizeSettlementApiErrorCode('TAX_REPORT_REQUIRED_IDENTITY_MISSING:ids=')).toEqual({
+      rawCode: 'TAX_REPORT_REQUIRED_IDENTITY_MISSING:ids=',
+      stableCode: 'TAX_REPORT_REQUIRED_IDENTITY_MISSING',
+      missingCount: null,
+      paymentIds: [],
+    })
+    expect(normalizeSettlementApiErrorCode('TAX_REPORT_REQUIRED_IDENTITY_MISSING:count=x')).toEqual(
+      {
+        rawCode: 'TAX_REPORT_REQUIRED_IDENTITY_MISSING:count=x',
+        stableCode: 'TAX_REPORT_REQUIRED_IDENTITY_MISSING',
+        missingCount: null,
+        paymentIds: [],
+      }
+    )
+  })
+
+  it('getNormalizedSettlementApiError는 axios 응답에서 동일 정규화를 한다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: { error: { code: 'LEGACY_GEMINI_TAX_SNAPSHOT_MISSING:count=1;ids=9' } },
+      },
+    }
+    expect(getNormalizedSettlementApiError(error)).toEqual({
+      rawCode: 'LEGACY_GEMINI_TAX_SNAPSHOT_MISSING:count=1;ids=9',
+      stableCode: 'LEGACY_GEMINI_TAX_SNAPSHOT_MISSING',
+      missingCount: 1,
+      paymentIds: [9],
+    })
   })
 })

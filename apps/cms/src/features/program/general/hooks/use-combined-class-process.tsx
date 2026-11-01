@@ -15,7 +15,6 @@ import { CmsButton } from '@/shared/ui/cms-button'
 import { ContentModal } from '@/shared/ui/content-modal'
 
 const MODAL_WIDTH = 600
-const MODAL_BUTTON_WIDTH = 120
 
 export type CombinedClassProcessSelection = {
   application: '신청' | '미신청'
@@ -268,10 +267,8 @@ export function useCombinedClassProcess(params: {
           <CmsButton
             variant="primary"
             size="medium"
-            width={MODAL_BUTTON_WIDTH}
             type="button"
-            onClick={() => setGradeAlertOpen(false)}
-          >
+            onClick={() => setGradeAlertOpen(false)} >
             닫기
           </CmsButton>
         }

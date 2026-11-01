@@ -12,8 +12,6 @@ type UploadDuplicateModalProps = {
   onCancel: () => void
   onOverwrite: () => void
   onAppend: () => void
-  /** 지급 완료 중복 — 덮어쓰기 숨김, 데이터 추가만 */
-  overwriteDisabled?: boolean
 }
 
 export function UploadDuplicateModal({
@@ -21,7 +19,6 @@ export function UploadDuplicateModal({
   onCancel,
   onOverwrite,
   onAppend,
-  overwriteDisabled = false,
 }: UploadDuplicateModalProps) {
   return (
     <ContentModal
@@ -31,15 +28,13 @@ export function UploadDuplicateModal({
       width={600}
       footer={
         <>
-          <CmsButton variant="secondary" type="button" onClick={onCancel}>
+          <CmsButton variant="cancel" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          {overwriteDisabled ? null : (
-            <CmsButton variant="secondary" type="button" onClick={onOverwrite}>
-              덮어쓰기
-            </CmsButton>
-          )}
-          <CmsButton type="button" onClick={onAppend}>
+          <CmsButton variant="secondary" type="button" onClick={onOverwrite}>
+            덮어쓰기
+          </CmsButton>
+          <CmsButton variant="primary" type="button" onClick={onAppend}>
             데이터 추가
           </CmsButton>
         </>

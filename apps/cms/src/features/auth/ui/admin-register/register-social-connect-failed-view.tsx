@@ -26,10 +26,10 @@ export function RegisterSocialConnectFailedView({
       <p className="register-social-connect-failed__description">잠시후 다시 시도해 주세요.</p>
 
       <div className="auth-actions register-social-connect-failed__actions">
-        <CmsButton variant="primary" size="h52" width="100%" onClick={onRetry}>
+        <CmsButton variant="primary" size="h52" onClick={onRetry}>
           다시 시도하기
         </CmsButton>
-        <CmsButton variant="default" size="h52" width="100%" onClick={onSkipLogin}>
+        <CmsButton variant="default" size="h52" onClick={onSkipLogin}>
           연결하지 않고 로그인하기
         </CmsButton>
       </div>

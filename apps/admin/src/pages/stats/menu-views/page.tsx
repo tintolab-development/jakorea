@@ -16,7 +16,6 @@ import { MenuViewSummaryTable } from '@/features/menu-view-stats/ui/summary-tabl
 import { MenuViewTabPanel } from '@/features/menu-view-stats/ui/tab-panels'
 import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -174,14 +173,11 @@ export function MenuViewsStatsPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
+              <CmsButton className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 type="button"
-                onClick={handleSearch}
-              >
+                onClick={handleSearch} >
                 조회
               </CmsButton>
             </div>

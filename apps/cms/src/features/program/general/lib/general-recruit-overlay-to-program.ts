@@ -41,10 +41,21 @@ import {
   applyRecruitmentRowCopy,
   resolveRecruitmentOtherMatters,
 } from '@/features/program/shared/lib/recruitment-row-copy'
+import { RECRUIT_INTERVIEW_REQUIRED_DEFAULT } from '@/features/program/general/lib/recruit-radio-defaults'
+import { participantFlagsFromGeneralProgram } from '@/features/program/general/lib/participant-audience-selection'
+import { coalesceResultAnnouncementDate } from '@/features/program/shared/lib/resolve-result-announcement-date'
 
 type RangeSeal = { start?: string | null; end?: string | null }
 
 const TARGET_LEVEL_VALUES = new Set<string>(['elementary', 'middle', 'high', 'university', 'adult'])
+
+function pickParticipantOverlayValue<T>(
+  organization: boolean,
+  institutionValue: T | undefined,
+  individualValue: T | undefined
+): T | undefined {
+  return organization ? (institutionValue ?? individualValue) : (individualValue ?? institutionValue)
+}
 
 /** 개인·강사·봉사자 모집 overlay 키 */
 export const GENERAL_RECRUIT_OVERLAY_KEYS = {
@@ -121,13 +132,12 @@ export const GENERAL_RECRUIT_OVERLAY_KEYS = {
   },
 } as const
 
-/** 개인 모집 「참여자 면접 유무」 화면 기본값 — `applicant-recruit-individual-participant-info-paragraph` 라디오 기본값과 같다. */
-export const INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT = 'yes'
+/** 개인 모집 「참여자 면접 유무」 화면 기본값 — 정본은 `recruit-radio-defaults` */
+export const INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT = RECRUIT_INTERVIEW_REQUIRED_DEFAULT
 
 /**
- * 등록(create) 전용. 개인 참여자를 고른 등록에서 라디오를 건드리지 않으면 기본 '면접 있음'이
- * 스토어에 기록되지 않아 overlay 키가 비고 `generalParticipantInterviewEnabled`가 빠진다.
- * 화면에 보이던 기본값을 create 스냅샷에만 채운다. 개인 미선택·키가 이미 있으면 그대로 반환.
+ * 개인 모집 면접 키만 채우는 하위 헬퍼. 화면 기본값 정본은 `withGeneralRecruitRadioDefaults`.
+ * 개인 미선택·키가 이미 있으면 그대로 반환.
  */
 export function withIndividualInterviewRequiredCreateDefault(
   overlay: Record<string, unknown>,
@@ -139,12 +149,11 @@ export function withIndividualInterviewRequiredCreateDefault(
   return { ...overlay, [key]: INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT }
 }
 
-/** 봉사 모집 「봉사자 면접 유무」 화면 기본값 — `recruit-form-volunteer-info-paragraph` 라디오 기본값과 같다. */
-export const VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT = 'yes'
+/** 봉사 모집 「봉사자 면접 유무」 화면 기본값 — 정본은 `recruit-radio-defaults` */
+export const VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT = RECRUIT_INTERVIEW_REQUIRED_DEFAULT
 
 /**
- * 등록(create) 전용. 봉사자를 고른 등록에서 라디오를 건드리지 않으면 기본 '면접 있음'이 스토어에 기록되지 않아
- * `generalVolunteerInterviewEnabled`·봉사 행 `interviewEnabled` 가 false 로 저장되던 문제. 화면 기본값을 create 스냅샷에만 채운다.
+ * 봉사 모집 면접 키만 채우는 하위 헬퍼. 화면 기본값 정본은 `withGeneralRecruitRadioDefaults`.
  */
 export function withVolunteerInterviewRequiredCreateDefault(
   overlay: Record<string, unknown>,
@@ -579,17 +588,24 @@ export function applyGeneralRecruitOverlayToProgram(
   const preferOverlay = options?.preferOverlay === true
   const keys = GENERAL_RECRUIT_OVERLAY_KEYS
   const inst = APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS
+  const preferInstitution = participantFlagsFromGeneralProgram(program).organization === true
   // GET recruitments[]가 있으면 기간·운영기간·문의처·면접은 행 SSOT — overlay seal로 덮지 않는다.
   const keepRecruitmentRows = (program.programRecruitments?.length ?? 0) > 0
 
   const participantRecruitRange = keepRecruitmentRows
     ? undefined
-    : (readRangeSeal(overlay, inst.recruitRangeSeal) ??
-      readRangeSeal(overlay, keys.individual.recruitRangeSeal))
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        readRangeSeal(overlay, inst.recruitRangeSeal),
+        readRangeSeal(overlay, keys.individual.recruitRangeSeal)
+      )
   const participantProgramRange = keepRecruitmentRows
     ? undefined
-    : (readRangeSeal(overlay, inst.programRangeSeal) ??
-      readRangeSeal(overlay, keys.individual.programRangeSeal))
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        readRangeSeal(overlay, inst.programRangeSeal),
+        readRangeSeal(overlay, keys.individual.programRangeSeal)
+      )
   const instructorRecruitRange = keepRecruitmentRows
     ? undefined
     : readRangeSeal(overlay, keys.instructor.recruitRangeSeal)
@@ -603,12 +619,16 @@ export function applyGeneralRecruitOverlayToProgram(
     ? undefined
     : readRangeSeal(overlay, keys.volunteer.programRangeSeal)
 
-  const targetLevels =
-    parseTargetLevels(overlayStringArray(overlay, inst.targetLevels)) ??
+  const targetLevels = pickParticipantOverlayValue(
+    preferInstitution,
+    parseTargetLevels(overlayStringArray(overlay, inst.targetLevels)),
     parseTargetLevels(overlayStringArray(overlay, keys.individual.targetLevels))
-  const targetLevelDetail =
-    overlayString(overlay, inst.targetLevelDetail) ??
+  )
+  const targetLevelDetail = pickParticipantOverlayValue(
+    preferInstitution,
+    overlayString(overlay, inst.targetLevelDetail),
     overlayString(overlay, keys.individual.targetLevelDetail)
+  )
 
   const instructorTargetsRaw = overlayStringArray(overlay, keys.instructor.recruitTargets)
   const instructorTargets =
@@ -625,16 +645,25 @@ export function applyGeneralRecruitOverlayToProgram(
 
   const participantContact = keepRecruitmentRows
     ? undefined
-    : (overlayString(overlay, inst.inquiryContact) ??
-      overlayString(overlay, keys.individual.inquiryContact))
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        overlayString(overlay, inst.inquiryContact),
+        overlayString(overlay, keys.individual.inquiryContact)
+      )
   const participantTel = keepRecruitmentRows
     ? undefined
-    : (overlayString(overlay, inst.inquiryTel) ??
-      overlayString(overlay, keys.individual.inquiryTel))
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        overlayString(overlay, inst.inquiryTel),
+        overlayString(overlay, keys.individual.inquiryTel)
+      )
   const participantEmail = keepRecruitmentRows
     ? undefined
-    : (overlayString(overlay, inst.inquiryEmail) ??
-      overlayString(overlay, keys.individual.inquiryEmail))
+    : pickParticipantOverlayValue(
+        preferInstitution,
+        overlayString(overlay, inst.inquiryEmail),
+        overlayString(overlay, keys.individual.inquiryEmail)
+      )
 
   const instructorContact = keepRecruitmentRows
     ? undefined
@@ -809,9 +838,11 @@ export function applyGeneralRecruitOverlayToProgram(
     keys.detailInfo.participantMethod
   )
   const participantRemarks =
-    overlayString(overlay, inst.notes) ??
-    overlayString(overlay, keys.individual.notes) ??
-    overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes)
+    pickParticipantOverlayValue(
+      preferInstitution,
+      overlayString(overlay, inst.notes),
+      overlayString(overlay, keys.individual.notes)
+    ) ?? overlayParticipantDetailString(overlay, 'otherNotes', keys.detailInfo.participantOtherNotes)
   if (participantDescription) {
     participantInfo.programDescription = coalesceString(
       participantInfo.programDescription,
@@ -867,11 +898,14 @@ export function applyGeneralRecruitOverlayToProgram(
 
   const individualFinalAnnounceIso = overlayString(overlay, keys.individual.finalAnnounceIso)
   const individualFinalAnnounceMethod = overlayString(overlay, keys.individual.finalAnnounceMethod)
-  const individualDocDeadlineIso = overlayString(overlay, keys.individual.docDeadlineIso)
-  const individualDocAnnounceMethod = overlayString(overlay, keys.individual.docAnnounceMethod)
   const individualInterviewEnabled = keepRecruitmentRows
     ? undefined
     : overlayYesNoBool(overlay, keys.individual.interviewRequired)
+  const individualDocDeadlineIso =
+    individualInterviewEnabled === false
+      ? undefined
+      : overlayString(overlay, keys.individual.docDeadlineIso)
+  const individualDocAnnounceMethod = overlayString(overlay, keys.individual.docAnnounceMethod)
   const individualInterviewRange = keepRecruitmentRows
     ? undefined
     : individualInterviewEnabled === false
@@ -892,9 +926,11 @@ export function applyGeneralRecruitOverlayToProgram(
 
   // ── 기관·개인 참여자 모집 (공고·사전안내·명단·상한·최종발표) ─────
   const institutionAnnouncementPublished =
-    overlayAnnouncementPublished(overlay, inst.announcementPublished) ??
-    overlayAnnouncementPublished(overlay, keys.individual.announcementPublished) ??
-    (participantRecruitRange || participantContact ? true : undefined)
+    pickParticipantOverlayValue(
+      preferInstitution,
+      overlayAnnouncementPublished(overlay, inst.announcementPublished),
+      overlayAnnouncementPublished(overlay, keys.individual.announcementPublished)
+    ) ?? (participantRecruitRange || participantContact ? true : undefined)
   const institutionPreguidance = overlayNeedNoneBool(overlay, inst.preguidanceRequired)
   const institutionStudentList = overlayStudentListRequired(overlay, inst.studentListRequired)
   const institutionCertificateRaw = overlayString(overlay, inst.certificateProvided)
@@ -908,9 +944,16 @@ export function applyGeneralRecruitOverlayToProgram(
         : undefined
   const institutionFinalAnnounceIso = overlayString(overlay, inst.finalAnnounceIso)
   const institutionFinalAnnounceMethod = overlayString(overlay, inst.finalAnnounceMethod)
-  const participantFinalAnnounceIso = institutionFinalAnnounceIso ?? individualFinalAnnounceIso
-  const participantFinalAnnounceMethod =
-    institutionFinalAnnounceMethod ?? individualFinalAnnounceMethod
+  const participantFinalAnnounceIso = pickParticipantOverlayValue(
+    preferInstitution,
+    institutionFinalAnnounceIso,
+    individualFinalAnnounceIso
+  )
+  const participantFinalAnnounceMethod = pickParticipantOverlayValue(
+    preferInstitution,
+    institutionFinalAnnounceMethod,
+    individualFinalAnnounceMethod
+  )
   const participantFinalAnnouncementLabel = formatAnnouncementLabel(
     participantFinalAnnounceIso,
     participantFinalAnnounceMethod
@@ -1000,14 +1043,19 @@ export function applyGeneralRecruitOverlayToProgram(
       participantInfo.resultAnnouncementLabel = nextFinal
     }
   }
-  const overlayParticipantNotesNA =
-    overlay[inst.notesNotApplicable] === true ||
+  const overlayParticipantNotesNA = pickParticipantOverlayValue(
+    preferInstitution,
+    overlay[inst.notesNotApplicable] === true
+      ? true
+      : overlay[inst.notesNotApplicable] === false
+        ? false
+        : undefined,
     overlay[keys.individual.notesNotApplicable] === true
       ? true
-      : overlay[inst.notesNotApplicable] === false ||
-          overlay[keys.individual.notesNotApplicable] === false
+      : overlay[keys.individual.notesNotApplicable] === false
         ? false
         : undefined
+  )
   if (overlayParticipantNotesNA !== undefined) {
     const nextNotesNA = coalesceBool(
       participantInfo.notesNotApplicable,
@@ -1283,11 +1331,16 @@ export function applyGeneralRecruitOverlayToProgram(
   const volunteerInterviewEnabled = keepRecruitmentRows
     ? undefined
     : overlayYesNoBool(overlay, keys.volunteer.interviewRequired)
-  const volunteerDocDeadlineIso = overlayString(overlay, keys.volunteer.docDeadlineIso)
+  const volunteerDocDeadlineIso =
+    volunteerInterviewEnabled === false
+      ? undefined
+      : overlayString(overlay, keys.volunteer.docDeadlineIso)
   const volunteerDocAnnounceMethod = overlayString(overlay, keys.volunteer.docAnnounceMethod)
   const volunteerInterviewRange = keepRecruitmentRows
     ? undefined
-    : readRangeSeal(overlay, keys.volunteer.interviewRangeSeal)
+    : volunteerInterviewEnabled === false
+      ? undefined
+      : readRangeSeal(overlay, keys.volunteer.interviewRangeSeal)
   const volunteerInterviewMethod = overlayString(overlay, keys.volunteer.interviewMethod)
   const volunteerFinalAnnounceIso = overlayString(overlay, keys.volunteer.finalAnnounceIso)
   const volunteerFinalAnnounceMethod = overlayString(overlay, keys.volunteer.finalAnnounceMethod)
@@ -1490,7 +1543,11 @@ export function applyGeneralRecruitOverlayToProgram(
     ),
     oneLineIntroduction: coalesceString(
       program.oneLineIntroduction,
-      overlayString(overlay, keys.individual.notes) ?? overlayString(overlay, inst.notes),
+      pickParticipantOverlayValue(
+        preferInstitution,
+        overlayString(overlay, inst.notes),
+        overlayString(overlay, keys.individual.notes)
+      ),
       preferOverlay
     ),
     targetLevels: nextTargetLevels,
@@ -1547,11 +1604,13 @@ export function applyGeneralRecruitOverlayToProgram(
       institutionStudentList,
       preferOverlay
     ) as Program['studentListRequired'],
-    resultAnnouncementDate: coalesceIso(
-      program.resultAnnouncementDate,
-      participantFinalAnnounceIso ?? volunteerFinalAnnounceIso,
-      preferOverlay
-    ),
+    resultAnnouncementDate: coalesceResultAnnouncementDate({
+      overlayIso: participantFinalAnnounceIso ?? volunteerFinalAnnounceIso,
+      programDate: program.resultAnnouncementDate,
+      createdAt: program.createdAt,
+      updatedAt: program.updatedAt,
+      preferOverlay,
+    }),
     resultAnnouncementMethod: coalesceString(
       program.resultAnnouncementMethod,
       participantFinalAnnounceMethod ?? volunteerFinalAnnounceMethod,

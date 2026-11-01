@@ -11,6 +11,13 @@ export const settlementQueryKeys = {
       [...settlementQueryKeys.paymentOrders.details(), type, key, dateRangeKey] as const,
     settlement: (settlementId: number) =>
       [...settlementQueryKeys.paymentOrders.all(), 'settlement', settlementId] as const,
+    /** 지급 현황 강사 상세 — instructor member privacy/unmask 응답 캐시 */
+    instructorPrivacyUnmask: (instructorMemberId: number) =>
+      [
+        ...settlementQueryKeys.paymentOrders.all(),
+        'instructorPrivacyUnmask',
+        instructorMemberId,
+      ] as const,
     transportationSnapshots: (settlementId: number) =>
       [
         ...settlementQueryKeys.paymentOrders.all(),

@@ -22,6 +22,7 @@ import {
   programEditWindowErrorMessage,
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
+import { resolveProgramScheduleLineErrorMessage } from '@/features/program/shared/lib/program-schedule-line-error'
 
 const BUSINESS_START_LOCK_PATTERN =
   /business_start_date|schedule lock|only be modified before/i
@@ -57,12 +58,22 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_1365_ID_REQUIRED: '1365 ID를 입력해 주세요.',
   VOLUNTEER_PERSONAL_INFO_CONSENT_REQUIRED: '개인정보 수집·이용에 동의해 주세요.',
   VOLUNTEER_THIRD_PARTY_CONSENT_REQUIRED: '개인정보 제3자 정보 제공·이용에 동의해 주세요.',
+  VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED: '제공받는 기관명을 입력해 주세요.',
+  VOLUNTEER_THIRD_PARTY_RECIPIENT_INVALID: '제공받는 기관명은 200자 이내로 입력해 주세요.',
   VOLUNTEER_PREVIOUS_JA_REQUIRED:
     '동의서 제출 요청 시 이전 참여 JA 봉사 프로그램 정보와 증빙서류가 필요합니다.',
+  VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID:
+    '이전 기수 수료증 파일이 올바르지 않습니다. 본인이 업로드한 신청 증빙(스캔 완료)만 연결할 수 있습니다.',
+  VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN:
+    '이전 기수 수료증 파일의 보안 검사가 아직 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.',
+  VOLUNTEER_PREVIOUS_UJAT_FILE_QUESTION_MISSING:
+    '이전 기수 수료증을 연결할 신청서 문항을 찾을 수 없습니다. 프로그램 신청 양식 바인딩을 확인해 주세요.',
   VOLUNTEER_FREE_TEXT_REQUIRED: '자유 작성 항목을 모두 작성해 주세요.',
   VOLUNTEER_FREE_TEXT_INVALID: '자유 작성 항목 글자 수를 확인해 주세요.',
   VOLUNTEER_RECRUITMENT_NOT_CONFIGURED:
     '이 프로그램에 봉사 모집·신청 양식이 설정되지 않았습니다. 프로그램 모집 설정을 확인해 주세요.',
+  VOLUNTEER_APPLICATION_TYPE_INVALID: '지원 형태를 확인해 주세요.',
+  UJAT_EDUCATION_REGION_CODE_UNKNOWN: '등록되지 않은 교육 지역입니다. 지역 목록을 다시 확인해 주세요.',
   CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY:
     '진행 현황 봉사자 추가 등록은 일반 봉사자만 지원합니다.',
   EMPLOYEE_VOLUNTEER_ORGANIZATION_SCOPE_REQUIRED:
@@ -201,7 +212,7 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (isProgramEducationStructureGuardCode(code)) {
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
   }
-  if (code === 'VERSION_CONFLICT') {
+  if (code === 'VERSION_CONFLICT' || code === 'PROGRAM_CONCURRENTLY_MODIFIED') {
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES.PROGRAM_EDUCATION_STRUCTURE_CHANGE_CONCURRENT
   }
   if (code === 'PROGRAM_EDUCATION_SLOT_KEY_MISMATCH') {
@@ -222,6 +233,11 @@ export function getGeneralProgramApiErrorMessage(error: unknown, fallback: strin
   if (code === 'PROGRAM_DATE_OUTSIDE_OPEN_PERIOD') {
     return '모집·운영 기간이 사업(오픈) 기간 밖입니다. 모집 창은 모집 행으로만 저장되고, 신청일·프로그램 운영일은 사업 기간 안에 있을 때만 함께 전송됩니다.'
   }
+  const scheduleLineMessage = resolveProgramScheduleLineErrorMessage(
+    code,
+    extractRawApiMessage(error)
+  )
+  if (scheduleLineMessage) return scheduleLineMessage
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(
     code,
     extractRawApiMessage(error)

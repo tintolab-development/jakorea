@@ -42,13 +42,10 @@ export function DashboardToolbar({
         <CmsButton
           variant="primary"
           size="large"
-          width="auto"
-          style={{ minWidth: 180, lineHeight: 1.2 }}
-          className="dashboard-toolbar-settings-btn"
+          style={{ minWidth: 180, lineHeight: 1.2 }} className="dashboard-toolbar-settings-btn"
           icon={<IconDashboardEdit />}
           adminAction="dashboardWrite"
-          onClick={onOpenSettings}
-        >
+          onClick={onOpenSettings} >
           대시보드 설정
         </CmsButton>
       </div>

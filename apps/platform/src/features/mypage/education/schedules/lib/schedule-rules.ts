@@ -18,6 +18,26 @@ export function resolveEducationScheduleProgressStatus(
   return heldDay.getTime() < today.getTime() ? 'completed' : 'scheduled'
 }
 
+/**
+ * 교육일정 행 뱃지 전용.
+ * 출결이 있으면 완료, 없으면 endAt(없으면 heldAt 일 단위 규칙) 기준으로 판정.
+ * 정산 탭(`resolveSettlementEducationProgress`)은 기존 `resolveEducationScheduleProgressStatus`를 유지한다.
+ */
+export function resolveEducationScheduleRowProgressStatus(
+  item: Pick<EducationScheduleItem, 'heldAt' | 'endAt' | 'attendanceStatus'>,
+  now = new Date(),
+): EducationScheduleProgressStatus {
+  if (item.attendanceStatus != null) return 'completed'
+  const endRaw = item.endAt?.trim()
+  if (endRaw) {
+    const end = new Date(endRaw)
+    if (!Number.isNaN(end.getTime())) {
+      return now.getTime() > end.getTime() ? 'completed' : 'scheduled'
+    }
+  }
+  return resolveEducationScheduleProgressStatus(item.heldAt, now)
+}
+
 export const EDUCATION_SCHEDULE_PROGRESS_LABEL: Record<
   EducationScheduleProgressStatus,
   string
@@ -50,17 +70,54 @@ export function shouldShowEducationAssignment(
   return now.getTime() >= start.getTime()
 }
 
-/** 결석 사유 제출 — API 허용 동작을 우선하고, 출석·지각·사유불참이면 항상 비활성화 */
+function normalizeScheduleActionCode(value: string): string {
+  return value.trim().toUpperCase()
+}
+
+function hasScheduleAction(
+  availableActions: readonly string[] | undefined,
+  action: string,
+): boolean {
+  return (availableActions ?? []).some(
+    item => normalizeScheduleActionCode(item) === action,
+  )
+}
+
+function normalizeAbsenceReasonStatus(
+  value: string | null | undefined,
+): string {
+  return (value ?? '').trim().toUpperCase()
+}
+
+/** 결석 사유 텍스트·제출됨 표시 — SUBMITTED + 사유 문자열만 */
+export function shouldDisplayEducationAbsenceReason(
+  attendance: EducationScheduleAttendanceStatus | null,
+  absenceReasonStatus?: string | null,
+  absenceReason?: string | null,
+): boolean {
+  const status = normalizeAbsenceReasonStatus(absenceReasonStatus)
+  if (status === 'NOT_REQUIRED' || !absenceReason?.trim()) return false
+  if (attendance === 'present' || attendance === 'late') return false
+  return status === 'SUBMITTED'
+}
+
+/** 결석 사유 제출 — absenceReasonStatus·API 허용 동작을 우선하고, 출석·지각·사유불참이면 항상 비활성화 */
 export function canSubmitEducationAbsenceReason(
   progress: EducationScheduleProgressStatus,
   attendance: EducationScheduleAttendanceStatus | null,
   availableActions?: readonly string[],
+  absenceReasonStatus?: string | null,
 ): boolean {
+  const status = normalizeAbsenceReasonStatus(absenceReasonStatus)
+  if (status === 'NOT_REQUIRED' || status === 'SUBMITTED') return false
   if (attendance === 'present' || attendance === 'late' || attendance === 'excused') {
     return false
   }
   if (availableActions != null) {
-    return availableActions.some(action => action.trim().toUpperCase() === 'SUBMIT_ABSENCE_REASON')
+    return hasScheduleAction(availableActions, 'SUBMIT_ABSENCE_REASON')
+  }
+  if (status === 'NOT_SUBMITTED') {
+    return progress === 'scheduled' || attendance === 'absent'
   }
   if (progress === 'scheduled') return true
   return attendance === 'absent'
@@ -80,16 +137,27 @@ export type EducationAssignmentGuide = {
   submitLabel: string
   submitDisabled: boolean
   showFeedbackButton: boolean
+  /** false면 '수정 제출하기' 등 primary CTA 숨김 (승인 완료) */
+  showSubmitButton?: boolean
 }
 
+/** FEEDBACK + APPROVED — 수정 제출 숨김 */
+export const EDUCATION_ASSIGNMENT_APPROVED_COPY = {
+  statusLabel: '승인 완료',
+  message: '담당자가 과제를 확인했어요',
+} as const
+
 /**
- * 과제 제출 버튼 활성화 여부는 제출 기간을 FE에서 재계산하지 않고
- * 교육일정 API가 내려준 canSubmit/canResubmit만 신뢰한다.
+ * 과제 제출 버튼 활성화 — 팀 역할과 무관하게
+ * 교육일정 API의 canSubmit/canResubmit 또는 availableActions SUBMIT_ASSIGNMENT만 신뢰한다.
+ * 마감·미제출 여부는 FE에서 재계산하지 않는다.
  */
 export function canSubmitEducationAssignment(
   assignment: Pick<EducationScheduleAssignment, 'canSubmit' | 'canResubmit'>,
   mode: 'submit' | 'revise',
+  availableActions?: readonly string[],
 ): boolean {
+  if (hasScheduleAction(availableActions, 'SUBMIT_ASSIGNMENT')) return true
   return mode === 'revise' ? assignment.canResubmit === true : assignment.canSubmit === true
 }
 
@@ -99,24 +167,62 @@ function isDeadlinePassed(submitEndAt: string, now: Date): boolean {
   return now.getTime() > end.getTime()
 }
 
+export type ResolveEducationAssignmentGuideOptions = {
+  responseStatus?: string | null
+  canResubmit?: boolean
+}
+
+function normalizeAssignmentResponseStatus(
+  responseStatus: string | null | undefined,
+): string {
+  return (responseStatus ?? '').trim().toUpperCase()
+}
+
+function isAssignmentResponseApproved(responseStatus: string | null | undefined): boolean {
+  const normalized = normalizeAssignmentResponseStatus(responseStatus)
+  return normalized === 'APPROVED' || normalized === 'COMPLETED'
+}
+
+function isAssignmentResponseRejected(responseStatus: string | null | undefined): boolean {
+  return normalizeAssignmentResponseStatus(responseStatus) === 'REJECTED'
+}
+
 /**
  * 과제 안내 문구·버튼 상태.
  * 상태 라벨(과제 제출 완료 / 미제출)은 UI에서 톤만 다르게 렌더 — 대괄호 없음.
+ * FEEDBACK + APPROVED/COMPLETED 만 '승인 완료' + 수정 제출 숨김.
+ * REJECTED 는 기존 수정 요청 UI. CTA 활성은 canResubmit/canSubmit만 본다.
  */
 export function resolveEducationAssignmentGuide(
   status: EducationAssignmentSubmitStatus,
   submitEndAt: string,
   now = new Date(),
+  options?: ResolveEducationAssignmentGuideOptions,
 ): EducationAssignmentGuide {
   const closed = isDeadlinePassed(submitEndAt, now)
 
   if (status === 'feedback') {
+    if (isAssignmentResponseApproved(options?.responseStatus)) {
+      return {
+        statusLabel: EDUCATION_ASSIGNMENT_APPROVED_COPY.statusLabel,
+        statusTone: 'submitted',
+        message: EDUCATION_ASSIGNMENT_APPROVED_COPY.message,
+        tone: 'default',
+        submitLabel: '수정 제출하기',
+        submitDisabled: true,
+        showFeedbackButton: true,
+        showSubmitButton: false,
+      }
+    }
+    const rejected = isAssignmentResponseRejected(options?.responseStatus)
+    const canResubmit = options?.canResubmit === true
     return {
       message: '담당자의 피드백이 있어요',
       tone: 'feedback',
       submitLabel: '수정 제출하기',
-      submitDisabled: false,
+      submitDisabled: !canResubmit,
       showFeedbackButton: true,
+      showSubmitButton: rejected || canResubmit || options?.canResubmit !== false,
     }
   }
 

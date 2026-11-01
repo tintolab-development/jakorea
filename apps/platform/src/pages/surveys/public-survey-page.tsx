@@ -15,7 +15,8 @@ import {
 } from '@/features/mypage/education/surveys/lib/survey-sidecar'
 import { EducationSurveyFormBody } from '@/features/mypage/education/surveys/ui/survey-form-body'
 import { EducationSurveyHeader } from '@/features/mypage/education/surveys/ui/survey-header'
-import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { EducationSurveySubmitConfirm } from '@/features/mypage/education/surveys/ui/submit-confirm'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
   fetchPublicSurveyForm,
@@ -71,6 +72,8 @@ export function PublicSurveyPage() {
   const [sidecar, setSidecar] = useState<SurveySidecarState>(EMPTY_SURVEY_SIDECAR)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [successAlertOpen, setSuccessAlertOpen] = useState(false)
 
   const surveyQuery = useQuery({
     queryKey: platformQueryKeys.publicSurvey.form(token),
@@ -96,10 +99,12 @@ export function PublicSurveyPage() {
   const submitMutation = useMutation({
     mutationFn: (answers: Record<string, unknown>) => submitPublicSurveyResponse(token, answers),
     onSuccess: () => {
-      setSubmitted(true)
+      setConfirmOpen(false)
       setSubmitError(null)
+      setSuccessAlertOpen(true)
     },
     onError: error => {
+      setConfirmOpen(false)
       const code = readPublicSurveyErrorCode(error)
       setSubmitError(
         code === 'FORM_SUBMISSION_CLOSED'
@@ -154,13 +159,14 @@ export function PublicSurveyPage() {
   const programTitle = titleParagraph?.surveyTitle?.trim() || '만족도조사'
 
   const handleSubmit = () => {
+    if (submitMutation.isPending) return
     setSubmitError(null)
     const validation = validateEducationSurveyFill(draft, sidecar)
     if (!validation.ok) {
       setSubmitError(validation.message)
       return
     }
-    submitMutation.mutate(buildEducationSurveyAnswers(draft, sidecar))
+    setConfirmOpen(true)
   }
 
   return (
@@ -202,6 +208,28 @@ export function PublicSurveyPage() {
           </PFButton>
         </div>
       </div>
+      <EducationSurveySubmitConfirm
+        open={confirmOpen}
+        kind="survey"
+        pending={submitMutation.isPending}
+        onCancel={() => {
+          if (submitMutation.isPending) return
+          setConfirmOpen(false)
+        }}
+        onConfirm={() => {
+          if (submitMutation.isPending) return
+          submitMutation.mutate(buildEducationSurveyAnswers(draft, sidecar))
+        }}
+      />
+      <PFAlertModal
+        open={successAlertOpen}
+        title="안내"
+        description="설문이 제출되었습니다."
+        onConfirm={() => {
+          setSuccessAlertOpen(false)
+          setSubmitted(true)
+        }}
+      />
     </main>
   )
 }
