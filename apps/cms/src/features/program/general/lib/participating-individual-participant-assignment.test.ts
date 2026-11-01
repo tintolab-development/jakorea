@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   appendParticipantSurveyViewRows,
   buildParticipatingIndividualParticipantAssignmentRowsFromAssigned,
-  collectParticipantAssignmentDownloadableFiles,
   mergeParticipantDetailAssignmentRowsWithRemote,
 } from './participating-individual-participant-assignment'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
@@ -305,29 +304,5 @@ describe('appendParticipantSurveyViewRows', () => {
         rows: [localRow],
       })
     ).toEqual([localRow])
-  })
-})
-
-describe('collectParticipantAssignmentDownloadableFiles', () => {
-  it('collects downloadable file ids', () => {
-    expect(
-      collectParticipantAssignmentDownloadableFiles([
-        {
-          ...localRow,
-          submission: {
-            kind: 'file',
-            fileName: '과제.pdf',
-            fileObjectId: 9001,
-            downloadable: true,
-            secondaryFileName: '보충.pdf',
-            secondaryFileObjectId: 9002,
-            secondaryDownloadable: true,
-          },
-        },
-      ])
-    ).toEqual([
-      { fileObjectId: 9001, fileName: '과제.pdf' },
-      { fileObjectId: 9002, fileName: '보충.pdf' },
-    ])
   })
 })

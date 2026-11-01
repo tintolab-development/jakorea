@@ -73,6 +73,30 @@ export async function downloadPDF(buffer: ArrayBuffer, filename: string): Promis
 }
 
 /**
+ * `Content-Disposition`에서 저장 파일명을 읽는다.
+ * RFC 5987 `filename*=UTF-8''…`를 우선하고, 없거나 디코딩에 실패하면 `filename`, 둘 다 없으면 fallback.
+ */
+export function fileNameFromContentDisposition(
+  header: string | null | undefined,
+  fallback: string
+): string {
+  if (!header) return fallback
+  const star = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header)?.[1]?.trim().replace(/^"|"$/g, '')
+  if (star) {
+    try {
+      const decoded = decodeURIComponent(star).trim()
+      if (decoded) return decoded
+    } catch {
+      /* ASCII filename으로 넘어간다 */
+    }
+  }
+  const quoted = /filename\s*=\s*"([^"]+)"/i.exec(header)?.[1]?.trim()
+  if (quoted) return quoted
+  const plain = /filename\s*=\s*([^";]+)/i.exec(header)?.[1]?.trim()
+  return plain || fallback
+}
+
+/**
  * 파일명 생성 헬퍼
  */
 export function generateFilename(prefix: string, extension: string, date?: Date): string {

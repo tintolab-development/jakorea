@@ -364,28 +364,3 @@ export function appendParticipantSurveyViewRows(input: {
 
   return extra.length === 0 ? input.rows : [...input.rows, ...extra]
 }
-
-export function collectParticipantAssignmentDownloadableFiles(
-  rows: ParticipatingIndividualParticipantAssignmentRow[]
-): Array<{ fileObjectId: number; fileName: string }> {
-  const files: Array<{ fileObjectId: number; fileName: string }> = []
-  for (const row of rows) {
-    if (row.submission.kind !== 'file') continue
-    if (row.submission.downloadable === true && row.submission.fileObjectId != null) {
-      files.push({
-        fileObjectId: row.submission.fileObjectId,
-        fileName: row.submission.fileName,
-      })
-    }
-    if (
-      row.submission.secondaryDownloadable === true &&
-      row.submission.secondaryFileObjectId != null
-    ) {
-      files.push({
-        fileObjectId: row.submission.secondaryFileObjectId,
-        fileName: row.submission.secondaryFileName ?? `과제_${row.submission.secondaryFileObjectId}`,
-      })
-    }
-  }
-  return files
-}
