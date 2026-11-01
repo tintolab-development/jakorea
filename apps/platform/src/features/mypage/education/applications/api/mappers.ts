@@ -549,7 +549,11 @@ export function mapPortalProgramApplicationDetail(
     programType: detail.programType ?? detail.program?.programType,
     programGroup: detail.programGroup,
     portalCategories: detail.portalCategories ?? detail.program?.portalCategories,
-    thumbnailFileObjectId: detail.thumbnailFileObjectId ?? detail.program?.thumbnailFileObjectId,
+    // 루트 키의 명시적 null은 "이미지 없음"이다. 키가 없을 때만 nested 값을 읽는다.
+    thumbnailFileObjectId:
+      detail.thumbnailFileObjectId !== undefined
+        ? detail.thumbnailFileObjectId
+        : detail.program?.thumbnailFileObjectId,
     educationStartAt: detail.educationStartAt,
     educationEndAt: detail.educationEndAt,
   })

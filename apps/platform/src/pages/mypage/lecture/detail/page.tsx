@@ -53,6 +53,7 @@ import { resolveLectureListBackPath } from '@/features/mypage/lecture'
 import { EducationProgramInfoModal } from '@/features/mypage/education/notices/ui/program-info-modal'
 import { isGeminiTrainingProgram } from '@/features/program/lib/is-gemini-training'
 import { ProgramInfoBody, useProgramDetail } from '@/features/program'
+import { withApplicationThumbnail } from '@/features/mypage/education/applications/lib/application-program-thumbnail'
 import {
   getAccessToken,
   getDevAuthLoggedIn,
@@ -157,14 +158,17 @@ export function MypageLectureDetailPage() {
   const program = useMemo(() => {
     if (!remoteProgram) return undefined
     const applicationProgram = application?.programConfig
-    if (!applicationProgram) return remoteProgram
-    return {
-      ...remoteProgram,
-      surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
-      satisfactionConfigured:
-        applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
-    }
-  }, [application?.programConfig, remoteProgram])
+    if (!applicationProgram) return withApplicationThumbnail(remoteProgram, application)
+    return withApplicationThumbnail(
+      {
+        ...remoteProgram,
+        surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
+        satisfactionConfigured:
+          applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
+      },
+      application,
+    )
+  }, [application, remoteProgram])
   const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading

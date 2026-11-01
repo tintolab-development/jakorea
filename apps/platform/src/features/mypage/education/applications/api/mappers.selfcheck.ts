@@ -5,6 +5,7 @@ import {
   mapPortalProgramApplicationDetail,
   mapPortalProgramApplicationListItem,
 } from './mappers.ts'
+import { withApplicationThumbnail } from '../lib/application-program-thumbnail.ts'
 
 const generalOrganization = mapPortalProgramApplicationListItem({
   applicationId: 1,
@@ -97,6 +98,84 @@ const mixedCategories = mapPortalProgramApplicationListItem({
 })
 assert.ok(mixedCategories)
 assert.equal(mixedCategories.categoryLabel, '기관 · 청소년 · 청년')
+
+// 썸네일 = 신청 recruitmentId 모집 행 대표 이미지. 같은 프로그램이라도 모집 행이 다르면 다른 이미지.
+{
+  const individualRow = mapPortalProgramApplicationListItem({
+    applicationId: 1694699,
+    applicationType: 'INDIVIDUAL',
+    programId: 186410,
+    recruitmentId: 186878,
+    programTitle: '모집 행 썸네일',
+    thumbnailFileObjectId: 2056176,
+  })
+  const volunteerRow = mapPortalProgramApplicationListItem({
+    applicationId: 1691639,
+    applicationType: 'VOLUNTEER',
+    programId: 186410,
+    recruitmentId: 186880,
+    programTitle: '모집 행 썸네일',
+    thumbnailFileObjectId: 2056179,
+  })
+  const noImageRow = mapPortalProgramApplicationListItem({
+    applicationId: 1691640,
+    applicationType: 'VOLUNTEER',
+    programId: 186410,
+    recruitmentId: 186881,
+    programTitle: '모집 행 썸네일 없음',
+    thumbnailFileObjectId: null,
+  })
+  assert.equal(individualRow?.thumbnailUrl, '/api/portal/public/files/2056176/content')
+  assert.equal(volunteerRow?.thumbnailUrl, '/api/portal/public/files/2056179/content')
+  assert.equal(noImageRow?.thumbnailUrl, undefined)
+
+  const detailWithThumbnail = mapPortalProgramApplicationDetail({
+    applicationId: 1694699,
+    applicationType: 'INDIVIDUAL',
+    programId: 186410,
+    recruitmentId: 186878,
+    programTitle: '모집 행 썸네일',
+    thumbnailFileObjectId: 2056176,
+    program: { programId: 186410, thumbnailFileObjectId: 2056176 },
+  })
+  assert.equal(detailWithThumbnail?.thumbnailUrl, '/api/portal/public/files/2056176/content')
+
+  const detailWithoutThumbnail = mapPortalProgramApplicationDetail({
+    applicationId: 1691640,
+    applicationType: 'VOLUNTEER',
+    programId: 186410,
+    recruitmentId: 186881,
+    programTitle: '모집 행 썸네일 없음',
+    thumbnailFileObjectId: null,
+    program: { programId: 186410, thumbnailFileObjectId: null },
+  })
+  assert.equal(detailWithoutThumbnail?.thumbnailUrl, undefined)
+
+  const detailRootNull = mapPortalProgramApplicationDetail({
+    applicationId: 8171,
+    applicationType: 'ORGANIZATION',
+    programId: 8101,
+    recruitmentId: 8111,
+    programTitle: '루트 null 우선',
+    thumbnailFileObjectId: null,
+    program: { programId: 8101, thumbnailFileObjectId: 8150 },
+  })
+  assert.equal(detailRootNull?.thumbnailUrl, undefined)
+
+  const remoteProgramImages = {
+    thumbnailUrl: '/api/portal/public/files/8150/content',
+    detailImageUrl: '/api/portal/public/files/8150/content',
+  }
+  assert.deepEqual(withApplicationThumbnail(remoteProgramImages, detailRootNull ?? undefined), {
+    thumbnailUrl: undefined,
+    detailImageUrl: undefined,
+  })
+  assert.deepEqual(withApplicationThumbnail(remoteProgramImages, detailWithThumbnail ?? undefined), {
+    thumbnailUrl: '/api/portal/public/files/2056176/content',
+    detailImageUrl: '/api/portal/public/files/2056176/content',
+  })
+  assert.equal(withApplicationThumbnail(remoteProgramImages, undefined), remoteProgramImages)
+}
 
 const mapped = mapPortalProgramApplicationDetail({
   applicationId: 1691620,
