@@ -59,6 +59,8 @@ describe('resolveParticipatingIndividualProgressScheduleSessions', () => {
     expect(result).toHaveLength(1)
     expect(result[0]?.resolvedScheduleId).toBe(187163)
     expect(result[0]?.timeRange).toContain('~')
+    // education-slots.scheduleStatus(ACTIVE)가 아니라 시각 기준으로 진행 현황을 채운다.
+    expect(result[0]?.deliveryScheduleStatus).toBe('COMPLETED')
   })
 
   it('returns empty when no assigned ids', () => {

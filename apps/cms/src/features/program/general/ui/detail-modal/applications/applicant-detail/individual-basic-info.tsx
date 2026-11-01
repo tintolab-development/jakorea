@@ -185,7 +185,7 @@ function IndividualApplicantScreeningBasicInfo({
             view={
               <HomeAddressDisplay
                 address={detail?.homeAddressFull ?? applicant.homeAddress}
-                mask={shouldMask}
+                mask={maskSensitive}
               />
             }
           />
@@ -465,7 +465,7 @@ export function ApplicantGeneralIndividualBasicInfo({
   const homeAddressDisplay = (
     <HomeAddressDisplay
       address={detail?.homeAddressFull ?? applicant.homeAddress}
-      mask={shouldMask}
+      mask={maskSensitive}
     />
   )
 

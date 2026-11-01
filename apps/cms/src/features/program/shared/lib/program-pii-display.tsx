@@ -129,7 +129,17 @@ export function PrivacyHomeAddressDisplay({
 
   // 단일 문자열
   if (!base) return empty
-  return renderAddressWithBlurToken(base, blurClassName)
+  if (base.includes(PRIVACY_ADDRESS_BLUR_TOKEN)) {
+    return renderAddressWithBlurToken(base, blurClassName)
+  }
+  // MASKED인데 토큰이 없으면(시군구·동만) 블러 꼬리로 마스킹 영역 표시
+  return (
+    <>
+      {base}
+      {' '}
+      <AddressBlurSpan className={blurClassName}>{PRIVACY_ADDRESS_BLUR_TOKEN}</AddressBlurSpan>
+    </>
+  )
 }
 
 /** 기존 `HomeAddressDisplay({ address, mask })` 호출부용 래퍼 */

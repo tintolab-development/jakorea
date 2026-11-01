@@ -34,6 +34,7 @@ import type {
 import { parseParticipantSurveyViewKey } from '@/features/program/general/model/participating-individual-participants'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import { isGeneralProgressEducationSessionSchedule } from '@/features/program/general/lib/general-progress-education-session-schedule'
+import { resolveEducationProgressFromScheduleBounds } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 
 function formatDateLabel(value: string | null | undefined, pattern: string): string {
   if (!value?.trim()) return ''
@@ -255,6 +256,10 @@ function mapScheduleGroup(
   return {
     id: String(schedule.scheduleId),
     ...header,
+    scheduleEducationProgress: resolveEducationProgressFromScheduleBounds({
+      startAt: schedule.startAt,
+      endAt: schedule.endAt,
+    }),
     participants: (schedule.participants ?? [])
       .filter(participant => {
         const lookup = giveUpById.get(String(participant.participantId))

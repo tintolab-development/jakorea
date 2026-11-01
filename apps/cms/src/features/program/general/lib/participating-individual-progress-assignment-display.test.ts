@@ -29,6 +29,7 @@ function session(
     headerPeriodRangeLabel: '2026.01.09',
     assignmentPeriodLabel: '2026.01.05(월) ~ 2026.01.09(금)',
     headerPrefix: `${id}회차`,
+    scheduleEducationProgress: 'completed',
     participants,
   }
 }

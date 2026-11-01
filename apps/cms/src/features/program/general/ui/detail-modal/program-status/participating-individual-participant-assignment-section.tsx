@@ -565,9 +565,44 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         )
       }
 
+      if (submission.kind === 'attachments') {
+        return (
+          <div className="participating-individual-participant-assignment-section__submission-links">
+            {submission.items.map((item, index) =>
+              item.kind === 'link' ? (
+                <a
+                  key={`${item.href}-${index}`}
+                  className="participating-individual-participant-assignment-section__submission-link"
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <button
+                  key={`${item.fileObjectId ?? item.fileName}-${index}`}
+                  type="button"
+                  className="participating-individual-participant-assignment-section__submission-link"
+                  onClick={() =>
+                    void downloadAssignmentFile(
+                      item.fileObjectId,
+                      item.fileName,
+                      item.downloadable
+                    )
+                  }
+                >
+                  {item.fileName}
+                </button>
+              )
+            )}
+          </div>
+        )
+      }
+
       if (submission.kind === 'file') {
         return (
-          <div className="assignment-submission-modal__status-text">
+          <div className="participating-individual-participant-assignment-section__submission-links">
             <button
               type="button"
               className="participating-individual-participant-assignment-section__submission-link"
@@ -602,14 +637,16 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       if (submission.kind === 'link') {
         return (
-          <a
-            className="participating-individual-participant-assignment-section__submission-link"
-            href={submission.href}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {submission.label}
-          </a>
+          <div className="participating-individual-participant-assignment-section__submission-links">
+            <a
+              className="participating-individual-participant-assignment-section__submission-link"
+              href={submission.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {submission.label}
+            </a>
+          </div>
         )
       }
 
@@ -748,6 +785,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           key: 'submission',
           width: 300,
           align: 'center',
+          className: 'participating-individual-participant-assignment-section__submission-column',
           render: (_value, record) => renderSubmissionCell(record),
         },
         {

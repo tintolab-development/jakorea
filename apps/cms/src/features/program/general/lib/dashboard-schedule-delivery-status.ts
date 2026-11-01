@@ -64,6 +64,30 @@ export function mapDashboardScheduleDeliveryToEducationProgress(
   return 'scheduled'
 }
 
+/**
+ * 교육 일정 시각(startAt/endAt)으로 진행 현황을 산출한다.
+ * BE `scheduleStatus`가 없을 때(assignment-submissions·education-slots 폴백)만 쓴다.
+ * endAt이 있으면 종료 시각 이후를 진행 완료로 본다. 없으면 startAt 기준.
+ */
+export function resolveEducationProgressFromScheduleBounds(
+  input: { startAt?: string | null; endAt?: string | null },
+  now: Date = new Date()
+): 'completed' | 'scheduled' {
+  const endAt = input.endAt?.trim()
+  const startAt = input.startAt?.trim()
+  const end = endAt ? dayjs(endAt) : null
+  const start = startAt ? dayjs(startAt) : null
+  const nowD = dayjs(now)
+
+  if (end?.isValid()) {
+    return !nowD.isBefore(end) ? 'completed' : 'scheduled'
+  }
+  if (start?.isValid()) {
+    return !nowD.isBefore(start) ? 'completed' : 'scheduled'
+  }
+  return 'scheduled'
+}
+
 export function resolveDashboardScheduleDeliveryProgressLabel(
   scheduleStatus?: string | null
 ): string {

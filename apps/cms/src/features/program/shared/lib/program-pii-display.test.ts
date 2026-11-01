@@ -69,4 +69,25 @@ describe('program-pii-display', () => {
     expect(container.textContent).toBe('강서구 화곡동')
     expect(container.querySelector('.program-pii-address-blur')).toBeNull()
   })
+
+  it('appends blurred ***** when masked address has no token', () => {
+    const { container } = render(
+      createElement(PrivacyHomeAddressDisplay, {
+        address: '강서구 화곡동',
+        revealed: false,
+      })
+    )
+    expect(container.textContent).toBe('강서구 화곡동 *****')
+    expect(container.querySelector('.program-pii-address-blur')?.textContent).toBe('*****')
+  })
+
+  it('HomeAddressDisplay mask=true blurs token even when address already includes it', () => {
+    const { container } = render(
+      createElement(PrivacyHomeAddressDisplay, {
+        address: '강서구 화곡동 *****',
+        mask: true,
+      })
+    )
+    expect(container.querySelector('.program-pii-address-blur')?.textContent).toBe('*****')
+  })
 })
