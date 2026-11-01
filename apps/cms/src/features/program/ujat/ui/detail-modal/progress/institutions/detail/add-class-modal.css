@@ -255,6 +255,11 @@
   line-height: 140%;
 }
 
+.add-class-modal__catalog-hint {
+  margin: 0 0 12px;
+  flex-shrink: 0;
+}
+
 .add-class-modal__footer {
   display: flex;
   width: 100%;

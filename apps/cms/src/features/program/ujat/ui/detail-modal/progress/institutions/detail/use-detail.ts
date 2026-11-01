@@ -3,6 +3,14 @@
  */
 
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import {
+  listAdminCommentsByTargetRemote,
+  resolveLatestAdminCommentText,
+} from '@/features/program/general/api/admin-comments-api-client'
+import { parseOrganizationApplicationIdFromSchoolId } from '@/features/program/general/api/adapters/program-post-adapters'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
@@ -29,6 +37,21 @@ export function useUjatEducationProgressInstitutionDetail(input: {
     programId,
   })
 
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+  const applicationNumericId = parseOrganizationApplicationIdFromSchoolId(institutionId)
+  const commentsQuery = useQuery({
+    queryKey: ujatQueryKeys.organizationApplicationComments(programId, institutionId),
+    queryFn: () =>
+      listAdminCommentsByTargetRemote({
+        targetType: 'ORGANIZATION_APPLICATION',
+        targetId: applicationNumericId!,
+        screenCode: 'ORGANIZATION_APPLICATION',
+      }),
+    enabled: remoteEnabled && applicationNumericId != null,
+    staleTime: 60_000,
+    retry: false,
+  })
+
   const remoteDetail = applicationDetail.remoteDetail
 
   const detail = useMemo((): UjatEducationProgressInstitutionDetail | null => {
@@ -53,7 +76,7 @@ export function useUjatEducationProgressInstitutionDetail(input: {
       half,
       institutionName: row.institutionName,
       educationRegion: getUjatEducationRegionLabel(row.regionKey, row.regionKey),
-      adminComment: '',
+      adminComment: resolveLatestAdminCommentText(commentsQuery.data) ?? '',
       applicationDetail: application,
       confirmedScheduleRows,
       guidance: {
@@ -69,6 +92,7 @@ export function useUjatEducationProgressInstitutionDetail(input: {
     applicationDetail.detail,
     applicationDetail.temporarySchedule,
     applicationDetail.row,
+    commentsQuery.data,
     half,
     institutionId,
     remoteDetail,

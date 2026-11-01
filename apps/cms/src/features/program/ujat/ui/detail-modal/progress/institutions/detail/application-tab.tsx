@@ -36,6 +36,7 @@ import './detail.css'
 
 export function UjatEducationProgressInstitutionApplicationTab({
   detail,
+  programId,
   personalInfoRevealed,
   gradeBlocks,
   onGradeBlocksChange,
@@ -47,8 +48,11 @@ export function UjatEducationProgressInstitutionApplicationTab({
   isAdminCommentEditing,
   adminCommentDraft,
   onAdminCommentDraftChange,
+  addClassConfirming = false,
+  onConfirmAddClasses,
 }: {
   detail: UjatEducationProgressInstitutionDetail
+  programId: string
   personalInfoRevealed: boolean
   gradeBlocks: UjatInstitutionApplicationGradeBlockDetail[]
   onGradeBlocksChange: (next: UjatInstitutionApplicationGradeBlockDetail[]) => void
@@ -60,6 +64,10 @@ export function UjatEducationProgressInstitutionApplicationTab({
   isAdminCommentEditing: boolean
   adminCommentDraft: string
   onAdminCommentDraftChange: (next: string) => void
+  addClassConfirming?: boolean
+  onConfirmAddClasses?: (
+    payload: UjatEducationProgressAddClassConfirmPayload
+  ) => void | Promise<void>
 }) {
   const currentUser = useAuthStore(state => state.user)
   const canWrite = canPerformWriteAction(currentUser)
@@ -74,16 +82,21 @@ export function UjatEducationProgressInstitutionApplicationTab({
   const currentTotalClassCount = useMemo(() => computeTotalClassCount(gradeBlocks), [gradeBlocks])
 
   const handleConfirmAddClasses = useCallback(
-    ({ added, removed }: UjatEducationProgressAddClassConfirmPayload) => {
+    async (payload: UjatEducationProgressAddClassConfirmPayload) => {
+      if (onConfirmAddClasses) {
+        await onConfirmAddClasses(payload)
+        setAddClassModalOpen(false)
+        return
+      }
       onGradeBlocksChange(
         mergePendingClassesIntoGradeBlocks(
-          removeClassesFromGradeBlocks(gradeBlocks, removed),
-          added
+          removeClassesFromGradeBlocks(gradeBlocks, payload.removed),
+          payload.added
         )
       )
       setAddClassModalOpen(false)
     },
-    [gradeBlocks, onGradeBlocksChange]
+    [gradeBlocks, onConfirmAddClasses, onGradeBlocksChange]
   )
 
   return (
@@ -309,9 +322,15 @@ export function UjatEducationProgressInstitutionApplicationTab({
 
       <UjatEducationProgressAddClassModal
         open={addClassModalOpen}
+        programId={programId}
+        institutionId={detail.institutionId}
         currentTotalClassCount={currentTotalClassCount}
         existingGradeBlocks={gradeBlocks}
-        onCancel={() => setAddClassModalOpen(false)}
+        confirming={addClassConfirming}
+        onCancel={() => {
+          if (addClassConfirming) return
+          setAddClassModalOpen(false)
+        }}
         onConfirm={handleConfirmAddClasses}
       />
     </div>
