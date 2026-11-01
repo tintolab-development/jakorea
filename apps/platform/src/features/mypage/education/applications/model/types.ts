@@ -138,19 +138,23 @@ export type EducationApplicationListItem = {
   teacherAssignment?: EducationTeacherAssignment
   /** 교사 회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
   teacherApplicationContent?: EducationTeacherApplicationContent
-  /** 목록 `programType` — 수료증 개인 CTA에서 교사·제미나이 제외 */
+  /** 목록·상세 `programType` — 개인 수료증 대상 판별 */
   programType?: string
-  /** 목록 `programGroup` */
+  /** 목록·상세 `programGroup` */
   programGroup?: string
   /**
-   * 목록 `certificateAvailable` 또는 상세 `capabilities.canIssueCertificate`.
-   * true = 발급 가능 또는 이미 발급되어 다운로드 가능. 상세 루트 `certificateAvailable`은 쓰지 않는다.
+   * 목록 `certificateAvailable` — 목록 액션 힌트.
+   * 상세는 `canIssueCertificate`를 쓴다. 발급 CTA 최종 SSOT는 availability API.
    */
   certificateAvailable?: boolean
-  /** 상세 `participation.certificateStatus` */
-  certificateStatus?: string
-  /** 목록 `availableActions` */
+  /** 목록 `availableActions` — ISSUE_CERTIFICATE 등 */
   availableActions?: string[]
+  /** 상세 `participation.participantId` — 발급 POST용 힌트(availability 우선) */
+  participantId?: number
+  /** 상세 `participation.certificateStatus` — 표시 라벨만 */
+  certificateStatus?: string
+  /** 상세 `capabilities.canIssueCertificate` — UX 힌트. CTA 최종은 availability */
+  canIssueCertificate?: boolean
   /** 미응답 설문 수 — 포털 신청 목록·상세 `pendingSurveyCount` */
   pendingSurveyCount?: number
   /** 상세 `summary.satisfactionPendingCount` — 로컬 추정 금지 */
