@@ -6,6 +6,8 @@ export type EducationDetailHeaderLayoutProps = {
   leading?: ReactNode
   header: ReactNode
   aside?: ReactNode
+  /** aside 세로 정렬 — 'end'면 header 하단에 맞춤(수료증 CTA) */
+  asideAlign?: 'start' | 'end'
 }
 
 /**
@@ -17,6 +19,7 @@ export function EducationDetailHeaderLayout({
   leading,
   header,
   aside,
+  asideAlign = 'start',
 }: EducationDetailHeaderLayoutProps) {
   if (!aside) {
     return (
@@ -33,7 +36,13 @@ export function EducationDetailHeaderLayout({
         {leading}
         {header}
       </div>
-      <div className={styles.asideSlot}>{aside}</div>
+      <div
+        className={
+          asideAlign === 'end' ? `${styles.asideSlot} ${styles.asideSlotEnd}` : styles.asideSlot
+        }
+      >
+        {aside}
+      </div>
     </div>
   )
 }

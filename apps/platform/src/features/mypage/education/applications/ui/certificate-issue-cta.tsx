@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
+import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
 import { PFAlertModal, PFButton } from '@/shared/ui'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
@@ -146,6 +146,7 @@ export function CertificateIssueCta({
           <PFButton
             type="button"
             variant="certificate"
+            size="large"
             disabled={isBusy}
             className={styles.submitButton}
             onClick={() => {
@@ -159,7 +160,7 @@ export function CertificateIssueCta({
             {title}
             <img
               className={styles.submitIllustration}
-              src={illustQuotationUrl}
+              src={illustDiplomaUrl}
               alt=""
               width={48}
               height={48}
