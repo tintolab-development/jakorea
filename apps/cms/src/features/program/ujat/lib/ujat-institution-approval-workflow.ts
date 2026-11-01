@@ -223,13 +223,48 @@ export function readUjatInstitutionWorkflowInput(
   return {
     applicationStatus: readWorkflowString(detail, schedule, 'applicationStatus'),
     temporaryAssignmentStatus: readWorkflowString(detail, schedule, 'temporaryAssignmentStatus'),
-    institutionConfirmationStatus: readWorkflowString(
-      detail,
-      schedule,
-      'institutionConfirmationStatus'
-    ),
+    institutionConfirmationStatus: readInstitutionConfirmationStatus(detail, schedule),
     assignmentLockedAt: readWorkflowString(detail, schedule, 'assignmentLockedAt'),
     portalBannerState: readWorkflowString(detail, schedule, 'portalBannerState'),
+  }
+}
+
+/**
+ * institutionConfirmationStatus 병합.
+ * BE는 미설정 시 키를 생략하며 null로 보내지 않는다.
+ * Orval/어댑터가 optional을 null로 정규화해도 null은 absent와 동일 취급한다.
+ */
+function readInstitutionConfirmationStatus(
+  detail: object | null | undefined,
+  schedule: object | null | undefined
+): string | null {
+  const fromDetail = readOwnNonNullString(detail, 'institutionConfirmationStatus')
+  if (fromDetail != null) return fromDetail
+  const fromSchedule = readOwnNonNullString(schedule, 'institutionConfirmationStatus')
+  if (fromSchedule != null) return fromSchedule
+  return mapScheduleConfirmStatusToInstitutionConfirmation(
+    readOwnNonNullString(detail, 'scheduleConfirmStatus') ??
+      readOwnNonNullString(schedule, 'scheduleConfirmStatus')
+  )
+}
+
+export function mapScheduleConfirmStatusToInstitutionConfirmation(
+  scheduleConfirmStatus?: string | null
+): string | null {
+  if (scheduleConfirmStatus == null) return null
+  const wire = String(scheduleConfirmStatus)
+    .trim()
+    .toLowerCase()
+    .replace(/-/g, '_')
+  switch (wire) {
+    case 'institution_checking':
+      return 'CHECKING'
+    case 'institution_confirmed':
+      return 'CONFIRMED'
+    case 'revision_requested':
+      return 'REVISION_REQUESTED'
+    default:
+      return null
   }
 }
 
@@ -243,6 +278,19 @@ function readWorkflowString(
   const fromSchedule = readOwnString(schedule, key)
   if (fromSchedule.present) return fromSchedule.value
   return null
+}
+
+function readOwnNonNullString(
+  source: object | null | undefined,
+  key: string
+): string | null {
+  if (!source || !Object.prototype.hasOwnProperty.call(source, key)) {
+    return null
+  }
+  const value = (source as Record<string, unknown>)[key]
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
 }
 
 function readOwnString(

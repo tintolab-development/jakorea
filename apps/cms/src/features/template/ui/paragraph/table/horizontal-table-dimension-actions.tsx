@@ -28,24 +28,20 @@ export function HorizontalTableDimensionActions({
         variant="primary"
         type="button"
         size="large"
-        width={140}
         icon={<ButtonAddIcon />}
         disabled={disabled}
         title="테이블 최하단에 가로 한 줄(행)을 추가합니다."
-        onClick={() => onUpdate(horizontalTableAddRow(paragraph))}
-      >
+        onClick={() => onUpdate(horizontalTableAddRow(paragraph))} >
         행 추가
       </CmsButton>
       <CmsButton
         variant="primary"
         type="button"
         size="large"
-        width={140}
         icon={<ButtonAddIcon />}
         disabled={disabled}
         title="테이블 가장 오른쪽에 세로 한 줄(열)을 추가합니다."
-        onClick={() => onUpdate(horizontalTableAddColumn(paragraph))}
-      >
+        onClick={() => onUpdate(horizontalTableAddColumn(paragraph))} >
         열 추가
       </CmsButton>
     </div>

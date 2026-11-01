@@ -87,12 +87,21 @@
 }
 
 .ujat-assignment-assign-modal__label {
-  color: var(--main-BK, #3d3d3d);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--Content-secondary, #525252);
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 140%;
+}
+
+.ujat-assignment-assign-modal__required {
+  color: var(--Status-red-main, #c32f4a);
+  font-weight: 700;
+  line-height: 120%;
 }
 
 .ujat-assignment-assign-modal__error {

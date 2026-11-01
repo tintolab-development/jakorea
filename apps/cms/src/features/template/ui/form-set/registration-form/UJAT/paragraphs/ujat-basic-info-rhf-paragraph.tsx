@@ -279,8 +279,8 @@ export function UjatBasicInfoRHFParagraph({
   }
 
   const setOperationRange = (next: [Dayjs, Dayjs] | null) => {
-    setField(infoForm, 'startDate', next == null ? '' : next[0].toISOString())
-    setField(infoForm, 'endDate', next == null ? '' : next[1].toISOString())
+    setField(infoForm, 'startDate', next == null ? '' : next[0].format('YYYY-MM-DD'))
+    setField(infoForm, 'endDate', next == null ? '' : next[1].format('YYYY-MM-DD'))
   }
 
   return (
@@ -370,11 +370,12 @@ export function UjatBasicInfoRHFParagraph({
                 width="100%"
                 placeholder="사업 운영 기간을 선택하세요"
                 preferPeriodModeInPopover
+                excludeBusinessPeriodConstraint
                 appliedSurfaceRange={operationRange}
                 appliedSurfaceWithTime={operationRangeWithTime}
                 onRangeChange={setOperationRange}
                 onChange={next => {
-                  if (next != null) setField(infoForm, 'startDate', next.toISOString())
+                  if (next != null) setField(infoForm, 'startDate', next.format('YYYY-MM-DD'))
                 }}
               />
             </div>

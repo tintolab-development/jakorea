@@ -491,6 +491,19 @@ describe('일반 신규 등록 모집 RHF 정본', () => {
     )
   })
 
+  it('면접 없음 boolean false도 면접 일정 단락을 숨긴다', () => {
+    render(<GeneralRegistrationWizardFormProvider>ok</GeneralRegistrationWizardFormProvider>)
+    act(() => {
+      seedVolunteerWizard({
+        'recruit.volunteer.interviewRequired': false,
+      })
+      setGeneralRecruitOverlayScope('recruitment-instructor')
+    })
+    expect(getRecruitVolunteerHiddenParagraphIds()).toEqual(
+      new Set([RECRUIT_FORM_VOLUNTEER_IDS.interviewSchedule])
+    )
+  })
+
   it('예외 일정 삭제는 merge patch가 아니라 RHF 키를 제거한다', () => {
     render(<GeneralRegistrationWizardFormProvider>ok</GeneralRegistrationWizardFormProvider>)
     const filled = filledVolunteerKv()

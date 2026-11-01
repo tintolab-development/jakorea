@@ -82,7 +82,7 @@ export function ActivityWithdrawScheduleModal({
     <div className="activity-withdraw-schedule-modal__footer">
       <CmsButton
         variant="secondary"
-        size="large"
+        size="h40"
         type="button"
         disabled={confirming}
         onClick={handleCancel}
@@ -91,7 +91,7 @@ export function ActivityWithdrawScheduleModal({
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="h40"
         type="button"
         disabled={!canConfirm}
         onClick={handleConfirm}
@@ -117,10 +117,10 @@ export function ActivityWithdrawScheduleModal({
         <CmsSelect
           label="교육 일정"
           required
-          inputSize="large"
+          inputSize="medium"
           width="100%"
           withAllOption={false}
-          placeholder="활동 포기 처리할 일정을 선택해 주세요."
+          placeholder="활동 포기 처리할 일정을 선택해 주세요"
           value={stopSessionKey}
           disabled={!hasScheduleOptions || confirming}
           onChange={value => setStopSessionKey(value == null ? undefined : String(value))}

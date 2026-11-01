@@ -8,6 +8,7 @@ import {
 import { loadUjatRecruitVolunteerTemplateSave } from '@/features/program/ujat/lib/ujat-recruit-template-local-save'
 import { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS } from '@/features/program/ujat/lib/ujat-recruit-overlay-keys'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { coalesceResultAnnouncementDate } from '@/features/program/shared/lib/resolve-result-announcement-date'
 
 export { UJAT_RECRUIT_VOLUNTEER_OVERLAY_KEYS }
 
@@ -234,9 +235,20 @@ export function applyUjatRecruitVolunteerOverlayOntoProgram(
     interviewEndDate:
       preferOverlay && interviewRange?.end?.trim() ? interviewRange.end : program.interviewEndDate,
     interviewMethod: overlayString(overlay, KEYS.interviewMethod) ?? program.interviewMethod,
-    finalPassAnnouncementDate: finalAnnounce?.date?.trim()
-      ? finalAnnounce.date
-      : program.finalPassAnnouncementDate,
+    finalPassAnnouncementDate: coalesceResultAnnouncementDate({
+      overlayIso: finalAnnounce?.date,
+      programDate: program.finalPassAnnouncementDate,
+      createdAt: program.createdAt,
+      updatedAt: program.updatedAt,
+      preferOverlay,
+    }),
+    resultAnnouncementDate: coalesceResultAnnouncementDate({
+      overlayIso: finalAnnounce?.date,
+      programDate: program.resultAnnouncementDate,
+      createdAt: program.createdAt,
+      updatedAt: program.updatedAt,
+      preferOverlay,
+    }),
     finalPassAnnouncementMethod: finalAnnounce?.method?.trim()
       ? finalAnnounce.method
       : program.finalPassAnnouncementMethod,
@@ -369,10 +381,20 @@ export function applyUjatRecruitVolunteerTemplateDefaults(
       program.interviewMethod,
       overlayString(overlay, KEYS.interviewMethod)
     ),
-    finalPassAnnouncementDate: coalesceIsoDate(
-      program.finalPassAnnouncementDate ?? program.resultAnnouncementDate,
-      finalAnnounce?.date ?? undefined
-    ),
+    finalPassAnnouncementDate: coalesceResultAnnouncementDate({
+      overlayIso: finalAnnounce?.date,
+      programDate: program.finalPassAnnouncementDate ?? program.resultAnnouncementDate,
+      createdAt: program.createdAt,
+      updatedAt: program.updatedAt,
+      preferOverlay: false,
+    }),
+    resultAnnouncementDate: coalesceResultAnnouncementDate({
+      overlayIso: finalAnnounce?.date,
+      programDate: program.resultAnnouncementDate,
+      createdAt: program.createdAt,
+      updatedAt: program.updatedAt,
+      preferOverlay: false,
+    }),
     finalPassAnnouncementMethod: coalesceString(
       program.finalPassAnnouncementMethod ?? program.resultAnnouncementMethod,
       finalAnnounce?.method

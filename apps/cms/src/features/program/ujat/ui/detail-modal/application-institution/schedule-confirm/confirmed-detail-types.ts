@@ -40,6 +40,9 @@ export type UjatScheduleConfirmConfirmedDetail = {
   otherRequests: string
   gradeEducationBlocks: ScheduleConfirmGradeEducationBlock[]
   classTimeRows: UjatInstitutionApplicationClassTimeRowDetail[]
+  /** 기관 신청 당시 희망일 (preferredEducationDates / preferredEducationSchedules) */
+  preferredEducationDates: string[]
+  /** 임시 배정 확정 슬롯 — temporary-schedule SSOT */
   educationScheduleDays: UjatScheduleConfirmEducationScheduleDay[]
   guidanceNotes: UjatScheduleConfirmGuidanceNotes
 }

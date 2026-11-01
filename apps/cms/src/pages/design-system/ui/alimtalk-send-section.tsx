@@ -117,8 +117,7 @@ export function AlimtalkSendSection() {
           variant="primary"
           size="large"
           type="button"
-          onClick={() => setTemplateModalOpen(true)}
-        >
+          onClick={() => setTemplateModalOpen(true)} >
           템플릿 선택 모달 열기
         </CmsButton>
       </DsDemo>

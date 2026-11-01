@@ -5,6 +5,7 @@ import {
   isCatalogFixedWritingFormTemplateCode,
   isCatalogOriginalVersionWriteBlocked,
   isCatalogSurveyOrGeneralAgreementTemplateCode,
+  isSurveyOrGeneralAgreementPublishTarget,
   isDocumentOnlyAgreementTemplateCode,
   isDuplicateWritingTemplateCode,
   isProgramScopedOperationalWritingTemplate,
@@ -46,6 +47,14 @@ describe('form-template-delete-policy', () => {
     expect(isCatalogOriginalVersionWriteBlocked('survey-default')).toBe(false)
     expect(isDocumentOnlyAgreementTemplateCode('agreement-crime')).toBe(true)
     expect(isCatalogOriginalVersionWriteBlocked('agreement-crime')).toBe(true)
+    expect(isSurveyOrGeneralAgreementPublishTarget('survey-default')).toBe(true)
+    expect(isSurveyOrGeneralAgreementPublishTarget('survey-student-copy-1')).toBe(true)
+    expect(
+      isSurveyOrGeneralAgreementPublishTarget('copy-abc', { baseTemplateCode: 'survey-student' })
+    ).toBe(true)
+    expect(isSurveyOrGeneralAgreementPublishTarget('issuance-3')).toBe(false)
+    expect(isSurveyOrGeneralAgreementPublishTarget('registration-general')).toBe(false)
+    expect(isSurveyOrGeneralAgreementPublishTarget('agreement-crime')).toBe(false)
   })
 
   it('identifies catalog-fixed template codes', () => {

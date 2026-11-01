@@ -8,8 +8,8 @@
 import type { ActivityScheduleSlot } from './activityScheduleSlot';
 import type { Application } from './application';
 import type { InterviewAvailabilitySlot } from './interviewAvailabilitySlot';
-import type { Profile } from './profile';
 import type { Screening } from './screening';
+import type { VolunteerApplicationProfile } from './volunteerApplicationProfile';
 
 /**
  * 일반/UJAT 프로그램 봉사자 신청 상세
@@ -20,6 +20,10 @@ export interface VolunteerApplicationDetailResponse {
   recruitmentId?: number;
   memberId?: number;
   applicationStatus?: string;
+  /** 면접 상태. 배정 직후 ASSIGNED, 이후 PARTIALLY_EVALUATED|EVALUATED. 배정 전이면 PENDING/WAITING 등 저장된 값 */
+  interviewStatus?: string | null;
+  /** 현재 유효 면접 배정 상태. 배정 전이면 null */
+  interviewAssignmentStatus?: string | null;
   submittedAt?: string;
   updatedAt?: string;
   availableActions?: string[];
@@ -27,7 +31,7 @@ export interface VolunteerApplicationDetailResponse {
   canEditManagerBEvaluation?: boolean;
   privacyMaskingLevel?: string;
   canRevealPersonalInfo?: boolean;
-  profile?: Profile;
+  profile?: VolunteerApplicationProfile;
   application?: Application;
   screening?: Screening;
   /** 신청자가 고른 면접 가능(희망) 시간 구간. program_interview_slot 선택과 CMS 면접 진행 가능 일정에서 고른 interview-option 답을 합쳐 startAt 순으로 반환. 없으면 [] */

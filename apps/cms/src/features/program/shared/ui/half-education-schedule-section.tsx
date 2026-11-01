@@ -6,6 +6,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import { useWatch } from 'react-hook-form'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
+import { PRE_EDUCATION_DISPLAY_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import {
   type UjatEducationDelivery,
@@ -377,9 +378,9 @@ function UjatPreEducationBlock({
 }) {
   return (
     <div className="half-education-schedule__block half-education-schedule__block--first">
-      <HalfEducationScheduleSubheading>■ 사전 교육</HalfEducationScheduleSubheading>
+      <HalfEducationScheduleSubheading>{`■ ${PRE_EDUCATION_DISPLAY_LABEL}`}</HalfEducationScheduleSubheading>
       <DetailInfoForm
-        title="사전 교육"
+        title={PRE_EDUCATION_DISPLAY_LABEL}
         hideHeader
         mode={mode}
         className="program-registration-paragraph"

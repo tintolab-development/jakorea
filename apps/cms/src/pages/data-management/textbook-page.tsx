@@ -503,6 +503,10 @@ export default function TextbookPage() {
           if (!detailTextbookId) return
           setDetailRoute(detailTextbookId, 'edit')
         }}
+        onCancel={() => {
+          if (!detailTextbookId) return
+          setDetailRoute(detailTextbookId, 'view')
+        }}
         onSave={async payload => {
           if (!detailTextbookId) return
           if (
@@ -558,16 +562,14 @@ export default function TextbookPage() {
               onClick={() => {
                 setKitQuantityChangeConfirmOpen(false)
                 setPendingKitQuantities(null)
-              }}
-            >
+              }} >
               취소
             </CmsButton>
             <CmsButton
               variant="primary"
               type="button"
               onClick={handleConfirmKitQuantityChange}
-              disabled={kitQuantitiesMutation.isPending}
-            >
+              disabled={kitQuantitiesMutation.isPending} >
               확인
             </CmsButton>
           </div>
@@ -595,8 +597,7 @@ export default function TextbookPage() {
           <>
             <FilterTableToolbarButton
               variant="delete"
-              onClick={handleDeleteSelected}
-            >
+              onClick={handleDeleteSelected} >
               교재 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton variant="secondary" onClick={() => setKitQuantityModalOpen(true)}>
@@ -609,8 +610,7 @@ export default function TextbookPage() {
               variant="primary"
               onClick={() => {
                 setRegisterModalOpen(true)
-              }}
-            >
+              }} >
               교재 등록
             </FilterTableToolbarButton>
           </>

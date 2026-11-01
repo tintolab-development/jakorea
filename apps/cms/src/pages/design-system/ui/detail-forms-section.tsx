@@ -15,7 +15,7 @@ const VERTICAL_TABLE_LABEL_WIDTH = 200 as const
 
 export function DetailFormsSection() {
   const [mode, setMode] = useState<DetailInfoFormMode>('view')
-  const [name, setName] = useState('홍길동')
+  const [name, setName] = useState('이름예시')
   const [email, setEmail] = useState('hong@example.com')
   const [memo, setMemo] = useState('상세 폼 데모')
   const textAreaForm = useForm<TextAreaDemoForm>({
@@ -40,15 +40,13 @@ export function DetailFormsSection() {
           <CmsButton
             variant={mode === 'view' ? 'primary' : 'secondary'}
             size="medium"
-            onClick={() => setMode('view')}
-          >
+            onClick={() => setMode('view')} >
             view
           </CmsButton>
           <CmsButton
             variant={mode === 'edit' ? 'primary' : 'secondary'}
             size="medium"
-            onClick={() => setMode('edit')}
-          >
+            onClick={() => setMode('edit')} >
             edit
           </CmsButton>
         </div>
@@ -148,7 +146,7 @@ export function DetailFormsSection() {
             <DetailInfoForm.Field
               label="담당자"
               labelWidth={VERTICAL_TABLE_LABEL_WIDTH}
-              view="홍길동 매니저"
+              view="이름예시 매니저"
               fullRow
             />
           </DetailInfoForm.Row>

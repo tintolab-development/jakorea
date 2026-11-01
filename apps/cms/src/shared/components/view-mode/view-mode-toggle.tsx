@@ -40,8 +40,7 @@ export function ViewModeToggle<V extends string = ViewMode>({
         variant="secondary"
         size="large" style={{ minWidth: 180 }}
         icon={target.icon}
-        onClick={() => onChange(target.value)}
-      >
+        onClick={() => onChange(target.value)} >
         {target.label}
       </CmsButton>
     </div>

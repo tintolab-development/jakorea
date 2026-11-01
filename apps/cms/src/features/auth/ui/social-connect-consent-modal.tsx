@@ -106,21 +106,17 @@ export function SocialConnectConsentModal({
             variant="default"
             size="h52"
             type="button"
-            width="100%"
             disabled={confirmLoading}
-            onClick={onCancel}
-          >
+            onClick={onCancel} >
             취소
           </CmsButton>
           <CmsButton
             variant="secondary"
             size="h52"
             type="button"
-            width="100%"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             동의하고 연결하기
           </CmsButton>
         </footer>

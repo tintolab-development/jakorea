@@ -1,0 +1,257 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: JA Korea NEW PROD frontend static hosting - private S3, CloudFront OAC, GitHub OIDC deploy role
+
+Parameters:
+  GitHubOidcProviderArn:
+    Type: String
+    Default: arn:aws:iam::264015108093:oidc-provider/token.actions.githubusercontent.com
+
+Resources:
+  CmsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ja-newprod-frontend-cms-264015108093
+      PublicAccessBlockConfiguration: {BlockPublicAcls: true, IgnorePublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true}
+      OwnershipControls:
+        Rules: [{ObjectOwnership: BucketOwnerEnforced}]
+      VersioningConfiguration: {Status: Enabled}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+
+  PlatformBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ja-newprod-frontend-platform-264015108093
+      PublicAccessBlockConfiguration: {BlockPublicAcls: true, IgnorePublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true}
+      OwnershipControls:
+        Rules: [{ObjectOwnership: BucketOwnerEnforced}]
+      VersioningConfiguration: {Status: Enabled}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+
+  AdminBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ja-newprod-frontend-admin-264015108093
+      PublicAccessBlockConfiguration: {BlockPublicAcls: true, IgnorePublicAcls: true, BlockPublicPolicy: true, RestrictPublicBuckets: true}
+      OwnershipControls:
+        Rules: [{ObjectOwnership: BucketOwnerEnforced}]
+      VersioningConfiguration: {Status: Enabled}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+
+  CmsOac:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: ja-newprod-frontend-cms-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  PlatformOac:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: ja-newprod-frontend-platform-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  AdminOac:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: ja-newprod-frontend-admin-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  CmsDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: JA Korea NEW PROD CMS HTTPS
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        Origins:
+          - Id: s3-cms
+            DomainName: !GetAtt CmsBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt CmsOac.Id
+            S3OriginConfig: {OriginAccessIdentity: ''}
+        DefaultCacheBehavior:
+          TargetOriginId: s3-cms
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD, OPTIONS]
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        CustomErrorResponses:
+          - {ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /index.html, ErrorCachingMinTTL: 0}
+          - {ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /index.html, ErrorCachingMinTTL: 0}
+        PriceClass: PriceClass_200
+
+  PlatformDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: JA Korea NEW PROD Platform HTTPS
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        Origins:
+          - Id: s3-platform
+            DomainName: !GetAtt PlatformBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt PlatformOac.Id
+            S3OriginConfig: {OriginAccessIdentity: ''}
+        DefaultCacheBehavior:
+          TargetOriginId: s3-platform
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD, OPTIONS]
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        CustomErrorResponses:
+          - {ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /index.html, ErrorCachingMinTTL: 0}
+          - {ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /index.html, ErrorCachingMinTTL: 0}
+        PriceClass: PriceClass_200
+
+  AdminDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: JA Korea NEW PROD Homepage Admin HTTPS
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        Origins:
+          - Id: s3-admin
+            DomainName: !GetAtt AdminBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt AdminOac.Id
+            S3OriginConfig: {OriginAccessIdentity: ''}
+        DefaultCacheBehavior:
+          TargetOriginId: s3-admin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD, OPTIONS]
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        CustomErrorResponses:
+          - {ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /index.html, ErrorCachingMinTTL: 0}
+          - {ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /index.html, ErrorCachingMinTTL: 0}
+        PriceClass: PriceClass_200
+
+  CmsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CmsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: cloudfront.amazonaws.com}
+            Action: s3:GetObject
+            Resource: !Sub '${CmsBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CmsDistribution}'
+
+  PlatformBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref PlatformBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: cloudfront.amazonaws.com}
+            Action: s3:GetObject
+            Resource: !Sub '${PlatformBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${PlatformDistribution}'
+
+  AdminBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AdminBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: cloudfront.amazonaws.com}
+            Action: s3:GetObject
+            Resource: !Sub '${AdminBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${AdminDistribution}'
+
+  FrontendGitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ja-newprod-frontend-github-deploy
+      Description: GitHub Actions deploy role for NEW PROD CMS, Platform and Homepage Admin static sites
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: repo:tintolab-development/jakorea:ref:refs/heads/deploy/newprod
+      Policies:
+        - PolicyName: ja-newprod-frontend-static-deploy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:ListBucket]
+                Resource:
+                  - !GetAtt CmsBucket.Arn
+                  - !GetAtt PlatformBucket.Arn
+                  - !GetAtt AdminBucket.Arn
+              - Effect: Allow
+                Action: [s3:PutObject, s3:GetObject, s3:DeleteObject, s3:AbortMultipartUpload, s3:ListMultipartUploadParts]
+                Resource:
+                  - !Sub '${CmsBucket.Arn}/*'
+                  - !Sub '${PlatformBucket.Arn}/*'
+                  - !Sub '${AdminBucket.Arn}/*'
+              - Effect: Allow
+                Action: [cloudformation:DescribeStacks]
+                Resource: !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/ja-newprod-frontend-static/*'
+              - Effect: Allow
+                Action: [cloudfront:CreateInvalidation, cloudfront:GetInvalidation, cloudfront:GetDistribution]
+                Resource:
+                  - !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CmsDistribution}'
+                  - !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${PlatformDistribution}'
+                  - !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${AdminDistribution}'
+
+Outputs:
+  CmsBucket:
+    Value: !Ref CmsBucket
+  PlatformBucket:
+    Value: !Ref PlatformBucket
+  AdminBucket:
+    Value: !Ref AdminBucket
+  CmsDistributionId:
+    Value: !Ref CmsDistribution
+  PlatformDistributionId:
+    Value: !Ref PlatformDistribution
+  AdminDistributionId:
+    Value: !Ref AdminDistribution
+  CmsDomain:
+    Value: !GetAtt CmsDistribution.DomainName
+  PlatformDomain:
+    Value: !GetAtt PlatformDistribution.DomainName
+  AdminDomain:
+    Value: !GetAtt AdminDistribution.DomainName
+  FrontendDeployRoleArn:
+    Value: !GetAtt FrontendGitHubDeployRole.Arn

@@ -20,7 +20,7 @@ import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
 import { applyEducationScheduleModeLineSwap } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import {
   educationOperationRangeSealKeyFromSchedulePrefix,
-  isOutsideEducationOperationRange,
+  isEducationScheduleSelectionDateDisabled,
   toEducationOperationDayjs,
   type EducationOperationRangeSeal,
 } from '@/features/program/shared/lib/education-schedule-change'
@@ -96,8 +96,9 @@ export function ProgramRegistrationEducationScheduleSettingsParagraph({
   )
   const operationStart = toEducationOperationDayjs(operationRangeSeal?.start)
   const operationEnd = toEducationOperationDayjs(operationRangeSeal?.end)
+  // 사업 운영 기간 밖 + 오늘 이전 비활성
   const disableOutsideOperation = (date: Dayjs) =>
-    isOutsideEducationOperationRange(date, operationStart, operationEnd)
+    isEducationScheduleSelectionDateDisabled(date, operationStart, operationEnd)
   const [groupTimesByDetail] = useProgramRegistrationOverlayKv<
     Record<number, Array<EducationScheduleGroupTimeSlot | null>>
   >(GENERAL_REGISTRATION_OVERLAY_GROUP_TIMES_KEY, EMPTY_GROUP_TIMES)

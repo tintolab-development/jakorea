@@ -168,29 +168,50 @@ export function isParticipantSelectionEducationFormInOverlay(
 }
 
 /**
+ * 보이는 회차 유형 키를 먼저 읽고, 없으면 숨은 키·레거시로 fallback.
+ * 장소 규칙(`resolveEducationPlaceCommonEducationForm`)과 같은 회차 기준.
+ */
+export function resolveRoundScopedCommonValue(
+  sessionRoundType: string | undefined,
+  multiValue: string,
+  singleValue: string,
+  fallback: string
+): string {
+  if (sessionRoundType === 'multi') {
+    return multiValue || singleValue || fallback
+  }
+  return singleValue || multiValue || fallback
+}
+
+/**
  * 일정 공통 교육 형태 — create 매핑·필수 검사 동일 해석.
- * 복수회차 키가 비면 단일 회차 값, 둘 다 없으면 UI 기본값 `online`.
+ * 단일 회차는 single 키, 복수는 multi 키. 보이는 키가 비면 숨은 키·레거시·`online`.
  */
 export function resolveGeneralRegistrationCommonEducationForm(
-  overlay: Record<string, unknown>
+  overlay: Record<string, unknown>,
+  sessionRoundType?: string
 ): string {
-  return (
-    overlayNonEmptyText(overlay, MULTI_COMMON_EDUCATION_FORM_KEY) ||
+  return resolveRoundScopedCommonValue(
+    sessionRoundType,
+    overlayNonEmptyText(overlay, MULTI_COMMON_EDUCATION_FORM_KEY),
     overlayNonEmptyText(overlay, SINGLE_EDUCATION_FORM_KEY) ||
+      overlayNonEmptyText(overlay, LEGACY_EDUCATION_FORM_KEY),
     DEFAULT_REGISTRATION_EDUCATION_FORM
   )
 }
 
 /**
  * 일정 공통 참여 방식 — create 매핑·필수 검사 동일 해석.
- * 복수회차 키가 비면 단일 회차 값, 둘 다 없으면 UI 기본값 `individual`.
+ * 단일 회차는 single 키, 복수는 multi 키. 둘 다 없으면 UI 기본값 `individual`.
  */
 export function resolveGeneralRegistrationCommonParticipation(
-  overlay: Record<string, unknown>
+  overlay: Record<string, unknown>,
+  sessionRoundType?: string
 ): string {
-  return (
-    overlayNonEmptyText(overlay, MULTI_COMMON_PARTICIPATION_KEY) ||
-    overlayNonEmptyText(overlay, SINGLE_PARTICIPATION_KEY) ||
+  return resolveRoundScopedCommonValue(
+    sessionRoundType,
+    overlayNonEmptyText(overlay, MULTI_COMMON_PARTICIPATION_KEY),
+    overlayNonEmptyText(overlay, SINGLE_PARTICIPATION_KEY),
     DEFAULT_REGISTRATION_PARTICIPATION
   )
 }

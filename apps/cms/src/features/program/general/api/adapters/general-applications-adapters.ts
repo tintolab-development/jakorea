@@ -6,6 +6,7 @@ import {
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
 } from '@/shared/lib/education-schedule-name'
+import { readProgramScheduleCanonicalFields } from '@/features/program/shared/lib/program-schedule-canonical'
 import { formatApplicantSchoolApprovalNotificationSentAt } from '@/features/program/shared/model/applicant-institution'
 import type {
   ApplicantInstructorLectureFeeBasisType,
@@ -68,6 +69,7 @@ import type {
   GeneralManagerEvaluation,
   GeneralSecondInterviewScreeningStatus,
 } from '@/features/program/general/lib/volunteer-screening-constants'
+import { pickVolunteerInterviewAssignmentApiStatus } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import {
   formatRequestedSchedulesPeriodLabel,
   mapRequestedSchedulesToSessions,
@@ -129,6 +131,48 @@ export function mapApiApplicationStatusToApprovalStatus(
   if (normalized === 'REJECTION_CANCELLED') {
     return 'pending'
   }
+  return 'pending'
+}
+
+/** 면접 파이프라인에서 BE가 유지하는 applicationStatus 별칭 — 프로그램 승인 현황용 */
+const INDIVIDUAL_APPLICATION_APPROVED_ALIASES = new Set([
+  'DOCUMENT_PASSED',
+  'PASS',
+  'PASSED',
+  'FINAL_APPROVED',
+  'INTERVIEW_PASSED',
+])
+
+/**
+ * 일반 개인 신청 목록·상세 「프로그램 승인 현황」.
+ * 면접 있음이면 applicationStatus가 WAITING_REVIEW로 남고 document/final 결과가 먼저 바뀐다.
+ */
+export function mapIndividualApplicationToApprovalStatus(input: {
+  applicationStatus?: string | null
+  documentStatus?: string | null
+  finalResultStatus?: string | null
+  reserveRank?: number | null
+}): ApplicantApprovalStatusKey {
+  const fromApplication = mapApiApplicationStatusToApprovalStatus(
+    input.applicationStatus ?? undefined
+  )
+  if (fromApplication !== 'pending') return fromApplication
+
+  const applicationNormalized = input.applicationStatus?.trim().toUpperCase() ?? ''
+  if (INDIVIDUAL_APPLICATION_APPROVED_ALIASES.has(applicationNormalized)) {
+    return 'approved'
+  }
+
+  const finalResult = mapApiFinalResultToSecondInterviewStatus(
+    input.finalResultStatus,
+    input.reserveRank
+  )
+  if (finalResult === 'pass') return 'approved'
+  if (finalResult === 'fail') return 'rejected'
+
+  const document = mapApiDocumentStatusToScreeningStatus(input.documentStatus)
+  if (document === 'pass') return 'approved'
+  if (document === 'fail') return 'rejected'
   return 'pending'
 }
 
@@ -844,6 +888,8 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     rejectionReason: readRuntimeString(dto, 'rejectReason'),
     distanceKm: readRuntimeNumber(dto, 'distanceKm'),
     longDistanceYn: readRuntimeBoolean(dto, 'longDistance'),
+    programDispatchCount: readRuntimeNumber(dto, 'programDispatchCount'),
+    programLongDistanceDispatchCount: readRuntimeNumber(dto, 'programLongDistanceDispatchCount'),
     availableActions: dto.availableActions,
   }
 }
@@ -1000,6 +1046,9 @@ export function mapInstructorApplicationDetailToApplicantRow(
       dto.longDistance !== undefined && dto.longDistance !== null
         ? dto.longDistance
         : base.longDistanceYn,
+    // dispatch 집계는 list item 전용 — detail 응답에 없음. 목록 hydrate 값 유지.
+    programDispatchCount: base.programDispatchCount,
+    programLongDistanceDispatchCount: base.programLongDistanceDispatchCount,
     managerComment: dto.managerComment ?? base.managerComment,
     availableActions: dto.availableActions ?? base.availableActions,
     preferredScheduleSlots,
@@ -1151,6 +1200,7 @@ export function mapPreferredEducationSchedulesToSessions(
   schedules: PreferredEducationSchedule[] | undefined,
   options?: { useEducationDate?: boolean }
 ): ParticipatingSchoolSession[] {
+  const useEducationDate = options?.useEducationDate !== false
   return orderPreferredEducationSchedules([...(schedules ?? [])]).map((schedule, index) => {
     const scheduleLabel = preferredScheduleLabel(schedule)
     const start = schedule.startAt ? new Date(schedule.startAt) : null
@@ -1158,7 +1208,7 @@ export function mapPreferredEducationSchedulesToSessions(
     const validStart = start != null && !Number.isNaN(start.getTime())
     const validEnd = end != null && !Number.isNaN(end.getTime())
     const dateOnly = isOrganizationPreferredDateOnlyRange(schedule.startAt, schedule.endAt)
-    const educationDate = options?.useEducationDate ? schedule.educationDate?.trim() : undefined
+    const educationDate = useEducationDate ? schedule.educationDate?.trim() : undefined
     const educationDay = educationDate ? new Date(`${educationDate}T00:00:00+09:00`) : null
     const dateParts =
       educationDay != null && !Number.isNaN(educationDay.getTime())
@@ -1211,6 +1261,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
     })
     .map((session, index) => {
+      const canonical = readProgramScheduleCanonicalFields(session)
       const scheduleName = toDisplayEducationScheduleName(session.scheduleName) || ''
       const start = session.startAt ? new Date(session.startAt) : null
       const end = session.endAt ? new Date(session.endAt) : null
@@ -1248,6 +1299,9 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         requestedScheduleId: session.requestedScheduleId ?? undefined,
         scheduleUnresolved,
         startAt: session.startAt?.trim() || undefined,
+        ...(scheduleName ? { scheduleName } : {}),
+        ...(canonical.scheduleRole ? { scheduleRole: String(canonical.scheduleRole) } : {}),
+        ...(canonical.educationSlotKey ? { educationSlotKey: canonical.educationSlotKey } : {}),
       }
     })
 }
@@ -1288,7 +1342,12 @@ export function mapIndividualApplicationToApplicantRow(
     educationGrade: readIndividualApplicationListGrade(dto),
     homeAddress: dto.homeAddressSummary?.trim() || '',
     appliedAt: dto.submittedAt,
-    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    approvalStatus: mapIndividualApplicationToApprovalStatus({
+      applicationStatus: dto.applicationStatus,
+      documentStatus: dto.documentStatus,
+      finalResultStatus: dto.finalResultStatus,
+      reserveRank: dto.reserveRank,
+    }),
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     adminComment: dto.managerComment ?? undefined,
@@ -1350,7 +1409,12 @@ export function mapIndividualApplicationDetailToApplicantRow(
       ? formatApplicantGradeLabel(profile?.affiliationGrade) || base.educationGrade || ''
       : '',
     homeAddress: profile?.homeAddress?.trim() || base.homeAddress || '',
-    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    approvalStatus: mapIndividualApplicationToApprovalStatus({
+      applicationStatus: dto.applicationStatus,
+      documentStatus: screening?.documentStatus,
+      finalResultStatus: screening?.finalResultStatus,
+      reserveRank: screening?.reserveRank,
+    }),
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,
     preferredEducationSchedules:
@@ -1520,6 +1584,28 @@ export function mapApiVolunteerInterviewStatusToAssignmentStatus(
   return status?.trim().toUpperCase() === 'NOT_REQUIRED' ? 'not_required' : 'waiting'
 }
 
+/** 목록·상세 GET — interviewAssignmentStatus · interviewStatus · applicationStatus 순 */
+export function mapVolunteerInterviewAssignmentFromWire(input: {
+  interviewStatus?: string | null
+  interviewAssignmentStatus?: string | null
+  applicationStatus?: string | null
+  giveUpYn?: boolean
+}): GeneralInterviewAssignmentStatus {
+  if (input.giveUpYn) return 'withdrawn'
+  const fields = [
+    input.interviewAssignmentStatus,
+    input.interviewStatus,
+    input.applicationStatus,
+  ]
+  let notRequired = false
+  for (const field of fields) {
+    const mapped = mapApiVolunteerInterviewStatusToAssignmentStatus(field, false)
+    if (mapped === 'assigned' || mapped === 'withdrawn') return mapped
+    if (mapped === 'not_required') notRequired = true
+  }
+  return notRequired ? 'not_required' : 'waiting'
+}
+
 export function mapApiFinalResultToSecondInterviewStatus(
   status?: string | null,
   reserveRank?: number | null
@@ -1576,6 +1662,8 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     essayEducationExperience?: string | null
     essayNecessity?: string | null
     essayJaExperience?: string | null
+    homeAddressSummary?: string | null
+    homeAddress?: string | null
     interviewEvaluations?: InterviewEvaluationSlotSource[] | null
   }
   const assigned = formatAssignedInterviewFromIso(
@@ -1596,6 +1684,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     email: dto.email?.trim() || '-',
     contactRaw: dto.contact?.trim() || '',
     emailRaw: dto.email?.trim() || '',
+    homeAddress: enriched.homeAddressSummary?.trim() || enriched.homeAddress?.trim() || '',
     id1365: '',
     scheduleChangeCancelCount: 0,
     applicationType: dto.isReparticipation ? 'ujat-graduate' : 'new',
@@ -1611,9 +1700,16 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     availableActions: dto.availableActions ?? [],
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
-    interviewAssignmentStatus: mapApiVolunteerInterviewStatusToAssignmentStatus(
+    interviewAssignmentStatus: mapVolunteerInterviewAssignmentFromWire({
+      interviewStatus: dto.interviewStatus,
+      interviewAssignmentStatus: dto.interviewAssignmentStatus,
+      applicationStatus: dto.applicationStatus,
+      giveUpYn: dto.giveUpYn,
+    }),
+    interviewAssignmentApiStatus: pickVolunteerInterviewAssignmentApiStatus(
+      dto.interviewAssignmentStatus,
       dto.interviewStatus,
-      dto.giveUpYn
+      dto.applicationStatus
     ),
     programId: toId(dto.programId) || programId,
     englishName: '',
@@ -1626,6 +1722,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     interviewAvailability: mapInterviewAvailabilitySlots(dto.interviewAvailability),
     interviewAssignmentId:
       enriched.interviewAssignmentId != null ? Number(enriched.interviewAssignmentId) : undefined,
+    assignedInterviewStartAt: enriched.assignedInterviewStartAt?.trim() || undefined,
     assignedInterviewEndAt: enriched.assignedInterviewEndAt?.trim() || undefined,
     ...interviewSlots,
     ...assigned,
@@ -1640,16 +1737,43 @@ export function mapVolunteerApplicationDetailToApplicantRow(
   dto: VolunteerApplicationDetailResponse,
   base: GeneralVolunteerApplicantRow
 ): GeneralVolunteerApplicantRow {
-  const profile = dto.profile
+  const profile = dto.profile as
+    | (NonNullable<VolunteerApplicationDetailResponse['profile']> & {
+        homeAddress?: string | null
+        homeAddressSummary?: string | null
+      })
+    | undefined
+    | null
   const screening = dto.screening
   const assigned = formatAssignedInterviewFromIso(
     dto.assignedInterviewStartAt,
     dto.assignedInterviewEndAt
   )
   const canEditEvaluation = dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
+  const assignmentFromWire = mapVolunteerInterviewAssignmentFromWire({
+    interviewStatus: dto.interviewStatus,
+    interviewAssignmentStatus: dto.interviewAssignmentStatus,
+    applicationStatus: dto.applicationStatus,
+    giveUpYn: screening?.giveUpYn,
+  })
+  const interviewAssignmentStatus =
+    assignmentFromWire !== 'waiting'
+      ? assignmentFromWire
+      : dto.assignedInterviewSlotId != null
+        ? 'assigned'
+        : base.interviewAssignmentStatus === 'not_required'
+          ? 'not_required'
+          : assignmentFromWire
   return {
     ...base,
-    assignedInterviewEndAt: dto.assignedInterviewEndAt?.trim() || base.assignedInterviewEndAt,
+    assignedInterviewStartAt:
+      dto.assignedInterviewStartAt === null
+        ? undefined
+        : dto.assignedInterviewStartAt?.trim() || base.assignedInterviewStartAt,
+    assignedInterviewEndAt:
+      dto.assignedInterviewEndAt === null
+        ? undefined
+        : dto.assignedInterviewEndAt?.trim() || base.assignedInterviewEndAt,
     ...readGeneralVolunteerProjection(dto.application, base),
     id: toId(dto.id) || base.id,
     memberId: dto.memberId ?? base.memberId,
@@ -1658,6 +1782,11 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     email: profile?.email?.trim() || base.email,
     contactRaw: profile?.contact?.trim() || base.contactRaw,
     emailRaw: profile?.email?.trim() || base.emailRaw,
+    homeAddress:
+      profile?.homeAddressSummary?.trim() ||
+      profile?.homeAddress?.trim() ||
+      base.homeAddress ||
+      '',
     id1365: profile?.external1365Id?.trim() || base.id1365,
     scheduleChangeCancelCount:
       dto.application?.scheduleChangeCancelCount ?? base.scheduleChangeCancelCount,
@@ -1669,14 +1798,13 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
-    interviewAssignmentStatus: mapApiVolunteerInterviewStatusToAssignmentStatus(
-      dto.assignedInterviewSlotId != null
-        ? 'ASSIGNED'
-        : base.interviewAssignmentStatus === 'not_required'
-          ? 'NOT_REQUIRED'
-          : 'WAITING_ASSIGNMENT',
-      screening?.giveUpYn
-    ),
+    interviewAssignmentStatus,
+    interviewAssignmentApiStatus:
+      pickVolunteerInterviewAssignmentApiStatus(
+        dto.interviewAssignmentStatus,
+        dto.interviewStatus,
+        dto.applicationStatus
+      ) ?? base.interviewAssignmentApiStatus,
     programId: toId(dto.programId) || base.programId,
     gender: toGenderLabelOrRaw(profile?.gender) || base.gender,
     birthDate: profile?.birthDate?.trim() || base.birthDate,
@@ -1694,8 +1822,11 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     interviewEvaluationRemark:
       screening?.interviewEvaluationRemark ?? base.interviewEvaluationRemark,
     assignedInterviewDateLabel:
-      assigned.assignedInterviewDateLabel ?? base.assignedInterviewDateLabel,
-    assignedInterviewTime: assigned.assignedInterviewTime ?? base.assignedInterviewTime,
+      assigned.assignedInterviewDateLabel ??
+      (dto.assignedInterviewStartAt == null ? undefined : base.assignedInterviewDateLabel),
+    assignedInterviewTime:
+      assigned.assignedInterviewTime ??
+      (dto.assignedInterviewStartAt == null ? undefined : base.assignedInterviewTime),
   }
 }
 

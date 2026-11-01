@@ -16,6 +16,7 @@ import type {
 import type { InstructorRoleKey } from '../../../model/school-detail-types'
 import { INSTRUCTOR_ROLE_LABELS } from '../../../model/school-detail-types'
 import type { InstructorAssignSessionOption } from '../../../lib/instructor-assign-session-options'
+import { useProgramInstructorApplications } from '@/features/program/general/hooks/use-program-instructor-applications'
 import {
   buildProgramApprovedInstructorAssignOptions,
   buildSchoolAddInstructorAssignSessionOptions,
@@ -160,21 +161,27 @@ export function SchoolDetailAddInstructorAssignModal({
   const [form] = Form.useForm<AddInstructorAssignFormValues>()
   const selectedInstructorId = Form.useWatch('instructorId', form)
 
+  const instructorApplications = useProgramInstructorApplications(
+    instructorOptionsProp ? undefined : programId
+  )
   const instructorOptions = useMemo(() => {
-    if (instructorOptionsProp?.length) return instructorOptionsProp
-    return buildProgramApprovedInstructorAssignOptions(programId, assignedInstructorNames)
-  }, [instructorOptionsProp, programId, assignedInstructorNames])
+    if (instructorOptionsProp) return instructorOptionsProp
+    return buildProgramApprovedInstructorAssignOptions(
+      instructorApplications.rows,
+      assignedInstructorNames
+    )
+  }, [assignedInstructorNames, instructorApplications.rows, instructorOptionsProp])
 
   const assignmentSessionOptions = useMemo(() => {
     if (assignmentSessionOptionsProp.length > 0 && !schoolSessions?.length) {
       return assignmentSessionOptionsProp
     }
     return buildSchoolAddInstructorAssignSessionOptions({
-      programId,
       schoolId,
       schoolName,
       sessions: schoolSessions,
       selectedInstructorId,
+      applicantInstructors: instructorApplications.rows,
       participatingInstructorList,
       participatingSchoolList,
     })
@@ -185,6 +192,7 @@ export function SchoolDetailAddInstructorAssignModal({
     schoolId,
     schoolName,
     selectedInstructorId,
+    instructorApplications.rows,
     participatingInstructorList,
     participatingSchoolList,
   ])

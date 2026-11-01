@@ -139,6 +139,8 @@ function SponsorDetailFullPageModalInner({
     handleSponsorshipStatusChange,
     isEditingBasicInfo,
     handleToggleBasicInfoEdit,
+    handleCancelBasicInfoEdit,
+    basicInfoSaveLoading,
     removeProgramHistoryRows,
     programHistoryDeleteDisabled,
     isLoading: isDetailLoading,
@@ -260,6 +262,13 @@ function SponsorDetailFullPageModalInner({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
         })
+        return
+      }
+      if (result === 'failed') {
+        showAlert({
+          title: '저장 실패',
+          content: '기본 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
       }
     })()
   }, [canManageSponsor, handleToggleBasicInfoEdit, showAlert])
@@ -331,27 +340,48 @@ function SponsorDetailFullPageModalInner({
           <div className="info-section-wrapper">
             <span className="info-section-title">기본 정보</span>
             <div className="info-section-buttons--wrapper">
-              <CmsButton variant="delete" size="large" onClick={sponsorDelete.openDeleteModal}>
-                후원사 삭제
-              </CmsButton>
-              <CmsButton
-                variant="secondary"
-                size="large"
-                onClick={handleToggleBasicInfoClick}
-                adminAction="sponsorWrite"
-              >
-                정보 수정
-              </CmsButton>
-              <CmsButton
-                variant="secondary"
-                size="large"
-                icon={<ButtonDownloadIcon />}
-                loading={logoBulkDownloading}
-                onClick={handleLogoBulkDownload}
-                adminAction="download"
-              >
-                로고 일괄 다운로드
-              </CmsButton>
+              {isEditingBasicInfo ? (
+                <>
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    disabled={basicInfoSaveLoading}
+                    onClick={handleCancelBasicInfoEdit}
+                    adminAction="sponsorWrite" >
+                    취소
+                  </CmsButton>
+                  <CmsButton
+                    variant="primary"
+                    size="large"
+                    loading={basicInfoSaveLoading}
+                    onClick={handleToggleBasicInfoClick}
+                    adminAction="sponsorWrite" >
+                    저장
+                  </CmsButton>
+                </>
+              ) : (
+                <>
+                  <CmsButton variant="delete" size="large" onClick={sponsorDelete.openDeleteModal}>
+                    후원사 삭제
+                  </CmsButton>
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    onClick={handleToggleBasicInfoClick}
+                    adminAction="sponsorWrite" >
+                    정보 수정
+                  </CmsButton>
+                  <CmsButton
+                    variant="secondary"
+                    size="large"
+                    icon={<ButtonDownloadIcon />}
+                    loading={logoBulkDownloading}
+                    onClick={handleLogoBulkDownload}
+                    adminAction="download" >
+                    로고 일괄 다운로드
+                  </CmsButton>
+                </>
+              )}
             </div>
           </div>
         ) : null

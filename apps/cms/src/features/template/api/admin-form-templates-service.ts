@@ -17,9 +17,13 @@ import {
   isCatalogOriginalVersionWriteBlocked,
   isCatalogSurveyOrGeneralAgreementTemplateCode,
   isDocumentOnlyAgreementTemplateCode,
+  isSurveyOrGeneralAgreementPublishTarget,
   resolveWritingFormCatalogCategory,
   shouldOmitImmutableFormSchemaJson,
 } from '@/features/template/lib/form-template-delete-policy'
+import {
+  FormTemplatePublishAfterSaveError,
+} from '@/features/template/api/form-template-publish-after-save-error'
 import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
 import {
   getFormTemplateVersionCacheEntry,
@@ -456,6 +460,8 @@ export async function saveFormTemplateVersionDraft(args: {
   editorState?: Record<string, unknown>
   uiState?: Record<string, unknown>
   settingsJson?: Record<string, unknown>
+  /** 템플릿 관리 저장만 true. 프로그램 흐름에서는 넘기지 않는다. */
+  publishAfterSave?: boolean
 }): Promise<void> {
   assertFormsSurveysRemoteReady()
 
@@ -478,18 +484,51 @@ export async function saveFormTemplateVersionDraft(args: {
     omitSchemaJson,
     catalogBaseline,
   })
+  const fingerprint = fingerprintVersionBody(body)
+  const cached = getFormTemplateVersionCacheEntry(args.templateCode)
+  const wantPublish =
+    args.publishAfterSave === true &&
+    isSurveyOrGeneralAgreementPublishTarget(args.templateCode, {
+      baseTemplateCode: cached?.baseTemplateCode,
+    })
 
-  if (isCatalogSurveyOrGeneralAgreementTemplateCode(args.templateCode)) {
-    await createDraftVersionFromImmutable(args.templateCode, versionId, body)
-    return
+  const pending = wantPublish ? unpublishedDraftByTemplateCode.get(args.templateCode) : undefined
+  let leftoverDraftVersionIds: number[] = []
+  let savedVersionId: number
+
+  if (pending != null && pending.fingerprint === fingerprint) {
+    savedVersionId = pending.versionId
+  } else if (pending != null) {
+    leftoverDraftVersionIds = [pending.versionId]
+    savedVersionId = await createDraftVersionFromImmutable(
+      args.templateCode,
+      pending.versionId,
+      body
+    )
+    console.warn(
+      '[form-templates] unpublished leftover draft remains after rewrite',
+      leftoverDraftVersionIds
+    )
+  } else if (isCatalogSurveyOrGeneralAgreementTemplateCode(args.templateCode)) {
+    savedVersionId = await createDraftVersionFromImmutable(args.templateCode, versionId, body)
+  } else {
+    try {
+      await updateFormTemplateVersionRemote(versionId, body)
+      savedVersionId = versionId
+    } catch (error) {
+      if (!isFormVersionCopyOnPutError(error)) throw error
+      savedVersionId = await createDraftVersionFromImmutable(args.templateCode, versionId, body)
+    }
   }
 
-  try {
-    await updateFormTemplateVersionRemote(versionId, body)
-  } catch (error) {
-    if (!isFormVersionCopyOnPutError(error)) throw error
-    await createDraftVersionFromImmutable(args.templateCode, versionId, body)
-  }
+  if (!wantPublish) return
+
+  unpublishedDraftByTemplateCode.set(args.templateCode, {
+    versionId: savedVersionId,
+    fingerprint,
+  })
+  await publishSavedDraftVersion(args.templateCode, savedVersionId, leftoverDraftVersionIds)
+  unpublishedDraftByTemplateCode.delete(args.templateCode)
 }
 
 function isFormVersionCopyOnPutError(error: unknown): boolean {
@@ -505,7 +544,7 @@ async function createDraftVersionFromImmutable(
   templateCode: string,
   sourceVersionId: number,
   body: ReturnType<typeof buildVersionUpdateBody>
-): Promise<void> {
+): Promise<number> {
   const cached = getFormTemplateVersionCacheEntry(templateCode)
   if (cached?.templateId == null) {
     throw new Error('템플릿 ID를 찾을 수 없습니다. 작성 양식 목록을 먼저 조회해 주세요.')
@@ -532,6 +571,70 @@ async function createDraftVersionFromImmutable(
     latestVersionId: created.templateVersionId,
     latestVersionNo: created.versionNo,
   })
+  return created.templateVersionId
+}
+
+const unpublishedDraftByTemplateCode = new Map<string, { versionId: number; fingerprint: string }>()
+
+/** vitest 격리 — 미발행 DRAFT 재시도 메모리 */
+export function resetFormTemplateUnpublishedDraftMemoryForTests(): void {
+  unpublishedDraftByTemplateCode.clear()
+}
+
+function fingerprintVersionBody(body: ReturnType<typeof buildVersionUpdateBody>): string {
+  return JSON.stringify({
+    schemaJson: body.schemaJson ?? null,
+    extensionJson: body.extensionJson ?? null,
+    settingsJson: body.settingsJson ?? null,
+  })
+}
+
+async function publishSavedDraftVersion(
+  templateCode: string,
+  versionId: number,
+  leftoverDraftVersionIds: readonly number[]
+): Promise<void> {
+  let published
+  try {
+    published = await publishFormTemplateVersionRemote(versionId, {})
+  } catch (cause) {
+    throw new FormTemplatePublishAfterSaveError({
+      versionId,
+      leftoverDraftVersionIds,
+      cause,
+    })
+  }
+  if (published.versionStatus !== 'PUBLISHED') {
+    throw new FormTemplatePublishAfterSaveError({
+      versionId,
+      leftoverDraftVersionIds,
+    })
+  }
+
+  const publishedId = published.templateVersionId ?? versionId
+  const cached = getFormTemplateVersionCacheEntry(templateCode)
+  if (cached?.templateId != null) {
+    upsertFormTemplateVersionCacheEntry({
+      templateCode,
+      templateId: cached.templateId,
+      templateVersionId: publishedId,
+      latestVersionId: publishedId,
+      latestVersionNo: published.versionNo,
+    })
+  }
+
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: formTemplateQueryKeys.writingSections() }),
+    queryClient.invalidateQueries({ queryKey: formTemplateQueryKeys.versionById(versionId) }),
+    queryClient.invalidateQueries({ queryKey: formTemplateQueryKeys.versionById(publishedId) }),
+    queryClient.invalidateQueries({ queryKey: formTemplateQueryKeys.versionDraft(templateCode) }),
+    queryClient.invalidateQueries({
+      queryKey: formTemplateQueryKeys.surveyVersionDraft(versionId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: formTemplateQueryKeys.surveyVersionDraft(publishedId),
+    }),
+  ])
 }
 
 function toJsonText(value: unknown): string | undefined {

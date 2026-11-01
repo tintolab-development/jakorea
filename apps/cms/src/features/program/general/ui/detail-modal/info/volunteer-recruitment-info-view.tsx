@@ -13,6 +13,10 @@ import {
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { RECRUIT_FORM_VOLUNTEER_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-volunteer-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
+import {
+  optionalDateRangeUsesClockTime,
+  optionalDateUsesClockTime,
+} from '@/features/template/lib/date-range-clock'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -90,6 +94,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
             render={({ field }) => (
               <ParagraphDatePicker inputSize="small"
                 mode="range"
+                showTimeToggle={false}
                 value={[
                   toDayjs(field.value as string | Date | undefined),
                   toDayjs(form.watch('volunteerApplicationEndDate') as string | Date | undefined),
@@ -133,7 +138,9 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                   mode="single"
                   presetMode="date"
                   customizable={false}
+                  suppressAutoTodayWhenEmpty
                   value={toDayjs(field.value)}
+                  appliedSurfaceWithTime={optionalDateUsesClockTime(toDayjs(field.value))}
                   onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                   placeholder="합격자 발표일"
                   width={190}
@@ -185,6 +192,10 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                     toDayjs(field.value as string | Date | undefined),
                     toDayjs(form.watch('interviewEndDate') as string | Date | undefined),
                   ]}
+                  appliedSurfaceWithTime={optionalDateRangeUsesClockTime(
+                    toDayjs(field.value as string | Date | undefined),
+                    toDayjs(form.watch('interviewEndDate') as string | Date | undefined)
+                  )}
                   onChange={([start, end]) => {
                     field.onChange(start ? start.toISOString() : undefined)
                     form.setValue('interviewEndDate', end ? end.toISOString() : undefined)
@@ -241,7 +252,9 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                   mode="single"
                   presetMode="date"
                   customizable={false}
+                  suppressAutoTodayWhenEmpty
                   value={toDayjs(field.value)}
+                  appliedSurfaceWithTime={optionalDateUsesClockTime(toDayjs(field.value))}
                   onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                   placeholder="합격자 발표일"
                   width={190}
@@ -349,6 +362,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                     render={({ field }) => (
                       <ParagraphDatePicker inputSize="small"
                         mode="range"
+                        showTimeToggle={false}
                         value={[
                           toDayjs(field.value as string | Date | undefined),
                           toDayjs(
@@ -358,6 +372,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                               | undefined
                           ),
                         ]}
+                        appliedSurfaceWithTime={false}
                         onChange={([start, end]) => {
                           field.onChange(start ? start.toISOString() : '')
                           form.setValue(

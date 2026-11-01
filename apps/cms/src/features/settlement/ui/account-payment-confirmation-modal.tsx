@@ -210,7 +210,7 @@ export function AccountPaymentConfirmationModal({
           <CmsButton variant="secondary" size="h40" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="h40" width={140} onClick={onConfirm}>
+          <CmsButton variant="primary" size="h40" onClick={onConfirm}>
             계좌 지급 완료
           </CmsButton>
         </div>

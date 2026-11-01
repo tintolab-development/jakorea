@@ -19,7 +19,7 @@ export function ujatScheduleLineToEventRange(line: string): UjatHalfEventRangeSe
   const range = parseEducationScheduleLineToChangeRange(line)
   if (!range) return EMPTY_UJAT_HALF_EVENT_RANGE_SEAL
   return {
-    start: range[0].toISOString(),
-    end: range[1].toISOString(),
+    start: range[0].format('YYYY-MM-DD'),
+    end: range[1].format('YYYY-MM-DD'),
   }
 }

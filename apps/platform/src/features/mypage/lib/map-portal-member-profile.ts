@@ -15,10 +15,7 @@ export function mapPortalMemberToPlatformProfile(input: {
     input.me?.teacher === true ||
     memberType === 'TEACHER' ||
     instructorMemberType === 'SCHOOL_TEACHER'
-  const instructor =
-    input.profile?.instructor === true ||
-    input.me?.instructor === true ||
-    Boolean(input.profile?.instructorProfile)
+  const instructor = input.profile?.instructor === true || input.me?.instructor === true
 
   if (teacher && instructor) return 'instructor_dual'
   if (instructor) return 'instructor_only'

@@ -55,13 +55,10 @@ export function AssignmentSubmissionCellActionButton({
     <div className="assignment-submission-history-table__cell-action">
       <CmsButton
         variant="default"
-        size="medium"
-        width="100%"
-        className="assignment-submission-history-table__cell-action-btn"
+        size="medium" className="assignment-submission-history-table__cell-action-btn"
         disabled={disabled}
         loading={loading}
-        onClick={onClick}
-      >
+        onClick={onClick} >
         {children}
       </CmsButton>
     </div>

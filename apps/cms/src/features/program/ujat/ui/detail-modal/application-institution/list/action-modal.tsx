@@ -25,6 +25,7 @@ export type UjatInstitutionApplicationActionModalProps = {
   selectionCount: number
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
+  confirmLoading?: boolean
 }
 
 function getModalCopy(
@@ -49,8 +50,8 @@ function getModalCopy(
     if (variant === 'single') {
       return {
         permissionVariant: 'approve',
-        title: '기관 승인 안내',
-        message: `**[${displayName}]**의 프로그램 참여를 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`,
+        title: '프로그램 신청 승인 안내',
+        message: `**[${displayName}]**의 프로그램 신청을 승인하시겠습니까?\n승인 시 선택한 일정으로 교육이 배정되며, 담당 교사에게 승인 알림이 발송됩니다.`,
         confirmLabel: '승인',
         confirmVariant: 'primary',
         requireReason: false,
@@ -61,8 +62,8 @@ function getModalCopy(
     }
     return {
       permissionVariant: 'approve',
-      title: '기관 일괄 승인 안내',
-      message: `선택한 **${selectionCount}개**의 모든 기관의 프로그램 참여를 일괄 승인하시겠습니까?\n승인 시 담당 교사에게 승인 알림이 발송됩니다.`,
+      title: '프로그램 신청 일괄 승인 안내',
+      message: `선택한 **${selectionCount}개**의 프로그램 신청을 일괄 승인하시겠습니까?\n승인 시 선택한 일정으로 교육이 배정되며, 담당 교사에게 승인 알림이 발송됩니다.`,
       confirmLabel: '승인',
       confirmVariant: 'primary',
       requireReason: false,
@@ -83,6 +84,7 @@ export function UjatInstitutionApplicationActionModal({
   selectionCount,
   onCancel,
   onConfirm,
+  confirmLoading = false,
 }: UjatInstitutionApplicationActionModalProps) {
   if (action === 'application_reject') {
     return (
@@ -95,6 +97,7 @@ export function UjatInstitutionApplicationActionModal({
         onCancel={onCancel}
         onConfirm={onConfirm}
         notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+        confirmLoading={confirmLoading}
       />
     )
   }
@@ -116,6 +119,7 @@ export function UjatInstitutionApplicationActionModal({
       reasonPlaceholder={copy.reasonPlaceholder}
       reasonRequiredMessage={copy.reasonRequiredMessage}
       notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+      confirmLoading={confirmLoading}
     />
   )
 }

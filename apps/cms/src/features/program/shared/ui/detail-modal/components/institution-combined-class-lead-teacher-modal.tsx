@@ -69,8 +69,7 @@ export function InstitutionCombinedClassLeadTeacherModal({
             size="medium"
             type="button"
             disabled={confirmLoading}
-            onClick={close}
-          >
+            onClick={close} >
             취소
           </CmsButton>
           <CmsButton
@@ -79,8 +78,7 @@ export function InstitutionCombinedClassLeadTeacherModal({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={confirm}
-          >
+            onClick={confirm} >
             합반 처리
           </CmsButton>
         </>

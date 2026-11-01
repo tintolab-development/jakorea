@@ -36,8 +36,6 @@
 .recruitment-view
   .recruitment-view__preview-btn.cms-button.ant-btn {
   display: flex;
-  width: 140px;
-  min-width: 140px;
   height: 44px;
   min-height: 44px;
   padding: 6px 16px;

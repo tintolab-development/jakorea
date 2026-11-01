@@ -33,6 +33,10 @@ import {
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import { SponsorManagerContactsView } from '@/features/program/shared/ui/sponsor-manager-inline-view'
 import { EducationScheduleChangeTitleAction } from '@/features/program/shared/ui/education-schedule-change-title-action'
+import {
+  isEducationScheduleSelectionDateDisabled,
+  toEducationOperationDayjs,
+} from '@/features/program/shared/lib/education-schedule-change'
 import { useEducationScheduleModeLineStash } from '@/features/program/shared/lib/education-schedule-mode-lines'
 import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/general/lib/curriculum-display'
 import {
@@ -62,7 +66,9 @@ import {
   shouldDisableEducationSchedulePeriodTimeInput,
   shouldLockEducationScheduleDateMode,
   shouldLockEducationScheduleCalendarToggles,
+  PRE_EDUCATION_DISPLAY_LABEL,
   PRE_EDUCATION_SCHEDULE_LABEL,
+  toPreEducationDisplayLabel,
   type ScheduleEventPerScheduleExtraPlan,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
@@ -212,7 +218,6 @@ import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-p
 import { ItemDeleteButton } from '@/features/template/ui/shared/item-delete-button'
 import { EducationProgressScheduleDatePicker } from '@/features/template/ui/shared/education-progress-schedule-date-picker'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
-import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import '@/features/template/ui/shared/paragraph-date-picker.css'
 import '@/features/template/ui/shared/paragraph-time-picker.css'
@@ -714,10 +719,6 @@ function BasicInfoSection({
                   const start = toDayjs(field.value)
                   const end = toDayjs(endDateValue)
                   const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
-                  const operationRangeWithTime =
-                    operationRange == null
-                      ? false
-                      : dateRangeUsesClockTime(operationRange[0], operationRange[1])
 
                   return (
                     <div className="detail-info-form-inputs-wrapper-no-gap">
@@ -729,8 +730,9 @@ function BasicInfoSection({
                         width="100%"
                         placeholder="사업 운영 기간을 선택하세요"
                         preferPeriodModeInPopover
+                        showTimeToggle={false}
                         appliedSurfaceRange={operationRange}
-                        appliedSurfaceWithTime={operationRangeWithTime}
+                        appliedSurfaceWithTime={false}
                         onRangeChange={range => {
                           field.onChange(toIso(range[0]))
                           editForm.setValue('endDate', toIso(range[1]), {
@@ -2276,7 +2278,7 @@ function MultiRoundCurriculumSessionForm({
   const assignmentEnabled = editForm.watch(`curriculumSessions.${index}.assignmentEnabled`) ?? false
   const sessionIpsCategory = editForm.watch(`curriculumSessions.${index}.ipsCategory`) ?? ''
   const sessionIpsDetail = editForm.watch(`curriculumSessions.${index}.ipsDetail`) ?? ''
-  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_SCHEDULE_LABEL : session.sessionLabel
+  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : session.sessionLabel
   const classFieldLabel = isPreEducationBlock
     ? '교육 내용'
     : isFormEdit
@@ -2672,7 +2674,7 @@ function SingleRoundCurriculumSessionForm({
 }) {
   const sessionIpsCategory = editForm.watch(`curriculumSessions.${index}.ipsCategory`) ?? ''
   const sessionIpsDetail = editForm.watch(`curriculumSessions.${index}.ipsDetail`) ?? ''
-  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_SCHEDULE_LABEL : session.sessionLabel
+  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : session.sessionLabel
   return (
     <div className="program-registration-curriculum__session-block">
       {showHeading ? (
@@ -2802,7 +2804,7 @@ function CurriculumPreEducationEventEditBlock({
   return (
     <div className="program-registration-schedule-curriculum__block">
       <div className="program-registration-schedule-curriculum__session-heading">
-        ■ {PRE_EDUCATION_SCHEDULE_LABEL}
+        ■ {PRE_EDUCATION_DISPLAY_LABEL}
       </div>
       <div className="program-registration-curriculum__session-row">
         <div className="program-registration-schedule-curriculum__session-panel">
@@ -3114,8 +3116,8 @@ function CurriculumSection({
         return (
           <ScheduleEventDetailViewBlock
             key={blockKey}
-            scheduleLabel={PRE_EDUCATION_SCHEDULE_LABEL}
-            name={session.title || PRE_EDUCATION_SCHEDULE_LABEL}
+            scheduleLabel={PRE_EDUCATION_DISPLAY_LABEL}
+            name={toPreEducationDisplayLabel(session.title || PRE_EDUCATION_DISPLAY_LABEL)}
             scheduleDateLabel={session.scheduleDateLabel}
             extraPlan={eventExtraPlan}
             educationFormLabel={session.educationFormLabel}
@@ -3200,7 +3202,7 @@ function CurriculumSection({
               control={editForm.control}
               render={({ field }) => (
                 <CmsToggle
-                  label="사전 교육"
+                  label={PRE_EDUCATION_DISPLAY_LABEL}
                   checked={field.value ?? false}
                   onChange={field.onChange}
                 />
@@ -3210,11 +3212,9 @@ function CurriculumSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={180}
               disabled={curriculumChartSessionAtMax}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddSession}
-            >
+              onClick={handleAddSession} >
               {isMultiRoundCurriculum ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
             </CmsButton>
           </div>
@@ -3434,7 +3434,7 @@ function ScheduleEventDetailViewBlock({
     <div className="program-registration-schedule-curriculum__block">
       {showHeading ? (
         <div className="program-registration-schedule-curriculum__session-heading">
-          ■ {isPreEducationBlock ? PRE_EDUCATION_SCHEDULE_LABEL : scheduleLabel}
+          ■ {isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : scheduleLabel}
         </div>
       ) : null}
       <div className="program-registration-schedule-curriculum__session-panel">
@@ -3711,7 +3711,7 @@ function ScheduleEventDetailEditBlock({
   highlightScheduleNo: number
   participationMethodLocked?: boolean
 }) {
-  const headingLabel = isPreEducationBlock ? '사전 교육' : scheduleLabel
+  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : scheduleLabel
   const participantIndividual = Boolean(editForm.watch('participantIndividual'))
   const participantOrganization = Boolean(editForm.watch('participantOrganization'))
   const sessionRound = editForm.watch('sessionRound') === 'multi' ? 'multi' : 'single'
@@ -3852,7 +3852,7 @@ function ScheduleDetailEditBlock({
 }) {
   const showGroupLabel = groupCount > 1
   const isSingleRound = sessionRound === 'single'
-  const headingLabel = isPreEducationBlock ? '사전 교육' : scheduleLabel
+  const headingLabel = isPreEducationBlock ? PRE_EDUCATION_DISPLAY_LABEL : scheduleLabel
   const participantOrganization = editForm.watch('participantOrganization')
   const perScheduleEducationFormOptions = getProgramRegistrationEducationFormOptions(
     Boolean(participantOrganization),
@@ -4497,7 +4497,7 @@ function ScheduleProgressEditSection({
             control={editForm.control}
             render={({ field }) => (
               <CmsToggle
-                label="사전 교육"
+                label={PRE_EDUCATION_DISPLAY_LABEL}
                 checked={field.value ?? false}
                 onChange={field.onChange}
               />
@@ -4508,10 +4508,8 @@ function ScheduleProgressEditSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={160}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddDetail}
-            >
+              onClick={handleAddDetail} >
               강의 행사 일정 추가
             </CmsButton>
           ) : isMultiRound || !allowProgressGroupAdd ? (
@@ -4519,10 +4517,8 @@ function ScheduleProgressEditSection({
               type="button"
               variant="secondary"
               size="medium"
-              width={160}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddDetail}
-            >
+              onClick={handleAddDetail} >
               강의 세부 일정 추가
             </CmsButton>
           ) : (
@@ -4531,23 +4527,19 @@ function ScheduleProgressEditSection({
                 type="button"
                 variant="secondary"
                 size="medium"
-                width={160}
                 disabled={
                   scheduleGroupCount >= PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
                 }
                 icon={<ButtonClockIcon />}
-                onClick={handleAddGroup}
-              >
+                onClick={handleAddGroup} >
                 진행 그룹 구분 추가
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
                 size="medium"
-                width={160}
                 icon={<ButtonAddIcon aria-hidden />}
-                onClick={handleAddDetail}
-              >
+                onClick={handleAddDetail} >
                 강의 세부 일정 추가
               </CmsButton>
             </>
@@ -4764,12 +4756,12 @@ function ScheduleProgressSection({
               key={detail.scheduleLabel}
               scheduleLabel={
                 isPreEducationBlock
-                  ? PRE_EDUCATION_SCHEDULE_LABEL
+                  ? PRE_EDUCATION_DISPLAY_LABEL
                   : useEventLayout
                     ? padEventScheduleLabel(eventIndex)
                     : detail.scheduleLabel
               }
-              name={detail.name}
+              name={isPreEducationBlock ? toPreEducationDisplayLabel(detail.name) : detail.name}
               scheduleDateLabel={detail.scheduleDateLabel}
               assignmentEnabled={detail.assignmentEnabled}
               assignmentPeriod={detail.assignmentPeriod}
@@ -4839,6 +4831,11 @@ function ScheduleSettingsEditFields({
     scheduleMode,
   })
   const autoFillDatePicker = autoFillFromScheduleGroupTimes && scheduleMode === 'date'
+  // 「사업 운영 기간」(startDate~endDate) 밖 + 오늘 이전 비활성
+  const operationStartBound = toEducationOperationDayjs(form.watch('startDate'))
+  const operationEndBound = toEducationOperationDayjs(form.watch('endDate'))
+  const disableScheduleSelectionDate = (date: Dayjs) =>
+    isEducationScheduleSelectionDateDisabled(date, operationStartBound, operationEndBound)
   const previewScheduleLines = useMemo(
     () =>
       disableSchedulePeriodTime
@@ -5017,6 +5014,7 @@ function ScheduleSettingsEditFields({
               onChange={scheduleMode === 'date' ? handleDateApply : setPeriodDate}
               onRangeChange={handleScheduleRangeApply}
               width={scheduleMode === 'date' ? 240 : 360}
+              disabledDate={disableScheduleSelectionDate}
             />
           }
           view="-"
@@ -5176,15 +5174,17 @@ export function GeneralProgramDetailCommonInfoView({
     <div className="detail-common-info-view program-detail-fullpage-modal__info-tab">
       {(canWrite || isEditMode) && (
         <div className="detail-common-info-view__header">
-          <BusinessPeriodExtendToolbar program={program} editDisabled={editDisabled}>
+          <BusinessPeriodExtendToolbar
+            program={program}
+            editDisabled={editDisabled}
+            hideExtend={isEditMode} >
             <ProgramEditInfoActions
               isEditing={isEditMode}
               idleVariant="secondary"
               disabled={editDisabled}
               onEdit={onEdit ?? (() => {})}
               onCancel={onCancel ?? (() => {})}
-              onSave={onSave ?? (() => {})}
-            />
+              onSave={onSave ?? (() => {})} />
           </BusinessPeriodExtendToolbar>
         </div>
       )}

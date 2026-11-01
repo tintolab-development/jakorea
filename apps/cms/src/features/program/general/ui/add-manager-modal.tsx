@@ -1,29 +1,44 @@
 /**
  * 담당자 추가 등록 모달
  * 프로그램 상세 > 담당자 정보 탭 > 담당자 등록
- * ContentModal · 권한 설정 CmsRadio · 담당자 CmsSelect(검색)
+ * ContentModal · 권한 설정 CmsRadio · 담당자 CmsSelect
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import { forwardRef, useEffect, useMemo, useState } from 'react'
+import type { RefSelectProps } from 'antd/es/select'
 import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
-import { CmsButton, CmsRadio, CmsSelect } from '@/shared/ui'
+import { CmsButton, CmsRadio, CmsSelect, type CmsSelectProps } from '@/shared/ui'
 import { FieldSearchIcon } from '@/shared/ui/icons'
 import type { ProgramRole } from '@/types/user'
 import {
+  formatAddProgramManagerRegistrationHint,
   PROGRAM_ROLE_LABELS,
   type ProgramManagerRow,
 } from '@/features/program/general/model/program-managers'
 import {
   canAddProgramPmFromPmCount,
   canAssignProgramRoleToCmsAdmin,
-  CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE,
-  isCmsViewerAdminRole,
+  CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE,
   PROGRAM_PM_ROLE_LIMIT_MESSAGE,
 } from '@/entities/program/lib/program-pm-role-policy'
 import type { AssignableManagerCandidate } from '@/features/program/general/hooks/use-program-managers'
 import './add-manager-modal.css'
+
+/** Form.Item 연동 + 좌측 돋보기(표시만, showSearch 미사용) */
+const ManagerPresetSelect = forwardRef<RefSelectProps, CmsSelectProps>(
+  function ManagerPresetSelect(props, ref) {
+    return (
+      <div className="add-manager-modal__manager-select-shell">
+        <span className="add-manager-modal__leading-icon cms-field__icon" aria-hidden>
+          <FieldSearchIcon />
+        </span>
+        <CmsSelect ref={ref} allowClear={false} showSearch={false} {...props} />
+      </div>
+    )
+  }
+)
 
 const ROLE_OPTIONS: { label: string; value: ProgramRole }[] = [
   { label: PROGRAM_ROLE_LABELS.OWNER, value: 'OWNER' },
@@ -57,6 +72,7 @@ interface AddManagerModalProps {
   candidates?: AssignableManagerCandidate[]
   candidatesLoading?: boolean
   confirmLoading?: boolean
+  afterOpenChange?: (open: boolean) => void
   /** false 반환 시 모달을 닫지 않음 (API 실패 등) */
   onAdd: (values: AddManagerFormValues) => boolean | void | Promise<boolean | void>
 }
@@ -69,55 +85,63 @@ export function AddManagerModal({
   candidates,
   candidatesLoading = false,
   confirmLoading = false,
+  afterOpenChange,
   onAdd,
 }: AddManagerModalProps) {
   const [form] = Form.useForm<AddManagerModalFormValues>()
   const [blockMessage, setBlockMessage] = useState<string | null>(null)
+  const selectedRole = Form.useWatch('role', form)
+  const ownerSlotAvailable = canAddProgramPmFromPmCount(currentOwnerCount)
   const assignablePool = useMemo((): AssignableManagerCandidate[] => {
-    return candidates ?? []
-  }, [candidates])
+    const pool = candidates ?? []
+    if (!selectedRole) return pool
+    return pool.filter(m => canAssignProgramRoleToCmsAdmin(m.cmsRoleCode, selectedRole))
+  }, [candidates, selectedRole])
   const managerSelectOptions = useMemo(
     () =>
       assignablePool.map(m => ({
         value: m.id,
-        label: isCmsViewerAdminRole(m.cmsRoleCode) ? `${m.name} (조회 전용)` : m.name,
+        label: m.name,
       })),
     [assignablePool]
   )
   const selectedManagerId = Form.useWatch('managerPreset', form)
-  const selectedCandidate = useMemo(
-    () => assignablePool.find(m => m.id === selectedManagerId),
-    [assignablePool, selectedManagerId]
-  )
-  const viewerSelected = isCmsViewerAdminRole(selectedCandidate?.cmsRoleCode)
 
   useEffect(() => {
     if (!open) return
     form.resetFields()
-    if (!canAddProgramPmFromPmCount(currentOwnerCount)) {
+    if (!ownerSlotAvailable) {
       form.setFieldsValue({ role: 'PARTNER' })
     }
-  }, [open, form, currentOwnerCount])
+  }, [open, form, ownerSlotAvailable])
 
   useEffect(() => {
     if (!open) setBlockMessage(null)
   }, [open])
 
   useEffect(() => {
-    if (!open || !viewerSelected) return
-    form.setFieldsValue({ role: 'ASSISTANT' })
-  }, [form, open, viewerSelected])
+    if (!open || !selectedManagerId) return
+    if (assignablePool.some(m => m.id === selectedManagerId)) return
+    form.setFieldsValue({ managerPreset: undefined })
+  }, [assignablePool, form, open, selectedManagerId])
 
   const handleSubmit = async (values: AddManagerModalFormValues) => {
     const picked = assignablePool.find(m => m.id === values.managerPreset)
     if (!picked) return
 
-    if (values.role === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)) {
+    if (values.role === 'OWNER' && !ownerSlotAvailable) {
       setBlockMessage(PROGRAM_PM_ROLE_LIMIT_MESSAGE)
       return
     }
     if (!canAssignProgramRoleToCmsAdmin(picked.cmsRoleCode, values.role)) {
-      setBlockMessage(CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE)
+      const allowedRole = ROLE_OPTIONS.map(opt => opt.value).find(role =>
+        canAssignProgramRoleToCmsAdmin(picked.cmsRoleCode, role)
+      )
+      setBlockMessage(
+        allowedRole
+          ? formatAddProgramManagerRegistrationHint(allowedRole)
+          : CMS_MASTER_CANNOT_BE_PROGRAM_OWNER_MESSAGE
+      )
       return
     }
 
@@ -148,8 +172,7 @@ export function AddManagerModal({
         variant="primary"
         size="large"
         loading={confirmLoading}
-        onClick={() => form.submit()}
-      >
+        onClick={() => form.submit()} >
         추가 등록
       </CmsButton>
     </>
@@ -165,6 +188,7 @@ export function AddManagerModal({
         footer={footer}
         className="add-manager-modal"
         titleBodyGap="list-settings"
+        afterOpenChange={afterOpenChange}
       >
         <div className="add-manager-modal__body">
           <Form<AddManagerModalFormValues>
@@ -182,17 +206,13 @@ export function AddManagerModal({
               name="role"
               rules={[{ required: true, message: '권한을 선택해 주세요' }]}
               className="add-manager-modal__field"
-              extra={viewerSelected ? CMS_VIEWER_PROGRAM_ROLE_ONLY_MESSAGE : undefined}
             >
               <CmsRadio.Group label="권한 설정" required size="large">
                 {ROLE_OPTIONS.map(opt => (
                   <CmsRadio
                     key={opt.value}
                     value={opt.value}
-                    disabled={
-                      (opt.value === 'OWNER' && !canAddProgramPmFromPmCount(currentOwnerCount)) ||
-                      (viewerSelected && opt.value !== 'ASSISTANT')
-                    }
+                    disabled={opt.value === 'OWNER' && !ownerSlotAvailable}
                   >
                     {opt.label}
                   </CmsRadio>
@@ -203,23 +223,16 @@ export function AddManagerModal({
             <Form.Item
               name="managerPreset"
               rules={[{ required: true, message: '추가 등록할 담당자를 선택해 주세요' }]}
-              className="add-manager-modal__field"
+              className="add-manager-modal__field add-manager-modal__field--manager-select"
             >
-              <CmsSelect
+              <ManagerPresetSelect
                 label="담당자 추가"
                 required
                 inputSize="large"
                 placeholder="추가 등록할 담당자를 선택해 주세요"
                 width="100%"
                 withAllOption={false}
-                showSearch
-                optionFilterProp="label"
                 loading={candidatesLoading}
-                suffixIcon={
-                  <span className="cms-field__icon" aria-hidden>
-                    <FieldSearchIcon />
-                  </span>
-                }
                 options={managerSelectOptions}
                 notFoundContent={
                   assignablePool.length === 0 && !candidatesLoading

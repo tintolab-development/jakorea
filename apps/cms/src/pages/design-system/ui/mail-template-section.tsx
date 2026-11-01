@@ -54,8 +54,7 @@ export function MailTemplateSection() {
           onClick={() => {
             setFormMode('create')
             setFormOpen(true)
-          }}
-        >
+          }} >
           템플릿 등록 열기
         </CmsButton>
       </DsDemo>
@@ -67,8 +66,7 @@ export function MailTemplateSection() {
           onClick={() => {
             setFormMode('edit')
             setFormOpen(true)
-          }}
-        >
+          }} >
           템플릿 수정 열기
         </CmsButton>
       </DsDemo>
@@ -77,8 +75,7 @@ export function MailTemplateSection() {
           variant="secondary"
           size="large"
           type="button"
-          onClick={() => setPreviewOpen(true)}
-        >
+          onClick={() => setPreviewOpen(true)} >
           메일 미리보기 열기
         </CmsButton>
       </DsDemo>

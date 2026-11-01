@@ -1,6 +1,9 @@
 import { Fragment } from 'react'
 import { formatCmsScheduleKoreanDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
-import { canRemoveEducationSchedulePreviewLine } from '@/features/template/lib/format-education-schedule-line'
+import {
+  canRemoveEducationSchedulePreviewLine,
+  chronologicalEducationScheduleLineIndexes,
+} from '@/features/template/lib/format-education-schedule-line'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import './education-schedule-preview-lines.css'
 
@@ -31,7 +34,11 @@ export type EducationSchedulePreviewLinesProps = {
   lockStartedLines?: boolean
 }
 
-/** 교육 진행 예정일 목록 — 구분선 + 텍스트 + (선택) X */
+/**
+ * 교육 진행 예정일 목록 — 구분선 + 텍스트 + (선택) X
+ * 표시는 날짜 → 시각 오름차순(설정 중 새 일정을 추가해도 시간순 자리로 간다).
+ * 저장 배열 순서는 그대로 두고, X는 원래 인덱스로 `onRemove`에 넘긴다.
+ */
 export function EducationSchedulePreviewLines({
   lines,
   onRemove,
@@ -48,11 +55,12 @@ export function EducationSchedulePreviewLines({
 
   return (
     <div className="education-schedule-preview-lines">
-      {lines.map((line, index) => {
+      {chronologicalEducationScheduleLineIndexes(lines).map((index, position) => {
+        const line = lines[index] ?? ''
         const displayLine = formatCmsScheduleKoreanDisplayLabel(line)
         return (
           <Fragment key={`${line}-${index}`}>
-            {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
+            {position > 0 ? <DetailInfoForm.InputsSeparator /> : null}
             <span className="education-schedule-preview-lines__item">
               <span className="detail-info-form--text nowrap">{displayLine}</span>
               {editable &&

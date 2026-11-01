@@ -3,7 +3,9 @@ import {
   buildGradeOptionsForInstitution,
   collectScheduleAssignPendingInstitutionNames,
   computeVolunteerEducationDays,
+  formatVolunteerEducationDays,
   isScheduleAssignBlockedInstitution,
+  isScheduleAssignEstimationInputsEntered,
   listAssignableSchoolsForDate,
 } from './utils'
 import type { UjatInstitutionApplicationRow } from '../list/types'
@@ -99,9 +101,28 @@ describe('computeVolunteerEducationDays', () => {
     expect(computeVolunteerEducationDays(Number.NaN, 3)).toBeNull()
   })
 
-  it('입력값이 0이면 계산하지 않고, 모두 있으면 일수를 반올림한다', () => {
+  it('필수 미입력·봉사단 0명이면 계산하지 않고, BE와 같이 소수 나눗셈한다', () => {
+    expect(computeVolunteerEducationDays(10, 3, false)).toBeNull()
     expect(computeVolunteerEducationDays(10, 0)).toBeNull()
-    expect(computeVolunteerEducationDays(0, 3)).toBeNull()
-    expect(computeVolunteerEducationDays(10, 3)).toBe(7)
+    expect(computeVolunteerEducationDays(0, 3)).toBe(0)
+    expect(computeVolunteerEducationDays(10, 3)).toBeCloseTo(20 / 3)
+    expect(computeVolunteerEducationDays(6, 3222)).toBeCloseTo(12 / 3222)
+  })
+})
+
+describe('formatVolunteerEducationDays', () => {
+  it('미계산은 -로, 양수 소수점은 0으로 바꾸지 않는다', () => {
+    expect(formatVolunteerEducationDays(null)).toBe('-')
+    expect(formatVolunteerEducationDays(0)).toBe('0')
+    expect(formatVolunteerEducationDays(12 / 3222)).not.toBe('0')
+    expect(formatVolunteerEducationDays(12 / 3222)).toContain('0.003')
+  })
+})
+
+describe('isScheduleAssignEstimationInputsEntered', () => {
+  it('1일 최대·봉사단 수가 모두 있을 때만 true', () => {
+    expect(isScheduleAssignEstimationInputsEntered('', '3')).toBe(false)
+    expect(isScheduleAssignEstimationInputsEntered('2', '')).toBe(false)
+    expect(isScheduleAssignEstimationInputsEntered('2', '0')).toBe(true)
   })
 })

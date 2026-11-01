@@ -37,6 +37,7 @@ import {
 } from '@/shared/ui'
 import { NoticePinnedIcon } from '@/features/posts/ui/notice-pinned-icon'
 import { CategoryManagementModal } from '@/features/posts/ui/category-management-modal'
+import { selectedPostRowKeysToBulkIds } from '@/features/posts/lib/posts-bulk-delete-ids'
 import { resolvePostsDeleteConfirmCopy } from '@/features/posts/lib/posts-delete-confirm-copy'
 import { NoticeDeleteConfirmModal } from '@/features/posts/ui/notice-delete-confirm-modal'
 import { NoticeFormModal } from '@/features/posts/ui/notice-form-modal'
@@ -152,7 +153,7 @@ export function AdminNoticeListPage() {
   }, [canWrite, selectedRowKeys.length, showAlert])
 
   const handleConfirmBulkDelete = useCallback(async () => {
-    const ids = selectedRowKeys.map(k => String(k))
+    const ids = selectedPostRowKeysToBulkIds(selectedRowKeys, tableData)
     if (ids.length === 0) {
       setBulkDeleteConfirmOpen(false)
       return
@@ -167,7 +168,7 @@ export function AdminNoticeListPage() {
       setActionResultMessage(getPostsApiErrorMessage(error, '삭제에 실패했습니다.'))
       setActionResultOpen(true)
     }
-  }, [bulkDeleteMutation, selectedRowKeys])
+  }, [bulkDeleteMutation, selectedRowKeys, tableData])
 
   const handleRegister = useCallback(() => {
     if (!canWrite) return
@@ -327,8 +328,7 @@ export function AdminNoticeListPage() {
           <>
             <FilterTableToolbarButton
               variant="delete"
-              onClick={handleBulkDelete}
-            >
+              onClick={handleBulkDelete} >
               공지사항 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton variant="secondary" onClick={() => setCategoryModalOpen(true)}>

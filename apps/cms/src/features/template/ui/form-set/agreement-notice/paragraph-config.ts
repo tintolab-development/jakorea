@@ -8,7 +8,7 @@ export const AGREEMENT_NOTICE_PARAGRAPH_BODY_OPTIONS = {
   /** confirmationClosing에 날짜·성명 합침 — systemDate/systemSignature 숨김 */
   hiddenParagraphIds: getAgreementNoticeAdminProxyHiddenIds(),
   /** 템플릿 authoring 미리보기용 샘플 이름 (회원 fill에서는 participantName으로 덮어씀) */
-  agreementSystemParticipantName: '홍길동',
+  agreementSystemParticipantName: '이름예시',
   structureLockedAuthoringChoicePreview: true,
   /** A4 미리보기 전용 스코프 — 작성 화면 대리동의 카드는 유지 */
   documentPreviewClassName: AGREEMENT_NOTICE_A4_PREVIEW_BODY_CLASS_NAME,

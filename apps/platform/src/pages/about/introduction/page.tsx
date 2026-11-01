@@ -4,7 +4,7 @@ import {
   IntroductionScroll,
   usePublicOrganization,
 } from '@/features/introduction'
-import { PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PFButton, PFText, PublicContentPageLoading, PublicContentPageStatus } from '@/shared/ui'
 import styles from './page.module.css'
 
 export function IntroductionPage() {
@@ -12,8 +12,8 @@ export function IntroductionPage() {
 
   if (isPending) {
     return (
-      <div className={[styles.page, styles.pageFill].join(' ')}>
-        <PFLoadingSpinner centered label="기관소개 정보를 불러오는 중" />
+      <div className={styles.page}>
+        <PublicContentPageLoading label="기관소개 정보를 불러오는 중" />
       </div>
     )
   }
@@ -21,14 +21,14 @@ export function IntroductionPage() {
   if (isError) {
     return (
       <div className={styles.page}>
-        <div className={styles.status}>
+        <PublicContentPageStatus>
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             기관소개 정보를 불러오지 못했습니다.
           </PFText>
           <PFButton variant="tertiary" size="large" onClick={refetch}>
             다시 시도
           </PFButton>
-        </div>
+        </PublicContentPageStatus>
       </div>
     )
   }
@@ -36,9 +36,11 @@ export function IntroductionPage() {
   if (view == null) {
     return (
       <div className={styles.page}>
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.status}>
-          등록된 정보가 없습니다.
-        </PFText>
+        <PublicContentPageStatus>
+          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+            등록된 정보가 없습니다.
+          </PFText>
+        </PublicContentPageStatus>
       </div>
     )
   }

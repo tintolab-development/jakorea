@@ -163,6 +163,22 @@ function isTeacherDevProfile(profile: PlatformMemberProfile) {
 export function getMockInstructorApplyLockedBasic(
   profile: PlatformMemberProfile = getDevMemberProfile(),
 ): InstructorApplyLockedBasicInfo {
+  if (!import.meta.env.DEV) {
+    return {
+      name: '',
+      gender: 'male',
+      birthDate: '',
+      contact: '',
+      email: '',
+      homeAddress: '',
+      homeAddressDetail: '',
+      memberType: 'general',
+      schoolName: '',
+      employmentStatus: '',
+      affiliationName: '',
+      affiliationNone: false,
+    }
+  }
   const teacher = isTeacherDevProfile(profile)
   return {
     name: MOCK_MYPAGE_USER_NAME || MOCK_VERIFIED_NAME,

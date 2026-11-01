@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Space, Empty } from 'antd'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type { Program } from '@/types/domain'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert, type CmsButtonVariant } from '@/shared/ui'
+import { CmsButton, useCmsAlert, type CmsButtonVariant } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES } from '@/shared/constants/messages'
 import { type ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
@@ -42,8 +42,13 @@ import {
 } from '@/features/program/shared/lib/application-available-actions'
 import { resolveVolunteerInterview2CancelPassButtonLabel } from '@/features/program/general/lib/volunteer-interview2-cancel-pass'
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
-import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import {
+  shouldUseGeneralApplicationsRemoteApi,
+  shouldUseOrganizationApplicationRemoteApi,
+} from '@/features/program/general/api/applications-remote-capabilities'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import { saveIndividualApplicationAdminCommentRemote } from '@/features/program/general/api/individual-application-update-helpers'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import {
@@ -60,7 +65,6 @@ import {
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import {
-  patchGeneralIndividualApplicantDetail,
   patchGeneralIndividualApplicantManagerEvaluation,
   type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
@@ -84,7 +88,8 @@ import './applicants-detail-contents.css'
 import {
   PROGRAM_EDIT_INFO_BUTTON_LABEL,
   PROGRAM_EDIT_INFO_BUTTON_PROPS,
-  resolveProgramEditInfoClick,
+  PROGRAM_EDIT_INFO_CANCEL_LABEL,
+  PROGRAM_EDIT_INFO_SAVE_LABEL,
 } from '@/features/program/shared/lib/program-edit-info-button'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -135,11 +140,11 @@ type ApplicantHeaderActionItem = {
   variant: CmsButtonVariant
   label: string
   disabled?: boolean
+  loading?: boolean
   title?: string
   onClick?: () => void
   /** 기본 `filter` — 개인정보 상세보기 등은 `filter-wide` */
   size?: 'filter' | 'filter-wide'
-  width?: number
 }
 
 function ApplicantHeaderActionsExtra({
@@ -161,19 +166,15 @@ function ApplicantHeaderActionsExtra({
             revealed={personalInfoRevealed}
             cmsVariant={a.variant}
             cmsSize="large"
-            width={a.width ?? (a.size === 'filter-wide' ? 180 : CMS_ACTION_BUTTON_WIDTH)}
             disabled={a.disabled || programPrivacyPending}
-            onClick={a.onClick ?? (() => {})}
-          />
+            onClick={a.onClick ?? (() => {})} />
         ) : a.key === 'edit-info' ? (
           <CmsButton
             key={a.key}
             {...PROGRAM_EDIT_INFO_BUTTON_PROPS}
-            className="cms-button--action"
             disabled={a.disabled}
             title={a.title}
-            onClick={a.onClick}
-          >
+            onClick={a.onClick} >
             {a.label}
           </CmsButton>
         ) : (
@@ -181,12 +182,10 @@ function ApplicantHeaderActionsExtra({
             key={a.key}
             variant={a.variant}
             size="large"
-            className="cms-button--action"
-            width={a.width ?? (a.size === 'filter-wide' ? 180 : CMS_ACTION_BUTTON_WIDTH)}
             disabled={a.disabled}
+            loading={a.loading}
             title={a.title}
-            onClick={a.onClick}
-          >
+            onClick={a.onClick} >
             {a.label}
           </CmsButton>
         )
@@ -215,32 +214,49 @@ function headerBtnCancelApproval(
     key: 'cancel-approval',
     variant: 'delete',
     label: '승인 취소',
-    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: cancelApprovalState.disabled,
     title: cancelApprovalState.reason ?? undefined,
     onClick: cancelApprovalState.disabled ? undefined : () => onCancelApproval?.(applicantId),
   }
 }
 
-function headerBtnEditInfo(
-  onEnterEdit: () => void,
-  onSaveEdit: () => void,
-  isEditing: boolean,
-  disabled = false
-): ApplicantHeaderActionItem {
+function headerBtnEditInfo(onEnterEdit: () => void, disabled = false): ApplicantHeaderActionItem {
   return {
     key: 'edit-info',
     variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: PROGRAM_EDIT_INFO_BUTTON_PROPS.width,
     disabled,
-    onClick: disabled
-      ? undefined
-      : resolveProgramEditInfoClick(isEditing, {
-          onEnterEdit,
-          onSaveEdit,
-        }),
+    onClick: disabled ? undefined : onEnterEdit,
   }
+}
+
+function headerBtnCancelEdit(onCancel: () => void, saving = false): ApplicantHeaderActionItem {
+  return {
+    key: 'cancel-edit',
+    variant: 'secondary',
+    label: PROGRAM_EDIT_INFO_CANCEL_LABEL,
+    disabled: saving,
+    onClick: saving ? undefined : onCancel,
+  }
+}
+
+function headerBtnSaveEdit(onSave: () => void, saving = false): ApplicantHeaderActionItem {
+  return {
+    key: 'save-edit',
+    variant: 'primary',
+    label: PROGRAM_EDIT_INFO_SAVE_LABEL,
+    loading: saving,
+    disabled: saving,
+    onClick: saving ? undefined : onSave,
+  }
+}
+
+function headerEditModeActions(
+  onCancel: () => void,
+  onSave: () => void,
+  saving = false
+): ApplicantHeaderActionItem[] {
+  return [headerBtnCancelEdit(onCancel, saving), headerBtnSaveEdit(onSave, saving)]
 }
 
 function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
@@ -248,7 +264,6 @@ function headerBtnEditInfoDisabled(): ApplicantHeaderActionItem {
     key: 'edit-info',
     variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: PROGRAM_EDIT_INFO_BUTTON_PROPS.width,
     disabled: true,
   }
 }
@@ -258,7 +273,6 @@ function headerBtnEditInfoPreparing(): ApplicantHeaderActionItem {
     key: 'edit-info',
     variant: PROGRAM_EDIT_INFO_BUTTON_PROPS.variant,
     label: PROGRAM_EDIT_INFO_BUTTON_LABEL,
-    width: PROGRAM_EDIT_INFO_BUTTON_PROPS.width,
     onClick: () => window.alert('준비중'),
   }
 }
@@ -268,7 +282,6 @@ function headerBtnWriteComment(onClick: () => void, disabled = false): Applicant
     key: 'write-comment',
     variant: 'primary',
     label: '코멘트 작성',
-    width: CMS_ACTION_BUTTON_WIDTH,
     disabled,
     onClick: disabled ? undefined : onClick,
   }
@@ -282,7 +295,6 @@ function headerBtnCancelReject(
     key: 'cancel-reject',
     variant: 'delete',
     label: '반려 취소',
-    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: !onCancelReject,
     onClick: () => onCancelReject?.(applicantId),
   }
@@ -297,7 +309,6 @@ function headerBtnCancelFinalPass(
     key: 'cancel-final-pass',
     variant: 'delete',
     label,
-    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: !onCancelFinalPass,
     onClick: () => onCancelFinalPass?.(applicantId),
   }
@@ -311,7 +322,6 @@ function headerBtnCancelFinalFail(
     key: 'cancel-final-fail',
     variant: 'delete',
     label: '불합격 취소',
-    width: CMS_ACTION_BUTTON_WIDTH,
     disabled: !onCancelFinalFail,
     onClick: () => onCancelFinalFail?.(applicantId),
   }
@@ -330,7 +340,6 @@ function headerBtnsPendingParticipation(
       key: 'reject',
       variant: 'delete',
       label: '참여 반려',
-      width: CMS_ACTION_BUTTON_WIDTH,
       onClick: () => onReject(applicantId),
     })
   }
@@ -339,7 +348,6 @@ function headerBtnsPendingParticipation(
       key: 'approve',
       variant: 'secondary',
       label: '참여 승인',
-      width: CMS_ACTION_BUTTON_WIDTH,
       onClick: () => onApprove(applicantId),
     })
   }
@@ -368,16 +376,22 @@ function resolveApplicantHeaderItems(params: {
   cancelApprovalState: { disabled: boolean; reason: string | null }
   isGeneralInstitutionEditEnabled?: boolean
   isEditingInstitutionDetail?: boolean
+  isSavingInstitutionDetail?: boolean
   onEnterInstitutionEdit?: () => void
   onSaveInstitutionEdit?: () => void
+  onCancelInstitutionEdit?: () => void
   isGeneralIndividualEditEnabled?: boolean
   isEditingIndividualDetail?: boolean
+  isSavingIndividualDetail?: boolean
   onEnterIndividualEdit?: () => void
   onSaveIndividualEdit?: () => void
+  onCancelIndividualEdit?: () => void
   isGeneralInstructorEditEnabled?: boolean
   isEditingInstructorDetail?: boolean
+  isSavingInstructorDetail?: boolean
   onEnterInstructorEdit?: () => void
   onSaveInstructorEdit?: () => void
+  onCancelInstructorEdit?: () => void
   isAdminCommentWriteEnabled?: boolean
   onEnterAdminCommentEdit?: () => void
   individualAvailableActions?: string[]
@@ -408,16 +422,21 @@ function resolveApplicantHeaderItems(params: {
     cancelApprovalState,
     isGeneralInstitutionEditEnabled = false,
     isEditingInstitutionDetail = false,
+    isSavingInstitutionDetail = false,
     onEnterInstitutionEdit,
     onSaveInstitutionEdit,
+    onCancelInstitutionEdit,
     isGeneralIndividualEditEnabled = false,
     isEditingIndividualDetail = false,
+    isSavingIndividualDetail = false,
     onEnterIndividualEdit,
     onSaveIndividualEdit,
+    onCancelIndividualEdit,
     isGeneralInstructorEditEnabled = false,
     isEditingInstructorDetail = false,
     onEnterInstructorEdit,
     onSaveInstructorEdit,
+    onCancelInstructorEdit,
     isAdminCommentWriteEnabled = false,
     onEnterAdminCommentEdit,
     individualAvailableActions,
@@ -433,13 +452,17 @@ function resolveApplicantHeaderItems(params: {
   }
 
   if (isApprovedInstitution) {
+    if (isEditingInstitutionDetail && onCancelInstitutionEdit && onSaveInstitutionEdit) {
+      return headerEditModeActions(
+        onCancelInstitutionEdit,
+        onSaveInstitutionEdit,
+        isSavingInstitutionDetail
+      )
+    }
+
     const editButton =
-      isGeneralInstitutionEditEnabled && onEnterInstitutionEdit && onSaveInstitutionEdit
-        ? headerBtnEditInfo(
-            onEnterInstitutionEdit,
-            onSaveInstitutionEdit,
-            isEditingInstitutionDetail
-          )
+      isGeneralInstitutionEditEnabled && onEnterInstitutionEdit
+        ? headerBtnEditInfo(onEnterInstitutionEdit)
         : headerBtnEditInfoDisabled()
 
     const items: ApplicantHeaderActionItem[] = []
@@ -461,6 +484,14 @@ function resolveApplicantHeaderItems(params: {
   }
 
   if (isApprovedIndividual) {
+    if (isEditingIndividualDetail && onCancelIndividualEdit && onSaveIndividualEdit) {
+      return headerEditModeActions(
+        onCancelIndividualEdit,
+        onSaveIndividualEdit,
+        isSavingIndividualDetail
+      )
+    }
+
     const items: ApplicantHeaderActionItem[] = []
 
     if (onCancelApproval && individualAvailableActions?.includes('CANCEL_APPROVAL')) {
@@ -482,10 +513,8 @@ function resolveApplicantHeaderItems(params: {
       )
     }
 
-    if (isGeneralIndividualEditEnabled && onEnterIndividualEdit && onSaveIndividualEdit) {
-      items.push(
-        headerBtnEditInfo(onEnterIndividualEdit, onSaveIndividualEdit, isEditingIndividualDetail)
-      )
+    if (isGeneralIndividualEditEnabled && onEnterIndividualEdit) {
+      items.push(headerBtnEditInfo(onEnterIndividualEdit))
     }
 
     if (isAdminCommentWriteEnabled && onEnterAdminCommentEdit) {
@@ -496,13 +525,13 @@ function resolveApplicantHeaderItems(params: {
     return items
   }
   if (isApprovedInstructor) {
+    if (isEditingInstructorDetail && onCancelInstructorEdit && onSaveInstructorEdit) {
+      return headerEditModeActions(onCancelInstructorEdit, onSaveInstructorEdit)
+    }
+
     const editButton =
-      isGeneralInstructorEditEnabled && onEnterInstructorEdit && onSaveInstructorEdit
-        ? headerBtnEditInfo(
-            onEnterInstructorEdit,
-            onSaveInstructorEdit,
-            isEditingInstructorDetail
-          )
+      isGeneralInstructorEditEnabled && onEnterInstructorEdit
+        ? headerBtnEditInfo(onEnterInstructorEdit)
         : headerBtnEditInfoPreparing()
 
     const items: ApplicantHeaderActionItem[] = []
@@ -588,7 +617,7 @@ interface ApplicantsDetailContentsProps {
   onSaveIndividualDetail?: (
     payload: GeneralIndividualApplicantDetailSavePayload
   ) => Promise<GeneralIndividualApplicantRow | null>
-  /** 일반 프로그램 개인 신청 관리자 코멘트 원격 저장. 미지정 시 기존 mock 저장 */
+  /** 일반 프로그램 개인 신청 관리자 코멘트 원격 저장. 미지정 시 내장 PATCH individual-applications */
   onSaveIndividualAdminComment?: (
     managerComment: string
   ) => Promise<GeneralIndividualApplicantRow | null>
@@ -959,18 +988,26 @@ export function ApplicantsDetailContents({
       setIsIndividualAdminCommentModalOpen(false)
       return
     }
-    const updated = patchGeneralIndividualApplicantDetail(individualData.id, {
-      adminComment: individualAdminCommentDraft,
-    })
-    if (!updated) {
+    if (!shouldUseGeneralApplicationsRemoteApi()) {
       void showAlert({
-        title: '안내',
-        content: MESSAGES.error.save,
+        title: PROGRAM_API_UNAVAILABLE_TITLE,
+        content: buildProgramApiUnavailableSaveContent('개인 신청 관리자 코멘트'),
       })
       return
     }
-    onIndividualDetailSaved?.(updated)
-    setIsIndividualAdminCommentModalOpen(false)
+    try {
+      const updated = await saveIndividualApplicationAdminCommentRemote(
+        individualData,
+        individualAdminCommentDraft
+      )
+      onIndividualDetailSaved?.(updated)
+      setIsIndividualAdminCommentModalOpen(false)
+    } catch (error) {
+      void showAlert({
+        title: '안내',
+        content: getGeneralProgramApiErrorMessage(error, MESSAGES.error.save),
+      })
+    }
   }, [
     individualAdminCommentDraft,
     individualData,
@@ -1415,7 +1452,9 @@ export function ApplicantsDetailContents({
       cancelApprovalState,
       isGeneralInstitutionEditEnabled,
       isEditingInstitutionDetail: institutionDetailEdit.isEditing,
+      isSavingInstitutionDetail: institutionDetailEdit.isSaving,
       onEnterInstitutionEdit: institutionDetailEdit.enterEdit,
+      onCancelInstitutionEdit: institutionDetailEdit.cancelEdit,
       onSaveInstitutionEdit: () => {
         void institutionDetailEdit.saveEdit().then(result => {
           if (result === COMBINED_CLASS_GRADE_REQUIRED_SAVE_RESULT) {
@@ -1425,13 +1464,16 @@ export function ApplicantsDetailContents({
       },
       isGeneralIndividualEditEnabled,
       isEditingIndividualDetail: individualDetailEdit.isEditing,
+      isSavingIndividualDetail: individualDetailEdit.isSaving,
       onEnterIndividualEdit: requestStartIndividualEdit,
+      onCancelIndividualEdit: individualDetailEdit.cancelEdit,
       onSaveIndividualEdit: () => {
         individualDetailEdit.saveEdit()
       },
       isGeneralInstructorEditEnabled,
       isEditingInstructorDetail: instructorDetailEdit.isEditing,
       onEnterInstructorEdit: instructorDetailEdit.enterEdit,
+      onCancelInstructorEdit: instructorDetailEdit.cancelEdit,
       onSaveInstructorEdit: () => {
         instructorDetailEdit.saveEdit()
       },
@@ -1465,13 +1507,18 @@ export function ApplicantsDetailContents({
     applicantId,
     isApprovedInstitution,
     institutionDetailEdit.enterEdit,
+    institutionDetailEdit.cancelEdit,
     institutionDetailEdit.isEditing,
+    institutionDetailEdit.isSaving,
     institutionDetailEdit.saveEdit,
     combinedClassProcess.openGradeRequiredAlert,
     individualDetailEdit.isEditing,
+    individualDetailEdit.isSaving,
+    individualDetailEdit.cancelEdit,
     individualDetailEdit.saveEdit,
     requestStartIndividualEdit,
     instructorDetailEdit.enterEdit,
+    instructorDetailEdit.cancelEdit,
     instructorDetailEdit.isEditing,
     instructorDetailEdit.saveEdit,
     isGeneralInstitutionEditEnabled,

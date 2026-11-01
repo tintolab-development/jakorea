@@ -152,6 +152,20 @@ describe('resolvePublishedSurveyBinding', () => {
     expect(publishFormTemplateVersionById).not.toHaveBeenCalled()
   })
 
+  it('selects the newest published version for a new program binding', async () => {
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 99, templateVersionId: 200 })
+    fetchFormTemplateVersionsRemote.mockResolvedValue([
+      { templateVersionId: 100, versionNo: 1, versionStatus: 'ARCHIVED' },
+      { templateVersionId: 200, versionNo: 4, versionStatus: 'PUBLISHED' },
+    ])
+
+    await expect(resolvePublishedSurveyBinding('survey-default')).resolves.toEqual({
+      ok: true,
+      templateId: 99,
+      templateVersionId: 200,
+    })
+  })
+
   it('does not publish a catalog draft from the program flow (shared data guard)', async () => {
     upsertFormTemplateVersionCacheEntry({
       templateCode: 'survey-student',

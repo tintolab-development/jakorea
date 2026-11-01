@@ -5,26 +5,12 @@
   position: relative;
 }
 
-.ujat-lecture-eval-survey__submit-trailing.cms-button.ant-btn.cms-button--h44,
 .ujat-lecture-eval-survey__download-trailing.cms-button.ant-btn.cms-button--h44 {
-  min-width: 180px;
-}
-
-.ujat-lecture-eval-survey__download-trailing.cms-button.ant-btn.cms-button--no-label-ellipsis {
-  width: max-content !important;
-  min-width: fit-content;
-  max-width: none;
   height: 44px;
   flex-shrink: 0;
   padding: 6px 16px 6px 10px !important;
   align-items: center !important;
   justify-content: center !important;
-}
-
-.ujat-lecture-eval-survey__download-trailing.cms-button .cms-button__label {
-  overflow: visible;
-  text-overflow: unset;
-  max-width: none;
 }
 
 .ujat-lecture-eval-survey__results {
@@ -74,10 +60,6 @@
   font-weight: 400;
   line-height: 140%;
   opacity: 0.7;
-}
-
-.ujat-survey-pre-start-state .ujat-survey-pre-start-state__preview-button.cms-button.ant-btn.cms-button--h44 {
-  min-width: 180px;
 }
 
 .ujat-survey-pre-start-state,
@@ -133,9 +115,6 @@
   white-space: pre-line;
 }
 
-.ujat-survey-submitted-state__edit-button.cms-button.ant-btn.cms-button--h44 {
-  min-width: 180px;
-}
 
 /* 강의평가 제출 완료 — Figma 탭 하위 페이지 */
 .ujat-lecture-eval-survey .ujat-survey-submitted-state.ujat-lecture-eval-submitted {
@@ -212,9 +191,7 @@
   .ujat-lecture-eval-submitted
   .ujat-survey-submitted-state__edit-button.cms-button.ant-btn {
   display: flex;
-  width: 180px;
   height: 44px;
-  min-width: 180px;
   min-height: 44px;
   margin-top: 28px;
   padding: 0;

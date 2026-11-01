@@ -313,20 +313,16 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
           {viewMode === 'list' ? (
             <CmsButton
               variant="secondary"
-              size="medium"
-              className="settlement-tab__btn-view-toggle"
-              onClick={() => setViewMode('calendar')}
-            >
+              size="medium" className="settlement-tab__btn-view-toggle"
+              onClick={() => setViewMode('calendar')} >
               <CalendarOutlined style={{ marginRight: 4 }} />
               캘린더 뷰로 보기
             </CmsButton>
           ) : (
             <CmsButton
               variant="secondary"
-              size="medium"
-              className="settlement-tab__btn-view-toggle"
-              onClick={() => setViewMode('list')}
-            >
+              size="medium" className="settlement-tab__btn-view-toggle"
+              onClick={() => setViewMode('list')} >
               <UnorderedListOutlined style={{ marginRight: 4 }} />
               리스트 뷰로 보기
             </CmsButton>

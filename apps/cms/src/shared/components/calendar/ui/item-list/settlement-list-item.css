@@ -16,7 +16,7 @@
 
 .settlement-list-item-list .settlement-list-item:hover,
 .settlement-list-item-list .settlement-list-item--selected:hover {
-  border: 2px solid var(--JA-mint-01, #01a1af) !important;
+  border: 2px solid #00a0af !important;
   background: var(--default-WT, #fff) !important;
   box-shadow: none;
 }

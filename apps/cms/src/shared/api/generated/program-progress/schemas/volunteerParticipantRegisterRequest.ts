@@ -5,28 +5,46 @@
  * Filtered for CMS general program progress Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { FreeTextItemsRequest } from './freeTextItemsRequest';
-import type { PreviousJaProgramRequest } from './previousJaProgramRequest';
+import type { VolunteerFreeTextItemsRequest } from './volunteerFreeTextItemsRequest';
+import type { VolunteerParticipantRegisterRequestApplicationType } from './volunteerParticipantRegisterRequestApplicationType';
 import type { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from './volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest';
 import type { VolunteerParticipantRegisterRequestPersonalInfoConsent } from './volunteerParticipantRegisterRequestPersonalInfoConsent';
 import type { VolunteerParticipantRegisterRequestRegistrationChannel } from './volunteerParticipantRegisterRequestRegistrationChannel';
 import type { VolunteerParticipantRegisterRequestThirdPartyConsent } from './volunteerParticipantRegisterRequestThirdPartyConsent';
 import type { VolunteerParticipantRegisterRequestVolunteerKind } from './volunteerParticipantRegisterRequestVolunteerKind';
+import type { VolunteerPreviousJaProgramRequest } from './volunteerPreviousJaProgramRequest';
+import type { VolunteerPreviousUjatTermRequest } from './volunteerPreviousUjatTermRequest';
 
 export interface VolunteerParticipantRegisterRequest {
   memberId: number;
   volunteerKind?: VolunteerParticipantRegisterRequestVolunteerKind;
+  /** @nullable */
   registrationChannel?: VolunteerParticipantRegisterRequestRegistrationChannel;
-  /** @minLength 1 */
   personalInfoConsent: VolunteerParticipantRegisterRequestPersonalInfoConsent;
-  /** @minLength 1 */
   thirdPartyConsent: VolunteerParticipantRegisterRequestThirdPartyConsent;
-  /** 회원에 1365 ID가 없을 때만 */
+  /**
+     * 제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. 일반(GENERAL*) 프로그램 CMS_PROGRESS_ADD에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).
+     * @minLength 0
+     * @maxLength 200
+     */
+  thirdPartyRecipient?: string | null;
+  /**
+     * 회원에 1365가 없을 때만 필수. 있으면 회원 1365 식별자에 저장하고 consent-records는 덮어쓰지 않습니다.
+     * @nullable
+     */
   id1365?: string | null;
-  /** @minLength 1 */
+  /** 일반 프로그램은 JA 진행 경험. UJAT는 교육 진행 경험 여부이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다. */
   jaProgramExperienceConsentRequest: VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest;
-  previousJaProgram?: PreviousJaProgramRequest;
-  freeTextItems?: FreeTextItemsRequest;
+  previousJaProgram?: VolunteerPreviousJaProgramRequest;
+  previousUjatTerm?: VolunteerPreviousUjatTermRequest;
+  /**
+     * UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null.
+     * @nullable
+     */
+  educationRegionCode?: string | null;
+  /** @nullable */
+  applicationType?: VolunteerParticipantRegisterRequestApplicationType;
+  freeTextItems?: VolunteerFreeTextItemsRequest;
   /**
      * @minLength 5
      * @maxLength 500

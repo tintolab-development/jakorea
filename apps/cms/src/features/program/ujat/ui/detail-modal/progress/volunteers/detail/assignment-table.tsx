@@ -37,10 +37,8 @@ function renderPlanLogViewButton(
         type="button"
         variant="default"
         size="medium"
-        width={140}
         disabled={!enabled}
-        onClick={enabled ? onView : undefined}
-      >
+        onClick={enabled ? onView : undefined} >
         {label}
       </CmsButton>
     </div>
@@ -89,6 +87,9 @@ function renderAttendance(attendance: UjatVolunteerAttendanceDisplay) {
   if (attendance.kind === 'dash') {
     return <ProgramAttendanceStatusText kind="dash" label="-" />
   }
+  if (attendance.kind === 'withdrawn') {
+    return <ProgramAttendanceStatusText kind="withdrawn" label="활동 포기" />
+  }
   if (attendance.kind === 'late') {
     return (
       <ProgramAttendanceStatusText
@@ -112,7 +113,7 @@ function renderAttendance(attendance: UjatVolunteerAttendanceDisplay) {
 function renderEducationProgress(status: UjatVolunteerAssignmentProgressRow['educationProgress']) {
   if (status === 'dash') return <span className="ujat-volunteer-assignment-table__dash">-</span>
   const tone = status === 'completed' ? 'completed' : 'scheduled'
-  const label = status === 'completed' ? '교육 완료' : '교육 예정'
+  const label = status === 'completed' ? '진행 완료' : '진행 예정'
   return (
     <span className={`ujat-volunteer-education-progress-text ujat-volunteer-education-progress-text--${tone}`}>
       {label}
@@ -126,12 +127,17 @@ export function UjatEducationProgressVolunteerAssignmentTable({
   regionLabel = '서울',
   selectedRowKeys: selectedRowKeysProp,
   onSelectedRowKeysChange,
+  onRoleChange,
 }: {
   initialRows: UjatVolunteerAssignmentProgressRow[]
   volunteerName?: string
   regionLabel?: string
   selectedRowKeys?: Key[]
   onSelectedRowKeysChange?: (keys: Key[]) => void
+  onRoleChange?: (
+    row: UjatVolunteerAssignmentProgressRow,
+    nextRole: UjatVolunteerScheduleRole
+  ) => void | Promise<void>
 }) {
   const [rows, setRows] = useState(() => sortVolunteerAssignmentRows(initialRows))
   const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState<Key[]>([])
@@ -168,7 +174,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
           record.classDisplay.kind === 'class'
             ? formatUjatGradeClassDisplayLabel(record.classDisplay.label)
             : '',
-        submittedDateLabel: '260403',
+        submittedDateLabel: record.educationPlanSubmittedDateLabel?.trim() || '-',
         formResponseId: record.educationPlanFormResponseId,
       })
     },
@@ -186,31 +192,40 @@ export function UjatEducationProgressVolunteerAssignmentTable({
           record.classDisplay.kind === 'class'
             ? formatUjatGradeClassDisplayLabel(record.classDisplay.label)
             : '',
-        submittedDateLabel: '260410',
+        submittedDateLabel: record.educationLogSubmittedDateLabel?.trim() || '-',
         formResponseId: record.educationLogFormResponseId,
       })
     },
     [volunteerName, regionLabel, getInstitutionName]
   )
 
-  const handleRoleChange = useCallback((rowId: string, nextRole: UjatVolunteerScheduleRole) => {
-    setRows(prev => {
-      const sorted = sortVolunteerAssignmentRows(
-        prev.map(row => {
-          if (row.isWithdrawn) return row
-          if (nextRole === 'attendance_manager') {
-            return { ...row, role: row.id === rowId ? 'attendance_manager' : 'none' }
-          }
-          if (row.id === rowId) {
-            return { ...row, role: nextRole }
-          }
-          return row
-        })
+  const handleRoleChange = useCallback(
+    (rowId: string, nextRole: UjatVolunteerScheduleRole) => {
+      const target = rows.find(row => row.id === rowId)
+      if (!target || target.isWithdrawn) {
+        setOpenRoleDropdownRowId(null)
+        return
+      }
+      setOpenRoleDropdownRowId(null)
+      if (onRoleChange) {
+        void onRoleChange(target, nextRole)
+        return
+      }
+      setRows(prev =>
+        sortVolunteerAssignmentRows(
+          prev.map(row => {
+            if (row.isWithdrawn) return row
+            if (nextRole === 'attendance_manager') {
+              return { ...row, role: row.id === rowId ? 'attendance_manager' : 'none' }
+            }
+            if (row.id === rowId) return { ...row, role: nextRole }
+            return row
+          })
+        )
       )
-      return sorted
-    })
-    setOpenRoleDropdownRowId(null)
-  }, [])
+    },
+    [onRoleChange, rows]
+  )
 
   const columns: ColumnsType<UjatVolunteerAssignmentProgressRow & { no: number }> = useMemo(
     () => [

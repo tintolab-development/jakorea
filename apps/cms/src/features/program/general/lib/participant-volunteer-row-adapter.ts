@@ -3,6 +3,7 @@
  */
 
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
+import type { ApplicantApprovalStatusKey } from '@/features/program/shared/model/applicant-institution'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { countInterviewAvailabilitySlots } from '@/features/program/general/lib/interview-availability-utils'
 import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
@@ -86,6 +87,19 @@ export function mapParticipantsToVolunteerScreeningRows(
 }
 
 /** 합격자·2차 면접 목록 row → 참여자 상세 뷰용 (목록 전달, mock 재조회 방지) */
+function approvalStatusFromVolunteerScreeningRow(
+  row: GeneralVolunteerApplicantRow
+): ApplicantApprovalStatusKey {
+  if (row.participantApplicant?.approvalStatus) {
+    return row.participantApplicant.approvalStatus
+  }
+  if (row.secondInterviewScreeningStatus === 'pass') return 'approved'
+  if (row.secondInterviewScreeningStatus === 'fail') return 'rejected'
+  if (row.documentScreeningStatus === 'pass') return 'approved'
+  if (row.documentScreeningStatus === 'fail') return 'rejected'
+  return 'pending'
+}
+
 export function mapVolunteerScreeningRowToParticipant(
   row: GeneralVolunteerApplicantRow
 ): GeneralIndividualApplicantRow {
@@ -96,7 +110,7 @@ export function mapVolunteerScreeningRowToParticipant(
     affiliation: row.universityName,
     educationGrade: row.major,
     homeAddress: '',
-    approvalStatus: 'pending',
+    approvalStatus: approvalStatusFromVolunteerScreeningRow(row),
     memberId: row.memberId != null ? String(row.memberId) : undefined,
     programId: row.programId,
     managerAEvaluation: row.managerAEvaluation,

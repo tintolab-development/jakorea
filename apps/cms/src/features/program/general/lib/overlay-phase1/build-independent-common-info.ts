@@ -208,12 +208,14 @@ function applyFormValuesToProgram(
   const ipsDetailKind = extras.ipsScheduleDetail ?? 'common'
 
   const commonEducationForm =
-    resolveCommonEducationForm(values) || readOptionalText(values.legacyEducationForm) || 'online'
+    resolveCommonEducationForm(values, extras.sessionRoundType) ||
+    readOptionalText(values.legacyEducationForm) ||
+    'online'
   const participantFlags = participantFlagsFromCompleteExtras(extras)
   const hideParticipation = extras.participantOrganization === true
   const commonParticipation = hideParticipation
     ? undefined
-    : (resolveCommonParticipation(values) as 'individual' | 'team')
+    : (resolveCommonParticipation(values, extras.sessionRoundType) as 'individual' | 'team')
 
   const programTypeFromForm =
     commonEducationForm === 'online'
@@ -378,7 +380,12 @@ export function buildIndependentCommonInfo(
     return {
       applied,
       programDraft,
-      persistOverlay: serializeCreatePersistOverlay(input.formValues, unowned, keyOrder),
+      persistOverlay: serializeCreatePersistOverlay(
+        input.formValues,
+        unowned,
+        keyOrder,
+        input.editorExtras.sessionRoundType
+      ),
     }
   }
 
@@ -387,7 +394,12 @@ export function buildIndependentCommonInfo(
     input.editorExtras,
     input.formValues
   )
-  const editOverlay = serializeCreatePersistOverlay(input.formValues, unowned, keyOrder)
+  const editOverlay = serializeCreatePersistOverlay(
+    input.formValues,
+    unowned,
+    keyOrder,
+    input.editorExtras.sessionRoundType
+  )
   return {
     applied,
     programDraft,

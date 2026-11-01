@@ -4,16 +4,19 @@
 
 .calendar-preview-popover {
   display: flex;
-  width: 294px;
+  /* 피그마 14981:848846 — border #e0e0e0 · radius 12 · padding 16 · gap 10 · 최대 폭 400 */
+  width: max-content;
+  min-width: 294px;
+  max-width: min(400px, 92vw);
   max-height: 250px;
   padding: 16px;
   flex-direction: column;
   align-items: stretch;
   gap: 0;
   border-radius: 12px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--Border-default, #e0e0e0);
   background: #fff;
-  box-shadow: 0 4px 12px 0 rgba(32, 32, 33, 0.1);
+  box-shadow: 0 0 8px 0 rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
   overflow-x: hidden;
   overflow-y: auto;
@@ -23,23 +26,17 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 4px;
+  gap: 2px;
   width: 100%;
   min-width: 0;
-  padding: 8px 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-.calendar-preview-popover__entry:first-child {
-  padding-top: 0;
-}
-
-.calendar-preview-popover__entry:last-child {
-  padding-bottom: 0;
-}
-
 .calendar-preview-popover__entry:not(:last-child) {
-  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--Border-default, #e0e0e0);
 }
 
 .calendar-preview-popover__title-row {

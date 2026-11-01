@@ -41,8 +41,11 @@ import {
 import { selectRegionUnavailabilityScheduleIds } from './region-assignment-options'
 import type { RegionAssignmentTableData } from './types'
 
-function emptyTable(regionKey: UjatInstitutionApplicationRegionKey): RegionAssignmentTableData {
-  return getRegionAssignmentTableDataFromStore(regionKey)
+function emptyTable(
+  half: EducationProgressHalfKey,
+  regionKey: UjatInstitutionApplicationRegionKey
+): RegionAssignmentTableData {
+  return getRegionAssignmentTableDataFromStore(half, regionKey)
 }
 
 export function useRegionAssignment(
@@ -54,6 +57,7 @@ export function useRegionAssignment(
   const queryClient = useQueryClient()
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const educationRegionCode = toUjatEducationRegionCode(regionKey)
+  /** 상·하반기 탭 → 항상 semesterType 전송. FE에서 전 반기 응답을 분류하지 않는다. */
   const semesterType = toUjatRecruitHalfApi(half)
 
   useNotifyProgramApiUnavailableOnce(
@@ -92,25 +96,26 @@ export function useRegionAssignment(
 
   useEffect(() => {
     if (matrixQuery.data) {
-      setRegionAssignmentTableData(regionKey, matrixQuery.data)
+      setRegionAssignmentTableData(half, regionKey, matrixQuery.data)
     }
-  }, [matrixQuery.data, regionKey])
+  }, [half, matrixQuery.data, regionKey])
 
   const tableData = useMemo(() => {
     if (matrixQuery.data) return matrixQuery.data
-    return emptyTable(regionKey)
-  }, [matrixQuery.data, regionKey])
+    return emptyTable(half, regionKey)
+  }, [half, matrixQuery.data, regionKey])
 
   const invalidateMatrix = useCallback(async () => {
+    // unavailability는 allocation-matrix queryFn 안에서 함께 fetch → matrix invalidate로 갱신
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
+        queryKey: ujatQueryKeys.allocationMatrixRoot(programId),
       }),
       queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.directAssignmentCandidatesRoot(programId),
       }),
     ])
-  }, [educationRegionCode, programId, queryClient, semesterType])
+  }, [programId, queryClient])
 
   const showMutationError = useCallback(
     (error: unknown, fallback: string) => {
@@ -176,23 +181,23 @@ export function useRegionAssignment(
           replacementParticipantId: Number.isFinite(replacementParticipantId)
             ? replacementParticipantId
             : null,
-          reason: 'CMS 배정 불가일 설정',
+          reason: 'CMS 참여 불가일 설정',
         })
       }
     },
     onSuccess: async () => {
       await invalidateMatrix()
-      showAlert({ title: '안내', content: '배정 불가일이 설정되었습니다.' })
+      showAlert({ title: '안내', content: '참여 불가일이 설정되었습니다.' })
     },
     onError: error => {
-      showMutationError(error, '배정 불가일 설정에 실패했습니다.')
+      showMutationError(error, '참여 불가일 설정에 실패했습니다.')
     },
   })
 
   const attendanceManagerMutation = useMutation({
     mutationFn: async (assignments: RegionAttendanceManagerAssignments) => {
       const optimistic = applyRegionAttendanceManagersFromData(tableData, assignments)
-      setRegionAssignmentTableData(regionKey, optimistic)
+      setRegionAssignmentTableData(half, regionKey, optimistic)
 
       for (const [columnId, volunteerId] of Object.entries(assignments)) {
         const column = tableData.columns.find(c => c.id === columnId)
@@ -247,6 +252,7 @@ export function useRegionAssignment(
     tableData,
     tableVersion: matrixQuery.dataUpdatedAt,
     isLoading: remoteEnabled && matrixQuery.isLoading,
+    isError: remoteEnabled && matrixQuery.isError,
     isRemote: remoteEnabled,
     autoAssignResultSummary:
       autoAssignResult?.scopeKey === autoAssignScopeKey ? autoAssignResult.summary : null,

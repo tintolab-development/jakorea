@@ -53,10 +53,8 @@ export function AdminRegisterStepIdentity({
           <CmsButton
             variant="primary"
             size="h52"
-            width="100%"
             loading={isVerifying}
-            onClick={onStartVerify}
-          >
+            onClick={onStartVerify} >
             휴대폰 본인인증하기
           </CmsButton>
         </div>

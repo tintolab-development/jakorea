@@ -23,10 +23,8 @@ export function FaqFormModalFooter({
         <CmsButton
           variant="delete"
           size="large"
-          type="button"
-          className="faq-form-modal__faq-delete"
-          onClick={onRequestDelete}
-        >
+          type="button" className="faq-form-modal__faq-delete"
+          onClick={onRequestDelete} >
           FAQ 삭제
         </CmsButton>
       ) : null}

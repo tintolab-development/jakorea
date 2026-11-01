@@ -16,6 +16,8 @@ const PROGRAM_PROGRESS_EXACT_PATHS = new Set([
   '/api/admin/programs/{programId}/participant-register-candidates',
   '/api/admin/programs/{programId}/volunteer-participants/register',
   '/api/admin/programs/{programId}/employee-volunteer-counts',
+  '/api/admin/programs/{programId}/participants/{participantId}/1365-registration-form',
+  '/api/portal/me/generated-files/jobs/{jobId}',
 ])
 
 function collectSchemaNames(node, names = new Set()) {
@@ -34,8 +36,35 @@ function collectSchemaNames(node, names = new Set()) {
 }
 
 const spec = JSON.parse(readFileSync(inputPath, 'utf8'))
+/** BE 스펙에 responses 없는 operation이 있으면 Orval 검증이 실패한다 — FE subset에서 stub. */
+function ensureOperationResponses(operation) {
+  if (operation == null || typeof operation !== 'object' || Array.isArray(operation)) {
+    return operation
+  }
+  if (operation.responses != null) return operation
+  return {
+    ...operation,
+    responses: {
+      '200': {
+        description:
+          'Stubbed by filter-openapi-program-progress.mjs — BE OpenAPI operation lacked responses.',
+      },
+    },
+  }
+}
+
 const filteredPaths = Object.fromEntries(
-  Object.entries(spec.paths ?? {}).filter(([path]) => PROGRAM_PROGRESS_EXACT_PATHS.has(path))
+  Object.entries(spec.paths ?? {})
+    .filter(([path]) => PROGRAM_PROGRESS_EXACT_PATHS.has(path))
+    .map(([path, methods]) => [
+      path,
+      Object.fromEntries(
+        Object.entries(methods ?? {}).map(([method, operation]) => [
+          method,
+          ensureOperationResponses(operation),
+        ])
+      ),
+    ])
 )
 
 const allSchemas = spec.components?.schemas ?? {}
@@ -60,11 +89,17 @@ const filteredSchemas = Object.fromEntries(
   })
 )
 
+/**
+ * Orval client factory 이름은 OpenAPI `info.title`에서 파생된다.
+ * BE title이 바뀌어도 FE import(`getJAKoreaCMSBackendAPIProgramProgressSubset`)를 깨지 않도록 subset title을 고정한다.
+ */
+const ORVAL_STABLE_TITLE = 'JA Korea CMS Backend API — Program progress subset'
+
 const subset = {
   ...spec,
   info: {
     ...spec.info,
-    title: `${spec.info?.title ?? 'API'} — Program progress subset`,
+    title: ORVAL_STABLE_TITLE,
     description: 'Filtered for CMS general program progress Orval codegen.',
   },
   paths: filteredPaths,

@@ -177,8 +177,7 @@ export function PartnershipSectionCard({ items }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending}
-              >
+                disabled={saveMutation.isPending} >
                 취소
               </CmsButton>
               <CmsButton
@@ -188,8 +187,7 @@ export function PartnershipSectionCard({ items }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }}
-              >
+                }} >
                 저장
               </CmsButton>
             </>

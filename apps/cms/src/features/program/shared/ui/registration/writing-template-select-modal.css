@@ -171,9 +171,6 @@
 
 .writing-template-select-modal__action-btn.cms-button.ant-btn {
   display: flex !important;
-  width: 80px !important;
-  min-width: 80px !important;
-  max-width: 80px !important;
   height: 32px !important;
   min-height: 32px !important;
   max-height: 32px !important;

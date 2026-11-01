@@ -19,6 +19,10 @@ import {
   clearRegistrationStepTemplateSelections,
   setRegistrationStepTemplateSelection,
 } from '@/features/program/shared/lib/step-template-selection'
+import {
+  clearOperationalSeedDefaultSuppression,
+  suppressOperationalSeedDefaults,
+} from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 
 const INSTITUTION_CODE = 'recruitment-participant-school'
 const INDIVIDUAL_CODE = 'recruitment-participant-individual'
@@ -398,5 +402,101 @@ describe('hasIncompleteGeneralProgramRecruitmentRequiredFields', () => {
       [K.finalAnnounceMethod]: '',
     })
     expect(hasIncompleteGeneralProgramRecruitmentRequiredFields(ctx())).toBe(false)
+  })
+})
+
+describe('라디오 화면 기본값 미조작 — 미입력으로 막지 않는다(재발 방지)', () => {
+  const allTabs = (patch: Partial<GeneralProgramRecruitmentRequiredFieldContext['participant']>) =>
+    ctx({
+      participant: {
+        individual: false,
+        organization: false,
+        teacherInstructor: false,
+        volunteer: false,
+        ...patch,
+      },
+    })
+
+  beforeEach(() => {
+    resetApplicantRecruitInstitutionOverlayStoreForTests()
+    resetGeneralRecruitOverlayStoreForTests()
+    clearRegistrationStepTemplateSelections()
+    clearOperationalSeedDefaultSuppression()
+  })
+
+  afterEach(() => {
+    clearOperationalSeedDefaultSuppression()
+    clearRegistrationStepTemplateSelections()
+    resetApplicantRecruitInstitutionOverlayStoreForTests()
+    resetGeneralRecruitOverlayStoreForTests()
+  })
+
+  it('기관 — 공고 게시·학생 명단·사전 안내 라디오 미조작이면 완료', () => {
+    const row = filledInstitution()
+    delete row[K.announcementPublished]
+    delete row[K.studentListRequired]
+    delete row[K.preguidanceRequired]
+    replaceApplicantRecruitInstitutionOverlayForScope(INSTITUTION_CODE, row)
+    expect(listIncompleteGeneralProgramRecruitmentRequiredFields(ctx())).toEqual([])
+  })
+
+  it('개인 — 공고 게시 라디오 미조작이면 완료(스크린샷 케이스)', () => {
+    const row = filledIndividual()
+    delete row['recruit.individual.announcementPublished']
+    replaceGeneralRecruitOverlayForScope(INDIVIDUAL_CODE, row)
+    expect(listIncompleteGeneralProgramRecruitmentRequiredFields(allTabs({ individual: true }))).toEqual(
+      []
+    )
+  })
+
+  it('강사 — 공고 게시 라디오 미조작이면 완료', () => {
+    const row = filledInstructor()
+    delete row['recruit.instructor.announcementPublished']
+    replaceGeneralRecruitOverlayForScope('recruitment-instructor', row)
+    expect(
+      listIncompleteGeneralProgramRecruitmentRequiredFields(allTabs({ teacherInstructor: true }))
+    ).toEqual([])
+  })
+
+  it('봉사 — 공고 게시 라디오 미조작이면 완료', () => {
+    const row = filledVolunteerNoInterview()
+    delete row['recruit.volunteer.announcementPublished']
+    replaceGeneralRecruitOverlayForScope(VOLUNTEER_CODE, row)
+    expect(listIncompleteGeneralProgramRecruitmentRequiredFields(allTabs({ volunteer: true }))).toEqual(
+      []
+    )
+  })
+
+  it('명시적 빈 값(화면 미선택)은 여전히 미입력이다', () => {
+    replaceApplicantRecruitInstitutionOverlayForScope(INSTITUTION_CODE, {
+      ...filledInstitution(),
+      [K.announcementPublished]: '',
+      [K.studentListRequired]: '',
+    })
+    const keys = listIncompleteGeneralProgramRecruitmentRequiredFields(ctx())
+    expect(keys).toContain('recruit.institution.announcementPublished')
+    expect(keys).toContain('recruit.institution.studentListRequired')
+  })
+
+  it('템플릿 변경으로 시드 기본값이 억제된 키(화면도 비어 있음)는 채우지 않는다', () => {
+    suppressOperationalSeedDefaults('general-recruit', ['recruit.instructor'])
+    const row = filledInstructor()
+    delete row['recruit.instructor.announcementPublished']
+    replaceGeneralRecruitOverlayForScope('recruitment-instructor', row)
+    expect(
+      listIncompleteGeneralProgramRecruitmentRequiredFields(allTabs({ teacherInstructor: true }))
+    ).toContain('recruit.instructor.announcementPublished')
+  })
+
+  it('1사1교 강사 탭(일반 단락) — 공고 게시 미조작이면 완료', () => {
+    const row = filledInstructor()
+    delete row['recruit.instructor.announcementPublished']
+    replaceGeneralRecruitOverlayForScope('recruitment-instructor', row)
+    expect(
+      listIncompleteGeneralProgramRecruitmentRequiredFields({
+        ...allTabs({ teacherInstructor: true }),
+        registrationProgramType: 'COMPANY_SCHOOL',
+      })
+    ).toEqual([])
   })
 })

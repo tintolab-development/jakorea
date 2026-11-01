@@ -23,6 +23,8 @@ export type PortalVolunteerAssignedItem = {
   schoolName?: string
   educationGrade?: string
   distanceKm?: number | null
+  /** 표기 전용. 없으면 접미어 없음 (FE km 판정 금지) */
+  longDistance?: boolean | null
   scheduleLines?: string[]
   scheduleLine?: string
 }
@@ -35,6 +37,8 @@ export type PortalVolunteerWaitingItem = {
   schoolName?: string
   desiredGrade?: string
   distanceKm?: number | null
+  /** 표기 전용. 없으면 접미어 없음 */
+  longDistance?: boolean | null
   scheduleLine?: string
   assignmentStatus?: PortalVolunteerAssignmentStatus
 }

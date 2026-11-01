@@ -9,7 +9,7 @@ const EDUCATION_TARGET_LABEL: Record<SponsorProgramHistoryRow['educationTarget']
   elementary: '초등학생',
   middle: '중학생',
   high: '고등학생',
-  college: '대학생',
+  university: '대학생',
   adult: '성인',
   unknown: '-',
 }

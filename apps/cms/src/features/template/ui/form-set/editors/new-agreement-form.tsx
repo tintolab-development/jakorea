@@ -427,6 +427,7 @@ export function AgreementWritingFormShell({
         await persistWritingFormTemplateDraft({
           templateId: nextTemplateCode,
           draft,
+          publishAfterSave: isTemplateManagementSave,
         })
 
         if (enableCreateOnSave) {

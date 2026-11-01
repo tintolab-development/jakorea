@@ -3,6 +3,7 @@ import {
   filterProgramSchedulesForNewEducationAssignment,
   isLegacyProgramScheduleWithoutEducationSlotKey,
   isProgramScheduleCandidateForNewEducationAssignment,
+  isProgramSchedulePreEducation,
   readProgramScheduleCanonicalFields,
   resolveProgramScheduleListRowKey,
 } from './program-schedule-canonical'
@@ -37,6 +38,29 @@ describe('program-schedule-canonical', () => {
       isLegacyProgramScheduleWithoutEducationSlotKey({
         educationSlotKey: 'uuid',
         scheduleRole: null,
+      })
+    ).toBe(false)
+  })
+
+  it('treats scheduleRole, slot key prefix, and scheduleKind as pre-education', () => {
+    expect(isProgramSchedulePreEducation({ scheduleRole: 'PRE_EDUCATION' })).toBe(true)
+    expect(
+      isProgramSchedulePreEducation({ educationSlotKey: 'general-pre-education:1' })
+    ).toBe(true)
+    expect(isProgramSchedulePreEducation({ scheduleKind: 'PRE_EDUCATION' })).toBe(true)
+    expect(isProgramSchedulePreEducation({ scheduleRole: 'EDUCATION' })).toBe(false)
+    expect(isProgramSchedulePreEducation({ educationSlotKey: 'general-common-line:1' })).toBe(
+      false
+    )
+    expect(isProgramSchedulePreEducation({})).toBe(false)
+  })
+
+  it('excludes pre-education slot keys from new assignment candidates even without role', () => {
+    expect(
+      isProgramScheduleCandidateForNewEducationAssignment({
+        id: 187590,
+        educationSlotKey: 'general-pre-education:1',
+        scheduleStatus: 'ACTIVE',
       })
     ).toBe(false)
   })

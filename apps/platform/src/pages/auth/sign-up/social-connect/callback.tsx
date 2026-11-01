@@ -11,8 +11,7 @@ import {
   isPortalSocialAuthLinkRemoteEnabled,
   platformSocialAuthClient,
 } from '@/features/auth/social-auth'
-import { PFText } from '@/shared/ui'
-import styles from './callback.module.css'
+import { PFLoadingSpinner } from '@/shared/ui'
 
 const COMPLETE_PATH = '/auth/sign-up/social-connect/complete'
 const ERROR_PATH = '/auth/sign-up/social-connect/error'
@@ -141,11 +140,5 @@ export function SignUpSocialConnectCallbackPage() {
     })
   }, [navigate])
 
-  return (
-    <section className={styles.loading}>
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-500">
-        소셜 계정 연결 처리 중…
-      </PFText>
-    </section>
-  )
+  return <PFLoadingSpinner centered label="소셜 계정 연결 처리 중" />
 }

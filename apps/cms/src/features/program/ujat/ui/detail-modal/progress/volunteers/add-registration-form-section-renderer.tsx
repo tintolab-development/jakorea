@@ -13,7 +13,10 @@ import {
   UjatVolunteerAddRegistrationSectionHeader,
   resolveUjatVolunteerSeedSectionDescription,
 } from './add-registration-section-header'
-import { UjatEducationProgressVolunteerTermsConsentSection } from './terms-consent-section'
+import {
+  UjatEducationProgressVolunteerTermsConsentSection,
+  type UjatVolunteerAddRegistrationConsentState,
+} from './terms-consent-section'
 import { UjatEducationProgressVolunteerActivityTermSection } from './activity-term-section'
 import {
   findVolunteerAddRegistrationParagraph,
@@ -24,6 +27,10 @@ import {
 export type UjatVolunteerAddRegistrationFormSectionRendererProps = {
   section: UjatVolunteerAddRegistrationSectionDefinition
   vm: ProgramParticipantApplicationEditorViewModel
+  memberId: string
+  programId?: string | number | null
+  consents: UjatVolunteerAddRegistrationConsentState
+  onConsentsChange: (next: UjatVolunteerAddRegistrationConsentState) => void
 }
 
 function buildRenderParagraphBodyOptions(vm: ProgramParticipantApplicationEditorViewModel) {
@@ -90,6 +97,10 @@ function DraftParagraphSection({
 export function UjatVolunteerAddRegistrationFormSectionRenderer({
   section,
   vm,
+  memberId,
+  programId,
+  consents,
+  onConsentsChange,
 }: UjatVolunteerAddRegistrationFormSectionRendererProps) {
   if (section.kind === 'plugin' && section.isVisible != null && !section.isVisible(vm)) {
     return null
@@ -115,7 +126,13 @@ export function UjatVolunteerAddRegistrationFormSectionRenderer({
     }
 
     case 'terms-consent':
-      return <UjatEducationProgressVolunteerTermsConsentSection />
+      return (
+        <UjatEducationProgressVolunteerTermsConsentSection
+          memberId={memberId}
+          consents={consents}
+          onConsentsChange={onConsentsChange}
+        />
+      )
 
     case 'plugin': {
       const PluginBody = UJAT_VOLUNTEER_ADD_REGISTRATION_PLUGIN_BODIES[section.body]
@@ -134,7 +151,7 @@ export function UjatVolunteerAddRegistrationFormSectionRenderer({
             required={section.required}
             description={description}
           />
-          <PluginBody />
+          <PluginBody programId={programId} />
         </section>
       )
     }

@@ -1,10 +1,14 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchVolunteerApplicationDetailRemote } from '@/features/program/general/api/applications-api-client'
+import { mapVolunteerInterviewAssignmentFromWire } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { formatAssignedInterviewFromIso } from '@/features/program/ujat/api/applications-adapters'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { readVolunteerApplicationAttachments } from '@/features/program/general/lib/volunteer-application-evidence'
 import type { VolunteerApplicationEvidenceAttachment } from '@/features/program/general/model/volunteer-applicant'
-import type { Profile } from '@/shared/api/generated/dashboard/schemas/profile'
+import type { VolunteerApplicationProfile } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationProfile'
 import { toGenderLabelOrRaw } from '@/features/user/api/map-member-gender-birth'
+import { toSchoolEnrollmentStatusLabelOrRaw } from '@/features/user/api/map-school-enrollment-status'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { mapUjatVolunteerGradeLabel } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 
@@ -105,13 +109,27 @@ function readProjection(application: unknown): UjatProjection | null {
   return ujat as UjatProjection
 }
 
+function readScheduleChangeCancelCount(application: unknown): number | null {
+  if (!application || typeof application !== 'object') return null
+  const value = (application as { scheduleChangeCancelCount?: unknown }).scheduleChangeCancelCount
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
+}
+
 function applyVolunteerProfile(
   row: UjatVolunteerApplicantRow,
-  profile: Profile | null | undefined,
+  profile: VolunteerApplicationProfile | null | undefined,
 ): UjatVolunteerApplicantRow {
   if (!profile) return row
   const contact = text(profile.contact)
   const email = text(profile.email)
+  /**
+   * 학교 재학·소속은 profile 전용. application.ujat.universityName/grade 로 채우지 않는다.
+   * API null → 표시 레이어 `-` (여기서 ''로만 두고 ujat로 보완하지 않음).
+   */
+  const schoolEnrollmentStatus =
+    toSchoolEnrollmentStatusLabelOrRaw(profile.schoolEnrollmentStatus) ?? ''
+  const affiliationSchool = text(profile.affiliationSchool)
+  const affiliationGrade = text(profile.affiliationGrade)
   return {
     ...row,
     name: text(profile.name) || row.name,
@@ -125,6 +143,9 @@ function applyVolunteerProfile(
     id1365: text(profile.external1365Id) || row.id1365,
     /** MASKED는 homeAddress(시/도) 또는 homeAddressSido. sigungu로 보완하지 않음. */
     homeAddress: text(profile.homeAddress) || text(profile.homeAddressSido) || row.homeAddress,
+    schoolEnrollmentStatus,
+    affiliationSchool,
+    affiliationGrade,
   }
 }
 
@@ -132,9 +153,9 @@ function applyVolunteerProfile(
 export function applyUjatVolunteerApplicationDetail(
   row: UjatVolunteerApplicantRow,
   application: unknown,
-  profile?: Profile | null,
+  profile?: VolunteerApplicationProfile | null,
 ): UjatVolunteerApplicantRow {
-  return applyVolunteerProfile(
+  const next = applyVolunteerProfile(
     applyUjatVolunteerProjection(
       row,
       readProjection(application),
@@ -142,6 +163,9 @@ export function applyUjatVolunteerApplicationDetail(
     ),
     profile,
   )
+  const scheduleChangeCancelCount = readScheduleChangeCancelCount(application)
+  if (scheduleChangeCancelCount == null) return next
+  return { ...next, scheduleChangeCancelCount }
 }
 
 /** UJAT 봉사자 상세 — 공용 volunteer-applications 상세의 ujat projection·첨부 */
@@ -150,7 +174,7 @@ export function useUjatVolunteerApplicationDetailEnrichment(
 ): UjatVolunteerApplicantRow {
   const applicationId = Number(row.id)
   const detailQuery = useQuery({
-    queryKey: ['ujat', 'volunteer-application-detail', row.id],
+    queryKey: ujatQueryKeys.volunteerApplicationDetail(row.id),
     queryFn: () => fetchVolunteerApplicationDetailRemote(String(row.id)),
     enabled: Number.isFinite(applicationId) && applicationId > 0,
     staleTime: 30_000,
@@ -159,10 +183,41 @@ export function useUjatVolunteerApplicationDetailEnrichment(
 
   return useMemo(() => {
     if (!detailQuery.data) return row
-    return applyUjatVolunteerApplicationDetail(
-      row,
-      detailQuery.data.application,
-      detailQuery.data.profile,
+    const dto = detailQuery.data
+    const enriched = applyUjatVolunteerApplicationDetail(row, dto.application, dto.profile)
+    const assignment = mapVolunteerInterviewAssignmentFromWire({
+      interviewStatus: dto.interviewStatus,
+      interviewAssignmentStatus: dto.interviewAssignmentStatus,
+      applicationStatus: dto.applicationStatus,
+      giveUpYn: dto.screening?.giveUpYn,
+    })
+    const assigned = formatAssignedInterviewFromIso(
+      dto.assignedInterviewStartAt,
+      dto.assignedInterviewEndAt
     )
+    return {
+      ...enriched,
+      interviewAssignmentStatus:
+        assignment === 'waiting' || assignment === 'not_required'
+          ? enriched.interviewAssignmentStatus
+          : assignment,
+      ...(dto.interviewAssignmentId != null
+        ? { interviewAssignmentId: dto.interviewAssignmentId }
+        : {}),
+      assignedInterviewStartAt:
+        dto.assignedInterviewStartAt === null
+          ? undefined
+          : dto.assignedInterviewStartAt?.trim() || enriched.assignedInterviewStartAt,
+      assignedInterviewEndAt:
+        dto.assignedInterviewEndAt === null
+          ? undefined
+          : dto.assignedInterviewEndAt?.trim() || enriched.assignedInterviewEndAt,
+      assignedInterviewDateLabel:
+        assigned.assignedInterviewDateLabel ??
+        (dto.assignedInterviewStartAt == null ? undefined : enriched.assignedInterviewDateLabel),
+      assignedInterviewTime:
+        assigned.assignedInterviewTime ??
+        (dto.assignedInterviewStartAt == null ? undefined : enriched.assignedInterviewTime),
+    }
   }, [detailQuery.data, row])
 }

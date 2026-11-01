@@ -589,6 +589,77 @@ describe('generalCommonInfoEditValuesToProgramPatch', () => {
     ).toBe(true)
   })
 
+  it('일정형 복수 — 여러 날+시각 진행 일정은 저장할 수 있다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'schedule'
+    values.sessionRound = 'multi'
+    values.educationFormScheduleDetail = 'common'
+    values.participantIndividual = true
+    values.participantOrganization = false
+    values.scheduleCurriculumPreEducation = false
+    values.scheduleDetails = [
+      {
+        scheduleLabel: '세부 일정 01',
+        blockKind: 'event',
+        name: '세부 01',
+        groupTimes: [{ startTime: '', endTime: '' }],
+        scheduleDate: '2026.11.05(목) 11:00 ~ 2026.11.06(금) 18:00',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'offline',
+        participationMethod: 'individual',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+    ]
+    const result = generalProgramCommonInfoEditSchema.safeParse(values)
+    expect(
+      result.success
+        ? []
+        : result.error.issues.filter(issue => issue.path.includes('scheduleDate')).map(issue => issue.message)
+    ).toEqual([])
+  })
+
+  it('일정형 — 사전교육만 있으면 유효한 교육 일정이 필요하다', () => {
+    const program = baseProgram({
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+    })
+    const values = programToGeneralCommonInfoEditValues(program, sponsorContext)
+    values.educationStructure = 'schedule'
+    values.sessionRound = 'multi'
+    values.participantIndividual = true
+    values.participantOrganization = false
+    values.scheduleCurriculumPreEducation = true
+    values.scheduleDetails = [
+      {
+        scheduleLabel: '사전 교육',
+        blockKind: 'preEducation',
+        name: '사전교육',
+        groupTimes: [{ startTime: '', endTime: '' }],
+        scheduleDate: '2026.11.05(목) 10:00 ~ 11:00',
+        assignmentEnabled: false,
+        assignmentPeriod: '',
+        educationForm: 'offline',
+        participationMethod: 'individual',
+        ipsCategory: 'prepare',
+        ipsDetail: 'none',
+      },
+    ]
+    const result = generalProgramCommonInfoEditSchema.safeParse(values)
+    expect(result.success).toBe(false)
+    if (result.success) return
+    expect(result.error.issues.some(issue => issue.path[0] === 'scheduleDetails')).toBe(true)
+  })
+
   it('커리큘럼형 사전 교육 — 진행 일정에 시각이 없으면 검증 실패한다', () => {
     const program = baseProgram({
       generalProgramEducationStructure: 'curriculum',

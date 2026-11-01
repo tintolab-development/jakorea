@@ -26,6 +26,8 @@ import type { Program } from '@/types/domain'
 import type { DashboardProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse'
 import type { ParticipantEducationScopeScheduleEnrich } from '@/features/program/general/api/program-progress-api-client'
 import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
+import { PRE_EDUCATION_DISPLAY_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 
 /** 프로그램 공통 정보 진행 장소 — 개인형 봉사 지역 폴백 */
 export function resolveProgramVolunteerServiceRegionFallback(program: Program): string | undefined {
@@ -59,12 +61,19 @@ export const VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP =
 
 /**
  * education-scope `distanceKm`만 표시. FE 반올림·재계산 없음.
- * null/undefined → '-'. 0은 '0km'. 100 이상이면 장거리 접미사.
+ * null/undefined → '-'. 0은 '0km'.
+ * `(장거리)`는 BE `longDistance`가 true일 때만 (km 임계값 판정 금지).
  */
-export function formatVolunteerAssignmentDistanceKm(km: number | null | undefined): string {
+export function formatVolunteerAssignmentDistanceKm(
+  km: number | null | undefined,
+  options?: { longDistance?: boolean | null }
+): string {
   if (km == null || Number.isNaN(km)) return '-'
   const label = `${km}km`
-  return km >= 100 ? `${label} (장거리)` : label
+  if (options?.longDistance === true) {
+    return `${label} (장거리)`
+  }
+  return label
 }
 
 /**
@@ -369,6 +378,73 @@ function participantSessionsByScheduleId(
   return map
 }
 
+function physicalDashboardScheduleId(schedule: unknown): number | null {
+  if (schedule == null || typeof schedule !== 'object') return null
+  const raw = schedule as { scheduleId?: unknown; id?: unknown }
+  for (const value of [raw.scheduleId, raw.id]) {
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return Math.trunc(value)
+    }
+  }
+  return null
+}
+
+/** 프로그램 schedules에서 PRE_EDUCATION 행 id. */
+export function collectPreEducationScheduleIdsFromProgramSchedules(
+  schedules: ReadonlyArray<unknown>
+): number[] {
+  const ids: number[] = []
+  const seen = new Set<number>()
+  for (const schedule of schedules) {
+    if (!isProgramSchedulePreEducation(schedule)) continue
+    const id = physicalDashboardScheduleId(schedule)
+    if (id == null || seen.has(id)) continue
+    seen.add(id)
+    ids.push(id)
+  }
+  return ids
+}
+
+/** GET education-scope의 현재 배정분 중 PRE_ED id만. 프로그램에 있는 미배정 PRE_ED는 넣지 않는다. */
+export function collectAssignedPreEducationScheduleIds(input: {
+  currentScheduleIds: ReadonlyArray<number>
+  programSchedules: ReadonlyArray<unknown>
+}): number[] {
+  const preEducationInProgram = new Set(
+    collectPreEducationScheduleIdsFromProgramSchedules(input.programSchedules)
+  )
+  const seen = new Set<number>()
+  const ids: number[] = []
+  for (const id of input.currentScheduleIds) {
+    if (!Number.isFinite(id) || id <= 0) continue
+    const scheduleId = Math.trunc(id)
+    if (!preEducationInProgram.has(scheduleId) || seen.has(scheduleId)) continue
+    seen.add(scheduleId)
+    ids.push(scheduleId)
+  }
+  return ids
+}
+
+/**
+ * PUT education-scope PRE_ED merge는 BE 대기.
+ * 임시: 사용자가 고른 본교육 id ∪ 기존 PRE_ED id. PRE_ED를 빼거나 새로 넣지 않는다.
+ */
+export function mergeEducationScopeScheduleIdsPreservingPreEducation(input: {
+  nextScheduleIds: ReadonlyArray<number>
+  preEducationScheduleIds: ReadonlyArray<number>
+}): number[] {
+  const seen = new Set<number>()
+  const result: number[] = []
+  for (const id of [...input.nextScheduleIds, ...input.preEducationScheduleIds]) {
+    if (!Number.isFinite(id) || id <= 0) continue
+    const scheduleId = Math.trunc(id)
+    if (seen.has(scheduleId)) continue
+    seen.add(scheduleId)
+    result.push(scheduleId)
+  }
+  return result
+}
+
 /** schedules·education-scope가 모두 준비된 후에만 배정/대기 분할을 한다. */
 export function canBuildIndividualVolunteerAssignmentRows(input: {
   remoteEnabled: boolean
@@ -417,13 +493,18 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
       if (!session) return
       const enrich = enrichByScheduleId.get(scheduleId)
       const slotKey = `${session.date.replace(/\./g, '-')}|individual-program|${session.round}`
-      const scheduleLabel = formatVolunteerAssignmentScheduleLine(session, params.program)
+      const preEducation = isProgramSchedulePreEducation(schedule)
+      const scheduleLabel = preEducation
+        ? PRE_EDUCATION_DISPLAY_LABEL
+        : formatVolunteerAssignmentScheduleLine(session, params.program)
       const serviceRegion = resolveVolunteerServiceRegion({
         locationName: schedule.locationName ?? enrich?.locationName,
         address: schedule.address ?? enrich?.address,
         regionFallback,
       })
-      const distanceFromHome = formatVolunteerAssignmentDistanceKm(enrich?.distanceKm)
+      const distanceFromHome = formatVolunteerAssignmentDistanceKm(enrich?.distanceKm, {
+        longDistance: enrich?.longDistance,
+      })
       const assignedVolunteerCountLabel =
         typeof enrich?.assignedVolunteerCount === 'number'
           ? `${enrich.assignedVolunteerCount}명`
@@ -437,9 +518,12 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
           distanceFromHome,
           scheduleLabel,
           scheduleId,
+          preEducation,
         })
         return
       }
+      // 필수 사전교육은 서버 자동 배정 — 배정 대기(선택 후보)로 노출하지 않는다.
+      if (preEducation) return
       const hopeSchedule: WaitingInstructorHopeSchedule = {
         hopeDate: `${session.date}(${session.dayOfWeek})`,
         hopeTime: session.timeRange,

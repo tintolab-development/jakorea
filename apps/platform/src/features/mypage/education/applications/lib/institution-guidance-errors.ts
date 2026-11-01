@@ -5,6 +5,8 @@ export const UJAT_STALE_REVISION_ALERT_MESSAGE =
 
 const INSTITUTION_GUIDANCE_ERROR_MESSAGES: Record<string, string> = {
   GUIDANCE_ANSWERS_VALIDATION_FAILED: '입력 내용을 확인해 주세요.',
+  PREFERRED_EDUCATION_DATE_INVALID:
+    '선택할 수 없는 희망 교육일이 포함되어 있습니다. 화면을 새로고침한 뒤 다시 선택해 주세요.',
   ORGANIZATION_APPLICATION_NOT_OWNED: '본인 신청만 수정할 수 있습니다.',
   GUIDANCE_EDIT_NOT_ALLOWED: '현재 상태에서는 안내사항을 수정할 수 없습니다.',
   ORGANIZATION_APPLICATION_NOT_FOUND: '신청 정보를 찾을 수 없습니다.',

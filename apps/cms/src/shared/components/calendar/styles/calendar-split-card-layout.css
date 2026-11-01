@@ -194,6 +194,16 @@
 }
 
 /*
+ * 주간도 월간과 같은 여백 — `calendar-main.css`의 `.calendar-main:has(.calendar-week--time-grid)` (padding 16px 20px · gap 8px)가
+ * import 순서상 위 `.calendar-split-card--left > .calendar-main` padding 0을 덮어써 카드 padding 20 안에 이중 여백이 생겼다.
+ * 좌측 카드 shell이 padding 20을 담당하므로 주간도 0, 헤더–본문 간격은 월간 토큰(10px)으로 통일.
+ */
+.calendar-split-card-layout .calendar-split-card--left > .calendar-main:has(.calendar-week--time-grid) {
+  padding: 0;
+  gap: var(--calendar-main-header-body-gap, 10px);
+}
+
+/*
  * 풀페이지 모달 page-scroll — 우측 split-card sticky + 743px (`detail-fullpage-modal.css` __main 가로 스크롤 연동)
  */
 .calendar-split-card-layout--page-scroll {

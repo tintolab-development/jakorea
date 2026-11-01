@@ -51,7 +51,9 @@ function mapIndividualAssigned(
         id: String(item.id ?? item.scheduleId ?? `assigned-${index}`),
         no: 0,
         location,
-        distanceFromHome: formatVolunteerDistanceKm(item.distanceKm),
+        distanceFromHome: formatVolunteerDistanceKm(item.distanceKm, {
+          longDistance: item.longDistance,
+        }),
         scheduleLines,
       },
     ]
@@ -75,7 +77,9 @@ function mapIndividualWaiting(
         id: String(item.id ?? item.scheduleId ?? `waiting-${index}`),
         no: 0,
         location,
-        distanceFromHome: formatVolunteerDistanceKm(item.distanceKm),
+        distanceFromHome: formatVolunteerDistanceKm(item.distanceKm, {
+          longDistance: item.longDistance,
+        }),
         scheduleLine,
         assignmentStatus: status,
       },
@@ -98,7 +102,9 @@ function mapOrgAssigned(
         schoolName: item.schoolName?.trim() || '-',
         educationGrade: item.educationGrade?.trim() || '-',
         region: item.region?.trim() || item.locationName?.trim() || '-',
-        distanceFromHome: formatVolunteerDistanceKm(item.distanceKm),
+        distanceFromHome: formatVolunteerDistanceKm(item.distanceKm, {
+          longDistance: item.longDistance,
+        }),
         scheduleLines,
       },
     ]
@@ -123,7 +129,9 @@ function mapOrgWaiting(
         schoolName: item.schoolName?.trim() || '-',
         desiredGrade: item.desiredGrade?.trim() || '-',
         region: item.region?.trim() || item.locationName?.trim() || '-',
-        distanceFromHome: formatVolunteerDistanceKm(item.distanceKm),
+        distanceFromHome: formatVolunteerDistanceKm(item.distanceKm, {
+          longDistance: item.longDistance,
+        }),
         scheduleLine,
         assignmentStatus: status,
       },

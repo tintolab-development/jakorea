@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { ProgramFormBindingRenderResponseQuestionsItem } from './programFormBindingRenderResponseQuestionsItem';
+import type { ProgramFormBindingRenderResponseRuntimeContext } from './programFormBindingRenderResponseRuntimeContext';
 import type { ProgramFormBindingRenderResponseSectionsItem } from './programFormBindingRenderResponseSectionsItem';
 import type { ProgramFormBindingRenderResponseVersionStatus } from './programFormBindingRenderResponseVersionStatus';
 
@@ -35,4 +36,6 @@ export interface ProgramFormBindingRenderResponse {
   targetScopeId?: number | null;
   submissionStartAt?: string | null;
   submissionEndAt?: string | null;
+  /** 런타임 장식 컨텍스트. UJAT 학교 신청 바인딩은 ujatPreferredEducationDateOptions를 항상 배열로 포함하며 후보가 없으면 []이다. 각 항목은 id(h1:YYYY-MM-DD|h2:YYYY-MM-DD), date(YYYY-MM-DD Asia/Seoul), label. 신청 제출 후에도 동일 규칙으로 노출한다. */
+  runtimeContext?: ProgramFormBindingRenderResponseRuntimeContext;
 }

@@ -25,3 +25,9 @@ export type {
 export { EducationSettlementPanel } from './ui/panel'
 export { EducationSettlementWriteForm } from './ui/write-form'
 export { EducationSettlementConfirmView } from './ui/confirm-view'
+export { EducationSettlementApplicationDocumentView } from './ui/application-document-view'
+export { useSettlementApplicationDocumentQuery } from './api/use-application-document-query'
+export type {
+  SettlementApplicationDocumentResponse,
+  SettlementApplicationDocumentKind,
+} from './api/application-document-types'

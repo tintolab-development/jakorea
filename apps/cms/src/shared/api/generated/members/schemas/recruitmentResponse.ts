@@ -28,12 +28,18 @@ export interface RecruitmentResponse {
   interviewEnabled?: boolean | null;
   /** 1차 서류 합격자 발표 시각. interviewEnabled가 true일 때만 의미가 있습니다. 없으면 null입니다. */
   documentPassAnnouncementAt?: string | null;
+  /** 1차 서류 합격 발표 방법. interviewEnabled가 true이고 해당 모집 행 overlay에 값이 있을 때만 채웁니다. 빈 문자열은 null. */
+  documentPassAnnouncementMethod?: string | null;
   /** 2차 면접 기간 시작. 없으면 null입니다. */
   interviewStartAt?: string | null;
   /** 2차 면접 기간 끝. 없으면 null입니다. */
   interviewEndAt?: string | null;
+  /** 면접 방식. interviewEnabled가 true이고 해당 모집 행 overlay에 값이 있을 때만 채웁니다. 빈 문자열은 null. */
+  interviewMethod?: string | null;
   /** 최종 합격자 발표 시각. 면접이 없어도 값이 있으면 내려줍니다. 없으면 null입니다. */
   finalPassAnnouncementAt?: string | null;
+  /** 최종 합격 발표 방법. 해당 모집 행 overlay에 값이 있으면 면접 여부와 무관하게 채웁니다. 빈 문자열은 null. */
+  finalPassAnnouncementMethod?: string | null;
   /** 이 모집 행의 프로그램 설명. 비어 있으면 null. */
   programDescription?: string | null;
   /** 이 모집 행의 모집 안내. 비어 있으면 null. 다른 모집 문구로 채우지 않는다. */

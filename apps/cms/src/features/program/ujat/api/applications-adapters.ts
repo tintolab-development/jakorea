@@ -23,6 +23,8 @@ import type {
   UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { projectUjatVolunteerApplicationStatus } from '@/features/program/ujat/lib/normalize-ujat-volunteer-application-status'
+import { mapVolunteerInterviewAssignmentFromWire } from '@/features/program/general/api/adapters/general-applications-adapters'
+import { pickVolunteerInterviewAssignmentApiStatus } from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { findUjatEducationRegionKeyByCode } from '@/features/program/ujat/lib/ujat-education-regions'
 import { fromUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
@@ -87,12 +89,32 @@ export function toSeoulYmd(value: string | null | undefined): string | null {
   return SEOUL_YMD.format(parsed)
 }
 
-function isoDatesFromStartAts(
-  items: ReadonlyArray<{ startAt?: string | null } | undefined> | null | undefined
+const ISO_YMD = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * 희망일 달력 SSOT: OpenAPI `educationDate`(Asia/Seoul).
+ * null인 레거시만 `startAt`을 Seoul로 환산한다. UTC 날짜 절단 금지.
+ */
+export function preferredEducationIsoFromSchedule(item: {
+  educationDate?: string | null
+  startAt?: string | null
+} | null | undefined): string | null {
+  const educationDate = item?.educationDate?.trim()
+  if (educationDate && ISO_YMD.test(educationDate)) return educationDate
+  return toSeoulYmd(item?.startAt)
+}
+
+function isoDatesFromPreferredSchedules(
+  items:
+    | ReadonlyArray<
+        { educationDate?: string | null; startAt?: string | null } | undefined
+      >
+    | null
+    | undefined
 ): string[] {
   const dates: string[] = []
   for (const item of items ?? []) {
-    const iso = toSeoulYmd(item?.startAt)
+    const iso = preferredEducationIsoFromSchedule(item)
     if (iso && !dates.includes(iso)) dates.push(iso)
   }
   return dates.sort()
@@ -103,7 +125,7 @@ function preferredScheduleIdByIsoFromSchedules(
 ): Record<string, number> {
   const ids: Record<string, number> = {}
   for (const item of preferred ?? []) {
-    const iso = toSeoulYmd(item?.startAt)
+    const iso = preferredEducationIsoFromSchedule(item)
     const scheduleId = item?.scheduleId
     const unresolved = item?.unresolvedReason?.trim().toUpperCase() ?? ''
     if (!iso) continue
@@ -147,7 +169,7 @@ function scheduleSlotsFromPreferredDates(
   preferred: OrganizationApplicationListItemResponse['preferredEducationSchedules']
 ): UjatInstitutionApplicationRow['scheduleSlots'] {
   const slots = buildEmptyScheduleSlots()
-  for (const iso of isoDatesFromStartAts(preferred)) {
+  for (const iso of isoDatesFromPreferredSchedules(preferred)) {
     slots[iso] = 'O'
   }
   return slots
@@ -186,7 +208,7 @@ export function mapOrganizationApplicationToUjatInstitutionRow(
     preferredScheduleIdByIso: preferredScheduleIdByIsoFromSchedules(
       dto.preferredEducationSchedules
     ),
-    sessionIsoDates: isoDatesFromStartAts(dto.sessions),
+    sessionIsoDates: isoDatesFromPreferredSchedules(dto.sessions),
     teacherName: displayTextOrDash(dto.teacherName),
     scheduleConfirmStatus: parseUjatScheduleConfirmStatus(dto.scheduleConfirmStatus),
     assignedInstructorCount: dto.assignedInstructorCount ?? null,
@@ -243,6 +265,9 @@ export function enrichUjatInstitutionDetailFromRemote(
   const base = getUjatInstitutionApplicationDetail(row)
   const remoteGradeBlocks = mapRemoteGradeBlocks(dto.gradeBlocks)
   const remoteClassTimeRows = mapRemoteClassTimeRows(dto.classTimeRows)
+  const gradeBlocks = remoteGradeBlocks
+    ? applyRootTextbookOntoGradeBlocks(remoteGradeBlocks, dto)
+    : base.gradeBlocks
 
   const hasField = (key: keyof OrganizationApplicationDetailDto): boolean =>
     Object.prototype.hasOwnProperty.call(dto, key)
@@ -268,7 +293,7 @@ export function enrichUjatInstitutionDetailFromRemote(
     },
     preferredEducationDates: mapPreferredEducationDates(dto, base.preferredEducationDates),
     classTimeRows: remoteClassTimeRows ?? base.classTimeRows,
-    gradeBlocks: remoteGradeBlocks ?? base.gradeBlocks,
+    gradeBlocks,
   }
 }
 
@@ -284,10 +309,88 @@ function mapPreferredEducationDates(
     : []
   if (fromDates.length > 0) return fromDates.map(item => item.trim())
 
-  const fromSchedules = isoDatesFromStartAts(dto.preferredEducationSchedules)
+  const fromSchedules = isoDatesFromPreferredSchedules(dto.preferredEducationSchedules)
   if (fromSchedules.length > 0) return fromSchedules
   if (hasDates) return []
   return fallback
+}
+
+function sameGradeLabel(left: string, right: string): boolean {
+  const a = Number.parseInt(left, 10)
+  const b = Number.parseInt(right, 10)
+  if (Number.isFinite(a) && Number.isFinite(b)) return a === b
+  return left.trim() === right.trim()
+}
+
+function gradeBlockHasOwnTextbookFields(
+  block: UjatInstitutionApplicationDetail['gradeBlocks'][number]
+): boolean {
+  return (
+    block.textbookName !== undefined ||
+    block.textbookNameEn !== undefined ||
+    block.kitCount !== undefined ||
+    block.bookCount !== undefined ||
+    block.textbookDeliveryStatus !== undefined
+  )
+}
+
+/**
+ * gradeBlocks에 교재 키가 없을 때만 상세 루트 교재 필드를 동일 DTO 안에서 반영한다.
+ * 블록에 textbookName: null 등이 명시되면 루트로 덮지 않는다 (서버 원본 SSOT).
+ * 일정 확정 `mapTextbookForGrade` 와 동일 계약.
+ */
+function applyRootTextbookOntoGradeBlocks(
+  blocks: UjatInstitutionApplicationDetail['gradeBlocks'],
+  dto: OrganizationApplicationDetailDto
+): UjatInstitutionApplicationDetail['gradeBlocks'] {
+  const rootName =
+    (typeof dto.textbookDisplayLabel === 'string' && dto.textbookDisplayLabel.trim()) ||
+    (typeof dto.textbookName === 'string' && dto.textbookName.trim()) ||
+    null
+  const rootNameEn = typeof dto.textbookNameEn === 'string' ? dto.textbookNameEn : null
+  const rootKit =
+    typeof dto.kitCount === 'number'
+      ? dto.kitCount
+      : typeof dto.textbookKits === 'number'
+        ? dto.textbookKits
+        : null
+  const rootBook =
+    typeof dto.bookCount === 'number'
+      ? dto.bookCount
+      : typeof dto.textbookQuantity === 'number'
+        ? dto.textbookQuantity
+        : null
+  const rootDelivery =
+    typeof dto.textbookDeliveryStatus === 'string' ? dto.textbookDeliveryStatus : null
+  const rootGrade = typeof dto.textbookGrade === 'string' ? dto.textbookGrade.trim() : ''
+  const hasRootTextbook =
+    rootName != null ||
+    rootNameEn != null ||
+    rootKit != null ||
+    rootBook != null ||
+    rootDelivery != null
+  if (!hasRootTextbook) return blocks
+
+  return blocks.map(block => {
+    if (gradeBlockHasOwnTextbookFields(block)) return block
+    if (rootGrade && !sameGradeLabel(rootGrade, block.gradeLabel)) return block
+    return {
+      ...block,
+      textbookName: rootName,
+      textbookNameEn: rootNameEn,
+      kitCount: rootKit,
+      bookCount: rootBook,
+      textbookDeliveryStatus: rootDelivery,
+    }
+  })
+}
+
+/** BE가 "2"만 보내도 UI·학급 파서("2학년")와 맞추기 위해 숫자 학년을 정규화한다 */
+function displayGradeLabelFromRemote(raw: string | null | undefined): string {
+  const trimmed = raw?.trim()
+  if (!trimmed) return '-'
+  if (/^\d+$/.test(trimmed)) return `${trimmed}학년`
+  return trimmed
 }
 
 /** classes가 []이면 classCount로 반 목록을 만들지 않는다 */
@@ -303,11 +406,28 @@ function mapRemoteGradeBlocks(
         studentCount: room.studentCount ?? 0,
       }
     })
-    return {
-      gradeLabel: block.gradeLabel?.trim() || '-',
+    const mapped: UjatInstitutionApplicationDetail['gradeBlocks'][number] = {
+      gradeLabel: displayGradeLabelFromRemote(block.gradeLabel),
       classCount: block.classCount ?? 0,
       classes,
     }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookName')) {
+      mapped.textbookName = typeof block.textbookName === 'string' ? block.textbookName : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookNameEn')) {
+      mapped.textbookNameEn = typeof block.textbookNameEn === 'string' ? block.textbookNameEn : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'kitCount')) {
+      mapped.kitCount = typeof block.kitCount === 'number' ? block.kitCount : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'bookCount')) {
+      mapped.bookCount = typeof block.bookCount === 'number' ? block.bookCount : null
+    }
+    if (Object.prototype.hasOwnProperty.call(block, 'textbookDeliveryStatus')) {
+      mapped.textbookDeliveryStatus =
+        typeof block.textbookDeliveryStatus === 'string' ? block.textbookDeliveryStatus : null
+    }
+    return mapped
   })
 }
 
@@ -346,7 +466,7 @@ function mapVolunteerGrade(value: unknown): UjatVolunteerGrade | '' {
   return typeof value === 'string' ? (value.trim() as UjatVolunteerGrade | '') : ''
 }
 
-function formatAssignedInterviewFromIso(
+export function formatAssignedInterviewFromIso(
   startAt?: string | null,
   endAt?: string | null
 ): { assignedInterviewDateLabel?: string; assignedInterviewTime?: string } {
@@ -419,6 +539,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
   })
 
   const preferredRegion = dto.preferredRegion?.trim() || ''
+  const preferredRegionCode = dto.preferredRegionCode?.trim() || null
   const grade = mapVolunteerGrade(dto.grade)
   const hasEducationExperience =
     typeof dto.hasEducationExperience === 'boolean' ? dto.hasEducationExperience : null
@@ -444,6 +565,7 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     name: displayTextOrDash(dto.memberName),
     grade,
     preferredRegion,
+    preferredRegionCode,
     contact: displayTextOrDash(dto.contact),
     email: displayTextOrDash(dto.email),
     contactRaw: '',
@@ -455,15 +577,30 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     essayNecessity: dto.essayNecessity?.trim() ?? '',
     essayJaExperience: dto.essayJaExperience?.trim() ?? '',
     totalAssignedDays: typeof dto.totalAssignedDays === 'number' ? dto.totalAssignedDays : null,
-    homeAddress: '',
+    homeAddress: dto.homeAddress?.trim() || dto.homeAddressSido?.trim() || '',
+    schoolEnrollmentStatus: '',
+    affiliationSchool: '',
+    affiliationGrade: '',
     managerAEvaluation: mapManagerEvaluation(dto.managerAEvaluation),
     managerBEvaluation: mapManagerEvaluation(dto.managerBEvaluation),
     documentScreeningStatus: projection.documentScreeningStatus,
     interviewSlotCount: dto.interviewAvailabilityCount ?? interviewAvailability.length,
-    interviewAssignmentStatus:
-      dto.interviewAssignmentStatus?.trim().toUpperCase() === 'ASSIGNED'
-        ? 'assigned'
-        : projection.interviewAssignmentStatus,
+    interviewAssignmentStatus: (() => {
+      const fromWire = mapVolunteerInterviewAssignmentFromWire({
+        interviewStatus: dto.interviewStatus,
+        interviewAssignmentStatus: dto.interviewAssignmentStatus,
+        applicationStatus: dto.applicationStatus,
+        giveUpYn: dto.giveUpYn,
+      })
+      return fromWire === 'waiting' || fromWire === 'not_required'
+        ? projection.interviewAssignmentStatus
+        : fromWire
+    })(),
+    interviewAssignmentApiStatus: pickVolunteerInterviewAssignmentApiStatus(
+      dto.interviewAssignmentStatus,
+      dto.interviewStatus,
+      dto.applicationStatus
+    ),
     programId: toId(dto.programId) || programId,
     half: fromUjatRecruitHalfApi(dto.recruitHalf, half),
     ...(dto.interviewAssignmentId != null
@@ -485,6 +622,8 @@ export function mapVolunteerApplicationToUjatApplicantRow(
     managerBScore: scoreB,
     totalScore:
       scoreA != null && scoreB != null ? scoreA + scoreB : scoreA != null ? scoreA : scoreB,
+    assignedInterviewStartAt: dto.assignedInterviewStartAt?.trim() || undefined,
+    assignedInterviewEndAt: dto.assignedInterviewEndAt?.trim() || undefined,
     ...assigned,
   }
 }

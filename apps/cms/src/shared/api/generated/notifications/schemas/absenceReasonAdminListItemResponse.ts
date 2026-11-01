@@ -5,6 +5,7 @@
  * Filtered for CMS notifications / kakao alimtalk Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AbsenceReasonAttachmentItem } from './absenceReasonAttachmentItem';
 
 export interface AbsenceReasonAdminListItemResponse {
   submissionId?: number;
@@ -23,6 +24,7 @@ export interface AbsenceReasonAdminListItemResponse {
   latestRevision?: boolean;
   fileObjectIds?: number[];
   originalFileNames?: string[];
+  attachments?: AbsenceReasonAttachmentItem[];
   submittedAt?: string;
   reviewedAt?: string;
   reviewedByAdminId?: number;

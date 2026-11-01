@@ -89,18 +89,18 @@
   margin: 0;
 }
 
+/* Figma 11001:220304 — element/hover · radius 24 · gap 4 · pad 16/24 */
 .programSummary {
   display: flex;
   width: 100%;
   box-sizing: border-box;
-  margin-bottom: var(--spacing-24);
-  padding: var(--Spacing-16, 16px) var(--Spacing-24, 24px);
+  padding: var(--spacing-16) var(--spacing-24);
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  gap: 4px;
-  border-radius: var(--radius-12);
-  background: var(--Color-netural-cool-100, #e6e9eb);
+  gap: var(--spacing-4);
+  border-radius: var(--radius-24);
+  background: var(--color-element-hover);
 }
 
 .content {
@@ -110,8 +110,8 @@
   flex-direction: column;
   align-items: flex-start;
   align-self: stretch;
-  /* 단락(섹션) 스택 간격 — 하위 form은 gap: inherit */
-  gap: var(--spacing-24);
+  /* 공고명 ↔ 본문 32 · 단락 스택은 하위 form gap */
+  gap: var(--spacing-32);
 }
 
 @media (--bp-pc-compact) {
@@ -204,8 +204,9 @@
   flex-direction: column;
   align-self: stretch;
   overflow: hidden;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: var(--radius-16);
+  border: 1px solid var(--table-line, var(--color-border-default, #d9d9d9));
+  /* 소비 화면에서 토큰만 바꿀 수 있는 훅 — 기본은 Figma·디자인 토큰 */
+  border-radius: var(--pf-form-field-table-radius, var(--radius-16));
   background: var(--color-neutral-white);
 }
 
@@ -218,7 +219,7 @@
   box-sizing: border-box;
   width: 100%;
   align-items: stretch;
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, var(--color-border-default, #d9d9d9));
 }
 
 .fieldRow:last-child {
@@ -261,7 +262,7 @@
 }
 
 .fieldRowDouble > .field:nth-child(2) {
-  border-left: 1px solid var(--table-line, #e0e0e0);
+  border-left: 1px solid var(--table-line, var(--color-border-default, #d9d9d9));
 }
 
 .fieldRowDouble > .field > .fieldLabel {
@@ -284,8 +285,8 @@
   justify-content: center;
   gap: 2px;
   padding: 10px;
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  background: #f5f6f7;
+  border-right: 1px solid var(--table-line, var(--color-border-default, #d9d9d9));
+  background: var(--pf-form-field-label-bg, var(--color-neutral-cool-80, #eef3f4));
 }
 
 .fieldLabelWide {
@@ -314,7 +315,7 @@
   flex: 1 0 0;
   align-items: center;
   gap: 12px;
-  padding: 12px;
+  padding: var(--pf-form-field-content-padding, 12px);
 }
 
 /* 세로형 단락 — 상단 라벨 / 하단 값 */
@@ -329,7 +330,7 @@
   justify-content: flex-start;
   padding: 12px 16px;
   border-right: none;
-  border-bottom: 1px solid var(--table-line, #e0e0e0);
+  border-bottom: 1px solid var(--table-line, var(--color-border-default, #d9d9d9));
 }
 
 .fieldLabelTextVertical {
@@ -397,7 +398,7 @@
   min-height: auto;
   flex: 1 1 auto;
   align-items: stretch;
-  padding: 12px 16px;
+  padding: var(--pf-form-field-content-vertical-padding, 12px 16px);
 }
 
 .fieldValueText {
@@ -683,7 +684,7 @@
     align-items: stretch;
     gap: var(--spacing-16);
     padding: var(--spacing-16) 0;
-    border-bottom: 1px solid var(--table-line, #e0e0e0);
+    border-bottom: 1px solid var(--table-line, var(--color-border-default, #d9d9d9));
   }
 
   .fieldRow:last-child .field:last-child {

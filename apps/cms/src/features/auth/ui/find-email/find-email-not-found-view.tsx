@@ -19,10 +19,10 @@ export function FindEmailNotFoundView({ onRetry, onGoLogin }: FindEmailNotFoundV
         </p>
 
         <div className="auth-actions find-email-result__actions">
-          <CmsButton variant="primary" size="h52" width="100%" onClick={onRetry}>
+          <CmsButton variant="primary" size="h52" onClick={onRetry}>
             이메일 다시 찾기
           </CmsButton>
-          <CmsButton variant="default" size="h52" width="100%" onClick={onGoLogin}>
+          <CmsButton variant="default" size="h52" onClick={onGoLogin}>
             로그인 화면 돌아가기
           </CmsButton>
         </div>

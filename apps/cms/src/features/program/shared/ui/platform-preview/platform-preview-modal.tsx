@@ -133,11 +133,8 @@ export function PlatformPreviewModal({
                 <CmsButton
                   type="button"
                   variant="secondary"
-                  size="large"
-                  width={140}
-                  className="template-preview-modal__notice-close-btn"
-                  onClick={onClose}
-                >
+                  size="large" className="template-preview-modal__notice-close-btn"
+                  onClick={onClose} >
                   미리보기 닫기
                 </CmsButton>
               </div>

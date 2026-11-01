@@ -270,8 +270,7 @@ export function MemberConsentCrimeModal({
                 variant="secondary"
                 size="medium"
                 onClick={onClose}
-                disabled={isSubmitting}
-              >
+                disabled={isSubmitting} >
                 닫기
               </CmsButton>
               <CmsButton
@@ -279,8 +278,7 @@ export function MemberConsentCrimeModal({
                 size="medium"
                 icon={<ButtonDownloadIcon />}
                 onClick={handleDownload}
-                disabled={isSubmitting}
-              >
+                disabled={isSubmitting} >
                 문서 다운로드
               </CmsButton>
               <span className="file-upload-picker">
@@ -298,19 +296,16 @@ export function MemberConsentCrimeModal({
                   size="medium"
                   tabIndex={isSubmitting ? undefined : -1}
                   onClick={handlePickDocument}
-                  disabled={isSubmitting}
-                >
+                  disabled={isSubmitting} >
                   문서 업로드
                 </CmsButton>
               </span>
               <CmsButton
                 variant="primary"
                 size="medium"
-                width={140}
                 onClick={() => void handleSubmit()}
                 disabled={isSubmitting}
-                loading={isSubmitting}
-              >
+                loading={isSubmitting} >
                 제출
               </CmsButton>
             </div>

@@ -51,8 +51,7 @@ export function RegistrationStepTemplateBanner({
                   type="button"
                   variant="secondary"
                   size="small"
-                  onClick={onChangeTemplate}
-                >
+                  onClick={onChangeTemplate} >
                   템플릿 변경
                 </CmsButton>
               </div>

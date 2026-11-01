@@ -1,6 +1,10 @@
 import { useMemo } from 'react'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import {
+  RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
+  RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
+} from '@/features/program/general/lib/recruit-radio-defaults'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS } from '@/features/template/lib/template-form-select-options'
@@ -13,6 +17,10 @@ import {
   RECRUIT_FORM_MAX_SUFFIX_CLASS,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
+import {
+  isRecruitInterviewRequiredOff,
+  isRecruitInterviewRequiredOn,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-required'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -35,11 +43,11 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
     useIndividualRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
       'recruit.individual.announcementPublished',
-      'published'
+      RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
     )
   const [interviewRequired, setInterviewRequired] = useIndividualRecruitField<string>(
     'recruit.individual.interviewRequired',
-    'yes'
+    RECRUIT_INTERVIEW_REQUIRED_DEFAULT
   )
 
   const [programAnchorIso, setProgramAnchorIso] = useIndividualRecruitField<string | null>(
@@ -65,11 +73,6 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
     }
     setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
-  const programRangeWithTime = useMemo(
-    () => (programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1])),
-    [programRange]
-  )
-
   const [recruitAnchorIso, setRecruitAnchorIso] = useIndividualRecruitField<string | null>(
     'recruit.individual.recruitAnchorIso',
     null
@@ -178,7 +181,8 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
     false
   )
   const [notes, setNotes] = useIndividualRecruitField<string>('recruit.individual.notes', '')
-  const interviewEnabled = interviewRequired === 'yes'
+  const interviewEnabled = isRecruitInterviewRequiredOn(interviewRequired)
+  const interviewRadioValue = isRecruitInterviewRequiredOff(interviewRequired) ? 'no' : 'yes'
 
   return (
     <div className="applicant-recruit-individual-participant-info-paragraph__forms">
@@ -202,7 +206,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
             edit={
               <CmsRadioGroup
                 size="medium"
-                value={interviewRequired}
+                value={interviewRadioValue}
                 onChange={e => setInterviewRequired(String(e.target.value))}
                 className={RECRUITMENT_RADIO_CLASS}
               >
@@ -234,8 +238,9 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
                   placeholder="프로그램 운영 기간을 선택하세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
+                  showTimeToggle={false}
                   appliedSurfaceRange={programRange}
-                  appliedSurfaceWithTime={programRangeWithTime}
+                  appliedSurfaceWithTime={false}
                   onRangeChange={range => setProgramRange(range)}
                   onChange={next => {
                     if (next == null) return

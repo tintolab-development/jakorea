@@ -176,22 +176,17 @@ export function WritingTemplateSelectModal({
               <CmsButton
                 type="button"
                 variant="default"
-                size="small"
-                width={80}
-                className="writing-template-select-modal__action-btn writing-template-select-modal__action-btn--preview"
+                size="small" className="writing-template-select-modal__action-btn writing-template-select-modal__action-btn--preview"
                 onClick={event => {
                   event.stopPropagation()
                   void handlePreview(record)
-                }}
-              >
+                }} >
                 미리보기
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
-                size="small"
-                width={80}
-                className="writing-template-select-modal__action-btn writing-template-select-modal__action-btn--use"
+                size="small" className="writing-template-select-modal__action-btn writing-template-select-modal__action-btn--use"
                 disabled={!canUse}
                 onClick={event => {
                   event.stopPropagation()
@@ -203,8 +198,7 @@ export function WritingTemplateSelectModal({
                     return
                   }
                   onUse(record)
-                }}
-              >
+                }} >
                 사용하기
               </CmsButton>
             </div>

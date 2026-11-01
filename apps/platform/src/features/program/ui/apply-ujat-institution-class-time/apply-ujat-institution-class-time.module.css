@@ -2,9 +2,22 @@
   width: 100%;
 }
 
+.table {
+  width: 100%;
+}
+
 .gradeRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Figma: 교시 셀 — 120px 시작/종료 인풋 + ~ (가로 고정, 늘리지 않음) */
+.periodPair {
+  width: auto;
+  min-width: 0;
+  flex: 0 0 auto;
 }

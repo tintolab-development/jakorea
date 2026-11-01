@@ -161,8 +161,7 @@ export function SectionFrame({
                 size="h40"
                 type="button"
                 disabled={saving}
-                onClick={onCancel}
-              >
+                onClick={onCancel} >
                 취소
               </CmsButton>
               <CmsButton
@@ -171,8 +170,7 @@ export function SectionFrame({
                 type="button"
                 loading={saving}
                 disabled={saving}
-                onClick={onSave}
-              >
+                onClick={onSave} >
                 수정
               </CmsButton>
             </>

@@ -4,6 +4,7 @@
  * - 월간: 월 그리드 + 우측 일정 리스트 / 주간: 주간 그리드 셀 내 이벤트
  */
 
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { Card, List, Popover } from 'antd'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useState, useMemo, useRef, useLayoutEffect, Fragment, type ReactElement } from 'react'
@@ -920,9 +921,9 @@ export function ProgramScheduleWidget({
               <List.Item
                 className="program-schedule-widget__event-item"
                 style={{
-                  // 피그마 14894:26661 — 프로그램 주 색상(accent) 배경 6% · 테두리 10%
-                  backgroundColor: `color-mix(in srgb, ${pair.accent ?? pair.bg} 6%, transparent)`,
-                  border: `1px solid color-mix(in srgb, ${pair.accent ?? pair.bg} 10%, transparent)`,
+                  // CMS 캘린더 공통 규칙 — 배경: 공통 컬러셋 bg opacity 0.6 · 테두리: 공통 회색(colors.border)
+                  backgroundColor: calendarListItemBackground(pair.bg),
+                  border: `1px solid ${pair.border}`,
                 }}
                 onClick={() => handleEventClick(event)}
               >

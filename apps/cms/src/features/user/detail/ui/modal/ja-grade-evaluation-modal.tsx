@@ -334,9 +334,7 @@ export function JaGradeEvaluationModal({
             <div className="ja-grade-evaluation-modal__footer-inner">
               <CmsButton
                 type="button"
-                size="large"
-                width="100%"
-                className="ja-grade-evaluation-modal__submit"
+                size="large" className="ja-grade-evaluation-modal__submit"
                 adminAction="write"
                 disabled={
                   draft == null ||
@@ -347,8 +345,7 @@ export function JaGradeEvaluationModal({
                 loading={submitting}
                 onClick={() => {
                   void handleSubmit()
-                }}
-              >
+                }} >
                 JA 등급 평가 완료하기
               </CmsButton>
             </div>

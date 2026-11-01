@@ -27,6 +27,16 @@ const entry = mapPortalFormListItemToSurveyEntry({
 assert.equal(entry?.id, '99')
 assert.equal(entry?.formResponseId, 501)
 assert.equal(entry?.status, 'submitted')
+assert.equal(entry?.startAt, '2026-10-01')
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 100,
+    status: 'NOT_SUBMITTED',
+    submissionStartAt: '2026-10-31T15:30:00Z',
+    submissionEndAt: '2026-10-31T15:30:00Z',
+  })?.startAt,
+  '2026-11-01',
+)
 
 assert.equal(isPortalSurveyFormType('SURVEY'), true)
 assert.equal(isPortalSurveyFormType('SATISFACTION'), false)
@@ -188,5 +198,16 @@ const mappedAssignment = mapPortalFormListItemToSurveyEntry({
 assert.equal(mappedAssignment?.bindingId, 21)
 assert.equal(mappedAssignment?.canSubmit, true)
 assert.equal(mappedAssignment?.canResubmit, false)
+
+const submittedByResponse = mapPortalFormListItemToSurveyEntry({
+  bindingId: 190289,
+  status: 'NOT_SUBMITTED',
+  responseStatus: 'APPROVED',
+  formResponseId: 1852101,
+  canSubmit: false,
+  canResubmit: false,
+})
+assert.equal(submittedByResponse?.status, 'submitted')
+assert.equal(submittedByResponse?.responseStatus, 'APPROVED')
 
 console.log('portal-form-list.selfcheck: ok')

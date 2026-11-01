@@ -449,7 +449,6 @@
 
 /* 문서 다운로드 버튼 — secondary 기본 스펙에서 width·padding 오버라이드 */
 .full-page-modal__download-btn.cms-button.ant-btn {
-  width: 180px;
   padding: 6px 16px 6px 10px !important;
 }
 
@@ -584,9 +583,6 @@
 }
 
 .full-page-modal--registration-user-mode .full-page-modal__footer-cta-btn.cms-button.ant-btn {
-  width: 180px;
-  min-width: 180px;
-  max-width: 180px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

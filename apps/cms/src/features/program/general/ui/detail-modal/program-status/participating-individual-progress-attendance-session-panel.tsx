@@ -148,20 +148,24 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
     [onSaveParticipant, session.id, showAlert]
   )
 
+  // ⑤ 일정형·단일·날짜: 제목에 이미 시간이 들어가므로 옆 표기에서는 시간만 뺀다(값은 유지).
+  const headerMetaPeriodLabel =
+    session.headerPeriodRangeLabel && !session.headerTitle.includes(session.headerPeriodRangeLabel)
+      ? session.headerPeriodRangeLabel
+      : ''
+
   return (
     <section className="school-detail-attendance-session">
       <div className="table-header-actions">
         <div className="table-header-title--wrapper school-detail-attendance-session__title-row">
           <span className="table-title">{session.headerTitle}</span>
-          {session.headerScheduleSummary || session.headerPeriodRangeLabel ? (
+          {session.headerScheduleSummary || headerMetaPeriodLabel ? (
             <div className="school-detail-attendance-session__header-meta">
               {session.headerScheduleSummary ? <span>{session.headerScheduleSummary}</span> : null}
-              {session.headerScheduleSummary && session.headerPeriodRangeLabel ? (
+              {session.headerScheduleSummary && headerMetaPeriodLabel ? (
                 <span className="detail-info-form-inputs-separator" aria-hidden />
               ) : null}
-              {session.headerPeriodRangeLabel ? (
-                <span>{session.headerPeriodRangeLabel}</span>
-              ) : null}
+              {headerMetaPeriodLabel ? <span>{headerMetaPeriodLabel}</span> : null}
             </div>
           ) : null}
           <span className="table-description">총 {participants.length}건</span>
@@ -171,8 +175,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
             type="button"
             variant="secondary"
             size="h40"
-            onClick={handleOpenCorrectionModal}
-          >
+            onClick={handleOpenCorrectionModal} >
             출결 정정
           </CmsButton>
           <ExcelButton loading={isExporting} onClick={exportExcel} />

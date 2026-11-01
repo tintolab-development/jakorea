@@ -33,7 +33,7 @@ alwaysApply: false
     <CmsDateRangePicker inputSize="medium" width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX} … />
   </div>
   <div className="admin-filter-area__actions">
-    <CmsButton className="admin-filter-area__search-button" size="medium" width={FILTER_SEARCH_BUTTON_WIDTH_PX}>
+    <CmsButton className="admin-filter-area__search-button" size="medium">
       조회
     </CmsButton>
   </div>

@@ -185,8 +185,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             취소
           </CmsButton>
           <CmsButton
@@ -195,8 +194,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit}
-          >
+            onClick={handleSubmit} >
             수정
           </CmsButton>
         </>

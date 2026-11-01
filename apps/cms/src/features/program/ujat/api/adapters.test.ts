@@ -187,7 +187,7 @@ describe('UJAT program adapters', () => {
 
     expect(request.programType).toBe('UJAT')
     expect(request.educationStructure).toBe('SCHEDULE')
-    expect(request.businessStartDate).toBe(program.startDate)
+    expect(request.businessStartDate).toBe('2026-01-01')
     expect(detail.version).toBe(1)
     expect(detail.registration?.overlay?.['ujat.basicInfo.programManagementName']).toBeUndefined()
   })
@@ -443,8 +443,8 @@ describe('UJAT program adapters', () => {
       startDate: '2026-10-14',
       endDate: '2026-11-07',
     })
-    expect(created.businessStartDate).toBe(program.startDate)
-    expect(created.businessEndDate).toBe(program.endDate)
+    expect(created.businessStartDate).toBe('2026-01-01')
+    expect(created.businessEndDate).toBe('2027-01-01')
     expect(updated.businessStartDate).toBe('2026-10-14')
     expect(updated.businessEndDate).toBe('2026-11-07')
   })
@@ -462,9 +462,10 @@ describe('UJAT program adapters', () => {
     expect(updated).not.toHaveProperty('businessField')
   })
 
-  it('사업 기간은 연도를 넘어도 선택한 날짜를 그대로 보낸다', () => {
+  it('사업 기간은 Asia/Seoul 달력일 YYYY-MM-DD로 보낸다 (UTC ISO 하루 밀림 방지)', () => {
     const span: Program = {
       ...program,
+      // KST 2025-04-01 00:00 / 2027-08-23 23:59:59.999
       startDate: '2025-03-31T15:00:00.000Z',
       endDate: '2027-08-23T14:59:59.999Z',
     }
@@ -473,12 +474,12 @@ describe('UJAT program adapters', () => {
       startDate: span.startDate,
       endDate: span.endDate,
     })
-    expect(created.startDate).toBe(span.startDate)
-    expect(created.endDate).toBe(span.endDate)
-    expect(created.businessStartDate).toBe(span.startDate)
-    expect(created.businessEndDate).toBe(span.endDate)
-    expect(updated.businessStartDate).toBe(span.startDate)
-    expect(updated.businessEndDate).toBe(span.endDate)
+    expect(created.startDate).toBe('2025-04-01')
+    expect(created.endDate).toBe('2027-08-23')
+    expect(created.businessStartDate).toBe('2025-04-01')
+    expect(created.businessEndDate).toBe('2027-08-23')
+    expect(updated.businessStartDate).toBe('2025-04-01')
+    expect(updated.businessEndDate).toBe('2027-08-23')
   })
 })
 
@@ -1017,6 +1018,36 @@ describe('UJAT API policy', () => {
 })
 
 describe('mapUjatProgramRecruitmentsToRequest', () => {
+  it('기관 모집 날짜만 오면 KST 하루 시작·끝 Instant로 보내고 finalPassAnnouncementAt을 보존한다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      programRecruitments: [
+        {
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          startAt: '2026-03-02',
+          endAt: '2026-03-13',
+          finalPassAnnouncementAt: '2026-03-16',
+        },
+        {
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          startAt: '2026-03-01T15:00:00.000Z',
+          endAt: '2026-03-13T14:59:59.999Z',
+        },
+      ],
+    })
+    const institution = rows.find(row => row.recruitmentType === 'PARTICIPANT')
+    const volunteer = rows.find(row => row.recruitmentType === 'VOLUNTEER')
+    expect(institution?.startAt).toBe('2026-03-01T15:00:00.000Z')
+    expect(institution?.endAt).toBe('2026-03-13T14:59:59.999Z')
+    expect(institution?.finalPassAnnouncementAt).toBe('2026-03-16')
+    // 이미 Instant인 봉사자 행은 재직렬화하지 않는다
+    expect(volunteer?.startAt).toBe('2026-03-01T15:00:00.000Z')
+    expect(volunteer?.endAt).toBe('2026-03-13T14:59:59.999Z')
+  })
+
   it('봉사자 정원이 0이어도 maxCount를 보낸다', () => {
     const rows = mapUjatProgramRecruitmentsToRequest({
       ...program,
@@ -1577,8 +1608,8 @@ describe('toCreateRequest — UJAT 상·하반기 봉사자 모집 행 (수동 �
     )
     const participant = request.recruitments?.find(row => row.recruitmentType === 'PARTICIPANT')
     expect(participant).toMatchObject({
-      startAt: '2026-08-01',
-      endAt: '2026-08-31',
+      startAt: '2026-07-31T15:00:00.000Z',
+      endAt: '2026-08-31T14:59:59.999Z',
       operationStartDate: '2027-03-01',
     })
     expect(participant).not.toHaveProperty('operationEndDate')

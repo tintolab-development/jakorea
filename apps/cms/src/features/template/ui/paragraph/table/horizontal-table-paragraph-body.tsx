@@ -442,6 +442,7 @@ export function HorizontalTableParagraphBody({
   programApplicationFormGeminiInstitution,
   programApplicationFormGeminiInstructor,
   ujatProgramApplicationFormInstitution,
+  ujatPreferredEducationScheduleTypedDetail,
   ujatProgramApplicationFormVolunteer,
   ujatProgramApplicationGradeInfo,
   ujatProgramApplicationGradeClassTime,
@@ -512,6 +513,7 @@ export function HorizontalTableParagraphBody({
     | GeminiVisitingTrainingApplicationFormInstructorBodyOptions
   /** UJAT 프로그램 학교 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormInstitution?: boolean
+  ujatPreferredEducationScheduleTypedDetail?: UjatTypedDetail | null
   /** UJAT 프로그램 봉사자 신청 폼 시드 단락 — `DetailInfoForm` 본문 */
   ujatProgramApplicationFormVolunteer?: UjatProgramApplicationVolunteerBodyOptions
   ujatProgramApplicationGradeInfo?: UjatProgramApplicationGradeInfoParagraphOptions
@@ -788,7 +790,8 @@ export function HorizontalTableParagraphBody({
       ujatProgramApplicationGradeClassTime,
       paragraphInteractionMode,
       programLinkedInstitutionApplicationForm === true,
-      bottomConsentDisplayOnly
+      bottomConsentDisplayOnly,
+      ujatPreferredEducationScheduleTypedDetail
     )
   if (ujatProgramApplicationFormInstitutionBody != null)
     return ujatProgramApplicationFormInstitutionBody

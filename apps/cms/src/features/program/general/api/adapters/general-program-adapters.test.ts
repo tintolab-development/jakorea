@@ -384,8 +384,8 @@ describe('general-program-adapters', () => {
 
     // audience 미설정 → ORGANIZATION → GENERAL_ORGANIZATION
     expect(create.programType).toBe('GENERAL_ORGANIZATION')
-    expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
-    expect(create.businessEndDate).toBe('2026-12-31T00:00:00.000Z')
+    expect(create.businessStartDate).toBe('2026-04-01')
+    expect(create.businessEndDate).toBe('2026-12-31')
     expect(create.autoApplyDefaultFormBindings).toBe(true)
     // audience 미설정 시 폼 기본값(organization)과 동일
     expect(create.applicationTargetMode).toBe('ORGANIZATION')
@@ -422,7 +422,7 @@ describe('general-program-adapters', () => {
 
     expect(request.applicationStartDate).toBeUndefined()
     expect(request.applicationEndDate).toBeUndefined()
-    expect(request.businessStartDate).toBe('2026-10-30T15:00:00.000Z')
+    expect(request.businessStartDate).toBe('2026-10-31')
     expect(request.recruitments).toEqual([
       expect.objectContaining({
         recruitmentType: 'PARTICIPANT',
@@ -477,8 +477,8 @@ describe('general-program-adapters', () => {
     expect(create).toEqual(mapGeneralProgramToCreateRequest(withoutRounds))
     expect(create.programType).toBe('GENERAL_ORGANIZATION')
     expect(typeof create.serviceDetailJson).toBe('string')
-    expect(create.businessStartDate).toBe('2026-04-01T00:00:00.000Z')
-    expect(create.businessEndDate).toBe('2026-12-31T00:00:00.000Z')
+    expect(create.businessStartDate).toBe('2026-04-01')
+    expect(create.businessEndDate).toBe('2026-12-31')
     expect(create.recruitments).toEqual([
       expect.objectContaining({
         recruitmentType: 'PARTICIPANT',
@@ -937,8 +937,8 @@ describe('general-program-adapters', () => {
     const request = mapGeneralProgramToUpdateRequest(sampleProgram)
     expect(request).not.toHaveProperty('programType')
     expect(request).not.toHaveProperty('autoApplyDefaultFormBindings')
-    expect(request.businessStartDate).toBe(sampleProgram.startDate)
-    expect(request.businessEndDate).toBe(sampleProgram.endDate)
+    expect(request.businessStartDate).toBe('2026-04-01')
+    expect(request.businessEndDate).toBe('2026-12-31')
   })
 
   it('사업 분야는 공식 businessArea만 생성·수정 요청에 보낸다', () => {
@@ -971,8 +971,8 @@ describe('general-program-adapters', () => {
     })
     expect(request.startDate).toBe('2025-03-31T15:00:00.000Z')
     expect(request.endDate).toBe('2027-08-23T14:59:59.999Z')
-    expect(request.businessStartDate).toBe('2025-03-31T15:00:00.000Z')
-    expect(request.businessEndDate).toBe('2027-08-23T14:59:59.999Z')
+    expect(request.businessStartDate).toBe('2025-04-01')
+    expect(request.businessEndDate).toBe('2027-08-23')
   })
 
   it('maps Program patch to update request with only patched keys', () => {

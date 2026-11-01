@@ -1,6 +1,7 @@
 import type { UjatPreferredEducationScheduleOption } from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import {
   isUjatPreferredScheduleOptionSelected,
+  isUjatPreferredScheduleSelectedId,
   resolveUjatPreferredScheduleSelectedOptions,
 } from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import {
@@ -10,6 +11,7 @@ import {
   PFFormInlineSeparatedFields,
   PFText,
 } from '@/shared/ui'
+import hostStyles from '../apply-form-field-host.module.css'
 import slotStyles from '../apply-instructor-available-schedule/apply-instructor-available-schedule.module.css'
 import styles from './apply-ujat-institution-preferred-schedule.module.css'
 
@@ -69,7 +71,7 @@ export function ujatInstitutionPreferredScheduleValuesFromDraftAnswer(
     record.selectedIds ??
     record.dates
   if (!Array.isArray(raw)) return null
-  return raw.map(value => String(value)).filter(Boolean)
+  return raw.map(value => String(value).trim()).filter(isUjatPreferredScheduleSelectedId)
 }
 
 export function ApplyUjatInstitutionPreferredSchedule({
@@ -83,9 +85,7 @@ export function ApplyUjatInstitutionPreferredSchedule({
     const option = options.find(row => row.id === id)
     if (!option) return
     if (isUjatPreferredScheduleOptionSelected(option, selectedIds)) {
-      onChange(
-        selectedIds.filter(token => token !== option.id && token !== option.date),
-      )
+      onChange(selectedIds.filter(token => token !== option.id))
       return
     }
     if (selected.length >= UJAT_PREFERRED_EDUCATION_DATE_MAX) return
@@ -111,19 +111,22 @@ export function ApplyUjatInstitutionPreferredSchedule({
                 className={[
                   slotStyles.slotCard,
                   slotStyles.slotCardInterview,
+                  styles.chip,
                   active ? slotStyles.slotCardActive : undefined,
                 ]
                   .filter(Boolean)
                   .join(' ')}
                 onClick={() => toggle(option.id)}
               >
-                <span className={slotStyles.slotCardTitle}>{option.display}</span>
+                <span className={[slotStyles.slotCardTitle, styles.chipLabel].join(' ')}>
+                  {option.display}
+                </span>
               </button>
             )
           })
         )}
       </div>
-      <PFFormFieldTable>
+      <PFFormFieldTable radius="rounded" className={hostStyles.root}>
         <PFFormFieldRow type="single">
           <PFFormField label="교육 진행 희망일" labelWidth="wider" fullWidth>
             {selected.length === 0 ? (

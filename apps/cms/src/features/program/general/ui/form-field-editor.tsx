@@ -230,8 +230,7 @@ export function FormFieldEditor({
             size="large"
             icon={<ButtonAddIcon />}
             onClick={handleAdd}
-            style={{ marginBottom: 16 }}
-          >
+            style={{ marginBottom: 16 }} >
             필드 추가
           </CmsButton>
         </div>
@@ -328,8 +327,7 @@ export function FormFieldEditor({
                     onClick={() => {
                       setEditingIndex(null)
                       fieldForm.resetFields()
-                    }}
-                  >
+                    }} >
                     취소
                   </CmsButton>
                 </Space>

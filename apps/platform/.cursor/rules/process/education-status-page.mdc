@@ -25,7 +25,8 @@ alwaysApply: false
 ### 정렬
 
 1. **모집현황**: 모집 중 → 모집 예정 → 모집 완료 (`recruiting` → `scheduled` → `closed`)
-2. **진행 상태**: 결과 대기 → 서류 합격 → 진행중 → 진행 완료 → 활동 포기 → 신청 반려
+2. **진행 상태**(내부 enum): `waiting_result` → `document_passed` → `in_progress` → `completed` → `withdrawn` → `rejected`
+   - 목록 표시 라벨은 아래 **진행 상태 라벨** (승인 대기 세트)
 
 구현: [`education-application-list.ts`](apps/platform/src/features/mypage/education/applications/lib/list.ts)
 
@@ -57,25 +58,25 @@ alwaysApply: false
 - 태그: `ProgramStatusBadges` — 모집 완료(`closed`) → 회색(`disabled`)
 - 진행 상태 색: [`education-display-status.ts`](apps/platform/src/features/mypage/education/applications/lib/display-status.ts)
 
-| 상태                 | 색                                  |
-| -------------------- | ----------------------------------- |
-| 결과 대기, 서류 합격 | 주황 `--color-element-orange`       |
-| 진행중               | 파랑 `--color-element-blue`         |
-| 진행 완료, 활동 포기 | 회색 `--color-neutral-cool-500`     |
-| 신청 반려            | 빨강 `--color-status-error-default` |
+| 상태(표시)                         | 내부 enum                         | 색                                  |
+| ---------------------------------- | --------------------------------- | ----------------------------------- |
+| 승인 대기                          | `waiting_result`, `document_passed` | 주황 `--color-element-orange`     |
+| 진행중                             | `in_progress`                     | 파랑 `--color-element-blue`         |
+| 진행 완료, 활동 포기               | `completed`, `withdrawn`          | 회색 `--color-neutral-cool-500`     |
+| 신청 반려                          | `rejected`                        | 빨강 `--color-status-error-default` |
 
-### 교사 회원 (`school_teacher`) 진행 상태 라벨
+### 진행 상태 라벨 (교육현황)
 
-내부 enum·탭·정렬은 일반과 동일. **표시 문구만** [`display-status.ts`](apps/platform/src/features/mypage/education/applications/lib/display-status.ts) `audience: 'teacher'`.
+내부 enum·탭·정렬 키는 공통. **교육현황 목록·상세 표시 문구**는 [`display-status.ts`](apps/platform/src/features/mypage/education/applications/lib/display-status.ts) `audience: 'teacher'` (`TEACHER_EDUCATION_DISPLAY_STATUS_LABEL`).
 
 | 라벨                                            | 색 (톤)          |
 | ----------------------------------------------- | ---------------- |
-| 승인대기 (`waiting_result` · `document_passed`) | 주황 `pending`   |
+| 승인 대기 (`waiting_result` · `document_passed`) | 주황 `pending`   |
 | 진행중                                          | 파랑 `progress`  |
 | 진행 완료, 활동 포기                            | 회색 `completed` |
 | 신청 반려                                       | 빨강 `rejected`  |
 
-목록·상세: `isSchoolTeacherMypageProfile` 일 때 `statusAudience="teacher"`. 봉사·강의현황은 `general` 유지.
+목록·상세: `statusAudience="teacher"` 고정. **봉사·강의현황**은 `general`(결과 대기 등) 유지.
 
 ### 행 클릭
 
@@ -109,7 +110,7 @@ alwaysApply: false
 
 | 진행 상태                                  | 탭                                                                                                             |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| 결과 대기 / 서류 합격 / 신청 반려          | 프로그램 정보 / 신청 내용                                                                                      |
+| 승인 대기(`waiting_result`·`document_passed`) / 신청 반려 | 프로그램 정보 / 신청 내용                                                                             |
 | **진행 중 / 진행 완료**                    | 안내사항 / 교육 일정 / 설문조사 / 만족도조사 / **정산 현황**                                                   |
 | **활동 포기 (교육 전)** `before_education` | 프로그램 정보 / 신청 내용. 상태만 `활동 포기`, 합격 배너·신청 취소 비노출                                      |
 | **활동 포기 (교육 중)** `during_education` | 교육 일정 / 설문조사 / 만족도조사 / **정산 현황** (**안내사항 비노출**). `lastParticipatedSession` 이하만 노출 |
@@ -222,7 +223,7 @@ alwaysApply: false
   - 피드백: `담당자의 과제 피드백이 있어요` + 피드백 확인 / 수정 제출하기
   - 수정제출완료: 라벨 + `과제 수정 제출이 완료되었어요` · 제출 버튼 disabled
   - 제출 완료 시 파일 목록 위 구분선(`--color-border-default`)
-- 제출 완료+마감 or 수정제출완료 → 과제 제출하기 **disabled**
+- 과제 제출하기 활성은 서버 `canSubmit`/`canResubmit` 또는 `availableActions`의 `SUBMIT_ASSIGNMENT`. 팀 역할(LEADER/MEMBER)로 숨기거나 끄지 않는다. 마감만 보고 켜지 않는다.
 - 과제 제출·피드백·결석 사유 팝업: UI 후속(현재 준비 중 alert)
 
 ## 설문조사 · 만족도조사 탭

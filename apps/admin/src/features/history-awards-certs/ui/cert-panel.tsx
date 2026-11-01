@@ -31,7 +31,6 @@ import { CertFormModal } from '@/features/history-awards-certs/ui/cert-form-moda
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import {
   CMS_TABLE_NO_COL_CLASS,
@@ -393,13 +392,11 @@ export function CertPanel() {
           <CmsButton
             variant="secondary"
             size="medium"
-            width={88}
             type="button"
             onClick={e => {
               e.stopPropagation()
               openEdit(record)
-            }}
-          >
+            }} >
             수정
           </CmsButton>
         ),
@@ -487,14 +484,11 @@ export function CertPanel() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
+              <CmsButton className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
-                onClick={handleSearch}
-              >
+                onClick={handleSearch} >
                 조회
               </CmsButton>
             </div>
@@ -521,8 +515,7 @@ export function CertPanel() {
                 size="h40"
                 type="button"
                 onClick={handleDeleteClick}
-                loading={removeMutation.isPending}
-              >
+                loading={removeMutation.isPending} >
                 선택 삭제
               </CmsButton>
               <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

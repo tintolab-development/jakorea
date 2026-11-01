@@ -229,8 +229,7 @@ export function SchoolAffiliatedTeachersSection({
             variant="delete"
             size="medium"
             disabled={selectedRowKeys.length === 0}
-            onClick={handleWithdraw}
-          >
+            onClick={handleWithdraw} >
             회원 탈퇴
           </CmsButton>
         </div>

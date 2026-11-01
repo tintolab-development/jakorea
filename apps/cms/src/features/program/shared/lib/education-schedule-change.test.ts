@@ -10,6 +10,8 @@ import {
   findEducationScheduleChangePeriodIssues,
   findEducationScheduleLinesOutsideOperationRange,
   formatEducationScheduleLineForChangeModal,
+  isBeforeEducationScheduleSeoulToday,
+  isEducationScheduleSelectionDateDisabled,
   isOutsideEducationOperationRange,
   padEducationScheduleChangeLabel,
   parseEducationScheduleLineToChangeRange,
@@ -162,5 +164,37 @@ describe('isEducationScheduleLinePast', () => {
     expect(isEducationScheduleLinePast('2026.10.25', now)).toBe(true)
     expect(isEducationScheduleLinePast('2026.10.26', now)).toBe(false)
     expect(isEducationScheduleLinePast('2026.10.27', now)).toBe(false)
+  })
+})
+
+describe('isEducationScheduleSelectionDateDisabled (사업 운영 기간 밖 + 오늘 이전)', () => {
+  // 2026-11-05 10:00 KST
+  const now = new Date('2026-11-05T01:00:00Z')
+  const start = dayjs('2026-11-01')
+  const end = dayjs('2026-12-31')
+
+  it('disables dates before today (Seoul) and keeps today selectable', () => {
+    expect(isBeforeEducationScheduleSeoulToday(dayjs('2026-11-04'), now)).toBe(true)
+    expect(isBeforeEducationScheduleSeoulToday(dayjs('2026-11-05'), now)).toBe(false)
+    expect(isBeforeEducationScheduleSeoulToday(dayjs('2026-11-06'), now)).toBe(false)
+    // 2026-11-04 23:30 UTC = 11/05 08:30 KST → 서울 기준 오늘은 11/05
+    expect(
+      isBeforeEducationScheduleSeoulToday(dayjs('2026-11-04'), new Date('2026-11-04T23:30:00Z'))
+    ).toBe(true)
+  })
+
+  it('disables dates outside the operation period', () => {
+    expect(isEducationScheduleSelectionDateDisabled(dayjs('2026-11-10'), start, end, now)).toBe(false)
+    expect(isEducationScheduleSelectionDateDisabled(dayjs('2027-01-01'), start, end, now)).toBe(true)
+    expect(isEducationScheduleSelectionDateDisabled(dayjs('2026-12-31'), start, end, now)).toBe(false)
+    // 운영 기간 안이지만 오늘 이전
+    expect(isEducationScheduleSelectionDateDisabled(dayjs('2026-11-02'), start, end, now)).toBe(true)
+  })
+
+  it('only disables before today when the period is not set, and handles open ends', () => {
+    expect(isEducationScheduleSelectionDateDisabled(dayjs('2030-01-01'), null, null, now)).toBe(false)
+    expect(isEducationScheduleSelectionDateDisabled(dayjs('2026-11-01'), null, null, now)).toBe(true)
+    expect(isEducationScheduleSelectionDateDisabled(dayjs('2030-01-01'), start, null, now)).toBe(false)
+    expect(isEducationScheduleSelectionDateDisabled(dayjs('2027-01-02'), null, end, now)).toBe(true)
   })
 })

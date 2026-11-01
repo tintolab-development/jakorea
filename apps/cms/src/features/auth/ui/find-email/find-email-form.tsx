@@ -34,10 +34,8 @@ export function FindEmailForm({
           <CmsButton
             variant="primary"
             size="h52"
-            width="100%"
             loading={isLoading}
-            onClick={onSubmit}
-          >
+            onClick={onSubmit} >
             본인인증 후 이메일 찾기
           </CmsButton>
         </div>

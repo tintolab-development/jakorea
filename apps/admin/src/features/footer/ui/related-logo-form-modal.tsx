@@ -184,8 +184,7 @@ export function RelatedLogoFormModal({
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             취소
           </CmsButton>
           <CmsButton
@@ -194,8 +193,7 @@ export function RelatedLogoFormModal({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit}
-          >
+            onClick={handleSubmit} >
             저장
           </CmsButton>
         </>

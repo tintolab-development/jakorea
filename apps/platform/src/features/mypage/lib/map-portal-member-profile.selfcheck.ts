@@ -65,6 +65,20 @@ assert.equal(
   'instructor_dual',
 )
 
+/** instructor:false 이고 instructorProfile이 비어 있으면 교사회원 (강사 아님) */
+assert.equal(
+  mapPortalMemberToPlatformProfile({
+    me: { memberType: 'TEACHER', teacher: true, instructor: false },
+    profile: {
+      memberType: 'TEACHER',
+      teacher: true,
+      instructor: false,
+      instructorProfile: {},
+    } as PortalProfileResponse,
+  }),
+  'school_teacher',
+)
+
 /** 교사: profile.teacher 또는 me.memberType=TEACHER */
 assert.equal(
   mapPortalMemberToPlatformProfile({

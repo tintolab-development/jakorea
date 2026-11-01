@@ -1,8 +1,4 @@
 import type { ApplicantInstructorRow } from '@/features/program/shared/model/applicant-instructor'
-import { LONG_DISTANCE_THRESHOLD_KM as SETTLEMENT_LONG_DISTANCE_KM } from '@/shared/constants/settlement-rules'
-
-/** Notion/시드·정산 컬럼 기준 100km. API `longDistanceYn`이 있으면 그 값을 우선한다. */
-export const LONG_DISTANCE_THRESHOLD_KM = SETTLEMENT_LONG_DISTANCE_KM
 
 /** 캘린더 우측 목록 — 기관·자택 편도 거리 이하일 때 거리 태그 민트 테두리 */
 export const INSTRUCTOR_NEAR_DISTANCE_THRESHOLD_KM = 30
@@ -24,23 +20,39 @@ export function getInstructorScheduleDistanceKm(
   return null
 }
 
+/**
+ * 장거리 표기 — BE `longDistance` / `longDistanceYn`만 따른다.
+ * 값 없으면 false. FE에서 km로 판정하지 않는다.
+ */
 export function isInstructorLongDistance(params: {
-  distanceKm: number | null
   longDistanceYn?: boolean | null
 }): boolean {
-  if (params.longDistanceYn != null) return params.longDistanceYn
-  if (params.distanceKm == null) return false
-  return params.distanceKm >= LONG_DISTANCE_THRESHOLD_KM
+  return params.longDistanceYn === true
 }
 
-/** mock 기반 출강 통계 제거 — API 집계 전까지 0 */
-export function getInstructorScheduleDispatchStats(_instructorName: string): {
+/**
+ * 출강·장거리 횟수 — InstructorApplicationListItemResponse 집계 필드.
+ * 없으면 0.
+ */
+export function getInstructorScheduleDispatchStats(params?: {
+  programDispatchCount?: number | null
+  programLongDistanceDispatchCount?: number | null
+}): {
   dispatchCount: number
   longDistanceCount: number
 } {
+  const dispatch =
+    params?.programDispatchCount != null && Number.isFinite(params.programDispatchCount)
+      ? params.programDispatchCount
+      : 0
+  const longDistance =
+    params?.programLongDistanceDispatchCount != null &&
+    Number.isFinite(params.programLongDistanceDispatchCount)
+      ? params.programLongDistanceDispatchCount
+      : 0
   return {
-    dispatchCount: 0,
-    longDistanceCount: 0,
+    dispatchCount: dispatch,
+    longDistanceCount: longDistance,
   }
 }
 

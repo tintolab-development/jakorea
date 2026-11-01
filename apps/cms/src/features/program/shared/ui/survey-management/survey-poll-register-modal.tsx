@@ -72,22 +72,18 @@ export function SurveyPollRegisterModal({
           <CmsButton
             variant="secondary"
             size="medium"
-            width={120}
             type="button"
             onClick={onCancel}
-            disabled={submitting}
-          >
+            disabled={submitting} >
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
             size="medium"
-            width={120}
             type="button"
             onClick={onSubmit}
             disabled={!canSubmit}
-            loading={submitting}
-          >
+            loading={submitting} >
             신규 등록
           </CmsButton>
         </>

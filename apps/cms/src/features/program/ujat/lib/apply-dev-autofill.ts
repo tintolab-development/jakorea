@@ -83,6 +83,7 @@ export type UjatDevAutofillErrorCode =
   | 'NOT_DEV'
   | 'ALREADY_RUNNING'
   | 'REGIONS_EMPTY'
+  | 'SPONSORS_EMPTY'
   | 'FIXTURE_INVALID'
   | 'APPLY_FAILED'
 
@@ -148,18 +149,30 @@ function byId(a: { id?: unknown }, b: { id?: unknown }): number {
   return left.localeCompare(right)
 }
 
-/** id 오름차순으로 담당자가 있는 첫 후원사. remote가 꺼져 있으면 UJAT 기본값 「전체」 */
+/**
+ * id 오름차순으로 담당자가 있는 첫 후원사.
+ * 등록 필수값은 「전체」를 허용하지 않으므로, 실후원사·담당자가 없으면 실패한다.
+ */
 async function resolveSponsor(): Promise<ResolvedUjatDevDependencies['sponsor']> {
-  const all = { sponsorId: UJAT_SPONSOR_ALL_VALUE, contactId: UJAT_SPONSOR_ALL_VALUE }
-  if (!shouldUseSponsorsRemoteApi()) return all
-  const sponsors = [...(await getSponsorOptionsList())].filter(row => row?.id).sort(byId)
+  if (!shouldUseSponsorsRemoteApi()) {
+    throw new UjatDevAutofillError(
+      'SPONSORS_EMPTY',
+      '후원사 API가 비활성화되어 있습니다. VITE_API_SERVER를 연결하거나 후원사를 먼저 등록해 주세요.'
+    )
+  }
+  const sponsors = [...(await getSponsorOptionsList())]
+    .filter(row => row?.id && String(row.id).trim() !== UJAT_SPONSOR_ALL_VALUE)
+    .sort(byId)
   for (const sponsor of sponsors) {
     const sponsorId = String(sponsor.id).trim()
     const contacts = [...(await getSponsorContacts(sponsorId))].filter(row => row?.id).sort(byId)
     const contact = contacts[0]
     if (contact) return { sponsorId, contactId: String(contact.id).trim() }
   }
-  return all
+  throw new UjatDevAutofillError(
+    'SPONSORS_EMPTY',
+    '담당자가 등록된 후원사가 없습니다. 후원사 관리에서 후원사·담당자를 먼저 등록해 주세요.'
+  )
 }
 
 async function resolveInstructorId(): Promise<string | null> {
@@ -371,7 +384,8 @@ export function isUjatDevAutofillRunning(): boolean {
 export async function applyUjatDevAutofillCase(options: {
   caseId: UjatDevAutofillCaseId
   businessYear: number
-  dependencies?: ResolvedUjatDevDependencies
+  /** 동기 Fixture 또는 조회 중인 Promise. Promise면 조회 중에도 중복 실행을 막는다. */
+  dependencies?: ResolvedUjatDevDependencies | Promise<ResolvedUjatDevDependencies>
 }): Promise<UjatDevAutofillResult> {
   if (!import.meta.env.DEV) {
     throw new UjatDevAutofillError('NOT_DEV', '자동입력(개발용)은 개발 환경에서만 사용할 수 있습니다.')
@@ -382,7 +396,9 @@ export async function applyUjatDevAutofillCase(options: {
   running = true
   try {
     const dependencies =
-      options.dependencies ?? (await resolveUjatDevAutofillDependencies(options.caseId))
+      options.dependencies != null
+        ? await options.dependencies
+        : await resolveUjatDevAutofillDependencies(options.caseId)
     const fixture = buildUjatDevAutofillFixture(
       { caseId: options.caseId, businessYear: options.businessYear },
       dependencies

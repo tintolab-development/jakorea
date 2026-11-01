@@ -1,10 +1,11 @@
-import { getApplicationApiErrorCode } from '@/features/program/lib/application-api-error'
+import { getApplicationApiErrorCode } from '../../../../program/lib/application-api-error.ts'
+import { toSeoulDateOnly } from '../../../../../shared/lib/format-display-date.ts'
 import type { TitleWithPeriodParagraph } from '@jakorea/form-schema/writing-form'
 import {
   resolveTitleEndPeriodMode,
   resolveTitleStartPeriodMode,
 } from '@jakorea/form-schema/writing-form'
-import type { EducationSurveyListEntry } from './survey-list-types'
+import type { EducationSurveyListEntry, EducationSurveyListStatus } from './survey-list-types.ts'
 
 function startOfLocalDay(dateStr: string): Date {
   const [y, m, d] = dateStr.split('-').map(part => Number(part))
@@ -42,6 +43,19 @@ export function isPortalFormSubmissionPeriodOpen(
   return resolvePortalFormSubmissionPeriodBlockReason(entry, at) == null
 }
 
+/** 미제출 목록 배지. 작성 시작 시각 이전이면 진행중이 아니다. */
+export function resolveEducationSurveyListStatus(
+  submitted: boolean,
+  entry: PeriodFields,
+  at: Date = new Date(),
+): EducationSurveyListStatus {
+  if (submitted) return 'submitted'
+  if (resolvePortalFormSubmissionPeriodBlockReason(entry, at) === 'not_started') {
+    return 'before_start'
+  }
+  return 'in_progress'
+}
+
 /** 미제출 설문·만족도 — 작성 기간 밖일 때 안내 문구 분기 */
 /** 목록 API 기간 필드가 비었을 때 양식 제목 단락의 기간을 보조 SSOT로 병합한다. */
 export function mergePortalFormSubmissionPeriodFields(
@@ -64,8 +78,8 @@ export function mergePortalFormSubmissionPeriodFields(
     ...entry,
     submissionStartAt,
     submissionEndAt,
-    startAt: entry.startAt?.trim() ? entry.startAt : titleStart?.slice(0, 10),
-    endAt: entry.endAt?.trim() ? entry.endAt : titleEnd?.slice(0, 10),
+    startAt: entry.startAt?.trim() ? entry.startAt : toSeoulDateOnly(titleStart),
+    endAt: entry.endAt?.trim() ? entry.endAt : toSeoulDateOnly(titleEnd),
   }
 }
 
@@ -102,8 +116,6 @@ export function resolvePortalFormSubmissionPeriodBlockReason(
     const end = endOfLocalDay(endAt)
     if (!Number.isNaN(end.getTime()) && at > end) return 'closed'
   }
-
-  if (entry.canSubmit === false) return 'closed'
 
   return null
 }

@@ -165,8 +165,7 @@ export function EducationRecordListPage() {
           <ExcelButton
             onClick={handleExportExcel}
             loading={isExporting}
-            disabled={tableData.length === 0 || listQuery.isLoading || listQuery.isError}
-          />
+            disabled={tableData.length === 0 || listQuery.isLoading || listQuery.isError} />
         }
       />
 

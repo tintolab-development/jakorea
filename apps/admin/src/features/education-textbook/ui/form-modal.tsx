@@ -394,8 +394,7 @@ function TextbookFormBody({
           type="button"
           loading={deleteLoading}
           disabled={confirmLoading || deleteLoading}
-          onClick={() => setDeleteConfirmOpen(true)}
-        >
+          onClick={() => setDeleteConfirmOpen(true)} >
           교재 삭제
         </CmsButton>
       ) : null}
@@ -405,8 +404,7 @@ function TextbookFormBody({
           size="large"
           type="button"
           onClick={onCancel}
-          disabled={confirmLoading || deleteLoading}
-        >
+          disabled={confirmLoading || deleteLoading} >
           취소
         </CmsButton>
         {isView ? (
@@ -415,8 +413,7 @@ function TextbookFormBody({
             size="large"
             type="button"
             onClick={onRequestEdit}
-            disabled={deleteLoading}
-          >
+            disabled={deleteLoading} >
             수정
           </CmsButton>
         ) : (
@@ -426,8 +423,7 @@ function TextbookFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading || deleteLoading}
-            onClick={handleSubmit}
-          >
+            onClick={handleSubmit} >
             {isCreate ? '교재 등록' : '저장'}
           </CmsButton>
         )}

@@ -69,6 +69,18 @@ function registerGradeAllValue(educationTarget: string): string | undefined {
   )?.value
 }
 
+function stripEducationTargetPrefix(educationTarget: string, grade: string): string {
+  const raw = grade.trim()
+  if (!raw) return ''
+  if (raw.startsWith(`${educationTarget}:`)) {
+    return raw.slice(educationTarget.length + 1).trim()
+  }
+  if (raw.startsWith(`${educationTarget} `)) {
+    return raw.slice(educationTarget.length + 1).trim()
+  }
+  return raw
+}
+
 /** 목록·상세 요약 `grade` → 등록 멀티셀렉트 값 */
 export function parseTextbookRegisterGradeValues(
   educationTarget: string,
@@ -79,7 +91,7 @@ export function parseTextbookRegisterGradeValues(
   const stageKey = toEducationStageKey(educationTarget)
   if (!stageKey) return []
 
-  const raw = grade.trim()
+  const raw = stripEducationTargetPrefix(educationTarget, grade)
   if (!raw) return []
 
   const allValue = registerGradeAllValue(educationTarget) ?? getStageAllLabel(stageKey)
@@ -115,10 +127,13 @@ export function nextTextbookRegisterGradeValues(
   const next = [...new Set(asGradeValueList(incoming).filter(value => allowed.has(value)))]
   if (!allValue) return next
 
-  const addedAll = next.includes(allValue) && !previousValues.includes(allValue)
+  const hasAll = next.includes(allValue)
+  const addedAll = hasAll && !previousValues.includes(allValue)
   if (addedAll) return [allValue]
 
   const withoutAll = next.filter(value => value !== allValue)
+  if (hasAll && withoutAll.length === 0) return [allValue]
+
   if (individualValues.length > 0 && withoutAll.length === individualValues.length) {
     return [allValue]
   }
@@ -146,12 +161,26 @@ export function encodeTextbookRegisterGradeValue(target: string, grade: string):
 export function decodeTextbookRegisterGradeValue(
   value: string
 ): { target: TextbookEducationTarget; grade: string } | null {
-  const sep = value.indexOf(GRADE_VALUE_SEP)
-  if (sep <= 0 || sep === value.length - 1) return null
-  const target = value.slice(0, sep)
-  const grade = value.slice(sep + 1)
-  if (!(TEXTBOOK_EDUCATION_TARGETS as readonly string[]).includes(target)) return null
-  return { target: target as TextbookEducationTarget, grade }
+  const raw = value.trim()
+  if (!raw) return null
+
+  const sep = raw.indexOf(GRADE_VALUE_SEP)
+  if (sep > 0 && sep < raw.length - 1) {
+    const target = raw.slice(0, sep)
+    const grade = raw.slice(sep + 1).trim()
+    if ((TEXTBOOK_EDUCATION_TARGETS as readonly string[]).includes(target) && grade) {
+      return { target: target as TextbookEducationTarget, grade }
+    }
+  }
+
+  const byLength = [...TEXTBOOK_EDUCATION_TARGETS].sort((a, b) => b.length - a.length)
+  for (const target of byLength) {
+    if (raw.startsWith(`${target} `)) {
+      const grade = raw.slice(target.length + 1).trim()
+      if (grade) return { target, grade }
+    }
+  }
+  return null
 }
 
 function orderedEducationTargets(targets: readonly string[] | null | undefined): TextbookEducationTarget[] {
@@ -164,12 +193,63 @@ function decodeGradeValueForTargets(
   targets: readonly string[]
 ): { target: TextbookEducationTarget; grade: string } | null {
   const decoded = decodeTextbookRegisterGradeValue(value)
-  if (decoded) return decoded
+  const allowed = new Set(orderedEducationTargets(targets))
+  if (decoded && allowed.has(decoded.target)) return decoded
+
   const fallbackTarget = targets[0]
-  if (targets.length === 1 && fallbackTarget && value) {
-    return { target: fallbackTarget as TextbookEducationTarget, grade: value }
+  if (targets.length === 1 && fallbackTarget && value.trim()) {
+    return {
+      target: fallbackTarget as TextbookEducationTarget,
+      grade: stripEducationTargetPrefix(fallbackTarget, value),
+    }
   }
   return null
+}
+
+function findTargetTokenIndex(raw: string, target: string): number {
+  let from = 0
+  while (from <= raw.length) {
+    const index = raw.indexOf(target, from)
+    if (index < 0) return -1
+    const before = index === 0 ? '' : raw[index - 1]
+    const after = raw[index + target.length] ?? ''
+    const beforeOk = index === 0 || /[\s,]/.test(before)
+    const afterOk = after === '' || /[\s,:]/.test(after)
+    if (beforeOk && afterOk) return index
+    from = index + 1
+  }
+  return -1
+}
+
+function splitGradeSummaryByTargets(
+  grade: string,
+  targets: readonly TextbookEducationTarget[]
+): Map<TextbookEducationTarget, string> {
+  const raw = grade.trim()
+  const result = new Map<TextbookEducationTarget, string>()
+  if (!raw || targets.length === 0) return result
+
+  if (targets.length === 1 && targets[0]) {
+    result.set(targets[0], stripEducationTargetPrefix(targets[0], raw))
+    return result
+  }
+
+  const hits = targets
+    .map(target => ({ target, index: findTargetTokenIndex(raw, target) }))
+    .filter(hit => hit.index >= 0)
+    .sort((a, b) => a.index - b.index)
+
+  if (hits.length === 0) return result
+
+  for (let i = 0; i < hits.length; i += 1) {
+    const current = hits[i]
+    if (!current) continue
+    const start = current.index + current.target.length
+    const end = hits[i + 1]?.index ?? raw.length
+    const part = raw.slice(start, end).replace(/^[\s,:]+/, '').replace(/[\s,]+$/, '')
+    result.set(current.target, part)
+  }
+  return result
 }
 
 function groupGradesByTarget(
@@ -232,6 +312,36 @@ export function gradesByTargetFromRegisterValues(
   return result
 }
 
+function pruneTextbookRegisterGradesForTargets(
+  targets: readonly string[] | null | undefined,
+  grades: readonly string[] | null | undefined
+): string[] {
+  const ordered = orderedEducationTargets(targets)
+  const grouped = groupGradesByTarget(grades, ordered)
+  return ordered.flatMap(target => {
+    const list = grouped.get(target) ?? []
+    return list.map(grade => encodeTextbookRegisterGradeValue(target, grade))
+  })
+}
+
+/** 교육 대상 변경 후: 제거된 대상 학년은 버리고, 대학교만 선택 시 학년이 없으면 `전체` 1개. */
+export function syncTextbookRegisterGradesAfterTargetsChange(
+  nextTargets: readonly string[] | null | undefined,
+  previousGrades: readonly string[] | null | undefined
+): string[] {
+  const ordered = orderedEducationTargets(nextTargets)
+  const pruned = pruneTextbookRegisterGradesForTargets(ordered, previousGrades)
+  const grouped = groupGradesByTarget(pruned, ordered)
+  const extras: string[] = []
+  for (const target of ordered) {
+    if ((grouped.get(target) ?? []).length > 0) continue
+    if (target !== '대학교') continue
+    const allValue = registerGradeAllValue(target)
+    if (allValue) extras.push(encodeTextbookRegisterGradeValue(target, allValue))
+  }
+  return [...pruned, ...extras]
+}
+
 export function parseTextbookRegisterGradeValuesFromStages(
   stages: readonly TextbookEducationStage[] | null | undefined
 ): { targets: TextbookEducationTarget[]; grades: string[] } {
@@ -261,9 +371,16 @@ export function parseTextbookRegisterGradeValuesForTargets(
   grade: string
 ): string[] {
   const selected = orderedEducationTargets(targets)
-  const target = selected[0]
-  if (selected.length !== 1 || !target) return []
-  return parseTextbookRegisterGradeValues(target, grade).map(value =>
-    encodeTextbookRegisterGradeValue(target, value)
-  )
+  if (selected.length === 0) return []
+  const raw = grade.trim()
+  if (!raw) return []
+
+  const segments = splitGradeSummaryByTargets(raw, selected)
+  return selected.flatMap(target => {
+    const part = segments.get(target)
+    if (!part) return []
+    return parseTextbookRegisterGradeValues(target, part).map(value =>
+      encodeTextbookRegisterGradeValue(target, value)
+    )
+  })
 }

@@ -5,5 +5,5 @@ import type { RenderFormParagraphBodyOptions } from '@/features/template/ui/para
 export const DIRECT_AGREEMENT_PARAGRAPH_BODY_OPTIONS = {
   agreementAdminProxyConfirm: true,
   hiddenParagraphIds: getDirectAgreementAdminProxyHiddenIds(),
-  agreementSystemParticipantName: '홍길동',
+  agreementSystemParticipantName: '이름예시',
 } satisfies RenderFormParagraphBodyOptions

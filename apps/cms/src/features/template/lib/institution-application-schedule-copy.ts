@@ -56,6 +56,7 @@ export function resolveInstitutionFixedScheduleDescription(
     educationRoundCount: bridge.educationRoundCount,
     sessionsPerRound: bridge.sessionsPerRound,
     curriculumChartSessionCount: bridge.curriculumChartSessionCount,
+    unknownCount: 'omit',
   })
 }
 

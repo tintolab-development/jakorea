@@ -100,10 +100,8 @@ export function NotificationDropdown({
           <CmsButton
             key={key}
             variant={key === category ? 'primary' : 'default'}
-            size="small"
-            className={`notification-dropdown-category-btn ${key === category ? 'notification-dropdown-category-btn--active' : ''}`}
-            onClick={() => setCategory(key)}
-          >
+            size="small" className={`notification-dropdown-category-btn ${key === category ? 'notification-dropdown-category-btn--active' : ''}`}
+            onClick={() => setCategory(key)} >
             {label}
           </CmsButton>
         ))}

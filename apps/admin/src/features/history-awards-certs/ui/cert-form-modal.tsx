@@ -137,8 +137,7 @@ function CertFormBody({
                     setDeleteConfirmOpen(true)
                   }}
                   disabled={confirmLoading || deleteLoading}
-                  loading={deleteLoading}
-                >
+                  loading={deleteLoading} >
                   인증 삭제
                 </CmsButton>
               ) : null}
@@ -149,8 +148,7 @@ function CertFormBody({
                 size="large"
                 type="button"
                 onClick={onCancel}
-                disabled={confirmLoading || deleteLoading}
-              >
+                disabled={confirmLoading || deleteLoading} >
                 취소
               </CmsButton>
               <CmsButton
@@ -159,8 +157,7 @@ function CertFormBody({
                 type="button"
                 loading={confirmLoading}
                 disabled={deleteLoading}
-                onClick={handleSubmit}
-              >
+                onClick={handleSubmit} >
                 {primaryLabel}
               </CmsButton>
             </div>

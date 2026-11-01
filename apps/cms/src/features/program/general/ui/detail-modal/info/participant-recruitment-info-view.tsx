@@ -13,6 +13,7 @@ import type { UseFormReturn } from 'react-hook-form'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
+  INTERVIEW_METHOD_OPTIONS,
   parseTargetLevelsSelectValue,
   TARGET_LEVEL_LABEL,
 } from '@/features/program/shared/lib/program-detail-info-constants'
@@ -20,6 +21,10 @@ import { APPLICANT_RECRUIT_FORM_INDIVIDUAL_IDS } from '@jakorea/form-schema/para
 import { APPLICANT_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/applicant-recruit-form-institution-draft'
 import { ECONOMY_RECRUIT_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/economy-recruit-form-institution-draft'
 import { FormParagraphSectionHeader } from '@/features/template/ui/shared/form-paragraph-section-header'
+import {
+  optionalDateRangeUsesClockTime,
+  optionalDateUsesClockTime,
+} from '@/features/template/lib/date-range-clock'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -32,10 +37,14 @@ import { DividerVertical } from '@/shared/components/divider-vertical'
 import {
   ProgramDetailContactReadRow,
   ProgramDetailDateMethodReadRow,
+  ProgramDetailInterviewReadRow,
 } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
-import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
+import {
+  resolveGeneralProgramParticipantRecruitmentDisplay,
+  resolveParticipantRecruitmentInterviewEnabled,
+} from '@/features/program/general/lib/participant-recruitment-display'
 import { isGeneralIndividualProgram } from '@/features/program/general/lib/survey-audience'
 import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import dayjs from 'dayjs'
@@ -183,6 +192,13 @@ export function GeneralProgramParticipantRecruitmentInfoView({
   const showLimits = display.showInstitutionApplicationLimits
   const contactOrg = display.contactOrganizationName
   const isIndividual = isGeneralIndividualProgram(program)
+  const editInterviewValue = form?.watch('participantRecruitmentInterviewEnabled')
+  const interviewEnabled =
+    isIndividual &&
+    resolveParticipantRecruitmentInterviewEnabled(
+      program,
+      isEdit && form ? editInterviewValue : undefined
+    )
   const isCompanySchool = isCompanySchoolProgram(program)
   // 교육받은 교사 — 공고 게시|학생 명단 1행, 사전 안내·수료증 비노출 (기존 유형 렌더 불변)
   const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
@@ -234,6 +250,125 @@ export function GeneralProgramParticipantRecruitmentInfoView({
     />
   )
 
+  const documentPassField = (
+    <DetailInfoForm.Field
+      label="1차 서류 합격자 발표"
+      validationKey={[
+        `${recruitKeyPrefix}.docDeadlineIso`,
+        `${recruitKeyPrefix}.docAnnounceMethod`,
+      ]}
+      view={
+        <ProgramDetailDateMethodReadRow
+          dateIso={display.documentPassAnnouncementDate}
+          method={display.documentPassAnnouncementMethod}
+        />
+      }
+      edit={
+        isEdit && form ? (
+          <div className="program-detail-info-tab__result-row">
+            <Controller
+              name="documentPassAnnouncementDate"
+              control={form.control}
+              render={({ field }) => (
+                <ParagraphDatePicker
+                  inputSize="small"
+                  mode="single"
+                  presetMode="date"
+                  customizable={false}
+                  suppressAutoTodayWhenEmpty
+                  value={toDayjs(field.value)}
+                  appliedSurfaceWithTime={optionalDateUsesClockTime(toDayjs(field.value))}
+                  onChange={d => field.onChange(d ? d.toISOString() : undefined)}
+                  placeholder="합격자 발표일"
+                  width={190}
+                />
+              )}
+            />
+            <DetailInfoForm.InputsSeparator />
+            <Controller
+              name="documentPassAnnouncementMethod"
+              control={form.control}
+              render={({ field }) => (
+                <CmsInput
+                  {...field}
+                  value={field.value ?? ''}
+                  placeholder="발표 방법 안내"
+                  inputSize="small"
+                  width="100%"
+                  className="program-detail-info-tab__result-method-input"
+                />
+              )}
+            />
+          </div>
+        ) : undefined
+      }
+    />
+  )
+
+  const interviewPeriodField = (
+    <DetailInfoForm.Field
+      label="2차 면접 기간"
+      validationKey={[
+        `${recruitKeyPrefix}.interviewRangeSeal`,
+        `${recruitKeyPrefix}.interviewMethod`,
+      ]}
+      view={
+        <ProgramDetailInterviewReadRow
+          start={display.interviewStartDate}
+          end={display.interviewEndDate}
+          method={display.interviewMethod}
+          allowMissingEnd
+        />
+      }
+      edit={
+        isEdit && form ? (
+          <div className="program-detail-info-tab__result-row">
+            <Controller
+              name="interviewStartDate"
+              control={form.control}
+              render={({ field }) => (
+                <ParagraphDatePicker
+                  inputSize="small"
+                  mode="range"
+                  value={[
+                    toDayjs(field.value as string | Date | undefined),
+                    toDayjs(form.watch('interviewEndDate') as string | Date | undefined),
+                  ]}
+                  appliedSurfaceWithTime={optionalDateRangeUsesClockTime(
+                    toDayjs(field.value as string | Date | undefined),
+                    toDayjs(form.watch('interviewEndDate') as string | Date | undefined)
+                  )}
+                  onChange={([start, end]) => {
+                    field.onChange(start ? start.toISOString() : undefined)
+                    form.setValue('interviewEndDate', end ? end.toISOString() : undefined)
+                  }}
+                  placeholder={['면접 시작일', '면접 종료일']}
+                  width="100%"
+                  style={{ width: '100%', flex: '1 1 0', minWidth: 0 }}
+                />
+              )}
+            />
+            <DetailInfoForm.InputsSeparator />
+            <Controller
+              name="interviewMethod"
+              control={form.control}
+              render={({ field }) => (
+                <CmsSelect
+                  inputSize="small"
+                  width={140}
+                  value={field.value ?? undefined}
+                  options={INTERVIEW_METHOD_OPTIONS}
+                  onChange={v => field.onChange(v ?? undefined)}
+                  placeholder="면접 유형"
+                />
+              )}
+            />
+          </div>
+        ) : undefined
+      }
+    />
+  )
+
   const recruitmentPeriodField = (
     <DetailInfoForm.Field
       label="참여자 모집 기간"
@@ -248,6 +383,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
               <ParagraphDatePicker
                 inputSize="small"
                 mode="range"
+                showTimeToggle={false}
                 value={[
                   toDayjs(field.value as string | Date | undefined),
                   toDayjs(form.watch('applicationEndDate') as string | Date | undefined),
@@ -299,7 +435,9 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                   mode="single"
                   presetMode="date"
                   customizable={false}
+                  suppressAutoTodayWhenEmpty
                   value={toDayjs(field.value)}
+                  appliedSurfaceWithTime={optionalDateUsesClockTime(toDayjs(field.value))}
                   onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                   placeholder="합격자 발표일"
                   width={190}
@@ -530,6 +668,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       <ParagraphDatePicker
                         inputSize="small"
                         mode="range"
+                        showTimeToggle={false}
                         value={[
                           toDayjs(field.value as string | Date | undefined),
                           toDayjs(
@@ -539,6 +678,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                               | undefined
                           ),
                         ]}
+                        appliedSurfaceWithTime={false}
                         onChange={([start, end]) => {
                           field.onChange(start ? start.toISOString() : '')
                           form.setValue(
@@ -621,11 +761,17 @@ export function GeneralProgramParticipantRecruitmentInfoView({
             />
           </DetailInfoForm.Row>
 
-          {isIndividual ? (
-            <DetailInfoForm.Row type="double">
-              {recruitmentPeriodField}
-              {finalPassField}
-            </DetailInfoForm.Row>
+          {isIndividual && interviewEnabled ? (
+            <>
+              <DetailInfoForm.Row type="double">
+                {recruitmentPeriodField}
+                {documentPassField}
+              </DetailInfoForm.Row>
+              <DetailInfoForm.Row type="double">
+                {interviewPeriodField}
+                {finalPassField}
+              </DetailInfoForm.Row>
+            </>
           ) : (
             <DetailInfoForm.Row type="double">
               {recruitmentPeriodField}

@@ -2,7 +2,8 @@
   --detail-info-label-w: 120px;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-16, 16px);
+  /* Figma 블록 스택 간격 spacing/5 = 20 */
+  gap: var(--spacing-20, 20px);
   width: 100%;
   min-width: 0;
 }
@@ -19,8 +20,24 @@
   min-width: 0;
 }
 
-.blockTitle {
-  margin: 0 0 8px;
+/*
+ * Figma 테이블 상단 블록 라벨 — Body/Large/semibold
+ * FormTemplateHost 가 typo-* 를 unset 하므로 typo 클래스 없이 이 규칙만 쓴다.
+ * padding-left 8 · 표까지 gap 8
+ */
+.blockTitle,
+:global(.form-template-host) .blockTitle {
+  display: block;
+  margin: 0 0 var(--spacing-8, 8px);
+  padding-left: var(--spacing-8, 8px);
+  color: var(--color-neutral-black, #3d3d3d);
+  font-family: var(--font-family-base), Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.18px;
+  -webkit-text-fill-color: var(--color-neutral-black, #3d3d3d);
 }
 
 .deleteCell {
@@ -243,11 +260,16 @@
     display: block;
   }
 
-  .blockTitle {
+  .blockTitle,
+  :global(.form-template-host) .blockTitle {
     margin-bottom: 8px;
+    padding-left: var(--spacing-8, 8px);
     font-size: 13px;
+    font-weight: 600;
     line-height: 150%;
+    letter-spacing: -0.13px;
     color: var(--color-neutral-cool-700, #647780);
+    -webkit-text-fill-color: var(--color-neutral-cool-700, #647780);
   }
 
   .scheduleForm :global(.detail-info-form__body) {

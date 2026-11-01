@@ -132,8 +132,7 @@ export function ThumbnailUploadField({
               size="h32"
               disabled={!canSelect}
               tabIndex={canSelect ? -1 : undefined}
-              onClick={() => openFilePicker(inputRef.current)}
-            >
+              onClick={() => openFilePicker(inputRef.current)} >
               {uploading ? '업로드 중…' : buttonLabel}
             </CmsButton>
           </span>

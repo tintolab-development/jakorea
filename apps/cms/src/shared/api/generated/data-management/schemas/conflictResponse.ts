@@ -11,5 +11,6 @@ export type ConflictResponse = {
   success?: unknown;
   data?: unknown;
   message?: unknown;
+  detail?: unknown;
   error?: ConflictResponseError;
 };

@@ -4,7 +4,7 @@ import type {
   FormEditorKind,
   WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
 import type { FormUpdateParagraph } from '@/features/template/ui/paragraph/renderers/render-form-paragraph-body'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { A4DocumentPageLayout } from '@/features/template/ui/layout'
@@ -163,22 +163,18 @@ export function AgreementTemplatePreviewModal({
                 type="button"
                 variant="secondary"
                 size="large"
-                width={180}
                 icon={<ButtonDownloadIcon />}
                 adminAction="download"
                 onClick={() => void handlePdfDownload()}
                 loading={pdfLoading}
-                disabled={pdfLoading || pages.length === 0}
-              >
+                disabled={pdfLoading || pages.length === 0} >
                 문서 다운로드
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="primary"
                 size="large"
-                width={CMS_ACTION_BUTTON_WIDTH}
-                disabled
-              >
+                disabled >
                 문서 변경
               </CmsButton>
             </div>

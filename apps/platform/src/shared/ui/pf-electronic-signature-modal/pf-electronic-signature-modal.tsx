@@ -82,6 +82,7 @@ export function PFElectronicSignatureModal({
 
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       title={title}
       size="lg"

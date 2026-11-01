@@ -29,7 +29,7 @@ export const PAYMENT_STATEMENT_PRE_CONSENT_PARAGRAPH_BODY_OPTIONS = {
     PAYMENT_STATEMENT_PRE_CONSENT_IDS.closingRecipient,
   ]),
   /** 템플릿 authoring 미리보기용 샘플 이름 (회원 fill에서는 participantName으로 덮어씀) */
-  agreementSystemParticipantName: '홍길동',
+  agreementSystemParticipantName: '이름예시',
   /** A4 미리보기 전용 스코프 — 작성 화면 대리동의 카드는 유지 */
   documentPreviewClassName: PAYMENT_STATEMENT_PRE_CONSENT_A4_PREVIEW_BODY_CLASS_NAME,
 } satisfies RenderFormParagraphBodyOptions

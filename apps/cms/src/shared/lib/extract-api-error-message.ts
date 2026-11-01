@@ -2,14 +2,18 @@ import {
   programEditWindowErrorMessage,
   resolveProgramRecruitmentPolicyErrorMessage,
 } from '@/shared/lib/program-edit-window-error-message'
+import { resolveProgramScheduleLineErrorMessage } from '@/features/program/shared/lib/program-schedule-line-error'
 
-/** 백엔드 공통 에러 envelope (`success: false`, `error: { code, message, traceId }`) */
+/** 백엔드 공통 에러 envelope (`success: false`, RFC7807식 `detail` 포함) */
 export type ApiErrorEnvelope = {
   success?: boolean
   message?: string
+  /** RFC7807 / ApiResponse 업무 문구. `message`와 같다. */
+  detail?: string
   error?: {
     code?: string
     message?: string
+    detail?: string
     field?: string | null
     traceId?: string
     /** 키가 없을 수 있음 — 서버는 빈 값을 null 대신 생략한다. */
@@ -50,15 +54,61 @@ const UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES: Record<string, string> = {
   UJAT_ASSIGNMENT_LOCKED: '기관이 확인한 일정은 수정할 수 없습니다. 수정 요청 후 다시 배정하세요.',
 }
 
+const UJAT_REGION_CODE_LABEL: Record<string, string> = {
+  SEOUL: '서울',
+  GYEONGGI_SOUTH: '경기(남부)',
+  INCHEON: '인천',
+  DAEJEON: '대전',
+  DAEGU: '대구',
+  BUSAN: '부산',
+  GWANGJU: '광주',
+  JEONBUK_JEONJU: '전북(전주)',
+}
+
+function formatUjatSemesterTypeLabel(raw: string | undefined): string | undefined {
+  const value = raw?.trim().toUpperCase()
+  if (!value) return undefined
+  if (value === 'FIRST_HALF' || value === 'H1' || value === 'FIRST') return '1학기'
+  if (value === 'SECOND_HALF' || value === 'H2' || value === 'SECOND') return '2학기'
+  return raw?.trim()
+}
+
+/** `UJAT_REGION_CLASS_CAPACITY_EXCEEDED` — details.maxCount / projectedCount 반영 */
+export function formatUjatRegionClassCapacityExceededMessage(
+  details?: Record<string, string | undefined> | null
+): string {
+  const maxCount = details?.maxCount?.trim()
+  const projectedCount = details?.projectedCount?.trim()
+  const regionCode = details?.educationRegionCode?.trim().toUpperCase()
+  const regionLabel = regionCode
+    ? UJAT_REGION_CODE_LABEL[regionCode] ?? regionCode
+    : undefined
+  const semesterLabel = formatUjatSemesterTypeLabel(details?.semesterType)
+
+  if (maxCount && projectedCount) {
+    const subject = [regionLabel, semesterLabel].filter(Boolean).join(' ')
+    const head = subject
+      ? `${subject} 학급 정원(${maxCount}개)을 초과합니다.`
+      : `지역·반기 학급 정원(${maxCount}개)을 초과합니다.`
+    return `${head} (배정 예정 ${projectedCount}개)\n학급 수를 줄이거나 다른 일정·지역으로 변경해 주세요.`
+  }
+
+  return UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES.UJAT_REGION_CLASS_CAPACITY_EXCEEDED
+}
+
 function resolveUjatInstitutionWorkflowErrorMessage(
   code: string,
-  field?: string
+  field?: string,
+  details?: Record<string, string | undefined> | null
 ): string | undefined {
   if (code === 'UJAT_WORKFLOW_STATE_CONFLICT') {
     if (field === 'status') {
       return UJAT_REVISION_REQUEST_DUPLICATE_MESSAGE
     }
     return UJAT_INSTITUTION_APPROVAL_BLOCKED_MESSAGE
+  }
+  if (code === 'UJAT_REGION_CLASS_CAPACITY_EXCEEDED') {
+    return formatUjatRegionClassCapacityExceededMessage(details)
   }
   return UJAT_INSTITUTION_WORKFLOW_ERROR_MESSAGES[code]
 }
@@ -68,11 +118,43 @@ const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
   UJAT_ORGANIZATION_ALREADY_APPLIED: '같은 UJAT 프로그램에 이미 신청한 학교입니다.',
   UJAT_INTERVIEW_SCORE_INVALID: 'UJAT 면접 점수는 평가자별 1~5점 정수만 입력할 수 있습니다.',
   UJAT_VOLUNTEER_INTERVIEW_REQUIRED: 'UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.',
+  /** 평가 후 면접 재배정 — 서버 409 `VOLUNTEER_INTERVIEW_CONFLICT` */
+  VOLUNTEER_INTERVIEW_CONFLICT: '면접 평가가 진행·완료된 신청은 재배정할 수 없습니다.',
+}
+
+/** 수료증·참여인증서 — 서버 message가 비거나 code만 있을 때 */
+const CERTIFICATE_ISSUE_ERROR_MESSAGES: Record<string, string> = {
+  CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE:
+    '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+  ISSUANCE_PERIOD_EXPIRED: '수료증 발급 기간이 만료되었습니다.',
+  PARTICIPANT_NOT_COMPLETED: '수료 조건을 충족하지 않아 발급할 수 없습니다.',
 }
 
 function asEnvelope(data: unknown): ApiErrorEnvelope | null {
   if (!data || typeof data !== 'object') return null
   return data as ApiErrorEnvelope
+}
+
+function trimText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
+}
+
+/**
+ * 성공이 아닌 응답 문구: body.detail → error.detail → error.message → body.message.
+ * 상태코드 고정 문구보다 서버 업무 문구를 우선한다.
+ */
+export function readApiErrorEnvelopeText(data: unknown): string | undefined {
+  const envelope = asEnvelope(data)
+  if (!envelope) {
+    if (typeof data === 'string' && data.trim()) return data.trim()
+    return undefined
+  }
+  return (
+    trimText(envelope.detail) ||
+    trimText(envelope.error?.detail) ||
+    trimText(envelope.error?.message) ||
+    trimText(envelope.message)
+  )
 }
 
 /**
@@ -85,7 +167,10 @@ export function extractApiErrorMessage(
 ): string {
   const code = extractApiErrorCode(data)
   const field = extractApiErrorField(data)
-  const ujatWorkflowMessage = code ? resolveUjatInstitutionWorkflowErrorMessage(code, field) : undefined
+  const details = extractApiErrorDetails(data)
+  const ujatWorkflowMessage = code
+    ? resolveUjatInstitutionWorkflowErrorMessage(code, field, details)
+    : undefined
   if (ujatWorkflowMessage) {
     return ujatWorkflowMessage
   }
@@ -96,7 +181,9 @@ export function extractApiErrorMessage(
     return PROGRAM_EDUCATION_STRUCTURE_GUARD_MESSAGES[code]
   }
   const envelope = asEnvelope(data)
-  const serverMessage = envelope?.error?.message?.trim() || envelope?.message?.trim()
+  const serverMessage = readApiErrorEnvelopeText(data) ?? envelope?.error?.message?.trim()
+  const scheduleLineMessage = resolveProgramScheduleLineErrorMessage(code, serverMessage)
+  if (scheduleLineMessage) return scheduleLineMessage
   const policyMessage = resolveProgramRecruitmentPolicyErrorMessage(code, serverMessage)
   if (policyMessage) return policyMessage
 
@@ -108,17 +195,23 @@ export function extractApiErrorMessage(
     return ujatMapped
   }
 
-  if (envelope) {
-    const top = envelope.message?.trim()
-    if (top && !(ujatMapped && top === code)) return top
-    if (ujatMapped) return ujatMapped
-
-    const nested = envelope.error?.message?.trim()
-    if (nested) return nested
-
-    const nestedCode = envelope.error?.code?.trim()
-    if (nestedCode) return nestedCode
+  const certificateMapped = code ? CERTIFICATE_ISSUE_ERROR_MESSAGES[code] : undefined
+  if (certificateMapped && (!serverMessage || serverMessage === code)) {
+    return certificateMapped
   }
+
+  if (
+    serverMessage &&
+    !(ujatMapped && serverMessage === code) &&
+    !(certificateMapped && serverMessage === code)
+  ) {
+    return serverMessage
+  }
+  if (ujatMapped) return ujatMapped
+  if (certificateMapped) return certificateMapped
+
+  const nestedCode = envelope?.error?.code?.trim()
+  if (nestedCode) return nestedCode
 
   if (typeof data === 'string' && data.trim()) {
     return data.trim()

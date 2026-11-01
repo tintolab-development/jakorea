@@ -24,7 +24,7 @@ export type UjatEducationRegionOption = {
 /** @deprecated `UJAT_DEFAULT_EDUCATION_REGIONS` 사용 */
 export const UJAT_INSTITUTION_APPLICATION_REGIONS = UJAT_DEFAULT_EDUCATION_REGIONS
 
-export type UjatInstitutionApplicationRegionKey = UjatDefaultEducationRegionKey
+export type UjatInstitutionApplicationRegionKey = string
 
 function mapDefaultRegions(): UjatEducationRegionOption[] {
   return UJAT_DEFAULT_EDUCATION_REGIONS.map(row => ({
@@ -147,8 +147,8 @@ export function findUjatEducationRegionKeyByCode(code: string | null | undefined
 }
 
 /** 탭·필터 기본 선택 — 교육 지역 관리 sortOrder 1번째 active 지역 */
-export function getDefaultUjatEducationRegionKey(): UjatDefaultEducationRegionKey {
-  const first = listUjatEducationRegionsActive()[0]?.key
-  if (first && isUjatInstitutionApplicationRegionKey(first)) return first
-  return 'seoul'
+export function getDefaultUjatEducationRegionKey(): string {
+  const first = listUjatEducationRegionsActive()[0]?.key?.trim()
+  if (first) return first
+  return UJAT_DEFAULT_EDUCATION_REGIONS[0]?.key ?? ''
 }

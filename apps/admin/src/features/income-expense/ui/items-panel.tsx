@@ -466,8 +466,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   size="h40"
                   type="button"
                   onClick={handleCancelEdit}
-                  disabled={updateMutation.isPending}
-                >
+                  disabled={updateMutation.isPending} >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -475,8 +474,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   size="h40"
                   type="button"
                   loading={updateMutation.isPending}
-                  onClick={() => void handleSave()}
-                >
+                  onClick={() => void handleSave()} >
                   저장
                 </CmsButton>
               </>
@@ -487,8 +485,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   size="h40"
                   type="button"
                   onClick={handleDeleteClick}
-                  loading={removeMutation.isPending}
-                >
+                  loading={removeMutation.isPending} >
                   선택 삭제
                 </CmsButton>
                 <CmsButton
@@ -496,8 +493,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   size="h40"
                   type="button"
                   onClick={handleStartEdit}
-                  disabled={rows.length === 0}
-                >
+                  disabled={rows.length === 0} >
                   항목 수정
                 </CmsButton>
                 <CmsButton variant="primary" size="h40" type="button" onClick={handleOpenCreate}>

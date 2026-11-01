@@ -390,6 +390,222 @@ describe('wageCommonInfoFieldsUnchanged', () => {
   })
 })
 
+describe('scheduleDateLabel persist format', () => {
+  it('일정형 점 표기 라벨을 서버 형식으로 보내고 GET에서 CMS로 되돌린다', () => {
+    const program = {
+      id: '186504',
+      sponsorId: 'sponsor-1',
+      title: '일정형',
+      mainTitle: '일정형',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      startDate: '2026-04-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      status: 'pending',
+      generalProgramAudience: 'organization',
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+      generalCommonInfo: {
+        scheduleDetails: [
+          {
+            scheduleLabel: '사전 교육',
+            name: '사전 교육',
+            scheduleDateLabel: '2026.11.04(수) 10:00 ~ 11:00',
+          },
+          {
+            scheduleLabel: '세부 일정 01',
+            name: '세부 01',
+            scheduleDateLabel: '2026.11.05(목) 10:00 ~ 11:00',
+          },
+          {
+            scheduleLabel: '세부 일정 02',
+            name: '세부 02',
+            scheduleDateLabel: '2026.11.06(금)',
+          },
+        ],
+        curriculumSessions: [
+          {
+            sessionNo: 0,
+            sessionLabel: '사전 교육',
+            title: '사전',
+            description: '사전 교육',
+            scheduleDateLabel: '2026.11.04(수) 10:00 ~ 11:00',
+          },
+        ],
+      },
+      rounds: [],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    } as Program
+
+    const json = serializeGeneralProgramServiceDetailJson(program)
+    const persisted = JSON.parse(json ?? '{}') as {
+      generalCommonInfo?: {
+        scheduleDetails?: Array<{ scheduleDateLabel?: string; blockKind?: string }>
+        curriculumSessions?: Array<{ scheduleDateLabel?: string }>
+      }
+    }
+    expect(persisted.generalCommonInfo?.scheduleDetails?.map(row => row.scheduleDateLabel)).toEqual([
+      '26년 11월 4일(수) 10:00 ~ 11:00',
+      '26년 11월 5일(목) 10:00 ~ 11:00',
+      '26년 11월 6일(금)',
+    ])
+    expect(persisted.generalCommonInfo?.curriculumSessions?.[0]?.scheduleDateLabel).toBe(
+      '26년 11월 4일(수) 10:00 ~ 11:00'
+    )
+
+    const parsed = parseGeneralProgramServiceDetailJson(json)
+    expect(parsed.generalCommonInfo?.scheduleDetails?.map(row => row.scheduleDateLabel)).toEqual([
+      '2026.11.04(수) 10:00 ~ 11:00',
+      '2026.11.05(목) 10:00 ~ 11:00',
+      '2026.11.06(금)',
+    ])
+    expect(persisted.generalCommonInfo?.scheduleDetails?.map(row => row.blockKind)).toEqual([
+      'preEducation',
+      'event',
+      'event',
+    ])
+  })
+
+  it('행사 이름에 사전·연수가 있어도 blockKind event를 유지한다', () => {
+    const json = serializeGeneralProgramServiceDetailJson({
+      id: '186504',
+      sponsorId: 'sponsor-1',
+      title: '일정형',
+      mainTitle: '일정형',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      startDate: '2026-04-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      status: 'pending',
+      generalProgramEducationStructure: 'schedule',
+      generalProgramSessionRound: 'multi',
+      generalCommonInfo: {
+        scheduleCurriculumPreEducation: true,
+        scheduleDetails: [
+          {
+            scheduleLabel: '사전 교육',
+            blockKind: 'preEducation',
+            name: '사전교육',
+            scheduleDateLabel: '2026.11.05(목) 10:00 ~ 11:00',
+          },
+          {
+            scheduleLabel: '행사 일정 01',
+            blockKind: 'event',
+            name: '사전 연수 행사A',
+            scheduleDateLabel: '2026.11.05(목) 10:00 ~ 11:00',
+          },
+          {
+            scheduleLabel: '행사 일정 02',
+            blockKind: 'event',
+            name: '행사B',
+            scheduleDateLabel: '2026.11.06(금) 14:00 ~ 15:30',
+          },
+        ],
+      },
+      rounds: [],
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    } as Program)
+    const persisted = JSON.parse(json ?? '{}') as {
+      generalCommonInfo?: { scheduleDetails?: Array<{ blockKind?: string; name?: string }> }
+    }
+    expect(persisted.generalCommonInfo?.scheduleDetails?.map(row => row.blockKind)).toEqual([
+      'preEducation',
+      'event',
+      'event',
+    ])
+    expect(persisted.generalCommonInfo?.scheduleDetails?.[1]?.name).toBe('사전 연수 행사A')
+  })
+})
+
+describe('resultAnnouncementDate persist', () => {
+  it('컬럼이 등록 시각이어도 overlay 발표일을 JSON에 싣는다', () => {
+    const now = '2026-10-31T08:42:54.872Z'
+    const overlayIso = '2026-11-02T15:00:00.000Z'
+    const json = serializeGeneralProgramServiceDetailJson({
+      id: '186504',
+      sponsorId: 'sponsor-1',
+      title: '발표일',
+      mainTitle: '발표일',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      startDate: '2026-04-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      status: 'pending',
+      createdAt: now,
+      updatedAt: now,
+      resultAnnouncementDate: now,
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+      registrationOverlay: {
+        'recruit.individual.finalAnnounceIso': overlayIso,
+        'recruit.individual.finalAnnounceMethod': '홈페이지 공지',
+      },
+      generalCommonInfo: {},
+      rounds: [],
+    } as Program)
+    const parsed = JSON.parse(json ?? '{}') as { resultAnnouncementDate?: string }
+    expect(parsed.resultAnnouncementDate).toBe(overlayIso)
+  })
+
+  it('발표일 미입력이면 현재 시각을 넣지 않는다', () => {
+    const now = '2026-10-31T08:42:54.872Z'
+    const json = serializeGeneralProgramServiceDetailJson({
+      id: 'no-announce',
+      sponsorId: 'sponsor-1',
+      title: '발표일 없음',
+      mainTitle: '발표일 없음',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      startDate: '2026-04-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      status: 'pending',
+      createdAt: now,
+      updatedAt: now,
+      resultAnnouncementDate: now,
+      generalProgramAudience: 'individual',
+      generalParticipantTypes: ['individual'],
+      registrationOverlay: {},
+      generalCommonInfo: {},
+      rounds: [],
+    } as Program)
+    const parsed = JSON.parse(json ?? '{}') as { resultAnnouncementDate?: string }
+    expect(parsed.resultAnnouncementDate).toBeUndefined()
+  })
+
+  it('시간 토글 14:00 overlay ISO를 JSON에 그대로 싣는다', () => {
+    const overlayIso = '2026-11-02T05:00:00.000Z'
+    const json = serializeGeneralProgramServiceDetailJson({
+      id: 'clock-announce',
+      sponsorId: 'sponsor-1',
+      title: '발표일 시각',
+      mainTitle: '발표일 시각',
+      type: 'offline',
+      format: 'workshop',
+      category: 'school',
+      startDate: '2026-04-01T00:00:00.000Z',
+      endDate: '2026-12-31T00:00:00.000Z',
+      status: 'pending',
+      createdAt: '2026-10-31T08:42:54.872Z',
+      updatedAt: '2026-10-31T08:42:54.872Z',
+      generalProgramAudience: 'organization',
+      generalParticipantTypes: ['school_institution'],
+      registrationOverlay: {
+        'recruit.finalAnnounceIso': overlayIso,
+      },
+      generalCommonInfo: {},
+      rounds: [],
+    } as Program)
+    const parsed = JSON.parse(json ?? '{}') as { resultAnnouncementDate?: string }
+    expect(parsed.resultAnnouncementDate).toBe(overlayIso)
+  })
+})
+
 describe('kpiCommonInfoFieldsUnchanged', () => {
   it('같은 숫자는 미변경이다', () => {
     expect(

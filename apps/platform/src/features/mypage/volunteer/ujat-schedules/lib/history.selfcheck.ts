@@ -293,6 +293,15 @@ assert.equal(attendanceDetail.classLabel, '2학년 1반')
 assert.equal(attendanceDetail.canCheckIn, false)
 assert.equal(attendanceDetail.absenceReason, '-')
 
+const lateCorrectedAttendance = mapPortalScheduleAttendanceDetail({
+  attendanceStatus: 'LATE',
+  absenceReasonStatus: 'NOT_REQUIRED',
+  absenceReason: '예전 결석 사유',
+  canCheckIn: false,
+})
+assert.equal(lateCorrectedAttendance.attendanceLabel, '지각')
+assert.equal(lateCorrectedAttendance.absenceReason, '-')
+
 const roster = mapPortalAttendanceParticipantList({
   items: [
     {

@@ -16,13 +16,22 @@ export function isInstructorRoleRequestRejected(
   return summary?.status?.trim().toUpperCase() === 'REJECTED'
 }
 
+export type InstructorRoleRequestSubmitContext = {
+  /** GET /me/profile · /auth/me 의 `instructor`. 승인된 강사 권한일 때만 true */
+  isApprovedInstructor?: boolean
+}
+
 /** current 신청 상태 기준으로 신규/재신청 가능 여부 */
 export function canSubmitInstructorRoleRequest(
   summary?: InstructorRoleRequestSummary | null,
+  context?: InstructorRoleRequestSubmitContext,
 ): boolean {
+  if (context?.isApprovedInstructor === true) return false
   if (!summary) return true
   if (summary.canRequest === true) return true
   if (summary.canReapply === true) return true
+  if (isInstructorRoleRequestPendingReview(summary)) return false
+  if (context?.isApprovedInstructor === false) return true
   if (summary.canRequest === false) return false
 
   const status = summary.status?.trim().toUpperCase()
@@ -33,9 +42,16 @@ export function canSubmitInstructorRoleRequest(
 
 export function getInstructorRoleRequestStatusMessage(
   summary?: InstructorRoleRequestSummary | null,
+  context?: InstructorRoleRequestSubmitContext,
 ): string {
+  if (context?.isApprovedInstructor === true) {
+    return '이미 강사 권한이 승인되었습니다.'
+  }
   const status = summary?.status?.trim().toUpperCase()
-  if (status === 'APPROVED' || status === 'COMPLETED') {
+  if (
+    context?.isApprovedInstructor !== false &&
+    (status === 'APPROVED' || status === 'COMPLETED')
+  ) {
     return '이미 강사 권한이 승인되었습니다.'
   }
   if (status === 'PENDING' || status === 'SUBMITTED' || status === 'IN_REVIEW') {

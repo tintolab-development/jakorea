@@ -169,10 +169,8 @@ export function AdminFaqDetailPage() {
           <div className="admin-faq-detail-page__actions-right">
             <CmsButton
               variant="delete"
-              size="large"
-              className="admin-faq-delete-btn"
-              onClick={handleDelete}
-            >
+              size="large" className="admin-faq-delete-btn"
+              onClick={handleDelete} >
               삭제
             </CmsButton>
             <CmsButton variant="primary" size="large" adminAction="write" onClick={handleEdit}>

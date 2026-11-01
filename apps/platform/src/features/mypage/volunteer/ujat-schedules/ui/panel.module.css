@@ -71,3 +71,27 @@
 .setup p {
   margin: 0;
 }
+
+/* Mobile — Figma 6810:78493 월 헤더(mhead) · 간격 20 */
+@media (--bp-below-pc) {
+  .month,
+  .monthList {
+    gap: var(--spacing-20);
+  }
+
+  .monthHeading {
+    gap: var(--spacing-8);
+  }
+
+  .monthHeading .monthLabel {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: normal;
+    letter-spacing: 0;
+  }
+
+  .monthChevron {
+    width: 24px;
+    height: 24px;
+  }
+}

@@ -1,5 +1,5 @@
 import type { Dayjs } from 'dayjs'
-import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import { formatKoreanYearMonthDayWithWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { UjatInterviewAssignConfirmPayload } from './modal'
@@ -11,14 +11,14 @@ const MODAL_WIDTH = 600
 /** 풀페이지 상세(기본 z-index) 위에 완료 모달이 항상 보이도록 */
 const MODAL_Z_INDEX = 10000
 
-/** 완료 모달 — `2026.09.15(화) 09:00 ~ 09:30` */
+/** 완료 모달 시안 — `2026년 9월 15일(화) 09:00 ~ 09:30` */
 export function formatInterviewAssignCompleteScheduleDisplay(
   date: Dayjs,
   timeRange: string
 ): string {
   const time = normalizeTimeRangeKey(timeRange)
-  const datePart = formatDateDotWithWeekday(date)
-  return datePart === '-' ? time : `${datePart} ${time}`
+  const datePart = formatKoreanYearMonthDayWithWeekday(date)
+  return datePart ? `${datePart} ${time}` : time
 }
 
 export type UjatVolunteerInterviewAssignCompleteModalProps = {
@@ -61,7 +61,7 @@ export function UjatVolunteerInterviewAssignCompleteModal({
       className="ujat-volunteer-interview-assign-complete-modal"
       description={`**[${applicantName}]** 님의 ${descriptionAction}`}
       footer={
-        <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="h40" type="button" onClick={onClose}>
           확인
         </CmsButton>
       }

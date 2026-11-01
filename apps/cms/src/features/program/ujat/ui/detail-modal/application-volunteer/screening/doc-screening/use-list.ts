@@ -1,18 +1,27 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import type { FilterTableExcelExportConfig } from '@/shared/components/filter-table-layout'
-import type { UjatDocumentScreeningConfirmRequest } from './document-actions'
 import type { ColumnsType } from 'antd/es/table'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
+import { toScreeningNotifyFields } from '@/features/program/general/lib/application-decision-notify-timing'
 import {
   sortUjatVolunteerApplicants,
   formatUjatVolunteerApplicationType,
   type UjatVolunteerApplicantRow,
 } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+  readDocumentEvaluationErrorMessage,
+  shouldShowDocumentEvaluationErrorAlert,
+} from '@/features/program/shared/lib/document-evaluation-error'
+import { shouldSkipLocalApiErrorAlert } from '@/features/program/shared/lib/interview-not-ended'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { listUjatVolunteerApplicationsPage } from '@/features/program/ujat/api/applications-service'
 import { buildUjatVolunteerDoc1ListQuery } from '@/features/program/ujat/api/applications-list-query'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { invalidateUjatVolunteerApplicationLists } from '@/features/program/ujat/api/volunteer-application-list-cache'
 import {
   submitUjatVolunteerDocumentResultsRemote,
   updateUjatVolunteerDocumentEvaluationRemote,
@@ -31,11 +40,14 @@ import {
 } from './filter-fields'
 import { useUjatVolunteerDocScreeningColumns } from './columns'
 import {
-  confirmUjatVolunteerDocumentApprove,
-  confirmUjatVolunteerDocumentReject,
+  alertUjatVolunteerDocumentSelectionRequired,
   patchUjatVolunteerDocumentScreeningStatus,
 } from './document-actions'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  showApplicationApprovalCompletedAlert,
+  showApplicationRejectionCompletedAlert,
+} from '@/shared/ui'
 
 const EXPORT_COLUMNS_UJAT: ColumnsType<Record<string, string | number>> = [
   { title: 'No.', dataIndex: 'no', key: 'no' },
@@ -119,8 +131,12 @@ export function useUjatVolunteerDocScreening({
 
   const queryClient = useQueryClient()
   const { showAlert } = useCmsAlert()
-  const [documentScreeningConfirm, setDocumentScreeningConfirm] =
-    useState<UjatDocumentScreeningConfirmRequest | null>(null)
+  const [approveModalVolunteer, setApproveModalVolunteer] =
+    useState<UjatVolunteerApplicantRow | null>(null)
+  const [rejectModalVolunteer, setRejectModalVolunteer] =
+    useState<UjatVolunteerApplicantRow | null>(null)
+  const [bulkApproveOpen, setBulkApproveOpen] = useState(false)
+  const [bulkRejectOpen, setBulkRejectOpen] = useState(false)
   const [list, setList] = useState<UjatVolunteerApplicantRow[]>(() => [])
   const [pendingFilters, setPendingFilters] = useState<UjatVolunteerDocScreeningFilters>(() => ({
     ...DEFAULT_UJAT_VOLUNTEER_DOC_SCREENING_FILTERS,
@@ -168,9 +184,7 @@ export function useUjatVolunteerDocScreening({
   }, [queriedRows])
 
   const invalidateVolunteerLists = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: [...ujatQueryKeys.applications(), 'volunteers', programId],
-    })
+    await invalidateUjatVolunteerApplicationLists(queryClient, programId)
   }, [programId, queryClient])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
@@ -209,14 +223,16 @@ export function useUjatVolunteerDocScreening({
     (id: string, evaluation: UjatManagerEvaluation) => {
       const previousEvaluation = list.find(row => row.id === id)?.managerAEvaluation
       updateRow(id, { managerAEvaluation: evaluation })
-      void updateUjatVolunteerDocumentEvaluationRemote(id, 'A', evaluation).catch(() => {
+      void updateUjatVolunteerDocumentEvaluationRemote(id, 'A', evaluation).catch(error => {
         if (previousEvaluation != null) {
           updateRow(id, { managerAEvaluation: previousEvaluation })
         }
-        showAlert({
-          title: '담당자 평가 저장 실패',
-          content: '담당자 A 평가를 저장하지 못했습니다. 다시 시도해 주세요.',
-        })
+        if (shouldShowDocumentEvaluationErrorAlert(error)) {
+          showAlert({
+            title: DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+            content: readDocumentEvaluationErrorMessage(error),
+          })
+        }
         void invalidateVolunteerLists()
       })
     },
@@ -227,14 +243,16 @@ export function useUjatVolunteerDocScreening({
     (id: string, evaluation: UjatManagerEvaluation) => {
       const previousEvaluation = list.find(row => row.id === id)?.managerBEvaluation
       updateRow(id, { managerBEvaluation: evaluation })
-      void updateUjatVolunteerDocumentEvaluationRemote(id, 'B', evaluation).catch(() => {
+      void updateUjatVolunteerDocumentEvaluationRemote(id, 'B', evaluation).catch(error => {
         if (previousEvaluation != null) {
           updateRow(id, { managerBEvaluation: previousEvaluation })
         }
-        showAlert({
-          title: '담당자 평가 저장 실패',
-          content: '담당자 B 평가를 저장하지 못했습니다. 다시 시도해 주세요.',
-        })
+        if (shouldShowDocumentEvaluationErrorAlert(error)) {
+          showAlert({
+            title: DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+            content: readDocumentEvaluationErrorMessage(error),
+          })
+        }
         void invalidateVolunteerLists()
       })
     },
@@ -249,55 +267,138 @@ export function useUjatVolunteerDocScreening({
   })
 
   const applyDocumentScreeningStatus = useCallback(
-    (ids: string[], status: 'pass' | 'fail') => {
+    async (
+      ids: string[],
+      status: 'pass' | 'fail',
+      payload?: PermissionModalPayload
+    ): Promise<boolean> => {
+      const notify = toScreeningNotifyFields(payload?.notifyTiming, payload?.manualNotifyAt)
       setList(prev => patchUjatVolunteerDocumentScreeningStatus(prev, ids, status))
-      void submitUjatVolunteerDocumentResultsRemote(ids, status)
-        .then(() => invalidateVolunteerLists())
-        .catch(() => {
+      try {
+        const bulk = await submitUjatVolunteerDocumentResultsRemote(
+          ids,
+          status,
+          payload?.reason?.trim() || undefined,
+          notify
+        )
+        if (bulk && (bulk.failureCount ?? 0) > 0) {
+          showAlert({
+            title: '서류 결과 일부 실패',
+            content: `요청 ${bulk.requestedCount ?? ids.length}건 중 성공 ${bulk.successCount ?? 0}건, 실패 ${bulk.failureCount ?? 0}건입니다.`,
+          })
+        }
+        await invalidateVolunteerLists()
+        return true
+      } catch (error) {
+        if (!shouldSkipLocalApiErrorAlert(error)) {
           showAlert({
             title: '서류 심사 처리 실패',
-            content: '서류 합격/불합격 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+            content: readApiErrorAlertMessage(
+              error,
+              '서류 합격/불합격 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'
+            ),
           })
-          void invalidateVolunteerLists()
-        })
+        }
+        await invalidateVolunteerLists()
+        return false
+      }
     },
     [invalidateVolunteerLists, showAlert]
   )
 
-  const showDocumentScreeningConfirm = useCallback(
-    (options: UjatDocumentScreeningConfirmRequest) => {
-      setDocumentScreeningConfirm(options)
-    },
-    []
-  )
+  const openApproveModal = useCallback((row: UjatVolunteerApplicantRow) => {
+    setApproveModalVolunteer(row)
+  }, [])
 
-  const closeDocumentScreeningConfirm = useCallback(() => {
-    setDocumentScreeningConfirm(null)
+  const openRejectModal = useCallback((row: UjatVolunteerApplicantRow) => {
+    setRejectModalVolunteer(row)
+  }, [])
+
+  const closeApproveModal = useCallback(() => {
+    setApproveModalVolunteer(null)
+  }, [])
+
+  const closeRejectModal = useCallback(() => {
+    setRejectModalVolunteer(null)
+  }, [])
+
+  const closeBulkApproveModal = useCallback(() => {
+    setBulkApproveOpen(false)
+  }, [])
+
+  const closeBulkRejectModal = useCallback(() => {
+    setBulkRejectOpen(false)
   }, [])
 
   const handleBulkReject = useCallback(() => {
     const ids = selectedRowKeys.map(String)
-    confirmUjatVolunteerDocumentReject({
-      showConfirm: showDocumentScreeningConfirm,
-      count: ids.length,
-      onConfirm: () => {
-        applyDocumentScreeningStatus(ids, 'fail')
-        setSelectedRowKeys([])
-      },
-    })
-  }, [applyDocumentScreeningStatus, selectedRowKeys, showDocumentScreeningConfirm])
+    if (ids.length === 0) {
+      alertUjatVolunteerDocumentSelectionRequired('reject')
+      return
+    }
+    setBulkRejectOpen(true)
+  }, [selectedRowKeys])
 
   const handleBulkApprove = useCallback(() => {
     const ids = selectedRowKeys.map(String)
-    confirmUjatVolunteerDocumentApprove({
-      showConfirm: showDocumentScreeningConfirm,
-      count: ids.length,
-      onConfirm: () => {
-        applyDocumentScreeningStatus(ids, 'pass')
-        setSelectedRowKeys([])
-      },
-    })
-  }, [applyDocumentScreeningStatus, selectedRowKeys, showDocumentScreeningConfirm])
+    if (ids.length === 0) {
+      alertUjatVolunteerDocumentSelectionRequired('approve')
+      return
+    }
+    setBulkApproveOpen(true)
+  }, [selectedRowKeys])
+
+  const handleApproveModalConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!approveModalVolunteer) return
+      const { id } = approveModalVolunteer
+      const ok = await applyDocumentScreeningStatus([id], 'pass', payload)
+      setApproveModalVolunteer(null)
+      if (!ok) return
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
+      showApplicationApprovalCompletedAlert()
+    },
+    [applyDocumentScreeningStatus, approveModalVolunteer]
+  )
+
+  const handleRejectModalConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!rejectModalVolunteer) return
+      const { id } = rejectModalVolunteer
+      const ok = await applyDocumentScreeningStatus([id], 'fail', payload)
+      setRejectModalVolunteer(null)
+      if (!ok) return
+      setSelectedRowKeys(prev => prev.filter(key => String(key) !== id))
+      showApplicationRejectionCompletedAlert()
+    },
+    [applyDocumentScreeningStatus, rejectModalVolunteer]
+  )
+
+  const handleBulkApproveConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      const ids = selectedRowKeys.map(String)
+      if (ids.length === 0) return
+      const ok = await applyDocumentScreeningStatus(ids, 'pass', payload)
+      setBulkApproveOpen(false)
+      if (!ok) return
+      setSelectedRowKeys([])
+      showApplicationApprovalCompletedAlert()
+    },
+    [applyDocumentScreeningStatus, selectedRowKeys]
+  )
+
+  const handleBulkRejectConfirm = useCallback(
+    async (payload: PermissionModalPayload) => {
+      const ids = selectedRowKeys.map(String)
+      if (ids.length === 0) return
+      const ok = await applyDocumentScreeningStatus(ids, 'fail', payload)
+      setBulkRejectOpen(false)
+      if (!ok) return
+      setSelectedRowKeys([])
+      showApplicationRejectionCompletedAlert()
+    },
+    [applyDocumentScreeningStatus, selectedRowKeys]
+  )
 
   return {
     list,
@@ -314,9 +415,20 @@ export function useUjatVolunteerDocScreening({
     handleBulkReject,
     handleBulkApprove,
     excelExport,
-    showDocumentScreeningConfirm,
-    documentScreeningConfirm,
-    closeDocumentScreeningConfirm,
+    approveModalVolunteer,
+    rejectModalVolunteer,
+    bulkApproveOpen,
+    bulkRejectOpen,
+    openApproveModal,
+    openRejectModal,
+    closeApproveModal,
+    closeRejectModal,
+    closeBulkApproveModal,
+    closeBulkRejectModal,
+    handleApproveModalConfirm,
+    handleRejectModalConfirm,
+    handleBulkApproveConfirm,
+    handleBulkRejectConfirm,
     count: filteredSorted.length,
     openManagerDropdown,
     setOpenManagerDropdown,

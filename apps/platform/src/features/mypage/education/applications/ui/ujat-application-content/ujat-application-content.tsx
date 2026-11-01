@@ -19,6 +19,7 @@ export type UjatApplicationContentProps = {
 
 const EMPTY_INSTITUTION = {
   name: '',
+  applicationRegion: '',
   address: '',
   addressDetail: '',
   teacherContact: '',
@@ -143,6 +144,13 @@ export function UjatApplicationContent({ content }: UjatApplicationContentProps)
       {showInstitution ? (
         <section className={styles.section} aria-label="신청 기관 정보">
           <PFFormFieldTable>
+            {institution.applicationRegion.trim() ? (
+              <PFFormFieldRow>
+                <PFFormField label="신청 지역" labelWidth="wider" fullWidth>
+                  <p className={styles.fieldValue}>{institution.applicationRegion}</p>
+                </PFFormField>
+              </PFFormFieldRow>
+            ) : null}
             {showNameAndAddress ? (
               <PFFormFieldRow type="double">
                 <PFFormField label="신청 기관명" labelWidth="wider">

@@ -18,6 +18,12 @@
   width: 100%;
 }
 
+/* 교육 진행 일정 — pipe wrap이 block flex라 td text-align이 안 먹음 */
+.participating-individual-participant-assignment-section__table-outer
+  .program-detail-td-segment-wrap {
+  justify-content: center;
+}
+
 .participating-individual-participant-assignment-section__table-outer
   .ant-table-thead
   > tr

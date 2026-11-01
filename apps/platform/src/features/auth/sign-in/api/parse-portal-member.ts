@@ -67,6 +67,7 @@ function parseInstructorPortalProfile(
   if (!root) return undefined
   const profile = optionalObject(root.profile)
   const settlement = optionalObject(root.settlement)
+  if (!profile && !settlement) return undefined
   return {
     ...(profile ? { profile: profile as InstructorRoleRequestProfile } : {}),
     ...(settlement
@@ -125,6 +126,7 @@ export function parseHomepageMeResponse(payload: unknown): HomepageMeResponse {
     memberType: optionalString(root.memberType),
     ageGroup: parsePortalAgeGroup(root.ageGroup),
     teacher: optionalBoolean(root.teacher),
+    instructor: optionalBoolean(root.instructor),
     identityVerified: optionalBoolean(root.identityVerified),
     lastLoginAt: optionalString(root.lastLoginAt),
     registeredByAdmin: optionalBoolean(root.registeredByAdmin),

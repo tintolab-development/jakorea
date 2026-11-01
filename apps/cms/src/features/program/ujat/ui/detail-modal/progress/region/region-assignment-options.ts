@@ -1,6 +1,7 @@
 import type { UjatDirectAssignmentCandidatesResponse } from '@/features/program/ujat/api/education-execution-api'
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
+import type { EducationProgressHalfKey } from '../tabs'
 import { formatRegionAssignmentInstitutionLabel } from './format-institution-label'
 import { getRegionAssignmentTableDataFromStore } from './region-assignment-store'
 import type {
@@ -19,15 +20,12 @@ function formatRegionDirectAssignClassOptionLabel(
 
 export const REGION_DIRECT_ASSIGN_SECONDARY_LABEL = '두 번째 봉사자 배정'
 
-/** 학급 슬롯 배정 인원 — 배정 불가일·재배정 필요 건은 미배정으로 본다 */
+/** 학급 슬롯 배정 인원 — 재배정 필요 건은 미배정으로 본다 */
 function countRegionClassSlotAssignees(
-  column: RegionAssignmentColumn,
   classLabel: string,
   rows: RegionAssignmentVolunteerRow[],
   columnIndex: number
 ): number {
-  if (column.isBlockedDate) return 0
-
   return rows.filter(row => {
     const cell = row.cells[columnIndex]
     return (
@@ -39,9 +37,10 @@ function countRegionClassSlotAssignees(
 }
 
 export function getRegionAssignmentTableData(
+  half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): RegionAssignmentTableData {
-  return getRegionAssignmentTableDataFromStore(regionKey)
+  return getRegionAssignmentTableDataFromStore(half, regionKey)
 }
 
 function isVolunteerUnassignedOnColumn(
@@ -52,8 +51,9 @@ function isVolunteerUnassignedOnColumn(
   return cell?.kind !== 'assigned' || cell.isInvalidAssignment === true
 }
 
-function countVolunteerAssignedDays(row: RegionAssignmentVolunteerRow): number {
-  return row.cells.filter(cell => cell.kind === 'assigned').length
+/** 반기 matrix 응답의 totalAssignedDays SSOT — cells를 다시 세어 보정하지 않는다 */
+function volunteerAssignedDays(row: RegionAssignmentVolunteerRow): number {
+  return row.totalAssignedDays
 }
 
 /**
@@ -96,7 +96,7 @@ export function getRegionDirectAssignClassOptionsFromData(
         formatUjatGradeClassDisplayLabel(slot.classLabel),
         column.institutionName
       )
-      const assignees = countRegionClassSlotAssignees(column, slot.classLabel, rows, columnIndex)
+      const assignees = countRegionClassSlotAssignees(slot.classLabel, rows, columnIndex)
       if (assignees >= 2) {
         return { value: slot.id, label: `${label} · 배정 완료`, disabled: true }
       }
@@ -109,9 +109,10 @@ export function getRegionDirectAssignClassOptionsFromData(
 }
 
 export function getRegionDirectAssignClassOptions(
+  half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): { value: string; label: string; disabled?: boolean }[] {
-  return getRegionDirectAssignClassOptionsFromData(getRegionAssignmentTableData(regionKey))
+  return getRegionDirectAssignClassOptionsFromData(getRegionAssignmentTableData(half, regionKey))
 }
 
 /**
@@ -134,7 +135,7 @@ export function mapRegionDirectAssignCandidateOptions(
 }
 
 /**
- * 배정 불가일 POST 대상 scheduleId — 활동 불가는 서울 날짜 단위로 적용되므로 날짜당 1건.
+ * 참여 불가일 POST 대상 scheduleId — 활동 불가는 서울 날짜 단위로 적용되므로 날짜당 1건.
  * 대상 봉사자가 그 날 배정된 일정이 있으면 그 일정(대체자가 해당 배정을 넘겨받음), 없으면 그 날 첫 일정.
  */
 export function selectRegionUnavailabilityScheduleIds(
@@ -162,13 +163,11 @@ export function selectRegionUnavailabilityScheduleIds(
   })
 }
 
-/** 배정 불가일 설정 — 봉사자명 옵션 */
-export function getRegionBlockedDateVolunteerOptions(
-  regionKey: UjatInstitutionApplicationRegionKey
+/** 참여 불가일 설정 — 봉사자명 옵션 */
+export function getRegionBlockedDateVolunteerOptionsFromData(
+  data: RegionAssignmentTableData
 ): { value: string; label: string }[] {
-  const { rows } = getRegionAssignmentTableData(regionKey)
-
-  return rows
+  return data.rows
     .filter(row => !row.isWithdrawnVolunteer)
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
     .map(row => ({
@@ -177,19 +176,34 @@ export function getRegionBlockedDateVolunteerOptions(
     }))
 }
 
-/** 배정 불가일 설정 — 지역 내 모든 교육일(중복 일자 제거, 열 순서 유지) */
-export function getRegionEducationDateOptions(
+export function getRegionBlockedDateVolunteerOptions(
+  half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): { value: string; label: string }[] {
-  const { columns } = getRegionAssignmentTableData(regionKey)
+  return getRegionBlockedDateVolunteerOptionsFromData(
+    getRegionAssignmentTableData(half, regionKey)
+  )
+}
+
+/** 참여 불가일 설정 — 지역 내 모든 교육일(중복 일자 제거, 열 순서 유지) */
+export function getRegionEducationDateOptionsFromData(
+  data: RegionAssignmentTableData
+): { value: string; label: string }[] {
   const seen = new Set<string>()
 
-  return columns.reduce<{ value: string; label: string }[]>((acc, column) => {
+  return data.columns.reduce<{ value: string; label: string }[]>((acc, column) => {
     if (seen.has(column.dateLabel)) return acc
     seen.add(column.dateLabel)
     acc.push({ value: column.dateLabel, label: column.dateLabel })
     return acc
   }, [])
+}
+
+export function getRegionEducationDateOptions(
+  half: EducationProgressHalfKey,
+  regionKey: UjatInstitutionApplicationRegionKey
+): { value: string; label: string }[] {
+  return getRegionEducationDateOptionsFromData(getRegionAssignmentTableData(half, regionKey))
 }
 
 /** 선택한 교육일(진행일)에 배정이 없는 대체 봉사자 — 배정일 수 오름차순 */
@@ -211,9 +225,7 @@ export function getRegionBlockedDateSubstituteVolunteerOptionsFromData(
         !row.isWithdrawnVolunteer &&
         isVolunteerFreeOnColumnIndices(row, columnIndices)
     )
-    .sort(
-      (a, b) => countVolunteerAssignedDays(a) - countVolunteerAssignedDays(b)
-    )
+    .sort((a, b) => volunteerAssignedDays(a) - volunteerAssignedDays(b))
     .map(row => ({
       value: row.id,
       label: row.name,
@@ -221,12 +233,13 @@ export function getRegionBlockedDateSubstituteVolunteerOptionsFromData(
 }
 
 export function getRegionBlockedDateSubstituteVolunteerOptions(
+  half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey,
   targetVolunteerId: string,
   blockedDateLabels: string[]
 ): { value: string; label: string }[] {
   return getRegionBlockedDateSubstituteVolunteerOptionsFromData(
-    getRegionAssignmentTableData(regionKey),
+    getRegionAssignmentTableData(half, regionKey),
     targetVolunteerId,
     blockedDateLabels
   )

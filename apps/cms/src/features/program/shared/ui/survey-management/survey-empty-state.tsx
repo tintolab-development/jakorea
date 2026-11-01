@@ -8,6 +8,8 @@ export type SurveyEmptyStateProps = {
   secondaryDescription?: string
   registerButtonLabel: string
   embedded?: boolean
+  /** false면 등록 버튼을 숨긴다. 기본 true */
+  showRegisterButton?: boolean
   onRegisterClick: () => void
 }
 
@@ -17,6 +19,7 @@ export function SurveyEmptyState({
   secondaryDescription,
   registerButtonLabel,
   embedded = false,
+  showRegisterButton = true,
   onRegisterClick,
 }: SurveyEmptyStateProps) {
   const rootClassName = embedded
@@ -43,9 +46,11 @@ export function SurveyEmptyState({
             ))}
           </p>
         </div>
-        <CmsButton size="large" onClick={onRegisterClick}>
-          {registerButtonLabel}
-        </CmsButton>
+        {showRegisterButton ? (
+          <CmsButton size="large" onClick={onRegisterClick}>
+            {registerButtonLabel}
+          </CmsButton>
+        ) : null}
       </div>
     </div>
   )

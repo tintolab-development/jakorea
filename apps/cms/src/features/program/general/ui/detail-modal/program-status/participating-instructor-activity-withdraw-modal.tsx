@@ -94,8 +94,7 @@ export function ParticipatingInstructorActivityWithdrawModal({
         size="large"
         type="button"
         disabled={!canConfirm}
-        onClick={handleConfirm}
-      >
+        onClick={handleConfirm} >
         활동 포기
       </CmsButton>
     </div>

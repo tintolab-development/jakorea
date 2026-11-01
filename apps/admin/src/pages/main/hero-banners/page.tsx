@@ -237,13 +237,11 @@ export function HeroBannersPage() {
           <CmsButton
             variant="secondary"
             size="medium"
-            width={88}
             type="button"
             onClick={e => {
               e.stopPropagation()
               openEdit(record)
-            }}
-          >
+            }} >
             수정
           </CmsButton>
         ),
@@ -269,8 +267,7 @@ export function HeroBannersPage() {
               size="h40"
               type="button"
               onClick={handleDeleteClick}
-              loading={removeMutation.isPending}
-            >
+              loading={removeMutation.isPending} >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

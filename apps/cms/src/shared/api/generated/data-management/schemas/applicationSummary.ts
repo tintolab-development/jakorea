@@ -12,8 +12,12 @@ export interface ApplicationSummary {
   submitted?: number;
   approved?: number;
   rejected?: number;
+  /** 표시상태가 '신청 취소'인 건수. 활동 포기는 포함하지 않는다(giveUp). */
   cancelled?: number;
   inProgress?: number;
   completed?: number;
+  /** 표시상태가 '활동 포기'인 건수. */
   giveUp?: number;
+  /** 마이페이지 교육·봉사 현황 「종료」 탭과 동일: 진행 완료+활동 포기+신청 반려+신청 취소. */
+  ended?: number;
 }

@@ -8,8 +8,13 @@
 import type { EmployeeVolunteerCountEntryResponse } from './employeeVolunteerCountEntryResponse';
 
 export interface EmployeeVolunteerCountSetResponse {
-  programId?: number;
-  organizationApplicationId?: number;
-  targetMode?: string;
-  entries?: EmployeeVolunteerCountEntryResponse[];
+  programId: number;
+  /**
+     * GENERAL_ORGANIZATION 등 기관 스코프. 개인 프로그램은 null.
+     * @nullable
+     */
+  organizationApplicationId?: number | null;
+  /** PROGRAM 또는 ORGANIZATION_APPLICATION 등 집계 스코프. */
+  targetMode: string;
+  entries: EmployeeVolunteerCountEntryResponse[];
 }

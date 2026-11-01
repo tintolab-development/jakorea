@@ -28,4 +28,8 @@ export interface SignedConsentDocumentResponse {
   writingFormAvailable?: boolean;
   schemaJson?: SignedConsentDocumentResponseSchemaJson;
   signatureFields?: SignedConsentSignatureField[];
+  /** 회원이 제출한 성범죄 동의서 원본 PDF ID. 연결된 원본이 없으면 null. */
+  originalFileObjectId?: number;
+  /** 원본 PDF의 관리자 민감 파일 relay 요청 API. 원본이 없으면 null. SENSITIVE_FILE_DOWNLOAD 권한과 사유가 필요합니다. */
+  originalDownloadApi?: string;
 }

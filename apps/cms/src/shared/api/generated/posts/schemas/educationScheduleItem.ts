@@ -8,6 +8,7 @@
 import type { EducationScheduleAssignment } from './educationScheduleAssignment';
 import type { EducationScheduleItemBlockKind } from './educationScheduleItemBlockKind';
 import type { EducationScheduleItemTeamRole } from './educationScheduleItemTeamRole';
+import type { MemberPortalEducationCurriculumSession } from './memberPortalEducationCurriculumSession';
 import type { ScheduleGroupTime } from './scheduleGroupTime';
 
 export interface EducationScheduleItem {
@@ -47,8 +48,10 @@ export interface EducationScheduleItem {
   groupTimes?: ScheduleGroupTime[] | null;
   /** 과제 블록. 없거나 enabled=false면 FE가 과제 UI만 숨긴다. */
   assignment?: EducationScheduleAssignment | null;
-  /** 해당 회차 기준 본인 팀 역할. 팀 프로그램의 회차 응답 스냅샷을 우선하고, 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null. */
+  /** 해당 회차 기준 본인 팀 역할. CMS scheduleDetails[].participationMethodLabel이 개인이면 INDIVIDUAL. 팀이면 회차 응답 스냅샷을 우선하고 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 일정별 참여 라벨이 있는 프로그램에서 라벨 없는 회차(예: 사전교육)는 null이며 다른 회차 팀 정보로 합성하지 않습니다. 프로그램 단위 팀(공통/커리큘럼·행 라벨 없음)은 기존과 같이 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null. */
   teamRole?: EducationScheduleItemTeamRole;
-  /** 해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀이면 null이며 다른 회차 값으로 합성하지 않습니다. */
+  /** 해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀·일정별 참여 라벨 없는 회차(예: 사전교육)이면 null이며 다른 회차 값으로 합성하지 않습니다. */
   teamName?: string | null;
+  /** 커리큘럼형 단일 회차에서 이 일정(하루)에 진행하는 전 차시. 그 외 구조는 null. */
+  curriculumSessions?: MemberPortalEducationCurriculumSession[] | null;
 }

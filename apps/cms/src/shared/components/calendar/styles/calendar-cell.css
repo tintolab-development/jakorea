@@ -5,12 +5,14 @@
 .calendar-cell {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-8, 8px);
   width: 100%;
   min-width: var(--calendar-cell-min-width, 116px);
   min-height: var(--calendar-cell-min-height, 124px);
   height: auto;
   max-height: none;
-  padding: 8px;
+  /* 피그마 Calendar/Cell — padding 6 7 6 6 */
+  padding: 6px 7px 6px 6px;
   overflow: hidden;
   background: var(--main-WT, #fff);
   box-sizing: border-box;
@@ -56,44 +58,63 @@
   background: var(--status-hover-bg);
 }
 
+/* 피그마 Calendar/Cell — 선택일 셀 배경 tint */
+.calendar-cell--selected {
+  background: rgba(1, 161, 175, 0.06);
+}
+
+.calendar-cell--selected:hover {
+  background: rgba(1, 161, 175, 0.06);
+}
+
 /*
  * 날짜 뱃지 — 셀 내용(이벤트·「외 N개」)과 무관하게 고정 크기·상단 정렬.
  * flex-shrink 허용 시 높이 오버플로에서 원이 타원으로 찌그러진다.
+ * 피그마 Component 22 — 24×24 · Pretendard Medium 15/1.3
  */
 .calendar-cell-date {
   color: var(--default-BK, #3d3d3d);
-  font-family: Outfit, sans-serif;
-  font-size: 14px;
+  font-family: Pretendard, sans-serif;
+  font-size: 15px;
   font-weight: 500;
   text-align: left;
   align-self: flex-start;
-  flex: 0 0 25px;
+  flex: 0 0 24px;
   display: inline-flex;
   box-sizing: border-box;
-  width: 25px !important;
-  height: 25px !important;
-  min-width: 25px;
-  min-height: 25px;
-  max-width: 25px;
-  max-height: 25px;
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px;
+  min-height: 24px;
+  max-width: 24px;
+  max-height: 24px;
   aspect-ratio: 1 / 1;
   padding: 0;
   justify-content: center;
   align-items: center;
-  line-height: 1;
+  line-height: 1.3;
   border-radius: 50%;
   overflow: hidden;
+}
+
+.calendar-cell--sunday:not(.calendar-cell--selected) .calendar-cell-date {
+  color: var(--Status-red-main, #c32f4a);
+}
+
+.calendar-cell--saturday:not(.calendar-cell--selected) .calendar-cell-date {
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .calendar-cell-events {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 5px;
+  gap: 6px;
   flex: 0 0 auto;
   min-width: 0;
   overflow: visible;
-  margin-top: 6px;
+  margin-top: 0;
+  padding: 0 2px;
 }
 
 /* 이벤트 strip 래퍼 — 높이 부족 시 칩만 줄이고 「외 N개」는 유지 */
@@ -176,10 +197,10 @@
   flex: 0 0 auto;
   display: inline-block;
   width: 0;
-  height: 12px;
+  height: 10px;
   margin: 0 6px;
   border-left: 1px solid var(--main-BK, #3d3d3d);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .calendar-event-title__right {

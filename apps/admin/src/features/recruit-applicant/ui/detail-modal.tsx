@@ -178,8 +178,7 @@ export function RecruitApplicantDetailModal({
         type="button"
         loading={deleteLoading}
         disabled={busy}
-        onClick={() => setDeleteConfirmOpen(true)}
-      >
+        onClick={() => setDeleteConfirmOpen(true)} >
         신청 삭제
       </CmsButton>
       <div className="recruit-applicant-detail-modal__footer-end">
@@ -188,8 +187,7 @@ export function RecruitApplicantDetailModal({
           size="large"
           type="button"
           disabled={busy}
-          onClick={onCancel}
-        >
+          onClick={onCancel} >
           닫기
         </CmsButton>
         <CmsButton
@@ -198,8 +196,7 @@ export function RecruitApplicantDetailModal({
           type="button"
           loading={confirmLoading}
           disabled={busy || isConfirmed || !data}
-          onClick={onConfirm}
-        >
+          onClick={onConfirm} >
           신청 확인
         </CmsButton>
       </div>

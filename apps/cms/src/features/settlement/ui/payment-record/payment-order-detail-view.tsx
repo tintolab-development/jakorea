@@ -120,6 +120,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
   } = props
 
   const instructorRowKey = kind === 'instructor' ? row.no : null
+  const instructorMemberId = kind === 'instructor' ? row.instructorMemberId : null
 
   const { registerStatementCommitSink, handleStatementLineCommitted } =
     usePaymentOrderStatementCommitBridge(closeCalculationStatement)
@@ -128,10 +129,12 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     personalInfoRevealed,
     onPrivacyControlClick: handlePrivacyToggleClick,
     confirmModal: personalInfoRevealModal,
+    instructorDetailWithPrivacy,
   } = usePaymentOrderDetailInstructorPrivacyReveal({
     isOpen,
     kind,
     instructorRowKey,
+    instructorMemberId,
     detail,
   })
 
@@ -204,7 +207,7 @@ export function PaymentOrderDetailView(props: PaymentOrderDetailViewProps): Reac
     ) : kind === 'instructor' && detail ? (
       <>
         <PaymentOrderInstructorBasicInfo
-          detail={detail}
+          detail={instructorDetailWithPrivacy ?? detail}
           aggregateStatus={lineAggregateStatus}
           totalEstimatedAmount={lineCountableAmount ?? detail.totalEstimatedAmount}
           personalInfoRevealed={personalInfoRevealed}

@@ -67,7 +67,7 @@
       "sessionOrdinal|lectureSessionDisplay",
       "lectureDate",
       "netPaymentAmount",
-      "items[] with calculationDetail for detail modal"
+      "items[] with calculationDetail for detail modal (instructor_fee: layout lectureFeeTier|lectureFeeSpecial|lectureFeeGemini; basisJson.lectureTimeDisplay canonical N차시|N회차 OR sessionOrdinal→N차시; never clock-time 14:30~16:30 as modal lecture time)"
     ],
     "accountPayment": [
       "accountPaymentId",

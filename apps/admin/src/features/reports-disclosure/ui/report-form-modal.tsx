@@ -260,8 +260,7 @@ export function ReportFormModal({
             size="large"
             type="button"
             disabled={confirmLoading || deleteLoading}
-            onClick={() => setDeleteConfirmOpen(true)}
-          >
+            onClick={() => setDeleteConfirmOpen(true)} >
             보고서 삭제
           </CmsButton>
         ) : null}
@@ -272,8 +271,7 @@ export function ReportFormModal({
           size="large"
           type="button"
           disabled={confirmLoading || deleteLoading}
-          onClick={onCancel}
-        >
+          onClick={onCancel} >
           취소
         </CmsButton>
         <CmsButton
@@ -282,8 +280,7 @@ export function ReportFormModal({
           type="button"
           loading={confirmLoading}
           disabled={deleteLoading}
-          onClick={handleSubmit}
-        >
+          onClick={handleSubmit} >
           {confirmText}
         </CmsButton>
       </div>

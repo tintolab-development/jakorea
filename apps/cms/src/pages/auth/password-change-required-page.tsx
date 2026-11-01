@@ -57,7 +57,7 @@ export function PasswordChangeRequiredPage() {
         <p className="password-change-required-page__description">
           안전한 이용을 위해 본인인증 후 비밀번호를 변경해 주세요.
         </p>
-        <CmsButton variant="primary" size="h52" width="100%" onClick={handleStart}>
+        <CmsButton variant="primary" size="h52" onClick={handleStart}>
           본인인증 후 비밀번호 변경하기
         </CmsButton>
       </div>

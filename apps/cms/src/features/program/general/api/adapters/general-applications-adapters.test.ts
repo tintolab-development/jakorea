@@ -16,6 +16,7 @@ import {
   mapApiVolunteerInterviewStatusToAssignmentStatus,
   mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
+  mapIndividualApplicationToApprovalStatus,
   readIndividualApplicationListAffiliationDisplayName,
   readIndividualApplicationListGrade,
   mapInterviewEvaluationSlots,
@@ -34,6 +35,7 @@ import {
   mapParticipantToParticipatingSchoolRow,
   mapParticipantToParticipatingVolunteerRow,
   mapVolunteerApplicationToGeneralVolunteerApplicantRow,
+  mapVolunteerInterviewAssignmentFromWire,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
 import {
   parseGeneralProgramServiceDetailJson,
@@ -333,6 +335,59 @@ describe('general-applications-adapters', () => {
     expect(mapApiApplicationStatusToApprovalStatus('REJECTION_CANCELLED')).toBe('pending')
   })
 
+  it('maps interview-track individual approval from document/final result when applicationStatus stays waiting', () => {
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'WAITING_REVIEW',
+        documentStatus: 'PASS',
+      })
+    ).toBe('approved')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'DOCUMENT_PASSED',
+      })
+    ).toBe('approved')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'WAITING_REVIEW',
+        finalResultStatus: 'PASS',
+      })
+    ).toBe('approved')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'WAITING_REVIEW',
+        finalResultStatus: 'FAIL',
+      })
+    ).toBe('rejected')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'CANCELLED',
+        documentStatus: 'PASS',
+      })
+    ).toBe('cancelled')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'WAITING_REVIEW',
+      })
+    ).toBe('pending')
+  })
+
+  it('maps interview-track individual list rows to program approval from document result', () => {
+    const row = mapIndividualApplicationToApplicantRow(
+      {
+        id: 56,
+        programId: 5001,
+        memberName: '서류합격자',
+        applicationStatus: 'WAITING_REVIEW',
+        documentStatus: 'PASS',
+        finalResultStatus: 'WAITING',
+      } as never,
+      0,
+      '5001'
+    )
+    expect(row.approvalStatus).toBe('approved')
+  })
+
   it('maps organization application list item to applicant row', () => {
     const row = mapOrganizationApplicationToApplicantSchoolRow(
       organizationApplicationListItemFixture({
@@ -475,6 +530,17 @@ describe('general-applications-adapters', () => {
     expect(row.sessions?.[0]?.scheduleUnresolved).toBeUndefined()
     expect(row.sessions?.[0]?.scheduleLabel).toBe('2026.11.02(월) 13:30 ~ 16:00')
     expect(row.sessions?.[0]?.timeRange).toContain('~')
+  })
+
+  it('uses educationDate (Seoul calendar) instead of UTC-sliced startAt', () => {
+    const sessions = mapPreferredEducationSchedulesToSessions([
+      {
+        startAt: '2026-11-01T15:30:00.000Z',
+        endAt: '2026-11-01T16:00:00.000Z',
+        educationDate: '2026-11-02',
+      },
+    ])
+    expect(sessions[0]?.date).toBe('2026.11.02')
   })
 
   it('does not render 00:00 for a date-only preferred schedule', () => {
@@ -1292,6 +1358,21 @@ describe('general-applications-adapters', () => {
     expect(row.canEditManagerBEvaluation).toBe(false)
     expect(row.availableActions).toEqual(['VIEW', 'UPDATE_DOCUMENT_EVALUATION'])
     expect(row.essayIntro).toBe('')
+    expect(row.homeAddress).toBe('')
+  })
+
+  it('maps volunteer list homeAddressSummary when present', () => {
+    const row = mapVolunteerApplicationToGeneralVolunteerApplicantRow(
+      {
+        id: 57,
+        programId: 5001,
+        memberName: '김봉사',
+        homeAddressSummary: ' 서울특별시 ',
+      } as Parameters<typeof mapVolunteerApplicationToGeneralVolunteerApplicantRow>[0],
+      0,
+      '5001'
+    )
+    expect(row.homeAddress).toBe('서울특별시')
   })
 
   it('maps volunteer list essay fields and keeps null as empty', () => {
@@ -1710,6 +1791,30 @@ describe('general-applications-adapters', () => {
     expect(row.detail?.teamMemberCount).toBe(4)
     expect(row.detail?.teamMemberCountSelect).toBe('4')
     expect(row.detail?.teamRole).toBe('member')
+  })
+
+  it('maps GET assignment wire: INTERVIEW_ASSIGNED / ASSIGNED / PARTIALLY_EVALUATED', () => {
+    expect(
+      mapVolunteerInterviewAssignmentFromWire({
+        applicationStatus: 'INTERVIEW_ASSIGNED',
+        interviewStatus: 'ASSIGNED',
+        interviewAssignmentStatus: 'ASSIGNED',
+      })
+    ).toBe('assigned')
+    expect(
+      mapVolunteerInterviewAssignmentFromWire({
+        applicationStatus: 'DOCUMENT_PASSED',
+        interviewStatus: 'PARTIALLY_EVALUATED',
+        interviewAssignmentStatus: 'PARTIALLY_EVALUATED',
+      })
+    ).toBe('assigned')
+    expect(
+      mapVolunteerInterviewAssignmentFromWire({
+        applicationStatus: 'DOCUMENT_PASSED',
+        interviewStatus: undefined,
+        interviewAssignmentStatus: null,
+      })
+    ).toBe('waiting')
   })
 
   it('keeps evaluated interviews in the assigned state so they stay on the 2nd interview list', () => {

@@ -190,8 +190,7 @@ function StripBannerFormBody({
                   type="button"
                   onClick={() => setDeleteConfirmOpen(true)}
                   disabled={confirmLoading || deleteLoading}
-                  loading={deleteLoading}
-                >
+                  loading={deleteLoading} >
                   배너 삭제
                 </CmsButton>
               ) : null}
@@ -202,8 +201,7 @@ function StripBannerFormBody({
                 size="large"
                 type="button"
                 onClick={onCancel}
-                disabled={confirmLoading || deleteLoading}
-              >
+                disabled={confirmLoading || deleteLoading} >
                 취소
               </CmsButton>
               <CmsButton
@@ -212,8 +210,7 @@ function StripBannerFormBody({
                 type="button"
                 loading={confirmLoading}
                 disabled={confirmLoading || deleteLoading}
-                onClick={handlePrimaryAction}
-              >
+                onClick={handlePrimaryAction} >
                 {primaryLabel}
               </CmsButton>
             </div>

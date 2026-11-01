@@ -216,8 +216,7 @@ export function InstructorRegisterModal({
             size="medium"
             type="button"
             onClick={onClose}
-            disabled={loading}
-          >
+            disabled={loading} >
             닫기
           </CmsButton>
           <CmsButton
@@ -226,8 +225,7 @@ export function InstructorRegisterModal({
             type="button"
             onClick={handleRegisterClick}
             loading={loading}
-            disabled={loading}
-          >
+            disabled={loading} >
             신규 등록
           </CmsButton>
         </>

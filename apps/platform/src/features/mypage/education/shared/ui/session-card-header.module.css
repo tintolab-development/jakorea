@@ -29,3 +29,22 @@
   justify-content: flex-end;
   gap: var(--spacing-12);
 }
+
+/* mobileStack opt-in — Figma 6810:78493 (Mobile 375) 카드 헤더 */
+@media (--bp-below-pc) {
+  .mobileStack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-16);
+  }
+
+  .mobileStack .meta {
+    flex: 0 0 auto;
+  }
+
+  .mobileStack .aside {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

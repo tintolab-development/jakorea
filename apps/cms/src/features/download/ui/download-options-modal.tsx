@@ -114,8 +114,7 @@ export function DownloadOptionsModal({
             size="medium"
             type="button"
             onClick={handleCancel}
-            disabled={downloading}
-          >
+            disabled={downloading} >
             취소
           </CmsButton>
           <CmsButton
@@ -124,8 +123,7 @@ export function DownloadOptionsModal({
             type="button"
             loading={downloading}
             disabled={!downloadCheck.allowed}
-            onClick={() => form.submit()}
-          >
+            onClick={() => form.submit()} >
             다운로드
           </CmsButton>
         </>

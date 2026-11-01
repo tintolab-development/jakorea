@@ -12,6 +12,7 @@ import {
   syncSurveyItemsIntoRegistrationOverlay,
 } from '@/features/program/general/lib/general-survey-menu-keys'
 import { persistScheduleEducationFormByDetailOverlay } from '@/features/program/general/model/common-info-edit-schema'
+import { commonInfoWithServerEducationScheduleLines } from '@/features/program/general/lib/general-program-service-detail-json'
 import {
   omitTrainedTeacherInfoDetailOwnedCommonInfo,
   omitTrainedTeacherStaleSessionOverlayKeys,
@@ -173,7 +174,7 @@ function sanitizeTrainedTeacherCommonInfo(
         preEducationNoticeRequired: false,
       }
     : undefined
-  return {
+  return commonInfoWithServerEducationScheduleLines({
     ...(stripped as NonNullable<Program['generalCommonInfo']>),
     ...educationSelection,
     ...(venueKind === 'inside' || venueKind === 'outside' || venueKind === 'other'
@@ -188,7 +189,7 @@ function sanitizeTrainedTeacherCommonInfo(
       : {}),
     ...(participantRecruitmentInfo ? { participantRecruitmentInfo } : {}),
     announcementTitle: common.announcementTitle?.trim() || undefined,
-  }
+  })
 }
 
 /** TT 설문 키 정규화 — survey / satisfaction / lecture_evaluation (공통정보 체크 ↔ LNB SSOT) */

@@ -1,12 +1,34 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Spin } from 'antd'
 import type { Program } from '@/types/domain'
 import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
+import {
+  PROGRAM_MANAGER_ADD_COMPLETE_BODY,
+  PROGRAM_MANAGER_ADD_COMPLETE_TITLE,
+  PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_BODY,
+  PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_TITLE,
+} from '@/features/program/general/lib/program-manager-action-result-messages'
+import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import { parseOrganizationApplicationIdFromSchoolId } from '@/features/program/general/api/adapters/program-post-adapters'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { useGeneralProgramPosts } from '@/features/program/general/hooks/use-general-program-posts-surveys'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import {
+  postUjatEducationClassRemappings,
+  postUjatEducationClasses,
+} from '@/features/program/ujat/api/education-classes-api'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { EnrollmentProgramDetailPostsTab } from '@/features/user/detail/ui/enrollment-program-detail-posts-tab'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
-import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
+import {
+  getApiErrorCode,
+  readApiErrorAlertMessage,
+} from '@/shared/lib/extract-api-error-message'
+import { useUjatInstitutionTeacherPrivacyReveal } from '../../../application-institution/shared/use-institution-teacher-privacy-reveal'
 import type { UjatEducationProgressInstitutionDetailTab } from '@/features/program/ujat/lib/ujat-program-detail-url'
 import {
   UJAT_EDU_PROGRESS_INSTITUTION_DETAIL_TAB_LABELS,
@@ -18,8 +40,9 @@ import type {
 } from '../../../application-institution/detail/detail-types'
 import { UjatEducationProgressInstitutionApplicationTab } from './application-tab'
 import {
-  UjatEducationProgressInstitutionAssignmentChangeButton,
+  UjatEducationProgressInstitutionAssignmentHeaderActions,
   UjatEducationProgressInstitutionAssignmentTab,
+  useInstitutionAssignmentTabModel,
 } from './assignment-tab'
 import {
   UjatEducationProgressActivityWithdrawModal,
@@ -29,10 +52,47 @@ import { UjatEducationProgressChangeClassModal } from './change-class-modal'
 import {
   applyClassChangesToGradeBlocks,
   applyClassChangesToSchedules,
+  buildEducationClassRemappingRequest,
   resolveRegionKeyForInstitution,
   type ChangeClassConfirmPayload,
 } from './change-class'
+import {
+  buildEducationClassAddRequest,
+  gradeBlocksFromEducationClasses,
+} from './add-class'
+import type { UjatEducationProgressAddClassConfirmPayload } from './add-class-modal'
+import {
+  mergePendingClassesIntoGradeBlocks,
+  removeClassesFromGradeBlocks,
+} from './grade-blocks'
 import './detail.css'
+
+const CLASS_ADD_ERROR_TITLES: Record<string, string> = {
+  UJAT_CLASS_ADD_DUPLICATE: '이미 등록된 학급입니다',
+  UJAT_EDUCATION_CLASS_DUPLICATE: '이미 등록된 학급입니다',
+  UJAT_CLASS_ADD_REVISION_CONFLICT: '학급 정보가 변경되었습니다',
+  UJAT_EDUCATION_CLASS_REVISION_CONFLICT: '학급 정보가 변경되었습니다',
+  ORGANIZATION_APPLICATION_NOT_FOUND: '기관 신청을 찾을 수 없습니다',
+}
+
+const CLASS_REMAP_ERROR_TITLES: Record<string, string> = {
+  UJAT_CLASS_REMAP_APPLY_FROM_IN_PAST: '적용일을 확인할 수 없습니다',
+  UJAT_CLASS_REMAP_INVALID_MAPPING: '학급 변경 정보가 올바르지 않습니다',
+  UJAT_CLASS_REMAP_DUPLICATE_FROM: '동일한 기존 학급이 중복되었습니다',
+  UJAT_CLASS_REMAP_SAME_CLASS: '기존 학급과 변경 학급이 동일합니다',
+  UJAT_CLASS_REMAP_FROM_NOT_FOUND: '기존 학급을 찾을 수 없습니다',
+  UJAT_CLASS_REMAP_APPLY_DATE_MISMATCH: '적용 일정과 날짜가 일치하지 않습니다',
+  ORGANIZATION_APPLICATION_NOT_FOUND: '기관 신청을 찾을 수 없습니다',
+  SCHEDULE_NOT_FOUND: '교육 일정을 찾을 수 없습니다',
+  UJAT_CLASS_REMAP_REVISION_CONFLICT: '학급 정보가 변경되었습니다',
+  UJAT_CLASS_REMAP_HAS_VOLUNTEER_ASSIGNMENTS: '봉사자 배정이 있어 변경할 수 없습니다',
+  UJAT_CLASS_REMAP_TARGET_SLOT_CONFLICT: '변경 대상 학급이 충돌합니다',
+  INVALID_MAPPING: '학급 변경 정보가 올바르지 않습니다',
+  DUPLICATE_FROM: '동일한 기존 학급이 중복되었습니다',
+  SAME_CLASS: '기존 학급과 변경 학급이 동일합니다',
+  FROM_NOT_FOUND: '기존 학급을 찾을 수 없습니다',
+  APPLY_DATE_MISMATCH: '적용 일정과 날짜가 일치하지 않습니다',
+}
 
 export function UjatEducationProgressInstitutionDetailView({
   detail,
@@ -46,14 +106,21 @@ export function UjatEducationProgressInstitutionDetailView({
   onSelectTab: (tab: UjatEducationProgressInstitutionDetailTab) => void
 }) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
+  const canWrite = useUjatCanWrite()
   const [postWriteModalOpen, setPostWriteModalOpen] = useState(false)
   const [withdrawConfirmOpen, setWithdrawConfirmOpen] = useState(false)
   const [changeClassModalOpen, setChangeClassModalOpen] = useState(false)
+  const [changeClassConfirming, setChangeClassConfirming] = useState(false)
+  const [addClassConfirming, setAddClassConfirming] = useState(false)
   const [activityWithdrawn, setActivityWithdrawn] = useState(false)
   const [isApplicationInfoEditing, setIsApplicationInfoEditing] = useState(false)
   const [adminCommentModalOpen, setAdminCommentModalOpen] = useState(false)
+  const [savingComment, setSavingComment] = useState(false)
   const [adminComment, setAdminComment] = useState(() => detail.adminComment)
   const [adminCommentDraft, setAdminCommentDraft] = useState(() => detail.adminComment)
+  const remoteReady = shouldUseUjatApplicationsRemoteApi()
+  const applicationNumericId = parseOrganizationApplicationIdFromSchoolId(detail.institutionId)
   const [addressDetail, setAddressDetail] = useState(() => detail.applicationDetail.addressDetail)
   const [addressDetailDraft, setAddressDetailDraft] = useState(
     () => detail.applicationDetail.addressDetail
@@ -71,6 +138,8 @@ export function UjatEducationProgressInstitutionDetailView({
   useEffect(() => {
     setWithdrawConfirmOpen(false)
     setChangeClassModalOpen(false)
+    setChangeClassConfirming(false)
+    setAddClassConfirming(false)
     setActivityWithdrawn(false)
     setIsApplicationInfoEditing(false)
     setAdminCommentModalOpen(false)
@@ -105,23 +174,35 @@ export function UjatEducationProgressInstitutionDetailView({
     [addressDetail, adminComment, detail, gradeBlocks, teacherContact]
   )
 
-  const resolveAccessItem = useCallback(
-    () => `${detail.institutionName} 참여 기관 신청 정보`,
-    [detail.institutionName]
+  const assignmentTabModel = useInstitutionAssignmentTabModel({
+    detail: detailWithGradeBlocks,
+    programId: program.id,
+    dataRevision: assignmentDataRevision,
+  })
+
+  const {
+    posts: remotePosts,
+    files: remotePostFiles,
+    loading: postsLoading,
+    isRemoteDataSource: postsRemote,
+    invalidatePosts,
+    removeDeletedPost,
+  } = useGeneralProgramPosts(program.id)
+  const postsForTab = useMemo(() => (postsRemote ? remotePosts : null), [postsRemote, remotePosts])
+  const filesForTab = useMemo(
+    () => (postsRemote ? remotePostFiles : null),
+    [postsRemote, remotePostFiles]
   )
 
   const {
     personalInfoRevealed,
     openPersonalInfoRevealConfirm,
     confirmModal: personalInfoRevealModal,
-  programPrivacyPending,
-  } = usePersonalInfoReveal({
-    privacyScope: 'program',
+    programPrivacyPending,
+  } = useUjatInstitutionTeacherPrivacyReveal({
+    institutionId: detail.institutionId,
     programId: program.id,
-    resolveProgramRole: () => resolveSessionProgramRole(program.id),
-    resolveAccessItem,
-    resetDeps: [detail.institutionId, detail.half],
-    controlMode: 'headerStickyNoop',
+    accessItemLabel: `${detail.institutionName} 참여 기관 신청 정보`,
   })
 
   const tabKeys = useMemo(
@@ -162,18 +243,198 @@ export function UjatEducationProgressInstitutionDetailView({
     [detail.institutionName, showAlert]
   )
 
+  const changeClassRemoteScheduleRows = useMemo(
+    () =>
+      assignmentTabModel.sections.map(section => ({
+        id: section.scheduleId,
+        dateDisplay: section.dateDisplay,
+        isoDate: section.isoDate,
+        numericScheduleId: section.numericScheduleId,
+      })),
+    [assignmentTabModel.sections]
+  )
+
+  const invalidateAfterClassRemap = useCallback(
+    async (programId: string, institutionId: string) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [
+            ...ujatQueryKeys.execution(),
+            'institution-assignment',
+            programId,
+            institutionId,
+          ],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ujatQueryKeys.allocationMatrixRoot(programId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ujatQueryKeys.partnerAssignmentsRoot(programId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ujatQueryKeys.organizationDetail(programId, institutionId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [
+            ...ujatQueryKeys.organizationDetail(programId, institutionId),
+            'education-classes',
+          ],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ujatQueryKeys.organizationTemporarySchedule(programId, institutionId),
+        }),
+      ])
+    },
+    [queryClient]
+  )
+
+  const handleConfirmAddClasses = useCallback(
+    async (payload: UjatEducationProgressAddClassConfirmPayload) => {
+      const programId = String(program.id)
+      const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+
+      if (!remoteEnabled) {
+        setGradeBlocks(prev =>
+          mergePendingClassesIntoGradeBlocks(
+            removeClassesFromGradeBlocks(prev, payload.removed),
+            payload.added
+          )
+        )
+        showAlert({
+          title: PROGRAM_MANAGER_ADD_COMPLETE_TITLE,
+          content: PROGRAM_MANAGER_ADD_COMPLETE_BODY,
+        })
+        return
+      }
+
+      const body = buildEducationClassAddRequest(payload.added, payload.expectedRevision)
+      if (!body) {
+        showAlert({
+          title: '학급 추가 실패',
+          content: '추가할 학급 정보를 확인해 주세요.',
+        })
+        throw new Error('empty education-class add payload')
+      }
+
+      setAddClassConfirming(true)
+      try {
+        const response = await postUjatEducationClasses(
+          programId,
+          detail.institutionId,
+          body
+        )
+        const remoteClasses = response.classes ?? []
+        // 응답 classes 가 SSOT. 비어 있으면 invent 금지 — invalidate 후 재조회에 맡김.
+        if (remoteClasses.length > 0) {
+          setGradeBlocks(gradeBlocksFromEducationClasses(remoteClasses))
+        }
+        setAssignmentDataRevision(revision => revision + 1)
+        await invalidateAfterClassRemap(programId, detail.institutionId)
+        showAlert({
+          title: PROGRAM_MANAGER_ADD_COMPLETE_TITLE,
+          content:
+            remoteClasses.length > 0
+              ? PROGRAM_MANAGER_ADD_COMPLETE_BODY
+              : '저장 요청은 완료되었습니다. 응답 classes가 비어 있어 목록을 다시 불러옵니다. 여전히 비면 서버 동기화를 확인해 주세요.',
+        })
+      } catch (error) {
+        const code = getApiErrorCode(error)
+        showAlert({
+          title: (code && CLASS_ADD_ERROR_TITLES[code]) || '학급 추가 실패',
+          content: readApiErrorAlertMessage(error, '교육 학급을 추가하지 못했습니다.'),
+        })
+        if (
+          code === 'UJAT_CLASS_ADD_REVISION_CONFLICT' ||
+          code === 'UJAT_EDUCATION_CLASS_REVISION_CONFLICT'
+        ) {
+          await invalidateAfterClassRemap(programId, detail.institutionId)
+        }
+        throw error
+      } finally {
+        setAddClassConfirming(false)
+      }
+    },
+    [detail.institutionId, invalidateAfterClassRemap, program.id, showAlert]
+  )
+
   const handleConfirmChangeClass = useCallback(
-    (payload: ChangeClassConfirmPayload) => {
+    async (payload: ChangeClassConfirmPayload) => {
+      const programId = String(program.id)
+      const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+
+      if (remoteEnabled) {
+        const body = buildEducationClassRemappingRequest(payload)
+        if (!body) {
+          showAlert({
+            title: '학급 변경 실패',
+            content: '교육 학급 버전 정보를 확인한 뒤 다시 시도해 주세요.',
+          })
+          return
+        }
+        if (body.applyFromScheduleId == null && !body.applyFromDate) {
+          showAlert({
+            title: '학급 변경 실패',
+            content: '변경사항 적용 일정을 선택해 주세요.',
+          })
+          return
+        }
+
+        setChangeClassConfirming(true)
+        try {
+          const response = await postUjatEducationClassRemappings(
+            programId,
+            detail.institutionId,
+            body
+          )
+          const remoteClasses = response.classes ?? []
+          // 응답 classes 가 SSOT. 비면 invent 금지 — invalidate 재조회에 맡김.
+          if (remoteClasses.length > 0) {
+            setGradeBlocks(gradeBlocksFromEducationClasses(remoteClasses))
+          }
+          setAssignmentDataRevision(revision => revision + 1)
+          setChangeClassModalOpen(false)
+          await invalidateAfterClassRemap(programId, detail.institutionId)
+          showAlert({
+            title: PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_TITLE,
+            content: PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_BODY,
+          })
+        } catch (error) {
+          const code = getApiErrorCode(error)
+          if (code === 'UJAT_CLASS_REMAP_REVISION_CONFLICT') {
+            await invalidateAfterClassRemap(programId, detail.institutionId)
+            showAlert({
+              title: CLASS_REMAP_ERROR_TITLES.UJAT_CLASS_REMAP_REVISION_CONFLICT,
+              content:
+                '다른 작업으로 학급 정보가 변경되었습니다. 교육 학급 목록을 다시 불러왔습니다. 기존 학급을 다시 선택한 뒤 저장해 주세요.',
+            })
+          } else {
+            showAlert({
+              title: (code && CLASS_REMAP_ERROR_TITLES[code]) || '학급 변경 실패',
+              content: readApiErrorAlertMessage(
+                error,
+                '교육 학년 및 학급 변경을 저장하지 못했습니다.'
+              ),
+            })
+          }
+        } finally {
+          setChangeClassConfirming(false)
+        }
+        return
+      }
+
       const regionKey = resolveRegionKeyForInstitution(detail.institutionId)
       if (regionKey) {
         applyClassChangesToSchedules(detail, regionKey, payload)
       }
-
       setGradeBlocks(prev => applyClassChangesToGradeBlocks(prev, payload.mappings))
       setAssignmentDataRevision(revision => revision + 1)
       setChangeClassModalOpen(false)
+      showAlert({
+        title: PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_TITLE,
+        content: PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_BODY,
+      })
     },
-    [detail]
+    [detail, invalidateAfterClassRemap, program.id, showAlert]
   )
 
   const handleApplicationInfoButtonClick = useCallback(() => {
@@ -208,14 +469,53 @@ export function UjatEducationProgressInstitutionDetailView({
     setAdminCommentModalOpen(true)
   }, [adminComment, isApplicationInfoEditing])
 
-  const handleAdminCommentSave = useCallback(() => {
-    setAdminComment(adminCommentDraft.trim())
-    setAdminCommentModalOpen(false)
-    showAlert({
-      title: '코멘트 저장',
-      content: '관리자 코멘트가 저장되었습니다.',
-    })
-  }, [adminCommentDraft, showAlert])
+  const handleAdminCommentSave = useCallback(async () => {
+    if (applicationNumericId == null || !remoteReady) {
+      showAlert({
+        title: '저장 실패',
+        content: '기관 신청 API가 활성화되지 않았거나 신청 ID가 올바르지 않습니다.',
+      })
+      return
+    }
+    setSavingComment(true)
+    try {
+      const result = await upsertAdminCommentByTargetRemote({
+        targetType: 'ORGANIZATION_APPLICATION',
+        targetId: applicationNumericId,
+        screenCode: 'ORGANIZATION_APPLICATION',
+        comment: adminCommentDraft,
+      })
+      const nextComment = result.commentText ?? ''
+      setAdminComment(nextComment)
+      setAdminCommentDraft(nextComment)
+      setAdminCommentModalOpen(false)
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.organizationApplicationComments(
+          String(program.id),
+          detail.institutionId
+        ),
+      })
+      showAlert({
+        title: '코멘트 저장',
+        content: '관리자 코멘트가 저장되었습니다.',
+      })
+    } catch (error) {
+      showAlert({
+        title: '저장 실패',
+        content: getGeneralProgramApiErrorMessage(error, '관리자 코멘트를 저장하지 못했습니다.'),
+      })
+    } finally {
+      setSavingComment(false)
+    }
+  }, [
+    adminCommentDraft,
+    applicationNumericId,
+    detail.institutionId,
+    program.id,
+    queryClient,
+    remoteReady,
+    showAlert,
+  ])
 
   const handleAdminCommentModalCancel = useCallback(() => {
     setAdminCommentModalOpen(false)
@@ -243,62 +543,68 @@ export function UjatEducationProgressInstitutionDetailView({
 
         {activeTab === 'application' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            <CmsButton
-              type="button"
-              variant="delete"
-              size="h40"
-              disabled={activityWithdrawn}
-              onClick={handleRequestWithdraw}
-            >
-              활동 포기
-            </CmsButton>
+            {!isApplicationInfoEditing && canWrite ? (
+              <CmsButton
+                type="button"
+                variant="delete"
+                size="h40"
+                disabled={activityWithdrawn}
+                onClick={handleRequestWithdraw} >
+                활동 포기
+              </CmsButton>
+            ) : null}
             <ProgramEditInfoActions
+              canWrite={canWrite}
               size="h40"
-              width={false}
               isEditing={isApplicationInfoEditing}
               onEdit={handleApplicationInfoButtonClick}
               onCancel={handleApplicationInfoCancel}
-              onSave={handleApplicationInfoButtonClick}
-            />
-            <CmsButton
-              type="button"
-              variant="primary"
-              size="h40"
-              disabled={isApplicationInfoEditing}
-              onClick={handleAdminCommentEditEnter}
-            >
-              코멘트 작성
-            </CmsButton>
-            <PersonalInfoRevealButton disabled={programPrivacyPending}
-              labelMode="stickyReveal"
-              revealed={personalInfoRevealed}
-              cmsVariant="primary"
-              cmsSize="h40"
-              width="auto"
-              onClick={openPersonalInfoRevealConfirm}
-            />
+              onSave={handleApplicationInfoButtonClick} />
+            {!isApplicationInfoEditing ? (
+              <>
+                {canWrite ? (
+                  <CmsButton
+                    type="button"
+                    variant="primary"
+                    size="h40"
+                    onClick={handleAdminCommentEditEnter} >
+                    코멘트 작성
+                  </CmsButton>
+                ) : null}
+                <PersonalInfoRevealButton disabled={programPrivacyPending}
+                  labelMode="stickyReveal"
+                  revealed={personalInfoRevealed}
+                  cmsVariant="primary"
+                  cmsSize="h40"
+                  onClick={openPersonalInfoRevealConfirm} />
+              </>
+            ) : null}
           </div>
         ) : null}
 
         {activeTab === 'assignment' ? (
           <div className="program-detail-fullpage-modal__header-actions">
-            <UjatEducationProgressInstitutionAssignmentChangeButton
-              onClick={() => setChangeClassModalOpen(true)}
+            <UjatEducationProgressInstitutionAssignmentHeaderActions
+              onChangeClass={() => setChangeClassModalOpen(true)}
+              onExcelDownload={() => {
+                void assignmentTabModel.exportExcel()
+              }}
+              isExcelExporting={assignmentTabModel.isExporting}
             />
           </div>
         ) : null}
 
         {activeTab === 'posts' ? (
           <div className="program-detail-fullpage-modal__header-actions">
+            {canWrite ? (
             <CmsButton
               type="button"
               variant="primary"
-              size="medium"
-              className="ujat-education-progress-institution-detail__posts-register-btn"
-              onClick={() => setPostWriteModalOpen(true)}
-            >
+              size="medium" className="ujat-education-progress-institution-detail__posts-register-btn"
+              onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -308,6 +614,7 @@ export function UjatEducationProgressInstitutionDetailView({
           <div className="program-detail-fullpage-modal__info-tab">
             <UjatEducationProgressInstitutionApplicationTab
               detail={detailWithGradeBlocks}
+              programId={String(program.id)}
               personalInfoRevealed={personalInfoRevealed}
               gradeBlocks={gradeBlocks}
               onGradeBlocksChange={setGradeBlocks}
@@ -319,28 +626,41 @@ export function UjatEducationProgressInstitutionDetailView({
               isAdminCommentEditing={false}
               adminCommentDraft=""
               onAdminCommentDraftChange={() => {}}
+              addClassConfirming={addClassConfirming}
+              onConfirmAddClasses={handleConfirmAddClasses}
             />
           </div>
         ) : null}
 
         {activeTab === 'assignment' ? (
           <div className="program-detail-fullpage-modal__info-tab">
-            <UjatEducationProgressInstitutionAssignmentTab
-              detail={detailWithGradeBlocks}
-              dataRevision={assignmentDataRevision}
-            />
+            <UjatEducationProgressInstitutionAssignmentTab model={assignmentTabModel} />
           </div>
         ) : null}
 
         {activeTab === 'posts' ? (
           <div className="program-detail-fullpage-modal__info-tab ujat-education-progress-institution-detail__posts-tab-wrap">
-            <EnrollmentProgramDetailPostsTab
-              program={program}
-              schoolId={detail.institutionId}
-              showWriteButtonInSection={false}
-              writeModalOpen={postWriteModalOpen}
-              onWriteModalOpenChange={setPostWriteModalOpen}
-            />
+            {postsLoading ? (
+              <div className="page-content-loading" role="status">
+                <Spin size="large" />
+              </div>
+            ) : (
+              <EnrollmentProgramDetailPostsTab
+                program={program}
+                schoolId={detail.institutionId}
+                showWriteButtonInSection={false}
+                writeModalOpen={postWriteModalOpen}
+                onWriteModalOpenChange={setPostWriteModalOpen}
+                postsOverride={postsForTab}
+                filesOverride={filesForTab}
+                onPostWriteSuccess={() => {
+                  void invalidatePosts()
+                }}
+                onPostDeleted={postId => {
+                  void removeDeletedPost(postId)
+                }}
+              />
+            )}
           </div>
         ) : null}
       </div>
@@ -350,6 +670,7 @@ export function UjatEducationProgressInstitutionDetailView({
       <UjatEducationProgressActivityWithdrawModal
         open={withdrawConfirmOpen}
         participantName={detail.institutionName}
+        subjectKind="institution"
         scheduleOptions={withdrawScheduleOptions}
         onCancel={handleCancelWithdraw}
         onConfirm={handleConfirmWithdraw}
@@ -357,18 +678,27 @@ export function UjatEducationProgressInstitutionDetailView({
 
       <UjatEducationProgressChangeClassModal
         open={changeClassModalOpen}
+        programId={String(program.id)}
         half={detail.half}
         detail={detail}
         gradeBlocks={gradeBlocks}
-        onCancel={() => setChangeClassModalOpen(false)}
+        remoteScheduleRows={changeClassRemoteScheduleRows}
+        confirming={changeClassConfirming}
+        onCancel={() => {
+          if (changeClassConfirming) return
+          setChangeClassModalOpen(false)
+        }}
         onConfirm={handleConfirmChangeClass}
       />
       <MemberAdminCommentModal
         open={adminCommentModalOpen}
         value={adminCommentDraft}
+        loading={savingComment}
         onChange={setAdminCommentDraft}
         onCancel={handleAdminCommentModalCancel}
-        onConfirm={handleAdminCommentSave}
+        onConfirm={() => {
+          void handleAdminCommentSave()
+        }}
       />
     </div>
   )

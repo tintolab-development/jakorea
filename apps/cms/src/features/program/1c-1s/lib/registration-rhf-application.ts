@@ -79,6 +79,18 @@ export function emptyCompanySchoolApplicationFormState(): CompanySchoolApplicati
   }
 }
 
+/** 등록 위저드 신청 폼은 양식 템플릿이다. 희망 일정은 지원자가 채우므로 항상 빈 칸. */
+export function withEmptyCompanySchoolApplicationPreferredSchedule(
+  state: CompanySchoolApplicationFormState
+): CompanySchoolApplicationFormState {
+  const next = cloneCompanySchoolApplicationFormState(state)
+  next.schedule = {
+    first: emptyCompanySchoolPreferredScheduleBlock(),
+    second: emptyCompanySchoolPreferredScheduleBlock(),
+  }
+  return next
+}
+
 export function isCompanySchoolApplicationCatalog(
   templateCode: string | null | undefined
 ): boolean {

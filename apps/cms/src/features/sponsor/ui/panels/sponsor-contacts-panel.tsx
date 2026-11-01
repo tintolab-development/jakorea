@@ -83,6 +83,7 @@ export function SponsorContactsPanel({
     isDeleting,
     draftRows,
     startEdit,
+    cancelEdit,
     saveEdits,
     handleDelete,
   } = contactsProps
@@ -209,31 +210,48 @@ export function SponsorContactsPanel({
         }}
         actions={
           <>
-            <FilterTableToolbarButton
-              variant="delete"
-              onClick={handleDeleteClick}
-              disabled={!canWrite || isEditing || isDeleting}
-              loading={isDeleting}
-              adminAction="sponsorContactWrite"
-            >
-              담당자 삭제
-            </FilterTableToolbarButton>
-            {canWrite ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                onClick={() => void handleToggleEdit()}
-                disabled={isSavingEdits}
-              >
-                정보 수정
-              </FilterTableToolbarButton>
-            ) : null}
-            <FilterTableToolbarButton
-              variant="primary"
-              onClick={handleRegisterClick}
-              disabled={isEditing}
-            >
-              담당자 등록
-            </FilterTableToolbarButton>
+            {isEditing ? (
+              <>
+                <FilterTableToolbarButton
+                  variant="secondary"
+                  onClick={cancelEdit}
+                  disabled={isSavingEdits}
+                  adminAction="sponsorContactWrite" >
+                  취소
+                </FilterTableToolbarButton>
+                <FilterTableToolbarButton
+                  variant="primary"
+                  onClick={() => void handleToggleEdit()}
+                  loading={isSavingEdits}
+                  disabled={isSavingEdits}
+                  adminAction="sponsorContactWrite" >
+                  저장
+                </FilterTableToolbarButton>
+              </>
+            ) : (
+              <>
+                <FilterTableToolbarButton
+                  variant="delete"
+                  onClick={handleDeleteClick}
+                  disabled={!canWrite || isDeleting}
+                  loading={isDeleting}
+                  adminAction="sponsorContactWrite" >
+                  담당자 삭제
+                </FilterTableToolbarButton>
+                {canWrite ? (
+                  <FilterTableToolbarButton
+                    variant="secondary"
+                    onClick={() => void handleToggleEdit()} >
+                    정보 수정
+                  </FilterTableToolbarButton>
+                ) : null}
+                <FilterTableToolbarButton
+                  variant="primary"
+                  onClick={handleRegisterClick} >
+                  담당자 등록
+                </FilterTableToolbarButton>
+              </>
+            )}
           </>
         }
       >

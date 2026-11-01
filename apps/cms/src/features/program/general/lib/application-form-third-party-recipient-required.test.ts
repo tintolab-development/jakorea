@@ -17,6 +17,7 @@ import {
   hasIncompleteApplicationFormThirdPartyRecipient,
   isApplicationFormThirdPartyRecipientColumn,
   readApplicationFormThirdPartyRecipientValue,
+  resolveThirdPartyRecipientFromFormAnswer,
 } from '@/features/template/model/application-form-third-party-recipient'
 import {
   createProgramApplicationFormInstructorDraft,
@@ -200,6 +201,31 @@ describe('application form third-party recipient required', () => {
         APPLICATION_FORM_THIRD_PARTY_RECIPIENT_SEED_BY_PARAGRAPH_ID[paragraphId]
       )
     }
+  })
+
+  it('resolveThirdPartyRecipientFromFormAnswer prioritizes thirdPartyRecipient then rows', () => {
+    expect(
+      resolveThirdPartyRecipientFromFormAnswer({
+        bottomConsent: 'agree',
+        thirdPartyRecipient: '서울○○중학교',
+        dataRows: [['다른값']],
+      })
+    ).toBe('서울○○중학교')
+    expect(
+      resolveThirdPartyRecipientFromFormAnswer({
+        bottomConsent: 'agree',
+        dataRows: [['데이터행기관']],
+        fieldDataRows: [[{ kind: 'text', value: '필드행기관' }]],
+      })
+    ).toBe('데이터행기관')
+    expect(
+      resolveThirdPartyRecipientFromFormAnswer({
+        bottomConsent: 'agree',
+        fieldDataRows: [[{ kind: 'text', value: '필드행기관' }]],
+      })
+    ).toBe('필드행기관')
+    expect(resolveThirdPartyRecipientFromFormAnswer('agree')).toBeNull()
+    expect(resolveThirdPartyRecipientFromFormAnswer({ bottomConsent: 'agree' })).toBeNull()
   })
 
   it('tableFlavor가 text이고 dataRows가 비어도 fieldDataRows의 제공받는 곳을 읽는다', () => {

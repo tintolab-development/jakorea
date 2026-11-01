@@ -209,21 +209,15 @@ export function CategoryManagementModal({
               <CmsButton
                 type="button"
                 variant="default"
-                size="medium"
-                width={80}
-                className="is-category-modal__action-btn"
-                onClick={cancelEdit}
-              >
+                size="medium" className="is-category-modal__action-btn"
+                onClick={cancelEdit} >
                 취소
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="secondary"
-                size="medium"
-                width={80}
-                className="is-category-modal__action-btn"
-                onClick={submitEdit}
-              >
+                size="medium" className="is-category-modal__action-btn"
+                onClick={submitEdit} >
                 등록
               </CmsButton>
             </div>
@@ -232,21 +226,15 @@ export function CategoryManagementModal({
               <CmsButton
                 type="button"
                 variant="default"
-                size="medium"
-                width={80}
-                className="is-category-modal__action-btn"
-                onClick={() => startEdit(row)}
-              >
+                size="medium" className="is-category-modal__action-btn"
+                onClick={() => startEdit(row)} >
                 수정
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="delete"
-                size="medium"
-                width={80}
-                className="is-category-modal__action-btn"
-                onClick={() => requestDeleteCategory(row)}
-              >
+                size="medium" className="is-category-modal__action-btn"
+                onClick={() => requestDeleteCategory(row)} >
                 삭제
               </CmsButton>
             </div>
@@ -270,8 +258,7 @@ export function CategoryManagementModal({
         size="large"
         type="button"
         disabled={saving}
-        onClick={handleClose}
-      >
+        onClick={handleClose} >
         닫기
       </CmsButton>
       <CmsButton
@@ -279,8 +266,7 @@ export function CategoryManagementModal({
         size="large"
         type="button"
         disabled={saving}
-        onClick={focusNewRow}
-      >
+        onClick={focusNewRow} >
         카테고리 추가
       </CmsButton>
       <CmsButton
@@ -290,8 +276,7 @@ export function CategoryManagementModal({
         loading={saving}
         onClick={() => {
           void handleSave()
-        }}
-      >
+        }} >
         카테고리 저장
       </CmsButton>
     </>
@@ -341,21 +326,15 @@ export function CategoryManagementModal({
                         <CmsButton
                           type="button"
                           variant="default"
-                          size="medium"
-                          width={80}
-                          className="is-category-modal__action-btn"
-                          onClick={cancelNew}
-                        >
+                          size="medium" className="is-category-modal__action-btn"
+                          onClick={cancelNew} >
                           취소
                         </CmsButton>
                         <CmsButton
                           type="button"
                           variant="secondary"
-                          size="medium"
-                          width={80}
-                          className="is-category-modal__action-btn"
-                          onClick={submitNew}
-                        >
+                          size="medium" className="is-category-modal__action-btn"
+                          onClick={submitNew} >
                           등록
                         </CmsButton>
                       </div>

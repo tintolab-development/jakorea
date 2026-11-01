@@ -1,8 +1,9 @@
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
-import type { MypageProgramStats } from '../../model/types'
-import type { MypageScheduleEvent, MypageScheduleEventType } from '../model/schedule-types'
-import type { PortalApplicationSummary, PortalScheduleItem } from './client'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+import type { MypageScheduleEvent, MypageScheduleEventType } from '../model/schedule-types'
+import type { PortalScheduleItem } from './client'
+
+export { mapPortalDashboardStats } from './dashboard-stats'
 
 const CALENDAR_EVENT_TYPES = new Set<MypageScheduleEventType>([
   'assignment',
@@ -34,32 +35,6 @@ function mapPortalScheduleEventType(item: PortalScheduleItem): MypageScheduleEve
     return normalized as MypageScheduleEventType
   }
   return 'education'
-}
-
-const EMPTY_STATS: MypageProgramStats = {
-  applied: 0,
-  inProgress: 0,
-  completed: 0,
-}
-
-function count(value: number | undefined): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0
-}
-
-/** 목록 탭과 같은 묶음. 신청=제출·승인, 종료=완료·포기·반려·취소. */
-export function mapPortalDashboardStats(
-  summary: PortalApplicationSummary | undefined,
-): MypageProgramStats {
-  if (!summary) return EMPTY_STATS
-  return {
-    applied: count(summary.submitted) + count(summary.approved),
-    inProgress: count(summary.inProgress),
-    completed:
-      count(summary.completed) +
-      count(summary.giveUp) +
-      count(summary.rejected) +
-      count(summary.cancelled),
-  }
 }
 
 function pad(value: number): string {

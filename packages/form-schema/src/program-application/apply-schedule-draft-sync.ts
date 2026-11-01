@@ -33,6 +33,7 @@ export type ApplyScheduleDraftSyncInput = ApplicationScheduleVisibilityInput & {
   sessionsPerRound?: number
   curriculumChartSessionCount?: number
   curriculumSessions?: ReadonlyArray<{ sessionLabel?: string; title?: string }>
+  unknownCount?: 'placeholder' | 'omit'
 }
 
 /**

@@ -619,16 +619,14 @@ export function ParticipatingInstitutionsSection({
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={handleCalendarView}
-              >
+                onClick={handleCalendarView} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
               <FilterTableToolbarButton
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={handleListView}
-              >
+                onClick={handleListView} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}

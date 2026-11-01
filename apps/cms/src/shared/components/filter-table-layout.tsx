@@ -259,8 +259,7 @@ export function FilterTableLayout({
                   <ExcelButton
                     onClick={resolvedOnExcelDownload}
                     loading={resolvedExcelDownloadLoading}
-                    disabled={excelDownloadDisabled || resolvedOnExcelDownload == null}
-                  />
+                    disabled={excelDownloadDisabled || resolvedOnExcelDownload == null} />
                 </div>
               ) : null}
               {actionsAfterExcel != null ? (

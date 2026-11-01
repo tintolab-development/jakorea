@@ -20,7 +20,7 @@
   );
   flex-shrink: 0;
   max-width: none;
-  gap: 8px;
+  gap: var(--calendar-main-header-body-gap, 10px);
   padding: 16px 20px;
 }
 

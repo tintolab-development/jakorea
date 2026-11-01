@@ -142,8 +142,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending}
-              >
+                disabled={saveMutation.isPending} >
                 취소
               </CmsButton>
               <CmsButton
@@ -153,8 +152,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }}
-              >
+                }} >
                 저장
               </CmsButton>
             </>

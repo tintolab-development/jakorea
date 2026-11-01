@@ -110,8 +110,7 @@ export function MyProgramHistoryPage() {
           variant="default"
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate(`/programs/my/active/${id}`)}
-          style={{ marginBottom: 16 }}
-        >
+          style={{ marginBottom: 16 }} >
           목록으로
         </CmsButton>
         <EmptyState description="프로그램 정보를 찾을 수 없습니다." />
@@ -323,8 +322,7 @@ export function MyProgramHistoryPage() {
         <CmsButton
           variant="default"
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(`/programs/my/active/${id}`)}
-        >
+          onClick={() => navigate(`/programs/my/active/${id}`)} >
           프로그램 상세로
         </CmsButton>
       </Space>

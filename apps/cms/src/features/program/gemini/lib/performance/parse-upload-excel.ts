@@ -99,15 +99,17 @@ function parseOptionalNumberCell(row: ExcelJS.Row, colNumber: number | undefined
   return Number.isFinite(value) ? value : null
 }
 
+/** 강사 미기재 실적만 행도 살리므로, 교육 일정·장소 기준으로 빈 행을 판별한다. */
 function isEmptyUploadRow(row: ExcelJS.Row, headerMap: HeaderMap): boolean {
-  const requiredKeys = [
-    'instructorName',
-    'contact',
+  const contentKeys = [
     'trainingDate',
     'trainingLocation',
+    'trainingStartTime',
+    'trainingEndTime',
+    'school',
   ] as const satisfies ReadonlyArray<keyof HeaderMap>
 
-  return requiredKeys.every(key => !getCellText(row, headerMap[key]))
+  return contentKeys.every(key => !getCellText(row, headerMap[key]))
 }
 
 export async function parseUploadExcel(file: File): Promise<GeminiPerformanceUploadRow[]> {

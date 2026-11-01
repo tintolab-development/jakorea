@@ -67,10 +67,7 @@ export function PaymentOrderBatchConfirmModal({
           <CmsButton
             variant="primary"
             size="large"
-            className="cms-button--footer-auto"
-            width="auto"
-            onClick={handleConfirm}
-          >
+            onClick={handleConfirm} >
             지급조서 확인 완료
           </CmsButton>
         </>

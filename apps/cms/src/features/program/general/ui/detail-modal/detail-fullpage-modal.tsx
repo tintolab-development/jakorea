@@ -2499,6 +2499,7 @@ export function GeneralProgramDetailFullPageModal({
                 onRecruitTabChange={handleRecruitSubTabChange}
                 showInstructorTab={showInstructorApplications}
                 showVolunteerTab={showVolunteerApplications}
+                showParticipantRecruitmentMethod
                 canWrite={canWrite}
                 isEditModeInstitutions={isEditModeInstitutions}
                 institutionsForm={isEditModeInstitutions ? institutionsForm : undefined}

@@ -33,6 +33,10 @@
   text-align: left;
 }
 
+.certificateEntry {
+  margin: 0;
+}
+
 .periodBlock {
   display: flex;
   width: 100%;

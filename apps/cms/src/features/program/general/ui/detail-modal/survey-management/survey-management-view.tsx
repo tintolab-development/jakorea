@@ -1645,24 +1645,20 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             <CmsButton
               variant="secondary"
               size="medium"
-              width={120}
               type="button"
               onClick={closeCreateModal}
-              disabled={submitting}
-            >
+              disabled={submitting} >
               취소
             </CmsButton>
             <CmsButton
               variant="primary"
               size="medium"
-              width={120}
               type="button"
               onClick={() => {
                 void submitCreateModal()
               }}
               disabled={selectedTemplateId == null || selectedTemplateId === ''}
-              loading={submitting}
-            >
+              loading={submitting} >
               신규 등록
             </CmsButton>
           </>
@@ -1727,26 +1723,22 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
             <CmsButton
               variant="secondary"
               size="medium"
-              width={120}
               type="button"
               onClick={() => {
                 setDeleteModalKind(null)
                 setDeleteConfirmWord('')
-              }}
-            >
+              }} >
               취소
             </CmsButton>
             <CmsButton
               variant="delete"
               size="medium"
-              width={120}
               type="button"
               disabled={deleteConfirmWord.trim() !== '삭제' || bindingMutating}
               loading={bindingMutating}
               onClick={() => {
                 void confirmDelete()
-              }}
-            >
+              }} >
               삭제
             </CmsButton>
           </>
@@ -1773,10 +1765,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           <CmsButton
             variant="secondary"
             size="medium"
-            width={120}
             type="button"
-            onClick={() => setLectureEvalIncompleteModalOpen(false)}
-          >
+            onClick={() => setLectureEvalIncompleteModalOpen(false)} >
             {GENERAL_LECTURE_EVAL_INCOMPLETE_MODAL_COPY.confirmButton}
           </CmsButton>
         }

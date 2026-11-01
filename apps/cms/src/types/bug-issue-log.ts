@@ -7,3 +7,14 @@ export interface BugIssueLog {
   userName: string
   occurredAt: DateValue
 }
+
+export interface BugIssueLogDetail {
+  issueId: string
+  messageKo: string
+  message: string
+  apiPath: string
+  featureKey: string
+  screenKey: string
+  actorType: string
+  actorTypeLabel: string
+}

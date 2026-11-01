@@ -32,7 +32,6 @@ export {
 export type { PortalRecruitmentFocus, PortalTabCode } from './lib/portal-recruitment'
 export {
   getApplicationTemplateCodeForApplyCase,
-  getMockApplyFormCase,
   buildApplyFormSeedDraft,
   PROGRAM_APPLY_FORM_CASE_SSOT_IDS,
   resolveProgramApplyFormCase,
@@ -52,12 +51,6 @@ export {
   resolveProgramDetailCase,
   recruitmentRoleLabelForCase,
 } from './lib/detail-case'
-export {
-  getMockProgramById,
-  getMockPrograms,
-  loadMockProgramById,
-  loadMockPrograms,
-} from './lib/program-catalog-fallback'
 export {
   programIncludesOperatingDate,
   programOverlapsOperatingDateRange,

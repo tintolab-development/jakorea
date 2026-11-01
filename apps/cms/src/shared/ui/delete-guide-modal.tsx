@@ -34,6 +34,7 @@ export interface DeleteGuideModalProps {
   zIndex?: number
   /** 확인 버튼 로딩 (비동기 탈퇴 등) */
   confirmLoading?: boolean
+  afterOpenChange?: (open: boolean) => void
 }
 
 /**
@@ -89,6 +90,7 @@ export function DeleteGuideModal({
   confirmInputMode = 'phrase',
   zIndex = 2500,
   confirmLoading = false,
+  afterOpenChange,
 }: DeleteGuideModalProps) {
   const [confirmInput, setConfirmInput] = useState('')
   const isPasswordMode = confirmInputMode === 'password'
@@ -111,6 +113,7 @@ export function DeleteGuideModal({
       width={600}
       className="delete-guide-modal"
       zIndex={zIndex}
+      afterOpenChange={afterOpenChange}
       footer={
         <>
           <CmsButton variant="secondary" size="medium" type="button" onClick={onCancel}>
@@ -126,8 +129,7 @@ export function DeleteGuideModal({
               if (canConfirm && !confirmLoading) {
                 onConfirm(isPasswordMode || needsTypedConfirm ? confirmInput : undefined)
               }
-            }}
-          >
+            }} >
             {confirmText}
           </CmsButton>
         </>

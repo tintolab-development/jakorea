@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { CmsButton } from '@/shared/ui/cms-button'
+import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { useCmsAlert } from '@/shared/ui'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { getInstructorSettlementInvoiceStatusPresentation } from '@/shared/constants/instructor-settlement-status'
@@ -350,19 +351,13 @@ export function InstructorInvoiceModal({
                       <CmsButton
                         variant="delete"
                         size="large"
-                        className="cms-button--action"
-                        width={CMS_ACTION_BUTTON_WIDTH}
-                        onClick={() => setPaymentRejectOpen(true)}
-                      >
+                        onClick={() => setPaymentRejectOpen(true)} >
                         신청 반려
                       </CmsButton>
                       <CmsButton
                         variant="primary"
                         size="large"
-                        className="cms-button--action"
-                        width={CMS_ACTION_BUTTON_WIDTH}
-                        onClick={() => setPaymentConfirmOpen(true)}
-                      >
+                        onClick={() => setPaymentConfirmOpen(true)} >
                         확인 처리
                       </CmsButton>
                     </div>
@@ -416,10 +411,7 @@ export function InstructorInvoiceModal({
                               </td>
                               <td>
                                 <div className="instructor-invoice-modal__basis-detail-btn-wrap">
-                                  <CmsButton
-                                    variant="default"
-                                    size="large"
-                                    width={160}
+                                  <CalculationDetailViewButton
                                     onClick={() =>
                                       handleBasisDetailClick(
                                         buildBasisDetailTableRow({
@@ -430,9 +422,7 @@ export function InstructorInvoiceModal({
                                         })
                                       )
                                     }
-                                  >
-                                    상세 보기
-                                  </CmsButton>
+                                  />
                                 </div>
                               </td>
                             </tr>
@@ -445,10 +435,7 @@ export function InstructorInvoiceModal({
                             </td>
                             <td>
                               <div className="instructor-invoice-modal__basis-detail-btn-wrap">
-                                <CmsButton
-                                  variant="default"
-                                  size="large"
-                                  width={160}
+                                <CalculationDetailViewButton
                                   onClick={() =>
                                     handleBasisDetailClick(
                                       buildBasisDetailTableRow({
@@ -466,9 +453,7 @@ export function InstructorInvoiceModal({
                                       })
                                     )
                                   }
-                                >
-                                  상세 보기
-                                </CmsButton>
+                                />
                               </div>
                             </td>
                           </tr>
@@ -487,11 +472,9 @@ export function InstructorInvoiceModal({
                             <CmsButton
                               variant="primary"
                               size="large"
-                              width={160}
                               icon={<ButtonDownloadIcon />}
                               loading={downloadLoading}
-                              onClick={() => void handleDownloadPaymentStatement()}
-                            >
+                              onClick={() => void handleDownloadPaymentStatement()} >
                               지급조서 발급
                             </CmsButton>
                           </div>
@@ -533,7 +516,7 @@ export function InstructorInvoiceModal({
         open={basisDetailOpen}
         detail={selectedBasisDetail}
         onCancel={closeBasisDetailModal}
-        zIndex={1200}
+        zIndex={1400}
       />
     </>
   )

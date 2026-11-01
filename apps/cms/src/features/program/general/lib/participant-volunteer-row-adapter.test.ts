@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
-import { mapParticipantToVolunteerScreeningRow } from './participant-volunteer-row-adapter'
+import {
+  mapParticipantToVolunteerScreeningRow,
+  mapVolunteerScreeningRowToParticipant,
+} from './participant-volunteer-row-adapter'
 
 describe('mapParticipantToVolunteerScreeningRow', () => {
   it('상세 화면에서 사용할 원본 개인 신청 행을 보존한다', () => {
@@ -26,5 +29,30 @@ describe('mapParticipantToVolunteerScreeningRow', () => {
 
     expect(screeningRow.id).toBe(participant.id)
     expect(screeningRow.participantApplicant).toBe(participant)
+  })
+
+  it('does not reset program approval to pending when converting a passed screening row', () => {
+    const passed = mapParticipantToVolunteerScreeningRow({
+      id: '1690626',
+      no: 2,
+      applicantName: '합격 참여자',
+      affiliation: '테스트 기관',
+      educationGrade: '대학생',
+      homeAddress: '서울',
+      approvalStatus: 'approved',
+      programId: '168006',
+      documentScreeningStatus: 'pass',
+      secondInterviewScreeningStatus: 'pass',
+    })
+
+    expect(mapVolunteerScreeningRowToParticipant(passed).approvalStatus).toBe('approved')
+    expect(
+      mapVolunteerScreeningRowToParticipant({
+        ...passed,
+        participantApplicant: undefined,
+        documentScreeningStatus: 'pass',
+        secondInterviewScreeningStatus: 'pass',
+      }).approvalStatus
+    ).toBe('approved')
   })
 })

@@ -3,13 +3,134 @@
   width: 100%;
   min-width: 0;
   flex-direction: column;
+  /* Figma 1단계 단락 간격 24 · 2단계(안내사항)는 .paragraphStackGuidance */
+  gap: var(--spacing-24);
+  /*
+   * 신청하기(programs/apply) · Figma 표 토큰과 동일
+   * 표 선 #d9d9d9 · 표 머리 #eef3f4(cool-80) · 모서리 24
+   */
+  --table-line: var(--color-border-default);
+  --table-header-line: var(--color-border-default);
+  --BG-header: var(--color-neutral-cool-80);
+  --pf-form-field-table-radius: var(--radius-24);
+  --pf-form-field-label-bg: var(--color-neutral-cool-80);
+  /* Figma 표 칸: 세로 12 · 가로 20 */
+  --pf-form-field-content-padding: 12px var(--spacing-20);
+  --pf-form-field-content-vertical-padding: var(--spacing-16);
+}
+
+/* Figma Card_Large — radius 24 · soft teal shadow */
+.paragraphStack :global(.paragraph-card) {
+  border-radius: var(--radius-24);
+  box-shadow:
+    0 20px 42px 0 rgba(30, 71, 75, 0.05),
+    0 0 9px 4px rgba(41, 96, 118, 0.02);
+}
+
+/* 단락 헤더 → 본문 갭 — 1단계 표 20 · 2단계 입력 16 */
+.paragraphStack :global(.paragraph-card__slot) {
+  margin-top: var(--spacing-20);
+}
+
+/* Figma 11001:220417 — 안내사항 카드 간격 32 · 헤더→입력 16 */
+.paragraphStackGuidance {
+  gap: var(--spacing-32);
+}
+
+.paragraphStackGuidance :global(.paragraph-card__slot) {
+  margin-top: var(--spacing-16);
+}
+
+/* 인트로 카드 — Bold 24 제목 · 제출 기간 Medium 16 · 내부 gap 16 */
+.introCard {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
   gap: var(--spacing-16);
+  padding: 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-24);
+  background: var(--main-WT, #fff);
+  box-shadow:
+    0 20px 42px 0 rgba(30, 71, 75, 0.05),
+    0 0 9px 4px rgba(41, 96, 118, 0.02);
+}
+
+.introTitle {
+  margin: 0;
+  padding-inline: var(--spacing-8);
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-base), sans-serif;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+.introPeriod {
+  margin: 0;
+  padding-inline: var(--spacing-8);
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-base), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+}
+
+:global(.form-template-host) .introTitle {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-base), sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 140%;
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+}
+
+:global(.form-template-host) .introPeriod {
+  color: var(--main-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-family-base), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  -webkit-text-fill-color: var(--main-BK, #3d3d3d);
+}
+
+/* 제목 ↔ 설명 갭 spacing/2 = 2 */
+.paragraphStack :global(.paragraph-card__header) {
+  gap: var(--spacing-2);
 }
 
 .paragraphStack :global([data-application-error='true']) {
-  border-radius: var(--radius-12);
+  border-radius: var(--radius-24);
   outline: 2px solid var(--color-error, #d92d20);
   outline-offset: 3px;
+}
+
+/* Figma 단락 설명 — Body/Medium/regular · cool-500 (#85969d) */
+.paragraphStack :global(.paragraph-input--view.paragraph-input--description .paragraph-input__view-text) {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  color: var(--color-neutral-cool-500, #85969d);
+  -webkit-text-fill-color: var(--color-neutral-cool-500, #85969d);
+  opacity: 1;
+}
+
+/* FormTemplateHost unset 복원 — 표 라벨 Body/Medium/bold */
+.paragraphStack :global(.typo-form-field-label) {
+  font-family: var(--font-family-base);
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 150%;
+  letter-spacing: -0.16px;
 }
 
 .assignedScheduleList {
@@ -34,7 +155,7 @@
   margin: 0;
 }
 
-/* form-template ParagraphCard와 동일 shell */
+/* form-template ParagraphCard · Figma Card_Large */
 .closingCard {
   box-sizing: border-box;
   display: flex;
@@ -44,9 +165,11 @@
   align-items: flex-start;
   padding: 20px;
   border: 1px solid transparent;
-  border-radius: 16px;
+  border-radius: var(--radius-24);
   background: var(--main-WT, #fff);
-  box-shadow: 0 0 16px 0 rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 20px 42px 0 rgba(30, 71, 75, 0.05),
+    0 0 9px 4px rgba(41, 96, 118, 0.02);
 }
 
 .closingText {

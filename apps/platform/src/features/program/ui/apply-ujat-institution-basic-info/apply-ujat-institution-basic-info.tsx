@@ -156,9 +156,12 @@ export function ApplyUjatInstitutionBasicInfo({
   const teacherEmailDisplay = value.teacherEmail || profile?.teacherEmail || ''
 
   return (
-    <PFFormFieldTable className={[styles.root, hostStyles.root, teacherStyles.root].join(' ')}>
+    <PFFormFieldTable
+      radius="rounded"
+      className={[styles.root, hostStyles.root, teacherStyles.root].join(' ')}
+    >
       <PFFormFieldRow type="single">
-        <PFFormField label="신청 기관명">
+        <PFFormField label="신청 기관명" labelWidth="wider">
           <PFTextInput
             variant="formPage"
             size="large"
@@ -171,7 +174,7 @@ export function ApplyUjatInstitutionBasicInfo({
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="double">
-        <PFFormField label="기관 소재지">
+        <PFFormField label="기관 소재지" labelWidth="wider">
           <PFTextInput
             variant="formPage"
             size="large"
@@ -182,7 +185,7 @@ export function ApplyUjatInstitutionBasicInfo({
             onValueChange={() => {}}
           />
         </PFFormField>
-        <PFFormField label="상세 주소">
+        <PFFormField label="상세 주소" labelWidth="wider">
           <PFTextInput
             variant="formPage"
             size="large"
@@ -194,7 +197,7 @@ export function ApplyUjatInstitutionBasicInfo({
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
-        <PFFormField label="담당 교사 정보">
+        <PFFormField label="담당 교사 정보" labelWidth="wider">
           <PFFormInlineRow className={teacherStyles.teacherContactRow}>
             <PFFormInlineSegment className={teacherStyles.teacherContactSegment}>
               <PFFormControlCluster className={teacherStyles.teacherContactCluster}>
@@ -234,7 +237,7 @@ export function ApplyUjatInstitutionBasicInfo({
                   width={240}
                   inputMode="tel"
                   autoComplete="tel"
-                  placeholder="담당 교사의 내선 번호(직통 번호)"
+                  placeholder="담당 교사의 내선 (직통)번호"
                   value={formatKoreanPhoneNumber(value.teacherTel)}
                   onValueChange={next => patch({ teacherTel: formatKoreanPhoneNumber(next) })}
                 />
@@ -292,30 +295,34 @@ export function ApplyUjatInstitutionBasicInfo({
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
-        <PFFormField label="기타 요청사항">
-          <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
-            <PFCheckbox
-              checked={value.otherRequestsNotApplicable}
-              onCheckedChange={checked =>
-                patch({
-                  otherRequestsNotApplicable: checked,
-                  otherRequests: checked ? '' : value.otherRequests,
-                })
-              }
-            >
-              해당 없음
-            </PFCheckbox>
+        <PFFormField label="기타 요청사항" labelWidth="wider">
+          <PFFormInlineRow className={styles.otherRequestsRow}>
+            <PFFormInlineSegment className={styles.otherRequestsCheck}>
+              <PFCheckbox
+                checked={value.otherRequestsNotApplicable}
+                onCheckedChange={checked =>
+                  patch({
+                    otherRequestsNotApplicable: checked,
+                    otherRequests: checked ? '' : value.otherRequests,
+                  })
+                }
+              >
+                해당 없음
+              </PFCheckbox>
+            </PFFormInlineSegment>
             <PFFormInlineSeparator />
-            <PFTextarea
-              variant="formPage"
-              width="100%"
-              rows={1}
-              disabled={value.otherRequestsNotApplicable}
-              placeholder="기타 요청사항을 입력해 주세요."
-              value={value.otherRequests}
-              onValueChange={next => patch({ otherRequests: next })}
-            />
-          </div>
+            <PFFormInlineSegment className={styles.otherRequestsInput}>
+              <PFTextarea
+                variant="formPage"
+                width="100%"
+                rows={1}
+                disabled={value.otherRequestsNotApplicable}
+                placeholder="기타 요청사항을 입력해 주세요"
+                value={value.otherRequests}
+                onValueChange={next => patch({ otherRequests: next })}
+              />
+            </PFFormInlineSegment>
+          </PFFormInlineRow>
         </PFFormField>
       </PFFormFieldRow>
     </PFFormFieldTable>

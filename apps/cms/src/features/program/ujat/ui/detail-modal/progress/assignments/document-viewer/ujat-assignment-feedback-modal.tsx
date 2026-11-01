@@ -68,21 +68,19 @@ export function UjatAssignmentFeedbackModal({
       footer={
         isWrite ? (
           <>
-            <CmsButton variant="secondary" size="medium" width={120} onClick={onCancel}>
+            <CmsButton variant="secondary" size="medium" onClick={onCancel}>
               취소
             </CmsButton>
             <CmsButton
               variant="primary"
               size="medium"
-              width={120}
               disabled={!text.trim() || submitting}
-              onClick={handleSubmit}
-            >
+              onClick={handleSubmit} >
               {submitting ? '등록 중…' : '피드백 전달'}
             </CmsButton>
           </>
         ) : (
-          <CmsButton variant="primary" size="medium" width={120} onClick={onCancel}>
+          <CmsButton variant="primary" size="medium" onClick={onCancel}>
             확인
           </CmsButton>
         )

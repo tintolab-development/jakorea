@@ -256,8 +256,7 @@ export function InstructorLectureAssignModal({
             size="medium"
             type="button"
             disabled={!canConfirm}
-            onClick={handleConfirm}
-          >
+            onClick={handleConfirm} >
             {isIndividual ? '강의 배정' : '기관 배정'}
           </CmsButton>
         </div>

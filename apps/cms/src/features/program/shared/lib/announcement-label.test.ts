@@ -28,6 +28,16 @@ describe('announcement-label', () => {
     expect(parseAnnouncementLabel('-')).toEqual({})
   })
 
+  it('시각이 있으면 라벨에 HH:mm을 넣고 파싱 때도 유지한다', () => {
+    const iso = '2026-10-08T09:30:00+09:00'
+    expect(formatAnnouncementLabel(iso, '홈페이지 공지')).toBe(
+      '2026.10.08 09:30 | 홈페이지 공지'
+    )
+    const parsed = parseAnnouncementLabel('2026.10.08 09:30 | 홈페이지 공지')
+    expect(dayjs(parsed.date).format('YYYY-MM-DD HH:mm')).toBe('2026-10-08 09:30')
+    expect(parsed.method).toBe('홈페이지 공지')
+  })
+
   it('조회 — 모집별 라벨 우선, 빈 부분은 컬럼으로 채운다', () => {
     const resolved = resolveAnnouncement({
       labels: ['홈페이지 공지'],

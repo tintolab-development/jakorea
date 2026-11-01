@@ -17,6 +17,9 @@ const generalOrganization = mapPortalProgramApplicationListItem({
 })
 assert.ok(generalOrganization)
 assert.equal(generalOrganization.categoryLabel, '기관')
+assert.equal(generalOrganization.educationTargetLabel, '')
+assert.equal(generalOrganization.educationFormLabel, '')
+assert.equal(generalOrganization.educationForm, undefined)
 
 const generalYouth = mapPortalProgramApplicationListItem({
   applicationId: 2,
@@ -29,6 +32,33 @@ const generalYouth = mapPortalProgramApplicationListItem({
 })
 assert.ok(generalYouth)
 assert.equal(generalYouth.categoryLabel, '청소년 · 청년')
+assert.equal(generalYouth.certificateAvailable, false)
+
+const certificateListIssued = mapPortalProgramApplicationListItem({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '수료 완료 발급됨',
+  displayStatus: '진행 완료',
+  certificateAvailable: true,
+  availableActions: ['ISSUE_CERTIFICATE'],
+})
+assert.equal(certificateListIssued?.certificateAvailable, true)
+
+const certificateListActionOnly = mapPortalProgramApplicationListItem({
+  applicationId: 1694719,
+  applicationType: 'INDIVIDUAL',
+  programId: 186514,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '수료 미발급',
+  displayStatus: '진행 완료',
+  certificateAvailable: false,
+  availableActions: ['ISSUE_CERTIFICATE'],
+})
+assert.equal(certificateListActionOnly?.certificateAvailable, true)
 
 const ujatVolunteer = mapPortalProgramApplicationListItem({
   applicationId: 3,
@@ -92,6 +122,36 @@ assert.equal(mapped.recruitmentId, 186674)
 assert.equal(mapped.title, '신청 상세 API 제목')
 assert.equal(mapped.detailCase, 'ujat-volunteer')
 assert.equal(mapped.ujatPortalBannerState, undefined)
+assert.equal(mapped.ujatVolunteerApplicationContent, undefined)
+
+const mappedVolunteerAnswers = mapPortalProgramApplicationDetail({
+  applicationId: 1691621,
+  applicationType: 'VOLUNTEER',
+  programId: 186290,
+  programTitle: 'UJAT 봉사자 신청 내용',
+  programGroup: 'UJAT',
+  applicationStatus: 'SUBMITTED',
+  displayStatus: '승인대기',
+  answers: {
+    'ujatVolunteerApplication.preferredRegion': '서울',
+    'ujatVolunteerApplication.universityName': '한국대학교',
+    'ujatVolunteerApplication.grade': '2',
+    'ujatVolunteerApplication.major': '경영학',
+    'ujatVolunteerApplication.hasExperience': 'yes',
+    'ujatVolunteerApplication.applicationRoute': 'instagram',
+  },
+})
+assert.ok(mappedVolunteerAnswers)
+assert.deepEqual(mappedVolunteerAnswers.ujatVolunteerApplicationContent, {
+  preferredRegion: '서울',
+  universityName: '한국대학교',
+  gradeLabel: '2학년',
+  major: '경영학',
+  educationExperienceLabel: '있음',
+  applicationRouteLabel: '인스타그램',
+  previousTermLabel: '',
+  interviewScheduleLabel: '',
+})
 
 const teacherOrganization = mapPortalProgramApplicationDetail({
   applicationId: 1691483,
@@ -226,6 +286,10 @@ const ujatOrg = mapPortalProgramApplicationDetail({
     ujat: {
       portalBannerState: 'ACTION_REQUIRED',
       assignmentRevision: 3,
+      preferredEducationDateOptions: [
+        { id: 'h1:2026-11-06', date: '2026-11-06', label: '2026년 11월 6일(금)' },
+        { id: 'h2:2026-11-13', date: '2026-11-13', label: '2026년 11월 13일(금)' },
+      ],
       temporarySchedule: {
         slots: [
           {
@@ -246,6 +310,10 @@ assert.equal(ujatOrg.detailCase, 'ujat-participant')
 assert.equal(ujatOrg.ujatPortalBannerState, 'ACTION_REQUIRED')
 assert.equal(ujatOrg.ujatAssignmentRevision, 3)
 assert.equal(ujatOrg.ujatRevisionReason, undefined)
+assert.deepEqual(ujatOrg.ujatPreferredEducationDateOptions, [
+  { id: 'h1:2026-11-06', date: '2026-11-06', label: '2026년 11월 6일(금)' },
+  { id: 'h2:2026-11-13', date: '2026-11-13', label: '2026년 11월 13일(금)' },
+])
 assert.deepEqual(ujatOrg.ujatTemporarySchedule, {
   slots: [
     {
@@ -389,5 +457,58 @@ assert.equal(
   geminiOrgNameFromOrganizationApplication.teacherApplicationContent?.institution.grade,
   '',
 )
+
+const satisfactionFlags = mapPortalProgramApplicationDetail({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programTitle: '만족도 플래그',
+  programGroup: 'GENERAL',
+  displayStatus: '진행 중',
+  pendingSurveyCount: 0,
+  capabilities: { canSubmitSatisfaction: false, canSubmitSurvey: false },
+  summary: { satisfactionPendingCount: 0, surveyPendingCount: 0 },
+})
+assert.equal(satisfactionFlags?.canSubmitSatisfaction, false)
+assert.equal(satisfactionFlags?.canSubmitSurvey, false)
+assert.equal(satisfactionFlags?.satisfactionPendingCount, 0)
+assert.equal(satisfactionFlags?.surveyPendingCount, 0)
+assert.equal(satisfactionFlags?.pendingSurveyCount, 0)
+
+const certificateCapabilityFalse = mapPortalProgramApplicationDetail({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programTitle: '수료증 상세 플래그',
+  programGroup: 'GENERAL',
+  displayStatus: '진행 완료',
+  certificateAvailable: true,
+  capabilities: { canIssueCertificate: false },
+})
+assert.equal(certificateCapabilityFalse?.certificateAvailable, false)
+
+const certificateCapabilityMissing = mapPortalProgramApplicationDetail({
+  applicationId: 1694719,
+  applicationType: 'INDIVIDUAL',
+  programId: 186514,
+  programTitle: '수료증 상세 플래그 없음',
+  programGroup: 'GENERAL',
+  displayStatus: '진행 완료',
+  certificateAvailable: true,
+})
+assert.equal(certificateCapabilityMissing?.certificateAvailable, false)
+
+const certificateCapabilityTrue = mapPortalProgramApplicationDetail({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programTitle: '수료증 발급됨',
+  programGroup: 'GENERAL',
+  displayStatus: '진행 완료',
+  capabilities: { canIssueCertificate: true },
+  participation: { certificateStatus: 'COMPLETION_ISSUED' },
+})
+assert.equal(certificateCapabilityTrue?.certificateAvailable, true)
+assert.equal(certificateCapabilityTrue?.certificateStatus, 'COMPLETION_ISSUED')
 
 console.log('portal application mappers.selfcheck: ok')

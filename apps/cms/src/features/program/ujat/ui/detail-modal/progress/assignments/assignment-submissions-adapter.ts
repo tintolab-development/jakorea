@@ -47,6 +47,8 @@ function formatPeriodLabel(period: UjatAssignmentDatePeriodDto | null | undefine
 function toReportStatus(raw: string | null | undefined): UjatAssignmentReportStatus {
   switch (raw?.trim().toUpperCase()) {
     case 'SUBMITTED':
+    case 'APPROVED':
+      // OpenAPI APPROVED = 관리자 승인 제출본 → 목록에서는 제출 완료로 표기
       return 'submitted'
     case 'REVISED':
       return 'revised'

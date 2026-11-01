@@ -74,6 +74,7 @@ export const PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_SECTIONS: ParticipatingVol
       kind: 'plugin',
       paragraphId: PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.previousJaProgram,
       title: '이전 참여 JA 봉사 프로그램',
+      required: true,
       body: 'previous-ja-program',
       isVisible: ctx => ctx.jaVolunteerExperience === 'yes',
     },

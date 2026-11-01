@@ -5,6 +5,7 @@ import {
   mapDownloadLogListPageResponse,
   mapMemberLoginLogListPageResponse,
   mapPersonalInfoAccessLogListPageResponse,
+  mapSystemIssueDetailResponse,
 } from '@/features/logs/api/adapters/logs-adapters'
 import {
   exportMemberLoginHistoryRemote,
@@ -13,6 +14,7 @@ import {
   fetchFileAccessLogsRemote,
   fetchMemberLoginsRemote,
   fetchPrivacyAccessLogsRemote,
+  fetchSystemIssueDetailRemote,
   fetchSystemIssueLogsRemote,
   toLogsListQueryParams,
 } from '@/features/logs/api/logs-api-client'
@@ -22,7 +24,7 @@ import { buildMemberLoginHistoryExcelFilename } from '@/features/logs/lib/member
 import { buildPersonalInfoAccessHistoryExcelFilename } from '@/features/logs/lib/personal-info-access-excel'
 import { LOG_LIST_PAGE_SIZE, type LogListPage } from '@/features/logs/api/log-list-page'
 import { isRealApiModuleEnabled } from '@/shared/config/real-api-modules'
-import type { BugIssueLog } from '@/types/bug-issue-log'
+import type { BugIssueLog, BugIssueLogDetail } from '@/types/bug-issue-log'
 import type { DownloadLog } from '@/types/download-log'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
@@ -122,6 +124,16 @@ export async function getBugIssueLogsPage(
   assertLogsRemoteApiReady()
   const dto = await fetchSystemIssueLogsRemote(toLogsListQueryParams(filters, page, size))
   return mapBugIssueLogListPageResponse(dto)
+}
+
+export async function getBugIssueLogDetail(issueId: string): Promise<BugIssueLogDetail> {
+  assertLogsRemoteApiReady()
+  const numericId = Number(issueId)
+  if (!Number.isFinite(numericId)) {
+    throw new Error('버그/이슈 상세 ID가 유효하지 않습니다.')
+  }
+  const dto = await fetchSystemIssueDetailRemote(numericId)
+  return mapSystemIssueDetailResponse(dto)
 }
 
 export async function exportBugIssueLogs(

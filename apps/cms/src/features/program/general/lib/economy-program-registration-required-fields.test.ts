@@ -4,6 +4,7 @@ import {
   hasIncompleteEconomyProgramApplicationRequiredFields,
   hasIncompleteEconomyProgramRegistrationRequiredFields,
   hasIncompleteEconomyProgramRecruitmentRequiredFields,
+  listIncompleteEconomyProgramRecruitmentRequiredFields,
   listIncompleteEconomyProgramRegistrationRequiredFields,
 } from './economy-program-registration-required-fields'
 import {
@@ -234,5 +235,49 @@ describe('economy application required fields', () => {
       },
     })
     expect(hasIncompleteEconomyProgramApplicationRequiredFields()).toBe(false)
+  })
+})
+
+describe('economy recruitment — 라디오 화면 기본값(강사 탭 일반 단락)', () => {
+  beforeEach(() => {
+    resetApplicantRecruitInstitutionOverlayStoreForTests()
+    resetGeneralRecruitOverlayStoreForTests()
+    clearRegistrationStepTemplateSelections()
+  })
+
+  const INSTRUCTOR_ONLY = {
+    individual: false,
+    organization: false,
+    teacherInstructor: true,
+    volunteer: false,
+  } as const
+
+  function filledInstructorWithoutPublished(): Record<string, unknown> {
+    return {
+      'recruit.instructor.programRangeSeal': RANGE,
+      'recruit.instructor.recruitRangeSeal': RANGE,
+      'recruit.instructor.recruitTargets': ['teacher'],
+      'recruit.instructor.recruitTargetDetail': '초등 교사',
+      'recruit.instructor.finalAnnounceIso': '2026-10-01T00:00:00.000Z',
+      'recruit.instructor.finalAnnounceMethod': '문자',
+      'recruit.instructor.inquiryContact': '담당',
+      'recruit.instructor.inquiryTel': '010-0000-0000',
+      'recruit.instructor.inquiryEmail': 'x@y.com',
+      'recruit.instructor.notesNotApplicable': true,
+    }
+  }
+
+  it('강사 탭 공고 게시 라디오 미조작(화면 기본 게시)이면 미입력으로 막지 않는다', () => {
+    replaceGeneralRecruitOverlayForScope('recruitment-instructor', filledInstructorWithoutPublished())
+    expect(listIncompleteEconomyProgramRecruitmentRequiredFields(INSTRUCTOR_ONLY)).toEqual([])
+  })
+
+  it('기관 탭 공고 게시 빈 값(1사1교 RHF 기본 \'\' — 화면 미선택)은 그대로 필수다', () => {
+    replaceApplicantRecruitInstitutionOverlayForScope('recruitment-economy', {
+      [RK.announcementPublished]: '',
+    })
+    expect(listIncompleteEconomyProgramRecruitmentRequiredFields(ORG)).toContain(
+      'recruit.institution.announcementPublished'
+    )
   })
 })

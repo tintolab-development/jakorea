@@ -80,13 +80,11 @@ export function AdminRegisterStepReview({
           <CmsButton
             variant="primary"
             size="h52"
-            width="100%"
             loading={submitting}
-            onClick={handleComplete}
-          >
+            onClick={handleComplete} >
             가입 완료하기
           </CmsButton>
-          <CmsButton variant="default" size="h52" width="100%" onClick={onBack}>
+          <CmsButton variant="default" size="h52" onClick={onBack}>
             이전으로
           </CmsButton>
         </div>

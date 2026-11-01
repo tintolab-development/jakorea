@@ -5,6 +5,8 @@ import {
   lectureFeeTitleFromGradeOrWage,
   mapLectureFeeCalculationDetailToBasisDetail,
   mapTransportationCalculationDetailToBasisDetail,
+  mapWithholdingCalculationDetailToBasisDetail,
+  resolveLectureTimeDisplayFromCalculationFields,
   type PaymentOrderCalculationBasisDetail,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
 import type { SettlementFrontendCalculationDetailResponse } from '@/shared/api/generated/settlement/schemas'
@@ -140,8 +142,7 @@ export function formatBusinessPeriodDisplay(input: {
   businessPeriodEnd?: string
   formatDate: (iso: string) => string
 }): string {
-  const period = input.period?.trim()
-  if (period) return period
+  // 사업 운영 기간 = businessPeriodStart/End. period(YYYY-MM 조회월)는 대체값이 아님.
   if (input.businessPeriodStart && input.businessPeriodEnd) {
     return `${input.formatDate(input.businessPeriodStart)} ~ ${input.formatDate(input.businessPeriodEnd)}`
   }
@@ -211,15 +212,29 @@ function coerceTransportStudentBasisLayout(value: unknown): unknown {
   return { ...value, layout: 'transportOneWay' }
 }
 
+function hasLectureFeeAmountField(value: Record<string, unknown>): boolean {
+  return (
+    'feeAssessmentWon' in value ||
+    'totalWon' in value ||
+    'amount' in value ||
+    'tier' in value
+  )
+}
+
+function hasLectureFeeTimeField(value: Record<string, unknown>): boolean {
+  return 'lectureTimeDisplay' in value || 'sessionOrdinal' in value || 'hours' in value
+}
+
 function hasTypedBasisDetailFields(value: unknown): boolean {
   if (!isRecord(value)) return false
   switch (value.layout) {
     case 'lectureFeeTier':
-      return 'tier' in value && 'totalWon' in value
+      // BE basisJson은 tier/totalWon 없이 feeGrade·feeAssessmentWon·sessionOrdinal만 올 수 있다.
+      return hasLectureFeeAmountField(value)
     case 'lectureFeeSpecial':
-      return 'feeAssessmentWon' in value && 'totalWon' in value
+      return hasLectureFeeAmountField(value)
     case 'lectureFeeGemini':
-      return 'feeAssessmentWon' in value && 'lectureTimeDisplay' in value
+      return hasLectureFeeAmountField(value) && hasLectureFeeTimeField(value)
     case 'transportInstructor':
       return 'distanceKm' in value
     case 'transportRoundTrip':
@@ -238,6 +253,19 @@ function hasTypedBasisDetailFields(value: unknown): boolean {
     default:
       return false
   }
+}
+
+function parseBasisJsonCandidate(basisJson: unknown): unknown | undefined {
+  if (basisJson == null) return undefined
+  if (typeof basisJson === 'object' && !Array.isArray(basisJson)) return basisJson
+  if (typeof basisJson !== 'string' || !basisJson.trim()) return undefined
+  try {
+    const parsed: unknown = JSON.parse(basisJson)
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed
+  } catch {
+    return undefined
+  }
+  return undefined
 }
 
 function nonEmptyStringArray(value: unknown): string[] {
@@ -287,13 +315,8 @@ export function mapCalculationDetailToBasisDetail(
   if (transportationSnapshot) return transportationSnapshot
 
   const candidates: unknown[] = []
-  if (detail.basisJson?.trim()) {
-    try {
-      candidates.push(JSON.parse(detail.basisJson) as unknown)
-    } catch {
-      // invalid JSON — try the object itself
-    }
-  }
+  const parsedBasisJson = parseBasisJsonCandidate(detail.basisJson)
+  if (parsedBasisJson) candidates.push(parsedBasisJson)
   candidates.push(detail)
 
   for (const candidate of candidates) {
@@ -302,12 +325,74 @@ export function mapCalculationDetailToBasisDetail(
       isSupportedBasisDetailLayout(coerced as PaymentOrderCalculationBasisDetail) &&
       hasTypedBasisDetailFields(coerced)
     ) {
-      return coerced as PaymentOrderCalculationBasisDetail
+      const normalized = normalizeTypedLectureFeeBasisDetail(
+        coerced as PaymentOrderCalculationBasisDetail,
+        candidate
+      )
+      // typed payload에 tier/totalWon이 없으면 mapLectureFee로 급수·특강·제미나이 필드를 채운다.
+      if (
+        normalized.layout === 'lectureFeeTier' ||
+        normalized.layout === 'lectureFeeSpecial' ||
+        normalized.layout === 'lectureFeeGemini'
+      ) {
+        const fromLectureFee = mapLectureFeeCalculationDetailToBasisDetail(detail)
+        if (fromLectureFee) return fromLectureFee
+      }
+      if (normalized.layout === 'withholding') {
+        const fromWithholding = mapWithholdingCalculationDetailToBasisDetail(detail)
+        if (fromWithholding) return fromWithholding
+        continue
+      }
+      return normalized
     }
   }
 
   const lectureFee = mapLectureFeeCalculationDetailToBasisDetail(detail)
   if (lectureFee) return lectureFee
 
+  const withholding = mapWithholdingCalculationDetailToBasisDetail(detail)
+  if (withholding) return withholding
+
   return mapRemoteCalculationDetail(detail)
+}
+
+/**
+ * typed basisJson의 lectureTimeDisplay가 시계열·일정명이면 sessionOrdinal·hours로 정규화.
+ * calculationDetail 밖(payment/settlement) ordinal은 쓰지 않는다.
+ */
+function normalizeTypedLectureFeeBasisDetail(
+  detail: PaymentOrderCalculationBasisDetail,
+  source: unknown
+): PaymentOrderCalculationBasisDetail {
+  if (
+    detail.layout !== 'lectureFeeTier' &&
+    detail.layout !== 'lectureFeeSpecial' &&
+    detail.layout !== 'lectureFeeGemini'
+  ) {
+    return detail
+  }
+
+  const record = isRecord(source) ? source : undefined
+  const sessionOrdinalRaw = record?.sessionOrdinal
+  const sessionOrdinal =
+    typeof sessionOrdinalRaw === 'number' && Number.isFinite(sessionOrdinalRaw)
+      ? sessionOrdinalRaw
+      : typeof sessionOrdinalRaw === 'string' && sessionOrdinalRaw.trim() !== ''
+        ? Number(sessionOrdinalRaw)
+        : undefined
+  const hoursRaw = record?.hours
+  const hours =
+    typeof hoursRaw === 'number' && Number.isFinite(hoursRaw)
+      ? hoursRaw
+      : typeof hoursRaw === 'string' && hoursRaw.trim() !== ''
+        ? Number(hoursRaw)
+        : undefined
+  const lectureTimeDisplay = resolveLectureTimeDisplayFromCalculationFields({
+    lectureTimeDisplay: detail.lectureTimeDisplay,
+    sessionOrdinal:
+      sessionOrdinal != null && Number.isFinite(sessionOrdinal) ? sessionOrdinal : null,
+    hours: hours != null && Number.isFinite(hours) ? hours : null,
+  })
+  if (lectureTimeDisplay === detail.lectureTimeDisplay) return detail
+  return { ...detail, lectureTimeDisplay }
 }

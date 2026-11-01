@@ -305,6 +305,29 @@ export function rebuildEducationScheduleLinesFromGroupTimes(
   return [...rebuilt, ...periodLines]
 }
 
+/**
+ * 교육 진행 예정일 줄을 화면에 보일 순서(날짜 → 시작 시각 → 종료 시각 오름차순)의 원래 인덱스로 돌려준다.
+ * - 읽을 수 없는 줄(빈 값·형식 불일치)은 버리지 않고 맨 뒤에 원래 순서대로 둔다.
+ * - 같은 시각이면 원래 순서를 지킨다(안정 정렬).
+ * 저장 배열 순서는 바꾸지 않는다 — 서버가 줄 인덱스(`general-common-line:N`)로 일정 ID를 잇기 때문.
+ */
+export function chronologicalEducationScheduleLineIndexes(lines: readonly string[]): number[] {
+  const keyed = lines.map((line, index) => {
+    const range = parseEducationScheduleLineToRange(line)
+    return {
+      index,
+      start: range ? range[0].valueOf() : Number.POSITIVE_INFINITY,
+      end: range ? range[1].valueOf() : Number.POSITIVE_INFINITY,
+    }
+  })
+  keyed.sort((a, b) => {
+    if (a.start !== b.start) return a.start < b.start ? -1 : 1
+    if (a.end !== b.end) return a.end < b.end ? -1 : 1
+    return a.index - b.index
+  })
+  return keyed.map(item => item.index)
+}
+
 export function educationScheduleLinesEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false
   return a.every((line, index) => line === b[index])
@@ -377,6 +400,15 @@ const SERVER_PERIOD_RE = new RegExp(`^${SERVER_DATE_TOKEN}\\s*~\\s*${SERVER_DATE
 const SERVER_DATE_ONLY_RE = new RegExp(`^${SERVER_DATE_TOKEN}$`)
 export const EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE =
   '교육 진행 예정일 형식을 확인해 주세요.'
+
+/**
+ * 여러 날+시각 일정 줄을 저장 전 검증에서 막을지. BE parseWindow가 F4를 받으므로 false.
+ */
+export const BLOCK_MULTI_DAY_EDUCATION_SCHEDULE_WITH_CLOCK = false
+
+function isCmsMultiDayEducationScheduleWithClock(trimmed: string): boolean {
+  return CMS_CROSS_DAY_TIME_RE.test(trimmed)
+}
 
 type CalendarDate = { year: number; month: number; day: number }
 
@@ -455,9 +487,9 @@ function trySerializeCmsEducationScheduleLine(trimmed: string): string | null {
   const crossDay = trimmed.match(CMS_CROSS_DAY_TIME_RE)
   if (crossDay) {
     const start = readCmsDate(crossDay, 1)
-    const end = readCmsDate(crossDay, 6)
+    const end = readCmsDate(crossDay, 5)
     const startClock = crossDay[4]
-    const endClock = crossDay[9]
+    const endClock = crossDay[8]
     if (!start || !end || !startClock || !endClock) return null
     if (clockToMinutes(startClock) == null || clockToMinutes(endClock) == null) return null
     if (!isChronologicalRange(start, end, startClock, endClock)) return null
@@ -497,9 +529,9 @@ function isValidServerScheduleMatch(trimmed: string): boolean {
   const crossDay = trimmed.match(SERVER_CROSS_DAY_TIME_RE)
   if (crossDay) {
     const start = readServerDate(crossDay, 1)
-    const end = readServerDate(crossDay, 6)
+    const end = readServerDate(crossDay, 5)
     const startClock = crossDay[4]
-    const endClock = crossDay[9]
+    const endClock = crossDay[8]
     if (!start || !end || !startClock || !endClock) return false
     if (clockToMinutes(startClock) == null || clockToMinutes(endClock) == null) return false
     return (
@@ -574,8 +606,28 @@ export function educationScheduleLineSerializationIssue(line: string): string | 
   const trimmed = line.trim()
   if (!trimmed || !matchesEducationScheduleShape(trimmed)) return null
   if (isValidServerScheduleMatch(trimmed)) return null
+  if (
+    BLOCK_MULTI_DAY_EDUCATION_SCHEDULE_WITH_CLOCK &&
+    isCmsMultiDayEducationScheduleWithClock(trimmed)
+  ) {
+    return EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE
+  }
   if (trySerializeCmsEducationScheduleLine(trimmed)) return null
   return EDUCATION_SCHEDULE_LINE_SERVER_FORMAT_MESSAGE
+}
+
+/** overlay·ISO·표시 줄을 CMS `YYYY.MM.DD(요일)` 일정 라벨로 맞춘다. */
+export function normalizeEducationScheduleDateLabelForCms(
+  raw: string | null | undefined
+): string | undefined {
+  if (!raw?.trim()) return undefined
+  const trimmed = raw.trim()
+  const range = parseEducationScheduleLineToRange(trimmed)
+  if (range) return formatEducationScheduleLineFromRange(range)
+  const parsed = dayjs(trimmed)
+  if (!parsed.isValid()) return trimmed
+  const label = formatDateDotWithWeekday(parsed)
+  return label === '-' ? trimmed : label
 }
 
 /**

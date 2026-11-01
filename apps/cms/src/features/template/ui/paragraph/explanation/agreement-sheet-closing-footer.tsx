@@ -55,12 +55,9 @@ export function AgreementSheetClosingFooter({
       {showSubmitButton ? (
         <CmsButton
           variant="primary"
-          size="large"
-          width={240}
-          className="agreement-sheet-closing-footer__submit"
+          size="large" className="agreement-sheet-closing-footer__submit"
           disabled={submitDisabled}
-          onClick={onSubmit}
-        >
+          onClick={onSubmit} >
           작성완료
         </CmsButton>
       ) : null}

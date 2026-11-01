@@ -13,7 +13,9 @@ import {
   isIndividualAllPerScheduleLayout,
   isPreEducationCurriculumSession,
   isPreEducationScheduleBlock,
+  PRE_EDUCATION_DISPLAY_LABEL,
   PRE_EDUCATION_SCHEDULE_LABEL,
+  toPreEducationDisplayLabel,
   trimTrailingBlankRegularCurriculumSessions,
   shouldAllowScheduleProgressGroupAdd,
   getEducationScheduleSelectionDatePickerProps,
@@ -54,7 +56,15 @@ describe('GENERAL 사전교육 판별', () => {
     expect(isPreEducationCurriculumSession({ sessionLabel: '사전교육 1회차' })).toBe(true)
     expect(
       isPreEducationScheduleBlock({ scheduleLabel: '세부 일정 01', name: '사전 교육' })
-    ).toBe(true)
+    ).toBe(false)
+    expect(
+      isPreEducationScheduleBlock({
+        blockKind: 'event',
+        scheduleLabel: '행사 일정 01',
+        name: '사전교육 워크숍',
+      })
+    ).toBe(false)
+    expect(isPreEducationScheduleBlock({ scheduleLabel: '사전 교육' })).toBe(true)
     expect(isPreEducationScheduleBlock({ blockKind: 'preEducation' })).toBe(true)
     expect(isPreEducationScheduleBlock({ isPreEducation: true })).toBe(true)
   })
@@ -840,5 +850,24 @@ describe('applyEducationStructureChangeToForm', () => {
     )
     expect(values.detailedProgramId).toBe('')
     expect(values.scheduleDetails).toEqual([])
+  })
+})
+
+describe('사전교육 표시 라벨', () => {
+  it('저장 기본값은 그대로 두고 화면 표시는 「사전교육」(붙여쓰기)', () => {
+    expect(PRE_EDUCATION_SCHEDULE_LABEL).toBe('사전 교육')
+    expect(PRE_EDUCATION_DISPLAY_LABEL).toBe('사전교육')
+  })
+
+  it('일반 사전 교육 기본 라벨만 「사전교육」으로 바꾼다', () => {
+    expect(toPreEducationDisplayLabel('사전 교육')).toBe('사전교육')
+    expect(toPreEducationDisplayLabel(PRE_EDUCATION_SCHEDULE_LABEL)).toBe('사전교육')
+    expect(toPreEducationDisplayLabel('사전교육')).toBe('사전교육')
+    expect(toPreEducationDisplayLabel('사전  교육')).toBe('사전교육')
+  })
+
+  it('교육 연수·다른 라벨은 그대로 둔다', () => {
+    expect(toPreEducationDisplayLabel('교육 연수')).toBe('교육 연수')
+    expect(toPreEducationDisplayLabel('세부 일정 01')).toBe('세부 일정 01')
   })
 })

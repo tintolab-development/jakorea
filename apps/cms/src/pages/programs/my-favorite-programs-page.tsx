@@ -231,8 +231,7 @@ export function MyFavoriteProgramsPage() {
           </Select>
           <CmsButton
             variant="default"
-            onClick={() => setParams({ status: undefined, category: undefined, search: undefined })}
-          >
+            onClick={() => setParams({ status: undefined, category: undefined, search: undefined })} >
             필터 초기화
           </CmsButton>
         </Space>

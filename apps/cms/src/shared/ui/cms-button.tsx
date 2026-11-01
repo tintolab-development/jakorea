@@ -6,9 +6,6 @@ import { forwardRef } from 'react'
 import type { MouseEvent } from 'react'
 import {
   AdminButton,
-  ADMIN_ACTION_BUTTON_WIDTH,
-  ADMIN_APPLICATION_LIST_BULK_BUTTON_WIDTH,
-  ADMIN_CERTIFICATE_ISSUE_BUTTON_WIDTH,
   resolveAdminButtonSize,
   resolveAdminButtonVariant,
   type AdminButtonProps,
@@ -27,10 +24,6 @@ export type CmsButtonResolvedVariant = AdminButtonResolvedVariant
 
 export const resolveCmsButtonSize = resolveAdminButtonSize
 export const resolveCmsButtonVariant = resolveAdminButtonVariant
-
-export const CMS_ACTION_BUTTON_WIDTH = ADMIN_ACTION_BUTTON_WIDTH
-export const CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH = ADMIN_APPLICATION_LIST_BULK_BUTTON_WIDTH
-export const CMS_CERTIFICATE_ISSUE_BUTTON_WIDTH = ADMIN_CERTIFICATE_ISSUE_BUTTON_WIDTH
 
 export interface CmsButtonProps extends AdminButtonProps {
   adminAction?: AdminActionKind
@@ -63,8 +56,7 @@ export const CmsButton = forwardRef<HTMLButtonElement, CmsButtonProps>(
         ref={ref}
         variant={variant}
         loading={loading}
-        onClick={handleClick}
-      />
+        onClick={handleClick} />
     )
   }
 )

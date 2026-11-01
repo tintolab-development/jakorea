@@ -7,6 +7,8 @@ type EducationSessionCardHeaderProps = {
   date: string
   subtitle?: ReactNode
   aside?: ReactNode
+  /** PC 미만에서 aside를 메타 아래로 쌓고 꽉 채움 (opt-in, 기본 off) */
+  mobileStack?: boolean
 }
 
 export function EducationSessionCardHeader({
@@ -14,9 +16,10 @@ export function EducationSessionCardHeader({
   date,
   subtitle,
   aside,
+  mobileStack = false,
 }: EducationSessionCardHeaderProps) {
   return (
-    <div className={styles.top}>
+    <div className={[styles.top, mobileStack ? styles.mobileStack : undefined].filter(Boolean).join(' ')}>
       <div className={styles.meta}>
         {badge}
         <PFText as="span" typo="hd-sm" className={styles.date}>

@@ -37,6 +37,7 @@ export function ConsentWithdrawConfirm({
   const isAgree = mode === 'agree'
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       size="md"
       onClose={onCancel}
@@ -89,7 +90,7 @@ type ConsentWithdrawCompleteProps = {
   confirmLabel?: ReactNode
   /** 버튼 클릭 — 미지정 시 `onClose` */
   onConfirm?: () => void
-  /** 우측 상단 닫기(X) 노출 — 기본값: `true` */
+  /** 우측 상단 닫기(X) 노출 — 기본값: `false` (하단 확인 버튼으로 닫음) */
   showCloseButton?: boolean
   onClose: () => void
 }
@@ -100,7 +101,7 @@ export function ConsentWithdrawComplete({
   description,
   confirmLabel = '확인',
   onConfirm,
-  showCloseButton = true,
+  showCloseButton = false,
   onClose,
 }: ConsentWithdrawCompleteProps) {
   return (

@@ -1,0 +1,62 @@
+.pageFill {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: visible;
+  /* 로딩 시 첫 폴드 높이 — 푸터 점프·스피너 상단 붙음 방지 (모바일) */
+  min-height: calc(100svh - var(--app-header-height));
+}
+
+@media (--bp-pc-up) {
+  .pageFill {
+    /* PC 투명 헤더(main 위 겹침) — 뷰포트 전체 높이 */
+    min-height: 100svh;
+  }
+}
+
+.pageStatusViewport {
+  composes: pageFill;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-16);
+  padding-inline: var(--page-padding-x);
+  text-align: center;
+}
+
+.pageStatusInline {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-16);
+  padding-inline: var(--page-padding-x);
+  text-align: center;
+}
+
+/** 목록·그리드 슬롯 — 탭/검색 아래 빈 결과·로딩·에러 문구 */
+.pageStatusList {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-16);
+  min-height: clamp(200px, 32vh, 400px);
+  padding: var(--spacing-40) var(--page-padding-x);
+  text-align: center;
+}
+
+@media (--bp-below-pc) {
+  .pageStatusList {
+    min-height: clamp(180px, 28vh, 320px);
+    padding-block: var(--spacing-32);
+  }
+}

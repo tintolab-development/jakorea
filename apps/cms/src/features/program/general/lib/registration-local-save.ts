@@ -36,11 +36,10 @@ import {
   type GeneralRegistrationEditorExtras,
 } from '@/features/program/general/lib/registration-overlay-to-program'
 import { readRegistrationOverlaySponsorId } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import {
-  applyGeneralRecruitOverlayToProgram,
-  withIndividualInterviewRequiredCreateDefault,
-  withVolunteerInterviewRequiredCreateDefault,
-} from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import { withGeneralRecruitRadioDefaults } from '@/features/program/general/lib/recruit-radio-defaults'
+import { resolveVisibleRecruitTabsForProgram } from '@/features/program/general/lib/recruit-radio-visible-tabs'
+import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib/overlay-phase1/registration-wizard-rhf-api'
 import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
 import {
@@ -417,7 +416,12 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
       registrationOverlay
     )
     flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-    const recruitOverlay = collectSelectedRecruitOverlaysForProgram(withEconomyRegistration)
+    // 1사1교 기관 탭은 RHF 기본값 ''(화면 미선택)이라 제외. 강사·개인·봉사 탭(일반 단락)만 화면 기본값을 채운다.
+    const economyRecruitOverlay = collectSelectedRecruitOverlaysForProgram(withEconomyRegistration)
+    const recruitOverlay = withGeneralRecruitRadioDefaults(economyRecruitOverlay, {
+      ...resolveVisibleRecruitTabsForProgram(withEconomyRegistration),
+      organization: false,
+    })
     const persistedOverlay = persistRegistrationAndRecruitOverlay(
       withEconomyRegistration,
       registrationOverlay
@@ -446,13 +450,19 @@ export function buildGeneralProgramListRowFromRegistrationSnapshot(args: {
   })
 
   flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-  const recruitOverlay = withVolunteerInterviewRequiredCreateDefault(
-    withIndividualInterviewRequiredCreateDefault(
-      collectSelectedRecruitOverlaysForProgram(withRegistration),
-      !isTrainedTeachers && args.participant.individual === true
-    ),
-    !isTrainedTeachers && args.participant.volunteer === true
-  )
+  // 교육받은 교사 기관 모집은 RHF 상태 기본값이 ''(화면 미선택)이라 채우지 않는다.
+  const recruitOverlay = isTrainedTeachers
+    ? collectSelectedRecruitOverlaysForProgram(withRegistration)
+    : withGeneralRecruitRadioDefaults(
+        collectSelectedRecruitOverlaysForProgram(withRegistration),
+        {
+          individual: args.participant.individual === true,
+          organization: args.participant.organization === true,
+          teacherInstructor: args.participant.teacherInstructor === true,
+          volunteer: args.participant.volunteer === true,
+        },
+        { wizardKv: peekGeneralRegistrationWizardRhf() != null }
+      )
   const withRecruit = applyGeneralRecruitOverlayToProgram(
     withRegistration,
     recruitOverlay,

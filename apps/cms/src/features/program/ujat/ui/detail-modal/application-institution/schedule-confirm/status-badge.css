@@ -1,5 +1,8 @@
 .ujat-schedule-confirm-status-badge {
   display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: center;
   font-family: Pretendard, sans-serif;
   font-size: 14px;
@@ -9,12 +12,13 @@
   white-space: nowrap;
 }
 
+/* Figma Status / Text / 일정 확인 현황 — 캘린더 outline 뱃지와 동일 토큰 */
 .ujat-schedule-confirm-status-badge--institution_checking {
-  color: var(--Status-blue-main, #017eaf);
+  color: var(--Status-green-main, #1e8c29);
 }
 
 .ujat-schedule-confirm-status-badge--institution_confirmed {
-  color: var(--Status-green-main, #1e8c29);
+  color: var(--Status-blue-main, #017eaf);
 }
 
 .ujat-schedule-confirm-status-badge--approval_completed {

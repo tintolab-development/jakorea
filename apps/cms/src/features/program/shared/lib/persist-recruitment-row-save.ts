@@ -17,6 +17,7 @@ import {
   type RecruitmentInterviewConfig,
 } from '@/features/program/shared/lib/volunteer-interview-config'
 import { normalizeVolunteerTargetList } from '@/features/program/shared/lib/program-detail-info-constants'
+import { toOperationCalendarDate } from '@/features/program/general/lib/general-program-recruitment-operation-period'
 import type { DateValue } from '@/types'
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
 
@@ -180,6 +181,26 @@ function assignOptionalDate(
   body[key] = value
 }
 
+function assignAnnouncementInstant(
+  body: ProgramRecruitmentRequest,
+  clearFields: string[],
+  key: 'documentPassAnnouncementAt' | 'finalPassAnnouncementAt',
+  patchValue: DateValue | null | undefined,
+  rowValue: string | null | undefined,
+  patchOwnsKey: boolean
+): void {
+  if (patchOwnsKey) {
+    const next = optionalDateToApiString(patchValue)
+    if (!next) {
+      if (!clearFields.includes(key)) clearFields.push(key)
+      return
+    }
+    body[key] = next
+    return
+  }
+  if (rowValue !== undefined) body[key] = rowValue
+}
+
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000
 
 /** ISO·날짜 문자열 → KST 달력 날짜(YYYY-MM-DD). 읽을 수 없으면 undefined. */
@@ -245,6 +266,9 @@ function volunteerInterviewPeriodForRowSave(
   isGeneralVolunteerRow: boolean,
   baseline: Program
 ): string | null | undefined {
+  if (audience === 'participant' && Object.prototype.hasOwnProperty.call(patch, field)) {
+    return optionalDateToApiString(patch[field])
+  }
   if (audience !== 'volunteer' || !Object.prototype.hasOwnProperty.call(patch, field)) {
     return rowValue ?? undefined
   }
@@ -381,14 +405,16 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
     clearFields,
     'operationStartDate',
     Object.prototype.hasOwnProperty.call(row, 'operationStartDate')
-      ? row.operationStartDate
+      ? (toOperationCalendarDate(row.operationStartDate) ?? row.operationStartDate)
       : undefined
   )
   assignOptionalDate(
     body,
     clearFields,
     'operationEndDate',
-    Object.prototype.hasOwnProperty.call(row, 'operationEndDate') ? row.operationEndDate : undefined
+    Object.prototype.hasOwnProperty.call(row, 'operationEndDate')
+      ? (toOperationCalendarDate(row.operationEndDate) ?? row.operationEndDate)
+      : undefined
   )
   const maxCount = maxCountFromPatch(audience, patch)
   if (typeof maxCount === 'number') body.maxCount = maxCount
@@ -413,8 +439,10 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   if (interviewEnabled !== undefined && interviewEnabled !== null) {
     body.interviewEnabled = interviewEnabled
   }
-  assignOptionalString(body, 'interviewStartAt', interviewStartAt)
-  assignOptionalString(body, 'interviewEndAt', interviewEndAt)
+  if (interviewEnabled !== false) {
+    assignOptionalString(body, 'interviewStartAt', interviewStartAt)
+    assignOptionalString(body, 'interviewEndAt', interviewEndAt)
+  }
   const typedBody = body as ProgramRecruitmentRequest & Record<string, unknown>
   if (row.announcementPublished != null) {
     typedBody.announcementPublished = row.announcementPublished
@@ -425,13 +453,41 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   if (typeof row.contentRevision === 'number') {
     typedBody.expectedRevision = row.contentRevision
   }
+  if (audience === 'volunteer' || audience === 'participant') {
+    const documentPatch =
+      audience === 'participant' || patch.documentPassAnnouncementDate !== undefined
+        ? patch.documentPassAnnouncementDate
+        : row.documentPassAnnouncementAt
+    const finalPatch =
+      audience === 'participant'
+        ? patch.resultAnnouncementDate
+        : patch.finalPassAnnouncementDate !== undefined
+          ? patch.finalPassAnnouncementDate
+          : row.finalPassAnnouncementAt
+    assignAnnouncementInstant(
+      typedBody,
+      clearFields,
+      'documentPassAnnouncementAt',
+      documentPatch,
+      row.documentPassAnnouncementAt,
+      (audience === 'participant' &&
+        Object.prototype.hasOwnProperty.call(patch, 'documentPassAnnouncementDate')) ||
+        (audience === 'volunteer' &&
+          Object.prototype.hasOwnProperty.call(patch, 'documentPassAnnouncementDate'))
+    )
+    assignAnnouncementInstant(
+      typedBody,
+      clearFields,
+      'finalPassAnnouncementAt',
+      finalPatch,
+      row.finalPassAnnouncementAt,
+      (audience === 'participant' &&
+        Object.prototype.hasOwnProperty.call(patch, 'resultAnnouncementDate')) ||
+        (audience === 'volunteer' &&
+          Object.prototype.hasOwnProperty.call(patch, 'finalPassAnnouncementDate'))
+    )
+  }
   if (audience === 'volunteer') {
-    if (row.documentPassAnnouncementAt !== undefined) {
-      typedBody.documentPassAnnouncementAt = row.documentPassAnnouncementAt
-    }
-    if (row.finalPassAnnouncementAt !== undefined) {
-      typedBody.finalPassAnnouncementAt = row.finalPassAnnouncementAt
-    }
     if (row.noticeExposureTiming !== undefined) {
       typedBody.noticeExposureTiming = row.noticeExposureTiming
     }

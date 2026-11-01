@@ -73,7 +73,6 @@ export function createGeneralProgramCommonInfoIndependentSave(args: {
       ...(persistedTargetLevels.length > 0
         ? { targetLevels: persistedTargetLevels, targetLevel: persistedTargetLevels[0] }
         : {}),
-      updatedAt: new Date().toISOString(),
     },
     patch: {
       ...built.alignedPatch.patch,

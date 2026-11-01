@@ -275,6 +275,7 @@ export function useWritingFormEditorWithUserPreview(
         await persistWritingFormTemplateDraft({
           templateId: templateCode,
           draft,
+          publishAfterSave: isTemplateManagementSave,
         })
         if (isTemplateManagementSave) {
           showSaveSuccess(onTemplateDraftSaveConfirmed)

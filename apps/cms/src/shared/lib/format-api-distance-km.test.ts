@@ -13,7 +13,17 @@ describe('formatApiDistanceKmDisplay', () => {
     expect(formatApiDistanceKmDisplay(10)).toBe('10km')
   })
 
-  it('appends 장거리 suffix when requested', () => {
-    expect(formatApiDistanceKmDisplay(100, { longDistanceSuffix: true })).toBe('100km (장거리)')
+  it('does not append 장거리 when longDistance is false even if km is high', () => {
+    expect(formatApiDistanceKmDisplay(150, { longDistance: false })).toBe('150km')
+    expect(formatApiDistanceKmDisplay(250, { longDistance: false })).toBe('250km')
+  })
+
+  it('appends 장거리 only when BE longDistance is true', () => {
+    expect(formatApiDistanceKmDisplay(250, { longDistance: true })).toBe('250km (장거리)')
+    expect(formatApiDistanceKmDisplay(100, { longDistance: true })).toBe('100km (장거리)')
+  })
+
+  it('does not append 장거리 when option is omitted', () => {
+    expect(formatApiDistanceKmDisplay(250)).toBe('250km')
   })
 })

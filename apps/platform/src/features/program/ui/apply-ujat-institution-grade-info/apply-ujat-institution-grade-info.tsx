@@ -1,12 +1,28 @@
-import { Fragment } from 'react'
-import { DetailInfoForm } from '@/features/form-template'
-import { PFItemDeleteButton, PFSelect, PFText, PFTextInput } from '@/shared/ui'
+import {
+  PFFormControlCluster,
+  PFFormControlSuffix,
+  PFFormField,
+  PFFormFieldRow,
+  PFFormFieldTable,
+  PFFormInlineRow,
+  PFFormInlineSegment,
+  PFFormInlineSeparatedFields,
+  PFFormInlineSeparator,
+  PFItemDeleteButton,
+  PFSelect,
+  PFText,
+  PFTextInput,
+} from '@/shared/ui'
+import hostStyles from '../apply-form-field-host.module.css'
 import blockStyles from '../apply-preferred-schedule/apply-preferred-schedule.module.css'
 import styles from './apply-ujat-institution-grade-info.module.css'
 
-const GRADE_OPTIONS = Array.from({ length: 6 }, (_, index) => ({
-  value: String(index + 1),
-  label: `${index + 1}학년`,
+/** UJAT 초등 신청 학년 — 1~6 고정 (수업 시간 체크박스·학년 셀렉트 공통) */
+export const UJAT_INSTITUTION_GRADE_VALUES = ['1', '2', '3', '4', '5', '6'] as const
+
+const GRADE_OPTIONS = UJAT_INSTITUTION_GRADE_VALUES.map(value => ({
+  value,
+  label: `${value}학년`,
 }))
 
 const MAX_CLASS_COUNT = 40
@@ -170,22 +186,15 @@ export function ApplyUjatInstitutionGradeInfo({
         return (
           <div key={block.id} className={blockStyles.blockRow}>
             <div className={blockStyles.blockBody}>
-              <PFText as="p" typo="bd-md-sb" color="black" className={blockStyles.blockTitle}>
-                {rankTitle}
-              </PFText>
-              <DetailInfoForm
-                title="학년 별 신청 정보"
-                hideHeader
-                mode="edit"
-                className={blockStyles.scheduleForm}
+              <p className={blockStyles.blockTitle}>{rankTitle}</p>
+              <PFFormFieldTable
+                radius="rounded"
+                className={[styles.table, hostStyles.root].join(' ')}
               >
-                <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field
-                    label="신청 학년 및 학급 수"
-                    fullRow
-                    view="-"
-                    edit={
-                      <div className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap">
+                <PFFormFieldRow type="single">
+                  <PFFormField label="신청 학년 및 학급 수" labelWidth="wider" fullWidth>
+                    <PFFormInlineRow>
+                      <PFFormInlineSegment>
                         <PFSelect
                           variant="formPage"
                           size="large"
@@ -195,96 +204,76 @@ export function ApplyUjatInstitutionGradeInfo({
                           value={block.grade || undefined}
                           onValueChange={next => patchBlock(block.id, { grade: next })}
                         />
-                        <DetailInfoForm.InputsSeparator />
-                        <span data-field="classCount">
-                          <PFTextInput
-                            variant="formPage"
-                            size="large"
-                            width={120}
-                            inputMode="numeric"
-                            placeholder="총 학급 수"
-                            value={block.classCountInput}
-                            onValueChange={next =>
-                              patchBlock(block.id, { classCountInput: next.replace(/\D/g, '') })
-                            }
-                          />
-                        </span>
-                        <PFText as="span" typo="bd-md-md" color="black" className={blockStyles.timeUnit}>
-                          학급
-                        </PFText>
-                      </div>
-                    }
-                  />
-                </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field
-                    label="학급 별 학생 수"
-                    fullRow
-                    view="-"
-                    edit={
-                      classCount < 1 ? (
-                        <span className="form-editor-template-field-hint-text">
-                          총 학급 수를 먼저 입력해 주세요.
-                        </span>
-                      ) : (
-                        <div
-                          className={`detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap ${styles.studentInputsRow}`}
-                        >
-                          {Array.from({ length: classCount }, (_, index) => (
-                            <Fragment key={`${block.id}-class-${index}`}>
-                              {index > 0 ? <DetailInfoForm.InputsSeparator /> : null}
-                              <PFTextInput
-                                variant="formPage"
-                                size="large"
-                                width={80}
-                                placeholder="학급"
-                                value={block.classNoByIndex[index] ?? ''}
-                                onValueChange={next =>
-                                  patchBlock(block.id, {
-                                    classNoByIndex: { ...block.classNoByIndex, [index]: next },
-                                  })
-                                }
-                              />
-                              <PFText
-                                as="span"
-                                typo="bd-md-md"
-                                color="black"
-                                className={blockStyles.timeUnit}
-                              >
-                                반
-                              </PFText>
-                              <PFTextInput
-                                variant="formPage"
-                                size="large"
-                                width={80}
-                                inputMode="numeric"
-                                placeholder="학생 수"
-                                value={block.studentCountByIndex[index] ?? ''}
-                                onValueChange={next =>
-                                  patchBlock(block.id, {
-                                    studentCountByIndex: {
-                                      ...block.studentCountByIndex,
-                                      [index]: next.replace(/\D/g, ''),
-                                    },
-                                  })
-                                }
-                              />
-                              <PFText
-                                as="span"
-                                typo="bd-md-md"
-                                color="black"
-                                className={blockStyles.timeUnit}
-                              >
-                                명
-                              </PFText>
-                            </Fragment>
-                          ))}
-                        </div>
-                      )
-                    }
-                  />
-                </DetailInfoForm.Row>
-              </DetailInfoForm>
+                      </PFFormInlineSegment>
+                      <PFFormInlineSeparator />
+                      <PFFormInlineSegment>
+                        <PFFormControlCluster>
+                          <span data-field="classCount">
+                            <PFTextInput
+                              variant="formPage"
+                              size="large"
+                              width={120}
+                              inputMode="numeric"
+                              placeholder="총 학급 수"
+                              value={block.classCountInput}
+                              onValueChange={next =>
+                                patchBlock(block.id, { classCountInput: next.replace(/\D/g, '') })
+                              }
+                            />
+                          </span>
+                          <PFFormControlSuffix>학급</PFFormControlSuffix>
+                        </PFFormControlCluster>
+                      </PFFormInlineSegment>
+                    </PFFormInlineRow>
+                  </PFFormField>
+                </PFFormFieldRow>
+                <PFFormFieldRow type="single">
+                  <PFFormField label="학급 별 학생 수" labelWidth="wider" fullWidth>
+                    {classCount < 1 ? (
+                      <PFText as="span" typo="bd-md-md" color="neutral-cool-600">
+                        총 학급 수를 먼저 입력해 주세요.
+                      </PFText>
+                    ) : (
+                      <PFFormInlineSeparatedFields className={styles.studentInputsRow}>
+                        {Array.from({ length: classCount }, (_, index) => (
+                          <PFFormControlCluster key={`${block.id}-class-${index}`}>
+                            <PFTextInput
+                              variant="formPage"
+                              size="large"
+                              width={80}
+                              placeholder="학급"
+                              value={block.classNoByIndex[index] ?? ''}
+                              onValueChange={next =>
+                                patchBlock(block.id, {
+                                  classNoByIndex: { ...block.classNoByIndex, [index]: next },
+                                })
+                              }
+                            />
+                            <PFFormControlSuffix>반</PFFormControlSuffix>
+                            <PFTextInput
+                              variant="formPage"
+                              size="large"
+                              width={80}
+                              inputMode="numeric"
+                              placeholder="학생 수"
+                              value={block.studentCountByIndex[index] ?? ''}
+                              onValueChange={next =>
+                                patchBlock(block.id, {
+                                  studentCountByIndex: {
+                                    ...block.studentCountByIndex,
+                                    [index]: next.replace(/\D/g, ''),
+                                  },
+                                })
+                              }
+                            />
+                            <PFFormControlSuffix>명</PFFormControlSuffix>
+                          </PFFormControlCluster>
+                        ))}
+                      </PFFormInlineSeparatedFields>
+                    )}
+                  </PFFormField>
+                </PFFormFieldRow>
+              </PFFormFieldTable>
             </div>
             {blockIndex > 0 ? (
               <div className={blockStyles.deleteCell}>

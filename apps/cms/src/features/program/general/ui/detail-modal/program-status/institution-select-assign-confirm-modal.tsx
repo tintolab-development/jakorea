@@ -42,8 +42,7 @@ export function InstitutionSelectAssignConfirmModal({
             variant="secondary"
             size="medium"
             onClick={onCancel}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             취소
           </CmsButton>
           <CmsButton
@@ -51,8 +50,7 @@ export function InstitutionSelectAssignConfirmModal({
             size="medium"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             배정
           </CmsButton>
         </div>

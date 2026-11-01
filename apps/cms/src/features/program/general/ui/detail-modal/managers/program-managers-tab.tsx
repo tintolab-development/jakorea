@@ -10,9 +10,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
-import {
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { ActionResultModal, FilterTableToolbarButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { displayServerPiiAsIs } from '@/features/program/shared/lib/program-pii-display'
 import type { ColumnsType } from 'antd/es/table'
@@ -39,7 +37,23 @@ import {
 } from '@/shared/components'
 import { getProgramRoleBadgeTone } from '@/shared/constants/editable-status-badge-tones'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  PROGRAM_MANAGER_ADD_COMPLETE_BODY,
+  PROGRAM_MANAGER_ADD_COMPLETE_TITLE,
+  PROGRAM_MANAGER_DELETE_COMPLETE_BODY,
+  PROGRAM_MANAGER_DELETE_COMPLETE_TITLE,
+  PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_BODY,
+  PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_TITLE,
+} from '@/features/program/general/lib/program-manager-action-result-messages'
 import './program-managers-tab.css'
+
+type ProgramManagerActionResult = {
+  title: string
+  body: string
+}
+
+/** 삭제 안내(zIndex 2500)보다 위에 시안 완료 팝업만 노출 */
+const PROGRAM_MANAGER_ACTION_RESULT_Z_INDEX = 2600
 
 const ROLE_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -66,6 +80,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
   const [openRoleDropdownId, setOpenRoleDropdownId] = useState<string | null>(null)
   const [addModalOpen, setAddModalOpen] = useState(false)
   const [deleteGuideModalOpen, setDeleteGuideModalOpen] = useState(false)
+  const [actionResult, setActionResult] = useState<ProgramManagerActionResult | null>(null)
 
   const managersListFilters = useMemo(
     () => ({
@@ -184,13 +199,17 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
 
   const handleDeleteConfirm = async () => {
     const keysToDelete = selectedRowKeys.map(String)
+    setDeleteGuideModalOpen(false)
     const result = await deleteManagers(keysToDelete)
     if (!result.ok) {
       void showAlert({ title: '삭제 실패', content: result.message })
       return
     }
     setSelectedRowKeys([])
-    setDeleteGuideModalOpen(false)
+    setActionResult({
+      title: PROGRAM_MANAGER_DELETE_COMPLETE_TITLE,
+      body: PROGRAM_MANAGER_DELETE_COMPLETE_BODY,
+    })
   }
 
   const handleDeleteGuideCancel = () => {
@@ -210,6 +229,11 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
       void showAlert({ title: '등록 실패', content: result.message })
       return false
     }
+    setAddModalOpen(false)
+    setActionResult({
+      title: PROGRAM_MANAGER_ADD_COMPLETE_TITLE,
+      body: PROGRAM_MANAGER_ADD_COMPLETE_BODY,
+    })
     return true
   }
 
@@ -236,6 +260,11 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
       const result = await updateManagerRole(recordId, newRole)
       if (!result.ok) {
         void showAlert({ title: '권한 변경 실패', content: result.message })
+      } else {
+        setActionResult({
+          title: PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_TITLE,
+          body: PROGRAM_MANAGER_ROLE_CHANGE_COMPLETE_BODY,
+        })
       }
       setOpenRoleDropdownId(null)
     },
@@ -389,15 +418,13 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
             <FilterTableToolbarButton
               variant="delete"
               loading={isMutating && deleteGuideModalOpen}
-              onClick={handleDeleteClick}
-            >
+              onClick={handleDeleteClick} >
               담당자 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               disabled={isMutating}
-              onClick={() => setAddModalOpen(true)}
-            >
+              onClick={() => setAddModalOpen(true)} >
               담당자 등록
             </FilterTableToolbarButton>
           </>
@@ -421,24 +448,37 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
         />
       </FilterTableLayout>
 
-      <AddManagerModal
-        open={addModalOpen}
-        onCancel={() => setAddModalOpen(false)}
-        currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
-        excludeManagerNames={excludeManagerNames}
-        candidates={assignableCandidates}
-        candidatesLoading={candidatesLoading}
-        confirmLoading={isMutating}
-        onAdd={handleAdd}
-      />
+      {actionResult == null ? (
+        <AddManagerModal
+          open={addModalOpen}
+          onCancel={() => setAddModalOpen(false)}
+          currentOwnerCount={managerList.filter(m => m.role === 'OWNER').length}
+          excludeManagerNames={excludeManagerNames}
+          candidates={assignableCandidates}
+          candidatesLoading={candidatesLoading}
+          confirmLoading={isMutating}
+          onAdd={handleAdd}
+        />
+      ) : null}
 
-      <ManagerDeleteGuideModal
-        open={deleteGuideModalOpen}
-        onCancel={handleDeleteGuideCancel}
-        managerNames={managerNamesToDelete}
-        onConfirm={() => {
-          void handleDeleteConfirm()
-        }}
+      {actionResult == null ? (
+        <ManagerDeleteGuideModal
+          open={deleteGuideModalOpen}
+          onCancel={handleDeleteGuideCancel}
+          managerNames={managerNamesToDelete}
+          confirmLoading={isMutating}
+          onConfirm={() => {
+            void handleDeleteConfirm()
+          }}
+        />
+      ) : null}
+
+      <ActionResultModal
+        open={actionResult != null}
+        onClose={() => setActionResult(null)}
+        title={actionResult?.title ?? ''}
+        body={actionResult?.body ?? ''}
+        zIndex={PROGRAM_MANAGER_ACTION_RESULT_Z_INDEX}
       />
     </div>
   )

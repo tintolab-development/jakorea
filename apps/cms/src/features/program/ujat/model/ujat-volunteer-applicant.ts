@@ -34,6 +34,8 @@ export interface UjatVolunteerApplicantRow {
   /** 목록 DTO에 학년이 없으면 빈 문자열. 1학년으로 채우지 않는다. */
   grade: UjatVolunteerGrade | ''
   preferredRegion: UjatVolunteerPreferredRegion
+  /** 목록 DTO `preferredRegionCode`. 셀렉트 value. 없으면 라벨에서 매핑 */
+  preferredRegionCode?: string | null
   contact: string
   email: string
   contactRaw: string
@@ -49,11 +51,23 @@ export interface UjatVolunteerApplicantRow {
   totalAssignedDays: number | null
   /** 상세·unmask `profile.homeAddress`. MASKED는 시/도, UNMASKED는 원문 */
   homeAddress: string
+  /**
+   * 회원 프로필 학교 재학 여부 표시값.
+   * `profile.schoolEnrollmentStatus` → `toSchoolEnrollmentStatusLabelOrRaw`. null/없음 → '' (UI `-`).
+   * application.ujat 대학 필드로 채우지 않는다.
+   */
+  schoolEnrollmentStatus: string
+  /** 회원 프로필 소속 학교명. `profile.affiliationSchool`만. 대학명과 별개 */
+  affiliationSchool: string
+  /** 회원 프로필 소속 학년. `profile.affiliationGrade`만. UjatProjection.grade(대학 학년)와 별개 */
+  affiliationGrade: string
   managerAEvaluation: UjatManagerEvaluation
   managerBEvaluation: UjatManagerEvaluation
   documentScreeningStatus: UjatDocumentScreeningStatus
   interviewSlotCount: number
   interviewAssignmentStatus: UjatInterviewAssignmentStatus
+  /** wire `interviewAssignmentStatus`/`interviewStatus` — 재배정 가능 판별용 (EVALUATED 등) */
+  interviewAssignmentApiStatus?: string | null
   programId: string
   half: UjatVolunteerRecruitHalf
   englishName: string
@@ -74,6 +88,8 @@ export interface UjatVolunteerApplicantRow {
   evidenceAttachments?: VolunteerApplicationEvidenceAttachment[]
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
+  assignedInterviewStartAt?: string
+  assignedInterviewEndAt?: string
   /** 목록 DTO `interviewAssignmentId`. 평가 POST에 사용 */
   interviewAssignmentId?: number
   secondInterviewScreeningStatus?: UjatSecondInterviewScreeningStatus
@@ -90,8 +106,6 @@ export type UjatVolunteerInterviewEvaluationPayload = {
   managerBScore: number | null
   interviewEvaluationRemark: string
 }
-
-export function clearUjatVolunteerApplicantsMockCache(): void {}
 
 export function getUjatVolunteerApplicants(
   _programId?: string,
@@ -194,6 +208,17 @@ export function patchUjatVolunteerInterviewAssignmentWithdrawn(
   return rows.map(row =>
     row.id === id ? { ...row, interviewAssignmentStatus: 'withdrawn' as const } : row
   )
+}
+
+/**
+ * 목록 query 동기화 — 서버 행이 정본.
+ * 로컬 배정 optimistic은 GET이 waiting이면 되돌린다.
+ */
+export function mergeUjatVolunteerApplicantQueryRow(
+  _previous: UjatVolunteerApplicantRow | undefined,
+  incoming: UjatVolunteerApplicantRow
+): UjatVolunteerApplicantRow {
+  return incoming
 }
 
 export function formatUjatVolunteerApplicationType(type: UjatVolunteerApplicationType): string {

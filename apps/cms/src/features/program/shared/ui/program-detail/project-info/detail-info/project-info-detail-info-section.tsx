@@ -172,6 +172,14 @@ function RichTextReadContent({
   )
 }
 
+function isBlankDetailHtml(value: string): boolean {
+  const text = value
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
+  return text === ''
+}
+
 function DetailInfoRichTextFieldEditor({
   field,
   program,
@@ -192,6 +200,8 @@ function DetailInfoRichTextFieldEditor({
   }
   const onChangeRef = useRef(field.onChange)
   onChangeRef.current = field.onChange
+  const fieldValueRef = useRef(value)
+  fieldValueRef.current = value
   const { editor, editorMinHeight, getHTML } = useNoticeWysiwygEditor(
     true,
     initialContentRef.current.value,
@@ -212,8 +222,14 @@ function DetailInfoRichTextFieldEditor({
     }
     editor.on('update', sync)
     return () => {
-      sync()
-      if (!editor.isDestroyed) editor.off('update', sync)
+      if (!editor.isDestroyed) {
+        const html = getHTML()
+        const stored = fieldValueRef.current
+        if (!(isBlankDetailHtml(html) && !isBlankDetailHtml(stored))) {
+          onChangeRef.current(html)
+        }
+        editor.off('update', sync)
+      }
     }
   }, [editor, getHTML])
 
@@ -548,9 +564,10 @@ function useDetailInfoEditorBlock(
   const displayThumbnailUrl = rowMedia
     ? thumbnailPreviewBlobUrl || linkedThumbnail?.url
     : thumbnailPreviewBlobUrl || linkedThumbnail?.url || legacyThumbnailUrl
-  const overlayThumbnailName = readRecruitDetailMediaFromOverlay(
-    program.registrationOverlay ?? {}
-  ).thumbFileName
+  // 행 모드 파일명은 fetchProgramMediaThumbnail(활성 행 prefix)만 쓴다 — 다른 유형 overlay로 폴백하지 않는다.
+  const overlayThumbnailName = rowMedia
+    ? undefined
+    : readRecruitDetailMediaFromOverlay(program.registrationOverlay ?? {}).thumbFileName
   const thumbnailFilename =
     linkedThumbnail?.fileName ||
     overlayThumbnailName ||

@@ -15,41 +15,35 @@ vi.mock('./tax-filing-fortune-data', () => ({
   buildTaxFilingFortuneSheet: () => ({ celldata: [] }),
 }))
 
-const downloadIssuedSettlementExportFile = vi.fn().mockResolvedValue(undefined)
+const exportTaxFilingExcel = vi.fn().mockResolvedValue(undefined)
 
-vi.mock('@/features/settlement-management/api/account-payments/download-issued-export-file', () => ({
-  downloadIssuedSettlementExportFile: (...args: unknown[]) =>
-    downloadIssuedSettlementExportFile(...args),
-  notifySettlementExportDownloadError: vi.fn(),
+vi.mock('./tax-filing-excel', () => ({
+  exportTaxFilingExcel: (...args: unknown[]) => exportTaxFilingExcel(...args),
 }))
 
 import { TaxFilingPreviewModal } from './tax-filing-preview-modal'
 
-describe('TaxFilingPreviewModal SERVER_FILE 다운로드', () => {
+describe('TaxFilingPreviewModal 엑셀 다운로드', () => {
   afterEach(() => {
     cleanup()
-    downloadIssuedSettlementExportFile.mockClear()
+    exportTaxFilingExcel.mockClear()
   })
 
-  it('SERVER_FILE이면 모달이 sensitive-downloads stream 경로로 받는다', async () => {
+  it('미리보기와 같은 행으로 프론트에서 엑셀을 만든다', async () => {
+    const rows = [{ id: 'row-1' }]
+
     render(
       <TaxFilingPreviewModal
         open
         onCancel={() => undefined}
-        rows={[]}
-        serverExport={{
-          deliveryMethod: 'SERVER_FILE',
-          fileObjectId: 91,
-        }}
+        rows={rows as never}
       />
     )
 
     fireEvent.click(screen.getByRole('button', { name: '엑셀 다운로드' }))
 
-    expect(downloadIssuedSettlementExportFile).toHaveBeenCalledWith({
-      serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
-      filenamePrefix: '세금신고',
-      reason: '세금신고 양식 발급',
+    await vi.waitFor(() => {
+      expect(exportTaxFilingExcel).toHaveBeenCalledWith(rows)
     })
   })
 })

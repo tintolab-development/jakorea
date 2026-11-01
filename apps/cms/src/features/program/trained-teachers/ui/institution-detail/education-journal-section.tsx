@@ -44,8 +44,7 @@ function renderJournalViewButton(enabled: boolean, onView: () => void) {
         variant="default"
         size="h40"
         disabled={!enabled}
-        onClick={enabled ? onView : undefined}
-      >
+        onClick={enabled ? onView : undefined} >
         보기
       </CmsButton>
     </div>
@@ -300,12 +299,10 @@ export function TrainedTeachersEducationJournalSection({
           <CmsButton
             variant="secondary"
             size="h40"
-            icon={<ButtonDownloadIcon />}
-            className="trained-teachers-education-journal-section__bulk-download-button"
+            icon={<ButtonDownloadIcon />} className="trained-teachers-education-journal-section__bulk-download-button"
             loading={createZipJobMutation.isPending || bulkJobId != null}
             disabled={createZipJobMutation.isPending || bulkJobId != null}
-            onClick={() => void handleBulkDownload()}
-          >
+            onClick={() => void handleBulkDownload()} >
             {bulkJobId != null && zipJobQuery.data
               ? `ZIP ${educationJournalZipJobStatusLabel(zipJobQuery.data)}`
               : '교육일지 일괄 다운로드'}

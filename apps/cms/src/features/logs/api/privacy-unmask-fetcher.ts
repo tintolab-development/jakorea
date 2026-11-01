@@ -1,5 +1,5 @@
 /**
- * POST /api/users/{memberId}/privacy/unmask — 관리자 개인정보 원문 조회
+ * POST /api/admin/users/{memberId}/privacy/unmask — 관리자 개인정보 원문 조회 (legacy member path)
  */
 
 import { axiosClient } from '@/shared/api'
@@ -32,7 +32,7 @@ export async function fetchMemberPrivacyUnmask(
 ): Promise<unknown> {
   try {
     const { data: payload } = await axiosClient.post<unknown>(
-      `/api/users/${encodeURIComponent(memberId)}/privacy/unmask`,
+      `/api/admin/users/${encodeURIComponent(memberId)}/privacy/unmask`,
       { reason }
     )
     if (payload && typeof payload === 'object') {

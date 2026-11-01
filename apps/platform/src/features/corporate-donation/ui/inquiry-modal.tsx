@@ -236,6 +236,7 @@ export function CorporateDonationInquiryModal({
   return (
     <>
       <PFModal
+        showCloseButton={false}
         open={open}
         onClose={handleClose}
         title="기업후원 상담하기"

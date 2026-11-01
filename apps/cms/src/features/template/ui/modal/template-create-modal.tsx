@@ -184,8 +184,7 @@ export function TemplateCreateModal({
         size="large"
         type="button"
         onClick={handleCancel}
-        disabled={submitting}
-      >
+        disabled={submitting} >
         취소
       </CmsButton>
       <CmsButton
@@ -196,8 +195,7 @@ export function TemplateCreateModal({
         loading={submitting}
         onClick={() => {
           void handleRegister()
-        }}
-      >
+        }} >
         등록
       </CmsButton>
     </div>

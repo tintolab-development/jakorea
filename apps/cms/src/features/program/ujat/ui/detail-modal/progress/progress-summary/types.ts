@@ -44,9 +44,9 @@ export type UjatEducationProgressSchoolSummary = {
 
 export type UjatEducationProgressVolunteerRowKey =
   | 'planned_selection'
-  | 'gen36_final_pass'
-  | 'gen37_final_pass'
-  | 'final_2026'
+  | 'h1_final_pass'
+  | 'h2_final_pass'
+  | 'final_total'
 
 export type UjatEducationProgressVolunteerSummaryRow = {
   key: UjatEducationProgressVolunteerRowKey

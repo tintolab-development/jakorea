@@ -53,9 +53,13 @@
   flex: 0 0 auto;
   max-width: 100%;
   min-height: 1.5em;
-  padding-right: var(--spacing-32);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 우측 상단 닫기(X)가 있을 때만 제목 우측 여백 확보 */
+.titleWithClose {
+  padding-right: var(--spacing-32);
 }
 
 .closeButton {

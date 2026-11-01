@@ -83,6 +83,7 @@ export {
   shouldShowDocumentPassBanner,
   UjatScheduleBanner,
   UjatApplicationContent,
+  UjatVolunteerApplicationContent,
 } from './applications'
 export { UjatVolunteerAssignmentPanel } from './ujat-assignments'
 export type {
@@ -101,7 +102,9 @@ export {
   EducationNoticeStats,
 } from './notices'
 export type {
+  EducationAssignmentResponseStatus,
   EducationAssignmentSubmitStatus,
+  EducationCurriculumSession,
   EducationScheduleAssignment,
   EducationScheduleAssignmentFile,
   EducationScheduleAssignmentSubmissionKind,
@@ -116,6 +119,7 @@ export {
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
   resolveEducationAssignmentGuide,
   resolveEducationScheduleProgressStatus,
+  resolveEducationScheduleRowProgressStatus,
   shouldShowEducationAssignment,
   formatEducationScheduleHeldAt,
   EducationSchedulePanel,

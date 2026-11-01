@@ -50,6 +50,15 @@ export function useMypageMember(): MypageMemberView {
   const profileQuery = usePortalProfileQuery({ enabled: isRemoteSession })
 
   if (!isRemoteSession) {
+    if (!import.meta.env.DEV) {
+      return {
+        isRemoteSession: false,
+        isLoading: false,
+        isError: false,
+        displayName: '',
+        profile: 'individual',
+      }
+    }
     const profile = getDevMemberProfile()
     const showAffiliationEmployment = showMypageAffiliationEmployment(profile)
     return {

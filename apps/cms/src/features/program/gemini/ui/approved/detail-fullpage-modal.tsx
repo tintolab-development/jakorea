@@ -226,8 +226,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
                   variant="secondary"
                   size="large"
                   loading={isDetailRefetching}
-                  onClick={refetchDetail}
-                >
+                  onClick={refetchDetail} >
                   다시 시도
                 </CmsButton>
               }
@@ -269,9 +268,7 @@ export function GeminiApprovedTrainingDetailFullPageModal({
                     labelMode="stickyReveal"
                     revealed={personalInfoRevealed}
                     cmsSize="large"
-                    width={180}
-                    onClick={openPersonalInfoRevealConfirm}
-                  />
+                    onClick={openPersonalInfoRevealConfirm} />
                 </div>
                 <div className="program-detail-fullpage-modal__info-tab">
                   <GeminiApprovedTrainingDetailProgramInfoTab

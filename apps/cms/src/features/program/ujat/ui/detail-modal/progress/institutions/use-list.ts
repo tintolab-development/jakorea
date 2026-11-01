@@ -83,10 +83,8 @@ export function useUjatEducationProgressInstitutions(
       appliedFilters.educationRegion !== UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL
         ? appliedFilters.educationRegion
         : ''
-    const scheduleDate =
-      appliedFilters.educationScheduleIso !== UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL
-        ? appliedFilters.educationScheduleIso
-        : ''
+    const selectedScheduleDates = appliedFilters.educationScheduleIsoDates
+    const scheduleDate = selectedScheduleDates.length === 1 ? selectedScheduleDates[0] : ''
     return {
       status: 'APPROVED',
       recruitHalf: toUjatRecruitHalfApi(half),
@@ -117,11 +115,23 @@ export function useUjatEducationProgressInstitutions(
     return source.map((row, index) => mapOrgRowToProgressInstitution(row, index, half))
   }, [half, remoteQuery.data])
 
-  const tableData = allRows
+  const tableData = useMemo(() => {
+    const selected = appliedFilters.educationScheduleIsoDates
+    if (selected.length <= 1) return allRows
+    const selectedSet = new Set(selected)
+    return allRows.filter(row => row.educationScheduleIsoDates.some(iso => selectedSet.has(iso)))
+  }, [allRows, appliedFilters.educationScheduleIsoDates])
 
   const columns = useMemo(() => buildUjatEducationProgressInstitutionColumns(), [])
 
   const handleFilterChange = useCallback((key: string, value: unknown) => {
+    if (key === 'educationScheduleIsoDates') {
+      setPendingFilters(prev => ({
+        ...prev,
+        educationScheduleIsoDates: Array.isArray(value) ? value.map(String) : [],
+      }))
+      return
+    }
     setPendingFilters(prev => ({ ...prev, [key]: String(value ?? '') }))
   }, [])
 

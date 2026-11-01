@@ -1,10 +1,11 @@
 /** @vitest-environment jsdom */
-import { fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import type { ProgramDetailEditFormValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/lib/hydrate-recruitment-windows'
 import { GeneralProgramParticipantRecruitmentInfoView } from './participant-recruitment-info-view'
 
 const program = {
@@ -48,6 +49,10 @@ function Harness({
 }
 
 describe('GeneralProgramParticipantRecruitmentInfoView', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
   it('신청 가능 최대 학급 수를 비워도 이전 숫자로 되돌리지 않는다', () => {
     const formRef: {
       current: ReturnType<typeof useForm<ProgramDetailEditFormValues>> | null
@@ -104,6 +109,95 @@ describe('GeneralProgramParticipantRecruitmentInfoView', () => {
     it('기관 프로그램에는 행이 없다', () => {
       render(<GeneralProgramParticipantRecruitmentInfoView program={program} isEdit={false} />)
       expect(screen.queryByText('참여자 면접 유무')).toBeNull()
+    })
+
+    it('면접 있음이면 2차 면접 기간이 보인다', () => {
+      const { unmount } = render(
+        <GeneralProgramParticipantRecruitmentInfoView
+          program={individualProgram(true)}
+          isEdit={false}
+        />
+      )
+      expect(screen.getByText('2차 면접 기간')).toBeTruthy()
+      expect(screen.getByText('1차 서류 합격자 발표')).toBeTruthy()
+      unmount()
+    })
+
+    it('행 면접 기간과 overlay 방식이 2차 면접 기간에 보인다', () => {
+      const p = {
+        ...individualProgram(true),
+        backendProgramType: 'GENERAL_INDIVIDUAL',
+        interviewMethod: '온라인',
+        programRecruitments: [
+          {
+            id: 1,
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'INDIVIDUAL',
+            interviewEnabled: true,
+            interviewStartAt: '2026-11-05T15:00:00Z',
+            interviewEndAt: '2026-11-07T14:59:59.999Z',
+          },
+        ],
+      } as Program
+      const { unmount } = render(
+        <GeneralProgramParticipantRecruitmentInfoView
+          program={hydrateRecruitmentWindowsOntoProgram(p)}
+          isEdit={false}
+        />
+      )
+      const field = screen
+        .getByText('2차 면접 기간', { selector: '.detail-info-form__field-label-text' })
+        .closest('.detail-info-form__field')
+      const text = field?.textContent ?? ''
+      expect(text).toContain('2026.11.06')
+      expect(text).toContain('2026.11.07')
+      expect(text).toContain('온라인')
+      expect(text).not.toBe('2차 면접 기간-')
+      unmount()
+    })
+
+    it('종료가 null인 옛 행은 시작일 하루와 방식을 보여 준다', () => {
+      const p = {
+        ...individualProgram(true),
+        backendProgramType: 'GENERAL_INDIVIDUAL',
+        interviewMethod: '온라인',
+        programRecruitments: [
+          {
+            id: 1,
+            recruitmentType: 'PARTICIPANT',
+            applicationType: 'INDIVIDUAL',
+            interviewEnabled: true,
+            interviewStartAt: '2026-11-10T15:00:00Z',
+            interviewEndAt: null,
+          },
+        ],
+      } as Program
+      const { unmount } = render(
+        <GeneralProgramParticipantRecruitmentInfoView
+          program={hydrateRecruitmentWindowsOntoProgram(p)}
+          isEdit={false}
+        />
+      )
+      const field = screen
+        .getByText('2차 면접 기간', { selector: '.detail-info-form__field-label-text' })
+        .closest('.detail-info-form__field')
+      const text = field?.textContent ?? ''
+      expect(text).toContain('2026.11.11')
+      expect(text).toContain('온라인')
+      expect(text).not.toBe('2차 면접 기간-')
+      unmount()
+    })
+
+    it('면접 없음이면 2차 면접 기간이 없다', () => {
+      const { unmount } = render(
+        <GeneralProgramParticipantRecruitmentInfoView
+          program={individualProgram(false)}
+          isEdit={false}
+        />
+      )
+      expect(screen.queryByText('2차 면접 기간')).toBeNull()
+      expect(screen.queryByText('1차 서류 합격자 발표')).toBeNull()
+      unmount()
     })
   })
 })

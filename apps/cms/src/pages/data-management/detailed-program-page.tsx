@@ -506,33 +506,35 @@ export default function DetailedProgramPage() {
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <FilterTableToolbarButton variant="delete" onClick={handleBulkDelete}>
-              항목 삭제
-            </FilterTableToolbarButton>
             {isEditMode ? (
-              <FilterTableToolbarButton
-                variant="secondary"
-                onClick={handleCancelEdit}
-                disabled={savePending}
-              >
-                취소
-              </FilterTableToolbarButton>
-            ) : null}
-            <FilterTableToolbarButton
-              variant="secondary"
-              onClick={isEditMode ? handleSave : enterEditMode}
-              disabled={isEditMode && savePending}
-              loading={isEditMode && savePending}
-            >
-              정보 수정
-            </FilterTableToolbarButton>
-            <FilterTableToolbarButton
-              variant="primary"
-              onClick={handleAddClick}
-              disabled={isEditMode}
-            >
-              신규 등록
-            </FilterTableToolbarButton>
+              <>
+                <FilterTableToolbarButton
+                  variant="secondary"
+                  onClick={handleCancelEdit}
+                  disabled={savePending} >
+                  취소
+                </FilterTableToolbarButton>
+                <FilterTableToolbarButton
+                  variant="primary"
+                  onClick={handleSave}
+                  disabled={savePending}
+                  loading={savePending} >
+                  저장
+                </FilterTableToolbarButton>
+              </>
+            ) : (
+              <>
+                <FilterTableToolbarButton variant="delete" onClick={handleBulkDelete}>
+                  항목 삭제
+                </FilterTableToolbarButton>
+                <FilterTableToolbarButton variant="secondary" onClick={enterEditMode}>
+                  정보 수정
+                </FilterTableToolbarButton>
+                <FilterTableToolbarButton variant="primary" onClick={handleAddClick}>
+                  신규 등록
+                </FilterTableToolbarButton>
+              </>
+            )}
           </>
         }
         excelExport={{

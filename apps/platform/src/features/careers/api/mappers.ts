@@ -40,7 +40,12 @@ import type {
   PublicCareerTalentEducationLevel,
   PublicCareerTalentJobInterest,
 } from './types'
-import { formatDisplayDate, formatDisplayDateRange } from '@/shared/lib/format-display-date'
+import {
+  formatDisplayDate,
+  formatDisplayDateRange,
+  formatPaddedKoreanSeoulDate,
+  toSeoulDisplayParts,
+} from '../../../shared/lib/format-display-date.ts'
 
 const CULTURE_CODE_TO_ID: Record<string, ThriveValueId> = {
   MAKE_AN_IMPACT: 'impact',
@@ -219,16 +224,13 @@ export function formatCareerPublishedAtLabel(publishedOn: string | undefined | n
  */
 export function formatCareerPublishedAtDetailLabel(value: string | undefined | null): string {
   if (typeof value !== 'string') return ''
-  const match = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/.exec(value.trim())
-  if (!match) return ''
-  const dateLabel = `${match[1]}년 ${match[2]}월 ${match[3]}일`
-  if (match[4] == null || match[5] == null) return dateLabel
-  const hours24 = Number(match[4])
-  const minutes = match[5]
-  if (!Number.isInteger(hours24) || hours24 < 0 || hours24 > 23) return dateLabel
-  const period = hours24 < 12 ? '오전' : '오후'
-  const hours12 = hours24 % 12 || 12
-  return `${dateLabel} ${period} ${hours12}:${minutes}`
+  const parts = toSeoulDisplayParts(value)
+  if (!parts) return ''
+  const dateLabel = formatPaddedKoreanSeoulDate(value)
+  if (!parts.hasTime) return dateLabel
+  const period = parts.hour < 12 ? '오전' : '오후'
+  const hours12 = parts.hour % 12 || 12
+  return `${dateLabel} ${period} ${hours12}:${String(parts.minute).padStart(2, '0')}`
 }
 
 /** YYYY-MM-DD → `2026년 4월 3일(금)`. 잘못된 날짜는 빈 문자열. */

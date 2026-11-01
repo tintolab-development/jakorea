@@ -53,11 +53,7 @@ export const UJAT_CLASSROOM_SETTING_FIELD = {
     '선생님들께서 1개 교실에 2명씩(불가피한 경우 1명) 파견될 예정입니다. USB에 PPT를 담아 방문할 예정이오니 세팅에 협조 부탁드립니다.',
 } as const
 
-export const UJAT_SEX_OFFENSE_WRITE_HEADING = {
-  title: '성범죄경력 조회 동의서 조회 방식',
-  description:
-    '성범죄경력 조회 동의서의 조회 방식을 선택해 주세요. 범죄경력회보서의 온라인 제출을 희망하는 경우, 기관 ID와 검증번호를 함께 전달해 주세요.\nJA 시스템 내에서 확인 선택 시, 프로그램 및 배정 정보와 함께 JA 홈페이지 상세에서 동의서 확인이 가능합니다. (조회 동의서만 제공하며, 실제 조회는 별도로 진행해 주셔야 합니다.)',
-} as const
+export const UJAT_GUIDANCE_INTRO_TITLE = 'UJAT 프로그램_기관 안내 사항 작성' as const
 
 export function emptyUjatInstitutionGuidanceExtras(): ApplyUjatInstitutionGuidanceExtras {
   return {

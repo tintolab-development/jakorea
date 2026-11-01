@@ -15,7 +15,7 @@ export function LectureReportSubmitCompleteModal({
   hidePaymentStatementCta = false,
 }: LectureReportSubmitCompleteModalProps) {
   return (
-    <PFModal open={open} size="sm" onClose={onLater} closeOnBackdropClick>
+    <PFModal open={open} size="sm" onClose={onLater} closeOnBackdropClick showCloseButton={false}>
       <div className={styles.content}>
         <div className={styles.textBlock}>
           <PFText as="h2" typo="hl-lg" color="black" className={styles.title}>

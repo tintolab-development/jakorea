@@ -19,11 +19,18 @@ import {
 import type { UjatScheduleAssignRow } from './types'
 import {
   computeVolunteerEducationDays,
+  isScheduleAssignEstimationInputsEntered,
   listAssignableSchoolsForDate,
   sumSelectedGradeClassCount,
 } from './utils'
 import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import {
+  applyPlanningEstimatesToRegionState,
+  buildMergedPlanningEstimatePutBody,
+  fetchUjatPlanningEstimates,
+  replaceUjatPlanningEstimates,
+} from '@/features/program/ujat/api/planning-estimates-api'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import {
   buildScheduleIdByIsoDateMap,
@@ -37,6 +44,7 @@ import {
   applyTemporaryScheduleSlotsToDraft,
   buildTemporaryScheduleSaveRequest,
   collectStudentCountByClass,
+  serializeRemoteTemporaryScheduleSlots,
   serializeTemporaryScheduleSlots,
 } from './temporary-schedule-mapper'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
@@ -49,7 +57,8 @@ export function useUjatInstitutionScheduleAssign(
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const queryClient = useQueryClient()
   const [version, setVersion] = useState(0)
-  const [hydrating, setHydrating] = useState(false)
+  // remote 활성 시 첫 paint부터 로딩 — 탭 전환 empty → content 시프트 방지
+  const [hydrating, setHydrating] = useState(() => remoteEnabled)
   const [saving, setSaving] = useState(false)
   const [organizationNamesByApplicationId, setOrganizationNamesByApplicationId] = useState<
     Record<string, string>
@@ -62,6 +71,16 @@ export function useUjatInstitutionScheduleAssign(
     () => ({ educationRegionCode }),
     [educationRegionCode]
   )
+
+  useEffect(() => {
+    if (!remoteEnabled) {
+      setHydrating(false)
+      return
+    }
+    // programId 지연 주입·재조회 시 skeleton 유지
+    hydratedKeyRef.current = null
+    setHydrating(true)
+  }, [programId, remoteEnabled])
 
   const remoteQuery = useInfiniteQuery({
     queryKey: ujatQueryKeys.organizationApplications(programId ?? '', listQuery),
@@ -161,6 +180,7 @@ export function useUjatInstitutionScheduleAssign(
         hydratedSignatureByInstitutionRef.current = new Map()
         const organizationNames: Record<string, string> = {}
         const byApp = new Map<string, typeof slots>()
+        const remoteSlotsByApp = new Map<string, typeof slots>()
         for (const slot of slots) {
           const appId = slot.organizationApplicationId
           if (appId == null) continue
@@ -185,6 +205,7 @@ export function useUjatInstitutionScheduleAssign(
           if (!matchedRegion) continue
           const counts = collectStudentCountByClass(appSlots, appId)
           for (const [key, value] of counts) studentCountByClassRef.current.set(key, value)
+          remoteSlotsByApp.set(appId, appSlots)
           draft = applyTemporaryScheduleSlotsToDraft({
             regionState: draft,
             institutionRowId: appId,
@@ -204,6 +225,7 @@ export function useUjatInstitutionScheduleAssign(
             const detailSlots = detail.slots ?? []
             const counts = collectStudentCountByClass(detailSlots, appId)
             for (const [key, value] of counts) studentCountByClassRef.current.set(key, value)
+            if (detailSlots.length > 0) remoteSlotsByApp.set(appId, detailSlots)
             draft = applyTemporaryScheduleSlotsToDraft({
               regionState: draft,
               institutionRowId: appId,
@@ -215,6 +237,15 @@ export function useUjatInstitutionScheduleAssign(
           }
         }
 
+        // studentCount는 API slots[].studentCount만 사용 (BE hydrate SSOT). gradeBlocks FE 보완 금지.
+
+        try {
+          const estimates = await fetchUjatPlanningEstimates(String(programId))
+          draft = applyPlanningEstimatesToRegionState(draft, estimates, educationRegionCode)
+        } catch {
+          // 산정값 미존재·조회 실패 시 슬롯 hydrate는 유지
+        }
+
         if (!cancelled) {
           const signatures = new Map<string, string>()
           const institutionIds = new Set<string>([
@@ -222,6 +253,15 @@ export function useUjatInstitutionScheduleAssign(
             ...regionAppIds,
           ])
           for (const institutionId of institutionIds) {
+            const remoteSlots = remoteSlotsByApp.get(institutionId) ?? []
+            if (remoteSlots.length > 0) {
+              // 서버 응답 studentCount(hydrate 포함) 서명
+              signatures.set(
+                institutionId,
+                serializeRemoteTemporaryScheduleSlots(remoteSlots)
+              )
+              continue
+            }
             const body = buildTemporaryScheduleSaveRequest({
               regionKey,
               regionState: draft,
@@ -348,8 +388,8 @@ export function useUjatInstitutionScheduleAssign(
   )
 
   const setMaxClassesPerDay = useCallback(
-    (value: string) => {
-      patchUjatScheduleAssignMaxClassesPerDay(regionKey, value.replace(/\D/g, ''))
+    (semester: UjatInstitutionEducationSemesterKey, value: string) => {
+      patchUjatScheduleAssignMaxClassesPerDay(regionKey, semester, value.replace(/\D/g, ''))
       bump()
     },
     [regionKey, bump]
@@ -388,8 +428,11 @@ export function useUjatInstitutionScheduleAssign(
 
     for (const semester of ['h1', 'h2'] as const) {
       const expectedClasses = semesterClassTotals[semester]
-      const volunteers = Number.parseInt(regionState.estimation[semester].expectedVolunteerCount, 10)
-      out[semester] = computeVolunteerEducationDays(expectedClasses, volunteers)
+      const maxRaw = regionState.estimation[semester].maxClassesPerDay
+      const volunteerRaw = regionState.estimation[semester].expectedVolunteerCount
+      const volunteers = Number.parseInt(volunteerRaw, 10)
+      const inputsEntered = isScheduleAssignEstimationInputsEntered(maxRaw, volunteerRaw)
+      out[semester] = computeVolunteerEducationDays(expectedClasses, volunteers, inputsEntered)
     }
     return out
   }, [regionState.estimation, semesterClassTotals])
@@ -415,10 +458,15 @@ export function useUjatInstitutionScheduleAssign(
 
       const results: Array<{ institutionId: string; name: string; ok: boolean; message?: string }> =
         []
+      const nameById = new Map(
+        applicationRows.map(row => [row.id, row.institutionName?.trim() || ''])
+      )
 
       for (const institutionId of institutionIds) {
         const name =
-          organizationNamesByApplicationId[institutionId]?.trim() || institutionId
+          organizationNamesByApplicationId[institutionId]?.trim() ||
+          nameById.get(institutionId) ||
+          institutionId
         const body = buildTemporaryScheduleSaveRequest({
           regionKey,
           regionState: draft,
@@ -441,8 +489,18 @@ export function useUjatInstitutionScheduleAssign(
           continue
         }
         try {
-          await putUjatTemporarySchedule(String(programId), institutionId, body)
-          hydratedSignatureByInstitutionRef.current.set(institutionId, nextSignature)
+          const saved = await putUjatTemporarySchedule(String(programId), institutionId, body)
+          const savedSlots = saved.slots ?? []
+          const savedCounts = collectStudentCountByClass(savedSlots, institutionId)
+          for (const [key, value] of savedCounts) {
+            studentCountByClassRef.current.set(key, value)
+          }
+          hydratedSignatureByInstitutionRef.current.set(
+            institutionId,
+            savedSlots.length > 0
+              ? serializeRemoteTemporaryScheduleSlots(savedSlots)
+              : nextSignature
+          )
           results.push({ institutionId, name, ok: true })
         } catch (error) {
           results.push({
@@ -457,34 +515,74 @@ export function useUjatInstitutionScheduleAssign(
         }
       }
 
-      if (results.length === 0) {
-        return { ok: true as const, message: '변경된 배정이 없습니다.' }
+      const slotFailed = results.filter(item => !item.ok)
+      const slotsOk = slotFailed.length === 0
+      const slotSummary =
+        results.length === 0
+          ? '변경된 배정이 없습니다.'
+          : slotFailed.length > 0
+            ? slotFailed
+                .map(item =>
+                  item.message
+                    ? `${item.name}: ${item.message}`
+                    : `${item.name}: 저장에 실패했습니다.`
+                )
+                .join('\n')
+            : '학급 배정이 저장되었습니다.'
+
+      let estimatesOk = false
+      let estimatesMessage = ''
+      try {
+        const existing = await fetchUjatPlanningEstimates(String(programId))
+        const body = buildMergedPlanningEstimatePutBody({
+          existing,
+          educationRegionCode,
+          regionState: draft,
+        })
+        await replaceUjatPlanningEstimates(String(programId), body)
+        estimatesOk = true
+        estimatesMessage = '산정값이 저장되었습니다.'
+      } catch (error) {
+        estimatesMessage = readApiErrorAlertMessage(
+          error,
+          '산정값 저장에 실패했습니다. 다시 시도해 주세요.'
+        )
       }
 
       await queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.organizationApplicationsRoot(String(programId)),
       })
       await queryClient.invalidateQueries({
-        queryKey: ujatQueryKeys.organizationScheduleAssignments(
-          String(programId),
-          educationRegionCode
-        ),
+        queryKey: [
+          ...ujatQueryKeys.organizationApplicationsRoot(String(programId)),
+          'schedule-assignments',
+        ],
       })
       await queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.programSchedules(String(programId)),
       })
+      await queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.planningEstimates(String(programId)),
+      })
       hydratedKeyRef.current = null
       setVersion(v => v + 1)
-      const failed = results.filter(item => !item.ok)
-      const summary = results
-        .map(item =>
-          item.ok ? `${item.name}: 성공` : `${item.name}: 실패${item.message ? ` (${item.message})` : ''}`
-        )
-        .join('\n')
-      if (failed.length > 0) {
-        return { ok: false as const, message: summary, results }
+
+      if (!slotsOk || !estimatesOk) {
+        const parts = [
+          slotsOk ? `학급 배정: ${slotSummary}` : `학급 배정 실패:\n${slotSummary}`,
+          estimatesOk ? `산정값: ${estimatesMessage}` : `산정값 실패: ${estimatesMessage}`,
+        ]
+        return { ok: false as const, message: parts.join('\n'), results }
       }
-      return { ok: true as const, message: summary, results }
+
+      if (results.length === 0) {
+        return {
+          ok: true as const,
+          message: `${slotSummary}\n${estimatesMessage}`,
+          results,
+        }
+      }
+      return { ok: true as const, message: `${slotSummary}\n${estimatesMessage}`, results }
     } catch (error) {
       return {
         ok: false as const,
@@ -494,6 +592,7 @@ export function useUjatInstitutionScheduleAssign(
       setSaving(false)
     }
   }, [
+    applicationRows,
     educationRegionCode,
     organizationNamesByApplicationId,
     programId,
@@ -502,6 +601,19 @@ export function useUjatInstitutionScheduleAssign(
     remoteEnabled,
     scheduleIdByIsoDate,
   ])
+
+  const daysPending =
+    assignDates.length > 0 &&
+    assignDates.some(({ isoDate }) => regionState.days[isoDate] == null)
+
+  const contentLoading =
+    remoteEnabled &&
+    (remoteQuery.isLoading ||
+      schedulesQuery.isLoading ||
+      Boolean(hasNextPage) ||
+      isFetchingNextPage ||
+      hydrating ||
+      daysPending)
 
   return {
     assignDates,
@@ -517,6 +629,7 @@ export function useUjatInstitutionScheduleAssign(
     volunteerEducationDays,
     saveTemporarySchedules,
     hydrating,
+    contentLoading,
     saving,
     remoteEnabled,
   }

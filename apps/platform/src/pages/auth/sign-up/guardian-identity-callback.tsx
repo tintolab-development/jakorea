@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { PFText } from '@/shared/ui'
+import { PFLoadingSpinner, PFText } from '@/shared/ui'
 import {
   buildIdentityCallbackKey,
   isIdentityCallbackHandled,
@@ -127,11 +127,5 @@ export function SignUpGuardianIdentityCallbackPage() {
     )
   }
 
-  return (
-    <div className={styles.fallback}>
-      <PFText as="p" typo="bd-md-md" color="neutral-warm-600">
-        보호자 본인인증을 확인하는 중이에요…
-      </PFText>
-    </div>
-  )
+  return <PFLoadingSpinner centered label="보호자 본인인증 확인 중" />
 }

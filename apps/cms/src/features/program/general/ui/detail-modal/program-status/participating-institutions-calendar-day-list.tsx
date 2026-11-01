@@ -2,6 +2,7 @@
  * 참여 기관 캘린더 우측 — 선택일 기관 목록 (학교명 + 지역 | 학년 | 회차·시간)
  */
 
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { EmptyState } from '@/shared/ui'
 import type {
   ParticipatingSchoolRow,
@@ -147,7 +148,7 @@ export function ParticipatingInstitutionsCalendarDayList({
               className="calendar-list-item participating-institutions-calendar-day-list__item"
               data-has-color="true"
               style={{
-                backgroundColor: color.bg,
+                backgroundColor: calendarListItemBackground(color.bg),
                 border: `1px solid ${color.border}`,
               }}
               onClick={() => onSchoolClick(row)}

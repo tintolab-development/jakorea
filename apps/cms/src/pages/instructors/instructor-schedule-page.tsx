@@ -265,8 +265,7 @@ export function InstructorSchedulePage() {
                   navigate(`/schedules/${selectedSchedule.id}`)
                   setModalOpen(false)
                 }
-              }}
-            >
+              }} >
               상세 페이지 보기
             </CmsButton>
           </Space>

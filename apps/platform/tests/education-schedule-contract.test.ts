@@ -23,8 +23,59 @@ describe('portal education schedule contract', () => {
 
     expect(leader.team).toEqual({ roleLabel: '팀장', teamName: '드림메이커스' })
     expect(member.team).toEqual({ roleLabel: '팀원', teamName: '변경 팀' })
-    expect(individual.team).toEqual({ roleLabel: '개인', teamName: '-' })
+    expect(individual.team).toEqual({ roleLabel: '개인' })
     expect(nonTeam.team).toBeUndefined()
+  })
+
+  it('maps per-schedule team fields for mixed individual/team events without copying answers', () => {
+    const preEducation = mapPortalEducationSchedule(
+      {
+        scheduleId: 187614,
+        scheduleLabel: '사전 교육',
+        scheduleName: '사전 교육',
+        blockKind: 'PRE_EDUCATION',
+        teamRole: null,
+        teamName: null,
+      },
+      0,
+    )
+    const individualEvent = mapPortalEducationSchedule(
+      {
+        scheduleId: 187612,
+        scheduleLabel: '행사 일정 01',
+        scheduleName: '개인일정111',
+        blockKind: 'EVENT',
+        teamRole: 'INDIVIDUAL',
+        teamName: null,
+        assignment: { enabled: true, status: 'NOT_SUBMITTED', canSubmit: true },
+      },
+      1,
+    )
+    const teamEvent = mapPortalEducationSchedule(
+      {
+        scheduleId: 187613,
+        scheduleLabel: '행사 일정 02',
+        scheduleName: '팀일정111',
+        blockKind: 'EVENT',
+        teamRole: 'MEMBER',
+        teamName: '아자자',
+        availableActions: ['SUBMIT_ASSIGNMENT'],
+        assignment: { enabled: true, status: 'NOT_SUBMITTED', canSubmit: true, canResubmit: false },
+      },
+      2,
+    )
+
+    expect(preEducation.team).toBeUndefined()
+    expect(individualEvent.team).toEqual({ roleLabel: '개인' })
+    expect(teamEvent.team).toEqual({ roleLabel: '팀원', teamName: '아자자' })
+    expect(canSubmitEducationAssignment(individualEvent.assignment!, 'submit')).toBe(true)
+    expect(
+      canSubmitEducationAssignment(
+        teamEvent.assignment!,
+        'submit',
+        teamEvent.availableActions,
+      ),
+    ).toBe(true)
   })
 
   it('does not create assignment UI data for instructor or volunteer schedules', () => {
@@ -46,6 +97,30 @@ describe('portal education schedule contract', () => {
     ).toBeUndefined()
   })
 
+  it('maps approved assignment responseStatus without treating FEEDBACK as resubmittable', () => {
+    const item = mapPortalEducationSchedule(
+      {
+        scheduleId: 187630,
+        assignment: {
+          enabled: true,
+          status: 'FEEDBACK',
+          responseStatus: 'APPROVED',
+          formResponseId: 1852101,
+          canSubmit: false,
+          canResubmit: false,
+        },
+        availableActions: [],
+      },
+      0,
+    )
+    expect(item.assignment?.status).toBe('feedback')
+    expect(item.assignment?.responseStatus).toBe('APPROVED')
+    expect(item.assignment?.canResubmit).toBe(false)
+    expect(canSubmitEducationAssignment(item.assignment!, 'revise', item.availableActions)).toBe(
+      false,
+    )
+  })
+
   it('uses canSubmit and canResubmit as the only button permission source', () => {
     expect(canSubmitEducationAssignment({ canSubmit: true }, 'submit')).toBe(true)
     expect(canSubmitEducationAssignment({ canSubmit: false }, 'submit')).toBe(false)
@@ -53,5 +128,36 @@ describe('portal education schedule contract', () => {
     expect(canSubmitEducationAssignment({ canResubmit: true }, 'revise')).toBe(true)
     expect(canSubmitEducationAssignment({ canResubmit: false }, 'revise')).toBe(false)
     expect(canSubmitEducationAssignment({}, 'revise')).toBe(false)
+    expect(
+      canSubmitEducationAssignment({ canResubmit: false }, 'revise', ['SUBMIT_ASSIGNMENT']),
+    ).toBe(true)
+    expect(
+      canSubmitEducationAssignment({ canSubmit: false, canResubmit: false }, 'revise', []),
+    ).toBe(false)
+  })
+
+  it('maps APPROVED assignment flags without enabling resubmit', () => {
+    const item = mapPortalEducationSchedule(
+      {
+        scheduleId: 187630,
+        assignment: {
+          enabled: true,
+          status: 'FEEDBACK',
+          responseStatus: 'APPROVED',
+          formResponseId: 1852101,
+          canSubmit: false,
+          canResubmit: false,
+        },
+        availableActions: [],
+      },
+      0,
+    )
+    expect(item.assignment?.status).toBe('feedback')
+    expect(item.assignment?.responseStatus).toBe('APPROVED')
+    expect(item.assignment?.canSubmit).toBe(false)
+    expect(item.assignment?.canResubmit).toBe(false)
+    expect(
+      canSubmitEducationAssignment(item.assignment!, 'revise', item.availableActions),
+    ).toBe(false)
   })
 })

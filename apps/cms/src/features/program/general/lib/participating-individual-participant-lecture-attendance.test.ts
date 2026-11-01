@@ -3,14 +3,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   fetchProgramSchedulesViaDashboardRemoteMock,
   fetchAttendancesByScheduleIdsRemoteMock,
+  fetchParticipantEducationScopeRemoteMock,
 } = vi.hoisted(() => ({
   fetchProgramSchedulesViaDashboardRemoteMock: vi.fn(),
   fetchAttendancesByScheduleIdsRemoteMock: vi.fn(),
+  fetchParticipantEducationScopeRemoteMock: vi.fn(),
 }))
 
 vi.mock('@/features/program/general/api/program-progress-api-client', () => ({
   fetchProgramSchedulesViaDashboardRemote: fetchProgramSchedulesViaDashboardRemoteMock,
   fetchAttendancesByScheduleIdsRemote: fetchAttendancesByScheduleIdsRemoteMock,
+  fetchParticipantEducationScopeRemote: fetchParticipantEducationScopeRemoteMock,
 }))
 
 import {
@@ -23,6 +26,7 @@ describe('participating-individual-participant-lecture-attendance', () => {
   beforeEach(() => {
     fetchProgramSchedulesViaDashboardRemoteMock.mockReset()
     fetchAttendancesByScheduleIdsRemoteMock.mockReset()
+    fetchParticipantEducationScopeRemoteMock.mockReset()
   })
 
   it('maps participant attendance and treats excused as attended', () => {
@@ -60,12 +64,14 @@ describe('participating-individual-participant-lecture-attendance', () => {
   })
 
   it('hydrates from schedule attendances when list sessions have no person attendance', async () => {
+    fetchParticipantEducationScopeRemoteMock.mockResolvedValue({ scheduleIds: [10, 11] })
     fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
       { scheduleId: 10, sessionNo: 1 },
       { scheduleId: 11, sessionNo: 2 },
+      { scheduleId: 99, sessionNo: 9 },
     ])
     fetchAttendancesByScheduleIdsRemoteMock.mockResolvedValue({
-      '10': [{ participantId: 1691701, status: 'PRESENT' }],
+      '10': [{ participantId: 1691701, status: 'PRESENT', checkInSource: 'SYSTEM' }],
       '11': [{ participantId: 1691701, status: 'EXCUSED' }],
     })
 
@@ -83,7 +89,28 @@ describe('participating-individual-participant-lecture-attendance', () => {
     expect(fetchAttendancesByScheduleIdsRemoteMock).toHaveBeenCalledWith('168001', [10, 11])
   })
 
+  it('does not put unassigned program schedules in the lecture-attendance denominator', async () => {
+    fetchParticipantEducationScopeRemoteMock.mockResolvedValue({ scheduleIds: [10] })
+    fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
+      { scheduleId: 10, sessionNo: 1 },
+      { scheduleId: 99, sessionNo: 9 },
+    ])
+    fetchAttendancesByScheduleIdsRemoteMock.mockResolvedValue({
+      '10': [{ participantId: 1691701, status: 'PRESENT' }],
+      '99': [{ participantId: 1691701, status: 'ABSENT' }],
+    })
+
+    const sessions = await hydrateParticipatingIndividualLectureAttendanceSessions({
+      programId: '168001',
+      participantId: '1691701',
+      existing: [],
+    })
+
+    expect(sessions.map(session => session.scheduleId)).toEqual([10])
+  })
+
   it('bulk 출석 조회 실패 시 오류를 전파한다', async () => {
+    fetchParticipantEducationScopeRemoteMock.mockResolvedValue({ scheduleIds: [10] })
     fetchProgramSchedulesViaDashboardRemoteMock.mockResolvedValue([
       { scheduleId: 10, sessionNo: 1 },
     ])

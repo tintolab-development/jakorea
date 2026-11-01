@@ -2,6 +2,7 @@
  * 참여자(개인) 캘린더 — split-card 우측 (선택일 교육 일정 목록)
  */
 
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { useCallback, useMemo } from 'react'
 import { EmptyState } from '@/shared/ui'
 import type { ParticipatingIndividualParticipantCalendarEvent } from '@/features/program/general/lib/build-participating-individual-participant-calendar-events'
@@ -100,7 +101,7 @@ export function ParticipatingParticipantsCalendarRight({
                 .join(' ')}
               data-has-color="true"
               style={{
-                backgroundColor: colors.bg,
+                backgroundColor: calendarListItemBackground(colors.bg),
                 border: `1px solid ${colors.border}`,
               }}
               onClick={() => {

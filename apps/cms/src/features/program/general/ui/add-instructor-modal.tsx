@@ -282,8 +282,7 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
         type="submit"
         variant="primary"
         size="large"
-        form="add-instructor-form"
-      >
+        form="add-instructor-form" >
         신규 등록
       </CmsButton>
     </div>
@@ -605,10 +604,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       </Form.Item>
                       <CmsButton
                         variant="secondary"
-                        size="medium"
-                        className="add-instructor-modal__consent-btn"
-                        disabled={consentWithholdingTax !== 'agree'}
-                      >
+                        size="medium" className="add-instructor-modal__consent-btn"
+                        disabled={consentWithholdingTax !== 'agree'} >
                         동의서 작성
                       </CmsButton>
                       <div className="add-instructor-modal__consent-description">
@@ -635,10 +632,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       </Form.Item>
                       <CmsButton
                         variant="secondary"
-                        size="medium"
-                        className="add-instructor-modal__consent-btn"
-                        disabled={consentCriminalRecord !== 'agree'}
-                      >
+                        size="medium" className="add-instructor-modal__consent-btn"
+                        disabled={consentCriminalRecord !== 'agree'} >
                         동의서 작성
                       </CmsButton>
                     </div>
@@ -661,10 +656,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       </Form.Item>
                       <CmsButton
                         variant="primary"
-                        size="medium"
-                        className="add-instructor-modal__consent-btn"
-                        disabled={consentAdministrativeInfo !== 'agree'}
-                      >
+                        size="medium" className="add-instructor-modal__consent-btn"
+                        disabled={consentAdministrativeInfo !== 'agree'} >
                         동의서 수정
                       </CmsButton>
                       <span
@@ -692,10 +685,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                       </Form.Item>
                       <CmsButton
                         variant="primary"
-                        size="medium"
-                        className="add-instructor-modal__consent-btn"
-                        disabled={consentEducationFacilitatorPledge !== 'agree'}
-                      >
+                        size="medium" className="add-instructor-modal__consent-btn"
+                        disabled={consentEducationFacilitatorPledge !== 'agree'} >
                         동의서 수정
                       </CmsButton>
                       <span
@@ -731,10 +722,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   <CmsButton
                     type="button"
                     variant="primary"
-                    size="medium"
-                    className="add-instructor-modal__add-btn"
-                    onClick={() => add({})}
-                  >
+                    size="medium" className="add-instructor-modal__add-btn"
+                    onClick={() => add({})} >
                     항목 추가
                   </CmsButton>
                 </div>
@@ -855,10 +844,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   <CmsButton
                     type="button"
                     variant="primary"
-                    size="medium"
-                    className="add-instructor-modal__add-btn"
-                    onClick={() => add({})}
-                  >
+                    size="medium" className="add-instructor-modal__add-btn"
+                    onClick={() => add({})} >
                     항목 추가
                   </CmsButton>
                 </div>
@@ -963,10 +950,8 @@ export function AddInstructorModal({ open, onCancel, onAdd }: AddInstructorModal
                   <CmsButton
                     type="button"
                     variant="primary"
-                    size="medium"
-                    className="add-instructor-modal__add-btn"
-                    onClick={() => add({})}
-                  >
+                    size="medium" className="add-instructor-modal__add-btn"
+                    onClick={() => add({})} >
                     항목 추가
                   </CmsButton>
                 </div>

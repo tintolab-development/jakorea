@@ -1,3 +1,36 @@
 .root {
   width: 100%;
 }
+
+.otherRequestsRow {
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 0;
+}
+
+.otherRequestsCheck {
+  flex: 0 0 auto;
+}
+
+.otherRequestsInput {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.otherRequestsInput > * {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (--bp-below-pc) {
+  .otherRequestsRow {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+  }
+
+  .otherRequestsCheck,
+  .otherRequestsInput {
+    width: 100%;
+  }
+}

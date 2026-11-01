@@ -203,19 +203,21 @@ export function programToUjatRecruitTemplateFormValues(
   const persisted = options?.sourceOverlay ?? program.ujatRegistrationOverlay ?? {}
   const liveInstitution = options?.sourceOverlay ? {} : getUjatRecruitInstitutionOverlayRecord()
   const liveVolunteer = options?.sourceOverlay ? {} : getUjatRecruitVolunteerOverlayRecord()
+  const volunteerHalfKey = volunteerHalf ?? 'h1'
+  const rawVolunteerOverlay =
+    kind === 'volunteer'
+      ? {
+          ...liveVolunteer,
+          ...pickUjatRecruitVolunteerOverlay(persisted),
+        }
+      : {}
   const overlay =
     kind === 'institution'
       ? {
           ...pickUjatRecruitInstitutionOverlay(persisted),
           ...liveInstitution,
         }
-      : resolveVolunteerOverlayForHalf(
-          {
-            ...liveVolunteer,
-            ...pickUjatRecruitVolunteerOverlay(persisted),
-          },
-          volunteerHalf ?? 'h1'
-        )
+      : resolveVolunteerOverlayForHalf(rawVolunteerOverlay, volunteerHalfKey)
   const volunteerRow =
     kind === 'volunteer'
       ? pickUjatVolunteerRecruitmentRow(program, volunteerHalf ?? 'h1')
@@ -235,9 +237,16 @@ export function programToUjatRecruitTemplateFormValues(
   )
   const publicTitleKey =
     kind === 'institution' ? INSTITUTION_KEYS.publicTitle : VOLUNTEER_KEYS.publicTitle
+  const halfPublicTitleKey =
+    kind === 'volunteer' ? ujatVolunteerHalfOverlayKey(volunteerHalfKey, 'publicTitle') : null
+  const halfPublicTitle =
+    halfPublicTitleKey != null && typeof rawVolunteerOverlay[halfPublicTitleKey] === 'string'
+      ? rawVolunteerOverlay[halfPublicTitleKey].trim()
+      : ''
   const publicTitle = overlay[publicTitleKey]
   const next = { ...values }
-  next.announcementTitle = typeof publicTitle === 'string' ? publicTitle.trim() : ''
+  next.announcementTitle =
+    halfPublicTitle || (typeof publicTitle === 'string' ? publicTitle.trim() : '')
   if (kind === 'institution') {
     const contact = readOverlayContact(overlay, INSTITUTION_KEYS.contact)
     if (contact?.name?.trim()) next.recruitmentContactOrganizationName = contact.name
@@ -306,18 +315,31 @@ export function programToUjatRecruitTemplateFormValues(
     next.volunteerTargets = normalizeVolunteerTargetList(next.volunteerTargets)
   }
   const programRange = readOverlayRange(overlay, VOLUNTEER_KEYS.programRange)
-  const recruitRange =
-    readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRange) ??
-    readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRangeH1) ??
-    readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRangeH2)
+  const halfRecruitKey =
+    volunteerHalfKey === 'h2' ? VOLUNTEER_KEYS.recruitRangeH2 : VOLUNTEER_KEYS.recruitRangeH1
+  const halfRecruit =
+    readOverlayRange(rawVolunteerOverlay, halfRecruitKey) ??
+    readOverlayRange(overlay, halfRecruitKey) ??
+    (volunteerHalfKey === 'h1'
+      ? readOverlayRange(rawVolunteerOverlay, VOLUNTEER_KEYS.recruitRange) ??
+        readOverlayRange(overlay, VOLUNTEER_KEYS.recruitRange)
+      : undefined)
   if (volunteerRow == null) {
     if (!next.startDate && programRange?.start?.trim()) next.startDate = programRange.start
     if (!next.endDate && programRange?.end?.trim()) next.endDate = programRange.end
-    if (!next.volunteerApplicationStartDate && recruitRange?.start?.trim()) {
-      next.volunteerApplicationStartDate = recruitRange.start
-    }
-    if (!next.volunteerApplicationEndDate && recruitRange?.end?.trim()) {
-      next.volunteerApplicationEndDate = recruitRange.end
+    if (halfRecruit?.start?.trim()) next.volunteerApplicationStartDate = halfRecruit.start
+    if (halfRecruit?.end?.trim()) next.volunteerApplicationEndDate = halfRecruit.end
+    const roundIndex = volunteerHalfKey === 'h2' ? 1 : 0
+    if (halfRecruit && next.rounds?.[roundIndex]) {
+      next.rounds = next.rounds.map((round, index) =>
+        index === roundIndex
+          ? {
+              ...round,
+              ...(halfRecruit.start?.trim() ? { startDate: halfRecruit.start } : {}),
+              ...(halfRecruit.end?.trim() ? { endDate: halfRecruit.end } : {}),
+            }
+          : round
+      )
     }
   }
   return applyUjatRecruitmentRowCopyToForm(next, program, 'volunteer', volunteerHalf)
@@ -500,13 +522,16 @@ export function useUjatRecruitTemplateFormOverlaySync(
     return () => subscription.unsubscribe()
   }, [form, kind, volunteerHalf])
 
-  // 모집 단계의 주요 필드는 RHF 값을 렌더링하고, DEV 자동입력은 overlay를
-  // 갱신한다. 버튼을 현재 모집 단계에서 누른 경우 overlay만 바뀌고 RHF가
-  // 기존 빈 값을 계속 들고 있던 문제를 자동입력 완료 이벤트에서 한 번만
-  // 재수화해 해결한다. 일반적인 사용자 입력 변경에는 반응하지 않아
-  // 입력 중인 값이 되돌아가지 않는다.
+  // 등록 위저드는 `use-ujat-program-registration-flow`가 typedRecruitment로 RHF를
+  // 채운다. 여기서 programRef만으로 재수화하면 빈 모집 기간·기수로 덮어쓴다.
+  // typedRecruitment가 없는 경로(양식 authoring 등)만 overlay/program으로 재수화한다.
   useEffect(() => {
-    const handleDevAutofillComplete = () => {
+    const handleDevAutofillComplete = (event: Event) => {
+      const detail =
+        event instanceof CustomEvent && event.detail != null && typeof event.detail === 'object'
+          ? (event.detail as { typedRecruitment?: unknown })
+          : null
+      if (detail?.typedRecruitment != null) return
       readyRef.current = false
       form.reset(programToUjatRecruitTemplateFormValues(programRef.current, kind, volunteerHalf), {
         keepDefaultValues: false,

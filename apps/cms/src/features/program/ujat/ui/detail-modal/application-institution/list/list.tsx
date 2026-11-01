@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CMS_ACTION_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS } from './filter-fields'
 import { UjatInstitutionApplicationRegionTabs } from './region-tabs'
 import { useUjatInstitutionEducationRegion } from '../use-institution-education-region'
@@ -25,6 +26,7 @@ export function UjatInstitutionApplicationList({
   onOpenScheduleAssign?: () => void
   programId?: string | null
 }) {
+  const canWrite = useUjatCanWrite()
   const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
@@ -42,22 +44,17 @@ export function UjatInstitutionApplicationList({
     handleBulkApplicationReject,
     handleBulkTempReject,
     handleBulkTempAssign,
-    handleBulkTempRelease,
-    handleBulkTempRejectCancel,
     pendingTempAction,
     tempActionLoading,
     closeTempActionModal,
+    confirmBulkTempAssign,
     confirmBulkTempReject,
-    confirmBulkTempRejectCancel,
-    confirmTempRelease,
+    eligibleTempAssignRows,
     eligibleTempRejectRows,
-    eligibleTempAssignCancelRows,
-    eligibleTempRejectCancelRows,
-    tempReleasing,
+    eligibleApplicationRejectRows,
     pendingApplicationRejectModal,
     closeApplicationRejectModal,
     confirmApplicationRejectModal,
-    selectedApplications,
     resetRegionState,
     fetchNextPage,
     hasNextPage,
@@ -93,6 +90,7 @@ export function UjatInstitutionApplicationList({
       <FilterTableLayout
         className="ujat-institution-application-list__filter-layout"
         bordered={false}
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
@@ -102,11 +100,11 @@ export function UjatInstitutionApplicationList({
         description={`${totalElements}건`}
         actions={
           <div className="ujat-institution-application-list__actions">
+            {canWrite ? (
+              <>
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkApplicationReject}
             >
               선택 신청 반려
@@ -114,8 +112,6 @@ export function UjatInstitutionApplicationList({
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
               onClick={handleBulkTempReject}
             >
               선택 임시 반려
@@ -123,42 +119,18 @@ export function UjatInstitutionApplicationList({
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              className="cms-button--action"
-              width={180}
-              onClick={() => {
-                if (!handleBulkTempAssign()) return
-                onOpenScheduleAssign?.()
-              }}
+              onClick={handleBulkTempAssign}
             >
-              임시 일정 배정
+              선택 임시 배정
             </FilterTableToolbarButton>
-            <FilterTableToolbarButton
-              type="button"
-              variant="delete"
-              className="cms-button--action"
-              width={180}
-              disabled={tempReleasing}
-              onClick={handleBulkTempRelease}
-            >
-              선택 임시 배정 해제
-            </FilterTableToolbarButton>
-            <FilterTableToolbarButton
-              type="button"
-              variant="secondary"
-              className="cms-button--action"
-              width={180}
-              disabled={tempReleasing || tempActionLoading}
-              onClick={handleBulkTempRejectCancel}
-            >
-              선택 임시 반려 취소
-            </FilterTableToolbarButton>
+              </>
+            ) : null}
             {viewMode === 'table' ? (
               <FilterTableToolbarButton
                 type="button"
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={() => setViewMode('calendar')}
-              >
+                onClick={() => setViewMode('calendar')} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
@@ -166,18 +138,21 @@ export function UjatInstitutionApplicationList({
                 type="button"
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={() => setViewMode('table')}
-              >
+                onClick={() => setViewMode('table')} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}
           </div>
         }
-        excelExport={{
-          columns,
-          data: tableData,
-          selectedRowKeys,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+                selectedRowKeys,
+              }
+            : undefined
+        }
       >
         {viewMode === 'table' ? (
           <div className="ujat-institution-application-list__table-wrap">
@@ -230,21 +205,21 @@ export function UjatInstitutionApplicationList({
         <TemporaryActionModal
           open
           kind={pendingTempAction}
-          institutionNames={(pendingTempAction === 'temp_reject'
-            ? eligibleTempRejectRows
-            : pendingTempAction === 'temp_assign_cancel'
-              ? eligibleTempAssignCancelRows
-              : eligibleTempRejectCancelRows
+          institutionNames={(
+            pendingTempAction === 'temp_assign'
+              ? eligibleTempAssignRows
+              : eligibleTempRejectRows
           ).map(row => row.institutionName)}
-          loading={tempActionLoading || tempReleasing}
+          loading={tempActionLoading}
           onCancel={closeTempActionModal}
-          onConfirm={
-            pendingTempAction === 'temp_reject'
-              ? confirmBulkTempReject
-              : pendingTempAction === 'temp_assign_cancel'
-                ? confirmTempRelease
-                : confirmBulkTempRejectCancel
-          }
+          onConfirm={() => {
+            if (pendingTempAction === 'temp_assign') {
+              confirmBulkTempAssign()
+              onOpenScheduleAssign?.()
+              return
+            }
+            void confirmBulkTempReject()
+          }}
         />
       ) : null}
 
@@ -252,9 +227,9 @@ export function UjatInstitutionApplicationList({
         <UjatInstitutionApplicationActionModal
           open
           action="application_reject"
-          variant={selectedApplications.length === 1 ? 'single' : 'bulk'}
-          institutionName={selectedApplications[0]?.institutionName}
-          selectionCount={selectedApplications.length}
+          variant={eligibleApplicationRejectRows.length === 1 ? 'single' : 'bulk'}
+          institutionName={eligibleApplicationRejectRows[0]?.institutionName}
+          selectionCount={eligibleApplicationRejectRows.length}
           onCancel={closeApplicationRejectModal}
           onConfirm={payload => {
             void confirmApplicationRejectModal(payload)

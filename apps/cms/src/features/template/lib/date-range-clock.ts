@@ -21,3 +21,16 @@ export function dateRangeUsesClockTime(a: Dayjs, b: Dayjs): boolean {
   if (isStartOfDayClock(end) || isInclusiveEndOfDayClock(end)) return false
   return true
 }
+
+export function optionalDateRangeUsesClockTime(
+  start: Dayjs | null | undefined,
+  end: Dayjs | null | undefined
+): boolean {
+  if (start == null || end == null || !start.isValid() || !end.isValid()) return false
+  return dateRangeUsesClockTime(start, end)
+}
+
+export function optionalDateUsesClockTime(value: Dayjs | null | undefined): boolean {
+  if (value == null || !value.isValid()) return false
+  return dateRangeUsesClockTime(value, value)
+}

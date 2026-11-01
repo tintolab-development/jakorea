@@ -107,12 +107,10 @@ export function FormEditorOptionListEditor({
         <CmsButton
           type="button"
           variant="secondary"
-          size="medium"
-          className="form-editor-horizontal-table-body-fields__option-add"
+          size="medium" className="form-editor-horizontal-table-body-fields__option-add"
           icon={addButtonIcon ? <FormEditorHorizontalTableOptionAddIcon /> : undefined}
           disabled={atMax}
-          onClick={add}
-        >
+          onClick={add} >
           {addLabel}
         </CmsButton>
       </li>

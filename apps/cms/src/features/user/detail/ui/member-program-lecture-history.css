@@ -62,10 +62,7 @@
  * (font 16/600/150% · gap 6 · padding 6 16 6 10 · icon 16)
  * 긴 라벨만 max-content로 확장. 패딩을 키우면 텍스트가 상대적으로 작아 보임.
  */
-.member-program-lecture-history__bulk-lecture-report-download.cms-button.ant-btn.cms-button--no-label-ellipsis.cms-button--h44.cms-button--has-icon {
-  width: max-content !important;
-  min-width: fit-content;
-  max-width: none;
+.member-program-lecture-history__bulk-lecture-report-download.cms-button.ant-btn.cms-button--h44.cms-button--has-icon {
   height: 44px !important;
   min-height: 44px !important;
   flex-shrink: 0;

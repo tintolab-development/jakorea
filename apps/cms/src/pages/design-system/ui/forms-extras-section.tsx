@@ -59,8 +59,7 @@ export function FormsExtrasSection() {
             ref={anchorRef}
             variant="secondary"
             size="medium"
-            onClick={() => setPickerOpen(true)}
-          >
+            onClick={() => setPickerOpen(true)} >
             일시 선택
           </CmsButton>
           <span style={{ fontSize: 14, color: 'var(--color-text-body)' }}>

@@ -1,12 +1,14 @@
 /**
  * 봉사자 추가 등록 모달
- * 참여 봉사자 탭 > 봉사자 등록 버튼 — 담당자 등록 모달과 동일 ContentModal 레이아웃
+ * 참여 봉사자 탭 > 봉사자 등록 — Figma Popup/Search/w600 (10014:41200)
+ * 일반 프로그램 참여 봉사자 추가 등록 모달과 동일 ContentModal 레이아웃
  */
 
 import { useEffect } from 'react'
 import { Form } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton, CmsSelect } from '@/shared/ui'
+import { FieldSearchIcon } from '@/shared/ui/icons'
 import type { UjatEducationProgressVolunteerMemberCandidate } from './types'
 import './add-volunteer-modal.css'
 
@@ -72,7 +74,7 @@ export function UjatAddVolunteerModal({
       footer={footer}
       className="ujat-add-volunteer-modal"
       description={
-        '추가할 봉사자를 선택해 주세요.\n등록된 봉사자 정보가 없는 경우, **[회원 관리]**에서 봉사자 정보를 먼저 등록해 주세요.'
+        '프로그램에 추가할 봉사자를 선택해 주세요.\n등록된 회원 정보가 없는 경우, **[전체 회원]**에서 회원 정보를 먼저 등록해 주세요.'
       }
     >
       <div className="ujat-add-volunteer-modal__body">
@@ -82,14 +84,30 @@ export function UjatAddVolunteerModal({
           className="ujat-add-volunteer-modal__form"
           requiredMark={false}
         >
-          <Form.Item name="memberId" label="회원 추가" className="ujat-add-volunteer-modal__field">
+          <Form.Item
+            name="memberId"
+            label={
+              <span>
+                봉사자 추가
+                <span className="ujat-add-volunteer-modal__required" aria-hidden>
+                  *
+                </span>
+              </span>
+            }
+            className="ujat-add-volunteer-modal__field"
+          >
             <CmsSelect
               inputSize="large"
               width="100%"
               withAllOption={false}
-              placeholder="추가 등록할 봉사자를 선택해 주세요"
               showSearch
               optionFilterProp="label"
+              placeholder="추가 등록할 봉사자를 선택해 주세요"
+              suffixIcon={
+                <span className="cms-field__icon" aria-hidden>
+                  <FieldSearchIcon />
+                </span>
+              }
               options={memberOptions.map(m => ({
                 value: m.memberId,
                 label: m.volunteerName,

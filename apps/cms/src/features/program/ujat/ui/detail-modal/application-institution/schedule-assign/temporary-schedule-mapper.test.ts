@@ -1,15 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildTemporaryScheduleSaveRequest,
+  collectStudentCountByClass,
+  normalizeClassNameForSlot,
+  serializeRemoteTemporaryScheduleSlots,
   serializeTemporaryScheduleSlots,
+  studentCountLookupKey,
 } from './temporary-schedule-mapper'
 import type { UjatScheduleAssignRegionState } from './types'
 
 const draft: UjatScheduleAssignRegionState = {
-  maxClassesPerDay: '',
   estimation: {
-    h1: { expectedVolunteerCount: '' },
-    h2: { expectedVolunteerCount: '' },
+    h1: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+    h2: { maxClassesPerDay: '', expectedVolunteerCount: '' },
   },
   days: {
     '2027-04-30': {
@@ -77,5 +80,136 @@ describe('buildTemporaryScheduleSaveRequest', () => {
     expect(serializeTemporaryScheduleSlots(slots)).toBe(
       serializeTemporaryScheduleSlots([...slots].reverse())
     )
+  })
+
+  it('API slots studentCount만 쓰고 없으면 PUT에 0을 보낸다', () => {
+    const body = buildTemporaryScheduleSaveRequest({
+      regionKey: 'seoul',
+      regionState: {
+        estimation: {
+          h1: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+          h2: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+        },
+        days: {
+          '2026-11-06': {
+            isoDate: '2026-11-06',
+            rows: [
+              {
+                id: 'r1',
+                institutionRowId: '1691554',
+                gradeValues: ['2학년:1', '2학년:2'],
+              },
+            ],
+          },
+        },
+      },
+      institutionRowId: '1691554',
+      scheduleIdByIsoDate: new Map([['2026-11-06', 187580]]),
+      studentCountByClass: collectStudentCountByClass(
+        [
+          {
+            scheduleId: 187580,
+            organizationApplicationId: 1691554,
+            grade: '2',
+            className: '1반',
+            studentCount: 21,
+          },
+          {
+            scheduleId: 187580,
+            organizationApplicationId: 1691554,
+            grade: '2',
+            className: '2반',
+            studentCount: 20,
+          },
+        ],
+        '1691554'
+      ),
+    })
+    expect(body?.slots).toEqual([
+      { scheduleId: 187580, grade: '2', className: '1반', studentCount: 21 },
+      { scheduleId: 187580, grade: '2', className: '2반', studentCount: 20 },
+    ])
+  })
+
+  it('슬롯 인원이 없으면 studentCount 0으로 PUT한다', () => {
+    const body = buildTemporaryScheduleSaveRequest({
+      regionKey: 'seoul',
+      regionState: {
+        estimation: {
+          h1: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+          h2: { maxClassesPerDay: '', expectedVolunteerCount: '' },
+        },
+        days: {
+          '2026-11-06': {
+            isoDate: '2026-11-06',
+            rows: [
+              {
+                id: 'r1',
+                institutionRowId: '1691554',
+                gradeValues: ['2학년:1'],
+              },
+            ],
+          },
+        },
+      },
+      institutionRowId: '1691554',
+      scheduleIdByIsoDate: new Map([['2026-11-06', 187580]]),
+    })
+    expect(body?.slots).toEqual([
+      { scheduleId: 187580, grade: '2', className: '1반', studentCount: 0 },
+    ])
+  })
+})
+
+describe('normalizeClassNameForSlot', () => {
+  it('classNo 표기를 1반으로 정규화한다', () => {
+    expect(normalizeClassNameForSlot('1')).toBe('1반')
+    expect(normalizeClassNameForSlot('1반')).toBe('1반')
+    expect(normalizeClassNameForSlot(2)).toBe('2반')
+  })
+})
+
+describe('collectStudentCountByClass', () => {
+  it('양수 API studentCount만 수집한다', () => {
+    const map = collectStudentCountByClass(
+      [
+        {
+          organizationApplicationId: 10,
+          grade: '2',
+          className: '1반',
+          studentCount: 21,
+        },
+        {
+          organizationApplicationId: 10,
+          grade: '2',
+          className: '2반',
+          studentCount: 0,
+        },
+      ],
+      '10'
+    )
+    expect(map.get(studentCountLookupKey('10', '2', '1반'))).toBe(21)
+    expect(map.has(studentCountLookupKey('10', '2', '2반'))).toBe(false)
+  })
+})
+
+describe('serializeRemoteTemporaryScheduleSlots', () => {
+  it('서버 hydrate studentCount를 서명에 유지한다', () => {
+    const remote = serializeRemoteTemporaryScheduleSlots([
+      {
+        scheduleId: 187580,
+        grade: '2',
+        className: '1반',
+        studentCount: 21,
+      },
+      {
+        scheduleId: 187580,
+        grade: '2',
+        className: '2반',
+        studentCount: 20,
+      },
+    ])
+    expect(remote).toContain('|21')
+    expect(remote).toContain('|20')
   })
 })

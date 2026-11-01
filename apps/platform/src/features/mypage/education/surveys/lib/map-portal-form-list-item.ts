@@ -1,4 +1,5 @@
-import { mapPortalFormListItemToSurveyEntry } from '../../applications/lib/portal-form-list'
+import { toSeoulDateOnly } from '../../../../../shared/lib/format-display-date.ts'
+import { mapPortalFormListItemToSurveyEntry } from '../../applications/lib/portal-form-list.ts'
 import type { PortalFormListItem } from '../../applications/api/activity-client'
 import type { EducationSurveyListEntry } from './survey-list-types'
 
@@ -9,11 +10,9 @@ export type PortalFormResponseStatus =
   | 'COMPLETED'
   | 'DONE'
 
-/** ISO 또는 YYYY-MM-DD — 목록 표시용 날짜 부분만 (null-safe) */
+/** ISO 또는 YYYY-MM-DD — 목록 표시용 서울 달력 날짜 (null-safe) */
 export function slicePortalFormDate(iso: string | null | undefined): string | undefined {
-  const trimmed = iso?.trim()
-  if (!trimmed) return undefined
-  return trimmed.length >= 10 ? trimmed.slice(0, 10) : trimmed
+  return toSeoulDateOnly(iso)
 }
 
 /**

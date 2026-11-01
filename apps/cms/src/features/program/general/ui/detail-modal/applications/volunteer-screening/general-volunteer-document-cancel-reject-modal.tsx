@@ -10,7 +10,7 @@ import {
   type PermissionModalPayload,
 } from '@/shared/components/permission-modal'
 import { ContentModal } from '@/shared/ui/content-modal'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH } from '@/shared/ui/cms-button'
+import { CmsButton } from '@/shared/ui/cms-button'
 import '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-modal.css'
 import '@/features/program/shared/ui/detail-modal/components/instructor-cancel-reject-modal.css'
 
@@ -64,21 +64,15 @@ function VolunteerDocumentCancelRejectPendingNotificationModal({
           <CmsButton
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             type="button"
-            onClick={onCancel}
-          >
+            onClick={onCancel} >
             취소
           </CmsButton>
           <CmsButton
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             type="button"
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             반려 취소
           </CmsButton>
         </>

@@ -157,8 +157,7 @@ export function ParticipatingIndividualProgressAttendanceCorrectionModal({
                   evidenceFileObjectIds,
                 })
               })()
-            }}
-          >
+            }} >
             정정
           </CmsButton>
         </div>

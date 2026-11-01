@@ -18,3 +18,11 @@ export const TEXTBOOK_BUSINESS_AREA_SELECT_OPTIONS: Array<{
   label: string
   value: string
 }> = TEXTBOOK_BUSINESS_AREAS.map(area => ({ label: area, value: area }))
+
+/** 등록·수정 — 목록 필터 `전체`/`ALL`은 사업 분야 값이 아님 */
+export function isTextbookRegisterBusinessAreaFilled(
+  value: string | null | undefined
+): boolean {
+  const raw = (value ?? '').trim()
+  return raw.length > 0 && raw !== 'ALL' && raw !== '전체'
+}

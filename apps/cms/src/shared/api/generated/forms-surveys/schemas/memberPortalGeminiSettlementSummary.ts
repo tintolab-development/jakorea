@@ -5,6 +5,7 @@
  * Filtered for CMS form template / survey Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberPortalGeminiLectureFeeBasisItem } from './memberPortalGeminiLectureFeeBasisItem';
 import type { MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus } from './memberPortalGeminiSettlementSummaryPaymentStatementProcessingStatus';
 import type { MemberPortalGeminiSettlementSummaryPaymentStatementProcessingStatusCode } from './memberPortalGeminiSettlementSummaryPaymentStatementProcessingStatusCode';
 
@@ -27,6 +28,8 @@ export interface MemberPortalGeminiSettlementSummary {
   businessIncomeLabel?: string | null;
   /** 인정 차시별 고정 강사비 표시. 예: 인정 2차시 고정 강사비 170000원. 단가 없으면 단가 미설정 */
   lectureFeeBasis?: string | null;
+  /** 제미나이 차시별 강사비 단가 목록. 1~4차시 오름차순. 없으면 []. null이 아니다 */
+  lectureFeeBasisItems?: MemberPortalGeminiLectureFeeBasisItem[];
   /** 연수 실적에 연결된 account_payment.payment_status 원문(정규화). 지급 행이 없으면 null. SettlementPaymentStatus: NOT_READY|WAITING|WAITING_PAYMENT|READY_TO_PAY|PAID|FAILED 및 DB ON_HOLD */
   accountPaymentStatus?: string | null;
   /** settlement.payment_status 원문. 제미나이가 계좌지급만 있고 settlement 행이 없으면 null */

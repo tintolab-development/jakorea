@@ -9,18 +9,26 @@ import type { CertificateSerialAllocateRequestCertificateType } from './certific
 import type { CertificateSerialAllocateRequestIssuanceSource } from './certificateSerialAllocateRequestIssuanceSource';
 
 /**
- * 인증서 고유번호(YY-JA-NNNNN) 발급 요청. 호출마다 새 번호를 할당합니다.
+ * 인증서 문서 PDF용 고유번호 발급 요청. 호출마다 새 번호를 할당합니다. PROGRAM(실발급)은 programId/participantId 필수. FORM_TEMPLATE(양식 관리 샘플)은 둘을 생략한다.
  */
 export interface CertificateSerialAllocateRequest {
-  /** 프로그램 ID. PROGRAM(실발급)일 때 필수. FORM_TEMPLATE면 생략 */
-  programId?: number;
-  /** 프로그램 참가자 ID. PROGRAM(실발급)일 때 필수. FORM_TEMPLATE면 생략 */
-  participantId?: number;
   /**
-     * FE form template code (그대로 저장)
-     * @minLength 1
+     * 프로그램 ID. PROGRAM일 때 필수, FORM_TEMPLATE면 생략
+     * @minimum 1
+     * @nullable
      */
+  programId?: number | null;
+  /**
+     * program_participant.id. PROGRAM일 때 필수, FORM_TEMPLATE면 생략
+     * @minimum 1
+     * @nullable
+     */
+  participantId?: number | null;
+  /** FE form templateCode 그대로. COMPLETION/ACTIVITY로 바꾸지 말 것 */
   certificateType: CertificateSerialAllocateRequestCertificateType;
-  /** 발급 출처. 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플 */
+  /**
+     * 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플
+     * @nullable
+     */
   issuanceSource?: CertificateSerialAllocateRequestIssuanceSource;
 }

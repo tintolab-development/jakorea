@@ -13,6 +13,7 @@ import { formatUjatPreferredEducationDateDisplay } from '../education-schedule'
 import { formatUjatGradeClassDisplayLabelFromParts } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import type { UjatInstitutionApplicationRow } from '../list/types'
 import type { UjatInstitutionApplicationDetail } from '../detail/detail-types'
+import type { UjatInstitutionApplicationGradeBlockDetail } from '../detail/detail-types'
 import type {
   ScheduleConfirmTextbookInfo,
   UjatScheduleConfirmConfirmedDetail,
@@ -50,18 +51,43 @@ function formatKitSummary(kits: number | null | undefined, quantity: number | nu
   return [kitLabel, quantityLabel].filter(Boolean).join(' ').trim()
 }
 
+function numericOrNull(value: number | null | undefined): number | null {
+  return typeof value === 'number' ? value : null
+}
+
+function hasOwnGradeTextbook(block: UjatInstitutionApplicationGradeBlockDetail): boolean {
+  return (
+    block.textbookName !== undefined ||
+    block.textbookNameEn !== undefined ||
+    block.kitCount !== undefined ||
+    block.bookCount !== undefined ||
+    block.textbookDeliveryStatus !== undefined
+  )
+}
+
 function mapTextbookForGrade(
   dto: UjatOrganizationApplicationDetail | null | undefined,
-  gradeLabel: string
+  block: UjatInstitutionApplicationGradeBlockDetail
 ): ScheduleConfirmTextbookInfo | null {
-  if (!dto) return null
-  const textbookGrade = dto.textbookGrade?.trim()
-  if (textbookGrade && textbookGrade !== gradeLabel) return null
+  const useBlock = hasOwnGradeTextbook(block)
+  const rootGrade = dto?.textbookGrade?.trim()
+  if (!useBlock && rootGrade && rootGrade !== block.gradeLabel) return null
 
-  const textbookName = displayOrDash(dto.textbookDisplayLabel ?? dto.textbookName)
-  const kitSummary = formatKitSummary(dto.textbookKits, dto.textbookQuantity)
+  const textbookName = displayOrDash(
+    useBlock ? block.textbookName : (dto?.textbookDisplayLabel ?? dto?.textbookName)
+  )
+  const kitSummary = formatKitSummary(
+    useBlock
+      ? numericOrNull(block.kitCount)
+      : numericOrNull(dto?.kitCount) ?? numericOrNull(dto?.textbookKits),
+    useBlock
+      ? numericOrNull(block.bookCount)
+      : numericOrNull(dto?.bookCount) ?? numericOrNull(dto?.textbookQuantity)
+  )
   const deliveryStatus = mapDeliveryStatus(
-    ownString(dto, 'textbookDeliveryStatus') ?? ownString(dto, 'deliveryStatus')
+    useBlock
+      ? block.textbookDeliveryStatus
+      : ownString(dto, 'textbookDeliveryStatus') ?? ownString(dto, 'deliveryStatus')
   )
 
   if (textbookName === '-' && !kitSummary && !deliveryStatus) return null
@@ -118,27 +144,115 @@ export function buildEducationScheduleDaysFromTemporarySchedule(
     }))
 }
 
-function mapSnackAvailability(dto: UjatOrganizationApplicationDetail | null | undefined): string {
-  const snack = ownString(dto, 'snackAvailability')?.trim().toLowerCase()
-  if (snack === 'possible' || snack === '가능') return '가능'
-  if (snack === 'impossible' || snack === '불가' || snack === '불가능') return '불가'
-  const snackNotice = ownString(dto, 'snackNotice')
-  if (snackNotice?.trim()) return snackNotice.trim()
-  return '-'
+export type ProgressConfirmedScheduleHalf = 'h1' | 'h2'
+
+/**
+ * 교육 진행 기관 상세 「진행 교육 일정」— temporary-schedule slots SSOT.
+ * 로컬 schedule-assign store에 의존하지 않는다.
+ */
+export function buildProgressConfirmedScheduleRowsFromTemporarySchedule(input: {
+  institutionId: string
+  half: ProgressConfirmedScheduleHalf
+  temporarySchedule: UjatOrganizationScheduleResponse | null | undefined
+  resolveHalf: (isoDate: string) => ProgressConfirmedScheduleHalf | null
+  formatDateDisplay: (isoDate: string) => string
+}): Array<{ id: string; dateDisplay: string; classLabels: string[] }> {
+  const grouped = new Map<string, string[]>()
+
+  for (const slot of input.temporarySchedule?.slots ?? []) {
+    const iso = toSeoulYmd(slot.scheduleStartAt)
+    if (!iso) continue
+    if (input.resolveHalf(iso) !== input.half) continue
+    const label = slotClassLabel(slot)
+    if (!label) continue
+    const labels = grouped.get(iso) ?? []
+    if (!labels.includes(label)) labels.push(label)
+    grouped.set(iso, labels)
+  }
+
+  return [...grouped.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([iso, labels]) => ({
+      id: `${input.institutionId}-${iso}`,
+      dateDisplay: input.formatDateDisplay(iso),
+      classLabels: [...labels].sort((a, b) => {
+        const left = classLabelSortKey(a)
+        const right = classLabelSortKey(b)
+        return left.grade - right.grade || left.classNo - right.classNo
+      }),
+    }))
 }
 
-function mapGuidanceNotes(
+/**
+ * 간식 제공 가능 여부 — 시안 표시값 `가능` / `불가`.
+ * wire: possible|impossible · 포털 라디오 문구 · 한글 단축.
+ */
+export function mapSnackAvailabilityLabel(raw: string | null | undefined): string | null {
+  const snack = raw?.trim().toLowerCase() ?? ''
+  if (!snack) return null
+  if (
+    snack === 'possible' ||
+    snack === '가능' ||
+    snack.includes('가능합니다') ||
+    snack === 'yes'
+  ) {
+    return '가능'
+  }
+  if (
+    snack === 'impossible' ||
+    snack === '불가' ||
+    snack === '불가능' ||
+    snack.includes('불가능합니다') ||
+    snack === 'no'
+  ) {
+    return '불가'
+  }
+  return raw?.trim() || null
+}
+
+function mapSnackAvailability(dto: UjatOrganizationApplicationDetail | null | undefined): string {
+  // UJAT snackAvailability = possible|impossible. mealNotice(잔여교재 meal)와 혼용하지 않는다.
+  return (
+    mapSnackAvailabilityLabel(dto?.snackAvailability ?? ownString(dto, 'snackAvailability')) ?? '-'
+  )
+}
+
+function mapSexOffenderCheckLabel(raw: string | null | undefined): string {
+  const trimmed = raw?.trim()
+  if (!trimmed) return '-'
+  const parts = trimmed
+    .split('|')
+    .map(part => part.trim())
+    .filter(Boolean)
+  // wire enum만 온 경우 시안 라벨로
+  if (parts.length === 1) {
+    const token = parts[0]!.toLowerCase().replace(/-/g, '_')
+    if (token === 'online' || token === 'online_submit') return '온라인 제출'
+    if (token === 'direct' || token === 'direct_submit') return '직접 제출'
+    if (token === 'ja_system') return 'JA 시스템 내에서 동의서 확인'
+    if (token === 'no_submit') return '동의서 미제출'
+    if (token === 'request') return '동의서 제출 요청'
+  }
+  return trimmed
+}
+
+/** 안내 사항 — Admin organization-application detail 프로젝션만 SSOT. form/local fallback 없음. */
+export function mapUjatOrganizationGuidanceNotes(
   dto: UjatOrganizationApplicationDetail | null | undefined
 ): UjatScheduleConfirmGuidanceNotes {
   return {
     searchDeviceGrade6: displayOrDash(dto?.computerInRoom),
     waitingArea: displayOrDash(dto?.waitingRoomLocation),
     textbookDisposalLocation: displayOrDash(
-      ownString(dto, 'leftoverTextbookDisposal') ?? dto?.mealNotice
+      dto?.leftoverTextbookDisposal ??
+        ownString(dto, 'leftoverTextbookDisposal') ??
+        dto?.mealNotice
     ),
     otherSpecialNotes: displayOrDash(dto?.parkingInfo),
     snackAvailability: mapSnackAvailability(dto),
-    sexOffenderCheck: displayOrDash(ownString(dto, 'sexOffenseCheckRequest')),
+    sexOffenderCheck: mapSexOffenderCheckLabel(
+      dto?.sexOffenseCheckRequest ?? ownString(dto, 'sexOffenseCheckRequest')
+    ),
   }
 }
 
@@ -174,10 +288,11 @@ export function buildUjatScheduleConfirmConfirmedDetail(
     otherRequests: displayOrDash(baseDetail.otherRequests),
     gradeEducationBlocks: baseDetail.gradeBlocks.map(block => ({
       ...block,
-      textbook: mapTextbookForGrade(dto, block.gradeLabel),
+      textbook: mapTextbookForGrade(dto, block),
     })),
     classTimeRows: baseDetail.classTimeRows,
+    preferredEducationDates: [...(baseDetail.preferredEducationDates ?? [])],
     educationScheduleDays: buildEducationScheduleDaysFromTemporarySchedule(temporarySchedule),
-    guidanceNotes: mapGuidanceNotes(dto),
+    guidanceNotes: mapUjatOrganizationGuidanceNotes(dto),
   }
 }

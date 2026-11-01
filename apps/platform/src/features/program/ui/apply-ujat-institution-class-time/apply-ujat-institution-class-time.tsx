@@ -1,10 +1,24 @@
-import { DetailInfoForm } from '@/features/form-template'
-import { PFCheckbox, PFItemDeleteButton, PFText, PFTimeInput } from '@/shared/ui'
-import type { ApplyUjatGradeBlock } from '../apply-ujat-institution-grade-info/apply-ujat-institution-grade-info'
+import {
+  PFCheckbox,
+  PFFormField,
+  PFFormFieldRow,
+  PFFormFieldTable,
+  PFFormPeriodPair,
+  PFFormPeriodTilde,
+  PFItemDeleteButton,
+  PFTimeInput,
+} from '@/shared/ui'
+import formStyles from '@/shared/ui/pf-form/pf-form.module.css'
+import hostStyles from '../apply-form-field-host.module.css'
+import {
+  UJAT_INSTITUTION_GRADE_VALUES,
+  type ApplyUjatGradeBlock,
+} from '../apply-ujat-institution-grade-info/apply-ujat-institution-grade-info'
 import blockStyles from '../apply-preferred-schedule/apply-preferred-schedule.module.css'
 import styles from './apply-ujat-institution-class-time.module.css'
 
 const PERIOD_IDS = ['period1', 'period2', 'period3', 'period4'] as const
+const TIME_INPUT_WIDTH = 120
 
 export type ApplyUjatClassTimePeriod = { start: string; end: string }
 
@@ -217,23 +231,25 @@ function PeriodTimePair({
   onChange: (next: ApplyUjatClassTimePeriod) => void
 }) {
   return (
-    <div className={`detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap ${blockStyles.timeInputs}`}>
+    <PFFormPeriodPair className={[formStyles.periodPair, styles.periodPair].join(' ')}>
       <PFTimeInput
+        variant="formPage"
+        size="large"
+        width={TIME_INPUT_WIDTH}
         placeholder="수업 시작"
         value={start}
         onValueChange={next => onChange({ start: next, end })}
-        className={blockStyles.timePicker}
       />
-      <PFText as="span" typo="bd-md-md" color="neutral-cool-500" className={blockStyles.tilde}>
-        ~
-      </PFText>
+      <PFFormPeriodTilde />
       <PFTimeInput
+        variant="formPage"
+        size="large"
+        width={TIME_INPUT_WIDTH}
         placeholder="수업 종료"
         value={end}
         onValueChange={next => onChange({ start, end: next })}
-        className={blockStyles.timePicker}
       />
-    </div>
+    </PFFormPeriodPair>
   )
 }
 
@@ -242,7 +258,8 @@ export function ApplyUjatInstitutionClassTime({
   onChange,
   gradeBlocks,
 }: ApplyUjatInstitutionClassTimeProps) {
-  const grades = uniqueGrades(gradeBlocks)
+  /** 피그마: 전체+1~6 항상 노출. 신청 학년만 선택 가능, 타 블록 점유·미신청은 disabled */
+  const appliedGrades = new Set(uniqueGrades(gradeBlocks))
 
   const patchBlock = (id: string, partial: Partial<ApplyUjatClassTimeBlock>) => {
     onChange(value.map(block => (block.id === id ? { ...block, ...partial } : block)))
@@ -275,98 +292,86 @@ export function ApplyUjatInstitutionClassTime({
   return (
     <div className={blockStyles.root}>
       {value.map((block, blockIndex) => {
-        const eligible = grades.filter(grade => {
-          const takenElsewhere = value.some(
-            other => other.id !== block.id && other.checkedGrades[grade],
-          )
-          return !takenElsewhere
+        const eligible = UJAT_INSTITUTION_GRADE_VALUES.filter(grade => {
+          if (!appliedGrades.has(grade)) return false
+          return !value.some(other => other.id !== block.id && other.checkedGrades[grade])
         })
         const allChecked = eligible.length > 0 && eligible.every(grade => block.checkedGrades[grade])
         const rankTitle = `수업 진행 시간 ${String(blockIndex + 1).padStart(2, '0')}`
         return (
           <div key={block.id} className={blockStyles.blockRow}>
             <div className={blockStyles.blockBody}>
-              <PFText as="p" typo="bd-md-sb" color="black" className={blockStyles.blockTitle}>
-                {rankTitle}
-              </PFText>
-              <DetailInfoForm
-                title="학년 별 수업 시간"
-                hideHeader
-                mode="edit"
-                className={blockStyles.scheduleForm}
+              <p className={blockStyles.blockTitle}>{rankTitle}</p>
+              <PFFormFieldTable
+                radius="rounded"
+                className={[styles.table, hostStyles.root].join(' ')}
               >
-                <DetailInfoForm.Row type="single">
-                  <DetailInfoForm.Field
-                    label="해당 학년"
-                    fullRow
-                    view="-"
-                    edit={
-                      <div className={styles.gradeRow}>
-                        <PFCheckbox
-                          checked={allChecked}
-                          disabled={eligible.length === 0}
-                          onCheckedChange={nextChecked => {
-                            const next = { ...block.checkedGrades }
-                            for (const grade of eligible) next[grade] = nextChecked
-                            patchBlock(block.id, { checkedGrades: next })
-                          }}
-                        >
-                          전체
-                        </PFCheckbox>
-                        {grades.map(grade => {
-                          const disabled = value.some(
-                            other => other.id !== block.id && other.checkedGrades[grade],
-                          )
-                          return (
-                            <PFCheckbox
-                              key={`${block.id}-${grade}`}
-                              checked={block.checkedGrades[grade] === true}
-                              disabled={disabled}
-                              onCheckedChange={nextChecked =>
-                                toggleGrade(block.id, grade, nextChecked)
-                              }
-                            >
-                              {grade}학년
-                            </PFCheckbox>
-                          )
-                        })}
-                      </div>
-                    }
-                  />
-                </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="double">
+                <PFFormFieldRow type="single">
+                  <PFFormField label="해당 학년" labelWidth="wider" fullWidth>
+                    <div className={styles.gradeRow}>
+                      <PFCheckbox
+                        checked={allChecked}
+                        disabled={eligible.length === 0}
+                        onCheckedChange={nextChecked => {
+                          const next = { ...block.checkedGrades }
+                          for (const grade of eligible) next[grade] = nextChecked
+                          patchBlock(block.id, { checkedGrades: next })
+                        }}
+                      >
+                        전체
+                      </PFCheckbox>
+                      {UJAT_INSTITUTION_GRADE_VALUES.map(grade => {
+                        const takenElsewhere = value.some(
+                          other => other.id !== block.id && other.checkedGrades[grade],
+                        )
+                        const disabled = !appliedGrades.has(grade) || takenElsewhere
+                        return (
+                          <PFCheckbox
+                            key={`${block.id}-${grade}`}
+                            checked={block.checkedGrades[grade] === true}
+                            disabled={disabled}
+                            onCheckedChange={nextChecked =>
+                              toggleGrade(block.id, grade, nextChecked)
+                            }
+                          >
+                            {grade}학년
+                          </PFCheckbox>
+                        )
+                      })}
+                    </div>
+                  </PFFormField>
+                </PFFormFieldRow>
+                <PFFormFieldRow type="double">
                   {PERIOD_IDS.slice(0, 2).map(periodId => (
-                    <DetailInfoForm.Field
+                    <PFFormField
                       key={periodId}
                       label={`${periodId.replace('period', '')}교시`}
-                      view="-"
-                      edit={
-                        <PeriodTimePair
-                          start={block.periods[periodId]?.start ?? ''}
-                          end={block.periods[periodId]?.end ?? ''}
-                          onChange={next => patchPeriod(block, periodId, next)}
-                        />
-                      }
-                    />
+                      labelWidth="wider"
+                    >
+                      <PeriodTimePair
+                        start={block.periods[periodId]?.start ?? ''}
+                        end={block.periods[periodId]?.end ?? ''}
+                        onChange={next => patchPeriod(block, periodId, next)}
+                      />
+                    </PFFormField>
                   ))}
-                </DetailInfoForm.Row>
-                <DetailInfoForm.Row type="double">
+                </PFFormFieldRow>
+                <PFFormFieldRow type="double">
                   {PERIOD_IDS.slice(2).map(periodId => (
-                    <DetailInfoForm.Field
+                    <PFFormField
                       key={periodId}
                       label={`${periodId.replace('period', '')}교시`}
-                      view="-"
-                      edit={
-                        <PeriodTimePair
-                          start={block.periods[periodId]?.start ?? ''}
-                          end={block.periods[periodId]?.end ?? ''}
-                          onChange={next => patchPeriod(block, periodId, next)}
-                        />
-                      }
-                    />
+                      labelWidth="wider"
+                    >
+                      <PeriodTimePair
+                        start={block.periods[periodId]?.start ?? ''}
+                        end={block.periods[periodId]?.end ?? ''}
+                        onChange={next => patchPeriod(block, periodId, next)}
+                      />
+                    </PFFormField>
                   ))}
-                </DetailInfoForm.Row>
-              </DetailInfoForm>
+                </PFFormFieldRow>
+              </PFFormFieldTable>
             </div>
             {blockIndex > 0 ? (
               <div className={blockStyles.deleteCell}>

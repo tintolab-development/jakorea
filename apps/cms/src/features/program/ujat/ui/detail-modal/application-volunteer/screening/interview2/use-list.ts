@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type Key } from 'rea
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs, { type Dayjs } from 'dayjs'
 import {
+  mergeUjatVolunteerApplicantQueryRow,
   patchUjatVolunteerInterviewEvaluation,
   patchUjatVolunteerSecondInterviewScreeningStatus,
   type UjatVolunteerApplicantRow,
@@ -12,19 +13,23 @@ import { listUjatVolunteerApplicationsPage } from '@/features/program/ujat/api/a
 import { buildUjatVolunteerInterview2ListQuery } from '@/features/program/ujat/api/applications-list-query'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
+import { invalidateUjatVolunteerApplicationLists } from '@/features/program/ujat/api/volunteer-application-list-cache'
 import {
   giveUpUjatVolunteerApplicationRemote,
   submitUjatVolunteerFinalResultsRemote,
   submitUjatVolunteerInterviewEvaluationRemote,
 } from '@/features/program/ujat/api/volunteer-mutations'
 import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import {
+  readInterviewDecisionErrorAlert,
+  shouldSkipLocalApiErrorAlert,
+} from '@/features/program/shared/lib/interview-not-ended'
 import type {
   UjatSecondInterviewScreeningStatus,
   UjatVolunteerRecruitHalf,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import {
   DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS,
@@ -40,6 +45,7 @@ import {
   openUjatVolunteerInterview2BulkPassModal,
 } from './actions'
 import type { UjatInterview2BulkPassConfirmPayload } from './bulk-pass-modal'
+import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
   guardUjatVolunteerInterview2Evaluation,
   guardUjatVolunteerInterview2Fail,
@@ -140,6 +146,8 @@ export function useUjatVolunteerInterview2({
   )
   const [withdrawTargetId, setWithdrawTargetId] = useState<string | null>(null)
   const [bulkPassModalOpen, setBulkPassModalOpen] = useState(false)
+  const [failModal, setFailModal] = useState<{ ids: string[]; volunteerName: string } | null>(null)
+  const [resultCompleteKind, setResultCompleteKind] = useState<'pass' | 'fail' | null>(null)
   const [now, setNow] = useState(() => dayjs())
   const finalResultInFlightRef = useRef(false)
 
@@ -171,12 +179,19 @@ export function useUjatVolunteerInterview2({
     setSelectedRowKeys([])
     setWithdrawTargetId(null)
     setBulkPassModalOpen(false)
+    setFailModal(null)
+    setResultCompleteKind(null)
     setNow(dayjs())
   }, [programId, half])
 
   useEffect(() => {
     setList(previous =>
-      queriedRows.map(row => previous.find(current => current.id === row.id) ?? row)
+      queriedRows.map(row =>
+        mergeUjatVolunteerApplicantQueryRow(
+          previous.find(current => current.id === row.id),
+          row
+        )
+      )
     )
   }, [queriedRows])
 
@@ -186,9 +201,7 @@ export function useUjatVolunteerInterview2({
   }, [])
 
   const invalidateVolunteerLists = useCallback(async () => {
-    await queryClient.invalidateQueries({
-      queryKey: [...ujatQueryKeys.applications(), 'volunteers', programId],
-    })
+    await invalidateUjatVolunteerApplicationLists(queryClient, programId)
   }, [programId, queryClient])
 
   const updateRow = useCallback((id: string, patch: Partial<UjatVolunteerApplicantRow>) => {
@@ -246,16 +259,25 @@ export function useUjatVolunteerInterview2({
         return true
       }
       try {
-        await submitUjatVolunteerFinalResultsRemote(ids, status, reason, notify)
+        const bulk = await submitUjatVolunteerFinalResultsRemote(ids, status, reason, notify)
+        if (bulk && (bulk.failureCount ?? 0) > 0) {
+          showAlert({
+            title: '면접 결과 일부 실패',
+            content: `요청 ${bulk.requestedCount ?? ids.length}건 중 성공 ${bulk.successCount ?? 0}건, 실패 ${bulk.failureCount ?? 0}건입니다.`,
+          })
+        }
         await invalidateVolunteerLists()
         return true
       } catch (error: unknown) {
-        showAlert({
-          title: '2차 면접 결과 저장 실패',
-          content:
-            formatApplicationEligibilityConflictMessage(error) ??
-            '최종 결과 처리에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
-        })
+        if (!shouldSkipLocalApiErrorAlert(error)) {
+          const alert = readInterviewDecisionErrorAlert(error, '2차 면접 결과 저장 실패')
+          showAlert({
+            title: alert.title,
+            content:
+              formatApplicationEligibilityConflictMessage(error) ??
+              alert.content,
+          })
+        }
         await invalidateVolunteerLists()
         return false
       } finally {
@@ -273,21 +295,50 @@ export function useUjatVolunteerInterview2({
     setInterview2Confirm(null)
   }, [])
 
+  const closeFailModal = useCallback(() => {
+    setFailModal(null)
+  }, [])
+
   const handleBulkFail = useCallback(() => {
     const ids = selectedRowKeys.map(String)
+    const firstName =
+      list.find(row => ids.includes(row.id))?.name?.trim() || '봉사자'
     confirmUjatVolunteerInterview2Fail({
-      showConfirm: showInterview2Confirm,
       count: ids.length,
-      onConfirm: () => applySecondInterviewStatus(ids, 'fail'),
+      onOpen: () => setFailModal({ ids, volunteerName: firstName }),
     })
-  }, [applySecondInterviewStatus, selectedRowKeys, showInterview2Confirm])
+  }, [list, selectedRowKeys])
+
+  const confirmInterview2Fail = useCallback(
+    async (payload: PermissionModalPayload) => {
+      if (!failModal) return
+      const notify = toScreeningNotifyFields(payload.notifyTiming, payload.manualNotifyAt)
+      const ok = await applySecondInterviewStatus(
+        failModal.ids,
+        'fail',
+        payload.reason.trim(),
+        notify
+      )
+      setFailModal(null)
+      if (!ok) return
+      setResultCompleteKind('fail')
+    },
+    [applySecondInterviewStatus, failModal]
+  )
+
+  const closeResultCompleteModal = useCallback(() => {
+    setResultCompleteKind(null)
+  }, [])
 
   const handleBulkPass = useCallback(() => {
-    openUjatVolunteerInterview2BulkPassModal(
-      () => setBulkPassModalOpen(true),
-      selectedRowKeys.length
-    )
-  }, [selectedRowKeys.length])
+    const ids = selectedRowKeys.map(String)
+    const selectedRows = list.filter(row => ids.includes(row.id))
+    openUjatVolunteerInterview2BulkPassModal({
+      selectedIds: ids,
+      selectedRows,
+      onOpen: () => setBulkPassModalOpen(true),
+    })
+  }, [list, selectedRowKeys])
 
   const closeBulkPassModal = useCallback(() => {
     setBulkPassModalOpen(false)
@@ -300,6 +351,7 @@ export function useUjatVolunteerInterview2({
       const ok = await applySecondInterviewStatus(ids, payload.passType, undefined, notify)
       setBulkPassModalOpen(false)
       if (!ok) return
+      setSelectedRowKeys([])
       const passTypeLabel =
         UJAT_INTERVIEW2_BULK_PASS_TYPE_OPTIONS.find(option => option.value === payload.passType)
           ?.label ?? payload.passType
@@ -308,9 +360,9 @@ export function useUjatVolunteerInterview2({
           ? '즉시'
           : payload.notifyTiming === 'on_announcement'
             ? '발표일에 맞춰서'
-            : (payload.manualNotifyAt
-                ? formatYmdHmWithKoreanWeekday(payload.manualNotifyAt)
-                : '직접 설정')
+            : payload.manualNotifyAt
+              ? payload.manualNotifyAt.format('YYYY.MM.DD HH:mm')
+              : '직접 설정'
       showAlert({
         title: '일괄 합격',
         content: `선택한 ${ids.length}건이 ${passTypeLabel} 처리되었습니다. (알림: ${notifyLabel})`,
@@ -325,7 +377,13 @@ export function useUjatVolunteerInterview2({
       confirmUjatVolunteerInterview2Pass({
         showConfirm: showInterview2Confirm,
         count: 1,
-        onConfirm: () => applySecondInterviewStatus([row.id], 'pass'),
+        onConfirm: () => {
+          void (async () => {
+            const ok = await applySecondInterviewStatus([row.id], 'pass')
+            if (!ok) return
+            setResultCompleteKind('pass')
+          })()
+        },
       })
     },
     [applySecondInterviewStatus, showInterview2Confirm]
@@ -335,12 +393,11 @@ export function useUjatVolunteerInterview2({
     (row: UjatVolunteerApplicantRow) => {
       if (!guardUjatVolunteerInterview2Fail(row)) return
       confirmUjatVolunteerInterview2Fail({
-        showConfirm: showInterview2Confirm,
         count: 1,
-        onConfirm: () => applySecondInterviewStatus([row.id], 'fail'),
+        onOpen: () => setFailModal({ ids: [row.id], volunteerName: row.name }),
       })
     },
-    [applySecondInterviewStatus, showInterview2Confirm]
+    []
   )
 
   const requestWithdrawActivity = useCallback((row: UjatVolunteerApplicantRow) => {
@@ -422,13 +479,18 @@ export function useUjatVolunteerInterview2({
         })
         return true
       } catch (error: unknown) {
-        showAlert({
-          title: '면접 평가 실패',
-          content: extractApiErrorMessage((error as { response?: { data?: unknown } })?.response?.data, {
-            httpStatus: getApiErrorHttpStatus(error),
-            fallback: '면접 평가 저장 중 오류가 발생했습니다. 입력값을 유지한 채 다시 시도해 주세요.',
-          }),
-        })
+        if (!shouldSkipLocalApiErrorAlert(error)) {
+          const alert = readInterviewDecisionErrorAlert(error, '면접 평가 실패')
+          showAlert({
+            title: alert.title,
+            content:
+              alert.content ||
+              extractApiErrorMessage((error as { response?: { data?: unknown } })?.response?.data, {
+                httpStatus: getApiErrorHttpStatus(error),
+                fallback: '면접 평가 저장 중 오류가 발생했습니다. 입력값을 유지한 채 다시 시도해 주세요.',
+              }),
+          })
+        }
         return false
       }
     },
@@ -473,8 +535,15 @@ export function useUjatVolunteerInterview2({
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount: selectedRowKeys.length,
+    bulkPassSubjectName:
+      list.find(row => selectedRowKeys.map(String).includes(row.id))?.name ?? '',
     interview2Confirm,
     closeInterview2Confirm,
+    failModal,
+    closeFailModal,
+    confirmInterview2Fail,
+    resultCompleteKind,
+    closeResultCompleteModal,
     filterRowsSource: list,
     requestWithdrawActivity,
     cancelWithdrawActivity,

@@ -45,7 +45,7 @@
   min-height: var(--calendar-cell-min-height, 124px);
   height: auto;
   max-height: none;
-  padding: 8px;
+  padding: 6px 7px 6px 6px;
   display: flex;
   flex-direction: column;
   text-align: left;

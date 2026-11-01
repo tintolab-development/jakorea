@@ -13,6 +13,7 @@ import {
   type CalendarItem,
 } from '@/shared/components/calendar'
 import type { RenderCalendarMonthEventContent } from '@/shared/components/calendar/model/calendar-month-cell-row'
+import { CalendarMonthEventTitleWithDivider } from '@/shared/components/calendar/ui/calendar-month-event-title'
 import {
   SCHEDULE_COLORS,
   type ScheduleColorPair,
@@ -273,9 +274,17 @@ export function UjatInstitutionApplicationCalendarView({
   )
 
   const renderMonthEventContent: RenderCalendarMonthEventContent = useCallback(
-    ({ row }) => (
-      <span className="calendar-event-title">{String(row.sourceEvent.title ?? '')}</span>
-    ),
+    ({ row, colors }) => {
+      const institution = extractInstitutionFromCalendarItem(row.sourceEvent)
+      const left = institution?.institutionName ?? String(row.sourceEvent.title ?? '')
+      const right = institution?.regionLabel?.trim() || undefined
+      return (
+        <CalendarMonthEventTitleWithDivider
+          parts={{ left, right }}
+          accentColor={colors.text}
+        />
+      )
+    },
     []
   )
 

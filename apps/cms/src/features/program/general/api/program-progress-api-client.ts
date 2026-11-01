@@ -215,9 +215,16 @@ export async function bulkUpsertProgramAttendancesRemote(
   )
 }
 
+/** 일정 시작일 범위(포함, YYYY-MM-DD Asia/Seoul). 없으면 BE 기본 범위(이번 달). */
+export interface ProgramScheduleDateRange {
+  dateFrom: string
+  dateTo: string
+}
+
 /** GET /api/admin/dashboard/program-schedules — 프로그램 일정 목록(출석 세션 옵션용). P2-2 전용 schedules list 대체. */
 export async function fetchProgramSchedulesViaDashboardRemote(
-  programId: string
+  programId: string,
+  dateRange?: ProgramScheduleDateRange | null
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/dashboardProgramScheduleResponse').DashboardProgramScheduleResponse[]
 > {
@@ -225,7 +232,10 @@ export async function fetchProgramSchedulesViaDashboardRemote(
     '@/features/dashboard/api/dashboard-api-client'
   )
   const body = await fetchDashboardProgramSchedulesRemote(
-    toDashboardQueryParams({ programIds: [programId] })
+    toDashboardQueryParams({
+      programIds: [programId],
+      ...(dateRange ? { extra: { dateFrom: dateRange.dateFrom, dateTo: dateRange.dateTo } } : {}),
+    })
   )
   return body.items ?? []
 }
@@ -446,6 +456,8 @@ export type ParticipantEducationScopeScheduleEnrich = {
    * 자택과 장소가 같아 서버가 0km 이하로 버린 경우. FE는 재계산하지 않는다.
    */
   distanceKm?: number | null
+  /** 장거리 표기 전용(단가 아님). 없으면 FE는 접미어를 붙이지 않는다. */
+  longDistance?: boolean | null
   /** 동일 scheduleId VOLUNTEER education-scope 인원. 항상 number, 0 포함 (omit 금지) */
   assignedVolunteerCount: number
 }
@@ -616,9 +628,19 @@ export type GeneralAssignmentSubmissionListResponse = {
 }
 
 const GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE = 20
+const GENERAL_ASSIGNMENT_SUBMISSIONS_MAX_PAGES = 50
 
-/** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
-export async function fetchProgramAssignmentSubmissionsRemote(
+function readAssignmentSubmissionScheduleItems(
+  body: unknown
+): GeneralAssignmentSubmissionScheduleDto[] {
+  if (Array.isArray(body)) return body
+  if (body == null || typeof body !== 'object') return []
+  const record = body as Record<string, unknown>
+  const raw = record.items ?? record.content ?? record.schedules
+  return Array.isArray(raw) ? (raw as GeneralAssignmentSubmissionScheduleDto[]) : []
+}
+
+async function fetchProgramAssignmentSubmissionsPage(
   programId: string,
   params?: {
     scheduleId?: string
@@ -635,9 +657,7 @@ export async function fetchProgramAssignmentSubmissionsRemote(
     size: params?.size ?? GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE,
     ...params,
   }
-  const body = await unwrapApiBody<
-    GeneralAssignmentSubmissionListResponse | GeneralAssignmentSubmissionScheduleDto[]
-  >(
+  const body = await unwrapApiBody<unknown>(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/assignment-submissions`,
       method: 'GET',
@@ -645,10 +665,47 @@ export async function fetchProgramAssignmentSubmissionsRemote(
     })
   )
   if (Array.isArray(body)) return { items: body }
+  if (body == null || typeof body !== 'object') return { items: [] }
+  const record = body as GeneralAssignmentSubmissionListResponse
   return {
-    ...body,
-    items: body.items ?? [],
+    ...record,
+    items: readAssignmentSubmissionScheduleItems(body),
   }
+}
+
+/** GET /api/admin/programs/{programId}/assignment-submissions — 일반 개인 LNB 과제 관리 */
+export async function fetchProgramAssignmentSubmissionsRemote(
+  programId: string,
+  params?: {
+    scheduleId?: string
+    memberName?: string
+    affiliation?: string
+    grade?: string
+    submissionStatus?: 'NOT_SUBMITTED' | 'SUBMITTED'
+    page?: number
+    size?: number
+  }
+): Promise<GeneralAssignmentSubmissionListResponse> {
+  const first = await fetchProgramAssignmentSubmissionsPage(programId, params)
+  const pageSize = params?.size ?? first.size ?? GENERAL_ASSIGNMENT_SUBMISSIONS_PAGE_SIZE
+  const items = [...(first.items ?? [])]
+  const totalPages =
+    first.totalPages ??
+    (first.totalElements != null ? Math.ceil(first.totalElements / pageSize) : 1)
+  const shouldPage =
+    params?.page == null &&
+    (totalPages > 1 || (first.totalElements != null && first.totalElements > items.length))
+  if (!shouldPage) return { ...first, items }
+
+  for (let page = 1; page < totalPages && page < GENERAL_ASSIGNMENT_SUBMISSIONS_MAX_PAGES; page += 1) {
+    const next = await fetchProgramAssignmentSubmissionsPage(programId, {
+      ...params,
+      page,
+      size: pageSize,
+    })
+    items.push(...(next.items ?? []))
+  }
+  return { ...first, items }
 }
 
 /** POST /api/admin/programs/{programId}/submission-teams */
@@ -682,7 +739,10 @@ export async function registerVolunteerParticipantRemote(
   payload: VolunteerParticipantRegisterRequest
 ): Promise<VolunteerParticipantRegisterResponse> {
   return unwrapApiBody<VolunteerParticipantRegisterResponse>(
-    await programProgressApi.registerVolunteerParticipant(programId, payload)
+    await programProgressApi.registerVolunteerParticipant(
+      toNumericProgramId(programId),
+      payload
+    )
   )
 }
 
@@ -698,7 +758,10 @@ export async function fetchProgramParticipantRegisterCandidatesRemote(
   }
 ): Promise<PageResponseProgramParticipantRegisterCandidateResponse> {
   return unwrapApiBody<PageResponseProgramParticipantRegisterCandidateResponse>(
-    await programProgressApi.participantRegisterCandidates(programId, params)
+    await programProgressApi.getApiAdminProgramsProgramIdParticipantRegisterCandidates(
+      programId,
+      params
+    )
   )
 }
 
@@ -708,7 +771,7 @@ export async function fetchEmployeeVolunteerCountsRemote(
   organizationApplicationId?: number
 ): Promise<EmployeeVolunteerCountSetResponse> {
   return unwrapApiBody(
-    await programProgressApi.get1(
+    await programProgressApi.getApiAdminProgramsProgramIdEmployeeVolunteerCounts(
       toNumericProgramId(programId),
       organizationApplicationId != null ? { organizationApplicationId } : undefined
     )
@@ -721,6 +784,9 @@ export async function putEmployeeVolunteerCountsRemote(
   payload: EmployeeVolunteerCountReplaceRequest
 ): Promise<EmployeeVolunteerCountSetResponse> {
   return unwrapApiBody(
-    await programProgressApi.replace2(toNumericProgramId(programId), payload)
+    await programProgressApi.putApiAdminProgramsProgramIdEmployeeVolunteerCounts(
+      toNumericProgramId(programId),
+      payload
+    )
   )
 }

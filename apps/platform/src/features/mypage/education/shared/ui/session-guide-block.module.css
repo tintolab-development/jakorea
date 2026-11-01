@@ -62,3 +62,41 @@
   justify-content: flex-end;
   gap: var(--spacing-8);
 }
+
+/* mobileStack opt-in — Figma 6810:78493 (Mobile 375) 문서 제출 블록 */
+@media (--bp-below-pc) {
+  .mobileStack {
+    padding: var(--spacing-16);
+  }
+
+  .mobileStack .top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mobileStack .main {
+    flex: 0 0 auto;
+  }
+
+  .mobileStack .messageRow .statusLabel,
+  .mobileStack .messageRow .message {
+    font-size: 18px;
+    letter-spacing: -0.18px;
+  }
+
+  .mobileStack .main .description {
+    font-size: 14px;
+    line-height: 160%;
+    letter-spacing: 0;
+  }
+
+  .mobileStack .actionStack {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mobileStack .actionStack > * {
+    width: 100%;
+  }
+}
