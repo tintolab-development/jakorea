@@ -430,11 +430,17 @@ export function buildVolunteerAssignmentProgressView(
       item => item.participantId === participantId
     )
 
-    // 배정 학급 SSOT: matrix cell → 활성 partner-assignment. submissions.assignedClass로 invent 금지.
-    const classLabel =
-      cell?.classLabel?.trim() || partnerAssignment?.classLabel?.trim() || ''
+    // 배정 학급 SSOT: allocation-matrix cell.classLabel만. partner-assignment/submissions 백필 금지.
+    const assignmentStatus = (cell?.assignmentStatus ?? '').trim().toUpperCase()
+    const needsReassignment =
+      cell?.needsReassignment === true || assignmentStatus === 'REASSIGNMENT_REQUIRED'
+    const rawClassLabel = cell?.classLabel?.trim() || ''
     const abandoned =
       volunteer?.giveUp === true || submission?.volunteer.activityAbandoned === true
+    const assignedFromMatrix =
+      !abandoned &&
+      (assignmentStatus === 'ASSIGNED' || needsReassignment || rawClassLabel.length > 0)
+    const classLabel = assignedFromMatrix ? rawClassLabel || '—' : ''
     // 기관명: matrix column 우선. submissions-only 행(매트릭스에 없는 일정)만 submission 기관명.
     const institutionName =
       draft.column?.organizationName?.trim() ||
@@ -452,7 +458,7 @@ export function buildVolunteerAssignmentProgressView(
     const planSubmitted = isDocumentSubmitted(plan?.status)
     const logSubmitted = isDocumentSubmitted(log?.status)
     const attendance = abandoned ? ({ kind: 'withdrawn' } as const) : mapAttendance(attendanceItem)
-    const assigned = !abandoned && classLabel.length > 0
+    const assigned = assignedFromMatrix
 
     let educationProgress: UjatVolunteerAssignmentProgressRow['educationProgress'] = 'dash'
     if (assigned) {

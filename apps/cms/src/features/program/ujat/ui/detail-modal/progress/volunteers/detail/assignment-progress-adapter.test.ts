@@ -260,4 +260,51 @@ describe('buildVolunteerAssignmentProgressView', () => {
     expect(view.bundle.rows.every(row => row.attendance.kind === 'withdrawn')).toBe(true)
     expect(view.bundle.attendanceSummary.completionStatus).toBe('수료 불가(활동 포기)')
   })
+
+  it('ASSIGNED인데 matrix classLabel이 비면 partner-assignment로 백필하지 않고 —만 둔다', () => {
+    const view = buildVolunteerAssignmentProgressView({
+      participantId: 7,
+      memberId: '70',
+      matrix: {
+        ...matrix,
+        volunteers: [
+          {
+            participantId: 7,
+            memberId: 70,
+            volunteerName: '이봉사',
+            totalAssignedDays: 1,
+            cells: [
+              {
+                columnKey: 'col-1',
+                scheduleId: 10,
+                educationSlotId: 501,
+                classLabel: null,
+                assignmentStatus: 'ASSIGNED',
+                organizationApplicationId: 3,
+              },
+            ],
+          },
+        ],
+      },
+      submissions: { sessions: [] },
+      partnerAssignmentsByScheduleId: {
+        '10': [
+          {
+            assignmentGroupId: 'grp-1',
+            scheduleId: 10,
+            status: 'ASSIGNED',
+            primaryParticipantId: 7,
+            secondaryParticipantId: 8,
+            educationSlotId: 501,
+            classLabel: '2학년 9반',
+            organizationApplicationId: 3,
+          },
+        ],
+      },
+      attendancesByScheduleId: {},
+      absenceReasons: [],
+    })
+
+    expect(view.bundle.rows[0]?.classDisplay).toEqual({ kind: 'class', label: '—' })
+  })
 })

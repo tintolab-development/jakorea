@@ -51,8 +51,9 @@ function isVolunteerUnassignedOnColumn(
   return cell?.kind !== 'assigned' || cell.isInvalidAssignment === true
 }
 
-function countVolunteerAssignedDays(row: RegionAssignmentVolunteerRow): number {
-  return row.cells.filter(cell => cell.kind === 'assigned').length
+/** 반기 matrix 응답의 totalAssignedDays SSOT — cells를 다시 세어 보정하지 않는다 */
+function volunteerAssignedDays(row: RegionAssignmentVolunteerRow): number {
+  return row.totalAssignedDays
 }
 
 /**
@@ -224,9 +225,7 @@ export function getRegionBlockedDateSubstituteVolunteerOptionsFromData(
         !row.isWithdrawnVolunteer &&
         isVolunteerFreeOnColumnIndices(row, columnIndices)
     )
-    .sort(
-      (a, b) => countVolunteerAssignedDays(a) - countVolunteerAssignedDays(b)
-    )
+    .sort((a, b) => volunteerAssignedDays(a) - volunteerAssignedDays(b))
     .map(row => ({
       value: row.id,
       label: row.name,

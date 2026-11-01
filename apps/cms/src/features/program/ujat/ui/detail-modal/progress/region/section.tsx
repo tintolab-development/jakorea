@@ -266,7 +266,7 @@ export function UjatEducationProgressRegionAssignmentSection({
       ) : !hasScheduleColumns ? (
         <div className="ujat-education-progress-region-assignment__state">
           {isRemote
-            ? '해당 반기·지역에 확정된 교육 일정이 없습니다'
+            ? '해당 반기·지역 확정 교육 일정 없음'
             : '원격 API를 사용할 수 없어 배정표를 표시하지 않습니다.'}
         </div>
       ) : (
