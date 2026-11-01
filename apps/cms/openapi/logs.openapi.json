@@ -4968,15 +4968,15 @@
       },
       "AttendanceManagerUpdateRequest": {
         "type": "object",
+        "description": "UJAT 교육일 출결 담당자 지정/해제 요청",
         "properties": {
           "participantId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "출결 담당자로 지정할 program_participant.id. null이면 해당 교육일(scheduleId)의 출결 담당을 해제한다. 0이나 다른 id로 치환하지 않는다.",
+            "nullable": true
           }
-        },
-        "required": [
-          "participantId"
-        ]
+        }
       },
       "CapacityLimitRequest": {
         "type": "object",
@@ -11658,6 +11658,21 @@
             "type": "integer",
             "format": "int32"
           },
+          "schoolEnrollmentStatus": {
+            "type": "string",
+            "description": "회원 학교 재학 여부. ENROLLED | NOT_ENROLLED. 비민감이므로 MASKED/UNMASKED 모두 원문. 없으면 null. application.ujat와 무관",
+            "nullable": true
+          },
+          "affiliationSchool": {
+            "type": "string",
+            "description": "회원 소속 학교명(고교 등). schoolName/affiliationName alias. universityName(application.ujat)과 혼용하지 않음. MASKED는 학교명 마스킹, UNMASKED는 원문. 없으면 null",
+            "nullable": true
+          },
+          "affiliationGrade": {
+            "type": "string",
+            "description": "회원 소속 학교 학년 표시값(예: 1학년, 1). application.ujat.grade(대학 학년)와 혼용하지 않음. MASKED/UNMASKED 모두 원문(일반 개인 신청 profile과 동일). 없으면 null",
+            "nullable": true
+          },
           "contact": {
             "type": "string"
           },
@@ -14875,10 +14890,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -15950,6 +15965,13 @@
               "AGREE"
             ],
             "minLength": 1
+          },
+          "thirdPartyRecipient": {
+            "type": "string",
+            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. 일반(GENERAL*) 프로그램 CMS_PROGRESS_ADD에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).",
+            "maxLength": 200,
+            "minLength": 0,
+            "nullable": true
           },
           "id1365": {
             "type": "string",
@@ -33743,6 +33765,204 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "ApiResponseSettlementApplicationDocumentResponse": {
+        "type": "object",
+        "description": "공통 API 응답 래퍼. 오류 응답에서는 success=false, data=null, message에는 사용자 표시용 한국어 문구를 담고, error에는 프론트 분기용 구조화 오류 정보를 담습니다.",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "요청 처리 성공 여부",
+            "example": false
+          },
+          "data": {
+            "$ref": "#/components/schemas/SettlementApplicationDocumentResponse",
+            "description": "성공 응답 데이터. 오류 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 또는 안내 메시지. 화면에 바로 표시할 수 있는 사용자용 한국어 문구입니다.",
+            "example": "현재 상태에서는 요청을 처리할 수 없습니다.",
+            "nullable": true
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail",
+            "description": "구조화된 오류 정보. 성공 응답에서는 null입니다.",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "description": "RFC7807 detail과 같은 사용자 표시 문구. 오류에서만 채우며 message와 동일합니다.",
+            "example": "면접이 아직 종료되지 않았습니다.",
+            "nullable": true
+          }
+        }
+      },
+      "BasicInfo": {
+        "type": "object",
+        "description": "제출 시점 스냅샷만. 스냅샷 없는 필드는 null(현재 회원/동의서 값으로 채우지 않음).",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "englishName": {
+            "type": "string"
+          },
+          "residentNumberMasked": {
+            "type": "string",
+            "description": "예: 000915-1******. 원문 없음.",
+            "example": "000915-1******"
+          },
+          "affiliation": {
+            "type": "string"
+          },
+          "homeAddress": {
+            "type": "string"
+          },
+          "homeAddressDetail": {
+            "type": "string"
+          },
+          "bank": {
+            "type": "string"
+          },
+          "accountNumberMasked": {
+            "type": "string",
+            "description": "마스킹된 계좌번호. 원문 없음."
+          },
+          "accountHolder": {
+            "type": "string"
+          },
+          "paymentPurpose": {
+            "type": "string"
+          }
+        }
+      },
+      "CalcInfo": {
+        "type": "object",
+        "description": "지급조서(PAYMENT_STATEMENT)만. 영수증 경로는 null.",
+        "properties": {
+          "lectureFeeType": {
+            "type": "string",
+            "description": "강의비 유형(스냅샷 taxIncomeType 등)"
+          },
+          "instructorFeeAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "강사비 책정액"
+          },
+          "businessIncomeYn": {
+            "type": "boolean",
+            "description": "사업소득자 여부"
+          },
+          "educationSessionCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "교육 진행 차시. 제출 스냅샷에 없으면 null"
+          },
+          "totalStudentCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "총 학생 수. 제출 스냅샷에 없으면 null"
+          },
+          "totalLectureFee": {
+            "type": "integer",
+            "format": "int64",
+            "description": "총 강의비"
+          }
+        }
+      },
+      "Line": {
+        "type": "object",
+        "properties": {
+          "institutionName": {
+            "type": "string"
+          },
+          "educationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "sessionLabel": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "PAYMENT",
+              "DEDUCTION"
+            ]
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "공제 행은 음수"
+          }
+        }
+      },
+      "SettlementApplicationDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "RECEIPT_SETTLEMENT",
+              "PAYMENT_STATEMENT"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "revisionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          },
+          "basicInfo": {
+            "$ref": "#/components/schemas/BasicInfo"
+          },
+          "calcInfo": {
+            "$ref": "#/components/schemas/CalcInfo"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Line"
+            }
+          },
+          "total": {
+            "$ref": "#/components/schemas/Total"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Attachment"
+            }
+          }
+        }
+      },
+      "Total": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formulaLabel": {
+            "type": "string"
           }
         }
       },

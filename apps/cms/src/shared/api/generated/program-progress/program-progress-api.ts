@@ -338,7 +338,7 @@ const getMyGeneratedFileJob = (
  * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
  * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
  * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: General program progress volunteer modal; eligibility SSOT with POST participants VOLUNTEER
+ * - 검토 메모: GENERAL+UJAT progress volunteer modal; eligibility SSOT with POST volunteer-participants/register; no recruitHalf query
  * @summary 봉사자 추가 등록 후보 조회
  */
 const participantRegisterCandidates = (

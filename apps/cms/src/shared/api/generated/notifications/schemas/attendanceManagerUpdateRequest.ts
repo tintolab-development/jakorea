@@ -6,6 +6,10 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * UJAT 교육일 출결 담당자 지정/해제 요청
+ */
 export interface AttendanceManagerUpdateRequest {
-  participantId: number;
+  /** 출결 담당자로 지정할 program_participant.id. null이면 해당 교육일(scheduleId)의 출결 담당을 해제한다. 0이나 다른 id로 치환하지 않는다. */
+  participantId?: number | null;
 }
