@@ -19,15 +19,12 @@ function formatRegionDirectAssignClassOptionLabel(
 
 export const REGION_DIRECT_ASSIGN_SECONDARY_LABEL = '두 번째 봉사자 배정'
 
-/** 학급 슬롯 배정 인원 — 배정 불가일·재배정 필요 건은 미배정으로 본다 */
+/** 학급 슬롯 배정 인원 — 재배정 필요 건은 미배정으로 본다 */
 function countRegionClassSlotAssignees(
-  column: RegionAssignmentColumn,
   classLabel: string,
   rows: RegionAssignmentVolunteerRow[],
   columnIndex: number
 ): number {
-  if (column.isBlockedDate) return 0
-
   return rows.filter(row => {
     const cell = row.cells[columnIndex]
     return (
@@ -96,7 +93,7 @@ export function getRegionDirectAssignClassOptionsFromData(
         formatUjatGradeClassDisplayLabel(slot.classLabel),
         column.institutionName
       )
-      const assignees = countRegionClassSlotAssignees(column, slot.classLabel, rows, columnIndex)
+      const assignees = countRegionClassSlotAssignees(slot.classLabel, rows, columnIndex)
       if (assignees >= 2) {
         return { value: slot.id, label: `${label} · 배정 완료`, disabled: true }
       }
@@ -134,7 +131,7 @@ export function mapRegionDirectAssignCandidateOptions(
 }
 
 /**
- * 배정 불가일 POST 대상 scheduleId — 활동 불가는 서울 날짜 단위로 적용되므로 날짜당 1건.
+ * 참여 불가일 POST 대상 scheduleId — 활동 불가는 서울 날짜 단위로 적용되므로 날짜당 1건.
  * 대상 봉사자가 그 날 배정된 일정이 있으면 그 일정(대체자가 해당 배정을 넘겨받음), 없으면 그 날 첫 일정.
  */
 export function selectRegionUnavailabilityScheduleIds(
@@ -162,7 +159,7 @@ export function selectRegionUnavailabilityScheduleIds(
   })
 }
 
-/** 배정 불가일 설정 — 봉사자명 옵션 */
+/** 참여 불가일 설정 — 봉사자명 옵션 */
 export function getRegionBlockedDateVolunteerOptions(
   regionKey: UjatInstitutionApplicationRegionKey
 ): { value: string; label: string }[] {
@@ -177,7 +174,7 @@ export function getRegionBlockedDateVolunteerOptions(
     }))
 }
 
-/** 배정 불가일 설정 — 지역 내 모든 교육일(중복 일자 제거, 열 순서 유지) */
+/** 참여 불가일 설정 — 지역 내 모든 교육일(중복 일자 제거, 열 순서 유지) */
 export function getRegionEducationDateOptions(
   regionKey: UjatInstitutionApplicationRegionKey
 ): { value: string; label: string }[] {

@@ -96,12 +96,21 @@
 }
 
 .ujat-region-assignment-download-modal__label {
-  color: var(--main-BK, #3d3d3d);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--Content-secondary, #525252);
   font-family: Pretendard, sans-serif;
   font-size: 14px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%;
+  line-height: 140%;
+}
+
+.ujat-region-assignment-download-modal__required {
+  color: var(--Status-red-main, #c32f4a);
+  font-weight: 700;
+  line-height: 120%;
 }
 
 .ujat-region-assignment-download-modal__field .cms-select {

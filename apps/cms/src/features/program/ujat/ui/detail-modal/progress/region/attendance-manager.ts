@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import type { RegionAssignmentTableData } from './types'
 
 export type RegionAttendanceManagerSelectOption = {
@@ -14,49 +15,55 @@ export type RegionAttendanceManagerScheduleItem = {
 
 export type RegionAttendanceManagerAssignments = Record<string, string>
 
-function formatScheduleLabel(dateLabel: string, institutionName: string): string {
-  return `${dateLabel} (${institutionName})`
+/** Figma: `4월 3일 (제이초등학교)` — isoDate 우선, 없으면 dateLabel 그대로 */
+export function formatAttendanceManagerScheduleLabel(
+  isoDate: string | undefined,
+  dateLabel: string,
+  institutionName: string
+): string {
+  const institution = institutionName.trim() || '-'
+  const parsed = isoDate?.trim() ? dayjs(isoDate) : null
+  const datePart =
+    parsed?.isValid() === true
+      ? `${parsed.month() + 1}월 ${parsed.date()}일`
+      : dateLabel.trim() || '-'
+  return `${datePart} (${institution})`
 }
 
-/** 배정 불가일 제외 — 일정(열)별 배정된 봉사자 목록 */
+/** 일정(열)별 배정된 봉사자 목록 — 활동 포기자 제외 */
 export function getRegionAttendanceManagerScheduleItemsFromData(
   data: RegionAssignmentTableData
 ): RegionAttendanceManagerScheduleItem[] {
   const { columns, rows } = data
 
-  return columns
-    .map((column, columnIndex) => ({ column, columnIndex }))
-    .filter(({ column }) => !column.isBlockedDate)
-    .map(({ column, columnIndex }) => {
-      const volunteerOptions = rows
-        .filter(row => {
-          if (row.isWithdrawnVolunteer) return false
-          if (
-            row.withdrawnFromColumnIndex != null &&
-            columnIndex >= row.withdrawnFromColumnIndex
-          ) {
-            return false
-          }
-          const cell = row.cells[columnIndex]
-          return cell?.kind === 'assigned'
-        })
-        .map(row => ({
-          value: row.id,
-          label: row.name,
-        }))
-
-      const currentManager = rows.find(row => {
+  return columns.map((column, columnIndex) => {
+    const volunteerOptions = rows
+      .filter(row => {
+        if (row.isWithdrawnVolunteer) return false
         const cell = row.cells[columnIndex]
-        return cell?.kind === 'assigned' && cell.isAttendanceManager
+        return cell?.kind === 'assigned'
       })
+      .map(row => ({
+        value: row.id,
+        label: row.name,
+      }))
 
-      return {
-        columnId: column.id,
-        label: formatScheduleLabel(column.dateLabel, column.institutionName),
-        volunteerOptions,
-        currentManagerId: currentManager?.id,
-      }
+    const currentManager = rows.find(row => {
+      const cell = row.cells[columnIndex]
+      return cell?.kind === 'assigned' && cell.isAttendanceManager
     })
+
+    return {
+      columnId: column.id,
+      label: formatAttendanceManagerScheduleLabel(
+        column.isoDate,
+        column.dateLabel,
+        column.institutionName
+      ),
+      volunteerOptions,
+      currentManagerId: currentManager?.id,
+    }
+  })
 }
 
 export function applyRegionAttendanceManagersFromData(

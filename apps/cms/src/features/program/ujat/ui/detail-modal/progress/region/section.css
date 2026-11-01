@@ -6,6 +6,18 @@
   min-width: 0;
 }
 
+.ujat-education-progress-region-assignment__state {
+  display: flex;
+  min-height: 200px;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 14px;
+  line-height: 150%;
+  text-align: center;
+}
+
 .ujat-education-progress-region-assignment
   .ujat-institution-application-region-tabs.cms-text-tabs
   .cms-text-tabs__row {
