@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -180,9 +181,7 @@ export function AccountPaymentStatusDetailFullPageModal({
         loading={detailLoading}
         error={
           !detailLoading && !detailForbidden && (detailError || !detail)
-            ? detailError instanceof Error
-              ? detailError.message
-              : '상세를 불러오지 못했습니다.'
+            ? getSettlementApiErrorMessage(detailError, '상세를 불러오지 못했습니다.')
             : null
         }
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
@@ -249,7 +248,7 @@ export function AccountPaymentStatusDetailFullPageModal({
         open={basisDetailOpen}
         onCancel={closeBasisDetailModal}
         detail={selectedBasisDetail}
-        zIndex={1200}
+        zIndex={1400}
       />
     </>
   )

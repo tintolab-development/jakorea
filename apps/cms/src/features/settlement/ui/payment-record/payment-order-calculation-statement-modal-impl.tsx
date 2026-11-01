@@ -209,7 +209,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         }
       >
         <div className="account-payments-page__error" role="alert">
-          {loadError instanceof Error ? loadError.message : '산출 내역서를 불러오지 못했습니다.'}
+          {getSettlementApiErrorMessage(loadError, '산출 내역서를 불러오지 못했습니다.')}
         </div>
       </ContentModal>
     )
@@ -423,7 +423,7 @@ export function PaymentOrderCalculationStatementModalImpl({
         open={basisDetailOpen}
         onCancel={closeBasisDetailModal}
         detail={selectedBasisDetail}
-        zIndex={1200}
+        zIndex={1400}
       />
     </>
   )

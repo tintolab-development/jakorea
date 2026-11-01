@@ -3,6 +3,7 @@
  */
 
 import type { Dayjs } from 'dayjs'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import type {
   PaymentOrderAdminInstructorRow,
   PaymentOrderAdminProgramRow,
@@ -31,7 +32,7 @@ function resolveDetailContentError(
 ): string | null {
   if (detailLoading) return null
   if (detailError) {
-    return detailError instanceof Error ? detailError.message : '상세를 불러오지 못했습니다.'
+    return getSettlementApiErrorMessage(detailError, '상세를 불러오지 못했습니다.')
   }
   if (!hasDetail) return '상세를 불러오지 못했습니다.'
   return null
