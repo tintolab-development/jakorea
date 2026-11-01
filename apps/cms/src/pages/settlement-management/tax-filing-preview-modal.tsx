@@ -33,6 +33,10 @@ export interface TaxFilingPreviewModalProps {
 
 export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: TaxFilingPreviewModalProps) {
   const usesServerFile = serverExport?.deliveryMethod === 'SERVER_FILE'
+  const serverFileReady =
+    usesServerFile &&
+    serverExport?.fileObjectId != null &&
+    Number.isFinite(serverExport.fileObjectId)
   const sheetData: Sheet[] = useMemo(() => {
     const sheet = buildTaxFilingFortuneSheet(rows)
     return [sheet]
@@ -41,6 +45,14 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
   const handleDownload = useCallback(async () => {
     try {
       if (serverExport?.deliveryMethod === 'SERVER_FILE') {
+        if (serverExport.fileObjectId == null) {
+          cmsAlertModal.show({
+            title: '다운로드 불가',
+            content:
+              '세금신고 서버 파일이 아직 준비되지 않았습니다. 목록에서 「세금 신고 양식 발급」을 다시 눌러 주세요.',
+          })
+          return
+        }
         await downloadIssuedSettlementExportFile({
           serverExport,
           filenamePrefix: '세금신고',
@@ -52,7 +64,7 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
         cmsAlertModal.show({
           title: '다운로드 불가',
           content:
-            '승인된 서버 파일이 준비된 뒤에만 세금신고 양식을 받을 수 있습니다. 원본 파일을 브라우저에서 만들지 않습니다.',
+            '서버 발급 파일이 준비된 뒤에만 세금신고 양식을 받을 수 있습니다. 브라우저에서 엑셀을 만들지 않습니다.',
         })
         return
       }
@@ -88,6 +100,7 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
             size="large"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
+            disabled={usesServerFile && !serverFileReady}
             onClick={() => void handleDownload()} >
             엑셀 다운로드
           </CmsButton>
@@ -95,15 +108,7 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
       }
     >
       <div className="tax-filing-preview-modal__sheet-host">
-        {usesServerFile ? (
-          <div className="tax-filing-preview-modal__server-file-notice" role="status">
-            <strong>서버 생성 엑셀을 기준으로 확인해 주세요.</strong>
-            <p>
-              원천징수세액이 0원이면 세액 행을 생성하지 않고, 세액이 있으면 실지급액·세액 행을
-              서버 계산 결과에 따라 생성합니다.
-            </p>
-          </div>
-        ) : open ? (
+        {open ? (
           <Suspense
             fallback={
               <div className="tax-filing-preview-modal__sheet-loading">
