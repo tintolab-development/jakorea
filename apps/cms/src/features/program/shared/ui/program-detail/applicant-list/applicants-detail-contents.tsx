@@ -69,7 +69,11 @@ import {
   type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
 } from '@/features/program/general/model/individual-applicant'
-import type { IndividualApplicantScreeningStage } from '@/features/program/general/lib/individual-application-visibility'
+import {
+  individualApplicationDecisionButtonLabels,
+  isIndividualInterviewDocumentDecisionStage,
+  type IndividualApplicantScreeningStage,
+} from '@/features/program/general/lib/individual-application-visibility'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
 import { ApplicantInstructorBasicInfo } from './applicant-instructor-basic-info'
 import { ApplicantInstitutionBasicInfo } from './applicant-institution-basic-info'
@@ -332,14 +336,15 @@ function headerBtnsPendingParticipation(
   onApprove: (id: string) => void,
   onReject: (id: string) => void,
   onRevealPersonalInfo: () => void,
-  availableActions?: string[]
+  availableActions?: string[],
+  labels: { reject: string; approve: string } = individualApplicationDecisionButtonLabels(false)
 ): ApplicantHeaderActionItem[] {
   const items: ApplicantHeaderActionItem[] = []
   if (canPerformApplicationAction(availableActions, 'REJECT')) {
     items.push({
       key: 'reject',
       variant: 'delete',
-      label: '참여 반려',
+      label: labels.reject,
       onClick: () => onReject(applicantId),
     })
   }
@@ -347,7 +352,7 @@ function headerBtnsPendingParticipation(
     items.push({
       key: 'approve',
       variant: 'secondary',
-      label: '참여 승인',
+      label: labels.approve,
       onClick: () => onApprove(applicantId),
     })
   }
@@ -400,6 +405,8 @@ function resolveApplicantHeaderItems(params: {
   instructorAvailableActions?: string[]
   isCancelledInstitution?: boolean
   isCancelledInstructor?: boolean
+  program?: Program | null
+  individualScreeningStage?: IndividualApplicantScreeningStage
 }): ApplicantHeaderActionItem[] | null {
   const {
     applicantId,
@@ -445,6 +452,8 @@ function resolveApplicantHeaderItems(params: {
     instructorAvailableActions,
     isCancelledInstitution = false,
     isCancelledInstructor = false,
+    program = null,
+    individualScreeningStage = 'main',
   } = params
 
   if (isCancelledInstitution || isCancelledInstructor) {
@@ -586,17 +595,24 @@ function resolveApplicantHeaderItems(params: {
     return items
   }
   if (isInstitution || isInstructor || isIndividual) {
+    const useDocumentDecisionLabels =
+      isIndividual && isIndividualInterviewDocumentDecisionStage(program, individualScreeningStage)
     const availableActions = isInstructor
       ? instructorAvailableActions
       : isInstitution
         ? institutionAvailableActions
-        : individualAvailableActions
+        : isIndividual && !useDocumentDecisionLabels
+          ? undefined
+          : individualAvailableActions
     return headerBtnsPendingParticipation(
       applicantId,
       onApprove,
       onReject,
       onRevealPersonalInfo,
-      availableActions
+      availableActions,
+      isIndividual
+        ? individualApplicationDecisionButtonLabels(useDocumentDecisionLabels)
+        : undefined
     )
   }
   return null
@@ -1490,12 +1506,17 @@ export function ApplicantsDetailContents({
       individualSecondInterviewScreeningStatus: individualData?.secondInterviewScreeningStatus,
       institutionAvailableActions: institutionData?.availableActions,
       instructorAvailableActions: instructorData?.availableActions,
+      program,
+      individualScreeningStage,
     })
     if (!items) return null
-    const visibleItems =
-      isIndividual && showIndividualPrivacyReveal === false
-        ? items.filter(item => item.key !== 'privacy')
-        : items
+    const hideIndividualPrivacy =
+      isIndividual &&
+      showIndividualPrivacyReveal === false &&
+      isIndividualInterviewDocumentDecisionStage(program, individualScreeningStage)
+    const visibleItems = hideIndividualPrivacy
+      ? items.filter(item => item.key !== 'privacy')
+      : items
     return (
       <ApplicantHeaderActionsExtra
         items={visibleItems}
@@ -1549,6 +1570,8 @@ export function ApplicantsDetailContents({
     institutionData,
     instructorData,
     showIndividualPrivacyReveal,
+    program,
+    individualScreeningStage,
     handleAdminCommentEditEnter,
     handleIndividualAdminCommentEditEnter,
     handleInstructorAdminCommentEditEnter,
@@ -1733,7 +1756,6 @@ export function ApplicantsDetailContents({
           validationErrors={individualDetailEdit.validationErrors}
           onResendNotificationClick={onResendNotification}
           screeningStage={individualScreeningStage}
-          textbookOptions={individualDetailEdit.textbookOptions}
           openManagerDropdown={openManagerDropdown}
           setOpenManagerDropdown={setOpenManagerDropdown}
           onManagerAEvaluationChange={handleManagerAEvaluationChange}
@@ -1759,7 +1781,6 @@ export function ApplicantsDetailContents({
     individualDetailEdit.draft,
     individualDetailEdit.updateDraft,
     individualDetailEdit.validationErrors,
-    individualDetailEdit.textbookOptions,
     onResendNotification,
     program,
     individualScreeningStage,
