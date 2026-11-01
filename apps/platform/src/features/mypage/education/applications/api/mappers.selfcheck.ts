@@ -32,6 +32,33 @@ const generalYouth = mapPortalProgramApplicationListItem({
 })
 assert.ok(generalYouth)
 assert.equal(generalYouth.categoryLabel, '청소년 · 청년')
+assert.equal(generalYouth.certificateAvailable, false)
+
+const certificateListIssued = mapPortalProgramApplicationListItem({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '수료 완료 발급됨',
+  displayStatus: '진행 완료',
+  certificateAvailable: true,
+  availableActions: ['ISSUE_CERTIFICATE'],
+})
+assert.equal(certificateListIssued?.certificateAvailable, true)
+
+const certificateListActionOnly = mapPortalProgramApplicationListItem({
+  applicationId: 1694719,
+  applicationType: 'INDIVIDUAL',
+  programId: 186514,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '수료 미발급',
+  displayStatus: '진행 완료',
+  certificateAvailable: false,
+  availableActions: ['ISSUE_CERTIFICATE'],
+})
+assert.equal(certificateListActionOnly?.certificateAvailable, true)
 
 const ujatVolunteer = mapPortalProgramApplicationListItem({
   applicationId: 3,
@@ -459,5 +486,29 @@ const certificateCapabilityFalse = mapPortalProgramApplicationDetail({
   capabilities: { canIssueCertificate: false },
 })
 assert.equal(certificateCapabilityFalse?.certificateAvailable, false)
+
+const certificateCapabilityMissing = mapPortalProgramApplicationDetail({
+  applicationId: 1694719,
+  applicationType: 'INDIVIDUAL',
+  programId: 186514,
+  programTitle: '수료증 상세 플래그 없음',
+  programGroup: 'GENERAL',
+  displayStatus: '진행 완료',
+  certificateAvailable: true,
+})
+assert.equal(certificateCapabilityMissing?.certificateAvailable, false)
+
+const certificateCapabilityTrue = mapPortalProgramApplicationDetail({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programTitle: '수료증 발급됨',
+  programGroup: 'GENERAL',
+  displayStatus: '진행 완료',
+  capabilities: { canIssueCertificate: true },
+  participation: { certificateStatus: 'COMPLETION_ISSUED' },
+})
+assert.equal(certificateCapabilityTrue?.certificateAvailable, true)
+assert.equal(certificateCapabilityTrue?.certificateStatus, 'COMPLETION_ISSUED')
 
 console.log('portal application mappers.selfcheck: ok')

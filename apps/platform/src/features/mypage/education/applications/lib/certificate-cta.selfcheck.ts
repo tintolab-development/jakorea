@@ -1,51 +1,93 @@
 import assert from 'node:assert/strict'
 import {
+  listRowCertificateAvailable,
   resolveCertificateCtaView,
   shouldFetchIndividualCertificateAvailability,
+  shouldShowDetailCertificateCta,
+  shouldShowListCertificateEntry,
 } from './certificate-cta.ts'
 
+const personalCompleted = {
+  isTeacher: false,
+  applicationType: 'INDIVIDUAL',
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  canIssueCertificate: true,
+  programId: '186514',
+} as const
+
+assert.equal(shouldFetchIndividualCertificateAvailability(personalCompleted), true)
+assert.equal(shouldShowDetailCertificateCta(personalCompleted), true)
 assert.equal(
-  shouldFetchIndividualCertificateAvailability({
-    isTeacher: false,
-    applicationType: 'INDIVIDUAL',
-    displayStatus: 'completed',
-    programId: '186514',
+  shouldFetchIndividualCertificateAvailability({ ...personalCompleted, isTeacher: true }),
+  false,
+)
+assert.equal(
+  shouldShowDetailCertificateCta({ ...personalCompleted, canIssueCertificate: false }),
+  false,
+)
+assert.equal(
+  shouldShowDetailCertificateCta({ ...personalCompleted, canIssueCertificate: null }),
+  false,
+)
+assert.equal(
+  shouldShowDetailCertificateCta({
+    ...personalCompleted,
+    applicationType: 'ORGANIZATION',
+  }),
+  false,
+)
+assert.equal(
+  shouldShowDetailCertificateCta({
+    ...personalCompleted,
+    programType: 'TRAINED_TEACHER',
+  }),
+  false,
+)
+assert.equal(
+  shouldShowDetailCertificateCta({
+    ...personalCompleted,
+    programType: 'GEMINI_TRAINING',
+  }),
+  false,
+)
+
+assert.equal(
+  listRowCertificateAvailable({ certificateAvailable: true, availableActions: [] }),
+  true,
+)
+assert.equal(
+  listRowCertificateAvailable({
+    certificateAvailable: false,
+    availableActions: ['ISSUE_CERTIFICATE'],
   }),
   true,
 )
 assert.equal(
-  shouldFetchIndividualCertificateAvailability({
+  listRowCertificateAvailable({ certificateAvailable: false, availableActions: [] }),
+  false,
+)
+assert.equal(
+  shouldShowListCertificateEntry({
+    ...personalCompleted,
+    certificateAvailable: true,
+    availableActions: ['ISSUE_CERTIFICATE'],
+  }),
+  true,
+)
+assert.equal(
+  shouldShowListCertificateEntry({
+    ...personalCompleted,
     isTeacher: true,
-    applicationType: 'INDIVIDUAL',
-    displayStatus: 'completed',
-    programId: '186514',
-  }),
-  false,
-)
-assert.equal(
-  shouldFetchIndividualCertificateAvailability({
-    isTeacher: false,
-    applicationType: 'INDIVIDUAL',
-    displayStatus: 'in_progress',
-    programId: '186514',
-  }),
-  false,
-)
-assert.equal(
-  shouldFetchIndividualCertificateAvailability({
-    isTeacher: false,
-    applicationType: 'ORGANIZATION',
-    displayStatus: 'completed',
-    programId: '186514',
+    certificateAvailable: true,
   }),
   false,
 )
 
 assert.deepEqual(
   resolveCertificateCtaView({
-    isTeacher: false,
-    applicationType: 'INDIVIDUAL',
-    displayStatus: 'completed',
+    ...personalCompleted,
+    certificateStatus: 'AVAILABLE',
     availability: {
       available: true,
       canDownload: false,
@@ -58,9 +100,8 @@ assert.deepEqual(
 
 assert.deepEqual(
   resolveCertificateCtaView({
-    isTeacher: false,
-    applicationType: 'INDIVIDUAL',
-    displayStatus: 'completed',
+    ...personalCompleted,
+    certificateStatus: 'COMPLETION_ISSUED',
     availability: {
       available: true,
       canDownload: true,
@@ -72,38 +113,39 @@ assert.deepEqual(
 
 assert.equal(
   resolveCertificateCtaView({
-    isTeacher: false,
-    applicationType: 'INDIVIDUAL',
-    displayStatus: 'completed',
-    availability: {
-      available: false,
-      canDownload: false,
-      reasonCode: 'PARTICIPANT_NOT_COMPLETED',
-      reasonMessage: '수료 조건을 충족하지 않아 발급할 수 없습니다.',
-    },
-  }).kind,
-  'unavailable',
-)
-
-assert.equal(
-  resolveCertificateCtaView({
-    isTeacher: false,
-    applicationType: 'INDIVIDUAL',
-    displayStatus: 'completed',
+    ...personalCompleted,
+    certificateStatus: 'COMPLETION_ISSUED',
     availability: {
       available: true,
-      canDownload: false,
+      canDownload: true,
+      existingIssueId: 14,
     },
   }).kind,
-  'issue',
+  'download',
 )
 
 assert.equal(
   resolveCertificateCtaView({
-    isTeacher: true,
-    applicationType: 'INDIVIDUAL',
-    displayStatus: 'completed',
+    ...personalCompleted,
+    canIssueCertificate: false,
     availability: { available: true, canDownload: false },
+  }).kind,
+  'hidden',
+)
+
+assert.equal(
+  resolveCertificateCtaView({
+    ...personalCompleted,
+    certificateStatus: 'NOT_ELIGIBLE',
+    availability: { available: false, canDownload: false },
+  }).kind,
+  'hidden',
+)
+
+assert.equal(
+  resolveCertificateCtaView({
+    ...personalCompleted,
+    availability: undefined,
   }).kind,
   'hidden',
 )

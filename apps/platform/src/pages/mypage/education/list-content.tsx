@@ -5,8 +5,10 @@ import {
   EDUCATION_APPLICATION_PAGE_SIZE,
   EducationApplicationListItemRow,
   filterEducationStatusApplications,
+  hasTeacherMypageProfile,
   listEducationApplications,
   useMyProgramApplications,
+  useMypageMember,
   type EducationApplicationListParams,
   type EducationDisplayStatusAudience,
   EducationApplicationListSkeleton,
@@ -26,6 +28,8 @@ export function EducationListContent({
   statusAudience = 'general',
 }: EducationListContentProps) {
   const navigate = useNavigate()
+  const member = useMypageMember()
+  const isTeacher = hasTeacherMypageProfile(member.profile)
   const remoteApplications = useMyProgramApplications('education')
 
   const { items, totalPages, currentPage, totalElements } = useMemo(() => {
@@ -52,6 +56,7 @@ export function EducationListContent({
               key={`${item.applicationType ?? 'application'}:${item.id}`}
               item={item}
               statusAudience={statusAudience}
+              isTeacher={isTeacher}
               onClick={() =>
                 navigate(educationApplicationDetailPath(item.id, item.applicationType), {
                   state: {

@@ -138,8 +138,19 @@ export type EducationApplicationListItem = {
   teacherAssignment?: EducationTeacherAssignment
   /** 교사 회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
   teacherApplicationContent?: EducationTeacherApplicationContent
-  /** 수료증 발급 가능 — 포털 신청 상세 `capabilities.canIssueCertificate` (노출 판단에 쓰지 않음) */
+  /** 목록 `programType` — 수료증 개인 CTA에서 교사·제미나이 제외 */
+  programType?: string
+  /** 목록 `programGroup` */
+  programGroup?: string
+  /**
+   * 목록 `certificateAvailable` 또는 상세 `capabilities.canIssueCertificate`.
+   * true = 발급 가능 또는 이미 발급되어 다운로드 가능. 상세 루트 `certificateAvailable`은 쓰지 않는다.
+   */
   certificateAvailable?: boolean
+  /** 상세 `participation.certificateStatus` */
+  certificateStatus?: string
+  /** 목록 `availableActions` */
+  availableActions?: string[]
   /** 미응답 설문 수 — 포털 신청 목록·상세 `pendingSurveyCount` */
   pendingSurveyCount?: number
   /** 상세 `summary.satisfactionPendingCount` — 로컬 추정 금지 */

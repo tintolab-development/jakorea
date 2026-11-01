@@ -10,6 +10,7 @@ import {
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
+import { listRowCertificateAvailable } from '../lib/certificate-cta'
 import { readUjatPortalBannerState, readUjatRevisionReason } from '../lib/ujat-portal-banner'
 import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
 import { buildUjatVolunteerApplicationProfileFromAnswers } from '../lib/ujat-volunteer-application-content-from-answers'
@@ -279,6 +280,10 @@ export function mapPortalProgramApplicationListItem(
     thumbnailUrl,
     displayStatus,
     detailCase,
+    programType: row.programType,
+    programGroup: row.programGroup,
+    certificateAvailable: listRowCertificateAvailable(row),
+    ...(row.availableActions ? { availableActions: row.availableActions } : {}),
     ...(typeof row.pendingSurveyCount === 'number' && Number.isFinite(row.pendingSurveyCount)
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),
@@ -556,9 +561,9 @@ export function mapPortalProgramApplicationDetail(
     displayStatus,
   })
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
-  if (detail.capabilities?.canIssueCertificate != null) {
-    mapped.certificateAvailable = detail.capabilities.canIssueCertificate
-  }
+  mapped.certificateAvailable = detail.capabilities?.canIssueCertificate === true
+  const certificateStatus = detail.participation?.certificateStatus?.trim()
+  if (certificateStatus) mapped.certificateStatus = certificateStatus
   if (typeof detail.capabilities?.canSubmitSatisfaction === 'boolean') {
     mapped.canSubmitSatisfaction = detail.capabilities.canSubmitSatisfaction
   }

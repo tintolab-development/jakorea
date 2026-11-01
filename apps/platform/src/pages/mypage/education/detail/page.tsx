@@ -81,6 +81,7 @@ import {
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
 import { CertificateIssueCta } from '@/features/mypage/education/applications/ui/certificate-issue-cta'
+import { shouldShowDetailCertificateCta } from '@/features/mypage/education/applications/lib/certificate-cta'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import {
   resolveVisibleUjatScheduleBanner,
@@ -959,16 +960,25 @@ export function MypageEducationDetailPage() {
         </>
       ) : isActivityStatus ? (
         <>
-          {!isTeacher &&
-          (routeApplicationType ?? application.applicationType) === 'INDIVIDUAL' &&
-          application.displayStatus === 'completed' ? (
+          {shouldShowDetailCertificateCta({
+            isTeacher,
+            applicationType: routeApplicationType ?? application.applicationType,
+            programType: application.programType ?? application.programConfig?.programType ?? program.programType,
+            programGroup: application.programGroup,
+            detailCase: application.detailCase,
+            canIssueCertificate: application.certificateAvailable,
+          }) ? (
             <CertificateIssueCta
               isTeacher={isTeacher}
               applicationType={routeApplicationType ?? application.applicationType}
               applicationId={application.id}
-              displayStatus={application.displayStatus}
               programId={application.programId ?? program.id}
               programTitle={program.title}
+              programType={application.programType ?? application.programConfig?.programType ?? program.programType}
+              programGroup={application.programGroup}
+              detailCase={application.detailCase}
+              canIssueCertificate={application.certificateAvailable}
+              certificateStatus={application.certificateStatus}
             />
           ) : null}
           <PFTabs

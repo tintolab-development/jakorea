@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import illustQuotationUrl from '@/shared/assets/illustration/illust-quotation-no-bg.svg'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
-import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton } from '@/shared/ui'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import {
   useDownloadMyCertificateMutation,
@@ -13,30 +13,40 @@ import {
   resolveCertificateCtaView,
   shouldFetchIndividualCertificateAvailability,
 } from '../lib/certificate-cta'
-import type { EducationDisplayStatus } from '../model/types'
 import styles from './certificate-issue-cta.module.css'
 
 type CertificateIssueCtaProps = {
   isTeacher: boolean
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
-  displayStatus?: EducationDisplayStatus | null
   programId?: string | number | null
   programTitle?: string
+  programType?: string | null
+  programGroup?: string | null
+  detailCase?: string | null
+  canIssueCertificate?: boolean | null
+  certificateStatus?: string | null
 }
 
 export function CertificateIssueCta({
   isTeacher,
   applicationType,
   applicationId,
-  displayStatus,
   programId,
   programTitle,
+  programType,
+  programGroup,
+  detailCase,
+  canIssueCertificate,
+  certificateStatus,
 }: CertificateIssueCtaProps) {
   const availabilityEnabled = shouldFetchIndividualCertificateAvailability({
     isTeacher,
     applicationType,
-    displayStatus,
+    programType,
+    programGroup,
+    detailCase,
+    canIssueCertificate,
     programId,
   })
   const availabilityQuery = useMyCertificateAvailabilityQuery({
@@ -57,7 +67,11 @@ export function CertificateIssueCta({
   const view = resolveCertificateCtaView({
     isTeacher,
     applicationType,
-    displayStatus,
+    programType,
+    programGroup,
+    detailCase,
+    canIssueCertificate,
+    certificateStatus,
     availability: availabilityQuery.data,
   })
   const isBusy = issueMutation.isPending || downloadMutation.isPending
@@ -78,7 +92,19 @@ export function CertificateIssueCta({
 
   const handleIssue = async () => {
     if (isBusy || pendingRef.current) return
-    const participantId = availabilityQuery.data?.participantId
+    const availability = availabilityQuery.data
+    const existingIssueId = availability?.existingIssueId
+    if (
+      availability?.canDownload === true ||
+      (typeof existingIssueId === 'number' && existingIssueId > 0)
+    ) {
+      setConfirmOpen(false)
+      if (typeof existingIssueId === 'number' && existingIssueId > 0) {
+        await handleDownload(existingIssueId)
+      }
+      return
+    }
+    const participantId = availability?.participantId
     const parsedProgramId = Number(programId)
     if (
       participantId == null ||
@@ -116,37 +142,31 @@ export function CertificateIssueCta({
   return (
     <>
       <div className={styles.block}>
-        {view.kind === 'unavailable' ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.reason}>
-            {view.message}
-          </PFText>
-        ) : (
-          <div className={styles.submitRow}>
-            <PFButton
-              type="button"
-              variant="certificate"
-              disabled={isBusy}
-              className={styles.submitButton}
-              onClick={() => {
-                if (view.kind === 'download') {
-                  void handleDownload(view.issueId)
-                  return
-                }
-                setConfirmOpen(true)
-              }}
-            >
-              {title}
-              <img
-                className={styles.submitIllustration}
-                src={illustQuotationUrl}
-                alt=""
-                width={48}
-                height={48}
-                aria-hidden="true"
-              />
-            </PFButton>
-          </div>
-        )}
+        <div className={styles.submitRow}>
+          <PFButton
+            type="button"
+            variant="certificate"
+            disabled={isBusy}
+            className={styles.submitButton}
+            onClick={() => {
+              if (view.kind === 'download') {
+                void handleDownload(view.issueId)
+                return
+              }
+              setConfirmOpen(true)
+            }}
+          >
+            {title}
+            <img
+              className={styles.submitIllustration}
+              src={illustQuotationUrl}
+              alt=""
+              width={48}
+              height={48}
+              aria-hidden="true"
+            />
+          </PFButton>
+        </div>
       </div>
 
       <PFAlertModal
