@@ -8,13 +8,7 @@ import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
-import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
-import {
-  downloadIssuedSettlementExportFile,
-  notifySettlementExportDownloadError,
-} from '@/features/settlement-management/api/account-payments/download-issued-export-file'
-import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
-import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { notifySettlementExportDownloadError } from '@/features/settlement-management/api/account-payments/download-issued-export-file'
 import {
   TAX_FILING_SHEET_COLUMN_COUNT,
   buildTaxFilingFortuneSheet,
@@ -28,15 +22,9 @@ export interface TaxFilingPreviewModalProps {
   open: boolean
   onCancel: () => void
   rows: AccountPaymentRow[]
-  serverExport?: SettlementExportHistoryResponse | null
 }
 
-export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: TaxFilingPreviewModalProps) {
-  const usesServerFile = serverExport?.deliveryMethod === 'SERVER_FILE'
-  const serverFileReady =
-    usesServerFile &&
-    serverExport?.fileObjectId != null &&
-    Number.isFinite(serverExport.fileObjectId)
+export function TaxFilingPreviewModal({ open, onCancel, rows }: TaxFilingPreviewModalProps) {
   const sheetData: Sheet[] = useMemo(() => {
     const sheet = buildTaxFilingFortuneSheet(rows)
     return [sheet]
@@ -44,30 +32,6 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
 
   const handleDownload = useCallback(async () => {
     try {
-      if (serverExport?.deliveryMethod === 'SERVER_FILE') {
-        if (serverExport.fileObjectId == null) {
-          cmsAlertModal.show({
-            title: '다운로드 불가',
-            content:
-              '세금신고 서버 파일이 아직 준비되지 않았습니다. 목록에서 「세금 신고 양식 발급」을 다시 눌러 주세요.',
-          })
-          return
-        }
-        await downloadIssuedSettlementExportFile({
-          serverExport,
-          filenamePrefix: '세금신고',
-          reason: '세금신고 양식 발급',
-        })
-        return
-      }
-      if (shouldUseSettlementRemote('accountPayments')) {
-        cmsAlertModal.show({
-          title: '다운로드 불가',
-          content:
-            '서버 발급 파일이 준비된 뒤에만 세금신고 양식을 받을 수 있습니다. 브라우저에서 엑셀을 만들지 않습니다.',
-        })
-        return
-      }
       const { exportTaxFilingExcel } =
         await import('@/pages/settlement-management/tax-filing-excel')
       await exportTaxFilingExcel(rows)
@@ -79,7 +43,7 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
         onAlreadyDownloaded: onCancel,
       })
     }
-  }, [onCancel, rows, serverExport])
+  }, [onCancel, rows])
 
   return (
     <ContentModal
@@ -100,7 +64,6 @@ export function TaxFilingPreviewModal({ open, onCancel, rows, serverExport }: Ta
             size="large"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
-            disabled={usesServerFile && !serverFileReady}
             onClick={() => void handleDownload()} >
             엑셀 다운로드
           </CmsButton>
