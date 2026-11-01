@@ -52,6 +52,7 @@ import {
   GENERAL_LECTURE_EVAL_PRE_START_COPY,
   GENERAL_LECTURE_EVAL_REGISTER_MODAL_COPY,
   GENERAL_LECTURE_EVAL_SUBMITTED_COPY,
+  GENERAL_SATISFACTION_DOWNLOAD_MODAL_COPY,
   GENERAL_SATISFACTION_NO_RESPONSE_COPY,
   GENERAL_SATISFACTION_SHARE_TOAST_COPY,
   GENERAL_SURVEY_POLL_ACTION_LABELS,
@@ -871,7 +872,10 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
           void showAlert({ title: '등록 실패', content: result.message })
           return
         }
-        if (createModalKind === 'survey' && result.binding != null) {
+        if (
+          (createModalKind === 'survey' || createModalKind === 'satisfaction') &&
+          result.binding != null
+        ) {
           const editLoad = await loadProgramSurveyFormEditAfterBinding(
             String(program.id),
             result.binding,
@@ -1808,6 +1812,7 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       <SurveyResultsDownloadModal
         open={satisfactionDownloadModalOpen}
         downloading={downloadingSatisfactionResults}
+        copy={GENERAL_SATISFACTION_DOWNLOAD_MODAL_COPY}
         onCancel={() => setSatisfactionDownloadModalOpen(false)}
         onDownload={handleDownloadSatisfactionResults}
       />

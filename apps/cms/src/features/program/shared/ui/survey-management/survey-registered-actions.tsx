@@ -43,7 +43,6 @@ export function SurveyRegisteredActions({
   onDownloadClick,
 }: SurveyRegisteredActionsProps) {
   const showProgressHeaderActions = survey.status !== 'before_start'
-  const downloadEnabled = canDownloadSurveyResults(survey)
   const rootClassName =
     layout === 'satisfaction'
       ? 'survey-management-registered-actions survey-management-registered-actions--satisfaction'
@@ -74,7 +73,6 @@ export function SurveyRegisteredActions({
         variant="secondary"
         size="large"
         icon={<ButtonDownloadIcon />}
-        disabled={!downloadEnabled}
         onClick={onDownloadClick} >
         {labels.download}
       </CmsButton>

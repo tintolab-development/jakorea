@@ -2240,6 +2240,20 @@ export function UjatProgramDetailFullPageModal({
           void showAlert({ title: '등록 실패', content: result.message })
           return
         }
+        if (displayProgram != null && result.binding != null) {
+          const editLoad = await loadProgramSurveyFormEditAfterBinding(
+            String(displayProgram.id),
+            result.binding,
+            selectedSatisfactionTemplateId
+          )
+          setSatisfactionCreateModalOpen(false)
+          if (editLoad.ok) {
+            setProgramFormEdit(editLoad.edit)
+          } else {
+            void showAlert({ title: '양식 편집', content: editLoad.message })
+          }
+          return
+        }
         setSatisfactionCreateModalOpen(false)
         return
       }
@@ -2265,6 +2279,7 @@ export function UjatProgramDetailFullPageModal({
   }, [
     activeSatisfactionAudience,
     createBinding,
+    displayProgram,
     invalidateSurveyCaches,
     selectedSatisfactionTemplateId,
     showAlert,
