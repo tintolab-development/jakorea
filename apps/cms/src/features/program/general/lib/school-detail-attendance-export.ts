@@ -45,10 +45,9 @@ export function buildSchoolDetailAttendanceSessionExcelRows(
   sessionLabel: string,
   students: SchoolDetailAttendanceSessionGroup['students']
 ): SchoolDetailAttendanceExcelRow[] {
-  const total = students.length
   return students.map((student, index) => ({
     sessionLabel,
-    no: total - index,
+    no: index + 1,
     name: student.name,
     genderLabel: formatStudentGenderLabel(student.gender, student.genderMask, ''),
     birthDate: student.birthDate ?? '',

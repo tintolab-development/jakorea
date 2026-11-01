@@ -42,7 +42,7 @@ export function ParticipatingIndividualProgressAssignmentSessionPanel({
         session.headerPrefix,
         participants.map((row, index) => ({
           ...row,
-          no: participants.length - index,
+          no: index + 1,
         }))
       ),
     [participants, session.headerPrefix]
