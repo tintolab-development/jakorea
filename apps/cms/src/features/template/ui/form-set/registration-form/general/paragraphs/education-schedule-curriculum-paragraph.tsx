@@ -193,6 +193,9 @@ function ScheduleDetailAssignmentInputs({
         value={appliedSurfaceRange?.[0] ?? null}
         onChange={() => {}}
         appliedSurfaceRange={appliedSurfaceRange}
+        appliedSurfaceWithTime={Boolean(
+          appliedSurfaceRange && educationScheduleRangeHasClock(appliedSurfaceRange)
+        )}
         onRangeChange={([start, end]) => {
           onChange({
             enabled: true,
