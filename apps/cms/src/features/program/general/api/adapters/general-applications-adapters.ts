@@ -6,6 +6,7 @@ import {
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
 } from '@/shared/lib/education-schedule-name'
+import { readProgramScheduleCanonicalFields } from '@/features/program/shared/lib/program-schedule-canonical'
 import { formatApplicantSchoolApprovalNotificationSentAt } from '@/features/program/shared/model/applicant-institution'
 import type {
   ApplicantInstructorLectureFeeBasisType,
@@ -130,6 +131,48 @@ export function mapApiApplicationStatusToApprovalStatus(
   if (normalized === 'REJECTION_CANCELLED') {
     return 'pending'
   }
+  return 'pending'
+}
+
+/** 면접 파이프라인에서 BE가 유지하는 applicationStatus 별칭 — 프로그램 승인 현황용 */
+const INDIVIDUAL_APPLICATION_APPROVED_ALIASES = new Set([
+  'DOCUMENT_PASSED',
+  'PASS',
+  'PASSED',
+  'FINAL_APPROVED',
+  'INTERVIEW_PASSED',
+])
+
+/**
+ * 일반 개인 신청 목록·상세 「프로그램 승인 현황」.
+ * 면접 있음이면 applicationStatus가 WAITING_REVIEW로 남고 document/final 결과가 먼저 바뀐다.
+ */
+export function mapIndividualApplicationToApprovalStatus(input: {
+  applicationStatus?: string | null
+  documentStatus?: string | null
+  finalResultStatus?: string | null
+  reserveRank?: number | null
+}): ApplicantApprovalStatusKey {
+  const fromApplication = mapApiApplicationStatusToApprovalStatus(
+    input.applicationStatus ?? undefined
+  )
+  if (fromApplication !== 'pending') return fromApplication
+
+  const applicationNormalized = input.applicationStatus?.trim().toUpperCase() ?? ''
+  if (INDIVIDUAL_APPLICATION_APPROVED_ALIASES.has(applicationNormalized)) {
+    return 'approved'
+  }
+
+  const finalResult = mapApiFinalResultToSecondInterviewStatus(
+    input.finalResultStatus,
+    input.reserveRank
+  )
+  if (finalResult === 'pass') return 'approved'
+  if (finalResult === 'fail') return 'rejected'
+
+  const document = mapApiDocumentStatusToScreeningStatus(input.documentStatus)
+  if (document === 'pass') return 'approved'
+  if (document === 'fail') return 'rejected'
   return 'pending'
 }
 
@@ -1213,6 +1256,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
     })
     .map((session, index) => {
+      const canonical = readProgramScheduleCanonicalFields(session)
       const scheduleName = toDisplayEducationScheduleName(session.scheduleName) || ''
       const start = session.startAt ? new Date(session.startAt) : null
       const end = session.endAt ? new Date(session.endAt) : null
@@ -1250,6 +1294,9 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         requestedScheduleId: session.requestedScheduleId ?? undefined,
         scheduleUnresolved,
         startAt: session.startAt?.trim() || undefined,
+        ...(scheduleName ? { scheduleName } : {}),
+        ...(canonical.scheduleRole ? { scheduleRole: String(canonical.scheduleRole) } : {}),
+        ...(canonical.educationSlotKey ? { educationSlotKey: canonical.educationSlotKey } : {}),
       }
     })
 }
@@ -1290,7 +1337,12 @@ export function mapIndividualApplicationToApplicantRow(
     educationGrade: readIndividualApplicationListGrade(dto),
     homeAddress: dto.homeAddressSummary?.trim() || '',
     appliedAt: dto.submittedAt,
-    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    approvalStatus: mapIndividualApplicationToApprovalStatus({
+      applicationStatus: dto.applicationStatus,
+      documentStatus: dto.documentStatus,
+      finalResultStatus: dto.finalResultStatus,
+      reserveRank: dto.reserveRank,
+    }),
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     adminComment: dto.managerComment ?? undefined,
@@ -1352,7 +1404,12 @@ export function mapIndividualApplicationDetailToApplicantRow(
       ? formatApplicantGradeLabel(profile?.affiliationGrade) || base.educationGrade || ''
       : '',
     homeAddress: profile?.homeAddress?.trim() || base.homeAddress || '',
-    approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    approvalStatus: mapIndividualApplicationToApprovalStatus({
+      applicationStatus: dto.applicationStatus,
+      documentStatus: screening?.documentStatus,
+      finalResultStatus: screening?.finalResultStatus,
+      reserveRank: screening?.reserveRank,
+    }),
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,
     preferredEducationSchedules:

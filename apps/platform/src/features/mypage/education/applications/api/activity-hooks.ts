@@ -1265,10 +1265,26 @@ export function useSubmitEducationSurveyMutation(
         ),
       })
       void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.detail(
+          applicationType,
+          applicationId,
+        ),
+        exact: true,
+      })
+      void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.programApplications.all(),
       })
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.program.availableForms(String(numericProgramId ?? '')),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.mypage.programApplications.all(), 'form-binding'],
+      })
+      void queryClient.invalidateQueries({
+        queryKey: [...platformQueryKeys.mypage.programApplications.all(), 'form-binding-render'],
+      })
+      void queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),
       })
     },
   })

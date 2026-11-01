@@ -3,6 +3,7 @@ import type {
   PortalAvailableProgramForm,
   PortalFormListItem,
 } from '../api/activity-client'
+import { resolveEducationSurveyListStatus } from '../../surveys/lib/portal-form-submission-period.ts'
 import type { EducationSurveyListEntry } from '../../surveys/lib/survey-list-types'
 
 export const PORTAL_SURVEY_FORM_TYPE_QUERIES = ['SURVEY', 'QUESTIONNAIRE'] as const
@@ -125,8 +126,18 @@ export function mapPortalFormListItemToSurveyEntry(
   if (bindingId == null) return null
 
   const status = (item.status ?? '').toUpperCase()
+  const responseStatus = (item.responseStatus ?? '').trim().toUpperCase()
   const formResponseId = item.formResponseId ?? item.latestFormResponseId ?? undefined
-  const submitted = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
+  const submittedByStatus = ['SUBMITTED', 'COMPLETED', 'DONE'].includes(status)
+  const submittedByResponse = ['SUBMITTED', 'COMPLETED', 'DONE', 'APPROVED'].includes(
+    responseStatus,
+  )
+  const submittedByEvidence =
+    formResponseId != null &&
+    item.canSubmit !== true &&
+    item.canResubmit !== true &&
+    responseStatus !== 'REJECTED'
+  const submitted = submittedByStatus || submittedByResponse || submittedByEvidence
   const targetScope = item.targetScope?.trim() || undefined
   const targetScopeId =
     typeof item.targetScopeId === 'number' && Number.isFinite(item.targetScopeId)
@@ -137,14 +148,22 @@ export function mapPortalFormListItemToSurveyEntry(
       ? Math.trunc(item.scheduleId)
       : undefined
 
+  const submissionStartAt = item.submissionStartAt ?? undefined
+  const submissionEndAt = item.submissionEndAt ?? undefined
+
   return {
     id: String(bindingId),
     title: item.title?.trim() || '설문',
-    status: submitted ? 'submitted' : 'in_progress',
+    status: resolveEducationSurveyListStatus(submitted, {
+      submissionStartAt,
+      submissionEndAt,
+      startAt: toSeoulDateOnly(item.submissionStartAt),
+      endAt: toSeoulDateOnly(item.submissionEndAt),
+    }),
     startAt: toSeoulDateOnly(item.submissionStartAt),
     endAt: toSeoulDateOnly(item.submissionEndAt),
-    submissionStartAt: item.submissionStartAt ?? undefined,
-    submissionEndAt: item.submissionEndAt ?? undefined,
+    submissionStartAt,
+    submissionEndAt,
     createdAt: item.submissionStartAt ?? undefined,
     templateVersionId: item.templateVersionId,
     formType: item.formType,
@@ -159,6 +178,7 @@ export function mapPortalFormListItemToSurveyEntry(
     bindingId: resolveCanonicalPortalFormBindingId(item) ?? undefined,
     canSubmit: item.canSubmit === true,
     canResubmit: item.canResubmit === true,
+    ...(responseStatus ? { responseStatus } : {}),
     revisionNo: item.revisionNo,
     retentionExpiresAt: item.retentionExpiresAt,
   }

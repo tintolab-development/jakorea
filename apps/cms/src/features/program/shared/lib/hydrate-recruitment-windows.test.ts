@@ -6,7 +6,9 @@ import {
 } from './hydrate-recruitment-windows'
 import { resolveGeneralProgramVolunteerRecruitmentDisplay } from '@/features/program/general/lib/volunteer-recruitment-display'
 import { resolveGeneralProgramInstructorRecruitmentDisplay } from '@/features/program/general/lib/instructor-recruitment-display'
+import { resolveGeneralProgramParticipantRecruitmentDisplay } from '@/features/program/general/lib/participant-recruitment-display'
 import { programToRecruitmentTabEditValues } from '@/features/program/general/lib/general-program-recruitment-edit-seed'
+import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
 
 function programWithRows(): Program {
   return {
@@ -144,5 +146,90 @@ describe('모집 탭 표시·폼 시드 — 행 SSOT', () => {
     const values = programToRecruitmentTabEditValues(program, 'volunteer')
     expect(String(values.volunteerApplicationStartDate)).toContain('2026-10-13')
     expect(values.volunteerContactPhone).toBe('010-3333-4444')
+  })
+})
+
+function individualParticipantInterviewProgram(): Program {
+  return {
+    id: '186526',
+    title: '개인 면접',
+    type: 'offline',
+    format: 'workshop',
+    category: 'school',
+    sponsorId: 's1',
+    status: 'pending',
+    lifecycleStatus: 'recruiting_students',
+    backendProgramType: 'GENERAL_INDIVIDUAL',
+    rounds: [],
+    startDate: '2026-12-01',
+    endDate: '2026-12-31',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    interviewMethod: 'online',
+    programRecruitments: [
+      {
+        id: 1,
+        recruitmentType: 'PARTICIPANT',
+        applicationType: 'INDIVIDUAL',
+        startAt: '2026-11-01T00:00:00.000Z',
+        endAt: '2026-11-30T00:00:00.000Z',
+        interviewEnabled: true,
+        interviewStartAt: '2026-12-13T15:00:00Z',
+        interviewEndAt: '2026-12-13T15:00:00Z',
+      },
+    ],
+  }
+}
+
+describe('개인 참여자 2차 면접 기간 — 행 SSOT', () => {
+  it('행 있음 + 개인 면접 있음이면 상세 display에 interviewStartDate/EndDate가 있다', () => {
+    const hydrated = hydrateRecruitmentWindowsOntoProgram(individualParticipantInterviewProgram())
+    expect(String(hydrated.interviewStartDate)).toContain('2026-12-13T15:00:00')
+    expect(String(hydrated.interviewEndDate)).toContain('2026-12-13T15:00:00')
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(hydrated)
+    expect(String(display.interviewStartDate)).toContain('2026-12-13T15:00:00')
+    expect(String(display.interviewEndDate)).toContain('2026-12-13T15:00:00')
+    expect(display.interviewMethod).toBe('online')
+    expect(formatDateRange(display.interviewStartDate, display.interviewEndDate)).toContain(
+      '2026.12.14'
+    )
+  })
+
+  it('기관 참여자 행의 면접 시각은 program 컬럼으로 올리지 않는다', () => {
+    const program = programWithRows()
+    program.interviewStartDate = '2026-01-10T00:00:00.000Z'
+    program.interviewEndDate = '2026-01-12T00:00:00.000Z'
+    program.programRecruitments = [
+      {
+        id: 1,
+        recruitmentType: 'PARTICIPANT',
+        applicationType: 'ORGANIZATION',
+        interviewEnabled: true,
+        interviewStartAt: '2026-12-13T15:00:00Z',
+        interviewEndAt: '2026-12-13T15:00:00Z',
+      },
+    ]
+    const hydrated = hydrateRecruitmentWindowsOntoProgram(program)
+    expect(String(hydrated.interviewStartDate)).toContain('2026-01-10')
+    expect(String(hydrated.interviewEndDate)).toContain('2026-01-12')
+  })
+
+  it('참여자 행 값이 null이면 기존 program 면접 컬럼을 유지한다', () => {
+    const program = individualParticipantInterviewProgram()
+    program.interviewStartDate = '2026-01-10T00:00:00.000Z'
+    program.interviewEndDate = '2026-01-12T00:00:00.000Z'
+    program.programRecruitments = [
+      {
+        id: 1,
+        recruitmentType: 'PARTICIPANT',
+        applicationType: 'INDIVIDUAL',
+        interviewEnabled: true,
+        interviewStartAt: null,
+        interviewEndAt: null,
+      },
+    ]
+    const hydrated = hydrateRecruitmentWindowsOntoProgram(program)
+    expect(String(hydrated.interviewStartDate)).toContain('2026-01-10')
+    expect(String(hydrated.interviewEndDate)).toContain('2026-01-12')
   })
 })

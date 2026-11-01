@@ -356,7 +356,16 @@ export default function UjatEducationRegionsPage() {
         width: TABLE_COLUMN_WIDTHS.name,
         align: 'center',
         ellipsis: true,
-        render: (value: string) => value?.trim() || '-',
+        render: (value?: string | null) => value?.trim() || '-',
+      },
+      {
+        title: '수정자명',
+        dataIndex: 'updatedByName',
+        key: 'updatedByName',
+        width: TABLE_COLUMN_WIDTHS.name,
+        align: 'center',
+        ellipsis: true,
+        render: (value?: string | null) => value?.trim() || '-',
       },
       {
         title: '등록일시',

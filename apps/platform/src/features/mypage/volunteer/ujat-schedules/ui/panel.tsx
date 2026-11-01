@@ -94,6 +94,7 @@ export function UjatVolunteerSchedulePanel({
             resolveEducationScheduleProgressStatus(item.heldAt),
             item.attendanceStatus,
             item.availableActions,
+            item.absenceReasonStatus,
           ),
       ),
     [ownItems],

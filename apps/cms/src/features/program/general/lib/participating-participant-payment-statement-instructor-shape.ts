@@ -25,7 +25,10 @@ export function participantToPaymentStatementInstructorShape(
     lectureRound: '',
     settlementStatus: 'none',
     teacherName: '',
-    memberId: participant.memberId?.trim() || undefined,
+    memberId:
+      participant.memberId != null && String(participant.memberId).trim()
+        ? String(participant.memberId).trim()
+        : undefined,
     contact: participant.detail?.contact,
     email: participant.detail?.email,
     affiliation: participant.affiliation,

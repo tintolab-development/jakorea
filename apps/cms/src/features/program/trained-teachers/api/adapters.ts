@@ -21,6 +21,7 @@ import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/progr
 import {
   omitProgramAuditNameFields,
   readProgramAuditNames,
+  withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
@@ -600,14 +601,15 @@ export function mapTrainedTeacherToUpdateRequest(
     if (!clearFields.includes('businessArea')) clearFields.push('businessArea')
     body.clearFields = clearFields
   }
-  return body
+  return withExpectedUpdatedAt(body, program.updatedAt)
 }
 
 export function mapTrainedTeacherToCreateRequest(program: Program): ProgramCreateRequest {
-  const update = mapTrainedTeacherToUpdateRequest(program, undefined, {
-    omitInfoDetailOwnedFields: false,
-    omitRegistrationOverlay: true,
-  })
+  const { expectedUpdatedAt: _expectedUpdatedAt, ...update } =
+    mapTrainedTeacherToUpdateRequest(program, undefined, {
+      omitInfoDetailOwnedFields: false,
+      omitRegistrationOverlay: true,
+    })
   // update 매퍼는 existing===merged 라 contactName 미변경으로 생략한다. CREATE는 값을 강제 실는다.
   const contactName = resolveProgramInquiryContactName(program)
   const body = omitNullRecordValues({

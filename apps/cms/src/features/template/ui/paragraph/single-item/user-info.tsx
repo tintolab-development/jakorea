@@ -3,6 +3,7 @@ import {
   type UserInfoParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { ParagraphChip } from '@/features/template/ui/shared/paragraph-chip'
+import { CmsInput } from '@/shared/ui/cms-input'
 import './user-info.css'
 
 const DEFAULT_USER_INFO_FIELDS = DEFAULT_USER_INFO_FIELD_CATALOG
@@ -44,17 +45,38 @@ export type UserInfoPreviewTableSkin = 'surface' | 'a4Document'
 export type UserInfoPreviewValues = Record<string, string>
 
 /** 설문자 정보 등 — 카드 미리보기(`surface`) / A4 contentOnly(`a4Document`) */
+function renderUserInfoPreviewValue(
+  field: UserInfoFieldEntry,
+  previewValues: UserInfoPreviewValues | undefined,
+  onFieldAnswerChange?: (key: string, value: string) => void
+) {
+  if (onFieldAnswerChange) {
+    return (
+      <CmsInput
+        inputSize="small"
+        value={previewValues?.[field.key] ?? ''}
+        onChange={event => onFieldAnswerChange(field.key, event.target.value)}
+        placeholder={`${field.label}을 입력해 주세요`}
+        width="100%"
+      />
+    )
+  }
+  return previewValues?.[field.key] ?? previewSampleForKey(field.key)
+}
+
 export function UserInfoPreviewTable({
   selectedEntries,
   skin = 'surface',
   previewValues,
   forceTwoColumnRow = false,
+  onFieldAnswerChange,
 }: {
   selectedEntries: UserInfoFieldEntry[]
   skin?: UserInfoPreviewTableSkin
   previewValues?: UserInfoPreviewValues
   /** 선택 항목 2개일 때도 한 행에 라벨·값 두 쌍 (UJAT 교육일지 봉사자 정보 미리보기) */
   forceTwoColumnRow?: boolean
+  onFieldAnswerChange?: (key: string, value: string) => void
 }) {
   const n = selectedEntries.length
   const isA4 = skin === 'a4Document'
@@ -95,7 +117,9 @@ export function UserInfoPreviewTable({
               <th className={thCls} scope="row">
                 {field.label}
               </th>
-              <td className={tdCls}>{previewValues?.[field.key] ?? previewSampleForKey(field.key)}</td>
+              <td className={tdCls}>
+                {renderUserInfoPreviewValue(field, previewValues, onFieldAnswerChange)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -130,7 +154,7 @@ export function UserInfoPreviewTable({
               {row.left.label}
             </th>
             <td className={tdCls}>
-              {previewValues?.[row.left.key] ?? previewSampleForKey(row.left.key)}
+              {renderUserInfoPreviewValue(row.left, previewValues, onFieldAnswerChange)}
             </td>
             {row.right != null ? (
               <>
@@ -138,7 +162,7 @@ export function UserInfoPreviewTable({
                   {row.right.label}
                 </th>
                 <td className={tdCls}>
-                  {previewValues?.[row.right.key] ?? previewSampleForKey(row.right.key)}
+                  {renderUserInfoPreviewValue(row.right, previewValues, onFieldAnswerChange)}
                 </td>
               </>
             ) : isA4 ? (
@@ -178,6 +202,7 @@ export function UserInfo({
   layout = 'chips',
   previewValues,
   forceTwoColumnRow = false,
+  answerEditable = false,
 }: {
   paragraph: UserInfoParagraph
   onChange?: (next: UserInfoParagraph) => void
@@ -185,6 +210,7 @@ export function UserInfo({
   layout?: UserInfoLayout
   previewValues?: UserInfoPreviewValues
   forceTwoColumnRow?: boolean
+  answerEditable?: boolean
 }) {
   const fields = normalizeFields(paragraph)
   const selected = new Set(paragraph.selectedUserFieldKeys ?? [])
@@ -206,8 +232,17 @@ export function UserInfo({
       <UserInfoPreviewTable
         selectedEntries={getUserInfoPreviewSelectedEntries(paragraph)}
         skin="surface"
-        previewValues={previewValues}
+        previewValues={previewValues ?? paragraph.fieldAnswers}
         forceTwoColumnRow={forceTwoColumnRow}
+        onFieldAnswerChange={
+          answerEditable && onChange
+            ? (key, value) =>
+                onChange({
+                  ...paragraph,
+                  fieldAnswers: { ...(paragraph.fieldAnswers ?? {}), [key]: value },
+                })
+            : undefined
+        }
       />
     )
   }

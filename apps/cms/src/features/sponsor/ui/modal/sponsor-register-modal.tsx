@@ -16,6 +16,7 @@ import {
   SPONSOR_LOGO_GUIDE_LINES,
   validateSponsorLogoSelection,
 } from '@/features/sponsor/lib/sponsor-logo-file-policy'
+import { toSponsorDateOnly } from '@/features/sponsor/lib/to-sponsor-date-only'
 import {
   AddressSearch,
   CmsBusinessNumberInput,
@@ -216,7 +217,7 @@ export function SponsorRegisterModal({
                 inputSize="small"
                 value={form.sponsorshipStartDate ? dayjs(form.sponsorshipStartDate) : null}
                 onChange={date =>
-                  setField('sponsorshipStartDate', date ? date.startOf('day').toISOString() : '')
+                  setField('sponsorshipStartDate', toSponsorDateOnly(date) ?? '')
                 }
                 placeholder="후원 시작일을 입력하세요"
                 format="YYYY.MM.DD"

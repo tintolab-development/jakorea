@@ -39,6 +39,56 @@ describe('getCertificateSerialAllocateErrorMessage', () => {
 
     expect(getCertificateSerialAllocateErrorMessage(null)).toBe(CERTIFICATE_SERIAL_ALLOCATE_FALLBACK)
   })
+
+  it('maps CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE when server message is empty or the code', () => {
+    expect(
+      getCertificateSerialAllocateErrorMessage({
+        response: {
+          status: 409,
+          data: {
+            success: false,
+            data: null,
+            message: '',
+            error: { code: 'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE', message: '' },
+          },
+        },
+      })
+    ).toBe('수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.')
+
+    expect(
+      getCertificateSerialAllocateErrorMessage({
+        response: {
+          status: 409,
+          data: {
+            success: false,
+            data: null,
+            message: 'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
+            error: {
+              code: 'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
+              message: 'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
+            },
+          },
+        },
+      })
+    ).toBe('수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.')
+
+    expect(
+      getCertificateSerialAllocateErrorMessage({
+        response: {
+          status: 409,
+          data: {
+            success: false,
+            data: null,
+            message: '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+            error: {
+              code: 'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
+              message: '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+            },
+          },
+        },
+      })
+    ).toBe('수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.')
+  })
 })
 
 describe('buildCertificateSerialAllocateRequest', () => {

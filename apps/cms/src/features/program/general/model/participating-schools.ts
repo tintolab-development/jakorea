@@ -47,6 +47,12 @@ export interface ParticipatingSchoolSession {
   sessionNo?: number | null
   /** 서버 일정명 (TT `educationSchedules[].label`) — 있으면 출석 회차 제목으로 우선 사용 */
   educationScheduleLabel?: string
+  /** participants `sessions[].scheduleName` — 교육 진행 일정 행 라벨 */
+  scheduleName?: string
+  /** GET schedules / education-slots `scheduleRole` */
+  scheduleRole?: string
+  /** GET schedules / education-slots `educationSlotKey` */
+  educationSlotKey?: string
 }
 
 export interface ParticipatingSchoolRow {

@@ -7,13 +7,14 @@
  */
 import type { FreeTextItemsRequest } from './freeTextItemsRequest';
 import type { PreviousJaProgramRequest } from './previousJaProgramRequest';
+import type { PreviousUjatTermRequest } from './previousUjatTermRequest';
 import type { VolunteerParticipantRegisterRequestApplicationType } from './volunteerParticipantRegisterRequestApplicationType';
 import type { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from './volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest';
 import type { VolunteerParticipantRegisterRequestPersonalInfoConsent } from './volunteerParticipantRegisterRequestPersonalInfoConsent';
+import type { VolunteerParticipantRegisterRequestRecruitHalf } from './volunteerParticipantRegisterRequestRecruitHalf';
 import type { VolunteerParticipantRegisterRequestRegistrationChannel } from './volunteerParticipantRegisterRequestRegistrationChannel';
 import type { VolunteerParticipantRegisterRequestThirdPartyConsent } from './volunteerParticipantRegisterRequestThirdPartyConsent';
 import type { VolunteerParticipantRegisterRequestVolunteerKind } from './volunteerParticipantRegisterRequestVolunteerKind';
-import type { VolunteerPreviousUjatTermRequest } from './volunteerPreviousUjatTermRequest';
 
 export interface VolunteerParticipantRegisterRequest {
   memberId: number;
@@ -32,9 +33,13 @@ export interface VolunteerParticipantRegisterRequest {
      */
   jaProgramExperienceConsentRequest: VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest;
   previousJaProgram?: PreviousJaProgramRequest;
-  previousUjatTerm?: VolunteerPreviousUjatTermRequest;
-  /** UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null. */
+  /** UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다. */
+  previousUjatTerm?: PreviousUjatTermRequest | null;
+  /** UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다. */
   educationRegionCode?: string | null;
+  /** UJAT 봉사자 모집 반기. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다. */
+  recruitHalf?: VolunteerParticipantRegisterRequestRecruitHalf;
+  /** UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다. */
   applicationType?: VolunteerParticipantRegisterRequestApplicationType;
   freeTextItems?: FreeTextItemsRequest;
   /**

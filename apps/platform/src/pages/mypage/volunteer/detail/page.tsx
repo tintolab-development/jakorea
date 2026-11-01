@@ -507,6 +507,7 @@ export function MypageVolunteerDetailPage() {
           applicationId={application.id}
           programId={program.id}
           pendingSurveyCount={application.pendingSurveyCount}
+          canSubmitSurvey={application.canSubmitSurvey}
         />
       )
     }
@@ -525,6 +526,7 @@ export function MypageVolunteerDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           programId={program.id}
+          canSubmitSatisfaction={application.canSubmitSatisfaction}
         />
       )
     }

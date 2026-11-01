@@ -8,6 +8,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { ParticipatingVolunteerRow } from '@/features/program/general/model/participating-volunteers'
 import type { Program } from '@/types/domain'
 import { StatusBadge } from '@/shared/components'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, ExcelButton } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
@@ -249,22 +250,20 @@ export function ParticipatingVolunteerSettlementSection({
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-volunteer-settlement-section">
       <div className="program-detail-fullpage-modal__info-tab-block participating-volunteer-settlement-section__summary">
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-            <tbody>
-              <tr>
-                <th scope="row">지급조서 처리 현황</th>
-                <td>
-                  <InstructorSettlementStatusText status={paymentStatementSummaryStatus} />
-                </td>
-                <th scope="row">프로그램 진행 회차</th>
-                <td>
-                  {progressSummary.completed} / {progressSummary.total}건 (봉사 진행 회차 기준)
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <DetailInfoForm title="정산 현황" mode="view">
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="지급조서 처리 현황"
+              view={<InstructorSettlementStatusText status={paymentStatementSummaryStatus} />}
+              readOnlyDisplay
+            />
+            <DetailInfoForm.Field
+              label="프로그램 진행 회차"
+              view={`${progressSummary.completed} / ${progressSummary.total}건 (봉사 진행 회차 기준)`}
+              readOnlyDisplay
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
       </div>
 
       <div className="table-header-actions">

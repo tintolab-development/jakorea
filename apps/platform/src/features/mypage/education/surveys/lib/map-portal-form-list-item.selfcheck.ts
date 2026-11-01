@@ -9,6 +9,7 @@ import {
 import {
   isPortalFormSubmissionPeriodOpen,
   mergePortalFormSubmissionPeriodFields,
+  resolveEducationSurveyListStatus,
   resolvePortalFormSubmissionPeriodBlockForEntry,
   resolvePortalFormSubmissionPeriodBlockReason,
 } from './portal-form-submission-period.ts'
@@ -97,9 +98,40 @@ assert.equal(
   ),
   'closed',
 )
+
+const beforeClock = new Date('2026-11-01T07:17:00+09:00')
+const startClock = {
+  submissionStartAt: '2026-11-01T07:20:00+09:00',
+  submissionEndAt: '2026-11-01T08:16:00+09:00',
+}
+assert.equal(resolvePortalFormSubmissionPeriodBlockReason(startClock, beforeClock), 'not_started')
+assert.equal(isPortalFormSubmissionPeriodOpen(startClock, beforeClock), false)
+assert.equal(
+  resolvePortalFormSubmissionPeriodBlockReason(startClock, new Date('2026-11-01T07:20:00+09:00')),
+  null,
+)
+
+assert.equal(resolveEducationSurveyListStatus(false, startClock, beforeClock), 'before_start')
+assert.equal(
+  resolveEducationSurveyListStatus(false, startClock, new Date('2026-11-01T07:21:00+09:00')),
+  'in_progress',
+)
+assert.equal(resolveEducationSurveyListStatus(true, startClock, beforeClock), 'submitted')
 assert.equal(
   resolvePortalFormSubmissionPeriodBlockReason({ canSubmit: false }, new Date()),
-  'closed',
+  null,
+)
+
+assert.equal(
+  mapPortalFormListItem({
+    bindingId: 190289,
+    status: 'NOT_SUBMITTED',
+    responseStatus: 'APPROVED',
+    formResponseId: 11,
+    canSubmit: false,
+    canResubmit: false,
+  })?.status,
+  'submitted',
 )
 
 const titleParagraph = {

@@ -1,5 +1,5 @@
 /**
- * 참여자(개인) 상세 — 정산 현황 탭 (개인 일정별 정산 심사)
+ * 참여자(개인) 상세 — 정산 현황 탭 (개인 일정별 정산 신청)
  */
 
 import { useMemo, useState } from 'react'
@@ -7,17 +7,28 @@ import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { StatusBadge } from '@/shared/components'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, ExcelButton } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import { INDIVIDUAL_SETTLEMENT_REVIEW_EXCEL_COLUMNS } from '@/features/program/general/lib/individual-settlement-review-export'
+import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
+import { PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS } from '@/features/program/general/lib/participating-individual-instructor-settlement-export'
+import {
+  lectureProgressAccent,
+  PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_PROGRESS_LABELS,
+} from '@/features/program/general/lib/participating-individual-instructor-lecture-report-display'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   individualSettlementReviewStatusAccent,
+  individualSettlementTableProcessingLabel,
 } from '@/features/program/general/lib/individual-settlement-review-status'
 import type { IndividualSettlementReviewListRow } from '@/features/program/general/lib/map-individual-settlement-review-rows'
+import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { useParticipatingParticipantSettlementList } from '@/features/program/general/hooks/use-participating-participant-settlement-list'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { IndividualSettlementReviewDetailModal } from './individual-settlement-review-detail-modal'
 import './participating-instructor-settlement-section.css'
 import './individual-settlement-review-detail-modal.css'
@@ -25,12 +36,17 @@ import './individual-settlement-review-detail-modal.css'
 export interface ParticipatingParticipantSettlementSectionProps {
   program: Program
   participant: ParticipatingIndividualParticipantRow
+  assignedSessions?: ReadonlyArray<ParticipatingSchoolSession>
+  assignedSessionsLoading?: boolean
 }
 
 export function ParticipatingParticipantSettlementSection({
   program,
   participant,
+  assignedSessions = [],
+  assignedSessionsLoading = false,
 }: ParticipatingParticipantSettlementSectionProps) {
+  const { showAlert } = useCmsAlert()
   const programId = program.id != null ? String(program.id) : ''
   const participantId = participant.id?.trim() ?? ''
 
@@ -38,12 +54,13 @@ export function ParticipatingParticipantSettlementSection({
     useParticipatingParticipantSettlementList({
       programId,
       participant,
+      assignedSessions,
     })
 
   const [detailApplicationId, setDetailApplicationId] = useState<number | null>(null)
 
   const { exportExcel, isExporting: isExcelExporting } = useTableExcelExport({
-    columns: INDIVIDUAL_SETTLEMENT_REVIEW_EXCEL_COLUMNS,
+    columns: PARTICIPATING_PARTICIPANT_SETTLEMENT_EXCEL_COLUMNS,
     data: rows,
     filename: `정산내역_${participant.applicantName}`,
   })
@@ -56,58 +73,69 @@ export function ParticipatingParticipantSettlementSection({
         dataIndex: 'educationScheduleLabel',
         key: 'educationScheduleLabel',
         align: 'center',
-        width: 360,
-        render: (value: string | undefined) => renderProgramDetailPipeSeparated(value),
+        width: 400,
+        render: (value: string | undefined) =>
+          renderProgramDetailPipeSeparated(value ? formatCmsScheduleDisplayLabel(value) : value),
       },
       {
-        title: '정산 상태',
-        dataIndex: 'statusLabel',
-        key: 'statusLabel',
+        title: '교육 진행 현황',
+        dataIndex: 'lectureProgress',
+        key: 'lectureProgress',
         align: 'center',
-        width: 140,
+        width: 120,
         render: (_value, record) => (
           <StatusBadge
             domain="custom"
+            label={
+              PARTICIPATING_INDIVIDUAL_INSTRUCTOR_LECTURE_PROGRESS_LABELS[record.lectureProgress]
+            }
+            accentColor={lectureProgressAccent(record.lectureProgress)}
             variant="text"
-            label={record.statusLabel}
-            accentColor={individualSettlementReviewStatusAccent(record.status)}
           />
         ),
       },
       {
-        title: '정산 금액',
+        title: '지급조서 처리 현황',
+        key: 'status',
+        align: 'center',
+        width: 160,
+        render: (_value, record) => {
+          const label = individualSettlementTableProcessingLabel(record.status)
+          if (record.status === 'NONE' || record.settlementApplicationId == null) {
+            return <InstructorSettlementStatusText status="none" />
+          }
+          return (
+            <StatusBadge
+              domain="custom"
+              variant="text"
+              label={label}
+              accentColor={individualSettlementReviewStatusAccent(record.status)}
+            />
+          )
+        },
+      },
+      {
+        title: '정산 예정 금액',
         dataIndex: 'totalAmountLabel',
         key: 'totalAmountLabel',
         align: 'center',
         width: 140,
       },
       {
-        title: 'Revision',
-        dataIndex: 'latestRevisionNoLabel',
-        key: 'latestRevisionNoLabel',
+        title: '지급조서',
+        key: 'paymentStatement',
         align: 'center',
-        width: 100,
-      },
-      {
-        title: '제출일시',
-        dataIndex: 'submittedAtLabel',
-        key: 'submittedAtLabel',
-        align: 'center',
-        width: 160,
-      },
-      {
-        title: '상세',
-        key: 'detail',
-        align: 'center',
-        width: 140,
+        width: 180,
         render: (_value, record) => (
           <div className="participating-instructor-settlement-section__payment-statement-cell-inner">
             <CmsButton
               variant="default"
-              size="h40"
+              size="h32"
+              style={{ width: '100%' }}
               disabled={!record.canOpenDetail || !remoteEnabled}
-              onClick={() => setDetailApplicationId(record.settlementApplicationId)} >
-              상세
+              onClick={() => setDetailApplicationId(record.settlementApplicationId)}
+            >
+              상세 보기
             </CmsButton>
           </div>
         ),
@@ -116,33 +144,39 @@ export function ParticipatingParticipantSettlementSection({
     [remoteEnabled]
   )
 
+  const completedCount = rows.filter(row => row.lectureProgress === 'completed').length
+
   const summaryStatusLabel = isError
     ? '조회 실패'
-    : summary.submitted > 0
-      ? `확인 대기 중 ${summary.submitted}건`
-      : summary.approved > 0
-        ? `영수증 확인 완료 ${summary.approved}건`
-        : summary.rejected > 0
-          ? `신청 반려 ${summary.rejected}건`
-          : summary.total > 0
-            ? '미신청'
-            : '-'
+    : summary.submitted > 0 && (summary.approved > 0 || summary.rejected > 0)
+      ? '확인 진행 중'
+      : summary.submitted > 0
+        ? '확인 대기 중'
+        : summary.approved > 0
+          ? '영수증 확인 완료'
+          : summary.rejected > 0
+            ? '신청 반려'
+            : summary.total > 0
+              ? '해당 없음'
+              : '-'
 
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-settlement-section__summary">
-        <div className="program-detail-info-tab__table-wrapper program-detail-info-tab__table-wrapper--top">
-          <table className="program-detail-info-tab__table program-detail-info-tab__table--basic">
-            <tbody>
-              <tr>
-                <th scope="row">정산 현황</th>
-                <td>{isLoading ? '불러오는 중' : summaryStatusLabel}</td>
-                <th scope="row">프로그램 진행 회차</th>
-                <td>{isError ? '-' : `${summary.total}건`}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <DetailInfoForm title="정산 현황" mode="view">
+          <DetailInfoForm.Row type="double">
+            <DetailInfoForm.Field
+              label="지급조서 처리 현황"
+              view={isLoading ? '불러오는 중' : summaryStatusLabel}
+              readOnlyDisplay
+            />
+            <DetailInfoForm.Field
+              label="프로그램 진행 회차"
+              view={isError ? '-' : `${completedCount} / ${rows.length}건 (강의 진행 회차 기준)`}
+              readOnlyDisplay
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
       </div>
 
       <div className="table-header-actions">
@@ -151,10 +185,25 @@ export function ParticipatingParticipantSettlementSection({
           <span className="table-description">{isError ? '0건' : `${rows.length}건`}</span>
         </div>
         <div className="info-section-buttons--wrapper">
+          <CmsButton
+            variant="secondary"
+            size="h40"
+            icon={<ButtonDownloadIcon />}
+            onClick={() =>
+              showAlert({
+                title: '안내',
+                content:
+                  '다운로드할 지급조서가 없습니다. 개인 참여자 정산은 일정별 정산 신청이며, 지급조서 일괄 다운로드 대상이 아닙니다.',
+              })
+            }
+          >
+            지급조서 일괄 다운로드
+          </CmsButton>
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={rows.length === 0 || isError} />
+            disabled={rows.length === 0 || isError}
+          />
         </div>
       </div>
 
@@ -164,7 +213,7 @@ export function ParticipatingParticipantSettlementSection({
             {errorMessage}
           </div>
         ) : (
-          <Spin spinning={isLoading}>
+          <Spin spinning={isLoading || assignedSessionsLoading}>
             <CmsDataTable<IndividualSettlementReviewListRow>
               className="participating-institutions-section__table cms-data-table"
               rowKey="id"

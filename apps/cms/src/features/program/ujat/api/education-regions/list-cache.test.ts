@@ -16,6 +16,7 @@ function region(
     sortOrder: 1,
     active: true,
     createdByName: '',
+    updatedByName: '',
     createdAt: '2026-08-24T00:00:00.000Z',
     hasUsageHistory: false,
     ...partial,

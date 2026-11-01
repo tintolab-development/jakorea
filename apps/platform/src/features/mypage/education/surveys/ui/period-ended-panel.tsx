@@ -2,22 +2,25 @@ import illustCrossUrl from '@/shared/assets/illustration/illust-cross.svg'
 import { PFText } from '@/shared/ui'
 import {
   portalFormSubmissionPeriodBlockMessage,
+  type EducationSurveyPeriodNoticeKind,
   type PortalFormSubmissionPeriodBlockReason,
 } from '../lib/portal-form-submission-period'
 import emptyStyles from './empty-panel.module.css'
 
 type EducationSurveyPeriodEndedPanelProps = {
   reason: PortalFormSubmissionPeriodBlockReason
+  kind?: EducationSurveyPeriodNoticeKind
   /** 목록+본문 2열일 때 full-bleed shell 생략 */
   layout?: 'full' | 'inline'
 }
 
-/** 설문조사 탭 — 작성 기간 종료(또는 시작 전). 만족도조사 empty 패널과 동일 레이아웃, 부가 설명 없음. */
+/** 설문·만족도 탭 — 작성 기간 종료(또는 시작 전). empty 패널과 동일 레이아웃, 부가 설명 없음. */
 export function EducationSurveyPeriodEndedPanel({
   reason,
+  kind = 'survey',
   layout = 'full',
 }: EducationSurveyPeriodEndedPanelProps) {
-  const title = portalFormSubmissionPeriodBlockMessage(reason, 'survey')
+  const title = portalFormSubmissionPeriodBlockMessage(reason, kind)
 
   const content = (
     <div className={emptyStyles.content}>

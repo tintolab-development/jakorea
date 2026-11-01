@@ -7,6 +7,7 @@
  */
 import type { ClassTimeRow } from './classTimeRow';
 import type { GradeBlock } from './gradeBlock';
+import type { OrganizationApplicationDetailResponseInstitutionConfirmationStatus } from './organizationApplicationDetailResponseInstitutionConfirmationStatus';
 import type { OrganizationApplicationDetailResponsePreviousYearParticipation } from './organizationApplicationDetailResponsePreviousYearParticipation';
 import type { OrganizationApplicationDetailResponseScheduleConfirmStatus } from './organizationApplicationDetailResponseScheduleConfirmStatus';
 import type { OrganizationApplicationDetailResponseSnackAvailability } from './organizationApplicationDetailResponseSnackAvailability';
@@ -64,10 +65,16 @@ export interface OrganizationApplicationDetailResponse {
   /** 대기 장소 안내 스냅샷. Portal guidance(waiting-place 등)에서 프로젝션. 없으면 null. */
   waitingRoomLocation?: string | null;
   mealProvided?: boolean;
-  /** 식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null. */
+  /** 식사 가능 여부 및 안내 스냅샷. Portal guidance(meal 등)에서 프로젝션. 없으면 null. UJAT에서는 guidance meal이 잔여교재 배출 장소로도 쓰이므로 leftoverTextbookDisposal을 우선한다. */
   mealNotice?: string | null;
   /** 기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. */
   parkingInfo?: string | null;
+  /** 간식(ABC초콜릿) 제공 가능 여부. Portal guidance snackAvailability(possible|impossible)에서 응답 필드로 프로젝션. 없으면 null. 빈 문자열 금지. mealProvided/mealNotice와 혼용하지 않음(UJAT meal 키는 잔여교재 배출 장소). */
+  snackAvailability?: OrganizationApplicationDetailResponseSnackAvailability;
+  /** 성범죄 경력 조회서 요청 표시 문구. form sex-offense submission+inquiry 답을 Portal formatSexOffenseTeacherGuidanceValue와 동일 포맷으로 직렬화해 응답 필드로 프로젝션(원본은 form/application-answers, 영속 전용 컬럼 없음). 없으면 null. 빈 문자열·'-'로 채우지 않음. */
+  sexOffenseCheckRequest?: string | null;
+  /** UJAT 잔여교재 배출 장소. Portal guidance meal 답을 프로젝션. UJAT이 아니면 null. 없으면 mealNotice 스냅샷으로 fallback 가능. snackAvailability와 동일 필드로 쓰지 않음. */
+  leftoverTextbookDisposal?: string | null;
   textbookGrade?: string;
   textbookKits?: number;
   textbookQuantity?: number;
@@ -94,22 +101,18 @@ export interface OrganizationApplicationDetailResponse {
   educationRegionCode?: string | null;
   /** UJAT 일정 확인 상태. 정의된 wire enum 또는 null. */
   scheduleConfirmStatus?: OrganizationApplicationDetailResponseScheduleConfirmStatus;
+  /** UJAT 기관 확인 상태(temporary-schedule와 동일 vocabulary). scheduleConfirmStatus와 동치: institution_checking→CHECKING, institution_confirmed→CONFIRMED, revision_requested→REVISION_REQUESTED. 비대상·미설정이면 키를 생략하며 null로 보내지 않는다. */
+  institutionConfirmationStatus?: OrganizationApplicationDetailResponseInstitutionConfirmationStatus;
   /** UJAT 신청에 배정된 강사 수. 0명은 null. */
   assignedInstructorCount?: number | null;
   /** UJAT 운영 학생 수. 활성 학생 명단 행 기준이며 없으면 null. */
   operatingStudentCount?: number | null;
-  /** 신청에 연결된 교재 영문명. 없으면 null. */
+  /** 신청에 연결된 교재 영문명. 교재가 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다. */
   textbookNameEn?: string | null;
   /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
   textbookDeliveryStatus?: OrganizationApplicationDetailResponseTextbookDeliveryStatus;
-  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생수/24로 계산하지 않습니다. */
+  /** 저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다. */
   kitCount?: number | null;
-  /** 저장된 교재 권수. 없으면 null. */
+  /** 저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다. */
   bookCount?: number | null;
-  /** 간식(ABC초콜릿) 제공 가능 여부. Portal guidance snackAvailability(possible|impossible)에서 응답 필드로 프로젝션. 없으면 null. 빈 문자열 금지. mealProvided/mealNotice와 혼용하지 않음(UJAT meal 키는 잔여교재 배출 장소). */
-  snackAvailability?: OrganizationApplicationDetailResponseSnackAvailability;
-  /** 성범죄 경력 조회서 요청 표시 문구. form sex-offense submission+inquiry 답을 Portal formatSexOffenseTeacherGuidanceValue와 동일 포맷으로 직렬화해 응답 필드로 프로젝션(원본은 form/application-answers, 영속 전용 컬럼 없음). 없으면 null. 빈 문자열·'-'로 채우지 않음. */
-  sexOffenseCheckRequest?: string | null;
-  /** UJAT 잔여교재 배출 장소. Portal guidance meal 답을 프로젝션. UJAT이 아니면 null. 없으면 mealNotice 스냅샷으로 fallback 가능. snackAvailability와 동일 필드로 쓰지 않음. */
-  leftoverTextbookDisposal?: string | null;
 }

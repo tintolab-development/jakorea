@@ -47,6 +47,7 @@ import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/progra
 import {
   omitProgramAuditNameFields,
   readProgramAuditNames,
+  withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
 import {
   applyParticipantRecruitmentColumnsFromResponse,
@@ -764,20 +765,25 @@ export function mapCompanySchoolToUpdateRequest(
   program: Program,
   patch?: Partial<Program>
 ): ProgramUpdateRequest {
+  let body: ProgramUpdateRequest
   if (patch && Object.keys(patch).length > 0) {
     const syncedPatch = withCompanySchoolParticipantTopLevelSync(program, patch)
-    return mapCompanySchoolPatchFieldsToRequest(
+    body = mapCompanySchoolPatchFieldsToRequest(
       { ...program, ...syncedPatch },
       syncedPatch,
       program
     )
+  } else {
+    body = mapCompanySchoolCoreFieldsToRequest(program)
   }
-  return mapCompanySchoolCoreFieldsToRequest(program)
+  return withExpectedUpdatedAt(body, program.updatedAt)
 }
 
 export function mapCompanySchoolToCreateRequest(program: Program): ProgramCreateRequest {
+  const { expectedUpdatedAt: _expectedUpdatedAt, ...update } =
+    mapCompanySchoolToUpdateRequest(program)
   return omitNullRecordValues({
-    ...mapCompanySchoolToUpdateRequest(program),
+    ...update,
     programType: COMPANY_SCHOOL_PROGRAM_API_TYPE,
     businessStartDate: toDate(program.startDate),
     businessEndDate: toDate(program.endDate),

@@ -11,6 +11,9 @@ export interface PreviousUjatTermRequest {
   term: string;
   /** @minLength 1 */
   year: string;
-  /** @items.minLength 1 */
+  /**
+     * 이전 기수 수료증 fileObjectId 문자열 목록. 숫자만 허용. 본인(ADMIN) 업로드·VOLUNTEER_APPLICATION_EVIDENCE·대상 PROGRAM owner·CLEAN·AVAILABLE/CONFIRMED. 연결 키는 ujat-program-application-volunteer-seed-previous-term. 없는 id/타 프로그램 owner/CERTIFICATE_TEMPLATE·CERTIFICATE_ASSET purpose → 400 VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID. PENDING_SCAN·미확정 업로드 → 409 VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN.
+     * @items.minLength 1
+     */
   certificateFileIds?: string[] | null;
 }

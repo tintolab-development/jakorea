@@ -23,6 +23,8 @@ export type PortalApplicationSummary = {
   inProgress?: number
   completed?: number
   giveUp?: number
+  /** 교육·봉사 현황 `statusGroup=COMPLETED`(표시: 진행 완료·활동 포기·신청 반려·신청 취소) */
+  ended?: number
 }
 
 export type PortalScheduleItem = {

@@ -46,6 +46,7 @@ import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/
 import {
   omitProgramAuditNameFields,
   readProgramAuditNames,
+  withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
 import { resolveBusinessPeriodDates } from '@/features/program/shared/lib/program-business-period'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
@@ -1595,8 +1596,9 @@ export function toUpdateRequest(
   registration?: RegistrationPersistSnapshot,
   options?: { stripTypedLegacyOverlay?: boolean }
 ): ProgramUpdateRequest {
-  if (patch && Object.keys(patch).length > 0) {
-    return patchRequest({ ...program, ...patch }, patch, registration, program, options)
-  }
-  return coreRequest(program, registration, options)
+  const body =
+    patch && Object.keys(patch).length > 0
+      ? patchRequest({ ...program, ...patch }, patch, registration, program, options)
+      : coreRequest(program, registration, options)
+  return withExpectedUpdatedAt(body, program.updatedAt)
 }

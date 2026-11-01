@@ -16,6 +16,7 @@ export interface SystemIssueDetailResponse {
   actorType?: string;
   actorId?: number;
   message?: string;
+  messageKo?: string;
   detailSummary?: string;
   featureKey?: string;
   requestId?: number;

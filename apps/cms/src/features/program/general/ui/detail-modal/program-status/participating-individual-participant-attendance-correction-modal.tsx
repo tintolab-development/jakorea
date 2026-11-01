@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import dayjs, { type Dayjs } from 'dayjs'
 import { ContentModal, CmsButton, CmsInput, CmsSelect, FileSelectField, useCmsAlert } from '@/shared/ui'
+import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
   parseAttendanceScheduleOwnerId,
@@ -15,6 +17,14 @@ import {
 import type { ParticipatingIndividualParticipantAttendanceRow } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
 import './participating-individual-participant-attendance-correction-modal.css'
 
+const TIME_PICKER_Z_INDEX = 2600
+
+function parseLateTime(value: string | undefined): Dayjs | null {
+  const match = value?.trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/)
+  if (!match) return null
+  return dayjs().hour(Number(match[1])).minute(Number(match[2])).second(0).millisecond(0)
+}
+
 export type ParticipatingIndividualParticipantAttendanceCorrectionScheduleOption = {
   value: string
   label: string
@@ -24,6 +34,7 @@ export type ParticipatingIndividualParticipantAttendanceCorrectionScheduleOption
 export type ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload = {
   scheduleRowId: string
   status: ProgramAttendanceCorrectionStatus
+  lateTime?: string
   reason: string
   evidenceFileName: string | null
   evidenceFileObjectIds?: number[]
@@ -47,6 +58,7 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   const { showAlert } = useCmsAlert()
   const [scheduleRowId, setScheduleRowId] = useState<string | undefined>(undefined)
   const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus | undefined>(undefined)
+  const [lateTime, setLateTime] = useState<Dayjs | null>(null)
   const [reason, setReason] = useState('')
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
   const [uploadingEvidence, setUploadingEvidence] = useState(false)
@@ -59,12 +71,22 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   useEffect(() => {
     if (!open) return
     setScheduleRowId(undefined)
-    setStatus(undefined)
+    setStatus('present')
+    setLateTime(null)
     setReason('')
     setEvidenceFiles([])
   }, [open, scheduleOptions])
 
+  const showLateTimePicker = status === 'late'
   const showReasonTable = status === 'excused_absence'
+
+  useEffect(() => {
+    if (!showLateTimePicker) {
+      setLateTime(null)
+      return
+    }
+    setLateTime(parseLateTime(selectedOption?.row.lateTime) ?? dayjs().hour(9).minute(0).second(0))
+  }, [showLateTimePicker, selectedOption?.row.lateTime])
 
   useEffect(() => {
     if (showReasonTable) return
@@ -74,7 +96,13 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
 
   const evidenceFileNames = evidenceFiles.map(file => file.name)
 
-  const canConfirm = Boolean(scheduleRowId && selectedOption && status && !uploadingEvidence)
+  const canConfirm = Boolean(
+    scheduleRowId &&
+      selectedOption &&
+      status &&
+      !uploadingEvidence &&
+      (status !== 'late' || lateTime != null)
+  )
   const displayName = participantName.trim() || '참여자'
 
   return (
@@ -97,6 +125,13 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
             disabled={!canConfirm}
             onClick={() => {
               if (!scheduleRowId || !selectedOption || !status) return
+              if (status === 'late' && lateTime == null) {
+                showAlert({
+                  title: '안내',
+                  content: '지각 시간을 선택해 주세요.',
+                })
+                return
+              }
               if (status === 'excused_absence' && reason.trim().length === 0) {
                 showAlert({
                   title: '안내',
@@ -151,6 +186,7 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
                 onConfirm({
                   scheduleRowId,
                   status,
+                  lateTime: status === 'late' && lateTime != null ? lateTime.format('H:mm') : undefined,
                   reason: reason.trim(),
                   evidenceFileName: evidenceFiles[0]?.name ?? null,
                   evidenceFileObjectIds,
@@ -190,13 +226,30 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
             <CmsSelect
               inputSize="large"
               width={170}
-              value={status ?? ''}
+              withAllOption={false}
+              value={status ?? 'present'}
               options={[...PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS]}
-              onChange={value => setStatus(parseProgramAttendanceCorrectionStatus(value))}
+              onChange={value =>
+                setStatus(parseProgramAttendanceCorrectionStatus(value) ?? 'present')
+              }
               aria-label="출결 현황"
             />
           </div>
         </div>
+
+        {showLateTimePicker ? (
+          <div className="participating-individual-attendance-correction-modal__late-time">
+            <ParagraphTimePicker
+              value={lateTime}
+              onChange={setLateTime}
+              placeholder="지각 시간을 선택해 주세요"
+              width="100%"
+              inputSize="large"
+              zIndex={TIME_PICKER_Z_INDEX}
+              showEndTimeToggle={false}
+            />
+          </div>
+        ) : null}
 
         {showReasonTable ? (
           <div className="participating-individual-attendance-correction-modal__reason-table-wrap">

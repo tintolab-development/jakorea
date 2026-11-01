@@ -262,6 +262,13 @@ function SponsorDetailFullPageModalInner({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
         })
+        return
+      }
+      if (result === 'failed') {
+        showAlert({
+          title: '저장 실패',
+          content: '기본 정보를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
       }
     })()
   }, [canManageSponsor, handleToggleBasicInfoEdit, showAlert])

@@ -86,6 +86,11 @@ function shouldSkipGlobalErrorAlert(
     return true
   }
 
+  // 출결 정정 일정 시작 전 — 화면에서 전용 안내를 띄운다.
+  if (code === 'ATTENDANCE_RECORDING_NOT_OPEN') {
+    return true
+  }
+
   return false
 }
 

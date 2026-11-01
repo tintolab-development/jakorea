@@ -57,7 +57,8 @@ function addDays(key: string, days: number): string {
  */
 export function resolveProgressAttendanceScheduleDateRanges(
   program: Pick<Program, 'startDate' | 'endDate'> &
-    Partial<Pick<Program, 'rounds' | 'generalCommonInfo' | 'registrationOverlay'>>
+    Partial<Pick<Program, 'rounds' | 'generalCommonInfo' | 'registrationOverlay'>>,
+  extraDateTexts: readonly (string | null | undefined)[] = []
 ): ProgramScheduleDateRange[] {
   const keys: string[] = []
   const push = (key: string | null) => {
@@ -77,6 +78,11 @@ export function resolveProgressAttendanceScheduleDateRanges(
   }
   for (const detail of commonInfo?.scheduleDetails ?? []) {
     readLabelDateKeys(detail.scheduleDateLabel).forEach(push)
+  }
+  for (const text of extraDateTexts) {
+    if (text == null || !String(text).trim()) continue
+    push(toDateKey(text))
+    readLabelDateKeys(text).forEach(push)
   }
   if (keys.length === 0) return []
   keys.sort()

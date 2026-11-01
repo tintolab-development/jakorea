@@ -6,7 +6,6 @@
  * 데이터 소스: dashboard remote API. 미연동 시 빈 집계.
  */
 
-import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import type { Program } from '@/types/domain'
 import { countGeneralProgramOverviewStages } from '@/features/program/general/lib/overview-stage-counts'
 import { countCompanySchoolOverviewStages } from '@/features/program/1c-1s/lib/overview-stage-counts'
@@ -138,7 +137,6 @@ export interface ProgramKpiItem {
  * 7단계 lifecycle → RECEIVED, MATCHING_*, MATERIAL_*, IN_PROGRESS, REPORT_SUBMITTED 매핑
  */
 export async function getProgramProgressSummary(): Promise<ProgramProgressSummary> {
-  notifyProgramApiUnavailable('dashboard-program-progress-summary', '대시보드 · 프로그램 진행 현황')
   return {
     total: 0,
     byStatus: {
@@ -169,7 +167,6 @@ export async function getProgramProgressStages(options?: {
     options?.programType === 'general' ||
     options?.programType === 'trained_teachers'
   ) {
-    notifyProgramApiUnavailable('dashboard-program-progress-stages', '대시보드 · 프로그램 진행 현황')
     const programs: Program[] = []
 
     if (options.programType === 'general') {
@@ -183,7 +180,6 @@ export async function getProgramProgressStages(options?: {
     return { scheduled: 0, inProgress: 0, completed: 0, total: 0 }
   }
 
-  notifyProgramApiUnavailable('dashboard-program-progress-stages-legacy', '대시보드 · 프로그램 진행 현황')
   const programs: Program[] = []
 
   const stages = {
@@ -242,10 +238,6 @@ export async function getProgramProgressStagesByProgramId(
   _programId: string
 ): Promise<ProgramProgressStages> {
   void _programId
-  notifyProgramApiUnavailable(
-    'dashboard-program-progress-stages-by-id',
-    '대시보드 · 프로그램 진행 현황'
-  )
   return {
     studentRecruitment: 0,
     instructorRecruitment: 0,
@@ -270,7 +262,6 @@ export async function getRecruitmentStatusList(options?: {
     const dto = await fetchDashboardRecruitmentsRemote(queryParams)
     return mapRecruitmentListResponse(dto)
   }
-  notifyProgramApiUnavailable('dashboard-recruitment-status', '대시보드 · 모집 신청 현황')
   return { rows: [], totalCount: null }
 }
 
@@ -292,7 +283,6 @@ export async function getKpiAchievementList(options?: {
     const dto = await fetchDashboardKpiProgressRemote(queryParams)
     return mapKpiProgressListResponse(dto)
   }
-  notifyProgramApiUnavailable('dashboard-kpi-achievement', '대시보드 · 사업 KPI')
   return []
 }
 
@@ -315,7 +305,6 @@ export async function getDashboardHomeSummary(): Promise<DashboardHomeSummary> {
     const dto = await fetchDashboardHomeRemote()
     return mapDashboardHomeResponse(dto)
   }
-  notifyProgramApiUnavailable('dashboard-home-summary', '대시보드 · 홈 요약')
   return {
     version: 'mock',
     programCount: null,

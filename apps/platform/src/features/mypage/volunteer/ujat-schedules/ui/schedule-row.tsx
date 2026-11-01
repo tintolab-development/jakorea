@@ -57,7 +57,12 @@ export function UjatVolunteerScheduleRow({
     !readOnly &&
     onAbsenceReasonSubmit != null &&
     hasOperationalSchedule &&
-    canSubmitEducationAbsenceReason(progress, item.attendanceStatus, item.availableActions)
+    canSubmitEducationAbsenceReason(
+      progress,
+      item.attendanceStatus,
+      item.availableActions,
+      item.absenceReasonStatus,
+    )
   const school = item.locationName?.trim()
   const classLabel = item.classLabel?.trim()
   const unassigned = !isAssignedUjatSchedule(item) && !school && !classLabel
@@ -125,19 +130,17 @@ export function UjatVolunteerScheduleRow({
             출석하기
           </PFButton>
           <div className={styles.actionButtons}>
-            <PFButton
-              type="button"
-              variant="secondary"
-              size="large"
-              className={styles.rowButton}
-              disabled={!canSubmitAbsence}
-              onClick={() => {
-                if (!canSubmitAbsence) return
-                onAbsenceReasonSubmit?.(item)
-              }}
-            >
-              결석 사유 제출하기
-            </PFButton>
+            {canSubmitAbsence ? (
+              <PFButton
+                type="button"
+                variant="secondary"
+                size="large"
+                className={styles.rowButton}
+                onClick={() => onAbsenceReasonSubmit?.(item)}
+              >
+                결석 사유 제출하기
+              </PFButton>
+            ) : null}
             <PFButton
               type="button"
               variant="secondary"

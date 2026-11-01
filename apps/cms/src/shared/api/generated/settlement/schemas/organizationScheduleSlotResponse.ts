@@ -16,6 +16,7 @@ export interface OrganizationScheduleSlotResponse {
   grade?: string;
   className?: string;
   classLabel?: string;
+  /** 학생 수. 저장값이 0이어도 gradeBlocks.classes의 grade+className 매칭으로 hydrate된 값을 반환할 수 있다. 매칭 실패 시 0. Portal·Admin GET은 이 값을 그대로 노출한다. */
   studentCount?: number;
   assignmentStatus?: string;
   scheduleStartAt?: string;

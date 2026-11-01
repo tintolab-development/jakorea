@@ -16,6 +16,7 @@ import {
   mapApiVolunteerInterviewStatusToAssignmentStatus,
   mapIndividualApplicationDetailToApplicantRow,
   mapIndividualApplicationToApplicantRow,
+  mapIndividualApplicationToApprovalStatus,
   readIndividualApplicationListAffiliationDisplayName,
   readIndividualApplicationListGrade,
   mapInterviewEvaluationSlots,
@@ -332,6 +333,59 @@ describe('general-applications-adapters', () => {
     expect(mapApiApplicationStatusToApprovalStatus('REJECTED')).toBe('rejected')
     expect(mapApiApplicationStatusToApprovalStatus('CANCELLED')).toBe('cancelled')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTION_CANCELLED')).toBe('pending')
+  })
+
+  it('maps interview-track individual approval from document/final result when applicationStatus stays waiting', () => {
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'WAITING_REVIEW',
+        documentStatus: 'PASS',
+      })
+    ).toBe('approved')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'DOCUMENT_PASSED',
+      })
+    ).toBe('approved')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'WAITING_REVIEW',
+        finalResultStatus: 'PASS',
+      })
+    ).toBe('approved')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'WAITING_REVIEW',
+        finalResultStatus: 'FAIL',
+      })
+    ).toBe('rejected')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'CANCELLED',
+        documentStatus: 'PASS',
+      })
+    ).toBe('cancelled')
+    expect(
+      mapIndividualApplicationToApprovalStatus({
+        applicationStatus: 'WAITING_REVIEW',
+      })
+    ).toBe('pending')
+  })
+
+  it('maps interview-track individual list rows to program approval from document result', () => {
+    const row = mapIndividualApplicationToApplicantRow(
+      {
+        id: 56,
+        programId: 5001,
+        memberName: '서류합격자',
+        applicationStatus: 'WAITING_REVIEW',
+        documentStatus: 'PASS',
+        finalResultStatus: 'WAITING',
+      } as never,
+      0,
+      '5001'
+    )
+    expect(row.approvalStatus).toBe('approved')
   })
 
   it('maps organization application list item to applicant row', () => {

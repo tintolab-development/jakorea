@@ -47,6 +47,14 @@ function parseFileObjectId(value: unknown): number | null {
   return null
 }
 
+export const ADMIN_FILE_UPLOAD_FAILED_MESSAGE =
+  '파일을 업로드하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+
+function throwUserFacingUploadError(userMessage: string, detail: string): never {
+  console.warn(`[admin-file-upload] ${detail}`)
+  throw new Error(userMessage, { cause: detail })
+}
+
 function rethrowAdminFileUploadError(
   error: unknown,
   context: 'prepare' | 'confirm' | 'status'
@@ -54,22 +62,38 @@ function rethrowAdminFileUploadError(
   const status = getApiErrorHttpStatus(error)
   if (context === 'prepare') {
     if (status === 401) {
-      throw new Error(
-        '관리자 파일 업로드 인증에 실패했습니다. 로그인 상태를 확인하거나 백엔드 파일 API 권한을 확인해 주세요.'
+      throwUserFacingUploadError(
+        '로그인 상태를 확인해 주세요.',
+        'prepare 401: admin file upload auth failed'
       )
     }
     if (status === 403) {
-      throw new Error('파일 업로드 권한이 없습니다. 관리자 계정 권한을 확인해 주세요.')
+      throwUserFacingUploadError(
+        '파일 업로드 권한이 없습니다. 관리자 계정 권한을 확인해 주세요.',
+        'prepare 403: admin file upload forbidden'
+      )
     }
-    throw error instanceof Error ? error : new Error('업로드 URL 발급 실패')
+    throwUserFacingUploadError(
+      ADMIN_FILE_UPLOAD_FAILED_MESSAGE,
+      error instanceof Error ? error.message : 'prepare failed'
+    )
   }
   if (context === 'confirm') {
     if (status === 401) {
-      throw new Error('파일 업로드 확인(confirm) 인증에 실패했습니다. 다시 시도해 주세요.')
+      throwUserFacingUploadError(
+        '로그인 상태를 확인해 주세요.',
+        'confirm 401: admin file upload auth failed'
+      )
     }
-    throw error instanceof Error ? error : new Error('파일 업로드 Confirm 실패')
+    throwUserFacingUploadError(
+      ADMIN_FILE_UPLOAD_FAILED_MESSAGE,
+      error instanceof Error ? error.message : 'confirm failed'
+    )
   }
-  throw error instanceof Error ? error : new Error('파일 상태 조회 실패')
+  throwUserFacingUploadError(
+    ADMIN_FILE_UPLOAD_FAILED_MESSAGE,
+    error instanceof Error ? error.message : 'file status lookup failed'
+  )
 }
 
 function defaultSleep(ms: number): Promise<void> {
@@ -136,13 +160,17 @@ export async function uploadToS3(
       cache: 'no-store',
       referrerPolicy: 'no-referrer',
     })
-  } catch {
-    throw new Error(
-      'S3 파일 업로드 요청이 실패했습니다. Presigned URL CORS 또는 네트워크를 확인해 주세요.'
+  } catch (error) {
+    throwUserFacingUploadError(
+      ADMIN_FILE_UPLOAD_FAILED_MESSAGE,
+      error instanceof Error ? error.message : 'presigned PUT CORS or network failure'
     )
   }
   if (!response.ok) {
-    throw new Error(`S3 파일 업로드 실패: ${response.status}`)
+    throwUserFacingUploadError(
+      ADMIN_FILE_UPLOAD_FAILED_MESSAGE,
+      `presigned PUT HTTP ${response.status}`
+    )
   }
 }
 
@@ -162,7 +190,10 @@ export function resolvePresignedUploadUrl(uploadUrl: string): string {
   try {
     return new URL(trimmed, `${baseOrigin.replace(/\/$/, '')}/`).toString()
   } catch {
-    throw new Error('Presigned upload URL이 올바르지 않습니다.')
+    throwUserFacingUploadError(
+      ADMIN_FILE_UPLOAD_FAILED_MESSAGE,
+      'invalid presigned upload URL'
+    )
   }
 }
 

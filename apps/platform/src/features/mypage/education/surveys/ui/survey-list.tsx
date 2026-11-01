@@ -37,7 +37,13 @@ export function EducationSurveyList({ items, selectedId, onSelect }: EducationSu
                 <PFText
                   as="span"
                   typo="label-md"
-                  color={item.status === 'in_progress' ? 'primary-500' : 'neutral-cool-500'}
+                  color={
+                    item.status === 'in_progress'
+                      ? 'primary-500'
+                      : item.status === 'before_start'
+                        ? 'neutral-cool-600'
+                        : 'neutral-cool-500'
+                  }
                   className={styles.status}
                 >
                   {statusLabel}

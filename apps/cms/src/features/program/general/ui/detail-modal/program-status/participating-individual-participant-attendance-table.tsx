@@ -10,6 +10,7 @@ import {
   PARTICIPATING_INDIVIDUAL_PARTICIPANT_SESSION_PROGRESS_LABELS,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
+import './participating-individual-participant-attendance-table.css'
 import {
   ProgramAttendanceStatusText,
   type ProgramAttendanceStatusTextKind,
@@ -20,7 +21,7 @@ export const PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_TABLE_SCROLL_X = 96
 function toAttendanceStatusTextKind(
   status: ParticipatingIndividualParticipantAttendanceRow['attendanceStatus']
 ): ProgramAttendanceStatusTextKind {
-  if (status === 'pending') return 'pending'
+  if (status === 'pending') return 'present'
   if (status === 'withdrawn') return 'withdrawn'
   return status
 }
@@ -44,7 +45,7 @@ export function ParticipatingIndividualParticipantAttendanceTable({
     () =>
       rows.map((row, index) => ({
         ...row,
-        no: rows.length - index,
+        no: index + 1,
       })),
     [rows]
   )

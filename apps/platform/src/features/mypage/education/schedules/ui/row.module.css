@@ -21,6 +21,26 @@
   white-space: nowrap;
 }
 
+.sessions {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+  list-style: none;
+}
+
+.session {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-8);
+}
+
+.sessionHeading {
+  margin: 0;
+}
+
 .aside {
   display: flex;
   flex-wrap: wrap;

@@ -10,7 +10,10 @@ const fetchRemoteMock = vi.fn()
 const fetchVersionsMock = vi.fn()
 const fetchTemplatesMock = vi.fn().mockResolvedValue({ items: [] })
 const getCacheMock = vi.fn()
+const upsertCacheMock = vi.fn()
 const createVersionMock = vi.fn()
+const publishRemoteMock = vi.fn()
+const invalidateQueriesMock = vi.fn()
 
 vi.mock('@/entities/user/api/auth-service', () => ({
   hasRemoteAdminJwt: () => true,
@@ -30,13 +33,20 @@ vi.mock('@/features/template/api/form-templates-api-client', () => ({
   createFormTemplateVersionRemote: (...args: unknown[]) => createVersionMock(...args),
   createFormTemplateRemote: vi.fn(),
   deleteFormTemplateRemote: vi.fn(),
-  publishFormTemplateVersionRemote: vi.fn(),
+  publishFormTemplateVersionRemote: (...args: unknown[]) => publishRemoteMock(...args),
   updateFormTemplateRemote: vi.fn(),
+}))
+
+vi.mock('@/shared/lib/query-client', () => ({
+  queryClient: {
+    invalidateQueries: (...args: unknown[]) => invalidateQueriesMock(...args),
+    fetchQuery: vi.fn(),
+  },
 }))
 
 vi.mock('@/features/template/api/form-template-version-cache', () => ({
   getFormTemplateVersionCacheEntry: (...args: unknown[]) => getCacheMock(...args),
-  upsertFormTemplateVersionCacheEntry: vi.fn(),
+  upsertFormTemplateVersionCacheEntry: (...args: unknown[]) => upsertCacheMock(...args),
   removeFormTemplateVersionCacheEntry: vi.fn(),
   clearFormTemplateVersionCache: vi.fn(),
   upsertFormTemplateVersionCacheFromListItems: vi.fn(),
@@ -44,9 +54,11 @@ vi.mock('@/features/template/api/form-template-version-cache', () => ({
 
 import {
   loadFormTemplateVersionDraft,
+  resetFormTemplateUnpublishedDraftMemoryForTests,
   saveFormTemplateVersionDraft,
   saveFormTemplateVersionDraftByVersionId,
 } from '@/features/template/api/admin-form-templates-service'
+import { FormTemplatePublishAfterSaveError } from '@/features/template/api/form-template-publish-after-save-error'
 
 const TEMPLATE_CODE = 'survey-default-custom-1'
 
@@ -79,12 +91,21 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     fetchTemplatesMock.mockReset()
     fetchTemplatesMock.mockResolvedValue({ items: [] })
     createVersionMock.mockReset()
+    publishRemoteMock.mockReset()
+    upsertCacheMock.mockReset()
+    invalidateQueriesMock.mockReset()
+    invalidateQueriesMock.mockResolvedValue(undefined)
     getCacheMock.mockReset()
+    resetFormTemplateUnpublishedDraftMemoryForTests()
     getCacheMock.mockReturnValue({
       templateCode: TEMPLATE_CODE,
       templateId: 1,
       templateVersionId: 10,
       latestVersionId: 10,
+    })
+    upsertCacheMock.mockImplementation((entry: { templateCode: string } & Record<string, unknown>) => {
+      const current = getCacheMock(entry.templateCode) ?? {}
+      getCacheMock.mockReturnValue({ ...current, ...entry })
     })
   })
 
@@ -236,6 +257,60 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
         schemaJson: expect.any(String),
       })
     )
+    expect(publishRemoteMock).not.toHaveBeenCalled()
+  })
+
+  it('publishes the created catalog survey draft when publishAfterSave is set', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'survey-default',
+      templateId: 7,
+      templateVersionId: 70,
+      latestVersionId: 70,
+    })
+    createVersionMock.mockResolvedValue({ templateId: 7, templateVersionId: 71, versionNo: 2 })
+    publishRemoteMock.mockResolvedValue({
+      templateVersionId: 71,
+      versionNo: 2,
+      versionStatus: 'PUBLISHED',
+    })
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'survey-default',
+      draft: createProgramRegistrationDraft('general'),
+      publishAfterSave: true,
+    })
+
+    expect(createVersionMock).toHaveBeenCalledTimes(1)
+    expect(publishRemoteMock).toHaveBeenCalledWith(71, {})
+    expect(upsertCacheMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        templateCode: 'survey-default',
+        templateVersionId: 71,
+        latestVersionId: 71,
+      })
+    )
+  })
+
+  it('publishes catalog survey-student the same way', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'survey-student',
+      templateId: 8,
+      templateVersionId: 80,
+      latestVersionId: 80,
+    })
+    createVersionMock.mockResolvedValue({ templateId: 8, templateVersionId: 81, versionNo: 3 })
+    publishRemoteMock.mockResolvedValue({
+      templateVersionId: 81,
+      versionStatus: 'PUBLISHED',
+    })
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'survey-student',
+      draft: createProgramRegistrationDraft('general'),
+      publishAfterSave: true,
+    })
+
+    expect(publishRemoteMock).toHaveBeenCalledWith(81, {})
   })
 
   it('creates a new draft version directly for catalog agreement without PUT', async () => {
@@ -259,6 +334,215 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
         sourceVersionId: 64,
       })
     )
+    expect(publishRemoteMock).not.toHaveBeenCalled()
+  })
+
+  it('publishes the created catalog agreement draft when publishAfterSave is set', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'agreement-third-party',
+      templateId: 24,
+      templateVersionId: 64,
+      latestVersionId: 64,
+    })
+    createVersionMock.mockResolvedValue({ templateId: 24, templateVersionId: 65, versionNo: 2 })
+    publishRemoteMock.mockResolvedValue({
+      templateVersionId: 65,
+      versionStatus: 'PUBLISHED',
+    })
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'agreement-third-party',
+      draft: createProgramRegistrationDraft('general'),
+      publishAfterSave: true,
+    })
+
+    expect(publishRemoteMock).toHaveBeenCalledWith(65, {})
+  })
+
+  it('publishes a user survey copy after PUT 409 creates a new draft', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'survey-student-copy-196537',
+      templateId: 196537,
+      templateVersionId: 352,
+      latestVersionId: 352,
+      baseTemplateCode: 'survey-student',
+      systemTemplate: false,
+    })
+    updateRemoteMock.mockRejectedValueOnce({
+      response: { data: { error: { code: 'FORM_VERSION_IMMUTABLE' } } },
+    })
+    fetchRemoteMock.mockResolvedValue({
+      templateVersionId: 352,
+      schemaJson: '{"source":true}',
+      extensionJson: null,
+      settingsJson: '{"s":1}',
+    })
+    createVersionMock.mockResolvedValue({
+      templateId: 196537,
+      templateVersionId: 410,
+      versionNo: 2,
+    })
+    publishRemoteMock.mockResolvedValue({
+      templateVersionId: 410,
+      versionStatus: 'PUBLISHED',
+    })
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'survey-student-copy-196537',
+      draft: createProgramRegistrationDraft('general'),
+      publishAfterSave: true,
+    })
+
+    expect(createVersionMock).toHaveBeenCalledWith(
+      196537,
+      expect.objectContaining({ sourceVersionId: 352 })
+    )
+    expect(publishRemoteMock).toHaveBeenCalledWith(410, {})
+  })
+
+  it('publishes the same version after a successful PUT on an unpublished user draft', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'survey-custom-new',
+      templateId: 3001,
+      templateVersionId: 411,
+      latestVersionId: 411,
+      systemTemplate: false,
+    })
+    updateRemoteMock.mockResolvedValue({})
+    publishRemoteMock.mockResolvedValue({
+      templateVersionId: 411,
+      versionStatus: 'PUBLISHED',
+    })
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'survey-custom-new',
+      draft: createProgramRegistrationDraft('general'),
+      publishAfterSave: true,
+    })
+
+    expect(createVersionMock).not.toHaveBeenCalled()
+    expect(updateRemoteMock).toHaveBeenCalledWith(411, expect.any(Object))
+    expect(publishRemoteMock).toHaveBeenCalledWith(411, {})
+  })
+
+  it('does not treat a successful save as done when publish fails', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'survey-default',
+      templateId: 7,
+      templateVersionId: 70,
+      latestVersionId: 70,
+    })
+    createVersionMock.mockResolvedValue({ templateId: 7, templateVersionId: 71, versionNo: 2 })
+    publishRemoteMock.mockRejectedValue(new Error('publish failed'))
+
+    await expect(
+      saveFormTemplateVersionDraft({
+        templateCode: 'survey-default',
+        draft: createProgramRegistrationDraft('general'),
+        publishAfterSave: true,
+      })
+    ).rejects.toBeInstanceOf(FormTemplatePublishAfterSaveError)
+
+    expect(createVersionMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('retries publish on the same unpublished draft without creating another version', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'survey-default',
+      templateId: 7,
+      templateVersionId: 70,
+      latestVersionId: 70,
+    })
+    createVersionMock.mockResolvedValue({ templateId: 7, templateVersionId: 71, versionNo: 2 })
+    publishRemoteMock
+      .mockRejectedValueOnce(new Error('publish failed'))
+      .mockResolvedValueOnce({ templateVersionId: 71, versionStatus: 'PUBLISHED' })
+    const draft = createProgramRegistrationDraft('general')
+
+    await expect(
+      saveFormTemplateVersionDraft({
+        templateCode: 'survey-default',
+        draft,
+        publishAfterSave: true,
+      })
+    ).rejects.toBeInstanceOf(FormTemplatePublishAfterSaveError)
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'survey-default',
+      draft,
+      publishAfterSave: true,
+    })
+
+    expect(createVersionMock).toHaveBeenCalledTimes(1)
+    expect(publishRemoteMock).toHaveBeenNthCalledWith(1, 71, {})
+    expect(publishRemoteMock).toHaveBeenNthCalledWith(2, 71, {})
+  })
+
+  it('uses the published version as sourceVersionId on the next catalog save', async () => {
+    let cache = {
+      templateCode: 'survey-default',
+      templateId: 7,
+      templateVersionId: 70,
+      latestVersionId: 70,
+    }
+    getCacheMock.mockImplementation(() => cache)
+    upsertCacheMock.mockImplementation((entry: Record<string, unknown>) => {
+      cache = { ...cache, ...entry } as typeof cache
+    })
+    createVersionMock
+      .mockResolvedValueOnce({ templateId: 7, templateVersionId: 71, versionNo: 2 })
+      .mockResolvedValueOnce({ templateId: 7, templateVersionId: 72, versionNo: 3 })
+    publishRemoteMock.mockResolvedValue({ versionStatus: 'PUBLISHED', templateVersionId: 71 })
+
+    const draft = createProgramRegistrationDraft('general')
+    await saveFormTemplateVersionDraft({
+      templateCode: 'survey-default',
+      draft,
+      publishAfterSave: true,
+    })
+    publishRemoteMock.mockResolvedValue({ versionStatus: 'PUBLISHED', templateVersionId: 72 })
+    await saveFormTemplateVersionDraft({
+      templateCode: 'survey-default',
+      draft: { ...draft, formSettings: { titleNumbering: 'none' } },
+      publishAfterSave: true,
+    })
+
+    expect(createVersionMock).toHaveBeenNthCalledWith(
+      2,
+      7,
+      expect.objectContaining({ sourceVersionId: 71 })
+    )
+  })
+
+  it('does not publish issuance templates even with publishAfterSave', async () => {
+    getCacheMock.mockReturnValue({
+      templateCode: 'issuance-3',
+      templateId: 40,
+      templateVersionId: 400,
+      latestVersionId: 400,
+    })
+    updateRemoteMock.mockResolvedValue({})
+
+    await saveFormTemplateVersionDraft({
+      templateCode: 'issuance-3',
+      draft: createProgramRegistrationDraft('general'),
+      publishAfterSave: true,
+    })
+
+    expect(publishRemoteMock).not.toHaveBeenCalled()
+    expect(createVersionMock).not.toHaveBeenCalled()
+  })
+
+  it('does not publish when saving a program-owned version by id', async () => {
+    updateRemoteMock.mockResolvedValue({})
+
+    await saveFormTemplateVersionDraftByVersionId({
+      versionId: 9001,
+      draft: createProgramRegistrationDraft('general'),
+      templateCode: 'survey-student-copy-1',
+    })
+
+    expect(publishRemoteMock).not.toHaveBeenCalled()
   })
 
   it('blocks agreement-crime form version writes', async () => {
@@ -270,6 +554,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     ).rejects.toThrow(/PDF 교체/)
     expect(updateRemoteMock).not.toHaveBeenCalled()
     expect(createVersionMock).not.toHaveBeenCalled()
+    expect(publishRemoteMock).not.toHaveBeenCalled()
   })
 
   it('blocks catalog registration original PUT', async () => {
@@ -291,6 +576,7 @@ describe('saveFormTemplateVersionDraft / loadFormTemplateVersionDraft', () => {
     ).rejects.toThrow(/CATALOG 원본/)
 
     expect(updateRemoteMock).not.toHaveBeenCalled()
+    expect(publishRemoteMock).not.toHaveBeenCalled()
   })
 
   it('omits schemaJson on version-id PUT when templateCode is registration', async () => {

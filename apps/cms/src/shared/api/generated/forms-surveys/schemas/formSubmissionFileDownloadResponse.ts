@@ -17,6 +17,7 @@ export interface FormSubmissionFileDownloadResponse {
   fileScanStatus?: string;
   sensitive?: boolean;
   accessPolicy?: string;
+  /** 민감: /api/admin/files/{fileObjectId}/sensitive-downloads. 비민감: /api/admin/files/{fileObjectId}/download. SENSITIVE_FILE_RELAY_REQUIRED(409)면 민감 relay 경로를 사용. */
   downloadEndpoint?: string;
   requiredReason?: string;
   status?: string;

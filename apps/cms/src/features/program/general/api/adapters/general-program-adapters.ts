@@ -80,6 +80,7 @@ import { hydrateRecruitmentWindowsOntoProgram } from '@/features/program/shared/
 import {
   omitProgramAuditNameFields,
   readProgramAuditNames,
+  withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
 import {
   resolveAudienceProgramOperationIsoRange,
@@ -1606,7 +1607,10 @@ export function mapGeneralProgramToUpdateRequest(
           serializeOptions
         )
       : mapProgramCoreFieldsToRequest(program)
-  return omitTypedVolunteerInterviewKeysFromUpdateRequest(body, baselineProgram)
+  return withExpectedUpdatedAt(
+    omitTypedVolunteerInterviewKeysFromUpdateRequest(body, baselineProgram),
+    baselineProgram.updatedAt
+  )
 }
 
 /** 조회 typed 적용 조건과 같다 — UJAT 아님 + 반기 아닌 봉사 모집 행 정확히 1개 */

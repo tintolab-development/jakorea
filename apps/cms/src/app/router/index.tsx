@@ -169,10 +169,18 @@ const PersonalInfoAccessHistoryPage = lazyLoad(
   () => import('@/pages/logs/personal-info-access-history-page')
 )
 const BugIssueHistoryPage = lazyLoad(() => import('@/pages/logs/bug-issue-history-page'))
-const DesignSystemPage = lazyLoad(() => import('@/pages/design-system/page'))
-const E2eErrorLogPage = lazyLoad(() => import('@/pages/e2e-error-log/page'))
-const BackendDummiesPage = lazyLoad(() => import('@/pages/backend-dummies/page'))
-const BackendDummiesCategoryPage = lazyLoad(() => import('@/pages/backend-dummies/category-page'))
+const DesignSystemPage = import.meta.env.DEV
+  ? lazyLoad(() => import('@/pages/design-system/page'))
+  : null
+const E2eErrorLogPage = import.meta.env.DEV
+  ? lazyLoad(() => import('@/pages/e2e-error-log/page'))
+  : null
+const BackendDummiesPage = import.meta.env.DEV
+  ? lazyLoad(() => import('@/pages/backend-dummies/page'))
+  : null
+const BackendDummiesCategoryPage = import.meta.env.DEV
+  ? lazyLoad(() => import('@/pages/backend-dummies/category-page'))
+  : null
 
 function LegacyPostsRedirect({
   kind,
@@ -319,41 +327,49 @@ export const router = createBrowserRouter([
     path: '/oauth/naver',
     element: <OAuthCallbackPage provider="naver" />,
   },
-  {
-    // 로그인·역할 없이 공개 접근 (쇼케이스/문서용)
-    path: '/design-system',
-    element: (
-      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
-        <DesignSystemPage />
-      </Suspense>
-    ),
-  },
-  {
-    // 로컬·E2E 디버그: 테스트 진행·백엔드 에러 Mock 로그 (로그인 불필요, ?tab=error)
-    path: '/e2e-error-log',
-    element: (
-      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
-        <E2eErrorLogPage />
-      </Suspense>
-    ),
-  },
-  {
-    // LNB 전체 도메인 API/더미 적용률 대시보드 (로그인 불필요 · 회원·프로그램 env 게이트 포함)
-    path: '/backend-dummies',
-    element: (
-      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
-        <BackendDummiesPage />
-      </Suspense>
-    ),
-  },
-  {
-    path: '/backend-dummies/:categoryId',
-    element: (
-      <Suspense fallback={<RouterLoadingFallback fullViewport />}>
-        <BackendDummiesCategoryPage />
-      </Suspense>
-    ),
-  },
+  ...(import.meta.env.DEV &&
+  DesignSystemPage &&
+  E2eErrorLogPage &&
+  BackendDummiesPage &&
+  BackendDummiesCategoryPage
+    ? [
+        {
+          // 로그인·역할 없이 공개 접근 (쇼케이스/문서용). 운영 빌드에서는 라우트 자체 제외.
+          path: '/design-system',
+          element: (
+            <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+              <DesignSystemPage />
+            </Suspense>
+          ),
+        },
+        {
+          // 로컬·E2E 디버그: 테스트 진행·백엔드 에러 Mock 로그 (로그인 불필요, ?tab=error)
+          path: '/e2e-error-log',
+          element: (
+            <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+              <E2eErrorLogPage />
+            </Suspense>
+          ),
+        },
+        {
+          // LNB 전체 도메인 API/더미 적용률 대시보드 (로그인 불필요 · 회원·프로그램 env 게이트 포함)
+          path: '/backend-dummies',
+          element: (
+            <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+              <BackendDummiesPage />
+            </Suspense>
+          ),
+        },
+        {
+          path: '/backend-dummies/:categoryId',
+          element: (
+            <Suspense fallback={<RouterLoadingFallback fullViewport />}>
+              <BackendDummiesCategoryPage />
+            </Suspense>
+          ),
+        },
+      ]
+    : []),
   {
     path: '/',
     element: (

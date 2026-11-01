@@ -37,6 +37,7 @@ import {
   readSettlementScheduleJoinId,
 } from './settlement-join.ts'
 import { toDisplayEducationScheduleName } from '../../../../../shared/lib/education-schedule-name.ts'
+import { isScheduleDateLikeText } from '../../../../../shared/lib/format-display-date.ts'
 
 export type SettlementLectureReportJoin = {
   scheduleId: number
@@ -173,9 +174,12 @@ function formatSettlementSessionMeta(
   item: EducationScheduleItem,
   lecture?: SettlementLectureReportJoin,
 ): string {
+  // 카드 헤더·반려사유 팝업이 날짜를 따로 붙이므로, 날짜로 시작하는 진행 시간 라벨
+  // (`2026년 10월 31일(토) 21:20 ~ 21:22` 등)은 쓰지 않고 시간만 만든다.
+  const progressTimeLabel = item.progressTimeLabel?.trim()
   const time =
-    item.progressTimeLabel?.trim() ||
-    formatLectureTimeRange(lecture?.startAt, lecture?.endAt)
+    (progressTimeLabel && !isScheduleDateLikeText(progressTimeLabel) ? progressTimeLabel : '') ||
+    formatLectureTimeRange(lecture?.startAt ?? item.heldAt, lecture?.endAt ?? item.endAt)
   const sessionNumber = lecture?.sessionNo && lecture.sessionNo > 0 ? lecture.sessionNo : item.sessionNumber
   const session =
     item.sessionLabel?.trim() || (sessionNumber > 0 ? `${sessionNumber}차시` : '')

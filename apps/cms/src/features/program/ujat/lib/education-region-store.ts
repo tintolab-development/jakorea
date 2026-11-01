@@ -47,6 +47,7 @@ function buildSeedRegions(): UjatEducationRegion[] {
     active: true,
     name: row.name,
     createdByName: '이름예시',
+    updatedByName: '이름예시',
     createdAt: new Date(base.getTime() + index * 60_000).toISOString(),
     hasUsageHistory: row.hasUsageHistory ?? false,
   }))
@@ -116,6 +117,7 @@ export function createUjatEducationRegion(input: UjatEducationRegionCreateInput)
     active: input.active,
     name: trimmed,
     createdByName: input.createdByName?.trim() || '관리자',
+    updatedByName: input.createdByName?.trim() || '관리자',
     createdAt: now,
     hasUsageHistory: false,
   }

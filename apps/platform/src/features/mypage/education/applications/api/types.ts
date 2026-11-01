@@ -230,8 +230,13 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
     status?: string
     completionStatus?: string
   }
-  summary?: unknown
+  summary?: {
+    satisfactionPendingCount?: number | null
+    surveyPendingCount?: number | null
+  } | null
   capabilities?: {
     canCancelApplication?: boolean
+    canSubmitSatisfaction?: boolean
+    canSubmitSurvey?: boolean
   }
 }

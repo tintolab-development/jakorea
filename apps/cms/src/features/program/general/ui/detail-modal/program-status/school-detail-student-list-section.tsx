@@ -116,10 +116,12 @@ import { handleError } from '@/shared/utils/error-handler'
 import { unmaskRosterStudentForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { buildStudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
 import type { StudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
+import { resolveStudentCertificateKind } from '../../../lib/resolve-student-certificate-kind'
 import {
-  isWithinStudentCertificateIssuancePeriod,
-  resolveStudentCertificateKind,
-} from '../../../lib/resolve-student-certificate-kind'
+  CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+  getCertificateEligibilityErrorMessage,
+  resolveCertificateIssuePrecheckMessage,
+} from '@/features/program/shared/api/certificate-serial-api'
 import { resolveOrganizationPortraitConsentDownload } from '../../../lib/student-portrait-consent'
 import {
   downloadOrganizationPortraitConsentFile,
@@ -203,7 +205,7 @@ export function SchoolDetailStudentListSection({
   programTitle = 'JA Korea 경제교육 프로그램',
   programStartDate = null,
   programEndDate = null,
-  participationAppliedAt = null,
+  participationAppliedAt: _participationAppliedAt = null,
   hasStudentSatisfactionSurvey = true,
   readOnly = false,
   studentListInfoEditComingSoonAlert = false,
@@ -246,6 +248,7 @@ export function SchoolDetailStudentListSection({
   const [certificateExportContext, setCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
+  const [certificateEligibilityChecking, setCertificateEligibilityChecking] = useState(false)
   const [portraitConsentDownloading, setPortraitConsentDownloading] = useState(false)
   /** 정보 수정 세션 — GET 재조회로 revision이 바뀌어도 PUT 기준은 고정 */
   const rosterEditSessionRef = useRef<StudentRosterCommitSession | null>(null)
@@ -331,7 +334,7 @@ export function SchoolDetailStudentListSection({
     studentCount,
   ])
 
-  const handleCertificateIssueClick = useCallback(() => {
+  const handleCertificateIssueClick = useCallback(async () => {
     if (isStudentListEditMode) {
       showStudentListEditModeBlockedAlert()
       return
@@ -346,16 +349,33 @@ export function SchoolDetailStudentListSection({
       showAlert({ title: '안내', content: STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE })
       return
     }
-    if (certificateExportActive) return
-    if (!isWithinStudentCertificateIssuancePeriod(participationAppliedAt)) {
-      return
-    }
+    if (certificateExportActive || certificateEligibilityChecking) return
 
-    setCertificateIssueModalOpen(true)
+    const selectedId = String(selectedStudentKeys[0])
+    const student = mergedStudentList.find(row => row.id === selectedId)
+    const participantId = student?.participantId
+    setCertificateEligibilityChecking(true)
+    try {
+      const blockMessage = await resolveCertificateIssuePrecheckMessage(participantId)
+      if (blockMessage) {
+        showAlert({ title: '안내', content: blockMessage })
+        return
+      }
+      setCertificateIssueModalOpen(true)
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content:
+          getCertificateEligibilityErrorMessage(error) || CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+      })
+    } finally {
+      setCertificateEligibilityChecking(false)
+    }
   }, [
+    certificateEligibilityChecking,
     certificateExportActive,
     isStudentListEditMode,
-    participationAppliedAt,
+    mergedStudentList,
     selectedStudentKeys,
     showAlert,
     showStudentListEditModeBlockedAlert,
@@ -1077,8 +1097,10 @@ export function SchoolDetailStudentListSection({
           <FilterTableToolbarButton
             variant="secondary"
             icon={<ButtonDownloadIcon />}
-            disabled={certificateExportActive}
-            onClick={handleCertificateIssueClick} >
+            disabled={certificateExportActive || certificateEligibilityChecking}
+            onClick={() => {
+              void handleCertificateIssueClick()
+            }} >
             수료증/참여인증서 발급
           </FilterTableToolbarButton>
         </>

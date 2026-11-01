@@ -25,7 +25,7 @@
   gap: var(--spacing-12);
   padding: var(--spacing-12) var(--spacing-16);
   border: 0;
-  border-radius: var(--radius-16);
+  border-radius: var(--radius-12);
   background: transparent;
   text-align: left;
   cursor: pointer;

@@ -14,6 +14,7 @@ import type {
   LogListPageResponsePersonalInfoAccessLogFrontendResponse,
   MemberLoginHistoryParams,
   PrivacyAccessLogsParams,
+  SystemIssueDetailResponse,
   SystemIssueLogsParams,
 } from '@/shared/api/generated/logs/schemas'
 import {
@@ -133,6 +134,12 @@ export async function fetchSystemIssueLogsRemote(
   return unwrapBody(
     await logsRemoteApi.systemIssueLogs(toOrvalListParams<SystemIssueLogsParams>(params))
   )
+}
+
+export async function fetchSystemIssueDetailRemote(
+  issueId: number
+): Promise<SystemIssueDetailResponse> {
+  return unwrapBody(await logsRemoteApi.systemIssueDetail(issueId))
 }
 
 export async function exportSystemIssueLogsRemote(

@@ -300,6 +300,7 @@ describe('progress-attendance-adapters', () => {
     const row = sessions[0]?.participants[0]
     expect(row?.attendanceRecorded).toBe(false)
     expect(row?.attendanceStatus).toBeUndefined()
+    expect(row?.persistedAttendanceStatus).toBe('present')
     expect(sessions[0]?.attendanceRecordingOpen).toBe(false)
   })
 

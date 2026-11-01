@@ -3,6 +3,8 @@ import styles from './summary.module.css'
 
 type EducationSettlementSummaryProps = {
   processLabel: string
+  /** 정산 정보 표 첫 라벨. 영수증 경로는 '영수증 처리 현황'(Figma 11005:339348) */
+  processTitle?: string
   completedCount: number | string
   totalCount: number | string
   feeGradeLabel?: string
@@ -18,6 +20,7 @@ type EducationSettlementSummaryProps = {
 
 export function EducationSettlementSummary({
   processLabel,
+  processTitle = '지급조서 처리 현황',
   completedCount,
   totalCount,
   feeGradeLabel,
@@ -85,11 +88,16 @@ export function EducationSettlementSummary({
       </PFText>
       <PFFormFieldTable radius="rounded">
         <PFFormFieldRow type="double">
-          <PFFormField label="지급조서 처리 현황">{processLabel}</PFFormField>
+          <PFFormField
+            label={processTitle}
+            labelWidth={showInstructorFields ? undefined : 'wider'}
+          >
+            {processLabel}
+          </PFFormField>
           {showInstructorFields ? (
             <PFFormField label="강의비 책정 기준">{feeGradeLabel ?? '-'}</PFFormField>
           ) : (
-            <PFFormField label="프로그램 진행 회차">
+            <PFFormField label="프로그램 진행 회차" labelWidth="wider">
               <span className={styles.sessionValue}>
                 <PFText as="span" typo="bd-lg-sb" color="black">
                   {completedCount}

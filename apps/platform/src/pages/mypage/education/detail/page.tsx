@@ -808,6 +808,7 @@ export function MypageEducationDetailPage() {
           applicationId={application.id}
           programId={program.id}
           pendingSurveyCount={application.pendingSurveyCount}
+          canSubmitSurvey={application.canSubmitSurvey}
         />
       )
     }
@@ -832,6 +833,7 @@ export function MypageEducationDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           programId={program.id}
+          canSubmitSatisfaction={application.canSubmitSatisfaction}
         />
       )
     }

@@ -7,7 +7,10 @@ import {
 } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { writingFormDraftFromApplicationForm } from '@/features/program/lib/application-form-draft'
-import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
+import {
+  getApplicationApiErrorCode,
+  getProgramApplicationApiErrorMessage,
+} from '@/features/program/lib/application-api-error'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
 import { EducationSurveyPanelSkeleton } from '@/features/mypage/shared/ui'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
@@ -23,6 +26,7 @@ import {
 } from '../lib/seed-survey-draft'
 import {
   useAvailableProgramFormsQuery,
+  useApplicationFormsQuery,
   useApplicationSurveyFormQuery,
   useSubmitEducationSurveyMutation,
 } from '../../applications/api/activity-hooks'
@@ -33,14 +37,13 @@ import {
 } from '../../applications/lib/portal-form-list'
 import type { ProgramApplicationType } from '../../applications/api/types'
 import type { EducationSurveyListEntry } from '../lib/survey-list-types'
+import { resolveEducationSurveyFillNotice } from '../lib/fill-notice'
 import {
-  isPortalFormSubmissionPeriodOpen,
-  mergePortalFormSubmissionPeriodFields,
   resolvePortalFormSubmissionPeriodBlockForEntry,
-  resolvePortalFormSubmissionPeriodBlockFromApiError,
   type PortalFormSubmissionPeriodBlockReason,
 } from '../lib/portal-form-submission-period'
 import { EducationSurveyEmptyPanel } from './empty-panel'
+import { EducationSurveySubmittedPanel } from './submitted-panel'
 import {
   formatEducationPeriodLabel,
   resolveSurveyUserInfoValues,
@@ -56,6 +59,7 @@ import { EducationSurveyFormBody } from './survey-form-body'
 import { EducationSurveyHeader } from './survey-header'
 import { EducationSurveyList } from './survey-list'
 import { EducationSurveyPeriodEndedPanel } from './period-ended-panel'
+import { EducationSurveySubmitConfirm } from './submit-confirm'
 import styles from './fill-panel.module.css'
 
 export type EducationSurveyFillPanelProps = {
@@ -73,6 +77,25 @@ export type EducationSurveyFillPanelProps = {
   applicationId?: string | null
   programId?: string | null
   pendingSurveyCount?: number
+  /** 상세 `capabilities.canSubmitSatisfaction` — false면 작성 CTA 숨김 */
+  canSubmitSatisfaction?: boolean
+  /** 상세 `capabilities.canSubmitSurvey` — false면 작성 CTA 숨김 */
+  canSubmitSurvey?: boolean
+}
+
+function surveyRenderLoadFallback(kind: EducationSurveySeedKind): string {
+  return kind === 'satisfaction'
+    ? '만족도조사를 불러오지 못했습니다.'
+    : '설문조사를 불러오지 못했습니다.'
+}
+
+/** render GET 실패 문구. POST 409 `FORM_SUBMISSION_CLOSED` 기간 카피와 분리한다. */
+function surveyRenderLoadErrorMessage(kind: EducationSurveySeedKind, error: unknown): string {
+  const code = getApplicationApiErrorCode(error)
+  if (code === 'FORM_SUBMISSION_CLOSED' || code === 'FORM_SUBMISSION_NOT_STARTED') {
+    return surveyRenderLoadFallback(kind)
+  }
+  return getProgramApplicationApiErrorMessage(error, surveyRenderLoadFallback(kind))
 }
 
 function resolveFillDraft(options: {
@@ -110,19 +133,28 @@ export function EducationSurveyFillPanel({
   applicationId,
   programId,
   pendingSurveyCount,
+  canSubmitSatisfaction,
+  canSubmitSurvey,
 }: EducationSurveyFillPanelProps) {
-  const remoteForms = useAvailableProgramFormsQuery(
+  const applicationForms = useApplicationFormsQuery(
+    applicationType,
+    applicationId,
+    kind === 'satisfaction' ? 'SATISFACTION' : 'SURVEY',
+  )
+  const availableForms = useAvailableProgramFormsQuery(
     programId,
     kind === 'satisfaction'
       ? PORTAL_SATISFACTION_FORM_TYPE_QUERIES
       : PORTAL_SURVEY_FORM_TYPE_QUERIES,
   )
+  const remoteForms = applicationForms.enabled ? applicationForms : availableForms
   const surveyList = useMemo(
     () => (remoteForms.enabled ? remoteForms.items : []),
     [remoteForms.enabled, remoteForms.items],
   )
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
+  const [rewriteEntryId, setRewriteEntryId] = useState<string | null>(null)
 
   useEffect(() => {
     if (surveyList.length === 0) return
@@ -135,6 +167,7 @@ export function EducationSurveyFillPanel({
     [surveyList, selectedId],
   )
   const selectedEntryId = selectedEntry?.id ?? ''
+  const rewriteRequested = rewriteEntryId === selectedEntryId
   const listHasForm = selectedEntry?.form != null
   const canFetchRemoteForm =
     remoteForms.enabled &&
@@ -171,6 +204,8 @@ export function EducationSurveyFillPanel({
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertTitle, setAlertTitle] = useState('안내')
   const [alertDescription, setAlertDescription] = useState('')
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deferSubmittedView, setDeferSubmittedView] = useState(false)
 
   useEffect(() => {
     if (selectedEntry == null) return
@@ -281,22 +316,37 @@ export function EducationSurveyFillPanel({
   const surveyCreatedAt =
     selectedEntry?.createdAt ?? selectedEntry?.startAt ?? EDUCATION_SURVEY_SEED_CREATED_AT
 
+  const selectedEntryWithRenderPeriod = useMemo(() => {
+    if (!selectedEntry) return selectedEntry
+    const render = remoteFormDocument?.form
+    if (!render || typeof render !== 'object') return selectedEntry
+    const periodFields = render as { submissionStartAt?: unknown; submissionEndAt?: unknown }
+    const renderStart =
+      typeof periodFields.submissionStartAt === 'string' ? periodFields.submissionStartAt : undefined
+    const renderEnd =
+      typeof periodFields.submissionEndAt === 'string' ? periodFields.submissionEndAt : undefined
+    return {
+      ...selectedEntry,
+      submissionStartAt: selectedEntry.submissionStartAt ?? renderStart,
+      submissionEndAt: selectedEntry.submissionEndAt ?? renderEnd,
+    }
+  }, [
+    selectedEntry,
+    remoteFormDocument?.form,
+  ])
+
   const periodBlockReason = useMemo(
-    () => resolvePortalFormSubmissionPeriodBlockForEntry(selectedEntry, titleParagraph),
-    [selectedEntry, titleParagraph],
-  )
-
-  const mergedPeriodFields = useMemo(
     () =>
-      selectedEntry
-        ? mergePortalFormSubmissionPeriodFields(selectedEntry, titleParagraph)
-        : undefined,
-    [selectedEntry, titleParagraph],
+      resolvePortalFormSubmissionPeriodBlockForEntry(selectedEntryWithRenderPeriod, titleParagraph),
+    [selectedEntryWithRenderPeriod, titleParagraph],
   )
 
-  const readOnly =
-    selectedEntry?.status === 'submitted' ||
-    (mergedPeriodFields != null && !isPortalFormSubmissionPeriodOpen(mergedPeriodFields))
+  const canWrite =
+    periodBlockReason == null &&
+    (kind === 'satisfaction' ? canSubmitSatisfaction !== false : canSubmitSurvey !== false) &&
+    (selectedEntry?.canSubmit === true || selectedEntry?.canResubmit === true)
+
+  const readOnly = !canWrite
 
   const updateParagraph = useCallback<FormUpdateParagraph>((id, updater) => {
     setDraft(prev => ({
@@ -305,8 +355,18 @@ export function EducationSurveyFillPanel({
     }))
   }, [])
 
-  const handleSubmit = () => {
-    if (readOnly) return
+  const showSubmitSuccessAlert = () => {
+    setConfirmOpen(false)
+    setDeferSubmittedView(true)
+    setAlertTitle('안내')
+    setAlertDescription(
+      kind === 'satisfaction' ? '만족도조사가 제출되었습니다.' : '설문이 제출되었습니다.',
+    )
+    setAlertOpen(true)
+  }
+
+  const requestSubmit = () => {
+    if (!canWrite || submitMutation.isPending) return
     const validation = validateEducationSurveyFill(draft, sidecar)
     if (!validation.ok) {
       setAlertTitle('입력 확인')
@@ -314,7 +374,11 @@ export function EducationSurveyFillPanel({
       setAlertOpen(true)
       return
     }
+    setConfirmOpen(true)
+  }
 
+  const performSubmit = () => {
+    if (!canWrite || submitMutation.isPending) return
     const answers = buildEducationSurveyAnswers(draft, sidecar)
     const bindingId = parsePortalProgramId(selectedEntryId)
     const templateVersionId =
@@ -329,22 +393,21 @@ export function EducationSurveyFillPanel({
       submitMutation.mutate(
         { bindingId, answers, templateVersionId },
         {
-          onSuccess: () => {
-            setAlertTitle('안내')
-            setAlertDescription(
-              kind === 'satisfaction' ? '만족도조사가 제출되었습니다.' : '설문이 제출되었습니다.',
-            )
-            setAlertOpen(true)
-          },
+          onSuccess: showSubmitSuccessAlert,
           onError: error => {
+            setConfirmOpen(false)
             setAlertTitle('제출 실패')
+            const closed = getApplicationApiErrorCode(error) === 'FORM_SUBMISSION_CLOSED'
+            const alreadySubmitted = selectedEntry?.status === 'submitted'
             setAlertDescription(
-              getProgramApplicationApiErrorMessage(
-                error,
-                kind === 'satisfaction'
-                  ? '만족도조사 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-                  : '설문 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.',
-              ),
+              closed && alreadySubmitted
+                ? '더 이상 제출할 수 없습니다.'
+                : getProgramApplicationApiErrorMessage(
+                    error,
+                    kind === 'satisfaction'
+                      ? '만족도조사 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+                      : '설문 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+                  ),
             )
             setAlertOpen(true)
           },
@@ -353,14 +416,16 @@ export function EducationSurveyFillPanel({
       return
     }
 
-    setAlertTitle('안내')
-    setAlertDescription(
-      kind === 'satisfaction' ? '만족도조사가 제출되었습니다.' : '설문이 제출되었습니다.',
-    )
-    setAlertOpen(true)
+    showSubmitSuccessAlert()
   }
 
-  if (remoteForms.isLoading || (remoteFormQuery.enabled && remoteFormQuery.isLoading)) {
+  const holdFillSurface =
+    confirmOpen || alertOpen || deferSubmittedView || submitMutation.isPending
+
+  if (
+    !holdFillSurface &&
+    (remoteForms.isLoading || (remoteFormQuery.enabled && remoteFormQuery.isLoading))
+  ) {
     return (
       <EducationSurveyPanelSkeleton
         statusMessage={
@@ -369,7 +434,7 @@ export function EducationSurveyFillPanel({
       />
     )
   }
-  if (remoteForms.isError) {
+  if (!holdFillSurface && remoteForms.isError) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
         {kind === 'satisfaction' ? '만족도조사를 불러오지 못했습니다.' : '설문조사를 불러오지 못했습니다.'}
@@ -385,58 +450,93 @@ export function EducationSurveyFillPanel({
             selectedId={selectedEntry?.id ?? selectedId}
             onSelect={setSelectedId}
           />
-          <EducationSurveyPeriodEndedPanel reason={reason} layout="inline" />
+          <EducationSurveyPeriodEndedPanel reason={reason} kind={kind} layout="inline" />
         </div>
       )
     }
 
-    return <EducationSurveyPeriodEndedPanel reason={reason} />
+    return <EducationSurveyPeriodEndedPanel reason={reason} kind={kind} />
   }
 
-  if (!remoteForms.enabled) {
+  const renderSubmittedNotice = () => {
+    const submittedBody = (
+      <div className={styles.body}>
+        <EducationSurveySubmittedPanel
+          kind={kind}
+          titleParagraph={titleParagraph}
+          surveyCreatedAt={surveyCreatedAt}
+          canRewrite={canWrite}
+          onRewrite={() => {
+            if (!canWrite) return
+            setRewriteEntryId(selectedEntryId)
+          }}
+        />
+      </div>
+    )
+
+    return (
+      <div className={styles.shell}>
+        <div className={showList ? styles.layoutWithList : styles.inner}>
+          {showList ? (
+            <>
+              <EducationSurveyList
+                items={surveyList}
+                selectedId={selectedEntry?.id ?? selectedId}
+                onSelect={setSelectedId}
+              />
+              {submittedBody}
+            </>
+          ) : (
+            submittedBody
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (!holdFillSurface && !remoteForms.enabled) {
     return <EducationSurveyEmptyPanel kind={kind} />
   }
 
-  if (remoteForms.enabled && surveyList.length === 0) {
+  if (!holdFillSurface && remoteForms.enabled && surveyList.length === 0) {
     if (kind === 'survey' && pendingSurveyCount != null && pendingSurveyCount > 0) {
       return <EducationSurveyEmptyPanel kind={kind} pendingMismatchHint />
     }
     return <EducationSurveyEmptyPanel kind={kind} />
   }
 
-  const formFetchPeriodBlock =
-    selectedEntry?.status === 'submitted'
-      ? null
-      : resolvePortalFormSubmissionPeriodBlockFromApiError(remoteFormQuery.error)
+  const effectivePeriodBlockReason = periodBlockReason
 
-  const effectivePeriodBlockReason = periodBlockReason ?? formFetchPeriodBlock
+  const canShowFormBody =
+    !remoteFormQuery.isError && isPortalBoundFormVersionUsable(remoteFormDocument?.versionStatus)
 
-  if (kind === 'survey' && effectivePeriodBlockReason) {
-    return renderPeriodNotice(effectivePeriodBlockReason)
+  const fillNotice = resolveEducationSurveyFillNotice({
+    kind,
+    status: selectedEntry?.status,
+    periodBlockReason: effectivePeriodBlockReason,
+    canShowFormBody,
+    canWrite,
+    rewriteRequested,
+  })
+
+  if (fillNotice.type === 'submitted' && !holdFillSurface) {
+    return renderSubmittedNotice()
   }
 
-  if (
-    kind === 'survey' &&
-    selectedEntry?.status !== 'submitted' &&
-    mergedPeriodFields != null &&
-    !isPortalFormSubmissionPeriodOpen(mergedPeriodFields)
-  ) {
-    return renderPeriodNotice('closed')
+  if (!holdFillSurface && fillNotice.type === 'period') {
+    return renderPeriodNotice(fillNotice.reason)
   }
 
   // 실패 시 seed 양식이 대신 보이면 CMS 양식과 다른 설문을 제출하게 된다.
-  if (remoteFormQuery.isError) {
+  if (!holdFillSurface && remoteFormQuery.isError) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-        {getProgramApplicationApiErrorMessage(
-          remoteFormQuery.error,
-          kind === 'satisfaction' ? '만족도조사를 불러오지 못했습니다.' : '설문조사를 불러오지 못했습니다.',
-        )}
+        {surveyRenderLoadErrorMessage(kind, remoteFormQuery.error)}
       </PFText>
     )
   }
 
-  if (!isPortalBoundFormVersionUsable(remoteFormDocument?.versionStatus)) {
+  if (!holdFillSurface && !isPortalBoundFormVersionUsable(remoteFormDocument?.versionStatus)) {
     return (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
         {kind === 'satisfaction'
@@ -469,7 +569,7 @@ export function EducationSurveyFillPanel({
             width={240}
             type="button"
             disabled={submitMutation.isPending}
-            onClick={handleSubmit}
+            onClick={requestSubmit}
           >
             제출하기
           </PFButton>
@@ -497,11 +597,24 @@ export function EducationSurveyFillPanel({
         </div>
       </div>
 
+      <EducationSurveySubmitConfirm
+        open={confirmOpen}
+        kind={kind}
+        pending={submitMutation.isPending}
+        onCancel={() => {
+          if (submitMutation.isPending) return
+          setConfirmOpen(false)
+        }}
+        onConfirm={performSubmit}
+      />
       <PFAlertModal
         open={alertOpen}
         title={alertTitle}
         description={alertDescription}
-        onConfirm={() => setAlertOpen(false)}
+        onConfirm={() => {
+          setAlertOpen(false)
+          setDeferSubmittedView(false)
+        }}
       />
     </>
   )

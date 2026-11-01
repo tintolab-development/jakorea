@@ -50,7 +50,7 @@ const EDUCATION_TARGET_OPTIONS = [
   { label: '초등학생', value: 'elementary' },
   { label: '중학생', value: 'middle' },
   { label: '고등학생', value: 'high' },
-  { label: '대학생', value: 'college' },
+  { label: '대학생', value: 'university' },
   { label: '성인', value: 'adult' },
 ] as const
 

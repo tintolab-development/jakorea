@@ -198,6 +198,32 @@ describe('extractApiErrorMessage', () => {
       })
     ).toBe('선택한 지역·반기의 잔여 학급 정원을 초과했습니다. 지역 또는 일정을 변경해 주세요.')
   })
+
+  it('수료증 409는 범용 충돌 문구가 아니라 error.message를 쓴다', () => {
+    expect(
+      extractApiErrorMessage(
+        {
+          success: false,
+          data: null,
+          message: '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+          error: {
+            code: 'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
+            message: '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+          },
+        },
+        { httpStatus: 409, fallback: '요청한 변경이 기존 데이터와 충돌합니다.' }
+      )
+    ).toBe('수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.')
+    expect(
+      extractApiErrorMessage(
+        {
+          success: false,
+          error: { code: 'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE', message: '' },
+        },
+        { httpStatus: 409 }
+      )
+    ).toBe('수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.')
+  })
 })
 
 describe('getApiErrorCode / getApiErrorHttpStatus', () => {

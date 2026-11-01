@@ -1,4 +1,5 @@
 import type {
+  PortalEducationCurriculumSession,
   PortalEducationSchedule,
   PortalEducationScheduleAssignment,
   PortalEducationScheduleGroupTime,
@@ -19,7 +20,9 @@ import {
   normalizeScheduleDisplayLabel,
 } from '../../../../../shared/lib/format-display-date.ts'
 import type {
+  EducationAssignmentResponseStatus,
   EducationAssignmentSubmitStatus,
+  EducationCurriculumSession,
   EducationScheduleAssignment,
   EducationScheduleAssignmentFile,
   EducationScheduleAttendanceStatus,
@@ -73,6 +76,23 @@ function mapAttendance(
       return 'excused'
     default:
       return null
+  }
+}
+
+function mapAssignmentResponseStatus(
+  value: string | null | undefined,
+): EducationAssignmentResponseStatus | undefined {
+  switch ((value ?? '').trim().toUpperCase()) {
+    case 'SUBMITTED':
+      return 'SUBMITTED'
+    case 'APPROVED':
+      return 'APPROVED'
+    case 'REJECTED':
+      return 'REJECTED'
+    case 'COMPLETED':
+      return 'COMPLETED'
+    default:
+      return undefined
   }
 }
 
@@ -151,6 +171,28 @@ function mapSubmissions(
   return files.length > 0 ? files : undefined
 }
 
+function mapCurriculumSessions(
+  sessions: PortalEducationCurriculumSession[] | null | undefined,
+): EducationCurriculumSession[] | undefined {
+  if (!Array.isArray(sessions) || sessions.length === 0) return undefined
+  const mapped = sessions.map((session, index) => {
+    const sessionNo =
+      typeof session.sessionNo === 'number' && Number.isFinite(session.sessionNo)
+        ? session.sessionNo
+        : index + 1
+    const sessionLabel = optionalText(session.sessionLabel)
+    const title = optionalText(session.title)
+    const content = optionalText(session.content)
+    return {
+      sessionNo,
+      ...(sessionLabel ? { sessionLabel } : {}),
+      ...(title ? { title } : {}),
+      ...(content ? { content } : {}),
+    } satisfies EducationCurriculumSession
+  })
+  return mapped.length > 0 ? mapped : undefined
+}
+
 function mapAssignment(
   assignment: PortalEducationScheduleAssignment | null | undefined,
 ): EducationScheduleAssignment | undefined {
@@ -162,6 +204,7 @@ function mapAssignment(
       ? normalizeScheduleDisplayLabel(assignment.periodLabel!)
       : undefined) ?? formatPeriodLabel(submitStartAt, submitEndAt)
   const files = mapSubmissions(assignment)
+  const responseStatus = mapAssignmentResponseStatus(assignment.responseStatus)
   return {
     submitStartAt,
     submitEndAt,
@@ -171,6 +214,7 @@ function mapAssignment(
     ...(typeof assignment.canResubmit === 'boolean'
       ? { canResubmit: assignment.canResubmit }
       : {}),
+    ...(responseStatus ? { responseStatus } : {}),
     ...(assignment.formResponseId != null ? { formResponseId: assignment.formResponseId } : {}),
     ...(files ? { files } : {}),
   }
@@ -187,6 +231,7 @@ export type MapPortalEducationScheduleMeta = {
  * startAt이 없어도 매핑은 유지한다. 화면은 scheduleId 있는 배정 일정만 노출한다.
  * assignment.enabled가 true가 아니면 과제 블록 omit.
  * 카드 청록 라벨은 공통정보(차시/단원명/일정명)만 쓴다.
+ * teamRole/teamName은 표시만. 과제 제출 권한은 assignment.canSubmit/canResubmit·availableActions.
  */
 export function mapPortalEducationSchedule(
   item: PortalEducationSchedule,
@@ -213,6 +258,7 @@ export function mapPortalEducationSchedule(
     blockKind: item.blockKind,
   })
   const heldAt = optionalText(item.startAt ?? undefined) ?? ''
+  const endAt = optionalText(item.endAt ?? undefined)
   const progressTimeLabel =
     (optionalText(item.progressTimeLabel)
       ? normalizeScheduleDisplayLabel(item.progressTimeLabel!)
@@ -230,6 +276,14 @@ export function mapPortalEducationSchedule(
   const classLabel = optionalText(item.classLabel)
   const locationName = optionalText(item.locationName)
   const team = mapTeamInfo(item.teamRole, item.teamName)
+  const attendanceStatus = mapAttendance(item.attendanceStatus)
+  const absenceReasonStatus = optionalText(item.absenceReasonStatus)?.toUpperCase()
+  const hideAbsenceReason =
+    absenceReasonStatus === 'NOT_REQUIRED' ||
+    attendanceStatus === 'present' ||
+    attendanceStatus === 'late'
+  const absenceReason = hideAbsenceReason ? undefined : optionalText(item.absenceReason)
+  const curriculumSessions = mapCurriculumSessions(item.curriculumSessions)
 
   return {
     id,
@@ -240,13 +294,16 @@ export function mapPortalEducationSchedule(
         : {}),
     sessionNumber,
     heldAt,
+    ...(endAt ? { endAt } : {}),
     title,
     rowLabel,
-    attendanceStatus: mapAttendance(item.attendanceStatus),
-    ...(optionalText(item.absenceReason) ? { absenceReason: item.absenceReason!.trim() } : {}),
+    attendanceStatus,
+    ...(absenceReason ? { absenceReason } : {}),
+    ...(absenceReasonStatus ? { absenceReasonStatus } : {}),
     ...(sessionLabel ? { sessionLabel } : {}),
     ...(scheduleLabel ? { scheduleLabel } : {}),
     ...(optionalText(item.content) ? { content: item.content!.trim() } : {}),
+    ...(curriculumSessions ? { curriculumSessions } : {}),
     ...(progressTimeLabel ? { progressTimeLabel } : {}),
     ...(assignment ? { assignment } : {}),
     ...(availableActions ? { availableActions } : {}),

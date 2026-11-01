@@ -17,6 +17,9 @@ const generalOrganization = mapPortalProgramApplicationListItem({
 })
 assert.ok(generalOrganization)
 assert.equal(generalOrganization.categoryLabel, '기관')
+assert.equal(generalOrganization.educationTargetLabel, '')
+assert.equal(generalOrganization.educationFormLabel, '')
+assert.equal(generalOrganization.educationForm, undefined)
 
 const generalYouth = mapPortalProgramApplicationListItem({
   applicationId: 2,
@@ -427,5 +430,22 @@ assert.equal(
   geminiOrgNameFromOrganizationApplication.teacherApplicationContent?.institution.grade,
   '',
 )
+
+const satisfactionFlags = mapPortalProgramApplicationDetail({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programTitle: '만족도 플래그',
+  programGroup: 'GENERAL',
+  displayStatus: '진행 중',
+  pendingSurveyCount: 0,
+  capabilities: { canSubmitSatisfaction: false, canSubmitSurvey: false },
+  summary: { satisfactionPendingCount: 0, surveyPendingCount: 0 },
+})
+assert.equal(satisfactionFlags?.canSubmitSatisfaction, false)
+assert.equal(satisfactionFlags?.canSubmitSurvey, false)
+assert.equal(satisfactionFlags?.satisfactionPendingCount, 0)
+assert.equal(satisfactionFlags?.surveyPendingCount, 0)
+assert.equal(satisfactionFlags?.pendingSurveyCount, 0)
 
 console.log('portal application mappers.selfcheck: ok')

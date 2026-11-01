@@ -229,6 +229,7 @@ function mapParticipantRow(
     email,
     attendanceRecorded,
     ...(attendanceRecorded ? { attendanceStatus: status } : {}),
+    ...(status != null ? { persistedAttendanceStatus: status } : {}),
     lateTime,
     remark: attendance?.absenceReason ?? undefined,
   }

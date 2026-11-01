@@ -303,6 +303,79 @@ describe('resolveParticipatingInstitutionScheduleRowLabel', () => {
     )
   })
 
+  it('복수 일정형 — 배정된 사전교육 행은 사전교육 라벨을 쓰고 이후 일정명은 밀리지 않는다', () => {
+    const program = baseProgram({
+      generalProgramSessionRound: 'multi',
+      generalProgramEducationStructure: 'schedule',
+      rounds: [
+        { id: '187614', curriculum: '사전 교육' },
+        { id: '187612', curriculum: '개인일정111' },
+        { id: '187613', curriculum: '팀일정111' },
+      ] as Program['rounds'],
+      generalCommonInfo: {
+        scheduleDetails: [
+          { scheduleLabel: '사전 교육', name: '사전 교육', blockKind: 'preEducation' },
+          { scheduleLabel: '행사 일정 01', name: '개인일정111' },
+          { scheduleLabel: '행사 일정 02', name: '팀일정111' },
+        ],
+      },
+    })
+
+    expect(
+      resolveParticipatingInstitutionScheduleRowLabel(
+        program,
+        baseSession({
+          round: 1,
+          resolvedScheduleId: 187614,
+          scheduleRole: 'PRE_EDUCATION',
+          educationSlotKey: 'general-pre-education:1',
+        })
+      )
+    ).toBe('사전교육')
+    expect(
+      resolveParticipatingInstitutionScheduleRowLabel(
+        program,
+        baseSession({ round: 2, resolvedScheduleId: 187612, scheduleName: '개인일정111' })
+      )
+    ).toBe('개인일정111')
+    expect(
+      resolveParticipatingInstitutionScheduleRowLabel(
+        program,
+        baseSession({ round: 3, resolvedScheduleId: 187613, scheduleName: '팀일정111' })
+      )
+    ).toBe('팀일정111')
+  })
+
+  it('복수 일정형 — 사전교육이 없으면 기존처럼 1행이 첫 행사 일정명이다', () => {
+    const program = baseProgram({
+      generalProgramSessionRound: 'multi',
+      generalProgramEducationStructure: 'schedule',
+      rounds: [
+        { id: '187612', curriculum: '개인일정111' },
+        { id: '187613', curriculum: '팀일정111' },
+      ] as Program['rounds'],
+      generalCommonInfo: {
+        scheduleDetails: [
+          { scheduleLabel: '행사 일정 01', name: '개인일정111' },
+          { scheduleLabel: '행사 일정 02', name: '팀일정111' },
+        ],
+      },
+    })
+
+    expect(
+      resolveParticipatingInstitutionScheduleRowLabel(
+        program,
+        baseSession({ round: 1, resolvedScheduleId: 187612, scheduleName: '개인일정111' })
+      )
+    ).toBe('개인일정111')
+    expect(
+      resolveParticipatingInstitutionScheduleRowLabel(
+        program,
+        baseSession({ round: 2, resolvedScheduleId: 187613, scheduleName: '팀일정111' })
+      )
+    ).toBe('팀일정111')
+  })
+
   it('복수 일정형 — 사전 교육 행 이름이 따로 입력돼 있어도 blockKind로 회차에서 뺀다', () => {
     const program = baseProgram({
       generalProgramSessionRound: 'multi',

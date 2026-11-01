@@ -6,6 +6,9 @@ import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/progr
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
+import { PRE_EDUCATION_DISPLAY_LABEL } from '@/features/program/general/lib/schedule-detail-form'
+import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
+import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import type { Program } from '@/types/domain'
 
 function padTimePart(part: string): string {
@@ -434,11 +437,46 @@ export function buildParticipatingSchoolPreferredScheduleLines(
   })
 }
 
+function positiveScheduleId(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return Math.trunc(value)
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    return Number.parseInt(value.trim(), 10)
+  }
+  return null
+}
+
+function resolveAssignedScheduleDisplayName(
+  program: Program,
+  session: ParticipatingSchoolSession
+): string | undefined {
+  if (isProgramSchedulePreEducation(session)) return PRE_EDUCATION_DISPLAY_LABEL
+
+  const fromSession = toDisplayEducationScheduleName(
+    session.scheduleName ?? session.educationScheduleLabel
+  )
+  if (fromSession) return fromSession
+
+  const scheduleId = positiveScheduleId(session.resolvedScheduleId)
+  if (scheduleId == null) return undefined
+
+  const fromSchedules = (program.schedules ?? []).find(
+    row => positiveScheduleId(row.id) === scheduleId
+  )
+  if (fromSchedules) {
+    if (isProgramSchedulePreEducation(fromSchedules)) return PRE_EDUCATION_DISPLAY_LABEL
+    const name = toDisplayEducationScheduleName(fromSchedules.scheduleName)
+    if (name) return name
+  }
+
+  const fromRound = (program.rounds ?? []).find(row => positiveScheduleId(row.id) === scheduleId)
+  return toDisplayEducationScheduleName(fromRound?.curriculum)
+}
+
 /**
- * 참여 기관 상세 — 교육 진행 일정 행 라벨 (진행 내용 기준)
+ * 참여 기관·참여자 상세 — 교육 진행 일정 행 라벨 (진행 내용 기준)
  * - 단일 회차: 교육 일정
- * - 복수 회차 + 커리큘럼형: 회차명 (curriculumSessions[].sessionLabel)
- * - 복수 회차 + 일정형: 일정명 (scheduleDetails[].name)
+ * - 배정 일정(`scheduleId` / `scheduleName` / PRE_EDUCATION)이 있으면 그 이름
+ * - 없으면 복수 회차 공통정보 회차·일정명 (`round`, 사전교육 행은 출석/과제와 같이 제외)
  */
 export function resolveParticipatingInstitutionScheduleRowLabel(
   program: Program,
@@ -456,5 +494,8 @@ export function resolveParticipatingInstitutionScheduleRowLabel(
     return '교육 일정'
   }
 
-  return resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
+  return (
+    resolveAssignedScheduleDisplayName(program, session) ??
+    resolveSchoolDetailAttendanceSessionLeadLabel(program, session.round)
+  )
 }
