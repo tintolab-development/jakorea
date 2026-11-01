@@ -588,6 +588,17 @@ export const platformQueryKeys = {
           applicationType,
           applicationId,
         ] as const,
+      /**
+       * 개인 수료증 자격 — GET /api/portal/me/programs/{programId}/certificates/availability
+       * Class E — 발급/다운로드 CTA SSOT. certificateType 기본 AUTO.
+       */
+      certificateAvailability: (programId: string, certificateType = 'AUTO') =>
+        [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'certificate-availability',
+          programId,
+          certificateType,
+        ] as const,
     },
     /** 정산 신청 목록 — GET /api/portal/me/settlement-applications (Class C) */
     settlementApplications: () =>

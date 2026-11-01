@@ -448,4 +448,57 @@ assert.equal(satisfactionFlags?.satisfactionPendingCount, 0)
 assert.equal(satisfactionFlags?.surveyPendingCount, 0)
 assert.equal(satisfactionFlags?.pendingSurveyCount, 0)
 
+const certificateListHint = mapPortalProgramApplicationListItem({
+  applicationId: 1694719,
+  applicationType: 'INDIVIDUAL',
+  programId: 186514,
+  programType: 'GENERAL_EDUCATION',
+  programGroup: 'GENERAL',
+  programTitle: '수료증 목록 힌트',
+  displayStatus: '진행 중',
+  certificateAvailable: true,
+  availableActions: ['VIEW_DETAIL', 'ISSUE_CERTIFICATE'],
+})
+assert.ok(certificateListHint)
+assert.equal(certificateListHint.certificateAvailable, true)
+assert.deepEqual(certificateListHint.availableActions, ['VIEW_DETAIL', 'ISSUE_CERTIFICATE'])
+
+const certificateDetailIssued = mapPortalProgramApplicationDetail({
+  applicationId: 1694716,
+  applicationType: 'INDIVIDUAL',
+  programId: 186513,
+  programTitle: '수료증 상세 발급완료',
+  programGroup: 'GENERAL',
+  programType: 'GENERAL_EDUCATION',
+  displayStatus: '진행 중',
+  participation: {
+    participantId: 1695042,
+    certificateStatus: 'COMPLETION_ISSUED',
+  },
+  capabilities: { canIssueCertificate: true },
+})
+assert.ok(certificateDetailIssued)
+assert.equal(certificateDetailIssued.participantId, 1695042)
+assert.equal(certificateDetailIssued.certificateStatus, 'COMPLETION_ISSUED')
+assert.equal(certificateDetailIssued.canIssueCertificate, true)
+assert.equal(certificateDetailIssued.certificateAvailable, undefined)
+
+const certificateDetailAvailable = mapPortalProgramApplicationDetail({
+  applicationId: 1694719,
+  applicationType: 'INDIVIDUAL',
+  programId: 186514,
+  programTitle: '수료증 상세 미발급',
+  programGroup: 'GENERAL',
+  programType: 'GENERAL_EDUCATION',
+  displayStatus: '진행 중',
+  participation: {
+    participantId: 1695043,
+    certificateStatus: 'AVAILABLE',
+  },
+  capabilities: { canIssueCertificate: true },
+})
+assert.ok(certificateDetailAvailable)
+assert.equal(certificateDetailAvailable.certificateStatus, 'AVAILABLE')
+assert.equal(certificateDetailAvailable.canIssueCertificate, true)
+
 console.log('portal application mappers.selfcheck: ok')

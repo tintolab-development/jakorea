@@ -23,6 +23,7 @@ import {
   EducationSettlementPanel,
   EducationStudentsPanel,
   EducationSurveySection,
+  EducationPersonalCertificatePanel,
   DocumentPassBanner,
   hasTeacherMypageProfile,
   isSchoolTeacherMypageProfile,
@@ -955,6 +956,18 @@ export function MypageEducationDetailPage() {
             ariaLabel="진행중 교육 상세 탭"
           />
           <div className={styles.tabPanelBody}>{renderActivityBody(activitySection)}</div>
+          <EducationPersonalCertificatePanel
+            programId={program.id}
+            applicationId={application.id}
+            applicationType={
+              application.applicationType ?? routeApplicationType ?? resolvedApplicationType
+            }
+            programType={program.programType}
+            detailCase={application.detailCase}
+            certificateStatus={application.certificateStatus}
+            canIssueCertificateHint={application.canIssueCertificate}
+            participantIdHint={application.participantId}
+          />
         </>
       ) : (
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>

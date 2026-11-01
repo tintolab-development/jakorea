@@ -8,6 +8,10 @@ import {
   getEducationDisplayStatusTone,
   type EducationDisplayStatusAudience,
 } from '../lib/display-status'
+import {
+  hasIssueCertificateListAction,
+  shouldShowPersonalCertificateAction,
+} from '../lib/personal-certificate-eligibility'
 import styles from './list-item.module.css'
 
 type EducationApplicationListItemRowProps = {
@@ -28,6 +32,12 @@ export function EducationApplicationListItemRow({
     audience: statusAudience,
   })
   const statusClassName = [styles.status, statusToneClass].filter(Boolean).join(' ')
+  const showCertificateHint =
+    shouldShowPersonalCertificateAction({
+      applicationType: item.applicationType,
+      detailCase: item.detailCase,
+    }) &&
+    (item.certificateAvailable === true || hasIssueCertificateListAction(item.availableActions))
 
   return (
     <MediaListRow
@@ -67,6 +77,11 @@ export function EducationApplicationListItemRow({
                 {item.operatingPeriodLabel}
               </PFText>
             </div>
+            {showCertificateHint ? (
+              <PFText as="p" typo="bd-sm-md" color="primary-700" className={styles.certificateHint}>
+                수료증 발급·다운로드 가능
+              </PFText>
+            ) : null}
           </div>
 
           <ProgramStatusBadges

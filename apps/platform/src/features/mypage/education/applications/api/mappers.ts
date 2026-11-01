@@ -282,6 +282,12 @@ export function mapPortalProgramApplicationListItem(
     ...(typeof row.pendingSurveyCount === 'number' && Number.isFinite(row.pendingSurveyCount)
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),
+    ...(typeof row.certificateAvailable === 'boolean'
+      ? { certificateAvailable: row.certificateAvailable }
+      : {}),
+    ...(Array.isArray(row.availableActions)
+      ? { availableActions: row.availableActions.filter(action => typeof action === 'string') }
+      : {}),
     ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
     ...(ujatRevisionReason ? { ujatRevisionReason } : {}),
     ...(typeof ujatAssignmentRevision === 'number' ? { ujatAssignmentRevision } : {}),
@@ -556,8 +562,18 @@ export function mapPortalProgramApplicationDetail(
     displayStatus,
   })
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
-  if (detail.certificateAvailable != null) {
-    mapped.certificateAvailable = detail.certificateAvailable
+  // 상세는 certificateAvailable이 없음 — capabilities.canIssueCertificate를 쓴다.
+  // 목록 row를 spread해도 상세에 없는 필드로 덮지 않도록 상세 힌트만 설정한다.
+  if (typeof detail.capabilities?.canIssueCertificate === 'boolean') {
+    mapped.canIssueCertificate = detail.capabilities.canIssueCertificate
+  }
+  const participantId = detail.participation?.participantId
+  if (typeof participantId === 'number' && Number.isFinite(participantId) && participantId > 0) {
+    mapped.participantId = participantId
+  }
+  const certificateStatus = detail.participation?.certificateStatus?.trim()
+  if (certificateStatus) {
+    mapped.certificateStatus = certificateStatus
   }
   if (typeof detail.capabilities?.canSubmitSatisfaction === 'boolean') {
     mapped.canSubmitSatisfaction = detail.capabilities.canSubmitSatisfaction
