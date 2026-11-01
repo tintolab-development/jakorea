@@ -208,6 +208,8 @@ export function AccountPaymentStatusDetailFullPageModal({
                 formulaLabel={detail.formulaLabel}
                 totalAmount={detail.totalAmount}
                 lectureSessionSegmentLabel="round"
+                columnWidthPreset="account-payment-detail"
+                actionButtonSize="h32"
                 onBasisDetailClick={handleBasisDetailClick}
                 onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
                 headerActions={
@@ -216,7 +218,8 @@ export function AccountPaymentStatusDetailFullPageModal({
                     : (
                     <CmsButton
                       variant="primary"
-                      size="large"
+                      size="h40"
+                      className="account-payment-status-detail-fullpage-modal__complete-btn"
                       onClick={() => setPaymentCompleteConfirmOpen(true)} >
                       지급 완료 처리
                     </CmsButton>
