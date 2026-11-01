@@ -141,7 +141,7 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
 })
 
 describe('mapAccountPaymentDetailFromGetApi', () => {
-  it('settlement embed와 sensitiveAccount만 반영하고 강사 unmask PII는 채우지 않는다', () => {
+  it('표시 계좌는 maskedAccountNo, sensitiveAccount는 지급 확인 원문만', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {
         accountPaymentId: 185956,
@@ -152,6 +152,9 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         scheduledPaymentDate: '2026-10-15',
         paidAt: '2026-10-15T15:00:00.000Z',
         paymentStatus: 'PAID',
+        bankName: '국민은행',
+        maskedAccountNo: '**********',
+        accountHolder: '이*희',
       },
       settlement: {
         instructorId: '190001',
@@ -159,6 +162,9 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         institutionName: '서울 성동고등학교',
         lectureSessionDisplay: '10:00 ~ 17:00',
         programNameKo: '찾아가는 연수',
+        businessPeriodStart: '2026-01-01',
+        businessPeriodEnd: '2026-12-31',
+        period: '2026-11',
         items: [{ type: 'instructor_fee', amount: 100_000, description: '강의비' }],
         totalAmount: 100_000,
       },
@@ -172,16 +178,57 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
 
     expect(mapped.basic.nameKo).toBe('이건희')
-    expect(mapped.basic.genderBirthDisplay).toBe('-')
-    expect(mapped.basic.phoneDisplay).toBe('-')
-    expect(mapped.basic.emailDisplay).toBe('-')
-    expect(mapped.basic.addressDisplay).toBe('-')
-    expect(mapped.basic.settlementAccountBankNumberPart).toContain('국민은행')
-    expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
+    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행 **********')
+    expect(mapped.basic.settlementAccountBankNumberPart).not.toContain('1234567890')
+    expect(mapped.basic.settlementAccountHolderPart).toBe('이*희')
+    expect(mapped.plainAccountForPaymentConfirm?.bankAndNumber).toContain('1234567890')
+    expect(mapped.plainAccountForPaymentConfirm?.holder).toBe('이건희')
     expect(mapped.blocks[0]?.institutionName).toBe('서울 성동고등학교')
     expect(mapped.totalAmount).toBe(100_000)
-    expect(mapped.basic.paidAtDisplay).toBe('2026. 10. 16(금)')
+    expect(mapped.basic.paidAtDisplay).toBe('2026.10.16(금)')
+    expect(mapped.basic.businessPeriodDisplay).toContain('2026.01.01')
+    expect(mapped.basic.businessPeriodDisplay).toContain('2026.12.31')
+    expect(mapped.basic.businessPeriodDisplay).not.toBe('2026-11')
     expect(mapped.blocks[0]?.lines[0]?.basisDetail).toBeUndefined()
+  })
+
+  it('settlement.payee MASKED를 성별·연락처 칸에 매핑한다', () => {
+    const detail: AccountPaymentDetailResponse = {
+      payment: {
+        accountPaymentId: 185956,
+        instructorName: '이건희',
+        bankName: '국민',
+        maskedAccountNo: '**************',
+        accountHolder: '[**산',
+        paymentStatus: 'WAITING_PAYMENT',
+      },
+      settlement: {
+        payee: {
+          gender: '**',
+          birthDate: '1985-**-**',
+          phone: '010-****-2201',
+          email: 'e2e-settle-***@local.demo',
+          addressRoad: '서울특별시 강남구 테헤란로 *****',
+          addressDetail: '***',
+          accountHolder: '[E2E-SETTLE] 김정산',
+        },
+      },
+      sensitiveAccount: {
+        bankName: '국민',
+        accountNo: '11048200123456',
+        accountHolder: '[E2E-SETTLE] 김정산',
+      },
+    }
+
+    const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1985-**-**')
+    expect(mapped.basic.phoneDisplay).toBe('010-****-2201')
+    expect(mapped.basic.emailDisplay).toBe('e2e-settle-***@local.demo')
+    expect(mapped.basic.addressDisplay).toContain('테헤란로')
+    expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민 **************')
+    // sensitive 원문 `[E2E-SETTLE] 김정산` → 접두어 제거 후 `김*산`
+    expect(mapped.basic.settlementAccountHolderPart).toBe('김*산')
+    expect(mapped.plainAccountForPaymentConfirm?.holder).toBe('[E2E-SETTLE] 김정산')
   })
 
   it('제미나이 calculationDetail → basisDetail 강의 시간 2차시 (시계열 lectureSessionDisplay 무시)', () => {
@@ -283,7 +330,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.basic.phoneDisplay).toBe('-')
     expect(mapped.basic.emailDisplay).toBe('-')
     expect(mapped.basic.addressDisplay).toBe('-')
-    expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
+    expect(mapped.basic.settlementAccountHolderPart).toBe('이*희')
   })
 
   it('sensitiveAccount.accountNo가 없으면 강사 계좌 원문으로 보완하지 않는다', () => {
@@ -304,6 +351,6 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     const mapped = mapAccountPaymentDetailFromGetApi(baseRow, detail)
 
     expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민은행')
-    expect(mapped.basic.settlementAccountHolderPart).toBe('이건희')
+    expect(mapped.basic.settlementAccountHolderPart).toBe('이*희')
   })
 })

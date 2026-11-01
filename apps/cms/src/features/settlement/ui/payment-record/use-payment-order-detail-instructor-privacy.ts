@@ -2,17 +2,23 @@
  * 지급 현황 상세(강사) — instructor member privacy/unmask + 캐시 SSOT
  */
 
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   PaymentOrderAdminInstructorDetail,
   PaymentOrderAdminProgramDetail,
 } from '@/features/settlement-management/model/payment-order-admin-list'
 import { settlementQueryKeys } from '@/features/settlement-management/api/settlement-query-keys'
-import { unmaskInstructorMemberPrivacyRemote } from '@/features/user/api/members-api-client'
+import {
+  fetchInstructorMemberDetailRemote,
+  unmaskInstructorMemberPrivacyRemote,
+} from '@/features/user/api/members-api-client'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas/instructorMemberDetailResponse'
-import { mergeInstructorDetailFromPrivacyUnmask } from './merge-instructor-detail-from-privacy-unmask'
+import {
+  mergeInstructorDetailFromMaskedMember,
+  mergeInstructorDetailFromPrivacyUnmask,
+} from './merge-instructor-detail-from-privacy-unmask'
 
 type DetailForPrivacy = PaymentOrderAdminProgramDetail | PaymentOrderAdminInstructorDetail
 
@@ -33,10 +39,21 @@ export function usePaymentOrderDetailInstructorPrivacyReveal(options: {
       ? instructorMemberId
       : null
 
-  const privacyQueryKey =
-    memberId != null
-      ? settlementQueryKeys.paymentOrders.instructorPrivacyUnmask(memberId)
-      : (['cms', 'settlement', 'paymentOrders', 'instructorPrivacyUnmask', 'none'] as const)
+  const privacyQueryKey = useMemo(
+    () =>
+      memberId != null
+        ? settlementQueryKeys.paymentOrders.instructorPrivacyUnmask(memberId)
+        : (['cms', 'settlement', 'paymentOrders', 'instructorPrivacyUnmask', 'none'] as const),
+    [memberId]
+  )
+
+  const maskedQueryKey = useMemo(
+    () =>
+      memberId != null
+        ? ([...settlementQueryKeys.paymentOrders.instructorPrivacyUnmask(memberId), 'masked'] as const)
+        : (['cms', 'settlement', 'paymentOrders', 'instructorPrivacyMasked', 'none'] as const),
+    [memberId]
+  )
 
   const resolvePersonalInfoAccessItem = useCallback(() => {
     if (detail && 'nameKo' in detail) {
@@ -66,6 +83,19 @@ export function usePaymentOrderDetailInstructorPrivacyReveal(options: {
     controlMode: 'toggleRemask',
   })
 
+  const { data: maskedDto } = useQuery({
+    queryKey: maskedQueryKey,
+    enabled: kind === 'instructor' && memberId != null && isOpen && !reveal.personalInfoRevealed,
+    staleTime: 60_000,
+    queryFn: async (): Promise<InstructorMemberDetailResponse> => {
+      if (memberId == null) {
+        throw new Error('강사 회원 ID가 없습니다.')
+      }
+      return fetchInstructorMemberDetailRemote(memberId)
+    },
+    retry: false,
+  })
+
   const { data: unmaskDto } = useQuery({
     queryKey: privacyQueryKey,
     enabled: kind === 'instructor' && memberId != null && reveal.personalInfoRevealed,
@@ -78,10 +108,12 @@ export function usePaymentOrderDetailInstructorPrivacyReveal(options: {
     retry: false,
   })
 
-  const instructorDetailWithPrivacy =
-    kind === 'instructor' && detail && 'nameKo' in detail
+  let instructorDetailWithPrivacy: PaymentOrderAdminInstructorDetail | null = null
+  if (kind === 'instructor' && detail && 'nameKo' in detail) {
+    instructorDetailWithPrivacy = reveal.personalInfoRevealed
       ? mergeInstructorDetailFromPrivacyUnmask(detail, unmaskDto)
-      : null
+      : mergeInstructorDetailFromMaskedMember(detail, maskedDto)
+  }
 
   return {
     ...reveal,

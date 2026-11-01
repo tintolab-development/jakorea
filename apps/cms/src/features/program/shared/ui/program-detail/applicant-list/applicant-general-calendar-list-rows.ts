@@ -162,7 +162,10 @@ export function buildGeneralInstructorCalendarListRows(
       instructor.address,
       instructor.distanceKm
     )
-    const { dispatchCount, longDistanceCount } = getInstructorScheduleDispatchStats(instructorName)
+    const { dispatchCount, longDistanceCount } = getInstructorScheduleDispatchStats({
+      programDispatchCount: instructor.programDispatchCount,
+      programLongDistanceDispatchCount: instructor.programLongDistanceDispatchCount,
+    })
 
     return {
       id,
@@ -174,7 +177,9 @@ export function buildGeneralInstructorCalendarListRows(
       ),
       sessionLabel,
       distanceKm,
-      distanceDisplay: formatApiDistanceKmDisplay(distanceKm),
+      distanceDisplay: formatApiDistanceKmDisplay(distanceKm, {
+        longDistance: instructor.longDistanceYn === true,
+      }),
       isNearDistance: distanceKm != null ? isInstructorNearDistanceKm(distanceKm) : false,
       dispatchCount,
       longDistanceCount,

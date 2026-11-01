@@ -122,7 +122,9 @@ export function buildParticipatingInstructorAssignedSchoolRowsFromBoard(input: {
       schoolName: school?.schoolName ?? primary.organizationName?.trim() ?? '-',
       educationGrade: school?.educationGrade ?? '-',
       region: school?.region ?? '-',
-      distanceFromHome: formatApiDistanceKmDisplay(primary.distanceKm, { longDistanceSuffix: true }),
+      distanceFromHome: formatApiDistanceKmDisplay(primary.distanceKm, {
+        longDistance: primary.longDistance,
+      }),
       educationScheduleLines: [...new Set(scheduleLines.length > 0 ? scheduleLines : ['-'])],
       assignmentId:
         primary.assignmentId != null ? String(primary.assignmentId) : undefined,
@@ -493,7 +495,9 @@ export function buildParticipatingInstructorAssignedScheduleRowsFromBoard(input:
       slotKey: scheduleId || assignmentId,
       schoolId,
       lectureLocation: school?.schoolName ?? a.organizationName?.trim() ?? '-',
-      distanceFromHome: formatApiDistanceKmDisplay(a.distanceKm, { longDistanceSuffix: true }),
+      distanceFromHome: formatApiDistanceKmDisplay(a.distanceKm, {
+        longDistance: a.longDistance,
+      }),
       scheduleLabel,
       assignmentId,
       instructorMemberId: input.instructorMemberId,

@@ -61,12 +61,19 @@ export const VOLUNTEER_ASSIGNMENT_DISTANCE_UNAVAILABLE_TOOLTIP =
 
 /**
  * education-scope `distanceKm`만 표시. FE 반올림·재계산 없음.
- * null/undefined → '-'. 0은 '0km'. 100 이상이면 장거리 접미사.
+ * null/undefined → '-'. 0은 '0km'.
+ * `(장거리)`는 BE `longDistance`가 true일 때만 (km 임계값 판정 금지).
  */
-export function formatVolunteerAssignmentDistanceKm(km: number | null | undefined): string {
+export function formatVolunteerAssignmentDistanceKm(
+  km: number | null | undefined,
+  options?: { longDistance?: boolean | null }
+): string {
   if (km == null || Number.isNaN(km)) return '-'
   const label = `${km}km`
-  return km >= 100 ? `${label} (장거리)` : label
+  if (options?.longDistance === true) {
+    return `${label} (장거리)`
+  }
+  return label
 }
 
 /**
@@ -495,7 +502,9 @@ export function buildIndividualVolunteerAssignmentRowsFromEducationScope(params:
         address: schedule.address ?? enrich?.address,
         regionFallback,
       })
-      const distanceFromHome = formatVolunteerAssignmentDistanceKm(enrich?.distanceKm)
+      const distanceFromHome = formatVolunteerAssignmentDistanceKm(enrich?.distanceKm, {
+        longDistance: enrich?.longDistance,
+      })
       const assignedVolunteerCountLabel =
         typeof enrich?.assignedVolunteerCount === 'number'
           ? `${enrich.assignedVolunteerCount}명`

@@ -62,8 +62,13 @@ function mapItemToLine(
   )
 
   const kind = mapSettlementFrontendItemTypeToLineKind(item.type, amount)
+  const taxableFromBasis = readTaxableFlagFromCalculationDetail(item.calculationDetail)
   const taxIncomeTypeDisplay =
-    kind === 'withholding' ? item.taxIncomeTypeDisplay?.trim() || null : null
+    kind === 'withholding'
+      ? item.taxIncomeTypeDisplay?.trim() || null
+      : taxableFromBasis === false
+        ? '비과세'
+        : null
 
   return {
     id: `calc-line-remote-${index}`,
@@ -76,12 +81,44 @@ function mapItemToLine(
   }
 }
 
+function readTaxableFlagFromCalculationDetail(
+  detail: SettlementFrontendItemResponse['calculationDetail']
+): boolean | null {
+  if (!detail?.basisJson?.trim()) return null
+  try {
+    const parsed: unknown = JSON.parse(detail.basisJson)
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const taxable = (parsed as { taxable?: unknown }).taxable
+      if (typeof taxable === 'boolean') return taxable
+    }
+  } catch {
+    return null
+  }
+  return null
+}
+
 function resolveItemBasisDetail(
   itemType: SettlementFrontendItemResponse['type'],
   mappedBasisDetail: ReturnType<typeof mapCalculationDetailToBasisDetail>,
   transportationSnapshot: SettlementTransportationSnapshotResponse | undefined,
   amount: number
 ) {
+  const kind = mapSettlementFrontendItemTypeToLineKind(itemType, amount)
+  const lectureFeeLayoutAttached =
+    mappedBasisDetail?.layout === 'lectureFeeTier' ||
+    mappedBasisDetail?.layout === 'lectureFeeSpecial' ||
+    mappedBasisDetail?.layout === 'lectureFeeGemini'
+  // withholding 등에 lectureFee* calculationDetail이 붙어 강사비 모달로 열리는 것을 막는다.
+  if (kind !== 'lecture_fee' && lectureFeeLayoutAttached) {
+    if (itemType === 'transportation') {
+      return withTransportationAmountFallback(
+        mapTransportationSnapshotToBasisDetail(transportationSnapshot),
+        amount
+      )
+    }
+    return undefined
+  }
+
   if (itemType !== 'transportation') return mappedBasisDetail
 
   if (mappedBasisDetail?.layout === 'transportSnapshot') {

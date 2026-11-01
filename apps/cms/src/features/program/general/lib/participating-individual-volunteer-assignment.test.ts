@@ -160,8 +160,12 @@ describe('formatVolunteerAssignmentDistanceKm', () => {
 
   it('does not round the server value', () => {
     expect(formatVolunteerAssignmentDistanceKm(12.3)).toBe('12.3km')
-    expect(formatVolunteerAssignmentDistanceKm(287.44)).toBe('287.44km (장거리)')
-    expect(formatVolunteerAssignmentDistanceKm(100)).toBe('100km (장거리)')
+    expect(formatVolunteerAssignmentDistanceKm(287.44)).toBe('287.44km')
+    expect(formatVolunteerAssignmentDistanceKm(100)).toBe('100km')
+    expect(formatVolunteerAssignmentDistanceKm(250, { longDistance: false })).toBe('250km')
+    expect(formatVolunteerAssignmentDistanceKm(250, { longDistance: true })).toBe(
+      '250km (장거리)'
+    )
   })
 })
 

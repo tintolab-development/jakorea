@@ -21,7 +21,10 @@ import {
 } from '@/features/settlement-management/model/account-payments-list'
 import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { buildAccountPaymentExportRequest } from '@/features/settlement-management/api/account-payments/build-account-payment-export-request'
-import { waitForSettlementExportDownload } from '@/features/settlement-management/api/settlement-api-client'
+import {
+  assertSettlementServerExportReady,
+  waitForSettlementExportDownload,
+} from '@/features/settlement-management/api/settlement-api-client'
 import type {
   SettlementExportHistoryResponse,
   SettlementExportRequest,
@@ -298,7 +301,6 @@ export default function AccountPaymentsPage() {
 
   const accountPaymentsRemote = shouldUseSettlementRemote('accountPayments')
   const canRequestRawExport = accountPaymentsRemote && sessionRoleCode === 'ACCOUNTING_MANAGER'
-  const canApproveRawExport = accountPaymentsRemote && sessionRoleCode === 'MASTER'
   const markPaidMutation = useMarkAccountPaymentPaidMutation()
   const bulkTransferExportMutation = useBulkTransferExportMutation()
   const taxReportExportMutation = useTaxReportExportMutation()
@@ -698,9 +700,19 @@ export default function AccountPaymentsPage() {
       let readyExport: SettlementExportHistoryResponse | null = null
       try {
         const exportResult = await requestExportForKind('bulk-transfer', rows)
-        readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
-        if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
-          throw new Error(readyExport.failureReason || '대량이체 파일 생성에 실패했습니다.')
+        if (accountPaymentsRemote) {
+          if (exportResult == null) {
+            throw new Error('대량이체 양식 발급 응답이 없습니다.')
+          }
+          readyExport = assertSettlementServerExportReady(
+            await waitForSettlementExportDownload(exportResult),
+            '대량이체 서버 파일이 준비되지 않았습니다. 잠시 후 다시 발급해 주세요.'
+          )
+        } else {
+          readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
+          if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
+            throw new Error(readyExport.failureReason || '대량이체 파일 생성에 실패했습니다.')
+          }
         }
       } catch (error) {
         notifyExportError(error, '대량이체 파일 생성에 실패했습니다.')
@@ -710,7 +722,12 @@ export default function AccountPaymentsPage() {
       setIssuedFormExport(readyExport)
       setBulkTransferPreviewOpen(true)
     })()
-  }, [notifyExportError, requestExportForKind, resolveToolbarFormIssueRows])
+  }, [
+    accountPaymentsRemote,
+    notifyExportError,
+    requestExportForKind,
+    resolveToolbarFormIssueRows,
+  ])
 
   const closeBulkTransferPreview = useCallback(() => {
     setBulkTransferPreviewOpen(false)
@@ -721,23 +738,10 @@ export default function AccountPaymentsPage() {
   const openTaxFilingPreview = useCallback(() => {
     const rows = resolveToolbarFormIssueRows('tax-report')
     if (rows === null) return
-    void (async () => {
-      let readyExport: SettlementExportHistoryResponse | null = null
-      try {
-        const exportResult = await requestExportForKind('tax-report', rows)
-        readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
-        if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
-          throw new Error(readyExport.failureReason || '세금신고 파일 생성에 실패했습니다.')
-        }
-      } catch (error) {
-        notifyExportError(error, '세금신고 파일 생성에 실패했습니다.')
-        return
-      }
-      setIssuedFormPreviewRows(rows)
-      setIssuedFormExport(readyExport)
-      setTaxFilingPreviewOpen(true)
-    })()
-  }, [notifyExportError, requestExportForKind, resolveToolbarFormIssueRows])
+    setIssuedFormPreviewRows(rows)
+    setIssuedFormExport(null)
+    setTaxFilingPreviewOpen(true)
+  }, [resolveToolbarFormIssueRows])
 
   const closeTaxFilingPreview = useCallback(() => {
     setTaxFilingPreviewOpen(false)
@@ -883,27 +887,16 @@ export default function AccountPaymentsPage() {
               style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
               type="button"
               onClick={() => openRawExportRequest('bulk-transfer')} >
-              대량이체 전체 원본 승인
+              대량이체 전체 원본 요청
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="secondary"
               style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
               type="button"
               onClick={() => openRawExportRequest('tax-report')} >
-              세금신고 전체 원본 승인
+              세금신고 전체 원본 요청
             </FilterTableToolbarButton>
           </>
-        ) : null}
-        {canApproveRawExport ? (
-          <FilterTableToolbarButton
-            variant="secondary"
-            style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
-            type="button"
-            onClick={() =>
-              setRawExport({ mode: 'approve', kind: 'bulk-transfer' })
-            } >
-            원본 양식 승인
-          </FilterTableToolbarButton>
         ) : null}
       </>
     ),
@@ -912,7 +905,6 @@ export default function AccountPaymentsPage() {
       openBulkTransferPreview,
       openTaxFilingPreview,
       canRequestRawExport,
-      canApproveRawExport,
       openRawExportRequest,
     ]
   )
@@ -1002,9 +994,19 @@ export default function AccountPaymentsPage() {
       let readyExport: SettlementExportHistoryResponse | null = null
       try {
         const exportResult = await requestExportForKind('bulk-transfer', rowsForPreview)
-        readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
-        if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
-          throw new Error(readyExport.failureReason || '대량이체 파일 생성에 실패했습니다.')
+        if (accountPaymentsRemote) {
+          if (exportResult == null) {
+            throw new Error('대량이체 양식 발급 응답이 없습니다.')
+          }
+          readyExport = assertSettlementServerExportReady(
+            await waitForSettlementExportDownload(exportResult),
+            '대량이체 서버 파일이 준비되지 않았습니다. 잠시 후 다시 발급해 주세요.'
+          )
+        } else {
+          readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
+          if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
+            throw new Error(readyExport.failureReason || '대량이체 파일 생성에 실패했습니다.')
+          }
         }
       } catch (error) {
         notifyExportError(error, '대량이체 파일 생성에 실패했습니다.')
@@ -1014,7 +1016,12 @@ export default function AccountPaymentsPage() {
       setIssuedFormExport(readyExport)
       setBulkTransferPreviewOpen(true)
     })()
-  }, [accountPaymentCompleteSuccessContext, notifyExportError, requestExportForKind])
+  }, [
+    accountPaymentCompleteSuccessContext,
+    accountPaymentsRemote,
+    notifyExportError,
+    requestExportForKind,
+  ])
 
   const filterLayoutClassName = 'account-payments-page__filter-table'
 
@@ -1258,7 +1265,6 @@ export default function AccountPaymentsPage() {
             open
             onCancel={closeTaxFilingPreview}
             rows={issuedFormPreviewRows ?? []}
-            serverExport={issuedFormExport}
           />
         </Suspense>
       ) : null}

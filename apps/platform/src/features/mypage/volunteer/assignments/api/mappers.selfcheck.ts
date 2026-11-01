@@ -54,7 +54,17 @@ const org = mapPortalVolunteerAssignments(
         educationGrade: '1학년',
         region: '서울특별시 강서구',
         distanceKm: 100,
+        longDistance: true,
         scheduleLines: ['2026년 01월 09일(금) 09:00~12:20 | 1차시'],
+      },
+      {
+        id: 'o2',
+        schoolName: '양천초등학교',
+        educationGrade: '2학년',
+        region: '서울특별시 양천구',
+        distanceKm: 250,
+        longDistance: false,
+        scheduleLines: ['2026년 01월 10일(토) 09:00~12:20 | 1차시'],
       },
     ],
     waiting: [],
@@ -64,5 +74,6 @@ const org = mapPortalVolunteerAssignments(
 
 assert.equal(org.audience, 'organization')
 assert.equal(org.data.assigned[0]?.distanceFromHome, '100km (장거리)')
+assert.equal(org.data.assigned[1]?.distanceFromHome, '250km')
 
 console.log('volunteer-assignments.mappers.selfcheck: ok')

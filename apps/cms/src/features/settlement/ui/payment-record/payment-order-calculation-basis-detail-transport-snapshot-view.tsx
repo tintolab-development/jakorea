@@ -8,11 +8,7 @@ import {
   BasisDetailReadOnlyValue,
 } from './payment-order-calculation-basis-detail-shared'
 import { formatPaymentOrderCalculationWonPlain } from './payment-order-calculation-breakdown-table'
-import { formatDateTimeDot } from '@/shared/utils/date'
-import {
-  formatTransportSnapshotFuelTypeLabel,
-  formatTransportSnapshotProviderLabel,
-} from '@/features/settlement/lib/transport-snapshot-labels'
+import { formatTransportSnapshotFuelTypeLabel } from '@/features/settlement/lib/transport-snapshot-labels'
 
 function formatDistance(distanceKm?: number): string {
   return distanceKm == null || !Number.isFinite(distanceKm) ? '-' : `${distanceKm.toFixed(3)}km`
@@ -42,11 +38,6 @@ export function PaymentOrderCalculationBasisDetailTransportSnapshotView({
 
   return (
     <BasisDetailInfoForm title="교통비 산정 기준">
-      <BasisDetailInfoFormRow label="거리 산정 업체">
-        <BasisDetailReadOnlyValue>
-          {formatTransportSnapshotProviderLabel(detail.provider)}
-        </BasisDetailReadOnlyValue>
-      </BasisDetailInfoFormRow>
       <BasisDetailInfoFormRow label="편도 거리">
         <BasisDetailReadOnlyValue>
           {formatDistance(detail.oneWayDistanceKm)}
@@ -81,11 +72,6 @@ export function PaymentOrderCalculationBasisDetailTransportSnapshotView({
           {detail.calculatedTransportAmount == null
             ? '-'
             : formatPaymentOrderCalculationWonPlain(detail.calculatedTransportAmount)}
-        </BasisDetailReadOnlyValue>
-      </BasisDetailInfoFormRow>
-      <BasisDetailInfoFormRow label="스냅샷 기준 시각">
-        <BasisDetailReadOnlyValue>
-          {formatDateTimeDot(detail.snapshotAt)}
         </BasisDetailReadOnlyValue>
       </BasisDetailInfoFormRow>
     </BasisDetailInfoForm>

@@ -123,6 +123,11 @@ export function resolvePaymentStatementIssuanceCategoryLabel(
     return presentText(line.taxIncomeTypeDisplay ?? undefined) || '-'
   }
 
+  // 비과세 교통·숙박 등: taxIncomeTypeDisplay(일용근로소득)를 구분으로 쓰지 않는다.
+  if (line.taxIncomeTypeDisplay === '비과세') {
+    return '비과세'
+  }
+
   const fromDetail = categoryFromBasisDetail(line)
   if (fromDetail) return fromDetail
 

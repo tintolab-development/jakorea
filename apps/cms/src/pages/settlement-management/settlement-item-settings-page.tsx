@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { App, Dropdown, Spin } from 'antd'
 import type { MenuProps } from 'antd'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   getSettlementItemSettingDetail,
   saveSettlementItemSettingDetail,
@@ -48,6 +49,15 @@ export default function SettlementItemSettingsPage() {
   const sectionsQuery = useSettlementConfigSectionsQuery(settlementConfigsRemote)
   const { showAlert } = useCmsAlert()
   const { message } = App.useApp()
+  const authUser = useAuthStore(s => s.user)
+  const canEditSettlementConfig = useMemo(() => {
+    const codes = authUser?.permissionCodes
+    if (Array.isArray(codes) && codes.length > 0) {
+      return codes.includes('SETTLEMENT_WRITE') || codes.includes('*')
+    }
+    // permissionCodes 미동기화 시 MASTER만 저장 허용
+    return authUser?.roleCode === 'MASTER'
+  }, [authUser?.permissionCodes, authUser?.roleCode])
 
   const updateItemMutation = useUpdateSettlementConfigItemMutation()
   const duplicatePaymentMutation = useDuplicateSettlementConfigPaymentItemMutation()
@@ -285,6 +295,7 @@ export default function SettlementItemSettingsPage() {
           open={selectedItem !== null}
           item={selectedItem}
           saving={updateItemMutation.isPending}
+          canEdit={canEditSettlementConfig}
           onCancel={() => setSelectedItem(null)}
           onSaveItemMeta={(itemId, meta) => {
             if (settlementConfigsRemote) return

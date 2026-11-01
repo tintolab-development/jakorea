@@ -8,6 +8,7 @@ import { Input } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { ActionResultModal } from '@/shared/ui/action-result-modal'
 import { CmsButton } from '@/shared/ui'
+import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { SETTLEMENT_ROW_STATUS_LABELS, type SettlementDetail } from '@/features/school/model/school-detail-types'
 import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import './settlement-detail-modal.css'
@@ -161,11 +162,7 @@ export function SettlementDetailModal({
                   <td>{item.description}</td>
                   <td>+{item.amount.toLocaleString()}원</td>
                   <td>
-                    <CmsButton
-                      variant="secondary"
-                      size="small" className="settlement-detail__view-btn" >
-                      상세보기
-                    </CmsButton>
+                    <CalculationDetailViewButton />
                   </td>
                 </tr>
               ))}
@@ -176,11 +173,7 @@ export function SettlementDetailModal({
                   -{withholdingAmount.toLocaleString()}원
                 </td>
                 <td>
-                  <CmsButton
-                    variant="secondary"
-                    size="small" className="settlement-detail__view-btn" >
-                    상세보기
-                  </CmsButton>
+                  <CalculationDetailViewButton />
                 </td>
               </tr>
               <tr className="settlement-detail__total-row">

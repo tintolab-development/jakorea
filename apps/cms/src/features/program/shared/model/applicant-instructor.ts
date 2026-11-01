@@ -161,8 +161,12 @@ export interface ApplicantInstructorRow {
   rejectionReason?: string
   /** Admin API — 기관까지 편도 거리(km). mock 해시 대신 우선 */
   distanceKm?: number
-  /** Admin API — 장거리 여부. threshold 하드코딩보다 우선 */
+  /** Admin API — 장거리 표기 전용(단가 아님). BE longDistance */
   longDistanceYn?: boolean
+  /** Admin API — 프로그램 내 출강 횟수 */
+  programDispatchCount?: number
+  /** Admin API — 프로그램 내 장거리 출강 횟수 (표기 기준) */
+  programLongDistanceDispatchCount?: number
   /** 강사 이력서 - 경력 상세 (강사 이력서 탭) */
   careerDetails?: ApplicantInstructorCareerDetail[]
   /** 강사 이력서 — JA Korea 활동 경험 */

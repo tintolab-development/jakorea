@@ -27,17 +27,14 @@ import {
   mapSettlementFrontendItemTypeToLineKind,
   prepareSettlementFrontendItemsForStatement,
 } from '@/features/settlement-management/api/shared/map-frontend-fields'
+import { mapSettlementPayeeToInstructorBasicFields } from '@/features/settlement-management/api/payment-orders/map-settlement-payee'
 import { formatPaymentOrderCalculationItemLabel } from '@/shared/constants/settlement-item-type'
-
-const KO_WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'] as const
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 
 function formatTransferDateDisplay(iso: string): string {
   if (!iso) return '-'
-  const [y, m, d] = iso.split('-').map(Number)
-  if (!y || !m || !d) return iso
-  const date = new Date(y, m - 1, d)
-  const dow = KO_WEEKDAY[date.getDay()]
-  return `${y}. ${String(m).padStart(2, '0')}. ${String(d).padStart(2, '0')}(${dow})`
+  const label = formatDateDotWithWeekday(iso.slice(0, 10))
+  return label === '-' ? iso : label
 }
 
 function formatPaidAtDisplay(iso: string | undefined): string {
@@ -52,13 +49,25 @@ function formatPaidAtDisplay(iso: string | undefined): string {
     day: '2-digit',
   }).formatToParts(date)
   const values = Object.fromEntries(parts.map(part => [part.type, part.value]))
-  const year = Number(values.year)
-  const month = Number(values.month)
-  const day = Number(values.day)
+  const year = values.year
+  const month = values.month
+  const day = values.day
   if (!year || !month || !day) return '-'
+  return formatTransferDateDisplay(`${year}-${month}-${day}`)
+}
 
-  const dow = KO_WEEKDAY[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]
-  return `${year}. ${String(month).padStart(2, '0')}. ${String(day).padStart(2, '0')}(${dow})`
+/** `[E2E-SETTLE] 김정산`처럼 대괄호 접두어가 있으면 벗긴 뒤 예금주 마스킹 */
+export function maskAccountHolderForDisplay(value: string | null | undefined): string {
+  const raw = value?.trim()
+  if (!raw) return '-'
+  const stripped = raw.replace(/^\[[^\]]*]\s*/, '').trim()
+  const source = stripped || raw
+  // 이미 정상 마스킹(김*산)이면 유지. `[**산`처럼 깨진 값은 복구 불가면 ***
+  if (source.includes('*')) {
+    if (!source.startsWith('[') && !/^\*/.test(source)) return source
+    return '***'
+  }
+  return MASKING_POLICY.accountHolderName(source)
 }
 
 function formatLectureDateDisplay(iso: string | null | undefined): string {
@@ -97,13 +106,24 @@ function mapFrontendItemToCalcLine(
   index: number
 ): PaymentOrderCalculationStatementLine {
   const amount = item.amount ?? 0
+  const kind = mapSettlementFrontendItemTypeToLineKind(item.type, amount)
+  const mappedBasisDetail = mapCalculationDetailToBasisDetail(item.calculationDetail)
+  // withholding·교통비 등에 lectureFee* calculationDetail이 와도 강사비 모달로 연결하지 않는다.
+  const basisDetail =
+    kind !== 'lecture_fee' &&
+    mappedBasisDetail &&
+    (mappedBasisDetail.layout === 'lectureFeeTier' ||
+      mappedBasisDetail.layout === 'lectureFeeSpecial' ||
+      mappedBasisDetail.layout === 'lectureFeeGemini')
+      ? undefined
+      : mappedBasisDetail
   return {
     id: `calc-line-api-${index}`,
     itemLabel: formatPaymentOrderCalculationItemLabel(item.type, amount),
     description: item.description?.trim() || '-',
     amount,
-    kind: mapSettlementFrontendItemTypeToLineKind(item.type, amount),
-    basisDetail: mapCalculationDetailToBasisDetail(item.calculationDetail),
+    kind,
+    basisDetail,
   }
 }
 
@@ -322,23 +342,30 @@ function buildAccountPaymentStatusDetail(
     accountPaymentStatus?: AccountPaymentStatusDetail['basic']['accountPaymentStatus']
     transferScheduledDate?: string
     paidAt?: string
+    genderBirthDisplay?: string
+    phoneDisplay?: string
+    emailDisplay?: string
+    addressDisplay?: string
+    nameEn?: string
+    plainBankAndNumber?: string
+    plainHolder?: string
   }
 ): AccountPaymentStatusDetail {
   const bankAndNumber = [row.bankName, row.maskedAccountNo].filter(Boolean).join(' ') || '-'
   const accountPaymentStatus = extras?.accountPaymentStatus ?? row.accountPaymentStatus
+  const holderDisplay = maskAccountHolderForDisplay(row.accountHolder)
 
   return {
     basic: {
       nameKo: row.instructorName,
-      nameEn: '-',
-      // 성별·생년월일·연락처·이메일·주소는 계좌 지급 GET에 없다. BE_HANDOFF_REQUIRED.
-      genderBirthDisplay: '-',
+      nameEn: extras?.nameEn ?? '-',
+      genderBirthDisplay: extras?.genderBirthDisplay ?? '-',
       scheduleChangeCancelCount: undefined,
-      phoneDisplay: '-',
-      emailDisplay: '-',
-      addressDisplay: '-',
+      phoneDisplay: extras?.phoneDisplay ?? '-',
+      emailDisplay: extras?.emailDisplay ?? '-',
+      addressDisplay: extras?.addressDisplay ?? '-',
       settlementAccountBankNumberPart: bankAndNumber,
-      settlementAccountHolderPart: row.accountHolder?.trim() || '-',
+      settlementAccountHolderPart: holderDisplay,
       programName: extras?.programName ?? row.programName,
       programSessionProgressDisplay:
         extras?.programSessionProgressDisplay ??
@@ -363,8 +390,8 @@ function buildAccountPaymentStatusDetail(
     formulaLabel: '정산 항목 합계',
     totalAmount,
     plainAccountForPaymentConfirm: {
-      bankAndNumber,
-      holder: row.accountHolder?.trim() || row.instructorName,
+      bankAndNumber: extras?.plainBankAndNumber ?? bankAndNumber,
+      holder: extras?.plainHolder ?? (row.accountHolder?.trim() || row.instructorName),
     },
   }
 }
@@ -397,8 +424,8 @@ export function mapAccountPaymentDetailRemote(
 
 /**
  * `GET /api/admin/account-payments/{id}`만 사용한다.
- * 성별·생년월일·연락처·이메일·주소는 이 응답에 없으면 `-`로 둔다.
- * 계좌 원문은 sensitiveAccount만 사용한다.
+ * 표시 계좌번호 = payment.maskedAccountNo (원문 sensitiveAccount는 지급 확인용).
+ * 성별·연락처 등 = settlement.payee(MASKED)가 있으면 매핑, 없으면 `-`.
  */
 export function mapAccountPaymentDetailFromGetApi(
   row: AccountPaymentRow,
@@ -407,6 +434,27 @@ export function mapAccountPaymentDetailFromGetApi(
   const payment = detail.payment
   const settlement = detail.settlement ?? undefined
   const sensitiveAccount = detail.sensitiveAccount
+  const payeeFields = mapSettlementPayeeToInstructorBasicFields(settlement?.payee)
+
+  const displayBankName =
+    payment?.bankName?.trim() ||
+    payeeFields?.settlementAccountBankNumberPart.split(' ')[0] ||
+    row.bankName
+  const displayMaskedAccountNo =
+    payment?.maskedAccountNo?.trim() ||
+    payeeFields?.settlementAccountBankNumberPart.split(' ').slice(1).join(' ') ||
+    row.maskedAccountNo
+  const plainBankAndNumber = sensitiveAccount
+    ? [sensitiveAccount.bankName, sensitiveAccount.accountNo].filter(Boolean).join(' ') || undefined
+    : undefined
+  const plainHolder = sensitiveAccount?.accountHolder?.trim() || undefined
+
+  // 표시 예금주: 원문(sensitive)이 있으면 접두어 제거 후 재마스킹. 없으면 목록 마스킹값.
+  const displayHolder =
+    plainHolder ||
+    payment?.accountHolder?.trim() ||
+    payeeFields?.settlementAccountHolderPart ||
+    row.accountHolder
 
   const mergedRow: AccountPaymentRow = {
     ...row,
@@ -431,15 +479,23 @@ export function mapAccountPaymentDetailFromGetApi(
     transferScheduledDate:
       payment?.scheduledPaymentDate ?? settlement?.expectedTransferDate ?? row.transferScheduledDate,
     paidAt: payment?.paidAt ?? settlement?.paidAt ?? row.paidAt,
-    bankName: sensitiveAccount?.bankName?.trim() || payment?.bankName || row.bankName,
-    maskedAccountNo:
-      sensitiveAccount?.accountNo?.trim() || payment?.maskedAccountNo || row.maskedAccountNo,
-    accountHolder:
-      sensitiveAccount?.accountHolder?.trim() || payment?.accountHolder || row.accountHolder,
+    bankName: displayBankName,
+    maskedAccountNo: displayMaskedAccountNo,
+    accountHolder: displayHolder,
     accountPaymentStatus: mapPaymentStatusToAccountPaymentStatus(payment?.paymentStatus),
     instructorMemberId:
       resolveAccountPaymentMemberId(detail, row) ?? row.instructorMemberId,
   }
+
+  const payeeExtras = payeeFields
+    ? {
+        nameEn: payeeFields.nameEn,
+        genderBirthDisplay: payeeFields.genderBirthDisplay,
+        phoneDisplay: payeeFields.phoneDisplay,
+        emailDisplay: payeeFields.emailDisplay,
+        addressDisplay: payeeFields.addressDisplay,
+      }
+    : undefined
 
   const base = settlement
     ? mapAccountPaymentDetailRemote(mergedRow, settlement)
@@ -452,8 +508,31 @@ export function mapAccountPaymentDetailFromGetApi(
           accountPaymentStatus: mergedRow.accountPaymentStatus,
           transferScheduledDate: mergedRow.transferScheduledDate,
           paidAt: mergedRow.paidAt,
+          ...payeeExtras,
+          plainBankAndNumber,
+          plainHolder,
         }
       )
 
-  return base
+  if (!settlement && !payeeExtras && !plainBankAndNumber) return base
+
+  return {
+    ...base,
+    basic: {
+      ...base.basic,
+      ...(payeeExtras ?? {}),
+      settlementAccountBankNumberPart:
+        [mergedRow.bankName, mergedRow.maskedAccountNo].filter(Boolean).join(' ') ||
+        base.basic.settlementAccountBankNumberPart,
+      settlementAccountHolderPart: maskAccountHolderForDisplay(mergedRow.accountHolder),
+    },
+    plainAccountForPaymentConfirm: {
+      bankAndNumber:
+        plainBankAndNumber || base.plainAccountForPaymentConfirm?.bankAndNumber || '-',
+      holder:
+        plainHolder ||
+        base.plainAccountForPaymentConfirm?.holder ||
+        mergedRow.instructorName,
+    },
+  }
 }
