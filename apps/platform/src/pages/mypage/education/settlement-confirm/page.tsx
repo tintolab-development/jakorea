@@ -29,6 +29,10 @@ import {
   buildIndividualSettlementSubmitRequest,
 } from '@/features/mypage/education/settlements/lib/build-individual-settlement-submit'
 import {
+  getSettlementApplicationDocumentErrorMessage,
+  SETTLEMENT_APPLICATION_DOCUMENT_LOAD_FAILED_MESSAGE,
+} from '@/features/mypage/education/settlements/lib/application-document-errors'
+import {
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
   individualSettlementApiErrorMessage,
   shouldUseIndividualSettlementSchedulesApi,
@@ -191,7 +195,9 @@ export function MypageEducationSettlementConfirmPage() {
           />
         ) : (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            정산 신청서를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+            {documentQuery.isError
+              ? getSettlementApplicationDocumentErrorMessage(documentQuery.error)
+              : SETTLEMENT_APPLICATION_DOCUMENT_LOAD_FAILED_MESSAGE}
           </PFText>
         )}
       </PFFormPage>

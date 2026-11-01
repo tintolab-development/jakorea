@@ -11,6 +11,7 @@ import {
   settlementDocumentPayDeductionLabel,
   warnIfSettlementDocumentTotalMismatch,
 } from '../lib/format-application-document'
+import { resolveSettlementDocumentAttachmentViewUrl } from '../lib/resolve-attachment-view-url'
 import { PFButton, PFInfoReview, PFText } from '@/shared/ui'
 import styles from './application-document-view.module.css'
 
@@ -162,6 +163,7 @@ export function EducationSettlementApplicationDocumentView({
           <ul className={styles.attachmentList}>
             {document.attachments.map(attachment => {
               const label = attachment.fileName?.trim() || `첨부 ${attachment.fileObjectId}`
+              const viewUrl = resolveSettlementDocumentAttachmentViewUrl(attachment.viewUrl)
               const image = isImageContentType(attachment.contentType, attachment.fileName)
               const pdf = isPdfContentType(attachment.contentType, attachment.fileName)
               return (
@@ -172,13 +174,13 @@ export function EducationSettlementApplicationDocumentView({
                   {image ? (
                     <a
                       className={styles.attachmentLink}
-                      href={attachment.viewUrl}
+                      href={viewUrl}
                       target="_blank"
                       rel="noreferrer"
                     >
                       <img
                         className={styles.attachmentImage}
-                        src={attachment.viewUrl}
+                        src={viewUrl}
                         alt={label}
                         onError={handleAttachmentError}
                       />
@@ -187,13 +189,13 @@ export function EducationSettlementApplicationDocumentView({
                     <iframe
                       className={styles.attachmentFrame}
                       title={label}
-                      src={attachment.viewUrl}
+                      src={viewUrl}
                       onError={handleAttachmentError}
                     />
                   ) : (
                     <a
                       className={styles.attachmentOpen}
-                      href={attachment.viewUrl}
+                      href={viewUrl}
                       target="_blank"
                       rel="noreferrer"
                     >

@@ -58,9 +58,14 @@ export function buildSettlementConfirmPath(options: {
   area?: SettlementArea
   applicationType?: string
   mode?: 'view'
+  /** 제출 후 문서 미리보기 — 생략 시 최신 revision (document GET) */
+  revisionNo?: number
 }): string {
   const params = new URLSearchParams({ sessionId: options.sessionId })
   if (options.mode) params.set('mode', options.mode)
+  if (options.revisionNo != null && options.revisionNo > 0) {
+    params.set('revisionNo', String(options.revisionNo))
+  }
   return `${settlementBasePath(options.applicationId, options.area ?? 'education', options.applicationType)}/settlement/confirm?${params.toString()}`
 }
 
