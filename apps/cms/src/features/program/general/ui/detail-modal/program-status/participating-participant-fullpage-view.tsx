@@ -98,6 +98,7 @@ import {
   ParticipatingIndividualParticipantAssignmentSection,
   type ParticipatingIndividualParticipantAssignmentSectionHandle,
 } from './participating-individual-participant-assignment-section'
+import type { ProgressAssignmentSurveyNavTab } from './participating-individual-progress-assignment-table'
 import { ParticipatingParticipantSettlementSection } from './participating-participant-settlement-section'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import { isSubmissionTeamApplicable } from '@/features/program/general/lib/submission-team-applicable'
@@ -124,6 +125,8 @@ export interface ParticipatingParticipantFullpageViewProps {
   activeTab?: ParticipantDetailTabKey
   onTabChange?: (key: ParticipantDetailTabKey) => void
   onClearParticipantId: () => void
+  /** 과제 관리 설문조사·만족도조사 버튼 → 같은 프로그램 설문 관리 탭 이동 */
+  onNavigateToSurveyCategory?: (tab: ProgressAssignmentSurveyNavTab) => void
 }
 
 export function ParticipatingParticipantFullpageView({
@@ -132,6 +135,7 @@ export function ParticipatingParticipantFullpageView({
   activeTab = 'application',
   onTabChange,
   onClearParticipantId: _onClearParticipantId,
+  onNavigateToSurveyCategory,
 }: ParticipatingParticipantFullpageViewProps) {
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
@@ -835,6 +839,7 @@ export function ParticipatingParticipantFullpageView({
               assignedSessions={progressScheduleSessions}
               assignedSessionsLoading={progressScheduleSessionsLoading}
               onTeamFeatureNotApplicable={handleSubmissionTeamNotApplicable}
+              onNavigateToSurveyCategory={onNavigateToSurveyCategory}
             />
           </div>
         ) : visibleActiveTab === 'settlement' ? (
