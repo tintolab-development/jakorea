@@ -421,12 +421,14 @@ export function applyUjatRecruitFormValuesToProgram(
     audience === 'volunteer' && half
       ? pickUjatVolunteerRecruitmentRow(program, half)
       : pickRecruitmentCopyRow(program, audience, half ?? undefined)
-  const hasFormValues = (isInstitution =>
-    (isInstitution
+  const hasFormValues = (
+    kind === 'institution'
       ? [
           values.announcementTitle,
           values.applicationStartDate,
           values.applicationEndDate,
+          values.startDate,
+          values.endDate,
           values.recruitmentContactOrganizationName,
           values.participantRecruitmentAnnouncementPublished,
         ]
@@ -434,22 +436,19 @@ export function applyUjatRecruitFormValuesToProgram(
           values.announcementTitle,
           values.volunteerApplicationStartDate,
           values.volunteerApplicationEndDate,
+          values.startDate,
+          values.endDate,
           values.volunteerRecruitmentContactOrganizationName,
           values.interviewStartDate,
           values.interviewEndDate,
           values.volunteerRecruitmentAnnouncementPublished,
         ]
-    ).some(value => typeof value === 'string' && value.trim() !== ''))(kind === 'institution')
+  ).some(value => typeof value === 'string' && value.trim() !== '')
   if (!existingTarget && (!options?.createMissing || !hasFormValues)) return program
 
   const isInstitution = kind === 'institution'
-  const volunteerRoundIndex = half === 'h1' ? 0 : half === 'h2' ? 1 : null
-  const volunteerRound =
-    volunteerRoundIndex != null ? values.rounds?.[volunteerRoundIndex] : undefined
-  const volunteerStartAt =
-    volunteerRound?.startDate?.trim() || values.volunteerApplicationStartDate?.trim() || null
-  const volunteerEndAt =
-    volunteerRound?.endDate?.trim() || values.volunteerApplicationEndDate?.trim() || null
+  const volunteerStartAt = values.volunteerApplicationStartDate?.trim() || null
+  const volunteerEndAt = values.volunteerApplicationEndDate?.trim() || null
   const contactName = isInstitution
     ? values.recruitmentContactOrganizationName
     : values.volunteerRecruitmentContactOrganizationName

@@ -130,24 +130,8 @@ export function UjatRecruitVolunteerInfoProgramView({
   const recruitKey = (suffix: string) => `recruit.volunteer.${volunteerHalf}.${suffix}`
   const period = getUjatVolunteerRecruitPeriod(program, volunteerHalf)
   const roundIndex = volunteerHalf === 'h1' ? 0 : 1
-  const hasRound =
-    isEdit && form
-      ? form.getValues(`rounds.${roundIndex}` as 'rounds.0') != null
-      : program.rounds?.[roundIndex] != null
-  const recruitStartName = (
-    hasRound
-      ? volunteerHalf === 'h1'
-        ? 'rounds.0.startDate'
-        : 'rounds.1.startDate'
-      : 'volunteerApplicationStartDate'
-  ) as 'rounds.0.startDate' | 'volunteerApplicationStartDate'
-  const recruitEndName = (
-    hasRound
-      ? volunteerHalf === 'h1'
-        ? 'rounds.0.endDate'
-        : 'rounds.1.endDate'
-      : 'volunteerApplicationEndDate'
-  ) as 'rounds.0.endDate' | 'volunteerApplicationEndDate'
+  const recruitStartName = 'volunteerApplicationStartDate' as const
+  const recruitEndName = 'volunteerApplicationEndDate' as const
   const recruitStartWatch =
     isEdit && form ? (form.watch(recruitStartName) as string | undefined) : period.start
   const recruitEndWatch =
