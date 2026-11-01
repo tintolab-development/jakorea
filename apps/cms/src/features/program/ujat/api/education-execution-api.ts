@@ -269,6 +269,7 @@ export async function fetchUjatAllocationMatrix(
 export type UjatAssignmentDocumentStatus =
   | 'NOT_SUBMITTED'
   | 'SUBMITTED'
+  | 'APPROVED'
   | 'REVISED'
   | 'DEADLINE_MISSED'
 
