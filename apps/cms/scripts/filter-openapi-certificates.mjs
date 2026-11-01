@@ -17,12 +17,33 @@ const CERTIFICATE_PATHS = [
   '/api/admin/certificates/issues/{issueId}/download-logs',
 ]
 
-const SCHEMA_NAMES = [
-  'CertificateSerialAllocateRequest',
-  'CertificateSerialAllocateResponse',
-  'CertificateDownloadLogRequest',
+/** BE 회귀 시 filter가 조용히 빠지지 않도록 최소 스키마 존재 검사 */
+const REQUIRED_SCHEMA_NAMES = [
   'CertificateDownloadLogResponse',
+  'CertificateDownloadLogRequest',
+  'CertificateSerialAllocateRequest',
 ]
+
+/**
+ * Orval client factory 이름은 OpenAPI `info.title`에서 파생된다.
+ * BE title이 바뀌어도 FE import(`getJAKoreaCMSBackendAPICertificatesSubset`)를 깨지 않도록 subset title을 고정한다.
+ */
+const ORVAL_STABLE_TITLE = 'JA Korea CMS Backend API — Certificates subset'
+
+function collectSchemaNames(node, names = new Set()) {
+  if (node == null || typeof node !== 'object') return names
+  if (Array.isArray(node)) {
+    for (const item of node) collectSchemaNames(item, names)
+    return names
+  }
+  const ref = node.$ref
+  if (typeof ref === 'string') {
+    const match = ref.match(/^#\/components\/schemas\/(.+)$/)
+    if (match) names.add(match[1])
+  }
+  for (const value of Object.values(node)) collectSchemaNames(value, names)
+  return names
+}
 
 const spec = JSON.parse(readFileSync(inputPath, 'utf8'))
 const filteredPaths = Object.fromEntries(
@@ -36,21 +57,44 @@ if (missingPaths.length > 0) {
   )
 }
 
-const schemas = spec.components?.schemas ?? {}
-const filteredSchemas = Object.fromEntries(
-  SCHEMA_NAMES.map(name => {
-    if (schemas[name] == null) {
-      throw new Error(`OpenAPI snapshot missing schema ${name}`)
+const allSchemas = spec.components?.schemas ?? {}
+for (const name of REQUIRED_SCHEMA_NAMES) {
+  if (allSchemas[name] == null) {
+    throw new Error(`OpenAPI snapshot missing schema ${name}`)
+  }
+}
+
+const usedNames = collectSchemaNames(filteredPaths)
+for (const name of REQUIRED_SCHEMA_NAMES) usedNames.add(name)
+const queue = [...usedNames]
+while (queue.length > 0) {
+  const name = queue.pop()
+  const schema = allSchemas[name]
+  if (!schema) continue
+  for (const nested of collectSchemaNames(schema)) {
+    if (!usedNames.has(nested)) {
+      usedNames.add(nested)
+      queue.push(nested)
     }
-    return [name, schemas[name]]
-  })
+  }
+}
+
+const missingUsed = [...usedNames].filter(name => allSchemas[name] == null)
+if (missingUsed.length > 0) {
+  throw new Error(
+    `OpenAPI snapshot missing schema refs used by certificates paths: ${missingUsed.join(', ')}`
+  )
+}
+
+const filteredSchemas = Object.fromEntries(
+  [...usedNames].sort().map(name => [name, allSchemas[name]])
 )
 
 const subset = {
   ...spec,
   info: {
     ...spec.info,
-    title: `${spec.info?.title ?? 'API'} — Certificates subset`,
+    title: ORVAL_STABLE_TITLE,
     description: 'Filtered for CMS certificate serial allocate and download-log Orval codegen.',
   },
   paths: filteredPaths,
@@ -69,4 +113,6 @@ if (bearer && bearer.type === 'http' && 'name' in bearer) {
 normalizeOpenApiSchemaNode(subset)
 
 writeFileSync(outputPath, `${JSON.stringify(subset, null, 2)}\n`)
-console.log(`Wrote ${outputPath} (${Object.keys(filteredPaths).length} paths)`)
+console.log(
+  `Wrote ${outputPath} (${Object.keys(filteredPaths).length} paths, ${Object.keys(filteredSchemas).length} schemas)`
+)

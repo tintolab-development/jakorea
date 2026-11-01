@@ -22,4 +22,10 @@ export interface Profile {
   homeAddressSido?: string | null;
   /** 자택 시군구. MASKED GET은 항상 null. UNMASKED는 저장된 원문 또는 인식값. 없으면 null */
   homeAddressSigungu?: string | null;
+  /** 학교 재학 여부. ENROLLED | NOT_ENROLLED. 없거나 그 외 값이면 null. MASKED/UNMASKED 모두 원문. */
+  schoolEnrollmentStatus?: string | null;
+  /** 회원 소속 학교명(고교 등). application.ujat.universityName과 혼용 금지. MASKED는 마스킹 문자열, UNMASKED는 원문. 없으면 null. */
+  affiliationSchool?: string | null;
+  /** 회원 소속 학교 학년 표시값(예: 1학년). application.ujat.grade/gradeLabel(대학 학년)과 혼용 금지. MASKED/UNMASKED 모두 원문. 없으면 null. */
+  affiliationGrade?: string | null;
 }

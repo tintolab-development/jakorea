@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * GENERAL|EMPLOYEE만 허용합니다. UJAT 전용 kind는 없습니다. CMS 진행 추가 등록은 GENERAL만 처리하고 EMPLOYEE는 CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY입니다.
- */
 export type VolunteerParticipantRegisterRequestVolunteerKind = typeof VolunteerParticipantRegisterRequestVolunteerKind[keyof typeof VolunteerParticipantRegisterRequestVolunteerKind];
 
 

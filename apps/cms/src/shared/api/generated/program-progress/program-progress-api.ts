@@ -6,13 +6,13 @@
  * OpenAPI spec version: v9
  */
 import type {
-  ApiResponseEmployeeVolunteerCountSetResponse,
   EmployeeVolunteerCountReplaceRequest,
   EmployeeVolunteerCountSetResponse,
   GeneratedFileJobResponse,
-  Get1Params,
-  PageResponseProgramParticipantRegisterCandidateResponse,
-  ParticipantRegisterCandidatesParams,
+  GetApiAdminProgramsProgramIdEmployeeVolunteerCountsParams,
+  GetApiAdminProgramsProgramIdParticipantRegisterCandidatesParams,
+  ProgramParticipantRegisterCandidatePageResponse,
+  PutApiAdminProgramsProgramIdEmployeeVolunteerCounts200,
   Ujat1365RegistrationFormParams,
   Ujat1365RegistrationFormResponse,
   VolunteerParticipantRegisterRequest,
@@ -27,50 +27,12 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
   export const getJAKoreaCMSBackendAPIProgramProgressSubset = () => {
 /**
- * ### 이 API가 하는 일
- * - 임직원 자원봉사자 실적 입력 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/admin/programs/{programId}/employee-volunteer-counts`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: PERFORMANCE_READ 권한 필요
- * - 접근 범위: PROGRAM_ASSIGNED 범위 정책
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: AGGREGATED_COUNT 개인정보 정책
- * - 감사로그 저장: 필수 아님
- *
- * ### 상태값/화면 배지 기준
- * - 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Round15 manager-confirmed employee volunteer counts per schedule/organization
+ * 봉사자 실적 적용 프로그램만 조회할 수 있습니다. 1사1교/교육받은 교사 등 봉사자가 없는 유형은 409 EMPLOYEE_VOLUNTEER_NOT_APPLICABLE로 거부됩니다. 입력되지 않은 일정의 0은 확정값이 아니며 confirmed=false로 구분합니다.
  * @summary 임직원 자원봉사자 실적 입력 조회
  */
-const get1 = (
+const getApiAdminProgramsProgramIdEmployeeVolunteerCounts = (
     programId: number,
-    params?: Get1Params,
+    params?: GetApiAdminProgramsProgramIdEmployeeVolunteerCountsParams,
  options?: SecondParameter<typeof customInstance<EmployeeVolunteerCountSetResponse>>,) => {
       return customInstance<EmployeeVolunteerCountSetResponse>(
       {url: `/api/admin/programs/${programId}/employee-volunteer-counts`, method: 'GET',
@@ -80,53 +42,14 @@ const get1 = (
     }
 
 /**
- * ### 이 API가 하는 일
- * - 임직원 자원봉사자 실적 입력 저장
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `PUT /api/admin/programs/{programId}/employee-volunteer-counts`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: PERFORMANCE_WRITE 권한 필요
- * - 접근 범위: PROGRAM_ASSIGNED 범위 정책
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: AGGREGATED_COUNT 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Round15 manager-confirmed employee volunteer counts per schedule/organization
+ * 유효한 전체 일정의 신규/재참여 임직원 봉사자 수를 명시 저장합니다. 봉사자가 없어도 0을 저장해야 합니다. 1사1교/교육받은 교사 등 봉사자가 없는 유형은 거부됩니다.
  * @summary 임직원 자원봉사자 실적 입력 저장
  */
-const replace2 = (
+const putApiAdminProgramsProgramIdEmployeeVolunteerCounts = (
     programId: number,
     employeeVolunteerCountReplaceRequest: EmployeeVolunteerCountReplaceRequest,
- options?: SecondParameter<typeof customInstance<ApiResponseEmployeeVolunteerCountSetResponse>>,) => {
-      return customInstance<ApiResponseEmployeeVolunteerCountSetResponse>(
+ options?: SecondParameter<typeof customInstance<PutApiAdminProgramsProgramIdEmployeeVolunteerCounts200>>,) => {
+      return customInstance<PutApiAdminProgramsProgramIdEmployeeVolunteerCounts200>(
       {url: `/api/admin/programs/${programId}/employee-volunteer-counts`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: employeeVolunteerCountReplaceRequest
@@ -135,103 +58,22 @@ const replace2 = (
     }
 
 /**
- * ### 이 API가 하는 일
- * - CMS 참여 봉사자 추가 등록(신청서·동의·승인)
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/programs/{programId}/volunteer-participants/register`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: APPLICATION_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 처리 기준 없음
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
- * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: GENERAL keeps previous-JA and 4 free-text items. UJAT GENERAL CMS_PROGRESS_ADD creates APPROVED volunteer participant and PASS application without interview or member consent overwrite
- * @summary CMS 참여 봉사자 추가 등록(신청서·동의·승인)
+ * participantType=VOLUNTEER, volunteerKind=GENERAL|EMPLOYEE. eligible 후보만 반환. 이미 VOLUNTEER participant 제외.
+ * @summary 봉사자 추가 등록 후보 조회
  */
-const registerVolunteerParticipant = (
+const getApiAdminProgramsProgramIdParticipantRegisterCandidates = (
     programId: string,
-    volunteerParticipantRegisterRequest: VolunteerParticipantRegisterRequest,
- options?: SecondParameter<typeof customInstance<VolunteerParticipantRegisterResponse>>,) => {
-      return customInstance<VolunteerParticipantRegisterResponse>(
-      {url: `/api/admin/programs/${programId}/volunteer-participants/register`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: volunteerParticipantRegisterRequest
+    params: GetApiAdminProgramsProgramIdParticipantRegisterCandidatesParams,
+ options?: SecondParameter<typeof customInstance<ProgramParticipantRegisterCandidatePageResponse>>,) => {
+      return customInstance<ProgramParticipantRegisterCandidatePageResponse>(
+      {url: `/api/admin/programs/${programId}/participant-register-candidates`, method: 'GET',
+        params
     },
       options);
     }
 
 /**
- * ### 이 API가 하는 일
- * - UJAT 1365 봉사시간 등록 양식 원문
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `POST /api/admin/programs/{programId}/participants/{participantId}/1365-registration-form`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: PRIVACY_RAW_READ 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: SENSITIVE_MEMBER_DATA 개인정보 정책
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - UJAT 상태는 파트너 배정, 출결, 1365 시간, 수료증 조건과 연결됩니다. `ASSIGNED`, `CANCELLED`, `GIVE_UP`, `PRESENT`, `ABSENT`, `LATE`를 화면 배지와 후속 버튼 조건에 함께 사용합니다.
- * - `/ujat-dgbong` legacy URL은 사용하지 않고 `/ujat` canonical URL만 호출합니다.
- * ### Swagger에서 확인할 때
- * - 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: 자동 사유 1365 봉사시간 등록을 하기 위함. PREVIEW와 DOWNLOAD. 회원 unmask와 별도
+ * mode=PREVIEW 또는 DOWNLOAD. 감사 사유는 '1365 봉사시간 등록을 하기 위함'. SENSITIVE_PII_READ 필요. 감사 또는 다운로드 이력 실패 시 원문을 반환하지 않는다. 이름, 생년월일, 1365 ID, 봉사시간 분만 반환한다.
  * @summary UJAT 1365 봉사시간 등록 양식 원문
  */
 const ujat1365RegistrationForm = (
@@ -247,45 +89,23 @@ const ujat1365RegistrationForm = (
     }
 
 /**
- * ### 이 API가 하는 일
- * - 내 생성 파일 작업 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/portal/me/generated-files/jobs/{jobId}`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 일반/교사/강사 회원 계정
- * - 필요 권한: 별도 세부 권한 없음
- * - 접근 범위: SELF_OWNED 범위 정책
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 처리 기준 없음
- * - 감사로그 저장: 필수 아님
- *
- * ### 상태값/화면 배지 기준
- * - 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: Owner-only generated file job poll. Other members and missing jobs are 404. Admin payload is not returned.
+ * volunteerKind는 GENERAL만 처리합니다. EMPLOYEE는 CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY입니다. UJAT kind는 없습니다. 서버가 program type으로 UJAT를 판별합니다. UJAT 성공 시 volunteer participant와 volunteer application을 만들고 final_result_status=PASS라서 목록 finalResultStatus=APPROVED에 포함됩니다. body에 반기가 없으면 Asia/Seoul 오늘이 포함된 활성 봉사자 모집 중 recruit_term이 달력 반기(1-6월 FIRST_HALF, 7-12월 SECOND_HALF)인 행을 사용합니다. 열린 모집이 없으면 같은 달력 반기 모집을 사용합니다. 일반 프로그램은 REQUESTED일 때 previousJaProgram과 자유작성 4문항이 필수입니다. UJAT는 REQUESTED여도 previousJaProgram을 요구하지 않습니다. applicationType=UJAT_GRADUATE 또는 생략이면 freeTextItems를 생략할 수 있고 NEW만 4문항이 필수입니다. UJAT 대리등록은 personalInfoConsent, thirdPartyConsent, reason만 서버 필수이며 회원 consent-records는 덮어쓰지 않습니다. id1365는 회원에 1365가 없을 때만 필수이고 있으면 회원 1365 식별자에 저장합니다. educationRegionCode가 활성 지역 code와 맞지 않으면 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN이며 서울로 치환하지 않습니다. 생략하면 희망 지역은 null입니다. UJAT previousUjatTerm.certificateFileIds는 본 ADMIN 업로드 VOLUNTEER_APPLICATION_EVIDENCE·대상 PROGRAM owner·CLEAN·AVAILABLE/CONFIRMED만 허용합니다. 없는 fileObjectId·타 프로그램 owner·CERTIFICATE_TEMPLATE/CERTIFICATE_ASSET purpose는 400 VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID, PENDING_SCAN은 409 VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN, 문항 키 부재는 409 VOLUNTEER_PREVIOUS_UJAT_FILE_QUESTION_MISSING입니다.
+ * @summary CMS 참여 봉사자 추가 등록(신청서·동의·승인)
+ */
+const registerVolunteerParticipant = (
+    programId: number,
+    volunteerParticipantRegisterRequest: VolunteerParticipantRegisterRequest,
+ options?: SecondParameter<typeof customInstance<VolunteerParticipantRegisterResponse>>,) => {
+      return customInstance<VolunteerParticipantRegisterResponse>(
+      {url: `/api/admin/programs/${programId}/volunteer-participants/register`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: volunteerParticipantRegisterRequest
+    },
+      options);
+    }
+
+/**
+ * 로그인 회원이 요청한 작업만 반환합니다. 다른 회원 jobId와 없는 jobId는 404 GENERATED_FILE_JOB_NOT_FOUND입니다. 스키마는 관리자 GeneratedFileJobResponse와 같고 requestPayloadJson과 resultSnapshotJson은 null입니다. jobStatus는 REQUESTED, PROCESSING, RENDERING, COMPLETED, FAILED입니다. 파일 다운로드는 fileObjectId로 기존 포털 download-requests를 사용합니다.
  * @summary 내 생성 파일 작업 조회
  */
 const getMyGeneratedFileJob = (
@@ -297,65 +117,10 @@ const getMyGeneratedFileJob = (
       options);
     }
 
-/**
- * ### 이 API가 하는 일
- * - 봉사자 추가 등록 후보 조회
- * - API 분류: 내부 처리 또는 보조 API
- * - 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.
- * - 호출 방식: `GET /api/admin/programs/{programId}/participant-register-candidates`
- *
- * ### 화면/프론트 사용 기준
- * - 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값
- * - 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영
- * - 프론트 조회 키: 화면별 조회 키 정책에 따름
- * - 구현 상태: 구현 완료
- * - 로컬/스테이징 준비도: 준비 상태 정보 없음
- * - 외부 연동 확인: 외부 연동 대기 없음
- * - 스테이징 점검 기준: 스테이징 기본 검증 대상
- * - 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.
- *
- * ### 권한/보안
- * - 호출 가능 계정: 관리자 계정
- * - 필요 권한: APPLICATION_WRITE 권한 필요
- * - 접근 범위: 담당 프로그램 범위 내에서만 가능
- * - 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.
- *
- * ### 개인정보/감사 정책
- * - 개인정보 노출 기준: 개인정보 처리 기준 없음
- * - 감사로그 저장: 필수
- * - 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.
- *
- * ### 상태값/화면 배지 기준
- * - 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.
- * - 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.
- * ### Swagger에서 확인할 때
- * - 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.
- * - 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.
- * - 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.
- *
- * ### 프론트 구현 참고
- * - 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.
- * - 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.
- * - 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.
- * - 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.
- * - 검토 메모: General program progress volunteer modal; eligibility SSOT with POST participants VOLUNTEER
- * @summary 봉사자 추가 등록 후보 조회
- */
-const participantRegisterCandidates = (
-    programId: string,
-    params: ParticipantRegisterCandidatesParams,
- options?: SecondParameter<typeof customInstance<PageResponseProgramParticipantRegisterCandidateResponse>>,) => {
-      return customInstance<PageResponseProgramParticipantRegisterCandidateResponse>(
-      {url: `/api/admin/programs/${programId}/participant-register-candidates`, method: 'GET',
-        params
-    },
-      options);
-    }
-
-return {get1,replace2,registerVolunteerParticipant,ujat1365RegistrationForm,getMyGeneratedFileJob,participantRegisterCandidates}};
-export type Get1Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['get1']>>>
-export type Replace2Result = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['replace2']>>>
-export type RegisterVolunteerParticipantResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['registerVolunteerParticipant']>>>
+return {getApiAdminProgramsProgramIdEmployeeVolunteerCounts,putApiAdminProgramsProgramIdEmployeeVolunteerCounts,getApiAdminProgramsProgramIdParticipantRegisterCandidates,ujat1365RegistrationForm,registerVolunteerParticipant,getMyGeneratedFileJob}};
+export type GetApiAdminProgramsProgramIdEmployeeVolunteerCountsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['getApiAdminProgramsProgramIdEmployeeVolunteerCounts']>>>
+export type PutApiAdminProgramsProgramIdEmployeeVolunteerCountsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['putApiAdminProgramsProgramIdEmployeeVolunteerCounts']>>>
+export type GetApiAdminProgramsProgramIdParticipantRegisterCandidatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['getApiAdminProgramsProgramIdParticipantRegisterCandidates']>>>
 export type Ujat1365RegistrationFormResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['ujat1365RegistrationForm']>>>
+export type RegisterVolunteerParticipantResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['registerVolunteerParticipant']>>>
 export type GetMyGeneratedFileJobResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['getMyGeneratedFileJob']>>>
-export type ParticipantRegisterCandidatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIProgramProgressSubset>['participantRegisterCandidates']>>>

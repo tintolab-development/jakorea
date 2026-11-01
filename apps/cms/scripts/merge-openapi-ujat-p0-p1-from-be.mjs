@@ -26,7 +26,13 @@ if (!bePath) {
 }
 
 const PORTAL_JOB_PATH = '/api/portal/me/generated-files/jobs/{jobId}'
-const REGISTER_EXTRA_PROPS = ['previousUjatTerm', 'educationRegionCode', 'applicationType']
+const REGISTER_EXTRA_PROPS = [
+  'previousUjatTerm',
+  'educationRegionCode',
+  'applicationType',
+  /** GENERAL CMS_PROGRESS_ADD: thirdPartyConsent=AGREE 시 필수. UJAT는 omit 가능 */
+  'thirdPartyRecipient',
+]
 const DETAIL_EXTRA_PROPS = [
   'textbookNameEn',
   'textbookDeliveryStatus',

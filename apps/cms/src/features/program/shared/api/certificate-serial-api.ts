@@ -232,7 +232,7 @@ export async function allocateCertificateSerial(
   return {
     serialNumber,
     issueId,
-    ...(typeof body?.reused === 'boolean' ? { reused: body.reused } : {}),
+    reused: typeof body?.reused === 'boolean' ? body.reused : false,
   }
 }
 

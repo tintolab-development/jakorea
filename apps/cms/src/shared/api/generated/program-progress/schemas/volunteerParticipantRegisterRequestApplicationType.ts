@@ -7,7 +7,7 @@
  */
 
 /**
- * UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다.
+ * @nullable
  */
 export type VolunteerParticipantRegisterRequestApplicationType = typeof VolunteerParticipantRegisterRequestApplicationType[keyof typeof VolunteerParticipantRegisterRequestApplicationType] | null;
 
