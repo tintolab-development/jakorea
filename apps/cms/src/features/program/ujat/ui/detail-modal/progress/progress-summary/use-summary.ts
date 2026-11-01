@@ -81,14 +81,24 @@ async function listAllApprovedVolunteers(
   return rows
 }
 
-/** `operatingStudentCount`가 하나도 없는 지역은 null(미집계)로 둔다 */
+/**
+ * 기관 신청 목록 remote 응답만 집계.
+ * totalClassCount / operatingStudentCount 가 null이면 0 invent 금지 → 해당 지역은 null 유지.
+ */
 function countInstitutions(rows: readonly UjatInstitutionApplicationRow[]) {
   const schools = zeroRegionValues()
-  const classes = zeroRegionValues()
+  const classes = nullRegionValues()
   const students = nullRegionValues()
+  const classSeen = new Set<UjatInstitutionApplicationRegionKey>()
   for (const row of rows) {
     addCount(schools, row.regionKey)
-    addCount(classes, row.regionKey, row.totalClassCount ?? 0)
+    if (row.regionKey && typeof row.totalClassCount === 'number') {
+      if (!classSeen.has(row.regionKey)) {
+        classSeen.add(row.regionKey)
+        classes[row.regionKey] = 0
+      }
+      classes[row.regionKey] = (classes[row.regionKey] ?? 0) + row.totalClassCount
+    }
     if (row.regionKey && typeof row.operatingStudentCount === 'number') {
       students[row.regionKey] = (students[row.regionKey] ?? 0) + row.operatingStudentCount
     }
@@ -175,17 +185,22 @@ export function useUjatEducationProgressSummary(programId?: string | null) {
     if (!summaryQuery.data) return emptyVolunteerSummary()
     const h1 = countVolunteers(summaryQuery.data.h1Volunteers)
     const h2 = countVolunteers(summaryQuery.data.h2Volunteers)
-    const total = (buildRegionRow(h1).total ?? 0) + (buildRegionRow(h2).total ?? 0)
+    const h1Total = buildRegionRow(h1).total
+    const h2Total = buildRegionRow(h2).total
+    const total =
+      h1Total == null && h2Total == null
+        ? null
+        : (h1Total ?? 0) + (h2Total ?? 0)
     return {
       rows: [
-        { key: 'gen36_final_pass', label: '상반기 최종 합격', tone: 'h1', row: buildRegionRow(h1) },
-        { key: 'gen37_final_pass', label: '하반기 최종 합격', tone: 'h2', row: buildRegionRow(h2) },
+        { key: 'h1_final_pass', label: '상반기 최종 합격', tone: 'h1', row: buildRegionRow(h1) },
+        { key: 'h2_final_pass', label: '하반기 최종 합격', tone: 'h2', row: buildRegionRow(h2) },
         {
-          key: 'final_2026',
+          key: 'final_total',
           label: '합계',
           tone: 'grand',
           mergedTotalOnly: true,
-          row: buildRegionRow(zeroRegionValues(), total),
+          row: buildRegionRow(nullRegionValues(), total),
         },
       ],
     }
@@ -195,5 +210,7 @@ export function useUjatEducationProgressSummary(programId?: string | null) {
     schoolSummary,
     volunteerSummary,
     loading: remoteEnabled && summaryQuery.isLoading,
+    isError: remoteEnabled && summaryQuery.isError,
+    isRemote: remoteEnabled,
   }
 }
