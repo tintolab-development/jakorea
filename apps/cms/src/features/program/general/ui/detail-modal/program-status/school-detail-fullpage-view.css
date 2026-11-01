@@ -124,13 +124,6 @@
 }
 
 /* 게시글 등록 — 탭 행 우측, 시안 100×32 */
-.school-detail-fullpage-view__posts-register-btn {
-  width: 100px !important;
-  min-width: 100px !important;
-  height: 32px !important;
-  min-height: 32px !important;
-}
-
 .school-detail-fullpage-view__journal-tab {
   padding-top: 0;
 }
