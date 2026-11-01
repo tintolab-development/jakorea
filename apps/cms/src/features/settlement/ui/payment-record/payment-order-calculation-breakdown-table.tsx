@@ -88,6 +88,10 @@ export function getPaymentOrderCalculationColumns(options?: {
   lectureSessionSegmentLabel?: 'session' | 'round'
   /** 산출 내역서(1340px) · 계좌 지급 현황 상세 · compact */
   columnWidthPreset?: 'statement-modal' | 'compact' | 'account-payment-detail'
+  /** 1열 헤더. 기본 참여 기관명 */
+  institutionColumnTitle?: string
+  /** 2열 헤더. 기본 강의 진행 일자 */
+  dateColumnTitle?: string
 }): ColumnsType<PaymentOrderCalculationTableRow> {
   const handleBasisDetailClick = (row: PaymentOrderCalculationTableRow) => {
     if (options?.onBasisDetailClick) {
@@ -116,7 +120,7 @@ export function getPaymentOrderCalculationColumns(options?: {
 
   return [
     {
-      title: '참여 기관명',
+      title: options?.institutionColumnTitle ?? '참여 기관명',
       dataIndex: 'institutionName',
       key: 'institutionName',
       width: columnWidths.institution,
@@ -126,7 +130,7 @@ export function getPaymentOrderCalculationColumns(options?: {
       }),
     },
     {
-      title: '강의 진행 일자',
+      title: options?.dateColumnTitle ?? '강의 진행 일자',
       key: 'lectureProgress',
       width: columnWidths.date,
       align: 'center',
@@ -216,6 +220,8 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   actionButtonSize?: CmsButtonSize
   /** 산출 내역서(1340px) · 계좌 지급 현황 상세 · compact */
   columnWidthPreset?: 'statement-modal' | 'compact' | 'account-payment-detail'
+  institutionColumnTitle?: string
+  dateColumnTitle?: string
   /**
    * `cms-data-table`: 공유 테이블 패딩·타이포(8×12, 14px/150%).
    * `statement-modal`: 산출 내역서 모달 전용 오버라이드(기본).
@@ -235,6 +241,8 @@ export function PaymentOrderCalculationBreakdownTable({
   detailDescription,
   actionButtonSize = 'large',
   columnWidthPreset,
+  institutionColumnTitle,
+  dateColumnTitle,
   tableCellSpec = 'statement-modal',
 }: PaymentOrderCalculationBreakdownTableProps) {
   const resolvedColumnWidthPreset =
@@ -257,8 +265,16 @@ export function PaymentOrderCalculationBreakdownTable({
         lectureSessionSegmentLabel,
         onBasisDetailClick,
         columnWidthPreset: resolvedColumnWidthPreset,
+        institutionColumnTitle,
+        dateColumnTitle,
       }),
-    [lectureSessionSegmentLabel, onBasisDetailClick, resolvedColumnWidthPreset]
+    [
+      lectureSessionSegmentLabel,
+      onBasisDetailClick,
+      resolvedColumnWidthPreset,
+      institutionColumnTitle,
+      dateColumnTitle,
+    ]
   )
   const showHeaderActions = headerActions != null
 
