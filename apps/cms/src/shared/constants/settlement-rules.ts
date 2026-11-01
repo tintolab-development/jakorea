@@ -8,7 +8,8 @@
 /**
  * 강사료 지급기준 테이블
  * §별첨2: 차시별 기본/장거리 강사료
- * 기준: 편도 100km = 파주시청 ↔ 용인시청
+ * 장거리 단가 대체는 1사1교 정산/배정 snapshot 경로에서만 (편도 > 200km, BE SSOT).
+ * 표기용 longDistance와 단가는 별개 — 일반 프로그램은 표기 O여도 기본 단가.
  */
 export const INSTRUCTOR_FEE_TABLE = {
   1: { base: 120000, longDistance: 140000 },
@@ -20,9 +21,11 @@ export const INSTRUCTOR_FEE_TABLE = {
 } as const
 
 /**
- * 장거리 기준: 편도 100km 이상
+ * 1사1교 장거리 단가 적용 임계 (편도 km 초과).
+ * 표기(longDistance) 판정용이 아님. 레거시 FE 정산 산출(my-settlement) fallback 전용.
+ * 운영 단가 SSOT는 BE SettlementAmountPolicy / calculationDetail.
  */
-export const LONG_DISTANCE_THRESHOLD_KM = 100
+export const COMPANY_SCHOOL_LONG_DISTANCE_FEE_THRESHOLD_KM = 200
 
 /**
  * 교통비 지급 기준
