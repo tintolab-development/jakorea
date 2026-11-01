@@ -357,4 +357,41 @@ describe('mapCalculationDetailToBasisDetail', () => {
   it('표시용 필드도 없으면 basisDetail을 만들지 않는다', () => {
     expect(mapCalculationDetailToBasisDetail({ layout: 'transportInstructor' })).toBeUndefined()
   })
+
+  it('원천징수 basisJson 숫자는 그대로 매핑하고 FE 세율로 다시 계산하지 않는다', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'withholding',
+      basisJson: JSON.stringify({
+        itemType: 'WITHHOLDING',
+        dailySalaryTotalWon: 200000,
+        earnedIncomeDeductionWon: 80000,
+        incomeTaxRatePercent: 8.8,
+        incomeTaxWon: 10560,
+        earnedIncomeTaxCreditWon: 0,
+        withholdingTaxAmountWon: 10560,
+      }),
+    })
+
+    expect(detail).toEqual({
+      layout: 'withholding',
+      dailySalaryTotalWon: 200000,
+      earnedIncomeDeductionWon: 80000,
+      incomeTaxRatePercent: 8.8,
+      incomeTaxWon: 10560,
+      earnedIncomeTaxCreditWon: 0,
+      withholdingTaxAmountWon: 10560,
+    })
+  })
+
+  it('원천징수 필드가 빠지면 3.3% 산출표를 만들지 않는다', () => {
+    expect(
+      mapCalculationDetailToBasisDetail({
+        layout: 'withholding',
+        basisJson: JSON.stringify({
+          dailySalaryTotalWon: 200000,
+          withholdingTaxAmountWon: 6600,
+        }),
+      })
+    ).toBeUndefined()
+  })
 })

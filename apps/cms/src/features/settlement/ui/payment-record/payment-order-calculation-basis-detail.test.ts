@@ -170,9 +170,21 @@ describe('payment-order-calculation-basis-detail', () => {
       fuelType: '휘발유',
       calculatedTransportAmount: 51000,
       snapshotAt: '2026-10-24T12:00:00Z',
+      fuelCostWon: undefined,
       distanceSnapshotUnlinked: false,
     })
     expect(isSupportedBasisDetailLayout(detail)).toBe(true)
+  })
+
+  it('교통비 스냅샷의 fuelCostWon은 산출 교통비로 바꾸지 않는다', () => {
+    const detail = mapTransportationSnapshotToBasisDetail({
+      provider: 'NAVER_MAPS',
+      fuelCostWon: 155052,
+      calculatedTransportAmount: 199052,
+    })
+    expect(detail?.fuelCostWon).toBe(155052)
+    expect(detail?.calculatedTransportAmount).toBe(199052)
+    expect(detail?.distanceSnapshotUnlinked).toBe(false)
   })
 
   it('resolveBasisDetailModalTitle returns transport title', () => {
@@ -469,7 +481,7 @@ describe('payment-order-calculation-basis-detail', () => {
       },
       { withholdingDailySalaryTotalWon: 300000, remoteData: true }
     )
-    expect(detail?.layout).toBe('withholding')
+    expect(detail).toBeUndefined()
   })
 
   it('제미나이 calculationDetail이 있으면 시계열 lectureSessionDisplay를 무시하고 2차시를 쓴다', () => {

@@ -5,6 +5,7 @@ import {
   lectureFeeTitleFromGradeOrWage,
   mapLectureFeeCalculationDetailToBasisDetail,
   mapTransportationCalculationDetailToBasisDetail,
+  mapWithholdingCalculationDetailToBasisDetail,
   resolveLectureTimeDisplayFromCalculationFields,
   type PaymentOrderCalculationBasisDetail,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail'
@@ -337,12 +338,20 @@ export function mapCalculationDetailToBasisDetail(
         const fromLectureFee = mapLectureFeeCalculationDetailToBasisDetail(detail)
         if (fromLectureFee) return fromLectureFee
       }
+      if (normalized.layout === 'withholding') {
+        const fromWithholding = mapWithholdingCalculationDetailToBasisDetail(detail)
+        if (fromWithholding) return fromWithholding
+        continue
+      }
       return normalized
     }
   }
 
   const lectureFee = mapLectureFeeCalculationDetailToBasisDetail(detail)
   if (lectureFee) return lectureFee
+
+  const withholding = mapWithholdingCalculationDetailToBasisDetail(detail)
+  if (withholding) return withholding
 
   return mapRemoteCalculationDetail(detail)
 }

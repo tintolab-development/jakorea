@@ -267,16 +267,23 @@ export function resolveTravelBasisDetailTotalWon(
 }
 
 export function mapTransportationSnapshotToBasisDetail(
-  snapshot?: SettlementTransportationSnapshotResponse | null
+  snapshot?:
+    | (SettlementTransportationSnapshotResponse & { fuelCostWon?: number | null })
+    | null
 ): PaymentOrderCalculationBasisDetailTransportSnapshot | undefined {
   if (!snapshot) return undefined
 
+  const fuelCostWon =
+    snapshot.fuelCostWon != null && Number.isFinite(snapshot.fuelCostWon)
+      ? snapshot.fuelCostWon
+      : undefined
   const hasDistanceOrProvider =
     Boolean(snapshot.provider?.trim()) ||
     snapshot.oneWayDistanceKm != null ||
     snapshot.roundTripDistanceKm != null ||
     snapshot.tollAmount != null ||
     Boolean(snapshot.fuelType?.trim()) ||
+    fuelCostWon != null ||
     Boolean(snapshot.snapshotAt)
   const hasValue = hasDistanceOrProvider || snapshot.calculatedTransportAmount != null
   if (!hasValue) return undefined
@@ -288,6 +295,7 @@ export function mapTransportationSnapshotToBasisDetail(
     roundTripDistanceKm: snapshot.roundTripDistanceKm,
     tollAmount: snapshot.tollAmount,
     fuelType: snapshot.fuelType?.trim() || undefined,
+    fuelCostWon,
     calculatedTransportAmount: snapshot.calculatedTransportAmount,
     snapshotAt: snapshot.snapshotAt,
     distanceSnapshotUnlinked: !hasDistanceOrProvider,
@@ -585,6 +593,78 @@ export function resolveActivityBasisDetailTotalWon(
   detail: PaymentOrderCalculationBasisDetailActivity
 ): number {
   return detail.totalWon
+}
+
+/**
+ * BE calculationDetail/basisJson의 원천징수 숫자만 매핑한다.
+ * 빠진 항목을 FE 세율·공제 공식으로 채우지 않는다.
+ */
+export function mapWithholdingCalculationDetailToBasisDetail(
+  detail?: SettlementFrontendCalculationDetailResponse | null
+): PaymentOrderCalculationBasisDetailWithholding | undefined {
+  if (!detail) return undefined
+
+  const candidates: Record<string, unknown>[] = []
+  const basisJsonRaw = detail.basisJson as unknown
+  if (basisJsonRaw && typeof basisJsonRaw === 'object' && !Array.isArray(basisJsonRaw)) {
+    candidates.push(basisJsonRaw as Record<string, unknown>)
+  } else if (typeof detail.basisJson === 'string' && detail.basisJson.trim()) {
+    try {
+      const parsed: unknown = JSON.parse(detail.basisJson)
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        candidates.push(parsed as Record<string, unknown>)
+      }
+    } catch {
+      // invalid JSON — typed withholding 없음
+    }
+  }
+  candidates.push(detail as unknown as Record<string, unknown>)
+
+  for (const candidate of candidates) {
+    const itemType = stringValue(recordValue(candidate, 'itemType'))?.toUpperCase()
+    const layout = stringValue(recordValue(candidate, 'layout'))
+    const looksLikeWithholding =
+      itemType === 'WITHHOLDING' ||
+      layout === 'withholding' ||
+      recordValue(candidate, 'withholdingTaxAmountWon') != null ||
+      recordValue(candidate, 'dailySalaryTotalWon') != null
+    if (!looksLikeWithholding) continue
+
+    const dailySalaryTotalWon = numberValue(recordValue(candidate, 'dailySalaryTotalWon'))
+    const earnedIncomeDeductionWon = numberValue(
+      recordValue(candidate, 'earnedIncomeDeductionWon')
+    )
+    const incomeTaxRatePercent = numberValue(recordValue(candidate, 'incomeTaxRatePercent'))
+    const incomeTaxWon = numberValue(recordValue(candidate, 'incomeTaxWon'))
+    const earnedIncomeTaxCreditWon = numberValue(
+      recordValue(candidate, 'earnedIncomeTaxCreditWon')
+    )
+    const withholdingTaxAmountWon = numberValue(
+      recordValue(candidate, 'withholdingTaxAmountWon')
+    )
+    if (
+      dailySalaryTotalWon == null ||
+      earnedIncomeDeductionWon == null ||
+      incomeTaxRatePercent == null ||
+      incomeTaxWon == null ||
+      earnedIncomeTaxCreditWon == null ||
+      withholdingTaxAmountWon == null
+    ) {
+      continue
+    }
+
+    return {
+      layout: 'withholding',
+      dailySalaryTotalWon,
+      earnedIncomeDeductionWon,
+      incomeTaxRatePercent,
+      incomeTaxWon,
+      earnedIncomeTaxCreditWon,
+      withholdingTaxAmountWon,
+    }
+  }
+
+  return undefined
 }
 
 /** mock·데모 — 1일 급여 총액 기준 원천징수 산정 (소득세 3.3% · 근로소득세액공제) */
@@ -978,13 +1058,13 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     )
   }
 
-  // 원천징수: 원격이어도 소계(실지급 전 합)가 있으면 요율 산출 UI를 표시한다.
+  // 원천징수: 원격은 BE withholding 필드만. 소계로 3.3%를 재계산하지 않는다.
   if (row.kind === 'withholding' || row.itemLabel === '원천징수') {
+    if (context?.remoteData) return undefined
     const dailyTotal = context?.withholdingDailySalaryTotalWon
     if (dailyTotal && dailyTotal > 0) {
       return buildWithholdingBasisDetail(dailyTotal)
     }
-    if (context?.remoteData) return undefined
   }
 
   if (matchedBasisDetail && isSupportedBasisDetailLayout(matchedBasisDetail)) {
