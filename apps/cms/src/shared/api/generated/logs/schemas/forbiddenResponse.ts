@@ -11,5 +11,6 @@ export type ForbiddenResponse = {
   success?: unknown;
   data?: unknown;
   message?: unknown;
+  detail?: unknown;
   error?: ForbiddenResponseError;
 };

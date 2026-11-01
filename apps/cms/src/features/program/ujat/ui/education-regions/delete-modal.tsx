@@ -17,7 +17,7 @@ export function UjatEducationRegionDeleteModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title="교육 지역 삭제"
+      title="교육 지역 삭제 안내"
       width={600}
       description={`[${regionName}] 지역을 UJAT 교육 대상 지역에서 삭제하시겠습니까?\n\n이전에 사용된 이력은 유지되며, 추후 생성된 프로그램부터 해당 지역이 비노출됩니다.\n삭제된 항목은 되돌릴 수 없습니다. 정말 삭제하시겠습니까?`}
       footer={
@@ -29,9 +29,7 @@ export function UjatEducationRegionDeleteModal({
             variant="delete"
             size="medium"
             type="button"
-            className="cms-button--footer-auto"
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             교육 지역 삭제
           </CmsButton>
         </>
@@ -53,7 +51,7 @@ export function UjatEducationRegionDeleteBlockedModal({
     <ActionResultModal
       open={open}
       onClose={onClose}
-      title="교육 지역 삭제 불가"
+      title="교육 지역 삭제 불가 안내"
       body={
         <>
           해당 교육 지역을 사용한 이력이 있습니다.

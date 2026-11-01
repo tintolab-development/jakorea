@@ -1,7 +1,7 @@
 import { useCallback, useMemo, type MouseEvent } from 'react'
 import { Spin } from 'antd'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import { CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH, FilterTableToolbarButton } from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import type { Program } from '@/types/domain'
 import type {
   GeneralVolunteerApplicantRow,
@@ -24,7 +24,7 @@ import {
 import { GeneralVolunteerApplicantDetailView } from './detail-view'
 import { GeneralVolunteerInterview2BulkFailCompleteModal } from './general-volunteer-interview2-bulk-fail-complete-modal'
 import { GeneralVolunteerInterview2BulkFailModal } from './general-volunteer-interview2-bulk-fail-modal'
-import { GeneralVolunteerInterview2BulkPassModal } from './general-volunteer-interview2-bulk-pass-modal'
+import { GeneralVolunteerApplicationBulkApproveModal } from './general-volunteer-application-bulk-approve-modal'
 import { GeneralVolunteerInterview2FailCompleteModal } from './general-volunteer-interview2-fail-complete-modal'
 import { GeneralVolunteerInterview2FailModal } from './general-volunteer-interview2-fail-modal'
 import { GeneralVolunteerInterview2PassCompleteModal } from './general-volunteer-interview2-pass-complete-modal'
@@ -81,6 +81,7 @@ export function GeneralVolunteerInterview2Section({
     closeBulkPassModal,
     confirmBulkPass,
     bulkPassCount,
+    bulkPassSubjectName,
     bulkFailModalOpen,
     closeBulkFailModal,
     confirmBulkFail,
@@ -217,9 +218,10 @@ export function GeneralVolunteerInterview2Section({
   )
 
   const bulkPassModal = (
-    <GeneralVolunteerInterview2BulkPassModal
+    <GeneralVolunteerApplicationBulkApproveModal
       open={bulkPassModalOpen}
-      count={bulkPassCount}
+      subjectName={bulkPassSubjectName}
+      selectionCount={bulkPassCount}
       onCancel={closeBulkPassModal}
       onConfirm={confirmBulkPass}
     />
@@ -385,19 +387,13 @@ export function GeneralVolunteerInterview2Section({
             <FilterTableToolbarButton
               type="button"
               variant="delete"
-              className="cms-button--application-list-bulk"
-              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
-              onClick={handleBulkFail}
-            >
+              onClick={handleBulkFail} >
               선택 불합격
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               type="button"
               variant="secondary"
-              className="cms-button--application-list-bulk"
-              width={CMS_APPLICATION_LIST_BULK_BUTTON_WIDTH}
-              onClick={handleBulkPass}
-            >
+              onClick={handleBulkPass} >
               선택 합격
             </FilterTableToolbarButton>
             {viewMode === 'list' ? (
@@ -405,8 +401,7 @@ export function GeneralVolunteerInterview2Section({
                 type="button"
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={handleViewCalendar}
-              >
+                onClick={handleViewCalendar} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
@@ -414,8 +409,7 @@ export function GeneralVolunteerInterview2Section({
                 type="button"
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={handleViewList}
-              >
+                onClick={handleViewList} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}

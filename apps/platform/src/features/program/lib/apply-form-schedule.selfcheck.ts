@@ -40,6 +40,11 @@ import {
   readApplyFixedScheduleChoiceIds,
   resolveApplyScheduleChoiceAnswerKey,
   resolveHiddenScheduleAutoSubmitIds,
+  excludePreEducationScheduleChoices,
+  shouldBlockApplyForEmptyFixedSchedule,
+  shouldExcludePreEducationFromApplyFixedSchedule,
+  APPLY_EMPTY_FIXED_SCHEDULE_ALERT_TITLE,
+  APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES,
   GEMINI_INSTITUTION_PREFERRED_SCHEDULE_BLOCK_COUNT,
   GEMINI_INSTITUTION_SESSION_COUNT_MAX,
   GEMINI_INSTITUTION_SESSION_COUNT_MIN,
@@ -48,6 +53,8 @@ import {
   padPreferredScheduleBlocks,
   readGeminiTrainingRequestDateBounds,
   hasPreferredScheduleDateOutsideBounds,
+  hasPreferredScheduleDateOutsideEducationConstraint,
+  resolveEducationScheduleApplyConstraint,
   filterItemsByScheduleDateBounds,
   filterGeminiInstructorSlotsByTrainingRequestPeriod,
   isGeminiTrainingRequestPeriodConfigured,
@@ -1292,5 +1299,220 @@ function testGeminiPreferredSchedulePad() {
 }
 
 testGeminiPreferredSchedulePad()
+
+function testEducationScheduleApplyConstraint() {
+  const range = { start: '2026-10-01', end: '2026-12-31' }
+  const fromRange = resolveEducationScheduleApplyConstraint({
+    educationScheduleRange: range,
+    failClosed: true,
+  })
+  assert.equal(fromRange.configured, true)
+  assert.equal(fromRange.minDate, '2026-10-01')
+  assert.equal(fromRange.maxDate, '2026-12-31')
+  assert.equal(hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-10-01' }], fromRange), false)
+  assert.equal(hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-12-31' }], fromRange), false)
+  assert.equal(hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-09-30' }], fromRange), true)
+  assert.equal(hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2027-01-01' }], fromRange), true)
+
+  const fromRuntimePeriods = resolveEducationScheduleApplyConstraint({
+    runtime: {
+      scheduleInputMode: 'date_time_requests',
+      allowedSchedulePeriods: [{ startDate: '2026-11-01', endDate: '2026-11-15' }],
+    },
+    educationScheduleRange: range,
+    failClosed: true,
+  })
+  assert.equal(fromRuntimePeriods.minDate, '2026-11-01')
+  assert.equal(fromRuntimePeriods.maxDate, '2026-11-15')
+  assert.equal(fromRuntimePeriods.enabledDates?.has('2026-11-10'), true)
+  assert.equal(fromRuntimePeriods.enabledDates?.has('2026-10-05'), false)
+  assert.equal(
+    hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-10-05' }], fromRuntimePeriods),
+    true
+  )
+
+  const fromRuntimeMinMax = resolveEducationScheduleApplyConstraint({
+    runtime: {
+      scheduleInputMode: 'date_time_requests',
+      minScheduleDate: '2026-11-01',
+      maxScheduleDate: '2026-11-30',
+    },
+    educationScheduleRange: range,
+    failClosed: true,
+  })
+  assert.equal(fromRuntimeMinMax.minDate, '2026-11-01')
+  assert.equal(fromRuntimeMinMax.maxDate, '2026-11-30')
+  assert.equal(fromRuntimeMinMax.enabledDates, null)
+
+  const fallbackWhenRuntimeEmpty = resolveEducationScheduleApplyConstraint({
+    runtime: { scheduleInputMode: 'date_time_requests' },
+    educationScheduleRange: range,
+    failClosed: true,
+  })
+  assert.equal(fallbackWhenRuntimeEmpty.minDate, '2026-10-01')
+  assert.equal(fallbackWhenRuntimeEmpty.maxDate, '2026-12-31')
+  assert.equal(fallbackWhenRuntimeEmpty.configured, true)
+
+  const unconfigured = resolveEducationScheduleApplyConstraint({ failClosed: true })
+  assert.equal(unconfigured.configured, false)
+  assert.equal(unconfigured.enabledDates?.size, 0)
+  assert.equal(
+    hasPreferredScheduleDateOutsideEducationConstraint([{ date: '2026-11-01' }], unconfigured),
+    true
+  )
+  assert.equal(
+    hasPreferredScheduleDateOutsideEducationConstraint([{ date: '' }], unconfigured),
+    false
+  )
+}
+
+testEducationScheduleApplyConstraint()
+
+function testEmptyFixedScheduleApplyGate() {
+  const education = { id: 'schedule:187653', scheduleId: 187653, label: '본교육' }
+  const preEducation = {
+    id: 'schedule:9001',
+    scheduleId: 9001,
+    label: '사전 교육',
+  }
+  const lookup = [
+    { scheduleId: 187653, scheduleKind: 'EDUCATION' },
+    { scheduleId: 9001, scheduleKind: 'PRE_EDUCATION' },
+  ]
+  const filtered = excludePreEducationScheduleChoices([education, preEducation], lookup)
+  assert.deepEqual(
+    filtered?.map(item => item.id),
+    ['schedule:187653'],
+  )
+  assert.deepEqual(
+    excludePreEducationScheduleChoices([preEducation], lookup)?.map(item => item.id),
+    [],
+  )
+  const unlabeledEducation = {
+    id: 'schedule:187653',
+    scheduleId: 187653,
+    label: '사전 교육',
+  }
+  assert.deepEqual(
+    excludePreEducationScheduleChoices([unlabeledEducation], lookup)?.map(item => item.id),
+    ['schedule:187653'],
+  )
+  const unknownKind = { id: 'schedule:9999', scheduleId: 9999, label: '미정' }
+  assert.deepEqual(
+    excludePreEducationScheduleChoices([unknownKind], lookup)?.map(item => item.id),
+    ['schedule:9999'],
+  )
+  const nullKind = {
+    id: 'schedule:8888',
+    scheduleId: 8888,
+    label: '종류없음',
+  }
+  assert.deepEqual(
+    excludePreEducationScheduleChoices([nullKind], [{ scheduleId: 8888, scheduleKind: null }])?.map(
+      item => item.id,
+    ),
+    ['schedule:8888'],
+  )
+  assert.equal(excludePreEducationScheduleChoices(null, lookup), null)
+
+  assert.equal(
+    shouldBlockApplyForEmptyFixedSchedule({
+      applyCase: 'individual-general',
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleChoiceHidden: false,
+      scheduleParagraphForcedHidden: false,
+      educationScheduleChoices: [],
+    }),
+    true,
+  )
+  assert.equal(
+    shouldBlockApplyForEmptyFixedSchedule({
+      applyCase: 'individual-general',
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleChoiceHidden: false,
+      scheduleParagraphForcedHidden: false,
+      educationScheduleChoices: [education],
+    }),
+    false,
+  )
+  assert.equal(
+    shouldBlockApplyForEmptyFixedSchedule({
+      applyCase: 'individual-general',
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleChoiceHidden: false,
+      scheduleParagraphForcedHidden: false,
+      educationScheduleChoices: null,
+    }),
+    false,
+  )
+  assert.equal(
+    shouldBlockApplyForEmptyFixedSchedule({
+      applyCase: 'individual-general',
+      scheduleInputMode: 'date_time_requests',
+      scheduleChoiceHidden: false,
+      scheduleParagraphForcedHidden: false,
+      educationScheduleChoices: [],
+    }),
+    false,
+  )
+  assert.equal(
+    shouldBlockApplyForEmptyFixedSchedule({
+      applyCase: 'individual-general',
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleChoiceHidden: true,
+      scheduleParagraphForcedHidden: false,
+      educationScheduleChoices: [],
+    }),
+    false,
+  )
+  assert.equal(
+    shouldBlockApplyForEmptyFixedSchedule({
+      applyCase: 'individual-general',
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleChoiceHidden: false,
+      scheduleParagraphForcedHidden: true,
+      educationScheduleChoices: [],
+    }),
+    false,
+  )
+  assert.equal(
+    shouldBlockApplyForEmptyFixedSchedule({
+      applyCase: 'trained-teachers',
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleChoiceHidden: false,
+      scheduleParagraphForcedHidden: false,
+      educationScheduleChoices: [],
+    }),
+    false,
+  )
+  assert.equal(
+    shouldExcludePreEducationFromApplyFixedSchedule({
+      applyCase: 'institution-general',
+      scheduleInputMode: 'fixed_schedule_options',
+      scheduleParagraphForcedHidden: true,
+    }),
+    false,
+  )
+  const forcedHiddenIds = resolveHiddenScheduleAutoSubmitIds({
+    hidden: true,
+    forcedHidden: true,
+    choiceIds: ['schedule:187653', 'schedule:9001'],
+  })
+  assert.deepEqual(forcedHiddenIds, ['schedule:187653', 'schedule:9001'])
+  assert.equal(APPLY_EMPTY_FIXED_SCHEDULE_ALERT_TITLE, '신청 가능 교육 일정')
+  assert.equal(
+    APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES.join('\n'),
+    '현재 신청 가능한 교육 일정이 없습니다.\n프로그램 모집 정보를 다시 확인해주세요.',
+  )
+  assert.deepEqual(
+    readApplyFixedScheduleChoiceIds({
+      runtimeChoices: [],
+      paragraph: { items: [{ id: 'line:0' }] },
+    }),
+    [],
+  )
+}
+
+testEmptyFixedScheduleApplyGate()
 
 console.log('apply-form-schedule.selfcheck: ok')

@@ -1,5 +1,27 @@
 /* UJAT 프로그램 상세 — LNB(봉사자 상·하반기 아코디언 등)·모집 정보 본문 보조 */
 
+/*
+ * 본문 하단 52px: 셸 `.detail-fullpage-modal__content` padding-bottom.
+ * flex:1 + min-height:0 이면 뷰포트에 묶여 패딩 위로 상세·표가 넘친다.
+ * 콘텐츠 높이로 늘려 `__main` 이 스크롤하게 한다. 캘린더(--page-scroll)는
+ * 공유 CSS가 padding-bottom:0 이므로 해당 화면만 스페이서를 둔다.
+ */
+.ujat-program-detail-fullpage-modal .detail-fullpage-modal__content {
+  flex: 1 0 auto;
+  min-height: auto;
+}
+
+.ujat-program-detail-fullpage-modal
+  .detail-fullpage-modal__content:has(> .detail-fullpage-modal__loading) {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* 셸 52px만 사용 — info-tab 추가 32px·설문 자체 52px 이중 여백 제거 */
+.ujat-program-detail-fullpage-modal .program-detail-fullpage-modal__info-tab {
+  padding-bottom: 0;
+}
+
 .ujat-program-detail-fullpage-modal .ujat-detail-lnb__education-list {
   padding-left: 0;
   margin: 0;
@@ -190,7 +212,7 @@
 
 .ujat-program-detail-fullpage-modal .ujat-survey-poll-empty {
   display: flex;
-  padding: 152px 52px 52px;
+  padding: 152px 0 0;
   flex-direction: column;
   align-items: center;
   gap: 32px;
@@ -278,7 +300,6 @@
 .ujat-program-detail-fullpage-modal
   .ujat-survey-poll-empty__register-button.cms-button.ant-btn.cms-button--h44 {
   display: flex;
-  width: 180px;
   height: 44px;
   padding: 0 31px !important;
   flex-direction: column;
@@ -433,7 +454,7 @@
 .ujat-survey-registered {
   display: flex;
   flex-direction: column;
-  padding: 0 0 52px;
+  padding: 0;
   box-sizing: border-box;
   align-self: stretch;
   min-height: 0;

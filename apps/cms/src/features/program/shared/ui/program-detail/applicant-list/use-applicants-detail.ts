@@ -33,6 +33,7 @@ import {
   formatIndividualApprovalScopeErrorMessage,
   invalidateIndividualApprovalScopeQueries,
   isEducationScopeRevisionConflict,
+  normalizeIndividualApprovalReason,
 } from '@/features/program/general/lib/individual-approval-education-scope'
 import type { BulkFailure } from '@/shared/api/generated/dashboard/schemas/bulkFailure'
 import { invalidateProgramAdminSchedulesQuery } from '@/features/program/general/lib/invalidate-program-admin-schedules-query'
@@ -746,6 +747,12 @@ export function useApplicantsDetail({
       | { status: 'partial'; successIds: number[]; failures: BulkFailure[] }
     > => {
       if (!applicationsRemote.individualRemoteEnabled || !programId) return { status: 'skipped' }
+      const normalizedReason = normalizeIndividualApprovalReason(input.reason)
+      if (!normalizedReason.ok) {
+        showAlert({ title: '승인 불가', content: normalizedReason.message })
+        return { status: 'error' }
+      }
+      const reason = normalizedReason.reason
       const applicationIds = input.targets.map(target => target.applicationId)
       const refresh = async (participantIds?: Array<string | number | null | undefined>) => {
         await invalidateIndividualApprovalScopeQueries(queryClient, {
@@ -763,7 +770,7 @@ export function useApplicantsDetail({
             {
               confirmedScheduleIds: target.confirmedScheduleIds,
               expectedScopeRevision: target.expectedScopeRevision ?? 0,
-              reason: input.reason,
+              reason,
               ...notify,
             }
           )
@@ -790,7 +797,7 @@ export function useApplicantsDetail({
           }
         }
         const response = await applicationsRemote.bulkApproveIndividualWithEducationScope({
-          reason: input.reason,
+          reason,
           targets: input.targets.map(target => ({
             applicationId: Number(target.applicationId),
             confirmedScheduleIds: target.confirmedScheduleIds,

@@ -18,10 +18,7 @@ export function buildUjatEducationProgressInstitutionFilterFields(
     })),
   ]
 
-  const scheduleOptions = [
-    { label: '전체', value: UJAT_EDU_PROGRESS_INSTITUTION_FILTER_ALL },
-    ...getUjatEducationProgressScheduleFilterOptions(half, scheduleDates),
-  ]
+  const scheduleOptions = getUjatEducationProgressScheduleFilterOptions(half, scheduleDates)
 
   return [
     {
@@ -40,11 +37,11 @@ export function buildUjatEducationProgressInstitutionFilterFields(
       width: '25%',
     },
     {
-      key: 'educationScheduleIso',
-      type: 'select',
+      key: 'educationScheduleIsoDates',
+      type: 'multiSelect',
       label: '교육 진행 일정',
-      placeholder: '전체',
-      options: scheduleOptions,
+      placeholder: '일정을 선택하세요',
+      multiSelectOptions: scheduleOptions,
       width: '25%',
     },
     {

@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import type { UjatDocumentScreeningConfirmRequest } from '../doc-screening/document-actions'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { UJAT_APPLICANT_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
-import {
-  confirmUjatVolunteerDocumentApprove,
-  confirmUjatVolunteerDocumentReject,
-} from '../doc-screening/document-actions'
 import {
   getUjatVolunteerDocPassedDetailTitle,
   getUjatVolunteerDocScreeningDetailTitle,
@@ -27,10 +22,10 @@ export type UseApplicantDetailParams = {
   half: UjatVolunteerRecruitHalf
   list: UjatVolunteerApplicantRow[]
   detailVariant: ApplicantDetailVariant
-  applyDocumentScreeningStatus: (ids: string[], status: 'pass' | 'fail') => void
   onRegisterApplicantCloseHandler?: (fn: (() => boolean) | null) => void
   onVolunteerApplicantDetailMetaChange?: ApplicantDetailMetaChangeHandler
-  showDocumentScreeningConfirm: (options: UjatDocumentScreeningConfirmRequest) => void
+  onRequestDocumentApprove?: (row: UjatVolunteerApplicantRow) => void
+  onRequestDocumentReject?: (row: UjatVolunteerApplicantRow) => void
 }
 
 function getVolunteerApplicantDetailTitle(
@@ -52,10 +47,10 @@ export function useApplicantDetail({
   half,
   list,
   detailVariant,
-  applyDocumentScreeningStatus,
   onRegisterApplicantCloseHandler,
   onVolunteerApplicantDetailMetaChange,
-  showDocumentScreeningConfirm,
+  onRequestDocumentApprove,
+  onRequestDocumentReject,
 }: UseApplicantDetailParams) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedApplicant, setSelectedApplicant] = useState<UjatVolunteerApplicantRow | null>(null)
@@ -160,26 +155,14 @@ export function useApplicantDetail({
   }, [clearApplicantIdFromUrl])
 
   const handleDocumentReject = useCallback(() => {
-    if (!selectedApplicant) return
-    confirmUjatVolunteerDocumentReject({
-      showConfirm: showDocumentScreeningConfirm,
-      count: 1,
-      onConfirm: () => {
-        applyDocumentScreeningStatus([selectedApplicant.id], 'fail')
-      },
-    })
-  }, [applyDocumentScreeningStatus, selectedApplicant, showDocumentScreeningConfirm])
+    if (!selectedApplicant || !onRequestDocumentReject) return
+    onRequestDocumentReject(selectedApplicant)
+  }, [onRequestDocumentReject, selectedApplicant])
 
   const handleDocumentApprove = useCallback(() => {
-    if (!selectedApplicant) return
-    confirmUjatVolunteerDocumentApprove({
-      showConfirm: showDocumentScreeningConfirm,
-      count: 1,
-      onConfirm: () => {
-        applyDocumentScreeningStatus([selectedApplicant.id], 'pass')
-      },
-    })
-  }, [applyDocumentScreeningStatus, selectedApplicant, showDocumentScreeningConfirm])
+    if (!selectedApplicant || !onRequestDocumentApprove) return
+    onRequestDocumentApprove(selectedApplicant)
+  }, [onRequestDocumentApprove, selectedApplicant])
 
   return {
     selectedApplicant,

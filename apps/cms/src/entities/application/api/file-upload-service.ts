@@ -165,7 +165,7 @@ export const fileUploadService = {
     const headers = ['이름', '학년', '반', '번호']
     sheet.addRow(headers)
     sheet.getRow(1).font = { bold: true }
-    sheet.addRow(['홍길동', '3', '1', '1'])
+    sheet.addRow(['이름예시', '3', '1', '1'])
     sheet.addRow(['김철수', '3', '1', '2'])
     sheet.addRow(['이영희', '3', '2', '1'])
 

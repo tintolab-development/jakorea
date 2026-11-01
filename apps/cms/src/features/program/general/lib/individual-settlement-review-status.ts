@@ -28,6 +28,14 @@ export function normalizeIndividualSettlementReviewStatus(
   return (status ?? '').trim().toUpperCase()
 }
 
+export function individualSettlementTableProcessingLabel(
+  status: string | null | undefined
+): string {
+  const key = normalizeIndividualSettlementReviewStatus(status)
+  if (!key || key === 'NONE') return '해당 없음'
+  return individualSettlementReviewStatusLabel(status)
+}
+
 export function individualSettlementReviewStatusLabel(
   status: string | null | undefined
 ): string {

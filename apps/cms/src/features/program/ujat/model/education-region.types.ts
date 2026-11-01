@@ -8,6 +8,7 @@ export type UjatEducationRegion = {
   active: boolean
   name: string
   createdByName: string
+  updatedByName: string
   createdAt: string
   /** 프로그램·신청 등에서 사용된 이력 — true면 삭제 불가 */
   hasUsageHistory: boolean

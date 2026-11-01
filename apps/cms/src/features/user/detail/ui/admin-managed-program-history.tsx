@@ -460,8 +460,7 @@ export function AdminManagedProgramHistory({
             <FilterTableToolbarButton
               variant="delete"
               disabled={selectedRowKeys.length === 0}
-              onClick={handleOpenDeleteModal}
-            >
+              onClick={handleOpenDeleteModal} >
               이력 삭제
             </FilterTableToolbarButton>
           ) : null

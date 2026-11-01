@@ -13,12 +13,9 @@ export function shouldMockAdminFileUpload(): boolean {
   return !isRealApiModuleEnabled('files')
 }
 
-function stubFileObjectId(fileSize: number): number {
-  return 800_000_001 + (fileSize % 10_000)
-}
-
 /**
- * files 모듈 미활성 시 stub id. 활성 시 uploadAdminFile 전체 flow.
+ * files 모듈 미활성 시 DEV-only stub. PROD 번들에서는 tree-shake.
+ * 활성 시 uploadAdminFile 전체 flow.
  */
 export async function uploadAdminFileMaybeMock(input: {
   file: File
@@ -26,11 +23,15 @@ export async function uploadAdminFileMaybeMock(input: {
   originalFileName?: string
   waitUntilAvailable?: boolean
 }): Promise<UploadAdminFileResult> {
-  if (shouldMockAdminFileUpload()) {
+  if (import.meta.env.DEV && shouldMockAdminFileUpload()) {
+    const stubId = 800_000_001 + (input.file.size % 10_000)
     return {
-      fileObjectId: stubFileObjectId(input.file.size),
+      fileObjectId: stubId,
       checksumSha256: '0'.repeat(64),
     }
+  }
+  if (shouldMockAdminFileUpload()) {
+    throw new Error('파일 업로드는 files API가 활성화된 환경에서만 사용할 수 있습니다.')
   }
   return uploadAdminFile({
     file: input.file,

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
+import { Tooltip } from 'antd'
 import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -25,16 +26,24 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 
-const PERSONAL_INFO_ACCESS_TABLE_SCROLL_X = 1120
+const PERSONAL_INFO_ACCESS_TABLE_SCROLL_X = 1240
 
 const TABLE_COL_WIDTH = {
   no: 80,
   targetName: 160,
   accessPurpose: 260,
   accessorName: 150,
+  result: 120,
   accessedAt: 220,
   ipAddress: 180,
 } as const
+
+function privacyAccessResultLabel(result: string): string {
+  if (result === 'SUCCESS') return '성공'
+  if (result === 'ATTEMPT') return '시도'
+  if (result === 'FAILURE') return '실패'
+  return result || '-'
+}
 
 export default function PersonalInfoAccessHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -103,6 +112,24 @@ export default function PersonalInfoAccessHistoryPage() {
         width: TABLE_COL_WIDTH.accessorName,
         align: 'center',
         ellipsis: true,
+      },
+      {
+        title: '단계',
+        dataIndex: 'result',
+        key: 'result',
+        width: TABLE_COL_WIDTH.result,
+        align: 'center',
+        render: (result: string, record: PersonalInfoAccessLog) => (
+          <Tooltip
+            title={
+              record.traceId && record.traceId !== '-'
+                ? `같은 요청 ${record.traceId}`
+                : undefined
+            }
+          >
+            <span>{privacyAccessResultLabel(result)}</span>
+          </Tooltip>
+        ),
       },
       {
         title: '조회 일시',

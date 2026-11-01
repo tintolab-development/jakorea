@@ -64,6 +64,7 @@ const institution = buildUjatApplicationContentFromPortal({
   },
 })
 assert.equal(institution!.institution.name, 'UJAT초등학교')
+assert.equal(institution!.institution.applicationRegion, '')
 assert.equal(institution!.institution.address, '인천광역시 연수구')
 assert.equal(institution!.institution.addressDetail, '교무실')
 assert.equal(
@@ -71,6 +72,28 @@ assert.equal(
   '김교사 | 032-111-2222 | 010-1111-2222 | ujat@test.com',
 )
 assert.equal(institution!.institution.otherRequests, '주차 안내')
+
+const applicationRegion = buildUjatApplicationContentFromPortal({
+  answers: {
+    [UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion]: 'SEOUL',
+    [ujatBasic]: {
+      schoolName: '서울초등학교',
+      regionLabel: '서울특별시 중구 세종대로 110',
+      addressDetail: '본관',
+    },
+  },
+})
+assert.equal(applicationRegion!.institution.applicationRegion, '서울')
+assert.equal(applicationRegion!.institution.address, '서울특별시 중구 세종대로 110')
+
+const applicationRegionById = buildUjatApplicationContentFromPortal({
+  answers: {
+    [UJAT_PROGRAM_APPLICATION_FORM_INSTITUTION_IDS.applicationRegion]:
+      'ujat-program-application-institution-application-region-daegu',
+    [ujatBasic]: { schoolName: '대구초등학교' },
+  },
+})
+assert.equal(applicationRegionById!.institution.applicationRegion, '대구')
 
 const gradeBlocks = buildUjatApplicationContentFromPortal({
   answers: {

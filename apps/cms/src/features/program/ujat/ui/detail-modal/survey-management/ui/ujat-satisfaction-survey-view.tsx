@@ -17,6 +17,7 @@ import { UjatSurveyEmptyState } from './ujat-survey-empty-state'
 import { UjatSurveyNoResponseState } from './ujat-survey-no-response-state'
 import { UjatSurveyPollResultsView } from './ujat-survey-poll-results-view'
 import { UjatSurveyRegisteredActions } from './ujat-survey-registered-actions'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 
 export type UjatSatisfactionSurveyViewProps = {
   surveysByAudience: UjatSatisfactionSurveyByAudience
@@ -45,6 +46,7 @@ export function UjatSatisfactionSurveyView({
   resultsResponses,
   audienceTabs: audienceTabsProp,
 }: UjatSatisfactionSurveyViewProps) {
+  const canWrite = useUjatCanWrite()
   const audienceTabs = audienceTabsProp ?? getSatisfactionAudienceTabs()
   const activeSurvey: UjatRegisteredSurvey | undefined = surveysByAudience[activeAudience]
 
@@ -77,6 +79,7 @@ export function UjatSatisfactionSurveyView({
           description={UJAT_SATISFACTION_EMPTY_COPY.description}
           secondaryDescription={UJAT_SATISFACTION_EMPTY_COPY.secondaryDescription}
           registerButtonLabel={UJAT_SATISFACTION_EMPTY_COPY.registerButton}
+          showRegisterButton={canWrite}
           embedded
           onRegisterClick={onRegisterClick}
         />
@@ -100,7 +103,8 @@ export function UjatSatisfactionSurveyView({
           description={UJAT_SATISFACTION_NO_RESPONSE_COPY.description}
           deleteButtonLabel={UJAT_SATISFACTION_NO_RESPONSE_COPY.deleteButton}
           previewButtonLabel={UJAT_SATISFACTION_NO_RESPONSE_COPY.previewButton}
-          canDelete={activeSurvey.status === 'before_start'}
+          canDelete={canWrite && activeSurvey.status === 'before_start'}
+          showDeleteButton={canWrite}
           embedded
           onDeleteClick={onDeleteClick}
           onOpenTemplatePreview={onOpenTemplatePreview}

@@ -222,7 +222,6 @@ export function MypageEducationInstitutionGuidanceWritePage() {
         submitPeriodLabel={program?.applicationPeriodLabel}
         ujatAcknowledgedSchedule={hasValidAcknowledgedSchedule ? acknowledgedSchedule : null}
         scheduleRevisionDrift={scheduleRevisionDrift}
-        temporarySchedule={application.ujatTemporarySchedule}
         portalPatchContext={{
           formResponseId: application.formResponseId,
           formResponseStatus: application.formResponseStatus,

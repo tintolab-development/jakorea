@@ -302,8 +302,7 @@ export function ParticipatingInstructorLectureReportsSection({
               }
               onClick={() => {
                 void handleViewReport(record)
-              }}
-            >
+              }} >
               강의보고서 보기
             </CmsButton>
           </div>
@@ -334,14 +333,12 @@ export function ParticipatingInstructorLectureReportsSection({
           <CmsButton
             variant="secondary"
             size="h40"
-            className="cms-button--no-label-ellipsis"
             icon={<ButtonDownloadIcon />}
             disabled={bulkDownloading || submittedRows.length === 0}
             loading={bulkDownloading}
             onClick={() => {
               void handleBulkDownload()
-            }}
-          >
+            }} >
             강의보고서 일괄 다운로드
           </CmsButton>
           <ExcelButton onClick={exportExcel} loading={isExcelExporting} />

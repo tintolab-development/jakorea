@@ -2,6 +2,7 @@
  * 일반 프로그램 — 1차 서류 합격자 캘린더 뷰
  */
 
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { useMemo, useCallback, type ReactNode } from 'react'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -75,7 +76,7 @@ function GeneralVolunteerDocPassedCalendarRightList({
               className="calendar-list-item"
               data-has-color="true"
               style={{
-                backgroundColor: colors.bg,
+                backgroundColor: calendarListItemBackground(colors.bg),
                 border: `1px solid ${colors.border}`,
               }}
               onClick={() => onRowClick(row)}

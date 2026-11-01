@@ -33,11 +33,8 @@ export function LoginSocialNotLinkedView({
 
       <CmsButton
         variant="primary"
-        size="h52"
-        width="100%"
-        className="login-submit-btn"
-        onClick={onEmailLogin}
-      >
+        size="h52" className="login-submit-btn"
+        onClick={onEmailLogin} >
         로그인하기
       </CmsButton>
 

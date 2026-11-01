@@ -430,8 +430,7 @@ export default function SponsorPage() {
           <>
             <FilterTableToolbarButton
               variant="delete"
-              onClick={handleBulkDelete}
-            >
+              onClick={handleBulkDelete} >
               후원사 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton variant="primary" onClick={handleRegister}>

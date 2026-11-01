@@ -39,7 +39,7 @@ export function CreateFontPanel({
           className={styles.fullWidthField}
           size="large"
           value={name}
-          placeholder="예) 홍길동"
+          placeholder="예) 이름"
           aria-label="전자서명에 사용할 이름"
           onValueChange={onNameChange}
         />

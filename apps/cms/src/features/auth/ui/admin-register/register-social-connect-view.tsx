@@ -41,7 +41,7 @@ export function RegisterSocialConnectView({
         />
 
         <div className="register-social-connect__actions">
-          <CmsButton variant="primary" size="h52" width="100%" onClick={onComplete}>
+          <CmsButton variant="primary" size="h52" onClick={onComplete}>
             완료
           </CmsButton>
         </div>

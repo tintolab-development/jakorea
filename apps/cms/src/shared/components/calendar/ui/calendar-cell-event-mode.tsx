@@ -96,12 +96,15 @@ export function CalendarCellEventMode(props: CalendarCellEventModeProps) {
     const isCurrentMonth = date.isSame(currentMonth, 'month')
     const isSelected = date.isSame(selectedDate, 'day')
     const isToday = date.isSame(dayjs(), 'day')
+    const dayOfWeek = date.day()
 
     const cellClass = [
       'calendar-cell',
       !isCurrentMonth ? 'calendar-cell--other-month' : '',
       isSelected ? 'calendar-cell--selected' : '',
       isToday ? 'calendar-cell--today' : '',
+      dayOfWeek === 0 ? 'calendar-cell--sunday' : '',
+      dayOfWeek === 6 ? 'calendar-cell--saturday' : '',
     ]
       .filter(Boolean)
       .join(' ')

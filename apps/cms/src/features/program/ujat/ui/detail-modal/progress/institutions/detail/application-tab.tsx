@@ -7,6 +7,7 @@ import { formatNumberDisplay } from '@/shared/utils'
 import { InstitutionTeacherEdit } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-edit-fields'
 import { isCmsAdminUser } from '@/features/user/shared/lib/admin-provisioned-member-policy'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { canPerformWriteAction } from '@/shared/utils/permissions'
 import { withProgramDetailTdDivider, renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { UjatInstitutionTeacherInfoValue } from '../../../application-institution/detail/detail-display'
 import {
@@ -35,6 +36,7 @@ import './detail.css'
 
 export function UjatEducationProgressInstitutionApplicationTab({
   detail,
+  programId,
   personalInfoRevealed,
   gradeBlocks,
   onGradeBlocksChange,
@@ -46,8 +48,11 @@ export function UjatEducationProgressInstitutionApplicationTab({
   isAdminCommentEditing,
   adminCommentDraft,
   onAdminCommentDraftChange,
+  addClassConfirming = false,
+  onConfirmAddClasses,
 }: {
   detail: UjatEducationProgressInstitutionDetail
+  programId: string
   personalInfoRevealed: boolean
   gradeBlocks: UjatInstitutionApplicationGradeBlockDetail[]
   onGradeBlocksChange: (next: UjatInstitutionApplicationGradeBlockDetail[]) => void
@@ -59,8 +64,13 @@ export function UjatEducationProgressInstitutionApplicationTab({
   isAdminCommentEditing: boolean
   adminCommentDraft: string
   onAdminCommentDraftChange: (next: string) => void
+  addClassConfirming?: boolean
+  onConfirmAddClasses?: (
+    payload: UjatEducationProgressAddClassConfirmPayload
+  ) => void | Promise<void>
 }) {
   const currentUser = useAuthStore(state => state.user)
+  const canWrite = canPerformWriteAction(currentUser)
   const showAdminCommentSection = isCmsAdminUser(currentUser)
   const { applicationDetail } = detail
   const [addClassModalOpen, setAddClassModalOpen] = useState(false)
@@ -72,16 +82,21 @@ export function UjatEducationProgressInstitutionApplicationTab({
   const currentTotalClassCount = useMemo(() => computeTotalClassCount(gradeBlocks), [gradeBlocks])
 
   const handleConfirmAddClasses = useCallback(
-    ({ added, removed }: UjatEducationProgressAddClassConfirmPayload) => {
+    async (payload: UjatEducationProgressAddClassConfirmPayload) => {
+      if (onConfirmAddClasses) {
+        await onConfirmAddClasses(payload)
+        setAddClassModalOpen(false)
+        return
+      }
       onGradeBlocksChange(
         mergePendingClassesIntoGradeBlocks(
-          removeClassesFromGradeBlocks(gradeBlocks, removed),
-          added
+          removeClassesFromGradeBlocks(gradeBlocks, payload.removed),
+          payload.added
         )
       )
       setAddClassModalOpen(false)
     },
-    [gradeBlocks, onGradeBlocksChange]
+    [gradeBlocks, onConfirmAddClasses, onGradeBlocksChange]
   )
 
   return (
@@ -170,14 +185,15 @@ export function UjatEducationProgressInstitutionApplicationTab({
             </h2>
           </div>
           <div className="detail-info-form__header-trailing">
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="h40"
-              onClick={() => setAddClassModalOpen(true)}
-            >
-              학급 추가
-            </CmsButton>
+            {canWrite ? (
+              <CmsButton
+                type="button"
+                variant="secondary"
+                size="h40"
+                onClick={() => setAddClassModalOpen(true)} >
+                학급 추가
+              </CmsButton>
+            ) : null}
           </div>
         </header>
         <div className="ujat-education-progress-institution-detail__grade-info-stack">
@@ -214,11 +230,13 @@ export function UjatEducationProgressInstitutionApplicationTab({
                         <span>
                           {renderDetailInfoPipeSeparated(formatGradeTextbookSupplyDisplay(textbook))}
                         </span>
-                        <span
-                          className={`ujat-education-progress-institution-detail__textbook-badge ujat-education-progress-institution-detail__textbook-badge--${textbook.status}`}
-                        >
-                          {UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS[textbook.status]}
-                        </span>
+                        {textbook.status ? (
+                          <span
+                            className={`ujat-education-progress-institution-detail__textbook-badge ujat-education-progress-institution-detail__textbook-badge--${textbook.status}`}
+                          >
+                            {UJAT_EDUCATION_PROGRESS_TEXTBOOK_STATUS_LABELS[textbook.status]}
+                          </span>
+                        ) : null}
                       </span>
                     }
                   />
@@ -295,7 +313,7 @@ export function UjatEducationProgressInstitutionApplicationTab({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="성범죄 경력 조회서 요청"
+            label="성범죄경력 조회서 요청"
             fullRow
             view={renderCriminalRecordCheckRequest(detail.guidance.criminalRecordCheckRequest)}
           />
@@ -304,9 +322,15 @@ export function UjatEducationProgressInstitutionApplicationTab({
 
       <UjatEducationProgressAddClassModal
         open={addClassModalOpen}
+        programId={programId}
+        institutionId={detail.institutionId}
         currentTotalClassCount={currentTotalClassCount}
         existingGradeBlocks={gradeBlocks}
-        onCancel={() => setAddClassModalOpen(false)}
+        confirming={addClassConfirming}
+        onCancel={() => {
+          if (addClassConfirming) return
+          setAddClassModalOpen(false)
+        }}
         onConfirm={handleConfirmAddClasses}
       />
     </div>

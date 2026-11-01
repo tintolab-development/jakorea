@@ -197,9 +197,9 @@ export function FiltersTablesSection() {
       description="목록 페이지 표준 스택: FilterTableLayout → TableFilterGroup → Ant Table + cms-data-table. 셀 인라인 구분은 ProgramDetailTdDivider 계열."
     >
       <p className="ds-note">
-        필터 컨트롤 기본 폭 240×44, 조회 버튼 160×44. UnifiedFilterCard는 사용하지 않습니다.
-        검색·셀렉트는 조회 클릭 시 반영(커밋)됩니다.         테이블 상단 액션은 <code>FilterTableToolbarButton</code>(h40) — 반려/승인 140(
-        <code>cms-button--action</code>) · 엑셀은 <code>ExcelButton</code>(h40).
+        필터 컨트롤 기본 폭 240×44, 조회 버튼은 medium(h40) min-width + 라벨. UnifiedFilterCard는
+        사용하지 않습니다. 검색·셀렉트는 조회 클릭 시 반영(커밋)됩니다. 테이블 상단 액션은{' '}
+        <code>FilterTableToolbarButton</code>(h40) · 엑셀은 <code>ExcelButton</code>(h40).
       </p>
 
       <DsDemo label="FilterTableLayout + cms-data-table + StatusDropdownCell" className="ds-demo--table">
@@ -217,10 +217,10 @@ export function FiltersTablesSection() {
           }}
           actions={
             <div style={{ display: 'flex', gap: 8 }}>
-              <FilterTableToolbarButton variant="delete" className="cms-button--action">
+              <FilterTableToolbarButton variant="delete">
                 선택 반려
               </FilterTableToolbarButton>
-              <FilterTableToolbarButton variant="secondary" className="cms-button--action">
+              <FilterTableToolbarButton variant="secondary">
                 선택 승인
               </FilterTableToolbarButton>
               <FilterTableToolbarButton variant="secondary" icon={<ButtonCalendarIcon />}>

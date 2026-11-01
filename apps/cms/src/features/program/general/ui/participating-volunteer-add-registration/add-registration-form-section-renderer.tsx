@@ -21,6 +21,9 @@ import {
 } from './add-registration-form-section-config'
 import '@/features/template/ui/paragraph/single-item/multiple-choice.css'
 
+/** 제3자 동의 표 — 「제공받는 곳」(0열)만 입력, 나머지 열·헤더는 고정 */
+const THIRD_PARTY_LOCKED_BODY_COLUMN_INDEXES: ReadonlySet<number> = new Set([1, 2, 3])
+
 export type ParticipatingVolunteerAddRegistrationFormSectionRendererProps = {
   section: ParticipatingVolunteerAddRegistrationSectionDefinition
   paragraphs: WritingFormParagraph[]
@@ -56,6 +59,8 @@ function HorizontalTableDraftParagraphSection({
   onChange: (next: HorizontalTableParagraph) => void
 }) {
   const description = resolveParticipatingVolunteerSeedSectionDescription(paragraph.paragraphDescription)
+  const isThirdParty =
+    paragraph.id === PARTICIPATING_VOLUNTEER_ADD_REGISTRATION_IDS.thirdPartyConsent
 
   return (
     <section className="participating-volunteer-add-registration-modal__section">
@@ -70,8 +75,9 @@ function HorizontalTableDraftParagraphSection({
         <HorizontalTableParagraphBody
           paragraph={paragraph}
           onChange={onChange}
-          isEditMode={false}
+          isEditMode={isThirdParty}
           tableCanvasInteractive={false}
+          lockedBodyColumnIndexes={isThirdParty ? THIRD_PARTY_LOCKED_BODY_COLUMN_INDEXES : undefined}
           bottomConsentPreviewInAuthoring
           paragraphInteractionMode="user"
         />

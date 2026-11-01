@@ -18,7 +18,7 @@ export type SignUpCompleteLocationState = {
   memberType?: MemberType
 }
 
-export const MOCK_VERIFIED_NAME = '홍길동'
+export const MOCK_VERIFIED_NAME = import.meta.env.DEV ? '이름예시' : ''
 export const MOCK_VERIFIED_PHONE = '010-1234-5678'
 export const MOCK_DUPLICATE_EMAIL = 'ja@gmail.com'
 

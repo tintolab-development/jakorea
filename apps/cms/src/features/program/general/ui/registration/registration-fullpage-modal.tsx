@@ -63,6 +63,7 @@ import { peekGeneralRegistrationWizardRhf } from '@/features/program/general/lib
 import { TrainedTeachersRegistrationWizardFormProvider } from '@/features/program/trained-teachers/ui/registration/registration-wizard-form-provider'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import { CompanySchoolRegistrationWizardFormProvider } from '@/features/program/1c-1s/ui/registration/registration-wizard-form-provider'
+import { RegistrationBusinessPeriodConstraintProvider } from '@/features/program/shared/ui/registration/registration-business-period-constraint'
 
 const GENERAL_REGISTRATION_MODAL_TITLE = '일반 프로그램 등록'
 const COMPANY_SCHOOL_REGISTRATION_MODAL_TITLE = '1사1교 프로그램 등록'
@@ -103,17 +104,27 @@ export function GeneralProgramRegistrationFullpageModal(
       variant={registrationWizardHighlightVariant(variant)}
     >
       {variant === 'general' ? (
-        <GeneralRegistrationWizardFormProvider>{inner}</GeneralRegistrationWizardFormProvider>
+        <GeneralRegistrationWizardFormProvider>
+          <RegistrationBusinessPeriodConstraintProvider>
+            {inner}
+          </RegistrationBusinessPeriodConstraintProvider>
+        </GeneralRegistrationWizardFormProvider>
       ) : variant === 'trainedTeachers' ? (
         <TrainedTeachersRegistrationWizardFormProvider>
-          {inner}
+          <RegistrationBusinessPeriodConstraintProvider>
+            {inner}
+          </RegistrationBusinessPeriodConstraintProvider>
         </TrainedTeachersRegistrationWizardFormProvider>
       ) : variant === 'economy' ? (
         <CompanySchoolRegistrationWizardFormProvider>
-          {inner}
+          <RegistrationBusinessPeriodConstraintProvider>
+            {inner}
+          </RegistrationBusinessPeriodConstraintProvider>
         </CompanySchoolRegistrationWizardFormProvider>
       ) : (
-        inner
+        <RegistrationBusinessPeriodConstraintProvider>
+          {inner}
+        </RegistrationBusinessPeriodConstraintProvider>
       )}
     </RegistrationWizardValidationHighlightProvider>
   )

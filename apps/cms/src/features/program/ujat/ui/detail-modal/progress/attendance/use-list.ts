@@ -132,11 +132,10 @@ export function useUjatEducationProgressAttendance(
             .filter((id): id is number => id != null)
         ),
       ]
+      // 출석 조회 실패를 빈 배열로 숨기지 않는다 — remote 응답만 SSOT
       const attendancesByScheduleId = await fetchUjatAttendancesByScheduleIds(
         programId,
         scheduleIds
-      ).catch(() =>
-        Object.fromEntries(scheduleIds.map(scheduleId => [String(scheduleId), []]))
       )
       return buildUjatAttendanceSessionsFromMatrix({
         matrix,
@@ -147,7 +146,8 @@ export function useUjatEducationProgressAttendance(
     },
   })
 
-  const remoteSessions = attendanceQuery.data ?? []
+  const remoteSessions =
+    remoteEnabled && !attendanceQuery.isError ? (attendanceQuery.data ?? []) : []
 
   const sessionsWithOverrides = useMemo(() => {
     if (Object.keys(localOverrides).length === 0) return remoteSessions
@@ -270,5 +270,7 @@ export function useUjatEducationProgressAttendance(
     saveSessionVolunteers,
     getSessionVolunteers,
     isLoading: remoteEnabled && attendanceQuery.isLoading,
+    isError: remoteEnabled && attendanceQuery.isError,
+    isRemote: remoteEnabled,
   }
 }

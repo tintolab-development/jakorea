@@ -86,6 +86,7 @@ describe('buildAccountPaymentExportRequest', () => {
     })
     expect(body.rawPrivacyIncluded).toBe(false)
     expect(body.approvalReference).toBeUndefined()
+    expect(body.exportPolicy).toBeUndefined()
   })
 })
 

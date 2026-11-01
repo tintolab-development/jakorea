@@ -17,7 +17,7 @@ export const PARTICIPATING_INDIVIDUAL_PARTICIPANT_ATTENDANCE_STATUS_LABELS: Reco
   absent: '결석',
   excused_absence: '사유 불참',
   withdrawn: '활동 포기',
-  pending: '-',
+  pending: '출석',
 }
 
 export const PARTICIPATING_INDIVIDUAL_PARTICIPANT_SESSION_PROGRESS_LABELS: Record<
@@ -34,6 +34,10 @@ export type ParticipatingIndividualParticipantAttendanceRow = {
   scheduleId?: string | null
   scheduleLabel: string
   attendanceStatus: ParticipatingIndividualParticipantAttendanceStatus
+  /** BE 출석 기록 여부. 미기록이면 테이블은 출석으로 보여도 출석률 분자에 넣지 않는다. */
+  attendanceRecorded: boolean
+  /** education-scope 배정 순서 — 마지막 교육 일정 판정 */
+  assignedIndex: number
   lateTime?: string
   educationProgress: ParticipatingIndividualParticipantSessionProgressStatus
   remark?: string

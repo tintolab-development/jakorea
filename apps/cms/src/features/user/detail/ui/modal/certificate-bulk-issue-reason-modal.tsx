@@ -75,10 +75,10 @@ export function CertificateBulkIssueReasonModal({
       width={600}
       footer={
         <>
-          <CmsButton variant="secondary" size="medium" width={120} onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton variant="primary" size="medium" width={120} onClick={handleIssue}>
+          <CmsButton variant="primary" size="medium" onClick={handleIssue}>
             발급
           </CmsButton>
         </>

@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { formatGeneralJaVolunteerExperienceLabel } from '@/features/program/general/lib/volunteer-screening-constants'
+import { mapVolunteerDocumentStatusToApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { IndividualApplicantId1365Cell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/individual-screening-sections'
 import {
@@ -17,6 +19,7 @@ import {
 
 export type GeneralVolunteerApplicantBasicInfoStatusRow =
   | 'document_screening'
+  | 'program_approval'
   | 'interview_assignment'
   | 'second_interview'
   | 'none'
@@ -53,6 +56,17 @@ function resolveStatusField(
     return {
       label: '면접일 배정 현황',
       value: <GeneralInterviewAssignmentStatusText status={applicant.interviewAssignmentStatus} />,
+    }
+  }
+
+  if (statusRow === 'program_approval') {
+    return {
+      label: '프로그램 승인 현황',
+      value: (
+        <ApprovalStatusText
+          status={mapVolunteerDocumentStatusToApprovalStatus(applicant.documentScreeningStatus)}
+        />
+      ),
     }
   }
 

@@ -220,8 +220,7 @@ export function ParticipatingInstructorSettlementSection({
               variant="default"
               size="h40"
               disabled={!record.canViewPaymentStatement || !remoteEnabled}
-              onClick={() => paymentStatementView.handleOpen(record)}
-            >
+              onClick={() => paymentStatementView.handleOpen(record)} >
               지급조서 보기
             </CmsButton>
           </div>
@@ -234,7 +233,7 @@ export function ParticipatingInstructorSettlementSection({
   return (
     <div className="school-detail-fullpage-view__instructor-section participating-instructor-settlement-section">
       <div className="program-detail-fullpage-modal__info-tab-block participating-instructor-settlement-section__summary">
-        <DetailInfoForm title="정산 현황" hideHeader mode="view">
+        <DetailInfoForm title="정산 현황" mode="view">
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="지급조서 처리현황"
@@ -269,15 +268,13 @@ export function ParticipatingInstructorSettlementSection({
             size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
-            onClick={() => void handleBulkDownloadPaymentStatements()}
-          >
+            onClick={() => void handleBulkDownloadPaymentStatements()} >
             지급조서 일괄 다운로드
           </CmsButton>
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={rows.length === 0}
-          />
+            disabled={rows.length === 0} />
         </div>
       </div>
 

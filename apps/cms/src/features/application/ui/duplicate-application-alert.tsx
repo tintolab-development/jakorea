@@ -45,9 +45,7 @@ export function DuplicateApplicationAlert({
             variant="primary"
             size="medium"
             type="button"
-            className="cms-button--footer-auto"
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             {confirmText}
           </CmsButton>
         </>

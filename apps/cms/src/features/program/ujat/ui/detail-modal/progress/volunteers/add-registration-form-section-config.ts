@@ -17,14 +17,21 @@ export type UjatVolunteerAddRegistrationPluginBodyKey =
   | 'education-experience'
   | 'free-text'
 
+export type UjatVolunteerAddRegistrationPluginBodyProps = {
+  programId?: string | number | null
+}
+
 export const UJAT_VOLUNTEER_ADD_REGISTRATION_PLUGIN_BODIES: Record<
   UjatVolunteerAddRegistrationPluginBodyKey,
-  ComponentType
+  ComponentType<UjatVolunteerAddRegistrationPluginBodyProps>
 > = {
   'previous-term': UjatProgramApplicationVolunteerPreviousTermParagraph,
-  'preferred-region': UjatProgramApplicationVolunteerPreferredRegionParagraph,
-  'education-experience': UjatProgramApplicationVolunteerEducationExperienceParagraph,
-  'free-text': UjatProgramApplicationVolunteerFreeTextParagraph,
+  'preferred-region':
+    UjatProgramApplicationVolunteerPreferredRegionParagraph as ComponentType<UjatVolunteerAddRegistrationPluginBodyProps>,
+  'education-experience':
+    UjatProgramApplicationVolunteerEducationExperienceParagraph as ComponentType<UjatVolunteerAddRegistrationPluginBodyProps>,
+  'free-text':
+    UjatProgramApplicationVolunteerFreeTextParagraph as ComponentType<UjatVolunteerAddRegistrationPluginBodyProps>,
 }
 
 export type UjatVolunteerAddRegistrationSectionDefinition =

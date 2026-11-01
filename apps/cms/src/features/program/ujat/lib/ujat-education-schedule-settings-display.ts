@@ -117,6 +117,20 @@ export function resolveUjatEducationScheduleSettingsSemesterDisplay(
   }
 }
 
+export function hasUjatTypedMainEducationRange(
+  detail: UjatTypedDetail | null | undefined
+): boolean {
+  if (!detail) return false
+  for (const half of ['h1', 'h2'] as const) {
+    const range = resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail(
+      half,
+      detail
+    ).eventRange
+    if (range.start && range.end) return true
+  }
+  return false
+}
+
 /** Canonical Typed detail projection. This display path never reads registration.overlay. */
 export function resolveUjatEducationScheduleSettingsSemesterDisplayFromTypedDetail(
   half: UjatHalfSemesterKey,

@@ -67,11 +67,20 @@ import {
   mapIndividualApplicationDetailToApplicantRow,
   type IndividualApplicationDetailEnriched,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
-import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
+import {
+  INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT,
+  isIndividualApplicationApprovedOnlyUpdateError,
+  resolveIndividualApplicationTeamDetail,
+} from '@/features/program/general/lib/individual-application-team-detail'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { extractApiErrorMessage, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import {
+  DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+  readDocumentEvaluationErrorMessage,
+  shouldShowDocumentEvaluationErrorAlert,
+} from '@/features/program/shared/lib/document-evaluation-error'
 import { formatApplicationEligibilityConflictMessage } from '@/features/program/shared/lib/application-eligibility-conflict'
 import { formatApplicationDecisionCancelConflictMessage } from '@/features/program/shared/lib/application-decision-cancel-conflict'
 import { formatApplicationStatusConflictMessage } from '@/features/program/shared/lib/application-status-conflict'
@@ -400,17 +409,21 @@ export function GeneralParticipantApplicantDetailView({
         syncRemoteApplicant(updated)
         return updated
       } catch (error) {
-        const responseData =
-          error && typeof error === 'object' && 'response' in error
-            ? (error as { response?: { data?: unknown } }).response?.data
-            : undefined
-        void showAlert({
-          title: '신청 정보 저장 실패',
-          content: extractApiErrorMessage(responseData, {
-            httpStatus: getApiErrorHttpStatus(error),
-            fallback: '신청 정보를 저장하지 못했습니다. 다시 시도해 주세요.',
-          }),
-        })
+        if (isIndividualApplicationApprovedOnlyUpdateError(error)) {
+          void showAlert(INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT)
+        } else {
+          const responseData =
+            error && typeof error === 'object' && 'response' in error
+              ? (error as { response?: { data?: unknown } }).response?.data
+              : undefined
+          void showAlert({
+            title: '신청 정보 저장 실패',
+            content: extractApiErrorMessage(responseData, {
+              httpStatus: getApiErrorHttpStatus(error),
+              fallback: '신청 정보를 저장하지 못했습니다. 다시 시도해 주세요.',
+            }),
+          })
+        }
         await detailQuery.refetch()
         throw error
       }
@@ -427,17 +440,21 @@ export function GeneralParticipantApplicantDetailView({
         })
         syncRemoteApplicant(mergeApplicationUpdateResponse(applicant, response))
       } catch (error) {
-        const responseData =
-          error && typeof error === 'object' && 'response' in error
-            ? (error as { response?: { data?: unknown } }).response?.data
-            : undefined
-        void showAlert({
-          title: '팀 역할 저장 실패',
-          content: extractApiErrorMessage(responseData, {
-            httpStatus: getApiErrorHttpStatus(error),
-            fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
-          }),
-        })
+        if (isIndividualApplicationApprovedOnlyUpdateError(error)) {
+          void showAlert(INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT)
+        } else {
+          const responseData =
+            error && typeof error === 'object' && 'response' in error
+              ? (error as { response?: { data?: unknown } }).response?.data
+              : undefined
+          void showAlert({
+            title: '팀 역할 저장 실패',
+            content: extractApiErrorMessage(responseData, {
+              httpStatus: getApiErrorHttpStatus(error),
+              fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
+            }),
+          })
+        }
         await detailQuery.refetch()
         throw error
       }
@@ -508,17 +525,12 @@ export function GeneralParticipantApplicantDetailView({
         })
         await detailQuery.refetch()
       } catch (error) {
-        const responseData =
-          error && typeof error === 'object' && 'response' in error
-            ? (error as { response?: { data?: unknown } }).response?.data
-            : undefined
-        void showAlert({
-          title: '담당자 서류 평가 저장 실패',
-          content: extractApiErrorMessage(responseData, {
-            httpStatus: getApiErrorHttpStatus(error),
-            fallback: '담당자 서류 평가를 저장하지 못했습니다.',
-          }),
-        })
+        if (shouldShowDocumentEvaluationErrorAlert(error)) {
+          void showAlert({
+            title: DOCUMENT_EVALUATION_ERROR_ALERT_TITLE,
+            content: readDocumentEvaluationErrorMessage(error),
+          })
+        }
         await detailQuery.refetch()
       }
     },

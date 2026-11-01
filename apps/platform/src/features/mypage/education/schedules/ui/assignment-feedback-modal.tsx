@@ -22,7 +22,7 @@ export function EducationAssignmentFeedbackModal({
   onRevise,
 }: EducationAssignmentFeedbackModalProps) {
   return (
-    <PFModal open={open} onClose={onClose} title="피드백 확인" size="md">
+    <PFModal open={open} onClose={onClose} title="피드백 확인" size="md" showCloseButton={false}>
       <PFText as="p" typo="bd-md-rg" color="black" className={styles.guide}>
         담당자의 피드백을 확인 후, 과제를 수정 제출 또는 다음 과제에 반영해 주세요.
       </PFText>

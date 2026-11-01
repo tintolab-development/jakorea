@@ -178,6 +178,8 @@ export async function persistWritingFormTemplateDraft(args: {
   localOnly?: boolean
   /** 프로그램 form-binding 전용 version — 카탈로그 code PUT을 건너뛴다 */
   templateVersionId?: number
+  /** 템플릿 관리 설문·동의서 저장만 true. 프로그램 흐름에서는 켜지 않는다. */
+  publishAfterSave?: boolean
 }): Promise<void> {
   if (args.localOnly) {
     persistWritingFormTemplateSave(args)
@@ -231,6 +233,7 @@ export async function persistWritingFormTemplateDraft(args: {
     overlay: args.overlay,
     editorState: args.editorState,
     settingsJson: args.settingsJson,
+    publishAfterSave: args.publishAfterSave,
   })
 }
 

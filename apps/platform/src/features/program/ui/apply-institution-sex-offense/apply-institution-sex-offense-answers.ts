@@ -114,10 +114,83 @@ function incompleteSiteCredentialMessage(
   return null
 }
 
+/** UJAT 안내사항 — UI `직접 제출` | `온라인 제출` */
+export type UjatSexOffenseWriteChoice = 'direct' | 'online'
+
+/**
+ * 저장값 → UJAT 2단계 라디오.
+ * ja_system(및 레거시 site_direct) → 직접, criminal_record_site+online → 온라인.
+ * empty 기본 inquiryMethod=ja_system만으로는 선택으로 치지 않는다(submissionRequest=request 필요).
+ */
+export function resolveUjatSexOffenseWriteChoice(
+  values: ApplyInstitutionSexOffenseValues,
+): UjatSexOffenseWriteChoice | '' {
+  if (values.submissionRequest !== 'request') return ''
+  if (values.inquiryMethod === 'ja_system') return 'direct'
+  if (values.inquiryMethod === 'criminal_record_site' && values.siteSubmission === 'online') {
+    return 'online'
+  }
+  if (values.inquiryMethod === 'criminal_record_site' && values.siteSubmission === 'direct') {
+    // 레거시 site_direct — 신규 UI는 직접(ja_system)으로 편집
+    return 'direct'
+  }
+  return ''
+}
+
+/** UJAT UI 선택 → BE inquiry 매핑 (직접=ja_system, 온라인=criminal_record_site+online) */
+export function applyUjatSexOffenseWriteChoice(
+  current: ApplyInstitutionSexOffenseValues,
+  choice: UjatSexOffenseWriteChoice,
+): ApplyInstitutionSexOffenseValues {
+  const withRequest = {
+    ...current,
+    submissionRequest: (current.submissionRequest || 'request') as ApplySexOffenseSubmissionRequest,
+  }
+  if (choice === 'direct') {
+    return {
+      ...withRequest,
+      inquiryMethod: 'ja_system',
+      siteSubmission: '',
+      institutionId: '',
+      verificationNumber: '',
+    }
+  }
+  const keepCredentials =
+    current.inquiryMethod === 'criminal_record_site' ||
+    Boolean(current.institutionId.trim() || current.verificationNumber.trim())
+  return {
+    ...withRequest,
+    inquiryMethod: 'criminal_record_site',
+    siteSubmission: 'online',
+    institutionId: keepCredentials ? current.institutionId : '',
+    verificationNumber: keepCredentials ? current.verificationNumber : '',
+  }
+}
+
+/** 제출 직전 — 레거시 site_direct 등도 신규 계약(ja_system / online)으로 정규화 */
+export function normalizeUjatSexOffenseWriteValues(
+  values: ApplyInstitutionSexOffenseValues,
+): ApplyInstitutionSexOffenseValues {
+  const choice = resolveUjatSexOffenseWriteChoice(values)
+  if (!choice) {
+    return { ...values, submissionRequest: values.submissionRequest || 'request' }
+  }
+  return applyUjatSexOffenseWriteChoice(values, choice)
+}
+
+/**
+ * UJAT 2/2 — 직접(ja_system) / 온라인(criminal_record_site+online+자격정보).
+ * 일반 신버전 조회 단락(사이트 직접 제출 포함)과 검증을 분리한다.
+ */
 export function findIncompleteUjatSexOffenseWriteMessage(
   values: ApplyInstitutionSexOffenseValues,
 ): string | null {
-  return incompleteSiteCredentialMessage(values)
+  const choice = resolveUjatSexOffenseWriteChoice(values)
+  if (!choice) return '성범죄 경력조회 동의서 제출 방식을 선택해 주세요.'
+  if (choice === 'direct') return null
+  if (!values.institutionId.trim()) return '성범죄 경력조회 기관 아이디를 입력해 주세요.'
+  if (!values.verificationNumber.trim()) return '성범죄 경력조회 검증번호를 입력해 주세요.'
+  return null
 }
 
 export function findIncompleteSexOffenseMessage(

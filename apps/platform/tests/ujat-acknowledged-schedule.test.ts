@@ -57,11 +57,19 @@ describe('ujat acknowledged schedule', () => {
     expect(isValidUjatAcknowledgedScheduleForApplication(null, '1691467')).toBe(false)
   })
 
-  it('배정 슬롯이 없으면 확인할 수 없다', () => {
+  it('revision만 있으면 확인 가능(배정 카드·slots 불필요)', () => {
     expect(
       canAcknowledgeDisplayedUjatSchedule({
         assignmentRevision: 1,
         temporarySchedule: { slots: [] },
+      }),
+    ).toBe(true)
+    expect(
+      canAcknowledgeDisplayedUjatSchedule({
+        assignmentRevision: undefined,
+        temporarySchedule: {
+          slots: [{ scheduleId: 1, scheduleStartAt: '2027-03-12T10:00:00+09:00' }],
+        },
       }),
     ).toBe(false)
   })

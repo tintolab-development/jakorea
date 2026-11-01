@@ -20,7 +20,6 @@
   --filter-area-label-font-size: 14px;
   --filter-area-label-font-weight: 500;
   --filter-area-label-line-height: 150%;
-  --filter-search-button-width: 160px;
 }
 
 @media (max-width: 1200px) {

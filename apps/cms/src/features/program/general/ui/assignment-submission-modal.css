@@ -256,19 +256,3 @@
   min-height: 40px !important;
   max-height: 40px !important;
 }
-
-.assignment-submission-modal
-  .content-modal__footer-actions
-  .assignment-submission-modal__footer-btn--close.cms-button.ant-btn {
-  width: 120px !important;
-  min-width: 120px !important;
-  max-width: 120px !important;
-}
-
-.assignment-submission-modal
-  .content-modal__footer-actions
-  .assignment-submission-modal__footer-btn--bulk.cms-button.ant-btn {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
-}

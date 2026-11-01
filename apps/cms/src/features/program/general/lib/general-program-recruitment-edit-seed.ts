@@ -376,6 +376,12 @@ function generalRecruitmentRowFormSeed(
             ...(row.operationEndDate
               ? { participantProgramOperationEndDate: String(row.operationEndDate) }
               : {}),
+            ...((row.applicationType ?? '').toUpperCase() === 'INDIVIDUAL' && row.interviewStartAt
+              ? { interviewStartDate: String(row.interviewStartAt) }
+              : {}),
+            ...((row.applicationType ?? '').toUpperCase() === 'INDIVIDUAL' && row.interviewEndAt
+              ? { interviewEndDate: String(row.interviewEndAt) }
+              : {}),
           }
   const contact =
     audience === 'instructor'

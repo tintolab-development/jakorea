@@ -128,3 +128,11 @@
   gap: 16px;
   width: 100%;
 }
+
+.auth-actions .cms-button.ant-btn,
+.login-submit-actions .cms-button.ant-btn,
+.login-submit-btn.cms-button.ant-btn {
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+}

@@ -95,10 +95,8 @@ function CatalogTable({
                 <CmsButton
                   variant="secondary"
                   size="small"
-                  className="cms-button--toolbar-auto"
-                  style={{ width: 'auto', minWidth: 72, maxWidth: 'none' }}
-                  onClick={() => onPreview(row.previewId!)}
-                >
+                  style={{ minWidth: 72, maxWidth: 'none' }}
+                  onClick={() => onPreview(row.previewId!)} >
                   열기
                 </CmsButton>
               ) : (

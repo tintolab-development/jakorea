@@ -48,8 +48,7 @@ export function RegistrationDraftNoticeModal({
             variant="primary"
             size="medium"
             type="button"
-            onClick={() => onConfirm(choice)}
-          >
+            onClick={() => onConfirm(choice)} >
             {confirmLabel}
           </CmsButton>
         </>

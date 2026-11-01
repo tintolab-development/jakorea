@@ -41,6 +41,9 @@ const row = {
   interviewAvailability: [],
   totalAssignedDays: null,
   homeAddress: '',
+  schoolEnrollmentStatus: '',
+  affiliationSchool: '',
+  affiliationGrade: '',
 } satisfies UjatVolunteerApplicantRow
 
 const certificate: VolunteerApplicationEvidenceAttachment = {
@@ -106,5 +109,88 @@ describe('applyUjatVolunteerProjection', () => {
       homeAddressSigungu: '강남구',
     })
     expect(next.homeAddress).toBe('서울특별시')
+  })
+
+  it('profile 학교 재학·소속을 대학 학년과 분리해 매핑한다', () => {
+    const next = applyUjatVolunteerApplicationDetail(
+      row,
+      {
+        ujat: {
+          universityName: '연세대학교 미래캠퍼스 (제1캠퍼스)',
+          grade: '2',
+          gradeLabel: '2학년',
+        },
+      },
+      {
+        schoolEnrollmentStatus: 'ENROLLED',
+        affiliationSchool: '광주*********사단',
+        affiliationGrade: '1학년',
+      },
+    )
+    expect(next.schoolEnrollmentStatus).toBe('재학 중')
+    expect(next.affiliationSchool).toBe('광주*********사단')
+    expect(next.affiliationGrade).toBe('1학년')
+    expect(next.universityName).toBe('연세대학교 미래캠퍼스 (제1캠퍼스)')
+    expect(next.grade).toBe('2학년')
+    expect(next.affiliationSchool).not.toBe(next.universityName)
+    expect(next.affiliationGrade).not.toBe(next.grade)
+  })
+
+  it('profile 학교 필드가 null이면 빈 값으로 두고 ujat 대학으로 채우지 않는다', () => {
+    const seeded = {
+      ...row,
+      schoolEnrollmentStatus: '재학 중',
+      affiliationSchool: '이전학교',
+      affiliationGrade: '3학년',
+      universityName: '연세대학교',
+      grade: '2학년' as const,
+    }
+    const next = applyUjatVolunteerApplicationDetail(
+      seeded,
+      { ujat: { universityName: '연세대학교', gradeLabel: '2학년' } },
+      {
+        schoolEnrollmentStatus: null,
+        affiliationSchool: null,
+        affiliationGrade: null,
+      },
+    )
+    expect(next.schoolEnrollmentStatus).toBe('')
+    expect(next.affiliationSchool).toBe('')
+    expect(next.affiliationGrade).toBe('')
+    expect(next.universityName).toBe('연세대학교')
+    expect(next.grade).toBe('2학년')
+  })
+
+  it('UNMASKED affiliationSchool 원문을 그대로 쓴다', () => {
+    const next = applyUjatVolunteerApplicationDetail(
+      row,
+      { ujat: { universityName: '연세대학교 미래캠퍼스 (제1캠퍼스)', gradeLabel: '2학년' } },
+      {
+        schoolEnrollmentStatus: 'ENROLLED',
+        affiliationSchool: '광주 JA 대학생 봉사단',
+        affiliationGrade: '1학년',
+      },
+    )
+    expect(next.affiliationSchool).toBe('광주 JA 대학생 봉사단')
+    expect(next.schoolEnrollmentStatus).toBe('재학 중')
+  })
+
+  it('application.scheduleChangeCancelCount를 성명 옆 배지용으로 반영한다', () => {
+    const next = applyUjatVolunteerApplicationDetail(
+      row,
+      {
+        scheduleChangeCancelCount: 1,
+        ujat: { applicationType: 'ujat-graduate', previousActivityTerm: '30', previousActivityYear: '2023' },
+        attachments: [certificate],
+      },
+      null,
+    )
+    expect(next.scheduleChangeCancelCount).toBe(1)
+    expect(next.applicationType).toBe('ujat-graduate')
+    expect(next.previousUjatActivity).toEqual({
+      term: '30',
+      year: '2023',
+      certificateFileName: 'certificate.pdf',
+    })
   })
 })

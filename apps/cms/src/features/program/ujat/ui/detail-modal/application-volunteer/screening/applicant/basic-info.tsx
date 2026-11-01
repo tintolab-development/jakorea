@@ -57,16 +57,15 @@ function resolveStatusField(
   }
 }
 
-function formatSchoolEnrollmentStatus(grade: UjatVolunteerApplicantRow['grade']): string {
-  if (grade === '휴학') return '휴학 중'
-  if (grade === '졸업유예') return '졸업유예'
-  if (grade === '졸업') return '졸업'
-  return '재학 중'
-}
-
 function maskId1365(id: string): string {
+  if (!id || id === '—' || id === '-') return id || '-'
   if (id.length <= 4) return '*'.repeat(id.length)
   return `${id.slice(0, 4)}***`
+}
+
+function displayOrDash(value: string | null | undefined): string {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : '-'
 }
 
 export function ApplicantBasicInfo({
@@ -82,10 +81,11 @@ export function ApplicantBasicInfo({
     applicant.gender,
     formatUjatVolunteerBirthDateAndAge(applicant.birthDate, applicant.age),
   ])
-  const affiliationDisplay = withProgramDetailTdDivider([
-    formatUjatVolunteerUniversityDisplay(applicant.universityName, maskSensitive),
-    applicant.grade,
-  ])
+  const hasAffiliation =
+    Boolean(applicant.affiliationSchool.trim()) || Boolean(applicant.affiliationGrade.trim())
+  const affiliationDisplay = hasAffiliation
+    ? withProgramDetailTdDivider([applicant.affiliationSchool, applicant.affiliationGrade])
+    : '-'
   const universityGradeDisplay = withProgramDetailTdDivider([
     formatUjatVolunteerUniversityDisplay(applicant.universityName, maskSensitive),
     applicant.grade,
@@ -135,7 +135,7 @@ export function ApplicantBasicInfo({
           <DetailInfoForm.Field
             label="학교 재학 여부"
             readOnlyDisplay
-            view={formatSchoolEnrollmentStatus(applicant.grade)}
+            view={displayOrDash(applicant.schoolEnrollmentStatus)}
           />
           <DetailInfoForm.Field
             label="소속"
@@ -151,7 +151,7 @@ export function ApplicantBasicInfo({
           <DetailInfoForm.Field
             label="자택 주소지"
             readOnlyDisplay
-            view={applicant.homeAddress.trim() || '-'}
+            view={displayOrDash(applicant.homeAddress)}
           />
           <DetailInfoForm.Field label="1365 ID" readOnlyDisplay view={id1365Display} />
         </DetailInfoForm.Row>

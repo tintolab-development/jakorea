@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { FilterTableToolbarButton } from '@/shared/ui'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { UjatInstitutionApplicationRegionTabs } from '../list/region-tabs'
@@ -19,6 +20,7 @@ export function UjatInstitutionScheduleConfirmList({
   programId?: string | null
   onOpenDetail: (row: UjatScheduleConfirmRow) => void
 }) {
+  const canWrite = useUjatCanWrite()
   const { activeRegion, setActiveRegion } = useUjatInstitutionEducationRegion()
   const {
     pendingFilters,
@@ -54,6 +56,7 @@ export function UjatInstitutionScheduleConfirmList({
       <FilterTableLayout
         className="ujat-schedule-confirm-list__filter-layout"
         bordered={false}
+        contentVariant={viewMode === 'calendar' ? 'calendar' : 'table'}
         fields={filterFields}
         filters={pendingFilters}
         onFilterChange={handleFilterChange}
@@ -67,8 +70,7 @@ export function UjatInstitutionScheduleConfirmList({
                 type="button"
                 variant="secondary"
                 icon={<ButtonCalendarIcon />}
-                onClick={() => setViewMode('calendar')}
-              >
+                onClick={() => setViewMode('calendar')} >
                 캘린더 뷰로 보기
               </FilterTableToolbarButton>
             ) : (
@@ -76,17 +78,20 @@ export function UjatInstitutionScheduleConfirmList({
                 type="button"
                 variant="secondary"
                 icon={<ButtonListIcon />}
-                onClick={() => setViewMode('table')}
-              >
+                onClick={() => setViewMode('table')} >
                 리스트 뷰로 보기
               </FilterTableToolbarButton>
             )}
           </div>
         }
-        excelExport={{
-          columns,
-          data: tableData,
-        }}
+        excelExport={
+          canWrite
+            ? {
+                columns,
+                data: tableData,
+              }
+            : undefined
+        }
       >
         {viewMode === 'table' ? (
           <div ref={tableWrapRef} className="ujat-schedule-confirm-list__table-wrap">

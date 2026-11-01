@@ -16,6 +16,8 @@ import {
   useUjatApplicationVolunteerOverlayKv,
 } from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-sync'
 
+export { useUjatApplicationVolunteerOverlayKv }
+
 const GRADE_OPTIONS = UJAT_PROGRAM_APPLICATION_VOLUNTEER_GRADE_OPTIONS.map(option => ({ ...option }))
 
 const APPLICATION_ROUTE_OTHER_VALUE = UJAT_PROGRAM_APPLICATION_VOLUNTEER_ROUTE_OTHER_VALUE

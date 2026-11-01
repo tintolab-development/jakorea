@@ -22,6 +22,10 @@ import {
   getLectureAttendanceDetailForApplication,
 } from '../lib/school-detail'
 import { countLectureAttendanceHeldAndAttended } from '../lib/lecture-attendance-count'
+import {
+  formatLectureAttendanceSessionLabel,
+  lectureAttendanceSessionKey,
+} from '../lib/lecture-attendance-session-identity'
 import './lecture-attendance-modal.css'
 
 type EditableAttendanceStatus = Extract<LectureAttendanceStatusKey, 'attended' | 'absent' | 'late'>
@@ -33,7 +37,7 @@ function SessionStatusCell({
 }: {
   session: LectureAttendanceSession
   editing: boolean
-  onPick: (roundNumber: number, status: EditableAttendanceStatus) => void
+  onPick: (sessionKey: string, status: EditableAttendanceStatus) => void
 }) {
   if (session.status === 'not_held' && !(editing && session.recordingOpen)) {
     return (
@@ -61,7 +65,9 @@ function SessionStatusCell({
       className="lecture-attendance-modal__session-radios"
       size="medium"
       value={session.status === 'not_held' ? undefined : session.status}
-      onChange={e => onPick(session.roundNumber, e.target.value as EditableAttendanceStatus)}
+      onChange={e =>
+        onPick(lectureAttendanceSessionKey(session), e.target.value as EditableAttendanceStatus)
+      }
     >
       <CmsRadio value="attended" size="medium">
         출석
@@ -180,8 +186,10 @@ export function LectureAttendanceModal({
   }, [tableSessions])
 
   const patchSessionStatus = useCallback(
-    (roundNumber: number, status: EditableAttendanceStatus) => {
-      setSessionDraft(prev => prev.map(s => (s.roundNumber === roundNumber ? { ...s, status } : s)))
+    (sessionKey: string, status: EditableAttendanceStatus) => {
+      setSessionDraft(prev =>
+        prev.map(s => (lectureAttendanceSessionKey(s) === sessionKey ? { ...s, status } : s))
+      )
     },
     []
   )
@@ -265,7 +273,7 @@ export function LectureAttendanceModal({
             ? sessionPairs.map(([left, right], index) => (
                 <DetailInfoForm.Row type="double" key={`session-pair-${index}`}>
                   <DetailInfoForm.Field
-                    label={left ? `${left.roundNumber}회차` : '\u00a0'}
+                    label={left ? formatLectureAttendanceSessionLabel(left) : '\u00a0'}
                     view={
                       left ? (
                         <SessionStatusCell
@@ -277,7 +285,7 @@ export function LectureAttendanceModal({
                     }
                   />
                   <DetailInfoForm.Field
-                    label={right ? `${right.roundNumber}회차` : '\u00a0'}
+                    label={right ? formatLectureAttendanceSessionLabel(right) : '\u00a0'}
                     view={
                       right ? (
                         <SessionStatusCell

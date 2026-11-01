@@ -80,10 +80,12 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
   const info = common?.instructorRecruitmentInfo as InstructorRecruitmentInfoLoose | undefined
   const row = pickAudienceRecruitmentWindow(program, 'instructor')
   const useRow = hasRecruitmentWindows(program)
-  const useContactRow = useRow && row != null
+  // 1사1교 등 non-structured: 참여 행만 있고 강사 행이 없으면 중첩·스칼라 값으로 폴백한다.
+  const useInstructorRow = useRow && row != null
+  const useContactRow = useInstructorRow
   const recruitmentStatus = getRecruitmentStatusFromDates(
-    useRow ? row?.startAt ?? undefined : program.instructorApplicationStartDate,
-    useRow ? row?.endAt ?? undefined : program.instructorApplicationEndDate
+    useInstructorRow ? row?.startAt ?? undefined : program.instructorApplicationStartDate,
+    useInstructorRow ? row?.endAt ?? undefined : program.instructorApplicationEndDate
   )
   const lifecycle = resolveInstructorRecruitmentLifecycle(recruitmentStatus)
 
@@ -103,7 +105,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
     operationPeriodLabel: pickDisplayString(
       operationPeriodLabelFromWindow(row),
       audienceOperationPeriodLabelFromRecruitmentRow(program, 'instructor'),
-      useRow ? undefined : info?.operationPeriodLabel
+      useInstructorRow ? undefined : info?.operationPeriodLabel
     ),
     recruitmentStatusLabel: getRecruitmentStatusLabelForStatus(recruitmentStatus, 'instructor'),
     recruitmentStatusLifecycle: lifecycle,
@@ -111,7 +113,7 @@ export function resolveGeneralProgramInstructorRecruitmentDisplay(
     instructorTargetDetailLabel: pickDisplayString(info?.recruitmentTargetDetail),
     recruitmentPeriodLabel: pickDisplayString(
       recruitmentPeriodLabelFromWindow(row),
-      useRow ? undefined : info?.recruitmentPeriodLabel
+      useInstructorRow ? undefined : info?.recruitmentPeriodLabel
     ),
     finalPassAnnouncementDate: finalAnnouncement.date,
     finalPassAnnouncementMethod: finalAnnouncement.method,

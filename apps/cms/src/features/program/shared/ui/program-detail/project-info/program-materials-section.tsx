@@ -120,8 +120,7 @@ export function ProgramMaterialsSection({
             size="h40"
             onClick={() => void saveChanges()}
             loading={isSaving}
-            disabled={isMaterialsLoading || isCandidatesLoading}
-          >
+            disabled={isMaterialsLoading || isCandidatesLoading} >
             교재 설정 저장
           </CmsButton>
         )}

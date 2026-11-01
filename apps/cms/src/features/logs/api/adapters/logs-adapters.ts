@@ -2,10 +2,11 @@ import type {
   BugIssueLogFrontendResponse,
   DownloadLogFrontendResponse,
   PersonalInfoAccessLogFrontendResponse,
+  SystemIssueDetailResponse,
 } from '@/shared/api/generated/logs/schemas'
 import type { LogListPage } from '@/features/logs/api/log-list-page'
 import { LOG_LIST_PAGE_SIZE } from '@/features/logs/api/log-list-page'
-import type { BugIssueLog } from '@/types/bug-issue-log'
+import type { BugIssueLog, BugIssueLogDetail } from '@/types/bug-issue-log'
 import type { DownloadLog } from '@/types/download-log'
 import type { MemberLoginLog } from '@/types/member-login-log'
 import type { PersonalInfoAccessLog } from '@/types/personal-info-access-log'
@@ -127,6 +128,8 @@ export function mapPersonalInfoAccessLogResponse(
     accessorName: dto.accessorName ?? '-',
     accessedAt: dto.accessedAt ?? new Date().toISOString(),
     ipAddress: dto.ipAddress ?? '-',
+    result: dto.result?.trim() || '-',
+    traceId: dto.traceId?.trim() || '-',
   }
 }
 
@@ -179,4 +182,32 @@ export function mapBugIssueLogListPageResponse(payload: unknown): LogListPage<Bu
   return mapLogListPage(payload, (dto: BugIssueLogFrontendResponse) =>
     mapBugIssueLogResponse(dto)
   )
+}
+
+function dash(value: string | null | undefined): string {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : '-'
+}
+
+function actorTypeLabel(actorType: string | undefined): string {
+  const key = actorType?.trim().toUpperCase()
+  if (key === 'SYSTEM') return '시스템'
+  if (key === 'ADMIN') return '관리자'
+  if (key === 'MEMBER') return '회원'
+  return dash(actorType)
+}
+
+export function mapSystemIssueDetailResponse(
+  dto: SystemIssueDetailResponse
+): BugIssueLogDetail {
+  return {
+    issueId: dto.issueId != null ? String(dto.issueId) : '-',
+    messageKo: dash(dto.messageKo),
+    message: dash(dto.message),
+    apiPath: dash(dto.apiPath),
+    featureKey: dash(dto.featureKey),
+    screenKey: dash(dto.screenKey),
+    actorType: dash(dto.actorType),
+    actorTypeLabel: actorTypeLabel(dto.actorType),
+  }
 }

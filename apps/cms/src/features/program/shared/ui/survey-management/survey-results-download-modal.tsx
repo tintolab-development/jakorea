@@ -53,23 +53,19 @@ export function SurveyResultsDownloadModal({
           <CmsButton
             variant="secondary"
             size="medium"
-            width={120}
             type="button"
             onClick={handleCancel}
-            disabled={downloading}
-          >
+            disabled={downloading} >
             {copy.cancelButton}
           </CmsButton>
           <CmsButton
             variant="primary"
             size="medium"
-            width={140}
             type="button"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
             loading={downloading}
-            onClick={handleDownload}
-          >
+            onClick={handleDownload} >
             {copy.downloadButton}
           </CmsButton>
         </div>

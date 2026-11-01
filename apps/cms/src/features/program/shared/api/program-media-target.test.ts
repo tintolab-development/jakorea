@@ -29,6 +29,62 @@ describe('fetchProgramMediaThumbnail', () => {
   })
 })
 
+describe('fetchProgramMediaThumbnail — 참여자 행에만 썸네일이 있을 때 (186486)', () => {
+  const base = {
+    id: '186486',
+    backendProgramType: 'GENERAL_INDIVIDUAL',
+    programRecruitments: [
+      { id: 187022, recruitmentType: 'PARTICIPANT', thumbnailFileObjectId: 2056325 },
+      { id: 187023, recruitmentType: 'INSTRUCTOR', thumbnailFileObjectId: null },
+      { id: 187024, recruitmentType: 'VOLUNTEER', thumbnailFileObjectId: null },
+    ],
+    registrationOverlay: {
+      'recruit.detailInfo.thumbFileObjectId': 2056325,
+      'recruit.detailInfo.thumbFileName': '개인봉사자.png',
+      'recruitInstructor.detailInfo.thumbFileName': null,
+      'recruitVolunteer.detailInfo.thumbFileName': null,
+    },
+  }
+
+  it('참여자 행은 썸네일 파일명을 표시한다', async () => {
+    const thumbnail = await fetchProgramMediaThumbnail({
+      ...base,
+      activeRecruitmentId: 187022,
+    } as unknown as Program)
+    expect(thumbnail.fileObjectId).toBe(2056325)
+    expect(thumbnail.originalFileName).toBe('개인봉사자.png')
+  })
+
+  it.each([
+    ['강사', 187023],
+    ['봉사자', 187024],
+  ])('%s 행은 참여자 파일명을 가져오지 않는다', async (_label, activeRecruitmentId) => {
+    const thumbnail = await fetchProgramMediaThumbnail({
+      ...base,
+      activeRecruitmentId,
+    } as unknown as Program)
+    expect(thumbnail.fileObjectId).toBeNull()
+    expect(thumbnail.originalFileName).toBeNull()
+  })
+
+  it('강사 행에 썸네일이 있으면 강사 prefix 파일명만 쓴다', async () => {
+    const thumbnail = await fetchProgramMediaThumbnail({
+      ...base,
+      activeRecruitmentId: 187023,
+      programRecruitments: [
+        base.programRecruitments[0],
+        { id: 187023, recruitmentType: 'INSTRUCTOR', thumbnailFileObjectId: 2056400 },
+      ],
+      registrationOverlay: {
+        ...base.registrationOverlay,
+        'recruitInstructor.detailInfo.thumbFileName': '강사.png',
+      },
+    } as unknown as Program)
+    expect(thumbnail.fileObjectId).toBe(2056400)
+    expect(thumbnail.originalFileName).toBe('강사.png')
+  })
+})
+
 describe('resolveProgramMediaThumbnailUploadOwner', () => {
   it('UJAT 등록 초안은 가짜 programId 대신 ownerId null draft로 올린다', () => {
     expect(

@@ -47,7 +47,7 @@ export function getUjatEducationA4ParagraphGap(
 }
 
 const UJAT_JOURNAL_USER_INFO_PREVIEW_SAMPLES: UserInfoPreviewValues = {
-  name: '홍길동',
+  name: '이름예시',
   teamPartnerName: '이순신',
 }
 

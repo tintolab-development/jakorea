@@ -131,8 +131,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
                 variant="secondary"
                 size="large"
                 icon={<ButtonDownloadIcon />}
-                onClick={handleDownload}
-              >
+                onClick={handleDownload} >
                 문서 다운로드
               </CmsButton>
               <span className="file-upload-picker">
@@ -148,8 +147,7 @@ export function CrimeRecordConsentDocumentFullpageModal({
                   variant="primary"
                   size="large"
                   tabIndex={-1}
-                  onClick={handlePickDocument}
-                >
+                  onClick={handlePickDocument} >
                   문서 변경
                 </CmsButton>
               </span>

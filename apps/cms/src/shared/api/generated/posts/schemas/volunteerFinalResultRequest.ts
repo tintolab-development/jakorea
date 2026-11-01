@@ -25,8 +25,8 @@ export interface VolunteerFinalResultRequest {
      * @maxLength 500
      */
   reason?: string;
-  /** 최종 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL */
+  /** 최종 결과 알림 시점. IMMEDIATE | ON_ANNOUNCEMENT | MANUAL | SCHEDULED. SCHEDULED는 MANUAL과 동일하며 scheduledAt 필수. */
   notifyTiming?: string;
-  /** notifyTiming=MANUAL일 때 필수. 현재 시각 이후 ISO-8601 */
+  /** notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601 */
   scheduledAt?: string;
 }

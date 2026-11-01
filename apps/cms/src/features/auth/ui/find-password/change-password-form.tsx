@@ -108,10 +108,8 @@ export function FindPasswordChangeForm({
             variant="primary"
             size="h52"
             type="submit"
-            width="100%"
             loading={isSubmitting}
-            disabled={!canSubmit}
-          >
+            disabled={!canSubmit} >
             비밀번호 변경하기
           </CmsButton>
         </div>

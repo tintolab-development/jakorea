@@ -28,11 +28,17 @@ export async function fetchGeminiTrainingReportsRemotePage(params?: {
   programId?: number
   page?: number
   size?: number
+  instructorName?: string
+  trainingLocation?: string
 }): Promise<GeminiTrainingReportsRemotePage> {
   const pageParam = params?.page ?? 0
   const sizeParam = params?.size ?? GEMINI_PERFORMANCE_LIST_PAGE_SIZE
   const query = new URLSearchParams()
   if (params?.programId != null) query.set('programId', String(params.programId))
+  const instructorName = params?.instructorName?.trim()
+  if (instructorName) query.set('instructorName', instructorName)
+  const trainingLocation = params?.trainingLocation?.trim()
+  if (trainingLocation) query.set('trainingLocation', trainingLocation)
   query.set('page', String(pageParam))
   query.set('size', String(sizeParam))
   const body = await unwrapApiBody<GeminiTrainingReportListResponse | GeminiTrainingReportItem[]>(

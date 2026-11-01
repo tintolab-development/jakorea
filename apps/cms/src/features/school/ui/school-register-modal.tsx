@@ -173,8 +173,7 @@ export function SchoolRegisterModal({
             type="submit"
             form={FORM_ID}
             loading={loading}
-            disabled={loading}
-          >
+            disabled={loading} >
             신규 등록
           </CmsButton>
         </>

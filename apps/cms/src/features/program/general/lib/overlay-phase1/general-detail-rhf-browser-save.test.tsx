@@ -359,7 +359,9 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
       overlay?.['generalRegistration.educationScheduleSettings.scheduleLines']
     expect(Array.isArray(overlayScheduleLines) && overlayScheduleLines.length > 0).toBe(true)
     expect(overlay?.['generalRegistration.typeSettings.singleEducationForm']).toBe('offline')
-    expect(overlay?.['generalRegistration.typeSettings.multiCommonEducationForm']).toBe('offline')
+    expect(overlay).not.toHaveProperty(
+      'generalRegistration.typeSettings.multiCommonEducationForm'
+    )
 
     const mergedCommon = {
       ...program.generalCommonInfo,

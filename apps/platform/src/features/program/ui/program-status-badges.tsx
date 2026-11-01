@@ -8,7 +8,7 @@ import styles from './program-status-badges.module.css'
 type ProgramStatusBadgesProps = {
   recruitmentStatus: RecruitmentStatus
   educationTargetLabel: string
-  educationForm: EducationForm
+  educationForm?: EducationForm
   educationFormLabel: string
   /** 케이스 역할 배지 (강사·봉사자·기관·교육생). 없거나 참여자면 비노출 */
   recruitmentRoleLabel?: string
@@ -87,15 +87,17 @@ export function ProgramStatusBadges({
         </PFCategoryBadge>
       ) : null}
 
-      <PFCategoryBadge
-        size={categoryBadgeSize}
-        variant="secondary"
-        icon={categoryIcon}
-        iconVariant="primary"
-        className={badgeClassName}
-      >
-        {educationTargetLabel}
-      </PFCategoryBadge>
+      {educationTargetLabel.trim() ? (
+        <PFCategoryBadge
+          size={categoryBadgeSize}
+          variant="secondary"
+          icon={categoryIcon}
+          iconVariant="primary"
+          className={badgeClassName}
+        >
+          {educationTargetLabel}
+        </PFCategoryBadge>
+      ) : null}
 
       {educationFormLabel.trim() ? (
         <PFCategoryBadge

@@ -20,4 +20,6 @@ export interface UjatDgbongPartnerAssignmentResponse {
   assignedAt?: string;
   cancelledAt?: string;
   cancelReason?: string;
+  /** 배정 알림(ACTIVITY_ORGANIZATION_ASSIGNED)이 회원에게 이미 노출되었거나 외부 발송 처리에 들어갔는지 여부. false면 발송 전(예약 포함). true면 취소 시 reason 필수 + timing/scheduledAt으로 회원 취소 알림. */
+  assignmentNotificationSent: boolean;
 }

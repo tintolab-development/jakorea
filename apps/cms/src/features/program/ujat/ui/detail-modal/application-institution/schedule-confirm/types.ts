@@ -76,7 +76,10 @@ export type UjatScheduleConfirmFilters = {
   teacherName: string
 }
 
-/** 안내 사항 블록 — 기관 확인 완료·승인 완료에서 노출 */
+/**
+ * 안내 사항 블록 — 기관 확인 완료·승인 완료에서 노출.
+ * 확인 중·수정 요청·신청 반려에서는 숨김.
+ */
 export function shouldShowScheduleConfirmGuidanceNotes(
   status: UjatInstitutionScheduleConfirmStatus | null
 ): boolean {

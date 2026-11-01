@@ -1,74 +1,29 @@
 /**
- * UJAT 교육 진행 · 참여 기관 상세 — 승인 기관 신청 목록에서 hydrate
+ * UJAT 교육 진행 · 참여 기관 상세 — Admin detail + temporary-schedule SSOT
  */
 
 import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import {
+  listAdminCommentsByTargetRemote,
+  resolveLatestAdminCommentText,
+} from '@/features/program/general/api/admin-comments-api-client'
+import { parseOrganizationApplicationIdFromSchoolId } from '@/features/program/general/api/adapters/program-post-adapters'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { EducationProgressHalfKey } from '@/features/program/ujat/ui/detail-modal/progress/tabs'
-import type {
-  UjatEducationProgressInstitutionConfirmedScheduleRow,
-  UjatEducationProgressInstitutionDetail,
-} from './types'
+import type { UjatEducationProgressInstitutionDetail } from './types'
 import {
   formatUjatInstitutionFridayDisplay,
   resolveEducationSemesterForIsoDate,
-  type UjatInstitutionScheduleAssignDateEntry,
 } from '@/features/program/ujat/ui/detail-modal/application-institution/education-schedule'
 import { useUjatProgramScheduleDates } from '@/features/program/ujat/ui/detail-modal/application-institution/use-program-schedule-dates'
-import { getUjatScheduleAssignRegionState } from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-assign/store'
 import {
-  formatGradeClassSectionLabel,
-  parseGradeClassSectionValue,
-} from '@/features/program/ujat/ui/detail-modal/application-institution/list/grade-class-sections'
-import type { UjatInstitutionApplicationRegionKey } from '@/features/program/ujat/ui/detail-modal/application-institution/list/regions'
-
-const DEFAULT_GUIDANCE = {
-  deviceAvailability: '-',
-  waitingAreaGuide: '-',
-  leftoverTextbookDisposal: '-',
-  parkingAndNotes: '-',
-  snackAvailability: '-',
-  criminalRecordCheckRequest: '-',
-} as const
-
-function buildConfirmedEducationScheduleRows(
-  institutionId: string,
-  regionKey: UjatInstitutionApplicationRegionKey,
-  half: EducationProgressHalfKey,
-  scheduleDates: readonly UjatInstitutionScheduleAssignDateEntry[]
-): UjatEducationProgressInstitutionConfirmedScheduleRow[] {
-  const state = getUjatScheduleAssignRegionState(regionKey)
-  const rows: UjatEducationProgressInstitutionConfirmedScheduleRow[] = []
-
-  for (const isoDate of Object.keys(state.days).sort()) {
-    const known = scheduleDates.find(entry => entry.isoDate === isoDate)
-    const semester = known?.semester ?? resolveEducationSemesterForIsoDate(isoDate)
-    if (semester !== half) continue
-    const day = state.days[isoDate]
-    if (!day) continue
-
-    const classLabels: string[] = []
-    for (const assignRow of day.rows) {
-      if (assignRow.institutionRowId !== institutionId) continue
-      for (const value of assignRow.gradeValues) {
-        const parsed = parseGradeClassSectionValue(value)
-        if (!parsed) continue
-        classLabels.push(formatGradeClassSectionLabel(parsed))
-      }
-    }
-
-    if (classLabels.length === 0) continue
-
-    rows.push({
-      id: `${institutionId}-${isoDate}`,
-      dateDisplay: formatUjatInstitutionFridayDisplay(isoDate),
-      classLabels,
-    })
-  }
-
-  return rows
-}
+  buildProgressConfirmedScheduleRowsFromTemporarySchedule,
+  mapUjatOrganizationGuidanceNotes,
+} from '@/features/program/ujat/ui/detail-modal/application-institution/schedule-confirm/build-confirmed-detail'
 
 export function useUjatEducationProgressInstitutionDetail(input: {
   programId: string
@@ -82,26 +37,67 @@ export function useUjatEducationProgressInstitutionDetail(input: {
     programId,
   })
 
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
+  const applicationNumericId = parseOrganizationApplicationIdFromSchoolId(institutionId)
+  const commentsQuery = useQuery({
+    queryKey: ujatQueryKeys.organizationApplicationComments(programId, institutionId),
+    queryFn: () =>
+      listAdminCommentsByTargetRemote({
+        targetType: 'ORGANIZATION_APPLICATION',
+        targetId: applicationNumericId!,
+        screenCode: 'ORGANIZATION_APPLICATION',
+      }),
+    enabled: remoteEnabled && applicationNumericId != null,
+    staleTime: 60_000,
+    retry: false,
+  })
+
+  const remoteDetail = applicationDetail.remoteDetail
+
   const detail = useMemo((): UjatEducationProgressInstitutionDetail | null => {
     const row = applicationDetail.row
     const application = applicationDetail.detail
     if (!row || !application) return null
+
+    const guidanceNotes = mapUjatOrganizationGuidanceNotes(remoteDetail)
+    const confirmedScheduleRows = buildProgressConfirmedScheduleRowsFromTemporarySchedule({
+      institutionId,
+      half,
+      temporarySchedule: applicationDetail.temporarySchedule,
+      resolveHalf: isoDate => {
+        const known = scheduleDates.find(entry => entry.isoDate === isoDate)
+        return known?.semester ?? resolveEducationSemesterForIsoDate(isoDate)
+      },
+      formatDateDisplay: formatUjatInstitutionFridayDisplay,
+    })
+
     return {
       institutionId,
       half,
       institutionName: row.institutionName,
       educationRegion: getUjatEducationRegionLabel(row.regionKey, row.regionKey),
-      adminComment: '',
+      adminComment: resolveLatestAdminCommentText(commentsQuery.data) ?? '',
       applicationDetail: application,
-      confirmedScheduleRows: buildConfirmedEducationScheduleRows(
-        institutionId,
-        row.regionKey,
-        half,
-        scheduleDates
-      ),
-      guidance: { ...DEFAULT_GUIDANCE },
+      confirmedScheduleRows,
+      guidance: {
+        deviceAvailability: guidanceNotes.searchDeviceGrade6,
+        waitingAreaGuide: guidanceNotes.waitingArea,
+        leftoverTextbookDisposal: guidanceNotes.textbookDisposalLocation,
+        parkingAndNotes: guidanceNotes.otherSpecialNotes,
+        snackAvailability: guidanceNotes.snackAvailability,
+        criminalRecordCheckRequest: guidanceNotes.sexOffenderCheck,
+      },
     }
-  }, [applicationDetail.detail, applicationDetail.row, half, institutionId, scheduleDates])
+  }, [
+    applicationDetail.detail,
+    applicationDetail.temporarySchedule,
+    applicationDetail.row,
+    commentsQuery.data,
+    half,
+    institutionId,
+    remoteDetail,
+    scheduleDates,
+  ])
 
   return {
     detail,

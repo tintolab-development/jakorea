@@ -11,6 +11,7 @@ import {
   PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED,
   PROGRAM_VOLUNTEER_RECRUITMENT_EDIT_PERIOD_ENDED,
 } from '@/shared/lib/program-edit-window-error-message'
+import { isFormTemplatePublishAfterSaveError } from '@/features/template/api/form-template-publish-after-save-error'
 
 const APPLICATION_FORM_WRITE_CONFLICT_CODES = new Set([
   PROGRAM_PARTICIPANT_RECRUITMENT_EDIT_PERIOD_ENDED,
@@ -19,6 +20,9 @@ const APPLICATION_FORM_WRITE_CONFLICT_CODES = new Set([
 ])
 
 function resolveSaveFailureMessage(error?: unknown): string {
+  if (isFormTemplatePublishAfterSaveError(error)) {
+    return error.message
+  }
   const code = getApiErrorCode(error)
   if (
     getApiErrorHttpStatus(error) === 409 &&

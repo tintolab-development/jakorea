@@ -9,7 +9,7 @@ import { cacheProjectedProgramPrivacy } from '@/features/program/shared/lib/prog
 import type { Program } from '@/types/domain'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { GeneralIndividualApplicantRow } from '@/features/program/general/model/individual-applicant'
-import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { MESSAGES } from '@/shared/constants/messages'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
@@ -22,7 +22,11 @@ import {
   unmaskIndividualApplicationPrivacyRemote,
   updateIndividualApplication,
 } from '@/features/program/general/api/applications-api-client'
-import { resolveIndividualApplicationTeamDetail } from '@/features/program/general/lib/individual-application-team-detail'
+import {
+  INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT,
+  isIndividualApplicationApprovedOnlyUpdateError,
+  resolveIndividualApplicationTeamDetail,
+} from '@/features/program/general/lib/individual-application-team-detail'
 import {
   extractApiErrorMessage,
   getApiErrorHttpStatus,
@@ -66,7 +70,18 @@ import {
   buildParticipatingSchoolSessionKey,
 } from '@/features/program/general/lib/participating-institution-activity-withdraw'
 import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
-import { isWithinStudentCertificateIssuancePeriod } from '@/features/program/general/lib/resolve-student-certificate-kind'
+import {
+  CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+  certificateIssuePrecheckBlockMessage,
+} from '@/features/program/shared/lib/certificate-eligibility'
+import {
+  CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+  fetchCertificateEligibility,
+  getCertificateEligibilityErrorMessage,
+  resolveCertificateIssuePrecheckMessage,
+} from '@/features/program/shared/api/certificate-serial-api'
+import { parseCertificateSerialInt64 } from '@/features/program/shared/lib/certificate-serial'
+import { cmsQueryKeys } from '@/shared/api/query-keys'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import {
@@ -78,10 +93,7 @@ import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/moda
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { handleError } from '@/shared/utils/error-handler'
 import { ApplicantGeneralIndividualBasicInfo } from '../applications/applicant-detail/individual-basic-info'
-import {
-  ParticipatingIndividualParticipantAttendanceSection,
-  type ParticipatingIndividualParticipantAttendanceSectionHandle,
-} from './participating-individual-participant-attendance-section'
+import { ParticipatingIndividualParticipantAttendanceSection } from './participating-individual-participant-attendance-section'
 import {
   ParticipatingIndividualParticipantAssignmentSection,
   type ParticipatingIndividualParticipantAssignmentSectionHandle,
@@ -124,8 +136,6 @@ export function ParticipatingParticipantFullpageView({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const progressRemoteEnabled = shouldUseGeneralProgramProgressRemoteApi()
-  const attendanceSectionRef =
-    useRef<ParticipatingIndividualParticipantAttendanceSectionHandle>(null)
   const assignmentSectionRef =
     useRef<ParticipatingIndividualParticipantAssignmentSectionHandle>(null)
   const [submissionTeamRejected, setSubmissionTeamRejected] = useState(false)
@@ -144,6 +154,7 @@ export function ParticipatingParticipantFullpageView({
   const [certificateExportContext, setCertificateExportContext] =
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
+  const [certificateEligibilityChecking, setCertificateEligibilityChecking] = useState(false)
   const availableTabKeys = useMemo(() => getParticipantDetailTabKeys(program), [program])
   const visibleActiveTab = availableTabKeys.includes(activeTab) ? activeTab : 'application'
 
@@ -161,6 +172,23 @@ export function ParticipatingParticipantFullpageView({
 
   const sessions = mergedParticipant.sessions ?? []
   const isActivityWithdrawn = mergedParticipant.activityWithdrawn === true
+
+  const certificateParticipantId = parseCertificateSerialInt64(mergedParticipant.id)
+  const certificateEligibilityQuery = useQuery({
+    queryKey: cmsQueryKeys.certificates.eligibility(
+      certificateParticipantId ?? 0,
+      CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION
+    ),
+    queryFn: () =>
+      fetchCertificateEligibility({
+        participantId: certificateParticipantId as number,
+        certificateType: CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+      }),
+    enabled: certificateParticipantId != null,
+  })
+  const certificateIssueBlockMessage = certificateIssuePrecheckBlockMessage(
+    certificateEligibilityQuery.data
+  )
 
   const educationScopeQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.educationScope(program.id, mergedParticipant.id),
@@ -485,14 +513,39 @@ export function ParticipatingParticipantFullpageView({
     ]
   )
 
-  const handleCertificateIssueClick = useCallback(() => {
-    if (certificateExportActive) return
-    if (!isWithinStudentCertificateIssuancePeriod(mergedParticipant.participationAppliedAt)) {
+  const handleCertificateIssueClick = useCallback(async () => {
+    if (certificateExportActive || certificateEligibilityChecking || isApplicationInfoEditing) {
       return
     }
-    if (isApplicationInfoEditing) return
-    setCertificateIssueModalOpen(true)
-  }, [certificateExportActive, isApplicationInfoEditing, mergedParticipant.participationAppliedAt])
+    if (certificateIssueBlockMessage) {
+      showAlert({ title: '안내', content: certificateIssueBlockMessage })
+      return
+    }
+    setCertificateEligibilityChecking(true)
+    try {
+      const blockMessage = await resolveCertificateIssuePrecheckMessage(mergedParticipant.id)
+      if (blockMessage) {
+        showAlert({ title: '안내', content: blockMessage })
+        return
+      }
+      setCertificateIssueModalOpen(true)
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content:
+          getCertificateEligibilityErrorMessage(error) || CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
+      })
+    } finally {
+      setCertificateEligibilityChecking(false)
+    }
+  }, [
+    certificateEligibilityChecking,
+    certificateExportActive,
+    certificateIssueBlockMessage,
+    isApplicationInfoEditing,
+    mergedParticipant.id,
+    showAlert,
+  ])
 
   const handleCertificateIssueModalCancel = useCallback(() => {
     setCertificateIssueModalOpen(false)
@@ -623,17 +676,21 @@ export function ParticipatingParticipantFullpageView({
           queryKey: generalApplicationsQueryKeys.individualDetail(individualApplicationId),
         })
       } catch (error) {
-        const responseData =
-          error && typeof error === 'object' && 'response' in error
-            ? (error as { response?: { data?: unknown } }).response?.data
-            : undefined
-        void showAlert({
-          title: '팀 역할 저장 실패',
-          content: extractApiErrorMessage(responseData, {
-            httpStatus: getApiErrorHttpStatus(error),
-            fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
-          }),
-        })
+        if (isIndividualApplicationApprovedOnlyUpdateError(error)) {
+          void showAlert(INDIVIDUAL_TEAM_EDIT_AFTER_APPROVAL_ALERT)
+        } else {
+          const responseData =
+            error && typeof error === 'object' && 'response' in error
+              ? (error as { response?: { data?: unknown } }).response?.data
+              : undefined
+          void showAlert({
+            title: '팀 역할 저장 실패',
+            content: extractApiErrorMessage(responseData, {
+              httpStatus: getApiErrorHttpStatus(error),
+              fallback: '팀 역할을 저장하지 못했습니다. 다시 시도해 주세요.',
+            }),
+          })
+        }
         throw error
       }
     },
@@ -659,73 +716,58 @@ export function ParticipatingParticipantFullpageView({
         trailing={
           visibleActiveTab === 'application' ? (
             <>
-              <CmsButton
-                variant="delete"
-                size="h40"
-                disabled={
-                  isActivityWithdrawn ||
-                  isApplicationInfoEditing ||
-                  activityWithdrawSubmitting ||
-                  activityWithdrawScheduleOptions.length === 0
-                }
-                onClick={handleRequestActivityWithdraw}
-              >
-                활동 포기
-              </CmsButton>
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                icon={<ButtonDownloadIcon />}
-                disabled={
-                  certificateExportActive ||
-                  isApplicationInfoEditing ||
-                  !isWithinStudentCertificateIssuancePeriod(
-                    mergedParticipant.participationAppliedAt
-                  )
-                }
-                onClick={handleCertificateIssueClick}
-              >
-                수료증/참여인증서 발급
-              </CmsButton>
+              {!isApplicationInfoEditing ? (
+                <>
+                  <CmsButton
+                    variant="delete"
+                    size="h40"
+                    disabled={
+                      isActivityWithdrawn ||
+                      activityWithdrawSubmitting ||
+                      activityWithdrawScheduleOptions.length === 0
+                    }
+                    onClick={handleRequestActivityWithdraw} >
+                    활동 포기
+                  </CmsButton>
+                  <CmsButton
+                    variant="secondary"
+                    size="h40"
+                    icon={<ButtonDownloadIcon />}
+                    disabled={
+                      certificateExportActive ||
+                      certificateEligibilityChecking ||
+                      certificateIssueBlockMessage != null
+                    }
+                    onClick={() => {
+                      void handleCertificateIssueClick()
+                    }} >
+                    수료증/참여인증서 발급
+                  </CmsButton>
+                </>
+              ) : null}
               <ProgramEditInfoActions
                 size="h40"
-                width={false}
                 isEditing={isApplicationInfoEditing}
                 onEdit={requestStartApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}
                 onSave={() => {
                   void saveApplicationInfoEdit()
-                }}
-              />
-              <CmsButton
-                variant="primary"
-                size="h40"
-                disabled={isApplicationInfoEditing}
-                onClick={handleAdminCommentEditEnter}
-              >
-                코멘트 작성
-              </CmsButton>
-              <PersonalInfoRevealButton disabled={programPrivacyPending}
-                labelMode="stickyReveal"
-                revealed={personalInfoRevealed}
-                cmsSize="h40"
-                width="auto"
-                onClick={openPersonalInfoRevealConfirm}
-              />
-            </>
-          ) : visibleActiveTab === 'attendance' ? (
-            <>
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                onClick={() => attendanceSectionRef.current?.openAttendanceCorrectionModal()}
-              >
-                출결 정정
-              </CmsButton>
-              <ExcelButton
-                size="h40"
-                onClick={() => attendanceSectionRef.current?.exportExcel()}
-              />
+                }} />
+              {!isApplicationInfoEditing ? (
+                <>
+                  <CmsButton
+                    variant="primary"
+                    size="h40"
+                    onClick={handleAdminCommentEditEnter} >
+                    코멘트 작성
+                  </CmsButton>
+                  <PersonalInfoRevealButton disabled={programPrivacyPending}
+                    labelMode="stickyReveal"
+                    revealed={personalInfoRevealed}
+                    cmsSize="h40"
+                    onClick={openPersonalInfoRevealConfirm} />
+                </>
+              ) : null}
             </>
           ) : visibleActiveTab === 'assignments' ? (
             <>
@@ -733,21 +775,10 @@ export function ParticipatingParticipantFullpageView({
                 <CmsButton
                   variant="secondary"
                   size="h40"
-                  onClick={() => assignmentSectionRef.current?.openTeamChangeModal()}
-                >
+                  onClick={() => assignmentSectionRef.current?.openTeamChangeModal()} >
                   팀 변경
                 </CmsButton>
               ) : null}
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                icon={<ButtonDownloadIcon />}
-                adminAction="download"
-                onClick={() => assignmentSectionRef.current?.bulkDownloadAssignments()}
-              >
-                과제 일괄 다운로드
-              </CmsButton>
-              <ExcelButton onClick={() => assignmentSectionRef.current?.exportExcel()} />
             </>
           ) : null
         }
@@ -786,7 +817,6 @@ export function ParticipatingParticipantFullpageView({
             aria-label="출석 관리"
           >
             <ParticipatingIndividualParticipantAttendanceSection
-              ref={attendanceSectionRef}
               program={program}
               participant={mergedParticipant}
               assignedSessions={progressScheduleSessions}
@@ -802,6 +832,8 @@ export function ParticipatingParticipantFullpageView({
               ref={assignmentSectionRef}
               program={program}
               participant={mergedParticipant}
+              assignedSessions={progressScheduleSessions}
+              assignedSessionsLoading={progressScheduleSessionsLoading}
               onTeamFeatureNotApplicable={handleSubmissionTeamNotApplicable}
             />
           </div>
@@ -813,6 +845,8 @@ export function ParticipatingParticipantFullpageView({
             <ParticipatingParticipantSettlementSection
               program={program}
               participant={mergedParticipant}
+              assignedSessions={progressScheduleSessions}
+              assignedSessionsLoading={progressScheduleSessionsLoading}
             />
           </div>
         ) : null}

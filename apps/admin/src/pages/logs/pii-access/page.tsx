@@ -19,7 +19,6 @@ import {
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-  FILTER_SEARCH_BUTTON_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -308,14 +307,11 @@ export function PiiAccessLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton
-                className="admin-filter-area__search-button"
+              <CmsButton className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
-                width={FILTER_SEARCH_BUTTON_WIDTH_PX}
                 type="button"
-                onClick={applySearch}
-              >
+                onClick={applySearch} >
                 조회
               </CmsButton>
             </div>

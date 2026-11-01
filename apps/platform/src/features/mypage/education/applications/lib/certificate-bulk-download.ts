@@ -2,6 +2,10 @@ import type {
   PortalStudentRosterItem,
   PortalStudentRosterResponse,
 } from '../api/student-documents-types'
+import {
+  CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE,
+  CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE,
+} from './certificate-reason-messages'
 
 /** OpenAPI `PortalCertificateBulkDownloadRequest.rosterIds.maxItems` */
 export const CERTIFICATE_BULK_DOWNLOAD_MAX_ROSTERS = 100
@@ -26,6 +30,7 @@ const CERTIFICATE_BULK_DOWNLOAD_FALLBACK_BY_CODE: Record<string, string> = {
     '이름 또는 프로그램명이 없어 수료증을 만들 수 없습니다.',
   CERTIFICATE_OFFICIAL_TEMPLATE_UNAVAILABLE:
     '수료증 양식 또는 서버 설정에 문제가 있습니다. 관리자에게 문의해 주세요.',
+  [CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE]: CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE,
 }
 
 export class CertificateBulkDownloadError extends Error {

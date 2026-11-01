@@ -15,14 +15,12 @@ export type UjatEducationProgressVolunteerGrade =
   | '휴학'
   | '졸업유예'
 
-/** 회원 관리 > 봉사자 — 봉사자 추가 등록 셀렉트 옵션 */
+/** 봉사자 추가 등록 셀렉트 옵션 — GET …/participant-register-candidates */
 export type UjatEducationProgressVolunteerMemberCandidate = {
   memberId: string
   volunteerName: string
-  grade: UjatEducationProgressVolunteerGrade
-  regionKey: UjatInstitutionApplicationRegionKey
-  mobile: string
-  email: string
+  /** 회원 프로필에 1365 ID가 이미 등록되어 있으면 true */
+  hasRegisteredId1365?: boolean
 }
 
 export type UjatEducationProgressVolunteerRow = {

@@ -12,9 +12,28 @@
   margin-bottom: var(--spacing-40);
 }
 
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-12);
+  margin-bottom: var(--spacing-40);
+}
+
 .pageTitle {
   margin: 0;
-  margin-bottom: var(--spacing-40);
+}
+
+.devMockBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-8);
+  background: var(--color-warning-100, #fff4e5);
+  color: var(--color-warning-800, #8a4b00);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .summary {
@@ -220,4 +239,78 @@
 
 .form :global(.form-template-host .paragraph-card .paragraph-input__required) {
   color: var(--color-status-error-default);
+}
+
+/*
+ * 시안 11265-96723 · 디자인 시스템 토큰 맞춤 (신청하기 화면 한정)
+ * - 표 선 #d9d9d9(border-default) · 표 머리 #eef3f4(neutral-cool-80) · 표 모서리 24
+ * - 표 칸 여백 11/16 → 44px 입력 + 칸 높이 66
+ * - 입력 placeholder #999(neutral-warm-500)
+ * - 라디오 24px (선택 2px 링 + 14px 점), 항목 간격 24
+ */
+.form :global(.form-template-host[data-surface='platformUser']) {
+  --table-line: var(--color-border-default);
+  --table-header-line: var(--color-border-default);
+  --BG-header: var(--color-neutral-cool-80);
+  --pf-form-field-table-radius: var(--radius-24);
+  --pf-form-field-label-bg: var(--color-neutral-cool-80);
+  --pf-form-field-content-padding: 11px var(--spacing-16);
+  --pf-form-field-content-vertical-padding: var(--spacing-16);
+}
+
+.form :global(.form-template-host .form-template-horizontal-table__row--header),
+.form :global(.form-template-host .form-template-vertical-table__th) {
+  background: var(--color-neutral-cool-80);
+}
+
+@media (min-width: 768px) {
+  .form :global(.form-template-host[data-surface='platformUser'] .detail-info-form__field-content) {
+    padding: 11px var(--spacing-16);
+  }
+}
+
+.form :global(.form-template-host) :is(input, textarea)::placeholder {
+  color: var(--color-neutral-warm-500);
+}
+
+.form :global(.form-template-host .app-radio-group--large.ant-radio-group) {
+  gap: var(--spacing-8) var(--spacing-24);
+}
+
+.form :global(.form-template-host .app-radio-group--large .ant-radio-wrapper) {
+  font-size: 16px;
+}
+
+.form
+  :global(
+    .form-template-host .app-radio-group--large .ant-radio-wrapper .ant-radio .ant-radio-inner
+  ) {
+  width: 24px;
+  height: 24px;
+  border-color: var(--color-border-default);
+}
+
+.form
+  :global(
+    .form-template-host
+      .app-radio-group--large
+      .ant-radio-wrapper
+      .ant-radio-checked
+      .ant-radio-inner
+  ) {
+  border-width: 2px;
+  border-color: var(--color-primary-500);
+}
+
+.form
+  :global(
+    .form-template-host
+      .app-radio-group--large
+      .ant-radio-wrapper
+      .ant-radio-checked
+      .ant-radio-inner::after
+  ) {
+  width: 14px !important;
+  height: 14px !important;
+  background-color: var(--color-primary-500);
 }

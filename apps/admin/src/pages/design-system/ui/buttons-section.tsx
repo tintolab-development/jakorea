@@ -94,8 +94,7 @@ export function ButtonsSection() {
             onClick={() => {
               setLoading(true)
               window.setTimeout(() => setLoading(false), 1200)
-            }}
-          >
+            }} >
             저장
           </CmsButton>
         </div>

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { EmployeeVolunteerCountEntryResponse } from '@/shared/api/generated/program-progress/schemas/employeeVolunteerCountEntryResponse'
 import {
   buildEmployeeVolunteerCountsPutRequest,
   buildEmployeeVolunteerSessionRowScheduleMap,
@@ -6,6 +7,20 @@ import {
   mapEmployeeVolunteerCountsGetToSessionCounts,
 } from './employee-volunteer-counts-remote'
 import type { EmployeeVolunteerSessionRow } from './employee-volunteer-session-rows'
+
+/** 테스트 fixture — OpenAPI required 필드를 채우지 않은 partial entry */
+function entry(
+  partial: Partial<EmployeeVolunteerCountEntryResponse> & Pick<EmployeeVolunteerCountEntryResponse, 'scheduleId'>
+): EmployeeVolunteerCountEntryResponse {
+  return {
+    scheduleName: '',
+    newVolunteerCount: 0,
+    reparticipationVolunteerCount: 0,
+    revision: 0,
+    confirmed: false,
+    ...partial,
+  }
+}
 
 describe('buildEmployeeVolunteerSessionRowScheduleMap', () => {
   const sessionRows: EmployeeVolunteerSessionRow[] = [
@@ -71,12 +86,12 @@ describe('mapEmployeeVolunteerCountsGetToSessionCounts', () => {
       sessionRows,
       [{ scheduleId: 1, sessionNo: 1, scheduleName: '프로그램 진행' }],
       [
-        {
+        entry({
           scheduleId: 1,
           newVolunteerCount: 0,
           reparticipationVolunteerCount: 0,
           confirmed: false,
-        },
+        }),
       ]
     )
 
@@ -88,13 +103,13 @@ describe('mapEmployeeVolunteerCountsGetToSessionCounts', () => {
       sessionRows,
       [{ scheduleId: 1, sessionNo: 1, scheduleName: '프로그램 진행' }],
       [
-        {
+        entry({
           scheduleId: 1,
           newVolunteerCount: 0,
           reparticipationVolunteerCount: 0,
           confirmed: true,
           revision: 1,
-        },
+        }),
       ]
     )
 
@@ -135,8 +150,8 @@ describe('buildEmployeeVolunteerCountsPutRequest', () => {
         round_2: { newCount: 1, returningCount: 0 },
       },
       previousEntries: [
-        { scheduleId: 20, revision: 2, confirmed: true },
-        { scheduleId: 30, revision: 0, confirmed: false },
+        entry({ scheduleId: 20, revision: 2, confirmed: true }),
+        entry({ scheduleId: 30, revision: 0, confirmed: false }),
       ],
     })
 
@@ -165,7 +180,7 @@ describe('buildEmployeeVolunteerCountsPutRequest', () => {
           round_1: { newCount: 1, returningCount: 0 },
           round_2: { newCount: 0, returningCount: 0 },
         },
-        previousEntries: [{ scheduleId: 99, revision: 0 }],
+        previousEntries: [entry({ scheduleId: 99, revision: 0 })],
       })
     ).toThrow(EmployeeVolunteerScheduleMappingError)
   })
@@ -209,8 +224,8 @@ describe('buildEmployeeVolunteerCountsPutRequest', () => {
         { scheduleId: 202, sessionNo: 1, scheduleName: '국내대회' },
       ],
       [
-        { scheduleId: 201, scheduleName: '오리엔테이션' },
-        { scheduleId: 202, scheduleName: '국내대회' },
+        entry({ scheduleId: 201, scheduleName: '오리엔테이션' }),
+        entry({ scheduleId: 202, scheduleName: '국내대회' }),
       ]
     )
 

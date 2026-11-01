@@ -3,6 +3,7 @@
  * shell: 공통 `.calendar-list` / `.calendar-list-item` (`calendar-sub-right.css`)
  */
 
+import { calendarListItemBackground } from '@/shared/components/calendar/lib/calendar-list-item-background'
 import { useCallback, useMemo } from 'react'
 import { EmptyState } from '@/shared/ui'
 import type { ParticipatingVolunteerCalendarEvent } from '@/features/program/general/lib/build-participating-volunteer-calendar-events'
@@ -137,7 +138,7 @@ export function ParticipatingVolunteersCalendarRight({
                   .join(' ')}
                 data-has-color="true"
                 style={{
-                  backgroundColor: colors.bg,
+                  backgroundColor: calendarListItemBackground(colors.bg),
                   border: `1px solid ${colors.border}`,
                 }}
               >

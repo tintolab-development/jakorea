@@ -6,7 +6,7 @@
 
 .leadingIcon {
   position: absolute;
-  left: 14px;
+  left: 12px;
   top: 50%;
   z-index: 3;
   width: 16px;
@@ -15,6 +15,10 @@
   pointer-events: none;
 }
 
+/*
+ * Figma Input 120 기준: 시계·쉐브론을 두고도 HH:mm(≈48px)이 잘리지 않게
+ * 좌 12+16+6=34 · 우 쉐브론 영역 36 → 가용 ≈50
+ */
 .trigger {
   position: absolute;
   inset: 0;
@@ -23,7 +27,7 @@
   min-width: 0;
   align-items: center;
   box-sizing: border-box;
-  padding: var(--spacing-12) 52px var(--spacing-12) 38px;
+  padding: var(--spacing-12) 36px var(--spacing-12) 34px;
   border: 0;
   background: transparent;
   text-align: left;

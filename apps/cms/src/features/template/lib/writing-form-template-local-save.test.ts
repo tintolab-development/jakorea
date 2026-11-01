@@ -101,4 +101,22 @@ describe('program registration local-only draft', () => {
     expect(loaded?.editorState?.ujatBasicInfo).toEqual(ujatBasicInfo)
     expect(loaded?.overlay).toEqual({ 'ujat.h1.event.name': '상반기 본교육' })
   })
+
+  it('forwards publishAfterSave only to the catalog-code remote save', async () => {
+    vi.mocked(saveFormTemplateVersionDraft).mockResolvedValue(undefined)
+    const draft = createProgramRegistrationDraft('general')
+
+    await persistWritingFormTemplateDraft({
+      templateId: 'survey-default',
+      draft,
+      publishAfterSave: true,
+    })
+
+    expect(saveFormTemplateVersionDraft).toHaveBeenCalledWith(
+      expect.objectContaining({
+        templateCode: 'survey-default',
+        publishAfterSave: true,
+      })
+    )
+  })
 })

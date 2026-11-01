@@ -9,11 +9,45 @@
 
 .grid {
   display: grid;
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  max-height: 280px;
   margin: 0;
+  padding: var(--spacing-16, 16px);
   gap: 12px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radius-24, 24px);
+  background: var(--color-neutral-cool-50, #f5f7f7);
+  -webkit-overflow-scrolling: touch;
+}
+
+.grid .chip {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 48px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+}
+
+.grid .chip .chipLabel {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 150%;
+  letter-spacing: -0.16px;
+  text-align: center;
 }
 
 .empty {
@@ -23,6 +57,19 @@
 
 @media (--bp-pc-up) {
   .grid {
+    max-height: none;
+    overflow: visible;
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .grid .chip {
+    height: 54px;
+    min-height: 54px;
+    padding: 13px var(--spacing-16, 16px);
+  }
+
+  .grid .chip .chipLabel {
+    font-size: 18px;
+    letter-spacing: -0.18px;
   }
 }

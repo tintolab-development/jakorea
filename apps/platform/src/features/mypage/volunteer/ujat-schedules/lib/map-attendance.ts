@@ -78,6 +78,11 @@ export function mapPortalScheduleAttendanceDetail(
 ): UjatScheduleAttendanceDetailView {
   const attendanceStatus = mapAttendance(detail.attendanceStatus)
   const assignmentStatus = displayText(detail.assignmentStatus)
+  const absenceReasonStatus = (detail.absenceReasonStatus ?? '').trim().toUpperCase()
+  const hideAbsenceReason =
+    absenceReasonStatus === 'NOT_REQUIRED' ||
+    attendanceStatus === 'present' ||
+    attendanceStatus === 'late'
   return {
     attendanceStatus,
     attendanceLabel: attendanceLabel(attendanceStatus),
@@ -85,7 +90,7 @@ export function mapPortalScheduleAttendanceDetail(
     assignmentStatus,
     assignmentStatusLabel: formatUjatAssignmentStatusLabel(detail.assignmentStatus),
     canCheckIn: detail.canCheckIn === true,
-    absenceReason: displayText(detail.absenceReason ?? undefined),
+    absenceReason: hideAbsenceReason ? '-' : displayText(detail.absenceReason ?? undefined),
     locationName: displayText(detail.locationName ?? detail.organizationName),
   }
 }

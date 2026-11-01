@@ -62,6 +62,13 @@ function formatGradeLabel(raw: string): string {
   return trimmed
 }
 
+function readClassNo(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const trimmed = readTrimmed(value)
+  if (/^\d+$/.test(trimmed)) return Number(trimmed)
+  return null
+}
+
 function formatClassLabel(classLabel: string, className: string, classNo: number | null): string {
   const labeled = classLabel.trim()
   if (labeled) return labeled.endsWith('반') || !/^\d+$/.test(labeled) ? labeled : `${labeled}반`
@@ -112,7 +119,7 @@ function mapClassRow(
   scheduleKey: string,
 ): UjatClassAssignmentRow {
   const gradeLabel = formatGradeLabel(readTrimmed(row.gradeLabel) || readTrimmed(row.grade))
-  const classNo = typeof row.classNo === 'number' && Number.isFinite(row.classNo) ? row.classNo : null
+  const classNo = readClassNo(row.classNo)
   const classLabel = formatClassLabel(
     readTrimmed(row.classLabel),
     readTrimmed(row.className),
@@ -132,10 +139,6 @@ function mapClassRow(
       formatTextbookQuantity(readTrimmed(row.textbookQuantityLabel), quantity, studentCount),
     ),
   }
-}
-
-function scheduleHasClassRows(item: PortalUjatClassAssignmentSchedule): boolean {
-  return Boolean(item.rows?.length || item.slots?.length || item.classes?.length)
 }
 
 function isClassRow(item: unknown): item is PortalUjatClassAssignmentRow {
@@ -162,7 +165,7 @@ function mapScheduleSection(
 ): UjatClassAssignmentScheduleSection | null {
   const scheduleKey = String(schedule.scheduleId ?? schedule.date ?? schedule.scheduleStartAt ?? index)
   const dateLabel = formatUjatAssignmentDateLabel(
-    readTrimmed(schedule.scheduleStartAt) || readTrimmed(schedule.date),
+    readTrimmed(schedule.date) || readTrimmed(schedule.scheduleStartAt),
   )
   const rawRows = readScheduleRows(schedule)
   const rows = applyGradeRowSpans(
@@ -227,9 +230,8 @@ export function mapPortalUjatClassAssignments(
 ): UjatClassAssignmentScheduleSection[] {
   if (!response) return []
 
-  const nested = response.schedules ?? []
-  if (nested.some(scheduleHasClassRows) || nested.length > 0) {
-    return nested
+  if (Array.isArray(response.schedules)) {
+    return response.schedules
       .map((schedule, index) => mapScheduleSection(schedule, index))
       .filter((section): section is UjatClassAssignmentScheduleSection => section != null)
   }

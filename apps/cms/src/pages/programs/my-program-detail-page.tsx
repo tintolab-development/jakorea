@@ -164,8 +164,7 @@ export function MyProgramDetailPage() {
           variant="default"
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/programs/my/active')}
-          style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }}
-        >
+          style={{ marginBottom: LAYOUT_CONSTANTS.margins.lg }} >
           목록으로
         </CmsButton>
         <EmptyState description="프로그램 정보를 찾을 수 없습니다." />
@@ -223,31 +222,27 @@ export function MyProgramDetailPage() {
         <CmsButton
           variant="default"
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/programs/my/active')}
-        >
+          onClick={() => navigate('/programs/my/active')} >
           목록으로
         </CmsButton>
         <Space>
           <CmsButton
             variant="default"
-            onClick={() => navigate(`/programs/my/${program.id}/history`)}
-          >
+            onClick={() => navigate(`/programs/my/${program.id}/history`)} >
             이력/현황 보기
           </CmsButton>
           {canSubmitSatisfaction && (
             <CmsButton
               variant="primary"
               icon={<FormOutlined />}
-              onClick={() => setSatisfactionModalOpen(true)}
-            >
+              onClick={() => setSatisfactionModalOpen(true)} >
               만족도 조사
             </CmsButton>
           )}
           <CmsButton
             variant="default"
             icon={favorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-            onClick={handleToggleFavorite}
-          >
+            onClick={handleToggleFavorite} >
             {favorite ? '관심 해제' : '관심 등록'}
           </CmsButton>
         </Space>

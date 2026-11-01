@@ -254,6 +254,8 @@ export async function createGeneralProgramPost(
     title?: string
     content: string
     visibilityType?: string
+    /** 참여 기관 상세에서 작성 시 organizationApplicationId */
+    organizationApplicationId?: number
   }
 ) {
   if (!shouldUseProgramsHttpRemoteApi()) return null
@@ -262,6 +264,7 @@ export async function createGeneralProgramPost(
     title: payload.title ?? payload.content.slice(0, 40),
     content: payload.content,
     visibilityType: payload.visibilityType,
+    organizationApplicationId: payload.organizationApplicationId,
   })
 }
 

@@ -3,12 +3,13 @@
  * 모집별 정보(`*RecruitmentInfo.finalAnnouncementLabel`)에 저장하고, 상세 조회·수정 시드에서 다시 쪼갠다.
  */
 import dayjs from 'dayjs'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
 import { formatDateOnly } from '@/features/program/shared/lib/program-detail-info-constants'
 
 type DateValue = string | Date | null | undefined
 
 const DATE_SEGMENT_RE =
-  /^(\d{4})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})\.?\s*(?:\([^)]*\))?$/
+  /^(\d{4})\s*[.\-/]\s*(\d{1,2})\s*[.\-/]\s*(\d{1,2})\.?\s*(?:\([^)]*\))?(?:\s+(\d{1,2}):(\d{2}))?$/
 
 function hasDate(value: DateValue): value is string | Date {
   if (value == null || value === '') return false
@@ -25,9 +26,15 @@ export function formatAnnouncementLabel(
   date: DateValue,
   method: string | null | undefined
 ): string | undefined {
-  const parts = [hasDate(date) ? formatDateOnly(date) : undefined, cleanMethod(method)].filter(
-    (part): part is string => Boolean(part)
-  )
+  const dateLabel = (() => {
+    if (!hasDate(date)) return undefined
+    const parsed = dayjs(date)
+    if (parsed.isValid() && dateRangeUsesClockTime(parsed, parsed)) {
+      return parsed.format('YYYY.MM.DD HH:mm')
+    }
+    return formatDateOnly(date)
+  })()
+  const parts = [dateLabel, cleanMethod(method)].filter((part): part is string => Boolean(part))
   return parts.length > 0 ? parts.join(' | ') : undefined
 }
 
@@ -44,10 +51,21 @@ export function parseAnnouncementLabel(label: string | null | undefined): Announ
   const [first = '', ...rest] = text.split('|').map(part => part.trim())
   const match = DATE_SEGMENT_RE.exec(first)
   if (!match) return { method: cleanMethod(text) }
-  const parsed = dayjs(`${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`)
+  const hour = match[4] != null ? Number(match[4]) : 0
+  const minute = match[5] != null ? Number(match[5]) : 0
+  const parsed = dayjs(
+    `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`
+  ).hour(hour).minute(minute).second(0).millisecond(0)
   const method = cleanMethod(rest.join(' | '))
   return {
-    ...(parsed.isValid() ? { date: parsed.startOf('day').toISOString() } : {}),
+    ...(parsed.isValid()
+      ? {
+          date:
+            match[4] != null
+              ? parsed.toISOString()
+              : parsed.startOf('day').toISOString(),
+        }
+      : {}),
     ...(method ? { method } : {}),
   }
 }

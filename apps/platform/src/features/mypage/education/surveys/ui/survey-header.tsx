@@ -1,63 +1,14 @@
 import type { TitleWithPeriodParagraph } from '@jakorea/form-schema/writing-form'
-import {
-  resolveTitleEndPeriodMode,
-  resolveTitleStartPeriodMode,
-  titlePeriodEndDisplayText,
-} from '@jakorea/form-schema/writing-form'
-import { formatDisplayDate } from '@/shared/lib/format-display-date'
+import { resolveEducationSurveyPeriodLabel } from '@/features/mypage/education/surveys/lib/survey-period-label'
 import { PFText } from '@/shared/ui'
 import styles from './survey-header.module.css'
+
+export { resolveEducationSurveyPeriodLabel }
 
 type EducationSurveyHeaderProps = {
   paragraph: TitleWithPeriodParagraph
   /** 바로 시작(`immediate`)일 때 노출 시작일 — 설문 생성일(ISO) */
   surveyCreatedAt?: string | null
-}
-
-function formatKoreanDatePart(raw: string): string | null {
-  const label = formatDisplayDate(raw.slice(0, 10))
-  return label || null
-}
-
-function resolveSurveyStartLabel(
-  paragraph: TitleWithPeriodParagraph,
-  surveyCreatedAt?: string | null
-): string {
-  const startMode = resolveTitleStartPeriodMode(paragraph)
-  if (startMode === 'custom' && paragraph.startAt) {
-    return formatKoreanDatePart(paragraph.startAt) ?? paragraph.startAt
-  }
-
-  const createdRaw = surveyCreatedAt ?? new Date().toISOString()
-  return formatKoreanDatePart(createdRaw) ?? createdRaw.slice(0, 10)
-}
-
-/** 설문 제목형 — 기간 항상 노출. 마감 없음은 종료일 생략(`YYYY년 M월 D일 ~`) */
-export function resolveEducationSurveyPeriodLabel(
-  paragraph: TitleWithPeriodParagraph,
-  surveyCreatedAt?: string | null
-): string {
-  const start = resolveSurveyStartLabel(paragraph, surveyCreatedAt)
-  const endMode = resolveTitleEndPeriodMode(paragraph)
-
-  if (endMode === 'immediate') {
-    return `${start} ~`
-  }
-
-  const endDisplay = titlePeriodEndDisplayText(paragraph)
-
-  if (paragraph.endPeriodPresetLabel?.trim()) {
-    return `${start} ~ ${paragraph.endPeriodPresetLabel.trim()}`
-  }
-
-  if (paragraph.endAt && formatKoreanDatePart(paragraph.endAt)) {
-    const koreanEnd = formatKoreanDatePart(paragraph.endAt)!
-    const timeMatch = endDisplay.match(/\((\d{2}:\d{2})\)/)
-    const end = timeMatch ? `${koreanEnd} (${timeMatch[1]})` : koreanEnd
-    return `${start} ~ ${end}`
-  }
-
-  return `${start} ~ ${endDisplay}`
 }
 
 export function EducationSurveyHeader({ paragraph, surveyCreatedAt }: EducationSurveyHeaderProps) {

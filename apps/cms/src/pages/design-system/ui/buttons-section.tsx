@@ -42,7 +42,7 @@ export function ButtonsSection() {
       <p className="ds-note">
         <strong>Size</strong> — h52 · h44(기본) · h40 · h36 · h32. radius h52 10 · h44·h40 8 ·
         h36·h32 6 · font-weight 600. 폭은 사이즈별 min-width(h44 140 · h40 120 · h36 100 · h32 80,
-        h52 없음)부터 라벨 길이만큼 늘어나며, <code>width</code> prop으로 고정할 수 있습니다.
+        h52 없음)부터 라벨 길이만큼 늘어납니다. <code>width</code> prop은 없습니다.
         <br />
         <strong>별칭</strong> — <code>large</code>=h44 · <code>medium</code>=h40 ·{' '}
         <code>small</code>=h32 · <code>delete</code>=error · <code>cancel</code>=default. 새 코드는
@@ -52,7 +52,7 @@ export function ButtonsSection() {
         <code>disabled</code> prop(모든 variant 공통 회색).
         <br />
         <strong>아이콘</strong> — <code>icon</code> + <code>iconPosition</code>(start | end). 크기
-        h52·h44 24 · h40·h36 20 · h32 16. <code>cms-button--action</code>은 폭 140 고정.
+        h52·h44 24 · h40·h36 20 · h32 16.
         <br />
         SSOT: <code>.cursor/rules/cms-admin-ui/cms-button-action-sizes.mdc</code>
       </p>
@@ -70,8 +70,7 @@ export function ButtonsSection() {
                     disabled={state.disabled}
                     icon={row.icon ? <ButtonDownloadIcon /> : undefined}
                     iconPosition={row.iconPosition}
-                    aria-label={`${size} ${state.key} ${row.label}`}
-                  >
+                    aria-label={`${size} ${state.key} ${row.label}`} >
                     text
                   </CmsButton>
                 ))}
@@ -99,18 +98,17 @@ export function ButtonsSection() {
           <code>secondary</code>+icon · 엑셀 <code>ExcelButton</code>
         </p>
         <div className="ds-demo__row">
-          <CmsButton variant="error" size="h44" className="cms-button--action">
+          <CmsButton variant="error" size="h44">
             선택 반려
           </CmsButton>
-          <CmsButton variant="secondary" size="h44" className="cms-button--action">
+          <CmsButton variant="secondary" size="h44">
             선택 승인
           </CmsButton>
           <CmsButton
             variant="secondary"
             size="h44"
             icon={listView ? <ButtonCalendarIcon /> : <ButtonListIcon />}
-            onClick={() => setListView(v => !v)}
-          >
+            onClick={() => setListView(v => !v)} >
             {listView ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
           </CmsButton>
           <ExcelButton onClick={() => undefined} />
@@ -147,8 +145,7 @@ export function ButtonsSection() {
             onClick={() => {
               setLoading(true)
               window.setTimeout(() => setLoading(false), 1500)
-            }}
-          >
+            }} >
             {loading ? '저장 중' : '저장'}
           </CmsButton>
         </div>

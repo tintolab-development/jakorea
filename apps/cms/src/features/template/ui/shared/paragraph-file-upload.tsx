@@ -156,8 +156,7 @@ export function ParagraphFileUpload({
             onClick={() => {
               if (interactionLocked) return
               openFilePicker(inputRef.current)
-            }}
-          >
+            }} >
             {buttonLabel}
           </CmsButton>
         </span>

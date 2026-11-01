@@ -46,8 +46,7 @@ export function RegistrationDraftOverwriteConfirmModal({
             size="medium"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             취소
           </CmsButton>
           <CmsButton
@@ -55,8 +54,7 @@ export function RegistrationDraftOverwriteConfirmModal({
             size="medium"
             type="button"
             loading={confirmLoading}
-            onClick={onConfirm}
-          >
+            onClick={onConfirm} >
             임시 저장
           </CmsButton>
         </>

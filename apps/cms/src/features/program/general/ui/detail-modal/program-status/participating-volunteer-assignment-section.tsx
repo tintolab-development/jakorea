@@ -566,8 +566,7 @@ export function ParticipatingVolunteerAssignmentSection({
               variant="delete"
               size="h40"
               disabled={assignedInstitutions.length === 0}
-              onClick={handleUnassignClick}
-            >
+              onClick={handleUnassignClick} >
               배정 취소
             </CmsButton>
             <CmsButton
@@ -578,8 +577,7 @@ export function ParticipatingVolunteerAssignmentSection({
                 if (addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
-              }}
-            >
+              }} >
               추가 배정
             </CmsButton>
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
@@ -689,8 +687,7 @@ export function ParticipatingVolunteerAssignmentSection({
             <CmsButton
               variant="secondary"
               size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)}
-            >
+              onClick={() => setSelectAssignConfirmOpen(false)} >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
@@ -725,8 +722,7 @@ export function ParticipatingVolunteerAssignmentSection({
               onClick={() => {
                 setAddAssignModalOpen(false)
                 setAddAssignWaitingRowId(null)
-              }}
-            >
+              }} >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleAddAssignConfirm}>

@@ -48,6 +48,12 @@ export type GeneratedFileJobResponse = {
   failureReason?: string | null
   requestedAt?: string
   completedAt?: string
+  /** OpenAPI `FileDownloadJobResponse` */
+  generatedFileJobId?: number
+  status?: string
+  downloadUrl?: string
+  downloadExpiresAt?: string
+  requiredHeaders?: Record<string, string>
 }
 
 export type PortalFileDownloadResolveResponse = {
@@ -61,7 +67,7 @@ export type PortalFileDownloadResolveResponse = {
 }
 
 function statusOf(job: GeneratedFileJobResponse | null | undefined): string {
-  return job?.jobStatus?.trim().toUpperCase() ?? ''
+  return job?.jobStatus?.trim().toUpperCase() || job?.status?.trim().toUpperCase() || ''
 }
 
 export function isPortraitConsentTemplateJobPending(
@@ -116,11 +122,45 @@ export function parseGeneratedFileJobPayload(payload: unknown): GeneratedFileJob
     'jobStatus' in record ||
     'fileObjectId' in record ||
     'failureReason' in record ||
-    'jobType' in record
+    'jobType' in record ||
+    'generatedFileJobId' in record ||
+    'downloadUrl' in record
   ) {
-    return record as GeneratedFileJobResponse
+    const generatedFileJobId = readPositiveInt(record.generatedFileJobId)
+    const id = readPositiveInt(record.id) ?? generatedFileJobId
+    const jobStatus =
+      typeof record.jobStatus === 'string' && record.jobStatus.trim()
+        ? record.jobStatus
+        : typeof record.status === 'string'
+          ? record.status
+          : undefined
+    const downloadUrl =
+      typeof record.downloadUrl === 'string' && record.downloadUrl.trim()
+        ? record.downloadUrl.trim()
+        : undefined
+    const requiredHeaders =
+      record.requiredHeaders && typeof record.requiredHeaders === 'object'
+        ? (record.requiredHeaders as Record<string, string>)
+        : undefined
+    return {
+      ...(record as GeneratedFileJobResponse),
+      ...(id != null ? { id } : {}),
+      ...(generatedFileJobId != null ? { generatedFileJobId } : {}),
+      ...(jobStatus ? { jobStatus, status: jobStatus } : {}),
+      ...(downloadUrl ? { downloadUrl } : {}),
+      ...(requiredHeaders ? { requiredHeaders } : {}),
+    }
   }
   return null
+}
+
+function readPositiveInt(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) return value
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value)
+    if (Number.isInteger(parsed) && parsed > 0) return parsed
+  }
+  return undefined
 }
 
 export async function parseGeneratedFileJobBlob(

@@ -67,8 +67,7 @@ export function ParticipatingIndividualParticipantTeamChangeModal({
                 fromSessionOrder: selectedOption.sessionOrder,
                 teamName: teamName.trim(),
               })
-            }}
-          >
+            }} >
             팀 변경
           </CmsButton>
         </div>

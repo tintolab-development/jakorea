@@ -477,6 +477,9 @@ describe('교육구조 Guard 코드', () => {
       '다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.'
     )
     expect(
+      getGeneralProgramApiErrorMessage(errorFor('PROGRAM_CONCURRENTLY_MODIFIED'), 'fallback')
+    ).toBe('다른 관리자가 프로그램 정보를 변경했습니다. 최신 정보를 확인한 후 다시 시도해 주세요.')
+    expect(
       getGeneralProgramApiErrorMessage(errorFor('GENERAL_CURRICULUM_SESSION_IN_USE'), 'fallback')
     ).toBe('설문에 연결된 교육 회차가 있어 교육구조를 변경할 수 없습니다.')
     expect(
@@ -514,5 +517,59 @@ describe('getGeneralProgramApiErrorMessage inline images', () => {
     expect(
       getGeneralProgramApiErrorMessage(errorFor('INLINE_IMAGE_FILE_NOT_AVAILABLE', 409), 'fallback')
     ).toContain('AVAILABLE·CLEAN')
+  })
+})
+
+describe('schedule line API errors', () => {
+  it('SCHEDULE_LINE_UNPARSEABLE 코드만 오면 FE 안내를 쓴다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: { success: false, error: { code: 'SCHEDULE_LINE_UNPARSEABLE' } },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('교육 일정 날짜/시간 형식을 해석할 수 없습니다. 날짜와 시간을 확인해 주세요.')
+  })
+
+  it('GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED는 사전교육만으로는 부족함을 안내한다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              success: false,
+              error: { code: 'GENERAL_PROGRAM_ACTIVE_SCHEDULE_REQUIRED' },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('사전교육만으로는 일정형 요건을 충족하지 않습니다')
+  })
+
+  it('서버 한글 메시지가 있으면 그대로 쓴다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: {
+              success: false,
+              error: {
+                code: 'SCHEDULE_LINE_UNPARSEABLE',
+                message:
+                  '교육 일정 날짜/시간 형식을 해석할 수 없습니다. 날짜와 시간을 확인해 주세요. scheduleDetails[1] scheduleDateLabel=2026.13.40(목)',
+              },
+            },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('scheduleDetails[1]')
   })
 })

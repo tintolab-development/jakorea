@@ -1,7 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ContentModal, CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
+import { fetchUjatEducationClasses } from '@/features/program/ujat/api/education-classes-api'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import type { UjatInstitutionApplicationGradeBlockDetail } from '../../../application-institution/detail/detail-types'
 import {
   formatGradeLabelFromValue,
@@ -10,12 +14,18 @@ import {
   type UjatEducationProgressClassRemoval,
   type UjatEducationProgressPendingClassRow,
 } from './grade-blocks'
+import {
+  isDuplicateInEducationClasses,
+  resolveEducationClassCountDisplay,
+} from './add-class'
+import './add-class-modal.css'
 
 export type UjatEducationProgressAddClassConfirmPayload = {
   added: UjatEducationProgressPendingClassRow[]
   removed: UjatEducationProgressClassRemoval[]
+  /** GET education-classes.revision — POST expectedRevision */
+  expectedRevision: number | null
 }
-import './add-class-modal.css'
 
 const MODAL_Z_INDEX = 1100
 
@@ -80,8 +90,9 @@ function ClassRowFields({
     <div className="add-class-modal__inputs">
       <div className="add-class-modal__field-grade">
         <CmsSelect
-          inputSize="medium"
-          width={110}
+          inputSize="small"
+          width={120}
+          allowClear={false}
           withAllOption={false}
           placeholder="신청 학년"
           value={grade}
@@ -93,8 +104,9 @@ function ClassRowFields({
       </div>
       <div className="add-class-modal__field-class">
         <CmsSelect
-          inputSize="medium"
-          width="100%"
+          inputSize="small"
+          width={120}
+          allowClear={false}
           withAllOption={false}
           placeholder="신청 학급"
           value={classNo}
@@ -104,42 +116,74 @@ function ClassRowFields({
           aria-label={classAriaLabel}
         />
       </div>
-      <div className="add-class-modal__field-student">
-        <CmsNumericInput
-          mode="integer"
-          min={1}
-          inputSize="medium"
-          width={110}
-          placeholder="총 학생 수"
-          value={studentCount}
-          readOnly={readOnly}
-          onValueChange={value => onStudentCountChange?.(value)}
-          aria-label={studentCountAriaLabel}
-        />
+      <div className="add-class-modal__field-student-wrap">
+        <div className="add-class-modal__field-student">
+          <CmsNumericInput
+            mode="integer"
+            min={1}
+            inputSize="small"
+            width={120}
+            placeholder="총 학생 수"
+            value={studentCount}
+            readOnly={readOnly}
+            onValueChange={value => onStudentCountChange?.(value)}
+            aria-label={studentCountAriaLabel}
+          />
+        </div>
+        <span className="add-class-modal__unit">명</span>
       </div>
-      <span className="add-class-modal__unit">명</span>
     </div>
   )
 }
 
 export type UjatEducationProgressAddClassModalProps = {
   open: boolean
+  programId: string
+  institutionId: string
+  /** local fallback count when remote catalog unavailable */
   currentTotalClassCount: number
   existingGradeBlocks: ReadonlyArray<UjatInstitutionApplicationGradeBlockDetail>
+  confirming?: boolean
   onCancel: () => void
-  onConfirm: (payload: UjatEducationProgressAddClassConfirmPayload) => void
+  onConfirm: (payload: UjatEducationProgressAddClassConfirmPayload) => void | Promise<void>
 }
 
 export function UjatEducationProgressAddClassModal({
   open,
+  programId,
+  institutionId,
   currentTotalClassCount,
   existingGradeBlocks,
+  confirming = false,
   onCancel,
   onConfirm,
 }: UjatEducationProgressAddClassModalProps) {
   const { showAlert } = useCmsAlert()
+  const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const [pendingRows, setPendingRows] = useState<UjatEducationProgressPendingClassRow[]>([])
   const [draft, setDraft] = useState<DraftClassForm>(EMPTY_DRAFT)
+
+  const educationClassesQuery = useQuery({
+    queryKey: [...ujatQueryKeys.organizationDetail(programId, institutionId), 'education-classes'],
+    queryFn: () => fetchUjatEducationClasses(programId, institutionId),
+    enabled: open && remoteEnabled && Boolean(institutionId),
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const remoteClasses = educationClassesQuery.data?.classes ?? []
+  const displayClassCount = useMemo(() => {
+    if (!remoteEnabled) return currentTotalClassCount
+    const fromApi = resolveEducationClassCountDisplay(educationClassesQuery.data)
+    return fromApi ?? currentTotalClassCount
+  }, [currentTotalClassCount, educationClassesQuery.data, remoteEnabled])
+
+  /** 진짜 학급 없음 (BE: classes=[] ↔ count 0). count>0 invent 힌트 제거 */
+  const catalogEmpty =
+    remoteEnabled &&
+    educationClassesQuery.isFetched &&
+    !educationClassesQuery.isError &&
+    remoteClasses.length === 0
 
   const hasChanges = pendingRows.length > 0
 
@@ -150,10 +194,11 @@ export function UjatEducationProgressAddClassModal({
   }, [open])
 
   const handleCancel = useCallback(() => {
+    if (confirming) return
     setPendingRows([])
     setDraft(EMPTY_DRAFT)
     onCancel()
-  }, [onCancel])
+  }, [confirming, onCancel])
 
   const validateDraft = useCallback((): UjatEducationProgressPendingClassRow | null => {
     if (!draft.grade || !draft.classNo) {
@@ -178,7 +223,23 @@ export function UjatEducationProgressAddClassModal({
       return null
     }
 
-    if (isDuplicateClassInGradeBlocks(existingGradeBlocks, gradeLabel, classNo)) {
+    if (remoteEnabled) {
+      if (educationClassesQuery.isLoading) {
+        showAlert({ title: '안내', content: '교육 학급 목록을 불러오는 중입니다. 잠시 후 다시 시도해 주세요.' })
+        return null
+      }
+      if (educationClassesQuery.isError) {
+        showAlert({
+          title: '안내',
+          content: '교육 학급 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+        return null
+      }
+      if (isDuplicateInEducationClasses(remoteClasses, gradeLabel, classNo)) {
+        showAlert({ title: '안내', content: '이미 진행 중인 학급입니다.' })
+        return null
+      }
+    } else if (isDuplicateClassInGradeBlocks(existingGradeBlocks, gradeLabel, classNo)) {
       showAlert({ title: '안내', content: '이미 진행 중인 학급입니다.' })
       return null
     }
@@ -189,39 +250,78 @@ export function UjatEducationProgressAddClassModal({
       classNo,
       studentCount,
     }
-  }, [draft, existingGradeBlocks, pendingRows, showAlert])
+  }, [
+    draft,
+    educationClassesQuery.isError,
+    educationClassesQuery.isLoading,
+    existingGradeBlocks,
+    pendingRows,
+    remoteClasses,
+    remoteEnabled,
+    showAlert,
+  ])
 
   const handleRegisterDraft = useCallback(() => {
+    if (confirming) return
     const nextRow = validateDraft()
     if (!nextRow) return
     setPendingRows(prev => [...prev, nextRow])
     setDraft(EMPTY_DRAFT)
-  }, [validateDraft])
+  }, [confirming, validateDraft])
 
-  const handleRemovePendingRow = useCallback((rowId: string) => {
-    setPendingRows(prev => prev.filter(row => row.id !== rowId))
-  }, [])
+  const handleRemovePendingRow = useCallback(
+    (rowId: string) => {
+      if (confirming) return
+      setPendingRows(prev => prev.filter(row => row.id !== rowId))
+    },
+    [confirming]
+  )
 
   const handleConfirm = useCallback(() => {
-    if (!hasChanges) return
-    onConfirm({ added: pendingRows, removed: [] })
-    setPendingRows([])
-    setDraft(EMPTY_DRAFT)
-  }, [hasChanges, onConfirm, pendingRows])
+    if (!hasChanges || confirming) return
+    if (remoteEnabled) {
+      const revision = educationClassesQuery.data?.revision
+      if (revision == null || !Number.isFinite(revision)) {
+        showAlert({
+          title: '안내',
+          content: '교육 학급 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
+        })
+        return
+      }
+      void onConfirm({ added: pendingRows, removed: [], expectedRevision: revision })
+      return
+    }
+    void onConfirm({ added: pendingRows, removed: [], expectedRevision: null })
+  }, [
+    confirming,
+    educationClassesQuery.data?.revision,
+    hasChanges,
+    onConfirm,
+    pendingRows,
+    remoteEnabled,
+    showAlert,
+  ])
 
   const footer = (
     <div className="add-class-modal__footer">
-      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
+      <CmsButton
+        variant="secondary"
+        size="h40"
+        type="button"
+        disabled={confirming}
+        onClick={handleCancel}
+      >
         취소
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="h40"
         type="button"
-        disabled={!hasChanges}
+        disabled={!hasChanges || confirming}
+        loading={confirming}
         onClick={handleConfirm}
       >
-        학급 추가
+        저장
       </CmsButton>
     </div>
   )
@@ -236,8 +336,20 @@ export function UjatEducationProgressAddClassModal({
       className="add-class-modal"
       wrapClassName="add-class-modal-wrap"
       footer={footer}
-      description={`현재 진행 학급은 총 **[${currentTotalClassCount}학급]**입니다.\n추가로 교육을 진행할 학급 정보를 입력해 주세요.`}
+      description={`현재 진행 학급은 총 **[${displayClassCount}학급]**입니다.\n추가로 교육을 진행할 학급 정보를 입력해 주세요.`}
     >
+      {catalogEmpty ? (
+        <p className="form-editor-template-field-hint-text add-class-modal__catalog-hint" role="status">
+          등록된 교육 학급이 없습니다. 아래에 학급을 등록·저장하면 카탈로그에 반영됩니다.
+        </p>
+      ) : null}
+
+      {remoteEnabled && educationClassesQuery.isError ? (
+        <p className="form-editor-template-field-hint-text add-class-modal__catalog-hint" role="alert">
+          교육 학급 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
+        </p>
+      ) : null}
+
       <div className="add-class-modal__table">
         <div className="add-class-modal__table-scroll">
           <div className="add-class-modal__header-row">
@@ -262,9 +374,9 @@ export function UjatEducationProgressAddClassModal({
                 <CmsButton
                   type="button"
                   variant="delete"
-                  size="medium"
-                  width={80}
+                  size="h32"
                   className="add-class-modal__action-btn"
+                  disabled={confirming}
                   onClick={() => handleRemovePendingRow(row.id)}
                 >
                   삭제
@@ -279,6 +391,7 @@ export function UjatEducationProgressAddClassModal({
                 grade={draft.grade}
                 classNo={draft.classNo}
                 studentCount={draft.studentCount}
+                readOnly={confirming}
                 onGradeChange={value => {
                   setDraft(prev => ({ ...prev, grade: value }))
                 }}
@@ -297,9 +410,9 @@ export function UjatEducationProgressAddClassModal({
               <CmsButton
                 type="button"
                 variant="secondary"
-                size="medium"
-                width={80}
+                size="h32"
                 className="add-class-modal__action-btn"
+                disabled={confirming}
                 onClick={handleRegisterDraft}
               >
                 등록

@@ -172,8 +172,7 @@ export function AddManagerModal({
         variant="primary"
         size="large"
         loading={confirmLoading}
-        onClick={() => form.submit()}
-      >
+        onClick={() => form.submit()} >
         추가 등록
       </CmsButton>
     </>
@@ -233,6 +232,7 @@ export function AddManagerModal({
                 placeholder="추가 등록할 담당자를 선택해 주세요"
                 width="100%"
                 withAllOption={false}
+                optionFilterProp="label"
                 loading={candidatesLoading}
                 options={managerSelectOptions}
                 notFoundContent={

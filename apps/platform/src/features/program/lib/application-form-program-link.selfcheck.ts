@@ -39,7 +39,7 @@ assert.ok(schedule && schedule.kind === 'single_item' && schedule.variant === 'm
 assert.equal(schedule.items.length, 3)
 assert.equal(
   schedule.paragraphDescription,
-  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+  '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, N차시 운영됩니다.'
 )
 
 const scheduleTypeProgram = {
@@ -132,7 +132,7 @@ assert.ok(
 assert.equal(individualSchedule.items.length, 3)
 assert.equal(
   individualSchedule.paragraphDescription,
-  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+  '진행 가능한 일정을 모두 선택해 주세요. 수업은 1일, 2차시 운영됩니다.'
 )
 assert.equal(
   individualSchedule.items[0]?.label,
@@ -213,7 +213,7 @@ assert.equal(
 )
 assert.equal(
   individualMultiSchedule.items[0]?.label,
-  '26년 4월 20일(월) 9:30 ~ 12:20'
+  '26년 4월 20일(월) 9:30 ~ 12:20 | 1회차'
 )
 
 const individualMulti차시Title = applyProgramLinkedApplicationDraftPatches(
@@ -236,6 +236,29 @@ const individualMulti차시Paragraph = individualMulti차시Title.paragraphs.fin
 assert.equal(
   individualMulti차시Paragraph?.paragraphDescription,
   '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
+)
+
+const individualMultiBotTitle = applyProgramLinkedApplicationDraftPatches(
+  createProgramParticipantApplicationDraft(),
+  {
+    applyCase: 'individual-general',
+    program: {
+      ...individualMultiProgram,
+      sessions: [
+        { sessionLabel: '1차시', title: '[BOT-TEST] 1차시' },
+        { sessionLabel: '2차시', title: '[BOT-TEST] 2차시' },
+        { sessionLabel: '3차시', title: '[BOT-TEST] 3차시' },
+      ],
+    } as unknown as import('../model/types.ts').ProgramDetail,
+    runtimeContext: { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  }
+)
+const individualMultiBotParagraph = individualMultiBotTitle.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.equal(
+  individualMultiBotParagraph?.paragraphDescription,
+  '진행 가능한 일정을 모두 선택해 주세요.'
 )
 
 const individualScheduleSingle = applyProgramLinkedApplicationDraftPatches(

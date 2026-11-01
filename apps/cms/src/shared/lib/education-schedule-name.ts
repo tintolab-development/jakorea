@@ -16,12 +16,18 @@ export function isDefaultEducationSlotName(value: string | null | undefined): bo
   return trimmed.length > 0 && DEFAULT_EDUCATION_SLOT_NAME_RE.test(trimmed)
 }
 
-/** 표시용 일정명. 비어 있거나 자동 기본명이면 undefined. */
+/** 사전교육 일정의 일정명은 화면에서 항상 「사전교육」(붙여쓰기). 저장값은 바꾸지 않는다. */
+const PRE_EDUCATION_SCHEDULE_DISPLAY_NAME = '사전교육'
+
+/** 표시용 일정명. 비어 있거나 자동 기본명이면 undefined. 「사전 교육」 등은 「사전교육」으로 표시. */
 export function toDisplayEducationScheduleName(
   value: string | null | undefined,
 ): string | undefined {
   const trimmed = typeof value === 'string' ? value.trim() : ''
   if (!trimmed || DEFAULT_EDUCATION_SLOT_NAME_RE.test(trimmed)) return undefined
+  if (trimmed.replace(/\s+/gu, '') === PRE_EDUCATION_SCHEDULE_DISPLAY_NAME) {
+    return PRE_EDUCATION_SCHEDULE_DISPLAY_NAME
+  }
   return trimmed
 }
 

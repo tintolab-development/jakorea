@@ -20,6 +20,10 @@ assert.equal(
   'not-eligible',
 )
 assert.equal(
+  resolveProgramApplyGateModal(undefined, 'SCHOOL_TEACHER_ROLE_REQUIRED'),
+  'not-eligible',
+)
+assert.equal(
   resolveProgramApplyGateModal(undefined, 'TRAINED_TEACHER_APPLICATION_TARGET_REQUIRED'),
   'not-eligible',
 )

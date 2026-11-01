@@ -329,13 +329,9 @@ export function buildGeneralRecruitOverlayFromProgram(program: Program): Record<
   if (volunteerProgram) overlay[keys.volunteer.programRangeSeal] = volunteerProgram
   if (volunteerInterviewRange) overlay[keys.volunteer.interviewRangeSeal] = volunteerInterviewRange
 
-  const volunteerDocDeadline = isoOrUndefined(
-    volunteer?.documentPassAnnouncementDate ?? program.documentPassAnnouncementDate
-  )
+  const volunteerDocDeadline = isoOrUndefined(volunteer?.documentPassAnnouncementDate)
   if (volunteerDocDeadline) overlay[keys.volunteer.docDeadlineIso] = volunteerDocDeadline
-  const volunteerDocMethod =
-    volunteer?.documentPassAnnouncementMethod?.trim() ||
-    program.documentPassAnnouncementMethod?.trim()
+  const volunteerDocMethod = volunteer?.documentPassAnnouncementMethod?.trim()
   if (volunteerDocMethod) overlay[keys.volunteer.docAnnounceMethod] = volunteerDocMethod
   const volunteerInterviewMethod =
     volunteer?.interviewMethod?.trim() || program.interviewMethod?.trim()

@@ -1,3 +1,4 @@
+import type { Program } from '@/types/domain'
 import type { UjatVolunteerPreferredRegion } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import { EssaySections } from '@/features/program/ujat/ui/detail-modal/application-volunteer/screening/applicant/essay-sections'
@@ -7,6 +8,7 @@ import '@/features/program/shared/ui/program-detail/project-info/project-info-fo
 import './detail.css'
 
 export function UjatEducationProgressVolunteerApplicationTab({
+  program,
   detail,
   adminComment,
   maskSensitive,
@@ -17,6 +19,7 @@ export function UjatEducationProgressVolunteerApplicationTab({
   adminCommentDraft = '',
   onAdminCommentDraftChange,
 }: {
+  program: Program
   detail: UjatEducationProgressVolunteerDetail
   adminComment: string
   maskSensitive: boolean
@@ -37,6 +40,7 @@ export function UjatEducationProgressVolunteerApplicationTab({
       />
 
       <UjatEducationProgressVolunteerDetailBasicInfo
+        program={program}
         applicant={detail.applicant}
         maskSensitive={maskSensitive}
         isEditing={isEditing}

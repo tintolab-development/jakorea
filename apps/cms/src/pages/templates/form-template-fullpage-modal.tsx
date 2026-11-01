@@ -249,23 +249,18 @@ export function FormTemplateFullpageModal({
                   type="button"
                   variant="primary"
                   size="large"
-                  icon={<ButtonDownloadIcon />}
-                  className="template-preview-modal__notice-download-btn"
+                  icon={<ButtonDownloadIcon />} className="template-preview-modal__notice-download-btn"
                   adminAction="download"
                   loading={isPdfDownloading || isAllocatingSerial}
                   disabled={isPdfDownloading || isAllocatingSerial}
-                  onClick={() => void handleDownloadDocument()}
-                >
+                  onClick={() => void handleDownloadDocument()} >
                   문서 다운로드
                 </CmsButton>
                 <CmsButton
                   type="button"
                   variant="secondary"
-                  size="large"
-                  width={140}
-                  className="template-preview-modal__notice-close-btn"
-                  onClick={handleClosePreview}
-                >
+                  size="large" className="template-preview-modal__notice-close-btn"
+                  onClick={handleClosePreview} >
                   미리보기 닫기
                 </CmsButton>
               </div>

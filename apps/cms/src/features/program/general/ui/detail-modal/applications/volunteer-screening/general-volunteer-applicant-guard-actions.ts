@@ -3,18 +3,19 @@ import {
   resolveGeneralEffectiveSecondInterviewStatus,
 } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
+import { INTERVIEW_RESULT_NOT_ENDED_ALERT } from '@/features/program/shared/lib/interview-not-ended'
+import {
+  canReassignVolunteerInterviewAssignment,
+  VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT,
+} from '@/features/program/shared/lib/volunteer-interview-reassign'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+
+export { INTERVIEW_RESULT_NOT_ENDED_ALERT }
 
 const INTERVIEW_EVALUATION_REQUIRED_ALERT = {
   title: '면접 평가 진행 안내',
   content: '면접 평가 진행 후 합격 혹은 불합격 처리가 가능합니다.',
   confirmLabel: '닫기',
-} as const
-
-export const INTERVIEW_RESULT_NOT_ENDED_ALERT = {
-  title: '면접 결과 처리 안내',
-  content:
-    '면접이 아직 종료되지 않았습니다.\n면접 종료 후 담당자 평가가 완료되면 합격·불합격 처리가 가능합니다.',
 } as const
 
 function guardGeneralVolunteerInterview2Evaluated(row: GeneralVolunteerApplicantRow): boolean {
@@ -47,12 +48,21 @@ export function guardGeneralVolunteerAssignInterview(row: GeneralVolunteerApplic
     })
     return false
   }
-  if (row.interviewAssignmentStatus !== 'withdrawn') return true
-  cmsAlertModal.show({
-    title: '면접일 배정 안내',
-    content: '활동 포기한 봉사자에게는 면접일을 배정할 수 없습니다.',
-  })
-  return false
+  if (row.interviewAssignmentStatus === 'withdrawn') {
+    cmsAlertModal.show({
+      title: '면접일 배정 안내',
+      content: '활동 포기한 봉사자에게는 면접일을 배정할 수 없습니다.',
+    })
+    return false
+  }
+  if (
+    row.interviewAssignmentStatus === 'assigned' &&
+    !canReassignVolunteerInterviewAssignment(row)
+  ) {
+    cmsAlertModal.show({ ...VOLUNTEER_INTERVIEW_REASSIGN_BLOCKED_ALERT })
+    return false
+  }
+  return true
 }
 
 function guardGeneralVolunteerInterview2Withdrawn(
@@ -126,9 +136,3 @@ export function guardGeneralVolunteerInterview2Evaluation(row: GeneralVolunteerA
   return guardGeneralVolunteerInterview2NotEnded(row)
 }
 
-export function alertGeneralVolunteerInterview2BulkPassTypeRequired(): void {
-  cmsAlertModal.show({
-    title: '일괄 합격 안내',
-    content: '합격 유형을 선택해 주세요.',
-  })
-}

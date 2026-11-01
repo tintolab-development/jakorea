@@ -95,6 +95,7 @@ import {
   emptyCompanySchoolApplicationFormState,
   omitCompanySchoolApplicationOverlayKeys,
   serializeCompanySchoolApplicationForFormVersion,
+  withEmptyCompanySchoolApplicationPreferredSchedule,
 } from '@/features/program/1c-1s/lib/registration-rhf-application'
 import { companySchoolRecruitEditorState } from '@/features/program/1c-1s/lib/recruit-form-state'
 import { companySchoolApplicationEditorState } from '@/features/program/1c-1s/lib/application-form-state'
@@ -896,9 +897,11 @@ export function useProgramRegistrationEditor(
                       typed.sidecar,
                       // C4: 이전 세션의 RHF 값이 새 draft로 새지 않도록 빈 상태로 fallback
                       typed.recruit ?? emptyCompanySchoolRecruitFormState(),
-                      typed.application ??
-                        imported.application ??
-                        emptyCompanySchoolApplicationFormState()
+                      withEmptyCompanySchoolApplicationPreferredSchedule(
+                        typed.application ??
+                          imported.application ??
+                          emptyCompanySchoolApplicationFormState()
+                      )
                     ),
                     { keepDirty: false }
                   )
@@ -911,7 +914,9 @@ export function useProgramRegistrationEditor(
                       imported.common,
                       imported.sidecar,
                       imported.recruit ?? emptyCompanySchoolRecruitFormState(),
-                      imported.application ?? emptyCompanySchoolApplicationFormState()
+                      withEmptyCompanySchoolApplicationPreferredSchedule(
+                        imported.application ?? emptyCompanySchoolApplicationFormState()
+                      )
                     ),
                     { keepDirty: false }
                   )
@@ -2342,7 +2347,11 @@ export function useProgramRegistrationEditor(
                 : null
               const imported = live == null ? importLegacyOverlayToCompanySchoolCanonical({}) : null
               const recruitState = live?.recruitment ?? imported?.recruit
-              const applicationState = live?.application ?? imported?.application
+              const applicationState = withEmptyCompanySchoolApplicationPreferredSchedule(
+                live?.application ??
+                  imported?.application ??
+                  emptyCompanySchoolApplicationFormState()
+              )
               const recruitSaved = registrationWizardProgramType
                 ? await loadRegistrationWizardFormDraft({
                     programType: registrationWizardProgramType,

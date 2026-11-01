@@ -31,10 +31,8 @@ function renderPlanLogViewButton(
         type="button"
         variant="default"
         size="medium"
-        width={140}
         disabled={!enabled}
-        onClick={enabled ? onView : undefined}
-      >
+        onClick={enabled ? onView : undefined} >
         {label}
       </CmsButton>
     </div>

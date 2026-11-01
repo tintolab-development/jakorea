@@ -133,8 +133,7 @@ function HistoryFormBody({
                     setDeleteConfirmOpen(true)
                   }}
                   disabled={confirmLoading || deleteLoading}
-                  loading={deleteLoading}
-                >
+                  loading={deleteLoading} >
                   연혁 삭제
                 </CmsButton>
               ) : null}
@@ -145,8 +144,7 @@ function HistoryFormBody({
                 size="large"
                 type="button"
                 onClick={onCancel}
-                disabled={confirmLoading || deleteLoading}
-              >
+                disabled={confirmLoading || deleteLoading} >
                 취소
               </CmsButton>
               <CmsButton
@@ -155,8 +153,7 @@ function HistoryFormBody({
                 type="button"
                 loading={confirmLoading}
                 disabled={deleteLoading}
-                onClick={handleSubmit}
-              >
+                onClick={handleSubmit} >
                 {primaryLabel}
               </CmsButton>
             </div>

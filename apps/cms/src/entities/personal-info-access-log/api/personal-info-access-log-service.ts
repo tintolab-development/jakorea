@@ -32,5 +32,7 @@ export async function recordPersonalInfoAccess(
     accessorName: payload.accessorName ?? '알 수 없음',
     accessedAt: new Date().toISOString(),
     ipAddress: payload.ipAddress ?? '14.128.xxx.xxx',
+    result: '-',
+    traceId: '-',
   })
 }

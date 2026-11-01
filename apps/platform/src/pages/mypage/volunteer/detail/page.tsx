@@ -8,6 +8,7 @@ import {
   canShowEducationApplicationContent,
   educationApplicationDetailPath,
   EducationApplicationContent,
+  UjatVolunteerApplicationContent,
   EducationCancelConfirm,
   EducationDetailBack,
   EducationDetailHeader,
@@ -45,6 +46,10 @@ import {
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import { resolveMypagePreferredScheduleLines } from '@/features/mypage/education/applications/lib/mypage-preferred-schedule-lines'
+import {
+  groupScheduleLinesByDate,
+  resolveVolunteerApplicationExtrasFromAnswers,
+} from '@/features/mypage/education/applications/lib/volunteer-application-extras-from-answers'
 import { PFButton, PFTabs, PFText } from '@/shared/ui'
 import styles from '../../education/detail/page.module.css'
 
@@ -102,6 +107,10 @@ function readSection(search = window.location.search): DetailSection {
 
 function readVolunteerApplicationType(value: string | undefined): ProgramApplicationType | null {
   return value === 'VOLUNTEER' ? 'VOLUNTEER' : null
+}
+
+function assertNever(_x: never): never {
+  throw new Error('unreachable')
 }
 
 function buildDetailPath(
@@ -251,6 +260,11 @@ export function MypageVolunteerDetailPage() {
           })
         : [],
     [application, program, routeApplicationType],
+  )
+
+  const volunteerApplicationExtras = useMemo(
+    () => resolveVolunteerApplicationExtrasFromAnswers(application?.applicationAnswers),
+    [application?.applicationAnswers],
   )
 
   useEffect(() => {
@@ -413,13 +427,29 @@ export function MypageVolunteerDetailPage() {
       ? (withdrawnDuringKeys[0] ?? 'schedule')
       : (inProgressKeys[0] ?? 'notice')
 
+  const volunteerApplicationBody = isUjatVolunteer ? (
+    <UjatVolunteerApplicationContent
+      profile={application.ujatVolunteerApplicationContent}
+      selfIntroMotivation={application.selfIntroMotivation}
+      preferredEducationScheduleLines={preferredEducationScheduleLines}
+      alwaysShowPreferredSchedule
+      freeTextSections={volunteerApplicationExtras.freeTextSections}
+      infoFields={volunteerApplicationExtras.infoFields}
+    />
+  ) : (
+    <EducationApplicationContent
+      selfIntroMotivation={application.selfIntroMotivation}
+      preferredEducationScheduleLines={groupScheduleLinesByDate(preferredEducationScheduleLines)}
+      alwaysShowPreferredSchedule
+      scheduleSummaryTitle="봉사 진행 가능 일정"
+      freeTextSections={volunteerApplicationExtras.freeTextSections}
+      infoFields={volunteerApplicationExtras.infoFields}
+    />
+  )
+
   const renderApplicationOrPlaceholder = () =>
     canShowEducationApplicationContent(application.displayStatus) ? (
-      <EducationApplicationContent
-        selfIntroMotivation={application.selfIntroMotivation}
-        preferredEducationScheduleLines={preferredEducationScheduleLines}
-        alwaysShowPreferredSchedule
-      />
+      volunteerApplicationBody
     ) : (
       <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
         신청 내용 화면은 준비 중입니다.
@@ -427,7 +457,8 @@ export function MypageVolunteerDetailPage() {
     )
 
   const renderActivityBody = (active: EducationActivitySection) => {
-    if (active === 'notice' && isActivityStatus) {
+    if (active === 'notice') {
+      if (!isActivityStatus) return null
       return (
         <VolunteerNoticePanel
           program={program}
@@ -437,6 +468,7 @@ export function MypageVolunteerDetailPage() {
           lastParticipatedSession={lastParticipatedSession}
           applicationType={routeApplicationType}
           applicationId={application.id}
+          applicationInfoBody={isUjatVolunteer ? volunteerApplicationBody : undefined}
         />
       )
     }
@@ -475,6 +507,7 @@ export function MypageVolunteerDetailPage() {
           applicationId={application.id}
           programId={program.id}
           pendingSurveyCount={application.pendingSurveyCount}
+          canSubmitSurvey={application.canSubmitSurvey}
         />
       )
     }
@@ -493,6 +526,7 @@ export function MypageVolunteerDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           programId={program.id}
+          canSubmitSatisfaction={application.canSubmitSatisfaction}
         />
       )
     }
@@ -507,11 +541,15 @@ export function MypageVolunteerDetailPage() {
         />
       )
     }
-    return (
-      <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.placeholder}>
-        준비 중입니다.
-      </PFText>
-    )
+    if (
+      active === 'assignment' ||
+      active === 'lecture-report' ||
+      active === 'educationJournal' ||
+      active === 'students'
+    ) {
+      return null
+    }
+    return assertNever(active)
   }
 
   return (

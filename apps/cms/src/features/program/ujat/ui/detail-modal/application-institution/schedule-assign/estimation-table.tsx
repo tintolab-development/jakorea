@@ -4,6 +4,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import type { UjatInstitutionEducationSemesterKey } from '../education-schedule'
 import type { UjatScheduleAssignRegionState } from './types'
+import { formatVolunteerEducationDays } from './utils'
 
 const SEMESTER_ROWS: ReadonlyArray<{ key: UjatInstitutionEducationSemesterKey; label: string }> = [
   { key: 'h1', label: '1학기' },
@@ -16,12 +17,6 @@ const COLUMN_HEADERS = [
   '봉사단 수',
   '봉사단 교육 진행일 수',
 ] as const
-
-const EMPTY_COMPUTED_VALUE = '-'
-
-function formatComputedDays(value: number | null): string {
-  return value != null && Number.isFinite(value) ? String(value) : EMPTY_COMPUTED_VALUE
-}
 
 function ComputedCell({
   filled,
@@ -46,25 +41,24 @@ function ComputedCell({
 }
 
 export function UjatInstitutionScheduleAssignEstimationTable({
-  maxClassesPerDay,
   estimation,
   semesterClassTotals,
   volunteerEducationDays,
   onMaxClassesPerDayChange,
   onExpectedVolunteerCountChange,
 }: {
-  maxClassesPerDay: string
   estimation: UjatScheduleAssignRegionState['estimation']
   semesterClassTotals: Record<UjatInstitutionEducationSemesterKey, number>
   volunteerEducationDays: Record<UjatInstitutionEducationSemesterKey, number | null>
-  onMaxClassesPerDayChange: (value: string) => void
+  onMaxClassesPerDayChange: (
+    semester: UjatInstitutionEducationSemesterKey,
+    value: string
+  ) => void
   onExpectedVolunteerCountChange: (
     semester: UjatInstitutionEducationSemesterKey,
     value: string
   ) => void
 }) {
-  const [firstSemester, secondSemester] = SEMESTER_ROWS
-
   return (
     <DetailInfoForm
       className="ujat-schedule-assign-estimation"
@@ -91,11 +85,7 @@ export function UjatInstitutionScheduleAssignEstimationTable({
                 {COLUMN_HEADERS.map(header => (
                   <th
                     key={header}
-                    className={
-                      header === '총 학급 수'
-                        ? 'cross-table__cell cross-table__cell--column-header ujat-schedule-assign-estimation__after-max-cell'
-                        : 'cross-table__cell cross-table__cell--column-header'
-                    }
+                    className="cross-table__cell cross-table__cell--column-header"
                     scope="col"
                   >
                     {header}
@@ -104,88 +94,53 @@ export function UjatInstitutionScheduleAssignEstimationTable({
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <th className="cross-table__cell cross-table__cell--row-header" scope="row">
-                  {firstSemester.label}
-                </th>
-                <td
-                  rowSpan={SEMESTER_ROWS.length}
-                  className="cross-table__cell cross-table__cell--data ujat-schedule-assign-estimation__max-cell"
-                >
-                  <CmsNumericInput
-                    mode="integer"
-                    min={0}
-                    inputSize="small"
-                    width="100%"
-                    placeholder="예상 최대 학급 수를 입력하세요"
-                    value={maxClassesPerDay}
-                    onValueChange={onMaxClassesPerDayChange}
-                  />
-                </td>
-                <td className="cross-table__cell cross-table__cell--data ujat-schedule-assign-estimation__after-max-cell">
-                  <ComputedCell
-                    filled={semesterClassTotals[firstSemester.key] > 0}
-                    placeholder="예상 학급 수"
-                  >
-                    {semesterClassTotals[firstSemester.key]}
-                  </ComputedCell>
-                </td>
-                <td className="cross-table__cell cross-table__cell--data">
-                  <CmsNumericInput
-                    mode="integer"
-                    min={0}
-                    inputSize="small"
-                    width="100%"
-                    placeholder="예상 봉사단 인원을 입력하세요"
-                    value={estimation[firstSemester.key].expectedVolunteerCount}
-                    onValueChange={value =>
-                      onExpectedVolunteerCountChange(firstSemester.key, value)
-                    }
-                  />
-                </td>
-                <td className="cross-table__cell cross-table__cell--data">
-                  <ComputedCell
-                    filled={volunteerEducationDays[firstSemester.key] != null}
-                    placeholder={EMPTY_COMPUTED_VALUE}
-                  >
-                    {formatComputedDays(volunteerEducationDays[firstSemester.key])}
-                  </ComputedCell>
-                </td>
-              </tr>
-              <tr>
-                <th className="cross-table__cell cross-table__cell--row-header" scope="row">
-                  {secondSemester.label}
-                </th>
-                <td className="cross-table__cell cross-table__cell--data ujat-schedule-assign-estimation__after-max-cell">
-                  <ComputedCell
-                    filled={semesterClassTotals[secondSemester.key] > 0}
-                    placeholder="예상 학급 수"
-                  >
-                    {semesterClassTotals[secondSemester.key]}
-                  </ComputedCell>
-                </td>
-                <td className="cross-table__cell cross-table__cell--data">
-                  <CmsNumericInput
-                    mode="integer"
-                    min={0}
-                    inputSize="small"
-                    width="100%"
-                    placeholder="예상 봉사단 인원을 입력하세요"
-                    value={estimation[secondSemester.key].expectedVolunteerCount}
-                    onValueChange={value =>
-                      onExpectedVolunteerCountChange(secondSemester.key, value)
-                    }
-                  />
-                </td>
-                <td className="cross-table__cell cross-table__cell--data">
-                  <ComputedCell
-                    filled={volunteerEducationDays[secondSemester.key] != null}
-                    placeholder={EMPTY_COMPUTED_VALUE}
-                  >
-                    {formatComputedDays(volunteerEducationDays[secondSemester.key])}
-                  </ComputedCell>
-                </td>
-              </tr>
+              {SEMESTER_ROWS.map(semester => (
+                <tr key={semester.key}>
+                  <th className="cross-table__cell cross-table__cell--row-header" scope="row">
+                    {semester.label}
+                  </th>
+                  <td className="cross-table__cell cross-table__cell--data">
+                    <CmsNumericInput
+                      mode="integer"
+                      min={0}
+                      inputSize="small"
+                      width="100%"
+                      placeholder="예상 최대 학급 수를 입력해 주세요"
+                      value={estimation[semester.key].maxClassesPerDay}
+                      onValueChange={value => onMaxClassesPerDayChange(semester.key, value)}
+                    />
+                  </td>
+                  <td className="cross-table__cell cross-table__cell--data">
+                    <ComputedCell
+                      filled={semesterClassTotals[semester.key] > 0}
+                      placeholder="예상 학급 수"
+                    >
+                      {semesterClassTotals[semester.key]}
+                    </ComputedCell>
+                  </td>
+                  <td className="cross-table__cell cross-table__cell--data">
+                    <CmsNumericInput
+                      mode="integer"
+                      min={0}
+                      inputSize="small"
+                      width="100%"
+                      placeholder="예상 봉사단 인원을 입력해 주세요"
+                      value={estimation[semester.key].expectedVolunteerCount}
+                      onValueChange={value =>
+                        onExpectedVolunteerCountChange(semester.key, value)
+                      }
+                    />
+                  </td>
+                  <td className="cross-table__cell cross-table__cell--data">
+                    <ComputedCell
+                      filled={volunteerEducationDays[semester.key] != null}
+                      placeholder="예상 봉사단 교육 진행일 수"
+                    >
+                      {formatVolunteerEducationDays(volunteerEducationDays[semester.key])}
+                    </ComputedCell>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

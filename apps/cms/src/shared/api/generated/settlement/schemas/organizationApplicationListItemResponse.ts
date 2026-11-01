@@ -19,7 +19,7 @@ export interface OrganizationApplicationListItemResponse {
   programName?: string;
   programType?: string;
   recruitmentId?: number;
-  /** 상·하반기. 학교 모집은 연 1회라 null. 명시적 recruit_term이 있는 경우만 FIRST_HALF|SECOND_HALF */
+  /** 응답 필드. 학교 연 1회 신청은 null. 명시적 volunteer recruit_term이 있을 때만 FIRST_HALF|SECOND_HALF. 목록 쿼리 recruitHalf는 이 값 등호가 아니라 확정 session 교육일 학기 필터. */
   recruitHalf?: OrganizationApplicationListItemResponseRecruitHalf;
   organizationId?: number;
   organizationName?: string;

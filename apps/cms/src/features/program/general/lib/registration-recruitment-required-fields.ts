@@ -34,10 +34,7 @@ import {
   isAnnouncementPublishedChoiceMissing,
   isAnnouncementUnpublished,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
-import {
-  INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT,
-  VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT,
-} from '@/features/program/general/lib/general-recruit-overlay-to-program'
+import { withGeneralRecruitRadioDefaults } from '@/features/program/general/lib/recruit-radio-defaults'
 
 export type GeneralProgramRecruitmentRequiredFieldContext = {
   participant: ProgramRegistrationParticipantSelection
@@ -247,12 +244,8 @@ function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): 
     isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  // 라디오 기본값 '면접 있음'은 조작 전 스토어에 기록되지 않는다. 등록 저장(withIndividualInterviewRequiredCreateDefault)과 같이 yes 로 본다.
-  const interviewRequiredRaw = read(overlay, `${p}.interviewRequired`)
-  const interviewRequired =
-    interviewRequiredRaw == null || interviewRequiredRaw === ''
-      ? INDIVIDUAL_INTERVIEW_REQUIRED_DEFAULT
-      : readText(overlay, `${p}.interviewRequired`)
+  // 라디오 화면 기본값은 호출부에서 withGeneralRecruitRadioDefaults 로 채운 뒤 검사한다(등록 저장과 같은 값).
+  const interviewRequired = readText(overlay, `${p}.interviewRequired`)
   pushReason(reasons, isEmptyText(interviewRequired), `${p}.interviewRequired`)
   if (!skipSchedule) {
     pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
@@ -362,12 +355,8 @@ function listIncompleteVolunteerRecruitInfo(
     isAnnouncementPublishedChoiceMissing(published),
     `${p}.announcementPublished`
   )
-  // 라디오 기본값 '면접 있음'은 조작 전 스토어에 기록되지 않는다. 등록 저장(withVolunteerInterviewRequiredCreateDefault)과 같이 yes 로 본다.
-  const interviewRequiredRaw = read(overlay, `${p}.interviewRequired`)
-  const interviewRequired =
-    interviewRequiredRaw == null || interviewRequiredRaw === ''
-      ? VOLUNTEER_INTERVIEW_REQUIRED_DEFAULT
-      : readText(overlay, `${p}.interviewRequired`)
+  // 라디오 화면 기본값은 호출부에서 withGeneralRecruitRadioDefaults 로 채운 뒤 검사한다(등록 저장과 같은 값).
+  const interviewRequired = readText(overlay, `${p}.interviewRequired`)
   pushReason(reasons, isEmptyText(interviewRequired), `${p}.interviewRequired`)
   if (!skipSchedule) {
     pushProgramAndRecruitPeriodIncomplete(reasons, overlay, p)
@@ -431,7 +420,12 @@ export function listIncompleteGeneralProgramRecruitmentRequiredFields(
   const registrationProgramType = ctx.registrationProgramType ?? 'GENERAL'
   const rhf = peekGeneralRegistrationWizardRhf()
   if (registrationProgramType === 'GENERAL' && rhf != null) {
-    const kv = selectRecruitmentKvForParticipant(rhf.getValues().recruitmentKv, ctx.participant)
+    // 화면이 기본값으로 그린 라디오(공고 게시·명단·사전안내·면접)를 등록 저장과 같은 값으로 채운다.
+    const kv = withGeneralRecruitRadioDefaults(
+      selectRecruitmentKvForParticipant(rhf.getValues().recruitmentKv, ctx.participant),
+      ctx.participant,
+      { wizardKv: true }
+    )
     return listIncompleteRecruitmentRequiredFieldsFromOverlay(
       {
         institution: kv,
@@ -442,23 +436,44 @@ export function listIncompleteGeneralProgramRecruitmentRequiredFields(
       ctx
     )
   }
+  // 필드 폼 경로(1사1교 강사·개인·봉사 탭 등). 템플릿 변경으로 시드가 억제된 키는 화면도 비어 있어 채우지 않는다.
+  const p = ctx.participant
+  const only = (part: Partial<ProgramRegistrationParticipantSelection>) => ({
+    individual: false,
+    organization: false,
+    teacherInstructor: false,
+    volunteer: false,
+    ...part,
+  })
   return listIncompleteRecruitmentRequiredFieldsFromOverlay(
     {
-      institution: peekSelectedInstitutionRecruitOverlay(registrationProgramType),
-      individual: peekSelectedRecruitOverlay(
-        registrationProgramType,
-        'recruit-participant-individual',
-        peekGeneralRecruitOverlayRecord
+      institution: withGeneralRecruitRadioDefaults(
+        peekSelectedInstitutionRecruitOverlay(registrationProgramType),
+        only({ organization: p.organization })
       ),
-      instructor: peekSelectedRecruitOverlay(
-        registrationProgramType,
-        'recruit-instructor',
-        peekGeneralRecruitOverlayRecord
+      individual: withGeneralRecruitRadioDefaults(
+        peekSelectedRecruitOverlay(
+          registrationProgramType,
+          'recruit-participant-individual',
+          peekGeneralRecruitOverlayRecord
+        ),
+        only({ individual: p.individual })
       ),
-      volunteer: peekSelectedRecruitOverlay(
-        registrationProgramType,
-        'recruit-volunteer',
-        peekGeneralRecruitOverlayRecord
+      instructor: withGeneralRecruitRadioDefaults(
+        peekSelectedRecruitOverlay(
+          registrationProgramType,
+          'recruit-instructor',
+          peekGeneralRecruitOverlayRecord
+        ),
+        only({ teacherInstructor: p.teacherInstructor })
+      ),
+      volunteer: withGeneralRecruitRadioDefaults(
+        peekSelectedRecruitOverlay(
+          registrationProgramType,
+          'recruit-volunteer',
+          peekGeneralRecruitOverlayRecord
+        ),
+        only({ volunteer: p.volunteer })
       ),
     },
     ctx

@@ -1,5 +1,5 @@
 /**
- * UJAT 설문 응답 — 타입·빈 stub
+ * UJAT 설문 응답 raw 타입
  * @see apps/cms/.cursor/rules/process/program-no-fe-mock.mdc
  */
 
@@ -9,7 +9,3 @@ export type UjatSurveyPollRawResponse = {
   addressRegion: string
   answers: Record<string, string>
 }
-
-export const UJAT_SURVEY_POLL_RESPONSES_MOCK: UjatSurveyPollRawResponse[] = []
-
-export const UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT = 0

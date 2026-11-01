@@ -51,6 +51,7 @@ import {
 } from '@/features/mypage/education/schedules/lib/lecture-report-display'
 import { resolveEducationSurveySectionDescription } from '@/features/mypage/education/surveys/lib/survey-section-title'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+import { toSeoulDateOnly } from '@/shared/lib/format-display-date'
 
 type LoadedReport = {
   assignment: LectureReportAssignment
@@ -89,7 +90,7 @@ function applyLectureReportAssignmentContext(
   assignment: LectureReportAssignment,
   program: { title?: string; educationTargetDetailLabel?: string } | null | undefined
 ): WritingFormDraft {
-  const educationDate = assignment.startAt?.slice(0, 10)
+  const educationDate = toSeoulDateOnly(assignment.startAt)
   const sessionTime = [formatTime(assignment.startAt), formatTime(assignment.endAt)]
     .filter(Boolean)
     .join(' ~ ')

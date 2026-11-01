@@ -55,6 +55,7 @@ export function UjatEducationDocumentSlotBlock({
       statusTone={guide.statusTone}
       message={guide.message}
       description={documentPeriodLabel(slot)}
+      mobileStack
       actions={
         canFeedback || canView || canRevise || canWrite ? (
           <div className={styles.actions}>

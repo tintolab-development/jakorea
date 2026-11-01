@@ -69,15 +69,8 @@
   border-right: none;
 }
 
-.cross-table__cell--corner {
-  background: var(
-    --disabled-default-bg,
-    linear-gradient(0deg, rgba(61, 61, 61, 0.16) 0%, rgba(61, 61, 61, 0.16) 100%),
-    #fff
-  );
-  font-weight: 700;
-}
-
+/* corner·행·열 헤더 — DetailInfoForm 라벨(--BG-header)과 동일 (시안 학년/교시 격자) */
+.cross-table__cell--corner,
 .cross-table__cell--column-header,
 .cross-table__cell--row-header {
   background: var(--BG-header);

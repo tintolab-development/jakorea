@@ -27,11 +27,16 @@ function educationSlotToParticipatingSession(
 ): ParticipatingSchoolSession | null {
   const scheduleId = positiveScheduleId(slot.scheduleId)
   if (scheduleId == null) return null
-  const progress: SessionProgress = {
+  const progress: SessionProgress & {
+    educationSlotKey?: string
+    scheduleRole?: string
+  } = {
     scheduleId,
     sessionNo: slot.sessionNo ?? index + 1,
     startAt: slot.startAt,
     endAt: slot.endAt,
+    ...(slot.educationSlotKey?.trim() ? { educationSlotKey: slot.educationSlotKey.trim() } : {}),
+    ...(slot.scheduleRole?.trim() ? { scheduleRole: slot.scheduleRole.trim() } : {}),
   }
   return mapSessionProgressToParticipatingSchoolSessions([progress])[0] ?? null
 }

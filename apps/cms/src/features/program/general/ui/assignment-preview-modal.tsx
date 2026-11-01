@@ -32,11 +32,8 @@ export function AssignmentPreviewModal({
     <>
       <CmsButton
         variant="secondary"
-        size="medium"
-        width={120}
-        className="cms-button--footer-auto assignment-preview-modal__footer-btn assignment-preview-modal__footer-btn--close"
-        onClick={onCancel}
-      >
+        size="medium" className="assignment-preview-modal__footer-btn assignment-preview-modal__footer-btn--close"
+        onClick={onCancel} >
         닫기
       </CmsButton>
       <CmsButton
@@ -45,9 +42,7 @@ export function AssignmentPreviewModal({
         icon={<ButtonDownloadIcon />}
         loading={downloadLoading}
         disabled={onDownload == null}
-        onClick={() => onDownload?.()}
-        className="cms-button--footer-auto assignment-preview-modal__footer-btn assignment-preview-modal__footer-btn--download"
-      >
+        onClick={() => onDownload?.()} className="assignment-preview-modal__footer-btn assignment-preview-modal__footer-btn--download" >
         파일 다운로드
       </CmsButton>
     </>

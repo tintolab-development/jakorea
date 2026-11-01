@@ -25,6 +25,7 @@ import {
 import { GENERAL_PROGRAM_CURRICULUM_PROGRESS_SESSION_OPTIONS } from '@/features/program/general/lib/curriculum-progress-session-options'
 import {
   PRE_EDUCATION_SCHEDULE_LABEL,
+  toPreEducationDisplayLabel,
 } from '@/features/program/general/lib/schedule-detail-form'
 import { getIndividualMultiRoundPerScheduleTableRows } from '@/features/program/general/lib/individual-per-schedule-table'
 import { IndividualPerScheduleExtraRows } from './individual-per-schedule-extra-rows'
@@ -384,6 +385,8 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     'generalRegistration.educationCurriculum.preEducationScheduleLine',
     null
   )
+  // 블록 제목 표시만 「사전교육」 — overlay 기본 일정명은 저장 라벨 그대로 기록한다.
+  const preEducationHeadingLabel = toPreEducationDisplayLabel(preEducationBlockLabel)
 
   useEffect(() => {
     if (!prependTraining) return
@@ -590,7 +593,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
     return (
       <div key="pre-education" className="program-registration-schedule-curriculum__block">
         <div className="program-registration-schedule-curriculum__session-heading">
-          ■ {preEducationBlockLabel}
+          ■ {preEducationHeadingLabel}
         </div>
         <div className="program-registration-curriculum__session-row">
           <div className="program-registration-schedule-curriculum__session-panel">
@@ -707,7 +710,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
             <ProgramRegistrationCurriculumChartSessionBlock
               key={chartIndex}
               chartIndex={chartIndex}
-              headingLabel={trainingSession ? preEducationBlockLabel : undefined}
+              headingLabel={trainingSession ? preEducationHeadingLabel : undefined}
               showHeading={showChartSessionHeading || trainingSession}
               onDeleteCurriculumChartSession={handleDeleteChartSession}
               extraRows={extraRows}
@@ -888,7 +891,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
         const roundIndex = i + 1
         const progressSession = progressSessionByRound[roundIndex] ?? ''
         const trainingSession = isTrainingSession(roundIndex)
-        const roundHeading = trainingSession ? preEducationBlockLabel : `${roundIndex}회차`
+        const roundHeading = trainingSession ? preEducationHeadingLabel : `${roundIndex}회차`
 
         return (
           <div key={roundIndex} className="program-registration-curriculum__session-block">

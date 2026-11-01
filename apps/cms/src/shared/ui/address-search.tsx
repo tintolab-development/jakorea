@@ -343,8 +343,7 @@ export function AddressSearch({
               type="button"
               variant="primary"
               size="large"
-              onClick={() => void runSearch(1)}
-            >
+              onClick={() => void runSearch(1)} >
               검색
             </CmsButton>
           </Flex>

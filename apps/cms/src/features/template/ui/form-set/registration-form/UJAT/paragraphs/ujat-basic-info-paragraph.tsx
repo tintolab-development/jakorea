@@ -234,12 +234,12 @@ function UjatBasicInfoLegacyParagraph({
   const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
   const setOperationAnchorDate = (next: Dayjs | null) => {
     if (infoForm) {
-      infoForm.setValue('startDate', next == null ? '' : next.toISOString(), {
+      infoForm.setValue('startDate', next == null ? '' : next.format('YYYY-MM-DD'), {
         shouldDirty: true,
         shouldTouch: true,
       })
     } else {
-      setOverlayOperationAnchorIso(next == null ? null : next.toISOString())
+      setOverlayOperationAnchorIso(next == null ? null : next.format('YYYY-MM-DD'))
     }
   }
   const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
@@ -264,10 +264,19 @@ function UjatBasicInfoLegacyParagraph({
       return
     }
     if (infoForm) {
-      infoForm.setValue('startDate', next[0].toISOString(), { shouldDirty: true, shouldTouch: true })
-      infoForm.setValue('endDate', next[1].toISOString(), { shouldDirty: true, shouldTouch: true })
+      infoForm.setValue('startDate', next[0].format('YYYY-MM-DD'), {
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+      infoForm.setValue('endDate', next[1].format('YYYY-MM-DD'), {
+        shouldDirty: true,
+        shouldTouch: true,
+      })
     } else {
-      setOverlayOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
+      setOverlayOperationRangeSeal({
+        start: next[0].format('YYYY-MM-DD'),
+        end: next[1].format('YYYY-MM-DD'),
+      })
     }
   }
 
@@ -694,6 +703,7 @@ function UjatBasicInfoLegacyParagraph({
                   width="100%"
                   placeholder="사업 운영 기간을 선택하세요"
                   preferPeriodModeInPopover
+                  excludeBusinessPeriodConstraint
                   appliedSurfaceRange={operationRange}
                   appliedSurfaceWithTime={operationRangeWithTime}
                   onRangeChange={range => setOperationRange(range)}

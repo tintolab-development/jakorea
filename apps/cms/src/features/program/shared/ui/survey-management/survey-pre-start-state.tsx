@@ -31,11 +31,8 @@ export function SurveyPreStartState({
           <p className="survey-management-status-state__title">{title}</p>
           <p className="survey-management-status-state__description">{description}</p>
         </div>
-        <CmsButton
-          className="survey-management-pre-start-state__preview-button"
-          width={180}
-          onClick={onOpenTemplatePreview}
-        >
+        <CmsButton className="survey-management-pre-start-state__preview-button"
+          onClick={onOpenTemplatePreview} >
           {previewButtonLabel}
         </CmsButton>
       </div>

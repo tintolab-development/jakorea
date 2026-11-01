@@ -279,8 +279,8 @@ describe('일반 공통정보 저장 왕복', () => {
       2: '개인 커리큘럼 단일22',
     })
     expect(
-      detail.registration?.overlay?.['generalRegistration.educationCurriculum.educationFormBySession']
-    ).toEqual({})
+      detail.registration?.overlay
+    ).not.toHaveProperty('generalRegistration.educationCurriculum.educationFormBySession')
 
     const reloaded = reload(request)
     seedGeneralRegistrationOverlayFromProgram(reloaded)

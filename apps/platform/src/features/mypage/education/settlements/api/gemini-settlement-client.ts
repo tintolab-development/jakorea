@@ -2,6 +2,7 @@ import { axiosClient } from '@/shared/api/axios-instance'
 import {
   GEMINI_LECTURE_SCHEDULES_PATH,
   GEMINI_SETTLEMENT_SUMMARY_PATH,
+  type GeminiLectureFeeBasisItem,
   type GeminiLectureScheduleItem,
   type GeminiSettlementSummary,
 } from '../lib/gemini-settlement-status'
@@ -46,15 +47,30 @@ function readStringOrNumber(row: Record<string, unknown>, key: string): string |
   return readString(row, key)
 }
 
+function readFiniteNumber(row: Record<string, unknown>, key: string): number | null {
+  const raw = row[key]
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : null
+}
+
+function parseFeeBasisItems(value: unknown): GeminiLectureFeeBasisItem[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .map(item => asRecord(item))
+    .filter((row): row is Record<string, unknown> => row != null)
+    .map(row => ({ classCount: readFiniteNumber(row, 'classCount'), amount: readFiniteNumber(row, 'amount') }))
+    .filter((item): item is GeminiLectureFeeBasisItem => item.classCount != null)
+}
+
 export function parseGeminiSettlementSummary(payload: unknown): GeminiSettlementSummary {
   const row = asRecord(unwrapEnvelope(payload)) ?? {}
-  const businessIncome = row.businessIncome
+  const businessIncome = typeof row.businessIncomeYn === 'boolean' ? row.businessIncomeYn : row.businessIncome
   return {
     paymentStatementProcessingStatus: readString(row, 'paymentStatementProcessingStatus'),
     paymentStatementProcessingStatusCode: readString(row, 'paymentStatementProcessingStatusCode'),
     lectureProgressRound: readNumber(row, 'lectureProgressRound'),
     lectureTotalRound: readNumber(row, 'lectureTotalRound'),
     lectureFeeBasis: row.lectureFeeBasis === null ? null : readString(row, 'lectureFeeBasis'),
+    lectureFeeBasisItems: parseFeeBasisItems(row.lectureFeeBasisItems),
     businessIncomeLabel: readString(row, 'businessIncomeLabel'),
     businessIncome: typeof businessIncome === 'boolean' ? businessIncome : null,
     accountPaymentStatus: readString(row, 'accountPaymentStatus'),
@@ -78,6 +94,9 @@ export function parseGeminiLectureSchedules(payload: unknown): GeminiLectureSche
       scheduleId: typeof row.scheduleId === 'number' ? row.scheduleId : null,
       startAt: readString(row, 'startAt'),
       endAt: readString(row, 'endAt'),
+      trainingDate: readString(row, 'trainingDate'),
+      trainingStartTime: readString(row, 'trainingStartTime'),
+      trainingEndTime: readString(row, 'trainingEndTime'),
       institutionName: readString(row, 'institutionName'),
       grade: readString(row, 'grade'),
       sessionNo: readNumber(row, 'sessionNo'),
@@ -89,6 +108,8 @@ export function parseGeminiLectureSchedules(payload: unknown): GeminiLectureSche
       distanceFromHome: readStringOrNumber(row, 'distanceFromHome'),
       accountPaymentStatus: readString(row, 'accountPaymentStatus'),
       settlementStatus: readString(row, 'settlementStatus'),
+      settlementStatusLabel: readString(row, 'settlementStatusLabel'),
+      expectedAmount: readFiniteNumber(row, 'expectedAmount'),
     }))
 }
 

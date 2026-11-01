@@ -163,9 +163,7 @@ export function FooterRelatedLogosSection() {
             variant="secondary"
             size="medium"
             type="button"
-            width={88}
-            onClick={() => setEditing(record)}
-          >
+            onClick={() => setEditing(record)} >
             수정
           </CmsButton>
         ),

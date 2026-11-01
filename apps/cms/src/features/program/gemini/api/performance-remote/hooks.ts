@@ -1,7 +1,10 @@
 import { useLayoutEffect, useMemo } from 'react'
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query'
 import { shouldUseGeminiPerformanceRemoteApi } from './capabilities'
-import { geminiPerformanceQueryKeys } from './query-keys'
+import {
+  geminiPerformanceQueryKeys,
+  type GeminiPerformanceListQueryFilters,
+} from './query-keys'
 import {
   listGeminiPerformanceRowsPage,
   type GeminiPerformanceRemoteListPage,
@@ -18,10 +21,17 @@ function keepFirstInfiniteQueryPage<T>(
   }
 }
 
-export function useGeminiPerformanceListQuery(enabled = true) {
+export function useGeminiPerformanceListQuery(
+  filters: GeminiPerformanceListQueryFilters = {},
+  enabled = true
+) {
   const remoteEnabled = shouldUseGeminiPerformanceRemoteApi()
   const queryClient = useQueryClient()
-  const listQueryKey = useMemo(() => geminiPerformanceQueryKeys.list(), [])
+  const filtersKey = JSON.stringify(filters)
+  const listQueryKey = useMemo(
+    () => geminiPerformanceQueryKeys.list(filtersKey),
+    [filtersKey]
+  )
 
   useLayoutEffect(() => {
     if (!enabled || !remoteEnabled) return
@@ -33,7 +43,8 @@ export function useGeminiPerformanceListQuery(enabled = true) {
 
   return useInfiniteQuery({
     queryKey: listQueryKey,
-    queryFn: ({ pageParam }) => listGeminiPerformanceRowsPage(pageParam as number),
+    queryFn: ({ pageParam }) =>
+      listGeminiPerformanceRowsPage(pageParam as number, filters),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled,

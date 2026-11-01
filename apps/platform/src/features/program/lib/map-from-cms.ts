@@ -48,6 +48,7 @@ import {
   normalizeScheduleDisplayLabel,
 } from '../../../shared/lib/format-display-date.ts'
 import { toDisplayEducationScheduleName } from '../../../shared/lib/education-schedule-name.ts'
+import { mapUjatEducationHalfRangesFromSchedules } from './ujat-preferred-education-schedule-options.ts'
 
 /** domain RECRUITMENT_STATUS 값과 동일 (value import 없이 런타임 selfcheck 가능) */
 const RECRUITMENT_STATUS = {
@@ -653,11 +654,11 @@ function mapRecruitmentPhases(
   if (shouldIncludeInterviewStages(detailCase, program)) {
     phases.push(
       {
-        label: '1차 합격자 발표일',
+        label: '1차 서류 합격자 발표',
         value: formatOptionalDate(program.documentPassAnnouncementDate),
       },
       {
-        label: '면접 기간',
+        label: '2차 면접 기간',
         value: formatOptionalDateRange(program.interviewStartDate, program.interviewEndDate),
       }
     )
@@ -863,6 +864,9 @@ export function mapCmsProgramToPlatformDetail(
       detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
         ? mapUjatPublicEventSchedules(program)
         : mapEventSchedules(program),
+    ...(detailCase === 'ujat-participant' || detailCase === 'ujat-volunteer'
+      ? { ujatEducationHalfRanges: mapUjatEducationHalfRangesFromSchedules(program.schedules) }
+      : {}),
     recruitmentPhaseGroupLabel: recruitmentPhaseGroupLabel(detailCase),
     recruitmentPhases: mapRecruitmentPhases(program, detailCase, appStart, appEnd),
     educationSchedules: mapEducationSchedules(program, detailCase),

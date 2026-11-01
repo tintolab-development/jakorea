@@ -24,13 +24,18 @@ export const queryKeys = {
     [...queryKeys.organizationApplicationsRoot(programId), query] as const,
   organizationDetail: (programId: string, institutionId: string) =>
     [...queryKeys.organizationApplicationsRoot(programId), 'detail', institutionId] as const,
+  organizationApplicationComments: (programId: string, institutionId: string) =>
+    [...queryKeys.organizationApplicationsRoot(programId), 'comments', institutionId] as const,
   organizationTemporarySchedule: (programId: string, institutionId: string) =>
     [
       ...queryKeys.organizationApplicationsRoot(programId),
       'temporary-schedule',
       institutionId,
     ] as const,
-  organizationScheduleAssignments: (programId: string, educationRegionCode: string) =>
+  organizationScheduleAssignments: (
+    programId: string,
+    educationRegionCode: string = 'ALL'
+  ) =>
     [
       ...queryKeys.organizationApplicationsRoot(programId),
       'schedule-assignments',
@@ -39,37 +44,91 @@ export const queryKeys = {
   programSchedules: (programId: string) =>
     [...queryKeys.all, 'program-schedules', programId] as const,
   typedDetail: (programId: string) => [...queryKeys.all, 'typed-detail', programId] as const,
+  volunteerApplicationsRoot: (programId: string) =>
+    [...queryKeys.applications(), 'volunteers', programId] as const,
   volunteerApplications: (
     programId: string,
     half: UjatVolunteerRecruitHalf,
     stage: UjatVolunteerApplicationsStage = 'doc1',
     query: ApplicationsListQuery = {}
-  ) => [...queryKeys.applications(), 'volunteers', programId, { half, stage, query }] as const,
+  ) => [...queryKeys.volunteerApplicationsRoot(programId), { half, stage, query }] as const,
+  volunteerApplicationComments: (programId: string, applicationId: string) =>
+    [...queryKeys.volunteerApplicationsRoot(programId), 'comments', applicationId] as const,
+  volunteerApplicationDetail: (applicationId: string) =>
+    [...queryKeys.applications(), 'volunteer-detail', applicationId] as const,
   execution: () => [...queryKeys.all, 'execution'] as const,
+  planningEstimates: (programId: string) =>
+    [...queryKeys.execution(), 'planning-estimates', programId] as const,
+  allocationMatrixRoot: (programId: string) =>
+    [...queryKeys.execution(), 'allocation-matrix', programId] as const,
   allocationMatrix: (
     programId: string,
     educationRegionCode: string,
     semesterType: 'FIRST_HALF' | 'SECOND_HALF' | 'ALL' = 'ALL'
   ) =>
     [
-      ...queryKeys.execution(),
-      'allocation-matrix',
-      programId,
+      ...queryKeys.allocationMatrixRoot(programId),
       educationRegionCode,
       semesterType,
     ] as const,
+  assignmentSubmissionsRoot: (programId: string) =>
+    [...queryKeys.execution(), 'assignment-submissions', programId] as const,
   assignmentSubmissions: (
     programId: string,
     educationRegionCode: string,
     semesterType: 'FIRST_HALF' | 'SECOND_HALF'
   ) =>
     [
-      ...queryKeys.execution(),
-      'assignment-submissions',
-      programId,
+      ...queryKeys.assignmentSubmissionsRoot(programId),
       educationRegionCode,
       semesterType,
     ] as const,
+  /** 봉사자 상세 · 배정/출결 묶음. memberId로 조회하고 queryFn 안에서 participantId를 해석한다. */
+  volunteerAssignmentProgressRoot: (programId: string) =>
+    [...queryKeys.execution(), 'volunteer-assignment-progress', programId] as const,
+  volunteerAssignmentProgress: (
+    programId: string,
+    memberId: string,
+    semesterType: 'FIRST_HALF' | 'SECOND_HALF',
+    educationRegionCode: string
+  ) =>
+    [
+      ...queryKeys.volunteerAssignmentProgressRoot(programId),
+      memberId,
+      semesterType,
+      educationRegionCode,
+    ] as const,
+  partnerAssignmentsRoot: (programId: string) =>
+    [...queryKeys.execution(), 'partner-assignments', programId] as const,
+  partnerAssignments: (programId: string, scheduleId: string) =>
+    [...queryKeys.partnerAssignmentsRoot(programId), scheduleId] as const,
+  /** 기관 상세 배정 탭. 출결 담당자·학급 봉사자. Class E — 배정 변경이 잦아 30초. */
+  institutionAssignment: (
+    programId: string,
+    institutionId: string,
+    semesterType: 'FIRST_HALF' | 'SECOND_HALF'
+  ) =>
+    [
+      ...queryKeys.execution(),
+      'institution-assignment',
+      programId,
+      institutionId,
+      semesterType,
+    ] as const,
+  partnerRecommendationRoot: (programId: string) =>
+    [...queryKeys.execution(), 'partner-recommendation', programId] as const,
+  partnerRecommendation: (
+    programId: string,
+    scheduleId: string,
+    organizationApplicationId?: number | null
+  ) =>
+    [
+      ...queryKeys.partnerRecommendationRoot(programId),
+      scheduleId,
+      organizationApplicationId ?? 'all',
+    ] as const,
+  absenceReasons: (programId: string) =>
+    [...queryKeys.execution(), 'absence-reasons', programId] as const,
   scheduleAttendances: (programId: string, scheduleId: string) =>
     [...queryKeys.execution(), 'attendances', programId, scheduleId] as const,
   volunteer1365AttendanceAll: (programId: string) =>

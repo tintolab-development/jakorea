@@ -49,6 +49,7 @@ import {
   announcementPublishedToFormValue,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { resolveVenueKind } from '@/features/program/general/model/common-info-edit-schema'
+import { prefillDetailEditRecruitRadioDefaults } from '@/features/program/general/lib/recruit-radio-edit-prefill'
 import {
   isPreEducationCurriculumSession,
   isPreEducationScheduleBlock,
@@ -964,7 +965,7 @@ export function programToDetailEditValues(
       undefined,
     kpiFinalClasses: clampJavaInt(program.generalCommonInfo?.kpi?.finalClasses) ?? undefined,
   })
-  return {
+  const values: ProgramDetailEditFormValues = {
     title: program.title ?? '',
     startDate: toStr(program.startDate),
     endDate: toStr(program.endDate),
@@ -1358,6 +1359,8 @@ export function programToDetailEditValues(
       undefined,
     kpiEducatedTeachers: clampJavaInt(program.educatedTeachers) ?? undefined,
   }
+  // 서버에 값이 없는 모집 라디오 — 등록 화면 기본값과 같게 채운다(일반·1사1교 강사/봉사만, 저장은 사용자 수정 저장 시).
+  return prefillDetailEditRecruitRadioDefaults(program, values)
 }
 
 export type ProgramDetailEditPatchOptions = {
@@ -1373,6 +1376,16 @@ function recruitAudienceScalar<T>(
   fieldAudience: ProgramDetailRecruitmentAudience
 ): T | undefined {
   if (activeAudience === fieldAudience) return value
+  return value ?? existingValue
+}
+
+function recruitAudienceScalarAny<T>(
+  value: T | undefined,
+  existingValue: T | undefined,
+  activeAudience: ProgramDetailRecruitmentAudience | undefined,
+  fieldAudiences: ProgramDetailRecruitmentAudience[]
+): T | undefined {
+  if (activeAudience && fieldAudiences.includes(activeAudience)) return value
   return value ?? existingValue
 }
 
@@ -1444,11 +1457,13 @@ function resolveRecruitmentOperationPeriodLabels(
  * 병합: 새 폼 필드를 저장하려면 여기와 `@/types/domain` Program 정의를 함께 갱신.
  */
 export function detailEditValuesToProgramPatch(
-  values: ProgramDetailEditFormValues,
+  formValues: ProgramDetailEditFormValues,
   existing: import('@/types/domain').Program,
   options?: ProgramDetailEditPatchOptions
 ): Partial<import('@/types/domain').Program> {
   type ProgramRound = import('@/types/domain').ProgramRound
+  // 수정 폼 초기값과 같은 기본값 — 폼 값이 다른 매핑에서 와서 라디오가 비어 있어도 저장 payload 에서 빠지지 않게 한다.
+  const values = prefillDetailEditRecruitRadioDefaults(existing, formValues)
   const announcementPublished =
     announcementPublishedFromFormValue(values.participantRecruitmentAnnouncementPublished) ??
     existing.generalCommonInfo?.participantRecruitmentInfo?.announcementPublished
@@ -2081,35 +2096,35 @@ export function detailEditValuesToProgramPatch(
       recruitmentAudience,
       'instructor'
     ),
-    documentPassAnnouncementDate: recruitAudienceScalar(
+    documentPassAnnouncementDate: recruitAudienceScalarAny(
       values.documentPassAnnouncementDate,
       existing.documentPassAnnouncementDate,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
-    documentPassAnnouncementMethod: recruitAudienceScalar(
+    documentPassAnnouncementMethod: recruitAudienceScalarAny(
       values.documentPassAnnouncementMethod,
       existing.documentPassAnnouncementMethod,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
-    interviewStartDate: recruitAudienceScalar(
+    interviewStartDate: recruitAudienceScalarAny(
       values.interviewStartDate,
       existing.interviewStartDate,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
-    interviewEndDate: recruitAudienceScalar(
+    interviewEndDate: recruitAudienceScalarAny(
       values.interviewEndDate,
       existing.interviewEndDate,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
-    interviewMethod: recruitAudienceScalar(
+    interviewMethod: recruitAudienceScalarAny(
       values.interviewMethod,
       existing.interviewMethod,
       recruitmentAudience,
-      'instructor'
+      ['participant', 'volunteer']
     ),
     finalPassAnnouncementDate:
       recruitmentAudience === 'instructor' || recruitmentAudience === 'volunteer'

@@ -377,7 +377,9 @@ describe('미변경 공통정보 PATCH 보존 — GET 186307 형상', () => {
     expect(overlay?.['generalRegistration.kpi.participantCount']).toBe(80)
     expect(overlay?.['generalRegistration.typeSettings.educationForm']).toBe('offline')
     expect(overlay?.['generalRegistration.typeSettings.singleEducationForm']).toBe('offline')
-    expect(overlay?.['generalRegistration.typeSettings.multiCommonEducationForm']).toBe('offline')
+    expect(overlay).not.toHaveProperty(
+      'generalRegistration.typeSettings.multiCommonEducationForm'
+    )
   })
 
   it('실제 수정한 대표명·영문명·KPI·강사비·교육과정·IP는 PATCH에 남긴다', () => {

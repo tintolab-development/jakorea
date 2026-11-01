@@ -202,25 +202,19 @@ export function AssignmentSubmissionModal({
     <>
       <CmsButton
         variant="secondary"
-        size="medium"
-        width={120}
-        className="cms-button--footer-auto assignment-submission-modal__footer-btn assignment-submission-modal__footer-btn--close"
-        onClick={handleModalCancel}
-      >
+        size="medium" className="assignment-submission-modal__footer-btn assignment-submission-modal__footer-btn--close"
+        onClick={handleModalCancel} >
         닫기
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="medium"
-        width={160}
-        className="cms-button--footer-auto assignment-submission-modal__footer-btn assignment-submission-modal__footer-btn--bulk"
+        size="medium" className="assignment-submission-modal__footer-btn assignment-submission-modal__footer-btn--bulk"
         icon={<ButtonDownloadIcon />}
         loading={bulkDownloadLoading}
         disabled={onBulkDownload == null}
         onClick={() => {
           if (onBulkDownload) void onBulkDownload()
-        }}
-      >
+        }} >
         과제 일괄 다운로드
       </CmsButton>
     </>

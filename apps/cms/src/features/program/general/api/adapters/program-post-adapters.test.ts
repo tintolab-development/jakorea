@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   groupProgramPostAttachmentsByPostId,
+  mapOrganizationApplicationIdToSchoolId,
+  mapProgramPostListItemToDomain,
   mapProgramPostResponseToDomain,
+  parseOrganizationApplicationIdFromSchoolId,
 } from './program-post-adapters'
 
 describe('mapProgramPostResponseToDomain', () => {
@@ -17,6 +20,34 @@ describe('mapProgramPostResponseToDomain', () => {
   it('이전 응답의 id도 계속 받는다', () => {
     const post = mapProgramPostResponseToDomain({ id: 30001, programId: 1201 }, '1201')
     expect(post.id).toBe('30001')
+  })
+
+  it('organizationApplicationId를 schoolId로 매핑한다', () => {
+    const post = mapProgramPostResponseToDomain(
+      { postId: 1, organizationApplicationId: 1691554, content: '기관글' },
+      '186495'
+    )
+    expect(post.schoolId).toBe('1691554')
+  })
+})
+
+describe('mapProgramPostListItemToDomain', () => {
+  it('목록 응답의 organizationApplicationId를 schoolId로 매핑한다', () => {
+    const post = mapProgramPostListItemToDomain(
+      { postId: 9, organizationApplicationId: 1691554, title: '공지' },
+      '186495'
+    )
+    expect(post.schoolId).toBe('1691554')
+    expect(post.id).toBe('9')
+  })
+})
+
+describe('organizationApplicationId helpers', () => {
+  it('양방향 변환한다', () => {
+    expect(mapOrganizationApplicationIdToSchoolId(1691554)).toBe('1691554')
+    expect(mapOrganizationApplicationIdToSchoolId(null)).toBeUndefined()
+    expect(parseOrganizationApplicationIdFromSchoolId('1691554')).toBe(1691554)
+    expect(parseOrganizationApplicationIdFromSchoolId('school-1')).toBeUndefined()
   })
 })
 

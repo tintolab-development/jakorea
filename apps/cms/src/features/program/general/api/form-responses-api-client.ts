@@ -1,5 +1,6 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
 import customInstance from '@/shared/api/orval-mutator'
+import type { FormResponseDocumentSnapshotResponse } from '@/shared/api/generated/forms-surveys/schemas/formResponseDocumentSnapshotResponse'
 import type { FormResponseResponse } from '@/shared/api/generated/forms-surveys/schemas/formResponseResponse'
 import type { FormResponseUpdateRequest } from '@/shared/api/generated/forms-surveys/schemas/formResponseUpdateRequest'
 import type { PageResponseFormResponseResponse } from '@/shared/api/generated/forms-surveys/schemas/pageResponseFormResponseResponse'
@@ -36,6 +37,18 @@ export async function getFormResponseRemote(responseId: number): Promise<FormRes
   return unwrapApiBody<FormResponseResponse>(
     await customInstance({
       url: `/api/admin/form-responses/${encodeURIComponent(String(responseId))}`,
+      method: 'GET',
+    })
+  )
+}
+
+/** GET /api/admin/form-responses/{responseId}/document-snapshot */
+export async function getFormResponseDocumentSnapshotRemote(
+  responseId: number
+): Promise<FormResponseDocumentSnapshotResponse> {
+  return unwrapApiBody<FormResponseDocumentSnapshotResponse>(
+    await customInstance({
+      url: `/api/admin/form-responses/${encodeURIComponent(String(responseId))}/document-snapshot`,
       method: 'GET',
     })
   )

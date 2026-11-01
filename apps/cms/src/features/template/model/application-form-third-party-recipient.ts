@@ -11,4 +11,5 @@ export {
   isBlankApplicationFormThirdPartyRecipientValue,
   listIncompleteApplicationFormThirdPartyRecipientKeys,
   readApplicationFormThirdPartyRecipientValue,
+  resolveThirdPartyRecipientFromFormAnswer,
 } from '@jakorea/form-schema/paragraph-ids/application-form-third-party-recipient'

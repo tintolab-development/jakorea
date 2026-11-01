@@ -19,7 +19,6 @@ import {
 } from '@/shared/ui'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
-import { RegistrationDevAutofillButton } from '@/features/program/shared/ui/registration/registration-dev-autofill-button'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
 import {
   LnbIconManagers,
@@ -117,7 +116,6 @@ export function GeminiRecruitmentDetailFullPageModal({
     handleEdit: handleInfoEdit,
     handleCancel: handleInfoCancel,
     handleSave: handleInfoSave,
-    applyDevAutofill,
     registerRichTextGetter,
     overlayRichText,
     isDetailFetching,
@@ -320,27 +318,23 @@ export function GeminiRecruitmentDetailFullPageModal({
             {activeLnb === 'info' ? (
               <>
                 <div className="gemini-recruitment-detail__header-actions program-detail-fullpage-modal__header-actions">
-                  {canWrite && isEditModeInfo ? (
-                    <RegistrationDevAutofillButton onClick={applyDevAutofill} />
-                  ) : null}
                   {canWrite ? (
                     <ProgramEditInfoActions
                       isEditing={isEditModeInfo}
                       idleVariant="secondary"
                       onEdit={handleInfoEditClick}
                       onCancel={handleInfoCancel}
-                      onSave={handleInfoSaveClick}
-                    />
+                      onSave={handleInfoSaveClick} />
                   ) : null}
-                  <CmsButton
-                    type="button"
-                    variant="primary"
-                    size="large"
-                    className="program-detail-fullpage-modal__program-preview-btn"
-                    onClick={handlePreview}
-                  >
-                    미리보기
-                  </CmsButton>
+                  {!isEditModeInfo ? (
+                    <CmsButton
+                      type="button"
+                      variant="primary"
+                      size="large" className="program-detail-fullpage-modal__program-preview-btn"
+                      onClick={handlePreview} >
+                      미리보기
+                    </CmsButton>
+                  ) : null}
                 </div>
                 <div className="program-detail-fullpage-modal__info-tab">
                   <GeminiRecruitmentInfoTab

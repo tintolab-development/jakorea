@@ -37,6 +37,7 @@ export function PortraitGuardianInfoModal({
 
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       size="md"
       title={PORTRAIT_GUARDIAN_INFO_COPY.title}

@@ -47,15 +47,16 @@ export function buildUjatAcknowledgedScheduleNavigateState(
   return { [UJAT_ACKNOWLEDGED_SCHEDULE_STATE_KEY]: schedule }
 }
 
+/**
+ * 1→2단계 이동·confirm 전 revision 유효성.
+ * 배정 일정 카드 UI는 노출하지 않으므로 slots 유무는 보지 않는다.
+ */
 export function canAcknowledgeDisplayedUjatSchedule(input: {
   assignmentRevision: number | undefined
   temporarySchedule?: EducationUjatTemporarySchedule
 }): boolean {
-  if (!isPositiveIntegerRevision(input.assignmentRevision)) return false
-  const slots = (input.temporarySchedule?.slots ?? []).filter(
-    slot => slot.scheduleId != null,
-  )
-  return slots.length > 0
+  void input.temporarySchedule
+  return isPositiveIntegerRevision(input.assignmentRevision)
 }
 
 export function hasUjatScheduleRevisionDrift(

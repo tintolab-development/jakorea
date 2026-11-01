@@ -107,8 +107,7 @@ export function EducationScheduleChangeModal({
             size="large"
             type="button"
             disabled={busy}
-            onClick={onCancel}
-          >
+            onClick={onCancel} >
             닫기
           </CmsButton>
           <CmsButton
@@ -126,8 +125,7 @@ export function EducationScheduleChangeModal({
               void Promise.resolve(onConfirm(nextLines)).finally(() => {
                 setConfirming(false)
               })
-            }}
-          >
+            }} >
             일정 변경
           </CmsButton>
         </div>

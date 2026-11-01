@@ -220,14 +220,11 @@ function ProfileFieldWithAction({
       <span className="profile-edit-modal__value-with-action-text">{value}</span>
       <CmsButton
         variant="secondary"
-        size="h32"
-        width={100}
-        className="profile-edit-modal__field-action-btn"
+        size="h32" className="profile-edit-modal__field-action-btn"
         type="button"
         disabled={actionDisabled}
         loading={actionLoading}
-        onClick={onAction}
-      >
+        onClick={onAction} >
         {actionLabel}
       </CmsButton>
     </span>
@@ -536,7 +533,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
         회원탈퇴
       </button>
       <div className="profile-edit-modal__footer-actions">
-        <CmsButton variant="default" size="medium" type="button" width={120} onClick={handleCancel}>
+        <CmsButton variant="default" size="medium" type="button" onClick={handleCancel}>
           닫기
         </CmsButton>
         {isAdminUser ? (
@@ -544,9 +541,7 @@ export function ProfileEditModal({ open, onCancel }: ProfileEditModalProps) {
             variant="secondary"
             size="medium"
             type="button"
-            width={140}
-            onClick={handleOpenPasswordChangeModal}
-          >
+            onClick={handleOpenPasswordChangeModal} >
             비밀번호 변경
           </CmsButton>
         ) : null}

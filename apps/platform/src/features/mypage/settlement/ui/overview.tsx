@@ -17,11 +17,19 @@ type SettlementOverviewProps = {
   params: SettlementOverviewParams
   data: SettlementOverviewPageData
   onParamsChange: (next: Partial<SettlementOverviewParams>) => void
+  onRefresh?: () => void
+  refreshing?: boolean
 }
 
 const SEARCH_PLACEHOLDER = '프로그램명 또는 참여 기관명 검색'
 
-export function SettlementOverview({ params, data, onParamsChange }: SettlementOverviewProps) {
+export function SettlementOverview({
+  params,
+  data,
+  onParamsChange,
+  onRefresh,
+  refreshing = false,
+}: SettlementOverviewProps) {
   const listItems = useMemo(
     () => filterSettlementListItems(data.items, params),
     [data.items, params],
@@ -54,8 +62,13 @@ export function SettlementOverview({ params, data, onParamsChange }: SettlementO
           />
           <PFCircleIconButton
             icon="refresh"
-            disabled
-            aria-label="새로고침은 정산 API 연동 후 사용할 수 있습니다."
+            disabled={!onRefresh || refreshing || params.fixture}
+            aria-label={
+              params.fixture
+                ? 'fixture 모드에서는 새로고침할 수 없습니다.'
+                : '정산 현황 새로고침'
+            }
+            onClick={onRefresh}
           />
         </div>
       </div>

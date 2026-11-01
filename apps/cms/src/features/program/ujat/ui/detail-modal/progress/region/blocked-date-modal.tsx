@@ -23,6 +23,17 @@ export type RegionBlockedDateModalProps = {
   onConfirm: (payload: RegionBlockedDateModalPayload) => void
 }
 
+function RequiredLabel({ children }: { children: string }) {
+  return (
+    <span className="ujat-assignment-assign-modal__label">
+      {children}
+      <span className="ujat-assignment-assign-modal__required" aria-hidden>
+        *
+      </span>
+    </span>
+  )
+}
+
 export function RegionBlockedDateModal({
   open,
   volunteerOptions,
@@ -104,7 +115,7 @@ export function RegionBlockedDateModal({
         disabled={!canConfirm}
         onClick={handleConfirm}
       >
-        배정 불가 설정
+        설정
       </CmsButton>
     </div>
   )
@@ -113,24 +124,28 @@ export function RegionBlockedDateModal({
     <ContentModal
       open={open}
       onCancel={handleCancel}
-      title="배정 불가일 설정"
+      title="참여 불가일 설정"
       width={600}
       zIndex={MODAL_Z_INDEX}
       className="ujat-assignment-assign-modal"
       wrapClassName="ujat-assignment-assign-modal-wrap"
       footer={footer}
       description={
-        '배정이 불가한 일정을 설정할 봉사자 및 날짜를 선택해 주세요.\n해당 일정에 교육이 배정되어 있는 경우, 다른 봉사자를 지정해 주세요.'
+        '봉사자가 교육에 참여할 수 없는 날짜를 선택해 주세요.\n해당 날짜에 이미 배정된 교육이 있다면 대체 봉사자를 지정해 주세요.'
       }
     >
       <div className="ujat-assignment-assign-modal__form">
         <div className="ujat-assignment-assign-modal__field">
-          <span className="ujat-assignment-assign-modal__label">봉사자명</span>
+          <RequiredLabel>봉사자</RequiredLabel>
           <CmsSelect
             inputSize="large"
             width="100%"
             withAllOption={false}
-            placeholder="봉사자명을 선택해 주세요"
+            placeholder={
+              volunteerOptions.length === 0
+                ? '선택 가능한 봉사자가 없습니다'
+                : '봉사자명을 선택해 주세요'
+            }
             value={volunteerId}
             disabled={volunteerOptions.length === 0}
             onChange={value => {
@@ -138,19 +153,23 @@ export function RegionBlockedDateModal({
               setSubstituteVolunteerId(undefined)
             }}
             options={[...volunteerOptions]}
-            aria-label="봉사자명"
+            aria-label="봉사자"
           />
         </div>
 
         <div className="ujat-assignment-assign-modal__field">
-          <span className="ujat-assignment-assign-modal__label">배정 불가일</span>
+          <RequiredLabel>참여 불가일</RequiredLabel>
           <CmsSelect
             mode="multiple"
             inputSize="large"
             width="100%"
             withAllOption={false}
             allowClear
-            placeholder="배정 불가한 날짜를 선택해 주세요"
+            placeholder={
+              educationDateOptions.length === 0
+                ? '선택 가능한 교육일이 없습니다'
+                : '참여 불가한 날짜를 선택해 주세요'
+            }
             value={blockedDateLabels}
             disabled={!volunteerId || educationDateOptions.length === 0}
             onChange={value => {
@@ -159,27 +178,31 @@ export function RegionBlockedDateModal({
               setSubstituteVolunteerId(undefined)
             }}
             options={[...educationDateOptions]}
-            aria-label="배정 불가일"
+            aria-label="참여 불가일"
           />
         </div>
 
         <div className="ujat-assignment-assign-modal__field">
-          <span className="ujat-assignment-assign-modal__label">대체 봉사자</span>
+          <RequiredLabel>대체 봉사자</RequiredLabel>
           <CmsSelect
             inputSize="large"
             width="100%"
             withAllOption={false}
             placeholder={
               !volunteerId
-                ? '봉사자명을 먼저 선택해 주세요'
+                ? '봉사자를 먼저 선택해 주세요'
                 : blockedDateLabels.length === 0
-                  ? '배정 불가일을 먼저 선택해 주세요'
+                  ? '참여 불가일을 먼저 선택해 주세요'
                   : substituteVolunteerOptions.length === 0
                     ? '선택 가능한 대체 봉사자가 없습니다'
                     : '대체 봉사자를 선택해 주세요'
             }
             value={substituteVolunteerId}
-            disabled={!volunteerId || blockedDateLabels.length === 0}
+            disabled={
+              !volunteerId ||
+              blockedDateLabels.length === 0 ||
+              substituteVolunteerOptions.length === 0
+            }
             onChange={value =>
               setSubstituteVolunteerId(value == null ? undefined : String(value))
             }

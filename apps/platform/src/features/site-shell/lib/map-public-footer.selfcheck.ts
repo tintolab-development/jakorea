@@ -67,9 +67,13 @@ const remote = mapPublicFooter({
 
 assert.ok(remote)
 assert.equal(remote.source, 'remote')
+assert.equal(remote.menus.find(menu => menu.key === 'DIRECTIONS')?.label, '오시는 길')
 assert.equal(remote.menus.length, 6)
 assert.equal(remote.menus.at(-1)?.label, '온라인 학습관리')
-assert.equal(remote.menus.some(menu => menu.label === '없는 메뉴'), false)
+assert.equal(
+  remote.menus.some(menu => menu.label === '없는 메뉴'),
+  false
+)
 assert.equal(remote.addressLine.includes('('), false)
 const donation = remote.menus.find(menu => menu.key === 'DONATION')
 assert.equal(donation?.kind, 'noop')

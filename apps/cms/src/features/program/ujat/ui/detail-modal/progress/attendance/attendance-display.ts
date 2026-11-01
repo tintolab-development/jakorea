@@ -36,11 +36,11 @@ export function attendanceStatusLabel(status: UjatAttendanceStatus): string {
   return UJAT_ATTENDANCE_STATUS_LABEL[status]
 }
 
-/** 활동 포기자는 해당 세션 출석 이력이 있는 경우에만 노출 (mock 설계상 목록 포함 = 노출) */
+/** 활동 포기자는 해당 세션에 출석 처리(미처리 아님)가 있을 때만 노출 */
 export function filterVisibleAttendanceVolunteers(
   volunteers: UjatAttendanceVolunteerRow[]
 ): UjatAttendanceVolunteerRow[] {
-  return volunteers.filter(v => !v.isDropout || v.status !== undefined)
+  return volunteers.filter(v => !v.isDropout || v.status !== 'unprocessed')
 }
 
 export function cloneAttendanceVolunteerRows(
@@ -98,16 +98,18 @@ export function applyAttendanceCorrection(
   const next: UjatAttendanceVolunteerRow = { ...row, status }
 
   if (status === 'late') {
-    const checkInTime = options.checkInTime ?? row.checkInTime ?? '9:10'
-    const sessionStart = options.sessionStartTime ?? '8:00'
+    const checkInTime = options.checkInTime ?? row.checkInTime
+    const sessionStart = options.sessionStartTime
     next.checkInTime = checkInTime
-    next.lateMinutes = computeLateMinutes(sessionStart, checkInTime)
+    next.lateMinutes =
+      checkInTime && sessionStart ? computeLateMinutes(sessionStart, checkInTime) : undefined
     next.excusedReason = undefined
     return next
   }
 
   if (status === 'excused_absence') {
-    next.excusedReason = options.excusedReason ?? row.excusedReason ?? '개인 사정'
+    // 사유는 사용자·API 값만 — 기본문구 invent 금지
+    next.excusedReason = options.excusedReason ?? row.excusedReason
     next.lateMinutes = undefined
     next.checkInTime = undefined
     return next

@@ -10,7 +10,7 @@
  * - 필터 칸 사이 gap: --filter-field-gap (12px)
  * - 레이블·컨트롤 gap: --filter-label-control-gap (6px)
  * - TableFilterGroup 레이블: CmsField M (14px) — `cms-control--medium` · `.cms-field__label`
- * - 조회 버튼: 160×40px (table-filter-group.css)
+ * - 조회 버튼: 높이 40px · 폭은 CmsButton medium min-width + 라벨 (table-filter-group.css)
  *
  * FilterFieldConfig.width: 단일 검색·셀렉트는 `FILTER_CONTROL_MAX_WIDTH_PX`(260), 기간·이중셀렉트는
  * `FILTER_CONTROL_WIDE_FIELD_WIDTH_PX`(540). **radio에는 width를 두지 않음.** `%` 폭은 행 전체 stretch — 목록 필터에 쓰지 않음.

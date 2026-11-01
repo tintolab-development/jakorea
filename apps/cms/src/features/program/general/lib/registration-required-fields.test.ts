@@ -706,6 +706,31 @@ it('일정형·복수 회차 — 진행 일정에 시각이 있으면 groupTimes
   ).toBe(false)
 })
 
+it('일정형·복수 회차 — 여러 날+시각 진행 일정은 완료로 본다', () => {
+  expect(
+    hasIncompleteGeneralProgramRegistrationRequiredFields(
+      filledOverlay({
+        'generalRegistration.basicInfo.detailedProgramId': undefined,
+        'generalRegistration.kpi.dispatchedSchool': 10,
+        'generalRegistration.kpi.dispatchedClass': 5,
+        'generalRegistration.typeSettings.ipsType': { category: 'prepare', detail: 'none' },
+        'generalRegistration.educationScheduleCurriculum.eventNameByDetail': {
+          1: '행사 1',
+        },
+        'generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso': {
+          1: '2026.11.05(목) 11:00 ~ 2026.11.06(금) 18:00',
+        },
+      }),
+      ctx({
+        programType: 'schedule',
+        sessionRoundType: 'multi',
+        educationFormScheduleDetail: 'perSchedule',
+        scheduleCurriculumDetailCount: 1,
+      })
+    )
+  ).toBe(false)
+})
+
 it('일정형·복수 회차 — 진행 일정이 날짜만이면 미완료이다', () => {
   expect(
     describeIncompleteGeneralProgramRegistrationRequiredFields(

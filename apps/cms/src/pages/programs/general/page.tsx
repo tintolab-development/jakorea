@@ -395,15 +395,14 @@ export function GeneralProgramListPageContent() {
       <FilterTableToolbarButton
         variant="secondary"
         icon={viewMode === 'list' ? <ButtonCalendarIcon /> : <ButtonListIcon />}
-        onClick={handleViewModeToggle}
-      >
+        onClick={handleViewModeToggle} >
         {viewMode === 'list' ? '캘린더 뷰로 보기' : '리스트 뷰로 보기'}
       </FilterTableToolbarButton>
     </div>
   )
 
   const programListToolbarActionsAfterExcel = (
-    <FilterTableToolbarButton variant="primary" width={120} onClick={handleProgramCreateClick}>
+    <FilterTableToolbarButton variant="primary" onClick={handleProgramCreateClick}>
       신규 등록
     </FilterTableToolbarButton>
   )

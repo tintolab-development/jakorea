@@ -3,7 +3,8 @@
  * overlay store / apply / resync / seed 함수를 호출하지 않는다.
  */
 import dayjs from 'dayjs'
-import { formatDateDotWithWeekday } from '@/shared/utils/date'
+import { dateRangeUsesClockTime } from '@/features/template/lib/date-range-clock'
+import { normalizeEducationScheduleDateLabelForCms } from '@/features/template/lib/format-education-schedule-line'
 import type {
   GeneralProgramCurriculumSessionRow,
   GeneralProgramScheduleDetailKind,
@@ -136,9 +137,15 @@ export function programDatesFromOperationRange(
 ): { startDate: string; endDate: string } | null {
   if (seal == null) return null
   if (!seal.start?.trim() || !seal.end?.trim()) return null
+  const start = dayjs(seal.start)
+  const end = dayjs(seal.end)
+  if (!start.isValid() || !end.isValid()) return null
+  if (dateRangeUsesClockTime(start, end)) {
+    return { startDate: start.toISOString(), endDate: end.toISOString() }
+  }
   return {
-    startDate: dayjs(seal.start).startOf('day').toISOString(),
-    endDate: dayjs(seal.end).endOf('day').toISOString(),
+    startDate: start.startOf('day').toISOString(),
+    endDate: end.endOf('day').toISOString(),
   }
 }
 
@@ -203,11 +210,7 @@ function maxFilledSessionIndex(records: Array<Record<number, unknown>>): number 
 }
 
 export function formatScheduleDateLabel(iso: string | null | undefined): string | undefined {
-  if (!iso?.trim()) return undefined
-  const d = dayjs(iso)
-  if (!d.isValid()) return iso.trim()
-  const label = formatDateDotWithWeekday(d)
-  return label === '-' ? iso.trim() : label
+  return normalizeEducationScheduleDateLabelForCms(iso)
 }
 
 export function buildIpsTypeSummaryFull(
@@ -240,20 +243,28 @@ export function surveyKeysFromItems(items: CommonInfoSurveyItems | undefined): G
   return keys
 }
 
-export function resolveCommonEducationForm(values: CommonInfoFormValues): string {
-  return (
-    readOptionalText(values.multiCommonEducationForm) ||
-    readOptionalText(values.singleEducationForm) ||
-    DEFAULT_REGISTRATION_EDUCATION_FORM
-  )
+export function resolveCommonEducationForm(
+  values: CommonInfoFormValues,
+  sessionRoundType?: string
+): string {
+  const multi = readOptionalText(values.multiCommonEducationForm)
+  const single = readOptionalText(values.singleEducationForm)
+  if (sessionRoundType === 'multi') {
+    return multi || single || DEFAULT_REGISTRATION_EDUCATION_FORM
+  }
+  return single || multi || DEFAULT_REGISTRATION_EDUCATION_FORM
 }
 
-export function resolveCommonParticipation(values: CommonInfoFormValues): string {
-  return (
-    readOptionalText(values.multiCommonParticipation) ||
-    readOptionalText(values.singleParticipation) ||
-    DEFAULT_REGISTRATION_PARTICIPATION
-  )
+export function resolveCommonParticipation(
+  values: CommonInfoFormValues,
+  sessionRoundType?: string
+): string {
+  const multi = readOptionalText(values.multiCommonParticipation)
+  const single = readOptionalText(values.singleParticipation)
+  if (sessionRoundType === 'multi') {
+    return multi || single || DEFAULT_REGISTRATION_PARTICIPATION
+  }
+  return single || multi || DEFAULT_REGISTRATION_PARTICIPATION
 }
 
 export function participantFlagsFromCompleteExtras(
@@ -433,6 +444,7 @@ export function buildScheduleDetailsFromMaps(
     const ips = maps.ipsByDetailIndex[n]
     return {
       ...row,
+      blockKind: 'event' as const,
       scheduleDateLabel: formatScheduleDateLabel(maps.scheduleDateByDetailIso[n]),
       progressTimeSummary: slots.length > 0 ? buildScheduleProgressTimeSummary(slots) : undefined,
       assignmentEnabled: hideAssignment ? false : Boolean(assignment?.enabled),
@@ -706,7 +718,7 @@ function scheduleOverlayFromProgram(program: Program): Record<string, unknown> {
   let dataIndex = 0
 
   rows.forEach(row => {
-    const isPre = row.scheduleLabel.includes('사전') || row.scheduleLabel.includes('연수')
+    const isPre = isPreEducationScheduleBlock(row)
     const index = isPre ? 0 : dataIndex + 1
     if (!isPre) dataIndex += 1
     eventNameByDetail[index] = row.name
@@ -862,11 +874,17 @@ export function serializeIndependentCommonInfoOverlayFromProgram(
     [K.kpiDispatchedSchool]: null,
     [K.kpiDispatchedClass]: null,
     ...wageOverlayFromNested(program, values),
-    [K.singleEducationForm]: educationFormValueFromLabel(common?.educationFormLabel) ?? 'online',
-    [K.multiCommonEducationForm]:
-      educationFormValueFromLabel(common?.educationFormLabel) ?? 'online',
-    [K.singleParticipation]: common?.participationMethod ?? 'individual',
-    [K.multiCommonParticipation]: common?.participationMethod ?? 'individual',
+    ...(extras.sessionRoundType === 'multi'
+      ? {
+          [K.multiCommonEducationForm]:
+            educationFormValueFromLabel(common?.educationFormLabel) ?? 'online',
+          [K.multiCommonParticipation]: common?.participationMethod ?? 'individual',
+        }
+      : {
+          [K.singleEducationForm]:
+            educationFormValueFromLabel(common?.educationFormLabel) ?? 'online',
+          [K.singleParticipation]: common?.participationMethod ?? 'individual',
+        }),
     [K.ipsType]: {
       category: commonIps.category || reverseIpsCategory(program.ips),
       detail: commonIps.detail,
@@ -897,7 +915,8 @@ export function orderOverlayKeys(
 export function serializeCreatePersistOverlay(
   values: CommonInfoFormValues,
   unownedOverlay: Record<string, unknown> | undefined,
-  keyOrder?: readonly string[]
+  keyOrder?: readonly string[],
+  sessionRoundType?: string
 ): Record<string, unknown> {
   const out: Record<string, unknown> = { ...(unownedOverlay ?? {}) }
   const write = (key: string, field: OptionalField<unknown>) => {
@@ -933,15 +952,25 @@ export function serializeCreatePersistOverlay(
   write(K.wageGrade3Fee, values.wageGrade3Fee)
   write(K.paymentItemValues, values.paymentItemValues)
   write(K.paymentItemLabels, values.paymentItemLabels)
-  write(K.singleEducationForm, values.singleEducationForm)
-  write(K.multiCommonEducationForm, values.multiCommonEducationForm)
-  write(K.legacyEducationForm, values.legacyEducationForm)
-  write(K.singleParticipation, values.singleParticipation)
-  write(K.multiCommonParticipation, values.multiCommonParticipation)
+  if (sessionRoundType === 'multi') {
+    write(K.multiCommonEducationForm, values.multiCommonEducationForm)
+    write(K.multiCommonParticipation, values.multiCommonParticipation)
+  } else {
+    write(K.singleEducationForm, values.singleEducationForm)
+    write(K.legacyEducationForm, values.legacyEducationForm)
+    write(K.singleParticipation, values.singleParticipation)
+  }
   write(K.ipsType, values.ipsType)
   write(K.scheduleLines, values.scheduleLines)
   Object.assign(out, serializeCurriculumMaps(values.curriculum))
   Object.assign(out, serializeScheduleMaps(values.schedule))
+  if (sessionRoundType === 'multi') {
+    delete out[K.singleEducationForm]
+    delete out[K.singleParticipation]
+  } else {
+    delete out[K.multiCommonEducationForm]
+    delete out[K.multiCommonParticipation]
+  }
   return orderOverlayKeys(out, keyOrder)
 }
 

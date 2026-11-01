@@ -5,7 +5,7 @@ import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import { canPerformWriteAction } from '@/shared/utils/permissions'
-import { CMS_ACTION_BUTTON_WIDTH, useCmsAlert,
+import { useCmsAlert,
   FilterTableToolbarButton
 } from '@/shared/ui'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
@@ -325,10 +325,7 @@ export function GeminiApprovedTrainingDetailInstructorApplicationTab({
           canWrite ? (
             <FilterTableToolbarButton
               variant="secondary"
-              className="cms-button--action"
-              width={CMS_ACTION_BUTTON_WIDTH}
-              onClick={handleBulkApprove}
-            >
+              onClick={handleBulkApprove} >
               {approveButtonLabel}
             </FilterTableToolbarButton>
           ) : null

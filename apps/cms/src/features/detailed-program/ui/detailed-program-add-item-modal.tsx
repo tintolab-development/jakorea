@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { CmsButton, CmsInput, CmsRadio, CmsRadioGroup, ContentModal } from '@/shared/ui'
+import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import './detailed-program-add-item-modal.css'
 
 export type DetailedProgramAddItemValues = {
@@ -41,21 +46,14 @@ export function DetailedProgramAddItemModal({
   const handleSubmit = useCallback(() => {
     const trimmed = name.trim()
     if (!trimmed) {
+      cmsAlertModal.show({
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+        content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+      })
       return
     }
     onSubmit({ name: trimmed, active })
   }, [active, name, onSubmit])
-
-  const nameLabel = (
-    <>
-      세부 프로그램명
-      <span className="detailed-program-add-item-modal__required" aria-hidden>
-        *
-      </span>
-    </>
-  )
-
-  const canSubmit = Boolean(name.trim())
 
   return (
     <ContentModal
@@ -70,13 +68,7 @@ export function DetailedProgramAddItemModal({
           <CmsButton variant="secondary" size="large" type="button" onClick={onCancel}>
             취소
           </CmsButton>
-          <CmsButton
-            variant="primary"
-            size="large"
-            type="button"
-            disabled={!canSubmit}
-            onClick={handleSubmit}
-          >
+          <CmsButton variant="primary" size="large" type="button" onClick={handleSubmit}>
             등록
           </CmsButton>
         </>
@@ -84,32 +76,25 @@ export function DetailedProgramAddItemModal({
       titleBodyGap="none"
     >
       <div className="detailed-program-add-item-modal__form">
-        <div>
-          <CmsInput
-            label={nameLabel}
-            inputSize="large"
-            width="100%"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="세부 프로그램명을 입력해 주세요."
-            maxLength={200}
-          />
-        </div>
-        <div>
-          <span className="detailed-program-add-item-modal__label">사용 여부</span>
-          <CmsRadioGroup
-            size="medium"
-            value={active}
-            onChange={e => setActive(coerceRadioBoolean(e.target.value))}
-          >
-            <CmsRadio size="medium" value={true}>
-              사용
-            </CmsRadio>
-            <CmsRadio size="medium" value={false}>
-              미사용
-            </CmsRadio>
-          </CmsRadioGroup>
-        </div>
+        <CmsInput
+          label="세부 프로그램명"
+          required
+          inputSize="large"
+          width="100%"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="세부 프로그램명을 입력해 주세요."
+          maxLength={200}
+        />
+        <CmsRadioGroup
+          label="사용 여부"
+          size="large"
+          value={active}
+          onChange={e => setActive(coerceRadioBoolean(e.target.value))}
+        >
+          <CmsRadio value={true}>사용</CmsRadio>
+          <CmsRadio value={false}>미사용</CmsRadio>
+        </CmsRadioGroup>
       </div>
     </ContentModal>
   )

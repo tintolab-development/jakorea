@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 import { UJAT_REVISION_REQUEST_DUPLICATE_MESSAGE } from '@/features/program/ujat/lib/ujat-institution-approval-workflow'
 import {
+  UJAT_REVISION_REQUEST_COMPLETE_ALERT_CONTENT,
+  UJAT_REVISION_REQUEST_COMPLETE_ALERT_TITLE,
+} from './revision-request-complete'
+import {
   submitUjatScheduleConfirmRevisionRequest,
   UJAT_REVISION_REQUEST_FAIL_ALERT_TITLE,
 } from './submit-revision-request'
@@ -30,7 +34,6 @@ describe('submitUjatScheduleConfirmRevisionRequest', () => {
       onStatusUpdated,
       closeModal,
       showAlert,
-      institutionName: '테스트학교',
     })
 
     expect(result).toBe('conflict')
@@ -54,7 +57,6 @@ describe('submitUjatScheduleConfirmRevisionRequest', () => {
       onStatusUpdated: vi.fn(),
       closeModal,
       showAlert,
-      institutionName: '테스트학교',
     })
 
     expect(result).toBe('retryable')
@@ -77,7 +79,6 @@ describe('submitUjatScheduleConfirmRevisionRequest', () => {
       onStatusUpdated,
       closeModal,
       showAlert,
-      institutionName: '테스트학교',
     })
 
     expect(result).toBe('success')
@@ -85,8 +86,8 @@ describe('submitUjatScheduleConfirmRevisionRequest', () => {
     expect(onStatusUpdated).toHaveBeenCalledTimes(1)
     expect(closeModal).toHaveBeenCalledTimes(1)
     expect(showAlert).toHaveBeenCalledWith({
-      title: '수정 요청',
-      content: '[테스트학교] 담당교사님에게 수정 요청이 전달되었습니다.',
+      title: UJAT_REVISION_REQUEST_COMPLETE_ALERT_TITLE,
+      content: UJAT_REVISION_REQUEST_COMPLETE_ALERT_CONTENT,
     })
   })
 })

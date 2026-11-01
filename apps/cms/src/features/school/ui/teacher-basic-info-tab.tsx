@@ -25,17 +25,13 @@ export function TeacherBasicInfoTab({ detail, onWithdraw }: TeacherBasicInfoTabP
         <div className="teacher-detail-modal__actions-buttons">
           <CmsButton
             variant="default"
-            size="medium"
-            className="teacher-detail-modal__btn-withdraw"
-            onClick={onWithdraw}
-          >
+            size="medium" className="teacher-detail-modal__btn-withdraw"
+            onClick={onWithdraw} >
             탈퇴
           </CmsButton>
           <CmsButton
             variant="default"
-            size="medium"
-            className="teacher-detail-modal__btn-edit"
-          >
+            size="medium" className="teacher-detail-modal__btn-edit" >
             수정
           </CmsButton>
         </div>

@@ -208,7 +208,47 @@ describe('mapCalculationDetailToBasisDetail', () => {
     expect(detail?.layout).toBe('lectureFeeGemini')
     if (detail?.layout === 'lectureFeeGemini') {
       expect(detail.feeAssessmentWon).toBe(170000)
+      expect(detail.lectureTimeDisplay).toBe('2차시')
     }
+  })
+
+  it('Gemini basisJson sessionOrdinal=2 → lectureTimeDisplay 2차시', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'lectureFeeGemini',
+      title: '강사비 산정 기준 상세',
+      resultAmount: 170000,
+      basisJson: JSON.stringify({
+        layout: 'lectureFeeGemini',
+        itemType: 'LECTURE_FEE',
+        wageItemType: 'GEMINI',
+        categoryLabel: '제미나이 강사비',
+        feeAssessmentWon: 170000,
+        amount: 170000,
+        sessionOrdinal: 2,
+      }),
+    })
+    expect(detail?.layout).toBe('lectureFeeGemini')
+    if (detail?.layout !== 'lectureFeeGemini') return
+    expect(detail.categoryLabel).toBe('제미나이 강사비')
+    expect(detail.feeAssessmentWon).toBe(170000)
+    expect(detail.lectureTimeDisplay).toBe('2차시')
+  })
+
+  it('Gemini typed basisJson 시계열 lectureTimeDisplay는 canonical 거절 후 sessionOrdinal → N차시', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'lectureFeeGemini',
+      basisJson: JSON.stringify({
+        layout: 'lectureFeeGemini',
+        categoryLabel: '제미나이 강사비',
+        feeAssessmentWon: 170000,
+        lectureTimeDisplay: '14:30 ~ 16:30',
+        sessionOrdinal: 2,
+      }),
+    })
+    expect(detail?.layout).toBe('lectureFeeGemini')
+    if (detail?.layout !== 'lectureFeeGemini') return
+    expect(detail.lectureTimeDisplay).toBe('2차시')
+    expect(detail.lectureTimeDisplay).not.toBe('14:30 ~ 16:30')
   })
 
   it('BE LECTURE_FEE basisJson(layout=lectureFeeTier) → 급수 모달 payload', () => {
@@ -316,5 +356,42 @@ describe('mapCalculationDetailToBasisDetail', () => {
 
   it('표시용 필드도 없으면 basisDetail을 만들지 않는다', () => {
     expect(mapCalculationDetailToBasisDetail({ layout: 'transportInstructor' })).toBeUndefined()
+  })
+
+  it('원천징수 basisJson 숫자는 그대로 매핑하고 FE 세율로 다시 계산하지 않는다', () => {
+    const detail = mapCalculationDetailToBasisDetail({
+      layout: 'withholding',
+      basisJson: JSON.stringify({
+        itemType: 'WITHHOLDING',
+        dailySalaryTotalWon: 200000,
+        earnedIncomeDeductionWon: 80000,
+        incomeTaxRatePercent: 8.8,
+        incomeTaxWon: 10560,
+        earnedIncomeTaxCreditWon: 0,
+        withholdingTaxAmountWon: 10560,
+      }),
+    })
+
+    expect(detail).toEqual({
+      layout: 'withholding',
+      dailySalaryTotalWon: 200000,
+      earnedIncomeDeductionWon: 80000,
+      incomeTaxRatePercent: 8.8,
+      incomeTaxWon: 10560,
+      earnedIncomeTaxCreditWon: 0,
+      withholdingTaxAmountWon: 10560,
+    })
+  })
+
+  it('원천징수 필드가 빠지면 3.3% 산출표를 만들지 않는다', () => {
+    expect(
+      mapCalculationDetailToBasisDetail({
+        layout: 'withholding',
+        basisJson: JSON.stringify({
+          dailySalaryTotalWon: 200000,
+          withholdingTaxAmountWon: 6600,
+        }),
+      })
+    ).toBeUndefined()
   })
 })

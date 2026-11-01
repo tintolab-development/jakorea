@@ -3,6 +3,7 @@ import {
   type ParticipatingIndividualProgressAssignmentFilters,
   type ParticipatingIndividualProgressAssignmentParticipantRow,
   type ParticipatingIndividualProgressAssignmentRemarkKind,
+  type ParticipatingIndividualProgressAssignmentSessionGroup,
   type ParticipatingIndividualProgressAssignmentSubmission,
 } from '@/features/program/general/lib/participating-individual-progress-assignment-types'
 
@@ -83,18 +84,42 @@ export function participantMatchesProgressAssignmentFilters(
   return true
 }
 
-export function filterProgressAssignmentParticipantsForDisplay(
-  participants: ParticipatingIndividualProgressAssignmentParticipantRow[],
+export function hasProgressAssignmentParticipantSearchFilters(
   filters: ParticipatingIndividualProgressAssignmentFilters
-): ParticipatingIndividualProgressAssignmentParticipantRow[] {
-  const hasParticipantFilter =
+): boolean {
+  return (
     filters.participantName.trim() !== '' ||
     filters.affiliation.trim() !== '' ||
     filters.educationGrade !== PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL ||
     filters.submissionStatus !== PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL
+  )
+}
 
-  if (!hasParticipantFilter) return participants
+export function filterProgressAssignmentParticipantsForDisplay(
+  participants: ParticipatingIndividualProgressAssignmentParticipantRow[],
+  filters: ParticipatingIndividualProgressAssignmentFilters
+): ParticipatingIndividualProgressAssignmentParticipantRow[] {
+  if (!hasProgressAssignmentParticipantSearchFilters(filters)) return participants
   return participants.filter(row => participantMatchesProgressAssignmentFilters(row, filters))
+}
+
+/** 교육 일정 필터만 적용. 참여자 검색이 없으면 빈 테이블 회차도 유지한다. */
+export function filterProgressAssignmentSessionGroups(
+  sessions: ParticipatingIndividualProgressAssignmentSessionGroup[],
+  filters: ParticipatingIndividualProgressAssignmentFilters
+): ParticipatingIndividualProgressAssignmentSessionGroup[] {
+  const filteredBySchedule =
+    filters.educationSchedule === PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_FILTER_ALL
+      ? sessions
+      : sessions.filter(session => session.filterValue === filters.educationSchedule)
+
+  const mapped = filteredBySchedule.map(session => ({
+    ...session,
+    participants: filterProgressAssignmentParticipantsForDisplay(session.participants, filters),
+  }))
+
+  if (!hasProgressAssignmentParticipantSearchFilters(filters)) return mapped
+  return mapped.filter(session => session.participants.length > 0)
 }
 
 export function cloneProgressAssignmentParticipantRows(

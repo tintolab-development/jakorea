@@ -265,8 +265,7 @@ export function IndividualEducationScopeSection({
                         setReason('')
                         setRejectedIds([])
                         setAppliedSourceKey(null)
-                      }}
-                    >
+                      }} >
                       취소
                     </CmsButton>
                     <CmsButton
@@ -277,8 +276,7 @@ export function IndividualEducationScopeSection({
                       disabled={saving || !selection.ok}
                       onClick={() => {
                         void save()
-                      }}
-                    >
+                      }} >
                       저장
                     </CmsButton>
                   </div>

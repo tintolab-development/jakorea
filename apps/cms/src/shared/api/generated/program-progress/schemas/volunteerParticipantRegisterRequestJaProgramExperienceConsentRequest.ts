@@ -7,7 +7,7 @@
  */
 
 /**
- * @minLength 1
+ * 일반 프로그램은 JA 진행 경험. UJAT는 교육 진행 경험 여부이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.
  */
 export type VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest = typeof VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest[keyof typeof VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest];
 

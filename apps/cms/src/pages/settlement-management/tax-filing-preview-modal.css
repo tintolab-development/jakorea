@@ -79,25 +79,3 @@
   height: 100%;
   min-height: 200px;
 }
-
-.tax-filing-preview-modal__server-file-notice {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
-  padding: 32px;
-  box-sizing: border-box;
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, 'Pretendard Variable', sans-serif;
-  font-size: 16px;
-  line-height: 150%;
-}
-
-.tax-filing-preview-modal__server-file-notice p {
-  margin: 0;
-}

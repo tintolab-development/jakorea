@@ -36,6 +36,11 @@ export type PortalVolunteerInterviewSchedule = {
 export type PortalRecruitment = {
   recruitmentId?: number
   recruitmentType?: string
+  /**
+   * UJAT 봉사자 모집 반기. `FIRST_HALF` / `SECOND_HALF`.
+   * 없으면 복수 봉사자 모집 행은 `봉사자1` / `봉사자2`로 표시한다.
+   */
+  recruitTerm?: string | null
   targetType?: string
   status?: string
   startAt?: string
@@ -50,6 +55,12 @@ export type PortalRecruitment = {
   interviewStartAt?: string | null
   interviewEndAt?: string | null
   finalPassAnnouncementAt?: string | null
+  /** CMS 원문 라벨(예: 홈페이지 공지). interviewEnabled === true일 때만 값, 그 외 null. 키 없음 = null. */
+  documentPassAnnouncementMethod?: string | null
+  /** CMS 원문 라벨(예: 온라인). interviewEnabled === true일 때만 값, 그 외 null. */
+  interviewMethod?: string | null
+  /** CMS 원문 라벨(예: 문자 안내). 면접 여부와 무관, 없으면 null. */
+  finalPassAnnouncementMethod?: string | null
   /**
    * VOLUNTEER 면접 운영 행만. 그 외 null/생략.
    * 상세 「면접 진행 가능 일정」 표시용(표시 전용, 선택은 신청폼).

@@ -188,7 +188,7 @@ export function ModalProcessSection() {
             JA Korea 데모 기관
           </ModalSpecTableRow>
           <ModalSpecTableRow label="담당 강사" labelVariant="basis">
-            홍길동 강사
+            이름예시 강사
           </ModalSpecTableRow>
           <ModalSpecTableRow label="교육 일정" labelVariant="basis">
             2026.07.21 10:00–12:00

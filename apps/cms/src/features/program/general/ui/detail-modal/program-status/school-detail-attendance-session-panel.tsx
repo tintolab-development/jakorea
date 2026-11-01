@@ -140,8 +140,7 @@ export function SchoolDetailAttendanceSessionPanel({
             loading={isSavingLocal || saving}
             onClick={() => {
               void handleSave()
-            }}
-          >
+            }} >
             저장
           </CmsButton>
           <ExcelButton loading={exporting} disabled={exportDisabled} onClick={handleExport} />

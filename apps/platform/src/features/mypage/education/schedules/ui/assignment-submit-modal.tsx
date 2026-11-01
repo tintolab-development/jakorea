@@ -225,6 +225,7 @@ export function EducationAssignmentSubmitModal({
 
   return (
     <PFModal
+      showCloseButton={false}
       open={open}
       title={title}
       size="md"

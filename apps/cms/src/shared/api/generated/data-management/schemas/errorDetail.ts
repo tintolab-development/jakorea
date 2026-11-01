@@ -21,4 +21,6 @@ export interface ErrorDetail {
   traceId?: string | null;
   /** 전이 충돌 등 부가 컨텍스트. 없으면 null입니다. */
   details?: ErrorDetailDetails;
+  /** RFC7807 detail. message와 동일합니다. */
+  detail?: string;
 }

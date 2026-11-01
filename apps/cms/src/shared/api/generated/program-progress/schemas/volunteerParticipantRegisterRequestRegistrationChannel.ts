@@ -6,7 +6,10 @@
  * OpenAPI spec version: v9
  */
 
-export type VolunteerParticipantRegisterRequestRegistrationChannel = typeof VolunteerParticipantRegisterRequestRegistrationChannel[keyof typeof VolunteerParticipantRegisterRequestRegistrationChannel];
+/**
+ * @nullable
+ */
+export type VolunteerParticipantRegisterRequestRegistrationChannel = typeof VolunteerParticipantRegisterRequestRegistrationChannel[keyof typeof VolunteerParticipantRegisterRequestRegistrationChannel] | null;
 
 
 export const VolunteerParticipantRegisterRequestRegistrationChannel = {

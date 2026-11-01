@@ -102,6 +102,7 @@ export function NewsletterSubscribeModal({
   return (
     <>
     <PFModal
+      showCloseButton={false}
       open={open}
       size="md"
       title="뉴스레터 신청하기"

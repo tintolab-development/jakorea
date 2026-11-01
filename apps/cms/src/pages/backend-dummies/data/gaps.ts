@@ -148,7 +148,7 @@ export const GAP_ROWS: readonly GapRow[] = [
     categoryId: 'ujat',
     priority: 'P1',
     title: 'UJAT 설문 응답 수',
-    suggestedApi: 'surveys summary · UJAT_SURVEY_POLL_MOCK_RESPONSE_COUNT 제거',
+    suggestedApi: 'surveys summary',
   },
 
   // P2

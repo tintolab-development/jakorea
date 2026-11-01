@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ACCOUNT_PAYMENT_DETAIL_FORBIDDEN_ALERT_MESSAGE } from '@/shared/constants/messages'
+import { getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
 import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { useAuthStore } from '@/features/auth/model/auth-store'
@@ -99,10 +100,18 @@ export function AccountPaymentStatusDetailFullPageModal({
     const subtotalBeforeWithholding = detail
       ? computePaymentOrderCalculationSubtotalBeforeWithholding(detail.blocks)
       : 0
+    const amountDigits = detail?.basic.lectureFeeStandardAmount?.replace(/[^\d]/g, '')
+    const lectureFeeStandardAmountWon = amountDigits ? Number(amountDigits) : undefined
     return {
       lectureFeeStandardTitle: detail?.basic.lectureFeeStandardTitle,
       withholdingDailySalaryTotalWon:
         subtotalBeforeWithholding > 0 ? subtotalBeforeWithholding : undefined,
+      /** remote calculationDetail만 모달 강의 시간 SSOT — sessionOrdinal fallback 금지 */
+      remoteData: true,
+      lectureFeeStandardAmountWon:
+        lectureFeeStandardAmountWon != null && Number.isFinite(lectureFeeStandardAmountWon)
+          ? lectureFeeStandardAmountWon
+          : undefined,
     }
   }, [detail])
 
@@ -172,9 +181,7 @@ export function AccountPaymentStatusDetailFullPageModal({
         loading={detailLoading}
         error={
           !detailLoading && !detailForbidden && (detailError || !detail)
-            ? detailError instanceof Error
-              ? detailError.message
-              : '상세를 불러오지 못했습니다.'
+            ? getSettlementApiErrorMessage(detailError, '상세를 불러오지 못했습니다.')
             : null
         }
         headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
@@ -201,6 +208,8 @@ export function AccountPaymentStatusDetailFullPageModal({
                 formulaLabel={detail.formulaLabel}
                 totalAmount={detail.totalAmount}
                 lectureSessionSegmentLabel="round"
+                columnWidthPreset="account-payment-detail"
+                actionButtonSize="h32"
                 onBasisDetailClick={handleBasisDetailClick}
                 onDownloadPaymentStatement={() => setIssuanceViewOpen(true)}
                 headerActions={
@@ -209,10 +218,9 @@ export function AccountPaymentStatusDetailFullPageModal({
                     : (
                     <CmsButton
                       variant="primary"
-                      size="large"
-                      width={160}
-                      onClick={() => setPaymentCompleteConfirmOpen(true)}
-                    >
+                      size="h40"
+                      className="account-payment-status-detail-fullpage-modal__complete-btn"
+                      onClick={() => setPaymentCompleteConfirmOpen(true)} >
                       지급 완료 처리
                     </CmsButton>
                   )
@@ -243,7 +251,7 @@ export function AccountPaymentStatusDetailFullPageModal({
         open={basisDetailOpen}
         onCancel={closeBasisDetailModal}
         detail={selectedBasisDetail}
-        zIndex={1200}
+        zIndex={1400}
       />
     </>
   )

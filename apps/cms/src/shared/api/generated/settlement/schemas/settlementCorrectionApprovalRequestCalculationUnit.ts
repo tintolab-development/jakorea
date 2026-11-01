@@ -15,4 +15,6 @@ export type SettlementCorrectionApprovalRequestCalculationUnit = typeof Settleme
 export const SettlementCorrectionApprovalRequestCalculationUnit = {
   PER_LECTURE: 'PER_LECTURE',
   PER_HOUR: 'PER_HOUR',
+  /** BE 261028 — 기타 인건비·특강 수동 책정 1차시당 */
+  PER_CLASS: 'PER_CLASS',
 } as const;

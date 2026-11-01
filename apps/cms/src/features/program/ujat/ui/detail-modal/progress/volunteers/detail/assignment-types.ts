@@ -29,6 +29,7 @@ export type UjatVolunteerAttendanceDisplay =
   | { kind: 'late'; time: string }
   | { kind: 'absence' }
   | { kind: 'excused_absence' }
+  | { kind: 'withdrawn' }
   | { kind: 'dash' }
 
 export type UjatVolunteerEducationProgressDisplay = 'completed' | 'scheduled' | 'dash'
@@ -47,9 +48,27 @@ export type UjatVolunteerAssignmentProgressRow = {
   educationPlanFormResponseId?: number
   /** Wave11 — 교육일지 form response id */
   educationLogFormResponseId?: number
+  /** 교육계획서 제출일 표시(예: 2026.04.03). 없으면 빈 문자열 */
+  educationPlanSubmittedDateLabel?: string
+  /** 교육일지 제출일 표시. 없으면 빈 문자열 */
+  educationLogSubmittedDateLabel?: string
   educationProgress: UjatVolunteerEducationProgressDisplay
   /** 봉사 활동 포기 상태(역할·보기 등 제한). 배정 학급 `활동 포기`와 별도일 수 있음 */
   isWithdrawn: boolean
+  /** 배정·출결 mutation 식별자. 표시용 값이 아니다. */
+  scheduleId?: number
+  educationSlotId?: number | null
+  assignmentGroupId?: string | null
+  organizationApplicationId?: number | null
+  participantId?: number
+  /** 이 봉사자가 조의 secondary이면 true */
+  selfIsSecondary?: boolean
+  /**
+   * 배정 알림 발송 여부(서버 `assignmentNotificationSent`만).
+   * `false` → 미발송 간단 확인 모달.
+   * `true`/미제공 → 사유·알림 모달(추정 금지, 구 BE는 안전 기본).
+   */
+  assignmentNotificationSent?: boolean
 }
 
 /** 배정 학급 열이 `활동 포기`인 행 — 하단 고정·흰색 오버레이 */
@@ -66,6 +85,8 @@ export type UjatVolunteerAssignmentAbsenceReason = {
   reason: string
   /** 없으면 `-` 표기 */
   fileName?: string | null
+  fileObjectIds?: number[]
+  originalFileNames?: Array<string | null>
 }
 
 export function hasExcusedAbsenceInAssignmentRows(

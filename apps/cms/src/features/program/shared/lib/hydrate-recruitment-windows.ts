@@ -3,7 +3,10 @@
  * nested `*RecruitmentInfo` 라벨·프로그램 컬럼이 옛값이면 행으로 맞춘다.
  */
 import type { Program, ProgramRecruitmentWindow } from '@/types/domain'
-import { formatDateRange } from '@/features/program/shared/lib/program-detail-info-constants'
+import {
+  formatDateRange,
+  formatDateOnly,
+} from '@/features/program/shared/lib/program-detail-info-constants'
 import {
   pickRecruitmentCopyRow,
   type RecruitmentCopyAudience,
@@ -44,8 +47,10 @@ export function operationPeriodLabelFromWindow(
   row: ProgramRecruitmentWindow | undefined
 ): string | undefined {
   if (!row?.operationStartDate || !row?.operationEndDate) return undefined
-  const label = formatDateRange(row.operationStartDate, row.operationEndDate)
-  return label === '-' ? undefined : label
+  const start = formatDateOnly(row.operationStartDate)
+  const end = formatDateOnly(row.operationEndDate)
+  if (start === '-' || end === '-') return undefined
+  return `${start} ~ ${end}`
 }
 
 function patchNestedFromRow(
@@ -103,6 +108,19 @@ export function hydrateRecruitmentWindowsOntoProgram(program: Program): Program 
   const instructorEnd = rowString(instructor, 'endAt')
   const volunteerStart = rowString(volunteer, 'startAt')
   const volunteerEnd = rowString(volunteer, 'endAt')
+  // 일반·개인 참여자 2차 면접만 프로그램 컬럼으로 올린다.
+  // UJAT·TT·1사1교 참여자 행과 기관(ORGANIZATION) 행은 건드리지 않는다.
+  // 행 값이 있을 때만 덮는다. null/빈 값은 overlay·컬럼을 지우지 않는다.
+  const backendType = (program.backendProgramType ?? '').toUpperCase()
+  const isGeneralProgram = backendType === 'GENERAL' || backendType.startsWith('GENERAL_')
+  const isIndividualParticipant =
+    isGeneralProgram && (participant?.applicationType ?? '').toUpperCase() === 'INDIVIDUAL'
+  const participantInterviewStart = isIndividualParticipant
+    ? rowString(participant, 'interviewStartAt')?.trim()
+    : undefined
+  const participantInterviewEnd = isIndividualParticipant
+    ? rowString(participant, 'interviewEndAt')?.trim()
+    : undefined
 
   return {
     ...program,
@@ -112,6 +130,8 @@ export function hydrateRecruitmentWindowsOntoProgram(program: Program): Program 
     ...(instructorEnd !== undefined ? { instructorApplicationEndDate: instructorEnd } : {}),
     ...(volunteerStart !== undefined ? { volunteerApplicationStartDate: volunteerStart } : {}),
     ...(volunteerEnd !== undefined ? { volunteerApplicationEndDate: volunteerEnd } : {}),
+    ...(participantInterviewStart ? { interviewStartDate: participantInterviewStart } : {}),
+    ...(participantInterviewEnd ? { interviewEndDate: participantInterviewEnd } : {}),
     generalCommonInfo: {
       ...program.generalCommonInfo,
       participantRecruitmentInfo: patchNestedFromRow(

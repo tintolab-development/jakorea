@@ -56,40 +56,6 @@
 }
 
 /*
- * 산출 내역 「상세 보기」: CmsButton은 display:flex(블록)라 text-align만으로는
- * 셀 가운데 정렬이 안 됨 → 고정 폭 + margin auto
- */
-.payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--140x40.cms-button.cms-button--h44.ant-btn,
-.payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--180.cms-button.cms-button--h44.ant-btn {
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* 프로그램 별 정산 목록(강사 상세): 산출 내역 상세 보기 140×40 */
-.payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--140x40.cms-button.cms-button--h44.ant-btn {
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
-  box-sizing: border-box !important;
-}
-
-/* 강사 별 정산 목록(프로그램 상세): 산출 내역 상세 보기 180px 유지 */
-.payment-order-detail-filter-table
-  .payment-order-detail-filter-table__breakdown-btn--180.cms-button.cms-button--h44.ant-btn {
-  width: 180px !important;
-  min-width: 180px !important;
-  max-width: 180px !important;
-}
-
-/*
  * 강사별·프로그램별 정산 목록 테이블: 행·헤더 셀 52px 고정
  * (cms-data-table 기본 12×16 패딩 + line-height 조합 시 실측 76px대로 커지는 것 방지)
  */

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   mapBugIssueLogListPageResponse,
   mapBugIssueLogResponse,
+  mapSystemIssueDetailResponse,
   mapDownloadLogListPageResponse,
   mapDownloadLogResponse,
   mapMemberLoginLogListPageResponse,
@@ -61,6 +62,18 @@ describe('logs-adapters', () => {
     expect(row.accessItem).toBe('연락처')
     expect(row.accessorName).toBe('관리자')
     expect(row.targetName).toBe('-')
+    expect(row.result).toBe('-')
+    expect(row.traceId).toBe('-')
+  })
+
+  it('maps privacy result and traceId', () => {
+    const row = mapPersonalInfoAccessLogResponse({
+      accessItem: '연락처',
+      result: 'SUCCESS',
+      traceId: 'trace-1',
+    })
+    expect(row.result).toBe('SUCCESS')
+    expect(row.traceId).toBe('trace-1')
   })
 
   it('maps optional privacy targetName from extra DTO fields', () => {
@@ -136,5 +149,21 @@ describe('logs-adapters', () => {
     expect(page.items[0]?.id).toBe('1')
     expect(page.totalElements).toBe(55)
     expect(page.hasNext).toBe(true)
+  })
+
+  it('maps system issue detail Korean message and actor', () => {
+    const detail = mapSystemIssueDetailResponse({
+      issueId: 9,
+      message: 'INTERNAL_SERVER_ERROR',
+      messageKo: '서버 오류가 발생했습니다.',
+      apiPath: 'POST /api/admin/programs/{id}',
+      featureKey: 'ProgramController#update',
+      screenKey: 'cms.programs.detail',
+      actorType: 'SYSTEM',
+    })
+    expect(detail.messageKo).toBe('서버 오류가 발생했습니다.')
+    expect(detail.message).toBe('INTERNAL_SERVER_ERROR')
+    expect(detail.apiPath).toBe('POST /api/admin/programs/{id}')
+    expect(detail.actorTypeLabel).toBe('시스템')
   })
 })

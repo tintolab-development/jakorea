@@ -8,6 +8,10 @@ import {
   VOLUNTEER_TARGET_OPTIONS,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
+import {
+  RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
+  RECRUIT_INTERVIEW_REQUIRED_DEFAULT,
+} from '@/features/program/general/lib/recruit-radio-defaults'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { dateRangeUsesClockTime } from '@/features/template/ui/shared/writing-form-period-date-picker-field'
 import { useVolunteerRecruitField } from '@/features/template/ui/form-set/recruit-form/volunteer/volunteer-recruit-form-rhf'
@@ -17,6 +21,10 @@ import {
   RECRUIT_FORM_MAX_SUFFIX_CLASS,
 } from '@/features/template/ui/form-set/recruit-form/shared/recruit-form-field-rows'
 import { RecruitInterviewConditionalRows } from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-conditional-rows'
+import {
+  isRecruitInterviewRequiredOff,
+  isRecruitInterviewRequiredOn,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-interview-required'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
 import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
@@ -39,11 +47,11 @@ export function RecruitFormVolunteerInfoParagraph() {
   const [announcementPublished, setAnnouncementPublished] =
     useVolunteerRecruitField<ParticipantRecruitmentAnnouncementPublishedValue>(
       'recruit.volunteer.announcementPublished',
-      'published'
+      RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT
     )
   const [interviewRequired, setInterviewRequired] = useVolunteerRecruitField<string>(
     'recruit.volunteer.interviewRequired',
-    'yes'
+    RECRUIT_INTERVIEW_REQUIRED_DEFAULT
   )
 
   const [programAnchorIso, setProgramAnchorIso] = useVolunteerRecruitField<string | null>(
@@ -69,11 +77,6 @@ export function RecruitFormVolunteerInfoParagraph() {
     }
     setProgramRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
-  const programRangeWithTime = useMemo(
-    () => (programRange == null ? false : dateRangeUsesClockTime(programRange[0], programRange[1])),
-    [programRange]
-  )
-
   const [recruitAnchorIso, setRecruitAnchorIso] = useVolunteerRecruitField<string | null>(
     'recruit.volunteer.recruitAnchorIso',
     null
@@ -183,7 +186,8 @@ export function RecruitFormVolunteerInfoParagraph() {
   )
   const [notes, setNotes] = useVolunteerRecruitField<string>('recruit.volunteer.notes', '')
 
-  const interviewEnabled = interviewRequired === 'yes'
+  const interviewEnabled = isRecruitInterviewRequiredOn(interviewRequired)
+  const interviewRadioValue = isRecruitInterviewRequiredOff(interviewRequired) ? 'no' : 'yes'
 
   return (
     <div className="recruit-form-volunteer-info-paragraph__forms">
@@ -206,7 +210,7 @@ export function RecruitFormVolunteerInfoParagraph() {
             edit={
               <CmsRadioGroup
                 size="medium"
-                value={interviewRequired}
+                value={interviewRadioValue}
                 onChange={e => setInterviewRequired(String(e.target.value))}
                 className={RECRUITMENT_RADIO_CLASS}
               >
@@ -238,8 +242,9 @@ export function RecruitFormVolunteerInfoParagraph() {
                   placeholder="프로그램 운영 기간을 선택하세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
+                  showTimeToggle={false}
                   appliedSurfaceRange={programRange}
-                  appliedSurfaceWithTime={programRangeWithTime}
+                  appliedSurfaceWithTime={false}
                   onRangeChange={range => setProgramRange(range)}
                   onChange={next => {
                     if (next == null) return

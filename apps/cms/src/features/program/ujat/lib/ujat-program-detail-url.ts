@@ -46,6 +46,18 @@ export const UJAT_EDU_INST_TAB_PARAM = 'eduInstTab'
 /** 교육 진행 > 참여 봉사자 — 관리자 대리 신청서 작성(회원 선택 후) */
 export const UJAT_VOL_ADD_MEMBER_ID_PARAM = 'volAddMemberId'
 
+/**
+ * `volAddMemberId` / register `memberId` — BE `@Positive Long`만 허용.
+ * UUID·소수·음수·비숫자는 null (등록 폼 대신 목록으로 되돌림).
+ */
+export function parseUjatVolAddMemberIdParam(raw: string | null | undefined): string | null {
+  const trimmed = raw?.trim() ?? ''
+  if (!/^\d+$/.test(trimmed)) return null
+  const n = Number(trimmed)
+  if (!Number.isSafeInteger(n) || n <= 0) return null
+  return trimmed
+}
+
 /** 교육 진행 > 참여 봉사자 목록 → 봉사자 상세 */
 export const UJAT_EDU_VOL_ID_PARAM = 'eduVolId'
 export const UJAT_EDU_VOL_TAB_PARAM = 'eduVolTab'

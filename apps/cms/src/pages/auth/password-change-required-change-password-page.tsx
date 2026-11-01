@@ -161,7 +161,7 @@ export function PasswordChangeRequiredChangePasswordPage() {
           </Form.Item>
 
           <div className="auth-actions" style={{ marginTop: '20px' }}>
-            <CmsButton variant="primary" size="h52" type="submit" width="100%" loading={submitting}>
+            <CmsButton variant="primary" size="h52" type="submit" loading={submitting}>
               비밀번호 변경하기
             </CmsButton>
           </div>

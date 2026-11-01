@@ -7,6 +7,7 @@
  */
 
 /**
+ * 일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.
  * @minLength 1
  */
 export type VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest = typeof VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest[keyof typeof VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest];

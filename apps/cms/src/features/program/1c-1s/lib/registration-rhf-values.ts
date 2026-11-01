@@ -373,7 +373,8 @@ export function readCompanySchoolRhfOverlayValue(
         () => ({ ...values.operationRange })
       )
     }
-    if (suffix === 'sponsorId') return values.sponsorId || COMPANY_SCHOOL_UNSELECTED
+    // 일반 프로그램과 동일: 미선택은 빈 값. `__all__`로 바꾸면 셀렉트가 토큰을 그대로 표시한다.
+    if (suffix === 'sponsorId') return values.sponsorId
     if (suffix === 'managerContactIds') {
       return cachedDerivedOverlaySnapshot(
         key,
@@ -382,7 +383,7 @@ export function readCompanySchoolRhfOverlayValue(
       )
     }
     if (suffix === 'managerContactId') {
-      return values.managerContactIds[0] ?? COMPANY_SCHOOL_UNSELECTED
+      return values.managerContactIds[0] ?? ''
     }
     if (suffix === 'partnerInvolvement') return values.partnerInvolvement
     const field = BASIC_FIELD_BY_SUFFIX[suffix]

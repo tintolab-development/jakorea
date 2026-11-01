@@ -79,13 +79,13 @@ category: process
 | 교육 학년 별 정보 | 항상 |
 | 학년 별 수업 시간 | 항상 |
 | 진행 교육 일정 | 항상 |
-| **안내 사항** | **`institution_confirmed`만** |
+| **안내 사항** | **`institution_confirmed` · `approval_completed`** |
 
-### 안내 사항 블록 (기관 확인 완료 전용)
+### 안내 사항 블록 (기관 확인 완료·승인 완료)
 
-- 임시 배정 일정을 기관이 확인하는 과정에서 **`UJAT 프로그램_기관 안내 사항` 폼**을 추가 제출한다 (기관 포털·폼 UI **추후 개발**, CMS 화면 없음).
-- 제출 내용은 상세 **안내 사항** 블록에 노출 예정.
-- **`institution_checking` · `application_rejected`에서는 안내 사항 블록을 렌더하지 않는다** (`shouldShowScheduleConfirmGuidanceNotes` → `types.ts`).
+- 임시 배정 일정을 기관이 확인하는 과정에서 **`UJAT 프로그램_기관 안내 사항` 폼**을 추가 제출한다.
+- 제출 내용은 상세 **안내 사항** 블록에 노출한다. 신청 승인 후에도 동일하게 유지한다.
+- **`institution_checking` · `revision_requested` · `application_rejected`에서는 안내 사항 블록을 렌더하지 않는다** (`shouldShowScheduleConfirmGuidanceNotes` → `types.ts`).
 - mock 안내 문구: `confirmedDetailExtras.guidanceNotes` (`seoul-5` 등).
 
 ### 상단 액션 (확인 완료 상세)

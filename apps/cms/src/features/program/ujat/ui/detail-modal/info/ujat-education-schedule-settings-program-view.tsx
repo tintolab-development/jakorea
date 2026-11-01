@@ -56,9 +56,9 @@ function TypedUjatEducationScheduleChangeTitleAction({
           const range = ujatScheduleLineToEventRange(next)
           updateUjatTypedEventRow(scheduleForm, row.half, current => ({
             ...current,
-            startDate: range.start ? range.start.slice(0, 10) : null,
-            endDate: range.end ? range.end.slice(0, 10) : null,
-            dates: range.start ? [range.start.slice(0, 10)] : [],
+            startDate: range.start || null,
+            endDate: range.end || null,
+            dates: range.start ? [range.start] : [],
           }))
         })
       }}

@@ -8,7 +8,7 @@ export const AGREEMENT_PORTRAIT_PARAGRAPH_BODY_OPTIONS = {
   /** confirmationClosing에 날짜·성명 합침 — systemDate/systemSignature 숨김 */
   hiddenParagraphIds: getAgreementPortraitAdminProxyHiddenIds(),
   /** 템플릿 authoring 미리보기용 샘플 이름 (회원 fill에서는 participantName으로 덮어씀) */
-  agreementSystemParticipantName: '홍길동',
+  agreementSystemParticipantName: '이름예시',
   structureLockedAuthoringChoicePreview: true,
   /** A4 미리보기 1페이지 — 확인·표·서명 스택 패딩/갭 축소 */
   documentPreviewClassName: AGREEMENT_PORTRAIT_A4_PREVIEW_BODY_CLASS_NAME,

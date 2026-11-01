@@ -27,6 +27,7 @@ import {
 } from '@/features/program/general/api/admin-general-programs-service'
 import { collectFileObjectIdsFromHtml } from '@/features/program/shared/api/program-inline-images'
 import { shouldUseGeneralProgramsRemoteApi } from '@/features/program/general/api/general-programs-remote-capabilities'
+import { parseOrganizationApplicationIdFromSchoolId } from '@/features/program/general/api/adapters/program-post-adapters'
 import {
   contentUrlForFileObjectId,
   parseFileObjectId,
@@ -273,10 +274,12 @@ export function PostWriteModal({
       }
 
       if (shouldUseGeneralProgramsRemoteApi()) {
+        const organizationApplicationId = parseOrganizationApplicationIdFromSchoolId(schoolId)
         const created = await createGeneralProgramPost(programId, {
           title,
           content: trimmed,
           visibilityType,
+          organizationApplicationId,
         })
         const createdPostId = created?.postId
         if (createdPostId != null && uploadResults.length > 0) {

@@ -54,10 +54,10 @@ export function FindEmailIdentityMockNicePage() {
           <p className="register-identity-mock-nice__meta">세션 ID: {sessionId}</p>
         ) : null}
         <div className="register-identity-mock-nice__actions">
-          <CmsButton variant="primary" size="h44" width="100%" onClick={handleComplete}>
+          <CmsButton variant="primary" size="h44" onClick={handleComplete}>
             인증 완료
           </CmsButton>
-          <CmsButton variant="default" size="h44" width="100%" onClick={handleClose}>
+          <CmsButton variant="default" size="h44" onClick={handleClose}>
             닫기
           </CmsButton>
         </div>

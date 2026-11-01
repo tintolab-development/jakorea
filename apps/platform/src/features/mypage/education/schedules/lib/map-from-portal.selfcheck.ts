@@ -17,8 +17,24 @@ assert.equal(withId.id, '12')
 assert.equal(withId.sessionNumber, 2)
 assert.equal(withId.title, '1차 교육')
 assert.equal(withId.heldAt, '2026-04-04T10:00:00+09:00')
+assert.equal(withId.endAt, '2026-04-04T12:00:00+09:00')
 assert.equal(withId.attendanceStatus, 'present')
+assert.equal(withId.absenceReason, undefined)
 assert.equal(withId.assignment, undefined)
+
+const lateCorrected = mapPortalEducationSchedule(
+  {
+    scheduleId: 187626,
+    attendanceStatus: 'LATE',
+    absenceReasonStatus: 'NOT_REQUIRED',
+    absenceReason: '예전 결석 사유',
+    availableActions: ['VIEW_ATTENDANCE'],
+  },
+  0,
+)
+assert.equal(lateCorrected.attendanceStatus, 'late')
+assert.equal(lateCorrected.absenceReasonStatus, 'NOT_REQUIRED')
+assert.equal(lateCorrected.absenceReason, undefined)
 
 const noScheduleId = mapPortalEducationSchedule(
   {
@@ -74,6 +90,7 @@ const assignmentOn = mapPortalEducationSchedule(
       status: 'FEEDBACK',
       canSubmit: false,
       canResubmit: true,
+      responseStatus: 'REJECTED',
       formResponseId: 88,
       submissions: [
         { id: 501, kind: 'FILE', fileName: '과제.pdf' },
@@ -86,9 +103,10 @@ const assignmentOn = mapPortalEducationSchedule(
 assert.ok(assignmentOn.assignment)
 assert.equal(assignmentOn.assignment.status, 'feedback')
 assert.equal(assignmentOn.assignment.formResponseId, 88)
+assert.equal(assignmentOn.assignment.responseStatus, 'REJECTED')
 assert.equal(assignmentOn.assignment.files?.length, 2)
 const assignmentSubmissions = assignmentOn.assignment.files ?? []
-assert.equal(assignmentSubmissions[0]?.id, 'file-1')
+assert.equal(assignmentSubmissions[0]?.id, 'file-501')
 assert.equal(assignmentSubmissions[1]?.id, 'url-2')
 if (assignmentSubmissions[0]?.kind === 'file') {
   assert.equal(assignmentSubmissions[0].fileObjectId, 501)
@@ -98,6 +116,29 @@ if (assignmentSubmissions[1]?.kind === 'url') {
 }
 assert.equal(assignmentOn.assignment.canSubmit, false)
 assert.equal(assignmentOn.assignment.canResubmit, true)
+
+const assignmentApproved = mapPortalEducationSchedule(
+  {
+    sessionNo: 3,
+    startAt: '2026-04-05T10:00:00',
+    title: '2차 교육',
+    assignment: {
+      enabled: true,
+      submitStartAt: '2026-04-03T15:00:00',
+      submitEndAt: '2026-04-10T18:00:00',
+      status: 'FEEDBACK',
+      canSubmit: false,
+      canResubmit: false,
+      responseStatus: 'APPROVED',
+      formResponseId: 99,
+    },
+  },
+  2,
+)
+assert.ok(assignmentApproved.assignment)
+assert.equal(assignmentApproved.assignment.status, 'feedback')
+assert.equal(assignmentApproved.assignment.responseStatus, 'APPROVED')
+assert.equal(assignmentApproved.assignment.canResubmit, false)
 assert.equal(assignmentOff.assignment, undefined)
 assert.ok(assignmentOn.assignment.periodLabel.includes('~'))
 
@@ -205,7 +246,7 @@ const teamIndividual = mapPortalEducationSchedule(
   { scheduleId: 21, teamRole: 'INDIVIDUAL', teamName: null },
   0,
 )
-assert.deepEqual(teamIndividual.team, { roleLabel: '개인', teamName: '-' })
+assert.deepEqual(teamIndividual.team, { roleLabel: '개인' })
 
 const nonTeamProgram = mapPortalEducationSchedule({ scheduleId: 22, teamName: '무시' }, 0)
 assert.equal(nonTeamProgram.team, undefined)
@@ -223,5 +264,86 @@ const instructorAssignment = mapPortalEducationSchedule(
   { applicationType: 'INSTRUCTOR' },
 )
 assert.equal(instructorAssignment.assignment, undefined)
+
+// 일정형 사전교육 블록 — scheduleName 없이 title·blockKind 만 오는 응답 (신청 1694714 형태)
+const preEducationMeta = {
+  educationStructure: 'SCHEDULE',
+  sessionRound: 'MULTI',
+  applicationType: 'INDIVIDUAL',
+} as const
+const preEducation = mapPortalEducationSchedule(
+  {
+    scheduleId: 187614,
+    title: '사전 교육',
+    startAt: '2026-10-31T12:20:00Z',
+    endAt: '2026-10-31T12:22:00Z',
+    attendanceStatus: 'PRESENT',
+    blockKind: 'PRE_EDUCATION',
+    teamRole: null,
+    teamName: null,
+  },
+  0,
+  preEducationMeta,
+)
+assert.equal(preEducation.rowLabel, '사전교육')
+assert.equal(preEducation.progressTimeLabel, '2026년 10월 31일(토) 21:20 ~ 21:22')
+assert.equal(preEducation.team, undefined)
+
+const subBlock = mapPortalEducationSchedule(
+  {
+    scheduleId: 187612,
+    title: '개인일정',
+    startAt: '2026-10-31T12:25:00Z',
+    endAt: '2026-10-31T12:30:00Z',
+    blockKind: 'SUB',
+  },
+  1,
+  preEducationMeta,
+)
+// scheduleName 이 없으면 title(CMS 일정명)을 라벨로 쓴다
+assert.equal(subBlock.rowLabel, '개인일정')
+
+const singleCurriculumDay = mapPortalEducationSchedule(
+  {
+    scheduleId: 187626,
+    title: '공통 교육 예정 1',
+    sessionLabel: '1차시',
+    content: '1차시만 매칭된 레거시 본문',
+    curriculumSessions: [
+      {
+        sessionNo: 1,
+        sessionLabel: '1차시',
+        title: '1단원 나를 발견하는 진로 탐색',
+        content: '1차시 내용',
+      },
+      {
+        sessionNo: 2,
+        sessionLabel: '2차시',
+        title: '2단원 나를 보여주는 커리어 포트폴리오',
+        content: '2차시 내용',
+      },
+    ],
+  },
+  0,
+  { educationStructure: 'CURRICULUM', sessionRound: 'SINGLE' },
+)
+assert.equal(singleCurriculumDay.sessionLabel, '1차시')
+assert.equal(singleCurriculumDay.content, '1차시만 매칭된 레거시 본문')
+assert.equal(singleCurriculumDay.curriculumSessions?.length, 2)
+assert.equal(singleCurriculumDay.curriculumSessions?.[1]?.sessionLabel, '2차시')
+
+const omittedSessions = mapPortalEducationSchedule(
+  { scheduleId: 1, sessionLabel: '1회차', content: '레거시' },
+  0,
+  { educationStructure: 'CURRICULUM', sessionRound: 'MULTI' },
+)
+assert.equal(omittedSessions.curriculumSessions, undefined)
+assert.equal(omittedSessions.content, '레거시')
+
+const emptySessions = mapPortalEducationSchedule(
+  { scheduleId: 2, sessionLabel: '1차시', content: '폴백', curriculumSessions: [] },
+  0,
+)
+assert.equal(emptySessions.curriculumSessions, undefined)
 
 console.log('map-from-portal.selfcheck: ok')

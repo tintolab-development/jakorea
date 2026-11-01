@@ -7,9 +7,9 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import {
-  CmsButton,
   FilterTableToolbarButton
 } from '@/shared/ui'
+import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -220,17 +220,12 @@ export function PaymentOrderInstructorSettlementTable({
         width: 196,
         align: 'center',
         render: (_: unknown, row: PaymentOrderAdminInstructorDetailProgramRow) => (
-          <CmsButton
-            variant="default"
-            size="small"
-            className="payment-order-program-status-detail__detail-btn"
+          <CalculationDetailViewButton
             onClick={e => {
               e.stopPropagation()
               onOpenCalculationStatement(row)
             }}
-          >
-            상세 보기
-          </CmsButton>
+          />
         ),
       },
     ],
@@ -315,16 +310,14 @@ export function PaymentOrderInstructorSettlementTable({
               onClick={() => {
                 if (selectedRowKeys.length === 0) return
                 setBatchConfirmOpen(true)
-              }}
-            >
+              }} >
               일괄 확인
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
-              onClick={() => {}}
-            >
+              onClick={() => {}} >
               지급조서 발급
             </FilterTableToolbarButton>
           </>

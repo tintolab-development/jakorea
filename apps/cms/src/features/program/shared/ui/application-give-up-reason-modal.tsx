@@ -61,8 +61,7 @@ export function ApplicationGiveUpReasonModal({
         size="large"
         type="button"
         disabled={confirming}
-        onClick={handleCancel}
-      >
+        onClick={handleCancel} >
         취소
       </CmsButton>
       <CmsButton
@@ -70,8 +69,7 @@ export function ApplicationGiveUpReasonModal({
         size="large"
         type="button"
         disabled={!canConfirm}
-        onClick={handleConfirm}
-      >
+        onClick={handleConfirm} >
         활동 포기
       </CmsButton>
     </div>

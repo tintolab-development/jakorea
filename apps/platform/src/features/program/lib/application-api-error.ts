@@ -82,6 +82,7 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   APPLICATION_TYPE_NOT_ALLOWED: '해당 모집에 허용되지 않은 지원 유형입니다.',
   RECRUITMENT_NOT_OPEN: '현재 신청할 수 없는 모집입니다.',
   ORGANIZATION_MEMBERSHIP_REQUIRED: '학교·기관 회원만 신청할 수 있습니다.',
+  SCHOOL_TEACHER_ROLE_REQUIRED: '학교 교사 회원만 기관 신청을 할 수 있습니다.',
   APPROVED_INSTRUCTOR_REQUIRED: '승인된 강사만 신청할 수 있습니다.',
   MEMBER_NOT_ACTIVE: '활성 회원만 신청할 수 있습니다.',
   APPLICATION_ALREADY_SUBMITTED: '이미 제출한 신청이 있습니다.',
@@ -146,6 +147,8 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   UJAT_INTERVIEW_SCORE_INVALID: 'UJAT 면접 점수는 평가자별 1~5점 정수만 입력할 수 있습니다.',
   UJAT_VOLUNTEER_INTERVIEW_REQUIRED: 'UJAT 봉사자 모집은 면접이 필수입니다. 면접 기간을 입력해 주세요.',
   FORM_RESUBMISSION_DEADLINE_PASSED: '수정 제출 기한이 종료되었습니다.',
+  FORM_SUBMISSION_NOT_STARTED: '아직 설문 작성 기간이 시작되지 않았습니다.',
+  FORM_SUBMISSION_CLOSED: '설문 작성 기간이 종료되었습니다.',
   FORM_SUBMISSION_ACTIVITY_ABANDONED:
     '활동 포기 이후에는 교육계획서·교육일지를 새로 제출하거나 수정할 수 없습니다.',
   PARTICIPATION_REQUIRED: '최종 합격 후 배정된 교육일에 대해 작성할 수 있습니다.',
@@ -158,16 +161,22 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   SCHEDULE_NOT_FOUND: '해당 교육일의 문서를 조회할 수 없습니다.',
   ASSIGNMENT_SUBMISSION_NOT_STARTED: '과제 제출 기간이 아직 시작되지 않았습니다.',
   ASSIGNMENT_SUBMISSION_CLOSED: '과제 제출 기간이 종료되었습니다.',
-  ASSIGNMENT_SUBMISSION_NOT_ALLOWED: '해당 회차에는 과제를 제출할 수 없습니다.',
+  ASSIGNMENT_SUBMISSION_NOT_ALLOWED: '참여 중인 교육일정에서만 과제를 제출할 수 있습니다.',
+  ASSIGNMENT_SUBMISSION_UNAVAILABLE: '현재 상태에서는 과제를 제출할 수 없습니다.',
   ASSIGNMENT_FILES_REQUIRED: '과제 파일 또는 링크를 1개 이상 첨부해 제출해 주세요.',
   ASSIGNMENT_URL_INVALID: 'https://로 시작하는 올바른 링크를 입력해 주세요.',
   ASSIGNMENT_SUBMISSION_LIMIT_EXCEEDED:
     '과제 파일과 링크를 합쳐 최대 20개까지 제출할 수 있어요.',
   ASSIGNMENT_FILE_INVALID: '업로드할 수 없는 과제 파일입니다.',
-  ASSIGNMENT_NOT_ENABLED: '해당 회차에는 과제를 제출할 수 없습니다.',
-  ASSIGNMENT_ALREADY_SUBMITTED: '이미 과제를 제출했습니다.',
-  ASSIGNMENT_NOT_SUBMITTED: '제출된 과제가 없습니다.',
-  ASSIGNMENT_RESUBMIT_NOT_ALLOWED: '과제 수정 제출이 허용되지 않습니다.',
+  ASSIGNMENT_NOT_ENABLED: '과제가 설정되지 않은 교육일정입니다.',
+  ASSIGNMENT_ALREADY_SUBMITTED: '이미 제출한 과제입니다. 수정 제출을 이용해 주세요.',
+  ASSIGNMENT_NOT_SUBMITTED: '제출한 과제가 없습니다.',
+  ASSIGNMENT_RESUBMIT_NOT_ALLOWED: '현재 상태에서는 과제를 수정 제출할 수 없습니다.',
+  CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE:
+    '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
+  ISSUANCE_PERIOD_EXPIRED: '수료증 발급 기간이 만료되었습니다.',
+  PARTICIPANT_NOT_COMPLETED: '수료 조건을 충족하지 않아 발급할 수 없습니다.',
+  PORTAL_CERTIFICATE_ISSUANCE_NOT_READY: '수료증을 아직 발급할 수 없습니다.',
 }
 
 export const INDIVIDUAL_APPLICATION_ENROLLED_GRADE_REQUIRED_CODE =

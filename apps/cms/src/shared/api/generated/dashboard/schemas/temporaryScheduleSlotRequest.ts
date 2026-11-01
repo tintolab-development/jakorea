@@ -23,7 +23,7 @@ export interface TemporaryScheduleSlotRequest {
      */
   className: string;
   /**
-     * 학생 수. 임시 배정 화면은 필드가 없어 0을 보낸다. 명단/카탈로그 불일치로 거절하지 않는다.
+     * 학생 수. CMS가 0을 내도 서버가 해당 organizationApplication gradeBlocks.classes에서 grade+className이 일치하는 studentCount로 채운다. 매칭 실패 시에만 0을 유지하며 명단/카탈로그 불일치로 거절하지 않는다. Portal·Admin GET은 저장된 값(또는 hydrate 결과)을 그대로 노출한다.
      * @minimum 0
      */
   studentCount: number;

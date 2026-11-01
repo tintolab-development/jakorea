@@ -77,7 +77,10 @@ export function GeneralVolunteerApplicationsView({
       ) : screenTab === 'vol_interview2' ? (
         <GeneralVolunteerInterview2Section {...sharedSectionProps} />
       ) : (
-        <GeneralVolunteerDocScreeningSection {...sharedSectionProps} />
+        <GeneralVolunteerDocScreeningSection
+          {...sharedSectionProps}
+          interviewEnabled={interviewEnabled}
+        />
       )}
     </div>
   )

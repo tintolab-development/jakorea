@@ -110,7 +110,7 @@ export function TrainedTeachersEducationJournalViewModal({
       title="교육일지 보기"
       width={800}
       footer={
-        <CmsButton variant="primary" size="large" width={120} onClick={onClose}>
+        <CmsButton variant="primary" size="large" onClick={onClose}>
           닫기
         </CmsButton>
       }
@@ -145,11 +145,9 @@ export function TrainedTeachersEducationJournalViewModal({
             <CmsButton
               variant="secondary"
               size="medium"
-              width={160}
               loading={isDownloading}
               disabled={isDownloading}
-              onClick={() => onDownload(entry)}
-            >
+              onClick={() => onDownload(entry)} >
               파일 다운로드
             </CmsButton>
           </div>

@@ -1,0 +1,42 @@
+.content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--spacing-28);
+}
+
+.textBlock {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-8);
+  text-align: center;
+}
+
+.title {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+.description {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  white-space: normal;
+}
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-8);
+}
+
+.actions > * {
+  flex: 1 1 140px;
+}

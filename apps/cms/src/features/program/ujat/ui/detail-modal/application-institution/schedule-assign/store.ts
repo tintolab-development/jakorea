@@ -27,21 +27,23 @@ function createInitialDayState(isoDate: string): UjatScheduleAssignDayState {
   }
 }
 
+function createEmptyEstimationSemester(): UjatScheduleAssignRegionState['estimation']['h1'] {
+  return { maxClassesPerDay: '', expectedVolunteerCount: '' }
+}
+
 function createInitialRegionState(): UjatScheduleAssignRegionState {
   const days: UjatScheduleAssignRegionState['days'] = {}
   return {
     days,
-    maxClassesPerDay: '',
     estimation: {
-      h1: { expectedVolunteerCount: '' },
-      h2: { expectedVolunteerCount: '' },
+      h1: createEmptyEstimationSemester(),
+      h2: createEmptyEstimationSemester(),
     },
   }
 }
 
 function cloneRegionState(state: UjatScheduleAssignRegionState): UjatScheduleAssignRegionState {
   return {
-    maxClassesPerDay: state.maxClassesPerDay,
     estimation: {
       h1: { ...state.estimation.h1 },
       h2: { ...state.estimation.h2 },
@@ -73,7 +75,9 @@ function applyScheduleAssignMockSeed(regionKey: UjatInstitutionApplicationRegion
 
   const state = createInitialRegionState()
   if (seed.maxClassesPerDay) {
-    state.maxClassesPerDay = seed.maxClassesPerDay
+    // legacy seed — 양 학기에 동일 시드값
+    state.estimation.h1.maxClassesPerDay = seed.maxClassesPerDay
+    state.estimation.h2.maxClassesPerDay = seed.maxClassesPerDay
   }
 
   for (const { institutionId, isoDate, gradeValues } of seed.assignments) {
@@ -217,13 +221,10 @@ export function patchUjatScheduleAssignEstimation(
 
 export function patchUjatScheduleAssignMaxClassesPerDay(
   regionKey: UjatInstitutionApplicationRegionKey,
+  semester: UjatInstitutionEducationSemesterKey,
   value: string
 ): void {
-  const current = ensureDraftRegionState(regionKey)
-  updateUjatScheduleAssignDraftRegionState(regionKey, {
-    ...current,
-    maxClassesPerDay: value,
-  })
+  patchUjatScheduleAssignEstimation(regionKey, semester, { maxClassesPerDay: value })
 }
 
 function withoutInstitutionRows(

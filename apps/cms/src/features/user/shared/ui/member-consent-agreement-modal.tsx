@@ -279,10 +279,8 @@ export function MemberConsentAgreementModal({
               <CmsButton
                 variant="primary"
                 size="medium"
-                width={140}
                 disabled={isDraftLoading || draft == null}
-                onClick={handleSubmit}
-              >
+                onClick={handleSubmit} >
                 작성완료
               </CmsButton>
             </div>

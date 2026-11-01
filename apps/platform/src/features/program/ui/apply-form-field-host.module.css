@@ -2,14 +2,15 @@
  * 신청 양식은 FormTemplateHost 안에서 typo-*가 unset 된다.
  * 강사 신청·교육받은 교사 표(PFFormFieldTable)와 같은 라벨 글자로 되돌린다.
  */
+/* Figma Body/Medium/bold — 16 / 700 / 150% / -0.16px */
 .root :global(.typo-form-field-label) {
   font-family: var(--font-family-base);
   color: var(--default-BK, #3d3d3d);
   text-align: center;
   font-size: 16px;
   font-weight: 700;
-  line-height: 140%;
-  letter-spacing: 0;
+  line-height: 150%;
+  letter-spacing: -0.16px;
 }
 
 :global(.form-template-host) .root :global(.typo-form-field-label) {
@@ -18,8 +19,8 @@
   text-align: center;
   font-size: 16px;
   font-weight: 700;
-  line-height: 140%;
-  letter-spacing: 0;
+  line-height: 150%;
+  letter-spacing: -0.16px;
 }
 
 /* 자유 작성 — 세로형 라벨은 왼쪽 정렬 */

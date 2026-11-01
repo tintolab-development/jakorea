@@ -96,7 +96,6 @@ export function UjatVolunteerInterviewAssignModal({
     }
     return parseInterviewScheduleFromDisplay(
       resolveUjatVolunteerInterviewScheduleDisplay(program, applicant.half, {
-        allowMockFallback: false,
         allowOverlayFallback: false,
       }),
       {

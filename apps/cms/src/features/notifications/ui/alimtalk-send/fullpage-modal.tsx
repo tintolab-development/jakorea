@@ -661,20 +661,16 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 <CmsButton
                   variant="cancel"
                   size="large"
-                  width={140}
                   type="button"
-                  onClick={onClose}
-                >
+                  onClick={onClose} >
                   취소
                 </CmsButton>
                 <CmsButton
                   variant="primary"
                   size="large"
-                  width={140}
                   type="button"
                   disabled={sending}
-                  onClick={handleRequestSend}
-                >
+                  onClick={handleRequestSend} >
                   알림톡 발송
                 </CmsButton>
               </div>
@@ -800,8 +796,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         variant="delete"
                         size="h40"
                         type="button"
-                        onClick={handleDeleteSelected}
-                      >
+                        onClick={handleDeleteSelected} >
                         선택 삭제
                       </CmsButton>
                       {isWithoutProgram ? (
@@ -809,8 +804,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                           variant="secondary"
                           size="h40"
                           type="button"
-                          onClick={handleManualRecipients}
-                        >
+                          onClick={handleManualRecipients} >
                           수신자 직접 입력
                         </CmsButton>
                       ) : null}
@@ -818,8 +812,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         variant="secondary"
                         size="h40"
                         type="button"
-                        onClick={handleSetRecipients}
-                      >
+                        onClick={handleSetRecipients} >
                         수신자 설정
                       </CmsButton>
                     </div>

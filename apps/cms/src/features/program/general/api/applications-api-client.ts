@@ -25,6 +25,8 @@ import type { PageResponseOrganizationApplicationListItemResponse } from '@/shar
 import type { DocumentResultRequest } from '@/shared/api/generated/dashboard/schemas/documentResultRequest'
 import type { VolunteerApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationListItemResponse'
 import type { VolunteerApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/volunteerApplicationDetailResponse'
+import type { VolunteerActivityRegionUpdateRequest } from '@/shared/api/generated/dashboard/schemas/volunteerActivityRegionUpdateRequest'
+import type { VolunteerActivityRegionUpdateResponse } from '@/shared/api/generated/dashboard/schemas/volunteerActivityRegionUpdateResponse'
 import type { VolunteerFinalResultRequest } from '@/shared/api/generated/dashboard/schemas/volunteerFinalResultRequest'
 import type { IndividualApplicationUpdateRequest } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateRequest'
 import type { IndividualApplicationUpdateResponse } from '@/shared/api/generated/dashboard/schemas/individualApplicationUpdateResponse'
@@ -147,6 +149,8 @@ export type InstructorApplicationApprovalCancellationRequest = {
   faultParty?: 'USER' | 'ADMIN' | null
 }
 
+export type { IndividualApprovalWithScopeResult }
+
 export type InstructorApplicationUpdatePayload = {
   managerComment?: string | null
   feePolicy?: InstructorApplicationFeePolicyRequest | null
@@ -237,14 +241,15 @@ export async function fetchOrganizationApplicationsRemote(
 /**
  * 기관 신청 상세 — OpenAPI `OrganizationApplicationDetailResponse` +
  * UJAT hydrate용 보조 필드(목록·레거시 호환).
+ *
+ * snackAvailability / sexOffenseCheckRequest / leftoverTextbookDisposal 는
+ * OpenAPI detail 프로젝션 필드(SSOT). form-response·local fallback 없음.
  */
 export type OrganizationApplicationDetailDto = OrganizationApplicationDetailResponse & {
   managerComment?: string | null
   regionSido?: string | null
   regionSigungu?: string | null
   grade?: string | null
-  /** UJAT 기관 확인. CHECKING | CONFIRMED | REVISION_REQUESTED. 비대상이면 null. */
-  institutionConfirmationStatus?: string | null
   /** 기관 확인 후 일정 수정 잠금 시각. 없으면 null. */
   assignmentLockedAt?: string | null
   /** Portal 일정 협의 배너. 관리자 버튼은 상태 필드가 우선이다. */
@@ -430,6 +435,26 @@ export async function fetchVolunteerApplicationDetailRemote(
       url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}`,
       method: 'GET',
     })
+  )
+}
+
+/**
+ * 봉사자 희망 교육 활동 지역 수정.
+ * OpenAPI operationId: `updateVolunteerApplicationActivityRegion`
+ */
+export async function patchVolunteerApplicationActivityRegionRemote(
+  applicationId: string,
+  payload: VolunteerActivityRegionUpdateRequest
+): Promise<VolunteerActivityRegionUpdateResponse> {
+  const numericApplicationId = Number(applicationId)
+  if (!Number.isSafeInteger(numericApplicationId) || numericApplicationId <= 0) {
+    throw new Error('봉사자 신청 ID가 올바르지 않습니다.')
+  }
+  return unwrapApiBody<VolunteerActivityRegionUpdateResponse>(
+    await generalApplicationsDashboardApi.updateVolunteerApplicationActivityRegion(
+      numericApplicationId,
+      payload
+    )
   )
 }
 
@@ -750,6 +775,40 @@ export async function bulkApproveIndividualApplicationsWithEducationScopeRemote(
   return unwrapApiBody<BulkActionResponse>(
     await customInstance({
       url: '/api/admin/individual-applications/bulk-approve-with-education-scope',
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
+ * POST /api/admin/volunteer-applications/{applicationId}/approve-with-education-scope
+ * 면접 없는 봉사자 최종 합격. confirmedScheduleIds는 본교육 ID만(사전교육은 서버가 붙임).
+ */
+export async function approveVolunteerApplicationWithEducationScopeRemote(
+  applicationId: string,
+  payload: IndividualApprovalWithScopeRequest
+): Promise<IndividualApprovalWithScopeResult> {
+  return unwrapApiBody<IndividualApprovalWithScopeResult>(
+    await customInstance({
+      url: `/api/admin/volunteer-applications/${encodeURIComponent(applicationId)}/approve-with-education-scope`,
+      method: 'POST',
+      data: payload,
+    })
+  )
+}
+
+/**
+ * POST /api/admin/volunteer-applications/bulk-approve-with-education-scope
+ * 면접 없는 봉사자 일괄 합격. target.confirmedScheduleIds는 본교육 ID만.
+ */
+export async function bulkApproveVolunteerApplicationsWithEducationScopeRemote(payload: {
+  reason: string
+  targets: IndividualApprovalWithScopeBulkTarget[]
+} & OrganizationDecisionNotifyRequest): Promise<BulkActionResponse> {
+  return unwrapApiBody<BulkActionResponse>(
+    await customInstance({
+      url: '/api/admin/volunteer-applications/bulk-approve-with-education-scope',
       method: 'POST',
       data: payload,
     })

@@ -104,8 +104,7 @@ export function createProgramHistoryColumns({
             variant="default"
             size="medium"
             disabled={!record.hasAssignmentSubmission}
-            onClick={() => onOpenAssignmentSubmission(record)}
-          >
+            onClick={() => onOpenAssignmentSubmission(record)} >
             내역 보기
           </CmsButton>
         </span>

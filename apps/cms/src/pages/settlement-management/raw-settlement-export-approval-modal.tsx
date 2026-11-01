@@ -21,7 +21,10 @@ import {
   type SettlementExportScope,
 } from '@/features/settlement-management/api/account-payments/settlement-export-scope'
 import { getSettlementApiErrorCode, getSettlementApiErrorMessage } from '@/features/settlement-management/api/get-settlement-api-error'
-import { waitForSettlementExportDownload } from '@/features/settlement-management/api/settlement-api-client'
+import {
+  assertSettlementServerExportReady,
+  waitForSettlementExportDownload,
+} from '@/features/settlement-management/api/settlement-api-client'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -217,13 +220,10 @@ export function RawSettlementExportApprovalModal({
         throw new Error('무필터 전체 원본 요청 body가 아닙니다.')
       }
       const requested = await onRequestExport(kind, body)
-      const ready = await waitForSettlementExportDownload(requested)
-      if (ready.pollingStatus === 'FAILED' || ready.exportStatus === 'FAILED') {
-        throw new Error(ready.failureReason || '원본 파일 생성에 실패했습니다.')
-      }
-      if (ready.deliveryMethod !== 'SERVER_FILE' || ready.fileObjectId == null) {
-        throw new Error('서버 파일이 준비되지 않았습니다. 클라이언트 파일로 대체하지 않습니다.')
-      }
+      const ready = assertSettlementServerExportReady(
+        await waitForSettlementExportDownload(requested),
+        '서버 파일이 준비되지 않았습니다. 클라이언트 파일로 대체하지 않습니다.'
+      )
       await downloadIssuedSettlementExportFile({
         serverExport: ready,
         filenamePrefix: label,
@@ -298,8 +298,7 @@ export function RawSettlementExportApprovalModal({
                   setMessage(rawExportFailureMessage(error, '발급 범위 확인에 실패했습니다.'))
                 })
                 .finally(() => setBusy(false))
-            }}
-          >
+            }} >
             발급 범위 확인
           </CmsButton>
           {scopeSummary ? (

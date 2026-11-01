@@ -27,7 +27,8 @@ import {
 import checkMintUrl from '@/shared/assets/icons/check-mint-small.svg'
 import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
-import { PFAlertModal, PFButton, PFCategoryBadge, PFStateBadge, PFText } from '@/shared/ui'
+import alertBlack24Url from '@/shared/assets/icons/alert-black-24.svg'
+import { PFButton, PFCategoryBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
@@ -168,6 +169,10 @@ export function EducationSettlementRow({
       ? `${formatEducationSessionDate(item.heldAt)} ${item.sessionMeta}`
       : formatEducationSessionDate(item.heldAt)
   const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
+  const receiptReapplyUnavailable =
+    documentKind === 'receipt' &&
+    (item.canResubmitReceipt === false ||
+      (item.hasPayableItems === false && item.canResubmitReceipt !== true))
 
   const renderAction = (action: SettlementStatusAction) => {
     if (action === 'write') {
@@ -224,6 +229,7 @@ export function EducationSettlementRow({
           size="large"
           onClick={() => setRejectOpen(true)}
         >
+          <img src={alertBlack24Url} alt="" width={24} height={24} aria-hidden="true" />
           반려사유 확인
         </PFButton>
       )
@@ -247,10 +253,7 @@ export function EducationSettlementRow({
     }
     if (hideInstructorWrite && documentKind === 'payment_statement') return null
     const reapplyPath = documentKind === 'receipt' ? receiptSubmitPath : writePath
-    const reapplyUnavailable =
-      documentKind === 'receipt' &&
-      (item.canResubmitReceipt === false ||
-        (item.hasPayableItems === false && item.canResubmitReceipt !== true))
+    const reapplyUnavailable = receiptReapplyUnavailable
     return (
       <PFButton
         key={action}
@@ -323,12 +326,7 @@ export function EducationSettlementRow({
                         {amountKindLabel}
                       </PFText>
                       {showPreviousAmount ? (
-                        <PFText
-                          as="p"
-                          typo="bd-md-rg"
-                          color="neutral-cool-500"
-                          className={styles.amountStruck}
-                        >
+                        <PFText as="p" typo="hl-lg" className={styles.amountStruck}>
                           {(item.previousAmount ?? amount)?.toLocaleString('ko-KR')}원
                         </PFText>
                       ) : null}
@@ -366,7 +364,7 @@ export function EducationSettlementRow({
                           {actionHint}
                         </PFText>
                       ) : null}
-                      {actions.map(renderAction)}
+                      <div className={styles.actionButtons}>{actions.map(renderAction)}</div>
                     </>
                   )}
                 </div>
@@ -376,43 +374,78 @@ export function EducationSettlementRow({
         ) : null}
       </EducationSessionCard>
 
-      <PFAlertModal
+      <PFModal
         open={rejectOpen}
-        title="반려사유"
-        confirmLabel="닫기"
-        onConfirm={closeRejectReason}
-        onDismiss={closeRejectReason}
+        size="md"
+        title="반려사유 확인"
+        onClose={closeRejectReason}
+        mobilePlacement="center"
+        showCloseButton={false}
       >
-        <div className={styles.rejectBody}>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            해당 강의 일정
-          </PFText>
-          <PFText as="p" typo="bd-md-md" color="black">
-            {[formatEducationSessionDate(item.heldAt), item.sessionMeta].filter(Boolean).join(' ')}
-          </PFText>
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            관리자 반려 사유
-          </PFText>
-          <PFText as="p" typo="bd-md-md" color="black">
-            {item.rejectReason ?? '반려 사유가 없습니다.'}
-          </PFText>
-          {documentKind === 'payment_statement' && !hideInstructorWrite ? (
+        <div className={styles.rejectContent}>
+          <div className={styles.rejectBody}>
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              해당 강의 일정
+            </PFText>
+            <PFText as="p" typo="bd-sm-rg" color="neutral-cool-600">
+              {[formatEducationSessionDate(item.heldAt), item.sessionMeta].filter(Boolean).join(' ')}
+            </PFText>
+            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+              관리자 반려 사유
+            </PFText>
+            <PFText as="p" typo="bd-md-md" color="black">
+              {item.rejectReason ?? '반려 사유가 없습니다.'}
+            </PFText>
+          </div>
+          <div className={styles.rejectActions}>
             <PFButton
               type="button"
-              variant="primary"
-              size="large"
-              disabled={reapplyDisabled}
-              onClick={() => {
-                if (reapplyDisabled) return
-                closeRejectReason()
-                navigate(writePath)
-              }}
+              variant="tertiary"
+              size="xlarge"
+              className={styles.rejectButton}
+              onClick={closeRejectReason}
             >
-              지급조서 재신청
+              닫기
             </PFButton>
-          ) : null}
+            {documentKind === 'payment_statement' && !hideInstructorWrite ? (
+              <PFButton
+                type="button"
+                variant="primary"
+                size="xlarge"
+                className={styles.rejectButton}
+                disabled={reapplyDisabled}
+                onClick={() => {
+                  if (reapplyDisabled) return
+                  closeRejectReason()
+                  navigate(writePath)
+                }}
+              >
+                지급조서 재신청
+              </PFButton>
+            ) : null}
+            {documentKind === 'receipt' && receiptSubmitPath ? (
+              <PFButton
+                type="button"
+                variant="primary"
+                size="xlarge"
+                className={styles.rejectButton}
+                disabled={reapplyDisabled || receiptReapplyUnavailable}
+                onClick={() => {
+                  if (reapplyDisabled || receiptReapplyUnavailable) return
+                  closeRejectReason()
+                  if (onReceiptWrite) {
+                    onReceiptWrite(receiptSubmitPath)
+                    return
+                  }
+                  navigate(receiptSubmitPath)
+                }}
+              >
+                영수증 수정 제출
+              </PFButton>
+            ) : null}
+          </div>
         </div>
-      </PFAlertModal>
+      </PFModal>
     </>
   )
 }

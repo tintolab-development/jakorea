@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
-import { patchUjatInstitutionApplicationRows } from '@/features/program/ujat/model/ujat-institution-application'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  invalidateUjatOrganizationApplicationLists,
+  patchUjatOrganizationApplicationTempAssignmentStatus,
+} from '@/features/program/ujat/api/organization-application-list-cache'
 import {
   type UjatInstitutionApplicationFilters,
   EMPTY_UJAT_INSTITUTION_APPLICATION_FILTERS,
   type UjatInstitutionApplicationRow,
-  type UjatInstitutionTempAssignmentStatus,
 } from './types'
 import type { UjatInstitutionApplicationRegionKey } from './regions'
 import { useUjatInstitutionApplicationColumns } from './columns'
@@ -18,14 +25,11 @@ import {
 } from '../education-schedule'
 import {
   getUjatInstitutionTempRejectCompleteContent,
+  UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
+  UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
   UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
 } from './temp-assign-complete'
-import {
-  rejectUjatOrganizationApplicationsIfRemote,
-  UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE,
-} from '@/features/program/ujat/api/temporary-rejections'
-import { removeUjatScheduleAssignInstitutionRows } from '../schedule-assign/store'
-import { buildUjatTempReleaseResultAlert, releaseUjatTemporarySchedules } from './temp-release'
+import { rejectUjatOrganizationApplicationsIfRemote } from '@/features/program/ujat/api/temporary-rejections'
 import { listUjatInstitutionApplicationsPage } from '@/features/program/ujat/api/applications-service'
 import { buildUjatInstitutionApplicationsListQuery } from '@/features/program/ujat/api/applications-list-query'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
@@ -35,6 +39,22 @@ import {
   buildUjatRegionCapacityMaxClassMap,
   fetchUjatRegionCapacitiesRemote,
 } from '@/features/program/ujat/api/region-capacities-client'
+
+function applyInstitutionTempAssignmentStatus(
+  queryClient: QueryClient,
+  programId: string | null | undefined,
+  ids: readonly string[],
+  status: Parameters<typeof patchUjatOrganizationApplicationTempAssignmentStatus>[3]
+) {
+  const resolvedProgramId = String(programId ?? '')
+  if (!resolvedProgramId || ids.length === 0) return
+  patchUjatOrganizationApplicationTempAssignmentStatus(
+    queryClient,
+    resolvedProgramId,
+    ids,
+    status
+  )
+}
 import {
   applyUjatInstitutionApplicationViewMode,
   parseUjatInstitutionApplicationViewMode,
@@ -46,6 +66,7 @@ import { bulkRejectGeneralOrganizationApplications } from '@/features/program/ge
 import { toTimedBulkNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import { getNotificationTimingApiErrorMessage } from '@/shared/lib/notification-schedule'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 
 /** 필터 조건은 모두 서버 query로 보낸다. 응답이 다른 지역 코드를 섞어 보낼 때만 탭 기준으로 거른다. */
 function filterRowsByRegion(
@@ -79,11 +100,10 @@ export function useUjatInstitutionApplicationList(
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const viewMode = parseUjatInstitutionApplicationViewMode(searchParams)
   const [pendingApplicationRejectModal, setPendingApplicationRejectModal] = useState(false)
-  const [pendingTempAction, setPendingTempAction] = useState<
-    null | 'temp_reject' | 'temp_assign_cancel' | 'temp_reject_cancel'
-  >(null)
+  const [pendingTempAction, setPendingTempAction] = useState<null | 'temp_reject' | 'temp_assign'>(
+    null
+  )
   const [tempActionLoading, setTempActionLoading] = useState(false)
-  const [tempReleasing, setTempReleasing] = useState(false)
   const queryClient = useQueryClient()
 
   const listQuery = useMemo(
@@ -141,10 +161,10 @@ export function useUjatInstitutionApplicationList(
     [appliedFilters, programId, regionKey]
   )
 
-  const selectedApplications = useMemo(
-    () => tableData.filter(row => selectedRowKeys.includes(row.id)),
-    [tableData, selectedRowKeys]
-  )
+  const selectedApplications = useMemo(() => {
+    const selectedIds = new Set(selectedRowKeys.map(String))
+    return tableData.filter(row => selectedIds.has(row.id))
+  }, [tableData, selectedRowKeys])
 
   const scheduleColumns = useMemo(
     () => scheduleColumnsFromIsoDates(collectPreferredEducationIsoDates(tableData)),
@@ -205,18 +225,9 @@ export function useUjatInstitutionApplicationList(
     })
   }, [showAlert])
 
-  const patchSelectedStatus = useCallback(
-    (status: UjatInstitutionTempAssignmentStatus) => {
-      const ids = selectedRowKeys.map(String)
-      if (ids.length === 0) {
-        showNoSelectionAlert()
-        return
-      }
-      patchUjatInstitutionApplicationRows(ids, status)
-      setDataVersion(v => v + 1)
-      setSelectedRowKeys([])
-    },
-    [selectedRowKeys, showNoSelectionAlert]
+  const eligibleApplicationRejectRows = useMemo(
+    () => selectedApplications.filter(row => row.tempAssignmentStatus !== 'application_rejected'),
+    [selectedApplications]
   )
 
   const handleBulkApplicationReject = useCallback(() => {
@@ -224,29 +235,42 @@ export function useUjatInstitutionApplicationList(
       showNoSelectionAlert()
       return
     }
+    if (eligibleApplicationRejectRows.length === 0) {
+      showAlert({
+        title: '프로그램 신청 반려 안내',
+        content:
+          '이미 신청 반려된 기관입니다.\n신청 반려가 가능한 기관을 선택한 뒤 다시 시도해 주세요.',
+      })
+      return
+    }
     setPendingApplicationRejectModal(true)
-  }, [selectedRowKeys.length, showNoSelectionAlert])
+  }, [
+    eligibleApplicationRejectRows.length,
+    selectedRowKeys.length,
+    showAlert,
+    showNoSelectionAlert,
+  ])
 
   const eligibleTempRejectRows = useMemo(
     () => selectedApplications.filter(row => row.tempAssignmentStatus === 'evaluation_pending'),
     [selectedApplications]
   )
-  const eligibleTempAssignCancelRows = useMemo(
-    () => selectedApplications.filter(row => row.tempAssignmentStatus === 'temp_assigned'),
-    [selectedApplications]
-  )
-  const eligibleTempRejectCancelRows = useMemo(
-    () => selectedApplications.filter(row => row.tempAssignmentStatus === 'temp_rejected'),
-    [selectedApplications]
-  )
 
   const handleBulkTempReject = useCallback(() => {
-    if (selectedRowKeys.length === 0 || eligibleTempRejectRows.length === 0) {
+    if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
       return
     }
+    if (eligibleTempRejectRows.length === 0) {
+      showAlert({
+        title: '임시 반려 안내',
+        content:
+          '평가 대기 상태의 기관만 임시 반려할 수 있습니다.\n평가 대기 기관을 선택한 뒤 다시 시도해 주세요.',
+      })
+      return
+    }
     setPendingTempAction('temp_reject')
-  }, [eligibleTempRejectRows.length, selectedRowKeys.length, showNoSelectionAlert])
+  }, [eligibleTempRejectRows.length, selectedRowKeys.length, showAlert, showNoSelectionAlert])
 
   const confirmBulkTempReject = useCallback(async () => {
     const rows = eligibleTempRejectRows
@@ -257,7 +281,6 @@ export function useUjatInstitutionApplicationList(
       const persisted = await rejectUjatOrganizationApplicationsIfRemote({
         programId,
         applicationIds: ids,
-        reason: '',
       })
       if (!persisted) {
         showAlert({
@@ -266,122 +289,64 @@ export function useUjatInstitutionApplicationList(
         })
         return
       }
-      patchUjatInstitutionApplicationRows(ids, 'temp_rejected')
-      setDataVersion(v => v + 1)
+      applyInstitutionTempAssignmentStatus(queryClient, programId, ids, 'temp_rejected')
       setSelectedRowKeys([])
       setPendingTempAction(null)
       showAlert({
         title: UJAT_INSTITUTION_TEMP_REJECT_ALERT_TITLE,
         content: getUjatInstitutionTempRejectCompleteContent(ids.length),
       })
-      await queryClient.invalidateQueries({
-        queryKey: ujatQueryKeys.organizationApplicationsRoot(String(programId ?? '')),
-      })
+      await invalidateUjatOrganizationApplicationLists(queryClient, String(programId ?? ''))
     } catch (error) {
       showAlert({
         title: '안내',
-        content: error instanceof Error ? error.message : '신청기관 임시 반려에 실패했습니다.',
+        content: readApiErrorAlertMessage(error, '신청기관 임시 반려에 실패했습니다.'),
       })
     } finally {
       setTempActionLoading(false)
     }
   }, [eligibleTempRejectRows, programId, queryClient, showAlert, tempActionLoading])
 
+  const eligibleTempAssignRows = useMemo(
+    () =>
+      selectedApplications.filter(
+        row =>
+          row.tempAssignmentStatus !== 'application_rejected' &&
+          row.tempAssignmentStatus !== 'temp_rejected'
+      ),
+    [selectedApplications]
+  )
+
   const handleBulkTempAssign = useCallback(() => {
     if (selectedRowKeys.length === 0) {
       showNoSelectionAlert()
-      return false
-    }
-    const assignable = selectedApplications.filter(
-      row =>
-        row.tempAssignmentStatus !== 'application_rejected' &&
-        row.tempAssignmentStatus !== 'temp_rejected'
-    )
-    if (assignable.length === 0) {
-      showNoSelectionAlert()
-      return false
-    }
-    return true
-  }, [selectedApplications, selectedRowKeys.length, showNoSelectionAlert])
-
-  const handleBulkTempRelease = useCallback(() => {
-    if (selectedRowKeys.length === 0 || eligibleTempAssignCancelRows.length === 0) {
-      showNoSelectionAlert()
       return
     }
-    if (!remoteEnabled || !programId) {
-      showAlert({ title: '안내', content: '원격 API가 비활성 상태라 임시 배정을 해제할 수 없습니다.' })
+    if (eligibleTempAssignRows.length === 0) {
+      showAlert({
+        title: '임시 배정 안내',
+        content:
+          '신청 반려·임시 반려 상태의 기관은 임시 배정할 수 없습니다.\n배정 가능한 기관을 선택한 뒤 다시 시도해 주세요.',
+      })
       return
     }
-    setPendingTempAction('temp_assign_cancel')
+    setPendingTempAction('temp_assign')
   }, [
-    eligibleTempAssignCancelRows.length,
-    programId,
-    remoteEnabled,
+    eligibleTempAssignRows.length,
     selectedRowKeys.length,
     showAlert,
     showNoSelectionAlert,
   ])
 
-  const handleBulkTempRejectCancel = useCallback(() => {
-    if (selectedRowKeys.length === 0 || eligibleTempRejectCancelRows.length === 0) {
-      showNoSelectionAlert()
-      return
-    }
-    setPendingTempAction('temp_reject_cancel')
-  }, [eligibleTempRejectCancelRows.length, selectedRowKeys.length, showNoSelectionAlert])
+  const confirmBulkTempAssign = useCallback(() => {
+    if (tempActionLoading) return
+    setPendingTempAction(null)
+  }, [tempActionLoading])
 
   const closeTempActionModal = useCallback(() => {
-    if (tempActionLoading || tempReleasing) return
+    if (tempActionLoading) return
     setPendingTempAction(null)
-  }, [tempActionLoading, tempReleasing])
-
-  const confirmBulkTempRejectCancel = useCallback(async () => {
-    setPendingTempAction(null)
-    showAlert({ title: '안내', content: UJAT_TEMP_REJECT_CANCEL_API_UNAVAILABLE })
-  }, [showAlert])
-
-  const confirmTempRelease = useCallback(async () => {
-    if (!programId) return
-    const targets = eligibleTempAssignCancelRows.map(row => ({
-      id: row.id,
-      name: row.institutionName,
-    }))
-    setTempReleasing(true)
-    setTempActionLoading(true)
-    try {
-      const results = await releaseUjatTemporarySchedules(String(programId), targets)
-      const succeeded = results.filter(item => item.ok)
-      removeUjatScheduleAssignInstitutionRows(succeeded.map(item => item.id))
-      if (succeeded.length > 0) {
-        patchUjatInstitutionApplicationRows(
-          succeeded.map(item => item.id),
-          'evaluation_pending'
-        )
-        setDataVersion(v => v + 1)
-      }
-      await queryClient.invalidateQueries({
-        queryKey: ujatQueryKeys.organizationApplicationsRoot(String(programId)),
-      })
-      setSelectedRowKeys([])
-      setPendingTempAction(null)
-      const failed = results.filter(item => !item.ok)
-      if (failed.length === 0) {
-        showAlert({
-          title: '안내',
-          content:
-            succeeded.length === 1
-              ? '임시 배정이 취소되어 평가 대기로 돌아갔습니다.'
-              : `${succeeded.length}개 기관의 임시 배정이 취소되어 평가 대기로 돌아갔습니다.`,
-        })
-        return
-      }
-      showAlert(buildUjatTempReleaseResultAlert(results))
-    } finally {
-      setTempReleasing(false)
-      setTempActionLoading(false)
-    }
-  }, [eligibleTempAssignCancelRows, programId, queryClient, showAlert])
+  }, [tempActionLoading])
 
   const closeApplicationRejectModal = useCallback(() => {
     setPendingApplicationRejectModal(false)
@@ -389,18 +354,59 @@ export function useUjatInstitutionApplicationList(
 
   const confirmApplicationRejectModal = useCallback(
     async (payload: PermissionModalPayload) => {
-      const ids = selectedApplications.map(row => row.id)
+      const targetRows = eligibleApplicationRejectRows
+      const ids = targetRows.map(row => row.id)
+      const reason = payload.reason.trim()
+      if (!reason) {
+        showAlert({
+          title: '필수 항목 미입력 안내',
+          content: '반려 사유를 입력해 주세요.',
+        })
+        return
+      }
+      if (ids.length === 0) {
+        showAlert({
+          title: '프로그램 신청 반려 안내',
+          content:
+            '이미 신청 반려된 기관입니다.\n신청 반려가 가능한 기관을 선택한 뒤 다시 시도해 주세요.',
+        })
+        return
+      }
       if (remoteEnabled) {
         try {
           const result = await bulkRejectGeneralOrganizationApplications(ids, {
-            reason: payload.reason.trim() || 'CMS UJAT 신청기관 신청 반려',
+            reason,
             ...toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt),
           })
-          if ((result.failureCount ?? 0) > 0) {
-            showAlert({
-              title: '처리 실패',
-              content: `선택한 신청 중 ${result.failureCount}건을 처리하지 못했습니다.`,
+          const failures = result.failures ?? []
+          const failureCount = result.failureCount ?? failures.length
+          const successIds = (result.successIds ?? []).map(String)
+          if (failureCount > 0) {
+            const lines = failures.map(failure => {
+              const message = failure.message?.trim() || '현재 상태에서는 처리할 수 없습니다.'
+              const code = failure.code?.trim()
+              return code ? `${message} (${code})` : message
             })
+            showAlert({
+              title: successIds.length > 0 ? '일부 처리 실패' : '처리 실패',
+              content:
+                lines.length > 0
+                  ? lines.join('\n')
+                  : `선택한 신청 중 ${failureCount}건을 처리하지 못했습니다.`,
+            })
+            if (successIds.length === 0) return
+            applyInstitutionTempAssignmentStatus(
+              queryClient,
+              programId,
+              successIds,
+              'application_rejected'
+            )
+            setSelectedRowKeys([])
+            setPendingApplicationRejectModal(false)
+            await invalidateUjatOrganizationApplicationLists(
+              queryClient,
+              String(programId ?? '')
+            )
             return
           }
         } catch (error) {
@@ -413,10 +419,18 @@ export function useUjatInstitutionApplicationList(
           return
         }
       }
-      patchSelectedStatus('application_rejected')
+      applyInstitutionTempAssignmentStatus(queryClient, programId, ids, 'application_rejected')
+      setSelectedRowKeys([])
       setPendingApplicationRejectModal(false)
+      if (remoteEnabled) {
+        await invalidateUjatOrganizationApplicationLists(queryClient, String(programId ?? ''))
+      }
+      showAlert({
+        title: UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
+        content: UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
+      })
     },
-    [patchSelectedStatus, remoteEnabled, selectedApplications, showAlert]
+    [eligibleApplicationRejectRows, programId, queryClient, remoteEnabled, showAlert]
   )
 
   const resetRegionState = useCallback(() => {
@@ -445,18 +459,14 @@ export function useUjatInstitutionApplicationList(
     handleBulkApplicationReject,
     handleBulkTempReject,
     handleBulkTempAssign,
-    handleBulkTempRelease,
-    handleBulkTempRejectCancel,
     pendingTempAction,
     tempActionLoading,
     closeTempActionModal,
+    confirmBulkTempAssign,
     confirmBulkTempReject,
-    confirmBulkTempRejectCancel,
+    eligibleTempAssignRows,
     eligibleTempRejectRows,
-    eligibleTempAssignCancelRows,
-    eligibleTempRejectCancelRows,
-    tempReleasing,
-    confirmTempRelease,
+    eligibleApplicationRejectRows,
     pendingApplicationRejectModal,
     closeApplicationRejectModal,
     confirmApplicationRejectModal,

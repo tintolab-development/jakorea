@@ -24,10 +24,11 @@ function formatPartialClassSuffix(classNos: readonly number[]): string {
   const sorted = [...classNos].sort((a, b) => a - b)
   if (isConsecutiveClassNos(sorted)) {
     if (sorted.length === 1) {
-      return ` (${sorted[0]}반)`
+      return `(${sorted[0]}반)`
     }
     return `(${sorted[0]}~${sorted[sorted.length - 1]}반)`
   }
+  // 비연속 — 시안: `N학년 M학급 (1, 2, 5, 6반)`
   return ` (${sorted.join(', ')}반)`
 }
 
@@ -39,13 +40,13 @@ function formatGradeLine(
   const assignedCount = classNos.length
   if (assignedCount === 0) return ''
 
+  // 해당 학년 전체 배정 — 시안: `3학년 4학급`
   if (totalInGrade > 0 && assignedCount === totalInGrade) {
     return `${gradeLabel} ${totalInGrade}학급`
   }
 
-  const suffix = formatPartialClassSuffix(classNos)
-  const spacer = suffix.startsWith(' (') ? ' ' : ''
-  return `${gradeLabel} ${assignedCount}학급${spacer}${suffix}`
+  // 일부 배정 — 연속 `2학년 7학급(1~7반)` / 비연속 `3학년 4학급 (1, 2, 5, 6반)`
+  return `${gradeLabel} ${assignedCount}학급${formatPartialClassSuffix(classNos)}`
 }
 
 /**

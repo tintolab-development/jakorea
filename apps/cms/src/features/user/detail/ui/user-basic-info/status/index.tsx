@@ -141,8 +141,7 @@ export function PermissionApprovalStatusWithResend({
         } else {
           window.alert('준비중 입니다.')
         }
-      }}
-    >
+      }} >
       알림 재발송
     </CmsButton>
   )

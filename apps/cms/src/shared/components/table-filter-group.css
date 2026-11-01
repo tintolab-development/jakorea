@@ -143,10 +143,10 @@
 }
 
 .table-filter-group__fields-shell--inline {
-  flex: 0 0 160px;
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .table-filter-group__shell-actions {

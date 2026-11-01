@@ -51,7 +51,7 @@ export function buildUjatVolunteerDocPassedFilterRows(): FilterFieldConfig[][] {
         key: 'volunteerName',
         type: 'search',
         label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
+        placeholder: '봉사자명을 입력해 주세요',
       },
       {
         key: 'preferredRegion',
@@ -63,7 +63,7 @@ export function buildUjatVolunteerDocPassedFilterRows(): FilterFieldConfig[][] {
       {
         key: 'educationExperience',
         type: 'select',
-        label: '교육 진행 경험',
+        label: '교육 진행 경험 여부',
         placeholder: '전체',
         options: experienceOptions,
       },

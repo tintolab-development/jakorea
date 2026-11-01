@@ -168,8 +168,7 @@ function OrgChartFormBody({
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading}
-          >
+            disabled={confirmLoading} >
             취소
           </CmsButton>
           <CmsButton
@@ -178,8 +177,7 @@ function OrgChartFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit}
-          >
+            onClick={handleSubmit} >
             저장
           </CmsButton>
         </>

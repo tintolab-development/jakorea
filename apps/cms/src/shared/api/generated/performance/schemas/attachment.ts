@@ -7,7 +7,7 @@
  */
 
 /**
- * 신청서 문항 첨부 1건. 다운로드는 downloadPolicyPath를 GET해 받은 정책(민감 파일이면 사유 필요)을 따릅니다.
+ * 신청서 문항 첨부 1건. 다운로드는 downloadPolicyPath를 GET해 받은 정책을 따릅니다. 민감 파일이면 downloadEndpoint가 /api/admin/files/{fileObjectId}/sensitive-downloads 이고, POST /download 등 일반 경로의 SENSITIVE_FILE_RELAY_REQUIRED(409)는 이 relay 경로로 전환하라는 신호입니다.
  */
 export interface Attachment {
   submissionFileId?: number;
@@ -17,6 +17,6 @@ export interface Attachment {
   originalFileName?: string;
   contentType?: string;
   fileSize?: number;
-  /** GET /api/admin/form-submission-files/{submissionFileId}/download */
+  /** GET /api/admin/form-submission-files/{submissionFileId}/download → 민감: POST /api/admin/files/{fileObjectId}/sensitive-downloads (reason) 후 POST …/sensitive-downloads/stream. 비민감: /api/admin/files/{fileObjectId}/download */
   downloadPolicyPath?: string;
 }

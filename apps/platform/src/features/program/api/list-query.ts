@@ -13,6 +13,7 @@ const PORTAL_RECRUITMENT_STATUS = {
   closed: 'CLOSED',
 } as const
 
+/** `NAME` = 카드에 보이는 타이틀과 동일한 SQL 정렬(내부 name_ko 단독이 아님). */
 const PORTAL_SORT = {
   latest: 'LATEST',
   name: 'NAME',

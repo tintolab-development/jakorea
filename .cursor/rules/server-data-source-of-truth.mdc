@@ -1,37 +1,60 @@
 ---
-description: 백엔드 원본 응답을 우선 사용하고 임의 fallback으로 데이터를 보완하지 않는다
+description: Remote API만 SSOT — fallback·overlay·form hydrate·local invent 절대 금지
 alwaysApply: true
 ---
 
-# 서버 원본 데이터 정합성
+# 서버 원본 데이터 정합성 — fallback 절대 금지
 
-화면에 표시되는 업무 데이터는 백엔드 API 응답을 canonical source로 사용한다.
+화면에 표시되는 업무 데이터는 **해당 화면의 remote API 응답만** canonical source다.
+에이전트·개발자가 “없으면 다른 데서 채워 넣기”를 **임의로 추가하는 것을 금지**한다.
 
-## 필수 원칙
+## 절대 금지 (하드 룰)
 
-- API 응답에 값이 있으면 해당 값을 그대로 사용하고 다른 데이터로 덮어쓰지 않는다.
-- API 응답이 `null`, 빈 문자열, 빈 배열 또는 필드 누락이면 임의의 기본값·목록 캐시·프로그램 공통값으로 보완하지 않는다.
-- 표시용 업무 데이터가 없으면 화면에는 `-`를 표시한다. 다른 API·기존 row·mock 데이터로 대체하지 않는다.
-- 응답이 없거나 필요한 필드가 누락된 경우 fallback을 추가하지 말고 API 계약, 조회 조건, 백엔드 read model 및 저장 데이터를 확인한다.
-- 목록 응답과 상세 응답이 함께 사용되면 상세 API 응답을 우선한다. 상세 응답의 명시적 `null`도 canonical 값으로 처리한다.
-- 로딩 중 placeholder와 서버 응답 완료 후 최종값을 구분한다. 오래된 캐시를 최신 응답처럼 표시하지 않는다.
+아래를 **작성·복구·우회·주석으로 남기지 않는다.** “미배포 BE 대비”, “legacy”, “안전장치”, “일단 hydrate” 도 예외가 아니다.
+
+1. **다른 API로 보완** — detail 필드가 null인데 form-response / 다른 endpoint / 목록 row / 프로그램 공통값으로 채우기
+2. **local store · session · mock · allocation-matrix invent** — temporary-schedule `slots=[]`인데 classLabel·일정을 다른 소스에서 조립
+3. **overlay / preferOverlay / catalog peek** 로 GET 정본 덮어쓰기 (프로그램 상세는 별도 overlay-save SSOT 룰)
+4. **wire에 `''` / `'-'` 넣기** — BE·FE 모두 null만. UI 표시 `-`는 **렌더 레이어만**
+5. **필드 혼용** — 예: `snackAvailability`↔`mealNotice`, 성범죄↔`parkingInfo`
+6. **UTC `slice(0,10)` 날짜** — instant는 Asia/Seoul 달력일로만
+
+값이 없으면 **`-` 또는 빈 목록**을 보여 주고, **API 계약·BE read model을 고친다.** FE fallback으로 숨기지 않는다.
+
+## 필수
+
+- 응답에 값이 있으면 **그대로** 쓴다. 다른 데이터로 덮지 않는다.
+- `null` / 빈 배열 / 필드 부재 = 데이터 없음. 보완 금지.
+- 목록+상세가 같이 있으면 **상세 GET**이 정본. 상세의 명시적 `null`도 정본.
+- 로딩 placeholder와 최종 응답을 구분한다. 오래된 캐시를 최신처럼 쓰지 않는다.
+- 유저/스펙이 “fallback 허용”을 **명시하지 않으면** fallback 경로를 만들지 않는다.
 
 ## 금지 예시
 
 ```ts
-// 금지: 신청 상세 API 값이 없을 때 프로그램 공통값으로 대체
-const format = detail.requestedEducationFormat ?? program.educationFormat
+// ❌ detail null → form-response / 다른 API
+const snack = detail.snackAvailability ?? formHydrate.snack
+const sex = detail.sexOffenseCheckRequest ?? parseSexOffense(formAnswers)
 
-// 금지: 상세 응답의 누락/null을 목록 캐시 값으로 복원
+// ❌ slots 비면 local store / matrix로 invent
+const rows = slots.length ? fromSlots : fromLocalAssignStore()
+
+// ❌ 상세 null → 목록·프로그램 공통값
+const format = detail.requestedEducationFormat ?? program.educationFormat
 const value = detail.field ?? listRow.field
 ```
 
 ## 올바른 처리
 
 ```ts
-const format = detail.requestedEducationFormat
-const displayFormat = format?.trim() || '-'
-// displayFormat이 '-'이면 API·백엔드 원인을 확인한다. 다른 데이터로 대체하지 않는다.
+const snack = mapSnack(detail.snackAvailability) // null → UI '-'
+const rows = buildFromTemporaryScheduleSlots(temporarySchedule.slots) // []면 빈 일정
+// 비면 BE/계약을 확인한다. form·store·overlay로 채우지 않는다.
 ```
 
-화면 요구사항과 서버 응답이 다르면 프론트 fallback으로 숨기지 말고, 필요한 API 필드와 저장·조회 경로를 명시해 백엔드 수정 또는 계약 보완을 요청한다.
+## 관련
+
+- 프로그램 상세 overlay 저장: `program-detail-overlay-save-ssot.mdc`
+- CMS remote-only: `apps/cms/.cursor/rules/process/cms-remote-only-orval-ssot.mdc`
+
+**Last updated:** 2026-11-01

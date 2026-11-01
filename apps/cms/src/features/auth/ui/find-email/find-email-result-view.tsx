@@ -30,10 +30,10 @@ export function FindEmailResultView({
         </div>
 
         <div className="auth-actions find-email-result__actions">
-          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
+          <CmsButton variant="primary" size="h52" onClick={onGoLogin}>
             로그인하기
           </CmsButton>
-          <CmsButton variant="default" size="h52" width="100%" onClick={onResetPassword}>
+          <CmsButton variant="default" size="h52" onClick={onResetPassword}>
             비밀번호 재설정하기
           </CmsButton>
         </div>

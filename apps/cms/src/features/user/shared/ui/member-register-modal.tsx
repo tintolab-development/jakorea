@@ -76,8 +76,7 @@ export function MemberRegisterModal({
             size="medium"
             type="button"
             onClick={onClose}
-            disabled={loading}
-          >
+            disabled={loading} >
             닫기
           </CmsButton>
           <CmsButton
@@ -86,8 +85,7 @@ export function MemberRegisterModal({
             type="submit"
             form={FORM_ID}
             loading={loading}
-            disabled={loading}
-          >
+            disabled={loading} >
             신규 등록
           </CmsButton>
         </>

@@ -21,7 +21,10 @@ import {
   putProgramRecruitmentAttachments,
   putProgramRecruitmentThumbnail,
 } from '@/features/program/shared/api/program-recruitment-rows'
-import { readRecruitDetailMediaFromOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
+import {
+  readRecruitDetailMediaFromOverlay,
+  recruitDetailOverlayPrefixForProgram,
+} from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-media'
 
 /**
  * 상세 정보 섹션의 첨부·대표 이미지 저장 위치.
@@ -139,11 +142,17 @@ export async function fetchProgramMediaThumbnail(
   if (!target) return empty
   if (target.recruitmentId == null) return fetchProgramThumbnail(target.programId)
   const row = program.programRecruitments?.find(item => item.id === target.recruitmentId)
-  const overlayName = readRecruitDetailMediaFromOverlay(program.registrationOverlay ?? {})
-    .thumbFileName
+  const fileObjectId = row?.thumbnailFileObjectId ?? null
+  // 파일명은 활성 행 유형의 overlay prefix에서만 읽는다(참여자 썸네일명이 강사·봉사자 탭에 새지 않게).
+  const overlayName =
+    fileObjectId != null
+      ? readRecruitDetailMediaFromOverlay(program.registrationOverlay ?? {}, [
+          recruitDetailOverlayPrefixForProgram(program),
+        ]).thumbFileName
+      : undefined
   return {
     ...empty,
-    fileObjectId: row?.thumbnailFileObjectId ?? null,
+    fileObjectId,
     originalFileName: overlayName?.trim() || null,
   }
 }

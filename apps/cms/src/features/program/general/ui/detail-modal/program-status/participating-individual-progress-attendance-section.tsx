@@ -46,8 +46,7 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
             <CmsButton
               variant="secondary"
               loading={isRefetching}
-              onClick={() => refetchAttendance()}
-            >
+              onClick={() => refetchAttendance()} >
               다시 시도
             </CmsButton>
           }
@@ -69,8 +68,7 @@ export function ParticipatingIndividualProgressAttendanceSection({ program }: { 
             <CmsButton
               variant="secondary"
               loading={isRefetching}
-              onClick={() => refetchAttendance()}
-            >
+              onClick={() => refetchAttendance()} >
               다시 시도
             </CmsButton>
           }

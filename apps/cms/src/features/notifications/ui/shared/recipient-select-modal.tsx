@@ -208,8 +208,7 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
             type="button"
             loading={selectingAll}
             disabled={selectingAll || !hasResults}
-            onClick={() => void handleSelectAll()}
-          >
+            onClick={() => void handleSelectAll()} >
             전체 선택
           </CmsButton>
           <CmsButton variant="primary" size="large" type="button" onClick={handleConfirm}>

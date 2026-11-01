@@ -110,22 +110,19 @@
   white-space: nowrap;
 }
 
-/* 조회 — 우측 정렬, 160×40 */
+/* 조회 — 우측 정렬, 높이 40 (폭은 라벨 + size min-width) */
 .admin-filter-area__actions {
   display: flex;
   align-items: flex-end;
-  flex: 0 0 var(--filter-search-button-width, 160px);
-  width: var(--filter-search-button-width, 160px);
-  min-width: var(--filter-search-button-width, 160px);
-  max-width: var(--filter-search-button-width, 160px);
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 0;
+  max-width: 100%;
   margin-left: auto;
   box-sizing: border-box;
 }
 
 .admin-filter-area__search-button.cms-button {
-  width: var(--filter-search-button-width, 160px) !important;
-  min-width: var(--filter-search-button-width, 160px) !important;
-  max-width: var(--filter-search-button-width, 160px) !important;
   height: var(--filter-control-height, 40px) !important;
   min-height: var(--filter-control-height, 40px) !important;
   max-height: var(--filter-control-height, 40px) !important;

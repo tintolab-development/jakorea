@@ -22,7 +22,7 @@ export function FindPasswordCompleteView({ onGoLogin }: FindPasswordCompleteView
         </p>
 
         <div className="auth-actions find-password-complete__actions">
-          <CmsButton variant="primary" size="h52" width="100%" onClick={onGoLogin}>
+          <CmsButton variant="primary" size="h52" onClick={onGoLogin}>
             로그인하기
           </CmsButton>
         </div>

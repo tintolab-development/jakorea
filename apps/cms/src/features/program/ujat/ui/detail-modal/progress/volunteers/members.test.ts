@@ -5,14 +5,14 @@ import {
 } from './members'
 import type { User } from '@/types/user'
 
-const fetchAllCmsMembersAndAdminsPageRemote = vi.hoisted(() => vi.fn())
+const fetchParticipatingVolunteerMemberCandidates = vi.hoisted(() => vi.fn())
 
-vi.mock('@/features/user/api/members-api-client', () => ({
-  fetchAllCmsMembersAndAdminsPageRemote,
+vi.mock('@/features/program/general/lib/participating-volunteer-member-candidates', () => ({
+  fetchParticipatingVolunteerMemberCandidates,
 }))
 
-vi.mock('@/features/user/api/member-remote-capabilities', () => ({
-  isMembersRemoteEnabled: () => true,
+vi.mock('@/features/program/general/api/program-progress-remote-capabilities', () => ({
+  shouldUseProgramProgressHttpRemoteApi: () => true,
 }))
 
 function user(partial: Partial<User> & Pick<User, 'id' | 'name'>): Omit<User, 'password'> {
@@ -28,106 +28,55 @@ function user(partial: Partial<User> & Pick<User, 'id' | 'name'>): Omit<User, 'p
 
 describe('fetchUjatEducationProgressVolunteerMemberCandidates', () => {
   beforeEach(() => {
-    fetchAllCmsMembersAndAdminsPageRemote.mockReset()
+    fetchParticipatingVolunteerMemberCandidates.mockReset()
   })
 
-  it('회원 디렉터리에서 봉사자 역할 회원만 조회한다', async () => {
-    fetchAllCmsMembersAndAdminsPageRemote.mockResolvedValueOnce({
-      items: [
-        {
-          accountType: 'MEMBER',
-          accountId: 11,
-          memberId: 11,
-          uuid: 'm-1',
-          name: '김봉사자',
-          email: 'm-1@ja.org',
-          roles: ['USER', 'VOLUNTEER'],
-        },
-        {
-          accountType: 'MEMBER',
-          accountId: 12,
-          memberId: 12,
-          uuid: 'm-2',
-          name: '강사회원',
-          email: 'm-2@ja.org',
-          roles: ['INSTRUCTOR'],
-        },
-        {
-          accountType: 'MEMBER',
-          accountId: 13,
-          memberId: 13,
-          uuid: 'm-3',
-          name: '일반회원',
-          email: 'm-3@ja.org',
-          roles: ['GENERAL'],
-        },
-      ],
-      totalPages: 1,
-    })
+  it('participant-register-candidates SSOT로 후보를 조회한다', async () => {
+    fetchParticipatingVolunteerMemberCandidates.mockResolvedValueOnce([
+      { memberId: '11', volunteerName: '김봉사자', hasRegisteredId1365: false },
+      { memberId: '12', volunteerName: '이미등록', hasRegisteredId1365: true },
+    ])
 
-    const options = await fetchUjatEducationProgressVolunteerMemberCandidates([])
+    const options = await fetchUjatEducationProgressVolunteerMemberCandidates('186495', ['12'])
 
-    expect(fetchAllCmsMembersAndAdminsPageRemote).toHaveBeenCalledWith({
-      accountType: 'MEMBER',
-      page: 0,
-      size: 20,
+    expect(fetchParticipatingVolunteerMemberCandidates).toHaveBeenCalledWith({
+      programId: '186495',
+      volunteerKind: 'GENERAL',
+      excludedMemberIds: [12],
     })
-    expect(options.map(o => o.volunteerName)).toEqual(['김봉사자'])
+    expect(options).toEqual([
+      { memberId: '11', volunteerName: '김봉사자', hasRegisteredId1365: false },
+      { memberId: '12', volunteerName: '이미등록', hasRegisteredId1365: true },
+    ])
   })
 
-  it('이름·memberId로 이미 등록된 후보만 제외한다', async () => {
-    fetchAllCmsMembersAndAdminsPageRemote.mockResolvedValueOnce({
-      items: [
-        {
-          accountType: 'MEMBER',
-          accountId: 21,
-          memberId: 21,
-          uuid: 'keep',
-          name: '남길회원',
-          email: 'keep@ja.org',
-          roles: ['USER', 'VOLUNTEER'],
-        },
-        {
-          accountType: 'MEMBER',
-          accountId: 22,
-          memberId: 22,
-          uuid: 'by-name',
-          name: '중복이름',
-          email: 'by-name@ja.org',
-          roles: ['USER', 'VOLUNTEER'],
-        },
-        {
-          accountType: 'MEMBER',
-          accountId: 23,
-          memberId: 23,
-          uuid: 'by-id',
-          name: '아이디제외',
-          email: 'by-id@ja.org',
-          roles: ['USER', 'VOLUNTEER'],
-        },
-      ],
-      totalPages: 1,
-    })
-
-    const options = await fetchUjatEducationProgressVolunteerMemberCandidates(
-      ['중복이름'],
-      ['23']
+  it('programId가 없으면 실패한다', async () => {
+    await expect(fetchUjatEducationProgressVolunteerMemberCandidates('')).rejects.toThrow(
+      /programId/
     )
-
-    expect(options.map(o => o.memberId)).toEqual(['keep'])
+    expect(fetchParticipatingVolunteerMemberCandidates).not.toHaveBeenCalled()
   })
 })
 
 describe('mapVolunteerUserToMemberCandidate', () => {
-  it('회원 id와 이름을 셀렉트 옵션으로 매핑한다', () => {
+  it('숫자 memberId를 셀렉트 옵션으로 보존한다', () => {
     expect(
       mapVolunteerUserToMemberCandidate(
-        user({ id: 'uuid-1', name: '테스트', phone: '010-0000-0000' })
+        user({ id: 'uuid-1', memberId: 190094, name: '테스트', phone: '010-0000-0000' })
       )
     ).toMatchObject({
-      memberId: 'uuid-1',
+      memberId: '190094',
       volunteerName: '테스트',
       mobile: '010-0000-0000',
     })
+  })
+
+  it('UUID만 있는 사용자는 null을 반환한다', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(
+      mapVolunteerUserToMemberCandidate(user({ id: 'uuid-only', name: '테스트' }))
+    ).toBeNull()
+    expect(warn).toHaveBeenCalled()
+    warn.mockRestore()
   })
 })

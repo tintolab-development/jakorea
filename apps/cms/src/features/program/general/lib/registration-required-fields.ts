@@ -29,7 +29,10 @@ import {
   PROGRAM_REGISTRATION_IPS_PREPARE_NONE_DEFAULT,
   type ProgramRegistrationIpsTypeValue,
 } from '@/features/template/ui/form-set/registration-form/general/paragraphs/program-registration-ips-type-fields'
-import { isEducationScheduleProgressLineMissingOrWithoutClock } from '@/features/template/lib/education-schedule-line-clock-required'
+import {
+  isEducationScheduleProgressLineMissingOrWithoutClock,
+  isEducationScheduleProgressLinePersistBlocked,
+} from '@/features/template/lib/education-schedule-line-clock-required'
 import {
   listIncompleteEducationPlaceReasons,
   resolveEducationPlaceCommonEducationForm,
@@ -278,14 +281,16 @@ function findIncompleteTypeSettingsReasons(
     pushReason(
       reasons,
       ctx.educationFormScheduleDetail === 'common' &&
-        isEmptyText(resolveGeneralRegistrationCommonEducationForm(overlay)),
+        isEmptyText(resolveGeneralRegistrationCommonEducationForm(overlay, ctx.sessionRoundType)),
       'typeSettings.multiCommonEducationForm'
     )
     pushReason(
       reasons,
       showParticipation &&
         ctx.participationScheduleDetail === 'common' &&
-        isEmptyText(resolveGeneralRegistrationCommonParticipation(overlay)),
+        isEmptyText(
+          resolveGeneralRegistrationCommonParticipation(overlay, ctx.sessionRoundType)
+        ),
       'typeSettings.multiCommonParticipation'
     )
   }
@@ -374,14 +379,14 @@ function findIncompleteCurriculumReasons(
       preEducationName !== undefined && isEmptyText(preEducationName),
       'curriculum.preEducationScheduleName'
     )
+    const preEducationScheduleLine = readOverlay(
+      overlay,
+      'generalRegistration.educationCurriculum.preEducationScheduleLine'
+    ) as string | null | undefined
     pushReason(
       reasons,
-      isEducationScheduleProgressLineMissingOrWithoutClock(
-        readOverlay(overlay, 'generalRegistration.educationCurriculum.preEducationScheduleLine') as
-          | string
-          | null
-          | undefined
-      ),
+      isEducationScheduleProgressLineMissingOrWithoutClock(preEducationScheduleLine) ||
+        isEducationScheduleProgressLinePersistBlocked(preEducationScheduleLine),
       'curriculum.preEducationScheduleLine'
     )
   }
@@ -430,7 +435,8 @@ function findIncompleteScheduleCurriculumReasons(
     if (useEventScheduleDate) {
       pushReason(
         reasons,
-        isEducationScheduleProgressLineMissingOrWithoutClock(scheduleDates[index] as string),
+        isEducationScheduleProgressLineMissingOrWithoutClock(scheduleDates[index] as string) ||
+          isEducationScheduleProgressLinePersistBlocked(scheduleDates[index] as string),
         `scheduleCurriculum.scheduleDate[${index}]`
       )
     } else {
@@ -466,7 +472,8 @@ function findIncompleteScheduleCurriculumReasons(
     )
     pushReason(
       reasons,
-      isEducationScheduleProgressLineMissingOrWithoutClock(scheduleDates[0] as string),
+      isEducationScheduleProgressLineMissingOrWithoutClock(scheduleDates[0] as string) ||
+        isEducationScheduleProgressLinePersistBlocked(scheduleDates[0] as string),
       'scheduleCurriculum.preEducationScheduleDate'
     )
   }

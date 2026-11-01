@@ -73,8 +73,7 @@ export function SchoolDetailAttendanceSection({
             <CmsButton
               variant="secondary"
               loading={isRefetching}
-              onClick={() => refetchAttendance()}
-            >
+              onClick={() => refetchAttendance()} >
               다시 시도
             </CmsButton>
           }
@@ -96,8 +95,7 @@ export function SchoolDetailAttendanceSection({
             <CmsButton
               variant="secondary"
               loading={isRefetching}
-              onClick={() => refetchAttendance()}
-            >
+              onClick={() => refetchAttendance()} >
               다시 시도
             </CmsButton>
           }
@@ -114,8 +112,7 @@ export function SchoolDetailAttendanceSection({
             <CmsButton
               variant="secondary"
               loading={isRefetching}
-              onClick={() => refetchAttendance()}
-            >
+              onClick={() => refetchAttendance()} >
               다시 시도
             </CmsButton>
           }

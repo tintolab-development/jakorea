@@ -78,11 +78,8 @@ export function AuthSection() {
                   <Form.Item className="login-submit-actions">
                     <CmsButton
                       variant="primary"
-                      size="large"
-                      width="100%"
-                      className="login-submit-btn"
-                      type="submit"
-                    >
+                      size="large" className="login-submit-btn"
+                      type="submit" >
                       로그인하기
                     </CmsButton>
                   </Form.Item>

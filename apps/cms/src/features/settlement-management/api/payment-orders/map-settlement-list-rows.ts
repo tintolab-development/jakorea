@@ -26,8 +26,9 @@ function collectAttendanceDates(items: SettlementListItemResponse[]): string[] {
   return [...new Set(dates)].sort()
 }
 
-function sumNetAmount(items: SettlementListItemResponse[]): number {
-  return items.reduce((sum, i) => sum + (i.netPaymentAmount ?? 0), 0)
+/** 총 정산 신청 금액 = 세전(gross). gross 없으면 net fallback */
+function sumAppliedSettlementAmount(items: SettlementListItemResponse[]): number {
+  return items.reduce((sum, i) => sum + (i.grossAmount ?? i.netPaymentAmount ?? 0), 0)
 }
 
 function countPendingItems(items: SettlementListItemResponse[]): number {
@@ -60,7 +61,7 @@ export function mapSettlementsToProgramRows(
         programName: group[0]?.programNameKo ?? `프로그램 ${programId}`,
         instructorCount: instructorIds.size,
         processingStatus: aggregateProcessingStatus(group),
-        estimatedAmount: sumNetAmount(group),
+        estimatedAmount: sumAppliedSettlementAmount(group),
         referenceDate: dates[0] ?? '',
         settlementRelevantAttendanceDates: dates,
         pendingPaymentSettlementItemCount: countPendingItems(group),
@@ -99,7 +100,7 @@ export function mapSettlementsToInstructorRows(
         instructorName: group[0]?.instructorName ?? `강사 ${instructorMemberId}`,
         programCount: programIds.size,
         processingStatus: aggregateProcessingStatus(group),
-        estimatedAmount: sumNetAmount(group),
+        estimatedAmount: sumAppliedSettlementAmount(group),
         relatedProgramNames: programNames,
         referenceDate: dates[0] ?? '',
         settlementRelevantAttendanceDates: dates,

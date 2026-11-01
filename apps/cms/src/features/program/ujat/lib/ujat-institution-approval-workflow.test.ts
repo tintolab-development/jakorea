@@ -157,12 +157,11 @@ describe('readUjatInstitutionWorkflowInput', () => {
     expect(input.portalBannerState).toBe('ADMIN_REVIEW')
   })
 
-  it('상세의 명시적 null은 임시 일정 값으로 덮지 않는다', () => {
+  it('상세의 temporaryAssignmentStatus 명시적 null은 임시 일정 값으로 덮지 않는다', () => {
     const input = readUjatInstitutionWorkflowInput(
       {
         applicationStatus: 'SUBMITTED',
         temporaryAssignmentStatus: null,
-        institutionConfirmationStatus: null,
       },
       {
         temporaryAssignmentStatus: 'TEMP_ASSIGNED',
@@ -171,6 +170,48 @@ describe('readUjatInstitutionWorkflowInput', () => {
     )
 
     expect(input.temporaryAssignmentStatus).toBeNull()
-    expect(input.institutionConfirmationStatus).toBeNull()
+    expect(input.institutionConfirmationStatus).toBe('CONFIRMED')
+  })
+
+  it('detail institutionConfirmationStatus null은 temporary-schedule CHECKING을 막지 않는다', () => {
+    const input = readUjatInstitutionWorkflowInput(
+      {
+        applicationStatus: 'SUBMITTED',
+        temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+        institutionConfirmationStatus: null,
+      },
+      {
+        institutionConfirmationStatus: 'CHECKING',
+        portalBannerState: 'ACTION_REQUIRED',
+      }
+    )
+
+    expect(input.institutionConfirmationStatus).toBe('CHECKING')
+    expect(input.portalBannerState).toBe('ACTION_REQUIRED')
+  })
+
+  it('institutionConfirmationStatus가 없으면 scheduleConfirmStatus를 매핑한다', () => {
+    const input = readUjatInstitutionWorkflowInput(
+      {
+        applicationStatus: 'SUBMITTED',
+        temporaryAssignmentStatus: 'TEMP_ASSIGNED',
+        scheduleConfirmStatus: 'institution_checking',
+      },
+      null
+    )
+
+    expect(input.institutionConfirmationStatus).toBe('CHECKING')
+  })
+
+  it('detail에 non-null institutionConfirmationStatus가 있으면 우선한다', () => {
+    const input = readUjatInstitutionWorkflowInput(
+      {
+        institutionConfirmationStatus: 'CONFIRMED',
+        scheduleConfirmStatus: 'institution_checking',
+      },
+      { institutionConfirmationStatus: 'CHECKING' }
+    )
+
+    expect(input.institutionConfirmationStatus).toBe('CONFIRMED')
   })
 })

@@ -369,40 +369,32 @@ export function FormModal({
                     <CmsButton
                       variant="cancel"
                       size="large"
-                      width={140}
                       type="button"
-                      onClick={onClose}
-                    >
+                      onClick={onClose} >
                       닫기
                     </CmsButton>
                     <CmsButton
                       variant="delete"
                       size="large"
-                      width={140}
                       type="button"
                       disabled={submitting}
-                      onClick={() => setDeleteOpen(true)}
-                    >
+                      onClick={() => setDeleteOpen(true)} >
                       삭제
                     </CmsButton>
                     <CmsButton
                       variant="secondary"
                       size="large"
-                      width={140}
                       type="button"
                       disabled={submitting}
-                      onClick={handlePreview}
-                    >
+                      onClick={handlePreview} >
                       미리보기
                     </CmsButton>
                     <CmsButton
                       variant="primary"
                       size="large"
-                      width={140}
                       type="button"
                       disabled={submitting}
-                      onClick={handleSubmit}
-                    >
+                      onClick={handleSubmit} >
                       수정
                     </CmsButton>
                   </>
@@ -411,30 +403,24 @@ export function FormModal({
                     <CmsButton
                       variant="cancel"
                       size="large"
-                      width={140}
                       type="button"
-                      onClick={onClose}
-                    >
+                      onClick={onClose} >
                       취소
                     </CmsButton>
                     <CmsButton
                       variant="secondary"
                       size="large"
-                      width={140}
                       type="button"
                       disabled={submitting}
-                      onClick={handlePreview}
-                    >
+                      onClick={handlePreview} >
                       미리보기
                     </CmsButton>
                     <CmsButton
                       variant="primary"
                       size="large"
-                      width={140}
                       type="button"
                       disabled={submitting}
-                      onClick={handleSubmit}
-                    >
+                      onClick={handleSubmit} >
                       등록
                     </CmsButton>
                   </>
@@ -456,8 +442,7 @@ export function FormModal({
                           disabled={syncSenderProfilesMutation.isPending}
                           onClick={() => {
                             void handleSyncSenderProfiles()
-                          }}
-                        >
+                          }} >
                           {syncSenderProfilesMutation.isPending
                             ? '동기화 중…'
                             : '발신 프로필 동기화'}

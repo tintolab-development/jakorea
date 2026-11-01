@@ -17,6 +17,11 @@ export type PreferredEducationSchedule = PreferredEducationScheduleResponse & {
   unresolvedReason?: 'AMBIGUOUS_SCHEDULE_MATCH' | 'NO_PROGRAM_DEFINED_SCHEDULE_MATCH' | null
   /** TT 기관 신청 상세의 서버 일정 매칭 상태. 일반 기관 응답에는 없을 수 있음. */
   scheduleStatus?: 'MATCHED' | 'UNMATCHED' | 'INACTIVE_OR_DELETED' | string | null
+  /**
+   * 희망 교육일 (Asia/Seoul 달력일 `YYYY-MM-DD`).
+   * OpenAPI `PreferredEducationScheduleResponse.educationDate` — startAt UTC 날짜 절단 금지.
+   */
+  educationDate?: string | null
 }
 
 /** GET individual-applications list item + P1 assigned interview enrich */

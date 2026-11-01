@@ -215,10 +215,8 @@ export function IndividualSettlementReviewDetailModal({
                   <CmsButton
                     key={file.fileObjectId}
                     variant="default"
-                    size="small"
-                    className="individual-settlement-review-detail-modal__file-button"
-                    onClick={() => void handleDownload(file)}
-                  >
+                    size="small" className="individual-settlement-review-detail-modal__file-button"
+                    onClick={() => void handleDownload(file)} >
                     {file.fileName}
                   </CmsButton>
                 ))}
@@ -250,8 +248,7 @@ export function IndividualSettlementReviewDetailModal({
                 size="large"
                 type="button"
                 disabled={reviewing}
-                onClick={() => setRejectOpen(true)}
-              >
+                onClick={() => setRejectOpen(true)} >
                 반려
               </CmsButton>
             ) : null}
@@ -261,8 +258,7 @@ export function IndividualSettlementReviewDetailModal({
                 size="large"
                 type="button"
                 disabled={reviewing}
-                onClick={() => setApproveOpen(true)}
-              >
+                onClick={() => setApproveOpen(true)} >
                 승인
               </CmsButton>
             ) : null}
@@ -386,8 +382,7 @@ export function IndividualSettlementReviewDetailModal({
               size="large"
               type="button"
               onClick={() => setRejectOpen(false)}
-              disabled={rejectMutation.isPending}
-            >
+              disabled={rejectMutation.isPending} >
               취소
             </CmsButton>
             <CmsButton
@@ -396,8 +391,7 @@ export function IndividualSettlementReviewDetailModal({
               type="button"
               onClick={() => void handleReject()}
               loading={rejectMutation.isPending}
-              disabled={rejectMutation.isPending || !rejectReason.trim()}
-            >
+              disabled={rejectMutation.isPending || !rejectReason.trim()} >
               반려
             </CmsButton>
           </div>

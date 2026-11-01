@@ -14,6 +14,7 @@ import type { UjatInstitutionApplicationFilters } from '@/features/program/ujat/
 import { UJAT_INSTITUTION_APPLICATION_FILTER_ALL } from '@/features/program/ujat/ui/detail-modal/application-institution/list/filter-fields'
 import type { UjatVolunteerRecruitHalf } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
+import { GENERAL_VOLUNTEER_INTERVIEW2_STAGE } from '@/features/program/general/api/volunteer-list-query'
 
 export type UjatVolunteerApplicationsStage = 'doc1' | 'docPassed' | 'interview2'
 
@@ -39,13 +40,15 @@ const INTERVIEW_ASSIGN_TO_API: Record<string, string> = {
 const FINAL_STATUS_TO_API: Record<string, string> = {
   pass: 'PASS',
   fail: 'FAIL',
-  waiting: 'WAITING',
-  completed: 'COMPLETED',
   reserve1: 'RESERVE',
   reserve2: 'RESERVE',
   reserve3: 'RESERVE',
   reserve4: 'RESERVE',
-  withdrawn: 'WITHDRAWN',
+}
+
+const EFFECTIVE_SECOND_INTERVIEW_STATUS_TO_API: Record<'waiting' | 'completed', string> = {
+  waiting: 'WAITING',
+  completed: 'COMPLETED',
 }
 
 const TEMP_ASSIGN_TO_APPLICATION_STATUS: Record<string, string> = {
@@ -169,10 +172,18 @@ export function buildUjatVolunteerInterview2ListQuery(
   half?: UjatVolunteerRecruitHalf | null
 ): ApplicationsListQuery {
   const keyword = trimKeyword(filters.volunteerName)
+  const status = filters.secondInterviewScreeningStatus
+  const withdrawn = status === 'withdrawn'
+  const effectiveSecondInterviewStatus =
+    status === 'waiting' || status === 'completed'
+      ? EFFECTIVE_SECOND_INTERVIEW_STATUS_TO_API[status]
+      : undefined
   const finalResultStatus =
-    filters.secondInterviewScreeningStatus !== UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL &&
-    filters.secondInterviewScreeningStatus !== 'withdrawn'
-      ? FINAL_STATUS_TO_API[filters.secondInterviewScreeningStatus]
+    status !== UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL &&
+    status !== 'withdrawn' &&
+    status !== 'waiting' &&
+    status !== 'completed'
+      ? FINAL_STATUS_TO_API[status]
       : undefined
 
   const preferredRegion = selected(filters.preferredRegion, UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL)
@@ -184,11 +195,12 @@ export function buildUjatVolunteerInterview2ListQuery(
   return withRecruitHalf(
     {
       documentStatus: 'PASS',
-      ...(keyword ? { keyword } : {}),
-      ...(finalResultStatus ? { finalResultStatus } : {}),
-      ...(filters.secondInterviewScreeningStatus === 'withdrawn'
+      ...(withdrawn
         ? { interviewStatus: 'WITHDRAWN' }
-        : {}),
+        : { interviewStage: GENERAL_VOLUNTEER_INTERVIEW2_STAGE }),
+      ...(keyword ? { keyword } : {}),
+      ...(effectiveSecondInterviewStatus ? { effectiveSecondInterviewStatus } : {}),
+      ...(finalResultStatus ? { finalResultStatus } : {}),
       ...(preferredRegion ? { preferredRegion } : {}),
       ...(assignedInterviewDate ? { assignedInterviewDate } : {}),
       ...(totalScore != null ? { totalScore } : {}),

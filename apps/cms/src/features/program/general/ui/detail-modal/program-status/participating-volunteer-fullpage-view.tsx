@@ -395,32 +395,27 @@ export function ParticipatingVolunteerFullpageView({
                   activityWithdrawSubmitting ||
                   activityWithdrawScheduleOptions.length === 0
                 }
-                onClick={handleRequestActivityWithdraw}
-              >
+                onClick={handleRequestActivityWithdraw} >
                 활동 포기
               </CmsButton>
               <CmsButton
                 variant="secondary"
                 size="h40"
                 icon={<ButtonDownloadIcon />}
-                onClick={handleActivityCertificateIssueClick}
-              >
+                onClick={handleActivityCertificateIssueClick} >
                 활동인증서 발급
               </CmsButton>
               <CmsButton
                 variant="primary"
                 size="h40"
-                onClick={handleAdminCommentEditEnter}
-              >
+                onClick={handleAdminCommentEditEnter} >
                 코멘트 작성
               </CmsButton>
               <PersonalInfoRevealButton disabled={programPrivacyPending}
                 labelMode="stickyReveal"
                 revealed={personalInfoRevealed}
                 cmsSize="h40"
-                width="auto"
-                onClick={openPersonalInfoRevealConfirm}
-              />
+                onClick={openPersonalInfoRevealConfirm} />
             </>
           ) : null
         }

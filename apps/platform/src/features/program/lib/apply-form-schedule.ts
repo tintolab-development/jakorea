@@ -112,10 +112,9 @@ export function readApplyFixedScheduleChoiceIds(input: {
   program?: ApplyScheduleVisibilityFields
   educationScheduleLines?: readonly string[]
 }): string[] {
-  const fromRuntimeChoices = uniqueTrimmedIds(
-    (input.runtimeChoices ?? []).map(choice => choice.id),
-  )
-  if (fromRuntimeChoices.length > 0) return fromRuntimeChoices
+  if (input.runtimeChoices != null) {
+    return uniqueTrimmedIds(input.runtimeChoices.map(choice => choice.id))
+  }
 
   const fromItems = readInstitutionFixedScheduleChoiceItems(input.runtime, input.paragraph, {
     educationStructure: input.program?.educationStructure,
@@ -146,6 +145,90 @@ export function resolveHiddenScheduleAutoSubmitIds(input: {
   if (input.forcedHidden) return ids
   if (ids.length === 1) return ids
   return null
+}
+
+const GENERAL_FIXED_SCHEDULE_APPLY_CASES = new Set([
+  'institution-general',
+  'individual-general',
+  'individual-team',
+])
+
+export const APPLY_EMPTY_FIXED_SCHEDULE_ALERT_TITLE = '신청 가능 교육 일정'
+
+export const APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES = [
+  '현재 신청 가능한 교육 일정이 없습니다.',
+  '프로그램 모집 정보를 다시 확인해주세요.',
+] as const
+
+export type ApplyScheduleKindLookupRow = {
+  scheduleId: number
+  scheduleKind?: string | null
+}
+
+function readChoiceScheduleId(choice: { id: string; scheduleId?: number }): number | undefined {
+  if (typeof choice.scheduleId === 'number' && Number.isFinite(choice.scheduleId)) {
+    return choice.scheduleId
+  }
+  const trimmed = choice.id.trim()
+  const fromToken = trimmed.match(/^schedule:(\d+)/i)
+  if (fromToken) {
+    const parsed = Number(fromToken[1])
+    if (Number.isFinite(parsed)) return parsed
+  }
+  if (/^\d{4,}$/.test(trimmed)) {
+    const parsed = Number(trimmed)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return undefined
+}
+
+/** PRE_EDUCATION만 제외. 종류를 모르면 남긴다. */
+export function excludePreEducationScheduleChoices<
+  T extends { id: string; scheduleId?: number },
+>(
+  choices: readonly T[] | null | undefined,
+  lookup: readonly ApplyScheduleKindLookupRow[] | undefined,
+): T[] | null {
+  if (choices == null) return null
+  const kindById = new Map<number, string>()
+  for (const row of lookup ?? []) {
+    if (typeof row.scheduleId !== 'number' || !Number.isFinite(row.scheduleId)) continue
+    const kind = String(row.scheduleKind ?? '').trim().toUpperCase()
+    if (kind) kindById.set(row.scheduleId, kind)
+  }
+  return choices.filter(choice => {
+    const scheduleId = readChoiceScheduleId(choice)
+    if (scheduleId == null) return true
+    const kind = kindById.get(scheduleId)
+    if (kind == null || kind === '') return true
+    return kind !== 'PRE_EDUCATION'
+  })
+}
+
+export function shouldExcludePreEducationFromApplyFixedSchedule(input: {
+  applyCase?: string | null
+  scheduleInputMode?: string | null
+  scheduleParagraphForcedHidden?: boolean
+}): boolean {
+  if (!GENERAL_FIXED_SCHEDULE_APPLY_CASES.has(input.applyCase ?? '')) return false
+  if (input.scheduleInputMode !== 'fixed_schedule_options') return false
+  if (input.scheduleParagraphForcedHidden) return false
+  return true
+}
+
+export function shouldBlockApplyForEmptyFixedSchedule(input: {
+  applyCase?: string | null
+  scheduleInputMode?: string | null
+  scheduleChoiceHidden?: boolean
+  scheduleParagraphForcedHidden?: boolean
+  educationScheduleChoices: readonly unknown[] | null
+}): boolean {
+  if (!GENERAL_FIXED_SCHEDULE_APPLY_CASES.has(input.applyCase ?? '')) return false
+  if (input.scheduleInputMode !== 'fixed_schedule_options') return false
+  if (input.scheduleChoiceHidden) return false
+  if (input.scheduleParagraphForcedHidden) return false
+  if (input.educationScheduleChoices == null) return false
+  return input.educationScheduleChoices.length === 0
 }
 
 function readUnknownParagraphId(value: unknown): string {
@@ -495,6 +578,103 @@ export function resolveInstitutionAllowedScheduleEnabledDates(
     return restrictWhenUnavailable ? new Set<string>() : null
   }
   return buildEnabledDatesFromAllowedSchedulePeriods(periods!)
+}
+
+export type EducationScheduleApplyConstraint = {
+  minDate: string | null
+  maxDate: string | null
+  enabledDates: ReadonlySet<string> | null
+  configured: boolean
+}
+
+export const PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE =
+  '희망 교육 일정이 교육 예정 기간을 벗어났습니다.'
+
+export const PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE =
+  '신청 가능한 교육 일정이 설정되지 않았습니다. 관리자에게 확인해 주세요.'
+
+function readEducationScheduleRangeBounds(
+  range: { start?: string | null; end?: string | null } | null | undefined
+): ApplyScheduleDateBounds {
+  const start = readIsoDateOrNull(range?.start)
+  const end = readIsoDateOrNull(range?.end)
+  if (start == null || end == null) {
+    return { minScheduleDate: null, maxScheduleDate: null }
+  }
+  return start <= end
+    ? { minScheduleDate: start, maxScheduleDate: end }
+    : { minScheduleDate: end, maxScheduleDate: start }
+}
+
+/**
+ * 기간형 희망 교육일 달력 SSOT.
+ * runtime 허용 기간 → runtime min/max → 프로그램 교육 예정 기간.
+ * 사업 운영 기간은 쓰지 않는다.
+ */
+export function resolveEducationScheduleApplyConstraint(input: {
+  runtime?: unknown
+  paragraph?: unknown
+  educationScheduleRange?: { start?: string | null; end?: string | null } | null
+  failClosed?: boolean
+}): EducationScheduleApplyConstraint {
+  const failClosed = input.failClosed === true
+  const config = readRuntimeScheduleConfig(input.runtime, input.paragraph)
+  if (hasRuntimeAllowedSchedulePeriods(config)) {
+    const enabledDates = buildEnabledDatesFromAllowedSchedulePeriods(config.allowedSchedulePeriods)
+    const sorted = [...enabledDates].sort()
+    return {
+      minDate: sorted[0] ?? config.minScheduleDate,
+      maxDate: sorted[sorted.length - 1] ?? config.maxScheduleDate,
+      enabledDates,
+      configured: enabledDates.size > 0,
+    }
+  }
+  if (config.minScheduleDate != null && config.maxScheduleDate != null) {
+    return {
+      minDate: config.minScheduleDate,
+      maxDate: config.maxScheduleDate,
+      enabledDates: null,
+      configured: true,
+    }
+  }
+  const fallback = readEducationScheduleRangeBounds(input.educationScheduleRange)
+  if (fallback.minScheduleDate != null && fallback.maxScheduleDate != null) {
+    return {
+      minDate: fallback.minScheduleDate,
+      maxDate: fallback.maxScheduleDate,
+      enabledDates: null,
+      configured: true,
+    }
+  }
+  if (failClosed) {
+    return {
+      minDate: null,
+      maxDate: null,
+      enabledDates: new Set<string>(),
+      configured: false,
+    }
+  }
+  return {
+    minDate: null,
+    maxDate: null,
+    enabledDates: null,
+    configured: true,
+  }
+}
+
+export function hasPreferredScheduleDateOutsideEducationConstraint(
+  blocks: readonly Pick<ApplyPreferredScheduleBlock, 'date'>[],
+  constraint: EducationScheduleApplyConstraint
+): boolean {
+  return blocks.some(block => {
+    const date = readIsoDateOrNull(block.date)
+    if (!date) return false
+    if (!constraint.configured) return true
+    if (constraint.enabledDates != null) return !constraint.enabledDates.has(date)
+    if (constraint.minDate != null && date < constraint.minDate) return true
+    if (constraint.maxDate != null && date > constraint.maxDate) return true
+    return false
+  })
 }
 
 export function buildEnabledDatesFromAllowedSchedulePeriods(
@@ -1011,5 +1191,6 @@ export function applyScheduleParagraphsForProgram(
     curriculumChartSessionCount: scheduleMeta.curriculumChartSessionCount,
     curriculumSessions: scheduleMeta.curriculumSessions,
     runtimeContext: program.runtimeContext,
+    unknownCount: 'omit',
   })
 }

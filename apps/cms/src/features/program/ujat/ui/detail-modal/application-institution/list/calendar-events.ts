@@ -1,8 +1,10 @@
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatInstitutionApplicationRow } from './types'
 
 export type UjatInstitutionCalendarOriginalItem = UjatInstitutionApplicationRow & {
   schoolName: string
-  /** 툴팁 등 — `총 N개 학급 | 학년별 상세` */
+  regionLabel: string
+  /** 툴팁 등 — `총 N개의 학급 | 학년별 상세` */
   calendarGradeSummary: string
   calendarTotalClassSummary: string
   calendarGradeDetail: string
@@ -17,6 +19,7 @@ export type UjatInstitutionCalendarEvent = {
 }
 
 function formatGradeSummaries(row: UjatInstitutionApplicationRow): {
+  regionLabel: string
   calendarTotalClassSummary: string
   calendarGradeDetail: string
   calendarGradeSummary: string
@@ -32,8 +35,9 @@ function formatGradeSummaries(row: UjatInstitutionApplicationRow): {
     .filter(Boolean)
     .join(', ')
   const calendarTotalClassSummary =
-    row.totalClassCount == null ? '-' : `총 ${row.totalClassCount}개 학급`
+    row.totalClassCount == null ? '-' : `총 ${row.totalClassCount}개의 학급`
   return {
+    regionLabel: getUjatEducationRegionLabel(row.regionKey, ''),
     calendarTotalClassSummary,
     calendarGradeDetail: gradeDetail,
     calendarGradeSummary: gradeDetail

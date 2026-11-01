@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Space, Spin, Tooltip } from 'antd'
-import { CmsButton, CMS_ACTION_BUTTON_WIDTH, useCmsAlert } from '@/shared/ui'
+import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useUjatInstitutionApplicationDetail } from '@/features/program/ujat/api/use-institution-application-detail'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { postUjatScheduleChangeRequest } from '@/features/program/ujat/api/temporary-schedule-api'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import { submitUjatScheduleConfirmRevisionRequest } from './submit-revision-request'
 import { shouldShowScheduleConfirmGuidanceNotes } from './types'
-import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
-import { resolveSessionProgramRole } from '@/entities/program/lib/program-privacy-access'
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
+import { useUjatInstitutionTeacherPrivacyReveal } from '../shared/use-institution-teacher-privacy-reveal'
 import { UjatInstitutionApplicationActionModal } from '../list/action-modal'
 import type { PermissionModalPayload } from '@/shared/components/permission-modal'
 import {
@@ -22,6 +22,14 @@ import {
   getUjatInstitutionScheduleConfirmApproveCompleteContent,
   UJAT_INSTITUTION_SCHEDULE_CONFIRM_APPROVE_ALERT_TITLE,
 } from './institution-approve-complete'
+import {
+  UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
+  UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
+} from '../list/temp-assign-complete'
+import {
+  UJAT_REVISION_REQUEST_COMPLETE_ALERT_CONTENT,
+  UJAT_REVISION_REQUEST_COMPLETE_ALERT_TITLE,
+} from './revision-request-complete'
 import {
   UjatScheduleConfirmRevisionRequestModal,
   type UjatScheduleConfirmRevisionRequestModalPayload,
@@ -47,9 +55,11 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   onOpenScheduleAssign?: () => void
 }) {
   const { showAlert } = useCmsAlert()
+  const canWrite = useUjatCanWrite()
   const [pendingReject, setPendingReject] = useState(false)
   const [pendingApprove, setPendingApprove] = useState(false)
   const [pendingRevisionRequest, setPendingRevisionRequest] = useState(false)
+  const [revisionRequestLoading, setRevisionRequestLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
   const {
     row,
@@ -65,6 +75,17 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
   } = useUjatInstitutionApplicationDetail({
     institutionId,
     programId,
+  })
+
+  const {
+    personalInfoRevealed,
+    openPersonalInfoRevealConfirm,
+    confirmModal,
+    programPrivacyPending,
+  } = useUjatInstitutionTeacherPrivacyReveal({
+    institutionId,
+    programId,
+    accessItemLabel: row?.institutionName ?? 'UJAT 임시 배정 기관',
   })
 
   const detail = useMemo(
@@ -85,33 +106,31 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     detail?.scheduleConfirmStatus === 'approval_completed' ||
     detail?.scheduleConfirmStatus === 'application_rejected'
 
-  const {
-    personalInfoRevealed,
-    openPersonalInfoRevealConfirm,
-    confirmModal,
-  programPrivacyPending,
-  } = usePersonalInfoReveal({
-    privacyScope: 'program',
-    programId: programId,
-    resolveProgramRole: () => resolveSessionProgramRole(programId),
-    resolveAccessItem: () => row?.institutionName ?? 'UJAT 임시 배정 기관',
-    resetDeps: [row?.id],
-    controlMode: 'headerStickyNoop',
-  })
-
   const handleRejectConfirm = useCallback(
     (payload: PermissionModalPayload) => {
       if (!row) return
+      const reason = payload.reason.trim()
+      if (!reason) {
+        showAlert({
+          title: '필수 항목 미입력 안내',
+          content: '반려 사유를 입력해 주세요.',
+        })
+        return
+      }
       void (async () => {
         setActionLoading(true)
         try {
           await rejectRemote(
-            payload.reason.trim() || 'CMS UJAT 임시 배정 기관 신청 반려',
+            reason,
             toTimedBulkNotifyTiming(payload.notifyTiming, payload.manualNotifyAt)
           )
+          setPendingReject(false)
           onStatusUpdated()
           onBack()
-          setPendingReject(false)
+          showAlert({
+            title: UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_TITLE,
+            content: UJAT_INSTITUTION_APPLICATION_REJECT_COMPLETE_CONTENT,
+          })
         } catch (error) {
           showAlert({
             title: '안내',
@@ -162,30 +181,42 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
 
   const handleRevisionRequestConfirm = useCallback(
     async (payload: UjatScheduleConfirmRevisionRequestModalPayload) => {
-      if (!row) return
-      if (shouldUseUjatApplicationsRemoteApi() && programId) {
-        await submitUjatScheduleConfirmRevisionRequest({
-          request: () =>
-            postUjatScheduleChangeRequest(String(programId), row.id, {
-              reason: payload.message || '학급 수 변경 요청',
-            }),
-          invalidate,
-          onStatusUpdated,
-          closeModal: () => setPendingRevisionRequest(false),
-          showAlert,
-          institutionName: row.institutionName,
+      if (!row || revisionRequestLoading) return
+      const reason = payload.message.trim()
+      if (!reason) {
+        showAlert({
+          title: '필수 항목 미입력 안내',
+          content: '수정사항을 작성해 주세요.',
         })
         return
       }
-      void invalidate()
-      onStatusUpdated()
-      setPendingRevisionRequest(false)
-      showAlert({
-        title: '수정 요청',
-        content: `[${row.institutionName}] 담당교사님에게 수정 요청이 전달되었습니다.`,
-      })
+      setRevisionRequestLoading(true)
+      try {
+        if (shouldUseUjatApplicationsRemoteApi() && programId) {
+          await submitUjatScheduleConfirmRevisionRequest({
+            request: () =>
+              postUjatScheduleChangeRequest(String(programId), row.id, {
+                reason,
+              }),
+            invalidate,
+            onStatusUpdated,
+            closeModal: () => setPendingRevisionRequest(false),
+            showAlert,
+          })
+          return
+        }
+        void invalidate()
+        onStatusUpdated()
+        setPendingRevisionRequest(false)
+        showAlert({
+          title: UJAT_REVISION_REQUEST_COMPLETE_ALERT_TITLE,
+          content: UJAT_REVISION_REQUEST_COMPLETE_ALERT_CONTENT,
+        })
+      } finally {
+        setRevisionRequestLoading(false)
+      }
     },
-    [programId, row, invalidate, onStatusUpdated, showAlert]
+    [programId, revisionRequestLoading, row, invalidate, onStatusUpdated, showAlert]
   )
 
   if (loading) {
@@ -216,24 +247,21 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
     <div className="ujat-institution-application-detail-page">
       <div className="ujat-institution-application-detail-page__actions">
         <Space size={8} wrap>
+          {canWrite ? (
+          <>
           <CmsButton
             type="button"
             variant="delete"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             loading={actionLoading}
             disabled={isTerminal}
-            onClick={() => setPendingReject(true)}
-          >
+            onClick={() => setPendingReject(true)} >
             신청 반려
           </CmsButton>
           <CmsButton
             type="button"
             variant="secondary"
             size="large"
-            className="cms-button--action"
-            width={CMS_ACTION_BUTTON_WIDTH}
             style={APPROVE_BUTTON_STYLE}
             loading={actionLoading}
             disabled={approveOrReassignDisabled}
@@ -244,8 +272,7 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
                 return
               }
               if (workflow.canFinalApprove) setPendingApprove(true)
-            }}
-          >
+            }} >
             {approveOrReassignLabel}
           </CmsButton>
           {(() => {
@@ -255,14 +282,11 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
                 type="button"
                 variant="primary"
                 size="large"
-                className="cms-button--action"
-                width={CMS_ACTION_BUTTON_WIDTH}
                 disabled={revisionDisabled}
                 onClick={() => {
                   if (revisionDisabled) return
                   setPendingRevisionRequest(true)
-                }}
-              >
+                }} >
                 수정 요청
               </CmsButton>
             )
@@ -275,14 +299,14 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
               </Tooltip>
             )
           })()}
+          </>
+          ) : null}
           <PersonalInfoRevealButton disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             cmsVariant="primary"
             cmsSize="large"
-            width={180}
-            onClick={openPersonalInfoRevealConfirm}
-          />
+            onClick={openPersonalInfoRevealConfirm} />
         </Space>
       </div>
 
@@ -310,7 +334,11 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
           variant="single"
           institutionName={row.institutionName}
           selectionCount={1}
-          onCancel={() => setPendingApprove(false)}
+          confirmLoading={actionLoading}
+          onCancel={() => {
+            if (actionLoading) return
+            setPendingApprove(false)
+          }}
           onConfirm={handleApproveConfirm}
         />
       ) : null}
@@ -318,7 +346,11 @@ export function UjatInstitutionScheduleConfirmConfirmedDetailPage({
         <UjatScheduleConfirmRevisionRequestModal
           open
           institutionName={row.institutionName}
-          onCancel={() => setPendingRevisionRequest(false)}
+          confirmLoading={revisionRequestLoading}
+          onCancel={() => {
+            if (revisionRequestLoading) return
+            setPendingRevisionRequest(false)
+          }}
           onConfirm={payload => {
             void handleRevisionRequestConfirm(payload)
           }}

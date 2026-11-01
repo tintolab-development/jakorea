@@ -144,8 +144,7 @@ export function TrainedTeachersApplicationInfoView({
               variant="secondary"
               size="large"
               onClick={onEditForm}
-              disabled={editFormLoading}
-            >
+              disabled={editFormLoading} >
               양식 수정
             </CmsButton>
           ) : null

@@ -17,6 +17,8 @@ export function useParticipatingInstructorSettlementList(input: {
   programId: string
   instructor: ParticipatingInstructorRow
   enabled?: boolean
+  /** 참여자 상세처럼 배정 일정이 행 SSOT일 때는 강사 API 미연동 안내를 띄우지 않는다. */
+  notifyUnavailable?: boolean
 }): {
   remoteEnabled: boolean
   isLoading: boolean
@@ -32,7 +34,11 @@ export function useParticipatingInstructorSettlementList(input: {
   )
 
   useNotifyProgramApiUnavailableOnce(
-    Boolean(input.enabled !== false && (!remoteEnabled || !instructorMemberId)),
+    Boolean(
+      input.notifyUnavailable !== false &&
+        input.enabled !== false &&
+        (!remoteEnabled || !instructorMemberId)
+    ),
     'general-participating-instructor-settlement',
     '참여 강사 · 정산 현황'
   )

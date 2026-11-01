@@ -21,6 +21,9 @@ export type ScheduleDetailBlockKind = 'sub' | 'event' | 'preEducation'
 
 export const PRE_EDUCATION_SCHEDULE_LABEL = '사전 교육'
 
+/** 화면 표시용 사전교육 이름(붙여쓰기). 저장값·기본값은 PRE_EDUCATION_SCHEDULE_LABEL을 그대로 쓴다. */
+export const PRE_EDUCATION_DISPLAY_LABEL = '사전교육'
+
 /** 교육 진행 일정 설정 — 「교육 진행 일정 선택」 날짜 지정 팝오버 시간 입력 */
 export function shouldDisableEducationScheduleSelectionTimeInput(input: {
   educationStructure: 'curriculum' | 'schedule'
@@ -204,6 +207,16 @@ export function isGeneralPreEducationName(value: string | undefined | null): boo
   return compactGeneralPreEducationName(value).startsWith('사전교육')
 }
 
+/**
+ * 블록 제목 표시용 — 일반 사전 교육 기본 라벨(공백 무관 「사전교육」)만 「사전교육」으로 바꾼다.
+ * 교육받은 교사 「교육 연수」 등 다른 라벨은 그대로 둔다.
+ */
+export function toPreEducationDisplayLabel(label: string): string {
+  return compactGeneralPreEducationName(label) === PRE_EDUCATION_DISPLAY_LABEL
+    ? PRE_EDUCATION_DISPLAY_LABEL
+    : label
+}
+
 function isGeneralPreEducationKindToken(value: string | undefined | null): boolean {
   const token = (value ?? '').replace(/\s+/g, '').toUpperCase()
   return token === 'PREEDUCATION' || token === 'PRE_EDUCATION'
@@ -223,11 +236,13 @@ export function isPreEducationScheduleBlock(detail: {
   isPreEducation?: boolean
   preEducation?: boolean
 }): boolean {
+  if (detail.blockKind === 'event' || detail.blockKind === 'sub') return false
   if (detail.isPreEducation === true || detail.preEducation === true) return true
   if (isGeneralPreEducationKindToken(detail.blockKind)) return true
   if (isGeneralPreEducationKindToken(detail.scheduleKind)) return true
   if (isGeneralPreEducationKindToken(detail.scheduleRole)) return true
-  return isGeneralPreEducationName(detail.scheduleLabel) || isGeneralPreEducationName(detail.name)
+  // 이름 휴리스틱 금지. 레거시는 구조 라벨(scheduleLabel)만.
+  return isGeneralPreEducationName(detail.scheduleLabel)
 }
 
 export function isScheduleMultiAllPerSchedule(
@@ -462,14 +477,9 @@ export function applySchedulePreEducationBlock(
   }
 
   const existingPre = details.find(d => isPreEducationScheduleBlock(d))
-  const convertedFirst =
-    !existingPre && withoutPre[0]?.name?.trim() === PRE_EDUCATION_SCHEDULE_LABEL
-      ? withoutPre[0]
-      : undefined
-  const rest = convertedFirst ? withoutPre.slice(1) : withoutPre
+  const rest = withoutPre
   const preSource =
     existingPre ??
-    convertedFirst ??
     createEmptyScheduleDetailBlock(0, {
       blockKind: 'preEducation',
       groupCount: options.groupCount,

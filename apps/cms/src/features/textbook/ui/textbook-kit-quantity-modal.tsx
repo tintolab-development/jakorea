@@ -86,8 +86,7 @@ export function TextbookKitQuantityModal({
             size="large"
             type="button"
             disabled={hasInvalidQuantity}
-            onClick={() => onConfirm(quantities)}
-          >
+            onClick={() => onConfirm(quantities)} >
             확인
           </CmsButton>
         </div>
