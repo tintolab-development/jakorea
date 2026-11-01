@@ -447,6 +447,28 @@ assert.equal(
   '2차시*2회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
 )
 
+const individualMultiOmitEmpty = syncApplicationScheduleChoiceParagraphsInDraft(
+  createProgramParticipantApplicationDraft(),
+  {
+    educationStructure: 'curriculum',
+    sessionRound: 'multi',
+    educationScheduleMode: 'date',
+    educationScheduleLines: [
+      '26년 4월 20일(월) 9:30 ~ 12:20',
+      '26년 4월 27일(월) 13:00 ~ 15:50',
+    ],
+    unknownCount: 'omit',
+    runtimeContext: { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [] },
+  }
+)
+const individualMultiOmitEmptyParagraph = individualMultiOmitEmpty.paragraphs.find(
+  p => p.id === 'program-participant-application-seed-schedule'
+)
+assert.equal(
+  individualMultiOmitEmptyParagraph?.paragraphDescription,
+  '진행 가능한 일정을 모두 선택해 주세요.'
+)
+
 assert.equal(
   readCurriculumMultiDateFixedScheduleMeta({
     curriculumSessions: [

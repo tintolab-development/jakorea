@@ -81,5 +81,6 @@ export function applyProgramLinkedApplicationDraftPatches(
     curriculumSessions: scheduleMeta.curriculumSessions,
     runtimeContext,
     scheduleParagraphRaw,
+    unknownCount: 'omit',
   })
 }

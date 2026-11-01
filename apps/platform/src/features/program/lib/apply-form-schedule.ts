@@ -112,10 +112,9 @@ export function readApplyFixedScheduleChoiceIds(input: {
   program?: ApplyScheduleVisibilityFields
   educationScheduleLines?: readonly string[]
 }): string[] {
-  const fromRuntimeChoices = uniqueTrimmedIds(
-    (input.runtimeChoices ?? []).map(choice => choice.id),
-  )
-  if (fromRuntimeChoices.length > 0) return fromRuntimeChoices
+  if (input.runtimeChoices != null) {
+    return uniqueTrimmedIds(input.runtimeChoices.map(choice => choice.id))
+  }
 
   const fromItems = readInstitutionFixedScheduleChoiceItems(input.runtime, input.paragraph, {
     educationStructure: input.program?.educationStructure,
@@ -146,6 +145,90 @@ export function resolveHiddenScheduleAutoSubmitIds(input: {
   if (input.forcedHidden) return ids
   if (ids.length === 1) return ids
   return null
+}
+
+const GENERAL_FIXED_SCHEDULE_APPLY_CASES = new Set([
+  'institution-general',
+  'individual-general',
+  'individual-team',
+])
+
+export const APPLY_EMPTY_FIXED_SCHEDULE_ALERT_TITLE = '신청 가능 교육 일정'
+
+export const APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES = [
+  '현재 신청 가능한 교육 일정이 없습니다.',
+  '프로그램 모집 정보를 다시 확인해주세요.',
+] as const
+
+export type ApplyScheduleKindLookupRow = {
+  scheduleId: number
+  scheduleKind?: string | null
+}
+
+function readChoiceScheduleId(choice: { id: string; scheduleId?: number }): number | undefined {
+  if (typeof choice.scheduleId === 'number' && Number.isFinite(choice.scheduleId)) {
+    return choice.scheduleId
+  }
+  const trimmed = choice.id.trim()
+  const fromToken = trimmed.match(/^schedule:(\d+)/i)
+  if (fromToken) {
+    const parsed = Number(fromToken[1])
+    if (Number.isFinite(parsed)) return parsed
+  }
+  if (/^\d{4,}$/.test(trimmed)) {
+    const parsed = Number(trimmed)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return undefined
+}
+
+/** PRE_EDUCATION만 제외. 종류를 모르면 남긴다. */
+export function excludePreEducationScheduleChoices<
+  T extends { id: string; scheduleId?: number },
+>(
+  choices: readonly T[] | null | undefined,
+  lookup: readonly ApplyScheduleKindLookupRow[] | undefined,
+): T[] | null {
+  if (choices == null) return null
+  const kindById = new Map<number, string>()
+  for (const row of lookup ?? []) {
+    if (typeof row.scheduleId !== 'number' || !Number.isFinite(row.scheduleId)) continue
+    const kind = String(row.scheduleKind ?? '').trim().toUpperCase()
+    if (kind) kindById.set(row.scheduleId, kind)
+  }
+  return choices.filter(choice => {
+    const scheduleId = readChoiceScheduleId(choice)
+    if (scheduleId == null) return true
+    const kind = kindById.get(scheduleId)
+    if (kind == null || kind === '') return true
+    return kind !== 'PRE_EDUCATION'
+  })
+}
+
+export function shouldExcludePreEducationFromApplyFixedSchedule(input: {
+  applyCase?: string | null
+  scheduleInputMode?: string | null
+  scheduleParagraphForcedHidden?: boolean
+}): boolean {
+  if (!GENERAL_FIXED_SCHEDULE_APPLY_CASES.has(input.applyCase ?? '')) return false
+  if (input.scheduleInputMode !== 'fixed_schedule_options') return false
+  if (input.scheduleParagraphForcedHidden) return false
+  return true
+}
+
+export function shouldBlockApplyForEmptyFixedSchedule(input: {
+  applyCase?: string | null
+  scheduleInputMode?: string | null
+  scheduleChoiceHidden?: boolean
+  scheduleParagraphForcedHidden?: boolean
+  educationScheduleChoices: readonly unknown[] | null
+}): boolean {
+  if (!GENERAL_FIXED_SCHEDULE_APPLY_CASES.has(input.applyCase ?? '')) return false
+  if (input.scheduleInputMode !== 'fixed_schedule_options') return false
+  if (input.scheduleChoiceHidden) return false
+  if (input.scheduleParagraphForcedHidden) return false
+  if (input.educationScheduleChoices == null) return false
+  return input.educationScheduleChoices.length === 0
 }
 
 function readUnknownParagraphId(value: unknown): string {
@@ -1108,5 +1191,6 @@ export function applyScheduleParagraphsForProgram(
     curriculumChartSessionCount: scheduleMeta.curriculumChartSessionCount,
     curriculumSessions: scheduleMeta.curriculumSessions,
     runtimeContext: program.runtimeContext,
+    unknownCount: 'omit',
   })
 }

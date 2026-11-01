@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { readEducationScheduleLinesForApplicationForm } from '@jakorea/form-schema/program-application'
 import type { WritingFormDraft, WritingFormParagraph } from '@jakorea/form-schema/writing-form'
@@ -186,6 +186,11 @@ import {
   readApplyFixedScheduleChoiceIds,
   resolveApplyScheduleChoiceAnswerKey,
   resolveHiddenScheduleAutoSubmitIds,
+  excludePreEducationScheduleChoices,
+  shouldExcludePreEducationFromApplyFixedSchedule,
+  shouldBlockApplyForEmptyFixedSchedule,
+  APPLY_EMPTY_FIXED_SCHEDULE_ALERT_TITLE,
+  APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES,
   buildApplyPreferredSessionSelectOptions,
   buildGeminiInstitutionSessionSelectOptions,
   createEmptyApplyPreferredScheduleBlocks,
@@ -678,7 +683,8 @@ export function ProgramApplyPage() {
   >(emptyUjatInstitutionClassTimeBlocks)
   const [ujatPreferredScheduleIds, setUjatPreferredScheduleIds] = useState<string[]>([])
   const [submitAlert, setSubmitAlert] = useState<{
-    description: string
+    title?: string
+    description: ReactNode
     promptSettingsGrade?: boolean
   } | null>(null)
   const [submitErrorField, setSubmitErrorField] = useState<string | null>(null)
@@ -840,6 +846,29 @@ export function ProgramApplyPage() {
         institutionScheduleParagraph
       ),
     [applicationFormDocument, institutionScheduleParagraph]
+  )
+  const applyScheduleParagraphForcedHidden = isApplyScheduleParagraphForcedHidden(
+    applicationScheduleVisibility,
+  )
+  const applyEducationFixedScheduleChoices = useMemo(
+    () =>
+      shouldExcludePreEducationFromApplyFixedSchedule({
+        applyCase,
+        scheduleInputMode: institutionScheduleInputMode,
+        scheduleParagraphForcedHidden: applyScheduleParagraphForcedHidden,
+      })
+        ? excludePreEducationScheduleChoices(
+            institutionRuntimeFixedScheduleChoices,
+            program?.scheduleOptionLookup,
+          )
+        : institutionRuntimeFixedScheduleChoices,
+    [
+      applyCase,
+      applyScheduleParagraphForcedHidden,
+      institutionRuntimeFixedScheduleChoices,
+      institutionScheduleInputMode,
+      program?.scheduleOptionLookup,
+    ],
   )
   /**
    * CMS 개인 신청은 기간 지정 지망 UI가 없다 (institution-schedule 전용).
@@ -1963,7 +1992,7 @@ export function ProgramApplyPage() {
         const runtimeFixedChoiceItems =
           isApplyScheduleChoiceParagraphId(paragraph.id) &&
           institutionScheduleInputMode === 'fixed_schedule_options'
-            ? (institutionRuntimeFixedScheduleChoices?.map(item => ({
+            ? (applyEducationFixedScheduleChoices?.map(item => ({
                 id: item.id,
                 label: item.label,
               })) ?? [])
@@ -2169,6 +2198,7 @@ export function ProgramApplyPage() {
       applicationRecruitmentLimits,
       applicationFormDocument,
       institutionRuntimeFixedScheduleChoices,
+      applyEducationFixedScheduleChoices,
       institutionScheduleInputMode,
       profileSchoolLocked,
       profileSchool,
@@ -2484,6 +2514,38 @@ export function ProgramApplyPage() {
       setSubmitAlert({ description: blockedMessage })
       return
     }
+    {
+      const scheduleParagraph = pickApplyScheduleChoiceParagraph(
+        displayDraft.paragraphs,
+        Array.isArray(applicationFormDocument?.paragraphs)
+          ? applicationFormDocument.paragraphs
+          : undefined,
+      )
+      if (
+        shouldBlockApplyForEmptyFixedSchedule({
+          applyCase,
+          scheduleInputMode: institutionScheduleInputMode,
+          scheduleChoiceHidden: isApplyScheduleChoiceHiddenInSet(
+            hiddenParagraphIds,
+            scheduleParagraph,
+          ),
+          scheduleParagraphForcedHidden: applyScheduleParagraphForcedHidden,
+          educationScheduleChoices: applyEducationFixedScheduleChoices,
+        })
+      ) {
+        setSubmitAlert({
+          title: APPLY_EMPTY_FIXED_SCHEDULE_ALERT_TITLE,
+          description: (
+            <>
+              {APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES[0]}
+              <br />
+              {APPLY_EMPTY_FIXED_SCHEDULE_ALERT_LINES[1]}
+            </>
+          ),
+        })
+        return
+      }
+    }
     // 제출 직전 필수 동의 재확인 — 진입 후 철회·만료된 경우도 막는다. 조회 실패는 서버 응답에 맡긴다.
     if (remoteApplyEnabled && applicationFormQuery.bundle?.option.canApply !== false) {
       const missing = await findMissingRequiredConsents()
@@ -2595,10 +2657,7 @@ export function ProgramApplyPage() {
       const applyScheduleChoiceIdsRaw = readApplyFixedScheduleChoiceIds({
         runtime: applicationFormDocument?.runtimeContext,
         paragraph: applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
-        runtimeChoices: readRuntimeFixedScheduleChoiceItems(
-          applicationFormDocument?.runtimeContext,
-          applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
-        ),
+        runtimeChoices: applyEducationFixedScheduleChoices,
         program: applicationScheduleVisibility,
         educationScheduleLines: educationScheduleLinesForApply,
       })
@@ -2612,8 +2671,16 @@ export function ProgramApplyPage() {
           : applyScheduleChoiceIdsRaw
       const hiddenScheduleAutoSubmitIds = resolveHiddenScheduleAutoSubmitIds({
         hidden: applyScheduleChoiceHidden,
-        forcedHidden: isApplyScheduleParagraphForcedHidden(applicationScheduleVisibility),
-        choiceIds: applyScheduleChoiceIds,
+        forcedHidden: applyScheduleParagraphForcedHidden,
+        choiceIds: applyScheduleParagraphForcedHidden
+          ? readApplyFixedScheduleChoiceIds({
+              runtime: applicationFormDocument?.runtimeContext,
+              paragraph: applyScheduleChoiceParagraph ?? institutionScheduleParagraph,
+              runtimeChoices: institutionRuntimeFixedScheduleChoices,
+              program: applicationScheduleVisibility,
+              educationScheduleLines: educationScheduleLinesForApply,
+            })
+          : applyScheduleChoiceIds,
       })
       const applyScheduleChoiceAnswerKey = resolveApplyScheduleChoiceAnswerKey(
         applyCase,
@@ -2865,7 +2932,7 @@ export function ProgramApplyPage() {
         ) {
           const selectableCount = Math.max(
             scheduleParagraph.items.length,
-            institutionRuntimeFixedScheduleChoices?.length ?? 0
+            applyEducationFixedScheduleChoices?.length ?? 0
           )
           const selected = normalizeInstitutionFixedScheduleAnswerTokens(
             scheduleParagraph.selectedPreviewMultipleIds ?? [],
@@ -3193,7 +3260,7 @@ export function ProgramApplyPage() {
         applyCase === 'institution-general' &&
         institutionScheduleInputMode === 'fixed_schedule_options' &&
         !applyScheduleChoiceHidden &&
-        institutionRuntimeFixedScheduleChoices == null
+        applyEducationFixedScheduleChoices == null
       ) {
         setSubmitAlert({
           description: '신청 가능한 교육 일정을 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.',
@@ -3740,7 +3807,7 @@ export function ProgramApplyPage() {
       />
       <PFAlertModal
         open={submitAlert != null}
-        title="안내"
+        title={submitAlert?.title ?? '안내'}
         description={submitAlert?.description}
         onConfirm={dismissSubmitAlert}
       >

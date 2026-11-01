@@ -20,23 +20,56 @@ const FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX =
 const FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND =
   'N차시*N회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.'
 
+export type ApplicationScheduleUnknownCountMode = 'placeholder' | 'omit'
+
 export type ApplicationScheduleParagraphCopyInput = ApplicationScheduleVisibilityInput &
   CurriculumMultiDateFixedScheduleMetaInput & {
     maxScheduleCount?: number
     maxSessionsPerDay?: number
+    /**
+     * 차시·회차 수를 못 구할 때.
+     * `placeholder` = 문자 'N' (템플릿 작성 기본). `omit` = 앞 문장 생략.
+     */
+    unknownCount?: ApplicationScheduleUnknownCountMode
   }
 
 function countOrN(value: number | undefined): string {
   return value != null && value > 0 ? String(value) : 'N'
 }
 
+function resolveUnknownCountMode(
+  input: ApplicationScheduleParagraphCopyInput
+): ApplicationScheduleUnknownCountMode {
+  return input.unknownCount === 'omit' ? 'omit' : 'placeholder'
+}
+
 function resolveMultiRoundFixedScheduleDescription(
   input: ApplicationScheduleParagraphCopyInput
 ): string {
-  if (!shouldUseCurriculumMultiDateFixedScheduleMatrix(input)) {
+  const unknownCount = resolveUnknownCountMode(input)
+  const useMatrix = shouldUseCurriculumMultiDateFixedScheduleMatrix(input)
+  const meta = useMatrix
+    ? readCurriculumMultiDateFixedScheduleMeta(input)
+    : { sessionsPerRound: undefined, educationRoundCount: undefined }
+  if (unknownCount === 'omit') {
+    const sessionsValue = meta.sessionsPerRound
+    const roundsValue = meta.educationRoundCount
+    if (
+      sessionsValue == null ||
+      sessionsValue <= 0 ||
+      roundsValue == null ||
+      roundsValue <= 0
+    ) {
+      return FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX
+    }
+    return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND.replace(
+      'N차시',
+      `${sessionsValue}차시`
+    ).replace('N회', `${roundsValue}회`)
+  }
+  if (!useMatrix) {
     return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND
   }
-  const meta = readCurriculumMultiDateFixedScheduleMeta(input)
   const sessions = countOrN(meta.sessionsPerRound)
   const rounds = countOrN(meta.educationRoundCount)
   return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND.replace('N차시', `${sessions}차시`).replace(

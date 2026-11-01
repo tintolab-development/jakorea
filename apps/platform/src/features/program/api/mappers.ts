@@ -602,12 +602,14 @@ export function mapPortalScheduleOptionLookup(
     const startAt = readString(schedule.startAt)
     const endAt = readString(schedule.endAt)
     const scheduleName = toDisplayEducationScheduleName(schedule.scheduleName)
+    const scheduleKind = readString(schedule.scheduleKind)?.toUpperCase()
     return [
       {
         scheduleId,
         ...(startAt ? { startAt } : {}),
         ...(endAt ? { endAt } : {}),
         ...(scheduleName ? { scheduleName } : {}),
+        ...(scheduleKind ? { scheduleKind } : {}),
       },
     ]
   })
