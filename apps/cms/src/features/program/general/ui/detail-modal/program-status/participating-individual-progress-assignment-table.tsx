@@ -18,6 +18,9 @@ export type ProgressAssignmentSurveyNavTab = 'survey' | typeof GENERAL_SATISFACT
 
 export const PARTICIPATING_INDIVIDUAL_PROGRESS_ASSIGNMENT_TABLE_SCROLL_X = 1100
 
+/** 링크 제출은 URL 대신 고정 문구로 표시한다(Figma 4515:64786). */
+export const PROGRESS_ASSIGNMENT_SUBMISSION_LINK_LABEL = '제출 링크'
+
 function SubmissionCell({
   row,
   onViewSurveyResponse,
@@ -103,7 +106,7 @@ function SubmissionCell({
             target="_blank"
             rel="noopener noreferrer"
           >
-            {item.fileName}
+            {PROGRESS_ASSIGNMENT_SUBMISSION_LINK_LABEL}
           </a>
         ) : (
           <button
@@ -140,10 +143,9 @@ export function ParticipatingIndividualProgressAssignmentTable({
   onViewSurveyResponse: (tab: ProgressAssignmentSurveyNavTab) => void
 }) {
   const tableData = useMemo(() => {
-    const total = rows.length
     return rows.map((row, index) => ({
       ...row,
-      no: total - index,
+      no: index + 1,
     }))
   }, [rows])
 

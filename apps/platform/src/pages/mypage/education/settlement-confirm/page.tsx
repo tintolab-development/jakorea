@@ -4,7 +4,7 @@ import {
   buildSettlementTabPath,
   buildSettlementWritePath,
   clearSettlementWriteDraft,
-  EducationSettlementApplicationDocumentView,
+  EducationSettlementApplicationDocumentOverlay,
   EducationSettlementConfirmView,
   loadSettlementWriteDraft,
   readSettlementRouteApplicationType,
@@ -153,54 +153,43 @@ export function MypageEducationSettlementConfirmPage() {
   ])
 
   if (viewMode) {
-    const pageTitle =
-      documentKind === 'receipt' ? '영수증 확인하기' : '지급조서 확인하기'
+    const handleClose = () =>
+      navigate(buildSettlementTabPath(applicationId, area, applicationType))
     if (!session || documentId == null) {
       if (remoteSettlements.isLoading) {
         return (
-          <PFFormPage
-            aria-label={pageTitle}
-            className={styles.page}
-            innerClassName={styles.innerDocument}
-            title={pageTitle}
-          >
-            <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-              정산 신청서를 불러오는 중입니다.
-            </PFText>
-          </PFFormPage>
+          <EducationSettlementApplicationDocumentOverlay
+            open
+            document={null}
+            programTitle={application?.title}
+            loading
+            onClose={handleClose}
+            onRefreshDocument={refreshDocument}
+          />
         )
       }
       return null
     }
 
+    const documentError = documentQuery.isLoading
+      ? ''
+      : documentQuery.document
+        ? ''
+        : documentQuery.isError
+          ? getSettlementApplicationDocumentErrorMessage(documentQuery.error)
+          : SETTLEMENT_APPLICATION_DOCUMENT_LOAD_FAILED_MESSAGE
+
     return (
-      <PFFormPage
-        aria-label={pageTitle}
-        className={styles.page}
-        innerClassName={styles.innerDocument}
-        title={pageTitle}
-      >
-        {documentQuery.isLoading ? (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            정산 신청서를 불러오는 중입니다.
-          </PFText>
-        ) : documentQuery.document ? (
-          <EducationSettlementApplicationDocumentView
-            document={documentQuery.document}
-            refreshing={documentQuery.isFetching}
-            onRefreshDocument={refreshDocument}
-            onBack={() =>
-              navigate(buildSettlementTabPath(applicationId, area, applicationType))
-            }
-          />
-        ) : (
-          <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-            {documentQuery.isError
-              ? getSettlementApplicationDocumentErrorMessage(documentQuery.error)
-              : SETTLEMENT_APPLICATION_DOCUMENT_LOAD_FAILED_MESSAGE}
-          </PFText>
-        )}
-      </PFFormPage>
+      <EducationSettlementApplicationDocumentOverlay
+        open
+        document={documentQuery.document}
+        programTitle={application?.title}
+        loading={documentQuery.isLoading}
+        error={documentError}
+        refreshing={documentQuery.isFetching}
+        onClose={handleClose}
+        onRefreshDocument={refreshDocument}
+      />
     )
   }
 

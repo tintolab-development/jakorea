@@ -106,7 +106,7 @@ export function ParticipatingIndividualProgressAttendanceSessionPanel({
         session.headerPrefix,
         participants.map((row, index) => ({
           ...row,
-          no: participants.length - index,
+          no: index + 1,
           contact: maskProgressAttendanceContact(row.contact),
           email: maskProgressAttendanceEmail(row.email),
         }))

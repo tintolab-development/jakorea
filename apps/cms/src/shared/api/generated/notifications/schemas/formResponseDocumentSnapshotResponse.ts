@@ -8,6 +8,9 @@
 import type { FormResponseAnswerResponse } from './formResponseAnswerResponse';
 import type { FormResponseProjectionResponse } from './formResponseProjectionResponse';
 
+/**
+ * Admin document-snapshot. answers/projections는 []이며 null이 아니다. 미제출·없는 responseId는 404.
+ */
 export interface FormResponseDocumentSnapshotResponse {
   formResponseId?: number;
   templateId?: number;

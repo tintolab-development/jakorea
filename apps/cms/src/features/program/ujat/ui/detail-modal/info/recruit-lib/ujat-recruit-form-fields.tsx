@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useMemo, useRef, type CSSProperties } from 'react'
 import { Controller, type FieldPath, type PathValue, type UseFormReturn } from 'react-hook-form'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -59,6 +59,10 @@ const toDayjs = (iso: string | undefined) => {
 }
 const toIso = (d: Dayjs | null, clearToUndefined: boolean) =>
   clearToUndefined ? (d ? d.toISOString() : undefined) : d ? d.toISOString() : ''
+const toDateOnly = (d: Dayjs | null, clearToUndefined: boolean) => {
+  if (!d) return clearToUndefined ? undefined : ''
+  return d.format('YYYY-MM-DD')
+}
 export function UjatRecruitFormPeriodDatePicker({
   form,
   startName,
@@ -83,15 +87,11 @@ export function UjatRecruitFormPeriodDatePicker({
     if (start && end) return [start, end]
     return null
   }, [startIso, endIso])
-  const [anchor, setAnchor] = useState<Dayjs | null>(() => appliedSurfaceRange?.[0] ?? null)
-  useEffect(() => {
-    const next = appliedSurfaceRange?.[0] ?? null
-    setAnchor(prev => {
-      if (next == null) return prev
-      if (prev != null && prev.isSame(next, 'day')) return prev
-      return next
-    })
-  }, [appliedSurfaceRange])
+  const anchor = appliedSurfaceRange?.[0] ?? null
+  const formStampRef = useRef({ form, stamp: 0 })
+  if (formStampRef.current.form !== form) {
+    formStampRef.current = { form, stamp: formStampRef.current.stamp + 1 }
+  }
   const rangeWithTime = useMemo(
     () =>
       dateOnly
@@ -101,9 +101,11 @@ export function UjatRecruitFormPeriodDatePicker({
           : dateRangeUsesClockTime(appliedSurfaceRange[0], appliedSurfaceRange[1]),
     [appliedSurfaceRange, dateOnly]
   )
-  const emit = (d: Dayjs | null) => toIso(d, clearToUndefined)
+  const emit = (d: Dayjs | null) =>
+    dateOnly ? toDateOnly(d, clearToUndefined) : toIso(d, clearToUndefined)
   return (
     <ParagraphDatePicker
+      key={`${formStampRef.current.stamp}:${startName}:${endName}`}
       inputSize="small"
       mode="single"
       presetMode="period"
@@ -114,6 +116,9 @@ export function UjatRecruitFormPeriodDatePicker({
       showTimeToggle={!dateOnly}
       appliedSurfaceRange={appliedSurfaceRange}
       appliedSurfaceWithTime={rangeWithTime}
+      onChange={() => {
+        // Period confirm writes both ends via onRangeChange; form fields drive the trigger.
+      }}
       onRangeChange={range => {
         form.setValue(
           startName,
@@ -129,11 +134,6 @@ export function UjatRecruitFormPeriodDatePicker({
             shouldDirty: true,
           }
         )
-        setAnchor(range[0])
-      }}
-      onChange={next => {
-        if (next == null) return
-        setAnchor(next)
       }}
     />
   )

@@ -1,11 +1,8 @@
 .block {
   display: flex;
-  width: 100%;
   min-width: 0;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--spacing-24);
-  margin-top: var(--spacing-32);
+  align-items: flex-end;
+  justify-content: flex-end;
 }
 
 .submitRow {
@@ -32,8 +29,6 @@
 
 @media (--bp-below-pc) {
   .block {
-    flex-direction: column;
-    align-items: stretch;
-    margin-top: var(--spacing-20);
+    justify-content: flex-start;
   }
 }

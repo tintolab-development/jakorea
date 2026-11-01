@@ -18,6 +18,8 @@ import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { handleError } from '@/shared/utils/error-handler'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
+import { GENERAL_SATISFACTION_NAV_TAB } from '@/features/program/general/lib/survey-audience'
+import type { ProgressAssignmentSurveyNavTab } from './participating-individual-progress-assignment-table'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE } from '@/features/program/general/lib/assignment-team-role-tag'
@@ -117,13 +119,22 @@ export interface ParticipatingIndividualParticipantAssignmentSectionProps {
   assignedSessionsLoading?: boolean
   /** 서버가 `TEAM_FEATURE_NOT_APPLICABLE`을 돌려줘 팀 UI를 숨겨야 할 때 */
   onTeamFeatureNotApplicable?: () => void
+  /** 설문조사·만족도조사 버튼 → 같은 프로그램 설문 관리 탭 이동 (없으면 응답 보기 팝업) */
+  onNavigateToSurveyCategory?: (tab: ProgressAssignmentSurveyNavTab) => void
 }
 
 export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   ParticipatingIndividualParticipantAssignmentSectionHandle,
   ParticipatingIndividualParticipantAssignmentSectionProps
 >(function ParticipatingIndividualParticipantAssignmentSection(
-  { program, participant, assignedSessions = [], assignedSessionsLoading = false, onTeamFeatureNotApplicable },
+  {
+    program,
+    participant,
+    assignedSessions = [],
+    assignedSessionsLoading = false,
+    onTeamFeatureNotApplicable,
+    onNavigateToSurveyCategory,
+  },
   ref
 ) {
   const { showAlert } = useCmsAlert()
@@ -559,12 +570,16 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         return (
           <AssignmentSubmissionCellActionButton
             loading={surveyViewLoading}
-            onClick={() =>
+            onClick={() => {
+              if (onNavigateToSurveyCategory) {
+                onNavigateToSurveyCategory('survey')
+                return
+              }
               void openSurveyResponseView('설문조사 보기', {
                 templateVersionId: submission.templateVersionId,
                 formResponseId: submission.formResponseId,
               })
-            }
+            }}
           >
             설문조사 보기
           </AssignmentSubmissionCellActionButton>
@@ -575,12 +590,16 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         return (
           <AssignmentSubmissionCellActionButton
             loading={surveyViewLoading}
-            onClick={() =>
+            onClick={() => {
+              if (onNavigateToSurveyCategory) {
+                onNavigateToSurveyCategory(GENERAL_SATISFACTION_NAV_TAB)
+                return
+              }
               void openSurveyResponseView('만족도조사 보기', {
                 templateVersionId: submission.templateVersionId,
                 formResponseId: submission.formResponseId,
               })
-            }
+            }}
           >
             만족도조사 보기
           </AssignmentSubmissionCellActionButton>
@@ -589,7 +608,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       return '-'
     },
-    [downloadAssignmentFile, openSurveyResponseView, surveyViewLoading]
+    [downloadAssignmentFile, onNavigateToSurveyCategory, openSurveyResponseView, surveyViewLoading]
   )
 
   const teamColumns: ColumnsType<ParticipatingIndividualParticipantAssignmentRow & { no: number }> =

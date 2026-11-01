@@ -89,6 +89,20 @@
   accent-color: #85969d;
 }
 
+/* 지급조서 작성 — Figma Radio Pattern: 24px · 라벨 간격 8 · 항목 간 24 */
+.radioGroupLarge {
+  gap: var(--spacing-24);
+}
+
+.radioGroupLarge .radioOption {
+  gap: var(--spacing-8);
+}
+
+.radioGroupLarge .radioOption input {
+  width: 24px;
+  height: 24px;
+}
+
 /* 식별번호 종류 고정(주민등록번호) — 시안 비활성 톤 */
 .radioOptionLocked {
   color: var(--color-neutral-warm-400, #bdbdbd);
@@ -274,9 +288,10 @@
   background: var(--color-neutral-cool-80, #eef3f4);
 }
 
-/* 연번·행정정보명 4열 표 — 연번 100px / 행정정보명 flex / 연번 100px / 행정정보명 flex */
-.infoTable thead th:first-child:nth-last-child(4),
-.infoTable thead th:nth-child(3):nth-last-child(2) {
+/* 연번·행정정보명 4열 표(행정정보 공동이용) — 연번 100px / 행정정보명 flex / 연번 100px / 행정정보명 flex.
+   지급조서 3·4번 등 일반 4열 표는 균등 폭 (Figma 11240:69606·11240:72360) */
+.infoTableSerialPairs thead th:first-child:nth-last-child(4),
+.infoTableSerialPairs thead th:nth-child(3):nth-last-child(2) {
   width: 100px;
 }
 
@@ -325,6 +340,41 @@
 .cellTextEmphasized {
   font-size: 20px;
   font-weight: 700;
+}
+
+/* 지급조서 5번 기본 정보 — PC 인풋 고정 폭 (Figma 11240:70021: 성명 200 · 영문 240 · 주민 200/200 ·
+   소속 240 · 주소 240/240 · 은행 160 · 계좌 240 · 예금주 160 · 지급 목적 전체).
+   모바일은 기존 100% 세로 스택 유지 */
+.paymentInputW160 {
+  --payment-input-width: 160px;
+}
+
+.paymentInputW200 {
+  --payment-input-width: 200px;
+}
+
+.paymentInputW240 {
+  --payment-input-width: 240px;
+}
+
+@media (--bp-pc-up) {
+  /* inlineRowFill·periodPairFill 세그먼트(1 1 0) → 내용 폭 */
+  /* 필드 셀(.fieldContent) 하위 래퍼만 — 셀 자체 폭은 유지 */
+  .paymentBasicInfo .paymentFixedField > div div:has(> :global(.pf-text-input)) {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .paymentBasicInfo .paymentFixedField div > :global(.pf-text-input) {
+    flex: 0 1 auto;
+    width: var(--payment-input-width, 100%);
+    min-width: 0;
+  }
+
+  /* 주민등록번호 앞·뒤 사이 `-` — 좌우 16px */
+  .paymentBasicInfo .paymentFixedField :global(.pf-text-input) + span {
+    padding: 0 var(--spacing-16);
+  }
 }
 
 /* 모바일 — PFFormFieldTable 내 소속 입력 + 소속 없음 체크 */

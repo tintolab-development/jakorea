@@ -232,6 +232,7 @@ export function AddManagerModal({
                 placeholder="추가 등록할 담당자를 선택해 주세요"
                 width="100%"
                 withAllOption={false}
+                optionFilterProp="label"
                 loading={candidatesLoading}
                 options={managerSelectOptions}
                 notFoundContent={

@@ -6,9 +6,6 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * @nullable
- */
 export type VolunteerParticipantRegisterRequestApplicationType = typeof VolunteerParticipantRegisterRequestApplicationType[keyof typeof VolunteerParticipantRegisterRequestApplicationType] | null;
 
 

@@ -15,9 +15,7 @@ import {
   collectFormDocumentPdfPageElements,
   downloadFormDocumentPdfFromPageElements,
 } from '@/features/template/lib/generate-form-document-pdf'
-import {
-  createUjatEducationIssuanceA4Preview,
-} from '@/features/template/model/ujat-education-issuance-a4-preview'
+import { createUjatEducationIssuanceA4Preview } from '@/features/template/model/ujat-education-issuance-a4-preview'
 import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
 import { shouldUseFormsSurveysRemoteApi } from '@/features/template/api/admin-form-templates-service'
@@ -25,9 +23,14 @@ import {
   getFormResponseDocumentSnapshotRemote,
   getFormResponseRemote,
 } from '@/features/program/general/api/form-responses-api-client'
+import { fetchFormResponseFeedbackRemote } from '@/features/template/api/form-templates-api-client'
+import { formResponseQueryKeys } from '@/features/template/api/form-response-query-keys'
 import { useCreateFormResponseFeedbackMutation } from '@/features/template/hooks/use-create-form-response-feedback-mutation'
 import { getFormResponseFeedbackErrorMessage } from '@/features/template/lib/form-response-feedback-error'
-import { UjatAssignmentFeedbackModal, type UjatFeedbackModalMode } from './ujat-assignment-feedback-modal'
+import {
+  UjatAssignmentFeedbackModal,
+  type UjatFeedbackModalMode,
+} from './ujat-assignment-feedback-modal'
 import {
   buildUjatDocumentFileName,
   type UjatDocumentViewerTarget,
@@ -46,7 +49,14 @@ interface UjatAssignmentDocumentViewerModalProps {
 
 function PreviewPagePrevIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      fill="none"
+      aria-hidden
+    >
       <mask
         id="ujat-doc-preview-page-nav-prev-mask"
         style={{ maskType: 'alpha' }}
@@ -70,7 +80,14 @@ function PreviewPagePrevIcon() {
 
 function PreviewPageNextIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="28"
+      height="28"
+      viewBox="0 0 28 28"
+      fill="none"
+      aria-hidden
+    >
       <mask
         id="ujat-doc-preview-page-nav-next-mask"
         style={{ maskType: 'alpha' }}
@@ -149,6 +166,22 @@ export function UjatAssignmentDocumentViewerModal({
     },
   })
 
+  const feedbackQuery = useQuery({
+    queryKey: formResponseQueryKeys.feedback(formResponseId ?? 0),
+    enabled: open && formsRemote && formResponseId != null && Number.isFinite(formResponseId),
+    retry: false,
+    staleTime: 30_000,
+    queryFn: () => fetchFormResponseFeedbackRemote(Number(formResponseId)),
+  })
+
+  const serverFeedback =
+    feedbackQuery.data?.feedbacks
+      ?.slice()
+      .reverse()
+      .map(item => item.content?.trim())
+      .find((content): content is string => Boolean(content)) ?? null
+  const effectiveSubmittedFeedback = submittedFeedback ?? serverFeedback
+
   const draft = useMemo(() => {
     if (!target || formResponseId == null) return null
     if (!documentQuery.data) return null
@@ -166,17 +199,11 @@ export function UjatAssignmentDocumentViewerModal({
     return createUjatEducationIssuanceA4Preview({
       variant: a4Variant,
       userInfoPreviewValues: buildVolunteerUserInfoPreviewValues(target),
-      ...(target.docType === 'log'
-        ? { journalInstitutionName: target.institutionName }
-        : {}),
+      ...(target.docType === 'log' ? { journalInstitutionName: target.institutionName } : {}),
     })
   }, [a4Variant, draft, target])
   const previewParagraphs = useMemo(
-    () =>
-      getA4PreviewParagraphs(
-        draft?.paragraphs ?? [],
-        ujatA4Preview?.a4HiddenParagraphIds
-      ),
+    () => getA4PreviewParagraphs(draft?.paragraphs ?? [], ujatA4Preview?.a4HiddenParagraphIds),
     [draft?.paragraphs, ujatA4Preview?.a4HiddenParagraphIds]
   )
   const paragraphBodyOptions = ujatA4Preview?.paragraphBodyOptions
@@ -201,8 +228,7 @@ export function UjatAssignmentDocumentViewerModal({
 
   const docTypeLabel = target?.docType === 'plan' ? '교육계획서' : '교육일지'
   const fileName = target ? buildUjatDocumentFileName(target) : ''
-  const fallbackTitle =
-    target?.docType === 'plan' ? 'UJAT 교육계획서' : 'UJAT 교육일지'
+  const fallbackTitle = target?.docType === 'plan' ? 'UJAT 교육계획서' : 'UJAT 교육일지'
   const surveyTitle = draft != null ? getA4DocumentTitle(draft, fallbackTitle) : fallbackTitle
 
   const handlePrevPage = useCallback(() => {
@@ -221,12 +247,12 @@ export function UjatAssignmentDocumentViewerModal({
   }, [onCancel])
 
   const handleFeedbackButtonClick = useCallback(() => {
-    if (submittedFeedback != null) {
+    if (effectiveSubmittedFeedback != null) {
       setFeedbackMode('view')
     } else {
       setFeedbackMode('write')
     }
-  }, [submittedFeedback])
+  }, [effectiveSubmittedFeedback])
 
   const handleFeedbackSubmit = useCallback(
     async (feedback: string) => {
@@ -274,13 +300,13 @@ export function UjatAssignmentDocumentViewerModal({
     setPdfLoading(true)
     try {
       const pageEls = collectFormDocumentPdfPageElements(root)
-      await downloadFormDocumentPdfFromPageElements(
-        pageEls,
-        `${fileName}.pdf`
-      )
+      await downloadFormDocumentPdfFromPageElements(pageEls, `${fileName}.pdf`)
     } catch (e) {
       handleError(e, { context: 'ujatDocumentViewerModal.downloadPdf' })
-      showAlert({ title: '안내', content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.' })
+      showAlert({
+        title: '안내',
+        content: 'PDF 다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+      })
     } finally {
       setPdfLoading(false)
     }
@@ -294,15 +320,18 @@ export function UjatAssignmentDocumentViewerModal({
       <CmsButton
         variant="primary"
         size="medium"
-        onClick={handleFeedbackButtonClick} >
-        {submittedFeedback != null ? '피드백 보기' : '피드백 작성'}
+        disabled={feedbackQuery.isLoading}
+        onClick={handleFeedbackButtonClick}
+      >
+        {effectiveSubmittedFeedback != null ? '피드백 보기' : '피드백 작성'}
       </CmsButton>
       <CmsButton
         variant="primary"
         size="medium"
         icon={<ButtonDownloadIcon />}
         disabled={pdfLoading || draft == null}
-        onClick={() => void handleDownloadPdf()} >
+        onClick={() => void handleDownloadPdf()}
+      >
         파일 다운로드
       </CmsButton>
     </div>
@@ -443,7 +472,7 @@ export function UjatAssignmentDocumentViewerModal({
           mode={feedbackMode ?? 'write'}
           volunteerName={target.volunteerName}
           docTypeLabel={docTypeLabel}
-          existingFeedback={submittedFeedback ?? ''}
+          existingFeedback={effectiveSubmittedFeedback ?? ''}
           submitting={createFeedbackMutation.isPending}
           onSubmit={handleFeedbackSubmit}
         />

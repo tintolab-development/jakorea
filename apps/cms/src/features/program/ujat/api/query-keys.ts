@@ -32,10 +32,7 @@ export const queryKeys = {
       'temporary-schedule',
       institutionId,
     ] as const,
-  organizationScheduleAssignments: (
-    programId: string,
-    educationRegionCode: string = 'ALL'
-  ) =>
+  organizationScheduleAssignments: (programId: string, educationRegionCode: string = 'ALL') =>
     [
       ...queryKeys.organizationApplicationsRoot(programId),
       'schedule-assignments',
@@ -65,12 +62,7 @@ export const queryKeys = {
     programId: string,
     educationRegionCode: string,
     semesterType: 'FIRST_HALF' | 'SECOND_HALF' | 'ALL' = 'ALL'
-  ) =>
-    [
-      ...queryKeys.allocationMatrixRoot(programId),
-      educationRegionCode,
-      semesterType,
-    ] as const,
+  ) => [...queryKeys.allocationMatrixRoot(programId), educationRegionCode, semesterType] as const,
   assignmentSubmissionsRoot: (programId: string) =>
     [...queryKeys.execution(), 'assignment-submissions', programId] as const,
   assignmentSubmissions: (
@@ -78,11 +70,7 @@ export const queryKeys = {
     educationRegionCode: string,
     semesterType: 'FIRST_HALF' | 'SECOND_HALF'
   ) =>
-    [
-      ...queryKeys.assignmentSubmissionsRoot(programId),
-      educationRegionCode,
-      semesterType,
-    ] as const,
+    [...queryKeys.assignmentSubmissionsRoot(programId), educationRegionCode, semesterType] as const,
   /** 봉사자 상세 · 배정/출결 묶음. memberId로 조회하고 queryFn 안에서 participantId를 해석한다. */
   volunteerAssignmentProgressRoot: (programId: string) =>
     [...queryKeys.execution(), 'volunteer-assignment-progress', programId] as const,
@@ -133,14 +121,13 @@ export const queryKeys = {
     [...queryKeys.execution(), 'attendances', programId, scheduleId] as const,
   volunteer1365AttendanceAll: (programId: string) =>
     [...queryKeys.all, 'volunteer-1365-attendance', programId] as const,
-  volunteer1365Attendance: (
-    programId: string,
-    half: string,
-    scheduleIdsKey: string
-  ) =>
+  volunteer1365Attendance: (programId: string, half: string, scheduleIdsKey: string) =>
+    [...queryKeys.volunteer1365AttendanceAll(programId), half, scheduleIdsKey] as const,
+  educationProgressSummary: (programId: string, educationRegionCode?: string) =>
     [
-      ...queryKeys.volunteer1365AttendanceAll(programId),
-      half,
-      scheduleIdsKey,
+      ...queryKeys.execution(),
+      'education-progress-summary',
+      programId,
+      educationRegionCode ?? 'all',
     ] as const,
 }

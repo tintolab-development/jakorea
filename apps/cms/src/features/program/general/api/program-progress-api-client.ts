@@ -740,7 +740,7 @@ export async function registerVolunteerParticipantRemote(
 ): Promise<VolunteerParticipantRegisterResponse> {
   return unwrapApiBody<VolunteerParticipantRegisterResponse>(
     await programProgressApi.registerVolunteerParticipant(
-      toNumericProgramId(programId),
+      programId,
       payload
     )
   )
@@ -758,7 +758,7 @@ export async function fetchProgramParticipantRegisterCandidatesRemote(
   }
 ): Promise<PageResponseProgramParticipantRegisterCandidateResponse> {
   return unwrapApiBody<PageResponseProgramParticipantRegisterCandidateResponse>(
-    await programProgressApi.getApiAdminProgramsProgramIdParticipantRegisterCandidates(
+    await programProgressApi.participantRegisterCandidates(
       programId,
       params
     )
@@ -771,7 +771,7 @@ export async function fetchEmployeeVolunteerCountsRemote(
   organizationApplicationId?: number
 ): Promise<EmployeeVolunteerCountSetResponse> {
   return unwrapApiBody(
-    await programProgressApi.getApiAdminProgramsProgramIdEmployeeVolunteerCounts(
+    await programProgressApi.get1(
       toNumericProgramId(programId),
       organizationApplicationId != null ? { organizationApplicationId } : undefined
     )
@@ -784,7 +784,7 @@ export async function putEmployeeVolunteerCountsRemote(
   payload: EmployeeVolunteerCountReplaceRequest
 ): Promise<EmployeeVolunteerCountSetResponse> {
   return unwrapApiBody(
-    await programProgressApi.putApiAdminProgramsProgramIdEmployeeVolunteerCounts(
+    await programProgressApi.replace2(
       toNumericProgramId(programId),
       payload
     )

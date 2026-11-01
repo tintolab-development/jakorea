@@ -701,6 +701,8 @@ describe('UJAT recruit form overlay', () => {
           ? { ...round, startDate: '2027-02-01T00:00:00Z', endDate: '2027-02-28T00:00:00Z' }
           : round
       ),
+      volunteerApplicationStartDate: '2027-03-01',
+      volunteerApplicationEndDate: '2027-03-31',
     })
     const savedH1 = applyUjatRecruitFormValuesToProgram(program, 'volunteer_h1', {
       ...h1,
@@ -717,7 +719,10 @@ describe('UJAT recruit form overlay', () => {
     )
     expect(savedH1.programRecruitments?.find(row => row.id === 201)?.recruitTerm).toBe('FIRST_HALF')
     expect(changedPeriod.programRecruitments?.find(row => row.id === 201)?.startAt).toBe(
-      '2027-02-01T00:00:00Z'
+      '2027-03-01'
+    )
+    expect(changedPeriod.programRecruitments?.find(row => row.id === 201)?.endAt).toBe(
+      '2027-03-31'
     )
     expect(savedH1.ujatRegistrationOverlay).toEqual(program.ujatRegistrationOverlay)
   })
@@ -826,6 +831,77 @@ describe('UJAT recruit form overlay', () => {
       applicationFormBindingId: 77,
       attachments: [{ fileObjectId: 9, originalFileName: 'guide.pdf' }],
     })
+  })
+
+  it('모집기간만 넣은 상·하반기는 행으로 왕복하고 회차 날짜로 덮이지 않는다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      id: 'ujat-registration-linked',
+      programRecruitments: [],
+      rounds: [
+        {
+          id: 'round-h1',
+          programId: 'ujat-registration-linked',
+          roundNumber: 1,
+          startDate: '2027-01-01',
+          endDate: '2027-06-30',
+          capacity: 30,
+          status: 'active' as const,
+          curriculum: '12',
+        },
+      ],
+    }
+    const h1 = {
+      ...programToUjatRecruitCanonicalFormValues(program, 'volunteer_h1'),
+      volunteerApplicationStartDate: '2027-02-01',
+      volunteerApplicationEndDate: '2027-02-28',
+      rounds: [
+        {
+          id: 'round-h1',
+          programId: 'ujat-registration-linked',
+          roundNumber: 1,
+          startDate: '2027-01-01',
+          endDate: '2027-06-30',
+          capacity: 30,
+          status: 'active' as const,
+          curriculum: '12',
+        },
+      ],
+    }
+    const h2 = {
+      ...programToUjatRecruitCanonicalFormValues(program, 'volunteer_h2'),
+      volunteerApplicationStartDate: '2027-08-01',
+      volunteerApplicationEndDate: '2027-08-31',
+      rounds: [
+        ...(h1.rounds ?? []),
+        {
+          id: 'round-h2',
+          programId: 'ujat-registration-linked',
+          roundNumber: 2,
+          startDate: '2027-07-01',
+          endDate: '2027-12-31',
+          capacity: 30,
+          status: 'active' as const,
+          curriculum: '13',
+        },
+      ],
+    }
+    const saved = applyUjatRegistrationRecruitmentFormsToProgram(program, {
+      institution: programToUjatRecruitCanonicalFormValues(program, 'institution'),
+      volunteerH1: h1,
+      volunteerH2: h2,
+    })
+    const h1Row = saved.programRecruitments?.find(row => row.recruitTerm === 'FIRST_HALF')
+    const h2Row = saved.programRecruitments?.find(row => row.recruitTerm === 'SECOND_HALF')
+    expect(h1Row).toMatchObject({ startAt: '2027-02-01', endAt: '2027-02-28' })
+    expect(h2Row).toMatchObject({ startAt: '2027-08-01', endAt: '2027-08-31' })
+    const h1Again = programToUjatRecruitCanonicalFormValues(saved, 'volunteer_h1')
+    const h2Again = programToUjatRecruitCanonicalFormValues(saved, 'volunteer_h2')
+    expect(h1Again.volunteerApplicationStartDate).toBe('2027-02-01')
+    expect(h1Again.volunteerApplicationEndDate).toBe('2027-02-28')
+    expect(h2Again.volunteerApplicationStartDate).toBe('2027-08-01')
+    expect(h2Again.volunteerApplicationEndDate).toBe('2027-08-31')
+    expect(h1Again.rounds?.[0]?.curriculum).toBe('12')
   })
 
   it('typed 폼의 섬네일·첨부를 overlay 없이 모집 행에 싣는다', () => {

@@ -8,6 +8,7 @@
 
 export interface FormResponseAnswerResponse {
   answerId?: number;
+  /** 제출 시점 문항 키. UJAT 발급 양식은 schemaJson.paragraphs[].id (또는 nested items[].id)와 같다. 예: ujat-edu-plan-session-1-body */
   questionKeySnapshot?: string;
   questionLabelSnapshot?: string;
   questionTypeSnapshot?: string;

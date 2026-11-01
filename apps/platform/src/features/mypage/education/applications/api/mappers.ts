@@ -10,6 +10,7 @@ import {
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
+import { listRowCertificateAvailable } from '../lib/certificate-cta'
 import { readUjatPortalBannerState, readUjatRevisionReason } from '../lib/ujat-portal-banner'
 import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
 import { buildUjatVolunteerApplicationProfileFromAnswers } from '../lib/ujat-volunteer-application-content-from-answers'
@@ -281,14 +282,10 @@ export function mapPortalProgramApplicationListItem(
     detailCase,
     programType: row.programType,
     programGroup: row.programGroup,
+    certificateAvailable: listRowCertificateAvailable(row),
+    ...(row.availableActions ? { availableActions: row.availableActions } : {}),
     ...(typeof row.pendingSurveyCount === 'number' && Number.isFinite(row.pendingSurveyCount)
       ? { pendingSurveyCount: row.pendingSurveyCount }
-      : {}),
-    ...(typeof row.certificateAvailable === 'boolean'
-      ? { certificateAvailable: row.certificateAvailable }
-      : {}),
-    ...(Array.isArray(row.availableActions)
-      ? { availableActions: row.availableActions.filter(action => typeof action === 'string') }
       : {}),
     ...(ujatPortalBannerState ? { ujatPortalBannerState } : {}),
     ...(ujatRevisionReason ? { ujatRevisionReason } : {}),
@@ -564,19 +561,9 @@ export function mapPortalProgramApplicationDetail(
     displayStatus,
   })
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
-  // 상세는 certificateAvailable이 없음 — capabilities.canIssueCertificate를 쓴다.
-  // 목록 row를 spread해도 상세에 없는 필드로 덮지 않도록 상세 힌트만 설정한다.
-  if (typeof detail.capabilities?.canIssueCertificate === 'boolean') {
-    mapped.canIssueCertificate = detail.capabilities.canIssueCertificate
-  }
-  const participantId = detail.participation?.participantId
-  if (typeof participantId === 'number' && Number.isFinite(participantId) && participantId > 0) {
-    mapped.participantId = participantId
-  }
+  mapped.certificateAvailable = detail.capabilities?.canIssueCertificate === true
   const certificateStatus = detail.participation?.certificateStatus?.trim()
-  if (certificateStatus) {
-    mapped.certificateStatus = certificateStatus
-  }
+  if (certificateStatus) mapped.certificateStatus = certificateStatus
   if (typeof detail.capabilities?.canSubmitSatisfaction === 'boolean') {
     mapped.canSubmitSatisfaction = detail.capabilities.canSubmitSatisfaction
   }

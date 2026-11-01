@@ -564,7 +564,7 @@ export function SchemaConsentWriteForm({
               type="submit"
               disabled={isSubmitting || isServerDraftLoading}
             >
-              {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성 완료'}
+              {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성완료'}
             </PFButton>
           </div>
         )}

@@ -111,13 +111,16 @@ export function ApplyUjatInstitutionPreferredSchedule({
                 className={[
                   slotStyles.slotCard,
                   slotStyles.slotCardInterview,
+                  styles.chip,
                   active ? slotStyles.slotCardActive : undefined,
                 ]
                   .filter(Boolean)
                   .join(' ')}
                 onClick={() => toggle(option.id)}
               >
-                <span className={slotStyles.slotCardTitle}>{option.display}</span>
+                <span className={[slotStyles.slotCardTitle, styles.chipLabel].join(' ')}>
+                  {option.display}
+                </span>
               </button>
             )
           })
