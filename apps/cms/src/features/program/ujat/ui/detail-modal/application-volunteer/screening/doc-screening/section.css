@@ -1,3 +1,5 @@
+@import '../../../../../../shared/ui/program-application-list-toolbar.css';
+
 .ujat-volunteer-doc-screening {
   --ujat-doc-screening-row-hover-bg: color-mix(
     in srgb,
@@ -456,8 +458,6 @@
   text-align: center;
   vertical-align: middle;
 }
-
-@import '../../../../../../shared/ui/program-application-list-toolbar.css';
 
 .ujat-volunteer-doc-screening__actions {
   display: flex;
