@@ -20,4 +20,9 @@ assert.equal(
   '수료증 발급 기간이 만료되었습니다.'
 )
 
+assert.equal(
+  messageForPortalCertificateReasonCode('CERTIFICATE_RENDER_HISTORICAL_DATA_INCOMPLETE'),
+  '이름 또는 프로그램명이 없어 수료증을 만들 수 없습니다.',
+)
+
 console.log('certificate-reason-messages.selfcheck: ok')
