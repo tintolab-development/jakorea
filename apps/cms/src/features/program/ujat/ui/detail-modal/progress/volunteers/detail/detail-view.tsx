@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Program } from '@/types/domain'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
-import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  FilterTableToolbarButton,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 import { ProgramEditInfoActions } from '@/features/program/shared/ui/program-edit-info-actions'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { usePersonalInfoReveal } from '@/features/user/detail/lib/use-personal-info-reveal'
@@ -458,41 +462,40 @@ export function UjatEducationProgressVolunteerDetailView({
       {!isEditing ? (
         <>
           {canWrite ? (
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="delete"
-              size="h40"
               disabled={givingUp || activityWithdrawScheduleOptions.length === 0}
-              onClick={handleRequestActivityWithdraw} >
+              onClick={handleRequestActivityWithdraw}
+            >
               활동 포기
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : null}
-          <CmsButton
+          <FilterTableToolbarButton
             type="button"
             variant="secondary"
-            size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={certificateIssueDisabled}
             title={certificateProgressBlockReason ?? undefined}
             onClick={handleActivityCertificateIssueClick}
           >
             활동인증서 발급
-          </CmsButton>
-          <CmsButton
+          </FilterTableToolbarButton>
+          <FilterTableToolbarButton
             type="button"
             variant="secondary"
-            size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={certificateIssueDisabled}
             title={certificateProgressBlockReason ?? undefined}
             onClick={handleStudentCertificateIssueClick}
           >
             수료증/참여인증서 발급
-          </CmsButton>
+          </FilterTableToolbarButton>
         </>
       ) : null}
       <ProgramEditInfoActions
         canWrite={canWrite}
+        useToolbarButton
         size="h40"
         isEditing={isEditing}
         saving={savingRegion}
@@ -501,23 +504,26 @@ export function UjatEducationProgressVolunteerDetailView({
         onCancel={handleCancelEdit}
         onSave={() => {
           void handleSaveEdit()
-        }} />
+        }}
+      />
       {!isEditing ? (
         <>
           {canWrite ? (
-            <CmsButton
+            <FilterTableToolbarButton
               type="button"
               variant="primary"
-              size="h40"
-              onClick={handleAdminCommentEditEnter} >
+              onClick={handleAdminCommentEditEnter}
+            >
               코멘트 작성
-            </CmsButton>
+            </FilterTableToolbarButton>
           ) : null}
-          <PersonalInfoRevealButton disabled={programPrivacyPending}
+          <PersonalInfoRevealButton
+            disabled={programPrivacyPending}
             labelMode="stickyReveal"
             revealed={personalInfoRevealed}
             onClick={openPersonalInfoRevealConfirm}
-            cmsSize="h40" />
+            cmsSize="h40"
+          />
         </>
       ) : null}
     </>

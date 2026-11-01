@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { CmsButton, ContentModal, ExcelButton, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  ContentModal,
+  ExcelButton,
+  FilterTableToolbarButton,
+  useCmsAlert,
+} from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
@@ -562,46 +568,46 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
             <span className="table-title">교육 배정 및 진행 현황</span>
             <span className="table-description">{rows.length}건</span>
           </div>
-          <div className="info-section-buttons--wrapper">
+          <div className="table-header-actions--wrapper">
             {canWrite ? (
               <>
-            <CmsButton
-              type="button"
-              variant="delete"
-              size="h40"
-              disabled={
-                progress.isMutating ||
-                progress.isError ||
-                progress.isParticipantUnresolved
-              }
-              onClick={openCancelModal} >
-              배정 취소
-            </CmsButton>
-            <CmsButton
-              type="button"
-              variant="secondary"
-              size="h40"
-              disabled={
-                progress.isMutating ||
-                progress.isError ||
-                progress.isParticipantUnresolved
-              }
-              onClick={openAttendanceCorrectionModal} >
-              출결 정정
-            </CmsButton>
-            <CmsButton
-              type="button"
-              variant="primary"
-              size="h40"
-              disabled={
-                progress.isMutating ||
-                progress.isError ||
-                progress.isParticipantUnresolved
-              }
-              onClick={openAssignModal} >
-              파트너 및 교육 배정
-            </CmsButton>
-            <ExcelButton onClick={exportExcel} loading={isExporting} />
+                <FilterTableToolbarButton
+                  type="button"
+                  variant="delete"
+                  disabled={
+                    progress.isMutating ||
+                    progress.isError ||
+                    progress.isParticipantUnresolved
+                  }
+                  onClick={openCancelModal}
+                >
+                  배정 취소
+                </FilterTableToolbarButton>
+                <FilterTableToolbarButton
+                  type="button"
+                  variant="secondary"
+                  disabled={
+                    progress.isMutating ||
+                    progress.isError ||
+                    progress.isParticipantUnresolved
+                  }
+                  onClick={openAttendanceCorrectionModal}
+                >
+                  출결 정정
+                </FilterTableToolbarButton>
+                <FilterTableToolbarButton
+                  type="button"
+                  variant="primary"
+                  disabled={
+                    progress.isMutating ||
+                    progress.isError ||
+                    progress.isParticipantUnresolved
+                  }
+                  onClick={openAssignModal}
+                >
+                  파트너 및 교육 배정
+                </FilterTableToolbarButton>
+                <ExcelButton onClick={exportExcel} loading={isExporting} />
               </>
             ) : null}
           </div>
