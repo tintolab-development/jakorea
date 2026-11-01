@@ -128,3 +128,47 @@ export function readApplicationFormThirdPartyRecipientValue(draft: WritingFormDr
   }
   return null
 }
+
+/**
+ * 신청 formAnswers 제3자 동의 객체에서 「제공받는 곳」을 읽는다.
+ * 우선순위: thirdPartyRecipient → dataRows[0][0] → fieldDataRows[0][0].value
+ * 레거시 `"agree"` 문자열만 있으면 null (호출부에서 템플릿 기본값 fallback).
+ */
+export function resolveThirdPartyRecipientFromFormAnswer(answer: unknown): string | null {
+  if (answer == null) return null
+  if (typeof answer === 'string') {
+    const trimmed = answer.trim()
+    if (!trimmed || trimmed === 'agree' || trimmed === 'disagree' || trimmed === '-') return null
+    if (isBlankApplicationFormThirdPartyRecipientValue(trimmed)) return null
+    return trimmed
+  }
+  if (typeof answer !== 'object' || Array.isArray(answer)) return null
+  const row = answer as Record<string, unknown>
+
+  const fromField =
+    typeof row.thirdPartyRecipient === 'string' ? row.thirdPartyRecipient.trim() : ''
+  if (fromField && fromField !== '-' && !isBlankApplicationFormThirdPartyRecipientValue(fromField)) {
+    return fromField
+  }
+
+  const dataCell = Array.isArray(row.dataRows) ? row.dataRows[0]?.[0] : undefined
+  if (typeof dataCell === 'string') {
+    const trimmed = dataCell.trim()
+    if (trimmed && trimmed !== '-' && !isBlankApplicationFormThirdPartyRecipientValue(trimmed)) {
+      return trimmed
+    }
+  }
+
+  const fieldCell = Array.isArray(row.fieldDataRows) ? row.fieldDataRows[0]?.[0] : undefined
+  if (fieldCell && typeof fieldCell === 'object' && !Array.isArray(fieldCell)) {
+    const value = (fieldCell as { value?: unknown }).value
+    if (typeof value === 'string') {
+      const trimmed = value.trim()
+      if (trimmed && trimmed !== '-' && !isBlankApplicationFormThirdPartyRecipientValue(trimmed)) {
+        return trimmed
+      }
+    }
+  }
+
+  return null
+}

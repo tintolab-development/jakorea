@@ -42,8 +42,13 @@ import {
 } from '@/features/program/shared/lib/application-available-actions'
 import { resolveVolunteerInterview2CancelPassButtonLabel } from '@/features/program/general/lib/volunteer-interview2-cancel-pass'
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
-import { shouldUseOrganizationApplicationRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
+import {
+  shouldUseGeneralApplicationsRemoteApi,
+  shouldUseOrganizationApplicationRemoteApi,
+} from '@/features/program/general/api/applications-remote-capabilities'
 import { upsertAdminCommentByTargetRemote } from '@/features/program/general/api/admin-comments-api-client'
+import { saveIndividualApplicationAdminCommentRemote } from '@/features/program/general/api/individual-application-update-helpers'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { useApplicantIndividualDetailEdit } from '@/features/program/general/hooks/use-applicant-individual-detail-edit'
 import { useApplicantInstructorDetailEdit } from '@/features/program/general/hooks/use-applicant-instructor-detail-edit'
 import {
@@ -60,7 +65,6 @@ import {
   type ApplicantInstructorRow,
 } from '@/features/program/shared/model/applicant-instructor'
 import {
-  patchGeneralIndividualApplicantDetail,
   patchGeneralIndividualApplicantManagerEvaluation,
   type GeneralIndividualApplicantDetailSavePayload,
   type GeneralIndividualApplicantRow,
@@ -613,7 +617,7 @@ interface ApplicantsDetailContentsProps {
   onSaveIndividualDetail?: (
     payload: GeneralIndividualApplicantDetailSavePayload
   ) => Promise<GeneralIndividualApplicantRow | null>
-  /** 일반 프로그램 개인 신청 관리자 코멘트 원격 저장. 미지정 시 기존 mock 저장 */
+  /** 일반 프로그램 개인 신청 관리자 코멘트 원격 저장. 미지정 시 내장 PATCH individual-applications */
   onSaveIndividualAdminComment?: (
     managerComment: string
   ) => Promise<GeneralIndividualApplicantRow | null>
@@ -984,18 +988,26 @@ export function ApplicantsDetailContents({
       setIsIndividualAdminCommentModalOpen(false)
       return
     }
-    const updated = patchGeneralIndividualApplicantDetail(individualData.id, {
-      adminComment: individualAdminCommentDraft,
-    })
-    if (!updated) {
+    if (!shouldUseGeneralApplicationsRemoteApi()) {
       void showAlert({
-        title: '안내',
-        content: MESSAGES.error.save,
+        title: PROGRAM_API_UNAVAILABLE_TITLE,
+        content: buildProgramApiUnavailableSaveContent('개인 신청 관리자 코멘트'),
       })
       return
     }
-    onIndividualDetailSaved?.(updated)
-    setIsIndividualAdminCommentModalOpen(false)
+    try {
+      const updated = await saveIndividualApplicationAdminCommentRemote(
+        individualData,
+        individualAdminCommentDraft
+      )
+      onIndividualDetailSaved?.(updated)
+      setIsIndividualAdminCommentModalOpen(false)
+    } catch (error) {
+      void showAlert({
+        title: '안내',
+        content: getGeneralProgramApiErrorMessage(error, MESSAGES.error.save),
+      })
+    }
   }, [
     individualAdminCommentDraft,
     individualData,

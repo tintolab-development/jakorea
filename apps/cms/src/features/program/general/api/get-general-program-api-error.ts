@@ -58,6 +58,8 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_1365_ID_REQUIRED: '1365 ID를 입력해 주세요.',
   VOLUNTEER_PERSONAL_INFO_CONSENT_REQUIRED: '개인정보 수집·이용에 동의해 주세요.',
   VOLUNTEER_THIRD_PARTY_CONSENT_REQUIRED: '개인정보 제3자 정보 제공·이용에 동의해 주세요.',
+  VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED: '제공받는 기관명을 입력해 주세요.',
+  VOLUNTEER_THIRD_PARTY_RECIPIENT_INVALID: '제공받는 기관명은 200자 이내로 입력해 주세요.',
   VOLUNTEER_PREVIOUS_JA_REQUIRED:
     '동의서 제출 요청 시 이전 참여 JA 봉사 프로그램 정보와 증빙서류가 필요합니다.',
   VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID:

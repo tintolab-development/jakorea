@@ -733,6 +733,30 @@ function mergeAnswerIntoParagraph(
     ) {
       next = { ...next, dataRows: answer.dataRows as string[][] }
     }
+    if (Array.isArray(answer.fieldDataRows)) {
+      next = {
+        ...next,
+        fieldDataRows: answer.fieldDataRows as HorizontalTableParagraph['fieldDataRows'],
+      }
+    }
+    // CMS 추가 등록 등 — thirdPartyRecipient만 온 경우 첫 열(제공받는 곳)에 반영
+    if (typeof answer.thirdPartyRecipient === 'string') {
+      const recipient = answer.thirdPartyRecipient.trim()
+      if (recipient.length > 0 && recipient !== '-') {
+        const table = next as HorizontalTableParagraph
+        const fieldRows = [...(table.fieldDataRows ?? [[]])]
+        const firstRow = [...(fieldRows[0] ?? [])]
+        firstRow[0] = { kind: 'text', value: recipient }
+        fieldRows[0] = firstRow
+        const dataRows = table.dataRows.map((row, rowIndex) => {
+          if (rowIndex !== 0) return row
+          const nextRow = [...row]
+          nextRow[0] = recipient
+          return nextRow
+        })
+        next = { ...table, fieldDataRows: fieldRows, dataRows }
+      }
+    }
   }
   if (next.kind === 'single_item' && next.variant === 'vertical_table') {
     const extraRows = Array.isArray(answer.rows) ? answer.rows : undefined
