@@ -18,6 +18,11 @@
   line-height: 150%;
 }
 
+.program-attendance-correction-modal__required {
+  margin-left: var(--spacing-4, 4px);
+  color: var(--color-required-mark, #c32f4a);
+}
+
 .program-attendance-correction-modal__status-row {
   display: grid;
   grid-template-columns: 170px 1fr;
