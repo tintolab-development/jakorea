@@ -1,13 +1,8 @@
-import { useRef, useState, type ChangeEvent } from 'react'
+import { Fragment, useRef, useState, type ChangeEvent } from 'react'
 import type { EducationScheduleAssignmentFile } from '../model/types'
-import { PFButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
-import {
-  formatMultiFileUploadHint,
-  sumUploadFileBytes,
-  validateUploadBatch,
-} from '@/shared/lib/file-upload-policy'
+import { PFButton, PFItemDeleteButton, PFModal, PFText, PFTextInput } from '@/shared/ui'
+import { sumUploadFileBytes, validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import { PORTAL_ASSIGNMENT_MAX_SUBMISSION_ITEMS } from '../api/assignment-client'
-import closeFileUrl from '@/shared/assets/icons/close-black.svg'
 import styles from './assignment-submit-modal.module.css'
 
 const ACCEPTED_FILE_EXTENSIONS = [
@@ -32,9 +27,9 @@ const ACCEPTED_FILE_EXTENSIONS = [
   'zip',
 ] as const
 
-const ASSIGNMENT_FILE_FORMATS =
-  'hwp, hwpx, doc, docx, ppt, pptx, pdf, xls, xlsx, csv, txt, png, jpg(jpeg), heic, bmp, mp4, mov, zip'
-const ASSIGNMENT_FILE_HINT = formatMultiFileUploadHint(ASSIGNMENT_FILE_FORMATS)
+/** Figma 13036:17316 파일 첨부 안내 문구 */
+const ASSIGNMENT_FILE_HINT =
+  '파일은 HWP, Word, PPT, PDF, Excel, CSV, TXT, PNG, JPG, HEIC, BMP, MP4, MOV, ZIP 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.'
 const ASSIGNMENT_LINK_HINTS = [
   '대용량 파일은 클라우드(구글 드라이브 등)에 업로드한 뒤 공유 링크를 첨부해 주세요.',
   '담당자가 열람할 수 있도록 링크 공유 권한을 설정해 주세요.',
@@ -70,6 +65,15 @@ let nextItemId = 0
 function createItemId(prefix: string): string {
   nextItemId += 1
   return `${prefix}-${nextItemId}`
+}
+
+/** 기간이 길면 `~` 뒤에서만 줄바꿈되도록 시작·종료 구간을 나눈다. */
+function splitPeriodLabel(periodLabel: string): readonly string[] {
+  const separatorIndex = periodLabel.indexOf('~')
+  if (separatorIndex < 0) return [periodLabel]
+  const start = periodLabel.slice(0, separatorIndex + 1).trim()
+  const end = periodLabel.slice(separatorIndex + 1).trim()
+  return end ? [start, end] : [start]
 }
 
 function getFileExtension(fileName: string): string {
@@ -129,6 +133,7 @@ export function EducationAssignmentSubmitModal({
   const isRevision = mode === 'revise'
   const title = isRevision ? '과제 수정 제출하기' : '과제 제출하기'
   const displaySessionHeading = sessionHeading.replace(/,\s*/, ' ')
+  const periodParts = splitPeriodLabel(periodLabel)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [items, setItems] = useState<SubmissionItem[]>(() => initialFiles.map(mapInitialFile))
   const [linkInput, setLinkInput] = useState('')
@@ -243,16 +248,21 @@ export function EducationAssignmentSubmitModal({
         </PFText>
 
         <div className={styles.sessionCard}>
-          <PFText as="p" typo="bd-lg-sb" color="black" className={styles.sessionHeading}>
+          <PFText as="p" typo="hl-sm" color="black" className={styles.sessionHeading}>
             {displaySessionHeading}
           </PFText>
           <div className={styles.periodRow}>
-            <PFText as="span" typo="bd-lg-rg" color="primary-500">
+            <PFText as="span" typo="bd-md-rg" color="primary-500" className={styles.periodLabel}>
               과제 제출 기간
             </PFText>
             <span className={styles.periodDivider} aria-hidden="true" />
-            <PFText as="span" typo="bd-lg-rg" color="primary-500">
-              {periodLabel}
+            <PFText as="span" typo="bd-md-rg" color="primary-500" className={styles.periodValue}>
+              {periodParts.map((part, index) => (
+                <Fragment key={`${index}-${part}`}>
+                  {index > 0 ? ' ' : null}
+                  <span className={styles.periodPart}>{part}</span>
+                </Fragment>
+              ))}
             </PFText>
           </div>
         </div>
@@ -261,7 +271,7 @@ export function EducationAssignmentSubmitModal({
           <PFText
             as="h2"
             id="assignment-file-label"
-            typo="bd-md-rg"
+            typo="label-md"
             color="neutral-warm-600"
             className={styles.sectionTitle}
           >
@@ -287,9 +297,8 @@ export function EducationAssignmentSubmitModal({
           >
             파일 추가하기
           </PFButton>
-          <ul className={styles.policy}>
+          <ul className={[styles.policy, styles.filePolicy].join(' ')}>
             <li>{ASSIGNMENT_FILE_HINT}</li>
-            <li>첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.</li>
           </ul>
           {fileItems.length > 0 ? (
             <div
@@ -300,25 +309,19 @@ export function EducationAssignmentSubmitModal({
               <ul className={styles.itemList} aria-label="첨부한 과제 파일">
                 {fileItems.map(item => (
                   <li key={item.id} className={styles.item}>
-                    <PFText as="span" typo="bd-lg-rg" color="black" className={styles.itemLabel}>
+                    <PFText as="span" typo="bd-md-rg" color="black" className={styles.itemLabel}>
                       {item.label}
                     </PFText>
-                    <button
-                      type="button"
-                      className={styles.removeButton}
+                    <PFItemDeleteButton
                       aria-label={`${item.label} 삭제`}
                       disabled={submitting}
                       onClick={() => removeItem(item.id)}
-                    >
-                      <img src={closeFileUrl} alt="" width={20} height={20} aria-hidden="true" />
-                    </button>
+                    />
                   </li>
                 ))}
               </ul>
             </div>
-          ) : (
-            <div className={styles.emptyItemSpace} aria-hidden="true" />
-          )}
+          ) : null}
         </section>
 
         <div className={styles.sectionDivider} aria-hidden="true" />
@@ -327,7 +330,7 @@ export function EducationAssignmentSubmitModal({
           <PFText
             as="h2"
             id="assignment-link-label"
-            typo="bd-md-rg"
+            typo="label-md"
             color="neutral-warm-600"
             className={styles.sectionTitle}
           >
@@ -354,7 +357,7 @@ export function EducationAssignmentSubmitModal({
               추가
             </PFButton>
           </div>
-          <ul className={styles.policy}>
+          <ul className={[styles.policy, styles.linkPolicy].join(' ')}>
             {ASSIGNMENT_LINK_HINTS.map(hint => (
               <li key={hint}>{hint}</li>
             ))}
@@ -368,25 +371,19 @@ export function EducationAssignmentSubmitModal({
               <ul className={styles.itemList} aria-label="첨부한 과제 링크">
                 {linkItems.map(item => (
                   <li key={item.id} className={styles.item}>
-                    <PFText as="span" typo="bd-lg-rg" color="black" className={styles.itemLabel}>
+                    <PFText as="span" typo="bd-md-rg" color="black" className={styles.itemLabel}>
                       {item.label}
                     </PFText>
-                    <button
-                      type="button"
-                      className={styles.removeButton}
+                    <PFItemDeleteButton
                       aria-label={`${item.label} 삭제`}
                       disabled={submitting}
                       onClick={() => removeItem(item.id)}
-                    >
-                      <img src={closeFileUrl} alt="" width={20} height={20} aria-hidden="true" />
-                    </button>
+                    />
                   </li>
                 ))}
               </ul>
             </div>
-          ) : (
-            <div className={styles.emptyItemSpace} aria-hidden="true" />
-          )}
+          ) : null}
         </section>
 
         {errorMessage ? (

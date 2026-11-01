@@ -270,8 +270,9 @@ export type UjatAssignmentDocumentStatus =
   | 'NOT_SUBMITTED'
   | 'SUBMITTED'
   | 'APPROVED'
-  | 'REVISED'
   | 'DEADLINE_MISSED'
+  | 'FEEDBACK_REQUESTED'
+  | 'REVISED'
 
 export type UjatAssignmentDocumentDto = {
   status?: UjatAssignmentDocumentStatus | string | null
@@ -584,7 +585,8 @@ export async function fetchUjatAssignmentSubmissions(
     semesterType: UjatSemesterType
     educationRegionCode: string
     isoDate?: string
-  }
+  },
+  options?: { signal?: AbortSignal }
 ): Promise<UjatAssignmentSubmissionsResponse> {
   return unwrapApiBody(
     await customInstance({
@@ -595,6 +597,7 @@ export async function fetchUjatAssignmentSubmissions(
         educationRegionCode: params.educationRegionCode,
         isoDate: params.isoDate,
       },
+      signal: options?.signal,
     })
   )
 }

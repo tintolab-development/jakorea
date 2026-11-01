@@ -55,10 +55,15 @@ export function ConsentInfoTable({
 }) {
   const colCount = headers.length
   const bodyRows = hideEmptyPairs ? rows.filter(row => rowHasVisiblePair(row, colCount)) : rows
+  /** 연번·행정정보명 쌍 표(행정정보 공동이용)만 연번 열 100px — 그 외 4열 표는 균등 폭 */
+  const tableClassName =
+    hideEmptyPairs || blankEmptyCells
+      ? `${styles.infoTable} ${styles.infoTableSerialPairs}`
+      : styles.infoTable
 
   return (
     <div className={styles.tableWrap}>
-      <table className={styles.infoTable}>
+      <table className={tableClassName}>
         <thead>
           <tr>
             {headers.map((header, index) => (

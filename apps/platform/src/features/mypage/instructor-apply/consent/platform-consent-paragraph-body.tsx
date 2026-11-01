@@ -35,7 +35,14 @@ import { ConsentShortEssayFillFields } from './consent-short-essay-fill-fields'
 import { PlatformIdTypeWithInputFields } from './id-type-with-input-fields'
 import { PlatformPortraitLockedVerticalTable } from './platform-portrait-locked-vertical-table'
 import { PlatformPortraitPersonalConsentTable } from './portrait-personal-consent-table'
-import { resolveHorizontalTablePlatformView } from './horizontal-table-from-schema'
+import {
+  resolveHorizontalTablePlatformView,
+  resolvePaymentStatementWriteEmphasizedColumns,
+} from './horizontal-table-from-schema'
+import {
+  PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS,
+} from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
 import previewTypography from '@/features/mypage/settings/ui/consent-document-preview-typography.module.css'
 import styles from './consent-form.module.css'
 
@@ -140,8 +147,15 @@ function PlatformHorizontalTableBody({
     )
   }
 
-  const { headers, rows, emphasizedColumns } = resolveHorizontalTablePlatformView(paragraph)
+  const view = resolveHorizontalTablePlatformView(paragraph)
+  const { headers, rows } = view
   const idType = paragraph.idTypeWithInput
+  /** 지급조서 작성 화면(A4 미리보기 제외) — Figma 강조 열·라디오 24px */
+  const isPaymentStatementWrite =
+    !documentPreview && PAYMENT_STATEMENT_PRE_CONSENT_HORIZONTAL_TABLE_IDS.has(paragraph.id)
+  const emphasizedColumns = isPaymentStatementWrite
+    ? resolvePaymentStatementWriteEmphasizedColumns(paragraph.id) ?? view.emphasizedColumns
+    : view.emphasizedColumns
 
   return (
     <div className={styles.tableBlock}>
@@ -162,6 +176,7 @@ function PlatformHorizontalTableBody({
               value={tableBottomConsentToChoice(paragraph.bottomConsent)}
               readOnly={documentPreview}
               documentTone={documentPreview}
+              size={isPaymentStatementWrite ? 'large' : 'default'}
               onChange={next =>
                 onUpdateParagraph(paragraph.id, current =>
                   current.kind === 'single_item' && current.variant === 'horizontal_table'
@@ -369,7 +384,12 @@ export function PlatformConsentParagraphBody({
       )
     }
     return (
-      <PFText as="p" typo="bd-md-rg" color="black" className={styles.prose}>
+      <PFText
+        as="p"
+        typo={paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro ? 'bd-lg-rg' : 'bd-md-rg'}
+        color="black"
+        className={styles.prose}
+      >
         {paragraph.bodyText}
       </PFText>
     )

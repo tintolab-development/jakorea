@@ -2,10 +2,14 @@
  * 참여 봉사자 추가 등록 — 신청 폼 모달
  */
 
+/* Figma Popup / Multiple / w1200 — 1200×880 고정, pt24 · px30 · pb34, 헤더·푸터 고정 + 본문 스크롤 */
 .content-modal.participating-volunteer-add-registration-modal.ant-modal .ant-modal-content {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
+  height: min(var(--max-height-modal-scroll, 880px), calc(100vh - 48px));
+  height: min(var(--max-height-modal-scroll, 880px), calc(100dvh - 48px));
   /* Figma Popup / Multiple / w1200 — pt24 · px30 · pb34 */
   padding: 24px 30px 34px;
 }
@@ -19,6 +23,19 @@
   padding: 0;
 }
 
+/* 타이틀↔본문 30 — body padding 이 아니라 헤더 margin 으로 둬야 스크롤 시에도 간격 유지 */
+.participating-volunteer-add-registration-modal .teal-header-modal__header {
+  flex-shrink: 0;
+  margin-bottom: var(--spacing-30, 30px);
+}
+
+.participating-volunteer-add-registration-modal .teal-header-modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .participating-volunteer-add-registration-modal .teal-header-modal__footer {
   flex-shrink: 0;
   justify-content: flex-end;
@@ -29,9 +46,6 @@
 
 .participating-volunteer-add-registration-modal__scroll {
   width: 100%;
-  max-height: min(72vh, 720px);
-  overflow-x: hidden;
-  overflow-y: auto;
   box-sizing: border-box;
 }
 
@@ -45,9 +59,15 @@
 .participating-volunteer-add-registration-modal__section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-16, 16px);
   width: 100%;
   min-width: 0;
+}
+
+/* 타이틀↔본문 간격은 섹션 gap(16)만 — 공통 헤더 margin-bottom 과 중복되지 않게 */
+.participating-volunteer-add-registration-modal__section
+  > .form-paragraph-section-header.detail-info-form__header {
+  margin-bottom: 0;
 }
 
 .participating-volunteer-add-registration-modal__template-block {
@@ -59,8 +79,67 @@
   width: 100%;
 }
 
-.participating-volunteer-add-registration-modal__section--basic-info {
-  gap: 10px;
+/* Figma 10014:42865 — 이전 참여 JA (DetailInfoForm 라벨 180 · Field/Table/Input h36) */
+.participating-volunteer-add-registration-modal
+  .detail-info-form:not(.volunteer-free-text-items)
+  .detail-info-form__label {
+  flex: 0 0 180px;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+}
+
+.participating-volunteer-add-registration-modal
+  .detail-info-form:not(.volunteer-free-text-items)
+  .cms-input.ant-input-affix-wrapper,
+.participating-volunteer-add-registration-modal
+  .detail-info-form:not(.volunteer-free-text-items)
+  .cms-select .ant-select-selector {
+  min-height: 36px;
+  height: 36px;
+}
+
+.participating-volunteer-add-registration-modal
+  .detail-info-form-inputs-wrapper-no-gap
+  > .cms-select {
+  width: 140px !important;
+  flex: 0 0 140px;
+}
+
+/* 자유 작성 항목 — Figma 카드(radius 12 · 헤더 h48 · 본문 p12 · 입력 h120). 공유 CSS는 신청서 폼도 쓰므로 모달 스코프로만 덮는다 */
+.participating-volunteer-add-registration-modal__section--free-text {
+  gap: var(--spacing-20, 20px);
+}
+
+.participating-volunteer-add-registration-modal__section--free-text .volunteer-free-text-items__card {
+  border-radius: var(--radius-12, 12px);
+}
+
+.participating-volunteer-add-registration-modal__section--free-text
+  .volunteer-free-text-items__card-header {
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: var(--spacing-12, 12px) var(--spacing-16, 16px);
+  gap: var(--spacing-8, 8px);
+  background: var(--BG-header);
+}
+
+.participating-volunteer-add-registration-modal__section--free-text
+  .volunteer-free-text-items__card-label {
+  text-align: left;
+  line-height: 150%;
+}
+
+.participating-volunteer-add-registration-modal__section--free-text
+  .volunteer-free-text-items__card-body {
+  padding: var(--spacing-12, 12px);
+}
+
+.participating-volunteer-add-registration-modal__section--free-text
+  .cms-textarea__inner
+  textarea.ant-input {
+  min-height: 118px;
+  resize: vertical;
 }
 
 .participating-volunteer-add-registration-modal__basic-info-form-stack {

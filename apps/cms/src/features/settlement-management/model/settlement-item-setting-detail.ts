@@ -52,10 +52,12 @@ export interface SettlementItemSettingDetail {
   meetingAttendance02MaxLimitWon?: number | null
   withholdingExclusionMaxWon?: number | null
   withholdingEarnedIncomeDeductionWon?: number | null
+  withholdingTaxRateDailyWorker?: number | null
   withholdingTaxRateBusiness?: number | null
   withholdingTaxRateOther?: number | null
   withholdingTaxRatePrize?: number | null
   withholdingTaxRateInterview?: number | null
+  withholdingEarnedIncomeTaxCreditRate?: number | null
   geminiSession1Won?: number | null
   geminiSession2Won?: number | null
   geminiSession3Won?: number | null
@@ -131,5 +133,14 @@ export function getCatalogSettlementItemSettingDetailForDeduction(): SettlementI
     ...EMPTY_CATALOG_DETAIL,
     layout: 'withholdingDailyWorker',
     basisUnit: '전체',
+    qualificationLines: ['1일 급여액에서 근로소득공제 150,000원을 차감하여 산정'],
+    withholdingExclusionMaxWon: 1_000,
+    withholdingEarnedIncomeDeductionWon: 150_000,
+    withholdingTaxRateDailyWorker: 6,
+    withholdingTaxRateBusiness: 3.3,
+    withholdingTaxRateOther: 8.8,
+    withholdingTaxRatePrize: 4.4,
+    withholdingTaxRateInterview: 22,
+    withholdingEarnedIncomeTaxCreditRate: 55,
   }
 }

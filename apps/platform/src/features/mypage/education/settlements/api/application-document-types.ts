@@ -45,11 +45,13 @@ export type SettlementApplicationDocumentTotal = {
 }
 
 export type SettlementApplicationDocumentAttachment = {
-  fileObjectId: number
-  fileName: string | null
-  contentType: string | null
-  viewUrl: string
-  viewUrlExpiresAt: string
+  submissionFileId?: number
+  questionKey?: string
+  fileObjectId?: number
+  originalFileName?: string
+  contentType?: string
+  fileSize?: number
+  downloadPolicyPath?: string
 }
 
 export type SettlementApplicationDocumentResponse = {

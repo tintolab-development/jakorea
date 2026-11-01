@@ -74,7 +74,6 @@ function createInitialSchemaConsentState(consentKey: InstructorApplyConsentKey):
   if (seed == null) {
     return {
       draft: { schemaVersion: 1, formSettings: { titleNumbering: 'numeric' }, paragraphs: [] },
-      crimeDocumentUploaded: false,
     }
   }
 
@@ -90,7 +89,6 @@ function createInitialSchemaConsentState(consentKey: InstructorApplyConsentKey):
     draft,
     paymentBasicInfo: templateId === 'agreement-third-party' ? {} : undefined,
     signatures: {},
-    crimeDocumentUploaded: false,
   }
 }
 
@@ -99,9 +97,6 @@ function isSchemaConsentWriteIncomplete(
   state: SchemaConsentWriteState
 ): boolean {
   const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
-  if (isCrimeConsentTemplate(templateId)) {
-    return state.crimeDocumentUploaded !== true
-  }
   return hasMemberConsentIncompleteRequiredFields(state.draft, {
     templateId,
     paymentStatementBasicInfo: state.paymentBasicInfo,
@@ -167,7 +162,6 @@ export function SchemaConsentWriteForm({
       ...initial,
       draft: normalizeMemberConsentWriteDraft(initial.draft, templateId),
       signatures: {},
-      crimeDocumentUploaded: initial.crimeDocumentUploaded,
     }
     if (readOnly) {
       return loadSchemaConsentWriteState(consentKey, normalized)
@@ -523,12 +517,7 @@ export function SchemaConsentWriteForm({
     return (
       <CrimeConsentDocumentForm
         consentKey={consentKey}
-        uploaded={state.crimeDocumentUploaded === true}
-        onUploadedChange={crimeDocumentUploaded =>
-          setState(prev => ({ ...prev, crimeDocumentUploaded }))
-        }
         onComplete={onComplete}
-        incomplete={incomplete}
         submitContext={submitContext}
         portalSubmitEnabled={portalSubmitEnabled}
       />
@@ -564,7 +553,7 @@ export function SchemaConsentWriteForm({
               type="submit"
               disabled={isSubmitting || isServerDraftLoading}
             >
-              {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성 완료'}
+              {isSubmitting ? '제출 중…' : isServerDraftLoading ? '불러오는 중…' : '작성완료'}
             </PFButton>
           </div>
         )}

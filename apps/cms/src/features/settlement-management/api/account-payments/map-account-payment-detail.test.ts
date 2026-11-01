@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   applyInstructorMemberPiiToAccountPaymentDetail,
   applyMaskedInstructorMemberToAccountPaymentDetail,
@@ -85,6 +85,15 @@ describe('resolveAccountPaymentMemberId', () => {
 })
 
 describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-02T12:00:00+09:00'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('마스킹 PII를 -로 치환하지 않는다', () => {
     const instructor: InstructorMemberDetailResponse = {
       member: {
@@ -103,7 +112,7 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
 
     const mapped = applyInstructorMemberPiiToAccountPaymentDetail(emptyDetailBasic(), instructor)
 
-    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994. **. **')
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994.**.** (만 32세)')
     expect(mapped.basic.phoneDisplay).toBe('010-****-5425')
     expect(mapped.basic.emailDisplay).toBe('teacher.instruc***@test.com')
     expect(mapped.basic.addressDisplay).toBe('서울특별시 강서구 마스킹')
@@ -124,7 +133,7 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
       },
     }
     const mapped = applyMaskedInstructorMemberToAccountPaymentDetail(emptyDetailBasic(), instructor)
-    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994. **. **')
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1994.**.** (만 32세)')
     expect(mapped.basic.phoneDisplay).toBe('010-****-5425')
     expect(mapped.basic.emailDisplay).toContain('***@')
     expect(mapped.basic.addressDisplay).not.toContain('101호')
@@ -141,6 +150,15 @@ describe('applyInstructorMemberPiiToAccountPaymentDetail', () => {
 })
 
 describe('mapAccountPaymentDetailFromGetApi', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-02T12:00:00+09:00'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('표시 계좌는 maskedAccountNo, sensitiveAccount는 지급 확인 원문만', () => {
     const detail: AccountPaymentDetailResponse = {
       payment: {
@@ -224,7 +242,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
     expect(mapped.basic.genderBirthDisplay).toBe('** | 1985-**-**')
     expect(mapped.basic.phoneDisplay).toBe('010-****-2201')
     expect(mapped.basic.emailDisplay).toBe('e2e-settle-***@local.demo')
-    expect(mapped.basic.addressDisplay).toContain('테헤란로')
+    expect(mapped.basic.addressDisplay).toBe('서울특별시 강남구 테헤란로 ***** ***')
     expect(mapped.basic.settlementAccountBankNumberPart).toBe('국민 **************')
     // sensitive 원문 `[E2E-SETTLE] 김정산` → 접두어 제거 후 `김*산`
     expect(mapped.basic.settlementAccountHolderPart).toBe('김*산')

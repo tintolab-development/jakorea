@@ -17,6 +17,7 @@ import type { Program, ProgramLifecycleStatus } from '@/types/domain'
 import type { ProgramListView } from '@/features/program/general/ui/table/program-table-column-resolver'
 import { getProgramAdminDetailUrlFromPathname } from '@/features/program/general/lib/program-admin-detail-url'
 import { clearGeneralProgramDetailQueryParams } from '@/features/program/general/lib/general-program-detail-route'
+import { buildProgramListSearchParamsAfterRegistrationComplete } from '@/features/program/shared/lib/post-registration-search-params'
 import { resolveProgramAdminDetailInfoTabUrl } from '@/features/program/general/lib/resolve-program-admin-detail-url'
 import { isUjatProgramId } from '@/features/program/ujat/lib/ujat-program-detail-meta'
 import {
@@ -497,20 +498,16 @@ function ProgramListPageContent() {
     (program?: Program) => {
       void companySchoolListQuery.refetch()
       closeWritingUserPreview()
-      const next = new URLSearchParams(searchParams)
-      next.delete(PROGRAMS_COMPANY_SCHOOL_NEW_QUERY_KEY)
-      next.delete(GENERAL_PROGRAM_REGISTRATION_FLOW_QUERY_KEY)
-      next.delete(REGISTRATION_DRAFT_MODE_QUERY_KEY)
-      next.delete('userPreview')
       const createdId = program?.id?.trim()
       if (createdId) {
-        next.set('programId', createdId)
-        next.set('lnb', 'info')
-        next.set('tab', 'info')
+        setSelectedProgramForFullPageModal(program ?? ({ id: createdId } as Program))
       }
-      setSearchParams(next, { replace: true })
+      setSearchParams(
+        prev => buildProgramListSearchParamsAfterRegistrationComplete(prev, createdId),
+        { replace: true }
+      )
     },
-    [closeWritingUserPreview, companySchoolListQuery, searchParams, setSearchParams]
+    [closeWritingUserPreview, companySchoolListQuery, setSearchParams]
   )
 
   const handleProgramCreateClick = () => {

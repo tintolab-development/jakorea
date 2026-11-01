@@ -134,6 +134,47 @@ export function mapRegionDirectAssignCandidateOptions(
   })
 }
 
+function getColumnIndicesForDateLabels(
+  columns: RegionAssignmentColumn[],
+  dateLabels: readonly string[]
+): number[] {
+  const labelSet = new Set(dateLabels)
+  return columns
+    .map((column, index) => ({ column, index }))
+    .filter(({ column }) => labelSet.has(column.dateLabel))
+    .map(({ index }) => index)
+}
+
+/**
+ * 선택한 교육일(서울 date = column.dateLabel)에 **활성 배정(ASSIGNED)** 이 있는지.
+ * REASSIGNMENT_REQUIRED / UNASSIGNED 만 있으면 false (대체 없이 불가 등록).
+ */
+export function regionUnavailabilityRequiresReplacementForDate(
+  data: RegionAssignmentTableData,
+  volunteerId: string,
+  dateLabel: string
+): boolean {
+  const row = data.rows.find(item => item.id === volunteerId)
+  if (!row) return false
+  const indices = getColumnIndicesForDateLabels(data.columns, [dateLabel])
+  return indices.some(index => {
+    const cell = row.cells[index]
+    return cell?.kind === 'assigned' && cell.isInvalidAssignment !== true
+  })
+}
+
+/** 선택한 불가일 중 하나라도 활성 배정이 있으면 대체 봉사자 필수 */
+export function regionUnavailabilityRequiresReplacement(
+  data: RegionAssignmentTableData,
+  volunteerId: string,
+  dateLabels: readonly string[]
+): boolean {
+  const unique = [...new Set(dateLabels)]
+  return unique.some(label =>
+    regionUnavailabilityRequiresReplacementForDate(data, volunteerId, label)
+  )
+}
+
 /**
  * 참여 불가일 POST 대상 scheduleId — 활동 불가는 서울 날짜 단위로 적용되므로 날짜당 1건.
  * 대상 봉사자가 그 날 배정된 일정이 있으면 그 일정(대체자가 해당 배정을 넘겨받음), 없으면 그 날 첫 일정.

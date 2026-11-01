@@ -7,7 +7,7 @@
  */
 
 /**
- * 특강/기타 인건비 지급 기준
+ * 특강/기타 인건비 지급 기준. PER_LECTURE=출강 1회, PER_HOUR=1시간당, PER_CLASS=1차시당(기타 인건비)
  */
 export type SettlementCorrectionApprovalRequestCalculationUnit = typeof SettlementCorrectionApprovalRequestCalculationUnit[keyof typeof SettlementCorrectionApprovalRequestCalculationUnit];
 
@@ -15,6 +15,5 @@ export type SettlementCorrectionApprovalRequestCalculationUnit = typeof Settleme
 export const SettlementCorrectionApprovalRequestCalculationUnit = {
   PER_LECTURE: 'PER_LECTURE',
   PER_HOUR: 'PER_HOUR',
-  /** BE 261028 — 기타 인건비·특강 수동 책정 1차시당 */
   PER_CLASS: 'PER_CLASS',
 } as const;

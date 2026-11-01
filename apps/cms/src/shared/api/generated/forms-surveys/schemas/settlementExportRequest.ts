@@ -26,9 +26,9 @@ export interface SettlementExportRequest {
      * @minimum 1
      */
   instructorMemberId?: number;
-  /** 이체 예정일 시작 */
+  /** 기간 시작. 대량이체·계좌 지급 목록은 이체 예정일(COALESCE(ap.expected_transfer_date, s.expected_transfer_date)). 세금신고 코퍼스(settlementIds·accountPaymentIds 비움) 발급은 지급 완료일(paid_at)의 달력일. 세금신고에서 settlementIds를 지정하면 이 기간으로 선택 건을 잘라내지 않습니다. */
   fromDate?: string;
-  /** 이체 예정일 종료 */
+  /** 기간 종료. 대량이체·계좌 지급 목록은 이체 예정일. 세금신고 코퍼스는 paid_at 달력일. 세금신고 선택 ID 발급에는 적용하지 않습니다. */
   toDate?: string;
   /**
      * export 사유. 감사 로그에 저장됩니다.
@@ -70,6 +70,6 @@ export interface SettlementExportRequest {
      * @items.minimum 1
      */
   accountPaymentIds?: number[];
-  dateRangeValid?: boolean;
   rawPrivacyApprovalValid?: boolean;
+  dateRangeValid?: boolean;
 }

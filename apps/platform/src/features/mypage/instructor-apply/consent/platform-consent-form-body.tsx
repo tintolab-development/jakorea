@@ -122,7 +122,11 @@ function wrapConsentParagraph(
       key={paragraph.id}
       id={paragraph.id}
       title={title}
-      required={resolvePlatformConsentSectionRequired(paragraph)}
+      required={
+        paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro
+          ? false
+          : resolvePlatformConsentSectionRequired(paragraph)
+      }
     >
       {content}
     </PFFormSection>

@@ -10,11 +10,16 @@ import type { AllocationCell } from './allocationCell';
 export interface VolunteerRow {
   participantId?: number;
   memberId?: number;
+  /** 봉사자 표시명. 배정 매칭용 SSOT. null/빈 문자열 금지(회원명 원문) */
   volunteerName?: string;
+  /** 목록용 마스킹 연락처(member.phone). PrivacyMaskingSupport.maskPhone. 원문이 없으면 null. 빈 문자열 금지. 봉사 합격 목록 VolunteerApplicationListItemResponse.contact와 동일 정책 */
+  contact?: string | null;
+  /** 목록용 마스킹 이메일(member.email). PrivacyMaskingSupport.maskEmail. 원문이 없으면 null. 빈 문자열 금지. VolunteerApplicationListItemResponse.email과 동일 정책 */
+  email?: string | null;
   educationRegionCode?: string;
   participantStatus?: string;
   giveUp?: boolean;
-  /** UJAT 교육 진행 배정일수. 취소가 아닌 ujat_dgbong_volunteer_schedule_assignment의 서로 다른 program_schedule_id 수. 봉사 합격 목록 VolunteerApplicationListItemResponse.totalAssignedDays와 같은 이름 */
+  /** UJAT 교육 진행 배정일수. 취소가 아닌 ujat_dgbong_volunteer_schedule_assignment의 서로 다른 program_schedule_id 수. semesterType/recruitHalf가 있으면 그 반기 교육일만 센다(미지정이면 전 반기). 봉사 합격 목록 VolunteerApplicationListItemResponse.totalAssignedDays와 같은 이름(목록 API는 전 반기) */
   totalAssignedDays?: number;
   cells?: AllocationCell[];
 }

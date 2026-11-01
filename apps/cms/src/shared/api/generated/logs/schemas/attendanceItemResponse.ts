@@ -20,6 +20,8 @@ export interface AttendanceItemResponse {
   checkedAt?: string;
   arrivalTime?: string;
   internalLate?: boolean;
+  /** 지각 분. arrivalTime이 JA 내부 정시 마감(08:30 Asia/Seoul wall-clock)을 넘기면 08:30부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다. */
+  lateMinutes?: number | null;
   volunteer1365Minutes?: number;
   volunteer1365DurationLabel?: string;
   checkedByMemberId?: number;

@@ -42,6 +42,7 @@ import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll
 import { useGeneralProgramListFilters } from './use-general-program-list-filters'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
 import { clearGeneralProgramDetailQueryParams } from '@/features/program/general/lib/general-program-detail-route'
+import { buildProgramListSearchParamsAfterRegistrationComplete } from '@/features/program/shared/lib/post-registration-search-params'
 import {
   fetchRegistrationDraftNotice,
   PROGRAM_REGISTRATION_GENERAL_TEMPLATE_CODE,
@@ -166,11 +167,19 @@ export function GeneralProgramListPageContent() {
   }, [closeWritingUserPreview, pNorm, setSearchParams])
 
   const handleGeneralProgramRegistrationSaved = useCallback(
-    (_createdProgram?: Program) => {
+    (createdProgram?: Program) => {
       refetchPrograms()
-      handleCloseGeneralProgramRegistrationFullpage()
+      closeWritingUserPreview()
+      const createdId = createdProgram?.id?.trim()
+      if (createdId) {
+        setSelectedProgramForDetail(createdProgram ?? ({ id: createdId } as Program))
+      }
+      setSearchParams(
+        prev => buildProgramListSearchParamsAfterRegistrationComplete(prev, createdId),
+        { replace: true }
+      )
     },
-    [handleCloseGeneralProgramRegistrationFullpage, refetchPrograms]
+    [closeWritingUserPreview, refetchPrograms, setSearchParams]
   )
 
   const userPreviewSyncParams = useMemo(

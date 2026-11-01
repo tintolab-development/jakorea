@@ -1,0 +1,16 @@
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  white-space: nowrap;
+}
+
+.actionIllustration {
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}

@@ -24,6 +24,7 @@ import {
   EducationSettlementPanel,
   EducationStudentsPanel,
   EducationSurveySection,
+  EducationPersonalCertificatePanel,
   DocumentPassBanner,
   hasTeacherMypageProfile,
   isSchoolTeacherMypageProfile,
@@ -80,8 +81,8 @@ import {
   resolveTeacherApplicationProgramGroup,
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
-import { CertificateIssueCta } from '@/features/mypage/education/applications/ui/certificate-issue-cta'
-import { shouldShowDetailCertificateCta } from '@/features/mypage/education/applications/lib/certificate-cta'
+import { shouldShowPersonalCertificateAction } from '@/features/mypage/education/applications/lib/personal-certificate-eligibility'
+import { withApplicationThumbnail } from '@/features/mypage/education/applications/lib/application-program-thumbnail'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import {
   resolveVisibleUjatScheduleBanner,
@@ -212,19 +213,22 @@ export function MypageEducationDetailPage() {
   const program = useMemo(() => {
     if (!remoteProgram) return undefined
     const applicationProgram = application?.programConfig
-    if (!applicationProgram) return remoteProgram
-    return {
-      ...remoteProgram,
-      programType: applicationProgram.programType ?? remoteProgram.programType,
-      educationFormLabel:
-        applicationProgram.educationFormLabel ?? remoteProgram.educationFormLabel,
-      educationJournalEnabled:
-        applicationProgram.educationJournalEnabled ?? remoteProgram.educationJournalEnabled,
-      surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
-      satisfactionConfigured:
-        applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
-    }
-  }, [application?.programConfig, remoteProgram])
+    if (!applicationProgram) return withApplicationThumbnail(remoteProgram, application)
+    return withApplicationThumbnail(
+      {
+        ...remoteProgram,
+        programType: applicationProgram.programType ?? remoteProgram.programType,
+        educationFormLabel:
+          applicationProgram.educationFormLabel ?? remoteProgram.educationFormLabel,
+        educationJournalEnabled:
+          applicationProgram.educationJournalEnabled ?? remoteProgram.educationJournalEnabled,
+        surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
+        satisfactionConfigured:
+          applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
+      },
+      application,
+    )
+  }, [application, application?.programConfig, remoteProgram])
   const isApplicationLoading =
     (isRemoteApiConfigured() && isProbingApplicationType) ||
     (remoteDetailEnabled && remoteApplicationQuery.isLoading)
@@ -682,6 +686,17 @@ export function MypageEducationDetailPage() {
       application.applicationType ?? routeApplicationType ?? resolvedApplicationType,
     hasTeacherAssignment: Boolean(application.teacherAssignment),
   })
+  const showPersonalCertificatePanel =
+    !isProgramApplicationStatus &&
+    !isWithdrawnDuring &&
+    isActivityStatus &&
+    shouldShowPersonalCertificateAction({
+      isTeacher,
+      applicationType: routeApplicationType ?? application.applicationType,
+      programType: application.programType ?? application.programConfig?.programType ?? program.programType,
+      programGroup: application.programGroup,
+      detailCase: application.detailCase,
+    })
   const appliedSection = isAppliedSection(section) ? section : 'program'
   const activitySection =
     isActivitySection(section) &&
@@ -898,8 +913,26 @@ export function MypageEducationDetailPage() {
                 application.displayStatus === 'in_progress' ? sexOffenseInquiryCase : undefined
               }
             />
+          ) : showPersonalCertificatePanel ? (
+            <EducationPersonalCertificatePanel
+              programId={application.programId ?? program.id}
+              applicationId={application.id}
+              applicationType={
+                application.applicationType ?? routeApplicationType ?? resolvedApplicationType
+              }
+              programType={
+                application.programType ?? application.programConfig?.programType ?? program.programType
+              }
+              programGroup={application.programGroup}
+              detailCase={application.detailCase}
+              isTeacher={isTeacher}
+              certificateStatus={application.certificateStatus}
+              canIssueCertificateHint={application.canIssueCertificate}
+              participantIdHint={application.participantId}
+            />
           ) : undefined
         }
+        asideAlign={!showTeacherAssignment && showPersonalCertificatePanel ? 'end' : 'start'}
       />
 
       {ujatScheduleBanner && appliedSection === 'application' ? (
@@ -960,27 +993,6 @@ export function MypageEducationDetailPage() {
         </>
       ) : isActivityStatus ? (
         <>
-          {shouldShowDetailCertificateCta({
-            isTeacher,
-            applicationType: routeApplicationType ?? application.applicationType,
-            programType: application.programType ?? application.programConfig?.programType ?? program.programType,
-            programGroup: application.programGroup,
-            detailCase: application.detailCase,
-            canIssueCertificate: application.certificateAvailable,
-          }) ? (
-            <CertificateIssueCta
-              isTeacher={isTeacher}
-              applicationType={routeApplicationType ?? application.applicationType}
-              applicationId={application.id}
-              programId={application.programId ?? program.id}
-              programTitle={program.title}
-              programType={application.programType ?? application.programConfig?.programType ?? program.programType}
-              programGroup={application.programGroup}
-              detailCase={application.detailCase}
-              canIssueCertificate={application.certificateAvailable}
-              certificateStatus={application.certificateStatus}
-            />
-          ) : null}
           <PFTabs
             className={styles.tabs}
             items={inProgressTabItems}

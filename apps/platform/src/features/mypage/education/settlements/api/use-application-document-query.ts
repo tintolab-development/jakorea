@@ -9,7 +9,7 @@ import {
 } from './application-document-client'
 import type { SettlementApplicationDocumentKind } from './application-document-types'
 
-/** Class G — viewUrl 단기 서명 URL. 캐시로 만료본을 붙잡지 않는다. */
+/** Class G — 첨부 다운로드 정책/민감 파일 경로. 캐시로 만료본을 붙잡지 않는다. */
 const STALE_MS = 0
 const GC_MS = 5 * 60_000
 
@@ -35,7 +35,7 @@ export function useSettlementApplicationDocumentQuery(options: {
     queryKey: platformQueryKeys.mypage.settlementApplicationDocument(
       kind ?? 'individual',
       documentId ?? 0,
-      revisionNo,
+      revisionNo
     ),
     queryFn: ({ signal }) => {
       if (kind === 'instructor') {

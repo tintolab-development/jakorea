@@ -12,7 +12,8 @@ export interface AllocationCell {
   organizationApplicationId?: number;
   educationSlotId?: number;
   assignmentGroupId?: string;
-  classLabel?: string;
+  /** 학급 라벨. ASSIGNED/REASSIGNMENT_REQUIRED는 class_label_snapshot, 없으면 교육 슬롯 class_label. UNASSIGNED는 null. 빈 문자열 금지 */
+  classLabel?: string | null;
   attendanceManager?: boolean;
   singleAssignment?: boolean;
   unavailable?: boolean;

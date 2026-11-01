@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
@@ -16,6 +16,11 @@ import {
 } from '@/shared/ui'
 import type { Popup, PopupCreateInput } from '@/entities/popup/model/types'
 import { shouldUsePopupRemoteApi } from '@/features/popup/api/capabilities'
+import {
+  buildPublishPeriodExpiredAlert,
+  createPublishPeriodDisabledDate,
+  isPublishPeriodExpired,
+} from '@/shared/lib/publish-period'
 import {
   HTTP_LINK_URL_FORMAT_ALERT,
   isValidHttpLinkUrl,
@@ -156,6 +161,10 @@ function PopupFormBody({
   const [imageCleared, setImageCleared] = useState(false)
 
   const createdAtLabel = initial ? formatCreatedAt(initial.createdAt) : '-'
+  const periodDisabledDate = useMemo(
+    () => createPublishPeriodDisabledDate(variant === 'detail' ? initial?.periodStart : null),
+    [initial?.periodStart, variant]
+  )
 
   const handleFilesChange = useCallback(
     async (files: File[]) => {
@@ -242,6 +251,10 @@ function PopupFormBody({
         title: '게시 기간 필수',
         content: '게시 기간을 선택해 주세요.',
       })
+      return null
+    }
+    if (isActive && isPublishPeriodExpired(end)) {
+      showAlert(buildPublishPeriodExpiredAlert('팝업은'))
       return null
     }
     if (linkEnabled && !linkUrl.trim()) {
@@ -506,6 +519,7 @@ function PopupFormBody({
                     onChange={dates => {
                       setPeriodRange(dates ?? [null, null])
                     }}
+                    disabledDate={periodDisabledDate}
                     placeholder="게시 기간을 선택하세요"
                   />
                 }

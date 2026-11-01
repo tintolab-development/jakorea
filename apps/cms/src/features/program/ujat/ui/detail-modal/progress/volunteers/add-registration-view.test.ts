@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseUjatVolAddMemberIdParam } from '@/features/program/ujat/lib/ujat-program-detail-url'
-
-/** add-registration-view `resolveVolunteerRegisterMemberId`와 동일 규칙 */
-function resolveVolunteerRegisterMemberId(memberId: string): number | null {
-  const parsed = parseUjatVolAddMemberIdParam(memberId)
-  return parsed == null ? null : Number(parsed)
-}
+import { resolveVolunteerRegisterMemberId } from './add-registration-modal'
 
 describe('resolveVolunteerRegisterMemberId', () => {
   it('양의 정수 문자열만 통과한다', () => {

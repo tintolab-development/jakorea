@@ -1,7 +1,10 @@
 import type { Program } from '@/types/domain'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
 import type { SurveyAudienceTab } from '@/features/program/shared/lib/survey-management/survey-management-types'
-import type { SurveyActionLabels, SurveyEmptyCopy } from '@/features/program/shared/lib/survey-management/survey-copy'
+import type {
+  SurveyActionLabels,
+  SurveyEmptyCopy,
+} from '@/features/program/shared/lib/survey-management/survey-copy'
 import {
   GENERAL_SATISFACTION_ACTION_LABELS,
   GENERAL_SATISFACTION_EMPTY_COPY,
@@ -19,11 +22,6 @@ export type GeneralSatisfactionAudienceKey =
 export const GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS = [
   { key: 'teacher', label: '교사' },
   { key: 'student', label: '학생' },
-] as const satisfies ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>>
-
-export const GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS = [
-  { key: 'volunteer_h1', label: '상반기 봉사자' },
-  { key: 'volunteer_h2', label: '하반기 봉사자' },
 ] as const satisfies ReadonlyArray<SurveyAudienceTab<GeneralSatisfactionAudienceKey>>
 
 export const GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS = [
@@ -154,19 +152,10 @@ export function getEnabledGeneralSatisfactionAudienceTabs(
   }
 
   if (isGeneralIndividualProgram(program)) {
-    if (programHasVolunteerParticipant(program)) {
-      return GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS
-    }
     return GENERAL_INDIVIDUAL_SATISFACTION_AUDIENCE_TABS
   }
 
-  const tabs: SurveyAudienceTab<GeneralSatisfactionAudienceKey>[] = [{ key: 'teacher', label: '교사' }]
-  if (programHasVolunteerParticipant(program)) {
-    tabs.push(...GENERAL_VOLUNTEER_SATISFACTION_AUDIENCE_TABS)
-  } else {
-    tabs.push({ key: 'student', label: '학생' })
-  }
-  return tabs
+  return GENERAL_ORGANIZATION_SATISFACTION_AUDIENCE_TABS
 }
 
 export function programHasGeneralSatisfactionSurvey(program: Program): boolean {
@@ -238,8 +227,7 @@ export function getGeneralSatisfactionEmptyCopy(
     }
     return {
       ...GENERAL_SATISFACTION_EMPTY_COPY,
-      secondaryDescription:
-        '만족도조사 등록 시 해당 프로그램 참여자에게 동일하게 노출됩니다. 기관 구분 없이 하나의 폼으로 진행됩니다.',
+      secondaryDescription: '만족도조사 등록 시 해당 프로그램 참여자에게 동일하게 노출됩니다.',
       registerButton: '만족도조사 등록',
     }
   }

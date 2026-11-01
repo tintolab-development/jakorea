@@ -2410,7 +2410,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
           ) : activeTab === 'posts' ? (
             <CmsButton
               variant="primary"
-              size="medium" className="school-detail-fullpage-view__posts-register-btn"
+              size="large"
               onClick={() => setPostWriteModalOpen(true)} >
               게시글 등록
             </CmsButton>

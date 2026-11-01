@@ -41,6 +41,7 @@ function ConsentParagraphSection({
           onChange={onChange}
           isEditMode={false}
           tableCanvasInteractive={false}
+          lockColumnHeaders
           bottomConsentPreviewInAuthoring
           paragraphInteractionMode="user"
         />

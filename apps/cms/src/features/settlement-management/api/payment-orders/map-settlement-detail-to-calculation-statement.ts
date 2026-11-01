@@ -309,8 +309,8 @@ export function mapSettlementDetailToInstructorPageCalculationStatement(
       nameEn: payeeFields?.nameEn ?? instructorDetail.nameEn,
       phoneDisplay: payeeFields?.phoneDisplay ?? MASKING_POLICY.phone(instructorDetail.phone),
       emailDisplay: payeeFields?.emailDisplay ?? MASKING_POLICY.email(instructorDetail.email),
-      addressDisplay: payeeFields?.addressDisplay ?? addressDisplay,
-      addressBlurredTail: payeeFields?.addressBlurredTail ?? addressBlurredTail,
+      addressDisplay: payeeFields ? payeeFields.addressDisplay : addressDisplay,
+      addressBlurredTail: payeeFields ? undefined : addressBlurredTail,
       settlementAccountBankNumberPart:
         payeeFields?.settlementAccountBankNumberPart ?? (settlementBankPart || '—'),
       settlementAccountHolderPart:

@@ -415,6 +415,8 @@ export function HorizontalTableParagraphBody({
   tableCanvasInteractive = true,
   /** 구조 잠금 partial — 본문 열 중 수정 불가(보유기간 등) */
   lockedBodyColumnIndexes,
+  /** true — th(열 제목)는 항상 고정 텍스트(Figma fill·추가 등록). 편집 인풋·파란 테두리 금지 */
+  lockColumnHeaders = false,
   /** 구조 잠금 partial — 개인정보 하단 안내도 ParagraphInput으로 수정 */
   allowDisclaimerBottomTextEdit = false,
   /** 구조 잠금 작성 중에도 하단 동의 라디오만 조작 가능 */
@@ -473,6 +475,7 @@ export function HorizontalTableParagraphBody({
   isEditMode: boolean
   tableCanvasInteractive?: boolean
   lockedBodyColumnIndexes?: ReadonlySet<number>
+  lockColumnHeaders?: boolean
   allowDisclaimerBottomTextEdit?: boolean
   bottomConsentPreviewInAuthoring?: boolean
   /** 프로그램 등록 — disabled 스킨 없이 미선택·입력 불가 */
@@ -917,10 +920,19 @@ export function HorizontalTableParagraphBody({
   const isField = p.tableFlavor === 'field'
   const isTextTable = !isField
   const canvasInteractive = tableCanvasInteractive
+  const isPersonalInfoConsentTableSpec =
+    PERSONAL_INFO_HORIZONTAL_TABLE_DISCLAIMER_PARAGRAPH_IDS.has(p.id)
+  /** Figma fill·추가 등록 — th는 table/h54 고정 라벨(편집 셸 아님) */
+  const shouldLockColumnHeaders =
+    lockColumnHeaders ||
+    (isPersonalInfoConsentTableSpec && !canvasInteractive)
   /** 셀·하단 동의 입력은 `isEditMode`, 격자 행 선택·민트 강조는 `canvasInteractive`로 분리 */
   const effectiveEditMode = isEditMode
   /** partial 잠금: 헤더(열 제목)는 고정, 본문만 열 단위로 열림 */
-  const headerEditMode = effectiveEditMode && lockedBodyColumnIndexes == null
+  const headerEditMode =
+    effectiveEditMode &&
+    lockedBodyColumnIndexes == null &&
+    !shouldLockColumnHeaders
   const isBodyColumnEditable = (colIdx: number) =>
     effectiveEditMode && !(lockedBodyColumnIndexes?.has(colIdx) ?? false)
   /** 시스템 설정 단락 — 텍스트 가로형과 동일한 파란 테두리 셀 인풋 */
@@ -977,6 +989,9 @@ export function HorizontalTableParagraphBody({
           : '',
         isPaymentStatementPreConsentThirdPartyTable
           ? 'form-editor-horizontal-table-wrap--payment-pre-consent-third-party'
+          : '',
+        isPersonalInfoConsentTableSpec
+          ? 'form-editor-horizontal-table-wrap--personal-info-consent-spec'
           : '',
       ]
         .filter(Boolean)

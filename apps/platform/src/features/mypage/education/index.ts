@@ -76,6 +76,7 @@ export {
   EducationDetailHeaderLayout,
   EducationStudentsPanel,
   EducationJournalPanel,
+  EducationPersonalCertificatePanel,
   TeacherAssignedInstructorCard,
   TeacherEducationAssignmentAside,
   TeacherTextbookInfoCard,

@@ -17,7 +17,18 @@ import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { handleError } from '@/shared/utils/error-handler'
+import {
+  downloadBlob,
+  fileNameFromContentDisposition,
+  generateFilename,
+} from '@/shared/utils/file-download'
+import {
+  downloadMemberApplicationAssignmentFilesZipRemote,
+  formatAssignmentFilesDownloadErrorMessage,
+} from '@/features/user/api/member-program-history-api-client'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
+import { GENERAL_SATISFACTION_NAV_TAB } from '@/features/program/general/lib/survey-audience'
+import type { ProgressAssignmentSurveyNavTab } from './participating-individual-progress-assignment-table'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import type { Program } from '@/types/domain'
 import { assignmentTeamRoleTagClassName, ASSIGNMENT_TEAM_ROLE_TAG_DROPDOWN_STYLE } from '@/features/program/general/lib/assignment-team-role-tag'
@@ -25,7 +36,6 @@ import {
   applyTeamNameFromSessionOrder,
   buildParticipatingIndividualParticipantAssignmentRowsFromAssigned,
   buildParticipatingIndividualParticipantAssignmentSummary,
-  collectParticipantAssignmentDownloadableFiles,
   getParticipatingIndividualParticipantAssignmentBundle,
   mergeParticipantDetailAssignmentRowsWithRemote,
   sortParticipatingIndividualParticipantAssignmentRows,
@@ -117,13 +127,22 @@ export interface ParticipatingIndividualParticipantAssignmentSectionProps {
   assignedSessionsLoading?: boolean
   /** 서버가 `TEAM_FEATURE_NOT_APPLICABLE`을 돌려줘 팀 UI를 숨겨야 할 때 */
   onTeamFeatureNotApplicable?: () => void
+  /** 설문조사·만족도조사 버튼 → 같은 프로그램 설문 관리 탭 이동 (없으면 응답 보기 팝업) */
+  onNavigateToSurveyCategory?: (tab: ProgressAssignmentSurveyNavTab) => void
 }
 
 export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
   ParticipatingIndividualParticipantAssignmentSectionHandle,
   ParticipatingIndividualParticipantAssignmentSectionProps
 >(function ParticipatingIndividualParticipantAssignmentSection(
-  { program, participant, assignedSessions = [], assignedSessionsLoading = false, onTeamFeatureNotApplicable },
+  {
+    program,
+    participant,
+    assignedSessions = [],
+    assignedSessionsLoading = false,
+    onTeamFeatureNotApplicable,
+    onNavigateToSurveyCategory,
+  },
   ref
 ) {
   const { showAlert } = useCmsAlert()
@@ -320,27 +339,66 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     [showAlert]
   )
 
-  const handleBulkDownloadAssignments = useCallback(() => {
-    const files = collectParticipantAssignmentDownloadableFiles(rows)
-    if (files.length === 0) {
+  const [bulkDownloading, setBulkDownloading] = useState(false)
+
+  const handleBulkDownloadAssignments = useCallback(async () => {
+    if (bulkDownloading) return
+    if (!remoteEnabled) {
+      notifyProgramApiUnavailable(
+        'general-participant-detail-assignment-bulk-download',
+        '참여자 상세 · 과제 일괄 다운로드'
+      )
+      return
+    }
+    const memberId = Number(participant.memberId)
+    const applicationId = Number(participant.individualApplicationId)
+    if (
+      !Number.isSafeInteger(memberId) ||
+      memberId <= 0 ||
+      !Number.isSafeInteger(applicationId) ||
+      applicationId <= 0
+    ) {
       showAlert({
         title: '안내',
-        content: '다운로드할 제출 파일이 없습니다.',
+        content: '참여자 신청 정보를 확인할 수 없어 과제를 다운로드할 수 없습니다.',
       })
       return
     }
-    void (async () => {
-      for (const file of files) {
-        await downloadAssignmentFile(file.fileObjectId, file.fileName, true)
-      }
-    })()
-  }, [downloadAssignmentFile, rows, showAlert])
+    setBulkDownloading(true)
+    try {
+      const { zip, contentDisposition } = await downloadMemberApplicationAssignmentFilesZipRemote({
+        memberId,
+        applicationId,
+        applicationType: 'INDIVIDUAL',
+      })
+      const fileName = fileNameFromContentDisposition(
+        contentDisposition,
+        generateFilename(`참여자_과제_${participant.applicantName}`, 'zip')
+      )
+      // 서버가 파일별 다운로드 감사 로그를 남긴다.
+      await downloadBlob(zip, fileName, { skipAccessLog: true })
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: formatAssignmentFilesDownloadErrorMessage(error),
+      })
+    } finally {
+      setBulkDownloading(false)
+    }
+  }, [
+    bulkDownloading,
+    participant.applicantName,
+    participant.individualApplicationId,
+    participant.memberId,
+    remoteEnabled,
+    showAlert,
+  ])
 
   useImperativeHandle(
     ref,
     () => ({
       openTeamChangeModal: handleOpenTeamChangeModal,
-      bulkDownloadAssignments: handleBulkDownloadAssignments,
+      bulkDownloadAssignments: () => void handleBulkDownloadAssignments(),
       exportExcel,
     }),
     [exportExcel, handleBulkDownloadAssignments, handleOpenTeamChangeModal]
@@ -559,12 +617,16 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         return (
           <AssignmentSubmissionCellActionButton
             loading={surveyViewLoading}
-            onClick={() =>
+            onClick={() => {
+              if (onNavigateToSurveyCategory) {
+                onNavigateToSurveyCategory('survey')
+                return
+              }
               void openSurveyResponseView('설문조사 보기', {
                 templateVersionId: submission.templateVersionId,
                 formResponseId: submission.formResponseId,
               })
-            }
+            }}
           >
             설문조사 보기
           </AssignmentSubmissionCellActionButton>
@@ -575,12 +637,16 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         return (
           <AssignmentSubmissionCellActionButton
             loading={surveyViewLoading}
-            onClick={() =>
+            onClick={() => {
+              if (onNavigateToSurveyCategory) {
+                onNavigateToSurveyCategory(GENERAL_SATISFACTION_NAV_TAB)
+                return
+              }
               void openSurveyResponseView('만족도조사 보기', {
                 templateVersionId: submission.templateVersionId,
                 formResponseId: submission.formResponseId,
               })
-            }
+            }}
           >
             만족도조사 보기
           </AssignmentSubmissionCellActionButton>
@@ -589,7 +655,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       return '-'
     },
-    [downloadAssignmentFile, openSurveyResponseView, surveyViewLoading]
+    [downloadAssignmentFile, onNavigateToSurveyCategory, openSurveyResponseView, surveyViewLoading]
   )
 
   const teamColumns: ColumnsType<ParticipatingIndividualParticipantAssignmentRow & { no: number }> =
@@ -715,7 +781,9 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
             variant="secondary"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
-            onClick={handleBulkDownloadAssignments}
+            loading={bulkDownloading}
+            disabled={bulkDownloading}
+            onClick={() => void handleBulkDownloadAssignments()}
           >
             과제 일괄 다운로드
           </FilterTableToolbarButton>

@@ -9,10 +9,7 @@ import type { PaymentOrderDetailAggregateStatus } from '@/shared/constants/payme
 import { PersonalInfoRevealButton } from '@/features/user/detail/ui/personal-info-reveal-button'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
-import {
-  ProgramDetailTdSegmentWrap,
-  renderDetailInfoPipeSeparated,
-} from '@/features/program/shared/ui/program-detail-td-divider'
+import { renderDetailInfoPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { formatWon } from './payment-order-detail-fullpage-shared'
 import { renderAggregateStatus } from './payment-order-detail-aggregate-status'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
@@ -132,11 +129,7 @@ export function PaymentOrderInstructorBasicInfo({
           />
           <DetailInfoForm.Field
             label="성별 및 생년월일"
-            view={
-              <ProgramDetailTdSegmentWrap>
-                {detail.genderBirthDisplay?.trim() || '-'}
-              </ProgramDetailTdSegmentWrap>
-            }
+            view={renderDetailInfoPipeSeparated(detail.genderBirthDisplay)}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

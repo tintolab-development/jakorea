@@ -4,7 +4,6 @@
 
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { CmsButton, CmsInput, CmsNumericInput, CmsSelect } from '@/shared/ui'
-import { TextbookStatusBadge } from '@/shared/components/textbook-status-badge'
 import type {
   GeneralIndividualApplicantDetail,
   GeneralIndividualApplicantRow,
@@ -15,12 +14,6 @@ import { toDisplayGender } from '@/features/user/api/map-member-gender-birth'
 import { ApplicantAdminCommentSection } from './applicant-admin-comment-section'
 import { ProgramApprovalStatusDetailValue } from './program-approval-status-detail-value'
 import type { ApplicantIndividualEditDraft } from '@/features/program/general/lib/applicant-individual-detail-edit'
-import type { TextbookSelectOption } from '@/features/program/general/hooks/use-applicant-institution-detail-edit'
-import {
-  TEXTBOOK_NOT_USED_OPTION_VALUE,
-  resolveIndividualApplicantTextbookDisplay,
-} from '@/features/program/general/lib/individual-applicant-textbook'
-import { useIndividualApplicantTextbookOptions } from '@/features/textbook/hooks/use-individual-applicant-textbook-options'
 import {
   shouldShowIndividualApplicantPreferredScheduleSection,
   shouldShowIndividualApplicantTeamSection,
@@ -82,7 +75,6 @@ export interface ApplicantGeneralIndividualBasicInfoProps {
   validationErrors?: Record<string, string>
   onResendNotificationClick?: () => void
   screeningStage?: IndividualApplicantScreeningStage
-  textbookOptions?: TextbookSelectOption[]
   openManagerDropdown?: { rowId: string; manager: 'A' | 'B' } | null
   setOpenManagerDropdown?: (value: { rowId: string; manager: 'A' | 'B' } | null) => void
   onManagerAEvaluationChange?: (id: string, evaluation: GeneralManagerEvaluation) => void
@@ -392,10 +384,8 @@ export function ApplicantGeneralIndividualBasicInfo({
   detailContext = 'application',
   draft,
   onDraftChange,
-  validationErrors,
   onResendNotificationClick,
   screeningStage = 'main',
-  textbookOptions = [],
   openManagerDropdown = null,
   setOpenManagerDropdown,
   onManagerAEvaluationChange,
@@ -409,14 +399,6 @@ export function ApplicantGeneralIndividualBasicInfo({
   const shouldMask = maskSensitive && applicant.privacyMaskingLevel == null
   const isEditMode = mode === 'edit' && draft != null && onDraftChange != null
   const showAdminComment = isProgressContext || applicant.approvalStatus === 'approved'
-  const applicantEducationGrade =
-    applicant.educationGrade?.trim() || detail?.affiliationGrade?.trim() || ''
-  const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
-    useIndividualApplicantTextbookOptions(program, applicantEducationGrade || undefined)
-  /** 승인 완료 후에만 교재명 노출. 미지정은 「해당 없음」 */
-  const showTextbookField =
-    screeningStage === 'main' && applicant.approvalStatus === 'approved'
-
   const showTeamSection = shouldShowIndividualApplicantTeamSection(program, detail)
   const showManagerEvaluation = shouldShowIndividualManagerEvaluationSection(
     program,
@@ -502,75 +484,6 @@ export function ApplicantGeneralIndividualBasicInfo({
           </ProgramDetailTdSegmentWrap>
         )
       : <IndividualApplicantId1365Cell id1365={id1365Raw} />
-
-  const textbookDisplay = resolveIndividualApplicantTextbookDisplay(
-    program,
-    applicant,
-    textbookCatalog
-  )
-  const textbookNotUsedView = <TextbookStatusBadge status="not_applicable" />
-  const textbookViewValue = textbookDisplay.isUnspecified ? (
-    textbookNotUsedView
-  ) : (
-    <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([
-        textbookDisplay.name,
-        textbookDisplay.kitsLabel,
-        textbookDisplay.status ? <TextbookStatusBadge status={textbookDisplay.status} /> : '-',
-      ])}
-    </ProgramDetailTdSegmentWrap>
-  )
-
-  const textbookEditCell =
-    isEditMode && draft && onDraftChange ? (
-      <div
-        className="institution-basic-info__field-stack institution-basic-info__textbook-select-only"
-      >
-        <CmsSelect
-          className="institution-basic-info__full-width-control"
-          inputSize="small"
-          placeholder={isTextbookCatalogLoading ? '교재 목록 불러오는 중…' : '교재명 선택'}
-          loading={isTextbookCatalogLoading}
-          withAllOption={false}
-          value={draft.textbookId || TEXTBOOK_NOT_USED_OPTION_VALUE}
-          options={(textbookOptions.length > 0
-            ? textbookOptions
-            : [
-                {
-                  value: TEXTBOOK_NOT_USED_OPTION_VALUE,
-                  label: '해당 없음',
-                  textbookName: '해당 없음',
-                },
-              ]
-          ).map(option => ({
-            label: option.label,
-            value: option.value,
-          }))}
-          onChange={value => {
-            const options =
-              textbookOptions.length > 0
-                ? textbookOptions
-                : [
-                    {
-                      value: TEXTBOOK_NOT_USED_OPTION_VALUE,
-                      label: '해당 없음',
-                      textbookName: '해당 없음',
-                    },
-                  ]
-            const selected = options.find(option => option.value === value)
-            const isNotUsed = value === TEXTBOOK_NOT_USED_OPTION_VALUE
-            onDraftChange({
-              textbookId: isNotUsed ? TEXTBOOK_NOT_USED_OPTION_VALUE : String(value ?? ''),
-              textbookName: isNotUsed ? '해당 없음' : (selected?.textbookName ?? ''),
-              textbookStatus: isNotUsed ? 'not_applicable' : 'preparing',
-            })
-          }}
-        />
-        {validationErrors?.textbookId ? (
-          <span className="institution-basic-info__field-error">{validationErrors.textbookId}</span>
-        ) : null}
-      </div>
-    ) : undefined
 
   const teamNameAndMemberEditCell =
     isEditMode && draft && onDraftChange ? (
@@ -769,30 +682,8 @@ export function ApplicantGeneralIndividualBasicInfo({
               }
             />
           </DetailInfoForm.Row>
-          {!isProgressContext && showTextbookField ? (
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="교재명"
-                fullRow
-                readOnlyDisplay={!isEditMode}
-                view={textbookViewValue}
-                edit={textbookEditCell}
-              />
-            </DetailInfoForm.Row>
-          ) : null}
         </DetailInfoForm>
         <DetailInfoForm title="기본 정보" hideHeader mode={basicInfoFormMode}>
-          {isProgressContext && showTextbookField ? (
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="교재명"
-                fullRow
-                readOnlyDisplay={!isEditMode}
-                view={textbookViewValue}
-                edit={textbookEditCell}
-              />
-            </DetailInfoForm.Row>
-          ) : null}
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field label="성명" readOnlyDisplay view={nameCell} />
             <DetailInfoForm.Field

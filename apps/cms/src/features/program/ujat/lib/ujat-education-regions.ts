@@ -134,7 +134,9 @@ export function findUjatEducationRegionKeyByLabel(label: string): string | undef
 }
 
 /** 백엔드 `educationRegionCode`(예: `GYEONGGI_SOUTH`) → regionKey. 대소문자 무시, 매칭 실패 시 undefined */
-export function findUjatEducationRegionKeyByCode(code: string | null | undefined): string | undefined {
+export function findUjatEducationRegionKeyByCode(
+  code: string | null | undefined
+): string | undefined {
   const normalized = code?.trim().toLowerCase()
   if (!normalized) return undefined
   const fromActive = listUjatEducationRegionsActive().find(
@@ -143,7 +145,7 @@ export function findUjatEducationRegionKeyByCode(code: string | null | undefined
   if (fromActive) return fromActive.key
   const fromAll = readAllRows().find(row => row.regionKey.toLowerCase() === normalized)
   if (fromAll) return fromAll.regionKey
-  return UJAT_DEFAULT_EDUCATION_REGIONS.find(row => row.key === normalized)?.key
+  return UJAT_DEFAULT_EDUCATION_REGIONS.find(row => row.key.toLowerCase() === normalized)?.key
 }
 
 /** 탭·필터 기본 선택 — 교육 지역 관리 sortOrder 1번째 active 지역 */

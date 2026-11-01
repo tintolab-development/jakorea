@@ -2,13 +2,18 @@ import { describe, expect, it } from 'vitest'
 import {
   buildEducationClassRemappingRequest,
   buildExistingClassOptionsFromEducationClasses,
+  buildMappingFromRowFields,
+  collectBlockedTargetClassKeys,
+  collectCatalogClassKeys,
   collectUsedExistingClassKeys,
   countAvailableExistingClasses,
   getChangeClassAddRowBlockReason,
   isChangeClassRowComplete,
   mappingToRemappingItem,
+  normalizedClassKey,
   remapTemporaryScheduleSlotsForClassChange,
   resolveEducationClassWireClassName,
+  validateChangeClassRows,
   type ChangeClassConfirmPayload,
 } from './change-class'
 
@@ -264,5 +269,85 @@ describe('remapTemporaryScheduleSlotsForClassChange', () => {
       { scheduleId: 11, grade: '2', className: '3반', studentCount: 28 },
       { scheduleId: 12, grade: '2', className: '3반', studentCount: 28 },
     ])
+  })
+})
+
+describe('change-class target guards', () => {
+  const catalogKeys = collectCatalogClassKeys(
+    buildExistingClassOptionsFromEducationClasses([
+      { grade: '1학년', className: '1반' },
+      { grade: '1', className: '2반' },
+      { grade: '2', className: '1반' },
+    ])
+  )
+
+  it('normalizes catalog wire grade/class into comparable keys', () => {
+    expect(normalizedClassKey('1학년', '1반')).toBe('1:1')
+    expect(normalizedClassKey('1', '1')).toBe('1:1')
+    expect(normalizedClassKey('__unassigned__', '')).toBeNull()
+    expect([...catalogKeys].sort()).toEqual(['1:1', '1:2', '2:1'])
+  })
+
+  it('builds mapping labels without doubling the grade suffix', () => {
+    expect(buildMappingFromRowFields('1학년', '1반', '3', '4')).toMatchObject({
+      existingGradeLabel: '1학년',
+      existingClassNo: 1,
+      newGradeLabel: '3학년',
+      newClassNo: 4,
+    })
+  })
+
+  it('rejects same class even when the existing value is catalog wire', () => {
+    expect(
+      validateChangeClassRows(
+        [{ existingGrade: '1학년', existingClassNo: '1반', newGrade: '1', newClassNo: '1' }],
+        catalogKeys
+      )
+    ).toBe('1번째 행의 기존 학급과 변경 학급이 동일합니다.')
+  })
+
+  it('rejects a target that stays in the catalog', () => {
+    expect(
+      validateChangeClassRows(
+        [{ existingGrade: '1학년', existingClassNo: '1반', newGrade: '2', newClassNo: '1' }],
+        catalogKeys
+      )
+    ).toBe('1번째 행의 변경 학급은 이미 진행 중인 학급입니다.')
+  })
+
+  it('rejects duplicate targets across rows', () => {
+    expect(
+      validateChangeClassRows(
+        [
+          { existingGrade: '1학년', existingClassNo: '1반', newGrade: '3', newClassNo: '1' },
+          { existingGrade: '1', existingClassNo: '2반', newGrade: '3', newClassNo: '1' },
+        ],
+        catalogKeys
+      )
+    ).toBe('2번째 행의 변경 학급이 다른 행과 중복됩니다.')
+  })
+
+  it('allows moving into a class that another row moves away', () => {
+    expect(
+      validateChangeClassRows(
+        [
+          { existingGrade: '1학년', existingClassNo: '1반', newGrade: '1', newClassNo: '2' },
+          { existingGrade: '1', existingClassNo: '2반', newGrade: '__unassigned__', newClassNo: '' },
+        ],
+        catalogKeys
+      )
+    ).toBeNull()
+  })
+
+  it('blocks other-row targets and remaining catalog classes for a row', () => {
+    const blocked = collectBlockedTargetClassKeys(
+      [
+        { existingGrade: '1학년', existingClassNo: '1반', newGrade: undefined, newClassNo: '' },
+        { existingGrade: '1', existingClassNo: '2반', newGrade: '4', newClassNo: '5' },
+      ],
+      0,
+      catalogKeys
+    )
+    expect([...blocked].sort()).toEqual(['1:1', '2:1', '4:5'])
   })
 })

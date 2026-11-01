@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { Spin } from 'antd'
 import { ModalCloseIcon } from '@/shared/ui/icons'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
@@ -21,12 +22,15 @@ import {
 import { useCmsAlert } from '@/shared/ui'
 import { handleError } from '@/shared/utils/error-handler'
 import { shouldUseFormsSurveysRemoteApi } from '@/features/template/api/admin-form-templates-service'
+import { getFormResponseFeedbackRemote } from '@/features/template/api/form-templates-api-client'
+import { formResponseQueryKeys } from '@/features/template/api/form-response-query-keys'
 import {
   getFormResponseDocumentSnapshotRemote,
   getFormResponseRemote,
 } from '@/features/program/general/api/form-responses-api-client'
 import { useCreateFormResponseFeedbackMutation } from '@/features/template/hooks/use-create-form-response-feedback-mutation'
 import { getFormResponseFeedbackErrorMessage } from '@/features/template/lib/form-response-feedback-error'
+import { resolveFormResponseFeedbackDisplayContent } from '@/features/template/lib/form-response-feedback-list'
 import { UjatAssignmentFeedbackModal, type UjatFeedbackModalMode } from './ujat-assignment-feedback-modal'
 import {
   buildUjatDocumentFileName,
@@ -123,6 +127,7 @@ export function UjatAssignmentDocumentViewerModal({
   target,
 }: UjatAssignmentDocumentViewerModalProps) {
   const { showAlert } = useCmsAlert()
+  const queryClient = useQueryClient()
   const createFeedbackMutation = useCreateFormResponseFeedbackMutation()
   const formsRemote = shouldUseFormsSurveysRemoteApi()
   const formResponseId = target?.formResponseId
@@ -131,6 +136,13 @@ export function UjatAssignmentDocumentViewerModal({
   const [feedbackMode, setFeedbackMode] = useState<UjatFeedbackModalMode | null>(null)
   const [submittedFeedback, setSubmittedFeedback] = useState<string | null>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setCurrentPageIndex(0)
+    setFeedbackMode(null)
+    setSubmittedFeedback(null)
+  }, [open, formResponseId])
 
   const pdfHostRef = useRef<HTMLDivElement>(null)
 
@@ -148,6 +160,20 @@ export function UjatAssignmentDocumentViewerModal({
       return { response, snapshot }
     },
   })
+
+  const feedbackQuery = useQuery({
+    queryKey: formResponseQueryKeys.feedback(Number(formResponseId)),
+    enabled: open && formsRemote && formResponseId != null && Number.isFinite(formResponseId),
+    retry: false,
+    staleTime: 15_000,
+    queryFn: () => getFormResponseFeedbackRemote(Number(formResponseId)),
+  })
+
+  const hydratedFeedbackContent = useMemo(
+    () => resolveFormResponseFeedbackDisplayContent(feedbackQuery.data),
+    [feedbackQuery.data]
+  )
+  const effectiveFeedback = submittedFeedback ?? hydratedFeedbackContent
 
   const draft = useMemo(() => {
     if (!target || formResponseId == null) return null
@@ -221,12 +247,12 @@ export function UjatAssignmentDocumentViewerModal({
   }, [onCancel])
 
   const handleFeedbackButtonClick = useCallback(() => {
-    if (submittedFeedback != null) {
+    if (effectiveFeedback != null) {
       setFeedbackMode('view')
     } else {
       setFeedbackMode('write')
     }
-  }, [submittedFeedback])
+  }, [effectiveFeedback])
 
   const handleFeedbackSubmit = useCallback(
     async (feedback: string) => {
@@ -253,6 +279,9 @@ export function UjatAssignmentDocumentViewerModal({
         })
         setSubmittedFeedback(result.content?.trim() || feedback)
         setFeedbackMode(null)
+        void queryClient.invalidateQueries({
+          queryKey: ujatQueryKeys.assignmentSubmissionsAll(),
+        })
         showAlert({
           title: '안내',
           content: '피드백을 등록했습니다. 회원에게 확인 요청 알림이 발송됩니다.',
@@ -265,7 +294,7 @@ export function UjatAssignmentDocumentViewerModal({
         })
       }
     },
-    [createFeedbackMutation, showAlert, target?.formResponseId]
+    [createFeedbackMutation, queryClient, showAlert, target?.formResponseId]
   )
 
   const handleDownloadPdf = useCallback(async () => {
@@ -295,7 +324,7 @@ export function UjatAssignmentDocumentViewerModal({
         variant="primary"
         size="medium"
         onClick={handleFeedbackButtonClick} >
-        {submittedFeedback != null ? '피드백 보기' : '피드백 작성'}
+        {effectiveFeedback != null ? '피드백 보기' : '피드백 작성'}
       </CmsButton>
       <CmsButton
         variant="primary"
@@ -443,7 +472,7 @@ export function UjatAssignmentDocumentViewerModal({
           mode={feedbackMode ?? 'write'}
           volunteerName={target.volunteerName}
           docTypeLabel={docTypeLabel}
-          existingFeedback={submittedFeedback ?? ''}
+          existingFeedback={effectiveFeedback ?? ''}
           submitting={createFeedbackMutation.isPending}
           onSubmit={handleFeedbackSubmit}
         />

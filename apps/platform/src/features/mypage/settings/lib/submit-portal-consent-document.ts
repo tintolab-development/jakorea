@@ -7,8 +7,18 @@ import {
 } from '@jakorea/form-schema/writing-form'
 import { buildPortraitFilledDocument } from '@/features/auth/sign-up/lib/map-portrait-consent-filled-document'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
-import { uploadMemberPortalFile } from '../../instructor-apply/api/member-file-upload'
+import { isAxiosError } from 'axios'
+import {
+  fetchMemberPortalFile,
+  uploadMemberPortalFile,
+} from '../../instructor-apply/api/member-file-upload'
 import type { InstructorApplyConsentKey } from '../../instructor-apply/consent/catalog'
+import { readCrimeConsentErrorCodeFromBody } from '../../instructor-apply/consent/crime-consent-original'
+import {
+  submitCrimeConsentOriginal,
+  type CrimeConsentApiFailure,
+  type CrimeConsentSubmitSession,
+} from '../../instructor-apply/consent/crime-consent-submit'
 import type { SchemaConsentWriteState } from '../../instructor-apply/consent/schema-draft-persist'
 import {
   completePortalConsentDocument,
@@ -215,15 +225,36 @@ export async function submitPortalPortraitConsentFromWriteState(
   })
 }
 
-/** 성범죄 — schema 작성 없이 complete만 (증빙 filePurpose 업로드는 별도 정책) */
+function readCrimeConsentApiFailure(error: unknown): CrimeConsentApiFailure | null {
+  if (!isAxiosError(error) || error.response == null) return null
+  return {
+    status: error.response.status,
+    code: readCrimeConsentErrorCodeFromBody(error.response.data),
+  }
+}
+
+/**
+ * 성범죄 — 원본 PDF(`CRIMINAL_HISTORY_CONSENT_ORIGINAL`)를 문서에 연결해 complete.
+ * 제출 직전 GET /me/files/{id} 재확인·응답 유실 재전송·409 처리는 `submitCrimeConsentOriginal`.
+ * `session`은 호출 화면이 메모리에 보관한다.
+ */
 export async function submitPortalCrimeConsentComplete(
   consentKey: InstructorApplyConsentKey,
+  input: { evidenceFileObjectId: number; session: CrimeConsentSubmitSession },
 ): Promise<void> {
   const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
-  const created = await createPortalConsentDocument({ consentType })
-  const documentId = created.documentId
-  if (documentId == null) {
-    throw new Error('동의서 문서를 만들지 못했습니다.')
-  }
-  await completePortalConsentDocument(documentId, {})
+  await submitCrimeConsentOriginal(
+    {
+      fetchFile: fileObjectId => fetchMemberPortalFile(fileObjectId),
+      createDocument: () => createPortalConsentDocument({ consentType }),
+      completeDocument: (documentId, body) => completePortalConsentDocument(documentId, body),
+      fetchDocument: documentId => fetchPortalConsentDocumentDetail(documentId),
+      readApiFailure: readCrimeConsentApiFailure,
+      reportClientBug: code => {
+        console.error('crimeConsent complete rejected request body', { code, consentType })
+      },
+    },
+    input.session,
+    input.evidenceFileObjectId,
+  )
 }

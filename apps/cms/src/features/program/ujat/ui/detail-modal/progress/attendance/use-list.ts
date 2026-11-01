@@ -4,12 +4,10 @@ import { useCmsAlert } from '@/shared/ui'
 import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
   isInvalidAttendanceArrivalTimeError,
-  toIsoLocalTime,
 } from '@/shared/lib/attendance-arrival-time'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import {
   buildUjatAttendanceSessionsFromMatrix,
-  mapUjatUiAttendanceStatusToApi,
 } from '@/features/program/ujat/api/allocation-matrix-adapters'
 import {
   bulkUpsertUjatAttendances,
@@ -23,6 +21,7 @@ import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/li
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type { EducationProgressHalfKey } from '../tabs'
 import { buildUjatAttendanceFilterFields } from './filter-fields'
+import { buildUjatAttendanceCorrectionBulkItem } from './attendance-correction-bulk'
 import {
   cloneAttendanceVolunteerRows,
   filterVisibleAttendanceVolunteers,
@@ -110,9 +109,6 @@ export function useUjatEducationProgressAttendance(
   const [appliedFilters, setAppliedFilters] = useState<UjatAttendanceFilters>(() => ({
     ...EMPTY_UJAT_ATTENDANCE_FILTERS,
   }))
-  const [localOverrides, setLocalOverrides] = useState<
-    Record<string, UjatAttendanceVolunteerRow[]>
-  >({})
 
   const attendanceQuery = useQuery({
     queryKey: [
@@ -146,17 +142,10 @@ export function useUjatEducationProgressAttendance(
     },
   })
 
-  const remoteSessions =
-    remoteEnabled && !attendanceQuery.isError ? (attendanceQuery.data ?? []) : []
-
-  const sessionsWithOverrides = useMemo(() => {
-    if (Object.keys(localOverrides).length === 0) return remoteSessions
-    return remoteSessions.map(session => {
-      const override = localOverrides[session.id]
-      if (!override) return session
-      return { ...session, volunteers: override }
-    })
-  }, [localOverrides, remoteSessions])
+  const remoteSessions = useMemo(
+    () => (remoteEnabled && !attendanceQuery.isError ? (attendanceQuery.data ?? []) : []),
+    [attendanceQuery.data, attendanceQuery.isError, remoteEnabled]
+  )
 
   const educationDateOptions = useMemo(() => {
     const seen = new Set<string>()
@@ -174,8 +163,8 @@ export function useUjatEducationProgressAttendance(
   )
 
   const sessionGroups = useMemo(
-    () => filterSessionGroups(sessionsWithOverrides, appliedFilters),
-    [appliedFilters, sessionsWithOverrides]
+    () => filterSessionGroups(remoteSessions, appliedFilters),
+    [appliedFilters, remoteSessions]
   )
 
   const handleFilterChange = useCallback((key: string, value: string) => {
@@ -189,74 +178,61 @@ export function useUjatEducationProgressAttendance(
   const resetRegionState = useCallback(() => {
     setPendingFilters({ ...EMPTY_UJAT_ATTENDANCE_FILTERS })
     setAppliedFilters({ ...EMPTY_UJAT_ATTENDANCE_FILTERS })
-    setLocalOverrides({})
   }, [])
 
   const saveMutation = useMutation({
     mutationFn: async (params: {
       sessionId: string
-      volunteers: UjatAttendanceVolunteerRow[]
+      correctedVolunteer: UjatAttendanceVolunteerRow
     }) => {
+      if (!remoteEnabled) throw new Error('REMOTE_DISABLED')
       const session = remoteSessions.find(s => s.id === params.sessionId)
       const scheduleIdNum = Number(session?.scheduleId)
       if (!session?.scheduleId || !Number.isFinite(scheduleIdNum)) {
         throw new Error('MISSING_SCHEDULE_ID')
       }
-      const recordedAttendances = params.volunteers
-        .filter(row => row.status !== 'unprocessed')
-        .map(row => ({
-          participantId: Number(row.id),
-          status: mapUjatUiAttendanceStatusToApi(row.status),
-          absenceReason: row.excusedReason ?? null,
-          arrivalTime: toIsoLocalTime(row.checkInTime),
-        }))
       await bulkUpsertUjatAttendances(programId, {
         scheduleId: scheduleIdNum,
-        attendances: recordedAttendances,
+        attendances: [buildUjatAttendanceCorrectionBulkItem(params.correctedVolunteer)],
       })
     },
-    onSuccess: async (_data, variables) => {
-      setLocalOverrides(prev => {
-        const next = { ...prev }
-        delete next[variables.sessionId]
-        return next
-      })
-      await queryClient.invalidateQueries({
-        queryKey: ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: ujatQueryKeys.volunteer1365AttendanceAll(programId),
-      })
-      showAlert({ title: '안내', content: '출석이 저장되었습니다.' })
+    onSuccess: async () => {
+      // 정정 결과는 재조회한 GET 응답으로만 표시한다 (refetch 완료 후 모달 닫힘)
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ujatQueryKeys.volunteer1365AttendanceAll(programId),
+        }),
+      ])
     },
     onError: error => {
       showAlert({
         title: '오류',
         content: isInvalidAttendanceArrivalTimeError(error)
           ? ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE
-          : '출석 저장에 실패했습니다.',
+          : '출결 정정에 실패했습니다. 잠시 후 다시 시도해 주세요.',
       })
     },
   })
 
-  const saveSessionVolunteers = useCallback(
-    (sessionId: string, volunteers: UjatAttendanceVolunteerRow[]) => {
-      setLocalOverrides(prev => ({ ...prev, [sessionId]: cloneAttendanceVolunteerRows(volunteers) }))
-      if (!remoteEnabled) return
-      saveMutation.mutate({ sessionId, volunteers })
+  const { mutateAsync: saveSessionMutateAsync } = saveMutation
+
+  const correctSessionVolunteerAttendance = useCallback(
+    async (sessionId: string, correctedVolunteer: UjatAttendanceVolunteerRow) => {
+      await saveSessionMutateAsync({ sessionId, correctedVolunteer })
     },
-    [remoteEnabled, saveMutation]
+    [saveSessionMutateAsync]
   )
 
   const getSessionVolunteers = useCallback(
     (sessionId: string): UjatAttendanceVolunteerRow[] => {
-      const override = localOverrides[sessionId]
-      if (override) return cloneAttendanceVolunteerRows(filterVisibleAttendanceVolunteers(override))
-      const session = sessionsWithOverrides.find(s => s.id === sessionId)
+      const session = remoteSessions.find(s => s.id === sessionId)
       if (!session) return []
       return cloneAttendanceVolunteerRows(filterVisibleAttendanceVolunteers(session.volunteers))
     },
-    [localOverrides, sessionsWithOverrides]
+    [remoteSessions]
   )
 
   return {
@@ -267,7 +243,8 @@ export function useUjatEducationProgressAttendance(
     filterFields,
     sessionGroups,
     resetRegionState,
-    saveSessionVolunteers,
+    correctSessionVolunteerAttendance,
+    savingSessionId: saveMutation.isPending ? (saveMutation.variables?.sessionId ?? null) : null,
     getSessionVolunteers,
     isLoading: remoteEnabled && attendanceQuery.isLoading,
     isError: remoteEnabled && attendanceQuery.isError,

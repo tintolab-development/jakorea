@@ -51,7 +51,7 @@ export const UJAT_ASSIGNMENT_SUBMISSION_STATUS_COLOR: Record<
 > = {
   completed: 'var(--Netural-black, #3D3D3D)',
   not_submitted: 'var(--Status-red-main, #C32F4A)',
-  deadline_missed: 'var(--Status-purple-main, #8457CE)',
+  deadline_missed: 'var(--Status-green-main, #1E8C29)',
 } as const
 
 export const UJAT_ASSIGNMENT_SUBMISSION_STATUS_CLASSNAME: Record<

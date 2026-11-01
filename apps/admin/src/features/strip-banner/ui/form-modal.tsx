@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
@@ -18,6 +18,11 @@ import {
   isValidHttpLinkUrl,
 } from '@/shared/lib/http-link-url'
 import { formatDateDot } from '@/shared/lib/format-display'
+import {
+  buildPublishPeriodExpiredAlert,
+  createPublishPeriodDisabledDate,
+  isPublishPeriodExpired,
+} from '@/shared/lib/publish-period'
 import './form-modal.css'
 
 const TEXT_MAX_LENGTH = 80
@@ -103,6 +108,10 @@ function StripBannerFormBody({
   )
 
   const createdAtLabel = initial ? formatCreatedAt(initial.createdAt) : '-'
+  const periodDisabledDate = useMemo(
+    () => createPublishPeriodDisabledDate(variant === 'detail' ? initial?.periodStart : null),
+    [initial?.periodStart, variant]
+  )
 
   const validateAndBuild = useCallback((): StripBannerFormValues | null => {
     const trimmed = text.trim()
@@ -127,6 +136,10 @@ function StripBannerFormBody({
         title: '게시 기간 필수',
         content: '게시 기간을 선택해 주세요.',
       })
+      return null
+    }
+    if (isActive && isPublishPeriodExpired(end)) {
+      showAlert(buildPublishPeriodExpiredAlert('띠배너는'))
       return null
     }
     if (linkEnabled && !linkUrl.trim()) {
@@ -317,6 +330,7 @@ function StripBannerFormBody({
                     onChange={dates => {
                       setPeriodRange(dates ?? [null, null])
                     }}
+                    disabledDate={periodDisabledDate}
                     placeholder="게시 기간을 선택하세요"
                   />
                 }

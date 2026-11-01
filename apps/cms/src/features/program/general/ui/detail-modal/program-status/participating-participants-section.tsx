@@ -50,6 +50,7 @@ import type { StudentCertificateDownloadContext } from '@/features/program/gener
 import type { Program } from '@/types/domain'
 import type { ParticipantDetailTabKey } from '@/features/program/general/lib/participating-individual-detail-tabs'
 import { ParticipatingParticipantFullpageView } from './participating-participant-fullpage-view'
+import type { ProgressAssignmentSurveyNavTab } from './participating-individual-progress-assignment-table'
 import { ParticipatingParticipantsCalendarView } from './participating-participants-calendar-view'
 import { StudentCertificatePdfExportHost } from './student-certificate-pdf-export-host'
 import {
@@ -70,6 +71,8 @@ export interface ParticipatingParticipantsSectionProps {
   onClearParticipantId?: () => void
   onParticipantDetailOpen?: (participantName: string) => void
   onParticipantDetailClose?: () => void
+  /** 과제 관리 설문조사·만족도조사 버튼 → 같은 프로그램 설문 관리 탭 이동 */
+  onNavigateToSurveyCategory?: (tab: ProgressAssignmentSurveyNavTab) => void
 }
 
 export function ParticipatingParticipantsSection({
@@ -82,6 +85,7 @@ export function ParticipatingParticipantsSection({
   onClearParticipantId,
   onParticipantDetailOpen,
   onParticipantDetailClose,
+  onNavigateToSurveyCategory,
 }: ParticipatingParticipantsSectionProps) {
   const { showAlert } = useCmsAlert()
   const {
@@ -354,6 +358,7 @@ export function ParticipatingParticipantsSection({
           activeTab={participantTabFromUrl}
           onTabChange={onParticipantTabChange}
           onClearParticipantId={() => onClearParticipantId?.()}
+          onNavigateToSurveyCategory={onNavigateToSurveyCategory}
         />
       </div>
     )
