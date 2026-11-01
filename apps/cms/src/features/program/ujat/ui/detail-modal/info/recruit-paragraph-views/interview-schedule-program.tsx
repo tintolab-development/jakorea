@@ -137,12 +137,16 @@ export function UjatRecruitInterviewScheduleProgramView({
     })
     return () => {
       const live = getRecruitTypedInterviewRecord()
-      if (live) {
+      const prefix = `${ns}.`
+      const belongsToThisHalf =
+        live != null &&
+        (Object.keys(live).length === 0 || Object.keys(live).some(key => key.startsWith(prefix)))
+      if (live && belongsToThisHalf) {
         form.setValue('volunteerInterviewConfig', overlayRecordToInterviewConfig(live, ns), {
           shouldDirty: true,
         })
+        setRecruitTypedInterviewRecordBridge(null)
       }
-      setRecruitTypedInterviewRecordBridge(null)
     }
   }, [
     form,
