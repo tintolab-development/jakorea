@@ -21,7 +21,9 @@ export function UjatVolunteerAttendanceCorrectionModal({
   return (
     <ProgramAttendanceCorrectionModal
       subjectName={volunteerName}
-      initialAttendance={initialAttendance}
+      initialAttendance={
+        initialAttendance.kind === 'withdrawn' ? { kind: 'dash' } : initialAttendance
+      }
       {...rest}
     />
   )

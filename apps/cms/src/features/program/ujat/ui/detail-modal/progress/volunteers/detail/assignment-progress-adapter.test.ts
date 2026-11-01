@@ -108,6 +108,7 @@ const partnerAssignments: Record<string, UjatPartnerAssignmentResponse[]> = {
       organizationApplicationId: 3,
       attendanceManagerParticipantId: 7,
       assignedAt: '2026-05-02T00:00:00Z',
+      assignmentNotificationSent: false,
     },
   ],
 }
@@ -166,6 +167,7 @@ describe('buildVolunteerAssignmentProgressView', () => {
       organizationApplicationId: 3,
       selfIsSecondary: false,
       isWithdrawn: false,
+      assignmentNotificationSent: false,
     })
     expect(assigned?.scheduleLabel).toContain('2026.05.08')
 
@@ -185,22 +187,60 @@ describe('buildVolunteerAssignmentProgressView', () => {
     expect(view.bundle.absenceReasons).toEqual([
       expect.objectContaining({
         id: '5',
-        dateLabel: '5월 8일',
+        dateLabel: '5월 8일(금)',
         reason: '병원 진료',
         fileName: 'note.pdf',
         fileObjectIds: [99],
       }),
     ])
-    expect(view.assignOptionsByRowId['col-1']?.classOptions).toEqual([
-      { value: '501', label: '3-1' },
-    ])
+    // 501은 이미 2인 배정이라 교육 배정(미배정 학급) 옵션에서 제외
+    expect(view.assignOptionsByRowId['col-1']?.classOptions).toEqual([])
     expect(view.assignOptionsByRowId['col-1']?.partnerOptions.map(option => option.value)).toEqual([
       '8',
       '9',
     ])
   })
 
-  it('활동 포기 봉사자는 학급을 활동 포기로 두고 수료 불가를 표시한다', () => {
+  it('org temporary slots 중 미배정 학급만 교육 배정 옵션으로 둔다', () => {
+    const view = buildVolunteerAssignmentProgressView({
+      participantId: 7,
+      memberId: '70',
+      matrix,
+      submissions,
+      partnerAssignmentsByScheduleId: partnerAssignments,
+      attendancesByScheduleId: attendances,
+      absenceReasons: [],
+      orgSlots: [
+        {
+          slotId: 501,
+          scheduleId: 10,
+          organizationApplicationId: 3,
+          classLabel: '3-1',
+        },
+        {
+          slotId: 502,
+          scheduleId: 10,
+          organizationApplicationId: 3,
+          classLabel: '3-2',
+        },
+        {
+          slotId: 601,
+          scheduleId: 11,
+          organizationApplicationId: 4,
+          classLabel: '4-1',
+        },
+      ],
+    })
+
+    expect(view.assignOptionsByRowId['col-1']?.classOptions).toEqual([
+      { value: '502', label: '3-2' },
+    ])
+    expect(view.assignOptionsByRowId['col-2']?.classOptions).toEqual([
+      { value: '601', label: '4-1' },
+    ])
+  })
+
+  it('활동 포기 봉사자는 학급·출결을 활동 포기로 두고 수료 불가를 표시한다', () => {
     const view = buildVolunteerAssignmentProgressView({
       participantId: 7,
       memberId: '70',
@@ -217,6 +257,7 @@ describe('buildVolunteerAssignmentProgressView', () => {
     })
 
     expect(view.bundle.rows.every(row => row.classDisplay.kind === 'withdrawn')).toBe(true)
+    expect(view.bundle.rows.every(row => row.attendance.kind === 'withdrawn')).toBe(true)
     expect(view.bundle.attendanceSummary.completionStatus).toBe('수료 불가(활동 포기)')
   })
 })

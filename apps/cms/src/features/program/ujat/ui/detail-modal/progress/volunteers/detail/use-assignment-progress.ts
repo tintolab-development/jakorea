@@ -5,6 +5,10 @@ import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
   isInvalidAttendanceArrivalTimeError,
 } from '@/shared/lib/attendance-arrival-time'
+import {
+  ATTENDANCE_CORRECTION_NOT_OPEN_ALERT,
+  isAttendanceRecordingNotOpenError,
+} from '@/features/program/general/lib/attendance-recording-not-open'
 import type { ProgramAttendanceCorrectionConfirmPayload } from '@/features/program/shared/lib/attendance-correction-types'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
@@ -12,15 +16,20 @@ import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-educ
 import { toUjatRecruitHalfApi } from '@/features/program/ujat/api/ujat-recruit-half'
 import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/lib/program-api-unavailable'
 import type { EducationProgressHalfKey } from '../../tabs'
+import { resolveAssignmentCancelErrorAlert } from './assignment-cancel-errors'
 import {
   cancelVolunteerAssignment,
   confirmVolunteerAssignment,
   correctVolunteerAttendance,
   invalidateVolunteerAssignmentQueries,
+  updateVolunteerScheduleRole,
 } from './assignment-progress-actions'
 import { loadVolunteerAssignmentProgress } from './assignment-progress-load'
 import { UNRESOLVED_VOLUNTEER_ASSIGNMENT_BUNDLE } from './assignment-progress-adapter'
-import type { UjatVolunteerAssignmentProgressRow } from './assignment-types'
+import type {
+  UjatVolunteerAssignmentProgressRow,
+  UjatVolunteerScheduleRole,
+} from './assignment-types'
 import type { UjatVolunteerAssignmentAssignModalMode } from './volunteer-assign-modal-data'
 
 function finiteId(value: string): number | null {
@@ -90,6 +99,16 @@ export function useVolunteerAssignmentProgress(input: {
 
   const showMutationError = useCallback(
     (error: unknown, fallback: string) => {
+      if (isAttendanceRecordingNotOpenError(error)) {
+        showAlert(ATTENDANCE_CORRECTION_NOT_OPEN_ALERT)
+        return
+      }
+      const cancelAlert = resolveAssignmentCancelErrorAlert(error)
+      if (cancelAlert) {
+        showAlert({ title: cancelAlert.title, content: cancelAlert.content })
+        if (cancelAlert.shouldRefresh) void invalidate()
+        return
+      }
       showAlert({
         title: '오류',
         content: isInvalidAttendanceArrivalTimeError(error)
@@ -97,7 +116,7 @@ export function useVolunteerAssignmentProgress(input: {
           : fallback,
       })
     },
-    [showAlert]
+    [invalidate, showAlert]
   )
 
   const cancelMutation = useMutation({
@@ -125,8 +144,22 @@ export function useVolunteerAssignmentProgress(input: {
     onError: error => showMutationError(error, '출결 정정에 실패했습니다.'),
   })
 
+  const roleMutation = useMutation({
+    mutationFn: updateVolunteerScheduleRole,
+    retry: false,
+    onSuccess: () => invalidate(),
+    onError: error => showMutationError(error, '역할 변경에 실패했습니다.'),
+  })
+
   const cancelAssignment = useCallback(
-    (row: UjatVolunteerAssignmentProgressRow, reason: string) => {
+    (
+      row: UjatVolunteerAssignmentProgressRow,
+      payload: {
+        reason?: string | null
+        timing?: 'IMMEDIATE' | 'SCHEDULED' | null
+        scheduledAt?: string | null
+      } = {}
+    ) => {
       if (row.scheduleId == null || !row.assignmentGroupId) {
         throw new Error('MISSING_ASSIGNMENT_GROUP')
       }
@@ -134,7 +167,7 @@ export function useVolunteerAssignmentProgress(input: {
         programId: input.programId,
         scheduleId: row.scheduleId,
         assignmentGroupId: row.assignmentGroupId,
-        reason,
+        ...payload,
       })
     },
     [cancelMutation, input.programId]
@@ -189,6 +222,21 @@ export function useVolunteerAssignmentProgress(input: {
     [attendanceMutation, input.programId]
   )
 
+  const changeScheduleRole = useCallback(
+    (row: UjatVolunteerAssignmentProgressRow, nextRole: UjatVolunteerScheduleRole) => {
+      if (row.scheduleId == null || row.participantId == null) {
+        throw new Error('MISSING_ROLE_TARGET')
+      }
+      return roleMutation.mutateAsync({
+        programId: input.programId,
+        scheduleId: row.scheduleId,
+        participantId: row.participantId,
+        role: nextRole,
+      })
+    },
+    [input.programId, roleMutation]
+  )
+
   const data = progressQuery.data
 
   return {
@@ -202,9 +250,13 @@ export function useVolunteerAssignmentProgress(input: {
       !progressQuery.isError &&
       (!enabled || data?.participantId == null),
     isMutating:
-      cancelMutation.isPending || confirmMutation.isPending || attendanceMutation.isPending,
+      cancelMutation.isPending ||
+      confirmMutation.isPending ||
+      attendanceMutation.isPending ||
+      roleMutation.isPending,
     cancelAssignment,
     confirmAssignment,
     correctAttendance,
+    changeScheduleRole,
   }
 }

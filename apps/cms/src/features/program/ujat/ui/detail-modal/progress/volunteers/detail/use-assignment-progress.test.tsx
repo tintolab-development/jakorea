@@ -195,11 +195,17 @@ describe('useVolunteerAssignmentProgress mutations', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false))
 
     await act(async () => {
-      await result.current.cancelAssignment(row, '일정 변경')
+      await result.current.cancelAssignment(row, {
+        reason: '일정 변경',
+        timing: 'IMMEDIATE',
+        scheduledAt: null,
+      })
     })
 
     expect(postUjatPartnerAssignmentCancel).toHaveBeenCalledWith('42', 10, 'grp-1', {
       reason: '일정 변경',
+      timing: 'IMMEDIATE',
+      scheduledAt: null,
     })
   })
 })

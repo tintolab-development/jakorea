@@ -7,6 +7,7 @@ import {
   postUjatDirectAssignment,
   postUjatPartnerAssignmentCancel,
   postUjatPartnerAssignmentConfirm,
+  putUjatAttendanceManager,
   type UjatPartnerAssignmentConfirmRequest,
   type UjatSemesterType,
 } from '@/features/program/ujat/api/education-execution-api'
@@ -50,13 +51,31 @@ export async function cancelVolunteerAssignment(input: {
   programId: string
   scheduleId: number
   assignmentGroupId: string
-  reason?: string
+  reason?: string | null
+  timing?: 'IMMEDIATE' | 'SCHEDULED' | null
+  scheduledAt?: string | null
 }) {
+  // undefined 필드는 omit. 빈 문자열 placeholder 금지.
+  const body: {
+    reason?: string | null
+    timing?: 'IMMEDIATE' | 'SCHEDULED' | null
+    scheduledAt?: string | null
+  } = {}
+  if (input.reason !== undefined) {
+    body.reason = input.reason?.trim() || null
+  }
+  if (input.timing !== undefined) {
+    body.timing = input.timing
+  }
+  if (input.scheduledAt !== undefined) {
+    body.scheduledAt = input.scheduledAt || null
+  }
+
   return postUjatPartnerAssignmentCancel(
     input.programId,
     input.scheduleId,
     input.assignmentGroupId,
-    { reason: input.reason?.trim() || null }
+    body
   )
 }
 
@@ -137,5 +156,21 @@ export async function correctVolunteerAttendance(input: {
           input.payload.status === 'late' ? toIsoLocalTime(input.payload.attendanceTime) : null,
       },
     ],
+  })
+}
+
+/**
+ * 봉사자 상세 역할 셀 → 출결 담당 지정/해제.
+ * `attendance_manager`: `{ participantId: <id> }`
+ * `none`(해당 없음): `{ participantId: null }` — 키 생략/skip 금지.
+ */
+export async function updateVolunteerScheduleRole(input: {
+  programId: string
+  scheduleId: number
+  participantId: number
+  role: 'attendance_manager' | 'none'
+}) {
+  return putUjatAttendanceManager(input.programId, input.scheduleId, {
+    participantId: input.role === 'attendance_manager' ? input.participantId : null,
   })
 }
