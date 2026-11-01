@@ -413,9 +413,11 @@ export function ApplicantGeneralIndividualBasicInfo({
     applicant.educationGrade?.trim() || detail?.affiliationGrade?.trim() || ''
   const { catalog: textbookCatalog, isLoading: isTextbookCatalogLoading } =
     useIndividualApplicantTextbookOptions(program, applicantEducationGrade || undefined)
-  /** 승인 완료 후에만 교재명 노출. 미지정은 「해당 없음」 */
+  /** 승인 완료 후 신청 상세에만 교재명 노출. 진행 현황 참여자 신청 정보는 기관 정보에서만 교재명 노출 */
   const showTextbookField =
-    screeningStage === 'main' && applicant.approvalStatus === 'approved'
+    !isProgressContext &&
+    screeningStage === 'main' &&
+    applicant.approvalStatus === 'approved'
 
   const showTeamSection = shouldShowIndividualApplicantTeamSection(program, detail)
   const showManagerEvaluation = shouldShowIndividualManagerEvaluationSection(
@@ -769,7 +771,7 @@ export function ApplicantGeneralIndividualBasicInfo({
               }
             />
           </DetailInfoForm.Row>
-          {!isProgressContext && showTextbookField ? (
+          {showTextbookField ? (
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="교재명"
@@ -782,17 +784,6 @@ export function ApplicantGeneralIndividualBasicInfo({
           ) : null}
         </DetailInfoForm>
         <DetailInfoForm title="기본 정보" hideHeader mode={basicInfoFormMode}>
-          {isProgressContext && showTextbookField ? (
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="교재명"
-                fullRow
-                readOnlyDisplay={!isEditMode}
-                view={textbookViewValue}
-                edit={textbookEditCell}
-              />
-            </DetailInfoForm.Row>
-          ) : null}
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field label="성명" readOnlyDisplay view={nameCell} />
             <DetailInfoForm.Field
