@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { resolveEducationIncomingDeeplinkBouncePath } from '@/features/mypage/education/applications/lib/education-application-route'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { useAdminRegisteredNoticeRedirect } from '@/features/auth/admin-registered'
 import {
@@ -172,8 +173,15 @@ export function MypageEducationDetailPage() {
     applicationType?: string
   }>()
   const routeApplicationType = readEducationApplicationType(applicationType)
+  const incomingDeeplinkBouncePath = resolveEducationIncomingDeeplinkBouncePath(
+    applicationType,
+    applicationId,
+  )
   const { applicationType: probedApplicationType, isProbing: isProbingApplicationType } =
-    useProbeEducationApplicationType(applicationId, routeApplicationType)
+    useProbeEducationApplicationType(
+      incomingDeeplinkBouncePath ? '' : applicationId,
+      routeApplicationType,
+    )
   const resolvedApplicationType = routeApplicationType ?? probedApplicationType
   const remoteDetailEnabled = isRemoteApiConfigured() && resolvedApplicationType != null
   const [isAuthReady, setIsAuthReady] = useState(false)
@@ -436,6 +444,11 @@ export function MypageEducationDetailPage() {
     showTeacherInstitutionGuidanceOnTab,
     teacherApplicationContent,
   ])
+
+  useEffect(() => {
+    if (!incomingDeeplinkBouncePath) return
+    navigate(`${incomingDeeplinkBouncePath}${location.search}`, { replace: true })
+  }, [incomingDeeplinkBouncePath, location.search, navigate])
 
   useEffect(() => {
     if (!probedApplicationType || routeApplicationType || !applicationId) return
@@ -962,8 +975,12 @@ export function MypageEducationDetailPage() {
             applicationType={
               application.applicationType ?? routeApplicationType ?? resolvedApplicationType
             }
-            programType={program.programType}
+            programType={
+              application.programType ?? application.programConfig?.programType ?? program.programType
+            }
+            programGroup={application.programGroup}
             detailCase={application.detailCase}
+            isTeacher={isTeacher}
             certificateStatus={application.certificateStatus}
             canIssueCertificateHint={application.canIssueCertificate}
             participantIdHint={application.participantId}

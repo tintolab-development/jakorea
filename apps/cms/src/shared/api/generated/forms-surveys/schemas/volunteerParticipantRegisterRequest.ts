@@ -25,6 +25,12 @@ export interface VolunteerParticipantRegisterRequest {
   personalInfoConsent: VolunteerParticipantRegisterRequestPersonalInfoConsent;
   /** @minLength 1 */
   thirdPartyConsent: VolunteerParticipantRegisterRequestThirdPartyConsent;
+  /**
+     * 제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. 일반(GENERAL*) 프로그램 CMS_PROGRESS_ADD에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).
+     * @minLength 0
+     * @maxLength 200
+     */
+  thirdPartyRecipient?: string | null;
   /** 회원 프로필에 1365가 없을 때만 필수. 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다. */
   id1365?: string | null;
   /**

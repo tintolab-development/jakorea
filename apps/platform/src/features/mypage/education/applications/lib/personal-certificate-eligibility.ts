@@ -17,12 +17,16 @@ function isExcludedGeminiSurface(input: {
 export function shouldShowPersonalCertificateAction(input: {
   applicationType?: ProgramApplicationType | string | null
   programType?: string | null
+  programGroup?: string | null
   detailCase?: string | null
+  isTeacher?: boolean
 }): boolean {
+  if (input.isTeacher) return false
   if ((input.applicationType ?? '').trim().toUpperCase() !== 'INDIVIDUAL') return false
   if (isExcludedGeminiSurface(input)) return false
   const programType = (input.programType ?? '').trim().toUpperCase()
-  if (programType === 'TRAINED_TEACHER') return false
+  const programGroup = (input.programGroup ?? '').trim().toUpperCase()
+  if (programType === 'TRAINED_TEACHER' || programGroup === 'TRAINED_TEACHER') return false
   const detailCase = (input.detailCase ?? '').trim().toLowerCase()
   if (
     detailCase === 'ujat-participant' ||

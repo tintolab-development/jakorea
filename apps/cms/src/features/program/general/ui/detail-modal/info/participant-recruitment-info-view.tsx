@@ -317,6 +317,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
           start={display.interviewStartDate}
           end={display.interviewEndDate}
           method={display.interviewMethod}
+          allowMissingEnd
         />
       }
       edit={

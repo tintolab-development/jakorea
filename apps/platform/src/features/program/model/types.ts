@@ -117,6 +117,8 @@ export type ProgramScheduleOptionLookupRow = {
   endAt?: string
   /** 자동 기본명(「공통 교육 예정 N」 등)은 제외된 표시용 일정명 */
   scheduleName?: string
+  /** Portal `schedules[].scheduleKind` — 신청 선택지에서 사전교육 제외용 */
+  scheduleKind?: string | null
 }
 
 /** UJAT `schedules[]` 중 scheduleKind=EDUCATION + 반기 term. 신청 희망일 칩 구간. */

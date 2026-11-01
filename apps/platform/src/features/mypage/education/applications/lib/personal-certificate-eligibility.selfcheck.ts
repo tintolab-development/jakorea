@@ -34,6 +34,24 @@ assert.equal(
 assert.equal(
   shouldShowPersonalCertificateAction({
     applicationType: 'INDIVIDUAL',
+    programType: 'GENERAL_EDUCATION',
+    programGroup: 'TRAINED_TEACHER',
+    detailCase: 'general',
+  }),
+  false,
+)
+assert.equal(
+  shouldShowPersonalCertificateAction({
+    applicationType: 'INDIVIDUAL',
+    programType: 'GENERAL_EDUCATION',
+    detailCase: 'general',
+    isTeacher: true,
+  }),
+  false,
+)
+assert.equal(
+  shouldShowPersonalCertificateAction({
+    applicationType: 'INDIVIDUAL',
     programType: 'GEMINI',
     detailCase: 'gemini',
   }),

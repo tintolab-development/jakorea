@@ -122,6 +122,43 @@ describe('curriculum multi date fixed schedule matrix', () => {
     )
   })
 
+  it('omit 모드 — 메타 없으면 앞 문장 생략', () => {
+    expect(
+      resolveApplicationFixedScheduleParagraphDescription({
+        ...MATRIX_VISIBILITY,
+        unknownCount: 'omit',
+      })
+    ).toBe('진행 가능한 일정을 모두 선택해 주세요.')
+  })
+
+  it('omit 모드 — 회차별 차시가 달라도 1회차 기준', () => {
+    expect(
+      resolveApplicationFixedScheduleParagraphDescription({
+        ...MATRIX_VISIBILITY,
+        unknownCount: 'omit',
+        curriculumSessions: [
+          { sessionLabel: '1회차', title: '2' },
+          { sessionLabel: '2회차', title: '4' },
+          { sessionLabel: '3회차', title: '3' },
+        ],
+      })
+    ).toBe('2차시*3회로 구성된 프로그램입니다. 진행 가능한 일정을 모두 선택해 주세요.')
+  })
+
+  it('omit 모드 — 자유 문구 title에서 차시를 추측하지 않는다', () => {
+    expect(
+      resolveApplicationFixedScheduleParagraphDescription({
+        ...MATRIX_VISIBILITY,
+        unknownCount: 'omit',
+        curriculumSessions: [
+          { sessionLabel: '1차시', title: '[BOT-TEST] 1차시' },
+          { sessionLabel: '2차시', title: '[BOT-TEST] 2차시' },
+          { sessionLabel: '3차시', title: '[BOT-TEST] 3차시' },
+        ],
+      })
+    ).toBe('진행 가능한 일정을 모두 선택해 주세요.')
+  })
+
   it('기간 지정 희망 설명 — 단일 회차 N차시는 curriculumChartSessionCount', () => {
     const text = resolveApplicationPreferredScheduleParagraphDescription({
       educationStructure: 'curriculum',

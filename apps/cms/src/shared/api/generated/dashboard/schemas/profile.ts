@@ -12,6 +12,12 @@ export interface Profile {
   birthDate?: string;
   birthYear?: number;
   age?: number;
+  /** 회원 학교 재학 여부. ENROLLED | NOT_ENROLLED. 비민감이므로 MASKED/UNMASKED 모두 원문. 없으면 null. application.ujat와 무관 */
+  schoolEnrollmentStatus?: string | null;
+  /** 회원 소속 학교명(고교 등). schoolName/affiliationName alias. universityName(application.ujat)과 혼용하지 않음. MASKED는 학교명 마스킹, UNMASKED는 원문. 없으면 null */
+  affiliationSchool?: string | null;
+  /** 회원 소속 학교 학년 표시값(예: 1학년, 1). application.ujat.grade(대학 학년)와 혼용하지 않음. MASKED/UNMASKED 모두 원문(일반 개인 신청 profile과 동일). 없으면 null */
+  affiliationGrade?: string | null;
   contact?: string;
   email?: string;
   external1365Id?: string;
@@ -22,10 +28,4 @@ export interface Profile {
   homeAddressSido?: string | null;
   /** 자택 시군구. MASKED GET은 항상 null. UNMASKED는 저장된 원문 또는 인식값. 없으면 null */
   homeAddressSigungu?: string | null;
-  /** 학교 재학 여부. ENROLLED | NOT_ENROLLED. 없거나 그 외 값이면 null. MASKED/UNMASKED 모두 원문. */
-  schoolEnrollmentStatus?: string | null;
-  /** 회원 소속 학교명(고교 등). application.ujat.universityName과 혼용 금지. MASKED는 마스킹 문자열, UNMASKED는 원문. 없으면 null. */
-  affiliationSchool?: string | null;
-  /** 회원 소속 학교 학년 표시값(예: 1학년). application.ujat.grade/gradeLabel(대학 학년)과 혼용 금지. MASKED/UNMASKED 모두 원문. 없으면 null. */
-  affiliationGrade?: string | null;
 }

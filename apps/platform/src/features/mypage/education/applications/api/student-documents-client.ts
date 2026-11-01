@@ -1,6 +1,5 @@
 import type { AxiosResponse } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
-import { fetchBlobOnce } from '@/shared/lib/download-attachment'
 import {
   assertCertificateZipBlob,
   CERTIFICATE_BULK_DOWNLOAD_ACCEPT,
@@ -12,14 +11,15 @@ import {
 } from '../lib/certificate-bulk-download'
 import { readStudentDocumentsErrorCode } from '../lib/student-documents-errors'
 import {
-  extractGeneratedFileName,
-  isPortraitConsentTemplateJobCompleted,
-  isPortraitConsentTemplateJobFailed,
-  isPortraitConsentTemplateJobPending,
+  downloadFromGeneratedFileJob,
+  savePortalBlobFile,
+  withSnapshotFileName,
+  type PortalGeneratedFileDownloadTemplate,
+} from '../lib/portal-generated-file-download'
+import {
   normalizeZipBlob,
   parseGeneratedFileJobBlob,
   parseGeneratedFileJobPayload,
-  parsePortalFileDownloadResolvePayload,
   type GeneratedFileJobResponse,
   type PortraitConsentTemplateDownloadProgress,
 } from '../lib/student-documents-template-download'
@@ -33,18 +33,8 @@ import type {
 
 const ORGANIZATION_APPLICATIONS_PATH = '/api/portal/me/organization-applications'
 
-/** GET /api/portal/me/generated-files/jobs/{jobId} — operationId getMyGeneratedFileJob. admin 경로는 쓰지 않는다. */
-const GENERATED_FILE_JOB_POLLING_PATH = (jobId: number) =>
-  `/api/portal/me/generated-files/jobs/${encodeURIComponent(String(jobId))}`
-const GENERATED_FILE_JOB_POLL_INTERVAL_MS = 1_000
-const GENERATED_FILE_JOB_MAX_POLL_ATTEMPTS = 30
-
-type GeneratedTemplateDefinition = {
+type GeneratedTemplateDefinition = PortalGeneratedFileDownloadTemplate & {
   pathSuffix: string
-  purpose: string
-  fallbackFileName: string
-  label: string
-  normalizeBlob?: boolean
 }
 
 const STUDENT_ROSTER_TEMPLATE: GeneratedTemplateDefinition = {
@@ -59,7 +49,7 @@ const PORTRAIT_CONSENT_TEMPLATE: GeneratedTemplateDefinition = {
   purpose: '학생 초상권 동의서 양식 다운로드',
   fallbackFileName: '학생 초상권 동의서.zip',
   label: '초상권 동의서 양식',
-  normalizeBlob: true,
+  normalizeBlob: normalizeZipBlob,
 }
 
 function unwrapEnvelope<T>(payload: unknown): T {
@@ -76,43 +66,8 @@ function organizationApplicationPath(applicationId: string): string {
   return `${ORGANIZATION_APPLICATIONS_PATH}/${encodeURIComponent(applicationId)}`
 }
 
-function saveBlobFile(fileName: string, blob: Blob) {
-  const objectUrl = URL.createObjectURL(blob)
-  const anchor = document.createElement('a')
-  anchor.href = objectUrl
-  anchor.download = fileName
-  document.body.appendChild(anchor)
-  anchor.click()
-  anchor.remove()
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
-}
-
 function isBlob(value: unknown): value is Blob {
   return typeof Blob !== 'undefined' && value instanceof Blob
-}
-
-function validFileObjectId(value: unknown): number | null {
-  const id = typeof value === 'number' ? value : Number(value)
-  return Number.isInteger(id) && id > 0 ? id : null
-}
-
-function resultSnapshotFileName(job: GeneratedFileJobResponse): string | undefined {
-  if (!job.resultSnapshotJson?.trim()) return undefined
-  try {
-    const snapshot = JSON.parse(job.resultSnapshotJson) as Record<string, unknown>
-    for (const key of ['originalFileName', 'fileName', 'filename']) {
-      const value = snapshot[key]
-      if (typeof value === 'string' && value.trim()) return value.trim()
-    }
-  } catch {
-    // 파일명 메타데이터가 없거나 잘못된 JSON이어도 fileObjectId 다운로드는 계속합니다.
-  }
-  return undefined
-}
-
-function withSnapshotFileName(job: GeneratedFileJobResponse): GeneratedFileJobResponse {
-  const fileName = resultSnapshotFileName(job)
-  return fileName && !job.originalFileName ? { ...job, originalFileName: fileName } : job
 }
 
 function resolveJobFromResponse(payload: unknown): GeneratedFileJobResponse | null {
@@ -143,94 +98,6 @@ async function createGeneratedTemplateJob(
   const job = resolveJobFromResponse(data)
   if (!job) throw new Error(`${template.label} 생성 결과를 받지 못했습니다.`)
   return { job: withSnapshotFileName(job), blob: null }
-}
-
-async function fetchPortalGeneratedFileJob(jobId: number): Promise<GeneratedFileJobResponse> {
-  const { data } = await axiosClient.get<unknown>(GENERATED_FILE_JOB_POLLING_PATH(jobId))
-  const job = resolveJobFromResponse(data)
-  if (!job) throw new Error('양식 생성 상태를 확인하지 못했습니다.')
-  return withSnapshotFileName(job)
-}
-
-function waitFor(milliseconds: number): Promise<void> {
-  return new Promise(resolve => window.setTimeout(resolve, milliseconds))
-}
-
-async function waitForGeneratedTemplateJob(
-  initialJob: GeneratedFileJobResponse,
-  template: GeneratedTemplateDefinition,
-  onProgress?: (progress: PortraitConsentTemplateDownloadProgress) => void
-): Promise<GeneratedFileJobResponse> {
-  if (isPortraitConsentTemplateJobCompleted(initialJob)) return initialJob
-  if (isPortraitConsentTemplateJobFailed(initialJob)) {
-    throw new Error(initialJob.failureReason?.trim() || `${template.label} 생성에 실패했습니다.`)
-  }
-  if (!isPortraitConsentTemplateJobPending(initialJob)) {
-    throw new Error(`${template.label} 생성 상태를 확인할 수 없습니다.`)
-  }
-
-  const jobId = validFileObjectId(initialJob.id)
-  if (jobId == null) throw new Error(`${template.label} 생성 작업 ID를 받지 못했습니다.`)
-  onProgress?.('generating')
-
-  let job = initialJob
-  for (let attempt = 0; attempt < GENERATED_FILE_JOB_MAX_POLL_ATTEMPTS; attempt += 1) {
-    await waitFor(GENERATED_FILE_JOB_POLL_INTERVAL_MS)
-    job = await fetchPortalGeneratedFileJob(jobId)
-    if (isPortraitConsentTemplateJobCompleted(job)) return job
-    if (isPortraitConsentTemplateJobFailed(job)) {
-      throw new Error(job.failureReason?.trim() || `${template.label} 생성에 실패했습니다.`)
-    }
-  }
-  throw new Error(`${template.label} 생성 시간이 초과되었습니다.`)
-}
-
-function headerRecord(headers: Record<string, string> | undefined): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(headers ?? {}).filter(([, value]) => typeof value === 'string' && value)
-  )
-}
-
-async function fetchBlobWithHeaders(
-  url: string,
-  headers: Record<string, string>,
-  label: string
-): Promise<Blob> {
-  const response = await fetch(url, {
-    method: 'GET',
-    headers,
-    credentials: /^https?:\/\//i.test(url) ? 'omit' : 'include',
-    mode: 'cors',
-  })
-  if (!response.ok) throw new Error(`${label} 다운로드에 실패했습니다. (${response.status})`)
-  return response.blob()
-}
-
-async function downloadPortalFileObject(
-  fileObjectId: number,
-  template: GeneratedTemplateDefinition,
-  job: GeneratedFileJobResponse,
-  onProgress?: (progress: PortraitConsentTemplateDownloadProgress) => void
-): Promise<void> {
-  onProgress?.('downloading')
-  const { data } = await axiosClient.post<unknown>(
-    `/api/portal/me/files/${encodeURIComponent(String(fileObjectId))}/download-requests`,
-    { purpose: template.purpose }
-  )
-  const resolved = parsePortalFileDownloadResolvePayload(data)
-  const downloadUrl = resolved?.downloadUrl?.trim()
-  if (!downloadUrl) throw new Error(`${template.label} 다운로드 주소를 받지 못했습니다.`)
-
-  const headers = headerRecord(resolved?.requiredHeaders)
-  const blob =
-    Object.keys(headers).length === 0
-      ? await fetchBlobOnce(downloadUrl)
-      : await fetchBlobWithHeaders(downloadUrl, headers, template.label)
-  if (blob.size < 1 || /\bjson\b/i.test(blob.type)) {
-    throw new Error(`${template.label} 파일을 받지 못했습니다.`)
-  }
-  const fileName = extractGeneratedFileName(job, resolved) ?? template.fallbackFileName
-  saveBlobFile(fileName, template.normalizeBlob ? normalizeZipBlob(blob) : blob)
 }
 
 export async function fetchOrganizationStudentRoster(
@@ -273,12 +140,7 @@ export async function downloadOrganizationStudentRosterTemplate(
   const created = await createGeneratedTemplateJob(applicationId, STUDENT_ROSTER_TEMPLATE)
   const initialJob = created.job
   if (!initialJob) throw new Error(`${STUDENT_ROSTER_TEMPLATE.label} 생성 결과를 받지 못했습니다.`)
-  const completedJob = await waitForGeneratedTemplateJob(initialJob, STUDENT_ROSTER_TEMPLATE)
-  const fileObjectId = validFileObjectId(completedJob.fileObjectId)
-  if (fileObjectId == null) {
-    throw new Error(`${STUDENT_ROSTER_TEMPLATE.label} 파일을 찾을 수 없습니다.`)
-  }
-  await downloadPortalFileObject(fileObjectId, STUDENT_ROSTER_TEMPLATE, completedJob)
+  await downloadFromGeneratedFileJob(initialJob, STUDENT_ROSTER_TEMPLATE)
 }
 
 /**
@@ -317,7 +179,7 @@ export async function downloadOrganizationStudentCertificates(
 
   const contentType = readResponseHeader(response.headers, 'content-type')
   const zipBlob = assertCertificateZipBlob(response.data, contentType)
-  saveBlobFile(CERTIFICATE_BULK_DOWNLOAD_FILE_NAME, zipBlob)
+  savePortalBlobFile(CERTIFICATE_BULK_DOWNLOAD_FILE_NAME, zipBlob)
 }
 
 export async function fetchOrganizationStudentDocumentPolicy(
@@ -391,21 +253,12 @@ export async function downloadOrganizationPortraitConsentTemplate(
   )
   if (created.blob) {
     onProgress?.('downloading')
-    saveBlobFile(PORTRAIT_CONSENT_TEMPLATE.fallbackFileName, normalizeZipBlob(created.blob))
+    savePortalBlobFile(PORTRAIT_CONSENT_TEMPLATE.fallbackFileName, normalizeZipBlob(created.blob))
     return
   }
 
   const initialJob = created.job
   if (!initialJob)
     throw new Error(`${PORTRAIT_CONSENT_TEMPLATE.label} 생성 결과를 받지 못했습니다.`)
-  const completedJob = await waitForGeneratedTemplateJob(
-    initialJob,
-    PORTRAIT_CONSENT_TEMPLATE,
-    onProgress
-  )
-  const fileObjectId = validFileObjectId(completedJob.fileObjectId)
-  if (fileObjectId == null) {
-    throw new Error(`${PORTRAIT_CONSENT_TEMPLATE.label} 파일을 찾을 수 없습니다.`)
-  }
-  await downloadPortalFileObject(fileObjectId, PORTRAIT_CONSENT_TEMPLATE, completedJob, onProgress)
+  await downloadFromGeneratedFileJob(initialJob, PORTRAIT_CONSENT_TEMPLATE, onProgress)
 }

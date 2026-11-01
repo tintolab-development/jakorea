@@ -362,6 +362,17 @@ export const platformQueryKeys = {
         applicationType,
         applicationId,
       ] as const,
+    /** 내 수료증 자격 — GET .../programs/{programId}/certificates/availability (Class F) */
+    certificates: {
+      all: () => [...platformQueryKeys.mypage.all(), 'certificates'] as const,
+      availability: (programId: number, certificateType: string) =>
+        [
+          ...platformQueryKeys.mypage.certificates.all(),
+          'availability',
+          programId,
+          certificateType,
+        ] as const,
+    },
     /** 기관 신청 — 학생 명단·초상권 (Class D) */
     organizationApplications: {
       studentRoster: (applicationId: string) =>

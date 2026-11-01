@@ -279,6 +279,8 @@ export function mapPortalProgramApplicationListItem(
     thumbnailUrl,
     displayStatus,
     detailCase,
+    programType: row.programType,
+    programGroup: row.programGroup,
     ...(typeof row.pendingSurveyCount === 'number' && Number.isFinite(row.pendingSurveyCount)
       ? { pendingSurveyCount: row.pendingSurveyCount }
       : {}),

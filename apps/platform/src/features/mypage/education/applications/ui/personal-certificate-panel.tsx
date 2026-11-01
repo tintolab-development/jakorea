@@ -21,7 +21,9 @@ type EducationPersonalCertificatePanelProps = {
   applicationId: string
   applicationType: ProgramApplicationType | string | null | undefined
   programType?: string | null
+  programGroup?: string | null
   detailCase?: ProgramDetailCase | string | null
+  isTeacher?: boolean
   /** 상세 힌트 — 발급 가능 여부의 최종 판정으로 쓰지 않는다 */
   certificateStatus?: string | null
   canIssueCertificateHint?: boolean | null
@@ -33,7 +35,9 @@ export function EducationPersonalCertificatePanel({
   applicationId,
   applicationType,
   programType,
+  programGroup,
   detailCase,
+  isTeacher,
   certificateStatus,
   canIssueCertificateHint,
   participantIdHint,
@@ -41,7 +45,9 @@ export function EducationPersonalCertificatePanel({
   const eligibleSurface = shouldShowPersonalCertificateAction({
     applicationType,
     programType,
+    programGroup,
     detailCase,
+    isTeacher,
   })
   const availabilityQuery = usePersonalCertificateAvailabilityQuery({
     programId,

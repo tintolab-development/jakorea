@@ -138,6 +138,10 @@ export type EducationApplicationListItem = {
   teacherAssignment?: EducationTeacherAssignment
   /** 교사 회원 신청 내용 탭 — 기관 신청·안내사항·희망 일정 */
   teacherApplicationContent?: EducationTeacherApplicationContent
+  /** 목록·상세 `programType` — 개인 수료증 대상 판별 */
+  programType?: string
+  /** 목록·상세 `programGroup` */
+  programGroup?: string
   /**
    * 목록 `certificateAvailable` — 목록 액션 힌트.
    * 상세는 `canIssueCertificate`를 쓴다. 발급 CTA 최종 SSOT는 availability API.

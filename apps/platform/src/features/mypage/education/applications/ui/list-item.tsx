@@ -19,12 +19,14 @@ type EducationApplicationListItemRowProps = {
   onClick: () => void
   /** 교육현황은 `teacher`(승인 대기 세트). 봉사·강의현황은 기본 `general`. */
   statusAudience?: EducationDisplayStatusAudience
+  isTeacher?: boolean
 }
 
 export function EducationApplicationListItemRow({
   item,
   onClick,
   statusAudience = 'general',
+  isTeacher = false,
 }: EducationApplicationListItemRowProps) {
   const statusTone = getEducationDisplayStatusTone(item.displayStatus)
   const statusToneClass = styles[EDUCATION_DISPLAY_STATUS_TONE_CLASS[statusTone]]
@@ -34,7 +36,10 @@ export function EducationApplicationListItemRow({
   const statusClassName = [styles.status, statusToneClass].filter(Boolean).join(' ')
   const showCertificateHint =
     shouldShowPersonalCertificateAction({
+      isTeacher,
       applicationType: item.applicationType,
+      programType: item.programType,
+      programGroup: item.programGroup,
       detailCase: item.detailCase,
     }) &&
     (item.certificateAvailable === true || hasIssueCertificateListAction(item.availableActions))

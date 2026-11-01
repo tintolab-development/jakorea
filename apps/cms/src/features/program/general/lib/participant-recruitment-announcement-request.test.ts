@@ -120,6 +120,53 @@ describe('participantRecruitmentAnnouncementRequestFields', () => {
     })
   })
 
+  it('면접 기간 종료 23:59:59.999는 등록 시드 휴리스틱에 걸리지 않고 실린다', () => {
+    const end = '2026-11-12T14:59:59.999Z'
+    const program: Program = {
+      ...baseProgram,
+      generalParticipantTypes: ['individual'],
+      generalParticipantInterviewEnabled: true,
+      registrationOverlay: {
+        'recruit.individual.interviewRequired': 'yes',
+        'recruit.individual.interviewRangeSeal': {
+          start: '2026-11-10T15:00:00.000Z',
+          end,
+        },
+        'recruit.individual.docDeadlineIso': '2026-11-09T02:00:00.000Z',
+        'recruit.individual.finalAnnounceIso': baseProgram.createdAt,
+      },
+    }
+    expect(participantRecruitmentAnnouncementRequestFields(program, 'INDIVIDUAL')).toEqual({
+      interviewEnabled: true,
+      documentPassAnnouncementAt: '2026-11-09T02:00:00.000Z',
+      interviewStartAt: '2026-11-10T15:00:00.000Z',
+      interviewEndAt: end,
+    })
+  })
+
+  it('생성 시각과 같은 발표일은 버리고 분 단위 시작·서류 발표는 남긴다', () => {
+    const program: Program = {
+      ...baseProgram,
+      generalParticipantTypes: ['individual'],
+      generalParticipantInterviewEnabled: true,
+      resultAnnouncementDate: baseProgram.createdAt,
+      registrationOverlay: {
+        'recruit.individual.interviewRequired': 'yes',
+        'recruit.individual.docDeadlineIso': '2026-11-09T02:00:00.000Z',
+        'recruit.individual.interviewRangeSeal': {
+          start: '2026-11-10T15:00:00.000Z',
+          end: '2026-11-12T14:59:59.999Z',
+        },
+        'recruit.individual.finalAnnounceIso': String(baseProgram.createdAt),
+      },
+    }
+    const fields = participantRecruitmentAnnouncementRequestFields(program, 'INDIVIDUAL')
+    expect(fields.finalPassAnnouncementAt).toBeUndefined()
+    expect(fields.interviewStartAt).toBe('2026-11-10T15:00:00.000Z')
+    expect(fields.documentPassAnnouncementAt).toBe('2026-11-09T02:00:00.000Z')
+    expect(fields.interviewEndAt).toBe('2026-11-12T14:59:59.999Z')
+  })
+
   it('개인 overlay를 volunteer 키로 복사하지 않는다', () => {
     const sanitized = sanitizeRecruitAnnouncementOverlay(
       {
