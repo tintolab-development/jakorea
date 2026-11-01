@@ -9,6 +9,7 @@ import {
   resolvePreferredEducationScheduleLabelFromAnswers,
 } from '../lib/application-content-from-answers'
 import { buildTeacherApplicationContentFromPortal } from '../lib/teacher-application-content-from-portal'
+import { listRowCertificateAvailable } from '../lib/certificate-cta'
 import { isOrganizationEducationApplication } from '../lib/organization-education-application'
 import { readUjatPortalBannerState, readUjatRevisionReason } from '../lib/ujat-portal-banner'
 import { buildUjatApplicationContentFromPortal } from '../lib/ujat-application-content-from-answers'
@@ -281,11 +282,9 @@ export function mapPortalProgramApplicationListItem(
     detailCase,
     programType: row.programType,
     programGroup: row.programGroup,
+    certificateAvailable: listRowCertificateAvailable(row),
     ...(typeof row.pendingSurveyCount === 'number' && Number.isFinite(row.pendingSurveyCount)
       ? { pendingSurveyCount: row.pendingSurveyCount }
-      : {}),
-    ...(typeof row.certificateAvailable === 'boolean'
-      ? { certificateAvailable: row.certificateAvailable }
       : {}),
     ...(Array.isArray(row.availableActions)
       ? { availableActions: row.availableActions.filter(action => typeof action === 'string') }
@@ -564,8 +563,11 @@ export function mapPortalProgramApplicationDetail(
     displayStatus,
   })
   mapped.cancellable = detail.cancellable ?? detail.capabilities?.canCancelApplication
-  // 상세는 certificateAvailable이 없음 — capabilities.canIssueCertificate를 쓴다.
-  // 목록 row를 spread해도 상세에 없는 필드로 덮지 않도록 상세 힌트만 설정한다.
+  // 상세 응답에는 목록용 certificateAvailable이 없다.
+  // 목록 매퍼가 액션 없음으로 만든 false가 상세 힌트를 덮지 않게 지운다.
+  if (typeof detail.certificateAvailable !== 'boolean') {
+    delete mapped.certificateAvailable
+  }
   if (typeof detail.capabilities?.canIssueCertificate === 'boolean') {
     mapped.canIssueCertificate = detail.capabilities.canIssueCertificate
   }

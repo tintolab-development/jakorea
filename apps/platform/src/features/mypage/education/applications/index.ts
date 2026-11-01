@@ -121,6 +121,7 @@ export { EducationStudentsPanel } from './ui/students-panel'
 export type { EducationStudentsPanelProps } from './ui/students-panel'
 export { EducationJournalPanel } from './ui/education-journal-panel'
 export { EducationPersonalCertificatePanel } from './ui/personal-certificate-panel'
+export { CertificateIssueCta } from './ui/certificate-issue-cta'
 export {
   TeacherAssignedInstructorCard,
   TeacherEducationAssignmentAside,
