@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import {
+  educationScheduleRangeHasClock,
   formatEducationScheduleLineFromRange,
   parseEducationScheduleLineToRange,
 } from '@/features/template/lib/format-education-schedule-line'
@@ -76,6 +77,9 @@ export function ProgramRegistrationMultiRoundAssignmentFields({
             value={appliedSurfaceRange?.[0] ?? null}
             onChange={() => {}}
             appliedSurfaceRange={appliedSurfaceRange}
+            appliedSurfaceWithTime={Boolean(
+              appliedSurfaceRange && educationScheduleRangeHasClock(appliedSurfaceRange)
+            )}
             onRangeChange={([start, end]) => {
               onChange({
                 enabled: true,
