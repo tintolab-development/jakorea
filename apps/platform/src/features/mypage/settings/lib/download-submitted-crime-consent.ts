@@ -1,36 +1,24 @@
+import { isAxiosError } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
-import { fetchPortalSignedDownloadBlob } from '@/shared/lib/portal-signed-download-fetch'
+import {
+  CRIME_CONSENT_MESSAGES,
+  readCrimeConsentErrorCodeFromBody,
+  resolveCrimeConsentApiErrorMessage,
+} from '../../instructor-apply/consent/crime-consent-original'
 
-const DOWNLOAD_PURPOSE = '회원 마이페이지 성범죄 경력 조회 동의서 다운로드'
-const FALLBACK_FILE_NAME = '성범죄 경력 조회 동의서'
+const FALLBACK_FILE_NAME = '성범죄 경력 조회 동의서.pdf'
 
-type ConsentDocumentDownload = {
-  downloadUrl?: string
-  requiredHeaders?: Record<string, string>
-}
+/** 원본 다운로드 실패. `message`는 화면 안내 문구, `code`·`status`는 서버 응답 그대로. */
+export class CrimeConsentDownloadError extends Error {
+  readonly code: string | null
+  readonly status: number | null
 
-function unwrapEnvelope<T>(payload: unknown): T {
-  if (payload && typeof payload === 'object') {
-    const record = payload as Record<string, unknown>
-    if (record.success === true && 'data' in record) {
-      return unwrapEnvelope<T>(record.data)
-    }
+  constructor(message: string, code: string | null = null, status: number | null = null) {
+    super(message)
+    this.name = 'CrimeConsentDownloadError'
+    this.code = code
+    this.status = status
   }
-  return payload as T
-}
-
-function extensionForBlob(blob: Blob): string {
-  if (blob.type.includes('pdf')) return '.pdf'
-  if (blob.type.includes('png')) return '.png'
-  if (blob.type.includes('jpeg')) return '.jpg'
-  if (blob.type.includes('webp')) return '.webp'
-  return ''
-}
-
-function ensureFileName(name: string, blob: Blob): string {
-  const trimmed = name.trim() || FALLBACK_FILE_NAME
-  if (/\.[a-z0-9]{2,5}$/i.test(trimmed)) return trimmed
-  return `${trimmed}${extensionForBlob(blob)}`
 }
 
 function saveBlobFile(fileName: string, blob: Blob): void {
@@ -45,38 +33,67 @@ function saveBlobFile(fileName: string, blob: Blob): void {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
 }
 
-function isUsableFileBlob(data: unknown): data is Blob {
-  return data instanceof Blob && data.size > 0 && !data.type.toLowerCase().includes('application/json')
+/** `responseType: 'blob'` 오류 응답은 JSON도 Blob으로 온다. */
+async function readErrorBody(data: unknown): Promise<unknown> {
+  if (data instanceof Blob) {
+    try {
+      return JSON.parse(await data.text())
+    } catch {
+      return null
+    }
+  }
+  return data
 }
 
-/**
- * 제출한 성범죄 동의서 원본 다운로드.
- * 1) GET .../content — 소유자 원본 PDF relay (OpenAPI streamOriginal)
- * 2) POST .../download-requests — 서명 보관본 Signed URL 폴백
- * `signedFileObjectId` + `/me/files/{id}/download-requests`는 403.
- */
-export async function downloadSubmittedCrimeConsent(documentId: number): Promise<void> {
-  const documentPath = `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}`
-  try {
-    const res = await axiosClient.get(documentPath + '/content', {
-      responseType: 'blob',
-    })
-    if (isUsableFileBlob(res.data)) {
-      saveBlobFile(ensureFileName(FALLBACK_FILE_NAME, res.data), res.data)
-      return
-    }
-  } catch {
-    /* download-requests 폴백 */
+async function toDownloadError(error: unknown): Promise<CrimeConsentDownloadError> {
+  if (error instanceof CrimeConsentDownloadError) return error
+  if (!isAxiosError(error)) {
+    return new CrimeConsentDownloadError(CRIME_CONSENT_MESSAGES.downloadFailed)
   }
+  if (error.response == null) {
+    return new CrimeConsentDownloadError(CRIME_CONSENT_MESSAGES.network)
+  }
+  const status = error.response.status
+  const code = readCrimeConsentErrorCodeFromBody(await readErrorBody(error.response.data))
+  return new CrimeConsentDownloadError(
+    resolveCrimeConsentApiErrorMessage({ code, status }, CRIME_CONSENT_MESSAGES.downloadFailed),
+    code,
+    status,
+  )
+}
 
-  const res = await axiosClient.post(documentPath + '/download-requests', {
-    purpose: DOWNLOAD_PURPOSE,
+function isPdfResponse(contentType: unknown, blob: Blob): boolean {
+  const header = typeof contentType === 'string' ? contentType.toLowerCase() : ''
+  return header.includes('application/pdf') || blob.type.toLowerCase().includes('application/pdf')
+}
+
+async function downloadOriginal(documentId: number): Promise<void> {
+  const path = `/api/portal/me/consents/documents/${encodeURIComponent(String(documentId))}/content`
+  try {
+    const res = await axiosClient.get<Blob>(path, { responseType: 'blob' })
+    const blob = res.data
+    if (!(blob instanceof Blob) || blob.size === 0 || !isPdfResponse(res.headers['content-type'], blob)) {
+      throw new CrimeConsentDownloadError(CRIME_CONSENT_MESSAGES.downloadFailed)
+    }
+    const pdf = blob.type ? blob : new Blob([blob], { type: 'application/pdf' })
+    saveBlobFile(FALLBACK_FILE_NAME, pdf)
+  } catch (error) {
+    throw await toDownloadError(error)
+  }
+}
+
+const inflightDownloads = new Map<number, Promise<void>>()
+
+/**
+ * 제출한 성범죄 동의서 원본 PDF — GET .../content (OpenAPI: 본인 업로드 원본 relay).
+ * 409 등 실패 시 `/download-requests`로 폴백하지 않는다. 같은 문서의 중복 요청은 하나로 합친다.
+ */
+export function downloadSubmittedCrimeConsent(documentId: number): Promise<void> {
+  const pending = inflightDownloads.get(documentId)
+  if (pending) return pending
+  const request = downloadOriginal(documentId).finally(() => {
+    inflightDownloads.delete(documentId)
   })
-  const body = unwrapEnvelope<ConsentDocumentDownload>(res.data)
-  const url = body.downloadUrl?.trim()
-  if (!url) throw new Error('download url missing')
-
-  const blob = await fetchPortalSignedDownloadBlob(url, body.requiredHeaders)
-  if (blob.size === 0) throw new Error('empty download')
-  saveBlobFile(ensureFileName(FALLBACK_FILE_NAME, blob), blob)
+  inflightDownloads.set(documentId, request)
+  return request
 }

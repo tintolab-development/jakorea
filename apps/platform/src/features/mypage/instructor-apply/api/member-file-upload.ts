@@ -14,11 +14,20 @@ type MemberFileUploadResponse = {
   requiredHeaders?: Record<string, string>
 }
 
-type MemberFileResponse = {
+/** OpenAPI `MemberPortalFileResponse` 중 FE가 판정에 쓰는 필드 */
+export type MemberFileResponse = {
   fileObjectId: number
+  filePurpose?: string
+  contentType?: string
   scanStatus?: string
   uploadStatus?: string
+  downloadable?: boolean
 }
+
+/** 폴링 판정. 기본값은 범용 회원 파일 기준(`CLEAN` + `AVAILABLE`/`CONFIRMED`). */
+export type MemberFileReadinessClassifier = (
+  file: MemberFileResponse,
+) => 'ready' | 'pending' | 'invalid'
 
 export type MemberFileUploadStatus =
   | 'PREPARING'
@@ -120,9 +129,16 @@ export class MemberFileTooLargeError extends Error {
 }
 
 export class MemberFileScanTimeoutError extends Error {
-  constructor() {
+  /** 업로드·confirm은 끝났고 검사만 남은 파일. 같은 ID로 상태를 다시 확인할 수 있다. */
+  readonly fileObjectId?: number
+  /** 시간 초과 직전 GET 응답 — 재확인할지 재업로드할지 판단한다. */
+  readonly lastFile?: MemberFileResponse
+
+  constructor(fileObjectId?: number, lastFile?: MemberFileResponse) {
     super('파일 보안 검사가 끝나지 않았습니다.')
     this.name = 'MemberFileScanTimeoutError'
+    this.fileObjectId = fileObjectId
+    this.lastFile = lastFile
   }
 }
 
@@ -202,6 +218,14 @@ function isTerminalFailureStatus(value: string | undefined): boolean {
   )
 }
 
+const classifyMemberFileDefault: MemberFileReadinessClassifier = file => {
+  if (isAvailable(file)) return 'ready'
+  if (isTerminalFailureStatus(file.scanStatus) || isTerminalFailureStatus(file.uploadStatus)) {
+    return 'invalid'
+  }
+  return 'pending'
+}
+
 function resolvePolicyFileType(file: File, policy: MemberFileUploadPolicy): string {
   const extension = fileExtension(file.name)
   const mimeType = resolveMemberPortalUploadContentType(file).toLowerCase()
@@ -221,8 +245,76 @@ export function validateMemberPortalFile(file: File, policy: MemberFileUploadPol
   if (policy.allowedFileTypes) resolvePolicyFileType(file, policy)
 }
 
-async function sleep(ms: number) {
-  await new Promise(resolve => window.setTimeout(resolve, ms))
+function throwIfAborted(signal: AbortSignal | undefined): void {
+  if (signal?.aborted) throw new DOMException('Upload aborted', 'AbortError')
+}
+
+async function sleep(ms: number, signal?: AbortSignal) {
+  throwIfAborted(signal)
+  await new Promise<void>((resolve, reject) => {
+    const timer = window.setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    const onAbort = () => {
+      window.clearTimeout(timer)
+      reject(new DOMException('Upload aborted', 'AbortError'))
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+/** GET /api/portal/me/files/{fileObjectId} — 회원 본인 파일 상태 */
+export async function fetchMemberPortalFile(
+  fileObjectId: number,
+  signal?: AbortSignal,
+): Promise<MemberFileResponse> {
+  return unwrap<MemberFileResponse>(
+    (await axiosClient.get(`/api/portal/me/files/${fileObjectId}`, { signal })).data
+  )
+}
+
+/** 동의서 원본처럼 서버가 CLEAN + AVAILABLE만 받는 파일의 엄격한 준비 판정 */
+export function isMemberPortalFileCleanAvailable(file: MemberFileResponse): boolean {
+  return (
+    file.scanStatus?.trim().toUpperCase() === 'CLEAN' &&
+    file.uploadStatus?.trim().toUpperCase() === 'AVAILABLE'
+  )
+}
+
+/**
+ * confirm 이후 보안 검사 완료까지 폴링한다.
+ * 시간 초과면 `MemberFileScanTimeoutError(fileObjectId)` — 같은 ID로 다시 호출해 재확인한다.
+ */
+export async function waitForMemberPortalFileAvailable(
+  fileObjectId: number,
+  options?: {
+    signal?: AbortSignal
+    onStatusChange?: (status: MemberFileUploadStatus) => void
+    classify?: MemberFileReadinessClassifier
+  },
+): Promise<number> {
+  const signal = options?.signal
+  const classify = options?.classify ?? classifyMemberFileDefault
+  options?.onStatusChange?.('SCANNING')
+  let lastFile: MemberFileResponse | undefined
+  for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
+    throwIfAborted(signal)
+    try {
+      lastFile = await fetchMemberPortalFile(fileObjectId, signal)
+    } catch (error) {
+      throwIfAborted(signal)
+      throw new MemberFileStatusCheckError(error)
+    }
+    const state = classify(lastFile)
+    if (state === 'ready') {
+      options?.onStatusChange?.('AVAILABLE')
+      return fileObjectId
+    }
+    if (state === 'invalid') throw new MemberFileRejectedError()
+    if (attempt + 1 < POLL_MAX_ATTEMPTS) await sleep(POLL_INTERVAL_MS, signal)
+  }
+  throw new MemberFileScanTimeoutError(fileObjectId, lastFile)
 }
 
 /** OpenAPI `MemberPortalFileUploadRequest.filePurpose` — 서버가 수락하는 값. */
@@ -238,6 +330,7 @@ export type MemberPortalFilePurpose =
   | 'PROGRAM_POST_INLINE_IMAGE'
   | 'STUDENT_ROSTER'
   | 'CRIMINAL_HISTORY_EVIDENCE'
+  | 'CRIMINAL_HISTORY_CONSENT_ORIGINAL'
   | 'EDUCATION_JOURNAL'
   | 'MEMBER_ELECTRONIC_SIGNATURE'
   | 'ELECTRONIC_SIGNATURE'
@@ -256,6 +349,9 @@ export async function uploadMemberPortalFile(input: {
   checksumSha256?: string
   policy?: MemberFileUploadPolicy
   onStatusChange?: (status: MemberFileUploadStatus) => void
+  /** 파일 교체·화면 이탈 시 진행 중 요청과 스캔 폴링을 멈춘다. */
+  signal?: AbortSignal
+  classify?: MemberFileReadinessClassifier
 }): Promise<number> {
   const notifyStatus = (status: MemberFileUploadStatus) => input.onStatusChange?.(status)
   if (input.policy) validateMemberPortalFile(input.file, input.policy)
@@ -281,6 +377,8 @@ export async function uploadMemberPortalFile(input: {
       contentType,
       checksumSha256,
       notifyStatus,
+      signal: input.signal,
+      classify: input.classify,
     })
   )
 }
@@ -292,8 +390,11 @@ async function uploadPreparedMemberPortalFile(input: {
   contentType: string
   checksumSha256: string | undefined
   notifyStatus: (status: MemberFileUploadStatus) => void
+  signal?: AbortSignal
+  classify?: MemberFileReadinessClassifier
 }): Promise<number> {
-  const { fileSize, contentType, checksumSha256, notifyStatus } = input
+  const { fileSize, contentType, checksumSha256, notifyStatus, signal } = input
+  throwIfAborted(signal)
   notifyStatus('PREPARING')
   let prepared: MemberFileUploadResponse
   try {
@@ -308,11 +409,12 @@ async function uploadPreparedMemberPortalFile(input: {
             fileSize,
             ...(checksumSha256 ? { checksumSha256 } : {}),
           },
-          { headers: { 'Idempotency-Key': crypto.randomUUID() } }
+          { headers: { 'Idempotency-Key': crypto.randomUUID() }, signal }
         )
       ).data
     )
   } catch (error) {
+    throwIfAborted(signal)
     throw new MemberFileUploadRequestError(error)
   }
   const headers: Record<string, string> = { ...(prepared.requiredHeaders ?? {}) }
@@ -327,8 +429,10 @@ async function uploadPreparedMemberPortalFile(input: {
       method: uploadMethod,
       headers,
       body: input.file,
+      signal,
     })
   } catch (error) {
+    throwIfAborted(signal)
     throw new MemberFileStorageUploadError(error)
   }
   if (!uploadResponse.ok) {
@@ -347,37 +451,24 @@ async function uploadPreparedMemberPortalFile(input: {
   try {
     unwrap(
       (
-        await axiosClient.post(confirmPath, {
-          fileSize,
-          contentType,
-          ...(checksumSha256 ? { checksumSha256 } : {}),
-        })
+        await axiosClient.post(
+          confirmPath,
+          {
+            fileSize,
+            contentType,
+            ...(checksumSha256 ? { checksumSha256 } : {}),
+          },
+          { signal }
+        )
       ).data
     )
   } catch (error) {
+    throwIfAborted(signal)
     throw new MemberFileConfirmError(error)
   }
-  notifyStatus('SCANNING')
-  for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt += 1) {
-    let status: MemberFileResponse
-    try {
-      status = unwrap<MemberFileResponse>(
-        (await axiosClient.get(`/api/portal/me/files/${prepared.fileObjectId}`)).data
-      )
-    } catch (error) {
-      throw new MemberFileStatusCheckError(error)
-    }
-    if (isAvailable(status)) {
-      notifyStatus('AVAILABLE')
-      return prepared.fileObjectId
-    }
-    if (
-      isTerminalFailureStatus(status.scanStatus) ||
-      isTerminalFailureStatus(status.uploadStatus)
-    ) {
-      throw new MemberFileRejectedError()
-    }
-    if (attempt + 1 < POLL_MAX_ATTEMPTS) await sleep(POLL_INTERVAL_MS)
-  }
-  throw new MemberFileScanTimeoutError()
+  return waitForMemberPortalFileAvailable(prepared.fileObjectId, {
+    signal,
+    onStatusChange: notifyStatus,
+    classify: input.classify,
+  })
 }
