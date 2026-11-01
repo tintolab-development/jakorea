@@ -105,6 +105,7 @@ export async function downloadMemberApplicationAssignmentFilesZipRemote(input: {
       url: `${memberApplicationUrl(input.memberId, input.applicationId)}/assignment-files/download`,
       method: 'POST',
       params: { applicationType: input.applicationType },
+      headers: { Accept: 'application/zip, application/json' },
       responseType: 'blob',
       skipGlobalErrorAlert: true,
     } as AxiosRequestConfig & { skipGlobalErrorAlert: boolean })

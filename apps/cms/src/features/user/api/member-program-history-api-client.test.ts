@@ -46,6 +46,7 @@ describe('downloadMemberApplicationAssignmentFilesZipRemote', () => {
       url: '/api/admin/users/7/applications/1694714/assignment-files/download',
       method: 'POST',
       params: { applicationType: 'INDIVIDUAL' },
+      headers: { Accept: 'application/zip, application/json' },
       responseType: 'blob',
       skipGlobalErrorAlert: true,
     })
