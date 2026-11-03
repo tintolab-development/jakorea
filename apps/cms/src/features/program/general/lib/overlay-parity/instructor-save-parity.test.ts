@@ -25,6 +25,8 @@ import {
 } from '@/features/template/ui/form-set/application-form/shared/general-application-overlay-sync'
 import { buildCompanySchoolProgramFromRhf } from '@/features/program/1c-1s/lib/build-registration-create-from-canonical'
 import {
+  notifyCompanySchoolRegistrationRhf,
+  peekCompanySchoolRegistrationRhf,
   registerCompanySchoolRegistrationRhf,
   type CompanySchoolRegistrationRhfApi,
 } from '@/features/program/1c-1s/lib/registration-rhf-api'
@@ -98,6 +100,13 @@ function mockCsRhf(values: CompanySchoolRegistrationRhfValues): CompanySchoolReg
       if (path === 'recruitment') {
         current = { ...current, recruitment: value as CompanySchoolRegistrationRhfValues['recruitment'] }
       }
+      if (path === 'instructorRecruit') {
+        current = {
+          ...current,
+          instructorRecruit: value as CompanySchoolRegistrationRhfValues['instructorRecruit'],
+        }
+      }
+      notifyCompanySchoolRegistrationRhf()
     },
     reset: next => {
       current = next
@@ -207,7 +216,10 @@ describe('강사 모집·신청 overlay save parity (part3 step4)', () => {
     expect(sorted(collectOperationalOverlayForCatalogId(APPLICATION))).toMatchSnapshot(
       'cs-application-collect'
     )
-    const program = buildCompanySchoolProgramFromRhf({ id: 'cs-instructor', values: csValues() })
+    const program = buildCompanySchoolProgramFromRhf({
+      id: 'cs-instructor',
+      values: peekCompanySchoolRegistrationRhf()?.getValues() ?? csValues(),
+    })
     const overlay = program.registrationOverlay ?? {}
     const instructorPart = Object.fromEntries(
       Object.entries(overlay).filter(

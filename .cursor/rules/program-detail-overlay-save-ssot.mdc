@@ -12,6 +12,7 @@ alwaysApply: true
 요약:
 
 - RHF가 있으면 `detailEditValuesToProgramPatch` / `generalCommonInfoEditValuesToProgramPatch`가 Program 정본.
+- 1사1교 CREATE는 overlay store collect가 아니라 RHF canonical(`recruitment`·`instructorRecruit`).
 - persist 시 `getGeneralRecruitOverlayRecord()` 금지 → catalog `peek` + `detail-operational-save-merge`.
 - `preferOverlay` 병합 결과로 폼 PATCH를 덮지 않는다.
 - GET `recruitments[]`가 있으면 모집기간·운영기간·문의처·면접은 **행만**. overlay·세션·nested 라벨로 표시·시드를 덮지 않는다.

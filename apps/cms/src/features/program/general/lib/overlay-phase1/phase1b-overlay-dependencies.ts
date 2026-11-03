@@ -94,7 +94,7 @@ export const PHASE1B_OVERLAY_DEPENDENCIES: readonly Phase1BOverlayDependency[] =
     status: 'store-live',
     storeCallSites: [
       'prepare-registration-create-form-bindings.ts — 일반 모집/신청 양식 overlay(collectOperationalOverlayForCatalogId: RHF 투영 + 스토어의 미디어·비소유 키)',
-      '1c-1s/lib/build-registration-create-from-canonical.ts — collectSelectedRecruitOverlaysForProgram leftover(recruit.instructor.*, recruitInstructor.* — CS RHF 미모델, part3부터 강사 모집 RHF 필드 폼이 소유·미디어 키만 스토어)',
+      '1c-1s CREATE leftover collect 제거 — 강사 모집은 instructorRecruit RHF. 양식 collectOperationalOverlayForCatalogId 는 아직 스토어+RHF peek 병행',
       'general/hooks/use-registration-flow.ts — 신청 overlay fallback(일반 RHF 미마운트 시)',
       'general/lib/detail-operational-save-merge.ts — 상세 운영 양식 저장 병합',
       'UJAT/Gemini/TT 흐름 — 동작 불변 제약으로 유지',

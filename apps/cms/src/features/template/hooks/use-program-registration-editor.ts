@@ -91,6 +91,7 @@ import {
   omitCompanySchoolRecruitmentOverlayKeys,
   serializeCompanySchoolRecruitmentForFormVersion,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
+import { emptyCompanySchoolInstructorRecruitFormState } from '@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment'
 import {
   emptyCompanySchoolApplicationFormState,
   omitCompanySchoolApplicationOverlayKeys,
@@ -901,7 +902,10 @@ export function useProgramRegistrationEditor(
                         typed.application ??
                           imported.application ??
                           emptyCompanySchoolApplicationFormState()
-                      )
+                      ),
+                      typed.instructorRecruit ??
+                        imported.instructorRecruit ??
+                        emptyCompanySchoolInstructorRecruitFormState()
                     ),
                     { keepDirty: false }
                   )
@@ -916,7 +920,8 @@ export function useProgramRegistrationEditor(
                       imported.recruit ?? emptyCompanySchoolRecruitFormState(),
                       withEmptyCompanySchoolApplicationPreferredSchedule(
                         imported.application ?? emptyCompanySchoolApplicationFormState()
-                      )
+                      ),
+                      imported.instructorRecruit ?? emptyCompanySchoolInstructorRecruitFormState()
                     ),
                     { keepDirty: false }
                   )

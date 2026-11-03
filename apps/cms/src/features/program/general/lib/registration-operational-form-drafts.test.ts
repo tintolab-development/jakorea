@@ -290,6 +290,30 @@ describe('registration operational draft-owned helpers', () => {
     ).toBe('강사문의')
   })
 
+  it('1사1교 강사 editorState 초안은 overlay leftover보다 우선한다', async () => {
+    const {
+      companySchoolInstructorRecruitEditorState,
+      emptyCompanySchoolInstructorRecruitFormState,
+    } = await import('@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment')
+    const instructor = emptyCompanySchoolInstructorRecruitFormState()
+    instructor.inquiryContact = 'typed 강사'
+    loadRegistrationWizardFormDraft.mockImplementation(
+      async (args: { templateCode: string }) => {
+        if (args.templateCode === 'recruitment-instructor') {
+          return {
+            overlay: { 'recruit.instructor.inquiryContact': 'overlay leftover' },
+            editorState: companySchoolInstructorRecruitEditorState(instructor),
+          }
+        }
+        return null
+      }
+    )
+    await hydrateRegistrationOperationalOverlaysFromLocalDrafts('ECONOMY', 'economy')
+    expect(
+      peekGeneralRecruitOverlayRecord('recruitment-instructor')['recruit.instructor.inquiryContact']
+    ).toBe('typed 강사')
+  })
+
   it('임시저장 시 registration-general settingsJson을 overlay 재기록으로 덮지 않는다', async () => {
     setRegistrationStepTemplateSelection('GENERAL', 'program', 'registration-general')
     loadRegistrationWizardFormDraft.mockImplementation(

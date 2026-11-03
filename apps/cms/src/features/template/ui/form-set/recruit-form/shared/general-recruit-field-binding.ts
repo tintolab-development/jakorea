@@ -36,7 +36,7 @@ import {
   subscribeCompanySchoolRegistrationRhf,
 } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import {
-  isCompanySchoolRecruitmentCatalog,
+  isCompanySchoolOwnedRecruitmentCatalog,
   isCompanySchoolRecruitmentOverlayKey,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
@@ -84,7 +84,7 @@ export function peekGeneralRecruitFieldRecord(
 ): Record<string, unknown> {
   const merged = mergeWizardRecruitmentIntoOverlayRecord(form.peekRecord(templateCode), templateCode)
   const csRecord =
-    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)
+    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)
       ? peekActiveCompanySchoolRecruitmentOverlayRecord()
       : null
   const ttRecord =
@@ -146,7 +146,7 @@ export function replaceGeneralRecruitFieldsForScope(
     patchActiveTrainedTeachersRecruitmentOverlay(next)
     return
   }
-  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)) {
+  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)) {
     patchActiveCompanySchoolRecruitmentOverlay(next)
     return
   }
