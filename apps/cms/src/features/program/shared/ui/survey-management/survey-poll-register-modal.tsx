@@ -29,6 +29,10 @@ export type SurveyPollRegisterModalProps = {
   hasSessionSchedules: boolean
   /** false — 신청 일정 단락 없음; 일정 선택 UI 숨김 */
   showScheduleField?: boolean
+  title?: string
+  description?: string
+  confirmLabel?: string
+  scheduleLabel?: string
   onCancel: () => void
   onSubmit: () => void
 }
@@ -46,6 +50,10 @@ export function SurveyPollRegisterModal({
   schedulesLoading = false,
   hasSessionSchedules,
   showScheduleField = true,
+  title = SURVEY_POLL_REGISTER_MODAL_COPY.title,
+  description,
+  confirmLabel = '신규 등록',
+  scheduleLabel = SURVEY_POLL_REGISTER_MODAL_COPY.scheduleLabel,
   onCancel,
   onSubmit,
 }: SurveyPollRegisterModalProps) {
@@ -59,13 +67,14 @@ export function SurveyPollRegisterModal({
     <ContentModal
       open={open}
       onCancel={onCancel}
-      title={SURVEY_POLL_REGISTER_MODAL_COPY.title}
+      title={title}
       width={600}
       className={className}
       description={
-        showScheduleField
+        description ??
+        (showScheduleField
           ? SURVEY_POLL_REGISTER_MODAL_COPY.description
-          : SURVEY_POLL_REGISTER_MODAL_COPY.descriptionWithoutSchedule
+          : SURVEY_POLL_REGISTER_MODAL_COPY.descriptionWithoutSchedule)
       }
       footer={
         <>
@@ -84,7 +93,7 @@ export function SurveyPollRegisterModal({
             onClick={onSubmit}
             disabled={!canSubmit}
             loading={submitting} >
-            신규 등록
+            {confirmLabel}
           </CmsButton>
         </>
       }
@@ -106,7 +115,7 @@ export function SurveyPollRegisterModal({
             width="100%"
             withAllOption={false}
             allowClear={false}
-            label={SURVEY_POLL_REGISTER_MODAL_COPY.scheduleLabel}
+            label={scheduleLabel}
             required
             placeholder={SURVEY_POLL_REGISTER_MODAL_COPY.schedulePlaceholder}
             options={scheduleOptions}

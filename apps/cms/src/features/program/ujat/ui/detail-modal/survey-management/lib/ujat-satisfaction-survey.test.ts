@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   defaultSatisfactionAudienceForSurveyTab,
   getSatisfactionAudienceTabsForSurveyTab,
+  resolveUjatSatisfactionBindingTargetRole,
 } from './ujat-satisfaction-survey'
 
 describe('UJAT satisfaction audience tabs', () => {
@@ -22,5 +23,11 @@ describe('UJAT satisfaction audience tabs', () => {
   it('survey-school-satisfaction은 교사 탭만 제공한다', () => {
     const tabs = getSatisfactionAudienceTabsForSurveyTab('survey-school-satisfaction')
     expect(tabs.map(tab => tab.key)).toEqual(['teacher'])
+  })
+
+  it('SATISFACTION 바인딩 targetRole은 교사·상반기·하반기 봉사자를 구분한다', () => {
+    expect(resolveUjatSatisfactionBindingTargetRole('teacher')).toBe('TEACHER')
+    expect(resolveUjatSatisfactionBindingTargetRole('volunteer_h1')).toBe('VOLUNTEER_H1')
+    expect(resolveUjatSatisfactionBindingTargetRole('volunteer_h2')).toBe('VOLUNTEER_H2')
   })
 })
