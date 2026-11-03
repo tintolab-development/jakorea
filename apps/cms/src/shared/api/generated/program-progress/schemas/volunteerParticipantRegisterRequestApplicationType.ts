@@ -7,7 +7,8 @@
  */
 
 /**
- * UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다.
+ * 사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다.
+ * @nullable
  */
 export type VolunteerParticipantRegisterRequestApplicationType = typeof VolunteerParticipantRegisterRequestApplicationType[keyof typeof VolunteerParticipantRegisterRequestApplicationType] | null;
 

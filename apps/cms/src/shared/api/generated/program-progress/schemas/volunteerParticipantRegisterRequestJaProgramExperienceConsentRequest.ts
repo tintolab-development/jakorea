@@ -7,8 +7,7 @@
  */
 
 /**
- * 일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.
- * @minLength 1
+ * JA 봉사 프로그램 진행 경험(Figma 일반 추가 등록 폼과 동일). REQUESTED이면 previousJaProgram{programYear,programName,certificateFileIds} 필수. 일반 프로그램은 400 VOLUNTEER_PREVIOUS_JA_REQUIRED, UJAT CMS_PROGRESS_ADD는 422 VOLUNTEER_PREVIOUS_JA_REQUIRED. previousUjatTerm을 요구하지 않습니다.
  */
 export type VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest = typeof VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest[keyof typeof VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest];
 
