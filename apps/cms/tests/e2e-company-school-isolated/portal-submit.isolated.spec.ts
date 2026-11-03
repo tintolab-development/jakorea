@@ -35,51 +35,79 @@ async function dismissApplyAlert(page: Page) {
   await alert.getByRole('button', { name: /확인|닫기/ }).first().click({ force: true }).catch(() => undefined)
 }
 
+async function selectPlatformOption(page: Page, triggerName: string, optionName: string) {
+  const trigger = page.getByRole('button', { name: triggerName, exact: true }).first()
+  if (!(await trigger.isVisible().catch(() => false))) return
+  await trigger.click()
+  const option = page.getByRole('option', { name: optionName, exact: true }).first()
+  if (await option.isVisible().catch(() => false)) {
+    await option.click()
+    return
+  }
+  const anyOption = page.getByRole('option').first()
+  if (await anyOption.isVisible().catch(() => false)) await anyOption.click()
+  else await page.keyboard.press('Escape').catch(() => undefined)
+}
+
+async function fillPlaceholderIfVisible(page: Page, placeholder: string, value: string) {
+  const input = page.getByPlaceholder(placeholder).first()
+  if (!(await input.isVisible().catch(() => false))) return
+  const current = await input.inputValue().catch(() => '')
+  if (String(current).trim()) return
+  await input.fill(value)
+}
+
+async function clickRadioIfVisible(page: Page, name: string) {
+  const radio = page.getByRole('radio', { name }).first()
+  if (await radio.isVisible().catch(() => false)) {
+    await radio.check({ force: true }).catch(() => undefined)
+  }
+}
+
 async function fillVisibleApplyInputs(page: Page) {
+  await selectPlatformOption(page, '학년 선택', '1학년')
+  await selectPlatformOption(page, '신청 학급', '1')
+  await fillPlaceholderIfVisible(
+    page,
+    '교구재 등 택배 발송을 위한 정확한 주소를 입력해 주세요',
+    '격리로 1',
+  )
+  await fillPlaceholderIfVisible(page, '총 학생 수', '20')
+  await fillPlaceholderIfVisible(page, '신청 사유를 입력해 주세요.', '격리 신청 사유')
+  await fillPlaceholderIfVisible(page, '담당 교사의 내선 번호(직통 번호)', '02-783-2367')
+  await fillPlaceholderIfVisible(page, '담당 교사의 휴대폰 번호', '010-1234-5678')
+  await fillPlaceholderIfVisible(page, '담당 교사의 이메일', 'teacher@test.com')
+  await clickRadioIfVisible(page, '오프라인')
+  await clickRadioIfVisible(page, '미결연')
+  await clickRadioIfVisible(page, '아니요, 진행하지 않았습니다.')
+  const unansweredSelects = page.getByRole('button', { name: /선택$/ })
+  const unansweredCount = await unansweredSelects.count()
+  for (let index = 0; index < Math.min(unansweredCount, 8); index += 1) {
+    const trigger = unansweredSelects.nth(index)
+    if (!(await trigger.isVisible().catch(() => false))) continue
+    await trigger.click()
+    const option = page.getByRole('option').first()
+    if (await option.isVisible().catch(() => false)) await option.click()
+    else await page.keyboard.press('Escape').catch(() => undefined)
+  }
+  const checkboxes = page.getByRole('checkbox')
+  const checkboxCount = await checkboxes.count()
+  for (let index = 0; index < Math.min(checkboxCount, 4); index += 1) {
+    const box = checkboxes.nth(index)
+    if (!(await box.isVisible().catch(() => false))) continue
+    if (await box.isChecked().catch(() => false)) continue
+    await box.check({ force: true }).catch(() => undefined)
+  }
   const textboxes = page.locator('input:visible, textarea:visible')
   const boxCount = await textboxes.count()
   for (let index = 0; index < Math.min(boxCount, 32); index += 1) {
     const box = textboxes.nth(index)
     const type = await box.getAttribute('type')
     if (type === 'radio' || type === 'checkbox' || type === 'file') continue
+    if (await box.isDisabled().catch(() => false)) continue
     const value = await box.inputValue().catch(() => '')
     if (String(value).trim()) continue
     await box.fill('격리입력').catch(() => undefined)
-  }
-  const selects = page.locator('.ant-select:visible')
-  const selectCount = await selects.count()
-  for (let index = 0; index < Math.min(selectCount, 12); index += 1) {
-    const select = selects.nth(index)
-    const selected = (await select.locator('.ant-select-selection-item').textContent().catch(() => '')) ?? ''
-    if (selected.trim() !== '' && !selected.includes('선택')) continue
-    await select.click()
-    const option = page.locator('.ant-select-item-option:visible').first()
-    if (await option.isVisible().catch(() => false)) {
-      await option.click()
-    } else {
-      await page.keyboard.press('Escape').catch(() => undefined)
-    }
-  }
-  const nativeSelects = page.locator('select:visible')
-  const nativeCount = await nativeSelects.count()
-  for (let index = 0; index < nativeCount; index += 1) {
-    const select = nativeSelects.nth(index)
-    const value = await select.inputValue().catch(() => '')
-    if (String(value).trim()) continue
-    const option = select.locator('option[value]:not([value=""])').nth(1)
-    const optionValue = await option.getAttribute('value').catch(() => '')
-    if (optionValue) await select.selectOption(optionValue).catch(() => undefined)
-  }
-  const radioGroups = page.locator('.ant-radio-group:visible, [role="radiogroup"]:visible')
-  const groupCount = await radioGroups.count()
-  for (let index = 0; index < Math.min(groupCount, 16); index += 1) {
-    const group = radioGroups.nth(index)
-    const checked = group.locator('.ant-radio-checked, [aria-checked="true"]')
-    if ((await checked.count()) > 0) continue
-    const option = group.locator('.ant-radio-wrapper:visible, [role="radio"]:visible').first()
-    if (await option.isVisible().catch(() => false)) {
-      await option.click()
-    }
   }
 }
 

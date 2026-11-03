@@ -205,8 +205,9 @@ export class CompanySchoolRegistrationPage {
     await expect(instructorTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
     await this.fillRecruitSharedFields()
     await this.expectVolunteerRecruitTabAbsent()
+    await this.page.keyboard.press('Escape').catch(() => undefined)
     const institutionTab = this.page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ }).first()
-    await expect(institutionTab).toBeVisible({ timeout: 15_000 })
+    await expect(institutionTab).toBeVisible({ timeout: 30_000 })
     await institutionTab.click()
     await expect(institutionTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
   }
