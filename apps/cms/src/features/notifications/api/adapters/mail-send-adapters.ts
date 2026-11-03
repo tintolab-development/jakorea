@@ -54,9 +54,8 @@ export function mapMailRecipientCandidate(
   const actorType = (candidate.actorType || 'MEMBER').trim() || 'MEMBER'
   if (memberId == null && actorType !== 'DIRECT') return null
 
-  const name = candidate.recipientName?.trim() || candidate.recipientNameMasked?.trim()
-  const contact =
-    candidate.recipientContact?.trim() || candidate.recipientContactMasked?.trim()
+  const name = candidate.recipientName?.trim()
+  const contact = candidate.recipientContact?.trim()
   const id =
     memberId != null ? `actor-${actorType}-${memberId}` : `contact-${contact ?? Math.random()}`
 

@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import { recipientCandidateQueryOptions } from '@/features/notifications/api/recipient-candidates-cache'
 import {
   getMailRecipientCandidates,
   getMailSenderProfiles,
@@ -45,9 +46,7 @@ export function useMailRecipientCandidatesQuery(
     queryKey: notificationsQueryKeys.mailSend.recipients(key),
     queryFn: () => getMailRecipientCandidates(input),
     enabled: canFetch,
-    staleTime: 30_000,
-    placeholderData: keepPreviousData,
-    retry: false,
+    ...recipientCandidateQueryOptions,
   })
 }
 

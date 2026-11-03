@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import { recipientCandidateQueryOptions } from '@/features/notifications/api/recipient-candidates-cache'
 import {
   getAlimtalkRecipientCandidates,
   getAlimtalkSenderProfiles,
@@ -56,9 +57,7 @@ export function useAlimtalkRecipientCandidatesQuery(
     queryKey: notificationsQueryKeys.alimtalkSend.recipients(key),
     queryFn: () => getAlimtalkRecipientCandidates(input),
     enabled: canFetch,
-    staleTime: 30_000,
-    placeholderData: keepPreviousData,
-    retry: false,
+    ...recipientCandidateQueryOptions,
   })
 }
 

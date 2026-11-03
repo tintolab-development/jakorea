@@ -1,4 +1,5 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import { recipientCandidateQueryOptions } from '@/features/notifications/api/recipient-candidates-cache'
 import { getSmsSendTemplatePicker } from '@/features/notifications/api/sms-template-service'
 import {
   getSmsRecipientCandidates,
@@ -56,9 +57,7 @@ export function useSmsRecipientCandidatesQuery(
     queryKey: notificationsQueryKeys.smsSend.recipients(key),
     queryFn: () => getSmsRecipientCandidates(input),
     enabled: canFetch,
-    staleTime: 30_000,
-    placeholderData: keepPreviousData,
-    retry: false,
+    ...recipientCandidateQueryOptions,
   })
 }
 
