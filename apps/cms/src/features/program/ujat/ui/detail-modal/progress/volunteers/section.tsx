@@ -28,6 +28,10 @@ import { StudentCertificatePdfExportHost } from '@/features/program/general/ui/d
 import type { EducationProgressHalfKey } from '../tabs'
 import { UjatAddVolunteerModal } from './add-volunteer-modal'
 import { UjatVolunteerAddRegistrationModal } from './add-registration-modal'
+import {
+  isUjatProgressVolunteerMissingId1365,
+  UJAT_PROGRESS_VOLUNTEER_1365_REQUIRED_MESSAGE,
+} from './ujat-volunteer-participant-register-request'
 import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
@@ -416,6 +420,14 @@ export function UjatEducationProgressVolunteersSection({
         memberOptions={memberOptions}
         onNoMemberSelected={showNoMemberSelectedAlert}
         onAdd={memberId => {
+          const candidate = memberOptions.find(option => option.memberId === memberId)
+          if (isUjatProgressVolunteerMissingId1365(candidate?.hasRegisteredId1365)) {
+            showAlert({
+              title: '안내',
+              content: UJAT_PROGRESS_VOLUNTEER_1365_REQUIRED_MESSAGE,
+            })
+            return
+          }
           setAddVolunteerModalOpen(false)
           setAddRegistrationMemberId(memberId)
         }}

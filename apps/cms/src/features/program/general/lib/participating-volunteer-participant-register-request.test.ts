@@ -167,4 +167,28 @@ describe('buildVolunteerParticipantRegisterRequest', () => {
     expect(result.request.previousJaProgram).toBeUndefined()
     expect(result.request.id1365).toBe('ID-1365')
   })
+
+  it('rejects REQUESTED without previousJaProgram', () => {
+    const paragraphs = withJaExperience(
+      withThirdPartyRecipient(agreeConsents(), '배정학교A'),
+      JA_VOLUNTEER_EXPERIENCE_OPTION_IDS.yes
+    )
+    const result = buildVolunteerParticipantRegisterRequest({
+      memberId: 190080,
+      paragraphs,
+      hideBasicInfoSection: true,
+      pluginValues: {
+        id1365: '',
+        previousJaProgram: {
+          programYear: '',
+          programName: '',
+          certificateFiles: [],
+        },
+        freeTextById: fullFreeText,
+      },
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.message).toContain('이전 참여 JA')
+  })
 })

@@ -32,9 +32,9 @@ const PERSONAL_INFO_THIRD_PARTY_BOTTOM =
 
 /** Figma · 봉사자 신청 시드와 동일 — 동의일 기준 3년 */
 const PERSONAL_INFO_RETENTION_CELL =
-  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
+  '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 파기'
 
-const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
+const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
 
 /** Figma 시안 — 제3자 「제공받는 곳」 입력 placeholder */
 export const PARTICIPATING_VOLUNTEER_THIRD_PARTY_RECIPIENT_PLACEHOLDER =

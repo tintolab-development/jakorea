@@ -42,7 +42,7 @@ export const PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS: readonly ProgramVolunteerFre
   { id: 'intro', label: '1. 자기소개 및 지원동기를 자유롭게 작성해 주세요.' },
   {
     id: 'educationExperience',
-    label: '2. 교육봉사, 강사 아르바이트 등 교육 진행 경험을 간략히 적어주세요.',
+    label: '2. 교육봉사, 강사 아르바이트 등 교육 진행 경험을 간략히 적어 주세요.',
   },
   {
     id: 'necessity',
