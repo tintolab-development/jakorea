@@ -75,6 +75,24 @@ describe('1사1교 CREATE 공유 모집 scope 격리', () => {
     expect(getGeneralRecruitOverlayRecord()['recruit.instructor.inquiryContact']).toBeUndefined()
   })
 
+  it('기관 모집 replace 스냅샷의 빈 강사 키는 라이브 instructorRecruit를 덮지 않는다', () => {
+    const api = mockRhfApi(createDefaultCompanySchoolRegistrationRhfValues())
+    registerCompanySchoolRegistrationRhf(api)
+    patchActiveCompanySchoolRecruitmentOverlay({
+      'recruit.inquiryContact': '기관B',
+      'recruit.instructor.inquiryContact': '강사B',
+      'recruit.instructor.notes': '강사 비고',
+    })
+    replaceGeneralRecruitOverlayForScope('recruitment-economy', {
+      'recruit.inquiryContact': '기관A',
+      'recruit.instructor.inquiryContact': '',
+      'recruit.instructor.notes': '',
+    })
+    expect(api.getValues().recruitment.inquiryContact).toBe('기관A')
+    expect(api.getValues().instructorRecruit.inquiryContact).toBe('강사B')
+    expect(api.getValues().instructorRecruit.notes).toBe('강사 비고')
+  })
+
   it('기관 모집과 강사 모집은 서로 덮지 않는다', () => {
     const api = mockRhfApi(createDefaultCompanySchoolRegistrationRhfValues())
     registerCompanySchoolRegistrationRhf(api)

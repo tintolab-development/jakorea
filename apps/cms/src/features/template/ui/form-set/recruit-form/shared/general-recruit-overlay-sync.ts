@@ -30,7 +30,8 @@ import {
 } from '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
 import {
   patchActiveCompanySchoolRecruitmentOverlay,
-  peekActiveCompanySchoolRecruitmentOverlayRecord,
+  peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord,
+  peekActiveCompanySchoolInstructorRecruitmentOverlayRecord,
   peekCompanySchoolRegistrationRhf,
   readActiveCompanySchoolRecruitmentOverlayValue,
   subscribeCompanySchoolRegistrationRhf,
@@ -38,6 +39,7 @@ import {
 import {
   isCompanySchoolOwnedRecruitmentCatalog,
   isCompanySchoolRecruitmentOverlayKey,
+  pickCompanySchoolRecruitmentOverlayForCatalog,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import { filterUjatTypedRecruitmentOverlayPatch } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
@@ -88,7 +90,9 @@ export function peekGeneralRecruitOverlayRecord(
   const merged = mergeWizardRecruitmentIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
   const csRecord =
     peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)
-      ? peekActiveCompanySchoolRecruitmentOverlayRecord()
+      ? templateCode === 'recruitment-instructor'
+        ? peekActiveCompanySchoolInstructorRecruitmentOverlayRecord()
+        : peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord()
       : null
   const ttRecord =
     peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)
@@ -118,7 +122,9 @@ export function replaceGeneralRecruitOverlayForScope(
     return
   }
   if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)) {
-    patchActiveCompanySchoolRecruitmentOverlay(next)
+    patchActiveCompanySchoolRecruitmentOverlay(
+      pickCompanySchoolRecruitmentOverlayForCatalog(templateCode, next)
+    )
     return
   }
   if (!isWizardRecruitmentRhfProjecting()) {

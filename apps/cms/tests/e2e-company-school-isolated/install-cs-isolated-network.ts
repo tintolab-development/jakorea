@@ -423,6 +423,7 @@ function persistProgramPatch(store: IsolatedProgramStore, body: Record<string, u
 function isAllowedGet(pathname: string): boolean {
   if (
     pathname === '/api/admin/me' ||
+    pathname === '/api/admin/applications/counts' ||
     pathname === '/api/admin/programs' ||
     pathname === '/api/admin/programs/overview-stages' ||
     pathname === '/api/admin/sponsors' ||
@@ -685,6 +686,10 @@ export async function installCsIsolatedNetwork(
     }
     if (method === 'GET' && pathname === '/api/admin/settlement-configs/current') {
       await route.fulfill(json(settlementCurrentConfig()))
+      return
+    }
+    if (method === 'GET' && pathname === '/api/admin/applications/counts') {
+      await route.fulfill(json([]))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/form-templates') {

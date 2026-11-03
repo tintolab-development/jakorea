@@ -47,6 +47,7 @@ import {
 const RANGE_A = { start: '2026-03-01', end: '2026-03-31' }
 const RANGE_B = { start: '2026-09-01', end: '2026-09-30' }
 const RECRUIT = 'recruitment-economy'
+const INSTRUCTOR = 'recruitment-instructor'
 const APPLICATION = 'application-economy'
 
 const draftByCatalog = new Map<string, { editorState?: Record<string, unknown> }>()
@@ -164,6 +165,32 @@ describe('1사1교 등록 임시저장 — stale session overlay가 모집 기�
       flushParticipantSessionOverlaysToOperationalStores()
     })
     expect(collectCompanySchoolApplicationFormState().basicInfo.detailAddress).toBe('주소B')
+  })
+
+  it('강사 라이브 문의처 + stale snapshot → flush해도 instructorRecruit는 유지된다', () => {
+    mountWizard()
+    act(() => {
+      const rhf = peekCompanySchoolRegistrationRhf()
+      expect(rhf).not.toBeNull()
+      rhf!.applyOverlayRecord({
+        'recruit.instructor.inquiryContact': '강사B',
+        'recruit.instructor.inquiryTel': '02-9999-0000',
+        'recruit.instructor.inquiryEmail': 'b@example.com',
+        'recruit.instructor.notes': '강사 비고 B',
+      })
+      seedParticipantSessionOverlayForTests(INSTRUCTOR, {
+        'recruit.instructor.inquiryContact': '',
+        'recruit.instructor.inquiryTel': '',
+        'recruit.instructor.inquiryEmail': '',
+        'recruit.instructor.notes': '',
+      })
+      flushParticipantSessionOverlaysToOperationalStores()
+    })
+    const live = peekCompanySchoolRegistrationRhf()!.getValues().instructorRecruit
+    expect(live.inquiryContact).toBe('강사B')
+    expect(live.inquiryTel).toBe('02-9999-0000')
+    expect(live.inquiryEmail).toBe('b@example.com')
+    expect(live.notes).toBe('강사 비고 B')
   })
 
   it('임시저장 persist는 신청 라이브 B를 editorState로 남긴다', async () => {

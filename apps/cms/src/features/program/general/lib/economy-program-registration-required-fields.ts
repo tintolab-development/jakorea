@@ -323,21 +323,16 @@ export function listIncompleteEconomyProgramRecruitmentRequiredFields(
           )
         : null
     if (participant.teacherInstructor) {
-      const fieldForm = {
-        ...instructorRecruitFieldForm.peekRecord(null),
-        ...instructorRecruitFieldForm.peekRecord('recruitment-instructor'),
-        ...instructorRecruitFieldForm.getRecord(),
-      }
-      const merged: Record<string, unknown> = { ...fieldForm }
-      for (const [key, value] of Object.entries(typedInstructor ?? {})) {
-        if (value == null) continue
-        if (typeof value === 'string' && value.trim() === '') continue
-        if (Array.isArray(value) && value.length === 0) continue
-        merged[key] = value
-      }
+      const instructorOverlay =
+        typedInstructor ??
+        {
+          ...instructorRecruitFieldForm.peekRecord(null),
+          ...instructorRecruitFieldForm.peekRecord('recruitment-instructor'),
+          ...instructorRecruitFieldForm.getRecord(),
+        }
       reasons.push(
         ...listIncompleteInstructorRecruitInfo(
-          withGeneralRecruitRadioDefaults(merged, {
+          withGeneralRecruitRadioDefaults(instructorOverlay, {
             individual: false,
             organization: false,
             teacherInstructor: true,

@@ -113,12 +113,29 @@ export function readActiveCompanySchoolRecruitmentOverlayValue(
   return raw === undefined ? defaultValue : raw
 }
 
-export function peekActiveCompanySchoolRecruitmentOverlayRecord(): Record<string, unknown> | null {
+export function peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord(): Record<
+  string,
+  unknown
+> | null {
   if (api == null) return null
-  const values = api.getValues()
+  return serializeCompanySchoolRecruitmentForFormVersion(api.getValues().recruitment)
+}
+
+export function peekActiveCompanySchoolInstructorRecruitmentOverlayRecord(): Record<
+  string,
+  unknown
+> | null {
+  if (api == null) return null
+  return serializeCompanySchoolInstructorRecruitmentForFormVersion(api.getValues().instructorRecruit)
+}
+
+export function peekActiveCompanySchoolRecruitmentOverlayRecord(): Record<string, unknown> | null {
+  const institution = peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord()
+  const instructor = peekActiveCompanySchoolInstructorRecruitmentOverlayRecord()
+  if (institution == null || instructor == null) return null
   return {
-    ...serializeCompanySchoolRecruitmentForFormVersion(values.recruitment),
-    ...serializeCompanySchoolInstructorRecruitmentForFormVersion(values.instructorRecruit),
+    ...institution,
+    ...instructor,
   }
 }
 

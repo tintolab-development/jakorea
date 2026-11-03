@@ -7,7 +7,10 @@ import type {
   CompanySchoolRecruitFormState,
   CompanySchoolRecruitRange,
 } from './registration-canonical-types'
-import { isCompanySchoolInstructorRecruitmentOverlayKey } from './registration-rhf-instructor-recruitment'
+import {
+  isCompanySchoolInstructorRecruitmentOverlayKey,
+  splitCompanySchoolInstructorRecruitmentOverlay,
+} from './registration-rhf-instructor-recruitment'
 
 const K = {
   maxAssignableInstructors: 'recruit.maxAssignableInstructors',
@@ -138,6 +141,16 @@ export function isCompanySchoolRecruitmentOverlayKey(key: string): boolean {
     isCompanySchoolInstitutionRecruitmentOverlayKey(key) ||
     isCompanySchoolInstructorRecruitmentOverlayKey(key)
   )
+}
+
+/** catalog 스냅샷을 기관/강사 typed state에 넣을 때 상대 탭 키는 제외한다. */
+export function pickCompanySchoolRecruitmentOverlayForCatalog(
+  templateCode: string | null | undefined,
+  record: Record<string, unknown>
+): Record<string, unknown> {
+  const split = splitCompanySchoolInstructorRecruitmentOverlay(record)
+  if (templateCode === 'recruitment-instructor') return split.instructorRecruit
+  return split.rest
 }
 
 export function cloneCompanySchoolRecruitFormState(

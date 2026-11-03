@@ -2372,7 +2372,12 @@ export function useProgramRegistrationEditor(
               const recruitDraft =
                 recruitSaved?.draft ??
                 createSeedDraftForOperationalCatalogId('recruitment-economy')
+              const sessionApplication = (operationalOverrides ?? []).find(
+                item =>
+                  item.templateCode === 'application-economy' && item.draft.paragraphs.length > 0
+              )
               const applicationDraft =
+                sessionApplication?.draft ??
                 applicationSaved?.draft ??
                 createSeedDraftForOperationalCatalogId('application-economy')
               operationalOverrides = [...(operationalOverrides ?? [])]
@@ -2385,11 +2390,16 @@ export function useProgramRegistrationEditor(
                 })
               }
               if (applicationState != null && applicationDraft != null) {
+                operationalOverrides = operationalOverrides.filter(
+                  item => item.templateCode !== 'application-economy'
+                )
                 operationalOverrides.push({
                   templateCode: 'application-economy',
                   draft: applicationDraft,
                   overlay: serializeCompanySchoolApplicationForFormVersion(applicationState),
-                  editorState: companySchoolApplicationEditorState(applicationState),
+                  editorState:
+                    sessionApplication?.editorState ??
+                    companySchoolApplicationEditorState(applicationState),
                 })
               }
             }

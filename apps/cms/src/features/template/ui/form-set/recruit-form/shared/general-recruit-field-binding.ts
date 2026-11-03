@@ -30,7 +30,8 @@ import {
 } from '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
 import {
   patchActiveCompanySchoolRecruitmentOverlay,
-  peekActiveCompanySchoolRecruitmentOverlayRecord,
+  peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord,
+  peekActiveCompanySchoolInstructorRecruitmentOverlayRecord,
   peekCompanySchoolRegistrationRhf,
   readActiveCompanySchoolRecruitmentOverlayValue,
   subscribeCompanySchoolRegistrationRhf,
@@ -38,6 +39,7 @@ import {
 import {
   isCompanySchoolOwnedRecruitmentCatalog,
   isCompanySchoolRecruitmentOverlayKey,
+  pickCompanySchoolRecruitmentOverlayForCatalog,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import type { ScopedRhfFieldForm } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
@@ -85,7 +87,9 @@ export function peekGeneralRecruitFieldRecord(
   const merged = mergeWizardRecruitmentIntoOverlayRecord(form.peekRecord(templateCode), templateCode)
   const csRecord =
     peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)
-      ? peekActiveCompanySchoolRecruitmentOverlayRecord()
+      ? templateCode === 'recruitment-instructor'
+        ? peekActiveCompanySchoolInstructorRecruitmentOverlayRecord()
+        : peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord()
       : null
   const ttRecord =
     peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)
@@ -147,7 +151,9 @@ export function replaceGeneralRecruitFieldsForScope(
     return
   }
   if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)) {
-    patchActiveCompanySchoolRecruitmentOverlay(next)
+    patchActiveCompanySchoolRecruitmentOverlay(
+      pickCompanySchoolRecruitmentOverlayForCatalog(templateCode, next)
+    )
     return
   }
   if (!isWizardRecruitmentRhfProjecting()) {

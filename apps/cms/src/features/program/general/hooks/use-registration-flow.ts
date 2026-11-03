@@ -49,13 +49,17 @@ import { collectWizardApplicationOverlayForCatalog } from '@/features/program/ge
 import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
+  rememberRegistrationWizardSessionDraft,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
 import {
   beginRegistrationWizardVisit,
   endRegistrationWizardVisit,
   trackRegistrationWizardVisitSave,
 } from '@/features/program/general/lib/registration-wizard-visit'
-import { describeIncompleteApplicationFormThirdPartyRecipient } from '@/features/program/general/lib/application-form-third-party-recipient-required'
+import {
+  describeIncompleteApplicationFormThirdPartyRecipient,
+  listIncompleteApplicationFormThirdPartyRecipientFieldKeys,
+} from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
@@ -74,7 +78,7 @@ import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/feature
 import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import { listIncompleteTrainedTeachersRecruitmentRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-recruitment-required-fields'
-import { listIncompleteApplicationFormThirdPartyRecipientFieldKeys } from '@/features/program/general/lib/application-form-third-party-recipient-required'
+import { hasIncompleteApplicationFormThirdPartyRecipient } from '@/features/template/model/application-form-third-party-recipient'
 import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
 import {
   clearRegistrationStepTemplateSelections,
@@ -772,6 +776,16 @@ export function useGeneralProgramRegistrationFlow(
               draft: participantVm.draft,
             }
           : undefined
+      if (
+        current != null &&
+        current.draft.paragraphs.length > 0 &&
+        !hasIncompleteApplicationFormThirdPartyRecipient(current.draft)
+      ) {
+        rememberRegistrationWizardSessionDraft({
+          templateCode: current.templateCode,
+          draft: current.draft,
+        })
+      }
       const programSnapshot = registrationVm.buildCurrentProgramSnapshot(
         registrationPendingSnapshotId(registrationFormVariant)
       )

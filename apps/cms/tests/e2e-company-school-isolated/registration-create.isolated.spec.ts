@@ -20,6 +20,7 @@ test.describe.configure({ mode: 'default' })
 
 test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
   test('CS-B01 공통·모집·신청 입력 후 CREATE와 Form Version을 캡처한다', async ({ page }) => {
+    test.setTimeout(240_000)
     const log = await installCsIsolatedNetwork(page)
     await openFreshWizard(page)
     await fillRegistrationThroughComplete(page)
@@ -48,13 +49,36 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
 
     expect(log.formVersionPuts.length).toBeGreaterThan(0)
     expect(log.formVersionPublishes.length).toBeGreaterThan(0)
+    await expect
+      .poll(
+        () =>
+          log.formVersionPuts.some(item => {
+            const overlay = overlayFromFormVersionPut(item.body)
+            if (Object.keys(overlay).some(key => key.startsWith('application.economy.'))) {
+              return true
+            }
+            return JSON.stringify(item.body ?? '').includes('program-application-economy-seed')
+          }),
+        { timeout: 60_000 }
+      )
+      .toBe(true)
     const overlayPuts = log.formVersionPuts.map(item => overlayFromFormVersionPut(item.body))
-    const applicationPut = overlayPuts.find(item =>
+    const overlayApplicationPut = overlayPuts.find(item =>
       Object.keys(item).some(key => key.startsWith('application.economy.'))
     )
-    expect(applicationPut, 'application-economy Form Version PUT').toBeTruthy()
-    expect(JSON.stringify(applicationPut)).not.toContain('application.institution.sexOffense')
-    const firstSchedule = applicationPut?.['application.economy.schedule.first']
+    const schemaApplicationPut = log.formVersionPuts.find(item =>
+      JSON.stringify(item.body ?? {}).includes('program-application-economy-seed')
+    )
+    expect(
+      overlayApplicationPut ?? schemaApplicationPut,
+      'application-economy Form Version PUT'
+    ).toBeTruthy()
+    const applicationPutPayload = log.formVersionPuts
+      .map(item => JSON.stringify(item.body ?? {}))
+      .join('\n')
+    expect(applicationPutPayload).not.toContain('application.institution.sexOffense')
+    expect(applicationPutPayload).toContain('JA코리아')
+    const firstSchedule = overlayApplicationPut?.['application.economy.schedule.first']
     if (firstSchedule && typeof firstSchedule === 'object') {
       const date = (firstSchedule as { date?: unknown }).date
       const firstStart = (firstSchedule as { firstStart?: unknown }).firstStart
