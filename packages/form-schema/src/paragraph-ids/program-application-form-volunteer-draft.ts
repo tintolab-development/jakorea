@@ -68,6 +68,10 @@ const PERSONAL_INFO_RETENTION_CELL =
   '이용 기간: 해당 프로그램이 진행되는 기간\n보유 기간: 동의일로부터 3년 보관 후 폐기'
 const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 폐기'
 
+/** Figma 수집·이용 목적 — 「및」 뒤 줄바꿈 */
+const VOLUNTEER_COLLECTION_PURPOSE_CELL =
+  'JA 프로그램 봉사활동 안내 및\n진행에 필요한 정보 안내'
+
 /** 객관식 항목 에디터(라디오 개별 선택)를 쓰지 않는 시드 */
 export function isProgramApplicationVolunteerJaExperienceMultipleChoiceSeed(
   paragraphId: string
@@ -88,7 +92,7 @@ function createVolunteerPersonalInfoHorizontalTable(): HorizontalTableParagraph 
     },
     {
       kind: 'text' as const,
-      value: 'JA 프로그램 봉사활동 안내 및 진행에 필요한 정보 안내',
+      value: VOLUNTEER_COLLECTION_PURPOSE_CELL,
     },
     {
       kind: 'text' as const,
@@ -132,7 +136,7 @@ function createVolunteerThirdPartyHorizontalTable(): HorizontalTableParagraph {
     },
     {
       kind: 'text' as const,
-      value: 'JA 프로그램 봉사활동 안내 및 진행에 필요한 정보 안내',
+      value: VOLUNTEER_COLLECTION_PURPOSE_CELL,
     },
     { kind: 'text' as const, value: THIRD_PARTY_RETENTION_CELL },
   ]

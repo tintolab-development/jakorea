@@ -40,6 +40,10 @@ const THIRD_PARTY_RETENTION_CELL = '동의일로부터 3년 보관 후 파기'
 export const PARTICIPATING_VOLUNTEER_THIRD_PARTY_RECIPIENT_PLACEHOLDER =
   '제공받는 기관명을 입력해 주세요'
 
+/** Figma 수집·이용 목적 — 「및」 뒤 줄바꿈 */
+const VOLUNTEER_COLLECTION_PURPOSE_CELL =
+  'JA 프로그램 봉사활동 안내 및\n진행에 필요한 정보 안내'
+
 function createParticipatingVolunteerPersonalInfoTable(): HorizontalTableParagraph {
   const colCount = 3
   const columnFields = Array.from({ length: colCount }, () => ({
@@ -53,7 +57,7 @@ function createParticipatingVolunteerPersonalInfoTable(): HorizontalTableParagra
     },
     {
       kind: 'text' as const,
-      value: 'JA 프로그램 봉사활동 안내 및 진행에 필요한 정보 안내',
+      value: VOLUNTEER_COLLECTION_PURPOSE_CELL,
     },
     {
       kind: 'text' as const,
@@ -97,7 +101,7 @@ function createParticipatingVolunteerThirdPartyTable(): HorizontalTableParagraph
     },
     {
       kind: 'text' as const,
-      value: 'JA 프로그램 봉사활동 안내 및 진행에 필요한 정보 안내',
+      value: VOLUNTEER_COLLECTION_PURPOSE_CELL,
     },
     { kind: 'text' as const, value: THIRD_PARTY_RETENTION_CELL },
   ]
