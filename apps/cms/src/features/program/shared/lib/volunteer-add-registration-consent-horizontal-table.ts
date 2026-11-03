@@ -10,6 +10,11 @@ export const VOLUNTEER_CONSENT_THIRD_PARTY_LOCKED_BODY_COLUMN_INDEXES: ReadonlyS
 export type VolunteerConsentHorizontalTableInteractionProps = {
   isEditMode: boolean
   lockedBodyColumnIndexes: ReadonlySet<number> | undefined
+  /**
+   * 제3자 「제공받는 곳」 — 공통 가로표 field처럼 셀 안 보더 없이 바로 입력
+   * (`TextCellInput` 파란/회색 박스 인풋 금지)
+   */
+  unboxedEditableBodyCell: boolean
   lockColumnHeaders: true
   tableCanvasInteractive: false
   bottomConsentPreviewInAuthoring: true
@@ -26,6 +31,7 @@ export function resolveVolunteerConsentHorizontalTableInteractionProps(
     lockedBodyColumnIndexes: isThirdParty
       ? VOLUNTEER_CONSENT_THIRD_PARTY_LOCKED_BODY_COLUMN_INDEXES
       : undefined,
+    unboxedEditableBodyCell: isThirdParty,
     lockColumnHeaders: true,
     tableCanvasInteractive: false,
     bottomConsentPreviewInAuthoring: true,

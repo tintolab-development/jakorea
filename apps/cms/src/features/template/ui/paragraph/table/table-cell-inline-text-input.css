@@ -1,0 +1,41 @@
+/* 가로표 field 셀 — 한 줄, blur 시 값 중앙 / focus 시 좌측 편집 */
+
+.table-cell-inline-text-input.ant-input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 24px !important;
+  min-height: 24px !important;
+  max-height: 24px !important;
+  padding: 0;
+  margin: 0;
+  line-height: 24px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.table-cell-inline-text-input.ant-input::placeholder {
+  text-align: center;
+}
+
+.form-editor-horizontal-table__cell-input-shell
+  .table-cell-inline-text-input--focused.ant-input,
+.form-editor-horizontal-table__cell-input-shell
+  .table-cell-inline-text-input--focused.ant-input::placeholder {
+  text-align: left !important;
+}
+
+.table-cell-inline-text-input--focused.ant-input::placeholder {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  opacity: 0;
+}
+
+.table-cell-inline-text-input.ant-input:focus,
+.table-cell-inline-text-input.ant-input-focused {
+  box-shadow: none !important;
+}
