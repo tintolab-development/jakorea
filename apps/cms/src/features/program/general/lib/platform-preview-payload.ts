@@ -31,6 +31,7 @@ import {
   resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import { looksLikeTrainedTeacherProgramId } from '@/features/program/trained-teachers/lib/is-trained-teachers-primary-program'
 import { resolveProgramOperationalBindingKind } from '@/features/program/general/lib/program-operational-binding-profile'
 import type { GeneralRecruitTabKey } from '@/features/program/general/lib/recruitment-tabs'
@@ -90,6 +91,13 @@ export function resolveRecruitmentPreviewProgram(
     row?.id != null && program.activeRecruitmentId !== row.id
       ? { ...program, activeRecruitmentId: row.id }
       : program
+  if (isCompanySchoolProgram(program) && peekCompanySchoolRegistrationRhf() != null) {
+    return resolveGeneralRecruitDetailDisplayProgram(
+      focused,
+      previewCopyAudienceForTab(audience),
+      { strictRemote: true }
+    )
+  }
   const live = liveRecruitPreviewOverlay(focused, audience, extraOverlay)
   const withLive =
     Object.keys(live).length > 0

@@ -14,6 +14,7 @@ import {
 } from '@/features/program/general/lib/institution-application-form-visibility'
 import {
   listIncompleteGeneralProgramRecruitmentRequiredFields,
+  listIncompleteInstructorRecruitInfo,
   peekSelectedInstitutionRecruitOverlay,
 } from '@/features/program/general/lib/registration-recruitment-required-fields'
 import { isDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
@@ -23,7 +24,13 @@ import {
   isAnnouncementUnpublished,
 } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { serializeCompanySchoolRecruitmentForFormVersion } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
+import {
+  serializeCompanySchoolInstructorRecruitmentForFormVersion,
+  withCompanySchoolInstructorRecruitCreateDefaults,
+} from '@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment'
 import { serializeCompanySchoolApplicationForFormVersion } from '@/features/program/1c-1s/lib/registration-rhf-application'
+import { instructorRecruitFieldForm } from '@/features/template/ui/form-set/recruit-form/instructor/instructor-recruit-form-rhf'
+import { withGeneralRecruitRadioDefaults } from '@/features/program/general/lib/recruit-radio-defaults'
 
 const ALL = '__all__'
 
@@ -308,21 +315,54 @@ export function listIncompleteEconomyProgramRecruitmentRequiredFields(
     )
   }
   if (participant.teacherInstructor || participant.individual || participant.volunteer) {
-    reasons.push(
-      ...listIncompleteGeneralProgramRecruitmentRequiredFields({
-        participant: {
-          individual: participant.individual,
-          organization: false,
-          teacherInstructor: participant.teacherInstructor,
-          volunteer: participant.volunteer,
-        },
-        programType: 'curriculum',
-        sessionRoundType: 'single',
-        educationScheduleMode: 'period',
-        volunteerExceptionScheduleCount: 0,
-        registrationProgramType: 'COMPANY_SCHOOL',
-      })
-    )
+    const rhf = peekCompanySchoolRegistrationRhf()
+    const typedInstructor =
+      rhf != null
+        ? serializeCompanySchoolInstructorRecruitmentForFormVersion(
+            withCompanySchoolInstructorRecruitCreateDefaults(rhf.getValues().instructorRecruit)
+          )
+        : null
+    if (participant.teacherInstructor) {
+      const fieldForm = {
+        ...instructorRecruitFieldForm.peekRecord(null),
+        ...instructorRecruitFieldForm.peekRecord('recruitment-instructor'),
+        ...instructorRecruitFieldForm.getRecord(),
+      }
+      const merged: Record<string, unknown> = { ...fieldForm }
+      for (const [key, value] of Object.entries(typedInstructor ?? {})) {
+        if (value == null) continue
+        if (typeof value === 'string' && value.trim() === '') continue
+        if (Array.isArray(value) && value.length === 0) continue
+        merged[key] = value
+      }
+      reasons.push(
+        ...listIncompleteInstructorRecruitInfo(
+          withGeneralRecruitRadioDefaults(merged, {
+            individual: false,
+            organization: false,
+            teacherInstructor: true,
+            volunteer: false,
+          })
+        )
+      )
+    }
+    if (participant.individual || participant.volunteer) {
+      reasons.push(
+        ...listIncompleteGeneralProgramRecruitmentRequiredFields({
+          participant: {
+            individual: participant.individual,
+            organization: false,
+            teacherInstructor: false,
+            volunteer: participant.volunteer,
+          },
+          programType: 'curriculum',
+          sessionRoundType: 'single',
+          educationScheduleMode: 'period',
+          volunteerExceptionScheduleCount: 0,
+          registrationProgramType: 'COMPANY_SCHOOL',
+        })
+      )
+    }
   }
   return reasons
 }

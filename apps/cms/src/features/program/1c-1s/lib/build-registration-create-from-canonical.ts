@@ -15,11 +15,7 @@ import {
   resolveProgramWageDeductionLabel,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { resolveCompanySchoolWageDefaultPaymentItemIds } from './company-school-wage-defaults'
-import { applyGeneralRecruitOverlayToProgram } from '@/features/program/general/lib/general-recruit-overlay-to-program'
-import { withGeneralRecruitRadioDefaults } from '@/features/program/general/lib/recruit-radio-defaults'
-import { resolveVisibleRecruitTabsForProgram } from '@/features/program/general/lib/recruit-radio-visible-tabs'
-import { collectSelectedRecruitOverlaysForProgram } from '@/features/program/general/lib/registration-operational-form-drafts'
-import { flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay } from '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush'
+import { applyCompanySchoolCanonicalRecruitToProgram } from './apply-company-school-canonical-recruit-to-program'
 import {
   TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS,
   TEMPLATE_FORM_EDUCATION_COURSE_OPTIONS,
@@ -38,6 +34,12 @@ import {
   emptyCompanySchoolRecruitFormState,
   serializeCompanySchoolRecruitmentForFormVersion,
 } from './registration-rhf-recruitment'
+import {
+  collectCompanySchoolInstructorRecruitmentState,
+  emptyCompanySchoolInstructorRecruitFormState,
+  serializeCompanySchoolInstructorRecruitmentForFormVersion,
+  withCompanySchoolInstructorRecruitCreateDefaults,
+} from './registration-rhf-instructor-recruitment'
 import { collectCompanySchoolApplicationState } from './registration-rhf-application'
 import { serializeCompanySchoolCompatibilityOverlay } from './serialize-registration-overlay-from-canonical'
 
@@ -175,6 +177,7 @@ export function buildCompanySchoolCanonicalFromRhf(args: {
     schemaVersion: COMPANY_SCHOOL_REGISTRATION_CANONICAL_VERSION,
     common: collectCompanySchoolRegistrationCommonState(args.values),
     recruit: collectCompanySchoolRecruitmentState(args.values.recruitment),
+    instructorRecruit: collectCompanySchoolInstructorRecruitmentState(args.values.instructorRecruit),
     application: collectCompanySchoolApplicationState(args.values.application),
     sidecar: { ...args.values.sidecar },
   }
@@ -303,34 +306,22 @@ export function buildCompanySchoolProgramFromCanonical(args: {
     updatedAt: now,
   }
 
-  flushRecruitDetailAdditionalContentIntoGeneralRecruitOverlay()
-  const collectedRecruit = Object.fromEntries(
-    Object.entries(collectSelectedRecruitOverlaysForProgram(program)).filter(
-      ([key]) => !key.startsWith('application.economy.')
-    )
+  const recruit = args.canonical.recruit ?? emptyCompanySchoolRecruitFormState()
+  const instructor = withCompanySchoolInstructorRecruitCreateDefaults(
+    args.canonical.instructorRecruit ?? emptyCompanySchoolInstructorRecruitFormState()
   )
-  // 강사·개인·봉사 탭(일반 모집 단락)은 화면 기본값(공고 게시·면접 있음)을 기록하지 않는다 — 필수 검사와 같은 값으로 채운다.
-  // 탭 판정은 overlay 를 모은 것과 같은 출처(보이는 모집 양식). 기관 탭은 1사1교 RHF(rhfRecruit, 기본 ''·화면 미선택)가
-  // 정본이라 건드리지 않는다.
-  const leftoverRecruit = withGeneralRecruitRadioDefaults(collectedRecruit, {
-    ...resolveVisibleRecruitTabsForProgram(program),
-    organization: false,
-  })
-  const rhfRecruit = serializeCompanySchoolRecruitmentForFormVersion(
-    args.canonical.recruit ?? emptyCompanySchoolRecruitFormState()
-  )
-  const registrationOverlay = {
-    ...(program.registrationOverlay ?? {}),
-    ...leftoverRecruit,
-    ...rhfRecruit,
+  const mapped = applyCompanySchoolCanonicalRecruitToProgram(program, recruit, instructor)
+  const wireOverlay = {
+    ...serializeCompanySchoolRecruitmentForFormVersion(recruit),
+    ...serializeCompanySchoolInstructorRecruitmentForFormVersion(instructor),
   }
-  return withTargetLevels(
-    applyGeneralRecruitOverlayToProgram(
-      { ...program, registrationOverlay },
-      { ...leftoverRecruit, ...rhfRecruit },
-      { preferOverlay: true }
-    )
-  )
+  return withTargetLevels({
+    ...mapped,
+    registrationOverlay: {
+      ...(mapped.registrationOverlay ?? {}),
+      ...wireOverlay,
+    },
+  })
 }
 
 export function buildCompanySchoolProgramFromRhf(args: {

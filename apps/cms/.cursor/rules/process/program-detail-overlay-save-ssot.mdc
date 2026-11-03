@@ -8,7 +8,7 @@ alwaysApply: false
 
 **Scope:** CMS 프로그램 **상세** 공통정보·모집·신청의 **저장·조회 표시·편집 시드**와 `registrationOverlay` / operational overlay store.
 
-등록 **위저드**(아직 `recruitments[]`가 없는 create)는 별도 플로우다. 상세 모달에서 RHF가 있으면 아래를 **반드시** 따른다.
+등록 **위저드**(아직 `recruitments[]`가 없는 create)는 별도 플로우다. **1사1교 CREATE**는 RHF canonical(`recruitment`·`instructorRecruit`)이 정본이며 overlay store collect를 쓰지 않는다. 상세 모달에서 RHF가 있으면 아래를 **반드시** 따른다.
 
 ## 정본 (SSOT)
 

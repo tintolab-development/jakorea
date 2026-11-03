@@ -11,6 +11,7 @@ import {
   type CompanySchoolCurriculumSession,
   type CompanySchoolDateRange,
   type CompanySchoolApplicationFormState,
+  type CompanySchoolInstructorRecruitFormState,
   type CompanySchoolRecruitFormState,
   type CompanySchoolRegistrationCommonCanonical,
 } from './registration-canonical-types'
@@ -18,8 +19,14 @@ import {
   applyCompanySchoolRecruitmentOverlayRecord,
   cloneCompanySchoolRecruitFormState,
   emptyCompanySchoolRecruitFormState,
-  isCompanySchoolRecruitmentOverlayKey,
+  isCompanySchoolInstitutionRecruitmentOverlayKey,
 } from './registration-rhf-recruitment'
+import {
+  applyCompanySchoolInstructorRecruitmentOverlayRecord,
+  cloneCompanySchoolInstructorRecruitFormState,
+  emptyCompanySchoolInstructorRecruitFormState,
+  isCompanySchoolInstructorRecruitmentOverlayKey,
+} from './registration-rhf-instructor-recruitment'
 import {
   applyCompanySchoolApplicationOverlayRecord,
   cloneCompanySchoolApplicationFormState,
@@ -50,6 +57,7 @@ export const COMPANY_SCHOOL_FIXED_CURRICULUM_SESSIONS = [
 export type CompanySchoolRegistrationRhfValues = CompanySchoolRegistrationCommonCanonical & {
   operationAnchorIso: string | null
   recruitment: CompanySchoolRecruitFormState
+  instructorRecruit: CompanySchoolInstructorRecruitFormState
   application: CompanySchoolApplicationFormState
   sidecar: Record<string, unknown>
 }
@@ -277,6 +285,7 @@ export function createDefaultCompanySchoolRegistrationRhfValues(): CompanySchool
     educationScheduleLines: [],
     generalSurveyMenuKeys: ['survey', 'satisfaction', 'lecture_evaluation'],
     recruitment: emptyCompanySchoolRecruitFormState(),
+    instructorRecruit: emptyCompanySchoolInstructorRecruitFormState(),
     application: emptyCompanySchoolApplicationFormState(),
     sidecar: {},
   }
@@ -292,6 +301,7 @@ export function isCompanySchoolRegistrationCanonicalSnapshot(value: unknown): va
   schemaVersion: typeof COMPANY_SCHOOL_REGISTRATION_CANONICAL_VERSION
   common: CompanySchoolRegistrationCommonCanonical
   recruit?: CompanySchoolRecruitFormState
+  instructorRecruit?: CompanySchoolInstructorRecruitFormState
   application?: CompanySchoolApplicationFormState
   sidecar?: Record<string, unknown>
 } {
@@ -308,7 +318,8 @@ export function rhfValuesFromCompanySchoolCanonical(
   common: CompanySchoolRegistrationCommonCanonical,
   sidecar?: Record<string, unknown>,
   recruit?: CompanySchoolRecruitFormState,
-  application?: CompanySchoolApplicationFormState
+  application?: CompanySchoolApplicationFormState,
+  instructorRecruit?: CompanySchoolInstructorRecruitFormState
 ): CompanySchoolRegistrationRhfValues {
   return {
     ...createDefaultCompanySchoolRegistrationRhfValues(),
@@ -327,6 +338,9 @@ export function rhfValuesFromCompanySchoolCanonical(
       : null,
     recruitment: cloneCompanySchoolRecruitFormState(
       recruit ?? emptyCompanySchoolRecruitFormState()
+    ),
+    instructorRecruit: cloneCompanySchoolInstructorRecruitFormState(
+      instructorRecruit ?? emptyCompanySchoolInstructorRecruitFormState()
     ),
     application: cloneCompanySchoolApplicationFormState(
       application ?? emptyCompanySchoolApplicationFormState()
@@ -502,10 +516,15 @@ export function applyCompanySchoolRhfOverlayRecord(
 ): CompanySchoolRegistrationRhfValues {
   let next = values
   const recruitPartial: Record<string, unknown> = {}
+  const instructorRecruitPartial: Record<string, unknown> = {}
   const applicationPartial: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(overlay)) {
-    if (isCompanySchoolRecruitmentOverlayKey(key)) {
+    if (isCompanySchoolInstitutionRecruitmentOverlayKey(key)) {
       recruitPartial[key] = value
+      continue
+    }
+    if (isCompanySchoolInstructorRecruitmentOverlayKey(key)) {
+      instructorRecruitPartial[key] = value
       continue
     }
     if (isCompanySchoolApplicationOverlayKey(key)) {
@@ -519,6 +538,15 @@ export function applyCompanySchoolRhfOverlayRecord(
     next = {
       ...next,
       recruitment: applyCompanySchoolRecruitmentOverlayRecord(next.recruitment, recruitPartial),
+    }
+  }
+  if (Object.keys(instructorRecruitPartial).length > 0) {
+    next = {
+      ...next,
+      instructorRecruit: applyCompanySchoolInstructorRecruitmentOverlayRecord(
+        next.instructorRecruit,
+        instructorRecruitPartial
+      ),
     }
   }
   if (Object.keys(applicationPartial).length > 0) {
