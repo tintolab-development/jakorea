@@ -20,22 +20,63 @@ import {
   latestIndividualSettlementReviewRevision,
 } from '@/features/program/general/lib/individual-settlement-review-status'
 import { mapIndividualSettlementReviewToCalculationStatement } from '@/features/program/general/lib/map-individual-settlement-review-to-calculation-statement'
-import { PaymentOrderCalculationStatementProgramBasicSection } from '@/features/settlement/ui/payment-record/payment-order-calculation-statement-program-basic-section'
+import { PaymentOrderCalculationStatementProcessingStatusView } from '@/features/settlement/ui/payment-record/payment-order-calculation-statement-processing-status-view'
+import type { PaymentOrderCalculationStatementProgramBasicInfo } from '@/features/settlement-management/model/payment-order-admin-list'
 import {
-  PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH,
   PaymentOrderCalculationBreakdownTable,
   type PaymentOrderCalculationTableRow,
 } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
 import type { IndividualSettlementReviewFileRef } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewFileRef'
 import type { IndividualSettlementReviewReceipt } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewReceipt'
 import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import './individual-settlement-review-detail-modal.css'
+
+function IndividualSettlementReviewBasicInfo({
+  basic,
+}: {
+  basic: PaymentOrderCalculationStatementProgramBasicInfo
+}) {
+  return (
+    <div className="applicant-instructor-basic-info">
+      <DetailInfoForm title="기본 정보" mode="view">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="프로그램명" fullRow view={basic.programName} readOnlyDisplay />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="프로그램 진행 회차"
+            view={basic.programSessionProgressDisplay}
+            readOnlyDisplay
+          />
+          <DetailInfoForm.Field
+            label="사업 운영 기간"
+            view={basic.businessPeriodDisplay}
+            readOnlyDisplay
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+      <DetailInfoForm title="기본 정보" hideHeader mode="view">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="지급 조서 처리 현황"
+            fullRow
+            view={<PaymentOrderCalculationStatementProcessingStatusView basic={basic} />}
+            readOnlyDisplay
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </div>
+  )
+}
 
 export type IndividualSettlementReviewDetailModalProps = {
   open: boolean
   programId: string
   participantId: string
   settlementApplicationId: number | null
+  programSessionProgressDisplay?: string | null
+  businessPeriodDisplay?: string | null
   onClose: () => void
   onReviewed?: () => Promise<void> | void
 }
@@ -45,6 +86,8 @@ export function IndividualSettlementReviewDetailModal({
   programId,
   participantId,
   settlementApplicationId,
+  programSessionProgressDisplay,
+  businessPeriodDisplay,
   onClose,
   onReviewed,
 }: IndividualSettlementReviewDetailModalProps) {
@@ -91,8 +134,14 @@ export function IndividualSettlementReviewDetailModal({
   const canApprove = canApproveIndividualSettlement(detail)
   const canReject = canRejectIndividualSettlement(detail)
   const statementView = useMemo(
-    () => (detail ? mapIndividualSettlementReviewToCalculationStatement(detail) : null),
-    [detail]
+    () =>
+      detail
+        ? mapIndividualSettlementReviewToCalculationStatement(detail, {
+            programSessionProgressDisplay,
+            businessPeriodDisplay,
+          })
+        : null,
+    [businessPeriodDisplay, detail, programSessionProgressDisplay]
   )
 
   const handleDownload = useCallback(
@@ -209,10 +258,7 @@ export function IndividualSettlementReviewDetailModal({
           </div>
         ) : (
           <>
-            <PaymentOrderCalculationStatementProgramBasicSection
-              basic={statementView.basic}
-              style={{ minWidth: PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH }}
-            />
+            <IndividualSettlementReviewBasicInfo basic={statementView.basic} />
             <PaymentOrderCalculationBreakdownTable
               blocks={statementView.blocks}
               formulaLabel={statementView.formulaLabel}
@@ -220,6 +266,9 @@ export function IndividualSettlementReviewDetailModal({
               institutionColumnTitle="프로그램명"
               dateColumnTitle="교육 진행 일자"
               lectureSessionSegmentLabel="round"
+              tableCellSpec="cms-data-table"
+              actionButtonSize="h32"
+              detailDescription="교통비 및 숙박비는 강사가 지급 신청한 경우에만 항목이 노출됩니다."
               paymentStatementIssueDisabled
               onBasisDetailClick={handleBasisDetailClick}
               headerActions={

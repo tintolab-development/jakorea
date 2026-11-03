@@ -74,8 +74,14 @@ function extractSessionLabel(scheduleName: string | undefined): string {
   return match?.[1]?.replace(/\s+/g, '') ?? ''
 }
 
+export type IndividualSettlementReviewBasicExtras = {
+  programSessionProgressDisplay?: string | null
+  businessPeriodDisplay?: string | null
+}
+
 export function mapIndividualSettlementReviewToCalculationStatement(
-  detail: IndividualSettlementReviewDetail
+  detail: IndividualSettlementReviewDetail,
+  extras?: IndividualSettlementReviewBasicExtras
 ): IndividualSettlementCalculationStatementView {
   const latest = latestIndividualSettlementReviewRevision(detail)
   const items = latest?.items ?? []
@@ -94,6 +100,7 @@ export function mapIndividualSettlementReviewToCalculationStatement(
     return {
       id,
       itemLabel: itemLabel(item),
+      // 관리자 상세 GET items[].description = 정산 항목 설정 카탈로그. receipts/expenses 메모는 쓰지 않는다.
       description: displayOrDash(item.description),
       amount: kind === 'withholding' && amount > 0 ? -amount : amount,
       kind,
@@ -117,8 +124,8 @@ export function mapIndividualSettlementReviewToCalculationStatement(
     basic: {
       programName,
       instructorNameKo: displayOrDash(detail.memberName),
-      businessPeriodDisplay: '-',
-      programSessionProgressDisplay: '-',
+      businessPeriodDisplay: displayOrDash(extras?.businessPeriodDisplay),
+      programSessionProgressDisplay: displayOrDash(extras?.programSessionProgressDisplay),
       processingStatusDisplay: individualSettlementReviewStatusLabel(status),
       processingStatusClass: mapIndividualSettlementProcessingStatusClass(status),
       processingRejectionReason: rejectionReason || undefined,

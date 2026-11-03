@@ -68,3 +68,67 @@
 .individual-settlement-review-reject-modal__textarea .cms-textarea__control {
   width: 100%;
 }
+
+/* 산출 내역 상세: cms-data-table 셀 규격, 합계 행만 민트 배경·발급 버튼 */
+.individual-settlement-review-detail-modal
+  .cms-data-table
+  .payment-order-calc-statement-modal__summary-row
+  .ant-table-cell {
+  padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  border-right: 1px solid var(--table-line, #e0e0e0) !important;
+  border-inline-end: 1px solid var(--table-line, #e0e0e0) !important;
+  border-bottom: none !important;
+}
+
+.individual-settlement-review-detail-modal
+  .cms-data-table
+  .payment-order-calc-statement-modal__summary-label,
+.individual-settlement-review-detail-modal
+  .cms-data-table
+  .payment-order-calc-statement-modal__summary-formula,
+.individual-settlement-review-detail-modal
+  .cms-data-table
+  .payment-order-calc-statement-modal__summary-total {
+  font-size: 14px;
+}
+
+.individual-settlement-review-detail-modal
+  .cms-data-table
+  .payment-order-calc-statement-modal__summary-row
+  .ant-table-cell:last-child {
+  border-right: none !important;
+  border-inline-end: none !important;
+}
+
+.individual-settlement-review-detail-modal
+  .cms-data-table
+  .payment-order-calc-statement-modal__summary-row
+  .ant-table-cell:last-child
+  .cms-button.ant-btn {
+  width: 156px !important;
+  min-width: 156px !important;
+  max-width: 156px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+}
+
+.individual-settlement-review-detail-modal
+  .cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell:first-child,
+.individual-settlement-review-detail-modal
+  .cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell.payment-order-calc-statement-modal__description-cell {
+  white-space: normal !important;
+  height: auto !important;
+  max-height: none;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}

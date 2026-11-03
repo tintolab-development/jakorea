@@ -92,6 +92,8 @@ export function getPaymentOrderCalculationColumns(options?: {
   institutionColumnTitle?: string
   /** 2열 헤더. 기본 강의 진행 일자 */
   dateColumnTitle?: string
+  /** true면 항목 설명 말줄임 대신 개행 */
+  wrapDescription?: boolean
 }): ColumnsType<PaymentOrderCalculationTableRow> {
   const handleBasisDetailClick = (row: PaymentOrderCalculationTableRow) => {
     if (options?.onBasisDetailClick) {
@@ -158,8 +160,11 @@ export function getPaymentOrderCalculationColumns(options?: {
       dataIndex: 'description',
       key: 'description',
       width: columnWidths.description,
-      ellipsis: { showTitle: true },
+      ellipsis: options?.wrapDescription ? false : { showTitle: true },
       align: 'center',
+      onCell: options?.wrapDescription
+        ? () => ({ className: 'payment-order-calc-statement-modal__description-cell' })
+        : undefined,
     },
     {
       title: '정산 금액',
@@ -258,6 +263,7 @@ export function PaymentOrderCalculationBreakdownTable({
     : tableCellSpec === 'cms-data-table'
       ? 'cms-data-table cms-data-table--skip-auto-no-col account-payment-status-detail__calc-table'
       : 'payment-order-calc-statement-modal__table cms-data-table cms-data-table--skip-auto-no-col'
+  const wrapDescription = tableCellSpec === 'cms-data-table'
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
   const columns = useMemo(
     () =>
@@ -267,11 +273,13 @@ export function PaymentOrderCalculationBreakdownTable({
         columnWidthPreset: resolvedColumnWidthPreset,
         institutionColumnTitle,
         dateColumnTitle,
+        wrapDescription,
       }),
     [
       lectureSessionSegmentLabel,
       onBasisDetailClick,
       resolvedColumnWidthPreset,
+      wrapDescription,
       institutionColumnTitle,
       dateColumnTitle,
     ]

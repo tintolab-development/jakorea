@@ -28,6 +28,8 @@ import {
 import type { IndividualSettlementReviewListRow } from '@/features/program/general/lib/map-individual-settlement-review-rows'
 import { InstructorSettlementStatusText } from '@/shared/ui/instructor-settlement-status-text'
 import { useParticipatingParticipantSettlementList } from '@/features/program/general/hooks/use-participating-participant-settlement-list'
+import { formatBusinessPeriodDisplay } from '@/features/settlement-management/api/shared/map-frontend-fields'
+import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { IndividualSettlementReviewDetailModal } from './individual-settlement-review-detail-modal'
 import './participating-instructor-settlement-section.css'
@@ -145,6 +147,17 @@ export function ParticipatingParticipantSettlementSection({
   )
 
   const completedCount = rows.filter(row => row.lectureProgress === 'completed').length
+  const programSessionProgressDisplay =
+    isError || rows.length === 0 ? undefined : `${completedCount} / ${rows.length}`
+  const businessPeriodStart =
+    typeof program.startDate === 'string' ? program.startDate : program.startDate?.toISOString()
+  const businessPeriodEnd =
+    typeof program.endDate === 'string' ? program.endDate : program.endDate?.toISOString()
+  const businessPeriodDisplay = formatBusinessPeriodDisplay({
+    businessPeriodStart,
+    businessPeriodEnd,
+    formatDate: iso => formatDateDotWithWeekday(iso),
+  })
 
   const summaryStatusLabel = isError
     ? '조회 실패'
@@ -232,6 +245,8 @@ export function ParticipatingParticipantSettlementSection({
         programId={programId}
         participantId={participantId}
         settlementApplicationId={detailApplicationId}
+        programSessionProgressDisplay={programSessionProgressDisplay}
+        businessPeriodDisplay={businessPeriodDisplay}
         onClose={() => setDetailApplicationId(null)}
         onReviewed={invalidate}
       />
