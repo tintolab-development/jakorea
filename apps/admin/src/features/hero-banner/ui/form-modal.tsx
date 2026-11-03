@@ -4,6 +4,7 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
   CmsButton,
   CmsInput,
+  CmsTextArea,
   CmsRadio,
   CmsRadioGroup,
   ContentModal,
@@ -106,13 +107,13 @@ function HeroBannerFormBody({
     mode === 'edit' && initial ? (initial.imageFileName ?? '') : ''
   )
   const [topText, setTopText] = useState(() =>
-    mode === 'edit' && initial ? initial.topText : ''
+    mode === 'edit' && initial ? initial.topText.replace(/\r?\n/g, ' ') : ''
   )
   const [mainTitle, setMainTitle] = useState(() =>
     mode === 'edit' && initial ? initial.mainTitle : ''
   )
   const [bottomText, setBottomText] = useState(() =>
-    mode === 'edit' && initial ? initial.bottomText : ''
+    mode === 'edit' && initial ? initial.bottomText.replace(/\r?\n/g, ' ') : ''
   )
   const [linkUrl, setLinkUrl] = useState(() =>
     mode === 'edit' && initial ? initial.linkUrl : ''
@@ -313,7 +314,7 @@ function HeroBannerFormBody({
                 width="100%"
                 placeholder="상단 문구를 입력하세요"
                 value={topText}
-                onChange={e => setTopText(e.target.value)}
+                onChange={e => setTopText(e.target.value.replace(/\r?\n/g, ' '))}
               />
             }
           />
@@ -323,9 +324,12 @@ function HeroBannerFormBody({
             label="메인 타이틀"
             view={null}
             edit={
-              <CmsInput
+              <CmsTextArea
+                className="hero-banner-form-modal__main-title-textarea"
                 inputSize="large"
                 width="100%"
+                rows={2}
+                autoSize={{ minRows: 2, maxRows: 8 }}
                 placeholder="메인 타이틀을 입력하세요"
                 value={mainTitle}
                 onChange={e => setMainTitle(e.target.value)}
@@ -343,7 +347,7 @@ function HeroBannerFormBody({
                 width="100%"
                 placeholder="하단 문구를 입력하세요"
                 value={bottomText}
-                onChange={e => setBottomText(e.target.value)}
+                onChange={e => setBottomText(e.target.value.replace(/\r?\n/g, ' '))}
               />
             }
           />

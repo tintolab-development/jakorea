@@ -48,3 +48,52 @@
   flex: 1 1 280px;
   min-width: 0;
 }
+
+.hero-banner-form-modal .detail-info-form__field-content--edit > * {
+  display: block;
+  margin-block: 0 !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.hero-banner-form-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.hero-banner-form-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.hero-banner-form-modal .hero-banner-form-modal__main-title-textarea.cms-textarea--large
+  .cms-textarea__control {
+  overflow: visible;
+  height: auto;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.hero-banner-form-modal .hero-banner-form-modal__main-title-textarea .cms-textarea__inner {
+  display: block;
+  flex: none;
+  height: auto;
+}
+
+.hero-banner-form-modal
+  .hero-banner-form-modal__main-title-textarea
+  .cms-textarea__inner
+  textarea.ant-input {
+  flex: none;
+  resize: both;
+  min-height: 64px;
+  min-width: 160px;
+  max-width: 100%;
+  height: auto;
+  overflow: auto;
+  white-space: pre-wrap;
+}
