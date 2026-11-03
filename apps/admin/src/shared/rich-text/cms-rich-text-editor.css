@@ -113,3 +113,45 @@
   min-height: 0 !important;
   flex: 0 0 auto !important;
 }
+
+.cms-rich-text-editor .rich-text-image-block {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.cms-rich-text-editor .rich-text-image-block__drag-handle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 6;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--rt-border, #e0e0e0);
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--rt-resize-handle, #8c8c8c) 0 2px,
+      transparent 2px 4px
+    ),
+    #fff;
+  background-size: 10px 2px, auto;
+  background-position: center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  cursor: grab;
+  opacity: 0.85;
+}
+
+.cms-rich-text-editor .rich-text-image-block__drag-handle:active {
+  cursor: grabbing;
+}
+
+.cms-rich-text-editor .rich-text-image-block__drag-handle:hover,
+.cms-rich-text-editor .rich-text-image-block--selected .rich-text-image-block__drag-handle,
+.cms-rich-text-editor .ProseMirror-selectednode > .rich-text-image-block__drag-handle,
+.cms-rich-text-editor .rich-text-image-block:hover .rich-text-image-block__drag-handle {
+  opacity: 1;
+}

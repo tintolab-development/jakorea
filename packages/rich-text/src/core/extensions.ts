@@ -26,6 +26,7 @@ import {
   RichTextTextStyle,
   RichTextYoutube,
 } from './markdown-serializers'
+import { createVisualImageResize } from './visual-image-resize'
 import { RawHtmlBlock } from './raw-html-block'
 import { RichTextSuperscript } from './superscript-extension'
 import type { CreateRichTextExtensionsOptions } from './types'
@@ -39,6 +40,7 @@ export function createRichTextExtensions(
     preset = 'full',
     extraExtensions,
     getResolveImageSrc,
+    visualImagePosition = false,
   } = options
   const isFull = preset === 'full'
 
@@ -72,7 +74,7 @@ export function createRichTextExtensions(
       autolink: true,
       linkOnPaste: true,
     }),
-    RichTextImageResize,
+    visualImagePosition ? createVisualImageResize() : RichTextImageResize,
     RichTextYoutube,
     // 모든 뷰어가 렌더하도록 항상 등록. 삽입 메뉴는 앱 툴바에서 선택적으로 노출
     RawHtmlBlock,
@@ -89,7 +91,9 @@ export function createRichTextExtensions(
     extensions.push(
       RichTextSuperscript,
       RichTextEmoji,
-      createRichTextFileHandler(getResolveImageSrc),
+      createRichTextFileHandler(getResolveImageSrc, {
+        requireImageFilesOnDrop: visualImagePosition,
+      }),
     )
   }
 

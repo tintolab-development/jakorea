@@ -33,4 +33,9 @@ export type CreateRichTextExtensionsOptions = {
   getResolveImageSrc?: () =>
     | ((file: File) => Promise<import('./insert-actions').ResolvedRichTextImageSrc>)
     | undefined
+  /**
+   * Homepage Admin 시각 편집 전용.
+   * 공통 CMS/Platform 에디터에서는 켜지 않는다.
+   */
+  visualImagePosition?: boolean
 }

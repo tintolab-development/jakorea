@@ -132,6 +132,18 @@
   height: auto;
 }
 
+.rich-text-content img[style*='margin-left: auto'][style*='margin-right: auto'] {
+  display: block;
+}
+
+.rich-text-content img[style*='margin-left: auto'][style*='margin-right: 0'] {
+  display: block;
+}
+
+.rich-text-content img[style*='margin-right: auto'][style*='margin-left: 0'] {
+  display: block;
+}
+
 /* tiptap-extension-resize-image 래퍼 */
 .rich-text-editor__body .ProseMirror [data-resize-image-ui],
 .rich-text-editor__body .ProseMirror .image-resizer {

@@ -72,6 +72,19 @@ export {
   setLinkFromUrl,
   RICH_TEXT_IMAGE_ACCEPT,
 } from './insert-actions'
+export {
+  applyImageAlignToContainerStyle,
+  containerStyleHasPersistentLayout,
+  isImageNodeSelection,
+  mergeImageContainerStyle,
+  moveSelectedImageBlock,
+  parseImageAlignFromElement,
+  parseImageContainerStyleFromElement,
+  readImageAlignFromDeclarations,
+  setVisualAlign,
+} from './image-align'
+export type { ImageHorizontalAlign, VisualAlignValue } from './image-align'
+export { shouldInsertDroppedImageFiles } from './dropped-image-files'
 export type { ResolvedRichTextImageSrc } from './insert-actions'
 export {
   EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,

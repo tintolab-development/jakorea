@@ -21,6 +21,11 @@ export type UseRichTextEditorOptions = {
   /** `full`(기본) | `basic` — basic은 paste/드롭 이미지·emoji 등 제외 */
   preset?: 'full' | 'basic'
   extraExtensions?: Extensions
+  /**
+   * Homepage Admin 시각 편집 전용 이미지 정렬·블록 이동.
+   * CMS/Platform 공통 에디터에서는 쓰지 않는다.
+   */
+  visualImagePosition?: boolean
   onReady?: (api: RichTextEditorApi) => void
   /**
    * 드롭·붙여넣기 이미지 src. 없으면 data URL.

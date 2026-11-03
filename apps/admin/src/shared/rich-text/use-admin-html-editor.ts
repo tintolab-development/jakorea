@@ -82,6 +82,7 @@ export function useAdminHtmlEditor({
     preset,
     extraExtensions,
     resolveImageSrc,
+    visualImagePosition: true,
     onReady: readyApi => {
       apiRef.current = readyApi
     },

@@ -22,6 +22,7 @@ export function useRichTextEditor({
   autofocus = false,
   preset = 'full',
   extraExtensions,
+  visualImagePosition = false,
   onReady,
   shouldRerenderOnTransaction = false,
   resolveImageSrc,
@@ -37,9 +38,10 @@ export function useRichTextEditor({
         placeholder,
         preset,
         extraExtensions,
+        visualImagePosition,
         getResolveImageSrc: () => resolveImageSrcRef.current,
       }),
-    [placeholder, preset, extraExtensions]
+    [placeholder, preset, extraExtensions, visualImagePosition]
   )
 
   const { content, contentType } = useMemo(
@@ -68,7 +70,7 @@ export function useRichTextEditor({
         onReadyRef.current?.(createRichTextEditorApi(instance))
       },
     },
-    [resetKey, placeholder, extraExtensions]
+    [resetKey, placeholder, extraExtensions, visualImagePosition]
   )
 
   useEffect(() => {

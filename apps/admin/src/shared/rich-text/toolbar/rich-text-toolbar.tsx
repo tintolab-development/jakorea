@@ -21,6 +21,7 @@ import {
   promptLinkUrl,
   promptYoutubeUrl,
   RICH_TEXT_IMAGE_ACCEPT,
+  setVisualAlign,
   registerRawHtmlImageUploader,
   registerRawHtmlSourceRequester,
   type RawHtmlSourceRequest,
@@ -309,7 +310,7 @@ export function RichTextToolbar({
       TEXT_ALIGN_OPTIONS.map(opt => ({
         key: opt.value,
         label: opt.label,
-        onClick: () => run(ed => ed.chain().focus().setTextAlign(opt.value).run()),
+        onClick: () => run(ed => setVisualAlign(ed, opt.value)),
       })),
     [run]
   )
