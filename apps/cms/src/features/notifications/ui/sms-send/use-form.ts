@@ -102,6 +102,11 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
   const bodyRangeRef = useRef({ start: 0, end: 0 })
 
   useEffect(() => {
+    if (open) return
+    setRecipients([])
+  }, [open])
+
+  useEffect(() => {
     if (!open) return
     setProgramId(SMS_SEND_DEFAULT_PROGRAM_ID)
     setTemplateId(initialTemplateId)
@@ -266,6 +271,10 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     setRecipients([])
   }, [])
 
+  const clearCandidateRecipients = useCallback(() => {
+    setRecipients(prev => prev.filter(item => item.source === 'manual'))
+  }, [])
+
   const updateRecipientVariable = useCallback((recipientId: string, key: string, value: string) => {
     setRecipients(prev =>
       prev.map(item =>
@@ -395,6 +404,7 @@ export function useSmsSendForm(open: boolean, initialTemplateId?: string) {
     replaceManualRecipients,
     removeRecipients,
     clearRecipients,
+    clearCandidateRecipients,
     updateRecipientVariable,
     getDraft,
     validateRequired,

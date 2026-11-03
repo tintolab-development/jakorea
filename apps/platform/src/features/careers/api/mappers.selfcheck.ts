@@ -362,6 +362,7 @@ assert.equal(jobs[1]?.publishedAtLabel, '2026년 05월 08일')
 assert.equal(jobs[2]?.id, 'job-3')
 assert.equal(jobs[2]?.statusLabel, '결과발표')
 assert.ok(jobs.every(job => job.status !== 'closed'))
+assert.ok(jobs.every(job => !('buttonLabel' in job) && !('linkUrl' in job)))
 
 console.log('careers mapPublicCareerPostings selfcheck: ok')
 
@@ -376,7 +377,11 @@ assert.equal(
 )
 assert.equal(
   formatCareerRecruitPeriodLabel('2026-04-03', '2026-11-20'),
-  '2026년 4월 3일(금) ~ 2026년 11월 20일(금)',
+  '2026년 4월 3일 ~ 11월 20일',
+)
+assert.equal(
+  formatCareerRecruitPeriodLabel('2026-05-15', '2026-06-15'),
+  '2026년 5월 15일 ~ 6월 15일',
 )
 assert.equal(formatCareerRecruitPeriodLabel('2026-04-03', undefined), '')
 
@@ -403,13 +408,29 @@ const detail = mapPublicCareerPostingDetail(detailSample)
 assert.equal(detail?.id, 'job-1')
 assert.equal(detail?.statusLabel, '모집중')
 assert.equal(detail?.publishedAtDetailLabel, '2026년 05월 08일')
-assert.equal(detail?.recruitPeriodLabel, '2026년 4월 3일(금) ~ 2026년 11월 20일(금)')
+assert.equal(detail?.recruitPeriodLabel, '2026년 4월 3일 ~ 11월 20일')
 assert.equal(detail?.viewCount, 1232)
 assert.equal(detail?.content, '<p>본문</p>')
 assert.equal(detail?.attachments.length, 1)
 assert.equal(detail?.attachments[0]?.name, '모집요강.pdf')
 assert.equal(detail?.buttonLabel, '')
 assert.equal(detail?.linkUrl, '')
+
+const detailWithCta = mapPublicCareerPostingDetail({
+  ...detailSample,
+  buttonLabel: '  채용 공고 바로가기  ',
+  linkUrl: ' https://jobs.example.test ',
+})
+assert.equal(detailWithCta?.buttonLabel, '채용 공고 바로가기')
+assert.equal(detailWithCta?.linkUrl, 'https://jobs.example.test')
+
+const detailLinkOnly = mapPublicCareerPostingDetail({
+  ...detailSample,
+  buttonLabel: null,
+  linkUrl: 'https://jobs.example.test',
+})
+assert.equal(detailLinkOnly?.buttonLabel, '')
+assert.equal(detailLinkOnly?.linkUrl, 'https://jobs.example.test')
 
 const detailFromPublishedAt = mapPublicCareerPostingDetail({
   ...detailSample,

@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton } from '@/shared/ui'
 import { STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME } from '@/shared/components/status-dropdown-cell'
-import { CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
+import {
+  CMS_DATA_TABLE_CELL_H40_ACTION_CLASS,
+  CMS_DATA_TABLE_ROW_DISABLED_CLASS,
+} from '@/shared/constants/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   UjatVolunteerAssignmentRoleCell,
@@ -24,7 +27,7 @@ import { ProgramAttendanceStatusText } from '@/features/program/shared/ui/progra
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import './assignment.css'
 
-const PLAN_LOG_CELL_CLASSNAME = 'ujat-volunteer-assignment-table__plan-log-cell'
+const PLAN_LOG_CELL_CLASSNAME = `${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS} ujat-volunteer-assignment-table__plan-log-cell`
 
 function renderPlanLogViewButton(
   label: string,
@@ -36,20 +39,21 @@ function renderPlanLogViewButton(
       <CmsButton
         type="button"
         variant="default"
-        size="medium"
+        size="small"
         disabled={!enabled}
-        onClick={enabled ? onView : undefined} >
+        onClick={enabled ? onView : undefined}
+      >
         {label}
       </CmsButton>
     </div>
   )
 }
 
-function isPlanLogViewEnabled(row: UjatVolunteerAssignmentProgressRow): boolean {
-  if (row.isWithdrawn) return false
-  if (row.classDisplay.kind === 'dash' || row.classDisplay.kind === 'withdrawn') return false
-  if (row.educationProgress === 'scheduled' || row.educationProgress === 'dash') return false
-  return true
+function isPlanLogViewEnabled(
+  submitted: boolean,
+  formResponseId: number | undefined
+): boolean {
+  return submitted && typeof formResponseId === 'number' && Number.isFinite(formResponseId)
 }
 
 function renderAssignedInstitution(institution: UjatVolunteerAssignedInstitutionDisplay) {
@@ -64,7 +68,7 @@ function renderPartner(partner: UjatVolunteerPartnerDisplay) {
     return <span className="ujat-volunteer-assignment-table__dash">-</span>
   }
   if (partner.kind === 'undecided') {
-    return <span className="ujat-volunteer-assignment-table__partner-undecided">미정</span>
+    return '미정'
   }
   return partner.value
 }
@@ -88,7 +92,7 @@ function renderAttendance(attendance: UjatVolunteerAttendanceDisplay) {
     return <ProgramAttendanceStatusText kind="dash" label="-" />
   }
   if (attendance.kind === 'withdrawn') {
-    return <ProgramAttendanceStatusText kind="withdrawn" label="활동 포기" />
+    return <ProgramAttendanceStatusText kind="dash" label="-" />
   }
   if (attendance.kind === 'late') {
     return (
@@ -206,6 +210,10 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         setOpenRoleDropdownRowId(null)
         return
       }
+      if (nextRole === 'attendance_manager' && target.canAssignAttendanceManager !== true) {
+        setOpenRoleDropdownRowId(null)
+        return
+      }
       setOpenRoleDropdownRowId(null)
       if (onRoleChange) {
         void onRoleChange(target, nextRole)
@@ -247,7 +255,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         title: '역할',
         dataIndex: 'role',
         key: 'role',
-        width: 160,
+        width: 140,
         align: 'center',
         onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_160_HEADER_CLASSNAME }),
         onCell: () => ({
@@ -258,6 +266,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
             <UjatVolunteerAssignmentRoleCell
               role={role}
               disabled={isVolunteerAssignmentClassWithdrawn(record)}
+              canAssignAttendanceManager={record.canAssignAttendanceManager === true}
               isOpen={openRoleDropdownRowId === record.id}
               onOpenChange={open => setOpenRoleDropdownRowId(open ? record.id : null)}
               onChange={next => handleRoleChange(record.id, next)}
@@ -269,7 +278,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         title: '배정 기관',
         dataIndex: 'assignedInstitution',
         key: 'assignedInstitution',
-        width: 140,
+        width: 196,
         align: 'center',
         render: (institution: UjatVolunteerAssignedInstitutionDisplay) =>
           renderAssignedInstitution(institution),
@@ -278,7 +287,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         title: '파트너명',
         dataIndex: 'partner',
         key: 'partner',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (partner: UjatVolunteerPartnerDisplay) => renderPartner(partner),
       },
@@ -286,7 +295,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         title: '배정 학급',
         dataIndex: 'classDisplay',
         key: 'classDisplay',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (classDisplay: UjatVolunteerClassDisplay) => renderClass(classDisplay),
       },
@@ -301,24 +310,30 @@ export function UjatEducationProgressVolunteerAssignmentTable({
       {
         title: '교육계획서 제출 현황',
         key: 'educationPlan',
-        width: 168,
+        width: 175,
         align: 'center',
         onHeaderCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
         onCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
         render: (_: unknown, record: UjatVolunteerAssignmentProgressRow) => {
-          const enabled = isPlanLogViewEnabled(record) && record.educationPlanSubmitted
+          const enabled = isPlanLogViewEnabled(
+            record.educationPlanSubmitted,
+            record.educationPlanFormResponseId
+          )
           return renderPlanLogViewButton('교육계획서 보기', enabled, () => openPlanViewer(record))
         },
       },
       {
         title: '교육일지 제출 현황',
         key: 'educationLog',
-        width: 168,
+        width: 175,
         align: 'center',
         onHeaderCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
         onCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
         render: (_: unknown, record: UjatVolunteerAssignmentProgressRow) => {
-          const enabled = isPlanLogViewEnabled(record) && record.educationLogSubmitted
+          const enabled = isPlanLogViewEnabled(
+            record.educationLogSubmitted,
+            record.educationLogFormResponseId
+          )
           return renderPlanLogViewButton('교육일지 보기', enabled, () => openLogViewer(record))
         },
       },
@@ -326,7 +341,7 @@ export function UjatEducationProgressVolunteerAssignmentTable({
         title: '교육 진행 현황',
         dataIndex: 'educationProgress',
         key: 'educationProgress',
-        width: 120,
+        width: 140,
         align: 'center',
         render: (status: UjatVolunteerAssignmentProgressRow['educationProgress']) =>
           renderEducationProgress(status),
@@ -340,12 +355,12 @@ export function UjatEducationProgressVolunteerAssignmentTable({
       <div className="ujat-volunteer-assignment-table">
         <CmsDataTable<UjatVolunteerAssignmentProgressRow & { no: number }>
           rowKey="id"
-          className="cms-data-table ujat-volunteer-assignment-table__table"
+          className="cms-data-table cms-data-table--fixed-row-height ujat-volunteer-assignment-table__table"
           columns={columns}
           dataSource={tableData}
           pagination={false}
           tableLayout="fixed"
-          scroll={{ x: 1340 }}
+          scroll={{ x: 1546 }}
           rowSelection={{
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),

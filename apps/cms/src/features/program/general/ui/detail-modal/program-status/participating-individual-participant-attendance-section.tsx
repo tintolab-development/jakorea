@@ -556,6 +556,9 @@ export const ParticipatingIndividualParticipantAttendanceSection = forwardRef<
       <ParticipatingIndividualParticipantAttendanceCorrectionModal
         open={attendanceCorrectionModalOpen}
         participantName={participant.applicantName}
+        programId={program.id}
+        participantId={participant.id}
+        submittedAbsenceReasons={absenceReasonQuery.data}
         scheduleOptions={correctableScheduleOptions}
         onCancel={() => setAttendanceCorrectionModalOpen(false)}
         onConfirm={handleAttendanceCorrectionConfirm}

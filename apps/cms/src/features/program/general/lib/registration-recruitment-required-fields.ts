@@ -270,7 +270,7 @@ function listIncompleteIndividualRecruitInfo(overlay: Record<string, unknown>): 
   return reasons
 }
 
-function listIncompleteInstructorRecruitInfo(overlay: Record<string, unknown>): string[] {
+export function listIncompleteInstructorRecruitInfo(overlay: Record<string, unknown>): string[] {
   const reasons: string[] = []
   const p = 'recruit.instructor'
   const published = read(overlay, `${p}.announcementPublished`)

@@ -21,10 +21,7 @@ import {
 import { formatYmdHmWithKoreanWeekday } from '@/shared/lib/format-date-korean-weekday'
 import { formatAppDatepickerDisplay } from '@/shared/ui/cms-datepicker'
 import type { CmsControlSize } from '@/shared/ui/cms-control-size'
-import {
-  useComposedRegistrationBusinessPeriodDisabledDate,
-  useRegistrationBusinessPeriodPickerHint,
-} from '@/features/program/shared/ui/registration/registration-business-period-constraint'
+import { useComposedRegistrationBusinessPeriodDisabledDate } from '@/features/program/shared/ui/registration/registration-business-period-constraint'
 import './paragraph-date-picker.css'
 
 function formatTriggerClock(d: Dayjs): string {
@@ -1233,9 +1230,6 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
     props.disabledDate,
     props.excludeBusinessPeriodConstraint
   )
-  const businessPeriodHint = useRegistrationBusinessPeriodPickerHint(
-    props.excludeBusinessPeriodConstraint
-  )
   const rootRef = useRef<HTMLDivElement>(null)
 
   const singlePresetMode =
@@ -1259,7 +1253,6 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
       className={[
         'paragraph-date-picker',
         dualFluidRoot && 'paragraph-date-picker--dual-fluid',
-        businessPeriodHint != null && 'paragraph-date-picker--with-hint',
         className,
       ]
         .filter(Boolean)
@@ -1312,9 +1305,6 @@ export function ParagraphDatePicker(props: ParagraphDatePickerProps) {
           initialPopoverRange={props.mode === 'single' ? props.initialPopoverRange : null}
         />
       )}
-      {businessPeriodHint != null ? (
-        <span className="paragraph-date-picker__business-period-hint">{businessPeriodHint}</span>
-      ) : null}
     </div>
   )
 }

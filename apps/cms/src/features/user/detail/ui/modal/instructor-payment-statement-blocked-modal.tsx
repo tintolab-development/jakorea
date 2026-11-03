@@ -19,6 +19,8 @@ export interface InstructorPaymentStatementBlockedModalProps {
    * `accountPaymentForms`: 계좌 지급 완료 전 상태 포함 시 대량이체·세금신고 양식 발급 불가 안내
    */
   purpose?: 'paymentStatement' | 'accountPaymentForms'
+  /** 산출 내역서 등 상위 모달 위에 띄울 때 */
+  zIndex?: number
 }
 
 export function InstructorPaymentStatementBlockedModal({
@@ -28,6 +30,7 @@ export function InstructorPaymentStatementBlockedModal({
   selectedCount = 0,
   layout = 'default',
   purpose = 'paymentStatement',
+  zIndex,
 }: InstructorPaymentStatementBlockedModalProps) {
   const rootClass = [
     'instructor-payment-statement-blocked-modal',
@@ -80,6 +83,7 @@ export function InstructorPaymentStatementBlockedModal({
       onCancel={onClose}
       title={title}
       width={600}
+      zIndex={zIndex}
       className={rootClass}
       footer={
         <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>

@@ -1,7 +1,6 @@
 /**
  * Homepage Admin 인증 서비스
- * - mock: 로컬 테스트 계정 + mock JWT (MFA 없음)
- * - api: CMS `/api/admin/auth/login` → MFA challenge
+ * CMS `/api/admin/auth/login` → MFA challenge
  */
 
 import type { LoginRequest, LoginResponse, AuthUser, MfaState } from '@/entities/auth/model/types'
@@ -10,19 +9,8 @@ import type { AdminMfaChallengeResponse } from '@/features/auth/model/admin-logi
 import { AUTH_TOKEN_KEY } from '@/features/auth/model/auth-storage'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 
-export type LoginMode = 'mock' | 'api'
-
-export interface LoginOptions {
-  mode?: LoginMode
-}
-
 /** MFA 진행 중 pending 세션 접두사 (실 JWT와 구분) */
 export const HP_REMOTE_SESSION_PREFIX = 'hp-remote-'
-
-const MOCK_ACCOUNTS: Array<{ email: string; password: string; name: string }> = [
-  { email: 'admin1@jakorea.org', password: 'admin1234!', name: '관리자' },
-  { email: '123@jakorea.org', password: '!Tinto05270527', name: '가입관리자' },
-]
 
 /** MFA 완료 후 저장된 실 JWT 여부 — mock·pending 제외 */
 export function hasRemoteAdminJwt(): boolean {
@@ -54,21 +42,6 @@ function buildPendingAdminUser(email: string): AuthUser {
   }
 }
 
-function buildMockAdminUser(email: string, name: string): AuthUser {
-  const now = new Date().toISOString()
-  return {
-    id: `mock-admin-${email}`,
-    email,
-    name,
-    role: 'ADMIN',
-    adminLevel: 'MASTER',
-    isActive: true,
-    createdAt: now,
-    updatedAt: now,
-    lastLoginAt: now,
-  }
-}
-
 function buildMfaStateFromChallenge(
   email: string,
   challenge: AdminMfaChallengeResponse,
@@ -89,30 +62,6 @@ function buildMfaStateFromChallenge(
     totpSecret: challenge.totpSecret,
     otpauthUri: challenge.otpauthUri,
     qrDataUrl: challenge.qrDataUrl,
-  }
-}
-
-async function loginWithMock(
-  request: LoginRequest,
-): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
-  const matched = MOCK_ACCOUNTS.find(
-    account =>
-      account.email.toLowerCase() === request.email.trim().toLowerCase() &&
-      account.password === request.password,
-  )
-  if (!matched) {
-    throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.')
-  }
-
-  const user = buildMockAdminUser(matched.email, matched.name)
-  const token = `mock-jwt-token-${user.id}-${Date.now()}`
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-
-  return {
-    user,
-    token,
-    expiresAt,
-    requiresMfa: false,
   }
 }
 
@@ -140,10 +89,6 @@ async function loginWithRemoteApi(
 
 export async function login(
   request: LoginRequest,
-  options?: LoginOptions,
 ): Promise<LoginResponse & { requiresMfa?: boolean; mfaState?: MfaState }> {
-  if (options?.mode === 'mock') {
-    return loginWithMock(request)
-  }
   return loginWithRemoteApi(request)
 }

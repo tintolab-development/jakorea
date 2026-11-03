@@ -93,7 +93,8 @@ export function useIssuePersonalCertificateMutation(options?: {
 
 export function useDownloadPersonalCertificateMutation() {
   return useMutation({
-    mutationFn: (certificateIssueId: number) => downloadPersonalCertificate(certificateIssueId),
+    mutationFn: (input: { certificateIssueId: number; fileName: string }) =>
+      downloadPersonalCertificate(input.certificateIssueId, { fileName: input.fileName }),
     retry: false,
   })
 }

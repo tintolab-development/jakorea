@@ -39,7 +39,7 @@ export type PublicCareerGuideResponse = {
   interviews?: PublicCareerInterview[]
 }
 
-/** GET /api/public/careers/postings — 공개 채용공고 (무토큰). CLOSED는 응답에 없다. */
+/** GET /api/public/careers/postings — 공개 채용공고 (무토큰). CLOSED는 응답에 없다. CTA(buttonLabel·linkUrl)는 목록 item에 없다. */
 
 export type PublicCareerPostingStatus = 'RECRUITING' | 'RESULT' | 'CLOSED'
 
@@ -105,6 +105,10 @@ export type PublicCareerPostingDetail = {
   attachment?: PublicCareerPostingAsset | null
   /** GET 성공 시 증가한 뒤의 값. 항상 숫자 */
   viewCount?: number
+  /** CareerPostingPublicDetail.buttonLabel. JSON null → 화면 ''. 비면 기본 문구 */
+  buttonLabel?: string | null
+  /** CareerPostingPublicDetail.linkUrl. JSON null → 화면 ''. 없으면 버튼 비노출 */
+  linkUrl?: string | null
 }
 
 /** POST /api/public/careers/talent-applications — 공개 인재채용 지원 (무토큰) */

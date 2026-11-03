@@ -8,10 +8,7 @@ import {
   formTemplateRuntimeWatchIgnored,
 } from '../../scripts/vite-form-template-runtime-watch'
 
-function withNgrokSkip(
-  target: string,
-  skipHeader: string | undefined,
-): ProxyOptions {
+function withNgrokSkip(target: string, skipHeader: string | undefined): ProxyOptions {
   const normalized = target.replace(/\/$/, '')
   const isNgrokTarget = /ngrok/i.test(normalized)
   return {
@@ -38,8 +35,7 @@ export default defineConfig(({ mode }) => {
     env.VITE_DEV_PROXY_TARGET?.trim() ||
     env.VITE_NGROK_SERVER?.trim()
   /** Homepage Admin API — 도메인 CRUD (`/api/admin/main` 등) */
-  const homepageTarget =
-    env.VITE_HOMEPAGE_API_SERVER?.trim() || 'http://localhost:8081'
+  const homepageTarget = env.VITE_HOMEPAGE_API_SERVER?.trim() || 'http://localhost:8081'
   const ngrokSkip = env.VITE_NGROK_SKIP_BROWSER_WARNING?.trim()
 
   const proxy: Record<string, ProxyOptions> | undefined = (() => {

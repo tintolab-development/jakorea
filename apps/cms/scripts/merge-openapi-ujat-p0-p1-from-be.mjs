@@ -53,6 +53,14 @@ const GRADE_BLOCK_EXTRA_PROPS = [
   'textbookDeliveryStatus',
 ]
 
+const ALLOCATION_SSOT_SCHEMAS = [
+  'AllocationColumn',
+  'AllocationEducationSlot',
+  'AllocationCell',
+  'VolunteerRow',
+  'MemberPortalEducationScheduleItem',
+]
+
 const be = JSON.parse(readFileSync(bePath, 'utf8'))
 const fe = JSON.parse(readFileSync(feBackendPath, 'utf8'))
 
@@ -116,6 +124,16 @@ mergeProps(
   be.components?.schemas?.OrganizationApplicationGradeBlock,
   GRADE_BLOCK_EXTRA_PROPS
 )
+
+for (const schemaName of ALLOCATION_SSOT_SCHEMAS) {
+  const source = be.components?.schemas?.[schemaName]
+  if (!source) {
+    console.warn(`BE missing schema ${schemaName}`)
+    continue
+  }
+  fe.components.schemas[schemaName] = source
+  schemaCount += 1
+}
 
 writeFileSync(feBackendPath, `${JSON.stringify(fe, null, 2)}\n`)
 console.log(

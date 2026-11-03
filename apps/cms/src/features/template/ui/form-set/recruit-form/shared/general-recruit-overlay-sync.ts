@@ -30,14 +30,16 @@ import {
 } from '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
 import {
   patchActiveCompanySchoolRecruitmentOverlay,
-  peekActiveCompanySchoolRecruitmentOverlayRecord,
+  peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord,
+  peekActiveCompanySchoolInstructorRecruitmentOverlayRecord,
   peekCompanySchoolRegistrationRhf,
   readActiveCompanySchoolRecruitmentOverlayValue,
   subscribeCompanySchoolRegistrationRhf,
 } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import {
-  isCompanySchoolRecruitmentCatalog,
+  isCompanySchoolOwnedRecruitmentCatalog,
   isCompanySchoolRecruitmentOverlayKey,
+  pickCompanySchoolRecruitmentOverlayForCatalog,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import { filterUjatTypedRecruitmentOverlayPatch } from '@/features/program/ujat/lib/ujat-typed-recruitment-overlay-write-block'
 
@@ -87,8 +89,10 @@ export function peekGeneralRecruitOverlayRecord(
 ): Record<string, unknown> {
   const merged = mergeWizardRecruitmentIntoOverlayRecord(store.peekRecord(templateCode), templateCode)
   const csRecord =
-    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)
-      ? peekActiveCompanySchoolRecruitmentOverlayRecord()
+    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)
+      ? templateCode === 'recruitment-instructor'
+        ? peekActiveCompanySchoolInstructorRecruitmentOverlayRecord()
+        : peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord()
       : null
   const ttRecord =
     peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)
@@ -117,8 +121,10 @@ export function replaceGeneralRecruitOverlayForScope(
     patchActiveTrainedTeachersRecruitmentOverlay(next)
     return
   }
-  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)) {
-    patchActiveCompanySchoolRecruitmentOverlay(next)
+  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)) {
+    patchActiveCompanySchoolRecruitmentOverlay(
+      pickCompanySchoolRecruitmentOverlayForCatalog(templateCode, next)
+    )
     return
   }
   if (!isWizardRecruitmentRhfProjecting()) {

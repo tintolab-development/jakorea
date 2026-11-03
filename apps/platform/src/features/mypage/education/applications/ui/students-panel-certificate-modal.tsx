@@ -14,8 +14,10 @@ import {
   validateCertificateRosterIds,
 } from '../lib/certificate-bulk-download'
 import { resolveStudentDocumentsErrorMessage } from '../lib/student-documents-errors'
+import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
+import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import fileDownloadBlackUrl from '@/shared/assets/icons/file-download-black.svg'
-import { PFAlertModal, PFButton, PFCheckbox, PFModal, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFCheckbox, PFLoadingSpinner, PFModal, PFText } from '@/shared/ui'
 import styles from './students-panel-certificate-modal.module.css'
 
 type StudentsPanelCertificateModalProps = {
@@ -37,6 +39,7 @@ export function StudentsPanelCertificateModal({
   }))
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
   const downloadCertificates = useDownloadOrganizationStudentCertificatesMutation(applicationId)
+  const { displayName } = useMypageMember()
   const isDownloading = downloadCertificates.isPending
   const downloadInFlightRef = useRef(false)
 
@@ -89,7 +92,13 @@ export function StudentsPanelCertificateModal({
     }
     downloadInFlightRef.current = true
     try {
-      await downloadCertificates.mutateAsync(selectedRosterIds)
+      await downloadCertificates.mutateAsync({
+        rosterIds: selectedRosterIds,
+        fileName: buildCertificateDownloadFileName({
+          memberName: displayName,
+          extension: 'zip',
+        }),
+      })
       onClose()
     } catch (error) {
       setAlertMessage(resolveStudentDocumentsErrorMessage(error, '수료증을 다운로드하지 못했습니다.'))
@@ -263,6 +272,7 @@ export function StudentsPanelCertificateModal({
         confirmLabel="확인"
         onConfirm={() => setAlertMessage(null)}
       />
+      {isDownloading ? <PFLoadingSpinner blocking label="수료증을 다운로드하는 중" /> : null}
     </>
   )
 }

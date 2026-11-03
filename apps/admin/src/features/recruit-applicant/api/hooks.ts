@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { RecruitApplicantListFilter } from '@/entities/recruit-applicant/model/types'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
 import { shouldUseRecruitApplicantRemoteApi } from './capabilities'
 import { recruitApplicantQueryKeys } from './query-keys'
 import {
   confirmRecruitApplicantsService,
   getRecruitApplicantService,
-  listRecruitApplicantsService,
+  listRecruitApplicantsPageService,
   removeRecruitApplicantsService,
   type RecruitApplicantConfirmInput,
 } from './service'
@@ -30,12 +31,13 @@ function filterKey(filter: RecruitApplicantListFilter): string {
 }
 
 export function useRecruitApplicantsList(filter: RecruitApplicantListFilter) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: recruitApplicantQueryKeys.list(dataSource, filterKey(filter)),
-    queryFn: () => listRecruitApplicantsService(filter),
-    staleTime: dataSource === 'remote' ? 0 : Number.POSITIVE_INFINITY,
-    gcTime: dataSource === 'remote' ? 0 : 15 * 60_000,
+  const remote = shouldUseRecruitApplicantRemoteApi()
+  return useAdminInfiniteList({
+    queryKey: recruitApplicantQueryKeys.list(source(), filterKey(filter)),
+    isRemote: remote,
+    fetchPage: page => listRecruitApplicantsPageService(filter, page),
+    staleTime: remote ? 0 : Number.POSITIVE_INFINITY,
+    gcTime: remote ? 0 : 15 * 60_000,
     retry: false,
   })
 }

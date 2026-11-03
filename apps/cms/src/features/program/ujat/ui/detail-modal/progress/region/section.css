@@ -24,6 +24,15 @@
   margin-bottom: 0;
 }
 
+.ujat-education-progress-region-assignment .table-description {
+  opacity: 0.5;
+}
+
+.ujat-education-progress-region-assignment .table-header-actions {
+  gap: 32px;
+  align-items: flex-end;
+}
+
 .ujat-region-auto-assign-banner {
   display: flex;
   align-items: flex-start;

@@ -33,13 +33,7 @@ export function mapPopupResponseToDomain(row: PopupResponse): Popup {
   }
 }
 
-/**
- * OpenAPI `List4Params` 서버 쿼리: `enabled` · `popupName` · `periodStart` · `periodEnd`.
- *
- * `altText`는 list GET 스펙에 없다. BE가 query를 추가하면:
- * 1. Orval 재생성 후 아래 `params.altText = …` 한 줄을 켠다
- * 2. `listRemotePopups`의 `applyClientAltTextFilter` 호출을 제거한다
- */
+/** OpenAPI `List4Params` — enabled · popupName · altText · periodStart · periodEnd */
 export function toPopupListParams(filter?: PopupListFilter): List4Params | undefined {
   if (!filter) return undefined
   const params: List4Params = {}
@@ -47,21 +41,10 @@ export function toPopupListParams(filter?: PopupListFilter): List4Params | undef
     params.enabled = filter.isActive
   }
   if (filter.name?.trim()) params.popupName = filter.name.trim()
+  if (filter.altText?.trim()) params.altText = filter.altText.trim()
   if (filter.periodStart) params.periodStart = filter.periodStart
   if (filter.periodEnd) params.periodEnd = filter.periodEnd
-  // BE list query `altText` 추가 시:
-  // if (filter.altText?.trim()) params.altText = filter.altText.trim()
   return Object.keys(params).length > 0 ? params : undefined
-}
-
-/**
- * `List4Params.altText`가 생길 때까지 응답 후 클라이언트 보조 필터.
- * 서버 필드(`enabled`, `popupName`, 기간)는 여기서 거르지 않는다.
- */
-export function applyClientAltTextFilter(rows: Popup[], filter?: PopupListFilter): Popup[] {
-  const q = filter?.altText?.trim().toLowerCase()
-  if (!q) return rows
-  return rows.filter(row => row.altText.toLowerCase().includes(q))
 }
 
 export function toPopupCreateRequest(

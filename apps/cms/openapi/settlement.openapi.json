@@ -10784,10 +10784,12 @@
           },
           "fileObjectIds": {
             "type": "array",
+            "description": "사유 불참 증빙 fileObjectId. CMS UJAT 봉사 탭은 생략(null/[]). 없으면 absence-reasons에 사유 텍스트만 남고 파일은 없다.",
             "items": {
               "type": "integer",
               "format": "int64"
-            }
+            },
+            "nullable": true
           }
         }
       },
@@ -20917,10 +20919,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -21995,19 +21997,19 @@
           },
           "thirdPartyRecipient": {
             "type": "string",
-            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. 일반(GENERAL*) 프로그램 CMS_PROGRESS_ADD에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).",
+            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).",
             "maxLength": 200,
             "minLength": 0,
             "nullable": true
           },
           "id1365": {
             "type": "string",
-            "description": "회원 프로필에 1365가 없을 때만 필수. 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다.",
+            "description": "회원 프로필에 1365가 없을 때만 필수(시안 기본정보 단락 없음). 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다. UJAT CMS_PROGRESS_ADD에서 프로필에 없고 본 필드도 없으면 422 VOLUNTEER_1365_REQUIRED. 일반(GENERAL*) 프로그램은 기존 400 VOLUNTEER_1365_ID_REQUIRED.",
             "nullable": true
           },
           "jaProgramExperienceConsentRequest": {
             "type": "string",
-            "description": "일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.",
+            "description": "JA 봉사 프로그램 진행 경험(Figma 일반 추가 등록 폼과 동일). REQUESTED이면 previousJaProgram{programYear,programName,certificateFileIds} 필수. 일반 프로그램은 400 VOLUNTEER_PREVIOUS_JA_REQUIRED, UJAT CMS_PROGRESS_ADD는 422 VOLUNTEER_PREVIOUS_JA_REQUIRED. previousUjatTerm을 요구하지 않습니다.",
             "enum": [
               "REQUESTED",
               "NOT_REQUESTED"
@@ -22018,7 +22020,7 @@
             "$ref": "#/components/schemas/PreviousJaProgramRequest"
           },
           "previousUjatTerm": {
-            "description": "UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다.",
+            "description": "사용자 홈 UJAT 봉사 신청서의 이전 활동 기수. CMS_PROGRESS_ADD에서는 생략 가능하며 없으면 기수를 invent하지 않습니다. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다.",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/PreviousUjatTermRequest"
@@ -22030,12 +22032,12 @@
           },
           "educationRegionCode": {
             "type": "string",
-            "description": "UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다.",
+            "description": "사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다.",
             "nullable": true
           },
           "recruitHalf": {
             "type": "string",
-            "description": "UJAT 봉사자 모집 반기. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다.",
+            "description": "UJAT 봉사자 모집 반기. CMS 교육 진행 탭(edu_h1_volunteers/edu_h2_volunteers)에서 온 값. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다.",
             "enum": [
               "FIRST_HALF",
               "SECOND_HALF",
@@ -22048,7 +22050,7 @@
           },
           "applicationType": {
             "type": "string",
-            "description": "UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다.",
+            "description": "사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다.",
             "enum": [
               "NEW",
               "UJAT_GRADUATE",
@@ -40414,7 +40416,7 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태",
+            "description": "회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료.",
             "enum": [
               "결과 대기",
               "서류 합격",
@@ -40820,7 +40822,7 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다.",
+            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료.",
             "enum": [
               "결과 대기",
               "서류 합격",
@@ -41343,6 +41345,26 @@
             "items": {
               "$ref": "#/components/schemas/MemberPortalEducationCurriculumSession"
             },
+            "nullable": true
+          },
+          "assignmentStatus": {
+            "type": "string",
+            "description": "UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null",
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED",
+              "REASSIGNMENT_REQUIRED"
+            ],
+            "nullable": true
+          },
+          "classLabel": {
+            "type": "string",
+            "description": "UJAT 봉사자 학급 라벨. allocation-matrix cell.classLabel과 동일 SSOT. UNASSIGNED는 null. 빈 문자열 금지. 비UJAT이면 null",
+            "nullable": true
+          },
+          "organizationName": {
+            "type": "string",
+            "description": "UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개",
             "nullable": true
           }
         }
@@ -50823,7 +50845,24 @@
             "type": "boolean"
           },
           "assignmentStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED",
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED",
+              "REASSIGNMENT_REQUIRED"
+            ]
+          },
+          "replacementParticipantId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "대체 봉사자 program_participant.id. unavailable=false이면 null",
+            "nullable": true
+          },
+          "replacementVolunteerName": {
+            "type": "string",
+            "description": "대체 봉사자 회원명 원문. 없으면 null. 빈 문자열 금지. unavailable=false이면 null",
+            "nullable": true
           }
         }
       },
@@ -50839,14 +50878,17 @@
           },
           "educationStartAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "교육 시작 시각(offset date-time). 달력일은 Asia/Seoul. UTC date slice(0,10) 금지"
           },
           "organizationApplicationId": {
             "type": "integer",
             "format": "int64"
           },
           "organizationName": {
-            "type": "string"
+            "type": "string",
+            "description": "기관명. 없으면 null. 빈 문자열 금지",
+            "nullable": true
           },
           "organizationRegion": {
             "type": "string",
@@ -50858,7 +50900,40 @@
           },
           "classCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "확정 학급 슬롯 수 참고값. 학급 행 SSOT가 아니며 classCount로 N반을 invent하지 않는다"
+          },
+          "educationSlots": {
+            "type": "array",
+            "description": "해당 열의 확정 교육 슬롯. 없으면 빈 배열. id invent 금지",
+            "items": {
+              "$ref": "#/components/schemas/AllocationEducationSlot"
+            }
+          }
+        }
+      },
+      "AllocationEducationSlot": {
+        "type": "object",
+        "properties": {
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "ujat_organization_class_schedule_assignment.id"
+          },
+          "classLabel": {
+            "type": "string",
+            "description": "슬롯 class_label 원문. 없으면 null. grade+className으로 합성하지 않음",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "description": "학년 원문. 없으면 null",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "description": "반 이름 원문. 없으면 null",
+            "nullable": true
           }
         }
       },
@@ -50965,6 +51040,15 @@
           "rank": {
             "type": "integer",
             "format": "int32"
+          },
+          "volunteerName": {
+            "type": "string",
+            "description": "memberName과 동일. CMS partnerOptionsFromRecommendation 소비 필드."
+          },
+          "assignmentDayCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "assignedScheduleCount와 동일. CMS partnerOptionsFromRecommendation 소비 필드."
           }
         }
       },
@@ -53851,15 +53935,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },

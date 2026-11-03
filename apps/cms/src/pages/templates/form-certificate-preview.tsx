@@ -213,8 +213,19 @@ export function FormCertificatePreview({
               : {})}
           />
           <span
-            className={cn(`${P}__tag`, shouldDim(region, 'decor') && FRAME_DIMMED)}
-            data-certificate-serial="tag"
+            className={cn(`${P}__serial-text`, shouldDim(region, 'decor') && FRAME_DIMMED)}
+            data-certificate-serial="text"
+            style={{
+              color: '#606060',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              padding: 0,
+              border: 'none',
+              borderRadius: 0,
+              outline: 'none',
+              background: 'transparent',
+              boxShadow: 'none',
+            }}
           >
             {displaySerialNumber}
           </span>

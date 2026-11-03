@@ -63,7 +63,7 @@ export function UjatVolunteerScheduleRow({
       item.availableActions,
       item.absenceReasonStatus,
     )
-  const school = item.locationName?.trim()
+  const school = item.locationName?.trim() || item.organizationName?.trim()
   const classLabel = item.classLabel?.trim()
   const unassigned = !isAssignedUjatSchedule(item) && !school && !classLabel
   const schoolLabel = school ?? (unassigned ? '미배정' : null)

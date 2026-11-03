@@ -85,6 +85,7 @@ import { CmsTimePicker } from '@/shared/ui/cms-time-picker'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/form-editor/form-editor-horizontal-table.css'
 import { TextCellInput } from '@/features/template/ui/paragraph/table/text-cell-input'
+import { TableCellInlineTextInput } from '@/features/template/ui/paragraph/table/table-cell-inline-text-input'
 import { DeferredBorderlessTextArea } from '@/features/template/ui/shared/deferred-borderless-text-area'
 import { DeferredCmsInput } from '@/features/template/ui/shared/deferred-cms-input'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
@@ -238,6 +239,8 @@ function FieldTableBodyCell({
   onSelectBodyRow,
   /** 시스템 설정·텍스트 가로형 형태 — 파란 테두리 `TextCellInput` */
   borderedTextCell = false,
+  /** unboxed text — 한 줄·blur 중앙 / focus 좌측 (`TableCellInlineTextInput`) */
+  inlineCenteredTextCell = false,
 }: {
   field: HorizontalTableColumnField
   cell: HorizontalTableFieldCellValue
@@ -248,6 +251,7 @@ function FieldTableBodyCell({
   onFieldChange: (v: HorizontalTableFieldCellValue) => void
   onSelectBodyRow: () => void
   borderedTextCell?: boolean
+  inlineCenteredTextCell?: boolean
 }) {
   if (!isEditMode) {
     const text = fieldCellValueToPlainText(rehomeForDisplay(field, cell))
@@ -263,6 +267,17 @@ function FieldTableBodyCell({
           value={textValue}
           placeholder={ph}
           onChange={value => onFieldChange({ kind: 'text', value })}
+          onFocus={onSelectBodyRow}
+        />
+      )
+    }
+    if (inlineCenteredTextCell) {
+      return (
+        <TableCellInlineTextInput
+          className="form-editor-horizontal-table__cell-textarea"
+          value={textValue}
+          placeholder={ph}
+          onCommit={next => onFieldChange({ kind: 'text', value: next })}
           onFocus={onSelectBodyRow}
         />
       )
@@ -415,6 +430,8 @@ export function HorizontalTableParagraphBody({
   tableCanvasInteractive = true,
   /** 구조 잠금 partial — 본문 열 중 수정 불가(보유기간 등) */
   lockedBodyColumnIndexes,
+  /** true — 잠긴 열 외 본문을 테두리 없는 셀 인풋으로 (공통 field 가로표) */
+  unboxedEditableBodyCell = false,
   /** true — th(열 제목)는 항상 고정 텍스트(Figma fill·추가 등록). 편집 인풋·파란 테두리 금지 */
   lockColumnHeaders = false,
   /** 구조 잠금 partial — 개인정보 하단 안내도 ParagraphInput으로 수정 */
@@ -475,6 +492,7 @@ export function HorizontalTableParagraphBody({
   isEditMode: boolean
   tableCanvasInteractive?: boolean
   lockedBodyColumnIndexes?: ReadonlySet<number>
+  unboxedEditableBodyCell?: boolean
   lockColumnHeaders?: boolean
   allowDisclaimerBottomTextEdit?: boolean
   bottomConsentPreviewInAuthoring?: boolean
@@ -936,7 +954,8 @@ export function HorizontalTableParagraphBody({
   const isBodyColumnEditable = (colIdx: number) =>
     effectiveEditMode && !(lockedBodyColumnIndexes?.has(colIdx) ?? false)
   /** 시스템 설정 단락 — 텍스트 가로형과 동일한 파란 테두리 셀 인풋 */
-  const useSystemSettingsTextCellInput = lockedBodyColumnIndexes != null
+  const useSystemSettingsTextCellInput =
+    lockedBodyColumnIndexes != null && !unboxedEditableBodyCell
   /** 시스템 설정 partial — 행 선택 없이 클릭한 셀만 테두리 인풋 활성화 (text·구시드 subjective 포함) */
   const activateSystemSettingsBodyCell = (rowIdx: number, colIdx: number) => {
     if (!useSystemSettingsTextCellInput || !isBodyColumnEditable(colIdx)) return
@@ -1272,6 +1291,10 @@ export function HorizontalTableParagraphBody({
                         colIdx={colIdx}
                         isEditMode={bodyColumnEditable}
                         ph={ph}
+                        borderedTextCell={usePartialLockTextCellInput}
+                        inlineCenteredTextCell={
+                          unboxedEditableBodyCell && field.kind === 'text'
+                        }
                         onFieldChange={v =>
                           onChange(horizontalTableSetFieldCellValue(p, rowIdx, colIdx, v))
                         }

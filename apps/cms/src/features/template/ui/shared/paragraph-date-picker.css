@@ -9,17 +9,6 @@
   vertical-align: middle;
 }
 
-.paragraph-date-picker--with-hint {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.paragraph-date-picker__business-period-hint {
-  color: var(--text-secondary, #757575);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 .paragraph-date-picker__trigger {
   display: flex;
   box-sizing: border-box;

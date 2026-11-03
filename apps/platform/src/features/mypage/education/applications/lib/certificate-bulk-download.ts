@@ -9,7 +9,6 @@ import {
 
 /** OpenAPI `PortalCertificateBulkDownloadRequest.rosterIds.maxItems` */
 export const CERTIFICATE_BULK_DOWNLOAD_MAX_ROSTERS = 100
-export const CERTIFICATE_BULK_DOWNLOAD_FILE_NAME = 'student-certificates.zip'
 export const CERTIFICATE_BULK_DOWNLOAD_ACCEPT = 'application/zip, application/json'
 
 const ZIP_CONTENT_TYPE = /^application\/zip\b/i

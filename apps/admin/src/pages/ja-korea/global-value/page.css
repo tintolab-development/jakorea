@@ -46,6 +46,16 @@
   vertical-align: middle;
 }
 
+.global-value-table .ant-table-tbody > tr > td.global-value-table__col--icon {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.global-value-table .ant-table-tbody > tr > td.global-value-table__col--icon img {
+  display: block;
+  margin-inline: auto;
+}
+
 .global-value-table .ant-table-tbody > tr > td .cms-textarea {
   display: block;
   max-width: 100%;

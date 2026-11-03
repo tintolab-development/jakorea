@@ -22,10 +22,16 @@ export { RichTextViewer, useRichTextEditor } from '@jakorea/rich-text/react'
 export { CmsRichTextEditor as RichTextEditor } from './cms-rich-text-editor'
 export { RichTextToolbar } from './toolbar/rich-text-toolbar'
 export {
-  getRemoteRichTextBodyError,
-  REMOTE_RICH_TEXT_BODY_MAX_LENGTH,
-} from './lib/remote-body'
+  createInitialAdminHtmlEditorState,
+  isEmptyAdminHtml,
+  isHtmlContent,
+  resolveAdminHtmlForSave,
+} from './admin-html-editor'
+export { useAdminHtmlEditor } from './use-admin-html-editor'
+export { getRemoteRichTextBodyError, REMOTE_RICH_TEXT_BODY_MAX_LENGTH } from './lib/remote-body'
 export type { RichTextToolbarProps } from './toolbar/rich-text-toolbar'
+export type { AdminEditorMode, AdminHtmlEditorState } from './admin-html-editor'
+export type { UseAdminHtmlEditorOptions } from './use-admin-html-editor'
 export type {
   CreateRichTextExtensionsOptions,
   Editor,

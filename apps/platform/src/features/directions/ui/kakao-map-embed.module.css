@@ -6,8 +6,7 @@
 
 /**
  * 지도 프레임 1440×728.
- * 확대·이동 잠금: pointer-events none + Roughmap 컨트롤 숨김.
- * OSM/카카오 임베드 하단 attribution 바는 overflow로 클립한다.
+ * 확대·축소·지도 내 이동(드래그) 활성. attribution 바는 overflow로 클립.
  */
 .mapFrame {
   position: relative;
@@ -19,10 +18,8 @@
   overflow: hidden;
   border-radius: var(--radius-16);
   background: var(--color-neutral-cool-80);
-  /* 휠·드래그·핀치 줌 차단 */
-  pointer-events: none;
-  user-select: none;
-  touch-action: none;
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .mapHost {
@@ -38,7 +35,7 @@
   background: var(--color-neutral-cool-80);
 }
 
-.mapHost :global(.leaflet-control-container) {
+.mapHost :global(.leaflet-control-attribution) {
   display: none !important;
 }
 
@@ -116,7 +113,7 @@
   max-width: 100%;
   min-height: 0;
   border: 0;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .mapHost :global(.root_daum_roughmap),
@@ -133,14 +130,7 @@
   height: 100% !important;
 }
 
-/* 카카오 Roughmap 확대/축소·컨트롤러 숨김 */
-.mapHost :global(.wrap_controllers),
-.mapHost :global(.wrap_btn_zoom),
-.mapHost :global(.btn_zoom),
-.mapHost :global(.zoom),
-.mapHost :global(.map_control) {
-  display: none !important;
-}
+/* 카카오 Roughmap 확대/축소 컨트롤은 노출 — 드래그·휠 줌과 함께 사용 */
 
 @media (--bp-below-pc) {
   .mapFrame {

@@ -30,7 +30,7 @@ export function useDirectAssignCandidates(input: {
     const primaryId = query.data?.existingPrimaryParticipantId
     if (primaryId == null) return null
     const row = input.tableData.rows.find(item => item.id === String(primaryId))
-    return row?.name ?? `봉사자 ${primaryId}`
+    return row?.name ?? '-'
   }, [input.tableData.rows, query.data?.existingPrimaryParticipantId])
 
   const errorMessage = useMemo(() => {

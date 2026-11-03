@@ -199,8 +199,8 @@ export function MypageEducationSettlementConfirmPage() {
 
   const title =
     documentKind === 'receipt'
-      ? '영수증 제출 전에 정보가 맞는지 확인해 주세요.'
-      : '지급조서 신청 전에 정보가 맞는지 확인해 주세요.'
+      ? '영수증 제출 전에\n정보가 맞는지 확인해 주세요.'
+      : '지급조서 신청 전에\n정보가 맞는지 확인해 주세요.'
   const titleInnerClassName =
     documentKind === 'receipt' ? `${styles.inner} ${styles.titleCentered}` : styles.inner
 

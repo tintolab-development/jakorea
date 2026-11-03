@@ -21,5 +21,6 @@ import './line-height-extension'
 import './markdown-serializers'
 import './emoji-extension'
 import './superscript-extension'
+import './raw-html-block'
 
 export {}

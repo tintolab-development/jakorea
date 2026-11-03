@@ -3,6 +3,7 @@ import {
   assertCertificatePdfBlob,
   CertificateLegacyRenderStubError,
 } from './assert-certificate-pdf-blob'
+import { buildCertificateDownloadFileName } from './certificate-download-file-name'
 import { messageForPortalCertificateRenderErrorCode } from './certificate-reason-messages'
 import {
   fetchPortalGeneratedDownloadBlob,
@@ -175,6 +176,7 @@ export async function savePortalCertificatePdfDownload(
   options?: { signal?: AbortSignal; fileName?: string },
 ): Promise<void> {
   const blob = await downloadPortalCertificatePdfBlob(certificateIssueId, options)
-  const fileName = options?.fileName?.trim() || `수료증_${certificateIssueId}.pdf`
+  const fileName =
+    options?.fileName?.trim() || buildCertificateDownloadFileName({ memberName: '' })
   savePortalBlobFile(fileName, blob)
 }

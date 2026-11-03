@@ -1,8 +1,6 @@
 /**
- * 관리자 계정 처리 이력 — remote API opt-in
+ * admin-account-log — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseAdminAccountLogRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

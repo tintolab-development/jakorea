@@ -26,26 +26,26 @@ export interface VolunteerParticipantRegisterRequest {
   /** @minLength 1 */
   thirdPartyConsent: VolunteerParticipantRegisterRequestThirdPartyConsent;
   /**
-     * 제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. 일반(GENERAL*) 프로그램 CMS_PROGRESS_ADD에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).
+     * 제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).
      * @minLength 0
      * @maxLength 200
      */
   thirdPartyRecipient?: string | null;
-  /** 회원 프로필에 1365가 없을 때만 필수. 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다. */
+  /** 회원 프로필에 1365가 없을 때만 필수(시안 기본정보 단락 없음). 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다. UJAT CMS_PROGRESS_ADD에서 프로필에 없고 본 필드도 없으면 422 VOLUNTEER_1365_REQUIRED. 일반(GENERAL*) 프로그램은 기존 400 VOLUNTEER_1365_ID_REQUIRED. */
   id1365?: string | null;
   /**
-     * 일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.
+     * JA 봉사 프로그램 진행 경험(Figma 일반 추가 등록 폼과 동일). REQUESTED이면 previousJaProgram{programYear,programName,certificateFileIds} 필수. 일반 프로그램은 400 VOLUNTEER_PREVIOUS_JA_REQUIRED, UJAT CMS_PROGRESS_ADD는 422 VOLUNTEER_PREVIOUS_JA_REQUIRED. previousUjatTerm을 요구하지 않습니다.
      * @minLength 1
      */
   jaProgramExperienceConsentRequest: VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest;
   previousJaProgram?: PreviousJaProgramRequest;
-  /** UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다. */
+  /** 사용자 홈 UJAT 봉사 신청서의 이전 활동 기수. CMS_PROGRESS_ADD에서는 생략 가능하며 없으면 기수를 invent하지 않습니다. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다. */
   previousUjatTerm?: PreviousUjatTermRequest | null;
-  /** UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다. */
+  /** 사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다. */
   educationRegionCode?: string | null;
-  /** UJAT 봉사자 모집 반기. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다. */
+  /** UJAT 봉사자 모집 반기. CMS 교육 진행 탭(edu_h1_volunteers/edu_h2_volunteers)에서 온 값. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다. */
   recruitHalf?: VolunteerParticipantRegisterRequestRecruitHalf;
-  /** UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다. */
+  /** 사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다. */
   applicationType?: VolunteerParticipantRegisterRequestApplicationType;
   freeTextItems?: FreeTextItemsRequest;
   /**

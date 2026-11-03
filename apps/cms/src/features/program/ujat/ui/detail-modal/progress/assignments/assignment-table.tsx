@@ -17,10 +17,13 @@ import type {
   UjatDocumentViewerTarget,
 } from './document-viewer/ujat-document-viewer-types'
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
-import '../volunteers/detail/assignment.css'
 import './section.css'
 
 const PLAN_LOG_CELL_CLASSNAME = 'ujat-volunteer-assignment-table__plan-log-cell'
+const REMARKS_CELL_CLASSNAME = 'ujat-education-progress-assignments__remarks-cell'
+
+/** Figma 4082:114026 열 합(1140) + 비고(406) */
+const UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X = 1546
 
 function renderPlanLogViewButton(
   label: string,
@@ -59,9 +62,6 @@ function renderRemarks(row: UjatAssignmentVolunteerRow) {
     </span>
   )
 }
-
-/** 고정 열 합(1140) + 비고 최소 폭 */
-export const UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X = 1366
 
 export function UjatEducationProgressAssignmentTable({
   rows,
@@ -172,6 +172,8 @@ export function UjatEducationProgressAssignmentTable({
         title: '비고',
         key: 'remarks',
         align: 'center',
+        onHeaderCell: () => ({ className: REMARKS_CELL_CLASSNAME }),
+        onCell: () => ({ className: REMARKS_CELL_CLASSNAME }),
         render: (_: unknown, record: UjatAssignmentVolunteerRow) => renderRemarks(record),
       },
     ],

@@ -48,7 +48,10 @@ import {
   resolveHorizontalTableCellPlainText,
   type HorizontalTableParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
-import { clearRegistrationWizardSessionDrafts } from './registration-wizard-session-drafts'
+import {
+  clearRegistrationWizardSessionDrafts,
+  rememberRegistrationWizardSessionDraft,
+} from './registration-wizard-session-drafts'
 import {
   describeIncompleteApplicationFormThirdPartyRecipient,
   hasIncompleteApplicationFormThirdPartyRecipientForProgram,
@@ -240,5 +243,41 @@ describe('application form third-party recipient required', () => {
       dataRows: [['', '', '', '']],
     }
     expect(resolveHorizontalTableCellPlainText(lostFlavor, 0, 0)).toBe('배정된 교육 대상 학교')
+  })
+
+  it('1사1교 pending — 기관 신청 시드가 비면 강사 시드가 있어도 막는다', () => {
+    const program = {
+      id: 'company-school-local-pending',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+    } as Program
+    expect(describeIncompleteApplicationFormThirdPartyRecipient({ program })).toBe(
+      'application.application-economy.thirdPartyRecipient'
+    )
+  })
+
+  it('1사1교 — 기관 신청 session draft가 채워지면 강사 시드와 함께 통과한다', () => {
+    const program = {
+      id: 'company-school-local-pending',
+      generalParticipantTypes: ['school_institution', 'teacher_instructor'],
+    } as Program
+    const economy = createProgramApplicationFormEconomyDraft()
+    const paragraph = economy.paragraphs.find(
+      item => item.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.thirdPartyConsent
+    ) as HorizontalTableParagraph | undefined
+    expect(paragraph).toBeDefined()
+    const filledParagraph = horizontalTableSetFieldCellValue(paragraph!, 0, 0, {
+      kind: 'text',
+      value: 'JA코리아',
+    })
+    rememberRegistrationWizardSessionDraft({
+      templateCode: 'application-economy',
+      draft: {
+        ...economy,
+        paragraphs: economy.paragraphs.map(item =>
+          item.id === filledParagraph.id ? filledParagraph : item
+        ),
+      },
+    })
+    expect(hasIncompleteApplicationFormThirdPartyRecipientForProgram({ program })).toBe(false)
   })
 })

@@ -15,6 +15,15 @@ export const CMS_TABLE_USAGE_COL_CLASS = 'cms-table-col--usage'
  */
 export const CMS_DATA_TABLE_ROW_DISABLED_CLASS = 'cms-data-table__row--disabled'
 
+/**
+ * 52px 고정 행 + h40(40px) 단일 버튼 셀 — tbody padding 6×12 (8+40+8>52 hover shift 방지).
+ * `columns[].onCell` / `onHeaderCell` className에 추가.
+ */
+export const CMS_DATA_TABLE_CELL_H40_ACTION_CLASS = 'cms-data-table__cell--h40-action'
+
+/** h40 버튼 세로 스택(2개+) — height auto · min-height 52px */
+export const CMS_DATA_TABLE_CELL_H40_ACTION_STACK_CLASS = 'cms-data-table__cell--h40-action-stack'
+
 export const TABLE_COLUMN_WIDTHS = {
   status: 110,
   date: 120,

@@ -6,10 +6,7 @@ import type {
   HistoryItem,
 } from '@/entities/history-awards-certs/model/types'
 import { coerceRadioBoolean } from '@/features/history-awards-certs/lib/format'
-import {
-  deleteConfirmContent,
-  publishedMustUnpublishAlert,
-} from '@/features/history-awards-certs/lib/delete-guards'
+import { deleteConfirmContent } from '@/features/history-awards-certs/lib/delete-guards'
 import {
   CmsButton,
   CmsInput,
@@ -125,11 +122,6 @@ function HistoryFormBody({
                   size="large"
                   type="button"
                   onClick={() => {
-                    // 저장된 공개 상태 기준 — 미저장 draft isPublic과 분리
-                    if (initial?.isPublic) {
-                      showAlert(publishedMustUnpublishAlert('연혁'))
-                      return
-                    }
                     setDeleteConfirmOpen(true)
                   }}
                   disabled={confirmLoading || deleteLoading}

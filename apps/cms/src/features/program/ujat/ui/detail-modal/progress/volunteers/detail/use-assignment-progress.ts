@@ -5,6 +5,7 @@ import {
   ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE,
   isInvalidAttendanceArrivalTimeError,
 } from '@/shared/lib/attendance-arrival-time'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import {
   ATTENDANCE_CORRECTION_NOT_OPEN_ALERT,
   isAttendanceRecordingNotOpenError,
@@ -113,7 +114,7 @@ export function useVolunteerAssignmentProgress(input: {
         title: '오류',
         content: isInvalidAttendanceArrivalTimeError(error)
           ? ATTENDANCE_ARRIVAL_TIME_FORMAT_ERROR_MESSAGE
-          : fallback,
+          : readApiErrorAlertMessage(error, fallback),
       })
     },
     [invalidate, showAlert]
@@ -226,6 +227,9 @@ export function useVolunteerAssignmentProgress(input: {
     (row: UjatVolunteerAssignmentProgressRow, nextRole: UjatVolunteerScheduleRole) => {
       if (row.scheduleId == null || row.participantId == null) {
         throw new Error('MISSING_ROLE_TARGET')
+      }
+      if (nextRole === 'attendance_manager' && row.canAssignAttendanceManager !== true) {
+        return Promise.resolve()
       }
       return roleMutation.mutateAsync({
         programId: input.programId,

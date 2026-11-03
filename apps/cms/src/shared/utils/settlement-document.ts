@@ -396,8 +396,8 @@ export async function generateTransferList(
     if (options.passwordProvided && options.password) {
       // Phase 0.4.3: @zurmokeeper/exceljs는 writeBuffer에 password 옵션 지원
       // 암호화 옵션: { password: string }
-      if (options.password.length < 8) {
-        throw new Error('암호는 최소 8자 이상이어야 합니다.')
+      if (options.password.length < 12) {
+        throw new Error('암호는 최소 12자 이상이어야 합니다.')
       }
 
       const buffer = await workbook.xlsx.writeBuffer({

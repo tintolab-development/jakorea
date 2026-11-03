@@ -12,7 +12,6 @@ import { subscribeCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/
 import { subscribeTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import {
   composeDisabledDate,
-  REGISTRATION_BUSINESS_PERIOD_FIRST_HINT,
   type BusinessCalendarPeriod,
 } from '@/features/program/shared/lib/registration-business-period-calendar'
 import {
@@ -91,11 +90,4 @@ export function useComposedRegistrationBusinessPeriodDisabledDate(
     },
     [constraint, exclude, existing]
   )
-}
-
-export function useRegistrationBusinessPeriodPickerHint(exclude?: boolean): string | null {
-  const constraint = useRegistrationBusinessPeriodConstraint()
-  if (exclude || constraint == null) return null
-  if (constraint.period != null) return null
-  return REGISTRATION_BUSINESS_PERIOD_FIRST_HINT
 }

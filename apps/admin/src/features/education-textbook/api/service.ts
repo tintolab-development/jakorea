@@ -5,6 +5,7 @@ import type {
   EducationTextbookUpdateInput,
 } from '@/entities/education-textbook/model/types'
 import { getJAKoreaHomepageAdminAPIEducationSubset } from '@/shared/api/generated/education/education-api'
+import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list'
 import {
   mapTextbookListItemToDomain,
   mapTextbookResponseToDomain,
@@ -20,11 +21,16 @@ function educationApi() {
   return getJAKoreaHomepageAdminAPIEducationSubset()
 }
 
-async function listRemote(
-  filter?: EducationTextbookListFilter,
-): Promise<EducationTextbook[]> {
-  const response = await educationApi().list8(toTextbookListParams(filter))
-  return (response.items ?? []).map(mapTextbookListItemToDomain)
+async function listRemotePage(
+  filter: EducationTextbookListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<EducationTextbook>> {
+  const response = await educationApi().list8(toTextbookListParams(filter, page))
+  return toAdminListPage(
+    (response.items ?? []).map(mapTextbookListItemToDomain),
+    page,
+    response,
+  )
 }
 
 async function resolveThumbnailAssetId(
@@ -40,10 +46,11 @@ async function resolveThumbnailAssetId(
   return fallbackAssetId
 }
 
-export async function listEducationTextbooksService(
+export async function listEducationTextbooksPageService(
   filter: EducationTextbookListFilter = {},
-): Promise<EducationTextbook[]> {
-  return listRemote(filter)
+  page = 0,
+): Promise<AdminListPage<EducationTextbook>> {
+  return listRemotePage(filter, page)
 }
 
 export async function getEducationTextbookService(

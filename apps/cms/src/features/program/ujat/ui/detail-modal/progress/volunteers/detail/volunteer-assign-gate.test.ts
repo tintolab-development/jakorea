@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { UjatVolunteerAssignmentProgressRow } from './assignment-types'
 import {
+  PARTNER_ONLY_ASSIGNMENT_NO_EDUCATION_SLOT_ALERT,
   isVolunteerScheduleFullyAssigned,
   resolveVolunteerAssignGate,
 } from './volunteer-assign-gate'
@@ -89,6 +90,37 @@ describe('resolveVolunteerAssignGate', () => {
       ok: false,
       title: '안내',
       content: '활동 포기된 일정에는 배정할 수 없습니다.',
+    })
+  })
+
+  it('학급 슬롯 없는 파트너 전용 배정은 교육 배정 불가이다', () => {
+    const partnerOnly = row({
+      partner: { kind: 'name', value: '백소리' },
+      classDisplay: { kind: 'dash' },
+      educationSlotId: null,
+    })
+    expect(
+      resolveVolunteerAssignGate({
+        selectedRowKeys: [partnerOnly.id],
+        rows: [partnerOnly],
+      })
+    ).toEqual({
+      ok: false,
+      title: PARTNER_ONLY_ASSIGNMENT_NO_EDUCATION_SLOT_ALERT.title,
+      content: PARTNER_ONLY_ASSIGNMENT_NO_EDUCATION_SLOT_ALERT.content,
+    })
+  })
+
+  it('scheduleId가 없으면 배정할 수 없다', () => {
+    const missing = row({ scheduleId: undefined })
+    expect(
+      resolveVolunteerAssignGate({
+        selectedRowKeys: [missing.id],
+        rows: [missing],
+      })
+    ).toMatchObject({
+      ok: false,
+      content: '일정 정보를 확인할 수 없어 배정할 수 없습니다.',
     })
   })
 

@@ -32,6 +32,17 @@ function readString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
+/** textarea 개행·JSON 이스케이프 `\\n`을 실제 줄바꿈으로 맞춘다. */
+function expandLineBreaks(value: string): string {
+  return value.replace(/\r\n?/g, '\n').replace(/\\n/g, '\n')
+}
+
+function readMultiline(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const expanded = expandLineBreaks(value).trim()
+  return expanded || undefined
+}
+
 /** 공개 URL이 비었거나 시드 placeholder(MinIO 404)면 필드 fallback PNG를 쓴다. */
 function readPublicImageUrl(value: unknown): string | undefined {
   const url = readString(value)
@@ -41,11 +52,11 @@ function readPublicImageUrl(value: unknown): string | undefined {
 }
 
 function splitTitleLines(title: string): readonly string[] {
-  const lines = title
-    .split(/\r?\n/)
+  const lines = expandLineBreaks(title)
+    .split('\n')
     .map(line => line.trim())
     .filter(Boolean)
-  return lines.length > 0 ? lines : [title]
+  return lines.length > 0 ? lines : [expandLineBreaks(title)]
 }
 
 function formatCount(count: number): string {
@@ -116,14 +127,14 @@ function mapHeroes(
 
   return rows.map((hero, index) => {
     const seed = fallback[index % fallback.length]!
-    const mainTitle = readString(hero.mainTitle)
+    const mainTitle = readMultiline(hero.mainTitle)
     const link = readString(hero.linkUrl)
     const href = link ? parseHomeHref(link) : undefined
     return {
       id: hero.id != null ? `hero-${hero.id}` : seed.id,
-      eyebrow: readString(hero.topText) ?? seed.eyebrow,
+      eyebrow: readMultiline(hero.topText) ?? seed.eyebrow,
       titleLines: mainTitle ? splitTitleLines(mainTitle) : seed.titleLines,
-      description: readString(hero.bottomText) ?? seed.description,
+      description: readMultiline(hero.bottomText) ?? seed.description,
       placeholderBackground: seed.placeholderBackground,
       imageUrl: readString(hero.imageUrl) ?? seed.imageUrl,
       href: href?.href,

@@ -48,6 +48,9 @@ export async function issueMyCertificate(
   return mapPortalCertificateIssueResult(data)
 }
 
-export async function downloadMyCertificate(certificateIssueId: number): Promise<void> {
-  await savePortalCertificatePdfDownload(certificateIssueId)
+export async function downloadMyCertificate(
+  certificateIssueId: number,
+  options?: { fileName?: string; signal?: AbortSignal },
+): Promise<void> {
+  await savePortalCertificatePdfDownload(certificateIssueId, options)
 }

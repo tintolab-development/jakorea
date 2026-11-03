@@ -10,8 +10,14 @@ import './form-paragraph-section-header.css'
 
 export type FormParagraphSectionHeaderProps = {
   title: ReactNode
-  /** 타이틀 하단 설명 — `FormParagraphSectionDescription`으로만 노출(placeholder 제외) */
+  /** 타이틀 옆/하단 설명 — `FormParagraphSectionDescription`으로만 노출(placeholder 제외) */
   description?: string | null
+  /**
+   * `inline` — Figma Title sub txt(제목 오른쪽, 14px Medium 50%).
+   * `below` — 기존 타이틀 하단 2px.
+   * @default 'below'
+   */
+  descriptionPlacement?: 'below' | 'inline'
   titleTrailing?: ReactNode
   /** @default 'responseEntry' */
   surface?: FormParagraphSectionDescriptionSurface
@@ -34,6 +40,7 @@ export type FormParagraphSectionHeaderProps = {
 export function FormParagraphSectionHeader({
   title,
   description,
+  descriptionPlacement = 'below',
   titleTrailing,
   surface = 'responseEntry',
   titleAligned = true,
@@ -52,6 +59,9 @@ export function FormParagraphSectionHeader({
     <header
       className={[
         'detail-info-form__header form-paragraph-section-header',
+        descriptionPlacement === 'inline'
+          ? 'form-paragraph-section-header--description-inline'
+          : '',
         requiredIncomplete ? 'form-paragraph-section-header--required-incomplete' : '',
       ]
         .filter(Boolean)
@@ -73,7 +83,7 @@ export function FormParagraphSectionHeader({
         {visibleDescription ? (
           <FormParagraphSectionDescription
             surface={surface}
-            titleAligned={titleAligned}
+            titleAligned={descriptionPlacement === 'inline' ? false : titleAligned}
             className="form-paragraph-section-header__description"
           >
             {visibleDescription}

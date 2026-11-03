@@ -85,7 +85,8 @@ export function useIssueMyCertificateMutation(input: {
 
 export function useDownloadMyCertificateMutation() {
   return useMutation({
-    mutationFn: (certificateIssueId: number) => downloadMyCertificate(certificateIssueId),
+    mutationFn: (input: { certificateIssueId: number; fileName: string }) =>
+      downloadMyCertificate(input.certificateIssueId, { fileName: input.fileName }),
     retry: false,
   })
 }

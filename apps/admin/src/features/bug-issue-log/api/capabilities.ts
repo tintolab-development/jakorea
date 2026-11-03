@@ -1,8 +1,6 @@
 /**
- * 버그/이슈 이력 — remote API opt-in
+ * bug-issue-log — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseBugIssueLogRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

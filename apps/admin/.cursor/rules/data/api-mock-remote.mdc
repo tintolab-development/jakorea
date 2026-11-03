@@ -1,23 +1,24 @@
 ---
-description: Homepage Admin mock vs remote API 연동 규칙
+description: Homepage Admin remote API 연동 규칙
 globs: apps/admin/src/**/*.{ts,tsx}
 alwaysApply: false
 ---
 
-# Admin API — Mock / Remote
+# Admin API — Remote only
 
 ## 세션 게이트
 
 | 로그인 | 토큰 | 데이터 |
 |--------|------|--------|
-| **Mock 로그인** | `hp_admin_auth_token` = `mock-jwt-token-…` | feature local mock (localStorage) |
 | **API 로그인** (MFA 완료) | 실 JWT (`.` 3조각) | OpenAPI generated client → Homepage API |
 
-헬퍼: `shouldUseHomepageRemoteApi()` = `isRemoteApiConfigured() && hasRemoteAdminJwt()`  
-(`shared/lib/remote-api-session.ts`)
+헬퍼: `shouldUseHomepageRemoteApi()` = `true` (feature mock 게이트 없음)  
+(`shared/lib/remote-api-session.ts`) — 실제 호출은 **MFA 완료 JWT** + axios 인터셉터.
 
 - CMS식 `VITE_REAL_API_MODULES`는 Admin에 **도입하지 않는다**.
-- feature `capabilities.ts`는 `shouldUseHomepageRemoteApi()`를 반환한다 (추가 조건만 AND).
+- feature `capabilities.ts`는 `return true` (Remote API only).
+- **Mock 로그인·localStorage feature mock은 사용하지 않는다.** `features/*/api/service.ts`는 Homepage/CMS API만 호출한다.
+- `features/*/api/store.ts`는 `*_CHANGED_EVENT`·`DEFAULT_*` 등 **UI 상수만** 둔다 (CRUD·seed·localStorage 금지).
 
 ## 이중 프록시
 
@@ -31,7 +32,7 @@ alwaysApply: false
 ## 구현 규칙
 
 1. **UI에서 generated import 금지** — `features/*/api/service` + mapper만 호출
-2. queryKey에 `source: 'remote' | 'local'` 유지
+2. queryKey에 `source: 'remote' | 'local'` 유지 (capabilities·JWT 기준; 데이터는 항상 remote service)
 3. logout / MFA 완료 시 관련 query cache clear
 4. OpenAPI 필드명 ↔ 도메인 매핑은 `mappers.ts`에 집중
 5. update/delete/reorder/toggle에 `version` 필수인 API는 entity에 `version` 보관
@@ -42,8 +43,9 @@ alwaysApply: false
 9. **Mutation 실패 알림** — [mutation-failure-alert.mdc](./mutation-failure-alert.mdc)  
    (필드/원인 명시 · 선검증 + API 에러 매핑 · 제네릭 문구만 금지)
 
-## 점진 연동
+## BE list query·클라이언트 필터
 
-한 feature씩 capabilities + service remote 분기. 미연동 feature는 `return false` stub 유지.
+- list GET에 필터 query가 없으면 **서비스 레이어에서만** 클라이언트 필터 (`list-filter.ts` 등). store mock 금지.
+- 로그 export는 **서버 xlsx download**만 (`export*Service` → `'remote-downloaded'`).
 
-**Last updated:** 2026-08-13
+**Last updated:** 2026-11-03

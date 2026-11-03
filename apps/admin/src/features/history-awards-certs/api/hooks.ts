@@ -1,4 +1,3 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   AwardCreateInput,
   AwardItem,
@@ -10,6 +9,13 @@ import type {
   HistoryItem,
   HistoryListFilter,
 } from '@/entities/history-awards-certs/model/types'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
+import {
+  collectInfiniteCachedRows,
+  patchInfiniteListRow,
+  removeInfiniteListRows,
+} from '@/shared/lib/admin-infinite-list'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { shouldUseHistoryAwardsCertsRemoteApi } from './capabilities'
 import { historyAwardsCertsQueryKeys } from './query-keys'
 import * as service from './service'
@@ -22,54 +28,12 @@ function filterKey(filter: object): string {
   return JSON.stringify(filter)
 }
 
-const localStale = () => ({
-  staleTime: source() === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-  retry: source() === 'remote' ? 1 : false,
-})
-
-function collectCached<T extends { id: string }>(
-  qc: ReturnType<typeof useQueryClient>,
-  listsKey: readonly unknown[],
-): T[] | undefined {
-  const merged = new Map<string, T>()
-  for (const [, rows] of qc.getQueriesData<T[]>({ queryKey: listsKey })) {
-    for (const row of rows ?? []) merged.set(row.id, row)
-  }
-  return merged.size > 0 ? [...merged.values()] : undefined
-}
-
-function patchInLists<T extends { id: string }>(
-  qc: ReturnType<typeof useQueryClient>,
-  listsKey: readonly unknown[],
-  row: T,
-) {
-  qc.setQueriesData<T[]>({ queryKey: listsKey }, old => {
-    if (!old) return old
-    const idx = old.findIndex(item => item.id === row.id)
-    if (idx < 0) return old
-    const next = [...old]
-    next[idx] = row
-    return next
-  })
-}
-
-function removeFromLists(
-  qc: ReturnType<typeof useQueryClient>,
-  listsKey: readonly unknown[],
-  ids: string[],
-) {
-  const idSet = new Set(ids)
-  qc.setQueriesData<{ id: string }[]>({ queryKey: listsKey }, old =>
-    (old ?? []).filter(row => !idSet.has(row.id)),
-  )
-}
-
 export function useHistoryList(filter: HistoryListFilter = {}, enabled = true) {
-  return useQuery({
+  return useAdminInfiniteList({
     queryKey: historyAwardsCertsQueryKeys.history.list(source(), filterKey(filter)),
-    queryFn: () => service.listHistoryService(filter),
     enabled,
-    ...localStale(),
+    isRemote: shouldUseHistoryAwardsCertsRemoteApi(),
+    fetchPage: page => service.listHistoryPageService(filter, page),
   })
 }
 
@@ -89,10 +53,10 @@ export function useUpdateHistory() {
   const listsKey = historyAwardsCertsQueryKeys.history.lists()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: HistoryCreateInput }) =>
-      service.updateHistoryService(id, input, collectCached<HistoryItem>(qc, listsKey)),
+      service.updateHistoryService(id, input, collectInfiniteCachedRows<HistoryItem>(qc, listsKey)),
     retry: false,
     onSuccess: data => {
-      patchInLists(qc, listsKey, data)
+      patchInfiniteListRow(qc, listsKey, data)
     },
   })
 }
@@ -102,10 +66,14 @@ export function useSetHistoryPublic() {
   const listsKey = historyAwardsCertsQueryKeys.history.lists()
   return useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
-      service.setHistoryPublicService(id, isPublic, collectCached<HistoryItem>(qc, listsKey)),
+      service.setHistoryPublicService(
+        id,
+        isPublic,
+        collectInfiniteCachedRows<HistoryItem>(qc, listsKey),
+      ),
     retry: false,
     onSuccess: data => {
-      patchInLists(qc, listsKey, data)
+      patchInfiniteListRow(qc, listsKey, data)
     },
   })
 }
@@ -115,20 +83,20 @@ export function useRemoveHistory() {
   const listsKey = historyAwardsCertsQueryKeys.history.lists()
   return useMutation({
     mutationFn: (ids: string[]) =>
-      service.removeHistoryService(ids, collectCached<HistoryItem>(qc, listsKey)),
+      service.removeHistoryService(ids, collectInfiniteCachedRows<HistoryItem>(qc, listsKey)),
     retry: false,
     onSuccess: (_data, ids) => {
-      removeFromLists(qc, listsKey, ids)
+      removeInfiniteListRows(qc, listsKey, ids)
     },
   })
 }
 
 export function useAwardList(filter: AwardListFilter = {}, enabled = true) {
-  return useQuery({
+  return useAdminInfiniteList({
     queryKey: historyAwardsCertsQueryKeys.award.list(source(), filterKey(filter)),
-    queryFn: () => service.listAwardService(filter),
     enabled,
-    ...localStale(),
+    isRemote: shouldUseHistoryAwardsCertsRemoteApi(),
+    fetchPage: page => service.listAwardPageService(filter, page),
   })
 }
 
@@ -148,10 +116,10 @@ export function useUpdateAward() {
   const listsKey = historyAwardsCertsQueryKeys.award.lists()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: AwardCreateInput }) =>
-      service.updateAwardService(id, input, collectCached<AwardItem>(qc, listsKey)),
+      service.updateAwardService(id, input, collectInfiniteCachedRows<AwardItem>(qc, listsKey)),
     retry: false,
     onSuccess: data => {
-      patchInLists(qc, listsKey, data)
+      patchInfiniteListRow(qc, listsKey, data)
     },
   })
 }
@@ -161,10 +129,14 @@ export function useSetAwardPublic() {
   const listsKey = historyAwardsCertsQueryKeys.award.lists()
   return useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
-      service.setAwardPublicService(id, isPublic, collectCached<AwardItem>(qc, listsKey)),
+      service.setAwardPublicService(
+        id,
+        isPublic,
+        collectInfiniteCachedRows<AwardItem>(qc, listsKey),
+      ),
     retry: false,
     onSuccess: data => {
-      patchInLists(qc, listsKey, data)
+      patchInfiniteListRow(qc, listsKey, data)
     },
   })
 }
@@ -174,20 +146,20 @@ export function useRemoveAward() {
   const listsKey = historyAwardsCertsQueryKeys.award.lists()
   return useMutation({
     mutationFn: (ids: string[]) =>
-      service.removeAwardService(ids, collectCached<AwardItem>(qc, listsKey)),
+      service.removeAwardService(ids, collectInfiniteCachedRows<AwardItem>(qc, listsKey)),
     retry: false,
     onSuccess: (_data, ids) => {
-      removeFromLists(qc, listsKey, ids)
+      removeInfiniteListRows(qc, listsKey, ids)
     },
   })
 }
 
 export function useCertList(filter: CertListFilter = {}, enabled = true) {
-  return useQuery({
+  return useAdminInfiniteList({
     queryKey: historyAwardsCertsQueryKeys.cert.list(source(), filterKey(filter)),
-    queryFn: () => service.listCertService(filter),
     enabled,
-    ...localStale(),
+    isRemote: shouldUseHistoryAwardsCertsRemoteApi(),
+    fetchPage: page => service.listCertPageService(filter, page),
   })
 }
 
@@ -207,10 +179,10 @@ export function useUpdateCert() {
   const listsKey = historyAwardsCertsQueryKeys.cert.lists()
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: CertCreateInput }) =>
-      service.updateCertService(id, input, collectCached<CertItem>(qc, listsKey)),
+      service.updateCertService(id, input, collectInfiniteCachedRows<CertItem>(qc, listsKey)),
     retry: false,
     onSuccess: data => {
-      patchInLists(qc, listsKey, data)
+      patchInfiniteListRow(qc, listsKey, data)
     },
   })
 }
@@ -220,10 +192,14 @@ export function useSetCertPublic() {
   const listsKey = historyAwardsCertsQueryKeys.cert.lists()
   return useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
-      service.setCertPublicService(id, isPublic, collectCached<CertItem>(qc, listsKey)),
+      service.setCertPublicService(
+        id,
+        isPublic,
+        collectInfiniteCachedRows<CertItem>(qc, listsKey),
+      ),
     retry: false,
     onSuccess: data => {
-      patchInLists(qc, listsKey, data)
+      patchInfiniteListRow(qc, listsKey, data)
     },
   })
 }
@@ -233,10 +209,10 @@ export function useRemoveCert() {
   const listsKey = historyAwardsCertsQueryKeys.cert.lists()
   return useMutation({
     mutationFn: (ids: string[]) =>
-      service.removeCertService(ids, collectCached<CertItem>(qc, listsKey)),
+      service.removeCertService(ids, collectInfiniteCachedRows<CertItem>(qc, listsKey)),
     retry: false,
     onSuccess: (_data, ids) => {
-      removeFromLists(qc, listsKey, ids)
+      removeInfiniteListRows(qc, listsKey, ids)
     },
   })
 }

@@ -1,8 +1,6 @@
 /**
- * 기업후원 안내 — remote API opt-in
+ * corporate-guide — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseCorporateGuideRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

@@ -1,12 +1,8 @@
 import type { Editor } from '@/shared/rich-text'
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { shouldUseImpactStoriesRemoteApi } from '@/features/impact-stories/api/capabilities'
 import { uploadImpactStoryInlineImage } from '@/features/impact-stories/api/upload-story-attachment'
-import {
-  useRichTextEditor,
-  type RichTextContentFormat,
-  type RichTextEditorApi,
-} from '@/shared/rich-text'
+import { useAdminHtmlEditor, type RichTextContentFormat } from '@/shared/rich-text'
 
 const DEFAULT_EDITOR_HEIGHT = '369px'
 const DEFAULT_PLACEHOLDER = '게시글 내용을 입력하세요'
@@ -31,7 +27,6 @@ export function useStoryWysiwygEditor(
   resetKey?: string | number,
   options?: StoryWysiwygEditorOptions
 ) {
-  const apiRef = useRef<RichTextEditorApi | null>(null)
   const editorMinHeight = options?.height ?? DEFAULT_EDITOR_HEIGHT
   const placeholder = options?.placeholder ?? DEFAULT_PLACEHOLDER
   const contentFormat = options?.contentFormat ?? 'markdown'
@@ -40,7 +35,7 @@ export function useStoryWysiwygEditor(
     return uploadImpactStoryInlineImage(file)
   }, [])
 
-  const { editor, api } = useRichTextEditor({
+  const adminEditor = useAdminHtmlEditor({
     enabled: open,
     initialContent: initialMarkdown,
     contentFormat,
@@ -49,26 +44,12 @@ export function useStoryWysiwygEditor(
     autofocus: false,
     preset: allowInlineMedia ? 'full' : 'basic',
     resolveImageSrc: shouldUseImpactStoriesRemoteApi() ? resolveImageSrc : undefined,
-    onReady: readyApi => {
-      apiRef.current = readyApi
-    },
   })
 
-  const getMarkdown = useCallback(
-    () => apiRef.current?.getMarkdown() ?? api?.getMarkdown() ?? '',
-    [api]
-  )
-
-  const getHTML = useCallback(
-    () => apiRef.current?.getHTML() ?? api?.getHTML() ?? '',
-    [api]
-  )
-
   return {
-    editor: editor as Editor | null,
+    ...adminEditor,
+    editor: adminEditor.editor as Editor | null,
     editorMinHeight,
-    getMarkdown,
-    getHTML,
     contentFormat,
     allowInlineMedia,
     resolveImageSrc: shouldUseImpactStoriesRemoteApi() ? resolveImageSrc : undefined,

@@ -4,7 +4,7 @@ import type {
   PortalScheduleAttendanceDetail,
 } from '../../../education/applications/api/activity-client'
 import type { EducationScheduleAttendanceStatus } from '../../../education/schedules/model/types'
-import { formatUjatAssignmentStatusLabel } from './history'
+import { formatUjatAssignmentStatusLabel } from './history.ts'
 
 export type UjatScheduleAttendanceDetailView = {
   attendanceStatus: EducationScheduleAttendanceStatus | null

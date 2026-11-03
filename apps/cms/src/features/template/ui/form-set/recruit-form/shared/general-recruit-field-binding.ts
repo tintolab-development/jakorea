@@ -30,14 +30,16 @@ import {
 } from '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
 import {
   patchActiveCompanySchoolRecruitmentOverlay,
-  peekActiveCompanySchoolRecruitmentOverlayRecord,
+  peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord,
+  peekActiveCompanySchoolInstructorRecruitmentOverlayRecord,
   peekCompanySchoolRegistrationRhf,
   readActiveCompanySchoolRecruitmentOverlayValue,
   subscribeCompanySchoolRegistrationRhf,
 } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import {
-  isCompanySchoolRecruitmentCatalog,
+  isCompanySchoolOwnedRecruitmentCatalog,
   isCompanySchoolRecruitmentOverlayKey,
+  pickCompanySchoolRecruitmentOverlayForCatalog,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
 import { readOperationalOverlayKvValue } from '@/features/template/ui/form-set/shared/operational-seed-default-suppression'
 import type { ScopedRhfFieldForm } from '@/features/template/ui/form-set/shared/scoped-rhf-field-form'
@@ -84,8 +86,10 @@ export function peekGeneralRecruitFieldRecord(
 ): Record<string, unknown> {
   const merged = mergeWizardRecruitmentIntoOverlayRecord(form.peekRecord(templateCode), templateCode)
   const csRecord =
-    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)
-      ? peekActiveCompanySchoolRecruitmentOverlayRecord()
+    peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)
+      ? templateCode === 'recruitment-instructor'
+        ? peekActiveCompanySchoolInstructorRecruitmentOverlayRecord()
+        : peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord()
       : null
   const ttRecord =
     peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)
@@ -146,8 +150,10 @@ export function replaceGeneralRecruitFieldsForScope(
     patchActiveTrainedTeachersRecruitmentOverlay(next)
     return
   }
-  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)) {
-    patchActiveCompanySchoolRecruitmentOverlay(next)
+  if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolOwnedRecruitmentCatalog(templateCode)) {
+    patchActiveCompanySchoolRecruitmentOverlay(
+      pickCompanySchoolRecruitmentOverlayForCatalog(templateCode, next)
+    )
     return
   }
   if (!isWizardRecruitmentRhfProjecting()) {

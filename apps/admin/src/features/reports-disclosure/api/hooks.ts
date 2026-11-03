@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
+import { collectInfiniteCachedRows } from '@/shared/lib/admin-infinite-list'
 import type {
   NtsDisclosure,
   ReportCreateInput,
@@ -11,7 +13,7 @@ import { reportsDisclosureQueryKeys } from './query-keys'
 import {
   createReportService,
   getNtsDisclosureService,
-  listReportsService,
+  listReportsPageService,
   removeReportsService,
   saveNtsDisclosureService,
   updateReportService,
@@ -30,22 +32,18 @@ function collectCachedReports(
   queryClient: ReturnType<typeof useQueryClient>,
   kind: ReportKind,
 ): TransparencyReport[] | undefined {
-  const merged = new Map<string, TransparencyReport>()
-  for (const [, rows] of queryClient.getQueriesData<TransparencyReport[]>({
-    queryKey: [...reportsDisclosureQueryKeys.reports(), kind],
-  })) {
-    for (const row of rows ?? []) merged.set(row.id, row)
-  }
-  return merged.size > 0 ? [...merged.values()] : undefined
+  return collectInfiniteCachedRows<TransparencyReport>(queryClient, [
+    ...reportsDisclosureQueryKeys.reports(),
+    kind,
+  ])
 }
 
 export function useReportsList(kind: ReportKind, filter: ReportListFilter, enabled = true) {
-  return useQuery({
+  return useAdminInfiniteList({
     queryKey: reportsDisclosureQueryKeys.reportList(kind, filterKey(filter)),
-    queryFn: () => listReportsService(kind, filter),
     enabled,
-    staleTime: 30_000,
-    retry: 1,
+    isRemote: true,
+    fetchPage: page => listReportsPageService(kind, filter, page),
   })
 }
 

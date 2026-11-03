@@ -28,11 +28,27 @@ assert.equal(
 )
 assert.equal(
   validateCareerPostingLinkFields({ buttonLabel: '채용 바로가기', linkUrl: '' }),
-  '버튼 링크를 입력해 주세요.',
+  '채용 공고 바로가기 링크를 입력해 주세요.',
 )
 assert.equal(
   validateCareerPostingLinkFields({ buttonLabel: '', linkUrl: 'https://example.test' }),
-  '버튼명을 입력해 주세요.',
+  null,
+)
+assert.equal(
+  validateCareerPostingLinkFields({ buttonLabel: '채용 바로가기', linkUrl: 'http://example.test/apply' }),
+  null,
+)
+assert.equal(
+  validateCareerPostingLinkFields({ buttonLabel: '', linkUrl: 'example.test' }),
+  '연결 링크는 http:// 또는 https://로 시작하는 주소를 입력해 주세요.',
+)
+assert.equal(
+  validateCareerPostingLinkFields({ buttonLabel: '채용 바로가기', linkUrl: 'javascript:alert(1)' }),
+  '연결 링크는 http:// 또는 https://로 시작하는 주소를 입력해 주세요.',
+)
+assert.equal(
+  validateCareerPostingLinkFields({ buttonLabel: '', linkUrl: 'ftp://example.test' }),
+  '연결 링크는 http:// 또는 https://로 시작하는 주소를 입력해 주세요.',
 )
 
 const hydrated = readCareerPostingLinkFields({
@@ -57,7 +73,12 @@ assert.deepEqual(readCareerPostingLinkFields({ buttonLabel: null, linkUrl: 'http
   linkUrl: 'https://jobs.example.test',
 })
 assert.equal(careerPostingLinkButtonVisible(''), false)
-assert.equal(careerPostingLinkButtonVisible('지원하기'), true)
+assert.equal(careerPostingLinkButtonVisible('https://jobs.example.test'), true)
+assert.equal(careerPostingLinkButtonVisible({ buttonLabel: '지원하기', linkUrl: '' }), false)
+assert.equal(
+  careerPostingLinkButtonVisible({ buttonLabel: '', linkUrl: 'https://jobs.example.test' }),
+  true,
+)
 assert.deepEqual(
   normalizeCareerPostingLinkFields({ buttonLabel: '  a  ', linkUrl: '  b  ' }),
   { buttonLabel: 'a', linkUrl: 'b' },

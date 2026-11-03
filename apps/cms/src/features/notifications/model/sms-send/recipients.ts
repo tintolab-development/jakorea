@@ -64,17 +64,11 @@ export function smsSendRecipientTypeColumnTitle(mode: SmsSendRecipientTypeMode):
   return mode === 'member' ? '회원 유형' : '참여 유형'
 }
 
+/** 유형 컬럼은 서버 typeLabel만 표시한다. memberType으로 덮어쓰지 않는다. */
 export function smsSendRecipientTypeLabel(
   recipient: SmsSendRecipient,
-  mode: SmsSendRecipientTypeMode = 'member'
+  _mode: SmsSendRecipientTypeMode = 'member'
 ): string {
-  if (mode === 'participation') {
-    if (recipient.participationType) {
-      return SMS_SEND_PARTICIPATION_TYPE_LABEL[recipient.participationType]
-    }
-  } else if (recipient.memberType) {
-    return SMS_SEND_MEMBER_TYPE_LABEL[recipient.memberType]
-  }
   return recipient.typeLabel?.trim() || ''
 }
 

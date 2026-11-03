@@ -210,9 +210,21 @@ export async function generatePdfBlobFromHtmlElement(
     backgroundColor: '#ffffff',
     onclone: clonedDoc => {
       if (issuedSerialNumber == null || issuedSerialNumber === '') return
-      clonedDoc.querySelectorAll('.form-certificate-preview__tag').forEach(tag => {
-        tag.textContent = issuedSerialNumber
-      })
+      clonedDoc
+        .querySelectorAll('.form-certificate-preview__serial-text, [data-certificate-serial="text"]')
+        .forEach(node => {
+          if (!(node instanceof HTMLElement)) return
+          node.textContent = issuedSerialNumber
+          node.style.color = '#606060'
+          node.style.fontWeight = '700'
+          node.style.whiteSpace = 'nowrap'
+          node.style.padding = '0'
+          node.style.border = 'none'
+          node.style.borderRadius = '0'
+          node.style.outline = 'none'
+          node.style.background = 'transparent'
+          node.style.boxShadow = 'none'
+        })
     },
   })
 

@@ -30,6 +30,12 @@ export function CompanySchoolRegistrationWizardFormProvider({
   const { isDirty } = form.formState
 
   useEffect(() => {
+    form.register('recruitment')
+    form.register('instructorRecruit')
+    form.register('application')
+  }, [form])
+
+  useEffect(() => {
     const api: CompanySchoolRegistrationRhfApi = {
       getValues: () => form.getValues(),
       getPath: path => getNestedValue(form.getValues(), path),

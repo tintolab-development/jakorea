@@ -40,6 +40,13 @@ export type VisitorStatsResult = {
   totalVisitors: number
 }
 
+/** GET /api/admin/statistics/visitors/metadata */
+export type VisitorStatsMetadata = {
+  years: string[]
+  minDate: string | null
+  maxDate: string | null
+}
+
 /** 일 단위 시드 행 */
 export type VisitorDayRecord = {
   /** YYYY-MM-DD */

@@ -1,7 +1,7 @@
 /**
  * CMS 공통 라디오 (재사용)
  * size: large(기본) | medium | small — 스타일은 app-radio.css
- * 선택 라벨 색: var(--JA-mint-01, #01A1AF)
+ * 선택 라벨 색: var(--Brand-500, #00A0AF)
  * Group에 size를 주면 자식 CmsRadio도 동일 size를 상속한다.
  */
 

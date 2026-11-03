@@ -3,13 +3,15 @@ import type { UjatInstitutionApplicationRegionKey } from '../../application-inst
 import type { EducationProgressHalfKey } from '../tabs'
 import type { RegionAssignmentTableData } from './types'
 
-type RegionAssignmentStoreKey = `${EducationProgressHalfKey}:${UjatInstitutionApplicationRegionKey}`
+type RegionAssignmentStoreKey =
+  `${string}:${EducationProgressHalfKey}:${UjatInstitutionApplicationRegionKey}`
 
 function toStoreKey(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): RegionAssignmentStoreKey {
-  return `${half}:${regionKey}`
+  return `${programId}:${half}:${regionKey}`
 }
 
 function buildInitialRegionAssignmentTableData(
@@ -27,10 +29,11 @@ function buildInitialRegionAssignmentTableData(
 const regionAssignmentState = new Map<RegionAssignmentStoreKey, RegionAssignmentTableData>()
 
 function ensureRegionAssignmentState(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): RegionAssignmentTableData {
-  const key = toStoreKey(half, regionKey)
+  const key = toStoreKey(programId, half, regionKey)
   let state = regionAssignmentState.get(key)
   if (!state) {
     state = buildInitialRegionAssignmentTableData(regionKey)
@@ -40,31 +43,42 @@ function ensureRegionAssignmentState(
 }
 
 export function getRegionAssignmentTableDataFromStore(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): RegionAssignmentTableData {
-  return ensureRegionAssignmentState(half, regionKey)
+  return ensureRegionAssignmentState(programId, half, regionKey)
 }
 
 export function setRegionAssignmentTableData(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey,
   data: RegionAssignmentTableData
 ): void {
-  regionAssignmentState.set(toStoreKey(half, regionKey), data)
+  regionAssignmentState.set(toStoreKey(programId, half, regionKey), data)
 }
 
 export function resetRegionAssignmentStore(
+  programId?: string,
   half?: EducationProgressHalfKey,
   regionKey?: UjatInstitutionApplicationRegionKey
 ): void {
-  if (half && regionKey) {
-    regionAssignmentState.delete(toStoreKey(half, regionKey))
+  if (programId && half && regionKey) {
+    regionAssignmentState.delete(toStoreKey(programId, half, regionKey))
     return
   }
-  if (half) {
+  if (programId && half) {
+    const prefix = `${programId}:${half}:`
     for (const key of regionAssignmentState.keys()) {
-      if (key.startsWith(`${half}:`)) regionAssignmentState.delete(key)
+      if (key.startsWith(prefix)) regionAssignmentState.delete(key)
+    }
+    return
+  }
+  if (programId) {
+    const prefix = `${programId}:`
+    for (const key of regionAssignmentState.keys()) {
+      if (key.startsWith(prefix)) regionAssignmentState.delete(key)
     }
     return
   }

@@ -10,6 +10,10 @@
   margin-inline: auto;
 }
 
+.inner > header h1 {
+  white-space: pre-line;
+}
+
 .innerDocument {
   width: 100%;
   max-width: 720px;

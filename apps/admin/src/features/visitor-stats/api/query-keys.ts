@@ -2,6 +2,8 @@ import type { VisitorStatsQuery } from '@/entities/visitor-stats/model/types'
 
 export const visitorStatsQueryKeys = {
   all: ['visitor-stats'] as const,
+  metadata: (source: 'remote' | 'local') =>
+    [...visitorStatsQueryKeys.all, 'metadata', source] as const,
   stats: (source: 'remote' | 'local', query: VisitorStatsQuery) =>
     [
       ...visitorStatsQueryKeys.all,

@@ -14,6 +14,7 @@ import {
 import {
   collectUnavailableScheduleIds,
   mapAllocationMatrixToRegionTableData,
+  matrixColumnsIncludeEducationSlots,
 } from '@/features/program/ujat/api/allocation-matrix-adapters'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
 import { toUjatEducationRegionCode } from '@/features/program/ujat/api/ujat-education-region-code'
@@ -23,7 +24,10 @@ import { useNotifyProgramApiUnavailableOnce } from '@/features/program/shared/li
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import type { EducationProgressHalfKey } from '../tabs'
 import type { RegionAttendanceManagerAssignments } from './attendance-manager'
-import { applyRegionAttendanceManagersFromData } from './attendance-manager'
+import {
+  applyRegionAttendanceManagersFromData,
+  collectAttendanceManagerPuts,
+} from './attendance-manager'
 import type { RegionBlockedDateModalPayload } from './blocked-date-modal'
 import {
   buildAutoAssignResultAlert,
@@ -35,10 +39,8 @@ import {
   resolveRegionAssignmentErrorMessage,
 } from './region-assignment-messages'
 import { resolveRegionUnavailabilityErrorMessage } from './region-unavailability-messages'
-import {
-  getRegionAssignmentTableDataFromStore,
-  setRegionAssignmentTableData,
-} from './region-assignment-store'
+import { setRegionAssignmentTableData } from './region-assignment-store'
+import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import {
   regionUnavailabilityRequiresReplacement,
   regionUnavailabilityRequiresReplacementForDate,
@@ -47,10 +49,15 @@ import {
 import type { RegionAssignmentTableData } from './types'
 
 function emptyTable(
-  half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): RegionAssignmentTableData {
-  return getRegionAssignmentTableDataFromStore(half, regionKey)
+  return {
+    regionKey,
+    regionLabel: getUjatEducationRegionLabel(regionKey, regionKey),
+    volunteerCount: 0,
+    columns: [],
+    rows: [],
+  }
 }
 
 export function useRegionAssignment(
@@ -75,10 +82,15 @@ export function useRegionAssignment(
     queryKey: ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
     enabled: remoteEnabled,
     queryFn: async () => {
-      const [matrix, orgAssignments] = await Promise.all([
-        fetchUjatAllocationMatrix(programId, { educationRegionCode, semesterType }),
-        fetchUjatOrganizationScheduleAssignments(programId).catch(() => ({ content: [] })),
-      ])
+      const matrix = await fetchUjatAllocationMatrix(programId, {
+        educationRegionCode,
+        semesterType,
+      })
+      const orgAssignments = matrixColumnsIncludeEducationSlots(matrix)
+        ? { content: [] }
+        : await fetchUjatOrganizationScheduleAssignments(programId, {
+            educationRegionCode,
+          }).catch(() => ({ content: [] }))
       const unavailabilityEntries = await Promise.all(
         collectUnavailableScheduleIds(matrix).map(
           async scheduleId =>
@@ -101,14 +113,14 @@ export function useRegionAssignment(
 
   useEffect(() => {
     if (matrixQuery.data) {
-      setRegionAssignmentTableData(half, regionKey, matrixQuery.data)
+      setRegionAssignmentTableData(programId, half, regionKey, matrixQuery.data)
     }
-  }, [half, matrixQuery.data, regionKey])
+  }, [half, matrixQuery.data, programId, regionKey])
 
   const tableData = useMemo(() => {
     if (matrixQuery.data) return matrixQuery.data
-    return emptyTable(half, regionKey)
-  }, [half, matrixQuery.data, regionKey])
+    return emptyTable(regionKey)
+  }, [matrixQuery.data, regionKey])
 
   const invalidateMatrix = useCallback(async () => {
     // unavailability는 allocation-matrix queryFn 안에서 함께 fetch → matrix invalidate로 갱신
@@ -231,22 +243,32 @@ export function useRegionAssignment(
 
   const attendanceManagerMutation = useMutation({
     mutationFn: async (assignments: RegionAttendanceManagerAssignments) => {
-      const optimistic = applyRegionAttendanceManagersFromData(tableData, assignments)
-      setRegionAssignmentTableData(half, regionKey, optimistic)
-
-      for (const [columnId, volunteerId] of Object.entries(assignments)) {
-        const column = tableData.columns.find(c => c.id === columnId)
-        const scheduleId = column?.scheduleId
-        const participantId = Number(volunteerId)
-        if (!scheduleId || !Number.isFinite(participantId)) continue
-        await putUjatAttendanceManager(programId, scheduleId, { participantId })
+      const puts = collectAttendanceManagerPuts(tableData, assignments)
+      for (const item of puts) {
+        await putUjatAttendanceManager(programId, item.scheduleId, {
+          participantId: item.participantId,
+        })
       }
+    },
+    retry: false,
+    onMutate: assignments => {
+      const previous = tableData
+      setRegionAssignmentTableData(
+        programId,
+        half,
+        regionKey,
+        applyRegionAttendanceManagersFromData(tableData, assignments)
+      )
+      return { previous }
     },
     onSuccess: async () => {
       await invalidateMatrix()
       showAlert({ title: '안내', content: '출결 담당자가 저장되었습니다.' })
     },
-    onError: error => {
+    onError: (error, _assignments, context) => {
+      if (context?.previous) {
+        setRegionAssignmentTableData(programId, half, regionKey, context.previous)
+      }
       showMutationError(error, '출결 담당자 저장에 실패했습니다.')
     },
   })

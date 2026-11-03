@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
+import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContentModal, CmsButton, CmsCompactPagination, CmsInput, CmsSelect } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
@@ -38,6 +39,10 @@ export type RecipientSelectModalProps<T extends SendRecipientPickerRow> = {
   totalCount?: number
   totalPages?: number
   fetchAllCandidates?: () => Promise<T[]>
+  /** 권한 없음·감사 실패 등 후보 목록을 보여 주지 않을 때 */
+  statusMessage?: string | null
+  selectionBlocked?: boolean
+  loading?: boolean
   pageSize?: number
   /** 유형 모드 전환 시 선택·검색 초기화 */
   resetKey?: string
@@ -60,6 +65,9 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
   totalCount,
   totalPages: serverTotalPages,
   fetchAllCandidates,
+  statusMessage,
+  selectionBlocked = false,
+  loading = false,
   pageSize = SEND_RECIPIENT_PICKER_PAGE_SIZE,
   resetKey,
   zIndex = PICKER_Z_INDEX,
@@ -153,7 +161,10 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
       setSelectingAll(true)
       try {
         const all = await fetchAllCandidates()
+        if (selectionBlocked) return
         setSelectedById(Object.fromEntries(all.map(item => [item.id, item])))
+      } catch {
+        setSelectedById({})
       } finally {
         setSelectingAll(false)
       }
@@ -164,6 +175,7 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
   }
 
   const handleConfirm = () => {
+    if (selectionBlocked || statusMessage) return
     onConfirm(Object.values(selectedById))
   }
 
@@ -207,11 +219,17 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
             size="large"
             type="button"
             loading={selectingAll}
-            disabled={selectingAll || !hasResults}
+            disabled={selectingAll || selectionBlocked || Boolean(statusMessage) || !hasResults}
             onClick={() => void handleSelectAll()} >
             전체 선택
           </CmsButton>
-          <CmsButton variant="primary" size="large" type="button" onClick={handleConfirm}>
+          <CmsButton
+            variant="primary"
+            size="large"
+            type="button"
+            disabled={selectionBlocked || Boolean(statusMessage)}
+            onClick={handleConfirm}
+          >
             수신자 설정
           </CmsButton>
         </>
@@ -250,7 +268,15 @@ export function RecipientSelectModal<T extends SendRecipientPickerRow>({
           <span className="send-recipient-select-modal__count-selected">{selectedCount}</span>명
         </p>
 
-        {hasResults ? (
+        {statusMessage ? (
+          <div className="send-recipient-select-modal__empty" role="alert">
+            <p className="send-recipient-select-modal__empty-description">{statusMessage}</p>
+          </div>
+        ) : loading ? (
+          <div className="send-recipient-select-modal__empty" role="status" aria-label="수신자 불러오는 중">
+            <Spin size="large" />
+          </div>
+        ) : hasResults ? (
           <>
             <div className="send-recipient-select-modal__table-wrap">
               <CmsDataTable

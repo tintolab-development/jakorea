@@ -41,9 +41,29 @@
 .cms-data-table
   .ant-table-tbody
   > tr:hover
-  > td.status-dropdown-cell__cell-status--payment-order-line {
+  > td.status-dropdown-cell__cell-status--payment-order-line,
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover.status-dropdown-cell__cell-status--tag-100,
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover.status-dropdown-cell__cell-status--tag-160,
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover.status-dropdown-cell__cell-status--payment-order-line {
   padding-left: 0 !important;
   padding-right: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover.status-dropdown-cell__cell-status {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
@@ -631,6 +651,26 @@
   max-height: 33px !important;
 }
 
+/* UJAT 참여 봉사자 배정 — 역할 배지 100×32 (tag-160 트리거 내 고정 치수) */
+.status-dropdown-cell__status-trigger--tag-160 .ujat-volunteer-assignment-role-badge {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  flex-shrink: 0;
+}
+
+.ant-table-tbody > tr:hover .status-dropdown-cell__status-trigger--tag-160 .ujat-volunteer-assignment-role-badge,
+.ant-table-tbody
+  > tr:hover
+  > td.status-dropdown-cell__cell-status
+  .ujat-volunteer-assignment-role-badge {
+  box-sizing: border-box !important;
+  border-width: 1px !important;
+}
+
 .status-dropdown-cell__dropdown-overlay--tag-160 {
   width: 160px !important;
   min-width: 160px !important;
@@ -683,6 +723,15 @@
   height: 33px !important;
   min-height: 33px !important;
   max-height: 33px !important;
+}
+
+.status-dropdown-cell__dropdown-overlay--tag-160 .ujat-volunteer-assignment-role-badge {
+  width: 100px !important;
+  min-width: 100px !important;
+  max-width: 100px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
 }
 
 /* --------------------------------------------------------------------------

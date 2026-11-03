@@ -1,6 +1,9 @@
 import dayjs from 'dayjs'
 import { describe, expect, it } from 'vitest'
-import { toUjatAssignmentCancelRequest } from './assignment-cancel-request'
+import {
+  assignmentCancelUsesReasonModal,
+  toUjatAssignmentCancelRequest,
+} from './assignment-cancel-request'
 import {
   ASSIGNMENT_CANCEL_PENDING_SUCCESS_MESSAGE,
   buildAssignmentCancelNotifiedMessage,
@@ -16,6 +19,13 @@ import {
 import { formatScheduleShortDateLabel } from './volunteer-assign-modal-data'
 
 describe('assignment cancel request / copy', () => {
+  it('false만 간단 취소, true와 값 없음은 사유 모달이다', () => {
+    expect(assignmentCancelUsesReasonModal(false)).toBe(false)
+    expect(assignmentCancelUsesReasonModal(true)).toBe(true)
+    expect(assignmentCancelUsesReasonModal(undefined)).toBe(true)
+    expect(assignmentCancelUsesReasonModal(null)).toBe(true)
+  })
+
   it('미발송 취소는 빈 body만 보낸다', () => {
     expect(
       toUjatAssignmentCancelRequest({
@@ -70,10 +80,15 @@ describe('assignment cancel request / copy', () => {
 
   it('취소 API 에러 코드를 안내로 매핑한다', () => {
     const completed = resolveAssignmentCancelErrorAlert({
-      response: { data: { error: { code: UJAT_PARTNER_ASSIGNMENT_EDUCATION_COMPLETED_CODE } } },
+      response: {
+        data: {
+          message: '서버 교육 완료 메시지',
+          error: { code: UJAT_PARTNER_ASSIGNMENT_EDUCATION_COMPLETED_CODE },
+        },
+      },
     })
     expect(completed?.shouldRefresh).toBe(true)
-    expect(completed?.content).toContain('진행 완료')
+    expect(completed?.content).toBe('서버 교육 완료 메시지')
 
     const scheduledAt = resolveAssignmentCancelErrorAlert({
       response: { data: { error: { code: CANCELLATION_NOTIFICATION_SCHEDULED_AT_INVALID_CODE } } },

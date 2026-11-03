@@ -10,6 +10,7 @@ import type {
 } from '../../../entities/recruit-posting/model/types.ts'
 import {
   mapCareerPostingAdminDetail,
+  mapCareerPostingAdminItem,
   toCareerPostingCreateRequest,
   toCareerPostingUpdateRequest,
 } from './mappers.ts'
@@ -31,17 +32,19 @@ const baseInput: RecruitPostingCreateInput = {
 const created = toCareerPostingCreateRequest(baseInput)
 assert.equal(created.title, '교육사업팀 프로그램 매니저 채용')
 assert.equal(created.status, 'RECRUITING')
-assert.equal('buttonLabel' in created, false)
-assert.equal('linkUrl' in created, false)
+assert.equal(created.buttonLabel, '지원하기')
+assert.equal(created.linkUrl, 'https://jobs.example.test')
 assert.equal('version' in created, false)
+assert.equal('buttonLabel' in created, true)
+assert.equal('linkUrl' in created, true)
 
 const cleared = toCareerPostingUpdateRequest(
   { ...baseInput, id: '12', buttonLabel: '  ', linkUrl: '' } satisfies RecruitPostingUpdateInput,
   3,
 )
 assert.equal(cleared.version, 3)
-assert.equal('buttonLabel' in cleared, false)
-assert.equal('linkUrl' in cleared, false)
+assert.equal(cleared.buttonLabel, '')
+assert.equal(cleared.linkUrl, '')
 assert.equal(cleared.status, 'RECRUITING')
 
 const detail = mapCareerPostingAdminDetail({
@@ -56,9 +59,11 @@ const detail = mapCareerPostingAdminDetail({
   createdAt: '2026-04-01T00:00:00',
   version: 3,
   body: '<p>본문</p>',
+  buttonLabel: '  지원하기  ',
+  linkUrl: ' https://jobs.example.test ',
 })
-assert.equal(detail?.buttonLabel, '')
-assert.equal(detail?.linkUrl, '')
+assert.equal(detail?.buttonLabel, '지원하기')
+assert.equal(detail?.linkUrl, 'https://jobs.example.test')
 assert.equal(detail?.version, 3)
 
 const legacy = mapCareerPostingAdminDetail({
@@ -87,6 +92,8 @@ const nullCta = mapCareerPostingAdminDetail({
   recruitEnd: '2026-11-20',
   version: 1,
   body: '<p>본문</p>',
+  buttonLabel: null,
+  linkUrl: null,
 })
 assert.equal(nullCta?.buttonLabel, '')
 assert.equal(nullCta?.linkUrl, '')
@@ -102,8 +109,24 @@ const partial = mapCareerPostingAdminDetail({
   recruitEnd: '2026-11-20',
   version: 1,
   body: '<p>본문</p>',
+  buttonLabel: null,
+  linkUrl: 'https://jobs.example.test',
 })
 assert.equal(partial?.buttonLabel, '')
-assert.equal(partial?.linkUrl, '')
+assert.equal(partial?.linkUrl, 'https://jobs.example.test')
+
+const listItem = mapCareerPostingAdminItem({
+  id: 11,
+  status: 'RECRUITING',
+  title: '목록',
+  isPublic: true,
+  authorName: '인사팀',
+  publishedOn: '2026-05-08',
+  recruitStart: '2026-04-03',
+  recruitEnd: '2026-11-20',
+  version: 1,
+})
+assert.equal(listItem?.buttonLabel, '')
+assert.equal(listItem?.linkUrl, '')
 
 console.log('recruit-posting mappers selfcheck: ok')

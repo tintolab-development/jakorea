@@ -8,7 +8,6 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { BugIssueListFilter, BugIssueLog } from '@/entities/bug-issue-log/model/types'
 import { useBugIssueLogsList, useExportBugIssueLogs } from '@/features/bug-issue-log/api/hooks'
-import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import {
   logListRowNumber,
@@ -149,28 +148,12 @@ export function BugIssueLogPage() {
   )
 
   const handleExcel = useCallback(() => {
-    void exportMutation
-      .mutateAsync(appliedFilter)
-      .then(result => {
-        if (result === 'remote-downloaded') return
-        const all = result.rows
-        downloadCsv({
-          filenameBase: '버그_이슈_이력',
-          headers: ['No.', '에러 메시지', '사용자명', '발생일시'],
-          rows: all.map((row, index) => [
-            all.length - index,
-            row.errorMessage,
-            row.userName,
-            formatLogDateTime(row.occurredAt),
-          ]),
-        })
+    void exportMutation.mutateAsync(appliedFilter).catch(() => {
+      showAlert({
+        title: '내보내기 실패',
+        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
       })
-      .catch(() => {
-        showAlert({
-          title: '내보내기 실패',
-          content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-        })
-      })
+    })
   }, [appliedFilter, exportMutation, showAlert])
 
   const columns = useMemo<ColumnsType<BugIssueLog>>(

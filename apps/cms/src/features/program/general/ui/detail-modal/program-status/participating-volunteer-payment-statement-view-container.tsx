@@ -16,6 +16,10 @@ import {
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
 import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  isPaymentStatementApplicationMissing,
+  PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT,
+} from '@/features/settlement/lib/payment-statement-view-unavailable-alert'
 
 function sanitizeFileNamePart(value: string): string {
   return value.replace(/[\\/:*?"<>|]/g, '_').trim()
@@ -118,10 +122,17 @@ export function useParticipatingVolunteerPaymentStatementView(input: {
     )
   }, [activeRow, input.institutionNameOverride, input.volunteer])
 
-  const handleOpen = useCallback((row: ParticipatingVolunteerSettlementApiRow) => {
-    setActiveRow(row)
-    setOpen(true)
-  }, [])
+  const handleOpen = useCallback(
+    (row: ParticipatingVolunteerSettlementApiRow) => {
+      if (isPaymentStatementApplicationMissing(row.hasPaymentStatementApplication)) {
+        showAlert(PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT)
+        return
+      }
+      setActiveRow(row)
+      setOpen(true)
+    },
+    [showAlert]
+  )
 
   const handleClose = useCallback(() => {
     setOpen(false)

@@ -11,11 +11,38 @@ import { collectMenuRouteKeys, resolveSidebarSelectedKey } from './sidebar-selec
 
 const { Sider } = Layout
 
+const SIDEBAR_MENU_ITEMS = getSidebarMenuItems()
+const SIDEBAR_MENU_ROUTE_KEYS = collectMenuRouteKeys(SIDEBAR_MENU_ITEMS)
+
+const SIDEBAR_CHROME: CSSProperties = {
+  background: 'var(--color-sidebar-bg)',
+  color: 'var(--color-sidebar-text)',
+}
+
+function sameOpenKeys(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false
+  if (a.length === 0) return true
+  const bSet = new Set(b)
+  return a.every(key => bSet.has(key))
+}
+
+function mergeOpenKeys(prev: readonly string[], required: readonly string[]): string[] {
+  if (required.length === 0) return prev as string[]
+  const merged = new Set(prev)
+  let changed = false
+  for (const key of required) {
+    if (!merged.has(key)) {
+      merged.add(key)
+      changed = true
+    }
+  }
+  if (!changed) return prev as string[]
+  return [...merged]
+}
+
 export function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
-
-  const menuItems = useMemo(() => getSidebarMenuItems(), [])
 
   const pathOpenKeys = useMemo(
     () => getOpenKeysForPath(location.pathname),
@@ -25,19 +52,12 @@ export function Sidebar() {
   const [controlledOpenKeys, setControlledOpenKeys] = useState<string[]>(pathOpenKeys)
 
   useEffect(() => {
-    setControlledOpenKeys(prev => {
-      const merged = new Set(prev)
-      for (const key of pathOpenKeys) merged.add(key)
-      return [...merged]
-    })
+    setControlledOpenKeys(prev => mergeOpenKeys(prev, pathOpenKeys))
   }, [pathOpenKeys])
 
-  const menuRouteKeys = useMemo(() => collectMenuRouteKeys(menuItems), [menuItems])
-
-  // 상세 경로(예: /ja-korea/notices/1)도 가장 가까운 메뉴 키를 선택 (CMS와 동일)
   const selectedKeys = useMemo(
-    () => [resolveSidebarSelectedKey(location.pathname, menuRouteKeys)],
-    [location.pathname, menuRouteKeys]
+    () => [resolveSidebarSelectedKey(location.pathname, SIDEBAR_MENU_ROUTE_KEYS)],
+    [location.pathname]
   )
 
   const expandIcon = useCallback(
@@ -45,29 +65,32 @@ export function Sidebar() {
     []
   )
 
-  const sidebarWidth = 'var(--sidebar-width)'
-  const sidebarChrome: CSSProperties = {
-    background: 'var(--color-sidebar-bg)',
-    color: 'var(--color-sidebar-text)',
-  }
+  const handleOpenChange = useCallback((keys: string[]) => {
+    setControlledOpenKeys(prev => (sameOpenKeys(prev, keys) ? prev : keys))
+  }, [])
+
+  const handleMenuClick = useCallback(
+    ({ key }: { key: string }) => {
+      if (typeof key !== 'string' || !key.startsWith('/')) return
+      navigate(key)
+    },
+    [navigate]
+  )
 
   return (
-    <Sider width={sidebarWidth} className="sidebar-container" style={sidebarChrome}>
+    <Sider width="var(--sidebar-width)" className="sidebar-container" style={SIDEBAR_CHROME}>
       <Header />
-      <div className="sidebar-menu-wrapper" style={sidebarChrome}>
+      <div className="sidebar-menu-wrapper" style={SIDEBAR_CHROME}>
         <Menu
           mode="inline"
           selectedKeys={selectedKeys}
-          openKeys={controlledOpenKeys.length > 0 ? controlledOpenKeys : pathOpenKeys}
-          onOpenChange={setControlledOpenKeys}
+          openKeys={controlledOpenKeys}
+          onOpenChange={handleOpenChange}
           className="sidebar-menu"
-          style={sidebarChrome}
-          items={menuItems}
+          style={SIDEBAR_CHROME}
+          items={SIDEBAR_MENU_ITEMS}
           expandIcon={expandIcon}
-          onClick={({ key }) => {
-            if (typeof key !== 'string' || !key.startsWith('/')) return
-            navigate(key)
-          }}
+          onClick={handleMenuClick}
         />
       </div>
     </Sider>

@@ -86,7 +86,7 @@ function multipleChoiceRowByLabel(
   return root.locator('.multiple-choice-row').filter({ hasText: labelPattern })
 }
 
-/** CmsRadio + 분리 label — `.multiple-choice-row` 텍스트로 클릭 */
+/** CmsRadio 레이블이 `.multiple-choice-row` 안에 있음 — 행 텍스트로 좁혀 원 클릭 */
 export async function clickMultipleChoiceOption(
   page: Page,
   optionLabel: string | RegExp,

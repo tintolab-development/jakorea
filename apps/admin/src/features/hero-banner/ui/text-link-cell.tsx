@@ -16,13 +16,22 @@ export function HeroBannerTextLinkCell({ banner }: { banner: HeroBanner }) {
       className="hero-banner-text-link-cell"
     >
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="상단 문구" view={banner.topText} />
+        <DetailInfoForm.Field
+          label="상단 문구"
+          view={<span className="hero-banner-text-link-cell__multiline">{banner.topText}</span>}
+        />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="메인 타이틀" view={banner.mainTitle} />
+        <DetailInfoForm.Field
+          label="메인 타이틀"
+          view={<span className="hero-banner-text-link-cell__multiline">{banner.mainTitle}</span>}
+        />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="하단 문구" view={banner.bottomText} />
+        <DetailInfoForm.Field
+          label="하단 문구"
+          view={<span className="hero-banner-text-link-cell__multiline">{banner.bottomText}</span>}
+        />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
