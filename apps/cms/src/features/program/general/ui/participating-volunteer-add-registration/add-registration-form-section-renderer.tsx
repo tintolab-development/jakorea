@@ -68,6 +68,7 @@ function HorizontalTableDraftParagraphSection({
         title={paragraph.paragraphTitle}
         required={paragraph.requiredMark}
         description={description}
+        descriptionPlacement="inline"
         surface="responseEntry"
         titleAligned
       />
@@ -108,6 +109,7 @@ function MultipleChoiceDraftParagraphSection({
         title={paragraph.paragraphTitle}
         required={paragraph.requiredMark}
         description={description}
+        descriptionPlacement="inline"
         surface="responseEntry"
         titleAligned
       />
@@ -186,6 +188,7 @@ export function ParticipatingVolunteerAddRegistrationFormSectionRenderer({
             title={section.title}
             required={section.required}
             description={description}
+            descriptionPlacement="inline"
             surface="responseEntry"
             titleAligned
           />
