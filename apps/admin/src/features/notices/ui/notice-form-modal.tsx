@@ -371,6 +371,7 @@ export function NoticeFormModal({
                 minHeight={editorMinHeight}
                 allowInlineMedia
                 resolveImageSrc={resolveImageSrc}
+                allowRawHtmlBlock
               />
             </div>
           </div>

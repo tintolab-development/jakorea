@@ -448,6 +448,7 @@ export function StoryFormModal({
                 minHeight={editorMinHeight}
                 allowInlineMedia
                 resolveImageSrc={resolveImageSrc}
+                allowRawHtmlBlock
               />
             </div>
           </div>

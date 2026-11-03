@@ -2,7 +2,15 @@ import '@jakorea/rich-text/extension-types'
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
 import type { MenuProps } from 'antd'
-import { useCallback, useId, useMemo, useRef, type ChangeEvent } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from 'react'
 import {
   insertEmoji,
   insertHorizontalRule,
@@ -21,7 +29,11 @@ import {
   promptLinkUrl,
   promptYoutubeUrl,
   RICH_TEXT_IMAGE_ACCEPT,
+  registerRawHtmlImageUploader,
+  registerRawHtmlSourceRequester,
+  type RawHtmlSourceRequest,
 } from '@jakorea/rich-text'
+import { RawHtmlSourceModal } from './raw-html-source-modal'
 import {
   FONT_FAMILY_OPTIONS,
   FONT_SIZE_OPTIONS,
@@ -64,8 +76,20 @@ export type RichTextToolbarProps = {
    * Homepage 공지 API는 body에서 img/iframe을 sanitize로 제거하므로 remote 공지는 false.
    */
   allowInlineMedia?: boolean
-  /** remote 저장 시 본문 data URL 대신 업로드 주소 */
+  /**
+   * remote 저장 시 본문 data URL 대신 업로드 주소.
+   * HTML 원본 블록의 이미지 업로드(블록 안 '이미지'·소스 모달 '이미지 업로드')도 같은 함수를 쓴다.
+   */
   resolveImageSrc?: (file: File) => Promise<string>
+  /**
+   * 삽입 메뉴에 'HTML 소스 붙여넣기'(HTML 원본 블록) 노출. 기본 false.
+   * Markdown으로 저장하는 화면(교재)은 켜지 않는다.
+   */
+  allowRawHtmlBlock?: boolean
+}
+
+type PendingRawHtmlRequest = RawHtmlSourceRequest & {
+  resolve: (html: string | null) => void
 }
 
 const EMPTY_TOOLBAR_STATE = {
@@ -123,7 +147,9 @@ export function RichTextToolbar({
   editor,
   allowInlineMedia = true,
   resolveImageSrc,
+  allowRawHtmlBlock = false,
 }: RichTextToolbarProps) {
+  const [rawHtmlRequest, setRawHtmlRequest] = useState<PendingRawHtmlRequest | null>(null)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
   const imageFileInputId = useId()
   const state =
@@ -182,6 +208,36 @@ export function RichTextToolbar({
     },
     [run]
   )
+
+  const requestRawHtmlSource = useCallback(
+    (request: RawHtmlSourceRequest) =>
+      new Promise<string | null>(resolve => {
+        setRawHtmlRequest(prev => {
+          prev?.resolve(null)
+          return { ...request, resolve }
+        })
+      }),
+    []
+  )
+
+  // 블록의 '소스 편집' 버튼이 이 모달을 쓰도록 에디터에 연결
+  useEffect(() => {
+    if (!editor || !allowRawHtmlBlock) return
+    return registerRawHtmlSourceRequester(editor, requestRawHtmlSource)
+  }, [editor, allowRawHtmlBlock, requestRawHtmlSource])
+
+  // 블록 안 '이미지' 버튼 — 본문 이미지와 같은 업로드 경로. 업로더가 없으면 버튼을 숨긴다
+  useEffect(() => {
+    if (!editor || !allowRawHtmlBlock || !resolveImageSrc) return
+    return registerRawHtmlImageUploader(editor, resolveImageSrc)
+  }, [editor, allowRawHtmlBlock, resolveImageSrc])
+
+  const closeRawHtmlModal = useCallback((html: string | null) => {
+    setRawHtmlRequest(prev => {
+      prev?.resolve(html)
+      return null
+    })
+  }, [])
 
   const headingTriggerLabel = useMemo(() => {
     return HEADING_OPTIONS.find(o => o.value === state.heading)?.triggerLabel ?? 'H₁'
@@ -341,6 +397,21 @@ export function RichTextToolbar({
           { type: 'divider' },
         ]
 
+    const rawHtmlItems: MenuProps['items'] = allowRawHtmlBlock
+      ? [
+          {
+            key: 'raw-html-block',
+            label: 'HTML 소스 붙여넣기',
+            onClick: () => {
+              void requestRawHtmlSource({ initialHtml: '', mode: 'insert' }).then(html => {
+                if (html == null) return
+                run(ed => ed.chain().focus().insertRawHtmlBlock(html).run())
+              })
+            },
+          },
+        ]
+      : []
+
     return [
       ...mediaItems,
       {
@@ -353,8 +424,9 @@ export function RichTextToolbar({
         label: '인용',
         onClick: () => run(ed => ed.chain().focus().toggleBlockquote().run()),
       },
+      ...rawHtmlItems,
     ]
-  }, [allowInlineMedia, imageFileInputId, run])
+  }, [allowInlineMedia, allowRawHtmlBlock, imageFileInputId, requestRawHtmlSource, run])
 
   const handleImageFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -564,6 +636,14 @@ export function RichTextToolbar({
         disabled={disabled}
       />
     </div>
+    {allowRawHtmlBlock ? (
+      <RawHtmlSourceModal
+        request={rawHtmlRequest}
+        onSubmit={html => closeRawHtmlModal(html)}
+        onCancel={() => closeRawHtmlModal(null)}
+        uploadImage={resolveImageSrc}
+      />
+    ) : null}
     </div>
   )
 }
