@@ -10,8 +10,11 @@ import type { UjatAssignmentSubmissionDocument } from './ujatAssignmentSubmissio
 export interface UjatAssignmentSubmissionVolunteer {
   participantId: number;
   memberId: number;
-  /** @nullable */
-  volunteerName: string | null;
+  /**
+   * 없으면 null. 빈 문자열은 내려주지 않는다.
+   * @nullable
+   */
+  volunteerName?: string | null;
   /** @nullable */
   institutionName?: string | null;
   /** @nullable */
