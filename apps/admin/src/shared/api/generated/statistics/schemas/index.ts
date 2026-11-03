@@ -403,6 +403,7 @@ export * from './visitorPoint';
 export * from './visitorSessionResponse';
 export * from './visitorsParams';
 export * from './visitorStatistics';
+export * from './visitorStatisticsMetadata';
 export * from './visitorStatisticsUnit';
 export * from './visitorsUnit';
 export * from './worldwideLinkResponse';
