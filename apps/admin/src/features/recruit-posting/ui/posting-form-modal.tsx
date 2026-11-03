@@ -12,12 +12,19 @@ import type {
   RecruitPostingCreateInput,
   RecruitPostingFormStatus,
 } from '@/entities/recruit-posting/model/types'
-import { DEFAULT_AUTHOR } from '@/features/recruit-posting/api/store'
+import { useAdminMeProfile } from '@/features/auth/api/use-admin-me-profile'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import { useRecruitPostingWysiwygEditor } from '@/features/recruit-posting/hooks/use-recruit-posting-wysiwyg-editor'
+import { resolveCurrentAdminAuthorName } from '@/features/recruit-posting/lib/resolve-current-admin-author-name'
+import {
+  CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH,
+  validateCareerPostingLinkFields,
+} from '@/features/recruit-posting/lib/link-fields'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
+import { HTTP_LINK_URL_FORMAT_ALERT } from '@/shared/lib/http-link-url'
 import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
   CmsButton,
@@ -138,11 +145,17 @@ export function RecruitPostingFormModal({
   onDelete,
 }: Props) {
   const { showAlert } = useCmsAlert()
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const adminId = useAuthStore(state => state.user?.id)
+  const meQueryEnabled = Boolean(isAuthenticated && open && mode === 'create' && adminId)
+  const meQuery = useAdminMeProfile(adminId, meQueryEnabled)
   const [publishedAt, setPublishedAt] = useState<Dayjs | null>(null)
   const [recruitRange, setRecruitRange] = useState<[Dayjs | null, Dayjs | null]>([null, null])
   const [isPublic, setIsPublic] = useState(true)
   const [status, setStatus] = useState<RecruitPostingFormStatus>('recruiting')
   const [title, setTitle] = useState('')
+  const [buttonLabel, setButtonLabel] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
   const [attachments, setAttachments] = useState<RecruitPostingAttachment[]>([])
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
@@ -183,6 +196,8 @@ export function RecruitPostingFormModal({
       setIsPublic(initial.isPublic)
       setStatus(toFormStatus(initial.status))
       setTitle(initial.title)
+      setButtonLabel(initial.buttonLabel)
+      setLinkUrl(initial.linkUrl)
       setAttachments(initial.attachments.map(a => ({ ...a })))
     } else {
       setPublishedAt(null)
@@ -190,6 +205,8 @@ export function RecruitPostingFormModal({
       setIsPublic(true)
       setStatus('recruiting')
       setTitle('')
+      setButtonLabel('')
+      setLinkUrl('')
       setAttachments([])
     }
   }, [mode, initial])
@@ -301,9 +318,41 @@ export function RecruitPostingFormModal({
       return
     }
 
+    const linkError = validateCareerPostingLinkFields({ buttonLabel, linkUrl })
+    if (linkError) {
+      showAlert(
+        linkError === HTTP_LINK_URL_FORMAT_ALERT.content
+          ? HTTP_LINK_URL_FORMAT_ALERT
+          : { title: '입력 확인', content: linkError },
+      )
+      return
+    }
+
     // 모집완료 행: 라디오가 발표(default)면 CLOSED 유지. 모집으로 바꾸면 RECRUITING.
     const submitStatus: RecruitPostingFormStatus | 'closed' =
       mode === 'edit' && initial?.status === 'closed' && status === 'result' ? 'closed' : status
+
+    const author = resolveCurrentAdminAuthorName({
+      mode,
+      existingAuthorName: initial?.authorName,
+      meName: meQuery.data?.name,
+      meQueryEnabled,
+      meQueryStatus: meQuery.status,
+    })
+    if (author.status === 'loading') {
+      showAlert({
+        title: '입력 확인',
+        content: '작성자 정보를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.',
+      })
+      return
+    }
+    if (author.status === 'unavailable') {
+      showAlert({
+        title: '입력 확인',
+        content: '작성자명을 확인할 수 없습니다. 다시 로그인한 뒤 시도해 주세요.',
+      })
+      return
+    }
 
     onSubmit({
       title: t,
@@ -313,15 +362,17 @@ export function RecruitPostingFormModal({
       publishedAt: publishedAt.format('YYYY-MM-DD'),
       recruitStart: recruitStart.format('YYYY-MM-DD'),
       recruitEnd: recruitEnd.format('YYYY-MM-DD'),
-      authorName: mode === 'edit' && initial ? initial.authorName : DEFAULT_AUTHOR,
+      authorName: author.authorName,
       attachments,
-      buttonLabel: '',
-      linkUrl: '',
+      buttonLabel,
+      linkUrl,
     })
   }, [
     publishedAt,
     recruitRange,
     title,
+    buttonLabel,
+    linkUrl,
     getHTML,
     isPublic,
     status,
@@ -330,6 +381,9 @@ export function RecruitPostingFormModal({
     showAlert,
     mode,
     initial,
+    meQueryEnabled,
+    meQuery.data?.name,
+    meQuery.status,
   ])
 
   const titleText = mode === 'edit' ? '채용 공고 수정' : '채용 공고 등록'
@@ -370,7 +424,8 @@ export function RecruitPostingFormModal({
                 variant="primary"
                 size="large"
                 type="button"
-                loading={confirmLoading}
+                loading={confirmLoading || (mode === 'create' && meQuery.isPending && !meQuery.data)}
+                disabled={mode === 'create' && meQuery.isPending && !meQuery.data}
                 onClick={handleSubmit}
               >
                 {submitLabel}
@@ -495,6 +550,43 @@ export function RecruitPostingFormModal({
                 }}
                 onRemoveFile={handleRemoveFile}
               />
+            </div>
+          </div>
+
+          <div className="posting-form-modal__section posting-form-modal__section--link">
+            <div className="posting-form-modal__link-heading">
+              <span className="posting-form-modal__link-heading-title">연결 버튼</span>
+              <span className="posting-form-modal__link-heading-note">
+                링크 입력 시 공고 상세에 버튼이 노출됩니다.
+              </span>
+            </div>
+            <div className="posting-form-modal__link-row">
+              <div className="posting-form-modal__link-field">
+                <FieldLabel>
+                  {`채용 공고 바로가기 버튼명 (최대 ${CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}자)`}
+                </FieldLabel>
+                <CmsInput
+                  inputSize="large"
+                  width="100%"
+                  maxLength={CAREER_POSTING_BUTTON_LABEL_MAX_LENGTH}
+                  value={buttonLabel}
+                  onChange={e => setButtonLabel(e.target.value)}
+                  placeholder="하단에 노출할 버튼명을 입력해 주세요"
+                />
+              </div>
+              <div className="posting-form-modal__link-field">
+                <FieldLabel>채용 공고 바로가기 링크</FieldLabel>
+                <CmsInput
+                  inputSize="large"
+                  width="100%"
+                  value={linkUrl}
+                  onChange={e => setLinkUrl(e.target.value)}
+                  placeholder="버튼에 연결할 링크를 입력해 주세요"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+              </div>
             </div>
           </div>
         </div>

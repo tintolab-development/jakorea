@@ -51,9 +51,9 @@ export type RecruitPosting = {
   /** 조회수 — 목록 OpenAPI에 없으면 0 */
   viewCount: number
   attachments: RecruitPostingAttachment[]
-  /** 홈페이지 상세 하단 버튼명. 비어 있으면 버튼·모집기간 비노출 */
+  /** 홈페이지 상세 하단 버튼명. 비면 플랫폼 기본 문구. */
   buttonLabel: string
-  /** 하단 버튼 이동 URL. 버튼명과 함께 설정 */
+  /** 하단 버튼 이동 URL. 값이 있을 때만 공개 상세에 버튼 노출 */
   linkUrl: string
   version: number
 }

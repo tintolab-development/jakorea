@@ -44,6 +44,7 @@ import {
   formatDateTimeDot,
   formatNumberDisplay,
 } from '@/shared/lib/format-display'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -58,6 +59,7 @@ import {
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
   AdminFilterTextInput,
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   CmsSelect,
@@ -252,9 +254,17 @@ export function RecruitPostingsPage() {
   const updateMutation = useUpdateRecruitPosting()
   const removeMutation = useRemoveRecruitPostings()
 
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+
   useInvalidateOnWindowEvent(RECRUIT_POSTINGS_CHANGED_EVENT, recruitPostingQueryKeys.all)
 
-  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const rows = listQuery.rows
+  const totalCount = listQuery.totalCount
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
@@ -264,10 +274,10 @@ export function RecruitPostingsPage() {
   const rowNoMap = useMemo(() => {
     const map = new Map<string, number>()
     rows.forEach((row, index) => {
-      map.set(row.id, rows.length - index)
+      map.set(row.id, totalCount - index)
     })
     return map
-  }, [rows])
+  }, [rows, totalCount])
 
   const handleSearch = useCallback(() => {
     applySearch()
@@ -599,7 +609,7 @@ export function RecruitPostingsPage() {
           </div>
         }
         title="채용 공고 목록"
-        description={`총 ${formatNumberDisplay(rows.length)}건`}
+        description={`총 ${formatNumberDisplay(totalCount)}건`}
         actions={
           <>
             <CmsButton
@@ -637,6 +647,10 @@ export function RecruitPostingsPage() {
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>
