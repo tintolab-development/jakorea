@@ -91,6 +91,7 @@ import {
   omitCompanySchoolRecruitmentOverlayKeys,
   serializeCompanySchoolRecruitmentForFormVersion,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
+import { emptyCompanySchoolInstructorRecruitFormState } from '@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment'
 import {
   emptyCompanySchoolApplicationFormState,
   omitCompanySchoolApplicationOverlayKeys,
@@ -901,7 +902,10 @@ export function useProgramRegistrationEditor(
                         typed.application ??
                           imported.application ??
                           emptyCompanySchoolApplicationFormState()
-                      )
+                      ),
+                      typed.instructorRecruit ??
+                        imported.instructorRecruit ??
+                        emptyCompanySchoolInstructorRecruitFormState()
                     ),
                     { keepDirty: false }
                   )
@@ -916,7 +920,8 @@ export function useProgramRegistrationEditor(
                       imported.recruit ?? emptyCompanySchoolRecruitFormState(),
                       withEmptyCompanySchoolApplicationPreferredSchedule(
                         imported.application ?? emptyCompanySchoolApplicationFormState()
-                      )
+                      ),
+                      imported.instructorRecruit ?? emptyCompanySchoolInstructorRecruitFormState()
                     ),
                     { keepDirty: false }
                   )
@@ -2367,7 +2372,12 @@ export function useProgramRegistrationEditor(
               const recruitDraft =
                 recruitSaved?.draft ??
                 createSeedDraftForOperationalCatalogId('recruitment-economy')
+              const sessionApplication = (operationalOverrides ?? []).find(
+                item =>
+                  item.templateCode === 'application-economy' && item.draft.paragraphs.length > 0
+              )
               const applicationDraft =
+                sessionApplication?.draft ??
                 applicationSaved?.draft ??
                 createSeedDraftForOperationalCatalogId('application-economy')
               operationalOverrides = [...(operationalOverrides ?? [])]
@@ -2380,11 +2390,16 @@ export function useProgramRegistrationEditor(
                 })
               }
               if (applicationState != null && applicationDraft != null) {
+                operationalOverrides = operationalOverrides.filter(
+                  item => item.templateCode !== 'application-economy'
+                )
                 operationalOverrides.push({
                   templateCode: 'application-economy',
                   draft: applicationDraft,
                   overlay: serializeCompanySchoolApplicationForFormVersion(applicationState),
-                  editorState: companySchoolApplicationEditorState(applicationState),
+                  editorState:
+                    sessionApplication?.editorState ??
+                    companySchoolApplicationEditorState(applicationState),
                 })
               }
             }

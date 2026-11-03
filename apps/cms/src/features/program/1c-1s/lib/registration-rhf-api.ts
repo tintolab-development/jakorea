@@ -5,11 +5,18 @@
 import dayjs from 'dayjs'
 import {
   applyCompanySchoolRecruitmentOverlayRecord,
-  isCompanySchoolRecruitmentOverlayKey,
+  isCompanySchoolInstitutionRecruitmentOverlayKey,
   readCompanySchoolRecruitmentOverlayValue,
   serializeCompanySchoolRecruitmentForFormVersion,
   splitCompanySchoolRecruitmentOverlay,
 } from './registration-rhf-recruitment'
+import {
+  applyCompanySchoolInstructorRecruitmentOverlayRecord,
+  isCompanySchoolInstructorRecruitmentOverlayKey,
+  readCompanySchoolInstructorRecruitmentOverlayValue,
+  serializeCompanySchoolInstructorRecruitmentForFormVersion,
+  splitCompanySchoolInstructorRecruitmentOverlay,
+} from './registration-rhf-instructor-recruitment'
 import {
   applyCompanySchoolApplicationOverlayRecord,
   isCompanySchoolApplicationOverlayKey,
@@ -93,29 +100,77 @@ export function readActiveCompanySchoolRecruitmentOverlayValue(
   defaultValue: unknown
 ): unknown {
   const current = api
-  if (current == null || !isCompanySchoolRecruitmentOverlayKey(key)) return defaultValue
+  if (current == null) return defaultValue
+  if (isCompanySchoolInstructorRecruitmentOverlayKey(key)) {
+    const raw = readCompanySchoolInstructorRecruitmentOverlayValue(
+      current.getValues().instructorRecruit,
+      key
+    )
+    return raw === undefined ? defaultValue : raw
+  }
+  if (!isCompanySchoolInstitutionRecruitmentOverlayKey(key)) return defaultValue
   const raw = readCompanySchoolRecruitmentOverlayValue(current.getValues().recruitment, key)
   return raw === undefined ? defaultValue : raw
 }
 
-export function peekActiveCompanySchoolRecruitmentOverlayRecord(): Record<string, unknown> | null {
+export function peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord(): Record<
+  string,
+  unknown
+> | null {
   if (api == null) return null
   return serializeCompanySchoolRecruitmentForFormVersion(api.getValues().recruitment)
 }
 
-/** 기관 모집 overlay 키를 RHF에만 기록. store에 쓰지 않는다. 소비되지 않은 키를 반환한다. */
+export function peekActiveCompanySchoolInstructorRecruitmentOverlayRecord(): Record<
+  string,
+  unknown
+> | null {
+  if (api == null) return null
+  return serializeCompanySchoolInstructorRecruitmentForFormVersion(api.getValues().instructorRecruit)
+}
+
+export function peekActiveCompanySchoolRecruitmentOverlayRecord(): Record<string, unknown> | null {
+  const institution = peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord()
+  const instructor = peekActiveCompanySchoolInstructorRecruitmentOverlayRecord()
+  if (institution == null || instructor == null) return null
+  return {
+    ...institution,
+    ...instructor,
+  }
+}
+
+/** 기관·강사 모집 overlay 키를 RHF에만 기록. store에 쓰지 않는다. 소비되지 않은 키를 반환한다. */
 export function patchActiveCompanySchoolRecruitmentOverlay(
   partial: Record<string, unknown>
 ): Record<string, unknown> {
   if (api == null) return partial
-  const { recruitment, rest } = splitCompanySchoolRecruitmentOverlay(partial)
-  if (Object.keys(recruitment).length === 0) return partial
+  const institution = splitCompanySchoolRecruitmentOverlay(partial)
+  const instructorSplit = splitCompanySchoolInstructorRecruitmentOverlay(institution.rest)
+  const rest = instructorSplit.rest
   const values = api.getValues()
-  api.setPath(
-    'recruitment',
-    applyCompanySchoolRecruitmentOverlayRecord(values.recruitment, recruitment),
-    { shouldDirty: true }
-  )
+  if (Object.keys(institution.recruitment).length > 0) {
+    api.setPath(
+      'recruitment',
+      applyCompanySchoolRecruitmentOverlayRecord(values.recruitment, institution.recruitment),
+      { shouldDirty: true }
+    )
+  }
+  if (Object.keys(instructorSplit.instructorRecruit).length > 0) {
+    api.setPath(
+      'instructorRecruit',
+      applyCompanySchoolInstructorRecruitmentOverlayRecord(
+        api.getValues().instructorRecruit,
+        instructorSplit.instructorRecruit
+      ),
+      { shouldDirty: true }
+    )
+  }
+  if (
+    Object.keys(institution.recruitment).length === 0 &&
+    Object.keys(instructorSplit.instructorRecruit).length === 0
+  ) {
+    return partial
+  }
   return rest
 }
 

@@ -64,9 +64,13 @@ export type UjatVolunteerAssignmentProgressRow = {
   /** 이 봉사자가 조의 secondary이면 true */
   selfIsSecondary?: boolean
   /**
-   * 배정 알림 발송 여부(서버 `assignmentNotificationSent`만).
-   * `false` → 미발송 간단 확인 모달.
-   * `true`/미제공 → 사유·알림 모달(추정 금지, 구 BE는 안전 기본).
+   * 이 교육일 matrix cell.assignmentStatus === ASSIGNED.
+   * false면 역할 셀에서 출결 담당 PUT을 보내지 않는다.
+   */
+  canAssignAttendanceManager?: boolean
+  /**
+   * 서버 `assignmentNotificationSent` (boolean). `false`만 간단 취소.
+   * `true`는 사유+알림. 값이 없으면 사유 모달.
    */
   assignmentNotificationSent?: boolean
 }

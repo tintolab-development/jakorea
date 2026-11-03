@@ -191,11 +191,18 @@ export function MultipleChoice({
         onChange={e => patch({ selectedPreviewSingleId: e.target.value })}
       >
         {items.map(item => (
-          <div key={item.id} role="presentation" className="multiple-choice-row">
-            <CmsRadio value={item.id} disabled={controlDisabled} />
-            <span className="multiple-choice-row__label">
+          <div
+            key={item.id}
+            role="presentation"
+            className="multiple-choice-row"
+            onClick={() => {
+              if (controlDisabled || blockChoicePointer) return
+              patch({ selectedPreviewSingleId: item.id })
+            }}
+          >
+            <CmsRadio value={item.id} disabled={controlDisabled}>
               {resolveItemDisplayLabel?.(item) ?? item.label}
-            </span>
+            </CmsRadio>
           </div>
         ))}
       </CmsRadioGroup>

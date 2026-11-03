@@ -4,10 +4,7 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { CertCreateInput, CertItem } from '@/entities/history-awards-certs/model/types'
 import { coerceRadioBoolean } from '@/features/history-awards-certs/lib/format'
-import {
-  deleteConfirmContent,
-  publishedMustUnpublishAlert,
-} from '@/features/history-awards-certs/lib/delete-guards'
+import { deleteConfirmContent } from '@/features/history-awards-certs/lib/delete-guards'
 import {
   CmsButton,
   CmsDatePicker,
@@ -130,10 +127,6 @@ function CertFormBody({
                   size="large"
                   type="button"
                   onClick={() => {
-                    if (initial?.isPublic) {
-                      showAlert(publishedMustUnpublishAlert('인증'))
-                      return
-                    }
                     setDeleteConfirmOpen(true)
                   }}
                   disabled={confirmLoading || deleteLoading}

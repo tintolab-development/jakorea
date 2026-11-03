@@ -1,190 +1,67 @@
 import { describe, expect, it } from 'vitest'
+import { VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestJaProgramExperienceConsentRequest'
+import { VolunteerParticipantRegisterRequestPersonalInfoConsent } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestPersonalInfoConsent'
+import { VolunteerParticipantRegisterRequestRegistrationChannel } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestRegistrationChannel'
+import { VolunteerParticipantRegisterRequestThirdPartyConsent } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestThirdPartyConsent'
+import { VolunteerParticipantRegisterRequestVolunteerKind } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequestVolunteerKind'
+import type { VolunteerParticipantRegisterRequest } from '@/shared/api/generated/program-progress/schemas/volunteerParticipantRegisterRequest'
 import {
-  createUjatProgramApplicationFormVolunteerDraft,
-  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
-} from '@/features/template/model/ujat-program-application-form-volunteer-draft'
-import {
-  UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS,
-  ujatVolunteerFreeTextOverlayKey,
-} from '@/features/template/ui/form-set/application-form/UJAT-volunteer/ujat-application-volunteer-overlay-keys'
-import { PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS } from '@jakorea/form-schema/paragraph-ids/program-application-form-volunteer-draft'
-import type { HorizontalTableParagraph } from '@/features/template/model/writing-form-draft.schema'
-import { EMPTY_UJAT_VOLUNTEER_ADD_REGISTRATION_CONSENTS } from './terms-consent-section'
-import { buildUjatVolunteerParticipantRegisterRequest } from './ujat-volunteer-participant-register-request'
+  attachUjatProgressVolunteerRegisterContext,
+  isUjatProgressVolunteerMissingId1365,
+} from './ujat-volunteer-participant-register-request'
 
-function agreeDraftParagraphs() {
-  return createUjatProgramApplicationFormVolunteerDraft().paragraphs.map(paragraph => {
-    if (
-      paragraph.variant === 'horizontal_table' &&
-      (paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.personalInfoCollection ||
-        paragraph.id === UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent)
-    ) {
-      return { ...paragraph, bottomConsent: 'agree' as const }
-    }
-    return paragraph
-  })
+const baseRequest: VolunteerParticipantRegisterRequest = {
+  memberId: 12,
+  volunteerKind: VolunteerParticipantRegisterRequestVolunteerKind.GENERAL,
+  registrationChannel: VolunteerParticipantRegisterRequestRegistrationChannel.CMS_PROGRESS_ADD,
+  personalInfoConsent: VolunteerParticipantRegisterRequestPersonalInfoConsent.AGREE,
+  thirdPartyConsent: VolunteerParticipantRegisterRequestThirdPartyConsent.AGREE,
+  jaProgramExperienceConsentRequest:
+    VolunteerParticipantRegisterRequestJaProgramExperienceConsentRequest.NOT_REQUESTED,
+  reason: 'CMS 참여 봉사자 추가 등록',
+  thirdPartyRecipient: '서울○○중학교',
 }
 
-function withThirdPartyRecipient(
-  paragraphs: ReturnType<typeof agreeDraftParagraphs>,
-  recipient: string
-) {
-  return paragraphs.map(paragraph => {
-    if (paragraph.id !== UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.thirdPartyConsent) {
-      return paragraph
-    }
-    const table = paragraph as HorizontalTableParagraph
-    const row = [...(table.fieldDataRows?.[0] ?? [])]
-    row[0] = { kind: 'text', value: recipient }
-    return { ...table, fieldDataRows: [row] }
-  })
-}
-
-const agreedTerms = {
-  ...EMPTY_UJAT_VOLUNTEER_ADD_REGISTRATION_CONSENTS,
-  serviceTerms: 'agree' as const,
-  personalInfo: 'agree' as const,
-  marketing: 'disagree' as const,
-  portrait: 'disagree' as const,
-  educationPledge: 'disagree' as const,
-  jointUse: 'disagree' as const,
-  sexOffenseCheck: 'disagree' as const,
-}
-
-function overlayWithFreeText(extra: Record<string, unknown> = {}) {
-  const overlay: Record<string, unknown> = {
-    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience]: 'no',
-    [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.id1365]: 'id-1365',
-    ...extra,
-  }
-  for (const question of PROGRAM_VOLUNTEER_FREE_TEXT_QUESTIONS) {
-    overlay[ujatVolunteerFreeTextOverlayKey(question.id)] = '작성 내용'
-  }
-  return overlay
-}
-
-describe('buildUjatVolunteerParticipantRegisterRequest', () => {
-  it('blocks unset required terms', () => {
-    const result = buildUjatVolunteerParticipantRegisterRequest({
-      memberId: 12,
-      paragraphs: agreeDraftParagraphs(),
-      terms: { ...EMPTY_UJAT_VOLUNTEER_ADD_REGISTRATION_CONSENTS },
-      overlay: overlayWithFreeText({
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: '서울',
-      }),
-      applicationType: 'new',
-    })
-    expect(result.ok).toBe(false)
+describe('attachUjatProgressVolunteerRegisterContext', () => {
+  it('하반기 탭이면 SECOND_HALF와 UJAT 등록 사유를 붙인다', () => {
+    const request = attachUjatProgressVolunteerRegisterContext(baseRequest, 'h2')
+    expect(request.recruitHalf).toBe('SECOND_HALF')
+    expect(request.reason).toBe('CMS UJAT 참여 봉사자 추가 등록')
+    expect(request.memberId).toBe(12)
+    expect(request.thirdPartyRecipient).toBe('서울○○중학교')
   })
 
-  it('maps agreed consents and overlay to register body', () => {
-    const result = buildUjatVolunteerParticipantRegisterRequest({
-      memberId: 12,
-      paragraphs: agreeDraftParagraphs(),
-      terms: agreedTerms,
-      overlay: overlayWithFreeText({
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: '서울',
-      }),
-      applicationType: 'new',
-    })
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    expect(result.request.memberId).toBe(12)
-    expect(result.request.volunteerKind).toBe('GENERAL')
-    expect(result.request.personalInfoConsent).toBe('AGREE')
-    expect(result.request.thirdPartyConsent).toBe('AGREE')
-    // UJAT 시드 기본값 「배정된 교육 대상 학교」 — 있으면 wire에 포함(생략도 가능)
-    expect(result.request.thirdPartyRecipient).toBe('배정된 교육 대상 학교')
-    expect(result.request.jaProgramExperienceConsentRequest).toBe('NOT_REQUESTED')
-    expect(result.request.applicationType).toBe('NEW')
-    expect(result.request.educationRegionCode).toBe('seoul')
-    expect(result.request.id1365).toBe('id-1365')
-    expect(result.request.freeTextItems?.items).toHaveLength(4)
-    expect(result.request.previousJaProgram).toBeUndefined()
+  it('상반기 탭이면 FIRST_HALF를 붙인다', () => {
+    const request = attachUjatProgressVolunteerRegisterContext(baseRequest, 'h1')
+    expect(request.recruitHalf).toBe('FIRST_HALF')
   })
 
-  it('omits thirdPartyRecipient when UJAT recipient cell is empty', () => {
-    const result = buildUjatVolunteerParticipantRegisterRequest({
-      memberId: 12,
-      paragraphs: withThirdPartyRecipient(agreeDraftParagraphs(), ''),
-      terms: agreedTerms,
-      overlay: overlayWithFreeText({
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: '서울',
-      }),
-      applicationType: 'new',
-    })
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    expect(result.request.thirdPartyRecipient).toBeUndefined()
-  })
-
-  it('omits freeTextItems for UJAT graduate and does not require previousJaProgram', () => {
-    const result = buildUjatVolunteerParticipantRegisterRequest({
-      memberId: 190094,
-      paragraphs: agreeDraftParagraphs(),
-      terms: agreedTerms,
-      overlay: {
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience]: 'yes',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: 'busan',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm]: '5기',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousYear]: '2025',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]: ['certificate.pdf'],
+  it('CMS_PROGRESS_ADD에서 사용자 홈 전용 필드와 빈 문자열을 빼 둔다', () => {
+    const request = attachUjatProgressVolunteerRegisterContext(
+      {
+        ...baseRequest,
+        previousUjatTerm: { year: '2024', term: '2' },
+        educationRegionCode: 'SEOUL',
+        applicationType: 'UJAT_GRADUATE',
+        id1365: '09151234',
+        thirdPartyRecipient: '-',
       },
-      applicationType: 'ujat-graduate',
-    })
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    expect(result.request.applicationType).toBe('UJAT_GRADUATE')
-    expect(result.request.jaProgramExperienceConsentRequest).toBe('REQUESTED')
-    expect(result.request.freeTextItems).toBeUndefined()
-    expect(result.request.previousJaProgram).toBeUndefined()
-    expect(result.request.previousUjatTerm).toEqual({ term: '5기', year: '2025' })
-    expect(result.request.educationRegionCode).toBe('busan')
+      'h2'
+    )
+    expect(request).not.toHaveProperty('previousUjatTerm')
+    expect(request).not.toHaveProperty('educationRegionCode')
+    expect(request).not.toHaveProperty('applicationType')
+    expect(request).not.toHaveProperty('id1365')
+    expect(request).not.toHaveProperty('thirdPartyRecipient')
+    expect(request.volunteerKind).toBe('GENERAL')
+    expect(request.recruitHalf).toBe('SECOND_HALF')
   })
+})
 
-  it('maps previousTermFileObjectIds to certificateFileIds', () => {
-    const result = buildUjatVolunteerParticipantRegisterRequest({
-      memberId: 12,
-      paragraphs: agreeDraftParagraphs(),
-      terms: agreedTerms,
-      overlay: overlayWithFreeText({
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience]: 'yes',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm]: '5기',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousYear]: '2025',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]: ['certificate.pdf'],
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileObjectIds]: [9001],
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: 'seoul',
-      }),
-      applicationType: 'new',
-    })
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    expect(result.request.previousUjatTerm).toEqual({
-      term: '5기',
-      year: '2025',
-      certificateFileIds: ['9001'],
-    })
-  })
-
-  it('omits certificateFileIds when none uploaded', () => {
-    const result = buildUjatVolunteerParticipantRegisterRequest({
-      memberId: 12,
-      paragraphs: agreeDraftParagraphs(),
-      terms: agreedTerms,
-      overlay: overlayWithFreeText({
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.hasExperience]: 'yes',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTerm]: '5기',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousYear]: '2025',
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.previousTermFileNames]: ['certificate.pdf'],
-        [UJAT_APPLICATION_VOLUNTEER_OVERLAY_KEYS.preferredRegion]: 'seoul',
-      }),
-      applicationType: 'new',
-    })
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    expect(result.request.previousUjatTerm).toEqual({
-      term: '5기',
-      year: '2025',
-    })
+describe('isUjatProgressVolunteerMissingId1365', () => {
+  it('후보에 1365가 없을 때만 true', () => {
+    expect(isUjatProgressVolunteerMissingId1365(false)).toBe(true)
+    expect(isUjatProgressVolunteerMissingId1365(true)).toBe(false)
+    expect(isUjatProgressVolunteerMissingId1365(undefined)).toBe(false)
   })
 })

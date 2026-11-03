@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { EducationScheduleAssignment } from './educationScheduleAssignment';
+import type { EducationScheduleItemAssignmentStatus } from './educationScheduleItemAssignmentStatus';
 import type { EducationScheduleItemBlockKind } from './educationScheduleItemBlockKind';
 import type { EducationScheduleItemTeamRole } from './educationScheduleItemTeamRole';
 import type { MemberPortalEducationCurriculumSession } from './memberPortalEducationCurriculumSession';
@@ -54,4 +55,10 @@ export interface EducationScheduleItem {
   teamName?: string | null;
   /** 커리큘럼형 단일 회차에서 이 일정(하루)에 진행하는 전 차시. 그 외 구조는 null. */
   curriculumSessions?: MemberPortalEducationCurriculumSession[] | null;
+  /** UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null */
+  assignmentStatus?: EducationScheduleItemAssignmentStatus;
+  /** UJAT 봉사자 학급 라벨. allocation-matrix cell.classLabel과 동일 SSOT. UNASSIGNED는 null. 빈 문자열 금지. 비UJAT이면 null */
+  classLabel?: string | null;
+  /** UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개 */
+  organizationName?: string | null;
 }

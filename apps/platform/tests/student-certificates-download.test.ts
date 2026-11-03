@@ -166,14 +166,16 @@ describe('organization student certificate bulk download', () => {
     expect(Object.keys(body).sort()).toEqual(['certificateType', 'rosterIds'])
   })
 
-  it('200 ZIP Blob을 student-certificates.zip으로 저장한다', async () => {
+  it('200 ZIP Blob을 수료증_이름_YYMMDD.zip으로 저장한다', async () => {
     const zip = new Blob(['PK\u0003\u0004zip-bytes'], { type: 'application/zip' })
     postMock.mockResolvedValue(zipResponse(zip))
 
-    await downloadOrganizationStudentCertificates(APPLICATION_ID, [1691594, 1691595])
+    await downloadOrganizationStudentCertificates(APPLICATION_ID, [1691594, 1691595], {
+      fileName: '수료증_강하은_261103.zip',
+    })
 
     expect(URL.createObjectURL).toHaveBeenCalledWith(zip)
-    expect(anchor.download).toBe('student-certificates.zip')
+    expect(anchor.download).toBe('수료증_강하은_261103.zip')
     expect(anchor.click).toHaveBeenCalledTimes(1)
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:certificate')
   })

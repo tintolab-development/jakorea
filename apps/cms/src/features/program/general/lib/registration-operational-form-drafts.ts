@@ -51,11 +51,13 @@ import {
   type ProgramOperationalBindingKind,
 } from '@/features/program/general/lib/program-operational-binding-profile'
 import { listVisibleOperationalFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
+import { patchActiveCompanySchoolRecruitmentOverlay } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { getRegistrationStepTemplateSelections } from '@/features/program/shared/lib/step-template-selection'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
 import { peekRegistrationWizardSessionDrafts } from '@/features/program/general/lib/registration-wizard-session-drafts'
+import { hasIncompleteApplicationFormThirdPartyRecipient } from '@/features/template/model/application-form-third-party-recipient'
 import {
   peekUjatApplicationInstitutionOverlayRecord,
   replaceUjatApplicationInstitutionOverlayForScope,
@@ -557,6 +559,7 @@ export function applyOperationalOverlayForCatalogId(
   }
   if (kind === 'general-recruit') {
     replaceSharedOverlayKeysByPrefixes('recruit', prefixes, overlay, catalogTemplateId)
+    patchActiveCompanySchoolRecruitmentOverlay(overlay)
     return
   }
   if (kind === 'general-application') {
@@ -648,6 +651,20 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
         continue
       }
     }
+    if (variant === 'economy' && catalogId === 'recruitment-instructor') {
+      const {
+        readCompanySchoolInstructorRecruitEditorState,
+        serializeCompanySchoolInstructorRecruitmentForFormVersion,
+      } = await import('@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment')
+      const instructor = readCompanySchoolInstructorRecruitEditorState(saved?.editorState)
+      if (instructor) {
+        applyOperationalOverlayForCatalogId(
+          catalogId,
+          serializeCompanySchoolInstructorRecruitmentForFormVersion(instructor)
+        )
+        continue
+      }
+    }
     if (variant === 'trainedTeachers') {
       const { readTrainedTeachersRecruitEditorState, trainedTeachersRecruitStateToApplyRecord } =
         await import('@/features/program/trained-teachers/lib/recruit-form-state')
@@ -685,12 +702,38 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
 }
 
 /**
+ * 1사1교 신청 양식 — 제3자 「제공받는 곳」이 채워진 draft를 seed/미입력본보다 우선한다.
+ * 일반·TT·UJAT는 호출하지 않는다.
+ */
+function pickCompanySchoolApplicationPersistDraft(
+  catalogId: string,
+  sessionDraft: WritingFormDraft | undefined,
+  savedDraft: WritingFormDraft | undefined,
+  seedDraft: WritingFormDraft | null
+): WritingFormDraft | null {
+  const isCsApplication = catalogId === 'application-economy' || catalogId === 'application-instructor'
+  if (!isCsApplication) return sessionDraft ?? savedDraft ?? seedDraft
+  const sessionFilled =
+    sessionDraft != null &&
+    sessionDraft.paragraphs.length > 0 &&
+    !hasIncompleteApplicationFormThirdPartyRecipient(sessionDraft)
+  if (sessionFilled) return sessionDraft
+  const savedFilled =
+    savedDraft != null &&
+    savedDraft.paragraphs.length > 0 &&
+    !hasIncompleteApplicationFormThirdPartyRecipient(savedDraft)
+  if (savedFilled) return savedDraft
+  if (sessionDraft != null && sessionDraft.paragraphs.length > 0) return sessionDraft
+  return savedDraft ?? seedDraft
+}
+
+/**
  * 「임시 저장」— 현재 메모리 overlay를 모든 모집/신청 양식 localStorage에 기록.
  * 현재 단계 handleSave만 하면 다른 탭 상세 정보가 빠진다.
  *
- * `preferSessionDrafts` — 일반·TT 위저드 전용. 떠난 탭의 단락 타이틀·설명은 편집기 draft
+ * `preferSessionDrafts` — 떠난 탭의 단락 본문(제3자 셀 등)은 편집기 draft
  * (세션 draft 맵)에만 있으므로, 활성 탭(`activeCatalogId`, 방금 handleSave로 기록)을 제외한
- * 탭은 localStorage draft 대신 세션 draft를 쓴다. UJAT·1사1교 호출부는 옵션 없이 기존 동작.
+ * 탭은 localStorage draft 대신 세션 draft를 쓴다. UJAT는 옵션 없이 기존 동작.
  */
 export async function persistRegistrationOperationalOverlaysToLocal(
   programType: string,
@@ -701,10 +744,18 @@ export async function persistRegistrationOperationalOverlaysToLocal(
   const { loadRegistrationWizardFormDraft, persistRegistrationWizardFormDraft } = await import(
     '@/features/program/general/lib/registration-wizard-form-draft'
   )
+  const preferSessionDrafts = options?.preferSessionDrafts === true
   const sessionDraftByCatalogId = new Map(
-    options?.preferSessionDrafts === true
-      ? peekRegistrationWizardSessionDrafts().map(entry => [entry.templateCode, entry.draft])
-      : []
+    peekRegistrationWizardSessionDrafts()
+      .filter(entry => {
+        if (preferSessionDrafts) return true
+        return (
+          variant === 'economy' &&
+          (entry.templateCode === 'application-economy' ||
+            entry.templateCode === 'application-instructor')
+        )
+      })
+      .map(entry => [entry.templateCode, entry.draft])
   )
   for (const storageKey of listRegistrationOperationalFormDraftStorageKeys(variant, programType)) {
     const catalogId = catalogTemplateIdFromOperationalStorageKey(storageKey)
@@ -720,7 +771,17 @@ export async function persistRegistrationOperationalOverlaysToLocal(
         overlayKind === 'institution-recruit')
         ? sessionDraftByCatalogId.get(catalogId)
         : undefined
-    const draft = sessionDraft ?? saved?.draft ?? createSeedDraftForOperationalCatalogId(catalogId)
+    const seedDraft = createSeedDraftForOperationalCatalogId(catalogId)
+    const draft =
+      variant === 'economy' &&
+      (catalogId === 'application-economy' || catalogId === 'application-instructor')
+        ? pickCompanySchoolApplicationPersistDraft(
+            catalogId,
+            sessionDraftByCatalogId.get(catalogId) ?? sessionDraft,
+            saved?.draft,
+            seedDraft
+          )
+        : (sessionDraft ?? saved?.draft ?? seedDraft)
     if (draft == null) continue
     // 공통정보(registration-*)는 handleSave가 settingsJson·RHF snapshot까지 저장한다.
     // 여기서 overlay만 다시 쓰면 국문 대표명 등 RHF 입력이 지워진다.
@@ -768,6 +829,30 @@ export async function persistRegistrationOperationalOverlaysToLocal(
         templateCode: catalogId,
         draft,
         editorState: companySchoolApplicationEditorState(collectCompanySchoolApplicationFormState()),
+      })
+      continue
+    }
+    if (variant === 'economy' && catalogId === 'recruitment-instructor') {
+      const { peekCompanySchoolRegistrationRhf } = await import(
+        '@/features/program/1c-1s/lib/registration-rhf-api'
+      )
+      const {
+        collectCompanySchoolInstructorRecruitmentState,
+        companySchoolInstructorRecruitEditorState,
+        emptyCompanySchoolInstructorRecruitFormState,
+        serializeCompanySchoolInstructorRecruitmentForFormVersion,
+      } = await import('@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment')
+      const rhf = peekCompanySchoolRegistrationRhf()
+      const instructor =
+        rhf != null
+          ? collectCompanySchoolInstructorRecruitmentState(rhf.getValues().instructorRecruit)
+          : emptyCompanySchoolInstructorRecruitFormState()
+      await persistRegistrationWizardFormDraft({
+        programType,
+        templateCode: catalogId,
+        draft,
+        overlay: serializeCompanySchoolInstructorRecruitmentForFormVersion(instructor),
+        editorState: companySchoolInstructorRecruitEditorState(instructor),
       })
       continue
     }

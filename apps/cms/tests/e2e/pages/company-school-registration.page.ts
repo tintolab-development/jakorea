@@ -3,7 +3,6 @@ import {
   checkCheckboxIfVisible,
   checkRadioIfVisible,
   checkVisibleEnabledConsentCheckboxes,
-  clickRegistrationTabIfVisible,
   clickSectionNavIfVisible,
   fillAllByPlaceholder,
   fillByPlaceholder,
@@ -200,10 +199,17 @@ export class CompanySchoolRegistrationPage {
   /** 모집 — 학교(참여자)·강사만 · 봉사자 탭 부재 assert */
   async fillRecruitmentInfo() {
     await this.fillRecruitSharedFields()
-    await clickRegistrationTabIfVisible(this.page, '강사 모집 정보')
+    const instructorTab = this.page.getByRole('tab', { name: /강사 모집/ }).first()
+    await expect(instructorTab).toBeVisible({ timeout: 15_000 })
+    await instructorTab.click()
+    await expect(instructorTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
     await this.fillRecruitSharedFields()
     await this.expectVolunteerRecruitTabAbsent()
-    await clickRegistrationTabIfVisible(this.page, '참여자 모집 정보')
+    await this.page.keyboard.press('Escape').catch(() => undefined)
+    const institutionTab = this.page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ }).first()
+    await expect(institutionTab).toBeVisible({ timeout: 30_000 })
+    await institutionTab.click()
+    await expect(institutionTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
   }
 
   async expectVolunteerRecruitTabAbsent() {
@@ -296,12 +302,20 @@ export class CompanySchoolRegistrationPage {
     )
     await fillVisibleFreeTextFields(this.page, 'E2E 1사1교 신청 정보')
 
-    await clickRegistrationTabIfVisible(this.page, '강사 신청 정보')
+    const instructorTab = this.page.getByRole('tab', { name: /강사 신청/ }).first()
+    if (await instructorTab.isVisible().catch(() => false)) {
+      await instructorTab.click()
+      await expect(instructorTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
+    }
     await this.fillApplicationConsentIfPresent()
     await fillVisibleFreeTextFields(this.page, 'E2E 1사1교 강사 신청')
     await uploadTinyPngIfPresent(this.page)
     await this.expectVolunteerApplicationTabAbsent()
-    await clickRegistrationTabIfVisible(this.page, '참여자 신청 정보')
+    const institutionTab = this.page.getByRole('tab', { name: /참여 기관 신청|참여자 신청/ }).first()
+    if (await institutionTab.isVisible().catch(() => false)) {
+      await institutionTab.click()
+      await expect(institutionTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
+    }
   }
 
   async expectVolunteerApplicationTabAbsent() {

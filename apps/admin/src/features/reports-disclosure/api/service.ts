@@ -17,25 +17,31 @@ import {
   toReportsListParams,
   toReportUpdateRequest,
 } from './mappers'
-import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
+import {
+  fetchAllAdminListPages,
+  toAdminListPage,
+  type AdminListPage,
+} from '@/shared/lib/admin-infinite-list'
 import { uploadReportPdfAsset, uploadReportThumbnailAsset } from './upload-report-assets'
 
 function jaKoreaApi() {
   return getJAKoreaHomepageAdminAPIJAKoreaSubset()
 }
 
-async function listRemoteReports(
+async function listRemoteReportsPage(
   kind: ReportKind,
   filter: ReportListFilter,
-): Promise<TransparencyReport[]> {
-  const items = await fetchAllApiPages(async (page, size) => {
-    const response = await jaKoreaApi().reports(
-      toApiReportType(kind),
-      toReportsListParams(filter, page, size)
-    )
-    return { items: response.items ?? [], totalPages: response.totalPages }
-  })
-  return items.map(mapReportResponseToDomain)
+  page: number,
+): Promise<AdminListPage<TransparencyReport>> {
+  const response = await jaKoreaApi().reports(
+    toApiReportType(kind),
+    toReportsListParams(filter, page),
+  )
+  return toAdminListPage(
+    (response.items ?? []).map(mapReportResponseToDomain),
+    page,
+    response,
+  )
 }
 
 async function resolveThumbnailAssetId(input: ReportCreateInput): Promise<number> {
@@ -58,11 +64,12 @@ async function resolveAttachmentAssetId(input: ReportCreateInput): Promise<numbe
   throw new Error('첨부파일을 등록해 주세요.')
 }
 
-export async function listReportsService(
+export async function listReportsPageService(
   kind: ReportKind,
   filter: ReportListFilter,
-): Promise<TransparencyReport[]> {
-  return listRemoteReports(kind, filter)
+  page: number,
+): Promise<AdminListPage<TransparencyReport>> {
+  return listRemoteReportsPage(kind, filter, page)
 }
 
 export async function createReportService(
@@ -85,7 +92,9 @@ export async function updateReportService(
 ): Promise<TransparencyReport> {
   const current =
     cachedRows?.find(row => row.id === input.id) ??
-    (await listRemoteReports(kind, {})).find(row => row.id === input.id)
+    (
+      await fetchAllAdminListPages(page => listRemoteReportsPage(kind, {}, page))
+    ).find(row => row.id === input.id)
   if (!current) {
     throw new Error(`Report not found: ${input.id}`)
   }
@@ -114,7 +123,7 @@ export async function removeReportsService(
   const idSet = new Set(ids)
   let targets = (cachedRows ?? []).filter(row => idSet.has(row.id))
   if (targets.length === 0) {
-    const rows = await listRemoteReports(kind, {})
+    const rows = await fetchAllAdminListPages(page => listRemoteReportsPage(kind, {}, page))
     targets = rows.filter(row => idSet.has(row.id))
   }
   if (targets.length === 0) return

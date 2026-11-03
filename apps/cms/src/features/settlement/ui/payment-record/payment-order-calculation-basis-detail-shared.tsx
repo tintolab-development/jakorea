@@ -4,7 +4,14 @@
 
 import type { ReactNode } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
+import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
+import { handleError } from '@/shared/utils/error-handler'
+import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { useCmsAlert } from '@/shared/ui'
 import type {
   PaymentOrderCalculationBasisDetailLodgingReceipt,
   PaymentOrderCalculationBasisDetailTransportPublicTransit,
@@ -14,18 +21,20 @@ import { formatPaymentOrderCalculationWonPlain } from './payment-order-calculati
 export const BASIS_DETAIL_INFO_FORM_CLASS =
   'payment-order-calculation-basis-detail-modal__detail-form'
 
-/** 산정 기준 상세 — read-only 단일 열 격자 (`hideHeader`, `title` = aria-label) */
+/** 산정 기준 상세 — DetailInfoForm 읽기 전용 격자. 모달 제목과 겹치는 섹션 타이틀은 숨긴다. */
 export function BasisDetailInfoForm({
   title,
   children,
+  hideHeader = true,
 }: {
   title: string
   children: ReactNode
+  hideHeader?: boolean
 }) {
   return (
     <DetailInfoForm
       title={title}
-      hideHeader
+      hideHeader={hideHeader}
       mode="view"
       className={BASIS_DETAIL_INFO_FORM_CLASS}
     >
@@ -43,43 +52,74 @@ export function BasisDetailInfoFormRow({
 }) {
   return (
     <DetailInfoForm.Row type="single">
-      <DetailInfoForm.Field label={label} view={children} />
+      <DetailInfoForm.Field label={label} view={children} readOnlyDisplay />
     </DetailInfoForm.Row>
   )
 }
 
 export function BasisDetailReadOnlyValue({ children }: { children: ReactNode }) {
-  return (
-    <span className="payment-order-calculation-basis-detail-modal__value">{children}</span>
-  )
-}
-
-export function BasisDetailSectionLabel({
-  id,
-  children,
-}: {
-  id?: string
-  children: ReactNode
-}) {
-  return (
-    <h3
-      id={id}
-      className="payment-order-calculation-basis-detail-modal__section-label detail-info-form__title"
-    >
-      {children}
-    </h3>
-  )
+  return children
 }
 
 export function BasisDetailTotalRow({ totalWon }: { totalWon: number }) {
   return (
-    <BasisDetailInfoForm title="합계">
+    <BasisDetailInfoForm title="합계" hideHeader={false}>
       <BasisDetailInfoFormRow label="합계">
         <BasisDetailReadOnlyValue>
           {formatPaymentOrderCalculationWonPlain(totalWon)}
         </BasisDetailReadOnlyValue>
       </BasisDetailInfoFormRow>
     </BasisDetailInfoForm>
+  )
+}
+
+function BasisDetailReceiptFileLink({
+  fileName,
+  url,
+  fileObjectId,
+}: {
+  fileName: string
+  url?: string
+  fileObjectId?: number
+}) {
+  const { showAlert } = useCmsAlert()
+
+  if (url) {
+    return (
+      <a
+        href={url}
+        className="payment-order-calculation-basis-detail-modal__file-link"
+        target="_blank"
+        rel="noreferrer"
+      >
+        {fileName}
+      </a>
+    )
+  }
+
+  const downloadable = fileObjectId != null
+
+  return (
+    <button
+      type="button"
+      className="payment-order-calculation-basis-detail-modal__file-link"
+      onClick={() => {
+        if (!downloadable) return
+        void (async () => {
+          try {
+            await downloadAdminFile({ fileObjectId, fileName })
+          } catch (error) {
+            handleError(error, { context: 'paymentOrderCalculationBasisDetail.downloadFile' })
+            showAlert({
+              title: '안내',
+              content: readApiErrorAlertMessage(error, '첨부파일을 다운로드하지 못했습니다.'),
+            })
+          }
+        })()
+      }}
+    >
+      {fileName}
+    </button>
   )
 }
 
@@ -95,52 +135,21 @@ export function BasisDetailPublicTransitValue({
 
   if (segment.receiptFileName) {
     segments.push(
-      segment.receiptUrl ? (
-        <a
-          key="receipt"
-          href={segment.receiptUrl}
-          className="payment-order-calculation-basis-detail-modal__file-link"
-          target="_blank"
-          rel="noreferrer"
-        >
-          {segment.receiptFileName}
-        </a>
-      ) : (
-        <button
-          key="receipt"
-          type="button"
-          className="payment-order-calculation-basis-detail-modal__file-link"
-        >
-          {segment.receiptFileName}
-        </button>
-      )
+      <BasisDetailReceiptFileLink
+        key="receipt"
+        fileName={segment.receiptFileName}
+        url={segment.receiptUrl}
+        fileObjectId={segment.receiptFileObjectId}
+      />
     )
   }
 
   return (
     <BasisDetailReadOnlyValue>
-      {withProgramDetailTdDivider(segments)}
+      <ProgramDetailTdSegmentWrap>
+        {withProgramDetailTdDivider(segments)}
+      </ProgramDetailTdSegmentWrap>
     </BasisDetailReadOnlyValue>
-  )
-}
-
-function renderReceiptLink(receiptFileName: string, receiptUrl?: string) {
-  if (receiptUrl) {
-    return (
-      <a
-        href={receiptUrl}
-        className="payment-order-calculation-basis-detail-modal__file-link"
-        target="_blank"
-        rel="noreferrer"
-      >
-        {receiptFileName}
-      </a>
-    )
-  }
-  return (
-    <button type="button" className="payment-order-calculation-basis-detail-modal__file-link">
-      {receiptFileName}
-    </button>
   )
 }
 
@@ -152,12 +161,21 @@ export function BasisDetailLodgingFeeValue({
   const segments: ReactNode[] = [formatPaymentOrderCalculationWonPlain(fee.amountWon)]
 
   if (fee.receiptFileName) {
-    segments.push(renderReceiptLink(fee.receiptFileName, fee.receiptUrl))
+    segments.push(
+      <BasisDetailReceiptFileLink
+        key="receipt"
+        fileName={fee.receiptFileName}
+        url={fee.receiptUrl}
+        fileObjectId={fee.receiptFileObjectId}
+      />
+    )
   }
 
   return (
     <BasisDetailReadOnlyValue>
-      {withProgramDetailTdDivider(segments)}
+      <ProgramDetailTdSegmentWrap>
+        {withProgramDetailTdDivider(segments)}
+      </ProgramDetailTdSegmentWrap>
     </BasisDetailReadOnlyValue>
   )
 }
@@ -171,7 +189,12 @@ export function BasisDetailRateAndAmountValue({
 }) {
   return (
     <BasisDetailReadOnlyValue>
-      {withProgramDetailTdDivider([rateLabel, formatPaymentOrderCalculationWonPlain(amountWon)])}
+      <ProgramDetailTdSegmentWrap>
+        {withProgramDetailTdDivider([
+          rateLabel,
+          formatPaymentOrderCalculationWonPlain(amountWon),
+        ])}
+      </ProgramDetailTdSegmentWrap>
     </BasisDetailReadOnlyValue>
   )
 }

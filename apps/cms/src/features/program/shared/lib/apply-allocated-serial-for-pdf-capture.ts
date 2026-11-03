@@ -9,19 +9,19 @@ import {
   parseCertificateIssueId,
   type CertificateSerialSubject,
 } from '@/features/program/shared/lib/certificate-serial'
-import { FORM_CERTIFICATE_SERIAL_TAG_SELECTOR } from '@/pages/templates/form-certificate-preview-utils'
+import { FORM_CERTIFICATE_SERIAL_TEXT_SELECTOR } from '@/pages/templates/form-certificate-preview-utils'
 import { waitForCertificatePreviewCaptureReady } from '@/pages/templates/wait-for-certificate-preview-capture-ready'
 
 export function paintIssuedSerialOnCertificatePreview(
   exportRoot: HTMLElement | null,
   serialNumber: string
 ): void {
-  const tag = exportRoot?.querySelector(FORM_CERTIFICATE_SERIAL_TAG_SELECTOR)
-  if (tag == null) {
+  const serialText = exportRoot?.querySelector(FORM_CERTIFICATE_SERIAL_TEXT_SELECTOR)
+  if (serialText == null) {
     throw new CertificateSerialAllocateError('고유번호를 PDF에 반영하지 못했습니다.')
   }
-  tag.textContent = serialNumber
-  if (tag.textContent?.trim() !== serialNumber) {
+  serialText.textContent = serialNumber
+  if (serialText.textContent?.trim() !== serialNumber) {
     throw new CertificateSerialAllocateError('고유번호를 PDF에 반영하지 못했습니다.')
   }
 }

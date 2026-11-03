@@ -9,5 +9,12 @@ export function formatRegionAssignmentInstitutionLabel(
   location: string,
   _regionKey: UjatInstitutionApplicationRegionKey
 ): string {
-  return `${institutionName}(${location})`
+  const name = institutionName.trim()
+  const region = location.trim()
+  const hasName = Boolean(name) && name !== '-'
+  const hasRegion = Boolean(region) && region !== '-'
+  if (hasName && hasRegion) return `${name}(${region})`
+  if (hasName) return name
+  if (hasRegion) return region
+  return '-'
 }

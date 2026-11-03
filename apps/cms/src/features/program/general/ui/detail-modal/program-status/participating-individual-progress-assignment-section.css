@@ -15,11 +15,20 @@
 .participating-individual-progress-assignment-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.participating-individual-progress-assignment-table__submission-column {
+  > td.participating-individual-progress-assignment-table__submission-column,
+.participating-individual-progress-assignment-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.participating-individual-progress-assignment-table__submission-column.ant-table-cell-row-hover {
+  box-sizing: border-box !important;
+  padding: 8px 12px !important;
   height: auto !important;
   min-height: 52px !important;
+  max-height: none !important;
   white-space: normal;
   overflow: visible;
+  vertical-align: middle !important;
+  transition: none !important;
 }
 
 /* 성별·생년월일 / 소속·학년 — pipe 세그먼트 wrap이 block flex라 td text-align이 안 먹음 */
@@ -29,11 +38,6 @@
 
 .participating-individual-progress-assignment-table__not-submitted {
   color: var(--color-red, #c32f4a);
-  font-weight: 500;
-}
-
-.participating-individual-progress-assignment-table__scheduled {
-  color: var(--color-green, #1e8c29);
   font-weight: 500;
 }
 

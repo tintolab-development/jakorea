@@ -2,10 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
-import { CmsButton, CmsTextArea, ContentModal, ConfirmModal } from '@/shared/ui'
+import { ActionResultModal, CmsButton, CmsTextArea, ContentModal, ConfirmModal } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
-import { handleError } from '@/shared/utils/error-handler'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
 import {
   individualSettlementReviewDetailQueryOptions,
@@ -15,27 +13,69 @@ import { useIndividualSettlementReviewMutations } from '@/features/program/gener
 import {
   canApproveIndividualSettlement,
   canRejectIndividualSettlement,
-  formatIndividualSettlementDate,
-  formatIndividualSettlementWon,
   latestIndividualSettlementReviewRevision,
 } from '@/features/program/general/lib/individual-settlement-review-status'
-import { mapIndividualSettlementReviewToCalculationStatement } from '@/features/program/general/lib/map-individual-settlement-review-to-calculation-statement'
-import { PaymentOrderCalculationStatementProgramBasicSection } from '@/features/settlement/ui/payment-record/payment-order-calculation-statement-program-basic-section'
 import {
-  PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH,
-  PaymentOrderCalculationBreakdownTable,
-  type PaymentOrderCalculationTableRow,
-} from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
-import type { IndividualSettlementReviewFileRef } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewFileRef'
-import type { IndividualSettlementReviewReceipt } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewReceipt'
+  INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX,
+  INDIVIDUAL_SETTLEMENT_REVIEW_STATEMENT_MODAL_Z_INDEX,
+} from '@/features/program/general/lib/general-program-modal-z-index'
+import { mapIndividualSettlementReviewToCalculationStatement } from '@/features/program/general/lib/map-individual-settlement-review-to-calculation-statement'
+import { PaymentOrderCalculationStatementProcessingStatusView } from '@/features/settlement/ui/payment-record/payment-order-calculation-statement-processing-status-view'
+import type { PaymentOrderCalculationStatementProgramBasicInfo } from '@/features/settlement-management/model/payment-order-admin-list'
+import { PaymentOrderCalculationBreakdownTable } from '@/features/settlement/ui/payment-record/payment-order-calculation-breakdown-table'
+import {
+  PaymentOrderCalculationBasisDetailModal,
+  usePaymentOrderCalculationBasisDetailModal,
+} from '@/features/settlement/ui/payment-record/payment-order-calculation-basis-detail-modal'
 import '@/features/settlement/ui/payment-record/payment-order-program-calculation-statement-modal.css'
+import '@/features/program/shared/ui/program-detail/applicant-list/applicant-instructor-basic-info.css'
 import './individual-settlement-review-detail-modal.css'
+
+function IndividualSettlementReviewBasicInfo({
+  basic,
+}: {
+  basic: PaymentOrderCalculationStatementProgramBasicInfo
+}) {
+  return (
+    <div className="applicant-instructor-basic-info">
+      <DetailInfoForm title="기본 정보" mode="view">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field label="프로그램명" fullRow view={basic.programName} readOnlyDisplay />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="프로그램 진행 회차"
+            view={basic.programSessionProgressDisplay}
+            readOnlyDisplay
+          />
+          <DetailInfoForm.Field
+            label="사업 운영 기간"
+            view={basic.businessPeriodDisplay}
+            readOnlyDisplay
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+      <DetailInfoForm title="기본 정보" hideHeader mode="view">
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="지급 조서 처리 현황"
+            fullRow
+            view={<PaymentOrderCalculationStatementProcessingStatusView basic={basic} />}
+            readOnlyDisplay
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
+    </div>
+  )
+}
 
 export type IndividualSettlementReviewDetailModalProps = {
   open: boolean
   programId: string
   participantId: string
   settlementApplicationId: number | null
+  programSessionProgressDisplay?: string | null
+  businessPeriodDisplay?: string | null
   onClose: () => void
   onReviewed?: () => Promise<void> | void
 }
@@ -45,6 +85,8 @@ export function IndividualSettlementReviewDetailModal({
   programId,
   participantId,
   settlementApplicationId,
+  programSessionProgressDisplay,
+  businessPeriodDisplay,
   onClose,
   onReviewed,
 }: IndividualSettlementReviewDetailModalProps) {
@@ -66,21 +108,24 @@ export function IndividualSettlementReviewDetailModal({
   })
 
   const [approveOpen, setApproveOpen] = useState(false)
+  const [approveDoneOpen, setApproveDoneOpen] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
-  const [receiptsOpen, setReceiptsOpen] = useState(false)
-  const [selectedReceipts, setSelectedReceipts] = useState<IndividualSettlementReviewReceipt[]>([])
-  const [selectedItemLabel, setSelectedItemLabel] = useState('')
+
+  const {
+    basisDetailOpen,
+    selectedBasisDetail,
+    handleBasisDetailClick,
+    closeBasisDetailModal,
+  } = usePaymentOrderCalculationBasisDetailModal(open, { remoteData: true })
 
   /* eslint-disable react-hooks/set-state-in-effect -- 모달 닫힘과 동기화 */
   useEffect(() => {
     if (!open) {
       setApproveOpen(false)
+      setApproveDoneOpen(false)
       setRejectOpen(false)
       setRejectReason('')
-      setReceiptsOpen(false)
-      setSelectedReceipts([])
-      setSelectedItemLabel('')
     }
   }, [open])
   /* eslint-enable react-hooks/set-state-in-effect */
@@ -91,26 +136,14 @@ export function IndividualSettlementReviewDetailModal({
   const canApprove = canApproveIndividualSettlement(detail)
   const canReject = canRejectIndividualSettlement(detail)
   const statementView = useMemo(
-    () => (detail ? mapIndividualSettlementReviewToCalculationStatement(detail) : null),
-    [detail]
-  )
-
-  const handleDownload = useCallback(
-    async (file: IndividualSettlementReviewFileRef) => {
-      try {
-        await downloadAdminFile({
-          fileObjectId: file.fileObjectId,
-          fileName: file.fileName,
-        })
-      } catch (error) {
-        handleError(error, { context: 'individualSettlementReviewDetail.downloadFile' })
-        showAlert({
-          title: '안내',
-          content: readApiErrorAlertMessage(error, '첨부파일을 다운로드하지 못했습니다.'),
-        })
-      }
-    },
-    [showAlert]
+    () =>
+      detail
+        ? mapIndividualSettlementReviewToCalculationStatement(detail, {
+            programSessionProgressDisplay,
+            businessPeriodDisplay,
+          })
+        : null,
+    [businessPeriodDisplay, detail, programSessionProgressDisplay]
   )
 
   const showMutationError = useCallback(
@@ -131,6 +164,7 @@ export function IndividualSettlementReviewDetailModal({
         expectedRevisionNo,
       })
       setApproveOpen(false)
+      setApproveDoneOpen(true)
     } catch (error) {
       showMutationError(error)
     }
@@ -167,16 +201,6 @@ export function IndividualSettlementReviewDetailModal({
     showMutationError,
   ])
 
-  const handleBasisDetailClick = useCallback(
-    (row: PaymentOrderCalculationTableRow) => {
-      const receipts = statementView?.receiptsByItemId[row.lineId] ?? []
-      setSelectedItemLabel(row.itemLabel)
-      setSelectedReceipts(receipts)
-      setReceiptsOpen(true)
-    },
-    [statementView]
-  )
-
   const reviewing = approveMutation.isPending || rejectMutation.isPending
   const isStatementActionLocked = !canApprove && !canReject
 
@@ -188,6 +212,7 @@ export function IndividualSettlementReviewDetailModal({
         title="산출 내역서"
         size="large"
         width={1400}
+        zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_STATEMENT_MODAL_Z_INDEX}
         className="payment-order-calc-statement-modal individual-settlement-review-detail-modal"
         footer={
           <CmsButton variant="secondary" size="large" type="button" onClick={onClose}>
@@ -209,10 +234,7 @@ export function IndividualSettlementReviewDetailModal({
           </div>
         ) : (
           <>
-            <PaymentOrderCalculationStatementProgramBasicSection
-              basic={statementView.basic}
-              style={{ minWidth: PAYMENT_ORDER_CALC_STATEMENT_MIN_WIDTH }}
-            />
+            <IndividualSettlementReviewBasicInfo basic={statementView.basic} />
             <PaymentOrderCalculationBreakdownTable
               blocks={statementView.blocks}
               formulaLabel={statementView.formulaLabel}
@@ -220,6 +242,8 @@ export function IndividualSettlementReviewDetailModal({
               institutionColumnTitle="프로그램명"
               dateColumnTitle="교육 진행 일자"
               lectureSessionSegmentLabel="round"
+              tableCellSpec="cms-data-table"
+              actionButtonSize="h32"
               paymentStatementIssueDisabled
               onBasisDetailClick={handleBasisDetailClick}
               headerActions={
@@ -227,6 +251,7 @@ export function IndividualSettlementReviewDetailModal({
                   <>
                     {canReject ? (
                       <CmsButton
+                        type="button"
                         variant="delete"
                         size="medium"
                         disabled={reviewing}
@@ -237,6 +262,7 @@ export function IndividualSettlementReviewDetailModal({
                     ) : null}
                     {canApprove ? (
                       <CmsButton
+                        type="button"
                         variant="primary"
                         size="medium"
                         disabled={reviewing}
@@ -255,18 +281,29 @@ export function IndividualSettlementReviewDetailModal({
 
       <ConfirmModal
         open={approveOpen}
-        title="개인 정산 승인"
-        content="이 개인 정산 신청을 승인하시겠습니까?"
-        confirmText="승인"
+        title="지급조서 확인 안내"
+        content="지급조서 확인 처리 하시겠습니까?"
+        cancelText="취소"
+        confirmText="확인 처리"
+        zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
         onCancel={() => setApproveOpen(false)}
         onConfirm={() => void handleApprove()}
         confirmLoading={approveMutation.isPending}
+      />
+
+      <ActionResultModal
+        open={approveDoneOpen}
+        title="지급조서 확인 완료"
+        body="지급조서 확인이 완료되었습니다."
+        zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
+        onClose={() => setApproveDoneOpen(false)}
       />
 
       <ContentModal
         open={rejectOpen}
         onCancel={() => setRejectOpen(false)}
         title="개인 정산 반려"
+        zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
         className="individual-settlement-review-reject-modal"
         footer={
           <div className="individual-settlement-review-detail-modal__footer">
@@ -321,47 +358,12 @@ export function IndividualSettlementReviewDetailModal({
         </DetailInfoForm>
       </ContentModal>
 
-      <ContentModal
-        open={receiptsOpen}
-        onCancel={() => setReceiptsOpen(false)}
-        title={selectedItemLabel ? `${selectedItemLabel} 산정 기준 상세` : '산정 기준 상세'}
-        size="medium"
-        footer={
-          <CmsButton variant="secondary" size="large" type="button" onClick={() => setReceiptsOpen(false)}>
-            닫기
-          </CmsButton>
-        }
-      >
-        {selectedReceipts.length === 0 ? (
-          <div className="individual-settlement-review-detail-modal__empty">첨부 없음</div>
-        ) : (
-          <ul className="individual-settlement-review-detail-modal__receipt-list">
-            {selectedReceipts.map(receipt => (
-              <li key={receipt.receiptId} className="individual-settlement-review-detail-modal__receipt-item">
-                <span>
-                  {receipt.expenseType} · {formatIndividualSettlementDate(receipt.expenseDate)} ·{' '}
-                  {formatIndividualSettlementWon(receipt.amount)}
-                </span>
-                <div className="individual-settlement-review-detail-modal__file-list">
-                  {(receipt.files ?? []).length === 0
-                    ? '-'
-                    : (receipt.files ?? []).map(file => (
-                        <CmsButton
-                          key={file.fileObjectId}
-                          variant="default"
-                          size="small"
-                          className="individual-settlement-review-detail-modal__file-button"
-                          onClick={() => void handleDownload(file)}
-                        >
-                          {file.fileName}
-                        </CmsButton>
-                      ))}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </ContentModal>
+      <PaymentOrderCalculationBasisDetailModal
+        open={basisDetailOpen}
+        onCancel={closeBasisDetailModal}
+        detail={selectedBasisDetail}
+        zIndex={INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX}
+      />
     </>
   )
 }

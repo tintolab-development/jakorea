@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import { CMS_DATA_TABLE_CELL_H40_ACTION_CLASS } from '@/shared/constants/table'
 import { CmsButton, EmptyState, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { downloadFile } from '@/shared/lib/file-download'
@@ -28,7 +29,7 @@ import { TrainedTeachersEducationJournalViewModal } from './education-journal-vi
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './education-journal-section.css'
 
-const VIEW_CELL_CLASSNAME = 'trained-teachers-education-journal-section__view-cell'
+const VIEW_CELL_CLASSNAME = `${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS} trained-teachers-education-journal-section__view-cell`
 const PROGRESS_NO_COLUMN_WIDTH = 88
 const PROGRESS_SUBMITTED_DATE_COLUMN_WIDTH = 240
 

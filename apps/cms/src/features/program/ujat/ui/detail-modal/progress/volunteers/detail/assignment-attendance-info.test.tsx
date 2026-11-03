@@ -95,4 +95,19 @@ describe('UjatEducationProgressVolunteerAssignmentAttendanceInfo', () => {
     expect(downloadAbsenceEvidenceFile).toHaveBeenNthCalledWith(1, 101, '진단서.pdf')
     expect(downloadAbsenceEvidenceFile).toHaveBeenNthCalledWith(2, 102, '영수증.pdf')
   })
+
+  it('불참 사유가 없어도 출결 관련 정보·불참 사유 섹션을 둔다', () => {
+    render(
+      <UjatEducationProgressVolunteerAssignmentAttendanceInfo
+        assignmentRows={[]}
+        attendanceSummary={attendanceSummary}
+        absenceReasons={[]}
+      />
+    )
+    expect(screen.getByText('출결 관련 정보')).toBeTruthy()
+    expect(screen.getByText('수료 여부')).toBeTruthy()
+    expect(screen.getByText('지각 횟수')).toBeTruthy()
+    expect(screen.getByText('불참 사유')).toBeTruthy()
+    expect(screen.getByText('사유 기재 후 불참한 이력이 없습니다.')).toBeTruthy()
+  })
 })

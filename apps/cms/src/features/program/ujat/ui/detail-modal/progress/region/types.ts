@@ -24,7 +24,7 @@ export type RegionAssignmentColumn = {
 export type RegionAssignmentCell =
   | {
       kind: 'empty'
-      /** 참여 불가일(unavailability) — 연한 빨간 배경 + 불가 뱃지 */
+      /** 참여 불가일(unavailability) — 연한 빨간 배경. 대체자 없으면 `-` */
       blockedEmpty?: boolean
       /** 참여 불가일 대체 봉사자 이름 — BE unavailability `replacementParticipantId` 기준 */
       substituteName?: string
@@ -36,6 +36,8 @@ export type RegionAssignmentCell =
       isSolo?: boolean
       /** 참여 불가·활동 포기 등으로 재배정 전까지 빨간 표기 (`needsReassignment`) */
       isInvalidAssignment?: boolean
+      /** allocation-matrix cell.assignmentStatus. 출결 담당 후보는 ASSIGNED만 */
+      assignmentStatus?: string
     }
 
 export type RegionAssignmentVolunteerRow = {

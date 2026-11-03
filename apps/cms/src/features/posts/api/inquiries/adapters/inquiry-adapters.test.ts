@@ -29,6 +29,28 @@ describe('inquiry-adapters', () => {
     })
   })
 
+  it('keeps server-masked inquiry fields as returned', () => {
+    const rows = mapInquiryListResponse({
+      items: [
+        {
+          id: 986202,
+          title: '문의 제목 연락처 010-****-5432',
+          content: '서버가 마스킹한 본문 값',
+          inquirerPhone: '010-****-1357',
+          inquirerEmail: 'inquiry.***@example.com',
+          inquirerName: '문의자 R26',
+        },
+      ],
+    })
+    expect(rows[0]).toMatchObject({
+      title: '문의 제목 연락처 010-****-5432',
+      body: '서버가 마스킹한 본문 값',
+      phone: '010-****-1357',
+      email: 'inquiry.***@example.com',
+      memberName: '문의자 R26',
+    })
+  })
+
   it('maps CLOSED and answers to ANSWERED', () => {
     const detail = mapInquiryDetail(
       // OpenAPI enum is PENDING|ANSWERED; mapper still accepts legacy CLOSED

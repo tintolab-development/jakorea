@@ -53,7 +53,10 @@ import {
   ASSIGNMENT_CANCEL_REASON_MIN_LENGTH,
   ASSIGNMENT_CANCEL_REASON_TOO_SHORT_ALERT,
 } from './assignment-cancel-errors'
-import { toUjatAssignmentCancelRequest } from './assignment-cancel-request'
+import {
+  assignmentCancelUsesReasonModal,
+  toUjatAssignmentCancelRequest,
+} from './assignment-cancel-request'
 import './assignment.css'
 
 type AssignmentProgressExportRow = {
@@ -281,6 +284,14 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
       return
     }
 
+    if (row.scheduleId == null || !row.assignmentGroupId) {
+      showAlert({
+        title: '안내',
+        content: '배정 정보를 확인할 수 없어 취소할 수 없습니다.',
+      })
+      return
+    }
+
     if (row.classDisplay.kind !== 'class' && row.assignedInstitution.kind === 'dash') {
       showAlert({
         title: '안내',
@@ -370,8 +381,9 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
     [attendanceCorrectionTargetRowId, rows]
   )
 
-  // 서버 `assignmentNotificationSent === false`만 간단 확인. 그 외(true·미제공)는 사유+알림.
-  const cancelRequiresMemberNotify = cancelTargetRow?.assignmentNotificationSent !== false
+  const cancelRequiresMemberNotify = assignmentCancelUsesReasonModal(
+    cancelTargetRow?.assignmentNotificationSent
+  )
 
   const closeCancelModal = useCallback(() => {
     setCancelModalOpen(false)
@@ -531,6 +543,9 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
         })
         return
       }
+      if (nextRole === 'attendance_manager' && row.canAssignAttendanceManager !== true) {
+        return
+      }
       void progress.changeScheduleRole(row, nextRole).then(
         () => {
           showAlert({
@@ -566,7 +581,7 @@ export function UjatEducationProgressVolunteerAssignmentProgressTab({
         <div className="table-header-actions">
           <div className="table-header-title--wrapper">
             <span className="table-title">교육 배정 및 진행 현황</span>
-            <span className="table-description">{rows.length}건</span>
+            <span className="table-description">총 {rows.length}건</span>
           </div>
           <div className="table-header-actions--wrapper">
             {canWrite ? (

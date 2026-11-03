@@ -22,7 +22,9 @@ import { List15CareerType } from '@/shared/api/generated/careers/schemas/list15C
 import { List15JobInterest } from '@/shared/api/generated/careers/schemas/list15JobInterest'
 import { List15Status } from '@/shared/api/generated/careers/schemas/list15Status'
 
-export const APPLICANT_LIST_PAGE_SIZE = 20
+import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
+
+export const APPLICANT_LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
 
 const JOB_INTEREST: Record<CareerTalentApplicationListItemJobInterest, RecruitJobInterest> = {
   MANAGEMENT_PLANNING: 'managementPlanning',
@@ -82,10 +84,12 @@ export function mapCareerTalentApplicationListItem(
 
 export function toTalentApplicationListParams(
   filter?: RecruitApplicantListFilter,
+  page = 0,
+  size = APPLICANT_LIST_PAGE_SIZE,
 ): List15Params {
   const params: List15Params = {
-    page: 0,
-    size: APPLICANT_LIST_PAGE_SIZE,
+    page,
+    size,
   }
   if (filter?.status === 'pending') params.status = List15Status.PENDING
   if (filter?.status === 'confirmed') params.status = List15Status.CONFIRMED

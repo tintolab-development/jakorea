@@ -1,9 +1,6 @@
 /**
- * 메인 콘텐츠 — remote API opt-in
- * API 로그인(실 JWT)일 때만 Homepage OpenAPI 사용
+ * main-content — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseMainContentRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

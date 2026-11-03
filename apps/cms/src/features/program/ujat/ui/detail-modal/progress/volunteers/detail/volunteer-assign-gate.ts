@@ -20,6 +20,17 @@ export const NO_VACANT_CLASS_OPTIONS_ALERT = {
     '배정 가능한 미배정 학급이 없습니다.\n기관 임시일정의 학급 슬롯을 확인해 주세요.',
 } as const
 
+export const PARTNER_ONLY_ASSIGNMENT_NO_EDUCATION_SLOT_ALERT = {
+  title: BLOCKED_TITLE,
+  content:
+    '학급 슬롯이 없는 파트너 배정입니다.\n교육 배정은 배정 취소 후 다시 진행해 주세요.',
+} as const
+
+export const MISSING_SCHEDULE_ASSIGN_ALERT = {
+  title: '안내',
+  content: '일정 정보를 확인할 수 없어 배정할 수 없습니다.',
+} as const
+
 /** 학급·파트너명이 모두 확정되면 재배정 전 취소가 필요하다 */
 export function isVolunteerScheduleFullyAssigned(
   row: UjatVolunteerAssignmentProgressRow
@@ -60,6 +71,14 @@ export function resolveVolunteerAssignGate(input: {
     }
   }
 
+  if (row.scheduleId == null) {
+    return {
+      ok: false,
+      title: MISSING_SCHEDULE_ASSIGN_ALERT.title,
+      content: MISSING_SCHEDULE_ASSIGN_ALERT.content,
+    }
+  }
+
   if (isVolunteerScheduleFullyAssigned(row)) {
     return {
       ok: false,
@@ -69,10 +88,20 @@ export function resolveVolunteerAssignGate(input: {
     }
   }
 
+  const modalMode = resolveVolunteerAssignmentAssignModalMode(row)
   if (
-    resolveVolunteerAssignmentAssignModalMode(row) === 'education' &&
-    input.vacantClassOptionCount === 0
+    modalMode === 'education' &&
+    row.partner.kind === 'name' &&
+    (row.educationSlotId == null || row.classDisplay.kind !== 'class')
   ) {
+    return {
+      ok: false,
+      title: PARTNER_ONLY_ASSIGNMENT_NO_EDUCATION_SLOT_ALERT.title,
+      content: PARTNER_ONLY_ASSIGNMENT_NO_EDUCATION_SLOT_ALERT.content,
+    }
+  }
+
+  if (modalMode === 'education' && input.vacantClassOptionCount === 0) {
     return {
       ok: false,
       title: NO_VACANT_CLASS_OPTIONS_ALERT.title,

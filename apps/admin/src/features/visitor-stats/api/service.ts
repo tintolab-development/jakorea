@@ -1,22 +1,28 @@
 import type {
+  VisitorStatsMetadata,
   VisitorStatsQuery,
   VisitorStatsResult,
 } from '@/entities/visitor-stats/model/types'
 import { getJAKoreaHomepageAdminAPIStatisticsSubset } from '@/shared/api/generated/statistics/statistics-api'
-import { shouldUseVisitorStatsRemoteApi } from './capabilities'
-import { mapVisitorStatisticsToDomain, toVisitorsParams } from './mappers'
-import { queryVisitorStats } from './store'
+import {
+  mapVisitorStatisticsMetadata,
+  mapVisitorStatisticsToDomain,
+  toVisitorsParams,
+} from './mappers'
 
 function statisticsApi() {
   return getJAKoreaHomepageAdminAPIStatisticsSubset()
 }
 
+export async function getVisitorStatsMetadataService(): Promise<VisitorStatsMetadata> {
+  const response = await statisticsApi().visitorsMetadata()
+  return mapVisitorStatisticsMetadata(response)
+}
+
 export async function getVisitorStatsService(
   query: VisitorStatsQuery,
+  bounds: VisitorStatsMetadata,
 ): Promise<VisitorStatsResult> {
-  if (shouldUseVisitorStatsRemoteApi()) {
-    const response = await statisticsApi().visitors(toVisitorsParams(query))
-    return mapVisitorStatisticsToDomain(response, query)
-  }
-  return queryVisitorStats(query)
+  const response = await statisticsApi().visitors(toVisitorsParams(query, bounds))
+  return mapVisitorStatisticsToDomain(response, query)
 }

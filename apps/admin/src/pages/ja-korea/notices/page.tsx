@@ -31,6 +31,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -43,6 +44,7 @@ import {
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -205,9 +207,16 @@ export function NoticesPage() {
   const removeMutation = useRemoveNotices()
   const setPublicMutation = useSetNoticePublic()
 
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+
   useInvalidateOnWindowEvent(NOTICES_CHANGED_EVENT, noticesQueryKeys.all)
 
-  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const rows = listQuery.rows
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -500,7 +509,7 @@ export function NoticesPage() {
           </div>
         }
         title="공지사항 목록"
-        description={`총 ${rows.length.toLocaleString('ko-KR')}건`}
+        description={`총 ${listQuery.totalCount.toLocaleString('ko-KR')}건`}
         actions={
           <>
             <CmsButton
@@ -538,6 +547,10 @@ export function NoticesPage() {
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>

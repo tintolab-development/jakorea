@@ -4,6 +4,7 @@ import {
   collectUnavailableScheduleIds,
   mapAllocationMatrixToRegionTableData,
   mapApiAttendanceStatusToUjatUi,
+  matrixColumnsIncludeEducationSlots,
 } from './allocation-matrix-adapters'
 import type { UjatAllocationMatrixResponse } from './education-execution-api'
 
@@ -61,6 +62,7 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     })
     expect(table.columns).toHaveLength(1)
     expect(table.columns[0]?.institutionName).toBe('테스트초')
+    expect(table.columns[0]?.dateLabel).toBe('4월 1일')
     expect(table.columns[0]?.scheduleId).toBe('10')
     expect(table.columns[0]?.classSlots[0]?.id).toBe('501')
     expect(table.rows).toHaveLength(2)
@@ -69,6 +71,7 @@ describe('mapAllocationMatrixToRegionTableData', () => {
       classLabel: '3-1',
       isAttendanceManager: true,
       isSolo: true,
+      assignmentStatus: 'ASSIGNED',
     })
     expect(table.rows[1]?.isWithdrawnVolunteer).toBe(true)
     expect(table.rows[1]?.cells[0]).toMatchObject({ kind: 'empty', blockedEmpty: true })
@@ -90,6 +93,7 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     })
     expect(table.columns[0]?.location).toBe('-')
     expect(table.columns[0]?.isoDate).toBe('2026-11-06')
+    expect(table.columns[0]?.dateLabel).toBe('11월 6일')
   })
 
   it('배정 불가 셀에 BE unavailability 대체자 이름을 붙인다', () => {
@@ -105,6 +109,26 @@ describe('mapAllocationMatrixToRegionTableData', () => {
       ],
     }
     expect(collectUnavailableScheduleIds(matrix)).toEqual(['10'])
+    expect(
+      collectUnavailableScheduleIds({
+        ...matrix,
+        volunteers: [
+          {
+            participantId: 202,
+            volunteerName: '이불가',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                unavailable: true,
+                replacementParticipantId: 201,
+                replacementVolunteerName: '김봉사',
+              },
+            ],
+          },
+        ],
+      })
+    ).toEqual([])
 
     const table = mapAllocationMatrixToRegionTableData({
       matrix,
@@ -514,6 +538,173 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     expect(table.columns).toEqual([])
     expect(table.rows).toHaveLength(1)
     expect(table.rows[0]?.cells).toEqual([])
+  })
+
+  it('column.educationSlots가 있으면 org slots보다 우선하고 classCount로 invent하지 않는다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        columns: [
+          {
+            ...MATRIX.columns![0]!,
+            classCount: 5,
+            educationSlots: [
+              { educationSlotId: 701, classLabel: '1-1' },
+              { educationSlotId: 702, grade: '1', className: '2반' },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+      orgSlots: [
+        {
+          slotId: 901,
+          scheduleId: 10,
+          organizationApplicationId: 100,
+          classLabel: 'org-무시',
+        },
+      ],
+    })
+    expect(table.columns[0]?.classSlots).toEqual([
+      { id: '701', classLabel: '1-1' },
+      { id: '702', classLabel: '1학년 2반' },
+    ])
+    expect(matrixColumnsIncludeEducationSlots(MATRIX)).toBe(false)
+    expect(matrixColumnsIncludeEducationSlots({ columns: [{ educationSlots: [] }] })).toBe(true)
+    expect(matrixColumnsIncludeEducationSlots({ columns: [] })).toBe(true)
+  })
+
+  it('educationSlots=[]이면 org/cell로 학급을 invent하지 않는다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        columns: [
+          {
+            ...MATRIX.columns![0]!,
+            classCount: 2,
+            educationSlots: [],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+      orgSlots: [
+        {
+          slotId: 901,
+          scheduleId: 10,
+          organizationApplicationId: 100,
+          classLabel: 'org-무시',
+        },
+      ],
+    })
+    expect(table.columns[0]?.classSlots).toEqual([])
+  })
+
+  it('educationStartAt UTC instant는 Seoul 달력일로 헤더를 만든다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        columns: [
+          {
+            ...MATRIX.columns![0]!,
+            educationStartAt: '2026-10-31T15:00:00Z',
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.columns[0]?.isoDate).toBe('2026-11-01')
+    expect(table.columns[0]?.dateLabel).toBe('11월 1일')
+  })
+
+  it('replacementParticipantId만 있어도 unavailability GET 대상을 건너뛴다', () => {
+    expect(
+      collectUnavailableScheduleIds({
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 202,
+            volunteerName: '이불가',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                unavailable: true,
+                replacementParticipantId: 201,
+                replacementVolunteerName: null,
+              },
+            ],
+          },
+        ],
+      }),
+    ).toEqual([])
+  })
+
+  it('unavailable이고 replacement가 둘 다 null이면 분홍만 두고 이름을 invent하지 않는다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 202,
+            volunteerName: '이불가',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                unavailable: true,
+                replacementParticipantId: 201,
+                replacementVolunteerName: null,
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows[0]?.cells[0]).toEqual({
+      kind: 'empty',
+      blockedEmpty: true,
+    })
+  })
+
+  it('cell.replacementVolunteerName이 있으면 unavailability GET 없이 대체자를 붙인다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 202,
+            volunteerName: '이불가',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                unavailable: true,
+                replacementVolunteerName: '대체김',
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows[0]?.cells[0]).toEqual({
+      kind: 'empty',
+      blockedEmpty: true,
+      substituteName: '대체김',
+    })
+    expect(table.rows[0]?.name).toBe('이불가')
+  })
+
+  it('volunteerName이 비면 행 이름을 -로 둔다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [{ participantId: 201, volunteerName: '', cells: [] }],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows[0]?.name).toBe('-')
   })
 })
 

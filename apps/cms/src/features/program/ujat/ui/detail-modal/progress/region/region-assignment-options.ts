@@ -37,10 +37,11 @@ function countRegionClassSlotAssignees(
 }
 
 export function getRegionAssignmentTableData(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): RegionAssignmentTableData {
-  return getRegionAssignmentTableDataFromStore(half, regionKey)
+  return getRegionAssignmentTableDataFromStore(programId, half, regionKey)
 }
 
 function isVolunteerUnassignedOnColumn(
@@ -109,10 +110,13 @@ export function getRegionDirectAssignClassOptionsFromData(
 }
 
 export function getRegionDirectAssignClassOptions(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): { value: string; label: string; disabled?: boolean }[] {
-  return getRegionDirectAssignClassOptionsFromData(getRegionAssignmentTableData(half, regionKey))
+  return getRegionDirectAssignClassOptionsFromData(
+    getRegionAssignmentTableData(programId, half, regionKey)
+  )
 }
 
 /**
@@ -124,7 +128,7 @@ export function mapRegionDirectAssignCandidateOptions(
 ): { value: string; label: string }[] {
   return (response?.candidates ?? []).flatMap(candidate => {
     if (candidate.participantId == null) return []
-    const name = candidate.volunteerName?.trim() || `봉사자 ${candidate.participantId}`
+    const name = candidate.volunteerName?.trim() || '-'
     const sourceClass = formatUjatGradeClassDisplayLabel(candidate.sourceClassLabel)
     const label =
       candidate.sourceAssignmentGroupId != null
@@ -218,11 +222,12 @@ export function getRegionBlockedDateVolunteerOptionsFromData(
 }
 
 export function getRegionBlockedDateVolunteerOptions(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): { value: string; label: string }[] {
   return getRegionBlockedDateVolunteerOptionsFromData(
-    getRegionAssignmentTableData(half, regionKey)
+    getRegionAssignmentTableData(programId, half, regionKey)
   )
 }
 
@@ -241,10 +246,13 @@ export function getRegionEducationDateOptionsFromData(
 }
 
 export function getRegionEducationDateOptions(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ): { value: string; label: string }[] {
-  return getRegionEducationDateOptionsFromData(getRegionAssignmentTableData(half, regionKey))
+  return getRegionEducationDateOptionsFromData(
+    getRegionAssignmentTableData(programId, half, regionKey)
+  )
 }
 
 /** 선택한 교육일(진행일)에 배정이 없는 대체 봉사자 — 배정일 수 오름차순 */
@@ -274,13 +282,14 @@ export function getRegionBlockedDateSubstituteVolunteerOptionsFromData(
 }
 
 export function getRegionBlockedDateSubstituteVolunteerOptions(
+  programId: string,
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey,
   targetVolunteerId: string,
   blockedDateLabels: string[]
 ): { value: string; label: string }[] {
   return getRegionBlockedDateSubstituteVolunteerOptionsFromData(
-    getRegionAssignmentTableData(half, regionKey),
+    getRegionAssignmentTableData(programId, half, regionKey),
     targetVolunteerId,
     blockedDateLabels
   )

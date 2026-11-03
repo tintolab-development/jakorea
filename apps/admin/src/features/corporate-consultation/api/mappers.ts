@@ -16,7 +16,9 @@ import type { StatusUpdateRequest } from '@/shared/api/generated/sponsorship/sch
 import { StatusUpdateRequestStatus } from '@/shared/api/generated/sponsorship/schemas/statusUpdateRequestStatus'
 import { List14Status } from '@/shared/api/generated/sponsorship/schemas/list14Status'
 
-export const LIST_PAGE_SIZE = 20
+import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
+
+export const LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
 
 function toDomainStatus(status: string | undefined): ConsultationStatus {
   return status === 'CONFIRMED' ? 'confirmed' : 'pending'
@@ -90,10 +92,12 @@ export function mapConsultationDetailToDomain(
 
 export function toConsultationListParams(
   filter: CorporateConsultationListFilter = {},
+  page = 0,
+  size = LIST_PAGE_SIZE,
 ): List14Params {
   const params: List14Params = {
-    page: 0,
-    size: LIST_PAGE_SIZE,
+    page,
+    size,
   }
 
   if (filter.status === 'pending') params.status = List14Status.PENDING

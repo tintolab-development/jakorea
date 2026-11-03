@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
+import { CMS_DATA_TABLE_CELL_H40_ACTION_CLASS } from '@/shared/constants/table'
 import { CmsButton } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { InterviewAssignmentStatusText } from '../shared/interview-assignment-status-text'
@@ -95,7 +96,13 @@ export function useUjatVolunteerDocPassedColumns({
         key: 'interviewAssignmentAction',
         width: 160,
         align: 'center' as const,
-        className: CENTER_CELL_CLASS,
+        className: `${CENTER_CELL_CLASS} ${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS}`,
+        onHeaderCell: () => ({
+          className: `${CENTER_CELL_CLASS} ${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS}`,
+        }),
+        onCell: () => ({
+          className: `${CENTER_CELL_CLASS} ${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS}`,
+        }),
         render: (_value: unknown, record: UjatVolunteerApplicantRow) => {
           const isAssigned = record.interviewAssignmentStatus === 'assigned'
           const label = isAssigned ? '면접일 재배정' : '면접일 배정'

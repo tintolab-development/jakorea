@@ -713,7 +713,9 @@ export function flushParticipantSessionOverlaysToOperationalStores(options?: {
     if (options?.excludeCatalogId != null && catalogId === options.excludeCatalogId) continue
     if (
       companySchoolRhf != null &&
-      (catalogId === 'recruitment-economy' || catalogId === 'application-economy')
+      (catalogId === 'recruitment-economy' ||
+        catalogId === 'recruitment-instructor' ||
+        catalogId === 'application-economy')
     ) {
       continue
     }
@@ -759,8 +761,10 @@ export function writeParticipantEditorSessionSnapshot(args: {
     editorState,
   })
   if (args.markHydratedWhenOverlayPresent) {
+    // 신청 양식은 overlay KV가 없어도 표 셀(제공받는 곳)이 draft에만 있다.
+    // hydrated 미표시면 탭 복귀 시 시드/저장본이 세션 캐시를 덮어 필수값이 유실된다.
+    args.hydratedIds.add(args.cacheKey)
     if (overlay != null && Object.keys(overlay).length > 0) {
-      args.hydratedIds.add(args.cacheKey)
       participantSessionOverlayByCatalogId.set(args.persistTemplateId, overlay)
     }
     rememberRegistrationWizardSessionDraft({

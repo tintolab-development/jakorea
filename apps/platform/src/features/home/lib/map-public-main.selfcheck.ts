@@ -141,6 +141,20 @@ const merged = mergePublicMainWithFallback(
 
 assert.equal(merged.heroes.length, 1)
 assert.deepEqual(merged.heroes[0]?.titleLines, ['청소년의 가능성이', '더 넓은 세상과 만납니다'])
+
+const escapedTitle = mergePublicMainWithFallback(
+  {
+    heroes: [
+      {
+        id: 11,
+        displayOrder: 1,
+        mainTitle: '첫줄\\n둘째줄',
+      },
+    ],
+  },
+  fallback,
+)
+assert.deepEqual(escapedTitle.heroes[0]?.titleLines, ['첫줄', '둘째줄'])
 assert.equal(merged.heroes[0]?.href, '/about')
 assert.equal(merged.heroes[0]?.external, false)
 assert.equal(merged.educationTitle, '원격 교육 제목')

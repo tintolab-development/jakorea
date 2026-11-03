@@ -82,6 +82,11 @@ export function useMailSendForm(open: boolean) {
   }, [])
 
   useEffect(() => {
+    if (open) return
+    setRecipients([])
+  }, [open])
+
+  useEffect(() => {
     if (!open) return
     setProgramId(MAIL_SEND_DEFAULT_PROGRAM_ID)
     setTemplateId(undefined)
@@ -156,6 +161,10 @@ export function useMailSendForm(open: boolean) {
     setRecipients([])
   }, [])
 
+  const clearCandidateRecipients = useCallback(() => {
+    setRecipients(prev => prev.filter(item => item.source === 'manual'))
+  }, [])
+
   const getDraft = useCallback(() => {
     return buildMailSendPayload({
       programId,
@@ -225,6 +234,7 @@ export function useMailSendForm(open: boolean) {
     updateRecipientVariable,
     removeRecipients,
     clearRecipients,
+    clearCandidateRecipients,
     getDraft,
     getPreviewAttachments: compose.getPreviewAttachments,
     getPreviewRecipient,

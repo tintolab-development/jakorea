@@ -1,8 +1,6 @@
 /**
- * 메뉴별 조회 통계 — remote API opt-in
+ * menu-view-stats — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseMenuViewStatsRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

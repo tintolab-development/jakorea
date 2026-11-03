@@ -67,3 +67,14 @@ export function getSatisfactionAudienceTabsForSurveyTab(
 export function defaultSatisfactionAudienceForSurveyTab(tab: string): UjatSatisfactionAudienceKey {
   return getSatisfactionAudienceTabsForSurveyTab(tab)[0]?.key ?? 'teacher'
 }
+
+export type UjatSatisfactionBindingTargetRole = 'TEACHER' | 'VOLUNTEER_H1' | 'VOLUNTEER_H2'
+
+/** SATISFACTION form-binding `targetRole` — UJAT 봉사단/학교 탭 분기와 동일 */
+export function resolveUjatSatisfactionBindingTargetRole(
+  audience: UjatSatisfactionAudienceKey
+): UjatSatisfactionBindingTargetRole {
+  if (audience === 'teacher') return 'TEACHER'
+  if (audience === 'volunteer_h2') return 'VOLUNTEER_H2'
+  return 'VOLUNTEER_H1'
+}

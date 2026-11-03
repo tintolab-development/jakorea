@@ -7,7 +7,7 @@
  */
 
 /**
- * MASKED | RAW. 정산 상세 GET은 항상 MASKED
+ * MASKED | RAW. 정산 상세 GET은 항상 MASKED. 계좌 지급 현황 상세(GET /api/admin/account-payments/{id}, 정책 CMS-09)는 RAW: phone·email·gender·birthDate(yyyy-MM-dd)·addressRoad·addressDetail·bankName·accountNumber·accountHolder 원문, residentRegistrationNumber·nameEn·affiliation은 RAW에서도 마스킹.
  */
 export type SettlementFrontendPayeeResponsePrivacyMaskingLevel = typeof SettlementFrontendPayeeResponsePrivacyMaskingLevel[keyof typeof SettlementFrontendPayeeResponsePrivacyMaskingLevel];
 

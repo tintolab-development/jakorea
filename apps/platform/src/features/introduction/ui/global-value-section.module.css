@@ -96,7 +96,10 @@
 
 .korean {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
   word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .contentLeft {
@@ -212,6 +215,9 @@
   }
 
   .item {
+    --value-motion: 560ms cubic-bezier(0.22, 1, 0.36, 1);
+    --value-fade: 280ms cubic-bezier(0.4, 0, 1, 1);
+
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -219,16 +225,22 @@
     min-width: 0;
     box-sizing: border-box;
     overflow: hidden;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
     transition:
-      padding 500ms cubic-bezier(0.4, 0, 0.2, 1),
-      min-height 500ms cubic-bezier(0.4, 0, 0.2, 1),
-      gap 500ms cubic-bezier(0.4, 0, 0.2, 1);
+      padding var(--value-motion),
+      min-height var(--value-motion),
+      gap var(--value-motion),
+      flex-grow var(--value-motion);
   }
 
   /* collapsed: 최소 높이 72px, 콘텐츠 줄바꿈 시 높이 자동 증가 */
   .item.isCollapsed {
     min-height: 72px;
-    flex: 0 0 auto;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
     align-items: center;
     gap: var(--spacing-80);
     padding: var(--spacing-20) var(--spacing-100);
@@ -239,7 +251,9 @@
    * flex:1을 전 expanded에 주지 않음.
    */
   .item.isExpanded {
-    flex: 0 0 auto;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: auto;
     align-items: stretch;
     gap: var(--spacing-80);
     margin: 0;
@@ -250,9 +264,12 @@
    * collapsed가 하나라도 있으면: 마지막 expanded(보통 05 Active)만
    * list 남은 높이를 차지. 01~04 실제 collapsed 높이만큼 뺀 나머지가 05 영역.
    * (초기 전체 expanded에는 .isCollapsed가 없어 이 규칙 미적용)
+   * flex-grow 0→1 을 01~04 접힘과 같은 500ms로 보간해 05만 높이 점프하지 않게 함.
    */
   .isAccordion .list:has(.isCollapsed) .item.isExpanded:last-child {
-    flex: 1 1 0;
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
@@ -279,7 +296,7 @@
     max-width: 50vw;
     min-width: 0;
     gap: var(--spacing-24);
-    transition: gap 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: gap var(--value-motion);
   }
 
   .isExpanded .contentLeft {
@@ -295,11 +312,11 @@
     flex: 1;
     min-width: 0;
     align-self: stretch;
-    /* icon은 absolute → 한글만 flow; expanded에서 하단 정렬 유지 */
+    /* icon은 absolute → 한글만 flow; 접혀도 flex-end 유지해 국문이 박스와 함께 올라감 */
     justify-content: flex-end;
     height: auto;
     align-items: flex-start;
-    transition: gap 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: gap var(--value-motion);
   }
 
   .number {
@@ -312,33 +329,37 @@
 
   .isCollapsed .contentRight {
     align-self: stretch;
-    justify-content: center;
+    justify-content: flex-end;
     height: auto;
     gap: 0;
   }
 
   /*
    * 접힘/펼침: DOM·flow 유지 + max-height로 실제 layout 수축.
-   * position:absolute / height:0 즉시 제거는 layout snap 유발 → 사용하지 않음.
+   * 12em은 실제 2~3줄보다 커서 후반에 갑자기 오므라짐 → 콘텐츠 높이에 가깝게.
    */
   .isAccordion .english {
     overflow: hidden;
+    transform-origin: top left;
     transition:
-      max-height 500ms cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 500ms cubic-bezier(0.4, 0, 0.2, 1),
-      margin 500ms cubic-bezier(0.4, 0, 0.2, 1);
+      max-height var(--value-motion),
+      opacity var(--value-fade),
+      margin var(--value-motion),
+      transform var(--value-motion);
   }
 
   .isCollapsed .english {
     max-height: 0;
     opacity: 0;
     margin: 0;
+    transform: translate3d(0, -10px, 0);
     pointer-events: none;
   }
 
   .isExpanded .english {
-    max-height: 12em;
+    max-height: 5.6em;
     opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 
   .english {
@@ -360,19 +381,23 @@
     flex: none;
     margin: 0;
     opacity: 1;
+    transform-origin: left top;
     transition:
-      top 500ms cubic-bezier(0.4, 0, 0.2, 1),
-      opacity 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      top var(--value-motion),
+      opacity var(--value-fade),
+      transform var(--value-motion);
   }
 
   .isExpanded .icon {
     top: 0;
     opacity: 1;
+    transform: scale(1);
   }
 
   .isCollapsed .icon {
     top: calc(var(--spacing-60) - var(--spacing-20));
     opacity: 0;
+    transform: scale(0.92);
     pointer-events: none;
   }
 }

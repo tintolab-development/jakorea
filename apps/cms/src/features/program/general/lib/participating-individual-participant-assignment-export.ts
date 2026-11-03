@@ -10,7 +10,16 @@ function resolveSubmissionLabel(
 ): string {
   if (submission.kind === 'none') return '-'
   if (submission.kind === 'not_submitted') return '미제출'
-  if (submission.kind === 'file') return submission.fileName
+  if (submission.kind === 'attachments') {
+    return (
+      submission.items
+        .map(item => (item.kind === 'link' ? item.label : item.fileName))
+        .join(', ') || '-'
+    )
+  }
+  if (submission.kind === 'file') {
+    return [submission.fileName, submission.secondaryFileName].filter(Boolean).join(', ')
+  }
   if (submission.kind === 'link') return submission.label
   if (submission.kind === 'survey_view') return '설문조사 보기'
   return '만족도조사 보기'

@@ -107,9 +107,12 @@ export async function issuePersonalCertificate(
  * GET /api/portal/me/certificates/{id}/download → downloadUrl signed raw PDF only.
  * Poll은 동일 certificate download GET (generatedFileJobId 캐시 키 사용 금지).
  */
-export async function downloadPersonalCertificate(certificateIssueId: number): Promise<void> {
+export async function downloadPersonalCertificate(
+  certificateIssueId: number,
+  options?: { fileName?: string; signal?: AbortSignal },
+): Promise<void> {
   try {
-    await savePortalCertificatePdfDownload(certificateIssueId)
+    await savePortalCertificatePdfDownload(certificateIssueId, options)
   } catch (error) {
     if (error instanceof Error && error.message.trim()) throw error
     throw new Error(await readErrorFromUnknown(error, GENERIC_DOWNLOAD_ERROR))

@@ -36,6 +36,7 @@ import type {
   ConfirmResponse,
   List12Params,
   List15Params,
+  List9Params,
   PageResponseCareerPostingPublicItem,
   PageResponseCareerTalentApplicationListItem,
   PrepareRequest,
@@ -160,10 +161,11 @@ const prepare2 = (
     }
 
 const list9 = (
-
+    params?: List9Params,
  options?: SecondParameter<typeof customInstance<CareerPostingAdminListResponse>>,) => {
       return customInstance<CareerPostingAdminListResponse>(
-      {url: `/api/admin/careers/postings`, method: 'GET'
+      {url: `/api/admin/careers/postings`, method: 'GET',
+        params
     },
       options);
     }

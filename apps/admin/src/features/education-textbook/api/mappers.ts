@@ -16,10 +16,11 @@ import type { TextbookCreateRequest } from '@/shared/api/generated/education/sch
 import type { TextbookListItem } from '@/shared/api/generated/education/schemas/textbookListItem'
 import type { TextbookResponse } from '@/shared/api/generated/education/schemas/textbookResponse'
 import type { TextbookUpdateRequest } from '@/shared/api/generated/education/schemas/textbookUpdateRequest'
+import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
 import { DEFAULT_TEXTBOOK_THUMBNAIL } from '../lib/defaults'
 
-/** list-page-size.mdc */
-export const LIST_PAGE_SIZE = 20
+/** list-page-size.mdc — 무한스크롤 size 기본값 20 */
+export const LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
 
 function looksLikeHtml(value: string): boolean {
   return /^\s*</.test(value)
@@ -78,10 +79,12 @@ export function mapTextbookResponseToDomain(row: TextbookResponse): EducationTex
 
 export function toTextbookListParams(
   filter?: EducationTextbookListFilter,
+  page = 0,
+  size = LIST_PAGE_SIZE,
 ): List8Params {
   const params: List8Params = {
-    page: 0,
-    size: LIST_PAGE_SIZE,
+    page,
+    size,
   }
   if (!filter) return params
 

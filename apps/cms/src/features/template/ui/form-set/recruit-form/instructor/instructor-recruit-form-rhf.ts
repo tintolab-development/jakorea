@@ -4,7 +4,7 @@
  * Part3 4단계: 일반 모집 overlay 스토어에서 강사 모집 정보(`recruit.instructor.*`)를 RHF로 옮겼다.
  * Part3 5단계: 상세정보(`recruitInstructor.detailInfo.*`, 미디어 포함)는 공용 상세정보 RHF 폼(`recruit-detail-info-form-rhf`)이 소유한다.
  * - 일반 위저드: RHF `recruitmentKv`가 정본이고, 같은 값을 이 폼에도 둔다(예전 스토어 투영과 같은 위치).
- * - 1사1교: CS RHF는 강사 모집을 모델링하지 않으므로 이 폼이 정본(CREATE leftover·양식 collect가 이 폼을 읽는다).
+ * - 1사1교: 위저드 RHF `instructorRecruit`가 정본. 이 폼은 일반·양식 편집 경로용이며 CS intercept가 키를 typed state로 보낸다.
  * - 상세·양식 편집기: 양식(templateCode)별 이 RHF 폼이 정본.
  * - 일반 모집 스토어(`general-recruit-overlay-sync`)는 이 폼을 합성해서 기존 읽기·collect 결과를 그대로 만든다.
  */

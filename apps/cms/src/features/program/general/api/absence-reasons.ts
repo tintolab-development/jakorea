@@ -6,12 +6,16 @@ import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
 export type ProgramAbsenceReasonItem = {
   submissionId?: number
+  attendanceId?: number
+  programId?: number
   participantId?: number
   memberId?: number
   scheduleId?: number
   scheduleName?: string
   scheduleStartAt?: string
   reason?: string
+  reviewStatus?: string
+  revisionNo?: number
   fileObjectIds?: number[]
   originalFileNames?: Array<string | null>
   latestRevision?: boolean

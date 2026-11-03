@@ -7,6 +7,10 @@ import type {
   CompanySchoolRecruitFormState,
   CompanySchoolRecruitRange,
 } from './registration-canonical-types'
+import {
+  isCompanySchoolInstructorRecruitmentOverlayKey,
+  splitCompanySchoolInstructorRecruitmentOverlay,
+} from './registration-rhf-instructor-recruitment'
 
 const K = {
   maxAssignableInstructors: 'recruit.maxAssignableInstructors',
@@ -121,9 +125,32 @@ export function isCompanySchoolRecruitmentCatalog(
   )
 }
 
-export function isCompanySchoolRecruitmentOverlayKey(key: string): boolean {
+export function isCompanySchoolOwnedRecruitmentCatalog(
+  templateCode: string | null | undefined
+): boolean {
+  return isCompanySchoolRecruitmentCatalog(templateCode) || templateCode === 'recruitment-instructor'
+}
+
+export function isCompanySchoolInstitutionRecruitmentOverlayKey(key: string): boolean {
   if (key.startsWith(`${ECONOMY_DETAIL}.`) || key.startsWith(`${CANONICAL_DETAIL}.`)) return true
   return Object.prototype.hasOwnProperty.call(INSTITUTION_FIELD_BY_KEY, key)
+}
+
+export function isCompanySchoolRecruitmentOverlayKey(key: string): boolean {
+  return (
+    isCompanySchoolInstitutionRecruitmentOverlayKey(key) ||
+    isCompanySchoolInstructorRecruitmentOverlayKey(key)
+  )
+}
+
+/** catalog 스냅샷을 기관/강사 typed state에 넣을 때 상대 탭 키는 제외한다. */
+export function pickCompanySchoolRecruitmentOverlayForCatalog(
+  templateCode: string | null | undefined,
+  record: Record<string, unknown>
+): Record<string, unknown> {
+  const split = splitCompanySchoolInstructorRecruitmentOverlay(record)
+  if (templateCode === 'recruitment-instructor') return split.instructorRecruit
+  return split.rest
 }
 
 export function cloneCompanySchoolRecruitFormState(
@@ -255,7 +282,7 @@ export function applyCompanySchoolRecruitmentOverlayRecord(
   const economyDetail: Array<[string, unknown]> = []
   const recruitDetail: Array<[string, unknown]> = []
   for (const [key, value] of Object.entries(overlay)) {
-    if (!isCompanySchoolRecruitmentOverlayKey(key)) continue
+    if (!isCompanySchoolInstitutionRecruitmentOverlayKey(key)) continue
     if (key.startsWith(`${CANONICAL_DETAIL}.`)) recruitDetail.push([key, value])
     else if (key.startsWith(`${ECONOMY_DETAIL}.`)) economyDetail.push([key, value])
     else rest.push([key, value])
@@ -346,7 +373,7 @@ export function splitCompanySchoolRecruitmentOverlay(
   const recruitment: Record<string, unknown> = {}
   const rest: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(record)) {
-    if (isCompanySchoolRecruitmentOverlayKey(key)) recruitment[key] = value
+    if (isCompanySchoolInstitutionRecruitmentOverlayKey(key)) recruitment[key] = value
     else rest[key] = value
   }
   return { recruitment, rest }

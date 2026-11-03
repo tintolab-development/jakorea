@@ -35,7 +35,7 @@ import type { ParticipatingVolunteerRow } from '@/features/program/general/model
 import type { OrganizationApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationListItemResponse'
 import type { Session } from '@/shared/api/generated/dashboard/schemas/session'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
-import type { OrganizationApplicationSessionResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationSessionResponse'
+import type { SessionResponse } from '@/shared/api/generated/dashboard/schemas/sessionResponse'
 import type { InstructorApplicationListItemResponse } from '@/shared/api/generated/dashboard/schemas/instructorApplicationListItemResponse'
 import type {
   IndividualApplicationListItemEnriched,
@@ -536,7 +536,7 @@ export function readOrganizationApplicationHopeSessionsForDisplay(
 
 /** 기관 상세 DTO의 `sessions` — OSA·배정 hybrid. 희망 UI에는 사용하지 않는다. */
 export function mapOrganizationApplicationDetailOperationalSessions(
-  sessions: OrganizationApplicationSessionResponse[] | undefined
+  sessions: SessionResponse[] | undefined
 ): ParticipatingSchoolSession[] {
   return (sessions ?? []).map((session, index) => {
     const start = session.startAt ? new Date(session.startAt) : null

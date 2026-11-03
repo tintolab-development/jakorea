@@ -26,6 +26,7 @@ import {
 } from '@/features/program/trained-teachers/lib/registration-rhf-recruitment'
 import {
   patchActiveCompanySchoolRecruitmentOverlay,
+  peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord,
   peekActiveCompanySchoolRecruitmentOverlayRecord,
   peekCompanySchoolRegistrationRhf,
   readActiveCompanySchoolRecruitmentOverlayValue,
@@ -35,6 +36,7 @@ import {
   isCompanySchoolRecruitmentCatalog,
   isCompanySchoolRecruitmentOverlayKey,
 } from '@/features/program/1c-1s/lib/registration-rhf-recruitment'
+import { splitCompanySchoolInstructorRecruitmentOverlay } from '@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment'
 
 import { APPLICANT_RECRUIT_INSTITUTION_OVERLAY_KEYS } from './applicant-recruit-institution-overlay-keys'
 
@@ -91,7 +93,7 @@ export function peekApplicantRecruitInstitutionOverlayRecord(
 ): Record<string, unknown> {
   const csRecord =
     peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)
-      ? peekActiveCompanySchoolRecruitmentOverlayRecord()
+      ? peekActiveCompanySchoolInstitutionRecruitmentOverlayRecord()
       : null
   const ttRecord =
     peekTrainedTeachersRegistrationRhf() != null && isTrainedTeachersRecruitmentCatalog(templateCode)
@@ -114,7 +116,9 @@ export function replaceApplicantRecruitInstitutionOverlayForScope(
     return
   }
   if (peekCompanySchoolRegistrationRhf() != null && isCompanySchoolRecruitmentCatalog(templateCode)) {
-    patchActiveCompanySchoolRecruitmentOverlay(next)
+    patchActiveCompanySchoolRecruitmentOverlay(
+      splitCompanySchoolInstructorRecruitmentOverlay(next).rest
+    )
     const rhfRecord = peekActiveCompanySchoolRecruitmentOverlayRecord()
     if (rhfRecord) syncOverlayLimitsToBridge(rhfRecord)
     return
@@ -238,7 +242,9 @@ export function replaceApplicantRecruitInstitutionOverlay(next: Record<string, u
     return
   }
   if (peekCompanySchoolRegistrationRhf() != null) {
-    patchActiveCompanySchoolRecruitmentOverlay(next)
+    patchActiveCompanySchoolRecruitmentOverlay(
+      splitCompanySchoolInstructorRecruitmentOverlay(next).rest
+    )
     const rhfRecord = peekActiveCompanySchoolRecruitmentOverlayRecord()
     if (rhfRecord) syncOverlayLimitsToBridge(rhfRecord)
     return

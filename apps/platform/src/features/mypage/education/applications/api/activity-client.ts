@@ -178,8 +178,9 @@ export type PortalEducationSchedule = {
   title?: string
   startAt?: string | null
   endAt?: string | null
-  locationName?: string
-  classLabel?: string
+  locationName?: string | null
+  organizationName?: string | null
+  classLabel?: string | null
   attendanceStatus?: string | null
   absenceReason?: string
   sessionLabel?: string

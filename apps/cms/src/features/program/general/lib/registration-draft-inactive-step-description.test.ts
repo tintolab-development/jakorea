@@ -1,6 +1,15 @@
 /** @vitest-environment jsdom */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { WritingFormDraft } from '@/features/template/model/writing-form-draft.schema'
+import {
+  createProgramApplicationFormEconomyDraft,
+  PROGRAM_APPLICATION_FORM_ECONOMY_IDS,
+} from '@/features/template/model/program-application-form-economy-draft'
+import {
+  horizontalTableSetFieldCellValue,
+  type HorizontalTableParagraph,
+} from '@/features/template/model/writing-form-draft.schema'
+import { hasIncompleteApplicationFormThirdPartyRecipient } from '@/features/template/model/application-form-third-party-recipient'
 
 const loadRegistrationWizardFormDraft = vi.fn()
 const persistRegistrationWizardFormDraft = vi.fn()
@@ -102,15 +111,48 @@ describe('임시저장 — 비활성 단계 단락 설명(카드 설명 입력)'
     expect(descriptionOf(persistedDraftFor('application-trained-teachers'))).toBe('신청 설명 A')
   })
 
-  it('옵션 없이(UJAT·1사1교 호출부) 기존처럼 localStorage draft를 쓴다', async () => {
+  it('UJAT: 옵션 없이 localStorage/seed를 쓰고 세션 draft를 쓰지 않는다', async () => {
     loadRegistrationWizardFormDraft.mockResolvedValue(null)
     rememberRegistrationWizardSessionDraft({
-      templateCode: 'application-economy',
+      templateCode: 'application-ujat-school',
       draft: draftWithDescription('세션'),
     })
 
-    await persistRegistrationOperationalOverlaysToLocal('COMPANY_SCHOOL', 'economy')
+    await persistRegistrationOperationalOverlaysToLocal('UJAT', 'ujat')
 
-    expect(descriptionOf(persistedDraftFor('application-economy'))).not.toBe('세션')
+    expect(descriptionOf(persistedDraftFor('application-ujat-school'))).not.toBe('세션')
+  })
+
+  it('1사1교: 세션의 제공받는 곳 값이 seed를 덮지 못하게 한다', async () => {
+    loadRegistrationWizardFormDraft.mockResolvedValue(null)
+    const seed = createProgramApplicationFormEconomyDraft()
+    const paragraph = seed.paragraphs.find(
+      item => item.id === PROGRAM_APPLICATION_FORM_ECONOMY_IDS.thirdPartyConsent
+    ) as HorizontalTableParagraph | undefined
+    if (paragraph == null) throw new Error('third party paragraph missing')
+    const filledParagraph = horizontalTableSetFieldCellValue(paragraph, 0, 0, {
+      kind: 'text',
+      value: 'JA코리아',
+    })
+    const filled = {
+      ...seed,
+      paragraphs: seed.paragraphs.map(item =>
+        item.id === paragraph.id ? filledParagraph : item
+      ),
+    }
+    expect(hasIncompleteApplicationFormThirdPartyRecipient(filled)).toBe(false)
+    rememberRegistrationWizardSessionDraft({
+      templateCode: 'application-economy',
+      draft: filled,
+    })
+
+    await persistRegistrationOperationalOverlaysToLocal('COMPANY_SCHOOL', 'economy', {
+      preferSessionDrafts: true,
+      activeCatalogId: 'recruitment-economy',
+    })
+
+    const persisted = persistedDraftFor('application-economy')
+    expect(persisted).toBeTruthy()
+    expect(hasIncompleteApplicationFormThirdPartyRecipient(persisted!)).toBe(false)
   })
 })

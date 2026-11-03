@@ -66,6 +66,8 @@ export function UjatEducationProgressAssignmentsSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         showFilter
+        filterResponsiveWrap={false}
+        hasActiveFilters={hasActiveFilters}
         title={firstSession ? <UjatAssignmentSessionGroupHeader session={firstSession} /> : null}
         hideExcelDownload
         actions={

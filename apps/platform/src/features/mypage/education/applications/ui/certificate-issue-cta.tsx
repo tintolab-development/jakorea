@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
+import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
-import { PFAlertModal, PFButton } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner } from '@/shared/ui'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
 import {
   useDownloadMyCertificateMutation,
@@ -13,6 +14,7 @@ import {
   resolveCertificateCtaView,
   shouldFetchIndividualCertificateAvailability,
 } from '../lib/certificate-cta'
+import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import styles from './certificate-issue-cta.module.css'
 
 type CertificateIssueCtaProps = {
@@ -58,6 +60,7 @@ export function CertificateIssueCta({
     applicationId,
   })
   const downloadMutation = useDownloadMyCertificateMutation()
+  const { displayName } = useMypageMember()
   const pendingRef = useRef(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [completeIssuedAt, setCompleteIssuedAt] = useState<string | null>(null)
@@ -80,7 +83,10 @@ export function CertificateIssueCta({
     if (isBusy || pendingRef.current) return
     pendingRef.current = true
     try {
-      await downloadMutation.mutateAsync(issueId)
+      await downloadMutation.mutateAsync({
+        certificateIssueId: issueId,
+        fileName: buildCertificateDownloadFileName({ memberName: displayName }),
+      })
     } catch (error) {
       setAlertMessage(
         getProgramApplicationApiErrorMessage(error, '수료증을 다운로드하지 못했습니다.'),
@@ -222,6 +228,9 @@ export function CertificateIssueCta({
         description={alertMessage ?? ''}
         onConfirm={() => setAlertMessage(null)}
       />
+      {downloadMutation.isPending ? (
+        <PFLoadingSpinner blocking label="수료증을 다운로드하는 중" />
+      ) : null}
     </>
   )
 }

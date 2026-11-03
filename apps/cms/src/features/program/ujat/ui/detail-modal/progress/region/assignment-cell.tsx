@@ -3,15 +3,12 @@ import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/uj
 
 export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCell }) {
   if (cell.kind === 'empty') {
-    if (cell.blockedEmpty) {
+    if (cell.blockedEmpty && cell.substituteName) {
       return (
         <span className="ujat-region-assignment-table__assignment">
-          <span className="ujat-region-assignment-table__unavailable-badge">불가</span>
-          {cell.substituteName ? (
-            <span className="ujat-region-assignment-table__substitute">
-              대체 {cell.substituteName}
-            </span>
-          ) : null}
+          <span className="ujat-region-assignment-table__substitute">
+            대체 {cell.substituteName}
+          </span>
         </span>
       )
     }
@@ -26,7 +23,6 @@ export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCe
       <span
         className={[
           'ujat-region-assignment-table__class-label',
-          cell.isSolo ? 'ujat-region-assignment-table__class-label--solo' : '',
           cell.isInvalidAssignment ? 'ujat-region-assignment-table__class-label--invalid' : '',
         ]
           .filter(Boolean)

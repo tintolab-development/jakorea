@@ -208,6 +208,11 @@
   text-align: center;
 }
 
+.principles-sortable-table .ant-table-tbody > tr > td.principles-sortable-table__col--icon img {
+  display: block;
+  margin-inline: auto;
+}
+
 /* 수정 모드 전환 시 행 transition 점프 방지 */
 .principles-sortable-table .ant-table-tbody > tr {
   transition: none;

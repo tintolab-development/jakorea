@@ -123,6 +123,7 @@ export type EducationScheduleItem = {
   scheduleStatus?: string | null
   classLabel?: string
   locationName?: string
+  organizationName?: string
   /** 팀 프로그램 회차 정보 — teamRole 이 있을 때만 카드에 역할·팀명 노출 */
   team?: EducationScheduleTeamInfo
 }

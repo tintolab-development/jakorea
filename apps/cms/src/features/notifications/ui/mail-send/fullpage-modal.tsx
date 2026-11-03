@@ -78,6 +78,11 @@ import {
   useMailSenderProfilesQuery,
   useMailTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-mail-send-queries'
+import {
+  useRecipientCandidatePrivacyGate,
+  useReportRecipientCandidateQueryError,
+} from '@/features/notifications/hooks/use-recipient-candidate-privacy'
+import { recipientCandidateErrorNotice } from '@/features/notifications/model/shared/recipient-candidate-privacy'
 import { useMailSendTemplatePickerQuery } from '@/features/notifications/hooks/use-mail-template-tree-query'
 import { SendScheduleField } from '@/features/notifications/ui/shared/send-schedule-field'
 import {
@@ -288,6 +293,20 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     [form.recipients, programNumericId]
   )
 
+  const onRecipientPrivacyFailure = useCallback(
+    (failure: 'forbidden' | 'audit-unavailable') => {
+      if (failure === 'audit-unavailable') form.clearRecipients()
+      else form.clearCandidateRecipients()
+      setSelectedRecipientIds([])
+      setSendConfirmOpen(false)
+    },
+    [form.clearCandidateRecipients, form.clearRecipients]
+  )
+  const recipientPrivacy = useRecipientCandidatePrivacyGate({
+    screenOpen: open,
+    programKey: String(programNumericId ?? ''),
+    onFailure: onRecipientPrivacyFailure,
+  })
   const candidatesQuery = useMailRecipientCandidatesQuery(
     {
       programId: programNumericId,
@@ -303,8 +322,21 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       page: recipientSearch.page,
       size: MAIL_SEND_PICKER_PAGE_SIZE,
     },
-    open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
+    open &&
+      recipientSelectOpen &&
+      recipientPrivacy.queryEnabled &&
+      (programNumericId != null || isWithoutProgram)
   )
+  useReportRecipientCandidateQueryError(
+    recipientPrivacy.report,
+    candidatesQuery.isError,
+    candidatesQuery.error
+  )
+  const candidateNotice =
+    recipientPrivacy.notice ??
+    (candidatesQuery.isError ? recipientCandidateErrorNotice(candidatesQuery.error) : null)
+  const candidateItems =
+    recipientPrivacy.failure || candidatesQuery.isError ? undefined : candidatesQuery.data?.items
   const variablesQuery = useMailTemplateVariablesQuery(
     templateVariablesQuery,
     open && remote && canLoadProgramScoped
@@ -497,6 +529,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   }
 
   const handleSend = () => {
+    if (recipientPrivacy.blockSend) return
     const error = form.validateRequired()
     if (error) {
       showAlert({ title: '필수 입력 안내', content: error })
@@ -511,6 +544,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
   }
 
   const handleConfirmSend = async () => {
+    if (recipientPrivacy.blockSend) return
     if (sending) return
     const variableResult = readVariableCheck()
     if (!variableResult.ok) {
@@ -594,6 +628,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                   variant="primary"
                   size="large"
                   type="button"
+                  disabled={recipientPrivacy.blockSend}
                   onClick={handleSend} >
                   메일 발송
                 </CmsButton>
@@ -759,6 +794,11 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                       않습니다.
                     </p>
                   ) : null}
+                  {candidateNotice ? (
+                    <p className="mail-send-fullpage__section-hint" role="alert">
+                      {candidateNotice}
+                    </p>
+                  ) : null}
                   <RecipientTable
                     recipients={form.recipients}
                     selectedIds={selectedRecipientIds}
@@ -854,9 +894,12 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
       <RecipientSelectModal
         key={recipientSelectOpen ? 'recipient-select-open' : 'recipient-select-closed'}
         open={open && recipientSelectOpen}
-        candidates={candidatesQuery.data?.items}
-        initialSelected={form.recipients}
-        resetKey={recipientTypeMode}
+        candidates={candidateItems}
+        initialSelected={recipientPrivacy.failure ? [] : form.recipients}
+        resetKey={`${recipientTypeMode}:${recipientPrivacy.failure ?? ''}`}
+        statusMessage={candidateNotice}
+        selectionBlocked={recipientPrivacy.blockSelection || candidatesQuery.isError}
+        loading={candidatesQuery.isFetching && !candidatesQuery.isError}
         pageSize={MAIL_SEND_PICKER_PAGE_SIZE}
         typeColumnTitle={typeColumnTitle}
         typeOptions={
@@ -875,28 +918,36 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
           })
         }
         onSearch={remote ? params => setRecipientSearch(params) : undefined}
-        totalCount={candidatesQuery.data?.total}
-        totalPages={candidatesQuery.data?.totalPages}
+        totalCount={candidateItems ? candidatesQuery.data?.total : 0}
+        totalPages={candidateItems ? candidatesQuery.data?.totalPages : 1}
         fetchAllCandidates={
-          remote && (programNumericId != null || isWithoutProgram)
+          remote &&
+          recipientPrivacy.queryEnabled &&
+          (programNumericId != null || isWithoutProgram)
             ? async () => {
-                return fetchAllMailRecipientCandidates({
-                  programId: programNumericId,
-                  keyword: recipientSearch.keyword || undefined,
-                  participantType:
-                    recipientTypeMode === 'participation'
-                      ? toMailSendParticipantTypeApi(recipientSearch.typeValue)
-                      : undefined,
-                  memberType:
-                    recipientTypeMode === 'member'
-                      ? toMailSendMemberTypeApi(recipientSearch.typeValue)
-                      : undefined,
-                })
+                try {
+                  return await fetchAllMailRecipientCandidates({
+                    programId: programNumericId,
+                    keyword: recipientSearch.keyword || undefined,
+                    participantType:
+                      recipientTypeMode === 'participation'
+                        ? toMailSendParticipantTypeApi(recipientSearch.typeValue)
+                        : undefined,
+                    memberType:
+                      recipientTypeMode === 'member'
+                        ? toMailSendMemberTypeApi(recipientSearch.typeValue)
+                        : undefined,
+                  })
+                } catch (error) {
+                  recipientPrivacy.report(error)
+                  throw error
+                }
               }
             : undefined
         }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={recipients => {
+          if (recipientPrivacy.blockSelection) return
           const notices = listMailEmailDuplicateNotices(form.recipients, recipients)
           form.addRecipients(recipients)
           if (notices.length > 0) {

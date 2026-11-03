@@ -37,6 +37,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -48,6 +49,7 @@ import {
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -254,9 +256,16 @@ export function EducationTextbooksPage() {
   const removeMutation = useRemoveEducationTextbooks()
   const setActiveMutation = useSetEducationTextbookActive()
 
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+
   const businessFields = useMemo(() => fieldsQuery.data ?? [], [fieldsQuery.data])
   const educationTargets = useMemo(() => targetsQuery.data ?? [], [targetsQuery.data])
-  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const rows = listQuery.rows
 
   const fieldNameById = useMemo(
     () => new Map(businessFields.map(f => [f.id, f.name])),
@@ -293,12 +302,12 @@ export function EducationTextbooksPage() {
 
   const rowNoMap = useMemo(() => {
     const map = new Map<string, number>()
-    const total = rows.length
+    const total = listQuery.totalCount
     rows.forEach((row, index) => {
       map.set(row.id, total - index)
     })
     return map
-  }, [rows])
+  }, [listQuery.totalCount, rows])
 
   const handleSearch = useCallback(() => {
     applySearch()
@@ -633,7 +642,7 @@ export function EducationTextbooksPage() {
           </div>
         }
         title="교재 목록"
-        description={`총 ${rows.length.toLocaleString('ko-KR')}건`}
+        description={`총 ${listQuery.totalCount.toLocaleString('ko-KR')}건`}
         actions={
           <>
             <CmsButton
@@ -679,6 +688,10 @@ export function EducationTextbooksPage() {
               },
               style: { cursor: 'pointer' },
             })}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>

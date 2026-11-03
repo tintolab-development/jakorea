@@ -3,6 +3,40 @@ export { Plugin, TextSelection, NodeSelection } from '@tiptap/pm/state'
 export type { EditorState, Transaction } from '@tiptap/pm/state'
 export { createRichTextExtensions } from './extensions'
 export { stripPastedDataUriImages } from './strip-pasted-data-uri-images'
+export {
+  buildRawHtmlImageTag,
+  buildRawHtmlSrcdoc,
+  createRawHtmlPreviewFrame,
+  decodeRawHtml,
+  encodeRawHtml,
+  escapeRawHtmlAttr,
+  isRawHtmlDocument,
+  normalizeRawHtmlInput,
+  normalizeRawHtmlLinkUrl,
+  normalizeUploadedImageUrl,
+  RawHtmlBlock,
+  RAW_HTML_BLOCK_ATTR,
+  RAW_HTML_BLOCK_EDIT_DEBOUNCE_MS,
+  RAW_HTML_BLOCK_ENCODING,
+  RAW_HTML_BLOCK_ENCODING_ATTR,
+  RAW_HTML_BLOCK_IFRAME_SANDBOX,
+  RAW_HTML_BLOCK_INLINE_EDIT_META,
+  RAW_HTML_BLOCK_NODE_NAME,
+  RAW_HTML_BLOCK_VALUE_ATTR,
+  RAW_HTML_PREVIEW_MARKER_ATTR,
+  registerRawHtmlImageUploader,
+  registerRawHtmlSourceRequester,
+  renderRawHtmlBlockWrapper,
+  serializeRawHtmlDocument,
+  validateRawHtmlImageFile,
+} from './raw-html-block'
+export type {
+  RawHtmlBlockStorage,
+  RawHtmlImageUploader,
+  RawHtmlSourceRequest,
+  RawHtmlSourceRequester,
+  SerializeRawHtmlDocumentOptions,
+} from './raw-html-block'
 export { createRichTextEditorApi } from './editor-api'
 export { isRichTextEditorReady } from './editor-ready'
 export {
@@ -38,6 +72,19 @@ export {
   setLinkFromUrl,
   RICH_TEXT_IMAGE_ACCEPT,
 } from './insert-actions'
+export {
+  applyImageAlignToContainerStyle,
+  containerStyleHasPersistentLayout,
+  isImageNodeSelection,
+  mergeImageContainerStyle,
+  moveSelectedImageBlock,
+  parseImageAlignFromElement,
+  parseImageContainerStyleFromElement,
+  readImageAlignFromDeclarations,
+  setVisualAlign,
+} from './image-align'
+export type { ImageHorizontalAlign, VisualAlignValue } from './image-align'
+export { shouldInsertDroppedImageFiles } from './dropped-image-files'
 export type { ResolvedRichTextImageSrc } from './insert-actions'
 export {
   EMPTY_RICH_TEXT_TABLE_COMMAND_AVAILABILITY,

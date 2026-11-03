@@ -3,26 +3,16 @@
  */
 
 import type {
+  VisitorStatsMetadata,
   VisitorStatsQuery,
   VisitorStatsResult,
   VisitorStatsRow,
   VisitorStatsUnit,
 } from '@/entities/visitor-stats/model/types'
 import type { VisitorStatistics } from '@/shared/api/generated/statistics/schemas/visitorStatistics'
+import type { VisitorStatisticsMetadata } from '@/shared/api/generated/statistics/schemas/visitorStatisticsMetadata'
 import type { VisitorsParams } from '@/shared/api/generated/statistics/schemas/visitorsParams'
 import { VisitorsUnit } from '@/shared/api/generated/statistics/schemas/visitorsUnit'
-
-/** FE mock / 시드와 동일한 연도 구간 */
-export const VISITOR_STATS_SEED_FROM = '2022-01-01'
-export const VISITOR_STATS_SEED_TO = '2026-07-31'
-
-export const VISITOR_STATS_SEED_YEARS: readonly string[] = [
-  '2026',
-  '2025',
-  '2024',
-  '2023',
-  '2022',
-]
 
 function pad2(n: number): string {
   return String(n).padStart(2, '0')
@@ -51,8 +41,12 @@ function toApiUnit(unit: VisitorStatsUnit): VisitorsParams['unit'] {
   return VisitorsUnit.DAY
 }
 
-function yearBounds(years: string[]): { from: string; to: string } | null {
-  if (years.length === 0) return null
+function optionalYmd(value: string | null | undefined): string | null {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : null
+}
+
+function yearsToBounds(years: string[]): { from: string; to: string } | null {
   const nums = years.map(Number).filter(n => Number.isFinite(n) && n > 0)
   if (nums.length === 0) return null
   const minY = Math.min(...nums)
@@ -60,11 +54,51 @@ function yearBounds(years: string[]): { from: string; to: string } | null {
   return { from: `${minY}-01-01`, to: `${maxY}-12-31` }
 }
 
+export function mapVisitorStatisticsMetadata(
+  response: VisitorStatisticsMetadata,
+): VisitorStatsMetadata {
+  const years = (response.availableYears ?? []).filter(
+    (year): year is string => typeof year === 'string' && year.trim().length > 0,
+  )
+  let minDate = optionalYmd(response.minDate)
+  let maxDate = optionalYmd(response.maxDate)
+  if (!minDate && !maxDate) {
+    const fromYears = yearsToBounds(years)
+    if (fromYears) {
+      minDate = fromYears.from
+      maxDate = fromYears.to
+    }
+  }
+  return { years, minDate, maxDate }
+}
+
+function clampToBounds(
+  from: string,
+  to: string,
+  bounds: VisitorStatsMetadata,
+): { from: string; to: string } {
+  let nextFrom = from
+  let nextTo = to
+  if (bounds.minDate && nextFrom < bounds.minDate) nextFrom = bounds.minDate
+  if (bounds.maxDate && nextTo > bounds.maxDate) nextTo = bounds.maxDate
+  if (nextFrom > nextTo) return { from: nextTo, to: nextTo }
+  return { from: nextFrom, to: nextTo }
+}
+
+function defaultRange(bounds: VisitorStatsMetadata): { from: string; to: string } {
+  const fromYears = yearsToBounds(bounds.years)
+  return {
+    from: bounds.minDate ?? fromYears?.from ?? '',
+    to: bounds.maxDate ?? fromYears?.to ?? '',
+  }
+}
+
+function yearBounds(years: string[]): { from: string; to: string } | null {
+  return yearsToBounds(years)
+}
+
 function monthBounds(years: string[], months: string[]): { from: string; to: string } | null {
-  const yearNums =
-    years.length > 0
-      ? years.map(Number).filter(n => Number.isFinite(n) && n > 0)
-      : VISITOR_STATS_SEED_YEARS.map(Number)
+  const yearNums = years.map(Number).filter(n => Number.isFinite(n) && n > 0)
   const monthNums =
     months.length > 0
       ? months.map(m => Number(m)).filter(n => Number.isFinite(n) && n >= 1 && n <= 12)
@@ -90,45 +124,49 @@ function monthBounds(years: string[], months: string[]): { from: string; to: str
 
 /**
  * 도메인 필터 → visitors GET params.
- * 빈 선택 = 시드 전체(연·월). 일별 빈 기간 = 시드 종료일 기준 최대 366일.
+ * from/to는 metadata minDate/maxDate(없으면 availableYears 구간)로 클램프.
  */
-export function toVisitorsParams(query: VisitorStatsQuery): VisitorsParams {
+export function toVisitorsParams(
+  query: VisitorStatsQuery,
+  bounds: VisitorStatsMetadata,
+): VisitorsParams {
   const unit = toApiUnit(query.unit)
-  let from = VISITOR_STATS_SEED_FROM
-  let to = VISITOR_STATS_SEED_TO
+  const fallback = defaultRange(bounds)
+  let from = fallback.from
+  let to = fallback.to
 
   if (query.unit === 'year') {
-    const bounds = yearBounds(query.years)
-    if (bounds) {
-      from = bounds.from
-      to = bounds.to > VISITOR_STATS_SEED_TO ? VISITOR_STATS_SEED_TO : bounds.to
+    const selected = yearBounds(query.years)
+    if (selected) {
+      from = selected.from
+      to = selected.to
     }
   } else if (query.unit === 'month') {
-    const bounds = monthBounds(query.years, query.months)
-    if (bounds) {
-      from = bounds.from < VISITOR_STATS_SEED_FROM ? VISITOR_STATS_SEED_FROM : bounds.from
-      to = bounds.to > VISITOR_STATS_SEED_TO ? VISITOR_STATS_SEED_TO : bounds.to
+    const yearSource = query.years.length > 0 ? query.years : bounds.years
+    const selected = monthBounds(yearSource, query.months)
+    if (selected) {
+      from = selected.from
+      to = selected.to
     }
-  } else {
-    if (query.from && query.to) {
-      from = query.from
-      to = query.to
-    } else if (query.from) {
-      from = query.from
-      to = addDays(query.from, 365)
-      if (to > VISITOR_STATS_SEED_TO) to = VISITOR_STATS_SEED_TO
-    } else if (query.to) {
-      to = query.to
-      from = addDays(query.to, -365)
-      if (from < VISITOR_STATS_SEED_FROM) from = VISITOR_STATS_SEED_FROM
-    } else {
-      to = VISITOR_STATS_SEED_TO
-      from = addDays(VISITOR_STATS_SEED_TO, -365)
-      if (from < VISITOR_STATS_SEED_FROM) from = VISITOR_STATS_SEED_FROM
-    }
+  } else if (query.from && query.to) {
+    from = query.from
+    to = query.to
+  } else if (query.from) {
+    from = query.from
+    to = addDays(query.from, 365)
+  } else if (query.to) {
+    to = query.to
+    from = addDays(query.to, -365)
+  } else if (fallback.to) {
+    to = fallback.to
+    from = addDays(fallback.to, -365)
   }
 
-  return { unit, from, to }
+  const clamped = clampToBounds(from, to, bounds)
+  const params: VisitorsParams = { unit }
+  if (clamped.from) params.from = clamped.from
+  if (clamped.to) params.to = clamped.to
+  return params
 }
 
 function mapPointToRow(

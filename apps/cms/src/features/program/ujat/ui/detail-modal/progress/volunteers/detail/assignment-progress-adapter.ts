@@ -2,7 +2,10 @@ import dayjs from 'dayjs'
 import { formatArrivalTimeForDisplay } from '@/shared/lib/attendance-arrival-time'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import type { ProgramAbsenceReasonItem } from '@/features/program/general/api/absence-reasons'
-import { mapApiAttendanceStatusToUjatUi } from '@/features/program/ujat/api/allocation-matrix-adapters'
+import {
+  isUjatAllocationAssignmentStatusAssigned,
+  mapApiAttendanceStatusToUjatUi,
+} from '@/features/program/ujat/api/allocation-matrix-adapters'
 import type {
   UjatAllocationColumnDto,
   UjatAllocationMatrixResponse,
@@ -66,9 +69,19 @@ type SubmissionHit = {
   volunteer: UjatAssignmentVolunteerDto
 }
 
+const SUBMITTED_DOCUMENT_STATUSES = new Set([
+  'SUBMITTED',
+  'APPROVED',
+  'DEADLINE_MISSED',
+  'FEEDBACK_REQUESTED',
+  'REVISED',
+])
+
+/** NOT_SUBMITTED·null·공백·알 수 없는 값은 미제출. 목록 라벨 조합과 별개로 이 탭은 6종 중 제출 5종을 제출로 본다. */
 function isDocumentSubmitted(status: string | null | undefined): boolean {
   const normalized = status?.trim().toUpperCase()
-  return normalized === 'SUBMITTED' || normalized === 'REVISED'
+  if (!normalized) return false
+  return SUBMITTED_DOCUMENT_STATUSES.has(normalized)
 }
 
 function isCancelledAssignment(status: string | null | undefined): boolean {
@@ -81,7 +94,7 @@ function formResponseId(value: number | null | undefined): number | undefined {
 }
 
 function volunteerDisplayName(volunteer: UjatAllocationVolunteerRowDto): string {
-  return volunteer.volunteerName?.trim() || `봉사자 ${volunteer.participantId ?? ''}`
+  return volunteer.volunteerName?.trim() || '-'
 }
 
 function scheduleLabelFrom(iso: string | null | undefined): string {
@@ -358,7 +371,7 @@ function buildAbsenceReasons(
 }
 
 type RowDraft = {
-  column?: UjatAllocationColumnDto
+  column: UjatAllocationColumnDto
   scheduleId: number
   organizationApplicationId?: number | null
   educationDate?: string | null
@@ -366,7 +379,7 @@ type RowDraft = {
 }
 
 function rowIdentity(draft: RowDraft): string {
-  const columnKey = draft.column?.columnKey?.trim()
+  const columnKey = draft.column.columnKey?.trim()
   if (columnKey) return columnKey
   return [
     draft.scheduleId,
@@ -393,10 +406,8 @@ export function buildVolunteerAssignmentProgressView(
   )
 
   const drafts: RowDraft[] = []
-  const seenScheduleIds = new Set<number>()
   ;(matrix.columns ?? []).forEach((column, index) => {
     if (column.scheduleId == null) return
-    seenScheduleIds.add(column.scheduleId)
     drafts.push({
       column,
       scheduleId: column.scheduleId,
@@ -406,21 +417,9 @@ export function buildVolunteerAssignmentProgressView(
     })
   })
 
-  ;(submissions.sessions ?? []).forEach((session, index) => {
-    if (session.scheduleId == null || seenScheduleIds.has(session.scheduleId)) return
-    const listed = (session.volunteers ?? []).some(item => item.participantId === participantId)
-    if (!listed) return
-    seenScheduleIds.add(session.scheduleId)
-    drafts.push({
-      scheduleId: session.scheduleId,
-      educationDate: session.educationDate,
-      index,
-    })
-  })
-
   const rows: UjatVolunteerAssignmentProgressRow[] = drafts.map(draft => {
     const scheduleKey = String(draft.scheduleId)
-    const cell = draft.column && volunteer ? cellForColumn(volunteer, draft.column) : undefined
+    const cell = volunteer ? cellForColumn(volunteer, draft.column) : undefined
     const submission = findSubmission(submissions, draft.scheduleId, participantId)
     const partnerAssignment = findActivePartnerAssignment(
       sources.partnerAssignmentsByScheduleId[scheduleKey],
@@ -441,11 +440,7 @@ export function buildVolunteerAssignmentProgressView(
       !abandoned &&
       (assignmentStatus === 'ASSIGNED' || needsReassignment || rawClassLabel.length > 0)
     const classLabel = assignedFromMatrix ? rawClassLabel || '—' : ''
-    // 기관명: matrix column 우선. submissions-only 행(매트릭스에 없는 일정)만 submission 기관명.
-    const institutionName =
-      draft.column?.organizationName?.trim() ||
-      (draft.column == null ? submission?.volunteer.institutionName?.trim() || '' : '') ||
-      ''
+    const institutionName = draft.column.organizationName?.trim() || ''
     const selfIsSecondary = partnerAssignment?.secondaryParticipantId === participantId
     const partnerParticipantId = selfIsSecondary
       ? partnerAssignment?.primaryParticipantId
@@ -480,11 +475,14 @@ export function buildVolunteerAssignmentProgressView(
     const attendanceManager =
       cell?.attendanceManager === true ||
       partnerAssignment?.attendanceManagerParticipantId === participantId
+    const canAssignAttendanceManager =
+      !abandoned && isUjatAllocationAssignmentStatusAssigned(assignmentStatus)
 
     return {
       id: rowIdentity(draft),
       scheduleLabel: scheduleLabelFrom(draft.educationDate ?? submission?.educationDate),
       role: attendanceManager ? 'attendance_manager' : 'none',
+      canAssignAttendanceManager,
       assignedInstitution: institutionName ? { kind: 'name', value: institutionName } : { kind: 'dash' },
       partner,
       classDisplay: abandoned

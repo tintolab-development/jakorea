@@ -1,8 +1,6 @@
 /**
- * 회원 로그인 이력 — remote API opt-in
+ * member-login-log — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseMemberLoginLogRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

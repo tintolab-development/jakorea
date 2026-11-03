@@ -41,6 +41,7 @@ const matrix: UjatAllocationMatrixResponse = {
           attendanceManager: true,
           assignmentGroupId: 'grp-1',
           organizationApplicationId: 3,
+          assignmentStatus: 'ASSIGNED',
         },
         { columnKey: 'col-2', scheduleId: 11 },
       ],
@@ -56,6 +57,7 @@ const matrix: UjatAllocationMatrixResponse = {
           scheduleId: 10,
           educationSlotId: 501,
           classLabel: '3-1',
+          assignmentStatus: 'ASSIGNED',
         },
       ],
     },
@@ -168,6 +170,7 @@ describe('buildVolunteerAssignmentProgressView', () => {
       selfIsSecondary: false,
       isWithdrawn: false,
       assignmentNotificationSent: false,
+      canAssignAttendanceManager: true,
     })
     expect(assigned?.scheduleLabel).toContain('2026.05.08')
 
@@ -178,6 +181,7 @@ describe('buildVolunteerAssignmentProgressView', () => {
       partner: { kind: 'dash' },
       attendance: { kind: 'dash' },
       educationProgress: 'dash',
+      canAssignAttendanceManager: false,
     })
 
     expect(view.bundle.attendanceSummary).toEqual({
@@ -199,6 +203,46 @@ describe('buildVolunteerAssignmentProgressView', () => {
       '8',
       '9',
     ])
+  })
+
+  it.each([
+    ['SUBMITTED', 15, true],
+    ['APPROVED', 16, true],
+    ['DEADLINE_MISSED', 17, true],
+    ['FEEDBACK_REQUESTED', 18, true],
+    ['REVISED', 19, true],
+    ['NOT_SUBMITTED', null, false],
+    ['  ', null, false],
+    ['UNKNOWN', 20, false],
+    [null, null, false],
+  ] as const)('문서 status %s formResponseId %s 제출 %s', (status, responseId, submitted) => {
+    const view = buildVolunteerAssignmentProgressView({
+      participantId: 7,
+      matrix,
+      submissions: {
+        sessions: [
+          {
+            scheduleId: 10,
+            volunteers: [
+              {
+                participantId: 7,
+                plan: { status, formResponseId: responseId },
+                log: { status, formResponseId: responseId },
+              },
+            ],
+          },
+        ],
+      },
+      partnerAssignmentsByScheduleId: {},
+      attendancesByScheduleId: {},
+      absenceReasons: [],
+    })
+    const row = view.bundle.rows.find(item => item.scheduleId === 10)
+    expect(row?.educationPlanSubmitted).toBe(submitted)
+    expect(row?.educationLogSubmitted).toBe(submitted)
+    expect(row?.educationPlanFormResponseId).toBe(responseId ?? undefined)
+    expect(row?.educationLogFormResponseId).toBe(responseId ?? undefined)
+    expect(row?.educationProgress).toBe(submitted ? 'completed' : 'scheduled')
   })
 
   it('org temporary slots 중 미배정 학급만 교육 배정 옵션으로 둔다', () => {
@@ -306,5 +350,76 @@ describe('buildVolunteerAssignmentProgressView', () => {
     })
 
     expect(view.bundle.rows[0]?.classDisplay).toEqual({ kind: 'class', label: '—' })
+    expect(view.bundle.rows[0]?.canAssignAttendanceManager).toBe(true)
+  })
+
+  it('allocation-matrix에 없는 일정은 submissions로 행을 만들지 않는다', () => {
+    const view = buildVolunteerAssignmentProgressView({
+      participantId: 7,
+      memberId: '70',
+      matrix,
+      submissions: {
+        sessions: [
+          ...(submissions.sessions ?? []),
+          {
+            scheduleId: 99,
+            educationDate: '2026-06-01',
+            volunteers: [
+              {
+                participantId: 7,
+                institutionName: '문서만있는학교',
+                assignedClass: '1-1',
+              },
+            ],
+          },
+        ],
+      },
+      partnerAssignmentsByScheduleId: partnerAssignments,
+      attendancesByScheduleId: attendances,
+      absenceReasons: [],
+    })
+
+    expect(view.bundle.rows.map(row => row.scheduleId)).toEqual([10, 11])
+  })
+
+  it('프로그램 등록만 된 미배정 봉사자는 출결 담당 지정을 막는다', () => {
+    const view = buildVolunteerAssignmentProgressView({
+      participantId: 1695064,
+      memberId: '190070',
+      matrix: {
+        columns: [
+          {
+            columnKey: '187580:1',
+            scheduleId: 187580,
+            educationStartAt: '2026-11-01',
+            organizationName: '테스트초',
+          },
+        ],
+        volunteers: [
+          {
+            participantId: 1695064,
+            memberId: 190070,
+            volunteerName: '여지은',
+            cells: [
+              {
+                columnKey: '187580:1',
+                scheduleId: 187580,
+                assignmentStatus: 'UNASSIGNED',
+              },
+            ],
+          },
+        ],
+      },
+      submissions: { sessions: [] },
+      partnerAssignmentsByScheduleId: {},
+      attendancesByScheduleId: {},
+      absenceReasons: [],
+    })
+
+    expect(view.bundle.rows[0]).toMatchObject({
+      participantId: 1695064,
+      canAssignAttendanceManager: false,
+      classDisplay: { kind: 'dash' },
+    })
   })
 })

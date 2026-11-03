@@ -49,13 +49,17 @@ import { collectWizardApplicationOverlayForCatalog } from '@/features/program/ge
 import {
   clearRegistrationWizardSessionDrafts,
   flushApplicationOperationalOverrides,
+  rememberRegistrationWizardSessionDraft,
 } from '@/features/program/general/lib/registration-wizard-session-drafts'
 import {
   beginRegistrationWizardVisit,
   endRegistrationWizardVisit,
   trackRegistrationWizardVisitSave,
 } from '@/features/program/general/lib/registration-wizard-visit'
-import { describeIncompleteApplicationFormThirdPartyRecipient } from '@/features/program/general/lib/application-form-third-party-recipient-required'
+import {
+  describeIncompleteApplicationFormThirdPartyRecipient,
+  listIncompleteApplicationFormThirdPartyRecipientFieldKeys,
+} from '@/features/program/general/lib/application-form-third-party-recipient-required'
 import { registrationPendingSnapshotId } from '@/features/program/general/lib/registration-local-save'
 import { shouldUseRegistrationCreateFormBindings } from '@/features/program/general/lib/registration-create-form-bindings-capabilities'
 import {
@@ -74,7 +78,7 @@ import { listIncompleteGeneralProgramRecruitmentRequiredFields } from '@/feature
 import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
 import { peekTrainedTeachersRegistrationRhf } from '@/features/program/trained-teachers/lib/registration-rhf-api'
 import { listIncompleteTrainedTeachersRecruitmentRequiredFields } from '@/features/program/trained-teachers/lib/trained-teachers-recruitment-required-fields'
-import { listIncompleteApplicationFormThirdPartyRecipientFieldKeys } from '@/features/program/general/lib/application-form-third-party-recipient-required'
+import { hasIncompleteApplicationFormThirdPartyRecipient } from '@/features/template/model/application-form-third-party-recipient'
 import { formatRegistrationStepTransitionLabel } from '@/features/program/shared/lib/log-program-registration-create-payload'
 import {
   clearRegistrationStepTemplateSelections,
@@ -606,10 +610,12 @@ export function useGeneralProgramRegistrationFlow(
           excludeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
         })
       }
-      // 일반·TT: 떠난 탭의 단락 타이틀·설명(세션 draft)도 함께 기록한다. 1사1교는 기존 동작 유지.
+      // 일반·TT·1사1교: 떠난 탭의 단락 본문(세션 draft)도 함께 기록한다. UJAT는 기존 동작.
       await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant, {
         preferSessionDrafts:
-          registrationFormVariant === 'general' || registrationFormVariant === 'trainedTeachers',
+          registrationFormVariant === 'general' ||
+          registrationFormVariant === 'trainedTeachers' ||
+          registrationFormVariant === 'economy',
         activeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
       })
       syncRegistrationProgramDraftSession({
@@ -772,6 +778,16 @@ export function useGeneralProgramRegistrationFlow(
               draft: participantVm.draft,
             }
           : undefined
+      if (
+        current != null &&
+        current.draft.paragraphs.length > 0 &&
+        !hasIncompleteApplicationFormThirdPartyRecipient(current.draft)
+      ) {
+        rememberRegistrationWizardSessionDraft({
+          templateCode: current.templateCode,
+          draft: current.draft,
+        })
+      }
       const programSnapshot = registrationVm.buildCurrentProgramSnapshot(
         registrationPendingSnapshotId(registrationFormVariant)
       )

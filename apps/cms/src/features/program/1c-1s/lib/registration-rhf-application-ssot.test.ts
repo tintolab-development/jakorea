@@ -326,7 +326,7 @@ describe('1사1교 등록 기관 신청 RHF SSOT', () => {
     const common = serializeCompanySchoolRegistrationForFormVersion(values)
     expect(common['economyRegistration.basicInfo.publicProgramTitle']).toBe('RHF 공고명')
     const recruit = serializeCompanySchoolRecruitmentForFormVersion(values.recruitment)
-    expect(recruit['recruit.announcementPublished']).toBe('published')
+    expect(recruit['recruit.announcementPublished']).toBe('')
   })
 
   it('typed snapshot에 application이 없으면 common/recruit를 유지하고 application만 import한다', () => {

@@ -46,6 +46,7 @@ export interface PaymentOrderCalculationBasisDetailTransportPublicTransit {
   amountWon: number
   receiptFileName?: string
   receiptUrl?: string
+  receiptFileObjectId?: number
 }
 
 export interface PaymentOrderCalculationBasisDetailTransportTripLeg {
@@ -99,6 +100,7 @@ export interface PaymentOrderCalculationBasisDetailLodgingReceipt {
   amountWon: number
   receiptFileName?: string
   receiptUrl?: string
+  receiptFileObjectId?: number
 }
 
 /** 1사1교 외 프로그램 공통 숙박비 */

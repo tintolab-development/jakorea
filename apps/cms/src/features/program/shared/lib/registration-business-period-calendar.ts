@@ -9,9 +9,6 @@ export type BusinessCalendarPeriod = {
   end: string
 }
 
-export const REGISTRATION_BUSINESS_PERIOD_FIRST_HINT =
-  '사업 운영 기간을 먼저 설정해 주세요.'
-
 export const REGISTRATION_BUSINESS_PERIOD_ALERT_TITLE = '사업 운영 기간을 확인해 주세요'
 
 /** Asia/Seoul 달력일(YYYY-MM-DD). ISO UTC를 앞 10자로 자르지 않는다. */

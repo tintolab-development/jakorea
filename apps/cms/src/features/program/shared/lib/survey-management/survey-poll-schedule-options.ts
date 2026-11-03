@@ -36,20 +36,34 @@ export type SurveyPollScheduleSelectOption = {
 export type SurveyPollScheduleBindingRef = {
   binding: {
     formType?: string | null
+    targetRole?: string | null
+    targetType?: string | null
     targetScope?: string | null
     targetScopeId?: number | null
     active?: boolean | null
   }
 }
 
-/** 활성 SURVEY + SCHEDULE 바인딩이 이미 있는 scheduleId 집합 (서버 데이터만). */
+export type SurveyPollUsedScheduleFilter = {
+  formType?: string
+  targetRole?: string
+}
+
+/** 활성 formType + SCHEDULE 바인딩이 이미 있는 scheduleId 집합 (서버 데이터만). 기본 formType=SURVEY. */
 export function collectSurveyPollUsedScheduleIds(
-  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined
+  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined,
+  filter?: SurveyPollUsedScheduleFilter
 ): Set<string> {
+  const formType = (filter?.formType ?? 'SURVEY').trim().toUpperCase()
+  const targetRole = filter?.targetRole?.trim().toUpperCase()
   const used = new Set<string>()
   for (const { binding } of bindings ?? []) {
     if (binding.active === false) continue
-    if (binding.formType?.trim().toUpperCase() !== 'SURVEY') continue
+    if (binding.formType?.trim().toUpperCase() !== formType) continue
+    if (targetRole) {
+      const role = (binding.targetRole ?? binding.targetType ?? '').trim().toUpperCase()
+      if (role !== targetRole) continue
+    }
     if (binding.targetScope?.trim().toUpperCase() !== 'SCHEDULE') continue
     const id = binding.targetScopeId
     if (typeof id !== 'number' || !Number.isFinite(id) || id < 1) continue
@@ -63,20 +77,22 @@ export const SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE = '이미 설문이
 /** 일정 필드가 숨겨진 자동 바인딩 대상이 이미 설문이 있는 SCHEDULE이면 true. PROGRAM 범위는 false. */
 export function isSurveyPollBindingTargetScheduleAlreadyRegistered(
   target: { targetScope?: string | null; targetScopeId?: number | null } | null | undefined,
-  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined
+  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined,
+  filter?: SurveyPollUsedScheduleFilter
 ): boolean {
   if (target?.targetScope?.trim().toUpperCase() !== 'SCHEDULE') return false
   const id = target.targetScopeId
   if (typeof id !== 'number' || !Number.isFinite(id) || id < 1) return false
-  return collectSurveyPollUsedScheduleIds(bindings).has(String(Math.trunc(id)))
+  return collectSurveyPollUsedScheduleIds(bindings, filter).has(String(Math.trunc(id)))
 }
 
 /** 이미 설문이 있는 일정은 노출은 유지하고 disabled만 켠다. 라벨·value는 그대로. */
 export function disableSurveyPollScheduleOptionsWithSurvey(
   options: ReadonlyArray<SurveyPollScheduleSelectOption>,
-  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined
+  bindings: ReadonlyArray<SurveyPollScheduleBindingRef> | null | undefined,
+  filter?: SurveyPollUsedScheduleFilter
 ): SurveyPollScheduleSelectOption[] {
-  const used = collectSurveyPollUsedScheduleIds(bindings)
+  const used = collectSurveyPollUsedScheduleIds(bindings, filter)
   if (used.size === 0) return [...options]
   return options.map(option => (used.has(option.value) ? { ...option, disabled: true } : option))
 }

@@ -4,26 +4,14 @@
  * 코드 스플리팅 적용: React.lazy를 사용한 동적 import
  */
 
-import { lazy, Suspense } from 'react'
+import { Suspense } from 'react'
 import { Navigate, createBrowserRouter, useLocation, useParams } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
 import { RouterLoadingFallback } from '@/app/router/loading-fallback'
+import { lazyLoad } from '@/app/router/lazy-load'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import './router.css'
-
-// Lazy loading wrapper - named export를 default export로 변환
-// Suspense 경계는 Layout 콘텐츠 영역에서 통합 처리
-const lazyLoad = <T extends React.ComponentType<any>>(importFunc: () => Promise<any>) => {
-  return lazy(async () => {
-    const module = await importFunc()
-    const Component = (module.default || Object.values(module)[0]) as T
-    if (!Component) {
-      throw new Error('Failed to load component: No export found')
-    }
-    return { default: Component }
-  })
-}
 
 // 인증 관련 페이지 (즉시 로드)
 import { LoginPage } from '@/pages/auth/login-page'

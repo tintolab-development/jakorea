@@ -750,6 +750,7 @@ export function ParticipatingParticipantFullpageView({
               ) : null}
               <ProgramEditInfoActions
                 size="h40"
+                canWrite={false}
                 isEditing={isApplicationInfoEditing}
                 onEdit={requestStartApplicationInfoEdit}
                 onCancel={cancelApplicationInfoEdit}

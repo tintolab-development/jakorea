@@ -8,13 +8,22 @@ import type {
   RecruitPostingAttachmentMime,
   RecruitPostingCreateInput,
   RecruitPostingFormStatus,
+  RecruitPostingListFilter,
   RecruitPostingStatus,
   RecruitPostingUpdateInput,
 } from '@/entities/recruit-posting/model/types'
+import {
+  normalizeCareerPostingLinkFields,
+  readCareerPostingLinkFields,
+} from '../lib/link-fields.ts'
+import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
 import type { AssetResponse } from '@/shared/api/generated/careers/schemas/assetResponse'
 import type { CareerPostingAdminDetail } from '@/shared/api/generated/careers/schemas/careerPostingAdminDetail'
 import type { CareerPostingAdminItem } from '@/shared/api/generated/careers/schemas/careerPostingAdminItem'
 import type { CareerPostingAdminItemStatus } from '@/shared/api/generated/careers/schemas/careerPostingAdminItemStatus'
+import type { List9Params } from '@/shared/api/generated/careers/schemas/list9Params'
+import { List9Status } from '@/shared/api/generated/careers/schemas/list9Status'
+import { List9Visibility } from '@/shared/api/generated/careers/schemas/list9Visibility'
 import type { CareerPostingCreateRequest } from '@/shared/api/generated/careers/schemas/careerPostingCreateRequest'
 import type { CareerPostingCreateRequestStatus } from '@/shared/api/generated/careers/schemas/careerPostingCreateRequestStatus'
 import type { CareerPostingUpdateRequest } from '@/shared/api/generated/careers/schemas/careerPostingUpdateRequest'
@@ -70,7 +79,7 @@ function mapAttachment(asset: AssetResponse | undefined | null): RecruitPostingA
 
 function mapAdminFields(
   row: CareerPostingAdminItem | CareerPostingAdminDetail,
-): Omit<RecruitPosting, 'contentMarkdown' | 'attachments'> | null {
+): Omit<RecruitPosting, 'contentMarkdown' | 'attachments' | 'buttonLabel' | 'linkUrl'> | null {
   if (row.id == null) return null
   const status = mapStatus(row.status)
   if (!status) return null
@@ -86,12 +95,10 @@ function mapAdminFields(
     createdAt: text(row.createdAt),
     viewCount: 0,
     version: row.version ?? 0,
-    buttonLabel: '',
-    linkUrl: '',
   }
 }
 
-/** 목록 item — body·첨부 없음 */
+/** 목록 item — body·첨부·CTA 없음. CTA는 상세 GET에서만 읽는다. */
 export function mapCareerPostingAdminItem(row: CareerPostingAdminItem): RecruitPosting | null {
   const base = mapAdminFields(row)
   if (!base) return null
@@ -99,6 +106,8 @@ export function mapCareerPostingAdminItem(row: CareerPostingAdminItem): RecruitP
     ...base,
     contentMarkdown: '',
     attachments: [],
+    buttonLabel: '',
+    linkUrl: '',
   }
 }
 
@@ -106,10 +115,13 @@ export function mapCareerPostingAdminItem(row: CareerPostingAdminItem): RecruitP
 export function mapCareerPostingAdminDetail(row: CareerPostingAdminDetail): RecruitPosting | null {
   const base = mapAdminFields(row)
   if (!base) return null
+  const link = readCareerPostingLinkFields(row)
   return {
     ...base,
     contentMarkdown: text(row.body),
     attachments: mapAttachment(row.attachment),
+    buttonLabel: link.buttonLabel,
+    linkUrl: link.linkUrl,
   }
 }
 
@@ -133,6 +145,10 @@ export function toCareerPostingCreateRequest(
   input: RecruitPostingCreateInput,
   attachmentAssetId?: number,
 ): CareerPostingCreateRequest {
+  const link = normalizeCareerPostingLinkFields({
+    buttonLabel: input.buttonLabel,
+    linkUrl: input.linkUrl,
+  })
   const request: CareerPostingCreateRequest = {
     title: input.title.trim(),
     body: input.contentMarkdown,
@@ -142,6 +158,8 @@ export function toCareerPostingCreateRequest(
     recruitStart: toYmd(input.recruitStart),
     recruitEnd: toYmd(input.recruitEnd),
     authorName: input.authorName.trim(),
+    buttonLabel: link.buttonLabel,
+    linkUrl: link.linkUrl,
   }
   if (attachmentAssetId != null) {
     request.attachmentAssetId = attachmentAssetId
@@ -154,6 +172,10 @@ export function toCareerPostingUpdateRequest(
   version: number,
   attachmentAssetId?: number,
 ): CareerPostingUpdateRequest {
+  const link = normalizeCareerPostingLinkFields({
+    buttonLabel: input.buttonLabel,
+    linkUrl: input.linkUrl,
+  })
   const request: CareerPostingUpdateRequest = {
     title: input.title.trim(),
     body: input.contentMarkdown,
@@ -164,6 +186,8 @@ export function toCareerPostingUpdateRequest(
     recruitEnd: toYmd(input.recruitEnd),
     authorName: input.authorName.trim(),
     version,
+    buttonLabel: link.buttonLabel,
+    linkUrl: link.linkUrl,
   }
   if (attachmentAssetId != null) {
     request.attachmentAssetId = attachmentAssetId
@@ -177,4 +201,32 @@ export function toNumericId(id: string): number {
     throw new Error('채용공고 id가 올바르지 않습니다.')
   }
   return numericId
+}
+
+export function toRecruitPostingListParams(
+  filter: RecruitPostingListFilter | undefined,
+  page = 0,
+  size = ADMIN_LIST_PAGE_SIZE,
+): List9Params {
+  const params: List9Params = { page, size }
+  if (!filter) return params
+
+  if (filter.visibility === 'public') params.visibility = List9Visibility.PUBLIC
+  if (filter.visibility === 'private') params.visibility = List9Visibility.PRIVATE
+
+  if (filter.status === 'recruiting') params.status = List9Status.RECRUITING
+  if (filter.status === 'result') params.status = List9Status.RESULT
+  if (filter.status === 'closed') params.status = List9Status.CLOSED
+
+  const title = filter.title?.trim()
+  if (title) params.title = title
+  const authorName = filter.authorName?.trim()
+  if (authorName) params.authorName = authorName
+
+  if (filter.recruitFrom) params.recruitFrom = filter.recruitFrom
+  if (filter.recruitTo) params.recruitTo = filter.recruitTo
+  if (filter.publishedFrom) params.publishedFrom = filter.publishedFrom
+  if (filter.publishedTo) params.publishedTo = filter.publishedTo
+
+  return params
 }

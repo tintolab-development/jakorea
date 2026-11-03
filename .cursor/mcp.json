@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "figma_official": {
+      "type": "http",
       "url": "https://mcp.figma.com/mcp"
     },
     "notion": {

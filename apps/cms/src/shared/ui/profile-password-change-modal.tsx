@@ -30,7 +30,7 @@ type ProfilePasswordChangeFormValues = {
 }
 
 const MODAL_DESCRIPTION =
-  '개인정보를 안전하게 보호하기 위해 비밀번호를 주기적(90일)으로 변경해 주세요.\n비밀번호는 8자 이상의 영문, 숫자, 특수문자를 조합하여 사용 가능합니다.'
+  '개인정보를 안전하게 보호하기 위해 비밀번호를 주기적(90일)으로 변경해 주세요.\n비밀번호는 12자 이상의 영문, 숫자, 특수문자를 조합하여 사용 가능합니다.'
 
 const NEW_PASSWORD_CONFIRM_MISMATCH_ALERT = {
   title: '비밀번호 불일치 안내',
@@ -84,12 +84,7 @@ type PasswordFieldRowProps = {
   autoComplete: string
 }
 
-function PasswordFieldRow({
-  label,
-  name,
-  placeholder,
-  autoComplete,
-}: PasswordFieldRowProps) {
+function PasswordFieldRow({ label, name, placeholder, autoComplete }: PasswordFieldRowProps) {
   return (
     <div className="profile-password-change-modal__row">
       <label className="profile-password-change-modal__label" htmlFor={`profile-password-${name}`}>
@@ -198,7 +193,8 @@ export function ProfilePasswordChangeModal({
             loading={submitting}
             onClick={() => {
               void handleChangeComplete()
-            }} >
+            }}
+          >
             변경 완료
           </CmsButton>
         </>

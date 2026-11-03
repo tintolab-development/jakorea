@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer'
 import { expect, type Locator, type Page } from '@playwright/test'
 import { CompanySchoolRegistrationPage } from '../e2e/pages/company-school-registration.page'
 import {
+  checkRadioIfVisible,
   checkVisibleEnabledAgreeRadios,
   clickSectionNavIfVisible,
   detailInfoField,
@@ -10,6 +11,7 @@ import {
   fillByPlaceholderIfVisible,
   fillParagraphDateByPlaceholder,
   selectByPlaceholder,
+  selectByPlaceholderIfVisible,
   selectNearLabel,
   selectNearLabelIfVisible,
 } from '../e2e/pages/form-helpers'
@@ -99,10 +101,18 @@ export async function fillIsolatedCommonInfo(page: Page) {
   await selectByPlaceholder(page, '세부 프로그램명을 선택하세요')
   await fillParagraphDateByPlaceholder(page, '사업 운영 기간을 선택하세요', 'range', {
     futureMonthClicks: 2,
+    required: true,
   })
+  await selectByPlaceholderIfVisible(page, '사업 분야를 선택하세요', '경제금융')
+  await selectNearLabelIfVisible(page, '사업 분야', '경제금융')
   await selectNearLabel(page, '후원사', 'RHF-B-후원사')
-  await selectNearLabel(page, '후원사 담당자')
+  await selectNearLabel(page, '후원사 담당자', 'RHF-B-담당자')
   await selectNearLabelIfVisible(page, '교육 과정', 'Traditional (Paper)')
+  await selectNearLabelIfVisible(page, 'IP Owned', 'JA')
+  await selectNearLabelIfVisible(page, 'Course Delivered By', 'JA')
+  await checkRadioIfVisible(page, 'Yes')
+  await selectNearLabelIfVisible(page, 'IPS 유형', 'Inspire')
+  await selectByPlaceholderIfVisible(page, 'IPS 유형', 'Inspire')
   const course = detailInfoField(page, '교육 과정')
   if (await course.isVisible().catch(() => false)) {
     const selected = await course.locator('.ant-select-selection-item').innerText().catch(() => '')
@@ -124,9 +134,14 @@ export async function fillIsolatedCommonInfo(page: Page) {
   await selectPaymentItemsB(page)
   await clickSectionNavIfVisible(page, '교육 진행 일정 설정')
   await fillParagraphDateByPlaceholder(page, '진행 기간을 선택하세요', 'range', {
-    futureMonthClicks: 2,
+    required: true,
+    force: true,
+    label: '교육 진행 일정 선택',
   })
   await clickSectionNavIfVisible(page, '기본 정보')
+  await expect(
+    detailInfoField(page, '대표 프로그램명 (국문)').getByPlaceholder('대표 프로그램명을 입력하세요')
+  ).toHaveValue(VALUES_B.title)
 }
 
 export async function fillDistinctKpiAndWage(page: Page) {
@@ -154,8 +169,78 @@ export async function fillDistinctKpiAndWage(page: Page) {
   }
 }
 
+async function selectInstructorRecruitTargets(page: Page) {
+  const field = detailInfoField(page, '모집 대상')
+  await expect(field).toBeVisible({ timeout: 10_000 })
+  const trigger = field.locator('.cms-select-multi__trigger').first()
+  if (!(await trigger.isVisible().catch(() => false))) {
+    await selectNearLabel(page, '모집 대상', undefined, { force: true })
+    return
+  }
+  await trigger.click()
+  const panel = page.locator('.cms-select-multi__panel:visible').last()
+  await expect(panel).toBeVisible({ timeout: 10_000 })
+  const row = panel.locator('.cms-select-multi__row').filter({ hasText: /^성인$|성인/ }).first()
+  await expect(row).toBeVisible({ timeout: 10_000 })
+  const checkbox = row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first()
+  const checked = (await row.locator('.ant-checkbox-checked').count()) > 0
+  await checkbox.click()
+  if (checked) await checkbox.click()
+  if (await panel.isVisible().catch(() => false)) {
+    await trigger.click({ force: true }).catch(() => undefined)
+  }
+}
+
+async function forceAnnouncementPublished(page: Page) {
+  const published = page.getByRole('radio', { name: '게시' }).first()
+  await expect(published).toBeVisible({ timeout: 10_000 })
+  const unpublished = page.getByRole('radio', { name: '미게시' }).first()
+  if (await unpublished.isVisible().catch(() => false)) {
+    await unpublished.click({ force: true })
+  }
+  await published.click({ force: true })
+  await expect(published).toBeChecked({ timeout: 5_000 })
+}
+
+async function fillIsolatedInstructorRecruit(page: Page) {
+  const panel = page.getByRole('group', { name: /강사 모집 정보/ }).filter({
+    hasText: '프로그램 운영 기간',
+  })
+  await expect(panel).toBeVisible({ timeout: 15_000 })
+  await forceAnnouncementPublished(page)
+  const dateOpts = { futureMonthClicks: 2, root: panel, force: true } as const
+  await fillParagraphDateByPlaceholder(page, '프로그램 운영 기간을 선택하세요', 'range', dateOpts)
+  await selectInstructorRecruitTargets(page)
+  await fillByPlaceholder(panel, '상세 모집 대상을 입력하세요', '성인 강사')
+  await expect(panel.getByPlaceholder('상세 모집 대상을 입력하세요')).toHaveValue('성인 강사')
+  await fillParagraphDateByPlaceholder(page, '모집 기간을 선택하세요', 'range', dateOpts)
+  await fillParagraphDateByPlaceholder(page, '합격자 발표일', 'single', {
+    ...dateOpts,
+    preferLaterDays: true,
+  })
+  await fillParagraphDateByPlaceholder(page, '발표일', 'single', {
+    ...dateOpts,
+    preferLaterDays: true,
+  })
+  await fillByPlaceholder(panel, '발표 방법 안내', '이메일 및 CMS 알림으로 개별 안내')
+  await fillByPlaceholder(panel, '담당 문의처', 'JA Korea 1사1교 운영팀')
+  await fillByPlaceholder(panel, '문의처 전화번호', '02-1234-5678')
+  await fillByPlaceholder(panel, '문의처 이메일', 'company-school-e2e@jakorea.org')
+  await fillByPlaceholder(panel, '비고란을 작성하세요', '-')
+  await expect(panel.getByPlaceholder('발표 방법 안내')).toHaveValue(
+    '이메일 및 CMS 알림으로 개별 안내'
+  )
+  await expect(panel.getByPlaceholder('담당 문의처')).toHaveValue('JA Korea 1사1교 운영팀')
+  await expect(panel.getByPlaceholder('문의처 전화번호')).not.toHaveValue('')
+  await expect(panel.getByPlaceholder('문의처 이메일')).toHaveValue(
+    'company-school-e2e@jakorea.org'
+  )
+  await expect(panel.getByPlaceholder('비고란을 작성하세요')).toHaveValue('-')
+}
+
 async function fillIsolatedInstitutionRecruitExtras(page: Page) {
   await page.getByRole('tab', { name: /참여 기관 모집/ }).click().catch(() => undefined)
+  await forceAnnouncementPublished(page)
   const maxInputs = page.getByPlaceholder('최대값 입력')
   const maxCount = await maxInputs.count()
   const maxValues = ['5', '20']
@@ -211,13 +296,20 @@ export async function fillRegistrationThroughComplete(page: Page) {
   await registration.goToRecruitment()
   await registration.fillRecruitmentInfo()
   await fillIsolatedInstitutionRecruitExtras(page)
-  const instructorRecruitTab = page.getByRole('tab', { name: /강사 모집/ })
-  await instructorRecruitTab.click().catch(() => undefined)
-  await waitActiveWizardTabPanel(page, instructorRecruitTab.first())
+  const instructorRecruitTab = page.getByRole('tab', { name: /강사 모집/ }).first()
+  await expect(instructorRecruitTab).toBeVisible({ timeout: 15_000 })
+  await instructorRecruitTab.click()
+  await waitActiveWizardTabPanel(page, instructorRecruitTab)
+  await expect(instructorRecruitTab).toHaveAttribute('aria-selected', 'true')
+  await fillIsolatedInstructorRecruit(page)
   await fillVisibleRecruitNotes(page)
-  const institutionRecruitTab = page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ })
-  await institutionRecruitTab.click().catch(() => undefined)
-  await waitActiveWizardTabPanel(page, institutionRecruitTab.first())
+  await expect(
+    page.getByRole('group', { name: /강사 모집 정보/ }).getByPlaceholder('담당 문의처')
+  ).toHaveValue('JA Korea 1사1교 운영팀')
+  const institutionRecruitTab = page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ }).first()
+  await expect(institutionRecruitTab).toBeVisible({ timeout: 15_000 })
+  await institutionRecruitTab.click()
+  await waitActiveWizardTabPanel(page, institutionRecruitTab)
   await fillIsolatedInstitutionRecruitExtras(page)
   const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
   if (await requiredDialog.isVisible().catch(() => false)) {
@@ -226,44 +318,97 @@ export async function fillRegistrationThroughComplete(page: Page) {
   await registration.goToApplication()
   await registration.fillApplicationInfo()
   await checkApplicationAgreeRadios(page)
+  await openAndCloseRegistrationPreview(page)
+  await expect(page.getByText(THIRD_PARTY_RECIPIENT_VALUE).first()).toBeVisible()
   return registration
 }
 
+async function openAndCloseRegistrationPreview(page: Page) {
+  const preview = page.getByRole('button', { name: '미리보기' }).first()
+  await expect(preview).toBeVisible({ timeout: 10_000 })
+  await preview.click()
+  await expect(page.getByText('현재 화면은 미리보기 화면입니다.')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText(THIRD_PARTY_RECIPIENT_VALUE).first()).toBeVisible({ timeout: 10_000 })
+  const closePreview = page.getByRole('button', { name: '미리보기 닫기' })
+  if (await closePreview.isVisible().catch(() => false)) {
+    await closePreview.click()
+  } else {
+    await page.keyboard.press('Escape')
+  }
+  await expect(page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
+    timeout: 10_000,
+  })
+}
+
+const THIRD_PARTY_RECIPIENT_VALUE = 'JA코리아'
+const THIRD_PARTY_RECIPIENT_PLACEHOLDER = '제공받는 곳을 입력해 주세요'
+
 async function fillThirdPartyRecipientIfEmpty(page: Page) {
   await waitActiveWizardTabPanel(page)
-  const grids = page.getByRole('grid')
-  const gridCount = await grids.count()
-  for (let gridIndex = 0; gridIndex < gridCount; gridIndex += 1) {
-    const grid = grids.nth(gridIndex)
-    if (!(await grid.getByRole('columnheader', { name: /제공받는 곳/ }).count())) continue
-    const inputs = grid.locator('input, textarea, [contenteditable="true"]')
-    const inputCount = await inputs.count()
-    for (let index = 0; index < inputCount; index += 1) {
-      const input = inputs.nth(index)
-      if (!(await input.isVisible().catch(() => false))) continue
-      const value = await input
-        .inputValue({ timeout: 2000 })
-        .catch(async () =>
-          (await input.innerText({ timeout: 2000 }).catch(() => '')).trim()
-        )
-      if (String(value ?? '').trim()) continue
-      await input.fill('JA코리아').catch(() => undefined)
-      break
-    }
+  await clickSectionNavIfVisible(page, '개인정보')
+  const card = page.locator('[data-paragraph-id*="third-party"]').first()
+  await expect(card, '제3자 동의 단락이 보여야 합니다').toBeVisible({ timeout: 15_000 })
+  const table = card.locator('[role="grid"]').first()
+  await expect(table, '제3자 동의 「제공받는 곳」 표가 보여야 합니다').toBeVisible({
+    timeout: 15_000,
+  })
+  if (await table.getByText(THIRD_PARTY_RECIPIENT_VALUE, { exact: true }).first().isVisible().catch(() => false)) {
+    return
   }
+  if (await table.getByText('배정된 교육 대상 학교').first().isVisible().catch(() => false)) {
+    return
+  }
+
+  const editWrap = card.locator('.form-editor-horizontal-table-wrap--system-settings-text-edit')
+  if (!(await editWrap.isVisible().catch(() => false))) {
+    await card.click()
+  }
+  if (!(await editWrap.isVisible().catch(() => false))) {
+    await card.click()
+  }
+  await expect(editWrap, '제3자 동의 단락 선택 후 제공받는 곳 셀을 편집할 수 있어야 합니다').toBeVisible(
+    { timeout: 10_000 }
+  )
+  const recipientCell = card.locator('[role="row"]').nth(1).locator('[role="gridcell"]').nth(0)
+  await expect(recipientCell, '빈 「제공받는 곳」 셀을 클릭할 수 있어야 합니다').toBeVisible({
+    timeout: 10_000,
+  })
+  await recipientCell.click()
+  const editor = card.locator('.text-cell-input textarea')
+  await expect(editor.first(), '제공받는 곳 셀 편집기가 열려야 합니다').toBeVisible({
+    timeout: 8_000,
+  })
+  await editor.first().fill(THIRD_PARTY_RECIPIENT_VALUE)
+  await editor.first().blur()
+  await expect(table.getByText(THIRD_PARTY_RECIPIENT_VALUE, { exact: true }).first()).toBeVisible({
+    timeout: 8_000,
+  })
 }
 
 async function visitApplicationTabsAndFillRequired(page: Page) {
-  const tabNames = [/참여 기관 신청/, /참여자 신청/, /강사 신청/]
-  for (const name of tabNames) {
-    const tab = page.getByRole('tab', { name }).first()
-    if (await tab.isVisible().catch(() => false)) {
-      await tab.click()
-      await waitActiveWizardTabPanel(page, tab)
-    }
-    await fillThirdPartyRecipientIfEmpty(page)
-    await checkVisibleEnabledAgreeRadios(page)
-  }
+  const institutionTab = page.getByRole('tab', { name: /참여 기관 신청/ }).first()
+  await expect(institutionTab).toBeVisible({ timeout: 15_000 })
+  await institutionTab.click()
+  await waitActiveWizardTabPanel(page, institutionTab)
+  await expect(institutionTab).toHaveAttribute('aria-selected', 'true')
+  await checkVisibleEnabledAgreeRadios(page)
+  await fillThirdPartyRecipientIfEmpty(page)
+  await expect(page.getByText(THIRD_PARTY_RECIPIENT_VALUE).first()).toBeVisible()
+
+  const instructorTab = page.getByRole('tab', { name: /강사 신청/ }).first()
+  await expect(instructorTab).toBeVisible({ timeout: 15_000 })
+  await instructorTab.click()
+  await waitActiveWizardTabPanel(page, instructorTab)
+  await expect(instructorTab).toHaveAttribute('aria-selected', 'true')
+  await checkVisibleEnabledAgreeRadios(page)
+  await fillThirdPartyRecipientIfEmpty(page)
+
+  await institutionTab.click()
+  await waitActiveWizardTabPanel(page, institutionTab)
+  await clickSectionNavIfVisible(page, '개인정보')
+  await expect(
+    page.locator('[data-paragraph-id*="third-party"]').getByText(THIRD_PARTY_RECIPIENT_VALUE).first()
+  ).toBeVisible({ timeout: 15_000 })
 }
 
 async function checkApplicationAgreeRadios(page: Page) {
@@ -271,27 +416,40 @@ async function checkApplicationAgreeRadios(page: Page) {
 }
 
 export async function completeAndCapture(page: Page, log: IsolatedNetworkLog) {
-  const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
-  if (await requiredDialog.isVisible().catch(() => false)) {
-    await requiredDialog.getByRole('button', { name: '확인' }).click()
-    await checkApplicationAgreeRadios(page)
+  const institutionTab = page.getByRole('tab', { name: /참여 기관 신청/ }).first()
+  if (await institutionTab.isVisible().catch(() => false)) {
+    await institutionTab.click()
+    await waitActiveWizardTabPanel(page, institutionTab)
+    await clickSectionNavIfVisible(page, '개인정보')
+    await expect(
+      page.locator('[data-paragraph-id*="third-party"]').getByText(THIRD_PARTY_RECIPIENT_VALUE).first()
+    ).toBeVisible({ timeout: 15_000 })
   }
+  const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
   await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
   if (await requiredDialog.isVisible().catch(() => false)) {
-    await requiredDialog.getByRole('button', { name: '확인' }).click()
-    await checkApplicationAgreeRadios(page)
-    await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
+    throw new Error('등록 완료가 필수 항목 미입력으로 차단되어 CREATE가 호출되지 않았습니다')
   }
   await expect.poll(() => log.createProgram, { timeout: 90_000 }).not.toBeNull()
-  // P2(방안 C): 양식 COPY/PUT/publish는 CREATE 이후에 나간다 — 실패 모드에서는 publish가 없을 수 있어 soft wait.
   await expect
     .poll(() => log.formVersionPublishes.length, { timeout: 30_000 })
     .toBeGreaterThan(0)
     .catch(() => undefined)
+  await expect
+    .poll(() => {
+      return log.formVersionPuts.some(item => {
+        const overlayKeys = Object.keys(overlayFromFormVersionPut(item.body))
+        const raw = JSON.stringify(item.body ?? {})
+        return (
+          overlayKeys.some(key => key.startsWith('application.economy.')) ||
+          raw.includes('program-application-economy-seed')
+        )
+      })
+    }, { timeout: 60_000 })
+    .toBe(true)
   const successDialog = page.getByRole('dialog').filter({ hasText: '등록되었습니다.' })
-  if (await successDialog.isVisible().catch(() => false)) {
-    await successDialog.getByRole('button', { name: '확인' }).click()
-  }
+  await expect(successDialog).toBeVisible({ timeout: 60_000 })
+  await successDialog.getByRole('button', { name: '확인' }).click()
 }
 
 export function createOverlay(log: IsolatedNetworkLog) {

@@ -1,11 +1,7 @@
 /**
- * Homepage remote API 세션 게이트
- * — Mock JWT면 local mock, 실 JWT면 OpenAPI generated client
+ * Homepage Admin 도메인 CRUD — OpenAPI remote only (localStorage mock 제거)
  */
 
-import { hasRemoteAdminJwt } from '@/entities/auth/api/auth-service'
-import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
-
 export function shouldUseHomepageRemoteApi(): boolean {
-  return isRemoteApiConfigured() && hasRemoteAdminJwt()
+  return true
 }

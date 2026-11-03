@@ -14,6 +14,7 @@ import {
   formatUjatScheduleCardDate,
   groupUjatVolunteerSchedulesByMonth,
   hasQueryableUjatEducationHistory,
+  isAssignedUjatSchedule,
   isUjatVolunteerOwnScheduleRecord,
   resolveScheduleAttendanceQueryErrorMessage,
   resolveUjatScheduleDayStatus,
@@ -245,6 +246,64 @@ assert.equal(
   false,
 )
 
+const assignedByClassLabel = item({
+  id: 'assigned-class-only',
+  assignmentStatus: null,
+  attendanceStatus: null,
+  classLabel: '3-1',
+  scheduleId: 19,
+})
+assert.equal(isAssignedUjatSchedule(assignedByClassLabel), true)
+assert.equal(
+  isUjatVolunteerOwnScheduleRecord(assignedByClassLabel, {
+    includeAssignedWithoutAttendance: true,
+  }),
+  true,
+)
+assert.equal(
+  isUjatVolunteerOwnScheduleRecord(assignedByClassLabel, {
+    includeAssignedWithoutAttendance: false,
+  }),
+  false,
+)
+
+const unassignedStatus = item({
+  id: 'unassigned-status',
+  assignmentStatus: 'UNASSIGNED',
+  classLabel: undefined,
+  attendanceStatus: null,
+  scheduleId: 187581,
+})
+assert.equal(isAssignedUjatSchedule(unassignedStatus), false)
+assert.equal(
+  isUjatVolunteerOwnScheduleRecord(unassignedStatus, {
+    includeAssignedWithoutAttendance: true,
+  }),
+  false,
+)
+
+assert.equal(formatUjatScheduleCardDate('2026-10-31T15:00:00Z'), '11월 1일')
+assert.equal(
+  groupUjatVolunteerSchedulesByMonth([
+    item({ id: 'seoul-nov', heldAt: '2026-10-31T15:00:00Z' }),
+  ])[0]?.monthKey,
+  '2026-11',
+)
+
+const programWideUnassigned = item({
+  id: 'program-wide',
+  assignmentStatus: null,
+  attendanceStatus: null,
+  scheduleId: 20,
+})
+assert.equal(isAssignedUjatSchedule(programWideUnassigned), false)
+assert.equal(
+  isUjatVolunteerOwnScheduleRecord(programWideUnassigned, {
+    includeAssignedWithoutAttendance: true,
+  }),
+  false,
+)
+
 // WD-FE-14 일정 API 오류를 교육 전 포기/이력 없음으로 보지 않는다.
 assert.equal(
   resolveUjatVolunteerWithdrawnDetailView({
@@ -339,8 +398,8 @@ assert.equal(roster.rows[0]?.volunteerB.name, '곽도규')
 assert.equal(roster.rows[1]?.gradeLabel, '2학년')
 assert.equal(roster.rows[1]?.showGrade, true)
 
-assert.equal(formatUjatScheduleCardDate('2026-01-01'), '01월 01일')
-assert.equal(formatUjatAttendanceRosterDate('2026-06-25'), '06월 25일 (목)')
+assert.equal(formatUjatScheduleCardDate('2026-01-01'), '1월 1일')
+assert.equal(formatUjatAttendanceRosterDate('2026-06-25'), '6월 25일 (목)')
 assert.equal(resolveUjatScheduleDayStatus(item({ id: 'present', attendanceStatus: 'present' })).label, '출석완료')
 assert.equal(resolveUjatScheduleDayStatus(item({ id: 'late-day', attendanceStatus: 'late' })).label, '지각')
 assert.equal(

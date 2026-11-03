@@ -53,8 +53,9 @@ describe('cms-data-table hover shift (CSS contract)', () => {
 
   it('CMS 공통 css: 본문 셀 padding은 단일 tbody 선택자 블록에만 정의', () => {
     expect(cmsTableCss).toContain(
-      '.cms-data-table .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td {'
+      '> tr:not(.ant-table-placeholder):not(.ant-table-measure-row)\n  > td,'
     )
+    expect(cmsTableCss).toContain('> td.ant-table-cell-row-hover {')
     expect(cmsTableCss).not.toContain(
       '> tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover\n  > td {\n  box-sizing: border-box !important;\n  min-width: 80px;\n  padding:'
     )
@@ -62,7 +63,7 @@ describe('cms-data-table hover shift (CSS contract)', () => {
 
   it('CMS 공통 css: 기본 tbody 셀 높이 52px 고정 (min-height + height)', () => {
     const match = cmsTableCss.match(
-      /\.cms-data-table \.ant-table-tbody > tr:not\(\.ant-table-placeholder\):not\(\.ant-table-measure-row\) > td \{([^}]+)\}/
+      /> td,\s*\n\.cms-data-table\s*\n\s*\.ant-table-tbody\s*\n\s*> tr:not\(\.ant-table-placeholder\):not\(\.ant-table-measure-row\)\s*\n\s*> td\.ant-table-cell-row-hover \{([^}]+)\}/
     )
     const block = match?.[1] ?? ''
     expect(block).toContain('min-height: 52px !important')

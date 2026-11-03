@@ -56,7 +56,7 @@
 }
 
 /* 전경(배경 레이어 위) — DOM 순서만으로도 대부분 위에 그려지나, 명시해 겹침 안정화 */
-.form-certificate-preview__tag,
+.form-certificate-preview__serial-text,
 .form-certificate-preview__logo-wrap,
 .form-certificate-preview__education-wrap,
 .form-certificate-preview__title,
@@ -71,17 +71,20 @@
   z-index: 1;
 }
 
-.form-certificate-preview__tag {
+.form-certificate-preview__serial-text,
+.form-certificate-preview span.form-certificate-preview__serial-text,
+.form-certificate-preview [data-certificate-serial='text'] {
   position: absolute;
   top: 142px;
   left: 34px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 6px;
-  border: 2px solid var(--JA-mint-01, #01A1AF);
-  background: var(--color-bg-mint, linear-gradient(0deg, rgba(1, 161, 175, 0.10) 0%, rgba(1, 161, 175, 0.10) 100%), #FFF);
+  display: block;
+  margin: 0;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
   box-sizing: border-box;
   color: #606060;
   font-family: 'Noto Sans KR', sans-serif;
@@ -90,6 +93,7 @@
   font-weight: 700;
   line-height: 150%; /* 30px */
   letter-spacing: 0.8px;
+  white-space: nowrap;
 }
 
 .form-certificate-preview__logo-wrap {
@@ -488,6 +492,18 @@
 
 .form-certificate-preview--pdf-export .form-certificate-preview__region--frame-active {
   outline: none !important;
+}
+
+.form-certificate-preview--pdf-export .form-certificate-preview__serial-text {
+  color: #606060 !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 /* html2canvas 대상 — 레이아웃은 좌측 미리보기와 동일 폭, 화면 밖에 둠 */

@@ -15,12 +15,25 @@
   min-width: 0;
 }
 
+/* selectPair: 2×240 + gap 20 — 년도/월 선택값(년도 전체 등)이 잘리지 않게 */
 .hac-panel__year-month-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
+  gap: var(--filter-control-range-split-between, 20px);
+  width: 100%;
+}
+
+.hac-panel__year-month-filters > .cms-select {
+  flex: 0 0 auto;
+  width: var(--filter-control-max-width, 240px) !important;
+  min-width: var(--filter-control-max-width, 240px) !important;
+  max-width: var(--filter-control-max-width, 240px) !important;
+}
+
+.hac-panel__year-month-filters > .cms-select > .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .hac-panel__table-scroll {

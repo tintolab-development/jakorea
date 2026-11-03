@@ -12,6 +12,7 @@ import {
   resetGeneralRecruitOverlayStoreForTests,
 } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
 import { listIncompleteEconomyProgramRecruitmentRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { instructorRecruitFieldForm } from '@/features/template/ui/form-set/recruit-form/instructor/instructor-recruit-form-rhf'
 import { buildCompanySchoolProgramFromRhf } from './build-registration-create-from-canonical'
 import { importLegacyOverlayToCompanySchoolCanonical } from './import-legacy-registration-overlay'
 import {
@@ -25,7 +26,10 @@ import {
   rhfValuesFromCompanySchoolCanonical,
   type CompanySchoolRegistrationRhfValues,
 } from './registration-rhf-values'
-import type { CompanySchoolRecruitFormState } from './registration-canonical-types'
+import type {
+  CompanySchoolInstructorRecruitFormState,
+  CompanySchoolRecruitFormState,
+} from './registration-canonical-types'
 import {
   emptyCompanySchoolRecruitFormState,
   importLegacyCompanySchoolRecruitmentOverlay,
@@ -33,6 +37,7 @@ import {
   serializeCompanySchoolRecruitmentForFormVersion,
 } from './registration-rhf-recruitment'
 import { serializeCompanySchoolRegistrationForFormVersion } from './serialize-registration-overlay-from-canonical'
+import { emptyCompanySchoolInstructorRecruitFormState } from './registration-rhf-instructor-recruitment'
 import {
   companySchoolRecruitEditorState,
   readCompanySchoolRecruitEditorState,
@@ -75,6 +80,27 @@ function filledRecruit(
   }
 }
 
+function filledInstructor(
+  patch: Partial<CompanySchoolInstructorRecruitFormState> = {}
+): CompanySchoolInstructorRecruitFormState {
+  return {
+    ...emptyCompanySchoolInstructorRecruitFormState(),
+    programRange: { start: '2026-04-01', end: '2026-12-31' },
+    recruitRange: { start: '2026-02-01', end: '2026-02-20' },
+    recruitTargets: ['adult'],
+    recruitTargetDetail: '성인',
+    announcementPublished: 'published',
+    inquiryContact: '강사담당',
+    inquiryTel: '02-1111-1111',
+    inquiryEmail: 'inst@example.com',
+    notes: '강사 비고',
+    notesNotApplicable: false,
+    finalAnnounce: '2026-02-25',
+    finalAnnounceMethod: '개별 연락',
+    ...patch,
+  }
+}
+
 function filledRhf(
   patch: Partial<CompanySchoolRegistrationRhfValues> = {}
 ): CompanySchoolRegistrationRhfValues {
@@ -108,6 +134,18 @@ function mockRhfApi(
       if (path === 'recruitment') {
         current = { ...current, recruitment: value as CompanySchoolRegistrationRhfValues['recruitment'] }
       }
+      if (path === 'instructorRecruit') {
+        current = {
+          ...current,
+          instructorRecruit: value as CompanySchoolRegistrationRhfValues['instructorRecruit'],
+        }
+      }
+      if (path === 'application') {
+        current = {
+          ...current,
+          application: value as CompanySchoolRegistrationRhfValues['application'],
+        }
+      }
     },
     reset: next => {
       current = next
@@ -125,6 +163,7 @@ describe('1사1교 등록 기관 모집 RHF SSOT', () => {
     registerCompanySchoolRegistrationRhf(null)
     resetApplicantRecruitInstitutionOverlayStoreForTests()
     resetGeneralRecruitOverlayStoreForTests()
+    instructorRecruitFieldForm.resetAll()
   })
 
   it('RHF와 Overlay가 달라도 CREATE·PUT·검증은 RHF를 쓴다', () => {
@@ -435,5 +474,102 @@ describe('1사1교 등록 기관 모집 RHF SSOT', () => {
     const peeked = peekGeneralRecruitOverlayRecord('recruitment-economy')
     expect(peeked['economyRecruit.detailInfo.additionalContentHtml']).toBe('<p>최신</p>')
     expect(peeked['recruit.detailInfo.additionalContentHtml']).toBe('<p>최신</p>')
+  })
+
+  it('강사 모집 미게시는 일정 필드를 필수에서 제외하는 기존 정책을 유지한다', () => {
+    registerCompanySchoolRegistrationRhf(
+      mockRhfApi(
+        filledRhf({
+          instructorRecruit: filledInstructor({
+            announcementPublished: 'unpublished',
+            programRange: null,
+            recruitRange: null,
+            finalAnnounce: null,
+            finalAnnounceMethod: '',
+          }),
+        })
+      )
+    )
+    expect(
+      listIncompleteEconomyProgramRecruitmentRequiredFields({
+        organization: true,
+        teacherInstructor: true,
+        individual: false,
+        volunteer: false,
+      })
+    ).toEqual([])
+  })
+
+  it('강사 모집 필수검사는 overlay store가 아니라 RHF instructorRecruit를 쓴다', () => {
+    patchGeneralRecruitOverlay({
+      'recruit.instructor.inquiryContact': '스토어 담당',
+      'recruit.instructor.notes': '',
+    })
+    const values = filledRhf({ instructorRecruit: filledInstructor() })
+    registerCompanySchoolRegistrationRhf(mockRhfApi(values))
+    expect(
+      listIncompleteEconomyProgramRecruitmentRequiredFields({
+        organization: true,
+        teacherInstructor: true,
+        individual: false,
+        volunteer: false,
+      })
+    ).toEqual([])
+
+    const incomplete = filledRhf({
+      instructorRecruit: filledInstructor({ notes: '', notesNotApplicable: false }),
+    })
+    registerCompanySchoolRegistrationRhf(mockRhfApi(incomplete))
+    expect(
+      listIncompleteEconomyProgramRecruitmentRequiredFields({
+        organization: true,
+        teacherInstructor: true,
+        individual: false,
+        volunteer: false,
+      })
+    ).toContain('recruit.instructor.notes')
+  })
+
+  it('1사1교 RHF가 켜져 있으면 강사 필드 폼만 채워도 필수검사를 통과하지 않는다', () => {
+    registerCompanySchoolRegistrationRhf(mockRhfApi(filledRhf()))
+    instructorRecruitFieldForm.replaceFor('recruitment-instructor', {
+      'recruit.instructor.programRangeSeal': { start: '2026-04-01', end: '2026-12-31' },
+      'recruit.instructor.recruitRangeSeal': { start: '2026-02-01', end: '2026-02-20' },
+      'recruit.instructor.recruitTargets': ['adult'],
+      'recruit.instructor.recruitTargetDetail': '성인',
+      'recruit.instructor.announcementPublished': 'published',
+      'recruit.instructor.finalAnnounceIso': '2026-02-25',
+      'recruit.instructor.finalAnnounceMethod': '개별 연락',
+      'recruit.instructor.inquiryContact': '필드폼 담당',
+      'recruit.instructor.inquiryTel': '02-1111-1111',
+      'recruit.instructor.inquiryEmail': 'inst@example.com',
+      'recruit.instructor.notesNotApplicable': true,
+    })
+    expect(
+      listIncompleteEconomyProgramRecruitmentRequiredFields({
+        organization: true,
+        teacherInstructor: true,
+        individual: false,
+        volunteer: false,
+      })
+    ).toEqual(
+      expect.arrayContaining([
+        'recruit.instructor.programRangeSeal',
+        'recruit.instructor.inquiryContact',
+        'recruit.instructor.notes',
+      ])
+    )
+  })
+
+  it('강사 모집 입력은 instructorRecruit typed path에 기록되고 기관 모집을 덮지 않는다', () => {
+    const api = mockRhfApi(filledRhf())
+    registerCompanySchoolRegistrationRhf(api)
+    patchGeneralRecruitOverlay({
+      'recruit.instructor.inquiryContact': '강사 문의',
+      'recruit.instructor.notes': '강사 비고',
+    })
+    expect(api.getValues().instructorRecruit.inquiryContact).toBe('강사 문의')
+    expect(api.getValues().instructorRecruit.notes).toBe('강사 비고')
+    expect(api.getValues().recruitment.inquiryContact).toBe('담당RHF')
   })
 })

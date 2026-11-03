@@ -6,13 +6,9 @@
  * OpenAPI spec version: v9
  */
 
-export * from './apiErrorDetail';
-export * from './apiErrorDetailDetails';
 export * from './certificateDownloadLogRequest';
 export * from './certificateDownloadLogResponse';
-export * from './certificateSerialAllocateApiResponse';
 export * from './certificateSerialAllocateRequest';
 export * from './certificateSerialAllocateRequestCertificateType';
 export * from './certificateSerialAllocateRequestIssuanceSource';
 export * from './certificateSerialAllocateResponse';
-export * from './structuredErrorResponse';

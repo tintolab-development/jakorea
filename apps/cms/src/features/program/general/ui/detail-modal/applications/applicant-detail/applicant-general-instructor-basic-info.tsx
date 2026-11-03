@@ -195,7 +195,7 @@ export function ApplicantGeneralInstructorBasicInfo({
           lectureExperienceDisplay,
           contactDisplay,
           emailDisplay,
-          homeAddressDisplay: <HomeAddressDisplay address={instructor.address} mask={shouldMask} />,
+          homeAddressDisplay: <HomeAddressDisplay address={instructor.address} mask={maskSensitive} />,
           accountDisplay: formatAccountDisplayContent(instructor, shouldMask),
           instructorFeeGradeView: <InstructorFeeGradeView instructor={instructor} />,
           instructorFeeGradeEdit:

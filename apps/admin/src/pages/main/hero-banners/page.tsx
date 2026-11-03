@@ -226,6 +226,7 @@ export function HeroBannersPage() {
       {
         title: '배너 텍스트 및 링크',
         key: 'textLink',
+        align: 'left',
         render: (_value, record) => <HeroBannerTextLinkCell banner={record} />,
       },
       {

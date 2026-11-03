@@ -210,24 +210,59 @@ export function KakaoMapEmbed({ html, className }: KakaoMapEmbedProps) {
     const host = hostRef.current
     if (!host) return
 
-    host.replaceChildren()
-    const trackedLinks: HTMLLinkElement[] = []
     let active = true
-    const isActive = () => active
-
     const trimmed = html.trim()
-    if (!trimmed) return
+    let mountVersion = 0
+    let cleanupMount: () => void = () => {}
+    let resizeFrame: number | null = null
+    let lastWidth = host.getBoundingClientRect().width
 
-    void mountEmbedHtml(host, trimmed, trackedLinks, isActive).catch(() => {
-      // 취소·로드 실패 시 UI는 유지하고 빈 영역만 둔다
-    })
+    const mount = () => {
+      const version = ++mountVersion
+      const trackedLinks: HTMLLinkElement[] = []
+      host.replaceChildren()
+      const isActive = () => active && version === mountVersion
+
+      void mountEmbedHtml(host, trimmed, trackedLinks, isActive).catch(() => {
+        // 취소·로드 실패 시 UI는 유지하고 빈 영역만 둔다
+      })
+
+      return () => {
+        trackedLinks.forEach(link => link.remove())
+      }
+    }
+
+    if (!trimmed) {
+      host.replaceChildren()
+      return
+    }
+
+    cleanupMount = mount()
+
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(entries => {
+            const nextWidth = entries[0]?.contentRect.width ?? host.getBoundingClientRect().width
+            if (Math.abs(nextWidth - lastWidth) < 1) return
+            lastWidth = nextWidth
+            if (resizeFrame != null) window.cancelAnimationFrame(resizeFrame)
+            resizeFrame = window.requestAnimationFrame(() => {
+              resizeFrame = null
+              if (!active) return
+              cleanupMount()
+              cleanupMount = mount()
+            })
+          })
+    resizeObserver?.observe(host)
 
     return () => {
       active = false
+      mountVersion += 1
+      resizeObserver?.disconnect()
+      if (resizeFrame != null) window.cancelAnimationFrame(resizeFrame)
+      cleanupMount()
       host.replaceChildren()
-      trackedLinks.forEach(link => {
-        link.remove()
-      })
     }
   }, [html])
 

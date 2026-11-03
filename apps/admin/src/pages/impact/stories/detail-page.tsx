@@ -3,8 +3,9 @@
  * 공지사항 상세 페이지 스펙 정렬 + 카테고리 배지
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Spin } from 'antd'
 import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
 import type { ImpactStory } from '@/entities/impact-stories/model/types'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
@@ -26,7 +27,7 @@ import {
 import { StoryPinnedIcon } from '@/features/impact-stories/ui/story-pin-icon'
 import { downloadFile } from '@/shared/lib/file-download'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
-import { RichTextViewer } from '@/shared/rich-text'
+import { RichTextViewer, type Editor } from '@/shared/rich-text'
 import {
   AttachmentDownloadIcon,
   CmsButton,
@@ -181,6 +182,86 @@ function MetaDivider() {
   return <span className="impact-story-detail-page__meta-divider" aria-hidden />
 }
 
+function ImpactStoryBody({ story }: { story: ImpactStory }) {
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const frameCleanupRef = useRef<(() => void) | null>(null)
+  const [editorReady, setEditorReady] = useState(false)
+  const [rawHtmlReady, setRawHtmlReady] = useState(false)
+  const handleEditor = useCallback((editor: Editor | null) => {
+    frameCleanupRef.current?.()
+    frameCleanupRef.current = null
+
+    if (!editor) {
+      setEditorReady(false)
+      setRawHtmlReady(false)
+      return
+    }
+
+    setEditorReady(true)
+    setRawHtmlReady(false)
+    const frames = Array.from(
+      bodyRef.current?.querySelectorAll<HTMLIFrameElement>(
+        '.rich-text-raw-html-block__frame'
+      ) ?? []
+    )
+
+    if (frames.length === 0) {
+      setRawHtmlReady(true)
+      return
+    }
+
+    let pendingFrames = frames.length
+    let active = true
+    const handleFrameLoad = () => {
+      if (!active) return
+      pendingFrames -= 1
+      if (pendingFrames === 0) setRawHtmlReady(true)
+    }
+    const cleanup = () => {
+      active = false
+      frames.forEach(frame => frame.removeEventListener('load', handleFrameLoad))
+    }
+    frameCleanupRef.current = cleanup
+
+    frames.forEach(frame => {
+      if (frame.contentDocument?.readyState === 'complete') {
+        handleFrameLoad()
+      } else {
+        frame.addEventListener('load', handleFrameLoad, { once: true })
+      }
+    })
+  }, [])
+  useEffect(() => () => frameCleanupRef.current?.(), [])
+  const isRendering = !editorReady || !rawHtmlReady
+  const bodyClassName = [
+    'impact-story-detail-page__body',
+    isRendering ? 'impact-story-detail-page__body--rendering' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <div ref={bodyRef} className={bodyClassName} aria-busy={isRendering}>
+      {isRendering ? (
+        <div
+          className="impact-story-detail-page__body-loading"
+          role="status"
+          aria-label="본문을 렌더링하는 중"
+        >
+          <Spin size="large" />
+        </div>
+      ) : null}
+      <RichTextViewer
+        key={story.id}
+        content={story.contentMarkdown}
+        contentFormat={story.contentMarkdown.trim().startsWith('<') ? 'html' : 'markdown'}
+        maxHeight="none"
+        onEditor={handleEditor}
+      />
+    </div>
+  )
+}
+
 function ImpactStoryDetailView({
   story,
   categoryName,
@@ -311,15 +392,7 @@ function ImpactStoryDetailView({
             <hr className="impact-story-detail-page__section-divider" />
           )}
 
-          <div className="impact-story-detail-page__body">
-            <RichTextViewer
-              content={story.contentMarkdown}
-              contentFormat={
-                story.contentMarkdown.trim().startsWith('<') ? 'html' : 'markdown'
-              }
-              maxHeight="none"
-            />
-          </div>
+          <ImpactStoryBody story={story} />
         </div>
 
         <div className="impact-story-detail-page__actions">

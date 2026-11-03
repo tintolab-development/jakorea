@@ -2,6 +2,74 @@
   --ujat-assignment-status-completed-color: var(--Netural-black, #3d3d3d);
   --ujat-assignment-status-not-submitted-color: var(--Status-red-main, #c32f4a);
   --ujat-assignment-status-deadline-missed-color: var(--Status-green-main, #1e8c29);
+  width: 100%;
+  min-width: 0;
+}
+
+/* Figma 4082:113949 — 풀페이지 본문에 카드 크롬 없음 */
+.ujat-education-progress-assignments__filter-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+/* 지역 탭 → 필터 32px (4082:113995 아래 Frame y=32) */
+.ujat-education-progress-assignments
+  .ujat-institution-application-region-tabs.cms-text-tabs
+  .cms-text-tabs__row {
+  margin-bottom: 32px;
+}
+
+.ujat-education-progress-assignments__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.ujat-education-progress-assignments__filter-layout .filter-table-layout__divider::before {
+  border-top-color: var(--table-line, #e0e0e0);
+}
+
+/* title 슬롯이 세션 헤더 전체를 받으므로 공통 20px 타이틀 래퍼를 해제 */
+.ujat-education-progress-assignments__filter-layout .filter-table-layout__title {
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ujat-education-progress-assignments__filter-layout .filter-table-layout__toolbar {
+  align-items: flex-end;
+  gap: var(--spacing-32, 32px);
+  min-height: 40px;
+  margin-bottom: 16px;
+}
+
+.ujat-education-progress-assignments__filter-layout .filter-table-layout__toolbar-main {
+  align-items: center;
+  gap: 0;
+}
+
+.ujat-education-progress-assignments .table-header-title--wrapper {
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  padding-left: 8px;
+}
+
+.ujat-education-progress-assignments .table-title {
+  font-size: 18px;
+  line-height: 140%;
+  padding: 0;
+}
+
+.ujat-education-progress-assignments .table-description {
+  font-size: 14px;
+  line-height: 150%;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  opacity: 1;
 }
 
 .ujat-education-progress-assignments__groups {
@@ -22,6 +90,8 @@
 .ujat-education-progress-assignments__session-header {
   width: 100%;
   min-width: 0;
+  min-height: 40px;
+  gap: var(--spacing-32, 32px);
 }
 
 .ujat-education-progress-assignments__empty {
@@ -89,6 +159,39 @@
   opacity: 0.85;
 }
 
+/* Figma 행 56 (h32 버튼 + cell padding 12) · 비고 2줄은 auto */
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover {
+  height: auto !important;
+  min-height: 56px !important;
+}
+
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ujat-education-progress-assignments__remarks-cell,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ujat-education-progress-assignments__remarks-cell.ant-table-cell-row-hover {
+  white-space: normal !important;
+}
+
+.ujat-education-progress-assignments__table .ujat-volunteer-assignment-table__plan-log-cell-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
 .ujat-education-progress-assignments__table
   .ant-table-thead
   > tr
@@ -102,7 +205,21 @@
 }
 
 .ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ujat-volunteer-assignment-table__plan-log-cell,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ujat-volunteer-assignment-table__plan-log-cell.ant-table-cell-row-hover {
+  padding: 12px !important;
+}
+
+.ujat-education-progress-assignments__table
   .ujat-volunteer-assignment-table__plan-log-cell-inner
   .cms-button {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }

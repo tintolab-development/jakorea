@@ -7,13 +7,6 @@
   overflow: hidden !important;
 }
 
-/* Figma 셸: 1400×880, padding 24px 30px 34px, radius 16, shadow 0.3 */
-.payment-order-calc-statement-modal.content-modal.teal-header-modal--large .ant-modal-content {
-  padding: 24px 30px 34px !important;
-  border-radius: 16px !important;
-  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.3) !important;
-}
-
 .payment-order-calc-statement-modal.teal-header-modal--large .ant-modal-content {
   width: min(1400px, calc(100vw - 32px)) !important;
   height: min(880px, calc(100dvh - 48px)) !important;
@@ -25,19 +18,8 @@
   overflow-y: hidden;
 }
 
-.payment-order-calc-statement-modal.teal-header-modal--large
-  .teal-header-modal__body.teal-header-modal__body--scrollable,
-.payment-order-calc-statement-modal.teal-header-modal--large .teal-header-modal__body {
-  overflow: auto !important;
-  max-height: none !important;
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
 /* Figma root gap: title/header와 본문 사이 30px */
 .payment-order-calc-statement-modal.teal-header-modal .teal-header-modal__body {
-  padding-top: 30px;
-  /* 기본 center면 자식이 콘텐츠 폭으로 줄어 테이블·우측이 잘림 → 전폭 사용 */
   align-items: stretch;
   min-width: 0;
 }
@@ -47,6 +29,7 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  margin-top: 12px;
 }
 
 /* 강사 맥락 기본정보: DetailInfoForm 2블록 — 블록 사이 간격 16px (자택 주소·계좌 / 지급 조서·강의비) */
@@ -192,20 +175,10 @@
   .payment-order-calc-statement-modal__processing-status-label--application-rejected {
   color: var(--color-red, #c32f4a);
   text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 .payment-order-calc-statement-modal__processing-status-detail {
   color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 .payment-order-calc-statement-modal__processing-vbar {
@@ -218,11 +191,6 @@
 
 .payment-order-calc-statement-modal__processing-reason {
   color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 /* 테이블 내 구분: ProgramDetailTdDivider(1×13, 양옆 12px) + flex 래퍼 */
@@ -469,18 +437,6 @@
   height: 52px;
 }
 
-/* 정산 금액: 기존 색 유지, 타이포는 테이블과 동일 */
-.payment-order-calc-statement-modal__table.ant-table-wrapper
-  .payment-order-calc-statement-modal__amount--positive,
-.payment-order-calc-statement-modal__table.ant-table-wrapper
-  .payment-order-calc-statement-modal__amount--negative {
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-}
-
 .payment-order-calc-statement-modal__amount--positive {
   color: rgba(0, 0, 0, 0.88);
 }
@@ -500,34 +456,17 @@
 .payment-order-calc-statement-modal__summary-label {
   display: inline-block;
   width: 100%;
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
 }
 
 .payment-order-calc-statement-modal__summary-formula {
   display: inline-block;
   width: 100%;
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  color: var(--default-BK, #3d3d3d);
 }
 
 .payment-order-calc-statement-modal__summary-total {
   display: inline-block;
   width: 100%;
   text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
   font-weight: 700;
   line-height: 150%;
   color: var(--color-brand-primary, #01a1af);

@@ -2,11 +2,13 @@
  * 지급조서 산출 내역서 · 계좌 지급 현황 상세 등 — 산출 내역 상세 테이블 공통
  */
 
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import { CmsButton, type CmsButtonSize } from '@/shared/ui/cms-button'
 import { CalculationDetailViewButton } from './calculation-detail-view-button'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
+import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
+import { InstructorPaymentStatementBlockedModal } from '@/features/user/detail/ui/modal/instructor-payment-statement-blocked-modal'
 import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type {
@@ -92,6 +94,8 @@ export function getPaymentOrderCalculationColumns(options?: {
   institutionColumnTitle?: string
   /** 2열 헤더. 기본 강의 진행 일자 */
   dateColumnTitle?: string
+  /** true면 항목 설명 말줄임 대신 개행 */
+  wrapDescription?: boolean
 }): ColumnsType<PaymentOrderCalculationTableRow> {
   const handleBasisDetailClick = (row: PaymentOrderCalculationTableRow) => {
     if (options?.onBasisDetailClick) {
@@ -158,8 +162,11 @@ export function getPaymentOrderCalculationColumns(options?: {
       dataIndex: 'description',
       key: 'description',
       width: columnWidths.description,
-      ellipsis: { showTitle: true },
+      ellipsis: options?.wrapDescription ? false : { showTitle: true },
       align: 'center',
+      onCell: options?.wrapDescription
+        ? () => ({ className: 'payment-order-calc-statement-modal__description-cell' })
+        : undefined,
     },
     {
       title: '정산 금액',
@@ -206,8 +213,9 @@ export interface PaymentOrderCalculationBreakdownTableProps {
   headerActions?: ReactNode
   onDownloadPaymentStatement?: () => void
   /**
-   * 지급조서 발급 비활성(확인 완료·계좌 지급 완료 외).
-   * 미전달 시 버튼 활성 — 호출부에서 조건 검증.
+   * 지급조서 발급 불가(확인 완료·계좌 지급 완료 외).
+   * true면 발급 클릭 시 `지급조서 발급 불가 안내` 모달.
+   * 미전달 시 발급 진행 — 호출부에서 조건 검증.
    */
   paymentStatementIssueDisabled?: boolean
   /** 계좌 지급 현황 상세 등: 산출 내역 강의 진행 일자 열에서 차시 대신 회차 표기 */
@@ -258,6 +266,7 @@ export function PaymentOrderCalculationBreakdownTable({
     : tableCellSpec === 'cms-data-table'
       ? 'cms-data-table cms-data-table--skip-auto-no-col account-payment-status-detail__calc-table'
       : 'payment-order-calc-statement-modal__table cms-data-table cms-data-table--skip-auto-no-col'
+  const wrapDescription = tableCellSpec === 'cms-data-table'
   const tableRows = useMemo(() => buildPaymentOrderCalculationTableRows(blocks), [blocks])
   const columns = useMemo(
     () =>
@@ -267,19 +276,25 @@ export function PaymentOrderCalculationBreakdownTable({
         columnWidthPreset: resolvedColumnWidthPreset,
         institutionColumnTitle,
         dateColumnTitle,
+        wrapDescription,
       }),
     [
       lectureSessionSegmentLabel,
       onBasisDetailClick,
       resolvedColumnWidthPreset,
+      wrapDescription,
       institutionColumnTitle,
       dateColumnTitle,
     ]
   )
   const showHeaderActions = headerActions != null
+  const [issueBlockedOpen, setIssueBlockedOpen] = useState(false)
 
   const handleDownload = () => {
-    if (paymentStatementIssueDisabled) return
+    if (paymentStatementIssueDisabled) {
+      setIssueBlockedOpen(true)
+      return
+    }
     if (onDownloadPaymentStatement) {
       onDownloadPaymentStatement()
       return
@@ -312,7 +327,7 @@ export function PaymentOrderCalculationBreakdownTable({
         columns={columns}
         dataSource={tableRows}
         pagination={false}
-        size="middle"
+        size={tableCellSpec === 'cms-data-table' ? undefined : 'middle'}
         tableLayout="fixed"
         rowHoverable={false}
         scroll={{ x: tableMinWidth }}
@@ -334,15 +349,10 @@ export function PaymentOrderCalculationBreakdownTable({
               </CmsDataTable.Summary.Cell>
               <CmsDataTable.Summary.Cell index={5} align="center">
                 <CmsButton
+                  type="button"
                   variant="primary"
                   size={actionButtonSize}
                   icon={<ButtonDownloadIcon />}
-                  disabled={paymentStatementIssueDisabled}
-                  title={
-                    paymentStatementIssueDisabled
-                      ? '지급조서 확인 완료 또는 계좌 지급 완료 건만 발급할 수 있습니다.'
-                      : undefined
-                  }
                   onClick={handleDownload} >
                   지급조서 발급
                 </CmsButton>
@@ -350,6 +360,13 @@ export function PaymentOrderCalculationBreakdownTable({
             </CmsDataTable.Summary.Row>
           </CmsDataTable.Summary>
         )}
+      />
+      <InstructorPaymentStatementBlockedModal
+        open={issueBlockedOpen}
+        onClose={() => setIssueBlockedOpen(false)}
+        variant="single"
+        layout="detailFullpage"
+        zIndex={CMS_ALERT_MODAL_Z_INDEX}
       />
     </div>
   )

@@ -5,7 +5,7 @@
 
 import { Form, Typography, Space, Alert } from 'antd'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuthStore, type LoginMode } from '@/features/auth/model/auth-store'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 import { CmsButton, CmsInput } from '@/shared/ui'
 import { useEffect, useState } from 'react'
 import type { LoginRequest } from '@/entities/auth/model/types'
@@ -34,7 +34,7 @@ export function LoginPage() {
   const [form] = Form.useForm()
   const [mfaModalOpen, setMfaModalOpen] = useState(false)
   const [showAdminApprovalPending, setShowAdminApprovalPending] = useState(false)
-  const [loginMode, setLoginMode] = useState<LoginMode | null>(null)
+  const [loginSubmitting, setLoginSubmitting] = useState(false)
   const apiLoginAvailable = isRemoteApiConfigured()
 
   const {
@@ -54,21 +54,21 @@ export function LoginPage() {
     }
   }, [isAuthenticated, user, navigate, redirectPath])
 
-  const submitLogin = async (values: LoginRequest, mode: LoginMode) => {
+  const submitLogin = async (values: LoginRequest) => {
     if (checkLocked()) {
       return
     }
 
-    if (mode === 'api' && !apiLoginAvailable) {
+    if (!apiLoginAvailable) {
       console.error('API 서버가 설정되지 않았습니다. `.env`에 `VITE_API_SERVER`를 확인하세요.')
       return
     }
 
-    setLoginMode(mode)
+    setLoginSubmitting(true)
     setShowAdminApprovalPending(false)
 
     try {
-      const result = await login(values, { mode })
+      const result = await login(values)
       recordSuccess()
 
       if (result?.requiresMfa) {
@@ -87,14 +87,14 @@ export function LoginPage() {
       recordFailure()
       console.error('login failed', loginError)
     } finally {
-      setLoginMode(null)
+      setLoginSubmitting(false)
     }
   }
 
-  const handleLoginClick = async (mode: LoginMode) => {
+  const handleLoginClick = async () => {
     try {
       const values = await form.validateFields()
-      await submitLogin(values as LoginRequest, mode)
+      await submitLogin(values as LoginRequest)
     } catch {
       // 폼 검증 실패
     }
@@ -213,9 +213,9 @@ export function LoginPage() {
               <CmsButton
                 variant="primary"
                 size="h52" className="login-submit-btn"
-                loading={loading && loginMode === 'api'}
+                loading={loading && loginSubmitting}
                 disabled={isLocked || !apiLoginAvailable}
-                onClick={() => void handleLoginClick('api')} >
+                onClick={() => void handleLoginClick()} >
                 로그인하기
               </CmsButton>
             </Form.Item>

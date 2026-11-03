@@ -149,9 +149,27 @@ describe('volunteer assignment mutations', () => {
           status: 'EXCUSED',
           absenceReason: '병원',
           arrivalTime: null,
+          fileObjectIds: [99],
         },
       ],
     })
+  })
+
+  it('confirm 409 CONFLICT는 성공으로 처리한다', async () => {
+    vi.mocked(postUjatPartnerAssignmentConfirm).mockRejectedValueOnce({
+      response: { data: { error: { code: 'UJAT_PARTNER_ASSIGNMENT_CONFLICT' } } },
+    })
+
+    await expect(
+      confirmVolunteerAssignment({
+        programId: '42',
+        mode: 'partner',
+        scheduleId: 10,
+        participantId: 7,
+        partnerParticipantId: 8,
+        educationSlotId: 501,
+      })
+    ).resolves.toEqual({})
   })
 
   it('출결 담당 지정은 attendance-manager PUT에 participantId를 보낸다', async () => {

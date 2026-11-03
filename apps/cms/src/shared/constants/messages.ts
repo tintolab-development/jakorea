@@ -23,8 +23,7 @@ export const INSTRUCTOR_CONSENT_BASIC_INFO_REQUIRED_ALERT_MESSAGE =
 export const CRIME_CONSENT_DOCUMENT_FILE_REQUIRED_ALERT_MESSAGE = '동의서 파일을 첨부해 주세요.'
 
 /** 성범죄 경력조회 동의서 — PDF 외 파일 선택 시 AlertModal 본문 */
-export const CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE =
-  'PDF 파일만 업로드할 수 있습니다.'
+export const CRIME_CONSENT_DOCUMENT_FILE_TYPE_ALERT_MESSAGE = 'PDF 파일만 업로드할 수 있습니다.'
 
 /** 개인 재학 소속 — 검색 미선택·불완전 선택(학교명만) 시 AlertModal 본문 */
 export const INDIVIDUAL_ENROLLED_NEIS_SCHOOL_SELECTION_REQUIRED_ALERT_MESSAGE =
@@ -121,8 +120,7 @@ export const CERTIFICATE_ISSUE_REASON_REQUIRED_ALERT_MESSAGE = '발급 사유를
 export const INSTRUCTOR_JA_FAULT_PARTY_REQUIRED_MESSAGE = '취소 귀책을 선택해 주세요.'
 
 /** 강사 사유 취소가 JA 평가 감점에 반영됨을 안내 */
-export const INSTRUCTOR_JA_FAULT_PARTY_HINT =
-  '강사 사유 선택 시 JA 평가 등급 감점에 반영됩니다'
+export const INSTRUCTOR_JA_FAULT_PARTY_HINT = '강사 사유 선택 시 JA 평가 등급 감점에 반영됩니다'
 
 /** 참여 기관 강사 배정 현황 — 배정 취소: 미선택 시 AlertModal 본문 */
 export const INSTRUCTOR_ASSIGN_UNASSIGN_SELECT_INSTRUCTOR_ALERT_MESSAGE =
@@ -298,7 +296,7 @@ export const MESSAGES = {
     transferListDownloadOwnerOnly: '이체리스트 다운로드는 OWNER 권한에서만 가능합니다.',
     noTransferListData: '다운로드할 이체리스트 데이터가 없습니다.',
     enterPassword: '암호를 입력해주세요.',
-    passwordMinLength: '암호는 최소 8자 이상이어야 합니다.',
+    passwordMinLength: '암호는 최소 12자 이상이어야 합니다.',
     passwordMismatch: '암호 확인이 일치하지 않습니다.',
     favoriteProgramProcessFailed: '관심 프로그램 처리 중 오류가 발생했습니다.',
     selectRoleType: '가입 유형을 선택해주세요.',
@@ -373,7 +371,7 @@ export const MESSAGES = {
     needAtLeastTwoVolunteers: '매칭할 봉사자가 2명 이상 필요합니다.',
     noMatchingCombination: '매칭 가능한 조합이 없습니다. 옵션을 조정해주세요.',
     transferListDownloadOwnerOnly: '이체리스트 다운로드는 OWNER 권한에서만 가능합니다.',
-    passwordMinLength: '암호는 최소 8자 이상이어야 합니다.',
+    passwordMinLength: '암호는 최소 12자 이상이어야 합니다.',
     passwordMismatch: '암호 확인이 일치하지 않습니다.',
   },
   confirm: {
