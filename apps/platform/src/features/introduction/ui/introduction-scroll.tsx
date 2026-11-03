@@ -28,12 +28,14 @@ const INITIAL_STATE: IntroductionScrollState = {
 export function IntroductionScroll({ view }: { view: IntroductionPageContent }) {
   const trackRef = useRef<HTMLElement>(null)
   const valueContentRef = useRef<HTMLDivElement>(null)
+  const lastRevealPxRef = useRef(0)
+  const scrollRangeRef = useRef(1)
+  const maxRevealRef = useRef(0)
   const prefersReducedMotion = usePrefersReducedMotion()
   const isPcUp = useMediaQuery('(min-width: 1080px)')
   const [mediaReady, setMediaReady] = useState(false)
   const [scrollState, setScrollState] = useState<IntroductionScrollState>(INITIAL_STATE)
   const scrollStateRef = useRef<IntroductionScrollState>(INITIAL_STATE)
-  const [worldwideRevealPx, setWorldwideRevealPx] = useState(0)
   const valueCount = Math.max(1, view.globalValues.length)
 
   useEffect(() => {
@@ -55,22 +57,43 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
     if (!isDesktopMotion) {
       scrollStateRef.current = INITIAL_STATE
       setScrollState(INITIAL_STATE)
-      setWorldwideRevealPx(0)
+      lastRevealPxRef.current = 0
+      maxRevealRef.current = 0
+      const content = valueContentRef.current
+      if (content) content.style.transform = 'translate3d(0, 0, 0)'
       return
     }
 
     scrollStateRef.current = INITIAL_STATE
     setScrollState(INITIAL_STATE)
-    setWorldwideRevealPx(0)
+    lastRevealPxRef.current = 0
 
     const track = trackRef.current
     if (!track) return
 
     let frameId = 0
 
+    const measureMetrics = () => {
+      scrollRangeRef.current = Math.max(1, track.offsetHeight - window.innerHeight)
+      const content = valueContentRef.current
+      const viewport = content?.parentElement
+      maxRevealRef.current = Math.max(
+        0,
+        (content?.offsetHeight ?? 0) - (viewport?.clientHeight ?? 0),
+      )
+    }
+
+    const applyWorldwideReveal = (revealPx: number) => {
+      const content = valueContentRef.current
+      if (!content) return
+      if (revealPx === lastRevealPxRef.current) return
+      lastRevealPxRef.current = revealPx
+      content.style.transform = `translate3d(0, -${revealPx}px, 0)`
+    }
+
     const syncState = () => {
       frameId = 0
-      const scrollRange = Math.max(1, track.offsetHeight - window.innerHeight)
+      const scrollRange = scrollRangeRef.current
       const scrollPx = Math.max(0, window.scrollY)
       const next = resolveIntroductionScrollState(scrollPx, scrollRange, valueCount)
       const prev = scrollStateRef.current
@@ -84,13 +107,8 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       }
 
       const revealProgress = resolveWorldwideRevealProgress(scrollPx, scrollRange)
-      const content = valueContentRef.current
-      const viewport = content?.parentElement
-      const maxReveal = Math.max(
-        0,
-        (content?.offsetHeight ?? 0) - (viewport?.clientHeight ?? 0),
-      )
-      setWorldwideRevealPx(Math.round(maxReveal * revealProgress))
+      if (revealProgress > 0 && maxRevealRef.current === 0) measureMetrics()
+      applyWorldwideReveal(Math.round(maxRevealRef.current * revealProgress))
     }
 
     const handleScroll = () => {
@@ -98,13 +116,31 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       frameId = window.requestAnimationFrame(syncState)
     }
 
+    const handleResize = () => {
+      measureMetrics()
+      handleScroll()
+    }
+
+    measureMetrics()
     syncState()
     window.addEventListener('scroll', handleScroll, { passive: true })
-    window.addEventListener('resize', handleScroll, { passive: true })
+    window.addEventListener('resize', handleResize, { passive: true })
+
+    const content = valueContentRef.current
+    const viewport = content?.parentElement
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            measureMetrics()
+          })
+    if (content) resizeObserver?.observe(content)
+    if (viewport) resizeObserver?.observe(viewport)
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
-      window.removeEventListener('resize', handleScroll)
+      window.removeEventListener('resize', handleResize)
+      resizeObserver?.disconnect()
       if (frameId !== 0) window.cancelAnimationFrame(frameId)
     }
   }, [isDesktopMotion, valueCount])
@@ -211,13 +247,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
                 list + Worldwide 동일 panel 형제 (그라데이션 연속).
                 accordion 이후 hold 스크롤로 valueContent translateY → Worldwide 노출.
               */}
-              <div
-                ref={valueContentRef}
-                className={styles.valueContent}
-                style={{
-                  transform: `translate3d(0, -${worldwideRevealPx}px, 0)`,
-                }}
-              >
+              <div ref={valueContentRef} className={styles.valueContent}>
                 <GlobalValuePanel
                   items={view.globalValues}
                   worldwide={view.worldwide}
