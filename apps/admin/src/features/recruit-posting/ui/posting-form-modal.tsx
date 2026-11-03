@@ -18,7 +18,7 @@ import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
-import { RichTextEditor } from '@/shared/rich-text'
+import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
   CmsButton,
   CmsDatePicker,
@@ -45,16 +45,7 @@ const ATTACH_GUIDE = [
   '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ] as const
 
-const ALLOWED_EXT = new Set([
-  '.jpg',
-  '.jpeg',
-  '.png',
-  '.xls',
-  '.xlsx',
-  '.pdf',
-  '.doc',
-  '.docx',
-])
+const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.xls', '.xlsx', '.pdf', '.doc', '.docx'])
 
 function isImageAttachment(file: File): boolean {
   const type = file.type.toLowerCase()
@@ -168,19 +159,22 @@ export function RecruitPostingFormModal({
 
   const editorResetKey = useMemo(
     () => (open ? `${mode}-${initial?.id ?? 'new'}-${editorContentFormat}` : 'closed'),
-    [open, mode, initial?.id, editorContentFormat],
+    [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, editorMinHeight, getHTML } = useRecruitPostingWysiwygEditor(
-    open,
-    initialMarkdown,
-    editorResetKey,
-    {
-      placeholder: '게시글 내용을 입력하세요',
-      contentFormat: editorContentFormat,
-      allowInlineMedia: true,
-    },
-  )
+  const {
+    editor,
+    editorMinHeight,
+    getHTML,
+    editorMode,
+    htmlSource,
+    onEditorModeChange,
+    onHtmlSourceChange,
+  } = useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
+    placeholder: '게시글 내용을 입력하세요',
+    contentFormat: editorContentFormat,
+    allowInlineMedia: true,
+  })
 
   const resetFromInitial = useCallback(() => {
     if (mode === 'edit' && initial) {
@@ -249,7 +243,7 @@ export function RecruitPostingFormModal({
         })
       }
     },
-    [showAlert],
+    [showAlert]
   )
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -277,10 +271,7 @@ export function RecruitPostingFormModal({
     }
     const startMinute = recruitStart.minute()
     const endMinute = recruitEnd.minute()
-    if (
-      (startMinute !== 0 && startMinute !== 30) ||
-      (endMinute !== 0 && endMinute !== 30)
-    ) {
+    if ((startMinute !== 0 && startMinute !== 30) || (endMinute !== 0 && endMinute !== 30)) {
       showAlert({
         title: '입력 확인',
         content: '모집 기간 분은 00분 또는 30분만 선택할 수 있습니다.',
@@ -299,21 +290,24 @@ export function RecruitPostingFormModal({
     }
 
     // remote body는 HTML. 로컬 mock도 HTML을 받을 수 있다.
-    const contentMarkdown = getHTML().trim()
-    if (!contentMarkdown || contentMarkdown === '<p></p>') {
+    const contentHtml = getHTML().trim()
+    if (isEmptyAdminHtml(contentHtml)) {
       showAlert({ title: '입력 확인', content: '공고 내용을 입력해 주세요.' })
+      return
+    }
+    const bodyError = getRemoteRichTextBodyError(contentHtml)
+    if (bodyError) {
+      showAlert({ title: '입력 확인', content: bodyError })
       return
     }
 
     // 모집완료 행: 라디오가 발표(default)면 CLOSED 유지. 모집으로 바꾸면 RECRUITING.
     const submitStatus: RecruitPostingFormStatus | 'closed' =
-      mode === 'edit' && initial?.status === 'closed' && status === 'result'
-        ? 'closed'
-        : status
+      mode === 'edit' && initial?.status === 'closed' && status === 'result' ? 'closed' : status
 
     onSubmit({
       title: t,
-      contentMarkdown,
+      contentMarkdown: contentHtml,
       isPublic,
       status: submitStatus,
       publishedAt: publishedAt.format('YYYY-MM-DD'),
@@ -357,7 +351,8 @@ export function RecruitPostingFormModal({
                 size="large"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
-                onClick={() => setDeleteConfirmOpen(true)} >
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
                 공고 삭제
               </CmsButton>
             ) : null}
@@ -367,7 +362,8 @@ export function RecruitPostingFormModal({
                 size="large"
                 type="button"
                 disabled={confirmLoading || deleteLoading}
-                onClick={onCancel} >
+                onClick={onCancel}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -375,7 +371,8 @@ export function RecruitPostingFormModal({
                 size="large"
                 type="button"
                 loading={confirmLoading}
-                onClick={handleSubmit} >
+                onClick={handleSubmit}
+              >
                 {submitLabel}
               </CmsButton>
             </div>
@@ -474,6 +471,10 @@ export function RecruitPostingFormModal({
                 minHeight={editorMinHeight}
                 allowInlineMedia
                 allowRawHtmlBlock
+                editorMode={editorMode}
+                htmlSource={htmlSource}
+                onEditorModeChange={onEditorModeChange}
+                onHtmlSourceChange={onHtmlSourceChange}
               />
             </div>
           </div>
@@ -496,7 +497,6 @@ export function RecruitPostingFormModal({
               />
             </div>
           </div>
-
         </div>
       </ContentModal>
 

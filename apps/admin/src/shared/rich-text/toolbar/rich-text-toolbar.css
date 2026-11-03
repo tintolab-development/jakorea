@@ -26,7 +26,7 @@
   gap: var(--rt-toolbar-trigger-gap, 4px);
   border: none;
   background: transparent;
-  color: var(--rt-toolbar-text-color, var(--main-BK, #3D3D3D));
+  color: var(--rt-toolbar-text-color, var(--main-BK, #3d3d3d));
   font-family: var(--rt-toolbar-font-family, Pretendard), var(--font-family-primary, sans-serif);
   font-size: var(--rt-toolbar-label-font-size, 15px);
   font-style: normal;
@@ -206,4 +206,81 @@
   flex-direction: column;
   width: 100%;
   min-width: 0;
+}
+
+.rich-text-editor--html-mode .rich-text-editor__toolbar {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.rich-text-editor--html-mode .rich-text-editor__body {
+  display: none;
+}
+
+.rich-text-editor--html-mode .rich-text-toolbar-shell {
+  align-self: stretch;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.rich-text-toolbar__mode-switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 2px;
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 8px;
+  background: var(--main-WT, #fff);
+}
+
+.rich-text-toolbar__mode-button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--rt-toolbar-text-color, var(--main-BK, #3d3d3d));
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rich-text-toolbar__mode-button:hover {
+  background: var(--rt-toolbar-hover-bg, #ebebeb);
+}
+
+.rich-text-toolbar__mode-button--active {
+  background: var(--rt-toolbar-active-bg, #e6f4f1);
+  color: var(--rt-toolbar-active-color, #00897b);
+  font-weight: 600;
+}
+
+.rich-text-toolbar__html-source {
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  padding: var(--rt-body-padding, 16px);
+  resize: none;
+  overflow: auto;
+  border: 0;
+  outline: none;
+  background: var(--rt-background, #fff);
+  color: var(--rt-content-color, var(--default-BK, #3d3d3d));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.rich-text-editor--html-mode .rich-text-toolbar__html-source {
+  min-height: 0;
 }

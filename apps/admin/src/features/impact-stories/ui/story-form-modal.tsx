@@ -14,7 +14,12 @@ import { DEFAULT_AUTHOR } from '@/features/impact-stories/api/store'
 import { shouldUseImpactStoriesRemoteApi } from '@/features/impact-stories/api/capabilities'
 import { useStoryWysiwygEditor } from '@/features/impact-stories/hooks/use-story-wysiwyg-editor'
 import { IMPACT_STORY_PIN_MAX } from '@/features/impact-stories/lib/pin-limits'
-import { getRemoteRichTextBodyError, RichTextEditor } from '@/shared/rich-text'
+import {
+  getRemoteRichTextBodyError,
+  isEmptyAdminHtml,
+  isHtmlContent,
+  RichTextEditor,
+} from '@/shared/rich-text'
 import {
   CmsButton,
   CmsDatePicker,
@@ -128,7 +133,7 @@ export function StoryFormModal({
   const editorContentFormat = useMemo((): 'markdown' | 'html' => {
     if (!useRemote) return 'markdown'
     const body = initialMarkdown.trim()
-    return body.startsWith('<') ? 'html' : 'markdown'
+    return isHtmlContent(body) ? 'html' : 'markdown'
   }, [initialMarkdown, useRemote])
 
   const editorResetKey = useMemo(
@@ -136,17 +141,21 @@ export function StoryFormModal({
     [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, editorMinHeight, getMarkdown, getHTML, resolveImageSrc } = useStoryWysiwygEditor(
-    open,
-    initialMarkdown,
-    editorResetKey,
-    {
-      placeholder: '게시글 내용을 입력하세요',
-      contentFormat: editorContentFormat,
-      // 기존 스펙: 삽입(이미지·YouTube) 유지
-      allowInlineMedia: true,
-    }
-  )
+  const {
+    editor,
+    editorMinHeight,
+    getHTML,
+    editorMode,
+    htmlSource,
+    onEditorModeChange,
+    onHtmlSourceChange,
+    resolveImageSrc,
+  } = useStoryWysiwygEditor(open, initialMarkdown, editorResetKey, {
+    placeholder: '게시글 내용을 입력하세요',
+    contentFormat: editorContentFormat,
+    // 기존 스펙: 삽입(이미지·YouTube) 유지
+    allowInlineMedia: true,
+  })
 
   const categoryOptions = useMemo(
     () => categories.map(c => ({ value: c.id, label: c.name })),
@@ -178,10 +187,7 @@ export function StoryFormModal({
   }, [open, resetFromInitial])
 
   const fileNames = useMemo(() => attachments.map(a => a.name), [attachments])
-  const thumbnailNames = useMemo(
-    () => (thumbnail?.name ? [thumbnail.name] : []),
-    [thumbnail],
-  )
+  const thumbnailNames = useMemo(() => (thumbnail?.name ? [thumbnail.name] : []), [thumbnail])
 
   const readAcceptedImage = useCallback(
     async (file: File, id: string): Promise<ImpactStoryAttachment | null> => {
@@ -216,7 +222,7 @@ export function StoryFormModal({
         return null
       }
     },
-    [showAlert],
+    [showAlert]
   )
 
   const handleThumbnailChange = useCallback(
@@ -226,7 +232,7 @@ export function StoryFormModal({
       const next = await readAcceptedImage(file, `thumb-${Date.now()}`)
       if (next) setThumbnail(next)
     },
-    [readAcceptedImage],
+    [readAcceptedImage]
   )
 
   const handleFilesChange = useCallback(
@@ -241,7 +247,7 @@ export function StoryFormModal({
         setAttachments(prev => [...prev, ...accepted])
       }
     },
-    [readAcceptedImage],
+    [readAcceptedImage]
   )
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -270,19 +276,15 @@ export function StoryFormModal({
       showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
       return
     }
-    const contentMarkdown = (
-      shouldUseImpactStoriesRemoteApi() ? getHTML() : getMarkdown()
-    ).trim()
-    if (!contentMarkdown) {
+    const contentHtml = getHTML().trim()
+    if (isEmptyAdminHtml(contentHtml)) {
       showAlert({ title: '입력 확인', content: '게시글 내용을 입력해 주세요.' })
       return
     }
-    if (shouldUseImpactStoriesRemoteApi()) {
-      const bodyError = getRemoteRichTextBodyError(contentMarkdown)
-      if (bodyError) {
-        showAlert({ title: '입력 확인', content: bodyError })
-        return
-      }
+    const bodyError = getRemoteRichTextBodyError(contentHtml)
+    if (bodyError) {
+      showAlert({ title: '입력 확인', content: bodyError })
+      return
     }
     if (!thumbnail) {
       showAlert({ title: '입력 확인', content: '섬네일 이미지를 등록해 주세요.' })
@@ -298,7 +300,7 @@ export function StoryFormModal({
     onSubmit({
       categoryId,
       title: t,
-      contentMarkdown,
+      contentMarkdown: contentHtml,
       isPublic,
       isPinned,
       publishedAt: publishedAt.toISOString(),
@@ -310,7 +312,6 @@ export function StoryFormModal({
     publishedAt,
     categoryId,
     title,
-    getMarkdown,
     getHTML,
     isPublic,
     isPinned,
@@ -342,7 +343,8 @@ export function StoryFormModal({
                 size="large"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
-                onClick={() => setDeleteConfirmOpen(true)} >
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
                 게시글 삭제
               </CmsButton>
             ) : null}
@@ -352,7 +354,8 @@ export function StoryFormModal({
                 size="large"
                 type="button"
                 disabled={confirmLoading || deleteLoading}
-                onClick={onCancel} >
+                onClick={onCancel}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -360,7 +363,8 @@ export function StoryFormModal({
                 size="large"
                 type="button"
                 loading={confirmLoading}
-                onClick={handleSubmit} >
+                onClick={handleSubmit}
+              >
                 {submitLabel}
               </CmsButton>
             </div>
@@ -449,6 +453,10 @@ export function StoryFormModal({
                 allowInlineMedia
                 resolveImageSrc={resolveImageSrc}
                 allowRawHtmlBlock
+                editorMode={editorMode}
+                htmlSource={htmlSource}
+                onEditorModeChange={onEditorModeChange}
+                onHtmlSourceChange={onHtmlSourceChange}
               />
             </div>
           </div>

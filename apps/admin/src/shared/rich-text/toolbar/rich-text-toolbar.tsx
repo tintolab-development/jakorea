@@ -2,15 +2,7 @@ import '@jakorea/rich-text/extension-types'
 import type { Editor } from '@tiptap/react'
 import { useEditorState } from '@tiptap/react'
 import type { MenuProps } from 'antd'
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-} from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import {
   insertEmoji,
   insertHorizontalRule,
@@ -33,6 +25,8 @@ import {
   registerRawHtmlSourceRequester,
   type RawHtmlSourceRequest,
 } from '@jakorea/rich-text'
+import type { AdminEditorMode } from '../admin-html-editor'
+import { REMOTE_RICH_TEXT_BODY_MAX_LENGTH } from '../lib/remote-body'
 import { RawHtmlSourceModal } from './raw-html-source-modal'
 import {
   FONT_FAMILY_OPTIONS,
@@ -45,11 +39,7 @@ import {
   type ListTypeValue,
   type TextAlignValue,
 } from './rich-text-toolbar.constants'
-import {
-  ColorSwatchGrid,
-  EmojiPickerGrid,
-  ToolbarDropdown,
-} from './rich-text-toolbar-dropdown'
+import { ColorSwatchGrid, EmojiPickerGrid, ToolbarDropdown } from './rich-text-toolbar-dropdown'
 import {
   AlignLeftIcon,
   BoldIcon,
@@ -82,10 +72,15 @@ export type RichTextToolbarProps = {
    */
   resolveImageSrc?: (file: File) => Promise<string>
   /**
-   * 삽입 메뉴에 'HTML 소스 붙여넣기'(HTML 원본 블록) 노출. 기본 false.
+   * HTML 원본 블록의 소스 편집 모달을 활성화한다. 기본 false.
    * Markdown으로 저장하는 화면(교재)은 켜지 않는다.
    */
   allowRawHtmlBlock?: boolean
+  /** Admin 전용 일반 편집·HTML 소스 모드. */
+  editorMode?: AdminEditorMode
+  htmlSource?: string
+  onEditorModeChange?: (mode: AdminEditorMode) => void
+  onHtmlSourceChange?: (html: string) => void
 }
 
 type PendingRawHtmlRequest = RawHtmlSourceRequest & {
@@ -148,6 +143,10 @@ export function RichTextToolbar({
   allowInlineMedia = true,
   resolveImageSrc,
   allowRawHtmlBlock = false,
+  editorMode,
+  htmlSource = '',
+  onEditorModeChange,
+  onHtmlSourceChange,
 }: RichTextToolbarProps) {
   const [rawHtmlRequest, setRawHtmlRequest] = useState<PendingRawHtmlRequest | null>(null)
   const imageFileInputRef = useRef<HTMLInputElement>(null)
@@ -181,6 +180,7 @@ export function RichTextToolbar({
     }) ?? EMPTY_TOOLBAR_STATE
 
   const disabled = !editor || !state.canEdit
+  const hasModeSwitch = editorMode != null && onEditorModeChange != null
   const activeListType: ListTypeValue | '' = state.isBulletList
     ? 'bullet'
     : state.isOrderedList
@@ -397,21 +397,6 @@ export function RichTextToolbar({
           { type: 'divider' },
         ]
 
-    const rawHtmlItems: MenuProps['items'] = allowRawHtmlBlock
-      ? [
-          {
-            key: 'raw-html-block',
-            label: 'HTML 소스 붙여넣기',
-            onClick: () => {
-              void requestRawHtmlSource({ initialHtml: '', mode: 'insert' }).then(html => {
-                if (html == null) return
-                run(ed => ed.chain().focus().insertRawHtmlBlock(html).run())
-              })
-            },
-          },
-        ]
-      : []
-
     return [
       ...mediaItems,
       {
@@ -424,9 +409,8 @@ export function RichTextToolbar({
         label: '인용',
         onClick: () => run(ed => ed.chain().focus().toggleBlockquote().run()),
       },
-      ...rawHtmlItems,
     ]
-  }, [allowInlineMedia, allowRawHtmlBlock, imageFileInputId, requestRawHtmlSource, run])
+  }, [allowInlineMedia, imageFileInputId, run])
 
   const handleImageFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -438,212 +422,256 @@ export function RichTextToolbar({
     [editor, resolveImageSrc]
   )
 
-  if (!editor) return null
+  if (!editor && !hasModeSwitch) return null
 
   return (
     <div className="rich-text-toolbar-shell">
-    <div className="rich-text-toolbar" role="toolbar" aria-label="서식">
-      <input
-        ref={imageFileInputRef}
-        id={imageFileInputId}
-        type="file"
-        accept={RICH_TEXT_IMAGE_ACCEPT}
-        className="rich-text-toolbar__file-input"
-        tabIndex={-1}
-        aria-hidden
-        disabled={!allowInlineMedia}
-        onChange={handleImageFileChange}
-      />
-      <ToolbarDropdown
-        ariaLabel="글꼴"
-        label="글꼴"
-        leadingIcon={<FontFamilyIcon />}
-        menuItems={fontFamilyMenuItems}
-        disabled={disabled}
-      />
+      <div className="rich-text-toolbar" role="toolbar" aria-label="서식">
+        <input
+          ref={imageFileInputRef}
+          id={imageFileInputId}
+          type="file"
+          accept={RICH_TEXT_IMAGE_ACCEPT}
+          className="rich-text-toolbar__file-input"
+          tabIndex={-1}
+          aria-hidden
+          disabled={!allowInlineMedia}
+          onChange={handleImageFileChange}
+        />
+        {editorMode !== 'html' ? (
+          <>
+            <ToolbarDropdown
+              ariaLabel="글꼴"
+              label="글꼴"
+              leadingIcon={<FontFamilyIcon />}
+              menuItems={fontFamilyMenuItems}
+              disabled={disabled}
+            />
 
-      <ToolbarDropdown
-        ariaLabel="글자 크기"
-        label="크기"
-        valueLabel={
-          state.fontSize
-            ? FONT_SIZE_OPTIONS.find(o => o.value === state.fontSize)?.label
-            : undefined
-        }
-        menuItems={fontSizeMenuItems}
-        disabled={disabled}
-      />
+            <ToolbarDropdown
+              ariaLabel="글자 크기"
+              label="크기"
+              valueLabel={
+                state.fontSize
+                  ? FONT_SIZE_OPTIONS.find(o => o.value === state.fontSize)?.label
+                  : undefined
+              }
+              menuItems={fontSizeMenuItems}
+              disabled={disabled}
+            />
 
-      <ToolbarDropdown
-        ariaLabel="제목"
-        label="제목"
-        valueLabel={headingTriggerLabel}
-        menuItems={headingMenuItems}
-        disabled={disabled}
-      />
+            <ToolbarDropdown
+              ariaLabel="제목"
+              label="제목"
+              valueLabel={headingTriggerLabel}
+              menuItems={headingMenuItems}
+              disabled={disabled}
+            />
 
-      <ToolbarToggle
-        title="굵게"
-        active={state.isBold}
-        disabled={disabled}
-        onAction={() => run(ed => ed.chain().focus().toggleBold().run())}
-      >
-        <BoldIcon />
-      </ToolbarToggle>
-      <ToolbarToggle
-        title="기울임"
-        active={state.isItalic}
-        disabled={disabled}
-        onAction={() => run(ed => ed.chain().focus().toggleItalic().run())}
-      >
-        <ItalicIcon />
-      </ToolbarToggle>
-      <ToolbarToggle
-        title="밑줄"
-        active={state.isUnderline}
-        disabled={disabled}
-        onAction={() => run(ed => ed.chain().focus().toggleUnderline().run())}
-      >
-        <UnderlineIcon />
-      </ToolbarToggle>
-      <ToolbarToggle
-        title="취소선"
-        active={state.isStrike}
-        disabled={disabled}
-        onAction={() => run(ed => ed.chain().focus().toggleStrike().run())}
-      >
-        <StrikeIcon />
-      </ToolbarToggle>
+            <ToolbarToggle
+              title="굵게"
+              active={state.isBold}
+              disabled={disabled}
+              onAction={() => run(ed => ed.chain().focus().toggleBold().run())}
+            >
+              <BoldIcon />
+            </ToolbarToggle>
+            <ToolbarToggle
+              title="기울임"
+              active={state.isItalic}
+              disabled={disabled}
+              onAction={() => run(ed => ed.chain().focus().toggleItalic().run())}
+            >
+              <ItalicIcon />
+            </ToolbarToggle>
+            <ToolbarToggle
+              title="밑줄"
+              active={state.isUnderline}
+              disabled={disabled}
+              onAction={() => run(ed => ed.chain().focus().toggleUnderline().run())}
+            >
+              <UnderlineIcon />
+            </ToolbarToggle>
+            <ToolbarToggle
+              title="취소선"
+              active={state.isStrike}
+              disabled={disabled}
+              onAction={() => run(ed => ed.chain().focus().toggleStrike().run())}
+            >
+              <StrikeIcon />
+            </ToolbarToggle>
 
-      <ToolbarDropdown
-        ariaLabel="줄간격"
-        label="줄간격"
-        leadingIcon={<LineHeightIcon />}
-        iconOnly
-        valueLabel={
-          state.lineHeight
-            ? LINE_HEIGHT_OPTIONS.find(o => o.value === state.lineHeight)?.label
-            : undefined
-        }
-        menuItems={lineHeightMenuItems}
-        disabled={disabled}
-      />
+            <ToolbarDropdown
+              ariaLabel="줄간격"
+              label="줄간격"
+              leadingIcon={<LineHeightIcon />}
+              iconOnly
+              valueLabel={
+                state.lineHeight
+                  ? LINE_HEIGHT_OPTIONS.find(o => o.value === state.lineHeight)?.label
+                  : undefined
+              }
+              menuItems={lineHeightMenuItems}
+              disabled={disabled}
+            />
 
-      <ToolbarToggle
-        title="위 첨자"
-        active={state.isSuperscript}
-        disabled={disabled}
-        onAction={() => run(ed => ed.chain().focus().toggleSuperscript().run())}
-      >
-        <SuperscriptIcon />
-      </ToolbarToggle>
+            <ToolbarToggle
+              title="위 첨자"
+              active={state.isSuperscript}
+              disabled={disabled}
+              onAction={() => run(ed => ed.chain().focus().toggleSuperscript().run())}
+            >
+              <SuperscriptIcon />
+            </ToolbarToggle>
 
-      <ToolbarDropdown
-        ariaLabel="이모지"
-        label="이모지"
-        leadingIcon={<EmojiIcon />}
-        iconOnly
-        disabled={disabled}
-        panel={
-          <EmojiPickerGrid
-            disabled={disabled}
-            onPick={name => run(ed => insertEmoji(ed, name))}
-          />
-        }
-      />
+            <ToolbarDropdown
+              ariaLabel="이모지"
+              label="이모지"
+              leadingIcon={<EmojiIcon />}
+              iconOnly
+              disabled={disabled}
+              panel={
+                <EmojiPickerGrid
+                  disabled={disabled}
+                  onPick={name => run(ed => insertEmoji(ed, name))}
+                />
+              }
+            />
 
-      <ToolbarDropdown
-        ariaLabel="텍스트 색상"
-        label="텍스트 색상"
-        leadingIcon={<PaletteIcon />}
-        disabled={disabled}
-        panel={
-          <ColorSwatchGrid
-            colors={TEXT_COLOR_OPTIONS}
-            activeValue={state.textColor}
-            disabled={disabled}
-            onPick={color =>
-              run(ed => ed.chain().focus().setColor(color).run())
-            }
-            onClear={() => run(ed => ed.chain().focus().unsetColor().run())}
-          />
-        }
-      />
+            <ToolbarDropdown
+              ariaLabel="텍스트 색상"
+              label="텍스트 색상"
+              leadingIcon={<PaletteIcon />}
+              disabled={disabled}
+              panel={
+                <ColorSwatchGrid
+                  colors={TEXT_COLOR_OPTIONS}
+                  activeValue={state.textColor}
+                  disabled={disabled}
+                  onPick={color => run(ed => ed.chain().focus().setColor(color).run())}
+                  onClear={() => run(ed => ed.chain().focus().unsetColor().run())}
+                />
+              }
+            />
 
-      <ToolbarDropdown
-        ariaLabel="하이라이트"
-        label="하이라이트"
-        leadingIcon={<HighlightIcon />}
-        disabled={disabled}
-        panel={
-          <ColorSwatchGrid
-            colors={HIGHLIGHT_OPTIONS}
-            activeValue={state.highlightColor}
-            disabled={disabled}
-            onPick={color =>
-              run(ed => ed.chain().focus().setHighlight({ color }).run())
-            }
-            onClear={() => run(ed => ed.chain().focus().unsetHighlight().run())}
-            clearLabel="하이라이트 제거"
-          />
-        }
-      />
+            <ToolbarDropdown
+              ariaLabel="하이라이트"
+              label="하이라이트"
+              leadingIcon={<HighlightIcon />}
+              disabled={disabled}
+              panel={
+                <ColorSwatchGrid
+                  colors={HIGHLIGHT_OPTIONS}
+                  activeValue={state.highlightColor}
+                  disabled={disabled}
+                  onPick={color => run(ed => ed.chain().focus().setHighlight({ color }).run())}
+                  onClear={() => run(ed => ed.chain().focus().unsetHighlight().run())}
+                  clearLabel="하이라이트 제거"
+                />
+              }
+            />
 
-      <ToolbarDropdown
-        ariaLabel="정렬"
-        label="정렬"
-        leadingIcon={<AlignLeftIcon />}
-        iconOnly
-        menuItems={textAlignMenuItems}
-        disabled={disabled}
-      />
+            <ToolbarDropdown
+              ariaLabel="정렬"
+              label="정렬"
+              leadingIcon={<AlignLeftIcon />}
+              iconOnly
+              menuItems={textAlignMenuItems}
+              disabled={disabled}
+            />
 
-      <ToolbarDropdown
-        ariaLabel="목록"
-        label="목록"
-        leadingIcon={<ListMenuIcon />}
-        iconOnly
-        valueLabel={
-          activeListType
-            ? LIST_OPTIONS.find(o => o.value === activeListType)?.label
-            : undefined
-        }
-        menuItems={listMenuItems}
-        disabled={disabled}
-      />
+            <ToolbarDropdown
+              ariaLabel="목록"
+              label="목록"
+              leadingIcon={<ListMenuIcon />}
+              iconOnly
+              valueLabel={
+                activeListType
+                  ? LIST_OPTIONS.find(o => o.value === activeListType)?.label
+                  : undefined
+              }
+              menuItems={listMenuItems}
+              disabled={disabled}
+            />
 
-      <ToolbarToggle
-        title="구분선"
-        disabled={disabled}
-        onAction={() => run(ed => insertHorizontalRule(ed))}
-      >
-        <HorizontalRuleIcon />
-      </ToolbarToggle>
+            <ToolbarToggle
+              title="구분선"
+              disabled={disabled}
+              onAction={() => run(ed => insertHorizontalRule(ed))}
+            >
+              <HorizontalRuleIcon />
+            </ToolbarToggle>
 
-      <ToolbarDropdown
-        ariaLabel="표"
-        label="표"
-        leadingIcon={<TableIcon />}
-        iconOnly
-        menuItems={tableMenuItems}
-        disabled={disabled}
-      />
+            <ToolbarDropdown
+              ariaLabel="표"
+              label="표"
+              leadingIcon={<TableIcon />}
+              iconOnly
+              menuItems={tableMenuItems}
+              disabled={disabled}
+            />
 
-      <ToolbarDropdown
-        ariaLabel="삽입"
-        label="삽입"
-        menuItems={insertMenuItems}
-        disabled={disabled}
-      />
-    </div>
-    {allowRawHtmlBlock ? (
-      <RawHtmlSourceModal
-        request={rawHtmlRequest}
-        onSubmit={html => closeRawHtmlModal(html)}
-        onCancel={() => closeRawHtmlModal(null)}
-        uploadImage={resolveImageSrc}
-      />
-    ) : null}
+            <ToolbarDropdown
+              ariaLabel="삽입"
+              label="삽입"
+              menuItems={insertMenuItems}
+              disabled={disabled}
+            />
+          </>
+        ) : null}
+
+        {hasModeSwitch ? (
+          <div className="rich-text-toolbar__mode-switch" role="group" aria-label="본문 편집 모드">
+            <button
+              type="button"
+              className={[
+                'rich-text-toolbar__mode-button',
+                editorMode === 'visual' ? 'rich-text-toolbar__mode-button--active' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              aria-pressed={editorMode === 'visual'}
+              onMouseDown={event => event.preventDefault()}
+              onClick={() => onEditorModeChange?.('visual')}
+            >
+              일반 편집
+            </button>
+            <button
+              type="button"
+              className={[
+                'rich-text-toolbar__mode-button',
+                editorMode === 'html' ? 'rich-text-toolbar__mode-button--active' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+              aria-pressed={editorMode === 'html'}
+              onMouseDown={event => event.preventDefault()}
+              onClick={() => onEditorModeChange?.('html')}
+            >
+              HTML
+            </button>
+          </div>
+        ) : null}
+      </div>
+      {editorMode === 'html' && onHtmlSourceChange ? (
+        <textarea
+          className="rich-text-toolbar__html-source"
+          value={htmlSource}
+          maxLength={REMOTE_RICH_TEXT_BODY_MAX_LENGTH}
+          spellCheck={false}
+          aria-label="HTML 소스"
+          placeholder="HTML 태그를 입력하세요"
+          onChange={event => onHtmlSourceChange(event.target.value)}
+        />
+      ) : null}
+      {allowRawHtmlBlock ? (
+        <RawHtmlSourceModal
+          request={rawHtmlRequest}
+          onSubmit={html => closeRawHtmlModal(html)}
+          onCancel={() => closeRawHtmlModal(null)}
+          uploadImage={resolveImageSrc}
+        />
+      ) : null}
     </div>
   )
 }
