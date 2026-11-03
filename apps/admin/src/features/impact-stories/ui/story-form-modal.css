@@ -9,7 +9,8 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   padding: 16px !important;
   box-sizing: border-box !important;
   position: fixed !important;
@@ -21,18 +22,19 @@
 
 .ant-modal-wrap:has(.ant-modal.teal-header-modal--large.story-form-modal)
   .ant-modal.teal-header-modal--large.story-form-modal {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
   right: auto !important;
   bottom: auto !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
+  transform: none !important;
+  margin: 0 auto !important;
   padding-bottom: 0 !important;
   width: min(1400px, calc(100vw - 32px)) !important;
   max-width: min(1400px, calc(100vw - 32px)) !important;
   max-height: calc(100vh - 32px) !important;
   max-height: calc(100dvh - 32px) !important;
+  height: auto !important;
   flex: none !important;
   box-sizing: border-box !important;
 }
@@ -229,8 +231,8 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  height: 100% !important;
-  min-height: 0 !important;
+  height: 100%;
+  min-height: 0;
   max-height: 100%;
   border-radius: 0;
   overflow: hidden;
@@ -268,13 +270,17 @@
 
 .story-form-modal__editor-host:has(.rich-text-editor[data-resized='true']) {
   flex: 0 0 auto;
+  height: auto;
   max-height: none;
   overflow: visible;
 }
 
+.story-form-modal__editor-host .cms-rich-text-editor.rich-text-editor[data-resized='true'],
 .story-form-modal__editor-host .rich-text-editor[data-resized='true'] {
   height: var(--rt-user-height) !important;
   max-height: none;
+  min-height: 0;
+  flex: 0 0 auto;
 }
 
 /* 섬네일 + 첨부 테이블 — CMS th 180 + body */

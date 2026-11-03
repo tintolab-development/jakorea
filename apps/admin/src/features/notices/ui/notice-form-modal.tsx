@@ -264,6 +264,7 @@ export function NoticeFormModal({
         onCancel={onCancel}
         title={titleText}
         size="large"
+        className="notice-form-modal"
         footer={
           <div className="notice-form-modal__footer">
             {mode === 'edit' && onDelete ? (
