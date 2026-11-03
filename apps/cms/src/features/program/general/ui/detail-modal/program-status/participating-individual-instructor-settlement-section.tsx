@@ -181,7 +181,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
             <CmsButton
               variant="default"
               size="h40"
-              disabled={!record.canViewPaymentStatement || !remoteEnabled}
+              disabled={!remoteEnabled}
               onClick={() => paymentStatementView.handleOpen(record)} >
               지급조서 보기
             </CmsButton>

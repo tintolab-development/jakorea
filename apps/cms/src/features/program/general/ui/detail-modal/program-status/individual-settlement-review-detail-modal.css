@@ -72,13 +72,22 @@
 /* 산출 내역 상세: cms-data-table 셀 규격, 합계 행만 민트 배경·발급 버튼 */
 .individual-settlement-review-detail-modal
   .cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell {
+  /* cms-data-table 마지막 행 bottom 제거 + 합계 border-top + rowspan bottom이 이중선이 되지 않게 본문 선만 유지 */
+  border-bottom: 1px solid var(--table-line, #e0e0e0) !important;
+}
+
+.individual-settlement-review-detail-modal
+  .cms-data-table
   .payment-order-calc-statement-modal__summary-row
   .ant-table-cell {
   padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
   font-size: 14px;
   font-weight: 500;
   line-height: 150%;
-  border-right: 1px solid var(--table-line, #e0e0e0) !important;
+  border-top: none !important;
   border-inline-end: 1px solid var(--table-line, #e0e0e0) !important;
   border-bottom: none !important;
 }

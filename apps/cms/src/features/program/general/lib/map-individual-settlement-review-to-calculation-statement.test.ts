@@ -84,6 +84,8 @@ describe('mapIndividualSettlementReviewToCalculationStatement', () => {
     expect(view.blocks[0]?.lines[0]?.description).toBe('편도 30km 이상 시 지급')
     expect(view.blocks[0]?.lines[0]?.description).not.toContain('가는 편')
     expect(view.receiptsByItemId['1']?.[0]?.description).toBe('가는 편')
+    expect(view.blocks[0]?.lines[0]?.basisDetail?.layout).toBe('transportOneWay')
+    expect(view.blocks[0]?.lines[1]?.basisDetail).toBeUndefined()
     expect(view.blocks[0]?.lines[1]?.description).toBe(
       '소득 유형별 원천징수 기준과 세율을 설정합니다.'
     )

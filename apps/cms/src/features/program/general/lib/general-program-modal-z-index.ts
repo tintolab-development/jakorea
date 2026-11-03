@@ -11,3 +11,13 @@ export const GENERAL_PROGRAM_DETAIL_STRUCTURE_CONFIRM_Z_INDEX =
 
 /** 참여자 모집 사용자 미리보기 — 상세 풀페이지 위 (양식 userPreview 1300과 동급 이상) */
 export const PARTICIPANT_RECRUITMENT_PREVIEW_MODAL_Z_INDEX = 1500
+
+/** 개인 정산 산출 내역서 — 상세 풀페이지(1100) 위 */
+export const INDIVIDUAL_SETTLEMENT_REVIEW_STATEMENT_MODAL_Z_INDEX = 1400
+
+/**
+ * 산출 내역서 위 승인·반려·산정 기준 상세.
+ * ConfirmModal 기본값(1001)은 풀페이지·산출 내역서에 가려진다.
+ */
+export const INDIVIDUAL_SETTLEMENT_REVIEW_NESTED_MODAL_Z_INDEX =
+  PARTICIPANT_RECRUITMENT_PREVIEW_MODAL_Z_INDEX

@@ -16,6 +16,10 @@ import {
 import { PaymentStatementIssuanceViewModal } from '@/features/program/shared/ui/payment-statement-issuance-view-modal'
 import { downloadFromBulkEndpoint } from '@/features/user/api/download-bulk-endpoint'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
+import {
+  isPaymentStatementApplicationMissing,
+  PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT,
+} from '@/features/settlement/lib/payment-statement-view-unavailable-alert'
 
 function toSettlementContext(
   row: ParticipatingInstructorSettlementApiRow,
@@ -78,10 +82,17 @@ export function useParticipatingInstructorPaymentStatementView(input: {
     )
   }, [activeRow, input.instructor, input.institutionNameOverride])
 
-  const handleOpen = useCallback((row: ParticipatingInstructorSettlementApiRow) => {
-    setActiveRow(row)
-    setOpen(true)
-  }, [])
+  const handleOpen = useCallback(
+    (row: ParticipatingInstructorSettlementApiRow) => {
+      if (isPaymentStatementApplicationMissing(row.hasPaymentStatementApplication)) {
+        showAlert(PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT)
+        return
+      }
+      setActiveRow(row)
+      setOpen(true)
+    },
+    [showAlert]
+  )
 
   const handleClose = useCallback(() => {
     setOpen(false)

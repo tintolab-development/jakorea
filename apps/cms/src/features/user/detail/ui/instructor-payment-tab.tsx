@@ -19,6 +19,10 @@ import {
   isInstructorSettlementEligibleForPaymentStatementIssue,
   isInstructorSettlementInactive,
 } from '@/shared/constants/instructor-settlement-status'
+import {
+  isInstructorPaymentStatementViewUnavailable,
+  PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT,
+} from '@/features/settlement/lib/payment-statement-view-unavailable-alert'
 import type { InstructorSettlementListRow } from '@/features/user/detail/model/instructor-settlement-types'
 import {
   filterRowsByMonth,
@@ -205,11 +209,17 @@ export function InstructorPaymentTab({
     ])
   }, [instructorMemberId, queryClient])
 
-  const openInvoice = useCallback((row: InstructorSettlementListRow) => {
-    if (row.status === 'none' || isInstructorSettlementInactive(row.status)) return
-    setInvoiceData(row)
-    setInvoiceOpen(true)
-  }, [])
+  const openInvoice = useCallback(
+    (row: InstructorSettlementListRow) => {
+      if (isInstructorPaymentStatementViewUnavailable(row.status)) {
+        showAlert(PAYMENT_STATEMENT_VIEW_UNAVAILABLE_ALERT)
+        return
+      }
+      setInvoiceData(row)
+      setInvoiceOpen(true)
+    },
+    [showAlert]
+  )
 
   const openSettlementDetail = useCallback(
     (row: InstructorSettlementListRow) => {
@@ -312,10 +322,7 @@ export function InstructorPaymentTab({
         align: 'center',
         render: (_: unknown, record) => (
           <div className="instructor-payment-tab__detail-action-cell">
-            <CalculationDetailViewButton
-              disabled={record.status === 'none' || isInstructorSettlementInactive(record.status)}
-              onClick={() => openInvoice(record)}
-            />
+            <CalculationDetailViewButton onClick={() => openInvoice(record)} />
           </div>
         ),
       },

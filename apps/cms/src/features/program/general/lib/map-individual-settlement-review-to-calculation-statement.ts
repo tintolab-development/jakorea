@@ -16,6 +16,7 @@ import {
   normalizeIndividualSettlementReviewStatus,
 } from './individual-settlement-review-status'
 import { formatCmsScheduleDisplayLabel } from './organization-preferred-schedule-label'
+import { mapIndividualSettlementItemToBasisDetail } from './map-individual-settlement-review-basis-detail'
 
 export type IndividualSettlementCalculationStatementView = {
   basic: PaymentOrderCalculationStatementProgramBasicInfo
@@ -104,6 +105,7 @@ export function mapIndividualSettlementReviewToCalculationStatement(
       description: displayOrDash(item.description),
       amount: kind === 'withholding' && amount > 0 ? -amount : amount,
       kind,
+      basisDetail: mapIndividualSettlementItemToBasisDetail(item, kind),
     }
   })
 

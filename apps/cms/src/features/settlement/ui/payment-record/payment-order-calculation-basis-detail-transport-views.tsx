@@ -13,21 +13,25 @@ import {
   BasisDetailInfoFormRow,
   BasisDetailPublicTransitValue,
   BasisDetailReadOnlyValue,
-  BasisDetailSectionLabel,
   BasisDetailTotalRow,
 } from './payment-order-calculation-basis-detail-shared'
 import { formatPaymentOrderCalculationWonPlain } from './payment-order-calculation-breakdown-table'
-import { withProgramDetailTdDivider } from '@/features/program/shared/ui/program-detail-td-divider'
+import {
+  ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
 
 function TransportParticipantTripLegTable({
   leg,
   title,
+  hideHeader = true,
 }: {
   leg: PaymentOrderCalculationBasisDetailTransportTripLeg
   title: string
+  hideHeader?: boolean
 }) {
   return (
-    <BasisDetailInfoForm title={title}>
+    <BasisDetailInfoForm title={title} hideHeader={hideHeader}>
       <BasisDetailInfoFormRow label="구분">
         <BasisDetailReadOnlyValue>{leg.categoryLabel}</BasisDetailReadOnlyValue>
       </BasisDetailInfoFormRow>
@@ -45,18 +49,16 @@ export function PaymentOrderCalculationBasisDetailTransportRoundTripView({
 }) {
   return (
     <div className="payment-order-calculation-basis-detail-modal__section-stack">
-      <section aria-labelledby="transport-basis-outbound-label">
-        <BasisDetailSectionLabel id="transport-basis-outbound-label">
-          가는 편(출발)
-        </BasisDetailSectionLabel>
-        <TransportParticipantTripLegTable leg={detail.outbound} title="가는 편 산정 기준" />
-      </section>
-      <section aria-labelledby="transport-basis-inbound-label">
-        <BasisDetailSectionLabel id="transport-basis-inbound-label">
-          오는 편(귀가)
-        </BasisDetailSectionLabel>
-        <TransportParticipantTripLegTable leg={detail.inbound} title="오는 편 산정 기준" />
-      </section>
+      <TransportParticipantTripLegTable
+        leg={detail.outbound}
+        title="가는 편(출발)"
+        hideHeader={false}
+      />
+      <TransportParticipantTripLegTable
+        leg={detail.inbound}
+        title="오는 편(귀가)"
+        hideHeader={false}
+      />
       <BasisDetailTotalRow totalWon={detail.totalWon} />
     </div>
   )
@@ -82,10 +84,12 @@ export function PaymentOrderCalculationBasisDetailTransportInstructorView({
       </BasisDetailInfoFormRow>
       <BasisDetailInfoFormRow label="이동 거리 및 유류비">
         <BasisDetailReadOnlyValue>
-          {withProgramDetailTdDivider([
-            `${detail.distanceKm}km`,
-            formatPaymentOrderCalculationWonPlain(detail.fuelCostWon),
-          ])}
+          <ProgramDetailTdSegmentWrap>
+            {withProgramDetailTdDivider([
+              `${detail.distanceKm}km`,
+              formatPaymentOrderCalculationWonPlain(detail.fuelCostWon),
+            ])}
+          </ProgramDetailTdSegmentWrap>
         </BasisDetailReadOnlyValue>
       </BasisDetailInfoFormRow>
       <BasisDetailInfoFormRow label="톨게이트비">
