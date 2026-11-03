@@ -7,7 +7,9 @@
  */
 import type { MemberPortalEducationScheduleAssignment } from './memberPortalEducationScheduleAssignment';
 import type { MemberPortalEducationScheduleGroupTime } from './memberPortalEducationScheduleGroupTime';
+import type { MemberPortalEducationScheduleItemAssignmentStatus } from './memberPortalEducationScheduleItemAssignmentStatus';
 import type { MemberPortalEducationScheduleItemBlockKind } from './memberPortalEducationScheduleItemBlockKind';
+import type { MemberPortalEducationScheduleItemTeamRole } from './memberPortalEducationScheduleItemTeamRole';
 
 export interface MemberPortalEducationScheduleItem {
   /**
@@ -61,4 +63,26 @@ export interface MemberPortalEducationScheduleItem {
   /** @nullable */
   groupTimes?: MemberPortalEducationScheduleGroupTime[] | null;
   assignment?: MemberPortalEducationScheduleAssignment | null;
+  /** 해당 회차 기준 본인 팀 역할 */
+  teamRole?: MemberPortalEducationScheduleItemTeamRole;
+  /**
+   * 해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀·일정별 참여 라벨 없는 회차(예: 사전교육)이면 null이며 다른 회차 값으로 합성하지 않습니다.
+   * @nullable
+   */
+  teamName?: string | null;
+  /**
+   * UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null
+   * @nullable
+   */
+  assignmentStatus?: MemberPortalEducationScheduleItemAssignmentStatus;
+  /**
+   * UJAT 봉사자 학급 라벨. allocation-matrix cell.classLabel과 동일 SSOT. UNASSIGNED는 null. 빈 문자열 금지. 비UJAT이면 null
+   * @nullable
+   */
+  classLabel?: string | null;
+  /**
+   * UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개
+   * @nullable
+   */
+  organizationName?: string | null;
 }
