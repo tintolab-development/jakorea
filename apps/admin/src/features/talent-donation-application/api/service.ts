@@ -1,8 +1,8 @@
 import type {
   TalentDonationApplication,
   TalentDonationApplicationListFilter,
-  TalentDonationApplicationListResult,
 } from '@/entities/talent-donation-application/model/types'
+import { paginateLocalRows, toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list'
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api'
 import { shouldUseTalentDonationApplicationRemoteApi } from './capabilities'
 import {
@@ -24,23 +24,25 @@ function sponsorshipApi() {
 }
 
 async function listRemote(
-  filter: TalentDonationApplicationListFilter = {},
-): Promise<TalentDonationApplicationListResult> {
-  const response = await sponsorshipApi().list13(toTalentApplicationListParams(filter))
-  return {
-    items: (response.items ?? []).map(mapTalentApplicationListItemToDomain),
-    totalCount: response.totalCount ?? response.items?.length ?? 0,
-  }
+  filter: TalentDonationApplicationListFilter,
+  page: number,
+): Promise<AdminListPage<TalentDonationApplication>> {
+  const response = await sponsorshipApi().list13(toTalentApplicationListParams(filter, page))
+  return toAdminListPage(
+    (response.items ?? []).map(mapTalentApplicationListItemToDomain),
+    page,
+    response,
+  )
 }
 
-export async function listTalentDonationApplicationsService(
+export async function listTalentDonationApplicationsPageService(
   filter: TalentDonationApplicationListFilter = {},
-): Promise<TalentDonationApplicationListResult> {
+  page = 0,
+): Promise<AdminListPage<TalentDonationApplication>> {
   if (shouldUseTalentDonationApplicationRemoteApi()) {
-    return listRemote(filter)
+    return listRemote(filter, page)
   }
-  const items = readTalentDonationApplications(filter)
-  return { items, totalCount: items.length }
+  return paginateLocalRows(readTalentDonationApplications(filter), page)
 }
 
 export async function getTalentDonationApplicationService(

@@ -2,14 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type {
   TalentDonationApplication,
   TalentDonationApplicationListFilter,
-  TalentDonationApplicationListResult,
 } from '@/entities/talent-donation-application/model/types'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
+import {
+  collectInfiniteCachedRows,
+  patchInfiniteListRow,
+} from '@/shared/lib/admin-infinite-list'
 import { shouldUseTalentDonationApplicationRemoteApi } from './capabilities'
 import { talentDonationApplicationQueryKeys } from './query-keys'
 import {
   confirmTalentDonationApplicationsService,
   getTalentDonationApplicationService,
-  listTalentDonationApplicationsService,
+  listTalentDonationApplicationsPageService,
   removeTalentDonationApplicationsService,
 } from './service'
 import { DEFAULT_CONFIRM_ACTOR } from './store'
@@ -32,29 +36,12 @@ function filterKey(filter: TalentDonationApplicationListFilter): string {
   })
 }
 
-function cachedList(
+function cachedRows(
   queryClient: ReturnType<typeof useQueryClient>,
-  filter: TalentDonationApplicationListFilter,
-): TalentDonationApplicationListResult | undefined {
-  return queryClient.getQueryData<TalentDonationApplicationListResult>(
-    talentDonationApplicationQueryKeys.list(source(), filterKey(filter)),
-  )
-}
-
-function patchApplicationInLists(
-  queryClient: ReturnType<typeof useQueryClient>,
-  application: TalentDonationApplication,
-) {
-  queryClient.setQueriesData<TalentDonationApplicationListResult>(
-    { queryKey: talentDonationApplicationQueryKeys.lists() },
-    old => {
-      if (!old) return old
-      const idx = old.items.findIndex(row => row.id === application.id)
-      if (idx < 0) return old
-      const items = [...old.items]
-      items[idx] = application
-      return { ...old, items }
-    },
+): TalentDonationApplication[] | undefined {
+  return collectInfiniteCachedRows<TalentDonationApplication>(
+    queryClient,
+    talentDonationApplicationQueryKeys.lists(),
   )
 }
 
@@ -62,13 +49,11 @@ export function useTalentDonationApplicationsList(
   filter: TalentDonationApplicationListFilter = {},
   enabled = true,
 ) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: talentDonationApplicationQueryKeys.list(dataSource, filterKey(filter)),
-    queryFn: () => listTalentDonationApplicationsService(filter),
+  return useAdminInfiniteList({
+    queryKey: talentDonationApplicationQueryKeys.list(source(), filterKey(filter)),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    isRemote: shouldUseTalentDonationApplicationRemoteApi(),
+    fetchPage: page => listTalentDonationApplicationsPageService(filter, page),
   })
 }
 
@@ -84,20 +69,12 @@ export function useTalentDonationApplicationDetail(id: string | null, enabled = 
 }
 
 export function useRemoveTalentDonationApplications(
-  filter: TalentDonationApplicationListFilter = {},
+  _filter: TalentDonationApplicationListFilter = {},
 ) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (ids: string[]) => {
-      const cached = cachedList(queryClient, filter)?.items
-      const merged = new Map<string, TalentDonationApplication>()
-      for (const [, result] of queryClient.getQueriesData<TalentDonationApplicationListResult>({
-        queryKey: talentDonationApplicationQueryKeys.lists(),
-      })) {
-        for (const row of result?.items ?? []) merged.set(row.id, row)
-      }
-      return removeTalentDonationApplicationsService(ids, cached ?? [...merged.values()])
-    },
+    mutationFn: (ids: string[]) =>
+      removeTalentDonationApplicationsService(ids, cachedRows(queryClient)),
     retry: false,
     onSuccess: (_void, ids) => {
       void queryClient.invalidateQueries({ queryKey: talentDonationApplicationQueryKeys.lists() })
@@ -111,7 +88,7 @@ export function useRemoveTalentDonationApplications(
 }
 
 export function useConfirmTalentDonationApplications(
-  filter: TalentDonationApplicationListFilter = {},
+  _filter: TalentDonationApplicationListFilter = {},
 ) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -122,11 +99,7 @@ export function useConfirmTalentDonationApplications(
       ids: string[]
       actorName?: string
     }) =>
-      confirmTalentDonationApplicationsService(
-        ids,
-        actorName,
-        cachedList(queryClient, filter)?.items,
-      ),
+      confirmTalentDonationApplicationsService(ids, actorName, cachedRows(queryClient)),
     retry: false,
     onSuccess: updatedRows => {
       for (const row of updatedRows) {
@@ -141,7 +114,7 @@ export function useConfirmTalentDonationApplications(
             confirmedByName: row.confirmedByName ?? existing.confirmedByName,
           })
         }
-        patchApplicationInLists(queryClient, row)
+        patchInfiniteListRow(queryClient, talentDonationApplicationQueryKeys.lists(), row)
       }
       if (updatedRows.length === 0) {
         void queryClient.invalidateQueries({

@@ -25,7 +25,6 @@ import { formatCreatedDateTime, formatYearMonth } from '@/features/history-award
 import {
   deleteConfirmContent,
   deleteFailureAlert,
-  publishedMustUnpublishAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
 import { HistoryFormModal } from '@/features/history-awards-certs/ui/history-form-modal'
 import {
@@ -37,6 +36,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -49,6 +49,7 @@ import {
   ymdFromParam,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -56,6 +57,7 @@ import {
   ConfirmModal,
   useCmsAlert,
   FilterTableLayout,
+  showDeleteCompletedAlert,
 } from '@/shared/ui'
 
 const YEAR_OPTIONS = [
@@ -226,7 +228,14 @@ export function HistoryPanel() {
   const removeMutation = useRemoveHistory()
   const setPublicMutation = useSetHistoryPublic()
 
-  const rows = listQuery.data ?? []
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+
+  const rows = listQuery.rows
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formVariant, setFormVariant] = useState<'create' | 'edit'>('create')
@@ -305,15 +314,12 @@ export function HistoryPanel() {
 
   const handleDetailDelete = useCallback(async () => {
     if (!editing) return
-    if (editing.isPublic) {
-      showAlert(publishedMustUnpublishAlert('연혁'))
-      return
-    }
     try {
       await removeMutation.mutateAsync([editing.id])
       setFormOpen(false)
       setEditing(null)
       setSelectedRowKeys(prev => prev.filter(k => String(k) !== editing.id))
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(deleteFailureAlert('연혁', error))
     }
@@ -324,25 +330,21 @@ export function HistoryPanel() {
       showAlert({ title: '선택 항목 없음', content: '삭제할 연혁을 선택해 주세요.' })
       return
     }
-    const idSet = new Set(selectedRowKeys.map(String))
-    if (rows.some(row => idSet.has(row.id) && row.isPublic)) {
-      showAlert(publishedMustUnpublishAlert('연혁'))
-      return
-    }
     setDeleteConfirmOpen(true)
-  }, [rows, selectedRowKeys, showAlert])
+  }, [selectedRowKeys, showAlert])
 
   const handleDeleteConfirm = useCallback(async () => {
     try {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(deleteFailureAlert('연혁', error))
     }
   }, [removeMutation, selectedRowKeys, showAlert])
 
-  const totalCount = rows.length
+  const totalCount = listQuery.totalCount
   const columns = useMemo<ColumnsType<HistoryItem>>(
     () => [
       {
@@ -433,19 +435,19 @@ export function HistoryPanel() {
                 ]}
               />
             </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
+            <div className="admin-filter-area__field admin-filter-area__field--date-range">
               <p className="admin-filter-area__label">연혁년도/월</p>
               <div className="hac-panel__year-month-filters">
                 <CmsSelect
                   inputSize="medium"
-                  width={116}
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.year}
                   onChange={v => setPendingFilters(prev => ({ ...prev, year: String(v ?? '') }))}
                   options={YEAR_OPTIONS}
                 />
                 <CmsSelect
                   inputSize="medium"
-                  width={116}
+                  width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.month}
                   onChange={v => setPendingFilters(prev => ({ ...prev, month: String(v ?? '') }))}
                   options={MONTH_OPTIONS}
@@ -535,6 +537,10 @@ export function HistoryPanel() {
               onChange: keys => setSelectedRowKeys(keys),
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>

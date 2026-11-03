@@ -17,7 +17,9 @@ import { TalentApplicationStatusUpdateRequestStatus } from '@/shared/api/generat
 import { List13JaParticipation } from '@/shared/api/generated/sponsorship/schemas/list13JaParticipation'
 import { List13Status } from '@/shared/api/generated/sponsorship/schemas/list13Status'
 
-export const LIST_PAGE_SIZE = 20
+import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
+
+export const LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
 
 function joinAddress(sido?: string | null, sigungu?: string | null): string {
   return [sido?.trim(), sigungu?.trim()].filter(Boolean).join(' ')
@@ -108,10 +110,12 @@ export function mapTalentApplicationDetailToDomain(
 
 export function toTalentApplicationListParams(
   filter: TalentDonationApplicationListFilter = {},
+  page = 0,
+  size = LIST_PAGE_SIZE,
 ): List13Params {
   const params: List13Params = {
-    page: 0,
-    size: LIST_PAGE_SIZE,
+    page,
+    size,
   }
   if (filter.status === 'pending') params.status = List13Status.pending
   if (filter.status === 'confirmed') params.status = List13Status.confirmed

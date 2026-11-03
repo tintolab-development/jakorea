@@ -10,8 +10,14 @@ import type {
   HistoryListFilter,
 } from '@/entities/history-awards-certs/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
+import {
+  paginateLocalRows,
+  toAdminListPage,
+  type AdminListPage,
+} from '@/shared/lib/admin-infinite-list'
 import { shouldUseHistoryAwardsCertsRemoteApi } from './capabilities'
 import {
+  LIST_PAGE_SIZE,
   mapAwardResponseToDomain,
   mapCertResponseToDomain,
   mapHistoryResponseToDomain,
@@ -33,19 +39,34 @@ function jaKoreaApi() {
   return getJAKoreaHomepageAdminAPIJAKoreaSubset()
 }
 
-async function listRemoteHistory(filter?: HistoryListFilter): Promise<HistoryItem[]> {
-  const response = await jaKoreaApi().history(toHistoryListParams(filter))
-  return (response.items ?? []).map(mapHistoryResponseToDomain)
+async function listRemoteHistory(
+  filter: HistoryListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<HistoryItem>> {
+  const response = await jaKoreaApi().history(toHistoryListParams(filter, page, LIST_PAGE_SIZE))
+  return toAdminListPage(
+    (response.items ?? []).map(mapHistoryResponseToDomain),
+    page,
+    response,
+  )
 }
 
-async function listRemoteAwards(filter?: AwardListFilter): Promise<AwardItem[]> {
-  const response = await jaKoreaApi().awards(toAwardListParams(filter))
-  return (response.items ?? []).map(mapAwardResponseToDomain)
+async function listRemoteAwards(
+  filter: AwardListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<AwardItem>> {
+  const response = await jaKoreaApi().awards(toAwardListParams(filter, page, LIST_PAGE_SIZE))
+  return toAdminListPage((response.items ?? []).map(mapAwardResponseToDomain), page, response)
 }
 
-async function listRemoteCerts(filter?: CertListFilter): Promise<CertItem[]> {
-  const response = await jaKoreaApi().certifications(toCertListParams(filter))
-  return (response.items ?? []).map(mapCertResponseToDomain)
+async function listRemoteCerts(
+  filter: CertListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<CertItem>> {
+  const response = await jaKoreaApi().certifications(
+    toCertListParams(filter, page, LIST_PAGE_SIZE),
+  )
+  return toAdminListPage((response.items ?? []).map(mapCertResponseToDomain), page, response)
 }
 
 async function getRemoteHistory(id: string): Promise<HistoryItem> {
@@ -93,11 +114,14 @@ async function syncPublished<T extends { id: string; isPublic: boolean; version:
   return toggle(Number(current.id), toPublishedToggleRequest(wantPublic, current.version))
 }
 
-export async function listHistoryService(filter?: HistoryListFilter): Promise<HistoryItem[]> {
+export async function listHistoryPageService(
+  filter: HistoryListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<HistoryItem>> {
   if (shouldUseHistoryAwardsCertsRemoteApi()) {
-    return listRemoteHistory(filter)
+    return listRemoteHistory(filter, page)
   }
-  return local.listHistoryItems(filter)
+  return paginateLocalRows(local.listHistoryItems(filter), page, LIST_PAGE_SIZE)
 }
 
 export async function createHistoryService(input: HistoryCreateInput): Promise<HistoryItem> {
@@ -166,11 +190,14 @@ export async function removeHistoryService(
   local.removeHistoryItems(ids)
 }
 
-export async function listAwardService(filter?: AwardListFilter): Promise<AwardItem[]> {
+export async function listAwardPageService(
+  filter: AwardListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<AwardItem>> {
   if (shouldUseHistoryAwardsCertsRemoteApi()) {
-    return listRemoteAwards(filter)
+    return listRemoteAwards(filter, page)
   }
-  return local.listAwardItems(filter)
+  return paginateLocalRows(local.listAwardItems(filter), page, LIST_PAGE_SIZE)
 }
 
 export async function createAwardService(input: AwardCreateInput): Promise<AwardItem> {
@@ -239,11 +266,14 @@ export async function removeAwardService(
   local.removeAwardItems(ids)
 }
 
-export async function listCertService(filter?: CertListFilter): Promise<CertItem[]> {
+export async function listCertPageService(
+  filter: CertListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<CertItem>> {
   if (shouldUseHistoryAwardsCertsRemoteApi()) {
-    return listRemoteCerts(filter)
+    return listRemoteCerts(filter, page)
   }
-  return local.listCertItems(filter)
+  return paginateLocalRows(local.listCertItems(filter), page, LIST_PAGE_SIZE)
 }
 
 export async function createCertService(input: CertCreateInput): Promise<CertItem> {

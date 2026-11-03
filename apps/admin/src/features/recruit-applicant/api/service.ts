@@ -3,8 +3,8 @@ import type {
   RecruitApplicant,
   RecruitApplicantDetail,
   RecruitApplicantListFilter,
-  RecruitApplicantListResult,
 } from '@/entities/recruit-applicant/model/types'
+import { paginateLocalRows, toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list'
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api'
 import { shouldUseRecruitApplicantRemoteApi } from './capabilities'
 import {
@@ -31,16 +31,14 @@ function careersApi() {
 
 /** 원격 목록 — 필터·totalCount 는 서버 응답을 그대로 사용한다. */
 async function listRemote(
-  filter?: RecruitApplicantListFilter,
-): Promise<RecruitApplicantListResult> {
-  const response = await careersApi().list15(toTalentApplicationListParams(filter))
+  filter: RecruitApplicantListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<RecruitApplicant>> {
+  const response = await careersApi().list15(toTalentApplicationListParams(filter, page))
   const items = (response.items ?? [])
     .map(mapCareerTalentApplicationListItem)
     .filter((row): row is RecruitApplicant => row != null)
-  return {
-    items,
-    totalCount: response.totalCount ?? items.length,
-  }
+  return toAdminListPage(items, page, response)
 }
 
 export function isRecruitApplicantNotFoundError(error: unknown): boolean {
@@ -82,14 +80,14 @@ export async function downloadRecruitApplicantAttachmentService(
   }
 }
 
-export async function listRecruitApplicantsService(
-  filter?: RecruitApplicantListFilter,
-): Promise<RecruitApplicantListResult> {
+export async function listRecruitApplicantsPageService(
+  filter: RecruitApplicantListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<RecruitApplicant>> {
   if (shouldUseRecruitApplicantRemoteApi()) {
-    return listRemote(filter)
+    return listRemote(filter, page)
   }
-  const items = readRecruitApplicants(filter)
-  return { items, totalCount: items.length }
+  return paginateLocalRows(readRecruitApplicants(filter), page)
 }
 
 export async function confirmRecruitApplicantsService(

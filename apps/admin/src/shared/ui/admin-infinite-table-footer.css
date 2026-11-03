@@ -1,0 +1,15 @@
+.admin-infinite-table-footer__sentinel {
+  height: 1px;
+  width: 100%;
+}
+
+.admin-infinite-table-footer__status {
+  margin: 12px 0 4px;
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+  opacity: 0.6;
+}

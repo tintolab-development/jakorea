@@ -36,6 +36,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -48,6 +49,7 @@ import {
   type UrlDateRangePendingSyncRef,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -228,12 +230,19 @@ export function ImpactStoriesPage() {
   const saveCategoriesMutation = useSaveImpactStoryCategories()
   const pinCountQuery = usePinnedImpactStoryCount(undefined)
 
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+
   // lists만 — all이면 공개 토글 시 categories GET까지 과호출됨
   useInvalidateOnWindowEvent(IMPACT_STORIES_CHANGED_EVENT, impactStoriesQueryKeys.lists())
 
-  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const rows = listQuery.rows
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data])
-  const allStories = useMemo(() => allStoriesQuery.data ?? [], [allStoriesQuery.data])
+  const allStories = allStoriesQuery.rows
   const categoryNameMap = useMemo(() => new Map(categories.map(c => [c.id, c.name])), [categories])
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
@@ -562,7 +571,7 @@ export function ImpactStoriesPage() {
         title="임팩트 스토리 목록"
         description={
           <>
-            총 {rows.length.toLocaleString('ko-KR')}건 · 상단 고정 게시글은 최대 9개까지 설정
+            총 {listQuery.totalCount.toLocaleString('ko-KR')}건 · 상단 고정 게시글은 최대 9개까지 설정
             가능합니다.
           </>
         }
@@ -610,6 +619,10 @@ export function ImpactStoriesPage() {
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>

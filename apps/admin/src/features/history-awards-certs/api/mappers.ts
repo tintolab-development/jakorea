@@ -24,8 +24,9 @@ import type { HistoryResponse } from '@/shared/api/generated/ja-korea/schemas/hi
 import type { HistoryUpdateRequest } from '@/shared/api/generated/ja-korea/schemas/historyUpdateRequest'
 import type { PublishedToggleRequest } from '@/shared/api/generated/ja-korea/schemas/publishedToggleRequest'
 import type { ToggleRequest } from '@/shared/api/generated/ja-korea/schemas/toggleRequest'
+import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
 
-const LIST_PAGE_SIZE = 20
+export const LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
 
 export function mapHistoryResponseToDomain(row: HistoryResponse): HistoryItem {
   return {
@@ -63,8 +64,12 @@ export function mapCertResponseToDomain(row: CertificationResponse): CertItem {
   }
 }
 
-export function toHistoryListParams(filter?: HistoryListFilter): HistoryParams {
-  const params: HistoryParams = { page: 0, size: LIST_PAGE_SIZE }
+export function toHistoryListParams(
+  filter?: HistoryListFilter,
+  page = 0,
+  size = LIST_PAGE_SIZE,
+): HistoryParams {
+  const params: HistoryParams = { page, size }
   if (!filter) return params
   if (filter.isPublic === true || filter.isPublic === false) params.published = filter.isPublic
   if (filter.year != null) params.year = filter.year
@@ -77,8 +82,12 @@ export function toHistoryListParams(filter?: HistoryListFilter): HistoryParams {
   return params
 }
 
-export function toAwardListParams(filter?: AwardListFilter): AwardsParams {
-  const params: AwardsParams = { page: 0, size: LIST_PAGE_SIZE }
+export function toAwardListParams(
+  filter?: AwardListFilter,
+  page = 0,
+  size = LIST_PAGE_SIZE,
+): AwardsParams {
+  const params: AwardsParams = { page, size }
   if (!filter) return params
   if (filter.isPublic === true || filter.isPublic === false) params.published = filter.isPublic
   if (filter.title?.trim()) params.awardName = filter.title.trim()
@@ -92,8 +101,12 @@ export function toAwardListParams(filter?: AwardListFilter): AwardsParams {
   return params
 }
 
-export function toCertListParams(filter?: CertListFilter): CertificationsParams {
-  const params: CertificationsParams = { page: 0, size: LIST_PAGE_SIZE }
+export function toCertListParams(
+  filter?: CertListFilter,
+  page = 0,
+  size = LIST_PAGE_SIZE,
+): CertificationsParams {
+  const params: CertificationsParams = { page, size }
   if (!filter) return params
   if (filter.isPublic === true || filter.isPublic === false) params.published = filter.isPublic
   if (filter.content?.trim()) params.content = filter.content.trim()

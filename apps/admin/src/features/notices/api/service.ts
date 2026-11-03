@@ -17,7 +17,12 @@ import {
   toNoticeUpdateRequest,
   toPublishedToggleRequest,
 } from './mappers'
-import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
+import {
+  fetchAllAdminListPages,
+  paginateLocalRows,
+  toAdminListPage,
+  type AdminListPage,
+} from '@/shared/lib/admin-infinite-list'
 import {
   createNotice as createLocal,
   getNoticeById,
@@ -32,12 +37,16 @@ function jaKoreaApi() {
   return getJAKoreaHomepageAdminAPIJAKoreaSubset()
 }
 
-async function listRemoteNotices(filter?: NoticeListFilter): Promise<Notice[]> {
-  const items = await fetchAllApiPages(async (page, size) => {
-    const response = await jaKoreaApi().list5(toNoticeListParams(filter, page, size))
-    return { items: response.items ?? [], totalPages: response.totalPages }
-  })
-  return items.map(mapNoticeResponseToDomain)
+async function listRemoteNoticesPage(
+  filter: NoticeListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<Notice>> {
+  const response = await jaKoreaApi().list5(toNoticeListParams(filter, page))
+  return toAdminListPage(
+    (response.items ?? []).map(mapNoticeResponseToDomain),
+    page,
+    response,
+  )
 }
 
 async function resolveAttachmentAssetId(
@@ -53,11 +62,14 @@ async function resolveAttachmentAssetId(
   return fallbackAssetId
 }
 
-export async function listNoticesService(filter?: NoticeListFilter): Promise<Notice[]> {
+export async function listNoticesPageService(
+  filter: NoticeListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<Notice>> {
   if (shouldUseNoticesRemoteApi()) {
-    return listRemoteNotices(filter)
+    return listRemoteNoticesPage(filter, page)
   }
-  return readNotices(filter)
+  return paginateLocalRows(readNotices(filter), page)
 }
 
 export async function getNoticeService(id: string): Promise<Notice | null> {
@@ -115,7 +127,7 @@ export async function removeNoticesService(
     const idSet = new Set(ids)
     let rows = (cachedList ?? []).filter(row => idSet.has(row.id))
     if (rows.length === 0) {
-      const all = await listRemoteNotices()
+      const all = await fetchAllAdminListPages(page => listRemoteNoticesPage(undefined, page))
       rows = all.filter(row => idSet.has(row.id))
     }
     if (rows.length === 0) return

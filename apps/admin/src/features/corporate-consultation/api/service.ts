@@ -1,8 +1,13 @@
 import type {
   CorporateConsultation,
   CorporateConsultationListFilter,
-  CorporateConsultationListResult,
 } from '@/entities/corporate-consultation/model/types'
+import {
+  fetchAllAdminListPages,
+  paginateLocalRows,
+  toAdminListPage,
+  type AdminListPage,
+} from '@/shared/lib/admin-infinite-list'
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api'
 import { shouldUseCorporateConsultationRemoteApi } from './capabilities'
 import {
@@ -25,13 +30,15 @@ function sponsorshipApi() {
 }
 
 async function listRemoteConsultations(
-  filter: CorporateConsultationListFilter = {},
-): Promise<CorporateConsultationListResult> {
-  const response = await sponsorshipApi().list14(toConsultationListParams(filter))
-  return {
-    items: (response.items ?? []).map(mapConsultationListItemToDomain),
-    totalCount: response.totalCount ?? response.items?.length ?? 0,
-  }
+  filter: CorporateConsultationListFilter,
+  page: number,
+): Promise<AdminListPage<CorporateConsultation>> {
+  const response = await sponsorshipApi().list14(toConsultationListParams(filter, page))
+  return toAdminListPage(
+    (response.items ?? []).map(mapConsultationListItemToDomain),
+    page,
+    response,
+  )
 }
 
 function resolveRowsFromCache(
@@ -42,14 +49,14 @@ function resolveRowsFromCache(
   return (cachedRows ?? []).filter(row => idSet.has(row.id))
 }
 
-export async function listCorporateConsultationsService(
+export async function listCorporateConsultationsPageService(
   filter: CorporateConsultationListFilter = {},
-): Promise<CorporateConsultationListResult> {
+  page = 0,
+): Promise<AdminListPage<CorporateConsultation>> {
   if (shouldUseCorporateConsultationRemoteApi()) {
-    return listRemoteConsultations(filter)
+    return listRemoteConsultations(filter, page)
   }
-  const items = readCorporateConsultations(filter)
-  return { items, totalCount: items.length }
+  return paginateLocalRows(readCorporateConsultations(filter), page)
 }
 
 export async function getCorporateConsultationService(
@@ -99,8 +106,8 @@ export async function removeCorporateConsultationsService(
     if (ids.length === 0) return
     let rows = resolveRowsFromCache(ids, cachedRows)
     if (rows.length === 0) {
-      const listed = await listRemoteConsultations()
-      rows = resolveRowsFromCache(ids, listed.items)
+      const listed = await fetchAllAdminListPages(page => listRemoteConsultations({}, page))
+      rows = resolveRowsFromCache(ids, listed)
     }
     if (rows.length === 0) return
     await sponsorshipApi().bulkDelete6(toBulkRequest(rows))
@@ -118,8 +125,8 @@ export async function confirmCorporateConsultationsService(
     if (ids.length === 0) return []
     let rows = resolveRowsFromCache(ids, cachedRows).filter(row => row.status === 'pending')
     if (rows.length === 0) {
-      const listed = await listRemoteConsultations()
-      rows = resolveRowsFromCache(ids, listed.items).filter(row => row.status === 'pending')
+      const listed = await fetchAllAdminListPages(page => listRemoteConsultations({}, page))
+      rows = resolveRowsFromCache(ids, listed).filter(row => row.status === 'pending')
     }
     if (rows.length === 0) return []
 
