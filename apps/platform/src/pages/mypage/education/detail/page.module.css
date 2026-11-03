@@ -3,8 +3,7 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  /* 신청내용 등 짧은 탭도 첫 화면에서 푸터가 보이지 않게 뷰포트를 채운다 */
-  min-height: calc(100dvh - var(--app-header-height));
+  flex: 1 1 auto;
   flex-direction: column;
   margin-inline: auto;
   padding-top: var(--spacing-100);
@@ -43,9 +42,12 @@
 }
 
 .tabPanelBody {
+  display: flex;
   width: 100%;
   min-width: 0;
   min-height: 280px;
+  flex: 1 1 auto;
+  flex-direction: column;
 }
 
 .errorStatus {

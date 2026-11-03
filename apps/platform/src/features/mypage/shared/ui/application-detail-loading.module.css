@@ -3,7 +3,7 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  min-height: calc(100dvh - var(--app-header-height));
+  flex: 1 1 auto;
   flex-direction: column;
   margin-inline: auto;
   padding-top: var(--spacing-100);

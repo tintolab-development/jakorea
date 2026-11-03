@@ -1,5 +1,8 @@
 .footer {
+  display: flex;
   width: 100%;
+  flex-direction: column;
+  flex: 0 0 auto;
   background: var(--color-neutral-white);
 }
 
@@ -368,7 +371,6 @@
     width: 240px;
     max-width: 240px;
     flex: 0 0 240px;
-    border: 0;
     padding: 8px 16px;
   }
 
@@ -531,6 +533,7 @@
 
   .navigation {
     flex: 0 1 auto;
+    flex-wrap: nowrap;
     gap: var(--spacing-24) var(--spacing-32);
   }
 }
