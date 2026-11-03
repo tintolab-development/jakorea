@@ -304,12 +304,29 @@
 
 /* 본문: 짧은 글은 카드 잔여 높이 채움 · 긴 글·이미지는 카드와 함께 성장 */
 .impact-story-detail-page__body {
+  position: relative;
   margin-top: 24px;
   width: 100%;
   min-width: 0;
   flex: 1 1 auto;
   min-height: auto;
   overflow: visible;
+}
+
+.impact-story-detail-page__body--rendering {
+  min-height: 160px;
+}
+
+.impact-story-detail-page__body-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  background: rgb(255 255 255 / 92%);
+  pointer-events: none;
 }
 
 .impact-story-detail-page__body .rich-text-viewer {
