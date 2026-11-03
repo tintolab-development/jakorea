@@ -36,6 +36,10 @@ function AddressBlurSpan({
   )
 }
 
+function HomeAddressValueShell({ children }: { children: ReactNode }) {
+  return <span className="program-detail-home-address-value">{children}</span>
+}
+
 function renderAddressWithBlurToken(
   address: string,
   blurClassName: string
@@ -91,45 +95,59 @@ export function PrivacyHomeAddressDisplay({
   const detail = detailRaw == null ? null : detailRaw.trim()
 
   if (!base && (detail == null || detail === '')) {
-    return empty
+    return <HomeAddressValueShell>{empty}</HomeAddressValueShell>
   }
+
+  let body: ReactNode
 
   if (isRevealed) {
     if (detailRaw === undefined) {
-      return base || empty
+      body = base || empty
+    } else {
+      const parts = [base, detail && !isPrivacyAddressBlurToken(detail) ? detail : null].filter(
+        Boolean
+      ) as string[]
+      if (detail && isPrivacyAddressBlurToken(detail)) {
+        // unmask 전이 아닌데 detail이 토큰만 있으면 동 구간만
+        body = base || empty
+      } else {
+        body = parts.length > 0 ? parts.join(' ') : empty
+      }
     }
-    const parts = [base, detail && !isPrivacyAddressBlurToken(detail) ? detail : null].filter(
-      Boolean
-    ) as string[]
-    if (detail && isPrivacyAddressBlurToken(detail)) {
-      // unmask 전이 아닌데 detail이 토큰만 있으면 동 구간만
-      return base || empty
-    }
-    return parts.length > 0 ? parts.join(' ') : empty
-  }
-
-  // split detail
-  if (detailRaw !== undefined) {
-    if (!base && !detail) return empty
-    if (detail == null || detail === '') {
-      return base || empty
-    }
-    if (isPrivacyAddressBlurToken(detail)) {
-      return (
+  } else if (detailRaw !== undefined) {
+    // split detail
+    if (!base && !detail) {
+      body = empty
+    } else if (detail == null || detail === '') {
+      body = base || empty
+    } else if (isPrivacyAddressBlurToken(detail)) {
+      body = (
         <>
           {base}
           {base ? ' ' : null}
           <AddressBlurSpan className={blurClassName}>{PRIVACY_ADDRESS_BLUR_TOKEN}</AddressBlurSpan>
         </>
       )
+    } else {
+      // 서버가 평문 detail을 준 경우(또는 레거시) — 재마스킹하지 않음
+      body = [base, detail].filter(Boolean).join(' ')
     }
-    // 서버가 평문 detail을 준 경우(또는 레거시) — 재마스킹하지 않음
-    return [base, detail].filter(Boolean).join(' ')
+  } else if (!base) {
+    body = empty
+  } else if (base.includes(PRIVACY_ADDRESS_BLUR_TOKEN)) {
+    body = renderAddressWithBlurToken(base, blurClassName)
+  } else {
+    // MASKED인데 토큰이 없으면(시군구·동만) 블러 꼬리로 마스킹 영역 표시
+    body = (
+      <>
+        {base}
+        {' '}
+        <AddressBlurSpan className={blurClassName}>{PRIVACY_ADDRESS_BLUR_TOKEN}</AddressBlurSpan>
+      </>
+    )
   }
 
-  // 단일 문자열
-  if (!base) return empty
-  return renderAddressWithBlurToken(base, blurClassName)
+  return <HomeAddressValueShell>{body}</HomeAddressValueShell>
 }
 
 /** 기존 `HomeAddressDisplay({ address, mask })` 호출부용 래퍼 */

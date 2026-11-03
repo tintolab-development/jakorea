@@ -174,3 +174,139 @@
 .rich-text-viewer .rich-text-content {
   min-height: 0;
 }
+
+/* HTML 원본 블록 — sandbox iframe 미리보기 + 직접 편집 (raw-html-block.ts) */
+.rich-text-content .rich-text-raw-html-block {
+  position: relative;
+  margin: 1em 0;
+}
+
+.rich-text-content .rich-text-raw-html-block__frame {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  background: transparent;
+}
+
+/* 읽기 전용(뷰어)에서는 편집 UI 없음 → 원본 링크 클릭 가능 */
+.rich-text-content[contenteditable='false'] .rich-text-raw-html-block__toolbar,
+.rich-text-content[contenteditable='false'] .rich-text-raw-html-block__format {
+  display: none !important;
+}
+
+.rich-text-content[contenteditable='true'] .rich-text-raw-html-block {
+  padding-top: 32px;
+  outline: 1px dashed #b0b8c1;
+  outline-offset: 2px;
+}
+
+.rich-text-content[contenteditable='true'] .rich-text-raw-html-block--editable .rich-text-raw-html-block__frame {
+  cursor: text;
+}
+
+.rich-text-content[contenteditable='true'] .rich-text-raw-html-block--editing {
+  outline: 2px solid var(--rt-dropcursor, #01a1af);
+}
+
+.rich-text-content[contenteditable='true'] .rich-text-raw-html-block--selected {
+  outline: 2px solid var(--rt-dropcursor, #01a1af);
+}
+
+.rich-text-raw-html-block__toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+}
+
+.rich-text-raw-html-block__badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7684;
+  cursor: grab;
+  user-select: none;
+}
+
+.rich-text-raw-html-block__hint {
+  margin-right: auto;
+  font-size: 12px;
+  color: #8b95a1;
+}
+
+.rich-text-raw-html-block__button {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #d1d6db;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 12px;
+  color: #333d4b;
+  cursor: pointer;
+}
+
+.rich-text-raw-html-block__button:hover {
+  border-color: var(--rt-dropcursor, #01a1af);
+  color: var(--rt-dropcursor, #01a1af);
+}
+
+.rich-text-raw-html-block__button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.rich-text-raw-html-block__button--delete:hover {
+  border-color: #e53935;
+  color: #e53935;
+}
+
+/* 직접 편집 중 작은 서식 툴바 — 커서 위에 뜬다 */
+.rich-text-raw-html-block__format {
+  position: absolute;
+  z-index: 3;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #d1d6db;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  white-space: nowrap;
+}
+
+.rich-text-raw-html-block--editing .rich-text-raw-html-block__format {
+  display: flex;
+}
+
+.rich-text-raw-html-block__format .rich-text-raw-html-block__button {
+  height: 24px;
+  min-width: 24px;
+  padding: 0 6px;
+  border-color: transparent;
+}
+
+.rich-text-raw-html-block__format .rich-text-raw-html-block__button[hidden] {
+  display: none;
+}
+
+.rich-text-raw-html-block__button--bold {
+  font-weight: 700;
+}
+
+.rich-text-raw-html-block__button--italic {
+  font-style: italic;
+}
+
+.rich-text-raw-html-block__button--underline {
+  text-decoration: underline;
+}
+
+.rich-text-raw-html-block__file-input {
+  display: none;
+}

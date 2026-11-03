@@ -70,5 +70,7 @@ export type ParticipatingIndividualProgressAssignmentSessionGroup = {
   headerPeriodRangeLabel: string
   assignmentPeriodLabel: string
   headerPrefix: string
+  /** 교육 일정(startAt/endAt) 기준 진행 현황 — 과제 제출 상태와 별개 */
+  scheduleEducationProgress: 'completed' | 'scheduled'
   participants: ParticipatingIndividualProgressAssignmentParticipantRow[]
 }

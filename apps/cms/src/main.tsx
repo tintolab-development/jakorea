@@ -11,7 +11,15 @@ import { FileUploadOverlay } from '@/shared/ui/file-upload-overlay'
 import { BlockingOverlay } from '@/shared/ui/blocking-overlay'
 import { TemplateWritingPreviewProvider } from '@/features/template/context/template-writing-preview-context'
 import { router } from './app/router'
+import { reloadOnceAfterDeployChunkMismatch } from './app/router/lazy-load'
 import './index.css'
+
+if (import.meta.env.PROD && typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', event => {
+    event.preventDefault()
+    reloadOnceAfterDeployChunkMismatch('vite-preload')
+  })
+}
 
 console.info(
   `[CMS] 배포 빌드 ${import.meta.env.VITE_APP_BUILD_AT ?? 'unknown'} (${import.meta.env.VITE_APP_GIT_SHA || 'local'} / ${import.meta.env.MODE})`

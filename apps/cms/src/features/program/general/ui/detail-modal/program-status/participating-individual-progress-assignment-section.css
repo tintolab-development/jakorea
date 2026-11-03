@@ -32,11 +32,6 @@
   font-weight: 500;
 }
 
-.participating-individual-progress-assignment-table__scheduled {
-  color: var(--color-green, #1e8c29);
-  font-weight: 500;
-}
-
 .participating-individual-progress-assignment-table__submission-links {
   display: flex;
   flex-direction: column;

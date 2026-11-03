@@ -63,4 +63,6 @@ export interface MemberPortalApplicationDetail {
   teacherAssignment?: MemberPortalTeacherAssignment | null;
   /** ORGANIZATION 신청의 기관 마스터·스냅샷. 비기관 신청이거나 저장값이 없으면 null. 가짜 기본값을 넣지 않는다. */
   organizationApplication?: MemberPortalOrganizationApplicationSnapshot | null;
+  /** 신청 recruitmentId 모집 행 대표 이미지 file_object id. program.thumbnailFileObjectId와 목록 thumbnailFileObjectId와 같은 값. 없으면 null. */
+  thumbnailFileObjectId?: number | null;
 }

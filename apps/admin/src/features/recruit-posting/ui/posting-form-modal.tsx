@@ -469,7 +469,12 @@ export function RecruitPostingFormModal({
           <div className="posting-form-modal__section posting-form-modal__section--editor">
             <FieldLabel required>내용</FieldLabel>
             <div className="posting-form-modal__editor-host">
-              <RichTextEditor editor={editor} minHeight={editorMinHeight} allowInlineMedia />
+              <RichTextEditor
+                editor={editor}
+                minHeight={editorMinHeight}
+                allowInlineMedia
+                allowRawHtmlBlock
+              />
             </div>
           </div>
 

@@ -49,12 +49,13 @@ export function AdminRegisterStepIdentity({
           idleTitle={idleTitle}
           idleDescription={idleDescription}
         />
-        <div style={{ marginTop: '40px' }}>
+        <div className="auth-actions" style={{ marginTop: '40px' }}>
           <CmsButton
             variant="primary"
             size="h52"
             loading={isVerifying}
-            onClick={onStartVerify} >
+            onClick={onStartVerify}
+          >
             휴대폰 본인인증하기
           </CmsButton>
         </div>

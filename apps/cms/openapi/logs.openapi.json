@@ -2034,6 +2034,10 @@
             "items": {
               "$ref": "#/components/schemas/StudentRosterItemResponse"
             }
+          },
+          "privacyAccessMode": {
+            "type": "string",
+            "description": "개인정보 노출 모드. AUTO_RAW_ACCESS(CMS 학생 명단·출석, 진입 시 자동 조회 기록 후 phone·email·birthDate 원문), MASKED(SENSITIVE_PII_READ가 없는 CMS 조회: phone·email·birthDate 생략, masked* 필드만), RAW_POLICY_EXCEPTION(포털 교사 본인 업로드 명단: 원문, 조회 기록 대상 아님)."
           }
         }
       },
@@ -15997,12 +16001,20 @@
             "$ref": "#/components/schemas/PreviousJaProgramRequest"
           },
           "previousUjatTerm": {
-            "$ref": "#/components/schemas/VolunteerPreviousUjatTermRequest"
+            "description": "UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PreviousUjatTermRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "educationRegionCode": {
             "type": "string",
-            "nullable": true,
-            "description": "UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null."
+            "description": "UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다.",
+            "nullable": true
           },
           "recruitHalf": {
             "type": "string",
@@ -16019,13 +16031,14 @@
           },
           "applicationType": {
             "type": "string",
-            "nullable": true,
+            "description": "UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다.",
             "enum": [
               "NEW",
               "UJAT_GRADUATE",
               "new",
               "ujat-graduate"
-            ]
+            ],
+            "nullable": true
           },
           "freeTextItems": {
             "$ref": "#/components/schemas/FreeTextItemsRequest"
@@ -20140,8 +20153,8 @@
           },
           "textbookName": {
             "type": "string",
-            "nullable": true,
-            "description": "학년 블록에 저장된 교재명. 없으면 null."
+            "description": "학년 블록에 저장된 교재명. 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다.",
+            "nullable": true
           },
           "textbookNameEn": {
             "type": "string",
@@ -20150,22 +20163,24 @@
           "kitCount": {
             "type": "integer",
             "format": "int32",
+            "description": "학년 블록에 저장된 키트 수. 없으면 null.",
             "nullable": true
           },
           "bookCount": {
             "type": "integer",
             "format": "int32",
+            "description": "학년 블록에 저장된 권수. 없으면 null.",
             "nullable": true
           },
           "textbookDeliveryStatus": {
             "type": "string",
-            "nullable": true,
             "enum": [
               "PREPARING",
               "SHIPPING",
               "DELIVERED",
               "NOT_APPLICABLE"
-            ]
+            ],
+            "nullable": true
           }
         }
       },
@@ -20341,8 +20356,8 @@
           },
           "parkingInfo": {
             "type": "string",
-            "nullable": true,
-            "description": "기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락)."
+            "description": "기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null.",
+            "nullable": true
           },
           "snackAvailability": {
             "type": "string",
@@ -20483,31 +20498,31 @@
           },
           "textbookNameEn": {
             "type": "string",
-            "nullable": true,
-            "description": "신청에 연결된 교재 영문명. 없으면 null."
+            "description": "신청에 연결된 교재 영문명. 교재가 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다.",
+            "nullable": true
           },
           "textbookDeliveryStatus": {
             "type": "string",
-            "nullable": true,
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
             "enum": [
               "PREPARING",
               "SHIPPING",
               "DELIVERED",
               "NOT_APPLICABLE"
             ],
-            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다."
+            "nullable": true
           },
           "kitCount": {
             "type": "integer",
             "format": "int32",
-            "nullable": true,
-            "description": "저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생수/24로 계산하지 않습니다."
+            "description": "저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다.",
+            "nullable": true
           },
           "bookCount": {
             "type": "integer",
             "format": "int32",
-            "nullable": true,
-            "description": "저장된 교재 권수. 없으면 null."
+            "description": "저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다.",
+            "nullable": true
           }
         }
       },
@@ -28383,33 +28398,38 @@
       },
       "VolunteerActivityRegionUpdateRequest": {
         "type": "object",
-        "required": [
-          "educationRegionCode"
-        ],
+        "description": "봉사자 신청 희망 교육 활동 지역 수정. educationRegionCode는 지역 마스터 code(예: seoul, SEOUL, gyeonggi_south). 한글 라벨 금지.",
         "properties": {
           "educationRegionCode": {
             "type": "string",
+            "description": "ujat_education_region.code. 대소문자·하이픈/언더스코어는 마스터 code로 정규화한다.",
+            "example": "seoul",
             "maxLength": 100,
-            "description": "ujat_education_region.code. 예: seoul, SEOUL, gyeonggi_south. 한글 라벨 금지. 저장·응답은 마스터 code."
+            "minLength": 0
           }
-        }
+        },
+        "required": [
+          "educationRegionCode"
+        ]
       },
       "VolunteerActivityRegionUpdateResponse": {
         "type": "object",
+        "description": "봉사자 신청 희망 교육 활동 지역 수정 결과. GET 목록 preferredRegion/preferredRegionCode 및 상세 ujat.preferredActivityRegion과 같다.",
         "properties": {
           "applicationId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "봉사자 신청 id"
           },
           "preferredRegion": {
             "type": "string",
-            "description": "마스터 라벨. GET 목록 preferredRegion 및 상세 ujat.preferredActivityRegion과 동일",
-            "nullable": true
+            "description": "지역 마스터 라벨. 목록 preferredRegion·상세 ujat.preferredActivityRegion과 동일",
+            "example": "서울"
           },
           "preferredRegionCode": {
             "type": "string",
-            "description": "마스터 code. GET 목록 preferredRegionCode와 동일",
-            "nullable": true
+            "description": "저장된 지역 마스터 code. 요청 seoul은 SEOUL로 정규화. 목록 preferredRegionCode와 동일",
+            "example": "SEOUL"
           }
         }
       },
@@ -34368,7 +34388,9 @@
           },
           "thumbnailFileObjectId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "신청 recruitmentId 모집 행 대표 이미지 file_object id. GENERAL_*·UJAT는 그 모집 행 값만 쓰고 프로그램 대표 이미지나 다른 모집 행으로 채우지 않는다. 그 외 유형은 프로그램 대표 이미지. 공개 GET /api/portal/programs 행 thumbnailFileObjectId와 같은 규칙. 없으면 null.",
+            "nullable": true
           },
           "participationStatus": {
             "type": "string"
@@ -34815,6 +34837,12 @@
                 "type": "null"
               }
             ]
+          },
+          "thumbnailFileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "신청 recruitmentId 모집 행 대표 이미지 file_object id. program.thumbnailFileObjectId와 목록 thumbnailFileObjectId와 같은 값. 없으면 null.",
+            "nullable": true
           }
         }
       },
@@ -34889,7 +34917,15 @@
           },
           "posterFileObjectId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "thumbnailFileObjectId와 같은 값(기존 필드 호환). 없으면 null.",
+            "nullable": true
+          },
+          "thumbnailFileObjectId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "신청 recruitmentId 모집 행 대표 이미지 file_object id. GENERAL_*·UJAT는 그 모집 행 값만 쓰고 프로그램 대표 이미지나 다른 모집 행으로 채우지 않는다. 그 외 유형은 프로그램 대표 이미지. 공개 GET /api/portal/programs 행 thumbnailFileObjectId와 같은 규칙. 없으면 null.",
+            "nullable": true
           },
           "interviewEnabled": {
             "type": "boolean",
@@ -39635,7 +39671,7 @@
         "properties": {
           "nameEn": {
             "type": "string",
-            "description": "영문 성명. 지급조서 동의서 paymentBasicInfo.nameEn. 없으면 null",
+            "description": "영문 성명(마스킹). 지급조서 동의서 paymentBasicInfo.nameEn",
             "nullable": true
           },
           "residentRegistrationNumber": {
@@ -39646,12 +39682,12 @@
           },
           "affiliation": {
             "type": "string",
-            "description": "소속. noAffiliation=true 이거나 미입력이면 null",
+            "description": "소속(마스킹). noAffiliation=true 이거나 미입력이면 null",
             "nullable": true
           },
           "phone": {
             "type": "string",
-            "description": "연락처(마스킹). member.phone",
+            "description": "연락처(마스킹). member.phone. 예: 010-****-5678",
             "nullable": true
           },
           "email": {
@@ -39666,7 +39702,7 @@
           },
           "birthDate": {
             "type": "string",
-            "description": "생년월일(마스킹). yyyy-**-**",
+            "description": "생년월일(마스킹). Masked responses use yyyy-**-** when member.birth_date or payment-consent residentFront/back yields a birth year; gender ** requires non-null birthDate when year exists. UNMASKED paths use yyyy-MM-dd on dedicated privacy APIs.",
             "example": "1990-**-**",
             "nullable": true
           },
@@ -39697,7 +39733,7 @@
           },
           "privacyMaskingLevel": {
             "type": "string",
-            "description": "MASKED | RAW. 정산 상세 GET은 항상 MASKED",
+            "description": "MASKED | RAW. 정산 상세 GET은 항상 MASKED. 계좌 지급 현황 상세(GET /api/admin/account-payments/{id}, 정책 CMS-09)는 RAW: phone·email·gender·birthDate(yyyy-MM-dd)·addressRoad·addressDetail·bankName·accountNumber·accountHolder 원문, residentRegistrationNumber·nameEn·affiliation은 RAW에서도 마스킹.",
             "enum": [
               "MASKED",
               "RAW"
@@ -47222,11 +47258,6 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
-        "required": [
-          "categoryCode",
-          "categoryLabel",
-          "variables"
-        ],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -47247,16 +47278,6 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
-        "required": [
-          "key",
-          "token",
-          "requiresProgram",
-          "enabled",
-          "programGroups",
-          "recruitmentTypes",
-          "participantTypes",
-          "memberTypes"
-        ],
         "properties": {
           "key": {
             "type": "string",
@@ -47270,8 +47291,8 @@
           },
           "description": {
             "type": "string",
-            "nullable": true,
-            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
+            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null",
+            "nullable": true
           },
           "requiresProgram": {
             "type": "boolean",
@@ -47283,63 +47304,46 @@
           },
           "programGroups": {
             "type": "array",
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
+            }
           },
           "recruitmentTypes": {
             "type": "array",
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
+            }
           },
           "participantTypes": {
             "type": "array",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string",
-              "enum": [
-                "PARTICIPANT",
-                "INSTRUCTOR",
-                "VOLUNTEER"
-              ]
-            },
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
+              "type": "string"
+            }
           },
           "memberTypes": {
             "type": "array",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string",
-              "enum": [
-                "GENERAL",
-                "SCHOOL_TEACHER",
-                "INSTRUCTOR",
-                "TEACHER_AND_INSTRUCTOR",
-                "ADMIN"
-              ]
-            },
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
+              "type": "string"
+            }
           },
           "sourceMode": {
             "type": "string",
-            "nullable": true,
             "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
             "enum": [
               "SERVER_RESOLVED",
               "MANUAL_ALLOWED",
               "EVENT_ONLY"
-            ]
+            ],
+            "nullable": true
           }
         }
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
-        "required": [
-          "totalCount",
-          "categories",
-          "systemManualSendQaEnabled"
-        ],
         "properties": {
           "totalCount": {
             "type": "integer",
@@ -47837,15 +47841,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -51714,125 +51718,6 @@
           },
           "status": {
             "type": "string"
-          }
-        }
-      },
-      "OrganizationApplicationSession": {
-        "type": "object",
-        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열"
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "grade": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "className": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "classLabel": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "OrganizationApplicationSessionResponse": {
-        "type": "object",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "requestedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "resolvedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "scheduleUnresolved": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "VolunteerPreviousUjatTermRequest": {
-        "type": "object",
-        "required": [
-          "term",
-          "year"
-        ],
-        "properties": {
-          "term": {
-            "type": "string"
-          },
-          "year": {
-            "type": "string"
-          },
-          "certificateFileIds": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            },
-            "description": "이전 기수 수료증 fileObjectId 문자열 목록. 숫자만 허용. 본인(ADMIN) 업로드·VOLUNTEER_APPLICATION_EVIDENCE·대상 PROGRAM owner·CLEAN·AVAILABLE/CONFIRMED. 연결 키는 ujat-program-application-volunteer-seed-previous-term. 없는 id/타 프로그램 owner/CERTIFICATE_TEMPLATE·CERTIFICATE_ASSET purpose → 400 VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID. PENDING_SCAN·미확정 업로드 → 409 VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN."
           }
         }
       },

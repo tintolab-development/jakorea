@@ -92,6 +92,7 @@ import {
   recruitmentPreviewParamForAudience,
   shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
+import { canonicalizeParticipantApplicationListViewParams } from '@/features/program/general/hooks/application-list-view-params'
 import { useGeneralProgramCommonInfoEditForm } from '@/features/program/general/hooks/use-common-info-edit-form'
 import {
   TRAINED_TEACHERS_DEDICATED_DETAIL_SAVE_KIND,
@@ -455,10 +456,18 @@ function normalizeGeneralDetailParams(
   if (next.get(LNB_PARAM) !== lnb) next.set(LNB_PARAM, lnb)
   if (next.get(TAB_PARAM) !== tab) next.set(TAB_PARAM, tab)
 
+  let applicationViewCanonicalized = false
+  if (lnb === 'institution_applications' && tab === 'main') {
+    applicationViewCanonicalized = canonicalizeParticipantApplicationListViewParams(next, {
+      isIndividualParticipantProgram: isGeneralIndividualProgram(program),
+    })
+  }
+
   const changed =
     searchParams.get('programId') !== programId ||
     searchParams.get(LNB_PARAM) !== lnb ||
-    searchParams.get(TAB_PARAM) !== tab
+    searchParams.get(TAB_PARAM) !== tab ||
+    applicationViewCanonicalized
 
   return changed ? next : null
 }

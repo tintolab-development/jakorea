@@ -13,7 +13,7 @@
 /* Pretendard 폰트 로드 */
 @font-face {
   font-family: 'Pretendard';
-  src: url('../../../public/fonts/PretendardVariable.woff2') format('woff2');
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
   font-weight: 100 200 300 400 500 600 700 800 900;
   font-style: normal;
   font-display: swap;

@@ -1,6 +1,36 @@
 /* 자택 주소 `*****` 토큰 전용 — 서버 `*` 마스킹(전화·메일)과 시각 구분 */
 .program-pii-address-blur {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: baseline;
   filter: blur(5px);
   -webkit-filter: blur(5px);
   user-select: none;
+}
+
+/*
+ * DetailInfoForm 읽기 전용 셀은 기본 single-line ellipsis — 긴 주소·블러 토큰이 잘리지 않게 한다.
+ */
+.program-detail-home-address-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  line-height: 150%;
+}
+
+.detail-info-form__field-content--view:has(.program-detail-home-address-value) {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  align-items: flex-start;
+}
+
+.detail-info-form__field-content--view > .program-detail-home-address-value {
+  overflow: visible;
+  text-overflow: clip;
 }

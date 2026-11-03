@@ -3,6 +3,8 @@
  * 진행 현황 탭과 동일 패턴: 카드, 서브 탭, 필터, 조회, 테이블
  */
 
+@import '../../shared/ui/program-application-list-toolbar.css';
+
 .program-applicants-tab {
     width: 100%;
 }
@@ -154,8 +156,6 @@
     align-items: baseline;
     gap: 6px;
 }
-
-@import '../../shared/ui/program-application-list-toolbar.css';
 
 .program-applicants-tab__table-actions {
     display: flex;

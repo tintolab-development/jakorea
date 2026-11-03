@@ -1,8 +1,10 @@
 import { mapSessionProgressToParticipatingSchoolSessions } from '@/features/program/general/api/adapters/general-applications-adapters'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { resolveParticipatingProgressAssignedSessions } from '@/features/program/general/lib/organization-education-schedule-sources'
+import { resolveEducationProgressFromScheduleBounds } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import type { ProgramEducationSlotResponse } from '@/shared/api/generated/dashboard/schemas/programEducationSlotResponse'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
+import type { SessionProgressScheduleStatus } from '@/shared/api/generated/dashboard/schemas/sessionProgressScheduleStatus'
 
 function positiveScheduleId(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
@@ -21,6 +23,18 @@ function participantSessionsByScheduleId(
   return map
 }
 
+function educationSlotDeliveryScheduleStatus(
+  slot: ProgramEducationSlotResponse
+): SessionProgressScheduleStatus {
+  // education-slots.scheduleStatus(ACTIVE 등)는 교육 진행 상태가 아니다. 시각으로 산출한다.
+  return resolveEducationProgressFromScheduleBounds({
+    startAt: slot.startAt,
+    endAt: slot.endAt,
+  }) === 'completed'
+    ? 'COMPLETED'
+    : 'SCHEDULED'
+}
+
 function educationSlotToParticipatingSession(
   slot: ProgramEducationSlotResponse,
   index: number
@@ -35,6 +49,7 @@ function educationSlotToParticipatingSession(
     sessionNo: slot.sessionNo ?? index + 1,
     startAt: slot.startAt,
     endAt: slot.endAt,
+    scheduleStatus: educationSlotDeliveryScheduleStatus(slot),
     ...(slot.educationSlotKey?.trim() ? { educationSlotKey: slot.educationSlotKey.trim() } : {}),
     ...(slot.scheduleRole?.trim() ? { scheduleRole: slot.scheduleRole.trim() } : {}),
   }
