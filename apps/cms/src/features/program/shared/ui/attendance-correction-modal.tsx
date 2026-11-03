@@ -3,11 +3,10 @@ import dayjs, { type Dayjs } from 'dayjs'
 import {
   ContentModal,
   CmsButton,
-  CmsInput,
   CmsSelect,
-  FileSelectField,
   useCmsAlert,
 } from '@/shared/ui'
+import { AttendanceCorrectionReasonForm } from '@/features/program/shared/ui/attendance-correction-reason-form'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
@@ -240,43 +239,15 @@ export function ProgramAttendanceCorrectionModal({
         </div>
 
         {showReasonTable ? (
-          <div className="program-attendance-correction-modal__reason-table-wrap">
-            <table className="program-attendance-correction-modal__reason-table">
-              <colgroup>
-                <col style={{ width: '165px' }} />
-                <col />
-              </colgroup>
-              <tbody>
-                <tr>
-                  <th scope="row">사유</th>
-                  <td>
-                    <CmsInput
-                      inputSize="large"
-                      width="100%"
-                      value={reason}
-                      onChange={event => setReason(event.target.value)}
-                      placeholder="사유를 입력해 주세요"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">증빙 서류</th>
-                  <td>
-                    <FileSelectField
-                      accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                      fileNames={evidenceFileNames}
-                      onFilesChange={files => setEvidenceFiles(prev => [...prev, ...files])}
-                      onRemoveFile={index =>
-                        setEvidenceFiles(prev =>
-                          prev.filter((_, currentIndex) => currentIndex !== index)
-                        )
-                      }
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <AttendanceCorrectionReasonForm
+            reason={reason}
+            onReasonChange={setReason}
+            evidenceFileNames={evidenceFileNames}
+            onFilesChange={files => setEvidenceFiles(prev => [...prev, ...files])}
+            onRemoveFile={index =>
+              setEvidenceFiles(prev => prev.filter((_, currentIndex) => currentIndex !== index))
+            }
+          />
         ) : null}
       </div>
     </ContentModal>
