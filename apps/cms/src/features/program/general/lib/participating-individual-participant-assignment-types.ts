@@ -1,5 +1,14 @@
 export type ParticipatingIndividualParticipantAssignmentTeamRole = 'leader' | 'member' | 'individual'
 
+export type ParticipatingIndividualParticipantAssignmentSubmissionItem =
+  | {
+      kind: 'file'
+      fileName: string
+      fileObjectId?: number
+      downloadable?: boolean
+    }
+  | { kind: 'link'; label: string; href: string }
+
 export type ParticipatingIndividualParticipantAssignmentSubmission =
   | { kind: 'none' }
   | { kind: 'not_submitted' }
@@ -13,6 +22,11 @@ export type ParticipatingIndividualParticipantAssignmentSubmission =
       secondaryDownloadable?: boolean
     }
   | { kind: 'link'; label: string; href: string }
+  /** 파일·외부 링크 혼합 제출(세로 컬럼 표시) */
+  | {
+      kind: 'attachments'
+      items: ParticipatingIndividualParticipantAssignmentSubmissionItem[]
+    }
   | {
       kind: 'survey_view'
       submitted: boolean

@@ -141,15 +141,14 @@ function mapListGradeClassCounts(
 ): UjatInstitutionApplicationRow['gradeClassCounts'] {
   if (Array.isArray(dto.gradeBlocks)) {
     return dto.gradeBlocks.map(block => ({
-      gradeLabel: block.gradeLabel?.trim() || '-',
+      gradeLabel: displayGradeLabelFromRemote(block.gradeLabel),
       classCount: typeof block.classCount === 'number' ? block.classCount : null,
     }))
   }
 
   // gradeBlocks null/생략 시 requestedClassCount로 학급 줄을 만들지 않는다. 학년 원문만 표시.
-  const gradeLabel = dto.grade?.trim()
-  if (!gradeLabel) return []
-  return [{ gradeLabel, classCount: null }]
+  if (!dto.grade?.trim()) return []
+  return [{ gradeLabel: displayGradeLabelFromRemote(dto.grade), classCount: null }]
 }
 
 function resolveTotalClassCount(

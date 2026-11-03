@@ -46,7 +46,7 @@ export function resolveProgressAssignmentSubmissionExportLabel(
   submission: ParticipatingIndividualProgressAssignmentSubmission
 ): string {
   if (submission.kind === 'not_submitted') return '미제출'
-  if (submission.kind === 'scheduled') return '교육 진행 예정'
+  if (submission.kind === 'scheduled') return '-'
   if (submission.items?.length) {
     return submission.items.map(item => item.fileName).join(', ')
   }

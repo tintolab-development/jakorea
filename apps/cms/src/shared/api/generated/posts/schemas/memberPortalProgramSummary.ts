@@ -20,7 +20,10 @@ export interface MemberPortalProgramSummary {
   educationEndAt?: string;
   inquiryEmail?: string;
   inquiryPhone?: string;
-  posterFileObjectId?: number;
+  /** thumbnailFileObjectId와 같은 값(기존 필드 호환). 없으면 null. */
+  posterFileObjectId?: number | null;
+  /** 신청 recruitmentId 모집 행 대표 이미지 file_object id. GENERAL_*·UJAT는 그 모집 행 값만 쓰고 프로그램 대표 이미지나 다른 모집 행으로 채우지 않는다. 그 외 유형은 프로그램 대표 이미지. 공개 GET /api/portal/programs 행 thumbnailFileObjectId와 같은 규칙. 없으면 null. */
+  thumbnailFileObjectId?: number | null;
   /** 해당 모집 행의 면접 여부. null이면 미설정(면접 없음으로 취급). false면 서류 합격 면접 배너를 숨긴다. */
   interviewEnabled?: boolean | null;
   /** 프로그램 canonical type. 신청 상세의 programType과 동일합니다. */

@@ -177,20 +177,9 @@ export function UjatEducationProgressInstitutionAssignmentHeaderActions({
 
   return (
     <>
-      <ExcelButton
-        size="large"
-        className="assignment-tab__excel-btn"
-        loading={isExcelExporting}
-        onClick={onExcelDownload}
-      />
+      <ExcelButton loading={isExcelExporting} onClick={onExcelDownload} />
       {canWrite ? (
-        <CmsButton
-          type="button"
-          variant="primary"
-          size="large"
-          className="assignment-tab__change-btn"
-          onClick={onChangeClass}
-        >
+        <CmsButton type="button" variant="primary" size="h40" onClick={onChangeClass}>
           교육 학년 및 학급 변경
         </CmsButton>
       ) : null}

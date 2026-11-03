@@ -14,6 +14,7 @@ import {
   CommentComposer,
   ReactionUserList,
 } from '@/shared/ui'
+import { getReactionEmojiTypeForBarIndex } from '@/shared/ui/posts'
 import type { ProgramPost, ProgramFile } from '@/types/domain'
 import { formatDateTimeDot } from '@/shared/utils/date'
 import { ProfileAvatarIcon } from '@/shared/ui/icons'
@@ -27,7 +28,6 @@ import {
   markPostAsRead,
   createProgramPostComment,
   addProgramPostReaction,
-  getReactionEmojiTypeForBarIndex,
   removeProgramPostReactionUser,
 } from '@/features/user/detail/lib/program-post-interaction-stubs'
 import { downloadFile } from '@/shared/lib/file-download'
@@ -259,7 +259,7 @@ export function PostDetailModal({
       void (async () => {
         if (emojiType) {
           try {
-            await remoteDetail.putReaction(String(emojiType))
+            await remoteDetail.putReaction(emojiType)
           } catch (error) {
             setSelectedEmojiIndex(null)
             cmsAlertModal.show({

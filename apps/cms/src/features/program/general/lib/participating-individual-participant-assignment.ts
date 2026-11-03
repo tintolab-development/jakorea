@@ -14,6 +14,7 @@ import type {
   ParticipatingIndividualParticipantAssignmentRow,
   ParticipatingIndividualParticipantAssignmentSummary,
   ParticipatingIndividualParticipantAssignmentSubmission,
+  ParticipatingIndividualParticipantAssignmentSubmissionItem,
 } from '@/features/program/general/lib/participating-individual-participant-assignment-types'
 import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
@@ -21,7 +22,13 @@ import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/pro
 function isSubmissionCountedAsSubmitted(
   submission: ParticipatingIndividualParticipantAssignmentSubmission
 ): boolean {
-  if (submission.kind === 'file' || submission.kind === 'link') return true
+  if (
+    submission.kind === 'file' ||
+    submission.kind === 'link' ||
+    submission.kind === 'attachments'
+  ) {
+    return true
+  }
   if (submission.kind === 'survey_view' || submission.kind === 'satisfaction_survey_view') {
     return submission.submitted
   }
@@ -182,6 +189,47 @@ function mapRemoteSubmissionToDetail(
   submission: ParticipatingIndividualProgressAssignmentSubmission
 ): ParticipatingIndividualParticipantAssignmentSubmission {
   if (submission.kind === 'submitted') {
+    const itemsFromRemote: ParticipatingIndividualParticipantAssignmentSubmissionItem[] =
+      submission.items?.map(item =>
+        item.kind === 'link'
+          ? {
+              kind: 'link' as const,
+              label: item.fileName.trim() || item.href,
+              href: item.href,
+            }
+          : {
+              kind: 'file' as const,
+              fileName: item.fileName,
+              fileObjectId: item.fileObjectId,
+              downloadable: item.downloadable,
+            }
+      ) ?? []
+
+    if (itemsFromRemote.length > 0) {
+      return { kind: 'attachments', items: itemsFromRemote }
+    }
+
+    const legacyItems: ParticipatingIndividualParticipantAssignmentSubmissionItem[] = []
+    if (submission.fileName?.trim()) {
+      legacyItems.push({
+        kind: 'file',
+        fileName: submission.fileName,
+        fileObjectId: submission.fileObjectId,
+        downloadable: submission.downloadable,
+      })
+    }
+    if (submission.secondaryFileName?.trim()) {
+      legacyItems.push({
+        kind: 'file',
+        fileName: submission.secondaryFileName,
+        fileObjectId: submission.secondaryFileObjectId,
+        downloadable: submission.secondaryDownloadable,
+      })
+    }
+    if (legacyItems.length > 0) {
+      return { kind: 'attachments', items: legacyItems }
+    }
+
     return {
       kind: 'file',
       fileName: submission.fileName,
@@ -225,11 +273,17 @@ export function mergeParticipantDetailAssignmentRowsWithRemote(input: {
     const remoteParticipant = remote?.participants.find(
       item => item.participantId === input.participantId
     )
+    const educationProgress =
+      local.educationProgress === 'completed' || remote?.scheduleEducationProgress === 'completed'
+        ? ('completed' as const)
+        : local.educationProgress
     if (remoteParticipant == null) {
       return {
         ...local,
         assignmentPeriodLabel:
           remote?.assignmentPeriodLabel?.trim() || local.assignmentPeriodLabel,
+        educationProgress,
+        countsTowardAssignmentDenominator: educationProgress === 'completed',
       }
     }
     const submission = mapRemoteSubmissionToDetail(remoteParticipant.submission)
@@ -238,13 +292,9 @@ export function mergeParticipantDetailAssignmentRowsWithRemote(input: {
       assignmentPeriodLabel:
         remote?.assignmentPeriodLabel?.trim() || local.assignmentPeriodLabel,
       submission,
-      educationProgress:
-        remoteParticipant.submission.kind === 'scheduled'
-          ? 'scheduled'
-          : local.educationProgress === 'scheduled'
-            ? 'scheduled'
-            : 'completed',
-      countsTowardAssignmentDenominator: remoteParticipant.submission.kind !== 'scheduled',
+      // 교육 진행 현황은 교육 일정(배정 세션·schedule bounds) 기준. 과제 제출 상태로 덮지 않는다.
+      educationProgress,
+      countsTowardAssignmentDenominator: educationProgress === 'completed',
     }
   }
 
@@ -275,6 +325,7 @@ export function mergeParticipantDetailAssignmentRowsWithRemote(input: {
     // 팀 일정 과제는 참가자별 제출. 다른 팀원(팀장) 파일을 이 행에 복사하지 않는다.
     if (!remoteParticipant) continue
     const submission = mapRemoteSubmissionToDetail(remoteParticipant.submission)
+    const educationProgress = remote.scheduleEducationProgress
     merged.push({
       id: `asg-${input.participantId}-${remote.id}`,
       scheduleId: remote.id,
@@ -284,9 +335,8 @@ export function mergeParticipantDetailAssignmentRowsWithRemote(input: {
       scheduleLabel: remote.filterLabel,
       assignmentPeriodLabel: remote.assignmentPeriodLabel?.trim() || null,
       submission,
-      educationProgress:
-        remoteParticipant.submission.kind === 'scheduled' ? 'scheduled' : 'completed',
-      countsTowardAssignmentDenominator: remoteParticipant.submission.kind !== 'scheduled',
+      educationProgress,
+      countsTowardAssignmentDenominator: educationProgress === 'completed',
       isTeamSchedule: false,
       countsTowardSurveyDenominator: false,
     })
@@ -363,29 +413,4 @@ export function appendParticipantSurveyViewRows(input: {
   }
 
   return extra.length === 0 ? input.rows : [...input.rows, ...extra]
-}
-
-export function collectParticipantAssignmentDownloadableFiles(
-  rows: ParticipatingIndividualParticipantAssignmentRow[]
-): Array<{ fileObjectId: number; fileName: string }> {
-  const files: Array<{ fileObjectId: number; fileName: string }> = []
-  for (const row of rows) {
-    if (row.submission.kind !== 'file') continue
-    if (row.submission.downloadable === true && row.submission.fileObjectId != null) {
-      files.push({
-        fileObjectId: row.submission.fileObjectId,
-        fileName: row.submission.fileName,
-      })
-    }
-    if (
-      row.submission.secondaryDownloadable === true &&
-      row.submission.secondaryFileObjectId != null
-    ) {
-      files.push({
-        fileObjectId: row.submission.secondaryFileObjectId,
-        fileName: row.submission.secondaryFileName ?? `과제_${row.submission.secondaryFileObjectId}`,
-      })
-    }
-  }
-  return files
 }

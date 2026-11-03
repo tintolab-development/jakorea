@@ -103,7 +103,8 @@ export function UjatAddVolunteerModal({
               showSearch
               optionFilterProp="label"
               placeholder="추가 등록할 봉사자를 선택해 주세요"
-              suffixIcon={
+              className="ujat-add-volunteer-modal__member-select"
+              prefix={
                 <span className="cms-field__icon" aria-hidden>
                   <FieldSearchIcon />
                 </span>

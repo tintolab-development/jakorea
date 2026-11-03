@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ContentModal, CmsButton, useCmsAlert } from '@/shared/ui'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
@@ -57,6 +57,14 @@ function parseStudentCount(raw: string): number | null {
   return value
 }
 
+function isDraftTouched(draft: DraftClassForm): boolean {
+  return Boolean(draft.grade || draft.classNo || draft.studentCount.trim())
+}
+
+function isDraftComplete(draft: DraftClassForm): boolean {
+  return Boolean(draft.grade && draft.classNo && parseStudentCount(draft.studentCount) != null)
+}
+
 function createPendingRowId(): string {
   return `pending-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
@@ -66,6 +74,7 @@ type ClassRowFieldsProps = {
   classNo?: string
   studentCount: string
   readOnly?: boolean
+  classOptions?: ReadonlyArray<{ value: string; label: string; disabled?: boolean }>
   onGradeChange?: (value: string | undefined) => void
   onClassNoChange?: (value: string | undefined) => void
   onStudentCountChange?: (value: string) => void
@@ -79,6 +88,7 @@ function ClassRowFields({
   classNo,
   studentCount,
   readOnly = false,
+  classOptions = CLASS_OPTIONS,
   onGradeChange,
   onClassNoChange,
   onStudentCountChange,
@@ -112,7 +122,7 @@ function ClassRowFields({
           value={classNo}
           disabled={readOnly}
           onChange={value => onClassNoChange?.(value == null ? undefined : String(value))}
-          options={CLASS_OPTIONS}
+          options={[...classOptions]}
           aria-label={classAriaLabel}
         />
       </div>
@@ -171,7 +181,10 @@ export function UjatEducationProgressAddClassModal({
     retry: false,
   })
 
-  const remoteClasses = educationClassesQuery.data?.classes ?? []
+  const remoteClasses = useMemo(
+    () => educationClassesQuery.data?.classes ?? [],
+    [educationClassesQuery.data?.classes]
+  )
   const displayClassCount = useMemo(() => {
     if (!remoteEnabled) return currentTotalClassCount
     const fromApi = resolveEducationClassCountDisplay(educationClassesQuery.data)
@@ -185,13 +198,66 @@ export function UjatEducationProgressAddClassModal({
     !educationClassesQuery.isError &&
     remoteClasses.length === 0
 
-  const hasChanges = pendingRows.length > 0
+  const canSave = pendingRows.length > 0 || isDraftComplete(draft)
+
+  const rowsScrollRef = useRef<HTMLDivElement>(null)
+  const prevPendingCountRef = useRef(0)
 
   useEffect(() => {
     if (!open) return
     setPendingRows([])
     setDraft(EMPTY_DRAFT)
   }, [open])
+
+  useEffect(() => {
+    const prevCount = prevPendingCountRef.current
+    prevPendingCountRef.current = pendingRows.length
+    if (pendingRows.length <= prevCount) return
+    const scrollEl = rowsScrollRef.current
+    if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight
+  }, [pendingRows.length])
+
+  const isPendingClass = useCallback(
+    (gradeLabel: string, classNo: number) =>
+      pendingRows.some(row => row.gradeLabel === gradeLabel && row.classNo === classNo),
+    [pendingRows]
+  )
+
+  const isExistingClass = useCallback(
+    (gradeLabel: string, classNo: number) =>
+      remoteEnabled
+        ? isDuplicateInEducationClasses(remoteClasses, gradeLabel, classNo)
+        : isDuplicateClassInGradeBlocks(existingGradeBlocks, gradeLabel, classNo),
+    [existingGradeBlocks, remoteClasses, remoteEnabled]
+  )
+
+  const isClassTaken = useCallback(
+    (gradeValue: string, classNoValue: string) => {
+      const gradeLabel = formatGradeLabelFromValue(gradeValue)
+      const classNo = Number.parseInt(classNoValue, 10)
+      return isPendingClass(gradeLabel, classNo) || isExistingClass(gradeLabel, classNo)
+    },
+    [isExistingClass, isPendingClass]
+  )
+
+  const draftClassOptions = useMemo(() => {
+    const gradeValue = draft.grade
+    if (!gradeValue) return CLASS_OPTIONS
+    return CLASS_OPTIONS.map(option => ({
+      ...option,
+      disabled: isClassTaken(gradeValue, option.value),
+    }))
+  }, [draft.grade, isClassTaken])
+
+  const handleDraftGradeChange = useCallback(
+    (value: string | undefined) => {
+      setDraft(prev => {
+        const keepClassNo = value && prev.classNo ? !isClassTaken(value, prev.classNo) : true
+        return { ...prev, grade: value, classNo: keepClassNo ? prev.classNo : undefined }
+      })
+    },
+    [isClassTaken]
+  )
 
   const handleCancel = useCallback(() => {
     if (confirming) return
@@ -215,10 +281,7 @@ export function UjatEducationProgressAddClassModal({
     const gradeLabel = formatGradeLabelFromValue(draft.grade)
     const classNo = Number.parseInt(draft.classNo, 10)
 
-    const duplicatedInPending = pendingRows.some(
-      row => row.gradeLabel === gradeLabel && row.classNo === classNo
-    )
-    if (duplicatedInPending) {
+    if (isPendingClass(gradeLabel, classNo)) {
       showAlert({ title: '안내', content: '이미 등록 목록에 추가된 학급입니다.' })
       return null
     }
@@ -235,11 +298,9 @@ export function UjatEducationProgressAddClassModal({
         })
         return null
       }
-      if (isDuplicateInEducationClasses(remoteClasses, gradeLabel, classNo)) {
-        showAlert({ title: '안내', content: '이미 진행 중인 학급입니다.' })
-        return null
-      }
-    } else if (isDuplicateClassInGradeBlocks(existingGradeBlocks, gradeLabel, classNo)) {
+    }
+
+    if (isExistingClass(gradeLabel, classNo)) {
       showAlert({ title: '안내', content: '이미 진행 중인 학급입니다.' })
       return null
     }
@@ -254,9 +315,8 @@ export function UjatEducationProgressAddClassModal({
     draft,
     educationClassesQuery.isError,
     educationClassesQuery.isLoading,
-    existingGradeBlocks,
-    pendingRows,
-    remoteClasses,
+    isExistingClass,
+    isPendingClass,
     remoteEnabled,
     showAlert,
   ])
@@ -278,7 +338,9 @@ export function UjatEducationProgressAddClassModal({
   )
 
   const handleConfirm = useCallback(() => {
-    if (!hasChanges || confirming) return
+    if (!canSave || confirming) return
+
+    let expectedRevision: number | null = null
     if (remoteEnabled) {
       const revision = educationClassesQuery.data?.revision
       if (revision == null || !Number.isFinite(revision)) {
@@ -288,18 +350,29 @@ export function UjatEducationProgressAddClassModal({
         })
         return
       }
-      void onConfirm({ added: pendingRows, removed: [], expectedRevision: revision })
-      return
+      expectedRevision = revision
     }
-    void onConfirm({ added: pendingRows, removed: [], expectedRevision: null })
+
+    let added = pendingRows
+    if (isDraftTouched(draft)) {
+      const draftRow = validateDraft()
+      if (!draftRow) return
+      added = [...pendingRows, draftRow]
+      setPendingRows(added)
+      setDraft(EMPTY_DRAFT)
+    }
+
+    void onConfirm({ added, removed: [], expectedRevision })
   }, [
+    canSave,
     confirming,
+    draft,
     educationClassesQuery.data?.revision,
-    hasChanges,
     onConfirm,
     pendingRows,
     remoteEnabled,
     showAlert,
+    validateDraft,
   ])
 
   const footer = (
@@ -317,7 +390,7 @@ export function UjatEducationProgressAddClassModal({
         variant="primary"
         size="h40"
         type="button"
-        disabled={!hasChanges || confirming}
+        disabled={!canSave || confirming}
         loading={confirming}
         onClick={handleConfirm}
       >
@@ -351,12 +424,12 @@ export function UjatEducationProgressAddClassModal({
       ) : null}
 
       <div className="add-class-modal__table">
-        <div className="add-class-modal__table-scroll">
-          <div className="add-class-modal__header-row">
-            <div className="add-class-modal__header-info">추가 학급 정보</div>
-            <div className="add-class-modal__header-actions">관리</div>
-          </div>
+        <div className="add-class-modal__header-row">
+          <div className="add-class-modal__header-info">추가 학급 정보</div>
+          <div className="add-class-modal__header-actions">관리</div>
+        </div>
 
+        <div ref={rowsScrollRef} className="add-class-modal__rows-scroll">
           {pendingRows.map(row => (
             <div key={row.id} className="add-class-modal__data-row">
               <div className="add-class-modal__cell-info">
@@ -392,9 +465,8 @@ export function UjatEducationProgressAddClassModal({
                 classNo={draft.classNo}
                 studentCount={draft.studentCount}
                 readOnly={confirming}
-                onGradeChange={value => {
-                  setDraft(prev => ({ ...prev, grade: value }))
-                }}
+                classOptions={draftClassOptions}
+                onGradeChange={handleDraftGradeChange}
                 onClassNoChange={value => {
                   setDraft(prev => ({ ...prev, classNo: value }))
                 }}

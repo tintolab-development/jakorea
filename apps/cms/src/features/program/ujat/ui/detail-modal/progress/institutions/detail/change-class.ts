@@ -535,9 +535,9 @@ export function buildMappingFromRowFields(
 ): ChangeClassMapping | null {
   if (!existingGrade || !existingClassNo || !newGrade) return null
 
-  const existingGradeLabel = formatGradeLabelFromValue(existingGrade)
-  const existingClassNoNum = Number.parseInt(existingClassNo, 10)
-  if (!Number.isFinite(existingClassNoNum) || existingClassNoNum < 1) return null
+  const existingGradeLabel = formatGradeLabelFromValue(normalizeGradeSelectValue(existingGrade))
+  const existingClassNoNum = parseClassSelectNo(existingClassNo)
+  if (existingClassNoNum == null) return null
 
   const wireFields =
     wire?.grade && wire.className
@@ -573,10 +573,9 @@ export function isSameClassMapping(
   newClassNo: string
 ): boolean {
   if (newGrade === UNASSIGNED_GRADE_VALUE) return false
-  if (!existingGrade || !existingClassNo || !newGrade) return false
-  const classNo = Number.parseInt(newClassNo.replace(/\D/g, ''), 10)
-  if (!Number.isFinite(classNo)) return false
-  return existingGrade === newGrade && Number.parseInt(existingClassNo, 10) === classNo
+  const existingKey = normalizedClassKey(existingGrade, existingClassNo)
+  const newKey = normalizedClassKey(newGrade, newClassNo)
+  return existingKey != null && existingKey === newKey
 }
 
 export type ChangeClassRowFields = {
@@ -584,6 +583,68 @@ export type ChangeClassRowFields = {
   existingClassNo?: string
   newGrade?: string
   newClassNo: string
+}
+
+function normalizeGradeSelectValue(grade: string): string {
+  return normalizeGradeNumberFromLabel(grade) ?? grade.replace(/학년$/, '').trim()
+}
+
+function parseClassSelectNo(classNo: string): number | null {
+  const value = Number.parseInt(classNo.replace(/\D/g, ''), 10)
+  return Number.isFinite(value) && value >= 1 ? value : null
+}
+
+/**
+ * 학년·반 비교 키. 기존 학급 셀렉트 값은 GET 원문("1학년"·"2반")일 수 있어
+ * 변경 학급 셀렉트 값("1"·"2")과 같은 형태로 맞춘 뒤 비교한다.
+ */
+export function normalizedClassKey(
+  grade: string | undefined,
+  classNo: string | undefined
+): string | null {
+  if (!grade || !classNo || grade === UNASSIGNED_GRADE_VALUE) return null
+  const gradeValue = normalizeGradeSelectValue(grade)
+  const classNoNum = parseClassSelectNo(classNo)
+  if (!gradeValue || classNoNum == null) return null
+  return `${gradeValue}:${classNoNum}`
+}
+
+/** 카탈로그(기존 학급 셀렉트)에 있는 학급의 정규화 키 */
+export function collectCatalogClassKeys(options: ExistingClassSelectOptions): Set<string> {
+  const keys = new Set<string>()
+  for (const [grade, classOptions] of Object.entries(options.classOptionsByGrade)) {
+    for (const option of classOptions) {
+      const key = normalizedClassKey(grade, option.value)
+      if (key) keys.add(key)
+    }
+  }
+  return keys
+}
+
+/**
+ * excludeIndex 행의 「변경할 학급」으로 고를 수 없는 학급.
+ * - 다른 행이 이미 변경 대상으로 고른 학급
+ * - 카탈로그에 남아 있는 학급 (다른 행에서 다른 곳으로 옮기거나 미배정하는 학급은 제외)
+ * 자기 행의 기존 학급은 남아 있으므로 동일 학급 선택도 막힌다.
+ */
+export function collectBlockedTargetClassKeys(
+  rows: ReadonlyArray<ChangeClassRowFields>,
+  excludeIndex: number,
+  catalogKeys: ReadonlySet<string>
+): Set<string> {
+  const movedAwayKeys = new Set<string>()
+  const blocked = new Set<string>()
+  rows.forEach((row, index) => {
+    if (index === excludeIndex) return
+    const existingKey = normalizedClassKey(row.existingGrade, row.existingClassNo)
+    if (existingKey) movedAwayKeys.add(existingKey)
+    const targetKey = normalizedClassKey(row.newGrade, row.newClassNo)
+    if (targetKey) blocked.add(targetKey)
+  })
+  for (const key of catalogKeys) {
+    if (!movedAwayKeys.has(key)) blocked.add(key)
+  }
+  return blocked
 }
 
 export function existingClassKey(
@@ -645,9 +706,11 @@ export function getChangeClassAddRowBlockReason(
 
 /** Validates row fields; returns error message or null */
 export function validateChangeClassRows(
-  rows: ReadonlyArray<ChangeClassRowFields>
+  rows: ReadonlyArray<ChangeClassRowFields>,
+  catalogKeys: ReadonlySet<string> = new Set()
 ): string | null {
   const existingKeys = new Set<string>()
+  const targetKeys = new Set<string>()
 
   for (let index = 0; index < rows.length; index += 1) {
     const row = rows[index]
@@ -675,11 +738,26 @@ export function validateChangeClassRows(
       return `${rowNum}번째 행의 기존 학급과 변경 학급이 동일합니다.`
     }
 
-    const existingKey = `${row.existingGrade}:${row.existingClassNo}`
+    const existingKey =
+      normalizedClassKey(row.existingGrade, row.existingClassNo) ??
+      `${row.existingGrade}:${row.existingClassNo}`
     if (existingKeys.has(existingKey)) {
       return '동일한 기존 학급이 중복 선택되었습니다.'
     }
     existingKeys.add(existingKey)
+  }
+
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index]
+    const targetKey = normalizedClassKey(row.newGrade, row.newClassNo)
+    if (!targetKey) continue
+    if (targetKeys.has(targetKey)) {
+      return `${index + 1}번째 행의 변경 학급이 다른 행과 중복됩니다.`
+    }
+    targetKeys.add(targetKey)
+    if (catalogKeys.has(targetKey) && !existingKeys.has(targetKey)) {
+      return `${index + 1}번째 행의 변경 학급은 이미 진행 중인 학급입니다.`
+    }
   }
 
   return null

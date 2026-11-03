@@ -11,6 +11,7 @@ import { formatNumberDisplay } from '@/shared/utils'
 import {
   coerceProgramPaymentItemsText,
   PROGRAM_WAGE_DEDUCTION_LABEL,
+  LEGACY_PROGRAM_WAGE_DEDUCTION_LABEL,
   PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL,
 } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import {
@@ -144,8 +145,14 @@ export function mapSettlementDeductionTypeToLabel(
   const raw = deductionType.trim()
   const normalized = raw.toUpperCase().replace(/[\s-]+/g, '_')
   if (DEDUCTION_TYPE_LABEL[normalized]) return DEDUCTION_TYPE_LABEL[normalized]
-  if (raw === PROGRAM_WAGE_DEDUCTION_LABEL || raw === PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL) {
-    return raw
+  if (
+    raw === PROGRAM_WAGE_DEDUCTION_LABEL ||
+    raw === LEGACY_PROGRAM_WAGE_DEDUCTION_LABEL ||
+    raw === PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+  ) {
+    return raw === PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+      ? PROGRAM_WAGE_PAYMENT_ITEM_NONE_LABEL
+      : PROGRAM_WAGE_DEDUCTION_LABEL
   }
   // 이미 저장된 영문 enum이 commonInfo.deductionItems에 들어온 경우
   if (normalized.includes('DAILY_WORKER') || normalized.includes('WITHHOLDING')) {

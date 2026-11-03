@@ -13,6 +13,10 @@ import { readPaymentItemEligiblePayeeTypes } from '@/features/settlement-managem
 import type { SettlementConfigResponse } from '@/shared/api/generated/settlement/schemas'
 import { PaymentItemResponsePaymentItemType } from '@/shared/api/generated/settlement/schemas/paymentItemResponsePaymentItemType'
 import { WageItemResponseWageItemType } from '@/shared/api/generated/settlement/schemas/wageItemResponseWageItemType'
+import {
+  normalizeSettlementWithholdingItemLabel,
+  SETTLEMENT_WITHHOLDING_ITEM_LABEL,
+} from '@/shared/constants/settlement-item-type'
 
 const WAGE_TYPE_ICON: Record<string, SettlementItemSettingIconKey> = {
   [WageItemResponseWageItemType.TIER1]: 'wage_tier1',
@@ -139,7 +143,8 @@ export function mapSettlementConfigToSections(
   const deductionItems: SettlementItemSettingRow[] = (config.deductionItems ?? [])
     .filter(item => item.useYn !== false)
     .map(item => {
-      const name = item.itemName ?? '공제 항목'
+      const name = normalizeSettlementWithholdingItemLabel(item.itemName) ?? '공제 항목'
+      const description = item.description?.trim()
       return {
         id: item.id != null ? `d-${item.id}` : `d-${name}`,
         apiItemId: item.id,
@@ -147,10 +152,12 @@ export function mapSettlementConfigToSections(
         layout: item.layout,
         title: name,
         description:
-          item.description?.trim() ||
-          (item.deductionRate
-            ? `공제율 ${item.deductionRate}`
-            : '상세 기준에 따라 적용되는 공제 항목입니다.'),
+          description ||
+          (name === SETTLEMENT_WITHHOLDING_ITEM_LABEL
+            ? '소득 유형별 원천징수 기준과 세율을 설정합니다.'
+            : item.deductionRate
+              ? `공제율 ${item.deductionRate}`
+              : '상세 기준에 따라 적용되는 공제 항목입니다.'),
         iconKey: asIconKey(item.iconKey) ?? 'deduct_business_33',
         emojiOverride: item.emojiOverride ?? null,
       }

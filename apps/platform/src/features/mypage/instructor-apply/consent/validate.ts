@@ -18,7 +18,7 @@ export function isSchemaConsentWriteIncomplete(
 ): boolean {
   const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
   if (isCrimeConsentTemplate(templateId)) {
-    return state.crimeDocumentUploaded !== true
+    return true
   }
   return hasMemberConsentIncompleteRequiredFields(state.draft, {
     templateId,

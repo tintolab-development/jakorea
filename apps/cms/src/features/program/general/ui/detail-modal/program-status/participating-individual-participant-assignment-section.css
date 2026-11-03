@@ -85,6 +85,25 @@
   background: #fff !important;
 }
 
+/* 복수 제출 파일·링크는 행 높이 고정에 잘리지 않도록 내용 높이 사용 */
+.participating-individual-participant-assignment-section__table-outer
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.participating-individual-participant-assignment-section__submission-column {
+  height: auto !important;
+  min-height: 52px !important;
+  white-space: normal;
+  overflow: visible;
+}
+
+.participating-individual-participant-assignment-section__submission-links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
 /* 제출 파일·링크 — #0070e7 (전역 --color-link는 #01a1af 민트) */
 .participating-individual-participant-assignment-section__table-outer
   a.participating-individual-participant-assignment-section__submission-link,

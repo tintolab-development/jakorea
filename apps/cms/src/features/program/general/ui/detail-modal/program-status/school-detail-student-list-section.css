@@ -2,6 +2,8 @@
  * 학교 상세 > 학생 명단 탭 — FilterTableLayout + 테이블
  */
 
+@import '../../../../shared/ui/program-application-list-toolbar.css';
+
 .school-detail-student-list-section {
   width: 100%;
 }
@@ -21,8 +23,6 @@
 .school-detail-student-list-section__filter-layout .table-filter-group__container {
   gap: var(--filter-field-gap, 12px);
 }
-
-@import '../../../../shared/ui/program-application-list-toolbar.css';
 
 .school-detail-student-list-section__toolbar-actions {
   display: flex;

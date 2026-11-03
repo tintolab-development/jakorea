@@ -46,6 +46,7 @@ import {
   resolveLoginRequiredPath,
 } from '@/shared/lib'
 import { resolveMypagePreferredScheduleLines } from '@/features/mypage/education/applications/lib/mypage-preferred-schedule-lines'
+import { withApplicationThumbnail } from '@/features/mypage/education/applications/lib/application-program-thumbnail'
 import {
   groupScheduleLinesByDate,
   resolveVolunteerApplicationExtrasFromAnswers,
@@ -162,14 +163,17 @@ export function MypageVolunteerDetailPage() {
   const program = useMemo(() => {
     if (!remoteProgram) return undefined
     const applicationProgram = application?.programConfig
-    if (!applicationProgram) return remoteProgram
-    return {
-      ...remoteProgram,
-      surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
-      satisfactionConfigured:
-        applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
-    }
-  }, [application?.programConfig, remoteProgram])
+    if (!applicationProgram) return withApplicationThumbnail(remoteProgram, application)
+    return withApplicationThumbnail(
+      {
+        ...remoteProgram,
+        surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
+        satisfactionConfigured:
+          applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
+      },
+      application,
+    )
+  }, [application, remoteProgram])
   const isApplicationLoading = remoteDetailEnabled && remoteApplicationQuery.isLoading
   const isProgramLoading = remoteDetailEnabled
     ? remoteApplicationQuery.isLoading || remoteProgramQuery.isLoading

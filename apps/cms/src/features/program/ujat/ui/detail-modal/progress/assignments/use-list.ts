@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useCmsAlert } from '@/shared/ui'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
 import { fetchUjatAssignmentSubmissions } from '@/features/program/ujat/api/education-execution-api'
 import { queryKeys as ujatQueryKeys } from '@/features/program/ujat/api/query-keys'
@@ -23,6 +22,14 @@ import {
   type UjatAssignmentVolunteerRow,
 } from './types'
 
+function hasVolunteerRowFilter(filters: UjatAssignmentFilters): boolean {
+  return (
+    filters.volunteerName.trim() !== '' ||
+    filters.institutionName !== UJAT_ASSIGNMENT_FILTER_ALL ||
+    filters.submissionStatus !== UJAT_ASSIGNMENT_FILTER_ALL
+  )
+}
+
 function volunteerMatchesFilters(
   row: UjatAssignmentVolunteerRow,
   filters: UjatAssignmentFilters
@@ -44,39 +51,47 @@ function volunteerMatchesFilters(
   return true
 }
 
+/** 활동 포기자 노출 규칙 적용 후 봉사자명·배정 기관·제출 현황 필터 */
 export function filterAssignmentVolunteersForDisplay(
   volunteers: UjatAssignmentVolunteerRow[],
   filters: UjatAssignmentFilters
 ): UjatAssignmentVolunteerRow[] {
   const visible = filterVisibleAssignmentVolunteers(volunteers)
-  const hasRowFilter =
-    filters.volunteerName.trim() !== '' ||
-    filters.institutionName !== UJAT_ASSIGNMENT_FILTER_ALL ||
-    filters.submissionStatus !== UJAT_ASSIGNMENT_FILTER_ALL
-  if (!hasRowFilter) return visible
+  if (!hasVolunteerRowFilter(filters)) return visible
   return visible.filter(row => volunteerMatchesFilters(row, filters))
 }
 
-function filterSessionGroups(
+/** 교육 진행일 필터 + 행 필터 적용. 반환 세션의 `volunteers`는 화면에 그릴 행만 담는다. */
+export function filterAssignmentSessionGroups(
   sessions: UjatAssignmentSessionGroup[],
   filters: UjatAssignmentFilters
 ): UjatAssignmentSessionGroup[] {
-  return sessions
-    .filter(session => {
-      if (
-        filters.educationDate !== UJAT_ASSIGNMENT_FILTER_ALL &&
-        session.isoDate !== filters.educationDate
-      ) {
-        return false
-      }
-      const visibleVolunteers = filterVisibleAssignmentVolunteers(session.volunteers)
-      const filtered = filterAssignmentVolunteersForDisplay(visibleVolunteers, filters)
-      return filtered.length > 0
-    })
-    .map(session => ({
-      ...session,
-      volunteers: filterVisibleAssignmentVolunteers(session.volunteers),
-    }))
+  return sessions.flatMap(session => {
+    if (
+      filters.educationDate !== UJAT_ASSIGNMENT_FILTER_ALL &&
+      session.isoDate !== filters.educationDate
+    ) {
+      return []
+    }
+    const volunteers = filterAssignmentVolunteersForDisplay(session.volunteers, filters)
+    if (volunteers.length === 0) return []
+    return [{ ...session, volunteers }]
+  })
+}
+
+function collectInstitutionOptions(
+  sessions: UjatAssignmentSessionGroup[]
+): Array<{ value: string; label: string }> {
+  const names = new Set<string>()
+  for (const session of sessions) {
+    for (const volunteer of filterVisibleAssignmentVolunteers(session.volunteers)) {
+      const name = volunteer.institutionName.trim()
+      if (name && name !== '-') names.add(name)
+    }
+  }
+  return [...names]
+    .sort((a, b) => a.localeCompare(b, 'ko'))
+    .map(name => ({ value: name, label: name }))
 }
 
 export function useUjatEducationProgressAssignments(
@@ -84,7 +99,6 @@ export function useUjatEducationProgressAssignments(
   half: EducationProgressHalfKey,
   regionKey: UjatInstitutionApplicationRegionKey
 ) {
-  const { showAlert } = useCmsAlert()
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const educationRegionCode = toUjatEducationRegionCode(regionKey)
   const semesterType = toUjatRecruitHalfApi(half)
@@ -102,25 +116,19 @@ export function useUjatEducationProgressAssignments(
     () => ({ ...EMPTY_UJAT_ASSIGNMENT_FILTERS })
   )
 
+  // 운영 데이터(제출·피드백 상태) — 짧은 staleTime, 피드백 등록 시 assignmentSubmissionsAll 무효화
   const remoteQuery = useQuery({
     queryKey: ujatQueryKeys.assignmentSubmissions(programId, educationRegionCode, semesterType),
     enabled: remoteEnabled,
     staleTime: 15_000,
     retry: false,
-    queryFn: () =>
-      fetchUjatAssignmentSubmissions(programId, {
-        semesterType,
-        educationRegionCode,
-      }),
+    queryFn: ({ signal }) =>
+      fetchUjatAssignmentSubmissions(
+        programId,
+        { semesterType, educationRegionCode },
+        { signal }
+      ),
   })
-
-  useEffect(() => {
-    if (!remoteQuery.isError || remoteQuery.isFetching) return
-    showAlert({
-      title: '목록 조회 실패',
-      content: '과제 제출 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
-    })
-  }, [remoteQuery.isError, remoteQuery.isFetching, showAlert])
 
   const remoteSessions = useMemo(() => {
     if (!remoteEnabled || remoteQuery.data == null || remoteQuery.isError) return []
@@ -141,19 +149,10 @@ export function useUjatEducationProgressAssignments(
     }, [])
   }, [remoteSessions])
 
-  const institutionOptions = useMemo(() => {
-    const seen = new Set<string>()
-    return remoteSessions.flatMap(session => session.volunteers).reduce<{ value: string; label: string }[]>(
-      (acc, volunteer) => {
-        const name = volunteer.institutionName.trim()
-        if (!name || name === '-' || seen.has(name)) return acc
-        seen.add(name)
-        acc.push({ value: name, label: name })
-        return acc
-      },
-      []
-    )
-  }, [remoteSessions])
+  const institutionOptions = useMemo(
+    () => collectInstitutionOptions(remoteSessions),
+    [remoteSessions]
+  )
 
   const filterFields = useMemo(
     () => buildUjatAssignmentFilterFields(educationDateOptions, institutionOptions),
@@ -161,7 +160,7 @@ export function useUjatEducationProgressAssignments(
   )
 
   const sessionGroups = useMemo(
-    () => filterSessionGroups(remoteSessions, appliedFilters),
+    () => filterAssignmentSessionGroups(remoteSessions, appliedFilters),
     [appliedFilters, remoteSessions]
   )
 
@@ -180,12 +179,15 @@ export function useUjatEducationProgressAssignments(
 
   return {
     pendingFilters,
-    appliedFilters,
     handleFilterChange,
     handleSearch,
     filterFields,
     sessionGroups,
+    hasActiveFilters: hasVolunteerRowFilter(appliedFilters) ||
+      appliedFilters.educationDate !== UJAT_ASSIGNMENT_FILTER_ALL,
     resetRegionState,
-    loading: remoteEnabled && remoteQuery.isFetching && remoteQuery.data == null,
+    isLoading: remoteEnabled && remoteQuery.isLoading,
+    isError: remoteEnabled && remoteQuery.isError,
+    isRemote: remoteEnabled,
   }
 }

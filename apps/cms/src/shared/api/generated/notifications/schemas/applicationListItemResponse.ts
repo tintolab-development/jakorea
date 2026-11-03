@@ -24,7 +24,8 @@ export interface ApplicationListItemResponse {
   submittedAt?: string;
   updatedAt?: string;
   cancellable?: boolean;
-  thumbnailFileObjectId?: number;
+  /** 신청 recruitmentId 모집 행 대표 이미지 file_object id. GENERAL_*·UJAT는 그 모집 행 값만 쓰고 프로그램 대표 이미지나 다른 모집 행으로 채우지 않는다. 그 외 유형은 프로그램 대표 이미지. 공개 GET /api/portal/programs 행 thumbnailFileObjectId와 같은 규칙. 없으면 null. */
+  thumbnailFileObjectId?: number | null;
   participationStatus?: string;
   /** 회원포탈 신청 표시상태 */
   displayStatus?: ApplicationListItemResponseDisplayStatus;

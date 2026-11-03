@@ -96,10 +96,10 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
           nameEn: 'Lee',
           phone: '010-****-5678',
           email: 'lee***@ex.com',
-          gender: 'M',
+          gender: '**',
           birthDate: '1990-**-**',
-          addressRoad: '서울시',
-          addressDetail: '101',
+          addressRoad: '서울시 강남구 테헤란로 ***',
+          addressDetail: '***',
           bankName: '국민',
           accountNumber: '***',
           accountHolder: '이*',
@@ -133,7 +133,9 @@ describe('mapSettlementDetailToProgramCalculationStatement', () => {
     expect(mapped.basic.phoneDisplay).toBe('010-****-5678')
     expect(mapped.basic.affiliation).toBe('JA')
     expect(mapped.basic.residentRegistrationNumber).toBe('900101-*******')
-    expect(mapped.basic.genderBirthDisplay).toBe('남성 | 1990-**-**')
+    expect(mapped.basic.genderBirthDisplay).toBe('** | 1990-**-**')
+    expect(mapped.basic.addressDisplay).toBe('서울시 강남구 테헤란로 *** ***')
+    expect(mapped.basic.addressBlurredTail).toBeUndefined()
     expect(mapped.blocks[0]?.institutionName).toBe('-')
     expect(mapped.blocks[0]?.lines.find(l => l.kind === 'withholding')?.taxIncomeTypeDisplay).toBe(
       '사업소득'

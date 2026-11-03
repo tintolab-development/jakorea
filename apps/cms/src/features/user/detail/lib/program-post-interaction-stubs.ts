@@ -63,7 +63,7 @@ export function createProgramPostComment(
   _postId: UUID,
   authorOrContent: string,
   content?: string,
-  _options?: { emojiType?: number; reactionRoleLabel?: string }
+  _options?: { emojiType?: string; reactionRoleLabel?: string }
 ): ProgramPostComment {
   const resolvedContent = content ?? authorOrContent
   return {
@@ -78,17 +78,13 @@ export function createProgramPostComment(
 export function addProgramPostReaction(
   _postId: UUID,
   _authorName: string,
-  _emojiType: number,
+  _emojiType: string,
   _options?: { roleLabel?: string }
 ): void {
   void _postId
   void _authorName
   void _emojiType
   void _options
-}
-
-export function getReactionEmojiTypeForBarIndex(barIndex: number): number {
-  return barIndex
 }
 
 export function removeProgramPostReactionUser(_postId: UUID, _userId: string): boolean {

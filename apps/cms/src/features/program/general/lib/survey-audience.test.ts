@@ -73,31 +73,31 @@ describe('general survey audience', () => {
     expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual(['individual'])
   })
 
-  it('개인 프로그램(봉사자 포함)은 상·하반기 봉사자 만족도 탭을 제공한다', () => {
+  it('일반 개인 프로그램은 봉사자가 있어도 상·하반기 봉사자 탭 없이 참여자 탭만 제공한다', () => {
     const p = program({
       generalProgramAudience: 'individual',
       generalParticipantTypes: ['individual', 'volunteer'],
       generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
-    expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual([
-      'volunteer_h1',
-      'volunteer_h2',
-    ])
-    expect(getDefaultGeneralSatisfactionAudience(p)).toBe('volunteer_h1')
+    const keys = getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)
+    expect(keys).toEqual(['individual'])
+    expect(keys).not.toContain('volunteer_h1')
+    expect(keys).not.toContain('volunteer_h2')
+    expect(getDefaultGeneralSatisfactionAudience(p)).toBe('individual')
   })
 
-  it('개인 프로그램(봉사자만)은 상·하반기 봉사자 만족도 탭을 제공한다', () => {
+  it('일반 개인 프로그램(봉사자만)도 상·하반기 봉사자 탭 없이 참여자 탭만 제공한다', () => {
     const p = program({
       generalProgramAudience: 'individual',
-      generalParticipantTypes: ['individual', 'volunteer'],
+      generalParticipantTypes: ['volunteer'],
       generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
-    expect(getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)).toEqual([
-      'volunteer_h1',
-      'volunteer_h2',
-    ])
+    const keys = getEnabledGeneralSatisfactionAudienceTabs(p).map(tab => tab.key)
+    expect(keys).toEqual(['individual'])
+    expect(keys).not.toContain('volunteer_h1')
+    expect(keys).not.toContain('volunteer_h2')
   })
 
   it('대분류가 없으면 참여자 유형만으로 개인 프로그램을 추론한다', () => {
@@ -297,18 +297,17 @@ describe('general survey audience', () => {
     ])
   })
 
-  it('봉사자 포함 프로그램은 학생 만족도 대신 상·하반기 봉사자 탭을 제공한다', () => {
+  it('일반 기관 프로그램은 봉사자가 있어도 교사·학생 탭만 제공한다', () => {
     const volunteerProgram = program({
       generalProgramAudience: 'organization',
       generalParticipantTypes: ['school_institution', 'teacher_instructor', 'volunteer'],
       generalSurveyMenuKeys: ['survey', 'satisfaction'],
     })
 
-    expect(getEnabledGeneralSatisfactionAudienceTabs(volunteerProgram).map(tab => tab.key)).toEqual([
-      'teacher',
-      'volunteer_h1',
-      'volunteer_h2',
-    ])
+    const keys = getEnabledGeneralSatisfactionAudienceTabs(volunteerProgram).map(tab => tab.key)
+    expect(keys).toEqual(['teacher', 'student'])
+    expect(keys).not.toContain('volunteer_h1')
+    expect(keys).not.toContain('volunteer_h2')
     expect(getDefaultGeneralSatisfactionAudience(volunteerProgram)).toBe('teacher')
   })
 

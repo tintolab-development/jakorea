@@ -62,6 +62,12 @@ export type PortalConsentCompleteRequest = {
   /** PORTRAIT_RIGHTS — 1·2번 항목 동의 기반 힌트(서버 재계산) */
   programEligible?: boolean
   filledDocument?: PortalFilledDocumentRequest
+  /**
+   * CRIMINAL_HISTORY_CHECK_CONSENT 전용 필수 원본 PDF.
+   * `CRIMINAL_HISTORY_CONSENT_ORIGINAL`로 업로드·confirm 후 CLEAN/AVAILABLE인 파일만.
+   * 다른 동의서 유형은 서버가 거부한다.
+   */
+  evidenceFileObjectId?: number
 }
 
 export type PortalSignatureProfileRequest = {

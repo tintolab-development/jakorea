@@ -12,6 +12,7 @@ import { resolveParticipatingIndividualProgressScheduleSessionsFallback } from '
 import { prepareGeneralEducationScheduleSessions } from '@/features/program/general/lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { GeneralDetailSessionLine } from '@/features/program/shared/ui/program-detail/applicant-list/general-detail-session-line'
+import { PrivacyHomeAddressDisplay } from '@/features/program/shared/lib/program-pii-display'
 
 const PARTICIPANT_NAME_COL_WIDTH = 120
 const AFFILIATION_COL_WIDTH = 160
@@ -84,6 +85,9 @@ export function useParticipatingIndividualParticipantColumns(
         width: HOME_ADDRESS_COL_WIDTH,
         align: 'center',
         ellipsis: true,
+        render: (value: string | undefined) => (
+          <PrivacyHomeAddressDisplay address={value} revealed={false} />
+        ),
       },
       {
         title: '교육 진행 일정',

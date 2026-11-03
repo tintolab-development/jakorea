@@ -27,8 +27,9 @@ export type UjatAttendanceCorrectionModalProps = {
   timeRange: string
   educationDateLabel: string
   volunteers: ReadonlyArray<UjatAttendanceVolunteerRow>
+  confirming?: boolean
   onCancel: () => void
-  onConfirm: (payload: UjatAttendanceCorrectionPayload) => void
+  onConfirm: (payload: UjatAttendanceCorrectionPayload) => void | Promise<void>
 }
 
 function parseCheckInDayjs(value: string | undefined, fallback: string): Dayjs {
@@ -68,6 +69,7 @@ export function UjatAttendanceCorrectionModal({
   timeRange,
   educationDateLabel,
   volunteers,
+  confirming = false,
   onCancel,
   onConfirm,
 }: UjatAttendanceCorrectionModalProps) {
@@ -110,12 +112,12 @@ export function UjatAttendanceCorrectionModal({
   }, [status, volunteerId, volunteers])
 
   const handleCancel = useCallback(() => {
-    setVolunteerId(undefined)
+    if (confirming) return
     onCancel()
-  }, [onCancel])
+  }, [confirming, onCancel])
 
   const handleConfirm = useCallback(() => {
-    if (!canConfirm || !volunteerId || !status) return
+    if (confirming || !canConfirm || !volunteerId || !status) return
     if (isReasonFieldVisible(status) && excusedReason.trim().length === 0) {
       showAlert({
         title: '안내',
@@ -123,29 +125,36 @@ export function UjatAttendanceCorrectionModal({
       })
       return
     }
-    onConfirm({
+    void onConfirm({
       volunteerId,
       status,
       checkInTime: status === 'present' || status === 'late' ? formatCheckInTime(checkInTime) : undefined,
       excusedReason: isReasonFieldVisible(status) ? excusedReason.trim() : undefined,
     })
-    setVolunteerId(undefined)
-  }, [canConfirm, checkInTime, excusedReason, onConfirm, showAlert, status, volunteerId])
+  }, [canConfirm, checkInTime, confirming, excusedReason, onConfirm, showAlert, status, volunteerId])
 
   const displayDateLabel = educationDateLabel.trim() || '교육'
   const statusUnset = status == null
 
   const footer = (
     <div className="ujat-attendance-correction-modal__footer">
-      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
+      <CmsButton
+        variant="secondary"
+        size="large"
+        type="button"
+        disabled={confirming}
+        onClick={handleCancel}
+      >
         취소
       </CmsButton>
       <CmsButton
         variant="primary"
         size="large"
         type="button"
-        disabled={!canConfirm}
-        onClick={handleConfirm} >
+        disabled={!canConfirm || confirming}
+        loading={confirming}
+        onClick={handleConfirm}
+      >
         출결 정정
       </CmsButton>
     </div>
@@ -177,6 +186,7 @@ export function UjatAttendanceCorrectionModal({
             withAllOption={false}
             placeholder="봉사자를 선택해 주세요"
             value={volunteerId}
+            disabled={confirming}
             onChange={value => setVolunteerId(value == null || value === '' ? undefined : String(value))}
             options={volunteerOptions}
             aria-label="봉사자"
@@ -196,6 +206,7 @@ export function UjatAttendanceCorrectionModal({
               className="ujat-attendance-correction-modal__status-select"
               width={170}
               value={status ?? ''}
+              disabled={confirming}
               onChange={value => setStatus(parseUjatAttendanceStatus(value))}
               options={UJAT_ATTENDANCE_STATUS_ORDER.map(value => ({
                 value,
@@ -211,7 +222,7 @@ export function UjatAttendanceCorrectionModal({
                     setCheckInTime(next ?? parseCheckInDayjs(undefined, sessionStartTime))
                   }
                   placeholder={statusUnset ? '출결 상태를 먼저 선택해 주세요' : '시간 선택'}
-                  disabled={statusUnset}
+                  disabled={statusUnset || confirming}
                   width="100%"
                   inputSize="large"
                   zIndex={MODAL_Z_INDEX + DATE_TIME_PICKER_Z_OFFSET}
@@ -224,6 +235,7 @@ export function UjatAttendanceCorrectionModal({
                   inputSize="large"
                   width="100%"
                   value={excusedReason}
+                  disabled={confirming}
                   onChange={event => setExcusedReason(event.target.value)}
                   placeholder="사유를 입력해 주세요"
                   aria-label="불참 사유"

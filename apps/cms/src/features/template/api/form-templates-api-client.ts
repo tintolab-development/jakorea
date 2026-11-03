@@ -1,8 +1,8 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import type { FormResponseFeedbackListResponse } from '@/features/template/lib/form-response-feedback-list'
 import { getJAKoreaCMSBackendAPIFormsSurveysSubset } from '@/shared/api/generated/forms-surveys/forms-surveys-api'
 import type {
   FormResponseFeedbackCreateRequest,
-  FormResponseFeedbackListResponse,
   FormResponseFeedbackResponse,
   FormTemplateCreateRequest,
   FormTemplateDuplicateRequest,
@@ -115,8 +115,8 @@ export async function createFormResponseFeedbackRemote(
   return unwrapApiBody(await formsSurveysApi.createFeedback(responseId, body))
 }
 
-/** GET /api/admin/form-responses/{responseId}/feedback — 기존 피드백 hydrate */
-export async function fetchFormResponseFeedbackRemote(
+/** GET /api/admin/form-responses/{responseId}/feedback — operationId getFormResponseFeedback */
+export async function getFormResponseFeedbackRemote(
   responseId: number
 ): Promise<FormResponseFeedbackListResponse> {
   return unwrapApiBody(await formsSurveysApi.getFeedback(responseId))

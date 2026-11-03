@@ -6,7 +6,6 @@ import type { AccountPaymentStatusDetailBasic } from '@/features/settlement-mana
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import {
-  ProgramDetailTdSegmentWrap,
   renderDetailInfoPipeSeparated,
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
@@ -77,11 +76,7 @@ export function AccountPaymentStatusDetailBasicInfo({ basic }: AccountPaymentSta
           />
           <DetailInfoForm.Field
             label="성별 및 생년월일"
-            view={
-              <ProgramDetailTdSegmentWrap>
-                {basic.genderBirthDisplay?.trim() || '-'}
-              </ProgramDetailTdSegmentWrap>
-            }
+            view={renderDetailInfoPipeSeparated(basic.genderBirthDisplay)}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

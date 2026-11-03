@@ -7,7 +7,7 @@ import type { CSSProperties } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ScheduleChangeHistoryBadge } from '@/shared/components/schedule-change-history-badge'
 import {
-  ProgramDetailTdSegmentWrap,
+  renderDetailInfoPipeSeparated,
   withProgramDetailTdDivider,
 } from '@/features/program/shared/ui/program-detail-td-divider'
 import type { PaymentOrderCalculationStatementInstructorBasicInfo } from '@/features/settlement-management/model/payment-order-admin-list'
@@ -70,11 +70,7 @@ export function PaymentOrderCalculationStatementInstructorBasicSection({
           <DetailInfoForm.Field label="성명" view={<NameCell basic={basic} />} />
           <DetailInfoForm.Field
             label="성별 및 생년월일"
-            view={
-              <ProgramDetailTdSegmentWrap>
-                {basic.genderBirthDisplay?.trim() || '-'}
-              </ProgramDetailTdSegmentWrap>
-            }
+            view={renderDetailInfoPipeSeparated(basic.genderBirthDisplay)}
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">

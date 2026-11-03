@@ -77,12 +77,9 @@ function SubmissionCell({
     return <span className="participating-individual-progress-assignment-table__not-submitted">미제출</span>
   }
 
+  // 교육 미진행(SCHEDULED) — 제출 파일 칸에 교육 진행 현황 문구를 넣지 않는다.
   if (!hasSurveyActions && submission.kind === 'scheduled') {
-    return (
-      <span className="participating-individual-progress-assignment-table__scheduled">
-        교육 진행 예정
-      </span>
-    )
+    return '-'
   }
 
   return (
@@ -90,11 +87,6 @@ function SubmissionCell({
       {submission.kind === 'not_submitted' ? (
         <span className="participating-individual-progress-assignment-table__not-submitted">
           미제출
-        </span>
-      ) : null}
-      {submission.kind === 'scheduled' ? (
-        <span className="participating-individual-progress-assignment-table__scheduled">
-          교육 진행 예정
         </span>
       ) : null}
       {submissionItems.map((item, index) => (

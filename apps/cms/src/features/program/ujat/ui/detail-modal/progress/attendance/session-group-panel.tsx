@@ -8,11 +8,7 @@ import {
   resolveUjatAttendanceSessionExcelFilename,
 } from './attendance-excel'
 import { UjatInlineDividedSegments } from '@/features/program/ujat/ui/detail-modal/shared/ujat-inline-divided-segments'
-import {
-  cloneAttendanceVolunteerRows,
-  filterVisibleAttendanceVolunteers,
-  parseSessionStartTime,
-} from './attendance-display'
+import { filterVisibleAttendanceVolunteers, parseSessionStartTime } from './attendance-display'
 import {
   buildCorrectedVolunteerRow,
   UjatAttendanceCorrectionModal,
@@ -55,21 +51,24 @@ export function UjatAttendanceSessionGroupPanel({
   appliedFilters,
   getSessionVolunteers,
   onSave,
+  saving = false,
   showHeader = true,
   onBindOpenCorrection,
 }: {
   session: UjatAttendanceSessionGroup
   appliedFilters: UjatAttendanceFilters
   getSessionVolunteers: (sessionId: string) => UjatAttendanceVolunteerRow[]
-  onSave: (sessionId: string, volunteers: UjatAttendanceVolunteerRow[]) => void
+  onSave: (sessionId: string, correctedVolunteer: UjatAttendanceVolunteerRow) => Promise<void>
+  saving?: boolean
   showHeader?: boolean
   onBindOpenCorrection?: (openCorrection: () => void) => void
 }) {
   const { showAlert } = useCmsAlert()
   const canWrite = useUjatCanWrite()
   const [correctionModalOpen, setCorrectionModalOpen] = useState(false)
-  const [workingRows, setWorkingRows] = useState<UjatAttendanceVolunteerRow[]>(() =>
-    cloneAttendanceVolunteerRows(getSessionVolunteers(session.id))
+  const workingRows = useMemo(
+    () => getSessionVolunteers(session.id),
+    [getSessionVolunteers, session.id]
   )
 
   const sessionStartTime = useMemo(
@@ -95,12 +94,6 @@ export function UjatAttendanceSessionGroupPanel({
     filename: resolveUjatAttendanceSessionExcelFilename(session),
   })
 
-  useEffect(() => {
-    const rows = cloneAttendanceVolunteerRows(getSessionVolunteers(session.id))
-    setWorkingRows(rows)
-    setCorrectionModalOpen(false)
-  }, [getSessionVolunteers, session.id])
-
   const openCorrectionModal = useCallback(() => {
     setCorrectionModalOpen(true)
   }, [])
@@ -110,20 +103,24 @@ export function UjatAttendanceSessionGroupPanel({
   }, [onBindOpenCorrection, openCorrectionModal])
 
   const handleCorrectionConfirm = useCallback(
-    (payload: UjatAttendanceCorrectionPayload) => {
-      setWorkingRows(prev => {
-        const nextRows = prev.map(row =>
-          row.id === payload.volunteerId
-            ? buildCorrectedVolunteerRow(row, payload, sessionStartTime)
-            : row
-        )
-        onSave(session.id, nextRows)
-        return nextRows
-      })
+    async (payload: UjatAttendanceCorrectionPayload) => {
+      const targetRow = workingRows.find(row => row.id === payload.volunteerId)
+      if (!targetRow) return
+      const correctedVolunteer = buildCorrectedVolunteerRow(
+        targetRow,
+        payload,
+        sessionStartTime
+      )
+      try {
+        await onSave(session.id, correctedVolunteer)
+      } catch {
+        // 실패 안내는 mutation onError. 입력값을 유지한 채 모달을 열어 둔다.
+        return
+      }
       setCorrectionModalOpen(false)
-      showAlert({ title: '안내', content: '출결 정보가 저장되었습니다.' })
+      showAlert({ title: '안내', content: '출결이 정정되었습니다.' })
     },
-    [onSave, session.id, sessionStartTime, showAlert]
+    [onSave, session.id, sessionStartTime, showAlert, workingRows]
   )
 
   return (
@@ -152,6 +149,7 @@ export function UjatAttendanceSessionGroupPanel({
         timeRange={session.timeRange}
         educationDateLabel={resolveEducationDateLabel(session)}
         volunteers={correctionVolunteers}
+        confirming={saving}
         onCancel={() => setCorrectionModalOpen(false)}
         onConfirm={handleCorrectionConfirm}
       />

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { UJAT_EDU_VOL_ID_PARAM } from '@/features/program/ujat/lib/ujat-program-detail-url'
+import {
+  parseUjatVolAddMemberIdParam,
+  UJAT_EDU_VOL_ID_PARAM,
+  UJAT_VOL_ADD_MEMBER_ID_PARAM,
+} from '@/features/program/ujat/lib/ujat-program-detail-url'
 import type { ColumnsType } from 'antd/es/table'
 import type { Program } from '@/types/domain'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -23,6 +27,7 @@ import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certific
 import { StudentCertificatePdfExportHost } from '@/features/program/general/ui/detail-modal/program-status/student-certificate-pdf-export-host'
 import type { EducationProgressHalfKey } from '../tabs'
 import { UjatAddVolunteerModal } from './add-volunteer-modal'
+import { UjatVolunteerAddRegistrationModal } from './add-registration-modal'
 import { unmaskMemberForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-error'
@@ -47,24 +52,19 @@ import './section.css'
 export function UjatEducationProgressVolunteersSection({
   program,
   half,
-  onStartAddRegistration,
   onOpenDetail,
-  onBindRegisterVolunteer,
 }: {
   program: Program
   half: EducationProgressHalfKey
-  /** 회원 선택 후 대리 작성 풀페이지 폼으로 이동 */
-  onStartAddRegistration: (memberId: string) => void
   /** 목록 행 클릭 → 봉사자 상세 */
   onOpenDetail?: (volunteerId: string) => void
-  /** 풀페이지 폼 완료 시 목록에 반영할 등록 함수 연결 */
-  onBindRegisterVolunteer?: (register: (memberId: string) => void) => void
 }) {
   const { showAlert } = useCmsAlert()
   const canWrite = useUjatCanWrite()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const eduVolDetailId = searchParams.get(UJAT_EDU_VOL_ID_PARAM)
   const [addVolunteerModalOpen, setAddVolunteerModalOpen] = useState(false)
+  const [addRegistrationMemberId, setAddRegistrationMemberId] = useState<string | null>(null)
   const [activityCertificateVolunteer, setActivityCertificateVolunteer] =
     useState<ParticipatingVolunteerDetailRow | null>(null)
   const [studentCertificateIssueModalOpen, setStudentCertificateIssueModalOpen] = useState(false)
@@ -109,17 +109,24 @@ export function UjatEducationProgressVolunteersSection({
   useEffect(() => {
     resetHalfState()
     setAddVolunteerModalOpen(false)
+    setAddRegistrationMemberId(null)
   }, [half, resetHalfState])
+
+  /** 레거시 딥링크 `volAddMemberId` → 모달로 전환 후 URL에서 제거 */
+  useEffect(() => {
+    const fromUrl = parseUjatVolAddMemberIdParam(searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM))
+    if (fromUrl == null) return
+    setAddRegistrationMemberId(fromUrl)
+    const next = new URLSearchParams(searchParams)
+    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     if (!eduVolDetailId) {
       refreshVolunteerList()
     }
   }, [eduVolDetailId, refreshVolunteerList])
-
-  useEffect(() => {
-    onBindRegisterVolunteer?.(addVolunteerFromMember)
-  }, [addVolunteerFromMember, onBindRegisterVolunteer])
 
   const handleRowClick = useCallback(
     (record: UjatEducationProgressVolunteerRow, event: MouseEvent) => {
@@ -410,8 +417,16 @@ export function UjatEducationProgressVolunteersSection({
         onNoMemberSelected={showNoMemberSelectedAlert}
         onAdd={memberId => {
           setAddVolunteerModalOpen(false)
-          onStartAddRegistration(memberId)
+          setAddRegistrationMemberId(memberId)
         }}
+      />
+      <UjatVolunteerAddRegistrationModal
+        open={addRegistrationMemberId != null}
+        memberId={addRegistrationMemberId ?? ''}
+        program={program}
+        volunteerHalf={half}
+        onClose={() => setAddRegistrationMemberId(null)}
+        onComplete={memberId => addVolunteerFromMember(memberId)}
       />
       {activityCertificateVolunteer ? (
         <ParticipatingVolunteerActivityCertificatePreviewModal

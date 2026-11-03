@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   appendParticipantSurveyViewRows,
   buildParticipatingIndividualParticipantAssignmentRowsFromAssigned,
-  collectParticipantAssignmentDownloadableFiles,
   mergeParticipantDetailAssignmentRowsWithRemote,
 } from './participating-individual-participant-assignment'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
@@ -39,6 +38,7 @@ const remoteSession = (
   headerPeriodRangeLabel: '2026.04.01',
   assignmentPeriodLabel: '2026.04.01 ~ 2026.04.07',
   headerPrefix: '1회차',
+  scheduleEducationProgress: 'completed',
   participants: [
     {
       id: 'asgn-11',
@@ -69,7 +69,10 @@ describe('mergeParticipantDetailAssignmentRowsWithRemote', () => {
       remoteSessions: [remoteSession()],
     })
     expect(merged).toHaveLength(1)
-    expect(merged[0]?.submission).toMatchObject({ kind: 'file', fileName: '과제.pdf' })
+    expect(merged[0]?.submission).toMatchObject({
+      kind: 'attachments',
+      items: [{ kind: 'file', fileName: '과제.pdf', fileObjectId: 9001, downloadable: true }],
+    })
   })
 
   it('joins assignment-submissions files onto the matching participant row', () => {
@@ -80,10 +83,8 @@ describe('mergeParticipantDetailAssignmentRowsWithRemote', () => {
     })
     expect(merged).toHaveLength(1)
     expect(merged[0]?.submission).toMatchObject({
-      kind: 'file',
-      fileName: '과제.pdf',
-      fileObjectId: 9001,
-      downloadable: true,
+      kind: 'attachments',
+      items: [{ kind: 'file', fileName: '과제.pdf', fileObjectId: 9001, downloadable: true }],
     })
     expect(merged[0]?.assignmentPeriodLabel).toBe('2026.04.01 ~ 2026.04.07')
     expect(merged[0]?.teamName).toBe('1조')
@@ -186,9 +187,126 @@ describe('mergeParticipantDetailAssignmentRowsWithRemote', () => {
     })
     expect(merged.map(row => row.scheduleId)).toEqual(['187612', '187613'])
     expect(merged[0]?.assignmentPeriodLabel).toBe('2026.10.20 ~ 2026.10.27')
-    expect(merged[0]?.submission).toMatchObject({ kind: 'file', fileName: '과제.pdf' })
+    expect(merged[0]?.submission).toMatchObject({
+      kind: 'attachments',
+      items: [{ kind: 'file', fileName: '과제.pdf' }],
+    })
     expect(merged[1]?.assignmentPeriodLabel).toBeNull()
     expect(merged[1]?.submission).toEqual({ kind: 'none' })
+  })
+
+  it('keeps education progress from the schedule, not assignment submission status', () => {
+    const scheduledLocal: ParticipatingIndividualParticipantAssignmentRow = {
+      ...localRow,
+      educationProgress: 'completed',
+      countsTowardAssignmentDenominator: true,
+    }
+    const merged = mergeParticipantDetailAssignmentRowsWithRemote({
+      participantId: '11',
+      localRows: [scheduledLocal],
+      remoteSessions: [
+        remoteSession({
+          scheduleEducationProgress: 'completed',
+          participants: [
+            {
+              id: 'asgn-11',
+              participantId: '11',
+              name: '김참여자',
+              genderBirthLabel: '여 | 2010.01.01',
+              affiliationGradeLabel: '학교 | 5학년',
+              affiliation: '학교',
+              educationGrade: '5학년',
+              submission: { kind: 'scheduled' },
+              remarkKind: 'none',
+            },
+          ],
+        }),
+      ],
+    })
+    expect(merged[0]?.educationProgress).toBe('completed')
+    expect(merged[0]?.countsTowardAssignmentDenominator).toBe(true)
+    expect(merged[0]?.submission).toEqual({ kind: 'none' })
+  })
+
+  it('uses remote schedule bounds for education progress when local rows are empty', () => {
+    const merged = mergeParticipantDetailAssignmentRowsWithRemote({
+      participantId: '11',
+      localRows: [],
+      remoteSessions: [
+        remoteSession({
+          scheduleEducationProgress: 'completed',
+          participants: [
+            {
+              id: 'asgn-11',
+              participantId: '11',
+              name: '김참여자',
+              genderBirthLabel: '여 | 2010.01.01',
+              affiliationGradeLabel: '학교 | 5학년',
+              affiliation: '학교',
+              educationGrade: '5학년',
+              submission: { kind: 'scheduled' },
+              remarkKind: 'none',
+            },
+          ],
+        }),
+      ],
+    })
+    expect(merged[0]?.educationProgress).toBe('completed')
+    expect(merged[0]?.countsTowardAssignmentDenominator).toBe(true)
+  })
+
+  it('maps remote link submissions as external URLs, not downloadable files', () => {
+    const merged = mergeParticipantDetailAssignmentRowsWithRemote({
+      participantId: '11',
+      localRows: [localRow],
+      remoteSessions: [
+        remoteSession({
+          participants: [
+            {
+              id: 'asgn-11',
+              participantId: '11',
+              name: '김참여자',
+              genderBirthLabel: '여 | 2010.01.01',
+              affiliationGradeLabel: '학교 | 5학년',
+              affiliation: '학교',
+              educationGrade: '5학년',
+              submission: {
+                kind: 'submitted',
+                fileName: '제출 파일',
+                href: '#',
+                items: [
+                  {
+                    kind: 'link',
+                    fileName: 'https://www.jakorea.org',
+                    href: 'https://www.jakorea.org',
+                  },
+                  {
+                    kind: 'file',
+                    fileName: '과제.pdf',
+                    href: '#',
+                    fileObjectId: 9001,
+                    downloadable: true,
+                  },
+                ],
+              },
+              remarkKind: 'none',
+            },
+          ],
+        }),
+      ],
+    })
+    expect(merged[0]?.submission).toEqual({
+      kind: 'attachments',
+      items: [
+        { kind: 'link', label: 'https://www.jakorea.org', href: 'https://www.jakorea.org' },
+        {
+          kind: 'file',
+          fileName: '과제.pdf',
+          fileObjectId: 9001,
+          downloadable: true,
+        },
+      ],
+    })
   })
 })
 
@@ -305,29 +423,5 @@ describe('appendParticipantSurveyViewRows', () => {
         rows: [localRow],
       })
     ).toEqual([localRow])
-  })
-})
-
-describe('collectParticipantAssignmentDownloadableFiles', () => {
-  it('collects downloadable file ids', () => {
-    expect(
-      collectParticipantAssignmentDownloadableFiles([
-        {
-          ...localRow,
-          submission: {
-            kind: 'file',
-            fileName: '과제.pdf',
-            fileObjectId: 9001,
-            downloadable: true,
-            secondaryFileName: '보충.pdf',
-            secondaryFileObjectId: 9002,
-            secondaryDownloadable: true,
-          },
-        },
-      ])
-    ).toEqual([
-      { fileObjectId: 9001, fileName: '과제.pdf' },
-      { fileObjectId: 9002, fileName: '보충.pdf' },
-    ])
   })
 })

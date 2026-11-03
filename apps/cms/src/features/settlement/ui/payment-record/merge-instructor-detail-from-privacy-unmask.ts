@@ -3,7 +3,7 @@
  */
 
 import type { PaymentOrderAdminInstructorDetail } from '@/features/settlement-management/model/payment-order-admin-list'
-import { toApiBirthDate, toDisplayGender } from '@/features/user/api/map-member-gender-birth'
+import { formatGenderBirthDisplayLine } from '@/features/user/api/format-gender-birth-display'
 import type { HomeAddress } from '@/shared/api/generated/members/schemas/homeAddress'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas/instructorMemberDetailResponse'
 
@@ -14,25 +14,12 @@ function formatInstructorHomeAddress(homeAddress: HomeAddress | null | undefined
   return [line, detail].filter(Boolean).join(' ')
 }
 
-function formatBirthDisplay(birthDate: string | null | undefined): string {
-  const raw = birthDate?.trim()
-  if (!raw) return '-'
-  const api = toApiBirthDate(raw)
-  if (api) {
-    const [y, m, d] = api.split('-')
-    if (y && m && d) return `${y}. ${m}. ${d}`
-  }
-  return raw
-}
-
 export function formatInstructorGenderBirthDisplay(
   gender: string | null | undefined,
-  birthDate: string | null | undefined
+  birthDate: string | null | undefined,
+  birthYear?: number | null
 ): string {
-  const genderPart = toDisplayGender(gender)
-  const birthPart = formatBirthDisplay(birthDate)
-  if (genderPart === '-' && birthPart === '-') return '-'
-  return `${genderPart} | ${birthPart}`
+  return formatGenderBirthDisplayLine(gender, birthDate, { birthYear })
 }
 
 export function mergeInstructorDetailFromPrivacyUnmask(
@@ -45,7 +32,11 @@ export function mergeInstructorDetailFromPrivacyUnmask(
   const address = formatInstructorHomeAddress(unmask.profile?.homeAddress)
   const genderBirthDisplay =
     member != null
-      ? formatInstructorGenderBirthDisplay(member.gender, member.birthDate)
+      ? formatInstructorGenderBirthDisplay(
+          member.gender,
+          member.birthDate,
+          member.birthYear
+        )
       : detail.genderBirthDisplay
   return {
     ...detail,
@@ -81,7 +72,11 @@ export function mergeInstructorDetailFromMaskedMember(
     accountHolder: settlement?.accountHolder?.trim() || detail.accountHolder,
     genderBirthDisplay:
       member != null
-        ? formatInstructorGenderBirthDisplay(member.gender, member.birthDate)
+        ? formatInstructorGenderBirthDisplay(
+            member.gender,
+            member.birthDate,
+            member.birthYear
+          )
         : detail.genderBirthDisplay,
     scheduleChangeCancelCount:
       member?.scheduleChangeCancelCount ?? detail.scheduleChangeCancelCount,

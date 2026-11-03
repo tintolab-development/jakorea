@@ -1,5 +1,11 @@
 import { axiosClient } from '@/shared/api/axios-instance'
-import { fetchBlobOnce } from '@/shared/lib/download-attachment'
+import {
+  fetchResolvedAttachmentBlob,
+  readDownloadUrlFromJsonBlob,
+  toProxiedApiPath,
+} from '@/shared/lib/download-attachment'
+import { fetchPortalSignedDownloadBlob } from '@/shared/lib/portal-signed-download-fetch'
+import { assertCertificatePdfBlob } from './assert-certificate-pdf-blob.ts'
 import {
   extractGeneratedFileName,
   isPortraitConsentTemplateJobCompleted,
@@ -22,6 +28,8 @@ export type PortalGeneratedFileDownloadTemplate = {
   fallbackFileName: string
   label: string
   normalizeBlob?: (blob: Blob) => Blob
+  /** true면 `%PDF-` 매직·스텁 텍스트를 검사한다 */
+  expectPdf?: boolean
 }
 
 export function savePortalBlobFile(fileName: string, blob: Blob) {
@@ -91,6 +99,48 @@ function waitFor(milliseconds: number): Promise<void> {
   return new Promise(resolve => window.setTimeout(resolve, milliseconds))
 }
 
+async function finalizeGeneratedDownloadBlob(
+  blob: Blob,
+  template: PortalGeneratedFileDownloadTemplate,
+): Promise<Blob> {
+  if (template.expectPdf) {
+    return assertCertificatePdfBlob(blob, template.label)
+  }
+  if (blob.size < 1 || /\bjson\b/i.test(blob.type)) {
+    throw new Error(`${template.label} 파일을 받지 못했습니다.`)
+  }
+  return blob
+}
+
+/** signed raw URL + optional JSON downloadUrl 2-hop (수료증 SSOT 경로) */
+export async function fetchPortalGeneratedDownloadBlob(
+  downloadUrl: string,
+  requiredHeaders: Record<string, string> | undefined,
+  label: string,
+): Promise<Blob> {
+  const headers = headerRecord(requiredHeaders)
+  const trimmed = downloadUrl.trim()
+  const proxied = toProxiedApiPath(trimmed)
+  const isExternalSigned = /^https?:\/\//i.test(trimmed) && !proxied
+
+  async function fetchOnce(url: string): Promise<Blob> {
+    if (isExternalSigned && url === trimmed) {
+      return fetchPortalSignedDownloadBlob(url, requiredHeaders, { acceptAnyContent: true })
+    }
+    if (Object.keys(headers).length === 0) {
+      return fetchResolvedAttachmentBlob(url)
+    }
+    return fetchBlobWithHeaders(url, headers, label)
+  }
+
+  let blob = await fetchOnce(trimmed)
+  const nested = await readDownloadUrlFromJsonBlob(blob)
+  if (nested) {
+    blob = await fetchOnce(nested)
+  }
+  return blob
+}
+
 export async function waitForGeneratedFileJob(
   initialJob: GeneratedFileJobResponse,
   template: PortalGeneratedFileDownloadTemplate,
@@ -137,16 +187,17 @@ export async function downloadPortalFileObject(
   const downloadUrl = resolved?.downloadUrl?.trim()
   if (!downloadUrl) throw new Error(`${template.label} 다운로드 주소를 받지 못했습니다.`)
 
-  const headers = headerRecord(resolved?.requiredHeaders)
-  const blob =
-    Object.keys(headers).length === 0
-      ? await fetchBlobOnce(downloadUrl)
-      : await fetchBlobWithHeaders(downloadUrl, headers, template.label)
-  if (blob.size < 1 || /\bjson\b/i.test(blob.type)) {
-    throw new Error(`${template.label} 파일을 받지 못했습니다.`)
-  }
+  const blob = await fetchPortalGeneratedDownloadBlob(
+    downloadUrl,
+    resolved?.requiredHeaders,
+    template.label,
+  )
+  const validated = await finalizeGeneratedDownloadBlob(blob, template)
   const fileName = extractGeneratedFileName(job, resolved) ?? template.fallbackFileName
-  savePortalBlobFile(fileName, template.normalizeBlob ? template.normalizeBlob(blob) : blob)
+  savePortalBlobFile(
+    fileName,
+    template.normalizeBlob ? template.normalizeBlob(validated) : validated,
+  )
 }
 
 export async function downloadFromGeneratedFileJob(
@@ -158,17 +209,21 @@ export async function downloadFromGeneratedFileJob(
   const directUrl = completedJob.downloadUrl?.trim()
   if (directUrl) {
     onProgress?.('downloading')
-    const headers = headerRecord(completedJob.requiredHeaders)
-    const blob =
-      Object.keys(headers).length === 0
-        ? await fetchBlobOnce(directUrl)
-        : await fetchBlobWithHeaders(directUrl, headers, template.label)
-    if (blob.size < 1 || /\bjson\b/i.test(blob.type)) {
-      throw new Error(`${template.label} 파일을 받지 못했습니다.`)
-    }
+    const blob = await fetchPortalGeneratedDownloadBlob(
+      directUrl,
+      completedJob.requiredHeaders,
+      template.label,
+    )
+    const validated = await finalizeGeneratedDownloadBlob(blob, template)
     const fileName = extractGeneratedFileName(completedJob) ?? template.fallbackFileName
-    savePortalBlobFile(fileName, template.normalizeBlob ? template.normalizeBlob(blob) : blob)
+    savePortalBlobFile(
+      fileName,
+      template.normalizeBlob ? template.normalizeBlob(validated) : validated,
+    )
     return
+  }
+  if (template.expectPdf) {
+    throw new Error(`${template.label} 다운로드 주소를 받지 못했습니다.`)
   }
   const fileObjectId = validFileObjectId(completedJob.fileObjectId)
   if (fileObjectId == null) {

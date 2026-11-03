@@ -1,12 +1,10 @@
 import { axiosClient } from '@/shared/api/axios-instance'
-import { downloadFromGeneratedFileJob } from '../lib/portal-generated-file-download.ts'
-import { parseGeneratedFileJobPayload } from '../lib/student-documents-template-download.ts'
+import { savePortalCertificatePdfDownload } from '../lib/personal-certificate-render-download.ts'
 import {
   mapPortalCertificateAvailability,
   mapPortalCertificateIssueResult,
   PORTAL_CERTIFICATE_TYPE_COMPLETION,
   portalCertificateAvailabilityPath,
-  portalCertificateDownloadPath,
   portalCertificateIssuePath,
   type PortalCertificateIssueRequest,
   type PortalCertificateType,
@@ -26,12 +24,6 @@ export type {
   PortalCertificateIssueResult,
   PortalCertificateType,
 } from './certificate-map.ts'
-
-const COMPLETION_DOWNLOAD_TEMPLATE = {
-  purpose: '수료증 다운로드',
-  fallbackFileName: '수료증.pdf',
-  label: '수료증',
-}
 
 export async function fetchMyCertificateAvailability(
   programId: number,
@@ -57,8 +49,5 @@ export async function issueMyCertificate(
 }
 
 export async function downloadMyCertificate(certificateIssueId: number): Promise<void> {
-  const { data } = await axiosClient.get<unknown>(portalCertificateDownloadPath(certificateIssueId))
-  const job = parseGeneratedFileJobPayload(data)
-  if (!job) throw new Error('수료증 파일을 받지 못했습니다.')
-  await downloadFromGeneratedFileJob(job, COMPLETION_DOWNLOAD_TEMPLATE)
+  await savePortalCertificatePdfDownload(certificateIssueId)
 }

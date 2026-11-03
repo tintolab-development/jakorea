@@ -82,6 +82,7 @@ import {
 } from '@/features/mypage/education/applications/lib/organization-education-application'
 import { useOrganizationStudentDocumentPolicyQuery } from '@/features/mypage/education/applications/api/student-documents-hooks'
 import { shouldShowPersonalCertificateAction } from '@/features/mypage/education/applications/lib/personal-certificate-eligibility'
+import { withApplicationThumbnail } from '@/features/mypage/education/applications/lib/application-program-thumbnail'
 import { shouldShowTeacherStudentDocumentDependentTabs } from '@/features/mypage/education/applications/lib/student-documents-policy'
 import {
   resolveVisibleUjatScheduleBanner,
@@ -212,19 +213,22 @@ export function MypageEducationDetailPage() {
   const program = useMemo(() => {
     if (!remoteProgram) return undefined
     const applicationProgram = application?.programConfig
-    if (!applicationProgram) return remoteProgram
-    return {
-      ...remoteProgram,
-      programType: applicationProgram.programType ?? remoteProgram.programType,
-      educationFormLabel:
-        applicationProgram.educationFormLabel ?? remoteProgram.educationFormLabel,
-      educationJournalEnabled:
-        applicationProgram.educationJournalEnabled ?? remoteProgram.educationJournalEnabled,
-      surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
-      satisfactionConfigured:
-        applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
-    }
-  }, [application?.programConfig, remoteProgram])
+    if (!applicationProgram) return withApplicationThumbnail(remoteProgram, application)
+    return withApplicationThumbnail(
+      {
+        ...remoteProgram,
+        programType: applicationProgram.programType ?? remoteProgram.programType,
+        educationFormLabel:
+          applicationProgram.educationFormLabel ?? remoteProgram.educationFormLabel,
+        educationJournalEnabled:
+          applicationProgram.educationJournalEnabled ?? remoteProgram.educationJournalEnabled,
+        surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
+        satisfactionConfigured:
+          applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
+      },
+      application,
+    )
+  }, [application, application?.programConfig, remoteProgram])
   const isApplicationLoading =
     (isRemoteApiConfigured() && isProbingApplicationType) ||
     (remoteDetailEnabled && remoteApplicationQuery.isLoading)

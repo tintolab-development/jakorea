@@ -14,10 +14,7 @@ import type {
   WageItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
 
-function mergeDetailJson(
-  existing: string | undefined,
-  patch: Record<string, unknown>
-): string {
+function mergeDetailJson(existing: string | undefined, patch: Record<string, unknown>): string {
   let base: Record<string, unknown> = {}
   if (existing?.trim()) {
     try {
@@ -46,7 +43,7 @@ export function resolveSettingDetailFromConfig(
   }
   if (item.sectionKind === 'deduction' && item.apiItemId != null) {
     const deduction = config.deductionItems?.find(d => d.id === item.apiItemId)
-    if (deduction) return mapDeductionItemToSettingDetail(deduction)
+    if (deduction) return mapDeductionItemToSettingDetail(deduction, config)
   }
   throw new Error(`설정 항목을 찾을 수 없습니다: ${item.id}`)
 }
@@ -117,6 +114,10 @@ function paymentItemToUpsert(
     detailPatch.minDistanceKm = detail.basisHours
     detailPatch.minOneWayKm = detail.basisHours
   }
+  if (detail.layout === 'lodging') {
+    detailPatch.basisUnit = detail.basisUnit
+    detailPatch.basisHours = detail.basisHours
+  }
 
   return {
     id: item.id,
@@ -125,9 +126,9 @@ function paymentItemToUpsert(
     maxAmount: detail.maxLimitWon ?? item.maxAmount,
     maxLimitWon: detail.maxLimitWon ?? undefined,
     taxableYn: item.taxableYn,
-    evidenceRequiredYn: evidenceRequiredYnFromSubmission(
-      detail.evidenceSubmission,
-    ) as NonNullable<SettlementConfigUpdateRequest['paymentItems']>[number]['evidenceRequiredYn'],
+    evidenceRequiredYn: evidenceRequiredYnFromSubmission(detail.evidenceSubmission) as NonNullable<
+      SettlementConfigUpdateRequest['paymentItems']
+    >[number]['evidenceRequiredYn'],
     useYn: item.useYn,
     iconKey: item.iconKey,
     emojiOverride: meta.emojiOverride ?? item.emojiOverride,
@@ -157,10 +158,12 @@ function deductionItemToUpsert(
       remarkLines: detail.remarkLines,
       withholdingExclusionMaxWon: detail.withholdingExclusionMaxWon,
       withholdingEarnedIncomeDeductionWon: detail.withholdingEarnedIncomeDeductionWon,
+      withholdingTaxRateDailyWorker: detail.withholdingTaxRateDailyWorker,
       withholdingTaxRateBusiness: detail.withholdingTaxRateBusiness,
       withholdingTaxRateOther: detail.withholdingTaxRateOther,
       withholdingTaxRatePrize: detail.withholdingTaxRatePrize,
       withholdingTaxRateInterview: detail.withholdingTaxRateInterview,
+      withholdingEarnedIncomeTaxCreditRate: detail.withholdingEarnedIncomeTaxCreditRate,
     }),
   }
 }
@@ -197,7 +200,7 @@ export function buildSettlementConfigUpdateRequest(
     if (item.sectionKind === 'deduction' && deduction.id === item.apiItemId) {
       return deductionItemToUpsert(deduction, detail, meta)
     }
-    return deductionItemToUpsert(deduction, mapDeductionItemToSettingDetail(deduction), {
+    return deductionItemToUpsert(deduction, mapDeductionItemToSettingDetail(deduction, config), {
       title: deduction.itemName ?? '',
       description: deduction.description ?? '',
       emojiOverride: deduction.emojiOverride,
@@ -244,7 +247,7 @@ export function configToUpdateRequest(
       })
     ),
     deductionItems: (config.deductionItems ?? []).map(deduction =>
-      deductionItemToUpsert(deduction, mapDeductionItemToSettingDetail(deduction), {
+      deductionItemToUpsert(deduction, mapDeductionItemToSettingDetail(deduction, config), {
         title: deduction.itemName ?? '',
         description: deduction.description ?? '',
         emojiOverride: deduction.emojiOverride,

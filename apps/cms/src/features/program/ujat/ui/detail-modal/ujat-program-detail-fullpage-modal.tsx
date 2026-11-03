@@ -38,7 +38,6 @@ import { UjatEducationProgressAttendanceSection } from './progress/attendance/se
 import { UjatEducationProgressInstitutionsSection } from './progress/institutions/section'
 import { UjatEducationProgressRegionAssignmentSection } from './progress/region/section'
 import { UjatEducationProgressVolunteersSection } from './progress/volunteers/section'
-import { UjatEducationProgressVolunteerAddRegistrationView } from './progress/volunteers/add-registration-view'
 import { UjatEducationProgressVolunteerDetailPage } from './progress/volunteers/detail/detail-page'
 import {
   formatUjatEducationProgressVolunteerDetailTitle,
@@ -1131,10 +1130,6 @@ export function UjatProgramDetailFullPageModal({
     ? parseUjatEduInstTab(searchParams)
     : ('application' as UjatEducationProgressInstitutionDetailTab)
 
-  const volAddMemberIdEarly = open
-    ? parseUjatVolAddMemberIdParam(searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM))
-    : null
-
   const eduVolunteerHalf =
     activeTab.startsWith('edu_h2') ? 'h2' : activeTab.startsWith('edu_h1') ? 'h1' : null
   const eduVolunteerIdRaw = open ? searchParams.get(UJAT_EDU_VOL_ID_PARAM) : null
@@ -1142,8 +1137,7 @@ export function UjatProgramDetailFullPageModal({
     eduVolunteerIdRaw &&
     eduVolunteerHalf &&
     displayProgram?.id &&
-    isUjatEducationProgressVolunteerInList(eduVolunteerHalf, eduVolunteerIdRaw) &&
-    !volAddMemberIdEarly
+    isUjatEducationProgressVolunteerInList(eduVolunteerHalf, eduVolunteerIdRaw)
       ? eduVolunteerIdRaw
       : null
 
@@ -1883,7 +1877,6 @@ export function UjatProgramDetailFullPageModal({
 
   // TODO: X는 바깥 모달 닫기로 통일됨. breadcrumb/목록 복귀 외 용도가 없으면 등록부 제거 검토.
   const volunteerApplicantCloseHandlerRef = useRef<(() => boolean) | null>(null)
-  const registerVolunteerFromMemberRef = useRef<(memberId: string) => void>(() => {})
   const [volunteerApplicantDetailMeta, setVolunteerApplicantDetailMeta] =
     useState<ApplicantDetailMeta | null>(null)
 
@@ -1915,10 +1908,6 @@ export function UjatProgramDetailFullPageModal({
       }
     )
   }, [location.pathname, navigate, onClose, searchParams])
-
-  const volAddMemberId = open
-    ? parseUjatVolAddMemberIdParam(searchParams.get(UJAT_VOL_ADD_MEMBER_ID_PARAM))
-    : null
 
   const handleOpenSurveyCreateModal = useCallback(() => {
     setSelectedSurveyTemplateId(null)
@@ -2770,51 +2759,13 @@ export function UjatProgramDetailFullPageModal({
     setLectureEvalIncompleteModalOpen(false)
   }, [])
 
-  const closeVolAddRegistration = useCallback(() => {
-    const next = new URLSearchParams(searchParams)
-    next.delete(UJAT_VOL_ADD_MEMBER_ID_PARAM)
-    if (programId) next.set('programId', programId)
-    setSearchParams(next, { replace: true })
-  }, [programId, searchParams, setSearchParams])
-
-  const openVolAddRegistration = useCallback(
-    (memberId: string) => {
-      const parsedMemberId = parseUjatVolAddMemberIdParam(memberId)
-      if (parsedMemberId == null) return
-      const next = new URLSearchParams(searchParams)
-      if (programId) next.set('programId', programId)
-      next.set(LNB_PARAM, 'education_progress')
-      const halfTab = activeTab.startsWith('edu_h2') ? 'edu_h2_volunteers' : 'edu_h1_volunteers'
-      next.set(TAB_PARAM, halfTab)
-      next.set(UJAT_VOL_ADD_MEMBER_ID_PARAM, parsedMemberId)
-      next.delete(UJAT_INST_APP_ID_PARAM)
-      next.delete(UJAT_APPLICANT_ID_PARAM)
-      next.delete(UJAT_EDU_INST_ID_PARAM)
-      next.delete(UJAT_EDU_INST_TAB_PARAM)
-      next.delete(UJAT_EDU_VOL_ID_PARAM)
-      next.delete(UJAT_EDU_VOL_TAB_PARAM)
-      setSearchParams(next, { replace: true })
-    },
-    [activeTab, programId, searchParams, setSearchParams]
-  )
-
-  const handleCompleteVolAddRegistration = useCallback(
-    (memberId: string) => {
-      registerVolunteerFromMemberRef.current(memberId)
-      closeVolAddRegistration()
-    },
-    [closeVolAddRegistration]
-  )
-
   if (!open) return null
 
   const programTitle = displayProgram
     ? resolveUjatProgramDisplayTitle(displayProgram)
     : '프로그램 상세'
   const title =
-    volAddMemberId
-      ? '봉사자 추가 등록'
-      : eduVolunteerDetailMeta?.title ??
+    eduVolunteerDetailMeta?.title ??
         volunteerApplicantDetailMeta?.title ??
         (eduInstitutionDetailName
           ? `참여 기관 신청 상세 (${eduInstitutionDetailName})`
@@ -2840,9 +2791,7 @@ export function UjatProgramDetailFullPageModal({
     })
 
     const nestedDetailLabel =
-      volAddMemberId
-        ? '봉사자 추가 등록'
-        : volunteerApplicantDetailMeta?.breadcrumbLabel
+      volunteerApplicantDetailMeta?.breadcrumbLabel
           ? volunteerApplicantDetailMeta.breadcrumbLabel
           : eduVolunteerDetailMeta?.breadcrumbLabel
             ? eduVolunteerDetailMeta.breadcrumbLabel
@@ -3119,15 +3068,7 @@ export function UjatProgramDetailFullPageModal({
           )}
           {activeLnb === 'education_progress' && /^edu_h[12]_volunteers$/.test(activeTab) && (
             <div className="program-detail-fullpage-modal__info-tab">
-              {volAddMemberId ? (
-                <UjatEducationProgressVolunteerAddRegistrationView
-                  memberId={volAddMemberId}
-                  program={displayProgram}
-                  volunteerHalf={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
-                  onClose={closeVolAddRegistration}
-                  onComplete={handleCompleteVolAddRegistration}
-                />
-              ) : eduVolunteerDetailId && eduVolunteerHalf && displayProgram ? (
+              {eduVolunteerDetailId && eduVolunteerHalf && displayProgram ? (
                 <UjatEducationProgressVolunteerDetailPage
                   program={displayProgram}
                   half={eduVolunteerHalf}
@@ -3139,11 +3080,7 @@ export function UjatProgramDetailFullPageModal({
                 <UjatEducationProgressVolunteersSection
                   program={displayProgram}
                   half={activeTab.startsWith('edu_h2') ? 'h2' : 'h1'}
-                  onStartAddRegistration={openVolAddRegistration}
                   onOpenDetail={setEduVolunteerId}
-                  onBindRegisterVolunteer={register => {
-                    registerVolunteerFromMemberRef.current = register
-                  }}
                 />
               )}
             </div>

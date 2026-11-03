@@ -17,6 +17,15 @@ import { downloadAdminFile } from '@/shared/lib/admin-file-upload'
 import { FilterTableToolbarButton, useCmsAlert } from '@/shared/ui'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import { handleError } from '@/shared/utils/error-handler'
+import {
+  downloadBlob,
+  fileNameFromContentDisposition,
+  generateFilename,
+} from '@/shared/utils/file-download'
+import {
+  downloadMemberApplicationAssignmentFilesZipRemote,
+  formatAssignmentFilesDownloadErrorMessage,
+} from '@/features/user/api/member-program-history-api-client'
 import { AssignmentSubmissionCellActionButton } from '@/features/program/general/ui/assignment-submission-history-table'
 import { GENERAL_SATISFACTION_NAV_TAB } from '@/features/program/general/lib/survey-audience'
 import type { ProgressAssignmentSurveyNavTab } from './participating-individual-progress-assignment-table'
@@ -27,7 +36,6 @@ import {
   applyTeamNameFromSessionOrder,
   buildParticipatingIndividualParticipantAssignmentRowsFromAssigned,
   buildParticipatingIndividualParticipantAssignmentSummary,
-  collectParticipantAssignmentDownloadableFiles,
   getParticipatingIndividualParticipantAssignmentBundle,
   mergeParticipantDetailAssignmentRowsWithRemote,
   sortParticipatingIndividualParticipantAssignmentRows,
@@ -331,27 +339,66 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
     [showAlert]
   )
 
-  const handleBulkDownloadAssignments = useCallback(() => {
-    const files = collectParticipantAssignmentDownloadableFiles(rows)
-    if (files.length === 0) {
+  const [bulkDownloading, setBulkDownloading] = useState(false)
+
+  const handleBulkDownloadAssignments = useCallback(async () => {
+    if (bulkDownloading) return
+    if (!remoteEnabled) {
+      notifyProgramApiUnavailable(
+        'general-participant-detail-assignment-bulk-download',
+        '참여자 상세 · 과제 일괄 다운로드'
+      )
+      return
+    }
+    const memberId = Number(participant.memberId)
+    const applicationId = Number(participant.individualApplicationId)
+    if (
+      !Number.isSafeInteger(memberId) ||
+      memberId <= 0 ||
+      !Number.isSafeInteger(applicationId) ||
+      applicationId <= 0
+    ) {
       showAlert({
         title: '안내',
-        content: '다운로드할 제출 파일이 없습니다.',
+        content: '참여자 신청 정보를 확인할 수 없어 과제를 다운로드할 수 없습니다.',
       })
       return
     }
-    void (async () => {
-      for (const file of files) {
-        await downloadAssignmentFile(file.fileObjectId, file.fileName, true)
-      }
-    })()
-  }, [downloadAssignmentFile, rows, showAlert])
+    setBulkDownloading(true)
+    try {
+      const { zip, contentDisposition } = await downloadMemberApplicationAssignmentFilesZipRemote({
+        memberId,
+        applicationId,
+        applicationType: 'INDIVIDUAL',
+      })
+      const fileName = fileNameFromContentDisposition(
+        contentDisposition,
+        generateFilename(`참여자_과제_${participant.applicantName}`, 'zip')
+      )
+      // 서버가 파일별 다운로드 감사 로그를 남긴다.
+      await downloadBlob(zip, fileName, { skipAccessLog: true })
+    } catch (error) {
+      showAlert({
+        title: '안내',
+        content: formatAssignmentFilesDownloadErrorMessage(error),
+      })
+    } finally {
+      setBulkDownloading(false)
+    }
+  }, [
+    bulkDownloading,
+    participant.applicantName,
+    participant.individualApplicationId,
+    participant.memberId,
+    remoteEnabled,
+    showAlert,
+  ])
 
   useImperativeHandle(
     ref,
     () => ({
       openTeamChangeModal: handleOpenTeamChangeModal,
-      bulkDownloadAssignments: handleBulkDownloadAssignments,
+      bulkDownloadAssignments: () => void handleBulkDownloadAssignments(),
       exportExcel,
     }),
     [exportExcel, handleBulkDownloadAssignments, handleOpenTeamChangeModal]
@@ -518,9 +565,44 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
         )
       }
 
+      if (submission.kind === 'attachments') {
+        return (
+          <div className="participating-individual-participant-assignment-section__submission-links">
+            {submission.items.map((item, index) =>
+              item.kind === 'link' ? (
+                <a
+                  key={`${item.href}-${index}`}
+                  className="participating-individual-participant-assignment-section__submission-link"
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <button
+                  key={`${item.fileObjectId ?? item.fileName}-${index}`}
+                  type="button"
+                  className="participating-individual-participant-assignment-section__submission-link"
+                  onClick={() =>
+                    void downloadAssignmentFile(
+                      item.fileObjectId,
+                      item.fileName,
+                      item.downloadable
+                    )
+                  }
+                >
+                  {item.fileName}
+                </button>
+              )
+            )}
+          </div>
+        )
+      }
+
       if (submission.kind === 'file') {
         return (
-          <div className="assignment-submission-modal__status-text">
+          <div className="participating-individual-participant-assignment-section__submission-links">
             <button
               type="button"
               className="participating-individual-participant-assignment-section__submission-link"
@@ -555,14 +637,16 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
 
       if (submission.kind === 'link') {
         return (
-          <a
-            className="participating-individual-participant-assignment-section__submission-link"
-            href={submission.href}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {submission.label}
-          </a>
+          <div className="participating-individual-participant-assignment-section__submission-links">
+            <a
+              className="participating-individual-participant-assignment-section__submission-link"
+              href={submission.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {submission.label}
+            </a>
+          </div>
         )
       }
 
@@ -701,6 +785,7 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
           key: 'submission',
           width: 300,
           align: 'center',
+          className: 'participating-individual-participant-assignment-section__submission-column',
           render: (_value, record) => renderSubmissionCell(record),
         },
         {
@@ -734,7 +819,9 @@ export const ParticipatingIndividualParticipantAssignmentSection = forwardRef<
             variant="secondary"
             icon={<ButtonDownloadIcon />}
             adminAction="download"
-            onClick={handleBulkDownloadAssignments}
+            loading={bulkDownloading}
+            disabled={bulkDownloading}
+            onClick={() => void handleBulkDownloadAssignments()}
           >
             과제 일괄 다운로드
           </FilterTableToolbarButton>
