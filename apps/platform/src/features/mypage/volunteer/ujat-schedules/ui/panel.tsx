@@ -99,27 +99,7 @@ export function UjatVolunteerSchedulePanel({
       ),
     [ownItems],
   )
-  const extraDocumentDays = useMemo(() => {
-    const known = new Set(
-      ownItems
-        .map(item => item.scheduleId)
-        .filter((id): id is number => typeof id === 'number' && id > 0),
-    )
-    return (documentsQuery.data?.items ?? []).filter(item => !known.has(item.scheduleId))
-  }, [documentsQuery.data?.items, ownItems])
-  const monthGroups = useMemo(() => {
-    const extraRows: EducationScheduleItem[] = extraDocumentDays.map(day => ({
-      id: `document-${day.scheduleId}`,
-      scheduleId: day.scheduleId,
-      sessionNumber: 0,
-      heldAt: day.educationDate ?? '',
-      title: '교육일',
-      attendanceStatus: null,
-      classLabel: day.classLabel ?? undefined,
-      assignmentStatus: day.assignmentStatus,
-    }))
-    return groupUjatVolunteerSchedulesByMonth([...ownItems, ...extraRows])
-  }, [extraDocumentDays, ownItems])
+  const monthGroups = useMemo(() => groupUjatVolunteerSchedulesByMonth(ownItems), [ownItems])
   const fillSlot =
     fillTarget == null
       ? null
@@ -217,7 +197,7 @@ export function UjatVolunteerSchedulePanel({
       ) : null}
       <EducationSessionList
         title={listTitle}
-        totalCount={ownItems.length + extraDocumentDays.length}
+        totalCount={ownItems.length}
         currentPage={1}
         totalPages={1}
         onPageChange={() => undefined}

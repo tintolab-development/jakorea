@@ -236,6 +236,40 @@ assert.equal(availableActions.assignmentStatus, 'ASSIGNED')
 assert.equal(availableActions.classLabel, '1학년 3반')
 assert.equal(availableActions.attendanceStatus, 'absent')
 
+const ujatPortalSchedule = mapPortalEducationSchedule(
+  {
+    scheduleId: 187580,
+    startAt: '2026-10-31T15:00:00Z',
+    assignmentStatus: 'ASSIGNED',
+    classLabel: '1학년 2반',
+    organizationName: '대전초록중학교',
+    locationName: null,
+    attendanceStatus: 'LATE',
+  },
+  0,
+)
+assert.equal(ujatPortalSchedule.scheduleId, 187580)
+assert.equal(ujatPortalSchedule.heldAt, '2026-10-31T15:00:00Z')
+assert.equal(ujatPortalSchedule.assignmentStatus, 'ASSIGNED')
+assert.equal(ujatPortalSchedule.classLabel, '1학년 2반')
+assert.equal(ujatPortalSchedule.organizationName, '대전초록중학교')
+assert.equal(ujatPortalSchedule.locationName, '대전초록중학교')
+assert.equal(ujatPortalSchedule.attendanceStatus, 'late')
+
+const unassignedPortalSchedule = mapPortalEducationSchedule(
+  {
+    scheduleId: 187581,
+    assignmentStatus: 'UNASSIGNED',
+    classLabel: null,
+    organizationName: null,
+    locationName: null,
+  },
+  0,
+)
+assert.equal(unassignedPortalSchedule.assignmentStatus, 'UNASSIGNED')
+assert.equal(unassignedPortalSchedule.classLabel, undefined)
+assert.equal(unassignedPortalSchedule.locationName, undefined)
+
 const teamLeader = mapPortalEducationSchedule(
   { scheduleId: 20, teamRole: 'LEADER', teamName: '글로벌챌린저스' },
   0,
