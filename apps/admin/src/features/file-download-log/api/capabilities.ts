@@ -1,8 +1,6 @@
 /**
- * 파일 다운로드 이력 — remote API opt-in
+ * file-download-log — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseFileDownloadLogRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

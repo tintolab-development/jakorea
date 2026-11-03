@@ -4,11 +4,7 @@
 
 import { create } from 'zustand'
 import type { AuthUser, LoginRequest, MfaState } from '@/entities/auth/model/types'
-import {
-  login as loginApi,
-  type LoginMode,
-  type LoginOptions,
-} from '@/entities/auth/api/auth-service'
+import { login as loginApi } from '@/entities/auth/api/auth-service'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
 import { fetchAdminAuthLogout } from '@/features/auth/api/admin-auth-fetcher'
 import {
@@ -95,10 +91,7 @@ interface AuthState {
   _isCheckingAuth: boolean
   _checkAuthPromise: Promise<void> | null
 
-  login: (
-    request: LoginRequest,
-    options?: LoginOptions,
-  ) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
+  login: (request: LoginRequest) => Promise<{ requiresMfa: boolean; mfaState?: MfaState } | void>
   logout: () => void
   checkAuth: () => Promise<void>
   clearError: () => void
@@ -106,8 +99,6 @@ interface AuthState {
   setAuth: (authData: { user: AuthUser; token: string; expiresAt: string }) => void
   refreshToken: () => Promise<boolean>
 }
-
-export type { LoginMode, LoginOptions }
 
 function tokenExpiresAtFromResponse(tokens: AuthTokenResponse): string {
   if (tokens.expiresInSeconds && tokens.expiresInSeconds > 0) {
@@ -192,11 +183,11 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     _isCheckingAuth: false,
     _checkAuthPromise: null,
 
-    login: async (request: LoginRequest, options?: LoginOptions) => {
+    login: async (request: LoginRequest) => {
       set({ loading: true, error: null })
 
       try {
-        const response = await loginApi(request, options)
+        const response = await loginApi(request)
 
         if (response.requiresMfa && response.mfaState) {
           const normalizedUser = response.user
