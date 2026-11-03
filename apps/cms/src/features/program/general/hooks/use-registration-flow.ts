@@ -610,10 +610,12 @@ export function useGeneralProgramRegistrationFlow(
           excludeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
         })
       }
-      // 일반·TT: 떠난 탭의 단락 타이틀·설명(세션 draft)도 함께 기록한다. 1사1교는 기존 동작 유지.
+      // 일반·TT·1사1교: 떠난 탭의 단락 본문(세션 draft)도 함께 기록한다. UJAT는 기존 동작.
       await persistRegistrationOperationalOverlaysToLocal(programType, registrationFormVariant, {
         preferSessionDrafts:
-          registrationFormVariant === 'general' || registrationFormVariant === 'trainedTeachers',
+          registrationFormVariant === 'general' ||
+          registrationFormVariant === 'trainedTeachers' ||
+          registrationFormVariant === 'economy',
         activeCatalogId: isParticipantStep ? selectedTemplateCode : undefined,
       })
       syncRegistrationProgramDraftSession({

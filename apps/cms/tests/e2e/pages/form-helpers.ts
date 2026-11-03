@@ -497,6 +497,10 @@ export type FillParagraphDateOptions = {
   wideCurrentYearWindow?: boolean
   /** 운영 시작일을 오늘 이후로 선택해 일정 배정 E2E에서 과거 회차가 되지 않게 한다. */
   futureStartWindow?: boolean
+  /** true면 트리거를 못 찾을 때 skip하지 않고 실패한다. */
+  required?: boolean
+  /** placeholder와 다른 필드 라벨로 트리거를 찾는다. */
+  label?: string
 }
 
 function datePickerDialog(page: Page) {
@@ -583,7 +587,7 @@ async function fillParagraphDateByPlaceholderOnce(
   mode: 'single' | 'range' = 'range',
   options?: FillParagraphDateOptions
 ) {
-  const labelText = placeholder.replace(/을 선택하세요$/, '')
+  const labelText = options?.label ?? placeholder.replace(/을 선택하세요$/, '')
   const scope = options?.root ?? page
   const triggerLocator = () => {
     const byPlaceholder = scope
@@ -600,23 +604,40 @@ async function fillParagraphDateByPlaceholderOnce(
     // 접근성 button으로만 노출된다. 동일 placeholder의 실제 버튼을
     // fallback으로 포함해 동적 반복 일정도 놓치지 않는다.
     const byRole = scope.getByRole('button', { name: placeholder, exact: true })
-    if (options?.force === true) {
+    if (options?.force === true || options?.label != null) {
       return byFieldLabel.or(byPlaceholder).or(byRole).first()
     }
     return byRole.or(byPlaceholder).or(byFieldLabel).first()
   }
 
   let trigger = triggerLocator()
-  if ((await trigger.count()) === 0) return
-  if (!(await trigger.isVisible().catch(() => false))) return
+  if ((await trigger.count()) === 0 || !(await trigger.isVisible().catch(() => false))) {
+    if (options?.required === true) {
+      await triggerLocator()
+        .first()
+        .waitFor({ state: 'visible', timeout: 8_000 })
+        .catch(() => undefined)
+      trigger = triggerLocator()
+    }
+    if ((await trigger.count()) === 0 || !(await trigger.isVisible().catch(() => false))) {
+      if (options?.required === true) {
+        throw new Error(`날짜 선택 트리거를 찾을 수 없습니다: ${placeholder}`)
+      }
+      return
+    }
+  }
 
   // 탭 전환·리렌더로 트리거가 detach 될 수 있어 재조회 후 스크롤/클릭
   try {
     await trigger.scrollIntoViewIfNeeded()
   } catch {
     trigger = triggerLocator()
-    if ((await trigger.count()) === 0) return
-    if (!(await trigger.isVisible().catch(() => false))) return
+    if ((await trigger.count()) === 0 || !(await trigger.isVisible().catch(() => false))) {
+      if (options?.required === true) {
+        throw new Error(`날짜 선택 트리거를 찾을 수 없습니다: ${placeholder}`)
+      }
+      return
+    }
     await trigger.scrollIntoViewIfNeeded()
   }
   await trigger.click()
@@ -798,9 +819,14 @@ export async function fillAllParagraphDatesByPlaceholder(
 
 /** 등록 LNB / 우측 네비 섹션 클릭 */
 export async function clickSectionNavIfVisible(page: Page, label: string) {
-  const nav = page.getByText(label, { exact: true }).first()
-  if (!(await nav.isVisible().catch(() => false))) return
-  await nav.click()
+  const matches = page.getByText(label, { exact: true })
+  const count = await matches.count()
+  for (let index = 0; index < count; index += 1) {
+    const nav = matches.nth(index)
+    if (!(await nav.isVisible().catch(() => false))) continue
+    await nav.click()
+    return
+  }
 }
 
 /** CmsTextTabs 탭 클릭 */

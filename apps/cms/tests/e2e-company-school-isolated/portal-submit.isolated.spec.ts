@@ -46,6 +46,41 @@ async function fillVisibleApplyInputs(page: Page) {
     if (String(value).trim()) continue
     await box.fill('격리입력').catch(() => undefined)
   }
+  const selects = page.locator('.ant-select:visible')
+  const selectCount = await selects.count()
+  for (let index = 0; index < Math.min(selectCount, 12); index += 1) {
+    const select = selects.nth(index)
+    const selected = (await select.locator('.ant-select-selection-item').textContent().catch(() => '')) ?? ''
+    if (selected.trim() !== '' && !selected.includes('선택')) continue
+    await select.click()
+    const option = page.locator('.ant-select-item-option:visible').first()
+    if (await option.isVisible().catch(() => false)) {
+      await option.click()
+    } else {
+      await page.keyboard.press('Escape').catch(() => undefined)
+    }
+  }
+  const nativeSelects = page.locator('select:visible')
+  const nativeCount = await nativeSelects.count()
+  for (let index = 0; index < nativeCount; index += 1) {
+    const select = nativeSelects.nth(index)
+    const value = await select.inputValue().catch(() => '')
+    if (String(value).trim()) continue
+    const option = select.locator('option[value]:not([value=""])').nth(1)
+    const optionValue = await option.getAttribute('value').catch(() => '')
+    if (optionValue) await select.selectOption(optionValue).catch(() => undefined)
+  }
+  const radioGroups = page.locator('.ant-radio-group:visible, [role="radiogroup"]:visible')
+  const groupCount = await radioGroups.count()
+  for (let index = 0; index < Math.min(groupCount, 16); index += 1) {
+    const group = radioGroups.nth(index)
+    const checked = group.locator('.ant-radio-checked, [aria-checked="true"]')
+    if ((await checked.count()) > 0) continue
+    const option = group.locator('.ant-radio-wrapper:visible, [role="radio"]:visible').first()
+    if (await option.isVisible().catch(() => false)) {
+      await option.click()
+    }
+  }
 }
 
 test.describe.configure({ mode: 'default' })

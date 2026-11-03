@@ -1037,8 +1037,9 @@ export async function installCsIsolatedNetwork(
         return
       }
       if (method === 'POST' && pathname.endsWith('/form-bindings')) {
-        log.formBindings = Array.isArray(mutation.body) ? mutation.body : [mutation.body]
-        createdBindings = log.formBindings
+        const incoming = Array.isArray(mutation.body) ? mutation.body : [mutation.body]
+        log.formBindings = [...log.formBindings, ...incoming]
+        createdBindings = [...createdBindings, ...incoming]
         await route.fulfill(json({ id: CS_ISOLATED_IDS.BINDING_ID }))
         return
       }

@@ -101,6 +101,7 @@ export async function fillIsolatedCommonInfo(page: Page) {
   await selectByPlaceholder(page, '세부 프로그램명을 선택하세요')
   await fillParagraphDateByPlaceholder(page, '사업 운영 기간을 선택하세요', 'range', {
     futureMonthClicks: 2,
+    required: true,
   })
   await selectByPlaceholderIfVisible(page, '사업 분야를 선택하세요', '경제금융')
   await selectNearLabelIfVisible(page, '사업 분야', '경제금융')
@@ -132,7 +133,11 @@ export async function fillIsolatedCommonInfo(page: Page) {
   }
   await selectPaymentItemsB(page)
   await clickSectionNavIfVisible(page, '교육 진행 일정 설정')
-  await fillParagraphDateByPlaceholder(page, '진행 기간을 선택하세요', 'range')
+  await fillParagraphDateByPlaceholder(page, '진행 기간을 선택하세요', 'range', {
+    required: true,
+    force: true,
+    label: '교육 진행 일정 선택',
+  })
   await clickSectionNavIfVisible(page, '기본 정보')
   await expect(
     detailInfoField(page, '대표 프로그램명 (국문)').getByPlaceholder('대표 프로그램명을 입력하세요')
