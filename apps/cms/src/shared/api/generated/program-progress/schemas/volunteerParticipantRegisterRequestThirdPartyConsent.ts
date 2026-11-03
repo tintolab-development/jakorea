@@ -6,6 +6,9 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * @minLength 1
+ */
 export type VolunteerParticipantRegisterRequestThirdPartyConsent = typeof VolunteerParticipantRegisterRequestThirdPartyConsent[keyof typeof VolunteerParticipantRegisterRequestThirdPartyConsent];
 
 

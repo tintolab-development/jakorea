@@ -11,10 +11,10 @@
  */
 export interface AdminAccountPasswordResetRequest {
   /**
-   * 로그인 이메일과 다르고 영문·숫자·특수문자를 조합한 12자 이상의 임시 비밀번호
-   * @minLength 1
-   */
-  newPassword: string
+     * 로그인 이메일과 다르고 영문·숫자·특수문자를 조합한 8자 이상의 임시 비밀번호
+     * @minLength 1
+     */
+  newPassword: string;
   /** 비밀번호 초기화 사유 */
-  reason?: string
+  reason?: string;
 }

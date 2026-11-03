@@ -6,13 +6,22 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 봉사자 추가 등록 모달 회원 후보
+ */
 export interface ProgramParticipantRegisterCandidateResponse {
-  memberId: number;
-  displayName: string;
-  hasRegisteredId1365: boolean;
-  hasVolunteerApplicationForProgram: boolean;
-  hasVolunteerApplicationAnyProgram: boolean;
-  eligible: boolean;
-  /** @nullable */
-  ineligibleReason?: string | null;
+  /** 회원 ID */
+  memberId?: number;
+  /** 표시 이름 */
+  displayName?: string;
+  /** 1365 아이디 등록 여부 */
+  hasRegisteredId1365?: boolean;
+  /** 이 프로그램 봉사 신청 존재 여부 */
+  hasVolunteerApplicationForProgram?: boolean;
+  /** 다른 프로그램 봉사 신청 존재 여부 */
+  hasVolunteerApplicationAnyProgram?: boolean;
+  /** 등록 가능 여부. eligible 후보만 반환 시 항상 true */
+  eligible?: boolean;
+  /** 등록 불가 사유. eligible 후보만 반환 시 null */
+  ineligibleReason?: string;
 }
