@@ -4,7 +4,6 @@ import {
   deleteInquiries,
   submitInquiryReply,
 } from '@/features/posts/api/inquiries/admin-inquiries-service'
-import { postsQueryKeys } from '@/features/posts/api/posts-query-keys'
 import {
   applyDeletedInquiryToLists,
   invalidateInquiryLists,
@@ -19,12 +18,7 @@ export function useInquiryMutations() {
       submitInquiryReply(inquiryId, content),
     onSuccess: async (_data, { inquiryId }) => {
       await invalidateInquiryLists(queryClient)
-      await queryClient.invalidateQueries({
-        queryKey: postsQueryKeys.inquiries.detail(inquiryId),
-      })
-      await queryClient.invalidateQueries({
-        queryKey: postsQueryKeys.inquiries.answers(inquiryId),
-      })
+      removeInquiryDetailQueries(queryClient, inquiryId)
     },
   })
 
