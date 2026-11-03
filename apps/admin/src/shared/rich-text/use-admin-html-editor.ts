@@ -146,22 +146,21 @@ export function useAdminHtmlEditor({
           ...current,
           mode: 'html',
           draftHtml: nextHtml,
-          preserveRawHtmlBlock:
-            current.preserveRawHtmlBlock || shouldPreserveAdminRawHtmlBlock(nextHtml),
+          preserveRawHtmlBlock: shouldPreserveAdminRawHtmlBlock(nextHtml),
         })
         return
       }
 
       const nextHtml = current.draftHtml
-      const preserveRawHtmlBlock =
-        current.preserveRawHtmlBlock || shouldPreserveAdminRawHtmlBlock(nextHtml)
+      const preserveRawHtmlBlock = shouldPreserveAdminRawHtmlBlock(nextHtml)
+      const visualHtml = toAdminVisualHtml(nextHtml, preserveRawHtmlBlock)
       if (editor) {
-        editor.commands.setContent(toAdminVisualHtml(nextHtml, preserveRawHtmlBlock), {
+        editor.commands.setContent(visualHtml, {
           emitUpdate: false,
           contentType: 'html',
         })
       } else {
-        pendingVisualHtmlRef.current = nextHtml
+        pendingVisualHtmlRef.current = visualHtml
       }
 
       setState({
@@ -181,8 +180,7 @@ export function useAdminHtmlEditor({
         return {
           ...nextState,
           draftHtml,
-          preserveRawHtmlBlock:
-            nextState.preserveRawHtmlBlock || shouldPreserveAdminRawHtmlBlock(draftHtml),
+          preserveRawHtmlBlock: shouldPreserveAdminRawHtmlBlock(draftHtml),
         }
       })
     },

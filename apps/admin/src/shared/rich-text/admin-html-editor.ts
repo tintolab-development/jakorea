@@ -12,11 +12,42 @@ const RAW_HTML_BLOCK_WRAPPER_RE =
   /^\s*<div\b(?=[^>]*\bdata-raw-html-block\b)(?=[^>]*\bdata-raw-html-encoding\s*=\s*(["'])base64\1)(?=[^>]*\bdata-raw-html\s*=\s*(["'])([^"']*)\2)[^>]*>\s*<\/div>\s*$/i
 
 /**
- * 메타·스타일·문서 셸을 포함한 원본 HTML은 Tiptap 문서로 파싱하지 않는다.
- * 뉴스레터/메일 HTML은 `<head>` 계열과 인라인 스타일이 화면 모양을 결정한다.
+ * Tiptap으로 파싱하면 배치가 깨지는 HTML만 원본 블록으로 둔다.
+ * `<meta charset>` · `<html>/<body>` 셸만 있는 표·이미지 HTML은 일반 문서로 열어
+ * 이미지·텍스트 정렬·표 칸 이동이 가능하게 한다.
  */
-const RAW_HTML_SOURCE_MARKER_RE =
-  /<!doctype\b|<html\b|<head\b|<body\b|<meta\b|<style\b|<link\b|<title\b|@media\b|\bclass\s*=\s*["'][^"']*\bstb-/i
+const RAW_HTML_LAYOUT_CRITICAL_RE =
+  /<style\b|<link\b|@media\b|\bclass\s*=\s*["'][^"']*\bstb-/i
+
+function stripHarmlessHtmlShell(html: string): string {
+  const original = html.trim()
+  if (!original) return html
+
+  let source = original.replace(/^\s*<!doctype[^>]*>/i, '').trim()
+  const headInner = source.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i)?.[1] ?? ''
+  if (RAW_HTML_LAYOUT_CRITICAL_RE.test(headInner)) return html
+
+  const bodyMatch = source.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)
+  if (bodyMatch) {
+    source = bodyMatch[1].trim()
+  } else {
+    source = source
+      .replace(/<\/?html\b[^>]*>/gi, '')
+      .replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, '')
+      .trim()
+  }
+
+  for (let index = 0; index < 8; index += 1) {
+    const next = source.replace(
+      /^\s*(?:<meta\b[^>]*\/?>|<title\b[^>]*>[\s\S]*?<\/title>)\s*/i,
+      ''
+    )
+    if (next === source) break
+    source = next
+  }
+
+  return source.trim() || html
+}
 
 /** `@jakorea/rich-text` RawHtmlBlock과 같은 UTF-8/base64 래퍼 규격. */
 function encodeRawHtml(content: string): string {
@@ -55,14 +86,17 @@ export function extractAdminRawHtmlBlock(content: string): string | null {
 }
 
 export function shouldPreserveAdminRawHtmlBlock(content: string): boolean {
-  return extractAdminRawHtmlBlock(content) != null || RAW_HTML_SOURCE_MARKER_RE.test(content)
+  if (extractAdminRawHtmlBlock(content) != null) return true
+  return RAW_HTML_LAYOUT_CRITICAL_RE.test(content)
 }
 
 /** HTML 모드의 원본을 일반 편집 모드에 표시할 저장 HTML로 변환한다. */
 export function toAdminVisualHtml(content: string, preserveRawHtmlBlock = false): string {
   const source = extractAdminRawHtmlBlock(content) ?? content
-  if (!preserveRawHtmlBlock && !shouldPreserveAdminRawHtmlBlock(source)) return content
-  return renderRawHtmlBlockWrapper(source)
+  if (preserveRawHtmlBlock || shouldPreserveAdminRawHtmlBlock(source)) {
+    return renderRawHtmlBlockWrapper(source)
+  }
+  return stripHarmlessHtmlShell(source)
 }
 
 /** HTML 모드에 표시할 값. 저장 래퍼가 있으면 base64 값을 다시 원본으로 푼다. */
@@ -100,10 +134,7 @@ export function resolveAdminHtmlForSave(
   visualHtml: string
 ): string {
   if (state.mode === 'html') {
-    return toAdminStoredHtml(
-      state.draftHtml,
-      state.preserveRawHtmlBlock || shouldPreserveAdminRawHtmlBlock(state.draftHtml)
-    )
+    return toAdminStoredHtml(state.draftHtml, shouldPreserveAdminRawHtmlBlock(state.draftHtml))
   }
   if (state.visualDirty) return visualHtml
   if (state.initialStoredHtml && isHtmlContent(state.initialStoredHtml)) {

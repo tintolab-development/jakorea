@@ -10,6 +10,7 @@ import {
   isEmptyAdminHtml,
   resolveAdminHtmlForSave,
   toAdminHtmlSource,
+  shouldPreserveAdminRawHtmlBlock,
   toAdminVisualHtml,
 } from './admin-html-editor.ts'
 import { getRemoteRichTextBodyError } from './lib/remote-body.ts'
@@ -61,6 +62,14 @@ assert.equal(isEmptyAdminHtml('<img src="https://example.test/a.png" alt="">'), 
 assert.equal(getRemoteRichTextBodyError('<p><img src="data:image/png;base64,abc"></p>') != null, true)
 assert.equal(getRemoteRichTextBodyError('a'.repeat(100_001)) != null, true)
 assert.equal(getRemoteRichTextBodyError('<p>정상 본문</p>'), null)
+
+const pastedLayoutHtml =
+  '<meta charset="UTF-8"><table><tr><td><img src="https://example.test/a.png" alt=""></td><td>본문</td></tr></table>'
+assert.equal(shouldPreserveAdminRawHtmlBlock(pastedLayoutHtml), false)
+assert.equal(
+  toAdminVisualHtml(pastedLayoutHtml),
+  '<table><tr><td><img src="https://example.test/a.png" alt=""></td><td>본문</td></tr></table>'
+)
 
 const pastedNewsletterHtml =
   '<meta charset="UTF-8"><style>@media only screen and (max-width:640px){.stb-block{width:100%!important}}</style><table><tr><td>원본</td></tr></table>'

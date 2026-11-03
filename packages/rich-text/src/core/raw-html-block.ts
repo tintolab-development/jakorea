@@ -370,6 +370,46 @@ function closestAnchor(node: globalThis.Node | null): HTMLAnchorElement | null {
   return null
 }
 
+function closestImage(node: globalThis.Node | null): HTMLImageElement | null {
+  let current: globalThis.Node | null = node
+  while (current) {
+    if (current.nodeType === 1 && (current as Element).tagName === 'IMG') {
+      return current as HTMLImageElement
+    }
+    current = current.parentNode
+  }
+  return null
+}
+
+function caretRangeFromPoint(
+  doc: Document,
+  clientX: number,
+  clientY: number
+): Range | null {
+  const withCaret = doc as Document & {
+    caretRangeFromPoint?: (x: number, y: number) => Range | null
+    caretPositionFromPoint?: (x: number, y: number) => { offsetNode: globalThis.Node; offset: number } | null
+  }
+  if (typeof withCaret.caretRangeFromPoint === 'function') {
+    return withCaret.caretRangeFromPoint(clientX, clientY)
+  }
+  const position = withCaret.caretPositionFromPoint?.(clientX, clientY)
+  if (!position) return null
+  const range = doc.createRange()
+  range.setStart(position.offsetNode, position.offset)
+  range.collapse(true)
+  return range
+}
+
+function applyImageAlign(img: HTMLImageElement, align: 'left' | 'center' | 'right') {
+  img.style.float = align === 'center' ? 'none' : align
+  img.style.display = align === 'center' ? 'block' : ''
+  img.style.marginLeft = align === 'center' || align === 'right' ? 'auto' : ''
+  img.style.marginRight = align === 'center' || align === 'left' ? 'auto' : ''
+  if (align === 'center') img.removeAttribute('align')
+  else img.setAttribute('align', align)
+}
+
 export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStorage>({
   name: RAW_HTML_BLOCK_NODE_NAME,
   group: 'block',
@@ -434,6 +474,7 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
       let frameFocused = false
       let uploading = false
       let savedRange: Range | null = null
+      let draggingImg: HTMLImageElement | null = null
       let detachFrameListeners: () => void = () => {}
 
       const dom = document.createElement('div')
@@ -449,7 +490,7 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
       badge.title = '눌러서 블록 선택 · 끌어서 이동'
       const hint = document.createElement('span')
       hint.className = 'rich-text-raw-html-block__hint'
-      hint.textContent = '내용을 눌러 바로 고칠 수 있어요'
+      hint.textContent = '이미지를 끌어 위치를 바꿀 수 있어요'
       const editButton = createButton('소스 편집', 'edit')
       const deleteButton = createButton('삭제', 'delete')
       toolbar.append(badge, hint, editButton, deleteButton)
@@ -462,9 +503,21 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
       const boldButton = createButton('B', 'bold', '굵게')
       const italicButton = createButton('I', 'italic', '기울임')
       const underlineButton = createButton('U', 'underline', '밑줄')
+      const alignLeftButton = createButton('좌', 'align-left', '왼쪽 정렬')
+      const alignCenterButton = createButton('중', 'align-center', '가운데 정렬')
+      const alignRightButton = createButton('우', 'align-right', '오른쪽 정렬')
       const linkButton = createButton('링크', 'link', '링크')
       const imageButton = createButton('이미지', 'image', '이미지 삽입')
-      formatBar.append(boldButton, italicButton, underlineButton, linkButton, imageButton)
+      formatBar.append(
+        boldButton,
+        italicButton,
+        underlineButton,
+        alignLeftButton,
+        alignCenterButton,
+        alignRightButton,
+        linkButton,
+        imageButton
+      )
 
       const fileInput = document.createElement('input')
       fileInput.type = 'file'
@@ -604,6 +657,27 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
           selection.addRange(range)
         }
         return selection
+      }
+
+      const markImagesDraggable = (doc: Document) => {
+        for (const img of Array.from(doc.querySelectorAll('img'))) {
+          img.draggable = true
+        }
+      }
+
+      const applyAlign = (align: 'left' | 'center' | 'right') => {
+        if (!canInlineEdit()) return
+        restoreSelection()
+        const img = closestImage(savedRange?.commonAncestorContainer ?? null)
+        if (img) {
+          applyImageAlign(img, align)
+          scheduleCommit()
+          positionFormatBar()
+          return
+        }
+        const command =
+          align === 'left' ? 'justifyLeft' : align === 'right' ? 'justifyRight' : 'justifyCenter'
+        exec(command)
       }
 
       const exec = (command: string, value?: string): boolean => {
@@ -747,6 +821,7 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
         const onInput = () => {
           if (!canInlineEdit()) return
           removeLiveDataImages(doc)
+          markImagesDraggable(doc)
           scheduleCommit()
           positionFormatBar()
         }
@@ -761,9 +836,44 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
           if (!canInlineEdit()) return
           handleFileTransfer(event, event.clipboardData?.files)
         }
+        const onDragStart = (event: DragEvent) => {
+          if (!canInlineEdit()) return
+          const img = closestImage(event.target as globalThis.Node | null)
+          if (!img) return
+          draggingImg = img
+          event.dataTransfer?.setData('text/plain', img.getAttribute('src') ?? '')
+          event.dataTransfer?.setDragImage(img, 8, 8)
+        }
+        const onDragOver = (event: DragEvent) => {
+          if (!canInlineEdit()) return
+          const types = Array.from(event.dataTransfer?.types ?? [])
+          if (draggingImg || types.includes('Files')) {
+            event.preventDefault()
+            if (event.dataTransfer) event.dataTransfer.dropEffect = draggingImg ? 'move' : 'copy'
+          }
+        }
         const onDrop = (event: DragEvent) => {
           if (!canInlineEdit()) return
-          handleFileTransfer(event, event.dataTransfer?.files)
+          const files = event.dataTransfer?.files
+          if (files && files.length > 0) {
+            draggingImg = null
+            handleFileTransfer(event, files)
+            return
+          }
+          const img = draggingImg
+          draggingImg = null
+          if (!img || !img.isConnected) return
+          event.preventDefault()
+          const range = caretRangeFromPoint(doc, event.clientX, event.clientY)
+          if (!range) return
+          if (img === range.startContainer || img.contains(range.startContainer)) return
+          img.parentNode?.removeChild(img)
+          range.insertNode(img)
+          markImagesDraggable(doc)
+          scheduleCommit()
+        }
+        const onDragEnd = () => {
+          draggingImg = null
         }
         const onClick = (event: MouseEvent) => {
           // 편집 중에는 링크로 이동하지 않는다
@@ -771,10 +881,14 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
             event.preventDefault()
           }
         }
+        markImagesDraggable(doc)
         doc.addEventListener('input', onInput)
         doc.addEventListener('selectionchange', onSelectionChange)
         doc.addEventListener('paste', onPaste)
+        doc.addEventListener('dragstart', onDragStart)
+        doc.addEventListener('dragover', onDragOver)
         doc.addEventListener('drop', onDrop)
+        doc.addEventListener('dragend', onDragEnd)
         doc.addEventListener('click', onClick)
         win.addEventListener('focus', onFocus)
         win.addEventListener('blur', onBlur)
@@ -782,7 +896,10 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
           doc.removeEventListener('input', onInput)
           doc.removeEventListener('selectionchange', onSelectionChange)
           doc.removeEventListener('paste', onPaste)
+          doc.removeEventListener('dragstart', onDragStart)
+          doc.removeEventListener('dragover', onDragOver)
           doc.removeEventListener('drop', onDrop)
+          doc.removeEventListener('dragend', onDragEnd)
           doc.removeEventListener('click', onClick)
           win.removeEventListener('focus', onFocus)
           win.removeEventListener('blur', onBlur)
@@ -814,12 +931,16 @@ export const RawHtmlBlock = Node.create<Record<string, never>, RawHtmlBlockStora
       const keepFrameFocus = (event: MouseEvent) => {
         // 서식 버튼을 눌러도 iframe 선택 영역이 사라지지 않게
         event.preventDefault()
+        saveSelection()
       }
       formatBar.addEventListener('mousedown', keepFrameFocus)
 
       boldButton.addEventListener('click', () => exec('bold'))
       italicButton.addEventListener('click', () => exec('italic'))
       underlineButton.addEventListener('click', () => exec('underline'))
+      alignLeftButton.addEventListener('click', () => applyAlign('left'))
+      alignCenterButton.addEventListener('click', () => applyAlign('center'))
+      alignRightButton.addEventListener('click', () => applyAlign('right'))
       linkButton.addEventListener('click', handleLink)
       imageButton.addEventListener('click', () => {
         if (!uploader() || uploading) return
