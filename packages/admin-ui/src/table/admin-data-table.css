@@ -90,7 +90,11 @@
 
 /* rowSelection.columnWidth·colgroup 과 동일 폭 유지 — 총폭 80px·좌 8px 패딩 포함 */
 .cms-data-table .ant-table-thead > tr > th.ant-table-cell.ant-table-selection-column,
-.cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column {
+.cms-data-table .ant-table-tbody > tr > td.ant-table-cell.ant-table-selection-column,
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell.ant-table-selection-column.ant-table-cell-row-hover {
   width: var(--table-selection-column-width, 80px) !important;
   min-width: var(--table-selection-column-width, 80px) !important;
   max-width: var(--table-selection-column-width, 80px) !important;
@@ -215,8 +219,15 @@
   );
 }
 
-/* 본문 셀: 기본·호버 동일 테두리 유지 (empty·measure 행 제외). :hover 선택자 미사용 — 화면 오버라이드 shift 방지 */
-.cms-data-table .ant-table-tbody > tr:not(.ant-table-placeholder):not(.ant-table-measure-row) > td {
+/* 본문 셀: 기본·cell-row-hover 동일 치수 (empty·measure 행 제외). tr:hover > td 치수 규칙은 금지 — shift 회귀 */
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td,
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover {
   box-sizing: border-box !important;
   min-width: var(--table-fixed-column-width, 80px);
   padding: var(--Spacing-8, 8px) var(--Spacing-12, 12px) !important;
@@ -256,6 +267,94 @@
   > td {
   max-height: 52px !important;
   overflow: hidden;
+}
+
+/*
+ * Hover shift 방지 — ant-table-cell-row-hover · h40 버튼 · status-dropdown 혼재
+ * (tr:hover > td 치수 규칙은 금지 — cell-row-hover·클래스 기반만)
+ */
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-data-table__cell--h40-action,
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-data-table__cell--h40-action.ant-table-cell-row-hover {
+  box-sizing: border-box !important;
+  padding: 6px 12px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  vertical-align: middle !important;
+  transition: none !important;
+}
+
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-data-table__cell--h40-action-stack,
+.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-data-table__cell--h40-action-stack.ant-table-cell-row-hover {
+  box-sizing: border-box !important;
+  padding: 8px 12px !important;
+  height: auto !important;
+  min-height: 52px !important;
+  max-height: none !important;
+  vertical-align: middle !important;
+  transition: none !important;
+}
+
+.cms-data-table.cms-data-table--fixed-row-height
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):has(
+    td.status-dropdown-cell__cell-status
+  ) {
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+}
+
+/* antd CSS-in-js 특이도 대비 — 풀페이지·목록(filter) 단일행 테이블 */
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--fluid)
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td:not(.status-dropdown-cell__cell-status):not(.cms-data-table__cell--h40-action):not(
+    .cms-data-table__cell--h40-action-stack
+  ):not(.ant-table-selection-column),
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--fluid)
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover:not(.status-dropdown-cell__cell-status):not(
+    .cms-data-table__cell--h40-action
+  ):not(.cms-data-table__cell--h40-action-stack):not(.ant-table-selection-column),
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--fluid)
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td:not(.status-dropdown-cell__cell-status):not(.cms-data-table__cell--h40-action):not(
+    .cms-data-table__cell--h40-action-stack
+  ):not(.ant-table-selection-column),
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table:not(.cms-data-table--fluid)
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover:not(.status-dropdown-cell__cell-status):not(
+    .cms-data-table__cell--h40-action
+  ):not(.cms-data-table__cell--h40-action-stack):not(.ant-table-selection-column) {
+  box-sizing: border-box !important;
+  padding: 8px 12px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  vertical-align: middle !important;
+  transition: none !important;
 }
 
 /* 선택 열 — `--table-selection-column-width`(80px), 일반 td min-width 80과 동일 */
@@ -515,9 +614,15 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td {
+  > td,
+.detail-fullpage-modal
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell-row-hover {
   min-height: 52px !important;
   height: 52px !important;
+  max-height: 52px !important;
   box-sizing: border-box !important;
 }
 
