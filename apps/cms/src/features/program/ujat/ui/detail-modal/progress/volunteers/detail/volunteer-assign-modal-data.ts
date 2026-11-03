@@ -73,12 +73,16 @@ export function partnerOptionsFromRecommendation(
   const mapped: UjatVolunteerPartnerCandidate[] = []
   for (const candidate of candidates ?? []) {
     if (candidate.participantId == null) continue
-    const name = candidate.volunteerName?.trim()
+    const name = candidate.volunteerName?.trim() || candidate.memberName?.trim()
     if (!name) continue
     mapped.push({
       id: String(candidate.participantId),
       name,
-      assignmentDayCount: candidate.assignmentDayCount ?? candidate.totalAssignedDays ?? 0,
+      assignmentDayCount:
+        candidate.assignmentDayCount ??
+        candidate.assignedScheduleCount ??
+        candidate.totalAssignedDays ??
+        0,
       hasPartnerHistoryWithVolunteer: candidate.hasPartnerHistoryWithVolunteer === true,
     })
   }

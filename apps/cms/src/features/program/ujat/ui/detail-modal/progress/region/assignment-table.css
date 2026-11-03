@@ -24,6 +24,10 @@
   width: var(--ujat-region-assignment-volunteer-col-w, 160px);
 }
 
+.ujat-region-assignment-table__schedule-col {
+  width: 180px;
+}
+
 .ujat-region-assignment-table__corner-days,
 .ujat-region-assignment-table__corner-axis-top,
 .ujat-region-assignment-table__corner-axis-bottom,
@@ -42,8 +46,17 @@
   max-width: var(--ujat-region-assignment-volunteer-col-w, 160px);
 }
 
-.ujat-region-assignment-table thead .cross-table__cell {
-  font-size: 16px;
+.ujat-region-assignment-table .cross-table__cell {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.ujat-region-assignment-table thead .cross-table__cell,
+.ujat-region-assignment-table__days-cell,
+.ujat-region-assignment-table__name-cell {
+  font-size: 14px;
   font-weight: 700;
   line-height: 150%;
 }
@@ -75,21 +88,19 @@
   white-space: nowrap;
 }
 
-.ujat-region-assignment-table__name-cell {
-  font-weight: 600;
-}
-
 /* 활동 포기자 — 행 전체 연한 빨간 배경 (스크린샷: #FFF0F0) */
 .ujat-region-assignment-table__row--withdrawn > .cross-table__cell {
   background: #fff0f0 !important;
 }
 
 .ujat-region-assignment-table__row--withdrawn .ujat-region-assignment-table__name-cell {
-  color: var(--color-red, #ff4d4f);
+  color: var(--Status-red-main, #c32f4a);
 }
 
+.ujat-region-assignment-table .cross-table__cell--column-header,
 .ujat-region-assignment-table__data-cell {
-  min-width: 120px;
+  width: 180px;
+  min-width: 180px;
 }
 
 .ujat-region-assignment-table__data-cell--blocked {
@@ -124,23 +135,6 @@
   white-space: nowrap;
 }
 
-.ujat-region-assignment-table__unavailable-badge {
-  display: flex;
-  width: 44px;
-  height: 20px;
-  padding: 2px 0;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  border-radius: 50px;
-  background: var(--color-red, #ff4d4f);
-  color: var(--main-WT, #fff);
-  text-align: center;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 150%;
-}
-
 .ujat-region-assignment-table__substitute {
   color: var(--default-BK, #3d3d3d);
   font-size: 14px;
@@ -155,22 +149,14 @@
   line-height: 150%;
 }
 
-.ujat-region-assignment-table__class-label--solo {
-  color: var(--color-mint-01, #01a1af);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 150%;
-}
-
 .ujat-region-assignment-table__class-label--invalid {
-  color: var(--color-red, #ff4d4f);
+  color: var(--Status-red-main, #c32f4a);
   font-weight: 700;
 }
 
 .ujat-region-assignment-table__empty {
   color: var(--default-BK, #3d3d3d);
-  opacity: 0.45;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
 }

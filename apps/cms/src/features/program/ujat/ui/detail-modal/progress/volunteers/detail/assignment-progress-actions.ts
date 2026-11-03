@@ -1,7 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { toIsoLocalTime } from '@/shared/lib/attendance-arrival-time'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import type { ProgramAttendanceCorrectionConfirmPayload } from '@/features/program/shared/lib/attendance-correction-types'
 import { mapUjatUiAttendanceStatusToApi } from '@/features/program/ujat/api/allocation-matrix-adapters'
+import { UJAT_PARTNER_ASSIGNMENT_CONFLICT_CODE } from './assignment-cancel-errors'
 import {
   bulkUpsertUjatAttendances,
   postUjatDirectAssignment,
@@ -122,11 +124,19 @@ export async function confirmVolunteerAssignment(input: {
     })
   }
 
-  return postUjatPartnerAssignmentConfirm(
-    input.programId,
-    input.scheduleId,
-    buildVolunteerPartnerConfirmRequest(input)
-  )
+  try {
+    return await postUjatPartnerAssignmentConfirm(
+      input.programId,
+      input.scheduleId,
+      buildVolunteerPartnerConfirmRequest(input)
+    )
+  } catch (error) {
+    // 같은 조 재confirm은 200. 잔여 409는 invalidate로 SSOT를 맞춘다.
+    if (getApiErrorCode(error) === UJAT_PARTNER_ASSIGNMENT_CONFLICT_CODE) {
+      return {}
+    }
+    throw error
+  }
 }
 
 function toApiAttendanceStatus(
@@ -143,7 +153,9 @@ export async function correctVolunteerAttendance(input: {
   payload: ProgramAttendanceCorrectionConfirmPayload
 }) {
   const uiStatus = toApiAttendanceStatus(input.payload.status)
-  // UJAT bulk upsert 계약에는 증빙 fileObjectId 필드가 없다. 사유 문구만 전달한다.
+  const fileObjectIds = (input.payload.evidenceFileObjectIds ?? []).filter(
+    (id): id is number => Number.isInteger(id) && id > 0
+  )
   return bulkUpsertUjatAttendances(input.programId, {
     scheduleId: input.scheduleId,
     attendances: [
@@ -154,6 +166,7 @@ export async function correctVolunteerAttendance(input: {
           input.payload.status === 'excused_absence' ? input.payload.reason.trim() || null : null,
         arrivalTime:
           input.payload.status === 'late' ? toIsoLocalTime(input.payload.attendanceTime) : null,
+        ...(fileObjectIds.length > 0 ? { fileObjectIds } : {}),
       },
     ],
   })

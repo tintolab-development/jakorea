@@ -31,7 +31,17 @@ export type UjatAllocationCellDto = {
   singleAssignment?: boolean | null
   unavailable?: boolean | null
   needsReassignment?: boolean | null
-  assignmentStatus?: string | null
+  assignmentStatus?: 'ASSIGNED' | 'UNASSIGNED' | 'REASSIGNMENT_REQUIRED' | string | null
+  /** 참여 불가 대체 봉사자. 있으면 unavailability GET 없이 표시 */
+  replacementParticipantId?: number | null
+  replacementVolunteerName?: string | null
+}
+
+export type UjatAllocationEducationSlotDto = {
+  educationSlotId?: number | null
+  classLabel?: string | null
+  grade?: string | null
+  className?: string | null
 }
 
 export type UjatAllocationColumnDto = {
@@ -43,12 +53,16 @@ export type UjatAllocationColumnDto = {
   organizationRegion?: string | null
   educationRegionCode?: string | null
   classCount?: number | null
+  /** 열의 확정 학급 슬롯. 배열(빈 배열 포함)이면 org-schedule-assignments를 호출하지 않는다 */
+  educationSlots?: UjatAllocationEducationSlotDto[] | null
 }
 
 export type UjatAllocationVolunteerRowDto = {
   participantId?: number | null
   memberId?: number | null
   volunteerName?: string | null
+  contact?: string | null
+  email?: string | null
   educationRegionCode?: string | null
   participantStatus?: string | null
   giveUp?: boolean | null
@@ -198,9 +212,8 @@ export type UjatPartnerAssignmentResponse = {
   cancelledAt?: string | null
   cancelReason?: string | null
   /**
-   * 배정 알림 발송 여부(서버 SSOT).
-   * false: 발송 전(예약 PENDING 포함) → 간단 확인 취소
-   * true: 발송 후 → 사유+알림 취소
+   * 배정 알림 발송 여부. 서버는 항상 true|false.
+   * false → 간단 취소 `{}`. true → 사유+알림.
    */
   assignmentNotificationSent?: boolean
 }
@@ -234,6 +247,8 @@ export type UjatAttendanceItemRequest = {
   status: string
   absenceReason?: string | null
   arrivalTime?: string | null
+  /** 증빙 fileObjectId. 없으면 omit — absence-reasons에 파일 없음이 정상 */
+  fileObjectIds?: number[]
 }
 
 export type UjatAttendanceBulkUpsertRequest = {
@@ -426,8 +441,12 @@ export type UjatPartnerRecommendationCandidate = {
   participantId?: number | null
   memberId?: number | null
   volunteerName?: string | null
+  /** volunteerName 별칭 */
+  memberName?: string | null
   totalAssignedDays?: number | null
   assignmentDayCount?: number | null
+  /** assignmentDayCount 별칭 */
+  assignedScheduleCount?: number | null
   hasPartnerHistoryWithVolunteer?: boolean | null
 }
 
