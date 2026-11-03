@@ -57,7 +57,7 @@ export interface MemberPortalApplicationDetail {
   summary?: EducationScreenSummary;
   capabilities?: ApplicationCapabilities;
   supplement?: ProgramApplicationSupplement;
-  /** 회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. */
+  /** 회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료. */
   displayStatus?: MemberPortalApplicationDetailDisplayStatus;
   /** ORGANIZATION은 신청별 교재를 textbook으로 제공합니다. INDIVIDUAL은 동일 회원·동일 프로그램의 INSTRUCTOR 신청에 연결된 활성 배정이 있을 때 assignments를 제공합니다. 연결된 배정이 없으면 null이며, 개인 신청에는 동의서·교재를 자동으로 포함하지 않습니다. VOLUNTEER·INSTRUCTOR·비교사 회원은 null입니다. */
   teacherAssignment?: MemberPortalTeacherAssignment | null;

@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { AllocationCellAssignmentStatus } from './allocationCellAssignmentStatus';
 
 export interface AllocationCell {
   columnKey?: string;
@@ -18,5 +19,10 @@ export interface AllocationCell {
   singleAssignment?: boolean;
   unavailable?: boolean;
   needsReassignment?: boolean;
-  assignmentStatus?: string;
+  /** 대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED */
+  assignmentStatus?: AllocationCellAssignmentStatus;
+  /** 대체 봉사자 program_participant.id. unavailable=false이면 null */
+  replacementParticipantId?: number | null;
+  /** 대체 봉사자 회원명 원문. 없으면 null. 빈 문자열 금지. unavailable=false이면 null */
+  replacementVolunteerName?: string | null;
 }

@@ -17857,7 +17857,7 @@
           "신청/프로그램 워크플로우"
         ],
         "summary": "CMS 참여 봉사자 추가 등록(신청서·동의·승인)",
-        "description": "### 이 API가 하는 일\n- CMS 참여 봉사자 추가 등록(신청서·동의·승인)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/volunteer-participants/register`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 처리 기준 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: GENERAL keeps previous-JA and 4 free-text items. UJAT GENERAL CMS_PROGRESS_ADD creates APPROVED volunteer participant and PASS application without interview or member consent overwrite",
+        "description": "### 이 API가 하는 일\n- CMS 참여 봉사자 추가 등록(신청서·동의·승인)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/volunteer-participants/register`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 처리 기준 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: GENERAL and UJAT CMS_PROGRESS_ADD share Figma add-volunteer form (consents recipient previousJaProgram freeText4) plus UJAT recruitHalf. No UJAT kind. Platform UJAT volunteer form stays separate",
         "operationId": "registerVolunteerParticipant",
         "parameters": [
           {
@@ -17954,7 +17954,7 @@
             }
           },
           "422": {
-            "description": "CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY: volunteerKind=EMPLOYEE는 CMS 진행 추가 등록에서 거부. VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED: 일반 프로그램에서 thirdPartyConsent=AGREE인데 thirdPartyRecipient 누락·공백·'-'. VOLUNTEER_THIRD_PARTY_RECIPIENT_INVALID: 200자 초과. VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED / VOLUNTEER_RECRUITMENT_NOT_CONFIGURED.",
+            "description": "CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY: volunteerKind=EMPLOYEE는 CMS 진행 추가 등록에서 거부. VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED: thirdPartyConsent=AGREE인데 thirdPartyRecipient 누락·공백·'-'. VOLUNTEER_THIRD_PARTY_RECIPIENT_INVALID: 200자 초과. VOLUNTEER_PREVIOUS_JA_REQUIRED: UJAT CMS_PROGRESS_ADD에서 REQUESTED인데 previousJaProgram 없음. VOLUNTEER_1365_REQUIRED: UJAT CMS_PROGRESS_ADD에서 회원 1365가 없고 id1365 생략. VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED / VOLUNTEER_RECRUITMENT_NOT_CONFIGURED.",
             "content": {
               "*/*": {
                 "schema": {
@@ -46301,7 +46301,7 @@
           {
             "name": "statusGroup",
             "in": "query",
-            "description": "회원포탈 교육/강의/봉사 현황 탭용 statusGroup. 허용값: WAITING | IN_PROGRESS | COMPLETED | CANCELLED. 생략 시 전체(작성 중 포함). displayStatus 매핑: WAITING → 결과 대기, 서류 합격 (작성 중은 목록 비노출/WAITING 제외); IN_PROGRESS → 진행 중; COMPLETED → 진행 완료, 활동 포기, 신청 반려, 신청 취소 (지원자 본인 취소 건은 포털 목록 히스토리에서 제외되므로 목록에 안 나올 수 있음); CANCELLED → deprecated. COMPLETED와 동일. 종료 탭은 COMPLETED만 사용. 알 수 없는 값은 400 INVALID_REQUEST.",
+            "description": "회원포탈 교육/강의/봉사 현황 탭용 statusGroup. 허용값: WAITING | IN_PROGRESS | COMPLETED | CANCELLED. 생략 시 전체(작성 중 포함). displayStatus 매핑: WAITING → 결과 대기, 서류 합격 (작성 중은 목록 비노출/WAITING 제외); IN_PROGRESS → 진행 중; COMPLETED → 진행 완료, 활동 포기, 신청 반려, 신청 취소 (지원자 본인 취소 건은 포털 목록 히스토리에서 제외되므로 목록에 안 나올 수 있음); CANCELLED → deprecated. COMPLETED와 동일. 종료 탭은 COMPLETED만 사용. GENERAL 개인(INDIVIDUAL) 진행 완료: 사업기간이 종료되면(KST 사업 종료일 다음날 또는 period_status=COMPLETED) 만족도 조사 제출 여부와 관계없이 진행 완료. 사업기간 중에는 수료 투영(completion_status=COMPLETED)과 본인 만족도 제출이 있을 때만 진행 완료. 활동 포기·신청 반려는 이 판정보다 우선. 알 수 없는 값은 400 INVALID_REQUEST.",
             "required": false,
             "schema": {
               "type": "string",
@@ -71204,7 +71204,11 @@
             "type": "string"
           },
           "fileObjectIds": {
-            "type": "array",
+            "type": [
+              "array",
+              "null"
+            ],
+            "description": "사유 불참 증빙 fileObjectId. CMS UJAT 봉사 탭은 생략(null/[]). 없으면 absence-reasons에 사유 텍스트만 남고 파일은 없다.",
             "items": {
               "type": "integer",
               "format": "int64"
@@ -82779,7 +82783,7 @@
               "string",
               "null"
             ],
-            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. 일반(GENERAL*) 프로그램 CMS_PROGRESS_ADD에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).",
+            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).",
             "maxLength": 200,
             "minLength": 0
           },
@@ -82788,11 +82792,11 @@
               "string",
               "null"
             ],
-            "description": "회원 프로필에 1365가 없을 때만 필수. 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다."
+            "description": "회원 프로필에 1365가 없을 때만 필수(시안 기본정보 단락 없음). 값이 있으면 member 1365 식별자에 반영하고 기존 consent-records는 덮어쓰지 않습니다. UJAT CMS_PROGRESS_ADD에서 프로필에 없고 본 필드도 없으면 422 VOLUNTEER_1365_REQUIRED. 일반(GENERAL*) 프로그램은 기존 400 VOLUNTEER_1365_ID_REQUIRED."
           },
           "jaProgramExperienceConsentRequest": {
             "type": "string",
-            "description": "일반 프로그램은 JA 봉사 프로그램 진행 경험입니다. UJAT는 교육 진행 경험 여부(있음=REQUESTED, 없음=NOT_REQUESTED)이며 REQUESTED여도 previousJaProgram을 요구하지 않습니다.",
+            "description": "JA 봉사 프로그램 진행 경험(Figma 일반 추가 등록 폼과 동일). REQUESTED이면 previousJaProgram{programYear,programName,certificateFileIds} 필수. 일반 프로그램은 400 VOLUNTEER_PREVIOUS_JA_REQUIRED, UJAT CMS_PROGRESS_ADD는 422 VOLUNTEER_PREVIOUS_JA_REQUIRED. previousUjatTerm을 요구하지 않습니다.",
             "enum": [
               "REQUESTED",
               "NOT_REQUESTED"
@@ -82803,7 +82807,7 @@
             "$ref": "#/components/schemas/PreviousJaProgramRequest"
           },
           "previousUjatTerm": {
-            "description": "UJAT 이전 활동 기수. 일반 프로그램 previousJaProgram과 다릅니다. 생략 가능. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다.",
+            "description": "사용자 홈 UJAT 봉사 신청서의 이전 활동 기수. CMS_PROGRESS_ADD에서는 생략 가능하며 없으면 기수를 invent하지 않습니다. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다.",
             "oneOf": [
               {
                 "$ref": "#/components/schemas/PreviousUjatTermRequest"
@@ -82818,14 +82822,14 @@
               "string",
               "null"
             ],
-            "description": "UJAT 희망 교육 활동 지역. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다."
+            "description": "사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다."
           },
           "recruitHalf": {
             "type": [
               "string",
               "null"
             ],
-            "description": "UJAT 봉사자 모집 반기. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다.",
+            "description": "UJAT 봉사자 모집 반기. CMS 교육 진행 탭(edu_h1_volunteers/edu_h2_volunteers)에서 온 값. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다.",
             "enum": [
               "FIRST_HALF",
               "SECOND_HALF",
@@ -82840,7 +82844,7 @@
               "string",
               "null"
             ],
-            "description": "UJAT 신청 유형. new→NEW, ujat-graduate→UJAT_GRADUATE. 생략 가능. NEW만 자유작성 4문항을 요구합니다.",
+            "description": "사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다.",
             "enum": [
               "NEW",
               "UJAT_GRADUATE",
@@ -102017,7 +102021,7 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태",
+            "description": "회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료.",
             "enum": [
               "결과 대기",
               "서류 합격",
@@ -102441,7 +102445,7 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다.",
+            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료.",
             "enum": [
               "결과 대기",
               "서류 합격",
@@ -103043,6 +103047,32 @@
             "items": {
               "$ref": "#/components/schemas/MemberPortalEducationCurriculumSession"
             }
+          },
+          "assignmentStatus": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null",
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED",
+              "REASSIGNMENT_REQUIRED"
+            ]
+          },
+          "classLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 봉사자 학급 라벨. allocation-matrix cell.classLabel과 동일 SSOT. UNASSIGNED는 null. 빈 문자열 금지. 비UJAT이면 null"
+          },
+          "organizationName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개"
           }
         }
       },
@@ -112921,7 +112951,28 @@
             "type": "boolean"
           },
           "assignmentStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED",
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED",
+              "REASSIGNMENT_REQUIRED"
+            ]
+          },
+          "replacementParticipantId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "대체 봉사자 program_participant.id. unavailable=false이면 null"
+          },
+          "replacementVolunteerName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "대체 봉사자 회원명 원문. 없으면 null. 빈 문자열 금지. unavailable=false이면 null"
           }
         }
       },
@@ -112937,14 +112988,19 @@
           },
           "educationStartAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "교육 시작 시각(offset date-time). 달력일은 Asia/Seoul. UTC date slice(0,10) 금지"
           },
           "organizationApplicationId": {
             "type": "integer",
             "format": "int64"
           },
           "organizationName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "기관명. 없으면 null. 빈 문자열 금지"
           },
           "organizationRegion": {
             "type": [
@@ -112958,7 +113014,46 @@
           },
           "classCount": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "확정 학급 슬롯 수 참고값. 학급 행 SSOT가 아니며 classCount로 N반을 invent하지 않는다"
+          },
+          "educationSlots": {
+            "type": "array",
+            "description": "해당 열의 확정 교육 슬롯. 없으면 빈 배열. id invent 금지",
+            "items": {
+              "$ref": "#/components/schemas/AllocationEducationSlot"
+            }
+          }
+        }
+      },
+      "AllocationEducationSlot": {
+        "type": "object",
+        "properties": {
+          "educationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "ujat_organization_class_schedule_assignment.id"
+          },
+          "classLabel": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "슬롯 class_label 원문. 없으면 null. grade+className으로 합성하지 않음"
+          },
+          "grade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "학년 원문. 없으면 null"
+          },
+          "className": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "반 이름 원문. 없으면 null"
           }
         }
       },
@@ -113069,6 +113164,15 @@
           "rank": {
             "type": "integer",
             "format": "int32"
+          },
+          "volunteerName": {
+            "type": "string",
+            "description": "memberName과 동일. CMS partnerOptionsFromRecommendation 소비 필드."
+          },
+          "assignmentDayCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "assignedScheduleCount와 동일. CMS partnerOptionsFromRecommendation 소비 필드."
           }
         }
       },

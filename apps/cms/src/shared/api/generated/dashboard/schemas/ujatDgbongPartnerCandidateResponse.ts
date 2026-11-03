@@ -14,4 +14,8 @@ export interface UjatDgbongPartnerCandidateResponse {
   samePartnerCount?: number;
   attendanceManagerCount?: number;
   rank?: number;
+  /** memberName과 동일. CMS partnerOptionsFromRecommendation 소비 필드. */
+  volunteerName?: string;
+  /** assignedScheduleCount와 동일. CMS partnerOptionsFromRecommendation 소비 필드. */
+  assignmentDayCount?: number;
 }
