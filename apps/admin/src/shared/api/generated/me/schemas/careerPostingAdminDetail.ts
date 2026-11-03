@@ -20,7 +20,10 @@ export interface CareerPostingAdminDetail {
   recruitEnd?: string;
   createdAt?: string;
   version?: number;
+  /** 일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다. */
   body?: string;
   attachment?: AssetResponse;
   updatedAt?: string;
+  buttonLabel?: string | null;
+  linkUrl?: string | null;
 }

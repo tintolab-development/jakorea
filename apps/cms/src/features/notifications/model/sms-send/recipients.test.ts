@@ -35,25 +35,26 @@ describe('resolveSmsSendRecipientTypeMode', () => {
 })
 
 describe('smsSendRecipientTypeLabel', () => {
-  it('maps member types to FE labels when no program is selected', () => {
+  it('shows server typeLabel and does not replace it with memberType', () => {
     expect(
-      smsSendRecipientTypeLabel(recipient({ memberType: 'teacher_instructor' }), 'member')
+      smsSendRecipientTypeLabel(
+        recipient({ memberType: 'teacher_instructor', typeLabel: '교사 겸 강사' }),
+        'member'
+      )
     ).toBe('교사 겸 강사')
-    expect(smsSendRecipientTypeLabel(recipient({ memberType: 'school_teacher' }), 'member')).toBe(
-      '교사'
-    )
-  })
-
-  it('maps participation types when a program is selected', () => {
     expect(
-      smsSendRecipientTypeLabel(recipient({ participationType: 'participant' }), 'participation')
+      smsSendRecipientTypeLabel(
+        recipient({
+          memberType: 'general',
+          participationType: 'participant',
+          typeLabel: '참여자',
+        }),
+        'participation'
+      )
     ).toBe('참여자')
     expect(
-      smsSendRecipientTypeLabel(recipient({ participationType: 'instructor' }), 'participation')
-    ).toBe('강사')
-    expect(
-      smsSendRecipientTypeLabel(recipient({ participationType: 'volunteer' }), 'participation')
-    ).toBe('봉사자')
+      smsSendRecipientTypeLabel(recipient({ memberType: 'school_teacher' }), 'member')
+    ).toBe('')
   })
 })
 

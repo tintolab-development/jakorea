@@ -88,9 +88,12 @@ export type { AlertModalProps } from './alert-modal'
 export { ConfirmModal } from './confirm-modal'
 export type { ConfirmModalProps } from './confirm-modal'
 export { cmsAlertModal, isCmsAlertModalReady, CMS_ALERT_MODAL_CLOSED_EVENT } from './cms-alert-modal-api'
+export { showDeleteCompletedAlert } from './show-delete-completed-alert'
 export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 export { CmsAlertModalProvider, useCmsAlert } from './cms-alert-modal-provider'
 export type { CmsAlertModalContextValue } from './cms-alert-modal-provider'
+
+export { AdminInfiniteTableFooter } from './admin-infinite-table-footer'
 
 export { PageContentLoading } from './page-content-loading'
 export type {

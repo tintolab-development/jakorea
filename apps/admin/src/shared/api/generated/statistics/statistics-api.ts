@@ -16,6 +16,7 @@ import type {
   SummaryParams,
   VisitorSessionResponse,
   VisitorStatistics,
+  VisitorStatisticsMetadata,
   VisitorsParams
 } from './schemas';
 
@@ -65,6 +66,15 @@ const visitors = (
       options);
     }
 
+const visitorsMetadata = (
+
+ options?: SecondParameter<typeof customInstance<VisitorStatisticsMetadata>>,) => {
+      return customInstance<VisitorStatisticsMetadata>(
+      {url: `/api/admin/statistics/visitors/metadata`, method: 'GET'
+    },
+      options);
+    }
+
 const summary = (
     params?: SummaryParams,
  options?: SecondParameter<typeof customInstance<StatisticsSummary>>,) => {
@@ -95,11 +105,12 @@ const daily = (
       options);
     }
 
-return {session,record,catalog,visitors,summary,menus,daily}};
+return {session,record,catalog,visitors,visitorsMetadata,summary,menus,daily}};
 export type SessionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIStatisticsSubset>['session']>>>
 export type RecordResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIStatisticsSubset>['record']>>>
 export type CatalogResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIStatisticsSubset>['catalog']>>>
 export type VisitorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIStatisticsSubset>['visitors']>>>
+export type VisitorsMetadataResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIStatisticsSubset>['visitorsMetadata']>>>
 export type SummaryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIStatisticsSubset>['summary']>>>
 export type MenusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIStatisticsSubset>['menus']>>>
 export type DailyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaHomepageAdminAPIStatisticsSubset>['daily']>>>

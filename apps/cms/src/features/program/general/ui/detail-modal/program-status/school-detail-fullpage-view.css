@@ -517,9 +517,18 @@
 .school-detail-fullpage-view
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status)
-  > td.status-dropdown-cell__cell-status {
+  > td.status-dropdown-cell__cell-status,
+.school-detail-fullpage-view
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td.status-dropdown-cell__cell-status.ant-table-cell-row-hover {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  height: 53px !important;
+  min-height: 53px !important;
+  max-height: 53px !important;
+  vertical-align: middle !important;
+  transition: none !important;
 }
 
 /* 역할 tag100: 열 116px — 닫힘/열림 동일 (열림 시 136 재중앙 밀림 방지) */
@@ -552,7 +561,11 @@
 .school-detail-fullpage-view
   .ant-table-tbody
   > tr:has(td.status-dropdown-cell__cell-status--tag-160)
-  > td.status-dropdown-cell__cell-status--tag-160 {
+  > td.status-dropdown-cell__cell-status--tag-160,
+.school-detail-fullpage-view
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status--tag-160)
+  > td.status-dropdown-cell__cell-status--tag-160.ant-table-cell-row-hover {
   width: 160px !important;
   min-width: 160px !important;
   max-width: 160px !important;
@@ -560,6 +573,9 @@
   vertical-align: middle !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  transition: none !important;
 }
 
 .school-detail-fullpage-view__assignment-status--unavailable {

@@ -5,12 +5,14 @@ import type {
   NoticeListFilter,
   NoticeUpdateInput,
 } from '@/entities/notices/model/types'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
+import { collectInfiniteCachedRows } from '@/shared/lib/admin-infinite-list'
 import { shouldUseNoticesRemoteApi } from './capabilities'
 import { noticesQueryKeys } from './query-keys'
 import {
   createNoticeService,
   getNoticeService,
-  listNoticesService,
+  listNoticesPageService,
   removeNoticesService,
   setNoticePublicService,
   updateNoticeService,
@@ -38,13 +40,11 @@ function invalidateNoticeLists(queryClient: ReturnType<typeof useQueryClient>) {
 }
 
 export function useNoticesList(filter: NoticeListFilter, enabled = true) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: noticesQueryKeys.list(dataSource, filterKey(filter)),
-    queryFn: () => listNoticesService(filter),
+  return useAdminInfiniteList({
+    queryKey: noticesQueryKeys.list(source(), filterKey(filter)),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    isRemote: shouldUseNoticesRemoteApi(),
+    fetchPage: page => listNoticesPageService(filter, page),
   })
 }
 
@@ -91,14 +91,8 @@ export function useRemoveNotices() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: string[]) => {
-      const cachedLists = queryClient.getQueriesData<Notice[]>({
-        queryKey: noticesQueryKeys.lists(),
-      })
-      const merged = new Map<string, Notice>()
-      for (const [, rows] of cachedLists) {
-        for (const row of rows ?? []) merged.set(row.id, row)
-      }
-      return removeNoticesService(ids, [...merged.values()])
+      const cached = collectInfiniteCachedRows<Notice>(queryClient, noticesQueryKeys.lists())
+      return removeNoticesService(ids, cached)
     },
     retry: false,
     onSuccess: (_void, ids) => {
@@ -121,13 +115,12 @@ export function useSetNoticePublic() {
       if (cached) {
         return setNoticePublicService(id, isPublic, cached)
       }
-      const lists = queryClient.getQueriesData<Notice[]>({
-        queryKey: noticesQueryKeys.lists(),
-      })
-      for (const [, rows] of lists) {
-        const hit = rows?.find(row => row.id === id)
-        if (hit) return setNoticePublicService(id, isPublic, hit)
-      }
+      const cachedRows = collectInfiniteCachedRows<Notice>(
+        queryClient,
+        noticesQueryKeys.lists(),
+      )
+      const hit = cachedRows?.find(row => row.id === id)
+      if (hit) return setNoticePublicService(id, isPublic, hit)
       return setNoticePublicService(id, isPublic)
     },
     retry: false,

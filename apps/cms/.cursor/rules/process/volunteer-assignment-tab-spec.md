@@ -123,7 +123,9 @@ category: process
 | education | 교육 배정 | `[이름] 봉사자를 [M월 D일] 교육에 배정하시겠습니까?` | 해당 일자 **미배정 학급**만 | partner-recommendation |
 | partner | 파트너 배정 | `[이름] 봉사자의 [M월 D일] 교육 파트너로…` | 교육 배정 학급 **disabled** 표시 | partner-recommendation |
 
-파트너 정렬은 recommendation 응답 + `partnerOptionsFromRecommendation`. 확인 버튼 라벨: **배정**.
+파트너 정렬은 recommendation 응답 + `partnerOptionsFromRecommendation` (`volunteerName`/`assignmentDayCount`, 없으면 `memberName`/`assignedScheduleCount`). 확인 버튼 라벨: **배정**.
+
+취소: `assignmentNotificationSent === false`만 `{}`. `true`는 사유+알림. `educationProgress === completed`는 취소 불가. 409 `UJAT_PARTNER_ASSIGNMENT_EDUCATION_COMPLETED`는 서버 message + invalidate, 재시도 없음. `assignmentGroupId`/`scheduleId` 없으면 취소·재배정 불가.
 
 ---
 

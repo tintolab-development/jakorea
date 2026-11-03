@@ -42,10 +42,11 @@ import type {
 } from './types'
 import {
   formatDisplayDate,
-  formatDisplayDateRange,
+  formatDisplayDateRangeCompact,
   formatPaddedKoreanSeoulDate,
   toSeoulDisplayParts,
 } from '../../../shared/lib/format-display-date.ts'
+import { readCareerPostingLinkFields } from '../lib/link-cta.ts'
 
 const CULTURE_CODE_TO_ID: Record<string, ThriveValueId> = {
   MAKE_AN_IMPACT: 'impact',
@@ -239,7 +240,7 @@ export function formatCareerDateWithWeekday(value: string | undefined | null): s
   return formatDisplayDate(value)
 }
 
-/** 시작·종료가 둘 다 유효할 때만. 하나라도 없으면 빈 문자열. */
+/** 시작·종료가 둘 다 유효할 때만. CTA 시안: `2026년 5월 15일 ~ 6월 15일`. */
 export function formatCareerRecruitPeriodLabel(
   start: string | undefined | null,
   end: string | undefined | null
@@ -247,7 +248,7 @@ export function formatCareerRecruitPeriodLabel(
   const startLabel = formatCareerDateWithWeekday(start)
   const endLabel = formatCareerDateWithWeekday(end)
   if (!startLabel || !endLabel) return ''
-  return formatDisplayDateRange(start, end, { empty: '' })
+  return formatDisplayDateRangeCompact(start, end, { empty: '' })
 }
 
 export function mapPublicCareerPostingItem(
@@ -321,6 +322,10 @@ export function mapPublicCareerPostingDetail(
 
   const viewCount =
     typeof item.viewCount === 'number' && Number.isFinite(item.viewCount) ? item.viewCount : null
+  const link = readCareerPostingLinkFields({
+    buttonLabel: item.buttonLabel,
+    linkUrl: item.linkUrl,
+  })
 
   return {
     id,
@@ -334,8 +339,8 @@ export function mapPublicCareerPostingDetail(
     contentFormat: 'html',
     viewCount,
     attachments: mapPostingAttachment(item.attachment),
-    buttonLabel: '',
-    linkUrl: '',
+    buttonLabel: link.buttonLabel,
+    linkUrl: link.linkUrl,
   }
 }
 

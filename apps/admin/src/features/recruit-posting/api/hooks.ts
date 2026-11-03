@@ -5,13 +5,14 @@ import type {
   RecruitPostingListFilter,
   RecruitPostingUpdateInput,
 } from '@/entities/recruit-posting/model/types'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
 import { shouldUseRecruitPostingRemoteApi } from './capabilities'
 import { canToggleRecruitPostingVisibility } from './permissions'
 import { recruitPostingQueryKeys } from './query-keys'
 import {
   createRecruitPostingService,
   getRecruitPostingService,
-  listRecruitPostingsService,
+  listRecruitPostingsPageService,
   removeRecruitPostingsService,
   setRecruitPostingPublicService,
   updateRecruitPostingService,
@@ -34,14 +35,16 @@ function filterKey(filter: RecruitPostingListFilter): string {
   })
 }
 
-export function useRecruitPostingsList(filter: RecruitPostingListFilter) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: recruitPostingQueryKeys.list(dataSource, filterKey(filter)),
-    queryFn: () => listRecruitPostingsService(filter),
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    gcTime: 15 * 60_000,
-    retry: dataSource === 'remote' ? 1 : false,
+function invalidatePostingLists(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
+}
+
+export function useRecruitPostingsList(filter: RecruitPostingListFilter, enabled = true) {
+  return useAdminInfiniteList({
+    queryKey: recruitPostingQueryKeys.list(source(), filterKey(filter)),
+    enabled,
+    isRemote: shouldUseRecruitPostingRemoteApi(),
+    fetchPage: page => listRecruitPostingsPageService(filter, page),
   })
 }
 
@@ -78,7 +81,7 @@ export function useSetRecruitPostingPublic() {
       setRecruitPostingPublicService(id, isPublic, version),
     retry: false,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
+      invalidatePostingLists(queryClient)
     },
   })
 }
@@ -89,7 +92,7 @@ export function useCreateRecruitPosting() {
     mutationFn: (input: RecruitPostingCreateInput) => createRecruitPostingService(input),
     retry: false,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
+      invalidatePostingLists(queryClient)
     },
   })
 }
@@ -109,7 +112,7 @@ export function useUpdateRecruitPosting() {
       void queryClient.invalidateQueries({
         queryKey: recruitPostingQueryKeys.detail(source(), data.id),
       })
-      void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
+      invalidatePostingLists(queryClient)
     },
   })
 }
@@ -119,8 +122,13 @@ export function useRemoveRecruitPostings() {
   return useMutation({
     mutationFn: (ids: string[]) => removeRecruitPostingsService(ids),
     retry: false,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: recruitPostingQueryKeys.lists() })
+    onSuccess: (_void, ids) => {
+      invalidatePostingLists(queryClient)
+      for (const id of ids) {
+        queryClient.removeQueries({
+          queryKey: recruitPostingQueryKeys.detail(source(), id),
+        })
+      }
     },
   })
 }

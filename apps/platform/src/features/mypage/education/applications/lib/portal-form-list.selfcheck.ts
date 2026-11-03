@@ -5,6 +5,7 @@ import {
   indexScheduleAssignmentFormsByScheduleId,
   isPortalAssignmentFormType,
   isPortalBoundFormVersionUsable,
+  isPortalSatisfactionFormType,
   isPortalSurveyFormType,
   mapAvailableProgramFormToListItem,
   mapPortalFormListItemToSurveyEntry,
@@ -40,6 +41,9 @@ assert.equal(
 
 assert.equal(isPortalSurveyFormType('SURVEY'), true)
 assert.equal(isPortalSurveyFormType('SATISFACTION'), false)
+assert.equal(isPortalSurveyFormType('LECTURE_EVALUATION'), false)
+assert.equal(isPortalSatisfactionFormType('SATISFACTION'), true)
+assert.equal(isPortalSatisfactionFormType('LECTURE_EVALUATION'), false)
 assert.equal(isPortalBoundFormVersionUsable('PUBLISHED'), true)
 assert.equal(isPortalBoundFormVersionUsable('ARCHIVED'), true)
 assert.equal(isPortalBoundFormVersionUsable(undefined), true)

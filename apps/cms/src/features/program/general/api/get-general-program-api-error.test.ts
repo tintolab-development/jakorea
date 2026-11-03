@@ -552,6 +552,45 @@ describe('schedule line API errors', () => {
     ).toContain('사전교육만으로는 일정형 요건을 충족하지 않습니다')
   })
 
+  it('UJAT 422 VOLUNTEER_1365_REQUIRED와 일반 400 VOLUNTEER_1365_ID_REQUIRED를 error.code로 가른다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 422,
+            data: { success: false, error: { code: 'VOLUNTEER_1365_REQUIRED' } },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('1365 ID가 없어')
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 400,
+            data: { success: false, error: { code: 'VOLUNTEER_1365_ID_REQUIRED' } },
+          },
+        },
+        'fallback'
+      )
+    ).toBe('1365 ID를 입력해 주세요.')
+  })
+
+  it('UJAT 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED를 반기 모집 안내로 변환한다', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        {
+          response: {
+            status: 422,
+            data: { success: false, error: { code: 'VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED' } },
+          },
+        },
+        'fallback'
+      )
+    ).toContain('해당 반기')
+  })
+
   it('서버 한글 메시지가 있으면 그대로 쓴다', () => {
     expect(
       getGeneralProgramApiErrorMessage(

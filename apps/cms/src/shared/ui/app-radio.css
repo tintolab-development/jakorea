@@ -191,14 +191,18 @@
 .app-radio-group--medium .ant-radio-wrapper-checked,
 .app-radio--large.ant-radio-wrapper-checked,
 .app-radio--medium.ant-radio-wrapper-checked {
-  color: var(--JA-mint-01, #01a1af) !important;
+  overflow: hidden;
+  color: var(--Brand-500, #00a0af) !important;
+  text-overflow: ellipsis;
 }
 
 .app-radio-group--large .ant-radio-wrapper-checked:hover,
 .app-radio-group--medium .ant-radio-wrapper-checked:hover,
 .app-radio--large.ant-radio-wrapper-checked:hover,
 .app-radio--medium.ant-radio-wrapper-checked:hover {
-  color: var(--JA-mint-01, #01a1af) !important;
+  overflow: hidden;
+  color: var(--Brand-500, #00a0af) !important;
+  text-overflow: ellipsis;
 }
 /* ----- disabled ----- */
 .app-radio-group--large .ant-radio-wrapper-disabled,
@@ -362,7 +366,9 @@
 .app-radio--small.ant-radio-wrapper-checked,
 .app-radio-group--small .ant-radio-wrapper-checked:hover,
 .app-radio--small.ant-radio-wrapper-checked:hover {
-  color: var(--JA-mint-01, #01a1af) !important;
+  overflow: hidden;
+  color: var(--Brand-500, #00a0af) !important;
+  text-overflow: ellipsis;
 }
 
 .app-radio-group--small .ant-radio-wrapper-disabled,

@@ -9,9 +9,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import type { Notice, NoticeAttachment, NoticeCreateInput } from '@/entities/notices/model/types'
 import { DEFAULT_AUTHOR } from '@/features/notices/api/store'
-import { shouldUseNoticesRemoteApi } from '@/features/notices/api/capabilities'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
-import { getRemoteRichTextBodyError, RichTextEditor } from '@/shared/rich-text'
+import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
   CmsButton,
   CmsDatePicker,
@@ -119,17 +118,21 @@ export function NoticeFormModal({
     [open, mode, initial?.id, editorContentFormat]
   )
 
-  const { editor, editorMinHeight, getMarkdown, getHTML, resolveImageSrc } = useNoticeWysiwygEditor(
-    open,
-    initialMarkdown,
-    editorResetKey,
-    {
-      placeholder: '공지사항 내용을 입력하세요',
-      contentFormat: editorContentFormat,
-      // 기존 스펙: 삽입(이미지·YouTube) 유지. remote sanitize와 무관하게 UI는 full
-      allowInlineMedia: true,
-    }
-  )
+  const {
+    editor,
+    editorMinHeight,
+    getHTML,
+    editorMode,
+    htmlSource,
+    onEditorModeChange,
+    onHtmlSourceChange,
+    resolveImageSrc,
+  } = useNoticeWysiwygEditor(open, initialMarkdown, editorResetKey, {
+    placeholder: '공지사항 내용을 입력하세요',
+    contentFormat: editorContentFormat,
+    // 기존 스펙: 삽입(이미지·YouTube) 유지
+    allowInlineMedia: true,
+  })
 
   const resetFromInitial = useCallback(() => {
     if (mode === 'edit' && initial) {
@@ -219,23 +222,19 @@ export function NoticeFormModal({
       showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
       return
     }
-    const contentMarkdown = (
-      shouldUseNoticesRemoteApi() || editorContentFormat === 'html' ? getHTML() : getMarkdown()
-    ).trim()
-    if (!contentMarkdown) {
+    const contentHtml = getHTML().trim()
+    if (isEmptyAdminHtml(contentHtml)) {
       showAlert({ title: '입력 확인', content: '공지사항 내용을 입력해 주세요.' })
       return
     }
-    if (shouldUseNoticesRemoteApi()) {
-      const bodyError = getRemoteRichTextBodyError(contentMarkdown)
-      if (bodyError) {
-        showAlert({ title: '입력 확인', content: bodyError })
-        return
-      }
+    const bodyError = getRemoteRichTextBodyError(contentHtml)
+    if (bodyError) {
+      showAlert({ title: '입력 확인', content: bodyError })
+      return
     }
     onSubmit({
       title: t,
-      contentMarkdown,
+      contentMarkdown: contentHtml,
       isPublic,
       isPinned,
       publishedAt: publishedAt.toISOString(),
@@ -245,9 +244,7 @@ export function NoticeFormModal({
   }, [
     publishedAt,
     title,
-    getMarkdown,
     getHTML,
-    editorContentFormat,
     isPublic,
     isPinned,
     attachments,
@@ -267,6 +264,7 @@ export function NoticeFormModal({
         onCancel={onCancel}
         title={titleText}
         size="large"
+        className="notice-form-modal"
         footer={
           <div className="notice-form-modal__footer">
             {mode === 'edit' && onDelete ? (
@@ -275,7 +273,8 @@ export function NoticeFormModal({
                 size="large"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
-                onClick={() => setDeleteConfirmOpen(true)} >
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
                 공지사항 삭제
               </CmsButton>
             ) : null}
@@ -285,7 +284,8 @@ export function NoticeFormModal({
                 size="large"
                 type="button"
                 disabled={confirmLoading || deleteLoading}
-                onClick={onCancel} >
+                onClick={onCancel}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -293,7 +293,8 @@ export function NoticeFormModal({
                 size="large"
                 type="button"
                 loading={confirmLoading}
-                onClick={handleSubmit} >
+                onClick={handleSubmit}
+              >
                 {submitLabel}
               </CmsButton>
             </div>
@@ -372,6 +373,10 @@ export function NoticeFormModal({
                 allowInlineMedia
                 resolveImageSrc={resolveImageSrc}
                 allowRawHtmlBlock
+                editorMode={editorMode}
+                htmlSource={htmlSource}
+                onEditorModeChange={onEditorModeChange}
+                onHtmlSourceChange={onHtmlSourceChange}
               />
             </div>
           </div>

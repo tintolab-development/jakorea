@@ -15,7 +15,6 @@ import {
   useExportMemberLoginLogs,
   useMemberLoginLogsList,
 } from '@/features/member-login-log/api/hooks'
-import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import {
   logListRowNumber,
@@ -220,30 +219,13 @@ export function MemberLoginLogPage() {
   )
 
   const handleExcel = useCallback(() => {
-    void exportMutation
-      .mutateAsync(appliedFilter)
-      .then(result => {
-        if (result === 'remote-downloaded') return
-        const all = result.rows
-        downloadCsv({
-          filenameBase: '회원_로그인_이력',
-          headers: ['No.', nameLabel, '아이디', '로그인 일시', 'IP'],
-          rows: all.map((row, index) => [
-            all.length - index,
-            row.name,
-            row.loginId,
-            formatLogDateTime(row.loggedAt),
-            row.ip,
-          ]),
-        })
+    void exportMutation.mutateAsync(appliedFilter).catch(() => {
+      showAlert({
+        title: '내보내기 실패',
+        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
       })
-      .catch(() => {
-        showAlert({
-          title: '내보내기 실패',
-          content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-        })
-      })
-  }, [appliedFilter, exportMutation, nameLabel, showAlert])
+    })
+  }, [appliedFilter, exportMutation, showAlert])
 
   const columns = useMemo<ColumnsType<MemberLoginLog>>(
     () => [

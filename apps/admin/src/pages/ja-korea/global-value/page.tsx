@@ -155,6 +155,7 @@ export function GlobalValuePage() {
         key: 'icon',
         width: 88,
         align: 'center',
+        className: 'global-value-table__col--icon',
         render: (_value, record) => <ValueIcon iconKey={record.iconKey} size={48} />,
       },
       {

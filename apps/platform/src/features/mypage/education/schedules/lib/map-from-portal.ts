@@ -274,7 +274,8 @@ export function mapPortalEducationSchedule(
   const assignmentStatus = optionalText(item.assignmentStatus ?? undefined)
   const scheduleStatus = optionalText(item.scheduleStatus)
   const classLabel = optionalText(item.classLabel)
-  const locationName = optionalText(item.locationName)
+  const organizationName = optionalText(item.organizationName)
+  const locationName = optionalText(item.locationName) ?? organizationName
   const team = mapTeamInfo(item.teamRole, item.teamName)
   const attendanceStatus = mapAttendance(item.attendanceStatus)
   const absenceReasonStatus = optionalText(item.absenceReasonStatus)?.toUpperCase()
@@ -311,6 +312,7 @@ export function mapPortalEducationSchedule(
     ...(scheduleStatus ? { scheduleStatus } : {}),
     ...(classLabel ? { classLabel } : {}),
     ...(locationName ? { locationName } : {}),
+    ...(organizationName ? { organizationName } : {}),
     ...(team ? { team } : {}),
   }
 }

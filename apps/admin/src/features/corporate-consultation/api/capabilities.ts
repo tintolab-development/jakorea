@@ -1,8 +1,6 @@
 /**
- * 기업 후원 상담 — remote API opt-in
+ * corporate-consultation — Remote API only (localStorage mock 없음)
  */
-import { shouldUseHomepageRemoteApi } from '@/shared/lib/remote-api-session'
-
 export function shouldUseCorporateConsultationRemoteApi(): boolean {
-  return shouldUseHomepageRemoteApi()
+  return true
 }

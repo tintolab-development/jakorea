@@ -18,7 +18,7 @@ export function RegionAssignmentTable({ data }: { data: RegionAssignmentTableDat
             <col className="cross-table__label-col" />
             <col className="ujat-region-assignment-table__volunteer-col" />
             {columns.map(column => (
-              <col key={column.id} />
+              <col key={column.id} className="ujat-region-assignment-table__schedule-col" />
             ))}
           </colgroup>
           <thead>

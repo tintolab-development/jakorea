@@ -1,9 +1,12 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Editor } from '@tiptap/react'
 import { ProgramBackButton } from '@/features/program'
 import {
   getImpactStoryIdFromPath,
   IMPACT_STORIES_PATH,
   ImpactStoryAdjacentNav,
   useImpactStoryDetail,
+  type ImpactStoryDetail,
   type ImpactStoryDetailStatus,
 } from '@/features/impact-story'
 import { RichTextViewer } from '@/shared/rich-text'
@@ -25,6 +28,85 @@ function formatViewCount(count: number) {
 function statusMessage(status: ImpactStoryDetailStatus) {
   if (status === 'error') return '임팩트 스토리를 불러오지 못했습니다.'
   return '임팩트 스토리를 찾을 수 없습니다.'
+}
+
+function ImpactStoryBody({ detail, body }: { detail: ImpactStoryDetail; body: string }) {
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const frameCleanupRef = useRef<(() => void) | null>(null)
+  const [editorReady, setEditorReady] = useState(false)
+  const [inlineImagesLoading, setInlineImagesLoading] = useState(false)
+  const [rawHtmlReady, setRawHtmlReady] = useState(false)
+  const handleEditor = useCallback((editor: Editor | null) => {
+    frameCleanupRef.current?.()
+    frameCleanupRef.current = null
+
+    if (!editor) {
+      setEditorReady(false)
+      setRawHtmlReady(false)
+      return
+    }
+
+    setEditorReady(true)
+    setRawHtmlReady(false)
+    const frames = Array.from(
+      bodyRef.current?.querySelectorAll<HTMLIFrameElement>(
+        '.rich-text-raw-html-block__frame'
+      ) ?? []
+    )
+
+    if (frames.length === 0) {
+      setRawHtmlReady(true)
+      return
+    }
+
+    let pendingFrames = frames.length
+    let active = true
+    const handleFrameLoad = () => {
+      if (!active) return
+      pendingFrames -= 1
+      if (pendingFrames === 0) setRawHtmlReady(true)
+    }
+    const cleanup = () => {
+      active = false
+      frames.forEach(frame => frame.removeEventListener('load', handleFrameLoad))
+    }
+    frameCleanupRef.current = cleanup
+
+    frames.forEach(frame => {
+      if (frame.contentDocument?.readyState === 'complete') {
+        handleFrameLoad()
+      } else {
+        frame.addEventListener('load', handleFrameLoad, { once: true })
+      }
+    })
+  }, [])
+  const handleInlineImagesLoadingChange = useCallback((loading: boolean) => {
+    setInlineImagesLoading(loading)
+  }, [])
+  useEffect(() => () => frameCleanupRef.current?.(), [])
+  const isRendering = !editorReady || !rawHtmlReady || inlineImagesLoading
+  const bodyClassName = [styles.body, isRendering ? styles.bodyRendering : null]
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <div ref={bodyRef} className={bodyClassName} aria-busy={isRendering}>
+      {isRendering ? (
+        <div className={styles.bodyLoading} role="status" aria-label="본문을 렌더링하는 중">
+          <PFLoadingSpinner label="본문을 렌더링하는 중" />
+        </div>
+      ) : null}
+      <RichTextViewer
+        key={detail.id}
+        content={body}
+        contentFormat={detail.bodyFormat ?? 'html'}
+        maxHeight="none"
+        className={styles.content}
+        onEditor={handleEditor}
+        onInlineImagesLoadingChange={handleInlineImagesLoadingChange}
+      />
+    </div>
+  )
 }
 
 export function ImpactStoryDetailPage() {
@@ -131,17 +213,11 @@ export function ImpactStoryDetailPage() {
 
           <PFDivider variant="focus" />
 
-          <div className={styles.body}>
-            {body ? (
-              <RichTextViewer
-                key={detail.id}
-                content={body}
-                contentFormat={detail.bodyFormat ?? 'html'}
-                maxHeight="none"
-                className={styles.content}
-              />
-            ) : (
-              detail.blocks
+          {body ? (
+            <ImpactStoryBody detail={detail} body={body} />
+          ) : (
+            <div className={styles.body}>
+              {detail.blocks
                 .filter(block => block.type === 'image')
                 .map((block, index) => (
                   <div
@@ -155,9 +231,9 @@ export function ImpactStoryDetailPage() {
                     }}
                     aria-hidden="true"
                   />
-                ))
-            )}
-          </div>
+                ))}
+            </div>
+          )}
 
           <div className={styles.footerNav}>
             <ImpactStoryAdjacentNav previous={adjacent.previous} next={adjacent.next} />

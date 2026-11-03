@@ -27,6 +27,7 @@ export interface ParticipatingVolunteerAddRegistrationModalProps {
   programId?: string | number | null
   /** true — 선택한 회원에 1365 ID가 이미 등록됨(기본 정보 단락 숨김) */
   hideBasicInfoSection?: boolean
+  zIndex?: number
   onClose: () => void
   onConfirm: (payload: VolunteerParticipantRegisterRequest) => void | Promise<void>
 }
@@ -41,6 +42,7 @@ function ParticipatingVolunteerAddRegistrationModalBody({
   memberId,
   programId,
   hideBasicInfoSection,
+  zIndex = 1100,
   onClose,
   onConfirm,
 }: ParticipatingVolunteerAddRegistrationModalProps) {
@@ -141,7 +143,7 @@ function ParticipatingVolunteerAddRegistrationModalBody({
       footer={footer}
       titleBodyGap="none"
       className="participating-volunteer-add-registration-modal"
-      zIndex={1100}
+      zIndex={zIndex}
     >
       <div className="participating-volunteer-add-registration-modal__scroll">
         <div className="participating-volunteer-add-registration-modal__sections">

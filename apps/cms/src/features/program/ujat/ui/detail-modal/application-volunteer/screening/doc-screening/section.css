@@ -363,13 +363,22 @@
   .ant-table-wrapper.cms-data-table
   .ant-table-tbody
   > tr
-  > td.ujat-volunteer-doc-screening__nowrap-cell {
+  > td.ujat-volunteer-doc-screening__nowrap-cell,
+.detail-fullpage-modal
+  .ujat-volunteer-doc-screening
+  .ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr
+  > td.ujat-volunteer-doc-screening__nowrap-cell.ant-table-cell-row-hover {
+  box-sizing: border-box !important;
   white-space: nowrap !important;
   word-break: normal !important;
   overflow-wrap: normal !important;
   height: 52px !important;
   min-height: 52px !important;
   max-height: 52px !important;
+  vertical-align: middle !important;
+  transition: none !important;
 }
 
 .detail-fullpage-modal
@@ -423,7 +432,10 @@
 /* 담당자 평가 StatusDropdownCell */
 .ujat-volunteer-doc-screening .ant-table-tbody
   > tr:has(td.ujat-volunteer-doc-screening__manager-eval-dropdown-cell)
-  > td.ujat-volunteer-doc-screening__manager-eval-dropdown-cell {
+  > td.ujat-volunteer-doc-screening__manager-eval-dropdown-cell,
+.ujat-volunteer-doc-screening .ant-table-tbody
+  > tr:has(td.ujat-volunteer-doc-screening__manager-eval-dropdown-cell)
+  > td.ujat-volunteer-doc-screening__manager-eval-dropdown-cell.ant-table-cell-row-hover {
   width: 200px !important;
   min-width: 200px !important;
   max-width: 200px !important;
@@ -431,8 +443,12 @@
   padding-bottom: 0 !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
   text-align: center !important;
   vertical-align: middle !important;
+  transition: none !important;
 }
 
 .ujat-volunteer-doc-screening

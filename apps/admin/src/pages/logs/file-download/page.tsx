@@ -14,7 +14,6 @@ import {
   useExportFileDownloadLogs,
   useFileDownloadLogsList,
 } from '@/features/file-download-log/api/hooks'
-import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import {
   logListRowNumber,
@@ -172,29 +171,12 @@ export function FileDownloadLogPage() {
   )
 
   const handleExcel = useCallback(() => {
-    void exportMutation
-      .mutateAsync(appliedFilter)
-      .then(result => {
-        if (result === 'remote-downloaded') return
-        const all = result.rows
-        downloadCsv({
-          filenameBase: '파일_다운로드_이력',
-          headers: ['No.', '다운로드 파일명', '사용자명', '다운로드 일시', 'IP'],
-          rows: all.map((row, index) => [
-            all.length - index,
-            row.fileName,
-            row.userName,
-            formatLogDateTime(row.downloadedAt),
-            row.ip,
-          ]),
-        })
+    void exportMutation.mutateAsync(appliedFilter).catch(() => {
+      showAlert({
+        title: '내보내기 실패',
+        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
       })
-      .catch(() => {
-        showAlert({
-          title: '내보내기 실패',
-          content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-        })
-      })
+    })
   }, [appliedFilter, exportMutation, showAlert])
 
   const columns = useMemo<ColumnsType<FileDownloadLog>>(

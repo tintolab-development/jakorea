@@ -109,6 +109,14 @@ describe('mapRegionDirectAssignCandidateOptions', () => {
     ])
     expect(mapRegionDirectAssignCandidateOptions(undefined)).toEqual([])
   })
+
+  it('후보 이름이 없으면 봉사자 id를 만들지 않고 -로 둔다', () => {
+    expect(
+      mapRegionDirectAssignCandidateOptions({
+        candidates: [{ participantId: 3, volunteerName: '   ' }],
+      })
+    ).toEqual([{ value: '3', label: '-' }])
+  })
 })
 
 describe('selectRegionUnavailabilityScheduleIds', () => {

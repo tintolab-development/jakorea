@@ -1,8 +1,5 @@
 /**
  * 채용공고 — Homepage careers OpenAPI
- *
- * list GET(`/api/admin/careers/postings`) 에 필터 query가 없다.
- * 공개·상태·제목·작성자·모집/게시 기간은 응답 후 `filterRecruitPostings`로 거른다.
  */
 
 import type {
@@ -13,23 +10,15 @@ import type {
   RecruitPostingUpdateInput,
 } from '@/entities/recruit-posting/model/types'
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api'
-import { shouldUseRecruitPostingRemoteApi } from './capabilities'
+import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list'
 import {
   mapCareerPostingAdminDetail,
   mapCareerPostingAdminItem,
   toCareerPostingCreateRequest,
   toCareerPostingUpdateRequest,
   toNumericId,
+  toRecruitPostingListParams,
 } from './mappers'
-import {
-  createRecruitPosting as createLocal,
-  filterRecruitPostings,
-  getRecruitPostingById,
-  readRecruitPostings,
-  removeRecruitPostings as removeLocal,
-  setRecruitPostingPublic as setPublicLocal,
-  updateRecruitPosting as updateLocal,
-} from './store'
 import { uploadRecruitPostingAttachmentAsset } from './upload-posting-attachment'
 
 function careersApi() {
@@ -50,66 +39,57 @@ async function resolveAttachmentAssetId(
   return undefined
 }
 
-export async function listRecruitPostingsService(
-  filter?: RecruitPostingListFilter,
-): Promise<RecruitPosting[]> {
-  if (shouldUseRecruitPostingRemoteApi()) {
-    const response = await careersApi().list9()
-    const items = (response.items ?? [])
+export async function listRecruitPostingsPageService(
+  filter: RecruitPostingListFilter | undefined,
+  page: number,
+): Promise<AdminListPage<RecruitPosting>> {
+  const response = await careersApi().list9(toRecruitPostingListParams(filter, page))
+  return toAdminListPage(
+    (response.items ?? [])
       .map(mapCareerPostingAdminItem)
-      .filter((row): row is RecruitPosting => row != null)
-    return filterRecruitPostings(items, filter)
-  }
-  return readRecruitPostings(filter)
+      .filter((row): row is RecruitPosting => row != null),
+    page,
+    response,
+  )
 }
 
 export async function getRecruitPostingService(id: string): Promise<RecruitPosting | null> {
-  if (shouldUseRecruitPostingRemoteApi()) {
-    try {
-      const row = await careersApi().detail3(toNumericId(id))
-      return mapCareerPostingAdminDetail(row)
-    } catch {
-      return null
-    }
+  try {
+    const row = await careersApi().detail3(toNumericId(id))
+    return mapCareerPostingAdminDetail(row)
+  } catch {
+    return null
   }
-  return getRecruitPostingById(id)
 }
 
 export async function createRecruitPostingService(
   input: RecruitPostingCreateInput,
 ): Promise<RecruitPosting> {
-  if (shouldUseRecruitPostingRemoteApi()) {
-    const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
-    const created = await careersApi().create11(
-      toCareerPostingCreateRequest(input, attachmentAssetId),
-    )
-    const mapped = mapCareerPostingAdminDetail(created)
-    if (!mapped) throw new Error('채용공고를 등록하지 못했습니다.')
-    return mapped
-  }
-  return createLocal(input)
+  const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
+  const created = await careersApi().create11(
+    toCareerPostingCreateRequest(input, attachmentAssetId),
+  )
+  const mapped = mapCareerPostingAdminDetail(created)
+  if (!mapped) throw new Error('채용공고를 등록하지 못했습니다.')
+  return mapped
 }
 
 export async function updateRecruitPostingService(
   input: RecruitPostingUpdateInput,
   cached?: RecruitPosting | null,
 ): Promise<RecruitPosting> {
-  if (shouldUseRecruitPostingRemoteApi()) {
-    const current =
-      cached && cached.id === input.id ? cached : await getRecruitPostingService(input.id)
-    if (!current) {
-      throw new Error('채용공고를 찾을 수 없습니다.')
-    }
-    const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
-    const updated = await careersApi().update14(
-      toNumericId(input.id),
-      toCareerPostingUpdateRequest(input, current.version, attachmentAssetId),
-    )
-    const mapped = mapCareerPostingAdminDetail(updated)
-    if (!mapped) throw new Error('채용공고를 수정하지 못했습니다.')
-    return mapped
+  const current = cached && cached.id === input.id ? cached : await getRecruitPostingService(input.id)
+  if (!current) {
+    throw new Error('채용공고를 찾을 수 없습니다.')
   }
-  return updateLocal(input)
+  const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
+  const updated = await careersApi().update14(
+    toNumericId(input.id),
+    toCareerPostingUpdateRequest(input, current.version, attachmentAssetId),
+  )
+  const mapped = mapCareerPostingAdminDetail(updated)
+  if (!mapped) throw new Error('채용공고를 수정하지 못했습니다.')
+  return mapped
 }
 
 export async function setRecruitPostingPublicService(
@@ -117,19 +97,12 @@ export async function setRecruitPostingPublicService(
   isPublic: boolean,
   version: number,
 ): Promise<RecruitPosting> {
-  if (shouldUseRecruitPostingRemoteApi()) {
-    const row = await careersApi().changeVisibility(toNumericId(id), { isPublic, version })
-    const mapped = mapCareerPostingAdminItem(row)
-    if (!mapped) throw new Error('채용공고 공개 여부를 바꾸지 못했습니다.')
-    return mapped
-  }
-  return setPublicLocal(id, isPublic)
+  const row = await careersApi().changeVisibility(toNumericId(id), { isPublic, version })
+  const mapped = mapCareerPostingAdminItem(row)
+  if (!mapped) throw new Error('채용공고 공개 여부를 바꾸지 못했습니다.')
+  return mapped
 }
 
 export async function removeRecruitPostingsService(ids: string[]): Promise<void> {
-  if (shouldUseRecruitPostingRemoteApi()) {
-    await careersApi().delete2(ids.map(toNumericId))
-    return
-  }
-  removeLocal(ids)
+  await careersApi().delete2(ids.map(toNumericId))
 }

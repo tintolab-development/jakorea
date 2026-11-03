@@ -20,12 +20,13 @@ export type CareerPostingDetail = CareerJobListItem & {
   contentFormat: 'html'
   /** publishedOn 날짜, 없으면 publishedAt. 시각이 있으면 `2026년 01월 15일 오후 3:00` */
   publishedAtDetailLabel: string
-  /** recruitStart·recruitEnd가 둘 다 있을 때만. 예: 2026년 04월 03일(금) ~ 2026년 11월 20일(금) */
+  /** recruitStart·recruitEnd가 둘 다 있을 때만. CTA: `2026년 5월 15일 ~ 6월 15일` */
   recruitPeriodLabel: string
   viewCount: number | null
   attachments: CareerPostingAttachment[]
-  /** 비어 있으면 상세 하단 버튼을 그리지 않는다. */
+  /** 비면 기본 문구. 버튼 노출은 linkUrl 기준. */
   buttonLabel: string
+  /** 비어 있으면 상세 하단 버튼을 그리지 않는다. */
   linkUrl: string
 }
 

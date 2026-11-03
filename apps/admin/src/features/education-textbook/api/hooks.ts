@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
+import { collectInfiniteCachedRows } from '@/shared/lib/admin-infinite-list'
 import type {
   EducationTextbook,
   EducationTextbookCreateInput,
@@ -9,7 +11,7 @@ import { educationTextbookQueryKeys } from './query-keys'
 import {
   createEducationTextbookService,
   getEducationTextbookService,
-  listEducationTextbooksService,
+  listEducationTextbooksPageService,
   removeEducationTextbooksService,
   setEducationTextbookActiveService,
   updateEducationTextbookService,
@@ -27,12 +29,11 @@ export function useEducationTextbooksList(
   filter: EducationTextbookListFilter = {},
   enabled = true,
 ) {
-  return useQuery({
+  return useAdminInfiniteList({
     queryKey: educationTextbookQueryKeys.list(filter),
-    queryFn: () => listEducationTextbooksService(filter),
     enabled,
-    staleTime: 30_000,
-    retry: 1,
+    isRemote: true,
+    fetchPage: page => listEducationTextbooksPageService(filter, page),
   })
 }
 
@@ -78,14 +79,11 @@ export function useRemoveEducationTextbooks() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: string[]) => {
-      const cachedLists = queryClient.getQueriesData<EducationTextbook[]>({
-        queryKey: educationTextbookQueryKeys.lists(),
-      })
-      const merged = new Map<string, EducationTextbook>()
-      for (const [, rows] of cachedLists) {
-        for (const row of rows ?? []) merged.set(row.id, row)
-      }
-      return removeEducationTextbooksService(ids, [...merged.values()])
+      const cached = collectInfiniteCachedRows<EducationTextbook>(
+        queryClient,
+        educationTextbookQueryKeys.lists(),
+      )
+      return removeEducationTextbooksService(ids, cached)
     },
     retry: false,
     onSuccess: (_void, ids) => {
@@ -109,13 +107,12 @@ export function useSetEducationTextbookActive() {
       if (cached) {
         return setEducationTextbookActiveService(id, isActive, cached)
       }
-      const lists = queryClient.getQueriesData<EducationTextbook[]>({
-        queryKey: educationTextbookQueryKeys.lists(),
-      })
-      for (const [, rows] of lists) {
-        const hit = rows?.find(row => row.id === id)
-        if (hit) return setEducationTextbookActiveService(id, isActive, hit)
-      }
+      const cachedRows = collectInfiniteCachedRows<EducationTextbook>(
+        queryClient,
+        educationTextbookQueryKeys.lists(),
+      )
+      const hit = cachedRows?.find(row => row.id === id)
+      if (hit) return setEducationTextbookActiveService(id, isActive, hit)
       return setEducationTextbookActiveService(id, isActive)
     },
     retry: false,

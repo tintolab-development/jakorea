@@ -9,6 +9,12 @@ import {
   useCareerPostingDetail,
   type CareerPostingDetailStatus,
 } from '@/features/careers'
+import {
+  careerPostingLinkCtaVisible,
+  careerPostingLinkHref,
+  resolveCareerPostingLinkCtaLabel,
+} from '@/features/careers/lib/link-cta'
+import ctaArrowUrl from '@/features/careers/image/icon/cta-arrow.svg'
 import { RichTextViewer } from '@/shared/rich-text'
 import {
   PFAttachmentDropdown,
@@ -79,9 +85,10 @@ export function CareerPostingDetailPage() {
     fileName: file.name,
     href: file.fileUrl,
   }))
-  const showLinkButton = detail.buttonLabel.length > 0 && detail.linkUrl.length > 0
-  const showRecruitPeriod =
-    showLinkButton && detail.status === 'recruiting' && Boolean(detail.recruitPeriodLabel)
+  const showLinkButton = careerPostingLinkCtaVisible(detail.linkUrl)
+  const linkHref = careerPostingLinkHref(detail.linkUrl)
+  const linkButtonLabel = resolveCareerPostingLinkCtaLabel(detail.buttonLabel)
+  const showRecruitPeriod = showLinkButton && Boolean(detail.recruitPeriodLabel)
 
   return (
     <section className={styles.page}>
@@ -149,27 +156,30 @@ export function CareerPostingDetailPage() {
         <div className={styles.footerNav}>
           {showLinkButton ? (
             <div className={styles.linkAction}>
-              <PFButton
-                variant="primary"
-                size="xlarge"
-                className={styles.linkButton}
-                onClick={() => {
-                  if (!detail.linkUrl) return
-                  window.open(detail.linkUrl, '_blank', 'noopener,noreferrer')
-                }}
+              <a
+                className={styles.linkCta}
+                href={linkHref}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {detail.buttonLabel}
-              </PFButton>
-              {showRecruitPeriod ? (
-                <span className={styles.ctaRecruitPeriod}>
-                  <PFText as="span" typo="bd-lg-rg" color="neutral-cool-600">
-                    모집 기간
+                <span className={styles.linkCtaCopy}>
+                  <PFText as="span" typo="bd-lg-sb" color="white">
+                    {linkButtonLabel}
                   </PFText>
-                  <PFText as="span" typo="hl-sm" color="black">
-                    {detail.recruitPeriodLabel}
-                  </PFText>
+                  {showRecruitPeriod ? (
+                    <PFText as="span" typo="bd-sm-rg" color="white">
+                      {`모집 기간 : ${detail.recruitPeriodLabel}`}
+                    </PFText>
+                  ) : null}
                 </span>
-              ) : null}
+                <img
+                  className={styles.linkCtaArrow}
+                  src={ctaArrowUrl}
+                  alt=""
+                  width={16}
+                  height={16}
+                />
+              </a>
             </div>
           ) : null}
 

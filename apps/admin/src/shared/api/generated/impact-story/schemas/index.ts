@@ -402,6 +402,7 @@ export * from './versionedId';
 export * from './visitorPoint';
 export * from './visitorSessionResponse';
 export * from './visitorStatistics';
+export * from './visitorStatisticsMetadata';
 export * from './visitorStatisticsUnit';
 export * from './worldwideLinkResponse';
 export * from './worldwideLinkUpdateItem';

@@ -9,7 +9,8 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   padding: 16px !important;
   box-sizing: border-box !important;
   position: fixed !important;
@@ -21,25 +22,26 @@
 
 .ant-modal-wrap:has(.ant-modal.teal-header-modal--large.story-form-modal)
   .ant-modal.teal-header-modal--large.story-form-modal {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
   right: auto !important;
   bottom: auto !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
+  transform: none !important;
+  margin: 0 auto !important;
   padding-bottom: 0 !important;
   width: min(1400px, calc(100vw - 32px)) !important;
   max-width: min(1400px, calc(100vw - 32px)) !important;
   max-height: calc(100vh - 32px) !important;
   max-height: calc(100dvh - 32px) !important;
+  height: auto !important;
   flex: none !important;
   box-sizing: border-box !important;
 }
 
 /*
  * 셸 패딩 시안: top 26 · sides 30 · bottom 34
- * 뷰포트에 맞게 고정 높이 상한 — 내부 body 스크롤 대신 에디터 축소
+ * 뷰포트에 맞게 높이를 확장하고, 상한에 도달하면 본문만 스크롤
  */
 .content-modal.story-form-modal.teal-header-modal--large .ant-modal-content,
 .story-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
@@ -48,8 +50,8 @@
   padding: 26px 30px 34px !important;
   border-radius: 12px;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
-  max-height: min(880px, calc(100vh - 32px));
-  max-height: min(880px, calc(100dvh - 32px));
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   height: auto;
   min-height: 0;
   overflow: hidden;
@@ -65,7 +67,7 @@
   overflow: hidden;
 }
 
-/* 타이틀 ↔ 본문 24px — 내부 스크롤 금지 (에디터가 남은 높이 흡수) */
+/* 타이틀 ↔ 본문 24px — 에디터가 커지면 모달이 함께 커지고, 상한에서는 본문 스크롤 */
 .story-form-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
 .story-form-modal.content-modal .teal-header-modal__body {
   padding-top: 24px !important;
@@ -229,8 +231,8 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  height: 100% !important;
-  min-height: 0 !important;
+  height: 100%;
+  min-height: 0;
   max-height: 100%;
   border-radius: 0;
   overflow: hidden;
@@ -245,6 +247,40 @@
 .story-form-modal__editor-host .rich-text-editor__content,
 .story-form-modal__editor-host .ProseMirror {
   min-height: 0 !important;
+}
+
+/*
+ * 리사이즈 시에는 모달의 남은 공간에 맞춘 flex 축소를 해제한다.
+ * 공통 에디터는 data-resized/--rt-user-height를 직접 갱신하므로,
+ * Admin 모달이 그 높이를 콘텐츠 높이로 받아야 모달도 함께 확장된다.
+ */
+.story-form-modal__form:has(.rich-text-editor[data-resized='true']) {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.story-form-modal.content-modal .teal-header-modal__body:has(.rich-text-editor[data-resized='true']) {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.story-form-modal__section--editor:has(.rich-text-editor[data-resized='true']) {
+  flex: 0 0 auto;
+}
+
+.story-form-modal__editor-host:has(.rich-text-editor[data-resized='true']) {
+  flex: 0 0 auto;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.story-form-modal__editor-host .cms-rich-text-editor.rich-text-editor[data-resized='true'],
+.story-form-modal__editor-host .rich-text-editor[data-resized='true'] {
+  height: var(--rt-user-height) !important;
+  max-height: none;
+  min-height: 0;
+  flex: 0 0 auto;
 }
 
 /* 섬네일 + 첨부 테이블 — CMS th 180 + body */

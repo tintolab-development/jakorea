@@ -22,23 +22,26 @@
 
 .ant-modal-wrap:has(.ant-modal.teal-header-modal--large.education-textbook-form-modal)
   .ant-modal.teal-header-modal--large.education-textbook-form-modal {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
   right: auto !important;
   bottom: auto !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
+  transform: none !important;
+  margin: 0 auto !important;
   padding-bottom: 0 !important;
   width: min(1400px, calc(100vw - 32px)) !important;
   max-width: min(1400px, calc(100vw - 32px)) !important;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
+  height: auto !important;
   flex: none !important;
   box-sizing: border-box !important;
 }
 
 /*
  * 셸: top 26 · sides 30 · bottom 34
- * 높이 시안 880 (뷰포트 초과 시 축소)
+ * 기본 시안 880. 에디터 리사이즈 시 height:auto 로 셸이 따라간다 (뷰포트 상한).
  */
 .content-modal.education-textbook-form-modal.teal-header-modal--large .ant-modal-content,
 .education-textbook-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
@@ -53,6 +56,15 @@
   max-height: min(880px, calc(100dvh - 32px));
   min-height: 0;
   overflow: hidden;
+}
+
+.content-modal.education-textbook-form-modal.teal-header-modal.ant-modal:has(
+    .rich-text-editor[data-resized='true']
+  )
+  .ant-modal-content {
+  height: auto !important;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
 }
 
 .content-modal.education-textbook-form-modal.teal-header-modal--large .ant-modal-body,
@@ -485,6 +497,18 @@
 
 .education-textbook-form-modal__rt-edit {
   min-height: 200px;
+}
+
+.education-textbook-form-modal__rt-edit:has(.rich-text-editor[data-resized='true']) {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.education-textbook-form-modal__scroll:has(.rich-text-editor[data-resized='true']) {
+  flex: 0 0 auto;
+  height: auto;
+  overflow: visible;
 }
 
 .education-textbook-form-modal__table .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {

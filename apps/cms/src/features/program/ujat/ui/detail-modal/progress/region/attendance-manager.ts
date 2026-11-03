@@ -1,9 +1,24 @@
-import dayjs from 'dayjs'
-import type { RegionAssignmentTableData } from './types'
+import { isUjatAllocationAssignmentStatusAssigned } from '@/features/program/ujat/api/allocation-matrix-adapters'
+import type { RegionAssignmentCell, RegionAssignmentTableData } from './types'
 
 export type RegionAttendanceManagerSelectOption = {
   value: string
   label: string
+}
+
+export type RegionAttendanceManagerPut = {
+  scheduleId: number
+  participantId: number
+}
+
+/** 그 교육일(열)에 ASSIGNED인 봉사자만 출결 담당 후보 */
+export function isRegionAttendanceManagerCandidateCell(
+  cell: RegionAssignmentCell | undefined
+): cell is Extract<RegionAssignmentCell, { kind: 'assigned' }> {
+  return (
+    cell?.kind === 'assigned' &&
+    isUjatAllocationAssignmentStatusAssigned(cell.assignmentStatus)
+  )
 }
 
 export type RegionAttendanceManagerScheduleItem = {
@@ -15,18 +30,20 @@ export type RegionAttendanceManagerScheduleItem = {
 
 export type RegionAttendanceManagerAssignments = Record<string, string>
 
-/** Figma: `4월 3일 (제이초등학교)` — isoDate 우선, 없으면 dateLabel 그대로 */
+function koreanMonthDayFromSeoulYmd(ymd: string | undefined): string | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd?.trim() ?? '')
+  if (!match) return null
+  return `${Number(match[2])}월 ${Number(match[3])}일`
+}
+
+/** Figma: `4월 3일 (제이초등학교)` — isoDate(YYYY-MM-DD, Asia/Seoul) 우선, 없으면 dateLabel */
 export function formatAttendanceManagerScheduleLabel(
   isoDate: string | undefined,
   dateLabel: string,
   institutionName: string
 ): string {
   const institution = institutionName.trim() || '-'
-  const parsed = isoDate?.trim() ? dayjs(isoDate) : null
-  const datePart =
-    parsed?.isValid() === true
-      ? `${parsed.month() + 1}월 ${parsed.date()}일`
-      : dateLabel.trim() || '-'
+  const datePart = koreanMonthDayFromSeoulYmd(isoDate) ?? (dateLabel.trim() || '-')
   return `${datePart} (${institution})`
 }
 
@@ -40,8 +57,7 @@ export function getRegionAttendanceManagerScheduleItemsFromData(
     const volunteerOptions = rows
       .filter(row => {
         if (row.isWithdrawnVolunteer) return false
-        const cell = row.cells[columnIndex]
-        return cell?.kind === 'assigned'
+        return isRegionAttendanceManagerCandidateCell(row.cells[columnIndex])
       })
       .map(row => ({
         value: row.id,
@@ -50,7 +66,7 @@ export function getRegionAttendanceManagerScheduleItemsFromData(
 
     const currentManager = rows.find(row => {
       const cell = row.cells[columnIndex]
-      return cell?.kind === 'assigned' && cell.isAttendanceManager
+      return isRegionAttendanceManagerCandidateCell(cell) && cell.isAttendanceManager
     })
 
     return {
@@ -98,4 +114,36 @@ export function applyRegionAttendanceManagersFromData(
   }
 
   return { ...data, rows }
+}
+
+/**
+ * 출결 담당 PUT 목록. scheduleId당 1건.
+ * ASSIGNED가 아닌 행·0·비유한 participantId는 보내지 않는다.
+ */
+export function collectAttendanceManagerPuts(
+  data: RegionAssignmentTableData,
+  assignments: RegionAttendanceManagerAssignments
+): RegionAttendanceManagerPut[] {
+  const byScheduleId = new Map<number, number>()
+
+  for (const [columnId, volunteerId] of Object.entries(assignments)) {
+    const columnIndex = data.columns.findIndex(column => column.id === columnId)
+    if (columnIndex < 0) continue
+
+    const scheduleId = Number(data.columns[columnIndex]?.scheduleId)
+    const participantId = Number(volunteerId)
+    if (!Number.isFinite(scheduleId) || scheduleId <= 0) continue
+    if (!Number.isFinite(participantId) || participantId <= 0) continue
+
+    const row = data.rows.find(item => item.id === volunteerId)
+    if (!row || row.isWithdrawnVolunteer) continue
+    if (!isRegionAttendanceManagerCandidateCell(row.cells[columnIndex])) continue
+
+    byScheduleId.set(scheduleId, participantId)
+  }
+
+  return [...byScheduleId.entries()].map(([scheduleId, participantId]) => ({
+    scheduleId,
+    participantId,
+  }))
 }

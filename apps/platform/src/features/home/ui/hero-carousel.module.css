@@ -85,6 +85,7 @@
   align-items: flex-start;
   max-width: min(711px, 100%);
   text-align: left;
+  width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -103,11 +104,13 @@
   line-height: 140%;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  white-space: pre-line;
+  text-align: left;
+  width: 100%;
 }
 
 .title {
-  display: flex;
-  flex-direction: column;
+  display: block;
   margin: 0 0 var(--spacing-12);
   color: var(--color-neutral-white);
   font-family: var(--font-family-base);
@@ -116,10 +119,13 @@
   font-weight: 700;
   line-height: 136%;
   letter-spacing: -0.56px;
+  white-space: pre-line;
+  text-align: left;
+  width: 100%;
 }
 
 .titleLine {
-  display: block;
+  display: inline;
 }
 
 .description {
@@ -130,6 +136,9 @@
   font-style: normal;
   font-weight: 400;
   line-height: 150%;
+  white-space: pre-line;
+  text-align: left;
+  width: 100%;
 }
 
 .controls {

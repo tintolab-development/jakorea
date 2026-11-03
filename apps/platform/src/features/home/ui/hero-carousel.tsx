@@ -179,6 +179,7 @@ export function HeroCarousel({ slides: slidesProp, autoplayMs = HOME_HERO_AUTOPL
           <h1 className={styles.title}>
             {titleLines.map((line, lineIndex) => (
               <span className={styles.titleLine} key={`${line}-${lineIndex}`}>
+                {lineIndex > 0 ? <br /> : null}
                 {line}
               </span>
             ))}

@@ -9,7 +9,7 @@
   width: 100px;
   height: 32px;
   min-width: 100px;
-  max-width: 200px;
+  max-width: 100px;
   padding: 6px 12px;
   flex-direction: column;
   justify-content: center;
@@ -77,11 +77,6 @@
   color: var(--Status-red-main, #c32f4a);
 }
 
-.ujat-volunteer-assignment-table__partner-undecided {
-  color: var(--color-mint-01, #01a1af);
-  font-weight: 500;
-}
-
 .ujat-volunteer-assignment-progress-tab {
   display: flex;
   flex-direction: column;
@@ -92,8 +87,12 @@
 .ujat-volunteer-assignment-progress-tab__table-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   min-width: 0;
+}
+
+.ujat-volunteer-assignment-attendance-info .detail-info-form__title {
+  font-size: 18px;
 }
 
 /* 교육계획서·교육일지 보기 버튼 — 셀 가로·세로 중앙 */
@@ -118,8 +117,112 @@
   box-sizing: border-box;
 }
 
-/* 역할 드롭다운 열림 시 행 높이 고정 */
-.ujat-volunteer-assignment-table__table tr:has(td .status-dropdown-cell__status-trigger--open) > td,
-.ujat-volunteer-assignment-table__table tr:has(td.status-dropdown-cell__cell-status) > td {
-  vertical-align: middle;
+.ujat-volunteer-assignment-table__plan-log-cell-inner .cms-button {
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/*
+ * 교육 배정 및 진행 현황 — 행 hover·cell-row-hover 시 셀 치수 고정
+ * (공통 admin-data-table.css 보강; antd CSS-in-js·status-dropdown 혼재 대응)
+ */
+.ujat-volunteer-assignment-table__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__header--tag-160 {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.ujat-volunteer-assignment-table__table .status-dropdown-cell__status-trigger--tag-160 {
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  padding: 12px;
+}
+
+.ujat-volunteer-assignment-table__table.cms-data-table.cms-data-table--fixed-row-height
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.status-dropdown-cell__cell-status {
+  overflow: visible !important;
+}
+
+.ujat-volunteer-assignment-table__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):has(
+    td.status-dropdown-cell__cell-status
+  ) {
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  overflow: visible;
+}
+
+.ujat-volunteer-assignment-table__table.cms-data-table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td,
+.ujat-volunteer-assignment-table__table.cms-data-table
+  .ant-table-tbody
+  > tr:has(td.status-dropdown-cell__cell-status)
+  > td {
+  vertical-align: middle !important;
+}
+
+.detail-fullpage-modal
+  .ujat-volunteer-assignment-table__table.ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):has(
+    td.status-dropdown-cell__cell-status--tag-160
+  )
+  > td.status-dropdown-cell__cell-status--tag-160,
+.detail-fullpage-modal
+  .ujat-volunteer-assignment-table__table.ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):has(
+    td.status-dropdown-cell__cell-status--tag-160
+  )
+  > td.status-dropdown-cell__cell-status--tag-160.ant-table-cell-row-hover {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+  padding: 0 !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  vertical-align: middle !important;
+  transition: none !important;
+  box-sizing: border-box !important;
+}
+
+.detail-fullpage-modal
+  .ujat-volunteer-assignment-table__table.ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:has(td .status-dropdown-cell__status-trigger--open)
+  > td {
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+}
+
+.detail-fullpage-modal
+  .ujat-volunteer-assignment-table__table.ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-data-table__cell--h40-action.ujat-volunteer-assignment-table__plan-log-cell,
+.detail-fullpage-modal
+  .ujat-volunteer-assignment-table__table.ant-table-wrapper.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.cms-data-table__cell--h40-action.ujat-volunteer-assignment-table__plan-log-cell.ant-table-cell-row-hover {
+  box-sizing: border-box !important;
+  padding: 6px 12px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  vertical-align: middle !important;
+  transition: none !important;
 }

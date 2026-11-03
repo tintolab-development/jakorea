@@ -1,4 +1,7 @@
-import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
+import {
+  getApiErrorCode,
+  readApiErrorAlertMessage,
+} from '@/shared/lib/extract-api-error-message'
 import { ASSIGNMENT_CANCEL_NOT_ALLOWED_ALERT } from './assignment-progress-action-guards'
 
 export const UJAT_PARTNER_ASSIGNMENT_EDUCATION_COMPLETED_CODE =
@@ -31,7 +34,11 @@ export function resolveAssignmentCancelErrorAlert(
 ): { title: string; content: string; shouldRefresh: boolean } | null {
   const code = getApiErrorCode(error)
   if (code === UJAT_PARTNER_ASSIGNMENT_EDUCATION_COMPLETED_CODE) {
-    return { ...ASSIGNMENT_CANCEL_NOT_ALLOWED_ALERT, shouldRefresh: true }
+    return {
+      title: ASSIGNMENT_CANCEL_NOT_ALLOWED_ALERT.title,
+      content: readApiErrorAlertMessage(error, ASSIGNMENT_CANCEL_NOT_ALLOWED_ALERT.content),
+      shouldRefresh: true,
+    }
   }
   if (code === CANCELLATION_NOTIFICATION_SCHEDULED_AT_INVALID_CODE) {
     return { ...ASSIGNMENT_CANCEL_SCHEDULED_AT_INVALID_ALERT, shouldRefresh: false }

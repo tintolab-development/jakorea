@@ -27,6 +27,7 @@ import {
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
@@ -38,6 +39,7 @@ import {
   ymdFromParam,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -171,8 +173,15 @@ export function ReportListPanel({ kind }: Props) {
   const updateMutation = useUpdateReport(kind)
   const removeMutation = useRemoveReports(kind)
 
-  const rows = listQuery.data ?? []
-  const totalCount = rows.length
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: `${kind}:${JSON.stringify(appliedFilter)}`,
+  })
+
+  const rows = listQuery.rows
+  const totalCount = listQuery.totalCount
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
@@ -439,6 +448,10 @@ export function ReportListPanel({ kind }: Props) {
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
             scroll={{ x: true }}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>

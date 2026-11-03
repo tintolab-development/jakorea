@@ -56,6 +56,8 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
     'UJAT 봉사 활동에 필요한 동의가 부족합니다. 해당 동의를 다시 받은 뒤 처리해 주세요.',
   VOLUNTEER_APPLICATION_ALREADY_EXISTS: '이미 이 프로그램에 봉사 신청이 있습니다.',
   VOLUNTEER_1365_ID_REQUIRED: '1365 ID를 입력해 주세요.',
+  VOLUNTEER_1365_REQUIRED:
+    '이 회원은 1365 ID가 없어 추가 등록할 수 없습니다. 회원 프로필에 1365 ID를 등록한 뒤 다시 시도해 주세요.',
   VOLUNTEER_PERSONAL_INFO_CONSENT_REQUIRED: '개인정보 수집·이용에 동의해 주세요.',
   VOLUNTEER_THIRD_PARTY_CONSENT_REQUIRED: '개인정보 제3자 정보 제공·이용에 동의해 주세요.',
   VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED: '제공받는 기관명을 입력해 주세요.',
@@ -72,6 +74,8 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_FREE_TEXT_INVALID: '자유 작성 항목 글자 수를 확인해 주세요.',
   VOLUNTEER_RECRUITMENT_NOT_CONFIGURED:
     '이 프로그램에 봉사 모집·신청 양식이 설정되지 않았습니다. 프로그램 모집 설정을 확인해 주세요.',
+  VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED:
+    '해당 반기의 봉사 모집이 설정되지 않았습니다. 프로그램 모집 설정을 확인해 주세요.',
   VOLUNTEER_APPLICATION_TYPE_INVALID: '지원 형태를 확인해 주세요.',
   UJAT_EDUCATION_REGION_CODE_UNKNOWN: '등록되지 않은 교육 지역입니다. 지역 목록을 다시 확인해 주세요.',
   CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY:

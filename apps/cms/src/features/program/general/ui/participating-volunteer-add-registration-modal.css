@@ -70,6 +70,21 @@
   margin-bottom: 0;
 }
 
+/* Figma Title 18 Bold · txt px 8 · sub 14 Medium 50% */
+.participating-volunteer-add-registration-modal__section
+  > .form-paragraph-section-header.detail-info-form__header
+  .detail-info-form__title {
+  font-size: 18px;
+  line-height: 140%;
+  padding: 0;
+}
+
+.participating-volunteer-add-registration-modal__section
+  > .form-paragraph-section-header--description-inline
+  .form-paragraph-section-header__lead {
+  padding: 0 8px;
+}
+
 .participating-volunteer-add-registration-modal__template-block {
   width: 100%;
   min-width: 0;
@@ -121,6 +136,8 @@
   min-height: 48px;
   padding: var(--spacing-12, 12px) var(--spacing-16, 16px);
   gap: var(--spacing-8, 8px);
+  align-items: flex-end;
+  flex-wrap: nowrap;
   background: var(--BG-header);
 }
 
@@ -128,6 +145,18 @@
   .volunteer-free-text-items__card-label {
   text-align: left;
   line-height: 150%;
+  flex: 0 1 auto;
+}
+
+.participating-volunteer-add-registration-modal__section--free-text
+  .volunteer-free-text-items__card-hint {
+  flex-shrink: 0;
+  line-height: 140%;
+}
+
+.participating-volunteer-add-registration-modal__section--free-text
+  .cms-textarea__count {
+  display: none;
 }
 
 .participating-volunteer-add-registration-modal__section--free-text
@@ -173,11 +202,37 @@
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   width: auto;
+  min-height: 44px;
+  padding: 0 8px;
 }
 
 .participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
   .multiple-choice-row {
   padding: 0;
+}
+
+.participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
+  .multiple-choice-row
+  .ant-radio-wrapper,
+.participating-volunteer-add-registration-modal
+  .form-editor-table-bottom-consent
+  .ant-radio-wrapper {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
+}
+
+.participating-volunteer-add-registration-modal__section--multiple-choice-horizontal
+  .multiple-choice-row
+  .ant-radio-wrapper-checked,
+.participating-volunteer-add-registration-modal
+  .form-editor-table-bottom-consent
+  .ant-radio-wrapper-checked {
+  color: var(--Brand-500, #00a0af) !important;
 }

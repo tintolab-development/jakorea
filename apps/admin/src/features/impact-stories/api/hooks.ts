@@ -1,4 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
+import { collectInfiniteCachedRows, toAdminListPage } from '@/shared/lib/admin-infinite-list'
 import type {
   ImpactStory,
   ImpactStoryCategory,
@@ -17,7 +19,6 @@ import {
   getStoryService,
   listCategoriesService,
   listStoriesPageService,
-  listStoriesService,
   removeStoriesService,
   saveCategoriesService,
   setStoryPublicService,
@@ -42,7 +43,6 @@ function filterKey(filter: ImpactStoryListFilter): string {
     pt: filter.publishedTo ?? '',
     cf: filter.createdFrom ?? '',
     ct: filter.createdTo ?? '',
-    p: filter.page ?? 0,
   })
 }
 
@@ -54,14 +54,7 @@ function invalidateStoryLists(queryClient: ReturnType<typeof useQueryClient>) {
 function mergedStoriesFromListCache(
   queryClient: ReturnType<typeof useQueryClient>,
 ): ImpactStory[] {
-  const lists = queryClient.getQueriesData<ImpactStory[]>({
-    queryKey: impactStoriesQueryKeys.lists(),
-  })
-  const merged = new Map<string, ImpactStory>()
-  for (const [, rows] of lists) {
-    for (const row of rows ?? []) merged.set(row.id, row)
-  }
-  return [...merged.values()]
+  return collectInfiniteCachedRows<ImpactStory>(queryClient, impactStoriesQueryKeys.lists()) ?? []
 }
 
 function setPinnedCounts(
@@ -97,13 +90,14 @@ function syncPinnedCountFromCache(
 }
 
 export function useImpactStoriesList(filter: ImpactStoryListFilter, enabled = true) {
-  const dataSource = source()
-  return useQuery({
-    queryKey: impactStoriesQueryKeys.list(dataSource, filterKey(filter)),
-    queryFn: () => listStoriesService(filter),
+  return useAdminInfiniteList({
+    queryKey: impactStoriesQueryKeys.list(source(), filterKey(filter)),
     enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    isRemote: shouldUseImpactStoriesRemoteApi(),
+    fetchPage: async page => {
+      const result = await listStoriesPageService({ ...filter, page })
+      return toAdminListPage(result.items, page, result)
+    },
   })
 }
 

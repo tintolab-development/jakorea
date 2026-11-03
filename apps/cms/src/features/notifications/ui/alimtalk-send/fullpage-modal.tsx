@@ -81,6 +81,11 @@ import {
   useAlimtalkTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-alimtalk-send-queries'
 import {
+  useRecipientCandidatePrivacyGate,
+  useReportRecipientCandidateQueryError,
+} from '@/features/notifications/hooks/use-recipient-candidate-privacy'
+import { recipientCandidateErrorNotice } from '@/features/notifications/model/shared/recipient-candidate-privacy'
+import {
   useAlimtalkCategoryTreeQuery,
   useAlimtalkTemplateDetailQuery,
   useAlimtalkTemplatePreviewQuery,
@@ -306,6 +311,21 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     [getTemplateUnusableMessage, programNumericId, variablesCatalog, variablesQuery.isError]
   )
 
+  const onRecipientPrivacyFailure = useCallback(
+    (failure: 'forbidden' | 'audit-unavailable') => {
+      setRecipients(prev =>
+        failure === 'audit-unavailable' ? [] : prev.filter(item => item.source === 'manual')
+      )
+      setSelectedRecipientIds([])
+      setSendConfirmOpen(false)
+    },
+    []
+  )
+  const recipientPrivacy = useRecipientCandidatePrivacyGate({
+    screenOpen: open,
+    programKey: String(programNumericId ?? ''),
+    onFailure: onRecipientPrivacyFailure,
+  })
   const candidatesQuery = useAlimtalkRecipientCandidatesQuery(
     {
       programId: programNumericId,
@@ -321,8 +341,21 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       page: recipientSearch.page,
       size: ALIMTALK_SEND_PICKER_PAGE_SIZE,
     },
-    open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
+    open &&
+      recipientSelectOpen &&
+      recipientPrivacy.queryEnabled &&
+      (programNumericId != null || isWithoutProgram)
   )
+  useReportRecipientCandidateQueryError(
+    recipientPrivacy.report,
+    candidatesQuery.isError,
+    candidatesQuery.error
+  )
+  const candidateNotice =
+    recipientPrivacy.notice ??
+    (candidatesQuery.isError ? recipientCandidateErrorNotice(candidatesQuery.error) : null)
+  const candidateItems =
+    recipientPrivacy.failure || candidatesQuery.isError ? undefined : candidatesQuery.data?.items
 
   const pickerTemplate = useMemo(
     () => pickerTemplates.find(item => item.id === templateId) ?? null,
@@ -339,7 +372,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   )
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setRecipients([])
+      setSelectedRecipientIds([])
+      return
+    }
     idempotencyKeyRef.current = createIdempotencyKey()
     setProgramId(undefined)
     setTemplateId(initialTemplateId)
@@ -554,6 +591,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   const handleRequestSend = () => {
+    if (recipientPrivacy.blockSend) return
     const draft = sendDraftRef.current
     if (!draft) return
     const result = validateAlimtalkSendRequest(draft)
@@ -567,6 +605,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   const handleConfirmSend = async () => {
+    if (recipientPrivacy.blockSend) return
     if (sendingRef.current) return
     const draft = sendDraftRef.current
     if (!draft?.templateId) return
@@ -669,7 +708,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   variant="primary"
                   size="large"
                   type="button"
-                  disabled={sending}
+                  disabled={sending || recipientPrivacy.blockSend}
                   onClick={handleRequestSend} >
                   알림톡 발송
                 </CmsButton>
@@ -822,6 +861,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       {ALIMTALK_PROGRAM_SELECTED_DIRECT_GUIDANCE}
                     </p>
                   ) : null}
+                  {candidateNotice ? (
+                    <p className="alimtalk-send-fullpage__variable-hint" role="alert">
+                      {candidateNotice}
+                    </p>
+                  ) : null}
                   {canConfigureRecipients ? (
                     <>
                       {directManualKeys.length > 0 ? (
@@ -948,9 +992,12 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       <RecipientSelectModal
         key={recipientSelectOpen ? 'recipient-select-open' : 'recipient-select-closed'}
         open={open && recipientSelectOpen}
-        candidates={candidatesQuery.data?.items}
-        initialSelected={recipients}
-        resetKey={recipientTypeMode}
+        candidates={candidateItems}
+        initialSelected={recipientPrivacy.failure ? [] : recipients}
+        resetKey={`${recipientTypeMode}:${recipientPrivacy.failure ?? ''}`}
+        statusMessage={candidateNotice}
+        selectionBlocked={recipientPrivacy.blockSelection || candidatesQuery.isError}
+        loading={candidatesQuery.isFetching && !candidatesQuery.isError}
         pageSize={ALIMTALK_SEND_PICKER_PAGE_SIZE}
         typeColumnTitle={typeColumnTitle}
         typeOptions={
@@ -975,9 +1022,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
               }
             : undefined
         }
-        totalCount={candidatesQuery.data?.total}
+        totalCount={candidateItems ? candidatesQuery.data?.total : 0}
         totalPages={
-          candidatesQuery.data
+          candidateItems && candidatesQuery.data
             ? recipientTotalPages(
                 candidatesQuery.data.total,
                 candidatesQuery.data.size,
@@ -986,25 +1033,33 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             : 1
         }
         fetchAllCandidates={
-          remote && (programNumericId != null || isWithoutProgram)
+          remote &&
+          recipientPrivacy.queryEnabled &&
+          (programNumericId != null || isWithoutProgram)
             ? async () => {
-                return fetchAllAlimtalkRecipientCandidates({
-                  programId: programNumericId,
-                  keyword: recipientSearch.keyword || undefined,
-                  participantType:
-                    recipientTypeMode === 'participation'
-                      ? toAlimtalkSendParticipantTypeApi(recipientSearch.typeValue)
-                      : undefined,
-                  memberType:
-                    recipientTypeMode === 'member'
-                      ? toAlimtalkSendMemberTypeApi(recipientSearch.typeValue)
-                      : undefined,
-                })
+                try {
+                  return await fetchAllAlimtalkRecipientCandidates({
+                    programId: programNumericId,
+                    keyword: recipientSearch.keyword || undefined,
+                    participantType:
+                      recipientTypeMode === 'participation'
+                        ? toAlimtalkSendParticipantTypeApi(recipientSearch.typeValue)
+                        : undefined,
+                    memberType:
+                      recipientTypeMode === 'member'
+                        ? toAlimtalkSendMemberTypeApi(recipientSearch.typeValue)
+                        : undefined,
+                  })
+                } catch (error) {
+                  recipientPrivacy.report(error)
+                  throw error
+                }
               }
             : undefined
         }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={next => {
+          if (recipientPrivacy.blockSelection) return
           const notices = listAlimtalkPhoneDuplicateNotices(recipients, next)
           setRecipients(prev => mergeAlimtalkSendRecipients(prev, next))
           if (notices.length > 0) {

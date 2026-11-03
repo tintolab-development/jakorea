@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { CmsButton } from '@/shared/ui/cms-button'
 import type { TemplateRow } from '@/features/template/model/template.schema'
 import './template-table.css'
+import { CMS_DATA_TABLE_CELL_H40_ACTION_CLASS } from '@/shared/constants/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 
 /**
@@ -84,8 +85,13 @@ export function TemplateTable({ rows, onPreview }: TemplateTableProps) {
         key: 'action',
         width: TEMPLATE_LIST_COL_WIDTH.action,
         align: 'center',
-        className: 'template-table__col-action',
-        onHeaderCell: () => ({ className: 'template-table__col-action' }),
+        className: `template-table__col-action ${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS}`,
+        onHeaderCell: () => ({
+          className: `template-table__col-action ${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS}`,
+        }),
+        onCell: () => ({
+          className: `template-table__col-action ${CMS_DATA_TABLE_CELL_H40_ACTION_CLASS}`,
+        }),
         render: (_, row) => (
           <CmsButton size="medium" variant="default" onClick={() => onPreview(row)}>
             양식 상세보기

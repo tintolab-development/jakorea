@@ -49,6 +49,8 @@
   -webkit-overflow-scrolling: touch;
   /* 서브메뉴 펼침으로 스크롤바가 생겨도 행·화살표가 좌측으로 밀리지 않도록 거터 고정 */
   scrollbar-gutter: stable;
+  /* 펼침 리플로우가 본문 레이아웃까지 번지지 않도록 */
+  contain: layout paint;
   background: var(--color-sidebar-bg) !important;
   color: var(--color-sidebar-text) !important;
 }

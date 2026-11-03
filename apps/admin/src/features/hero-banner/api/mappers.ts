@@ -10,6 +10,10 @@ import type { HeroUpdateRequest } from '@/shared/api/generated/main/schemas/hero
 import type { ReorderRequest } from '@/shared/api/generated/main/schemas/reorderRequest'
 import type { ToggleRequest } from '@/shared/api/generated/main/schemas/toggleRequest'
 
+function expandLineBreaks(value: string): string {
+  return value.replace(/\r\n?/g, '\n').replace(/\\n/g, '\n')
+}
+
 export function mapHeroResponseToDomain(row: HeroResponse): HeroBanner {
   const id = row.id != null ? String(row.id) : ''
   return {
@@ -20,9 +24,9 @@ export function mapHeroResponseToDomain(row: HeroResponse): HeroBanner {
     imageFileName: row.image?.originalName,
     imageAssetId: row.image?.assetId,
     version: row.version ?? 0,
-    topText: row.topText ?? '',
-    mainTitle: row.mainTitle ?? '',
-    bottomText: row.bottomText ?? '',
+    topText: expandLineBreaks(row.topText ?? ''),
+    mainTitle: expandLineBreaks(row.mainTitle ?? ''),
+    bottomText: expandLineBreaks(row.bottomText ?? ''),
     linkUrl: row.linkUrl ?? '',
     createdAt: row.createdAt ?? '',
     updatedAt: row.updatedAt ?? '',

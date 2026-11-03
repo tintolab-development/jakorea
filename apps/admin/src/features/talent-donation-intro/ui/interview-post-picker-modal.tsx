@@ -57,7 +57,7 @@ function PickerBody({
   const [applied, setApplied] = useState<ImpactStoryListFilter | null>(null)
 
   const listQuery = useImpactStoriesList(applied ?? EMPTY_FILTER, applied != null)
-  const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
+  const rows = useMemo(() => listQuery.rows ?? [], [listQuery.rows])
 
   const handleSearch = useCallback(() => {
     const year = pendingYear.trim()

@@ -17,6 +17,11 @@ import {
   useSmsSenderProfilesQuery,
   useSmsTemplateVariablesQuery,
 } from '@/features/notifications/hooks/use-sms-send-queries'
+import {
+  useRecipientCandidatePrivacyGate,
+  useReportRecipientCandidateQueryError,
+} from '@/features/notifications/hooks/use-recipient-candidate-privacy'
+import { recipientCandidateErrorNotice } from '@/features/notifications/model/shared/recipient-candidate-privacy'
 import { useNotificationSendProgramsQuery } from '@/features/notifications/hooks/use-send-programs-query'
 import {
   canSelectNotificationSendTemplate,
@@ -186,6 +191,20 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     return resolveSmsSenderProfileId(senderProfilesQuery.data ?? [], form.senderPhone)
   }, [form.senderPhone, senderProfilesQuery.data])
   const programNumericId = parseNotificationSendProgramId(form.programId)
+  const onRecipientPrivacyFailure = useCallback(
+    (failure: 'forbidden' | 'audit-unavailable') => {
+      if (failure === 'audit-unavailable') form.clearRecipients()
+      else form.clearCandidateRecipients()
+      setSelectedRecipientIds([])
+      setSendConfirmOpen(false)
+    },
+    [form.clearCandidateRecipients, form.clearRecipients]
+  )
+  const recipientPrivacy = useRecipientCandidatePrivacyGate({
+    screenOpen: open,
+    programKey: String(programNumericId ?? ''),
+    onFailure: onRecipientPrivacyFailure,
+  })
   const isWithoutProgram = isNotificationSendWithoutProgram(form.programId)
   const recipientTypeMode = resolveSmsSendRecipientTypeMode(form.programId)
   const typeColumnTitle = smsSendRecipientTypeColumnTitle(recipientTypeMode)
@@ -221,8 +240,21 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       page: recipientSearch.page,
       size: SMS_SEND_PICKER_PAGE_SIZE,
     },
-    open && recipientSelectOpen && (programNumericId != null || isWithoutProgram)
+    open &&
+      recipientSelectOpen &&
+      recipientPrivacy.queryEnabled &&
+      (programNumericId != null || isWithoutProgram)
   )
+  useReportRecipientCandidateQueryError(
+    recipientPrivacy.report,
+    candidatesQuery.isError,
+    candidatesQuery.error
+  )
+  const candidateNotice =
+    recipientPrivacy.notice ??
+    (candidatesQuery.isError ? recipientCandidateErrorNotice(candidatesQuery.error) : null)
+  const candidateItems =
+    recipientPrivacy.failure || candidatesQuery.isError ? undefined : candidatesQuery.data?.items
   const variablesQuery = useSmsTemplateVariablesQuery(
     templateVariablesQuery,
     open && remote && canLoadProgramScoped
@@ -387,6 +419,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   function handleSend() {
+    if (recipientPrivacy.blockSend) return
     if (form.composeBlocking) {
       const error = form.validateRequired()
       showAlert({ title: '필수 입력 안내', content: error ?? '입력값을 확인하세요.' })
@@ -418,6 +451,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   }
 
   async function handleConfirmSend() {
+    if (recipientPrivacy.blockSend) return
     if (sending) return
     const error = form.validateRequired()
     if (error) {
@@ -507,6 +541,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   type="button"
                   disabled={
                     sending ||
+                    recipientPrivacy.blockSend ||
                     form.attachmentUploadPending ||
                     form.composeBlocking ||
                     form.recipients.length === 0 ||
@@ -694,6 +729,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                       않습니다.
                     </p>
                   ) : null}
+                  {candidateNotice ? (
+                    <p className="mail-send-fullpage__section-hint" role="alert">
+                      {candidateNotice}
+                    </p>
+                  ) : null}
                   <RecipientTable
                     recipients={form.recipients}
                     selectedIds={selectedRecipientIds}
@@ -772,9 +812,12 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       <RecipientSelectModal
         key={recipientSelectOpen ? 'recipient-select-open' : 'recipient-select-closed'}
         open={open && recipientSelectOpen}
-        candidates={candidatesQuery.data?.items}
-        initialSelected={form.recipients}
-        resetKey={recipientTypeMode}
+        candidates={candidateItems}
+        initialSelected={recipientPrivacy.failure ? [] : form.recipients}
+        resetKey={`${recipientTypeMode}:${recipientPrivacy.failure ?? ''}`}
+        statusMessage={candidateNotice}
+        selectionBlocked={recipientPrivacy.blockSelection || candidatesQuery.isError}
+        loading={candidatesQuery.isFetching && !candidatesQuery.isError}
         typeColumnTitle={typeColumnTitle}
         typeOptions={
           recipientTypeMode === 'member'
@@ -792,9 +835,9 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           })
         }
         onSearch={remote ? params => setRecipientSearch(params) : undefined}
-        totalCount={candidatesQuery.data?.total}
+        totalCount={candidateItems ? candidatesQuery.data?.total : 0}
         totalPages={
-          candidatesQuery.data
+          candidateItems && candidatesQuery.data
             ? recipientTotalPages(
                 candidatesQuery.data.total,
                 candidatesQuery.data.size,
@@ -803,30 +846,38 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             : 1
         }
         fetchAllCandidates={
-          remote && (programNumericId != null || isWithoutProgram)
+          remote &&
+          recipientPrivacy.queryEnabled &&
+          (programNumericId != null || isWithoutProgram)
             ? async () => {
-                const result = await candidatesQuery.refetch({
-                  throwOnError: true,
-                })
-                if (!result.data) return []
-                if (result.data.total <= result.data.items.length) return result.data.items
-                return fetchAllSmsRecipientCandidates({
-                  programId: programNumericId,
-                  keyword: recipientSearch.keyword || undefined,
-                  participantType:
-                    recipientTypeMode === 'participation'
-                      ? toSmsSendParticipantTypeApi(recipientSearch.typeValue)
-                      : undefined,
-                  memberType:
-                    recipientTypeMode === 'member'
-                      ? toSmsSendMemberTypeApi(recipientSearch.typeValue)
-                      : undefined,
-                })
+                try {
+                  const result = await candidatesQuery.refetch({
+                    throwOnError: true,
+                  })
+                  if (!result.data) return []
+                  if (result.data.total <= result.data.items.length) return result.data.items
+                  return await fetchAllSmsRecipientCandidates({
+                    programId: programNumericId,
+                    keyword: recipientSearch.keyword || undefined,
+                    participantType:
+                      recipientTypeMode === 'participation'
+                        ? toSmsSendParticipantTypeApi(recipientSearch.typeValue)
+                        : undefined,
+                    memberType:
+                      recipientTypeMode === 'member'
+                        ? toSmsSendMemberTypeApi(recipientSearch.typeValue)
+                        : undefined,
+                  })
+                } catch (error) {
+                  recipientPrivacy.report(error)
+                  throw error
+                }
               }
             : undefined
         }
         onClose={() => setRecipientSelectOpen(false)}
         onConfirm={recipients => {
+          if (recipientPrivacy.blockSelection) return
           const notices = listSmsPhoneDuplicateNotices(form.recipients, recipients)
           form.addRecipients(recipients)
           if (notices.length > 0) {

@@ -93,16 +93,22 @@ function sortByDisplayOrder<T extends { displayOrder?: unknown }>(items: readonl
     .map(entry => entry.item)
 }
 
+const FOOTER_DIRECTIONS_LABEL = '오시는 길'
+
+function displayFooterMenuLabel(label: string): string {
+  return label === '오시는길' ? FOOTER_DIRECTIONS_LABEL : label
+}
+
 function mapMenu(raw: unknown): SiteFooterMenu | null {
   if (!isRecord(raw)) return null
   const key = readText(raw.menuCode)
-  const label = readText(raw.label)
+  const label = displayFooterMenuLabel(readText(raw.label))
   if (!key || !label) return null
 
   if (key === 'TERMS') return { key, label, kind: 'terms' }
   if (key === 'PRIVACY') return { key, label, kind: 'privacy' }
   if (key === 'DIRECTIONS') {
-    return { key, label: '오시는 길', kind: 'directions', href: '/about/directions' }
+    return { key, label: FOOTER_DIRECTIONS_LABEL, kind: 'directions', href: '/about/directions' }
   }
   if (!EXTERNAL_MENU_CODES.has(key)) return null
 

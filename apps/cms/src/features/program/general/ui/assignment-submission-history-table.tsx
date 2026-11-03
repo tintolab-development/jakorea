@@ -5,6 +5,7 @@
 
 import { useMemo, type ReactNode } from 'react'
 import type { ColumnsType } from 'antd/es/table'
+import { CMS_DATA_TABLE_CELL_H40_ACTION_STACK_CLASS } from '@/shared/constants/table'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
   StatusDropdownCell,
@@ -205,6 +206,8 @@ export function useAssignmentSubmissionHistoryColumns(options: {
         key: 'submission',
         width: 300,
         align: 'center',
+        onHeaderCell: () => ({ className: CMS_DATA_TABLE_CELL_H40_ACTION_STACK_CLASS }),
+        onCell: () => ({ className: CMS_DATA_TABLE_CELL_H40_ACTION_STACK_CLASS }),
         render: (_value, record) =>
           renderSubmissionCell(record, onOpenPreview, onOpenFeedback),
       },

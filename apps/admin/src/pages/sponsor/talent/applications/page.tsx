@@ -34,6 +34,7 @@ import {
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-display'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -48,6 +49,7 @@ import {
   ymdFromParam,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -262,13 +264,20 @@ export function TalentDonationApplicationsPage() {
   const removeMutation = useRemoveTalentDonationApplications(appliedFilter)
   const confirmMutation = useConfirmTalentDonationApplications(appliedFilter)
 
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+
   useInvalidateOnWindowEvent(
     TALENT_DONATION_APPLICATIONS_CHANGED_EVENT,
     talentDonationApplicationQueryKeys.all
   )
 
-  const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data?.items])
-  const totalCount = listQuery.data?.totalCount ?? rows.length
+  const rows = listQuery.rows
+  const totalCount = listQuery.totalCount
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [detailRow, setDetailRow] = useState<TalentDonationApplication | null>(null)
@@ -338,12 +347,7 @@ export function TalentDonationApplicationsPage() {
 
   const refreshDetailFromList = useCallback(
     async (id: string) => {
-      const next = await listQuery.refetch()
-      const found = (next.data?.items ?? []).find(r => r.id === id) ?? null
-      if (found) {
-        setDetailRow(found)
-        return
-      }
+      void listQuery.refetch()
       const detail = await getTalentDonationApplicationService(id, DEFAULT_CONFIRM_ACTOR)
       setDetailRow(detail)
       if (!detail) closeDetail()
@@ -726,6 +730,10 @@ export function TalentDonationApplicationsPage() {
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>

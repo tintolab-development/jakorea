@@ -28,15 +28,11 @@ export type VolunteerAssignmentProgressData = {
 }
 
 function collectScheduleIds(
-  matrixColumns: ReadonlyArray<{ scheduleId?: number | null }>,
-  sessions: ReadonlyArray<{ scheduleId?: number | null }>
+  matrixColumns: ReadonlyArray<{ scheduleId?: number | null }>
 ): number[] {
   const ids = new Set<number>()
   for (const column of matrixColumns) {
     if (column.scheduleId != null) ids.add(column.scheduleId)
-  }
-  for (const session of sessions) {
-    if (session.scheduleId != null) ids.add(session.scheduleId)
   }
   return [...ids]
 }
@@ -84,7 +80,7 @@ export async function loadVolunteerAssignmentProgress(input: {
       })
     : { sessions: [] }
 
-  const scheduleIds = collectScheduleIds(matrix.columns ?? [], submissions.sessions ?? [])
+  const scheduleIds = collectScheduleIds(matrix.columns ?? [])
   const [partnerEntries, attendancesByScheduleId, absenceReasons, orgAssignments] =
     await Promise.all([
       Promise.all(

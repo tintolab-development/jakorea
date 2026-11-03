@@ -4913,6 +4913,7 @@
           },
           "body": {
             "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다.",
             "maxLength": 100000,
             "minLength": 0
           },
@@ -4955,7 +4956,8 @@
             "type": "string"
           },
           "body": {
-            "type": "string"
+            "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
           "attachment": {
             "$ref": "#/components/schemas/AssetResponse"
@@ -6187,6 +6189,7 @@
           },
           "body": {
             "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다.",
             "maxLength": 100000,
             "minLength": 0
           },
@@ -6245,7 +6248,8 @@
             "type": "string"
           },
           "body": {
-            "type": "string"
+            "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
           "thumbnail": {
             "$ref": "#/components/schemas/AssetResponse",
@@ -6868,6 +6872,7 @@
           },
           "body": {
             "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다.",
             "maxLength": 100000,
             "minLength": 0
           },
@@ -6902,6 +6907,20 @@
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
+          },
+          "buttonLabel": {
+            "type": "string",
+            "description": "Optional public-detail CTA label. Blank or null clears.",
+            "maxLength": 15,
+            "minLength": 0,
+            "nullable": true
+          },
+          "linkUrl": {
+            "type": "string",
+            "description": "Optional public-detail CTA URL. Blank or null clears. Platform shows the CTA only when this is set.",
+            "maxLength": 2048,
+            "minLength": 0,
+            "nullable": true
           },
           "version": {
             "type": "integer",
@@ -6968,7 +6987,8 @@
             "format": "int64"
           },
           "body": {
-            "type": "string"
+            "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
           "attachment": {
             "$ref": "#/components/schemas/AssetResponse"
@@ -6976,6 +6996,14 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "buttonLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "linkUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -8260,6 +8288,7 @@
           },
           "body": {
             "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다.",
             "maxLength": 100000,
             "minLength": 0
           },
@@ -8375,6 +8404,7 @@
           },
           "body": {
             "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다.",
             "maxLength": 100000,
             "minLength": 0
           },
@@ -8504,6 +8534,7 @@
           },
           "body": {
             "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다.",
             "maxLength": 100000,
             "minLength": 0
           },
@@ -8538,6 +8569,20 @@
           "attachmentAssetId": {
             "type": "integer",
             "format": "int64"
+          },
+          "buttonLabel": {
+            "type": "string",
+            "description": "Optional public-detail CTA label. Blank or null clears.",
+            "maxLength": 15,
+            "minLength": 0,
+            "nullable": true
+          },
+          "linkUrl": {
+            "type": "string",
+            "description": "Optional public-detail CTA URL. Blank or null clears. Platform shows the CTA only when this is set.",
+            "maxLength": 2048,
+            "minLength": 0,
+            "nullable": true
           }
         },
         "required": [
@@ -10240,7 +10285,8 @@
             "type": "string"
           },
           "body": {
-            "type": "string"
+            "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
           "attachmentFileName": {
             "type": "string"
@@ -10402,7 +10448,8 @@
             "type": "string"
           },
           "body": {
-            "type": "string"
+            "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
           "imageUrl": {
             "type": "string",
@@ -10736,7 +10783,8 @@
             "format": "date"
           },
           "body": {
-            "type": "string"
+            "type": "string",
+            "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
           "attachment": {
             "$ref": "#/components/schemas/AssetResponse"
@@ -10744,6 +10792,14 @@
           "viewCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "buttonLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "linkUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -10906,6 +10962,25 @@
             "items": {
               "$ref": "#/components/schemas/VisitorPoint"
             }
+          }
+        }
+      },
+      "VisitorStatisticsMetadata": {
+        "type": "object",
+        "properties": {
+          "availableYears": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "minDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "maxDate": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -12519,6 +12594,22 @@
             "items": {
               "$ref": "#/components/schemas/CareerPostingAdminItem"
             }
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },

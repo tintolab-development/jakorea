@@ -479,7 +479,13 @@ describe('one survey per schedule — disable used schedules', () => {
     slot({ id: 33, sessionNo: 3, startAt: '2026-10-29T04:00:00+09:00', endAt: '2026-10-29T05:00:00+09:00' }),
   ]
   const ref = (
-    binding: Partial<{ formType: string; targetScope: string; targetScopeId: number; active: boolean }>
+    binding: Partial<{
+      formType: string
+      targetRole: string
+      targetScope: string
+      targetScopeId: number
+      active: boolean
+    }>
   ) => ({ binding: { formType: 'SURVEY', targetScope: 'SCHEDULE', active: true, ...binding } })
 
   it('collects only active SURVEY+SCHEDULE binding scheduleIds', () => {
@@ -493,6 +499,18 @@ describe('one survey per schedule — disable used schedules', () => {
     ])
     expect([...used].sort()).toEqual(['31', '35'])
     expect(collectSurveyPollUsedScheduleIds(null).size).toBe(0)
+  })
+
+  it('filters SATISFACTION by formType and targetRole', () => {
+    const used = collectSurveyPollUsedScheduleIds(
+      [
+        ref({ targetScopeId: 31, formType: 'SATISFACTION', targetRole: 'TEACHER' }),
+        ref({ targetScopeId: 32, formType: 'SATISFACTION', targetRole: 'VOLUNTEER_H1' }),
+        ref({ targetScopeId: 33, formType: 'SURVEY' }),
+      ],
+      { formType: 'SATISFACTION', targetRole: 'TEACHER' }
+    )
+    expect([...used]).toEqual(['31'])
   })
 
   it('keeps used schedules visible but disabled, labels and values unchanged', () => {

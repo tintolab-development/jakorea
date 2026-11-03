@@ -12,6 +12,8 @@ export type UjatAssignmentSubmissionDocumentStatus = typeof UjatAssignmentSubmis
 export const UjatAssignmentSubmissionDocumentStatus = {
   NOT_SUBMITTED: 'NOT_SUBMITTED',
   SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
   DEADLINE_MISSED: 'DEADLINE_MISSED',
+  FEEDBACK_REQUESTED: 'FEEDBACK_REQUESTED',
   REVISED: 'REVISED',
 } as const;

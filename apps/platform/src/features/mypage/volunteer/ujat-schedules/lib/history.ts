@@ -7,7 +7,7 @@ import {
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
   resolveEducationScheduleProgressStatus,
-} from '../../../education/schedules/lib/schedule-rules'
+} from '../../../education/schedules/lib/schedule-rules.ts'
 
 const SEOUL_YMD = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Asia/Seoul',
@@ -29,6 +29,7 @@ type ScheduleRecordItem = Pick<
   | 'attendanceStatus'
   | 'assignmentStatus'
   | 'scheduleStatus'
+  | 'classLabel'
   | 'scheduleId'
   | 'heldAt'
   | 'id'
@@ -74,7 +75,9 @@ export function isCancelledUjatAssignment(item: ScheduleRecordItem): boolean {
 }
 
 export function isAssignedUjatSchedule(item: ScheduleRecordItem): boolean {
-  return readAssignmentCode(item) === 'ASSIGNED'
+  const code = readAssignmentCode(item)
+  if (code === 'ASSIGNED' || code === 'REASSIGNMENT_REQUIRED') return true
+  return (item.classLabel ?? '').trim().length > 0
 }
 
 /**
@@ -120,9 +123,12 @@ export type UjatVolunteerScheduleMonthGroup = {
 }
 
 function monthKeyFromHeldAt(heldAt: string): string | null {
-  const date = new Date(heldAt)
-  if (Number.isNaN(date.getTime())) return null
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+  const date = seoulDateFromHeldAt(heldAt)
+  if (!date) return null
+  const ymd = SEOUL_YMD.format(date)
+  const [year, month] = ymd.split('-')
+  if (!year || !month) return null
+  return `${year}-${month}`
 }
 
 function monthLabelFromKey(monthKey: string): string {
@@ -147,9 +153,9 @@ export function formatUjatScheduleCardDate(heldAt: string): string | null {
   if (!date) return null
   const ymd = SEOUL_YMD.format(date)
   const parts = ymd.split('-')
-  const month = parts[1]
-  const day = parts[2]
-  if (!month || !day) return null
+  const month = Number(parts[1])
+  const day = Number(parts[2])
+  if (!Number.isFinite(month) || !Number.isFinite(day)) return null
   return `${month}월 ${day}일`
 }
 

@@ -17,7 +17,6 @@ import {
   useAdminAccountLogsList,
   useExportAdminAccountLogs,
 } from '@/features/admin-account-log/api/hooks'
-import { downloadCsv } from '@/features/logs/shared/lib/export-csv'
 import { formatLogDateTime } from '@/features/logs/shared/lib/format-datetime'
 import {
   logListRowNumber,
@@ -201,30 +200,12 @@ export function AdminAccountLogPage() {
   )
 
   const handleExcel = useCallback(() => {
-    void exportMutation
-      .mutateAsync(appliedFilter)
-      .then(result => {
-        if (result === 'remote-downloaded') return
-        const all = result.rows
-        downloadCsv({
-          filenameBase: '관리자_계정_처리_이력',
-          headers: ['No.', '관리자명', '아이디', '내역', '처리일시', 'IP'],
-          rows: all.map((row, index) => [
-            all.length - index,
-            row.name,
-            row.loginId,
-            ADMIN_ACCOUNT_ACTION_LABELS[row.actionType],
-            formatLogDateTime(row.processedAt),
-            row.ip,
-          ]),
-        })
+    void exportMutation.mutateAsync(appliedFilter).catch(() => {
+      showAlert({
+        title: '내보내기 실패',
+        content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
       })
-      .catch(() => {
-        showAlert({
-          title: '내보내기 실패',
-          content: '엑셀 내보내기에 실패했습니다. 다시 시도해 주세요.',
-        })
-      })
+    })
   }, [appliedFilter, exportMutation, showAlert])
 
   const columns = useMemo<ColumnsType<AdminAccountLog>>(

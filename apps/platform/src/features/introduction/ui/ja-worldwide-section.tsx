@@ -1,4 +1,4 @@
-import { useCallback, useState, type CSSProperties, type FocusEvent } from 'react'
+import { memo, useCallback, useState, type CSSProperties, type FocusEvent } from 'react'
 import arrowDiagonalBlackUrl from '@/shared/assets/icons/arrow-diagonal-black.svg?url'
 import arrowDiagonalWhiteUrl from '@/shared/assets/icons/arrow-diagonal-white-24.svg?url'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
@@ -21,7 +21,7 @@ import styles from './ja-worldwide-section.module.css'
  * JA Global Value `.list` 다음 콘텐츠 블록.
  * sticky/스크롤 하이재킹 없음 — Global Value panel 연속 배경 안에서 일반 document scroll.
  */
-export function JaWorldwideSection({
+export const JaWorldwideSection = memo(function JaWorldwideSection({
   worldwide,
 }: {
   worldwide: IntroductionWorldwideContent
@@ -184,4 +184,4 @@ export function JaWorldwideSection({
       ) : null}
     </section>
   )
-}
+})

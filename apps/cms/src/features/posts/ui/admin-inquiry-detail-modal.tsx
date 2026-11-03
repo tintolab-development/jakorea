@@ -48,7 +48,7 @@ export function AdminInquiryDetailModal({
     retry: false,
   })
   const { replyMutation } = useInquiryMutations()
-  const detail = detailQuery.data ?? null
+  const detail = detailQuery.detail
   const attachments = attachmentsQuery.data ?? []
 
   const handleDownloadAttachment = useCallback(async (fileObjectId: number, fileName: string) => {
@@ -140,6 +140,14 @@ export function AdminInquiryDetailModal({
             aria-label="문의 불러오는 중"
           >
             <Spin size="large" />
+          </div>
+        ) : detailQuery.privacyMessage ? (
+          <div className="admin-inquiry-detail-modal__empty" role="alert">
+            {detailQuery.privacyMessage}
+          </div>
+        ) : detailQuery.isError ? (
+          <div className="admin-inquiry-detail-modal__empty" role="alert">
+            {getPostsApiErrorMessage(detailQuery.error, '문의를 불러올 수 없습니다.')}
           </div>
         ) : !detail ? (
           <div className="admin-inquiry-detail-modal__empty">문의를 불러올 수 없습니다.</div>

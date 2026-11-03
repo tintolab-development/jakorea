@@ -9,4 +9,8 @@ import type { CareerPostingAdminItem } from './careerPostingAdminItem';
 
 export interface CareerPostingAdminListResponse {
   items?: CareerPostingAdminItem[];
+  totalCount?: number;
+  page?: number;
+  size?: number;
+  totalPages?: number;
 }

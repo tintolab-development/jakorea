@@ -26,6 +26,18 @@ describe('partnerOptionsFromRecommendation', () => {
       ]).map(option => option.value)
     ).toEqual(['9', '8'])
   })
+
+  it('volunteerName·assignmentDayCount가 없으면 memberName·assignedScheduleCount를 쓴다', () => {
+    expect(
+      partnerOptionsFromRecommendation([
+        {
+          participantId: 11,
+          memberName: '김별칭',
+          assignedScheduleCount: 2,
+        },
+      ])
+    ).toEqual([{ value: '11', label: '김별칭 (배정일 : 2일)' }])
+  })
 })
 
 describe('formatScheduleShortDateLabel', () => {

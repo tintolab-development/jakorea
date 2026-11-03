@@ -25,7 +25,6 @@ import { formatCreatedDateTime, formatYmdDot } from '@/features/history-awards-c
 import {
   deleteConfirmContent,
   deleteFailureAlert,
-  publishedMustUnpublishAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
 import { AwardFormModal } from '@/features/history-awards-certs/ui/award-form-modal'
 import {
@@ -37,6 +36,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
@@ -49,6 +49,7 @@ import {
   ymdFromParam,
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   AdminFilterTextInput,
@@ -56,6 +57,7 @@ import {
   ConfirmModal,
   useCmsAlert,
   FilterTableLayout,
+  showDeleteCompletedAlert,
 } from '@/shared/ui'
 
 type AwardPendingFilters = {
@@ -216,7 +218,14 @@ export function AwardPanel() {
   const removeMutation = useRemoveAward()
   const setPublicMutation = useSetAwardPublic()
 
-  const rows = listQuery.data ?? []
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+
+  const rows = listQuery.rows
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formVariant, setFormVariant] = useState<'create' | 'edit'>('create')
@@ -295,15 +304,12 @@ export function AwardPanel() {
 
   const handleDetailDelete = useCallback(async () => {
     if (!editing) return
-    if (editing.isPublic) {
-      showAlert(publishedMustUnpublishAlert('수상'))
-      return
-    }
     try {
       await removeMutation.mutateAsync([editing.id])
       setFormOpen(false)
       setEditing(null)
       setSelectedRowKeys(prev => prev.filter(k => String(k) !== editing.id))
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(deleteFailureAlert('수상', error))
     }
@@ -314,25 +320,21 @@ export function AwardPanel() {
       showAlert({ title: '선택 항목 없음', content: '삭제할 수상을 선택해 주세요.' })
       return
     }
-    const idSet = new Set(selectedRowKeys.map(String))
-    if (rows.some(row => idSet.has(row.id) && row.isPublic)) {
-      showAlert(publishedMustUnpublishAlert('수상'))
-      return
-    }
     setDeleteConfirmOpen(true)
-  }, [rows, selectedRowKeys, showAlert])
+  }, [selectedRowKeys, showAlert])
 
   const handleDeleteConfirm = useCallback(async () => {
     try {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(deleteFailureAlert('수상', error))
     }
   }, [removeMutation, selectedRowKeys, showAlert])
 
-  const totalCount = rows.length
+  const totalCount = listQuery.totalCount
   const columns = useMemo<ColumnsType<AwardItem>>(
     () => [
       {
@@ -539,6 +541,10 @@ export function AwardPanel() {
               onChange: keys => setSelectedRowKeys(keys),
               columnWidth: TABLE_COLUMN_WIDTHS.checkbox,
             }}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>

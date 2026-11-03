@@ -35,6 +35,7 @@ import {
 } from '@/shared/constants/filter-field-width'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { formatDateTimeDot, formatNumberDisplay } from '@/shared/lib/format-display'
+import { useGatedInfiniteScroll } from '@/shared/hooks/use-gated-infinite-scroll'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
@@ -50,6 +51,7 @@ import {
 } from '@/shared/lib/url-date-range-pending-sync'
 import {
   AdminFilterTextInput,
+  AdminInfiniteTableFooter,
   CmsButton,
   CmsDateRangePicker,
   CmsInput,
@@ -275,10 +277,17 @@ export function RecruitApplicantsPage() {
   const confirmMutation = useConfirmRecruitApplicants()
   const removeMutation = useRemoveRecruitApplicants()
 
+  const { sentinelRef } = useGatedInfiniteScroll({
+    hasNextPage: listQuery.hasNextPage,
+    isFetchingNextPage: listQuery.isFetchingNextPage,
+    fetchNextPage: listQuery.fetchNextPage,
+    resetKey: JSON.stringify(appliedFilter),
+  })
+
   useInvalidateOnWindowEvent(RECRUIT_APPLICANTS_CHANGED_EVENT, recruitApplicantQueryKeys.all)
 
-  const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data])
-  const totalCount = listQuery.data?.totalCount ?? rows.length
+  const rows = listQuery.rows
+  const totalCount = listQuery.totalCount
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
@@ -704,6 +713,10 @@ export function RecruitApplicantsPage() {
               style: { cursor: 'pointer' },
             })}
             scroll={{ x: true }}
+          />
+          <AdminInfiniteTableFooter
+            sentinelRef={sentinelRef}
+            isFetchingNextPage={listQuery.isFetchingNextPage}
           />
         </div>
       </FilterTableLayout>
