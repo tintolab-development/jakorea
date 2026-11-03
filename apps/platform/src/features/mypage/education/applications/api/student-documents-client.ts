@@ -3,12 +3,12 @@ import { axiosClient } from '@/shared/api/axios-instance'
 import {
   assertCertificateZipBlob,
   CERTIFICATE_BULK_DOWNLOAD_ACCEPT,
-  CERTIFICATE_BULK_DOWNLOAD_FILE_NAME,
   CertificateBulkDownloadError,
   readResponseHeader,
   toCertificateBulkDownloadError,
   validateCertificateRosterIds,
 } from '../lib/certificate-bulk-download'
+import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import { readStudentDocumentsErrorCode } from '../lib/student-documents-errors'
 import {
   downloadFromGeneratedFileJob,
@@ -150,7 +150,8 @@ export async function downloadOrganizationStudentRosterTemplate(
  */
 export async function downloadOrganizationStudentCertificates(
   applicationId: string,
-  rosterIds: readonly number[]
+  rosterIds: readonly number[],
+  options?: { fileName?: string },
 ): Promise<void> {
   const validationMessage = validateCertificateRosterIds(rosterIds)
   if (validationMessage) throw new CertificateBulkDownloadError(validationMessage)
@@ -179,7 +180,10 @@ export async function downloadOrganizationStudentCertificates(
 
   const contentType = readResponseHeader(response.headers, 'content-type')
   const zipBlob = assertCertificateZipBlob(response.data, contentType)
-  savePortalBlobFile(CERTIFICATE_BULK_DOWNLOAD_FILE_NAME, zipBlob)
+  const fileName =
+    options?.fileName?.trim() ||
+    buildCertificateDownloadFileName({ memberName: '', extension: 'zip' })
+  savePortalBlobFile(fileName, zipBlob)
 }
 
 export async function fetchOrganizationStudentDocumentPolicy(

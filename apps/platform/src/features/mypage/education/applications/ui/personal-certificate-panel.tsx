@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import type { ProgramDetailCase } from '@/features/program'
+import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
-import { PFAlertModal, PFButton } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner } from '@/shared/ui'
 import {
   useDownloadPersonalCertificateMutation,
   useIssuePersonalCertificateMutation,
@@ -9,6 +10,7 @@ import {
 } from '../api/personal-certificate-hooks'
 import { readPortalCertificateIssueId } from '../api/personal-certificate-types'
 import type { ProgramApplicationType } from '../api/types'
+import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import {
   isPersonalCertificateActionable,
   shouldShowPersonalCertificateAction,
@@ -56,6 +58,7 @@ export function EducationPersonalCertificatePanel({
     applicationId,
   })
   const downloadMutation = useDownloadPersonalCertificateMutation()
+  const { displayName } = useMypageMember()
   const [alertMessage, setAlertMessage] = useState('')
   const [localIssueId, setLocalIssueId] = useState<number | null>(null)
 
@@ -101,7 +104,10 @@ export function EducationPersonalCertificatePanel({
 
   const handleDownload = async (issueId: number) => {
     try {
-      await downloadMutation.mutateAsync(issueId)
+      await downloadMutation.mutateAsync({
+        certificateIssueId: issueId,
+        fileName: buildCertificateDownloadFileName({ memberName: displayName }),
+      })
     } catch (error) {
       setAlertMessage(
         error instanceof Error && error.message.trim()
@@ -174,6 +180,16 @@ export function EducationPersonalCertificatePanel({
         confirmLabel="확인"
         onConfirm={() => setAlertMessage('')}
       />
+      {downloadMutation.isPending || issueMutation.isPending ? (
+        <PFLoadingSpinner
+          blocking
+          label={
+            downloadMutation.isPending
+              ? '수료증을 다운로드하는 중'
+              : '수료증을 발급하는 중'
+          }
+        />
+      ) : null}
     </section>
   )
 }

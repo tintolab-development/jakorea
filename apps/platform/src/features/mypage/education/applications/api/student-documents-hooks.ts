@@ -409,9 +409,11 @@ export function useDownloadStudentRosterTemplateMutation(applicationId: string) 
 
 export function useDownloadOrganizationStudentCertificatesMutation(applicationId: string) {
   return useMutation({
-    mutationFn: (rosterIds: readonly number[]) => {
+    mutationFn: (input: { rosterIds: readonly number[]; fileName?: string }) => {
       const orgApplicationId = requireOrganizationApplicationId(applicationId)
-      return downloadOrganizationStudentCertificates(orgApplicationId, rosterIds)
+      return downloadOrganizationStudentCertificates(orgApplicationId, input.rosterIds, {
+        fileName: input.fileName,
+      })
     },
     retry: false,
   })
