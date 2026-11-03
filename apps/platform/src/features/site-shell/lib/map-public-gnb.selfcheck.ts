@@ -65,6 +65,19 @@ assert.equal(
   false,
 )
 
+const directionsLabelOverlay = mapPublicGnb([
+  {
+    groupCode: 'JA_KOREA',
+    groupName: 'JA Korea',
+    menus: [{ menuCode: 'JA_DIRECTIONS', displayName: '오시는길', displayOrder: 1 }],
+  },
+])
+assert.equal(
+  directionsLabelOverlay?.groups[0]?.children.find(item => item.menuCode === 'JA_DIRECTIONS')
+    ?.label,
+  '오시는 길',
+)
+
 const mobileMenuDesignOverlay = mapPublicGnb([
   {
     groupCode: 'JA_KOREA',

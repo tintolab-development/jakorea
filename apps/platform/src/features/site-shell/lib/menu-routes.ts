@@ -45,6 +45,7 @@ export type GnbMenuCode = keyof typeof GNB_MENU_ROUTES
 
 /** 공개 GNB에서 디자인 시안과 일치시켜야 하는 고정 메뉴 표기. */
 export const GNB_DESIGN_LABEL_OVERRIDES: Partial<Record<GnbMenuCode, string>> = {
+  JA_DIRECTIONS: '오시는 길',
   EDU_ENTREPRENEURSHIP: '기업가정신',
   EDU_DIGITAL_LITERACY: '디지털리터러시',
   EDU_MATERIAL: '교재',
