@@ -682,9 +682,7 @@ function repairColumnField(
   if (f.kind === 'dateTime') {
     return {
       kind: 'dateTime',
-      dateTimeMode: normalizeHorizontalDateTimeMode(
-        (f as { dateTimeMode?: unknown }).dateTimeMode
-      ),
+      dateTimeMode: normalizeHorizontalDateTimeMode((f as { dateTimeMode?: unknown }).dateTimeMode),
       placeholder: f.placeholder ?? '',
     }
   }
@@ -1569,19 +1567,13 @@ function persistMigratedVerticalStageKinds(row: VerticalTableRow): VerticalTable
   const hasLegacyDateTime = row.stageKinds.some(k => k === 'date_time')
   const hasDateOrTimeKind = row.stageKinds.some(k => k === 'date' || k === 'time')
   const hasModes =
-    row.dateTimeStageModes != null ||
-    (row.stageCount === 1 && row.dateTimeSingleStageMode != null)
+    row.dateTimeStageModes != null || (row.stageCount === 1 && row.dateTimeSingleStageMode != null)
   if (!hasLegacyDateTime && !(hasDateOrTimeKind && hasModes)) return row
 
   const modes = effectiveVerticalRowDateTimeModes(row)
   if (row.stageCount === 1) {
     const next = migrateVerticalDateTimeStageKind(row.stageKinds[0]!, modes[0])
-    const {
-      dateTimeStageModes: _m,
-      dateTimeSingleStageMode: _s,
-      stageKinds: _sk,
-      ...rest
-    } = row
+    const { dateTimeStageModes: _m, dateTimeSingleStageMode: _s, stageKinds: _sk, ...rest } = row
     return { ...rest, stageCount: 1, stageKinds: [next] }
   }
   const k0 = migrateVerticalDateTimeStageKind(row.stageKinds[0]!, modes[0])
@@ -1732,7 +1724,10 @@ export function effectiveVerticalRowDateTimeModes(
   }
   const kind0 = row.stageKinds?.[0]
   const kind1 = row.stageKinds?.[1]
-  if (isVerticalDateOrTimeStageKind(kind0 ?? 'text') || isVerticalDateOrTimeStageKind(kind1 ?? 'text')) {
+  if (
+    isVerticalDateOrTimeStageKind(kind0 ?? 'text') ||
+    isVerticalDateOrTimeStageKind(kind1 ?? 'text')
+  ) {
     const m0: DateTimeFieldMode =
       kind0 === 'time' ? 'time' : kind0 === 'date' || kind0 === 'date_time' ? 'date' : 'date'
     const m1: DateTimeFieldMode =
@@ -1740,20 +1735,14 @@ export function effectiveVerticalRowDateTimeModes(
     if (kind0 === 'date_time' || kind1 === 'date_time') {
       const dm = row.dateTimeStageModes
       if (dm && dm.length >= 2 && isDateTimeFieldMode(dm[0]) && isDateTimeFieldMode(dm[1])) {
-        return [
-          dm[0] === 'date_time' ? 'date' : dm[0],
-          dm[1] === 'date_time' ? 'date' : dm[1],
-        ]
+        return [dm[0] === 'date_time' ? 'date' : dm[0], dm[1] === 'date_time' ? 'date' : dm[1]]
       }
     }
     return [m0, m1]
   }
   const dm = row.dateTimeStageModes
   if (dm && dm.length >= 2 && isDateTimeFieldMode(dm[0]) && isDateTimeFieldMode(dm[1])) {
-    return [
-      dm[0] === 'date_time' ? 'date' : dm[0],
-      dm[1] === 'date_time' ? 'date' : dm[1],
-    ]
+    return [dm[0] === 'date_time' ? 'date' : dm[0], dm[1] === 'date_time' ? 'date' : dm[1]]
   }
   return ['date', 'date']
 }
@@ -2279,14 +2268,11 @@ const LECTURE_REPORT_SESSION_ITEM_TITLE_SEED: Record<
   },
 }
 
-function migrateLectureReportSessionPlanItemTitles(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateLectureReportSessionPlanItemTitles(p: WritingFormParagraph): WritingFormParagraph {
   if (
     p.kind !== 'single_item' ||
     p.variant !== 'session_plan_short_essay' ||
-    (p.id !== 'lecture-report-education-content' &&
-      p.id !== 'lecture-report-education-operation')
+    (p.id !== 'lecture-report-education-content' && p.id !== 'lecture-report-education-operation')
   ) {
     return p
   }
@@ -2325,9 +2311,7 @@ export function normalizeWritingFormDraft(draft: WritingFormDraft): WritingFormD
 }
 
 /** 초상권 intro — 설명글만 (구 시드/저장본의 하단 동의 라디오 제거) */
-function migrateAgreementPortraitIntroBottomConsent(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateAgreementPortraitIntroBottomConsent(p: WritingFormParagraph): WritingFormParagraph {
   if (
     p.id !== 'agreement-portrait-intro' ||
     p.kind !== 'single_item' ||
@@ -2364,8 +2348,7 @@ function migrateAgreementPortraitPersonalConsentNameCells(
   const c1 = (r0.cells[1] ?? '').trim()
   const clearName = c0 === '한글 성명'
   const clearAff = c1 === '소속 / 소속 없음' || c1 === '소속'
-  const kindsNeedFix =
-    r0.stageKinds?.[0] !== 'subjective' || r0.stageKinds?.[1] !== 'subjective'
+  const kindsNeedFix = r0.stageKinds?.[0] !== 'subjective' || r0.stageKinds?.[1] !== 'subjective'
   const h0 = (r0.placeholderHints?.[0] ?? '').trim()
   const h1 = (r0.placeholderHints?.[1] ?? '').trim()
   const hintsNeedFix = h0 === '' || h1 === '' || h1 === '소속 기관명'
@@ -2415,8 +2398,7 @@ const AGREEMENT_PORTRAIT_USAGE_CONSENT_QUESTION = '위와 같은 초상권 활�
 const PORTRAIT_PERSONAL_PURPOSE_CELL =
   '홍보 콘텐츠 제작 게시, 제작물의 정보 이용\n- 온라인(디지털 매체): 콘텐츠 제작, 홈페이지, SNS 게시물\n- 간행물(인쇄/출판/제작물) 제작: 리플렛, 팜플렛, 브로슈어, 기업보고서, 애뉴얼리포트 등'
 
-const PORTRAIT_DELEGATED_PERIOD_CELL =
-  '개인정보 수집 시 동의 기간 또는 위탁계약 종료 시까지'
+const PORTRAIT_DELEGATED_PERIOD_CELL = '개인정보 수집 시 동의 기간 또는 위탁계약 종료 시까지'
 
 const PORTRAIT_USAGE_SCOPE_HEADER = '초상권의 사용 범위'
 
@@ -2424,9 +2406,7 @@ const PORTRAIT_USAGE_SCOPE_CELL =
   '1) 간행물(인쇄/출판/제작물): 리플렛, 팜플렛, 브로슈어, 기업보고서, 사례집, 애뉴얼리포트 등\n2) 온라인(디지털 매체): 홈페이지, SNS 게시물 등'
 
 /** 초상권 시드 고정 카피 — 구 draft를 시안 문구로 보정 (성명·소속 응답 셀은 유지) */
-function migrateAgreementPortraitSeedFixedCopy(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateAgreementPortraitSeedFixedCopy(p: WritingFormParagraph): WritingFormParagraph {
   if (p.id === 'agreement-portrait-intro') {
     if (p.kind !== 'single_item' || p.variant !== 'agreement_explanation_text') return p
     if (p.bodyText === AGREEMENT_PORTRAIT_INTRO_TEXT) return p
@@ -2503,9 +2483,7 @@ function migrateAgreementPortraitSeedFixedCopy(
 }
 
 /** 초상권 시드 단락 — 필수항목(*)·답변 필수 강제 */
-function migrateAgreementPortraitSeedRequiredMarks(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateAgreementPortraitSeedRequiredMarks(p: WritingFormParagraph): WritingFormParagraph {
   if (!AGREEMENT_PORTRAIT_SEED_PARAGRAPH_IDS.has(p.id)) {
     return p
   }
@@ -2558,9 +2536,7 @@ function migrateRecruitFormDetailInfoOptionalRequired(
  * 행정정보 공동이용 사전동의서 — 「대상자 본인」만 필수.
  * 제목형(survey_title_with_period)은 타입상 requiredMark 고정.
  */
-function migrateAgreementNoticeSeedRequiredMarks(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateAgreementNoticeSeedRequiredMarks(p: WritingFormParagraph): WritingFormParagraph {
   if (!p.id.startsWith('agreement-notice-')) {
     return p
   }
@@ -2587,8 +2563,7 @@ function migrateAgreementNoticeSeedRequiredMarks(
       next.kind === 'single_item' &&
       next.variant === 'horizontal_table' &&
       next.idTypeWithInput != null &&
-      (next.idTypeWithInput.requiredMark !== false ||
-        next.idTypeWithInput.answerRequired !== false)
+      (next.idTypeWithInput.requiredMark !== false || next.idTypeWithInput.answerRequired !== false)
     ) {
       next = {
         ...next,
@@ -2650,9 +2625,7 @@ function createAgreementNoticeIdTypeWithInputSeed(): IdTypeWithInputParagraph {
  * 행정정보 공동이용 표 — 1행 시드(연번·행정정보명) 보정 + 최소 행 수 확보.
  * (구 JSON·localStorage/API 저장본이 빈 1행만 가진 경우 복구)
  */
-function migrateAgreementNoticeTableSeedRows(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateAgreementNoticeTableSeedRows(p: WritingFormParagraph): WritingFormParagraph {
   if (
     p.id !== 'agreement-notice-table' ||
     p.kind !== 'single_item' ||
@@ -2701,9 +2674,7 @@ function migrateAgreementNoticeTableSeedRows(
 }
 
 /** 행정정보 공동이용 — 이용기관·대상자 placeholder 등 시안 문구 보정 */
-function migrateAgreementNoticeSeedFixedCopy(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateAgreementNoticeSeedFixedCopy(p: WritingFormParagraph): WritingFormParagraph {
   if (
     p.id === 'agreement-notice-institution' &&
     p.kind === 'single_item' &&
@@ -2749,11 +2720,7 @@ function extractWritingFormParagraphBodyText(p: WritingFormParagraph): string {
   if (p.kind !== 'single_item') return ''
   if ('bodyText' in p && typeof p.bodyText === 'string') return p.bodyText
   const firstItem = 'items' in p && Array.isArray(p.items) ? p.items[0] : undefined
-  if (
-    firstItem != null &&
-    'bodyText' in firstItem &&
-    typeof firstItem.bodyText === 'string'
-  ) {
+  if (firstItem != null && 'bodyText' in firstItem && typeof firstItem.bodyText === 'string') {
     return firstItem.bodyText
   }
   return ''
@@ -2882,10 +2849,7 @@ function migrateAgreementExpensePledgeIntroParagraph(
 function migrateUjatEducationExplanationOptionalTitle(
   p: WritingFormParagraph
 ): WritingFormParagraph {
-  if (
-    p.id !== 'ujat-edu-plan-explanation-text' &&
-    p.id !== 'ujat-edu-journal-explanation-text'
-  ) {
+  if (p.id !== 'ujat-edu-plan-explanation-text' && p.id !== 'ujat-edu-journal-explanation-text') {
     return p
   }
   if (p.kind !== 'single_item' || p.variant !== 'agreement_explanation_text') return p
@@ -2894,9 +2858,7 @@ function migrateUjatEducationExplanationOptionalTitle(
 }
 
 /** 정산 신청서 교통비 신청 — 설명·하단 안내 시드 보정 */
-function migrateSettlementTransportParagraphCopy(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateSettlementTransportParagraphCopy(p: WritingFormParagraph): WritingFormParagraph {
   if (p.id !== 'settlement-application-seed-table-transport' || p.kind !== 'single_item') {
     return p
   }
@@ -2927,8 +2889,7 @@ function migrateSettlementAccommodationParagraphCopy(
     return p
   }
   if (p.variant !== 'horizontal_table') return p
-  const nextDescription =
-    '사전에 안내된 경우에만 지급되며 임의 신청 건은 반려될 수 있습니다.'
+  const nextDescription = '사전에 안내된 경우에만 지급되며 임의 신청 건은 반려될 수 있습니다.'
   const nextBottom =
     '숙박비는 1인 1실 기준, 최대 15만원까지 지급됩니다. 지출 금액이 15만원을 넘어가는 경우 150,000원으로 기재해 주세요.'
   if (
@@ -3326,9 +3287,7 @@ function migrateEducatorFacilitatorPledgeTitleParagraph(
 }
 
 /** 교육진행자 동의 서약서 — 조항 3 본문 시안 카피 보정 */
-function migrateEducatorFacilitatorPledgeClauseCopy(
-  p: WritingFormParagraph
-): WritingFormParagraph {
+function migrateEducatorFacilitatorPledgeClauseCopy(p: WritingFormParagraph): WritingFormParagraph {
   if (p.id !== 'agreement-expense-pledge-clause-3') return p
   if (p.kind !== 'single_item' || p.variant !== 'multiple_choice') return p
   const nextDescription =
@@ -3384,11 +3343,9 @@ export function ensureAgreementNoticeInstitutionPurposeParagraphs(
   if (!hasPurpose) {
     const purposeInsertAt =
       paragraphs.findIndex(p => p.id === AGREEMENT_NOTICE_PARAGRAPH_IDS.institution) + 1
-    paragraphs.splice(
-      purposeInsertAt > 0 ? purposeInsertAt : insertAt,
-      0,
-      { ...AGREEMENT_NOTICE_PURPOSE_PARAGRAPH }
-    )
+    paragraphs.splice(purposeInsertAt > 0 ? purposeInsertAt : insertAt, 0, {
+      ...AGREEMENT_NOTICE_PURPOSE_PARAGRAPH,
+    })
   }
 
   return { ...draft, paragraphs }
@@ -3591,7 +3548,9 @@ export function createAgreementPortraitDraft(): WritingFormDraft {
           {
             stageCount: 1,
             headers: ['초상권 이용 목적'],
-            cells: ['1) JA Korea 온라인 게시\n2) JA Korea 보고자료 작성\n3) JA Korea 대내외 홍보자료 활용'],
+            cells: [
+              '1) JA Korea 온라인 게시\n2) JA Korea 보고자료 작성\n3) JA Korea 대내외 홍보자료 활용',
+            ],
           },
           {
             stageCount: 1,
@@ -3934,8 +3893,7 @@ export function createEducatorFacilitatorPledgeDraft(): WritingFormDraft {
         paragraphTitle: '',
         paragraphDescription: '',
         participatesInTitleNumbering: false,
-        body:
-          '본 서약을 위반할 경우, 재단의 교육사업과 관련한 강사 자격이 제한되거나 향후 활동에 불이익이 있을 수 있음을 인지하고 이에 동의합니다.',
+        body: '본 서약을 위반할 경우, 재단의 교육사업과 관련한 강사 자격이 제한되거나 향후 활동에 불이익이 있을 수 있음을 인지하고 이에 동의합니다.',
       },
       {
         id: EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemDate,
@@ -4036,8 +3994,7 @@ export function getWritingFormHeadMiddlePinnedTail(paragraphs: WritingFormParagr
   }
 
   /** 마지막이 마무리글형이 아니면 하단 고정 tail 없음 — head만 고정(예: UJAT 교육계획서) */
-  const lastIsClosingParagraph =
-    last.kind === 'description' && last.variant === 'closing'
+  const lastIsClosingParagraph = last.kind === 'description' && last.variant === 'closing'
 
   if (!lastIsClosingParagraph) {
     return {
@@ -4101,10 +4058,7 @@ export function createDefaultHorizontalTableDraft(): WritingFormDraft {
   }
 }
 
-function createDefaultSurveyScaleParagraph(
-  id: string,
-  paragraphTitle: string
-): ScaleTypeParagraph {
+function createDefaultSurveyScaleParagraph(id: string, paragraphTitle: string): ScaleTypeParagraph {
   return {
     id,
     kind: 'single_item',
@@ -4498,7 +4452,9 @@ function createUjatEducationIssuanceDraft(
     userFields?: Array<{ key: string; label: string }>
   }
 ): WritingFormDraft {
-  const selectedKeys = [...(options?.selectedUserFieldKeys ?? UJAT_EDU_PLAN_DEFAULT_SELECTED_USER_FIELD_KEYS)]
+  const selectedKeys = [
+    ...(options?.selectedUserFieldKeys ?? UJAT_EDU_PLAN_DEFAULT_SELECTED_USER_FIELD_KEYS),
+  ]
   const afterVolunteer = options?.paragraphsAfterVolunteer ?? []
   return {
     schemaVersion: 1,
@@ -4569,9 +4525,7 @@ export function createUjatEducationPlanIssuanceDraft(): WritingFormDraft {
   )
 }
 
-function createUjatEducationJournalContentFeedbackParagraph(
-  id: string
-): ShortEssayParagraph {
+function createUjatEducationJournalContentFeedbackParagraph(id: string): ShortEssayParagraph {
   const ph = '자유롭게 작성해 주세요'
   return {
     id,
@@ -4609,9 +4563,7 @@ function createLectureReportEducationPhotosParagraph(id: string): FileAttachment
   }
 }
 
-function createUjatEducationJournalEducationPhotosParagraph(
-  id: string
-): FileAttachmentParagraph {
+function createUjatEducationJournalEducationPhotosParagraph(id: string): FileAttachmentParagraph {
   return {
     id,
     kind: 'single_item',
@@ -4632,7 +4584,9 @@ export function createUjatEducationJournalIssuanceDraft(): WritingFormDraft {
     n => `${n}차시 교육 일지`,
     {
       paragraphsAfterVolunteer: [
-        createUjatJournalEducationInfoParagraph(UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.educationInfo),
+        createUjatJournalEducationInfoParagraph(
+          UJAT_EDUCATION_JOURNAL_ISSUANCE_PARAGRAPH_IDS.educationInfo
+        ),
       ],
       explanationBody: UJAT_EDU_JOURNAL_EXPLANATION_BODY,
       titleNumbering: 'none',
@@ -4765,8 +4719,7 @@ export function createLectureReportIssuanceDraft(): WritingFormDraft {
       lectureReportSessionParagraph(ids.educationOperation, '교육 운영', '설명 입력', [
         {
           label: 'Q1. 전반적인 학생들의 교육 참여도는 어떠했나요?',
-          titleHint:
-            'ex) 전반적인 참여도, 다양한 상황 기반(수업 중 에피소드, 교구재활용 등)',
+          titleHint: 'ex) 전반적인 참여도, 다양한 상황 기반(수업 중 에피소드, 교구재활용 등)',
         },
         {
           label: 'Q2. 교육 콘텐츠 난이도 적합성은 어떠했나요?',

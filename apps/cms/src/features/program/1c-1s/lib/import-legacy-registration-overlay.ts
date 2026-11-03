@@ -20,6 +20,7 @@ import {
   isKnownCompanySchoolCommonInfoOverlayKey,
 } from './registration-rhf-values'
 import { importLegacyCompanySchoolRecruitmentOverlay } from './registration-rhf-recruitment'
+import { importLegacyCompanySchoolInstructorRecruitmentOverlay } from './registration-rhf-instructor-recruitment'
 import { importLegacyCompanySchoolApplicationOverlay } from './registration-rhf-application'
 
 function hasOwn(overlay: Record<string, unknown>, key: string): boolean {
@@ -237,6 +238,7 @@ export function importLegacyOverlayToCompanySchoolCanonical(args: {
     common: extractCommon(overlay),
     sidecar: extractCompanySchoolLegacySidecar(overlay),
     recruit: importLegacyCompanySchoolRecruitmentOverlay(overlay),
+    instructorRecruit: importLegacyCompanySchoolInstructorRecruitmentOverlay(overlay),
     application: importLegacyCompanySchoolApplicationOverlay(overlay),
   }
 }

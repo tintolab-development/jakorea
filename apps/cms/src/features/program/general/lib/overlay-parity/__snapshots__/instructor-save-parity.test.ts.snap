@@ -39,6 +39,7 @@ exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS 
   ],
   "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
   "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileNames": [],
   "recruitInstructor.detailInfo.attachmentFileObjectIds": [
     41,
     42,
@@ -47,6 +48,8 @@ exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS 
   "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
   "recruitInstructor.detailInfo.programDescription": "<p>소개</p>",
   "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbContentUrl": "",
+  "recruitInstructor.detailInfo.thumbFileName": "",
   "recruitInstructor.detailInfo.thumbFileObjectId": 31,
 }
 `;
@@ -95,6 +98,7 @@ exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS 
   "economyRegistration.wageInfo.grade2Fee",
   "economyRegistration.wageInfo.grade3DistanceFee",
   "economyRegistration.wageInfo.grade3Fee",
+  "economyRegistration.wageInfo.paymentItemValues",
   "recruit.announcementPublished",
   "recruit.certificateProvided",
   "recruit.detailInfo.additionalContentHtml",
@@ -142,11 +146,14 @@ exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS 
   "recruit.targetLevels",
   "recruitInstructor.detailInfo.additionalContentHtml",
   "recruitInstructor.detailInfo.applicationMethod",
+  "recruitInstructor.detailInfo.attachmentFileNames",
   "recruitInstructor.detailInfo.attachmentFileObjectIds",
   "recruitInstructor.detailInfo.learningSupportContent",
   "recruitInstructor.detailInfo.otherNotes",
   "recruitInstructor.detailInfo.programDescription",
   "recruitInstructor.detailInfo.recruitmentGuide",
+  "recruitInstructor.detailInfo.thumbContentUrl",
+  "recruitInstructor.detailInfo.thumbFileName",
   "recruitInstructor.detailInfo.thumbFileObjectId",
 ]
 `;
@@ -178,6 +185,7 @@ exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS 
   ],
   "recruitInstructor.detailInfo.additionalContentHtml": "<p>추가</p>",
   "recruitInstructor.detailInfo.applicationMethod": "<p>방법</p>",
+  "recruitInstructor.detailInfo.attachmentFileNames": [],
   "recruitInstructor.detailInfo.attachmentFileObjectIds": [
     41,
     42,
@@ -186,6 +194,8 @@ exports[`강사 모집·신청 overlay save parity (part3 step4) > 1사1교: CS 
   "recruitInstructor.detailInfo.otherNotes": "<p>기타</p>",
   "recruitInstructor.detailInfo.programDescription": "<p>소개</p>",
   "recruitInstructor.detailInfo.recruitmentGuide": "<p>안내</p>",
+  "recruitInstructor.detailInfo.thumbContentUrl": "",
+  "recruitInstructor.detailInfo.thumbFileName": "",
   "recruitInstructor.detailInfo.thumbFileObjectId": 31,
 }
 `;

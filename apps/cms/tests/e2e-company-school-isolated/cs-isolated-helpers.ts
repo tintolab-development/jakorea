@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer'
 import { expect, type Locator, type Page } from '@playwright/test'
 import { CompanySchoolRegistrationPage } from '../e2e/pages/company-school-registration.page'
 import {
+  checkRadioIfVisible,
   checkVisibleEnabledAgreeRadios,
   clickSectionNavIfVisible,
   detailInfoField,
@@ -10,6 +11,7 @@ import {
   fillByPlaceholderIfVisible,
   fillParagraphDateByPlaceholder,
   selectByPlaceholder,
+  selectByPlaceholderIfVisible,
   selectNearLabel,
   selectNearLabelIfVisible,
 } from '../e2e/pages/form-helpers'
@@ -100,9 +102,16 @@ export async function fillIsolatedCommonInfo(page: Page) {
   await fillParagraphDateByPlaceholder(page, '사업 운영 기간을 선택하세요', 'range', {
     futureMonthClicks: 2,
   })
+  await selectByPlaceholderIfVisible(page, '사업 분야를 선택하세요', '경제금융')
+  await selectNearLabelIfVisible(page, '사업 분야', '경제금융')
   await selectNearLabel(page, '후원사', 'RHF-B-후원사')
-  await selectNearLabel(page, '후원사 담당자')
+  await selectNearLabel(page, '후원사 담당자', 'RHF-B-담당자')
   await selectNearLabelIfVisible(page, '교육 과정', 'Traditional (Paper)')
+  await selectNearLabelIfVisible(page, 'IP Owned', 'JA')
+  await selectNearLabelIfVisible(page, 'Course Delivered By', 'JA')
+  await checkRadioIfVisible(page, 'Yes')
+  await selectNearLabelIfVisible(page, 'IPS 유형', 'Inspire')
+  await selectByPlaceholderIfVisible(page, 'IPS 유형', 'Inspire')
   const course = detailInfoField(page, '교육 과정')
   if (await course.isVisible().catch(() => false)) {
     const selected = await course.locator('.ant-select-selection-item').innerText().catch(() => '')
@@ -123,9 +132,7 @@ export async function fillIsolatedCommonInfo(page: Page) {
   }
   await selectPaymentItemsB(page)
   await clickSectionNavIfVisible(page, '교육 진행 일정 설정')
-  await fillParagraphDateByPlaceholder(page, '진행 기간을 선택하세요', 'range', {
-    futureMonthClicks: 2,
-  })
+  await fillParagraphDateByPlaceholder(page, '진행 기간을 선택하세요', 'range')
   await clickSectionNavIfVisible(page, '기본 정보')
 }
 
@@ -154,8 +161,70 @@ export async function fillDistinctKpiAndWage(page: Page) {
   }
 }
 
+async function selectInstructorRecruitTargets(page: Page) {
+  const field = detailInfoField(page, '모집 대상')
+  if (!(await field.isVisible().catch(() => false))) {
+    await selectByPlaceholderIfVisible(page, '모집 대상을 선택하세요')
+    return
+  }
+  const trigger = field.locator('.cms-select-multi__trigger').first()
+  if (!(await trigger.isVisible().catch(() => false))) {
+    await selectNearLabel(page, '모집 대상', undefined, { force: true })
+    return
+  }
+  await trigger.click()
+  const panel = page.locator('.cms-select-multi__panel:visible').last()
+  await expect(panel).toBeVisible({ timeout: 10_000 })
+  const row = panel.locator('.cms-select-multi__row').filter({ hasText: /^성인$|성인/ }).first()
+  await expect(row).toBeVisible({ timeout: 10_000 })
+  const checkbox = row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first()
+  const checked = (await row.locator('.ant-checkbox-checked').count()) > 0
+  await checkbox.click()
+  if (checked) await checkbox.click()
+  if (await panel.isVisible().catch(() => false)) {
+    await trigger.click({ force: true }).catch(() => undefined)
+  }
+}
+
+async function forceAnnouncementPublished(page: Page) {
+  const published = page.getByRole('radio', { name: '게시' }).first()
+  if (!(await published.isVisible().catch(() => false))) return
+  const unpublished = page.getByRole('radio', { name: '미게시' }).first()
+  if (await unpublished.isVisible().catch(() => false)) {
+    await unpublished.click({ force: true })
+  }
+  await published.click({ force: true })
+  await expect(published).toBeChecked({ timeout: 5_000 })
+}
+
+async function fillIsolatedInstructorRecruit(page: Page) {
+  const panel = page.getByRole('group', { name: /강사 모집 정보/ }).filter({
+    hasText: '프로그램 운영 기간',
+  })
+  await expect(panel).toBeVisible({ timeout: 15_000 })
+  await forceAnnouncementPublished(page)
+  const dateOpts = { futureMonthClicks: 2, root: panel, force: true } as const
+  await fillParagraphDateByPlaceholder(page, '프로그램 운영 기간을 선택하세요', 'range', dateOpts)
+  await selectInstructorRecruitTargets(page)
+  await fillByPlaceholder(panel, '상세 모집 대상을 입력하세요', '성인 강사')
+  await fillParagraphDateByPlaceholder(page, '모집 기간을 선택하세요', 'range', dateOpts)
+  await fillParagraphDateByPlaceholder(page, '합격자 발표일', 'single', {
+    ...dateOpts,
+    preferLaterDays: true,
+  })
+  await fillParagraphDateByPlaceholder(page, '발표일', 'single', {
+    ...dateOpts,
+    preferLaterDays: true,
+  })
+  await fillByPlaceholder(panel, '발표 방법 안내', '이메일 및 CMS 알림으로 개별 안내')
+  await fillByPlaceholder(panel, '담당 문의처', 'JA Korea 1사1교 운영팀')
+  await fillByPlaceholder(panel, '문의처 전화번호', '02-1234-5678')
+  await fillByPlaceholder(panel, '문의처 이메일', 'company-school-e2e@jakorea.org')
+}
+
 async function fillIsolatedInstitutionRecruitExtras(page: Page) {
   await page.getByRole('tab', { name: /참여 기관 모집/ }).click().catch(() => undefined)
+  await forceAnnouncementPublished(page)
   const maxInputs = page.getByPlaceholder('최대값 입력')
   const maxCount = await maxInputs.count()
   const maxValues = ['5', '20']
@@ -214,6 +283,7 @@ export async function fillRegistrationThroughComplete(page: Page) {
   const instructorRecruitTab = page.getByRole('tab', { name: /강사 모집/ })
   await instructorRecruitTab.click().catch(() => undefined)
   await waitActiveWizardTabPanel(page, instructorRecruitTab.first())
+  await fillIsolatedInstructorRecruit(page)
   await fillVisibleRecruitNotes(page)
   const institutionRecruitTab = page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ })
   await institutionRecruitTab.click().catch(() => undefined)

@@ -12,7 +12,7 @@ import { PFButton, PFText, PFTextInput } from '@/shared/ui'
 import styles from './page.module.css'
 import { authPageCopyClass } from '@/widgets/layout/auth-page-shell'
 
-const PASSWORD_HELP_TEXT = '영문, 숫자, 특수문자를 조합해 8자 이상 입력해 주세요.'
+const PASSWORD_HELP_TEXT = '영문, 숫자, 특수문자를 조합해 12자 이상 입력해 주세요.'
 const PASSWORD_MISMATCH_MESSAGE = '비밀번호가 서로 달라요. 다시 한 번 확인해 주세요.'
 const IDENTITY_REQUIRED_MESSAGE = '본인인증 정보가 없습니다. 처음부터 다시 진행해 주세요.'
 const IDENTITY_MISMATCH_MESSAGE =
@@ -83,7 +83,12 @@ export function FindPasswordResetPage() {
         <PFText as="h1" typo="hd-sm" color="black" className={authPageCopyClass('title')}>
           새 비밀번호를 입력해 주세요
         </PFText>
-        <PFText as="p" typo="bd-lg-rg" color="primary-800" className={authPageCopyClass('description')}>
+        <PFText
+          as="p"
+          typo="bd-lg-rg"
+          color="primary-800"
+          className={authPageCopyClass('description')}
+        >
           이제 새 비밀번호로 로그인할 수 있어요.
         </PFText>
       </div>

@@ -9,6 +9,8 @@ function isEmptySelectValue(text: string) {
     !text ||
     text === '전체' ||
     text === '해당 없음' ||
+    text === '미선택' ||
+    text.includes('미선택') ||
     text.includes('선택하세요') ||
     text.includes('선택해 주세요')
   )
@@ -478,6 +480,10 @@ export async function checkVisibleEnabledAgreeRadios(page: Page) {
 }
 
 export type FillParagraphDateOptions = {
+  /** 트리거를 이 범위 안에서만 찾는다 (열린 모집 탭 패널 등) */
+  root?: Locator
+  /** placeholder가 이미 날짜로 바뀌어도 해당 필드 트리거를 다시 선택한다 */
+  force?: boolean
   /** 다음 달 버튼 클릭 횟수 — 현재 표시월 기준 N개월 뒤 */
   futureMonthClicks?: number
   /**
@@ -493,6 +499,80 @@ export type FillParagraphDateOptions = {
   futureStartWindow?: boolean
 }
 
+function datePickerDialog(page: Page) {
+  return page
+    .locator('.date-time-picker-popover[role="dialog"]')
+    .filter({ has: page.locator('.calendar-mini') })
+    .last()
+}
+
+function calendarMiniPrevButton(dialog: Locator) {
+  return dialog.locator('.calendar-mini-header button.calendar-mini-nav-btn').first()
+}
+
+function calendarMiniNextButton(dialog: Locator) {
+  return dialog.locator('.calendar-mini-header button.calendar-mini-nav-btn').last()
+}
+
+function enabledCalendarMiniDayButtons(dialog: Locator) {
+  return dialog.locator(
+    'button.calendar-mini-cell:not(.calendar-mini-cell--disabled):not(.calendar-mini-cell--other-month):not([aria-disabled="true"])'
+  )
+}
+
+async function calendarMiniTitle(dialog: Locator): Promise<string> {
+  return (await dialog.locator('.calendar-mini-title').innerText()).trim()
+}
+
+async function clickCalendarMiniNav(dialog: Locator, direction: 'prev' | 'next') {
+  const before = await calendarMiniTitle(dialog)
+  const button = direction === 'prev' ? calendarMiniPrevButton(dialog) : calendarMiniNextButton(dialog)
+  await expect(button).toBeVisible({ timeout: 5_000 })
+  await button.click()
+  await expect
+    .poll(async () => calendarMiniTitle(dialog), { timeout: 5_000 })
+    .not.toBe(before)
+}
+
+/**
+ * 사업 운영 기간 밖 날짜는 전부 disabled다. 열린 달이 비어 있으면 허용일이 있는 달로 이동한다.
+ * futureMonthClicks는 허용 구간을 벗어나지 않는 범위에서만 적용한다.
+ */
+async function revealEnabledCalendarMiniDays(dialog: Locator, futureMonthClicks: number) {
+  await expect(dialog.locator('.calendar-mini')).toBeVisible({ timeout: 10_000 })
+  const hasEnabledDays = async () => (await enabledCalendarMiniDayButtons(dialog).count()) > 0
+
+  const scan = async (direction: 'prev' | 'next', steps: number) => {
+    for (let i = 0; i < steps; i += 1) {
+      if (await hasEnabledDays()) return true
+      const button = direction === 'prev' ? calendarMiniPrevButton(dialog) : calendarMiniNextButton(dialog)
+      if ((await button.count()) === 0) break
+      await clickCalendarMiniNav(dialog, direction)
+    }
+    return hasEnabledDays()
+  }
+
+  if (!(await hasEnabledDays())) {
+    const found = (await scan('next', 24)) || (await scan('prev', 36))
+    if (!found) {
+      const title = await calendarMiniTitle(dialog).catch(() => '')
+      const totalCells = await dialog.locator('button.calendar-mini-cell').count()
+      throw new Error(
+        `선택 가능한 날짜가 없습니다 (달력 ${title || 'unknown'}, cells=${totalCells}). 사업 운영 기간 제약을 확인하세요.`
+      )
+    }
+  }
+
+  for (let i = 0; i < futureMonthClicks; i += 1) {
+    const beforeTitle = await calendarMiniTitle(dialog)
+    await clickCalendarMiniNav(dialog, 'next')
+    if (await hasEnabledDays()) continue
+    await clickCalendarMiniNav(dialog, 'prev')
+    await expect.poll(async () => calendarMiniTitle(dialog), { timeout: 5_000 }).toBe(beforeTitle)
+    break
+  }
+}
+
 /**
  * ParagraphDatePicker — placeholder 트리거 클릭 후 캘린더에서 날짜 선택·설정.
  * `range`: 시작·종료 2일, `single`: 1일.
@@ -504,21 +584,25 @@ async function fillParagraphDateByPlaceholderOnce(
   options?: FillParagraphDateOptions
 ) {
   const labelText = placeholder.replace(/을 선택하세요$/, '')
+  const scope = options?.root ?? page
   const triggerLocator = () => {
-    const byPlaceholder = page
+    const byPlaceholder = scope
       .locator('.paragraph-date-picker__trigger:visible')
       .filter({ hasText: placeholder })
-    const fieldLabel = page
+    const fieldLabel = scope
       .locator('.detail-info-form__field-label-text')
       .filter({ hasText: labelText })
-    const byFieldLabel = page
+    const byFieldLabel = scope
       .locator('.detail-info-form__field:visible')
       .filter({ has: fieldLabel })
       .locator('.paragraph-date-picker__trigger:visible')
     // 일부 등록 폼에서는 트리거가 날짜 picker 전용 class 대신
     // 접근성 button으로만 노출된다. 동일 placeholder의 실제 버튼을
     // fallback으로 포함해 동적 반복 일정도 놓치지 않는다.
-    const byRole = page.getByRole('button', { name: placeholder, exact: true })
+    const byRole = scope.getByRole('button', { name: placeholder, exact: true })
+    if (options?.force === true) {
+      return byFieldLabel.or(byPlaceholder).or(byRole).first()
+    }
     return byRole.or(byPlaceholder).or(byFieldLabel).first()
   }
 
@@ -538,7 +622,7 @@ async function fillParagraphDateByPlaceholderOnce(
   await trigger.click()
 
   // `날짜 선택` (ParagraphDatePicker) · `날짜·시간 선택` (DateTimePicker)
-  const dialog = page.getByRole('dialog', { name: /날짜/ })
+  const dialog = datePickerDialog(page)
   await expect(dialog).toBeVisible({ timeout: 10_000 })
 
   const clicks = options?.futureMonthClicks ?? 0
@@ -557,26 +641,17 @@ async function fillParagraphDateByPlaceholderOnce(
       if (displayedMonth === targetMonth) break
       const navigationButton =
         displayedMonth < targetMonth
-          ? dialog.locator('button.calendar-mini-nav-btn').last()
-          : dialog.locator('button.calendar-mini-nav-btn').first()
+          ? calendarMiniNextButton(dialog)
+          : calendarMiniPrevButton(dialog)
       await navigationButton.click()
     }
   }
-  if (clicks > 0) {
-    for (let i = 0; i < clicks; i += 1) {
-      // 월 이동마다 CalendarMini가 다시 렌더되므로 버튼을 새로 조회한다.
-      const nextBtn = dialog.locator('button.calendar-mini-nav-btn').last()
-      await expect(nextBtn).toBeVisible({ timeout: 5_000 })
-      await nextBtn.click()
-    }
-  }
 
+  await revealEnabledCalendarMiniDays(dialog, clicks)
   // ParagraphDatePicker uses the shared CalendarMini rather than Ant Design's
   // calendar cells. Select only enabled days in the displayed month so the
   // test does not accidentally choose a trailing day from the adjacent month.
-  const dayCells = dialog.locator(
-    'button.calendar-mini-cell:not(.calendar-mini-cell--disabled):not(.calendar-mini-cell--other-month)'
-  )
+  const dayCells = enabledCalendarMiniDayButtons(dialog)
   await expect(dayCells.first()).toBeVisible({ timeout: 5_000 })
   const dayCount = await dayCells.count()
 
@@ -637,14 +712,8 @@ async function fillParagraphDateByPlaceholderOnce(
       .first()
     await endField.click()
     if (wideCurrentYearWindow || futureStartWindow) {
-      for (let monthOffset = 0; monthOffset < 2; monthOffset += 1) {
-        const nextBtn = dialog.locator('button.calendar-mini-nav-btn').last()
-        await expect(nextBtn).toBeVisible({ timeout: 5_000 })
-        await nextBtn.click()
-      }
-      const endMonthCells = dialog.locator(
-        'button.calendar-mini-cell:not(.calendar-mini-cell--disabled):not(.calendar-mini-cell--other-month)'
-      )
+      await revealEnabledCalendarMiniDays(dialog, 2)
+      const endMonthCells = enabledCalendarMiniDayButtons(dialog)
       await expect(endMonthCells.last()).toBeVisible({ timeout: 5_000 })
       await endMonthCells.last().click({ force: true })
     } else {
@@ -654,6 +723,9 @@ async function fillParagraphDateByPlaceholderOnce(
 
   await dialog.getByRole('button', { name: '설정' }).click()
   await expect(dialog).toBeHidden({ timeout: 10_000 })
+  const filledTrigger = triggerLocator()
+  await expect(filledTrigger).toBeVisible({ timeout: 5_000 })
+  await expect(filledTrigger).not.toHaveText(placeholder, { timeout: 5_000 })
 }
 
 export async function fillParagraphDateByPlaceholder(
@@ -676,7 +748,7 @@ export async function fillParagraphDateByPlaceholder(
       if ((await backdrop.count()) > 0) {
         await backdrop.click({ position: { x: 1, y: 1 }, force: true }).catch(() => undefined)
       }
-      await expect(page.getByRole('dialog', { name: /날짜/ }))
+      await expect(datePickerDialog(page))
         .toBeHidden({ timeout: 2_000 })
         .catch(() => undefined)
     }

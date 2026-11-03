@@ -41,7 +41,8 @@ describe('P4/C10 1사1교 legacy overlay import', () => {
       imported.common,
       imported.sidecar,
       imported.recruit,
-      imported.application
+      imported.application,
+      imported.instructorRecruit
     )
     const projected = projectCompanySchoolRhfToOverlayRecord(values)
     expect(projected['economyRegistration.kpi.volunteer']).toBe(4)

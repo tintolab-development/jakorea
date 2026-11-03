@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Program } from '@/types/domain'
+import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
+import { peekCompanySchoolRegistrationRhf } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import { loadProgramThumbnailPreviewUrl } from '@/features/program/shared/api/program-thumbnail'
 import { getApplicantRecruitInstitutionOverlayRecord } from '@/features/template/ui/form-set/recruit-form/institution/applicant-recruit-institution-overlay-sync'
 import { peekGeneralRecruitOverlayRecord } from '@/features/template/ui/form-set/recruit-form/shared/general-recruit-overlay-sync'
@@ -93,6 +95,15 @@ export function liveRecruitPreviewOverlay(
   audience: PreviewRecruitAudience,
   extraOverlay?: Record<string, unknown>
 ): Record<string, unknown> {
+  if (isCompanySchoolProgram(program) && peekCompanySchoolRegistrationRhf() != null) {
+    return pickAudienceLiveOverlay(
+      {
+        ...(program.registrationOverlay ?? {}),
+        ...extraOverlay,
+      },
+      audience
+    )
+  }
   const catalogOverlays = peekRecruitPreviewCatalogOverlays(
     recruitmentPreviewCatalogCodes(program, audience)
   )

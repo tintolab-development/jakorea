@@ -51,6 +51,7 @@ import {
   type ProgramOperationalBindingKind,
 } from '@/features/program/general/lib/program-operational-binding-profile'
 import { listVisibleOperationalFormSpecs } from '@/features/program/general/lib/operational-form-bindings'
+import { patchActiveCompanySchoolRecruitmentOverlay } from '@/features/program/1c-1s/lib/registration-rhf-api'
 import { resolveWritingFormBaseTemplateCode } from '@/features/template/lib/form-template-delete-policy'
 import { getFormTemplateVersionCacheEntry } from '@/features/template/api/form-template-version-cache'
 import { getRegistrationStepTemplateSelections } from '@/features/program/shared/lib/step-template-selection'
@@ -557,6 +558,7 @@ export function applyOperationalOverlayForCatalogId(
   }
   if (kind === 'general-recruit') {
     replaceSharedOverlayKeysByPrefixes('recruit', prefixes, overlay, catalogTemplateId)
+    patchActiveCompanySchoolRecruitmentOverlay(overlay)
     return
   }
   if (kind === 'general-application') {
@@ -644,6 +646,20 @@ export async function hydrateRegistrationOperationalOverlaysFromLocalDrafts(
         applyOperationalOverlayForCatalogId(
           catalogId,
           companySchoolApplicationStateToApplyRecord(application)
+        )
+        continue
+      }
+    }
+    if (variant === 'economy' && catalogId === 'recruitment-instructor') {
+      const {
+        readCompanySchoolInstructorRecruitEditorState,
+        serializeCompanySchoolInstructorRecruitmentForFormVersion,
+      } = await import('@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment')
+      const instructor = readCompanySchoolInstructorRecruitEditorState(saved?.editorState)
+      if (instructor) {
+        applyOperationalOverlayForCatalogId(
+          catalogId,
+          serializeCompanySchoolInstructorRecruitmentForFormVersion(instructor)
         )
         continue
       }
@@ -768,6 +784,30 @@ export async function persistRegistrationOperationalOverlaysToLocal(
         templateCode: catalogId,
         draft,
         editorState: companySchoolApplicationEditorState(collectCompanySchoolApplicationFormState()),
+      })
+      continue
+    }
+    if (variant === 'economy' && catalogId === 'recruitment-instructor') {
+      const { peekCompanySchoolRegistrationRhf } = await import(
+        '@/features/program/1c-1s/lib/registration-rhf-api'
+      )
+      const {
+        collectCompanySchoolInstructorRecruitmentState,
+        companySchoolInstructorRecruitEditorState,
+        emptyCompanySchoolInstructorRecruitFormState,
+        serializeCompanySchoolInstructorRecruitmentForFormVersion,
+      } = await import('@/features/program/1c-1s/lib/registration-rhf-instructor-recruitment')
+      const rhf = peekCompanySchoolRegistrationRhf()
+      const instructor =
+        rhf != null
+          ? collectCompanySchoolInstructorRecruitmentState(rhf.getValues().instructorRecruit)
+          : emptyCompanySchoolInstructorRecruitFormState()
+      await persistRegistrationWizardFormDraft({
+        programType,
+        templateCode: catalogId,
+        draft,
+        overlay: serializeCompanySchoolInstructorRecruitmentForFormVersion(instructor),
+        editorState: companySchoolInstructorRecruitEditorState(instructor),
       })
       continue
     }

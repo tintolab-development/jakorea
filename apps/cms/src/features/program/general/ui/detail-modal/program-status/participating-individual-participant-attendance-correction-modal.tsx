@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
-import { ContentModal, CmsButton, CmsInput, CmsSelect, FileSelectField, useCmsAlert } from '@/shared/ui'
+import { ContentModal, CmsButton, CmsSelect, useCmsAlert } from '@/shared/ui'
+import { AttendanceCorrectionReasonForm } from '@/features/program/shared/ui/attendance-correction-reason-form'
 import { ParagraphTimePicker } from '@/features/template/ui/shared/paragraph-time-picker'
 import {
   PROGRAM_ATTENDANCE_CORRECTION_STATUS_OPTIONS,
@@ -14,6 +15,8 @@ import {
   buildAdminFileOwner,
   uploadAdminFileMaybeMock,
 } from '@/shared/lib/admin-file-upload'
+import type { ProgramAbsenceReasonItem } from '@/features/program/general/api/absence-reasons'
+import { resolveAttendanceCorrectionAutoReason } from '@/features/program/general/lib/attendance-correction-submitted-reason'
 import type { ParticipatingIndividualParticipantAttendanceRow } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
 import './participating-individual-participant-attendance-correction-modal.css'
 
@@ -43,6 +46,9 @@ export type ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload
 export type ParticipatingIndividualParticipantAttendanceCorrectionModalProps = {
   open: boolean
   participantName: string
+  programId?: string | number | null
+  participantId?: string | number | null
+  submittedAbsenceReasons?: readonly ProgramAbsenceReasonItem[] | null
   scheduleOptions: ReadonlyArray<ParticipatingIndividualParticipantAttendanceCorrectionScheduleOption>
   onCancel: () => void
   onConfirm: (payload: ParticipatingIndividualParticipantAttendanceCorrectionConfirmPayload) => void
@@ -51,6 +57,9 @@ export type ParticipatingIndividualParticipantAttendanceCorrectionModalProps = {
 export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   open,
   participantName,
+  programId,
+  participantId,
+  submittedAbsenceReasons,
   scheduleOptions,
   onCancel,
   onConfirm,
@@ -62,6 +71,8 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   const [reason, setReason] = useState('')
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
   const [uploadingEvidence, setUploadingEvidence] = useState(false)
+  const appliedReasonSeedKeyRef = useRef<string | null>(null)
+  const lastSeededReasonRef = useRef('')
 
   const selectedOption = useMemo(
     () => scheduleOptions.find(option => option.value === scheduleRowId) ?? null,
@@ -75,10 +86,32 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
     setLateTime(null)
     setReason('')
     setEvidenceFiles([])
+    appliedReasonSeedKeyRef.current = null
+    lastSeededReasonRef.current = ''
   }, [open, scheduleOptions])
 
   const showLateTimePicker = status === 'late'
   const showReasonTable = status === 'excused_absence'
+
+  const autoReason = useMemo(
+    () =>
+      resolveAttendanceCorrectionAutoReason({
+        items: submittedAbsenceReasons,
+        programId,
+        participantId,
+        scheduleId: selectedOption?.row.scheduleId,
+        confirmedExcusedAbsence: selectedOption?.row.attendanceStatus === 'excused_absence',
+        confirmedReason: selectedOption?.row.remark,
+      }),
+    [
+      participantId,
+      programId,
+      selectedOption?.row.attendanceStatus,
+      selectedOption?.row.remark,
+      selectedOption?.row.scheduleId,
+      submittedAbsenceReasons,
+    ]
+  )
 
   useEffect(() => {
     if (!showLateTimePicker) {
@@ -89,10 +122,26 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
   }, [showLateTimePicker, selectedOption?.row.lateTime])
 
   useEffect(() => {
-    if (showReasonTable) return
-    setReason('')
-    setEvidenceFiles([])
-  }, [showReasonTable])
+    if (!showReasonTable) {
+      setReason('')
+      setEvidenceFiles([])
+      appliedReasonSeedKeyRef.current = null
+      lastSeededReasonRef.current = ''
+      return
+    }
+    const seedKey = `${scheduleRowId ?? ''}::excused_absence`
+    if (appliedReasonSeedKeyRef.current !== seedKey) {
+      appliedReasonSeedKeyRef.current = seedKey
+      lastSeededReasonRef.current = autoReason
+      setReason(autoReason)
+      setEvidenceFiles([])
+      return
+    }
+    if (reason === lastSeededReasonRef.current && reason !== autoReason) {
+      lastSeededReasonRef.current = autoReason
+      setReason(autoReason)
+    }
+  }, [autoReason, reason, scheduleRowId, showReasonTable])
 
   const evidenceFileNames = evidenceFiles.map(file => file.name)
 
@@ -252,43 +301,15 @@ export function ParticipatingIndividualParticipantAttendanceCorrectionModal({
         ) : null}
 
         {showReasonTable ? (
-          <div className="participating-individual-attendance-correction-modal__reason-table-wrap">
-            <table className="participating-individual-attendance-correction-modal__reason-table">
-              <colgroup>
-                <col style={{ width: '165px' }} />
-                <col />
-              </colgroup>
-              <tbody>
-                <tr>
-                  <th scope="row">사유</th>
-                  <td>
-                    <CmsInput
-                      inputSize="large"
-                      width="100%"
-                      value={reason}
-                      onChange={event => setReason(event.target.value)}
-                      placeholder="사유를 입력해 주세요"
-                    />
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">증빙 서류</th>
-                  <td>
-                    <FileSelectField
-                      accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                      fileNames={evidenceFileNames}
-                      onFilesChange={files => setEvidenceFiles(prev => [...prev, ...files])}
-                      onRemoveFile={index =>
-                        setEvidenceFiles(prev =>
-                          prev.filter((_, currentIndex) => currentIndex !== index)
-                        )
-                      }
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <AttendanceCorrectionReasonForm
+            reason={reason}
+            onReasonChange={setReason}
+            evidenceFileNames={evidenceFileNames}
+            onFilesChange={files => setEvidenceFiles(prev => [...prev, ...files])}
+            onRemoveFile={index =>
+              setEvidenceFiles(prev => prev.filter((_, currentIndex) => currentIndex !== index))
+            }
+          />
         ) : null}
       </div>
     </ContentModal>

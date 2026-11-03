@@ -70,6 +70,26 @@ export type CompanySchoolRecruitDetailInfo = {
   attachmentFileNames: string[]
 }
 
+export type CompanySchoolInstructorRecruitFormState = {
+  programRange: CompanySchoolRecruitRange | null
+  recruitRange: CompanySchoolRecruitRange | null
+  recruitTargets: string[]
+  recruitTargetDetail: string
+  /** 미조작은 undefined(화면 기본 게시). 명시적 빈 문자열은 미선택. */
+  announcementPublished: string | undefined
+  inquiryContact: string
+  inquiryTel: string
+  inquiryEmail: string
+  notes: string
+  notesNotApplicable: boolean | undefined
+  otherNotes: string
+  finalAnnounce: string | null
+  finalAnnounceMethod: string
+  programAnchorIso: string | null
+  recruitAnchorIso: string | null
+  detailInfo: CompanySchoolRecruitDetailInfo
+}
+
 export type CompanySchoolRecruitFormState = {
   programRange: CompanySchoolRecruitRange | null
   recruitRange: CompanySchoolRecruitRange | null
@@ -148,7 +168,9 @@ export type CompanySchoolRegistrationCanonical = {
   schemaVersion: typeof COMPANY_SCHOOL_REGISTRATION_CANONICAL_VERSION
   common: CompanySchoolRegistrationCommonCanonical
   recruit?: CompanySchoolRecruitFormState
+  instructorRecruit?: CompanySchoolInstructorRecruitFormState
   application?: CompanySchoolApplicationFormState
+  /** UNMAPPED_FIELD — 공통정보 whitelist 밖 legacy overlay 키. overlay store가 아니다. */
   sidecar?: Record<string, unknown>
 }
 
@@ -156,5 +178,8 @@ export const COMPANY_SCHOOL_REGISTRATION_SETTINGS_KEY =
   'companySchoolRegistrationCanonical' as const
 
 export const COMPANY_SCHOOL_RECRUIT_EDITOR_KIND = 'companySchoolRecruitCanonical' as const
+
+export const COMPANY_SCHOOL_INSTRUCTOR_RECRUIT_EDITOR_KIND =
+  'companySchoolInstructorRecruitCanonical' as const
 
 export const COMPANY_SCHOOL_APPLICATION_EDITOR_KIND = 'companySchoolApplicationCanonical' as const
