@@ -24,7 +24,9 @@ import {
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { detailFromListItem } from '@/features/recruit-applicant/api/mappers'
 import { isRecruitApplicantNotFoundError } from '@/features/recruit-applicant/api/service'
+import { useHomepagePiiView } from '@/features/auth/hooks/use-homepage-pii-view'
 import { isAdminForbidden } from '@/features/system-inbox/lib/http-status'
+import { HOMEPAGE_PII_REVEAL_COPY } from '@/shared/lib/homepage-pii'
 import { RecruitApplicantDetailModal } from '@/features/recruit-applicant/ui/detail-modal'
 import { recruitApplicantQueryKeys } from '@/features/recruit-applicant/api/query-keys'
 import { RECRUIT_APPLICANTS_CHANGED_EVENT } from '@/features/recruit-applicant/api/store'
@@ -296,7 +298,14 @@ export function RecruitApplicantsPage() {
     patchSearchParams,
     DETAIL_QUERY_KEYS
   )
-  const detailQuery = useRecruitApplicantDetail(detailId)
+  const [revealedForId, setRevealedForId] = useState<string | null>(null)
+  const canRevealPii = useHomepagePiiView()
+  const piiRevealed = Boolean(detailId) && revealedForId === detailId
+  const detailQuery = useRecruitApplicantDetail(detailId, { revealPii: false })
+  const revealedQuery = useRecruitApplicantDetail(detailId, {
+    revealPii: true,
+    enabled: piiRevealed,
+  })
   const remoteDetail = shouldUseRecruitApplicantRemoteApi()
 
   const rowNoMap = useMemo(() => {
@@ -334,11 +343,24 @@ export function RecruitApplicantsPage() {
 
   const detailRow = useMemo(() => {
     if (!detailId) return null
+    if (revealedQuery.data) return revealedQuery.data
     if (detailQuery.data) return detailQuery.data
     if (remoteDetail) return null
     const listed = rows.find(row => row.id === detailId)
     return listed ? detailFromListItem(listed) : null
-  }, [detailId, detailQuery.data, remoteDetail, rows])
+  }, [detailId, detailQuery.data, remoteDetail, revealedQuery.data, rows])
+
+  useEffect(() => {
+    if (!piiRevealed || !revealedQuery.isError) return
+    setRevealedForId(null)
+    const forbidden = isAdminForbidden(revealedQuery.error)
+    showAlert({
+      title: forbidden ? HOMEPAGE_PII_REVEAL_COPY.forbiddenTitle : '조회 실패',
+      content: forbidden
+        ? HOMEPAGE_PII_REVEAL_COPY.forbiddenContent
+        : '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
+    })
+  }, [piiRevealed, revealedQuery.error, revealedQuery.isError, showAlert])
 
   useEffect(() => {
     if (!remoteDetail || !detailId || !detailQuery.isError) return
@@ -727,6 +749,12 @@ export function RecruitApplicantsPage() {
         data={detailRow}
         confirmLoading={confirmMutation.isPending && detailId != null}
         deleteLoading={removeMutation.isPending && detailId != null}
+        canRevealPii={canRevealPii}
+        piiRevealed={piiRevealed && Boolean(revealedQuery.data)}
+        revealLoading={piiRevealed && revealedQuery.isPending}
+        onRevealPii={() => {
+          if (detailId) setRevealedForId(detailId)
+        }}
         onCancel={closeDetail}
         onConfirm={() => {
           void handleDetailConfirm()

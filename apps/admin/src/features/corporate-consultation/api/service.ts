@@ -3,6 +3,7 @@ import { fetchAllAdminListPages, toAdminListPage, type AdminListPage } from '@/s
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
 import { mapConsultationDetailToDomain, mapConsultationListItemToDomain, toBulkRequest, toConsultationListParams, toStatusUpdateRequest, } from './mappers';
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status';
+import { toRevealPiiQueryParam } from '@/shared/lib/homepage-pii';
 function sponsorshipApi() {
     return getJAKoreaHomepageAdminAPISponsorshipSubset();
 }
@@ -17,13 +18,17 @@ function resolveRowsFromCache(ids: string[], cachedRows?: CorporateConsultation[
 export async function listCorporateConsultationsPageService(filter: CorporateConsultationListFilter = {}, page = 0): Promise<AdminListPage<CorporateConsultation>> {
     return listRemoteConsultations(filter, page);
 }
-export async function getCorporateConsultationService(id: string, actorName?: string): Promise<CorporateConsultation | null> {
+export async function getCorporateConsultationService(id: string, actorName?: string, options?: {
+    revealPii?: boolean;
+}): Promise<CorporateConsultation | null> {
     void actorName;
     const numericId = Number(id);
     if (!Number.isFinite(numericId) || numericId <= 0)
         return null;
     try {
-        const row = await sponsorshipApi().detail8(numericId);
+        const row = await sponsorshipApi().detail8(numericId, {
+            revealPii: toRevealPiiQueryParam(options?.revealPii),
+        });
         return mapConsultationDetailToDomain(row);
     }
     catch (error) {

@@ -18,6 +18,8 @@ import type {
   CorporateAdminResponse,
   CorporateMetricResponse,
   CorporateStepResponse,
+  Detail7Params,
+  Detail8Params,
   DonationButtonResponse,
   DonationUrlUpdateRequest,
   FixedTextUpdateRequest,
@@ -408,9 +410,11 @@ const delete3 = (
 
 const detail7 = (
     id: number,
+    params?: Detail7Params,
  options?: SecondParameter<typeof customInstance<TalentApplicationDetailResponse>>,) => {
       return customInstance<TalentApplicationDetailResponse>(
-      {url: `/api/admin/sponsorship/talent-applications/${id}`, method: 'GET'
+      {url: `/api/admin/sponsorship/talent-applications/${id}`, method: 'GET',
+        params
     },
       options);
     }
@@ -475,9 +479,11 @@ const bulkDelete6 = (
 
 const detail8 = (
     id: number,
+    params?: Detail8Params,
  options?: SecondParameter<typeof customInstance<ConsultationDetailResponse>>,) => {
       return customInstance<ConsultationDetailResponse>(
-      {url: `/api/admin/sponsorship/corporate-consultations/${id}`, method: 'GET'
+      {url: `/api/admin/sponsorship/corporate-consultations/${id}`, method: 'GET',
+        params
     },
       options);
     }

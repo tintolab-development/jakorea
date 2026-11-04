@@ -57,11 +57,16 @@ export function useTalentDonationApplicationsList(
   })
 }
 
-export function useTalentDonationApplicationDetail(id: string | null, enabled = true) {
+export function useTalentDonationApplicationDetail(
+  id: string | null,
+  enabled = true,
+  revealPii = false,
+) {
   const dataSource = source()
   return useQuery({
-    queryKey: talentDonationApplicationQueryKeys.detail(dataSource, id ?? ''),
-    queryFn: () => getTalentDonationApplicationService(id!, DEFAULT_CONFIRM_ACTOR),
+    queryKey: talentDonationApplicationQueryKeys.detail(dataSource, id ?? '', revealPii),
+    queryFn: () =>
+      getTalentDonationApplicationService(id!, DEFAULT_CONFIRM_ACTOR, { revealPii }),
     enabled: Boolean(id) && enabled,
     staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
     retry: dataSource === 'remote' ? 1 : false,
@@ -104,16 +109,18 @@ export function useConfirmTalentDonationApplications(
     onSuccess: updatedRows => {
       for (const row of updatedRows) {
         // status PATCH 응답은 list item shape — 상세 PII를 덮어쓰지 않는다
-        const detailKey = talentDonationApplicationQueryKeys.detail(source(), row.id)
-        const existing = queryClient.getQueryData<TalentDonationApplication>(detailKey)
-        if (existing) {
-          queryClient.setQueryData(detailKey, {
-            ...existing,
-            status: row.status,
-            confirmedAt: row.confirmedAt,
-            confirmedByName: row.confirmedByName ?? existing.confirmedByName,
-          })
-        }
+        queryClient.setQueriesData<TalentDonationApplication>(
+          { queryKey: talentDonationApplicationQueryKeys.detail(source(), row.id) },
+          existing =>
+            existing
+              ? {
+                  ...existing,
+                  status: row.status,
+                  confirmedAt: row.confirmedAt,
+                  confirmedByName: row.confirmedByName ?? existing.confirmedByName,
+                }
+              : existing,
+        )
         patchInfiniteListRow(queryClient, talentDonationApplicationQueryKeys.lists(), row)
       }
       if (updatedRows.length === 0) {

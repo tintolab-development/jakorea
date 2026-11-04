@@ -34,6 +34,7 @@ import type {
   CareerTalentApplicationListItem,
   ConfirmRequest,
   ConfirmResponse,
+  Detail9Params,
   List12Params,
   List15Params,
   List9Params,
@@ -321,9 +322,11 @@ const delete4 = (
 
 const detail9 = (
     id: number,
+    params?: Detail9Params,
  options?: SecondParameter<typeof customInstance<CareerTalentApplicationDetailResponse>>,) => {
       return customInstance<CareerTalentApplicationDetailResponse>(
-      {url: `/api/admin/careers/talent-applications/${id}`, method: 'GET'
+      {url: `/api/admin/careers/talent-applications/${id}`, method: 'GET',
+        params
     },
       options);
     }
