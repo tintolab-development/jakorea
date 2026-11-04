@@ -360,11 +360,8 @@ async function openAndCloseRegistrationPreview(page: Page) {
   await expect(page.getByText('현재 화면은 미리보기 화면입니다.')).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText(THIRD_PARTY_RECIPIENT_VALUE).first()).toBeVisible({ timeout: 10_000 })
   const closePreview = page.getByRole('button', { name: '미리보기 닫기' })
-  if (await closePreview.isVisible().catch(() => false)) {
-    await closePreview.click()
-  } else {
-    await page.keyboard.press('Escape')
-  }
+  await expect(closePreview).toBeVisible({ timeout: 10_000 })
+  await closePreview.click()
   await expect(page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible({
     timeout: 10_000,
   })

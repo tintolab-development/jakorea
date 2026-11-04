@@ -486,6 +486,7 @@ export async function installCsIsolatedNetwork(
   options?: IsolatedNetworkOptions
 ): Promise<IsolatedNetworkLog> {
   const failMode = options?.failMode ?? 'none'
+  let createFailCount = 0
   const log: IsolatedNetworkLog = {
     api: [],
     mutations: [],
@@ -823,6 +824,10 @@ export async function installCsIsolatedNetwork(
           recruitmentStatus: 'OPEN',
           periodStatus: 'RECRUITING',
           applicationTargetMode: 'ORGANIZATION',
+          educationScheduleRange: {
+            start: '2026-01-01',
+            end: '2026-12-31',
+          },
           recruitments: [
             {
               recruitmentId: CS_ISOLATED_IDS.RECRUITMENT_ID,
@@ -931,11 +936,14 @@ export async function installCsIsolatedNetwork(
         return
       }
       if (failMode === 'create' && method === 'POST' && pathname === '/api/admin/programs') {
-        log.createProgram = mutation
-        await route.fulfill(
-          json({ error: { code: 'CREATE_FAILED', message: 'mock create fail' } }, 500)
-        )
-        return
+        if (createFailCount === 0) {
+          createFailCount += 1
+          log.createProgram = mutation
+          await route.fulfill(
+            json({ error: { code: 'CREATE_FAILED', message: 'mock create fail' } }, 500)
+          )
+          return
+        }
       }
       if (failMode === 'media' && method === 'POST' && pathname.startsWith('/api/admin/files')) {
         log.filePosts.push(mutation)
@@ -1194,7 +1202,12 @@ export async function installCsIsolatedNetwork(
         if (failMode === 'portalDuplicate' && portalSubmitted) {
           await route.fulfill(
             json(
-              { error: { code: 'DUPLICATE_APPLICATION', message: 'mock duplicate apply' } },
+              {
+                error: {
+                  code: 'APPLICATION_ALREADY_SUBMITTED',
+                  message: '이미 제출한 신청이 있습니다.',
+                },
+              },
               409
             )
           )
