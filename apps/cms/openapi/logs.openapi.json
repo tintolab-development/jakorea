@@ -496,7 +496,9 @@
   "paths": {
     "/api/admin/logs/file-access/client": {
       "post": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "클라이언트 생성 파일 다운로드 이력 적재",
         "description": "### 이 API가 하는 일\n- 클라이언트 생성 파일 다운로드 이력 적재\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/logs/file-access/client`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FILE_DOWNLOAD 권한 필요\n- 접근 범위: 관리자 CMS 권한 범위\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_WRITE 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 서버를 거치지 않는 단일 PDF/blob 다운로드 감사 로그; 서버 판별 IP 사용",
         "operationId": "recordClientGeneratedFileDownload",
@@ -541,7 +543,9 @@
     },
     "/api/admin/logs/system-issues/{issueId}/status": {
       "patch": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "버그/이슈 이력 상태 변경",
         "description": "### 이 API가 하는 일\n- 버그/이슈 이력 상태 변경\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `PATCH /api/admin/logs/system-issues/{issueId}/status`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 버그/이슈 상태 변경(CMS UI 미연결)\n- 프론트 조회 키: `patch_api_logs_system-issues_issueId_status`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 행 클릭 액션 없음 — CMS 목록 UI 미연결(내부/운영용).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_WRITE 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 행 액션 없음·CMS UI 미연결",
         "operationId": "updateSystemIssueStatus",
@@ -598,7 +602,9 @@
     },
     "/api/admin/logs/system-issues": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "버그/이슈 이력 조회",
         "description": "### 이 API가 하는 일\n- 버그/이슈 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: userName/from/to/page/size\n- 응답 사용 위치: 버그/이슈 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_system-issues`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 버그/이슈 이력: userName/from/to·발생화면 컬럼 삭제(취소선)·IP/보관클램프/BE export 없음. status·severity는 API 부가.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 목록·발생화면 컬럼 삭제·IP/export 없음",
         "operationId": "systemIssueLogs",
@@ -700,7 +706,9 @@
     },
     "/api/admin/logs/system-issues/{issueId}": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "버그/이슈 이력 상세 조회",
         "description": "### 이 API가 하는 일\n- 버그/이슈 이력 상세 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/system-issues/{issueId}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: query/path/요청 본문 from 화면 필터\n- 응답 사용 위치: 버그/이슈 상세(CMS UI 미연결)\n- 프론트 조회 키: `get_api_logs_system-issues_issueId`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-4 행 클릭 액션 없음 — CMS 목록 UI 미연결(내부/운영용).\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-4 행 액션 없음·CMS UI 미연결",
         "operationId": "systemIssueDetail",
@@ -744,7 +752,9 @@
     },
     "/api/admin/logs/system-issues/export": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "버그/이슈 이력 엑셀 다운로드",
         "description": "### 이 API가 하는 일\n- 버그/이슈 이력 엑셀 다운로드\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/logs/system-issues/export`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-23 Notion 04-4 current filtered results XLSX export",
         "operationId": "exportSystemIssueLogs",
@@ -791,7 +801,9 @@
     },
     "/api/admin/logs/privacy-access": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "개인정보 조회 이력 조회",
         "description": "### 이 API가 하는 일\n- 개인정보 조회 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/privacy-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: accessPurpose/accessorName/targetName/from/to/page/size\n- 응답 사용 위치: 개인정보 조회 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_privacy-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-3 개인정보 조회 이력: UNMASKED_VIEW only·accessPurpose/accessorName/targetName·보관클램프/BE export 없음.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-3 UNMASKED_VIEW only·보관클램프/export 없음",
         "operationId": "privacyAccessLogs",
@@ -893,7 +905,9 @@
     },
     "/api/admin/logs/privacy-access/export": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "개인정보 조회 이력 엑셀 다운로드",
         "description": "### 이 API가 하는 일\n- 개인정보 조회 이력 엑셀 다운로드\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/logs/privacy-access/export`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-23 Notion 04-3 current filtered results XLSX export",
         "operationId": "exportPrivacyAccessLogs",
@@ -940,7 +954,9 @@
     },
     "/api/admin/logs/member-logins": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "회원 로그인 이력 조회",
         "description": "### 이 API가 하는 일\n- 회원 로그인 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/member-logins`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: adminName/loginId/from/to/page/size\n- 응답 사용 위치: 회원 로그인 이력 페이지 목록(CMS 관리자)\n- 프론트 조회 키: `get_api_logs_member-logins`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-1 회원 로그인 이력: CMS ADMIN 성공 로그인만·요청 기간·IP 원문.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-1 CMS 관리자 성공 로그인(요청 기간·서버 XLSX export 제공)",
         "operationId": "memberLoginHistory",
@@ -1034,7 +1050,9 @@
     },
     "/api/admin/logs/member-logins/export": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "회원 로그인 이력 엑셀 다운로드",
         "description": "### 이 API가 하는 일\n- 회원 로그인 이력 엑셀 다운로드\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/member-logins/export`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: adminName/loginId/from/to\n- 응답 사용 위치: 현재 조회 조건 전체 회원 로그인 이력 XLSX 다운로드\n- 프론트 조회 키: `get_api_logs_member-logins_export`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: none\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Notion 04-1 현재 검색 조건 전체 XLSX 다운로드",
         "operationId": "exportMemberLoginHistory",
@@ -1081,7 +1099,9 @@
     },
     "/api/admin/logs/file-access": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "파일 다운로드 이력 조회",
         "description": "### 이 API가 하는 일\n- 파일 다운로드 이력 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 로그 관리 (`null`)\n- 프론트 담당 영역: logs (`logs`)\n- 호출 방식: `GET /api/admin/logs/file-access`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: fileName/userName/from/to/page/size\n- 응답 사용 위치: 파일 다운로드 이력 페이지 목록\n- 프론트 조회 키: `get_api_logs_file-access`\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 라우트 준비 완료\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 기본 스모크 검증 대상\n- 목데이터 대체: 04-2 파일 다운로드 이력: SUCCESS download-family events·userName·IP 원문·보관클램프/BE export 없음.\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 04-2 SUCCESS download-family·보관클램프/export 없음",
         "operationId": "fileAccessLogs",
@@ -1176,7 +1196,9 @@
     },
     "/api/admin/logs/file-access/export": {
       "get": {
-        "tags": ["로그 관리"],
+        "tags": [
+          "로그 관리"
+        ],
         "summary": "파일 다운로드 이력 엑셀 다운로드",
         "description": "### 이 API가 하는 일\n- 파일 다운로드 이력 엑셀 다운로드\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/logs/file-access/export`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: LOG_READ 권한 필요\n- 접근 범위: 마스터 관리자만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: AUDIT_LOG_VIEW 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 개인정보/파일 API는 마스킹 응답과 원문 접근을 구분합니다. 원문 조회, export, 민감파일 다운로드는 감사로그가 저장되어야 성공으로 취급합니다.\n### Swagger에서 확인할 때\n- 감사/로그 API는 필터 기간, 대상 id, 관리자 권한에 따른 응답 차이를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 2026-09-23 Notion 04-2 current filtered results XLSX export",
         "operationId": "exportFileAccessLogs",
@@ -1331,7 +1353,9 @@
             "minItems": 0
           }
         },
-        "required": ["requestedDate"]
+        "required": [
+          "requestedDate"
+        ]
       },
       "RequestedSessionTimeRequest": {
         "type": "object",
@@ -1349,7 +1373,10 @@
             "type": "string"
           }
         },
-        "required": ["endTime", "startTime"]
+        "required": [
+          "endTime",
+          "startTime"
+        ]
       },
       "SaveApplicationRequest": {
         "type": "object",
@@ -1418,7 +1445,11 @@
             "nullable": true
           }
         },
-        "required": ["applicationType", "formBindingId", "recruitmentId"]
+        "required": [
+          "applicationType",
+          "formBindingId",
+          "recruitmentId"
+        ]
       },
       "ApplicationSaveResponse": {
         "type": "object",
@@ -1472,7 +1503,10 @@
             "minLength": 0
           }
         },
-        "required": ["fileObjectId", "signatureType"]
+        "required": [
+          "fileObjectId",
+          "signatureType"
+        ]
       },
       "MemberPortalSignatureProfileResponse": {
         "type": "object",
@@ -1556,7 +1590,12 @@
           "status": {
             "type": "string",
             "description": "NOT_SUBMITTED | SUBMITTED | FEEDBACK | REVISION_SUBMITTED",
-            "enum": ["NOT_SUBMITTED", "SUBMITTED", "FEEDBACK", "REVISION_SUBMITTED"]
+            "enum": [
+              "NOT_SUBMITTED",
+              "SUBMITTED",
+              "FEEDBACK",
+              "REVISION_SUBMITTED"
+            ]
           },
           "formResponseId": {
             "type": "integer",
@@ -1583,7 +1622,12 @@
           "responseStatus": {
             "type": "string",
             "description": "제출본 form_response.response_status. 미제출이면 null. APPROVED/REJECTED/SUBMITTED/COMPLETED 등. status(FEEDBACK 등)와 별도로 승인 여부를 구분한다.",
-            "enum": ["SUBMITTED", "APPROVED", "REJECTED", "COMPLETED"],
+            "enum": [
+              "SUBMITTED",
+              "APPROVED",
+              "REJECTED",
+              "COMPLETED"
+            ],
             "nullable": true
           }
         }
@@ -1597,7 +1641,10 @@
           "kind": {
             "type": "string",
             "description": "제출물 유형.",
-            "enum": ["FILE", "URL"]
+            "enum": [
+              "FILE",
+              "URL"
+            ]
           },
           "fileName": {
             "type": "string",
@@ -1629,7 +1676,9 @@
             "minLength": 0
           }
         },
-        "required": ["reactionType"]
+        "required": [
+          "reactionType"
+        ]
       },
       "NoticeReactionMutationResponse": {
         "type": "object",
@@ -1696,7 +1745,9 @@
             }
           }
         },
-        "required": ["fileObjectIds"]
+        "required": [
+          "fileObjectIds"
+        ]
       },
       "NoticeInlineImage": {
         "type": "object",
@@ -1762,7 +1813,9 @@
             "minItems": 0
           }
         },
-        "required": ["rows"]
+        "required": [
+          "rows"
+        ]
       },
       "StudentRosterRowRequest": {
         "type": "object",
@@ -1836,7 +1889,10 @@
             "minLength": 0
           }
         },
-        "required": ["className", "studentName"]
+        "required": [
+          "className",
+          "studentName"
+        ]
       },
       "StudentRosterItemResponse": {
         "type": "object",
@@ -1993,7 +2049,9 @@
             "format": "int64"
           }
         },
-        "required": ["fileObjectId"]
+        "required": [
+          "fileObjectId"
+        ]
       },
       "PortraitConsentResponse": {
         "type": "object",
@@ -2078,7 +2136,11 @@
             "type": "boolean"
           }
         },
-        "required": ["alimtalkEnabled", "emailEnabled", "smsEnabled"]
+        "required": [
+          "alimtalkEnabled",
+          "emailEnabled",
+          "smsEnabled"
+        ]
       },
       "PreferenceResponse": {
         "type": "object",
@@ -2115,7 +2177,9 @@
             "minLength": 0
           }
         },
-        "required": ["agreed"]
+        "required": [
+          "agreed"
+        ]
       },
       "PortalMarketingConsentResponse": {
         "type": "object",
@@ -2153,7 +2217,9 @@
             "pattern": "PASS|NEUTRAL|FAIL|UNREVIEWED"
           }
         },
-        "required": ["evaluation"]
+        "required": [
+          "evaluation"
+        ]
       },
       "VolunteerDocumentEvaluationResponse": {
         "type": "object",
@@ -2450,7 +2516,14 @@
           },
           "wageItemType": {
             "type": "string",
-            "enum": ["TIER1", "TIER2", "TIER3", "SPECIAL_LECTURE", "OTHER_LABOR", "GEMINI"]
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR",
+              "GEMINI"
+            ]
           },
           "itemName": {
             "type": "string"
@@ -2760,7 +2833,14 @@
           },
           "wageItemType": {
             "type": "string",
-            "enum": ["TIER1", "TIER2", "TIER3", "SPECIAL_LECTURE", "OTHER_LABOR", "GEMINI"]
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR",
+              "GEMINI"
+            ]
           },
           "name": {
             "type": "string"
@@ -3063,7 +3143,10 @@
             "$ref": "#/components/schemas/HalfPlan"
           }
         },
-        "required": ["expectedRevision", "halfPlan"]
+        "required": [
+          "expectedRevision",
+          "halfPlan"
+        ]
       },
       "ProgramScheduleRequest": {
         "type": "object",
@@ -3126,7 +3209,9 @@
             }
           }
         },
-        "required": ["expectedRevision"]
+        "required": [
+          "expectedRevision"
+        ]
       },
       "TemporaryScheduleSaveRequest": {
         "type": "object",
@@ -3146,7 +3231,9 @@
             }
           }
         },
-        "required": ["slots"]
+        "required": [
+          "slots"
+        ]
       },
       "TemporaryScheduleSlotRequest": {
         "type": "object",
@@ -3159,7 +3246,10 @@
           "grade": {
             "type": "string",
             "description": "학년. CMS는 숫자만 보낸다.",
-            "enum": ["1", "1학년"],
+            "enum": [
+              "1",
+              "1학년"
+            ],
             "example": "1",
             "maxLength": 80,
             "minLength": 0
@@ -3179,7 +3269,12 @@
             "minimum": 0
           }
         },
-        "required": ["className", "grade", "scheduleId", "studentCount"]
+        "required": [
+          "className",
+          "grade",
+          "scheduleId",
+          "studentCount"
+        ]
       },
       "CapacityWarning": {
         "type": "object",
@@ -3417,7 +3512,9 @@
             }
           }
         },
-        "required": ["sponsors"]
+        "required": [
+          "sponsors"
+        ]
       },
       "ApiResponseListProgramSponsorAssignmentResponse": {
         "type": "object",
@@ -3583,7 +3680,9 @@
             }
           }
         },
-        "required": ["fileObjectIds"]
+        "required": [
+          "fileObjectIds"
+        ]
       },
       "ApiResponseListProgramRecruitmentAttachmentResponse": {
         "type": "object",
@@ -3728,7 +3827,9 @@
             }
           }
         },
-        "required": ["fileObjectIds"]
+        "required": [
+          "fileObjectIds"
+        ]
       },
       "ApiResponseListResponse": {
         "type": "object",
@@ -3819,7 +3920,9 @@
             }
           }
         },
-        "required": ["fileObjectIds"]
+        "required": [
+          "fileObjectIds"
+        ]
       },
       "ApiResponseProgramPostAttachmentListResponse": {
         "type": "object",
@@ -4049,7 +4152,10 @@
             "minLength": 2
           }
         },
-        "required": ["organizationApplicationIds", "reason"]
+        "required": [
+          "organizationApplicationIds",
+          "reason"
+        ]
       },
       "VolunteerOrganizationAssignmentReplaceResponse": {
         "type": "object",
@@ -4107,7 +4213,9 @@
             "format": "int64"
           }
         },
-        "required": ["scheduleId"]
+        "required": [
+          "scheduleId"
+        ]
       },
       "AssignmentResponse": {
         "type": "object",
@@ -4441,7 +4549,9 @@
             "minimum": 0
           }
         },
-        "required": ["scheduleId"]
+        "required": [
+          "scheduleId"
+        ]
       },
       "EmployeeVolunteerCountReplaceRequest": {
         "type": "object",
@@ -4464,7 +4574,10 @@
             "minLength": 5
           }
         },
-        "required": ["entries", "reason"]
+        "required": [
+          "entries",
+          "reason"
+        ]
       },
       "ApiResponseEmployeeVolunteerCountSetResponse": {
         "type": "object",
@@ -4719,7 +4832,12 @@
           "status": {
             "type": "string",
             "description": "출석 코드만 PRESENT|LATE|ABSENT|EXCUSED. UJAT 배정은 기록이 없으면 참여자 행을 유지하고 status를 null로 반환한다. 미기록·비출석 값(COMPLETED·SCHEDULED 등)도 null.",
-            "enum": ["PRESENT", "LATE", "ABSENT", "EXCUSED"],
+            "enum": [
+              "PRESENT",
+              "LATE",
+              "ABSENT",
+              "EXCUSED"
+            ],
             "nullable": true
           },
           "absenceReason": {
@@ -4763,7 +4881,11 @@
           "checkInSource": {
             "type": "string",
             "description": "출석 기록 출처. ADMIN=관리자 정정/저장, MEMBER_SELF=회원 셀프 체크인, SYSTEM=일정 시작 자동 출석.",
-            "enum": ["ADMIN", "MEMBER_SELF", "SYSTEM"],
+            "enum": [
+              "ADMIN",
+              "MEMBER_SELF",
+              "SYSTEM"
+            ],
             "nullable": true
           }
         }
@@ -4890,7 +5012,12 @@
             "minimum": 0
           }
         },
-        "required": ["educationRegionCode", "maxClassCount", "maxVolunteerCount", "semesterType"]
+        "required": [
+          "educationRegionCode",
+          "maxClassCount",
+          "maxVolunteerCount",
+          "semesterType"
+        ]
       },
       "CapacityUpsertRequest": {
         "type": "object",
@@ -4902,7 +5029,9 @@
             }
           }
         },
-        "required": ["capacities"]
+        "required": [
+          "capacities"
+        ]
       },
       "CapacityStatus": {
         "type": "object",
@@ -5007,7 +5136,9 @@
             }
           }
         },
-        "required": ["estimates"]
+        "required": [
+          "estimates"
+        ]
       },
       "PlanningEstimateStatus": {
         "type": "object",
@@ -5124,7 +5255,9 @@
             "minLength": 0
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "StudentPortraitConsentResponse": {
         "type": "object",
@@ -5186,7 +5319,9 @@
             "minItems": 1
           }
         },
-        "required": ["schedules"]
+        "required": [
+          "schedules"
+        ]
       },
       "RequestedScheduleResponse": {
         "type": "object",
@@ -5715,7 +5850,9 @@
             "pattern": "PASS|NEUTRAL|FAIL|UNREVIEWED"
           }
         },
-        "required": ["evaluation"]
+        "required": [
+          "evaluation"
+        ]
       },
       "IndividualDocumentEvaluationResponse": {
         "type": "object",
@@ -5847,7 +5984,11 @@
           },
           "versionStatus": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "schemaJson": {
             "type": "string"
@@ -6100,7 +6241,9 @@
             }
           }
         },
-        "required": ["fileObjectIds"]
+        "required": [
+          "fileObjectIds"
+        ]
       },
       "ApiResponseListNoticeAttachmentResponse": {
         "type": "object",
@@ -6195,7 +6338,9 @@
             "type": "boolean"
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "ApiResponseVoid": {
         "type": "object",
@@ -6242,7 +6387,9 @@
             "type": "string"
           }
         },
-        "required": ["roles"]
+        "required": [
+          "roles"
+        ]
       },
       "ProgramRoleItem": {
         "type": "object",
@@ -6256,7 +6403,10 @@
             "minLength": 1
           }
         },
-        "required": ["assignmentRole", "programId"]
+        "required": [
+          "assignmentRole",
+          "programId"
+        ]
       },
       "AdminProgramAssignmentResponse": {
         "type": "object",
@@ -6375,7 +6525,9 @@
             "additionalProperties": {}
           }
         },
-        "required": ["answers"]
+        "required": [
+          "answers"
+        ]
       },
       "PublicSurveySubmitResponse": {
         "type": "object",
@@ -6451,7 +6603,10 @@
             "nullable": true
           }
         },
-        "required": ["currentPassword", "reason"]
+        "required": [
+          "currentPassword",
+          "reason"
+        ]
       },
       "PortalWithdrawalResponse": {
         "type": "object",
@@ -6504,7 +6659,12 @@
             "minLength": 0
           }
         },
-        "required": ["accessToken", "provider", "socialConsentAgreed", "socialConsentVersion"]
+        "required": [
+          "accessToken",
+          "provider",
+          "socialConsentAgreed",
+          "socialConsentVersion"
+        ]
       },
       "SocialLinkResponse": {
         "type": "object",
@@ -6570,7 +6730,9 @@
             "minLength": 0
           }
         },
-        "required": ["frontendReturnUrl"]
+        "required": [
+          "frontendReturnUrl"
+        ]
       },
       "SocialOAuthStartResponse": {
         "type": "object",
@@ -6597,7 +6759,9 @@
             "minLength": 2
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "ApiResponseSettlementStatusChangeResponse": {
         "type": "object",
@@ -6700,7 +6864,9 @@
             "minLength": 0
           }
         },
-        "required": ["fileName"]
+        "required": [
+          "fileName"
+        ]
       },
       "SettlementApplicationEvidenceAttachmentRequest": {
         "type": "object",
@@ -7013,7 +7179,9 @@
             "type": "string"
           }
         },
-        "required": ["fileObjectId"]
+        "required": [
+          "fileObjectId"
+        ]
       },
       "ApiResponseEducationJournalResponse": {
         "type": "object",
@@ -7113,7 +7281,9 @@
             "minimum": 1
           }
         },
-        "required": ["programScheduleId"]
+        "required": [
+          "programScheduleId"
+        ]
       },
       "ApiResponseEducationCompletionResponse": {
         "type": "object",
@@ -7278,7 +7448,12 @@
             "nullable": true
           }
         },
-        "required": ["answers", "programFormBindingId", "programId", "templateVersionId"]
+        "required": [
+          "answers",
+          "programFormBindingId",
+          "programId",
+          "templateVersionId"
+        ]
       },
       "FormRuntimeResponse": {
         "type": "object",
@@ -7376,7 +7551,9 @@
             "minItems": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "AbsenceReasonSubmissionResponse": {
         "type": "object",
@@ -7432,7 +7609,10 @@
             "type": "boolean"
           }
         },
-        "required": ["documentId", "documentVersion"]
+        "required": [
+          "documentId",
+          "documentVersion"
+        ]
       },
       "PaymentStatementConsentResponse": {
         "type": "object",
@@ -7508,7 +7688,10 @@
             "nullable": true
           }
         },
-        "required": ["content", "visibilityType"]
+        "required": [
+          "content",
+          "visibilityType"
+        ]
       },
       "CreateNoticeCommentRequest": {
         "type": "object",
@@ -7520,7 +7703,9 @@
             "minLength": 0
           }
         },
-        "required": ["content"]
+        "required": [
+          "content"
+        ]
       },
       "NoticeCommentMutationResponse": {
         "type": "object",
@@ -7566,7 +7751,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "GiveUpApplicationResponse": {
         "type": "object",
@@ -7627,7 +7814,11 @@
             }
           }
         },
-        "required": ["amount", "expenseDate", "expenseType"]
+        "required": [
+          "amount",
+          "expenseDate",
+          "expenseType"
+        ]
       },
       "ExpenseReceiptFile": {
         "type": "object",
@@ -7723,7 +7914,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "CancelApplicationResponse": {
         "type": "object",
@@ -7753,7 +7946,9 @@
             "minLength": 2
           }
         },
-        "required": ["purpose"]
+        "required": [
+          "purpose"
+        ]
       },
       "MemberPortalFileDownloadResponse": {
         "type": "object",
@@ -7792,7 +7987,9 @@
             "minLength": 0
           }
         },
-        "required": ["assignmentRevision"]
+        "required": [
+          "assignmentRevision"
+        ]
       },
       "PhoneIdentityConfirmRequest": {
         "type": "object",
@@ -7807,7 +8004,9 @@
             "minLength": 0
           }
         },
-        "required": ["profileToken"]
+        "required": [
+          "profileToken"
+        ]
       },
       "PhoneIdentityChangeResponse": {
         "type": "object",
@@ -7876,7 +8075,9 @@
             "format": "int64"
           }
         },
-        "required": ["sourceFileObjectId"]
+        "required": [
+          "sourceFileObjectId"
+        ]
       },
       "PortalCertificateBulkDownloadRequest": {
         "type": "object",
@@ -7885,7 +8086,10 @@
           "rosterIds": {
             "type": "array",
             "description": "현재 기관 신청서에 속한 학생 roster ID 목록입니다. 최대 100개까지 요청할 수 있습니다.",
-            "example": [1691594, 1691595],
+            "example": [
+              1691594,
+              1691595
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -7896,11 +8100,16 @@
           "certificateType": {
             "type": "string",
             "description": "수료증 유형입니다. 현재 COMPLETION만 지원합니다.",
-            "enum": ["COMPLETION"],
+            "enum": [
+              "COMPLETION"
+            ],
             "example": "COMPLETION"
           }
         },
-        "required": ["certificateType", "rosterIds"]
+        "required": [
+          "certificateType",
+          "rosterIds"
+        ]
       },
       "StreamingResponseBody": {},
       "InstructorVerificationConsentUpsertRequest": {
@@ -8303,7 +8512,9 @@
             "type": "boolean"
           }
         },
-        "required": ["bankName"]
+        "required": [
+          "bankName"
+        ]
       },
       "PaymentStatementBasicInfo": {
         "type": "object",
@@ -8416,7 +8627,11 @@
           "consentStatus": {
             "type": "string",
             "description": "PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다.",
-            "enum": ["PARTIAL", "DISAGREED", "FULL"]
+            "enum": [
+              "PARTIAL",
+              "DISAGREED",
+              "FULL"
+            ]
           },
           "programEligible": {
             "type": "boolean",
@@ -8442,7 +8657,10 @@
             "minLength": 0
           }
         },
-        "required": ["termsType", "version"]
+        "required": [
+          "termsType",
+          "version"
+        ]
       },
       "InstructorRoleWorkflowResponse": {
         "type": "object",
@@ -8670,7 +8888,11 @@
             "minItems": 0
           }
         },
-        "required": ["category", "content", "title"]
+        "required": [
+          "category",
+          "content",
+          "title"
+        ]
       },
       "MemberPortalInquiryAnswer": {
         "type": "object",
@@ -8812,7 +9034,11 @@
             }
           }
         },
-        "required": ["amount", "expenseDate", "expenseType"]
+        "required": [
+          "amount",
+          "expenseDate",
+          "expenseType"
+        ]
       },
       "ItemInput": {
         "type": "object",
@@ -8838,7 +9064,10 @@
             }
           }
         },
-        "required": ["amount", "itemType"]
+        "required": [
+          "amount",
+          "itemType"
+        ]
       },
       "ResubmitRequest": {
         "type": "object",
@@ -8860,7 +9089,10 @@
             "minItems": 1
           }
         },
-        "required": ["expectedRevisionNo", "idempotencyKey"]
+        "required": [
+          "expectedRevisionNo",
+          "idempotencyKey"
+        ]
       },
       "ExpenseDetail": {
         "type": "object",
@@ -9035,7 +9267,10 @@
             "minItems": 1
           }
         },
-        "required": ["idempotencyKey", "scheduleId"]
+        "required": [
+          "idempotencyKey",
+          "scheduleId"
+        ]
       },
       "MemberGuardianVerificationCreateRequest": {
         "type": "object",
@@ -9060,7 +9295,10 @@
             "minLength": 0
           }
         },
-        "required": ["guardianRelation", "purpose"]
+        "required": [
+          "guardianRelation",
+          "purpose"
+        ]
       },
       "MemberGuardianVerificationSessionResponse": {
         "type": "object",
@@ -9197,7 +9435,10 @@
             "minLength": 0
           }
         },
-        "required": ["contentType", "fileSize"]
+        "required": [
+          "contentType",
+          "fileSize"
+        ]
       },
       "MemberPortalFileResponse": {
         "type": "object",
@@ -9289,7 +9530,12 @@
             "minLength": 0
           }
         },
-        "required": ["contentType", "filePurpose", "fileSize", "originalFileName"]
+        "required": [
+          "contentType",
+          "filePurpose",
+          "fileSize",
+          "originalFileName"
+        ]
       },
       "MemberPortalFileUploadResponse": {
         "type": "object",
@@ -9362,7 +9608,9 @@
           "consentTypes": {
             "type": "array",
             "description": "노출을 고정할 동의 유형(1~4개). PAYMENT_STATEMENT_PRE_CONSENT는 PAYMENT_STATEMENT_CONSENT로 정규화됩니다.",
-            "example": ["FACILITATOR_PLEDGE"],
+            "example": [
+              "FACILITATOR_PLEDGE"
+            ],
             "items": {
               "type": "string"
             }
@@ -9389,7 +9637,9 @@
             "description": "Optional with targetType. For MEMBER scope, must equal the authenticated member ID; for PROGRAM scope, the member must be a participant."
           }
         },
-        "required": ["consentType"]
+        "required": [
+          "consentType"
+        ]
       },
       "MemberPortalConsentDocumentResponse": {
         "type": "object",
@@ -9615,7 +9865,10 @@
           "consentStatus": {
             "type": "string",
             "description": "PORTRAIT_RIGHTS 전용 부분동의 상태 힌트. FULL은 deprecated이며 서버가 PARTIAL로 정규화합니다.",
-            "enum": ["PARTIAL", "FULL"]
+            "enum": [
+              "PARTIAL",
+              "FULL"
+            ]
           },
           "programEligible": {
             "type": "boolean",
@@ -9658,10 +9911,17 @@
           "issueReason": {
             "type": "string",
             "description": "발급 사유 코드",
-            "enum": ["INSTITUTION_SUBMISSION", "EDUCATION_COMPLETION_PROOF", "PERSONAL_ARCHIVE"]
+            "enum": [
+              "INSTITUTION_SUBMISSION",
+              "EDUCATION_COMPLETION_PROOF",
+              "PERSONAL_ARCHIVE"
+            ]
           }
         },
-        "required": ["participantId", "programId"]
+        "required": [
+          "participantId",
+          "programId"
+        ]
       },
       "CertificateIssueResponse": {
         "type": "object",
@@ -10019,7 +10279,10 @@
             "minLength": 0
           }
         },
-        "required": ["accessToken", "provider"]
+        "required": [
+          "accessToken",
+          "provider"
+        ]
       },
       "AuthTokenResponse": {
         "type": "object",
@@ -10073,7 +10336,10 @@
           "ageGroup": {
             "type": "string",
             "description": "회원 포탈 로그인·토큰 갱신·소셜 로그인에서 항상 UNDER_14 또는 OVER_14. GET /api/portal/auth/me 및 GET /api/portal/me/profile 과 동일 규칙(member_signup_profile.age_group 우선, 없으면 member.is_under_14_yn). 관리자 토큰 응답은 null.",
-            "enum": ["UNDER_14", "OVER_14"],
+            "enum": [
+              "UNDER_14",
+              "OVER_14"
+            ],
             "example": "OVER_14",
             "nullable": true
           }
@@ -10091,7 +10357,9 @@
             "minLength": 0
           }
         },
-        "required": ["socialLoginSessionId"]
+        "required": [
+          "socialLoginSessionId"
+        ]
       },
       "HomepageTeacherSignupRequest": {
         "type": "object",
@@ -10101,7 +10369,9 @@
             "$ref": "#/components/schemas/TeacherSignupRequest"
           }
         },
-        "required": ["teacher"]
+        "required": [
+          "teacher"
+        ]
       },
       "MemberSignupRequest": {
         "type": "object",
@@ -10238,7 +10508,11 @@
             }
           }
         },
-        "required": ["email", "name", "password"]
+        "required": [
+          "email",
+          "name",
+          "password"
+        ]
       },
       "PortalSchoolSelectionRequest": {
         "type": "object",
@@ -10322,7 +10596,9 @@
             "example": "EMPLOYED"
           }
         },
-        "required": ["member"]
+        "required": [
+          "member"
+        ]
       },
       "HomepageSignupResponse": {
         "type": "object",
@@ -10374,7 +10650,11 @@
             "minLength": 1
           }
         },
-        "required": ["birthDate", "gender", "memberType"]
+        "required": [
+          "birthDate",
+          "gender",
+          "memberType"
+        ]
       },
       "HomepageGeneralSignupRequest": {
         "type": "object",
@@ -10384,7 +10664,9 @@
             "$ref": "#/components/schemas/MemberSignupRequest"
           }
         },
-        "required": ["member"]
+        "required": [
+          "member"
+        ]
       },
       "RefreshTokenRequest": {
         "type": "object",
@@ -10398,7 +10680,9 @@
             "minLength": 0
           }
         },
-        "required": ["refreshToken"]
+        "required": [
+          "refreshToken"
+        ]
       },
       "PreRegisteredMemberMatchRequest": {
         "type": "object",
@@ -10475,7 +10759,10 @@
             "minLength": 12
           }
         },
-        "required": ["currentPassword", "newPassword"]
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
       },
       "PasswordResetStartRequest": {
         "type": "object",
@@ -10487,7 +10774,9 @@
             "minLength": 0
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "PasswordResetStartResponse": {
         "type": "object",
@@ -10522,7 +10811,11 @@
             "minLength": 0
           }
         },
-        "required": ["email", "identityVerificationSessionId", "profileToken"]
+        "required": [
+          "email",
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
       },
       "PasswordResetEligibilityResponse": {
         "type": "object",
@@ -10603,7 +10896,10 @@
             "minLength": 8
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "GuardianConsentRequest": {
         "type": "object",
@@ -10689,7 +10985,9 @@
             "minLength": 0
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "AccountEmailCheckResponse": {
         "type": "object",
@@ -10721,7 +11019,10 @@
             "minLength": 0
           }
         },
-        "required": ["identityVerificationSessionId", "profileToken"]
+        "required": [
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
       },
       "EmailRecoveryAccountResponse": {
         "type": "object",
@@ -10779,7 +11080,10 @@
             "minLength": 0
           }
         },
-        "required": ["identityVerificationSessionId", "profileToken"]
+        "required": [
+          "identityVerificationSessionId",
+          "profileToken"
+        ]
       },
       "AdminProvisionedOnboardingResponse": {
         "type": "object",
@@ -10988,7 +11292,11 @@
             "minLength": 0
           }
         },
-        "required": ["agreed", "guardianRelation", "termsVersion"]
+        "required": [
+          "agreed",
+          "guardianRelation",
+          "termsVersion"
+        ]
       },
       "GuardianConsentEvidenceResult": {
         "type": "object",
@@ -11065,7 +11373,9 @@
             "example": 1001
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "ActivityScheduleSlot": {
         "type": "object",
@@ -11661,11 +11971,16 @@
           "faultParty": {
             "type": "string",
             "description": "활동 포기 귀책 주체. USER만 회원 일정 변경/취소 횟수에 반영됩니다. 미전달 legacy 요청은 ADMIN으로 안전 처리합니다.",
-            "enum": ["USER", "ADMIN"],
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
             "example": "USER"
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "ApplicationDecisionResponse": {
         "type": "object",
@@ -11700,7 +12015,10 @@
           "scheduleAssignmentStatus": {
             "type": "string",
             "description": "기관 승인 후 또는 제미나이 강사 승인 후 일정 배정 상태. ASSIGNED는 확정 일정(OSA 또는 강사 배정 일정)이 있고, UNASSIGNED는 승인됐지만 일정이 없습니다. GENERAL/UJAT/1사1교 강사 승인 등 그 외 결정에서는 null입니다.",
-            "enum": ["ASSIGNED", "UNASSIGNED"],
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED"
+            ],
             "nullable": true
           }
         }
@@ -11712,7 +12030,11 @@
           "result": {
             "type": "string",
             "description": "최종 결과. PASS/APPROVED, FAIL/REJECTED, RESERVE",
-            "enum": ["PASS", "FAIL", "RESERVE"],
+            "enum": [
+              "PASS",
+              "FAIL",
+              "RESERVE"
+            ],
             "example": "PASS"
           },
           "reserveRank": {
@@ -11741,7 +12063,9 @@
             "description": "notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["result"]
+        "required": [
+          "result"
+        ]
       },
       "DocumentResultRequest": {
         "type": "object",
@@ -11750,7 +12074,10 @@
           "result": {
             "type": "string",
             "description": "서류 결과. PASS/DOCUMENT_PASSED 또는 FAIL/REJECTED",
-            "enum": ["PASS", "FAIL"],
+            "enum": [
+              "PASS",
+              "FAIL"
+            ],
             "example": "PASS"
           },
           "reason": {
@@ -11771,7 +12098,9 @@
             "description": "notifyTiming=MANUAL일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["result"]
+        "required": [
+          "result"
+        ]
       },
       "ApplicationDecisionCancelRequest": {
         "type": "object",
@@ -11789,7 +12118,9 @@
             "description": "취소 결과 알림 시점. 강사 Cancellation.notification과 같은 필드. 생략하면 즉시 발송"
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "Notification": {
         "type": "object",
@@ -11840,7 +12171,11 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["confirmedScheduleIds", "expectedScopeRevision", "reason"]
+        "required": [
+          "confirmedScheduleIds",
+          "expectedScopeRevision",
+          "reason"
+        ]
       },
       "BulkResultRequest": {
         "type": "object",
@@ -11881,7 +12216,10 @@
             "description": "notifyTiming=MANUAL 또는 SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["ids", "result"]
+        "required": [
+          "ids",
+          "result"
+        ]
       },
       "ApiResponseBulkActionResponse": {
         "type": "object",
@@ -11990,7 +12328,10 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["reason", "targets"]
+        "required": [
+          "reason",
+          "targets"
+        ]
       },
       "Target": {
         "type": "object",
@@ -12013,7 +12354,11 @@
             "format": "int64"
           }
         },
-        "required": ["applicationId", "confirmedScheduleIds", "expectedScopeRevision"]
+        "required": [
+          "applicationId",
+          "confirmedScheduleIds",
+          "expectedScopeRevision"
+        ]
       },
       "MemberDetailResponse": {
         "type": "object",
@@ -12209,7 +12554,10 @@
           "consentStatus": {
             "type": "string",
             "description": "PORTRAIT_RIGHTS 전용 상태. FULL은 deprecated이며 조회 시 PARTIAL로 정규화됩니다.",
-            "enum": ["PARTIAL", "DISAGREED"]
+            "enum": [
+              "PARTIAL",
+              "DISAGREED"
+            ]
           },
           "programEligible": {
             "type": "boolean",
@@ -12518,7 +12866,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "SignedConsentDocumentResponse": {
         "type": "object",
@@ -12683,7 +13033,9 @@
             "minLength": 1
           }
         },
-        "required": ["comment"]
+        "required": [
+          "comment"
+        ]
       },
       "AdminCommentResponse": {
         "type": "object",
@@ -12853,7 +13205,10 @@
             "description": "JA 등급 평가 팝업에서 입력한 4개 평가항목. 총점/등급은 서버가 산정합니다."
           }
         },
-        "required": ["email", "name"]
+        "required": [
+          "email",
+          "name"
+        ]
       },
       "InstructorCertificationUpsertRequest": {
         "type": "object",
@@ -12888,7 +13243,9 @@
             "type": "boolean"
           }
         },
-        "required": ["certificationName"]
+        "required": [
+          "certificationName"
+        ]
       },
       "InstructorJaEvaluationInput": {
         "type": "object",
@@ -13007,7 +13364,15 @@
             }
           }
         },
-        "required": ["address", "birthDate", "email", "enrollmentStatus", "gender", "name", "phone"]
+        "required": [
+          "address",
+          "birthDate",
+          "email",
+          "enrollmentStatus",
+          "gender",
+          "name",
+          "phone"
+        ]
       },
       "PreRegisterConflictResolveRequest": {
         "type": "object",
@@ -13053,7 +13418,10 @@
             "minLength": 0
           }
         },
-        "required": ["ids", "reason"]
+        "required": [
+          "ids",
+          "reason"
+        ]
       },
       "UjatEducationRegionCreateRequest": {
         "type": "object",
@@ -13087,7 +13455,10 @@
             "$ref": "#/components/schemas/RoutePointRequest"
           }
         },
-        "required": ["end", "start"]
+        "required": [
+          "end",
+          "start"
+        ]
       },
       "RoutePointRequest": {
         "type": "object",
@@ -13305,7 +13676,11 @@
           "ids": {
             "type": "array",
             "description": "처리 대상 숫자 ID(최대 100). 중복 ID는 허용하지 않습니다.",
-            "example": [101, 102, 103],
+            "example": [
+              101,
+              102,
+              103
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -13314,7 +13689,9 @@
             "minItems": 0
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "TextbookBusinessAreaRequest": {
         "type": "object",
@@ -13434,7 +13811,11 @@
           "contentFormat": {
             "type": "string",
             "description": "본문 형식",
-            "enum": ["HTML", "MARKDOWN", "TEXT"],
+            "enum": [
+              "HTML",
+              "MARKDOWN",
+              "TEXT"
+            ],
             "example": "HTML"
           },
           "requiredYn": {
@@ -13458,7 +13839,13 @@
             "description": "적용 종료 시각"
           }
         },
-        "required": ["content", "requiredYn", "termsType", "title", "version"]
+        "required": [
+          "content",
+          "requiredYn",
+          "termsType",
+          "title",
+          "version"
+        ]
       },
       "ApiResponseTermsDocumentResponse": {
         "type": "object",
@@ -13545,7 +13932,11 @@
           "contentFormat": {
             "type": "string",
             "description": "본문 형식. 현재 피그마 약관 모달은 HTML 렌더링 기준입니다.",
-            "enum": ["HTML", "MARKDOWN", "TEXT"],
+            "enum": [
+              "HTML",
+              "MARKDOWN",
+              "TEXT"
+            ],
             "example": "HTML"
           },
           "requiredYn": {
@@ -13646,13 +14037,21 @@
           "organizationKind": {
             "type": "string",
             "description": "구분. POST 등록 시 필수이며 corporate(기업) 또는 foundation(재단)을 사용합니다.",
-            "enum": ["corporate", "foundation"],
+            "enum": [
+              "corporate",
+              "foundation"
+            ],
             "example": "corporate"
           },
           "sponsorshipStatus": {
             "type": "string",
             "description": "후원 상태. POST 등록 시 필수. PATCH는 4값 양방향. 미지원 값은 400 SPONSOR_SPONSORSHIP_STATUS_UNSUPPORTED.",
-            "enum": ["active", "discussing", "dormant", "ended"],
+            "enum": [
+              "active",
+              "discussing",
+              "dormant",
+              "ended"
+            ],
             "example": "active"
           },
           "sponsorshipStartDate": {
@@ -13743,7 +14142,12 @@
           },
           "sponsorshipStatus": {
             "type": "string",
-            "enum": ["active", "discussing", "dormant", "ended"],
+            "enum": [
+              "active",
+              "discussing",
+              "dormant",
+              "ended"
+            ],
             "example": "active"
           },
           "sponsorshipStartDate": {
@@ -13928,7 +14332,9 @@
             "minItems": 1
           }
         },
-        "required": ["sponsorIds"]
+        "required": [
+          "sponsorIds"
+        ]
       },
       "ApiResponseBulkDownloadJobResponse": {
         "type": "object",
@@ -14111,7 +14517,11 @@
           "notificationType": {
             "type": "string",
             "description": "IMMEDIATE | ON_ANNOUNCEMENT | MANUAL",
-            "enum": ["IMMEDIATE", "ON_ANNOUNCEMENT", "MANUAL"],
+            "enum": [
+              "IMMEDIATE",
+              "ON_ANNOUNCEMENT",
+              "MANUAL"
+            ],
             "example": "IMMEDIATE"
           },
           "scheduledNotificationAt": {
@@ -14133,7 +14543,9 @@
             "example": "2026-09-15"
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "PaymentStatementRenderedFileRegisterRequest": {
         "type": "object",
@@ -14152,7 +14564,10 @@
             "minLength": 0
           }
         },
-        "required": ["fileObjectId", "payloadHash"]
+        "required": [
+          "fileObjectId",
+          "payloadHash"
+        ]
       },
       "SettlementCorrectionRequest": {
         "type": "object",
@@ -14173,7 +14588,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "ApiResponseSettlementCorrectionResponse": {
         "type": "object",
@@ -14272,7 +14689,9 @@
           "statementIds": {
             "type": "array",
             "description": "지급조서 일괄 확인 대상 statementId 목록. FE는 이 필드만 사용합니다.",
-            "example": [162602],
+            "example": [
+              162602
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -14283,7 +14702,9 @@
           "paymentIds": {
             "type": "array",
             "description": "이 API(bulk-confirm)에서는 사용하지 않습니다. 계좌 지급 bulk-paid 전용.",
-            "example": [162603],
+            "example": [
+              162603
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -14311,7 +14732,9 @@
             "minLength": 2
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "ApiResponseSettlementBulkStatusChangeResponse": {
         "type": "object",
@@ -14384,7 +14807,9 @@
             "minItems": 1
           }
         },
-        "required": ["settlementIds"]
+        "required": [
+          "settlementIds"
+        ]
       },
       "SettlementExportRequest": {
         "type": "object",
@@ -14446,7 +14871,7 @@
           },
           "rawPrivacyIncluded": {
             "type": "boolean",
-            "description": "원본 개인정보 포함 여부. true이면 승인 reference가 필요합니다.",
+            "description": "true면 RAW_PRIVACY_APPROVAL_REQUIRED와 approvalReference가 필요합니다. false(MASKED_ONLY)도 대량이체·세금신고 SERVER_FILE에는 원문 계좌·주민번호를 넣습니다. 원문 노출 감사는 POST /api/admin/files/{fileObjectId}/sensitive-downloads 의 reason으로 남깁니다. 미리보기 GET만으로는 이력이 생기지 않습니다.",
             "example": false
           },
           "approvalReference": {
@@ -14484,7 +14909,10 @@
             "type": "boolean"
           }
         },
-        "required": ["businessPurpose", "reason"]
+        "required": [
+          "businessPurpose",
+          "reason"
+        ]
       },
       "Scope": {
         "type": "object",
@@ -14654,7 +15082,10 @@
           "educationStructure": {
             "type": "string",
             "description": "교육 진행 구조",
-            "enum": ["CURRICULUM", "SCHEDULE"]
+            "enum": [
+              "CURRICULUM",
+              "SCHEDULE"
+            ]
           },
           "titleEn": {
             "type": "string"
@@ -14684,7 +15115,13 @@
           "targetLevels": {
             "type": "array",
             "description": "교육 대상 복수. elementary|middle|high|university|adult. 있으면 targetLevel은 첫 값과 같고, serviceDetailJson.program.targetLevels와 동기화된다. 빈 배열은 교육 대상을 지운다.",
-            "enum": ["elementary", "middle", "high", "university", "adult"],
+            "enum": [
+              "elementary",
+              "middle",
+              "high",
+              "university",
+              "adult"
+            ],
             "items": {
               "type": "string"
             }
@@ -14792,7 +15229,11 @@
           "educationForm": {
             "type": "string",
             "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.",
-            "enum": ["online", "offline", "hybrid"],
+            "enum": [
+              "online",
+              "offline",
+              "hybrid"
+            ],
             "nullable": true
           },
           "trainingRequestStartDate": {
@@ -14887,7 +15328,10 @@
           "draftStatus": {
             "type": "string",
             "description": "Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략 시 PUBLISHED. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.",
-            "enum": ["DRAFT", "PUBLISHED"],
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ],
             "nullable": true
           }
         }
@@ -14980,7 +15424,11 @@
           "recruitmentType": {
             "type": "string",
             "description": "모집 유형",
-            "enum": ["PARTICIPANT", "INSTRUCTOR", "VOLUNTEER"]
+            "enum": [
+              "PARTICIPANT",
+              "INSTRUCTOR",
+              "VOLUNTEER"
+            ]
           },
           "targetType": {
             "type": "string",
@@ -14989,7 +15437,13 @@
           "status": {
             "type": "string",
             "description": "모집 상태",
-            "enum": ["ACTIVE", "OPEN", "INACTIVE", "CLOSED", "CANCELLED"]
+            "enum": [
+              "ACTIVE",
+              "OPEN",
+              "INACTIVE",
+              "CLOSED",
+              "CANCELLED"
+            ]
           },
           "startAt": {
             "type": "string"
@@ -15028,13 +15482,21 @@
           "applicationType": {
             "type": "string",
             "description": "이 모집 행의 신청 유형. recruitmentType/targetType 은 이 값에서 정한다.",
-            "enum": ["INDIVIDUAL", "ORGANIZATION", "INSTRUCTOR", "VOLUNTEER"],
+            "enum": [
+              "INDIVIDUAL",
+              "ORGANIZATION",
+              "INSTRUCTOR",
+              "VOLUNTEER"
+            ],
             "nullable": true
           },
           "recruitTerm": {
             "type": "string",
             "description": "UJAT 봉사자 모집 상·하반기 SSOT. UJAT VOLUNTEER에서만 FIRST_HALF|SECOND_HALF, 그 외에는 null.",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           },
           "announcementTitle": {
@@ -15130,7 +15592,11 @@
           "noticeExposureTiming": {
             "type": "string",
             "description": "봉사자 공고 노출 시점. VOLUNTEER만. start-day|one-day-before|one-week-before. null 유지.",
-            "enum": ["start-day", "one-day-before", "one-week-before"],
+            "enum": [
+              "start-day",
+              "one-day-before",
+              "one-week-before"
+            ],
             "nullable": true
           },
           "volunteerTargets": {
@@ -15187,7 +15653,9 @@
             "nullable": true
           }
         },
-        "required": ["recruitmentType"]
+        "required": [
+          "recruitmentType"
+        ]
       },
       "ProgramRoundRequest": {
         "type": "object",
@@ -15399,7 +15867,11 @@
             "minLength": 0
           }
         },
-        "required": ["bodyText", "id", "label"]
+        "required": [
+          "bodyText",
+          "id",
+          "label"
+        ]
       },
       "FreeTextItemsRequest": {
         "type": "object",
@@ -15413,7 +15885,9 @@
             "minItems": 0
           }
         },
-        "required": ["items"]
+        "required": [
+          "items"
+        ]
       },
       "PreviousJaProgramRequest": {
         "type": "object",
@@ -15436,7 +15910,11 @@
             "minItems": 1
           }
         },
-        "required": ["certificateFileIds", "programName", "programYear"]
+        "required": [
+          "certificateFileIds",
+          "programName",
+          "programYear"
+        ]
       },
       "PreviousUjatTermRequest": {
         "type": "object",
@@ -15459,7 +15937,10 @@
             "nullable": true
           }
         },
-        "required": ["term", "year"]
+        "required": [
+          "term",
+          "year"
+        ]
       },
       "VolunteerParticipantRegisterRequest": {
         "type": "object",
@@ -15472,28 +15953,37 @@
             "type": "string",
             "default": "GENERAL",
             "description": "GENERAL|EMPLOYEE만 허용합니다. UJAT 전용 kind는 없습니다. CMS 진행 추가 등록은 GENERAL만 처리하고 EMPLOYEE는 CMS_PROGRESS_VOLUNTEER_REGISTER_GENERAL_ONLY입니다.",
-            "enum": ["GENERAL", "EMPLOYEE"]
+            "enum": [
+              "GENERAL",
+              "EMPLOYEE"
+            ]
           },
           "registrationChannel": {
             "type": "string",
-            "enum": ["CMS_PROGRESS_ADD"]
+            "enum": [
+              "CMS_PROGRESS_ADD"
+            ]
           },
           "personalInfoConsent": {
             "type": "string",
-            "enum": ["AGREE"],
+            "enum": [
+              "AGREE"
+            ],
             "minLength": 1
           },
           "thirdPartyConsent": {
             "type": "string",
-            "enum": ["AGREE"],
+            "enum": [
+              "AGREE"
+            ],
             "minLength": 1
           },
           "thirdPartyRecipient": {
             "type": "string",
-            "nullable": true,
-            "minLength": 1,
+            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient).",
             "maxLength": 200,
-            "description": "제3자 동의 「제공받는 곳(기관명)」. trim 후 1~200자. CMS_PROGRESS_ADD(일반 GENERAL* 및 UJAT 교육 진행 추가 등록)에서 thirdPartyConsent=AGREE이면 필수이며 누락·공백·'-'는 422 VOLUNTEER_THIRD_PARTY_RECIPIENT_REQUIRED. wire에 빈 문자열·'-'를 보내지 말고 미입력은 null/생략. 저장 위치: form_response.raw_answers_jsonb 및 form_response_answer의 program-volunteer-application-seed-third-party(UJAT는 ujat-…-seed-third-party) 객체(dataRows[0][0]·fieldDataRows[0][0].value·thirdPartyRecipient)."
+            "minLength": 0,
+            "nullable": true
           },
           "id1365": {
             "type": "string",
@@ -15503,31 +15993,54 @@
           "jaProgramExperienceConsentRequest": {
             "type": "string",
             "description": "JA 봉사 프로그램 진행 경험(Figma 일반 추가 등록 폼과 동일). REQUESTED이면 previousJaProgram{programYear,programName,certificateFileIds} 필수. 일반 프로그램은 400 VOLUNTEER_PREVIOUS_JA_REQUIRED, UJAT CMS_PROGRESS_ADD는 422 VOLUNTEER_PREVIOUS_JA_REQUIRED. previousUjatTerm을 요구하지 않습니다.",
-            "enum": ["REQUESTED", "NOT_REQUESTED"],
+            "enum": [
+              "REQUESTED",
+              "NOT_REQUESTED"
+            ],
             "minLength": 1
           },
           "previousJaProgram": {
             "$ref": "#/components/schemas/PreviousJaProgramRequest"
           },
           "previousUjatTerm": {
-            "$ref": "#/components/schemas/VolunteerPreviousUjatTermRequest"
+            "description": "사용자 홈 UJAT 봉사 신청서의 이전 활동 기수. CMS_PROGRESS_ADD에서는 생략 가능하며 없으면 기수를 invent하지 않습니다. certificateFileIds가 있으면 ADMIN이 업로드한 VOLUNTEER_APPLICATION_EVIDENCE(CLEAN·AVAILABLE)만 받으며 form_submission_file에 연결됩니다.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PreviousUjatTermRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "educationRegionCode": {
             "type": "string",
-            "nullable": true,
-            "description": "사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. UJAT 교육지역 code. 불일치 시 400 UJAT_EDUCATION_REGION_CODE_UNKNOWN. 서울 치환 없음. 생략 시 지역 null."
+            "description": "사용자 홈 UJAT 봉사 신청서의 희망 교육 활동 지역. CMS_PROGRESS_ADD에서는 생략 가능. GET /api/admin/ujat/education-regions 의 code. 대소문자 무시. 없거나 매핑 실패 시 서울로 채우지 않습니다. 생략하면 preferred region은 null입니다.",
+            "nullable": true
           },
           "recruitHalf": {
             "type": "string",
             "description": "UJAT 봉사자 모집 반기. CMS 교육 진행 탭(edu_h1_volunteers/edu_h2_volunteers)에서 온 값. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다.",
-            "enum": ["FIRST_HALF", "SECOND_HALF", "상반기", "하반기", "H1", "H2"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF",
+              "상반기",
+              "하반기",
+              "H1",
+              "H2"
+            ],
             "nullable": true
           },
           "applicationType": {
             "type": "string",
-            "nullable": true,
-            "enum": ["NEW", "UJAT_GRADUATE", "new", "ujat-graduate"],
-            "description": "사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다."
+            "description": "사용자 홈 UJAT 봉사 신청서 유형. CMS_PROGRESS_ADD에서는 생략 가능(없으면 NEW/기수를 invent하지 않음). UJAT_GRADUATE여도 freeTextItems 4문항(intro, educationExperience, necessity, jaExperience)은 필수입니다.",
+            "enum": [
+              "NEW",
+              "UJAT_GRADUATE",
+              "new",
+              "ujat-graduate"
+            ],
+            "nullable": true
           },
           "freeTextItems": {
             "$ref": "#/components/schemas/FreeTextItemsRequest"
@@ -15602,7 +16115,10 @@
             "minLength": 2
           }
         },
-        "required": ["reason", "volunteerParticipantId"]
+        "required": [
+          "reason",
+          "volunteerParticipantId"
+        ]
       },
       "VolunteerAssignmentResponse": {
         "type": "object",
@@ -15689,7 +16205,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "EducationClassAddItem": {
         "type": "object",
@@ -15710,7 +16228,11 @@
             "minimum": 1
           }
         },
-        "required": ["className", "grade", "studentCount"]
+        "required": [
+          "className",
+          "grade",
+          "studentCount"
+        ]
       },
       "EducationClassAddRequest": {
         "type": "object",
@@ -15729,7 +16251,9 @@
             "minItems": 0
           }
         },
-        "required": ["classes"]
+        "required": [
+          "classes"
+        ]
       },
       "EducationClassListResponse": {
         "type": "object",
@@ -15819,7 +16343,10 @@
             "type": "boolean"
           }
         },
-        "required": ["fromClassName", "fromGrade"]
+        "required": [
+          "fromClassName",
+          "fromGrade"
+        ]
       },
       "EducationClassRemappingRequest": {
         "type": "object",
@@ -15846,7 +16373,10 @@
             "minItems": 0
           }
         },
-        "required": ["expectedRevision", "mappings"]
+        "required": [
+          "expectedRevision",
+          "mappings"
+        ]
       },
       "EducationClassRemappingResponse": {
         "type": "object",
@@ -15905,7 +16435,9 @@
             "nullable": true
           }
         },
-        "required": ["applicationIds"]
+        "required": [
+          "applicationIds"
+        ]
       },
       "TemporaryRejectionCancelRequest": {
         "type": "object",
@@ -15919,7 +16451,9 @@
             "minItems": 1
           }
         },
-        "required": ["applicationIds"]
+        "required": [
+          "applicationIds"
+        ]
       },
       "OrganizationProgressRemovalRequest": {
         "type": "object",
@@ -15930,7 +16464,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "PreferredScheduleBlock": {
         "type": "object",
@@ -16209,7 +16745,9 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "OrganizationApplicationNotificationResendRequest": {
         "type": "object",
@@ -16243,10 +16781,17 @@
           },
           "faultParty": {
             "type": "string",
-            "enum": ["USER", "ADMIN"]
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
           }
         },
-        "required": ["faultParty", "reason", "stopScheduleId"]
+        "required": [
+          "faultParty",
+          "reason",
+          "stopScheduleId"
+        ]
       },
       "OrganizationApplicationApproveRequest": {
         "type": "object",
@@ -16468,7 +17013,10 @@
             "minimum": 1
           }
         },
-        "required": ["organizationApplicationId", "programScheduleId"]
+        "required": [
+          "organizationApplicationId",
+          "programScheduleId"
+        ]
       },
       "EducationCompletionCancelRequest": {
         "type": "object",
@@ -16478,7 +17026,9 @@
             "minLength": 1
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "SurveyShareLinkResponse": {
         "type": "object",
@@ -16865,7 +17415,10 @@
             "type": "string"
           }
         },
-        "required": ["memberId", "participantType"]
+        "required": [
+          "memberId",
+          "participantType"
+        ]
       },
       "ProgramParticipantRegisterResponse": {
         "type": "object",
@@ -16964,7 +17517,10 @@
             "type": "string"
           }
         },
-        "required": ["leadApplicationId", "members"]
+        "required": [
+          "leadApplicationId",
+          "members"
+        ]
       },
       "MergeMemberRequest": {
         "type": "object",
@@ -16979,7 +17535,10 @@
             "minLength": 1
           }
         },
-        "required": ["grade", "organizationApplicationId"]
+        "required": [
+          "grade",
+          "organizationApplicationId"
+        ]
       },
       "MergeGroupResponse": {
         "type": "object",
@@ -17264,7 +17823,9 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["instructorMemberId"]
+        "required": [
+          "instructorMemberId"
+        ]
       },
       "ProgramFormBindingResponse": {
         "type": "object",
@@ -17347,7 +17908,11 @@
           "progressStatus": {
             "type": "string",
             "description": "설문류(SURVEY, SATISFACTION, LECTURE_EVALUATION)만. BEFORE_START | IN_PROGRESS | FINISHED. 그 외 formType은 null. now < submissionStartAt 이면 BEFORE_START, submissionEndAt이 있고 now > submissionEndAt 이면 FINISHED, 그 외(시작 시각 null 포함)는 IN_PROGRESS. 응답 수로 바꾸지 않는다.",
-            "enum": ["BEFORE_START", "IN_PROGRESS", "FINISHED"],
+            "enum": [
+              "BEFORE_START",
+              "IN_PROGRESS",
+              "FINISHED"
+            ],
             "nullable": true
           },
           "duplicatePolicy": {
@@ -17568,7 +18133,10 @@
             "minLength": 0
           }
         },
-        "required": ["draftPayloadJson", "programType"]
+        "required": [
+          "draftPayloadJson",
+          "programType"
+        ]
       },
       "ProgramPostRequest": {
         "type": "object",
@@ -17636,7 +18204,9 @@
             "minLength": 0
           }
         },
-        "required": ["participantId"]
+        "required": [
+          "participantId"
+        ]
       },
       "VolunteerUnavailabilityResponse": {
         "type": "object",
@@ -17697,7 +18267,7 @@
           "targetSlotCount": {
             "type": "integer",
             "format": "int32",
-            "description": "빈 슬롯 수 + 보강 대상 1인 슬롯 수"
+            "description": "빈 슬롯 수 + 보강 대상 1인 슬롯 수. 같은 서울 교육일·같은 지역에서 가용 봉사자 V < 학급 수×2 이면 빈 학급을 1인씩 먼저 커버하므로 singleAssignedCount가 늘고 unassignedCount는 줄어든다. 신규 봉사자가 없고 미배정 학급이 남으면 같은 날·같은 지역의 미래 미진행 2인조에서 SECONDARY 1명만 이동한다. 원본 2인조 학급은 targetSlotCount·singleAssignedCount에 넣지 않지만, 분리 후 1인으로 남은 원본도 capacityWarnings[VOLUNTEER_SHORTAGE]와 results(reason=PAIR_SPLIT)에 포함한다."
           },
           "pairAssignedCount": {
             "type": "integer",
@@ -17759,7 +18329,7 @@
           },
           "result": {
             "type": "string",
-            "description": "ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지)",
+            "description": "ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지). 기존 2인조에서 한 명을 옮겨 1인 커버한 경우 result는 ASSIGNED_SINGLE이고 reason=PAIR_SPLIT. PAIR_SPLIT이면 대상 학급 row의 sourceEducationSlotId가 원본 학급이고, 원본 학급 row도 results에 포함된다.",
             "enum": [
               "ASSIGNED_PAIR",
               "ASSIGNED_SINGLE",
@@ -17786,6 +18356,12 @@
           },
           "reason": {
             "type": "string"
+          },
+          "sourceEducationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "reason=PAIR_SPLIT인 대상 학급 row에서 원본 학급 educationSlotId. 그 외 result는 null. FE는 educationSlotId와 sourceEducationSlotId를 모두 새로고침한다. 생략하지 않고 null로 둔다.",
+            "nullable": true
           }
         }
       },
@@ -17797,7 +18373,9 @@
             "format": "int64"
           }
         },
-        "required": ["participantId"]
+        "required": [
+          "participantId"
+        ]
       },
       "DirectAssignmentResponse": {
         "type": "object",
@@ -17886,7 +18464,9 @@
             "description": "배정 알림(ACTIVITY_ORGANIZATION_ASSIGNED)이 회원에게 이미 노출되었거나 외부 발송 처리에 들어갔는지 여부. false면 발송 전(예약 포함)이므로 취소 시 사유·취소 알림 없이 예약 배정 알림만 취소합니다. true면 취소 시 reason 필수 + timing/scheduledAt으로 회원 취소 알림을 보냅니다."
           }
         },
-        "required": ["assignmentNotificationSent"]
+        "required": [
+          "assignmentNotificationSent"
+        ]
       },
       "UjatDgbongPartnerAssignmentConfirmRequest": {
         "type": "object",
@@ -17954,7 +18534,10 @@
           "timing": {
             "type": "string",
             "description": "취소 알림 발송 방식. IMMEDIATE 또는 SCHEDULED. 이미 배정 알림이 발송된 경우에만 사용됩니다. 생략 시 scheduledAt이 있으면 SCHEDULED, 없으면 IMMEDIATE로 처리합니다.",
-            "enum": ["IMMEDIATE", "SCHEDULED"],
+            "enum": [
+              "IMMEDIATE",
+              "SCHEDULED"
+            ],
             "example": "IMMEDIATE",
             "nullable": true
           },
@@ -18001,7 +18584,9 @@
             "minLength": 0
           }
         },
-        "required": ["decision"]
+        "required": [
+          "decision"
+        ]
       },
       "AbsenceReasonReviewResponse": {
         "type": "object",
@@ -18065,7 +18650,9 @@
             "minLength": 2
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "LectureReportDecisionResponse": {
         "type": "object",
@@ -18111,7 +18698,10 @@
             "type": "string",
             "nullable": true,
             "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
-            "enum": ["USER", "ADMIN"]
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
           }
         }
       },
@@ -18167,7 +18757,9 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["scheduleId"]
+        "required": [
+          "scheduleId"
+        ]
       },
       "MemberPiiAnonymizeRequest": {
         "type": "object",
@@ -18178,7 +18770,9 @@
             "minLength": 5
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "PrivacyEnforcementMutationResponse": {
         "type": "object",
@@ -18270,7 +18864,11 @@
             "minLength": 0
           }
         },
-        "required": ["exportDomain", "exportFileObjectId", "reason"]
+        "required": [
+          "exportDomain",
+          "exportFileObjectId",
+          "reason"
+        ]
       },
       "PrivacyExportFileResponse": {
         "type": "object",
@@ -18359,7 +18957,9 @@
             "minLength": 5
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "PrivacyExportDownloadResponse": {
         "type": "object",
@@ -18470,7 +19070,10 @@
             "minLength": 0
           }
         },
-        "required": ["exportDomain", "reason"]
+        "required": [
+          "exportDomain",
+          "reason"
+        ]
       },
       "PrivacyExportClientSideCompleteResponse": {
         "type": "object",
@@ -18585,7 +19188,10 @@
             "minLength": 0
           }
         },
-        "required": ["exportDomain", "reason"]
+        "required": [
+          "exportDomain",
+          "reason"
+        ]
       },
       "PrivacyExportApprovalResponse": {
         "type": "object",
@@ -18694,7 +19300,9 @@
             "minLength": 5
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "DormantBulkRequest": {
         "type": "object",
@@ -18712,7 +19320,10 @@
             "minLength": 5
           }
         },
-        "required": ["memberIds", "reason"]
+        "required": [
+          "memberIds",
+          "reason"
+        ]
       },
       "BulkLifecycleResponse": {
         "type": "object",
@@ -18750,7 +19361,10 @@
             "minLength": 5
           }
         },
-        "required": ["consentIds", "reason"]
+        "required": [
+          "consentIds",
+          "reason"
+        ]
       },
       "PerformanceRuleUpsertRequest": {
         "type": "object",
@@ -19239,7 +19853,11 @@
           "ids": {
             "type": "array",
             "description": "처리 대상 ID",
-            "example": [101, 102, 103],
+            "example": [
+              101,
+              102,
+              103
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -19264,7 +19882,9 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "PerformanceClosingRequest": {
         "type": "object",
@@ -19388,7 +20008,10 @@
             "minLength": 0
           }
         },
-        "required": ["address", "name"]
+        "required": [
+          "address",
+          "name"
+        ]
       },
       "SchoolOrganizationListItemResponse": {
         "type": "object",
@@ -19481,7 +20104,9 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "ClassRoom": {
         "type": "object",
@@ -19536,8 +20161,8 @@
           },
           "textbookName": {
             "type": "string",
-            "nullable": true,
-            "description": "학년 블록에 저장된 교재명. 없으면 null."
+            "description": "학년 블록에 저장된 교재명. 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다.",
+            "nullable": true
           },
           "textbookNameEn": {
             "type": "string",
@@ -19546,17 +20171,24 @@
           "kitCount": {
             "type": "integer",
             "format": "int32",
+            "description": "학년 블록에 저장된 키트 수. 없으면 null.",
             "nullable": true
           },
           "bookCount": {
             "type": "integer",
             "format": "int32",
+            "description": "학년 블록에 저장된 권수. 없으면 null.",
             "nullable": true
           },
           "textbookDeliveryStatus": {
             "type": "string",
-            "nullable": true,
-            "enum": ["PREPARING", "SHIPPING", "DELIVERED", "NOT_APPLICABLE"]
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ],
+            "nullable": true
           }
         }
       },
@@ -19732,13 +20364,16 @@
           },
           "parkingInfo": {
             "type": "string",
-            "nullable": true,
-            "description": "기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null. 성범죄 조회서 요청은 detail 전용 컬럼 없음(form sex-offense 단락)."
+            "description": "기타 특이사항(주차·전달사항) 스냅샷. Portal guidance(other-notes 등)에서 프로젝션. 없으면 null.",
+            "nullable": true
           },
           "snackAvailability": {
             "type": "string",
             "description": "간식(ABC초콜릿) 제공 가능 여부. Portal guidance snackAvailability(possible|impossible)에서 응답 필드로 프로젝션. 없으면 null. 빈 문자열 금지. mealProvided/mealNotice와 혼용하지 않음(UJAT meal 키는 잔여교재 배출 장소).",
-            "enum": ["possible", "impossible"],
+            "enum": [
+              "possible",
+              "impossible"
+            ],
             "nullable": true
           },
           "sexOffenseCheckRequest": {
@@ -19785,7 +20420,10 @@
           "previousYearParticipation": {
             "type": "string",
             "description": "1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null.",
-            "enum": ["참여", "미참여"],
+            "enum": [
+              "참여",
+              "미참여"
+            ],
             "nullable": true
           },
           "affiliatedFinancialCompany": {
@@ -19847,7 +20485,11 @@
           "institutionConfirmationStatus": {
             "type": "string",
             "description": "UJAT 기관 확인 상태(temporary-schedule와 동일 vocabulary). scheduleConfirmStatus와 동치: institution_checking→CHECKING, institution_confirmed→CONFIRMED, revision_requested→REVISION_REQUESTED. 비대상·미설정이면 키를 생략하며 null로 보내지 않는다.",
-            "enum": ["CHECKING", "CONFIRMED", "REVISION_REQUESTED"],
+            "enum": [
+              "CHECKING",
+              "CONFIRMED",
+              "REVISION_REQUESTED"
+            ],
             "nullable": true
           },
           "assignedInstructorCount": {
@@ -19864,26 +20506,31 @@
           },
           "textbookNameEn": {
             "type": "string",
-            "nullable": true,
-            "description": "신청에 연결된 교재 영문명. 없으면 null."
+            "description": "신청에 연결된 교재 영문명. 교재가 없으면 null. 프로그램 공통 교재명으로 채우지 않습니다.",
+            "nullable": true
           },
           "textbookDeliveryStatus": {
             "type": "string",
-            "nullable": true,
-            "enum": ["PREPARING", "SHIPPING", "DELIVERED", "NOT_APPLICABLE"],
-            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다."
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ],
+            "nullable": true
           },
           "kitCount": {
             "type": "integer",
             "format": "int32",
-            "nullable": true,
-            "description": "저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생수/24로 계산하지 않습니다."
+            "description": "저장된 키트 수. UJAT는 저장값이 없으면 null이며 학생 수/24로 계산하지 않습니다. textbookKits와 같은 값입니다.",
+            "nullable": true
           },
           "bookCount": {
             "type": "integer",
             "format": "int32",
-            "nullable": true,
-            "description": "저장된 교재 권수. 없으면 null."
+            "description": "저장된 교재 권수. 없으면 null. textbookQuantity와 같은 값입니다.",
+            "nullable": true
           }
         }
       },
@@ -19985,7 +20632,10 @@
           "ids": {
             "type": "array",
             "description": "처리 대상 숫자 ID(최대 100).",
-            "example": [101, 102],
+            "example": [
+              101,
+              102
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -20010,7 +20660,9 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "TimedBulkIdsRequest": {
         "type": "object",
@@ -20019,7 +20671,10 @@
           "ids": {
             "type": "array",
             "description": "처리 대상 숫자 ID(최대 100).",
-            "example": [101, 102],
+            "example": [
+              101,
+              102
+            ],
             "items": {
               "type": "integer",
               "format": "int64"
@@ -20038,7 +20693,9 @@
             "description": "timing=SCHEDULED일 때 필수. 현재 시각 이후 ISO-8601"
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "NotificationTemplateUpsertRequest": {
         "type": "object",
@@ -20285,7 +20942,9 @@
             "description": "템플릿에 바인딩할 CLEAN 상태 file_object.id"
           }
         },
-        "required": ["fileObjectId"]
+        "required": [
+          "fileObjectId"
+        ]
       },
       "ApiResponseEmailAttachmentMutationResponse": {
         "type": "object",
@@ -20469,7 +21128,9 @@
             }
           }
         },
-        "required": ["templateCode"]
+        "required": [
+          "templateCode"
+        ]
       },
       "TemplateSyncRequest": {
         "type": "object",
@@ -20522,7 +21183,10 @@
           "resource": {
             "type": "string",
             "description": "동기화 대상 리소스",
-            "enum": ["NOTIFICATION_TEMPLATE", "SENDER_PROFILE"]
+            "enum": [
+              "NOTIFICATION_TEMPLATE",
+              "SENDER_PROFILE"
+            ]
           },
           "upsertedCount": {
             "type": "integer",
@@ -20563,7 +21227,9 @@
             "minLength": 0
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "ApiResponseCategoryMutationResponse": {
         "type": "object",
@@ -20634,7 +21300,9 @@
             "format": "int64"
           }
         },
-        "required": ["categoryId"]
+        "required": [
+          "categoryId"
+        ]
       },
       "ApiResponseCreateResponse": {
         "type": "object",
@@ -21057,7 +21725,9 @@
             "minLength": 0
           }
         },
-        "required": ["targets"]
+        "required": [
+          "targets"
+        ]
       },
       "AccountDirectoryBulkDeleteResponse": {
         "type": "object",
@@ -21177,7 +21847,9 @@
             "minLength": 0
           }
         },
-        "required": ["currentPassword"]
+        "required": [
+          "currentPassword"
+        ]
       },
       "AdminSelfWithdrawalResponse": {
         "type": "object",
@@ -21249,7 +21921,10 @@
             "type": "boolean"
           }
         },
-        "required": ["adminSsoSessionId", "socialConsentVersion"]
+        "required": [
+          "adminSsoSessionId",
+          "socialConsentVersion"
+        ]
       },
       "AdminSocialAccountResponse": {
         "type": "object",
@@ -21329,7 +22004,9 @@
             "minLength": 0
           }
         },
-        "required": ["provider"]
+        "required": [
+          "provider"
+        ]
       },
       "DashboardShortcutBadgeReadRequest": {
         "type": "object",
@@ -21585,7 +22262,9 @@
             "type": "boolean"
           }
         },
-        "required": ["interviewSlotId"]
+        "required": [
+          "interviewSlotId"
+        ]
       },
       "InterviewAssignmentResponse": {
         "type": "object",
@@ -21686,7 +22365,9 @@
             "minLength": 2
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "InstructorVerificationRequestCreateRequest": {
         "type": "object",
@@ -21766,7 +22447,11 @@
           "channelType": {
             "type": "string",
             "description": "강사 권한 박탈 알림 채널. ALIMTALK | SMS | EMAIL. 생략하면 기존 채널 정책을 따릅니다.",
-            "enum": ["ALIMTALK", "SMS", "EMAIL"]
+            "enum": [
+              "ALIMTALK",
+              "SMS",
+              "EMAIL"
+            ]
           },
           "scheduledAt": {
             "type": "string",
@@ -21896,7 +22581,12 @@
           "currentGrade": {
             "type": "string",
             "description": "서버 산정 등급. Wire 값은 A|B|C|D (JA_ prefix 없음).",
-            "enum": ["A", "B", "C", "D"]
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ]
           },
           "evaluatedAt": {
             "type": "string",
@@ -21934,7 +22624,9 @@
             "description": "결과 알림 예약 시각(ISO-8601). 생략 또는 null이면 즉시 발송. 유효한 미래 시각이면 예약. 최소 60초 이후여야 한다."
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "NotificationResendRequest": {
         "type": "object",
@@ -22123,7 +22815,9 @@
             "description": "일괄 결과 알림 예약 시각. null이면 즉시 발송"
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "InstructorFeePolicyUpsertRequest": {
         "type": "object",
@@ -22262,7 +22956,9 @@
             "$ref": "#/components/schemas/Notification"
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "AvailableScheduleSlot": {
         "type": "object",
@@ -22310,7 +23006,12 @@
             "minLength": 1
           }
         },
-        "required": ["amount", "basisType", "instructorFeeGrade", "measure"]
+        "required": [
+          "amount",
+          "basisType",
+          "instructorFeeGrade",
+          "measure"
+        ]
       },
       "InstructorApplicationDetailResponse": {
         "type": "object",
@@ -22539,7 +23240,10 @@
           "faultParty": {
             "type": "string",
             "description": "취소 귀책. USER=강사 사유(JA 평가 등급 강의 취소 감점 대상), ADMIN=운영 사유. 생략·null이면 ADMIN으로 처리합니다.",
-            "enum": ["USER", "ADMIN"],
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
             "example": "USER",
             "nullable": true
           }
@@ -22564,7 +23268,10 @@
             "$ref": "#/components/schemas/Notification"
           }
         },
-        "required": ["assignments", "feePolicy"]
+        "required": [
+          "assignments",
+          "feePolicy"
+        ]
       },
       "Assignment": {
         "type": "object",
@@ -22583,7 +23290,9 @@
             "type": "boolean"
           }
         },
-        "required": ["scheduleId"]
+        "required": [
+          "scheduleId"
+        ]
       },
       "CategoryRequest": {
         "type": "object",
@@ -22960,7 +23669,12 @@
           "duplicateStrategy": {
             "type": "string",
             "description": "overwrite=미지급 동일 키 upsert. append=미지급 중복 시 신규 insert. 기존 실적이 계좌 지급완료(PAID)인 중복이 하나라도 있으면 overwrite·append 모두 요청 전체 미커밋 (FAILED+GEMINI_TRAINING_REPORT_ACCOUNT_PAID, 부분 커밋 없음). 소문자 허용.",
-            "enum": ["overwrite", "append", "OVERWRITE", "APPEND"]
+            "enum": [
+              "overwrite",
+              "append",
+              "OVERWRITE",
+              "APPEND"
+            ]
           }
         }
       },
@@ -23100,7 +23814,10 @@
           "status": {
             "type": "string",
             "description": "대소문자 고정. SUCCESS+paymentExclusionReason=실적만(지급/정산 미생성). FAILED=시간 역전·필수값·부분 기재(NAME_AND_PHONE_REQUIRED)·모호 매칭(AMBIGUOUS)·지급완료 overwrite 차단 등 진짜 검증 실패. GEMINI_INSTRUCTOR_NOT_MATCHED(이름·연락처 있으나 미매칭)는 FAILED가 아니라 SUCCESS+paymentExclusionReason.",
-            "enum": ["SUCCESS", "FAILED"]
+            "enum": [
+              "SUCCESS",
+              "FAILED"
+            ]
           },
           "message": {
             "type": "string"
@@ -23257,12 +23974,20 @@
           "applicationType": {
             "type": "string",
             "description": "이 모집 행의 신청 유형",
-            "enum": ["INDIVIDUAL", "ORGANIZATION", "INSTRUCTOR", "VOLUNTEER"]
+            "enum": [
+              "INDIVIDUAL",
+              "ORGANIZATION",
+              "INSTRUCTOR",
+              "VOLUNTEER"
+            ]
           },
           "recruitTerm": {
             "type": "string",
             "description": "UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null.",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           },
           "announcementTitle": {
@@ -23346,7 +24071,11 @@
           "noticeExposureTiming": {
             "type": "string",
             "description": "봉사자 공고 노출 시점. VOLUNTEER가 아니면 null. typed 없으면 overlay 호환 조회.",
-            "enum": ["start-day", "one-day-before", "one-week-before"],
+            "enum": [
+              "start-day",
+              "one-day-before",
+              "one-week-before"
+            ],
             "nullable": true
           },
           "volunteerTargets": {
@@ -23473,7 +24202,10 @@
           "educationStructure": {
             "type": "string",
             "description": "교육 진행 구조",
-            "enum": ["CURRICULUM", "SCHEDULE"]
+            "enum": [
+              "CURRICULUM",
+              "SCHEDULE"
+            ]
           },
           "detailedProgramId": {
             "type": "integer",
@@ -23506,7 +24238,13 @@
           "targetLevel": {
             "type": "string",
             "description": "교육 대상 첫 값. targetLevels[0]과 같다. 없으면 null.",
-            "enum": ["elementary", "middle", "high", "university", "adult"],
+            "enum": [
+              "elementary",
+              "middle",
+              "high",
+              "university",
+              "adult"
+            ],
             "nullable": true
           },
           "targetLevels": {
@@ -23825,10 +24563,10 @@
           "ujatPlanRowId": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -23944,7 +24682,12 @@
           },
           "progressStatus": {
             "type": "string",
-            "enum": ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "NOT_CONDUCTED"],
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "NOT_CONDUCTED"
+            ],
             "nullable": true
           },
           "applicationStatus": {
@@ -24103,7 +24846,14 @@
           },
           "teacherEmploymentStatus": {
             "type": "string",
-            "enum": ["ACTIVE", "ON_LEAVE", "TRANSFERRED", "INACTIVE", "RESIGNED", "WITHDRAWN"],
+            "enum": [
+              "ACTIVE",
+              "ON_LEAVE",
+              "TRANSFERRED",
+              "INACTIVE",
+              "RESIGNED",
+              "WITHDRAWN"
+            ],
             "nullable": true
           },
           "teacherPosition": {
@@ -24255,7 +25005,12 @@
           },
           "formType": {
             "type": "string",
-            "enum": ["WRITING", "ISSUANCE", "SURVEY", "CERTIFICATE"]
+            "enum": [
+              "WRITING",
+              "ISSUANCE",
+              "SURVEY",
+              "CERTIFICATE"
+            ]
           },
           "category": {
             "type": "string",
@@ -24386,7 +25141,11 @@
           },
           "latestVersionStatus": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "baseTemplateCode": {
             "type": "string",
@@ -24424,7 +25183,11 @@
           },
           "versionStatus": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "responseCount": {
             "type": "integer",
@@ -24509,7 +25272,9 @@
             "description": "복사할 원본 version. 생략 시 원본 latest."
           }
         },
-        "required": ["templateName"]
+        "required": [
+          "templateName"
+        ]
       },
       "FormTemplateVersionPublishRequest": {
         "type": "object",
@@ -24552,7 +25317,9 @@
             "minItems": 0
           }
         },
-        "required": ["programId"]
+        "required": [
+          "programId"
+        ]
       },
       "RevealRequest": {
         "type": "object",
@@ -24563,7 +25330,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "FormResponseAnswerResponse": {
         "type": "object",
@@ -24724,7 +25493,9 @@
             "type": "string"
           }
         },
-        "required": ["content"]
+        "required": [
+          "content"
+        ]
       },
       "FormResponseFeedbackResponse": {
         "type": "object",
@@ -24855,7 +25626,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "SensitiveFileDownloadResponse": {
         "type": "object",
@@ -24928,7 +25701,9 @@
             "minimum": 1
           }
         },
-        "required": ["purpose"]
+        "required": [
+          "purpose"
+        ]
       },
       "FileDownloadRequestResponse": {
         "type": "object",
@@ -25077,7 +25852,10 @@
             }
           }
         },
-        "required": ["fileObjectId", "ownerType"]
+        "required": [
+          "fileObjectId",
+          "ownerType"
+        ]
       },
       "FileUploadConfirmRequest": {
         "type": "object",
@@ -25248,7 +26026,13 @@
             "minimum": 0
           }
         },
-        "required": ["attachmentType", "fileObjectId", "ownerDomain", "ownerId", "ownerType"]
+        "required": [
+          "attachmentType",
+          "fileObjectId",
+          "ownerDomain",
+          "ownerId",
+          "ownerType"
+        ]
       },
       "FileAttachmentResponse": {
         "type": "object",
@@ -25324,7 +26108,9 @@
             "type": "string"
           }
         },
-        "required": ["exportType"]
+        "required": [
+          "exportType"
+        ]
       },
       "ApiResponseCommonExportJobResponse": {
         "type": "object",
@@ -25487,7 +26273,9 @@
             "minItems": 0
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "NoticeRequest": {
         "type": "object",
@@ -25540,7 +26328,11 @@
           "status": {
             "type": "string",
             "description": "상태",
-            "enum": ["published", "임시저장", "archived"],
+            "enum": [
+              "published",
+              "임시저장",
+              "archived"
+            ],
             "example": "published"
           }
         }
@@ -25636,7 +26428,11 @@
           "status": {
             "type": "string",
             "description": "공개 상태",
-            "enum": ["published", "임시저장", "archived"],
+            "enum": [
+              "published",
+              "임시저장",
+              "archived"
+            ],
             "example": "published"
           },
           "resourceId": {
@@ -25680,7 +26476,12 @@
           "status": {
             "type": "string",
             "description": "공개 여부/상태. 공개=published, 비공개=draft|임시저장. 미입력 시 DRAFT(비공개).",
-            "enum": ["published", "draft", "임시저장", "archived"],
+            "enum": [
+              "published",
+              "draft",
+              "임시저장",
+              "archived"
+            ],
             "example": "published"
           }
         }
@@ -25750,7 +26551,11 @@
           "status": {
             "type": "string",
             "description": "공개 여부 매핑 상태. published=공개, 임시저장|draft=비공개, archived=보관.",
-            "enum": ["published", "임시저장", "archived"],
+            "enum": [
+              "published",
+              "임시저장",
+              "archived"
+            ],
             "example": "published"
           },
           "createdAt": {
@@ -25791,7 +26596,12 @@
             "minLength": 1
           }
         },
-        "required": ["comment", "screenCode", "targetId", "targetType"]
+        "required": [
+          "comment",
+          "screenCode",
+          "targetId",
+          "targetType"
+        ]
       },
       "ReprojectResult": {
         "type": "object",
@@ -25906,11 +26716,16 @@
           "issuanceSource": {
             "type": "string",
             "description": "발급 출처. 생략/PROGRAM=실발급, FORM_TEMPLATE=양식 관리 샘플",
-            "enum": ["PROGRAM", "FORM_TEMPLATE"],
+            "enum": [
+              "PROGRAM",
+              "FORM_TEMPLATE"
+            ],
             "example": "PROGRAM"
           }
         },
-        "required": ["certificateType"]
+        "required": [
+          "certificateType"
+        ]
       },
       "CertificateSerialAllocateResponse": {
         "type": "object",
@@ -25969,7 +26784,12 @@
             "minLength": 1
           }
         },
-        "required": ["applicationId", "certificateType", "programId", "rosterId"]
+        "required": [
+          "applicationId",
+          "certificateType",
+          "programId",
+          "rosterId"
+        ]
       },
       "ApiResponseCertificateSerialAllocateResponse": {
         "type": "object",
@@ -26026,7 +26846,10 @@
             "minLength": 0
           }
         },
-        "required": ["certificateType", "participantIds"]
+        "required": [
+          "certificateType",
+          "participantIds"
+        ]
       },
       "CertificateRosterBulkIssueRequest": {
         "type": "object",
@@ -26058,7 +26881,13 @@
             "minLength": 0
           }
         },
-        "required": ["applicationId", "certificateType", "issueReason", "programId", "rosterIds"]
+        "required": [
+          "applicationId",
+          "certificateType",
+          "issueReason",
+          "programId",
+          "rosterIds"
+        ]
       },
       "ApiResponseCertificateRosterBulkIssueResponse": {
         "type": "object",
@@ -26153,7 +26982,10 @@
             "minLength": 1
           }
         },
-        "required": ["certificateType", "participantIds"]
+        "required": [
+          "certificateType",
+          "participantIds"
+        ]
       },
       "CertificateStudentBulkDownloadRequest": {
         "type": "object",
@@ -26181,7 +27013,12 @@
             "minLength": 1
           }
         },
-        "required": ["applicationId", "certificateType", "programId", "rosterIds"]
+        "required": [
+          "applicationId",
+          "certificateType",
+          "programId",
+          "rosterIds"
+        ]
       },
       "AdminSsoStartRequest": {
         "type": "object",
@@ -26236,7 +27073,9 @@
             "minLength": 0
           }
         },
-        "required": ["adminSsoSessionId"]
+        "required": [
+          "adminSsoSessionId"
+        ]
       },
       "AdminMfaChallengeResponse": {
         "type": "object",
@@ -26371,7 +27210,9 @@
             "minLength": 0
           }
         },
-        "required": ["signupSocialLinkToken"]
+        "required": [
+          "signupSocialLinkToken"
+        ]
       },
       "AdminSignupSocialLinkCompleteResponse": {
         "type": "object",
@@ -26421,7 +27262,11 @@
           "gender": {
             "type": "string",
             "description": "성별",
-            "enum": ["MALE", "FEMALE", "OTHER"],
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ],
             "example": "MALE",
             "pattern": "^(MALE|FEMALE|OTHER)?$"
           },
@@ -26536,7 +27381,10 @@
             "pattern": "^[0-9]{6,8}$"
           }
         },
-        "required": ["challengeUuid", "verificationCode"]
+        "required": [
+          "challengeUuid",
+          "verificationCode"
+        ]
       },
       "AdminMfaSetupRequest": {
         "type": "object",
@@ -26679,7 +27527,10 @@
             "minLength": 8
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
@@ -26796,7 +27647,9 @@
             "description": "일괄 결과 알림 예약 시각. null이면 즉시 발송"
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "AdminPermissionRequestNotificationResponse": {
         "type": "object",
@@ -26897,7 +27750,11 @@
             "minItems": 4
           }
         },
-        "required": ["email", "name", "termsAgreements"]
+        "required": [
+          "email",
+          "name",
+          "termsAgreements"
+        ]
       },
       "AdminTermsAgreementRequest": {
         "type": "object",
@@ -26906,7 +27763,12 @@
           "termsType": {
             "type": "string",
             "description": "관리자 계정 등록 약관 유형",
-            "enum": ["SERVICE_TERMS", "PRIVACY_COLLECTION", "MFA_SETUP_CONSENT", "MARKETING"],
+            "enum": [
+              "SERVICE_TERMS",
+              "PRIVACY_COLLECTION",
+              "MFA_SETUP_CONSENT",
+              "MARKETING"
+            ],
             "example": "SERVICE_TERMS",
             "minLength": 1
           },
@@ -26931,7 +27793,10 @@
             "description": "호환 입력 필드. 실제 스냅샷은 서버의 게시 약관 원장으로 생성합니다."
           }
         },
-        "required": ["termsType", "version"]
+        "required": [
+          "termsType",
+          "version"
+        ]
       },
       "AdminAccountVerificationRequest": {
         "type": "object",
@@ -26973,7 +27838,9 @@
             "minItems": 0
           }
         },
-        "required": ["programIds"]
+        "required": [
+          "programIds"
+        ]
       },
       "AdminAccountPrivacyResponse": {
         "type": "object",
@@ -27023,7 +27890,9 @@
             "description": "비밀번호 초기화 사유"
           }
         },
-        "required": ["newPassword"]
+        "required": [
+          "newPassword"
+        ]
       },
       "ResetRequest": {
         "type": "object",
@@ -27049,7 +27918,12 @@
             "minLength": 0
           }
         },
-        "required": ["reason", "recoveryType", "stepUpProof", "verificationReference"]
+        "required": [
+          "reason",
+          "recoveryType",
+          "stepUpProof",
+          "verificationReference"
+        ]
       },
       "StepUpRequest": {
         "type": "object",
@@ -27093,7 +27967,9 @@
             "nullable": true
           }
         },
-        "required": ["content"]
+        "required": [
+          "content"
+        ]
       },
       "GuardianProfileResponse": {
         "type": "object",
@@ -27379,7 +28255,10 @@
           "ageGroup": {
             "type": "string",
             "description": "나이 그룹",
-            "enum": ["UNDER_14", "OVER_14"],
+            "enum": [
+              "UNDER_14",
+              "OVER_14"
+            ],
             "example": "OVER_14"
           }
         }
@@ -27437,7 +28316,9 @@
             "additionalProperties": {}
           }
         },
-        "required": ["answers"]
+        "required": [
+          "answers"
+        ]
       },
       "OrganizationGuidanceAnswersPatchResponse": {
         "type": "object",
@@ -27508,41 +28389,55 @@
           "gender": {
             "type": "string",
             "description": "성별. 저장 및 본인인증 비교 시 MALE/FEMALE/OTHER로 정규화됨",
-            "enum": ["MALE", "FEMALE", "OTHER"],
+            "enum": [
+              "MALE",
+              "FEMALE",
+              "OTHER"
+            ],
             "example": "FEMALE",
             "maxLength": 20,
             "minLength": 0
           }
         },
-        "required": ["birthDate", "gender"]
+        "required": [
+          "birthDate",
+          "gender"
+        ]
       },
       "VolunteerActivityRegionUpdateRequest": {
         "type": "object",
-        "required": ["educationRegionCode"],
+        "description": "봉사자 신청 희망 교육 활동 지역 수정. educationRegionCode는 지역 마스터 code(예: seoul, SEOUL, gyeonggi_south). 한글 라벨 금지.",
         "properties": {
           "educationRegionCode": {
             "type": "string",
+            "description": "ujat_education_region.code. 대소문자·하이픈/언더스코어는 마스터 code로 정규화한다.",
+            "example": "seoul",
             "maxLength": 100,
-            "description": "ujat_education_region.code. 예: seoul, SEOUL, gyeonggi_south. 한글 라벨 금지. 저장·응답은 마스터 code."
+            "minLength": 0
           }
-        }
+        },
+        "required": [
+          "educationRegionCode"
+        ]
       },
       "VolunteerActivityRegionUpdateResponse": {
         "type": "object",
+        "description": "봉사자 신청 희망 교육 활동 지역 수정 결과. GET 목록 preferredRegion/preferredRegionCode 및 상세 ujat.preferredActivityRegion과 같다.",
         "properties": {
           "applicationId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "봉사자 신청 id"
           },
           "preferredRegion": {
             "type": "string",
-            "description": "마스터 라벨. GET 목록 preferredRegion 및 상세 ujat.preferredActivityRegion과 동일",
-            "nullable": true
+            "description": "지역 마스터 라벨. 목록 preferredRegion·상세 ujat.preferredActivityRegion과 동일",
+            "example": "서울"
           },
           "preferredRegionCode": {
             "type": "string",
-            "description": "마스터 code. GET 목록 preferredRegionCode와 동일",
-            "nullable": true
+            "description": "저장된 지역 마스터 code. 요청 seoul은 SEOUL로 정규화. 목록 preferredRegionCode와 동일",
+            "example": "SEOUL"
           }
         }
       },
@@ -28004,7 +28899,12 @@
           "instructorStatus": {
             "type": "string",
             "description": "강사 프로필 상태. 권한 박탈 회원은 REVOKED로 반환됩니다.",
-            "enum": ["PENDING", "ACTIVE", "APPROVED", "REVOKED"]
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "APPROVED",
+              "REVOKED"
+            ]
           },
           "instructorRevokedAt": {
             "type": "string",
@@ -28029,7 +28929,10 @@
             "minLength": 5
           }
         },
-        "required": ["externalId", "reason"]
+        "required": [
+          "externalId",
+          "reason"
+        ]
       },
       "ExternalIdentifierResponse": {
         "type": "object",
@@ -28073,7 +28976,9 @@
             "minLength": 1
           }
         },
-        "required": ["comment"]
+        "required": [
+          "comment"
+        ]
       },
       "TeacherEmploymentStatusUpdateRequest": {
         "type": "object",
@@ -28083,7 +28988,9 @@
             "minLength": 1
           }
         },
-        "required": ["employmentStatus"]
+        "required": [
+          "employmentStatus"
+        ]
       },
       "UjatEducationRegionUpdateRequest": {
         "type": "object",
@@ -28212,20 +29119,34 @@
           "pricingMode": {
             "type": "string",
             "description": "강사비 책정 방식",
-            "enum": ["PROGRAM_STANDARD", "SPECIAL_LECTURE", "OTHER_LABOR"],
+            "enum": [
+              "PROGRAM_STANDARD",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR"
+            ],
             "example": "PROGRAM_STANDARD",
             "minLength": 1
           },
           "wageItemType": {
             "type": "string",
             "description": "강사비 유형. PROGRAM_STANDARD일 때 TIER1/TIER2/TIER3 중 하나",
-            "enum": ["TIER1", "TIER2", "TIER3", "SPECIAL_LECTURE", "OTHER_LABOR"],
+            "enum": [
+              "TIER1",
+              "TIER2",
+              "TIER3",
+              "SPECIAL_LECTURE",
+              "OTHER_LABOR"
+            ],
             "example": "TIER2"
           },
           "calculationUnit": {
             "type": "string",
             "description": "특강/기타 인건비 지급 기준. PER_LECTURE=출강 1회, PER_HOUR=1시간당, PER_CLASS=1차시당(기타 인건비)",
-            "enum": ["PER_LECTURE", "PER_HOUR", "PER_CLASS"],
+            "enum": [
+              "PER_LECTURE",
+              "PER_HOUR",
+              "PER_CLASS"
+            ],
             "example": "PER_HOUR"
           },
           "unitAmount": {
@@ -28235,7 +29156,9 @@
             "example": 200000
           }
         },
-        "required": ["pricingMode"]
+        "required": [
+          "pricingMode"
+        ]
       },
       "SettlementApplicationAdminActionRequest": {
         "type": "object",
@@ -28248,7 +29171,9 @@
             "minLength": 0
           }
         },
-        "required": ["reason"]
+        "required": [
+          "reason"
+        ]
       },
       "ApiResponseSettlementApplicationAdminActionResponse": {
         "type": "object",
@@ -28342,7 +29267,10 @@
             "minLength": 0
           }
         },
-        "required": ["items", "reason"]
+        "required": [
+          "items",
+          "reason"
+        ]
       },
       "SettlementApplicationItemAmountAdjustmentRequest": {
         "type": "object",
@@ -28361,7 +29289,10 @@
             "minLength": 0
           }
         },
-        "required": ["applicationItemId", "approvedAmount"]
+        "required": [
+          "applicationItemId",
+          "approvedAmount"
+        ]
       },
       "ProgramUpdateRequest": {
         "type": "object",
@@ -28430,7 +29361,10 @@
           "educationStructure": {
             "type": "string",
             "description": "교육 진행 구조",
-            "enum": ["CURRICULUM", "SCHEDULE"]
+            "enum": [
+              "CURRICULUM",
+              "SCHEDULE"
+            ]
           },
           "titleEn": {
             "type": "string"
@@ -28460,7 +29394,13 @@
           "targetLevels": {
             "type": "array",
             "description": "교육 대상 복수. elementary|middle|high|university|adult. 있으면 targetLevel은 첫 값과 같고, serviceDetailJson.program.targetLevels와 동기화된다. 빈 배열은 교육 대상을 지운다.",
-            "enum": ["elementary", "middle", "high", "university", "adult"],
+            "enum": [
+              "elementary",
+              "middle",
+              "high",
+              "university",
+              "adult"
+            ],
             "items": {
               "type": "string"
             }
@@ -28591,7 +29531,11 @@
           "educationForm": {
             "type": "string",
             "description": "교육 형태. online|offline|hybrid. Gemini 모집 공고에서 사용.",
-            "enum": ["online", "offline", "hybrid"],
+            "enum": [
+              "online",
+              "offline",
+              "hybrid"
+            ],
             "nullable": true
           },
           "trainingRequestStartDate": {
@@ -28672,7 +29616,10 @@
           "draftStatus": {
             "type": "string",
             "description": "Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다.",
-            "enum": ["DRAFT", "PUBLISHED"],
+            "enum": [
+              "DRAFT",
+              "PUBLISHED"
+            ],
             "nullable": true
           },
           "expectedUpdatedAt": {
@@ -28817,7 +29764,10 @@
             "format": "date"
           }
         },
-        "required": ["fromDate", "toDate"]
+        "required": [
+          "fromDate",
+          "toDate"
+        ]
       },
       "ChangeResponse": {
         "type": "object",
@@ -28881,11 +29831,18 @@
         "properties": {
           "textbookDeliveryStatus": {
             "type": "string",
-            "enum": ["PREPARING", "SHIPPING", "DELIVERED", "NOT_APPLICABLE"],
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ],
             "minLength": 1
           }
         },
-        "required": ["textbookDeliveryStatus"]
+        "required": [
+          "textbookDeliveryStatus"
+        ]
       },
       "TextbookDeliveryUpdateResponse": {
         "type": "object",
@@ -28916,7 +29873,9 @@
             "format": "int64"
           }
         },
-        "required": ["leadTeacherMemberId"]
+        "required": [
+          "leadTeacherMemberId"
+        ]
       },
       "ProgramManagerUpdateRequest": {
         "type": "object",
@@ -28949,7 +29908,9 @@
             "nullable": true
           }
         },
-        "required": ["businessEndDate"]
+        "required": [
+          "businessEndDate"
+        ]
       },
       "ApiResponseProgramBusinessPeriodResponse": {
         "type": "object",
@@ -29429,7 +30390,9 @@
             "minLength": 0
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "ApiResponseNotificationReadAllResponse": {
         "type": "object",
@@ -29482,7 +30445,9 @@
             "minLength": 0
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "AdminMeUpdateRequest": {
         "type": "object",
@@ -30010,7 +30975,9 @@
             "type": "string"
           }
         },
-        "required": ["expectedRevisionNo"]
+        "required": [
+          "expectedRevisionNo"
+        ]
       },
       "ApiResponseDecision": {
         "type": "object",
@@ -30168,7 +31135,9 @@
             "minLength": 0
           }
         },
-        "required": ["answers"]
+        "required": [
+          "answers"
+        ]
       },
       "ExpenseReceiptReviewRequest": {
         "type": "object",
@@ -30184,7 +31153,9 @@
             "minLength": 0
           }
         },
-        "required": ["decision"]
+        "required": [
+          "decision"
+        ]
       },
       "ExpenseReceiptAdminItemResponse": {
         "type": "object",
@@ -30309,7 +31280,9 @@
             "minimum": 1
           }
         },
-        "required": ["version"]
+        "required": [
+          "version"
+        ]
       },
       "DetailedProgramBulkUpdateItem": {
         "type": "object",
@@ -30330,7 +31303,9 @@
             "minimum": 1
           }
         },
-        "required": ["version"]
+        "required": [
+          "version"
+        ]
       },
       "DetailedProgramBulkUpdateRequest": {
         "type": "object",
@@ -30344,7 +31319,9 @@
             "minItems": 0
           }
         },
-        "required": ["items"]
+        "required": [
+          "items"
+        ]
       },
       "ApiResponseListDetailedProgramResponse": {
         "type": "object",
@@ -30402,7 +31379,10 @@
             "minItems": 0
           }
         },
-        "required": ["deleteItems", "updates"]
+        "required": [
+          "deleteItems",
+          "updates"
+        ]
       },
       "DetailedProgramBulkDeleteItem": {
         "type": "object",
@@ -30417,7 +31397,9 @@
             "minimum": 1
           }
         },
-        "required": ["version"]
+        "required": [
+          "version"
+        ]
       },
       "ApiResponseDetailedProgramBulkChangesResponse": {
         "type": "object",
@@ -30669,7 +31651,10 @@
           "categoryName": {
             "type": "string",
             "description": "카테고리명",
-            "enum": ["최종 합격 발표", "서류 심사 결과"]
+            "enum": [
+              "최종 합격 발표",
+              "서류 심사 결과"
+            ]
           }
         }
       },
@@ -30692,7 +31677,10 @@
           "categoryName": {
             "type": "string",
             "description": "카테고리명",
-            "enum": ["최종 합격 발표", "서류 심사 결과"]
+            "enum": [
+              "최종 합격 발표",
+              "서류 심사 결과"
+            ]
           },
           "title": {
             "type": "string",
@@ -30788,7 +31776,10 @@
           },
           "categoryName": {
             "type": "string",
-            "enum": ["최종 합격 발표", "서류 심사 결과"]
+            "enum": [
+              "최종 합격 발표",
+              "서류 심사 결과"
+            ]
           },
           "title": {
             "type": "string"
@@ -31300,7 +32291,11 @@
           "portalCategories": {
             "type": "array",
             "description": "회원포탈 탭 유형",
-            "enum": ["YOUTH_YOUNG", "ORGANIZATION", "INSTRUCTOR"],
+            "enum": [
+              "YOUTH_YOUNG",
+              "ORGANIZATION",
+              "INSTRUCTOR"
+            ],
             "items": {
               "type": "string"
             }
@@ -31342,7 +32337,13 @@
           "recruitmentStatus": {
             "type": "string",
             "description": "모집 축. OPEN/RECRUITING=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료",
-            "enum": ["OPEN", "UPCOMING", "CLOSED", "NONE", "RECRUITING"]
+            "enum": [
+              "OPEN",
+              "UPCOMING",
+              "CLOSED",
+              "NONE",
+              "RECRUITING"
+            ]
           },
           "recruitmentStartAt": {
             "type": "string",
@@ -31373,7 +32374,13 @@
           "educationTarget": {
             "type": "string",
             "description": "교육 대상 첫 값. educationTargets가 있으면 그 첫 원소와 같다.",
-            "enum": ["elementary", "middle", "high", "university", "adult"],
+            "enum": [
+              "elementary",
+              "middle",
+              "high",
+              "university",
+              "adult"
+            ],
             "nullable": true
           },
           "educationTargets": {
@@ -31392,7 +32399,12 @@
           "educationForm": {
             "type": "string",
             "description": "공통정보 교육 형태. operationMethod와 별개. online|offline|hybrid|participant_choice. educationFormScheduleDetail=perSchedule이면 hybrid(온/오프라인). 목록에 scheduleDetail 필드는 두지 않는다.",
-            "enum": ["online", "offline", "hybrid", "participant_choice"],
+            "enum": [
+              "online",
+              "offline",
+              "hybrid",
+              "participant_choice"
+            ],
             "nullable": true
           },
           "recruitmentId": {
@@ -31404,7 +32416,11 @@
           "recruitmentType": {
             "type": "string",
             "description": "이 행의 모집 유형.",
-            "enum": ["PARTICIPANT", "VOLUNTEER", "INSTRUCTOR"],
+            "enum": [
+              "PARTICIPANT",
+              "VOLUNTEER",
+              "INSTRUCTOR"
+            ],
             "nullable": true
           },
           "targetType": {
@@ -31415,13 +32431,21 @@
           "applicationType": {
             "type": "string",
             "description": "이 행의 신청 양식 하나. 같은 프로그램의 기관·봉사자 모집은 별도 목록 행이다.",
-            "enum": ["INDIVIDUAL", "ORGANIZATION", "INSTRUCTOR", "VOLUNTEER"],
+            "enum": [
+              "INDIVIDUAL",
+              "ORGANIZATION",
+              "INSTRUCTOR",
+              "VOLUNTEER"
+            ],
             "nullable": true
           },
           "recruitTerm": {
             "type": "string",
             "description": "UJAT 봉사자 모집 상·하반기. 그 외 목록 행은 null.",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           }
         }
@@ -31606,7 +32630,12 @@
           "recruitmentStatus": {
             "type": "string",
             "description": "모집 축. OPEN=모집 중, UPCOMING=모집 예정, CLOSED=모집 완료, NONE=공개 모집 없음. periodStatus와 별개.",
-            "enum": ["OPEN", "UPCOMING", "CLOSED", "NONE"],
+            "enum": [
+              "OPEN",
+              "UPCOMING",
+              "CLOSED",
+              "NONE"
+            ],
             "nullable": true
           },
           "trainingRequestStartDate": {
@@ -31643,7 +32672,11 @@
           "venueKind": {
             "type": "string",
             "description": "교육 장소 구분. inside=기관 안, outside=기관 밖, other=기타. 없으면 null.",
-            "enum": ["inside", "outside", "other"],
+            "enum": [
+              "inside",
+              "outside",
+              "other"
+            ],
             "nullable": true
           },
           "contactName": {
@@ -31676,7 +32709,13 @@
           "educationTarget": {
             "type": "string",
             "description": "프로그램 공통 교육 대상 첫 값. educationTargets[0]과 같다. recruitmentId·applicationType 포커스와 무관하다.",
-            "enum": ["elementary", "middle", "high", "university", "adult"],
+            "enum": [
+              "elementary",
+              "middle",
+              "high",
+              "university",
+              "adult"
+            ],
             "nullable": true
           },
           "educationTargets": {
@@ -31758,13 +32797,19 @@
           "educationStructure": {
             "type": "string",
             "description": "공통정보 교육 진행 구조. 프로그램 유형별 generalCommonInfo 저장값을 투영하며 값이 없으면 null.",
-            "enum": ["curriculum", "schedule"],
+            "enum": [
+              "curriculum",
+              "schedule"
+            ],
             "nullable": true
           },
           "sessionRound": {
             "type": "string",
             "description": "수업 회차 유형. 프로그램 유형별 공통정보 저장값이 없으면 null.",
-            "enum": ["single", "multi"],
+            "enum": [
+              "single",
+              "multi"
+            ],
             "nullable": true
           },
           "scheduleCurriculumPreEducation": {
@@ -31775,25 +32820,39 @@
           "educationFormScheduleDetail": {
             "type": "string",
             "description": "교육 형태 일정 공통/일정 별 상이.",
-            "enum": ["common", "perSchedule"],
+            "enum": [
+              "common",
+              "perSchedule"
+            ],
             "nullable": true
           },
           "participationScheduleDetail": {
             "type": "string",
             "description": "참여 방식 일정 공통/일정 별 상이. GENERAL_ORGANIZATION이면 항상 null.",
-            "enum": ["common", "perSchedule"],
+            "enum": [
+              "common",
+              "perSchedule"
+            ],
             "nullable": true
           },
           "ipsScheduleDetail": {
             "type": "string",
             "description": "IPS 일정 공통/일정 별 상이.",
-            "enum": ["common", "perSchedule"],
+            "enum": [
+              "common",
+              "perSchedule"
+            ],
             "nullable": true
           },
           "educationForm": {
             "type": "string",
             "description": "공통정보 교육 형태 코드. operationMethod와 별개. 없으면 null.",
-            "enum": ["online", "offline", "hybrid", "participant_choice"],
+            "enum": [
+              "online",
+              "offline",
+              "hybrid",
+              "participant_choice"
+            ],
             "nullable": true
           },
           "educationFormLabel": {
@@ -31804,7 +32863,10 @@
           "participationMethod": {
             "type": "string",
             "description": "개인 대상(GENERAL_INDIVIDUAL·GENERAL+INDIVIDUAL) 참여 방식. CMS generalCommonInfo.participationMethod 또는 일정별 participationMethodLabel을 반영. 미설정·perSchedule 개인 라벨만 있으면 individual. GENERAL_ORGANIZATION·비일반 유형은 null.",
-            "enum": ["individual", "team"],
+            "enum": [
+              "individual",
+              "team"
+            ],
             "nullable": true
           },
           "curriculumSessions": {
@@ -31824,7 +32886,10 @@
           "educationScheduleMode": {
             "type": "string",
             "description": "교육 진행 예정일 지정 방식.",
-            "enum": ["date", "period"],
+            "enum": [
+              "date",
+              "period"
+            ],
             "nullable": true
           },
           "educationScheduleLines": {
@@ -31866,7 +32931,10 @@
           "educationPlaceScheduleDetail": {
             "type": "string",
             "description": "GENERAL_INDIVIDUAL 교육 진행 장소 공통/일정 별 상이. 기관·다른 유형은 null.",
-            "enum": ["common", "perSchedule"],
+            "enum": [
+              "common",
+              "perSchedule"
+            ],
             "nullable": true
           },
           "educationPlaceAddress": {
@@ -31892,7 +32960,10 @@
           "recruitTerm": {
             "type": "string",
             "description": "UJAT 봉사자 모집 상·하반기. UJAT VOLUNTEER 외에는 null.",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           },
           "status": {
@@ -32055,7 +33126,11 @@
           },
           "blockKind": {
             "type": "string",
-            "enum": ["preEducation", "sub", "event"]
+            "enum": [
+              "preEducation",
+              "sub",
+              "event"
+            ]
           },
           "name": {
             "type": "string"
@@ -32150,13 +33225,21 @@
           "term": {
             "type": "string",
             "description": "UJAT 학기. FIRST_HALF 또는 SECOND_HALF. 그 외는 null입니다.",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           },
           "scheduleKind": {
             "type": "string",
             "description": "일정 종류. PRE_EDUCATION, EDUCATION, CLOSING, SESSION. 없으면 null입니다.",
-            "enum": ["PRE_EDUCATION", "EDUCATION", "CLOSING", "SESSION"],
+            "enum": [
+              "PRE_EDUCATION",
+              "EDUCATION",
+              "CLOSING",
+              "SESSION"
+            ],
             "nullable": true
           },
           "publiclyVisible": {
@@ -32180,7 +33263,10 @@
           "source": {
             "type": "string",
             "description": "SLOT 또는 SCHEDULE_INFO",
-            "enum": ["SLOT", "SCHEDULE_INFO"]
+            "enum": [
+              "SLOT",
+              "SCHEDULE_INFO"
+            ]
           },
           "slotDate": {
             "type": "string",
@@ -32206,7 +33292,11 @@
           "source": {
             "type": "string",
             "description": "선택지 출처. SLOT=program_interview_slot, SCHEDULE_INFO=CMS 설정, EMPTY=미래 선택지 없음",
-            "enum": ["SLOT", "SCHEDULE_INFO", "EMPTY"]
+            "enum": [
+              "SLOT",
+              "SCHEDULE_INFO",
+              "EMPTY"
+            ]
           },
           "periodStartDate": {
             "type": "string",
@@ -32834,7 +33924,10 @@
           },
           "direction": {
             "type": "string",
-            "enum": ["PAYMENT", "DEDUCTION"]
+            "enum": [
+              "PAYMENT",
+              "DEDUCTION"
+            ]
           },
           "category": {
             "type": "string"
@@ -32854,7 +33947,10 @@
         "properties": {
           "documentType": {
             "type": "string",
-            "enum": ["RECEIPT_SETTLEMENT", "PAYMENT_STATEMENT"]
+            "enum": [
+              "RECEIPT_SETTLEMENT",
+              "PAYMENT_STATEMENT"
+            ]
           },
           "title": {
             "type": "string"
@@ -33046,7 +34142,11 @@
           },
           "versionStatus": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "schemaJson": {
             "type": "string",
@@ -33274,7 +34374,10 @@
           "recruitTerm": {
             "type": "string",
             "description": "UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null.",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           },
           "applicationStatus": {
@@ -33619,7 +34722,10 @@
           "recruitTerm": {
             "type": "string",
             "description": "UJAT 봉사자 신청의 상·하반기 모집 식별자. 그 외에는 null.",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           },
           "applicationStatus": {
@@ -33881,7 +34987,9 @@
           "sourceApplicationType": {
             "type": "string",
             "description": "개인 신청에서 배정의 원본 신청 유형. CASE_D 연결 시 INSTRUCTOR이며 그 외에는 null.",
-            "enum": ["INSTRUCTOR"],
+            "enum": [
+              "INSTRUCTOR"
+            ],
             "nullable": true
           },
           "sourceApplicationId": {
@@ -33927,12 +35035,18 @@
           "assignmentStatus": {
             "type": "string",
             "description": "활성 배정 상태. 현재 정책상 ASSIGNED 또는 COMPLETED가 반환될 수 있으며 취소·대체·대기·반려 상태는 제외합니다.",
-            "enum": ["ASSIGNED", "COMPLETED"]
+            "enum": [
+              "ASSIGNED",
+              "COMPLETED"
+            ]
           },
           "instructorRole": {
             "type": "string",
             "description": "is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null",
-            "enum": ["LEAD", "ASSISTANT"],
+            "enum": [
+              "LEAD",
+              "ASSISTANT"
+            ],
             "nullable": true
           },
           "institutionAddress": {
@@ -33988,7 +35102,11 @@
           "deliveryStatus": {
             "type": "string",
             "description": "PREPARING | SHIPPING | DELIVERED. NOT_APPLICABLE은 textbook=null로 반환하며, 미설정은 null.",
-            "enum": ["PREPARING", "SHIPPING", "DELIVERED"],
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED"
+            ],
             "nullable": true
           }
         }
@@ -34166,7 +35284,11 @@
           "blockKind": {
             "type": "string",
             "description": "일정형만. PRE_EDUCATION | SUB | EVENT.",
-            "enum": ["PRE_EDUCATION", "SUB", "EVENT"],
+            "enum": [
+              "PRE_EDUCATION",
+              "SUB",
+              "EVENT"
+            ],
             "nullable": true
           },
           "progressTimeLabel": {
@@ -34194,7 +35316,11 @@
           "teamRole": {
             "type": "string",
             "description": "해당 회차 기준 본인 팀 역할. CMS scheduleDetails[].participationMethodLabel이 개인이면 INDIVIDUAL. 팀이면 회차 응답 스냅샷을 우선하고 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 일정별 참여 라벨이 있는 프로그램에서 라벨 없는 회차(예: 사전교육)는 null이며 다른 회차 팀 정보로 합성하지 않습니다. 프로그램 단위 팀(공통/커리큘럼·행 라벨 없음)은 기존과 같이 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null.",
-            "enum": ["LEADER", "MEMBER", "INDIVIDUAL"],
+            "enum": [
+              "LEADER",
+              "MEMBER",
+              "INDIVIDUAL"
+            ],
             "nullable": true
           },
           "teamName": {
@@ -34213,7 +35339,11 @@
           "assignmentStatus": {
             "type": "string",
             "description": "UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null",
-            "enum": ["ASSIGNED", "UNASSIGNED", "REASSIGNMENT_REQUIRED"],
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED",
+              "REASSIGNMENT_REQUIRED"
+            ],
             "nullable": true
           },
           "classLabel": {
@@ -34241,13 +35371,19 @@
           "educationStructure": {
             "type": "string",
             "description": "교육 진행 구조. CURRICULUM | SCHEDULE. 프로그램 상세의 lowercase wire와 달리 이 API는 UPPERCASE입니다.",
-            "enum": ["CURRICULUM", "SCHEDULE"],
+            "enum": [
+              "CURRICULUM",
+              "SCHEDULE"
+            ],
             "nullable": true
           },
           "sessionRound": {
             "type": "string",
             "description": "회차 유형. SINGLE | MULTI. 이 API는 UPPERCASE입니다.",
-            "enum": ["SINGLE", "MULTI"],
+            "enum": [
+              "SINGLE",
+              "MULTI"
+            ],
             "nullable": true
           },
           "items": {
@@ -35084,11 +36220,19 @@
           },
           "paymentStatementProcessingStatus": {
             "type": "string",
-            "enum": ["확인 진행 중", "확인 대기 중", "계좌 지급 완료"]
+            "enum": [
+              "확인 진행 중",
+              "확인 대기 중",
+              "계좌 지급 완료"
+            ]
           },
           "paymentStatementProcessingStatusCode": {
             "type": "string",
-            "enum": ["PARTIAL_CONFIRMATION", "AWAITING_CONFIRMATION", "ACCOUNT_PAID"]
+            "enum": [
+              "PARTIAL_CONFIRMATION",
+              "AWAITING_CONFIRMATION",
+              "ACCOUNT_PAID"
+            ]
           },
           "lectureProgressRound": {
             "type": "integer",
@@ -35183,7 +36327,10 @@
           "instructorRole": {
             "type": "string",
             "description": "is_schedule_lead 기준. LEAD=주강사, ASSISTANT=보조강사. 미설정이면 null",
-            "enum": ["LEAD", "ASSISTANT"],
+            "enum": [
+              "LEAD",
+              "ASSISTANT"
+            ],
             "nullable": true
           },
           "institutionAddress": {
@@ -35515,7 +36662,10 @@
           "programAudience": {
             "type": "string",
             "description": "프로그램 관점",
-            "enum": ["individual", "organization"],
+            "enum": [
+              "individual",
+              "organization"
+            ],
             "example": "individual"
           },
           "assigned": {
@@ -35582,7 +36732,10 @@
           "assignmentStatus": {
             "type": "string",
             "description": "WAITING | CANCELLED",
-            "enum": ["WAITING", "CANCELLED"],
+            "enum": [
+              "WAITING",
+              "CANCELLED"
+            ],
             "example": "WAITING"
           }
         }
@@ -35640,7 +36793,10 @@
         "properties": {
           "consentType": {
             "type": "string",
-            "enum": ["CRIMINAL_HISTORY_CHECK_CONSENT", "ADMINISTRATIVE_INFO_CONSENT"]
+            "enum": [
+              "CRIMINAL_HISTORY_CHECK_CONSENT",
+              "ADMINISTRATIVE_INFO_CONSENT"
+            ]
           },
           "title": {
             "type": "string"
@@ -37187,7 +38343,10 @@
           "ageGroup": {
             "type": "string",
             "description": "나이 그룹. 항상 UNDER_14 또는 OVER_14.",
-            "enum": ["UNDER_14", "OVER_14"],
+            "enum": [
+              "UNDER_14",
+              "OVER_14"
+            ],
             "example": "OVER_14"
           },
           "teacher": {
@@ -38077,7 +39236,12 @@
           },
           "sponsorshipStatus": {
             "type": "string",
-            "enum": ["active", "discussing", "dormant", "ended"],
+            "enum": [
+              "active",
+              "discussing",
+              "dormant",
+              "ended"
+            ],
             "example": "active"
           },
           "sponsorshipStartDate": {
@@ -38598,7 +39762,10 @@
           "privacyMaskingLevel": {
             "type": "string",
             "description": "MASKED | RAW. 정산 상세 GET은 항상 MASKED. 계좌 지급 현황 상세(GET /api/admin/account-payments/{id}, 정책 CMS-09)는 RAW: phone·email·gender·birthDate(yyyy-MM-dd)·addressRoad·addressDetail·bankName·accountNumber·accountHolder 원문, residentRegistrationNumber·nameEn·affiliation은 RAW에서도 마스킹.",
-            "enum": ["MASKED", "RAW"]
+            "enum": [
+              "MASKED",
+              "RAW"
+            ]
           }
         }
       },
@@ -39430,7 +40597,10 @@
           "aggregationScope": {
             "type": "string",
             "description": "집계 범위. YEAR=연간(paid_at/settlement year). PERIOD는 expected만 기간 필터된 경우에도 completed*/settlementCount/paidCount는 여전히 YEAR.",
-            "enum": ["YEAR", "PERIOD"],
+            "enum": [
+              "YEAR",
+              "PERIOD"
+            ],
             "example": "YEAR"
           },
           "annualBudgetAmount": {
@@ -40079,7 +41249,10 @@
           "recruitHalf": {
             "type": "string",
             "description": "상·하반기. program_recruitment.recruit_term의 FIRST_HALF|SECOND_HALF. 해당 없으면 null",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           },
           "memberId": {
@@ -40131,7 +41304,12 @@
           "finalResultStatus": {
             "type": "string",
             "description": "DB final_result_status 원문. PASS|FAIL|RESERVE|WAITING. 목록 쿼리 finalResultStatus=APPROVED는 PASS로 매핑되어 이 값이 PASS인 행을 포함한다(응답을 APPROVED로 바꾸지 않음).",
-            "enum": ["PASS", "FAIL", "RESERVE", "WAITING"],
+            "enum": [
+              "PASS",
+              "FAIL",
+              "RESERVE",
+              "WAITING"
+            ],
             "nullable": true
           },
           "reserveRank": {
@@ -40273,7 +41451,7 @@
           "totalAssignedDays": {
             "type": "integer",
             "format": "int32",
-            "description": "UJAT 교육 진행 배정일수. allocation-matrix volunteers[].totalAssignedDays와 같은 이름·같은 계산(취소가 아닌 서로 다른 program_schedule_id 수). 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음",
+            "description": "UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수(전 반기·전 지역). allocation-matrix volunteers[].totalAssignedDays와 같은 이름이지만 목록은 educationRegionCode 필터를 쓰지 않는다. 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음",
             "nullable": true
           },
           "openingCeremonyAttended": {
@@ -41690,7 +42868,12 @@
           "scheduleStatus": {
             "type": "string",
             "description": "교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus 와 동일 규칙. 출석과 별개.",
-            "enum": ["UNSCHEDULED", "SCHEDULED", "IN_PROGRESS", "COMPLETED"],
+            "enum": [
+              "UNSCHEDULED",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
             "nullable": true
           },
           "attendanceStatus": {
@@ -41882,7 +43065,10 @@
           "recruitHalf": {
             "type": "string",
             "description": "응답 필드. 학교 연 1회 신청은 null. 명시적 volunteer recruit_term이 있을 때만 FIRST_HALF|SECOND_HALF. 목록 쿼리 recruitHalf는 이 값 등호가 아니라 확정 session 교육일 학기 필터.",
-            "enum": ["FIRST_HALF", "SECOND_HALF"],
+            "enum": [
+              "FIRST_HALF",
+              "SECOND_HALF"
+            ],
             "nullable": true
           },
           "organizationId": {
@@ -41918,7 +43104,11 @@
           "requestedEducationFormat": {
             "type": "string",
             "description": "기관 신청 답변에서 저장된 희망 교육 형태. 없으면 null이며 프로그램 교육 형태를 추정해 채우지 않습니다.",
-            "enum": ["ONLINE", "OFFLINE", "HYBRID"],
+            "enum": [
+              "ONLINE",
+              "OFFLINE",
+              "HYBRID"
+            ],
             "nullable": true
           },
           "submittedAt": {
@@ -41998,7 +43188,10 @@
           "previousYearParticipation": {
             "type": "string",
             "description": "1사1교 전년도 참여 여부. 참여|미참여. 다른 프로그램이거나 답이 없으면 null.",
-            "enum": ["참여", "미참여"],
+            "enum": [
+              "참여",
+              "미참여"
+            ],
             "nullable": true
           },
           "affiliatedFinancialCompany": {
@@ -42105,7 +43298,12 @@
           "allowedApplicationTargets": {
             "type": "array",
             "description": "허용 신청 대상. 일반 프로그램은 역할별 canonical program_recruitment를 우선 반영하고, 해당 역할 row가 없는 구데이터만 serviceDetailJson participant types를 fallback으로 사용합니다.",
-            "enum": ["ORGANIZATION", "INDIVIDUAL", "INSTRUCTOR", "VOLUNTEER"],
+            "enum": [
+              "ORGANIZATION",
+              "INDIVIDUAL",
+              "INSTRUCTOR",
+              "VOLUNTEER"
+            ],
             "items": {
               "type": "string"
             }
@@ -42185,7 +43383,11 @@
           "assignmentRole": {
             "type": "string",
             "description": "본인 배정 역할. PM | PARTNER | VIEWER. 배정 행이 없으면 null",
-            "enum": ["PM", "PARTNER", "VIEWER"],
+            "enum": [
+              "PM",
+              "PARTNER",
+              "VIEWER"
+            ],
             "nullable": true
           },
           "masterBypass": {
@@ -42621,7 +43823,12 @@
           "distanceStatus": {
             "type": "string",
             "description": "기관별 거리 계산 상태.",
-            "enum": ["CALCULATED", "PENDING", "FAILED", "ADDRESS_UNAVAILABLE"]
+            "enum": [
+              "CALCULATED",
+              "PENDING",
+              "FAILED",
+              "ADDRESS_UNAVAILABLE"
+            ]
           },
           "distanceCalculatedAt": {
             "type": "string",
@@ -43610,18 +44817,16 @@
           },
           "educationSlotId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "assignmentGroupId": {
             "type": "string",
-            "format": "uuid",
-            "nullable": true
+            "format": "uuid"
           },
           "classLabel": {
             "type": "string",
-            "nullable": true,
-            "description": "학급 라벨. ASSIGNED/REASSIGNMENT_REQUIRED는 class_label_snapshot, 없으면 교육 슬롯 class_label. UNASSIGNED는 null. 빈 문자열 금지"
+            "description": "학급 라벨. ASSIGNED/REASSIGNMENT_REQUIRED는 class_label_snapshot, 없으면 교육 슬롯 class_label. UNASSIGNED는 null. 빈 문자열 금지",
+            "nullable": true
           },
           "attendanceManager": {
             "type": "boolean"
@@ -43637,20 +44842,23 @@
           },
           "assignmentStatus": {
             "type": "string",
-            "nullable": true,
-            "enum": ["ASSIGNED", "UNASSIGNED", "REASSIGNMENT_REQUIRED"],
-            "description": "대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED"
+            "description": "대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED",
+            "enum": [
+              "ASSIGNED",
+              "UNASSIGNED",
+              "REASSIGNMENT_REQUIRED"
+            ]
           },
           "replacementParticipantId": {
             "type": "integer",
             "format": "int64",
-            "nullable": true,
-            "description": "대체 봉사자 program_participant.id. unavailable=false이면 null"
+            "description": "대체 봉사자 program_participant.id. unavailable=false이면 null",
+            "nullable": true
           },
           "replacementVolunteerName": {
             "type": "string",
-            "nullable": true,
-            "description": "대체 봉사자 회원명 원문. 없으면 null. 빈 문자열 금지. unavailable=false이면 null"
+            "description": "대체 봉사자 회원명 원문. 없으면 null. 빈 문자열 금지. unavailable=false이면 null",
+            "nullable": true
           }
         }
       },
@@ -43667,7 +44875,6 @@
           "educationStartAt": {
             "type": "string",
             "format": "date-time",
-            "nullable": true,
             "description": "교육 시작 시각(offset date-time). 달력일은 Asia/Seoul. UTC date slice(0,10) 금지"
           },
           "organizationApplicationId": {
@@ -43676,20 +44883,21 @@
           },
           "organizationName": {
             "type": "string",
-            "nullable": true,
-            "description": "기관명. 없으면 null. 빈 문자열 금지"
+            "description": "기관명. 없으면 null. 빈 문자열 금지",
+            "nullable": true
           },
           "organizationRegion": {
             "type": "string",
-            "nullable": true,
-            "description": "기관 시군구 또는 시/도. 없으면 null. 빈 문자열 금지"
+            "description": "기관 시군구 또는 시/도. 없으면 null(빈 문자열 금지)",
+            "nullable": true
           },
           "educationRegionCode": {
             "type": "string",
-            "nullable": true
+            "description": "확정 슬롯 ujat_organization_class_schedule_assignment.education_region_code. 기관 신청/임시배정/확정 일정에 저장된 코드. 기본값 SEOUL invent 금지"
           },
           "classCount": {
             "type": "integer",
+            "format": "int32",
             "description": "확정 학급 슬롯 수 참고값. 학급 행 SSOT가 아니며 classCount로 N반을 invent하지 않는다"
           },
           "educationSlots": {
@@ -43711,18 +44919,18 @@
           },
           "classLabel": {
             "type": "string",
-            "nullable": true,
-            "description": "슬롯 class_label 원문. 없으면 null. grade+className으로 합성하지 않음"
+            "description": "슬롯 class_label 원문. 없으면 null. grade+className으로 합성하지 않음",
+            "nullable": true
           },
           "grade": {
             "type": "string",
-            "nullable": true,
-            "description": "학년 원문. 없으면 null"
+            "description": "학년 원문. 없으면 null",
+            "nullable": true
           },
           "className": {
             "type": "string",
-            "nullable": true,
-            "description": "반 이름 원문. 없으면 null"
+            "description": "반 이름 원문. 없으면 null",
+            "nullable": true
           }
         }
       },
@@ -43762,8 +44970,7 @@
           },
           "memberId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "volunteerName": {
             "type": "string",
@@ -43771,28 +44978,27 @@
           },
           "contact": {
             "type": "string",
-            "nullable": true,
-            "description": "목록용 마스킹 연락처(member.phone). PrivacyMaskingSupport.maskPhone. 원문이 없으면 null. 빈 문자열 금지. VolunteerApplicationListItemResponse.contact와 동일 정책"
+            "description": "목록용 마스킹 연락처(member.phone). PrivacyMaskingSupport.maskPhone. 원문이 없으면 null. 빈 문자열 금지. 봉사 합격 목록 VolunteerApplicationListItemResponse.contact와 동일 정책",
+            "nullable": true
           },
           "email": {
             "type": "string",
-            "nullable": true,
-            "description": "목록용 마스킹 이메일(member.email). PrivacyMaskingSupport.maskEmail. 원문이 없으면 null. 빈 문자열 금지. VolunteerApplicationListItemResponse.email과 동일 정책"
+            "description": "목록용 마스킹 이메일(member.email). PrivacyMaskingSupport.maskEmail. 원문이 없으면 null. 빈 문자열 금지. VolunteerApplicationListItemResponse.email과 동일 정책",
+            "nullable": true
           },
           "educationRegionCode": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "participantStatus": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "giveUp": {
             "type": "boolean"
           },
           "totalAssignedDays": {
             "type": "integer",
-            "description": "UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수. semesterType/recruitHalf가 있으면 그 반기만 센다(미지정이면 전 반기). 봉사 합격 목록 VolunteerApplicationListItemResponse.totalAssignedDays와 같은 이름(목록 API는 전 반기)"
+            "format": "int32",
+            "description": "UJAT 교육 진행 배정일수. 이 응답 columns의 ASSIGNED 셀 distinct scheduleId 수. educationRegionCode가 있으면 그 지역 확정 일정과, 그 지역 봉사자가 ASSIGNED인 다른 지역 일정을 포함한다. semesterType/recruitHalf가 있으면 그 반기만 센다(미지정이면 전 반기). cells=[]이면 0. 봉사 합격 목록 VolunteerApplicationListItemResponse.totalAssignedDays는 전 반기·전 지역이며 이 지역 필터 값으로 덮지 않는다"
           },
           "cells": {
             "type": "array",
@@ -46143,7 +47349,6 @@
       },
       "NotificationCatalogCategory": {
         "type": "object",
-        "required": ["categoryCode", "categoryLabel", "variables"],
         "properties": {
           "categoryCode": {
             "type": "string",
@@ -46164,16 +47369,6 @@
       "NotificationCatalogVariableItem": {
         "type": "object",
         "description": "카탈로그 변수 1건. enabled=삽입/발송-피커 사용 허용 SSOT(값 존재와 무관). 알림톡 발송 피커(프로그램 지정 시): 본문 키 ⊆ catalog && enabled=true.",
-        "required": [
-          "key",
-          "token",
-          "requiresProgram",
-          "enabled",
-          "programGroups",
-          "recruitmentTypes",
-          "participantTypes",
-          "memberTypes"
-        ],
         "properties": {
           "key": {
             "type": "string",
@@ -46187,8 +47382,8 @@
           },
           "description": {
             "type": "string",
-            "nullable": true,
-            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null"
+            "description": "보조 설명. 시스템 전용 키는 「CMS Admin 수동 발송 불가」 안내. 없으면 null",
+            "nullable": true
           },
           "requiresProgram": {
             "type": "boolean",
@@ -46200,45 +47395,46 @@
           },
           "programGroups": {
             "type": "array",
+            "description": "허용 프로그램 유형 그룹. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "허용 프로그램 유형 그룹. 비면 제한 없음"
+            }
           },
           "recruitmentTypes": {
             "type": "array",
+            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음",
             "items": {
               "type": "string"
-            },
-            "description": "필요 모집 유형 PARTICIPANT|INSTRUCTOR|VOLUNTEER. 비면 제한 없음"
+            }
           },
           "participantTypes": {
             "type": "array",
+            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER.",
             "items": {
-              "type": "string",
-              "enum": ["PARTICIPANT", "INSTRUCTOR", "VOLUNTEER"]
-            },
-            "description": "허용 참여 유형. 비면 제한 없음. PARTICIPANT|INSTRUCTOR|VOLUNTEER."
+              "type": "string"
+            }
           },
           "memberTypes": {
             "type": "array",
+            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN.",
             "items": {
-              "type": "string",
-              "enum": ["GENERAL", "SCHOOL_TEACHER", "INSTRUCTOR", "TEACHER_AND_INSTRUCTOR", "ADMIN"]
-            },
-            "description": "허용 회원 유형. 비면 제한 없음. GENERAL|SCHOOL_TEACHER|INSTRUCTOR|TEACHER_AND_INSTRUCTOR|ADMIN."
+              "type": "string"
+            }
           },
           "sourceMode": {
             "type": "string",
-            "nullable": true,
             "description": "값 소스. SERVER_RESOLVED=서버 정본(요청 덮어쓰기 불가), MANUAL_ALLOWED=CMS 수동 발송 입력 허용, EVENT_ONLY=자동 이벤트 전용. enabled와 독립.",
-            "enum": ["SERVER_RESOLVED", "MANUAL_ALLOWED", "EVENT_ONLY"]
+            "enum": [
+              "SERVER_RESOLVED",
+              "MANUAL_ALLOWED",
+              "EVENT_ONLY"
+            ],
+            "nullable": true
           }
         }
       },
       "NotificationTemplateVariableCatalogResponse": {
         "type": "object",
-        "required": ["totalCount", "categories", "systemManualSendQaEnabled"],
         "properties": {
           "totalCount": {
             "type": "integer",
@@ -46670,7 +47866,10 @@
           "accountType": {
             "type": "string",
             "description": "계정 도메인",
-            "enum": ["MEMBER", "ADMIN_ACCOUNT"],
+            "enum": [
+              "MEMBER",
+              "ADMIN_ACCOUNT"
+            ],
             "example": "MEMBER"
           },
           "accountId": {
@@ -47313,7 +48512,10 @@
           "status": {
             "type": "string",
             "description": "CMS 문의 답변 상태",
-            "enum": ["PENDING", "ANSWERED"],
+            "enum": [
+              "PENDING",
+              "ANSWERED"
+            ],
             "example": "ANSWERED"
           },
           "assignedAdminId": {
@@ -47974,7 +49176,11 @@
           "educationForm": {
             "type": "string",
             "description": "교육 형태. Gemini 모집은 online|offline 권장. hybrid는 계약 확정 전 값으로 내려갈 수 있다.",
-            "enum": ["online", "offline", "hybrid"],
+            "enum": [
+              "online",
+              "offline",
+              "hybrid"
+            ],
             "nullable": true
           },
           "educationStructure": {
@@ -48009,7 +49215,7 @@
           },
           "thumbnailFileName": {
             "type": "string",
-            "description": "썸네일 파일명",
+            "description": "섬네일 파일명",
             "nullable": true
           },
           "recruitmentGuide": {
@@ -48318,7 +49524,12 @@
           "progressStatus": {
             "type": "string",
             "description": "Asia/Seoul 기준 파생 진행 현황. program.period_status가 아니다.",
-            "enum": ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "NOT_CONDUCTED"]
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "NOT_CONDUCTED"
+            ]
           },
           "trainingDate": {
             "type": "string",
@@ -48535,7 +49746,11 @@
           },
           "versionStatus": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "schemaJson": {
             "type": "string"
@@ -48572,7 +49787,11 @@
           },
           "latestVersionStatus": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "ARCHIVED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "ARCHIVED"
+            ]
           },
           "baseTemplateCode": {
             "type": "string",
@@ -49317,12 +50536,22 @@
           "scheduleStatus": {
             "type": "string",
             "description": "교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. program_schedule.schedule_status 컬럼과 다를 수 있음. 출석 코드와 혼용하지 않음.",
-            "enum": ["UNSCHEDULED", "SCHEDULED", "IN_PROGRESS", "COMPLETED"]
+            "enum": [
+              "UNSCHEDULED",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
           },
           "scheduleRole": {
             "type": "string",
             "description": "program_schedule.schedule_kind. PRE_EDUCATION은 출석·대시보드에 포함되고 신청/배정 후보에서는 제외합니다.",
-            "enum": ["PRE_EDUCATION", "EDUCATION", "CLOSING", "SESSION"],
+            "enum": [
+              "PRE_EDUCATION",
+              "EDUCATION",
+              "CLOSING",
+              "SESSION"
+            ],
             "nullable": true
           },
           "educationSlotKey": {
@@ -49764,7 +50993,9 @@
           "blockingReasons": {
             "type": "array",
             "description": "발급 차단 사유 목록",
-            "example": ["출석 기준 미달"],
+            "example": [
+              "출석 기준 미달"
+            ],
             "items": {
               "type": "string"
             }
@@ -50581,844 +51812,6 @@
           }
         }
       },
-      "OrganizationApplicationSession": {
-        "type": "object",
-        "description": "확정된 기관 교육 일정. GENERAL_ORGANIZATION 응답에서는 grade/className/classLabel을 반환하지 않으며, UJAT 등 기존 유형은 해당 정책에 따라 사용할 수 있습니다.",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "임시 배정 또는 승인 후 확정 진행일. UJAT 교육 진행 참여 기관 「교육 진행 일정」열"
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "grade": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "className": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "classLabel": {
-            "type": "string",
-            "nullable": true,
-            "description": "GENERAL_ORGANIZATION에서는 미반환. 다른 프로그램 유형의 기존 응답에만 사용합니다."
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "OrganizationApplicationSessionResponse": {
-        "type": "object",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "requestedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "resolvedScheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "scheduleUnresolved": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "VolunteerPreviousUjatTermRequest": {
-        "type": "object",
-        "required": ["term", "year"],
-        "properties": {
-          "term": {
-            "type": "string"
-          },
-          "year": {
-            "type": "string"
-          },
-          "certificateFileIds": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "type": "string"
-            },
-            "description": "이전 기수 수료증 fileObjectId 문자열 목록. 숫자만 허용. 본인(ADMIN) 업로드·VOLUNTEER_APPLICATION_EVIDENCE·대상 PROGRAM owner·CLEAN·AVAILABLE/CONFIRMED. 연결 키는 ujat-program-application-volunteer-seed-previous-term. 없는 id/타 프로그램 owner/CERTIFICATE_TEMPLATE·CERTIFICATE_ASSET purpose → 400 VOLUNTEER_PREVIOUS_UJAT_FILE_INVALID. PENDING_SCAN·미확정 업로드 → 409 VOLUNTEER_PREVIOUS_UJAT_FILE_PENDING_SCAN."
-          }
-        }
-      },
-      "MemberPortalEducationScheduleItem": {
-        "type": "object",
-        "properties": {
-          "scheduleId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true,
-            "description": "운영 program_schedule.id. 교육 진행 정의만 있고 운영 행이 없으면 null."
-          },
-          "sessionNo": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "title": {
-            "type": "string"
-          },
-          "startAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "endAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "allDay": {
-            "type": "boolean"
-          },
-          "locationName": {
-            "type": "string"
-          },
-          "address": {
-            "type": "string"
-          },
-          "addressDetail": {
-            "type": "string"
-          },
-          "scheduleStatus": {
-            "type": "string"
-          },
-          "attendanceStatus": {
-            "type": "string",
-            "nullable": true,
-            "description": "PRESENT | LATE | ABSENT | EXCUSED. 예정·미기록이면 null."
-          },
-          "absenceReasonStatus": {
-            "type": "string"
-          },
-          "absenceReason": {
-            "type": "string",
-            "nullable": true,
-            "description": "저장된 결석 사유 본문"
-          },
-          "assignmentCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "surveyCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "satisfactionCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "availableActions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "sessionLabel": {
-            "type": "string",
-            "nullable": true,
-            "description": "커리큘럼 행 라벨. CMS 공통정보 curriculumSessions[].sessionLabel 원문. 예: 1차시 / 1회차. 저장값이 없거나 정의와 매칭되지 않으면 null이며 합성하지 않는다."
-          },
-          "unitName": {
-            "type": "string",
-            "nullable": true
-          },
-          "content": {
-            "type": "string",
-            "nullable": true
-          },
-          "scheduleLabel": {
-            "type": "string",
-            "nullable": true
-          },
-          "scheduleName": {
-            "type": "string",
-            "nullable": true,
-            "description": "일정형 일정명. CMS 공통정보 scheduleDetails[].name 원문. 예: 오리엔테이션 / 개회식. 저장값이 없거나 정의와 매칭되지 않으면 null이며 scheduleLabel·운영 슬롯 제목으로 채우지 않는다."
-          },
-          "blockKind": {
-            "type": "string",
-            "nullable": true,
-            "enum": ["PRE_EDUCATION", "SUB", "EVENT"]
-          },
-          "progressTimeLabel": {
-            "type": "string",
-            "nullable": true
-          },
-          "groupTimes": {
-            "type": "array",
-            "nullable": true,
-            "items": {
-              "$ref": "#/components/schemas/MemberPortalEducationScheduleGroupTime"
-            }
-          },
-          "assignment": {
-            "nullable": true,
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/MemberPortalEducationScheduleAssignment"
-              }
-            ]
-          },
-          "teamRole": {
-            "type": "string",
-            "nullable": true,
-            "enum": ["LEADER", "MEMBER", "INDIVIDUAL"],
-            "description": "해당 회차 기준 본인 팀 역할. CMS scheduleDetails[].participationMethodLabel이 개인이면 INDIVIDUAL. 팀이면 회차 응답 스냅샷을 우선하고 없으면 현재 참여자 또는 신청 팀 정보를 사용합니다. 일정별 참여 라벨이 있는 프로그램에서 라벨 없는 회차(예: 사전교육)는 null이며 다른 회차 팀 정보로 합성하지 않습니다. 프로그램 단위 팀(공통/커리큘럼·행 라벨 없음)은 기존과 같이 팀 정보를 사용합니다. 비팀 프로그램·미확인 팀은 null."
-          },
-          "teamName": {
-            "type": "string",
-            "nullable": true,
-            "description": "해당 회차 기준 본인 팀명. INDIVIDUAL·비팀 프로그램·미확인 팀·일정별 참여 라벨 없는 회차(예: 사전교육)이면 null이며 다른 회차 값으로 합성하지 않습니다."
-          },
-          "assignmentStatus": {
-            "type": "string",
-            "nullable": true,
-            "enum": ["ASSIGNED", "UNASSIGNED", "REASSIGNMENT_REQUIRED"],
-            "description": "UJAT 봉사자 일정 배정 상태. CMS allocation-matrix 셀과 같은 스냅샷. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 비UJAT 또는 미배정이면 null"
-          },
-          "classLabel": {
-            "type": "string",
-            "nullable": true,
-            "description": "UJAT 봉사자 학급 라벨. allocation-matrix cell.classLabel과 동일 SSOT. UNASSIGNED는 null. 빈 문자열 금지. 비UJAT이면 null"
-          },
-          "organizationName": {
-            "type": "string",
-            "nullable": true,
-            "description": "UJAT 배정 기관명. 없으면 null. 빈 문자열 금지. locationName과 별개"
-          }
-        }
-      },
-      "MemberPortalEducationScheduleGroupTime": {
-        "type": "object",
-        "properties": {
-          "startTime": {
-            "type": "string"
-          },
-          "endTime": {
-            "type": "string"
-          }
-        }
-      },
-      "MemberPortalEducationScheduleAssignment": {
-        "type": "object",
-        "description": "교육일정 회차 과제 블록. CMS 공통정보 회차별 과제 설정(assignmentEnabled·과제 제출 기간)이 ON인 회차에만 내려간다. INDIVIDUAL·ORGANIZATION 신청만 대상이며 INSTRUCTOR·VOLUNTEER는 항상 null. 과제 양식(form-binding)과 무관하다. 객체가 없으면 FE는 과제 UI를 숨긴다.",
-        "properties": {
-          "enabled": {
-            "type": "boolean"
-          },
-          "submitStartAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "submitEndAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "periodLabel": {
-            "type": "string",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "enum": ["NOT_SUBMITTED", "SUBMITTED", "FEEDBACK", "REVISION_SUBMITTED"]
-          },
-          "formResponseId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true,
-            "description": "과제 제출 ID(form_response.id). 피드백이 있으면 피드백이 달린 제출본 ID이며 GET /api/portal/me/form-responses/{formResponseId}/feedback 키로 쓴다. 미제출이면 null(생략)."
-          },
-          "submissions": {
-            "type": "array",
-            "nullable": true,
-            "description": "최신 제출본의 파일·링크만 반환하며 이전 revision 이력은 포함하지 않는다. 미제출이면 null(생략).",
-            "items": {
-              "$ref": "#/components/schemas/MemberPortalEducationScheduleAssignmentSubmission"
-            }
-          },
-          "canSubmit": {
-            "type": "boolean",
-            "description": "최초 제출 가능. 과제 설정 ON, 제출 기간 내, 본인 참여 회차(scheduleId 존재), 미제출일 때 true. 현재 정책상 submitEndAt 이후 미제출 최초 제출은 허용하지 않습니다."
-          },
-          "canResubmit": {
-            "type": "boolean",
-            "description": "수정 제출 가능. 제출 이력 있음, 마감 전, 본인 제출, form_response.response_status가 SUBMITTED 또는 REJECTED일 때 true. APPROVED/COMPLETED면 false. GET /api/portal/me/form-responses/{formResponseId}/feedback 의 canResubmit과 동일 규칙."
-          },
-          "responseStatus": {
-            "type": "string",
-            "nullable": true,
-            "description": "제출본 form_response.response_status. 미제출이면 null(생략). APPROVED/REJECTED/SUBMITTED/COMPLETED 등. status(FEEDBACK 등)와 별도로 승인 여부를 구분한다.",
-            "enum": ["SUBMITTED", "APPROVED", "REJECTED", "COMPLETED"]
-          }
-        }
-      },
-      "MemberPortalEducationScheduleAssignmentSubmission": {
-        "type": "object",
-        "description": "최신 제출본의 파일·URL 항목만 반환한다. 이력 전체는 포함하지 않는다. kind=FILE이면 실제 file_object.id인 id·fileObjectId와 원본 fileName, kind=URL이면 실제 form_response_answer.id인 id와 저장된 url을 반환한다. 미해당 필드는 null/생략(NON_NULL).",
-        "properties": {
-          "id": {
-            "description": "안정적인 제출물 항목 ID. FILE은 실제 file_object.id, URL은 실제 form_response_answer.id입니다."
-          },
-          "kind": {
-            "type": "string",
-            "enum": ["FILE", "URL"]
-          },
-          "fileName": {
-            "type": "string",
-            "nullable": true,
-            "description": "FILE만. 원본 파일명."
-          },
-          "url": {
-            "type": "string",
-            "nullable": true,
-            "description": "URL만. 저장된 URL. 신규 제출은 https://만 허용한다."
-          },
-          "fileObjectId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true,
-            "description": "FILE 항목의 file_object.id. 수정 제출 시 유지할 파일은 이 값을 fileObjectIds에 다시 보낸다. URL 항목에는 없다."
-          }
-        }
-      },
-      "MemberPortalAssignmentSubmissionRequest": {
-        "type": "object",
-        "description": "회차 과제 제출. POST는 최초 제출, PUT은 전달된 fileObjectIds와 urls를 최종 제출 집합으로 저장한다(이전 revision과 물리 파일은 보존). fileObjectIds와 urls 중 하나 이상 필수이며 파일 최대 10개·파일당 최대 20MB·전체 파일 용량 최대 100MB, URL 최대 20개, 파일·URL 합계 최대 20개다. 예: 파일만 {\"fileObjectIds\":[1001]}, URL만 {\"urls\":[\"https://drive.google.com/...\"]}, 혼합 {\"fileObjectIds\":[1001],\"urls\":[\"https://youtu.be/...\"]}.",
-        "properties": {
-          "fileObjectIds": {
-            "type": "array",
-            "maxItems": 10,
-            "description": "선택. 본인이 filePurpose=ASSIGNMENT_ATTACHMENT로 업로드·confirm하고 scanStatus=CLEAN, uploadStatus=AVAILABLE(레거시 CONFIRMED)인 파일. 파일당 최대 20MB, 전체 파일 용량 최대 100MB. 10개 초과는 422 ASSIGNMENT_FILE_COUNT_EXCEEDED. 빈 배열·생략 가능(urls가 있을 때).",
-            "items": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          "urls": {
-            "type": "array",
-            "maxItems": 20,
-            "description": "선택. https:// 만 허용. trim 후 검증, 최대 4096자, userinfo(user:pass@) 거부, 중복은 첫 등장만 유지. 빈 배열·생략 가능(fileObjectIds가 있을 때).",
-            "items": {
-              "type": "string",
-              "maxLength": 4096,
-              "example": "https://drive.google.com/file/d/..."
-            }
-          }
-        }
-      },
-      "ApiResponseIndividualSettlementReviewDecision": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "data": {
-            "$ref": "#/components/schemas/IndividualSettlementReviewDecision"
-          },
-          "message": {
-            "type": "string",
-            "nullable": true
-          },
-          "error": {
-            "$ref": "#/components/schemas/StructuredErrorResponse"
-          }
-        }
-      },
-      "StructuredErrorResponse": {
-        "type": "object",
-        "description": "공통 오류 응답입니다.",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "description": "성공 여부",
-            "example": false
-          },
-          "data": {
-            "nullable": true,
-            "description": "오류 응답에서는 null입니다."
-          },
-          "message": {
-            "type": "string",
-            "nullable": true,
-            "description": "사용자에게 표시할 안전한 오류 메시지"
-          },
-          "error": {
-            "$ref": "#/components/schemas/ApiErrorDetail",
-            "nullable": true,
-            "description": "MASKED에서는 null이며 UNMASKED에서만 원문"
-          },
-          "birthYear": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true,
-            "description": "기본 응답에서 표시 가능한 출생 연도"
-          }
-        }
-      },
-      "ApiErrorDetail": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "field": {
-            "type": "string",
-            "nullable": true
-          },
-          "traceId": {
-            "type": "string",
-            "nullable": true
-          },
-          "details": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "IndividualSettlementReviewDecision": {
-        "type": "object",
-        "properties": {
-          "settlementApplicationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "revisionNo": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["APPROVED", "REJECTED"]
-          },
-          "reviewedByAdminId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "reviewedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          }
-        }
-      },
-      "ApiResponseIndividualSettlementReviewDetail": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "data": {
-            "$ref": "#/components/schemas/IndividualSettlementReviewDetail"
-          },
-          "message": {
-            "type": "string",
-            "nullable": true
-          },
-          "error": {
-            "$ref": "#/components/schemas/StructuredErrorResponse"
-          }
-        }
-      },
-      "IndividualSettlementReviewDetail": {
-        "type": "object",
-        "description": "Settlement application detail including current status, immutable revision history, receipts, and available actions.",
-        "properties": {
-          "settlementApplicationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "programName": {
-            "type": "string"
-          },
-          "individualApplicationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "applicationStatus": {
-            "type": "string"
-          },
-          "participantId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memberName": {
-            "type": "string"
-          },
-          "programScheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "scheduleName": {
-            "type": "string"
-          },
-          "scheduleStartAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "scheduleEndAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "status": {
-            "type": "string"
-          },
-          "latestRevisionNo": {
-            "type": "integer"
-          },
-          "revisions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualSettlementReviewRevision"
-            }
-          },
-          "availableActions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "IndividualSettlementReviewRevision": {
-        "type": "object",
-        "properties": {
-          "revisionId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "revisionNo": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "string"
-          },
-          "rejectionReason": {
-            "type": "string",
-            "nullable": true
-          },
-          "submittedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "reviewedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "reviewedByAdminId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualSettlementReviewItem"
-            }
-          }
-        },
-        "required": ["revisionId", "revisionNo", "status", "submittedAt", "items"]
-      },
-      "IndividualSettlementReviewItem": {
-        "type": "object",
-        "properties": {
-          "itemId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "itemType": {
-            "type": "string"
-          },
-          "itemName": {
-            "type": "string"
-          },
-          "amount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "evidenceRequired": {
-            "type": "boolean"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true,
-            "description": "관리자 조회 시 현재 정산 항목 설정에서 매칭된 지급/임금/공제 항목 description. 신청자 입력 요약이 아님. 매칭 실패 또는 설정 문구 공백이면 null."
-          },
-          "receipts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualSettlementReviewReceipt"
-            }
-          }
-        },
-        "required": ["itemId", "itemType", "itemName", "amount", "evidenceRequired", "receipts"]
-      },
-      "IndividualSettlementReviewReceipt": {
-        "type": "object",
-        "properties": {
-          "receiptId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "originalReceiptId": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          },
-          "revisionNo": {
-            "type": "integer"
-          },
-          "expenseType": {
-            "type": "string"
-          },
-          "expenseDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "amount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "receiptStatus": {
-            "type": "string"
-          },
-          "files": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualSettlementReviewFileRef"
-            }
-          },
-          "transitLabel": {
-            "type": "string",
-            "nullable": true,
-            "description": "대중교통 수단 한글 라벨. 버스(시내·시외·고속 등) | 지하철 | 기차(KTX·SRT·무궁화호 등) | 항공기 | 기타. 없으면 null."
-          },
-          "transitCode": {
-            "type": "string",
-            "nullable": true,
-            "enum": ["bus", "subway", "train", "flight", "other"],
-            "description": "대중교통 수단 코드. bus | subway | train | flight | other. 없으면 null."
-          }
-        },
-        "required": [
-          "receiptId",
-          "revisionNo",
-          "expenseType",
-          "expenseDate",
-          "amount",
-          "receiptStatus",
-          "files"
-        ]
-      },
-      "IndividualSettlementReviewFileRef": {
-        "type": "object",
-        "properties": {
-          "fileObjectId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "fileName": {
-            "type": "string"
-          },
-          "contentType": {
-            "type": "string"
-          },
-          "fileSize": {
-            "type": "integer",
-            "format": "int64",
-            "nullable": true
-          }
-        },
-        "required": ["fileObjectId", "fileName", "contentType"]
-      },
-      "PageResponseIndividualSettlementReviewListItem": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualSettlementReviewListItem"
-            }
-          },
-          "page": {
-            "type": "integer"
-          },
-          "size": {
-            "type": "integer"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer"
-          }
-        }
-      },
-      "IndividualSettlementReviewListItem": {
-        "type": "object",
-        "properties": {
-          "settlementApplicationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "programId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "individualApplicationId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "participantId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memberId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "memberName": {
-            "type": "string"
-          },
-          "programScheduleId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "scheduleName": {
-            "type": "string"
-          },
-          "scheduleStartAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "scheduleEndAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "latestRevisionNo": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "string"
-          },
-          "totalAmount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "submittedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "reviewedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "rejected": {
-            "type": "boolean"
-          },
-          "rejectionReason": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "IndividualSettlementReviewRequest": {
-        "type": "object",
-        "required": ["expectedRevisionNo"],
-        "properties": {
-          "expectedRevisionNo": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "reason": {
-            "type": "string",
-            "description": "Optional decision reason used to explain rejection of a settlement revision."
-          }
-        }
-      },
       "InstructorApplicationApprovalCancellationRequest": {
         "type": "object",
         "description": "강사 신청 승인 취소 요청. 승인 취소 1건 = JA 감점 1건. 연쇄 배정 취소는 별도 집계하지 않는다.",
@@ -51436,7 +51829,10 @@
             "type": "string",
             "nullable": true,
             "description": "취소 귀책. USER=강사 사유(JA 감점 대상), ADMIN=운영 사유(감점 없음). 생략/null이면 서버가 ADMIN 처리.",
-            "enum": ["USER", "ADMIN"]
+            "enum": [
+              "USER",
+              "ADMIN"
+            ]
           }
         }
       },

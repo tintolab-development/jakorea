@@ -48,7 +48,7 @@ export interface SettlementExportRequest {
      * @maxLength 80
      */
   exportPolicy?: string;
-  /** 원본 개인정보 포함 여부. true이면 승인 reference가 필요합니다. */
+  /** true면 RAW_PRIVACY_APPROVAL_REQUIRED와 approvalReference가 필요합니다. false(MASKED_ONLY)도 대량이체·세금신고 SERVER_FILE에는 원문 계좌·주민번호를 넣습니다. 원문 노출 감사는 POST /api/admin/files/{fileObjectId}/sensitive-downloads 의 reason으로 남깁니다. 미리보기 GET만으로는 이력이 생기지 않습니다. */
   rawPrivacyIncluded?: boolean;
   /**
      * 원본 개인정보 export 승인 reference
@@ -70,6 +70,6 @@ export interface SettlementExportRequest {
      * @items.minimum 1
      */
   accountPaymentIds?: number[];
-  dateRangeValid?: boolean;
   rawPrivacyApprovalValid?: boolean;
+  dateRangeValid?: boolean;
 }

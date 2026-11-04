@@ -6,10 +6,14 @@
  * OpenAPI spec version: v9
  */
 
+/**
+ * 봉사자 신청 희망 교육 활동 지역 수정 결과. GET 목록 preferredRegion/preferredRegionCode 및 상세 ujat.preferredActivityRegion과 같다.
+ */
 export interface VolunteerActivityRegionUpdateResponse {
+  /** 봉사자 신청 id */
   applicationId?: number;
-  /** 마스터 라벨. GET 목록 preferredRegion 및 상세 ujat.preferredActivityRegion과 동일 */
-  preferredRegion?: string | null;
-  /** 마스터 code. GET 목록 preferredRegionCode와 동일 */
-  preferredRegionCode?: string | null;
+  /** 지역 마스터 라벨. 목록 preferredRegion·상세 ujat.preferredActivityRegion과 동일 */
+  preferredRegion?: string;
+  /** 저장된 지역 마스터 code. 요청 seoul은 SEOUL로 정규화. 목록 preferredRegionCode와 동일 */
+  preferredRegionCode?: string;
 }

@@ -5,68 +5,68 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { GeminiRecruitmentDetailResponseEducationForm } from './geminiRecruitmentDetailResponseEducationForm'
+import type { GeminiRecruitmentDetailResponseEducationForm } from './geminiRecruitmentDetailResponseEducationForm';
 
 /**
  * Gemini 찾아가는 연수 모집 공고 상세. create/PATCH로 저장한 모집 정보 필드를 같은 이름으로 왕복한다. serviceDetailJson 원문은 노출하지 않는다.
  */
 export interface GeminiRecruitmentDetailResponse {
-  programId?: number
-  programCode?: string
-  programType?: string
-  draftStatus?: string
-  periodStatus?: string
-  nameKo?: string
-  summary?: string
-  description?: string
-  businessYear?: number
-  businessStartDate?: string
-  businessEndDate?: string
+  programId?: number;
+  programCode?: string;
+  programType?: string;
+  draftStatus?: string;
+  periodStatus?: string;
+  nameKo?: string;
+  summary?: string;
+  description?: string;
+  businessYear?: number;
+  businessStartDate?: string;
+  businessEndDate?: string;
   /** 기관 모집 기간 시작. 연수 요청 가능기간(trainingRequest*)과 별개. */
-  applicationStartDate?: string
+  applicationStartDate?: string;
   /** 기관 모집 기간 종료. */
-  applicationEndDate?: string
+  applicationEndDate?: string;
   /** 연수 요청 가능기간 시작. */
-  trainingRequestStartDate?: string
+  trainingRequestStartDate?: string;
   /** 연수 요청 가능기간 종료. */
-  trainingRequestEndDate?: string
-  minimumParticipantCount?: number
-  certificateDisabled?: boolean
-  organizationApplicationCount?: number
-  approvedOrganizationApplicationCount?: number
+  trainingRequestEndDate?: string;
+  minimumParticipantCount?: number;
+  certificateDisabled?: boolean;
+  organizationApplicationCount?: number;
+  approvedOrganizationApplicationCount?: number;
   /** 교육 대상 코드. elementary|middle|high|university|adult. 없으면 []. */
-  targetLevels?: string[]
+  targetLevels?: string[];
   /** 교육 대상 상세 */
-  recruitmentTargetDetail?: string | null
+  recruitmentTargetDetail?: string | null;
   /** 교육 형태. Gemini 모집은 online|offline 권장. hybrid는 계약 확정 전 값으로 내려갈 수 있다. */
-  educationForm?: GeminiRecruitmentDetailResponseEducationForm
+  educationForm?: GeminiRecruitmentDetailResponseEducationForm;
   /** 교육 진행 구조. program.education_structure. 예: SCHEDULE. 없으면 null — FE가 SCHEDULE로 추정하지 않도록 GET SSOT. */
-  educationStructure?: string | null
+  educationStructure?: string | null;
   /** 문의처 이름 */
-  contactName?: string | null
+  contactName?: string | null;
   /** 문의처 전화 */
-  contactPhone?: string | null
+  contactPhone?: string | null;
   /** 문의처 이메일 */
-  contactEmail?: string | null
+  contactEmail?: string | null;
   /** 비고. geminiRecruitment.notes 저장값. 해당없음이면 null */
-  remarks?: string | null
+  remarks?: string | null;
   /** 기타사항. Gemini 찾아가는 연수 모집에는 입력란이 없어 항상 null. 하위 호환 필드로 유지한다. */
-  otherMatters?: string | null
-  /** 썸네일 파일명 */
-  thumbnailFileName?: string | null
+  otherMatters?: string | null;
+  /** 섬네일 파일명 */
+  thumbnailFileName?: string | null;
   /** 모집 안내 */
-  recruitmentGuide?: string | null
+  recruitmentGuide?: string | null;
   /** 지원 방법 */
-  applicationMethod?: string | null
+  applicationMethod?: string | null;
   /** 학습 지원 내용 */
-  learningSupportContent?: string | null
+  learningSupportContent?: string | null;
   /** 추가 내용 HTML/Markdown 저장분 */
-  additionalContentHtml?: string | null
+  additionalContentHtml?: string | null;
   /** 첨부 파일명. 없으면 []. */
-  attachmentFileNames?: string[]
-  createdAt?: string
-  createdByName?: string | null
-  updatedAt?: string
+  attachmentFileNames?: string[];
+  createdAt?: string;
+  createdByName?: string | null;
+  updatedAt?: string;
   /** program.updated_by_admin_id가 가리키는 CMS 관리자 화면 표시명. 생성 직후는 createdByName과 같다. 이력 없으면 null. */
-  updatedByName?: string | null
+  updatedByName?: string | null;
 }
