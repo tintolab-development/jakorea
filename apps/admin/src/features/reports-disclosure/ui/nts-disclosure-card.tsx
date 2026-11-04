@@ -127,6 +127,8 @@ export function NtsDisclosureCard() {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="버튼 연결 링크"
+              labelWidth={200}
+              required={isEditing}
               view={null}
               edit={
                 <CmsInput

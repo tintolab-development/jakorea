@@ -1,4 +1,7 @@
-/* 국세청 공시 단건 카드 — viewport fill + shift 최소화 */
+/* 국세청 공시 단건 카드 — Figma 32:14201 / 32:14711
+ * 조회 행 52 · 수정 행 64 시안이지만, 모드 전환 시 높이 점프를 막기 위해
+ * 양쪽 모두 수정 시안(라벨 200 · 행 64 · 인풋 40)으로 고정한다.
+ */
 
 .rd-nts-card.admin-list-card {
   flex: 1 1 auto;
@@ -20,43 +23,85 @@
   min-width: 0;
 }
 
+/* Table / Vertical / Cell / Medium — 수정 프레임 64px 고정 */
 .rd-nts-card .detail-info-form__field {
-  min-height: 54px;
-  --detail-info-label-w: 160px;
-  grid-template-columns: 160px minmax(0, 1fr);
+  --detail-info-label-w: 200px;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: stretch;
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
 }
 
 .rd-nts-card .detail-info-form__field-label {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
-  min-height: 54px;
-  padding: 12px 16px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  padding: 8px 16px;
   box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
-.rd-nts-card .detail-info-form__field-content {
-  min-height: 54px;
-  padding: 12px 16px;
+.rd-nts-card .detail-info-form__field-content,
+.rd-nts-card .detail-info-form__field-content--edit {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  padding: 12px;
   box-sizing: border-box;
+  display: flex;
   justify-content: flex-start;
   align-items: center;
+  overflow: hidden;
+}
+
+.rd-nts-card .detail-info-form__field-content--edit > .rd-nts-inline-field,
+.rd-nts-card .detail-info-form__field-content--edit > .cms-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  margin-block: 0 !important;
 }
 
 .rd-nts-card .rd-nts-inline-field {
   display: block;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
+  height: 40px;
 }
 
 .rd-nts-card .rd-nts-inline-field .cms-input__control {
   width: 100% !important;
   min-width: 0 !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 9px 16px;
   border-width: 1px;
   border-style: solid;
+  border-radius: var(--radius-8, 8px);
   box-sizing: border-box;
+  transition: none !important;
 }
 
+.rd-nts-card .rd-nts-inline-field .ant-input {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  transition: none !important;
+}
+
+/* 조회: 보더만 투명 — 패딩·높이 유지로 텍스트 위치/행 높이 고정 */
 .rd-nts-card .rd-nts-inline-field--readonly .cms-input__control {
   border-color: transparent !important;
   background: transparent !important;
@@ -64,7 +109,25 @@
   cursor: default;
 }
 
+.rd-nts-card .rd-nts-inline-field--readonly .cms-input__control:hover,
+.rd-nts-card .rd-nts-inline-field--readonly .cms-input__control:focus-within {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 .rd-nts-card .rd-nts-inline-field--readonly .ant-input {
   cursor: default;
   color: var(--default-BK, #3d3d3d) !important;
+  font-size: 14px !important;
+  line-height: 150% !important;
+}
+
+.rd-nts-card .rd-nts-inline-field--edit .cms-input__control {
+  border-color: var(--table-line, #e0e0e0);
+  background: #fff;
+}
+
+.rd-nts-card .rd-nts-inline-field--edit .ant-input {
+  font-size: 15px !important;
+  line-height: 145% !important;
 }
