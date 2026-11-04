@@ -335,7 +335,7 @@ export function MemberLoginLogPage() {
         }
         title="회원 로그인 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
       >
         <CmsDataTable<MemberLoginLog>
           className="cms-data-table"

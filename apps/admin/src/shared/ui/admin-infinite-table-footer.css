@@ -4,12 +4,9 @@
 }
 
 .admin-infinite-table-footer__status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin: 12px 0 4px;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 150%;
-  text-align: center;
-  opacity: 0.6;
+  min-height: 24px;
 }
