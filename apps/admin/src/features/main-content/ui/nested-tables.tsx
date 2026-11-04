@@ -3,8 +3,44 @@
  * 규격: apps/admin/.cursor/rules/design/detail-info-nested-table.mdc
  * (DetailInfoForm 중첩 금지 — flex·label 고정폭 충돌)
  */
+import type { ReactNode } from 'react'
 import type { PerformanceMetric } from '@/entities/main-content/model/types'
 import { CmsInput } from '@/shared/ui'
+
+/** Figma Table / Vertical / Cell required — 라벨 텍스트 shrink 래퍼 */
+export function MainContentRequiredLabel({
+  children,
+  required,
+}: {
+  children: ReactNode
+  required: boolean
+}) {
+  return (
+    <span className="main-content-required-label">
+      {children}
+      {required ? (
+        <span className="main-content-required-label__mark" aria-hidden>
+          *
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
+function NestedTableLabel({ children, required }: { children: string; required: boolean }) {
+  return (
+    <div className="main-content-nested-table__label">
+      <span className="main-content-nested-table__label-inner">
+        {children}
+        {required ? (
+          <span className="main-content-nested-table__required" aria-hidden>
+            *
+          </span>
+        ) : null}
+      </span>
+    </div>
+  )
+}
 
 function formatMetricView(metric: PerformanceMetric): string {
   return `${metric.value}${metric.unit}`
@@ -28,16 +64,24 @@ export function MetricsNestedTable({
   const items = metrics.slice(0, 4)
 
   return (
-    <div className="main-content-nested-table main-content-nested-table--metrics" role="group" aria-label="실적 및 성과">
+    <div
+      className={[
+        'main-content-nested-table',
+        'main-content-nested-table--metrics',
+        mode === 'view' ? 'main-content-nested-table--view' : 'main-content-nested-table--edit',
+      ].join(' ')}
+      role="group"
+      aria-label="실적 및 성과"
+    >
       {items.map(metric => (
         <div key={metric.id} className="main-content-nested-table__cell">
-          <div className="main-content-nested-table__label">{metric.label}</div>
+          <NestedTableLabel required={mode === 'edit'}>{metric.label}</NestedTableLabel>
           <div className="main-content-nested-table__value">
             {mode === 'edit' ? (
               <div className="main-content-metric-edit">
                 <CmsInput
-                  inputSize="medium"
-                  width="100%"
+                  inputSize="small"
+                  width="120px"
                   value={metric.value}
                   onChange={e => onChangeMetric(metric.id, { value: e.target.value })}
                   placeholder="수치"
@@ -93,11 +137,11 @@ export function CtaNestedTable({
       {rows.map(row => (
         <div key={row.key} className="main-content-nested-table__row">
           <div className="main-content-nested-table__cell">
-            <div className="main-content-nested-table__label">{row.buttonLabel}</div>
+            <NestedTableLabel required={mode === 'edit'}>{row.buttonLabel}</NestedTableLabel>
             <div className="main-content-nested-table__value">
               {mode === 'edit' ? (
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   value={row.data.label}
                   onChange={e => row.onChange({ label: e.target.value })}
@@ -109,11 +153,11 @@ export function CtaNestedTable({
             </div>
           </div>
           <div className="main-content-nested-table__cell">
-            <div className="main-content-nested-table__label">{row.linkLabel}</div>
+            <NestedTableLabel required={mode === 'edit'}>{row.linkLabel}</NestedTableLabel>
             <div className="main-content-nested-table__value">
               {mode === 'edit' ? (
                 <CmsInput
-                  inputSize="medium"
+                  inputSize="small"
                   width="100%"
                   value={row.data.linkUrl}
                   onChange={e => row.onChange({ linkUrl: e.target.value })}

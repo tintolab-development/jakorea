@@ -199,7 +199,8 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       <DetailInfoForm title="임팩트 스토리 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="타이틀 문구"
+            label="타이틀 텍스트"
+            required
             view={<span className="main-content-preline">{titleText || '-'}</span>}
             edit={
               <CmsTextArea
@@ -209,7 +210,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                 rows={2}
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력하세요"
+                placeholder="타이틀 텍스트를 입력하세요"
               />
             }
           />
@@ -217,6 +218,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="메인 영상 유튜브 링크"
+            required
             view={youtubeUrl || '-'}
             edit={
               <CmsInput
@@ -232,6 +234,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="대표 콘텐츠 설정"
+            required
             view={featuredTitle}
             edit={
               <CmsSelect
