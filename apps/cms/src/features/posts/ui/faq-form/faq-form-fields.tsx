@@ -2,13 +2,7 @@ import { Form } from 'antd'
 import type { Editor } from '@/shared/rich-text'
 import { RichTextEditor } from '@/shared/rich-text'
 import type { AdminFileUploadOwner } from '@/shared/lib/admin-file-upload'
-import {
-  CmsFieldFrame,
-  CmsInput,
-  CmsRadioGroup,
-  CmsSelect,
-  useCmsFieldStatus,
-} from '@/shared/ui'
+import { CmsFieldFrame, CmsInput, CmsRadioGroup, CmsSelect, useCmsFieldStatus } from '@/shared/ui'
 
 export type FaqFormFieldsProps = {
   categoryOptions: { label: string; value: string }[]
@@ -127,7 +121,7 @@ export function FaqFormFields({
         <CmsInput
           label="제목 (질문)"
           required
-          placeholder="제목을 입력하세요"
+          placeholder="제목을 입력해 주세요"
           inputSize="large"
           width="100%"
           maxLength={500}

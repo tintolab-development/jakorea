@@ -24,7 +24,7 @@ export const MAIL_SEND_HISTORY_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'subject',
     type: 'search',
     label: '메일 제목',
-    placeholder: '메일 제목을 입력하세요',
+    placeholder: '메일 제목을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

@@ -70,7 +70,7 @@ export function buildAdminInquiryManagementFilterFields(
       key: 'title',
       type: 'search',
       label: '제목',
-      placeholder: '제목을 입력하세요',
+      placeholder: '제목을 입력해 주세요',
       width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {
