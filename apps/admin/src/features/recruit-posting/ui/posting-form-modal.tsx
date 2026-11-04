@@ -43,6 +43,7 @@ import {
 import {
   ATTACHMENT_ACCEPT,
   ATTACHMENT_MULTI_GENERAL_GUIDE_LINE,
+  withAttachmentFilenameGuide,
   ATTACHMENT_MULTI_TOTAL_MAX_BYTES,
   generalAttachmentMimeFromFile,
   sumAttachmentBytes,
@@ -51,7 +52,7 @@ import {
 
 import './posting-form-modal.css'
 
-const ATTACH_GUIDE = [ATTACHMENT_MULTI_GENERAL_GUIDE_LINE] as const
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_MULTI_GENERAL_GUIDE_LINE])
 
 export type RecruitPostingFormValues = RecruitPostingCreateInput
 
@@ -356,7 +357,7 @@ export function RecruitPostingFormModal({
               <CmsButton
                 className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="medium"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
                 onClick={() => setDeleteConfirmOpen(true)}
@@ -366,7 +367,7 @@ export function RecruitPostingFormModal({
             ) : null}
             <CmsButton
               variant="secondary"
-              size="large"
+              size="medium"
               type="button"
               disabled={confirmLoading || deleteLoading}
               onClick={onCancel}
@@ -375,7 +376,7 @@ export function RecruitPostingFormModal({
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="large"
+              size="medium"
               type="button"
               loading={
                 confirmLoading || (mode === 'create' && meQuery.isPending && !meQuery.data)

@@ -30,6 +30,7 @@ import {
   ATTACHMENT_PER_FILE_MAX_BYTES,
   ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
   generalAttachmentMimeFromFile,
+  withAttachmentFilenameGuide,
   sumAttachmentBytes,
   validateGeneralAttachmentBatch,
   validateSingleJpgPngFile,
@@ -56,7 +57,7 @@ const THUMB_GUIDE = [
   '- 권장 배너 사이즈는 630 × 355px입니다.',
 ] as const
 
-const ATTACH_GUIDE = [ATTACHMENT_MULTI_GENERAL_GUIDE_LINE] as const
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_MULTI_GENERAL_GUIDE_LINE])
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

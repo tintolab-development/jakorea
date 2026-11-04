@@ -54,6 +54,16 @@ export function attachmentGuideLine(text: string): string {
   return `- ${text}`
 }
 
+/** 첨부파일 필드 전용 안내 — 이미지·썸네일·로고에는 쓰지 않는다. */
+export const ATTACHMENT_FILENAME_SPECIAL_CHAR_GUIDE_LINE = attachmentGuideLine(
+  '첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.'
+)
+
+export function withAttachmentFilenameGuide(lines: readonly string[]): readonly string[] {
+  if (lines.some(line => line.includes('특수문자 포함된'))) return lines
+  return [...lines, ATTACHMENT_FILENAME_SPECIAL_CHAR_GUIDE_LINE]
+}
+
 export const ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE = attachmentGuideLine(
   attachmentSingleGuide(ATTACHMENT_FORMATS.jpgPng)
 )

@@ -18,6 +18,7 @@ import {
   ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
   ATTACHMENT_SINGLE_PDF_GUIDE_LINE,
   validateSingleJpgPngFile,
+  withAttachmentFilenameGuide,
   validateSinglePdfFile,
 } from '@/shared/lib/attachment-policy'
 import {
@@ -56,7 +57,7 @@ const KIND_META = {
   },
 } as const
 
-const ATTACH_GUIDE = [ATTACHMENT_SINGLE_PDF_GUIDE_LINE] as const
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_SINGLE_PDF_GUIDE_LINE])
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {

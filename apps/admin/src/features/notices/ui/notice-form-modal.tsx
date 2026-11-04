@@ -15,6 +15,7 @@ import {
   ATTACHMENT_ACCEPT,
   ATTACHMENT_MULTI_GENERAL_GUIDE_LINE,
   ATTACHMENT_MULTI_TOTAL_MAX_BYTES,
+  withAttachmentFilenameGuide,
   generalAttachmentMimeFromFile,
   sumAttachmentBytes,
   validateGeneralAttachmentBatch,
@@ -35,7 +36,7 @@ import {
 
 import './notice-form-modal.css'
 
-const ATTACH_GUIDE = [ATTACHMENT_MULTI_GENERAL_GUIDE_LINE] as const
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_MULTI_GENERAL_GUIDE_LINE])
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -256,7 +257,7 @@ export function NoticeFormModal({
               <CmsButton
                 className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="medium"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
                 onClick={() => setDeleteConfirmOpen(true)}
@@ -266,7 +267,7 @@ export function NoticeFormModal({
             ) : null}
             <CmsButton
               variant="secondary"
-              size="large"
+              size="medium"
               type="button"
               disabled={confirmLoading || deleteLoading}
               onClick={onCancel}
@@ -275,7 +276,7 @@ export function NoticeFormModal({
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="large"
+              size="medium"
               type="button"
               loading={confirmLoading}
               onClick={handleSubmit}
