@@ -6,17 +6,17 @@
 .menu-view-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   width: 100%;
 }
 
-/* 타이틀(공지사항·투명경영 등)과 footnote가 같은 행 · 하단 정렬 */
+/* Figma Title: 타이틀·footnote 같은 행, items-end, gap 8 */
 .menu-view-section__header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
+  align-items: flex-end;
+  gap: 8px;
   min-width: 0;
   width: 100%;
 }
@@ -25,30 +25,32 @@
   margin: 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
+  padding: 0 8px;
   font-family: var(--font-family-primary, 'Pretendard', sans-serif);
   font-size: 16px;
   font-weight: 700;
-  line-height: 150%;
+  line-height: 140%;
   color: var(--default-BK, #3d3d3d);
 }
 
 /*
- * 국세청 등 footnote — 타이틀과 동일 헤더 레벨 · 하단 얼라인
- * color: var(--default-BK, #3D3D3D);
- * font-size: 14px; font-weight: 500; line-height: 150%; opacity: 0.6;
+ * ※ 국세청 안내 — 12 Medium, rgba(61,61,61,0.5), 타이틀 하단 정렬
+ * flex-grow로 표 헤더 폭을 채우지 않음
  */
 .menu-view-section__footnote {
   margin: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-width: 0;
-  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
-  font-family: Pretendard;
+  align-self: flex-end;
+  color: rgba(61, 61, 61, 0.5);
+  font-family: Pretendard, sans-serif;
   font-size: 12px;
   font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 18px */
+  line-height: 150%;
+  white-space: nowrap;
 }
 
 .menu-view-section__body {

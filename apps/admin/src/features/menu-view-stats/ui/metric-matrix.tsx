@@ -57,7 +57,11 @@ export function MenuViewMetricMatrix({ metric }: Props) {
     return (
       <DetailInfoForm title="조회수" hideHeader mode="view" className="mvs-metric-form">
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="대메뉴" view={formatCount(metric.entryViews)} />
+          <DetailInfoForm.Field
+            label="대메뉴"
+            labelWidth={200}
+            view={formatCount(metric.entryViews)}
+          />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     )
@@ -67,8 +71,16 @@ export function MenuViewMetricMatrix({ metric }: Props) {
     return (
       <DetailInfoForm title="조회수" hideHeader mode="view" className="mvs-metric-form">
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="대메뉴" view={formatCount(metric.entryViews)} />
-          <DetailInfoForm.Field label="게시글 총 조회수" view={formatCount(metric.postViews)} />
+          <DetailInfoForm.Field
+            label="대메뉴"
+            labelWidth={200}
+            view={formatCount(metric.entryViews)}
+          />
+          <DetailInfoForm.Field
+            label="게시글 총 조회수"
+            labelWidth={200}
+            view={formatCount(metric.postViews)}
+          />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     )
@@ -83,8 +95,8 @@ export function MenuViewMetricMatrix({ metric }: Props) {
         className="mvs-metric-form mvs-metric-form--disabled"
       >
         <DetailInfoForm.Row type="double">
-          <DetailInfoForm.Field label="대메뉴" view={metric.message} />
-          <DetailInfoForm.Field label="게시글 총 조회수" view={metric.message} />
+          <DetailInfoForm.Field label="대메뉴" labelWidth={200} view={metric.message} />
+          <DetailInfoForm.Field label="게시글 총 조회수" labelWidth={200} view={metric.message} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     )
@@ -99,10 +111,18 @@ export function MenuViewMetricMatrix({ metric }: Props) {
       className="mvs-metric-form mvs-metric-form--transparency"
     >
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="대메뉴" view={formatCount(metric.entryViews)} />
+        <DetailInfoForm.Field
+          label="대메뉴"
+          labelWidth={200}
+          view={formatCount(metric.entryViews)}
+        />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field label="중메뉴" view={<MidMenuNestedForm rows={metric.midRows} />} />
+        <DetailInfoForm.Field
+          label="중메뉴"
+          labelWidth={200}
+          view={<MidMenuNestedForm rows={metric.midRows} />}
+        />
       </DetailInfoForm.Row>
     </DetailInfoForm>
   )
