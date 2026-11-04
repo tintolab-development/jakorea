@@ -77,13 +77,6 @@
   margin-top: 30px !important;
 }
 
-.recruit-applicant-detail-modal__loading {
-  margin: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 16px;
-  line-height: 150%;
-}
-
 .recruit-applicant-detail-modal__scroll {
   display: flex;
   flex-direction: column;

@@ -3,7 +3,6 @@
  */
 
 import { useCallback, useMemo, useState } from 'react'
-import { Spin } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import type { ProgramIntroTabKey } from '@/entities/education-program-intro/model/types'
 import { useProgramIntroCategory } from '@/features/education-program-intro/api/hooks'
@@ -13,7 +12,7 @@ import {
   parseProgramIntroTab,
 } from '@/features/education-program-intro/lib/field-codes'
 import { ProgramIntroFormCard } from '@/features/education-program-intro/ui/form-card'
-import { CmsTextTabs } from '@/shared/ui'
+import { CmsTextTabs, PageContentLoading } from '@/shared/ui'
 
 import './page.css'
 
@@ -28,11 +27,7 @@ function ProgramIntroCategoryPanel({
   const docQuery = useProgramIntroCategory(fieldCode)
 
   if (docQuery.isLoading) {
-    return (
-      <div className="page-content-loading page-content-loading--viewport" role="status">
-        <Spin size="large" />
-      </div>
-    )
+    return <PageContentLoading variant="viewport" />
   }
 
   if (!docQuery.data) {
