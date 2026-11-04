@@ -559,8 +559,8 @@ export function PopupsPage() {
         title="팝업 목록"
         description={
           <>
-            총 {totalCount.toLocaleString()}건 (팝업은 최대 {MAX_ACTIVE_POPUPS}
-            개까지 동시 사용 가능합니다.)
+            총 {totalCount.toLocaleString()}건 | 팝업은 최대 {MAX_ACTIVE_POPUPS}
+            개까지 동시 사용 가능합니다.
           </>
         }
         actions={

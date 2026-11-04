@@ -39,6 +39,39 @@ const MODAL_DESCRIPTION =
 
 const WEEKDAY_KO_MIN = ['일', '월', '화', '수', '목', '금', '토'] as const
 
+function FileIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 20 20"
+      fill="none"
+      className={className}
+      aria-hidden
+    >
+      <path
+        d="M5.5 2.5h6.2L14.5 5.3V16.5a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M11.5 2.5V5.8H14.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7 9.5h6M7 12.5h4.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 function coerceRadioBoolean(raw: unknown): boolean {
   if (raw === true || raw === 1) return true
   if (raw === false || raw === 0) return false
@@ -316,13 +349,13 @@ function PopupFormBody({
         }
       >
         <div className="popup-form-modal__forms">
-          {variant === 'detail' ? (
-            <DetailInfoForm
-              title="등록 정보"
-              hideHeader
-              mode={formMode}
-              className="popup-form-modal__form popup-form-modal__form--meta"
-            >
+          <DetailInfoForm
+            title={title}
+            hideHeader
+            mode={formMode}
+            className="popup-form-modal__form"
+          >
+            {variant === 'detail' ? (
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field
                   label="등록일시"
@@ -349,16 +382,7 @@ function PopupFormBody({
                   }
                 />
               </DetailInfoForm.Row>
-            </DetailInfoForm>
-          ) : null}
-
-          <DetailInfoForm
-            title={title}
-            hideHeader
-            mode={formMode}
-            className="popup-form-modal__form"
-          >
-            {variant === 'create' ? (
+            ) : (
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="사용 여부"
@@ -380,25 +404,21 @@ function PopupFormBody({
                   }
                 />
               </DetailInfoForm.Row>
-            ) : null}
+            )}
 
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="이미지"
                 required
                 view={
-                  <div className="popup-form-modal__image-row">
-                    <div className="popup-form-modal__preview">
-                      {imageUrl ? (
-                        <img src={imageUrl} alt={altText || '팝업 이미지'} />
-                      ) : (
-                        <ThumbnailPlaceholder />
-                      )}
-                    </div>
-                    {imageFileName ? (
+                  imageFileName ? (
+                    <div className="popup-form-modal__file-view">
+                      <FileIcon className="popup-form-modal__file-icon" />
                       <span className="popup-form-modal__file-name">{imageFileName}</span>
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : (
+                    <span>-</span>
+                  )
                 }
                 edit={
                   <div className="popup-form-modal__image-row">

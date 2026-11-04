@@ -16,7 +16,7 @@
 .popup-form-modal__forms {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
   width: 100%;
   min-width: 0;
 }
@@ -73,7 +73,7 @@
 }
 
 /* 등록일시 | 사용 여부 — 한 줄 유지 */
-.popup-form-modal__form--meta .detail-info-form__row--double {
+.popup-form-modal__form .detail-info-form__row--double {
   flex-wrap: nowrap;
 }
 
@@ -134,11 +134,33 @@
   gap: 16px;
 }
 
+.popup-form-modal__file-view {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.popup-form-modal__file-icon {
+  flex-shrink: 0;
+  display: block;
+  width: 24px;
+  height: 24px;
+  color: var(--default-BK, #3d3d3d);
+}
+
 .popup-form-modal__file-name {
-  color: var(--main-BK, #3d3d3d);
-  font-size: 14px;
-  line-height: 1.4;
-  word-break: break-all;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
 }
 
 .popup-form-modal__link-edit,
