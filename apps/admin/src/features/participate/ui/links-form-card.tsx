@@ -11,7 +11,7 @@ import type { ParticipateMenuLinks } from '@/entities/participate/model/types'
 import { useSaveParticipateMenuLinks } from '@/features/participate/api/hooks'
 import { participateQueryKeys } from '@/features/participate/api/query-keys'
 import { EMPTY_LINK_LABEL } from '@/features/participate/api/store'
-import { CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './links-form-card.css'
 
@@ -108,7 +108,7 @@ export function ParticipateLinksFormCard({ data }: Props) {
         alumniUrl: draft.alumniUrl,
       })
       setIsEditing(false)
-      showSaveCompletedAlert()
+      showUpdateCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
