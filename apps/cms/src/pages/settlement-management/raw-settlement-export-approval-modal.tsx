@@ -226,8 +226,7 @@ export function RawSettlementExportApprovalModal({
       )
       await downloadIssuedSettlementExportFile({
         serverExport: ready,
-        filenamePrefix: label,
-        reason: kind === 'bulk-transfer' ? '대량이체 양식 발급' : '세금신고 양식 발급',
+        kind,
       })
       downloaded = true
     } catch (error) {
