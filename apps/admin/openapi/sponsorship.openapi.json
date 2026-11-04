@@ -1945,7 +1945,8 @@
           },
           "displayOrder": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "Contiguous 1-based order. Update accepts 1 through currentCount; inserting an existing order shifts later rows."
           },
           "version": {
             "type": "integer",
@@ -2181,6 +2182,11 @@
             "type": "integer",
             "format": "int64"
           },
+          "externalUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          },
           "version": {
             "type": "integer",
             "format": "int64"
@@ -2210,6 +2216,9 @@
           },
           "logo": {
             "$ref": "#/components/schemas/AssetResponse"
+          },
+          "externalUrl": {
+            "type": "string"
           },
           "version": {
             "type": "integer",
@@ -2313,7 +2322,15 @@
           }
         },
         "required": [
+          "address",
+          "businessRegistrationNumber",
+          "email",
+          "fax",
+          "logoAssetId",
           "organizationName",
+          "phone",
+          "postalCode",
+          "representativeName",
           "version"
         ]
       },
@@ -5901,12 +5918,14 @@
           "title": {
             "type": "string",
             "maxLength": 500,
-            "minLength": 1
+            "minLength": 0,
+            "nullable": true
           },
           "description": {
             "type": "string",
             "maxLength": 2000,
-            "minLength": 1
+            "minLength": 0,
+            "nullable": true
           },
           "version": {
             "type": "integer",
@@ -5914,9 +5933,7 @@
           }
         },
         "required": [
-          "description",
           "id",
-          "title",
           "version"
         ]
       },
@@ -6524,7 +6541,8 @@
           },
           "displayOrder": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "description": "Contiguous 1-based order. Create accepts 1 through currentCount+1; inserting an existing order shifts later rows."
           }
         },
         "required": [
@@ -8210,6 +8228,9 @@
             "type": "string"
           },
           "logoUrl": {
+            "type": "string"
+          },
+          "externalUrl": {
             "type": "string"
           },
           "displayOrder": {

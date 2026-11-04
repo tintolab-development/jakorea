@@ -14,5 +14,6 @@ export interface SponsorCreateRequest {
      * @maxLength 300
      */
   companyName: string;
+  /** Contiguous 1-based order. Create accepts 1 through currentCount+1; inserting an existing order shifts later rows. */
   displayOrder: number;
 }

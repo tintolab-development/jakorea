@@ -113,33 +113,26 @@ export function mapFooterOrganizationToDomain(
 export function toFooterOrganizationUpdateRequest(
   input: FooterOrgInfoSaveInput,
   version: number,
-  logoAssetId: number | undefined,
+  logoAssetId: number,
 ): FooterOrganizationUpdateRequest {
   const description = input.organizationDescription?.trim()
   return {
     organizationName: input.name.trim(),
-    // 생략된 optional 문자열·asset id는 Jackson이 null로 읽고, 서버는 null을 삭제로 저장한다.
     organizationDescription: description || undefined,
-    address: input.address.trim() || undefined,
-    postalCode: input.zipCode.trim() || undefined,
-    representativeName: input.representative.trim() || undefined,
-    businessRegistrationNumber: input.businessNumber.trim() || undefined,
-    phone: input.phone.trim() || undefined,
-    fax: input.fax.trim() || undefined,
-    email: input.email.trim() || undefined,
+    address: input.address.trim(),
+    postalCode: input.zipCode.trim(),
+    representativeName: input.representative.trim(),
+    businessRegistrationNumber: input.businessNumber.trim(),
+    phone: input.phone.trim(),
+    fax: input.fax.trim(),
+    email: input.email.trim(),
     logoAssetId,
     version,
   }
 }
 
-type FooterPartnerLinkWire = FooterPartnerResponse & {
-  externalUrl?: string | null
-  linkUrl?: string | null
-}
-
 function readPartnerLinkUrl(row: FooterPartnerResponse): string {
-  const wire = row as FooterPartnerLinkWire
-  const raw = wire.externalUrl ?? wire.linkUrl
+  const raw = row.externalUrl
   return typeof raw === 'string' ? raw.trim() : ''
 }
 
@@ -177,7 +170,7 @@ export function mapFooterPartnersToDomain(
 export function toFooterPartnerUpdateRequest(
   row: FooterRelatedLogo,
   logoAssetId: number | undefined,
-): FooterPartnerUpdateRequest & { externalUrl?: string } {
+): FooterPartnerUpdateRequest {
   const name = row.name.trim()
   const linkUrl = row.linkUrl.trim()
   return {

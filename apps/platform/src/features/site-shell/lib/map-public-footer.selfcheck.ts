@@ -78,6 +78,30 @@ assert.equal(remote.addressLine.includes('('), false)
 const donation = remote.menus.find(menu => menu.key === 'DONATION')
 assert.equal(donation?.kind, 'noop')
 assert.equal(remote.partners.length, 0)
+
+const withPartners = mapPublicFooter({
+  menus: [],
+  partners: [
+    {
+      partnerId: 1,
+      organizationName: '기획재정부',
+      logoUrl: 'https://cdn.example.com/logo.png',
+      externalUrl: 'https://www.moef.go.kr/',
+      displayOrder: 1,
+    },
+    {
+      partnerId: 2,
+      organizationName: '국세청',
+      logoUrl: 'https://cdn.example.com/nts.png',
+      externalUrl: 'javascript:alert(1)',
+      displayOrder: 2,
+    },
+  ],
+})
+assert.ok(withPartners)
+assert.equal(withPartners.partners[0]?.href, 'https://www.moef.go.kr/')
+assert.equal(withPartners.partners[1]?.href, null)
+
 assert.equal(mapPublicFooter([]), null)
 
 console.log('map-public-footer.selfcheck ok')

@@ -1,0 +1,44 @@
+---
+description: 관심사별 여러 커밋 시 pre-commit 검증을 한 번만 돌리는 절차
+alwaysApply: true
+---
+
+# 관심사별 분할 커밋 · pre-commit 검증
+
+`.husky/pre-commit`은 커밋마다 `pnpm typecheck`와 `pnpm lint`(전 monorepo)를 실행한다. 관심사별로 커밋을 여러 번 나눌 때 매번 전체 검증을 반복하면 수 분씩 걸린다.
+
+## 에이전트·개발자 절차 (관심사별 여러 커밋)
+
+1. **작업 트리 전체**가 커밋 대상 상태일 때, 먼저 한 번 검증한다.
+
+   ```bash
+   pnpm typecheck && pnpm lint
+   ```
+
+   실패하면 커밋을 나누지 말고 타입·lint 오류를 먼저 고친다.
+
+2. 같은 셸 세션에서 검증이 통과했으면, **나머지 분할 커밋**에는 아래를 export한 뒤 `git commit`을 반복한다.
+
+   ```bash
+   export JAKOREA_VALIDATION_SESSION=validated
+   ```
+
+   pre-commit이 `[pre-commit] 검증 완료 세션을 사용합니다.`를 출력하고 typecheck/lint를 건너뛴다.
+
+3. **코드 내용을 바꾼 뒤**에는 `JAKOREA_VALIDATION_SESSION=validated`만 믿지 않는다. 변경 후 다시 `pnpm typecheck && pnpm lint`를 돌리거나, 새 작업 트리 지문에 대해 pre-commit이 stamp를 새로 만든다(`.git/jakorea/pre-commit-validation/`).
+
+## 자동 재사용 (stamp)
+
+동일 작업 트리(스테이징·미스테이징·untracked 포함)에 대해 이미 pre-commit 검증이 성공한 적이 있으면, stamp 파일로 **한 번 더** typecheck/lint 없이 커밋할 수 있다. 커밋으로 트리가 바뀌면 지문이 달라져 검증이 다시 필요할 수 있다.
+
+## 금지
+
+- `--no-verify`로 hook을 끄는 것은 사용자가 명시적으로 요청할 때만 한다.
+- 검증 없이 `JAKOREA_VALIDATION_SESSION=validated`만 설정해 **처음** 커밋하는 것은 하지 않는다.
+
+## 참고
+
+- 구현: `.husky/pre-commit`
+- 커밋 메시지·푸시: 사용자 요청 시에만; 분할 커밋은 관심사(도메인·앱) 단위로 나눈다.
+
+**Last updated:** 2026-11-05

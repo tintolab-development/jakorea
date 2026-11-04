@@ -31,6 +31,7 @@ import {
 import type { RegionBlockedDateModalPayload } from './blocked-date-modal'
 import {
   buildAutoAssignResultAlert,
+  collectAutoAssignRefreshSlotIds,
   summarizeAutoAssignResult,
   type AutoAssignResultSummary,
 } from './auto-assign-result'
@@ -168,6 +169,19 @@ export function useRegionAssignment(
       postUjatPartnerAssignmentsAuto(programId, { educationRegionCode, semesterType }),
     onSuccess: async response => {
       await invalidateMatrix()
+      const refreshSlotIds = collectAutoAssignRefreshSlotIds(response.results)
+      if (refreshSlotIds.length > 0) {
+        await Promise.all(
+          refreshSlotIds.map(educationSlotId =>
+            queryClient.invalidateQueries({
+              queryKey: ujatQueryKeys.directAssignmentCandidates(
+                programId,
+                String(educationSlotId)
+              ),
+            })
+          )
+        )
+      }
       setAutoAssignResult({ scopeKey: autoAssignScopeKey, summary: summarizeAutoAssignResult(response) })
       showAlert(buildAutoAssignResultAlert(response))
     },

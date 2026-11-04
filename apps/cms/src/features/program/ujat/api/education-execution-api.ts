@@ -98,6 +98,8 @@ export type UjatAutoAssignmentSlotResult = {
   secondaryParticipantId?: number | null
   attendanceManagerParticipantId?: number | null
   reason?: string | null
+  /** PAIR_SPLIT 대상 학급의 원본 학급 educationSlotId. 그 외는 null */
+  sourceEducationSlotId?: number | null
 }
 
 /** results[].result — ASSIGNED_PAIR | ASSIGNED_SINGLE | UNASSIGNED | SECONDARY_ADDED | SECONDARY_UNAVAILABLE */

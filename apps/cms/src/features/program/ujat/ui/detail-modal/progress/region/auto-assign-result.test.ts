@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   AUTO_ASSIGN_RERUN_CONFIRM_MESSAGE,
   buildAutoAssignResultAlert,
+  collectAutoAssignRefreshSlotIds,
   hasExistingRegionAssignments,
   summarizeAutoAssignResult,
 } from './auto-assign-result'
@@ -122,6 +123,30 @@ describe('buildAutoAssignResultAlert', () => {
       '2인 배정 - · 1인 배정 - · 미배정 -'
     )
     expect(buildAutoAssignResultAlert(undefined).content).toContain('대상 학급 -')
+  })
+
+  it('PAIR_SPLIT 원본·대상 학급 id를 새로고침 대상으로 모은다', () => {
+    expect(
+      collectAutoAssignRefreshSlotIds([
+        { educationSlotId: 11, sourceEducationSlotId: 7, reason: 'PAIR_SPLIT' },
+        { educationSlotId: 11, sourceEducationSlotId: null },
+        { educationSlotId: 7, reason: 'ASSIGNED_SINGLE' },
+      ])
+    ).toEqual([11, 7])
+  })
+
+  it('PAIR_SPLIT이면 2인조 이동 안내를 추가한다', () => {
+    const summary = summarizeAutoAssignResult({
+      pairAssignedCount: 0,
+      singleAssignedCount: 1,
+      unassignedCount: 0,
+      secondaryAddedCount: 0,
+      secondaryUnfilledCount: 0,
+      results: [{ educationSlotId: 11, sourceEducationSlotId: 7, reason: 'PAIR_SPLIT' }],
+    })
+    expect(summary.warnings).toContain(
+      '기존 2인조에서 한 명을 옮겨 1인 학급을 커버했습니다. (1건)'
+    )
   })
 })
 

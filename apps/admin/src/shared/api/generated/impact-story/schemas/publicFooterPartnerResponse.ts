@@ -10,5 +10,6 @@ export interface PublicFooterPartnerResponse {
   partnerId?: number;
   organizationName?: string;
   logoUrl?: string;
+  externalUrl?: string;
   displayOrder?: number;
 }

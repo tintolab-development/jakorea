@@ -90,7 +90,7 @@ export interface VolunteerApplicationListItemResponse {
   birthDate?: string | null;
   /** UJAT 1365 ID 마스킹 값. 없으면 null. 원문은 상세 unmask profile.external1365Id */
   id1365?: string | null;
-  /** UJAT 교육 진행 배정일수. allocation-matrix volunteers[].totalAssignedDays와 같은 이름·같은 계산(취소가 아닌 서로 다른 program_schedule_id 수). 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음 */
+  /** UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수(전 반기·전 지역). allocation-matrix volunteers[].totalAssignedDays와 같은 이름이지만 목록은 educationRegionCode 필터를 쓰지 않는다. 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음 */
   totalAssignedDays?: number | null;
   /** 발대식 참석. 저장값이 없으면 null. false로 채우지 않음 */
   openingCeremonyAttended?: boolean | null;
