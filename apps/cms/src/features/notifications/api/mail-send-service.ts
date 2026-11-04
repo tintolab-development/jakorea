@@ -252,7 +252,7 @@ export async function submitMailSend(input: {
 
   const programId = parseNotificationSendProgramId(draft.programId)
   if (!isNotificationSendWithoutProgram(draft.programId) && programId == null) {
-    throw new Error('대상 프로그램을 선택하세요.')
+    throw new Error('대상 프로그램을 선택해 주세요.')
   }
 
   // 문맥 키(동의 항목·만료일시)는 catalog SYSTEM → variables 거부. 본문에 로컬 치환.

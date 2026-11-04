@@ -14,6 +14,7 @@ export interface SponsorUpdateRequest {
      * @maxLength 300
      */
   companyName: string;
+  /** Contiguous 1-based order. Update accepts 1 through currentCount; inserting an existing order shifts later rows. */
   displayOrder: number;
   version: number;
 }

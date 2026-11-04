@@ -128,7 +128,7 @@ export async function getFooterOrgInfoService(): Promise<FooterOrgInfo> {
 async function resolveOrgLogoAssetId(
   current: FooterOrgInfo,
   input: FooterOrgInfoSaveInput,
-): Promise<number | undefined> {
+): Promise<number> {
   if (input.logoFile) {
     return uploadFooterLogoAsset(input.logoFile)
   }
@@ -138,10 +138,7 @@ async function resolveOrgLogoAssetId(
   if (current.logoAssetId != null && input.logoUrl.trim()) {
     return current.logoAssetId
   }
-  if (!input.logoUrl.trim()) {
-    return undefined
-  }
-  throw new Error('기관 로고 asset이 없습니다. 이미지를 다시 등록해 주세요.')
+  throw new Error('기관 로고는 필수입니다. 이미지를 등록해 주세요.')
 }
 
 export async function saveFooterOrgInfoService(
@@ -221,6 +218,7 @@ export async function saveFooterRelatedLogoService(
     ...row,
     isActive: input.isActive,
     name: input.name,
+    linkUrl: input.linkUrl,
     logoUrl: input.logoUrl,
     logoFileName: input.logoFileName,
     logoAssetId,

@@ -108,7 +108,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                     value={field.value ?? ''}
                     inputSize="small"
                     width="100%"
-                    placeholder="공고용 프로그램명을 입력하세요"
+                    placeholder="공고용 프로그램명을 입력해 주세요"
                   />
                 )}
               />
@@ -123,7 +123,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                 width="100%"
                 value={activityTermLabel}
                 disabled
-                placeholder="활동 기수를 입력하세요"
+                placeholder="활동 기수를 입력해 주세요"
               />
             }
             view="-"
@@ -138,7 +138,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   form={form}
                   startName="startDate"
                   endName="endDate"
-                  placeholder="프로그램 운영 기간을 선택하세요"
+                  placeholder="프로그램 운영 기간을 선택해 주세요"
                 />
               </div>
             }
@@ -175,7 +175,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                           : (field.value ?? null)
                     )}
                     onChange={next => field.onChange(recruitmentTargetOptionValuesToStored(next))}
-                    placeholder="모집 대상을 선택하세요"
+                    placeholder="모집 대상을 선택해 주세요"
                     options={[...UJAT_VOLUNTEER_RECRUIT_TARGET_OPTIONS]}
                   />
                 )}
@@ -195,7 +195,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                     value={field.value ?? ''}
                     inputSize="small"
                     width="100%"
-                    placeholder="모집 대상 상세를 입력하세요"
+                    placeholder="모집 대상 상세를 입력해 주세요"
                   />
                 )}
               />
@@ -212,7 +212,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   form={form}
                   startName={recruitStartName}
                   endName={recruitEndName}
-                  placeholder="모집 기간을 선택하세요"
+                  placeholder="모집 기간을 선택해 주세요"
                   clearToUndefined
                   dateOnly
                 />
@@ -243,7 +243,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                   form={form}
                   startName="interviewStartDate"
                   endName="interviewEndDate"
-                  placeholder="면접 기간을 선택하세요"
+                  placeholder="면접 기간을 선택해 주세요"
                   clearToUndefined
                 />
                 <DetailInfoForm.InputsSeparator />

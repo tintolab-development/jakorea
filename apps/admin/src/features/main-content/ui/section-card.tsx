@@ -39,7 +39,7 @@ export function MainContentSectionCard({
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={onCancel}
                 disabled={saving} >
@@ -47,7 +47,7 @@ export function MainContentSectionCard({
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saving}
                 onClick={onSave} >
@@ -55,7 +55,7 @@ export function MainContentSectionCard({
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={onEdit}>
               수정
             </CmsButton>
           )}

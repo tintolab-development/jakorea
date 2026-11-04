@@ -51,3 +51,38 @@
 .log-list-page .cms-data-table .ant-pagination {
   margin: 16px 0 0;
 }
+
+/*
+ * 버그/이슈: No. 제외 col 이 `width:auto` 로 균등 분배되는 공통 규칙을 끊고
+ * 에러 메시지 800 / 사용자명 140 / 발생일시 180 고정
+ */
+.log-list-page .bug-issue-log-table colgroup > col:nth-child(1),
+.log-list-page .bug-issue-log-table .ant-table-thead > tr > th.cms-table-col--no,
+.log-list-page .bug-issue-log-table .ant-table-tbody > tr > td.cms-table-col--no {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.log-list-page .bug-issue-log-table colgroup > col:nth-child(2),
+.log-list-page .bug-issue-log-table .ant-table-thead > tr > th.log-list-page__col--error,
+.log-list-page .bug-issue-log-table .ant-table-tbody > tr > td.log-list-page__col--error {
+  width: auto !important;
+  min-width: 800px !important;
+}
+
+.log-list-page .bug-issue-log-table colgroup > col:nth-child(3),
+.log-list-page .bug-issue-log-table .ant-table-thead > tr > th.log-list-page__col--user,
+.log-list-page .bug-issue-log-table .ant-table-tbody > tr > td.log-list-page__col--user {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.log-list-page .bug-issue-log-table colgroup > col:nth-child(4),
+.log-list-page .bug-issue-log-table .ant-table-thead > tr > th.log-list-page__col--occurred,
+.log-list-page .bug-issue-log-table .ant-table-tbody > tr > td.log-list-page__col--occurred {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}

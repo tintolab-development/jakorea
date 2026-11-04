@@ -25,10 +25,6 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.education-textbooks-page .ant-switch {
-  min-width: 40px;
-}
-
 /* 공통 열 폭 CSS 변수 — cms-data-table 선택/No./사용 과 동일 */
 .education-textbooks-table.cms-data-table {
   --table-selection-column-width: 60px;

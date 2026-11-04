@@ -2,15 +2,37 @@ import { useCallback, useRef, useState } from 'react'
 import { EditorContent } from '@tiptap/react'
 import { isRichTextEditorReady } from '../core/editor-ready'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
-import type { RichTextEditorProps } from './types'
+import {
+  RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX,
+  type RichTextEditorProps,
+} from './types'
+
+function toCssLength(value: string | number): string {
+  return typeof value === 'number' ? `${value}px` : value
+}
 
 function resolveMinResizeHeight(minHeight: string | number | undefined): number {
   if (typeof minHeight === 'number' && Number.isFinite(minHeight)) return minHeight
-  if (typeof minHeight === 'string' && minHeight.endsWith('px')) {
+  if (typeof minHeight === 'string') {
     const parsed = Number.parseFloat(minHeight)
     if (Number.isFinite(parsed)) return parsed
   }
-  return 80
+  return RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX
+}
+
+/** ContentModal max-height `100dvh - 32px` 와 동일 */
+const MODAL_VIEWPORT_INSET_PX = 32
+/** 서브픽셀·보더로 모달 본문에 스크롤이 생기는 여유 */
+const MODAL_RESIZE_SLACK_PX = 8
+
+function maxEditorHeightInModal(editorRoot: HTMLElement, startEditorHeight: number): number | null {
+  const modal = editorRoot.closest('.ant-modal-content')
+  if (!(modal instanceof HTMLElement)) return null
+
+  const viewport = window.visualViewport?.height ?? window.innerHeight
+  const maxModal = viewport - MODAL_VIEWPORT_INSET_PX
+  const chrome = modal.getBoundingClientRect().height - startEditorHeight
+  return Math.floor(maxModal - chrome - MODAL_RESIZE_SLACK_PX)
 }
 
 /**
@@ -20,7 +42,8 @@ function resolveMinResizeHeight(minHeight: string | number | undefined): number 
 export function RichTextEditor({
   editor,
   className,
-  minHeight,
+  minHeight = RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX,
+  height,
   toolbar,
   'aria-label': ariaLabel = '본문 편집',
 }: RichTextEditorProps) {
@@ -28,19 +51,17 @@ export function RichTextEditor({
   const [userHeight, setUserHeight] = useState<number | null>(null)
   const rootClass = ['rich-text-editor', className].filter(Boolean).join(' ')
   const minResizeHeight = resolveMinResizeHeight(minHeight)
-  const rootStyle: CSSProperties | undefined =
-    minHeight != null || userHeight != null
-      ? {
-          ...(minHeight != null ? { minHeight } : null),
-          ...(userHeight != null
-            ? ({
-                height: userHeight,
-                // CMS 쪽 height:auto !important 를 이기기 위한 변수
-                ['--rt-user-height' as string]: `${userHeight}px`,
-              } as CSSProperties)
-            : null),
-        }
-      : undefined
+  const rootStyle: CSSProperties = {
+    minHeight: toCssLength(minHeight),
+    ...(userHeight != null
+      ? ({
+          height: userHeight,
+          ['--rt-user-height' as string]: `${userHeight}px`,
+        } as CSSProperties)
+      : height != null
+        ? { height: toCssLength(height) }
+        : null),
+  }
 
   const handleResizePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -52,6 +73,7 @@ export function RichTextEditor({
 
       const startY = event.clientY
       const startHeight = root.getBoundingClientRect().height
+      const maxInModal = maxEditorHeightInModal(root, startHeight)
       const pointerId = event.pointerId
       event.currentTarget.setPointerCapture(pointerId)
 
@@ -63,7 +85,10 @@ export function RichTextEditor({
       }
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
-        const nextHeight = Math.max(minResizeHeight, startHeight + moveEvent.clientY - startY)
+        let nextHeight = Math.max(minResizeHeight, startHeight + moveEvent.clientY - startY)
+        if (maxInModal != null) {
+          nextHeight = Math.min(nextHeight, Math.max(minResizeHeight, maxInModal))
+        }
         applyHeight(nextHeight)
       }
 

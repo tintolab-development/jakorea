@@ -41,7 +41,7 @@ export function ButtonsSection() {
     >
       <p className="ds-note">
         <strong>Size</strong> — h52 · h44(기본) · h40 · h36 · h32. radius h52 10 · h44·h40 8 ·
-        h36·h32 6 · font-weight 600. 폭은 사이즈별 min-width(h44 140 · h40 120 · h36 100 · h32 80,
+        h36·h32 6 · font-weight 600. 폭은 사이즈별 min-width(h44 140 · h40 120 · h36 100 · h32 100,
         h52 없음)부터 라벨 길이만큼 늘어납니다. <code>width</code> prop은 없습니다.
         <br />
         <strong>별칭</strong> — <code>large</code>=h44 · <code>medium</code>=h40 ·{' '}

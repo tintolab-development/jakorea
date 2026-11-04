@@ -116,8 +116,6 @@ const COL = {
   ip: 140,
 } as const
 
-const EMPTY_TEXT = '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
-
 export function PiiAccessLogPage() {
   const { showAlert } = useCmsAlert()
 
@@ -128,6 +126,7 @@ export function PiiAccessLogPage() {
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, PiiAccessListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -237,25 +236,15 @@ export function PiiAccessLogPage() {
   return (
     <div className="log-list-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
-            <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">조회 대상</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회 대상을 입력하세요"
-                value={pendingFilters.targetName}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, targetName: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">조회 목적</span>
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회 목적을 입력하세요"
+                placeholder="조회 목적을 입력해 주세요"
                 value={pendingFilters.purpose}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
                 onPressEnter={applySearch}
@@ -266,14 +255,14 @@ export function PiiAccessLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회자명을 입력하세요"
+                placeholder="조회자명을 입력해 주세요"
                 value={pendingFilters.accessorName}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
                 onPressEnter={applySearch}
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">조회 일시</span>
+              <span className="admin-filter-area__label">조회일</span>
               <CmsDateRangePicker
                 inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
@@ -288,11 +277,13 @@ export function PiiAccessLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -300,7 +291,7 @@ export function PiiAccessLogPage() {
         }
         title="개인정보 조회 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
       >
         <CmsDataTable<PiiAccessLog>
           className="cms-data-table"
@@ -309,7 +300,6 @@ export function PiiAccessLogPage() {
           dataSource={rows}
           loading={loading}
           pagination={logTablePagination({ page, total, onChange: handlePageChange })}
-          locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
             x: COL.no + COL.targetName + COL.purpose + COL.accessorName + COL.accessedAt + COL.ip,
           }}

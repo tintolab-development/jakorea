@@ -10,7 +10,7 @@ export const GEMINI_PERFORMANCE_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'instructorName',
     type: 'search',
     label: '강사',
-    placeholder: '강사명을 입력하세요',
+    placeholder: '강사명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -29,7 +29,7 @@ export const GEMINI_PERFORMANCE_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'trainingLocation',
     type: 'search',
     label: '연수장소',
-    placeholder: '연수장소를 입력하세요',
+    placeholder: '연수장소를 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

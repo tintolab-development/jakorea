@@ -2,7 +2,9 @@
  * 기업후원 안내 저장 실패 알림
  */
 
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
+  type AdminMutationAlert,
   isOptimisticLockConflictError,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
@@ -10,20 +12,17 @@ import {
 export function corporateGuideSaveFailureAlert(
   error: unknown,
   fallbackContent: string
-): { title: string; content: string } {
+): AdminMutationAlert {
   if (error instanceof Error) {
     const code = error.message
-    const map: Record<string, { title: string; content: string }> = {
-      BANNER_IMAGE_REQUIRED: { title: '입력 확인', content: '배너 이미지를 등록해 주세요.' },
-      BANNER_MAIN_TEXT_REQUIRED: { title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' },
-      BANNER_SUB_TEXT_REQUIRED: { title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' },
-      METRIC_TITLE_REQUIRED: { title: '입력 확인', content: '타이틀을 입력해 주세요.' },
-      METRIC_DESCRIPTION_REQUIRED: { title: '입력 확인', content: '설명을 입력해 주세요.' },
-      PARTNERSHIP_TITLE_REQUIRED: { title: '입력 확인', content: '단계 제목을 입력해 주세요.' },
-      PARTNERSHIP_DESCRIPTION_REQUIRED: {
-        title: '입력 확인',
-        content: '단계 설명을 입력해 주세요.',
-      },
+    const map: Record<string, AdminMutationAlert> = {
+      BANNER_IMAGE_REQUIRED: REQUIRED_FIELDS_INCOMPLETE_ALERT,
+      BANNER_MAIN_TEXT_REQUIRED: REQUIRED_FIELDS_INCOMPLETE_ALERT,
+      BANNER_SUB_TEXT_REQUIRED: REQUIRED_FIELDS_INCOMPLETE_ALERT,
+      METRIC_TITLE_REQUIRED: REQUIRED_FIELDS_INCOMPLETE_ALERT,
+      METRIC_DESCRIPTION_REQUIRED: REQUIRED_FIELDS_INCOMPLETE_ALERT,
+      PARTNERSHIP_TITLE_REQUIRED: REQUIRED_FIELDS_INCOMPLETE_ALERT,
+      PARTNERSHIP_DESCRIPTION_REQUIRED: REQUIRED_FIELDS_INCOMPLETE_ALERT,
     }
     if (map[code]) return map[code]!
   }

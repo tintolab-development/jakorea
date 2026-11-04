@@ -5,7 +5,7 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryThrive, JaHistoryThriveCard } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryThrive } from '@/features/ja-history/api/hooks'
-import { useCmsAlert } from '@/shared/ui'
+import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { InlineText, SectionFrame, jaHistorySaveAlert } from './chrome'
 
 export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
@@ -40,11 +40,13 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
               value={card.title}
               rows={1}
               label={`${record.id} 제목`}
-              placeholder="제목을 입력하세요"
+              placeholder="제목을 입력해 주세요"
               onChange={title => {
                 setDraft(prev => ({
                   ...prev,
-                  cards: prev.cards.map(item => (item.id === record.id ? { ...item, title } : item)),
+                  cards: prev.cards.map(item =>
+                    item.id === record.id ? { ...item, title } : item
+                  ),
                 }))
               }}
             />
@@ -63,12 +65,12 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
               value={card.description}
               rows={3}
               label={`${record.id} 설명`}
-              placeholder="설명을 입력하세요"
+              placeholder="설명을 입력해 주세요"
               onChange={description => {
                 setDraft(prev => ({
                   ...prev,
                   cards: prev.cards.map(item =>
-                    item.id === record.id ? { ...item, description } : item,
+                    item.id === record.id ? { ...item, description } : item
                   ),
                 }))
               }}
@@ -77,7 +79,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
         },
       },
     ],
-    [draft.cards, editing],
+    [draft.cards, editing]
   )
 
   return (
@@ -100,10 +102,18 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
             })),
           })
           .then(
-            () => setEditing(false),
-            error => {
-              showAlert(jaHistorySaveAlert(error, '글로벌 전략 Thrive 저장에 실패했습니다. 다시 시도해 주세요.'))
+            () => {
+              setEditing(false)
+              showSaveCompletedAlert()
             },
+            error => {
+              showAlert(
+                jaHistorySaveAlert(
+                  error,
+                  '글로벌 전략 Thrive 저장에 실패했습니다. 다시 시도해 주세요.'
+                )
+              )
+            }
           )
       }}
     >
@@ -119,7 +129,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
                 onChange={title => setDraft(prev => ({ ...prev, title }))}
                 rows={2}
                 label="타이틀"
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
               />
             }
           />
@@ -135,7 +145,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
                 onChange={lead => setDraft(prev => ({ ...prev, lead }))}
                 rows={3}
                 label="서브 텍스트"
-                placeholder="서브 텍스트를 입력하세요"
+                placeholder="서브 텍스트를 입력해 주세요"
               />
             }
           />
@@ -168,7 +178,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
                 onChange={footnote => setDraft(prev => ({ ...prev, footnote }))}
                 rows={3}
                 label="하단 텍스트"
-                placeholder="하단 텍스트를 입력하세요"
+                placeholder="하단 텍스트를 입력해 주세요"
               />
             }
           />

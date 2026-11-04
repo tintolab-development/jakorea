@@ -19,7 +19,7 @@ export const UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'institutionName',
     type: 'search',
     label: '신청 기관명',
-    placeholder: '기관명을 입력하세요',
+    placeholder: '기관명을 입력해 주세요',
     width: '25%',
   },
   {
@@ -34,7 +34,7 @@ export const UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'totalClassCount',
     type: 'search',
     label: '총 신청 학급 수',
-    placeholder: '총 신청 학급 수를 입력하세요',
+    placeholder: '총 신청 학급 수를 입력해 주세요',
     searchNumericOnly: true,
     width: '25%',
   },
@@ -42,7 +42,7 @@ export const UJAT_INSTITUTION_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'teacherName',
     type: 'search',
     label: '신청 교사명',
-    placeholder: '교사명을 입력하세요',
+    placeholder: '교사명을 입력해 주세요',
     width: '25%',
   },
 ]

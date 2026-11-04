@@ -157,7 +157,12 @@ export function shouldOmitImmutableFormSchemaJson(
   if (code.startsWith('registration-')) return true
   if (isRecruitmentWritingTemplateCode(code)) return true
   // BE 카탈로그 시드에 없는 normalize 필드(maxLength 등)가 붙으면 FORM_SCHEMA_IMMUTABLE
-  return resolveWritingFormBaseTemplateCode(code) === 'application-participant-individual'
+  const catalogCode = resolveWritingFormBaseTemplateCode(code)
+  return (
+    catalogCode === 'application-participant-individual' ||
+    catalogCode === 'application-ujat-volunteer' ||
+    catalogCode === 'application-ujat-school'
+  )
 }
 
 /**

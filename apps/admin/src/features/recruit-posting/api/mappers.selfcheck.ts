@@ -29,11 +29,13 @@ const baseInput: RecruitPostingCreateInput = {
   linkUrl: ' https://jobs.example.test ',
 }
 
-const created = toCareerPostingCreateRequest(baseInput)
+const created = toCareerPostingCreateRequest(baseInput, [])
 assert.equal(created.title, '교육사업팀 프로그램 매니저 채용')
 assert.equal(created.status, 'RECRUITING')
 assert.equal(created.buttonLabel, '지원하기')
 assert.equal(created.linkUrl, 'https://jobs.example.test')
+assert.deepEqual(created.attachmentAssetIds, [])
+assert.equal('attachmentAssetId' in created, false)
 assert.equal('version' in created, false)
 assert.equal('buttonLabel' in created, true)
 assert.equal('linkUrl' in created, true)
@@ -41,11 +43,13 @@ assert.equal('linkUrl' in created, true)
 const cleared = toCareerPostingUpdateRequest(
   { ...baseInput, id: '12', buttonLabel: '  ', linkUrl: '' } satisfies RecruitPostingUpdateInput,
   3,
+  [301, 302],
 )
 assert.equal(cleared.version, 3)
 assert.equal(cleared.buttonLabel, '')
 assert.equal(cleared.linkUrl, '')
 assert.equal(cleared.status, 'RECRUITING')
+assert.deepEqual(cleared.attachmentAssetIds, [301, 302])
 
 const detail = mapCareerPostingAdminDetail({
   id: 12,
@@ -61,10 +65,27 @@ const detail = mapCareerPostingAdminDetail({
   body: '<p>본문</p>',
   buttonLabel: '  지원하기  ',
   linkUrl: ' https://jobs.example.test ',
+  attachmentAssetIds: [9, 10],
+  attachments: [
+    {
+      assetId: 9,
+      originalName: '모집요강.pdf',
+      contentType: 'application/pdf',
+      publicUrl: 'https://example.test/file.pdf',
+    },
+    {
+      assetId: 10,
+      originalName: '양식.hwp',
+      contentType: 'application/x-hwp',
+      publicUrl: 'https://example.test/form.hwp',
+    },
+  ],
 })
 assert.equal(detail?.buttonLabel, '지원하기')
 assert.equal(detail?.linkUrl, 'https://jobs.example.test')
 assert.equal(detail?.version, 3)
+assert.equal(detail?.attachments.length, 2)
+assert.equal(detail?.attachments[1]?.assetId, 10)
 
 const legacy = mapCareerPostingAdminDetail({
   id: 1,

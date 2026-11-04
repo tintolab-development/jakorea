@@ -5,13 +5,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
-import type {
-  UsageGuideItem,
-  UsageGuideItemId,
-} from '@/entities/individual-donation/model/types'
+import type { UsageGuideItem, UsageGuideItemId } from '@/entities/individual-donation/model/types'
 import { useSaveUsageGuide } from '@/features/individual-donation/api/hooks'
 import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -76,16 +74,17 @@ export function UsageGuideSectionCard({ items }: Props) {
       })
       for (const row of payload) {
         if (!row.mainText.trim()) {
-          showAlert({ title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!row.subText.trim()) {
-          showAlert({ title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         individualDonationSaveFailureAlert(
@@ -122,7 +121,7 @@ export function UsageGuideSectionCard({ items }: Props) {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { mainText: e.target.value })}
-                placeholder="메인 텍스트를 입력하세요"
+                placeholder="메인 텍스트를 입력해 주세요"
                 aria-label={`${record.itemLabel} 메인 텍스트`}
               />
             )
@@ -146,7 +145,7 @@ export function UsageGuideSectionCard({ items }: Props) {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { subText: e.target.value })}
-                placeholder="서브 텍스트를 입력하세요"
+                placeholder="서브 텍스트를 입력해 주세요"
                 aria-label={`${record.itemLabel} 서브 텍스트`}
               />
             )
@@ -159,7 +158,7 @@ export function UsageGuideSectionCard({ items }: Props) {
   )
 
   return (
-    <div className="individual-donation-section">
+    <section className="admin-list-card individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 후원금 사용안내</span>
@@ -172,7 +171,8 @@ export function UsageGuideSectionCard({ items }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -182,7 +182,8 @@ export function UsageGuideSectionCard({ items }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
@@ -202,6 +203,6 @@ export function UsageGuideSectionCard({ items }: Props) {
         rowKey="id"
         scroll={{ x: true }}
       />
-    </div>
+    </section>
   )
 }

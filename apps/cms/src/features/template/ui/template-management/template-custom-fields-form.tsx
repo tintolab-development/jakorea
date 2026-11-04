@@ -170,7 +170,7 @@ export function TemplateCustomFieldsForm({
     const next =
       selectedFieldName === null || selectedFieldName === ''
         ? null
-        : fields.find(f => f.name === selectedFieldName) ?? null
+        : (fields.find(f => f.name === selectedFieldName) ?? null)
     setActiveField(next)
   }, [selectedFieldName, fields])
   const [valuesByField, setValuesByField] = useState<Record<string, string>>(() => {
@@ -256,9 +256,7 @@ export function TemplateCustomFieldsForm({
       }
 
       const isAllowedType =
-        file.type === 'image/jpeg' ||
-        file.type === 'image/png' ||
-        /\.(jpe?g|png)$/i.test(file.name)
+        file.type === 'image/jpeg' || file.type === 'image/png' || /\.(jpe?g|png)$/i.test(file.name)
       if (!isAllowedType) {
         input.value = ''
         return
@@ -313,7 +311,9 @@ export function TemplateCustomFieldsForm({
   )
 
   const activeLogoPreviewUrl =
-    activeField && isImageUploadField(activeField) ? logoPreviewUrlByField[activeField.name] : undefined
+    activeField && isImageUploadField(activeField)
+      ? logoPreviewUrlByField[activeField.name]
+      : undefined
 
   const activeThumbSrc =
     activeField && isImageUploadField(activeField)
@@ -380,14 +380,17 @@ export function TemplateCustomFieldsForm({
                     key={rowLabel}
                     className="template-custom-fields-form__participant-check-row"
                   >
-                    <CmsCheckbox checkboxSize="medium"
+                    <CmsCheckbox
+                      checkboxSize="medium"
                       className="template-custom-fields-form__participant-checkbox"
                       checked={participantVisibilityResolved[index]}
                       onChange={e => {
                         onParticipantRowVisibilityChange?.(index, e.target.checked)
                       }}
                     />
-                    <span className="template-custom-fields-form__participant-check-label">{rowLabel}</span>
+                    <span className="template-custom-fields-form__participant-check-label">
+                      {rowLabel}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -397,7 +400,7 @@ export function TemplateCustomFieldsForm({
               className="template-custom-fields-form__secondary-textarea"
               value={secondaryValue}
               onChange={handleInputChange}
-              placeholder={activeField ? '입력하세요' : '위에서 항목을 선택하세요'}
+              placeholder={activeField ? '입력해 주세요' : '위에서 항목을 선택해 주세요'}
               disabled={!activeField}
               aria-label={activeField ? `${activeField.label} 입력` : '항목 선택 후 입력'}
               autoSize={{
@@ -410,7 +413,7 @@ export function TemplateCustomFieldsForm({
               className="template-custom-fields-form__secondary-input"
               value={secondaryValue}
               onChange={handleInputChange}
-              placeholder={activeField ? '입력하세요' : '위에서 항목을 선택하세요'}
+              placeholder={activeField ? '입력해 주세요' : '위에서 항목을 선택해 주세요'}
               disabled={!activeField}
               aria-label={activeField ? `${activeField.label} 입력` : '항목 선택 후 입력'}
               maxLength={

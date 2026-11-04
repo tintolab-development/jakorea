@@ -2,11 +2,12 @@
  * 임팩트 스토리 asset prepare → binary upload → confirm
  * - 첨부: IMPACT_STORY_ATTACHMENT
  * - 본문 인라인: IMPACT_STORY_INLINE_IMAGE
- * - 섬네일: IMPACT_STORY_THUMBNAIL (Orval 재생 전이면 ATTACHMENT 확정 자산을 thumbnailAssetId로 저장)
+ * - 썸네일: IMPACT_STORY_THUMBNAIL (Orval 재생 전이면 ATTACHMENT 확정 자산을 thumbnailAssetId로 저장)
  */
 
 import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
 import { UploadPrepareRequestPurpose } from '@/shared/api/generated/assets/schemas/uploadPrepareRequestPurpose'
+import { contentTypeForAttachmentUpload } from '@/shared/lib/attachment-policy'
 import { resolvePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 
 type PrepareRuntime = {
@@ -26,13 +27,13 @@ function resolveThumbnailPurpose(): UploadPrepareRequestPurpose {
 async function uploadImpactStoryAsset(
   file: File,
   purpose: UploadPrepareRequestPurpose,
-  label: string,
+  label: string
 ): Promise<number> {
   const assetsApi = getJAKoreaHomepageAdminAPIAssetsSubset()
   const prepared = (await assetsApi.prepareUpload({
     purpose,
     originalName: file.name,
-    contentType: file.type || 'application/octet-stream',
+    contentType: contentTypeForAttachmentUpload(file),
     sizeBytes: file.size,
   })) as PrepareRuntime
 
@@ -48,7 +49,7 @@ async function uploadImpactStoryAsset(
     ...(prepared.requiredHeaders ?? {}),
   }
   if (!headers['Content-Type'] && !headers['content-type']) {
-    headers['Content-Type'] = file.type || 'application/octet-stream'
+    headers['Content-Type'] = contentTypeForAttachmentUpload(file)
   }
 
   const uploadRes = await fetch(resolvePresignedUploadUrl(uploadUrl), {
@@ -72,19 +73,19 @@ export async function uploadImpactStoryAttachmentAsset(file: File): Promise<numb
   return uploadImpactStoryAsset(
     file,
     UploadPrepareRequestPurpose.IMPACT_STORY_ATTACHMENT,
-    '첨부 파일',
+    '첨부 파일'
   )
 }
 
 export async function uploadImpactStoryThumbnailAsset(file: File): Promise<number> {
-  return uploadImpactStoryAsset(file, resolveThumbnailPurpose(), '섬네일')
+  return uploadImpactStoryAsset(file, resolveThumbnailPurpose(), '썸네일')
 }
 
 export async function uploadImpactStoryInlineImage(file: File): Promise<string> {
   const assetId = await uploadImpactStoryAsset(
     file,
     UploadPrepareRequestPurpose.IMPACT_STORY_INLINE_IMAGE,
-    '이미지',
+    '이미지'
   )
   const assetsApi = getJAKoreaHomepageAdminAPIAssetsSubset()
   const asset = await assetsApi.getAsset(assetId)

@@ -14,18 +14,14 @@ import { DeleteBlockedGuideModal } from '@/shared/ui/delete-blocked-guide-modal'
 import { SponsorContactDeleteModal } from '@/features/sponsor/ui/modal/sponsor-contact-delete-modal'
 import { SponsorContactTypeChangeBlockedModal } from '@/features/sponsor/ui/modal/sponsor-contact-type-change-blocked-modal'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import {
-  SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE,
-} from '@/features/sponsor/model/sponsor-contact-register-schema'
+import { SPONSOR_CONTACT_PHONE_FORMAT_MESSAGE } from '@/features/sponsor/model/sponsor-contact-register-schema'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
   REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
 } from '@/shared/constants/messages'
-import { useCmsAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 
@@ -34,21 +30,21 @@ const contactFilterFields: FilterFieldConfig[] = [
     key: 'department',
     type: 'search',
     label: '부서',
-    placeholder: '부서명을 입력하세요',
+    placeholder: '부서명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'position',
     type: 'search',
     label: '직함',
-    placeholder: '직함을 입력하세요',
+    placeholder: '직함을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'name',
     type: 'search',
     label: '담당자명',
-    placeholder: '담당자명을 입력하세요',
+    placeholder: '담당자명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
 ]
@@ -125,14 +121,7 @@ export function SponsorContactsPanel({
       return
     }
     setDeleteModalOpen(true)
-  }, [
-    canWrite,
-    isDeleting,
-    isEditing,
-    selectedKeys.length,
-    setDeleteModalOpen,
-    showAlert,
-  ])
+  }, [canWrite, isDeleting, isEditing, selectedKeys.length, setDeleteModalOpen, showAlert])
 
   const handleDeleteCancel = useCallback((): void => {
     if (isDeleting) return
@@ -216,7 +205,8 @@ export function SponsorContactsPanel({
                   variant="secondary"
                   onClick={cancelEdit}
                   disabled={isSavingEdits}
-                  adminAction="sponsorContactWrite" >
+                  adminAction="sponsorContactWrite"
+                >
                   취소
                 </FilterTableToolbarButton>
                 <FilterTableToolbarButton
@@ -224,7 +214,8 @@ export function SponsorContactsPanel({
                   onClick={() => void handleToggleEdit()}
                   loading={isSavingEdits}
                   disabled={isSavingEdits}
-                  adminAction="sponsorContactWrite" >
+                  adminAction="sponsorContactWrite"
+                >
                   저장
                 </FilterTableToolbarButton>
               </>
@@ -235,19 +226,19 @@ export function SponsorContactsPanel({
                   onClick={handleDeleteClick}
                   disabled={!canWrite || isDeleting}
                   loading={isDeleting}
-                  adminAction="sponsorContactWrite" >
+                  adminAction="sponsorContactWrite"
+                >
                   담당자 삭제
                 </FilterTableToolbarButton>
                 {canWrite ? (
                   <FilterTableToolbarButton
                     variant="secondary"
-                    onClick={() => void handleToggleEdit()} >
+                    onClick={() => void handleToggleEdit()}
+                  >
                     정보 수정
                   </FilterTableToolbarButton>
                 ) : null}
-                <FilterTableToolbarButton
-                  variant="primary"
-                  onClick={handleRegisterClick} >
+                <FilterTableToolbarButton variant="primary" onClick={handleRegisterClick}>
                   담당자 등록
                 </FilterTableToolbarButton>
               </>

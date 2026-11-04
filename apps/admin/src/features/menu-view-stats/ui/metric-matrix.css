@@ -1,5 +1,5 @@
 /**
- * 메뉴별 조회 통계 — DetailInfoForm + nested table
+ * 메뉴별 조회 통계 — DetailInfoForm (외곽 + 중메뉴 중첩)
  *
  * th(라벨) 크기:
  *   width: 220px; height: 50px; padding: 12px 20px;
@@ -22,7 +22,8 @@
   overflow: hidden;
 }
 
-.mvs-metric-form .detail-info-form__field {
+/* 바깥 행만 220px 고정 — 중첩 폼 Field의 labelWidth 를 덮지 않음 */
+.mvs-metric-form > .detail-info-form__body > .detail-info-form__row > .detail-info-form__field {
   min-height: 50px;
   --detail-info-label-w: 220px !important;
   grid-template-columns: 220px minmax(0, 1fr) !important;
@@ -30,7 +31,11 @@
 }
 
 /* th — 대메뉴 · 중메뉴 · 게시글 총 조회수: 중앙 정렬 */
-.mvs-metric-form .detail-info-form__field-label {
+.mvs-metric-form
+  > .detail-info-form__body
+  > .detail-info-form__row
+  > .detail-info-form__field
+  > .detail-info-form__field-label {
   display: flex !important;
   width: 220px !important;
   min-width: 220px !important;
@@ -47,10 +52,8 @@
   text-align: center;
 }
 
-/* 중메뉴 행: nested 높이에 맞춰 라벨 세로 늘림 (텍스트는 수직·수평 중앙 유지) */
-.mvs-metric-form
-  .detail-info-form__field:has(.mvs-nested-table)
-  .detail-info-form__field-label {
+/* 중메뉴 행: 중첩 폼 높이에 맞춰 라벨 세로 늘림 */
+.mvs-metric-form .detail-info-form__field:has(.mvs-nested-form) > .detail-info-form__field-label {
   height: auto;
   min-height: 50px;
   align-self: stretch;
@@ -75,126 +78,64 @@
 
 .mvs-metric-form--disabled .detail-info-form__field-content {
   white-space: nowrap;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
 }
 
 /*
- * nested table 이 들어가는 값 셀 — padding 20px · stretch
- * (detail-info-nested-table.mdc)
+ * 중메뉴 값 셀 안 DetailInfoForm — 시안: 남은 폭 전체
+ * flex shrink-wrap 방지: block + width 100%
  */
-.mvs-metric-form
-  .detail-info-form__field-content:has(.mvs-nested-table) {
-  display: flex !important;
+.mvs-metric-form .detail-info-form__field-content:has(.mvs-nested-form) {
+  display: block !important;
+  width: 100%;
   padding: 20px !important;
-  justify-content: stretch;
-  align-items: stretch;
-  gap: 0;
   min-height: 0;
   min-width: 0;
+  overflow: visible;
   box-sizing: border-box;
   text-align: left;
 }
 
-.mvs-metric-form
-  .detail-info-form__field-content:has(.mvs-nested-table)
-  > .mvs-nested-table {
-  flex: 1 1 auto;
+.mvs-metric-form .detail-info-form__field-content:has(.mvs-nested-form) > .mvs-nested-form {
+  display: block;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   margin-block: 0 !important;
-  align-self: stretch;
 }
 
-/* ── Nested table (중메뉴 값 칸) ───────────────────────── */
-
-.mvs-nested-table {
+.mvs-nested-form,
+.mvs-nested-form .detail-info-form__body,
+.mvs-nested-form .detail-info-form__row {
   width: 100%;
-  min-width: 0;
+  max-width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: var(--radius-8, 8px);
-  overflow: hidden;
-  background: #fff;
 }
 
-.mvs-nested-table--mid {
-  display: flex;
-  flex-direction: column;
-}
-
-.mvs-nested-table__row {
-  display: grid;
-  min-width: 0;
-}
-
-.mvs-nested-table__row--double {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-}
-
-.mvs-nested-table__row--single {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.mvs-nested-table__row + .mvs-nested-table__row {
-  border-top: 1px solid var(--table-line, #e0e0e0);
-}
-
-.mvs-nested-table__row--double > .mvs-nested-table__cell:first-child {
-  border-right: 1px solid var(--table-line, #e0e0e0);
-}
-
-.mvs-nested-table__cell {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  align-items: stretch;
-  min-width: 0;
+.mvs-nested-form .detail-info-form__field {
+  width: 100%;
   min-height: 50px;
-  box-sizing: border-box;
+  align-items: stretch;
+  grid-template-columns: var(--detail-info-label-w, 200px) minmax(0, 1fr);
 }
 
-/* nested th — 연차보고서 / 게시글 총 조회수: 중앙 */
-.mvs-nested-table__label {
+.mvs-nested-form .detail-info-form__field-label {
   display: flex;
-  width: 220px;
-  min-width: 220px;
-  max-width: 220px;
-  height: 50px;
+  width: var(--detail-info-label-w, 200px);
+  min-width: var(--detail-info-label-w, 200px);
+  max-width: var(--detail-info-label-w, 200px);
   min-height: 50px;
   padding: 12px 20px;
   justify-content: center;
   align-items: center;
-  gap: 8px;
   box-sizing: border-box;
-  background: var(
-    --BG-header,
-    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
-    #fff
-  );
-  border-right: 1px solid var(--table-line, #e0e0e0);
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 140%;
   text-align: center;
   word-break: keep-all;
-  overflow-wrap: break-word;
 }
 
-/* nested td 값 — 좌측 */
-.mvs-nested-table__value {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-width: 0;
+.mvs-nested-form .detail-info-form__field-content {
   min-height: 50px;
-  height: 50px;
-  padding: 12px 20px;
-  box-sizing: border-box;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 140%;
-  font-variant-numeric: tabular-nums;
-  text-align: left;
 }

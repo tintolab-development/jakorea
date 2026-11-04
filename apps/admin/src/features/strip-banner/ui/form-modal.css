@@ -15,18 +15,6 @@
   margin-top: 30px;
 }
 
-.strip-banner-form-modal .content-modal__footer-actions {
-  justify-content: space-between;
-  width: 100%;
-}
-
-.strip-banner-form-modal__footer-start,
-.strip-banner-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* 등록 메타 테이블 ↔ 본문 테이블 분리 (팝업 상세 / CMS form-stack) */
 .strip-banner-form-modal__forms {
   display: flex;
@@ -54,14 +42,26 @@
   width: 140px !important;
   min-width: 140px !important;
   max-width: 140px !important;
-  min-height: 48px;
-  padding: 10px !important;
+  min-height: 52px;
+  padding: 8px 16px !important;
   justify-content: center;
   align-items: center;
   gap: 2px;
   align-self: stretch;
   box-sizing: border-box;
   text-align: center;
+}
+
+.strip-banner-form-modal__form .detail-info-form__row--double {
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.strip-banner-form-modal__form .detail-info-form__row--double > .detail-info-form__field {
+  flex: 1 1 50%;
+  width: 50%;
+  max-width: 50%;
+  min-width: 0;
 }
 
 /*
@@ -74,6 +74,29 @@
   justify-content: flex-start !important;
   align-items: center;
   text-align: left !important;
+  min-height: 52px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+.strip-banner-form-modal__form
+  .detail-info-form__field-content:not(.detail-info-form__field-content--edit) {
+  color: var(--Netural-black, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.strip-banner-form-modal__form
+  .detail-info-form__field-content--edit
+  > .app-radio-group.ant-radio-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  width: auto;
+  max-width: 100%;
 }
 
 .strip-banner-form-modal__form .detail-info-form__field-content > *,
@@ -83,6 +106,21 @@
   margin-inline: 0 auto !important;
   width: auto;
   max-width: 100%;
+}
+
+.strip-banner-form-modal__form
+  .detail-info-form__field-content
+  > .strip-banner-form-modal__link-edit,
+.strip-banner-form-modal__form
+  .detail-info-form__field-content
+  > .strip-banner-form-modal__link-view,
+.strip-banner-form-modal__form
+  .detail-info-form__field-content--edit
+  > .strip-banner-form-modal__link-edit {
+  display: flex !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-inline: 0 !important;
 }
 
 /* 게시 기간 — CmsPeriodDatePicker 전체 너비 (팝업 상세와 동일) */
@@ -96,12 +134,17 @@
   display: inline-block;
   white-space: nowrap;
   text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--Netural-black, #3d3d3d);
 }
 
+/* 시안 연결 링크 td: Radio 16 · Radio 16 · 1×13 디바이더 · Input */
 .strip-banner-form-modal__link-edit,
 .strip-banner-form-modal__link-view {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-start;
   gap: 16px;
@@ -110,18 +153,43 @@
   text-align: left;
 }
 
-.strip-banner-form-modal__link-edit .detail-info-form-inputs-separator,
-.strip-banner-form-modal__link-view .detail-info-form-inputs-separator {
+.strip-banner-form-modal__link-edit .app-radio-group.ant-radio-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 16px;
+  width: auto;
+  max-width: none;
   margin: 0;
 }
 
+.strip-banner-form-modal__link-edit .app-radio-group .ant-radio-wrapper,
+.strip-banner-form-modal__link-edit .app-radio.ant-radio-wrapper {
+  gap: 8px;
+}
+
+.strip-banner-form-modal__link-edit .detail-info-form-inputs-separator,
+.strip-banner-form-modal__link-view .detail-info-form-inputs-separator {
+  margin: 0;
+  flex-shrink: 0;
+}
+
 .strip-banner-form-modal__link-edit .cms-input {
-  flex: 1 1 200px;
+  flex: 1 1 auto;
+  width: auto !important;
   min-width: 0;
+  max-width: none;
 }
 
 .strip-banner-form-modal__link-url {
-  word-break: break-all;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   text-align: left;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
 }

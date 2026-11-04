@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { MetricItem, MetricItemId } from '@/entities/corporate-guide/model/types'
 import { useSaveMetrics } from '@/features/corporate-guide/api/hooks'
 import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -73,22 +74,20 @@ export function MetricsSectionCard({ items }: Props) {
       })
       for (const row of payload) {
         if (!row.title.trim()) {
-          showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!row.description.trim()) {
-          showAlert({ title: '입력 확인', content: '설명을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
-        corporateGuideSaveFailureAlert(
-          err,
-          '핵심 지표 저장에 실패했습니다. 다시 시도해 주세요.'
-        )
+        corporateGuideSaveFailureAlert(err, '핵심 지표 저장에 실패했습니다. 다시 시도해 주세요.')
       )
     }
   }, [drafts, items, saveMutation, showAlert])
@@ -120,16 +119,12 @@ export function MetricsSectionCard({ items }: Props) {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { title: e.target.value })}
-                placeholder="제목을 입력하세요"
+                placeholder="제목을 입력해 주세요"
                 aria-label={`${record.itemLabel} 제목`}
               />
             )
           }
-            return (
-              <span className="corporate-guide-preline">
-                {value || '-'}
-              </span>
-            )
+          return <span className="corporate-guide-preline">{value || '-'}</span>
         },
       },
       {
@@ -148,7 +143,7 @@ export function MetricsSectionCard({ items }: Props) {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { description: e.target.value })}
-                placeholder="설명을 입력하세요"
+                placeholder="설명을 입력해 주세요"
                 aria-label={`${record.itemLabel} 설명`}
               />
             )
@@ -174,7 +169,8 @@ export function MetricsSectionCard({ items }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -184,7 +180,8 @@ export function MetricsSectionCard({ items }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>

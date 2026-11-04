@@ -16,7 +16,14 @@ import {
   formatDateRangeDot,
   formatDateTimeDotWithKoreanWeekday,
 } from '@/shared/lib/format-display'
-import { CmsButton, ConfirmModal, ContentModal, HomepagePiiRevealAction, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
+  ContentModal,
+  HomepagePiiRevealAction,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './detail-modal.css'
 
@@ -176,43 +183,42 @@ export function TalentDonationApplicationDetailModal({
   )
 
   const footer = (
-    <div className="talent-app-detail-modal__footer">
+    <>
       <CmsButton
+        className={CONTENT_MODAL_FOOTER_START_CLASS}
         variant="delete"
-        size="large"
+        size="medium"
         type="button"
         loading={deleteLoading}
         disabled={busy}
         onClick={() => setDeleteConfirmOpen(true)} >
         신청 삭제
       </CmsButton>
-      <div className="talent-app-detail-modal__footer-end">
-        <HomepagePiiRevealAction
-          canReveal={canRevealPii && Boolean(onRevealPii)}
-          revealed={piiRevealed}
-          loading={revealLoading}
-          disabled={busy && !revealLoading}
-          onReveal={() => onRevealPii?.()}
-        />
-        <CmsButton
-          variant="secondary"
-          size="large"
-          type="button"
-          disabled={busy}
-          onClick={onCancel} >
-          닫기
-        </CmsButton>
-        <CmsButton
-          variant="primary"
-          size="large"
-          type="button"
-          loading={confirmLoading}
-          disabled={busy || isConfirmed || !data}
-          onClick={onConfirm} >
-          신청 확인
-        </CmsButton>
-      </div>
-    </div>
+      <HomepagePiiRevealAction
+        canReveal={canRevealPii && Boolean(onRevealPii)}
+        revealed={piiRevealed}
+        loading={revealLoading}
+        disabled={busy && !revealLoading}
+        onReveal={() => onRevealPii?.()}
+      />
+      <CmsButton
+        variant="secondary"
+        size="medium"
+        type="button"
+        disabled={busy}
+        onClick={onCancel} >
+        닫기
+      </CmsButton>
+      <CmsButton
+        variant="primary"
+        size="medium"
+        type="button"
+        loading={confirmLoading}
+        disabled={busy || isConfirmed || !data}
+        onClick={onConfirm} >
+        신청 확인
+      </CmsButton>
+    </>
   )
 
   return (

@@ -100,7 +100,7 @@ export function createInstructorsSchema({
                       value={field.value ?? []}
                       options={[...INSTRUCTOR_TARGET_OPTIONS]}
                       onChange={v => field.onChange(parseInstructorTargetsSelectValue(v))}
-                      placeholder="모집 대상을 선택하세요"
+                      placeholder="모집 대상을 선택해 주세요"
                       className="program-detail-info-tab__target-select"
                     />
                   )}
@@ -168,7 +168,8 @@ export function createInstructorsSchema({
                     name="documentPassAnnouncementDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker inputSize="small"
+                      <CmsDatePicker
+                        inputSize="small"
                         value={toDayjs(field.value as string | Date | undefined) as Dayjs | null}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         className="program-detail-info-tab__date-picker"
@@ -180,7 +181,8 @@ export function createInstructorsSchema({
                     name="documentPassAnnouncementMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput inputSize="small"
+                      <CmsInput
+                        inputSize="small"
                         {...field}
                         value={field.value ?? ''}
                         placeholder="합격자 개별 안내"
@@ -212,7 +214,8 @@ export function createInstructorsSchema({
                     name="interviewStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker inputSize="small"
+                      <CmsDatePicker
+                        inputSize="small"
                         width={'30%'}
                         value={toDayjs(field.value as string | Date | undefined) as Dayjs | null}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
@@ -224,7 +227,8 @@ export function createInstructorsSchema({
                     name="interviewEndDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker inputSize="small"
+                      <CmsDatePicker
+                        inputSize="small"
                         width={'30%'}
                         value={toDayjs(field.value as string | Date | undefined) as Dayjs | null}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
@@ -236,7 +240,8 @@ export function createInstructorsSchema({
                     name="interviewMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsSelect inputSize="small"
+                      <CmsSelect
+                        inputSize="small"
                         width={'25%'}
                         value={field.value ?? undefined}
                         options={INTERVIEW_METHOD_OPTIONS}
@@ -264,7 +269,8 @@ export function createInstructorsSchema({
                     name="finalPassAnnouncementDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker inputSize="small"
+                      <CmsDatePicker
+                        inputSize="small"
                         value={toDayjs(field.value as string | Date | undefined) as Dayjs | null}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                       />
@@ -275,7 +281,8 @@ export function createInstructorsSchema({
                     name="finalPassAnnouncementMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput inputSize="small"
+                      <CmsInput
+                        inputSize="small"
                         {...field}
                         value={field.value ?? ''}
                         placeholder="합격자 개별 안내"
@@ -310,7 +317,8 @@ export function createInstructorsSchema({
                     name="managerName"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput inputSize="small"
+                      <CmsInput
+                        inputSize="small"
                         {...field}
                         value={field.value ?? ''}
                         placeholder="문의처 담당자명"
@@ -323,7 +331,12 @@ export function createInstructorsSchema({
                     name="contactPhone"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsPhoneInput inputSize="small" {...field} value={field.value ?? ''} placeholder="Tel" />
+                      <CmsPhoneInput
+                        inputSize="small"
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="Tel"
+                      />
                     )}
                   />
                   <DetailInfoForm.InputsSeparator />
@@ -332,7 +345,12 @@ export function createInstructorsSchema({
                     name="contactEmail"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput inputSize="small" {...field} value={field.value ?? ''} placeholder="E-mail" />
+                      <CmsInput
+                        inputSize="small"
+                        {...field}
+                        value={field.value ?? ''}
+                        placeholder="E-mail"
+                      />
                     )}
                   />
                 </div>
@@ -353,7 +371,8 @@ export function createInstructorsSchema({
                   name="otherNotes"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput inputSize="small"
+                    <CmsInput
+                      inputSize="small"
                       width={'100%'}
                       {...field}
                       value={field.value ?? ''}

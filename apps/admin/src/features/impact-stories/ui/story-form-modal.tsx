@@ -4,6 +4,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
+import { AdminFieldFrame } from '@jakorea/admin-ui'
+import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import type {
   ImpactStory,
   ImpactStoryAttachment,
@@ -21,6 +23,20 @@ import {
   RichTextEditor,
 } from '@/shared/rich-text'
 import {
+  ATTACHMENT_ACCEPT,
+  ATTACHMENT_ERROR,
+  ATTACHMENT_MULTI_GENERAL_GUIDE_LINE,
+  ATTACHMENT_MULTI_TOTAL_MAX_BYTES,
+  ATTACHMENT_PER_FILE_MAX_BYTES,
+  ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
+  generalAttachmentMimeFromFile,
+  withAttachmentFilenameGuide,
+  sumAttachmentBytes,
+  validateGeneralAttachmentBatch,
+  validateSingleJpgPngFile,
+} from '@/shared/lib/attachment-policy'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
   CmsInput,
@@ -28,33 +44,20 @@ import {
   CmsRadioGroup,
   CmsSelect,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
 
 import './story-form-modal.css'
 
-const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
-const MAX_BYTES = FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
-
 const THUMB_GUIDE = [
-  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
+  ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
   '- 권장 배너 사이즈는 630 × 355px입니다.',
 ] as const
 
-const ATTACH_GUIDE = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-] as const
-
-function isAllowedImageFile(file: File): boolean {
-  const type = file.type.toLowerCase()
-  if (type === 'image/jpeg' || type === 'image/png') return true
-  const name = file.name.toLowerCase()
-  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
-}
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_MULTI_GENERAL_GUIDE_LINE])
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -66,10 +69,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 function mimeFromFile(file: File): ImpactStoryAttachment['mime'] {
-  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
-    return 'image/png'
-  }
-  return 'image/jpeg'
+  return generalAttachmentMimeFromFile(file)
 }
 
 export type StoryFormValues = ImpactStoryCreateInput
@@ -143,7 +143,6 @@ export function StoryFormModal({
 
   const {
     editor,
-    editorMinHeight,
     getHTML,
     editorMode,
     htmlSource,
@@ -151,7 +150,6 @@ export function StoryFormModal({
     onHtmlSourceChange,
     resolveImageSrc,
   } = useStoryWysiwygEditor(open, initialMarkdown, editorResetKey, {
-    placeholder: '게시글 내용을 입력하세요',
     contentFormat: editorContentFormat,
     // 기존 스펙: 삽입(이미지·YouTube) 유지
     allowInlineMedia: true,
@@ -189,22 +187,8 @@ export function StoryFormModal({
   const fileNames = useMemo(() => attachments.map(a => a.name), [attachments])
   const thumbnailNames = useMemo(() => (thumbnail?.name ? [thumbnail.name] : []), [thumbnail])
 
-  const readAcceptedImage = useCallback(
+  const readAcceptedFile = useCallback(
     async (file: File, id: string): Promise<ImpactStoryAttachment | null> => {
-      if (!isAllowedImageFile(file)) {
-        showAlert({
-          title: '파일 형식',
-          content: 'JPG, PNG 형식만 등록할 수 있습니다.',
-        })
-        return null
-      }
-      if (file.size > MAX_BYTES) {
-        showAlert({
-          title: '파일 용량',
-          content: '파일은 최대 20MB까지 등록 가능합니다.',
-        })
-        return null
-      }
       try {
         const dataUrl = await readFileAsDataUrl(file)
         return {
@@ -229,25 +213,42 @@ export function StoryFormModal({
     async (files: File[]) => {
       const file = files[0]
       if (!file) return
-      const next = await readAcceptedImage(file, `thumb-${Date.now()}`)
+      const error = validateSingleJpgPngFile(file)
+      if (error) {
+        showAlert({
+          title: error === ATTACHMENT_ERROR.format ? '파일 형식' : '파일 용량',
+          content: error,
+        })
+        return
+      }
+      const next = await readAcceptedFile(file, `thumb-${Date.now()}`)
       if (next) setThumbnail(next)
     },
-    [readAcceptedImage]
+    [readAcceptedFile, showAlert]
   )
 
   const handleFilesChange = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return
+      const error = validateGeneralAttachmentBatch({
+        incoming: files,
+        existingCount: attachments.length,
+        existingBytes: sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 })),
+      })
+      if (error) {
+        showAlert({ title: '안내', content: error })
+        return
+      }
       const accepted: ImpactStoryAttachment[] = []
       for (let i = 0; i < files.length; i++) {
-        const next = await readAcceptedImage(files[i]!, `new-${Date.now()}-${i}`)
+        const next = await readAcceptedFile(files[i]!, `new-${Date.now()}-${i}`)
         if (next) accepted.push(next)
       }
       if (accepted.length > 0) {
         setAttachments(prev => [...prev, ...accepted])
       }
     },
-    [readAcceptedImage]
+    [attachments, readAcceptedFile, showAlert]
   )
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -256,7 +257,7 @@ export function StoryFormModal({
 
   const handleSubmit = useCallback(() => {
     if (!publishedAt || !publishedAt.isValid()) {
-      showAlert({ title: '입력 확인', content: '게시일시를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const m = publishedAt.minute()
@@ -268,17 +269,17 @@ export function StoryFormModal({
       return
     }
     if (!categoryId) {
-      showAlert({ title: '입력 확인', content: '카테고리를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const t = title.trim()
     if (!t) {
-      showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const contentHtml = getHTML().trim()
     if (isEmptyAdminHtml(contentHtml)) {
-      showAlert({ title: '입력 확인', content: '게시글 내용을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const bodyError = getRemoteRichTextBodyError(contentHtml)
@@ -287,7 +288,7 @@ export function StoryFormModal({
       return
     }
     if (!thumbnail) {
-      showAlert({ title: '입력 확인', content: '섬네일 이미지를 등록해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (isPinned && pinnedCountExcludingSelf >= IMPACT_STORY_PIN_MAX) {
@@ -336,39 +337,38 @@ export function StoryFormModal({
         size="large"
         className="story-form-modal"
         footer={
-          <div className="story-form-modal__footer">
+          <>
             {mode === 'edit' && onDelete ? (
               <CmsButton
+                className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="medium"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
                 onClick={() => setDeleteConfirmOpen(true)}
               >
-                게시글 삭제
+                삭제
               </CmsButton>
             ) : null}
-            <div className="story-form-modal__footer-end">
-              <CmsButton
-                variant="secondary"
-                size="large"
-                type="button"
-                disabled={confirmLoading || deleteLoading}
-                onClick={onCancel}
-              >
-                취소
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                type="button"
-                loading={confirmLoading}
-                onClick={handleSubmit}
-              >
-                {submitLabel}
-              </CmsButton>
-            </div>
-          </div>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              disabled={confirmLoading || deleteLoading}
+              onClick={onCancel}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              type="button"
+              loading={confirmLoading}
+              onClick={handleSubmit}
+            >
+              {submitLabel}
+            </CmsButton>
+          </>
         }
       >
         <div className="story-form-modal__form">
@@ -378,7 +378,7 @@ export function StoryFormModal({
                 <FieldLabel required>게시일시</FieldLabel>
                 <CmsDatePicker
                   inputSize="large"
-                  width={280}
+                  width={240}
                   showTime={{
                     format: 'HH:mm',
                     minuteStep: 30 as const,
@@ -386,16 +386,16 @@ export function StoryFormModal({
                   format="YYYY.MM.DD HH:mm"
                   value={publishedAt}
                   onChange={v => setPublishedAt(v)}
-                  placeholder="게시일시를 선택하세요"
+                  placeholder="게시일시를 선택해 주세요"
                 />
               </div>
               <div className="story-form-modal__filter-field story-form-modal__filter-field--category">
                 <FieldLabel required>카테고리</FieldLabel>
                 <CmsSelect
                   inputSize="large"
-                  width={200}
+                  width={240}
                   value={categoryId || undefined}
-                  placeholder="카테고리를 선택하세요"
+                  placeholder="카테고리를 선택해 주세요"
                   options={categoryOptions}
                   onChange={v => setCategoryId(String(v ?? ''))}
                 />
@@ -403,14 +403,14 @@ export function StoryFormModal({
               <div className="story-form-modal__filter-field story-form-modal__filter-field--radio">
                 <FieldLabel required>공개 여부</FieldLabel>
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={isPublic ? 'public' : 'private'}
                   onChange={e => setIsPublic(e.target.value === 'public')}
                 >
-                  <CmsRadio size="large" value="public">
+                  <CmsRadio size="medium" value="public">
                     공개
                   </CmsRadio>
-                  <CmsRadio size="large" value="private">
+                  <CmsRadio size="medium" value="private">
                     비공개
                   </CmsRadio>
                 </CmsRadioGroup>
@@ -418,14 +418,14 @@ export function StoryFormModal({
               <div className="story-form-modal__filter-field story-form-modal__filter-field--radio">
                 <FieldLabel required>상단 고정</FieldLabel>
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={isPinned ? 'on' : 'off'}
                   onChange={e => setIsPinned(e.target.value === 'on')}
                 >
-                  <CmsRadio size="large" value="off">
+                  <CmsRadio size="medium" value="off">
                     고정 안함
                   </CmsRadio>
-                  <CmsRadio size="large" value="on">
+                  <CmsRadio size="medium" value="on">
                     고정
                   </CmsRadio>
                 </CmsRadioGroup>
@@ -440,16 +440,19 @@ export function StoryFormModal({
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="제목을 입력하세요"
+              placeholder="제목을 입력해 주세요"
             />
           </div>
 
-          <div className="story-form-modal__section story-form-modal__section--editor">
-            <FieldLabel required>내용</FieldLabel>
+          <AdminFieldFrame
+            size="large"
+            label="내용"
+            required
+            className="story-form-modal__section story-form-modal__section--editor"
+          >
             <div className="story-form-modal__editor-host">
               <RichTextEditor
                 editor={editor}
-                minHeight={editorMinHeight}
                 allowInlineMedia
                 resolveImageSrc={resolveImageSrc}
                 allowRawHtmlBlock
@@ -459,51 +462,59 @@ export function StoryFormModal({
                 onHtmlSourceChange={onHtmlSourceChange}
               />
             </div>
-          </div>
+          </AdminFieldFrame>
 
-          <div className="story-form-modal__files">
-            <div className="story-form-modal__attachment">
-              <div className="story-form-modal__attachment-label">
-                <span>섬네일</span>
-                <span className="story-form-modal__required" aria-hidden>
-                  *
-                </span>
-              </div>
-              <div className="story-form-modal__attachment-body">
-                <FileSelectField
-                  className="story-form-modal__file-field"
-                  multiple={false}
-                  accept={IMAGE_ACCEPT}
-                  buttonLabel="파일 추가"
-                  fileNames={thumbnailNames}
-                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
-                  guideLines={THUMB_GUIDE}
-                  onFilesChange={files => {
-                    void handleThumbnailChange(files)
-                  }}
-                  onRemoveFile={() => setThumbnail(null)}
-                />
-              </div>
-            </div>
-            <div className="story-form-modal__attachment">
-              <div className="story-form-modal__attachment-label">첨부 파일</div>
-              <div className="story-form-modal__attachment-body">
-                <FileSelectField
-                  className="story-form-modal__file-field"
-                  multiple
-                  accept={IMAGE_ACCEPT}
-                  buttonLabel="파일 추가"
-                  fileNames={fileNames}
-                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
-                  guideLines={ATTACH_GUIDE}
-                  onFilesChange={files => {
-                    void handleFilesChange(files)
-                  }}
-                  onRemoveFile={handleRemoveFile}
-                />
-              </div>
-            </div>
-          </div>
+          <DetailInfoForm
+            title="첨부 파일"
+            hideHeader
+            mode="edit"
+            className="story-form-modal__files"
+          >
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="대표 썸네일"
+                required
+                view={null}
+                edit={
+                  <FileSelectField
+                    className="story-form-modal__file-field"
+                    multiple={false}
+                    accept={ATTACHMENT_ACCEPT.jpgPng}
+                    buttonLabel="파일 추가"
+                    fileNames={thumbnailNames}
+                    maxTotalBytes={ATTACHMENT_PER_FILE_MAX_BYTES}
+                    guideLines={THUMB_GUIDE}
+                    onFilesChange={files => {
+                      void handleThumbnailChange(files)
+                    }}
+                    onRemoveFile={() => setThumbnail(null)}
+                  />
+                }
+              />
+            </DetailInfoForm.Row>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="첨부 파일"
+                view={null}
+                edit={
+                  <FileSelectField
+                    className="story-form-modal__file-field"
+                    multiple
+                    accept={ATTACHMENT_ACCEPT.general}
+                    buttonLabel="파일 추가"
+                    fileNames={fileNames}
+                    currentTotalBytes={sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 }))}
+                    maxTotalBytes={ATTACHMENT_MULTI_TOTAL_MAX_BYTES}
+                    guideLines={ATTACH_GUIDE}
+                    onFilesChange={files => {
+                      void handleFilesChange(files)
+                    }}
+                    onRemoveFile={handleRemoveFile}
+                  />
+                }
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
         </div>
       </ContentModal>
 

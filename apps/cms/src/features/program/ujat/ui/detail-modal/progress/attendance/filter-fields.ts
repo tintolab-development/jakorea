@@ -33,7 +33,7 @@ export function buildUjatAttendanceFilterFields(
       key: 'volunteerName',
       type: 'search',
       label: '봉사자명',
-      placeholder: '봉사자명을 입력하세요',
+      placeholder: '봉사자명을 입력해 주세요',
       width: '33.33%',
     },
     {

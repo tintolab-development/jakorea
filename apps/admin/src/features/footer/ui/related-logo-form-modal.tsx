@@ -18,12 +18,13 @@ import {
   notifyFileSelectTotalSizeExceeded,
   useCmsAlert,
 } from '@/shared/ui'
+import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '@/shared/lib/http-link-url'
 
 import './related-logo-form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 로고 사이즈는 100 × 60px입니다.',
 ]
 
@@ -83,6 +84,7 @@ function ImagePlaceholderIcon() {
 export type RelatedLogoFormValues = {
   isActive: boolean
   name: string
+  linkUrl: string
   logoUrl: string
   logoFileName?: string
   logoAssetId?: number
@@ -107,6 +109,7 @@ export function RelatedLogoFormModal({
   const { showAlert } = useCmsAlert()
   const [isActive, setIsActive] = useState(true)
   const [name, setName] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [logoFileName, setLogoFileName] = useState('')
   const [logoAssetId, setLogoAssetId] = useState<number | undefined>()
@@ -116,6 +119,7 @@ export function RelatedLogoFormModal({
     if (!open || !initial) return
     setIsActive(initial.isActive)
     setName(initial.name)
+    setLinkUrl(initial.linkUrl)
     setLogoUrl(initial.logoUrl)
     setLogoFileName(initial.logoFileName ?? '')
     setLogoAssetId(initial.logoAssetId)
@@ -129,7 +133,7 @@ export function RelatedLogoFormModal({
       if (!isAllowedImageFile(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }
@@ -159,15 +163,21 @@ export function RelatedLogoFormModal({
   )
 
   const handleSubmit = useCallback(() => {
+    const trimmedLink = linkUrl.trim()
+    if (trimmedLink && !isValidHttpLinkUrl(trimmedLink)) {
+      showAlert(HTTP_LINK_URL_FORMAT_ALERT)
+      return
+    }
     onSubmit({
       isActive,
       name: name.trim(),
+      linkUrl: trimmedLink,
       logoUrl: logoUrl.trim(),
       logoFileName: logoFileName || undefined,
       logoAssetId: logoFile ? undefined : logoAssetId,
       logoFile,
     })
-  }, [isActive, logoAssetId, logoFile, logoFileName, logoUrl, name, onSubmit])
+  }, [isActive, linkUrl, logoAssetId, logoFile, logoFileName, logoUrl, name, onSubmit, showAlert])
 
   return (
     <ContentModal
@@ -181,19 +191,21 @@ export function RelatedLogoFormModal({
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="h40"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="h40"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             저장
           </CmsButton>
         </>
@@ -231,11 +243,26 @@ export function RelatedLogoFormModal({
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="small"
                 width="100%"
                 value={name}
-                placeholder="기관명을 입력하세요"
+                placeholder="기관명을 입력해 주세요"
                 onChange={e => setName(e.target.value)}
+              />
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="연결 링크"
+            view={null}
+            edit={
+              <CmsInput
+                inputSize="small"
+                width="100%"
+                value={linkUrl}
+                placeholder="연결 링크를 입력해 주세요"
+                onChange={e => setLinkUrl(e.target.value)}
               />
             }
           />
@@ -245,13 +272,9 @@ export function RelatedLogoFormModal({
             label="로고 이미지"
             view={null}
             edit={
-              <div className="footer-related-logo-form-modal__image-row">
-                <div className="footer-related-logo-form-modal__preview">
-                  {logoUrl ? (
-                    <img src={logoUrl} alt="로고 미리보기" />
-                  ) : (
-                    <ImagePlaceholderIcon />
-                  )}
+              <div className="file-select-image-cell">
+                <div className="file-select-image-cell__preview">
+                  {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
                 </div>
                 <FileSelectField
                   className="footer-related-logo-form-modal__file-field"

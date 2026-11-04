@@ -22,7 +22,10 @@ type CmsRichTextEditorProps = Omit<RichTextEditorProps, 'toolbar'> & {
   onHtmlSourceChange?: (html: string) => void
 }
 
-/** CMS RichText 에디터 — Ant Design 툴바 기본 포함 */
+/**
+ * CMS RichText 에디터 — Ant Design 툴바 기본 포함.
+ * 셸 `minHeight` 기본 284px. 더 큰 고정 높이는 `height`.
+ */
 export function CmsRichTextEditor({
   editor,
   showToolbar = true,

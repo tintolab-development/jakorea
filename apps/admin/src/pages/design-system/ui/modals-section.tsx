@@ -1,5 +1,13 @@
 import { useState } from 'react'
-import { AlertModal, CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
+import {
+  AlertModal,
+  CmsButton,
+  ConfirmModal,
+  ContentModal,
+  NO_SELECTION_ALERT,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  useCmsAlert,
+} from '@/shared/ui'
 import { DsDemo, DsSection } from './section'
 
 export function ModalsSection() {
@@ -33,12 +41,17 @@ export function ModalsSection() {
             variant="primary"
             size="medium"
             onClick={() =>
-              showAlert({
-                title: '선택 항목 없음',
-                content: '삭제할 배너를 선택해 주세요.',
-              })
-            } >
+              showAlert(NO_SELECTION_ALERT)
+            }
+          >
             useCmsAlert
+          </CmsButton>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            onClick={() => showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)}
+          >
+            필수 항목 입력 안내
           </CmsButton>
         </div>
       </DsDemo>
@@ -51,10 +64,10 @@ export function ModalsSection() {
         width={800}
         footer={
           <>
-            <CmsButton variant="secondary" size="large" onClick={() => setContentOpen(false)}>
+            <CmsButton variant="secondary" size="medium" onClick={() => setContentOpen(false)}>
               취소
             </CmsButton>
-            <CmsButton variant="primary" size="large" onClick={() => setContentOpen(false)}>
+            <CmsButton variant="primary" size="medium" onClick={() => setContentOpen(false)}>
               배너 등록
             </CmsButton>
           </>
@@ -66,7 +79,7 @@ export function ModalsSection() {
       <ConfirmModal
         open={confirmOpen}
         title="배너 삭제"
-        content={"선택한 배너를 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다."}
+        content={'선택한 배너를 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.'}
         confirmText="삭제"
         danger
         onCancel={() => setConfirmOpen(false)}
@@ -77,7 +90,7 @@ export function ModalsSection() {
         open={alertOpen}
         onClose={() => setAlertOpen(false)}
         title="안내"
-        content="파일은 총 최대 15MB까지 업로드 가능합니다."
+        content="20MB를 초과한 파일은 등록할 수 없습니다."
       />
     </DsSection>
   )

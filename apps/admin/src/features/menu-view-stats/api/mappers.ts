@@ -56,7 +56,7 @@ function fillMetric(
       viewCodes: readonly string[]
       postCodes?: readonly string[]
     }>
-  },
+  }
 ): MenuViewMetric {
   if (metric.kind === 'disabled') return metric
   if (metric.kind === 'simple') {
@@ -79,7 +79,11 @@ function fillMetric(
       midRows: metric.midRows.map(row => {
         const spec = codes.midRows?.find(m => m.id === row.id)
         if (!spec) {
-          return { ...row, viewCount: 0, postViewCount: row.postViewCount === undefined ? undefined : 0 }
+          return {
+            ...row,
+            viewCount: 0,
+            postViewCount: row.postViewCount === undefined ? undefined : 0,
+          }
         }
         return {
           ...row,
@@ -198,11 +202,10 @@ function buildSectionSpecs(): Record<MenuViewTabId, SectionSpec[]> {
         section: {
           id: 'impact-main',
           title: '임팩트 스토리',
-          metric: { kind: 'entry-posts', entryViews: 0, postViews: 0 },
+          metric: { kind: 'simple', entryViews: 0 },
         },
         codes: {
           entry: ['IMPACT_STORY_HOME_VIEW', 'IMPACT_STORY_LIST_VIEW'],
-          posts: ['IMPACT_STORY_DETAIL_VIEW'],
         },
       },
     ],
@@ -210,7 +213,7 @@ function buildSectionSpecs(): Record<MenuViewTabId, SectionSpec[]> {
       {
         section: {
           id: 'career',
-          title: '진로취업',
+          title: '프로그램 소개_진로취업',
           metric: { kind: 'simple', entryViews: 0 },
         },
         codes: { entry: ['EDU_CAREER_VIEW'] },
@@ -218,7 +221,7 @@ function buildSectionSpecs(): Record<MenuViewTabId, SectionSpec[]> {
       {
         section: {
           id: 'finance',
-          title: '경제금융',
+          title: '프로그램 소개_경제금융',
           metric: { kind: 'simple', entryViews: 0 },
         },
         codes: { entry: ['EDU_ECONOMY_VIEW'] },
@@ -226,7 +229,7 @@ function buildSectionSpecs(): Record<MenuViewTabId, SectionSpec[]> {
       {
         section: {
           id: 'entrepreneur',
-          title: '기업가 정신',
+          title: '프로그램 소개_기업가 정신',
           metric: { kind: 'simple', entryViews: 0 },
         },
         codes: { entry: ['EDU_ENTREPRENEURSHIP_VIEW'] },
@@ -234,7 +237,7 @@ function buildSectionSpecs(): Record<MenuViewTabId, SectionSpec[]> {
       {
         section: {
           id: 'digital',
-          title: '디지털 리터러시',
+          title: '프로그램 소개_디지털 리터러시',
           metric: { kind: 'simple', entryViews: 0 },
         },
         codes: { entry: ['EDU_DIGITAL_LITERACY_VIEW'] },
@@ -339,7 +342,7 @@ function mapSummary(response: MenuStatistics): MenuViewSummary {
 
 export function mapMenuStatisticsToDomain(
   response: MenuStatistics,
-  period: MenuViewPeriod,
+  period: MenuViewPeriod
 ): MenuViewStatsResult {
   const index = buildMetricIndex(response)
   const specs = buildSectionSpecs()

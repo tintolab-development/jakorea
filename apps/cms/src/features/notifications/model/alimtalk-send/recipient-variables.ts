@@ -477,7 +477,8 @@ export function formatAlimtalkPartialSendConfirm(input: {
   for (const gap of input.gaps.slice(0, 8)) {
     const reasons: string[] = []
     if (gap.manualMissing.length > 0) reasons.push(`값 없음: ${gap.manualMissing.join(', ')}`)
-    if (gap.unsafeManual.length > 0) reasons.push(`허용되지 않는 링크: ${gap.unsafeManual.join(', ')}`)
+    if (gap.unsafeManual.length > 0)
+      reasons.push(`허용되지 않는 링크: ${gap.unsafeManual.join(', ')}`)
     if (gap.blocked.length > 0) reasons.push(`서버 전용 변수: ${gap.blocked.join(', ')}`)
     if (gap.needsProgram.length > 0) reasons.push(`프로그램 변수: ${gap.needsProgram.join(', ')}`)
     lines.push(`${gap.label} — ${reasons.join(' / ')}`)
@@ -493,7 +494,7 @@ export function formatAlimtalkRecipientVariableGapMessage(
   const lines: string[] = []
   const needsProgram = [...new Set(gaps.flatMap(gap => gap.needsProgram))]
   if (needsProgram.length > 0) {
-    lines.push('프로그램 필수 변수가 있어 프로그램을 선택하세요.')
+    lines.push('프로그램 필수 변수가 있어 프로그램을 선택해 주세요.')
     lines.push(needsProgram.join(', '))
   }
   const unsafe = gaps.filter(gap => gap.unsafeManual.length > 0)
@@ -514,7 +515,7 @@ export function formatAlimtalkRecipientVariableGapMessage(
   }
   const manual = gaps.filter(gap => gap.manualMissing.length > 0)
   if (manual.length > 0) {
-    lines.push('수신자별 변수값을 입력하세요. 값이 없으면 해당 수신자는 발송할 수 없습니다.')
+    lines.push('수신자별 변수값을 입력해 주세요. 값이 없으면 해당 수신자는 발송할 수 없습니다.')
     for (const gap of manual.slice(0, 8)) {
       lines.push(`${gap.label}: ${gap.manualMissing.join(', ')}`)
     }
@@ -576,10 +577,7 @@ export function pickAlimtalkRecipientSendVariables(input: {
     if (typeof value !== 'string') continue
     const trimmed = value.trim()
     if (!trimmed) continue
-    if (
-      key === ALIMTALK_MANUAL_LINK_PLACEHOLDER_KEY &&
-      isUnsafeAlimtalkManualLinkValue(trimmed)
-    ) {
+    if (key === ALIMTALK_MANUAL_LINK_PLACEHOLDER_KEY && isUnsafeAlimtalkManualLinkValue(trimmed)) {
       continue
     }
     next[key] = trimmed

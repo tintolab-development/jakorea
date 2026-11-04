@@ -14,10 +14,11 @@
 
 .table-header-title--wrapper {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   flex-wrap: wrap;
   gap: var(--admin-list-title-desc-gap, 10px);
   min-width: 0;
+  height: 100%;
 }
 
 .table-title {
@@ -54,52 +55,4 @@
   justify-content: flex-end;
   align-items: center;
   gap: var(--admin-list-toolbar-actions-gap, 8px);
-}
-
-/*
- * 목록·카드 툴바 액션 버튼 — 높이 40 (폭은 라벨 + size min-width)
- * 엑셀은 아이콘+라벨 row 레이아웃만 유지
- */
-.table-header-actions--wrapper .cms-button.ant-btn:not(.excel-button),
-.admin-list-toolbar > .cms-button.ant-btn:not(.excel-button),
-.hac-panel__toolbar-buttons .cms-button.ant-btn:not(.excel-button) {
-  display: inline-flex !important;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
-  padding: 6px 16px !important;
-  padding-block: 6px !important;
-  padding-inline: 16px !important;
-  gap: 6px;
-  border-radius: var(--radius-8, 8px);
-  font-size: 16px;
-  box-sizing: border-box;
-}
-
-.table-header-actions--wrapper .cms-button.ant-btn.cms-button--has-icon:not(.excel-button),
-.hac-panel__toolbar-buttons .cms-button.ant-btn.cms-button--has-icon:not(.excel-button) {
-  flex-direction: row;
-}
-
-/* 엑셀 다운로드 — 아이콘+라벨 row, 높이 40 */
-.table-header-actions--wrapper .cms-button.ant-btn.excel-button,
-.admin-list-toolbar > .cms-button.ant-btn.excel-button,
-.hac-panel__toolbar-buttons .cms-button.ant-btn.excel-button {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  justify-content: center;
-  align-items: center;
-  height: 40px !important;
-  min-height: 40px !important;
-  max-height: 40px !important;
-  padding: 6px 16px 6px 10px !important;
-  padding-block: 6px !important;
-  padding-inline: 10px 16px !important;
-  gap: 6px;
-  border-radius: var(--radius-8, 8px);
-  font-size: 16px;
-  box-sizing: border-box;
 }

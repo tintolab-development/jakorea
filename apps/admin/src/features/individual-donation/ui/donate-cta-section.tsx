@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { DonateCta } from '@/entities/individual-donation/model/types'
 import { useSaveDonateCta } from '@/features/individual-donation/api/hooks'
 import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
-import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -31,10 +32,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
     setDraftLink(donateCta.linkUrl)
   }, [donateCta.buttonLabel, donateCta.linkUrl, isEditing])
 
-  const rows = useMemo<Row[]>(
-    () => [{ key: 'donate', ...donateCta }],
-    [donateCta]
-  )
+  const rows = useMemo<Row[]>(() => [{ key: 'donate', ...donateCta }], [donateCta])
 
   const handleEdit = useCallback(() => {
     setDraftLabel(donateCta.buttonLabel)
@@ -52,16 +50,17 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
     const buttonLabel = draftLabel.trim()
     const linkUrl = draftLink.trim()
     if (!buttonLabel) {
-      showAlert({ title: '입력 확인', content: '버튼명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!linkUrl) {
-      showAlert({ title: '입력 확인', content: '연결 링크를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     try {
       await saveMutation.mutateAsync({ buttonLabel, linkUrl, version: donateCta.version })
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         individualDonationSaveFailureAlert(
@@ -87,7 +86,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
               width="100%"
               value={draftLabel}
               onChange={e => setDraftLabel(e.target.value)}
-              placeholder="버튼명을 입력하세요"
+              placeholder="버튼명을 입력해 주세요"
               aria-label="개인후원 CTA 버튼명"
             />
           ) : (
@@ -108,7 +107,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 width="100%"
                 value={draftLink}
                 onChange={e => setDraftLink(e.target.value)}
-                placeholder="연결 링크를 입력하세요"
+                placeholder="연결 링크를 입력해 주세요"
                 aria-label="성장 후원하기 연결 링크"
               />
             )
@@ -125,7 +124,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
   )
 
   return (
-    <div className="individual-donation-section">
+    <section className="admin-list-card individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ {donateCta.buttonLabel || '성장 후원하기'}</span>
@@ -138,7 +137,8 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -148,7 +148,8 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
@@ -168,6 +169,6 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
         rowKey="key"
         scroll={{ x: true }}
       />
-    </div>
+    </section>
   )
 }

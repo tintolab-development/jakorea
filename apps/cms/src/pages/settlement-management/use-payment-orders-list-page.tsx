@@ -283,8 +283,7 @@ export function usePaymentOrdersListPage() {
     return t === 'program' || t === 'instructor' ? t : null
   }, [searchParams])
 
-  const resolvedExposureMode: ExposureMode =
-    detailExposureFromUrl ?? appliedFromUrl.exposureMode
+  const resolvedExposureMode: ExposureMode = detailExposureFromUrl ?? appliedFromUrl.exposureMode
 
   const calendarEventsOverride = useMemo(() => {
     if (!paymentOrdersRemote || viewMode !== 'calendar') return undefined
@@ -527,14 +526,14 @@ export function usePaymentOrdersListPage() {
           key: 'programName',
           type: 'search',
           label: '프로그램명',
-          placeholder: '프로그램명을 입력하세요',
+          placeholder: '프로그램명을 입력해 주세요',
           width: FILTER_CONTROL_MAX_WIDTH_PX,
         }
       : {
           key: 'instructorName',
           type: 'search',
           label: '신청자명',
-          placeholder: '신청자명을 입력하세요',
+          placeholder: '신청자명을 입력해 주세요',
           width: FILTER_CONTROL_MAX_WIDTH_PX,
         }
 

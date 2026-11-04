@@ -48,7 +48,7 @@ export function buildSchoolDetailAttendanceFilterFields(
       key: 'studentName',
       type: 'search',
       label: '학생명',
-      placeholder: '학생명을 입력하세요',
+      placeholder: '학생명을 입력해 주세요',
       width: FILTER_CONTROL_WIDTH,
     },
     {
@@ -67,10 +67,7 @@ export function buildSchoolDetailAttendanceFilterFields(
       type: 'select',
       label: '학급',
       placeholder: '전체',
-      options: [
-        { label: '전체', value: SCHOOL_ATTENDANCE_FILTER_ALL },
-        ...studentClassOptions,
-      ],
+      options: [{ label: '전체', value: SCHOOL_ATTENDANCE_FILTER_ALL }, ...studentClassOptions],
       width: FILTER_CONTROL_WIDTH,
     },
     {

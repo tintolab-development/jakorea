@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { HowItem, HowItemId } from '@/entities/talent-donation-intro/model/types'
 import { useSaveHowItems } from '@/features/talent-donation-intro/api/hooks'
 import { talentDonationIntroSaveFailureAlert } from '@/features/talent-donation-intro/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -72,16 +73,17 @@ export function HowSectionCard({ items }: Props) {
       })
       for (const row of payload) {
         if (!row.title.trim()) {
-          showAlert({ title: '입력 확인', content: '타이틀을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!row.description.trim()) {
-          showAlert({ title: '입력 확인', content: '설명 텍스트를 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         talentDonationIntroSaveFailureAlert(
@@ -119,7 +121,7 @@ export function HowSectionCard({ items }: Props) {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { title: e.target.value })}
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
                 aria-label={`${record.id}번 타이틀`}
               />
             )
@@ -143,7 +145,7 @@ export function HowSectionCard({ items }: Props) {
                 rows={3}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { description: e.target.value })}
-                placeholder="설명 텍스트를 입력하세요"
+                placeholder="설명 텍스트를 입력해 주세요"
                 aria-label={`${record.id}번 설명 텍스트`}
               />
             )
@@ -169,7 +171,8 @@ export function HowSectionCard({ items }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -179,7 +182,8 @@ export function HowSectionCard({ items }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>

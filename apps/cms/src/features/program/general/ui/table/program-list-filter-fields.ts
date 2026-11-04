@@ -22,7 +22,7 @@ export const programListOverviewFilterFields = [
     key: 'title',
     type: 'search' as const,
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -60,7 +60,7 @@ export const programListScheduledFilterFields = [
     key: 'title',
     type: 'search' as const,
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -93,7 +93,7 @@ export const programListInProgressFilterFields = [
     key: 'title',
     type: 'search' as const,
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -120,7 +120,7 @@ export const participantFilterFields = [
     key: 'search',
     type: 'search' as const,
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: '20%',
   },
   {

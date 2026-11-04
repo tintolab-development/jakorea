@@ -57,6 +57,8 @@ export const queryKeys = {
   volunteerApplicationDetail: (applicationId: string) =>
     [...queryKeys.applications(), 'volunteer-detail', applicationId] as const,
   execution: () => [...queryKeys.all, 'execution'] as const,
+  educationProgressSummary: (programId: string) =>
+    [...queryKeys.all, 'education-progress-summary', programId] as const,
   planningEstimates: (programId: string) =>
     [...queryKeys.execution(), 'planning-estimates', programId] as const,
   allocationMatrixRoot: (programId: string) =>
@@ -104,18 +106,14 @@ export const queryKeys = {
   partnerAssignments: (programId: string, scheduleId: string) =>
     [...queryKeys.partnerAssignmentsRoot(programId), scheduleId] as const,
   /** 기관 상세 배정 탭. 출결 담당자·학급 봉사자. Class E — 배정 변경이 잦아 30초. */
+  institutionAssignmentRoot: (programId: string) =>
+    [...queryKeys.execution(), 'institution-assignment', programId] as const,
   institutionAssignment: (
     programId: string,
     institutionId: string,
     semesterType: 'FIRST_HALF' | 'SECOND_HALF'
   ) =>
-    [
-      ...queryKeys.execution(),
-      'institution-assignment',
-      programId,
-      institutionId,
-      semesterType,
-    ] as const,
+    [...queryKeys.institutionAssignmentRoot(programId), institutionId, semesterType] as const,
   partnerRecommendationRoot: (programId: string) =>
     [...queryKeys.execution(), 'partner-recommendation', programId] as const,
   partnerRecommendation: (

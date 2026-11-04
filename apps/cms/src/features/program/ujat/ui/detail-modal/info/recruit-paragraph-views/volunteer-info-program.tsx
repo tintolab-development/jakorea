@@ -337,7 +337,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                     form={form}
                     startName="startDate"
                     endName="endDate"
-                    placeholder="프로그램 운영 기간을 선택하세요"
+                    placeholder="프로그램 운영 기간을 선택해 주세요"
                   />
                 </div>
               ) : undefined
@@ -376,7 +376,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                       width={240}
                       value={normalizeRecruitmentTargetSelectValues(field.value)}
                       onChange={next => field.onChange(recruitmentTargetOptionValuesToStored(next))}
-                      placeholder="모집 대상을 선택하세요"
+                      placeholder="모집 대상을 선택해 주세요"
                       options={[...UJAT_VOLUNTEER_RECRUIT_TARGET_OPTIONS]}
                     />
                   )}
@@ -420,7 +420,7 @@ export function UjatRecruitVolunteerInfoProgramView({
                     form={form}
                     startName={recruitStartName}
                     endName={recruitEndName}
-                    placeholder="봉사자 모집 기간을 선택하세요"
+                    placeholder="봉사자 모집 기간을 선택해 주세요"
                     clearToUndefined
                     dateOnly
                   />

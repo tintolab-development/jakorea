@@ -11,7 +11,7 @@ import {
   useSaveEducationTargets,
 } from '@/features/education-target/api/hooks'
 import { IndexColorDot } from '@/features/education-target/ui/index-color-dot'
-import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, ContentModal, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 import './targets-modal.css'
@@ -28,9 +28,11 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
 
   const rows = useMemo(() => listQuery.data ?? [], [listQuery.data])
   const [draftNames, setDraftNames] = useState<Record<string, string>>({})
+  const [showRequiredErrors, setShowRequiredErrors] = useState(false)
 
   useEffect(() => {
     if (!open) return
+    setShowRequiredErrors(false)
     setDraftNames(Object.fromEntries(rows.map(row => [row.id, row.name])))
   }, [open, rows])
 
@@ -39,15 +41,26 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
   }, [])
 
   const handleSave = useCallback(async () => {
+    const hasBlank = rows.some(row => !(draftNames[row.id] ?? row.name).trim())
+    if (hasBlank) {
+      setShowRequiredErrors(true)
+      showAlert({
+        title: '입력 확인',
+        content: '교육 대상명을 입력해 주세요.',
+      })
+      return
+    }
+    setShowRequiredErrors(false)
     try {
       await saveMutation.mutateAsync(
         rows.map(row => ({
           id: row.id,
-          name: (draftNames[row.id] ?? row.name).trim() || row.name,
+          name: (draftNames[row.id] ?? row.name).trim(),
         }))
       )
       onSaved?.()
       onCancel()
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -67,17 +80,32 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
         render: (_value, _record, index) => index + 1,
       },
       {
-        title: '교육 대상명',
-        key: 'name',
-        render: (_value, record) => (
-          <CmsInput
-            inputSize="medium"
-            width="100%"
-            value={draftNames[record.id] ?? record.name}
-            onChange={e => handleNameChange(record.id, e.target.value)}
-            aria-label={`교육 대상명 ${record.sortOrder}`}
-          />
+        title: (
+          <span className="education-targets-modal__name-th">
+            <span className="education-targets-modal__name-th-text">교육 대상명</span>
+            <span className="education-targets-modal__required" aria-hidden>
+              *
+            </span>
+          </span>
         ),
+        key: 'name',
+        className: 'education-targets-modal__name-col',
+        render: (_value, record) => {
+          const name = draftNames[record.id] ?? record.name
+          const isBlank = !name.trim()
+          return (
+            <CmsInput
+              inputSize="small"
+              width="100%"
+              required
+              error={showRequiredErrors && isBlank}
+              value={name}
+              onChange={e => handleNameChange(record.id, e.target.value)}
+              aria-label={`교육 대상명 ${record.sortOrder}`}
+              aria-required
+            />
+          )
+        },
       },
       {
         title: '인덱스 색상',
@@ -89,7 +117,7 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
         ),
       },
     ],
-    [draftNames, handleNameChange]
+    [draftNames, handleNameChange, showRequiredErrors]
   )
 
   return (
@@ -97,28 +125,28 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
       open={open}
       onCancel={onCancel}
       title="교육 대상 관리"
-      width={640}
+      width={600}
       className="education-targets-modal"
       footer={
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
             disabled={saveMutation.isPending} >
-            닫기
+            취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={saveMutation.isPending}
             disabled={saveMutation.isPending || rows.length === 0}
             onClick={() => {
               void handleSave()
             }} >
-            교육대상 설정
+            저장
           </CmsButton>
         </>
       }

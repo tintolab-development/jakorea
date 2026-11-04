@@ -59,7 +59,7 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     key: 'title',
     type: 'search',
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: '16%',
   },
   {
@@ -98,7 +98,7 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     key: 'beneficiaryCount',
     type: 'search',
     label: '총 수혜자 수',
-    placeholder: '총 수혜자 수를 입력하세요',
+    placeholder: '총 수혜자 수를 입력해 주세요',
     searchNumericOnly: true,
     width: '14%',
   },
@@ -106,7 +106,7 @@ const programHistoryFilterFields: FilterFieldConfig[] = [
     key: 'managerName',
     type: 'search',
     label: '후원사 담당자명',
-    placeholder: '후원사 담당자명을 입력하세요',
+    placeholder: '후원사 담당자명을 입력해 주세요',
     width: '14%',
   },
 ]
@@ -280,7 +280,8 @@ export function SponsorProgramHistoryPanel({
               variant="delete"
               onClick={handleDeleteProgramHistory}
               disabled={!canWrite || deleteDisabled}
-              loading={deleteDisabled} >
+              loading={deleteDisabled}
+            >
               이력 삭제
             </FilterTableToolbarButton>
           ) : null

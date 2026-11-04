@@ -137,8 +137,6 @@ const COL = {
   ip: 140,
 } as const
 
-const EMPTY_TEXT = '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
-
 export function AdminAccountLogPage() {
   const { showAlert } = useCmsAlert()
 
@@ -149,6 +147,7 @@ export function AdminAccountLogPage() {
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, AdminAccountListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -258,6 +257,7 @@ export function AdminAccountLogPage() {
   return (
     <div className="log-list-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -265,7 +265,7 @@ export function AdminAccountLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="관리자명을 입력하세요"
+                placeholder="관리자명을 입력해 주세요"
                 value={pendingFilters.name}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
                 onPressEnter={applySearch}
@@ -276,7 +276,7 @@ export function AdminAccountLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="아이디를 입력하세요"
+                placeholder="아이디를 입력해 주세요"
                 value={pendingFilters.loginId}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
                 onPressEnter={applySearch}
@@ -300,7 +300,7 @@ export function AdminAccountLogPage() {
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">처리일시</span>
+              <span className="admin-filter-area__label">처리일</span>
               <CmsDateRangePicker
                 inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
@@ -315,11 +315,13 @@ export function AdminAccountLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -327,7 +329,7 @@ export function AdminAccountLogPage() {
         }
         title="관리자 계정 처리 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
       >
         <CmsDataTable<AdminAccountLog>
           className="cms-data-table"
@@ -336,7 +338,6 @@ export function AdminAccountLogPage() {
           dataSource={rows}
           loading={loading}
           pagination={logTablePagination({ page, total, onChange: handlePageChange })}
-          locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
             x: COL.no + COL.name + COL.loginId + COL.action + COL.processedAt + COL.ip,
           }}

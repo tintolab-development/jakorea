@@ -204,10 +204,10 @@ export async function setEducationJournalOff(page: Page) {
 
 export async function fillUniqueTitles(page: Page, id: TtP4bVariantId) {
   const titles = uniqueVariantTitles(id)
-  const main = page.getByPlaceholder('대표 프로그램명을 입력하세요').first()
+  const main = page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()
   await expect(main).toBeVisible({ timeout: 15_000 })
   await main.fill(titles.mainTitle)
-  const publicTitle = page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요')
+  const publicTitle = page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요')
   if (await publicTitle.isVisible().catch(() => false)) {
     await publicTitle.fill(titles.announcementTitle)
   }
@@ -259,9 +259,7 @@ export function parseCreatePayload(body: unknown) {
     sessionRound: program.generalProgramSessionRound,
     teacherTrainingEnabled: common.teacherTrainingEnabled === true,
     educationJournalEnabled: common.educationJournalEnabled === true,
-    curriculumSessions: Array.isArray(common.curriculumSessions)
-      ? common.curriculumSessions
-      : [],
+    curriculumSessions: Array.isArray(common.curriculumSessions) ? common.curriculumSessions : [],
     scheduleDetails: Array.isArray(common.scheduleDetails) ? common.scheduleDetails : [],
   }
 }

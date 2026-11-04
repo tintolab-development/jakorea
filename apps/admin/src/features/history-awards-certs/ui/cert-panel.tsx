@@ -3,8 +3,6 @@ import { Switch } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
-import { DetailInfoFormTdDivider } from '@jakorea/form-template-runtime'
-import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
   CertCreateInput,
   CertItem,
@@ -26,7 +24,7 @@ import {
   deleteConfirmContent,
   deleteFailureAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
-import { CertFormModal } from '@/features/history-awards-certs/ui/cert-form-modal'
+import { CertFormModal } from '@/features/history-awards-certs/ui/form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -57,7 +55,10 @@ import {
   ConfirmModal,
   useCmsAlert,
   FilterTableLayout,
+  NO_SELECTION_ALERT,
   showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
 } from '@/shared/ui'
 
 type CertPendingFilters = {
@@ -160,7 +161,7 @@ export function CertPanel() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
-    patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<CertPendingFilters, CertListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -239,21 +240,6 @@ export function CertPanel() {
     setSelectedRowKeys([])
   }, [applySearch])
 
-  const handleSortChange = useCallback(
-    (value: CertSortKey) => {
-      setPendingFilters(prev => ({ ...prev, sort: value }))
-      patchSearchParams(next => {
-        if (value === 'created') {
-          next.set('c_sort', value)
-        } else {
-          next.delete('c_sort')
-        }
-      })
-      setSelectedRowKeys([])
-    },
-    [patchSearchParams, setPendingFilters]
-  )
-
   const handleTogglePublic = useCallback(
     (id: string, isPublic: boolean) => {
       void setPublicMutation.mutateAsync({ id, isPublic }).catch(() => {
@@ -284,8 +270,10 @@ export function CertPanel() {
       try {
         if (formVariant === 'edit' && editing) {
           await updateMutation.mutateAsync({ id: editing.id, input: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
@@ -317,7 +305,7 @@ export function CertPanel() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({ title: '선택 항목 없음', content: '삭제할 인증을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -393,12 +381,13 @@ export function CertPanel() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="small"
             type="button"
             onClick={e => {
               e.stopPropagation()
               openEdit(record)
-            }} >
+            }}
+          >
             수정
           </CmsButton>
         ),
@@ -410,12 +399,14 @@ export function CertPanel() {
   return (
     <div className="hac-panel">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
               <p className="admin-filter-area__label">공개 여부</p>
               <CmsSelect
                 inputSize="medium"
+                withAllOption
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.isPublic}
                 onChange={v =>
@@ -425,7 +416,6 @@ export function CertPanel() {
                   }))
                 }
                 options={[
-                  { label: '전체', value: '' },
                   { label: '공개', value: 'true' },
                   { label: '비공개', value: 'false' },
                 ]}
@@ -436,7 +426,7 @@ export function CertPanel() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="내용을 입력하세요"
+                placeholder="내용을 입력해 주세요"
                 value={pendingFilters.content}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
                 onPressEnter={handleSearch}
@@ -447,7 +437,7 @@ export function CertPanel() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="인증 기관명을 입력하세요"
+                placeholder="인증 기관명을 입력해 주세요"
                 value={pendingFilters.organization}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
                 onPressEnter={handleSearch}
@@ -486,11 +476,13 @@ export function CertPanel() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -499,32 +491,20 @@ export function CertPanel() {
         title="인증 목록"
         description={`총 ${totalCount.toLocaleString()}건`}
         actions={
-          <>
-            <CmsSelect
-              inputSize="medium"
-              width={140}
-              value={appliedFilter.sort ?? pendingFilters.sort}
-              onChange={v => handleSortChange((v as CertSortKey) ?? 'date')}
-              options={[
-                { label: '인증일 순', value: 'date' },
-                { label: '작성일 순', value: 'created' },
-              ]}
-            />
-            <DetailInfoFormTdDivider />
-            <div className="hac-panel__toolbar-buttons">
-              <CmsButton
-                variant="delete"
-                size="h40"
-                type="button"
-                onClick={handleDeleteClick}
-                loading={removeMutation.isPending} >
-                선택 삭제
-              </CmsButton>
-              <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
-                인증 등록
-              </CmsButton>
-            </div>
-          </>
+          <div className="hac-panel__toolbar-buttons">
+            <CmsButton
+              variant="delete"
+              size="h40"
+              type="button"
+              onClick={handleDeleteClick}
+              loading={removeMutation.isPending}
+            >
+              선택 삭제
+            </CmsButton>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
+              인증 등록
+            </CmsButton>
+          </div>
         }
       >
         <div className="hac-panel__table-scroll">

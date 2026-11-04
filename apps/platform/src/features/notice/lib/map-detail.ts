@@ -5,8 +5,7 @@ import {
 } from './format'
 
 /**
- * 홈페이지 어드민 공개 공지 응답 형태.
- * `apps/admin` PublicNoticeDetail 을 참고한 화면 매퍼 입력 — 백엔드 계약을 확정하지 않음.
+ * GET /api/public/ja-korea/notices/{id} — attachments[] 만 사용.
  */
 export type PublicNoticeDetailSource = {
   id?: number | string
@@ -14,44 +13,28 @@ export type PublicNoticeDetailSource = {
   publishAt?: string
   title?: string
   body?: string
-  attachmentFileName?: string
-  attachmentUrl?: string
   authorName?: string
   viewCount?: number
   attachments?: Array<{
-    id?: number | string
-    name?: string
-    fileName?: string
-    url?: string
-    fileUrl?: string
-    mime?: string
-    contentType?: string
-    size?: number
+    assetId?: number
+    originalName?: string
+    publicUrl?: string
   }>
 }
 
 function mapAttachments(source: PublicNoticeDetailSource): NoticeAttachment[] {
-  if (source.attachments && source.attachments.length > 0) {
-    return source.attachments.map((file, index) => ({
-      id: String(file.id ?? `attachment-${index + 1}`),
-      name: (file.name ?? file.fileName ?? 'attachment').trim() || 'attachment',
-      fileUrl: file.fileUrl ?? file.url,
-      mime: file.mime ?? file.contentType,
-      size: file.size,
-    }))
-  }
-
-  if (source.attachmentFileName || source.attachmentUrl) {
+  return (source.attachments ?? []).flatMap((file, index) => {
+    const name = file.originalName?.trim()
+    const fileUrl = file.publicUrl?.trim()
+    if (!name && !fileUrl) return []
     return [
       {
-        id: 'attachment-1',
-        name: source.attachmentFileName?.trim() || 'attachment',
-        fileUrl: source.attachmentUrl,
+        id: file.assetId != null ? String(file.assetId) : `attachment-${index + 1}`,
+        name: name || 'attachment',
+        fileUrl,
       },
     ]
-  }
-
-  return []
+  })
 }
 
 export function toNoticeDetailView(detail: NoticeDetail): NoticeDetail {

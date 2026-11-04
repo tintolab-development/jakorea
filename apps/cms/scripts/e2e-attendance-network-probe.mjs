@@ -97,10 +97,10 @@ function isApiUrl(url) {
 async function openGeneralByTitles(page, titles, keywordFallback) {
   await dismissOverlays(page)
   await page.goto(`${BASE}/programs/general`)
-  await page.getByPlaceholder('프로그램명을 입력하세요').waitFor({ timeout: 30_000 })
+  await page.getByPlaceholder('프로그램명을 입력해 주세요').waitFor({ timeout: 30_000 })
 
   const tryKeyword = async keyword => {
-    const titleFilter = page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = page.getByPlaceholder('프로그램명을 입력해 주세요')
     await titleFilter.fill(keyword)
     await page.getByRole('button', { name: '조회' }).click()
     await page.waitForTimeout(2500)
@@ -118,7 +118,7 @@ async function openGeneralByTitles(page, titles, keywordFallback) {
   }
 
   for (const title of titles) {
-    const titleFilter = page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = page.getByPlaceholder('프로그램명을 입력해 주세요')
     await titleFilter.fill(title)
     await page.getByRole('button', { name: '조회' }).click()
     await page.waitForTimeout(2500)
@@ -162,10 +162,10 @@ async function gotoGeneralDeep(page, programId, lnb, tab) {
 async function openUjatByTitles(page, titles) {
   await dismissOverlays(page)
   await page.goto(`${BASE}/programs/ujat`)
-  await page.getByPlaceholder('프로그램명을 입력하세요').waitFor({ timeout: 30_000 })
+  await page.getByPlaceholder('프로그램명을 입력해 주세요').waitFor({ timeout: 30_000 })
 
   for (const title of titles) {
-    const titleFilter = page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = page.getByPlaceholder('프로그램명을 입력해 주세요')
     await titleFilter.fill(title)
     await page.getByRole('button', { name: '조회' }).click()
     await page.waitForTimeout(2500)
@@ -243,7 +243,11 @@ try {
     i = captured.length
     await gotoGeneralDeep(page, ind.id, 'progress', 'progress_posts')
     await page.waitForTimeout(3000)
-    report.checks.push({ item: '5-FE01', programId: ind.id, ...summarize(captured, i, '게시글·첨부') })
+    report.checks.push({
+      item: '5-FE01',
+      programId: ind.id,
+      ...summarize(captured, i, '게시글·첨부'),
+    })
   } else {
     report.checks.push({ item: '1', error: 'P0 CASE-03 시드 없음' })
   }

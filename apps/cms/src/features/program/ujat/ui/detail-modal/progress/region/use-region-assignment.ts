@@ -31,6 +31,7 @@ import {
 import type { RegionBlockedDateModalPayload } from './blocked-date-modal'
 import {
   buildAutoAssignResultAlert,
+  collectAutoAssignRefreshSlotIds,
   summarizeAutoAssignResult,
   type AutoAssignResultSummary,
 } from './auto-assign-result'
@@ -131,6 +132,21 @@ export function useRegionAssignment(
       queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.directAssignmentCandidatesRoot(programId),
       }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.volunteerAssignmentProgressRoot(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.institutionAssignmentRoot(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.partnerAssignmentsRoot(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.assignmentSubmissionsRoot(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.educationProgressSummary(programId),
+      }),
     ])
   }, [programId, queryClient])
 
@@ -153,6 +169,19 @@ export function useRegionAssignment(
       postUjatPartnerAssignmentsAuto(programId, { educationRegionCode, semesterType }),
     onSuccess: async response => {
       await invalidateMatrix()
+      const refreshSlotIds = collectAutoAssignRefreshSlotIds(response.results)
+      if (refreshSlotIds.length > 0) {
+        await Promise.all(
+          refreshSlotIds.map(educationSlotId =>
+            queryClient.invalidateQueries({
+              queryKey: ujatQueryKeys.directAssignmentCandidates(
+                programId,
+                String(educationSlotId)
+              ),
+            })
+          )
+        )
+      }
       setAutoAssignResult({ scopeKey: autoAssignScopeKey, summary: summarizeAutoAssignResult(response) })
       showAlert(buildAutoAssignResultAlert(response))
     },
@@ -274,7 +303,7 @@ export function useRegionAssignment(
   })
 
   const runAutoAssign = useCallback(() => {
-    if (!remoteEnabled) return tableData
+    if (!remoteEnabled || autoAssignMutation.isPending) return tableData
     autoAssignMutation.mutate()
     return tableData
   }, [autoAssignMutation, remoteEnabled, tableData])

@@ -40,11 +40,7 @@ export function DateField({
   }, [layoutKey])
 
   useEffect(() => {
-    if (
-      paragraphInteractionMode === 'authoring' &&
-      prevCardSelected.current &&
-      !isCardSelected
-    ) {
+    if (paragraphInteractionMode === 'authoring' && prevCardSelected.current && !isCardSelected) {
       setSingleDate(null)
       setRange([null, null])
     }
@@ -86,7 +82,7 @@ export function DateField({
     return null
   }, [appliedSurfaceRange, appliedSurfaceWithTime, periodEnabled, singleDate])
 
-  const staticPlaceholder = periodEnabled ? '기간을 선택하세요' : '날짜를 선택하세요'
+  const staticPlaceholder = periodEnabled ? '기간을 선택해 주세요' : '날짜를 선택해 주세요'
 
   if (!isBodyInteractive) {
     return (

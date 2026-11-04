@@ -2,8 +2,8 @@
  * 메뉴별 조회 통계
  */
 
-import { useCallback, useMemo } from 'react'
-import type { Dayjs } from 'dayjs'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import dayjs, { type Dayjs } from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import {
   MENU_VIEW_TAB_IDS,
@@ -14,9 +14,7 @@ import {
 import { useMenuViewStats } from '@/features/menu-view-stats/api/hooks'
 import { MenuViewSummaryTable } from '@/features/menu-view-stats/ui/summary-table'
 import { MenuViewTabPanel } from '@/features/menu-view-stats/ui/tab-panels'
-import {
-  FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
-} from '@/shared/constants/filter-field-width'
+import { FILTER_CONTROL_WIDE_FIELD_WIDTH_PX } from '@/shared/constants/filter-field-width'
 import { useListFilterUrl } from '@/shared/lib/use-list-filter-url'
 import type { TableSearchParamRule } from '@/shared/lib/use-table-search'
 import {
@@ -31,8 +29,9 @@ import {
   CmsButton,
   CmsDateRangePicker,
   CmsTextTabs,
-  useCmsAlert,
   FilterTableLayout,
+  PageContentLoading,
+  useCmsAlert,
 } from '@/shared/ui'
 
 import './page.css'
@@ -43,8 +42,21 @@ type PendingFilters = {
 
 type AppliedPeriod = MenuViewPeriod | null
 
-const INITIAL_PENDING: PendingFilters = {
-  periodRange: null,
+/** Asia/Seoul 달력 오늘 */
+function seoulCalendarToday(): Dayjs {
+  const ymd = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date())
+  return dayjs(ymd)
+}
+
+/** 오늘 기준 해당 월 1일 ~ 말일 */
+function currentSeoulMonthRange(): [Dayjs, Dayjs] {
+  const today = seoulCalendarToday()
+  return [today.startOf('month'), today.endOf('month')]
 }
 
 const periodSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
@@ -90,14 +102,18 @@ export function MenuViewsStatsPage() {
   const { showAlert } = useCmsAlert()
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = useMemo(() => parseTab(searchParams.get('tab')), [searchParams])
+  const [initialPending] = useState<PendingFilters>(() => ({
+    periodRange: currentSeoulMonthRange(),
+  }))
 
   const {
     pendingFilters,
     setPendingFilters,
     applied: appliedPeriod,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, AppliedPeriod>({
-    initialPending: INITIAL_PENDING,
+    initialPending,
     paramConfig: searchSyncRules,
     parseApplied,
     syncPendingFromUrl: ({ searchParams: sp, setPendingFilters: setPending }) => {
@@ -119,6 +135,12 @@ export function MenuViewsStatsPage() {
   const statsQuery = useMenuViewStats(appliedPeriod)
 
   const canSearch = isCompletePeriod(pendingFilters.periodRange)
+
+  useEffect(() => {
+    if (appliedPeriod) return
+    if (!isCompletePeriod(pendingFilters.periodRange)) return
+    applySearch()
+  }, [appliedPeriod, applySearch, pendingFilters.periodRange])
 
   const handleSearch = useCallback(() => {
     if (!canSearch) {
@@ -156,6 +178,7 @@ export function MenuViewsStatsPage() {
   return (
     <div className="menu-views-stats-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
@@ -173,11 +196,13 @@ export function MenuViewsStatsPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -186,7 +211,11 @@ export function MenuViewsStatsPage() {
         title="메뉴별 조회 통계"
       >
         {!hasApplied ? (
-          <div className="menu-views-stats-page__placeholder" role="status">
+          <div
+            className="menu-views-stats-page__placeholder"
+            style={{ fontSize: '18px' }}
+            role="status"
+          >
             기간을 선택한 뒤 조회하면 메뉴별 조회 통계가 표시됩니다.
           </div>
         ) : statsQuery.isError ? (
@@ -195,35 +224,31 @@ export function MenuViewsStatsPage() {
           </div>
         ) : (
           <>
-            {summary ? (
-              <MenuViewSummaryTable
-                summary={summary}
-                loading={statsQuery.isLoading || statsQuery.isFetching}
-              />
-            ) : statsQuery.isLoading ? (
-              <div className="menu-views-stats-page__placeholder" role="status">
-                통계를 불러오는 중…
-              </div>
-            ) : null}
+            {statsQuery.isLoading && !statsQuery.data ? (
+              <PageContentLoading variant="table-slot" />
+            ) : (
+              <>
+                {summary ? (
+                  <MenuViewSummaryTable
+                    summary={summary}
+                    loading={statsQuery.isFetching}
+                  />
+                ) : null}
 
-            <CmsTextTabs
-              variant="list"
-              activeKey={activeTab}
-              onChange={handleTabChange}
-              items={TAB_ITEMS}
-              ariaLabel="메뉴 탭"
-              className="menu-views-stats-page__tabs"
-            />
+                <CmsTextTabs
+                  variant="list"
+                  activeKey={activeTab}
+                  onChange={handleTabChange}
+                  items={TAB_ITEMS}
+                  ariaLabel="메뉴 탭"
+                  className="menu-views-stats-page__tabs"
+                />
 
-            <div className="menu-views-stats-page__detail">
-              {statsQuery.isLoading && !statsQuery.data ? (
-                <div className="menu-views-stats-page__placeholder" role="status">
-                  통계를 불러오는 중…
+                <div className="menu-views-stats-page__detail">
+                  <MenuViewTabPanel tabId={activeTab} sections={sections} />
                 </div>
-              ) : (
-                <MenuViewTabPanel tabId={activeTab} sections={sections} />
-              )}
-            </div>
+              </>
+            )}
           </>
         )}
       </FilterTableLayout>

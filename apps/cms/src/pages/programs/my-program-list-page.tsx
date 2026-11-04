@@ -324,7 +324,7 @@ export function MyProgramListPage() {
             key: 'search',
             type: 'search',
             label: '프로그램명',
-            placeholder: '프로그램명을 입력하세요',
+            placeholder: '프로그램명을 입력해 주세요',
           },
           {
             key: 'status',

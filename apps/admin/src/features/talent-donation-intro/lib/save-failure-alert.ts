@@ -2,7 +2,9 @@
  * 재능기부 소개 저장 실패 알림 매핑
  */
 
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
+  type AdminMutationAlert,
   isOptimisticLockConflictError,
   readApiErrorCode,
   readApiErrorField,
@@ -12,35 +14,35 @@ import {
 export function talentDonationIntroSaveFailureAlert(
   error: unknown,
   fallbackContent: string
-): { title: string; content: string } {
+): AdminMutationAlert {
   if (error instanceof Error) {
     const code = error.message
     if (code === 'BANNER_IMAGE_REQUIRED') {
-      return { title: '입력 확인', content: '배너 이미지를 등록해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'BANNER_MAIN_TEXT_REQUIRED') {
-      return { title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'BANNER_SUB_TEXT_REQUIRED') {
-      return { title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'HOW_TITLE_REQUIRED') {
-      return { title: '입력 확인', content: '타이틀을 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'HOW_DESCRIPTION_REQUIRED') {
-      return { title: '입력 확인', content: '설명 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'INTERVIEW_MAIN_TEXT_REQUIRED') {
-      return { title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'INTERVIEW_SUB_TEXT_REQUIRED') {
-      return { title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'INTERVIEW_BUTTON_REQUIRED') {
-      return { title: '입력 확인', content: '버튼명을 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'INTERVIEW_POST_REQUIRED') {
-      return { title: '입력 확인', content: '연결 게시글을 선택해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
   }
 

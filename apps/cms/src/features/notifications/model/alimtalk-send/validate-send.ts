@@ -66,7 +66,10 @@ function sendFingerprint(
     programId: input.programId ?? '',
     sendTiming: input.sendTiming,
     scheduledAt: input.scheduledAt ?? '',
-    placeholderKeys: [...input.placeholderKeys].map(key => key.trim()).filter(Boolean).sort(),
+    placeholderKeys: [...input.placeholderKeys]
+      .map(key => key.trim())
+      .filter(Boolean)
+      .sort(),
     recipients: input.recipients.map(recipientFingerprint),
     validIds: validRecipients.map(recipient => recipient.id),
     excludedIds,
@@ -81,10 +84,10 @@ export function validateAlimtalkSendRequest(
   input: AlimtalkSendValidationInput
 ): AlimtalkSendValidationResult {
   if (!input.senderSelected) {
-    return { ok: false, title: '필수 입력 안내', alert: '발신 프로필을 선택하세요.' }
+    return { ok: false, title: '필수 입력 안내', alert: '발신 프로필을 선택해 주세요.' }
   }
   if (!input.templateId?.trim()) {
-    return { ok: false, title: '필수 입력 안내', alert: '템플릿을 선택하세요.' }
+    return { ok: false, title: '필수 입력 안내', alert: '템플릿을 선택해 주세요.' }
   }
   if (input.approvalStatus !== 'APPROVED') {
     return {
@@ -107,7 +110,7 @@ export function validateAlimtalkSendRequest(
   const withoutProgram = isNotificationSendWithoutProgram(input.programId)
   const programNumericId = parseNotificationSendProgramId(input.programId)
   if (!withoutProgram && programNumericId == null) {
-    return { ok: false, title: '필수 입력 안내', alert: '대상 프로그램을 선택하세요.' }
+    return { ok: false, title: '필수 입력 안내', alert: '대상 프로그램을 선택해 주세요.' }
   }
 
   const keys = [...input.placeholderKeys].map(key => key.trim()).filter(Boolean)

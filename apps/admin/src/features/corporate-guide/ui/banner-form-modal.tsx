@@ -5,10 +5,7 @@
 import { useCallback, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type {
-  BannerSaveInput,
-  CorporateGuideBanner,
-} from '@/entities/corporate-guide/model/types'
+import type { BannerSaveInput, CorporateGuideBanner } from '@/entities/corporate-guide/model/types'
 import {
   CmsButton,
   CmsTextArea,
@@ -24,7 +21,7 @@ import './banner-form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 배너 사이즈는 1113 × 1083px입니다.',
 ]
 
@@ -97,7 +94,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
       if (!isAllowedImageFile(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }
@@ -182,19 +179,21 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             수정
           </CmsButton>
         </>
@@ -213,8 +212,8 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             view={null}
             edit={
               <div>
-                <div className="corporate-guide-banner-modal__image-row">
-                  <div className="corporate-guide-banner-modal__preview">
+                <div className="file-select-image-cell">
+                  <div className="file-select-image-cell__preview">
                     {imageUrl ? (
                       <img src={imageUrl} alt="배너 미리보기" />
                     ) : (
@@ -256,7 +255,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   inputSize="large"
                   width="100%"
                   rows={3}
-                  placeholder="메인 텍스트를 입력하세요"
+                  placeholder="메인 텍스트를 입력해 주세요"
                   value={mainText}
                   onChange={e => {
                     setMainText(e.target.value)
@@ -286,7 +285,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   inputSize="large"
                   width="100%"
                   rows={4}
-                  placeholder="서브 텍스트를 입력하세요"
+                  placeholder="서브 텍스트를 입력해 주세요"
                   value={subText}
                   onChange={e => {
                     setSubText(e.target.value)

@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Spin } from 'antd'
-import { EyeOutlined, PaperClipOutlined } from '@ant-design/icons'
+import { EyeOutlined } from '@ant-design/icons'
 import type { ImpactStory } from '@/entities/impact-stories/model/types'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
@@ -20,21 +20,23 @@ import { impactStoriesQueryKeys } from '@/features/impact-stories/api/query-keys
 import { IMPACT_STORIES_CHANGED_EVENT } from '@/features/impact-stories/api/store'
 import { impactStoryMutationFailureAlert } from '@/features/impact-stories/lib/mutation-failure-alert'
 import { isPinLimitError } from '@/features/impact-stories/lib/pin-limits'
-import {
-  StoryFormModal,
-  type StoryFormValues,
-} from '@/features/impact-stories/ui/story-form-modal'
+import { StoryFormModal, type StoryFormValues } from '@/features/impact-stories/ui/story-form-modal'
 import { StoryPinnedIcon } from '@/features/impact-stories/ui/story-pin-icon'
+import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
 import { downloadFile } from '@/shared/lib/file-download'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
 import { RichTextViewer, type Editor } from '@/shared/rich-text'
 import {
-  AttachmentDownloadIcon,
   CmsButton,
   ConfirmModal,
   PageContentLoading,
+  showDeleteCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
+
+import attachFileMintUrl from '@/shared/ui/icons/attach-file-mint.svg'
+import fileDownloadBlackUrl from '@/shared/ui/icons/file-download-black.svg'
 
 import './detail-page.css'
 
@@ -76,6 +78,7 @@ export function ImpactStoryDetailPage() {
       await removeMutation.mutateAsync([id])
       setDeleteOpen(false)
       goList()
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -91,6 +94,7 @@ export function ImpactStoryDetailPage() {
         await updateMutation.mutateAsync({ ...values, id })
         setEditOpen(false)
         void detailQuery.refetch()
+        showUpdateCompletedAlert()
       } catch (error) {
         if (isPinLimitError(error)) {
           showAlert({
@@ -100,10 +104,7 @@ export function ImpactStoryDetailPage() {
           return
         }
         showAlert(
-          impactStoryMutationFailureAlert(
-            error,
-            '게시글 저장에 실패했습니다. 다시 시도해 주세요.',
-          ),
+          impactStoryMutationFailureAlert(error, '게시글 저장에 실패했습니다. 다시 시도해 주세요.')
         )
       }
     },
@@ -126,7 +127,7 @@ export function ImpactStoryDetailPage() {
             <p className="impact-story-detail-page__empty" role="alert">
               게시글을 찾을 수 없습니다.
             </p>
-            <CmsButton variant="secondary" size="large" type="button" onClick={goList}>
+            <CmsButton variant="secondary" size="medium" type="button" onClick={goList}>
               목록
             </CmsButton>
           </div>
@@ -200,9 +201,7 @@ function ImpactStoryBody({ story }: { story: ImpactStory }) {
     setEditorReady(true)
     setRawHtmlReady(false)
     const frames = Array.from(
-      bodyRef.current?.querySelectorAll<HTMLIFrameElement>(
-        '.rich-text-raw-html-block__frame'
-      ) ?? []
+      bodyRef.current?.querySelectorAll<HTMLIFrameElement>('.rich-text-raw-html-block__frame') ?? []
     )
 
     if (frames.length === 0) {
@@ -279,9 +278,25 @@ function ImpactStoryDetailView({
   onDeleteConfirm,
   deleteLoading,
 }: DetailViewProps) {
-  const handleAttachmentClick = useCallback((name: string, url?: string) => {
-    downloadFile(name, url)
-  }, [])
+  const { showAlert } = useCmsAlert()
+  const handleAttachmentClick = useCallback(
+    async (item: ImpactStory['attachments'][number]) => {
+      try {
+        let url = item.dataUrl
+        if (item.assetId != null && item.assetId > 0) {
+          const res = await getJAKoreaHomepageAdminAPIAssetsSubset().download1(item.assetId)
+          if (res.downloadUrl) url = res.downloadUrl
+        }
+        await downloadFile(item.name, url)
+      } catch {
+        showAlert({
+          title: '다운로드 실패',
+          content: '첨부파일 다운로드에 실패했습니다. 다시 시도해 주세요.',
+        })
+      }
+    },
+    [showAlert]
+  )
 
   const hasAttachments = story.attachments.length > 0
 
@@ -365,11 +380,15 @@ function ImpactStoryDetailView({
           {hasAttachments ? (
             <div className="impact-story-detail-page__attachments">
               <div className="impact-story-detail-page__attachments-head">
-                <PaperClipOutlined
+                <img
                   className="impact-story-detail-page__clip"
+                  src={attachFileMintUrl}
+                  alt=""
+                  width={13}
+                  height={16}
                   aria-hidden
                 />
-                <span>첨부파일</span>
+                <span>첨부 파일</span>
               </div>
               <ul className="impact-story-detail-page__attachments-list">
                 {story.attachments.map(item => (
@@ -377,12 +396,19 @@ function ImpactStoryDetailView({
                     <button
                       type="button"
                       className="impact-story-detail-page__file"
-                      onClick={() => handleAttachmentClick(item.name, item.dataUrl)}
+                      onClick={() => {
+                        void handleAttachmentClick(item)
+                      }}
                     >
-                      <span className="impact-story-detail-page__file-name">
-                        {item.name}
-                      </span>
-                      <AttachmentDownloadIcon className="impact-story-detail-page__file-icon" />
+                      <img
+                        className="impact-story-detail-page__file-icon"
+                        src={fileDownloadBlackUrl}
+                        alt=""
+                        width={24}
+                        height={24}
+                        aria-hidden
+                      />
+                      <span className="impact-story-detail-page__file-name">{item.name}</span>
                     </button>
                   </li>
                 ))}
@@ -396,14 +422,14 @@ function ImpactStoryDetailView({
         </div>
 
         <div className="impact-story-detail-page__actions">
-          <CmsButton variant="secondary" size="large" type="button" onClick={onList}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={onList}>
             목록
           </CmsButton>
           <div className="impact-story-detail-page__actions-right">
-            <CmsButton variant="delete" size="large" type="button" onClick={onDelete}>
+            <CmsButton variant="delete" size="medium" type="button" onClick={onDelete}>
               삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={onEdit}>
               수정
             </CmsButton>
           </div>

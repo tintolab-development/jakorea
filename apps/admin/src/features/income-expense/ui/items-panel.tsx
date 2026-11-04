@@ -40,11 +40,16 @@ import {
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
+  NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showSaveCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -69,6 +74,17 @@ const COL_WIDTH = {
     amount: 220,
   },
 } as const
+
+function requiredColumnTitle(label: string) {
+  return (
+    <span className="income-expense-table__th-label">
+      {label}
+      <span className="income-expense-table__required" aria-hidden>
+        *
+      </span>
+    </span>
+  )
+}
 
 type DraftRow = {
   name: string
@@ -163,14 +179,16 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       const patches = rows.map(row => {
         const d = drafts[row.id]
         const name = (d?.name ?? row.name).trim()
-        if (!name) {
-          throw new Error('EMPTY_NAME')
+        const ratioRaw = (d?.ratio ?? String(row.ratio)).trim()
+        const amountRaw = (d?.amount ?? String(row.amount)).trim()
+        if (!name || !ratioRaw || !amountRaw) {
+          throw new Error('EMPTY_REQUIRED')
         }
-        const ratio = parseRatioInput(d?.ratio ?? String(row.ratio))
+        const ratio = parseRatioInput(ratioRaw)
         if (ratio === null) {
           throw new Error('BAD_RATIO')
         }
-        const amount = parseAmountInput(d?.amount ?? String(row.amount))
+        const amount = parseAmountInput(amountRaw)
         if (amount === null) {
           throw new Error('BAD_AMOUNT')
         }
@@ -190,10 +208,11 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       await updateMutation.mutateAsync(patches)
       setDrafts({})
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       if (err instanceof Error) {
-        if (err.message === 'EMPTY_NAME') {
-          showAlert({ title: '입력 확인', content: '항목명을 입력해 주세요.' })
+        if (err.message === 'EMPTY_REQUIRED') {
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (err.message === 'BAD_RATIO') {
@@ -205,7 +224,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
           return
         }
         if (err.message === 'BAD_CATEGORY') {
-          showAlert({ title: '입력 확인', content: '구분을 선택해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }
@@ -218,10 +237,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '삭제할 항목을 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -232,6 +248,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -256,6 +273,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       try {
         await createMutation.mutateAsync(values)
         setCreateOpen(false)
+        showRegisterCompletedAlert()
       } catch (err) {
         if (err instanceof GraphItemLimitError) {
           showAlert({
@@ -299,6 +317,12 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
           ratio: COL_WIDTH.ratio,
           amount: COL_WIDTH.amount,
         }
+
+    const uniformLayout = view === 'table' || (section === 'expense' && view === 'graph')
+    const nameTitle = isEditing && uniformLayout ? requiredColumnTitle('항목명') : '항목명'
+    const ratioTitle = isEditing && uniformLayout ? requiredColumnTitle('비율') : '비율'
+    const amountTitle = isEditing && uniformLayout ? requiredColumnTitle('금액') : '금액'
+    const editInputSize = 'large'
 
     const cols: ColumnsType<FinanceItem> = [
       {
@@ -348,27 +372,24 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
               </CmsRadioGroup>
             )
           }
-          return (
-            <span className="income-expense-panel__category-text">
-              {category ? EXPENSE_CATEGORY_LABEL[category] : '-'}
-            </span>
-          )
+          return <span>{category ? EXPENSE_CATEGORY_LABEL[category] : '-'}</span>
         },
       })
     }
 
     cols.push(
       {
-        title: '항목명',
+        title: nameTitle,
         key: 'name',
         width: dataCols.name,
+        align: uniformLayout ? (isEditing ? 'left' : 'center') : undefined,
         className: 'income-expense-table__col--name',
         render: (_value, record) => {
           const value = drafts[record.id]?.name ?? record.name
           if (isEditing) {
             return (
               <CmsInput
-                inputSize="medium"
+                inputSize={editInputSize}
                 width="100%"
                 value={value}
                 onChange={e => handleDraftChange(record.id, { name: e.target.value })}
@@ -377,18 +398,14 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
               />
             )
           }
-          return (
-            <span className="income-expense-panel__cell-text" title={value || undefined}>
-              {value || '-'}
-            </span>
-          )
+          return <span title={value || undefined}>{value || '-'}</span>
         },
       },
       {
-        title: '비율',
+        title: ratioTitle,
         key: 'ratio',
         width: dataCols.ratio,
-        align: 'center',
+        align: uniformLayout && isEditing ? 'left' : 'center',
         className: 'income-expense-table__col--ratio',
         render: (_value, record) => {
           const raw = drafts[record.id]?.ratio ?? String(record.ratio)
@@ -396,7 +413,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
             return (
               <div className="income-expense-panel__input-suffix income-expense-panel__input-suffix--ratio">
                 <CmsInput
-                  inputSize="medium"
+                  inputSize={editInputSize}
                   width="100%"
                   value={raw}
                   onChange={e => handleDraftChange(record.id, { ratio: e.target.value })}
@@ -412,10 +429,10 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
         },
       },
       {
-        title: '금액',
+        title: amountTitle,
         key: 'amount',
         width: dataCols.amount,
-        align: 'right',
+        align: uniformLayout ? (isEditing ? 'left' : 'center') : 'right',
         className: 'income-expense-table__col--amount',
         render: (_value, record) => {
           const raw = drafts[record.id]?.amount ?? String(record.amount)
@@ -423,7 +440,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
             return (
               <div className="income-expense-panel__input-suffix income-expense-panel__input-suffix--amount">
                 <CmsInput
-                  inputSize="medium"
+                  inputSize={editInputSize}
                   width="100%"
                   value={raw}
                   onChange={e => handleDraftChange(record.id, { amount: e.target.value })}
@@ -441,7 +458,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
     )
 
     return cols
-  }, [drafts, handleDraftChange, isEditing, showCategory])
+  }, [drafts, handleDraftChange, isEditing, section, showCategory, view])
 
   const countLabel =
     view === 'graph'
@@ -466,7 +483,8 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   size="h40"
                   type="button"
                   onClick={handleCancelEdit}
-                  disabled={updateMutation.isPending} >
+                  disabled={updateMutation.isPending}
+                >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -474,7 +492,8 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   size="h40"
                   type="button"
                   loading={updateMutation.isPending}
-                  onClick={() => void handleSave()} >
+                  onClick={() => void handleSave()}
+                >
                   저장
                 </CmsButton>
               </>
@@ -485,7 +504,8 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   size="h40"
                   type="button"
                   onClick={handleDeleteClick}
-                  loading={removeMutation.isPending} >
+                  loading={removeMutation.isPending}
+                >
                   선택 삭제
                 </CmsButton>
                 <CmsButton
@@ -493,7 +513,8 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
                   size="h40"
                   type="button"
                   onClick={handleStartEdit}
-                  disabled={rows.length === 0} >
+                  disabled={rows.length === 0}
+                >
                   항목 수정
                 </CmsButton>
                 <CmsButton variant="primary" size="h40" type="button" onClick={handleOpenCreate}>
@@ -512,6 +533,8 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
             rowSelection={rowSelection}
             onRowsReorder={handleRowsReorder}
             withCategory={showCategory}
+            uniformLayout={view === 'table' || (section === 'expense' && view === 'graph')}
+            isEditing={isEditing}
           />
         </div>
       </div>
@@ -528,8 +551,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       <ConfirmModal
         open={deleteConfirmOpen}
         title="항목 삭제"
-        content={`선택한 항목 ${selectedRowKeys.length}건을 삭제하시겠습니까?`}
-        warningMessage="삭제된 항목은 복구할 수 없습니다."
+        content={`선택한 항목 ${selectedRowKeys.length}건을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.`}
         confirmText="삭제"
         cancelText="취소"
         danger

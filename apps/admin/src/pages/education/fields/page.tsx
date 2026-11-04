@@ -18,7 +18,7 @@ import {
   EducationBusinessFieldDragHandle,
   EducationBusinessFieldsSortableTable,
 } from '@/features/education-business-field/ui/sortable-table'
-import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -139,6 +139,7 @@ export function EducationFieldsPage() {
       })
       setDraft(null)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',

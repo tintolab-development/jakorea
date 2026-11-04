@@ -36,7 +36,17 @@ import {
   CMS_TABLE_SORT_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, CmsInput, ConfirmModal, PageContentLoading, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsInput,
+  ConfirmModal,
+  NO_SELECTION_ALERT,
+  PageContentLoading,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './board-panel.css'
 
@@ -231,6 +241,7 @@ export function BoardPanel() {
       await bulkUpdateMutation.mutateAsync(patches)
       draftMapRef.current = {}
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -242,10 +253,7 @@ export function BoardPanel() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 구성원을 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -256,6 +264,7 @@ export function BoardPanel() {
       await removeMutation.mutateAsync(selectedKeys.map(String))
       setSelectedKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -270,6 +279,7 @@ export function BoardPanel() {
       try {
         await createMutation.mutateAsync(values)
         setRegisterOpen(false)
+        showRegisterCompletedAlert()
       } catch {
         showAlert({
           title: '등록 실패',

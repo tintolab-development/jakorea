@@ -101,6 +101,12 @@ export function VisitorsStatsPage() {
   return (
     <div className="visitor-stats-page">
       <FilterTableLayout
+        hasActiveFilters={
+          applied.years.length > 0 ||
+          applied.months.length > 0 ||
+          Boolean(applied.from) ||
+          Boolean(applied.to)
+        }
         filter={
           <VisitorStatsFilterCard
             unit={unit}

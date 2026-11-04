@@ -83,12 +83,15 @@ export function ListPageFilters<T extends Record<string, any>>({
   cardStyle,
 }: ListPageFiltersProps<T>) {
   return (
-    <Card className="list-page-filters" style={{ marginBottom: LAYOUT_CONSTANTS.margins.md, ...cardStyle }}>
+    <Card
+      className="list-page-filters"
+      style={{ marginBottom: LAYOUT_CONSTANTS.margins.md, ...cardStyle }}
+    >
       <Space wrap align="start">
         {onSearchChange && (
           <LabeledSearchInput
             label={searchLabel}
-            placeholder={searchPlaceholder || `${searchLabel}을(를) 입력하세요`}
+            placeholder={searchPlaceholder || `${searchLabel}을(를) 입력해 주세요`}
             value={searchValue}
             onChange={onSearchChange}
             width={LAYOUT_CONSTANTS.widths.search}

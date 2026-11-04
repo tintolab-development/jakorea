@@ -20,7 +20,7 @@ import {
 } from '@/features/global-value/ui/sortable-table'
 import { ValueIcon } from '@/features/global-value/ui/value-icon'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -110,6 +110,7 @@ export function GlobalValuePage() {
       )
       setDraftTexts({})
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -171,7 +172,7 @@ export function GlobalValuePage() {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, 'mainText', e.target.value)}
-                placeholder="메인 텍스트를 입력하세요"
+                placeholder="메인 텍스트를 입력해 주세요"
                 aria-label={`메인 텍스트 ${record.sortOrder}`}
               />
             )
@@ -197,7 +198,7 @@ export function GlobalValuePage() {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, 'subText', e.target.value)}
-                placeholder="서브 텍스트를 입력하세요"
+                placeholder="서브 텍스트를 입력해 주세요"
                 aria-label={`서브 텍스트 ${record.sortOrder}`}
               />
             )
@@ -229,7 +230,8 @@ export function GlobalValuePage() {
                   size="h40"
                   type="button"
                   onClick={handleCancelEdit}
-                  disabled={saveMutation.isPending} >
+                  disabled={saveMutation.isPending}
+                >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -239,7 +241,8 @@ export function GlobalValuePage() {
                   loading={saveMutation.isPending}
                   onClick={() => {
                     void handleSave()
-                  }} >
+                  }}
+                >
                   저장
                 </CmsButton>
               </>
@@ -249,7 +252,8 @@ export function GlobalValuePage() {
                 size="h40"
                 type="button"
                 onClick={handleStartEdit}
-                disabled={listQuery.isLoading || rows.length === 0} >
+                disabled={listQuery.isLoading || rows.length === 0}
+              >
                 수정
               </CmsButton>
             )}

@@ -177,7 +177,7 @@ export function InstructorSettlementForm({
       <Form.Item
         label="매칭"
         validateStatus={errors.matchingId ? 'error' : ''}
-        help={fieldValidationHelp(errors.matchingId) || '해당 프로그램의 매칭 정보를 선택하세요'}
+        help={fieldValidationHelp(errors.matchingId) || '해당 프로그램의 매칭 정보를 선택해 주세요'}
         required
       >
         <Select
@@ -205,14 +205,14 @@ export function InstructorSettlementForm({
       <Form.Item
         label="기간"
         validateStatus={errors.period ? 'error' : ''}
-        help={fieldValidationHelp(errors.period) || '기간을 선택하세요'}
+        help={fieldValidationHelp(errors.period) || '기간을 선택해 주세요'}
         required
       >
         <DatePicker
           style={{ width: '100%' }}
           format="YYYY-MM-DD"
           locale={locale}
-          placeholder="기간을 선택하세요"
+          placeholder="기간을 선택해 주세요"
           value={
             watch('period')
               ? watch('period').includes('-') && watch('period').split('-').length === 2

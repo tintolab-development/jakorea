@@ -1,10 +1,5 @@
 import { Fragment } from 'react'
-import {
-  Controller,
-  type FieldPath,
-  type PathValue,
-  type UseFormReturn,
-} from 'react-hook-form'
+import { Controller, type FieldPath, type PathValue, type UseFormReturn } from 'react-hook-form'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
@@ -48,21 +43,21 @@ export function DateRangeEdit({
           const start = toDayjs(field.value as string | Date | undefined)
           const end = toDayjs(form.watch(endName) as string | Date | undefined)
           const appliedRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
-          const appliedWithTime =
-            dateOnly
-              ? false
-              : appliedRange != null
-                ? dateRangeUsesClockTime(appliedRange[0], appliedRange[1])
-                : false
+          const appliedWithTime = dateOnly
+            ? false
+            : appliedRange != null
+              ? dateRangeUsesClockTime(appliedRange[0], appliedRange[1])
+              : false
 
           return (
-            <ParagraphDatePicker inputSize="small"
+            <ParagraphDatePicker
+              inputSize="small"
               mode="single"
               presetMode="period"
               value={start ?? null}
               width="100%"
               className="program-detail-info-tab__date-picker"
-              placeholder="기간을 선택하세요"
+              placeholder="기간을 선택해 주세요"
               preferPeriodModeInPopover
               showTimeToggle={!dateOnly}
               appliedSurfaceRange={appliedRange}

@@ -3,6 +3,7 @@
  */
 
 import { getJAKoreaHomepageAdminAPIAssetsSubset } from '@/shared/api/generated/assets/assets-api'
+import { contentTypeForAttachmentUpload } from '@/shared/lib/attachment-policy'
 import { resolvePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 
 type PrepareRuntime = {
@@ -19,7 +20,7 @@ export async function uploadNoticeAttachmentAsset(file: File): Promise<number> {
   const prepared = (await assetsApi.prepareUpload({
     purpose: 'JA_NOTICE_ATTACHMENT',
     originalName: file.name,
-    contentType: file.type || 'application/octet-stream',
+    contentType: contentTypeForAttachmentUpload(file),
     sizeBytes: file.size,
   })) as PrepareRuntime
 
@@ -35,7 +36,7 @@ export async function uploadNoticeAttachmentAsset(file: File): Promise<number> {
     ...(prepared.requiredHeaders ?? {}),
   }
   if (!headers['Content-Type'] && !headers['content-type']) {
-    headers['Content-Type'] = file.type || 'application/octet-stream'
+    headers['Content-Type'] = contentTypeForAttachmentUpload(file)
   }
 
   const uploadRes = await fetch(resolvePresignedUploadUrl(uploadUrl), {

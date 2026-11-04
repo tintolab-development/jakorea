@@ -399,7 +399,11 @@ describe('UJAT recruit form overlay', () => {
     expect(notApplicable['ujat.recruit.volunteer.h1.otherNotes']).toBe('기타사항 값')
 
     const applied = applyUjatRecruitVolunteerOverlayOntoProgram(
-      { ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM, oneLineIntroduction: undefined, otherNotes: undefined },
+      {
+        ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+        oneLineIntroduction: undefined,
+        otherNotes: undefined,
+      },
       { [VOLUNTEER_KEYS.notes]: '비고 값' }
     )
     expect(applied.oneLineIntroduction).toBe('비고 값')
@@ -721,9 +725,7 @@ describe('UJAT recruit form overlay', () => {
     expect(changedPeriod.programRecruitments?.find(row => row.id === 201)?.startAt).toBe(
       '2027-03-01'
     )
-    expect(changedPeriod.programRecruitments?.find(row => row.id === 201)?.endAt).toBe(
-      '2027-03-31'
-    )
+    expect(changedPeriod.programRecruitments?.find(row => row.id === 201)?.endAt).toBe('2027-03-31')
     expect(savedH1.ujatRegistrationOverlay).toEqual(program.ujatRegistrationOverlay)
   })
 
@@ -904,7 +906,7 @@ describe('UJAT recruit form overlay', () => {
     expect(h1Again.rounds?.[0]?.curriculum).toBe('12')
   })
 
-  it('typed 폼의 섬네일·첨부를 overlay 없이 모집 행에 싣는다', () => {
+  it('typed 폼의 썸네일·첨부를 overlay 없이 모집 행에 싣는다', () => {
     const program = {
       ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
       id: 'ujat-registration-linked',

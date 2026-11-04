@@ -4,7 +4,10 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type { JaHistoryTimeline, JaHistoryTimelineSaveInput } from '@/entities/ja-history/model/types'
+import type {
+  JaHistoryTimeline,
+  JaHistoryTimelineSaveInput,
+} from '@/entities/ja-history/model/types'
 import {
   CmsButton,
   CmsInput,
@@ -15,6 +18,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
@@ -23,7 +27,7 @@ import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } 
 const EVENT_SLOT_COUNT = 3
 
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 이미지 사이즈는 520 × 240px입니다.',
 ]
 
@@ -155,7 +159,7 @@ function TimelineFormBody({
       if (!isAllowedJaHistoryImage(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }
@@ -182,7 +186,7 @@ function TimelineFormBody({
         })
       }
     },
-    [showAlert],
+    [showAlert]
   )
 
   const columns = useMemo<ColumnsType<DraftEventRow>>(() => {
@@ -202,7 +206,9 @@ function TimelineFormBody({
               initialValue={record.year}
               ariaLabel={`${periodLabel} ${record.index + 1}행 연도`}
               onValue={year => {
-                const event = periodsRef.current.find(item => item.id === periodId)?.events[record.index]
+                const event = periodsRef.current.find(item => item.id === periodId)?.events[
+                  record.index
+                ]
                 if (event) event.year = year
               }}
             />
@@ -216,10 +222,12 @@ function TimelineFormBody({
           <DraftTextArea
             initialValue={record.text}
             rows={2}
-            placeholder="설명 텍스트를 입력하세요"
+            placeholder="설명 텍스트를 입력해 주세요"
             ariaLabel={`${record.year || periodLabel} 설명 텍스트`}
             onValue={text => {
-              const event = periodsRef.current.find(item => item.id === periodId)?.events[record.index]
+              const event = periodsRef.current.find(item => item.id === periodId)?.events[
+                record.index
+              ]
               if (event) event.text = text
             }}
           />
@@ -230,7 +238,7 @@ function TimelineFormBody({
 
   const eventRows = useMemo<DraftEventRow[]>(
     () => (active ? active.events.map((event, index) => ({ ...event, index })) : []),
-    [active],
+    [active]
   )
 
   const handleSubmit = () => {
@@ -281,7 +289,11 @@ function TimelineFormBody({
       setErrors(nextErrors)
       if (alertPeriodId) setActiveId(alertPeriodId)
       if (alertMessage) {
-        showAlert({ title: '입력 확인', content: alertMessage })
+        showAlert(
+          /4자리/.test(alertMessage)
+            ? { title: '입력 확인', content: alertMessage }
+            : REQUIRED_FIELDS_INCOMPLETE_ALERT
+        )
       }
       return
     }
@@ -306,16 +318,23 @@ function TimelineFormBody({
       className="ja-history-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel} disabled={confirmLoading}>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            onClick={onCancel}
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             수정
           </CmsButton>
         </>
@@ -329,8 +348,8 @@ function TimelineFormBody({
             view={null}
             edit={
               <div>
-                <div className="ja-history-modal__image-row">
-                  <div className="ja-history-modal__preview">
+                <div className="file-select-image-cell">
+                  <div className="file-select-image-cell__preview">
                     {imageUrl ? (
                       <Image
                         src={imageUrl}
@@ -379,7 +398,7 @@ function TimelineFormBody({
                 <DraftTextArea
                   initialValue={headingRef.current}
                   rows={2}
-                  placeholder="타이틀을 입력하세요"
+                  placeholder="타이틀을 입력해 주세요"
                   ariaLabel="타이틀"
                   onValue={value => {
                     headingRef.current = value
@@ -404,7 +423,7 @@ function TimelineFormBody({
                 <DraftTextArea
                   initialValue={bodyRef.current}
                   rows={3}
-                  placeholder="서브 텍스트를 입력하세요"
+                  placeholder="서브 텍스트를 입력해 주세요"
                   ariaLabel="서브 텍스트"
                   onValue={value => {
                     bodyRef.current = value
@@ -443,7 +462,7 @@ function TimelineFormBody({
                       key={active.id}
                       initialValue={active.title}
                       rows={2}
-                      placeholder="기간 제목을 입력하세요"
+                      placeholder="기간 제목을 입력해 주세요"
                       ariaLabel={`${active.label} 제목`}
                       onValue={nextTitle => {
                         const period = periodsRef.current.find(item => item.id === active.id)

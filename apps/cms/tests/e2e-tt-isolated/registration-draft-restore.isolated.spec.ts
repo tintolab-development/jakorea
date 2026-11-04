@@ -1,13 +1,6 @@
 import { expect, test } from '@playwright/test'
-import {
-  assertIsolatedNetwork,
-  installTtIsolatedNetwork,
-} from './install-tt-isolated-network'
-import {
-  clickDevAutofill,
-  parseCreatePayload,
-  waitWizard,
-} from './tt-isolated-helpers'
+import { assertIsolatedNetwork, installTtIsolatedNetwork } from './install-tt-isolated-network'
+import { clickDevAutofill, parseCreatePayload, waitWizard } from './tt-isolated-helpers'
 
 const CASE_01 = {
   mainTitle: '임시저장-대표명-A',
@@ -27,20 +20,26 @@ async function fillCaseTitles(
   page: import('@playwright/test').Page,
   titles: { mainTitle: string; announcementTitle: string; titleEn: string }
 ) {
-  const main = page.getByPlaceholder('대표 프로그램명을 입력하세요')
+  const main = page.getByPlaceholder('대표 프로그램명을 입력해 주세요')
   await expect(main.first()).toBeVisible({ timeout: 15_000 })
   await main.first().fill(titles.mainTitle)
   if ((await main.count()) > 1) {
     await main.nth(1).fill(titles.titleEn)
   }
-  const publicTitle = page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요')
+  const publicTitle = page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요')
   await expect(publicTitle).toBeVisible({ timeout: 10_000 })
   await publicTitle.fill(titles.announcementTitle)
 }
 
 async function ensureCommonInfoStep(page: import('@playwright/test').Page) {
-  const main = page.getByPlaceholder('대표 프로그램명을 입력하세요')
-  if (await main.first().isVisible().catch(() => false)) return
+  const main = page.getByPlaceholder('대표 프로그램명을 입력해 주세요')
+  if (
+    await main
+      .first()
+      .isVisible()
+      .catch(() => false)
+  )
+    return
   const common = page.getByRole('button', { name: '공통 정보' }).first()
   if (await common.isVisible().catch(() => false)) await common.click()
 }
@@ -50,12 +49,12 @@ async function expectCaseTitles(
   titles: { mainTitle: string; announcementTitle: string; titleEn: string }
 ) {
   await ensureCommonInfoStep(page)
-  const main = page.getByPlaceholder('대표 프로그램명을 입력하세요')
+  const main = page.getByPlaceholder('대표 프로그램명을 입력해 주세요')
   await expect(main.first()).toHaveValue(titles.mainTitle)
   if ((await main.count()) > 1) {
     await expect(main.nth(1)).toHaveValue(titles.titleEn)
   }
-  await expect(page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요')).toHaveValue(
+  await expect(page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요')).toHaveValue(
     titles.announcementTitle
   )
 }
@@ -72,7 +71,9 @@ async function saveDraft(page: import('@playwright/test').Page) {
   if (await confirm.isVisible().catch(() => false)) {
     await confirm.click()
   }
-  await expect(done.first()).toBeHidden({ timeout: 10_000 }).catch(() => undefined)
+  await expect(done.first())
+    .toBeHidden({ timeout: 10_000 })
+    .catch(() => undefined)
 }
 
 async function closeWizard(page: import('@playwright/test').Page) {
@@ -190,7 +191,7 @@ test.describe('TT 등록 임시저장 복원', () => {
     await installTtIsolatedNetwork(page)
     await page.goto('/programs/trained-teachers?new=1&registrationDraft=fresh')
     await waitWizard(page)
-    const main = page.getByPlaceholder('대표 프로그램명을 입력하세요').first()
+    const main = page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()
     await expect(main).toBeVisible({ timeout: 15_000 })
     await expect(main).not.toHaveValue(CASE_05.mainTitle)
     await expect(main).not.toHaveValue(CASE_01.mainTitle)

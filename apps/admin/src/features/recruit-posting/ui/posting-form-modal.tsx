@@ -27,6 +27,7 @@ import {
 import { HTTP_LINK_URL_FORMAT_ALERT } from '@/shared/lib/http-link-url'
 import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
   CmsDateRangePicker,
@@ -34,32 +35,24 @@ import {
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
+import {
+  ATTACHMENT_ACCEPT,
+  ATTACHMENT_MULTI_GENERAL_GUIDE_LINE,
+  withAttachmentFilenameGuide,
+  ATTACHMENT_MULTI_TOTAL_MAX_BYTES,
+  generalAttachmentMimeFromFile,
+  sumAttachmentBytes,
+  validateGeneralAttachmentBatch,
+} from '@/shared/lib/attachment-policy'
 
 import './posting-form-modal.css'
 
-const FILE_ACCEPT =
-  '.jpg,.jpeg,.png,.xls,.xlsx,.pdf,.doc,.docx,image/jpeg,image/png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
-const DOCUMENT_MAX_BYTES = 15 * 1024 * 1024
-
-const ATTACH_GUIDE = [
-  '- 이미지 파일은 최대 20MB, Excel·PDF·Word 파일은 최대 15MB까지 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-] as const
-
-const ALLOWED_EXT = new Set(['.jpg', '.jpeg', '.png', '.xls', '.xlsx', '.pdf', '.doc', '.docx'])
-
-function isImageAttachment(file: File): boolean {
-  const type = file.type.toLowerCase()
-  if (type === 'image/jpeg' || type === 'image/png') return true
-  const name = file.name.toLowerCase()
-  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
-}
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_MULTI_GENERAL_GUIDE_LINE])
 
 export type RecruitPostingFormValues = RecruitPostingCreateInput
 
@@ -91,32 +84,8 @@ function toFormStatus(status: RecruitPosting['status']): RecruitPostingFormStatu
   return status === 'recruiting' ? 'recruiting' : 'result'
 }
 
-function isAllowedAttachment(file: File): boolean {
-  const name = file.name.toLowerCase()
-  const dot = name.lastIndexOf('.')
-  if (dot < 0) return false
-  return ALLOWED_EXT.has(name.slice(dot))
-}
-
 function mimeFromFile(file: File): RecruitPostingAttachmentMime {
-  const name = file.name.toLowerCase()
-  if (file.type === 'image/png' || name.endsWith('.png')) return 'image/png'
-  if (file.type === 'image/jpeg' || name.endsWith('.jpg') || name.endsWith('.jpeg')) {
-    return 'image/jpeg'
-  }
-  if (file.type === 'application/pdf' || name.endsWith('.pdf')) return 'application/pdf'
-  if (name.endsWith('.doc')) return 'application/msword'
-  if (name.endsWith('.docx')) {
-    return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  }
-  if (name.endsWith('.xls')) return 'application/vnd.ms-excel'
-  if (name.endsWith('.xlsx')) {
-    return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  }
-  if (file.type && file.type !== 'application/octet-stream') {
-    return file.type as RecruitPostingAttachmentMime
-  }
-  throw new Error('unsupported-mime')
+  return generalAttachmentMimeFromFile(file)
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -175,19 +144,11 @@ export function RecruitPostingFormModal({
     [open, mode, initial?.id, editorContentFormat]
   )
 
-  const {
-    editor,
-    editorMinHeight,
-    getHTML,
-    editorMode,
-    htmlSource,
-    onEditorModeChange,
-    onHtmlSourceChange,
-  } = useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
-    placeholder: '게시글 내용을 입력하세요',
-    contentFormat: editorContentFormat,
-    allowInlineMedia: true,
-  })
+  const { editor, getHTML, editorMode, htmlSource, onEditorModeChange, onHtmlSourceChange } =
+    useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
+      contentFormat: editorContentFormat,
+      allowInlineMedia: true,
+    })
 
   const resetFromInitial = useCallback(() => {
     if (mode === 'edit' && initial) {
@@ -220,47 +181,38 @@ export function RecruitPostingFormModal({
   const handleFilesChange = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return
-
-      const file = files[0]!
-      if (!isAllowedAttachment(file)) {
-        showAlert({
-          title: '파일 형식',
-          content: 'JPG, PNG, Excel, PDF, Word 형식만 등록할 수 있습니다.',
-        })
+      const error = validateGeneralAttachmentBatch({
+        incoming: files,
+        existingCount: attachments.length,
+        existingBytes: sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 })),
+      })
+      if (error) {
+        showAlert({ title: '안내', content: error })
         return
       }
-      const maxBytes = isImageAttachment(file)
-        ? FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
-        : DOCUMENT_MAX_BYTES
-      if (file.size > maxBytes) {
-        showAlert({
-          title: '파일 용량',
-          content: `이미지 파일은 최대 20MB, 문서 파일은 최대 ${
-            DOCUMENT_MAX_BYTES / (1024 * 1024)
-          }MB까지 등록 가능합니다.`,
-        })
-        return
-      }
-      try {
-        const mime = mimeFromFile(file)
-        const dataUrl = await readFileAsDataUrl(file)
-        setAttachments([
-          {
-            id: `new-${Date.now()}`,
+      const accepted: RecruitPostingAttachment[] = []
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]!
+        try {
+          accepted.push({
+            id: `new-${Date.now()}-${i}`,
             name: file.name,
-            mime,
-            dataUrl,
+            mime: mimeFromFile(file),
+            dataUrl: await readFileAsDataUrl(file),
             file,
-          },
-        ])
-      } catch {
-        showAlert({
-          title: '파일 읽기 실패',
-          content: '파일을 읽지 못했습니다. 다시 시도해 주세요.',
-        })
+          })
+        } catch {
+          showAlert({
+            title: '파일 읽기 실패',
+            content: '파일을 읽지 못했습니다. 다시 시도해 주세요.',
+          })
+        }
+      }
+      if (accepted.length > 0) {
+        setAttachments(prev => [...prev, ...accepted])
       }
     },
-    [showAlert]
+    [attachments, showAlert]
   )
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -269,7 +221,7 @@ export function RecruitPostingFormModal({
 
   const handleSubmit = useCallback(() => {
     if (!publishedAt || !publishedAt.isValid()) {
-      showAlert({ title: '입력 확인', content: '게시일시를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const publishedMinute = publishedAt.minute()
@@ -283,7 +235,7 @@ export function RecruitPostingFormModal({
 
     const [recruitStart, recruitEnd] = recruitRange
     if (!recruitStart?.isValid() || !recruitEnd?.isValid()) {
-      showAlert({ title: '입력 확인', content: '모집 기간을 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const startMinute = recruitStart.minute()
@@ -302,14 +254,14 @@ export function RecruitPostingFormModal({
 
     const t = title.trim()
     if (!t) {
-      showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
 
     // remote body는 HTML. 로컬 mock도 HTML을 받을 수 있다.
     const contentHtml = getHTML().trim()
     if (isEmptyAdminHtml(contentHtml)) {
-      showAlert({ title: '입력 확인', content: '공고 내용을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const bodyError = getRemoteRichTextBodyError(contentHtml)
@@ -323,7 +275,9 @@ export function RecruitPostingFormModal({
       showAlert(
         linkError === HTTP_LINK_URL_FORMAT_ALERT.content
           ? HTTP_LINK_URL_FORMAT_ALERT
-          : { title: '입력 확인', content: linkError },
+          : linkError.includes('바로가기 링크')
+            ? REQUIRED_FIELDS_INCOMPLETE_ALERT
+            : { title: '입력 확인', content: linkError }
       )
       return
     }
@@ -398,11 +352,12 @@ export function RecruitPostingFormModal({
         size="large"
         className="posting-form-modal"
         footer={
-          <div className="posting-form-modal__footer">
+          <>
             {mode === 'edit' && onDelete ? (
               <CmsButton
+                className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="medium"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
                 onClick={() => setDeleteConfirmOpen(true)}
@@ -410,28 +365,28 @@ export function RecruitPostingFormModal({
                 공고 삭제
               </CmsButton>
             ) : null}
-            <div className="posting-form-modal__footer-end">
-              <CmsButton
-                variant="secondary"
-                size="large"
-                type="button"
-                disabled={confirmLoading || deleteLoading}
-                onClick={onCancel}
-              >
-                취소
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                type="button"
-                loading={confirmLoading || (mode === 'create' && meQuery.isPending && !meQuery.data)}
-                disabled={mode === 'create' && meQuery.isPending && !meQuery.data}
-                onClick={handleSubmit}
-              >
-                {submitLabel}
-              </CmsButton>
-            </div>
-          </div>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              disabled={confirmLoading || deleteLoading}
+              onClick={onCancel}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              type="button"
+              loading={
+                confirmLoading || (mode === 'create' && meQuery.isPending && !meQuery.data)
+              }
+              disabled={mode === 'create' && meQuery.isPending && !meQuery.data}
+              onClick={handleSubmit}
+            >
+              {submitLabel}
+            </CmsButton>
+          </>
         }
       >
         <div className="posting-form-modal__form">
@@ -464,7 +419,7 @@ export function RecruitPostingFormModal({
                   format="YYYY.MM.DD HH:mm"
                   value={publishedAt}
                   onChange={v => setPublishedAt(v)}
-                  placeholder="게시일시를 선택하세요"
+                  placeholder="게시일시를 선택해 주세요"
                 />
               </div>
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--radio">
@@ -514,7 +469,7 @@ export function RecruitPostingFormModal({
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="제목을 입력하세요"
+              placeholder="제목을 입력해 주세요"
             />
           </div>
 
@@ -523,7 +478,6 @@ export function RecruitPostingFormModal({
             <div className="posting-form-modal__editor-host">
               <RichTextEditor
                 editor={editor}
-                minHeight={editorMinHeight}
                 allowInlineMedia
                 allowRawHtmlBlock
                 editorMode={editorMode}
@@ -539,11 +493,12 @@ export function RecruitPostingFormModal({
             <div className="posting-form-modal__attachment-body">
               <FileSelectField
                 className="posting-form-modal__file-field"
-                multiple={false}
-                accept={FILE_ACCEPT}
+                multiple
+                accept={ATTACHMENT_ACCEPT.general}
                 buttonLabel="파일 추가"
                 fileNames={fileNames}
-                maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                currentTotalBytes={sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 }))}
+                maxTotalBytes={ATTACHMENT_MULTI_TOTAL_MAX_BYTES}
                 guideLines={ATTACH_GUIDE}
                 onFilesChange={files => {
                   void handleFilesChange(files)

@@ -28,6 +28,7 @@ import type { CareerPostingCreateRequest } from '@/shared/api/generated/careers/
 import type { CareerPostingCreateRequestStatus } from '@/shared/api/generated/careers/schemas/careerPostingCreateRequestStatus'
 import type { CareerPostingUpdateRequest } from '@/shared/api/generated/careers/schemas/careerPostingUpdateRequest'
 import type { CareerPostingUpdateRequestStatus } from '@/shared/api/generated/careers/schemas/careerPostingUpdateRequestStatus'
+import { generalAttachmentMimeFromContentType } from '@/shared/lib/attachment-policy'
 
 function mapStatus(
   status: CareerPostingAdminItemStatus | CareerPostingAdminDetail['status'] | undefined,
@@ -50,31 +51,27 @@ export function toYmd(value: string | undefined | null): string {
 }
 
 function mapMime(contentType: string | undefined): RecruitPostingAttachmentMime {
-  switch (contentType) {
-    case 'image/jpeg':
-    case 'image/png':
-    case 'application/pdf':
-    case 'application/msword':
-    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-    case 'application/vnd.ms-excel':
-    case 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-      return contentType
-    default:
-      return 'application/octet-stream'
-  }
+  return generalAttachmentMimeFromContentType(contentType)
 }
 
-function mapAttachment(asset: AssetResponse | undefined | null): RecruitPostingAttachment[] {
-  if (!asset || asset.assetId == null) return []
-  return [
-    {
-      id: String(asset.assetId),
-      name: text(asset.originalName) || `attachment-${asset.assetId}`,
-      mime: mapMime(asset.contentType),
-      dataUrl: asset.publicUrl?.trim() || undefined,
-      assetId: asset.assetId,
-    },
-  ]
+export const RECRUIT_POSTING_ATTACHMENT_MAX_COUNT = 10
+
+function mapAttachments(assets: AssetResponse[] | undefined | null): RecruitPostingAttachment[] {
+  if (!assets?.length) return []
+  return assets
+    .flatMap(asset => {
+      if (asset.assetId == null) return []
+      return [
+        {
+          id: String(asset.assetId),
+          name: text(asset.originalName) || `attachment-${asset.assetId}`,
+          mime: mapMime(asset.contentType),
+          dataUrl: asset.publicUrl?.trim() || undefined,
+          assetId: asset.assetId,
+        },
+      ]
+    })
+    .slice(0, RECRUIT_POSTING_ATTACHMENT_MAX_COUNT)
 }
 
 function mapAdminFields(
@@ -119,7 +116,7 @@ export function mapCareerPostingAdminDetail(row: CareerPostingAdminDetail): Recr
   return {
     ...base,
     contentMarkdown: text(row.body),
-    attachments: mapAttachment(row.attachment),
+    attachments: mapAttachments(row.attachments),
     buttonLabel: link.buttonLabel,
     linkUrl: link.linkUrl,
   }
@@ -143,13 +140,13 @@ export function toUpdateWireStatus(
 
 export function toCareerPostingCreateRequest(
   input: RecruitPostingCreateInput,
-  attachmentAssetId?: number,
+  attachmentAssetIds: number[] = [],
 ): CareerPostingCreateRequest {
   const link = normalizeCareerPostingLinkFields({
     buttonLabel: input.buttonLabel,
     linkUrl: input.linkUrl,
   })
-  const request: CareerPostingCreateRequest = {
+  return {
     title: input.title.trim(),
     body: input.contentMarkdown,
     isPublic: input.isPublic,
@@ -158,25 +155,22 @@ export function toCareerPostingCreateRequest(
     recruitStart: toYmd(input.recruitStart),
     recruitEnd: toYmd(input.recruitEnd),
     authorName: input.authorName.trim(),
+    attachmentAssetIds: attachmentAssetIds.slice(0, RECRUIT_POSTING_ATTACHMENT_MAX_COUNT),
     buttonLabel: link.buttonLabel,
     linkUrl: link.linkUrl,
   }
-  if (attachmentAssetId != null) {
-    request.attachmentAssetId = attachmentAssetId
-  }
-  return request
 }
 
 export function toCareerPostingUpdateRequest(
   input: RecruitPostingUpdateInput,
   version: number,
-  attachmentAssetId?: number,
+  attachmentAssetIds: number[] = [],
 ): CareerPostingUpdateRequest {
   const link = normalizeCareerPostingLinkFields({
     buttonLabel: input.buttonLabel,
     linkUrl: input.linkUrl,
   })
-  const request: CareerPostingUpdateRequest = {
+  return {
     title: input.title.trim(),
     body: input.contentMarkdown,
     isPublic: input.isPublic,
@@ -186,13 +180,10 @@ export function toCareerPostingUpdateRequest(
     recruitEnd: toYmd(input.recruitEnd),
     authorName: input.authorName.trim(),
     version,
+    attachmentAssetIds: attachmentAssetIds.slice(0, RECRUIT_POSTING_ATTACHMENT_MAX_COUNT),
     buttonLabel: link.buttonLabel,
     linkUrl: link.linkUrl,
   }
-  if (attachmentAssetId != null) {
-    request.attachmentAssetId = attachmentAssetId
-  }
-  return request
 }
 
 export function toNumericId(id: string): number {

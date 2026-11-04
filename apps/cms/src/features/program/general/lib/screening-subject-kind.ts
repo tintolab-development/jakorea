@@ -11,7 +11,7 @@ export function screeningApplicantNameLabel(kind: ScreeningSubjectKind): string 
 }
 
 export function screeningApplicantNamePlaceholder(kind: ScreeningSubjectKind): string {
-  return kind === 'participant' ? '신청자명을 입력하세요' : '봉사자명을 입력하세요'
+  return kind === 'participant' ? '신청자명을 입력해 주세요' : '봉사자명을 입력해 주세요'
 }
 
 export function screeningDocPassedListTitle(kind: ScreeningSubjectKind): string {
@@ -22,19 +22,13 @@ export function screeningInterview2ListTitle(kind: ScreeningSubjectKind): string
   return kind === 'participant' ? '참여자 2차 면접 대상자 목록' : '봉사자 2차 면접 대상자 목록'
 }
 
-export function screeningWithdrawConfirmContent(
-  kind: ScreeningSubjectKind,
-  name: string
-): string {
+export function screeningWithdrawConfirmContent(kind: ScreeningSubjectKind, name: string): string {
   return kind === 'participant'
     ? `${name} 참여자를 활동 포기 처리하시겠습니까?`
     : `${name} 봉사자를 활동 포기 처리하시겠습니까?`
 }
 
-export function screeningWithdrawCompleteContent(
-  kind: ScreeningSubjectKind,
-  name: string
-): string {
+export function screeningWithdrawCompleteContent(kind: ScreeningSubjectKind, name: string): string {
   return kind === 'participant'
     ? `${name} 참여자가 활동 포기 처리되었습니다.`
     : `${name} 봉사자가 활동 포기 처리되었습니다.`
@@ -97,10 +91,17 @@ export function resolveGeneralParticipantApplicantDetailTitle(
 export function resolveGeneralApplicantDetailModalTitle(
   activeLnb: string,
   activeTab: string,
-  meta: { title: string; breadcrumbLabel: string; kind: 'institution' | 'individual' | 'instructor' }
+  meta: {
+    title: string
+    breadcrumbLabel: string
+    kind: 'institution' | 'individual' | 'instructor'
+  }
 ): string {
   if (activeLnb === 'institution_applications' && meta.kind === 'individual') {
-    const screeningTitle = resolveGeneralParticipantApplicantDetailTitle(activeTab, meta.breadcrumbLabel)
+    const screeningTitle = resolveGeneralParticipantApplicantDetailTitle(
+      activeTab,
+      meta.breadcrumbLabel
+    )
     if (screeningTitle) return screeningTitle
   }
   return meta.title

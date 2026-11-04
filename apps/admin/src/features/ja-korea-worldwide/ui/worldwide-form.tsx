@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useState } from 'react'
+import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
   JaKoreaWorldwide,
   WorldwideBranchId,
@@ -14,7 +15,7 @@ import {
   HTTP_LINK_URL_FORMAT_ALERT,
   isValidHttpLinkUrl,
 } from '@/shared/lib/http-link-url'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './worldwide-form.css'
 
@@ -59,6 +60,7 @@ export function WorldwideFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -89,7 +91,7 @@ export function WorldwideFormCard({ data }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending} >
@@ -97,7 +99,7 @@ export function WorldwideFormCard({ data }: Props) {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -107,7 +109,7 @@ export function WorldwideFormCard({ data }: Props) {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

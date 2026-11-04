@@ -72,12 +72,13 @@ function PreferenceScheduleFields({
     <DetailInfoForm.Field
       label="희망 교육일"
       edit={
-        <ParagraphDatePicker inputSize="small"
+        <ParagraphDatePicker
+          inputSize="small"
           mode="single"
           presetMode="date"
           customizable={false}
           suppressAutoTodayWhenEmpty
-          placeholder="희망 교육 날짜를 선택하세요"
+          placeholder="희망 교육 날짜를 선택해 주세요"
           value={block.date}
           onChange={next => onPatch({ date: next })}
           disabledDate={disabledDate}
@@ -121,7 +122,8 @@ function PreferenceScheduleFields({
                   <DetailInfoForm.InputsSeparator />
                 </>
               ) : null}
-              <ParagraphTimePicker inputSize="small"
+              <ParagraphTimePicker
+                inputSize="small"
                 value={block.start}
                 onChange={next => onPatch({ start: next, end: next == null ? null : block.end })}
                 placeholder="수업 시작"
@@ -130,7 +132,8 @@ function PreferenceScheduleFields({
                 disabled={timeInputsDisabled}
               />
               <span className="institution-preferred-schedule-paragraph__tilde">~</span>
-              <ParagraphTimePicker inputSize="small"
+              <ParagraphTimePicker
+                inputSize="small"
                 value={block.end}
                 onChange={next => onPatch({ end: next })}
                 placeholder="수업 종료"
@@ -243,7 +246,8 @@ export function InstitutionPreferredScheduleCardTitleTrailing({
       onClick={event => {
         event.stopPropagation()
         addInstitutionPreferredScheduleBlock()
-      }} >
+      }}
+    >
       희망 교육 일정 추가
     </CmsButton>
   )

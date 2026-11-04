@@ -76,7 +76,7 @@ export function buildGeneralParticipantDoc1FilterRows(): FilterFieldConfig[][] {
         key: 'applicantName',
         type: 'search',
         label: '신청자명',
-        placeholder: '신청자명을 입력하세요',
+        placeholder: '신청자명을 입력해 주세요',
       }),
       buildFilterField({
         key: 'grade',
@@ -114,7 +114,9 @@ export function filterGeneralParticipantDoc1Applications(
   rows: GeneralIndividualApplicantRow[],
   filters: GeneralParticipantDoc1Filters | Record<string, unknown>
 ): GeneralIndividualApplicantRow[] {
-  const nameQ = String(filters.applicantName ?? '').trim().toLowerCase()
+  const nameQ = String(filters.applicantName ?? '')
+    .trim()
+    .toLowerCase()
   const grade = String(filters.grade ?? GENERAL_VOLUNTEER_FILTER_ALL)
   const managerA = String(filters.managerAEvaluation ?? GENERAL_VOLUNTEER_FILTER_ALL)
   const managerB = String(filters.managerBEvaluation ?? GENERAL_VOLUNTEER_FILTER_ALL)
@@ -129,10 +131,7 @@ export function filterGeneralParticipantDoc1Applications(
     if (managerB !== GENERAL_VOLUNTEER_FILTER_ALL && row.managerBEvaluation !== managerB) {
       return false
     }
-    if (
-      docStatus !== GENERAL_VOLUNTEER_FILTER_ALL &&
-      row.documentScreeningStatus !== docStatus
-    ) {
+    if (docStatus !== GENERAL_VOLUNTEER_FILTER_ALL && row.documentScreeningStatus !== docStatus) {
       return false
     }
     return true

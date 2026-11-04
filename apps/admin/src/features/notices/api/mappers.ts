@@ -11,16 +11,17 @@ import type {
   NoticeUpdateInput,
 } from '@/entities/notices/model/types'
 import { markdownToHtml } from '@/shared/rich-text'
+import type { AssetResponse } from '@/shared/api/generated/ja-korea/schemas/assetResponse'
 import type { BulkDeleteRequest } from '@/shared/api/generated/ja-korea/schemas/bulkDeleteRequest'
 import type { List5Params } from '@/shared/api/generated/ja-korea/schemas/list5Params'
 import type { NoticeCreateRequest } from '@/shared/api/generated/ja-korea/schemas/noticeCreateRequest'
 import type { NoticeResponse } from '@/shared/api/generated/ja-korea/schemas/noticeResponse'
 import type { NoticeUpdateRequest } from '@/shared/api/generated/ja-korea/schemas/noticeUpdateRequest'
 import type { PublishedToggleRequest } from '@/shared/api/generated/ja-korea/schemas/publishedToggleRequest'
+import { generalAttachmentMimeFromContentType } from '@/shared/lib/attachment-policy'
 
 function mimeFromContentType(contentType: string | undefined): NoticeAttachmentMime {
-  if (contentType?.toLowerCase().includes('png')) return 'image/png'
-  return 'image/jpeg'
+  return generalAttachmentMimeFromContentType(contentType)
 }
 
 function looksLikeHtml(value: string): boolean {
@@ -35,18 +36,29 @@ export function toApiNoticeBody(content: string): string {
   return markdownToHtml(trimmed)
 }
 
+export const NOTICE_ATTACHMENT_MAX_COUNT = 10
+
+function mapAssetAttachments(assets: AssetResponse[] | undefined): NoticeAttachment[] {
+  if (!assets?.length) return []
+  return assets
+    .flatMap(asset => {
+      if (asset.assetId == null) return []
+      return [
+        {
+          id: String(asset.assetId),
+          name: asset.originalName ?? 'attachment',
+          mime: mimeFromContentType(asset.contentType),
+          dataUrl: asset.publicUrl,
+          assetId: asset.assetId,
+        },
+      ]
+    })
+    .slice(0, NOTICE_ATTACHMENT_MAX_COUNT)
+}
+
 export function mapNoticeResponseToDomain(row: NoticeResponse): Notice {
   const id = row.id != null ? String(row.id) : ''
-  const attachments: NoticeAttachment[] = []
-  if (row.attachment?.assetId != null) {
-    attachments.push({
-      id: String(row.attachment.assetId),
-      name: row.attachmentFileName ?? row.attachment.originalName ?? 'attachment',
-      mime: mimeFromContentType(row.attachment.contentType),
-      dataUrl: row.attachment.publicUrl,
-      assetId: row.attachment.assetId,
-    })
-  }
+  const attachments = mapAssetAttachments(row.attachments)
 
   return {
     id,
@@ -92,19 +104,9 @@ export function toNoticeListParams(
   return params
 }
 
-/** API는 첨부 1건만 지원 — 첫 번째 유효 asset/file 기준 */
-export function resolvePrimaryAttachmentAssetId(
-  attachments: NoticeAttachment[],
-): number | undefined {
-  for (const att of attachments) {
-    if (att.assetId != null && att.assetId > 0) return att.assetId
-  }
-  return undefined
-}
-
 export function toNoticeCreateRequest(
   input: NoticeCreateInput,
-  attachmentAssetId?: number,
+  attachmentAssetIds: number[],
 ): NoticeCreateRequest {
   return {
     published: input.isPublic,
@@ -112,14 +114,14 @@ export function toNoticeCreateRequest(
     publishAt: input.publishedAt,
     title: input.title.trim(),
     body: toApiNoticeBody(input.contentMarkdown),
-    attachmentAssetId,
+    attachmentAssetIds: attachmentAssetIds.slice(0, NOTICE_ATTACHMENT_MAX_COUNT),
   }
 }
 
 export function toNoticeUpdateRequest(
   input: NoticeUpdateInput,
   version: number,
-  attachmentAssetId?: number,
+  attachmentAssetIds: number[],
 ): NoticeUpdateRequest {
   return {
     published: input.isPublic,
@@ -127,7 +129,7 @@ export function toNoticeUpdateRequest(
     publishAt: input.publishedAt,
     title: input.title.trim(),
     body: toApiNoticeBody(input.contentMarkdown),
-    attachmentAssetId,
+    attachmentAssetIds: attachmentAssetIds.slice(0, NOTICE_ATTACHMENT_MAX_COUNT),
     version,
   }
 }

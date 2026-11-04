@@ -22,7 +22,9 @@ export const ADMIN_NOTICE_CATEGORY_FILTER_OPTIONS: {
  * @deprecated 작성 폼은 GET notice-categories만 사용. 목록 필터·카테고리 관리 mock 초기값용.
  */
 export const ADMIN_NOTICE_CATEGORY_OPTIONS: { label: string; value: Notice['category'] }[] =
-  ADMIN_NOTICE_CATEGORY_FILTER_OPTIONS.filter((o): o is { label: string; value: Notice['category'] } => o.value !== 'ALL')
+  ADMIN_NOTICE_CATEGORY_FILTER_OPTIONS.filter(
+    (o): o is { label: string; value: Notice['category'] } => o.value !== 'ALL'
+  )
 
 /** 카테고리 관리 모달 초기 행 — mock 필터 옵션과 동일 라벨 (원격 API 미사용 시) */
 export function createInitialNoticeCategoryRows(): NoticeCategoryRow[] {
@@ -68,14 +70,14 @@ export function buildAdminNoticeManagementFilterFields(
       key: 'title',
       type: 'search',
       label: '제목',
-      placeholder: '제목을 입력하세요',
+      placeholder: '제목을 입력해 주세요',
       width: '22%',
     },
     {
       key: 'author',
       type: 'search',
       label: '작성자명',
-      placeholder: '작성자명을 입력하세요',
+      placeholder: '작성자명을 입력해 주세요',
       width: '18%',
     },
     {

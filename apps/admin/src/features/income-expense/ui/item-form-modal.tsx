@@ -10,6 +10,7 @@ import {
 } from '@/entities/income-expense/model/types'
 import { parseAmountInput, parseRatioInput } from '@/features/income-expense/lib/format'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsRadio,
@@ -70,7 +71,7 @@ export function ItemFormModal({
   const handleSubmit = () => {
     const trimmed = name.trim()
     if (!trimmed) {
-      showAlert({ title: '입력 확인', content: '항목명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const ratioNum = parseRatioInput(ratio)
@@ -84,7 +85,7 @@ export function ItemFormModal({
       return
     }
     if (showCategory && !category) {
-      showAlert({ title: '입력 확인', content: '구분을 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
 
@@ -107,28 +108,27 @@ export function ItemFormModal({
       width={720}
       className="income-expense-item-form-modal"
       footer={
-        <div className="content-modal__footer-actions">
-          <div className="income-expense-item-form-modal__footer-start" />
-          <div className="income-expense-item-form-modal__footer-end">
-            <CmsButton
-              variant="secondary"
-              size="large"
-              type="button"
-              disabled={confirmLoading}
-              onClick={onCancel} >
-              취소
-            </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="large"
-              type="button"
-              loading={confirmLoading}
-              disabled={confirmLoading}
-              onClick={handleSubmit} >
-              등록
-            </CmsButton>
-          </div>
-        </div>
+        <>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            disabled={confirmLoading}
+            onClick={onCancel}
+          >
+            취소
+          </CmsButton>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            type="button"
+            loading={confirmLoading}
+            disabled={confirmLoading}
+            onClick={handleSubmit}
+          >
+            등록
+          </CmsButton>
+        </>
       }
     >
       <DetailInfoForm
@@ -170,7 +170,7 @@ export function ItemFormModal({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="항목명을 입력하세요"
+                placeholder="항목명을 입력해 주세요"
                 value={name}
                 onChange={e => setName(e.target.value)}
               />

@@ -10,7 +10,7 @@ import type {
 } from '@/entities/ja-korea-intro/model/types'
 import { useSaveJaKoreaIntro } from '@/features/ja-korea-intro/api/hooks'
 import { ContentNestedTable } from '@/features/ja-korea-intro/ui/content-nested-table'
-import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './intro-form.css'
 
@@ -67,6 +67,7 @@ export function IntroFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -157,25 +158,27 @@ export function IntroFormCard({ data }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}
@@ -196,7 +199,7 @@ export function IntroFormCard({ data }: Props) {
                     width="100%"
                     value={draft.section01.mainTitle}
                     onChange={e => updateSection01({ mainTitle: e.target.value })}
-                    placeholder="메인 타이틀을 입력하세요"
+                    placeholder="메인 타이틀을 입력해 주세요"
                   />
                 }
               />
@@ -209,7 +212,7 @@ export function IntroFormCard({ data }: Props) {
                     width="100%"
                     value={draft.section01.subTitle}
                     onChange={e => updateSection01({ subTitle: e.target.value })}
-                    placeholder="서브 타이틀을 입력하세요"
+                    placeholder="서브 타이틀을 입력해 주세요"
                   />
                 }
               />
@@ -230,7 +233,7 @@ export function IntroFormCard({ data }: Props) {
                     width="100%"
                     value={draft.section02.titlePhrase}
                     onChange={e => updateSection02({ titlePhrase: e.target.value })}
-                    placeholder="타이틀 문구를 입력하세요"
+                    placeholder="타이틀 문구를 입력해 주세요"
                   />
                 }
               />
@@ -243,7 +246,7 @@ export function IntroFormCard({ data }: Props) {
                     width="100%"
                     value={draft.section02.subTitle}
                     onChange={e => updateSection02({ subTitle: e.target.value })}
-                    placeholder="서브 타이틀을 입력하세요"
+                    placeholder="서브 타이틀을 입력해 주세요"
                   />
                 }
               />
@@ -272,7 +275,7 @@ export function IntroFormCard({ data }: Props) {
                     rows={2}
                     value={draft.vision.topSubText}
                     onChange={e => updateVision({ topSubText: e.target.value })}
-                    placeholder="상단 서브 텍스트를 입력하세요"
+                    placeholder="상단 서브 텍스트를 입력해 주세요"
                   />
                 }
               />
@@ -289,7 +292,7 @@ export function IntroFormCard({ data }: Props) {
                     rows={2}
                     value={draft.vision.mainText}
                     onChange={e => updateVision({ mainText: e.target.value })}
-                    placeholder="메인 텍스트를 입력하세요"
+                    placeholder="메인 텍스트를 입력해 주세요"
                   />
                 }
               />
@@ -312,7 +315,7 @@ export function IntroFormCard({ data }: Props) {
                     rows={2}
                     value={draft.mission.topSubText}
                     onChange={e => updateMission({ topSubText: e.target.value })}
-                    placeholder="상단 서브 텍스트를 입력하세요"
+                    placeholder="상단 서브 텍스트를 입력해 주세요"
                   />
                 }
               />
@@ -329,7 +332,7 @@ export function IntroFormCard({ data }: Props) {
                     rows={2}
                     value={draft.mission.mainText}
                     onChange={e => updateMission({ mainText: e.target.value })}
-                    placeholder="메인 텍스트를 입력하세요"
+                    placeholder="메인 텍스트를 입력해 주세요"
                   />
                 }
               />

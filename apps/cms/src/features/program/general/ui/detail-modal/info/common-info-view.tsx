@@ -596,11 +596,15 @@ function BasicInfoSection({
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
             label="최초 등록일"
-            view={<ProgramRegistrationAuditValue at={program.createdAt} name={program.createdByName} />}
+            view={
+              <ProgramRegistrationAuditValue at={program.createdAt} name={program.createdByName} />
+            }
           />
           <DetailInfoForm.Field
             label="마지막 수정일"
-            view={<ProgramRegistrationAuditValue at={program.updatedAt} name={program.updatedByName} />}
+            view={
+              <ProgramRegistrationAuditValue at={program.updatedAt} name={program.updatedByName} />
+            }
           />
         </DetailInfoForm.Row>
       </DetailInfoForm>
@@ -624,7 +628,7 @@ function BasicInfoSection({
                     inputSize="small"
                     {...field}
                     value={field.value ?? ''}
-                    placeholder="대표 프로그램명을 입력하세요"
+                    placeholder="대표 프로그램명을 입력해 주세요"
                     width="100%"
                     status={editForm.formState.errors.mainTitle ? 'error' : undefined}
                   />
@@ -645,7 +649,7 @@ function BasicInfoSection({
                     inputSize="small"
                     {...field}
                     value={field.value ?? ''}
-                    placeholder="대표 프로그램명(영문)을 입력하세요"
+                    placeholder="대표 프로그램명(영문)을 입력해 주세요"
                     width="100%"
                   />
                 )}
@@ -667,7 +671,7 @@ function BasicInfoSection({
                     inputSize="small"
                     {...field}
                     value={field.value ?? ''}
-                    placeholder="모집 시 노출될 프로그램명을 입력하세요"
+                    placeholder="모집 시 노출될 프로그램명을 입력해 주세요"
                     width="100%"
                     status={editForm.formState.errors.announcementTitle ? 'error' : undefined}
                   />
@@ -688,7 +692,7 @@ function BasicInfoSection({
                     <CmsSelect
                       withAllOption={false}
                       inputSize="small"
-                      placeholder="세부 프로그램명을 선택하세요"
+                      placeholder="세부 프로그램명을 선택해 주세요"
                       width="100%"
                       options={detailedProgramOptions}
                       value={
@@ -728,7 +732,7 @@ function BasicInfoSection({
                         presetMode="period"
                         value={start ?? dayjs()}
                         width="100%"
-                        placeholder="사업 운영 기간을 선택하세요"
+                        placeholder="사업 운영 기간을 선택해 주세요"
                         preferPeriodModeInPopover
                         showTimeToggle={false}
                         appliedSurfaceRange={operationRange}
@@ -821,7 +825,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="사업 분야를 선택하세요"
+                      placeholder="사업 분야를 선택해 주세요"
                       width="100%"
                       options={[...BUSINESS_AREA_OPTIONS]}
                       value={field.value || undefined}
@@ -854,7 +858,7 @@ function BasicInfoSection({
                       inputSize="small"
                       mode="multiple"
                       withAllOption={false}
-                      placeholder="후원사를 선택하세요"
+                      placeholder="후원사를 선택해 주세요"
                       width="100%"
                       showSearch
                       optionFilterProp="label"
@@ -908,7 +912,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       mode="multiple"
-                      placeholder="후원사 담당자를 선택하세요"
+                      placeholder="후원사 담당자를 선택해 주세요"
                       width="100%"
                       showSearch
                       optionFilterProp="label"
@@ -1038,7 +1042,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="교육 과정을 선택하세요"
+                      placeholder="교육 과정을 선택해 주세요"
                       width="100%"
                       options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
                       value={field.value || undefined}
@@ -1068,7 +1072,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="IP Owned를 선택하세요"
+                      placeholder="IP Owned를 선택해 주세요"
                       width="100%"
                       options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
                       value={field.value || undefined}
@@ -1100,7 +1104,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="Course Delivered By를 선택하세요"
+                      placeholder="Course Delivered By를 선택해 주세요"
                       width="100%"
                       options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
                       value={field.value || undefined}
@@ -2719,7 +2723,7 @@ function SingleRoundCurriculumSessionForm({
                         {...field}
                         value={field.value ?? ''}
                         inputSize="small"
-                        placeholder="단원명을 입력하세요"
+                        placeholder="단원명을 입력해 주세요"
                         width="100%"
                         style={{ minWidth: 0, flex: '1 1 0' }}
                       />
@@ -3218,7 +3222,8 @@ function CurriculumSection({
               size="medium"
               disabled={curriculumChartSessionAtMax}
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddSession} >
+              onClick={handleAddSession}
+            >
               {isMultiRoundCurriculum ? '강의 진행 회차 추가' : '강의 진행 차시 추가'}
             </CmsButton>
           </div>
@@ -4521,7 +4526,8 @@ function ScheduleProgressEditSection({
               variant="secondary"
               size="medium"
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddDetail} >
+              onClick={handleAddDetail}
+            >
               강의 행사 일정 추가
             </CmsButton>
           ) : isMultiRound || !allowProgressGroupAdd ? (
@@ -4530,7 +4536,8 @@ function ScheduleProgressEditSection({
               variant="secondary"
               size="medium"
               icon={<ButtonAddIcon aria-hidden />}
-              onClick={handleAddDetail} >
+              onClick={handleAddDetail}
+            >
               강의 세부 일정 추가
             </CmsButton>
           ) : (
@@ -4543,7 +4550,8 @@ function ScheduleProgressEditSection({
                   scheduleGroupCount >= PROGRAM_REGISTRATION_SCHEDULE_CURRICULUM_MAX_GROUP_COUNT
                 }
                 icon={<ButtonClockIcon />}
-                onClick={handleAddGroup} >
+                onClick={handleAddGroup}
+              >
                 진행 그룹 구분 추가
               </CmsButton>
               <CmsButton
@@ -4551,7 +4559,8 @@ function ScheduleProgressEditSection({
                 variant="secondary"
                 size="medium"
                 icon={<ButtonAddIcon aria-hidden />}
-                onClick={handleAddDetail} >
+                onClick={handleAddDetail}
+              >
                 강의 세부 일정 추가
               </CmsButton>
             </>
@@ -5189,14 +5198,16 @@ export function GeneralProgramDetailCommonInfoView({
           <BusinessPeriodExtendToolbar
             program={program}
             editDisabled={editDisabled}
-            hideExtend={isEditMode} >
+            hideExtend={isEditMode}
+          >
             <ProgramEditInfoActions
               isEditing={isEditMode}
               idleVariant="secondary"
               disabled={editDisabled}
               onEdit={onEdit ?? (() => {})}
               onCancel={onCancel ?? (() => {})}
-              onSave={onSave ?? (() => {})} />
+              onSave={onSave ?? (() => {})}
+            />
           </BusinessPeriodExtendToolbar>
         </div>
       )}

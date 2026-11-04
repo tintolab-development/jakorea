@@ -19,17 +19,18 @@ import type { CategoryPayloadRow } from './category-payload'
 import type { CategoryUpdateRequest } from '@/shared/api/generated/impact-story/schemas/categoryUpdateRequest'
 import type { List6Params } from '@/shared/api/generated/impact-story/schemas/list6Params'
 import type { PublishedToggleRequest } from '@/shared/api/generated/impact-story/schemas/publishedToggleRequest'
+import type { AssetResponse } from '@/shared/api/generated/impact-story/schemas/assetResponse'
 import type { StoryCreateRequest } from '@/shared/api/generated/impact-story/schemas/storyCreateRequest'
 import type { StoryListItem } from '@/shared/api/generated/impact-story/schemas/storyListItem'
 import type { StoryResponse } from '@/shared/api/generated/impact-story/schemas/storyResponse'
 import type { StoryUpdateRequest } from '@/shared/api/generated/impact-story/schemas/storyUpdateRequest'
+import { generalAttachmentMimeFromContentType } from '@/shared/lib/attachment-policy'
 
 /** BE default / list-page-size.mdc */
 export const LIST_PAGE_SIZE = 20
 
 function mimeFromContentType(contentType: string | undefined): ImpactStoryAttachmentMime {
-  if (contentType?.toLowerCase().includes('png')) return 'image/png'
-  return 'image/jpeg'
+  return generalAttachmentMimeFromContentType(contentType)
 }
 
 function looksLikeHtml(value: string): boolean {
@@ -46,7 +47,7 @@ export function toApiStoryBody(content: string): string {
 
 export function mapCategoryResponseToDomain(
   row: CategoryResponse | CategoryPayloadRow,
-  sortOrder = 0,
+  sortOrder = 0
 ): ImpactStoryCategory {
   const storyCount =
     typeof row.storyCount === 'number' && Number.isFinite(row.storyCount)
@@ -65,10 +66,7 @@ export function toCategoryCreateRequest(name: string): CategoryCreateRequest {
   return { name: name.trim() }
 }
 
-export function toCategoryUpdateRequest(
-  name: string,
-  version: number,
-): CategoryUpdateRequest {
+export function toCategoryUpdateRequest(name: string, version: number): CategoryUpdateRequest {
   return { name: name.trim(), version }
 }
 
@@ -78,25 +76,27 @@ export function isPersistedCategoryId(id: string): boolean {
   return Number.isFinite(n) && n > 0 && String(n) === id.trim()
 }
 
+export const STORY_ATTACHMENT_MAX_COUNT = 10
+
 export function requireThumbnailAssetId(id?: number): number {
   if (id == null || id <= 0) {
-    throw new Error('섬네일 이미지를 등록해 주세요.')
+    throw new Error('썸네일 이미지를 등록해 주세요.')
   }
   return id
 }
 
-export function assertDistinctStoryAssetIds(
+export function assertThumbnailNotInAttachments(
   thumbnailAssetId: number,
-  attachmentAssetId?: number,
+  attachmentAssetIds: readonly number[]
 ): void {
-  if (attachmentAssetId != null && attachmentAssetId === thumbnailAssetId) {
-    throw new Error('섬네일과 첨부 파일은 서로 다른 파일이어야 합니다.')
+  if (attachmentAssetIds.includes(thumbnailAssetId)) {
+    throw new Error('썸네일과 첨부 파일은 서로 다른 파일이어야 합니다.')
   }
 }
 
 function mapAssetAttachment(
-  asset: StoryResponse['thumbnail'] | StoryResponse['attachment'],
-  originalName?: string | null,
+  asset: AssetResponse | null | undefined,
+  originalName?: string | null
 ): ImpactStoryAttachment | null {
   if (asset?.assetId == null) return null
   return {
@@ -109,8 +109,13 @@ function mapAssetAttachment(
 }
 
 function mapAttachmentFromResponse(row: StoryResponse): ImpactStoryAttachment[] {
-  const attachment = mapAssetAttachment(row.attachment, row.attachmentOriginalName)
-  return attachment ? [attachment] : []
+  if (!row.attachments?.length) return []
+  return row.attachments
+    .flatMap(asset => {
+      const mapped = mapAssetAttachment(asset)
+      return mapped ? [mapped] : []
+    })
+    .slice(0, STORY_ATTACHMENT_MAX_COUNT)
 }
 
 function mapThumbnailFromResponse(row: StoryResponse): ImpactStoryAttachment | null {
@@ -190,22 +195,14 @@ export function toStoryListParams(filter?: ImpactStoryListFilter): List6Params {
   return params
 }
 
-export function resolvePrimaryAttachmentAssetId(
-  attachments: ImpactStoryAttachment[],
-): number | undefined {
-  for (const att of attachments) {
-    if (att.assetId != null && att.assetId > 0) return att.assetId
-  }
-  return undefined
-}
-
 export function toStoryCreateRequest(
   input: ImpactStoryCreateInput,
-  attachmentAssetId: number | undefined,
-  thumbnailAssetId: number,
+  attachmentAssetIds: number[],
+  thumbnailAssetId: number
 ): StoryCreateRequest {
   const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
-  assertDistinctStoryAssetIds(requiredThumbnailAssetId, attachmentAssetId)
+  const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
+  assertThumbnailNotInAttachments(requiredThumbnailAssetId, ids)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -214,20 +211,20 @@ export function toStoryCreateRequest(
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
     thumbnailAssetId: requiredThumbnailAssetId,
-    attachmentAssetId,
-    thumbnailDistinctFromAttachment:
-      attachmentAssetId != null && attachmentAssetId !== requiredThumbnailAssetId,
+    attachmentAssetIds: ids,
+    thumbnailDistinctFromAttachments: ids.length > 0,
   }
 }
 
 export function toStoryUpdateRequest(
   input: ImpactStoryUpdateInput,
   version: number,
-  attachmentAssetId: number | undefined,
-  thumbnailAssetId: number,
+  attachmentAssetIds: number[],
+  thumbnailAssetId: number
 ): StoryUpdateRequest {
   const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
-  assertDistinctStoryAssetIds(requiredThumbnailAssetId, attachmentAssetId)
+  const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
+  assertThumbnailNotInAttachments(requiredThumbnailAssetId, ids)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -236,16 +233,15 @@ export function toStoryUpdateRequest(
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
     thumbnailAssetId: requiredThumbnailAssetId,
-    attachmentAssetId,
-    thumbnailDistinctFromAttachment:
-      attachmentAssetId != null && attachmentAssetId !== requiredThumbnailAssetId,
+    attachmentAssetIds: ids,
+    thumbnailDistinctFromAttachments: ids.length > 0,
     version,
   }
 }
 
 export function toPublishedToggleRequest(
   row: ImpactStory,
-  published: boolean,
+  published: boolean
 ): PublishedToggleRequest {
   return {
     published,

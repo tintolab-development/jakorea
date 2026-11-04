@@ -87,12 +87,10 @@ function rangeAsPicker(period: PendingDateRange): [Dayjs | null, Dayjs | null] {
 
 const COL = {
   no: TABLE_COLUMN_WIDTHS.index,
-  errorMessage: 480,
+  errorMessage: 800,
   userName: 140,
   occurredAt: 180,
 } as const
-
-const EMPTY_TEXT = '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
 
 export function BugIssueLogPage() {
   const { showAlert } = useCmsAlert()
@@ -104,6 +102,7 @@ export function BugIssueLogPage() {
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, BugIssueListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -170,7 +169,7 @@ export function BugIssueLogPage() {
         dataIndex: 'errorMessage',
         key: 'errorMessage',
         width: COL.errorMessage,
-        className: 'log-list-page__col--left',
+        className: 'log-list-page__col--left log-list-page__col--error',
         ellipsis: true,
       },
       {
@@ -178,6 +177,7 @@ export function BugIssueLogPage() {
         dataIndex: 'userName',
         key: 'userName',
         width: COL.userName,
+        className: 'log-list-page__col--user',
         ellipsis: true,
       },
       {
@@ -185,6 +185,7 @@ export function BugIssueLogPage() {
         dataIndex: 'occurredAt',
         key: 'occurredAt',
         width: COL.occurredAt,
+        className: 'log-list-page__col--occurred',
         render: (v: string) => formatLogDateTime(v),
       },
     ],
@@ -194,6 +195,7 @@ export function BugIssueLogPage() {
   return (
     <div className="log-list-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -201,14 +203,14 @@ export function BugIssueLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="사용자명을 입력하세요"
+                placeholder="사용자명을 입력해 주세요"
                 value={pendingFilters.userName}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, userName: value }))}
                 onPressEnter={applySearch}
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">발생일시</span>
+              <span className="admin-filter-area__label">발생일</span>
               <CmsDateRangePicker
                 inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
@@ -223,11 +225,13 @@ export function BugIssueLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -235,16 +239,15 @@ export function BugIssueLogPage() {
         }
         title="버그/이슈 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
       >
         <CmsDataTable<BugIssueLog>
-          className="cms-data-table"
+          className="cms-data-table cms-data-table--skip-auto-no-col bug-issue-log-table"
           rowKey="id"
           columns={columns}
           dataSource={rows}
           loading={loading}
           pagination={logTablePagination({ page, total, onChange: handlePageChange })}
-          locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
             x: COL.no + COL.errorMessage + COL.userName + COL.occurredAt,
           }}

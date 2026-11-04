@@ -11,7 +11,7 @@ import type { ParticipateMenuLinks } from '@/entities/participate/model/types'
 import { useSaveParticipateMenuLinks } from '@/features/participate/api/hooks'
 import { participateQueryKeys } from '@/features/participate/api/query-keys'
 import { EMPTY_LINK_LABEL } from '@/features/participate/api/store'
-import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './links-form-card.css'
 
@@ -108,6 +108,7 @@ export function ParticipateLinksFormCard({ data }: Props) {
         alumniUrl: draft.alumniUrl,
       })
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -134,7 +135,7 @@ export function ParticipateLinksFormCard({ data }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="medium"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending} >
@@ -142,7 +143,7 @@ export function ParticipateLinksFormCard({ data }: Props) {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="medium"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -152,7 +153,7 @@ export function ParticipateLinksFormCard({ data }: Props) {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

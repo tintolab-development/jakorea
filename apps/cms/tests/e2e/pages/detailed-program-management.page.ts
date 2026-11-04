@@ -65,7 +65,7 @@ export class DetailedProgramManagementPage {
   }
 
   async fillName(name: string) {
-    await this.page.getByPlaceholder('세부 프로그램명을 입력하세요').fill(name)
+    await this.page.getByPlaceholder('세부 프로그램명을 입력해 주세요').fill(name)
   }
 
   async search() {

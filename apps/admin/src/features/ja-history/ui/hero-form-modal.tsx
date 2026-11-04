@@ -16,7 +16,7 @@ import {
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 이미지 사이즈는 1920 × 1200px입니다.',
 ]
 
@@ -60,12 +60,7 @@ type Props = {
   onSubmit: (values: JaHistoryHeroSaveInput) => void
 }
 
-function HeroFormBody({
-  initial,
-  confirmLoading,
-  onCancel,
-  onSubmit,
-}: Omit<Props, 'open'>) {
+function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Props, 'open'>) {
   const { showAlert } = useCmsAlert()
   const [imageUrl, setImageUrl] = useState(initial.image.url)
   const [imageFileName, setImageFileName] = useState(initial.image.fileName)
@@ -82,7 +77,7 @@ function HeroFormBody({
       if (!isAllowedJaHistoryImage(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }
@@ -109,7 +104,7 @@ function HeroFormBody({
         })
       }
     },
-    [showAlert],
+    [showAlert]
   )
 
   const handleSubmit = () => {
@@ -143,16 +138,23 @@ function HeroFormBody({
       className="ja-history-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel} disabled={confirmLoading}>
+          <CmsButton
+            variant="secondary"
+            size="medium"
+            type="button"
+            onClick={onCancel}
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             수정
           </CmsButton>
         </>
@@ -166,8 +168,8 @@ function HeroFormBody({
             view={null}
             edit={
               <div>
-                <div className="ja-history-modal__image-row">
-                  <div className="ja-history-modal__preview">
+                <div className="file-select-image-cell">
+                  <div className="file-select-image-cell__preview">
                     {imageUrl ? (
                       <Image
                         src={imageUrl}
@@ -216,7 +218,7 @@ function HeroFormBody({
                 <DraftTextArea
                   initialValue={eyebrowRef.current}
                   rows={1}
-                  placeholder="상단 라벨을 입력하세요"
+                  placeholder="상단 라벨을 입력해 주세요"
                   ariaLabel="상단 라벨"
                   onValue={value => {
                     eyebrowRef.current = value
@@ -241,7 +243,7 @@ function HeroFormBody({
                 <DraftTextArea
                   initialValue={mainTextRef.current}
                   rows={3}
-                  placeholder="메인 텍스트를 입력하세요"
+                  placeholder="메인 텍스트를 입력해 주세요"
                   ariaLabel="메인 텍스트"
                   onValue={value => {
                     mainTextRef.current = value

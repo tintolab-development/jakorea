@@ -13,22 +13,10 @@
   margin-top: 30px;
 }
 
-.popup-form-modal .content-modal__footer-actions {
-  justify-content: space-between;
-  width: 100%;
-}
-
-.popup-form-modal__footer-start,
-.popup-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .popup-form-modal__forms {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
   width: 100%;
   min-width: 0;
 }
@@ -80,12 +68,19 @@
   width: 100%;
 }
 
+/* 시안 YYYY. MM. DD ~ YYYY. MM. DD — 240px에선 말줄임 */
+.popup-form-modal__form .detail-info-form__field-content--edit > .cms-period-datepicker {
+  width: 100% !important;
+  max-width: 100%;
+  margin-inline: 0 !important;
+}
+
 .popup-form-modal__form .detail-info-form__field-content--view > * {
   text-align: left;
 }
 
 /* 등록일시 | 사용 여부 — 한 줄 유지 */
-.popup-form-modal__form--meta .detail-info-form__row--double {
+.popup-form-modal__form .detail-info-form__row--double {
   flex-wrap: nowrap;
 }
 
@@ -94,44 +89,37 @@
   white-space: nowrap;
 }
 
-.popup-form-modal__image-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 16px;
-  width: 100%;
+/* 시안 Table / Common / Cell / File — px 12, 아이콘 20 + 파일명 gap 2 */
+.popup-form-modal__form .detail-info-form__field-content--view:has(.popup-form-modal__file-view) {
+  padding-inline: 12px;
+  gap: 12px;
 }
 
-.popup-form-modal__preview {
-  width: 120px;
-  height: 80px;
-  flex-shrink: 0;
-  display: flex;
+.popup-form-modal__file-view {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  background: var(--color-bg-secondary, #f7f7f7);
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.popup-form-modal__preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.popup-form-modal__file-field {
-  flex: 1 1 280px;
+  gap: 2px;
   min-width: 0;
+  max-width: 100%;
+}
+
+.popup-form-modal__file-icon {
+  flex-shrink: 0;
+  display: block;
+  color: var(--default-BK, #3d3d3d);
 }
 
 .popup-form-modal__file-name {
-  color: var(--main-BK, #3d3d3d);
+  min-width: 0;
+  overflow: hidden;
+  color: var(--default-BK, #3d3d3d);
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 14px;
-  line-height: 1.4;
-  word-break: break-all;
+  font-weight: 500;
+  line-height: 1.3;
 }
 
 .popup-form-modal__link-edit,

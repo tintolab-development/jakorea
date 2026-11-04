@@ -15,24 +15,6 @@
   margin-top: 30px;
 }
 
-.rd-form-modal .content-modal__footer-actions {
-  width: 100%;
-  justify-content: space-between;
-}
-
-.rd-form-modal__footer {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.rd-form-modal__footer-start,
-.rd-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* th 140px · popup/hero 동일 */
 .rd-form-modal .detail-info-form__field {
   min-height: 54px;
@@ -90,98 +72,12 @@
   margin-block: auto !important;
 }
 
-/**
- * 썸네일: 프리뷰 + FileSelectField (hero gap 16)
- */
-.rd-form-modal .detail-info-form__field-content--edit > .rd-form-modal__image-row {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 16px;
-  width: 100%;
-  min-width: 0;
-}
-
 .rd-form-modal .detail-info-form__field-content--edit > .rd-form-modal__attach-row {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
   min-width: 0;
-}
-
-/* 미선택: 86×86 empty 슬롯 (시안) */
-.rd-form-modal__preview {
-  flex: 0 0 auto;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-sizing: border-box;
-  background: var(--default-WT, #fff);
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 8px;
-}
-
-.rd-form-modal__preview--empty {
-  width: 86px;
-  height: 86px;
-  aspect-ratio: 1 / 1;
-  border: none; /* empty SVG 자체 stroke/bg */
-  background: transparent;
-  border-radius: 0;
-  overflow: visible;
-}
-
-/* 선택 후 연차 A4 (17:24) */
-.rd-form-modal__preview--a4:not(.rd-form-modal__preview--empty) {
-  width: 86px;
-  height: calc(86px * 24 / 17);
-  aspect-ratio: 17 / 24;
-  border-radius: 4px;
-  background: var(--color-bg-secondary, #f7f7f7);
-}
-
-/* 선택 후 회계감사 16:9 */
-.rd-form-modal__preview--wide:not(.rd-form-modal__preview--empty) {
-  width: 122px;
-  height: calc(122px * 9 / 16);
-  aspect-ratio: 16 / 9;
-  border-radius: 4px;
-  background: var(--color-bg-secondary, #f7f7f7);
-}
-
-.rd-form-modal__preview img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.rd-form-modal__preview-empty {
-  display: block;
-  width: 86px;
-  height: 86px;
-}
-
-/**
- * FileSelectField — 컬럼 레이아웃 강제 (공통 file-select-field.css)
- * 버튼 120×40 medium · 가이드 우측 · 파일명 상단
- */
-.rd-form-modal .file-select-field {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-  margin-block: 0 !important;
-}
-
-.rd-form-modal .file-select-field--empty {
-  gap: 0;
 }
 
 .rd-form-modal__file-field {
@@ -193,28 +89,4 @@
 .rd-form-modal__attach-row .rd-form-modal__file-field {
   flex: none;
   width: 100%;
-}
-
-.rd-form-modal .file-select-field__actions {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-}
-
-.rd-form-modal .file-select-field__actions > .cms-button {
-  flex: 0 0 auto;
-}
-
-.rd-form-modal .file-select-field__guide {
-  flex: 1 1 200px;
-  min-width: 0;
-}
-
-.rd-form-modal .file-select-field__name {
-  word-break: break-all;
-  overflow-wrap: anywhere;
 }

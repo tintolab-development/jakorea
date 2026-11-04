@@ -42,6 +42,7 @@ export {
   useHomeImpactSubStories,
   useImpactStoriesList,
   useImpactStoriesPreview,
+  useImpactStoryCategories,
   useImpactStoryDetail,
 } from './api/hooks'
 export type {

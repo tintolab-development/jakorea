@@ -32,7 +32,7 @@ export function LogResultToolbar({
       <div className="table-header-actions--wrapper">
         <ExcelButton
           loading={excelLoading}
-          disabled={excelDisabled}
+          empty={excelDisabled}
           onClick={onExcelDownload} />
       </div>
     </div>

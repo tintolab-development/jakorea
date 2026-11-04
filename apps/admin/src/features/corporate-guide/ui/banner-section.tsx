@@ -12,7 +12,7 @@ import type {
 import { useSaveCorporateBanner } from '@/features/corporate-guide/api/hooks'
 import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
 import { BannerFormModal } from '@/features/corporate-guide/ui/banner-form-modal'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -73,6 +73,7 @@ export function BannerSectionCard({ banner }: Props) {
       try {
         await saveMutation.mutateAsync(values)
         setModalOpen(false)
+        showSaveCompletedAlert()
       } catch (err) {
         showAlert(
           corporateGuideSaveFailureAlert(

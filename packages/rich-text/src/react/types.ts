@@ -41,11 +41,16 @@ export type UseRichTextEditorOptions = {
   shouldRerenderOnTransaction?: boolean
 }
 
+/** 에디터 셸(툴바+본문) 기본 min-height */
+export const RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX = 284
+
 export type RichTextEditorProps = {
   editor: Editor | null
   className?: string
-  /** 예: `369px` — notice-register-modal 에디터 높이 */
+  /** 기본 `284px`. 리사이즈 하한과 동일 */
   minHeight?: string | number
+  /** 초기 높이. 생략 시 minHeight만 적용. 사용자 리사이즈가 있으면 그 값이 우선 */
+  height?: string | number
   /**
    * `true`이고 `toolbar`가 없으면 툴바 영역만 비워 둠.
    * 앱별 툴바는 `toolbar` 슬롯으로 주입.

@@ -1,6 +1,7 @@
 export { AdminTealHeaderModal, type AdminTealHeaderModalProps, type ModalSize } from './teal-header-modal.js'
 export {
   AdminContentModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS,
   type AdminContentModalProps,
 } from './content-modal.js'

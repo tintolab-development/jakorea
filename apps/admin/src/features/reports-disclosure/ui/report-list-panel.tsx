@@ -44,6 +44,10 @@ import {
   CmsDateRangePicker,
   AdminFilterTextInput,
   ConfirmModal,
+  NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -137,6 +141,7 @@ export function ReportListPanel({ kind }: Props) {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, ReportListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -191,10 +196,7 @@ export function ReportListPanel({ kind }: Props) {
 
   const handleBulkDeleteClick = () => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 보고서를 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -205,6 +207,7 @@ export function ReportListPanel({ kind }: Props) {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -234,10 +237,13 @@ export function ReportListPanel({ kind }: Props) {
     try {
       if (modalMode === 'create') {
         await createMutation.mutateAsync(values)
+        closeModal()
+        showRegisterCompletedAlert()
       } else if (editing) {
         await updateMutation.mutateAsync({ ...values, id: editing.id })
+        closeModal()
+        showUpdateCompletedAlert()
       }
-      closeModal()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -252,6 +258,7 @@ export function ReportListPanel({ kind }: Props) {
       await removeMutation.mutateAsync([editing.id])
       setSelectedRowKeys(keys => keys.filter(k => k !== editing.id))
       closeModal()
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -352,11 +359,7 @@ export function ReportListPanel({ kind }: Props) {
         width: 120,
         align: 'center',
         render: (_v, record) => (
-          <CmsButton
-            variant="secondary"
-            size="medium"
-            type="button"
-            onClick={() => openEdit(record)} >
+          <CmsButton variant="secondary" size="small" type="button" onClick={() => openEdit(record)}>
             수정
           </CmsButton>
         ),
@@ -368,6 +371,7 @@ export function ReportListPanel({ kind }: Props) {
   return (
     <div className="rd-list">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -378,7 +382,7 @@ export function ReportListPanel({ kind }: Props) {
                 value={pendingFilters.title}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
                 onPressEnter={() => applySearch()}
-                placeholder="제목을 입력하세요"
+                placeholder="제목을 입력해 주세요"
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -391,7 +395,7 @@ export function ReportListPanel({ kind }: Props) {
                   patchPendingFilters(prev => ({ ...prev, attachmentName: value }))
                 }
                 onPressEnter={() => applySearch()}
-                placeholder="첨부파일명을 입력하세요"
+                placeholder="첨부파일명을 입력해 주세요"
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
@@ -411,11 +415,13 @@ export function ReportListPanel({ kind }: Props) {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={() => applySearch()} >
+                onClick={() => applySearch()}
+              >
                 조회
               </CmsButton>
             </div>

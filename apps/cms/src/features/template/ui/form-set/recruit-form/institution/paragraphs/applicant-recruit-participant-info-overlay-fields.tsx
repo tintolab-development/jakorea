@@ -363,7 +363,7 @@ export const ApplicantRecruitProgramPeriodField = memo(
               presetMode="period"
               value={programAnchor}
               width="100%"
-              placeholder="운영 기간을 선택하세요"
+              placeholder="운영 기간을 선택해 주세요"
               preferPeriodModeInPopover
               suppressAutoTodayWhenEmpty
               showTimeToggle={false}
@@ -421,7 +421,7 @@ export const ApplicantRecruitRecruitPeriodField = memo(
               presetMode="period"
               value={recruitAnchor}
               width="100%"
-              placeholder="모집 기간을 선택하세요"
+              placeholder="모집 기간을 선택해 주세요"
               preferPeriodModeInPopover
               suppressAutoTodayWhenEmpty
               showTimeToggle={false}
@@ -505,7 +505,7 @@ export const ApplicantRecruitTargetLevelsField = memo(function ApplicantRecruitT
           mode="multiple"
           withAllOption={false}
           inputSize="small"
-          placeholder="교육 대상을 선택하세요"
+          placeholder="교육 대상을 선택해 주세요"
           width="100%"
           options={[...TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS]}
           value={targetLevels}
@@ -532,7 +532,7 @@ export const ApplicantRecruitTargetLevelDetailField = memo(
           <CmsInput
             inputSize="small"
             width="100%"
-            placeholder="상세 교육 대상을 입력하세요"
+            placeholder="상세 교육 대상을 입력해 주세요"
             value={targetLevelDetail}
             onChange={e => setTargetLevelDetail(e.target.value)}
           />

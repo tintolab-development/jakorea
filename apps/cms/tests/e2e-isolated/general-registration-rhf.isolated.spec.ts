@@ -10,7 +10,8 @@ import {
 } from './install-isolated-network'
 
 const ORG_CURRICULUM_SINGLE = REGISTRATION_CASES.find(
-  row => row.audience === 'organization' && row.structure === 'curriculum' && row.session === 'single'
+  row =>
+    row.audience === 'organization' && row.structure === 'curriculum' && row.session === 'single'
 )
 const INDIVIDUAL_SCHEDULE_SINGLE = REGISTRATION_CASES.find(
   row => row.audience === 'individual' && row.structure === 'schedule' && row.session === 'single'
@@ -37,7 +38,7 @@ function overlayFromFormVersionPut(body: unknown): Record<string, unknown> {
 async function expectWizardOpen(page: import('@playwright/test').Page) {
   await expect(page).toHaveURL(/\/programs\/general\?.*new=1/, { timeout: 30_000 })
   // 「기본 정보」 단락 제목은 텍스트 노드 매칭이 안정적이지 않아(리치 텍스트 렌더) 대표 입력란으로 확인한다.
-  await expect(page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).toBeVisible({
+  await expect(page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()).toBeVisible({
     timeout: 30_000,
   })
 }
@@ -47,8 +48,7 @@ async function runRepresentativeCase(
   log: IsolatedNetworkLog,
   audience: 'organization' | 'individual'
 ) {
-  const regCase =
-    audience === 'organization' ? ORG_CURRICULUM_SINGLE : INDIVIDUAL_SCHEDULE_SINGLE
+  const regCase = audience === 'organization' ? ORG_CURRICULUM_SINGLE : INDIVIDUAL_SCHEDULE_SINGLE
   if (regCase == null) throw new Error('등록 케이스를 찾지 못했습니다')
 
   const registration = new GeneralProgramRegistrationPage(page, regCase, {
@@ -133,9 +133,11 @@ test.describe('일반 신규 등록 RHF 격리 Mock E2E', () => {
     }
     expect(result.capturedTitle.length).toBeGreaterThan(0)
     if (hasInstitutionTel) {
-      expect(typeof overlays.find(overlay => overlay['application.institution.teacherTel'])?.[
-        'application.institution.teacherTel'
-      ]).toBe('string')
+      expect(
+        typeof overlays.find(overlay => overlay['application.institution.teacherTel'])?.[
+          'application.institution.teacherTel'
+        ]
+      ).toBe('string')
     }
   })
 

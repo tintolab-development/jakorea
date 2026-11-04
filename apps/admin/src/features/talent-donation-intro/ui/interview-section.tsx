@@ -9,7 +9,14 @@ import type { InterviewSlot } from '@/entities/talent-donation-intro/model/types
 import { useSaveInterview } from '@/features/talent-donation-intro/api/hooks'
 import { talentDonationIntroSaveFailureAlert } from '@/features/talent-donation-intro/lib/save-failure-alert'
 import { InterviewPostPickerModal } from '@/features/talent-donation-intro/ui/interview-post-picker-modal'
-import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  CmsTextArea,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './section-shared.css'
 import './interview-section.css'
@@ -84,19 +91,19 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
 
   const handleSave = useCallback(async () => {
     if (!draft.mainText.trim()) {
-      showAlert({ title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!draft.subText.trim()) {
-      showAlert({ title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!draft.buttonLabel.trim()) {
-      showAlert({ title: '입력 확인', content: '버튼명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!draft.linkedStoryTitle.trim() && !draft.linkedStoryId) {
-      showAlert({ title: '입력 확인', content: '연결 게시글을 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const linkedId = draft.linkedStoryId?.trim() ?? ''
@@ -119,6 +126,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
         version: slot.version,
       })
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         talentDonationIntroSaveFailureAlert(err, '인터뷰 저장에 실패했습니다. 다시 시도해 주세요.')
@@ -142,7 +150,8 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -152,7 +161,8 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
@@ -179,7 +189,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 inputSize="large"
                 width="100%"
                 value={draft.mainText}
-                placeholder="메인 텍스트를 입력하세요"
+                placeholder="메인 텍스트를 입력해 주세요"
                 onChange={e => setDraft(prev => ({ ...prev, mainText: e.target.value }))}
               />
             }
@@ -197,7 +207,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 width="100%"
                 rows={4}
                 value={draft.subText}
-                placeholder="서브 텍스트를 입력하세요"
+                placeholder="서브 텍스트를 입력해 주세요"
                 onChange={e => setDraft(prev => ({ ...prev, subText: e.target.value }))}
               />
             }
@@ -213,7 +223,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 inputSize="large"
                 width="100%"
                 value={draft.buttonLabel}
-                placeholder="버튼명을 입력하세요"
+                placeholder="버튼명을 입력해 주세요"
                 onChange={e => setDraft(prev => ({ ...prev, buttonLabel: e.target.value }))}
               />
             }
@@ -231,7 +241,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 width="100%"
                 readOnly
                 value={draft.linkedStoryTitle}
-                placeholder="연결할 게시글을 선택하세요"
+                placeholder="연결할 게시글을 선택해 주세요"
                 suffix={
                   <button
                     type="button"

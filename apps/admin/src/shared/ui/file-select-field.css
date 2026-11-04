@@ -1,17 +1,17 @@
 /**
- * 파일 선택 필드 공통 스타일
- * - 숨겨진 input + 파일명 목록 + 버튼(120×40) + 가이드 텍스트
+ * 파일 선택 필드 — CMS `file-select-field` / `file-attachment-row` 타이포·간격 정합
  */
 
 .file-select-field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-12);
+  align-items: flex-start;
+  gap: var(--Spacing-8, 8px);
+  min-width: 0;
 }
 
-/* 첨부 없음 — 파일명 영역 미노출, 버튼 상단 여백 제거 */
-.file-select-field--empty {
-  gap: 0;
+.detail-info-form__field-content > .file-select-field {
+  align-items: flex-start;
 }
 
 .file-upload-picker {
@@ -38,36 +38,56 @@
   outline-offset: 2px;
 }
 
-/* 파일명 목록 */
 .file-select-field__names {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  align-items: flex-start;
+  gap: var(--Spacing-8, 8px);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .file-select-field__name-row {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-8);
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.file-select-field__name,
+.file-select-field__empty {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
 }
 
 .file-select-field__name {
-  font-size: var(--font-size-16);
-  color: var(--color-text-primary);
+  min-width: 0;
+  color: var(--Netural-black, var(--default-BK, #3d3d3d));
 }
 
-/* 업로드 중 문구 — 파일명과 동일한 스타일로 UI shifting 방지 */
 .file-select-field__name--uploading {
-  color: var(--color-text-primary);
+  color: var(--Netural-black, var(--default-BK, #3d3d3d));
 }
 
-/* 업로드 취소(X) 버튼 — 배경 없음, SVG 아이콘 그대로 */
+.file-select-field__empty {
+  max-width: 100%;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+}
+
 .file-select-field__remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  aspect-ratio: 1 / 1;
   padding: 0;
   border: none;
   background: none;
@@ -75,38 +95,164 @@
   flex-shrink: 0;
 }
 
-.file-select-field__remove:hover svg {
-  opacity: 1;
-}
-
 .file-select-field__remove:focus {
   outline: none;
 }
 
 .file-select-field__remove:focus-visible {
-  outline: 2px solid var(--color-focus-teal);
+  outline: 2px solid var(--color-focus-teal, #00a0af);
   outline-offset: 1px;
   border-radius: 50%;
 }
 
-/* 버튼 + 가이드 텍스트 가로 배치 */
 .file-select-field__actions {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: var(--spacing-12);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
   flex-wrap: wrap;
 }
 
-/* 가이드 텍스트 */
+.file-select-field__actions > .cms-button,
+.file-select-field__actions > .file-upload-picker {
+  flex-shrink: 0;
+}
+
+/* 「파일 추가」Figma Button/h32 인스턴스 80×32. 목록 수정(small 100×32)과 분리 */
+.file-select-field__actions .file-upload-picker .cms-button.ant-btn.cms-button--h32 {
+  box-sizing: border-box;
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: var(--Spacing-8, 8px) calc(var(--Spacing-10, 10px) - 1px) !important;
+  gap: var(--Spacing-4, 4px);
+  border-radius: var(--Radius-6, 6px);
+}
+
 .file-select-field__guide {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 21px */
-  opacity: 0.6;
+  line-height: 150%;
 }
 
 .file-select-field__guide-line {
   display: block;
+}
+
+/*
+ * 모달 DetailInfoForm td — 이미지 미리보기 + 파일 추가
+ * Figma 20:12463 Table/Common/Cell/File
+ * 셀 padding은 Field가 담당. 내부: thumb 72×72 · gap 12 · file infor column gap 8 · 파일 추가 80×32
+ */
+.file-select-image-cell {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--Spacing-12, 12px);
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.detail-info-form__field-content--edit > .file-select-image-cell {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  margin-block: 0 !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.file-select-image-cell__preview {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--Border-default, #e0e0e0);
+  border-radius: var(--Radius-8, 8px);
+  box-sizing: border-box;
+  background: var(--White, #fff);
+}
+
+.file-select-image-cell__preview:not(:has(img)):not(:has(.ant-image)) {
+  border: none;
+  overflow: visible;
+  background: transparent;
+}
+
+.file-select-image-cell__preview img,
+.file-select-image-cell__preview .ant-image-img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+
+.file-select-image-cell__preview .ant-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+}
+
+.file-select-image-cell__preview .ant-image-mask {
+  position: absolute;
+  inset: 0;
+}
+
+.file-select-image-cell .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  gap: var(--Spacing-8, 8px);
+}
+
+.file-select-image-cell .file-select-field__names {
+  width: 100%;
+}
+
+.file-select-image-cell .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--Spacing-16, 16px);
+  width: 100%;
+  min-width: 0;
+}
+
+.file-select-image-cell .file-select-field__guide {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Figma 20:12463 — 안내 2줄은 문장 단위. 줄 안에서 중간 개행 금지 */
+.file-select-image-cell .file-select-field__guide-line {
+  display: block;
+  white-space: nowrap;
 }

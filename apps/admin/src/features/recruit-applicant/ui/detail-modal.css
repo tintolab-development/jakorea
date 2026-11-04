@@ -77,33 +77,6 @@
   margin-top: 30px !important;
 }
 
-.recruit-applicant-detail-modal .content-modal__footer-actions {
-  width: 100%;
-  justify-content: flex-end;
-}
-
-.recruit-applicant-detail-modal__footer {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 10px;
-  box-sizing: border-box;
-}
-
-.recruit-applicant-detail-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-}
-
-.recruit-applicant-detail-modal__loading {
-  margin: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 16px;
-  line-height: 150%;
-}
-
 .recruit-applicant-detail-modal__scroll {
   display: flex;
   flex-direction: column;

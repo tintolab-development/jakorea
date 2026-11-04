@@ -23,7 +23,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -31,6 +31,7 @@ import './section-shared.css'
 const RELATED_LOGO_ACTION_COL_WIDTH = 120
 
 const EMPTY_NAME = '등록된 기관 로고가 없습니다'
+const EMPTY_LINK = '연결된 링크가 없습니다'
 
 export function FooterRelatedLogosSection() {
   const { showAlert } = useCmsAlert()
@@ -76,12 +77,14 @@ export function FooterRelatedLogosSection() {
           id: editing.id,
           isActive: values.isActive,
           name: values.name,
+          linkUrl: values.linkUrl,
           logoUrl: values.logoUrl,
           logoFileName: values.logoFileName,
           logoAssetId: values.logoAssetId,
           logoFile: values.logoFile,
         })
         setEditing(null)
+        showSaveCompletedAlert()
       } catch {
         showAlert({
           title: '저장 실패',
@@ -153,6 +156,20 @@ export function FooterRelatedLogosSection() {
           ),
       },
       {
+        title: '연결 링크',
+        key: 'linkUrl',
+        minWidth: 280,
+        align: 'center',
+        ellipsis: true,
+        render: (_v, record) => {
+          const url = record.linkUrl?.trim() ?? ''
+          if (!url) {
+            return <span className="footer-section__empty-name">{EMPTY_LINK}</span>
+          }
+          return <span title={url}>{url}</span>
+        },
+      },
+      {
         title: '관리',
         key: 'action',
         /* 수정 버튼 88 + 좌우 패딩 여유 (TABLE_COLUMN_WIDTHS.action=72 는 부족) */
@@ -161,9 +178,10 @@ export function FooterRelatedLogosSection() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="small"
             type="button"
-            onClick={() => setEditing(record)} >
+            onClick={() => setEditing(record)}
+          >
             수정
           </CmsButton>
         ),
@@ -174,13 +192,11 @@ export function FooterRelatedLogosSection() {
 
   return (
     <>
-      <section className="footer-section footer-related-logos-section">
+      <section className="admin-list-card footer-section footer-related-logos-section">
         <div className="admin-list-toolbar">
           <div className="table-header-title--wrapper">
-            <span className="table-title">유관기관 로고 배너</span>
-            <span className="table-description">
-              기관명은 홈페이지에 미노출됩니다.
-            </span>
+            <span className="table-title">■ 유관기관 로고 배너</span>
+            <span className="table-description">기관명은 홈페이지에서 별도 노출되지 않습니다.</span>
           </div>
         </div>
         <div className="footer-section__table-scroll">

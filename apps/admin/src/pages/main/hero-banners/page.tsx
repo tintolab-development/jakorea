@@ -27,7 +27,15 @@ import {
 } from '@/features/hero-banner/ui/sortable-table'
 import { HeroBannerTextLinkCell } from '@/features/hero-banner/ui/text-link-cell'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
-import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  ConfirmModal,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
+  NO_SELECTION_ALERT,
+  useCmsAlert,
+} from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -39,8 +47,12 @@ import {
   minActiveRequiredAlert,
   wouldRemoveLastActive,
 } from '@/shared/lib/min-active-guard'
-
 import './page.css'
+
+/** Figma 15:4976 — 배너 이미지 열 240 / 관리 열 140 */
+const HERO_BANNER_IMAGE_COL_WIDTH = 240
+const HERO_BANNER_ACTION_COL_WIDTH = 140
+
 export function HeroBannersPage() {
   const { showAlert } = useCmsAlert()
   const listQuery = useHeroBannersList()
@@ -122,8 +134,10 @@ export function HeroBannersPage() {
       try {
         if (formMode === 'edit' && editingBanner) {
           await updateMutation.mutateAsync({ id: editingBanner.id, patch: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditingBanner(null)
@@ -144,10 +158,7 @@ export function HeroBannersPage() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 배너를 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     if (wouldRemoveLastActive(rows, selectedRowKeys.map(String))) {
@@ -163,6 +174,7 @@ export function HeroBannersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         heroBannerMutationFailureAlert(
@@ -210,8 +222,9 @@ export function HeroBannersPage() {
       {
         title: '배너 이미지',
         key: 'image',
-        width: 232,
+        width: HERO_BANNER_IMAGE_COL_WIDTH,
         align: 'center',
+        className: 'hero-banner-table__col--image',
         render: (_value, record) => (
           <div className="hero-banners-page__thumb-wrap">
             <Image
@@ -227,17 +240,19 @@ export function HeroBannersPage() {
         title: '배너 텍스트 및 링크',
         key: 'textLink',
         align: 'left',
+        className: 'hero-banner-table__col--text-link',
         render: (_value, record) => <HeroBannerTextLinkCell banner={record} />,
       },
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: HERO_BANNER_ACTION_COL_WIDTH,
         align: 'center',
+        className: 'hero-banner-table__col--actions',
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="small"
             type="button"
             onClick={e => {
               e.stopPropagation()

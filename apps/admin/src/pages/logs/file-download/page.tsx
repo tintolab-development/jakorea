@@ -110,8 +110,6 @@ const COL = {
   ip: 140,
 } as const
 
-const EMPTY_TEXT = '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
-
 export function FileDownloadLogPage() {
   const { showAlert } = useCmsAlert()
 
@@ -122,6 +120,7 @@ export function FileDownloadLogPage() {
     applied: appliedFilter,
     applySearch,
     patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, FileDownloadListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -222,6 +221,7 @@ export function FileDownloadLogPage() {
   return (
     <div className="log-list-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -229,7 +229,7 @@ export function FileDownloadLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="파일명을 입력하세요"
+                placeholder="파일명을 입력해 주세요"
                 value={pendingFilters.fileName}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, fileName: value }))}
                 onPressEnter={applySearch}
@@ -240,14 +240,14 @@ export function FileDownloadLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="사용자명을 입력하세요"
+                placeholder="사용자명을 입력해 주세요"
                 value={pendingFilters.userName}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, userName: value }))}
                 onPressEnter={applySearch}
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">다운로드 일시</span>
+              <span className="admin-filter-area__label">다운로드 기간</span>
               <CmsDateRangePicker
                 inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
@@ -262,11 +262,13 @@ export function FileDownloadLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -274,7 +276,7 @@ export function FileDownloadLogPage() {
         }
         title="파일 다운로드 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
       >
         <CmsDataTable<FileDownloadLog>
           className="cms-data-table"
@@ -283,7 +285,6 @@ export function FileDownloadLogPage() {
           dataSource={rows}
           loading={loading}
           pagination={logTablePagination({ page, total, onChange: handlePageChange })}
-          locale={{ emptyText: EMPTY_TEXT }}
           scroll={{
             x: COL.no + COL.fileName + COL.userName + COL.downloadedAt + COL.ip,
           }}

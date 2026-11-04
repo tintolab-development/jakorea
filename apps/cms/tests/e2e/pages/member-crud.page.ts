@@ -27,7 +27,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     menuLabel: '전체 회원',
     kindQuery: 'all',
     listTitle: '전체 회원 목록',
-    searchPlaceholder: '회원명을 입력하세요',
+    searchPlaceholder: '회원명을 입력해 주세요',
     createButton: '회원 등록',
     createModalTitle: '회원 신규 등록',
     createSubmitButton: '신규 등록',
@@ -42,7 +42,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     menuLabel: '학교(교사) 회원',
     kindQuery: 'institutions',
     listTitle: '학교(교사) 회원 목록',
-    searchPlaceholder: '기관명을 입력하세요',
+    searchPlaceholder: '기관명을 입력해 주세요',
     createButton: '학교 등록',
     createModalTitle: '학교 신규 등록',
     createSubmitButton: '신규 등록',
@@ -57,7 +57,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     menuLabel: '강사 회원',
     kindQuery: 'instructors',
     listTitle: '강사 회원 목록',
-    searchPlaceholder: '강사명을 입력하세요',
+    searchPlaceholder: '강사명을 입력해 주세요',
     createButton: '강사 등록',
     createModalTitle: '강사 추가 등록',
     createSubmitButton: '추가 등록',
@@ -72,7 +72,7 @@ const KIND_UI: Record<MemberListCrudKind, KindUi> = {
     menuLabel: '관리자 회원',
     kindQuery: 'admins',
     listTitle: '관리자 회원 목록',
-    searchPlaceholder: '관리자명을 입력하세요',
+    searchPlaceholder: '관리자명을 입력해 주세요',
     createButton: '관리자 등록',
     createModalTitle: '관리자 신규 등록',
     createSubmitButton: '신규 등록',
@@ -203,9 +203,7 @@ export class MemberListCrudPage {
     }
 
     await this.page.getByRole('menuitem', { name: this.ui.menuLabel }).click()
-    await expect(this.page).toHaveURL(
-      new RegExp(`/users/list\\?.*kind=${this.ui.kindQuery}`)
-    )
+    await expect(this.page).toHaveURL(new RegExp(`/users/list\\?.*kind=${this.ui.kindQuery}`))
     await expect(this.page.getByText(this.ui.listTitle)).toBeVisible({ timeout: 30_000 })
     await expect(this.page.getByRole('button', { name: this.ui.createButton })).toBeVisible()
   }
@@ -258,9 +256,12 @@ export class MemberListCrudPage {
       /* fall through — Form 직접 주입 */
     }
 
-    await schoolModal.getByRole('button', { name: '닫기' }).click().catch(async () => {
-      await this.page.keyboard.press('Escape')
-    })
+    await schoolModal
+      .getByRole('button', { name: '닫기' })
+      .click()
+      .catch(async () => {
+        await this.page.keyboard.press('Escape')
+      })
     await expect(schoolModal).toBeHidden({ timeout: 15_000 })
     await this.injectSchoolRegisterFields(fallbackSchoolName, fallbackAddress)
   }
@@ -282,8 +283,7 @@ export class MemberListCrudPage {
 
       let fiber = (formEl as unknown as Record<string, Fiber>)[fiberKey] as Fiber | null
       for (let i = 0; i < 50 && fiber; i += 1) {
-        const formInst =
-          fiber.memoizedProps?.form ?? fiber.pendingProps?.form
+        const formInst = fiber.memoizedProps?.form ?? fiber.pendingProps?.form
         if (formInst && typeof formInst.setFieldsValue === 'function') {
           formInst.setFieldsValue({ schoolName: name })
           return
@@ -337,9 +337,12 @@ export class MemberListCrudPage {
       /* fall through — Form 직접 주입 */
     }
 
-    await schoolModal.getByRole('button', { name: '닫기' }).click().catch(async () => {
-      await this.page.keyboard.press('Escape')
-    })
+    await schoolModal
+      .getByRole('button', { name: '닫기' })
+      .click()
+      .catch(async () => {
+        await this.page.keyboard.press('Escape')
+      })
     await expect(schoolModal).toBeHidden({ timeout: 15_000 })
     await this.injectAffiliationSchoolName(fallbackSchoolName)
   }
@@ -375,10 +378,14 @@ export class MemberListCrudPage {
     )
 
     const dialog = this.page.getByRole('dialog').filter({ hasText: '학교 신규 등록' })
-    await expect(dialog.locator(`input[value="${institutionName.replace(/"/g, '\\"')}"]`).first()).toBeVisible({
+    await expect(
+      dialog.locator(`input[value="${institutionName.replace(/"/g, '\\"')}"]`).first()
+    ).toBeVisible({
       timeout: 5_000,
     })
-    await expect(dialog.locator(`input[value="${roadAddress.replace(/"/g, '\\"')}"]`).first()).toBeVisible({
+    await expect(
+      dialog.locator(`input[value="${roadAddress.replace(/"/g, '\\"')}"]`).first()
+    ).toBeVisible({
       timeout: 5_000,
     })
   }
@@ -396,7 +403,11 @@ export class MemberListCrudPage {
       await dialog.getByText('1학년').click()
       await fillByPlaceholder(dialog, '연락처', this.phone)
       await fillByPlaceholder(dialog, '이메일', this.email)
-      await fillByPlaceholder(dialog, '건물명, 도로명 또는 지번', '서울특별시 강서구 마곡중앙로 171')
+      await fillByPlaceholder(
+        dialog,
+        '건물명, 도로명 또는 지번',
+        '서울특별시 강서구 마곡중앙로 171'
+      )
     } else if (this.kind === 'institutions') {
       await this.fillSchoolInstitutionViaSearch(dialog)
       await fillByPlaceholder(dialog, '상세 주소', 'E2E 테스트')
@@ -495,9 +506,7 @@ export class MemberListCrudPage {
     const patchResponse = await patchPromise
     if (!patchResponse.ok()) {
       const body = await patchResponse.text().catch(() => '')
-      throw new Error(
-        `회원 수정 API 실패: HTTP ${patchResponse.status()} ${body.slice(0, 400)}`
-      )
+      throw new Error(`회원 수정 API 실패: HTTP ${patchResponse.status()} ${body.slice(0, 400)}`)
     }
 
     await expect(this.page.getByRole('button', { name: '정보 수정' })).toBeVisible({
@@ -523,9 +532,7 @@ export class MemberListCrudPage {
     await this.page.getByRole('button', { name: this.ui.deleteButton }).click()
     const guide = this.page.getByRole('dialog').filter({ hasText: this.ui.deleteGuideTitle })
     await expect(guide).toBeVisible()
-    await guide
-      .getByPlaceholder('삭제하시려면 해당란에 [삭제]를 입력해 주세요.')
-      .fill('삭제')
+    await guide.getByPlaceholder('삭제하시려면 해당란에 [삭제]를 입력해 주세요.').fill('삭제')
 
     const deletePromise = this.page.waitForResponse(
       res => {
@@ -533,16 +540,12 @@ export class MemberListCrudPage {
         const path = new URL(res.url()).pathname
         if (this.kind === 'institutions') {
           return (
-            (method === 'DELETE' &&
-              /\/api\/admin\/organizations\/schools\/\d+\/?$/.test(path)) ||
+            (method === 'DELETE' && /\/api\/admin\/organizations\/schools\/\d+\/?$/.test(path)) ||
             (method === 'POST' &&
               /\/api\/admin\/organizations\/schools\/bulk-delete\/?$/.test(path))
           )
         }
-        return (
-          method === 'POST' &&
-          /\/api\/admin\/users\/[^/]+\/delete\/?$/.test(path)
-        )
+        return method === 'POST' && /\/api\/admin\/users\/[^/]+\/delete\/?$/.test(path)
       },
       { timeout: 60_000 }
     )
@@ -551,9 +554,7 @@ export class MemberListCrudPage {
     const deleteResponse = await deletePromise
     if (!deleteResponse.ok()) {
       const body = await deleteResponse.text().catch(() => '')
-      throw new Error(
-        `회원 삭제 API 실패: HTTP ${deleteResponse.status()} ${body.slice(0, 400)}`
-      )
+      throw new Error(`회원 삭제 API 실패: HTTP ${deleteResponse.status()} ${body.slice(0, 400)}`)
     }
 
     const done = this.page.getByRole('dialog').filter({ hasText: this.ui.deleteDoneTitle })

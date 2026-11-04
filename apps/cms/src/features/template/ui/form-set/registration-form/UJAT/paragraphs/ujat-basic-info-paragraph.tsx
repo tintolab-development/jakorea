@@ -116,12 +116,15 @@ function useUjatBasicInfoValue<T>(
     formKey,
     defaultValue as ProgramDetailEditFormValues[typeof formKey]
   ) as T
-  return [nextValue, next => {
-    infoForm.setValue(formKey, next as never, {
-      shouldDirty: true,
-      shouldTouch: true,
-    })
-  }]
+  return [
+    nextValue,
+    next => {
+      infoForm.setValue(formKey, next as never, {
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    },
+  ]
 }
 
 function UjatOverlayTextField({
@@ -229,8 +232,10 @@ function UjatBasicInfoLegacyParagraph({
       'ujat.basicInfo.operationRangeSeal',
       null
     )
-  const operationAnchorIso = infoForm ? formValues.startDate ?? null : overlayOperationAnchorIso
-  const operationEndIso = infoForm ? formValues.endDate ?? null : overlayOperationRangeSeal?.end ?? null
+  const operationAnchorIso = infoForm ? (formValues.startDate ?? null) : overlayOperationAnchorIso
+  const operationEndIso = infoForm
+    ? (formValues.endDate ?? null)
+    : (overlayOperationRangeSeal?.end ?? null)
   const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
   const setOperationAnchorDate = (next: Dayjs | null) => {
     if (infoForm) {
@@ -246,11 +251,8 @@ function UjatBasicInfoLegacyParagraph({
     const operationRangeSeal: OperationRangeSeal = infoForm
       ? { start: operationAnchorIso ?? '', end: operationEndIso ?? '' }
       : overlayOperationRangeSeal
-    if (
-      operationRangeSeal == null ||
-      !operationRangeSeal.start ||
-      !operationRangeSeal.end
-    ) return null
+    if (operationRangeSeal == null || !operationRangeSeal.start || !operationRangeSeal.end)
+      return null
     return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
   }, [infoForm, operationAnchorIso, operationEndIso, overlayOperationRangeSeal])
   const setOperationRange = (next: [Dayjs, Dayjs] | null) => {
@@ -311,10 +313,12 @@ function UjatBasicInfoLegacyParagraph({
     ? participantTypes?.has('individual') === true
     : individualChecked
   const resolvedOrganizationChecked = infoForm
-    ? participantTypes?.has('school_institution') === true || participantTypes?.has('organization') === true
+    ? participantTypes?.has('school_institution') === true ||
+      participantTypes?.has('organization') === true
     : organizationChecked
   const resolvedTeacherChecked = infoForm
-    ? participantTypes?.has('teacher_instructor') === true || participantTypes?.has('teacher') === true
+    ? participantTypes?.has('teacher_instructor') === true ||
+      participantTypes?.has('teacher') === true
     : teacherChecked
   const resolvedVolunteerChecked = infoForm
     ? participantTypes?.has('volunteer') === true
@@ -445,15 +449,9 @@ function UjatBasicInfoLegacyParagraph({
   const sponsorApiOptions = sponsorCatalogQuery.options
   const sponsorOptionsLoading =
     catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
-  const contactsQuery = useSponsorContactsQuery(
-    sponsorId,
-    Boolean(sponsorId)
-  )
+  const contactsQuery = useSponsorContactsQuery(sponsorId, Boolean(sponsorId))
 
-  const sponsorOptions = useMemo(
-    () => [...sponsorApiOptions],
-    [sponsorApiOptions]
-  )
+  const sponsorOptions = useMemo(() => [...sponsorApiOptions], [sponsorApiOptions])
 
   const managerOptions = useMemo(() => {
     if (!sponsorId) return []
@@ -502,8 +500,14 @@ function UjatBasicInfoLegacyParagraph({
       unique[0] ?? (sponsorId === UJAT_SPONSOR_ALL_VALUE ? UJAT_SPONSOR_ALL_VALUE : '')
     setSponsorContactId(primary)
     if (infoForm) {
-      infoForm.setValue('sponsorManagerContactIds', unique, { shouldDirty: true, shouldTouch: true })
-      infoForm.setValue('sponsorManagerContactId', primary, { shouldDirty: true, shouldTouch: true })
+      infoForm.setValue('sponsorManagerContactIds', unique, {
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+      infoForm.setValue('sponsorManagerContactId', primary, {
+        shouldDirty: true,
+        shouldTouch: true,
+      })
     }
     const labels = unique
       .filter(id => id !== UJAT_SPONSOR_ALL_VALUE && !isSponsorContactUnselected(id))
@@ -640,7 +644,7 @@ function UjatBasicInfoLegacyParagraph({
             label="대표 프로그램명 (국문)"
             validationKey="basicInfo.repKo"
             overlayKey="ujat.basicInfo.repKo"
-            placeholder="대표 프로그램명을 입력하세요"
+            placeholder="대표 프로그램명을 입력해 주세요"
             defaultValue=""
             infoForm={infoForm}
             formValues={formValues}
@@ -650,7 +654,7 @@ function UjatBasicInfoLegacyParagraph({
             label="대표 프로그램명 (영문)"
             validationKey="basicInfo.repEn"
             overlayKey="ujat.basicInfo.repEn"
-            placeholder="대표 프로그램명을 입력하세요"
+            placeholder="대표 프로그램명을 입력해 주세요"
             defaultValue=""
             infoForm={infoForm}
             formValues={formValues}
@@ -662,7 +666,7 @@ function UjatBasicInfoLegacyParagraph({
             label="프로그램 관리명"
             validationKey="basicInfo.programManagementName"
             overlayKey="ujat.basicInfo.programManagementName"
-            placeholder="프로그램 관리명을 입력하세요"
+            placeholder="프로그램 관리명을 입력해 주세요"
             defaultValue=""
             infoForm={infoForm}
             formValues={formValues}
@@ -676,7 +680,7 @@ function UjatBasicInfoLegacyParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="세부 프로그램명을 선택하세요"
+                  placeholder="세부 프로그램명을 선택해 주세요"
                   width="100%"
                   options={detailedProgramOptions}
                   value={detailedProgramSelectValue}
@@ -696,12 +700,13 @@ function UjatBasicInfoLegacyParagraph({
             validationKey="basicInfo.operationRangeSeal"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={operationAnchorDate}
                   width="100%"
-                  placeholder="사업 운영 기간을 선택하세요"
+                  placeholder="사업 운영 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   excludeBusinessPeriodConstraint
                   appliedSurfaceRange={operationRange}
@@ -756,7 +761,7 @@ function UjatBasicInfoLegacyParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="사업 분야를 선택하세요"
+                  placeholder="사업 분야를 선택해 주세요"
                   width="100%"
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField}
@@ -776,7 +781,7 @@ function UjatBasicInfoLegacyParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="선택하세요"
+                  placeholder="선택해 주세요"
                   width="100%"
                   options={sponsorOptions}
                   value={sponsorId}
@@ -807,7 +812,7 @@ function UjatBasicInfoLegacyParagraph({
                   mode="multiple"
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="후원사 담당자를 선택하세요"
+                  placeholder="후원사 담당자를 선택해 주세요"
                   width="100%"
                   showSearch
                   optionFilterProp="label"
@@ -840,9 +845,15 @@ function UjatBasicInfoLegacyParagraph({
                     setEducationVenueKind(event.target.value as 'inside' | 'outside' | 'other')
                   }
                 >
-                  <CmsRadio size="medium" value="inside">기관 안</CmsRadio>
-                  <CmsRadio size="medium" value="outside">기관 밖</CmsRadio>
-                  <CmsRadio size="medium" value="other">기타(직접입력)</CmsRadio>
+                  <CmsRadio size="medium" value="inside">
+                    기관 안
+                  </CmsRadio>
+                  <CmsRadio size="medium" value="outside">
+                    기관 밖
+                  </CmsRadio>
+                  <CmsRadio size="medium" value="other">
+                    기타(직접입력)
+                  </CmsRadio>
                 </CmsRadioGroup>
                 <DetailInfoForm.InputsSeparator />
                 <CmsInput
@@ -888,7 +899,7 @@ function UjatBasicInfoLegacyParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="교육 과정을 선택하세요"
+                placeholder="교육 과정을 선택해 주세요"
                 width="100%"
                 options={educationCourseSelectOptions}
                 value={educationCourse}
@@ -938,8 +949,12 @@ function UjatBasicInfoLegacyParagraph({
                 value={partnerInvolvement}
                 onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
               >
-                <CmsRadio size="medium" value="yes">Yes</CmsRadio>
-                <CmsRadio size="medium" value="no">No</CmsRadio>
+                <CmsRadio size="medium" value="yes">
+                  Yes
+                </CmsRadio>
+                <CmsRadio size="medium" value="no">
+                  No
+                </CmsRadio>
               </CmsRadioGroup>
             }
             view="-"
@@ -954,7 +969,7 @@ function UjatBasicInfoLegacyParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="IPS 유형을 선택하세요"
+                placeholder="IPS 유형을 선택해 주세요"
                 width={240}
                 options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
                 value={ipsCategory}

@@ -71,6 +71,9 @@ importers:
       '@jakorea/form-template-runtime':
         specifier: workspace:^
         version: link:../../packages/form-template-runtime
+      '@jakorea/identity-verification':
+        specifier: workspace:*
+        version: link:../../packages/identity-verification
       '@jakorea/rich-text':
         specifier: workspace:^
         version: link:../../packages/rich-text

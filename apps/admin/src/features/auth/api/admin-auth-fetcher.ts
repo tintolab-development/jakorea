@@ -33,7 +33,7 @@ function humanizeAuthErrorMessage(code: string, message: string, fallback: strin
     return '백엔드 JWT 설정(app.auth.jwt.secret, 32자 이상)이 없어 토큰 발급에 실패했습니다. 백엔드팀에 설정을 요청하세요.'
   }
   if (code === 'MFA_VERIFICATION_FAILED' || message.includes('MFA_VERIFICATION_FAILED')) {
-    return '인증번호가 올바르지 않습니다. LOCAL_TEST_CODE 환경이면 000000을 입력하세요.'
+    return '인증번호가 올바르지 않습니다. LOCAL_TEST_CODE 환경이면 000000을 입력해 주세요.'
   }
   if (
     code === 'MFA_CHALLENGE_INVALID' ||
@@ -52,14 +52,19 @@ function parseAuthError(payload: unknown, fallback: string): AdminMfaApiError {
     const codeFromBody = wrapped?.code ?? (typeof o.code === 'string' ? o.code : undefined)
     if (o.success === false) {
       const raw = typeof o.message === 'string' ? o.message : fallback
-      const codeFromMessage = codeFromBody ?? (raw.includes('ACCOUNT_LOCKED')
-        ? 'ACCOUNT_LOCKED'
-        : raw.includes('MFA_VERIFICATION_FAILED')
-          ? 'MFA_VERIFICATION_FAILED'
-          : raw.includes('MFA_ALREADY_ENROLLED') || raw.includes('이미 MFA 등록')
-            ? 'MFA_ALREADY_ENROLLED'
-            : 'MFA_FAILED')
-      return new AdminMfaApiError(codeFromMessage, humanizeAuthErrorMessage(codeFromMessage, raw, fallback))
+      const codeFromMessage =
+        codeFromBody ??
+        (raw.includes('ACCOUNT_LOCKED')
+          ? 'ACCOUNT_LOCKED'
+          : raw.includes('MFA_VERIFICATION_FAILED')
+            ? 'MFA_VERIFICATION_FAILED'
+            : raw.includes('MFA_ALREADY_ENROLLED') || raw.includes('이미 MFA 등록')
+              ? 'MFA_ALREADY_ENROLLED'
+              : 'MFA_FAILED')
+      return new AdminMfaApiError(
+        codeFromMessage,
+        humanizeAuthErrorMessage(codeFromMessage, raw, fallback)
+      )
     }
     const code = String(codeFromBody ?? 'UNKNOWN')
     const raw = wrapped?.message ?? (typeof o.message === 'string' ? o.message : fallback)
@@ -130,7 +135,10 @@ export async function fetchAdminMfaEnrollment(
   body: AdminMfaSetupRequestBody
 ): Promise<AdminMfaSetupResult> {
   try {
-    const { data: payload } = await axiosInstance.post<unknown>(adminAuthPaths.mfaEnrollment(), body)
+    const { data: payload } = await axiosInstance.post<unknown>(
+      adminAuthPaths.mfaEnrollment(),
+      body
+    )
     return unwrapMfaSetupResponse(payload)
   } catch (err) {
     if (err instanceof AdminMfaApiError) throw err

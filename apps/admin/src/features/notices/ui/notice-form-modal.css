@@ -32,27 +32,6 @@
   margin-top: 30px !important;
 }
 
-.notice-form-modal .content-modal__footer-actions {
-  width: 100%;
-  justify-content: flex-end;
-}
-
-/* 푸터: 좌 삭제 · 우 취소/저장·등록 */
-.notice-form-modal__footer {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 10px;
-  box-sizing: border-box;
-}
-
-.notice-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-}
-
 .notice-form-modal__form {
   display: flex;
   flex-direction: column;
@@ -60,17 +39,17 @@
   max-width: 100%;
 }
 
-/* 라벨 — vertical 14px · 필수 * */
+/* 라벨 — 14px · 필수 * · 라벨↔컨트롤 6px (Figma spacing/6) */
 .notice-form-modal__label {
   display: flex;
   align-items: center;
   gap: 2px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, var(--font-family-primary, sans-serif);
   font-size: 14px;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .notice-form-modal__required {
@@ -91,7 +70,8 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: flex-start;
-  gap: 16px;
+  /* 게시일시 · 공개 여부 · 상단 고정 필드 간 24px (Figma 2118:111311) */
+  gap: 24px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -106,21 +86,35 @@
 }
 
 .notice-form-modal__filter-field .notice-form-modal__label {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .notice-form-modal__filter-field--datetime {
-  width: 280px;
-  max-width: 280px;
+  width: 240px;
+  max-width: 240px;
 }
 
+/* 라디오 그룹은 hug — 고정 200px이면 공개/고정 사이 갭이 24px보다 커진다 */
 .notice-form-modal__filter-field--radio {
-  width: 200px;
-  max-width: 200px;
+  width: auto;
+  max-width: none;
 }
 
 .notice-form-modal__filter-field--radio .app-radio-group {
-  min-height: 44px;
+  min-height: 40px;
+}
+
+/* 인풋·캘린더 radius 8px (Figma --radius/8) */
+.notice-form-modal .cms-field__box,
+.notice-form-modal .cms-input__control {
+  border-radius: var(--Radius-8, 8px);
+}
+
+/* 에디터 chrome radius 8px · 코너 클리핑 */
+.notice-form-modal__editor-host .rich-text-editor,
+.notice-form-modal__editor-host .cms-rich-text-editor.rich-text-editor {
+  border-radius: var(--Radius-8, 8px);
+  overflow: hidden;
 }
 
 /* 제목 → 내용 24px */
@@ -140,16 +134,6 @@
 
 .notice-form-modal__editor-host {
   width: 100%;
-  height: 369px;
-  min-height: 369px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-}
-
-.notice-form-modal__editor-host .rich-text-editor {
-  height: 100%;
-  min-height: inherit;
-  border-radius: 0;
 }
 
 .notice-form-modal__form:has(.rich-text-editor[data-resized='true']) {
@@ -236,35 +220,9 @@
   width: 100%;
 }
 
-.notice-form-modal__file-field .file-select-field__actions {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-}
-
 .notice-form-modal__file-field .file-select-field__guide {
   flex: 1 1 200px;
   min-width: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-}
-
-.notice-form-modal__file-field .file-select-field__guide-line {
-  display: block;
-}
-
-.notice-form-modal__file-field .file-select-field__name {
-  color: var(--main-BK, #3d3d3d);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 @media (max-width: 768px) {

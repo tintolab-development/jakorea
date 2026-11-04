@@ -11,7 +11,10 @@ import { ContentModal } from '@/shared/ui/content-modal'
 import { DeleteGuideModal } from '@/shared/ui/delete-guide-modal'
 import { DetailFullPageModal } from '@/shared/ui/detail-fullpage-modal'
 import { DetailFullpageBreadcrumb } from '@/shared/ui/detail-fullpage-breadcrumb'
-import { DetailModalSidebar, type DetailModalSidebarNavItem } from '@/shared/ui/detail-modal-sidebar'
+import {
+  DetailModalSidebar,
+  type DetailModalSidebarNavItem,
+} from '@/shared/ui/detail-modal-sidebar'
 import type { ModalSize } from '@/shared/ui/teal-header-modal'
 import {
   ModalSpecTable,
@@ -83,15 +86,14 @@ export function ModalsSection() {
       description="CMS 표준 카드형 모달입니다. Confirm·Alert·Permission·CmsModal 등이 이 셸 위에 올라갑니다. 풀페이지 상세는 DetailFullPageModal입니다."
     >
       <p className="ds-note">
-        <strong>컴포넌트</strong> — <code>ContentModal</code> (<code>shared/ui/content-modal</code>).
-        내부 기반은 <code>TealHeaderModal</code>이나 화면에서는 ContentModal만 사용합니다.
+        <strong>컴포넌트</strong> — <code>ContentModal</code> (<code>shared/ui/content-modal</code>
+        ). 내부 기반은 <code>TealHeaderModal</code>이나 화면에서는 ContentModal만 사용합니다.
       </p>
       <p className="ds-note">
-        <strong>선택 순서</strong> — 안내(1버튼)→{' '}
-        <code>useCmsAlert</code> / <code>CmsModal</code> · 확인·취소→ <code>ConfirmModal</code> ·
-        삭제 안내→ <code>DeleteGuideModal</code> · 폼·표 컨텐츠→ <code>ContentModal</code> (+{' '}
-        <code>ModalSpecTable</code>) · 상세 화면→ <code>DetailFullPageModal</code> (+{' '}
-        <code>DetailModalSidebar</code>). 뷰포트 중앙 정렬은{' '}
+        <strong>선택 순서</strong> — 안내(1버튼)→ <code>useCmsAlert</code> / <code>CmsModal</code> ·
+        확인·취소→ <code>ConfirmModal</code> · 삭제 안내→ <code>DeleteGuideModal</code> · 폼·표
+        컨텐츠→ <code>ContentModal</code> (+ <code>ModalSpecTable</code>) · 상세 화면→{' '}
+        <code>DetailFullPageModal</code> (+ <code>DetailModalSidebar</code>). 뷰포트 중앙 정렬은{' '}
         <code>modal-viewport-centering</code> 규칙을 따릅니다. z-index는 Alert가{' '}
         <code>CMS_ALERT_MODAL_Z_INDEX</code>(10000)로 항상 최상위입니다.
       </p>
@@ -102,10 +104,10 @@ export function ModalsSection() {
       </p>
       <p className="ds-note">
         카드형 모달 셸 — 기본 폭 800px · padding <code>26px 30px 34px</code> · radius 12 · shadow{' '}
-        <code>0 0 25px rgba(0,0,0,0.35)</code>. 푸터 버튼은{' '}
-        <code>size=&quot;large&quot;</code>(140×44). 취소 <code>secondary</code> · 확인{' '}
-        <code>primary</code> / 삭제 <code>delete</code>. SSOT{' '}
-        <code>cms-admin-ui/cms-button-action-sizes</code> · 상세는 <a href="#buttons">Buttons</a>.
+        <code>0 0 25px rgba(0,0,0,0.35)</code>. 푸터 버튼은 <code>size=&quot;large&quot;</code>
+        (140×44). 취소 <code>secondary</code> · 확인 <code>primary</code> / 삭제 <code>delete</code>
+        . SSOT <code>cms-admin-ui/cms-button-action-sizes</code> · 상세는{' '}
+        <a href="#buttons">Buttons</a>.
       </p>
       <DsDemo label="ContentModal — 기본 (800px)">
         <p className="ds-note" style={{ marginTop: 0 }}>
@@ -117,7 +119,8 @@ export function ModalsSection() {
             onClick={() => {
               setContentSize('default')
               setContentOpen(true)
-            }} >
+            }}
+          >
             ContentModal 열기
           </CmsButton>
         </div>
@@ -136,7 +139,8 @@ export function ModalsSection() {
               onClick={() => {
                 setContentSize(size)
                 setContentOpen(true)
-              }} >
+              }}
+            >
               {size} · {width}px · {usage}
             </CmsButton>
           ))}
@@ -180,7 +184,8 @@ export function ModalsSection() {
                 title: '알림',
                 content: '작업이 완료되었습니다.\n(useCmsAlert)',
               })
-            } >
+            }
+          >
             useCmsAlert
           </CmsButton>
           <CmsButton
@@ -190,7 +195,8 @@ export function ModalsSection() {
                 title: '알림',
                 content: '작업이 완료되었습니다.\n(cmsAlertModal.show)',
               })
-            } >
+            }
+          >
             cmsAlertModal (비 React)
           </CmsButton>
         </div>
@@ -304,7 +310,7 @@ export function ModalsSection() {
         onCancel={() => setDeleteTypedOpen(false)}
         onConfirm={() => setDeleteTypedOpen(false)}
         title="삭제 확인 입력"
-        lines={['계속하려면 아래에 **삭제** 를 입력하세요.']}
+        lines={['계속하려면 아래에 **삭제** 를 입력해 주세요.']}
         requiredConfirmInput="삭제"
       />
 
@@ -415,11 +421,7 @@ export function ModalsSection() {
         onClose={() => setFullpageLoadingOpen(false)}
         title="상세 로딩"
       >
-        <div
-          className="detail-fullpage-modal__loading"
-          role="status"
-          aria-label="상세 불러오는 중"
-        >
+        <div className="detail-fullpage-modal__loading" role="status" aria-label="상세 불러오는 중">
           <Spin size="large" />
         </div>
       </DetailFullPageModal>

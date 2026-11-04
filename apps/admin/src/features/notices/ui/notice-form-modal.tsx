@@ -12,35 +12,31 @@ import { DEFAULT_AUTHOR } from '@/features/notices/api/store'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
 import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
+  ATTACHMENT_ACCEPT,
+  ATTACHMENT_MULTI_GENERAL_GUIDE_LINE,
+  ATTACHMENT_MULTI_TOTAL_MAX_BYTES,
+  withAttachmentFilenameGuide,
+  generalAttachmentMimeFromFile,
+  sumAttachmentBytes,
+  validateGeneralAttachmentBatch,
+} from '@/shared/lib/attachment-policy'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
   CmsInput,
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
 
 import './notice-form-modal.css'
 
-const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
-const MAX_BYTES = FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
-
-/** 시안 가이드 (20MB · 특수문자) */
-const ATTACH_GUIDE = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-] as const
-
-function isAllowedImageFile(file: File): boolean {
-  const type = file.type.toLowerCase()
-  if (type === 'image/jpeg' || type === 'image/png') return true
-  const name = file.name.toLowerCase()
-  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
-}
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_MULTI_GENERAL_GUIDE_LINE])
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -52,10 +48,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 function mimeFromFile(file: File): NoticeAttachment['mime'] {
-  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
-    return 'image/png'
-  }
-  return 'image/jpeg'
+  return generalAttachmentMimeFromFile(file)
 }
 
 export type NoticeFormValues = NoticeCreateInput
@@ -120,7 +113,6 @@ export function NoticeFormModal({
 
   const {
     editor,
-    editorMinHeight,
     getHTML,
     editorMode,
     htmlSource,
@@ -128,7 +120,6 @@ export function NoticeFormModal({
     onHtmlSourceChange,
     resolveImageSrc,
   } = useNoticeWysiwygEditor(open, initialMarkdown, editorResetKey, {
-    placeholder: '공지사항 내용을 입력하세요',
     contentFormat: editorContentFormat,
     // 기존 스펙: 삽입(이미지·YouTube) 유지
     allowInlineMedia: true,
@@ -159,24 +150,19 @@ export function NoticeFormModal({
   const handleFilesChange = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return
+      const error = validateGeneralAttachmentBatch({
+        incoming: files,
+        existingCount: attachments.length,
+        existingBytes: sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 })),
+      })
+      if (error) {
+        showAlert({ title: '안내', content: error })
+        return
+      }
 
       const accepted: NoticeAttachment[] = []
       for (let i = 0; i < files.length; i++) {
         const file = files[i]!
-        if (!isAllowedImageFile(file)) {
-          showAlert({
-            title: '파일 형식',
-            content: 'JPG, PNG 형식만 등록할 수 있습니다.',
-          })
-          continue
-        }
-        if (file.size > MAX_BYTES) {
-          showAlert({
-            title: '파일 용량',
-            content: '파일은 최대 20MB까지 등록 가능합니다.',
-          })
-          continue
-        }
         try {
           const dataUrl = await readFileAsDataUrl(file)
           accepted.push({
@@ -197,7 +183,7 @@ export function NoticeFormModal({
         setAttachments(prev => [...prev, ...accepted])
       }
     },
-    [showAlert]
+    [attachments, showAlert]
   )
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -206,7 +192,7 @@ export function NoticeFormModal({
 
   const handleSubmit = useCallback(() => {
     if (!publishedAt || !publishedAt.isValid()) {
-      showAlert({ title: '입력 확인', content: '게시일시를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const m = publishedAt.minute()
@@ -219,12 +205,12 @@ export function NoticeFormModal({
     }
     const t = title.trim()
     if (!t) {
-      showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const contentHtml = getHTML().trim()
     if (isEmptyAdminHtml(contentHtml)) {
-      showAlert({ title: '입력 확인', content: '공지사항 내용을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const bodyError = getRemoteRichTextBodyError(contentHtml)
@@ -266,11 +252,12 @@ export function NoticeFormModal({
         size="large"
         className="notice-form-modal"
         footer={
-          <div className="notice-form-modal__footer">
+          <>
             {mode === 'edit' && onDelete ? (
               <CmsButton
+                className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="medium"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
                 onClick={() => setDeleteConfirmOpen(true)}
@@ -278,27 +265,25 @@ export function NoticeFormModal({
                 공지사항 삭제
               </CmsButton>
             ) : null}
-            <div className="notice-form-modal__footer-end">
-              <CmsButton
-                variant="secondary"
-                size="large"
-                type="button"
-                disabled={confirmLoading || deleteLoading}
-                onClick={onCancel}
-              >
-                취소
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                type="button"
-                loading={confirmLoading}
-                onClick={handleSubmit}
-              >
-                {submitLabel}
-              </CmsButton>
-            </div>
-          </div>
+            <CmsButton
+              variant="secondary"
+              size="medium"
+              type="button"
+              disabled={confirmLoading || deleteLoading}
+              onClick={onCancel}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="medium"
+              type="button"
+              loading={confirmLoading}
+              onClick={handleSubmit}
+            >
+              {submitLabel}
+            </CmsButton>
+          </>
         }
       >
         <div className="notice-form-modal__form">
@@ -308,8 +293,8 @@ export function NoticeFormModal({
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--datetime">
                 <FieldLabel required>게시일시</FieldLabel>
                 <CmsDatePicker
-                  inputSize="large"
-                  width={280}
+                  inputSize="medium"
+                  width={240}
                   showTime={{
                     format: 'HH:mm',
                     minuteStep: 30 as const,
@@ -317,20 +302,20 @@ export function NoticeFormModal({
                   format="YYYY.MM.DD HH:mm"
                   value={publishedAt}
                   onChange={v => setPublishedAt(v)}
-                  placeholder="게시일시를 선택하세요"
+                  placeholder="게시일시를 선택해 주세요"
                 />
               </div>
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--radio">
                 <FieldLabel required>공개 여부</FieldLabel>
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={isPublic ? 'public' : 'private'}
                   onChange={e => setIsPublic(e.target.value === 'public')}
                 >
-                  <CmsRadio size="large" value="public">
+                  <CmsRadio size="medium" value="public">
                     공개
                   </CmsRadio>
-                  <CmsRadio size="large" value="private">
+                  <CmsRadio size="medium" value="private">
                     비공개
                   </CmsRadio>
                 </CmsRadioGroup>
@@ -338,14 +323,14 @@ export function NoticeFormModal({
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--radio">
                 <FieldLabel required>상단 고정</FieldLabel>
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={isPinned ? 'on' : 'off'}
                   onChange={e => setIsPinned(e.target.value === 'on')}
                 >
-                  <CmsRadio size="large" value="off">
+                  <CmsRadio size="medium" value="off">
                     고정 안함
                   </CmsRadio>
-                  <CmsRadio size="large" value="on">
+                  <CmsRadio size="medium" value="on">
                     고정
                   </CmsRadio>
                 </CmsRadioGroup>
@@ -356,11 +341,11 @@ export function NoticeFormModal({
           <div className="notice-form-modal__section">
             <FieldLabel required>제목</FieldLabel>
             <CmsInput
-              inputSize="large"
+              inputSize="medium"
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="제목을 입력하세요"
+              placeholder="제목을 입력해 주세요"
             />
           </div>
 
@@ -369,7 +354,6 @@ export function NoticeFormModal({
             <div className="notice-form-modal__editor-host">
               <RichTextEditor
                 editor={editor}
-                minHeight={editorMinHeight}
                 allowInlineMedia
                 resolveImageSrc={resolveImageSrc}
                 allowRawHtmlBlock
@@ -388,10 +372,11 @@ export function NoticeFormModal({
               <FileSelectField
                 className="notice-form-modal__file-field"
                 multiple
-                accept={IMAGE_ACCEPT}
+                accept={ATTACHMENT_ACCEPT.general}
                 buttonLabel="파일 추가"
                 fileNames={fileNames}
-                maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                currentTotalBytes={sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 }))}
+                maxTotalBytes={ATTACHMENT_MULTI_TOTAL_MAX_BYTES}
                 guideLines={ATTACH_GUIDE}
                 onFilesChange={files => {
                   void handleFilesChange(files)

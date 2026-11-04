@@ -57,6 +57,10 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -138,6 +142,7 @@ export function CorporatePartnersPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<PartnerPendingFilters, CorporatePartnerListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -258,8 +263,10 @@ export function CorporatePartnersPage() {
       try {
         if (formMode === 'edit' && editingPartner) {
           await updateMutation.mutateAsync({ id: editingPartner.id, patch: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditingPartner(null)
@@ -278,10 +285,7 @@ export function CorporatePartnersPage() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 후원사를 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -293,6 +297,7 @@ export function CorporatePartnersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       const alert = corporatePartnerMutationFailureAlert(
         error,
@@ -373,7 +378,7 @@ export function CorporatePartnersPage() {
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="small"
             type="button"
             onClick={e => {
               e.stopPropagation()
@@ -389,13 +394,10 @@ export function CorporatePartnersPage() {
 
   const formLoading = formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
 
-  const emptyText = hasActiveFilter
-    ? '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
-    : '등록된 후원사가 없습니다.'
-
   return (
     <div className="corporate-partners-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area corporate-partners-page__filter-row">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -479,7 +481,6 @@ export function CorporatePartnersPage() {
           loading={listQuery.isLoading || reorderMutation.isPending}
           disabled={reorderMutation.isPending}
           onRowsReorder={handleRowsReorder}
-          locale={{ emptyText }}
           rowSelection={{
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),

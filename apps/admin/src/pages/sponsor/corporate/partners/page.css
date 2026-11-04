@@ -5,10 +5,10 @@
 
 .corporate-partners-page__thumb-wrap {
   display: inline-flex;
-  flex: 1 0 0;
-  width: 250px;
-  height: 91.667px;
-  aspect-ratio: 30 / 11;
+  flex: 0 0 auto;
+  width: 86px;
+  height: 86px;
+  aspect-ratio: 1 / 1;
   flex-shrink: 0;
   border-radius: 4px;
   overflow: hidden;
@@ -28,7 +28,7 @@
 .corporate-partners-page__thumb {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
 }
 

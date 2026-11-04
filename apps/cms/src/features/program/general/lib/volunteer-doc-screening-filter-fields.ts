@@ -141,9 +141,7 @@ export const DEFAULT_GENERAL_VOLUNTEER_INTERVIEW2_FILTERS: GeneralVolunteerInter
   secondInterviewScreeningStatus: ALL,
 }
 
-function buildGeneralFilterField(
-  config: FilterFieldConfig
-): FilterFieldConfig {
+function buildGeneralFilterField(config: FilterFieldConfig): FilterFieldConfig {
   return {
     width: FILTER_WIDTH,
     style: config.type === 'select' ? selectStyle : undefined,
@@ -167,7 +165,7 @@ export function buildGeneralVolunteerDoc1FilterRows(options?: {
         key: 'volunteerName',
         type: 'search',
         label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
+        placeholder: '봉사자명을 입력해 주세요',
       }),
       ...(interviewEnabled
         ? [
@@ -266,9 +264,7 @@ export function buildGeneralVolunteerDocPassedFilterRows(
 
 export function buildGeneralVolunteerInterview2DateOptions(rows: GeneralVolunteerApplicantRow[]) {
   const dates = Array.from(
-    new Set(
-      rows.map(row => row.assignedInterviewDateLabel).filter((d): d is string => Boolean(d))
-    )
+    new Set(rows.map(row => row.assignedInterviewDateLabel).filter((d): d is string => Boolean(d)))
   ).sort()
   return [{ label: '전체', value: ALL }, ...dates.map(d => ({ label: d, value: d }))]
 }
@@ -381,10 +377,7 @@ export function buildGeneralVolunteerInterview2CalendarFilterRows(
   ]
 }
 
-export function matchesGeneralInterviewSlotRange(
-  count: number,
-  filter: string
-): boolean {
+export function matchesGeneralInterviewSlotRange(count: number, filter: string): boolean {
   if (filter === ALL) return true
   if (filter === '0') return count === 0
   if (filter === '1') return count === 1

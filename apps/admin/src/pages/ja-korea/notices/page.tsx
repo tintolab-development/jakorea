@@ -50,6 +50,10 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -153,6 +157,7 @@ export function NoticesPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<NoticePendingFilters, NoticeListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -274,10 +279,7 @@ export function NoticesPage() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '선택된 항목이 없습니다.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -288,6 +290,7 @@ export function NoticesPage() {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -302,8 +305,10 @@ export function NoticesPage() {
       try {
         if (formMode === 'edit' && editing) {
           await updateMutation.mutateAsync({ ...values, id: editing.id })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
@@ -391,7 +396,7 @@ export function NoticesPage() {
         dataIndex: 'viewCount',
         key: 'viewCount',
         width: 110,
-        align: 'right',
+        align: 'center',
         render: (v: number) => v.toLocaleString('ko-KR'),
       },
     ],
@@ -407,6 +412,7 @@ export function NoticesPage() {
         @see apps/cms table-filter-group-layout · mergedAutoFillTrailingFieldKeys
       */}
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split notices-page__filter">
             <div className="admin-filter-area__head">
@@ -436,7 +442,7 @@ export function NoticesPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.title}
-                  placeholder="제목을 입력하세요"
+                  placeholder="제목을 입력해 주세요"
                   onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
                   onPressEnter={handleSearch}
                 />
@@ -447,7 +453,7 @@ export function NoticesPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.authorName}
-                  placeholder="작성자명을 입력하세요"
+                  placeholder="작성자명을 입력해 주세요"
                   onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
                   onPressEnter={handleSearch}
                 />
@@ -497,11 +503,13 @@ export function NoticesPage() {
                 </div>
               </div>
               <div className="admin-filter-area__actions">
-                <CmsButton className="admin-filter-area__search-button"
+                <CmsButton
+                  className="admin-filter-area__search-button"
                   variant="primary"
                   size="medium"
                   type="button"
-                  onClick={handleSearch} >
+                  onClick={handleSearch}
+                >
                   조회
                 </CmsButton>
               </div>
@@ -517,7 +525,8 @@ export function NoticesPage() {
               size="h40"
               type="button"
               loading={removeMutation.isPending && !formOpen}
-              onClick={handleBulkDeleteClick} >
+              onClick={handleBulkDeleteClick}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

@@ -1,30 +1,5 @@
-/* 연혁·수상·인증 등록/수정 모달 — strip-banner form-modal 푸터 패턴 */
-
-.hac-form-modal.content-modal.teal-header-modal.ant-modal .ant-modal-content {
-  padding: 24px 30px 32px;
-}
-
-.hac-form-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
-.hac-form-modal.content-modal
-  .teal-header-modal__body:has(> .content-modal__description) {
-  padding-top: 12px;
-  gap: 30px;
-}
-
 .hac-form-modal .teal-header-modal__footer {
   margin-top: 30px;
-}
-
-.hac-form-modal .content-modal__footer-actions {
-  justify-content: space-between;
-  width: 100%;
-}
-
-.hac-form-modal__footer-start,
-.hac-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 /*

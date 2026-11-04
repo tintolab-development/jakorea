@@ -6,7 +6,7 @@ import {
   useSaveJaHistoryKoreaTimeline,
   useSaveJaHistoryWorldTimeline,
 } from '@/features/ja-history/api/hooks'
-import { CmsTextTabs, useCmsAlert } from '@/shared/ui'
+import { CmsTextTabs, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { TimelineFormModal } from './timeline-form-modal'
 
@@ -109,7 +109,10 @@ export function TimelineSection({ title, modalTitle, timeline, variant }: Props)
         onCancel={() => setOpen(false)}
         onSubmit={values => {
           void saveMutation.mutateAsync(values).then(
-            () => setOpen(false),
+            () => {
+              setOpen(false)
+              showSaveCompletedAlert()
+            },
             error => {
               showAlert(jaHistorySaveAlert(error, `${title} 저장에 실패했습니다. 다시 시도해 주세요.`))
             },

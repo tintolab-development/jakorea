@@ -2,6 +2,8 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { Layout } from '@/widgets/layout'
 import { ProtectedRoute } from '@/app/components/protected-route'
 import { LoginPage } from '@/pages/auth/login-page'
+import { AccountIdentityCallbackPage } from '@/pages/auth/account-identity-callback-page'
+import { AccountIdentityMockPage } from '@/pages/auth/account-identity-mock-page'
 import { CmsAuthRedirect } from '@/features/auth/ui/cms-auth-redirect'
 import { BiPage } from '@/pages/ja-korea/bi/page'
 import { DirectionsPage } from '@/pages/ja-korea/directions/page'
@@ -108,6 +110,14 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/account/identity/callback',
+    element: <AccountIdentityCallbackPage />,
+  },
+  {
+    path: '/account/identity/mock',
+    element: <AccountIdentityMockPage />,
   },
   {
     path: '/find-email',

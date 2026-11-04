@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "pnpm run build:workspace-deps",
     "prebuild": "pnpm run build:workspace-deps",
-    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/rich-text --filter @jakorea/domain --filter @jakorea/admin-ui build",
+    "build:workspace-deps": "pnpm --filter @jakorea/utils --filter @jakorea/ui --filter @jakorea/identity-verification --filter @jakorea/form-schema --filter @jakorea/form-template-runtime --filter @jakorea/rich-text --filter @jakorea/domain --filter @jakorea/admin-ui build",
     "dev": "node ../../packages/form-template-runtime/scripts/run-with-dev.mjs vite",
     "build": "vite build",
     "lint": "eslint . --max-warnings=-1",
@@ -39,6 +39,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@jakorea/admin-ui": "workspace:*",
     "@jakorea/domain": "workspace:*",
+    "@jakorea/identity-verification": "workspace:*",
     "@jakorea/form-template-runtime": "workspace:^",
     "@jakorea/rich-text": "workspace:^",
     "@jakorea/ui": "workspace:*",

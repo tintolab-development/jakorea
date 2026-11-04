@@ -56,6 +56,10 @@ import {
   CmsSelect,
   ConfirmModal,
   FilterTableLayout,
+  NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -207,6 +211,7 @@ export function EducationTextbooksPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<TextbookPendingFilters, EducationTextbookListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -345,10 +350,7 @@ export function EducationTextbooksPage() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '선택된 항목이 없습니다.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -359,6 +361,7 @@ export function EducationTextbooksPage() {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -373,8 +376,10 @@ export function EducationTextbooksPage() {
       try {
         if ((formMode === 'edit' || formMode === 'view') && editing) {
           await updateMutation.mutateAsync({ ...values, id: editing.id })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
@@ -397,6 +402,7 @@ export function EducationTextbooksPage() {
       setEditing(null)
       setFormMode('create')
       setSelectedRowKeys(prev => prev.filter(k => k !== editing.id))
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -543,6 +549,7 @@ export function EducationTextbooksPage() {
   return (
     <div className="education-textbooks-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area education-textbooks-page__filter">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -571,7 +578,7 @@ export function EducationTextbooksPage() {
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.title}
-                placeholder="교재명을 입력하세요"
+                placeholder="교재명을 입력해 주세요"
                 onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
                 onPressEnter={handleSearch}
               />
@@ -631,11 +638,13 @@ export function EducationTextbooksPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -650,15 +659,17 @@ export function EducationTextbooksPage() {
               size="h40"
               type="button"
               onClick={handleBulkDeleteClick}
-              disabled={removeMutation.isPending} >
+              disabled={removeMutation.isPending}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton
               variant="secondary"
               size="h40"
               type="button"
-              onClick={() => setTargetsOpen(true)} >
-              교육 대상 관리
+              onClick={() => setTargetsOpen(true)}
+            >
+              교육 대상 설정
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               교재 등록
@@ -730,7 +741,6 @@ export function EducationTextbooksPage() {
         open={bulkDeleteOpen}
         title="교재 삭제"
         content={`선택한 교재 ${selectedRowKeys.length}건을 삭제하시겠습니까?`}
-        warningMessage="삭제된 항목은 복구할 수 없습니다."
         confirmText="삭제"
         cancelText="취소"
         danger

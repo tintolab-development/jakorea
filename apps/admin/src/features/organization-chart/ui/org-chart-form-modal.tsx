@@ -6,30 +6,27 @@ import type {
   OrganizationChartSaveInput,
 } from '@/entities/organization-chart/model/types'
 import {
-  CmsButton,
-  CmsInput,
-  ContentModal,
-  FileSelectField,
-  useCmsAlert,
-} from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, ContentModal, FileSelectField, useCmsAlert } from '@/shared/ui'
 
 import './org-chart-form-modal.css'
 
-const IMAGE_ACCEPT = '.png,image/png'
-const MAX_IMAGE_BYTES = 20 * 1024 * 1024
+import {
+  ATTACHMENT_ACCEPT,
+  ATTACHMENT_ERROR,
+  ATTACHMENT_PER_FILE_MAX_BYTES,
+  ATTACHMENT_SINGLE_PNG_GUIDE_LINE,
+  validateSinglePngFile,
+} from '@/shared/lib/attachment-policy'
+
+const IMAGE_ACCEPT = ATTACHMENT_ACCEPT.png
+const MAX_IMAGE_BYTES = ATTACHMENT_PER_FILE_MAX_BYTES
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 PNG 형식만 등록 가능합니다.',
+  ATTACHMENT_SINGLE_PNG_GUIDE_LINE,
   '- 조직도 이미지의 권장 사이즈는 1440 × 826px입니다.',
 ]
 
 const MODAL_DESCRIPTION =
   '메인 타이틀 문구 및 조직도 이미지를 설정해 주세요.\n조직도 이미지는 배경 색상이 없는 투명 배경 이미지로 작업 후 png 형식으로만 업로드 가능합니다.'
-
-function isAllowedPngFile(file: File): boolean {
-  const type = file.type.toLowerCase()
-  if (type === 'image/png') return true
-  return file.name.toLowerCase().endsWith('.png')
-}
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -70,12 +67,7 @@ type FormBodyProps = {
   onSubmit: (values: OrganizationChartSaveInput) => void
 }
 
-function OrgChartFormBody({
-  initial,
-  confirmLoading,
-  onCancel,
-  onSubmit,
-}: FormBodyProps) {
+function OrgChartFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
   const [mainTitle, setMainTitle] = useState(initial.mainTitle)
   const [imageUrl, setImageUrl] = useState(initial.imageUrl)
@@ -86,17 +78,11 @@ function OrgChartFormBody({
     async (files: File[]) => {
       const file = files[0]
       if (!file) return
-      if (!isAllowedPngFile(file)) {
+      const error = validateSinglePngFile(file)
+      if (error) {
         showAlert({
-          title: '파일 형식 오류',
-          content: 'PNG 형식의 이미지만 등록할 수 있습니다.',
-        })
-        return
-      }
-      if (file.size > MAX_IMAGE_BYTES) {
-        showAlert({
-          title: '파일 용량 초과',
-          content: '파일은 최대 20MB까지 등록 가능합니다.',
+          title: error === ATTACHMENT_ERROR.format ? '파일 형식 오류' : '파일 용량 초과',
+          content: error,
         })
         return
       }
@@ -123,17 +109,11 @@ function OrgChartFormBody({
 
   const handleSubmit = useCallback(() => {
     if (!mainTitle.trim()) {
-      showAlert({
-        title: '메인 문구 필수',
-        content: '메인 타이틀을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!imageUrl.trim()) {
-      showAlert({
-        title: '조직도 이미지 필수',
-        content: '조직도 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     onSubmit({
@@ -165,19 +145,21 @@ function OrgChartFormBody({
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             저장
           </CmsButton>
         </>
@@ -198,7 +180,7 @@ function OrgChartFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
                 value={mainTitle}
                 onChange={e => setMainTitle(e.target.value)}
               />
@@ -211,14 +193,8 @@ function OrgChartFormBody({
             required
             view={null}
             edit={
-              <div className="org-chart-form-modal__image-row">
-                <div
-                  className={
-                    imageUrl
-                      ? 'org-chart-form-modal__preview'
-                      : 'org-chart-form-modal__preview org-chart-form-modal__preview--empty'
-                  }
-                >
+              <div className="file-select-image-cell">
+                <div className="file-select-image-cell__preview">
                   {imageUrl ? (
                     <img src={imageUrl} alt="조직도 미리보기" />
                   ) : (

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { CmsTableEmptyVariantProvider } from './cms-table-empty-variant-context'
 
 import './filter-table-layout.css'
 
@@ -13,6 +14,11 @@ export interface FilterTableLayoutProps {
   /** 툴바 우측 액션. Excel/권한은 호출 측에서 전달. */
   actions?: ReactNode
   topNav?: ReactNode
+  /**
+   * `useListFilterUrl`의 `hasActiveFilters` — 자식 `CmsDataTable` empty variant 자동 분기
+   * (false: 등록 데이터 없음 / true: 검색 결과 없음). 미전달 시 기본 `no-data`.
+   */
+  hasActiveFilters?: boolean
   children?: ReactNode
   className?: string
 }
@@ -26,6 +32,7 @@ export function FilterTableLayout({
   description,
   actions,
   topNav,
+  hasActiveFilters,
   children,
   className,
 }: FilterTableLayoutProps) {
@@ -78,7 +85,15 @@ export function FilterTableLayout({
         </div>
       ) : null}
 
-      <div className="filter-table-layout__table">{children}</div>
+      <div className="filter-table-layout__table">
+        {hasActiveFilters === undefined ? (
+          children
+        ) : (
+          <CmsTableEmptyVariantProvider hasActiveFilters={hasActiveFilters}>
+            {children}
+          </CmsTableEmptyVariantProvider>
+        )}
+      </div>
     </div>
   )
 }

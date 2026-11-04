@@ -2,7 +2,9 @@
  * 임팩트 스토리 도메인
  */
 
-export type ImpactStoryAttachmentMime = 'image/jpeg' | 'image/png'
+import type { GeneralAttachmentMime } from '@/shared/lib/attachment-policy'
+
+export type ImpactStoryAttachmentMime = GeneralAttachmentMime
 
 export type ImpactStoryAttachment = {
   id: string
@@ -42,7 +44,7 @@ export type ImpactStory = {
   createdAt: string
   updatedAt: string
   viewCount: number
-  /** 홈·목록 카드 섬네일 (첨부 파일과 별도) */
+  /** 홈·목록 카드 썸네일 (첨부 파일과 별도) */
   thumbnail: ImpactStoryAttachment | null
   attachments: ImpactStoryAttachment[]
   /** Optimistic locking — remote API */

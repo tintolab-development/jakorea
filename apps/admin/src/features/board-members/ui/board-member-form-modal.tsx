@@ -1,15 +1,13 @@
 import { useCallback, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type {
-  BoardMemberCreateInput,
-  BoardRoleGroup,
-} from '@/entities/board-members/model/types'
+import type { BoardMemberCreateInput, BoardRoleGroup } from '@/entities/board-members/model/types'
 import {
   BOARD_ROLE_GROUP_LABELS,
   BOARD_ROLE_GROUP_ORDER,
 } from '@/entities/board-members/model/types'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsRadio,
@@ -56,38 +54,23 @@ function BoardMemberFormBody({
 
   const handleSubmit = useCallback(() => {
     if (!roleGroup) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '이사회 직책을 선택해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!nameKo.trim()) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '한글 성명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!nameEn.trim()) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '영문 성명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!position.trim()) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '직위를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!affiliation.trim()) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '소속 및 직책을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     onSubmit({
@@ -111,19 +94,21 @@ function BoardMemberFormBody({
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             구성원 등록
           </CmsButton>
         </>
@@ -160,7 +145,7 @@ function BoardMemberFormBody({
               <CmsSelect
                 inputSize="large"
                 width="100%"
-                placeholder="이사회 직책을 선택하세요"
+                placeholder="이사회 직책을 선택해 주세요"
                 options={ROLE_OPTIONS}
                 value={roleGroup}
                 onChange={value => setRoleGroup(value as BoardRoleGroup)}
@@ -177,7 +162,7 @@ function BoardMemberFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="한글 성명을 입력하세요"
+                placeholder="한글 성명을 입력해 주세요"
                 value={nameKo}
                 onChange={e => setNameKo(e.target.value)}
               />
@@ -193,7 +178,7 @@ function BoardMemberFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="영문 성명을 입력하세요"
+                placeholder="영문 성명을 입력해 주세요"
                 value={nameEn}
                 onChange={e => setNameEn(e.target.value)}
               />
@@ -209,7 +194,7 @@ function BoardMemberFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="직위를 입력하세요"
+                placeholder="직위를 입력해 주세요"
                 value={position}
                 onChange={e => setPosition(e.target.value)}
               />
@@ -225,7 +210,7 @@ function BoardMemberFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="소속 및 직책을 입력하세요"
+                placeholder="소속 및 직책을 입력해 주세요"
                 value={affiliation}
                 onChange={e => setAffiliation(e.target.value)}
               />

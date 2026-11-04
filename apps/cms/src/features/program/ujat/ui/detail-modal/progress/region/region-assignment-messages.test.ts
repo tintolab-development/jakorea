@@ -29,6 +29,25 @@ describe('resolveRegionAssignmentErrorMessage', () => {
       '설정 실패'
     )
   })
+
+  it('영어·코드 메시지는 한국어로 치환한다', () => {
+    expect(
+      resolveRegionAssignmentErrorMessage(
+        apiError(409, 'UJAT_PARTNER_ASSIGNMENT_CONFLICT', 'UJAT_PARTNER_ASSIGNMENT_CONFLICT'),
+        'fallback'
+      )
+    ).toBe('다른 관리자가 같은 학급을 배정했습니다. 배정표를 새로고침해 주세요.')
+    expect(
+      resolveRegionAssignmentErrorMessage(
+        apiError(
+          409,
+          'UJAT_VOLUNTEER_ALREADY_ASSIGNED_SAME_DAY',
+          'Volunteer is already assigned on the same education day.'
+        ),
+        'fallback'
+      )
+    ).toBe('같은 날 이미 다른 학급에 배정된 봉사자입니다.')
+  })
 })
 
 describe('buildDirectAssignSuccessMessage', () => {

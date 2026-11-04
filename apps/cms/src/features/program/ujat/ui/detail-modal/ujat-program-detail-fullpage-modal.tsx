@@ -116,6 +116,7 @@ import {
 } from '@/features/program/ujat/api/region-capacities-client'
 import { ujatRegionCapacityUpsertsFromState } from '@/features/program/ujat/lib/ujat-kpi-wage-capacity-typed'
 import { ProgramDetailLnbDeleteButton } from '@/features/program/shared/ui/program-detail/lnb-delete-button'
+import { ProgramManagersTab } from '@/features/program/general/ui/detail-modal/managers/program-managers-tab'
 import { UjatProgramDetailSidebar } from './ujat-program-detail-sidebar'
 import { ProgramDetailSponsorDetailOverlay } from '@/features/program/shared/ui/program-detail/program-detail-sponsor-detail-overlay'
 import { clearSponsorDetailQueryStack } from '@/features/sponsor/lib/sponsor-detail-query-stack'
@@ -1848,6 +1849,12 @@ export function UjatProgramDetailFullPageModal({
 
           {activeLnb === 'survey' ? (
             <UjatSurveyManagementView program={displayProgram} activeTab={activeTab} />
+          ) : null}
+
+          {activeLnb === 'managers' && displayProgram.id ? (
+            <div className="program-detail-fullpage-modal__info-tab program-detail-fullpage-modal__managers-tab">
+              <ProgramManagersTab programId={displayProgram.id} />
+            </div>
           ) : null}
         </>
       ) : (

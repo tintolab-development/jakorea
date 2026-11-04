@@ -1,5 +1,6 @@
 import { AdminButton, type AdminButtonSize } from '../button/index.js'
 import { AdminContentModal } from './content-modal.js'
+import { renderContentModalDescription } from './content-modal-description.js'
 import './confirm-modal.css'
 
 const DEFAULT_WIDTH = 600
@@ -65,8 +66,10 @@ export function AdminConfirmModal({
         </>
       }
     >
-      <p className="confirm-modal__content">{content}</p>
-      {warningMessage ? <p className="confirm-modal__warning">{warningMessage}</p> : null}
+      {renderContentModalDescription(content, 'confirm-modal__content')}
+      {warningMessage
+        ? renderContentModalDescription(warningMessage, 'confirm-modal__warning')
+        : null}
     </AdminContentModal>
   )
 }
