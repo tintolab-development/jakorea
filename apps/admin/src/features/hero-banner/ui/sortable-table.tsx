@@ -44,7 +44,7 @@ export function HeroBannersSortableTable({
       dragDisabled={disabled}
     >
       <CmsDataTable<HeroBanner>
-        className="cms-data-table hero-banner-table"
+        className="cms-data-table cms-data-table--skip-auto-no-col hero-banner-table"
         rowKey="id"
         loading={loading}
         dataSource={items}

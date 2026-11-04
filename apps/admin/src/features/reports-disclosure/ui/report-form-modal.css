@@ -72,61 +72,12 @@
   margin-block: auto !important;
 }
 
-/**
- * 썸네일: 프리뷰 + FileSelectField (hero gap 16)
- */
-.rd-form-modal .detail-info-form__field-content--edit > .rd-form-modal__image-row {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 16px;
-  width: 100%;
-  min-width: 0;
-}
-
 .rd-form-modal .detail-info-form__field-content--edit > .rd-form-modal__attach-row {
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: 100%;
   min-width: 0;
-}
-
-.rd-form-modal__preview {
-  width: 86px;
-  height: 86px;
-  aspect-ratio: 1 / 1;
-  flex: 0 0 auto;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-sizing: border-box;
-  background: var(--color-bg-secondary, #f7f7f7);
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 8px;
-}
-
-.rd-form-modal__preview--empty {
-  border: none;
-  background: transparent;
-  border-radius: 0;
-  overflow: visible;
-}
-
-.rd-form-modal__preview img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.rd-form-modal__preview-empty {
-  display: block;
-  width: 86px;
-  height: 86px;
 }
 
 .rd-form-modal__file-field {

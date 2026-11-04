@@ -1,32 +1,53 @@
 import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
 import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload/attachments'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import {
-  downloadBlob,
-  generateFilename,
-  recordDownloadAccessLog,
-} from '@/shared/utils/file-download'
+import { downloadBlob, recordDownloadAccessLog } from '@/shared/utils/file-download'
 import {
   getSettlementApiErrorMessage,
+  isSettlementExportAlreadyDownloadedError,
   isSettlementExportReissueRequiredError,
 } from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  buildSettlementFormExcelFilename,
+  SETTLEMENT_FORM_DOWNLOAD_REASON,
+  type SettlementFormExportKind,
+} from '@/features/settlement-management/api/account-payments/settlement-form-download'
 
 export async function downloadIssuedSettlementExportFile(input: {
   serverExport: SettlementExportHistoryResponse
-  filenamePrefix: string
-  reason: string
+  kind: SettlementFormExportKind
 }): Promise<void> {
   const fileObjectId = input.serverExport.fileObjectId
   if (fileObjectId == null) {
     throw new Error('서버에서 정산 파일을 생성 중입니다. export 이력을 확인해 주세요.')
   }
-  const filename = generateFilename(input.filenamePrefix, 'xlsx')
+  const filename = buildSettlementFormExcelFilename(input.kind)
+  const reason = SETTLEMENT_FORM_DOWNLOAD_REASON[input.kind]
   await recordDownloadAccessLog(filename)
   const blob = await loadSensitiveAdminFileBlob({
     fileObjectId,
-    reason: input.reason,
+    reason,
   })
   await downloadBlob(blob, filename, { skipAccessLog: true })
+}
+
+/** 409 SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED면 한 번만 재발급 후 다시 받는다. */
+export async function downloadIssuedSettlementExportFileOrReissue(input: {
+  serverExport: SettlementExportHistoryResponse
+  kind: SettlementFormExportKind
+  onReissue: () => Promise<SettlementExportHistoryResponse | null>
+}): Promise<void> {
+  try {
+    await downloadIssuedSettlementExportFile(input)
+  } catch (error) {
+    if (!isSettlementExportAlreadyDownloadedError(error)) throw error
+    const next = await input.onReissue()
+    if (next?.fileObjectId == null) return
+    await downloadIssuedSettlementExportFile({
+      serverExport: next,
+      kind: input.kind,
+    })
+  }
 }
 
 export function notifySettlementExportDownloadError(input: {

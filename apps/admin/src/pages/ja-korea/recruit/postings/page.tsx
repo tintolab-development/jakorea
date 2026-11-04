@@ -482,7 +482,7 @@ export function RecruitPostingsPage() {
         render: (_, row) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="small"
             type="button"
             onClick={event => {
               event.stopPropagation()

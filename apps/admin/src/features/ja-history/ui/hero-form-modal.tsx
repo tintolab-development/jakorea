@@ -168,8 +168,8 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
             view={null}
             edit={
               <div>
-                <div className="ja-history-modal__image-row">
-                  <div className="ja-history-modal__preview">
+                <div className="file-select-image-cell">
+                  <div className="file-select-image-cell__preview">
                     {imageUrl ? (
                       <Image
                         src={imageUrl}

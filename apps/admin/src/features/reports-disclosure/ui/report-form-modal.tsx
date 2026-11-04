@@ -43,7 +43,6 @@ const KIND_META = {
       ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
       '- 권장 썸네일 사이즈는 328 × 463px입니다.',
     ],
-    previewClass: 'rd-form-modal__preview--a4',
   },
   audit: {
     label: '회계감사 보고서',
@@ -53,7 +52,6 @@ const KIND_META = {
       ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
       '- 권장 썸네일 사이즈는 461 × 256px입니다.',
     ],
-    previewClass: 'rd-form-modal__preview--wide',
   },
 } as const
 
@@ -296,15 +294,8 @@ export function ReportFormModal({
               required
               view={null}
               edit={
-                <div className="rd-form-modal__image-row">
-                  <div
-                    className={
-                      thumbnailUrl
-                        ? `rd-form-modal__preview ${meta.previewClass}`
-                        : 'rd-form-modal__preview rd-form-modal__preview--empty'
-                    }
-                    aria-hidden={!thumbnailUrl}
-                  >
+                <div className="file-select-image-cell">
+                  <div className="file-select-image-cell__preview" aria-hidden={!thumbnailUrl}>
                     {thumbnailUrl ? (
                       <img src={thumbnailUrl} alt="썸네일 미리보기" />
                     ) : (

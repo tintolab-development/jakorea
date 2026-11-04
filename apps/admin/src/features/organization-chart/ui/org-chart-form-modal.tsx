@@ -193,14 +193,8 @@ function OrgChartFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormB
             required
             view={null}
             edit={
-              <div className="org-chart-form-modal__image-row">
-                <div
-                  className={
-                    imageUrl
-                      ? 'org-chart-form-modal__preview'
-                      : 'org-chart-form-modal__preview org-chart-form-modal__preview--empty'
-                  }
-                >
+              <div className="file-select-image-cell">
+                <div className="file-select-image-cell__preview">
                   {imageUrl ? (
                     <img src={imageUrl} alt="조직도 미리보기" />
                   ) : (

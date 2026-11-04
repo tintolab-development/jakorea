@@ -178,7 +178,7 @@ export function FooterRelatedLogosSection() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="h32"
+            size="small"
             type="button"
             onClick={() => setEditing(record)}
           >

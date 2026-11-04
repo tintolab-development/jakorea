@@ -90,7 +90,11 @@ export type {
   CmsPageTabsSize,
 } from './cms-text-tabs'
 
-export { FileSelectField } from './file-select-field'
+export {
+  FileSelectField,
+  FILE_SELECT_IMAGE_CELL_CLASS,
+  FILE_SELECT_IMAGE_CELL_PREVIEW_CLASS,
+} from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
 export { ThumbnailPlaceholder } from './thumbnail-placeholder'
 export {
