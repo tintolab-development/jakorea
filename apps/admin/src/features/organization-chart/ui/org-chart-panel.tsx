@@ -13,7 +13,7 @@ import {
 } from '@/features/organization-chart/api/hooks'
 import { organizationChartQueryKeys } from '@/features/organization-chart/api/query-keys'
 import { OrgChartFormModal } from '@/features/organization-chart/ui/org-chart-form-modal'
-import { CmsButton, PageContentLoading, useCmsAlert } from '@/shared/ui'
+import { CmsButton, PageContentLoading, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './org-chart-panel.css'
 
@@ -39,6 +39,7 @@ export function OrganizationChartPanel() {
       try {
         await saveMutation.mutateAsync(values)
         setModalOpen(false)
+        showSaveCompletedAlert()
       } catch {
         showAlert({
           title: '저장 실패',

@@ -9,7 +9,7 @@ import type { UsageGuideItem, UsageGuideItemId } from '@/entities/individual-don
 import { useSaveUsageGuide } from '@/features/individual-donation/api/hooks'
 import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -84,6 +84,7 @@ export function UsageGuideSectionCard({ items }: Props) {
       }
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         individualDonationSaveFailureAlert(
@@ -157,7 +158,7 @@ export function UsageGuideSectionCard({ items }: Props) {
   )
 
   return (
-    <div className="individual-donation-section">
+    <section className="admin-list-card individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 후원금 사용안내</span>
@@ -202,6 +203,6 @@ export function UsageGuideSectionCard({ items }: Props) {
         rowKey="id"
         scroll={{ x: true }}
       />
-    </div>
+    </section>
   )
 }

@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { Spin } from 'antd'
 import './admin-infinite-table-footer.css'
 
 export function AdminInfiniteTableFooter({
@@ -12,9 +13,9 @@ export function AdminInfiniteTableFooter({
     <>
       <div ref={sentinelRef} className="admin-infinite-table-footer__sentinel" aria-hidden />
       {isFetchingNextPage ? (
-        <p className="admin-infinite-table-footer__status" role="status">
-          더 불러오는 중…
-        </p>
+        <div className="admin-infinite-table-footer__status" role="status" aria-label="로딩 중">
+          <Spin size="small" />
+        </div>
       ) : null}
     </>
   )

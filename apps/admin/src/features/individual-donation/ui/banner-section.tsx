@@ -12,7 +12,7 @@ import type {
 import { useSaveBanner } from '@/features/individual-donation/api/hooks'
 import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
 import { BannerFormModal } from '@/features/individual-donation/ui/banner-form-modal'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -78,6 +78,7 @@ export function BannerSectionCard({ banner }: Props) {
       try {
         await saveMutation.mutateAsync(values)
         setModalOpen(false)
+        showSaveCompletedAlert()
       } catch (err) {
         showAlert(
           individualDonationSaveFailureAlert(
@@ -91,7 +92,7 @@ export function BannerSectionCard({ banner }: Props) {
   )
 
   return (
-    <div className="individual-donation-section">
+    <section className="admin-list-card individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 상단 배너</span>
@@ -125,6 +126,6 @@ export function BannerSectionCard({ banner }: Props) {
           void handleSubmit(values)
         }}
       />
-    </div>
+    </section>
   )
 }

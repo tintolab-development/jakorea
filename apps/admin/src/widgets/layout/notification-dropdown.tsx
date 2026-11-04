@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Typography } from 'antd'
+import { Spin, Typography } from 'antd'
 import { CmsButton } from '@/shared/ui'
 import './notification-dropdown.css'
 
@@ -108,7 +108,9 @@ export function NotificationDropdown({
       </div>
       <div className="notification-dropdown-body">
         {status === 'loading' ? (
-          <div className="notification-dropdown-empty">알림을 불러오는 중입니다</div>
+          <div className="notification-dropdown-empty" role="status" aria-label="로딩 중">
+            <Spin />
+          </div>
         ) : status === 'forbidden' ? (
           <div className="notification-dropdown-empty">시스템 알림은 최고관리자만 확인할 수 있습니다</div>
         ) : status === 'error' ? (

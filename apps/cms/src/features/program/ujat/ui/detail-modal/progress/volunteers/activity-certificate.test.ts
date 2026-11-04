@@ -6,6 +6,7 @@ import {
   buildStudentCertificateContextFromUjatVolunteer,
   describeUjatCertificateProgressBlock,
   formatLectureAttendanceFromBundle,
+  hasUjatCertificateAssignment,
   resolveAssignedInstitutionNamesFromBundle,
   UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT,
 } from './activity-certificate'
@@ -196,6 +197,89 @@ describe('activity-certificate builders', () => {
       { roundNumber: 1, status: 'attended' },
       { roundNumber: 2, status: 'attended' },
     ])
+  })
+
+  it('ignores unassigned dash rows so other-region matrix columns do not count as sessions', () => {
+    const bundle = emptyBundle({
+      rows: [
+        {
+          id: 'r1',
+          scheduleLabel: '1회차',
+          role: 'none',
+          assignedInstitution: { kind: 'name', value: '대전초록중학교' },
+          partner: { kind: 'dash' },
+          classDisplay: { kind: 'class', label: '1-2' },
+          attendance: { kind: 'present' },
+          educationPlanSubmitted: false,
+          educationLogSubmitted: false,
+          educationProgress: 'completed',
+          isWithdrawn: false,
+          canAssignAttendanceManager: true,
+        },
+        {
+          id: 'r2',
+          scheduleLabel: '2회차',
+          role: 'none',
+          assignedInstitution: { kind: 'name', value: '푸른솔초등학교' },
+          partner: { kind: 'dash' },
+          classDisplay: { kind: 'dash' },
+          attendance: { kind: 'dash' },
+          educationPlanSubmitted: false,
+          educationLogSubmitted: false,
+          educationProgress: 'dash',
+          isWithdrawn: false,
+        },
+      ],
+    })
+
+    expect(hasUjatCertificateAssignment(bundle)).toBe(true)
+    expect(buildLectureAttendanceSessionsFromBundle(bundle)).toEqual([
+      { roundNumber: 1, status: 'attended' },
+    ])
+    expect(formatLectureAttendanceFromBundle(bundle)).toBe('1/1')
+  })
+
+  it('treats only-unassigned bundles as no assignment', () => {
+    const bundle = emptyBundle({
+      rows: [
+        {
+          id: 'r1',
+          scheduleLabel: '1회차',
+          role: 'none',
+          assignedInstitution: { kind: 'dash' },
+          partner: { kind: 'dash' },
+          classDisplay: { kind: 'dash' },
+          attendance: { kind: 'dash' },
+          educationPlanSubmitted: false,
+          educationLogSubmitted: false,
+          educationProgress: 'dash',
+          isWithdrawn: false,
+        },
+      ],
+    })
+    expect(hasUjatCertificateAssignment(bundle)).toBe(false)
+  })
+
+  it('excludes reassignment-required rows from certificate assignment', () => {
+    const bundle = emptyBundle({
+      rows: [
+        {
+          id: 'r1',
+          scheduleLabel: '1회차',
+          role: 'none',
+          assignedInstitution: { kind: 'name', value: '대전초록중학교' },
+          partner: { kind: 'dash' },
+          classDisplay: { kind: 'class', label: '1-2' },
+          attendance: { kind: 'present' },
+          educationPlanSubmitted: false,
+          educationLogSubmitted: false,
+          educationProgress: 'completed',
+          isWithdrawn: false,
+          canAssignAttendanceManager: false,
+        },
+      ],
+    })
+    expect(hasUjatCertificateAssignment(bundle)).toBe(false)
   })
 
   it('resolves completion when all sessions present or excused', () => {

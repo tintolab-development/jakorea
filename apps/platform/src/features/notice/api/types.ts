@@ -12,14 +12,19 @@ export type PublicNoticeListItem = {
   viewCount?: number
 }
 
+export type PublicNoticeAttachment = {
+  assetId?: number
+  originalName?: string
+  publicUrl?: string
+}
+
 export type PublicNoticeDetail = {
   id?: number
   pinned?: boolean
   publishAt?: string
   title?: string
   body?: string
-  attachmentFileName?: string
-  attachmentUrl?: string
+  attachments?: PublicNoticeAttachment[]
   authorName?: string
   viewCount?: number
 }

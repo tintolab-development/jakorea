@@ -2,12 +2,7 @@
  * 메뉴별 조회 통계
  */
 
-export type MenuViewTabId =
-  | 'ja-korea'
-  | 'impact'
-  | 'education'
-  | 'participate'
-  | 'sponsor'
+export type MenuViewTabId = 'ja-korea' | 'impact' | 'education' | 'participate' | 'sponsor'
 
 export type MenuViewPeriod = {
   from: string
@@ -98,11 +93,9 @@ export const MENU_VIEW_TAB_LABELS: Record<MenuViewTabId, string> = {
 
 export const DISABLED_MENU_MESSAGE = '해당 메뉴는 미사용 중입니다.'
 
-export const NTS_FOOTNOTE =
-  '* 국세청 공시는 조회수 대신 사이트 이동자 수를 카운트합니다.'
+export const NTS_FOOTNOTE = '※ 국세청 공시는 조회수 대신 사이트 이동자 수를 카운트합니다.'
 
 export const ONLINE_LEARNING_FOOTNOTE =
-  '* 온라인 학습은 조회수 대신 사이트 이동자 수를 카운트합니다.'
+  '※ 온라인 학습은 조회수 대신 사이트 이동자 수를 카운트합니다.'
 
-export const ALUMNI_FOOTNOTE =
-  '* Alumni는 조회수 대신 사이트 이동자 수를 카운트합니다.'
+export const ALUMNI_FOOTNOTE = '※ Alumni는 조회수 대신 사이트 이동자 수를 카운트합니다.'

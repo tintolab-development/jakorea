@@ -22,8 +22,9 @@
 }
 
 .recruit-guide-thumb {
-  width: 168px;
-  height: 179px;
+  width: 86px;
+  height: 86px;
+  aspect-ratio: 1 / 1;
   flex-shrink: 0;
   margin: 0 auto;
   overflow: hidden;

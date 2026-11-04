@@ -31,6 +31,8 @@ import {
   CmsButton,
   ConfirmModal,
   PageContentLoading,
+  showDeleteCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -92,6 +94,7 @@ export function RecruitPostingDetailPage() {
     try {
       await removeMutation.mutateAsync([id])
       goList(true)
+      showDeleteCompletedAlert()
     } catch {
       setDeleteOpen(false)
       showAlert({
@@ -108,6 +111,7 @@ export function RecruitPostingDetailPage() {
         await updateMutation.mutateAsync({ ...values, id })
         setEditOpen(false)
         void detailQuery.refetch()
+        showUpdateCompletedAlert()
       } catch (error) {
         const message =
           error instanceof Error && error.message
@@ -145,7 +149,7 @@ export function RecruitPostingDetailPage() {
                 ? '해당 채용공고를 조회할 권한이 없습니다.'
                 : '채용공고를 찾을 수 없습니다.'}
             </p>
-            <CmsButton variant="secondary" size="large" type="button" onClick={() => goList()}>
+            <CmsButton variant="secondary" size="medium" type="button" onClick={() => goList()}>
               목록
             </CmsButton>
           </div>
@@ -320,14 +324,14 @@ function RecruitPostingDetailView({
         </div>
 
         <div className="recruit-posting-detail-page__actions">
-          <CmsButton variant="secondary" size="large" type="button" onClick={onList}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={onList}>
             목록
           </CmsButton>
           <div className="recruit-posting-detail-page__actions-right">
-            <CmsButton variant="delete" size="large" type="button" onClick={onDelete}>
+            <CmsButton variant="delete" size="medium" type="button" onClick={onDelete}>
               삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={onEdit}>
               수정
             </CmsButton>
           </div>

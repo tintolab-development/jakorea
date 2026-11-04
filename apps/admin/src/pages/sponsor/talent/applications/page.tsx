@@ -59,6 +59,8 @@ import {
   CmsSelect,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  showChangeCompletedAlert,
+  showDeleteCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -418,6 +420,7 @@ export function TalentDonationApplicationsPage() {
       if (detailRow && selectedRowKeys.map(String).includes(detailRow.id)) {
         closeDetail()
       }
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         talentDonationApplicationMutationFailureAlert(
@@ -440,6 +443,7 @@ export function TalentDonationApplicationsPage() {
       if (detailRow && selectedRowKeys.map(String).includes(detailRow.id)) {
         await refreshDetailFromList(detailRow.id)
       }
+      showChangeCompletedAlert()
     } catch (error) {
       showAlert(
         talentDonationApplicationMutationFailureAlert(
@@ -459,6 +463,7 @@ export function TalentDonationApplicationsPage() {
         actorName: DEFAULT_CONFIRM_ACTOR,
       })
       await refreshDetailFromList(detailRow.id)
+      showChangeCompletedAlert()
     } catch (error) {
       showAlert(
         talentDonationApplicationMutationFailureAlert(
@@ -475,6 +480,7 @@ export function TalentDonationApplicationsPage() {
       await removeMutation.mutateAsync([detailRow.id])
       setSelectedRowKeys(prev => prev.filter(k => k !== detailRow.id))
       closeDetail()
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         talentDonationApplicationMutationFailureAlert(

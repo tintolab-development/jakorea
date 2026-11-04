@@ -31,6 +31,8 @@ import {
   CmsButton,
   ConfirmModal,
   PageContentLoading,
+  showDeleteCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -74,6 +76,7 @@ export function NoticeDetailPage() {
       await removeMutation.mutateAsync([id])
       // 상세 캐시 제거 직후 빈 화면이 보이지 않도록 즉시 목록으로 교체 이동
       goList(true)
+      showDeleteCompletedAlert()
     } catch {
       setDeleteOpen(false)
       showAlert({
@@ -90,6 +93,7 @@ export function NoticeDetailPage() {
         await updateMutation.mutateAsync({ ...values, id })
         setEditOpen(false)
         void detailQuery.refetch()
+        showUpdateCompletedAlert()
       } catch (error) {
         showAlert(
           noticeMutationFailureAlert(
@@ -127,7 +131,7 @@ export function NoticeDetailPage() {
             <p className="notice-detail-page__empty" role="alert">
               공지를 찾을 수 없습니다.
             </p>
-            <CmsButton variant="secondary" size="large" type="button" onClick={() => goList()}>
+            <CmsButton variant="secondary" size="medium" type="button" onClick={() => goList()}>
               목록
             </CmsButton>
           </div>
@@ -300,14 +304,14 @@ function NoticeDetailView({
         </div>
 
         <div className="notice-detail-page__actions">
-          <CmsButton variant="secondary" size="large" type="button" onClick={onList}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={onList}>
             목록
           </CmsButton>
           <div className="notice-detail-page__actions-right">
-            <CmsButton variant="delete" size="large" type="button" onClick={onDelete}>
+            <CmsButton variant="delete" size="medium" type="button" onClick={onDelete}>
               삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={onEdit}>
               수정
             </CmsButton>
           </div>

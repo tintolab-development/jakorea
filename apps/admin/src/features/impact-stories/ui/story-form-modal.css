@@ -10,7 +10,7 @@
   align-items: center !important;
   justify-content: center !important;
   overflow-x: hidden !important;
-  overflow-y: hidden !important;
+  overflow-y: auto !important;
   padding: 16px !important;
   box-sizing: border-box !important;
   position: fixed !important;
@@ -67,25 +67,18 @@
   overflow: hidden;
 }
 
-/* 타이틀 ↔ 본문 24px — 에디터가 커지면 모달이 함께 커지고, 상한에서는 본문 스크롤 */
+/* 타이틀 ↔ 본문 24px. 본문만 스크롤해 헤더·푸터를 고정한다. */
 .story-form-modal.content-modal.content-modal--title-body-gap-always .teal-header-modal__body,
 .story-form-modal.content-modal .teal-header-modal__body {
   padding-top: 24px !important;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   width: 100%;
   align-items: stretch;
   display: flex;
   flex-direction: column;
-}
-
-/* 공통 에디터 CSS가 resized 시 overflow-y:auto 를 켜 1px 스크롤이 깜빡인다 */
-.story-form-modal.content-modal.teal-header-modal.ant-modal:has(
-    .rich-text-editor[data-resized='true']
-  )
-  .teal-header-modal__body {
-  overflow: hidden !important;
 }
 
 /* 본문(첨부) ↔ 푸터 30px */
@@ -186,6 +179,45 @@
 
 .story-form-modal__editor-host {
   width: 100%;
+  min-width: 0;
+}
+
+/*
+ * 기본 높이 284px 유지. 긴 붙여넣기로 셸이 콘텐츠 높이만큼 늘어나지 않게 하고
+ * 본문(__body) 내부 스크롤로 커서를 따라간다. 사용자 리사이즈(data-resized)는 기존 규칙.
+ */
+.story-form-modal__editor-host .rich-text-editor:not([data-resized='true']) {
+  height: var(--rt-min-height, 284px);
+  max-height: var(--rt-min-height, 284px);
+  min-height: var(--rt-min-height, 284px);
+}
+
+.story-form-modal__editor-host .rich-text-editor:not([data-resized='true']) .rich-text-editor__body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.story-form-modal__editor-host
+  .rich-text-editor--html-mode:not([data-resized='true'])
+  .rich-text-toolbar-shell {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.story-form-modal__editor-host
+  .rich-text-editor--html-mode:not([data-resized='true'])
+  .rich-text-toolbar__html-source {
+  min-height: 0;
+  overflow: auto;
+}
+
+.story-form-modal__editor-host .ProseMirror,
+.story-form-modal__editor-host .rich-text-content {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /*

@@ -1,5 +1,5 @@
 /**
- * 개인후원 관리 — 단일 흰 카드 안에 3개 항목 테이블
+ * 개인후원 관리 — 상단 배너 / 후원금 사용안내 / 성장 후원하기 카드 3개
  */
 
 import { useIndividualDonation } from '@/features/individual-donation/api/hooks'
@@ -43,11 +43,9 @@ export function IndividualDonationPage() {
 
   return (
     <div className="individual-donation-page">
-      <div className="admin-list-card individual-donation-card">
-        <BannerSectionCard banner={data.banner} />
-        <UsageGuideSectionCard items={data.usageGuideItems} />
-        <DonateCtaSectionCard donateCta={data.donateCta} />
-      </div>
+      <BannerSectionCard banner={data.banner} />
+      <UsageGuideSectionCard items={data.usageGuideItems} />
+      <DonateCtaSectionCard donateCta={data.donateCta} />
     </div>
   )
 }

@@ -381,7 +381,7 @@ export function AwardPanel() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="h32"
+            size="medium"
             type="button"
             onClick={e => {
               e.stopPropagation()

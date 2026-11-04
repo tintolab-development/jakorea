@@ -149,6 +149,10 @@
   line-height: 150%;
 }
 
+.ujat-region-assignment-table__class-label--solo {
+  color: var(--color-mint-01, #01a1af);
+}
+
 .ujat-region-assignment-table__class-label--invalid {
   color: var(--Status-red-main, #c32f4a);
   font-weight: 700;

@@ -42,6 +42,9 @@ import {
   ConfirmModal,
   NO_SELECTION_ALERT,
   PageContentLoading,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showSaveCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -238,6 +241,7 @@ export function BoardPanel() {
       await bulkUpdateMutation.mutateAsync(patches)
       draftMapRef.current = {}
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -260,6 +264,7 @@ export function BoardPanel() {
       await removeMutation.mutateAsync(selectedKeys.map(String))
       setSelectedKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -274,6 +279,7 @@ export function BoardPanel() {
       try {
         await createMutation.mutateAsync(values)
         setRegisterOpen(false)
+        showRegisterCompletedAlert()
       } catch {
         showAlert({
           title: '등록 실패',

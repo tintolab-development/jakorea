@@ -60,17 +60,17 @@ const METRIC_DEFS: readonly {
 ]
 
 function formatCount(value: number | undefined): string {
-  const n = typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0
-  return new Intl.NumberFormat('ko-KR').format(n)
+  if (typeof value !== 'number' || !Number.isFinite(value)) return ''
+  return new Intl.NumberFormat('ko-KR').format(Math.max(0, Math.trunc(value)))
 }
 
-/** FE 표시 문자열("1,000") → API Long */
+/** FE 표시 문자열("1,000") → API Long. 빈 값은 fallback 하지 않는다. */
 export function parseMetricCount(value: string): number {
-  const digits = value.replace(/[^\d]/g, '')
-  if (!digits) return 0
-  const n = Number(digits)
-  if (!Number.isFinite(n) || n < 0) return 0
-  return Math.trunc(n)
+  const digits = value.trim().replace(/,/g, '')
+  if (!/^\d+$/.test(digits)) {
+    throw new Error('metric count is required')
+  }
+  return Number(digits)
 }
 
 export function mapStoryOptionToDomain(row: MainStoryOption): ImpactStoryOption {
@@ -149,15 +149,10 @@ export function toEducationUpdateRequest(section: EducationSection): EducationUp
 }
 
 export function toImpactUpdateRequest(section: ImpactStorySection): ImpactUpdateRequest {
-  const featuredRaw = section.featuredContentId.trim()
-  const featuredStoryId = featuredRaw ? Number(featuredRaw) : undefined
   return {
-    title: section.title.trimEnd(),
-    youtubeUrl: section.youtubeUrl.trim() || undefined,
-    featuredStoryId:
-      featuredStoryId != null && Number.isFinite(featuredStoryId) && featuredStoryId > 0
-        ? featuredStoryId
-        : undefined,
+    title: section.title.trim(),
+    youtubeUrl: section.youtubeUrl.trim(),
+    featuredStoryId: Number(section.featuredContentId.trim()),
     version: section.version,
   }
 }
@@ -168,26 +163,22 @@ export function toPerformanceUpdateRequest(
   const byId = new Map(section.metrics.map(m => [m.id, m]))
   return {
     title: section.title.trim(),
-    networkDistributionCount: parseMetricCount(byId.get('network')?.value ?? '0'),
-    partnerOrganizationCount: parseMetricCount(byId.get('partners')?.value ?? '0'),
-    educatorCount: parseMetricCount(byId.get('volunteers')?.value ?? '0'),
-    youthBeneficiaryCount: parseMetricCount(byId.get('beneficiaries')?.value ?? '0'),
-    bottomText: section.bottomText.trimEnd() || undefined,
+    networkDistributionCount: parseMetricCount(byId.get('network')?.value ?? ''),
+    partnerOrganizationCount: parseMetricCount(byId.get('partners')?.value ?? ''),
+    educatorCount: parseMetricCount(byId.get('volunteers')?.value ?? ''),
+    youthBeneficiaryCount: parseMetricCount(byId.get('beneficiaries')?.value ?? ''),
+    bottomText: section.bottomText.trim(),
     version: section.version,
   }
 }
 
 export function toDonationUpdateRequest(section: DonationSection): DonationUpdateRequest {
-  const cta1Label = section.cta1.label.trim()
-  const cta1Url = section.cta1.linkUrl.trim()
-  const cta2Label = section.cta2.label.trim()
-  const cta2Url = section.cta2.linkUrl.trim()
   return {
-    title: section.title.trimEnd(),
-    cta1Label: cta1Label || undefined,
-    cta1Url: cta1Url || undefined,
-    cta2Label: cta2Label || undefined,
-    cta2Url: cta2Url || undefined,
+    title: section.title.trim(),
+    cta1Label: section.cta1.label.trim(),
+    cta1Url: section.cta1.linkUrl.trim(),
+    cta2Label: section.cta2.label.trim(),
+    cta2Url: section.cta2.linkUrl.trim(),
     version: section.version,
   }
 }

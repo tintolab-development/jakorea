@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { JaHistoryHero } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryHero } from '@/features/ja-history/api/hooks'
-import { useCmsAlert } from '@/shared/ui'
+import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { HeroFormModal } from './hero-form-modal'
 
@@ -35,7 +35,10 @@ export function HeroSection({ hero }: { hero: JaHistoryHero }) {
         onCancel={() => setOpen(false)}
         onSubmit={values => {
           void saveMutation.mutateAsync(values).then(
-            () => setOpen(false),
+            () => {
+              setOpen(false)
+              showSaveCompletedAlert()
+            },
             error => {
               showAlert(jaHistorySaveAlert(error, '히어로 배너 저장에 실패했습니다. 다시 시도해 주세요.'))
             },

@@ -3,7 +3,7 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { JaHistoryEra } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryEras } from '@/features/ja-history/api/hooks'
-import { useCmsAlert } from '@/shared/ui'
+import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 
 export function EraSection({ eras }: { eras: JaHistoryEra[] }) {
@@ -70,7 +70,10 @@ export function EraSection({ eras }: { eras: JaHistoryEra[] }) {
         void saveMutation
           .mutateAsync(drafts.map(item => ({ year: item.year, caption: item.caption })))
           .then(
-            () => setEditing(false),
+            () => {
+              setEditing(false)
+              showSaveCompletedAlert()
+            },
             error => {
               showAlert(
                 jaHistorySaveAlert(

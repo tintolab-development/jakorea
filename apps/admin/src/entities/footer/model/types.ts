@@ -71,6 +71,7 @@ export type FooterRelatedLogo = {
   /** false면 목록 empty 문구 */
   hasContent: boolean
   name: string
+  linkUrl: string
   logoUrl: string
   logoFileName?: string
   logoAssetId?: number
@@ -81,6 +82,7 @@ export type FooterRelatedLogoSaveInput = {
   id: string
   isActive: boolean
   name: string
+  linkUrl: string
   logoUrl: string
   logoFileName?: string
   logoAssetId?: number

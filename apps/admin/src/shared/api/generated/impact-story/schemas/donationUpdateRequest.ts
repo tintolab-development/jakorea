@@ -8,29 +8,31 @@
 
 export interface DonationUpdateRequest {
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 1000
      */
   title: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 100
      */
-  cta1Label?: string;
+  cta1Label: string;
   /**
      * @minLength 0
      * @maxLength 2048
+     * @pattern ^https?://.+
      */
-  cta1Url?: string;
+  cta1Url: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 100
      */
-  cta2Label?: string;
+  cta2Label: string;
   /**
      * @minLength 0
      * @maxLength 2048
+     * @pattern ^https?://.+
      */
-  cta2Url?: string;
+  cta2Url: string;
   version: number;
 }

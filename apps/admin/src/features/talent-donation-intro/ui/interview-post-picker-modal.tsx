@@ -124,7 +124,7 @@ function PickerBody({ onCancel, onSelect }: Pick<Props, 'onCancel' | 'onSelect'>
           <CmsButton
             className="admin-filter-area__search-button"
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             onClick={handleSearch}
           >

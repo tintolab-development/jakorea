@@ -9,11 +9,14 @@ import { formatCount } from '@/features/menu-view-stats/lib/format-count'
 
 type SummaryRow = MenuViewSummary & { key: string }
 
+const COL_WIDTH = '16.6667%'
+
 const columns: ColumnsType<SummaryRow> = [
   {
     title: 'JA Korea',
     dataIndex: 'jaKorea',
     key: 'jaKorea',
+    width: COL_WIDTH,
     align: 'center',
     render: (v: number) => formatCount(v),
   },
@@ -21,6 +24,7 @@ const columns: ColumnsType<SummaryRow> = [
     title: '임팩트 스토리',
     dataIndex: 'impact',
     key: 'impact',
+    width: COL_WIDTH,
     align: 'center',
     render: (v: number) => formatCount(v),
   },
@@ -28,6 +32,7 @@ const columns: ColumnsType<SummaryRow> = [
     title: '교육 소개',
     dataIndex: 'education',
     key: 'education',
+    width: COL_WIDTH,
     align: 'center',
     render: (v: number) => formatCount(v),
   },
@@ -35,6 +40,7 @@ const columns: ColumnsType<SummaryRow> = [
     title: '참여하기',
     dataIndex: 'participate',
     key: 'participate',
+    width: COL_WIDTH,
     align: 'center',
     render: (v: number) => formatCount(v),
   },
@@ -42,6 +48,7 @@ const columns: ColumnsType<SummaryRow> = [
     title: '후원하기',
     dataIndex: 'sponsor',
     key: 'sponsor',
+    width: COL_WIDTH,
     align: 'center',
     render: (v: number) => formatCount(v),
   },
@@ -49,6 +56,7 @@ const columns: ColumnsType<SummaryRow> = [
     title: '총 조회수 합계',
     dataIndex: 'total',
     key: 'total',
+    width: COL_WIDTH,
     align: 'center',
     render: (v: number) => formatCount(v),
   },
@@ -65,13 +73,14 @@ export function MenuViewSummaryTable({ summary, loading }: Props) {
   return (
     <div className="cms-data-table menu-view-stats-summary">
       <CmsDataTable<SummaryRow>
-        className="menu-view-stats-summary__table"
+        className="cms-data-table cms-data-table--skip-auto-no-col menu-view-stats-summary__table"
         columns={columns}
         dataSource={dataSource}
         pagination={false}
         loading={loading}
         rowKey="key"
         size="middle"
+        tableLayout="fixed"
       />
     </div>
   )

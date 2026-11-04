@@ -1,0 +1,358 @@
+/**
+ * 내 정보 확인 모달 스타일
+ */
+
+.content-modal.profile-edit-modal.ant-modal .ant-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  width: 100%;
+  padding: 0;
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__body {
+  width: 100%;
+  margin-top: 0;
+  padding-top: 0;
+  align-self: stretch;
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__footer {
+  margin-top: 0;
+}
+
+.profile-edit-modal__body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 30px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.profile-edit-modal__section.detail-info-form {
+  --detail-info-label-w: 220px;
+  margin-top: 0;
+  width: 100%;
+}
+
+.profile-edit-modal__section .detail-info-form__header {
+  margin-bottom: 10px;
+}
+
+.profile-edit-modal__field-action-btn {
+  margin-left: 16px !important;
+}
+
+/* 소셜 3개(카카오·구글·네이버) + 액션 버튼이 한 줄에 들어가도록 디바이더 갭 축소 */
+.profile-edit-modal__value-with-action-text .user-basic-info-section__inline-segments {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.profile-edit-modal__section .user-consent-agreement-section__value-status {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+}
+
+.profile-edit-modal__managed-programs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+/* 기본 정보 — 가입일·소셜 분리 테이블 + 나머지 단일 테이블 */
+.profile-edit-modal__section--basic-info .detail-info-form__body {
+  border: none;
+  background: transparent;
+  overflow: visible;
+  padding: 0;
+}
+
+.profile-edit-modal__basic-info-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.profile-edit-modal__basic-info-table {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.profile-edit-modal__basic-info-table--main .detail-info-form__row {
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.profile-edit-modal__basic-info-table--main .detail-info-form__row:last-child {
+  border-bottom: none;
+}
+
+.profile-edit-modal__section--basic-info .detail-info-form__field {
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 50px;
+}
+
+.profile-edit-modal__section--basic-info .detail-info-form__field-label {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+}
+
+.profile-edit-modal__section--basic-info .profile-edit-modal__row--tall .detail-info-form__field {
+  min-height: 56px;
+}
+
+.profile-edit-modal__section--basic-info
+  .profile-edit-modal__row--tall
+  .detail-info-form__field-label,
+.profile-edit-modal__section--basic-info
+  .profile-edit-modal__row--tall
+  .detail-info-form__field-content {
+  min-height: 56px;
+}
+
+.profile-edit-modal__section--basic-info
+  .profile-edit-modal__row:not(.profile-edit-modal__row--tall)
+  .detail-info-form__field-label,
+.profile-edit-modal__section--basic-info
+  .profile-edit-modal__row:not(.profile-edit-modal__row--tall)
+  .detail-info-form__field-content {
+  min-height: 50px;
+}
+
+/* 약관 및 동의 — 단일 테이블, 라벨(th) 220px */
+.profile-edit-modal__section--terms {
+  --detail-info-label-w: 220px;
+}
+
+.profile-edit-modal__section--terms .detail-info-form__body {
+  border: none;
+  background: transparent;
+  overflow: visible;
+  padding: 0;
+}
+
+.profile-edit-modal__terms-table {
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  width: 100%;
+}
+
+.profile-edit-modal__terms-table .detail-info-form__row {
+  border-bottom: 1px solid var(--table-line, #e0e0e0);
+}
+
+.profile-edit-modal__terms-table .detail-info-form__row:last-child {
+  border-bottom: none;
+}
+
+.profile-edit-modal__section--terms .detail-info-form__field {
+  grid-template-columns: 220px minmax(0, 1fr);
+}
+
+.profile-edit-modal__section--terms .detail-info-form__field-label {
+  width: 220px;
+  min-width: 220px;
+  max-width: 220px;
+}
+
+/* 서비스 이용약관 · 개인정보 수집·이용 — 50px */
+.profile-edit-modal__section--terms
+  .profile-edit-modal__terms-row--standard
+  .detail-info-form__field {
+  min-height: 50px;
+}
+
+.profile-edit-modal__section--terms
+  .profile-edit-modal__terms-row--standard
+  .detail-info-form__field-label,
+.profile-edit-modal__section--terms
+  .profile-edit-modal__terms-row--standard
+  .detail-info-form__field-content {
+  min-height: 50px;
+}
+
+/* 마케팅 · MFA — 64px, 라디오·일시 한 줄 */
+.profile-edit-modal__section--terms .profile-edit-modal__terms-row--bottom {
+  min-height: 64px;
+}
+
+.profile-edit-modal__section--terms
+  .profile-edit-modal__terms-row--bottom
+  .detail-info-form__field {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  width: 100%;
+}
+
+.profile-edit-modal__section--terms
+  .profile-edit-modal__terms-row--bottom
+  .detail-info-form__field-label,
+.profile-edit-modal__section--terms
+  .profile-edit-modal__terms-row--bottom
+  .detail-info-form__field-content {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.profile-edit-modal__section--terms
+  .profile-edit-modal__terms-row--bottom
+  .detail-info-form__field-content--edit {
+  overflow: hidden;
+}
+
+.profile-edit-modal__value-with-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.profile-edit-modal__section--terms
+  .profile-edit-modal__terms-row--bottom
+  .detail-info-form__field-content--edit
+  > .profile-edit-modal__marketing-consent {
+  display: inline-flex;
+  margin-block: 0;
+}
+
+.profile-edit-modal__marketing-consent {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.profile-edit-modal__marketing-consent .app-radio-group.ant-radio-group {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.profile-edit-modal__marketing-consent .detail-info-form-inputs-separator {
+  margin: 0 0 0 16px;
+}
+
+.profile-edit-modal__marketing-consent .user-consent-agreement-section__value-datetime {
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: 12px;
+}
+
+.profile-edit-modal .content-modal__footer-actions {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.profile-edit-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.profile-edit-modal__footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.content-modal.profile-edit-modal .teal-header-modal__footer .profile-edit-modal__withdraw-button {
+  display: inline;
+  flex-direction: unset;
+  justify-content: unset;
+  align-items: unset;
+  gap: 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none !important;
+  appearance: none;
+  box-shadow: none;
+  color: var(--color-red, #c32f4a);
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: auto;
+  text-underline-offset: auto;
+  text-underline-position: from-font;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.user-consent-agreement-section__value-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 8px;
+}
+
+.user-consent-agreement-section__value-status {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+}
+
+.user-consent-agreement-section__value-sep {
+  flex-shrink: 0;
+  color: #d0d0d0;
+  font-weight: 400;
+  padding: 0 2px;
+  user-select: none;
+}
+
+.user-consent-agreement-section__value-datetime {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, var(--font-sans, system-ui), sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 150%;
+  opacity: 0.6;
+}

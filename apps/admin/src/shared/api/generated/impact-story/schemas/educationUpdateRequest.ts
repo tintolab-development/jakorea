@@ -8,7 +8,7 @@
 
 export interface EducationUpdateRequest {
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 300
      */
   title: string;

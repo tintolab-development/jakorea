@@ -17,10 +17,10 @@
 }
 
 .individual-donation-thumb {
-  width: 160px;
-  height: 155.256px;
+  width: 86px;
+  height: 86px;
   flex-shrink: 0;
-  aspect-ratio: 101 / 98;
+  aspect-ratio: 1 / 1;
   margin: 0 auto;
   border-radius: 4px;
   overflow: hidden;
@@ -63,10 +63,6 @@
   flex-shrink: 0;
   min-width: 0;
   width: 100%;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
 }
 
 .individual-donation-section .admin-list-toolbar {

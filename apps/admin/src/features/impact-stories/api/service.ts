@@ -2,7 +2,8 @@ import type { ImpactStory, ImpactStoryAttachment, ImpactStoryCategory, ImpactSto
 import { getJAKoreaHomepageAdminAPIImpactStorySubset } from '@/shared/api/generated/impact-story/impact-story-api';
 import { PinLimitError } from '@/features/impact-stories/lib/pin-limits';
 import { normalizeCategoryListPayload, normalizeCategoryPayload, } from './category-payload';
-import { isPersistedCategoryId, mapCategoryResponseToDomain, mapStoryListItemToDomain, mapStoryResponseToDomain, requireThumbnailAssetId, resolvePrimaryAttachmentAssetId, toBulkDeleteRequest, toCategoryCreateRequest, toCategoryUpdateRequest, toPublishedToggleRequest, LIST_PAGE_SIZE, toStoryCreateRequest, toStoryListParams, toStoryUpdateRequest, } from './mappers';
+import { isPersistedCategoryId, mapCategoryResponseToDomain, mapStoryListItemToDomain, mapStoryResponseToDomain, requireThumbnailAssetId, toBulkDeleteRequest, toCategoryCreateRequest, toCategoryUpdateRequest, toPublishedToggleRequest, LIST_PAGE_SIZE, toStoryCreateRequest, toStoryListParams, toStoryUpdateRequest, } from './mappers';
+import { resolveOrderedAttachmentAssetIds } from '@/shared/lib/resolve-attachment-asset-ids';
 import { uploadImpactStoryAttachmentAsset, uploadImpactStoryThumbnailAsset, } from './upload-story-attachment';
 function impactStoryApi() {
     return getJAKoreaHomepageAdminAPIImpactStorySubset();
@@ -44,15 +45,8 @@ async function listRemoteStories(filter?: ImpactStoryListFilter): Promise<Impact
     const response = await impactStoryApi().list6(toStoryListParams(filter));
     return (response.items ?? []).map(mapStoryListItemToDomain);
 }
-async function resolveAttachmentAssetId(attachments: ImpactStoryAttachment[], fallbackAssetId?: number): Promise<number | undefined> {
-    const withFile = attachments.find(att => att.file instanceof File);
-    if (withFile?.file) {
-        return uploadImpactStoryAttachmentAsset(withFile.file);
-    }
-    const fromExisting = resolvePrimaryAttachmentAssetId(attachments);
-    if (fromExisting != null)
-        return fromExisting;
-    return fallbackAssetId;
+async function resolveAttachmentAssetIds(attachments: ImpactStoryAttachment[]): Promise<number[]> {
+    return resolveOrderedAttachmentAssetIds(attachments, uploadImpactStoryAttachmentAsset);
 }
 async function resolveThumbnailAssetId(thumbnail: ImpactStoryAttachment | null | undefined, fallbackAssetId?: number): Promise<number | undefined> {
     if (thumbnail?.file instanceof File) {
@@ -122,11 +116,11 @@ export async function getStoryService(id: string): Promise<ImpactStory | null> {
 }
 export async function createStoryService(input: ImpactStoryCreateInput): Promise<ImpactStory> {
     try {
-        const [attachmentAssetId, thumbnailAssetId] = await Promise.all([
-            resolveAttachmentAssetId(input.attachments),
+        const [attachmentAssetIds, thumbnailAssetId] = await Promise.all([
+            resolveAttachmentAssetIds(input.attachments),
             resolveThumbnailAssetId(input.thumbnail),
         ]);
-        const created = await impactStoryApi().create8(toStoryCreateRequest(input, attachmentAssetId, requireThumbnailAssetId(thumbnailAssetId)));
+        const created = await impactStoryApi().create8(toStoryCreateRequest(input, attachmentAssetIds, requireThumbnailAssetId(thumbnailAssetId)));
         return mapStoryResponseToDomain(created);
     }
     catch (error) {
@@ -141,11 +135,11 @@ export async function updateStoryService(input: ImpactStoryUpdateInput, cached?:
         throw new Error(`Impact story not found: ${input.id}`);
     }
     try {
-        const [attachmentAssetId, thumbnailAssetId] = await Promise.all([
-            resolveAttachmentAssetId(input.attachments, current.attachments[0]?.assetId),
+        const [attachmentAssetIds, thumbnailAssetId] = await Promise.all([
+            resolveAttachmentAssetIds(input.attachments),
             resolveThumbnailAssetId(input.thumbnail, current.thumbnail?.assetId),
         ]);
-        const updated = await impactStoryApi().update10(Number(input.id), toStoryUpdateRequest(input, current.version ?? 0, attachmentAssetId, requireThumbnailAssetId(thumbnailAssetId)));
+        const updated = await impactStoryApi().update10(Number(input.id), toStoryUpdateRequest(input, current.version ?? 0, attachmentAssetIds, requireThumbnailAssetId(thumbnailAssetId)));
         return mapStoryResponseToDomain(updated);
     }
     catch (error) {

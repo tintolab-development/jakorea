@@ -151,6 +151,15 @@ export type DetailInfoFormFieldProps = {
   validationKey?: string | readonly string[]
 }
 
+function RequiredMark({ show }: { show: boolean }) {
+  if (!show) return null
+  return (
+    <span className="detail-info-form__field-required" aria-hidden>
+      *
+    </span>
+  )
+}
+
 function DetailInfoFormField({
   label,
   required,
@@ -223,12 +232,10 @@ function DetailInfoFormField({
   return (
     <div className={fieldClass} style={style} data-wizard-field-key={wizardFieldKeyAttr}>
       <div className={labelClass}>
-        <span className="detail-info-form__field-label-text">{label}</span>
-        {showRequired ? (
-          <span className="detail-info-form__field-required" aria-hidden>
-            *
-          </span>
-        ) : null}
+        <span className="detail-info-form__field-label-text">
+          {label}
+          <RequiredMark show={showRequired} />
+        </span>
       </div>
       <div className={contentClass}>{content}</div>
     </div>
@@ -278,12 +285,10 @@ function DetailInfoFormNameBlock({
     <div className={rootClass} role="group" aria-label={ariaLabel}>
       {showGroupTitle ? (
         <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--t detail-info-form__name-block-cell--label">
-          <span className="detail-info-form__field-label-text">{title}</span>
-          {showRequired ? (
-            <span className="detail-info-form__field-required" aria-hidden>
-              *
-            </span>
-          ) : null}
+          <span className="detail-info-form__field-label-text">
+            {title}
+            <RequiredMark show={showRequired} />
+          </span>
         </div>
       ) : null}
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--s1 detail-info-form__name-block-cell--label">
@@ -293,12 +298,10 @@ function DetailInfoFormNameBlock({
         {r0.main}
       </div>
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--l1 detail-info-form__name-block-cell--label">
-        <span className="detail-info-form__field-label-text">{r0.sideLabel}</span>
-        {r0.sideRequired && contextMode === 'edit' ? (
-          <span className="detail-info-form__field-required" aria-hidden>
-            *
-          </span>
-        ) : null}
+        <span className="detail-info-form__field-label-text">
+          {r0.sideLabel}
+          <RequiredMark show={Boolean(r0.sideRequired && contextMode === 'edit')} />
+        </span>
       </div>
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--r1 detail-info-form__name-block-cell--value">
         {r0.side}
@@ -310,12 +313,10 @@ function DetailInfoFormNameBlock({
         {r1.main}
       </div>
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--l2 detail-info-form__name-block-cell--label">
-        <span className="detail-info-form__field-label-text">{r1.sideLabel}</span>
-        {r1.sideRequired && contextMode === 'edit' ? (
-          <span className="detail-info-form__field-required" aria-hidden>
-            *
-          </span>
-        ) : null}
+        <span className="detail-info-form__field-label-text">
+          {r1.sideLabel}
+          <RequiredMark show={Boolean(r1.sideRequired && contextMode === 'edit')} />
+        </span>
       </div>
       <div className="detail-info-form__name-block-cell detail-info-form__name-block-cell--r2 detail-info-form__name-block-cell--value">
         {r1.side}

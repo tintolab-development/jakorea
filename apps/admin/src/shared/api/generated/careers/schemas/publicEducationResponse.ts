@@ -8,6 +8,6 @@
 import type { ProgramSummary } from './programSummary';
 
 export interface PublicEducationResponse {
-  title?: string;
+  title: string;
   programs?: ProgramSummary[];
 }

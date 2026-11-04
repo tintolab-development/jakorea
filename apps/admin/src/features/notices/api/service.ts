@@ -1,8 +1,9 @@
 import type { Notice, NoticeAttachment, NoticeCreateInput, NoticeListFilter, NoticeUpdateInput, } from '@/entities/notices/model/types';
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api';
 import type { ToggleRequest } from '@/shared/api/generated/ja-korea/schemas/toggleRequest';
-import { mapNoticeResponseToDomain, resolvePrimaryAttachmentAssetId, toBulkDeleteRequest, toNoticeCreateRequest, toNoticeListParams, toNoticeUpdateRequest, toPublishedToggleRequest, } from './mappers';
+import { mapNoticeResponseToDomain, toBulkDeleteRequest, toNoticeCreateRequest, toNoticeListParams, toNoticeUpdateRequest, toPublishedToggleRequest, } from './mappers';
 import { fetchAllAdminListPages, toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite-list';
+import { resolveOrderedAttachmentAssetIds } from '@/shared/lib/resolve-attachment-asset-ids';
 import { uploadNoticeAttachmentAsset } from './upload-notice-attachment';
 function jaKoreaApi() {
     return getJAKoreaHomepageAdminAPIJAKoreaSubset();
@@ -11,15 +12,8 @@ async function listRemoteNoticesPage(filter: NoticeListFilter | undefined, page:
     const response = await jaKoreaApi().list5(toNoticeListParams(filter, page));
     return toAdminListPage((response.items ?? []).map(mapNoticeResponseToDomain), page, response);
 }
-async function resolveAttachmentAssetId(attachments: NoticeAttachment[], fallbackAssetId?: number): Promise<number | undefined> {
-    const withFile = attachments.find(att => att.file instanceof File);
-    if (withFile?.file) {
-        return uploadNoticeAttachmentAsset(withFile.file);
-    }
-    const fromExisting = resolvePrimaryAttachmentAssetId(attachments);
-    if (fromExisting != null)
-        return fromExisting;
-    return fallbackAssetId;
+async function resolveAttachmentAssetIds(attachments: NoticeAttachment[]): Promise<number[]> {
+    return resolveOrderedAttachmentAssetIds(attachments, uploadNoticeAttachmentAsset);
 }
 export async function listNoticesPageService(filter: NoticeListFilter | undefined, page: number): Promise<AdminListPage<Notice>> {
     return listRemoteNoticesPage(filter, page);
@@ -37,8 +31,8 @@ export async function getNoticeService(id: string): Promise<Notice | null> {
     }
 }
 export async function createNoticeService(input: NoticeCreateInput): Promise<Notice> {
-    const attachmentAssetId = await resolveAttachmentAssetId(input.attachments);
-    const created = await jaKoreaApi().create7(toNoticeCreateRequest(input, attachmentAssetId));
+    const attachmentAssetIds = await resolveAttachmentAssetIds(input.attachments);
+    const created = await jaKoreaApi().create7(toNoticeCreateRequest(input, attachmentAssetIds));
     return mapNoticeResponseToDomain(created);
 }
 export async function updateNoticeService(input: NoticeUpdateInput, cached?: Notice | null): Promise<Notice> {
@@ -46,8 +40,8 @@ export async function updateNoticeService(input: NoticeUpdateInput, cached?: Not
     if (!current) {
         throw new Error(`Notice not found: ${input.id}`);
     }
-    const attachmentAssetId = await resolveAttachmentAssetId(input.attachments, current.attachments[0]?.assetId);
-    const updated = await jaKoreaApi().update8(Number(input.id), toNoticeUpdateRequest(input, current.version, attachmentAssetId));
+    const attachmentAssetIds = await resolveAttachmentAssetIds(input.attachments);
+    const updated = await jaKoreaApi().update8(Number(input.id), toNoticeUpdateRequest(input, current.version, attachmentAssetIds));
     return mapNoticeResponseToDomain(updated);
 }
 export async function removeNoticesService(ids: string[], cachedList?: Notice[]): Promise<void> {

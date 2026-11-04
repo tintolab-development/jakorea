@@ -19,7 +19,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -46,7 +46,7 @@ const FooterLinkField = memo(function FooterLinkField({
 
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={localValue}
       onChange={e => {
@@ -122,6 +122,7 @@ export function FooterTopMenuSection() {
       )
       linkDraftRef.current = {}
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -198,12 +199,12 @@ export function FooterTopMenuSection() {
   )
 
   return (
-    <section className="footer-section footer-top-menu-section">
+    <section className="admin-list-card footer-section footer-top-menu-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
-          <span className="table-title">상단 노출 메뉴</span>
+          <span className="table-title">■ 상단 노출 메뉴</span>
           <span className="table-description">
-            JA Worldwide 관리 내 글로벌 네트워크 테이블과 연동됩니다.
+            {'관련 사이트 목록은 [JA Korea] > [기관 소개] > [JA Worldwide 관리]에서 등록 및 관리된 항목이 동일하게 노출됩니다.'}
           </span>
         </div>
         <div className="table-header-actions--wrapper">

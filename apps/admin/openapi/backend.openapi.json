@@ -10835,7 +10835,7 @@
           "title": {
             "type": "string",
             "maxLength": 300,
-            "minLength": 0
+            "minLength": 1
           },
           "networkDistributionCount": {
             "type": "integer",
@@ -10856,7 +10856,7 @@
           "bottomText": {
             "type": "string",
             "maxLength": 2000,
-            "minLength": 0
+            "minLength": 1
           },
           "version": {
             "type": "integer",
@@ -10864,6 +10864,7 @@
           }
         },
         "required": [
+          "bottomText",
           "educatorCount",
           "networkDistributionCount",
           "partnerOrganizationCount",
@@ -10878,12 +10879,14 @@
           "title": {
             "type": "string",
             "maxLength": 1000,
-            "minLength": 0
+            "minLength": 1
           },
           "youtubeUrl": {
             "type": "string",
+            "description": "http(s) YouTube URL",
             "maxLength": 2048,
-            "minLength": 0
+            "minLength": 1,
+            "pattern": "(?i)^https?://(www\\.|m\\.)?(youtube\\.com|youtu\\.be|youtube-nocookie\\.com)(/.*)?$"
           },
           "featuredStoryId": {
             "type": "integer",
@@ -10895,8 +10898,10 @@
           }
         },
         "required": [
+          "featuredStoryId",
           "title",
-          "version"
+          "version",
+          "youtubeUrl"
         ]
       },
       "EducationUpdateRequest": {
@@ -10905,7 +10910,7 @@
           "title": {
             "type": "string",
             "maxLength": 300,
-            "minLength": 0
+            "minLength": 1
           },
           "version": {
             "type": "integer",
@@ -10923,27 +10928,29 @@
           "title": {
             "type": "string",
             "maxLength": 1000,
-            "minLength": 0
+            "minLength": 1
           },
           "cta1Label": {
             "type": "string",
             "maxLength": 100,
-            "minLength": 0
+            "minLength": 1
           },
           "cta1Url": {
             "type": "string",
             "maxLength": 2048,
-            "minLength": 0
+            "minLength": 0,
+            "pattern": "^https?://.+"
           },
           "cta2Label": {
             "type": "string",
             "maxLength": 100,
-            "minLength": 0
+            "minLength": 1
           },
           "cta2Url": {
             "type": "string",
             "maxLength": 2048,
-            "minLength": 0
+            "minLength": 0,
+            "pattern": "^https?://.+"
           },
           "version": {
             "type": "integer",
@@ -10951,6 +10958,10 @@
           }
         },
         "required": [
+          "cta1Label",
+          "cta1Url",
+          "cta2Label",
+          "cta2Url",
           "title",
           "version"
         ]
@@ -11629,9 +11640,15 @@
             "maxLength": 2000000,
             "minLength": 0
           },
-          "attachmentAssetId": {
-            "type": "integer",
-            "format": "int64"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
           },
           "version": {
             "type": "integer",
@@ -11671,11 +11688,19 @@
             "type": "string",
             "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
-          "attachment": {
-            "$ref": "#/components/schemas/AssetResponse"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           },
-          "attachmentFileName": {
-            "type": "string"
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetResponse"
+            }
           },
           "authorName": {
             "type": "string"
@@ -12909,15 +12934,21 @@
             "type": "integer",
             "format": "int64"
           },
-          "attachmentAssetId": {
-            "type": "integer",
-            "format": "int64"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
           },
           "version": {
             "type": "integer",
             "format": "int64"
           },
-          "thumbnailDistinctFromAttachment": {
+          "thumbnailDistinctFromAttachments": {
             "type": "boolean"
           }
         },
@@ -12973,15 +13004,19 @@
               "null"
             ]
           },
-          "attachment": {
-            "type": "null",
-            "$ref": "#/components/schemas/AssetResponse"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
           },
-          "attachmentOriginalName": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetResponse"
+            }
           },
           "authorName": {
             "type": "string"
@@ -13620,9 +13655,15 @@
             "maxLength": 200,
             "minLength": 0
           },
-          "attachmentAssetId": {
-            "type": "integer",
-            "format": "int64"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
           },
           "buttonLabel": {
             "type": [
@@ -13710,8 +13751,19 @@
             "type": "string",
             "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
-          "attachment": {
-            "$ref": "#/components/schemas/AssetResponse"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetResponse"
+            }
           },
           "updatedAt": {
             "type": "string",
@@ -15032,9 +15084,15 @@
             "maxLength": 2000000,
             "minLength": 0
           },
-          "attachmentAssetId": {
-            "type": "integer",
-            "format": "int64"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
           }
         },
         "required": [
@@ -15152,11 +15210,17 @@
             "type": "integer",
             "format": "int64"
           },
-          "attachmentAssetId": {
-            "type": "integer",
-            "format": "int64"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
           },
-          "thumbnailDistinctFromAttachment": {
+          "thumbnailDistinctFromAttachments": {
             "type": "boolean"
           }
         },
@@ -15306,9 +15370,15 @@
             "maxLength": 200,
             "minLength": 0
           },
-          "attachmentAssetId": {
-            "type": "integer",
-            "format": "int64"
+          "attachmentAssetIds": {
+            "type": "array",
+            "description": "Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip.",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "maxItems": 10,
+            "minItems": 0
           },
           "buttonLabel": {
             "type": [
@@ -16266,7 +16336,14 @@
           "cta2Url": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "cta1Label",
+          "cta1Url",
+          "cta2Label",
+          "cta2Url",
+          "title"
+        ]
       },
       "PublicEducationResponse": {
         "type": "object",
@@ -16280,7 +16357,10 @@
               "$ref": "#/components/schemas/ProgramSummary"
             }
           }
-        }
+        },
+        "required": [
+          "title"
+        ]
       },
       "PublicFeaturedStory": {
         "type": "object",
@@ -16347,7 +16427,12 @@
           "featuredStory": {
             "$ref": "#/components/schemas/PublicFeaturedStory"
           }
-        }
+        },
+        "required": [
+          "featuredStory",
+          "title",
+          "youtubeUrl"
+        ]
       },
       "PublicMainResponse": {
         "type": "object",
@@ -16421,7 +16506,11 @@
           "bottomText": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "bottomText",
+          "title"
+        ]
       },
       "PublicPopupResponse": {
         "type": "object",
@@ -17036,11 +17125,11 @@
             "type": "string",
             "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
-          "attachmentFileName": {
-            "type": "string"
-          },
-          "attachmentUrl": {
-            "type": "string"
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetResponse"
+            }
           },
           "authorName": {
             "type": "string"
@@ -17207,17 +17296,11 @@
               "null"
             ]
           },
-          "attachmentOriginalName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "attachmentUrl": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetResponse"
+            }
           },
           "authorName": {
             "type": "string"
@@ -17544,8 +17627,11 @@
             "type": "string",
             "description": "일반적으로 허용된 rich-text HTML을 받습니다. RawHtmlBlock canonical wrapper도 받을 수 있으며, wrapper 내부 원본은 서버가 일반 HTML로 펼치지 않고 opaque HTML source로 보존합니다. RawHtmlBlock은 frontend의 sandbox viewer에서만 렌더링해야 합니다."
           },
-          "attachment": {
-            "$ref": "#/components/schemas/AssetResponse"
+          "attachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssetResponse"
+            }
           },
           "viewCount": {
             "type": "integer",
@@ -18507,7 +18593,14 @@
             "type": "integer",
             "format": "int64"
           }
-        }
+        },
+        "required": [
+          "cta1Label",
+          "cta1Url",
+          "cta2Label",
+          "cta2Url",
+          "title"
+        ]
       },
       "EducationResponse": {
         "type": "object",
@@ -18525,7 +18618,10 @@
             "type": "integer",
             "format": "int64"
           }
-        }
+        },
+        "required": [
+          "title"
+        ]
       },
       "ImpactResponse": {
         "type": "object",
@@ -18550,7 +18646,12 @@
             "type": "integer",
             "format": "int64"
           }
-        }
+        },
+        "required": [
+          "featuredStoryId",
+          "title",
+          "youtubeUrl"
+        ]
       },
       "MainStoryOption": {
         "type": "object",
@@ -18600,7 +18701,11 @@
             "type": "integer",
             "format": "int64"
           }
-        }
+        },
+        "required": [
+          "bottomText",
+          "title"
+        ]
       },
       "PageResponseSystemIssueLogItem": {
         "type": "object",

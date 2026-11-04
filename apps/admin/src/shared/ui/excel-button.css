@@ -1,0 +1,7 @@
+.cms-button.ant-btn.cms-button--h40.excel-button {
+  --cms-button-icon-size: 13px;
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+  box-sizing: border-box;
+}

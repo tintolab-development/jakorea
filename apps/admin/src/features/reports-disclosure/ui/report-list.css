@@ -188,20 +188,12 @@
   box-sizing: border-box;
 }
 
-/* 연차: 80 × 112.927 · aspect 17/24 */
-.rd-list__thumb-wrap--a4 {
-  width: 80px;
-  height: 112.927px;
-  aspect-ratio: 17 / 24;
-  flex: 0 0 80px;
-}
-
-/* 회계감사: 140 × 77.66 · aspect 128/71 */
+.rd-list__thumb-wrap--a4,
 .rd-list__thumb-wrap--wide {
-  width: 140px;
-  height: 77.66px;
-  aspect-ratio: 128 / 71;
-  flex: 0 0 140px;
+  width: 86px;
+  height: 86px;
+  aspect-ratio: 1 / 1;
+  flex: 0 0 86px;
 }
 
 .rd-list__thumb.ant-image,

@@ -10,10 +10,10 @@
 
 .hero-banners-page__thumb-wrap {
   display: inline-flex;
-  width: 200px;
-  height: 112.5px;
+  width: 72px;
+  height: 72px;
   flex: 0 0 auto;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1 / 1;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--color-border, #e0e0e0);

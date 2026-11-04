@@ -359,7 +359,7 @@ export function ReportListPanel({ kind }: Props) {
         width: 120,
         align: 'center',
         render: (_v, record) => (
-          <CmsButton variant="secondary" size="h32" type="button" onClick={() => openEdit(record)}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={() => openEdit(record)}>
             수정
           </CmsButton>
         ),
