@@ -1,10 +1,25 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
 
+export type PublicSurveyFormType =
+  | 'SURVEY'
+  | 'SATISFACTION'
+  | 'SATISFACTION_SURVEY'
+  | 'PROGRAM_SATISFACTION'
+  | 'LECTURE_EVALUATION'
+  | string
+
+const SATISFACTION_FORM_TYPES = new Set([
+  'SATISFACTION',
+  'SATISFACTION_SURVEY',
+  'PROGRAM_SATISFACTION',
+])
+
 export type PublicSurveyFormResponse = {
   programId?: number
   bindingId?: number
   templateVersionId?: number
+  formType?: PublicSurveyFormType
   targetScope?: string
   targetScopeId?: number
   form?: Record<string, unknown>
@@ -12,7 +27,9 @@ export type PublicSurveyFormResponse = {
 
 export type PublicSurveySubmitResponse = {
   formResponseId?: number
+  bindingId?: number
   templateVersionId?: number
+  formType?: PublicSurveyFormType
   responseStatus?: string
   submittedAt?: string
 }
@@ -49,6 +66,32 @@ function encodeShareToken(shareToken: string): string {
   return encodeURIComponent(token)
 }
 
+function normalizeFormType(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const next = value.trim().toUpperCase()
+  return next || undefined
+}
+
+export function resolvePublicSurveyKind(
+  formType: string | undefined
+): 'survey' | 'satisfaction' {
+  const normalized = formType?.trim().toUpperCase()
+  return normalized && SATISFACTION_FORM_TYPES.has(normalized) ? 'satisfaction' : 'survey'
+}
+
+export function publicSurveySubmitMatchesForm(
+  form: Pick<PublicSurveyFormResponse, 'bindingId' | 'formType'>,
+  submitted: Pick<PublicSurveySubmitResponse, 'bindingId' | 'formType'>
+): boolean {
+  if (form.bindingId != null && submitted.bindingId != null && form.bindingId !== submitted.bindingId) {
+    return false
+  }
+  if (form.formType && submitted.formType && form.formType !== submitted.formType) {
+    return false
+  }
+  return true
+}
+
 export async function fetchPublicSurveyForm(
   shareToken: string,
   signal?: AbortSignal
@@ -62,7 +105,10 @@ export async function fetchPublicSurveyForm(
   if (!response || typeof response !== 'object' || !response.form) {
     throw new Error('PUBLIC_SURVEY_FORM_INVALID')
   }
-  return response
+  return {
+    ...response,
+    formType: normalizeFormType(response.formType),
+  }
 }
 
 export async function submitPublicSurveyResponse(
@@ -75,5 +121,9 @@ export async function submitPublicSurveyResponse(
     { answers },
     PUBLIC_REQUEST_CONFIG
   )
-  return unwrapEnvelope<PublicSurveySubmitResponse>(data)
+  const response = unwrapEnvelope<PublicSurveySubmitResponse>(data)
+  return {
+    ...response,
+    formType: normalizeFormType(response.formType),
+  }
 }

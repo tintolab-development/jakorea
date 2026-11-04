@@ -3,7 +3,10 @@ import { isAxiosError } from 'axios'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
-import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import {
+  isUserInfoParagraph,
+  type WritingFormDraft,
+} from '@jakorea/form-schema/writing-form'
 import { writingFormDraftFromApplicationForm } from '@/features/program/lib/application-form-draft'
 import {
   buildEducationSurveyAnswers,
@@ -13,13 +16,18 @@ import {
   EMPTY_SURVEY_SIDECAR,
   type SurveySidecarState,
 } from '@/features/mypage/education/surveys/lib/survey-sidecar'
-import { EducationSurveyFormBody } from '@/features/mypage/education/surveys/ui/survey-form-body'
+import {
+  EducationSurveyFormBody,
+  PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS,
+} from '@/features/mypage/education/surveys/ui/survey-form-body'
 import { EducationSurveyHeader } from '@/features/mypage/education/surveys/ui/survey-header'
 import { EducationSurveySubmitConfirm } from '@/features/mypage/education/surveys/ui/submit-confirm'
 import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
   fetchPublicSurveyForm,
+  publicSurveySubmitMatchesForm,
+  resolvePublicSurveyKind,
   submitPublicSurveyResponse,
 } from '@/features/public-survey/api/client'
 import styles from './public-survey-page.module.css'
@@ -44,9 +52,36 @@ function getPublicSurveyErrorMessage(error: unknown): string {
       return '설문 작성 기간이 종료되었습니다.'
     case 'FORM_TEMPLATE_VERSION_NOT_PUBLISHED':
     case 'FORM_BINDING_NOT_FOUND':
+    case 'PUBLIC_SURVEY_FORM_TYPE_NOT_ALLOWED':
       return '현재 설문을 불러올 수 없습니다. 관리자에게 문의해 주세요.'
     default:
       return '설문을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+  }
+}
+
+function getPublicSurveySubmitErrorMessage(error: unknown): string {
+  switch (readPublicSurveyErrorCode(error)) {
+    case 'FORM_ANSWER_REQUIRED':
+      return '필수 문항에 답변해 주세요.'
+    case 'FORM_ANSWER_NOT_ALLOWED':
+      return '제출할 수 없는 항목이 포함되어 있습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
+    case 'FORM_SUBMISSION_NOT_STARTED':
+      return '아직 설문 작성 기간이 시작되지 않았습니다.'
+    case 'FORM_SUBMISSION_CLOSED':
+      return '설문 작성 기간이 종료되어 제출할 수 없습니다.'
+    case 'PUBLIC_SURVEY_NOT_FOUND':
+      return '유효하지 않거나 삭제된 설문 링크입니다.'
+    default:
+      return '설문 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  }
+}
+
+function stripPublicSurveyUserInfoAnswers(draft: WritingFormDraft): WritingFormDraft {
+  return {
+    ...draft,
+    paragraphs: draft.paragraphs.map(paragraph =>
+      isUserInfoParagraph(paragraph) ? { ...paragraph, fieldAnswers: {} } : paragraph
+    ),
   }
 }
 
@@ -85,7 +120,9 @@ export function PublicSurveyPage() {
 
   const remoteDraft = useMemo(() => {
     if (!surveyQuery.data?.form) return null
-    return writingFormDraftFromApplicationForm(surveyQuery.data.form)
+    const fromForm = writingFormDraftFromApplicationForm(surveyQuery.data.form)
+    if (!fromForm) return null
+    return stripPublicSurveyUserInfoAnswers(fromForm)
   }, [surveyQuery.data?.form])
 
   useEffect(() => {
@@ -98,19 +135,19 @@ export function PublicSurveyPage() {
 
   const submitMutation = useMutation({
     mutationFn: (answers: Record<string, unknown>) => submitPublicSurveyResponse(token, answers),
-    onSuccess: () => {
+    onSuccess: submitted => {
       setConfirmOpen(false)
+      const form = surveyQuery.data
+      if (form && !publicSurveySubmitMatchesForm(form, submitted)) {
+        setSubmitError('제출이 올바른 설문에 저장되지 않았습니다. 관리자에게 문의해 주세요.')
+        return
+      }
       setSubmitError(null)
       setSuccessAlertOpen(true)
     },
     onError: error => {
       setConfirmOpen(false)
-      const code = readPublicSurveyErrorCode(error)
-      setSubmitError(
-        code === 'FORM_SUBMISSION_CLOSED'
-          ? '설문 작성 기간이 종료되어 제출할 수 없습니다.'
-          : '설문 제출에 실패했습니다. 잠시 후 다시 시도해 주세요.'
-      )
+      setSubmitError(getPublicSurveySubmitErrorMessage(error))
     },
   })
 
@@ -126,6 +163,8 @@ export function PublicSurveyPage() {
         : current
     )
   }, [])
+
+  const surveyKind = resolvePublicSurveyKind(surveyQuery.data?.formType)
 
   if (!token) return <PublicSurveyState message="유효하지 않은 설문 링크입니다." />
   if (surveyQuery.isError) {
@@ -145,7 +184,9 @@ export function PublicSurveyPage() {
             제출이 완료되었습니다.
           </PFText>
           <PFText as="p" typo="bd-lg-rg" color="neutral-cool-600">
-            설문에 참여해 주셔서 감사합니다.
+            {surveyKind === 'satisfaction'
+              ? '만족도조사에 참여해 주셔서 감사합니다.'
+              : '설문에 참여해 주셔서 감사합니다.'}
           </PFText>
         </div>
       </main>
@@ -156,12 +197,17 @@ export function PublicSurveyPage() {
     paragraph =>
       paragraph.kind === 'description' && paragraph.variant === 'survey_title_with_period'
   )
-  const programTitle = titleParagraph?.surveyTitle?.trim() || '만족도조사'
+  const programTitle =
+    titleParagraph?.surveyTitle?.trim() ||
+    (surveyKind === 'satisfaction' ? '만족도조사' : '설문조사')
 
   const handleSubmit = () => {
     if (submitMutation.isPending) return
     setSubmitError(null)
-    const validation = validateEducationSurveyFill(draft, sidecar)
+    const validation = validateEducationSurveyFill(draft, sidecar, {
+      requireUserInfoAnswers: true,
+      requiredUserInfoFieldKeys: PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS,
+    })
     if (!validation.ok) {
       setSubmitError(validation.message)
       return
@@ -188,6 +234,8 @@ export function PublicSurveyPage() {
           onUpdateParagraph={updateParagraph}
           sidecar={sidecar}
           onSidecarChange={setSidecar}
+          userInfoEditable
+          userInfoRequiredFieldKeys={PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS}
         />
 
         {submitError ? (
@@ -210,7 +258,7 @@ export function PublicSurveyPage() {
       </div>
       <EducationSurveySubmitConfirm
         open={confirmOpen}
-        kind="survey"
+        kind={surveyKind}
         pending={submitMutation.isPending}
         onCancel={() => {
           if (submitMutation.isPending) return
@@ -224,7 +272,11 @@ export function PublicSurveyPage() {
       <PFAlertModal
         open={successAlertOpen}
         title="안내"
-        description="설문이 제출되었습니다."
+        description={
+          surveyKind === 'satisfaction'
+            ? '만족도조사가 제출되었습니다.'
+            : '설문이 제출되었습니다.'
+        }
         onConfirm={() => {
           setSuccessAlertOpen(false)
           setSubmitted(true)

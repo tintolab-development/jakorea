@@ -386,20 +386,22 @@ export async function createGeneralProgramPostUnreadReminder(
 
 export async function fetchGeneralProgramSurveyResponses(
   programId: string,
-  templateVersionId: string
+  templateVersionId: string,
+  bindingId?: string
 ) {
   if (!shouldUseProgramsHttpRemoteApi()) return []
   assertProgramsHttpRemoteReady()
-  return fetchAdminProgramSurveyResponsesRemote(programId, templateVersionId)
+  return fetchAdminProgramSurveyResponsesRemote(programId, templateVersionId, bindingId)
 }
 
 export async function fetchGeneralProgramSurveySummary(
   programId: string,
-  templateVersionId: string
+  templateVersionId: string,
+  bindingId?: string
 ) {
   if (!shouldUseProgramsHttpRemoteApi()) return []
   assertProgramsHttpRemoteReady()
-  return fetchAdminProgramSurveySummaryRemote(programId, templateVersionId)
+  return fetchAdminProgramSurveySummaryRemote(programId, templateVersionId, bindingId)
 }
 
 export async function fetchGeneralProgramSurveyResponseDetail(
