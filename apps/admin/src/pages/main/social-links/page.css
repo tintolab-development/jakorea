@@ -46,10 +46,6 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.social-links-page .ant-switch {
-  min-width: 44px;
-}
-
 .social-link-table .ant-table-tbody > tr > td {
   vertical-align: middle;
 }

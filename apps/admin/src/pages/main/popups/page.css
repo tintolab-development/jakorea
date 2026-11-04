@@ -57,10 +57,6 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.popups-page .ant-switch {
-  min-width: 44px;
-}
-
 .popup-table .ant-table-tbody > tr > td {
   vertical-align: middle;
 }
