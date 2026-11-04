@@ -69,18 +69,31 @@ function PartnerLogoImage({
 
   const sizeClass = remoteSrc ? styles.partnerLogoRemote : local?.logoClassName
 
-  return (
-    <span className={styles.partnerLogoArea}>
-      <img
-        className={[styles.partnerLogo, sizeClass].filter(Boolean).join(' ')}
-        src={src}
-        alt={partner.name}
-        onError={() => {
-          if (local) setFailed(true)
-        }}
-      />
-    </span>
+  const image = (
+    <img
+      className={[styles.partnerLogo, sizeClass].filter(Boolean).join(' ')}
+      src={src}
+      alt={partner.name}
+      onError={() => {
+        if (local) setFailed(true)
+      }}
+    />
   )
+
+  if (partner.href) {
+    return (
+      <a
+        className={styles.partnerLogoArea}
+        href={partner.href}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {image}
+      </a>
+    )
+  }
+
+  return <span className={styles.partnerLogoArea}>{image}</span>
 }
 
 export function Footer() {

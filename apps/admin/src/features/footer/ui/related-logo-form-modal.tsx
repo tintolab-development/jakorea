@@ -164,7 +164,7 @@ export function RelatedLogoFormModal({
   )
 
   const handleSubmit = useCallback(() => {
-    if (!name.trim() || (!logoUrl.trim() && !logoFile && logoAssetId == null)) {
+    if (isActive && (!name.trim() || (!logoUrl.trim() && !logoFile && logoAssetId == null))) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }

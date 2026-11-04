@@ -6,6 +6,7 @@ export type SiteFooterPartner = {
   partnerId: number
   name: string
   logoUrl: string | null
+  href: string | null
 }
 
 export type SiteFooterView = {
@@ -58,9 +59,9 @@ export const SITE_FOOTER_FALLBACK: SiteFooterView = {
   email: 'jakorea@jakorea.org',
   organizationLogoUrl: null,
   partners: [
-    { partnerId: 1, name: '기획재정부', logoUrl: null },
-    { partnerId: 2, name: '국세청', logoUrl: null },
-    { partnerId: 3, name: '국민권익위원회', logoUrl: null },
+    { partnerId: 1, name: '기획재정부', logoUrl: null, href: null },
+    { partnerId: 2, name: '국세청', logoUrl: null, href: null },
+    { partnerId: 3, name: '국민권익위원회', logoUrl: null, href: null },
   ],
 }
 
@@ -133,6 +134,7 @@ function mapPartners(raw: unknown): SiteFooterPartner[] {
       partnerId: item.partnerId,
       name,
       logoUrl: readHttpUrl(item.logoUrl),
+      href: readHttpUrl(item.externalUrl),
     })
   }
 

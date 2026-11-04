@@ -124,7 +124,11 @@ export function FooterTopMenuSection() {
         id: row.id,
         linkUrl: linkDraft[row.id] ?? row.linkUrl,
       }))
-      if (payload.some(row => !row.linkUrl.trim())) {
+      const missingExternalUrl = rows.some((row, index) => {
+        if (row.isInternal || !row.isActive) return false
+        return !payload[index]?.linkUrl.trim()
+      })
+      if (missingExternalUrl) {
         showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
         return
       }
