@@ -41,6 +41,10 @@ export interface AccountPaymentRow {
   accountHolder?: string
   depositAccountNumber?: string
   recipientMobile?: string
+  /** 정산 상세 withholding 항목 합(원). 목록에 없으면 미리보기에서 세액 행을 만들지 않는다 */
+  withholdingTaxAmount?: number
+  /** 정산 상세 payee 마스킹 주민등록번호. 원문 금지 */
+  residentRegistrationNumberMasked?: string
   paymentOrderStatus: Extract<PaymentOrderAdminProcessingStatus, 'confirmed'>
 }
 

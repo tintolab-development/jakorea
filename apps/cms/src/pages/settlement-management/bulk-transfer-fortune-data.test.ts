@@ -27,7 +27,7 @@ function row(
 }
 
 describe('buildBulkTransferSheetRows', () => {
-  it('지급 대기 건만 1건당 1행으로 만들고 지급 완료 건은 제외한다', () => {
+  it('지급 대기 건만 대상으로 하고 지급 완료 건은 제외한다', () => {
     const rows = buildBulkTransferSheetRows([
       row('awaiting_confirmation'),
       row('account_paid', { id: 'ap-2', accountPaymentId: 102, settlementId: 202 }),
@@ -35,6 +35,16 @@ describe('buildBulkTransferSheetRows', () => {
 
     expect(rows).toHaveLength(1)
     expect(rows[0]?.depositAmount).toBe(100_000)
+  })
+
+  it('원천징수세액이 있으면 실지급액 다음에 세액 행을 두고 JA 계좌는 비운다', () => {
+    const rows = buildBulkTransferSheetRows([
+      row('awaiting_confirmation', { withholdingTaxAmount: 3_300 }),
+    ])
+
+    expect(rows).toHaveLength(2)
+    expect(rows[1]?.depositAmount).toBe(3_300)
+    expect(rows[1]?.depositAccount).toBe('')
   })
 
   it('계좌 원문이 응답에 없으면 임의 계좌번호를 만들지 않는다', () => {

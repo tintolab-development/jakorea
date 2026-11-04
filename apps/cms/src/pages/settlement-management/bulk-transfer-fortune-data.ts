@@ -1,9 +1,9 @@
 /**
  * 대량이체 양식 — Fortune Sheet 초기 데이터 및 동일 규칙의 표 행 생성
- * 목록 1건당 이체 1행(정산 금액 전액).
+ * 지급 건마다 실지급액 행, 원천징수세액이 0보다 크면 세액 행을 이어서 만든다.
+ * 세액 수취(JA) 계좌는 고객사 확인 전까지 비운다.
  *
  * SSOT: 시안 「대량이체 양식 미리보기」(입금은행~휴대폰 9열).
- * Notion 5번 「강사비+세액 행 교대」문구는 세금신고 양식과 혼동으로 보이며 채택하지 않음.
  */
 
 import type { Cell, CellWithRowAndCol, Sheet } from '@fortune-sheet/core'
@@ -40,6 +40,15 @@ export type BulkTransferSheetRow = {
   memo: string
   cmsCode: string
   mobile: string
+}
+
+function emptyJaTaxReceiptMeta() {
+  return {
+    bank: '',
+    acctNum: '',
+    holder: '',
+    mobile: '',
+  }
 }
 
 function payoutMetaFromRow(
@@ -127,6 +136,23 @@ function dataCell(text: string | number): Cell {
   return { v: m, m, ht: 0, vt: 0 }
 }
 
+function toSheetLine(
+  meta: ReturnType<typeof payoutMetaFromRow>,
+  depositAmount: number
+): BulkTransferSheetRow {
+  return {
+    depositBank: meta.bank,
+    depositAccount: meta.acctNum,
+    depositAmount,
+    expectedDepositor: meta.holder,
+    depositStatement: DEPOSIT_LABEL,
+    withdrawalStatement: DASH,
+    memo: DASH,
+    cmsCode: DASH,
+    mobile: meta.mobile,
+  }
+}
+
 function buildBulkTransferSheetRowsByMode(
   rows: AccountPaymentRow[],
   mode: 'preview' | 'download'
@@ -134,18 +160,11 @@ function buildBulkTransferSheetRowsByMode(
   const ordered = getWaitingPaymentRowsOrderedForBulkTransfer(rows)
   const lines: BulkTransferSheetRow[] = []
   for (const row of ordered) {
-    const { bank, acctNum, holder, mobile } = payoutMetaFromRow(row, mode)
-    lines.push({
-      depositBank: bank,
-      depositAccount: acctNum,
-      depositAmount: row.amount,
-      expectedDepositor: holder,
-      depositStatement: DEPOSIT_LABEL,
-      withdrawalStatement: DASH,
-      memo: DASH,
-      cmsCode: DASH,
-      mobile,
-    })
+    lines.push(toSheetLine(payoutMetaFromRow(row, mode), row.amount))
+    const withholdingTaxAmount = row.withholdingTaxAmount ?? 0
+    if (withholdingTaxAmount > 0) {
+      lines.push(toSheetLine(emptyJaTaxReceiptMeta(), withholdingTaxAmount))
+    }
   }
   return lines
 }
