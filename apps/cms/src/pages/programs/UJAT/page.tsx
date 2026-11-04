@@ -125,9 +125,7 @@ function isUjatProgramListPath(pathnameNormalized: string): boolean {
   ) {
     return false
   }
-  return (
-    pathnameNormalized === '/programs/ujat' || pathnameNormalized.startsWith('/programs/ujat/')
-  )
+  return pathnameNormalized === '/programs/ujat' || pathnameNormalized.startsWith('/programs/ujat/')
 }
 
 function readUjatProgressYearFilter(raw: string | null): UjatProgressYearFilter {
@@ -215,8 +213,7 @@ function UjatProgramListPageContent() {
     resetKey: infiniteResetKey,
   })
 
-  const totalElements =
-    programsQuery.data?.pages[0]?.totalElements ?? programs.length
+  const totalElements = programsQuery.data?.pages[0]?.totalElements ?? programs.length
 
   useEffect(() => {
     const nextKeyword = searchParams.get('keyword') ?? ''
@@ -305,8 +302,7 @@ function UjatProgramListPageContent() {
   const initialDetailProgram = useMemo(() => {
     if (!programIdFromUrl) return undefined
     return (
-      programs.find(p => p.id === programIdFromUrl) ??
-      resolveUjatProgramForDetail(programIdFromUrl)
+      programs.find(p => p.id === programIdFromUrl) ?? resolveUjatProgramForDetail(programIdFromUrl)
     )
   }, [programIdFromUrl, programs])
   const detailQuery = useProgramDetail(programIdFromUrl ?? undefined, initialDetailProgram)
@@ -433,7 +429,7 @@ function UjatProgramListPageContent() {
         key: 'keyword',
         type: 'search',
         label: '프로그램명',
-        placeholder: '프로그램명을 입력하세요',
+        placeholder: '프로그램명을 입력해 주세요',
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
@@ -702,30 +698,30 @@ function UjatProgramListPageContent() {
       </FilterTableLayout>
 
       <ProgramModalWhenOpen open={ujatDetailModalOpen}>
-      <LazyUjatProgramDetailFullPageModal
-        open={ujatDetailModalOpen}
-        onClose={() => undefined}
-        program={ujatDetailProgram}
-        programIdHint={programIdFromUrl}
-        externalLoading={
-          Boolean(programIdFromUrl) &&
-          !ujatDetailProgram &&
-          (detailQuery.isFetching || detailQuery.isLoading)
-        }
-        externalError={detailQuery.isError && !ujatDetailProgram}
-        onUpdateProgram={(programId, program, patch) =>
-          updateProgramMutation.mutateAsync({ programId, program, patch })
-        }
-        onRequestDelete={setProgramPendingDelete}
-      />
+        <LazyUjatProgramDetailFullPageModal
+          open={ujatDetailModalOpen}
+          onClose={() => undefined}
+          program={ujatDetailProgram}
+          programIdHint={programIdFromUrl}
+          externalLoading={
+            Boolean(programIdFromUrl) &&
+            !ujatDetailProgram &&
+            (detailQuery.isFetching || detailQuery.isLoading)
+          }
+          externalError={detailQuery.isError && !ujatDetailProgram}
+          onUpdateProgram={(programId, program, patch) =>
+            updateProgramMutation.mutateAsync({ programId, program, patch })
+          }
+          onRequestDelete={setProgramPendingDelete}
+        />
       </ProgramModalWhenOpen>
 
       <ProgramModalWhenOpen open={isUjatProgramNewRegistrationQuery} registrationEntry>
-      <LazyUjatProgramRegistrationFullpageModal
-        open={isUjatProgramNewRegistrationQuery}
-        onClose={handleCloseUjatProgramRegistrationFullpage}
-        onProgramRegistrationSaved={handleUjatProgramRegistrationSaved}
-      />
+        <LazyUjatProgramRegistrationFullpageModal
+          open={isUjatProgramNewRegistrationQuery}
+          onClose={handleCloseUjatProgramRegistrationFullpage}
+          onProgramRegistrationSaved={handleUjatProgramRegistrationSaved}
+        />
       </ProgramModalWhenOpen>
 
       <RegistrationDraftNoticeModal

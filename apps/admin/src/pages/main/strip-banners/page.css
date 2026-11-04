@@ -13,10 +13,6 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.strip-banners-page .ant-switch {
-  min-width: 44px;
-}
-
 .strip-banner-table .ant-table-tbody > tr > td {
   vertical-align: middle;
 }

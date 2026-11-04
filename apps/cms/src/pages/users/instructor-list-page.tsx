@@ -25,7 +25,6 @@ import { handleError } from '@/shared/utils/error-handler'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
 import './instructor-list-page.css'
 
-
 export function InstructorListPage() {
   const { params, setParam } = useQueryParams<InstructorListQueryParams>()
   const { user } = useAuthStore()
@@ -105,7 +104,6 @@ export function InstructorListPage() {
     loadInstructors()
   }
 
-
   // 페이지 로드 시 초기 데이터 불러오기
   useEffect(() => {
     loadInstructors()
@@ -121,7 +119,7 @@ export function InstructorListPage() {
             key: 'search',
             type: 'search',
             label: '이름/이메일/전문분야',
-            placeholder: '이름, 이메일 또는 전문분야를 입력하세요',
+            placeholder: '이름, 이메일 또는 전문분야를 입력해 주세요',
           },
           {
             key: 'instructorType',

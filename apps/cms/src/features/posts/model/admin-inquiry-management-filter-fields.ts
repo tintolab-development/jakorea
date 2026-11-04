@@ -63,7 +63,7 @@ export function buildAdminInquiryManagementFilterFields(
       key: 'programName',
       type: 'search',
       label: '프로그램명',
-      placeholder: '프로그램명을 입력하세요',
+      placeholder: '프로그램명을 입력해 주세요',
       width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {
@@ -77,14 +77,14 @@ export function buildAdminInquiryManagementFilterFields(
       key: 'memberName',
       type: 'search',
       label: '문의 회원명',
-      placeholder: '문의 회원명을 입력하세요',
+      placeholder: '문의 회원명을 입력해 주세요',
       width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {
       key: 'assigneeName',
       type: 'search',
       label: '담당자명',
-      placeholder: '담당자명을 입력하세요',
+      placeholder: '담당자명을 입력해 주세요',
       width: FILTER_CONTROL_MAX_WIDTH_PX,
     },
     {

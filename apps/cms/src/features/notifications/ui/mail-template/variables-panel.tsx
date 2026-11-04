@@ -117,7 +117,7 @@ export const VariablesPanel = memo(function VariablesPanel({
         className="mail-template-variables__search"
         inputSize="large"
         width="100%"
-        placeholder="검색어를 입력하세요"
+        placeholder="검색어를 입력해 주세요"
         value={query}
         onChange={event => setQuery(event.target.value)}
         allowClear

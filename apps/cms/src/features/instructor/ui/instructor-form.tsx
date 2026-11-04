@@ -254,9 +254,7 @@ export function InstructorForm({ instructor, onSubmit, onCancel, loading }: Inst
         <Controller
           name="bankName"
           control={control}
-          render={({ field }) => (
-            <Input {...field} placeholder="은행명을 입력하세요" />
-          )}
+          render={({ field }) => <Input {...field} placeholder="은행명을 입력해 주세요" />}
         />
       </Form.Item>
 

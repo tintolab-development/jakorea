@@ -103,12 +103,14 @@ async function snapshotVisibleFields(page: Page): Promise<FieldSnapshot> {
       const type = (el as HTMLInputElement).type ?? 'textarea'
       if (type === 'file' || type === 'hidden') continue
       const isToggle = type === 'radio' || type === 'checkbox'
-      const host = isToggle ? el.closest('label') ?? el.parentElement : el
+      const host = isToggle ? (el.closest('label') ?? el.parentElement) : el
       if (!isShown(host)) continue
       const base =
         el.getAttribute('placeholder') ||
         el.getAttribute('aria-label') ||
-        (isToggle ? `${type}:${(el.closest('label')?.textContent ?? '').trim().slice(0, 30)}` : '') ||
+        (isToggle
+          ? `${type}:${(el.closest('label')?.textContent ?? '').trim().slice(0, 30)}`
+          : '') ||
         el.getAttribute('name') ||
         type
       const n = counts[base] ?? 0
@@ -186,13 +188,28 @@ async function openPreviewText(page: Page): Promise<string> {
   if ((await iframe.count()) === 0) return shellText
   const frame = shell.frameLocator('iframe').first()
   await expect
-    .poll(async () => ((await frame.locator('body').innerText().catch(() => '')) ?? '').trim().length, {
-      timeout: 20_000,
-    })
+    .poll(
+      async () =>
+        (
+          (await frame
+            .locator('body')
+            .innerText()
+            .catch(() => '')) ?? ''
+        ).trim().length,
+      {
+        timeout: 20_000,
+      }
+    )
     .toBeGreaterThan(20)
   await page.waitForTimeout(1_000)
-  const frameText = await frame.locator('body').innerText().catch(() => '')
-  const frameImages = await frame.locator('img').count().catch(() => 0)
+  const frameText = await frame
+    .locator('body')
+    .innerText()
+    .catch(() => '')
+  const frameImages = await frame
+    .locator('img')
+    .count()
+    .catch(() => 0)
   return `${shellText}\n[iframe]\n${frameText}\n[iframe-img-count=${frameImages}]`
 }
 
@@ -229,7 +246,8 @@ async function readSavedCsRecords(page: Page) {
       ] as const) {
         for (let i = 0; i < store.length; i += 1) {
           const k = store.key(i)
-          if (k && (store.getItem(k) ?? '').includes('JA코리아')) storageKeysWithRecipient.push(`${label}:${k}`)
+          if (k && (store.getItem(k) ?? '').includes('JA코리아'))
+            storageKeysWithRecipient.push(`${label}:${k}`)
         }
       }
       return {
@@ -281,13 +299,21 @@ async function ensureCommonStep(page: Page) {
       .isVisible()
       .catch(() => false)
     const onLaterStep =
-      (await page.getByRole('button', { name: '모집 정보 돌아가기' }).isVisible().catch(() => false)) ||
-      (await page.getByRole('button', { name: '공통 정보 돌아가기' }).isVisible().catch(() => false))
+      (await page
+        .getByRole('button', { name: '모집 정보 돌아가기' })
+        .isVisible()
+        .catch(() => false)) ||
+      (await page
+        .getByRole('button', { name: '공통 정보 돌아가기' })
+        .isVisible()
+        .catch(() => false))
     if (onCommon && !onLaterStep) break
   }
-  await expect(page.getByRole('button', { name: '모집 정보 작성하기' })).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('button', { name: '모집 정보 작성하기' })).toBeVisible({
+    timeout: 30_000,
+  })
   await clickSectionNavIfVisible(page, '기본 정보')
-  await expect(page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).toBeVisible({
+  await expect(page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()).toBeVisible({
     timeout: 20_000,
   })
 }
@@ -414,7 +440,7 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     expect(Object.keys(inst1).length, '기관 모집 탭 입력 필드 수').toBeGreaterThan(3)
     expect(Object.keys(instr1).length, '강사 모집 탭 입력 필드 수').toBeGreaterThan(3)
     expect(instr1['담당 문의처#0']).toBe(CONTACT)
-    expect(instr1['상세 모집 대상을 입력하세요#0']).toBe('성인 강사')
+    expect(instr1['상세 모집 대상을 입력해 주세요#0']).toBe('성인 강사')
     expect(diffs.institutionAfterToggle, '기관 모집 값 유지(탭 토글)').toEqual([])
     expect(diffs.instructorAfterToggle, '강사 모집 값 유지(탭 토글) — STEP 2.7 회귀').toEqual([])
     expect(diffs.institutionAfterStepNav, '기관 모집 값 유지(단계 이동)').toEqual([])
@@ -476,7 +502,7 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
       .catch(() => false)
     // 플랫폼 미리보기는 공고용 프로그램명을 노출하므로 공고용 프로그램명을 바꿔 최신값 반영(stale overlay 여부)을 본다.
     await clickSectionNavIfVisible(page, '기본 정보')
-    const titleInput = page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요').first()
+    const titleInput = page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요').first()
     const newTitle = 'RHF-C-미리보기최신'
     await titleInput.fill(newTitle)
     await page.getByRole('button', { name: '모집 정보 작성하기' }).click()
@@ -524,13 +550,20 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     expect(report.reopenSameInstitution, '기관 모집 미리보기 재진입 동일').toBe(true)
     expect(report.reopenSameApplication, '신청 미리보기 재진입 동일').toBe(true)
     expect(report.applicationInstitution.recipient, '신청 미리보기 최신 제공받는 곳').toBe(true)
-    expect(report.recruitInstitution.contact || report.recruitInstructor.contact, '모집 문의처 표시').toBe(
-      true
-    )
+    expect(
+      report.recruitInstitution.contact || report.recruitInstructor.contact,
+      '모집 문의처 표시'
+    ).toBe(true)
     expect(report.afterTitleChange.newTitle, '미리보기가 최신 공고용 프로그램명을 표시').toBe(true)
-    expect(report.afterTitleChange.announcement, '미리보기가 이전(stale) 공고명을 표시하지 않음').toBe(false)
+    expect(
+      report.afterTitleChange.announcement,
+      '미리보기가 이전(stale) 공고명을 표시하지 않음'
+    ).toBe(false)
     expect(report.recruitInstitution.announcement, '기관 모집 미리보기 프로그램명').toBe(true)
-    expect(report.recruitInstitution.periodLike || /\d{4}년 \d{1,2}월/.test(recruitInstPreview1), '기간 표시').toBe(true)
+    expect(
+      report.recruitInstitution.periodLike || /\d{4}년 \d{1,2}월/.test(recruitInstPreview1),
+      '기간 표시'
+    ).toBe(true)
     assertIsolatedNetwork(log)
   })
 
@@ -578,7 +611,9 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     const restored = await snapshotWizardAllSteps(page)
     // 새로고침 후 복원
     await page.reload()
-    const draftDialogAfterReload = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    const draftDialogAfterReload = page
+      .getByRole('dialog')
+      .filter({ hasText: '임시저장 이력 안내' })
     if (await draftDialogAfterReload.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await draftDialogAfterReload.getByRole('radio', { name: '이어서 작성' }).check()
       await draftDialogAfterReload.getByRole('button', { name: '이어서 작성' }).click()
@@ -602,7 +637,10 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
 
     const diffs = {
       restoreCommon: diffSnapshots(base.common, restored.common),
-      restoreRecruitInstitution: diffSnapshots(base.recruitInstitution, restored.recruitInstitution),
+      restoreRecruitInstitution: diffSnapshots(
+        base.recruitInstitution,
+        restored.recruitInstitution
+      ),
       restoreRecruitInstructor: diffSnapshots(base.recruitInstructor, restored.recruitInstructor),
       baseAppInstitutionRecipient: base.appInstitutionText.includes(RECIPIENT),
       baseAppInstructorRecipient: base.appInstructorText.includes(RECIPIENT),
@@ -643,12 +681,18 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     expect(diffs.refreshRecruitInstructor, '새로고침 — 강사 모집').toEqual([])
     expect(diffs.restore2Common).toEqual([])
     expect(diffs.restore2RecruitInstructor).toEqual([])
-    expect(generalMetaAfter?.programTitleKo, '일반 프로그램 draft 격리').toBe('ISOLATION-GENERAL-DRAFT')
-    expect(finalState.allFormKeys.filter(k => k.startsWith('registration-wizard:GENERAL:'))).toEqual([])
+    expect(generalMetaAfter?.programTitleKo, '일반 프로그램 draft 격리').toBe(
+      'ISOLATION-GENERAL-DRAFT'
+    )
+    expect(
+      finalState.allFormKeys.filter(k => k.startsWith('registration-wizard:GENERAL:'))
+    ).toEqual([])
     assertIsolatedNetwork(log)
   })
 
-  test('CS-X04 legacy draft(overlay only, canonical 없음) fixture 복원', async ({ page }, testInfo) => {
+  test('CS-X04 legacy draft(overlay only, canonical 없음) fixture 복원', async ({
+    page,
+  }, testInfo) => {
     test.setTimeout(300_000)
     const ev = collectEvidence(page)
     const log = await installCsIsolatedNetwork(page)
@@ -687,8 +731,8 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     await ensureCommonStep(page)
     const common = await snapshotCommonSections(page)
     await attachEvidence(testInfo, page, log, ev, { converted, common, restoredUrl })
-    expect(common['대표 프로그램명을 입력하세요#0']).toBe('LEGACY-CS-대표명')
-    expect(common['모집 시 노출될 프로그램명을 입력하세요#0']).toBe('LEGACY-CS-공고명')
+    expect(common['대표 프로그램명을 입력해 주세요#0']).toBe('LEGACY-CS-대표명')
+    expect(common['모집 시 노출될 프로그램명을 입력해 주세요#0']).toBe('LEGACY-CS-공고명')
     expect(common['목표값 입력#0']).toMatch(/^33$/)
     assertIsolatedNetwork(log)
   })
@@ -725,18 +769,31 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     await expect(successDialog).toBeVisible({ timeout: 90_000 })
     await expect(successDialog.getByText('등록 완료', { exact: true })).toBeVisible()
     const successText = await successDialog.innerText()
-    await page.screenshot({ path: testInfo.outputPath('cs-x05-success-modal.png'), fullPage: false })
+    await page.screenshot({
+      path: testInfo.outputPath('cs-x05-success-modal.png'),
+      fullPage: false,
+    })
     const putsAtModal = log.formVersionPuts.length
     const publishesAtModal = log.formVersionPublishes.length
-    const createIndex = log.mutations.findIndex(m => m.method === 'POST' && m.path === '/api/admin/programs')
-    const firstPutIndex = log.mutations.findIndex(m => m.method === 'PUT' && m.path.includes('/form-template-versions/'))
+    const createIndex = log.mutations.findIndex(
+      m => m.method === 'POST' && m.path === '/api/admin/programs'
+    )
+    const firstPutIndex = log.mutations.findIndex(
+      m => m.method === 'PUT' && m.path.includes('/form-template-versions/')
+    )
     const firstPublishIndex = log.mutations.findIndex(m => m.path.endsWith('/publish'))
     await successDialog.getByRole('button', { name: '확인' }).click()
     await expect(successDialog).toBeHidden({ timeout: 20_000 })
-    await expect(page.getByText('1사1교 프로그램 등록', { exact: true })).toBeHidden({ timeout: 30_000 })
-    await expect(page).toHaveURL(new RegExp(`programId=${CS_ISOLATED_IDS.PROGRAM_ID}`), { timeout: 60_000 })
+    await expect(page.getByText('1사1교 프로그램 등록', { exact: true })).toBeHidden({
+      timeout: 30_000,
+    })
+    await expect(page).toHaveURL(new RegExp(`programId=${CS_ISOLATED_IDS.PROGRAM_ID}`), {
+      timeout: 60_000,
+    })
     const url = new URL(page.url())
-    await expect(page.getByRole('button', { name: '정보 수정' }).first()).toBeVisible({ timeout: 45_000 })
+    await expect(page.getByRole('button', { name: '정보 수정' }).first()).toBeVisible({
+      timeout: 45_000,
+    })
     await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => undefined)
     await page.screenshot({ path: testInfo.outputPath('cs-x05-detail.png'), fullPage: true })
     const detailText = await page.locator('body').innerText()
@@ -804,7 +861,9 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     assertIsolatedNetwork(log)
   })
 
-  test('CS-X06 CREATE 실패: 중복 클릭 1건·입력 유지·재시도 가능·성공 모달 없음', async ({ page }, testInfo) => {
+  test('CS-X06 CREATE 실패: 중복 클릭 1건·입력 유지·재시도 가능·성공 모달 없음', async ({
+    page,
+  }, testInfo) => {
     test.setTimeout(300_000)
     const ev = collectEvidence(page)
     const log = await installCsIsolatedNetwork(page, { failMode: 'create' })
@@ -815,7 +874,9 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     await button.click({ timeout: 1_000, force: true }).catch(() => undefined)
     await expect.poll(() => log.createProgram, { timeout: 60_000 }).not.toBeNull()
     await page.waitForTimeout(3_000)
-    const createsAfterDouble = log.mutations.filter(m => m.method === 'POST' && m.path === '/api/admin/programs').length
+    const createsAfterDouble = log.mutations.filter(
+      m => m.method === 'POST' && m.path === '/api/admin/programs'
+    ).length
     const failDialogText = await page
       .getByRole('dialog')
       .filter({ hasText: /실패|오류/ })
@@ -829,20 +890,33 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
       .catch(() => false)
     await page.screenshot({ path: testInfo.outputPath('cs-x06-create-fail.png') })
     await dismissVisibleDialogs(page)
-    const closeBtn = page.getByRole('dialog').filter({ hasText: /실패|오류/ }).getByRole('button').first()
+    const closeBtn = page
+      .getByRole('dialog')
+      .filter({ hasText: /실패|오류/ })
+      .getByRole('button')
+      .first()
     if (await closeBtn.isVisible().catch(() => false)) await closeBtn.click().catch(() => undefined)
     await expect(page.getByText('1사1교 프로그램 등록', { exact: true })).toBeVisible()
     const appStillThere = await page.getByRole('button', { name: '프로그램 등록 완료' }).isVisible()
     await button.click()
     await expect
-      .poll(() => log.mutations.filter(m => m.method === 'POST' && m.path === '/api/admin/programs').length, {
-        timeout: 30_000,
-      })
+      .poll(
+        () =>
+          log.mutations.filter(m => m.method === 'POST' && m.path === '/api/admin/programs').length,
+        {
+          timeout: 30_000,
+        }
+      )
       .toBe(createsAfterDouble + 1)
     await page.waitForTimeout(2_000)
     await dismissVisibleDialogs(page)
-    const closeBtn2 = page.getByRole('dialog').filter({ hasText: /실패|오류/ }).getByRole('button').first()
-    if (await closeBtn2.isVisible().catch(() => false)) await closeBtn2.click().catch(() => undefined)
+    const closeBtn2 = page
+      .getByRole('dialog')
+      .filter({ hasText: /실패|오류/ })
+      .getByRole('button')
+      .first()
+    if (await closeBtn2.isVisible().catch(() => false))
+      await closeBtn2.click().catch(() => undefined)
     await ensureCommonStep(page)
     const common = await snapshotCommonSections(page)
     const draftState = await readSavedCsRecords(page)
@@ -851,19 +925,21 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
       failDialogText,
       successShown,
       appStillThere,
-      commonTitle: common['대표 프로그램명을 입력하세요#0'],
+      commonTitle: common['대표 프로그램명을 입력해 주세요#0'],
       draftState: { ...draftState, meta: undefined },
     })
     expect(createsAfterDouble, '중복 CREATE 방지').toBe(1)
     expect(successShown, '실패 시 성공 모달 없음').toBe(false)
-    expect(common['대표 프로그램명을 입력하세요#0']).toBe(VALUES_B.title)
+    expect(common['대표 프로그램명을 입력해 주세요#0']).toBe(VALUES_B.title)
     expect(log.formVersionPuts).toHaveLength(0)
     expect(new URL(page.url()).searchParams.get('programId')).toBeNull()
     assertIsolatedNetwork(log)
   })
 
   for (const mode of ['publish', 'bind', 'media'] as const) {
-    test(`CS-X07 ${mode} 실패 모드: 잘못된 성공 화면 없이 실패 안내`, async ({ page }, testInfo) => {
+    test(`CS-X07 ${mode} 실패 모드: 잘못된 성공 화면 없이 실패 안내`, async ({
+      page,
+    }, testInfo) => {
       test.setTimeout(300_000)
       const ev = collectEvidence(page)
       const log = await installCsIsolatedNetwork(page, { failMode: mode })
@@ -893,7 +969,10 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
       }
       const mediaUiText =
         mode === 'media'
-          ? await page.locator('body').innerText().then(t => (t.match(/[^\n]*(실패|오류)[^\n]*/g) ?? []).slice(0, 10))
+          ? await page
+              .locator('body')
+              .innerText()
+              .then(t => (t.match(/[^\n]*(실패|오류)[^\n]*/g) ?? []).slice(0, 10))
           : []
       await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
       await page.waitForTimeout(1_000)
@@ -901,15 +980,24 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
         await expect.poll(() => log.createProgram, { timeout: 60_000 }).not.toBeNull()
       }
       await page.waitForTimeout(8_000)
-      const dialogs = await page.getByRole('dialog').allInnerTexts().catch(() => [])
-      const partialNotice = await page.getByText('일부 양식 적용 실패').first().isVisible().catch(() => false)
+      const dialogs = await page
+        .getByRole('dialog')
+        .allInnerTexts()
+        .catch(() => [])
+      const partialNotice = await page
+        .getByText('일부 양식 적용 실패')
+        .first()
+        .isVisible()
+        .catch(() => false)
       const successShown = await page
         .getByRole('dialog')
         .filter({ hasText: '등록되었습니다.' })
         .isVisible()
         .catch(() => false)
       await page.screenshot({ path: testInfo.outputPath(`cs-x07-${mode}.png`) })
-      const creates = log.mutations.filter(m => m.method === 'POST' && m.path === '/api/admin/programs').length
+      const creates = log.mutations.filter(
+        m => m.method === 'POST' && m.path === '/api/admin/programs'
+      ).length
       const createBlob = JSON.stringify(log.createProgram?.body ?? {}).includes('blob:')
       await attachEvidence(testInfo, page, log, ev, {
         mode,

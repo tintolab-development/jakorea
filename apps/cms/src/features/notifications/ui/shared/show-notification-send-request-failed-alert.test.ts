@@ -33,7 +33,7 @@ describe('showNotificationSendErrorAlert', () => {
 
     expect(showAlert).toHaveBeenCalledWith({
       title: '안내',
-      content: '프로그램 필수 변수가 있어 프로그램을 선택하세요: 프로그램명',
+      content: '프로그램 필수 변수가 있어 프로그램을 선택해 주세요: 프로그램명',
     })
     window.dispatchEvent(new Event(CMS_ALERT_MODAL_CLOSED_EVENT))
     vi.runAllTimers()

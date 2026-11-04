@@ -26,19 +26,22 @@ interface PermissionRequestReviewModalProps {
 const actionLabels: Record<PermissionRequest['requestedAction'], string> = {
   VIEW: '조회',
   DOWNLOAD: '다운로드',
-  EDIT: '수정' }
+  EDIT: '수정',
+}
 
 const roleLabels: Record<PermissionRequest['requestedRole'], string> = {
   OWNER: '소유자',
   PARTNER: '파트너',
-  ASSISTANT: '어시스턴트' }
+  ASSISTANT: '어시스턴트',
+}
 
 export function PermissionRequestReviewModal({
   open,
   request,
   onApprove,
   onReject,
-  onCancel }: PermissionRequestReviewModalProps) {
+  onCancel,
+}: PermissionRequestReviewModalProps) {
   const [form] = Form.useForm()
   const [action, setAction] = useState<'approve' | 'reject'>('approve')
   const [submitting, setSubmitting] = useState(false)
@@ -55,8 +58,10 @@ export function PermissionRequestReviewModal({
         grantedPeriod: values.grantedPeriod
           ? {
               startDate: values.grantedPeriod[0].toISOString(),
-              endDate: values.grantedPeriod[1].toISOString() }
-          : undefined }
+              endDate: values.grantedPeriod[1].toISOString(),
+            }
+          : undefined,
+      }
 
       if (action === 'approve') {
         await onApprove(input)
@@ -88,7 +93,8 @@ export function PermissionRequestReviewModal({
         variant={action === 'reject' ? 'delete' : 'primary'}
         type="submit"
         form="permission-review-form"
-        loading={submitting} >
+        loading={submitting}
+      >
         {action === 'approve' ? '승인' : '거부'}
       </CmsButton>
     </Space>
@@ -111,13 +117,22 @@ export function PermissionRequestReviewModal({
             <DetailInfoForm.Field label="프로그램" view={request.programName} />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field label="요청 역할" view={<Tag>{roleLabels[request.requestedRole]}</Tag>} />
+            <DetailInfoForm.Field
+              label="요청 역할"
+              view={<Tag>{roleLabels[request.requestedRole]}</Tag>}
+            />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field label="요청 권한" view={<Tag>{actionLabels[request.requestedAction]}</Tag>} />
+            <DetailInfoForm.Field
+              label="요청 권한"
+              view={<Tag>{actionLabels[request.requestedAction]}</Tag>}
+            />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field label="요청 사유" view={<div style={{ whiteSpace: 'pre-wrap' }}>{request.reason}</div>} />
+            <DetailInfoForm.Field
+              label="요청 사유"
+              view={<div style={{ whiteSpace: 'pre-wrap' }}>{request.reason}</div>}
+            />
           </DetailInfoForm.Row>
           {request.requestedPeriod && (
             <DetailInfoForm.Row type="single">
@@ -133,14 +148,9 @@ export function PermissionRequestReviewModal({
         </DetailInfoForm>
       </div>
 
-      <Form
-        id="permission-review-form"
-        form={form}
-        layout="vertical"
-        onFinish={handleSubmit}
-      >
+      <Form id="permission-review-form" form={form} layout="vertical" onFinish={handleSubmit}>
         <Form.Item label="처리 결정" required>
-          <CmsRadio.Group value={action} onChange={(e) => setAction(e.target.value)}>
+          <CmsRadio.Group value={action} onChange={e => setAction(e.target.value)}>
             <CmsRadio value="approve">승인</CmsRadio>
             <CmsRadio value="reject">거부</CmsRadio>
           </CmsRadio.Group>
@@ -155,7 +165,7 @@ export function PermissionRequestReviewModal({
             <RangePicker
               style={{ width: '100%' }}
               format="YYYY-MM-DD"
-              disabledDate={(current) => current && current < dayjs().startOf('day')}
+              disabledDate={current => current && current < dayjs().startOf('day')}
             />
           </Form.Item>
         )}
@@ -166,7 +176,9 @@ export function PermissionRequestReviewModal({
         >
           <TextArea
             rows={3}
-            placeholder={action === 'approve' ? '승인 메모를 입력하세요' : '거부 사유를 입력해주세요'}
+            placeholder={
+              action === 'approve' ? '승인 메모를 입력해 주세요' : '거부 사유를 입력해주세요'
+            }
             maxLength={500}
             showCount
           />

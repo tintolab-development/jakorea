@@ -6,7 +6,7 @@ export const MAIL_TEMPLATE_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'categoryName',
     type: 'search',
     label: '카테고리명',
-    placeholder: '카테고리명을 입력하세요',
+    placeholder: '카테고리명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

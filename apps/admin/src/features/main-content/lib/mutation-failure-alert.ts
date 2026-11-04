@@ -2,7 +2,9 @@
  * 메인 콘텐츠 섹션 저장 실패 알림 매핑
  */
 
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
+  type AdminMutationAlert,
   mapCommonRemoteMutationFailure,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
@@ -10,7 +12,7 @@ import {
 export function mainContentSaveFailureAlert(
   error: unknown,
   sectionLabel: string,
-): { title: string; content: string } {
+): AdminMutationAlert {
   const common = mapCommonRemoteMutationFailure(error)
   if (common) return common
 
@@ -28,7 +30,7 @@ export function mainContentSaveFailureAlert(
     }
   }
   if (/\btitle\b/i.test(message)) {
-    return { title: '입력 확인', content: '타이틀 문구를 확인해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
 
   return {

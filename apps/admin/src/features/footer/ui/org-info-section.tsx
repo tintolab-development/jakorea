@@ -8,6 +8,7 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { FooterOrgInfo, FooterOrgInfoSaveInput } from '@/entities/footer/model/types'
 import { useFooterOrgInfo, useSaveFooterOrgInfo } from '@/features/footer/api/hooks'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   FileSelectField,
@@ -235,11 +236,11 @@ export function FooterOrgInfoSection() {
     const text = textDraftRef.current
     if (!draft || !text) return
     if (!text.name.trim()) {
-      showAlert({ title: '입력 확인', content: '기관명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!text.email.trim()) {
-      showAlert({ title: '입력 확인', content: '이메일을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     try {

@@ -135,7 +135,7 @@ export default function UjatEducationRegionsPage() {
         key: 'name',
         type: 'search',
         label: '교육 지역명',
-        placeholder: '교육 지역명을 입력하세요',
+        placeholder: '교육 지역명을 입력해 주세요',
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
     ],
@@ -392,7 +392,8 @@ export default function UjatEducationRegionsPage() {
                 onClick={e => {
                   e.stopPropagation()
                   handleDeleteRequest(record)
-                }} >
+                }}
+              >
                 삭제
               </CmsButton>
               <CmsButton
@@ -408,7 +409,8 @@ export default function UjatEducationRegionsPage() {
                     return
                   }
                   startEdit(record)
-                }} >
+                }}
+              >
                 {isEditing ? '저장' : '수정'}
               </CmsButton>
             </div>
@@ -438,7 +440,8 @@ export default function UjatEducationRegionsPage() {
       variant="secondary"
       adminAction="write"
       loading={createMutation.isPending}
-      onClick={() => setRegisterOpen(true)} >
+      onClick={() => setRegisterOpen(true)}
+    >
       교육 지역 등록
     </FilterTableToolbarButton>
   ) : null

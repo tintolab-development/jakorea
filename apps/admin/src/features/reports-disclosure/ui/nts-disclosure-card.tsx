@@ -9,7 +9,8 @@ import {
   useNtsDisclosure,
   useSaveNtsDisclosure,
 } from '@/features/reports-disclosure/api/hooks'
-import { CmsButton, CmsInput, PageContentLoading, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, PageContentLoading, useCmsAlert } from '@/shared/ui'
 
 import './nts-disclosure-card.css'
 
@@ -48,10 +49,7 @@ export function NtsDisclosureCard() {
   const handleSave = useCallback(async () => {
     const url = draftUrl.trim()
     if (!url) {
-      showAlert({
-        title: '입력 확인',
-        content: '버튼 연결 링크를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     try {

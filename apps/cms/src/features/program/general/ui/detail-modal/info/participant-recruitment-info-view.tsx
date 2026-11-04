@@ -728,7 +728,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                         value={field.value ?? []}
                         options={TARGET_LEVEL_OPTIONS}
                         onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
-                        placeholder="교육 대상을 선택하세요"
+                        placeholder="교육 대상을 선택해 주세요"
                         className="program-detail-info-tab__target-select"
                       />
                     )}
@@ -749,7 +749,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        placeholder="상세 교육 대상을 입력하세요"
+                        placeholder="상세 교육 대상을 입력해 주세요"
                         inputSize="small"
                         width="100%"
                         className="program-detail-info-tab__district-input"

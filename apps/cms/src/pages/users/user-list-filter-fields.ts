@@ -53,14 +53,14 @@ const MEMBER_ROLE_SELECT_FIELD: FilterFieldConfig = {
 }
 
 const INSTITUTION_FIELDS: FilterFieldConfig[] = [
-  searchField('기관명', '기관명을 입력하세요'),
+  searchField('기관명', '기관명을 입력해 주세요'),
   createInstitutionAddressRegionFilterField(),
   dateRangeField('등록 시기'),
 ]
 
 /** 강사 회원 — 강사명 · JA 평가 등급 · 정산 현황 · 가입 시기 */
 const INSTRUCTOR_FIELDS: FilterFieldConfig[] = [
-  searchField('강사명', '강사명을 입력하세요'),
+  searchField('강사명', '강사명을 입력해 주세요'),
   {
     key: 'jaEvaluationGrade',
     type: 'select',
@@ -81,7 +81,7 @@ const INSTRUCTOR_FIELDS: FilterFieldConfig[] = [
 ]
 
 const ADMIN_FIELDS: FilterFieldConfig[] = [
-  searchField('관리자명', '관리자명을 입력하세요'),
+  searchField('관리자명', '관리자명을 입력해 주세요'),
   {
     key: 'adminPermissionVariant',
     type: 'select',
@@ -95,7 +95,7 @@ const ADMIN_FIELDS: FilterFieldConfig[] = [
 
 /** 전체·개인 등 일반 회원 목록 (회원 유형 셀렉트 + 가입일) */
 const DEFAULT_MEMBER_FIELDS: FilterFieldConfig[] = [
-  searchField('회원명', '회원명을 입력하세요'),
+  searchField('회원명', '회원명을 입력해 주세요'),
   MEMBER_ROLE_SELECT_FIELD,
   dateRangeField('가입 시기'),
 ]

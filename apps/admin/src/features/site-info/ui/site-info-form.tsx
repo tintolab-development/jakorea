@@ -8,6 +8,7 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { SiteInfo, SiteInfoSaveInput } from '@/entities/site-info/model/types'
 import { useSaveSiteInfo } from '@/features/site-info/api/hooks'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   FileSelectField,
@@ -315,17 +316,12 @@ export function SiteInfoFormCard({ data }: Props) {
     const siteDescription = textDraftRef.current.siteDescription
     if (!siteName.trim()) {
       setNameError('사이트명을 입력해 주세요.')
-      showAlert({
-        title: '필수 항목 누락',
-        content: '사이트명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     setNameError(undefined)
     try {
-      await saveMutation.mutateAsync(
-        toSaveInput({ ...draft, siteName, siteDescription }),
-      )
+      await saveMutation.mutateAsync(toSaveInput({ ...draft, siteName, siteDescription }))
       setIsEditing(false)
     } catch (error) {
       if (error instanceof Error && error.message === 'SITE_NAME_REQUIRED') {
@@ -362,7 +358,8 @@ export function SiteInfoFormCard({ data }: Props) {
               disabled={saveMutation.isPending}
               onClick={() => {
                 void handleSave()
-              }} >
+              }}
+            >
               저장
             </CmsButton>
           ) : (
@@ -374,12 +371,7 @@ export function SiteInfoFormCard({ data }: Props) {
       </div>
 
       <div className="site-info-form-card__body">
-        <DetailInfoForm
-          title="사이트 정보"
-          hideHeader
-          mode="edit"
-          className="site-info-form"
-        >
+        <DetailInfoForm title="사이트 정보" hideHeader mode="edit" className="site-info-form">
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="사이트명"
@@ -389,7 +381,7 @@ export function SiteInfoFormCard({ data }: Props) {
                 <SiteInfoTextField
                   sourceValue={data.siteName}
                   isEditing={isEditing}
-                  placeholder="사이트명을 입력하세요"
+                  placeholder="사이트명을 입력해 주세요"
                   ariaLabel="사이트명"
                   error={nameError}
                   onDraftChange={handleSiteNameChange}
@@ -406,7 +398,7 @@ export function SiteInfoFormCard({ data }: Props) {
                 <SiteInfoTextField
                   sourceValue={data.siteDescription}
                   isEditing={isEditing}
-                  placeholder="사이트 소개글을 입력하세요"
+                  placeholder="사이트 소개글을 입력해 주세요"
                   ariaLabel="사이트 소개글"
                   onDraftChange={handleSiteDescriptionChange}
                 />
@@ -419,27 +411,27 @@ export function SiteInfoFormCard({ data }: Props) {
               view={null}
               edit={
                 isEditing ? (
-                <ImageEditField
-                  imageUrl={draft.ogImageUrl}
-                  fileName={draft.ogImageFileName ?? ''}
-                  alt="링크 공유용 이미지 미리보기"
-                  onChange={(url, fileName, file) =>
-                    updateDraft({
-                      ogImageUrl: url,
-                      ogImageFileName: fileName,
-                      ogImageFile: file,
-                      ogAssetId: undefined,
-                    })
-                  }
-                  onRemove={() =>
-                    updateDraft({
-                      ogImageUrl: '',
-                      ogImageFileName: undefined,
-                      ogImageFile: null,
-                      ogAssetId: undefined,
-                    })
-                  }
-                />
+                  <ImageEditField
+                    imageUrl={draft.ogImageUrl}
+                    fileName={draft.ogImageFileName ?? ''}
+                    alt="링크 공유용 이미지 미리보기"
+                    onChange={(url, fileName, file) =>
+                      updateDraft({
+                        ogImageUrl: url,
+                        ogImageFileName: fileName,
+                        ogImageFile: file,
+                        ogAssetId: undefined,
+                      })
+                    }
+                    onRemove={() =>
+                      updateDraft({
+                        ogImageUrl: '',
+                        ogImageFileName: undefined,
+                        ogImageFile: null,
+                        ogAssetId: undefined,
+                      })
+                    }
+                  />
                 ) : (
                   <ImageView
                     url={image.ogImageUrl}
@@ -456,28 +448,28 @@ export function SiteInfoFormCard({ data }: Props) {
               view={null}
               edit={
                 isEditing ? (
-                <ImageEditField
-                  imageUrl={draft.faviconUrl}
-                  fileName={draft.faviconFileName ?? ''}
-                  alt="브라우저탭 아이콘 미리보기"
-                  variant="favicon"
-                  onChange={(url, fileName, file) =>
-                    updateDraft({
-                      faviconUrl: url,
-                      faviconFileName: fileName,
-                      faviconFile: file,
-                      faviconAssetId: undefined,
-                    })
-                  }
-                  onRemove={() =>
-                    updateDraft({
-                      faviconUrl: '',
-                      faviconFileName: undefined,
-                      faviconFile: null,
-                      faviconAssetId: undefined,
-                    })
-                  }
-                />
+                  <ImageEditField
+                    imageUrl={draft.faviconUrl}
+                    fileName={draft.faviconFileName ?? ''}
+                    alt="브라우저탭 아이콘 미리보기"
+                    variant="favicon"
+                    onChange={(url, fileName, file) =>
+                      updateDraft({
+                        faviconUrl: url,
+                        faviconFileName: fileName,
+                        faviconFile: file,
+                        faviconAssetId: undefined,
+                      })
+                    }
+                    onRemove={() =>
+                      updateDraft({
+                        faviconUrl: '',
+                        faviconFileName: undefined,
+                        faviconFile: null,
+                        faviconAssetId: undefined,
+                      })
+                    }
+                  />
                 ) : (
                   <ImageView
                     url={image.faviconUrl}

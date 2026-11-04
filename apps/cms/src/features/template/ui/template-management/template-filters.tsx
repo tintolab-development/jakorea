@@ -45,7 +45,7 @@ export function TemplateFilters({
           key: 'query',
           type: 'search',
           label: '검색',
-          placeholder: searchPlaceholder || '검색어를 입력하세요',
+          placeholder: searchPlaceholder || '검색어를 입력해 주세요',
           defaultValue: query,
         },
         {

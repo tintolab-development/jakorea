@@ -70,7 +70,7 @@ export class UjatEducationRegionsPage {
   }
 
   async setNameFilter(name: string) {
-    const input = this.page.getByPlaceholder('교육 지역명을 입력하세요')
+    const input = this.page.getByPlaceholder('교육 지역명을 입력해 주세요')
     await expect(input).toBeVisible({ timeout: 15_000 })
     await input.fill(name)
   }
@@ -123,9 +123,7 @@ export class UjatEducationRegionsPage {
       remoteOk = postRes.ok()
       if (!remoteOk) {
         const body = await postRes.text().catch(() => '')
-        throw new Error(
-          `교육 지역 등록 API 실패: HTTP ${postRes.status()} ${body.slice(0, 300)}`
-        )
+        throw new Error(`교육 지역 등록 API 실패: HTTP ${postRes.status()} ${body.slice(0, 300)}`)
       }
     }
 
@@ -168,7 +166,9 @@ export class UjatEducationRegionsPage {
     if (await cancel.isVisible().catch(() => false)) {
       await cancel.click()
     }
-    await expect(dialog).toBeHidden({ timeout: 15_000 }).catch(() => undefined)
+    await expect(dialog)
+      .toBeHidden({ timeout: 15_000 })
+      .catch(() => undefined)
   }
 
   async editInline(
@@ -215,9 +215,7 @@ export class UjatEducationRegionsPage {
       remoteOk = patchRes.ok()
       if (!remoteOk) {
         const body = await patchRes.text().catch(() => '')
-        throw new Error(
-          `교육 지역 수정 API 실패: HTTP ${patchRes.status()} ${body.slice(0, 300)}`
-        )
+        throw new Error(`교육 지역 수정 API 실패: HTTP ${patchRes.status()} ${body.slice(0, 300)}`)
       }
     }
 
@@ -272,9 +270,7 @@ export class UjatEducationRegionsPage {
 
     const reorderWait = this.page
       .waitForResponse(
-        res =>
-          isEducationRegionsApi(res, 'PUT', /\/reorder$/) ||
-          isEducationRegionsApi(res, 'PUT'),
+        res => isEducationRegionsApi(res, 'PUT', /\/reorder$/) || isEducationRegionsApi(res, 'PUT'),
         { timeout: 30_000 }
       )
       .catch(() => null)
@@ -328,15 +324,15 @@ export class UjatEducationRegionsPage {
       remoteOk = deleteRes.ok()
       if (!remoteOk) {
         const body = await deleteRes.text().catch(() => '')
-        throw new Error(
-          `교육 지역 삭제 API 실패: HTTP ${deleteRes.status()} ${body.slice(0, 300)}`
-        )
+        throw new Error(`교육 지역 삭제 API 실패: HTTP ${deleteRes.status()} ${body.slice(0, 300)}`)
       }
     }
 
     const failAlert = this.page.getByRole('dialog').filter({ hasText: /삭제 실패|삭제 불가/ })
     if (await failAlert.isVisible().catch(() => false)) {
-      const title = (await failAlert.locator('.ant-modal-title, [class*="title"]').first().innerText()).trim()
+      const title = (
+        await failAlert.locator('.ant-modal-title, [class*="title"]').first().innerText()
+      ).trim()
       if (title.includes('삭제 불가')) {
         throw new Error('교육 지역 삭제 불가(사용 이력) — Playwright 전용 행이 아닙니다.')
       }

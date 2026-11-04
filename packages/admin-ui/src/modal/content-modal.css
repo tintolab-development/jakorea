@@ -156,26 +156,6 @@
   margin-right: auto;
 }
 
-/*
- * 카드형 모달 푸터 CmsButton — large 높이 44 (폭은 라벨 + size min-width)
- */
-.content-modal__footer-actions .cms-button.ant-btn {
-  display: inline-flex !important;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 44px !important;
-  min-height: 44px !important;
-  max-height: 44px !important;
-  padding: 6px 16px !important;
-  padding-block: 6px !important;
-  padding-inline: 16px !important;
-  gap: 6px;
-  border-radius: var(--radius-8, 8px);
-  font-size: 16px;
-  box-sizing: border-box;
-}
-
 .content-modal__footer-actions .cms-button.ant-btn.cms-button--has-icon {
   flex-direction: row;
 }

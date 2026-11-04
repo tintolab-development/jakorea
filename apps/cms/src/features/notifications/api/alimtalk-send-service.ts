@@ -147,7 +147,7 @@ export async function createAlimtalkSendBatch(input: {
 
   const programId = parseNotificationSendProgramId(input.programId)
   if (!isNotificationSendWithoutProgram(input.programId) && programId == null) {
-    throw new Error('대상 프로그램을 선택하세요.')
+    throw new Error('대상 프로그램을 선택해 주세요.')
   }
 
   const body = buildCreateSendBatchRequest({

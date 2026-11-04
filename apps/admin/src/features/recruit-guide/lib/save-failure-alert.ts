@@ -3,10 +3,12 @@
  */
 
 import {
+  type AdminMutationAlert,
   isOptimisticLockConflictError,
   readApiErrorCode,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
+import { NO_SELECTION_ALERT, REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 
 const VERSION_CONFLICT_ALERT = {
   title: '저장 실패',
@@ -38,21 +40,21 @@ export function isRecruitGuideVersionConflict(error: unknown): boolean {
 function mapRecruitGuideSaveFailureAlert(
   error: unknown,
   fallbackContent: string
-): { title: string; content: string } {
+): AdminMutationAlert {
   const code = recruitGuideErrorCode(error)
   const field = readErrorField(error)
 
   if (code === 'BANNER_IMAGE_REQUIRED') {
-    return { title: '입력 확인', content: '배너 이미지를 등록해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (code === 'BANNER_MAIN_TEXT_REQUIRED') {
-    return { title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (code === 'BANNER_SUB_TEXT_01_REQUIRED') {
-    return { title: '입력 확인', content: '서브 텍스트 01을 입력해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (code === 'BANNER_SUB_TEXT_02_REQUIRED') {
-    return { title: '입력 확인', content: '서브 텍스트 02를 입력해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (code === 'BANNER_MAIN_TEXT_TOO_LONG') {
     return { title: '입력 확인', content: '메인 텍스트는 1,000자 이내로 입력해 주세요.' }
@@ -64,10 +66,10 @@ function mapRecruitGuideSaveFailureAlert(
     return { title: '입력 확인', content: '서브 텍스트 02는 2,000자 이내로 입력해 주세요.' }
   }
   if (code === 'CULTURE_TITLE_REQUIRED') {
-    return { title: '입력 확인', content: '타이틀을 입력해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (code === 'CULTURE_DESCRIPTION_REQUIRED') {
-    return { title: '입력 확인', content: '설명 텍스트를 입력해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (code === 'CULTURE_TITLE_TOO_LONG') {
     return { title: '입력 확인', content: '조직문화 타이틀은 500자 이내로 입력해 주세요.' }
@@ -117,10 +119,10 @@ function mapRecruitGuideSaveFailureAlert(
     return { title: '수정 실패', content: '직무 인터뷰를 찾을 수 없습니다.' }
   }
   if (code === 'INTERVIEW_NONE_SELECTED') {
-    return { title: '항목 선택', content: '선택된 항목이 없습니다.' }
+    return NO_SELECTION_ALERT
   }
   if (code === 'INTERVIEW_TITLE_REQUIRED') {
-    return { title: '입력 확인', content: '게시글 제목을 입력해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (code === 'INTERVIEW_TITLE_TOO_LONG') {
     return { title: '입력 확인', content: '게시글 제목은 300자 이내로 입력해 주세요.' }
@@ -178,6 +180,6 @@ function mapRecruitGuideSaveFailureAlert(
 export function recruitGuideSaveFailureAlert(
   error: unknown,
   fallbackContent: string
-): { title: string; content: string } {
+): AdminMutationAlert {
   return mapRecruitGuideSaveFailureAlert(error, fallbackContent)
 }

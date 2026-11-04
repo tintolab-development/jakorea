@@ -3,9 +3,7 @@ import {
   SECOND_INTERVIEW_SCREENING_STATUS_LABELS,
   VOLUNTEER_ACTIVITY_WITHDRAWN_LABEL,
 } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
-import {
-  type UjatSecondInterviewScreeningStatus,
-} from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
+import { type UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
 import { getUjatVolunteerPreferredRegionLabels } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 
@@ -65,9 +63,7 @@ export const DEFAULT_UJAT_VOLUNTEER_INTERVIEW2_FILTERS: UjatVolunteerInterview2F
 
 export function buildUjatVolunteerInterview2DateOptions(rows: UjatVolunteerApplicantRow[]) {
   const dates = Array.from(
-    new Set(
-      rows.map(row => row.assignedInterviewDateLabel).filter((d): d is string => Boolean(d))
-    )
+    new Set(rows.map(row => row.assignedInterviewDateLabel).filter((d): d is string => Boolean(d)))
   ).sort()
   return [{ label: '전체', value: ALL }, ...dates.map(d => ({ label: d, value: d }))]
 }
@@ -96,7 +92,7 @@ export function buildUjatVolunteerInterview2FilterRows(
       key: 'volunteerName',
       type: 'search',
       label: '신청 봉사자명',
-      placeholder: '봉사자명을 입력하세요',
+      placeholder: '봉사자명을 입력해 주세요',
     },
     {
       key: 'preferredRegion',
@@ -108,11 +104,11 @@ export function buildUjatVolunteerInterview2FilterRows(
     ...(includeInterviewDate
       ? [
           {
-        key: 'interviewDate',
-        type: 'select',
-        label: '면접일',
-        placeholder: '전체',
-        options: dateOptions,
+            key: 'interviewDate',
+            type: 'select',
+            label: '면접일',
+            placeholder: '전체',
+            options: dateOptions,
           } satisfies FilterFieldConfig,
         ]
       : []),

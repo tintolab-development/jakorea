@@ -75,25 +75,16 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
 
   return (
     <Form form={form} layout="vertical" onFinish={handleSubmit}>
-      <Form.Item
-        name="email"
-        label="이메일"
-      >
-        <Input placeholder="이메일을 입력하세요" />
+      <Form.Item name="email" label="이메일">
+        <Input placeholder="이메일을 입력해 주세요" />
       </Form.Item>
 
-      <Form.Item
-        name="password"
-        label="비밀번호"
-      >
-        <Input.Password placeholder="비밀번호를 입력하세요" />
+      <Form.Item name="password" label="비밀번호">
+        <Input.Password placeholder="비밀번호를 입력해 주세요" />
       </Form.Item>
 
-      <Form.Item
-        name="name"
-        label="이름"
-      >
-        <Input placeholder="이름을 입력하세요" />
+      <Form.Item name="name" label="이름">
+        <Input placeholder="이름을 입력해 주세요" />
       </Form.Item>
 
       <Form.Item
@@ -111,10 +102,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
         <CmsPhoneInput placeholder="010-1234-5678" />
       </Form.Item>
 
-      <Form.Item
-        name="role"
-        label="권한"
-      >
+      <Form.Item name="role" label="권한">
         <Select placeholder="권한 선택">
           {roleOptions.map(role => (
             <Option key={role} value={role}>
@@ -126,10 +114,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
 
       {selectedRole === 'ADMIN' && (
         <>
-          <Form.Item
-            name="adminLevel"
-            label="관리자 권한 레벨"
-          >
+          <Form.Item name="adminLevel" label="관리자 권한 레벨">
             <Select placeholder="관리자 권한 레벨 선택">
               {adminLevelOptions.map(adminLevel => (
                 <Option key={adminLevel} value={adminLevel}>
@@ -138,10 +123,7 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
               ))}
             </Select>
           </Form.Item>
-          <Form.Item
-            name="programRole"
-            label="프로그램 역할"
-          >
+          <Form.Item name="programRole" label="프로그램 역할">
             <Select placeholder="프로그램 역할 선택">
               {programRoleOptions.map(programRole => (
                 <Option key={programRole} value={programRole}>
@@ -155,17 +137,14 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
 
       {selectedRole === 'SCHOOL' && (
         <>
-          <Form.Item
-            name="schoolName"
-            label="학교명"
-          >
-            <Input placeholder="학교명을 입력하세요" />
+          <Form.Item name="schoolName" label="학교명">
+            <Input placeholder="학교명을 입력해 주세요" />
           </Form.Item>
           <Form.Item name="schoolAddress" label="주소">
-            <Input placeholder="주소를 입력하세요" />
+            <Input placeholder="주소를 입력해 주세요" />
           </Form.Item>
           <Form.Item name="position" label="담당자 직책">
-            <Input placeholder="담당자 직책을 입력하세요" />
+            <Input placeholder="담당자 직책을 입력해 주세요" />
           </Form.Item>
         </>
       )}
@@ -173,13 +152,13 @@ export function UserCreateForm({ onSubmit, onCancel, loading = false }: UserCrea
       {selectedRole === 'INSTRUCTOR' && (
         <>
           <Form.Item name="bankName" label="은행명">
-            <Input placeholder="은행명을 입력하세요" />
+            <Input placeholder="은행명을 입력해 주세요" />
           </Form.Item>
           <Form.Item name="accountNumber" label="계좌번호" trigger="onValueChange">
-            <CmsNumericInput mode="numericText" placeholder="계좌번호를 입력하세요" />
+            <CmsNumericInput mode="numericText" placeholder="계좌번호를 입력해 주세요" />
           </Form.Item>
           <Form.Item name="accountHolder" label="예금주">
-            <Input placeholder="예금주를 입력하세요" />
+            <Input placeholder="예금주를 입력해 주세요" />
           </Form.Item>
           <Form.Item name="isBusinessIncome" label="사업소득자" valuePropName="checked">
             <Switch />

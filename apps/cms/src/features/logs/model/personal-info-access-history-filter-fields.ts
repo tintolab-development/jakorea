@@ -9,14 +9,14 @@ export const personalInfoAccessHistoryFilterFields: FilterFieldConfig[] = [
     key: 'targetName',
     type: 'search',
     label: '조회 대상자명',
-    placeholder: '조회 대상자명을 입력하세요',
+    placeholder: '조회 대상자명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'accessPurpose',
     type: 'search',
     label: '조회 목적',
-    placeholder: '조회 목적을 입력하세요',
+    placeholder: '조회 목적을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -24,7 +24,7 @@ export const personalInfoAccessHistoryFilterFields: FilterFieldConfig[] = [
     type: 'search',
     // 시안: 조회자명 / 노션: 조회자 — 시안 우선
     label: '조회자명',
-    placeholder: '조회자명을 입력하세요',
+    placeholder: '조회자명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

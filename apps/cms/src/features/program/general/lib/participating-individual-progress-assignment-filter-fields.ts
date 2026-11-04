@@ -41,14 +41,14 @@ export function buildParticipatingIndividualProgressAssignmentFilterFields(
       key: 'participantName',
       type: 'search',
       label: '참여자명',
-      placeholder: '참여자명을 입력하세요',
+      placeholder: '참여자명을 입력해 주세요',
       width: FILTER_CONTROL_WIDTH,
     },
     {
       key: 'affiliation',
       type: 'search',
       label: '소속',
-      placeholder: '소속을 입력하세요',
+      placeholder: '소속을 입력해 주세요',
       width: FILTER_CONTROL_WIDTH,
     },
     {

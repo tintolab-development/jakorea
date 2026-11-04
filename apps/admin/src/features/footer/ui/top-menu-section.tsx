@@ -54,7 +54,7 @@ const FooterLinkField = memo(function FooterLinkField({
         setLocalValue(next)
         onDraftChange(next)
       }}
-      placeholder="연결 링크를 입력하세요"
+      placeholder="연결 링크를 입력해 주세요"
       aria-label={ariaLabel}
     />
   )
@@ -188,13 +188,9 @@ export function FooterTopMenuSection() {
           }
           if (record.isInternal) {
             const url = record.linkUrl.trim()
-            return (
-              <span title={url || undefined}>{url || INTERNAL_LINK_LABEL}</span>
-            )
+            return <span title={url || undefined}>{url || INTERNAL_LINK_LABEL}</span>
           }
-          return (
-            <span title={record.linkUrl || undefined}>{record.linkUrl || '-'}</span>
-          )
+          return <span title={record.linkUrl || undefined}>{record.linkUrl || '-'}</span>
         },
       },
     ],
@@ -218,7 +214,8 @@ export function FooterTopMenuSection() {
                 size="h40"
                 type="button"
                 onClick={handleCancelEdit}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -228,7 +225,8 @@ export function FooterTopMenuSection() {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
@@ -238,7 +236,8 @@ export function FooterTopMenuSection() {
               size="h40"
               type="button"
               onClick={handleStartEdit}
-              disabled={listQuery.isLoading || rows.length === 0} >
+              disabled={listQuery.isLoading || rows.length === 0}
+            >
               수정
             </CmsButton>
           )}

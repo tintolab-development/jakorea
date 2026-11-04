@@ -5,7 +5,12 @@ import type { EducationSection } from '@/entities/main-content/model/types'
 import { useSaveEducationSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsInput,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 type Props = {
   data: EducationSection
@@ -28,9 +33,14 @@ export function EducationSectionCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    if (!draft.title.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '교육 프로그램'))
     }
@@ -62,7 +72,7 @@ export function EducationSectionCard({ data }: Props) {
                 width="100%"
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 텍스트를 입력하세요"
+                placeholder="타이틀 텍스트를 입력해 주세요"
               />
             }
           />

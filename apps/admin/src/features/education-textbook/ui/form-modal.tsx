@@ -26,6 +26,7 @@ import {
   RichTextViewer,
 } from '@/shared/rich-text'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsRadio,
@@ -255,7 +256,7 @@ function TextbookFormBody({
   } = useNoticeWysiwygEditor(editorEnabled, initialMarkdown, editorResetKey, {
     contentFormat: editorContentFormat,
     allowInlineMedia: true,
-    placeholder: '단원 소개 내용을 입력하세요',
+    placeholder: '단원 소개 내용을 입력해 주세요',
   })
 
   const resetFromInitial = useCallback(() => {
@@ -298,16 +299,10 @@ function TextbookFormBody({
   }, [open, resetFromInitial])
 
   const activeFieldOptions = useMemo(() => {
-    const available =
-      mode === 'create'
-        ? businessFields.filter(f => f.isActive)
-        : businessFields
+    const available = mode === 'create' ? businessFields.filter(f => f.isActive) : businessFields
     // 상세/수정 시 현재 선택 분야가 미사용이어도 옵션에 유지
     const options = available.map(f => ({ value: f.id, label: f.name }))
-    if (
-      businessFieldId &&
-      !options.some(o => o.value === businessFieldId)
-    ) {
+    if (businessFieldId && !options.some(o => o.value === businessFieldId)) {
       const current = businessFields.find(f => f.id === businessFieldId)
       if (current) {
         options.unshift({ value: current.id, label: current.name })
@@ -372,23 +367,23 @@ function TextbookFormBody({
 
   const handleSubmit = useCallback(() => {
     if (!businessFieldId) {
-      showAlert({ title: '입력 확인', content: '사업분야를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (educationTargetIds.length === 0) {
-      showAlert({ title: '입력 확인', content: '교육 대상을 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!educationEffect.trim()) {
-      showAlert({ title: '입력 확인', content: '교육 효과를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!title.trim()) {
-      showAlert({ title: '입력 확인', content: '교재명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!description.trim()) {
-      showAlert({ title: '입력 확인', content: '교재 설명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const unitIntroMarkdown = canEdit ? getHTML().trim() : (initial?.unitIntroMarkdown ?? '')
@@ -405,11 +400,11 @@ function TextbookFormBody({
     }
     const units = Number(unitCount)
     if (!Number.isFinite(units) || units <= 0) {
-      showAlert({ title: '입력 확인', content: '총 단원 수를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!unitSessionText.trim()) {
-      showAlert({ title: '입력 확인', content: '교육 차시 설명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
 
@@ -450,8 +445,7 @@ function TextbookFormBody({
     unitSessionText,
   ])
 
-  const modalTitle =
-    mode === 'create' ? '교재 등록' : mode === 'edit' ? '교재 수정' : '교재 상세'
+  const modalTitle = mode === 'create' ? '교재 등록' : mode === 'edit' ? '교재 수정' : '교재 상세'
 
   const footer = (
     <>
@@ -465,7 +459,7 @@ function TextbookFormBody({
           disabled={confirmLoading || deleteLoading}
           onClick={() => setDeleteConfirmOpen(true)}
         >
-          삭제
+          교재 삭제
         </CmsButton>
       ) : null}
       <CmsButton
@@ -496,7 +490,7 @@ function TextbookFormBody({
           disabled={confirmLoading || deleteLoading}
           onClick={handleSubmit}
         >
-          {isCreate ? '등록' : '저장'}
+          {isCreate ? '교재 등록' : '저장'}
         </CmsButton>
       )}
     </>
@@ -510,24 +504,20 @@ function TextbookFormBody({
         }
       : null
 
-  const unitIntroContent =
-    mode === 'view' ? (initial?.unitIntroMarkdown ?? '').trim() : ''
+  const unitIntroContent = mode === 'view' ? (initial?.unitIntroMarkdown ?? '').trim() : ''
   const unitIntroItems = useMemo(
     () => (isView ? parseTextbookUnitIntros(unitIntroContent) : []),
     [isView, unitIntroContent]
   )
 
-  const fieldLabel = businessFieldId
-    ? (fieldNameById.get(businessFieldId) ?? '-')
-    : '-'
+  const fieldLabel = businessFieldId ? (fieldNameById.get(businessFieldId) ?? '-') : '-'
   const targetsLabel =
     educationTargetIds.length > 0
       ? educationTargetIds.map(id => targetNameById.get(id) ?? id).join(', ')
       : '-'
 
   const previewUrl = thumbnailUrl || (isView ? DEFAULT_TEXTBOOK_THUMBNAIL : '')
-  const thumbFileLabel =
-    thumbnailFileName?.trim() || (previewUrl ? '기본 썸네일' : '-')
+  const thumbFileLabel = thumbnailFileName?.trim() || (previewUrl ? '기본 썸네일' : '-')
 
   return (
     <>
@@ -645,9 +635,7 @@ function TextbookFormBody({
                       value={educationTargetIds}
                       options={targetOptions}
                       onChange={value =>
-                        setEducationTargetIds(
-                          (Array.isArray(value) ? value : [value]).map(String)
-                        )
+                        setEducationTargetIds((Array.isArray(value) ? value : [value]).map(String))
                       }
                     />
                   }
@@ -790,9 +778,7 @@ function TextbookFormBody({
                         onChange={e => setUnitCount(e.target.value.replace(/[^\d]/g, ''))}
                         aria-label="총 단원 수"
                       />
-                      <span className="education-textbook-form-modal__session-suffix">
-                        단원
-                      </span>
+                      <span className="education-textbook-form-modal__session-suffix">단원</span>
                       <DetailInfoForm.TdDivider />
                       <CmsInput
                         className="education-textbook-form-modal__session-text"
@@ -905,9 +891,7 @@ export function EducationTextbookFormModal({
    * create / 다른 교재 id 전환 시에만 리셋.
    */
   const formKey =
-    mode === 'create'
-      ? 'textbook-form-create'
-      : `textbook-form-${initial?.id ?? 'unknown'}`
+    mode === 'create' ? 'textbook-form-create' : `textbook-form-${initial?.id ?? 'unknown'}`
 
   return (
     <TextbookFormBody

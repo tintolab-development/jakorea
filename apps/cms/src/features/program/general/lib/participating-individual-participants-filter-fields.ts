@@ -20,7 +20,7 @@ export const participatingIndividualParticipantsFilterFields: FilterFieldConfig[
     key: 'participantName',
     type: 'search',
     label: '참여자명',
-    placeholder: '참여자명을 입력하세요',
+    placeholder: '참여자명을 입력해 주세요',
     width: FILTER_CONTROL_WIDTH,
   },
   {

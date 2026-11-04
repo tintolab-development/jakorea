@@ -94,7 +94,7 @@ export function InstructorListPage() {
         key: 'search',
         type: 'search' as const,
         label: '이름/이메일/전문분야',
-        placeholder: '이름, 이메일, 전문분야를 입력하세요',
+        placeholder: '이름, 이메일, 전문분야를 입력해 주세요',
       },
       {
         key: 'region',
@@ -130,9 +130,7 @@ export function InstructorListPage() {
 
   const instructorListTablePageConfig = useMemo(() => createInstructorListTablePageConfig(), [])
 
-  const { pendingFilters, handleFilterChange, applySearch,
-    hasActiveFilters,
-  } = useTablePage(
+  const { pendingFilters, handleFilterChange, applySearch, hasActiveFilters } = useTablePage(
     instructorListTablePageConfig,
     {
       data: filteredInstructors,
@@ -188,9 +186,9 @@ export function InstructorListPage() {
     try {
       if (editingInstructor && editingInstructor.id) {
         await updateInstructor(editingInstructor.id, data)
-        } else {
+      } else {
         await createInstructor(data)
-        }
+      }
       closeFormModal()
       fetchInstructors()
     } catch (error) {

@@ -24,7 +24,7 @@ import {
   deleteConfirmContent,
   deleteFailureAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
-import { HistoryFormModal } from '@/features/history-awards-certs/ui/history-form-modal'
+import { HistoryFormModal } from '@/features/history-awards-certs/ui/form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -55,7 +55,10 @@ import {
   ConfirmModal,
   useCmsAlert,
   FilterTableLayout,
+  NO_SELECTION_ALERT,
   showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
 } from '@/shared/ui'
 
 const YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => {
@@ -169,6 +172,7 @@ export function HistoryPanel() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<HistoryPendingFilters, HistoryListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -270,8 +274,10 @@ export function HistoryPanel() {
       try {
         if (formVariant === 'edit' && editing) {
           await updateMutation.mutateAsync({ id: editing.id, input: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
@@ -303,7 +309,7 @@ export function HistoryPanel() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({ title: '선택 항목 없음', content: '삭제할 연혁을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -391,6 +397,7 @@ export function HistoryPanel() {
   return (
     <div className="hac-panel">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -442,7 +449,7 @@ export function HistoryPanel() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="검색어를 입력하세요"
+                placeholder="검색어를 입력해 주세요"
                 value={pendingFilters.content}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
                 onPressEnter={handleSearch}

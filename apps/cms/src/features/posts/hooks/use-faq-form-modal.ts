@@ -6,15 +6,9 @@ import { getApiErrorField } from '@/shared/lib/extract-api-error-message'
 import { useFaqCategoriesQuery } from '@/features/posts/hooks/use-faq-categories-query'
 import { useFaqMutations } from '@/features/posts/hooks/use-faq-mutations'
 import { useNoticeWysiwygEditor } from '@/features/posts/hooks/use-notice-wysiwyg-editor'
-import type {
-  FaqFormFieldValues,
-  FaqFormModalProps,
-} from '@/features/posts/model/faq-form-types'
+import type { FaqFormFieldValues, FaqFormModalProps } from '@/features/posts/model/faq-form-types'
 import { useAuthStore } from '@/features/auth/model/auth-store'
-import {
-  faqInlineImageOwner,
-  type AdminFileUploadOwner,
-} from '@/shared/lib/admin-file-upload'
+import { faqInlineImageOwner, type AdminFileUploadOwner } from '@/shared/lib/admin-file-upload'
 import { parseOwnerResourceId } from '@/shared/lib/admin-file-upload/attachments'
 import type { Editor } from '@/shared/rich-text'
 import {
@@ -70,7 +64,7 @@ export function useFaqFormModal({
     open && isEdit && faq ? (faq.answer ?? '') : '',
     editorResetKey,
     {
-      placeholder: 'FAQ 내용을 입력하세요',
+      placeholder: 'FAQ 내용을 입력해 주세요',
       fileUploadOwner,
     }
   )

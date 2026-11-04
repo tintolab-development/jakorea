@@ -25,7 +25,7 @@ type PhilosophyCardNestedTableProps = {
   editing: boolean
   ariaLabel: string
   onChange: (
-    patch: Partial<Pick<JaHistoryPhilosophyCard, 'title' | 'description' | 'image'>>,
+    patch: Partial<Pick<JaHistoryPhilosophyCard, 'title' | 'description' | 'image'>>
   ) => void
 }
 
@@ -68,7 +68,7 @@ export function PhilosophyCardNestedTable({
         })
       }
     },
-    [card.image, onChange, showAlert],
+    [card.image, onChange, showAlert]
   )
 
   return (
@@ -111,7 +111,7 @@ export function PhilosophyCardNestedTable({
             value={card.title}
             rows={1}
             label={`${ariaLabel} 타이틀`}
-            placeholder="타이틀을 입력하세요"
+            placeholder="타이틀을 입력해 주세요"
             onChange={title => onChange({ title })}
           />
         </div>
@@ -124,7 +124,7 @@ export function PhilosophyCardNestedTable({
             value={card.description}
             rows={2}
             label={`${ariaLabel} 텍스트`}
-            placeholder="텍스트를 입력하세요"
+            placeholder="텍스트를 입력해 주세요"
             onChange={description => onChange({ description })}
           />
         </div>

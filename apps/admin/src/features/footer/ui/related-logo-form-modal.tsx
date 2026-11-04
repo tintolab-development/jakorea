@@ -184,7 +184,8 @@ export function RelatedLogoFormModal({
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -193,7 +194,8 @@ export function RelatedLogoFormModal({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             저장
           </CmsButton>
         </>
@@ -234,7 +236,7 @@ export function RelatedLogoFormModal({
                 inputSize="large"
                 width="100%"
                 value={name}
-                placeholder="기관명을 입력하세요"
+                placeholder="기관명을 입력해 주세요"
                 onChange={e => setName(e.target.value)}
               />
             }
@@ -247,11 +249,7 @@ export function RelatedLogoFormModal({
             edit={
               <div className="footer-related-logo-form-modal__image-row">
                 <div className="footer-related-logo-form-modal__preview">
-                  {logoUrl ? (
-                    <img src={logoUrl} alt="로고 미리보기" />
-                  ) : (
-                    <ImagePlaceholderIcon />
-                  )}
+                  {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
                 </div>
                 <FileSelectField
                   className="footer-related-logo-form-modal__file-field"

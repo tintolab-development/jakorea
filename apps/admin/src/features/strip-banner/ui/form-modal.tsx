@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsPeriodDatePicker,
@@ -14,10 +15,7 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import type { StripBanner, StripBannerCreateInput } from '@/entities/strip-banner/model/types'
-import {
-  HTTP_LINK_URL_FORMAT_ALERT,
-  isValidHttpLinkUrl,
-} from '@/shared/lib/http-link-url'
+import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '@/shared/lib/http-link-url'
 import { formatDateDot } from '@/shared/lib/format-display'
 import {
   buildPublishPeriodExpiredAlert,
@@ -78,17 +76,13 @@ function StripBannerFormBody({
   onDelete,
 }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
-  const [formMode, setFormMode] = useState<'view' | 'edit'>(
-    variant === 'create' ? 'edit' : 'view'
-  )
+  const [formMode, setFormMode] = useState<'view' | 'edit'>(variant === 'create' ? 'edit' : 'view')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const [isActive, setIsActive] = useState(() =>
     variant === 'detail' && initial ? initial.isActive : true
   )
-  const [text, setText] = useState(() =>
-    variant === 'detail' && initial ? initial.text : ''
-  )
+  const [text, setText] = useState(() => (variant === 'detail' && initial ? initial.text : ''))
   const [periodRange, setPeriodRange] = useState<[Dayjs | null, Dayjs | null]>(() => {
     if (variant === 'detail' && initial) {
       return [
@@ -114,10 +108,7 @@ function StripBannerFormBody({
   const validateAndBuild = useCallback((): StripBannerFormValues | null => {
     const trimmed = text.trim()
     if (!trimmed) {
-      showAlert({
-        title: '배너 텍스트 필수',
-        content: '배너 텍스트를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (trimmed.length > TEXT_MAX_LENGTH) {
@@ -130,10 +121,7 @@ function StripBannerFormBody({
     const start = periodRange[0]
     const end = periodRange[1]
     if (!start || !end) {
-      showAlert({
-        title: '게시 기간 필수',
-        content: '게시 기간을 선택해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (isActive && isPublishPeriodExpired(end)) {
@@ -141,10 +129,7 @@ function StripBannerFormBody({
       return null
     }
     if (linkEnabled && !linkUrl.trim()) {
-      showAlert({
-        title: '연결 링크 필수',
-        content: '연결 링크를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     const trimmedLinkUrl = linkEnabled ? linkUrl.trim() : ''
@@ -202,7 +187,8 @@ function StripBannerFormBody({
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
                 disabled={confirmLoading || deleteLoading}
-                loading={deleteLoading} >
+                loading={deleteLoading}
+              >
                 배너 삭제
               </CmsButton>
             ) : null}
@@ -211,7 +197,8 @@ function StripBannerFormBody({
               size="h40"
               type="button"
               onClick={onCancel}
-              disabled={confirmLoading || deleteLoading} >
+              disabled={confirmLoading || deleteLoading}
+            >
               취소
             </CmsButton>
             <CmsButton
@@ -220,7 +207,8 @@ function StripBannerFormBody({
               type="button"
               loading={confirmLoading}
               disabled={confirmLoading || deleteLoading}
-              onClick={handlePrimaryAction} >
+              onClick={handlePrimaryAction}
+            >
               {primaryLabel}
             </CmsButton>
           </>
@@ -412,9 +400,7 @@ export function StripBannerFormModal({
   if (!open) return null
 
   const formKey =
-    variant === 'detail'
-      ? `detail-${initial?.id ?? 'unknown'}`
-      : `create-${String(open)}`
+    variant === 'detail' ? `detail-${initial?.id ?? 'unknown'}` : `create-${String(open)}`
 
   return (
     <StripBannerFormBody

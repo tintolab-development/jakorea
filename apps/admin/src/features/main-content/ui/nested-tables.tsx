@@ -145,7 +145,7 @@ export function CtaNestedTable({
                   width="100%"
                   value={row.data.label}
                   onChange={e => row.onChange({ label: e.target.value })}
-                  placeholder="버튼명을 입력하세요"
+                  placeholder="버튼명을 입력해 주세요"
                 />
               ) : (
                 <span>{row.data.label || '-'}</span>
@@ -161,7 +161,7 @@ export function CtaNestedTable({
                   width="100%"
                   value={row.data.linkUrl}
                   onChange={e => row.onChange({ linkUrl: e.target.value })}
-                  placeholder="연결 링크를 입력하세요"
+                  placeholder="연결 링크를 입력해 주세요"
                 />
               ) : (
                 <span className="main-content-nested-table__url">{row.data.linkUrl || '-'}</span>

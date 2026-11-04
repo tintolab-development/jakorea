@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react'
+
 export type CmsAlertModalShowOptions = {
   title: string
-  content: string
+  content: ReactNode
   width?: number
   confirmLabel?: string
   zIndex?: number

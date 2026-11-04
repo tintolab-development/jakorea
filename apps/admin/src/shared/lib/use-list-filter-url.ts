@@ -27,6 +27,23 @@ export type UseListFilterUrlOptions<
   afterApplyParams?: (nextParams: URLSearchParams, filters: TPending) => void
 }
 
+const APPLIED_FILTER_SKIP_KEYS = new Set(['page', 'size', 'sort', 'order'])
+
+function isListFilterApplied(applied: unknown): boolean {
+  if (applied == null) return false
+  if (typeof applied === 'boolean') return true
+  if (typeof applied === 'number') return true
+  if (typeof applied === 'string') return applied.trim().length > 0
+  if (Array.isArray(applied)) return applied.length > 0
+  if (typeof applied === 'object') {
+    for (const [key, value] of Object.entries(applied as Record<string, unknown>)) {
+      if (APPLIED_FILTER_SKIP_KEYS.has(key)) continue
+      if (isListFilterApplied(value)) return true
+    }
+  }
+  return false
+}
+
 export type UseListFilterUrlReturn<TPending extends Record<string, unknown>, TApplied> = {
   searchParams: URLSearchParams
   setSearchParams: TableSearchSetSearchParams
@@ -42,6 +59,8 @@ export type UseListFilterUrlReturn<TPending extends Record<string, unknown>, TAp
   applySearch: () => void
   /** 정렬 등 즉시 URL 부분 패치 (replace) */
   patchSearchParams: (mutator: (next: URLSearchParams) => void) => void
+  /** 조회 적용된 필터가 있으면 true — CmsDataTable empty variant */
+  hasActiveFilters: boolean
 }
 
 export function useListFilterUrl<TPending extends Record<string, unknown>, TApplied>(
@@ -105,6 +124,8 @@ export function useListFilterUrl<TPending extends Record<string, unknown>, TAppl
     [parseApplied, searchParamsKey]
   )
 
+  const hasActiveFilters = useMemo(() => isListFilterApplied(applied), [applied])
+
   const { applySearch } = useTableSearch({
     filtersRef: pendingFiltersRef,
     setSearchParams,
@@ -132,5 +153,6 @@ export function useListFilterUrl<TPending extends Record<string, unknown>, TAppl
     applied,
     applySearch,
     patchSearchParams,
+    hasActiveFilters,
   }
 }

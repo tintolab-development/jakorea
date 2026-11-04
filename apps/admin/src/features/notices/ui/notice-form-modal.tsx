@@ -12,6 +12,7 @@ import { DEFAULT_AUTHOR } from '@/features/notices/api/store'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
 import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
   CmsInput,
@@ -205,7 +206,7 @@ export function NoticeFormModal({
 
   const handleSubmit = useCallback(() => {
     if (!publishedAt || !publishedAt.isValid()) {
-      showAlert({ title: '입력 확인', content: '게시일시를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const m = publishedAt.minute()
@@ -218,12 +219,12 @@ export function NoticeFormModal({
     }
     const t = title.trim()
     if (!t) {
-      showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const contentHtml = getHTML().trim()
     if (isEmptyAdminHtml(contentHtml)) {
-      showAlert({ title: '입력 확인', content: '공지사항 내용을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const bodyError = getRemoteRichTextBodyError(contentHtml)

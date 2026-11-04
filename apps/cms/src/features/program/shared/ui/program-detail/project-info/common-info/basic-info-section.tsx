@@ -7,7 +7,6 @@
  * - 수정 모드: react-hook-form Controller, 기존 프로그램 값이 default로 채워짐
  */
 
-
 import { useEffect, useMemo } from 'react'
 import { CmsRadio } from '@/shared/ui/cms-radio'
 import { CmsInput } from '@/shared/ui/cms-input'
@@ -215,15 +214,13 @@ function formatCompanySchoolSurveyItems(program: Program): string {
 
 function formatCompanySchoolVenue(program: Program): string {
   const kind = resolveVenueKind(program)
-  const kindLabel =
-    kind === 'outside' ? '기관 밖' : kind === 'other' ? '기타(직접입력)' : '기관 안'
+  const kindLabel = kind === 'outside' ? '기관 밖' : kind === 'other' ? '기타(직접입력)' : '기관 안'
   if (isTrainedTeachersProgram(program)) {
     const venueName = program.venue?.trim() || '-'
     const venueDetail = program.generalCommonInfo?.venueDetail?.trim() || '-'
     return `${kindLabel} | ${venueName} | ${venueDetail}`
   }
-  const detail =
-    program.generalCommonInfo?.venueDetail?.trim() || program.venue?.trim() || '-'
+  const detail = program.generalCommonInfo?.venueDetail?.trim() || program.venue?.trim() || '-'
   return `${kindLabel} | ${detail}`
 }
 
@@ -250,16 +247,17 @@ export function BasicInfoSection({
   useDetailedProgramSelect = false,
   hideFormTitles = false,
   hideEducationPlace = false,
-  announcementTitlePlaceholder = '공고용 프로그램명을 입력하세요',
+  announcementTitlePlaceholder = '공고용 프로그램명을 입력해 주세요',
 }: BasicInfoSectionProps) {
   const isFormEdit = isEditMode && form
   const companySchoolLayout = forceCompanySchoolLayout || isCompanySchoolProgram(program)
   /** 1사1교만. 교육받은 교사는 hideIpsTypeField / fixedParticipantTypeLabel 로 구분 */
-  const isEconomyCommonInfo =
-    companySchoolLayout && !hideIpsTypeField && !fixedParticipantTypeLabel
+  const isEconomyCommonInfo = companySchoolLayout && !hideIpsTypeField && !fixedParticipantTypeLabel
   const enableEconomyTitleEn = enableTitleEnEdit || isEconomyCommonInfo
   const enableEconomyDetailedProgramSelect = useDetailedProgramSelect || isEconomyCommonInfo
-  const { options: sponsorOptions } = useSponsorSelectOptions(Boolean(isFormEdit || program.sponsorId))
+  const { options: sponsorOptions } = useSponsorSelectOptions(
+    Boolean(isFormEdit || program.sponsorId)
+  )
   const { options: detailedProgramOptions } = useDetailedProgramSelectOptions(
     Boolean(isFormEdit && enableEconomyDetailedProgramSelect)
   )
@@ -288,10 +286,7 @@ export function BasicInfoSection({
       const detailName = sponsorEditContext.sponsors.find(row => row.id === id)?.name?.trim()
       options.push({
         value: id,
-        label:
-          detailName ||
-          (sponsorManagementIds.length === 1 ? sponsorName?.trim() : '') ||
-          id,
+        label: detailName || (sponsorManagementIds.length === 1 ? sponsorName?.trim() : '') || id,
       })
     }
     return options
@@ -333,11 +328,7 @@ export function BasicInfoSection({
       name: '',
       phone: '',
     })
-  }, [
-    selectedSponsorManagementRows,
-    sponsorEditContext.contactsBySponsorId,
-    sponsorManagementIds,
-  ])
+  }, [selectedSponsorManagementRows, sponsorEditContext.contactsBySponsorId, sponsorManagementIds])
 
   // 담당자 옵션 로드 후 — API/저장된 contactId[] 우선. 이름·전화로 강제 선택 금지
   useEffect(() => {
@@ -346,9 +337,7 @@ export function BasicInfoSection({
 
     const optionValues = new Set(sponsorManagerOptions.map(o => o.value))
     // contacts API 가 [] 로 성공해도 "로드됨"으로 본다 (무효 ref 정리)
-    const loadedSponsorIds = new Set(
-      Object.keys(sponsorEditContext.contactsBySponsorId)
-    )
+    const loadedSponsorIds = new Set(Object.keys(sponsorEditContext.contactsBySponsorId))
     const currentIds = normalizeSponsorManagerContactIds({
       ids: form.getValues('sponsorManagerContactIds'),
       id: form.getValues('sponsorManagerContactId'),
@@ -362,7 +351,10 @@ export function BasicInfoSection({
     })
 
     if (validIds.length > 0) {
-      if (validIds.length !== currentIds.length || validIds.some((id, index) => id !== currentIds[index])) {
+      if (
+        validIds.length !== currentIds.length ||
+        validIds.some((id, index) => id !== currentIds[index])
+      ) {
         form.setValue('sponsorManagerContactIds', validIds, { shouldDirty: false })
       }
       form.setValue('sponsorManagerContactId', validIds[0], { shouldDirty: false })
@@ -523,10 +515,11 @@ export function BasicInfoSection({
                   name="mainTitle"
                   control={commonInfoForm.control}
                   render={({ field }) => (
-                    <CmsInput inputSize="small"
+                    <CmsInput
+                      inputSize="small"
                       {...field}
                       value={field.value ?? ''}
-                      placeholder="대표 프로그램명을 입력하세요"
+                      placeholder="대표 프로그램명을 입력해 주세요"
                       width="100%"
                     />
                   )}
@@ -542,10 +535,11 @@ export function BasicInfoSection({
                     name="titleEn"
                     control={commonInfoForm.control}
                     render={({ field }) => (
-                      <CmsInput inputSize="small"
+                      <CmsInput
+                        inputSize="small"
                         {...field}
                         value={field.value ?? ''}
-                        placeholder="대표 프로그램명을 입력하세요"
+                        placeholder="대표 프로그램명을 입력해 주세요"
                         width="100%"
                       />
                     )}
@@ -563,7 +557,8 @@ export function BasicInfoSection({
                   name="announcementTitle"
                   control={commonInfoForm.control}
                   render={({ field }) => (
-                    <CmsInput inputSize="small"
+                    <CmsInput
+                      inputSize="small"
                       {...field}
                       value={field.value ?? ''}
                       placeholder={announcementTitlePlaceholder}
@@ -582,12 +577,11 @@ export function BasicInfoSection({
                     name="detailedProgramId"
                     control={commonInfoForm.control}
                     render={({ field }) => {
-                      const savedDetailedName = (
+                      const savedDetailedName =
                         commonInfoForm.watch('detailedProgramName')?.trim() ||
                         (detailedProgramName && detailedProgramName !== '-'
                           ? detailedProgramName.trim()
                           : '')
-                      )
                       const byName = detailedProgramOptions.find(o => o.label === savedDetailedName)
                       const savedDetailedValue = savedDetailedName
                         ? `__saved_detailed__:${savedDetailedName}`
@@ -614,9 +608,10 @@ export function BasicInfoSection({
                         byName?.value ||
                         (savedDetailedName ? savedDetailedValue : undefined)
                       return (
-                        <CmsSelect inputSize="small"
+                        <CmsSelect
+                          inputSize="small"
                           withAllOption={false}
-                          placeholder="세부 프로그램명을 선택하세요"
+                          placeholder="세부 프로그램명을 선택해 주세요"
                           width="100%"
                           showSearch
                           optionFilterProp="label"
@@ -643,10 +638,11 @@ export function BasicInfoSection({
                     name="detailedProgramName"
                     control={commonInfoForm.control}
                     render={({ field }) => (
-                      <CmsInput inputSize="small"
+                      <CmsInput
+                        inputSize="small"
                         {...field}
                         value={field.value ?? ''}
-                        placeholder="세부 프로그램명을 입력하세요"
+                        placeholder="세부 프로그램명을 입력해 주세요"
                         width="100%"
                       />
                     )}
@@ -668,16 +664,19 @@ export function BasicInfoSection({
                     const end = toDayjs(commonInfoForm.watch('endDate'))
                     const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
                     const operationRangeWithTime =
-                      operationRange != null ? dateRangeUsesClockTime(operationRange[0], operationRange[1]) : false
+                      operationRange != null
+                        ? dateRangeUsesClockTime(operationRange[0], operationRange[1])
+                        : false
 
                     return (
                       <div className="detail-info-form-inputs-wrapper-no-gap">
-                        <ParagraphDatePicker inputSize="small"
+                        <ParagraphDatePicker
+                          inputSize="small"
                           mode="single"
                           presetMode="period"
                           value={start ?? null}
                           width="100%"
-                          placeholder="사업 운영 기간을 선택하세요"
+                          placeholder="사업 운영 기간을 선택해 주세요"
                           preferPeriodModeInPopover
                           appliedSurfaceRange={operationRange}
                           appliedSurfaceWithTime={operationRangeWithTime}
@@ -701,7 +700,9 @@ export function BasicInfoSection({
             />
             <DetailInfoForm.Field
               label="프로그램 진행 현황"
-              view={lifecycleStatus ? <ProgramProgressReadonlyCell status={lifecycleStatus} /> : '-'}
+              view={
+                lifecycleStatus ? <ProgramProgressReadonlyCell status={lifecycleStatus} /> : '-'
+              }
             />
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
@@ -735,15 +736,14 @@ export function BasicInfoSection({
                   name="businessArea"
                   control={commonInfoForm.control}
                   render={({ field }) => (
-                    <CmsSelect inputSize="small"
+                    <CmsSelect
+                      inputSize="small"
                       withAllOption={false}
-                      placeholder="사업 분야를 선택하세요"
+                      placeholder="사업 분야를 선택해 주세요"
                       value={resolveStoredBusinessArea(field.value) || undefined}
                       options={[...BUSINESS_AREA_OPTIONS]}
                       onChange={next => {
-                        const resolved = resolveStoredBusinessArea(
-                          next == null ? '' : String(next)
-                        )
+                        const resolved = resolveStoredBusinessArea(next == null ? '' : String(next))
                         field.onChange(resolved || undefined)
                       }}
                       width="100%"
@@ -778,17 +778,20 @@ export function BasicInfoSection({
                     sponsorId={program.sponsorId}
                     sponsorName={sponsorName}
                   />
-                ) : '-'
+                ) : (
+                  '-'
+                )
               }
               edit={
                 <Controller
                   name="sponsorManagementIds"
                   control={commonInfoForm.control}
                   render={({ field }) => (
-                    <CmsSelect inputSize="small"
+                    <CmsSelect
+                      inputSize="small"
                       mode="multiple"
                       withAllOption={false}
-                      placeholder="후원사를 선택하세요"
+                      placeholder="후원사를 선택해 주세요"
                       width="100%"
                       showSearch
                       optionFilterProp="label"
@@ -820,10 +823,7 @@ export function BasicInfoSection({
                         commonInfoForm.setValue('sponsorManagerContactIds', keptManagerIds, {
                           shouldDirty: true,
                         })
-                        commonInfoForm.setValue(
-                          'sponsorManagerContactId',
-                          keptManagerIds[0] ?? ''
-                        )
+                        commonInfoForm.setValue('sponsorManagerContactId', keptManagerIds[0] ?? '')
                         if (
                           keptManagerIds.length === 0 ||
                           keptManagerIds.every(id => isSponsorContactUnselected(id))
@@ -838,11 +838,9 @@ export function BasicInfoSection({
                             SPONSOR_CONTACT_UNSELECTED_VALUE,
                             { shouldDirty: true }
                           )
-                          commonInfoForm.setValue(
-                            'managerName',
-                            SPONSOR_CONTACT_UNSELECTED_LABEL,
-                            { shouldDirty: true }
-                          )
+                          commonInfoForm.setValue('managerName', SPONSOR_CONTACT_UNSELECTED_LABEL, {
+                            shouldDirty: true,
+                          })
                         }
                       }}
                     />
@@ -866,11 +864,15 @@ export function BasicInfoSection({
                   render={({ field }) => {
                     const selectedIds = field.value ?? []
                     return (
-                      <div className="detail-info-form-inputs-wrapper" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                        <CmsSelect inputSize="small"
+                      <div
+                        className="detail-info-form-inputs-wrapper"
+                        style={{ flexDirection: 'column', alignItems: 'stretch' }}
+                      >
+                        <CmsSelect
+                          inputSize="small"
                           mode="multiple"
                           withAllOption={false}
-                          placeholder="후원사 담당자를 선택하세요"
+                          placeholder="후원사 담당자를 선택해 주세요"
                           width="100%"
                           showSearch
                           optionFilterProp="label"
@@ -915,53 +917,75 @@ export function BasicInfoSection({
             />
           </DetailInfoForm.Row>
           {isEconomyCommonInfo || hideEducationPlace ? null : (
-          <DetailInfoForm.Row type="single">
-            <DetailInfoForm.Field
-              label="교육 장소"
-              fullRow
-              view={renderDetailInfoPipeSeparated(formatCompanySchoolVenue(program))}
-              edit={
-                <div className="detail-info-form-inputs-wrapper">
-                  <Controller
-                    name="venueKind"
-                    control={commonInfoForm.control}
-                    render={({ field }) => (
-                      <CmsRadio.Group
-                        size="medium"
-                        value={field.value ?? 'inside'}
-                        onChange={event => field.onChange(event.target.value)}
-                      >
-                        <CmsRadio size="medium" value="inside">기관 안</CmsRadio>
-                        <CmsRadio size="medium" value="outside">기관 밖</CmsRadio>
-                        <CmsRadio size="medium" value="other">기타(직접입력)</CmsRadio>
-                      </CmsRadio.Group>
-                    )}
-                  />
-                  <DetailInfoForm.InputsSeparator />
-                  {isTrainedTeachersProgram(program) ? (
-                    <>
-                      <Controller
-                        name="venue"
-                        control={commonInfoForm.control}
-                        render={({ field }) => (
-                          <CmsInput
-                            inputSize="small"
-                            placeholder="장소명"
-                            width="100%"
-                            style={{ flex: '1 1 0', minWidth: 0 }}
-                            value={field.value ?? ''}
-                            onChange={field.onChange}
-                          />
-                        )}
-                      />
-                      <DetailInfoForm.InputsSeparator />
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="교육 장소"
+                fullRow
+                view={renderDetailInfoPipeSeparated(formatCompanySchoolVenue(program))}
+                edit={
+                  <div className="detail-info-form-inputs-wrapper">
+                    <Controller
+                      name="venueKind"
+                      control={commonInfoForm.control}
+                      render={({ field }) => (
+                        <CmsRadio.Group
+                          size="medium"
+                          value={field.value ?? 'inside'}
+                          onChange={event => field.onChange(event.target.value)}
+                        >
+                          <CmsRadio size="medium" value="inside">
+                            기관 안
+                          </CmsRadio>
+                          <CmsRadio size="medium" value="outside">
+                            기관 밖
+                          </CmsRadio>
+                          <CmsRadio size="medium" value="other">
+                            기타(직접입력)
+                          </CmsRadio>
+                        </CmsRadio.Group>
+                      )}
+                    />
+                    <DetailInfoForm.InputsSeparator />
+                    {isTrainedTeachersProgram(program) ? (
+                      <>
+                        <Controller
+                          name="venue"
+                          control={commonInfoForm.control}
+                          render={({ field }) => (
+                            <CmsInput
+                              inputSize="small"
+                              placeholder="장소명"
+                              width="100%"
+                              style={{ flex: '1 1 0', minWidth: 0 }}
+                              value={field.value ?? ''}
+                              onChange={field.onChange}
+                            />
+                          )}
+                        />
+                        <DetailInfoForm.InputsSeparator />
+                        <Controller
+                          name="venueDetail"
+                          control={commonInfoForm.control}
+                          render={({ field }) => (
+                            <CmsInput
+                              inputSize="small"
+                              placeholder="상세 장소"
+                              width="100%"
+                              style={{ flex: '1 1 0', minWidth: 0 }}
+                              value={field.value ?? ''}
+                              onChange={field.onChange}
+                            />
+                          )}
+                        />
+                      </>
+                    ) : (
                       <Controller
                         name="venueDetail"
                         control={commonInfoForm.control}
                         render={({ field }) => (
                           <CmsInput
                             inputSize="small"
-                            placeholder="상세 장소"
+                            placeholder="교육이 진행될 상세 장소를 입력해 주세요"
                             width="100%"
                             style={{ flex: '1 1 0', minWidth: 0 }}
                             value={field.value ?? ''}
@@ -969,27 +993,11 @@ export function BasicInfoSection({
                           />
                         )}
                       />
-                    </>
-                  ) : (
-                    <Controller
-                      name="venueDetail"
-                      control={commonInfoForm.control}
-                      render={({ field }) => (
-                        <CmsInput
-                          inputSize="small"
-                          placeholder="교육이 진행될 상세 장소를 입력해 주세요"
-                          width="100%"
-                          style={{ flex: '1 1 0', minWidth: 0 }}
-                          value={field.value ?? ''}
-                          onChange={field.onChange}
-                        />
-                      )}
-                    />
-                  )}
-                </div>
-              }
-            />
-          </DetailInfoForm.Row>
+                    )}
+                  </div>
+                }
+              />
+            </DetailInfoForm.Row>
           )}
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
@@ -1020,7 +1028,11 @@ export function BasicInfoSection({
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
-        <DetailInfoForm title="기본 정보 — 교육 과정" hideHeader mode={commonInfoFormEdit ? 'edit' : 'view'}>
+        <DetailInfoForm
+          title="기본 정보 — 교육 과정"
+          hideHeader
+          mode={commonInfoFormEdit ? 'edit' : 'view'}
+        >
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
               label="교육 과정"
@@ -1030,14 +1042,15 @@ export function BasicInfoSection({
                   name="educationProcess"
                   control={commonInfoForm.control}
                   render={({ field }) => (
-                    <CmsSelect inputSize="small"
+                    <CmsSelect
+                      inputSize="small"
                       withAllOption={false}
-                      placeholder="교육 과정을 선택하세요"
+                      placeholder="교육 과정을 선택해 주세요"
                       width={240}
                       options={[...educationProcessSelectOptions]}
                       value={
                         isEconomyCommonInfo
-                          ? (field.value?.trim() || ECONOMY_ALL_VALUE)
+                          ? field.value?.trim() || ECONOMY_ALL_VALUE
                           : (field.value ?? undefined)
                       }
                       onChange={next =>
@@ -1058,9 +1071,10 @@ export function BasicInfoSection({
                   name="ipOwned"
                   control={commonInfoForm.control}
                   render={({ field }) => (
-                    <CmsSelect inputSize="small"
+                    <CmsSelect
+                      inputSize="small"
                       withAllOption={false}
-                      placeholder="IP Owned를 선택하세요"
+                      placeholder="IP Owned를 선택해 주세요"
                       width={240}
                       options={
                         trainedTeacherCommonInfo
@@ -1086,9 +1100,10 @@ export function BasicInfoSection({
                   name="courseDeliveredBy"
                   control={commonInfoForm.control}
                   render={({ field }) => (
-                    <CmsSelect inputSize="small"
+                    <CmsSelect
+                      inputSize="small"
                       withAllOption={false}
-                      placeholder="Course Delivered By를 선택하세요"
+                      placeholder="Course Delivered By를 선택해 주세요"
                       width={240}
                       options={
                         trainedTeacherCommonInfo
@@ -1121,8 +1136,12 @@ export function BasicInfoSection({
                       value={field.value ? 'yes' : 'no'}
                       onChange={event => field.onChange(event.target.value === 'yes')}
                     >
-                      <CmsRadio size="medium" value="yes">Yes</CmsRadio>
-                      <CmsRadio size="medium" value="no">No</CmsRadio>
+                      <CmsRadio size="medium" value="yes">
+                        Yes
+                      </CmsRadio>
+                      <CmsRadio size="medium" value="no">
+                        No
+                      </CmsRadio>
                     </CmsRadio.Group>
                   )}
                 />
@@ -1140,9 +1159,10 @@ export function BasicInfoSection({
                     name="ips"
                     control={commonInfoForm.control}
                     render={({ field }) => (
-                      <CmsSelect inputSize="small"
+                      <CmsSelect
+                        inputSize="small"
                         withAllOption={false}
-                        placeholder="IPS 유형을 선택하세요"
+                        placeholder="IPS 유형을 선택해 주세요"
                         width="100%"
                         options={[...IPS_OPTIONS]}
                         value={field.value ?? 'Prepare'}
@@ -1199,7 +1219,8 @@ export function BasicInfoSection({
                 name="mainTitle"
                 control={commonInfoForm.control}
                 render={({ field }) => (
-                  <CmsInput inputSize="small"
+                  <CmsInput
+                    inputSize="small"
                     {...field}
                     value={field.value ?? ''}
                     placeholder="대표 프로그램명"
@@ -1220,11 +1241,14 @@ export function BasicInfoSection({
                 name="detailedProgramName"
                 control={commonInfoForm.control}
                 render={({ field }) => (
-                  <CmsInput inputSize="small"
+                  <CmsInput
+                    inputSize="small"
                     {...field}
                     value={field.value ?? ''}
                     placeholder="세부 프로그램명"
-                    status={commonInfoForm.formState.errors.detailedProgramName ? 'error' : undefined}
+                    status={
+                      commonInfoForm.formState.errors.detailedProgramName ? 'error' : undefined
+                    }
                     width={'100%'}
                   />
                 )}
@@ -1248,16 +1272,19 @@ export function BasicInfoSection({
                 const end = toDayjs(commonInfoForm.watch('endDate'))
                 const operationRange = start && end ? ([start, end] as [Dayjs, Dayjs]) : null
                 const operationRangeWithTime =
-                  operationRange != null ? dateRangeUsesClockTime(operationRange[0], operationRange[1]) : false
+                  operationRange != null
+                    ? dateRangeUsesClockTime(operationRange[0], operationRange[1])
+                    : false
 
                 return (
                   <div className="detail-info-form-inputs-wrapper-no-gap">
-                    <ParagraphDatePicker inputSize="small"
+                    <ParagraphDatePicker
+                      inputSize="small"
                       mode="single"
                       presetMode="period"
                       value={start ?? null}
                       width="100%"
-                      placeholder="사업 운영 기간을 선택하세요"
+                      placeholder="사업 운영 기간을 선택해 주세요"
                       preferPeriodModeInPopover
                       appliedSurfaceRange={operationRange}
                       appliedSurfaceWithTime={operationRangeWithTime}
@@ -1295,7 +1322,8 @@ export function BasicInfoSection({
               name="category"
               control={commonInfoForm.control}
               render={({ field }) => (
-                <CmsSelect inputSize="small"
+                <CmsSelect
+                  inputSize="small"
                   {...field}
                   options={CATEGORY_OPTIONS}
                   width={'100%'}
@@ -1318,9 +1346,10 @@ export function BasicInfoSection({
               name="businessArea"
               control={commonInfoForm.control}
               render={({ field }) => (
-                <CmsSelect inputSize="small"
+                <CmsSelect
+                  inputSize="small"
                   withAllOption={false}
-                  placeholder="사업 분야를 선택하세요"
+                  placeholder="사업 분야를 선택해 주세요"
                   value={resolveStoredBusinessArea(field.value) || undefined}
                   options={[...BUSINESS_AREA_OPTIONS]}
                   onChange={next => {
@@ -1356,7 +1385,8 @@ export function BasicInfoSection({
                 name="sponsorId"
                 control={commonInfoForm.control}
                 render={({ field }) => (
-                  <CmsSelect inputSize="small"
+                  <CmsSelect
+                    inputSize="small"
                     {...field}
                     placeholder="후원사 선택"
                     showSearch
@@ -1419,21 +1449,22 @@ export function BasicInfoSection({
                           const contactOptions =
                             contactsQuery.isSuccess || contactsQuery.isError
                               ? [
-                                ...managers.map((m, i) => ({
+                                  ...managers.map((m, i) => ({
+                                    value: i,
+                                    label: m.name,
+                                  })),
+                                  {
+                                    value: SPONSOR_CONTACT_UNSELECTED_VALUE,
+                                    label: SPONSOR_CONTACT_UNSELECTED_LABEL,
+                                  },
+                                ]
+                              : managers.map((m, i) => ({
                                   value: i,
                                   label: m.name,
-                                })),
-                                {
-                                  value: SPONSOR_CONTACT_UNSELECTED_VALUE,
-                                  label: SPONSOR_CONTACT_UNSELECTED_LABEL,
-                                },
-                              ]
-                            : managers.map((m, i) => ({
-                                value: i,
-                                label: m.name,
-                              }))
+                                }))
                           return (
-                            <CmsSelect inputSize="small"
+                            <CmsSelect
+                              inputSize="small"
                               placeholder="담당자 선택"
                               value={
                                 selectedIndex >= 0
@@ -1494,7 +1525,8 @@ export function BasicInfoSection({
               name="educationProcess"
               control={commonInfoForm.control}
               render={({ field }) => (
-                <CmsSelect inputSize="small"
+                <CmsSelect
+                  inputSize="small"
                   value={field.value ?? undefined}
                   options={EDUCATION_PROCESS_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
@@ -1514,12 +1546,13 @@ export function BasicInfoSection({
               name="ipOwned"
               control={commonInfoForm.control}
               render={({ field }) => (
-                <CmsSelect inputSize="small"
+                <CmsSelect
+                  inputSize="small"
                   value={field.value ?? undefined}
                   options={IP_OWNED_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  placeholder="IP Owned를 선택하세요"
+                  placeholder="IP Owned를 선택해 주세요"
                 />
               )}
             />
@@ -1537,12 +1570,13 @@ export function BasicInfoSection({
               name="courseDeliveredBy"
               control={commonInfoForm.control}
               render={({ field }) => (
-                <CmsSelect inputSize="small"
+                <CmsSelect
+                  inputSize="small"
                   value={field.value ?? undefined}
                   options={COURSE_DELIVERED_BY_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  placeholder="Course Delivered By를 선택하세요"
+                  placeholder="Course Delivered By를 선택해 주세요"
                 />
               )}
             />
@@ -1557,7 +1591,8 @@ export function BasicInfoSection({
               name="partnerInvolvement"
               control={commonInfoForm.control}
               render={({ field }) => (
-                <CmsRadio.Group size="medium"
+                <CmsRadio.Group
+                  size="medium"
                   value={field.value}
                   options={PARTNER_INVOLVEMENT_OPTIONS}
                   onChange={e => field.onChange(e.target.value)}
@@ -1578,7 +1613,8 @@ export function BasicInfoSection({
               name="ips"
               control={commonInfoForm.control}
               render={({ field }) => (
-                <CmsRadio.Group size="medium"
+                <CmsRadio.Group
+                  size="medium"
                   value={field.value}
                   options={IPS_OPTIONS}
                   onChange={e => field.onChange(e.target.value)}
@@ -1596,7 +1632,8 @@ export function BasicInfoSection({
               name="programCategory"
               control={commonInfoForm.control}
               render={({ field }) => (
-                <CmsSelect inputSize="small"
+                <CmsSelect
+                  inputSize="small"
                   value={field.value ?? undefined}
                   options={PROGRAM_CATEGORY_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}

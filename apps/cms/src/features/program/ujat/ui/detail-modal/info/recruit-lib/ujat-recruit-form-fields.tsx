@@ -233,7 +233,7 @@ export function UjatRecruitFormInterviewPeriodRow({
   startName,
   endName,
   methodName,
-  periodPlaceholder = '면접 기간을 선택하세요',
+  periodPlaceholder = '면접 기간을 선택해 주세요',
   methodPlaceholder = '면접 유형',
   clearToUndefined = true,
 }: {

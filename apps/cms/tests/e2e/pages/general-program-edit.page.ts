@@ -165,9 +165,9 @@ export class GeneralProgramEditPage {
     }
 
     await expect(this.page).toHaveURL(/edit=info/, { timeout: 15_000 })
-    await expect(
-      this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first()
-    ).toBeVisible({ timeout: 15_000 })
+    await expect(this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()).toBeVisible(
+      { timeout: 15_000 }
+    )
   }
 
   /**
@@ -180,16 +180,16 @@ export class GeneralProgramEditPage {
     // 대표명(국문)은 시드 식별용 — 변경하지 않음
     await fillByPlaceholderIfVisible(
       this.page,
-      '대표 프로그램명(영문)을 입력하세요',
+      '대표 프로그램명(영문)을 입력해 주세요',
       EDIT_EN_NAME
     )
     await fillByPlaceholderIfVisible(
       this.page,
-      '모집 시 노출될 프로그램명을 입력하세요',
+      '모집 시 노출될 프로그램명을 입력해 주세요',
       EDIT_PUBLIC_NAME
     )
 
-    await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택해 주세요')
     await this.fillDateNearLabel('사업 운영 기간', 'range', { preferFutureMonth: true })
 
     await checkCheckboxIfVisible(this.page, /개인/)
@@ -197,9 +197,9 @@ export class GeneralProgramEditPage {
     await checkCheckboxIfVisible(this.page, /봉사자/)
 
     await selectNearLabelIfVisible(this.page, '사업 분야', EDIT_BUSINESS_AREA)
-    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택하세요', EDIT_BUSINESS_AREA)
+    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택해 주세요', EDIT_BUSINESS_AREA)
     await selectNearLabelIfVisible(this.page, '후원사')
-    await selectByPlaceholderIfVisible(this.page, '후원사를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '후원사를 선택해 주세요')
     await this.page
       .waitForResponse(
         res => /sponsor/i.test(res.url()) && /contact/i.test(res.url()) && res.ok(),
@@ -207,7 +207,7 @@ export class GeneralProgramEditPage {
       )
       .catch(() => undefined)
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
-    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택해 주세요')
 
     await checkRadioIfVisible(this.page, '기관 밖')
     await fillByPlaceholderIfVisible(
@@ -231,12 +231,12 @@ export class GeneralProgramEditPage {
     await checkRadioIfVisible(this.page, '온라인')
     await checkRadioIfVisible(this.page, /^개인$/)
     await selectNearLabelIfVisible(this.page, 'IPS 유형', EDIT_IPS_TYPE)
-    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택해 주세요')
     await selectByPlaceholderIfVisible(this.page, 'IPS 유형', EDIT_IPS_TYPE)
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
-    await fillByPlaceholderIfVisible(this.page, '단원명을 입력하세요', EDIT_CURRICULUM_UNIT)
+    await fillByPlaceholderIfVisible(this.page, '단원명을 입력해 주세요', EDIT_CURRICULUM_UNIT)
     await fillByPlaceholderIfVisible(this.page, '교육 내용을 작성하세요', EDIT_CURRICULUM_CONTENT)
 
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
@@ -244,7 +244,7 @@ export class GeneralProgramEditPage {
 
     await clickSectionNavIfVisible(this.page, '임금 정보')
     await fillAllByPlaceholder(this.page, '직접 입력', EDIT_WAGE_VALUE)
-    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택해 주세요')
 
     await clickSectionNavIfVisible(this.page, '기본 정보')
 
@@ -289,9 +289,9 @@ export class GeneralProgramEditPage {
 
   async goToApplicationTab() {
     await this.detail.goToInfoTab('application')
-    await expect(
-      this.page.getByText('현재 화면은 양식 미리보기 화면입니다.').first()
-    ).toBeVisible({ timeout: 30_000 })
+    await expect(this.page.getByText('현재 화면은 양식 미리보기 화면입니다.').first()).toBeVisible({
+      timeout: 30_000,
+    })
     await expect(this.page.getByRole('button', { name: '양식 수정' }).first()).toBeVisible({
       timeout: 15_000,
     })
@@ -349,7 +349,9 @@ export class GeneralProgramEditPage {
 
     const loading = modal.locator('.form-draft-loading, [class*="FormDraftLoading"]')
     if ((await loading.count()) > 0) {
-      await expect(loading.first()).toBeHidden({ timeout: 60_000 }).catch(() => undefined)
+      await expect(loading.first())
+        .toBeHidden({ timeout: 60_000 })
+        .catch(() => undefined)
     }
 
     const saveButton = modal.getByRole('button', { name: '저장' }).first()
@@ -384,14 +386,16 @@ export class GeneralProgramEditPage {
     if (await closeModal.isVisible().catch(() => false)) {
       await closeModal.click()
     }
-    await expect(modal).toBeHidden({ timeout: 30_000 }).catch(() => undefined)
+    await expect(modal)
+      .toBeHidden({ timeout: 30_000 })
+      .catch(() => undefined)
   }
 
   async expectApplicationPreviewVisible() {
     await this.goToApplicationTab()
-    await expect(
-      this.page.getByText('현재 화면은 양식 미리보기 화면입니다.').first()
-    ).toBeVisible({ timeout: 15_000 })
+    await expect(this.page.getByText('현재 화면은 양식 미리보기 화면입니다.').first()).toBeVisible({
+      timeout: 15_000,
+    })
   }
 
   /** 참여자·강사·봉사자 각 탭: 수정 진입 → 채움 → 저장 → 조회 필드 대조 */
@@ -484,10 +488,18 @@ export class GeneralProgramEditPage {
     await this.fillDateNearLabel('프로그램 운영 기간', 'range', { preferFutureMonth: true })
     await fillParagraphDateByPlaceholder(this.page, '운영 시작일', 'range')
 
-    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
-    await fillByPlaceholderIfVisible(this.page, '상세 교육 대상을 입력하세요', EDIT_TARGET_DETAIL)
-    await fillByPlaceholderIfVisible(this.page, '상세 모집 대상을 입력하세요', EDIT_TARGET_DETAIL)
+    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택해 주세요')
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '상세 교육 대상을 입력해 주세요',
+      EDIT_TARGET_DETAIL
+    )
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '상세 모집 대상을 입력해 주세요',
+      EDIT_TARGET_DETAIL
+    )
 
     await this.fillDateNearLabel('참여자 모집 기간', 'range', { preferFutureMonth: true })
     await this.fillDateNearLabel('강사 모집 기간', 'range', { preferFutureMonth: true })
@@ -517,11 +529,7 @@ export class GeneralProgramEditPage {
 
     await fillByPlaceholderIfVisible(this.page, '프로그램 설명을 작성하세요', EDIT_DESCRIPTION)
     await fillByPlaceholderIfVisible(this.page, '모집 안내를 작성하세요', EDIT_RECRUIT_GUIDE)
-    await fillByPlaceholderIfVisible(
-      this.page,
-      '지원 방법을 작성하세요',
-      EDIT_APPLICATION_METHOD
-    )
+    await fillByPlaceholderIfVisible(this.page, '지원 방법을 작성하세요', EDIT_APPLICATION_METHOD)
     await fillByPlaceholderIfVisible(
       this.page,
       '학습 지원 내용을 작성하세요',
@@ -558,11 +566,7 @@ export class GeneralProgramEditPage {
     const s = snapshot ?? this.commonEdited
     await this.ensureCommonInfoTab()
 
-    await expectDetailInfoFieldContains(
-      this.page,
-      '대표 프로그램명 (국문)',
-      EDITABLE_DUMMY_TITLE
-    )
+    await expectDetailInfoFieldContains(this.page, '대표 프로그램명 (국문)', EDITABLE_DUMMY_TITLE)
 
     if (!s) {
       await expect(this.page.getByText(EDIT_MARKER).first()).toBeVisible({ timeout: 15_000 })
@@ -681,7 +685,7 @@ export class GeneralProgramEditPage {
       timeout: 30_000,
     })
 
-    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력해 주세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
 
     // openByTitle 과 동일 — 일시적 BE 5xx/빈 body 에 재조회 (첫 실패로 즉시 throw 하지 않음)
@@ -724,9 +728,7 @@ export class GeneralProgramEditPage {
   }
 
   private async clickInfoEditSave(programId: string) {
-    const failDialog = this.page
-      .getByRole('dialog')
-      .filter({ hasText: /저장 실패|입력 확인/ })
+    const failDialog = this.page.getByRole('dialog').filter({ hasText: /저장 실패|입력 확인/ })
     const editButton = this.page.getByRole('button', { name: '정보 수정' }).first()
 
     const patchPromise = this.page.waitForResponse(
@@ -744,9 +746,7 @@ export class GeneralProgramEditPage {
       patchPromise.then(async res => {
         if (!res.ok()) {
           const body = await res.text().catch(() => '')
-          throw new Error(
-            `프로그램 수정 API 실패: HTTP ${res.status()} ${body.slice(0, 400)}`
-          )
+          throw new Error(`프로그램 수정 API 실패: HTTP ${res.status()} ${body.slice(0, 400)}`)
         }
       }),
       failDialog.waitFor({ state: 'visible', timeout: 60_000 }).then(async () => {
@@ -781,9 +781,7 @@ export class GeneralProgramEditPage {
     ]
   }
 
-  private recruitmentSnapshotToChangedFields(
-    snapshot: RecruitmentEditedSnapshot
-  ): FieldLogItem[] {
+  private recruitmentSnapshotToChangedFields(snapshot: RecruitmentEditedSnapshot): FieldLogItem[] {
     return [
       { label: `${snapshot.tabLabel} · 상세 교육/모집 대상`, value: snapshot.targetDetail },
       { label: `${snapshot.tabLabel} · 프로그램 운영 기간`, value: snapshot.operationPeriod },
@@ -818,11 +816,10 @@ export class GeneralProgramEditPage {
             querySelector: (selector: string) => unknown
           }
           if (el.offsetParent === null) continue
-          const labelEl = el.querySelector('.detail-info-form__field-label-text') as
-            | { textContent?: string | null }
-            | null
-          const label =
-            labelEl?.textContent?.trim() ?? ''
+          const labelEl = el.querySelector('.detail-info-form__field-label-text') as {
+            textContent?: string | null
+          } | null
+          const label = labelEl?.textContent?.trim() ?? ''
           if (!label) continue
           const locked =
             el.querySelector(
@@ -853,11 +850,7 @@ export class GeneralProgramEditPage {
     await recordE2eTestLogNotes({
       page: this.page,
       title,
-      titlePath: [
-        'flows/programs/general-program-edit.spec.ts',
-        '일반 프로그램 수정',
-        stepTitle,
-      ],
+      titlePath: ['flows/programs/general-program-edit.spec.ts', '일반 프로그램 수정', stepTitle],
       file: 'tests/e2e/flows/programs/general-program-edit.spec.ts',
       notes: [
         {
@@ -884,12 +877,7 @@ export class GeneralProgramEditPage {
     const tabs: { tab: string; titles: string[] }[] = [
       {
         tab: 'progress_participants',
-        titles: [
-          '교육 참여 기관 목록',
-          '교육 참여자 목록',
-          '참여자 목록',
-          '교육 참여 참여자 목록',
-        ],
+        titles: ['교육 참여 기관 목록', '교육 참여자 목록', '참여자 목록', '교육 참여 참여자 목록'],
       },
       { tab: 'progress_instructors', titles: ['교육 참여 강사 목록'] },
       { tab: 'progress_volunteers', titles: ['참여 봉사자 목록'] },
@@ -944,7 +932,9 @@ export class GeneralProgramEditPage {
   private async tryExpectProgressListVisible(listTitles: string[]): Promise<boolean> {
     // 탭 전환 직후 제목 렌더 대기 (없으면 바로 false)
     const modalContent = this.page.locator('.detail-fullpage-modal__content').first()
-    await expect(modalContent).toBeVisible({ timeout: 15_000 }).catch(() => undefined)
+    await expect(modalContent)
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => undefined)
     await expect(modalContent.locator('.filter-table-layout__title').first())
       .toBeVisible({ timeout: 15_000 })
       .catch(() => undefined)

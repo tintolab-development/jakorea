@@ -64,6 +64,7 @@ import {
   CmsDateRangePicker,
   CmsSelect,
   ConfirmModal,
+  NO_SELECTION_ALERT,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -206,6 +207,7 @@ export function RecruitPostingsPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<PostingPendingFilters, RecruitPostingListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -300,7 +302,7 @@ export function RecruitPostingsPage() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({ title: '항목 선택', content: '선택된 항목이 없습니다.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -473,7 +475,7 @@ export function RecruitPostingsPage() {
         render: (_, row) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={event => {
               event.stopPropagation()
@@ -491,6 +493,7 @@ export function RecruitPostingsPage() {
   return (
     <div className="recruit-postings-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split recruit-postings-page__filter">
             <div className="admin-filter-area__head">
@@ -548,7 +551,7 @@ export function RecruitPostingsPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.authorName}
-                  placeholder="작성자명을 입력하세요"
+                  placeholder="작성자명을 입력해 주세요"
                   onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
                   onPressEnter={handleSearch}
                 />

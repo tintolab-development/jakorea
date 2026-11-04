@@ -125,6 +125,15 @@
   transition: none !important;
 }
 
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.rd-list__thumb-col
+  > * {
+  width: 100%;
+  margin-inline: auto;
+}
+
 .rd-list__table--audit.cms-data-table .ant-table-thead > tr > th.rd-list__thumb-col,
 .rd-list__table--audit.cms-data-table
   .ant-table-tbody
@@ -171,6 +180,7 @@
   position: relative;
   display: block;
   flex: 0 0 auto;
+  margin-inline: auto;
   overflow: hidden;
   border-radius: 4px;
   border: 1px solid var(--table-line, #e0e0e0);

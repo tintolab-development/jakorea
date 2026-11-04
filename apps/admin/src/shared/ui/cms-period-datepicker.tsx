@@ -1,6 +1,6 @@
 /**
  * 게시 기간 — 단일 트리거 인풋 (CmsDatePicker 크롬) + Range 패널
- * 시작·종료를 한 필드로 선택 (시안: 「게시 기간을 선택하세요」)
+ * 시작·종료를 한 필드로 선택 (시안: 「게시 기간을 선택해 주세요」)
  * 시작·종료가 모두 선택되면 패널을 닫는다 (클릭 투과로 즉시 재오픈 방지).
  */
 
@@ -38,7 +38,7 @@ const REOPEN_GUARD_MS = 250
 export function CmsPeriodDatePicker({
   value,
   onChange,
-  placeholder = '게시 기간을 선택하세요',
+  placeholder = '게시 기간을 선택해 주세요',
   inputSize = 'large',
   width = '100%',
   disabled = false,
@@ -66,9 +66,7 @@ export function CmsPeriodDatePicker({
       : null
 
   const widthStyle: CSSProperties | undefined =
-    width != null
-      ? { width: typeof width === 'number' ? `${width}px` : width }
-      : undefined
+    width != null ? { width: typeof width === 'number' ? `${width}px` : width } : undefined
 
   const wrapperCn = [
     'cms-datepicker',

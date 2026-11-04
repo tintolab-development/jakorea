@@ -56,16 +56,13 @@ export class GeneralProgramDetailPage {
    * 목록에서 title 1회 조회. 행이 없으면 null (후보 탐색용 — 긴 toPass 없음).
    * 목록 API가 응답하지 않으면(타임아웃) null — 다음 후보로 넘어감.
    */
-  async tryOpenByTitleOnce(
-    title: string,
-    listTimeoutMs = 8_000
-  ): Promise<DetailOpenResult | null> {
+  async tryOpenByTitleOnce(title: string, listTimeoutMs = 8_000): Promise<DetailOpenResult | null> {
     await this.page.goto('/programs/general')
     await expect(this.page.getByRole('button', { name: '프로그램 신규 등록' })).toBeVisible({
       timeout: 30_000,
     })
 
-    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력해 주세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
     await titleFilter.fill(title)
 
@@ -200,9 +197,7 @@ export class GeneralProgramDetailPage {
   async expectDetailShellReady() {
     const lnb = this.page.getByRole('navigation', { name: '일반 프로그램 상세 메뉴' })
     await expect(lnb).toBeVisible({ timeout: 60_000 })
-    const editOrClose = this.page
-      .getByRole('button', { name: /정보 수정|닫기|양식 수정/ })
-      .first()
+    const editOrClose = this.page.getByRole('button', { name: /정보 수정|닫기|양식 수정/ }).first()
     await expect(editOrClose).toBeVisible({ timeout: 60_000 })
   }
 
@@ -501,7 +496,9 @@ export class GeneralProgramDetailPage {
     await expect(content).toBeVisible({ timeout: 30_000 })
     const fullSpin = this.page.locator('.detail-fullpage-modal__loading')
     if ((await fullSpin.count()) > 0) {
-      await expect(fullSpin.first()).toBeHidden({ timeout: 60_000 }).catch(() => undefined)
+      await expect(fullSpin.first())
+        .toBeHidden({ timeout: 60_000 })
+        .catch(() => undefined)
     }
   }
 
@@ -510,7 +507,10 @@ export class GeneralProgramDetailPage {
     await this.goToInfoTab('info')
     await this.expectContentSettled()
     const body = this.page.locator('.detail-fullpage-modal__content, .detail-fullpage-modal__body')
-    const text = await body.first().innerText().catch(() => '')
+    const text = await body
+      .first()
+      .innerText()
+      .catch(() => '')
     return /회차|차시|■\s*\d/.test(text)
   }
 }

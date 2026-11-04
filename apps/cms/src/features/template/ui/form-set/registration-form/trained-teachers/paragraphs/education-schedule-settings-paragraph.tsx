@@ -157,8 +157,12 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 onEducationScheduleModeChange(next)
               }}
             >
-              <CmsRadio size="medium" value="date">날짜 지정</CmsRadio>
-              <CmsRadio size="medium" value="period">기간 지정</CmsRadio>
+              <CmsRadio size="medium" value="date">
+                날짜 지정
+              </CmsRadio>
+              <CmsRadio size="medium" value="period">
+                기간 지정
+              </CmsRadio>
             </CmsRadioGroup>
           }
           view="-"
@@ -171,7 +175,8 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
           ]}
           edit={
             educationScheduleMode === 'date' ? (
-              <ParagraphDatePicker inputSize="small"
+              <ParagraphDatePicker
+                inputSize="small"
                 mode="single"
                 presetMode="schedule"
                 customizable={false}
@@ -184,11 +189,12 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 onChange={setSingleDate}
                 onRangeChange={handleScheduleRangeApply}
                 width={240}
-                placeholder="날짜를 선택하세요"
+                placeholder="날짜를 선택해 주세요"
                 disabledDate={disableOutsideOperation}
               />
             ) : (
-              <ParagraphDatePicker inputSize="small"
+              <ParagraphDatePicker
+                inputSize="small"
                 mode="single"
                 presetMode="period"
                 customizable={false}
@@ -198,7 +204,7 @@ export function TrainedTeachersRegistrationEducationScheduleSettingsParagraph({
                 onChange={setPeriodDate}
                 onRangeChange={handleScheduleRangeApply}
                 width={360}
-                placeholder="기간을 선택하세요"
+                placeholder="기간을 선택해 주세요"
                 disabledDate={disableOutsideOperation}
               />
             )

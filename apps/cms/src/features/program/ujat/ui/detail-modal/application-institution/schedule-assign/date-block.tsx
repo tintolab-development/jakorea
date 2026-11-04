@@ -39,30 +39,27 @@ export function UjatInstitutionScheduleAssignDateBlock({
     [day.rows]
   )
 
-  const schoolSelectOptions = useMemo(
-    () => {
-      const options = schoolOptions.map(row =>
-        isScheduleAssignBlockedInstitution(row)
-          ? {
-              value: row.id,
-              label: `${row.institutionName} (${UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL[row.tempAssignmentStatus]})`,
-              disabled: true,
-            }
-          : { value: row.id, label: row.institutionName }
-      )
-      const knownIds = new Set(options.map(option => option.value))
+  const schoolSelectOptions = useMemo(() => {
+    const options = schoolOptions.map(row =>
+      isScheduleAssignBlockedInstitution(row)
+        ? {
+            value: row.id,
+            label: `${row.institutionName} (${UJAT_INSTITUTION_TEMP_ASSIGNMENT_STATUS_LABEL[row.tempAssignmentStatus]})`,
+            disabled: true,
+          }
+        : { value: row.id, label: row.institutionName }
+    )
+    const knownIds = new Set(options.map(option => option.value))
 
-      for (const row of day.rows) {
-        const id = row.institutionRowId
-        const name = id ? organizationNamesByApplicationId[id]?.trim() : ''
-        if (id && name && !knownIds.has(id)) {
-          options.push({ value: id, label: name })
-        }
+    for (const row of day.rows) {
+      const id = row.institutionRowId
+      const name = id ? organizationNamesByApplicationId[id]?.trim() : ''
+      if (id && name && !knownIds.has(id)) {
+        options.push({ value: id, label: name })
       }
-      return options
-    },
-    [day.rows, organizationNamesByApplicationId, schoolOptions]
-  )
+    }
+    return options
+  }, [day.rows, organizationNamesByApplicationId, schoolOptions])
 
   const showRowDelete = day.rows.length >= 2
 
@@ -100,7 +97,10 @@ export function UjatInstitutionScheduleAssignDateBlock({
             return (
               <div key={row.id} className="ujat-schedule-assign-date-block__row">
                 <div className="ujat-schedule-assign-date-block__row-body">
-                  <DetailInfoForm.Row type="double" className="ujat-schedule-assign-date-block__row-fields">
+                  <DetailInfoForm.Row
+                    type="double"
+                    className="ujat-schedule-assign-date-block__row-fields"
+                  >
                     <DetailInfoForm.Field
                       label={formatScheduleAssignSchoolLabel(index, day.rows.length)}
                       view="-"
@@ -123,7 +123,7 @@ export function UjatInstitutionScheduleAssignDateBlock({
                             inputSize="small"
                             mode="multiple"
                             withAllOption={false}
-                            placeholder="배정 학급을 선택하세요"
+                            placeholder="배정 학급을 선택해 주세요"
                             options={gradeOptions}
                             value={row.gradeValues}
                             disabled={!row.institutionRowId || institutionBlocked}

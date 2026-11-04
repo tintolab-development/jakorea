@@ -102,11 +102,11 @@ export class SponsorManagementPage {
   }
 
   async fillListName(name: string) {
-    await this.page.getByPlaceholder('후원사명을 입력하세요').fill(name)
+    await this.page.getByPlaceholder('후원사명을 입력해 주세요').fill(name)
   }
 
   async fillManagerName(name: string) {
-    await this.page.getByPlaceholder('담당자명을 입력하세요').fill(name)
+    await this.page.getByPlaceholder('담당자명을 입력해 주세요').fill(name)
   }
 
   async selectSponsorshipStatus(label: string) {
@@ -217,7 +217,7 @@ export class SponsorManagementPage {
   async expectHistoryShell() {
     const dialog = this.detailDialog()
     await expect(dialog.getByText('프로그램 후원 이력').first()).toBeVisible({ timeout: 15_000 })
-    await expect(dialog.getByPlaceholder('프로그램명을 입력하세요')).toBeVisible()
+    await expect(dialog.getByPlaceholder('프로그램명을 입력해 주세요')).toBeVisible()
     await expect(dialog.getByRole('button', { name: '이력 삭제' })).toHaveCount(0)
     await expectColumnTitles(this.page, HISTORY_COLUMNS, dialog)
     await expectNoColumnTitle(this.page, '참여자 모집 인원', dialog)
@@ -241,17 +241,17 @@ export class SponsorManagementPage {
   async expectContactsShell() {
     const dialog = this.detailDialog()
     await expect(dialog.getByText('담당자 목록').first()).toBeVisible({ timeout: 15_000 })
-    await expect(dialog.getByPlaceholder('부서를 입력하세요')).toBeVisible()
-    await expect(dialog.getByPlaceholder('직함을 입력하세요')).toBeVisible()
+    await expect(dialog.getByPlaceholder('부서를 입력해 주세요')).toBeVisible()
+    await expect(dialog.getByPlaceholder('직함을 입력해 주세요')).toBeVisible()
     await expect(dialog.getByRole('button', { name: '담당자 등록' })).toBeVisible()
     await expectColumnTitles(this.page, CONTACT_COLUMNS, dialog)
   }
 
   async searchContacts(opts: { department?: string; position?: string; name?: string }) {
     const dialog = this.detailDialog()
-    await dialog.getByPlaceholder('부서를 입력하세요').fill(opts.department ?? '')
-    await dialog.getByPlaceholder('직함을 입력하세요').fill(opts.position ?? '')
-    await dialog.getByPlaceholder('담당자명을 입력하세요').fill(opts.name ?? '')
+    await dialog.getByPlaceholder('부서를 입력해 주세요').fill(opts.department ?? '')
+    await dialog.getByPlaceholder('직함을 입력해 주세요').fill(opts.position ?? '')
+    await dialog.getByPlaceholder('담당자명을 입력해 주세요').fill(opts.name ?? '')
     const pending = waitForAdminGet(this.page, '/contacts', 30_000, { exact: false })
     await dialog.getByRole('button', { name: '조회' }).click()
     await pending

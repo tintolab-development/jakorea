@@ -6,12 +6,7 @@ import type {
   OrganizationChartSaveInput,
 } from '@/entities/organization-chart/model/types'
 import {
-  CmsButton,
-  CmsInput,
-  ContentModal,
-  FileSelectField,
-  useCmsAlert,
-} from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, ContentModal, FileSelectField, useCmsAlert } from '@/shared/ui'
 
 import './org-chart-form-modal.css'
 
@@ -70,12 +65,7 @@ type FormBodyProps = {
   onSubmit: (values: OrganizationChartSaveInput) => void
 }
 
-function OrgChartFormBody({
-  initial,
-  confirmLoading,
-  onCancel,
-  onSubmit,
-}: FormBodyProps) {
+function OrgChartFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
   const [mainTitle, setMainTitle] = useState(initial.mainTitle)
   const [imageUrl, setImageUrl] = useState(initial.imageUrl)
@@ -123,17 +113,11 @@ function OrgChartFormBody({
 
   const handleSubmit = useCallback(() => {
     if (!mainTitle.trim()) {
-      showAlert({
-        title: '메인 문구 필수',
-        content: '메인 타이틀을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!imageUrl.trim()) {
-      showAlert({
-        title: '조직도 이미지 필수',
-        content: '조직도 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     onSubmit({
@@ -168,7 +152,8 @@ function OrgChartFormBody({
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -177,7 +162,8 @@ function OrgChartFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             저장
           </CmsButton>
         </>
@@ -198,7 +184,7 @@ function OrgChartFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
                 value={mainTitle}
                 onChange={e => setMainTitle(e.target.value)}
               />

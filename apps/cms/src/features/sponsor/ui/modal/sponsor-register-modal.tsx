@@ -137,7 +137,8 @@ export function SponsorRegisterModal({
             type="button"
             disabled={!canSubmit || submitting}
             loading={submitting}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             신규 등록
           </CmsButton>
         </>
@@ -153,7 +154,7 @@ export function SponsorRegisterModal({
               <CmsInput
                 value={form.nameDisplayKo}
                 onChange={e => setField('nameDisplayKo', e.target.value)}
-                placeholder="후원사명(국문)을 입력하세요"
+                placeholder="후원사명(국문)을 입력해 주세요"
                 inputSize="small"
                 width="100%"
               />
@@ -167,7 +168,7 @@ export function SponsorRegisterModal({
               <CmsInput
                 value={form.nameDisplayEn}
                 onChange={e => setField('nameDisplayEn', e.target.value)}
-                placeholder="후원사명(영문)을 입력하세요"
+                placeholder="후원사명(영문)을 입력해 주세요"
                 inputSize="small"
                 width="100%"
               />
@@ -200,7 +201,7 @@ export function SponsorRegisterModal({
               <CmsBusinessNumberInput
                 value={form.businessNumber}
                 onChange={e => setField('businessNumber', e.target.value)}
-                placeholder="사업자번호를 입력하세요"
+                placeholder="사업자번호를 입력해 주세요"
                 inputSize="small"
                 width="100%"
               />
@@ -216,10 +217,8 @@ export function SponsorRegisterModal({
               <CmsDatePicker
                 inputSize="small"
                 value={form.sponsorshipStartDate ? dayjs(form.sponsorshipStartDate) : null}
-                onChange={date =>
-                  setField('sponsorshipStartDate', toSponsorDateOnly(date) ?? '')
-                }
-                placeholder="후원 시작일을 입력하세요"
+                onChange={date => setField('sponsorshipStartDate', toSponsorDateOnly(date) ?? '')}
+                placeholder="후원 시작일을 입력해 주세요"
                 format="YYYY.MM.DD"
                 allowClear
                 style={{ width: '100%' }}
@@ -255,7 +254,7 @@ export function SponsorRegisterModal({
               <CmsInput
                 value={form.executives}
                 onChange={e => setField('executives', e.target.value)}
-                placeholder="대표이사명을 입력하세요"
+                placeholder="대표이사명을 입력해 주세요"
                 inputSize="small"
                 width="100%"
               />
@@ -297,7 +296,7 @@ export function SponsorRegisterModal({
               <CmsInput
                 value={form.homepageUrl}
                 onChange={e => setField('homepageUrl', e.target.value)}
-                placeholder="홈페이지 주소를 입력하세요"
+                placeholder="홈페이지 주소를 입력해 주세요"
                 inputSize="small"
                 width="100%"
               />

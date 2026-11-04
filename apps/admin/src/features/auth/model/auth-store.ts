@@ -13,6 +13,13 @@ import {
   AUTH_TOKEN_KEY,
   AUTH_USER_KEY,
 } from '@/features/auth/model/auth-storage'
+import {
+  clearTokenIssuedAt,
+  getLastUserActivityAt,
+  readTokenIssuedAt,
+  recordTokenIssuedAt,
+  shouldProactivelyRefresh,
+} from '@/features/auth/lib/session-keepalive'
 import { boardMembersQueryKeys } from '@/features/board-members/api/query-keys'
 import { educationBusinessFieldQueryKeys } from '@/features/education-business-field/api/query-keys'
 import { educationTargetQueryKeys } from '@/features/education-target/api/query-keys'
@@ -98,6 +105,14 @@ interface AuthState {
   completeAdminAuth: (tokens: AuthTokenResponse) => void
   setAuth: (authData: { user: AuthUser; token: string; expiresAt: string }) => void
   refreshToken: () => Promise<boolean>
+  checkSessionExpiry: () => boolean
+}
+
+/** 만료 임박 판단 버퍼. access TTL과 같은 고정 1h 임계값은 쓰지 않는다. */
+export const ACCESS_TOKEN_EXPIRY_BUFFER_MS = 30 * 1000
+
+export function shouldRefreshAccessToken(expiresAtMs: number, nowMs: number): boolean {
+  return expiresAtMs <= nowMs + ACCESS_TOKEN_EXPIRY_BUFFER_MS
 }
 
 function tokenExpiresAtFromResponse(tokens: AuthTokenResponse): string {
@@ -120,6 +135,7 @@ function persistAuthTokens(
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
     localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, tokens.refreshToken)
   }
+  recordTokenIssuedAt()
 
   return { token: accessToken, expiresAt }
 }
@@ -139,7 +155,8 @@ const loadAuthFromStorage = (): Partial<AuthState> => {
   const userStr = localStorage.getItem(AUTH_USER_KEY)
 
   if (token && expiresAt && userStr) {
-    if (new Date(expiresAt) > new Date()) {
+    const hasRefreshToken = !!localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)
+    if (new Date(expiresAt) > new Date() || hasRefreshToken) {
       try {
         const user = JSON.parse(userStr) as AuthUser
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
@@ -211,6 +228,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           localStorage.setItem(AUTH_USER_KEY, JSON.stringify(normalizedUser))
           localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
         }
+        recordTokenIssuedAt()
 
         clearSessionScopedQueryCaches()
 
@@ -268,6 +286,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.setItem(AUTH_EXPIRY_KEY, expiresAt)
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(normalizedUser))
       }
+      recordTokenIssuedAt()
       clearSessionScopedQueryCaches()
       set({
         user: normalizedUser,
@@ -297,6 +316,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         localStorage.removeItem(AUTH_USER_KEY)
         localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
       }
+      clearTokenIssuedAt()
 
       clearSessionScopedQueryCaches()
 
@@ -342,10 +362,9 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       const checkAuthPromise = (async () => {
         try {
           const now = new Date()
-          let expiryTime = new Date(expiresAt)
-          const bufferTime = 30 * 1000
+          const expiryTime = new Date(expiresAt)
 
-          if (expiryTime.getTime() <= now.getTime() + bufferTime) {
+          if (shouldRefreshAccessToken(expiryTime.getTime(), now.getTime())) {
             const refreshed = await get().refreshToken()
             if (!refreshed) {
               get().logout()
@@ -357,15 +376,6 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               get().logout()
               return
             }
-            expiryTime = new Date(expiresAt)
-          }
-
-          const timeUntilExpiry = expiryTime.getTime() - now.getTime()
-          const oneHour = 60 * 60 * 1000
-          if (timeUntilExpiry < oneHour && timeUntilExpiry > 0) {
-            void get()
-              .refreshToken()
-              .catch(() => undefined)
           }
 
           let storedUser: AuthUser | null = null
@@ -400,5 +410,49 @@ export const useAuthStore = create<AuthState>()((set, get) => {
     clearError: () => set({ error: null }),
 
     refreshToken: async () => refreshAccessTokenSession(),
+
+    /**
+     * 세션 keep-alive 점검 (AuthProvider가 60초마다 호출). 만료만 보고 바로 logout하지 않는다.
+     * 1) access 만료 임박(30초 버퍼): refresh를 먼저 시도하고, 실패할 때만 logout.
+     * 2) 아직 여유가 있어도, 사용자가 최근 30분 내 활동했고 마지막 발급 후 20분이 지났으면 선제 refresh.
+     *    선제 refresh 실패는 logout하지 않는다.
+     */
+    checkSessionExpiry: (): boolean => {
+      const state = get()
+      const hasStorage = typeof window !== 'undefined' && !!window.localStorage
+      const expiresAt = (hasStorage ? localStorage.getItem(AUTH_EXPIRY_KEY) : null) ?? state.expiresAt
+      if (!expiresAt) {
+        return true
+      }
+
+      const nowMs = Date.now()
+      const nearExpiry = shouldRefreshAccessToken(new Date(expiresAt).getTime(), nowMs)
+      const proactive =
+        !nearExpiry &&
+        shouldProactivelyRefresh({
+          nowMs,
+          lastIssuedAtMs: readTokenIssuedAt(),
+          lastActivityAtMs: getLastUserActivityAt(),
+        })
+      if (!nearExpiry && !proactive) {
+        return false
+      }
+
+      const refreshToken = hasStorage ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY) : null
+      if (!refreshToken) {
+        if (nearExpiry) {
+          get().logout()
+          return true
+        }
+        return false
+      }
+
+      void get()
+        .refreshToken()
+        .then(ok => {
+          if (!ok && nearExpiry) get().logout()
+        })
+      return false
+    },
   }
 })

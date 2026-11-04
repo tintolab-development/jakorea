@@ -1,7 +1,10 @@
 import type { FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { createInstitutionAddressRegionFilterField } from '@/shared/config/institution-address-region-filter-field'
 import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/components/table-filter-group-field-width'
-import { TEXTBOOK_STATUS_LABELS, TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/participating-schools'
+import {
+  TEXTBOOK_STATUS_LABELS,
+  TEXTBOOK_STATUS_OPTION_KEYS,
+} from '@/features/program/general/model/participating-schools'
 
 const GRADE_OPTIONS = [
   { label: '전체', value: 'all' },
@@ -29,7 +32,7 @@ export const participatingInstitutionsFilterFields: FilterFieldConfig[] = [
     key: 'schoolName',
     type: 'search',
     label: '참여 기관명',
-    placeholder: '참여 기관명을 입력하세요',
+    placeholder: '참여 기관명을 입력해 주세요',
     width: FILTER_CONTROL_WIDTH,
   },
   createInstitutionAddressRegionFilterField(),
@@ -53,7 +56,7 @@ export const participatingInstitutionsFilterFields: FilterFieldConfig[] = [
     key: 'teacherName',
     type: 'search',
     label: '담당 교사명',
-    placeholder: '담당 교사명을 입력하세요',
+    placeholder: '담당 교사명을 입력해 주세요',
     width: FILTER_CONTROL_WIDTH,
   },
 ]
