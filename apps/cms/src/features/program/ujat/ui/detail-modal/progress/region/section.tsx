@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import { useRegionAssignment } from './use-region-assignment'
 import { FilterTableToolbarButton } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { ConfirmModal } from '@/shared/ui/confirm-modal'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
 import { UjatAssignmentAssignModal } from '../shared/assign-modal'
@@ -29,7 +30,6 @@ import {
   getRegionEducationDateOptionsFromData,
 } from './region-assignment-options'
 import { useDirectAssignCandidates } from './use-direct-assign-candidates'
-import { RegionAutoAssignResultBanner } from './auto-assign-result-banner'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './section.css'
 
@@ -41,9 +41,17 @@ export function UjatEducationProgressRegionAssignmentSection({
   half: EducationProgressHalfKey
 }) {
   const canWrite = useUjatCanWrite()
+  const { regions: educationRegions } = useUjatEducationRegions()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
   )
+
+  useEffect(() => {
+    if (educationRegions.length === 0) return
+    if (educationRegions.some(region => region.key === activeRegion)) return
+    const next = educationRegions[0]?.key?.trim()
+    if (next) setActiveRegion(next)
+  }, [activeRegion, educationRegions])
   const [directAssignModalOpen, setDirectAssignModalOpen] = useState(false)
   const [blockedDateModalOpen, setBlockedDateModalOpen] = useState(false)
   const [attendanceManagerModalOpen, setAttendanceManagerModalOpen] = useState(false)
@@ -56,8 +64,6 @@ export function UjatEducationProgressRegionAssignmentSection({
     isLoading,
     isError,
     isRemote,
-    autoAssignResultSummary,
-    dismissAutoAssignResult,
     runAutoAssign,
     confirmDirectAssign,
     confirmBlockedDate,
@@ -67,10 +73,7 @@ export function UjatEducationProgressRegionAssignmentSection({
 
   const [directAssignClassSlotId, setDirectAssignClassSlotId] = useState<string | undefined>()
 
-  const directAssignClassOptions = useMemo(
-    () => getRegionDirectAssignClassOptionsFromData(tableData),
-    [tableData]
-  )
+  const directAssignClassOptions = getRegionDirectAssignClassOptionsFromData(tableData)
 
   const directAssignCandidates = useDirectAssignCandidates({
     programId,
@@ -255,13 +258,6 @@ export function UjatEducationProgressRegionAssignmentSection({
         </div>
       </div>
 
-      {autoAssignResultSummary ? (
-        <RegionAutoAssignResultBanner
-          summary={autoAssignResultSummary}
-          onClose={dismissAutoAssignResult}
-        />
-      ) : null}
-
       {isLoading ? (
         <div className="ujat-education-progress-region-assignment__state">
           <Spin size="large" />
@@ -270,11 +266,9 @@ export function UjatEducationProgressRegionAssignmentSection({
         <div className="ujat-education-progress-region-assignment__state" role="alert">
           지역별 교육 배정 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
         </div>
-      ) : !hasScheduleColumns ? (
+      ) : !isRemote ? (
         <div className="ujat-education-progress-region-assignment__state">
-          {isRemote
-            ? '해당 반기·지역 확정 교육 일정 없음'
-            : '원격 API를 사용할 수 없어 배정표를 표시하지 않습니다.'}
+          원격 API를 사용할 수 없어 배정표를 표시하지 않습니다.
         </div>
       ) : (
         <RegionAssignmentTable data={tableData} />
@@ -293,6 +287,7 @@ export function UjatEducationProgressRegionAssignmentSection({
         volunteerOptions={directAssignCandidates.volunteerOptions}
         volunteerOptionsLoading={directAssignCandidates.loading}
         volunteerOptionsError={directAssignCandidates.errorMessage}
+        volunteerOptionsEmptyHint={directAssignCandidates.emptyHint}
         existingPrimaryVolunteerName={directAssignCandidates.existingPrimaryVolunteerName}
         onClassSlotChange={setDirectAssignClassSlotId}
         onCancel={handleCloseDirectAssignModal}

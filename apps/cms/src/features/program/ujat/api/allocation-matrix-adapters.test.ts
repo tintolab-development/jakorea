@@ -72,6 +72,7 @@ describe('mapAllocationMatrixToRegionTableData', () => {
       isAttendanceManager: true,
       isSolo: true,
       assignmentStatus: 'ASSIGNED',
+      educationSlotId: '501',
     })
     expect(table.rows[1]?.isWithdrawnVolunteer).toBe(true)
     expect(table.rows[1]?.cells[0]).toMatchObject({ kind: 'empty', blockedEmpty: true })
@@ -236,8 +237,8 @@ describe('mapAllocationMatrixToRegionTableData', () => {
       ],
     })
     expect(table.columns[0]?.classSlots).toEqual([
-      { id: '901', classLabel: '2-1' },
-      { id: '902', classLabel: '2-2' },
+      { id: '901', classLabel: '2-1', isEducationSlotId: false },
+      { id: '902', classLabel: '2-2', isEducationSlotId: false },
     ])
   })
 
@@ -270,6 +271,56 @@ describe('mapAllocationMatrixToRegionTableData', () => {
       classLabel: '3-1',
       isSolo: true,
       isInvalidAssignment: true,
+      isAttendanceManager: false,
+    })
+  })
+
+  it('출결 뱃지는 ASSIGNED 이고 attendanceManager true 인 셀만 켠다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          {
+            participantId: 201,
+            volunteerName: '김출결',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                educationSlotId: 501,
+                classLabel: '3-1',
+                assignmentStatus: 'ASSIGNED',
+                attendanceManager: true,
+              },
+            ],
+          },
+          {
+            participantId: 202,
+            volunteerName: '이재배정',
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                educationSlotId: 501,
+                classLabel: '3-1',
+                assignmentStatus: 'REASSIGNMENT_REQUIRED',
+                needsReassignment: true,
+                attendanceManager: true,
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows[0]?.cells[0]).toMatchObject({
+      kind: 'assigned',
+      assignmentStatus: 'ASSIGNED',
+      isAttendanceManager: true,
+    })
+    expect(table.rows[1]?.cells[0]).toMatchObject({
+      kind: 'assigned',
+      assignmentStatus: 'REASSIGNMENT_REQUIRED',
       isAttendanceManager: false,
     })
   })
@@ -614,6 +665,7 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     })
     expect(table.columns[0]?.isoDate).toBe('2026-11-01')
     expect(table.columns[0]?.dateLabel).toBe('11월 1일')
+    expect(table.columns[0]?.educationStartAt).toBe('2026-10-31T15:00:00Z')
   })
 
   it('replacementParticipantId만 있어도 unavailability GET 대상을 건너뛴다', () => {

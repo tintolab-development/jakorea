@@ -1,9 +1,14 @@
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 
 export type RegionAssignmentClassSlot = {
-  /** educationSlotId (직접 배정 API path param) */
+  /** educationSlotId (직접 배정 API path param). 임시일정 slotId는 isEducationSlotId: false */
   id: string
   classLabel: string
+  /**
+   * false면 기관 임시일정 slotId.
+   * GET/POST direct-assignment path는 educationSlotId만 허용하므로 직접 배정 옵션에서 disable.
+   */
+  isEducationSlotId?: boolean
 }
 
 export type RegionAssignmentColumn = {
@@ -11,8 +16,13 @@ export type RegionAssignmentColumn = {
   id: string
   scheduleId?: string
   organizationApplicationId?: string
+  /**
+   * allocation-matrix `columns[].educationStartAt` Instant (nullable).
+   * 표시용 달력일과 분리. 직접 배정 enabled는 이 Instant vs now.
+   */
+  educationStartAt?: string | null
   dateLabel: string
-  /** YYYY-MM-DD — 출석·필터용 */
+  /** YYYY-MM-DD — 출석·필터용. Asia/Seoul 달력일 */
   isoDate?: string
   institutionName: string
   /** 구/군 또는 시(경기 남부는 시 단위만) */
@@ -38,6 +48,8 @@ export type RegionAssignmentCell =
       isInvalidAssignment?: boolean
       /** allocation-matrix cell.assignmentStatus. 출결 담당 후보는 ASSIGNED만 */
       assignmentStatus?: string
+      /** allocation-matrix cell.educationSlotId. 점유 집계 SSOT */
+      educationSlotId?: string
     }
 
 export type RegionAssignmentVolunteerRow = {

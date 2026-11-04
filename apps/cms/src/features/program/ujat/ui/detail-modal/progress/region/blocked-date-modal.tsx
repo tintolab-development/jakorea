@@ -52,6 +52,13 @@ export function RegionBlockedDateModal({
   )
   const [formError, setFormError] = useState<string | null>(null)
 
+  const assignedDateOptions = useMemo(() => {
+    if (!volunteerId) return []
+    return educationDateOptions.filter(option =>
+      getRequiresReplacement(volunteerId, [option.value])
+    )
+  }, [educationDateOptions, getRequiresReplacement, volunteerId])
+
   const requiresReplacement = useMemo(() => {
     if (!volunteerId || blockedDateLabels.length === 0) return false
     return getRequiresReplacement(volunteerId, blockedDateLabels)
@@ -79,7 +86,7 @@ export function RegionBlockedDateModal({
     if (!volunteerId || blockedDateLabels.length === 0) return false
     if (
       !volunteerOptions.some(option => option.value === volunteerId) ||
-      !blockedDateLabels.every(label => educationDateOptions.some(option => option.value === label))
+      !blockedDateLabels.every(label => assignedDateOptions.some(option => option.value === label))
     ) {
       return false
     }
@@ -87,8 +94,8 @@ export function RegionBlockedDateModal({
     if (!substituteVolunteerId) return false
     return substituteVolunteerOptions.some(option => option.value === substituteVolunteerId)
   }, [
+    assignedDateOptions,
     blockedDateLabels,
-    educationDateOptions,
     requiresReplacement,
     substituteVolunteerId,
     substituteVolunteerOptions,
@@ -181,6 +188,7 @@ export function RegionBlockedDateModal({
             disabled={volunteerOptions.length === 0}
             onChange={value => {
               setVolunteerId(value == null ? undefined : String(value))
+              setBlockedDateLabels([])
               setSubstituteVolunteerId(undefined)
             }}
             options={[...volunteerOptions]}
@@ -197,27 +205,23 @@ export function RegionBlockedDateModal({
             withAllOption={false}
             allowClear
             placeholder={
-              educationDateOptions.length === 0
-                ? '선택 가능한 교육일이 없습니다'
-                : '참여 불가한 날짜를 선택해 주세요'
+              !volunteerId
+                ? '봉사자를 먼저 선택해 주세요'
+                : assignedDateOptions.length === 0
+                  ? '배정된 교육일이 없습니다'
+                  : '참여 불가한 날짜를 선택해 주세요'
             }
             value={blockedDateLabels}
-            disabled={!volunteerId || educationDateOptions.length === 0}
+            disabled={!volunteerId || assignedDateOptions.length === 0}
             onChange={value => {
               const next = Array.isArray(value) ? value.map(String) : []
               setBlockedDateLabels(next)
               setSubstituteVolunteerId(undefined)
             }}
-            options={[...educationDateOptions]}
+            options={[...assignedDateOptions]}
             aria-label="참여 불가일"
           />
         </div>
-
-        {volunteerId && blockedDateLabels.length > 0 && !requiresReplacement ? (
-          <p className="form-editor-template-field-hint-text" role="status">
-            선택한 교육일에 배정이 없습니다. 활동 불가만 등록되며 자동 배정에서 제외됩니다.
-          </p>
-        ) : null}
 
         {requiresReplacement ? (
           <div className="ujat-assignment-assign-modal__field">

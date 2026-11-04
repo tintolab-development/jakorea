@@ -150,8 +150,85 @@ export type UjatDirectAssignmentCandidatesResponse = {
   educationRegionCode?: string | null
   reallocationRequired?: boolean | null
   candidates?: UjatDirectAssignmentCandidate[] | null
+  /** 일부 래퍼·별칭. fetch 정규화 후 candidates로 합친다 */
+  items?: UjatDirectAssignmentCandidate[] | null
   /** 1인 슬롯이면 기존 배정 봉사자 participantId(선택 후보는 SECONDARY로 추가), 빈 슬롯이면 null */
   existingPrimaryParticipantId?: number | null
+}
+
+function readNullableNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && /^-?\d+$/.test(value.trim())) return Number(value.trim())
+  return null
+}
+
+function readOptionalString(value: unknown): string | null {
+  return typeof value === 'string' ? value : null
+}
+
+function normalizeDirectAssignmentCandidate(raw: unknown): UjatDirectAssignmentCandidate {
+  if (raw == null || typeof raw !== 'object') return {}
+  const o = raw as Record<string, unknown>
+  return {
+    participantId: readNullableNumber(o.participantId ?? o.participant_id),
+    memberId: readNullableNumber(o.memberId ?? o.member_id),
+    volunteerName:
+      readOptionalString(o.volunteerName) ??
+      readOptionalString(o.volunteer_name) ??
+      readOptionalString(o.memberName),
+    totalAssignedDays: readNullableNumber(o.totalAssignedDays ?? o.total_assigned_days),
+    alreadyAssignedOnEducationDate:
+      typeof (o.alreadyAssignedOnEducationDate ?? o.already_assigned_on_education_date) ===
+      'boolean'
+        ? Boolean(o.alreadyAssignedOnEducationDate ?? o.already_assigned_on_education_date)
+        : null,
+    sourceAssignmentGroupId:
+      readOptionalString(o.sourceAssignmentGroupId) ??
+      readOptionalString(o.source_assignment_group_id),
+    sourceEducationSlotId: readNullableNumber(
+      o.sourceEducationSlotId ?? o.source_education_slot_id
+    ),
+    sourceClassLabel:
+      readOptionalString(o.sourceClassLabel) ?? readOptionalString(o.source_class_label),
+    sourcePartnerParticipantId: readNullableNumber(
+      o.sourcePartnerParticipantId ?? o.source_partner_participant_id
+    ),
+  }
+}
+
+/** GET direct-assignment-candidates 래퍼·별칭·배열 본문을 canonical DTO로 맞춘다 */
+export function normalizeUjatDirectAssignmentCandidatesResponse(
+  payload: unknown
+): UjatDirectAssignmentCandidatesResponse {
+  const body = unwrapApiBody<unknown>(payload)
+  if (Array.isArray(body)) {
+    return { candidates: body.map(normalizeDirectAssignmentCandidate) }
+  }
+  if (body == null || typeof body !== 'object') return { candidates: [] }
+  const o = body as Record<string, unknown>
+  if (!('candidates' in o) && !('items' in o) && 'data' in o) {
+    return normalizeUjatDirectAssignmentCandidatesResponse(o.data)
+  }
+  const rawList = Array.isArray(o.candidates)
+    ? o.candidates
+    : Array.isArray(o.items)
+      ? o.items
+      : []
+  return {
+    programId: readNullableNumber(o.programId ?? o.program_id),
+    educationSlotId: readNullableNumber(o.educationSlotId ?? o.education_slot_id),
+    scheduleId: readNullableNumber(o.scheduleId ?? o.schedule_id),
+    educationRegionCode:
+      readOptionalString(o.educationRegionCode) ?? readOptionalString(o.education_region_code),
+    reallocationRequired:
+      typeof (o.reallocationRequired ?? o.reallocation_required) === 'boolean'
+        ? Boolean(o.reallocationRequired ?? o.reallocation_required)
+        : null,
+    candidates: rawList.map(normalizeDirectAssignmentCandidate),
+    existingPrimaryParticipantId: readNullableNumber(
+      o.existingPrimaryParticipantId ?? o.existing_primary_participant_id
+    ),
+  }
 }
 
 export type UjatDirectAssignmentResponse = {
@@ -342,7 +419,7 @@ export async function fetchUjatDirectAssignmentCandidates(
   programId: string,
   educationSlotId: string | number
 ): Promise<UjatDirectAssignmentCandidatesResponse> {
-  return unwrapApiBody(
+  return normalizeUjatDirectAssignmentCandidatesResponse(
     await customInstance({
       url: executionUjatPath(
         programId,
@@ -377,7 +454,7 @@ export async function putUjatAttendanceManager(
 ): Promise<void> {
   // participantId: null 은 JSON null로 유지. undefined/omit 금지(담당 해제 누락).
   const participantId = body.participantId === undefined ? null : body.participantId
-  await customInstance({
+  const payload = await customInstance({
     url: executionUjatPath(
       programId,
       `/schedules/${encodeURIComponent(String(scheduleId))}/attendance-manager`
@@ -385,6 +462,20 @@ export async function putUjatAttendanceManager(
     method: 'PUT',
     data: { participantId },
   })
+  if (payload != null && typeof payload === 'object') {
+    const envelope = payload as { success?: boolean; message?: string; error?: { message?: string } }
+    if (envelope.success === false) {
+      const message =
+        envelope.error?.message?.trim() ||
+        envelope.message?.trim() ||
+        '출결 담당자 저장에 실패했습니다.'
+      const error = new Error(message) as Error & {
+        response: { status: number; data: unknown }
+      }
+      error.response = { status: 400, data: payload }
+      throw error
+    }
+  }
 }
 
 export async function fetchUjatScheduleUnavailability(

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  getRegionAssignedEducationDateOptionsFromData,
   getRegionBlockedDateSubstituteVolunteerOptionsFromData,
   getRegionDirectAssignClassOptionsFromData,
+  REGION_DIRECT_ASSIGN_NO_EDUCATION_SLOT_LABEL,
+  isRegionDirectAssignClassSlotSelectable,
   mapRegionDirectAssignCandidateOptions,
   regionUnavailabilityRequiresReplacement,
   regionUnavailabilityRequiresReplacementForDate,
@@ -11,8 +14,13 @@ import type { RegionAssignmentCell, RegionAssignmentTableData } from './types'
 
 const EMPTY: RegionAssignmentCell = { kind: 'empty' }
 
-function assigned(classLabel: string): RegionAssignmentCell {
-  return { kind: 'assigned', classLabel }
+function assigned(classLabel: string, educationSlotId?: string): RegionAssignmentCell {
+  return {
+    kind: 'assigned',
+    classLabel,
+    educationSlotId,
+    assignmentStatus: educationSlotId ? 'ASSIGNED' : undefined,
+  }
 }
 
 /** 같은 날(4/3) 일정 2개(s10·s11) + 다른 날(4/10) 일정 1개(s20) */
@@ -62,9 +70,9 @@ function table(rows: Array<{ id: string; name: string; cells: RegionAssignmentCe
 describe('getRegionDirectAssignClassOptionsFromData', () => {
   it('빈 슬롯은 그대로, 1인 슬롯은 두 번째 봉사자 배정, 2인 슬롯은 비활성으로 둔다', () => {
     const data = table([
-      { id: '1', name: '김', cells: [assigned('3-1'), EMPTY, EMPTY] },
-      { id: '2', name: '이', cells: [assigned('3-1'), EMPTY, EMPTY] },
-      { id: '3', name: '박', cells: [assigned('3-2'), EMPTY, EMPTY] },
+      { id: '1', name: '김', cells: [assigned('3-1', '501'), EMPTY, EMPTY] },
+      { id: '2', name: '이', cells: [assigned('3-1', '501'), EMPTY, EMPTY] },
+      { id: '3', name: '박', cells: [assigned('3-2', '502'), EMPTY, EMPTY] },
     ])
     const options = getRegionDirectAssignClassOptionsFromData(data)
     expect(options.find(option => option.value === '501')).toMatchObject({
@@ -81,10 +89,158 @@ describe('getRegionDirectAssignClassOptionsFromData', () => {
     })
   })
 
+  it('임시일정 slotId 학급은 직접 배정 path에 쓰지 않고 disable한다', () => {
+    const data = table([{ id: '1', name: '김', cells: [EMPTY, EMPTY, EMPTY] }])
+    data.columns[0] = {
+      ...data.columns[0]!,
+      classSlots: [{ id: '901', classLabel: '4-1', isEducationSlotId: false }],
+    }
+    expect(getRegionDirectAssignClassOptionsFromData(data).find(option => option.value === '901')).toEqual({
+      value: '901',
+      label: `4/3 ｜ 4학년 1반 (A초) · ${REGION_DIRECT_ASSIGN_NO_EDUCATION_SLOT_LABEL}`,
+      disabled: true,
+    })
+    expect(isRegionDirectAssignClassSlotSelectable(data, '901')).toBe(false)
+  })
+
   it('classSlots가 비면 직접 배정 옵션을 invent하지 않는다', () => {
     const data = table([{ id: '1', name: '김', cells: [EMPTY, EMPTY, EMPTY] }])
     data.columns = data.columns.map(column => ({ ...column, classSlots: [] }))
     expect(getRegionDirectAssignClassOptionsFromData(data)).toEqual([])
+  })
+
+  it('지난 교육일 빈 학급·1인 학급은 교육 종료로 disable하고 배정 완료로 쓰지 않는다', () => {
+    const data = table([
+      { id: '1', name: '김', cells: [assigned('3-2', '502'), EMPTY, EMPTY] },
+    ])
+    data.columns[0] = {
+      ...data.columns[0]!,
+      dateLabel: '11월 1일',
+      educationStartAt: '2026-10-31T15:00:00Z',
+    }
+    const now = Date.parse('2026-11-05T00:00:00+09:00')
+    const options = getRegionDirectAssignClassOptionsFromData(data, now)
+    expect(options.find(option => option.value === '503')).toEqual({
+      value: '503',
+      label: '11월 1일 ｜ 3학년 3반 (A초) · 교육 종료',
+      disabled: true,
+    })
+    expect(options.find(option => option.value === '502')).toEqual({
+      value: '502',
+      label: '11월 1일 ｜ 3학년 2반 (A초) · 교육 종료',
+      disabled: true,
+    })
+    expect(options.find(option => option.value === '502')?.label).not.toContain('두 번째 봉사자')
+    expect(options.find(option => option.value === '503')?.label).not.toContain('배정 완료')
+  })
+
+  it('지난 교육일이어도 2인 만석은 배정 완료만 표시한다', () => {
+    const data = table([
+      { id: '1', name: '김', cells: [assigned('3-1', '501'), EMPTY, EMPTY] },
+      { id: '2', name: '이', cells: [assigned('3-1', '501'), EMPTY, EMPTY] },
+    ])
+    data.columns[0] = {
+      ...data.columns[0]!,
+      dateLabel: '11월 1일',
+      educationStartAt: '2026-10-31T15:00:00Z',
+    }
+    const options = getRegionDirectAssignClassOptionsFromData(
+      data,
+      Date.parse('2026-11-05T00:00:00+09:00')
+    )
+    expect(options.find(option => option.value === '501')).toEqual({
+      value: '501',
+      label: '11월 1일 ｜ 3학년 1반 (A초) · 배정 완료',
+      disabled: true,
+    })
+  })
+
+  it('미래 미만석 학급은 선택 가능하고, 표시일은 Seoul이어도 Instant로만 enabled를 본다', () => {
+    const data = table([{ id: '1', name: '김', cells: [EMPTY, EMPTY, EMPTY] }])
+    data.columns[0] = {
+      ...data.columns[0]!,
+      dateLabel: '11월 13일',
+      educationStartAt: '2026-11-12T15:00:00Z',
+    }
+    const now = Date.parse('2026-11-05T00:00:00+09:00')
+    expect(getRegionDirectAssignClassOptionsFromData(data, now).find(option => option.value === '503')).toEqual({
+      value: '503',
+      label: '11월 13일 ｜ 3학년 3반 (A초)',
+    })
+  })
+
+  it('educationStartAt이 null이면 달력일과 무관하게 배정 가능으로 본다', () => {
+    const data = table([{ id: '1', name: '김', cells: [EMPTY, EMPTY, EMPTY] }])
+    data.columns[0] = {
+      ...data.columns[0]!,
+      dateLabel: '11월 1일',
+      educationStartAt: null,
+    }
+    expect(
+      getRegionDirectAssignClassOptionsFromData(data, Date.parse('2026-11-05T00:00:00+09:00')).find(
+        option => option.value === '503'
+      )
+    ).toEqual({
+      value: '503',
+      label: '11월 1일 ｜ 3학년 3반 (A초)',
+    })
+  })
+
+  it('REASSIGNMENT_REQUIRED 는 점유 인원에 넣지 않는다', () => {
+    const data = table([
+      {
+        id: '1',
+        name: '김',
+        cells: [
+          {
+            kind: 'assigned',
+            classLabel: '3-1',
+            educationSlotId: '501',
+            assignmentStatus: 'REASSIGNMENT_REQUIRED',
+            isInvalidAssignment: true,
+          },
+          EMPTY,
+          EMPTY,
+        ],
+      },
+    ])
+    expect(getRegionDirectAssignClassOptionsFromData(data).find(option => option.value === '501')).toEqual({
+      value: '501',
+      label: '4/3 ｜ 3학년 1반 (A초)',
+    })
+  })
+
+  it('달력일이 오늘이어도 start Instant가 지났으면 선택 불가', () => {
+    const data = table([{ id: '1', name: '김', cells: [EMPTY, EMPTY, EMPTY] }])
+    data.columns[0] = {
+      ...data.columns[0]!,
+      dateLabel: '11월 5일',
+      educationStartAt: '2026-11-04T15:00:00Z',
+    }
+    const now = Date.parse('2026-11-05T00:30:00+09:00')
+    expect(
+      getRegionDirectAssignClassOptionsFromData(data, now).find(option => option.value === '503')
+    ).toMatchObject({ disabled: true, label: expect.stringContaining('교육 종료') })
+    expect(isRegionDirectAssignClassSlotSelectable(data, '503', now)).toBe(false)
+  })
+
+  it('지난 슬롯·만석 슬롯은 selectable이 아니다', () => {
+    const data = table([
+      { id: '1', name: '김', cells: [assigned('3-1', '501'), EMPTY, EMPTY] },
+      { id: '2', name: '이', cells: [assigned('3-1', '501'), EMPTY, EMPTY] },
+    ])
+    data.columns[0] = {
+      ...data.columns[0]!,
+      educationStartAt: '2026-10-31T15:00:00Z',
+    }
+    data.columns[2] = {
+      ...data.columns[2]!,
+      educationStartAt: '2026-11-12T15:00:00Z',
+    }
+    const now = Date.parse('2026-11-05T00:00:00+09:00')
+    expect(isRegionDirectAssignClassSlotSelectable(data, '503', now)).toBe(false)
+    expect(isRegionDirectAssignClassSlotSelectable(data, '501', now)).toBe(false)
+    expect(isRegionDirectAssignClassSlotSelectable(data, '701', now)).toBe(true)
   })
 })
 
@@ -145,6 +301,17 @@ describe('regionUnavailabilityRequiresReplacementForDate', () => {
       { id: 'v', name: '봉사', cells: [assigned('3-1'), EMPTY, EMPTY] },
     ])
     expect(regionUnavailabilityRequiresReplacement(data, 'v', ['4/10'])).toBe(false)
+  })
+})
+
+describe('getRegionAssignedEducationDateOptionsFromData', () => {
+  it('봉사자에게 활성 배정이 있는 교육일만 남긴다', () => {
+    const data = table([
+      { id: 'v', name: '봉사', cells: [assigned('3-1'), EMPTY, EMPTY] },
+    ])
+    expect(getRegionAssignedEducationDateOptionsFromData(data, 'v')).toEqual([
+      { value: '4/3', label: '4/3' },
+    ])
   })
 })
 

@@ -48,6 +48,7 @@ export type UjatRegionDirectAssignModalProps = {
   volunteerOptions: ReadonlyArray<UjatAssignmentAssignSelectOption>
   volunteerOptionsLoading?: boolean
   volunteerOptionsError?: string | null
+  volunteerOptionsEmptyHint?: string | null
   /** 1인 슬롯이면 기존 배정 봉사자 이름 — 두 번째 봉사자 배정 안내 */
   existingPrimaryVolunteerName?: string | null
   onClassSlotChange: (classSlotId: string | undefined) => void
@@ -214,6 +215,7 @@ function UjatRegionDirectAssignModalContent({
   volunteerOptions,
   volunteerOptionsLoading = false,
   volunteerOptionsError = null,
+  volunteerOptionsEmptyHint = null,
   existingPrimaryVolunteerName = null,
   onClassSlotChange,
   onCancel,
@@ -236,6 +238,12 @@ function UjatRegionDirectAssignModalContent({
     if (!open) return
     selectClassSlot(undefined)
   }, [open, selectClassSlot])
+
+  useEffect(() => {
+    if (!classSlotId) return
+    const selected = classOptions.find(option => option.value === classSlotId)
+    if (!selected || selected.disabled) selectClassSlot(undefined)
+  }, [classOptions, classSlotId, selectClassSlot])
 
   const isSecondaryAssign = Boolean(classSlotId && existingPrimaryVolunteerName)
 
@@ -307,6 +315,8 @@ function UjatRegionDirectAssignModalContent({
           <span className="ujat-assignment-assign-modal__error" role="alert">
             {volunteerOptionsError}
           </span>
+        ) : classSlotId && volunteerOptionsEmptyHint ? (
+          <span className="ujat-assignment-assign-modal__hint">{volunteerOptionsEmptyHint}</span>
         ) : null}
       </AssignModalField>
     </AssignModalShell>

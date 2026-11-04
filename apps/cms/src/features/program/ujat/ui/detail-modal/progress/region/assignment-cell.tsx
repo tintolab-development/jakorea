@@ -1,3 +1,4 @@
+import { isUjatAllocationAssignmentStatusAssigned } from '@/features/program/ujat/api/allocation-matrix-adapters'
 import type { RegionAssignmentCell } from './types'
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 
@@ -17,7 +18,7 @@ export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCe
 
   return (
     <span className="ujat-region-assignment-table__assignment">
-      {cell.isAttendanceManager ? (
+      {cell.isAttendanceManager && isUjatAllocationAssignmentStatusAssigned(cell.assignmentStatus) ? (
         <span className="ujat-region-assignment-table__attendance-badge">출결</span>
       ) : null}
       <span

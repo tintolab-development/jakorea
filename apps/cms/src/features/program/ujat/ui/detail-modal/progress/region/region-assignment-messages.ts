@@ -15,6 +15,8 @@ const REGION_ASSIGNMENT_ERROR_MESSAGES: Record<string, string> = {
   UJAT_EDUCATION_SLOT_NOT_FOUND:
     '배정할 수 있는 학급이 아닙니다. 일정이 지났거나 확정되지 않았을 수 있습니다.',
   UJAT_EDUCATION_SLOT_NOT_ASSIGNED: '아직 배정되지 않은 학급입니다. 배정표를 새로고침해 주세요.',
+  UJAT_ATTENDANCE_MANAGER_NOT_ASSIGNED:
+    '해당 교육일에 배정된 봉사자만 지정할 수 있습니다.',
 }
 
 function hasHangul(value: string): boolean {

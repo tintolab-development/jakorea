@@ -165,4 +165,66 @@ describe('getRegionAttendanceManagerScheduleItemsFromData', () => {
     expect(collectAttendanceManagerPuts(data, { '187580:1': '1695064' })).toEqual([])
     expect(collectAttendanceManagerPuts(data, { '187580:1': '0' })).toEqual([])
   })
+
+  it('같은 scheduleId 여러 기관 열이면 PUT은 1건만 만든다', () => {
+    const assigned = (classLabel: string, manager?: boolean) =>
+      ({
+        kind: 'assigned' as const,
+        classLabel,
+        assignmentStatus: 'ASSIGNED' as const,
+        isAttendanceManager: manager,
+      })
+    const data: RegionAssignmentTableData = {
+      regionKey: 'seoul',
+      regionLabel: '서울',
+      volunteerCount: 2,
+      columns: [
+        {
+          id: '187580:1',
+          scheduleId: '187580',
+          dateLabel: '11월 1일',
+          isoDate: '2026-11-01',
+          institutionName: '학교A',
+          location: '강남구',
+          classSlots: [],
+        },
+        {
+          id: '187580:2',
+          scheduleId: '187580',
+          dateLabel: '11월 1일',
+          isoDate: '2026-11-01',
+          institutionName: '학교B',
+          location: '서초구',
+          classSlots: [],
+        },
+      ],
+      rows: [
+        {
+          id: '11',
+          name: '김',
+          totalAssignedDays: 1,
+          cells: [assigned('1-1', true), assigned('2-1')],
+        },
+        {
+          id: '22',
+          name: '이',
+          totalAssignedDays: 1,
+          cells: [assigned('1-1'), assigned('2-1')],
+        },
+      ],
+    }
+
+    expect(collectAttendanceManagerPuts(data, { '187580:2': '22' })).toEqual([
+      { scheduleId: 187580, participantId: 22 },
+    ])
+    expect(
+      collectAttendanceManagerPuts(data, { '187580:1': '11', '187580:2': '22' })
+    ).toEqual([{ scheduleId: 187580, participantId: 22 }])
+    expect(collectAttendanceManagerPuts(data, { '187580:1': null })).toEqual([
+      { scheduleId: 187580, participantId: null },
+    ])
+    expect(
+      collectAttendanceManagerPuts(data, { '187580:1': null, '187580:2': '22' })
+    ).toEqual([{ scheduleId: 187580, participantId: 22 }])
+  })
 })

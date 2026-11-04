@@ -152,10 +152,12 @@ function mapCell(
     return {
       kind: 'assigned',
       classLabel: label || '—',
-      isAttendanceManager: cell.attendanceManager === true,
+      isAttendanceManager:
+        status === 'ASSIGNED' && cell.attendanceManager === true,
       isSolo: cell.singleAssignment === true,
       isInvalidAssignment: needsReassignment,
       assignmentStatus: status || undefined,
+      educationSlotId: cell.educationSlotId != null ? String(cell.educationSlotId) : undefined,
     }
   }
 
@@ -208,6 +210,7 @@ function buildClassSlotsForColumn(
       .map(slot => ({
         id: String(slot.slotId),
         classLabel: mapEducationSlotLabel(slot),
+        isEducationSlotId: false,
       }))
   }
 
@@ -300,6 +303,7 @@ export function mapAllocationMatrixToRegionTableData(params: {
         col.organizationApplicationId != null
           ? String(col.organizationApplicationId)
           : undefined,
+      educationStartAt: col.educationStartAt ?? null,
       dateLabel: formatDateLabel(col.educationStartAt),
       isoDate: formatIsoDate(col.educationStartAt),
       institutionName: col.organizationName?.trim() || '-',

@@ -8,7 +8,7 @@ export type RegionAttendanceManagerSelectOption = {
 
 export type RegionAttendanceManagerPut = {
   scheduleId: number
-  participantId: number
+  participantId: number | null
 }
 
 /** 그 교육일(열)에 ASSIGNED인 봉사자만 출결 담당 후보 */
@@ -28,7 +28,7 @@ export type RegionAttendanceManagerScheduleItem = {
   currentManagerId?: string
 }
 
-export type RegionAttendanceManagerAssignments = Record<string, string>
+export type RegionAttendanceManagerAssignments = Record<string, string | null>
 
 function koreanMonthDayFromSeoulYmd(ymd: string | undefined): string | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd?.trim() ?? '')
@@ -82,57 +82,33 @@ export function getRegionAttendanceManagerScheduleItemsFromData(
   })
 }
 
-export function applyRegionAttendanceManagersFromData(
-  data: RegionAssignmentTableData,
-  assignments: RegionAttendanceManagerAssignments
-): RegionAssignmentTableData {
-  const rows = data.rows.map(row => ({
-    ...row,
-    cells: row.cells.map(cell => {
-      if (cell.kind !== 'assigned') return cell
-      return { ...cell, isAttendanceManager: false }
-    }),
-  }))
-
-  for (const [columnId, volunteerId] of Object.entries(assignments)) {
-    const columnIndex = data.columns.findIndex(column => column.id === columnId)
-    if (columnIndex < 0) continue
-
-    const rowIndex = rows.findIndex(row => row.id === volunteerId)
-    if (rowIndex < 0) continue
-
-    const cell = rows[rowIndex].cells[columnIndex]
-    if (cell?.kind !== 'assigned') continue
-
-    rows[rowIndex] = {
-      ...rows[rowIndex],
-      cells: rows[rowIndex].cells.map((c, index) => {
-        if (index !== columnIndex || c.kind !== 'assigned') return c
-        return { ...c, isAttendanceManager: true }
-      }),
-    }
-  }
-
-  return { ...data, rows }
-}
+export const ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE =
+  '출결 담당자를 저장할 교육 일정이 없습니다. 배정표를 새로고침해 주세요.'
 
 /**
  * 출결 담당 PUT 목록. scheduleId당 1건.
  * ASSIGNED가 아닌 행·0·비유한 participantId는 보내지 않는다.
+ * 뱃지는 PUT 응답/로컬 overlay가 아니라 GET allocation-matrix cells.attendanceManager 만 쓴다.
  */
 export function collectAttendanceManagerPuts(
   data: RegionAssignmentTableData,
   assignments: RegionAttendanceManagerAssignments
 ): RegionAttendanceManagerPut[] {
-  const byScheduleId = new Map<number, number>()
+  const byScheduleId = new Map<number, number | null>()
 
   for (const [columnId, volunteerId] of Object.entries(assignments)) {
     const columnIndex = data.columns.findIndex(column => column.id === columnId)
     if (columnIndex < 0) continue
 
     const scheduleId = Number(data.columns[columnIndex]?.scheduleId)
-    const participantId = Number(volunteerId)
     if (!Number.isFinite(scheduleId) || scheduleId <= 0) continue
+
+    if (volunteerId === null) {
+      if (!byScheduleId.has(scheduleId)) byScheduleId.set(scheduleId, null)
+      continue
+    }
+
+    const participantId = Number(volunteerId)
     if (!Number.isFinite(participantId) || participantId <= 0) continue
 
     const row = data.rows.find(item => item.id === volunteerId)

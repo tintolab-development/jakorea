@@ -63,12 +63,9 @@ function mapGrade(grade: string): UjatEducationProgressVolunteerGrade | '' {
 }
 
 function mapRegionKey(row: UjatVolunteerApplicantRow): UjatInstitutionApplicationRegionKey {
-  return (
-    findUjatEducationRegionKeyByCode(row.preferredRegionCode) ??
-    findUjatEducationRegionKeyByCode(row.preferredRegion) ??
-    findUjatEducationRegionKeyByLabel(row.preferredRegion) ??
-    ''
-  )
+  const code = row.preferredRegionCode?.trim()
+  if (code) return findUjatEducationRegionKeyByCode(code) ?? code
+  return findUjatEducationRegionKeyByLabel(row.preferredRegion) ?? ''
 }
 
 function mapApplicantToProgressVolunteer(
@@ -130,12 +127,17 @@ export function useUjatEducationProgressVolunteers(
 
   const listQuery = useMemo(() => {
     const keyword = appliedFilters.volunteerName.trim() || undefined
+    const preferredRegion =
+      appliedFilters.regionKey !== UJAT_EDU_PROGRESS_VOLUNTEER_FILTER_ALL
+        ? appliedFilters.regionKey.trim()
+        : ''
     // BE VolunteerFinalResult = PASS|FAIL|RESERVE (APPROVED 별칭은 이 목록에서 빈 결과)
     return {
       finalResultStatus: 'PASS' as const,
       ...(keyword ? { keyword } : {}),
+      ...(preferredRegion ? { preferredRegion } : {}),
     }
-  }, [appliedFilters.volunteerName])
+  }, [appliedFilters.regionKey, appliedFilters.volunteerName])
 
   const remoteQuery = useInfiniteQuery({
     queryKey: [
@@ -208,6 +210,7 @@ export function useUjatEducationProgressVolunteers(
 
   return {
     pendingFilters,
+    appliedFilters,
     handleFilterChange,
     handleSearch,
     tableData,

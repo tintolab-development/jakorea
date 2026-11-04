@@ -39,36 +39,32 @@ describe('AUTO_ASSIGN_RERUN_CONFIRM_MESSAGE', () => {
 })
 
 describe('buildAutoAssignResultAlert', () => {
-  it('전체 학급 2인 배정이면 안내만 보여준다', () => {
+  it('성공 응답이면 공통 배정 완료 모달만 보여준다', () => {
     const alert = buildAutoAssignResultAlert({
       targetSlotCount: 4,
-      pairAssignedCount: 4,
+      pairAssignedCount: 0,
       singleAssignedCount: 0,
       unassignedCount: 0,
       secondaryAddedCount: 0,
-      secondaryUnfilledCount: 0,
+      secondaryUnfilledCount: 4,
+      capacityWarnings: [{ message: '최대 학급 수를 초과했습니다.' }],
     })
-    expect(alert.title).toBe('안내')
-    expect(alert.content).toContain('대상 학급 4건')
-    expect(alert.content).toContain('2인 배정 4건 · 1인 배정 0건 · 미배정 0건')
-    expect(alert.content).not.toContain('ASSIGNED_SINGLE')
+    expect(alert).toEqual({
+      title: '배정 완료',
+      content: '교육일 자동 배정이 완료되었습니다.',
+    })
   })
 
-  it('1인 배정과 완전 미배정을 다른 안내로 보여준다', () => {
+  it('1인 배정·미배정·정원 경고가 있어도 완료 모달을 유지한다', () => {
     const alert = buildAutoAssignResultAlert({
       pairAssignedCount: 2,
       singleAssignedCount: 1,
       unassignedCount: 3,
       capacityWarnings: [{ message: '서울 상반기 봉사자 정원이 부족합니다.' }, { message: ' ' }],
     })
-    expect(alert.title).toBe('확인 필요')
-    expect(alert.content).toContain('봉사자가 부족해 일부 학급이 1인으로 배정되었습니다. (1건)')
-    expect(alert.content).toContain(
-      '배정 가능한 봉사자가 부족하여 일부 학급이 미배정 상태입니다. (3건)'
-    )
-    expect(alert.content).toContain('· 서울 상반기 봉사자 정원이 부족합니다.')
-    expect(alert.content).not.toContain('ASSIGNED_SINGLE')
-    expect(alert.content.split('\n').filter(line => line.startsWith('· '))).toHaveLength(3)
+    expect(alert.title).toBe('배정 완료')
+    expect(alert.content).toBe('교육일 자동 배정이 완료되었습니다.')
+    expect(alert.content).not.toContain('확인 필요')
   })
 
   it('1인 학급 보강 성공·실패와 VOLUNTEER_SHORTAGE를 구분한다', () => {
@@ -117,11 +113,11 @@ describe('buildAutoAssignResultAlert', () => {
     expect(summary.hasVolunteerShortage).toBe(false)
   })
 
-  it('응답 집계가 없으면 -로 표시한다', () => {
-    expect(buildAutoAssignResultAlert(undefined).content).toContain(
-      '2인 배정 - · 1인 배정 - · 미배정 -'
-    )
-    expect(buildAutoAssignResultAlert(undefined).content).toContain('대상 학급 -')
+  it('응답이 없어도 공통 완료 모달을 보여준다', () => {
+    expect(buildAutoAssignResultAlert(undefined)).toEqual({
+      title: '배정 완료',
+      content: '교육일 자동 배정이 완료되었습니다.',
+    })
   })
 })
 
@@ -161,7 +157,7 @@ describe('summarizeAutoAssignResult — 커버리지 정책 mock', () => {
       pairAssignedCount: 2,
       singleAssignedCount: 0,
       unassignedCount: 0,
-    }).title).toBe('안내')
+    }).title).toBe('배정 완료')
   })
 
   it('CASE C: 1인 배정과 미배정을 동시에 안내한다', () => {

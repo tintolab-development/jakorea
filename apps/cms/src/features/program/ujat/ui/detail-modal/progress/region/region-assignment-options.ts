@@ -19,21 +19,37 @@ function formatRegionDirectAssignClassOptionLabel(
 }
 
 export const REGION_DIRECT_ASSIGN_SECONDARY_LABEL = '두 번째 봉사자 배정'
+export const REGION_DIRECT_ASSIGN_ENDED_LABEL = '교육 종료'
+export const REGION_DIRECT_ASSIGN_NO_EDUCATION_SLOT_LABEL = '서버 학급 슬롯 없음'
 
-/** 학급 슬롯 배정 인원 — 재배정 필요 건은 미배정으로 본다 */
+/**
+ * 후보/직접배정 API와 동일: start_at IS NULL OR start_at > now().
+ * 표시용 달력일 문자열·UTC slice 비교 금지. Instant만 Date.parse.
+ */
+export function isRegionDirectAssignEducationNotStarted(
+  educationStartAt: string | null | undefined,
+  nowMs = Date.now()
+): boolean {
+  const start = educationStartAt == null ? null : Date.parse(educationStartAt)
+  return start == null || start > nowMs
+}
+
+/** 학급 슬롯 점유 — assignmentStatus === ASSIGNED 이고 같은 educationSlotId 인 행만 */
 function countRegionClassSlotAssignees(
-  classLabel: string,
-  rows: RegionAssignmentVolunteerRow[],
-  columnIndex: number
+  educationSlotId: string,
+  rows: RegionAssignmentVolunteerRow[]
 ): number {
-  return rows.filter(row => {
-    const cell = row.cells[columnIndex]
+  return rows.reduce((count, row) => {
     return (
-      cell?.kind === 'assigned' &&
-      !cell.isInvalidAssignment &&
-      cell.classLabel === classLabel
+      count +
+      row.cells.filter(
+        cell =>
+          cell.kind === 'assigned' &&
+          cell.educationSlotId === educationSlotId &&
+          (cell.assignmentStatus ?? '').trim().toUpperCase() === 'ASSIGNED'
+      ).length
     )
-  }).length
+  }, 0)
 }
 
 export function getRegionAssignmentTableData(
@@ -83,29 +99,57 @@ function isVolunteerFreeOnColumnIndices(
 }
 
 /**
- * 직접 배정 학급 옵션 — 빈 슬롯·1인 슬롯(두 번째 봉사자 배정)은 선택 가능, 2인이 찬 슬롯만 비활성.
+ * 직접 배정 학급 옵션.
+ * 2인 만석 → 배정 완료 disable. 지난 교육일(start_at ≤ now) → 교육 종료 disable.
+ * 미래·미만석 1인만 「두 번째 봉사자 배정」. 격자 열은 그대로 두고 드롭다운만 disable.
  */
 export function getRegionDirectAssignClassOptionsFromData(
-  data: RegionAssignmentTableData
+  data: RegionAssignmentTableData,
+  nowMs = Date.now()
 ): { value: string; label: string; disabled?: boolean }[] {
   const { columns, rows } = data
 
-  return columns.flatMap((column, columnIndex) =>
+  return columns.flatMap(column =>
     column.classSlots.map(slot => {
       const label = formatRegionDirectAssignClassOptionLabel(
         column.dateLabel,
         formatUjatGradeClassDisplayLabel(slot.classLabel),
         column.institutionName
       )
-      const assignees = countRegionClassSlotAssignees(slot.classLabel, rows, columnIndex)
+      const assignees = countRegionClassSlotAssignees(slot.id, rows)
+      if (slot.isEducationSlotId === false) {
+        return {
+          value: slot.id,
+          label: `${label} · ${REGION_DIRECT_ASSIGN_NO_EDUCATION_SLOT_LABEL}`,
+          disabled: true,
+        }
+      }
       if (assignees >= 2) {
         return { value: slot.id, label: `${label} · 배정 완료`, disabled: true }
+      }
+      if (!isRegionDirectAssignEducationNotStarted(column.educationStartAt, nowMs)) {
+        return {
+          value: slot.id,
+          label: `${label} · ${REGION_DIRECT_ASSIGN_ENDED_LABEL}`,
+          disabled: true,
+        }
       }
       if (assignees === 1) {
         return { value: slot.id, label: `${label} · ${REGION_DIRECT_ASSIGN_SECONDARY_LABEL}` }
       }
       return { value: slot.id, label }
     })
+  )
+}
+
+export function isRegionDirectAssignClassSlotSelectable(
+  data: RegionAssignmentTableData,
+  classSlotId: string | undefined,
+  nowMs = Date.now()
+): boolean {
+  if (!classSlotId) return false
+  return getRegionDirectAssignClassOptionsFromData(data, nowMs).some(
+    option => option.value === classSlotId && option.disabled !== true
   )
 }
 
@@ -243,6 +287,16 @@ export function getRegionEducationDateOptionsFromData(
     acc.push({ value: column.dateLabel, label: column.dateLabel })
     return acc
   }, [])
+}
+
+/** 참여 불가일 설정 — 해당 봉사자에게 활성 배정이 있는 교육일만 */
+export function getRegionAssignedEducationDateOptionsFromData(
+  data: RegionAssignmentTableData,
+  volunteerId: string
+): { value: string; label: string }[] {
+  return getRegionEducationDateOptionsFromData(data).filter(option =>
+    regionUnavailabilityRequiresReplacementForDate(data, volunteerId, option.value)
+  )
 }
 
 export function getRegionEducationDateOptions(

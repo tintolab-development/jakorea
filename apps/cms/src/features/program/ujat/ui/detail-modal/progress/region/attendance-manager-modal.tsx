@@ -9,6 +9,10 @@ import type {
 import './attendance-manager-modal.css'
 
 const MODAL_Z_INDEX = 1100
+/** Figma `Popup / Select / w800` */
+const MODAL_WIDTH = 800
+/** Figma `Field / Table / Select` — pl14 + text92 + gap6 + icon18 + pr10 */
+const TABLE_SELECT_WIDTH = 140
 
 export type RegionAttendanceManagerModalProps = {
   open: boolean
@@ -53,10 +57,11 @@ export function RegionAttendanceManagerModal({
       .filter(item => {
         if (item.volunteerOptions.length === 0) return false
         const selected = selections[item.columnId]
-        return (
-          selected == null ||
-          !item.volunteerOptions.some(option => option.value === selected)
-        )
+        const hasValid =
+          selected != null &&
+          item.volunteerOptions.some(option => option.value === selected)
+        if (hasValid) return false
+        return item.currentManagerId == null
       })
       .map(item => item.label)
 
@@ -76,6 +81,8 @@ export function RegionAttendanceManagerModal({
       const volunteerId = selections[item.columnId]
       if (volunteerId && item.volunteerOptions.some(option => option.value === volunteerId)) {
         assignments[item.columnId] = volunteerId
+      } else if (item.currentManagerId && item.volunteerOptions.length > 0) {
+        assignments[item.columnId] = null
       }
     }
 
@@ -85,12 +92,12 @@ export function RegionAttendanceManagerModal({
 
   const footer = (
     <div className="ujat-region-attendance-manager-modal__footer">
-      <CmsButton variant="secondary" size="large" type="button" onClick={handleCancel}>
+      <CmsButton variant="secondary" size="h40" type="button" onClick={handleCancel}>
         닫기
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="h40"
         type="button"
         disabled={scheduleItems.length === 0}
         onClick={handleSave}
@@ -105,7 +112,7 @@ export function RegionAttendanceManagerModal({
       open={open}
       onCancel={handleCancel}
       title="출결 담당자 설정"
-      width={1000}
+      width={MODAL_WIDTH}
       zIndex={MODAL_Z_INDEX}
       className="ujat-region-attendance-manager-modal"
       wrapClassName="ujat-region-attendance-manager-modal-wrap"
@@ -134,36 +141,39 @@ export function RegionAttendanceManagerModal({
                     : undefined
                 }
               >
-                {row.map(item => (
-                  <DetailInfoForm.Field
-                    key={item.columnId}
-                    label={item.label}
-                    labelWidth={240}
-                    view={selections[item.columnId] ?? '-'}
-                    edit={
-                      <CmsSelect
-                        inputSize="small"
-                        width="100%"
-                        withAllOption={false}
-                        placeholder={
-                          item.volunteerOptions.length === 0
-                            ? '배정된 봉사자가 없습니다'
-                            : '출결 담당자를 선택해 주세요'
-                        }
-                        value={selections[item.columnId]}
-                        disabled={item.volunteerOptions.length === 0}
-                        onChange={value =>
-                          setSelections(prev => ({
-                            ...prev,
-                            [item.columnId]: value == null ? undefined : String(value),
-                          }))
-                        }
-                        options={[...item.volunteerOptions]}
-                        aria-label={`${item.label} 출결 담당자`}
-                      />
-                    }
-                  />
-                ))}
+                {row.map(item => {
+                  const placeholder =
+                    item.volunteerOptions.length === 0 ? '배정 없음' : '담당자 명'
+                  return (
+                    <DetailInfoForm.Field
+                      key={item.columnId}
+                      label={item.label}
+                      labelWidth={180}
+                      view={selections[item.columnId] ?? '-'}
+                      edit={
+                        <CmsSelect
+                          className="ujat-region-attendance-manager-modal__select"
+                          inputSize="small"
+                          width={TABLE_SELECT_WIDTH}
+                          withAllOption={false}
+                          allowClear={item.currentManagerId != null}
+                          placeholder={placeholder}
+                          title={placeholder}
+                          value={selections[item.columnId]}
+                          disabled={item.volunteerOptions.length === 0}
+                          onChange={value =>
+                            setSelections(prev => ({
+                              ...prev,
+                              [item.columnId]: value == null ? undefined : String(value),
+                            }))
+                          }
+                          options={[...item.volunteerOptions]}
+                          aria-label={`${item.label} 출결 담당자`}
+                        />
+                      }
+                    />
+                  )
+                })}
               </DetailInfoForm.Row>
             ))}
           </DetailInfoForm>

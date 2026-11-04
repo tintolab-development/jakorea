@@ -27,8 +27,8 @@
   transform: translate(-50%, -50%) !important;
   margin: 0 !important;
   padding-bottom: 0 !important;
-  width: min(1000px, calc(100vw - 32px)) !important;
-  max-width: min(1000px, calc(100vw - 32px)) !important;
+  width: min(800px, calc(100vw - 32px)) !important;
+  max-width: min(800px, calc(100vw - 32px)) !important;
   box-sizing: border-box !important;
 }
 
@@ -37,12 +37,11 @@
   display: flex;
   width: 100% !important;
   max-width: 100% !important;
-  min-height: 320px;
   max-height: calc(100vh - 48px);
-  padding: 26px 30px 34px;
+  padding: 24px 30px 34px;
   flex-direction: column;
   align-items: stretch;
-  border-radius: 12px;
+  border-radius: 16px;
   background: #fff;
   box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.35);
   box-sizing: border-box;
@@ -56,17 +55,7 @@
   flex-direction: column;
   min-height: 0;
   margin-top: 0;
-  padding-top: 16px;
   overflow: hidden;
-}
-
-.ujat-region-attendance-manager-modal__empty {
-  margin: 24px 0;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 14px;
-  line-height: 150%;
-  text-align: center;
-  opacity: 0.7;
 }
 
 .content-modal.ujat-region-attendance-manager-modal .teal-header-modal__footer {
@@ -80,7 +69,7 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  margin-top: 16px;
+  margin-top: 30px;
 }
 
 .ujat-region-attendance-manager-modal__empty {
@@ -96,16 +85,61 @@
   width: 100%;
 }
 
+.ujat-region-attendance-manager-modal__form .detail-info-form__field {
+  min-height: 44px;
+}
+
+.ujat-region-attendance-manager-modal__form .detail-info-form__field-label {
+  padding: 4px 12px;
+  min-height: 44px;
+}
+
 .ujat-region-attendance-manager-modal__form .detail-info-form__field-content--edit {
-  padding: 6px 12px;
+  min-width: 100px;
+  min-height: 44px;
+  padding: 10px;
 }
 
 .ujat-region-attendance-manager-modal__form .detail-info-form__field-content--edit > * {
-  width: 100%;
+  flex: 0 0 auto;
+  width: auto;
+  margin-block: 0;
 }
 
 .ujat-region-attendance-manager-modal__row--single-item > .detail-info-form__field {
   flex: 0 0 50%;
+}
+
+.ujat-region-attendance-manager-modal__select.cms-select.cms-field__box {
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 140px;
+  min-width: 140px;
+  max-width: 140px;
+}
+
+.ujat-region-attendance-manager-modal__select.cms-control--small {
+  --cms-control-h: 36px;
+  --cms-control-pl: 14px;
+  --cms-control-pr: 10px;
+  --cms-control-pt: 8px;
+  --cms-control-pb: 8px;
+  --cms-control-gap: 6px;
+  --cms-control-font: 14px;
+  --cms-control-lh: 140%;
+  --cms-icon-size: 18px;
+}
+
+.ujat-region-attendance-manager-modal__form
+  .ujat-region-attendance-manager-modal__select
+  .ant-select-selection-item,
+.ujat-region-attendance-manager-modal__form
+  .ujat-region-attendance-manager-modal__select
+  .ant-select-selection-placeholder {
+  max-width: 92px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ujat-region-attendance-manager-modal__footer {
@@ -113,5 +147,5 @@
   width: 100%;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
