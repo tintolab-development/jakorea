@@ -10,7 +10,12 @@ import { useSaveInterview } from '@/features/talent-donation-intro/api/hooks'
 import { talentDonationIntroSaveFailureAlert } from '@/features/talent-donation-intro/lib/save-failure-alert'
 import { InterviewPostPickerModal } from '@/features/talent-donation-intro/ui/interview-post-picker-modal'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  CmsTextArea,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './section-shared.css'
 import './interview-section.css'
@@ -234,7 +239,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 width="100%"
                 readOnly
                 value={draft.linkedStoryTitle}
-                placeholder="연결할 게시글을 선택하세요"
+                placeholder="연결할 게시글을 선택해 주세요"
                 suffix={
                   <button
                     type="button"

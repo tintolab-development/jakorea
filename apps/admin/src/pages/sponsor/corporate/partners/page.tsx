@@ -372,7 +372,7 @@ export function CorporatePartnersPage() {
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={e => {
               e.stopPropagation()

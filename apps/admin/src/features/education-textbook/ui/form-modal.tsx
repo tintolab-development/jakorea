@@ -523,7 +523,7 @@ function TextbookFormBody({
                     <CmsSelect
                       inputSize="large"
                       width="100%"
-                      placeholder="사업분야를 선택하세요"
+                      placeholder="사업분야를 선택해 주세요"
                       value={businessFieldId}
                       options={activeFieldOptions}
                       onChange={value => setBusinessFieldId(String(value))}
@@ -543,7 +543,7 @@ function TextbookFormBody({
                       inputSize="large"
                       width="100%"
                       withAllOption={false}
-                      placeholder="교육 대상을 선택하세요"
+                      placeholder="교육 대상을 선택해 주세요"
                       value={educationTargetIds}
                       options={targetOptions}
                       onChange={value =>

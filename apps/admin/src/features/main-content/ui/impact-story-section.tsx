@@ -233,7 +233,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                     featuredContentId: String(value ?? ''),
                   }))
                 }}
-                placeholder="대표 콘텐츠를 선택하세요"
+                placeholder="대표 콘텐츠를 선택해 주세요"
               />
             }
           />

@@ -317,7 +317,7 @@ function StripBannerFormBody({
                       setPeriodRange(dates ?? [null, null])
                     }}
                     disabledDate={periodDisabledDate}
-                    placeholder="게시 기간을 선택하세요"
+                    placeholder="게시 기간을 선택해 주세요"
                   />
                 }
               />

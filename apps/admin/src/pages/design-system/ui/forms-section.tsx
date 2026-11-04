@@ -74,7 +74,7 @@ export function FormsSection() {
         </div>
         <p className="ds-note">
           단일·기간 시작/종료 모두 <code>CmsDatePicker</code> (
-          <code>inputSize=&quot;large&quot;</code>, placeholder <code>날짜를 선택하세요</code>).
+          <code>inputSize=&quot;large&quot;</code>, placeholder <code>날짜를 선택해 주세요</code>).
           필터 등 분할 기간 UI는 <code>CmsDateRangePicker</code>.
         </p>
       </DsDemo>

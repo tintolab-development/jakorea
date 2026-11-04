@@ -145,7 +145,7 @@ function BoardMemberFormBody({
               <CmsSelect
                 inputSize="large"
                 width="100%"
-                placeholder="이사회 직책을 선택하세요"
+                placeholder="이사회 직책을 선택해 주세요"
                 options={ROLE_OPTIONS}
                 value={roleGroup}
                 onChange={value => setRoleGroup(value as BoardRoleGroup)}

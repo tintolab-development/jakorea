@@ -396,7 +396,7 @@ export function StoryFormModal({
                   inputSize="large"
                   width={240}
                   value={categoryId || undefined}
-                  placeholder="카테고리를 선택하세요"
+                  placeholder="카테고리를 선택해 주세요"
                   options={categoryOptions}
                   onChange={v => setCategoryId(String(v ?? ''))}
                 />

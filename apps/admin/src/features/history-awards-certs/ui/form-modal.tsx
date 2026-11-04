@@ -40,7 +40,7 @@ const KIND_COPY = {
     description:
       '수상일과 상명, 수여 기관명을 기재해 주세요.\n수상일은 관리자 화면에서 일까지 노출되며, 홈페이지에서는 연도와 월까지만 노출됩니다.',
     dateLabel: '수상일',
-    datePlaceholder: '수상일을 선택하세요',
+    datePlaceholder: '수상일을 선택해 주세요',
     nameLabel: '상명',
     namePlaceholder: '상명을 입력해 주세요',
     orgLabel: '수여 기관명',
@@ -51,7 +51,7 @@ const KIND_COPY = {
     description:
       '인증일과 내용, 인증 기관명을 기재해 주세요.\n인증일은 관리자 화면에서 일까지 노출되며, 홈페이지에서는 연도와 월까지만 노출됩니다.',
     dateLabel: '인증일',
-    datePlaceholder: '인증일을 선택하세요',
+    datePlaceholder: '인증일을 선택해 주세요',
     nameLabel: '내용',
     namePlaceholder: '내용을 입력해 주세요',
     orgLabel: '인증 기관명',
