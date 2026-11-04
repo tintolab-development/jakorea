@@ -43,6 +43,7 @@ import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
   describeUjatCertificateProgressBlock,
+  hasUjatCertificateAssignment,
 } from '../activity-certificate'
 import type { UjatEducationProgressVolunteerDetail } from './volunteer-detail-data'
 import { UjatEducationProgressVolunteerApplicationTab } from './application-tab'
@@ -374,7 +375,7 @@ export function UjatEducationProgressVolunteerDetailView({
     isLoading: assignmentProgress.isLoading,
     isError: assignmentProgress.isError,
     isParticipantUnresolved: assignmentProgress.isParticipantUnresolved,
-    hasNoAssignment: assignmentProgress.bundle.rows.length === 0,
+    hasNoAssignment: !hasUjatCertificateAssignment(assignmentProgress.bundle),
   })
   const certificateIssueDisabled =
     certificateProgressBlockReason != null || studentCertificateExportActive

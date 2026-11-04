@@ -87,4 +87,99 @@ describe('loadVolunteerAssignmentProgress', () => {
     expect(result.bundle.rows).toHaveLength(1)
     expect(result.bundle.attendanceSummary.completionStatus).toBe('교육 진행 전')
   })
+
+  it('계약 B: 희망 지역 matrix의 ASSIGNED 셀만 쓰고 반기 전체로 재조회하지 않는다', async () => {
+    vi.mocked(fetchUjatAllocationMatrix).mockResolvedValue({
+      educationRegionCode: 'INCHEON',
+      semesterType: 'SECOND_HALF',
+      columns: [
+        {
+          columnKey: 'col-1',
+          scheduleId: 187580,
+          educationStartAt: '2026-10-31T15:00:00Z',
+          organizationName: '대전초록중학교',
+          educationRegionCode: 'DAEJEON',
+        },
+      ],
+      volunteers: [
+        {
+          participantId: 1695054,
+          memberId: 190066,
+          volunteerName: '백소리',
+          educationRegionCode: 'INCHEON',
+          totalAssignedDays: 1,
+          cells: [
+            {
+              scheduleId: 187580,
+              assignmentStatus: 'ASSIGNED',
+              classLabel: '1학년 2반',
+            },
+          ],
+        },
+      ],
+    })
+    vi.mocked(fetchUjatAssignmentSubmissions).mockResolvedValue({ sessions: [] })
+    vi.mocked(fetchUjatPartnerAssignments).mockResolvedValue([])
+    vi.mocked(fetchUjatAttendancesByScheduleIds).mockResolvedValue({ '187580': [] })
+    vi.mocked(fetchProgramAbsenceReasons).mockResolvedValue([])
+
+    const result = await loadVolunteerAssignmentProgress({
+      programId: '186495',
+      memberId: '190066',
+      semesterType: 'SECOND_HALF',
+      educationRegionCode: 'INCHEON',
+    })
+
+    expect(fetchUjatAllocationMatrix).toHaveBeenCalledTimes(1)
+    expect(fetchUjatAllocationMatrix).toHaveBeenCalledWith('186495', {
+      semesterType: 'SECOND_HALF',
+      educationRegionCode: 'INCHEON',
+    })
+    expect(result.participantId).toBe(1695054)
+    expect(result.educationRegionCode).toBe('INCHEON')
+    expect(fetchUjatAssignmentSubmissions).toHaveBeenCalledWith('186495', {
+      semesterType: 'SECOND_HALF',
+      educationRegionCode: 'INCHEON',
+    })
+    expect(result.bundle.rows[0]?.classDisplay).toEqual({ kind: 'class', label: '1학년 2반' })
+    expect(result.bundle.rows[0]?.assignedInstitution).toEqual({
+      kind: 'name',
+      value: '대전초록중학교',
+    })
+  })
+
+  it('희망 지역 응답에 ASSIGNED 셀이 없으면 반기 전체를 치지 않고 빈 배정으로 둔다', async () => {
+    vi.mocked(fetchUjatAllocationMatrix).mockResolvedValue({
+      educationRegionCode: 'INCHEON',
+      columns: [],
+      volunteers: [
+        {
+          participantId: 1695054,
+          memberId: 190066,
+          volunteerName: '백소리',
+          educationRegionCode: 'INCHEON',
+          totalAssignedDays: 0,
+          cells: [],
+        },
+      ],
+    })
+    vi.mocked(fetchUjatAssignmentSubmissions).mockResolvedValue({ sessions: [] })
+    vi.mocked(fetchUjatPartnerAssignments).mockResolvedValue([])
+    vi.mocked(fetchUjatAttendancesByScheduleIds).mockResolvedValue({})
+    vi.mocked(fetchProgramAbsenceReasons).mockResolvedValue([])
+
+    const result = await loadVolunteerAssignmentProgress({
+      programId: '186495',
+      memberId: '190066',
+      semesterType: 'SECOND_HALF',
+      educationRegionCode: 'INCHEON',
+    })
+
+    expect(fetchUjatAllocationMatrix).toHaveBeenCalledTimes(1)
+    expect(fetchUjatAllocationMatrix).not.toHaveBeenCalledWith('186495', {
+      semesterType: 'SECOND_HALF',
+    })
+    expect(result.participantId).toBe(1695054)
+    expect(result.bundle.rows).toEqual([])
+  })
 })

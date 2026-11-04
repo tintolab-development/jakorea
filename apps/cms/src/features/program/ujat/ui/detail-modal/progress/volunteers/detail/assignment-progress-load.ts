@@ -21,7 +21,7 @@ import type { UjatVolunteerAssignmentProgressBundle } from './assignment-types'
 
 export type VolunteerAssignmentProgressData = {
   participantId: number | null
-  /** 과제 제출 조회에 실제로 쓴 지역 코드. 없으면 요청값 또는 ALL */
+  /** matrix·과제 제출 조회에 쓴 지역 코드. 희망 지역 GET과 같다. 없으면 ALL */
   educationRegionCode: string
   bundle: UjatVolunteerAssignmentProgressBundle
   assignOptionsByRowId: Record<string, VolunteerAssignmentAssignOptions>
@@ -67,6 +67,7 @@ export async function loadVolunteerAssignmentProgress(input: {
   }
 
   const volunteer = (matrix.volunteers ?? []).find(item => item.participantId === participantId)
+  // 계약 B: 희망 지역 GET과 같은 CODE로 submissions를 친다. 컬럼 저장 지역(DAEJEON 등)으로 바꾸지 않는다.
   const submissionsRegion =
     requestedRegion ||
     volunteer?.educationRegionCode?.trim() ||

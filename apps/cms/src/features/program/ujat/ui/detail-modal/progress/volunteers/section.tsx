@@ -38,6 +38,7 @@ import { getMemberApiErrorMessage } from '@/features/user/api/get-member-api-err
 import {
   buildActivityCertificateVolunteerFromUjatDetail,
   buildStudentCertificateContextFromUjatVolunteer,
+  hasUjatCertificateAssignment,
   UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT,
 } from './activity-certificate'
 import { loadVolunteerAssignmentProgress } from './detail/assignment-progress-load'
@@ -201,7 +202,7 @@ export function UjatEducationProgressVolunteersSection({
         })
         return null
       }
-      if (progress.bundle.rows.length === 0) {
+      if (!hasUjatCertificateAssignment(progress.bundle)) {
         showAlert({ title: '안내', content: UJAT_CERTIFICATE_NO_ASSIGNMENT_ALERT })
         return null
       }
