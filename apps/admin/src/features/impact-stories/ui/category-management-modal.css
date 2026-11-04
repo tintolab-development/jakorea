@@ -1,7 +1,7 @@
 /**
  * 임팩트 스토리 카테고리 관리 — Figma 2100:100121 · ContentModal 600
  * 셸: padding 24 30 34 · gap 타이틀↔테이블·테이블↔푸터 30px
- * 테이블: 관리 열 200px · 행 min 44px · summary 입력 h36
+ * 테이블: 관리 열 200px · 행 버튼 H32 폭 80 · 헤더 44 · 행 52 · summary 입력 h36
  */
 
 .ant-modal-wrap:has(.ant-modal.is-category-modal),
@@ -152,7 +152,6 @@
 
 .is-category-modal__table {
   --is-cat-line: var(--Border-default, #e0e0e0);
-  --is-cat-header-bg: #f0f3f5;
   font-family: Pretendard, sans-serif;
 }
 
@@ -174,11 +173,15 @@
   height: 44px;
   padding: 4px 12px;
   text-align: center;
-  background: var(--is-cat-header-bg) !important;
+  background: var(
+    --BG-header,
+    linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
+    #fff
+  ) !important;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.5;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--Netural-black, var(--default-BK, #3d3d3d));
 }
 
 .is-category-modal__table.cms-data-table .ant-table-thead > tr > th,
@@ -237,14 +240,14 @@
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.ant-table-cell-row-hover {
   box-sizing: border-box !important;
-  min-height: 60px !important;
-  height: 60px !important;
-  max-height: 60px !important;
+  min-height: 52px !important;
+  height: 52px !important;
+  max-height: 52px !important;
   padding: 10px 12px !important;
   vertical-align: middle !important;
   white-space: nowrap;
   transition: none !important;
-  background: var(--main-WT, #fff) !important;
+  background: var(--White, var(--main-WT, #fff)) !important;
 }
 
 .is-category-modal__table.cms-data-table
@@ -255,7 +258,7 @@
   .ant-table-tbody
   > tr.ant-table-row:not(.ant-table-placeholder):not(.ant-table-measure-row)
   > td.ant-table-cell-row-hover {
-  background: var(--main-WT, #fff) !important;
+  background: var(--White, var(--main-WT, #fff)) !important;
 }
 
 .is-category-modal__table .ant-table-tbody > tr {
@@ -267,8 +270,11 @@
   width: 100%;
 }
 
-.is-category-modal__table .content-modal__table-cell-actions .cms-button.ant-btn {
-  border: 1px solid var(--is-cat-line, #e0e0e0) !important;
+/* Figma Button / h32 — min-width 80 (공통 H32 기본 100 덮어씀) */
+.is-category-modal__table .content-modal__table-cell-actions .cms-button.ant-btn.cms-button--h32 {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
 }
 
 .is-category-modal__name-text {
@@ -279,10 +285,10 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
-  color: var(--default-BK, #3d3d3d);
+  color: var(--Netural-black, var(--default-BK, #3d3d3d));
 }
 
-/* Figma Field / Table / Input — h36 · radius 8 · px 14 */
+/* Figma Field / Table / Input — h36 · radius 8 · px 14 · placeholder Content/tertiary */
 .is-category-modal__compose .cms-input {
   width: 100%;
 }
@@ -291,11 +297,12 @@
 .is-category-modal__compose .cms-field__box,
 .is-category-modal__compose .cms-field__box:not(.cms-field__box--disabled):not(.cms-field__box--error):hover,
 .is-category-modal__compose .cms-field__box:not(.cms-field__box--disabled):not(.cms-field__box--error):focus-within {
-  border: 1px solid var(--is-cat-line, #e0e0e0) !important;
-  border-radius: var(--radius-8, 8px);
+  border: 1px solid var(--Border-default, #e0e0e0) !important;
+  border-radius: var(--Radius-8, var(--radius-8, 8px));
   box-shadow: none !important;
   min-height: 36px;
   height: 36px;
+  padding-inline: 14px;
 }
 
 .is-category-modal__compose .cms-input .ant-input {
@@ -303,17 +310,26 @@
   border-radius: 0;
   box-shadow: none !important;
   font-size: 14px;
+  font-weight: 500;
   line-height: 1.4;
+  color: var(--Netural-black, var(--default-BK, #3d3d3d));
 }
 
-.is-category-modal__table .ant-table-summary .ant-table-cell {
+.is-category-modal__compose .cms-input .ant-input::placeholder {
+  color: var(--Content-tertiary, #85969d);
+}
+
+.content-modal.is-category-modal
+  .is-category-modal__table.cms-data-table
+  .ant-table-summary
+  .ant-table-cell {
   box-sizing: border-box;
-  min-height: 60px;
-  height: 60px !important;
+  min-height: 56px;
+  height: 56px !important;
   padding: 10px 12px !important;
   vertical-align: middle !important;
   text-align: center;
-  background: var(--main-WT, #fff) !important;
+  background: var(--White, var(--main-WT, #fff)) !important;
 }
 
 .content-modal.is-category-delete-blocked.ant-modal .ant-modal-content {
