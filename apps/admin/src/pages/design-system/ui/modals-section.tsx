@@ -5,6 +5,7 @@ import {
   ConfirmModal,
   ContentModal,
   NO_SELECTION_ALERT,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 import { DsDemo, DsSection } from './section'
@@ -44,6 +45,13 @@ export function ModalsSection() {
             }
           >
             useCmsAlert
+          </CmsButton>
+          <CmsButton
+            variant="primary"
+            size="medium"
+            onClick={() => showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)}
+          >
+            필수 항목 입력 안내
           </CmsButton>
         </div>
       </DsDemo>

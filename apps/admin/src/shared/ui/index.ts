@@ -110,6 +110,11 @@ export { HomepagePiiRevealAction } from './homepage-pii-reveal-action'
 export { cmsAlertModal, isCmsAlertModalReady, CMS_ALERT_MODAL_CLOSED_EVENT } from './cms-alert-modal-api'
 export { showDeleteCompletedAlert } from './show-delete-completed-alert'
 export { NO_SELECTION_ALERT } from './no-selection-alert'
+export {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from './required-fields-incomplete-alert'
 export { showRegisterCompletedAlert } from './show-register-completed-alert'
 export { showUpdateCompletedAlert } from './show-update-completed-alert'
 export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
