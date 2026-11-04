@@ -18,10 +18,9 @@
 }
 
 .hero-banner-form-modal__image-row {
-  background-color: antiquewhite;
   display: flex !important;
   flex-direction: row !important;
-  gap: 200px !important;
+  gap: 12px !important;
 }
 
 .hero-banner-form-modal__preview {
@@ -35,7 +34,6 @@
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid green;
 }
 
 .hero-banner-form-modal__preview img {
@@ -43,10 +41,6 @@
   height: 100%;
   object-fit: cover;
   border: 1px solid blue;
-}
-
-.hero-banner-form-modal__file-field {
-  border: 1px solid red;
 }
 
 .hero-banner-form-modal .detail-info-form__field-content--edit > * {

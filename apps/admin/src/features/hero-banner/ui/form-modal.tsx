@@ -59,8 +59,8 @@ function ImagePlaceholderIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
+      width="36"
+      height="36"
       viewBox="0 0 48 48"
       fill="none"
       aria-hidden
@@ -271,26 +271,20 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             edit={
               <div className="hero-banner-form-modal__image-row">
                 <div className="hero-banner-form-modal__preview">
-                  {imageUrl ? (
-                    <img src={imageUrl} alt="배너 미리보기" />
-                  ) : (
-                    <ImagePlaceholderIcon />
-                  )}
+                  {imageUrl ? <img src={imageUrl} alt="배너 미리보기" /> : <ImagePlaceholderIcon />}
                 </div>
-                <div className="hero-banner-form-modal__file-field">
-                  <FileSelectField
-                    multiple={false}
-                    accept={IMAGE_ACCEPT}
-                    buttonLabel="파일 추가"
-                    fileNames={imageFileName ? [imageFileName] : []}
-                    maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
-                    onFilesChange={files => {
-                      void handleFilesChange(files)
-                    }}
-                    onRemoveFile={handleRemoveFile}
-                    guideLines={IMAGE_GUIDE_LINES}
-                  />
-                </div>
+                <FileSelectField
+                  multiple={false}
+                  accept={IMAGE_ACCEPT}
+                  buttonLabel="파일 추가"
+                  fileNames={imageFileName ? [imageFileName] : []}
+                  maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                  onFilesChange={files => {
+                    void handleFilesChange(files)
+                  }}
+                  onRemoveFile={handleRemoveFile}
+                  guideLines={IMAGE_GUIDE_LINES}
+                />
               </div>
             }
           />
