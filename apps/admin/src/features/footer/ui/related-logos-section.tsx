@@ -163,7 +163,8 @@ export function FooterRelatedLogosSection() {
             variant="secondary"
             size="h32"
             type="button"
-            onClick={() => setEditing(record)} >
+            onClick={() => setEditing(record)}
+          >
             수정
           </CmsButton>
         ),
@@ -174,13 +175,11 @@ export function FooterRelatedLogosSection() {
 
   return (
     <>
-      <section className="footer-section footer-related-logos-section">
+      <section className="admin-list-card footer-section footer-related-logos-section">
         <div className="admin-list-toolbar">
           <div className="table-header-title--wrapper">
-            <span className="table-title">유관기관 로고 배너</span>
-            <span className="table-description">
-              기관명은 홈페이지에 미노출됩니다.
-            </span>
+            <span className="table-title">■ 유관기관 로고 배너</span>
+            <span className="table-description">기관명은 홈페이지에서 별도 노출되지 않습니다.</span>
           </div>
         </div>
         <div className="footer-section__table-scroll">

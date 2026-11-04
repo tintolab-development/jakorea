@@ -1,5 +1,5 @@
 /**
- * 푸터 관리 — 단일 흰 카드 안에 3개 섹션
+ * 푸터 관리 — 상단 메뉴 / 기관 정보 / 유관기관 로고 카드 3개
  */
 
 import { FooterOrgInfoSection } from '@/features/footer/ui/org-info-section'
@@ -11,11 +11,9 @@ import './page.css'
 export function FooterPage() {
   return (
     <div className="site-footer-page">
-      <div className="admin-list-card site-footer-card">
-        <FooterTopMenuSection />
-        <FooterOrgInfoSection />
-        <FooterRelatedLogosSection />
-      </div>
+      <FooterTopMenuSection />
+      <FooterOrgInfoSection />
+      <FooterRelatedLogosSection />
     </div>
   )
 }

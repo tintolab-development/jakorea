@@ -1,6 +1,6 @@
 /**
  * 푸터 — 기관 정보 섹션
- * 카드 크롬 없음 — 페이지 단일 site-footer-card 안에 배치
+ * 페이지에서 admin-list-card 로 독립 컨테이너
  *
  * 값 셀(td): padding vertical 10px · horizontal 16px
  */

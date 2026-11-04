@@ -110,6 +110,25 @@
   overflow: visible !important;
 }
 
+/* 마지막 행 하단선 제거 — 테이블 외곽 border 와 2줄 겹침 방지 */
+.footer-section
+  .footer-sortable-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child
+  > td,
+.footer-section
+  .footer-sortable-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child:hover
+  > td,
+.footer-section
+  .footer-sortable-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child
+  > td.ant-table-cell-row-hover {
+  border-bottom: none !important;
+}
+
 /* 관리 열(마지막) 최소 폭: 88 버튼 + 좌우 패딩 */
 .footer-section
   .footer-related-logos-table.cms-data-table
