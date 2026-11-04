@@ -4,7 +4,7 @@ import {
   VOLUNTEER_ACTIVITY_WITHDRAWN_LABEL,
 } from '@/features/program/shared/lib/volunteer-screening/second-interview-screening-constants'
 import { type UjatSecondInterviewScreeningStatus } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { getUjatVolunteerPreferredRegionLabels } from '@/features/program/ujat/lib/ujat-education-regions'
+import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 import type { UjatVolunteerApplicantRow } from '@/features/program/ujat/model/ujat-volunteer-applicant'
 
 const ALL = 'ALL'
@@ -77,14 +77,20 @@ export function buildUjatVolunteerInterview2TimeOptions(rows: UjatVolunteerAppli
 
 export function buildUjatVolunteerInterview2FilterRows(
   rows: UjatVolunteerApplicantRow[],
-  options: { includeInterviewDate?: boolean } = {}
+  options: {
+    includeInterviewDate?: boolean
+    regions?: ReturnType<typeof listUjatEducationRegionsActive>
+  } = {}
 ): FilterFieldConfig[][] {
   const includeInterviewDate = options.includeInterviewDate ?? true
   const dateOptions = buildUjatVolunteerInterview2DateOptions(rows)
   const timeOptions = buildUjatVolunteerInterview2TimeOptions(rows)
   const regionOptions = [
     { label: '전체', value: ALL },
-    ...getUjatVolunteerPreferredRegionLabels().map(label => ({ label, value: label })),
+    ...(options.regions ?? listUjatEducationRegionsActive()).map(region => ({
+      label: region.label,
+      value: region.key,
+    })),
   ]
 
   const fields: FilterFieldConfig[] = [

@@ -25,6 +25,7 @@ function region(
 
 describe('ujat education-region list-cache', () => {
   const listKey = ujatEducationRegionQueryKeys.list('remote')
+  const activeKey = ujatEducationRegionQueryKeys.activeList('remote')
 
   it('appends a created region and keeps sort order', () => {
     const queryClient = new QueryClient()
@@ -40,6 +41,9 @@ describe('ujat education-region list-cache', () => {
 
     expect(queryClient.getQueryData<UjatEducationRegion[]>(listKey)?.map(row => row.id)).toEqual([
       '1',
+      '2',
+    ])
+    expect(queryClient.getQueryData<UjatEducationRegion[]>(activeKey)?.map(row => row.id)).toEqual([
       '2',
     ])
   })

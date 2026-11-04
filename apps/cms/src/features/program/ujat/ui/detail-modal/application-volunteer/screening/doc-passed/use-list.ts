@@ -63,6 +63,7 @@ function filterDocPassedApplicants(
     if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
     if (
       filters.preferredRegion !== UJAT_VOLUNTEER_DOC_PASSED_FILTER_ALL &&
+      row.preferredRegionCode !== filters.preferredRegion &&
       row.preferredRegion !== filters.preferredRegion
     ) {
       return false

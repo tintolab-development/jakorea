@@ -10,21 +10,23 @@ describe('ujat education-regions adapters', () => {
     expect(
       mapEducationRegionResponse({
         id: 3,
-        code: 'seoul',
-        nameKo: '서울',
+        code: 'SEOUL',
+        nameKo: '서울시',
+        displayName: '서울',
         displayOrder: 1,
         activeYn: true,
+        hasUsageHistory: true,
         createdAt: '2026-01-01T00:00:00.000Z',
         createdByName: '김등록',
         updatedByName: '이수정',
       })
     ).toMatchObject({
       id: '3',
-      regionKey: 'seoul',
+      regionKey: 'SEOUL',
       name: '서울',
       sortOrder: 1,
       active: true,
-      hasUsageHistory: false,
+      hasUsageHistory: true,
       createdByName: '김등록',
       updatedByName: '이수정',
     })
