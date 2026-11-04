@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
-import { collectInfiniteCachedRows, toAdminListPage } from '@/shared/lib/admin-infinite-list'
+import {
+  collectInfiniteCachedRows,
+  patchInfiniteListRow,
+  removeInfiniteListRows,
+  toAdminListPage,
+} from '@/shared/lib/admin-infinite-list'
 import type {
   ImpactStory,
   ImpactStoryCategory,
@@ -185,16 +190,7 @@ export function useUpdateImpactStory() {
     retry: false,
     onSuccess: data => {
       queryClient.setQueryData(impactStoriesQueryKeys.detail(source(), data.id), data)
-      const lists = queryClient.getQueriesData<ImpactStory[]>({
-        queryKey: impactStoriesQueryKeys.lists(),
-      })
-      for (const [key, rows] of lists) {
-        if (!rows) continue
-        queryClient.setQueryData(
-          key,
-          rows.map(row => (row.id === data.id ? { ...row, ...data } : row)),
-        )
-      }
+      patchInfiniteListRow(queryClient, impactStoriesQueryKeys.lists(), data)
       invalidateStoryLists(queryClient)
       syncPinnedCountFromCache(queryClient)
     },
@@ -209,17 +205,7 @@ export function useRemoveImpactStories() {
     },
     retry: false,
     onSuccess: (_void, ids) => {
-      const idSet = new Set(ids)
-      const lists = queryClient.getQueriesData<ImpactStory[]>({
-        queryKey: impactStoriesQueryKeys.lists(),
-      })
-      for (const [key, rows] of lists) {
-        if (!rows) continue
-        queryClient.setQueryData(
-          key,
-          rows.filter(row => !idSet.has(row.id)),
-        )
-      }
+      removeInfiniteListRows(queryClient, impactStoriesQueryKeys.lists(), ids)
       syncPinnedCountFromCache(queryClient)
       for (const id of ids) {
         queryClient.removeQueries({
@@ -240,13 +226,8 @@ export function useSetImpactStoryPublic() {
       if (cached) {
         return setStoryPublicService(id, isPublic, cached)
       }
-      const lists = queryClient.getQueriesData<ImpactStory[]>({
-        queryKey: impactStoriesQueryKeys.lists(),
-      })
-      for (const [, rows] of lists) {
-        const hit = rows?.find(row => row.id === id)
-        if (hit) return setStoryPublicService(id, isPublic, hit)
-      }
+      const hit = mergedStoriesFromListCache(queryClient).find(row => row.id === id)
+      if (hit) return setStoryPublicService(id, isPublic, hit)
       return setStoryPublicService(id, isPublic)
     },
     retry: false,
