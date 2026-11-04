@@ -15,4 +15,9 @@ export interface FooterPartnerUpdateRequest {
   organizationName?: string;
   logoAssetId?: number;
   version: number;
+  /**
+     * @minLength 0
+     * @maxLength 2048
+     */
+  externalUrl?: string | null;
 }

@@ -1235,6 +1235,12 @@
           "version": {
             "type": "integer",
             "format": "int64"
+          },
+          "externalUrl": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0,
+            "nullable": true
           }
         },
         "required": [
@@ -1265,6 +1271,10 @@
           "version": {
             "type": "integer",
             "format": "int64"
+          },
+          "externalUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -1311,7 +1321,7 @@
           "organizationName": {
             "type": "string",
             "maxLength": 200,
-            "minLength": 0
+            "minLength": 1
           },
           "organizationDescription": {
             "type": "string",
@@ -1321,38 +1331,38 @@
           "address": {
             "type": "string",
             "maxLength": 500,
-            "minLength": 0
+            "minLength": 1
           },
           "postalCode": {
             "type": "string",
             "maxLength": 20,
-            "minLength": 0
+            "minLength": 1
           },
           "representativeName": {
             "type": "string",
             "maxLength": 100,
-            "minLength": 0
+            "minLength": 1
           },
           "businessRegistrationNumber": {
             "type": "string",
             "maxLength": 50,
-            "minLength": 0
+            "minLength": 1
           },
           "phone": {
             "type": "string",
             "maxLength": 50,
-            "minLength": 0
+            "minLength": 1
           },
           "fax": {
             "type": "string",
             "maxLength": 50,
-            "minLength": 0
+            "minLength": 1
           },
           "email": {
             "type": "string",
             "format": "email",
             "maxLength": 255,
-            "minLength": 0
+            "minLength": 1
           },
           "logoAssetId": {
             "type": "integer",
@@ -1365,6 +1375,14 @@
         },
         "required": [
           "organizationName",
+          "address",
+          "postalCode",
+          "representativeName",
+          "businessRegistrationNumber",
+          "phone",
+          "fax",
+          "email",
+          "logoAssetId",
           "version"
         ]
       },
@@ -4952,12 +4970,12 @@
           "title": {
             "type": "string",
             "maxLength": 500,
-            "minLength": 1
+            "nullable": true
           },
           "description": {
             "type": "string",
             "maxLength": 2000,
-            "minLength": 1
+            "nullable": true
           },
           "version": {
             "type": "integer",
@@ -4965,9 +4983,7 @@
           }
         },
         "required": [
-          "description",
           "id",
-          "title",
           "version"
         ]
       },
@@ -7266,6 +7282,10 @@
           "displayOrder": {
             "type": "integer",
             "format": "int32"
+          },
+          "externalUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },

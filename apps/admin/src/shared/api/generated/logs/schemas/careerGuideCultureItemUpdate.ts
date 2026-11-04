@@ -8,15 +8,9 @@
 
 export interface CareerGuideCultureItemUpdate {
   id: number;
-  /**
-     * @minLength 1
-     * @maxLength 500
-     */
-  title: string;
-  /**
-     * @minLength 1
-     * @maxLength 2000
-     */
-  description: string;
+  /** @maxLength 500 */
+  title?: string | null;
+  /** @maxLength 2000 */
+  description?: string | null;
   version: number;
 }
