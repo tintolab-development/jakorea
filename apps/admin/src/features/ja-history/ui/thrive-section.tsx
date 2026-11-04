@@ -40,11 +40,13 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
               value={card.title}
               rows={1}
               label={`${record.id} 제목`}
-              placeholder="제목을 입력하세요"
+              placeholder="제목을 입력해 주세요"
               onChange={title => {
                 setDraft(prev => ({
                   ...prev,
-                  cards: prev.cards.map(item => (item.id === record.id ? { ...item, title } : item)),
+                  cards: prev.cards.map(item =>
+                    item.id === record.id ? { ...item, title } : item
+                  ),
                 }))
               }}
             />
@@ -68,7 +70,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
                 setDraft(prev => ({
                   ...prev,
                   cards: prev.cards.map(item =>
-                    item.id === record.id ? { ...item, description } : item,
+                    item.id === record.id ? { ...item, description } : item
                   ),
                 }))
               }}
@@ -77,7 +79,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
         },
       },
     ],
-    [draft.cards, editing],
+    [draft.cards, editing]
   )
 
   return (
@@ -102,8 +104,13 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
           .then(
             () => setEditing(false),
             error => {
-              showAlert(jaHistorySaveAlert(error, '글로벌 전략 Thrive 저장에 실패했습니다. 다시 시도해 주세요.'))
-            },
+              showAlert(
+                jaHistorySaveAlert(
+                  error,
+                  '글로벌 전략 Thrive 저장에 실패했습니다. 다시 시도해 주세요.'
+                )
+              )
+            }
           )
       }}
     >

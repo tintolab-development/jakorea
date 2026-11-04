@@ -17,7 +17,14 @@ import type {
 import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant/api/capabilities'
 import { downloadRecruitApplicantAttachmentService } from '@/features/recruit-applicant/api/service'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
-import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
+  ContentModal,
+  HomepagePiiRevealAction,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './detail-modal.css'
 
@@ -29,9 +36,13 @@ type Props = {
   loading?: boolean
   confirmLoading?: boolean
   deleteLoading?: boolean
+  canRevealPii?: boolean
+  piiRevealed?: boolean
+  revealLoading?: boolean
   onCancel: () => void
   onConfirm: () => void
   onDelete: () => void
+  onRevealPii?: () => void
 }
 
 const JOB_LABEL: Record<RecruitJobInterest, string> = {
@@ -92,9 +103,13 @@ export function RecruitApplicantDetailModal({
   loading = false,
   confirmLoading = false,
   deleteLoading = false,
+  canRevealPii = false,
+  piiRevealed = false,
+  revealLoading = false,
   onCancel,
   onConfirm,
   onDelete,
+  onRevealPii,
 }: Props) {
   const { showAlert } = useCmsAlert()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -105,7 +120,7 @@ export function RecruitApplicantDetailModal({
 
   const isConfirmed = data?.status === 'confirmed'
   const waiting = loading && !data
-  const busy = confirmLoading || deleteLoading || waiting
+  const busy = confirmLoading || deleteLoading || waiting || revealLoading
 
   const confirmedView = (() => {
     if (!data?.confirmedAt) return <span>-</span>
@@ -171,8 +186,9 @@ export function RecruitApplicantDetailModal({
     )
 
   const footer = (
-    <div className="recruit-applicant-detail-modal__footer">
+    <>
       <CmsButton
+        className={CONTENT_MODAL_FOOTER_START_CLASS}
         variant="delete"
         size="large"
         type="button"
@@ -181,26 +197,31 @@ export function RecruitApplicantDetailModal({
         onClick={() => setDeleteConfirmOpen(true)} >
         신청 삭제
       </CmsButton>
-      <div className="recruit-applicant-detail-modal__footer-end">
-        <CmsButton
-          variant="secondary"
-          size="large"
-          type="button"
-          disabled={busy}
-          onClick={onCancel} >
-          닫기
-        </CmsButton>
-        <CmsButton
-          variant="primary"
-          size="large"
-          type="button"
-          loading={confirmLoading}
-          disabled={busy || isConfirmed || !data}
-          onClick={onConfirm} >
-          신청 확인
-        </CmsButton>
-      </div>
-    </div>
+      <HomepagePiiRevealAction
+        canReveal={canRevealPii && Boolean(onRevealPii)}
+        revealed={piiRevealed}
+        loading={revealLoading}
+        disabled={busy && !revealLoading}
+        onReveal={() => onRevealPii?.()}
+      />
+      <CmsButton
+        variant="secondary"
+        size="large"
+        type="button"
+        disabled={busy}
+        onClick={onCancel} >
+        닫기
+      </CmsButton>
+      <CmsButton
+        variant="primary"
+        size="large"
+        type="button"
+        loading={confirmLoading}
+        disabled={busy || isConfirmed || !data}
+        onClick={onConfirm} >
+        신청 확인
+      </CmsButton>
+    </>
   )
 
   return (

@@ -4,11 +4,7 @@ import { shouldUseNoticesRemoteApi } from '@/features/notices/api/capabilities'
 import { uploadNoticeInlineImage } from '@/features/notices/api/upload-notice-attachment'
 import { useAdminHtmlEditor, type RichTextContentFormat } from '@/shared/rich-text'
 
-const DEFAULT_EDITOR_HEIGHT = '369px'
-const DEFAULT_PLACEHOLDER = '공지사항 내용을 입력하세요'
-
 export type NoticeWysiwygEditorOptions = {
-  height?: string
   placeholder?: string
   contentFormat?: RichTextContentFormat
   /**
@@ -27,8 +23,7 @@ export function useNoticeWysiwygEditor(
   resetKey?: string | number,
   options?: NoticeWysiwygEditorOptions
 ) {
-  const editorMinHeight = options?.height ?? DEFAULT_EDITOR_HEIGHT
-  const placeholder = options?.placeholder ?? DEFAULT_PLACEHOLDER
+  const placeholder = options?.placeholder
   const contentFormat = options?.contentFormat ?? 'markdown'
   const allowInlineMedia = options?.allowInlineMedia ?? true
   const resolveImageSrc = useCallback((file: File) => {
@@ -50,7 +45,6 @@ export function useNoticeWysiwygEditor(
   return {
     ...adminEditor,
     editor: adminEditor.editor as Editor | null,
-    editorMinHeight,
     contentFormat,
     allowInlineMedia,
     resolveImageSrc: shouldUseNoticesRemoteApi() ? resolveImageSrc : undefined,

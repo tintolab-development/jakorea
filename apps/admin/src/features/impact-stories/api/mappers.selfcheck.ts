@@ -6,11 +6,7 @@
 import assert from 'node:assert/strict'
 import type { ImpactStoryCreateInput } from '../../../entities/impact-stories/model/types.ts'
 import type { StoryResponse } from '../../../shared/api/generated/impact-story/schemas/storyResponse.ts'
-import {
-  mapStoryResponseToDomain,
-  toStoryCreateRequest,
-  toStoryUpdateRequest,
-} from './mappers.ts'
+import { mapStoryResponseToDomain, toStoryCreateRequest, toStoryUpdateRequest } from './mappers.ts'
 
 const input: ImpactStoryCreateInput = {
   categoryId: '3',
@@ -33,20 +29,11 @@ const created = toStoryCreateRequest(input, undefined, 41)
 assert.equal(created.title, '제목')
 assert.equal(created.categoryId, 3)
 assert.equal(created.body, '<p>본문</p>')
-assert.equal(
-  (created as unknown as { thumbnailAssetId: number }).thumbnailAssetId,
-  41,
-)
+assert.equal((created as unknown as { thumbnailAssetId: number }).thumbnailAssetId, 41)
 assert.equal(created.attachmentAssetId, undefined)
 
-assert.throws(
-  () => toStoryCreateRequest(input, undefined, 0),
-  /섬네일/,
-)
-assert.throws(
-  () => toStoryCreateRequest(input, 41, 41),
-  /서로 다른 파일/,
-)
+assert.throws(() => toStoryCreateRequest(input, undefined, 0), /썸네일/)
+assert.throws(() => toStoryCreateRequest(input, 41, 41), /서로 다른 파일/)
 
 const updated = toStoryUpdateRequest({ ...input, id: '9' }, 2, 77, 41)
 assert.equal((updated as unknown as { thumbnailAssetId: number }).thumbnailAssetId, 41)

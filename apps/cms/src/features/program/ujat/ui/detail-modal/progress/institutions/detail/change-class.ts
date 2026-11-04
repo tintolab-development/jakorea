@@ -447,8 +447,6 @@ export function mappingToRemappingItem(
     return {
       fromGrade,
       fromClassName,
-      toGrade: null,
-      toClassName: null,
       unassign: true,
     }
   }

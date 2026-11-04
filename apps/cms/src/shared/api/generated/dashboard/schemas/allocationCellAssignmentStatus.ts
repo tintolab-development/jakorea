@@ -8,7 +8,6 @@
 
 /**
  * 대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED
- * @nullable
  */
 export type AllocationCellAssignmentStatus = typeof AllocationCellAssignmentStatus[keyof typeof AllocationCellAssignmentStatus] | null;
 

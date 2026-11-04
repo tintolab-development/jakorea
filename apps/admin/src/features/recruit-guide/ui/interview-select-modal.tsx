@@ -12,9 +12,7 @@ import {
 } from '@/entities/impact-stories/model/types'
 import { useImpactStoriesPagedList } from '@/features/impact-stories/api/hooks'
 import type { InterviewSaveItem } from '@/entities/recruit-guide/model/types'
-import {
-  FILTER_CONTROL_MAX_WIDTH_PX,
-} from '@/shared/constants/filter-field-width'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/constants/filter-field-width'
 import { CmsButton, CmsInput, CmsSelect, ContentModal } from '@/shared/ui'
 
 import './interview-select-modal.css'
@@ -27,7 +25,14 @@ const YEAR_OPTIONS = Array.from({ length: 16 }, (_, i) => {
 
 function SearchIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden
+    >
       <circle cx="9" cy="9" r="6.25" stroke="#9E9E9E" strokeWidth="1.5" />
       <path d="M13.5 13.5L17 17" stroke="#9E9E9E" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
@@ -168,17 +173,13 @@ export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect 
           className="recruit-guide-interview-modal__title-input"
           inputSize="large"
           width="100%"
-          placeholder="고정 노출할 게시글 제목을 입력하세요"
+          placeholder="고정 노출할 게시글 제목을 입력해 주세요"
           icon={<SearchIcon />}
           value={pendingTitle}
           onChange={e => setPendingTitle(e.target.value)}
           onPressEnter={handleSearch}
         />
-        <CmsButton
-          variant="primary"
-          size="large"
-          type="button"
-          onClick={handleSearch} >
+        <CmsButton variant="primary" size="large" type="button" onClick={handleSearch}>
           검색
         </CmsButton>
       </div>
@@ -202,12 +203,8 @@ export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect 
             pagination={false}
             rowClassName={record =>
               [
-                record.id === pendingRowId
-                  ? 'recruit-guide-interview-modal__row--selected'
-                  : '',
-                canSelectStory(record)
-                  ? ''
-                  : 'recruit-guide-interview-modal__row--disabled',
+                record.id === pendingRowId ? 'recruit-guide-interview-modal__row--selected' : '',
+                canSelectStory(record) ? '' : 'recruit-guide-interview-modal__row--disabled',
               ]
                 .filter(Boolean)
                 .join(' ')
@@ -225,9 +222,7 @@ export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect 
                 className="recruit-guide-interview-modal__pager-btn"
                 disabled={applied.page <= 0}
                 aria-label="이전 페이지"
-                onClick={() =>
-                  setApplied(prev => ({ ...prev, page: Math.max(0, prev.page - 1) }))
-                }
+                onClick={() => setApplied(prev => ({ ...prev, page: Math.max(0, prev.page - 1) }))}
               >
                 ‹
               </button>

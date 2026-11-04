@@ -349,25 +349,20 @@ export function NoticeFormModal({
         footer={
           <div className="notice-register-modal__footer-row">
             {mode === 'edit' ? (
-              <CmsButton
-                variant="delete"
-                size="h40"
-                onClick={handleRequestDelete} >
+              <CmsButton variant="delete" size="h40" onClick={handleRequestDelete}>
                 삭제
               </CmsButton>
             ) : null}
             <div className="notice-register-modal__footer-actions-right">
-              <CmsButton
-                variant="secondary"
-                size="h40"
-                onClick={handleCancel} >
+              <CmsButton variant="secondary" size="h40" onClick={handleCancel}>
                 취소
               </CmsButton>
               <CmsButton
                 variant="primary"
                 size="h40"
                 adminAction="write"
-                onClick={() => form.submit()} >
+                onClick={() => form.submit()}
+              >
                 {submitLabel}
               </CmsButton>
             </div>
@@ -430,7 +425,7 @@ export function NoticeFormModal({
             <CmsInput
               label="제목"
               required
-              placeholder="제목을 입력하세요"
+              placeholder="제목을 입력해 주세요"
               inputSize="large"
               width="100%"
             />

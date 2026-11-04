@@ -48,6 +48,12 @@ const DASHBOARD_EXACT_PATHS = new Set([
   '/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/temporary-schedule',
   '/api/admin/programs/{programId}/ujat/organization-schedule-assignments',
   '/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/schedule-change-request',
+  '/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/education-classes',
+  '/api/admin/programs/{programId}/ujat/organization-applications/{applicationId}/education-class-remappings',
+  '/api/admin/individual-settlement-applications',
+  '/api/admin/individual-settlement-applications/{settlementApplicationId}',
+  '/api/admin/individual-settlement-applications/{settlementApplicationId}/approve',
+  '/api/admin/individual-settlement-applications/{settlementApplicationId}/reject',
   // UJAT Typed detail is the canonical replacement for typed registration.overlay writes.
   '/api/admin/programs/{programId}/ujat/typed-detail',
 ])

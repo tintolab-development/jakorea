@@ -2,15 +2,22 @@ import { useCallback, useRef, useState } from 'react'
 import { EditorContent } from '@tiptap/react'
 import { isRichTextEditorReady } from '../core/editor-ready'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
-import type { RichTextEditorProps } from './types'
+import {
+  RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX,
+  type RichTextEditorProps,
+} from './types'
+
+function toCssLength(value: string | number): string {
+  return typeof value === 'number' ? `${value}px` : value
+}
 
 function resolveMinResizeHeight(minHeight: string | number | undefined): number {
   if (typeof minHeight === 'number' && Number.isFinite(minHeight)) return minHeight
-  if (typeof minHeight === 'string' && minHeight.endsWith('px')) {
+  if (typeof minHeight === 'string') {
     const parsed = Number.parseFloat(minHeight)
     if (Number.isFinite(parsed)) return parsed
   }
-  return 80
+  return RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX
 }
 
 /**
@@ -20,7 +27,8 @@ function resolveMinResizeHeight(minHeight: string | number | undefined): number 
 export function RichTextEditor({
   editor,
   className,
-  minHeight,
+  minHeight = RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX,
+  height,
   toolbar,
   'aria-label': ariaLabel = '본문 편집',
 }: RichTextEditorProps) {
@@ -28,19 +36,17 @@ export function RichTextEditor({
   const [userHeight, setUserHeight] = useState<number | null>(null)
   const rootClass = ['rich-text-editor', className].filter(Boolean).join(' ')
   const minResizeHeight = resolveMinResizeHeight(minHeight)
-  const rootStyle: CSSProperties | undefined =
-    minHeight != null || userHeight != null
-      ? {
-          ...(minHeight != null ? { minHeight } : null),
-          ...(userHeight != null
-            ? ({
-                height: userHeight,
-                // CMS 쪽 height:auto !important 를 이기기 위한 변수
-                ['--rt-user-height' as string]: `${userHeight}px`,
-              } as CSSProperties)
-            : null),
-        }
-      : undefined
+  const rootStyle: CSSProperties = {
+    minHeight: toCssLength(minHeight),
+    ...(userHeight != null
+      ? ({
+          height: userHeight,
+          ['--rt-user-height' as string]: `${userHeight}px`,
+        } as CSSProperties)
+      : height != null
+        ? { height: toCssLength(height) }
+        : null),
+  }
 
   const handleResizePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {

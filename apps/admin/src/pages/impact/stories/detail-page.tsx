@@ -33,6 +33,8 @@ import {
   CmsButton,
   ConfirmModal,
   PageContentLoading,
+  showDeleteCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -76,6 +78,7 @@ export function ImpactStoryDetailPage() {
       await removeMutation.mutateAsync([id])
       setDeleteOpen(false)
       goList()
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -91,6 +94,7 @@ export function ImpactStoryDetailPage() {
         await updateMutation.mutateAsync({ ...values, id })
         setEditOpen(false)
         void detailQuery.refetch()
+        showUpdateCompletedAlert()
       } catch (error) {
         if (isPinLimitError(error)) {
           showAlert({

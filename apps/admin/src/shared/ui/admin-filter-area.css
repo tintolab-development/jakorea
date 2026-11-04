@@ -86,6 +86,48 @@
   max-width: var(--filter-control-max-width, 240px);
 }
 
+/* 시도/시군구·연혁년도/월: 235.5px (114.75×2 + gap 6) */
+.admin-filter-area__field--address-region {
+  width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
+  );
+  min-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
+  );
+  max-width: calc(
+    2 * var(--filter-address-region-segment-width, 114.75px) +
+      var(--filter-address-region-pair-gap, 6px)
+  );
+}
+
+.admin-filter-area__address-region-selects {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: var(--filter-address-region-pair-gap, 6px);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__address-region-selects > .cms-select {
+  flex: 0 0 var(--filter-address-region-segment-width, 114.75px) !important;
+  width: var(--filter-address-region-segment-width, 114.75px) !important;
+  min-width: var(--filter-address-region-segment-width, 114.75px) !important;
+  max-width: var(--filter-address-region-segment-width, 114.75px) !important;
+  height: var(--filter-control-height, 40px) !important;
+  box-sizing: border-box;
+}
+
+.admin-filter-area__address-region-selects > .cms-select > .ant-select {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: var(--filter-control-height, 40px) !important;
+  min-height: var(--filter-control-height, 40px) !important;
+}
+
 /* 분리형 기간 칸 500px = 2×240 + 20 */
 .admin-filter-area__field--date-range {
   width: calc(
@@ -200,6 +242,7 @@
 
 @media (max-width: 768px) {
   .admin-filter-area__field--control,
+  .admin-filter-area__field--address-region,
   .admin-filter-area__field--date-range {
     width: 100%;
     min-width: 0;

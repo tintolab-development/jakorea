@@ -1,17 +1,17 @@
 /**
- * 파일 선택 필드 공통 스타일
- * - 숨겨진 input + 파일명 목록 + 버튼(120×40) + 가이드 텍스트
+ * 파일 선택 필드 — CMS `file-select-field` / `file-attachment-row` 타이포·간격 정합
  */
 
 .file-select-field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-12);
+  align-items: flex-start;
+  gap: var(--Spacing-8, 8px);
+  min-width: 0;
 }
 
-/* 첨부 없음 — 파일명 영역 미노출, 버튼 상단 여백 제거 */
-.file-select-field--empty {
-  gap: 0;
+.detail-info-form__field-content > .file-select-field {
+  align-items: flex-start;
 }
 
 .file-upload-picker {
@@ -38,30 +38,49 @@
   outline-offset: 2px;
 }
 
-/* 파일명 목록 */
 .file-select-field__names {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  align-items: flex-start;
+  gap: var(--Spacing-8, 8px);
+  max-width: 100%;
+  min-width: 0;
 }
 
 .file-select-field__name-row {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-8);
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.file-select-field__name,
+.file-select-field__empty {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 130%;
 }
 
 .file-select-field__name {
-  font-size: var(--font-size-16);
-  color: var(--color-text-primary);
+  min-width: 0;
+  color: var(--Netural-black, var(--default-BK, #3d3d3d));
 }
 
-/* 업로드 중 문구 — 파일명과 동일한 스타일로 UI shifting 방지 */
 .file-select-field__name--uploading {
-  color: var(--color-text-primary);
+  color: var(--Netural-black, var(--default-BK, #3d3d3d));
 }
 
-/* 업로드 취소(X) 버튼 — 배경 없음, SVG 아이콘 그대로 */
+.file-select-field__empty {
+  max-width: 100%;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+}
+
 .file-select-field__remove {
   display: inline-flex;
   align-items: center;
@@ -84,27 +103,34 @@
 }
 
 .file-select-field__remove:focus-visible {
-  outline: 2px solid var(--color-focus-teal);
+  outline: 2px solid var(--color-focus-teal, #00a0af);
   outline-offset: 1px;
   border-radius: 50%;
 }
 
-/* 버튼 + 가이드 텍스트 가로 배치 */
 .file-select-field__actions {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: var(--spacing-12);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
   flex-wrap: wrap;
 }
 
-/* 가이드 텍스트 */
+.file-select-field__actions > .cms-button,
+.file-select-field__actions > .file-upload-picker {
+  flex-shrink: 0;
+}
+
 .file-select-field__guide {
-  color: var(--default-BK, #3d3d3d);
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
   font-weight: 500;
-  line-height: 150%; /* 21px */
-  opacity: 0.6;
+  line-height: 150%;
 }
 
 .file-select-field__guide-line {

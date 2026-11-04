@@ -12,9 +12,10 @@ on:
   workflow_dispatch:
     inputs:
       homepage_api_base_url:
-        description: "NEW PROD JAHOMEADMINBACK HTTPS CloudFront URL; leave empty to deploy CMS only"
+        description: "NEW PROD JAHOMEADMINBACK HTTPS CloudFront URL"
         required: false
         type: string
+        default: "https://d24javvkj8m9ih.cloudfront.net"
 permissions:
   contents: read
   id-token: write

@@ -6,13 +6,9 @@
  * OpenAPI spec version: v9
  */
 
-/**
- * 봉사자 신청 희망 교육 활동 지역 수정. educationRegionCode는 지역 마스터 code(예: seoul, SEOUL, gyeonggi_south). 한글 라벨 금지.
- */
 export interface VolunteerActivityRegionUpdateRequest {
   /**
-     * ujat_education_region.code. 대소문자·하이픈/언더스코어는 마스터 code로 정규화한다.
-     * @minLength 0
+     * ujat_education_region.code. 예: seoul, SEOUL, gyeonggi_south. 한글 라벨 금지. 저장·응답은 마스터 code.
      * @maxLength 100
      */
   educationRegionCode: string;
