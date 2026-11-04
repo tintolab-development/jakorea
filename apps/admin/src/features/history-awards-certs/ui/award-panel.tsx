@@ -24,7 +24,7 @@ import {
   deleteConfirmContent,
   deleteFailureAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
-import { AwardFormModal } from '@/features/history-awards-certs/ui/award-form-modal'
+import { AwardFormModal } from '@/features/history-awards-certs/ui/form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -57,6 +57,8 @@ import {
   FilterTableLayout,
   NO_SELECTION_ALERT,
   showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
 } from '@/shared/ui'
 
 type AwardPendingFilters = {
@@ -268,8 +270,10 @@ export function AwardPanel() {
       try {
         if (formVariant === 'edit' && editing) {
           await updateMutation.mutateAsync({ id: editing.id, input: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
