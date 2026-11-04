@@ -295,7 +295,11 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
   const getTemplateUnusableReason = useCallback(
     (template: AlimtalkTemplateItem) => {
       const message = getTemplateUnusableMessage(template)
-      if (variablesQuery.isError || variablesCatalog == null || template.hasAlimtalkMetadata !== true) {
+      if (
+        variablesQuery.isError ||
+        variablesCatalog == null ||
+        template.hasAlimtalkMetadata !== true
+      ) {
         return message ? { summary: message, detail: message } : null
       }
       return (
@@ -311,16 +315,13 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     [getTemplateUnusableMessage, programNumericId, variablesCatalog, variablesQuery.isError]
   )
 
-  const onRecipientPrivacyFailure = useCallback(
-    (failure: 'forbidden' | 'audit-unavailable') => {
-      setRecipients(prev =>
-        failure === 'audit-unavailable' ? [] : prev.filter(item => item.source === 'manual')
-      )
-      setSelectedRecipientIds([])
-      setSendConfirmOpen(false)
-    },
-    []
-  )
+  const onRecipientPrivacyFailure = useCallback((failure: 'forbidden' | 'audit-unavailable') => {
+    setRecipients(prev =>
+      failure === 'audit-unavailable' ? [] : prev.filter(item => item.source === 'manual')
+    )
+    setSelectedRecipientIds([])
+    setSendConfirmOpen(false)
+  }, [])
   const recipientPrivacy = useRecipientCandidatePrivacyGate({
     screenOpen: open,
     programKey: String(programNumericId ?? ''),
@@ -697,11 +698,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                 </p>
               ) : null}
               <div className="notification-fullpage-modal__notice-actions">
-                <CmsButton
-                  variant="cancel"
-                  size="large"
-                  type="button"
-                  onClick={onClose} >
+                <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
                   취소
                 </CmsButton>
                 <CmsButton
@@ -709,7 +706,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                   size="large"
                   type="button"
                   disabled={sending || recipientPrivacy.blockSend}
-                  onClick={handleRequestSend} >
+                  onClick={handleRequestSend}
+                >
                   알림톡 발송
                 </CmsButton>
               </div>
@@ -835,7 +833,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         variant="delete"
                         size="h40"
                         type="button"
-                        onClick={handleDeleteSelected} >
+                        onClick={handleDeleteSelected}
+                      >
                         선택 삭제
                       </CmsButton>
                       {isWithoutProgram ? (
@@ -843,7 +842,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                           variant="secondary"
                           size="h40"
                           type="button"
-                          onClick={handleManualRecipients} >
+                          onClick={handleManualRecipients}
+                        >
                           수신자 직접 입력
                         </CmsButton>
                       ) : null}
@@ -851,7 +851,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         variant="secondary"
                         size="h40"
                         type="button"
-                        onClick={handleSetRecipients} >
+                        onClick={handleSetRecipients}
+                      >
                         수신자 설정
                       </CmsButton>
                     </div>
@@ -1033,9 +1034,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             : 1
         }
         fetchAllCandidates={
-          remote &&
-          recipientPrivacy.queryEnabled &&
-          (programNumericId != null || isWithoutProgram)
+          remote && recipientPrivacy.queryEnabled && (programNumericId != null || isWithoutProgram)
             ? async () => {
                 try {
                   return await fetchAllAlimtalkRecipientCandidates({
@@ -1079,7 +1078,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         variableKeys={directManualKeys}
         normalize={normalizeAlimtalkSendPhone}
         isValid={isValidKoreanPhoneNumber}
-        invalidMessage="올바른 휴대폰 번호를 입력하세요."
+        invalidMessage="올바른 휴대폰 번호를 입력해 주세요."
         onClose={() => setRecipientManualOpen(false)}
         onConfirm={nextEntries => {
           const manual = nextEntries.map(entry =>

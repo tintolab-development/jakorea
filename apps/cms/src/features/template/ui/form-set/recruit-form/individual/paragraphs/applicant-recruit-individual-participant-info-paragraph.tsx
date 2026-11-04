@@ -285,7 +285,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
               <CmsInput
                 inputSize="small"
                 width="100%"
-                placeholder="상세 교육 대상을 입력하세요"
+                placeholder="상세 교육 대상을 입력해 주세요"
                 value={targetLevelDetail}
                 onChange={e => setTargetLevelDetail(e.target.value)}
               />

@@ -451,7 +451,7 @@ describe('validateSmsSendDraft', () => {
     // 템플릿 미선택 = 템플릿 사용 안 함 → 템플릿 없이도 발송 가능
     expect(validateSmsSendDraft(draft({ templateId: undefined }))).toBeNull()
     expect(validateSmsSendDraft(draft({ templateId: '' }))).toBeNull()
-    expect(validateSmsSendDraft(draft({ senderPhone: '  ' }))).toBe('발신 번호를 입력하세요.')
+    expect(validateSmsSendDraft(draft({ senderPhone: '  ' }))).toBe('발신 번호를 입력해 주세요.')
     expect(validateSmsSendDraft(draft({ senderPhone: '1234' }))).toBe(
       '발신 번호 형식이 올바르지 않습니다.'
     )
@@ -516,7 +516,7 @@ describe('validateSmsSendDraft', () => {
           ],
         })
       )
-    ).toBe('직접 입력 수신자의 연락처를 입력하세요.')
+    ).toBe('직접 입력 수신자의 연락처를 입력해 주세요.')
   })
 })
 
@@ -542,7 +542,11 @@ describe('buildSmsSendCreateRequest MMS attachmentFileIds', () => {
 
   it('템플릿 없는 MMS + 요청 첨부: messageType MMS + attachmentFileIds', () => {
     const body = buildSmsSendCreateRequest({
-      draft: draft({ templateId: undefined, messageType: 'MMS', attachmentFileIds: [30001, 30002] }),
+      draft: draft({
+        templateId: undefined,
+        messageType: 'MMS',
+        attachmentFileIds: [30001, 30002],
+      }),
       templateId: null,
       senderProfileId: 12,
     })
@@ -571,7 +575,11 @@ describe('buildSmsSendCreateRequest MMS attachmentFileIds', () => {
 
   it('중복 ID는 제거하고 선택 순서 유지', () => {
     const body = buildSmsSendCreateRequest({
-      draft: draft({ templateId: undefined, messageType: 'MMS', attachmentFileIds: [30002, 30001, 30002] }),
+      draft: draft({
+        templateId: undefined,
+        messageType: 'MMS',
+        attachmentFileIds: [30002, 30001, 30002],
+      }),
       templateId: null,
       senderProfileId: 12,
     })

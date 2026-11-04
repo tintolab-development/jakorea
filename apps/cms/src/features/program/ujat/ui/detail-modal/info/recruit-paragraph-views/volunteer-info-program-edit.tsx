@@ -108,7 +108,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                     value={field.value ?? ''}
                     inputSize="small"
                     width="100%"
-                    placeholder="공고용 프로그램명을 입력하세요"
+                    placeholder="공고용 프로그램명을 입력해 주세요"
                   />
                 )}
               />
@@ -123,7 +123,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                 width="100%"
                 value={activityTermLabel}
                 disabled
-                placeholder="활동 기수를 입력하세요"
+                placeholder="활동 기수를 입력해 주세요"
               />
             }
             view="-"
@@ -195,7 +195,7 @@ export function UjatRecruitVolunteerInfoProgramEdit({
                     value={field.value ?? ''}
                     inputSize="small"
                     width="100%"
-                    placeholder="모집 대상 상세를 입력하세요"
+                    placeholder="모집 대상 상세를 입력해 주세요"
                   />
                 )}
               />

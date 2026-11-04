@@ -123,9 +123,7 @@ export function GeminiRecruitmentInstitutionFields({
   useEffect(() => {
     setMinStudentCountLocal(minStudentCountCommitted)
   }, [minStudentCountCommitted])
-  const minStudentCountInput = deferTextCommit
-    ? minStudentCountLocal
-    : minStudentCountCommitted
+  const minStudentCountInput = deferTextCommit ? minStudentCountLocal : minStudentCountCommitted
 
   return (
     <>
@@ -158,7 +156,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiDeferredCmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="대표 프로그램명(국문)을 입력하세요"
+                  placeholder="대표 프로그램명(국문)을 입력해 주세요"
                   value={values.title}
                   onCommit={next => onChange({ title: next })}
                 />
@@ -166,7 +164,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <CmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="대표 프로그램명(국문)을 입력하세요"
+                  placeholder="대표 프로그램명(국문)을 입력해 주세요"
                   value={values.title}
                   onChange={e => onChange({ title: e.target.value })}
                 />
@@ -208,7 +206,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiDeferredCmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="상세 교육 대상을 입력하세요"
+                  placeholder="상세 교육 대상을 입력해 주세요"
                   value={values.educationTargetDetail}
                   onCommit={next => onChange({ educationTargetDetail: next })}
                 />
@@ -216,7 +214,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <CmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="상세 교육 대상을 입력하세요"
+                  placeholder="상세 교육 대상을 입력해 주세요"
                   value={values.educationTargetDetail}
                   onChange={e => onChange({ educationTargetDetail: e.target.value })}
                 />
@@ -277,7 +275,7 @@ export function GeminiRecruitmentInstitutionFields({
                   inputSize="small"
                   mode="integer"
                   min={0}
-                  placeholder="최소 수강 인원을 입력하세요"
+                  placeholder="최소 수강 인원을 입력해 주세요"
                   width={120}
                   value={minStudentCountInput}
                   onValueChange={raw => {

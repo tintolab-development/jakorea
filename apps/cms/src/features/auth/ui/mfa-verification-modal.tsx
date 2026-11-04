@@ -109,7 +109,7 @@ export function MfaVerificationModal({ open, onClose }: MfaVerificationModalProp
         {isLocalTestMfa && (
           <Alert
             type="info"
-            description={`테스트 코드 ${ADMIN_MFA_LOCAL_TEST_CODE} 을 입력하세요. (백엔드 mfaMethod: LOCAL_TEST_CODE)`}
+            description={`테스트 코드 ${ADMIN_MFA_LOCAL_TEST_CODE} 을 입력해 주세요. (백엔드 mfaMethod: LOCAL_TEST_CODE)`}
             showIcon
             className="mfa-verification-modal__alert"
           />

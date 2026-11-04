@@ -71,7 +71,8 @@ const LEGACY_DETAILED_PROGRAM_MAIN_VALUE = '__economy_1c1s_main__'
 
 function isLegacyDetailedProgramValue(value: string): boolean {
   return (
-    value === LEGACY_DETAILED_PROGRAM_MAIN_VALUE || value === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
+    value === LEGACY_DETAILED_PROGRAM_MAIN_VALUE ||
+    value === TEMPLATE_FORM_DETAILED_PROGRAM_NONE_VALUE
   )
 }
 
@@ -128,7 +129,10 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     'economyRegistration.basicInfo.businessField',
     ''
   )
-  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv('economyRegistration.basicInfo.ipOwned', '')
+  const [ipOwned, setIpOwned] = useProgramRegistrationOverlayKv(
+    'economyRegistration.basicInfo.ipOwned',
+    ''
+  )
   const [courseDeliveredBy, setCourseDeliveredBy] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.courseDeliveredBy',
     ''
@@ -137,28 +141,27 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     'economyRegistration.basicInfo.ipsCategory',
     ''
   )
-  const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<'yes' | 'no' | ''>(
-    'economyRegistration.basicInfo.partnerInvolvement',
-    ''
-  )
+  const [partnerInvolvement, setPartnerInvolvement] = useProgramRegistrationOverlayKv<
+    'yes' | 'no' | ''
+  >('economyRegistration.basicInfo.partnerInvolvement', '')
   const [educationCourse, setEducationCourse] = useProgramRegistrationOverlayKv(
     'economyRegistration.basicInfo.educationCourse',
     ''
   )
-  
-  const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<string | null>(
-    'economyRegistration.basicInfo.operationAnchorIso',
-    null
-  )
+
+  const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<
+    string | null
+  >('economyRegistration.basicInfo.operationAnchorIso', null)
   const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
   const setOperationAnchorDate = (next: Dayjs | null) => {
     setOperationAnchorIso(next == null ? null : next.toISOString())
   }
 
-  const [operationRangeSeal, setOperationRangeSeal] = useProgramRegistrationOverlayKv<OperationRangeSeal>(
-    'economyRegistration.basicInfo.operationRangeSeal',
-    null
-  )
+  const [operationRangeSeal, setOperationRangeSeal] =
+    useProgramRegistrationOverlayKv<OperationRangeSeal>(
+      'economyRegistration.basicInfo.operationRangeSeal',
+      null
+    )
   const operationRange: [Dayjs, Dayjs] | null = useMemo(() => {
     if (operationRangeSeal == null) return null
     return [dayjs(operationRangeSeal.start), dayjs(operationRangeSeal.end)]
@@ -170,7 +173,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
     }
     setOperationRangeSeal({ start: next[0].toISOString(), end: next[1].toISOString() })
   }
-  
+
   const operationRangeWithTime = useMemo(
     () =>
       operationRange == null ? false : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
@@ -320,14 +323,14 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="대표 프로그램명 (국문)"
             validationKey="basicInfo.repKo"
             overlayKey={ECONOMY_REGISTRATION_OVERLAY_PROGRAM_TITLE_KO_KEY}
-            placeholder="대표 프로그램명을 입력하세요"
+            placeholder="대표 프로그램명을 입력해 주세요"
             defaultValue={REP_KO}
           />
           <EconomyOverlayTextField
             label="대표 프로그램명 (영문)"
             validationKey="basicInfo.repEn"
             overlayKey="economyRegistration.basicInfo.repEn"
-            placeholder="대표 프로그램명을 입력하세요"
+            placeholder="대표 프로그램명을 입력해 주세요"
             defaultValue={REP_EN}
           />
         </DetailInfoForm.Row>
@@ -336,7 +339,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             label="공고용 프로그램명"
             validationKey="basicInfo.publicProgramTitle"
             overlayKey="economyRegistration.basicInfo.publicProgramTitle"
-            placeholder="모집 시 노출될 프로그램명을 입력하세요"
+            placeholder="모집 시 노출될 프로그램명을 입력해 주세요"
           />
           <DetailInfoForm.Field
             label="세부 프로그램명"
@@ -364,7 +367,8 @@ export function OneCOneSRegistrationBasicInfoParagraph({
             validationKey="basicInfo.operationRangeSeal"
             edit={
               <div className="detail-info-form-inputs-wrapper-no-gap">
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={operationAnchorDate}
@@ -579,8 +583,12 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 value={partnerInvolvement || undefined}
                 onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
               >
-                <CmsRadio size="medium" value="yes">Yes</CmsRadio>
-                <CmsRadio size="medium" value="no">No</CmsRadio>
+                <CmsRadio size="medium" value="yes">
+                  Yes
+                </CmsRadio>
+                <CmsRadio size="medium" value="no">
+                  No
+                </CmsRadio>
               </CmsRadioGroup>
             }
             view="-"

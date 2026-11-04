@@ -260,9 +260,11 @@ export class UjatProgramEditPage {
     }
 
     await expect(this.page).toHaveURL(/edit=info/, { timeout: 15_000 })
-    await expect(this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).toBeVisible({
-      timeout: 15_000,
-    })
+    await expect(this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()).toBeVisible(
+      {
+        timeout: 15_000,
+      }
+    )
   }
 
   /**
@@ -272,14 +274,14 @@ export class UjatProgramEditPage {
     await clickSectionNavIfVisible(this.page, '기본 정보')
 
     // 국문 대표명은 시드 식별용 — 변경하지 않음
-    const titleInputs = this.page.getByPlaceholder('대표 프로그램명을 입력하세요')
+    const titleInputs = this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요')
     if ((await titleInputs.count()) >= 2) {
       await titleInputs.nth(1).fill(EDIT_EN_NAME)
     }
 
     await fillByPlaceholderIfVisible(
       this.page,
-      '프로그램 관리명을 입력하세요',
+      '프로그램 관리명을 입력해 주세요',
       EDIT_MANAGEMENT_NAME
     )
 
@@ -391,11 +393,19 @@ export class UjatProgramEditPage {
 
     await fillByPlaceholderIfVisible(
       this.page,
-      '프로그램명을 입력하세요',
+      '프로그램명을 입력해 주세요',
       `E2E UJAT 공고 ${EDIT_MARKER}`
     )
-    await fillByPlaceholderIfVisible(this.page, '상세 교육 대상을 입력하세요', EDIT_TARGET_DETAIL)
-    await fillByPlaceholderIfVisible(this.page, '상세 모집 대상을 입력하세요', EDIT_TARGET_DETAIL)
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '상세 교육 대상을 입력해 주세요',
+      EDIT_TARGET_DETAIL
+    )
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '상세 모집 대상을 입력해 주세요',
+      EDIT_TARGET_DETAIL
+    )
     await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
     await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', EDIT_CONTACT_TEL)
@@ -501,9 +511,7 @@ export class UjatProgramEditPage {
 
   private async clickInfoEditSave(programId: string) {
     this.currentMutation = { recruitmentPatchBodies: [] }
-    const failDialog = this.page
-      .getByRole('dialog')
-      .filter({ hasText: /저장 실패|입력 확인/ })
+    const failDialog = this.page.getByRole('dialog').filter({ hasText: /저장 실패|입력 확인/ })
     const editButton = this.page.getByRole('button', { name: '정보 수정' }).first()
 
     const patchPromise = this.page.waitForResponse(

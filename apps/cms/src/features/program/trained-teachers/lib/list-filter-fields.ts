@@ -18,7 +18,7 @@ export const trainedTeachersOverviewFilterFields: FilterFieldConfig[] = [
     key: 'title',
     type: 'search',
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -45,7 +45,7 @@ export const trainedTeachersScheduledFilterFields: FilterFieldConfig[] = [
     key: 'title',
     type: 'search',
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -70,7 +70,7 @@ export const trainedTeachersInProgressFilterFields: FilterFieldConfig[] = [
     key: 'title',
     type: 'search',
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -83,9 +83,7 @@ export const trainedTeachersInProgressFilterFields: FilterFieldConfig[] = [
   },
 ]
 
-export function resolveTrainedTeachersListFilterFields(
-  view: ProgramListView
-): FilterFieldConfig[] {
+export function resolveTrainedTeachersListFilterFields(view: ProgramListView): FilterFieldConfig[] {
   if (view === 'SCHEDULED') return trainedTeachersScheduledFilterFields
   if (view === 'IN_PROGRESS' || view === 'COMPLETED') {
     return trainedTeachersInProgressFilterFields

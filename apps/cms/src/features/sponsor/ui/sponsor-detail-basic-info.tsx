@@ -249,7 +249,7 @@ export function SponsorBasicInfoSection({
                   sponsorshipStartDate: toSponsorDateOnly(date),
                 }))
               }
-              placeholder="후원 시작일을 입력하세요"
+              placeholder="후원 시작일을 입력해 주세요"
               format="YYYY.MM.DD"
               allowClear
               style={{ width: '100%' }}
@@ -271,7 +271,7 @@ export function SponsorBasicInfoSection({
             <CmsInput
               value={value.executives}
               onChange={event => onChange(prev => ({ ...prev, executives: event.target.value }))}
-              placeholder="대표이사명을 입력하세요"
+              placeholder="대표이사명을 입력해 주세요"
               inputSize="small"
               width="100%"
             />
@@ -299,7 +299,7 @@ export function SponsorBasicInfoSection({
                 onChange={event =>
                   onChange(prev => ({ ...prev, detailAddress: event.target.value }))
                 }
-                placeholder="상세 주소를 입력하세요"
+                placeholder="상세 주소를 입력해 주세요"
                 inputSize="small"
                 width="100%"
               />
@@ -315,7 +315,7 @@ export function SponsorBasicInfoSection({
             <CmsInput
               value={value.homepageUrl}
               onChange={event => onChange(prev => ({ ...prev, homepageUrl: event.target.value }))}
-              placeholder="홈페이지 주소를 입력하세요"
+              placeholder="홈페이지 주소를 입력해 주세요"
               inputSize="small"
               width="100%"
             />
@@ -427,7 +427,8 @@ export function SponsorContactsSection({
             variant="delete"
             size="medium"
             onClick={onDeleteClick}
-            disabled={selectedContactKeys.length === 0} >
+            disabled={selectedContactKeys.length === 0}
+          >
             담당자 삭제
           </CmsButton>
           <CmsButton variant="primary" size="medium" onClick={onRegisterClick}>

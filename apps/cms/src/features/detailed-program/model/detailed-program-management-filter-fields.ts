@@ -16,7 +16,7 @@ export const detailedProgramManagementFilterFields: FilterFieldConfig[] = [
     key: 'programName',
     type: 'search',
     label: '세부 프로그램명',
-    placeholder: '세부 프로그램명을 입력하세요',
+    placeholder: '세부 프로그램명을 입력해 주세요',
     width: '70%',
   },
 ]

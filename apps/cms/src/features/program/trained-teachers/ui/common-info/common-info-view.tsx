@@ -297,8 +297,7 @@ function ipsValueFromRowSummary(summary: string | undefined): ProgramRegistratio
     .split(/\s*\|\s*/)
     .map(part => part.trim())
     .filter(part => part && part !== '일정 공통' && part !== '일정 별 상이')
-  const categoryPart =
-    parts.find(part => /inspire|prepare|succeed/i.test(part)) ?? parts[0] ?? ''
+  const categoryPart = parts.find(part => /inspire|prepare|succeed/i.test(part)) ?? parts[0] ?? ''
   const category = PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS.find(option =>
     categoryPart.toLowerCase().includes(option.value)
   )?.value
@@ -313,8 +312,7 @@ function ipsValueFromRowSummary(summary: string | undefined): ProgramRegistratio
       : PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS
   const matched = options.find(
     option =>
-      option.value !== 'none' &&
-      (detailPart === option.label || detailPart.includes(option.label))
+      option.value !== 'none' && (detailPart === option.label || detailPart.includes(option.label))
   )
   return { category, detail: matched?.value ?? 'none' }
 }
@@ -467,7 +465,9 @@ function TrainedTeachersTypeSettingsSection({
     <TrainedTeachersDetailSection
       title={PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.title}
       description={
-        isFormEdit ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription : undefined
+        isFormEdit
+          ? PROGRAM_REGISTRATION_GENERAL_SECTION_META.typeSettings.editDescription
+          : undefined
       }
       bodyClassName="trained-teachers-common-info__section-body--type-settings"
       isFormEdit={isFormEdit}
@@ -516,8 +516,12 @@ function TrainedTeachersTypeSettingsSection({
                           value={field.value ?? 'common'}
                           onChange={e => field.onChange(e.target.value)}
                         >
-                          <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
-                          <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
+                          <CmsRadio size="medium" value="common">
+                            일정 공통
+                          </CmsRadio>
+                          <CmsRadio size="medium" value="perSchedule">
+                            일정 별 상이
+                          </CmsRadio>
                         </CmsRadioGroup>
                       )}
                     />
@@ -568,8 +572,12 @@ function TrainedTeachersTypeSettingsSection({
                           value={field.value ?? 'common'}
                           onChange={e => field.onChange(e.target.value)}
                         >
-                          <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
-                          <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
+                          <CmsRadio size="medium" value="common">
+                            일정 공통
+                          </CmsRadio>
+                          <CmsRadio size="medium" value="perSchedule">
+                            일정 별 상이
+                          </CmsRadio>
                         </CmsRadioGroup>
                       )}
                     />
@@ -645,8 +653,12 @@ function TrainedTeachersTypeSettingsSection({
                           value={field.value ?? 'common'}
                           onChange={e => field.onChange(e.target.value)}
                         >
-                          <CmsRadio size="medium" value="common">일정 공통</CmsRadio>
-                          <CmsRadio size="medium" value="perSchedule">일정 별 상이</CmsRadio>
+                          <CmsRadio size="medium" value="common">
+                            일정 공통
+                          </CmsRadio>
+                          <CmsRadio size="medium" value="perSchedule">
+                            일정 별 상이
+                          </CmsRadio>
                         </CmsRadioGroup>
                       )}
                     />
@@ -728,8 +740,7 @@ function EducationJournalBlock({
   onChange?: (next: boolean) => void
   mismatchWarning?: string
 }) {
-  const journalView =
-    enabled === true ? '있음' : enabled === false ? '없음' : '-'
+  const journalView = enabled === true ? '있음' : enabled === false ? '없음' : '-'
   return (
     <DetailInfoForm
       title="교육일지 설정"
@@ -759,8 +770,12 @@ function EducationJournalBlock({
                 value={enabled ? 'yes' : 'no'}
                 onChange={e => onChange?.(e.target.value === 'yes')}
               >
-                <CmsRadio size="medium" value="yes">있음</CmsRadio>
-                <CmsRadio size="medium" value="no">없음</CmsRadio>
+                <CmsRadio size="medium" value="yes">
+                  있음
+                </CmsRadio>
+                <CmsRadio size="medium" value="no">
+                  없음
+                </CmsRadio>
               </CmsRadioGroup>
             ) : undefined
           }
@@ -852,7 +867,7 @@ function SingleRoundSessionBlock({
                   <div className="detail-info-form-inputs-wrapper">
                     <CmsInput
                       inputSize="small"
-                      placeholder="단원명을 입력하세요"
+                      placeholder="단원명을 입력해 주세요"
                       width="100%"
                       style={{ minWidth: 0, flex: '1 1 0' }}
                       value={session.title}
@@ -1162,7 +1177,8 @@ function ProgressGroupTimeField({
 }) {
   const range = useMemo(() => parseProgressTimeRange(value), [value])
   return (
-    <ParagraphTimePicker inputSize="small"
+    <ParagraphTimePicker
+      inputSize="small"
       endTimeAlwaysOn
       placeholder="시간 선택"
       width={200}
@@ -1366,7 +1382,8 @@ function ScheduleEventBlock({
                 edit={
                   isFormEdit ? (
                     // 일정형 복수 행사 일정 — 기간 토글 비노출(presetMode date) + 시간 토글 고정
-                    <ParagraphDatePicker inputSize="small"
+                    <ParagraphDatePicker
+                      inputSize="small"
                       mode="single"
                       presetMode="date"
                       customizable={false}
@@ -1538,8 +1555,9 @@ function TrainedTeachersScheduleSection({
             participationScheduleDetail={commonInfo.participationScheduleDetail ?? 'common'}
             ipsScheduleDetail={commonInfo.ipsScheduleDetail ?? 'common'}
             educationScheduleMode={
-              (commonInfo.educationScheduleMode as ProgramRegistrationEducationScheduleMode | undefined) ??
-              'date'
+              (commonInfo.educationScheduleMode as
+                | ProgramRegistrationEducationScheduleMode
+                | undefined) ?? 'date'
             }
             scheduleCurriculumPreEducation={draft.teacherTrainingEnabled}
             onScheduleCurriculumPreEducationChange={() => {}}
@@ -1746,8 +1764,12 @@ function TrainedTeachersScheduleSettingsSection({
                         field.onChange(next)
                       }}
                     >
-                      <CmsRadio size="medium" value="date">날짜 지정</CmsRadio>
-                      <CmsRadio size="medium" value="period">기간 지정</CmsRadio>
+                      <CmsRadio size="medium" value="date">
+                        날짜 지정
+                      </CmsRadio>
+                      <CmsRadio size="medium" value="period">
+                        기간 지정
+                      </CmsRadio>
                     </CmsRadioGroup>
                   )}
                 />
@@ -1758,7 +1780,8 @@ function TrainedTeachersScheduleSettingsSection({
               label="교육 진행 일정 선택"
               edit={
                 scheduleMode === 'date' ? (
-                  <ParagraphDatePicker inputSize="small"
+                  <ParagraphDatePicker
+                    inputSize="small"
                     mode="single"
                     presetMode="schedule"
                     customizable={false}
@@ -1779,7 +1802,8 @@ function TrainedTeachersScheduleSettingsSection({
                     disabledDate={disableOutsideOperation}
                   />
                 ) : (
-                  <ParagraphDatePicker inputSize="small"
+                  <ParagraphDatePicker
+                    inputSize="small"
                     mode="single"
                     presetMode="period"
                     customizable={false}
@@ -1801,9 +1825,7 @@ function TrainedTeachersScheduleSettingsSection({
             <DetailInfoForm.Field
               label="교육 진행 예정일"
               fullRow
-              view={
-                <EducationSchedulePreviewLines lines={lines} onRemove={removeLine} />
-              }
+              view={<EducationSchedulePreviewLines lines={lines} onRemove={removeLine} />}
             />
           </DetailInfoForm.Row>
         </DetailInfoForm>
@@ -1886,9 +1908,7 @@ export function TrainedTeachersCommonInfoView({
       savedOverride
         ? {
             ...program,
-            ...(savedOverride.businessArea
-              ? { businessArea: savedOverride.businessArea }
-              : {}),
+            ...(savedOverride.businessArea ? { businessArea: savedOverride.businessArea } : {}),
             educatedTeachers: savedOverride.educatedTeachers ?? program.educatedTeachers,
             generalCommonInfo: commonInfo,
             ...(savedOverride.generalSurveyMenuKeys !== undefined
@@ -1984,184 +2004,178 @@ export function TrainedTeachersCommonInfoView({
   }, [isEditMode, form, draft])
 
   const runSave = async () => {
-      const typeSettingsValues = form?.getValues()
-      if (
-        isProgramTypeSettingsSaveBlocked(program, {
-          educationStructure: typeSettingsValues?.educationStructure,
-          sessionRound: typeSettingsValues?.sessionRound,
+    const typeSettingsValues = form?.getValues()
+    if (
+      isProgramTypeSettingsSaveBlocked(program, {
+        educationStructure: typeSettingsValues?.educationStructure,
+        sessionRound: typeSettingsValues?.sessionRound,
+      })
+    ) {
+      void showAlert({
+        title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
+        content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+      })
+      return
+    }
+    setSaving(true)
+    const endOverlay = beginBlockingOverlay()
+    try {
+      // KPI SSOT = programs PATCH — draft → RHF 동기화 후 onBeforePersist(infoTriggerSave)
+      // int32 초과 시드는 이미 clamp — 저장 직전 한 번 더 방어
+      if (form && draft) {
+        form.setValue('kpiFinalParticipants', clampKpiDraftValue(draft.kpiFinalParticipants), {
+          shouldDirty: true,
         })
-      ) {
-        void showAlert({
-          title: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_TITLE,
-          content: PROGRAM_TYPE_SETTINGS_CHANGE_BLOCKED_MESSAGE,
+        form.setValue('kpiEducatedTeachers', clampKpiDraftValue(draft.kpiEducatedTeachers), {
+          shouldDirty: true,
         })
-        return
+        form.setValue('kpiFinalSchools', clampKpiDraftValue(draft.kpiFinalSchools), {
+          shouldDirty: true,
+        })
+        form.setValue('kpiFinalClasses', clampKpiDraftValue(draft.kpiFinalClasses), {
+          shouldDirty: true,
+        })
+        form.setValue('teacherTrainingEnabled', draft.teacherTrainingEnabled, {
+          shouldDirty: true,
+        })
+        form.setValue('educationJournalEnabled', draft.educationJournalEnabled, {
+          shouldDirty: true,
+        })
       }
-      setSaving(true)
-      const endOverlay = beginBlockingOverlay()
-      try {
-        // KPI SSOT = programs PATCH — draft → RHF 동기화 후 onBeforePersist(infoTriggerSave)
-        // int32 초과 시드는 이미 clamp — 저장 직전 한 번 더 방어
-        if (form && draft) {
-          form.setValue(
-            'kpiFinalParticipants',
-            clampKpiDraftValue(draft.kpiFinalParticipants),
-            { shouldDirty: true }
-          )
-          form.setValue(
-            'kpiEducatedTeachers',
-            clampKpiDraftValue(draft.kpiEducatedTeachers),
-            { shouldDirty: true }
-          )
-          form.setValue('kpiFinalSchools', clampKpiDraftValue(draft.kpiFinalSchools), {
-            shouldDirty: true,
-          })
-          form.setValue('kpiFinalClasses', clampKpiDraftValue(draft.kpiFinalClasses), {
-            shouldDirty: true,
-          })
-          form.setValue('teacherTrainingEnabled', draft.teacherTrainingEnabled, {
-            shouldDirty: true,
-          })
-          form.setValue('educationJournalEnabled', draft.educationJournalEnabled, {
-            shouldDirty: true,
-          })
-        }
 
-        const persistStructure = baseEducationStructure
-        const persistRound = baseSessionRound
-        if (form) {
-          form.setValue('educationStructure', persistStructure, { shouldDirty: true })
-          form.setValue('sessionRound', persistRound, { shouldDirty: true })
-        }
-        const formPatchForRows = form
-          ? detailEditValuesToProgramPatch(form.getValues(), program)
-          : undefined
-        const rowFields = {
-          educationFormScheduleDetail: form?.getValues('educationFormScheduleDetail'),
-          ipsScheduleDetail: form?.getValues('ipsScheduleDetail'),
-          educationFormLabel: formPatchForRows?.generalCommonInfo?.educationFormLabel,
-          ipsTypeSummary: formPatchForRows?.generalCommonInfo?.ipsTypeSummary,
-        }
-        const formValues = form?.getValues()
-        const sourceSessions = (formValues?.trainedTeachersCurriculumSessions ??
-          draft?.curriculumSessions) as GeneralProgramCurriculumSessionRow[] | undefined
-        const sourceDetails = (formValues?.trainedTeachersScheduleDetails ??
-          draft?.scheduleDetails) as GeneralProgramScheduleDetailRow[] | undefined
-        const sourceGroups =
-          formValues?.trainedTeachersProgressGroupsByDetail ??
-          draft?.progressGroupsByDetail ??
-          []
-        const nested = buildTrainedTeachersNestedCommonInfo({
+      const persistStructure = baseEducationStructure
+      const persistRound = baseSessionRound
+      if (form) {
+        form.setValue('educationStructure', persistStructure, { shouldDirty: true })
+        form.setValue('sessionRound', persistRound, { shouldDirty: true })
+      }
+      const formPatchForRows = form
+        ? detailEditValuesToProgramPatch(form.getValues(), program)
+        : undefined
+      const rowFields = {
+        educationFormScheduleDetail: form?.getValues('educationFormScheduleDetail'),
+        ipsScheduleDetail: form?.getValues('ipsScheduleDetail'),
+        educationFormLabel: formPatchForRows?.generalCommonInfo?.educationFormLabel,
+        ipsTypeSummary: formPatchForRows?.generalCommonInfo?.ipsTypeSummary,
+      }
+      const formValues = form?.getValues()
+      const sourceSessions = (formValues?.trainedTeachersCurriculumSessions ??
+        draft?.curriculumSessions) as GeneralProgramCurriculumSessionRow[] | undefined
+      const sourceDetails = (formValues?.trainedTeachersScheduleDetails ??
+        draft?.scheduleDetails) as GeneralProgramScheduleDetailRow[] | undefined
+      const sourceGroups =
+        formValues?.trainedTeachersProgressGroupsByDetail ?? draft?.progressGroupsByDetail ?? []
+      const nested = buildTrainedTeachersNestedCommonInfo({
+        educationStructure: persistStructure,
+        curriculumSessions: stampTrainedTeachersSessionFields(sourceSessions, rowFields),
+        scheduleDetails: stampTrainedTeachersSessionFields(
+          sourceDetails
+            ? applyTrainedTeachersProgressGroupsToScheduleDetails(
+                sourceDetails,
+                sourceGroups,
+                persistRound
+              )
+            : undefined,
+          rowFields
+        ),
+      })
+      const slices = buildTrainedTeachersCommonInfoSaveSlices({
+        educationStructure: persistStructure,
+        teacherTrainingEnabled: draft?.teacherTrainingEnabled === true,
+        educationJournalEnabled: draft?.educationJournalEnabled === true,
+        curriculumSessions: nested.curriculumSessions,
+        scheduleDetails: nested.scheduleDetails,
+        educationScheduleLines: form?.getValues('educationScheduleLines'),
+        educationScheduleMode: form?.getValues('educationScheduleMode'),
+      })
+      const scheduleDetails = slices.extraCommonInfo.scheduleDetails
+      const curriculumSessions = slices.extraCommonInfo.curriculumSessions
+
+      if (draft) {
+        const draftValidationAlert = resolveTrainedTeachersCommonInfoDraftValidationAlert({
           educationStructure: persistStructure,
-          curriculumSessions: stampTrainedTeachersSessionFields(sourceSessions, rowFields),
-          scheduleDetails: stampTrainedTeachersSessionFields(
-            sourceDetails
-              ? applyTrainedTeachersProgressGroupsToScheduleDetails(
-                  sourceDetails,
-                  sourceGroups,
-                  persistRound
-                )
-              : undefined,
-            rowFields
-          ),
-        })
-        const slices = buildTrainedTeachersCommonInfoSaveSlices({
-          educationStructure: persistStructure,
-          teacherTrainingEnabled: draft?.teacherTrainingEnabled === true,
-          educationJournalEnabled: draft?.educationJournalEnabled === true,
-          curriculumSessions: nested.curriculumSessions,
-          scheduleDetails: nested.scheduleDetails,
+          sessionRound: persistRound,
+          scheduleDetails: draft.scheduleDetails,
+          progressGroupsByDetail: draft.progressGroupsByDetail,
           educationScheduleLines: form?.getValues('educationScheduleLines'),
-          educationScheduleMode: form?.getValues('educationScheduleMode'),
+          operationStart: form?.getValues('startDate') ?? program.startDate,
+          operationEnd: form?.getValues('endDate') ?? program.endDate,
         })
-        const scheduleDetails = slices.extraCommonInfo.scheduleDetails
-        const curriculumSessions = slices.extraCommonInfo.curriculumSessions
-
-        if (draft) {
-          const draftValidationAlert = resolveTrainedTeachersCommonInfoDraftValidationAlert({
-            educationStructure: persistStructure,
-            sessionRound: persistRound,
-            scheduleDetails: draft.scheduleDetails,
-            progressGroupsByDetail: draft.progressGroupsByDetail,
-            educationScheduleLines: form?.getValues('educationScheduleLines'),
-            operationStart: form?.getValues('startDate') ?? program.startDate,
-            operationEnd: form?.getValues('endDate') ?? program.endDate,
+        if (draftValidationAlert) {
+          void showAlert({
+            title: draftValidationAlert.title,
+            content: draftValidationAlert.content,
           })
-          if (draftValidationAlert) {
-            void showAlert({
-              title: draftValidationAlert.title,
-              content: draftValidationAlert.content,
-            })
-            return
-          }
+          return
         }
-
-        if (onBeforePersist) {
-          // A programs PATCH 는 RHF 기본정보만. 연수·일지·커리큘럼·일정은 B 전용.
-          await onBeforePersist()
-        }
-
-        if (draft) {
-          // onBeforePersist 가 상세 캐시를 갱신하면 폼이 구 program으로 reset될 수 있다.
-          // 저장 직전 스냅샷(formPatchForRows)을 화면 반영에 쓴다.
-          const formPatch = formPatchForRows
-          const formCommonInfo = formPatch?.generalCommonInfo
-          const savedBusinessArea =
-            resolveStoredBusinessArea(formPatch?.businessArea) ||
-            resolveStoredBusinessArea(program.businessArea) ||
-            undefined
-          const commonInfoPayload: Partial<TrainedTeachersCommonInfo> = {
-            ...commonInfo,
-            ...formCommonInfo,
-            ...slices.infoDetailCommonInfo,
-          }
-
-          const kpiOverride = {
-            finalParticipants: clampKpiDraftValue(draft.kpiFinalParticipants) ?? 0,
-            instructorCount: 0,
-            volunteerCount: 0,
-            finalSchools: clampKpiDraftValue(draft.kpiFinalSchools) ?? 0,
-            finalClasses: clampKpiDraftValue(draft.kpiFinalClasses) ?? 0,
-          }
-
-          const surveyOverride = {
-            ...(formPatch?.generalSurveyMenuKeys !== undefined
-              ? { generalSurveyMenuKeys: formPatch.generalSurveyMenuKeys }
-              : {}),
-          }
-
-          if (onPersist) {
-            // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers·kpi 미포함
-            await onPersist({
-              commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
-            })
-          }
-          if (onBeforePersist || onPersist) {
-            // remote: 부모 detail 쿼리(저장 직후 GET)가 SSOT.
-            // savedOverride로 FE 값을 얹으면 서버 미반영인데 저장된 것처럼 보이다가 재진입 시 롤백된다.
-            setSavedOverride(null)
-          } else {
-            setSavedOverride({
-              educatedTeachers: draft.kpiEducatedTeachers,
-              ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
-              ...surveyOverride,
-              commonInfo: {
-                ...commonInfoPayload,
-                kpi: kpiOverride,
-                curriculumSessions,
-                scheduleDetails,
-              },
-            })
-          }
-        }
-
-        onSave?.()
-      } catch {
-        return
-      } finally {
-        endOverlay()
-        setSaving(false)
       }
+
+      if (onBeforePersist) {
+        // A programs PATCH 는 RHF 기본정보만. 연수·일지·커리큘럼·일정은 B 전용.
+        await onBeforePersist()
+      }
+
+      if (draft) {
+        // onBeforePersist 가 상세 캐시를 갱신하면 폼이 구 program으로 reset될 수 있다.
+        // 저장 직전 스냅샷(formPatchForRows)을 화면 반영에 쓴다.
+        const formPatch = formPatchForRows
+        const formCommonInfo = formPatch?.generalCommonInfo
+        const savedBusinessArea =
+          resolveStoredBusinessArea(formPatch?.businessArea) ||
+          resolveStoredBusinessArea(program.businessArea) ||
+          undefined
+        const commonInfoPayload: Partial<TrainedTeachersCommonInfo> = {
+          ...commonInfo,
+          ...formCommonInfo,
+          ...slices.infoDetailCommonInfo,
+        }
+
+        const kpiOverride = {
+          finalParticipants: clampKpiDraftValue(draft.kpiFinalParticipants) ?? 0,
+          instructorCount: 0,
+          volunteerCount: 0,
+          finalSchools: clampKpiDraftValue(draft.kpiFinalSchools) ?? 0,
+          finalClasses: clampKpiDraftValue(draft.kpiFinalClasses) ?? 0,
+        }
+
+        const surveyOverride = {
+          ...(formPatch?.generalSurveyMenuKeys !== undefined
+            ? { generalSurveyMenuKeys: formPatch.generalSurveyMenuKeys }
+            : {}),
+        }
+
+        if (onPersist) {
+          // KPI는 programs PATCH만 — detail PATCH에 educatedTeachers·kpi 미포함
+          await onPersist({
+            commonInfo: commonInfoPayload as NonNullable<Program['generalCommonInfo']>,
+          })
+        }
+        if (onBeforePersist || onPersist) {
+          // remote: 부모 detail 쿼리(저장 직후 GET)가 SSOT.
+          // savedOverride로 FE 값을 얹으면 서버 미반영인데 저장된 것처럼 보이다가 재진입 시 롤백된다.
+          setSavedOverride(null)
+        } else {
+          setSavedOverride({
+            educatedTeachers: draft.kpiEducatedTeachers,
+            ...(savedBusinessArea ? { businessArea: savedBusinessArea } : {}),
+            ...surveyOverride,
+            commonInfo: {
+              ...commonInfoPayload,
+              kpi: kpiOverride,
+              curriculumSessions,
+              scheduleDetails,
+            },
+          })
+        }
+      }
+
+      onSave?.()
+    } catch {
+      return
+    } finally {
+      endOverlay()
+      setSaving(false)
+    }
   }
 
   const handleSave = () => {
@@ -2170,144 +2184,142 @@ export function TrainedTeachersCommonInfoView({
 
   return (
     <>
-    <div className="trained-teachers-common-info program-detail-fullpage-modal__info-tab">
-      <div className="trained-teachers-common-info__header">
-        <BusinessPeriodExtendToolbar
-          program={displayProgram}
-          editDisabled={editDisabled}
-          hideExtend={isEditMode} >
-          <ProgramEditInfoActions
-            isEditing={isEditMode}
-            idleVariant="secondary"
-            onEdit={onEdit ?? (() => {})}
-            onCancel={onCancel ?? (() => {})}
-            onSave={handleSave}
-            saving={saving || persistPending}
-            disabled={editDisabled} />
-        </BusinessPeriodExtendToolbar>
+      <div className="trained-teachers-common-info program-detail-fullpage-modal__info-tab">
+        <div className="trained-teachers-common-info__header">
+          <BusinessPeriodExtendToolbar
+            program={displayProgram}
+            editDisabled={editDisabled}
+            hideExtend={isEditMode}
+          >
+            <ProgramEditInfoActions
+              isEditing={isEditMode}
+              idleVariant="secondary"
+              onEdit={onEdit ?? (() => {})}
+              onCancel={onCancel ?? (() => {})}
+              onSave={handleSave}
+              saving={saving || persistPending}
+              disabled={editDisabled}
+            />
+          </BusinessPeriodExtendToolbar>
+        </div>
+
+        {isEditMode ? (
+          <TrainedTeachersDetailSection
+            title="기본 정보"
+            isFormEdit
+            required
+            highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
+          >
+            <BasicInfoSection
+              program={displayProgram}
+              sponsorName={sponsorName}
+              createdByName={program.createdByName}
+              updatedByName={program.updatedByName}
+              lifecycleStatus={program.lifecycleStatus ?? undefined}
+              forceCompanySchoolLayout
+              hideIpsTypeField
+              hideEducationPlace
+              hideFormTitles
+              fixedParticipantTypeLabel="교사/강사"
+              enableTitleEnEdit
+              useDetailedProgramSelect
+              announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력해 주세요"
+              isEditMode={isEditMode}
+              form={form}
+            />
+          </TrainedTeachersDetailSection>
+        ) : (
+          <TrainedTeachersDetailSection
+            title="기본 정보"
+            highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
+          >
+            <BasicInfoSection
+              program={displayProgram}
+              sponsorName={sponsorName}
+              createdByName={program.createdByName}
+              updatedByName={program.updatedByName}
+              lifecycleStatus={program.lifecycleStatus ?? undefined}
+              forceCompanySchoolLayout
+              hideIpsTypeField
+              hideEducationPlace
+              hideFormTitles
+              fixedParticipantTypeLabel="교사/강사"
+              enableTitleEnEdit
+              useDetailedProgramSelect
+              announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력해 주세요"
+              isEditMode={isEditMode}
+              form={form}
+            />
+          </TrainedTeachersDetailSection>
+        )}
+
+        {/* 교육받은 교사 공통정보 기획 — 사업 KPI 목표 비노출 (다른 유형 KPI는 유지) */}
+
+        <TrainedTeachersTypeSettingsSection
+          educationStructure={educationStructure}
+          sessionRound={sessionRound}
+          commonInfo={commonInfo}
+          programType={displayProgram.type}
+          ips={displayProgram.ips}
+          isEditMode={isEditMode}
+          form={form}
+        />
+
+        {educationStructure === 'curriculum' ? (
+          <TrainedTeachersCurriculumSection
+            sessionRound={sessionRound}
+            commonInfo={{
+              ...commonInfo,
+              ipsScheduleDetail:
+                isEditMode && form ? form.watch('ipsScheduleDetail') : commonInfo.ipsScheduleDetail,
+              educationFormScheduleDetail:
+                isEditMode && form
+                  ? form.watch('educationFormScheduleDetail')
+                  : commonInfo.educationFormScheduleDetail,
+            }}
+            isEditMode={isEditMode}
+            draft={draft}
+            updateDraft={updateDraft}
+            journalMismatchWarning={program.trainedTeacherInfoDetailWarnings?.find(item =>
+              item.includes('educationJournalEnabled')
+            )}
+          />
+        ) : (
+          <TrainedTeachersScheduleSection
+            sessionRound={sessionRound}
+            commonInfo={{
+              ...commonInfo,
+              ipsScheduleDetail:
+                isEditMode && form ? form.watch('ipsScheduleDetail') : commonInfo.ipsScheduleDetail,
+              educationFormScheduleDetail:
+                isEditMode && form
+                  ? form.watch('educationFormScheduleDetail')
+                  : commonInfo.educationFormScheduleDetail,
+              educationScheduleMode:
+                isEditMode && form
+                  ? (form.watch('educationScheduleMode') ?? 'date')
+                  : commonInfo.educationScheduleMode,
+            }}
+            isEditMode={isEditMode}
+            draft={draft}
+            updateDraft={updateDraft}
+            journalMismatchWarning={program.trainedTeacherInfoDetailWarnings?.find(item =>
+              item.includes('educationJournalEnabled')
+            )}
+          />
+        )}
+
+        <TrainedTeachersScheduleSettingsSection
+          programId={program.id}
+          operationStart={program.startDate}
+          operationEnd={program.endDate}
+          educationStructure={educationStructure}
+          sessionRound={sessionRound}
+          commonInfo={commonInfo}
+          isEditMode={isEditMode}
+          form={form}
+        />
       </div>
-
-      {isEditMode ? (
-        <TrainedTeachersDetailSection
-          title="기본 정보"
-          isFormEdit
-          required
-          highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
-        >
-          <BasicInfoSection
-            program={displayProgram}
-            sponsorName={sponsorName}
-            createdByName={program.createdByName}
-            updatedByName={program.updatedByName}
-            lifecycleStatus={program.lifecycleStatus ?? undefined}
-            forceCompanySchoolLayout
-            hideIpsTypeField
-            hideEducationPlace
-            hideFormTitles
-            fixedParticipantTypeLabel="교사/강사"
-            enableTitleEnEdit
-            useDetailedProgramSelect
-            announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력하세요"
-            isEditMode={isEditMode}
-            form={form}
-          />
-        </TrainedTeachersDetailSection>
-      ) : (
-        <TrainedTeachersDetailSection
-          title="기본 정보"
-          highlightParagraphId={PROGRAM_REGISTRATION_IDS.basicInfo}
-        >
-          <BasicInfoSection
-            program={displayProgram}
-            sponsorName={sponsorName}
-            createdByName={program.createdByName}
-            updatedByName={program.updatedByName}
-            lifecycleStatus={program.lifecycleStatus ?? undefined}
-            forceCompanySchoolLayout
-            hideIpsTypeField
-            hideEducationPlace
-            hideFormTitles
-            fixedParticipantTypeLabel="교사/강사"
-            enableTitleEnEdit
-            useDetailedProgramSelect
-            announcementTitlePlaceholder="모집 시 노출될 프로그램명을 입력하세요"
-            isEditMode={isEditMode}
-            form={form}
-          />
-        </TrainedTeachersDetailSection>
-      )}
-
-      {/* 교육받은 교사 공통정보 기획 — 사업 KPI 목표 비노출 (다른 유형 KPI는 유지) */}
-
-      <TrainedTeachersTypeSettingsSection
-        educationStructure={educationStructure}
-        sessionRound={sessionRound}
-        commonInfo={commonInfo}
-        programType={displayProgram.type}
-        ips={displayProgram.ips}
-        isEditMode={isEditMode}
-        form={form}
-      />
-
-      {educationStructure === 'curriculum' ? (
-        <TrainedTeachersCurriculumSection
-          sessionRound={sessionRound}
-          commonInfo={{
-            ...commonInfo,
-            ipsScheduleDetail:
-              isEditMode && form
-                ? form.watch('ipsScheduleDetail')
-                : commonInfo.ipsScheduleDetail,
-            educationFormScheduleDetail:
-              isEditMode && form
-                ? form.watch('educationFormScheduleDetail')
-                : commonInfo.educationFormScheduleDetail,
-          }}
-          isEditMode={isEditMode}
-          draft={draft}
-          updateDraft={updateDraft}
-          journalMismatchWarning={program.trainedTeacherInfoDetailWarnings?.find(item =>
-            item.includes('educationJournalEnabled')
-          )}
-        />
-      ) : (
-        <TrainedTeachersScheduleSection
-          sessionRound={sessionRound}
-          commonInfo={{
-            ...commonInfo,
-            ipsScheduleDetail:
-              isEditMode && form
-                ? form.watch('ipsScheduleDetail')
-                : commonInfo.ipsScheduleDetail,
-            educationFormScheduleDetail:
-              isEditMode && form
-                ? form.watch('educationFormScheduleDetail')
-                : commonInfo.educationFormScheduleDetail,
-            educationScheduleMode:
-              isEditMode && form
-                ? (form.watch('educationScheduleMode') ?? 'date')
-                : commonInfo.educationScheduleMode,
-          }}
-          isEditMode={isEditMode}
-          draft={draft}
-          updateDraft={updateDraft}
-          journalMismatchWarning={program.trainedTeacherInfoDetailWarnings?.find(item =>
-            item.includes('educationJournalEnabled')
-          )}
-        />
-      )}
-
-      <TrainedTeachersScheduleSettingsSection
-        programId={program.id}
-        operationStart={program.startDate}
-        operationEnd={program.endDate}
-        educationStructure={educationStructure}
-        sessionRound={sessionRound}
-        commonInfo={commonInfo}
-        isEditMode={isEditMode}
-        form={form}
-      />
-    </div>
     </>
   )
 }

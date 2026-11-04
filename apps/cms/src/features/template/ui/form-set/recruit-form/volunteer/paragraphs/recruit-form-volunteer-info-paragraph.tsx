@@ -289,7 +289,7 @@ export function RecruitFormVolunteerInfoParagraph() {
               <CmsInput
                 inputSize="small"
                 width="100%"
-                placeholder="상세 모집 대상을 입력하세요"
+                placeholder="상세 모집 대상을 입력해 주세요"
                 value={volunteerTargetDetail}
                 onChange={e => setVolunteerTargetDetail(e.target.value)}
               />

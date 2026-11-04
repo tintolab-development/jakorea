@@ -117,7 +117,7 @@ export function AddStudentModal({
                   {...field}
                   inputSize="medium"
                   width="100%"
-                  placeholder="학생명을 입력하세요"
+                  placeholder="학생명을 입력해 주세요"
                 />
               )}
             />
@@ -169,7 +169,7 @@ export function AddStudentModal({
                   ref={field.ref}
                   inputSize="medium"
                   width="100%"
-                  placeholder="생년월일 8자리를 입력하세요"
+                  placeholder="생년월일 8자리를 입력해 주세요"
                   maxLength={10}
                 />
               )}
@@ -208,7 +208,7 @@ export function AddStudentModal({
                     value={field.value ?? ''}
                     inputSize="medium"
                     width="100%"
-                    placeholder="학급을 입력하세요 (예: 1반)"
+                    placeholder="학급을 입력해 주세요 (예: 1반)"
                   />
                 )
               }
@@ -236,7 +236,7 @@ export function AddStudentModal({
                   value={field.value ?? ''}
                   inputSize="medium"
                   width="100%"
-                  placeholder="연락처를 입력하세요"
+                  placeholder="연락처를 입력해 주세요"
                 />
               )}
             />
@@ -263,7 +263,7 @@ export function AddStudentModal({
                   value={field.value ?? ''}
                   inputSize="medium"
                   width="100%"
-                  placeholder="이메일을 입력하세요"
+                  placeholder="이메일을 입력해 주세요"
                 />
               )}
             />

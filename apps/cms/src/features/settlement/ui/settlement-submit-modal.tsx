@@ -6,13 +6,27 @@
 import { CmsButton, CmsRadio, ContentModal } from '@/shared/ui'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { useState, useEffect, useCallback } from 'react'
-import { Form, Select, Input, Upload, Space, Divider, Typography, Switch, DatePicker, Collapse, Card, Button } from 'antd'
+import {
+  Form,
+  Select,
+  Input,
+  Upload,
+  Space,
+  Divider,
+  Typography,
+  Switch,
+  DatePicker,
+  Collapse,
+  Card,
+  Button,
+} from 'antd'
 import { UploadOutlined, CalculatorOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   submitSettlement,
   getAvailableSettlements,
-  type SettlementSubmitFormData } from '@/entities/settlement/api/instructor-settlement-submit-service'
+  type SettlementSubmitFormData,
+} from '@/entities/settlement/api/instructor-settlement-submit-service'
 import type { SettlementItem } from '@/types/domain'
 import dayjs, { type Dayjs } from 'dayjs'
 import locale from 'antd/es/date-picker/locale/ko_KR'
@@ -56,7 +70,8 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
   const {
     result: calculationResult,
     calculate: calculateSettlement,
-    reset: resetCalculation } = useSettlementCalculation()
+    reset: resetCalculation,
+  } = useSettlementCalculation()
 
   // 자동 산출 입력 필드
   const sessions = Form.useWatch('sessions', form)
@@ -89,11 +104,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       return
     }
 
-    if (
-      calculationMode === 'auto' &&
-      sessions &&
-      distance !== undefined
-    ) {
+    if (calculationMode === 'auto' && sessions && distance !== undefined) {
       try {
         // Form.useWatch가 즉시 반영되지 않을 수 있으므로 form.getFieldValue로 최신 값 가져오기
         const currentHasAccommodation = form.getFieldValue('hasAccommodation') ?? false
@@ -105,7 +116,8 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
           fuelCost: Number(fuelCost) || 0,
           tollFee: Number(tollFee) || 0,
           accommodationRequired: Boolean(currentHasAccommodation), // form에서 직접 가져온 최신 값 사용
-          isBusinessIncome: Boolean(currentIsBusinessIncome) })
+          isBusinessIncome: Boolean(currentIsBusinessIncome),
+        })
       } catch {
         // 에러는 무시 (입력 중일 수 있음)
       }
@@ -135,7 +147,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       setAvailableSettlements(data)
     } catch (error) {
       console.error('제출 가능한 정산 목록 로드 실패:', error)
-      }
+    }
   }, [user?.instructorId])
 
   useEffect(() => {
@@ -173,7 +185,8 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
         periodDate = dayjs(program.period)
       }
       form.setFieldsValue({
-        period: periodDate.isValid() ? periodDate : dayjs() })
+        period: periodDate.isValid() ? periodDate : dayjs(),
+      })
     }
   }
 
@@ -202,13 +215,15 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
         items.push({
           type: 'instructor_fee',
           description: `강사비 (${calculationResult.breakdown.sessions}차시${calculationResult.breakdown.isLongDistance ? ', 장거리' : ''})`,
-          amount: calculationResult.instructorFee })
+          amount: calculationResult.instructorFee,
+        })
 
         if (calculationResult.transportFee > 0) {
           items.push({
             type: 'transportation',
             description: '교통비',
-            amount: calculationResult.transportFee })
+            amount: calculationResult.transportFee,
+          })
         }
 
         // 숙박비는 accommodationFee가 0보다 크면 추가 (hasAccommodation 스위치가 켜져있을 때)
@@ -220,7 +235,8 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
             type: 'accommodation',
             description: '숙박비',
             amount:
-              calculationResult.accommodationFee > 0 ? calculationResult.accommodationFee : 80000 })
+              calculationResult.accommodationFee > 0 ? calculationResult.accommodationFee : 80000,
+          })
         }
       } else {
         // 수동 입력 모드 (기존 로직)
@@ -250,14 +266,16 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
         items.push({
           type: 'instructor_fee',
           description: '강사비',
-          amount: instructorFeeValue })
+          amount: instructorFeeValue,
+        })
 
         // 교통비 (선택)
         if (transportationFeeValue > 0) {
           items.push({
             type: 'transportation',
             description: '교통비',
-            amount: transportationFeeValue })
+            amount: transportationFeeValue,
+          })
         }
 
         // 숙박비 (선택, 스위치로 제어)
@@ -265,7 +283,8 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
           items.push({
             type: 'accommodation',
             description: '숙박비',
-            amount: 80000 })
+            amount: 80000,
+          })
         }
       }
 
@@ -284,7 +303,8 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
             instructorFee,
             transportationFee,
             hasAccommodation,
-            items })
+            items,
+          })
           setSubmitting(false)
           return
         }
@@ -307,9 +327,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
         : rawAttachments?.fileList || []
 
       const attachmentFiles = uploadFileList
-        .map((f: { originFileObj?: File } | File) =>
-          f instanceof File ? f : f.originFileObj
-        )
+        .map((f: { originFileObj?: File } | File) => (f instanceof File ? f : f.originFileObj))
         .filter((f: File | undefined): f is File => f instanceof File)
 
       if (attachmentFiles.length > 0) {
@@ -343,7 +361,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       onCancel()
     } catch (error: any) {
       console.error('정산 제출 실패:', error)
-      } finally {
+    } finally {
       setSubmitting(false)
     }
   }
@@ -369,7 +387,9 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       wrapClassName="settlement-submit-modal-wrap"
       modalStyles={{
         body: {
-          paddingBottom: 24 } }}
+          paddingBottom: 24,
+        },
+      }}
     >
       <Form
         form={form}
@@ -379,12 +399,10 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
           instructorFee: undefined,
           transportationFee: undefined,
           hasAccommodation: false,
-          isBusinessIncome: false }}
+          isBusinessIncome: false,
+        }}
       >
-        <Form.Item
-          label="프로그램/강의 선택"
-          name="matchingId"
-        >
+        <Form.Item label="프로그램/강의 선택" name="matchingId">
           <Select
             placeholder="프로그램을 선택하세요"
             onChange={handleProgramChange}
@@ -400,10 +418,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
 
         {selectedProgram && (
           <>
-            <Form.Item
-              label="기간"
-              name="period"
-            >
+            <Form.Item label="기간" name="period">
               <DatePicker
                 style={{ width: '100%' }}
                 size="large"
@@ -427,13 +442,15 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                   if (e.target.value === 'auto') {
                     form.setFieldsValue({
                       instructorFee: undefined,
-                      transportationFee: undefined })
+                      transportationFee: undefined,
+                    })
                   } else {
                     form.setFieldsValue({
                       sessions: undefined,
                       distance: undefined,
                       fuelCost: undefined,
-                      tollFee: undefined })
+                      tollFee: undefined,
+                    })
                   }
                 }}
               >
@@ -453,10 +470,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
             {calculationMode === 'auto' && (
               <>
                 <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                  <Form.Item
-                    label="차시 수"
-                    name="sessions"
-                  >
+                  <Form.Item label="차시 수" name="sessions">
                     <Select placeholder="차시 수를 선택하세요" disabled={submitting}>
                       {[1, 2, 3, 4, 5, 6].map(session => (
                         <Select.Option key={session} value={session}>
@@ -473,14 +487,12 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                     getValueProps={(value: number | undefined) => ({
                       value: value == null ? '' : String(value),
                     })}
-                    getValueFromEvent={(raw: string) =>
-                      raw === '' ? undefined : Number(raw)
-                    }
+                    getValueFromEvent={(raw: string) => (raw === '' ? undefined : Number(raw))}
                   >
                     <CmsNumericInput
                       mode="decimal"
                       style={{ width: '100%' }}
-                      placeholder="편도 거리를 입력하세요"
+                      placeholder="편도 거리를 입력해 주세요"
                       min={0}
                       precision={1}
                       addonAfter="km"
@@ -495,14 +507,12 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                     getValueProps={(value: number | undefined) => ({
                       value: value == null ? '' : String(value),
                     })}
-                    getValueFromEvent={(raw: string) =>
-                      raw === '' ? undefined : Number(raw)
-                    }
+                    getValueFromEvent={(raw: string) => (raw === '' ? undefined : Number(raw))}
                   >
                     <CmsNumericInput
                       mode="currency"
                       style={{ width: '100%' }}
-                      placeholder="주유비를 입력하세요"
+                      placeholder="주유비를 입력해 주세요"
                       min={0}
                       precision={0}
                       disabled={submitting}
@@ -516,14 +526,12 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                     getValueProps={(value: number | undefined) => ({
                       value: value == null ? '' : String(value),
                     })}
-                    getValueFromEvent={(raw: string) =>
-                      raw === '' ? undefined : Number(raw)
-                    }
+                    getValueFromEvent={(raw: string) => (raw === '' ? undefined : Number(raw))}
                   >
                     <CmsNumericInput
                       mode="currency"
                       style={{ width: '100%' }}
-                      placeholder="통행료를 입력하세요"
+                      placeholder="통행료를 입력해 주세요"
                       min={0}
                       precision={0}
                       disabled={submitting}
@@ -540,11 +548,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                       onChange={checked => {
                         form.setFieldsValue({ isBusinessIncome: checked })
                         // Switch 변경 시 즉시 재계산을 위해 form 값 업데이트 후 강제 재계산
-                        if (
-                          calculationMode === 'auto' &&
-                          sessions &&
-                          distance !== undefined
-                        ) {
+                        if (calculationMode === 'auto' && sessions && distance !== undefined) {
                           const currentHasAccommodation =
                             form.getFieldValue('hasAccommodation') ?? false
                           try {
@@ -573,11 +577,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                       onChange={checked => {
                         form.setFieldsValue({ hasAccommodation: checked })
                         // Switch 변경 시 즉시 재계산을 위해 form 값 업데이트 후 강제 재계산
-                        if (
-                          calculationMode === 'auto' &&
-                          sessions &&
-                          distance !== undefined
-                        ) {
+                        if (calculationMode === 'auto' && sessions && distance !== undefined) {
                           const currentIsBusinessIncome =
                             form.getFieldValue('isBusinessIncome') ?? false
                           try {
@@ -587,7 +587,8 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                               fuelCost: Number(fuelCost) || 0,
                               tollFee: Number(tollFee) || 0,
                               accommodationRequired: Boolean(checked), // Switch의 최신 값 사용
-                              isBusinessIncome: Boolean(currentIsBusinessIncome) })
+                              isBusinessIncome: Boolean(currentIsBusinessIncome),
+                            })
                           } catch {
                             // 에러는 무시
                           }
@@ -643,7 +644,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                             <CmsNumericInput
                               mode="currency"
                               style={{ width: '100%' }}
-                              placeholder="강사비를 입력하세요"
+                              placeholder="강사비를 입력해 주세요"
                               min={0}
                               precision={0}
                               inputSize="large"
@@ -671,7 +672,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                             <CmsNumericInput
                               mode="currency"
                               style={{ width: '100%' }}
-                              placeholder="교통비를 입력하세요 (선택사항)"
+                              placeholder="교통비를 입력해 주세요 (선택사항)"
                               min={0}
                               precision={0}
                               inputSize="large"
@@ -709,7 +710,8 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                           <div className="settlement-help-text">일괄 8만원입니다.</div>
                         </div>
                       </div>
-                    ) },
+                    ),
+                  },
                 ]}
                 style={{ marginBottom: 16 }}
               />
@@ -729,7 +731,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
             <Form.Item label="비고" name="notes">
               <TextArea
                 rows={4}
-                placeholder="추가 사항을 입력하세요 (선택사항)"
+                placeholder="추가 사항을 입력해 주세요 (선택사항)"
                 disabled={submitting}
               />
             </Form.Item>
@@ -746,7 +748,12 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
             </Form.Item>
 
             <div className="settlement-actions">
-              <CmsButton variant="default" onClick={handleCancel} disabled={submitting} size="large">
+              <CmsButton
+                variant="default"
+                onClick={handleCancel}
+                disabled={submitting}
+                size="large"
+              >
                 취소
               </CmsButton>
               <CmsButton type="submit" loading={submitting} size="large">

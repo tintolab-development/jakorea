@@ -15,7 +15,8 @@ import {
   Popconfirm,
   Typography,
   Switch,
-  Card } from 'antd'
+  Card,
+} from 'antd'
 import { CmsButton } from '@/shared/ui'
 import { CmsNumericInput } from '@/shared/ui/numeric-input'
 import { EditOutlined, DeleteOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons'
@@ -60,7 +61,8 @@ function FieldRow({
   onEdit,
   onDelete,
   onMoveUp,
-  onMoveDown }: FieldRowProps) {
+  onMoveDown,
+}: FieldRowProps) {
   return (
     <tr>
       <td style={{ padding: '8px' }}>
@@ -109,7 +111,8 @@ export function FormFieldEditor({
   open,
   fields: initialFields,
   onSave,
-  onCancel }: FormFieldEditorProps) {
+  onCancel,
+}: FormFieldEditorProps) {
   const [fields, setFields] = useState<FormFieldDef[]>(initialFields)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [fieldForm] = Form.useForm()
@@ -119,7 +122,8 @@ export function FormFieldEditor({
       id: `field-${Date.now()}`,
       label: '',
       type: 'text',
-      required: false }
+      required: false,
+    }
     setFields([...fields, newField])
     setEditingIndex(fields.length)
     fieldForm.setFieldsValue(newField)
@@ -174,7 +178,7 @@ export function FormFieldEditor({
 
   const handleSave = () => {
     onSave(fields)
-    }
+  }
 
   const handleCancel = () => {
     setFields(initialFields)
@@ -187,25 +191,30 @@ export function FormFieldEditor({
     {
       title: '순서',
       key: 'order',
-      width: 80 },
+      width: 80,
+    },
     {
       title: '필드명',
       dataIndex: 'label',
-      key: 'label' },
+      key: 'label',
+    },
     {
       title: '타입',
       dataIndex: 'type',
       key: 'type',
-      width: 120 },
+      width: 120,
+    },
     {
       title: '필수',
       dataIndex: 'required',
       key: 'required',
-      width: 80 },
+      width: 80,
+    },
     {
       title: '작업',
       key: 'actions',
-      width: 150 },
+      width: 150,
+    },
   ]
 
   return (
@@ -230,7 +239,8 @@ export function FormFieldEditor({
             size="large"
             icon={<ButtonAddIcon />}
             onClick={handleAdd}
-            style={{ marginBottom: 16 }} >
+            style={{ marginBottom: 16 }}
+          >
             필드 추가
           </CmsButton>
         </div>
@@ -238,17 +248,11 @@ export function FormFieldEditor({
         {editingIndex !== null && (
           <Card title={editingIndex >= fields.length ? '필드 추가' : '필드 수정'}>
             <Form form={fieldForm} layout="vertical" onFinish={handleSaveField}>
-              <Form.Item
-                name="label"
-                label="필드명"
-              >
+              <Form.Item name="label" label="필드명">
                 <Input placeholder="예: 참가 목적" />
               </Form.Item>
 
-              <Form.Item
-                name="type"
-                label="필드 타입"
-              >
+              <Form.Item name="type" label="필드 타입">
                 <Select options={fieldTypeOptions} />
               </Form.Item>
 
@@ -275,16 +279,18 @@ export function FormFieldEditor({
                           const lines = e.target.value.split('\n').filter((l: string) => l.trim())
                           return lines.map((line: string, idx: number) => ({
                             value: `option-${idx}`,
-                            label: line.trim() }))
+                            label: line.trim(),
+                          }))
                         }}
                         getValueProps={value => {
                           if (!value || !Array.isArray(value)) return { value: '' }
                           return {
-                            value: value.map((opt: { label: string }) => opt.label).join('\n') }
+                            value: value.map((opt: { label: string }) => opt.label).join('\n'),
+                          }
                         }}
                       >
                         <TextArea
-                          placeholder="각 줄에 하나씩 입력하세요.&#10;예:&#10;옵션1&#10;옵션2"
+                          placeholder="각 줄에 하나씩 입력해 주세요.&#10;예:&#10;옵션1&#10;옵션2"
                           rows={4}
                         />
                       </Form.Item>
@@ -327,7 +333,8 @@ export function FormFieldEditor({
                     onClick={() => {
                       setEditingIndex(null)
                       fieldForm.resetFields()
-                    }} >
+                    }}
+                  >
                     취소
                   </CmsButton>
                 </Space>
@@ -362,7 +369,9 @@ export function FormFieldEditor({
                         onMoveDown={handleMoveDown}
                       />
                     )
-                  } } }}
+                  },
+                },
+              }}
             />
           )}
         </Card>

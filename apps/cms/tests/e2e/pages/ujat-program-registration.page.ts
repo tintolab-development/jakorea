@@ -84,17 +84,17 @@ export class UjatProgramRegistrationPage {
       const autofillCompleted = this.page.evaluate(
         () =>
           new Promise<void>(resolve => {
-            window.addEventListener(
-              'cms:registration-dev-autofill-complete',
-              () => resolve(),
-              { once: true }
-            )
+            window.addEventListener('cms:registration-dev-autofill-complete', () => resolve(), {
+              once: true,
+            })
           })
       )
       await autofill.click()
       await autofillCompleted
       this.devAutofillApplied = true
-      await expect(this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).not.toHaveValue('', {
+      await expect(
+        this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()
+      ).not.toHaveValue('', {
         timeout: 15_000,
       })
       // 자동입력 이벤트가 끝났어도 초기 Form editor hydration이 한 프레임
@@ -112,7 +112,10 @@ export class UjatProgramRegistrationPage {
           .locator('.ant-select-selection-item')
           .first()
       ).toBeVisible({ timeout: 15_000 })
-      await this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first().fill(this.programTitle)
+      await this.page
+        .getByPlaceholder('대표 프로그램명을 입력해 주세요')
+        .first()
+        .fill(this.programTitle)
       const autofillAlert = this.page.getByRole('dialog').filter({ hasText: '자동입력 완료' })
       if (await autofillAlert.isVisible().catch(() => false)) {
         await autofillAlert.getByRole('button', { name: '확인' }).click()
@@ -127,7 +130,7 @@ export class UjatProgramRegistrationPage {
     await clickSectionNavIfVisible(this.page, '기본 정보')
 
     // 국문·영문 대표명이 동일 placeholder 2개
-    const titleInputs = this.page.getByPlaceholder('대표 프로그램명을 입력하세요')
+    const titleInputs = this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요')
     await expect(titleInputs.first()).toBeVisible({ timeout: 15_000 })
     await titleInputs.nth(0).fill(this.programTitle)
     if ((await titleInputs.count()) >= 2) {
@@ -136,12 +139,12 @@ export class UjatProgramRegistrationPage {
 
     await fillByPlaceholderIfVisible(
       this.page,
-      '모집 시 노출될 프로그램명을 입력하세요',
+      '모집 시 노출될 프로그램명을 입력해 주세요',
       PROGRAM_PUBLIC_NAME
     )
     await fillByPlaceholderIfVisible(
       this.page,
-      '프로그램 관리명을 입력하세요',
+      '프로그램 관리명을 입력해 주세요',
       `관리·${this.programTitle}`
     )
 
@@ -176,7 +179,7 @@ export class UjatProgramRegistrationPage {
     await checkCheckboxIfVisible(this.page, '강의평가')
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
-    await fillAllByPlaceholder(this.page, '단원명을 입력하세요', CURRICULUM_UNIT)
+    await fillAllByPlaceholder(this.page, '단원명을 입력해 주세요', CURRICULUM_UNIT)
     await fillAllByPlaceholder(this.page, '교육 내용을 작성하세요', CURRICULUM_CONTENT)
 
     if (this.devAutofillApplied) {
@@ -241,7 +244,9 @@ export class UjatProgramRegistrationPage {
       // 다중 선택 패널은 체크 후에도 열려 있으므로, live locator인
       // `target`을 다시 클릭하지 않고 팝오버 바깥을 클릭해 닫는다.
       await this.page.mouse.click(80, 90)
-      await expect(panel).toBeHidden({ timeout: 5_000 }).catch(() => undefined)
+      await expect(panel)
+        .toBeHidden({ timeout: 5_000 })
+        .catch(() => undefined)
     }
 
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
@@ -275,11 +280,9 @@ export class UjatProgramRegistrationPage {
       const autofillCompleted = this.page.evaluate(
         () =>
           new Promise<void>(resolve => {
-            window.addEventListener(
-              'cms:registration-dev-autofill-complete',
-              () => resolve(),
-              { once: true }
-            )
+            window.addEventListener('cms:registration-dev-autofill-complete', () => resolve(), {
+              once: true,
+            })
           })
       )
       await autofill.click()
@@ -301,7 +304,7 @@ export class UjatProgramRegistrationPage {
       await expect(this.page).toHaveURL(/ujatStep=program/)
 
       const titleInputs = this.page.locator(
-        'input[placeholder="대표 프로그램명을 입력하세요"]:visible'
+        'input[placeholder="대표 프로그램명을 입력해 주세요"]:visible'
       )
       await expect(titleInputs.first()).toBeVisible({ timeout: 15_000 })
       await titleInputs.first().fill(this.programTitle)
@@ -379,12 +382,12 @@ export class UjatProgramRegistrationPage {
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
     await fillByPlaceholderIfVisible(
       this.page,
-      '상세 교육 대상을 입력하세요',
+      '상세 교육 대상을 입력해 주세요',
       EDUCATION_TARGET_DETAIL
     )
     await fillByPlaceholderIfVisible(
       this.page,
-      '상세 모집 대상을 입력하세요',
+      '상세 모집 대상을 입력해 주세요',
       EDUCATION_TARGET_DETAIL
     )
     await fillParagraphDateByPlaceholder(
@@ -393,12 +396,7 @@ export class UjatProgramRegistrationPage {
       'range',
       RECRUIT_DATE_OPTS
     )
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '합격자 발표일',
-      'single',
-      ANNOUNCE_DATE_OPTS
-    )
+    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillByPlaceholderIfVisible(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
     await fillByPlaceholderIfVisible(this.page, '담당 문의처', CONTACT_NAME)
     await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', CONTACT_TEL)
@@ -410,15 +408,17 @@ export class UjatProgramRegistrationPage {
       'E2E UJAT 프로그램 설명입니다.'
     )
     await fillByPlaceholderIfVisible(this.page, '프로그램명을 작성하세요', this.programTitle)
-    await fillByPlaceholderIfVisible(this.page, '모집 안내를 작성하세요', 'E2E UJAT 모집 안내입니다.')
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '모집 안내를 작성하세요',
+      'E2E UJAT 모집 안내입니다.'
+    )
     await fillVisibleFreeTextFields(this.page, 'E2E UJAT 모집 상세')
   }
 
   async completeRegistration(): Promise<UjatRegistrationCompleteResult> {
     const failDialog = this.page.getByRole('dialog').filter({ hasText: /등록 실패/ })
-    const successDialog = this.page
-      .getByRole('dialog')
-      .filter({ hasText: '등록되었습니다.' })
+    const successDialog = this.page.getByRole('dialog').filter({ hasText: '등록되었습니다.' })
 
     const outcomePromise = Promise.race([
       this.page
@@ -468,8 +468,13 @@ export class UjatProgramRegistrationPage {
     }
 
     if (await successDialog.isVisible().catch(() => false)) {
-      await successDialog.getByRole('button', { name: /확인|닫기/ }).click().catch(() => undefined)
-      await expect(successDialog).toBeHidden({ timeout: 10_000 }).catch(() => undefined)
+      await successDialog
+        .getByRole('button', { name: /확인|닫기/ })
+        .click()
+        .catch(() => undefined)
+      await expect(successDialog)
+        .toBeHidden({ timeout: 10_000 })
+        .catch(() => undefined)
     }
 
     if (!programId) {
@@ -552,7 +557,10 @@ export class UjatProgramRegistrationPage {
     const titleFilter = this.page.getByPlaceholder(/프로그램명/)
     if ((await titleFilter.count()) > 0) {
       await titleFilter.fill(created.programTitle)
-      await this.page.getByRole('button', { name: '조회' }).click().catch(() => undefined)
+      await this.page
+        .getByRole('button', { name: '조회' })
+        .click()
+        .catch(() => undefined)
     }
 
     const row = this.page

@@ -99,9 +99,13 @@ export class CompanySchoolRegistrationPage {
   async fillCommonInfo() {
     await clickSectionNavIfVisible(this.page, '기본 정보')
 
-    await fillByPlaceholder(this.page, '대표 프로그램명을 입력하세요', this.programTitle)
-    await fillByPlaceholder(this.page, '상세 프로그램명을 입력하세요', PROGRAM_EN_NAME)
-    await fillByPlaceholder(this.page, '모집 시 노출될 프로그램명을 입력하세요', PROGRAM_PUBLIC_NAME)
+    await fillByPlaceholder(this.page, '대표 프로그램명을 입력해 주세요', this.programTitle)
+    await fillByPlaceholder(this.page, '상세 프로그램명을 입력해 주세요', PROGRAM_EN_NAME)
+    await fillByPlaceholder(
+      this.page,
+      '모집 시 노출될 프로그램명을 입력해 주세요',
+      PROGRAM_PUBLIC_NAME
+    )
 
     await selectByPlaceholder(this.page, '세부 프로그램명을 선택하세요')
     await fillParagraphDateByPlaceholder(
@@ -139,11 +143,7 @@ export class CompanySchoolRegistrationPage {
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
 
     await checkRadioIfVisible(this.page, '기관 안')
-    await fillByPlaceholder(
-      this.page,
-      '교육이 진행될 상세 장소를 입력해 주세요',
-      EDUCATION_PLACE
-    )
+    await fillByPlaceholder(this.page, '교육이 진행될 상세 장소를 입력해 주세요', EDUCATION_PLACE)
 
     await checkCheckboxIfVisible(this.page, '설문조사')
     await checkCheckboxIfVisible(this.page, '만족도조사')
@@ -206,7 +206,9 @@ export class CompanySchoolRegistrationPage {
     await this.fillRecruitSharedFields()
     await this.expectVolunteerRecruitTabAbsent()
     await this.page.keyboard.press('Escape').catch(() => undefined)
-    const institutionTab = this.page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ }).first()
+    const institutionTab = this.page
+      .getByRole('tab', { name: /참여 기관 모집|참여자 모집/ })
+      .first()
     await expect(institutionTab).toBeVisible({ timeout: 30_000 })
     await institutionTab.click()
     await expect(institutionTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
@@ -232,12 +234,12 @@ export class CompanySchoolRegistrationPage {
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
     await fillByPlaceholderIfVisible(
       this.page,
-      '상세 교육 대상을 입력하세요',
+      '상세 교육 대상을 입력해 주세요',
       EDUCATION_TARGET_DETAIL
     )
     await fillByPlaceholderIfVisible(
       this.page,
-      '상세 모집 대상을 입력하세요',
+      '상세 모집 대상을 입력해 주세요',
       EDUCATION_TARGET_DETAIL
     )
     await fillParagraphDateByPlaceholder(
@@ -246,12 +248,7 @@ export class CompanySchoolRegistrationPage {
       'range',
       RECRUIT_DATE_OPTS
     )
-    await fillParagraphDateByPlaceholder(
-      this.page,
-      '합격자 발표일',
-      'single',
-      ANNOUNCE_DATE_OPTS
-    )
+    await fillParagraphDateByPlaceholder(this.page, '합격자 발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillParagraphDateByPlaceholder(this.page, '발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillByPlaceholderIfVisible(this.page, '발표 방법 안내', ANNOUNCE_METHOD)
     await fillByPlaceholderIfVisible(this.page, '담당 문의처', CONTACT_NAME)
@@ -265,7 +262,11 @@ export class CompanySchoolRegistrationPage {
       'E2E 1사1교 프로그램 설명입니다.'
     )
     await fillByPlaceholderIfVisible(this.page, '프로그램명을 작성하세요', this.programTitle)
-    await fillByPlaceholderIfVisible(this.page, '모집 안내를 작성하세요', 'E2E 1사1교 모집 안내입니다.')
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '모집 안내를 작성하세요',
+      'E2E 1사1교 모집 안내입니다.'
+    )
     await fillByPlaceholderIfVisible(this.page, '지원 방법을 작성하세요', 'CMS에서 신청해 주세요.')
     await fillByPlaceholderIfVisible(
       this.page,
@@ -292,7 +293,7 @@ export class CompanySchoolRegistrationPage {
   /** 신청 — 학교(참여자)·강사만 */
   async fillApplicationInfo() {
     await this.fillApplicationConsentIfPresent()
-    await fillByPlaceholderIfVisible(this.page, '팀 명을 입력하세요', 'JA E2E 1사1교')
+    await fillByPlaceholderIfVisible(this.page, '팀 명을 입력해 주세요', 'JA E2E 1사1교')
     await selectByPlaceholderIfVisible(this.page, '인원 수')
     await fillByPlaceholderIfVisible(this.page, '팀원 수를 입력해 주세요', '4')
     await fillByPlaceholderIfVisible(
@@ -311,7 +312,9 @@ export class CompanySchoolRegistrationPage {
     await fillVisibleFreeTextFields(this.page, 'E2E 1사1교 강사 신청')
     await uploadTinyPngIfPresent(this.page)
     await this.expectVolunteerApplicationTabAbsent()
-    const institutionTab = this.page.getByRole('tab', { name: /참여 기관 신청|참여자 신청/ }).first()
+    const institutionTab = this.page
+      .getByRole('tab', { name: /참여 기관 신청|참여자 신청/ })
+      .first()
     if (await institutionTab.isVisible().catch(() => false)) {
       await institutionTab.click()
       await expect(institutionTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
@@ -330,9 +333,7 @@ export class CompanySchoolRegistrationPage {
 
   async completeRegistration(): Promise<CompanySchoolRegistrationCompleteResult> {
     const failDialog = this.page.getByRole('dialog').filter({ hasText: /등록 실패/ })
-    const successDialog = this.page
-      .getByRole('dialog')
-      .filter({ hasText: '등록되었습니다.' })
+    const successDialog = this.page.getByRole('dialog').filter({ hasText: '등록되었습니다.' })
 
     const outcomePromise = Promise.race([
       this.page
@@ -397,7 +398,7 @@ export class CompanySchoolRegistrationPage {
       timeout: 30_000,
     })
 
-    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력해 주세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
     await titleFilter.fill(result.programTitle)
     await this.page.getByRole('button', { name: '조회' }).click()

@@ -25,7 +25,7 @@ export function buildUjatEducationProgressInstitutionFilterFields(
       key: 'institutionName',
       type: 'search',
       label: '참여 기관명',
-      placeholder: '기관명을 입력하세요',
+      placeholder: '기관명을 입력해 주세요',
       width: '25%',
     },
     {
@@ -48,7 +48,7 @@ export function buildUjatEducationProgressInstitutionFilterFields(
       key: 'teacherName',
       type: 'search',
       label: '담당 교사명',
-      placeholder: '교사명을 입력하세요',
+      placeholder: '교사명을 입력해 주세요',
       width: '25%',
     },
   ]

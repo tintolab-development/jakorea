@@ -46,7 +46,9 @@ describe('containsMailVariableTokens', () => {
 
 describe('buildMailSendPayload', () => {
   it('forces general purpose and derives useTemplate from templateId', () => {
-    const withoutTemplate = buildMailSendPayload(draft({ templateId: undefined, useTemplate: true }))
+    const withoutTemplate = buildMailSendPayload(
+      draft({ templateId: undefined, useTemplate: true })
+    )
     expect(withoutTemplate.purpose).toBe('general')
     expect(withoutTemplate.useTemplate).toBe(false)
 
@@ -147,7 +149,7 @@ describe('validateMailSendDraft', () => {
           ],
         })
       )
-    ).toBe('직접 입력 수신자의 연락처를 입력하세요.')
+    ).toBe('직접 입력 수신자의 연락처를 입력해 주세요.')
   })
 
   it('accepts a complete immediate send', () => {

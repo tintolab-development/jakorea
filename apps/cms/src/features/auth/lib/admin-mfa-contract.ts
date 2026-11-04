@@ -39,7 +39,10 @@ function readOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
-function readFirstString(source: Record<string, unknown>, keys: readonly string[]): string | undefined {
+function readFirstString(
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | undefined {
   for (const key of keys) {
     const value = readOptionalString(source[key])
     if (value) return value
@@ -125,7 +128,14 @@ export function parseAdminMfaSetupResult(payload: unknown): AdminMfaSetupResult 
   }
 }
 
-export type MfaVerifyErrorKind = 'lock' | 'challenge' | 'otp' | 'not-configured' | 'rate' | 'validation' | 'other'
+export type MfaVerifyErrorKind =
+  | 'lock'
+  | 'challenge'
+  | 'otp'
+  | 'not-configured'
+  | 'rate'
+  | 'validation'
+  | 'other'
 
 export function mapMfaVerifyError(
   code: string,
@@ -197,7 +207,7 @@ export function buildMfaResetRequest(input: {
   const recoveryType = input.recoveryType.trim()
   const stepUpProof = input.stepUpProof.trim()
 
-  if (!reason) return { ok: false, message: '사유를 입력하세요.' }
+  if (!reason) return { ok: false, message: '사유를 입력해 주세요.' }
   if (reason.length > 500) return { ok: false, message: '사유는 500자 이하여야 합니다.' }
   if (containsMfaSecretMaterial(reason)) {
     return { ok: false, message: '사유에 인증번호나 토큰을 넣을 수 없습니다.' }
@@ -205,7 +215,7 @@ export function buildMfaResetRequest(input: {
   if (!MFA_RECOVERY_TYPES.includes(recoveryType as MfaRecoveryType)) {
     return { ok: false, message: '복구 유형을 선택하세요.' }
   }
-  if (!verificationReference) return { ok: false, message: '내부 티켓 번호를 입력하세요.' }
+  if (!verificationReference) return { ok: false, message: '내부 티켓 번호를 입력해 주세요.' }
   if (verificationReference.length > 120) {
     return { ok: false, message: '티켓 번호는 120자 이하여야 합니다.' }
   }
@@ -276,7 +286,7 @@ export function mapMfaResetError(
   if (code === 'MFA_VERIFICATION_FAILED') {
     return {
       action: 'restart-step-up',
-      message: '인증번호가 올바르지 않습니다. 인증번호부터 다시 입력하세요.',
+      message: '인증번호가 올바르지 않습니다. 인증번호부터 다시 입력해 주세요.',
     }
   }
   if (code === 'UNAUTHORIZED' || (httpStatus === 401 && (code === 'UNKNOWN' || code === ''))) {
@@ -292,7 +302,10 @@ export function mapMfaResetError(
     }
   }
   if (code === 'MFA_RESET_TARGET_NOT_FOUND' || httpStatus === 404) {
-    return { action: 'refresh-target', message: '대상 계정을 찾을 수 없습니다. 목록을 새로고침하세요.' }
+    return {
+      action: 'refresh-target',
+      message: '대상 계정을 찾을 수 없습니다. 목록을 새로고침하세요.',
+    }
   }
   if (
     code === 'MFA_RESET_CONCURRENT_CHANGE' ||

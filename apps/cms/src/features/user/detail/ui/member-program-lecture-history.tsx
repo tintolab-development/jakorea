@@ -23,9 +23,7 @@ import {
   resolveMemberProgramYear,
   resolveVolunteerHistoryDisplayStatus,
 } from '@/features/user/detail/lib/member-program-history-display'
-import {
-  isProgramHistoryDeleteBlockedByDisplayStatus,
-} from '@/shared/constants/status'
+import { isProgramHistoryDeleteBlockedByDisplayStatus } from '@/shared/constants/status'
 import { ProgramEnrollmentStatusText } from '@/shared/components/program-enrollment-status-text'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -41,11 +39,7 @@ import {
   DELETE_GUIDE_TYPED_CONFIRM_PLACEHOLDER,
   DELETE_GUIDE_TYPED_CONFIRM_VALUE,
 } from '@/shared/constants'
-import {
-  CMS_TABLE_NO_COL_CLASS,
-  TABLE_COLUMN_WIDTHS,
-  TABLE_CONFIG,
-} from '@/shared/constants/table'
+import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS, TABLE_CONFIG } from '@/shared/constants/table'
 import { buildProgressYearSelectOptions, lectureAttendanceHasAtLeastOne } from '@/shared/utils'
 import '@/features/program/general/ui/program-list.css'
 import '@/pages/programs/program-list-page.css'
@@ -145,8 +139,12 @@ function educationGradeFromRecord(record: Application): string {
 }
 
 /** 이력 삭제 모달 — 수강 이력 테이블만 「프로그램 수강 이력」 문구 분기 */
-function programHistoryDeleteDomainForMode(mode: MemberProgramHistoryMode): ProgramProgressHistoryDeleteDomain {
-  return mode === 'studentEnrollment' || mode === 'schoolProgramParticipation' ? 'enrollment' : 'progress'
+function programHistoryDeleteDomainForMode(
+  mode: MemberProgramHistoryMode
+): ProgramProgressHistoryDeleteDomain {
+  return mode === 'studentEnrollment' || mode === 'schoolProgramParticipation'
+    ? 'enrollment'
+    : 'progress'
 }
 
 export function MemberProgramLectureHistory({
@@ -180,9 +178,7 @@ export function MemberProgramLectureHistory({
         : mode === 'volunteerProgram'
           ? '봉사 프로그램 참여 이력'
           : '프로그램 강의 이력')
-  const footnote =
-    footnoteProp ??
-    (mode === 'instructorLecture' ? DEFAULT_FOOTNOTE : undefined)
+  const footnote = footnoteProp ?? (mode === 'instructorLecture' ? DEFAULT_FOOTNOTE : undefined)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const yearOptions = useMemo(() => buildProgressYearSelectOptions(''), [])
@@ -195,7 +191,7 @@ export function MemberProgramLectureHistory({
         key: 'title',
         type: 'search',
         label: '프로그램명',
-        placeholder: '프로그램명을 입력하세요',
+        placeholder: '프로그램명을 입력해 주세요',
         width: '25%',
       },
       {
@@ -218,7 +214,7 @@ export function MemberProgramLectureHistory({
         key: 'managerName',
         type: 'search',
         label: '담당자명',
-        placeholder: '담당자명을 입력하세요',
+        placeholder: '담당자명을 입력해 주세요',
         width: '25%',
       },
     ]
@@ -316,7 +312,10 @@ export function MemberProgramLectureHistory({
     const titles = tableData
       .filter(row => keySet.has(String(row.id)))
       .map(row => resolveMemberProgramTitle(row.programId, row))
-    if (titles.length === 0 || !buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)) {
+    if (
+      titles.length === 0 ||
+      !buildProgramProgressHistoryDeleteGuide(titles, historyDeleteDomain)
+    ) {
       return
     }
     setDeleteHistoryModalOpen(true)
@@ -338,7 +337,9 @@ export function MemberProgramLectureHistory({
             isProgramHistoryDeleteBlockedByDisplayStatus(resolveVolunteerHistoryDisplayStatus(h))
           )
         : (selectedRecords as Application[]).some(a =>
-            isProgramHistoryDeleteBlockedByDisplayStatus(resolveApplicationEnrollmentDisplayStatus(a))
+            isProgramHistoryDeleteBlockedByDisplayStatus(
+              resolveApplicationEnrollmentDisplayStatus(a)
+            )
           )
 
     if (hasInProgress) {
@@ -439,9 +440,7 @@ export function MemberProgramLectureHistory({
         key: 'enrollmentDisplay',
         align: 'center',
         render: (_: unknown, record: Application) => (
-          <ProgramEnrollmentStatusText
-            status={resolveApplicationEnrollmentDisplayStatus(record)}
-          />
+          <ProgramEnrollmentStatusText status={resolveApplicationEnrollmentDisplayStatus(record)} />
         ),
       },
     ]
@@ -502,7 +501,8 @@ export function MemberProgramLectureHistory({
                 disabled={!record.hasAssignmentSubmission}
                 onClick={() => {
                   if (onOpenAssignment) onOpenAssignment(record)
-                }} >
+                }}
+              >
                 내역 보기
               </CmsButton>
             </span>
@@ -559,7 +559,8 @@ export function MemberProgramLectureHistory({
                   if (onViewLectureReport) onViewLectureReport(record)
                   setLectureReportHistoryTarget(record)
                   setLectureReportHistoryModalOpen(true)
-                }} >
+                }}
+              >
                 내역 보기
               </CmsButton>
             </span>
@@ -636,7 +637,8 @@ export function MemberProgramLectureHistory({
                 <FilterTableToolbarButton
                   variant="delete"
                   disabled={selectedRowKeys.length === 0}
-                  onClick={handleOpenHistoryDeleteModal} >
+                  onClick={handleOpenHistoryDeleteModal}
+                >
                   이력 삭제
                 </FilterTableToolbarButton>
               ) : null}
@@ -648,7 +650,8 @@ export function MemberProgramLectureHistory({
                     disabled={selectedRowKeys.length === 0}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
-                    } >
+                    }
+                  >
                     수료증/참여인증서 발급
                   </FilterTableToolbarButton>
                 )}
@@ -660,7 +663,8 @@ export function MemberProgramLectureHistory({
                     icon={<ButtonDownloadIcon />}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
-                    } >
+                    }
+                  >
                     활동인증서 발급
                   </FilterTableToolbarButton>
                   <FilterTableToolbarButton
@@ -669,7 +673,8 @@ export function MemberProgramLectureHistory({
                     disabled={selectedRowKeys.length === 0}
                     onClick={() =>
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
-                    } >
+                    }
+                  >
                     수료증/참여인증서 발급
                   </FilterTableToolbarButton>
                 </>
@@ -679,21 +684,22 @@ export function MemberProgramLectureHistory({
                   variant="secondary"
                   disabled={selectedRowKeys.length === 0}
                   icon={<ButtonDownloadIcon />}
-                  onClick={() =>
-                    openCertificateIssueModal(selectedRowKeys.map(String), 'activity')
-                  } >
+                  onClick={() => openCertificateIssueModal(selectedRowKeys.map(String), 'activity')}
+                >
                   활동인증서 발급
                 </FilterTableToolbarButton>
               )}
               {mode === 'instructorLecture' && memberId != null && isMembersRemoteEnabled() && (
                 <FilterTableToolbarButton
                   variant="secondary"
-                  icon={<ButtonDownloadIcon />} className="member-program-lecture-history__bulk-lecture-report-download"
+                  icon={<ButtonDownloadIcon />}
+                  className="member-program-lecture-history__bulk-lecture-report-download"
                   loading={allLectureReportsDownloading}
                   disabled={allLectureReportsDownloading}
                   onClick={() => {
                     void handleDownloadAllLectureReports()
-                  }} >
+                  }}
+                >
                   전체 강의보고서 일괄 다운로드
                 </FilterTableToolbarButton>
               )}

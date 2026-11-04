@@ -4,7 +4,11 @@ import dayjs from 'dayjs'
 import { useSearchParams } from 'react-router-dom'
 import { FilterTableLayout, type FilterFieldConfig } from '@/shared/components/filter-table-layout'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 import {
   CmsButton,
   ContentModal,
@@ -103,9 +107,7 @@ export default function TextbookPage() {
   const [kitQuantityChangeConfirmOpen, setKitQuantityChangeConfirmOpen] = useState(false)
   const { options: businessAreaSelectOptions } = useTextbookBusinessAreaSelectOptions()
   const remoteKitEnabled = useDataManagementRemoteEnabled('textbooks', true)
-  const kitQuantitiesQuery = useMaterialKitQuantitiesQuery(
-    remoteKitEnabled && kitQuantityModalOpen
-  )
+  const kitQuantitiesQuery = useMaterialKitQuantitiesQuery(remoteKitEnabled && kitQuantityModalOpen)
   const kitQuantitiesMutation = useMaterialKitQuantitiesMutation()
   const [localKitQuantities, setLocalKitQuantities] =
     useState<TextbookKitQuantityValues>(DEFAULT_KIT_QUANTITIES)
@@ -191,7 +193,7 @@ export default function TextbookPage() {
         key: 'textbookName',
         type: 'search',
         label: '교재명',
-        placeholder: '교재명을 입력하세요',
+        placeholder: '교재명을 입력해 주세요',
         width: '20%',
       },
       {
@@ -265,8 +267,7 @@ export default function TextbookPage() {
           }
         }
         const nextGradeOptions = textbookFilterGradeOptions(nextValue).map(opt => opt.value)
-        const normalizedPrevGrade =
-          prev.grade === 'ALL' || !prev.grade.trim() ? '' : prev.grade
+        const normalizedPrevGrade = prev.grade === 'ALL' || !prev.grade.trim() ? '' : prev.grade
         const nextGrade = nextGradeOptions.includes(normalizedPrevGrade)
           ? normalizedPrevGrade
           : (nextGradeOptions[0] ?? '')
@@ -331,18 +332,21 @@ export default function TextbookPage() {
     }
   }, [deleteMutation, detailTextbookId, selectedRowKeys, setDetailRoute])
 
-  const handleRegisterSubmit = useCallback(async (payload: TextbookRegisterPayload) => {
-    try {
-      await createMutation.mutateAsync(payload)
-      setRegisterModalOpen(false)
-      showRegisterCompletedAlert()
-    } catch (error) {
-      console.debug(
-        'textbookPage register failed',
-        getDataManagementApiErrorMessage(error, '등록에 실패했습니다.')
-      )
-    }
-  }, [createMutation])
+  const handleRegisterSubmit = useCallback(
+    async (payload: TextbookRegisterPayload) => {
+      try {
+        await createMutation.mutateAsync(payload)
+        setRegisterModalOpen(false)
+        showRegisterCompletedAlert()
+      } catch (error) {
+        console.debug(
+          'textbookPage register failed',
+          getDataManagementApiErrorMessage(error, '등록에 실패했습니다.')
+        )
+      }
+    },
+    [createMutation]
+  )
 
   const handleKitQuantityConfirm = useCallback((nextValues: TextbookKitQuantityValues) => {
     setPendingKitQuantities(nextValues)
@@ -356,9 +360,7 @@ export default function TextbookPage() {
       try {
         await kitQuantitiesMutation.mutateAsync(pendingKitQuantities)
       } catch (error) {
-        setKitSaveError(
-          getDataManagementApiErrorMessage(error, '키트 수량 저장에 실패했습니다.')
-        )
+        setKitSaveError(getDataManagementApiErrorMessage(error, '키트 수량 저장에 실패했습니다.'))
         return
       }
       try {
@@ -562,14 +564,16 @@ export default function TextbookPage() {
               onClick={() => {
                 setKitQuantityChangeConfirmOpen(false)
                 setPendingKitQuantities(null)
-              }} >
+              }}
+            >
               취소
             </CmsButton>
             <CmsButton
               variant="primary"
               type="button"
               onClick={handleConfirmKitQuantityChange}
-              disabled={kitQuantitiesMutation.isPending} >
+              disabled={kitQuantitiesMutation.isPending}
+            >
               확인
             </CmsButton>
           </div>
@@ -595,22 +599,27 @@ export default function TextbookPage() {
         contentLoading={isInitialListLoading}
         actions={
           <>
-            <FilterTableToolbarButton
-              variant="delete"
-              onClick={handleDeleteSelected} >
+            <FilterTableToolbarButton variant="delete" onClick={handleDeleteSelected}>
               교재 삭제
             </FilterTableToolbarButton>
-            <FilterTableToolbarButton variant="secondary" onClick={() => setKitQuantityModalOpen(true)}>
+            <FilterTableToolbarButton
+              variant="secondary"
+              onClick={() => setKitQuantityModalOpen(true)}
+            >
               키트 수량 관리
             </FilterTableToolbarButton>
-            <FilterTableToolbarButton variant="secondary" onClick={() => setBusinessAreaModalOpen(true)}>
+            <FilterTableToolbarButton
+              variant="secondary"
+              onClick={() => setBusinessAreaModalOpen(true)}
+            >
               사업 분야 관리
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               onClick={() => {
                 setRegisterModalOpen(true)
-              }} >
+              }}
+            >
               교재 등록
             </FilterTableToolbarButton>
           </>

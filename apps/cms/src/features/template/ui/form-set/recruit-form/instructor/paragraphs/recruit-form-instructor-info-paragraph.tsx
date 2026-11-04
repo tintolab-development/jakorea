@@ -4,9 +4,7 @@ import type { Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { INSTRUCTOR_TARGET_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
-import {
-  RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
-} from '@/features/program/general/lib/recruit-radio-defaults'
+import { RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT } from '@/features/program/general/lib/recruit-radio-defaults'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { useInstructorRecruitField } from '@/features/template/ui/form-set/recruit-form/instructor/instructor-recruit-form-rhf'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
@@ -172,205 +170,208 @@ export function RecruitFormInstructorInfoParagraph() {
       </DetailInfoForm>
 
       <DetailInfoForm title="강사 모집 정보" hideHeader mode="edit">
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="프로그램 운영 기간"
-          validationKey="recruit.instructor.programRangeSeal"
-          edit={
-            <div className={MAX_SUFFIX_CLASS}>
-              <ParagraphDatePicker inputSize="small"
-                mode="single"
-                presetMode="period"
-                value={programAnchor}
-                width="100%"
-                placeholder="프로그램 운영 기간을 선택하세요"
-                preferPeriodModeInPopover
-                suppressAutoTodayWhenEmpty
-                showTimeToggle={false}
-                appliedSurfaceRange={programRange}
-                appliedSurfaceWithTime={false}
-                onRangeChange={range => setProgramRange(range)}
-                onChange={next => {
-                  if (next == null) return
-                  setProgramAnchor(next)
-                }}
-              />
-            </div>
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="강사 모집 현황"
-          readOnlyDisplay
-          view={
-            <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
-          }
-        />
-      </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="프로그램 운영 기간"
+            validationKey="recruit.instructor.programRangeSeal"
+            edit={
+              <div className={MAX_SUFFIX_CLASS}>
+                <ParagraphDatePicker
+                  inputSize="small"
+                  mode="single"
+                  presetMode="period"
+                  value={programAnchor}
+                  width="100%"
+                  placeholder="프로그램 운영 기간을 선택하세요"
+                  preferPeriodModeInPopover
+                  suppressAutoTodayWhenEmpty
+                  showTimeToggle={false}
+                  appliedSurfaceRange={programRange}
+                  appliedSurfaceWithTime={false}
+                  onRangeChange={range => setProgramRange(range)}
+                  onChange={next => {
+                    if (next == null) return
+                    setProgramAnchor(next)
+                  }}
+                />
+              </div>
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="강사 모집 현황"
+            readOnlyDisplay
+            view={
+              <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
+            }
+          />
+        </DetailInfoForm.Row>
 
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="모집 대상"
-          validationKey="recruit.instructor.recruitTargets"
-          edit={
-            <CmsSelect
-              mode="multiple"
-              inputSize="small"
-              width={240}
-              withAllOption={false}
-              placeholder="모집 대상을 선택하세요"
-              options={[...INSTRUCTOR_TARGET_OPTIONS]}
-              value={recruitTargets}
-              onChange={v => setRecruitTargets(Array.isArray(v) ? v.map(String) : [])}
-            />
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="모집 대상 상세"
-          validationKey="recruit.instructor.recruitTargetDetail"
-          edit={
-            <CmsInput
-              inputSize="small"
-              width="100%"
-              placeholder="상세 모집 대상을 입력하세요"
-              value={recruitTargetDetail}
-              onChange={e => setRecruitTargetDetail(e.target.value)}
-            />
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
-
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="강사 모집 기간"
-          validationKey="recruit.instructor.recruitRangeSeal"
-          edit={
-            <div className={MAX_SUFFIX_CLASS}>
-              <ParagraphDatePicker inputSize="small"
-                mode="single"
-                presetMode="period"
-                value={recruitAnchor}
-                width="100%"
-                placeholder="모집 기간을 선택하세요"
-                preferPeriodModeInPopover
-                suppressAutoTodayWhenEmpty
-                showTimeToggle={false}
-                appliedSurfaceRange={recruitRange}
-                appliedSurfaceWithTime={false}
-                onRangeChange={range => setRecruitRange(range)}
-                onChange={next => {
-                  if (next == null) return
-                  setRecruitAnchor(next)
-                }}
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="모집 대상"
+            validationKey="recruit.instructor.recruitTargets"
+            edit={
+              <CmsSelect
+                mode="multiple"
+                inputSize="small"
+                width={240}
+                withAllOption={false}
+                placeholder="모집 대상을 선택하세요"
+                options={[...INSTRUCTOR_TARGET_OPTIONS]}
+                value={recruitTargets}
+                onChange={v => setRecruitTargets(Array.isArray(v) ? v.map(String) : [])}
               />
-            </div>
-          }
-          view="-"
-        />
-        <DetailInfoForm.Field
-          label="최종 합격자 발표"
-          validationKey={[
-            'recruit.instructor.finalAnnounceIso',
-            'recruit.instructor.finalAnnounceMethod',
-          ]}
-          edit={
-            <div className={MAX_SUFFIX_CLASS}>
-              <ParagraphDatePicker inputSize="small"
-                mode="single"
-                presetMode="date"
-                value={finalAnnounceDate}
-                placeholder="합격자 발표일"
-                suppressAutoTodayWhenEmpty
-                onChange={next => setFinalAnnounceDate(next)}
-              />
-              <DetailInfoForm.InputsSeparator />
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="모집 대상 상세"
+            validationKey="recruit.instructor.recruitTargetDetail"
+            edit={
               <CmsInput
                 inputSize="small"
                 width="100%"
-                style={{ flex: '1 1 0', minWidth: 0 }}
-                placeholder="발표 방법 안내"
-                value={finalAnnounceMethod}
-                onChange={e => setFinalAnnounceMethod(e.target.value)}
+                placeholder="상세 모집 대상을 입력해 주세요"
+                value={recruitTargetDetail}
+                onChange={e => setRecruitTargetDetail(e.target.value)}
               />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
 
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="문의처"
-          validationKey={[
-            'recruit.instructor.inquiryContact',
-            'recruit.instructor.inquiryTel',
-            'recruit.instructor.inquiryEmail',
-          ]}
-          fullRow
-          edit={
-            <div className={MAX_SUFFIX_CLASS}>
-              <InquiryContactColumn
-                label="문의처"
-                placeholder="담당 문의처"
-                value={inquiryContact}
-                onChange={setInquiryContact}
-              />
-              <DetailInfoForm.InputsSeparator />
-              <InquiryContactColumn
-                label="Tel"
-                placeholder="문의처 전화번호"
-                value={inquiryTel}
-                onChange={setInquiryTel}
-                phone
-              />
-              <DetailInfoForm.InputsSeparator />
-              <InquiryContactColumn
-                label="E-mail"
-                placeholder="문의처 이메일"
-                value={inquiryEmail}
-                onChange={setInquiryEmail}
-              />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="강사 모집 기간"
+            validationKey="recruit.instructor.recruitRangeSeal"
+            edit={
+              <div className={MAX_SUFFIX_CLASS}>
+                <ParagraphDatePicker
+                  inputSize="small"
+                  mode="single"
+                  presetMode="period"
+                  value={recruitAnchor}
+                  width="100%"
+                  placeholder="모집 기간을 선택하세요"
+                  preferPeriodModeInPopover
+                  suppressAutoTodayWhenEmpty
+                  showTimeToggle={false}
+                  appliedSurfaceRange={recruitRange}
+                  appliedSurfaceWithTime={false}
+                  onRangeChange={range => setRecruitRange(range)}
+                  onChange={next => {
+                    if (next == null) return
+                    setRecruitAnchor(next)
+                  }}
+                />
+              </div>
+            }
+            view="-"
+          />
+          <DetailInfoForm.Field
+            label="최종 합격자 발표"
+            validationKey={[
+              'recruit.instructor.finalAnnounceIso',
+              'recruit.instructor.finalAnnounceMethod',
+            ]}
+            edit={
+              <div className={MAX_SUFFIX_CLASS}>
+                <ParagraphDatePicker
+                  inputSize="small"
+                  mode="single"
+                  presetMode="date"
+                  value={finalAnnounceDate}
+                  placeholder="합격자 발표일"
+                  suppressAutoTodayWhenEmpty
+                  onChange={next => setFinalAnnounceDate(next)}
+                />
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput
+                  inputSize="small"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  placeholder="발표 방법 안내"
+                  value={finalAnnounceMethod}
+                  onChange={e => setFinalAnnounceMethod(e.target.value)}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
 
-      <DetailInfoForm.Row type="single">
-        <DetailInfoForm.Field
-          label="비고"
-          validationKey="recruit.instructor.notes"
-          fullRow
-          edit={
-            <div className={MAX_SUFFIX_CLASS}>
-              <CmsCheckbox
-                checkboxSize="medium"
-                checked={notesNotApplicable}
-                onChange={e => {
-                  const checked = e.target.checked
-                  setNotesNotApplicable(checked)
-                  if (checked) setNotes('')
-                }}
-              >
-                해당 없음
-              </CmsCheckbox>
-              <DetailInfoForm.InputsSeparator />
-              <CmsInput
-                inputSize="small"
-                width="100%"
-                style={{ flex: '1 1 0', minWidth: 0 }}
-                placeholder="비고란을 작성하세요"
-                value={notes}
-                disabled={notesNotApplicable}
-                onChange={e => setNotes(e.target.value)}
-              />
-            </div>
-          }
-          view="-"
-        />
-      </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="문의처"
+            validationKey={[
+              'recruit.instructor.inquiryContact',
+              'recruit.instructor.inquiryTel',
+              'recruit.instructor.inquiryEmail',
+            ]}
+            fullRow
+            edit={
+              <div className={MAX_SUFFIX_CLASS}>
+                <InquiryContactColumn
+                  label="문의처"
+                  placeholder="담당 문의처"
+                  value={inquiryContact}
+                  onChange={setInquiryContact}
+                />
+                <DetailInfoForm.InputsSeparator />
+                <InquiryContactColumn
+                  label="Tel"
+                  placeholder="문의처 전화번호"
+                  value={inquiryTel}
+                  onChange={setInquiryTel}
+                  phone
+                />
+                <DetailInfoForm.InputsSeparator />
+                <InquiryContactColumn
+                  label="E-mail"
+                  placeholder="문의처 이메일"
+                  value={inquiryEmail}
+                  onChange={setInquiryEmail}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
+
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="비고"
+            validationKey="recruit.instructor.notes"
+            fullRow
+            edit={
+              <div className={MAX_SUFFIX_CLASS}>
+                <CmsCheckbox
+                  checkboxSize="medium"
+                  checked={notesNotApplicable}
+                  onChange={e => {
+                    const checked = e.target.checked
+                    setNotesNotApplicable(checked)
+                    if (checked) setNotes('')
+                  }}
+                >
+                  해당 없음
+                </CmsCheckbox>
+                <DetailInfoForm.InputsSeparator />
+                <CmsInput
+                  inputSize="small"
+                  width="100%"
+                  style={{ flex: '1 1 0', minWidth: 0 }}
+                  placeholder="비고란을 작성하세요"
+                  value={notes}
+                  disabled={notesNotApplicable}
+                  onChange={e => setNotes(e.target.value)}
+                />
+              </div>
+            }
+            view="-"
+          />
+        </DetailInfoForm.Row>
       </DetailInfoForm>
     </div>
   )

@@ -24,7 +24,7 @@ export const institutionFilterFields: FilterFieldConfig[] = [
     key: 'organizationName',
     type: 'search',
     label: '기관명',
-    placeholder: '기관명을 입력하세요',
+    placeholder: '기관명을 입력해 주세요',
   },
   {
     key: 'region',
@@ -51,7 +51,7 @@ export const institutionFilterFields: FilterFieldConfig[] = [
     key: 'teacherName',
     type: 'search',
     label: '담당 교사명',
-    placeholder: '담당 교사명을 입력하세요',
+    placeholder: '담당 교사명을 입력해 주세요',
   },
 ]
 
@@ -68,7 +68,7 @@ export const instructorFilterFields: FilterFieldConfig[] = [
     key: 'instructorName',
     type: 'search',
     label: '강사명',
-    placeholder: '강사명을 입력하세요',
+    placeholder: '강사명을 입력해 주세요',
   },
   {
     key: 'residenceRegion',

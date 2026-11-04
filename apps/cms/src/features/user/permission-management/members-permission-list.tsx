@@ -46,10 +46,7 @@ import '@/pages/programs/program-list-page.css'
 import '@/pages/users/user-list-page.css'
 import '@/features/program/general/ui/program-list.css'
 import './members-permission-list.css'
-import {
-  CmsButton, ContentModal, useCmsAlert,
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { CmsButton, ContentModal, useCmsAlert, FilterTableToolbarButton } from '@/shared/ui'
 
 /** 강사 권한승인 목록 — BE `학교/기관`은 UI `학교(교사)`로 표시 */
 const MEMBER_CATEGORY_LABEL: Record<MemberPermissionApplicationRow['memberCategory'], string> = {
@@ -580,7 +577,7 @@ export const MembersPermissionList = forwardRef<
       key: 'search',
       type: 'search',
       label: '회원명',
-      placeholder: '회원명을 입력하세요',
+      placeholder: '회원명을 입력해 주세요',
       width: memberType === 'admin' ? '30%' : '20%',
     }
     const roleField: FilterFieldConfig = {
@@ -639,14 +636,10 @@ export const MembersPermissionList = forwardRef<
         description={`총 ${displayedCount.toLocaleString()}건`}
         actions={
           <>
-            <FilterTableToolbarButton
-              variant="delete"
-              onClick={bulkReject} >
+            <FilterTableToolbarButton variant="delete" onClick={bulkReject}>
               신청 반려
             </FilterTableToolbarButton>
-            <FilterTableToolbarButton
-              variant="secondary"
-              onClick={bulkApprove} >
+            <FilterTableToolbarButton variant="secondary" onClick={bulkApprove}>
               신청 승인
             </FilterTableToolbarButton>
           </>
@@ -696,7 +689,8 @@ export const MembersPermissionList = forwardRef<
                 variant="secondary"
                 size="medium"
                 type="button"
-                onClick={() => setBulkApproveBlockedSelectedCount(null)} >
+                onClick={() => setBulkApproveBlockedSelectedCount(null)}
+              >
                 확인
               </CmsButton>
             }
@@ -717,7 +711,8 @@ export const MembersPermissionList = forwardRef<
                 variant="secondary"
                 size="medium"
                 type="button"
-                onClick={() => setBulkRejectBlockedSelectedCount(null)} >
+                onClick={() => setBulkRejectBlockedSelectedCount(null)}
+              >
                 확인
               </CmsButton>
             }

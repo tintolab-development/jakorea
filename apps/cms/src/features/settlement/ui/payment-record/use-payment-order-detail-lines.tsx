@@ -12,7 +12,10 @@ import {
 } from '@/features/settlement-management/api/payment-orders/map-settlement-detail-to-calculation-statement'
 import { getPaymentOrdersDetailContextRemote } from '@/features/settlement-management/api/payment-orders/admin-payment-orders-service'
 import { fetchSettlementDetailRemote } from '@/features/settlement-management/api/settlement-api-client'
-import { getSettlementApiErrorMessage, isPaymentStatementStatusConflictError } from '@/features/settlement-management/api/get-settlement-api-error'
+import {
+  getSettlementApiErrorMessage,
+  isPaymentStatementStatusConflictError,
+} from '@/features/settlement-management/api/get-settlement-api-error'
 import { canConfirmPaymentStatement } from '@/features/settlement-management/api/shared/settlement-status-mappers'
 import { useConfirmPaymentStatementMutation } from '@/features/settlement-management/hooks/use-confirm-payment-statement-mutation'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
@@ -104,7 +107,11 @@ function filterDetailRows(
       if (!keywordMatch) return false
     }
     if (qInstitution && !row.institutionName.includes(qInstitution)) return false
-    if (!remoteServerFiltered && applied.status !== 'all' && row.processingStatus !== applied.status) {
+    if (
+      !remoteServerFiltered &&
+      applied.status !== 'all' &&
+      row.processingStatus !== applied.status
+    ) {
       return false
     }
     if (!remoteServerFiltered && !matchesDateRange(row.lectureDate, applied.dateRange)) return false
@@ -112,9 +119,7 @@ function filterDetailRows(
   })
 }
 
-function mapLineStatusToStatementStatus(
-  status: AppliedLineStatus
-): string | null {
+function mapLineStatusToStatementStatus(status: AppliedLineStatus): string | null {
   switch (status) {
     case 'pending':
       return 'REQUESTED'
@@ -361,13 +366,9 @@ export function usePaymentOrderDetailLinesController(
     })
       .then(data => {
         if (mode === 'program') {
-          setRowsState(
-            resolvePaymentOrderProgramDetailLineRows(true, args.programRow, data)
-          )
+          setRowsState(resolvePaymentOrderProgramDetailLineRows(true, args.programRow, data))
         } else {
-          setRowsState(
-            resolvePaymentOrderInstructorDetailLineRows(true, args.instructorRow, data)
-          )
+          setRowsState(resolvePaymentOrderInstructorDetailLineRows(true, args.instructorRow, data))
         }
         setRemoteServerFiltered(true)
         setSelectedRowKeys([])
@@ -375,7 +376,10 @@ export function usePaymentOrderDetailLinesController(
       .catch(error => {
         showAlert({
           title: '안내',
-          content: getSettlementApiErrorMessage(error, '지급 현황 상세 목록을 불러오지 못했습니다.'),
+          content: getSettlementApiErrorMessage(
+            error,
+            '지급 현황 상세 목록을 불러오지 못했습니다.'
+          ),
         })
       })
       .finally(() => {
@@ -399,10 +403,7 @@ export function usePaymentOrderDetailLinesController(
 
       if (paymentOrdersRemote) {
         const selected = rowsState.filter(r => selectedRowKeys.includes(r.id))
-        if (
-          selected.length === 0 ||
-          selected.some(row => !canConfirmPaymentStatement(row))
-        ) {
+        if (selected.length === 0 || selected.some(row => !canConfirmPaymentStatement(row))) {
           showAlert({
             title: '안내',
             content: '확인할 수 없는 지급조서가 포함되어 있습니다. 목록을 새로고침해 주세요.',
@@ -641,14 +642,14 @@ export function usePaymentOrderDetailLinesController(
             key: 'instructorName' as const,
             type: 'search' as const,
             label: '신청자명',
-            placeholder: '신청자명을 입력하세요',
+            placeholder: '신청자명을 입력해 주세요',
             width: FILTER_CONTROL_MAX_WIDTH_PX,
           }
         : {
             key: 'programName' as const,
             type: 'search' as const,
             label: '프로그램명',
-            placeholder: '프로그램명을 입력하세요',
+            placeholder: '프로그램명을 입력해 주세요',
             width: FILTER_CONTROL_MAX_WIDTH_PX,
           }
 
@@ -658,7 +659,7 @@ export function usePaymentOrderDetailLinesController(
         key: 'institutionName' as const,
         type: 'search' as const,
         label: '참여 기관명',
-        placeholder: '기관명을 입력하세요',
+        placeholder: '기관명을 입력해 주세요',
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {

@@ -114,16 +114,13 @@ export function UjatBasicInfoRHFParagraph({
   }, [operationAnchorIso, operationEndIso])
   const operationRangeWithTime = useMemo(
     () =>
-      operationRange == null
-        ? false
-        : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
+      operationRange == null ? false : dateRangeUsesClockTime(operationRange[0], operationRange[1]),
     [operationRange]
   )
 
-  const participantTypes = new Set(formValues.generalParticipantTypes ?? [
-    'school_institution',
-    'volunteer',
-  ])
+  const participantTypes = new Set(
+    formValues.generalParticipantTypes ?? ['school_institution', 'volunteer']
+  )
   const individualChecked = participantTypes.has('individual')
   const organizationChecked =
     participantTypes.has('school_institution') || participantTypes.has('organization')
@@ -157,9 +154,7 @@ export function UjatBasicInfoRHFParagraph({
   const selectedSponsorContactIds = useMemo(() => {
     const stored = [
       ...new Set(
-        [...sponsorContactIds, sponsorContactId]
-          .map(id => String(id ?? '').trim())
-          .filter(Boolean)
+        [...sponsorContactIds, sponsorContactId].map(id => String(id ?? '').trim()).filter(Boolean)
       ),
     ]
     if (stored.some(id => isSponsorContactUnselected(id))) {
@@ -210,7 +205,10 @@ export function UjatBasicInfoRHFParagraph({
     () =>
       lockDetailedProgramToNone
         ? withDetailedProgramNoneOption(remoteDetailedProgramOptions)
-        : [DETAILED_PROGRAM_UJAT_OPTION, ...withDetailedProgramNoneOption(remoteDetailedProgramOptions)],
+        : [
+            DETAILED_PROGRAM_UJAT_OPTION,
+            ...withDetailedProgramNoneOption(remoteDetailedProgramOptions),
+          ],
     [lockDetailedProgramToNone, remoteDetailedProgramOptions]
   )
   const detailedProgramSelectValue = lockDetailedProgramToNone
@@ -231,10 +229,7 @@ export function UjatBasicInfoRHFParagraph({
     return normalized
   }
 
-  const setSelectValue = (
-    key: 'ipOwned' | 'courseDeliveredBy',
-    value: unknown
-  ) => {
+  const setSelectValue = (key: 'ipOwned' | 'courseDeliveredBy', value: unknown) => {
     const normalized = String(value ?? '')
     const canonical =
       normalized === 'ja'
@@ -299,7 +294,7 @@ export function UjatBasicInfoRHFParagraph({
               inputSize="small"
               value={String(formValues.mainTitle ?? '')}
               onChange={event => setField(infoForm, 'mainTitle', event.target.value)}
-              placeholder="대표 프로그램명을 입력하세요"
+              placeholder="대표 프로그램명을 입력해 주세요"
               width="100%"
             />
           }
@@ -313,7 +308,7 @@ export function UjatBasicInfoRHFParagraph({
               inputSize="small"
               value={String(formValues.titleEn ?? '')}
               onChange={event => setField(infoForm, 'titleEn', event.target.value)}
-              placeholder="대표 프로그램명을 입력하세요"
+              placeholder="대표 프로그램명을 입력해 주세요"
               width="100%"
             />
           }
@@ -329,7 +324,7 @@ export function UjatBasicInfoRHFParagraph({
               inputSize="small"
               value={String(formValues.title ?? '')}
               onChange={event => setField(infoForm, 'title', event.target.value)}
-              placeholder="대표 프로그램명을 입력하세요"
+              placeholder="대표 프로그램명을 입력해 주세요"
               width="100%"
             />
           }
@@ -385,7 +380,11 @@ export function UjatBasicInfoRHFParagraph({
         <DetailInfoForm.Field
           label="프로그램 진행 현황"
           readOnlyDisplay
-          view={<span className="form-editor-template-field-hint-text">{PROGRAM_PROGRESS_STATIC_VIEW}</span>}
+          view={
+            <span className="form-editor-template-field-hint-text">
+              {PROGRAM_PROGRESS_STATIC_VIEW}
+            </span>
+          }
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
@@ -500,9 +499,15 @@ export function UjatBasicInfoRHFParagraph({
                   )
                 }
               >
-                <CmsRadio size="medium" value="inside">기관 안</CmsRadio>
-                <CmsRadio size="medium" value="outside">기관 밖</CmsRadio>
-                <CmsRadio size="medium" value="other">기타(직접입력)</CmsRadio>
+                <CmsRadio size="medium" value="inside">
+                  기관 안
+                </CmsRadio>
+                <CmsRadio size="medium" value="outside">
+                  기관 밖
+                </CmsRadio>
+                <CmsRadio size="medium" value="other">
+                  기타(직접입력)
+                </CmsRadio>
               </CmsRadioGroup>
               <DetailInfoForm.InputsSeparator />
               <CmsInput
@@ -606,10 +611,16 @@ export function UjatBasicInfoRHFParagraph({
                     ? 'no'
                     : undefined
               }
-              onChange={event => setField(infoForm, 'partnerInvolvement', event.target.value === 'yes')}
+              onChange={event =>
+                setField(infoForm, 'partnerInvolvement', event.target.value === 'yes')
+              }
             >
-              <CmsRadio size="medium" value="yes">Yes</CmsRadio>
-              <CmsRadio size="medium" value="no">No</CmsRadio>
+              <CmsRadio size="medium" value="yes">
+                Yes
+              </CmsRadio>
+              <CmsRadio size="medium" value="no">
+                No
+              </CmsRadio>
             </CmsRadioGroup>
           }
           view="-"

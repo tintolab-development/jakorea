@@ -121,7 +121,7 @@ function SenderNameField({ seed, epoch, onChange }: SenderNameFieldProps) {
       allowClear={false}
       className="mail-send-fullpage__sender-name"
       maxLength={MAIL_SENDER_DISPLAY_NAME_MAX_LENGTH}
-      placeholder="발신자명을 입력하세요"
+      placeholder="발신자명을 입력해 주세요"
       value={value}
       onChange={event => {
         const next = sanitizeMailSenderDisplayNameInput(event.target.value)
@@ -577,7 +577,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
     } catch (error) {
       setSendConfirmOpen(false)
       showNotificationSendErrorAlert(showAlert, error, {
-        senderDisplayName: '.mail-send-fullpage__sender-name input, input.mail-send-fullpage__sender-name',
+        senderDisplayName:
+          '.mail-send-fullpage__sender-name input, input.mail-send-fullpage__sender-name',
       })
     } finally {
       setSending(false)
@@ -610,18 +611,10 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
           <div className="notification-fullpage-modal__body">
             <div className="notification-fullpage-modal__notice">
               <div className="notification-fullpage-modal__notice-actions">
-                <CmsButton
-                  variant="cancel"
-                  size="large"
-                  type="button"
-                  onClick={handleClose} >
+                <CmsButton variant="cancel" size="large" type="button" onClick={handleClose}>
                   취소
                 </CmsButton>
-                <CmsButton
-                  variant="secondary"
-                  size="large"
-                  type="button"
-                  onClick={handlePreview} >
+                <CmsButton variant="secondary" size="large" type="button" onClick={handlePreview}>
                   미리보기
                 </CmsButton>
                 <CmsButton
@@ -629,7 +622,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                   size="large"
                   type="button"
                   disabled={recipientPrivacy.blockSend}
-                  onClick={handleSend} >
+                  onClick={handleSend}
+                >
                   메일 발송
                 </CmsButton>
               </div>
@@ -741,7 +735,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                             inputSize="small"
                             width="100%"
                             allowClear={false}
-                            placeholder="발신 메일을 입력하세요"
+                            placeholder="발신 메일을 입력해 주세요"
                             value={form.senderEmail}
                             onChange={event => {
                               const email = event.target.value
@@ -767,7 +761,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         variant="delete"
                         size="h40"
                         type="button"
-                        onClick={handleDeleteSelected} >
+                        onClick={handleDeleteSelected}
+                      >
                         선택 삭제
                       </CmsButton>
                       {isWithoutProgram ? (
@@ -775,7 +770,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                           variant="secondary"
                           size="h40"
                           type="button"
-                          onClick={handleOpenRecipientManual} >
+                          onClick={handleOpenRecipientManual}
+                        >
                           수신자 직접 입력
                         </CmsButton>
                       ) : null}
@@ -783,7 +779,8 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
                         variant="secondary"
                         size="h40"
                         type="button"
-                        onClick={handleOpenRecipientSelect} >
+                        onClick={handleOpenRecipientSelect}
+                      >
                         수신자 설정
                       </CmsButton>
                     </div>
@@ -921,9 +918,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         totalCount={candidateItems ? candidatesQuery.data?.total : 0}
         totalPages={candidateItems ? candidatesQuery.data?.totalPages : 1}
         fetchAllCandidates={
-          remote &&
-          recipientPrivacy.queryEnabled &&
-          (programNumericId != null || isWithoutProgram)
+          remote && recipientPrivacy.queryEnabled && (programNumericId != null || isWithoutProgram)
             ? async () => {
                 try {
                   return await fetchAllMailRecipientCandidates({
@@ -966,7 +961,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
         variableKeys={directManualKeys}
         normalize={normalizeMailSendEmail}
         isValid={isMailSendEmail}
-        invalidMessage="올바른 이메일 주소를 입력하세요."
+        invalidMessage="올바른 이메일 주소를 입력해 주세요."
         onClose={() => setRecipientManualOpen(false)}
         onConfirm={entries => {
           const incoming = entries.map(entry =>

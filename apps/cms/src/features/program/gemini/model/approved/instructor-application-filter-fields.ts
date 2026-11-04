@@ -7,7 +7,7 @@ export const GEMINI_INSTRUCTOR_APPLICATION_FILTER_FIELDS: FilterFieldConfig[] = 
     key: 'instructorName',
     type: 'search',
     label: '신청 강사명',
-    placeholder: '강사명을 입력하세요',
+    placeholder: '강사명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   createHomeAddressRegionFilterField({ label: '자택 주소지' }),

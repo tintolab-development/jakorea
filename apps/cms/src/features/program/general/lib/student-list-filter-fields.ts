@@ -16,9 +16,7 @@ export const STUDENT_LIST_GENDER_FILTER_OPTIONS = [
 export const STUDENT_GRADE_CLASS_OPTIONS = buildStudentGradeClassOptions(6)
 
 /** 교육 학년 라벨을 학급 옵션용 `N학년` 형태로 정규화 */
-export function normalizeStudentGradeLabelForClassOption(
-  educationGrade?: string | null
-): string {
+export function normalizeStudentGradeLabelForClassOption(educationGrade?: string | null): string {
   const trimmed = educationGrade?.trim() ?? ''
   if (!trimmed) return ''
   const withGrade = trimmed.match(/(\d+)\s*학년/)
@@ -124,7 +122,7 @@ export function buildStudentListFilterFields(
       key: 'studentName',
       type: 'search',
       label: '학생명',
-      placeholder: '학생명을 입력하세요',
+      placeholder: '학생명을 입력해 주세요',
       width: STUDENT_LIST_FILTER_CONTROL_WIDTH,
     },
     {

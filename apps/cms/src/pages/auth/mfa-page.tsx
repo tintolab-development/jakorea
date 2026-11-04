@@ -190,8 +190,8 @@ export function MfaPage() {
           </Title>
           <Text type="secondary">
             {showQrSetup
-              ? 'Microsoft Authenticator 등으로 QR을 등록한 뒤, 앱의 6자리 코드를 입력하세요.'
-              : '등록된 인증 앱의 6자리 코드를 입력하세요.'}
+              ? 'Microsoft Authenticator 등으로 QR을 등록한 뒤, 앱의 6자리 코드를 입력해 주세요.'
+              : '등록된 인증 앱의 6자리 코드를 입력해 주세요.'}
           </Text>
           {mfaState && (
             <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
@@ -212,7 +212,7 @@ export function MfaPage() {
         {isLocalTestMfa && (
           <Alert
             type="info"
-            description={`테스트 코드 ${ADMIN_MFA_LOCAL_TEST_CODE} 을 입력하세요.`}
+            description={`테스트 코드 ${ADMIN_MFA_LOCAL_TEST_CODE} 을 입력해 주세요.`}
             style={{ marginBottom: 16 }}
             showIcon
           />
@@ -296,7 +296,8 @@ export function MfaPage() {
               type="submit"
               loading={verifying}
               disabled={isLocked || otpCode.length !== OTP_LENGTH}
-              icon={<SafetyOutlined />} >
+              icon={<SafetyOutlined />}
+            >
               인증하기
             </CmsButton>
 
@@ -306,7 +307,8 @@ export function MfaPage() {
               onClick={() => void loadProvisioning()}
               loading={provisioningLoading}
               disabled={isLocked || !showQrSetup}
-              icon={<ReloadOutlined />} >
+              icon={<ReloadOutlined />}
+            >
               QR 코드 다시 불러오기
             </CmsButton>
           </Space>

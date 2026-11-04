@@ -361,7 +361,7 @@ export function TableFilterGroup({
       return (
         <LabeledSearchInput
           label={field.label}
-          placeholder={field.placeholder || `${field.label}을(를) 입력하세요`}
+          placeholder={field.placeholder || `${field.label}을(를) 입력해 주세요`}
           value={searchDrafts[field.key] ?? ''}
           numericOnly={field.searchNumericOnly}
           uiVariant="filter"
@@ -697,7 +697,8 @@ export function TableFilterGroup({
         size="medium"
         type="button"
         onClick={flushSearchToParentAndSearch}
-        loading={loading} >
+        loading={loading}
+      >
         조회
       </CmsButton>
       {extra}

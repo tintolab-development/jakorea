@@ -521,18 +521,10 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
           <div className="notification-fullpage-modal__body">
             <div className="notification-fullpage-modal__notice">
               <div className="notification-fullpage-modal__notice-actions">
-                <CmsButton
-                  variant="cancel"
-                  size="large"
-                  type="button"
-                  onClick={handleClose} >
+                <CmsButton variant="cancel" size="large" type="button" onClick={handleClose}>
                   취소
                 </CmsButton>
-                <CmsButton
-                  variant="secondary"
-                  size="large"
-                  type="button"
-                  onClick={handlePreview} >
+                <CmsButton variant="secondary" size="large" type="button" onClick={handlePreview}>
                   미리보기
                 </CmsButton>
                 <CmsButton
@@ -548,7 +540,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                     !form.senderPhone.trim() ||
                     (form.sendTiming === 'scheduled' && !form.scheduledAt)
                   }
-                  onClick={handleSend} >
+                  onClick={handleSend}
+                >
                   문자 발송
                 </CmsButton>
               </div>
@@ -702,7 +695,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         variant="delete"
                         size="h40"
                         type="button"
-                        onClick={handleDeleteSelected} >
+                        onClick={handleDeleteSelected}
+                      >
                         선택 삭제
                       </CmsButton>
                       {isWithoutProgram ? (
@@ -710,7 +704,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                           variant="secondary"
                           size="h40"
                           type="button"
-                          onClick={handleOpenRecipientManual} >
+                          onClick={handleOpenRecipientManual}
+                        >
                           수신자 직접 입력
                         </CmsButton>
                       ) : null}
@@ -718,7 +713,8 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
                         variant="secondary"
                         size="h40"
                         type="button"
-                        onClick={handleOpenRecipientSelect} >
+                        onClick={handleOpenRecipientSelect}
+                      >
                         수신자 설정
                       </CmsButton>
                     </div>
@@ -846,9 +842,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
             : 1
         }
         fetchAllCandidates={
-          remote &&
-          recipientPrivacy.queryEnabled &&
-          (programNumericId != null || isWithoutProgram)
+          remote && recipientPrivacy.queryEnabled && (programNumericId != null || isWithoutProgram)
             ? async () => {
                 try {
                   const result = await candidatesQuery.refetch({
@@ -896,7 +890,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
         variableKeys={directManualKeys}
         normalize={normalizeSmsSendPhone}
         isValid={isValidKoreanPhoneNumber}
-        invalidMessage="올바른 휴대폰 번호를 입력하세요."
+        invalidMessage="올바른 휴대폰 번호를 입력해 주세요."
         onClose={() => setRecipientManualOpen(false)}
         onConfirm={entries => {
           const manual = entries.map(entry =>

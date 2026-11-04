@@ -224,7 +224,7 @@ export function CurriculumSection({
                       render={({ field }) => (
                         <CmsInput
                           inputSize="small"
-                          placeholder="단원명을 입력하세요"
+                          placeholder="단원명을 입력해 주세요"
                           width="100%"
                           value={field.value ?? row.unitName}
                           onChange={field.onChange}

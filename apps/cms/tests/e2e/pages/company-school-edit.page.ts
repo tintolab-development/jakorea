@@ -49,8 +49,7 @@ type FieldLogItem = {
   value?: string | null
 }
 
-const EDIT_LOG_TITLE_PREFIX =
-  'flows/programs/company-school-edit.spec.ts › 1사1교 프로그램 수정'
+const EDIT_LOG_TITLE_PREFIX = 'flows/programs/company-school-edit.spec.ts › 1사1교 프로그램 수정'
 
 const COMMON_INTENTIONALLY_UNCHANGED: FieldLogItem[] = [
   {
@@ -160,9 +159,9 @@ export class CompanySchoolEditPage {
     }
 
     await expect(this.page).toHaveURL(/edit=info/, { timeout: 15_000 })
-    await expect(
-      this.page.getByPlaceholder('대표 프로그램명을 입력하세요').first()
-    ).toBeVisible({ timeout: 15_000 })
+    await expect(this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()).toBeVisible(
+      { timeout: 15_000 }
+    )
   }
 
   async updateCommonInfo() {
@@ -170,12 +169,12 @@ export class CompanySchoolEditPage {
 
     await fillByPlaceholderIfVisible(
       this.page,
-      '대표 프로그램명(영문)을 입력하세요',
+      '대표 프로그램명(영문)을 입력해 주세요',
       EDIT_EN_NAME
     )
     await fillByPlaceholderIfVisible(
       this.page,
-      '모집 시 노출될 프로그램명을 입력하세요',
+      '모집 시 노출될 프로그램명을 입력해 주세요',
       EDIT_PUBLIC_NAME
     )
 
@@ -227,7 +226,11 @@ export class CompanySchoolEditPage {
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
     await fillByPlaceholderIfVisible(this.page, '단원명을 입력해 주세요', EDIT_CURRICULUM_UNIT)
-    await fillByPlaceholderIfVisible(this.page, '교육 내용을 작성해 주세요', EDIT_CURRICULUM_CONTENT)
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '교육 내용을 작성해 주세요',
+      EDIT_CURRICULUM_CONTENT
+    )
 
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
     await fillAllByPlaceholder(this.page, '목표값 입력', EDIT_KPI_VALUE)
@@ -279,9 +282,9 @@ export class CompanySchoolEditPage {
 
   async goToApplicationTab() {
     await this.detail.goToInfoTab('application')
-    await expect(
-      this.page.getByText('현재 화면은 양식 미리보기 화면입니다.').first()
-    ).toBeVisible({ timeout: 30_000 })
+    await expect(this.page.getByText('현재 화면은 양식 미리보기 화면입니다.').first()).toBeVisible({
+      timeout: 30_000,
+    })
     await expect(this.page.getByRole('button', { name: '양식 수정' }).first()).toBeVisible({
       timeout: 15_000,
     })
@@ -350,7 +353,9 @@ export class CompanySchoolEditPage {
 
     const loading = modal.locator('.form-draft-loading, [class*="FormDraftLoading"]')
     if ((await loading.count()) > 0) {
-      await expect(loading.first()).toBeHidden({ timeout: 60_000 }).catch(() => undefined)
+      await expect(loading.first())
+        .toBeHidden({ timeout: 60_000 })
+        .catch(() => undefined)
     }
 
     const saveButton = modal.getByRole('button', { name: '저장' }).first()
@@ -384,14 +389,16 @@ export class CompanySchoolEditPage {
     if (await closeModal.isVisible().catch(() => false)) {
       await closeModal.click()
     }
-    await expect(modal).toBeHidden({ timeout: 30_000 }).catch(() => undefined)
+    await expect(modal)
+      .toBeHidden({ timeout: 30_000 })
+      .catch(() => undefined)
   }
 
   async expectApplicationPreviewVisible() {
     await this.goToApplicationTab()
-    await expect(
-      this.page.getByText('현재 화면은 양식 미리보기 화면입니다.').first()
-    ).toBeVisible({ timeout: 15_000 })
+    await expect(this.page.getByText('현재 화면은 양식 미리보기 화면입니다.').first()).toBeVisible({
+      timeout: 15_000,
+    })
   }
 
   private async updateRecruitmentTab(
@@ -464,8 +471,16 @@ export class CompanySchoolEditPage {
 
     await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
-    await fillByPlaceholderIfVisible(this.page, '상세 교육 대상을 입력하세요', EDIT_TARGET_DETAIL)
-    await fillByPlaceholderIfVisible(this.page, '상세 모집 대상을 입력하세요', EDIT_TARGET_DETAIL)
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '상세 교육 대상을 입력해 주세요',
+      EDIT_TARGET_DETAIL
+    )
+    await fillByPlaceholderIfVisible(
+      this.page,
+      '상세 모집 대상을 입력해 주세요',
+      EDIT_TARGET_DETAIL
+    )
 
     await this.fillDateNearLabel('참여자 모집 기간', 'range', { preferFutureMonth: true })
     await this.fillDateNearLabel('강사 모집 기간', 'range', { preferFutureMonth: true })
@@ -491,11 +506,7 @@ export class CompanySchoolEditPage {
 
     await fillByPlaceholderIfVisible(this.page, '프로그램 설명을 작성하세요', EDIT_DESCRIPTION)
     await fillByPlaceholderIfVisible(this.page, '모집 안내를 작성하세요', EDIT_RECRUIT_GUIDE)
-    await fillByPlaceholderIfVisible(
-      this.page,
-      '지원 방법을 작성하세요',
-      EDIT_APPLICATION_METHOD
-    )
+    await fillByPlaceholderIfVisible(this.page, '지원 방법을 작성하세요', EDIT_APPLICATION_METHOD)
     await fillByPlaceholderIfVisible(
       this.page,
       '학습 지원 내용을 작성하세요',
@@ -640,7 +651,7 @@ export class CompanySchoolEditPage {
       timeout: 30_000,
     })
 
-    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력해 주세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
 
     await expect(async () => {
@@ -688,12 +699,7 @@ export class CompanySchoolEditPage {
     const tabs: { tab: string; titles: string[] }[] = [
       {
         tab: 'progress_participants',
-        titles: [
-          '교육 참여 기관 목록',
-          '교육 참여자 목록',
-          '참여자 목록',
-          '교육 참여 참여자 목록',
-        ],
+        titles: ['교육 참여 기관 목록', '교육 참여자 목록', '참여자 목록', '교육 참여 참여자 목록'],
       },
       { tab: 'progress_instructors', titles: ['교육 참여 강사 목록'] },
     ]
@@ -745,7 +751,9 @@ export class CompanySchoolEditPage {
 
   private async tryExpectProgressListVisible(listTitles: string[]): Promise<boolean> {
     const modalContent = this.page.locator('.detail-fullpage-modal__content').first()
-    await expect(modalContent).toBeVisible({ timeout: 15_000 }).catch(() => undefined)
+    await expect(modalContent)
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => undefined)
     await expect(modalContent.locator('.filter-table-layout__title').first())
       .toBeVisible({ timeout: 15_000 })
       .catch(() => undefined)
@@ -803,9 +811,7 @@ export class CompanySchoolEditPage {
   }
 
   private async clickInfoEditSave(programId: string) {
-    const failDialog = this.page
-      .getByRole('dialog')
-      .filter({ hasText: /저장 실패|입력 확인/ })
+    const failDialog = this.page.getByRole('dialog').filter({ hasText: /저장 실패|입력 확인/ })
     const editButton = this.page.getByRole('button', { name: '정보 수정' }).first()
 
     const patchPromise = this.page.waitForResponse(
@@ -823,9 +829,7 @@ export class CompanySchoolEditPage {
       patchPromise.then(async res => {
         if (!res.ok()) {
           const body = await res.text().catch(() => '')
-          throw new Error(
-            `프로그램 수정 API 실패: HTTP ${res.status()} ${body.slice(0, 400)}`
-          )
+          throw new Error(`프로그램 수정 API 실패: HTTP ${res.status()} ${body.slice(0, 400)}`)
         }
       }),
       failDialog.waitFor({ state: 'visible', timeout: 60_000 }).then(async () => {
@@ -837,9 +841,7 @@ export class CompanySchoolEditPage {
     ])
   }
 
-  private snapshotToChangedFields(
-    snapshot: CompanySchoolCommonInfoEditedSnapshot
-  ): FieldLogItem[] {
+  private snapshotToChangedFields(snapshot: CompanySchoolCommonInfoEditedSnapshot): FieldLogItem[] {
     return [
       { label: '대표 프로그램명 (영문)', value: snapshot.titleEn },
       { label: '공고용 프로그램명', value: snapshot.publicName },
@@ -898,9 +900,9 @@ export class CompanySchoolEditPage {
             querySelector: (selector: string) => unknown
           }
           if (el.offsetParent === null) continue
-          const labelEl = el.querySelector('.detail-info-form__field-label-text') as
-            | { textContent?: string | null }
-            | null
+          const labelEl = el.querySelector('.detail-info-form__field-label-text') as {
+            textContent?: string | null
+          } | null
           const label = labelEl?.textContent?.trim() ?? ''
           if (!label) continue
           const locked =
@@ -932,11 +934,7 @@ export class CompanySchoolEditPage {
     await recordE2eTestLogNotes({
       page: this.page,
       title,
-      titlePath: [
-        'flows/programs/company-school-edit.spec.ts',
-        '1사1교 프로그램 수정',
-        stepTitle,
-      ],
+      titlePath: ['flows/programs/company-school-edit.spec.ts', '1사1교 프로그램 수정', stepTitle],
       file: 'tests/e2e/flows/programs/company-school-edit.spec.ts',
       notes: [
         {

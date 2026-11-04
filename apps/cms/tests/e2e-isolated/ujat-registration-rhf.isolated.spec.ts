@@ -59,14 +59,17 @@ function programIdFromPath(path: string): string | undefined {
   return path.match(/\/programs\/([^/]+)\//)?.[1]
 }
 
-async function completeNewUjatRegistrationWizard(page: Page, log: Awaited<ReturnType<typeof installIsolatedRegistrationNetwork>>) {
+async function completeNewUjatRegistrationWizard(
+  page: Page,
+  log: Awaited<ReturnType<typeof installIsolatedRegistrationNetwork>>
+) {
   await page.goto('/programs/ujat')
   await expect(page.getByRole('button', { name: /신규 등록/ })).toBeVisible({ timeout: 45_000 })
 
   const registration = new UjatProgramRegistrationPage(page)
   await registration.openNewRegistration()
   await expect(page).toHaveURL(/\/programs\/ujat\?.*new=1/, { timeout: 30_000 })
-  await expect(page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).toHaveValue(
+  await expect(page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()).toHaveValue(
     registration.programTitle
   )
   await expect(page.getByPlaceholder('목표값 입력').first()).not.toHaveValue('', {
@@ -106,9 +109,7 @@ async function completeNewUjatRegistrationWizard(page: Page, log: Awaited<Return
     .click()
   await expect(page).toHaveURL(/ujatStep=application-ujat-volunteer/)
   await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
-  await expect
-    .poll(() => log.createProgram, { timeout: 90_000 })
-    .not.toBeNull()
+  await expect.poll(() => log.createProgram, { timeout: 90_000 }).not.toBeNull()
 }
 
 test.describe.configure({ mode: 'serial' })
@@ -253,9 +254,7 @@ test.describe('UJAT 신규 등록 Typed RHF 격리 Mock E2E', () => {
       { programId, capacities: retryRows }
     )
     expect(retryResult.status).toBe(200)
-    await expect
-      .poll(() => log.regionCapacityPutStatuses.length, { timeout: 15_000 })
-      .toBe(2)
+    await expect.poll(() => log.regionCapacityPutStatuses.length, { timeout: 15_000 }).toBe(2)
     expect(log.regionCapacityPutStatuses).toEqual([500, 200])
     expect(log.regionCapacityPuts).toHaveLength(2)
     expect(log.mutations.filter(item => item.path === '/api/admin/programs')).toHaveLength(1)
@@ -314,9 +313,7 @@ test.describe('UJAT 신규 등록 Typed RHF 격리 Mock E2E', () => {
         return []
       }
     })
-    expect(storedRecruitments.length, 'Typed 모집 행이 Draft payload에 저장되어야 합니다').toBe(
-      3
-    )
+    expect(storedRecruitments.length, 'Typed 모집 행이 Draft payload에 저장되어야 합니다').toBe(3)
     expect(
       storedRecruitments.some(
         row =>

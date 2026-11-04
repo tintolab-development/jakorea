@@ -256,10 +256,10 @@ export class GeneralProgramRegistrationPage {
     await clickSectionNavIfVisible(this.page, '기본 정보')
     await expect(titleField('대표 프로그램명 (국문)')).toBeVisible({ timeout: 10_000 })
     await titleField('대표 프로그램명 (국문)')
-      .getByPlaceholder('대표 프로그램명을 입력하세요')
+      .getByPlaceholder('대표 프로그램명을 입력해 주세요')
       .fill(this.programTitle)
     await titleField('대표 프로그램명 (영문)')
-      .getByPlaceholder('대표 프로그램명을 입력하세요')
+      .getByPlaceholder('대표 프로그램명을 입력해 주세요')
       .fill(PROGRAM_EN_NAME)
 
     // DEV 자동입력 케이스의 기본값은 복수 회차라도 한 개의 상세 일정만
@@ -415,27 +415,24 @@ export class GeneralProgramRegistrationPage {
       // 통합 E2E에서는 공통 운영 기간을 넓게 다시 잡아 교육 일정이 운영 기간
       // 밖으로 밀리지 않도록 한다.
       if (this.ensureFutureDates) {
-        await fillParagraphDateByPlaceholder(
-          this.page,
-          '사업 운영 기간을 선택하세요',
-          'range',
-          { futureStartWindow: true }
-        )
+        await fillParagraphDateByPlaceholder(this.page, '사업 운영 기간을 선택하세요', 'range', {
+          futureStartWindow: true,
+        })
       }
       return
     }
 
-    await fillByPlaceholder(this.page, '대표 프로그램명을 입력하세요', this.programTitle)
+    await fillByPlaceholder(this.page, '대표 프로그램명을 입력해 주세요', this.programTitle)
     const representativeProgramNameInputs =
-      this.page.getByPlaceholder('대표 프로그램명을 입력하세요')
+      this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요')
     if ((await representativeProgramNameInputs.count()) > 1) {
       await representativeProgramNameInputs.nth(1).fill(PROGRAM_EN_NAME)
     } else {
-      await fillByPlaceholder(this.page, '대표 프로그램명(영문)을 입력하세요', PROGRAM_EN_NAME)
+      await fillByPlaceholder(this.page, '대표 프로그램명(영문)을 입력해 주세요', PROGRAM_EN_NAME)
     }
     await fillByPlaceholder(
       this.page,
-      '모집 시 노출될 프로그램명을 입력하세요',
+      '모집 시 노출될 프로그램명을 입력해 주세요',
       PROGRAM_PUBLIC_NAME
     )
 
@@ -570,7 +567,7 @@ export class GeneralProgramRegistrationPage {
       if (session === 'multi') {
         await clickButtonIfVisible(this.page, '강의 진행 회차 추가')
       }
-      await fillAllByPlaceholder(this.page, '단원명을 입력하세요', CURRICULUM_UNIT)
+      await fillAllByPlaceholder(this.page, '단원명을 입력해 주세요', CURRICULUM_UNIT)
       await fillAllByPlaceholder(this.page, '교육 내용을 작성하세요', CURRICULUM_CONTENT)
       return
     }
@@ -638,21 +635,19 @@ export class GeneralProgramRegistrationPage {
         this.page,
         '프로그램 운영 기간을 선택하세요',
         'range',
-        this.ensureFutureDates
-          ? { futureStartWindow: true }
-          : operationDateOptions
+        this.ensureFutureDates ? { futureStartWindow: true } : operationDateOptions
       )
     }
     await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
     await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
     await fillByPlaceholderIfVisible(
       this.page,
-      '상세 교육 대상을 입력하세요',
+      '상세 교육 대상을 입력해 주세요',
       EDUCATION_TARGET_DETAIL
     )
     await fillByPlaceholderIfVisible(
       this.page,
-      '상세 모집 대상을 입력하세요',
+      '상세 모집 대상을 입력해 주세요',
       EDUCATION_TARGET_DETAIL
     )
     const recruitmentDateOptions = this.openRecruitment
@@ -752,7 +747,7 @@ export class GeneralProgramRegistrationPage {
 
   private async fillApplicationParticipantTab() {
     await this.fillApplicationConsentIfPresent()
-    await fillByPlaceholderIfVisible(this.page, '팀 명을 입력하세요', 'JA E2E 탐험대')
+    await fillByPlaceholderIfVisible(this.page, '팀 명을 입력해 주세요', 'JA E2E 탐험대')
     await selectByPlaceholderIfVisible(this.page, '인원 수')
     await fillByPlaceholderIfVisible(this.page, '팀원 수를 입력해 주세요', '4')
     await checkRadioIfVisible(this.page, '팀장')
@@ -795,9 +790,7 @@ export class GeneralProgramRegistrationPage {
   async completeRegistration(): Promise<RegistrationCompleteResult> {
     const failDialog = this.page.getByRole('dialog').filter({ hasText: /등록 실패/ })
     // 풀페이지 모달 footer 「프로그램 등록 완료」 버튼과 구분
-    const successDialog = this.page
-      .getByRole('dialog')
-      .filter({ hasText: '등록되었습니다.' })
+    const successDialog = this.page.getByRole('dialog').filter({ hasText: '등록되었습니다.' })
 
     // POST가 안 나가고 실패 모달만 뜨는 경우(템플릿 draft 500 등)도 잡기 위해 race
     const outcomePromise = Promise.race([
@@ -881,7 +874,7 @@ export class GeneralProgramRegistrationPage {
       timeout: 30_000,
     })
 
-    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력해 주세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
     await titleFilter.fill(result.programTitle)
     await this.page.getByRole('button', { name: '조회' }).click()

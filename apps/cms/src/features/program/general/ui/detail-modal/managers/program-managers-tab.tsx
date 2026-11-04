@@ -21,7 +21,10 @@ import {
   type ProgramManagersFilters,
 } from '../../../hooks/use-program-managers-params'
 import { useProgramManagers } from '../../../hooks/use-program-managers'
-import { PROGRAM_ROLE_LABELS, type ProgramManagerRow } from '@/features/program/general/model/program-managers'
+import {
+  PROGRAM_ROLE_LABELS,
+  type ProgramManagerRow,
+} from '@/features/program/general/model/program-managers'
 import {
   canAddProgramPm,
   canAssignProgramRoleToCmsAdmin,
@@ -69,7 +72,10 @@ interface ProgramManagersTabProps {
   maskSensitive?: boolean
 }
 
-export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = false }: ProgramManagersTabProps) {
+export function ProgramManagersTab({
+  programId,
+  maskSensitive: _maskSensitive = false,
+}: ProgramManagersTabProps) {
   const { showAlert } = useCmsAlert()
   const { filters, setFilters } = useProgramManagersParams()
   const [pendingFilters, setPendingFilters] = useState<ProgramManagersFilters>(() => ({
@@ -119,7 +125,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
         key: 'managerName',
         type: 'search',
         label: '담당자명',
-        placeholder: '담당자명을 입력하세요',
+        placeholder: '담당자명을 입력해 주세요',
       },
       {
         key: 'role',
@@ -175,10 +181,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
     return [...list].sort((a, b) => b.no - a.no)
   }, [managerList, appliedFilters])
 
-  const excludeManagerNames = useMemo(
-    () => managerList.map(row => row.name),
-    [managerList]
-  )
+  const excludeManagerNames = useMemo(() => managerList.map(row => row.name), [managerList])
 
   const assignableCandidates = useMemo(
     () => getAssignableCandidates(excludeManagerNames),
@@ -349,13 +352,7 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
         align: 'center',
       },
     ],
-    [
-      handleTableRoleChange,
-      isUpdatingRole,
-      openRoleDropdownId,
-      renderRoleBadge,
-      roleItemDisabled,
-    ]
+    [handleTableRoleChange, isUpdatingRole, openRoleDropdownId, renderRoleBadge, roleItemDisabled]
   )
 
   const excelColumns: ColumnsType<ProgramManagerRow> = useMemo(
@@ -418,13 +415,15 @@ export function ProgramManagersTab({ programId, maskSensitive: _maskSensitive = 
             <FilterTableToolbarButton
               variant="delete"
               loading={isMutating && deleteGuideModalOpen}
-              onClick={handleDeleteClick} >
+              onClick={handleDeleteClick}
+            >
               담당자 삭제
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               disabled={isMutating}
-              onClick={() => setAddModalOpen(true)} >
+              onClick={() => setAddModalOpen(true)}
+            >
               담당자 등록
             </FilterTableToolbarButton>
           </>

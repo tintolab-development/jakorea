@@ -67,7 +67,7 @@ export function validateMailSendDraft(draft: MailSendDraft): string | null {
     recipient =>
       (recipient.source === 'manual' || recipient.actorType === 'DIRECT') && !recipient.email.trim()
   )
-  if (missingDirectContact) return '직접 입력 수신자의 연락처를 입력하세요.'
+  if (missingDirectContact) return '직접 입력 수신자의 연락처를 입력해 주세요.'
   // 제목/본문은 저장된 템플릿 기준 발송. 화면 미리보기용으로만 유지.
   if (!draft.subject.trim()) return '제목을 작성하세요.'
   if (!draft.bodyHtml.trim()) return '내용을 작성하세요.'

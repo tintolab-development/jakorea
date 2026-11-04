@@ -353,7 +353,7 @@ describe('resolveNotificationSendFieldError', () => {
     })
     expect(
       resolveNotificationSendFieldError(
-        apiError(400, 'NOTIFICATION_SMS_CONTENT_REQUIRED', '본문을 입력하세요.')
+        apiError(400, 'NOTIFICATION_SMS_CONTENT_REQUIRED', '본문을 입력해 주세요.')
       )?.field
     ).toBe('content')
     expect(
@@ -398,7 +398,9 @@ describe('resolveNotificationSendFieldError', () => {
 
   it('NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED는 템플릿 필드로 안내한다', () => {
     expect(
-      resolveNotificationSendFieldError(apiError(400, 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED'))
+      resolveNotificationSendFieldError(
+        apiError(400, 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED')
+      )
     ).toEqual({
       code: 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED',
       field: 'template',

@@ -92,7 +92,8 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
             name="volunteerApplicationStartDate"
             control={form.control}
             render={({ field }) => (
-              <ParagraphDatePicker inputSize="small"
+              <ParagraphDatePicker
+                inputSize="small"
                 mode="range"
                 showTimeToggle={false}
                 value={[
@@ -101,10 +102,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                 ]}
                 onChange={([start, end]) => {
                   field.onChange(start ? start.toISOString() : undefined)
-                  form.setValue(
-                    'volunteerApplicationEndDate',
-                    end ? end.toISOString() : undefined
-                  )
+                  form.setValue('volunteerApplicationEndDate', end ? end.toISOString() : undefined)
                 }}
                 placeholder={['모집 시작일', '모집 종료일']}
                 width="100%"
@@ -134,7 +132,8 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
               name="documentPassAnnouncementDate"
               control={form.control}
               render={({ field }) => (
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="date"
                   customizable={false}
@@ -186,7 +185,8 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
               name="interviewStartDate"
               control={form.control}
               render={({ field }) => (
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="range"
                   value={[
                     toDayjs(field.value as string | Date | undefined),
@@ -233,7 +233,10 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
   const finalPassField = (
     <DetailInfoForm.Field
       label="최종 합격자 발표"
-      validationKey={['recruit.volunteer.finalAnnounceIso', 'recruit.volunteer.finalAnnounceMethod']}
+      validationKey={[
+        'recruit.volunteer.finalAnnounceIso',
+        'recruit.volunteer.finalAnnounceMethod',
+      ]}
       fullRow={!interviewEnabled}
       view={
         <ProgramDetailDateMethodReadRow
@@ -248,7 +251,8 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
               name="finalPassAnnouncementDate"
               control={form.control}
               render={({ field }) => (
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="date"
                   customizable={false}
@@ -360,7 +364,8 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                     name="volunteerProgramOperationStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <ParagraphDatePicker inputSize="small"
+                      <ParagraphDatePicker
+                        inputSize="small"
                         mode="range"
                         showTimeToggle={false}
                         value={[
@@ -395,7 +400,9 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
               view={statusView}
               edit={
                 isEdit && form ? (
-                  <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
+                  <span className="form-editor-template-field-hint-text">
+                    {RECRUIT_PROGRESS_HINT}
+                  </span>
                 ) : undefined
               }
             />
@@ -441,7 +448,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        placeholder="상세 모집 대상을 입력하세요"
+                        placeholder="상세 모집 대상을 입력해 주세요"
                         inputSize="small"
                         width="100%"
                         className="program-detail-info-tab__district-input"

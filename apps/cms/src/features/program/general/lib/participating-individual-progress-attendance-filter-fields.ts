@@ -20,10 +20,12 @@ const GRADE_OPTIONS = [
 
 const attendanceStatusOptions = [
   { label: '전체', value: PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_FILTER_ALL },
-  ...(Object.entries(PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_STATUS_LABELS) as [
-    ParticipatingIndividualProgressAttendanceStatus,
-    string,
-  ][]).map(([value, label]) => ({ label, value })),
+  ...(
+    Object.entries(PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_STATUS_LABELS) as [
+      ParticipatingIndividualProgressAttendanceStatus,
+      string,
+    ][]
+  ).map(([value, label]) => ({ label, value })),
 ]
 
 export function buildParticipatingIndividualProgressAttendanceFilterFields(
@@ -47,14 +49,14 @@ export function buildParticipatingIndividualProgressAttendanceFilterFields(
       key: 'participantName',
       type: 'search',
       label: '참여자명',
-      placeholder: '참여자명을 입력하세요',
+      placeholder: '참여자명을 입력해 주세요',
       width: FILTER_CONTROL_WIDTH,
     },
     {
       key: 'affiliation',
       type: 'search',
       label: '소속',
-      placeholder: '소속을 입력하세요',
+      placeholder: '소속을 입력해 주세요',
       width: FILTER_CONTROL_WIDTH,
     },
     {

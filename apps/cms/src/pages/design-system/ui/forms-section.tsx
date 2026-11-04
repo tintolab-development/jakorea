@@ -106,10 +106,33 @@ export function FormsSection() {
           <div key={size} className="ds-demo__stack" style={{ maxWidth: 'none' }}>
             <span className="ds-demo__label">{label}</span>
             <div className="ds-demo__row" style={{ alignItems: 'flex-start' }}>
-              <CmsInput inputSize={size} label="라벨" required placeholder="텍스트를 입력하세요" message="메세지" />
-              <CmsInput inputSize={size} label="라벨" defaultValue="입력된 텍스트" message="메세지" />
-              <CmsInput inputSize={size} label="라벨" disabled defaultValue="비활성" message="메세지" />
-              <CmsInput inputSize={size} label="라벨" error defaultValue="에러 상태" message="에러 메세지" />
+              <CmsInput
+                inputSize={size}
+                label="라벨"
+                required
+                placeholder="텍스트를 입력해 주세요"
+                message="메세지"
+              />
+              <CmsInput
+                inputSize={size}
+                label="라벨"
+                defaultValue="입력된 텍스트"
+                message="메세지"
+              />
+              <CmsInput
+                inputSize={size}
+                label="라벨"
+                disabled
+                defaultValue="비활성"
+                message="메세지"
+              />
+              <CmsInput
+                inputSize={size}
+                label="라벨"
+                error
+                defaultValue="에러 상태"
+                message="에러 메세지"
+              />
             </div>
             <div className="ds-demo__row" style={{ alignItems: 'flex-start' }}>
               <CmsSelect
@@ -125,7 +148,7 @@ export function FormsSection() {
               <CmsInputSearch
                 inputSize={size}
                 label="Search"
-                placeholder="검색어를 입력하세요"
+                placeholder="검색어를 입력해 주세요"
                 options={['서울 강남 프로그램', '부산 해운대 프로그램']}
               />
               <CmsDatePicker inputSize={size} label="Date" error message="날짜를 선택하세요" />
@@ -137,7 +160,7 @@ export function FormsSection() {
       <DsDemo label="CmsInput / CmsInputSearch / CmsTextArea">
         <div className="ds-demo__stack">
           <CmsInput
-            placeholder="이름을 입력하세요"
+            placeholder="이름을 입력해 주세요"
             value={text}
             onChange={e => setText(e.target.value)}
             width="100%"
@@ -150,7 +173,7 @@ export function FormsSection() {
             width="100%"
           />
           <CmsTextArea
-            placeholder="내용을 입력하세요"
+            placeholder="내용을 입력해 주세요"
             value={area}
             onChange={e => setArea(e.target.value)}
             rows={3}
@@ -213,8 +236,7 @@ export function FormsSection() {
           width="100%"
         />
         <p className="ds-note">
-          입력 중에는 한 자리 월·일을 유지하고, 완성된 유효 날짜만 blur 시 두 자리로
-          정규화합니다.
+          입력 중에는 한 자리 월·일을 유지하고, 완성된 유효 날짜만 blur 시 두 자리로 정규화합니다.
         </p>
       </DsDemo>
 
@@ -398,11 +420,7 @@ export function FormsSection() {
       <DsDemo label="CmsDatePicker / CmsDateRangePicker">
         <div className="ds-demo__stack">
           <CmsDatePicker value={date} onChange={v => setDate(v)} style={{ width: '100%' }} />
-          <CmsDateRangePicker
-            value={range}
-            onChange={v => setRange(v)}
-            style={{ width: '100%' }}
-          />
+          <CmsDateRangePicker value={range} onChange={v => setRange(v)} style={{ width: '100%' }} />
         </div>
       </DsDemo>
 
@@ -413,9 +431,7 @@ export function FormsSection() {
             accept=".pdf,.png,.jpg"
             fileNames={fileNames}
             guideLines={['파일은 총 최대 15MB까지 업로드 가능합니다. (PDF, PNG, JPG)']}
-            onFilesChange={files =>
-              setFileNames(prev => [...prev, ...files.map(f => f.name)])
-            }
+            onFilesChange={files => setFileNames(prev => [...prev, ...files.map(f => f.name)])}
             onRemoveFile={index => setFileNames(prev => prev.filter((_, i) => i !== index))}
           />
           <span className="ds-demo__label">파일 여러 개</span>
@@ -435,9 +451,9 @@ export function FormsSection() {
         <p className="ds-note">
           기본 <code>multiple</code>·합계 <code>15MB</code>. <code>accept</code>·가이드는 케이스별.
           단건만 <code>multiple=&#123;false&#125;</code>. 파일 행(유형 아이콘·파일명·X)과 빈 상태
-          「첨부된 파일이 없습니다.」는 <code>FileAttachmentRow</code> 공통(썸네일·ParagraphFileUpload
-          동일). 버튼은 「파일 추가」 secondary h32, 가이드 12px · 버튼과 16px.
-          DetailInfoForm Field edit 사용 시 layout override —{' '}
+          「첨부된 파일이 없습니다.」는 <code>FileAttachmentRow</code>{' '}
+          공통(썸네일·ParagraphFileUpload 동일). 버튼은 「파일 추가」 secondary h32, 가이드 12px ·
+          버튼과 16px. DetailInfoForm Field edit 사용 시 layout override —{' '}
           <code>cms-admin-ui/file-select-detail-form</code>. 주소·학교 검색은{' '}
           <a href="#search-modals">Search modals</a>.
         </p>
@@ -448,7 +464,12 @@ export function FormsSection() {
           {FILE_TYPE_ICON_DEMO.map(({ type, label }) => (
             <span
               key={type}
-              style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}
+              style={{
+                display: 'inline-flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 4,
+              }}
             >
               <FileTypeIcon type={type} />
               <span className="ds-demo__label">{label}</span>
@@ -456,16 +477,16 @@ export function FormsSection() {
           ))}
         </div>
         <p className="ds-note">
-          <code>&lt;FileTypeIcon fileName=&quot;a.pdf&quot; /&gt;</code> — 확장자로 자동 선택(jpeg→jpg,
-          docx→word, xlsx·csv→excel, pptx→ppt, hwpx→hwp, http(s) URL→net). 매핑 없으면 clip. 원본{' '}
-          <code>shared/assets/icons/file-types/file-icon-*.svg</code>
+          <code>&lt;FileTypeIcon fileName=&quot;a.pdf&quot; /&gt;</code> — 확장자로 자동
+          선택(jpeg→jpg, docx→word, xlsx·csv→excel, pptx→ppt, hwpx→hwp, http(s) URL→net). 매핑
+          없으면 clip. 원본 <code>shared/assets/icons/file-types/file-icon-*.svg</code>
         </p>
       </DsDemo>
 
       <DsDemo label="ThumbnailUploadField">
         <p className="ds-demo__hint" style={{ marginTop: 0 }}>
-          썸네일 72×72(클릭 시 확대 보기) · 파일명 14px/500/130% · 「파일 추가」 secondary small(h32) ·
-          가이드 12px/500/150% · 버튼–가이드 16px · 파일이 있으면 버튼 비활성, X로 삭제
+          썸네일 72×72(클릭 시 확대 보기) · 파일명 14px/500/130% · 「파일 추가」 secondary
+          small(h32) · 가이드 12px/500/150% · 버튼–가이드 16px · 파일이 있으면 버튼 비활성, X로 삭제
         </p>
         <div className="ds-demo__stack">
           <span className="ds-demo__label">빈 상태 · 파일 선택 가능</span>
