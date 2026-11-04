@@ -65,7 +65,7 @@ async function fillTextNearLabel(page: Page, label: string, placeholder: string,
 
 async function selectPaymentItemsB(page: Page) {
   await clickSectionNavIfVisible(page, '임금 정보')
-  const trigger = page.getByRole('button', { name: '지급 항목을 선택하세요' }).first()
+  const trigger = page.getByRole('button', { name: '지급 항목을 선택해 주세요' }).first()
   const fieldTrigger = detailInfoField(page, '지급 항목')
     .locator('.cms-select-multi__trigger')
     .first()
@@ -110,12 +110,12 @@ export async function fillIsolatedCommonInfo(page: Page) {
     '모집 시 노출될 프로그램명을 입력해 주세요',
     VALUES_B.announcement
   )
-  await selectByPlaceholder(page, '세부 프로그램명을 선택하세요')
-  await fillParagraphDateByPlaceholder(page, '사업 운영 기간을 선택하세요', 'range', {
+  await selectByPlaceholder(page, '세부 프로그램명을 선택해 주세요')
+  await fillParagraphDateByPlaceholder(page, '사업 운영 기간을 선택해 주세요', 'range', {
     futureMonthClicks: 2,
     required: true,
   })
-  await selectByPlaceholderIfVisible(page, '사업 분야를 선택하세요', '경제금융')
+  await selectByPlaceholderIfVisible(page, '사업 분야를 선택해 주세요', '경제금융')
   await selectNearLabelIfVisible(page, '사업 분야', '경제금융')
   await selectNearLabel(page, '후원사', 'RHF-B-후원사')
   await selectNearLabel(page, '후원사 담당자', 'RHF-B-담당자')
@@ -148,7 +148,7 @@ export async function fillIsolatedCommonInfo(page: Page) {
   }
   await selectPaymentItemsB(page)
   await clickSectionNavIfVisible(page, '교육 진행 일정 설정')
-  await fillParagraphDateByPlaceholder(page, '진행 기간을 선택하세요', 'range', {
+  await fillParagraphDateByPlaceholder(page, '진행 기간을 선택해 주세요', 'range', {
     required: true,
     force: true,
     label: '교육 진행 일정 선택',
@@ -229,11 +229,16 @@ async function fillIsolatedInstructorRecruit(page: Page) {
   await expect(panel).toBeVisible({ timeout: 15_000 })
   await forceAnnouncementPublished(page)
   const dateOpts = { futureMonthClicks: 2, root: panel, force: true } as const
-  await fillParagraphDateByPlaceholder(page, '프로그램 운영 기간을 선택하세요', 'range', dateOpts)
+  await fillParagraphDateByPlaceholder(
+    page,
+    '프로그램 운영 기간을 선택해 주세요',
+    'range',
+    dateOpts
+  )
   await selectInstructorRecruitTargets(page)
   await fillByPlaceholder(panel, '상세 모집 대상을 입력해 주세요', '성인 강사')
   await expect(panel.getByPlaceholder('상세 모집 대상을 입력해 주세요')).toHaveValue('성인 강사')
-  await fillParagraphDateByPlaceholder(page, '모집 기간을 선택하세요', 'range', dateOpts)
+  await fillParagraphDateByPlaceholder(page, '모집 기간을 선택해 주세요', 'range', dateOpts)
   await fillParagraphDateByPlaceholder(page, '합격자 발표일', 'single', {
     ...dateOpts,
     preferLaterDays: true,
@@ -274,7 +279,7 @@ async function fillIsolatedInstitutionRecruitExtras(page: Page) {
     }
   }
   await selectNearLabelIfVisible(page, '교육 대상')
-  const targetTrigger = page.getByRole('button', { name: /교육 대상을 선택하세요/ }).first()
+  const targetTrigger = page.getByRole('button', { name: /교육 대상을 선택해 주세요/ }).first()
   if (await targetTrigger.isVisible().catch(() => false)) {
     await targetTrigger.click()
     const panel = page.locator('.cms-select-multi__panel:visible').last()

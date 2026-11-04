@@ -178,7 +178,7 @@ export class CompanySchoolEditPage {
       EDIT_PUBLIC_NAME
     )
 
-    await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택해 주세요')
     await this.fillDateNearLabel('사업 운영 기간', 'range', { preferFutureMonth: true })
 
     await checkCheckboxIfVisible(this.page, /학교|기관/)
@@ -186,9 +186,9 @@ export class CompanySchoolEditPage {
     // 봉사자 체크 금지
 
     await selectNearLabelIfVisible(this.page, '사업 분야', EDIT_BUSINESS_AREA)
-    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택하세요', EDIT_BUSINESS_AREA)
+    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택해 주세요', EDIT_BUSINESS_AREA)
     await selectNearLabelIfVisible(this.page, '후원사')
-    await selectByPlaceholderIfVisible(this.page, '후원사를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '후원사를 선택해 주세요')
     await this.page
       .waitForResponse(
         res => /sponsor/i.test(res.url()) && /contact/i.test(res.url()) && res.ok(),
@@ -196,7 +196,7 @@ export class CompanySchoolEditPage {
       )
       .catch(() => undefined)
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
-    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택해 주세요')
 
     await checkRadioIfVisible(this.page, '기관 밖')
     await fillByPlaceholderIfVisible(
@@ -220,8 +220,8 @@ export class CompanySchoolEditPage {
     await checkRadioIfVisible(this.page, '온라인')
     await checkRadioIfVisible(this.page, /^개인$/)
     await selectNearLabelIfVisible(this.page, 'IPS 유형', EDIT_IPS_TYPE)
-    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택해 주세요')
     await selectByPlaceholderIfVisible(this.page, 'IPS 유형', EDIT_IPS_TYPE)
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
@@ -237,7 +237,7 @@ export class CompanySchoolEditPage {
 
     await clickSectionNavIfVisible(this.page, '임금 정보')
     await fillAllByPlaceholder(this.page, '직접 입력', EDIT_WAGE_VALUE)
-    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택해 주세요')
 
     await clickSectionNavIfVisible(this.page, '기본 정보')
 
@@ -469,8 +469,8 @@ export class CompanySchoolEditPage {
     await this.fillDateNearLabel('프로그램 운영 기간', 'range', { preferFutureMonth: true })
     await fillParagraphDateByPlaceholder(this.page, '운영 시작일', 'range')
 
-    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택해 주세요')
     await fillByPlaceholderIfVisible(
       this.page,
       '상세 교육 대상을 입력해 주세요',

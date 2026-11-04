@@ -101,7 +101,7 @@ export class UjatProgramRegistrationPage {
       // 늦게 끝날 수 있다. 실제 화면에 필수 기간·교육 과정이 반영된 뒤
       // 다음 단계로 진행해야 gate가 정상적으로 같은 overlay를 읽는다.
       await expect(
-        this.page.getByRole('button', { name: '사업 운영 기간을 선택하세요', exact: true })
+        this.page.getByRole('button', { name: '사업 운영 기간을 선택해 주세요', exact: true })
       ).toHaveCount(0, { timeout: 15_000 })
       // 자동입력 샘플은 호출마다 교육 과정이 달라질 수 있다. 특정 라벨을
       // 고정하지 않고 실제 교육 과정 Select가 선택값을 가진 시점만 기다린다.
@@ -148,24 +148,24 @@ export class UjatProgramRegistrationPage {
       `관리·${this.programTitle}`
     )
 
-    await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '교육 과정을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '교육 과정을 선택해 주세요')
     await selectNearLabelIfVisible(this.page, '교육 과정')
     if (!this.devAutofillApplied) {
       await fillParagraphDateByPlaceholder(
         this.page,
-        '사업 운영 기간을 선택하세요',
+        '사업 운영 기간을 선택해 주세요',
         'range',
         OPERATION_DATE_OPTS
       )
     }
 
-    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택하세요', '경제금융')
+    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택해 주세요', '경제금융')
     await selectNearLabelIfVisible(this.page, '사업 분야', '경제금융')
     await selectNearLabelIfVisible(this.page, '후원사')
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
-    await selectByPlaceholderIfVisible(this.page, '후원사를 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '후원사를 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택해 주세요')
 
     await fillByPlaceholderIfVisible(
       this.page,
@@ -201,7 +201,7 @@ export class UjatProgramRegistrationPage {
     )
     await fillAllParagraphDatesByPlaceholder(
       this.page,
-      '기간을 선택하세요',
+      '기간을 선택해 주세요',
       'range',
       OPERATION_DATE_OPTS
     )
@@ -254,7 +254,7 @@ export class UjatProgramRegistrationPage {
 
     await clickSectionNavIfVisible(this.page, '임금 정보')
     await fillAllByPlaceholder(this.page, '직접 입력', WAGE_VALUE)
-    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택해 주세요')
 
     await clickSectionNavIfVisible(this.page, '지역 별 교육 진행 가능 학급 및 봉사단 수')
     await fillAllByPlaceholder(this.page, '최대 학급 수', '1')
@@ -374,12 +374,12 @@ export class UjatProgramRegistrationPage {
 
     await fillParagraphDateByPlaceholder(
       this.page,
-      '프로그램 운영 기간을 선택하세요',
+      '프로그램 운영 기간을 선택해 주세요',
       'range',
       OPERATION_DATE_OPTS
     )
-    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택해 주세요')
     await fillByPlaceholderIfVisible(
       this.page,
       '상세 교육 대상을 입력해 주세요',
@@ -392,7 +392,7 @@ export class UjatProgramRegistrationPage {
     )
     await fillParagraphDateByPlaceholder(
       this.page,
-      '모집 기간을 선택하세요',
+      '모집 기간을 선택해 주세요',
       'range',
       RECRUIT_DATE_OPTS
     )

@@ -285,18 +285,18 @@ export class UjatProgramEditPage {
       EDIT_MANAGEMENT_NAME
     )
 
-    await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '후원사를 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '교육 과정을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, 'IPS 유형을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '세부 프로그램명을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '후원사를 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '후원사 담당자를 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '교육 과정을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, 'IPS 유형을 선택해 주세요')
 
     await clickSectionNavIfVisible(this.page, '사업 KPI 목표')
     await fillAllByPlaceholder(this.page, '목표값 입력', EDIT_KPI_VALUE)
 
     await clickSectionNavIfVisible(this.page, '임금 정보')
-    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택해 주세요')
 
     await clickSectionNavIfVisible(this.page, '지역 별 교육 진행 가능 학급 및 봉사단 수')
     await fillAllByPlaceholder(this.page, '최대 학급 수', '1')
@@ -406,8 +406,8 @@ export class UjatProgramEditPage {
       '상세 모집 대상을 입력해 주세요',
       EDIT_TARGET_DETAIL
     )
-    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택해 주세요')
     await fillByPlaceholderIfVisible(this.page, '문의처 전화번호', EDIT_CONTACT_TEL)
     await fillByPlaceholderIfVisible(this.page, '문의처 이메일', EDIT_CONTACT_EMAIL)
     let contactEmail = EDIT_CONTACT_EMAIL

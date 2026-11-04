@@ -107,10 +107,10 @@ export class CompanySchoolRegistrationPage {
       PROGRAM_PUBLIC_NAME
     )
 
-    await selectByPlaceholder(this.page, '세부 프로그램명을 선택하세요')
+    await selectByPlaceholder(this.page, '세부 프로그램명을 선택해 주세요')
     await fillParagraphDateByPlaceholder(
       this.page,
-      '사업 운영 기간을 선택하세요',
+      '사업 운영 기간을 선택해 주세요',
       'range',
       OPERATION_DATE_OPTS
     )
@@ -119,7 +119,7 @@ export class CompanySchoolRegistrationPage {
     await checkCheckboxIfVisible(this.page, '교사/강사')
     // 봉사자 — 1사1교에서는 숨김·미선택
 
-    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택하세요', '경제금융')
+    await selectByPlaceholderIfVisible(this.page, '사업 분야를 선택해 주세요', '경제금융')
     await selectNearLabelIfVisible(this.page, '사업 분야', '경제금융')
     await selectNearLabel(this.page, '후원사')
     const sponsorField = this.page
@@ -137,7 +137,7 @@ export class CompanySchoolRegistrationPage {
       await sponsorField.locator('.ant-select-selection-item').innerText()
     ).trim()
     expect(sponsorSelected.length).toBeGreaterThan(0)
-    expect(sponsorSelected).not.toContain('선택하세요')
+    expect(sponsorSelected).not.toContain('선택해 주세요')
     expect(sponsorSelected).not.toBe('전체')
 
     await selectNearLabelIfVisible(this.page, '후원사 담당자')
@@ -161,8 +161,8 @@ export class CompanySchoolRegistrationPage {
     await checkRadioIfVisible(this.page, '온라인')
     await checkRadioIfVisible(this.page, /^개인$/)
     await selectNearLabelIfVisible(this.page, 'IPS 유형', 'Inspire')
-    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택해 주세요')
     await selectByPlaceholderIfVisible(this.page, 'IPS 유형', 'Inspire')
 
     await clickSectionNavIfVisible(this.page, '교육 진행 (커리큘럼)')
@@ -172,7 +172,7 @@ export class CompanySchoolRegistrationPage {
     await clickSectionNavIfVisible(this.page, '교육 진행 일정 설정')
     await fillParagraphDateByPlaceholder(
       this.page,
-      '진행 기간을 선택하세요',
+      '진행 기간을 선택해 주세요',
       'range',
       OPERATION_DATE_OPTS
     )
@@ -182,7 +182,7 @@ export class CompanySchoolRegistrationPage {
 
     await clickSectionNavIfVisible(this.page, '임금 정보')
     await fillAllByPlaceholder(this.page, '직접 입력', WAGE_VALUE)
-    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택해 주세요')
 
     await clickSectionNavIfVisible(this.page, '기본 정보')
   }
@@ -226,12 +226,12 @@ export class CompanySchoolRegistrationPage {
 
     await fillParagraphDateByPlaceholder(
       this.page,
-      '프로그램 운영 기간을 선택하세요',
+      '프로그램 운영 기간을 선택해 주세요',
       'range',
       OPERATION_DATE_OPTS
     )
-    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택해 주세요')
     await fillByPlaceholderIfVisible(
       this.page,
       '상세 교육 대상을 입력해 주세요',
@@ -244,7 +244,7 @@ export class CompanySchoolRegistrationPage {
     )
     await fillParagraphDateByPlaceholder(
       this.page,
-      '모집 기간을 선택하세요',
+      '모집 기간을 선택해 주세요',
       'range',
       RECRUIT_DATE_OPTS
     )
