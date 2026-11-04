@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import { formatDateDotWithWeekday } from '@/shared/utils/date'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import { getCompletedRowsOrderedForBulkTransfer } from '@/pages/settlement-management/bulk-transfer-fortune-data'
+import { formatTaxFilingPreviewResidentId } from '@/pages/settlement-management/tax-filing-masked-resident'
 
 export const TAX_FILING_HEADER_LABELS = [
   '소득구분',
@@ -265,7 +266,7 @@ export function buildTaxFilingSheetLines(rows: AccountPaymentRow[]): TaxFilingSh
         residenceTax,
         afterDeduction: after,
         name: src.instructorName,
-        residentId: DASH,
+        residentId: formatTaxFilingPreviewResidentId(src.residentRegistrationNumberMasked),
         project: src.programName,
       })
     }

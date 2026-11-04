@@ -2,7 +2,7 @@
  * 정산 관리 > 계좌 지급 — 세금신고 양식 미리보기 (Fortune Sheet)
  */
 
-import { lazy, Suspense, useCallback, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -20,6 +20,10 @@ import {
   TAX_FILING_SHEET_COLUMN_COUNT,
   buildTaxFilingFortuneSheet,
 } from '@/pages/settlement-management/tax-filing-fortune-data'
+import {
+  applyTaxFilingMaskedResidentNumbers,
+  loadTaxFilingMaskedResidentNumbers,
+} from '@/pages/settlement-management/tax-filing-masked-resident'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './tax-filing-preview-modal.css'
 
@@ -45,10 +49,31 @@ export function TaxFilingPreviewModal({
     usesServerFile &&
     serverExport?.fileObjectId != null &&
     Number.isFinite(serverExport.fileObjectId)
+  const [previewRows, setPreviewRows] = useState(rows)
+
+  useEffect(() => {
+    if (!open) return
+    setPreviewRows(rows)
+    if (!shouldUseSettlementRemote('accountPayments')) return
+    let cancelled = false
+    void loadTaxFilingMaskedResidentNumbers(rows)
+      .then(masked => {
+        if (cancelled) return
+        setPreviewRows(applyTaxFilingMaskedResidentNumbers(rows, masked))
+      })
+      .catch(() => {
+        if (cancelled) return
+        setPreviewRows(rows)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, rows])
+
   const sheetData: Sheet[] = useMemo(() => {
-    const sheet = buildTaxFilingFortuneSheet(rows)
+    const sheet = buildTaxFilingFortuneSheet(previewRows)
     return [sheet]
-  }, [rows])
+  }, [previewRows])
 
   const handleDownload = useCallback(async () => {
     try {
