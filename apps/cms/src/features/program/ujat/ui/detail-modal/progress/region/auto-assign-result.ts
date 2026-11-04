@@ -6,7 +6,7 @@ import type { UjatCapacityWarning } from '@/features/program/ujat/api/temporary-
 import type { RegionAssignmentTableData } from './types'
 
 export const AUTO_ASSIGN_RERUN_CONFIRM_MESSAGE =
-  '미배정 학급과 기존 1인 학급만 배정합니다.\n이미 2인으로 배정된 학급과 교육이 시작된 일정은 유지됩니다.\n같은 날 학급을 1인씩 나누는 재분배는 하지 않습니다. 필요하면 직접 배정으로 보완해 주세요.\n교육일 자동 배정을 실행할까요?'
+  '기존 확정 배정은 유지됩니다.\n미배정 학급은 가용 봉사자 수에 따라 2인 또는 1인으로 배정되며, 기존 1인 학급에는 봉사자가 추가 배정될 수 있습니다.\n자동배정을 실행할까요?'
 
 /** 배정된 셀이 하나라도 있으면 재실행으로 보고 확인 모달을 띄운다. */
 export function hasExistingRegionAssignments(data: RegionAssignmentTableData): boolean {
