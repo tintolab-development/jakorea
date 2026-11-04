@@ -3,19 +3,21 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { PerformanceMetric, PerformanceSection } from '@/entities/main-content/model/types'
 import { useSavePerformanceSection } from '@/features/main-content/api/hooks'
-import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import {
-  MainContentRequiredLabel,
-  MetricsNestedTable,
-} from '@/features/main-content/ui/nested-tables'
+  mainContentSaveFailureAlert,
+  readMainContentFieldErrors,
+} from '@/features/main-content/lib/mutation-failure-alert'
+import {
+  hasFieldErrors,
+  MAIN_CONTENT_LIMITS,
+  type MainContentFieldErrors,
+  PERFORMANCE_METRIC_FIELDS,
+  validatePerformanceSection,
+} from '@/features/main-content/lib/validate'
+import { MainContentFieldControl } from '@/features/main-content/ui/field-control'
+import { MetricsNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT,
-  CmsInput,
-  CmsTextArea,
-  showUpdateCompletedAlert,
-  useCmsAlert,
-} from '@/shared/ui'
+import { CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 type Props = {
   data: PerformanceSection
@@ -26,43 +28,52 @@ export function PerformanceSectionCard({ data }: Props) {
   const saveMutation = useSavePerformanceSection()
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<PerformanceSection>(data)
+  const [fieldErrors, setFieldErrors] = useState<MainContentFieldErrors>({})
 
   const handleEdit = useCallback(() => {
     setDraft({
       ...data,
       metrics: data.metrics.map(m => ({ ...m })),
     })
+    setFieldErrors({})
     setIsEditing(true)
   }, [data])
 
   const handleCancel = useCallback(() => {
     setDraft(data)
+    setFieldErrors({})
     setIsEditing(false)
   }, [data])
 
   const handleSave = useCallback(async () => {
-    const metricsIncomplete = draft.metrics.some(metric => !metric.value.trim())
-    if (!draft.title.trim() || !draft.bottomText.trim() || metricsIncomplete) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+    const invalid = validatePerformanceSection(draft)
+    if (hasFieldErrors(invalid)) {
+      setFieldErrors(invalid)
       return
     }
     try {
       await saveMutation.mutateAsync(draft)
+      setFieldErrors({})
       setIsEditing(false)
-      showUpdateCompletedAlert()
     } catch (error) {
+      const mapped = readMainContentFieldErrors(error)
+      if (mapped) {
+        setFieldErrors(mapped)
+        return
+      }
       showAlert(mainContentSaveFailureAlert(error, '실적 및 성과'))
     }
   }, [draft, saveMutation, showAlert])
 
   const updateMetric = useCallback(
     (id: PerformanceMetric['id'], patch: Partial<Pick<PerformanceMetric, 'value' | 'unit'>>) => {
+      setFieldErrors(prev => ({ ...prev, [PERFORMANCE_METRIC_FIELDS[id]]: '' }))
       setDraft(prev => ({
         ...prev,
         metrics: prev.metrics.map(m => (m.id === id ? { ...m, ...patch } : m)),
       }))
     },
-    []
+    [],
   )
 
   const mode = isEditing ? 'edit' : 'view'
@@ -71,7 +82,12 @@ export function PerformanceSectionCard({ data }: Props) {
   const bottomText = isEditing ? draft.bottomText : data.bottomText
 
   const metricsTable = (
-    <MetricsNestedTable metrics={metrics} mode={mode} onChangeMetric={updateMetric} />
+    <MetricsNestedTable
+      metrics={metrics}
+      mode={mode}
+      fieldErrors={fieldErrors}
+      onChangeMetric={updateMetric}
+    />
   )
 
   return (
@@ -88,45 +104,51 @@ export function PerformanceSectionCard({ data }: Props) {
       <DetailInfoForm title="실적 및 성과 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label={
-              <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
-            }
+            label="타이틀 텍스트"
+            required
             view={titleText || '-'}
             edit={
               <CmsInput
                 inputSize="medium"
                 width="100%"
                 value={draft.title}
-                onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 텍스트를 입력해 주세요"
+                maxLength={MAIN_CONTENT_LIMITS.performanceTitle}
+                error={Boolean(fieldErrors.title)}
+                message={fieldErrors.title}
+                onChange={e => {
+                  setFieldErrors(prev => ({ ...prev, title: '' }))
+                  setDraft(prev => ({ ...prev, title: e.target.value }))
+                }}
+                placeholder="타이틀 텍스트를 입력하세요"
               />
             }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="실적 및 성과"
-            required
-            view={metricsTable}
-            edit={metricsTable}
-          />
+          <DetailInfoForm.Field label="실적 및 성과" view={metricsTable} edit={metricsTable} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label={
-              <MainContentRequiredLabel required={isEditing}>하단 텍스트</MainContentRequiredLabel>
-            }
+            label="하단 텍스트"
+            required
             view={<span className="main-content-preline">{bottomText || '-'}</span>}
             edit={
-              <CmsTextArea
-                className="cms-textarea--fixed-rows"
-                inputSize="medium"
-                width="100%"
-                rows={2}
-                value={draft.bottomText}
-                onChange={e => setDraft(prev => ({ ...prev, bottomText: e.target.value }))}
-                placeholder="하단 텍스트를 입력해 주세요"
-              />
+              <MainContentFieldControl error={fieldErrors.bottomText}>
+                <CmsTextArea
+                  className="cms-textarea--fixed-rows"
+                  inputSize="medium"
+                  width="100%"
+                  rows={2}
+                  maxLength={MAIN_CONTENT_LIMITS.bottomText}
+                  status={fieldErrors.bottomText ? 'error' : undefined}
+                  value={draft.bottomText}
+                  onChange={e => {
+                    setFieldErrors(prev => ({ ...prev, bottomText: '' }))
+                    setDraft(prev => ({ ...prev, bottomText: e.target.value }))
+                  }}
+                  placeholder="하단 텍스트를 입력하세요"
+                />
+              </MainContentFieldControl>
             }
           />
         </DetailInfoForm.Row>

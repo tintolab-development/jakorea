@@ -3,14 +3,18 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { EducationSection } from '@/entities/main-content/model/types'
 import { useSaveEducationSection } from '@/features/main-content/api/hooks'
-import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
-import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT,
-  CmsInput,
-  showUpdateCompletedAlert,
-  useCmsAlert,
-} from '@/shared/ui'
+  mainContentSaveFailureAlert,
+  readMainContentFieldErrors,
+} from '@/features/main-content/lib/mutation-failure-alert'
+import {
+  hasFieldErrors,
+  MAIN_CONTENT_LIMITS,
+  type MainContentFieldErrors,
+  validateEducationSection,
+} from '@/features/main-content/lib/validate'
+import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
+import { CmsInput, useCmsAlert } from '@/shared/ui'
 
 type Props = {
   data: EducationSection
@@ -21,27 +25,36 @@ export function EducationSectionCard({ data }: Props) {
   const saveMutation = useSaveEducationSection()
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<EducationSection>(data)
+  const [fieldErrors, setFieldErrors] = useState<MainContentFieldErrors>({})
 
   const handleEdit = useCallback(() => {
     setDraft(data)
+    setFieldErrors({})
     setIsEditing(true)
   }, [data])
 
   const handleCancel = useCallback(() => {
     setDraft(data)
+    setFieldErrors({})
     setIsEditing(false)
   }, [data])
 
   const handleSave = useCallback(async () => {
-    if (!draft.title.trim()) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+    const invalid = validateEducationSection(draft)
+    if (hasFieldErrors(invalid)) {
+      setFieldErrors(invalid)
       return
     }
     try {
       await saveMutation.mutateAsync(draft)
+      setFieldErrors({})
       setIsEditing(false)
-      showUpdateCompletedAlert()
     } catch (error) {
+      const mapped = readMainContentFieldErrors(error)
+      if (mapped) {
+        setFieldErrors(mapped)
+        return
+      }
       showAlert(mainContentSaveFailureAlert(error, '교육 프로그램'))
     }
   }, [draft, saveMutation, showAlert])
@@ -71,8 +84,14 @@ export function EducationSectionCard({ data }: Props) {
                 inputSize="medium"
                 width="100%"
                 value={draft.title}
-                onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 텍스트를 입력해 주세요"
+                maxLength={MAIN_CONTENT_LIMITS.educationTitle}
+                error={Boolean(fieldErrors.title)}
+                message={fieldErrors.title}
+                onChange={e => {
+                  setFieldErrors(prev => ({ ...prev, title: '' }))
+                  setDraft(prev => ({ ...prev, title: e.target.value }))
+                }}
+                placeholder="타이틀 텍스트를 입력하세요"
               />
             }
           />

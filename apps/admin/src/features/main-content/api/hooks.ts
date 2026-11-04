@@ -6,6 +6,8 @@ import type {
   MainContents,
   PerformanceSection,
 } from '@/entities/main-content/model/types'
+import { isImpactFeaturedStoryConflictError } from '@/features/main-content/lib/mutation-failure-alert'
+import { isOptimisticLockConflictError } from '@/shared/lib/api-error-message'
 import { shouldUseMainContentRemoteApi } from './capabilities'
 import { mainContentQueryKeys } from './query-keys'
 import {
@@ -65,46 +67,66 @@ function useApplyMainContents() {
   }
 }
 
+function useRefetchOnConflict() {
+  const queryClient = useQueryClient()
+  return (error: unknown) => {
+    if (
+      isOptimisticLockConflictError(error) ||
+      isImpactFeaturedStoryConflictError(error)
+    ) {
+      void queryClient.invalidateQueries({ queryKey: mainContentQueryKeys.detail(source()) })
+    }
+  }
+}
+
 export function useSaveEducationSection() {
   const queryClient = useQueryClient()
   const apply = useApplyMainContents()
+  const refetchOnConflict = useRefetchOnConflict()
   return useMutation({
     mutationFn: (section: EducationSection) =>
       saveEducationSectionService(section, cachedContents(queryClient)),
     retry: false,
     onSuccess: apply,
+    onError: refetchOnConflict,
   })
 }
 
 export function useSaveImpactStorySection() {
   const queryClient = useQueryClient()
   const apply = useApplyMainContents()
+  const refetchOnConflict = useRefetchOnConflict()
   return useMutation({
     mutationFn: (section: ImpactStorySection) =>
       saveImpactStorySectionService(section, cachedContents(queryClient)),
     retry: false,
     onSuccess: apply,
+    onError: refetchOnConflict,
   })
 }
 
 export function useSavePerformanceSection() {
   const queryClient = useQueryClient()
   const apply = useApplyMainContents()
+  const refetchOnConflict = useRefetchOnConflict()
   return useMutation({
     mutationFn: (section: PerformanceSection) =>
       savePerformanceSectionService(section, cachedContents(queryClient)),
     retry: false,
     onSuccess: apply,
+    onError: refetchOnConflict,
   })
 }
 
 export function useSaveDonationSection() {
   const queryClient = useQueryClient()
   const apply = useApplyMainContents()
+  const refetchOnConflict = useRefetchOnConflict()
   return useMutation({
     mutationFn: (section: DonationSection) =>
       saveDonationSectionService(section, cachedContents(queryClient)),
     retry: false,
     onSuccess: apply,
+    onError: refetchOnConflict,
   })
 }
