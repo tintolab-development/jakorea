@@ -52,6 +52,9 @@ import {
   ConfirmModal,
   FilterTableLayout,
   NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -307,11 +310,15 @@ export function PopupsPage() {
       try {
         if (formVariant === 'detail' && editingPopup) {
           await updateMutation.mutateAsync({ id: editingPopup.id, patch: values })
+          setFormOpen(false)
+          setEditingPopup(null)
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          setFormOpen(false)
+          setEditingPopup(null)
+          showRegisterCompletedAlert()
         }
-        setFormOpen(false)
-        setEditingPopup(null)
       } catch (error) {
         showAlert(
           popupMutationFailureAlert(
@@ -334,6 +341,7 @@ export function PopupsPage() {
       setFormOpen(false)
       setEditingPopup(null)
       setSelectedRowKeys(keys => keys.filter(key => String(key) !== editingPopup.id))
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         popupMutationFailureAlert(
@@ -359,6 +367,7 @@ export function PopupsPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         popupMutationFailureAlert(
@@ -426,7 +435,7 @@ export function PopupsPage() {
         ellipsis: true,
       },
       {
-        title: '대체 텍스트 (설명)',
+        title: '대체 텍스트',
         dataIndex: 'altText',
         key: 'altText',
         ellipsis: true,
@@ -453,12 +462,13 @@ export function PopupsPage() {
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={e => {
               e.stopPropagation()
               openDetail(record)
-            }} >
+            }}
+          >
             수정
           </CmsButton>
         ),
@@ -534,11 +544,13 @@ export function PopupsPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -558,7 +570,8 @@ export function PopupsPage() {
               size="h40"
               type="button"
               onClick={handleDeleteClick}
-              loading={removeMutation.isPending && !formOpen} >
+              loading={removeMutation.isPending && !formOpen}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

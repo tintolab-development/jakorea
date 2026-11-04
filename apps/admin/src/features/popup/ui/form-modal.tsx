@@ -14,6 +14,7 @@ import {
   ContentModal,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  ThumbnailPlaceholder,
   useCmsAlert,
 } from '@/shared/ui'
 import type { Popup, PopupCreateInput } from '@/entities/popup/model/types'
@@ -34,7 +35,7 @@ const IMAGE_GUIDE_LINES = [
 ]
 
 const MODAL_DESCRIPTION =
-  '홈페이지 진입 시 노출되는 팝업입니다.\n연결 링크가 설정된 경우, 팝업 클릭 시 입력된 주소가 새 창에서 열립니다.'
+  '홈페이지 접속 시 노출되는 팝업입니다.\n연결 링크를 설정하면 팝업을 클릭했을 때 설정된 페이지가 새 창으로 열립니다.'
 
 const WEEKDAY_KO_MIN = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -74,29 +75,6 @@ function formatCreatedAt(iso: string): string {
   const d = dayjs(iso)
   if (!d.isValid()) return '-'
   return `${d.format('YYYY.MM.DD')}(${WEEKDAY_KO_MIN[d.day()]}) ${d.format('HH:mm')}`
-}
-
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
 }
 
 export type PopupFormValues = PopupCreateInput
@@ -353,6 +331,7 @@ function PopupFormBody({
                 />
                 <DetailInfoForm.Field
                   label="사용 여부"
+                  required
                   view={<span>{isActive ? '사용' : '미사용'}</span>}
                   edit={
                     <CmsRadioGroup
@@ -383,6 +362,7 @@ function PopupFormBody({
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="사용 여부"
+                  required
                   view={null}
                   edit={
                     <CmsRadioGroup
@@ -405,13 +385,14 @@ function PopupFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="이미지"
+                required
                 view={
                   <div className="popup-form-modal__image-row">
                     <div className="popup-form-modal__preview">
                       {imageUrl ? (
                         <img src={imageUrl} alt={altText || '팝업 이미지'} />
                       ) : (
-                        <ImagePlaceholderIcon />
+                        <ThumbnailPlaceholder />
                       )}
                     </div>
                     {imageFileName ? (
@@ -425,7 +406,7 @@ function PopupFormBody({
                       {imageUrl ? (
                         <img src={imageUrl} alt="팝업 미리보기" />
                       ) : (
-                        <ImagePlaceholderIcon />
+                        <ThumbnailPlaceholder />
                       )}
                     </div>
                     <FileSelectField
@@ -449,10 +430,11 @@ function PopupFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="팝업명"
+                required
                 view={<span>{name || '-'}</span>}
                 edit={
                   <CmsInput
-                    inputSize="large"
+                    inputSize="medium"
                     width="100%"
                     placeholder="팝업명을 입력해 주세요"
                     value={name}
@@ -464,11 +446,12 @@ function PopupFormBody({
 
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
-                label="대체 텍스트 (설명)"
+                label="대체 텍스트"
+                required
                 view={<span>{altText || '-'}</span>}
                 edit={
                   <CmsInput
-                    inputSize="large"
+                    inputSize="medium"
                     width="100%"
                     placeholder="대체 텍스트를 입력해 주세요"
                     value={altText}
@@ -481,17 +464,18 @@ function PopupFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="게시 기간"
+                required
                 view={<span>{periodViewLabel}</span>}
                 edit={
                   <CmsPeriodDatePicker
-                    inputSize="large"
+                    inputSize="medium"
                     width="100%"
                     value={periodRange}
                     onChange={dates => {
                       setPeriodRange(dates ?? [null, null])
                     }}
                     disabledDate={periodDisabledDate}
-                    placeholder="게시 기간을 선택하세요"
+                    placeholder="게시 기간을 선택해 주세요"
                   />
                 }
               />
@@ -500,6 +484,7 @@ function PopupFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="연결 링크"
+                required
                 view={
                   <div className="popup-form-modal__link-view">
                     <span>{linkEnabled ? '연결' : '미연결'}</span>
@@ -527,7 +512,7 @@ function PopupFormBody({
                     </CmsRadioGroup>
                     <DetailInfoForm.TdDivider />
                     <CmsInput
-                      inputSize="large"
+                      inputSize="medium"
                       width="100%"
                       placeholder="연결 URL을 입력해 주세요"
                       value={linkUrl}
