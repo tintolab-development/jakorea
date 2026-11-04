@@ -9,7 +9,7 @@ import type { DonateCta } from '@/entities/individual-donation/model/types'
 import { useSaveDonateCta } from '@/features/individual-donation/api/hooks'
 import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -60,6 +60,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
     try {
       await saveMutation.mutateAsync({ buttonLabel, linkUrl, version: donateCta.version })
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         individualDonationSaveFailureAlert(

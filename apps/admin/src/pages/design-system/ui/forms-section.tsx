@@ -93,9 +93,10 @@ export function FormsSection() {
             buttonLabel="파일 추가"
             fileNames={fileNames}
             guideLines={[
-              '- 파일은 최대 15M까지 JPG, PNG 형식만 등록 가능합니다.',
+              '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
               '- 권장 배너 사이즈는 1920*1080입니다.',
             ]}
+            maxTotalBytes={20 * 1024 * 1024}
             onFilesChange={files => setFileNames(files.map(f => f.name))}
             onRemoveFile={() => setFileNames([])}
           />

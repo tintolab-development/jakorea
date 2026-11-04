@@ -56,6 +56,8 @@ import {
   CmsSelect,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  showChangeCompletedAlert,
+  showDeleteCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -414,6 +416,7 @@ export function CorporateConsultationsPage() {
       if (detailRow && selectedRowKeys.map(String).includes(detailRow.id)) {
         closeDetail()
       }
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         corporateConsultationMutationFailureAlert(
@@ -436,6 +439,7 @@ export function CorporateConsultationsPage() {
       if (detailRow && selectedRowKeys.map(String).includes(detailRow.id)) {
         await refreshDetailFromList(detailRow.id)
       }
+      showChangeCompletedAlert()
     } catch (error) {
       showAlert(
         corporateConsultationMutationFailureAlert(
@@ -455,6 +459,7 @@ export function CorporateConsultationsPage() {
         actorName: DEFAULT_CONFIRM_ACTOR,
       })
       await refreshDetailFromList(detailRow.id)
+      showChangeCompletedAlert()
     } catch (error) {
       showAlert(
         corporateConsultationMutationFailureAlert(
@@ -471,6 +476,7 @@ export function CorporateConsultationsPage() {
       await removeMutation.mutateAsync([detailRow.id])
       setSelectedRowKeys(prev => prev.filter(k => k !== detailRow.id))
       closeDetail()
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         corporateConsultationMutationFailureAlert(

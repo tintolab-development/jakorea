@@ -9,6 +9,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAdminGnbRoleLabel } from '@/features/auth/hooks/use-admin-gnb-role-label'
 import { useAuthStore } from '@/features/auth/model/auth-store'
+import { ProfileEditModal } from '@/features/auth/ui/profile-edit-modal'
 import {
   isSystemInboxForbidden,
   useReadSystemInboxItem,
@@ -32,6 +33,7 @@ export function MainHeader() {
   const logout = useAuthStore(state => state.logout)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const pendingReadIds = useRef(new Set<string>())
 
   const adminId = user?.id
@@ -114,6 +116,11 @@ export function MainHeader() {
     setAccountDropdownOpen(false)
     logout()
     navigate('/login', { replace: true })
+  }
+
+  const handleOpenProfile = () => {
+    setAccountDropdownOpen(false)
+    setProfileOpen(true)
   }
 
   return (
@@ -202,6 +209,13 @@ export function MainHeader() {
                     <button
                       type="button"
                       className="main-header-account-dropdown-item"
+                      onClick={handleOpenProfile}
+                    >
+                      내 정보 확인
+                    </button>
+                    <button
+                      type="button"
+                      className="main-header-account-dropdown-item"
                       onClick={handleLogout}
                     >
                       로그아웃
@@ -246,6 +260,7 @@ export function MainHeader() {
           </Space>
         </div>
       </div>
+      <ProfileEditModal open={profileOpen} onCancel={() => setProfileOpen(false)} />
     </AntHeader>
   )
 }

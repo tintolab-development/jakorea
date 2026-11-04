@@ -8,7 +8,7 @@
 
 export interface PerformanceUpdateRequest {
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 300
      */
   title: string;
@@ -17,9 +17,9 @@ export interface PerformanceUpdateRequest {
   educatorCount: number;
   youthBeneficiaryCount: number;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 2000
      */
-  bottomText?: string;
+  bottomText: string;
   version: number;
 }

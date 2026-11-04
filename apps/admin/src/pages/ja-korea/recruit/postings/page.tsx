@@ -65,6 +65,9 @@ import {
   CmsSelect,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -313,6 +316,7 @@ export function RecruitPostingsPage() {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -354,8 +358,10 @@ export function RecruitPostingsPage() {
       try {
         if (formMode === 'edit' && editing) {
           await updateMutation.mutateAsync({ ...values, id: editing.id })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         closeForm()
       } catch (error) {
@@ -377,6 +383,7 @@ export function RecruitPostingsPage() {
     try {
       await removeMutation.mutateAsync([editing.id])
       closeForm()
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -475,7 +482,7 @@ export function RecruitPostingsPage() {
         render: (_, row) => (
           <CmsButton
             variant="secondary"
-            size="h32"
+            size="medium"
             type="button"
             onClick={event => {
               event.stopPropagation()

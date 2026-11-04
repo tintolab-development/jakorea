@@ -20,11 +20,15 @@ export type PublicStoryListItem = {
   viewCount?: number
 }
 
+export type PublicStoryAttachment = {
+  assetId?: number
+  originalName?: string
+  publicUrl?: string
+}
+
 export type PublicStoryDetail = PublicStoryListItem & {
   body?: string
-  attachmentOriginalName?: string
-  /** PublicStoryDetail.attachmentUrl. 없으면 null/생략. 가짜 URL 금지. */
-  attachmentUrl?: string | null
+  attachments?: PublicStoryAttachment[]
 }
 
 export type PublicStoryListPage = {

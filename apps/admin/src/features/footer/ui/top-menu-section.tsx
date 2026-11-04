@@ -19,7 +19,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -122,6 +122,7 @@ export function FooterTopMenuSection() {
       )
       linkDraftRef.current = {}
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',

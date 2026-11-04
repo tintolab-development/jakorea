@@ -3,17 +3,22 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { ImpactStoryOption, ImpactStorySection } from '@/entities/main-content/model/types'
 import { useSaveImpactStorySection } from '@/features/main-content/api/hooks'
-import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
-import { MainContentRequiredLabel } from '@/features/main-content/ui/nested-tables'
-import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT,
-  CmsInput,
-  CmsSelect,
-  CmsTextArea,
-  showUpdateCompletedAlert,
-  useCmsAlert,
-} from '@/shared/ui'
+  mainContentSaveFailureAlert,
+  readMainContentFieldErrors,
+} from '@/features/main-content/lib/mutation-failure-alert'
+import {
+  hasFieldErrors,
+  MAIN_CONTENT_LIMITS,
+  type MainContentFieldErrors,
+  validateImpactStorySection,
+} from '@/features/main-content/lib/validate'
+import { MainContentFieldControl } from '@/features/main-content/ui/field-control'
+import {
+  MainContentRequiredLabel,
+} from '@/features/main-content/ui/nested-tables'
+import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
+import { CmsInput, CmsSelect, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 type Props = {
   data: ImpactStorySection
@@ -25,11 +30,13 @@ export function ImpactStorySectionCard({ data, options }: Props) {
   const saveMutation = useSaveImpactStorySection()
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<ImpactStorySection>(data)
+  const [fieldErrors, setFieldErrors] = useState<MainContentFieldErrors>({})
 
   const selectOptions = useMemo(
     () => options.map(opt => ({ value: opt.id, label: opt.title })),
-    [options]
+    [options],
   )
+  const optionIds = useMemo(() => options.map(opt => opt.id), [options])
 
   const featuredId = isEditing ? draft.featuredContentId : data.featuredContentId
   const featuredTitle = useMemo(() => {
@@ -38,27 +45,36 @@ export function ImpactStorySectionCard({ data, options }: Props) {
 
   const handleEdit = useCallback(() => {
     setDraft(data)
+    setFieldErrors({})
     setIsEditing(true)
   }, [data])
 
   const handleCancel = useCallback(() => {
     setDraft(data)
+    setFieldErrors({})
     setIsEditing(false)
   }, [data])
 
   const handleSave = useCallback(async () => {
-    if (!draft.title.trim() || !draft.youtubeUrl.trim() || !draft.featuredContentId.trim()) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+    const invalid = validateImpactStorySection(draft, optionIds)
+    if (hasFieldErrors(invalid)) {
+      setFieldErrors(invalid)
       return
     }
     try {
       await saveMutation.mutateAsync(draft)
+      setFieldErrors({})
       setIsEditing(false)
-      showUpdateCompletedAlert()
+      showSaveCompletedAlert()
     } catch (error) {
+      const mapped = readMainContentFieldErrors(error)
+      if (mapped) {
+        setFieldErrors(mapped)
+        return
+      }
       showAlert(mainContentSaveFailureAlert(error, '임팩트 스토리'))
     }
-  }, [draft, saveMutation, showAlert])
+  }, [draft, optionIds, saveMutation, showAlert])
 
   const mode = isEditing ? 'edit' : 'view'
   const titleText = isEditing ? draft.title : data.title
@@ -83,15 +99,22 @@ export function ImpactStorySectionCard({ data, options }: Props) {
             }
             view={<span className="main-content-preline">{titleText || '-'}</span>}
             edit={
-              <CmsTextArea
-                className="cms-textarea--fixed-rows"
-                inputSize="medium"
-                width="100%"
-                rows={2}
-                value={draft.title}
-                onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 텍스트를 입력해 주세요"
-              />
+              <MainContentFieldControl error={fieldErrors.title}>
+                <CmsTextArea
+                  className="cms-textarea--fixed-rows"
+                  inputSize="medium"
+                  width="100%"
+                  rows={2}
+                  maxLength={MAIN_CONTENT_LIMITS.impactTitle}
+                  status={fieldErrors.title ? 'error' : undefined}
+                  value={draft.title}
+                  onChange={e => {
+                    setFieldErrors(prev => ({ ...prev, title: '' }))
+                    setDraft(prev => ({ ...prev, title: e.target.value }))
+                  }}
+                  placeholder="타이틀 텍스트를 입력해 주세요"
+                />
+              </MainContentFieldControl>
             }
           />
         </DetailInfoForm.Row>
@@ -108,7 +131,13 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                 inputSize="medium"
                 width="100%"
                 value={draft.youtubeUrl}
-                onChange={e => setDraft(prev => ({ ...prev, youtubeUrl: e.target.value }))}
+                maxLength={MAIN_CONTENT_LIMITS.youtubeUrl}
+                error={Boolean(fieldErrors.youtubeUrl)}
+                message={fieldErrors.youtubeUrl}
+                onChange={e => {
+                  setFieldErrors(prev => ({ ...prev, youtubeUrl: '' }))
+                  setDraft(prev => ({ ...prev, youtubeUrl: e.target.value }))
+                }}
                 placeholder="유튜브 링크를 입력해 주세요"
               />
             }
@@ -127,7 +156,10 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                 withAllOption={false}
                 options={selectOptions}
                 value={draft.featuredContentId}
+                error={Boolean(fieldErrors.featuredStoryId)}
+                message={fieldErrors.featuredStoryId}
                 onChange={value => {
+                  setFieldErrors(prev => ({ ...prev, featuredStoryId: '' }))
                   setDraft(prev => ({
                     ...prev,
                     featuredContentId: String(value ?? ''),

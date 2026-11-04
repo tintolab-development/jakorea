@@ -1,13 +1,34 @@
 /**
- * 메인 콘텐츠 섹션 저장 실패 알림 매핑
+ * 메인 콘텐츠 섹션 저장 실패 — 필드 에러 / 알림 매핑
  */
 
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
+import type { MainContentFieldErrors } from '@/features/main-content/lib/validate'
 import {
-  type AdminMutationAlert,
   mapCommonRemoteMutationFailure,
+  readApiErrorCode,
+  readApiErrorField,
   readApiErrorMessage,
+  type AdminMutationAlert,
 } from '@/shared/lib/api-error-message'
+
+export function isImpactFeaturedStoryConflictError(error: unknown): boolean {
+  return readApiErrorCode(error) === 'IMPACT_FEATURED_STORY_CONFLICT'
+}
+
+/** 400 VALIDATION_ERROR · 409 IMPACT_FEATURED_STORY_CONFLICT → 해당 인풋 메시지 */
+export function readMainContentFieldErrors(error: unknown): MainContentFieldErrors | null {
+  const field = readApiErrorField(error)
+  const message = readApiErrorMessage(error)?.trim()
+  if (isImpactFeaturedStoryConflictError(error)) {
+    return {
+      featuredStoryId:
+        message ||
+        'The representative Impact Story must already be public and its publication time must have arrived.',
+    }
+  }
+  if (readApiErrorCode(error) !== 'VALIDATION_ERROR' || !field || !message) return null
+  return { [field]: message }
+}
 
 export function mainContentSaveFailureAlert(
   error: unknown,
@@ -16,21 +37,9 @@ export function mainContentSaveFailureAlert(
   const common = mapCommonRemoteMutationFailure(error)
   if (common) return common
 
-  const message = readApiErrorMessage(error) ?? ''
-  if (/youtubeUrl|youtube/i.test(message)) {
-    return { title: '입력 확인', content: '유튜브 링크를 확인해 주세요.' }
-  }
-  if (/attachment|첨부|IMPACT_STORY/i.test(message)) {
-    return { title: '저장 실패', content: '대표 콘텐츠 이미지를 확인해 주세요.' }
-  }
-  if (/cta1Url|cta2Url|cta.*url/i.test(message)) {
-    return {
-      title: '연결 링크 형식 오류',
-      content: 'CTA 링크는 http:// 또는 https://로 시작하는 주소를 입력해 주세요.',
-    }
-  }
-  if (/\btitle\b/i.test(message)) {
-    return REQUIRED_FIELDS_INCOMPLETE_ALERT
+  const message = readApiErrorMessage(error)
+  if (message) {
+    return { title: '저장 실패', content: message }
   }
 
   return {

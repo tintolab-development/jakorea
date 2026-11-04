@@ -26,7 +26,7 @@ export type NoticeListItem = {
   publishedAtLabel: string
 }
 
-/** 공지 상세 — 홈페이지 어드민 공개 공지 필드와 대응. 배열 첨부는 화면 모델이며 API 계약을 확정하지 않음 */
+/** 공지 상세 — 공개 GET attachments[] */
 export type NoticeDetail = NoticeListItem & {
   content: string
   contentFormat: NoticeContentFormat

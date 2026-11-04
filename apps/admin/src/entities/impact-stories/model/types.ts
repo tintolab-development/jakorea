@@ -2,7 +2,9 @@
  * 임팩트 스토리 도메인
  */
 
-export type ImpactStoryAttachmentMime = 'image/jpeg' | 'image/png'
+import type { GeneralAttachmentMime } from '@/shared/lib/attachment-policy'
+
+export type ImpactStoryAttachmentMime = GeneralAttachmentMime
 
 export type ImpactStoryAttachment = {
   id: string

@@ -127,7 +127,7 @@ export function ImpactStoryDetailPage() {
             <p className="impact-story-detail-page__empty" role="alert">
               게시글을 찾을 수 없습니다.
             </p>
-            <CmsButton variant="secondary" size="large" type="button" onClick={goList}>
+            <CmsButton variant="secondary" size="medium" type="button" onClick={goList}>
               목록
             </CmsButton>
           </div>
@@ -422,14 +422,14 @@ function ImpactStoryDetailView({
         </div>
 
         <div className="impact-story-detail-page__actions">
-          <CmsButton variant="secondary" size="large" type="button" onClick={onList}>
+          <CmsButton variant="secondary" size="medium" type="button" onClick={onList}>
             목록
           </CmsButton>
           <div className="impact-story-detail-page__actions-right">
-            <CmsButton variant="delete" size="large" type="button" onClick={onDelete}>
+            <CmsButton variant="delete" size="medium" type="button" onClick={onDelete}>
               삭제
             </CmsButton>
-            <CmsButton variant="primary" size="large" type="button" onClick={onEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={onEdit}>
               수정
             </CmsButton>
           </div>

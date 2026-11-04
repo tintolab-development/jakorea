@@ -395,13 +395,15 @@ const detailSample: PublicCareerPostingDetail = {
   recruitEnd: '2026-11-20',
   body: '<p>본문</p>',
   viewCount: 1232,
-  attachment: {
-    assetId: 9,
-    originalName: '모집요강.pdf',
-    publicUrl: 'https://example.test/file.pdf',
-    purpose: 'CAREERS_POSTING_ATTACHMENT',
-    status: 'READY',
-  },
+  attachments: [
+    {
+      assetId: 9,
+      originalName: '모집요강.pdf',
+      publicUrl: 'https://example.test/file.pdf',
+      purpose: 'CAREERS_POSTING_ATTACHMENT',
+      status: 'READY',
+    },
+  ],
 }
 
 const detail = mapPublicCareerPostingDetail(detailSample)
@@ -446,7 +448,7 @@ assert.equal(
     body: '',
     recruitStart: null,
     recruitEnd: null,
-    attachment: null,
+    attachments: [],
     viewCount: 1,
   })?.content,
   '',
@@ -454,14 +456,14 @@ assert.equal(
 assert.equal(
   mapPublicCareerPostingDetail({
     ...detailSample,
-    attachment: { originalName: '모집요강.pdf' },
+    attachments: [{ originalName: '모집요강.pdf' }],
   })?.attachments.length,
   0,
 )
 assert.equal(
   mapPublicCareerPostingDetail({
     ...detailSample,
-    attachment: { publicUrl: 'https://example.test/file.pdf' },
+    attachments: [{ publicUrl: 'https://example.test/file.pdf' }],
   })?.attachments.length,
   0,
 )

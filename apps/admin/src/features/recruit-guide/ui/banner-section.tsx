@@ -12,7 +12,7 @@ import type {
 import { useSaveRecruitBanner } from '@/features/recruit-guide/api/hooks'
 import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-failure-alert'
 import { BannerFormModal } from '@/features/recruit-guide/ui/banner-form-modal'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -82,6 +82,7 @@ export function BannerSectionCard({ banner }: Props) {
       try {
         await saveMutation.mutateAsync(values)
         setModalOpen(false)
+        showSaveCompletedAlert()
       } catch (err) {
         showAlert(
           recruitGuideSaveFailureAlert(

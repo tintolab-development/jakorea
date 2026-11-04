@@ -4,6 +4,8 @@
  * 등록·수정 폼 게시글 유형은 모집(recruiting) · 발표(result)만 선택
  */
 
+import type { GeneralAttachmentMime } from '@/shared/lib/attachment-policy'
+
 export type RecruitPostingStatus = 'recruiting' | 'result' | 'closed'
 
 /** 등록·수정 모달 — 게시글 유형 (모집 / 발표) */
@@ -11,15 +13,7 @@ export type RecruitPostingFormStatus = 'recruiting' | 'result'
 
 export type RecruitPostingVisibility = 'public' | 'private'
 
-export type RecruitPostingAttachmentMime =
-  | 'image/jpeg'
-  | 'image/png'
-  | 'application/pdf'
-  | 'application/msword'
-  | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-  | 'application/vnd.ms-excel'
-  | 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  | 'application/octet-stream'
+export type RecruitPostingAttachmentMime = GeneralAttachmentMime
 
 export type RecruitPostingAttachment = {
   id: string

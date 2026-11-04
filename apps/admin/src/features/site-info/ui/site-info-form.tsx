@@ -15,6 +15,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  showSaveCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -22,8 +23,7 @@ import './site-info-form.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
 ]
 
 const TOOLBAR_DESCRIPTION =
@@ -221,7 +221,7 @@ function ImageEditField({
       if (!isAllowedImageFile(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }
@@ -323,6 +323,7 @@ export function SiteInfoFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(toSaveInput({ ...draft, siteName, siteDescription }))
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (error) {
       if (error instanceof Error && error.message === 'SITE_NAME_REQUIRED') {
         setNameError('사이트명을 입력해 주세요.')
@@ -352,7 +353,7 @@ export function SiteInfoFormCard({ data }: Props) {
           {isEditing ? (
             <CmsButton
               variant="primary"
-              size="large"
+              size="medium"
               type="button"
               loading={saveMutation.isPending}
               disabled={saveMutation.isPending}
@@ -363,7 +364,7 @@ export function SiteInfoFormCard({ data }: Props) {
               저장
             </CmsButton>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

@@ -25,7 +25,7 @@ import {
   SocialLinksSortableTable,
 } from '@/features/social-link/ui/sortable-table'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
-import { CmsButton, CmsInput, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -146,7 +146,7 @@ export function SocialLinksPage() {
       )
       setDraftUrls({})
       setIsEditing(false)
-      showUpdateCompletedAlert()
+      showSaveCompletedAlert()
     } catch (error) {
       showAlert(
         socialLinkMutationFailureAlert(error, '소셜 링크 저장에 실패했습니다. 다시 시도해 주세요.')

@@ -47,8 +47,11 @@ export type ImpactStoryDetail = ImpactStoryListItem & {
   /** 공개 API `body`. 있으면 RichTextViewer로 렌더 */
   body?: string
   bodyFormat?: ImpactStoryBodyFormat
-  attachmentOriginalName?: string
-  attachmentUrl?: string
+  attachments: Array<{
+    id: string
+    name: string
+    fileUrl?: string
+  }>
 }
 
 export type ImpactStoryDetailStatus = 'loading' | 'ready' | 'not-found' | 'error'

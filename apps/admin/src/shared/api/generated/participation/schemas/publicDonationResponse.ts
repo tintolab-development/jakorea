@@ -7,9 +7,9 @@
  */
 
 export interface PublicDonationResponse {
-  title?: string;
-  cta1Label?: string;
-  cta1Url?: string;
-  cta2Label?: string;
-  cta2Url?: string;
+  title: string;
+  cta1Label: string;
+  cta1Url: string;
+  cta2Label: string;
+  cta2Url: string;
 }

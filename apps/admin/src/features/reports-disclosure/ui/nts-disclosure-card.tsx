@@ -10,7 +10,7 @@ import {
   useSaveNtsDisclosure,
 } from '@/features/reports-disclosure/api/hooks'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, PageContentLoading, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, PageContentLoading, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './nts-disclosure-card.css'
 
@@ -55,6 +55,7 @@ export function NtsDisclosureCard() {
     try {
       await saveMutation.mutateAsync(url)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -97,7 +98,7 @@ export function NtsDisclosureCard() {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="medium"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending} >
@@ -105,7 +106,7 @@ export function NtsDisclosureCard() {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="medium"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -115,7 +116,7 @@ export function NtsDisclosureCard() {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}
@@ -127,6 +128,8 @@ export function NtsDisclosureCard() {
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="버튼 연결 링크"
+              labelWidth={200}
+              required={isEditing}
               view={null}
               edit={
                 <CmsInput

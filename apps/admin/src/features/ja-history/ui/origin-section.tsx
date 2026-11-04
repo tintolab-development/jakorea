@@ -3,7 +3,7 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryOrigin } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryOrigin } from '@/features/ja-history/api/hooks'
-import { useCmsAlert } from '@/shared/ui'
+import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 
 export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
@@ -32,7 +32,10 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
         learningEmphasis: draft.learningEmphasis,
       })
       .then(
-        () => setEditing(false),
+        () => {
+          setEditing(false)
+          showSaveCompletedAlert()
+        },
         error => {
           showAlert(jaHistorySaveAlert(error, 'JA의 시작 저장에 실패했습니다. 다시 시도해 주세요.'))
         }

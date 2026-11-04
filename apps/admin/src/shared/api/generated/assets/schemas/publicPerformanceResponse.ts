@@ -7,10 +7,10 @@
  */
 
 export interface PublicPerformanceResponse {
-  title?: string;
+  title: string;
   networkDistributionCount?: number;
   partnerOrganizationCount?: number;
   educatorCount?: number;
   youthBeneficiaryCount?: number;
-  bottomText?: string;
+  bottomText: string;
 }

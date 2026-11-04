@@ -90,7 +90,7 @@ export function ModalsSection() {
         open={alertOpen}
         onClose={() => setAlertOpen(false)}
         title="안내"
-        content="파일은 총 최대 15MB까지 업로드 가능합니다."
+        content="20MB를 초과한 파일은 등록할 수 없습니다."
       />
     </DsSection>
   )

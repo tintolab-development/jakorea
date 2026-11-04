@@ -17,4 +17,18 @@ export const adminAuthPaths = {
   refresh: () => `${adminAuthPaths.prefix}/refresh`,
   mfaVerify: () => `${adminAuthPaths.prefix}/mfa/verify`,
   mfaEnrollment: () => `${adminAuthPaths.prefix}/mfa/enrollment`,
+  passwordChange: () => `${adminAuthPaths.prefix}/password/change`,
+} as const
+
+/** CMS 계정(내 정보) — Homepage CRUD와 분리. Vite/PROD에서 CMS origin으로 보냄 */
+export const cmsAdminMePaths = {
+  me: () => '/api/admin/me',
+  marketingConsent: () => '/api/admin/me/marketing-consent',
+  identityContact: () => '/api/admin/me/identity-contact',
+  withdrawals: () => '/api/admin/me/withdrawals',
+} as const
+
+export const cmsPublicTermsDocumentPaths = {
+  current: (termsType: string) =>
+    `/api/public/terms-documents/${encodeURIComponent(termsType)}/current`,
 } as const

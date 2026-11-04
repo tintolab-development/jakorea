@@ -21,7 +21,7 @@ import {
   directionsSaveFailureAlert,
   validateDirectionsBeforeSave,
 } from '@/features/directions/lib/save-validation'
-import { CmsButton, CmsInput, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './directions-form-card.css'
 
@@ -83,7 +83,7 @@ export function DirectionsFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
-      showUpdateCompletedAlert()
+      showSaveCompletedAlert()
     } catch (error) {
       showAlert(directionsSaveFailureAlert(error))
       void queryClient.invalidateQueries({ queryKey: directionsQueryKeys.all })
