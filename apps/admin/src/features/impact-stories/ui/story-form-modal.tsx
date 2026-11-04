@@ -23,6 +23,18 @@ import {
   RichTextEditor,
 } from '@/shared/rich-text'
 import {
+  ATTACHMENT_ACCEPT,
+  ATTACHMENT_ERROR,
+  ATTACHMENT_MULTI_GENERAL_GUIDE_LINE,
+  ATTACHMENT_MULTI_TOTAL_MAX_BYTES,
+  ATTACHMENT_PER_FILE_MAX_BYTES,
+  ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
+  generalAttachmentMimeFromFile,
+  sumAttachmentBytes,
+  validateGeneralAttachmentBatch,
+  validateSingleJpgPngFile,
+} from '@/shared/lib/attachment-policy'
+import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
@@ -34,31 +46,17 @@ import {
   CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
 
 import './story-form-modal.css'
 
-const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
-const MAX_BYTES = FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
-
 const THUMB_GUIDE = [
-  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
+  ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
   '- 권장 배너 사이즈는 630 × 355px입니다.',
 ] as const
 
-const ATTACH_GUIDE = [
-  '- 파일은 JPG, PNG, HWP, Excel, PDF, Word 형식만 등록 가능하며, 최대 10개(파일당 20MB, 총 100MB)까지 첨부할 수 있습니다.',
-  '- 첨부 파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-] as const
-
-function isAllowedImageFile(file: File): boolean {
-  const type = file.type.toLowerCase()
-  if (type === 'image/jpeg' || type === 'image/png') return true
-  const name = file.name.toLowerCase()
-  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
-}
+const ATTACH_GUIDE = [ATTACHMENT_MULTI_GENERAL_GUIDE_LINE] as const
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -70,10 +68,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 function mimeFromFile(file: File): ImpactStoryAttachment['mime'] {
-  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
-    return 'image/png'
-  }
-  return 'image/jpeg'
+  return generalAttachmentMimeFromFile(file)
 }
 
 export type StoryFormValues = ImpactStoryCreateInput
@@ -191,22 +186,8 @@ export function StoryFormModal({
   const fileNames = useMemo(() => attachments.map(a => a.name), [attachments])
   const thumbnailNames = useMemo(() => (thumbnail?.name ? [thumbnail.name] : []), [thumbnail])
 
-  const readAcceptedImage = useCallback(
+  const readAcceptedFile = useCallback(
     async (file: File, id: string): Promise<ImpactStoryAttachment | null> => {
-      if (!isAllowedImageFile(file)) {
-        showAlert({
-          title: '파일 형식',
-          content: 'JPG, PNG 형식만 등록할 수 있습니다.',
-        })
-        return null
-      }
-      if (file.size > MAX_BYTES) {
-        showAlert({
-          title: '파일 용량',
-          content: '파일은 최대 20MB까지 등록 가능합니다.',
-        })
-        return null
-      }
       try {
         const dataUrl = await readFileAsDataUrl(file)
         return {
@@ -231,25 +212,42 @@ export function StoryFormModal({
     async (files: File[]) => {
       const file = files[0]
       if (!file) return
-      const next = await readAcceptedImage(file, `thumb-${Date.now()}`)
+      const error = validateSingleJpgPngFile(file)
+      if (error) {
+        showAlert({
+          title: error === ATTACHMENT_ERROR.format ? '파일 형식' : '파일 용량',
+          content: error,
+        })
+        return
+      }
+      const next = await readAcceptedFile(file, `thumb-${Date.now()}`)
       if (next) setThumbnail(next)
     },
-    [readAcceptedImage]
+    [readAcceptedFile, showAlert]
   )
 
   const handleFilesChange = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return
+      const error = validateGeneralAttachmentBatch({
+        incoming: files,
+        existingCount: attachments.length,
+        existingBytes: sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 })),
+      })
+      if (error) {
+        showAlert({ title: '안내', content: error })
+        return
+      }
       const accepted: ImpactStoryAttachment[] = []
       for (let i = 0; i < files.length; i++) {
-        const next = await readAcceptedImage(files[i]!, `new-${Date.now()}-${i}`)
+        const next = await readAcceptedFile(files[i]!, `new-${Date.now()}-${i}`)
         if (next) accepted.push(next)
       }
       if (accepted.length > 0) {
         setAttachments(prev => [...prev, ...accepted])
       }
     },
-    [readAcceptedImage]
+    [attachments, readAcceptedFile, showAlert]
   )
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -480,10 +478,10 @@ export function StoryFormModal({
                   <FileSelectField
                     className="story-form-modal__file-field"
                     multiple={false}
-                    accept={IMAGE_ACCEPT}
+                    accept={ATTACHMENT_ACCEPT.jpgPng}
                     buttonLabel="파일 추가"
                     fileNames={thumbnailNames}
-                    maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                    maxTotalBytes={ATTACHMENT_PER_FILE_MAX_BYTES}
                     guideLines={THUMB_GUIDE}
                     onFilesChange={files => {
                       void handleThumbnailChange(files)
@@ -501,10 +499,11 @@ export function StoryFormModal({
                   <FileSelectField
                     className="story-form-modal__file-field"
                     multiple
-                    accept={IMAGE_ACCEPT}
+                    accept={ATTACHMENT_ACCEPT.general}
                     buttonLabel="파일 추가"
                     fileNames={fileNames}
-                    maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                    currentTotalBytes={sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 }))}
+                    maxTotalBytes={ATTACHMENT_MULTI_TOTAL_MAX_BYTES}
                     guideLines={ATTACH_GUIDE}
                     onFilesChange={files => {
                       void handleFilesChange(files)

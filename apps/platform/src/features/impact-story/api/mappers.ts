@@ -83,8 +83,18 @@ export function mapPublicStoryDetail(row: PublicStoryDetail): ImpactStoryDetail 
     blocks: body ? [] : [{ type: 'image', heightPx: 5000 }],
     body,
     bodyFormat: body ? detectStoryBodyFormat(body) : undefined,
-    attachmentOriginalName: readString(row.attachmentOriginalName),
-    attachmentUrl: readString(row.attachmentUrl),
+    attachments: (row.attachments ?? []).flatMap((file, index) => {
+      const name = readString(file.originalName)
+      const fileUrl = readString(file.publicUrl)
+      if (!name && !fileUrl) return []
+      return [
+        {
+          id: file.assetId != null ? String(file.assetId) : `attachment-${index + 1}`,
+          name: name ?? 'attachment',
+          fileUrl,
+        },
+      ]
+    }),
   }
 }
 

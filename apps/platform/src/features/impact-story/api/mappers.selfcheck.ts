@@ -72,8 +72,7 @@ assert.ok(detail)
 assert.equal(detail.bodyFormat, 'html')
 assert.equal(detail.viewCount, 9)
 assert.equal(detail.blocks.length, 0)
-assert.equal(detail.attachmentOriginalName, undefined)
-assert.equal(detail.attachmentUrl, undefined)
+assert.deepEqual(detail.attachments, [])
 
 const detailWithAttachment = mapPublicStoryDetail({
   id: 42,
@@ -81,12 +80,18 @@ const detailWithAttachment = mapPublicStoryDetail({
   categoryName: '스토리',
   publishAt: '2026-08-08T00:00:00.000Z',
   body: '<p>본문</p>',
-  attachmentOriginalName: 'brief.pdf',
-  attachmentUrl: 'https://cdn.example/brief.pdf',
+  attachments: [
+    {
+      assetId: 101,
+      originalName: 'brief.pdf',
+      publicUrl: 'https://cdn.example/brief.pdf',
+    },
+  ],
 })
 assert.ok(detailWithAttachment)
-assert.equal(detailWithAttachment.attachmentOriginalName, 'brief.pdf')
-assert.equal(detailWithAttachment.attachmentUrl, 'https://cdn.example/brief.pdf')
+assert.equal(detailWithAttachment.attachments.length, 1)
+assert.equal(detailWithAttachment.attachments[0]?.name, 'brief.pdf')
+assert.equal(detailWithAttachment.attachments[0]?.fileUrl, 'https://cdn.example/brief.pdf')
 
 const pinned = featuredFromPreview([
   { ...mapped!, id: '1', isFeatured: true },

@@ -8,7 +8,7 @@
 import type { ProgramSummary } from './programSummary';
 
 export interface EducationResponse {
-  title?: string;
+  title: string;
   programs?: ProgramSummary[];
   version?: number;
 }

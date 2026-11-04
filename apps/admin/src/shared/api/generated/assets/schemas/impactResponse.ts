@@ -8,9 +8,9 @@
 import type { MainStoryOption } from './mainStoryOption';
 
 export interface ImpactResponse {
-  title?: string;
-  youtubeUrl?: string;
-  featuredStoryId?: number;
+  title: string;
+  youtubeUrl: string;
+  featuredStoryId: number;
   featuredStoryOptions?: MainStoryOption[];
   version?: number;
 }

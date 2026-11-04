@@ -282,24 +282,20 @@ function postingKey(item: { id?: number; externalKey?: string }): string {
   return typeof item.id === 'number' && Number.isFinite(item.id) ? String(item.id) : ''
 }
 
-function mapPostingAttachment(
-  attachment: PublicCareerPostingAsset | null | undefined
+function mapPostingAttachments(
+  attachments: PublicCareerPostingAsset[] | null | undefined
 ): CareerPostingAttachment[] {
-  if (!attachment) return []
-  const name = singleLine(attachment.originalName)
-  const fileUrl = typeof attachment.publicUrl === 'string' ? attachment.publicUrl.trim() : ''
-  if (!name || !fileUrl) return []
-  const id =
-    typeof attachment.assetId === 'number' && Number.isFinite(attachment.assetId)
-      ? String(attachment.assetId)
-      : 'attachment-1'
-  return [
-    {
-      id,
-      name,
-      fileUrl,
-    },
-  ]
+  if (!attachments?.length) return []
+  return attachments.flatMap((attachment, index) => {
+    const name = singleLine(attachment.originalName)
+    const fileUrl = typeof attachment.publicUrl === 'string' ? attachment.publicUrl.trim() : ''
+    if (!name || !fileUrl) return []
+    const id =
+      typeof attachment.assetId === 'number' && Number.isFinite(attachment.assetId)
+        ? String(attachment.assetId)
+        : `attachment-${index + 1}`
+    return [{ id, name, fileUrl }]
+  })
 }
 
 export function mapPublicCareerPostingDetail(
@@ -338,7 +334,7 @@ export function mapPublicCareerPostingDetail(
     content: typeof item.body === 'string' ? item.body : '',
     contentFormat: 'html',
     viewCount,
-    attachments: mapPostingAttachment(item.attachment),
+    attachments: mapPostingAttachments(item.attachments),
     buttonLabel: link.buttonLabel,
     linkUrl: link.linkUrl,
   }
