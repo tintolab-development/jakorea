@@ -10,6 +10,7 @@ import {
   ContentModal,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  ThumbnailPlaceholder,
   useCmsAlert,
 } from '@/shared/ui'
 import type { HeroBanner, HeroBannerCreateInput } from '@/entities/hero-banner/model/types'
@@ -54,29 +55,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 export type HeroBannerFormValues = HeroBannerCreateInput
-
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="36"
-      height="36"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
 
 type FormBodyProps = {
   mode: 'create' | 'edit'
@@ -271,7 +249,7 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             edit={
               <div className="hero-banner-form-modal__image-row">
                 <div className="hero-banner-form-modal__preview">
-                  {imageUrl ? <img src={imageUrl} alt="배너 미리보기" /> : <ImagePlaceholderIcon />}
+                  {imageUrl ? <img src={imageUrl} alt="배너 미리보기" /> : <ThumbnailPlaceholder />}
                 </div>
                 <FileSelectField
                   multiple={false}
@@ -295,7 +273,7 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
                 placeholder="상단 텍스트를 입력해 주세요"
                 value={topText}
@@ -328,7 +306,7 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
                 placeholder="하단 문구를 입력해 주세요"
                 value={bottomText}
@@ -343,7 +321,7 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
                 placeholder="연결 링크를 입력해 주세요"
                 value={linkUrl}

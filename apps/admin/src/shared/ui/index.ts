@@ -78,6 +78,7 @@ export type {
 
 export { FileSelectField } from './file-select-field'
 export type { FileSelectFieldProps } from './file-select-field'
+export { ThumbnailPlaceholder } from './thumbnail-placeholder'
 export {
   FILE_SELECT_MAX_TOTAL_BYTES,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
