@@ -162,6 +162,7 @@ type FormBodyProps = {
   /** 현재 전체 후원사 수 (create: max=n+1, edit: max=n) */
   totalCount: number
   confirmLoading?: boolean
+  serverSortOrderError?: string
   onCancel: () => void
   onSubmit: (values: CorporatePartnerFormValues) => void
 }
@@ -171,13 +172,13 @@ function CorporatePartnerFormBody({
   initial,
   totalCount,
   confirmLoading,
+  serverSortOrderError,
   onCancel,
   onSubmit,
 }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
-  const SORT_ORDER_MAX = 30
-  const maxOrder = SORT_ORDER_MAX
-  const defaultOrder = mode === 'edit' && initial ? initial.sortOrder : Math.min(totalCount + 1, SORT_ORDER_MAX)
+  const maxOrder = mode === 'create' ? totalCount + 1 : Math.max(totalCount, 1)
+  const defaultOrder = mode === 'edit' && initial ? initial.sortOrder : totalCount + 1
 
   const [isPublic, setIsPublic] = useState(() =>
     mode === 'edit' && initial ? initial.isPublic : true
@@ -196,6 +197,11 @@ function CorporatePartnerFormBody({
     sortOrder?: string
   }>({})
 
+  useEffect(() => {
+    if (!serverSortOrderError) return
+    setErrors(prev => ({ ...prev, sortOrder: serverSortOrderError }))
+  }, [serverSortOrderError])
+
   const handleNameChange = useCallback((value: string) => {
     nameRef.current = value
     setErrors(prev => {
@@ -204,7 +210,7 @@ function CorporatePartnerFormBody({
     })
   }, [])
 
-  const sortHelper = '* 1부터 30 사이의 숫자를 입력해 주세요.'
+  const sortHelper = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
 
   /** 노출 순서 입력값 1…maxOrder 범위로 정규화 (빈 문자열은 허용 — 입력 중) */
   const normalizeSortOrderInput = useCallback(
@@ -275,7 +281,7 @@ function CorporatePartnerFormBody({
     }
     const orderNum = Math.floor(Number(sortOrder))
     if (!Number.isFinite(orderNum) || orderNum < 1 || orderNum > maxOrder) {
-      nextErrors.sortOrder = '* 1부터 30 사이의 숫자를 입력해 주세요.'
+      nextErrors.sortOrder = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
     }
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -455,6 +461,7 @@ export function CorporatePartnerFormModal({
   initial,
   totalCount,
   confirmLoading,
+  serverSortOrderError,
   onCancel,
   onSubmit,
 }: {
@@ -463,6 +470,7 @@ export function CorporatePartnerFormModal({
   initial?: CorporatePartner | null
   totalCount: number
   confirmLoading?: boolean
+  serverSortOrderError?: string
   onCancel: () => void
   onSubmit: (values: CorporatePartnerFormValues) => void
 }) {
@@ -477,6 +485,7 @@ export function CorporatePartnerFormModal({
       initial={initial}
       totalCount={totalCount}
       confirmLoading={confirmLoading}
+      serverSortOrderError={serverSortOrderError}
       onCancel={onCancel}
       onSubmit={onSubmit}
     />

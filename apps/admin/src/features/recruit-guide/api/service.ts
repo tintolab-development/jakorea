@@ -18,7 +18,7 @@ function requiredText(value: string, requiredCode: string, tooLongCode: string, 
     return normalized;
 }
 function optionalText(value: string, tooLongCode: string, maxLength: number) {
-    const normalized = value.trimEnd();
+    const normalized = value.trim();
     if (normalized.length > maxLength)
         throw new Error(tooLongCode);
     return normalized;

@@ -21,7 +21,10 @@ import {
 } from '@/features/corporate-partner/api/hooks'
 import { corporatePartnerQueryKeys } from '@/features/corporate-partner/api/query-keys'
 import { CORPORATE_PARTNERS_CHANGED_EVENT } from '@/features/corporate-partner/api/store'
-import { corporatePartnerMutationFailureAlert } from '@/features/corporate-partner/lib/mutation-failure-alert'
+import {
+  corporatePartnerMutationFailureAlert,
+  isSponsorshipOrderConflict,
+} from '@/features/corporate-partner/lib/mutation-failure-alert'
 import {
   CorporatePartnerFormModal,
   type CorporatePartnerFormValues,
@@ -178,6 +181,7 @@ export function CorporatePartnersPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [editingPartner, setEditingPartner] = useState<CorporatePartner | null>(null)
+  const [sortOrderServerError, setSortOrderServerError] = useState<string>()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const hasActiveFilter = useMemo(() => {
@@ -249,12 +253,14 @@ export function CorporatePartnersPage() {
   const openCreate = useCallback(() => {
     setFormMode('create')
     setEditingPartner(null)
+    setSortOrderServerError(undefined)
     setFormOpen(true)
   }, [])
 
   const openEdit = useCallback((partner: CorporatePartner) => {
     setFormMode('edit')
     setEditingPartner(partner)
+    setSortOrderServerError(undefined)
     setFormOpen(true)
   }, [])
 
@@ -270,7 +276,13 @@ export function CorporatePartnersPage() {
         }
         setFormOpen(false)
         setEditingPartner(null)
+        setSortOrderServerError(undefined)
       } catch (error) {
+        if (isSponsorshipOrderConflict(error)) {
+          const maxOrder = formMode === 'create' ? allCount + 1 : Math.max(allCount, 1)
+          setSortOrderServerError(`* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`)
+          return
+        }
         const alert = corporatePartnerMutationFailureAlert(
           error,
           formMode === 'edit'
@@ -280,7 +292,7 @@ export function CorporatePartnersPage() {
         showAlert(alert)
       }
     },
-    [createMutation, editingPartner, formMode, showAlert, updateMutation]
+    [allCount, createMutation, editingPartner, formMode, showAlert, updateMutation]
   )
 
   const handleDeleteClick = useCallback(() => {
@@ -493,10 +505,12 @@ export function CorporatePartnersPage() {
         mode={formMode}
         initial={editingPartner}
         totalCount={allCount}
+        serverSortOrderError={sortOrderServerError}
         confirmLoading={formLoading}
         onCancel={() => {
           setFormOpen(false)
           setEditingPartner(null)
+          setSortOrderServerError(undefined)
         }}
         onSubmit={values => {
           void handleFormSubmit(values)
