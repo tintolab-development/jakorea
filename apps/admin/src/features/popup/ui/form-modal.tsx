@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsPeriodDatePicker,
   CmsInput,
@@ -204,47 +205,29 @@ function PopupFormBody({
       Boolean(imageUrl.trim())
 
     if (!imageUrl.trim() && !hasExistingRemoteImage) {
-      showAlert({
-        title: '이미지 필수',
-        content: '팝업 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (useRemote && variant === 'create' && !pendingImageFile) {
-      showAlert({
-        title: '이미지 필수',
-        content: '팝업 이미지를 파일로 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (useRemote && variant === 'detail' && imageCleared && !pendingImageFile) {
-      showAlert({
-        title: '이미지 필수',
-        content: '팝업 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (!name.trim()) {
-      showAlert({
-        title: '팝업명 필수',
-        content: '팝업명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (!altText.trim()) {
-      showAlert({
-        title: '대체 텍스트 필수',
-        content: '대체 텍스트를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     const start = periodRange[0]
     const end = periodRange[1]
     if (!start || !end) {
-      showAlert({
-        title: '게시 기간 필수',
-        content: '게시 기간을 선택해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (isActive && isPublishPeriodExpired(end)) {
@@ -252,10 +235,7 @@ function PopupFormBody({
       return null
     }
     if (linkEnabled && !linkUrl.trim()) {
-      showAlert({
-        title: '연결 링크 필수',
-        content: '연결 URL을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     const trimmedLinkUrl = linkEnabled ? linkUrl.trim() : ''

@@ -10,6 +10,7 @@ import {
 } from '@/entities/income-expense/model/types'
 import { parseAmountInput, parseRatioInput } from '@/features/income-expense/lib/format'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsRadio,
@@ -70,7 +71,7 @@ export function ItemFormModal({
   const handleSubmit = () => {
     const trimmed = name.trim()
     if (!trimmed) {
-      showAlert({ title: '입력 확인', content: '항목명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const ratioNum = parseRatioInput(ratio)
@@ -84,7 +85,7 @@ export function ItemFormModal({
       return
     }
     if (showCategory && !category) {
-      showAlert({ title: '입력 확인', content: '구분을 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
 

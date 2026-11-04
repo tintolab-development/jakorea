@@ -8,6 +8,7 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { SiteInfo, SiteInfoSaveInput } from '@/entities/site-info/model/types'
 import { useSaveSiteInfo } from '@/features/site-info/api/hooks'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   FileSelectField,
@@ -315,10 +316,7 @@ export function SiteInfoFormCard({ data }: Props) {
     const siteDescription = textDraftRef.current.siteDescription
     if (!siteName.trim()) {
       setNameError('사이트명을 입력해 주세요.')
-      showAlert({
-        title: '필수 항목 누락',
-        content: '사이트명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     setNameError(undefined)

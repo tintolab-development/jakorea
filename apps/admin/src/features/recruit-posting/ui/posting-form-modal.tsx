@@ -27,6 +27,7 @@ import {
 import { HTTP_LINK_URL_FORMAT_ALERT } from '@/shared/lib/http-link-url'
 import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
   CmsDateRangePicker,
@@ -262,7 +263,7 @@ export function RecruitPostingFormModal({
 
   const handleSubmit = useCallback(() => {
     if (!publishedAt || !publishedAt.isValid()) {
-      showAlert({ title: '입력 확인', content: '게시일시를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const publishedMinute = publishedAt.minute()
@@ -276,7 +277,7 @@ export function RecruitPostingFormModal({
 
     const [recruitStart, recruitEnd] = recruitRange
     if (!recruitStart?.isValid() || !recruitEnd?.isValid()) {
-      showAlert({ title: '입력 확인', content: '모집 기간을 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const startMinute = recruitStart.minute()
@@ -295,14 +296,14 @@ export function RecruitPostingFormModal({
 
     const t = title.trim()
     if (!t) {
-      showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
 
     // remote body는 HTML. 로컬 mock도 HTML을 받을 수 있다.
     const contentHtml = getHTML().trim()
     if (isEmptyAdminHtml(contentHtml)) {
-      showAlert({ title: '입력 확인', content: '공고 내용을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const bodyError = getRemoteRichTextBodyError(contentHtml)
@@ -316,7 +317,9 @@ export function RecruitPostingFormModal({
       showAlert(
         linkError === HTTP_LINK_URL_FORMAT_ALERT.content
           ? HTTP_LINK_URL_FORMAT_ALERT
-          : { title: '입력 확인', content: linkError }
+          : linkError.includes('바로가기 링크')
+            ? REQUIRED_FIELDS_INCOMPLETE_ALERT
+            : { title: '입력 확인', content: linkError }
       )
       return
     }

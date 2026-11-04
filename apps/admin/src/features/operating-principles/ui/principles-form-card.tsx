@@ -28,7 +28,7 @@ import {
   PrincipleDragHandle,
   PrinciplesSortableTable,
 } from '@/features/operating-principles/ui/sortable-table'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -122,6 +122,7 @@ export function PrinciplesFormCard({ data }: Props) {
         })),
       })
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',

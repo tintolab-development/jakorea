@@ -7,6 +7,7 @@ import {
   BOARD_ROLE_GROUP_ORDER,
 } from '@/entities/board-members/model/types'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsRadio,
@@ -53,38 +54,23 @@ function BoardMemberFormBody({
 
   const handleSubmit = useCallback(() => {
     if (!roleGroup) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '이사회 직책을 선택해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!nameKo.trim()) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '한글 성명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!nameEn.trim()) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '영문 성명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!position.trim()) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '직위를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!affiliation.trim()) {
-      showAlert({
-        title: '필수 항목 미입력',
-        content: '소속 및 직책을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     onSubmit({

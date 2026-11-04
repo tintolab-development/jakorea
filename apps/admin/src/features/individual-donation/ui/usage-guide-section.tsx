@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { UsageGuideItem, UsageGuideItemId } from '@/entities/individual-donation/model/types'
 import { useSaveUsageGuide } from '@/features/individual-donation/api/hooks'
 import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -73,11 +74,11 @@ export function UsageGuideSectionCard({ items }: Props) {
       })
       for (const row of payload) {
         if (!row.mainText.trim()) {
-          showAlert({ title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!row.subText.trim()) {
-          showAlert({ title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }

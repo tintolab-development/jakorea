@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { HowItem, HowItemId } from '@/entities/talent-donation-intro/model/types'
 import { useSaveHowItems } from '@/features/talent-donation-intro/api/hooks'
 import { talentDonationIntroSaveFailureAlert } from '@/features/talent-donation-intro/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -72,11 +73,11 @@ export function HowSectionCard({ items }: Props) {
       })
       for (const row of payload) {
         if (!row.title.trim()) {
-          showAlert({ title: '입력 확인', content: '타이틀을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!row.description.trim()) {
-          showAlert({ title: '입력 확인', content: '설명 텍스트를 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }

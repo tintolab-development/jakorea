@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsPeriodDatePicker,
@@ -110,10 +111,7 @@ function StripBannerFormBody({
   const validateAndBuild = useCallback((): StripBannerFormValues | null => {
     const trimmed = text.trim()
     if (!trimmed) {
-      showAlert({
-        title: '배너 문구 필수',
-        content: '배너 문구를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (trimmed.length > TEXT_MAX_LENGTH) {
@@ -126,10 +124,7 @@ function StripBannerFormBody({
     const start = periodRange[0]
     const end = periodRange[1]
     if (!start || !end) {
-      showAlert({
-        title: '게시 기간 필수',
-        content: '게시 기간을 선택해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (isActive && isPublishPeriodExpired(end)) {
@@ -137,10 +132,7 @@ function StripBannerFormBody({
       return null
     }
     if (linkEnabled && !linkUrl.trim()) {
-      showAlert({
-        title: '연결 링크 필수',
-        content: '연결 링크를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     const trimmedLinkUrl = linkEnabled ? linkUrl.trim() : ''

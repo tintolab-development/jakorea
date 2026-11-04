@@ -18,6 +18,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
@@ -288,7 +289,11 @@ function TimelineFormBody({
       setErrors(nextErrors)
       if (alertPeriodId) setActiveId(alertPeriodId)
       if (alertMessage) {
-        showAlert({ title: '입력 확인', content: alertMessage })
+        showAlert(
+          /4자리/.test(alertMessage)
+            ? { title: '입력 확인', content: alertMessage }
+            : REQUIRED_FIELDS_INCOMPLETE_ALERT
+        )
       }
       return
     }

@@ -7,6 +7,7 @@ import { useSaveImpactStorySection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsInput,
   CmsSelect,
   CmsTextArea,
@@ -126,7 +127,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       const story = storyQuery.data
       if (pendingFile) {
         if (!draft.featuredContentId) {
-          showAlert({ title: '입력 확인', content: '대표 콘텐츠를 먼저 선택해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!story || story.id !== draft.featuredContentId) {

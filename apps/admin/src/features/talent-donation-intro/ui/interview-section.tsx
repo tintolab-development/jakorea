@@ -9,7 +9,8 @@ import type { InterviewSlot } from '@/entities/talent-donation-intro/model/types
 import { useSaveInterview } from '@/features/talent-donation-intro/api/hooks'
 import { talentDonationIntroSaveFailureAlert } from '@/features/talent-donation-intro/lib/save-failure-alert'
 import { InterviewPostPickerModal } from '@/features/talent-donation-intro/ui/interview-post-picker-modal'
-import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 import './interview-section.css'
@@ -84,19 +85,19 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
 
   const handleSave = useCallback(async () => {
     if (!draft.mainText.trim()) {
-      showAlert({ title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!draft.subText.trim()) {
-      showAlert({ title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!draft.buttonLabel.trim()) {
-      showAlert({ title: '입력 확인', content: '버튼명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!draft.linkedStoryTitle.trim() && !draft.linkedStoryId) {
-      showAlert({ title: '입력 확인', content: '연결 게시글을 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const linkedId = draft.linkedStoryId?.trim() ?? ''

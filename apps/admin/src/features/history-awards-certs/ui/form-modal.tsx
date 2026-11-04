@@ -13,6 +13,7 @@ import type {
 import { deleteConfirmContent } from '@/features/history-awards-certs/lib/delete-guards'
 import { coerceRadioBoolean } from '@/features/history-awards-certs/lib/format'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
   CmsInput,
@@ -156,29 +157,25 @@ function HacFormBody(props: BodyProps) {
       }
       const trimmed = historyContent.trim()
       if (!trimmed) {
-        showAlert({ title: '내용 필수', content: '내용을 입력해 주세요.' })
+        showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
         return
       }
       props.onSubmit({ isPublic, year: yearN, month: monthN, content: trimmed })
       return
     }
 
-    const datedCopy = KIND_COPY[props.kind]
     if (!eventOn || !eventOn.isValid()) {
-      showAlert({
-        title: `${datedCopy.dateLabel} 필수`,
-        content: `${datedCopy.dateLabel}을 선택해 주세요.`,
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const trimmedName = name.trim()
     if (!trimmedName) {
-      showAlert({ title: `${datedCopy.nameLabel} 필수`, content: datedCopy.namePlaceholder })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const org = organization.trim()
     if (!org) {
-      showAlert({ title: `${datedCopy.orgLabel} 필수`, content: datedCopy.orgPlaceholder })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const date = eventOn.format('YYYY-MM-DD')

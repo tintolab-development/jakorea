@@ -2,6 +2,7 @@
  * 소셜 링크 연결 URL 검증 — BE SafeExternalUrl / ck_main_social_url_shape 정합
  */
 import { isValidHttpLinkUrl } from '@/shared/lib/http-link-url'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 
 type LinkRow = {
   id: string
@@ -26,10 +27,6 @@ export function socialLinkUrlFormatAlert(channelNames: string[]) {
   } as const
 }
 
-export function socialLinkUrlRequiredAlert(channelNames: string[]) {
-  const targets = channelNames.join(', ')
-  return {
-    title: '연결 링크 필수',
-    content: `사용 중인 채널(${targets})의 연결 링크를 입력해 주세요.`,
-  } as const
+export function socialLinkUrlRequiredAlert(_channelNames: string[]) {
+  return REQUIRED_FIELDS_INCOMPLETE_ALERT
 }

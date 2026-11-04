@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { DonateCta } from '@/entities/individual-donation/model/types'
 import { useSaveDonateCta } from '@/features/individual-donation/api/hooks'
 import { individualDonationSaveFailureAlert } from '@/features/individual-donation/lib/save-failure-alert'
-import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -49,11 +50,11 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
     const buttonLabel = draftLabel.trim()
     const linkUrl = draftLink.trim()
     if (!buttonLabel) {
-      showAlert({ title: '입력 확인', content: '버튼명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!linkUrl) {
-      showAlert({ title: '입력 확인', content: '연결 링크를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     try {

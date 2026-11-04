@@ -3,7 +3,9 @@
  */
 
 import { MAX_ACTIVE_POPUPS, PopupActiveLimitError } from '@/entities/popup/model/types'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
+  type AdminMutationAlert,
   isEnabledLimitError,
   mapCommonRemoteMutationFailure,
   readApiErrorMessage,
@@ -25,7 +27,7 @@ export function popupMutationFailureAlert(
   error: unknown,
   fallbackContent: string,
   title = '저장 실패',
-): { title: string; content: string } {
+): AdminMutationAlert {
   if (isPopupActiveLimit(error)) return { ...ACTIVE_LIMIT_ALERT }
 
   const common = mapCommonRemoteMutationFailure(error)
@@ -33,19 +35,19 @@ export function popupMutationFailureAlert(
 
   if (error instanceof Error) {
     if (/팝업 이미지를 등록|이미지 asset/.test(error.message)) {
-      return { title: '입력 확인', content: '팝업 이미지를 등록해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
   }
 
   const message = readApiErrorMessage(error) ?? ''
   if (/image|asset|Image/i.test(message) && /required|등록|없/i.test(message)) {
-    return { title: '입력 확인', content: '팝업 이미지를 등록해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/popupName|popup name/i.test(message)) {
-    return { title: '입력 확인', content: '팝업명을 확인해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/altText|alt text|대체 텍스트/i.test(message)) {
-    return { title: '입력 확인', content: '대체 텍스트를 확인해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/linkUrl|link url|https?:\/\//i.test(message) && /invalid|형식|url/i.test(message)) {
     return {

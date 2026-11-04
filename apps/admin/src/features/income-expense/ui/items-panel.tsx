@@ -40,12 +40,16 @@ import {
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -191,10 +195,11 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       await updateMutation.mutateAsync(patches)
       setDrafts({})
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (err) {
       if (err instanceof Error) {
         if (err.message === 'EMPTY_NAME') {
-          showAlert({ title: '입력 확인', content: '항목명을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (err.message === 'BAD_RATIO') {
@@ -206,7 +211,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
           return
         }
         if (err.message === 'BAD_CATEGORY') {
-          showAlert({ title: '입력 확인', content: '구분을 선택해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }
@@ -230,6 +235,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -254,6 +260,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       try {
         await createMutation.mutateAsync(values)
         setCreateOpen(false)
+        showRegisterCompletedAlert()
       } catch (err) {
         if (err instanceof GraphItemLimitError) {
           showAlert({
@@ -526,8 +533,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       <ConfirmModal
         open={deleteConfirmOpen}
         title="항목 삭제"
-        content={`선택한 항목 ${selectedRowKeys.length}건을 삭제하시겠습니까?`}
-        warningMessage="삭제된 항목은 복구할 수 없습니다."
+        content={`선택한 항목 ${selectedRowKeys.length}건을 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.`}
         confirmText="삭제"
         cancelText="취소"
         danger

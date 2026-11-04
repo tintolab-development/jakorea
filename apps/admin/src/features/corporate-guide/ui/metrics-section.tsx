@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { MetricItem, MetricItemId } from '@/entities/corporate-guide/model/types'
 import { useSaveMetrics } from '@/features/corporate-guide/api/hooks'
 import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -73,11 +74,11 @@ export function MetricsSectionCard({ items }: Props) {
       })
       for (const row of payload) {
         if (!row.title.trim()) {
-          showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!row.description.trim()) {
-          showAlert({ title: '입력 확인', content: '설명을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }

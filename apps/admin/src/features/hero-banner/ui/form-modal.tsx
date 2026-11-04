@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsTextArea,
@@ -132,24 +133,15 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
       Boolean(imageUrl.trim())
 
     if (!imageUrl.trim() && !hasExistingRemoteImage) {
-      showAlert({
-        title: '배너 이미지 필수',
-        content: '배너 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (useRemote && mode === 'create' && !pendingImageFile) {
-      showAlert({
-        title: '배너 이미지 필수',
-        content: '배너 이미지를 파일로 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (useRemote && mode === 'edit' && imageCleared && !pendingImageFile) {
-      showAlert({
-        title: '배너 이미지 필수',
-        content: '배너 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const trimmedLinkUrl = linkUrl.trim()

@@ -45,6 +45,9 @@ import {
   AdminFilterTextInput,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -204,6 +207,7 @@ export function ReportListPanel({ kind }: Props) {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -233,10 +237,13 @@ export function ReportListPanel({ kind }: Props) {
     try {
       if (modalMode === 'create') {
         await createMutation.mutateAsync(values)
+        closeModal()
+        showRegisterCompletedAlert()
       } else if (editing) {
         await updateMutation.mutateAsync({ ...values, id: editing.id })
+        closeModal()
+        showUpdateCompletedAlert()
       }
-      closeModal()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -251,6 +258,7 @@ export function ReportListPanel({ kind }: Props) {
       await removeMutation.mutateAsync([editing.id])
       setSelectedRowKeys(keys => keys.filter(k => k !== editing.id))
       closeModal()
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -351,12 +359,7 @@ export function ReportListPanel({ kind }: Props) {
         width: 120,
         align: 'center',
         render: (_v, record) => (
-          <CmsButton
-            variant="secondary"
-            size="h32"
-            type="button"
-            onClick={() => openEdit(record)}
-          >
+          <CmsButton variant="secondary" size="h32" type="button" onClick={() => openEdit(record)}>
             수정
           </CmsButton>
         ),

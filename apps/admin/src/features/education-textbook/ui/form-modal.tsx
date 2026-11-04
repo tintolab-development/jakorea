@@ -21,6 +21,7 @@ import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
 import { RichTextEditor, RichTextViewer } from '@/shared/rich-text'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsRadio,
@@ -296,32 +297,32 @@ function TextbookFormBody({
 
   const handleSubmit = useCallback(() => {
     if (!businessFieldId) {
-      showAlert({ title: '입력 확인', content: '사업분야를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (educationTargetIds.length === 0) {
-      showAlert({ title: '입력 확인', content: '교육 대상을 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!educationEffect.trim()) {
-      showAlert({ title: '입력 확인', content: '교육 효과를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!title.trim()) {
-      showAlert({ title: '입력 확인', content: '교재명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!description.trim()) {
-      showAlert({ title: '입력 확인', content: '교재 설명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const units = Number(unitCount)
     if (!Number.isFinite(units) || units <= 0) {
-      showAlert({ title: '입력 확인', content: '총 단원 수를 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (!unitSessionText.trim()) {
-      showAlert({ title: '입력 확인', content: '교육 차시 설명을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
 
