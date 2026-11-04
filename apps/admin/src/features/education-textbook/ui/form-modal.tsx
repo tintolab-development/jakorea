@@ -28,6 +28,7 @@ import {
   CmsSelect,
   CmsTextArea,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
   useCmsAlert,
@@ -193,11 +194,11 @@ function TextbookFormBody({
   )
 
   const editorEnabled = canEdit
-  const { editor, editorMinHeight, getMarkdown } = useNoticeWysiwygEditor(
+  const { editor, getMarkdown } = useNoticeWysiwygEditor(
     editorEnabled,
     initialMarkdown,
     editorResetKey,
-    { placeholder: '단원 소개 내용을 입력하세요', height: '280px' }
+    { placeholder: '단원 소개 내용을 입력하세요' }
   )
 
   const resetFromInitial = useCallback(() => {
@@ -386,9 +387,10 @@ function TextbookFormBody({
     mode === 'create' ? '교재 등록' : mode === 'edit' ? '교재 수정' : '교재 상세'
 
   const footer = (
-    <div className="education-textbook-form-modal__footer">
+    <>
       {!isCreate ? (
         <CmsButton
+          className={CONTENT_MODAL_FOOTER_START_CLASS}
           variant="delete"
           size="large"
           type="button"
@@ -398,37 +400,35 @@ function TextbookFormBody({
           교재 삭제
         </CmsButton>
       ) : null}
-      <div className="education-textbook-form-modal__footer-end">
+      <CmsButton
+        variant="secondary"
+        size="large"
+        type="button"
+        onClick={onCancel}
+        disabled={confirmLoading || deleteLoading} >
+        취소
+      </CmsButton>
+      {isView ? (
         <CmsButton
-          variant="secondary"
+          variant="primary"
           size="large"
           type="button"
-          onClick={onCancel}
-          disabled={confirmLoading || deleteLoading} >
-          취소
+          onClick={onRequestEdit}
+          disabled={deleteLoading} >
+          수정
         </CmsButton>
-        {isView ? (
-          <CmsButton
-            variant="primary"
-            size="large"
-            type="button"
-            onClick={onRequestEdit}
-            disabled={deleteLoading} >
-            수정
-          </CmsButton>
-        ) : (
-          <CmsButton
-            variant="primary"
-            size="large"
-            type="button"
-            loading={confirmLoading}
-            disabled={confirmLoading || deleteLoading}
-            onClick={handleSubmit} >
-            {isCreate ? '교재 등록' : '저장'}
-          </CmsButton>
-        )}
-      </div>
-    </div>
+      ) : (
+        <CmsButton
+          variant="primary"
+          size="large"
+          type="button"
+          loading={confirmLoading}
+          disabled={confirmLoading || deleteLoading}
+          onClick={handleSubmit} >
+          {isCreate ? '교재 등록' : '저장'}
+        </CmsButton>
+      )}
+    </>
   )
 
   const registeredMeta =
@@ -753,10 +753,7 @@ function TextbookFormBody({
                     ) : null
                   }
                   edit={
-                    <div
-                      className="education-textbook-form-modal__rt-edit"
-                      style={{ minHeight: editorMinHeight }}
-                    >
+                    <div className="education-textbook-form-modal__rt-edit">
                       <RichTextEditor editor={editor} />
                     </div>
                   }

@@ -18,6 +18,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
@@ -120,7 +121,6 @@ export function NoticeFormModal({
 
   const {
     editor,
-    editorMinHeight,
     getHTML,
     editorMode,
     htmlSource,
@@ -128,7 +128,6 @@ export function NoticeFormModal({
     onHtmlSourceChange,
     resolveImageSrc,
   } = useNoticeWysiwygEditor(open, initialMarkdown, editorResetKey, {
-    placeholder: '공지사항 내용을 입력하세요',
     contentFormat: editorContentFormat,
     // 기존 스펙: 삽입(이미지·YouTube) 유지
     allowInlineMedia: true,
@@ -266,9 +265,10 @@ export function NoticeFormModal({
         size="large"
         className="notice-form-modal"
         footer={
-          <div className="notice-form-modal__footer">
+          <>
             {mode === 'edit' && onDelete ? (
               <CmsButton
+                className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
                 size="large"
                 type="button"
@@ -278,27 +278,25 @@ export function NoticeFormModal({
                 공지사항 삭제
               </CmsButton>
             ) : null}
-            <div className="notice-form-modal__footer-end">
-              <CmsButton
-                variant="secondary"
-                size="large"
-                type="button"
-                disabled={confirmLoading || deleteLoading}
-                onClick={onCancel}
-              >
-                취소
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                type="button"
-                loading={confirmLoading}
-                onClick={handleSubmit}
-              >
-                {submitLabel}
-              </CmsButton>
-            </div>
-          </div>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              type="button"
+              disabled={confirmLoading || deleteLoading}
+              onClick={onCancel}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="large"
+              type="button"
+              loading={confirmLoading}
+              onClick={handleSubmit}
+            >
+              {submitLabel}
+            </CmsButton>
+          </>
         }
       >
         <div className="notice-form-modal__form">
@@ -317,20 +315,20 @@ export function NoticeFormModal({
                   format="YYYY.MM.DD HH:mm"
                   value={publishedAt}
                   onChange={v => setPublishedAt(v)}
-                  placeholder="게시일시를 선택하세요"
+                  placeholder="게시일시를 선택해 주세요"
                 />
               </div>
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--radio">
                 <FieldLabel required>공개 여부</FieldLabel>
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={isPublic ? 'public' : 'private'}
                   onChange={e => setIsPublic(e.target.value === 'public')}
                 >
-                  <CmsRadio size="large" value="public">
+                  <CmsRadio size="medium" value="public">
                     공개
                   </CmsRadio>
-                  <CmsRadio size="large" value="private">
+                  <CmsRadio size="medium" value="private">
                     비공개
                   </CmsRadio>
                 </CmsRadioGroup>
@@ -338,14 +336,14 @@ export function NoticeFormModal({
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--radio">
                 <FieldLabel required>상단 고정</FieldLabel>
                 <CmsRadioGroup
-                  size="large"
+                  size="medium"
                   value={isPinned ? 'on' : 'off'}
                   onChange={e => setIsPinned(e.target.value === 'on')}
                 >
-                  <CmsRadio size="large" value="off">
+                  <CmsRadio size="medium" value="off">
                     고정 안함
                   </CmsRadio>
-                  <CmsRadio size="large" value="on">
+                  <CmsRadio size="medium" value="on">
                     고정
                   </CmsRadio>
                 </CmsRadioGroup>
@@ -360,7 +358,7 @@ export function NoticeFormModal({
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="제목을 입력하세요"
+              placeholder="제목을 입력해 주세요"
             />
           </div>
 
@@ -369,7 +367,6 @@ export function NoticeFormModal({
             <div className="notice-form-modal__editor-host">
               <RichTextEditor
                 editor={editor}
-                minHeight={editorMinHeight}
                 allowInlineMedia
                 resolveImageSrc={resolveImageSrc}
                 allowRawHtmlBlock

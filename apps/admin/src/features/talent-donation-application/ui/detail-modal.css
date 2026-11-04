@@ -79,26 +79,6 @@
   margin-top: 30px !important;
 }
 
-.talent-app-detail-modal .content-modal__footer-actions {
-  width: 100%;
-  justify-content: flex-end;
-}
-
-.talent-app-detail-modal__footer {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 10px;
-  box-sizing: border-box;
-}
-
-.talent-app-detail-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-}
-
 .talent-app-detail-modal__scroll {
   display: flex;
   flex-direction: column;

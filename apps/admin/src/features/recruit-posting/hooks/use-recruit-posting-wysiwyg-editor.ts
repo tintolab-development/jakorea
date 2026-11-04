@@ -1,12 +1,7 @@
 import type { Editor } from '@/shared/rich-text'
 import { useAdminHtmlEditor, type RichTextContentFormat } from '@/shared/rich-text'
 
-/** 시안 에디터 높이 — 모달 max-height로 수용 (에디터 축소 금지) */
-const DEFAULT_EDITOR_HEIGHT = '369px'
-const DEFAULT_PLACEHOLDER = '게시글 내용을 입력하세요'
-
 export type RecruitPostingWysiwygEditorOptions = {
-  height?: string
   placeholder?: string
   contentFormat?: RichTextContentFormat
   allowInlineMedia?: boolean
@@ -22,8 +17,7 @@ export function useRecruitPostingWysiwygEditor(
   resetKey?: string | number,
   options?: RecruitPostingWysiwygEditorOptions
 ) {
-  const editorMinHeight = options?.height ?? DEFAULT_EDITOR_HEIGHT
-  const placeholder = options?.placeholder ?? DEFAULT_PLACEHOLDER
+  const placeholder = options?.placeholder
   const contentFormat = options?.contentFormat ?? 'markdown'
   const allowInlineMedia = options?.allowInlineMedia ?? true
 
@@ -40,7 +34,6 @@ export function useRecruitPostingWysiwygEditor(
   return {
     ...adminEditor,
     editor: adminEditor.editor as Editor | null,
-    editorMinHeight,
     contentFormat,
     allowInlineMedia,
   }

@@ -15,6 +15,7 @@ import {
   CmsButton,
   CmsInput,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
   useCmsAlert,
@@ -240,51 +241,49 @@ export function ReportFormModal({
       attachmentUrl,
       thumbnailFile: pendingThumbFile,
       attachmentFile: pendingAttachFile,
-      thumbnailAssetId:
-        !pendingThumbFile && !thumbCleared ? initial?.thumbnailAssetId : undefined,
+      thumbnailAssetId: !pendingThumbFile && !thumbCleared ? initial?.thumbnailAssetId : undefined,
       attachmentAssetId:
         !pendingAttachFile && !attachCleared ? initial?.attachmentAssetId : undefined,
     })
   }
 
-  const titleText =
-    mode === 'create' ? `${meta.label} 등록` : `${meta.label} 수정`
+  const titleText = mode === 'create' ? `${meta.label} 등록` : `${meta.label} 수정`
   const confirmText = mode === 'create' ? '보고서 등록' : '저장'
 
   const footer = (
-    <div className="rd-form-modal__footer">
-      <div className="rd-form-modal__footer-start">
-        {mode === 'edit' && onDelete ? (
-          <CmsButton
-            variant="delete"
-            size="large"
-            type="button"
-            disabled={confirmLoading || deleteLoading}
-            onClick={() => setDeleteConfirmOpen(true)} >
-            보고서 삭제
-          </CmsButton>
-        ) : null}
-      </div>
-      <div className="rd-form-modal__footer-end">
+    <>
+      {mode === 'edit' && onDelete ? (
         <CmsButton
-          variant="secondary"
+          className={CONTENT_MODAL_FOOTER_START_CLASS}
+          variant="delete"
           size="large"
           type="button"
           disabled={confirmLoading || deleteLoading}
-          onClick={onCancel} >
-          취소
+          onClick={() => setDeleteConfirmOpen(true)}
+        >
+          보고서 삭제
         </CmsButton>
-        <CmsButton
-          variant="primary"
-          size="large"
-          type="button"
-          loading={confirmLoading}
-          disabled={deleteLoading}
-          onClick={handleSubmit} >
-          {confirmText}
-        </CmsButton>
-      </div>
-    </div>
+      ) : null}
+      <CmsButton
+        variant="secondary"
+        size="large"
+        type="button"
+        disabled={confirmLoading || deleteLoading}
+        onClick={onCancel}
+      >
+        취소
+      </CmsButton>
+      <CmsButton
+        variant="primary"
+        size="large"
+        type="button"
+        loading={confirmLoading}
+        disabled={deleteLoading}
+        onClick={handleSubmit}
+      >
+        {confirmText}
+      </CmsButton>
+    </>
   )
 
   return (
@@ -299,91 +298,91 @@ export function ReportFormModal({
         footer={footer}
       >
         <DetailInfoForm title={titleText} hideHeader mode="edit">
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="제목"
-                view={null}
-                edit={
-                  <CmsInput
-                    inputSize="large"
-                    width="100%"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    placeholder="제목을 입력하세요"
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="제목"
+              view={null}
+              edit={
+                <CmsInput
+                  inputSize="large"
+                  width="100%"
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  placeholder="제목을 입력해 주세요"
+                />
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="썸네일"
+              view={null}
+              edit={
+                <div className="rd-form-modal__image-row">
+                  <div
+                    className={
+                      thumbnailUrl
+                        ? `rd-form-modal__preview ${meta.previewClass}`
+                        : 'rd-form-modal__preview rd-form-modal__preview--empty'
+                    }
+                    aria-hidden={!thumbnailUrl}
+                  >
+                    {thumbnailUrl ? (
+                      <img src={thumbnailUrl} alt="썸네일 미리보기" />
+                    ) : (
+                      <ThumbnailEmptyIcon className="rd-form-modal__preview-empty" />
+                    )}
+                  </div>
+                  <FileSelectField
+                    className="rd-form-modal__file-field"
+                    multiple={false}
+                    accept={IMAGE_ACCEPT}
+                    buttonLabel="파일 추가"
+                    fileNames={thumbnailFileName ? [thumbnailFileName] : []}
+                    maxTotalBytes={IMAGE_MAX_BYTES}
+                    guideLines={meta.thumbGuide}
+                    onFilesChange={files => {
+                      void handleThumbFiles(files)
+                    }}
+                    onRemoveFile={() => {
+                      setThumbnailUrl('')
+                      setThumbnailFileName('')
+                      setPendingThumbFile(null)
+                      setThumbCleared(true)
+                    }}
                   />
-                }
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="썸네일"
-                view={null}
-                edit={
-                  <div className="rd-form-modal__image-row">
-                    <div
-                      className={
-                        thumbnailUrl
-                          ? `rd-form-modal__preview ${meta.previewClass}`
-                          : 'rd-form-modal__preview rd-form-modal__preview--empty'
-                      }
-                      aria-hidden={!thumbnailUrl}
-                    >
-                      {thumbnailUrl ? (
-                        <img src={thumbnailUrl} alt="썸네일 미리보기" />
-                      ) : (
-                        <ThumbnailEmptyIcon className="rd-form-modal__preview-empty" />
-                      )}
-                    </div>
-                    <FileSelectField
-                      className="rd-form-modal__file-field"
-                      multiple={false}
-                      accept={IMAGE_ACCEPT}
-                      buttonLabel="파일 추가"
-                      fileNames={thumbnailFileName ? [thumbnailFileName] : []}
-                      maxTotalBytes={IMAGE_MAX_BYTES}
-                      guideLines={meta.thumbGuide}
-                      onFilesChange={files => {
-                        void handleThumbFiles(files)
-                      }}
-                      onRemoveFile={() => {
-                        setThumbnailUrl('')
-                        setThumbnailFileName('')
-                        setPendingThumbFile(null)
-                        setThumbCleared(true)
-                      }}
-                    />
-                  </div>
-                }
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="첨부파일"
-                view={null}
-                edit={
-                  <div className="rd-form-modal__attach-row">
-                    <FileSelectField
-                      className="rd-form-modal__file-field"
-                      multiple={false}
-                      accept={PDF_ACCEPT}
-                      buttonLabel="파일 추가"
-                      fileNames={attachmentFileName ? [attachmentFileName] : []}
-                      guideLines={ATTACH_GUIDE}
-                      onFilesChange={files => {
-                        void handleAttachFiles(files)
-                      }}
-                      onRemoveFile={() => {
-                        setAttachmentUrl('')
-                        setAttachmentFileName('')
-                        setPendingAttachFile(null)
-                        setAttachCleared(true)
-                      }}
-                    />
-                  </div>
-                }
-              />
-            </DetailInfoForm.Row>
-          </DetailInfoForm>
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+          <DetailInfoForm.Row type="single">
+            <DetailInfoForm.Field
+              label="첨부파일"
+              view={null}
+              edit={
+                <div className="rd-form-modal__attach-row">
+                  <FileSelectField
+                    className="rd-form-modal__file-field"
+                    multiple={false}
+                    accept={PDF_ACCEPT}
+                    buttonLabel="파일 추가"
+                    fileNames={attachmentFileName ? [attachmentFileName] : []}
+                    guideLines={ATTACH_GUIDE}
+                    onFilesChange={files => {
+                      void handleAttachFiles(files)
+                    }}
+                    onRemoveFile={() => {
+                      setAttachmentUrl('')
+                      setAttachmentFileName('')
+                      setPendingAttachFile(null)
+                      setAttachCleared(true)
+                    }}
+                  />
+                </div>
+              }
+            />
+          </DetailInfoForm.Row>
+        </DetailInfoForm>
       </ContentModal>
 
       <ConfirmModal

@@ -356,7 +356,8 @@ export function ReportListPanel({ kind }: Props) {
             variant="secondary"
             size="medium"
             type="button"
-            onClick={() => openEdit(record)} >
+            onClick={() => openEdit(record)}
+          >
             수정
           </CmsButton>
         ),
@@ -378,7 +379,7 @@ export function ReportListPanel({ kind }: Props) {
                 value={pendingFilters.title}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
                 onPressEnter={() => applySearch()}
-                placeholder="제목을 입력하세요"
+                placeholder="제목을 입력해 주세요"
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -411,11 +412,13 @@ export function ReportListPanel({ kind }: Props) {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={() => applySearch()} >
+                onClick={() => applySearch()}
+              >
                 조회
               </CmsButton>
             </div>

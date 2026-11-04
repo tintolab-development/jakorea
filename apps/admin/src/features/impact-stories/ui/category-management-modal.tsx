@@ -15,7 +15,14 @@ import {
 } from '@/features/impact-stories/lib/category-domain'
 import { CategoryDeleteBlockedModal } from '@/features/impact-stories/ui/category-delete-blocked-modal'
 import { impactStoryCategoryMutationFailureAlert } from '@/features/impact-stories/lib/mutation-failure-alert'
-import { CmsButton, CmsInput, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsInput,
+  ConfirmModal,
+  CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS,
+  ContentModal,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './category-management-modal.css'
 
@@ -205,79 +212,69 @@ export function CategoryManagementModal({
         align: 'center',
         render: (_: unknown, row) =>
           editingId === row.id ? (
-            <div className="is-category-modal__actions">
-              <CmsButton
-                type="button"
-                variant="default"
-                size="medium" className="is-category-modal__action-btn"
-                onClick={cancelEdit} >
+            <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
+              <CmsButton type="button" variant="default" size="small" onClick={cancelEdit}>
                 취소
               </CmsButton>
-              <CmsButton
-                type="button"
-                variant="secondary"
-                size="medium" className="is-category-modal__action-btn"
-                onClick={submitEdit} >
+              <CmsButton type="button" variant="secondary" size="small" onClick={submitEdit}>
                 등록
               </CmsButton>
             </div>
           ) : (
-            <div className="is-category-modal__actions">
+            <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
               <CmsButton
                 type="button"
                 variant="default"
-                size="medium" className="is-category-modal__action-btn"
-                onClick={() => startEdit(row)} >
+                size="small"
+                onClick={() => startEdit(row)}
+              >
                 수정
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="delete"
-                size="medium" className="is-category-modal__action-btn"
-                onClick={() => requestDeleteCategory(row)} >
+                size="small"
+                onClick={() => requestDeleteCategory(row)}
+              >
                 삭제
               </CmsButton>
             </div>
           ),
       },
     ],
-    [
-      cancelEdit,
-      editDraft,
-      editingId,
-      requestDeleteCategory,
-      startEdit,
-      submitEdit,
-    ]
+    [cancelEdit, editDraft, editingId, requestDeleteCategory, startEdit, submitEdit]
   )
 
   const footer = (
     <>
       <CmsButton
-        variant="secondary"
-        size="large"
+        variant="default"
+        size="medium"
         type="button"
         disabled={saving}
-        onClick={handleClose} >
+        onClick={handleClose}
+      >
         닫기
       </CmsButton>
       <CmsButton
         variant="secondary"
-        size="large"
+        size="medium"
         type="button"
         disabled={saving}
-        onClick={focusNewRow} >
-        카테고리 추가
+        onClick={focusNewRow}
+      >
+        항목 추가
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="medium"
         type="button"
         loading={saving}
         onClick={() => {
           void handleSave()
-        }} >
-        카테고리 저장
+        }}
+      >
+        저장
       </CmsButton>
     </>
   )
@@ -297,7 +294,6 @@ export function CategoryManagementModal({
           <div className="is-category-modal__table-scroll">
             <CmsDataTable<ImpactStoryCategory>
               rowKey="id"
-              bordered
               className="cms-data-table cms-data-table--skip-auto-no-col is-category-modal__table"
               tableLayout="fixed"
               pagination={false}
@@ -311,7 +307,7 @@ export function CategoryManagementModal({
                       <div className="is-category-modal__compose">
                         <CmsInput
                           ref={newInputRef}
-                          inputSize="medium"
+                          inputSize="small"
                           width="100%"
                           placeholder="카테고리명을 입력해주세요"
                           value={newDraft}
@@ -322,19 +318,16 @@ export function CategoryManagementModal({
                       </div>
                     </CmsDataTable.Summary.Cell>
                     <CmsDataTable.Summary.Cell index={1} align="center">
-                      <div className="is-category-modal__actions">
-                        <CmsButton
-                          type="button"
-                          variant="default"
-                          size="medium" className="is-category-modal__action-btn"
-                          onClick={cancelNew} >
+                      <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
+                        <CmsButton type="button" variant="default" size="small" onClick={cancelNew}>
                           취소
                         </CmsButton>
                         <CmsButton
                           type="button"
                           variant="secondary"
-                          size="medium" className="is-category-modal__action-btn"
-                          onClick={submitNew} >
+                          size="small"
+                          onClick={submitNew}
+                        >
                           등록
                         </CmsButton>
                       </div>

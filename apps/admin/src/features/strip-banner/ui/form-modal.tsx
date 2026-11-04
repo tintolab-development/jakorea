@@ -9,6 +9,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   useCmsAlert,
 } from '@/shared/ui'
@@ -195,38 +196,35 @@ function StripBannerFormBody({
         className="strip-banner-form-modal"
         footer={
           <>
-            <div className="strip-banner-form-modal__footer-start">
-              {variant === 'detail' ? (
-                <CmsButton
-                  variant="delete"
-                  size="large"
-                  type="button"
-                  onClick={() => setDeleteConfirmOpen(true)}
-                  disabled={confirmLoading || deleteLoading}
-                  loading={deleteLoading} >
-                  배너 삭제
-                </CmsButton>
-              ) : null}
-            </div>
-            <div className="strip-banner-form-modal__footer-end">
+            {variant === 'detail' ? (
               <CmsButton
-                variant="secondary"
+                className={CONTENT_MODAL_FOOTER_START_CLASS}
+                variant="delete"
                 size="large"
                 type="button"
-                onClick={onCancel}
-                disabled={confirmLoading || deleteLoading} >
-                취소
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                type="button"
-                loading={confirmLoading}
+                onClick={() => setDeleteConfirmOpen(true)}
                 disabled={confirmLoading || deleteLoading}
-                onClick={handlePrimaryAction} >
-                {primaryLabel}
+                loading={deleteLoading} >
+                배너 삭제
               </CmsButton>
-            </div>
+            ) : null}
+            <CmsButton
+              variant="secondary"
+              size="large"
+              type="button"
+              onClick={onCancel}
+              disabled={confirmLoading || deleteLoading} >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="large"
+              type="button"
+              loading={confirmLoading}
+              disabled={confirmLoading || deleteLoading}
+              onClick={handlePrimaryAction} >
+              {primaryLabel}
+            </CmsButton>
           </>
         }
       >

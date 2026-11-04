@@ -1,10 +1,7 @@
 import { useCallback, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type {
-  BoardMemberCreateInput,
-  BoardRoleGroup,
-} from '@/entities/board-members/model/types'
+import type { BoardMemberCreateInput, BoardRoleGroup } from '@/entities/board-members/model/types'
 import {
   BOARD_ROLE_GROUP_LABELS,
   BOARD_ROLE_GROUP_ORDER,
@@ -114,7 +111,8 @@ function BoardMemberFormBody({
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -123,7 +121,8 @@ function BoardMemberFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             구성원 등록
           </CmsButton>
         </>

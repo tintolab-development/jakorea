@@ -86,27 +86,6 @@
   margin-top: 30px !important;
 }
 
-.story-form-modal .content-modal__footer-actions {
-  width: 100%;
-  justify-content: flex-end;
-}
-
-/* 푸터: 좌 삭제 · 우 취소/저장·등록 */
-.story-form-modal__footer {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 10px;
-  box-sizing: border-box;
-}
-
-.story-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-}
-
 .story-form-modal__form {
   display: flex;
   flex-direction: column;
@@ -155,7 +134,7 @@
 
 .story-form-modal__filter-inner--with-category {
   flex-wrap: nowrap;
-  gap: 12px;
+  gap: 24px;
 }
 
 .story-form-modal__filter-inner--with-category .story-form-modal__filter-field {
@@ -175,24 +154,8 @@
   margin-bottom: 10px;
 }
 
-.story-form-modal__filter-field--datetime {
-  width: 280px;
-  max-width: 280px;
-}
-
-.story-form-modal__filter-field--category {
-  width: 200px;
-  max-width: 200px;
-}
-
-.story-form-modal__filter-field--radio {
-  width: 200px;
-  max-width: 200px;
-}
-
-/* 라벨은 상단 정렬, 라디오는 large 입력(44px)과 세로 중앙 */
 .story-form-modal__filter-field--radio .app-radio-group {
-  min-height: 44px;
+  min-height: 40px;
 }
 
 /* 제목 → 내용 24px */
@@ -205,10 +168,9 @@
   flex-shrink: 0;
 }
 
-/* 내용 → 첨부 30px — 남는 세로 공간을 에디터가 흡수해 모달 스크롤 방지 */
+/* 내용 → 첨부 30px */
 .story-form-modal__section--editor {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex-shrink: 0;
   margin-bottom: 30px;
   display: flex;
   flex-direction: column;
@@ -216,37 +178,6 @@
 
 .story-form-modal__editor-host {
   width: 100%;
-  flex: 1 1 auto;
-  min-height: 200px;
-  max-height: 320px;
-  height: auto;
-  box-sizing: border-box;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.story-form-modal__editor-host .cms-rich-text-editor.rich-text-editor,
-.story-form-modal__editor-host .rich-text-editor {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  max-height: 100%;
-  border-radius: 0;
-  overflow: hidden;
-}
-
-.story-form-modal__editor-host .rich-text-editor__body {
-  flex: 1 1 auto;
-  min-height: 0 !important;
-  overflow-y: auto;
-}
-
-.story-form-modal__editor-host .rich-text-editor__content,
-.story-form-modal__editor-host .ProseMirror {
-  min-height: 0 !important;
 }
 
 /*
@@ -259,7 +190,8 @@
   overflow: visible;
 }
 
-.story-form-modal.content-modal .teal-header-modal__body:has(.rich-text-editor[data-resized='true']) {
+.story-form-modal.content-modal
+  .teal-header-modal__body:has(.rich-text-editor[data-resized='true']) {
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -283,102 +215,37 @@
   flex: 0 0 auto;
 }
 
-/* 섬네일 + 첨부 테이블 — CMS th 180 + body */
-.story-form-modal__files {
-  display: flex;
-  flex-direction: column;
+.story-form-modal__files.detail-info-form {
   width: 100%;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fff;
   flex-shrink: 0;
 }
 
-.story-form-modal__attachment {
-  display: flex;
+.story-form-modal__files .detail-info-form__body {
   width: 100%;
-  align-items: stretch;
-  background: #fff;
 }
 
-.story-form-modal__attachment-label {
-  display: flex;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  align-self: stretch;
-  width: 180px;
-  min-width: 180px;
-  padding: 10px;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 2px;
-  border-right: 1px solid #ddd;
-  border-bottom: 1px solid #ddd;
-  background: #edf0f2;
-  color: var(--default-BK, #3d3d3d);
-  text-align: center;
-  font-family: Pretendard, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 140%;
-}
-
-.story-form-modal__attachment-body {
-  flex: 1 1 auto;
+.story-form-modal .detail-info-form__field-content--edit > * {
+  display: block;
+  margin-block: 0 !important;
+  width: 100%;
   min-width: 0;
-  padding: 12px 16px;
-  align-self: stretch;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid #ddd;
-  box-sizing: border-box;
 }
 
-.story-form-modal__attachment:last-child .story-form-modal__attachment-label,
-.story-form-modal__attachment:last-child .story-form-modal__attachment-body {
-  border-bottom: none;
-}
-
-.story-form-modal__file-field.file-select-field {
+.story-form-modal .file-select-field {
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
-  gap: 8px;
-  width: 100%;
 }
 
-.story-form-modal__file-field .file-select-field__actions {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
+.story-form-modal
+  .detail-info-form__field:has(.story-form-modal__file-field)
+  .detail-info-form__field-content {
+  align-items: flex-start;
 }
 
 .story-form-modal__file-field .file-select-field__guide {
   flex: 1 1 200px;
   min-width: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-family: Pretendard, sans-serif;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%;
-  opacity: 0.6;
-}
-
-.story-form-modal__file-field .file-select-field__guide-line {
-  display: block;
-}
-
-.story-form-modal__file-field .file-select-field__name {
-  color: var(--main-BK, #3d3d3d);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 150%;
 }
 
 @media (max-width: 1100px) {
@@ -390,18 +257,9 @@
 
 @media (max-width: 768px) {
   .story-form-modal__filter-field--datetime,
+  .story-form-modal__filter-field--category,
   .story-form-modal__filter-field--radio {
     width: 100%;
     max-width: 100%;
-  }
-
-  .story-form-modal__attachment {
-    flex-direction: column;
-  }
-
-  .story-form-modal__attachment-label {
-    width: 100%;
-    min-width: 0;
-    border-right: none;
   }
 }
