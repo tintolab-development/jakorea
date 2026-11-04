@@ -1,5 +1,5 @@
 /**
- * 총 방문자 수 합계 바
+ * 총 방문자 수 합계
  */
 
 import { formatVisitorCount } from '@/features/visitor-stats/lib/format'
