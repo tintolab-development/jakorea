@@ -462,7 +462,7 @@ export function PopupsPage() {
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="small"
             type="button"
             onClick={e => {
               e.stopPropagation()

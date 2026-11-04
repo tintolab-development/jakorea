@@ -381,7 +381,7 @@ export function CertPanel() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="small"
             type="button"
             onClick={e => {
               e.stopPropagation()
