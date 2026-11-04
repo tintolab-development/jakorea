@@ -19,9 +19,9 @@ describe('ujat typed recruitment overlay write block', () => {
   })
 
   it('detailInfo·ujat.recruit prefix를 막는다', () => {
-    expect(isBlockedUjatTypedRecruitmentOverlayKey('ujatRecruit.detailInfo.thumbFileObjectId')).toBe(
-      true
-    )
+    expect(
+      isBlockedUjatTypedRecruitmentOverlayKey('ujatRecruit.detailInfo.thumbFileObjectId')
+    ).toBe(true)
     expect(
       isBlockedUjatTypedRecruitmentOverlayKey('recruitVolunteer.h1.detailInfo.thumbFileName')
     ).toBe(true)
@@ -54,7 +54,7 @@ describe('ujat typed recruitment overlay write block', () => {
     ).toEqual({ 'ujatRecruit.detailInfo.thumbFileObjectId': 9 })
   })
 
-  it('가드 중 섬네일 live overlay는 prefix를 만들지 않는다', () => {
+  it('가드 중 썸네일 live overlay는 prefix를 만들지 않는다', () => {
     setUjatTypedRecruitmentOverlayWritesBlocked(true)
     applyLiveRecruitmentThumbnailOverlay(
       { id: 'ujat-registration-linked', backendProgramType: 'UJAT' } as Program,
