@@ -92,7 +92,7 @@ export function BannerSectionCard({ banner }: Props) {
   )
 
   return (
-    <div className="individual-donation-section">
+    <section className="admin-list-card individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 상단 배너</span>
@@ -126,6 +126,6 @@ export function BannerSectionCard({ banner }: Props) {
           void handleSubmit(values)
         }}
       />
-    </div>
+    </section>
   )
 }
