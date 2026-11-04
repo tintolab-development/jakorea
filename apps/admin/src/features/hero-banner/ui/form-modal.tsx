@@ -199,7 +199,7 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -208,7 +208,7 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
@@ -288,7 +288,6 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             view={null}
             edit={
               <CmsTextArea
-                className="hero-banner-form-modal__main-title-textarea"
                 inputSize="large"
                 width="100%"
                 rows={2}
