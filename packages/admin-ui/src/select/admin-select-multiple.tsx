@@ -24,7 +24,8 @@ export const ADMIN_MULTI_SELECT_TAG_COLORS = [
 ] as const
 
 function labelStyleForOption(opt: AdminSelectMultipleOption, index: number): CSSProperties {
-  const bg = opt.tagColor ?? ADMIN_MULTI_SELECT_TAG_COLORS[index % ADMIN_MULTI_SELECT_TAG_COLORS.length]
+  const bg =
+    opt.tagColor ?? ADMIN_MULTI_SELECT_TAG_COLORS[index % ADMIN_MULTI_SELECT_TAG_COLORS.length]
   const style: CSSProperties = { backgroundColor: bg }
   if (opt.tagTextColor) style.color = opt.tagTextColor
   return style
@@ -57,7 +58,7 @@ export function AdminSelectMultiple({
   value,
   onChange,
   options,
-  placeholder = '선택하세요',
+  placeholder = '선택해 주세요',
   disabled = false,
   error = false,
   allowClear = true,
@@ -186,7 +187,10 @@ export function AdminSelectMultiple({
                   checked={checked}
                   onChange={e => toggle(opt.value, e.target.checked)}
                 >
-                  <span className="cms-select-multi__label-pill" style={labelStyleForOption(opt, idx)}>
+                  <span
+                    className="cms-select-multi__label-pill"
+                    style={labelStyleForOption(opt, idx)}
+                  >
                     {opt.label}
                   </span>
                 </Checkbox>
