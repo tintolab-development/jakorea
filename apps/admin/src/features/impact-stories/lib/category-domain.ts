@@ -4,9 +4,13 @@
 
 import type { ImpactStoryCategory } from '@/entities/impact-stories/model/types'
 
-export const IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE = '카테고리명을 입력해 주세요.'
+export const IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE = '카테고리명을 입력해주세요.'
 export const IMPACT_CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE =
   '한글, 영문, 숫자, 밑줄(_), 하이픈(-)만 입력할 수 있습니다.'
+export const IMPACT_CATEGORY_SAVE_FAILURE_MESSAGE =
+  '카테고리 설정을 저장하지 못했습니다. 변경 내용을 확인해 주세요.'
+export const IMPACT_CATEGORY_CONCURRENT_MODIFICATION_MESSAGE =
+  '다른 관리자가 카테고리를 먼저 변경했습니다. 최신 목록을 확인한 후 다시 저장해 주세요.'
 
 export type ImpactCategoryNameValidation = 'valid' | 'empty' | 'invalid_characters'
 

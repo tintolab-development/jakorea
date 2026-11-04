@@ -1,31 +1,19 @@
 /**
- * 임팩트 스토리 카테고리 관리 모달 — Figma 2100:100121 · ContentModal 600
+ * 임팩트 스토리 카테고리 관리 모달 — CMS 카테고리 관리와 동일 초안·저장 규칙
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
-import type { InputRef } from 'antd'
 import type { ImpactStory, ImpactStoryCategory } from '@/entities/impact-stories/model/types'
-import {
-  countByCategoryId,
-  createCategoryId,
-  hasDuplicateCategoryName,
-  hasImpactCategoryDraftChanges,
-  IMPACT_CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE,
-  IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE,
-  validateImpactCategoryName,
-} from '@/features/impact-stories/lib/category-domain'
+import { useCategoryManagementModal } from '@/features/impact-stories/hooks/use-category-management-modal'
 import { CategoryDeleteBlockedModal } from '@/features/impact-stories/ui/category-delete-blocked-modal'
-import { impactStoryCategoryMutationFailureAlert } from '@/features/impact-stories/lib/mutation-failure-alert'
 import {
   CmsButton,
   CmsInput,
   ConfirmModal,
   CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS,
   ContentModal,
-  showSaveCompletedAlert,
-  useCmsAlert,
 } from '@/shared/ui'
 
 import './category-management-modal.css'
@@ -48,25 +36,40 @@ type Props = {
   onCancel: () => void
   categories: ImpactStoryCategory[]
   stories: readonly ImpactStory[]
-  saving?: boolean
   onSave: (next: ImpactStoryCategory[]) => Promise<void> | void
 }
 
-function cloneCategories(rows: ImpactStoryCategory[]): ImpactStoryCategory[] {
-  return rows.map(r => ({ ...r }))
-}
-
-function showCategoryNameValidationAlert(
-  showAlert: ReturnType<typeof useCmsAlert>['showAlert'],
-  validation: ReturnType<typeof validateImpactCategoryName>
-) {
-  if (validation === 'empty') {
-    showAlert({ title: '안내', content: IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE })
-    return
-  }
-  if (validation === 'invalid_characters') {
-    showAlert({ title: '안내', content: IMPACT_CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE })
-  }
+function CategoryGuideModal({
+  open,
+  title,
+  body,
+  onClose,
+  zIndex = CATEGORY_SUB_MODAL_Z,
+}: {
+  open: boolean
+  title: string
+  body: string
+  onClose: () => void
+  zIndex?: number
+}) {
+  return (
+    <ContentModal
+      open={open}
+      onCancel={onClose}
+      title={title}
+      width={600}
+      zIndex={zIndex}
+      className="is-category-delete-blocked"
+      description={body}
+      footer={
+        <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
+          확인
+        </CmsButton>
+      }
+    >
+      {null}
+    </ContentModal>
+  )
 }
 
 export function CategoryManagementModal({
@@ -74,166 +77,26 @@ export function CategoryManagementModal({
   onCancel,
   categories,
   stories,
-  saving,
   onSave,
 }: Props) {
-  const { showAlert } = useCmsAlert()
-  const baselineRef = useRef<ImpactStoryCategory[]>([])
-  const [draft, setDraft] = useState<ImpactStoryCategory[]>(() => cloneCategories(categories))
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editDraft, setEditDraft] = useState('')
-  const [newDraft, setNewDraft] = useState('')
-  const [deleteBlockedOpen, setDeleteBlockedOpen] = useState(false)
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [pendingDeleteRow, setPendingDeleteRow] = useState<ImpactStoryCategory | null>(null)
+  const ctrl = useCategoryManagementModal({
+    open,
+    categories,
+    stories,
+    onClose: onCancel,
+    onSave,
+  })
 
-  const editInputRef = useRef<InputRef>(null)
-  const newInputRef = useRef<InputRef>(null)
-
-  useEffect(() => {
-    if (!open) return
-    baselineRef.current = cloneCategories(categories)
-    setDraft(cloneCategories(categories))
-    setEditingId(null)
-    setEditDraft('')
-    setNewDraft('')
-    setDeleteBlockedOpen(false)
-    setDeleteConfirmOpen(false)
-    setPendingDeleteRow(null)
-  }, [open, categories])
-
-  const handleClose = useCallback(() => {
-    if (saving) return
-    setEditingId(null)
-    setEditDraft('')
-    setNewDraft('')
-    onCancel()
-  }, [onCancel, saving])
-
-  const startEdit = useCallback((row: ImpactStoryCategory) => {
-    setEditingId(row.id)
-    setEditDraft(row.name)
-    setNewDraft('')
-    queueMicrotask(() => editInputRef.current?.focus())
-  }, [])
-
-  const cancelEdit = useCallback(() => {
-    setEditingId(null)
-    setEditDraft('')
-  }, [])
-
-  const submitEdit = useCallback(() => {
-    if (!editingId) return
-    const validation = validateImpactCategoryName(editDraft)
-    if (validation !== 'valid') {
-      showCategoryNameValidationAlert(showAlert, validation)
-      return
-    }
-    const name = editDraft.trim()
-    if (hasDuplicateCategoryName(draft, name, editingId)) {
-      showAlert({
-        title: '카테고리 중복',
-        content: '동일한 카테고리명이 이미 존재합니다.',
-      })
-      return
-    }
-    setDraft(prev => prev.map(r => (r.id === editingId ? { ...r, name } : r)))
-    setEditingId(null)
-    setEditDraft('')
-  }, [draft, editDraft, editingId, showAlert])
-
-  const cancelNew = useCallback(() => {
-    setNewDraft('')
-  }, [])
-
-  const submitNew = useCallback(() => {
-    const validation = validateImpactCategoryName(newDraft)
-    if (validation !== 'valid') {
-      showCategoryNameValidationAlert(showAlert, validation)
-      return
-    }
-    const name = newDraft.trim()
-    if (hasDuplicateCategoryName(draft, name)) {
-      showAlert({
-        title: '카테고리 중복',
-        content: '동일한 카테고리명이 이미 존재합니다.',
-      })
-      return
-    }
-    const row: ImpactStoryCategory = {
-      id: createCategoryId(),
-      name,
-      sortOrder: draft.length,
-    }
-    setDraft(prev => [...prev, row])
-    setNewDraft('')
-  }, [draft, newDraft, showAlert])
-
-  const focusNewRow = useCallback(() => {
-    setEditingId(null)
-    setEditDraft('')
-    queueMicrotask(() => newInputRef.current?.focus())
-  }, [])
-
-  const requestDeleteCategory = useCallback(
-    (row: ImpactStoryCategory) => {
-      const inUse =
-        typeof row.storyCount === 'number'
-          ? row.storyCount > 0
-          : countByCategoryId(stories, s => s.categoryId, row.id) > 0
-      if (inUse) {
-        setDeleteBlockedOpen(true)
-        return
-      }
-      setPendingDeleteRow(row)
-      setDeleteConfirmOpen(true)
-    },
-    [stories]
-  )
-
-  const confirmDeleteCategory = useCallback(() => {
-    if (!pendingDeleteRow) return
-    setDraft(prev => prev.filter(r => r.id !== pendingDeleteRow.id))
-    setPendingDeleteRow(null)
-    setDeleteConfirmOpen(false)
-  }, [pendingDeleteRow])
-
-  const handleSave = useCallback(async () => {
-    if (editingId) {
-      showAlert({
-        title: '수정 중',
-        content: '카테고리 수정을 완료한 뒤 저장해 주세요.',
-      })
-      return
-    }
-    if (newDraft.trim()) {
-      showAlert({
-        title: '등록 중',
-        content: '입력 중인 카테고리를 등록하거나 취소한 뒤 저장해 주세요.',
-      })
-      return
-    }
-    const normalized = draft.map((r, i) => ({ ...r, name: r.name.trim(), sortOrder: i }))
-    for (const row of normalized) {
-      const validation = validateImpactCategoryName(row.name)
-      if (validation !== 'valid') {
-        showCategoryNameValidationAlert(showAlert, validation)
-        return
-      }
-    }
-    if (!hasImpactCategoryDraftChanges(baselineRef.current, normalized)) {
-      handleClose()
-      return
-    }
-    try {
-      await onSave(normalized)
-      baselineRef.current = cloneCategories(normalized)
-      handleClose()
-      showSaveCompletedAlert()
-    } catch (error) {
-      showAlert(impactStoryCategoryMutationFailureAlert(error))
-    }
-  }, [draft, editingId, handleClose, newDraft, onSave, showAlert])
+  const {
+    editingId,
+    editDraft,
+    setEditDraft,
+    editInputRef,
+    startEdit,
+    cancelEdit,
+    submitEdit,
+    requestDeleteCategory,
+  } = ctrl
 
   const columns: ColumnsType<ImpactStoryCategory> = useMemo(
     () => [
@@ -270,7 +133,7 @@ export function CategoryManagementModal({
                 취소
               </CmsButton>
               <CmsButton type="button" variant="secondary" size="medium" onClick={submitEdit}>
-                저장
+                등록
               </CmsButton>
             </div>
           ) : (
@@ -298,7 +161,7 @@ export function CategoryManagementModal({
     [cancelEdit, editDraft, editingId, requestDeleteCategory, startEdit, submitEdit]
   )
 
-  const bodyScrolls = draft.length > VISIBLE_CATEGORY_ROWS
+  const bodyScrolls = ctrl.draftCategories.length > VISIBLE_CATEGORY_ROWS
   const tableClassName = [
     'cms-data-table',
     'cms-data-table--skip-auto-no-col',
@@ -314,8 +177,8 @@ export function CategoryManagementModal({
         variant="default"
         size="medium"
         type="button"
-        disabled={saving}
-        onClick={handleClose}
+        disabled={ctrl.isSaving}
+        onClick={ctrl.handleClose}
       >
         닫기
       </CmsButton>
@@ -323,8 +186,8 @@ export function CategoryManagementModal({
         variant="secondary"
         size="medium"
         type="button"
-        disabled={saving}
-        onClick={focusNewRow}
+        disabled={ctrl.isSaving}
+        onClick={ctrl.openCompose}
       >
         항목 추가
       </CmsButton>
@@ -332,9 +195,10 @@ export function CategoryManagementModal({
         variant="primary"
         size="medium"
         type="button"
-        loading={saving}
+        loading={ctrl.isSaving}
+        disabled={ctrl.isSaving}
         onClick={() => {
-          void handleSave()
+          void ctrl.applySettings()
         }}
       >
         저장
@@ -346,7 +210,7 @@ export function CategoryManagementModal({
     <>
       <ContentModal
         open={open}
-        onCancel={handleClose}
+        onCancel={ctrl.handleClose}
         title="카테고리 관리"
         width={600}
         titleBodyGap="list-settings"
@@ -363,71 +227,98 @@ export function CategoryManagementModal({
               pagination={false}
               scroll={bodyScrolls ? { y: TABLE_BODY_SCROLL_Y } : undefined}
               columns={columns}
-              dataSource={draft}
+              dataSource={ctrl.draftCategories}
               emptyTitle="등록된 카테고리가 없습니다."
               emptyDescription={null}
-              summary={() => (
-                <CmsDataTable.Summary fixed={bodyScrolls ? 'bottom' : undefined}>
-                  <CmsDataTable.Summary.Row className="is-category-modal__summary">
-                    <CmsDataTable.Summary.Cell index={0} align="center">
-                      <div className="is-category-modal__compose">
-                        <CmsInput
-                          ref={newInputRef}
-                          inputSize="medium"
-                          width="100%"
-                          placeholder="카테고리명을 입력해 주세요"
-                          value={newDraft}
-                          onChange={e => setNewDraft(e.target.value)}
-                          onPressEnter={submitNew}
-                          aria-label="새 카테고리명"
-                        />
-                      </div>
-                    </CmsDataTable.Summary.Cell>
-                    <CmsDataTable.Summary.Cell index={1} align="center">
-                      <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
-                        <CmsButton type="button" variant="default" size="medium" onClick={cancelNew}>
-                          취소
-                        </CmsButton>
-                        <CmsButton
-                          type="button"
-                          variant="secondary"
-                          size="medium"
-                          onClick={submitNew}
-                        >
-                          등록
-                        </CmsButton>
-                      </div>
-                    </CmsDataTable.Summary.Cell>
-                  </CmsDataTable.Summary.Row>
-                </CmsDataTable.Summary>
-              )}
+              summary={
+                ctrl.composeOpen
+                  ? () => (
+                      <CmsDataTable.Summary fixed={bodyScrolls ? 'bottom' : undefined}>
+                        <CmsDataTable.Summary.Row className="is-category-modal__summary">
+                          <CmsDataTable.Summary.Cell index={0} align="center">
+                            <div className="is-category-modal__compose">
+                              <CmsInput
+                                ref={ctrl.newInputRef}
+                                inputSize="medium"
+                                width="100%"
+                                placeholder="카테고리명을 입력해주세요"
+                                value={ctrl.newDraft}
+                                onChange={e => ctrl.setNewDraft(e.target.value)}
+                                onPressEnter={ctrl.submitNew}
+                                aria-label="새 카테고리명"
+                              />
+                            </div>
+                          </CmsDataTable.Summary.Cell>
+                          <CmsDataTable.Summary.Cell index={1} align="center">
+                            <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
+                              <CmsButton
+                                type="button"
+                                variant="default"
+                                size="medium"
+                                onClick={ctrl.cancelNew}
+                              >
+                                취소
+                              </CmsButton>
+                              <CmsButton
+                                type="button"
+                                variant="secondary"
+                                size="medium"
+                                onClick={ctrl.submitNew}
+                              >
+                                등록
+                              </CmsButton>
+                            </div>
+                          </CmsDataTable.Summary.Cell>
+                        </CmsDataTable.Summary.Row>
+                      </CmsDataTable.Summary>
+                    )
+                  : undefined
+              }
             />
           </div>
         </div>
       </ContentModal>
 
       <CategoryDeleteBlockedModal
-        open={deleteBlockedOpen}
-        onClose={() => setDeleteBlockedOpen(false)}
+        open={ctrl.deleteBlockedOpen}
+        onClose={ctrl.closeDeleteBlocked}
         zIndex={CATEGORY_SUB_MODAL_Z}
       />
 
+      <CategoryGuideModal
+        open={ctrl.duplicateAlertOpen}
+        title="카테고리명 중복 안내"
+        body="동일한 카테고리명이 존재합니다."
+        onClose={ctrl.closeDuplicateAlert}
+      />
+
+      <CategoryGuideModal
+        open={ctrl.settingsCompleteOpen}
+        title="카테고리 설정 완료"
+        body="카테고리 설정이 완료되었습니다."
+        onClose={ctrl.closeSettingsComplete}
+      />
+
+      <CategoryGuideModal
+        open={ctrl.saveErrorMessage != null}
+        title="카테고리 저장 안내"
+        body={ctrl.saveErrorMessage ?? ''}
+        onClose={ctrl.closeSaveError}
+      />
+
       <ConfirmModal
-        open={deleteConfirmOpen}
+        open={ctrl.deleteConfirmOpen}
         title="카테고리 삭제"
         content={
-          pendingDeleteRow?.name
-            ? `「${pendingDeleteRow.name}」 카테고리를 삭제하시겠습니까?\n삭제하면 카테고리 목록에서 제거되며, 이 작업은 취소할 수 없습니다.`
+          ctrl.pendingDeleteRow?.name
+            ? `「${ctrl.pendingDeleteRow.name}」 카테고리를 삭제하시겠습니까?\n삭제하면 카테고리 목록에서 제거되며, 이 작업은 취소할 수 없습니다.`
             : '카테고리를 삭제하시겠습니까?\n삭제하면 카테고리 목록에서 제거되며, 이 작업은 취소할 수 없습니다.'
         }
         confirmText="삭제"
         cancelText="취소"
         danger
-        onCancel={() => {
-          setDeleteConfirmOpen(false)
-          setPendingDeleteRow(null)
-        }}
-        onConfirm={confirmDeleteCategory}
+        onCancel={ctrl.cancelDeleteConfirm}
+        onConfirm={ctrl.confirmDeleteCategory}
       />
     </>
   )
