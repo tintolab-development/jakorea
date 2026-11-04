@@ -63,6 +63,12 @@
   flex: 1 1 auto;
 }
 
+.footer-org-section .detail-info-form__field-content--edit > .footer-org-section__logo-view {
+  width: 195px;
+  max-width: 195px;
+  flex: 0 0 195px;
+}
+
 .footer-org-inline-field {
   display: block;
   width: 100%;
@@ -115,6 +121,7 @@
   width: 72px;
   height: 72px;
   aspect-ratio: 1 / 1;
+  flex: 0 0 72px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -147,22 +154,19 @@
 .footer-org-section__logo-view {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  aspect-ratio: 1 / 1;
+  justify-content: flex-start;
+  width: 195px;
+  height: 60px;
+  flex: 0 0 195px;
   flex-shrink: 0;
   overflow: hidden;
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 4px;
-  background: var(--color-bg-secondary, #f7f7f7);
   box-sizing: border-box;
 }
 
 .footer-org-section__logo-view img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: 195px;
+  height: 60px;
+  object-fit: contain;
   display: block;
 }
 

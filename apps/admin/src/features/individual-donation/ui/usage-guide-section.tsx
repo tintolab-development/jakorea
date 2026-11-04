@@ -158,7 +158,7 @@ export function UsageGuideSectionCard({ items }: Props) {
   )
 
   return (
-    <div className="individual-donation-section">
+    <section className="admin-list-card individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ 후원금 사용안내</span>
@@ -203,6 +203,6 @@ export function UsageGuideSectionCard({ items }: Props) {
         rowKey="id"
         scroll={{ x: true }}
       />
-    </div>
+    </section>
   )
 }

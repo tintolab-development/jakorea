@@ -124,7 +124,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
   )
 
   return (
-    <div className="individual-donation-section">
+    <section className="admin-list-card individual-donation-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
           <span className="table-title">■ {donateCta.buttonLabel || '성장 후원하기'}</span>
@@ -169,6 +169,6 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
         rowKey="key"
         scroll={{ x: true }}
       />
-    </div>
+    </section>
   )
 }

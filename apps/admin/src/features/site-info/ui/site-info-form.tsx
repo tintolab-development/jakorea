@@ -15,7 +15,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
-  showSaveCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -299,6 +299,13 @@ export function SiteInfoFormCard({ data }: Props) {
     setIsEditing(true)
   }, [data])
 
+  const handleCancel = useCallback(() => {
+    textDraftRef.current = { siteName: data.siteName, siteDescription: data.siteDescription }
+    setDraft(cloneInfo(data))
+    setNameError(undefined)
+    setIsEditing(false)
+  }, [data])
+
   const handleSiteNameChange = useCallback((value: string) => {
     textDraftRef.current = { ...textDraftRef.current, siteName: value }
   }, [])
@@ -323,7 +330,7 @@ export function SiteInfoFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(toSaveInput({ ...draft, siteName, siteDescription }))
       setIsEditing(false)
-      showSaveCompletedAlert()
+      showUpdateCompletedAlert()
     } catch (error) {
       if (error instanceof Error && error.message === 'SITE_NAME_REQUIRED') {
         setNameError('사이트명을 입력해 주세요.')
@@ -351,18 +358,29 @@ export function SiteInfoFormCard({ data }: Props) {
         </div>
         <div className="table-header-actions--wrapper">
           {isEditing ? (
-            <CmsButton
-              variant="primary"
-              size="medium"
-              type="button"
-              loading={saveMutation.isPending}
-              disabled={saveMutation.isPending}
-              onClick={() => {
-                void handleSave()
-              }}
-            >
-              저장
-            </CmsButton>
+            <>
+              <CmsButton
+                variant="secondary"
+                size="medium"
+                type="button"
+                onClick={handleCancel}
+                disabled={saveMutation.isPending}
+              >
+                취소
+              </CmsButton>
+              <CmsButton
+                variant="primary"
+                size="medium"
+                type="button"
+                loading={saveMutation.isPending}
+                disabled={saveMutation.isPending}
+                onClick={() => {
+                  void handleSave()
+                }}
+              >
+                저장
+              </CmsButton>
+            </>
           ) : (
             <CmsButton variant="primary" size="medium" type="button" onClick={handleEdit}>
               수정
