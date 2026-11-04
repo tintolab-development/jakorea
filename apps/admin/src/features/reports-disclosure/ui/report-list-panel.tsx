@@ -353,7 +353,7 @@ export function ReportListPanel({ kind }: Props) {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={() => openEdit(record)}
           >

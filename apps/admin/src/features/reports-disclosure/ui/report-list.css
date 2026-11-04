@@ -125,6 +125,15 @@
   transition: none !important;
 }
 
+.rd-list__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.rd-list__thumb-col
+  > * {
+  width: 100%;
+  margin-inline: auto;
+}
+
 .rd-list__table--audit.cms-data-table .ant-table-thead > tr > th.rd-list__thumb-col,
 .rd-list__table--audit.cms-data-table
   .ant-table-tbody
@@ -157,15 +166,12 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  margin: 0;
+  margin: 0 auto;
 }
 
-.rd-list__thumb-cell--a4 {
-  width: 120px;
-}
-
+.rd-list__thumb-cell--a4,
 .rd-list__thumb-cell--wide {
-  width: 180px;
+  width: 100%;
 }
 
 /* 썸네일 이미지 래퍼 — 고정 치수, hover 시 grow/shrink 금지 */
@@ -173,6 +179,7 @@
   position: relative;
   display: block;
   flex: 0 0 auto;
+  margin-inline: auto;
   overflow: hidden;
   border-radius: 4px;
   border: 1px solid var(--table-line, #e0e0e0);
