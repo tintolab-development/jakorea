@@ -15,6 +15,8 @@ import {
   type AdminHtmlEditorState,
 } from './admin-html-editor'
 
+export const ADMIN_RICH_TEXT_PLACEHOLDER = '내용을 입력해 주세요'
+
 export type UseAdminHtmlEditorOptions = Pick<
   UseRichTextEditorOptions,
   | 'enabled'
@@ -44,7 +46,7 @@ export function useAdminHtmlEditor({
   initialContent = '',
   contentFormat = 'markdown',
   resetKey,
-  placeholder,
+  placeholder = ADMIN_RICH_TEXT_PLACEHOLDER,
   autofocus = false,
   preset = 'full',
   extraExtensions,

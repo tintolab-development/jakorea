@@ -27,6 +27,7 @@ import {
   type RawHtmlSourceRequest,
 } from '@jakorea/rich-text'
 import type { AdminEditorMode } from '../admin-html-editor'
+import { ADMIN_RICH_TEXT_PLACEHOLDER } from '../use-admin-html-editor'
 import { REMOTE_RICH_TEXT_BODY_MAX_LENGTH } from '../lib/remote-body'
 import { RawHtmlSourceModal } from './raw-html-source-modal'
 import {
@@ -661,7 +662,7 @@ export function RichTextToolbar({
           maxLength={REMOTE_RICH_TEXT_BODY_MAX_LENGTH}
           spellCheck={false}
           aria-label="HTML 소스"
-          placeholder="HTML 태그를 입력하세요"
+          placeholder={ADMIN_RICH_TEXT_PLACEHOLDER}
           onChange={event => onHtmlSourceChange(event.target.value)}
         />
       ) : null}

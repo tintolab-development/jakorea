@@ -12,6 +12,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   useCmsAlert,
 } from '@/shared/ui'
@@ -120,40 +121,37 @@ function AwardFormBody({
         className="hac-form-modal"
         footer={
           <>
-            <div className="hac-form-modal__footer-start">
-              {variant === 'edit' && onDelete ? (
-                <CmsButton
-                  variant="delete"
-                  size="large"
-                  type="button"
-                  onClick={() => {
-                    setDeleteConfirmOpen(true)
-                  }}
-                  disabled={confirmLoading || deleteLoading}
-                  loading={deleteLoading} >
-                  수상 삭제
-                </CmsButton>
-              ) : null}
-            </div>
-            <div className="hac-form-modal__footer-end">
+            {variant === 'edit' && onDelete ? (
               <CmsButton
-                variant="secondary"
+                className={CONTENT_MODAL_FOOTER_START_CLASS}
+                variant="delete"
                 size="large"
                 type="button"
-                onClick={onCancel}
-                disabled={confirmLoading || deleteLoading} >
-                취소
+                onClick={() => {
+                  setDeleteConfirmOpen(true)
+                }}
+                disabled={confirmLoading || deleteLoading}
+                loading={deleteLoading} >
+                수상 삭제
               </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                type="button"
-                loading={confirmLoading}
-                disabled={deleteLoading}
-                onClick={handleSubmit} >
-                {primaryLabel}
-              </CmsButton>
-            </div>
+            ) : null}
+            <CmsButton
+              variant="secondary"
+              size="large"
+              type="button"
+              onClick={onCancel}
+              disabled={confirmLoading || deleteLoading} >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="large"
+              type="button"
+              loading={confirmLoading}
+              disabled={deleteLoading}
+              onClick={handleSubmit} >
+              {primaryLabel}
+            </CmsButton>
           </>
         }
       >

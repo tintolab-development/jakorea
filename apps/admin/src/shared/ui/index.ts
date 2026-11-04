@@ -11,7 +11,11 @@ export type { ExcelButtonProps } from './excel-button'
 export { TealHeaderModal } from './teal-header-modal'
 export type { ModalSize, TealHeaderModalProps } from './teal-header-modal'
 
-export { ContentModal } from './content-modal'
+export {
+  ContentModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
+  CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS,
+} from './content-modal'
 export type { ContentModalProps } from './content-modal'
 export { renderContentModalDescription } from './content-modal-description'
 
@@ -90,6 +94,8 @@ export type { ConfirmModalProps } from './confirm-modal'
 export { HomepagePiiRevealAction } from './homepage-pii-reveal-action'
 export { cmsAlertModal, isCmsAlertModalReady, CMS_ALERT_MODAL_CLOSED_EVENT } from './cms-alert-modal-api'
 export { showDeleteCompletedAlert } from './show-delete-completed-alert'
+export { showRegisterCompletedAlert } from './show-register-completed-alert'
+export { showUpdateCompletedAlert } from './show-update-completed-alert'
 export type { CmsAlertModalShowOptions } from './cms-alert-modal-api'
 export { CmsAlertModalProvider, useCmsAlert } from './cms-alert-modal-provider'
 export type { CmsAlertModalContextValue } from './cms-alert-modal-provider'

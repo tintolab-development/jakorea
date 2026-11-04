@@ -79,10 +79,7 @@
 }
 
 /* 선택 열: 공통 10×16 패딩이 체크 열 12×8을 덮지 않게 */
-.rd-list__table.cms-data-table
-  .ant-table-thead
-  > tr
-  > th.ant-table-selection-column,
+.rd-list__table.cms-data-table .ant-table-thead > tr > th.ant-table-selection-column,
 .rd-list__table.cms-data-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
@@ -147,7 +144,7 @@
 }
 
 /**
- * 섬네일 영역 (시안)
+ * 썸네일 영역 (시안)
  * 연차: width 120 · padding 16×20
  * 감사: 이미지 140 + 좌우 20 → 180
  */

@@ -15,37 +15,10 @@
   min-width: 0;
 }
 
-/* selectPair: 2×240 + gap 20 — 년도/월 선택값(년도 전체 등)이 잘리지 않게 */
-.hac-panel__year-month-filters {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: var(--filter-control-range-split-between, 20px);
-  width: 100%;
-}
-
-.hac-panel__year-month-filters > .cms-select {
-  flex: 0 0 auto;
-  width: var(--filter-control-max-width, 240px) !important;
-  min-width: var(--filter-control-max-width, 240px) !important;
-  max-width: var(--filter-control-max-width, 240px) !important;
-}
-
-.hac-panel__year-month-filters > .cms-select > .ant-select {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
 .hac-panel__table-scroll {
   width: 100%;
   min-width: 0;
   overflow-x: auto;
-}
-
-/* 정렬 셀렉트 | TdDivider(margin 0 12px) | 선택삭제·등록
- * `.table-header-actions--wrapper` 기본 gap 8px 이 디바이더 양옆 12px 와 겹치지 않도록 제거 */
-.table-header-actions--wrapper.hac-panel__toolbar-actions {
-  gap: 0;
 }
 
 .hac-panel__toolbar-buttons {

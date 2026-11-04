@@ -98,27 +98,6 @@
   margin-top: 30px !important;
 }
 
-.education-textbook-form-modal .content-modal__footer-actions {
-  width: 100%;
-  justify-content: space-between;
-}
-
-/* 푸터: 좌 삭제 · 우 취소/수정·저장 */
-.education-textbook-form-modal__footer {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 10px;
-  box-sizing: border-box;
-}
-
-.education-textbook-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
-}
-
 .education-textbook-form-modal__scroll {
   display: flex;
   flex-direction: column;
@@ -349,8 +328,8 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
 }
 
 .education-textbook-form-modal__image-row {

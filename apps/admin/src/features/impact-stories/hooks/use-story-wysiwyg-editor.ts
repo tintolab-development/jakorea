@@ -4,11 +4,7 @@ import { shouldUseImpactStoriesRemoteApi } from '@/features/impact-stories/api/c
 import { uploadImpactStoryInlineImage } from '@/features/impact-stories/api/upload-story-attachment'
 import { useAdminHtmlEditor, type RichTextContentFormat } from '@/shared/rich-text'
 
-const DEFAULT_EDITOR_HEIGHT = '369px'
-const DEFAULT_PLACEHOLDER = '게시글 내용을 입력하세요'
-
 export type StoryWysiwygEditorOptions = {
-  height?: string
   placeholder?: string
   contentFormat?: RichTextContentFormat
   /**
@@ -27,8 +23,7 @@ export function useStoryWysiwygEditor(
   resetKey?: string | number,
   options?: StoryWysiwygEditorOptions
 ) {
-  const editorMinHeight = options?.height ?? DEFAULT_EDITOR_HEIGHT
-  const placeholder = options?.placeholder ?? DEFAULT_PLACEHOLDER
+  const placeholder = options?.placeholder
   const contentFormat = options?.contentFormat ?? 'markdown'
   const allowInlineMedia = options?.allowInlineMedia ?? true
   const resolveImageSrc = useCallback((file: File) => {
@@ -49,7 +44,6 @@ export function useStoryWysiwygEditor(
   return {
     ...adminEditor,
     editor: adminEditor.editor as Editor | null,
-    editorMinHeight,
     contentFormat,
     allowInlineMedia,
     resolveImageSrc: shouldUseImpactStoriesRemoteApi() ? resolveImageSrc : undefined,

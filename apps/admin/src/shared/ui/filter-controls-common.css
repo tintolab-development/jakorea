@@ -11,6 +11,10 @@
   --filter-control-range-split-between: 20px;
   /** 필터 칸 사이 gap */
   --filter-field-gap: 12px;
+  /** addressRegion(시/도·시/군/구, 연혁년도/월) 하위 셀렉트 사이 gap */
+  --filter-address-region-pair-gap: 6px;
+  /** addressRegion 하위 셀렉트 각 폭 */
+  --filter-address-region-segment-width: 114.75px;
   --filter-control-height: 40px;
   --filter-control-min-width: 180px;
   --filter-label-height: 27px;

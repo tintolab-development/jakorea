@@ -43,6 +43,13 @@
   color: var(--default-BK, #3d3d3d);
 }
 
+.app-radio-group--large .ant-radio-wrapper .ant-radio-label,
+.app-radio--large.ant-radio-wrapper .ant-radio-label {
+  font-size: 16px !important;
+  font-weight: 500;
+  line-height: 150%;
+}
+
 .app-radio-group--large .ant-radio-wrapper .ant-radio .ant-radio-inner,
 .app-radio--large.ant-radio-wrapper .ant-radio .ant-radio-inner {
   width: 20px;
@@ -80,6 +87,13 @@
   font-weight: 500;
   line-height: 150%;
   color: var(--default-BK, #3d3d3d);
+}
+
+.app-radio-group--medium .ant-radio-wrapper .ant-radio-label,
+.app-radio--medium.ant-radio-wrapper .ant-radio-label {
+  font-size: 14px !important;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .app-radio-group--medium .ant-radio-wrapper .ant-radio .ant-radio-inner,

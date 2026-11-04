@@ -18,7 +18,11 @@ export {
   serializeEditorContent,
   toEditorContentType,
 } from '@jakorea/rich-text'
-export { RichTextViewer, useRichTextEditor } from '@jakorea/rich-text/react'
+export {
+  RichTextViewer,
+  useRichTextEditor,
+  RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX,
+} from '@jakorea/rich-text/react'
 export { CmsRichTextEditor as RichTextEditor } from './cms-rich-text-editor'
 export { RichTextToolbar } from './toolbar/rich-text-toolbar'
 export {
@@ -27,7 +31,7 @@ export {
   isHtmlContent,
   resolveAdminHtmlForSave,
 } from './admin-html-editor'
-export { useAdminHtmlEditor } from './use-admin-html-editor'
+export { useAdminHtmlEditor, ADMIN_RICH_TEXT_PLACEHOLDER } from './use-admin-html-editor'
 export { getRemoteRichTextBodyError, REMOTE_RICH_TEXT_BODY_MAX_LENGTH } from './lib/remote-body'
 export type { RichTextToolbarProps } from './toolbar/rich-text-toolbar'
 export type { AdminEditorMode, AdminHtmlEditorState } from './admin-html-editor'

@@ -8,9 +8,7 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { ImpactStory, ImpactStoryListFilter } from '@/entities/impact-stories/model/types'
 import { useImpactStoriesList } from '@/features/impact-stories/api/hooks'
-import {
-  FILTER_CONTROL_MAX_WIDTH_PX,
-} from '@/shared/constants/filter-field-width'
+import { FILTER_CONTROL_MAX_WIDTH_PX } from '@/shared/constants/filter-field-width'
 import { CmsButton, CmsInput, CmsSelect, ContentModal } from '@/shared/ui'
 
 import './interview-post-picker-modal.css'
@@ -48,10 +46,7 @@ export function InterviewPostPickerModal({ open, onCancel, onSelect }: Props) {
   return <PickerBody onCancel={onCancel} onSelect={onSelect} />
 }
 
-function PickerBody({
-  onCancel,
-  onSelect,
-}: Pick<Props, 'onCancel' | 'onSelect'>) {
+function PickerBody({ onCancel, onSelect }: Pick<Props, 'onCancel' | 'onSelect'>) {
   const [pendingYear, setPendingYear] = useState('')
   const [pendingTitle, setPendingTitle] = useState('')
   const [applied, setApplied] = useState<ImpactStoryListFilter | null>(null)
@@ -120,17 +115,19 @@ function PickerBody({
             inputSize="large"
             width="100%"
             value={pendingTitle}
-            placeholder="고정 노출할 게시글 제목을 입력하세요"
+            placeholder="고정 노출할 게시글 제목을 입력해 주세요"
             onChange={e => setPendingTitle(e.target.value)}
             onPressEnter={handleSearch}
           />
         </div>
         <div className="admin-filter-area__actions">
-          <CmsButton className="admin-filter-area__search-button"
+          <CmsButton
+            className="admin-filter-area__search-button"
             variant="primary"
             size="large"
             type="button"
-            onClick={handleSearch} >
+            onClick={handleSearch}
+          >
             검색
           </CmsButton>
         </div>
@@ -143,7 +140,9 @@ function PickerBody({
         dataSource={applied ? rows : []}
         columns={columns}
         pagination={false}
-        locale={{ emptyText: applied ? '검색 결과가 없습니다.' : '검색 조건을 입력한 뒤 검색해 주세요.' }}
+        locale={{
+          emptyText: applied ? '검색 결과가 없습니다.' : '검색 조건을 입력한 뒤 검색해 주세요.',
+        }}
         onRow={record => ({
           onClick: () => {
             onSelect({

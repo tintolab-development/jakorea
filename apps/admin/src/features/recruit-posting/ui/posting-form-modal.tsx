@@ -34,6 +34,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
@@ -175,19 +176,11 @@ export function RecruitPostingFormModal({
     [open, mode, initial?.id, editorContentFormat]
   )
 
-  const {
-    editor,
-    editorMinHeight,
-    getHTML,
-    editorMode,
-    htmlSource,
-    onEditorModeChange,
-    onHtmlSourceChange,
-  } = useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
-    placeholder: '게시글 내용을 입력하세요',
-    contentFormat: editorContentFormat,
-    allowInlineMedia: true,
-  })
+  const { editor, getHTML, editorMode, htmlSource, onEditorModeChange, onHtmlSourceChange } =
+    useRecruitPostingWysiwygEditor(open, initialMarkdown, editorResetKey, {
+      contentFormat: editorContentFormat,
+      allowInlineMedia: true,
+    })
 
   const resetFromInitial = useCallback(() => {
     if (mode === 'edit' && initial) {
@@ -323,7 +316,7 @@ export function RecruitPostingFormModal({
       showAlert(
         linkError === HTTP_LINK_URL_FORMAT_ALERT.content
           ? HTTP_LINK_URL_FORMAT_ALERT
-          : { title: '입력 확인', content: linkError },
+          : { title: '입력 확인', content: linkError }
       )
       return
     }
@@ -398,9 +391,10 @@ export function RecruitPostingFormModal({
         size="large"
         className="posting-form-modal"
         footer={
-          <div className="posting-form-modal__footer">
+          <>
             {mode === 'edit' && onDelete ? (
               <CmsButton
+                className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
                 size="large"
                 type="button"
@@ -410,28 +404,28 @@ export function RecruitPostingFormModal({
                 공고 삭제
               </CmsButton>
             ) : null}
-            <div className="posting-form-modal__footer-end">
-              <CmsButton
-                variant="secondary"
-                size="large"
-                type="button"
-                disabled={confirmLoading || deleteLoading}
-                onClick={onCancel}
-              >
-                취소
-              </CmsButton>
-              <CmsButton
-                variant="primary"
-                size="large"
-                type="button"
-                loading={confirmLoading || (mode === 'create' && meQuery.isPending && !meQuery.data)}
-                disabled={mode === 'create' && meQuery.isPending && !meQuery.data}
-                onClick={handleSubmit}
-              >
-                {submitLabel}
-              </CmsButton>
-            </div>
-          </div>
+            <CmsButton
+              variant="secondary"
+              size="large"
+              type="button"
+              disabled={confirmLoading || deleteLoading}
+              onClick={onCancel}
+            >
+              취소
+            </CmsButton>
+            <CmsButton
+              variant="primary"
+              size="large"
+              type="button"
+              loading={
+                confirmLoading || (mode === 'create' && meQuery.isPending && !meQuery.data)
+              }
+              disabled={mode === 'create' && meQuery.isPending && !meQuery.data}
+              onClick={handleSubmit}
+            >
+              {submitLabel}
+            </CmsButton>
+          </>
         }
       >
         <div className="posting-form-modal__form">
@@ -464,7 +458,7 @@ export function RecruitPostingFormModal({
                   format="YYYY.MM.DD HH:mm"
                   value={publishedAt}
                   onChange={v => setPublishedAt(v)}
-                  placeholder="게시일시를 선택하세요"
+                  placeholder="게시일시를 선택해 주세요"
                 />
               </div>
               <div className="posting-form-modal__filter-field posting-form-modal__filter-field--radio">
@@ -514,7 +508,7 @@ export function RecruitPostingFormModal({
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
-              placeholder="제목을 입력하세요"
+              placeholder="제목을 입력해 주세요"
             />
           </div>
 
@@ -523,7 +517,6 @@ export function RecruitPostingFormModal({
             <div className="posting-form-modal__editor-host">
               <RichTextEditor
                 editor={editor}
-                minHeight={editorMinHeight}
                 allowInlineMedia
                 allowRawHtmlBlock
                 editorMode={editorMode}

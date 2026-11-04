@@ -57,6 +57,7 @@ export {
   AdminContentModal,
   AdminConfirmModal,
   AdminAlertModal,
+  CONTENT_MODAL_FOOTER_START_CLASS,
   CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS,
   renderContentModalDescription,
   type AdminTealHeaderModalProps,

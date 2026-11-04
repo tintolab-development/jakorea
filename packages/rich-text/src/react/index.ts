@@ -20,4 +20,5 @@ export type {
   RichTextViewerProps,
   UseRichTextEditorOptions,
 } from './types'
+export { RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX } from './types'
 export type { HeadingLevel, TextAlignValue } from './toolbar-options'

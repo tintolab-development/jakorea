@@ -3,8 +3,6 @@ import { Switch } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
-import { DetailInfoFormTdDivider } from '@jakorea/form-template-runtime'
-import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
   HistoryCreateInput,
   HistoryItem,
@@ -60,21 +58,15 @@ import {
   showDeleteCompletedAlert,
 } from '@/shared/ui'
 
-const YEAR_OPTIONS = [
-  { label: '년도 전체', value: '' },
-  ...Array.from({ length: 20 }, (_, i) => {
-    const y = 2026 - i
-    return { label: `${y}년`, value: String(y) }
-  }),
-]
+const YEAR_OPTIONS = Array.from({ length: 20 }, (_, i) => {
+  const y = 2026 - i
+  return { label: `${y}년`, value: String(y) }
+})
 
-const MONTH_OPTIONS = [
-  { label: '월 전체', value: '' },
-  ...Array.from({ length: 12 }, (_, i) => ({
-    label: `${i + 1}월`,
-    value: String(i + 1),
-  })),
-]
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+  label: `${i + 1}월`,
+  value: String(i + 1),
+}))
 
 type HistoryPendingFilters = {
   isPublic: PublicFilterValue
@@ -177,7 +169,6 @@ export function HistoryPanel() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
-    patchSearchParams,
   } = useListFilterUrl<HistoryPendingFilters, HistoryListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -248,21 +239,6 @@ export function HistoryPanel() {
     applySearch()
     setSelectedRowKeys([])
   }, [applySearch])
-
-  const handleSortChange = useCallback(
-    (value: HistorySortKey) => {
-      setPendingFilters(prev => ({ ...prev, sort: value }))
-      patchSearchParams(next => {
-        if (value === 'created') {
-          next.set('h_sort', value)
-        } else {
-          next.delete('h_sort')
-        }
-      })
-      setSelectedRowKeys([])
-    },
-    [patchSearchParams, setPendingFilters]
-  )
 
   const handleTogglePublic = useCallback(
     (id: string, isPublic: boolean) => {
@@ -397,12 +373,13 @@ export function HistoryPanel() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={e => {
               e.stopPropagation()
               openEdit(record)
-            }} >
+            }}
+          >
             수정
           </CmsButton>
         ),
@@ -420,6 +397,7 @@ export function HistoryPanel() {
               <p className="admin-filter-area__label">공개 여부</p>
               <CmsSelect
                 inputSize="medium"
+                withAllOption
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.isPublic}
                 onChange={v =>
@@ -429,25 +407,30 @@ export function HistoryPanel() {
                   }))
                 }
                 options={[
-                  { label: '전체', value: '' },
                   { label: '공개', value: 'true' },
                   { label: '비공개', value: 'false' },
                 ]}
               />
             </div>
-            <div className="admin-filter-area__field admin-filter-area__field--date-range">
+            <div className="admin-filter-area__field admin-filter-area__field--address-region">
               <p className="admin-filter-area__label">연혁년도/월</p>
-              <div className="hac-panel__year-month-filters">
+              <div
+                className="admin-filter-area__address-region-selects"
+                role="group"
+                aria-label="연혁년도/월"
+              >
                 <CmsSelect
                   inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  popupMatchSelectWidth={false}
                   value={pendingFilters.year}
                   onChange={v => setPendingFilters(prev => ({ ...prev, year: String(v ?? '') }))}
                   options={YEAR_OPTIONS}
                 />
                 <CmsSelect
                   inputSize="medium"
-                  width={FILTER_CONTROL_MAX_WIDTH_PX}
+                  withAllOption
+                  popupMatchSelectWidth={false}
                   value={pendingFilters.month}
                   onChange={v => setPendingFilters(prev => ({ ...prev, month: String(v ?? '') }))}
                   options={MONTH_OPTIONS}
@@ -482,11 +465,13 @@ export function HistoryPanel() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -495,32 +480,20 @@ export function HistoryPanel() {
         title="연혁 목록"
         description={`총 ${totalCount.toLocaleString()}건`}
         actions={
-          <>
-            <CmsSelect
-              inputSize="medium"
-              width={140}
-              value={appliedFilter.sort ?? pendingFilters.sort}
-              onChange={v => handleSortChange((v as HistorySortKey) ?? 'event')}
-              options={[
-                { label: '연혁일순', value: 'event' },
-                { label: '작성일순', value: 'created' },
-              ]}
-            />
-            <DetailInfoFormTdDivider />
-            <div className="hac-panel__toolbar-buttons">
-              <CmsButton
-                variant="delete"
-                size="h40"
-                type="button"
-                onClick={handleDeleteClick}
-                loading={removeMutation.isPending} >
-                선택 삭제
-              </CmsButton>
-              <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
-                연혁 등록
-              </CmsButton>
-            </div>
-          </>
+          <div className="hac-panel__toolbar-buttons">
+            <CmsButton
+              variant="delete"
+              size="h40"
+              type="button"
+              onClick={handleDeleteClick}
+              loading={removeMutation.isPending}
+            >
+              선택 삭제
+            </CmsButton>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
+              연혁 등록
+            </CmsButton>
+          </div>
         }
       >
         <div className="hac-panel__table-scroll">
