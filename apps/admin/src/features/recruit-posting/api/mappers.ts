@@ -54,20 +54,24 @@ function mapMime(contentType: string | undefined): RecruitPostingAttachmentMime 
   return generalAttachmentMimeFromContentType(contentType)
 }
 
+export const RECRUIT_POSTING_ATTACHMENT_MAX_COUNT = 10
+
 function mapAttachments(assets: AssetResponse[] | undefined | null): RecruitPostingAttachment[] {
   if (!assets?.length) return []
-  return assets.flatMap(asset => {
-    if (asset.assetId == null) return []
-    return [
-      {
-        id: String(asset.assetId),
-        name: text(asset.originalName) || `attachment-${asset.assetId}`,
-        mime: mapMime(asset.contentType),
-        dataUrl: asset.publicUrl?.trim() || undefined,
-        assetId: asset.assetId,
-      },
-    ]
-  })
+  return assets
+    .flatMap(asset => {
+      if (asset.assetId == null) return []
+      return [
+        {
+          id: String(asset.assetId),
+          name: text(asset.originalName) || `attachment-${asset.assetId}`,
+          mime: mapMime(asset.contentType),
+          dataUrl: asset.publicUrl?.trim() || undefined,
+          assetId: asset.assetId,
+        },
+      ]
+    })
+    .slice(0, RECRUIT_POSTING_ATTACHMENT_MAX_COUNT)
 }
 
 function mapAdminFields(
@@ -151,7 +155,7 @@ export function toCareerPostingCreateRequest(
     recruitStart: toYmd(input.recruitStart),
     recruitEnd: toYmd(input.recruitEnd),
     authorName: input.authorName.trim(),
-    attachmentAssetIds,
+    attachmentAssetIds: attachmentAssetIds.slice(0, RECRUIT_POSTING_ATTACHMENT_MAX_COUNT),
     buttonLabel: link.buttonLabel,
     linkUrl: link.linkUrl,
   }
@@ -176,7 +180,7 @@ export function toCareerPostingUpdateRequest(
     recruitEnd: toYmd(input.recruitEnd),
     authorName: input.authorName.trim(),
     version,
-    attachmentAssetIds,
+    attachmentAssetIds: attachmentAssetIds.slice(0, RECRUIT_POSTING_ATTACHMENT_MAX_COUNT),
     buttonLabel: link.buttonLabel,
     linkUrl: link.linkUrl,
   }

@@ -76,6 +76,8 @@ export function isPersistedCategoryId(id: string): boolean {
   return Number.isFinite(n) && n > 0 && String(n) === id.trim()
 }
 
+export const STORY_ATTACHMENT_MAX_COUNT = 10
+
 export function requireThumbnailAssetId(id?: number): number {
   if (id == null || id <= 0) {
     throw new Error('썸네일 이미지를 등록해 주세요.')
@@ -85,7 +87,7 @@ export function requireThumbnailAssetId(id?: number): number {
 
 export function assertThumbnailNotInAttachments(
   thumbnailAssetId: number,
-  attachmentAssetIds: number[]
+  attachmentAssetIds: readonly number[]
 ): void {
   if (attachmentAssetIds.includes(thumbnailAssetId)) {
     throw new Error('썸네일과 첨부 파일은 서로 다른 파일이어야 합니다.')
@@ -108,10 +110,12 @@ function mapAssetAttachment(
 
 function mapAttachmentFromResponse(row: StoryResponse): ImpactStoryAttachment[] {
   if (!row.attachments?.length) return []
-  return row.attachments.flatMap(asset => {
-    const mapped = mapAssetAttachment(asset)
-    return mapped ? [mapped] : []
-  })
+  return row.attachments
+    .flatMap(asset => {
+      const mapped = mapAssetAttachment(asset)
+      return mapped ? [mapped] : []
+    })
+    .slice(0, STORY_ATTACHMENT_MAX_COUNT)
 }
 
 function mapThumbnailFromResponse(row: StoryResponse): ImpactStoryAttachment | null {
@@ -197,7 +201,8 @@ export function toStoryCreateRequest(
   thumbnailAssetId: number
 ): StoryCreateRequest {
   const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
-  assertThumbnailNotInAttachments(requiredThumbnailAssetId, attachmentAssetIds)
+  const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
+  assertThumbnailNotInAttachments(requiredThumbnailAssetId, ids)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -206,8 +211,8 @@ export function toStoryCreateRequest(
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
     thumbnailAssetId: requiredThumbnailAssetId,
-    attachmentAssetIds,
-    thumbnailDistinctFromAttachments: attachmentAssetIds.length > 0,
+    attachmentAssetIds: ids,
+    thumbnailDistinctFromAttachments: ids.length > 0,
   }
 }
 
@@ -218,7 +223,8 @@ export function toStoryUpdateRequest(
   thumbnailAssetId: number
 ): StoryUpdateRequest {
   const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
-  assertThumbnailNotInAttachments(requiredThumbnailAssetId, attachmentAssetIds)
+  const ids = attachmentAssetIds.slice(0, STORY_ATTACHMENT_MAX_COUNT)
+  assertThumbnailNotInAttachments(requiredThumbnailAssetId, ids)
   return {
     published: input.isPublic,
     pinned: input.isPinned,
@@ -227,8 +233,8 @@ export function toStoryUpdateRequest(
     title: input.title.trim(),
     body: toApiStoryBody(input.contentMarkdown),
     thumbnailAssetId: requiredThumbnailAssetId,
-    attachmentAssetIds,
-    thumbnailDistinctFromAttachments: attachmentAssetIds.length > 0,
+    attachmentAssetIds: ids,
+    thumbnailDistinctFromAttachments: ids.length > 0,
     version,
   }
 }

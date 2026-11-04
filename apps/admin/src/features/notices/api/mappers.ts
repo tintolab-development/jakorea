@@ -36,20 +36,24 @@ export function toApiNoticeBody(content: string): string {
   return markdownToHtml(trimmed)
 }
 
+export const NOTICE_ATTACHMENT_MAX_COUNT = 10
+
 function mapAssetAttachments(assets: AssetResponse[] | undefined): NoticeAttachment[] {
   if (!assets?.length) return []
-  return assets.flatMap(asset => {
-    if (asset.assetId == null) return []
-    return [
-      {
-        id: String(asset.assetId),
-        name: asset.originalName ?? 'attachment',
-        mime: mimeFromContentType(asset.contentType),
-        dataUrl: asset.publicUrl,
-        assetId: asset.assetId,
-      },
-    ]
-  })
+  return assets
+    .flatMap(asset => {
+      if (asset.assetId == null) return []
+      return [
+        {
+          id: String(asset.assetId),
+          name: asset.originalName ?? 'attachment',
+          mime: mimeFromContentType(asset.contentType),
+          dataUrl: asset.publicUrl,
+          assetId: asset.assetId,
+        },
+      ]
+    })
+    .slice(0, NOTICE_ATTACHMENT_MAX_COUNT)
 }
 
 export function mapNoticeResponseToDomain(row: NoticeResponse): Notice {
@@ -110,7 +114,7 @@ export function toNoticeCreateRequest(
     publishAt: input.publishedAt,
     title: input.title.trim(),
     body: toApiNoticeBody(input.contentMarkdown),
-    attachmentAssetIds,
+    attachmentAssetIds: attachmentAssetIds.slice(0, NOTICE_ATTACHMENT_MAX_COUNT),
   }
 }
 
@@ -125,7 +129,7 @@ export function toNoticeUpdateRequest(
     publishAt: input.publishedAt,
     title: input.title.trim(),
     body: toApiNoticeBody(input.contentMarkdown),
-    attachmentAssetIds,
+    attachmentAssetIds: attachmentAssetIds.slice(0, NOTICE_ATTACHMENT_MAX_COUNT),
     version,
   }
 }
