@@ -175,8 +175,9 @@ function CorporatePartnerFormBody({
   onSubmit,
 }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
-  const maxOrder = mode === 'create' ? totalCount + 1 : Math.max(totalCount, 1)
-  const defaultOrder = mode === 'edit' && initial ? initial.sortOrder : totalCount + 1
+  const SORT_ORDER_MAX = 30
+  const maxOrder = SORT_ORDER_MAX
+  const defaultOrder = mode === 'edit' && initial ? initial.sortOrder : Math.min(totalCount + 1, SORT_ORDER_MAX)
 
   const [isPublic, setIsPublic] = useState(() =>
     mode === 'edit' && initial ? initial.isPublic : true
@@ -203,8 +204,7 @@ function CorporatePartnerFormBody({
     })
   }, [])
 
-  /** 시안: * 1부터 N 사이의 숫자를 입력해 주세요. */
-  const sortHelper = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
+  const sortHelper = '* 1부터 30 사이의 숫자를 입력해 주세요.'
 
   /** 노출 순서 입력값 1…maxOrder 범위로 정규화 (빈 문자열은 허용 — 입력 중) */
   const normalizeSortOrderInput = useCallback(
@@ -275,7 +275,7 @@ function CorporatePartnerFormBody({
     }
     const orderNum = Math.floor(Number(sortOrder))
     if (!Number.isFinite(orderNum) || orderNum < 1 || orderNum > maxOrder) {
-      nextErrors.sortOrder = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
+      nextErrors.sortOrder = '* 1부터 30 사이의 숫자를 입력해 주세요.'
     }
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
