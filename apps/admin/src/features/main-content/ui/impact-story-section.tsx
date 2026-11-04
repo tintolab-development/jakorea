@@ -14,6 +14,9 @@ import {
   validateImpactStorySection,
 } from '@/features/main-content/lib/validate'
 import { MainContentFieldControl } from '@/features/main-content/ui/field-control'
+import {
+  MainContentRequiredLabel,
+} from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import { CmsInput, CmsSelect, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
@@ -90,8 +93,9 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       <DetailInfoForm title="임팩트 스토리 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="타이틀 텍스트"
-            required
+            label={
+              <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
+            }
             view={<span className="main-content-preline">{titleText || '-'}</span>}
             edit={
               <MainContentFieldControl error={fieldErrors.title}>
@@ -115,8 +119,11 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="메인 영상 유튜브 링크"
-            required
+            label={
+              <MainContentRequiredLabel required={isEditing}>
+                메인 영상 유튜브 링크
+              </MainContentRequiredLabel>
+            }
             view={youtubeUrl || '-'}
             edit={
               <CmsInput
@@ -130,15 +137,16 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                   setFieldErrors(prev => ({ ...prev, youtubeUrl: '' }))
                   setDraft(prev => ({ ...prev, youtubeUrl: e.target.value }))
                 }}
-                placeholder="유튜브 링크를 입력하세요"
+                placeholder="유튜브 링크를 입력해 주세요"
               />
             }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="대표 콘텐츠 설정"
-            required
+            label={
+              <MainContentRequiredLabel required={isEditing}>대표 콘텐츠 설정</MainContentRequiredLabel>
+            }
             view={featuredTitle}
             edit={
               <CmsSelect
@@ -156,7 +164,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                     featuredContentId: String(value ?? ''),
                   }))
                 }}
-                placeholder="대표 콘텐츠를 선택하세요"
+                placeholder="대표 콘텐츠를 선택해 주세요"
               />
             }
           />

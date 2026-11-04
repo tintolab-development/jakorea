@@ -3,6 +3,7 @@
  * 규격: apps/admin/.cursor/rules/design/detail-info-nested-table.mdc
  * (DetailInfoForm 중첩 금지 — flex·label 고정폭 충돌)
  */
+import type { ReactNode } from 'react'
 import type { PerformanceMetric } from '@/entities/main-content/model/types'
 import {
   MAIN_CONTENT_LIMITS,
@@ -10,6 +11,26 @@ import {
   PERFORMANCE_METRIC_FIELDS,
 } from '@/features/main-content/lib/validate'
 import { CmsInput } from '@/shared/ui'
+
+/** Figma Table / Vertical / Cell required — 라벨 텍스트 shrink 래퍼 */
+export function MainContentRequiredLabel({
+  children,
+  required,
+}: {
+  children: ReactNode
+  required: boolean
+}) {
+  return (
+    <span className="main-content-required-label">
+      {children}
+      {required ? (
+        <span className="main-content-required-label__mark" aria-hidden>
+          *
+        </span>
+      ) : null}
+    </span>
+  )
+}
 
 function NestedRequiredMark() {
   return (
