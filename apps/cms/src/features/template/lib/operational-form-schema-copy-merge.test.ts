@@ -3,6 +3,10 @@ import { createProgramParticipantApplicationDraft } from '@/features/template/mo
 import { createRecruitFormInstructorDraft } from '@/features/template/model/recruit-form-instructor-draft'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { RECRUIT_FORM_INSTRUCTOR_IDS } from '@jakorea/form-schema/paragraph-ids/recruit-form-instructor-draft'
+import {
+  createUjatProgramApplicationFormVolunteerDraft,
+  UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS,
+} from '@jakorea/form-schema/paragraph-ids/ujat-program-application-form-volunteer-draft'
 import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
 import { normalizeWritingFormDraftFromApi } from '@/features/template/lib/form-template-seed-registry'
 
@@ -135,5 +139,46 @@ describe('buildOperationalImmutableFormSchemaDraft', () => {
     )
     expect(loadedParagraph?.paragraphTitle).toBe('상세 정보 — 수정')
     expect(loadedParagraph?.paragraphDescription).toBe('설명 수정')
+  })
+
+  it('UJAT 봉사자 신청 COPY — 제출 확인 선택지 구조는 카탈로그를 유지한다', () => {
+    const seed = createUjatProgramApplicationFormVolunteerDraft()
+    const submitId = UJAT_PROGRAM_APPLICATION_FORM_VOLUNTEER_IDS.submitConfirmation
+    const seedParagraph = seed.paragraphs.find(p => p.id === submitId)
+    expect(seedParagraph).toBeTruthy()
+
+    const editorDraft = {
+      ...seed,
+      paragraphs: seed.paragraphs.map(p =>
+        p.id === submitId && p.kind === 'single_item' && p.variant === 'multiple_choice'
+          ? {
+              ...p,
+              paragraphTitle: '제출 확인 안내 수정',
+              items: p.items.map(item => ({
+                ...item,
+                label: `${item.label} 31기로 지원합니다.`,
+              })),
+            }
+          : p
+      ),
+    }
+
+    const merged = buildOperationalImmutableFormSchemaDraft({
+      templateCode: 'application-ujat-volunteer-copy-1',
+      editorDraft,
+      baseTemplateCode: 'application-ujat-volunteer',
+      catalogBaseline: seed,
+    })
+    const mergedParagraph = merged?.paragraphs.find(p => p.id === submitId)
+    expect(mergedParagraph?.paragraphTitle).toBe('제출 확인 안내 수정')
+    expect(
+      mergedParagraph?.kind === 'single_item' && mergedParagraph.variant === 'multiple_choice'
+        ? mergedParagraph.items
+        : null
+    ).toEqual(
+      seedParagraph?.kind === 'single_item' && seedParagraph.variant === 'multiple_choice'
+        ? seedParagraph.items
+        : null
+    )
   })
 })
