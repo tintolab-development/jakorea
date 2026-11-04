@@ -282,6 +282,13 @@ async function ensureCommonStep(page: Page) {
   await page.waitForTimeout(2_000)
   for (let attempt = 0; attempt < 3; attempt += 1) {
     await dismissVisibleDialogs(page)
+    const registrationDone = page.getByRole('heading', { name: '등록 완료' })
+    if (await registrationDone.isVisible().catch(() => false)) return
+    const failOverlay = page.locator('.ant-modal-wrap').filter({ hasText: /등록 실패|서버 오류/ })
+    if (await failOverlay.isVisible().catch(() => false)) {
+      await failOverlay.getByRole('button', { name: '확인' }).click()
+      await expect(failOverlay).toBeHidden({ timeout: 10_000 })
+    }
     const recruitBack = page.getByRole('button', { name: '모집 정보 돌아가기' })
     if (await recruitBack.isVisible().catch(() => false)) {
       await recruitBack.click()
@@ -877,6 +884,7 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     const createsAfterDouble = log.mutations.filter(
       m => m.method === 'POST' && m.path === '/api/admin/programs'
     ).length
+    const formVersionPutsAfterFail = log.formVersionPuts.length
     const failDialogText = await page
       .getByRole('dialog')
       .filter({ hasText: /실패|오류/ })
@@ -898,6 +906,14 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     if (await closeBtn.isVisible().catch(() => false)) await closeBtn.click().catch(() => undefined)
     await expect(page.getByText('1사1교 프로그램 등록', { exact: true })).toBeVisible()
     const appStillThere = await page.getByRole('button', { name: '프로그램 등록 완료' }).isVisible()
+    await ensureCommonStep(page)
+    const common = await snapshotCommonSections(page)
+    const toRecruit = page.getByRole('button', { name: '모집 정보 작성하기' })
+    if (await toRecruit.isVisible().catch(() => false)) await toRecruit.click()
+    const toApplication = page.getByRole('button', { name: '신청 정보 작성하기' })
+    await expect(toApplication).toBeVisible({ timeout: 30_000 })
+    await toApplication.click()
+    await expect(button).toBeVisible({ timeout: 30_000 })
     await button.click()
     await expect
       .poll(
@@ -908,17 +924,7 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
         }
       )
       .toBe(createsAfterDouble + 1)
-    await page.waitForTimeout(2_000)
-    await dismissVisibleDialogs(page)
-    const closeBtn2 = page
-      .getByRole('dialog')
-      .filter({ hasText: /실패|오류/ })
-      .getByRole('button')
-      .first()
-    if (await closeBtn2.isVisible().catch(() => false))
-      await closeBtn2.click().catch(() => undefined)
-    await ensureCommonStep(page)
-    const common = await snapshotCommonSections(page)
+    await expect(page.getByRole('heading', { name: '등록 완료' })).toBeVisible({ timeout: 20_000 })
     const draftState = await readSavedCsRecords(page)
     await attachEvidence(testInfo, page, log, ev, {
       createsAfterDouble,
@@ -931,7 +937,7 @@ test.describe('CS 추가 검증 — 탭 값 보존·미리보기·임시저장·
     expect(createsAfterDouble, '중복 CREATE 방지').toBe(1)
     expect(successShown, '실패 시 성공 모달 없음').toBe(false)
     expect(common['대표 프로그램명을 입력해 주세요#0']).toBe(VALUES_B.title)
-    expect(log.formVersionPuts).toHaveLength(0)
+    expect(formVersionPutsAfterFail).toBe(0)
     expect(new URL(page.url()).searchParams.get('programId')).toBeNull()
     assertIsolatedNetwork(log)
   })

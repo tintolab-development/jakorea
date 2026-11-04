@@ -516,7 +516,7 @@ export function bindingCodes(log: IsolatedNetworkLog): string {
 export async function dismissVisibleDialogs(page: Page) {
   const dialog = page
     .getByRole('dialog')
-    .filter({ hasText: /임시 저장|필수 항목|입력 확인|등록 실패/ })
+    .filter({ hasText: /임시 저장|필수 항목|입력 확인|등록 실패|서버 오류/ })
   if (
     !(await dialog
       .first()
