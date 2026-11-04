@@ -95,6 +95,16 @@
   line-height: 150%;
 }
 
+.payment-order-payment-reject__required {
+  margin-left: 1px;
+  color: var(--color-red, #c32f4a);
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 120%;
+}
+
 .payment-order-payment-reject__reason-block .cms-input,
 .payment-order-payment-reject__reason-block .cms-input.cms-input--explicit-width {
   width: 100%;
