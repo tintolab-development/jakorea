@@ -167,7 +167,7 @@ export function CorporateConsultationDetailModal({
       <CmsButton
         className={CONTENT_MODAL_FOOTER_START_CLASS}
         variant="delete"
-        size="large"
+        size="medium"
         type="button"
         loading={deleteLoading}
         disabled={busy}
@@ -183,7 +183,7 @@ export function CorporateConsultationDetailModal({
       />
       <CmsButton
         variant="secondary"
-        size="large"
+        size="medium"
         type="button"
         disabled={busy}
         onClick={onCancel} >
@@ -191,7 +191,7 @@ export function CorporateConsultationDetailModal({
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="medium"
         type="button"
         loading={confirmLoading}
         disabled={busy || isConfirmed || !data}

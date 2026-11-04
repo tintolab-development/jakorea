@@ -140,7 +140,7 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -149,7 +149,7 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}

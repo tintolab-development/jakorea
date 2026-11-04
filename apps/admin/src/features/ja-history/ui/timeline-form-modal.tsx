@@ -320,7 +320,7 @@ function TimelineFormBody({
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -329,7 +329,7 @@ function TimelineFormBody({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}

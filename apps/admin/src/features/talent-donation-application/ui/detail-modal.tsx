@@ -187,7 +187,7 @@ export function TalentDonationApplicationDetailModal({
       <CmsButton
         className={CONTENT_MODAL_FOOTER_START_CLASS}
         variant="delete"
-        size="large"
+        size="medium"
         type="button"
         loading={deleteLoading}
         disabled={busy}
@@ -203,7 +203,7 @@ export function TalentDonationApplicationDetailModal({
       />
       <CmsButton
         variant="secondary"
-        size="large"
+        size="medium"
         type="button"
         disabled={busy}
         onClick={onCancel} >
@@ -211,7 +211,7 @@ export function TalentDonationApplicationDetailModal({
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="medium"
         type="button"
         loading={confirmLoading}
         disabled={busy || isConfirmed || !data}

@@ -182,7 +182,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -191,7 +191,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}

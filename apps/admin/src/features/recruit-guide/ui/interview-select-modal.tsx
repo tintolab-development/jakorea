@@ -179,7 +179,7 @@ export function InterviewSelectModal({ open, confirmLoading, onCancel, onSelect 
           onChange={e => setPendingTitle(e.target.value)}
           onPressEnter={handleSearch}
         />
-        <CmsButton variant="primary" size="large" type="button" onClick={handleSearch}>
+        <CmsButton variant="primary" size="medium" type="button" onClick={handleSearch}>
           검색
         </CmsButton>
       </div>

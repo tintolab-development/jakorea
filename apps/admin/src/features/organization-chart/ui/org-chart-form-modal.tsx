@@ -145,7 +145,7 @@ function OrgChartFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormB
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -154,7 +154,7 @@ function OrgChartFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormB
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
