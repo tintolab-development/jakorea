@@ -3,9 +3,7 @@ import { AdminAlertModal, type AdminAlertModalProps } from '@jakorea/admin-ui/mo
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
 import { CMS_ALERT_MODAL_CLOSED_EVENT } from './cms-alert-modal-api'
 
-export type AlertModalProps = Omit<AdminAlertModalProps, 'content'> & {
-  content: string
-}
+export type AlertModalProps = AdminAlertModalProps
 
 export function AlertModal({ zIndex = CMS_ALERT_MODAL_Z_INDEX, ...props }: AlertModalProps) {
   const wasOpenRef = useRef(false)

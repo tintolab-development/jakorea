@@ -6,9 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
-import {
-  FilterTableToolbarButton
-} from '@/shared/ui'
+import { FilterTableToolbarButton } from '@/shared/ui'
 import { CalculationDetailViewButton } from '@/features/settlement/ui/payment-record/calculation-detail-view-button'
 import { PaymentOrderLineProcessingStatusBadge } from '@/shared/components/payment-order-line-processing-status-badge'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
@@ -249,14 +247,14 @@ export function PaymentOrderProgramSettlementTable({
             key: 'instructorName',
             type: 'search',
             label: '강사명',
-            placeholder: '강사명을 입력하세요',
+            placeholder: '강사명을 입력해 주세요',
             flex: '1 1 0',
           },
           {
             key: 'institutionName',
             type: 'search',
             label: '참여 기관명',
-            placeholder: '기관명을 입력하세요',
+            placeholder: '기관명을 입력해 주세요',
             flex: '1 1 0',
           },
           {
@@ -310,14 +308,16 @@ export function PaymentOrderProgramSettlementTable({
               onClick={() => {
                 if (selectedRowKeys.length === 0) return
                 setBatchConfirmOpen(true)
-              }} >
+              }}
+            >
               일괄 확인
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="primary"
               style={{ minWidth: 180 }}
               icon={<ButtonDownloadIcon />}
-              onClick={() => {}} >
+              onClick={() => {}}
+            >
               지급조서 발급
             </FilterTableToolbarButton>
           </>

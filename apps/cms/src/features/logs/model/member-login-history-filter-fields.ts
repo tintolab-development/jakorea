@@ -10,14 +10,14 @@ export const memberLoginHistoryFilterFields: FilterFieldConfig[] = [
     key: 'adminName',
     type: 'search',
     label: '관리자명',
-    placeholder: '관리자명을 입력하세요',
+    placeholder: '관리자명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'loginId',
     type: 'search',
     label: '아이디',
-    placeholder: '아이디를 입력하세요',
+    placeholder: '아이디를 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

@@ -154,7 +154,7 @@ export class TextbookManagementPage {
   }
 
   async fillTextbookName(name: string) {
-    await this.page.getByPlaceholder('교재명을 입력하세요').fill(name)
+    await this.page.getByPlaceholder('교재명을 입력해 주세요').fill(name)
   }
 
   async selectEducationTarget(label: string) {

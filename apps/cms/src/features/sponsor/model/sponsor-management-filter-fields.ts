@@ -17,7 +17,7 @@ export const sponsorManagementFilterFields: FilterFieldConfig[] = [
     key: 'sponsorName',
     type: 'search',
     label: '후원사명',
-    placeholder: '후원사명을 입력하세요',
+    placeholder: '후원사명을 입력해 주세요',
     width: '20%',
   },
   {
@@ -38,7 +38,7 @@ export const sponsorManagementFilterFields: FilterFieldConfig[] = [
     key: 'managerName',
     type: 'search',
     label: '주 담당자명',
-    placeholder: '주 담당자명을 입력하세요',
+    placeholder: '주 담당자명을 입력해 주세요',
     width: '20%',
   },
   {

@@ -44,8 +44,13 @@ export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhiloso
           .then(
             () => setEditing(false),
             error => {
-              showAlert(jaHistorySaveAlert(error, '믿음을 키우는 교육 저장에 실패했습니다. 다시 시도해 주세요.'))
-            },
+              showAlert(
+                jaHistorySaveAlert(
+                  error,
+                  '믿음을 키우는 교육 저장에 실패했습니다. 다시 시도해 주세요.'
+                )
+              )
+            }
           )
       }}
     >
@@ -61,7 +66,7 @@ export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhiloso
                 onChange={title => setDraft(prev => ({ ...prev, title }))}
                 rows={2}
                 label="타이틀"
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
               />
             }
           />
@@ -77,7 +82,7 @@ export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhiloso
                 onChange={lead => setDraft(prev => ({ ...prev, lead }))}
                 rows={3}
                 label="서브 텍스트"
-                placeholder="서브 텍스트를 입력하세요"
+                placeholder="서브 텍스트를 입력해 주세요"
               />
             }
           />
@@ -92,7 +97,9 @@ export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhiloso
               onChange={patch => {
                 setDraft(prev => ({
                   ...prev,
-                  cards: prev.cards.map(item => (item.id === card.id ? { ...item, ...patch } : item)),
+                  cards: prev.cards.map(item =>
+                    item.id === card.id ? { ...item, ...patch } : item
+                  ),
                 }))
               }}
             />

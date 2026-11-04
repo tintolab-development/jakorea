@@ -19,7 +19,10 @@ import { CmsInput } from '@/shared/ui/cms-input'
 import { CmsPhoneInput } from '@/shared/ui/cms-phone-input'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { DividerVertical } from '@/shared/components/divider-vertical'
-import { ProgramDetailContactReadRow, ProgramDetailDateMethodReadRow } from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
+import {
+  ProgramDetailContactReadRow,
+  ProgramDetailDateMethodReadRow,
+} from '@/features/program/shared/ui/program-detail/project-info/recruitment/components/recruitment-form-parts'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
 import { resolveGeneralProgramInstructorRecruitmentDisplay } from '@/features/program/general/lib/instructor-recruitment-display'
 import dayjs from 'dayjs'
@@ -108,7 +111,8 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                     name="instructorProgramOperationStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <ParagraphDatePicker inputSize="small"
+                      <ParagraphDatePicker
+                        inputSize="small"
                         mode="range"
                         showTimeToggle={false}
                         value={[
@@ -143,7 +147,9 @@ export function GeneralProgramInstructorRecruitmentInfoView({
               view={statusView}
               edit={
                 isEdit && form ? (
-                  <span className="form-editor-template-field-hint-text">{RECRUIT_PROGRESS_HINT}</span>
+                  <span className="form-editor-template-field-hint-text">
+                    {RECRUIT_PROGRESS_HINT}
+                  </span>
                 ) : undefined
               }
             />
@@ -168,7 +174,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                         value={field.value ?? []}
                         options={[...INSTRUCTOR_TARGET_OPTIONS]}
                         onChange={v => field.onChange(parseInstructorTargetsSelectValue(v))}
-                        placeholder="모집 대상을 선택하세요"
+                        placeholder="모집 대상을 선택해 주세요"
                         className="program-detail-info-tab__target-select"
                       />
                     )}
@@ -189,7 +195,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                       <CmsInput
                         {...field}
                         value={field.value ?? ''}
-                        placeholder="상세 모집 대상을 입력하세요"
+                        placeholder="상세 모집 대상을 입력해 주세요"
                         inputSize="small"
                         width="100%"
                         className="program-detail-info-tab__district-input"
@@ -212,7 +218,8 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                     name="instructorApplicationStartDate"
                     control={form.control}
                     render={({ field }) => (
-                      <ParagraphDatePicker inputSize="small"
+                      <ParagraphDatePicker
+                        inputSize="small"
                         mode="range"
                         showTimeToggle={false}
                         value={[
@@ -239,7 +246,10 @@ export function GeneralProgramInstructorRecruitmentInfoView({
             />
             <DetailInfoForm.Field
               label="최종 합격자 발표"
-              validationKey={['recruit.instructor.finalAnnounceIso', 'recruit.instructor.finalAnnounceMethod']}
+              validationKey={[
+                'recruit.instructor.finalAnnounceIso',
+                'recruit.instructor.finalAnnounceMethod',
+              ]}
               view={
                 <ProgramDetailDateMethodReadRow
                   dateIso={display.finalPassAnnouncementDate}
@@ -253,7 +263,8 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                       name="finalPassAnnouncementDate"
                       control={form.control}
                       render={({ field }) => (
-                        <ParagraphDatePicker inputSize="small"
+                        <ParagraphDatePicker
+                          inputSize="small"
                           mode="single"
                           presetMode="date"
                           customizable={false}

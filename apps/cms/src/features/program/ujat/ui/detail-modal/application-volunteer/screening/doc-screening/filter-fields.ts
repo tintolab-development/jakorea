@@ -102,7 +102,7 @@ export function buildUjatVolunteerDocScreeningFilterRows(): FilterFieldConfig[][
         key: 'volunteerName',
         type: 'search',
         label: '신청 봉사자명',
-        placeholder: '봉사자명을 입력하세요',
+        placeholder: '봉사자명을 입력해 주세요',
       },
       {
         key: 'grade',

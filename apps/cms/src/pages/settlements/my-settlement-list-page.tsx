@@ -207,7 +207,11 @@ export function MySettlementListPage() {
       key: 'id',
       width: 200,
       render: (id: string, record: Settlement) => (
-        <LoadingButton type="link" onClick={() => handleViewSettlement(record)} style={{ padding: 0 }}>
+        <LoadingButton
+          type="link"
+          onClick={() => handleViewSettlement(record)}
+          style={{ padding: 0 }}
+        >
           {id}
         </LoadingButton>
       ),
@@ -295,7 +299,11 @@ export function MySettlementListPage() {
               },
             ]}
           />
-          <CmsButton variant="primary" icon={<ButtonAddIcon />} onClick={() => setSubmitModalOpen(true)}>
+          <CmsButton
+            variant="primary"
+            icon={<ButtonAddIcon />}
+            onClick={() => setSubmitModalOpen(true)}
+          >
             정산 제출
           </CmsButton>
         </Space>
@@ -316,9 +324,8 @@ export function MySettlementListPage() {
               : tab.key === 'not-applied'
                 ? allSettlements.filter(s => s.status === 'pending').length
                 : tab.key === 'submitted'
-                  ? allSettlements.filter(
-                      s => s.status === 'calculated' || s.status === 'review'
-                    ).length
+                  ? allSettlements.filter(s => s.status === 'calculated' || s.status === 'review')
+                      .length
                   : tab.key === 'issues'
                     ? allSettlements.filter(s => s.status === 'review').length
                     : allSettlements.filter(s => s.status === tab.key).length,
@@ -331,7 +338,7 @@ export function MySettlementListPage() {
             <Space size="middle" wrap align="start">
               <LabeledSearchInput
                 label="정산 ID"
-                placeholder="정산 ID를 입력하세요"
+                placeholder="정산 ID를 입력해 주세요"
                 value={filters.search || ''}
                 onChange={handleSearchChange}
                 width={300}

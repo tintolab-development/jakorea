@@ -36,7 +36,14 @@ import {
   CMS_TABLE_SORT_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, CmsInput, ConfirmModal, PageContentLoading, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  CmsInput,
+  ConfirmModal,
+  NO_SELECTION_ALERT,
+  PageContentLoading,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './board-panel.css'
 
@@ -242,10 +249,7 @@ export function BoardPanel() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 구성원을 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)

@@ -206,7 +206,7 @@ export function UjatRecruitParticipantInfoProgramView({
                     form={form}
                     startName="startDate"
                     endName="endDate"
-                    placeholder="프로그램 운영 기간을 선택하세요"
+                    placeholder="프로그램 운영 기간을 선택해 주세요"
                   />
                 </div>
               ) : undefined
@@ -246,7 +246,7 @@ export function UjatRecruitParticipantInfoProgramView({
                       value={field.value ?? []}
                       options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
                       onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
-                      placeholder="교육 대상을 선택하세요"
+                      placeholder="교육 대상을 선택해 주세요"
                     />
                   )}
                 />
@@ -289,7 +289,7 @@ export function UjatRecruitParticipantInfoProgramView({
                     form={form}
                     startName="applicationStartDate"
                     endName="applicationEndDate"
-                    placeholder="참여자 모집 기간을 선택하세요"
+                    placeholder="참여자 모집 기간을 선택해 주세요"
                     dateOnly
                   />
                 </div>

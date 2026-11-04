@@ -96,6 +96,7 @@ export function MenuViewsStatsPage() {
     setPendingFilters,
     applied: appliedPeriod,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, AppliedPeriod>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -156,6 +157,7 @@ export function MenuViewsStatsPage() {
   return (
     <div className="menu-views-stats-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--date-range">

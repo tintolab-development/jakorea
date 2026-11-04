@@ -20,7 +20,8 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
 
 import './gnb-menu-form.css'
 
@@ -152,10 +153,7 @@ export function GnbMenuFormCard({ data }: Props) {
     for (const group of nextDoc.groups) {
       for (const item of group.items) {
         if (!item.name.trim()) {
-          showAlert({
-            title: '필수 항목 누락',
-            content: '하위 메뉴명을 입력해 주세요.',
-          })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }

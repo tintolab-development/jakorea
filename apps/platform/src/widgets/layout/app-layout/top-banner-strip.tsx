@@ -5,30 +5,41 @@ import type { HomeStripBanner } from '@/features/home/lib/view'
 import { SkeletonBlock } from '@/features/home/ui/skeleton-block'
 import styles from './top-banner-strip.module.css'
 
-function StripBannerLink({ banner }: { banner: HomeStripBanner }) {
-  const className = styles.banner
+function StripBannerItem({ banner }: { banner: HomeStripBanner }) {
+  const href = banner.href?.trim()
   const body = (
     <>
       <span className={styles.label}>{banner.label}</span>
-      <img
-        className={styles.arrow}
-        src={arrowForwardCool200Url}
-        alt=""
-        width={20}
-        height={20}
-        aria-hidden="true"
-      />
+      {href ? (
+        <img
+          className={styles.arrow}
+          src={arrowForwardCool200Url}
+          alt=""
+          width={20}
+          height={20}
+          aria-hidden="true"
+        />
+      ) : null}
     </>
   )
+  const style = { backgroundColor: banner.backgroundColor }
+
+  if (!href) {
+    return (
+      <div className={styles.banner} style={style}>
+        {body}
+      </div>
+    )
+  }
 
   if (banner.external) {
     return (
       <a
-        className={className}
-        href={banner.href}
+        className={styles.banner}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
-        style={{ backgroundColor: banner.backgroundColor }}
+        style={style}
       >
         {body}
       </a>
@@ -36,7 +47,7 @@ function StripBannerLink({ banner }: { banner: HomeStripBanner }) {
   }
 
   return (
-    <Link className={className} to={banner.href} style={{ backgroundColor: banner.backgroundColor }}>
+    <Link className={styles.banner} to={href} style={style}>
       {body}
     </Link>
   )
@@ -61,7 +72,7 @@ export function TopBannerStrip() {
               <SkeletonBlock className={styles.bannerBone} />
             </div>
           ))
-        : strips.map(banner => <StripBannerLink banner={banner} key={banner.id} />)}
+        : strips.map(banner => <StripBannerItem banner={banner} key={banner.id} />)}
     </div>
   )
 }

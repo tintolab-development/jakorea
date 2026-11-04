@@ -27,9 +27,7 @@ import {
   useProgramRegistrationOverlayKv,
   updateProgramRegistrationOverlayKey,
 } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
-import {
-  ProgramRegistrationOverlaySelectField,
-} from '@/features/template/ui/form-set/registration-form/shared/registration-overlay-fields'
+import { ProgramRegistrationOverlaySelectField } from '@/features/template/ui/form-set/registration-form/shared/registration-overlay-fields'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import {
@@ -76,9 +74,11 @@ export const ProgramRegistrationBasicInfoOperationRangeField = memo(
     const [operationAnchorIso, setOperationAnchorIso] = useProgramRegistrationOverlayKv<
       string | null
     >(`${overlayPrefix}.operationAnchorIso`, null)
-    const [operationRangeSeal, setOperationRangeSeal] = useProgramRegistrationOverlayKv<
-      OperationRangeSeal
-    >(`${overlayPrefix}.operationRangeSeal`, null)
+    const [operationRangeSeal, setOperationRangeSeal] =
+      useProgramRegistrationOverlayKv<OperationRangeSeal>(
+        `${overlayPrefix}.operationRangeSeal`,
+        null
+      )
 
     const operationAnchorDate = operationAnchorIso ? dayjs(operationAnchorIso) : null
     const setOperationAnchorDate = (next: Dayjs | null) => {
@@ -101,12 +101,13 @@ export const ProgramRegistrationBasicInfoOperationRangeField = memo(
         validationKey="basicInfo.operationRangeSeal"
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
-            <ParagraphDatePicker inputSize="small"
+            <ParagraphDatePicker
+              inputSize="small"
               mode="single"
               presetMode="period"
               value={operationAnchorDate}
               width="100%"
-              placeholder="사업 운영 기간을 선택하세요"
+              placeholder="사업 운영 기간을 선택해 주세요"
               preferPeriodModeInPopover
               suppressAutoTodayWhenEmpty
               excludeBusinessPeriodConstraint
@@ -196,7 +197,7 @@ export const ProgramRegistrationBasicInfoBusinessFieldField = memo(
         label="사업 분야"
         validationKey="basicInfo.businessField"
         overlayKey={`${overlayPrefix}.businessField`}
-        placeholder="사업 분야를 선택하세요"
+        placeholder="사업 분야를 선택해 주세요"
         options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
         defaultValue={trainedTeachersDefaults ? 'economy_finance' : ''}
       />
@@ -227,9 +228,15 @@ export const ProgramRegistrationBasicInfoEducationVenueFields = memo(
                 setEducationVenueKind(e.target.value as 'inside' | 'outside' | 'other')
               }
             >
-              <CmsRadio size="medium" value="inside">기관 안</CmsRadio>
-              <CmsRadio size="medium" value="outside">기관 밖</CmsRadio>
-              <CmsRadio size="medium" value="other">기타(직접입력)</CmsRadio>
+              <CmsRadio size="medium" value="inside">
+                기관 안
+              </CmsRadio>
+              <CmsRadio size="medium" value="outside">
+                기관 밖
+              </CmsRadio>
+              <CmsRadio size="medium" value="other">
+                기타(직접입력)
+              </CmsRadio>
             </CmsRadioGroup>
             <DetailInfoForm.InputsSeparator />
             <EducationVenueDetailInput overlayKey={educationVenueDetailKey} />
@@ -306,7 +313,7 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
           <div className="detail-info-form-inputs-wrapper-no-gap">
             <CmsSelect
               inputSize="small"
-              placeholder="선택하세요"
+              placeholder="선택해 주세요"
               withAllOption={false}
               width={240}
               options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
@@ -322,15 +329,13 @@ export const ProgramRegistrationBasicInfoEducationCourseField = memo(
 )
 
 export const ProgramRegistrationBasicInfoIpOwnedField = memo(
-  function ProgramRegistrationBasicInfoIpOwnedField({
-    overlayPrefix,
-  }: OverlayPrefixProps) {
+  function ProgramRegistrationBasicInfoIpOwnedField({ overlayPrefix }: OverlayPrefixProps) {
     return (
       <ProgramRegistrationOverlaySelectField
         label="IP Owned"
         validationKey="basicInfo.ipOwned"
         overlayKey={`${overlayPrefix}.ipOwned`}
-        placeholder="선택하세요"
+        placeholder="선택해 주세요"
         options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
         defaultValue=""
       />
@@ -347,7 +352,7 @@ export const ProgramRegistrationBasicInfoCourseDeliveredByField = memo(
         label="Course Delivered By"
         validationKey="basicInfo.courseDeliveredBy"
         overlayKey={`${overlayPrefix}.courseDeliveredBy`}
-        placeholder="선택하세요"
+        placeholder="선택해 주세요"
         options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
         defaultValue=""
       />
@@ -374,8 +379,12 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
               value={partnerInvolvement === 'no' ? 'no' : 'yes'}
               onChange={e => setPartnerInvolvement(e.target.value as 'yes' | 'no')}
             >
-              <CmsRadio size="medium" value="yes">Yes</CmsRadio>
-              <CmsRadio size="medium" value="no">No</CmsRadio>
+              <CmsRadio size="medium" value="yes">
+                Yes
+              </CmsRadio>
+              <CmsRadio size="medium" value="no">
+                No
+              </CmsRadio>
             </CmsRadioGroup>
           </div>
         }
@@ -387,15 +396,19 @@ export const ProgramRegistrationBasicInfoPartnerInvolvementField = memo(
 
 export const ProgramRegistrationBasicInfoFooterIpsTypeField = memo(
   function ProgramRegistrationBasicInfoFooterIpsTypeField({ overlayPrefix }: OverlayPrefixProps) {
-    const [footerIpsType, setFooterIpsType] = useProgramRegistrationOverlayKv<
-      ProgramRegistrationIpsTypeValue
-    >(`${overlayPrefix}.footerIpsType`, { category: '', detail: '' })
+    const [footerIpsType, setFooterIpsType] =
+      useProgramRegistrationOverlayKv<ProgramRegistrationIpsTypeValue>(
+        `${overlayPrefix}.footerIpsType`,
+        { category: '', detail: '' }
+      )
 
     return (
       <DetailInfoForm.Field
         label="IPS 유형"
         fullRow
-        edit={<ProgramRegistrationIpsTypeFields value={footerIpsType} onChange={setFooterIpsType} />}
+        edit={
+          <ProgramRegistrationIpsTypeFields value={footerIpsType} onChange={setFooterIpsType} />
+        }
         view="-"
       />
     )

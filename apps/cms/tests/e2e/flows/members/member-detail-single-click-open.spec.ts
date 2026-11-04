@@ -16,7 +16,7 @@ test.describe('회원 상세 1클릭 오픈', () => {
     await page.goto('/users/list?kind=all')
     await page.waitForSelector('tr.ant-table-row', { timeout: 60_000 })
 
-    await page.getByPlaceholder('회원명을 입력하세요').fill('김개인')
+    await page.getByPlaceholder('회원명을 입력해 주세요').fill('김개인')
     await page.getByRole('button', { name: '조회' }).click()
     await expect(page.locator('tr.ant-table-row').first()).toBeVisible({ timeout: 30_000 })
 
@@ -28,7 +28,10 @@ test.describe('회원 상세 1클릭 오픈', () => {
     await expect(page).toHaveURL(/[?&]id=/)
 
     // 프로젝트(프로그램) 참여 이력 → 수강 이력
-    await page.getByText(/^(프로젝트|프로그램) 참여 이력$/).first().click()
+    await page
+      .getByText(/^(프로젝트|프로그램) 참여 이력$/)
+      .first()
+      .click()
     await expect(page).toHaveURL(/lnb=history/, { timeout: 15_000 })
 
     const historyRows = page.getByRole('dialog').locator('tr.ant-table-row')

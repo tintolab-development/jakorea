@@ -184,18 +184,20 @@ assert.equal(
   '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.'
 )
 assert.doesNotMatch(
-  recruitGuideSaveFailureAlert(
-    axiosError(
-      'CAREER_GUIDE_INTERVIEW_DUPLICATE',
-      'impactStoryId',
-      '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.'
-    ),
-    'fallback'
-  ).content,
+  String(
+    recruitGuideSaveFailureAlert(
+      axiosError(
+        'CAREER_GUIDE_INTERVIEW_DUPLICATE',
+        'impactStoryId',
+        '이미 등록된 임팩트 스토리입니다. 다른 임팩트 스토리를 선택해주세요.'
+      ),
+      'fallback'
+    ).content
+  ),
   /추적번호/
 )
 assert.doesNotMatch(
-  recruitGuideSaveFailureAlert(axiosError('FORBIDDEN'), 'fallback').content,
+  String(recruitGuideSaveFailureAlert(axiosError('FORBIDDEN'), 'fallback').content),
   /추적번호/
 )
 assert.equal(isRecruitGuideVersionConflict(axiosError('VERSION_CONFLICT')), true)

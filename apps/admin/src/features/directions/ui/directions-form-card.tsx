@@ -21,7 +21,7 @@ import {
   directionsSaveFailureAlert,
   validateDirectionsBeforeSave,
 } from '@/features/directions/lib/save-validation'
-import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './directions-form-card.css'
 
@@ -83,18 +83,16 @@ export function DirectionsFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(directionsSaveFailureAlert(error))
       void queryClient.invalidateQueries({ queryKey: directionsQueryKeys.all })
     }
   }, [draft, saveMutation, showAlert, queryClient])
 
-  const updateDraft = useCallback(
-    (patch: Partial<Omit<DirectionsInfo, 'updatedAt'>>) => {
-      setDraft(prev => ({ ...prev, ...patch }))
-    },
-    []
-  )
+  const updateDraft = useCallback((patch: Partial<Omit<DirectionsInfo, 'updatedAt'>>) => {
+    setDraft(prev => ({ ...prev, ...patch }))
+  }, [])
 
   return (
     <div
@@ -116,25 +114,27 @@ export function DirectionsFormCard({ data }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}
@@ -216,19 +216,14 @@ export function DirectionsFormCard({ data }: Props) {
                     if (!isEditing) return
                     updateDraft({ kakaoMapHtml: e.target.value })
                   }}
-                  placeholder="카카오맵에서 복사한 HTML 코드를 입력하세요"
+                  placeholder="카카오맵에서 복사한 HTML 코드를 입력해 주세요"
                 />
               }
             />
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
-        <DetailInfoForm
-          className="directions-card__contact"
-          title="연락처"
-          hideHeader
-          mode="edit"
-        >
+        <DetailInfoForm className="directions-card__contact" title="연락처" hideHeader mode="edit">
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="전화번호"

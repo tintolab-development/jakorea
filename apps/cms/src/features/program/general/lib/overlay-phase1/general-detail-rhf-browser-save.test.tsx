@@ -203,9 +203,9 @@ function changeLabeledSelect(
   name: 'educationProcess' | 'ipOwned',
   value: string
 ) {
-  const field = screen.getByText(label, { selector: '.detail-info-form__field-label-text' }).closest(
-    '.detail-info-form__field'
-  )
+  const field = screen
+    .getByText(label, { selector: '.detail-info-form__field-label-text' })
+    .closest('.detail-info-form__field')
   if (!field) throw new Error(`field not found: ${label}`)
   const widget = (field as HTMLElement).querySelector('.ant-select')
   if (!widget) throw new Error(`select not mounted: ${label}`)
@@ -255,14 +255,16 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
       </QueryClientProvider>
     )
 
-    expect(screen.getByPlaceholderText('대표 프로그램명을 입력하세요')).toBeTruthy()
+    expect(screen.getByPlaceholderText('대표 프로그램명을 입력해 주세요')).toBeTruthy()
     expect(screen.queryByText('프로그램 등록')).toBeNull()
 
     await act(async () => {
-      changeInput('대표 프로그램명을 입력하세요', '프로그램 수정 테스트123')
-      changeInput('대표 프로그램명(영문)을 입력하세요', 'Digital Literacy Classroom789')
-      changeInput('모집 시 노출될 프로그램명을 입력하세요', '프로그램 수정 테스트456')
-      fireEvent.change(screen.getAllByPlaceholderText('목표값 입력')[0]!, { target: { value: '510' } })
+      changeInput('대표 프로그램명을 입력해 주세요', '프로그램 수정 테스트123')
+      changeInput('대표 프로그램명(영문)을 입력해 주세요', 'Digital Literacy Classroom789')
+      changeInput('모집 시 노출될 프로그램명을 입력해 주세요', '프로그램 수정 테스트456')
+      fireEvent.change(screen.getAllByPlaceholderText('목표값 입력')[0]!, {
+        target: { value: '510' },
+      })
       const wageInputs = screen.getAllByPlaceholderText('직접 입력')
       fireEvent.change(wageInputs[0]!, { target: { value: '123' } })
       fireEvent.change(wageInputs[1]!, { target: { value: '456' } })
@@ -341,7 +343,8 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     const parsed = parseJson(body.serviceDetailJson)
     expect(parsed.generalCommonInfo?.announcementTitle).toBe('프로그램 수정 테스트456')
     expect(
-      (parsed.generalCommonInfo?.kpi as { finalParticipants?: number } | undefined)?.finalParticipants
+      (parsed.generalCommonInfo?.kpi as { finalParticipants?: number } | undefined)
+        ?.finalParticipants
     ).toBe(510)
     expect(
       wageAmountsFromRows(parsed.generalCommonInfo?.wageGradeRows as Array<{ pricing?: string }>)
@@ -349,19 +352,26 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     const overlay = parsed.registrationOverlay ?? parsed.registration?.overlay
     expect(overlay?.['generalRegistration.basicInfo.detailedProgramName']).toBe('기존 세부프로그램')
     expect(overlay?.['generalRegistration.basicInfo.educationVenueDetail']).toBe('서울시 강남구')
-    if (!Object.prototype.hasOwnProperty.call(patch.generalCommonInfo ?? {}, 'sponsorManagerContactIds')) {
-      expect(overlay?.['generalRegistration.basicInfo.localManagerContactIds']).toEqual(['contact-1'])
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        patch.generalCommonInfo ?? {},
+        'sponsorManagerContactIds'
+      )
+    ) {
+      expect(overlay?.['generalRegistration.basicInfo.localManagerContactIds']).toEqual([
+        'contact-1',
+      ])
     } else {
       const overlayContactIds = overlay?.['generalRegistration.basicInfo.localManagerContactIds']
-      expect(JSON.stringify(overlayContactIds ?? '')).not.toContain('__sponsor_contact_unselected__')
+      expect(JSON.stringify(overlayContactIds ?? '')).not.toContain(
+        '__sponsor_contact_unselected__'
+      )
     }
     const overlayScheduleLines =
       overlay?.['generalRegistration.educationScheduleSettings.scheduleLines']
     expect(Array.isArray(overlayScheduleLines) && overlayScheduleLines.length > 0).toBe(true)
     expect(overlay?.['generalRegistration.typeSettings.singleEducationForm']).toBe('offline')
-    expect(overlay).not.toHaveProperty(
-      'generalRegistration.typeSettings.multiCommonEducationForm'
-    )
+    expect(overlay).not.toHaveProperty('generalRegistration.typeSettings.multiCommonEducationForm')
 
     const mergedCommon = {
       ...program.generalCommonInfo,
@@ -419,7 +429,7 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     ])
 
     await act(async () => {
-      changeInput('모집 시 노출될 프로그램명을 입력하세요', '제목만 수정')
+      changeInput('모집 시 노출될 프로그램명을 입력해 주세요', '제목만 수정')
     })
 
     await act(async () => {
@@ -598,9 +608,9 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     )
 
     const curriculum = screen.getByRole('region', { name: '교육 진행 (커리큘럼)' })
-    const curriculumLabels = [...curriculum.querySelectorAll('.detail-info-form__field-label-text')].map(
-      el => el.textContent
-    )
+    const curriculumLabels = [
+      ...curriculum.querySelectorAll('.detail-info-form__field-label-text'),
+    ].map(el => el.textContent)
     expect(curriculumLabels).not.toContain('참여 방식')
     expect(
       screen.getAllByText('참여 방식', { selector: '.detail-info-form__field-label-text' })
@@ -632,9 +642,9 @@ describe('GENERAL_DETAIL_RHF 브라우저 입력 Mock 저장', () => {
     )
 
     const schedule = screen.getByRole('region', { name: '교육 진행 (일정형)' })
-    const scheduleLabels = [...schedule.querySelectorAll('.detail-info-form__field-label-text')].map(
-      el => el.textContent
-    )
+    const scheduleLabels = [
+      ...schedule.querySelectorAll('.detail-info-form__field-label-text'),
+    ].map(el => el.textContent)
     expect(scheduleLabels).not.toContain('참여 방식')
     expect(
       screen.getAllByText('참여 방식', { selector: '.detail-info-form__field-label-text' })

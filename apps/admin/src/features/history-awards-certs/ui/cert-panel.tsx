@@ -24,7 +24,7 @@ import {
   deleteConfirmContent,
   deleteFailureAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
-import { CertFormModal } from '@/features/history-awards-certs/ui/cert-form-modal'
+import { CertFormModal } from '@/features/history-awards-certs/ui/form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -55,7 +55,10 @@ import {
   ConfirmModal,
   useCmsAlert,
   FilterTableLayout,
+  NO_SELECTION_ALERT,
   showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
 } from '@/shared/ui'
 
 type CertPendingFilters = {
@@ -158,6 +161,7 @@ export function CertPanel() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<CertPendingFilters, CertListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -266,8 +270,10 @@ export function CertPanel() {
       try {
         if (formVariant === 'edit' && editing) {
           await updateMutation.mutateAsync({ id: editing.id, input: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
@@ -299,7 +305,7 @@ export function CertPanel() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({ title: '선택 항목 없음', content: '삭제할 인증을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -380,7 +386,8 @@ export function CertPanel() {
             onClick={e => {
               e.stopPropagation()
               openEdit(record)
-            }} >
+            }}
+          >
             수정
           </CmsButton>
         ),
@@ -392,6 +399,7 @@ export function CertPanel() {
   return (
     <div className="hac-panel">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -418,7 +426,7 @@ export function CertPanel() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="내용을 입력하세요"
+                placeholder="내용을 입력해 주세요"
                 value={pendingFilters.content}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
                 onPressEnter={handleSearch}
@@ -429,7 +437,7 @@ export function CertPanel() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="인증 기관명을 입력하세요"
+                placeholder="인증 기관명을 입력해 주세요"
                 value={pendingFilters.organization}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
                 onPressEnter={handleSearch}
@@ -468,11 +476,13 @@ export function CertPanel() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -487,7 +497,8 @@ export function CertPanel() {
               size="h40"
               type="button"
               onClick={handleDeleteClick}
-              loading={removeMutation.isPending} >
+              loading={removeMutation.isPending}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

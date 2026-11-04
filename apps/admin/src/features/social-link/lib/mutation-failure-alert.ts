@@ -4,6 +4,7 @@
 
 import { SocialLinkMinActiveError } from '@/entities/social-link/model/types'
 import {
+  type AdminMutationAlert,
   isMinActiveRequiredError,
   mapCommonRemoteMutationFailure,
   readApiErrorMessage,
@@ -16,7 +17,7 @@ export function socialLinkMutationFailureAlert(
   error: unknown,
   fallbackContent: string,
   title = '저장 실패',
-): { title: string; content: string } {
+): AdminMutationAlert {
   const common = mapCommonRemoteMutationFailure(error)
   if (common) return common
 

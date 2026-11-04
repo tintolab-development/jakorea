@@ -224,7 +224,7 @@ export function CurriculumSection({
                       render={({ field }) => (
                         <CmsInput
                           inputSize="small"
-                          placeholder="단원명을 입력하세요"
+                          placeholder="단원명을 입력해 주세요"
                           width="100%"
                           value={field.value ?? row.unitName}
                           onChange={field.onChange}
@@ -398,7 +398,7 @@ export function EducationScheduleSettingsSection({
                 }
                 appliedSurfaceWithTime={false}
                 width={320}
-                placeholder="진행 기간을 선택하세요"
+                placeholder="진행 기간을 선택해 주세요"
                 disabledDate={disableScheduleSelectionDate}
                 onRangeChange={range => handleScheduleRangeChange(range)}
                 onChange={next => {

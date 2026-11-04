@@ -27,7 +27,15 @@ import {
 } from '@/features/hero-banner/ui/sortable-table'
 import { HeroBannerTextLinkCell } from '@/features/hero-banner/ui/text-link-cell'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
-import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  ConfirmModal,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
+  NO_SELECTION_ALERT,
+  useCmsAlert,
+} from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -122,8 +130,10 @@ export function HeroBannersPage() {
       try {
         if (formMode === 'edit' && editingBanner) {
           await updateMutation.mutateAsync({ id: editingBanner.id, patch: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditingBanner(null)
@@ -144,10 +154,7 @@ export function HeroBannersPage() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 배너를 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     if (wouldRemoveLastActive(rows, selectedRowKeys.map(String))) {
@@ -163,6 +170,7 @@ export function HeroBannersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         heroBannerMutationFailureAlert(
@@ -237,7 +245,7 @@ export function HeroBannersPage() {
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={e => {
               e.stopPropagation()

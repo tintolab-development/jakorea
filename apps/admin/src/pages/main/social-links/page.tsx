@@ -25,7 +25,7 @@ import {
   SocialLinksSortableTable,
 } from '@/features/social-link/ui/sortable-table'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
-import { CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -146,6 +146,7 @@ export function SocialLinksPage() {
       )
       setDraftUrls({})
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(
         socialLinkMutationFailureAlert(error, '소셜 링크 저장에 실패했습니다. 다시 시도해 주세요.')
@@ -190,6 +191,8 @@ export function SocialLinksPage() {
         title: '소셜 매체명',
         key: 'name',
         width: 160,
+        className: 'social-links-page__name-col',
+        ellipsis: true,
         render: (_value, record) => <span className="social-links-page__name">{record.name}</span>,
       },
       {
@@ -202,7 +205,7 @@ export function SocialLinksPage() {
               width="100%"
               value={draftUrls[record.id] ?? record.linkUrl}
               onChange={e => handleDraftChange(record.id, e.target.value)}
-              placeholder="연결 링크를 입력하세요"
+              placeholder="연결 링크를 입력해 주세요"
               aria-label={`${record.name} 연결 링크`}
             />
           ) : (
@@ -230,7 +233,8 @@ export function SocialLinksPage() {
                   size="h40"
                   type="button"
                   onClick={handleCancelEdit}
-                  disabled={saveMutation.isPending} >
+                  disabled={saveMutation.isPending}
+                >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -240,7 +244,8 @@ export function SocialLinksPage() {
                   loading={saveMutation.isPending}
                   onClick={() => {
                     void handleSave()
-                  }} >
+                  }}
+                >
                   저장
                 </CmsButton>
               </>
@@ -250,7 +255,8 @@ export function SocialLinksPage() {
                 size="h40"
                 type="button"
                 onClick={handleStartEdit}
-                disabled={listQuery.isLoading || rows.length === 0} >
+                disabled={listQuery.isLoading || rows.length === 0}
+              >
                 수정
               </CmsButton>
             )}

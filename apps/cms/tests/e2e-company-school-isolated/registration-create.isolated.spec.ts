@@ -100,9 +100,15 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
     await openFreshWizard(page)
     const registration = await fillRegistrationThroughComplete(page)
     void registration
-    await page.getByRole('button', { name: '모집 정보 작성하기' }).click().catch(async () => {
-      await page.getByRole('tab', { name: /참여자 모집/ }).click().catch(() => undefined)
-    })
+    await page
+      .getByRole('button', { name: '모집 정보 작성하기' })
+      .click()
+      .catch(async () => {
+        await page
+          .getByRole('tab', { name: /참여자 모집/ })
+          .click()
+          .catch(() => undefined)
+      })
     await saveWizardDraft(page)
     // P2: 임시저장은 localStorage 전용 — 서버 program-draft 요청 0건, registration-wizard:COMPANY_SCHOOL:* 존재
     await expect
@@ -133,11 +139,11 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
     await waitWizard(page)
     await expectWizardCommonTitle(page, VALUES_B.title)
     await expect(
-      page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요').first()
+      page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요').first()
     ).toHaveValue(VALUES_B.announcement)
-    expect(await page.getByPlaceholder('대표 프로그램명을 입력하세요').first().inputValue()).not.toBe(
-      VALUES_A.title
-    )
+    expect(
+      await page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first().inputValue()
+    ).not.toBe(VALUES_A.title)
     assertIsolatedNetwork(log)
   })
 

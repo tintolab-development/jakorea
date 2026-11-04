@@ -131,7 +131,6 @@ const COL = {
   ip: 140,
 } as const
 
-const EMPTY_TEXT = '검색 결과가 없습니다. 필터 조건을 변경해 주세요.'
 
 export function MemberLoginLogPage() {
   const { showAlert } = useCmsAlert()
@@ -144,6 +143,7 @@ export function MemberLoginLogPage() {
     applySearch,
     setSearchParams,
     patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, MemberLoginListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -189,7 +189,8 @@ export function MemberLoginLogPage() {
   const loading = listQuery.isLoading || listQuery.isFetching
 
   const nameLabel = audience === 'admin' ? '관리자명' : '사용자명'
-  const namePlaceholder = audience === 'admin' ? '관리자명을 입력하세요' : '사용자명을 입력하세요'
+  const namePlaceholder =
+    audience === 'admin' ? '관리자명을 입력해 주세요' : '사용자명을 입력해 주세요'
 
   const handleTabChange = useCallback(
     (next: MemberLoginAudience) => {
@@ -279,6 +280,7 @@ export function MemberLoginLogPage() {
       />
 
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
@@ -297,7 +299,7 @@ export function MemberLoginLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="아이디를 입력하세요"
+                placeholder="아이디를 입력해 주세요"
                 value={pendingFilters.loginId}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
                 onPressEnter={applySearch}
@@ -319,11 +321,13 @@ export function MemberLoginLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -340,7 +344,6 @@ export function MemberLoginLogPage() {
           dataSource={rows}
           loading={loading}
           pagination={logTablePagination({ page, total, onChange: handlePageChange })}
-          locale={{ emptyText: EMPTY_TEXT }}
           scroll={{ x: COL.no + COL.name + COL.loginId + COL.loggedAt + COL.ip }}
         />
       </FilterTableLayout>

@@ -9,14 +9,14 @@ export const fileDownloadHistoryFilterFields: FilterFieldConfig[] = [
     key: 'fileName',
     type: 'search',
     label: '파일명',
-    placeholder: '파일명을 입력하세요',
+    placeholder: '파일명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'userName',
     type: 'search',
     label: '사용자명',
-    placeholder: '사용자명을 입력하세요',
+    placeholder: '사용자명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

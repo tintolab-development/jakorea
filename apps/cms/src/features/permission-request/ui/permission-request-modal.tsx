@@ -35,7 +35,8 @@ export function PermissionRequestModal({
   programName,
   requestedAction,
   onCancel,
-  onSuccess }: PermissionRequestModalProps) {
+  onSuccess,
+}: PermissionRequestModalProps) {
   const [form] = Form.useForm()
   const { submitting, submitRequest } = usePermissionRequest()
 
@@ -51,8 +52,10 @@ export function PermissionRequestModal({
         requestedPeriod: values.requestedPeriod
           ? {
               startDate: values.requestedPeriod[0].toISOString(),
-              endDate: values.requestedPeriod[1].toISOString() }
-          : undefined })
+              endDate: values.requestedPeriod[1].toISOString(),
+            }
+          : undefined,
+      })
 
       if (result) {
         form.resetFields()
@@ -64,7 +67,7 @@ export function PermissionRequestModal({
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return
       }
-      }
+    }
   }
 
   const handleCancel = () => {
@@ -75,7 +78,8 @@ export function PermissionRequestModal({
   const actionLabels: Record<PermissionAction, string> = {
     VIEW: '조회',
     DOWNLOAD: '다운로드',
-    EDIT: '수정' }
+    EDIT: '수정',
+  }
 
   const footer = (
     <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
@@ -105,20 +109,14 @@ export function PermissionRequestModal({
           <Input value={actionLabels[requestedAction]} disabled />
         </Form.Item>
 
-        <Form.Item
-          label="요청 역할"
-          name="requestedRole"
-        >
-          <Select placeholder="역할을 선택하세요" options={roleOptions} />
+        <Form.Item label="요청 역할" name="requestedRole">
+          <Select placeholder="역할을 선택해 주세요" options={roleOptions} />
         </Form.Item>
 
-        <Form.Item
-          label="요청 사유"
-          name="reason"
-        >
+        <Form.Item label="요청 사유" name="reason">
           <TextArea
             rows={4}
-            placeholder="권한이 필요한 사유를 입력하세요"
+            placeholder="권한이 필요한 사유를 입력해 주세요"
             maxLength={500}
             showCount
           />

@@ -26,7 +26,7 @@ export function BottomTextTable({ value, mode, onChange }: BottomTextTableProps)
               rows={3}
               value={value}
               onChange={e => onChange(e.target.value)}
-              placeholder="하단 문구를 입력하세요"
+              placeholder="하단 문구를 입력해 주세요"
               aria-label="하단 문구"
             />
           }

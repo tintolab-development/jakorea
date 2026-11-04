@@ -2,7 +2,9 @@
  * 후원사 mutation 실패 알림 매핑
  */
 
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
+  type AdminMutationAlert,
   isOptimisticLockConflictError,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
@@ -10,14 +12,14 @@ import {
 export function corporatePartnerMutationFailureAlert(
   error: unknown,
   fallbackContent: string,
-): { title: string; content: string } {
+): AdminMutationAlert {
   if (error instanceof Error) {
     const code = error.message
     if (code === 'NAME_REQUIRED') {
-      return { title: '입력 확인', content: '기업명을 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'LOGO_REQUIRED') {
-      return { title: '입력 확인', content: '로고 이미지를 등록해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
   }
 
@@ -30,10 +32,10 @@ export function corporatePartnerMutationFailureAlert(
 
   const message = readApiErrorMessage(error) ?? ''
   if (/company name|companyName/i.test(message)) {
-    return { title: '입력 확인', content: '기업명을 확인해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/logo|Logo|SPONSOR_LOGO/i.test(message)) {
-    return { title: '입력 확인', content: '로고 이미지를 확인해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/Permission is denied|FORBIDDEN/i.test(message)) {
     return {

@@ -50,7 +50,10 @@ type ControlledSponsorProps = {
 
 function normalizeSponsorIds(value: unknown, fallbackPrimary = ''): string[] {
   if (Array.isArray(value)) {
-    return value.map(String).map(id => id.trim()).filter(Boolean)
+    return value
+      .map(String)
+      .map(id => id.trim())
+      .filter(Boolean)
   }
   const primary = fallbackPrimary.trim()
   return primary ? [primary] : []
@@ -203,7 +206,8 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const sponsorApiOptions = sponsorCatalogQuery.options
   const sponsorOptionsLoading =
     catalogReady && sponsorCatalogQuery.isLoading && sponsorApiOptions.length === 0
-  const isAllSponsor = trainedTeachersDefaults && sponsorId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
+  const isAllSponsor =
+    trainedTeachersDefaults && sponsorId === TRAINED_TEACHERS_REGISTRATION_ALL_VALUE
 
   // 후원사는 있는데 담당자가 비면 수정 진입·후원사 변경 모두 미선택을 고른다.
   useEffect(() => {
@@ -243,9 +247,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
   const selectedSponsors = useMemo(() => {
     if (!allowMultipleSponsors) return [] as SponsorManagementRow[]
     return sponsorIds
-      .map(id =>
-        multiSponsorContext.sponsors.find(row => String(row.id) === String(id))
-      )
+      .map(id => multiSponsorContext.sponsors.find(row => String(row.id) === String(id)))
       .filter((row): row is SponsorManagementRow => row != null)
   }, [allowMultipleSponsors, multiSponsorContext.sponsors, sponsorIds])
 
@@ -296,8 +298,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
     const sponsorChosen =
       isAllSponsor || (allowMultipleSponsors ? sponsorIds.length > 0 : Boolean(sponsorId))
     const needsUnselectedOption =
-      sponsorChosen ||
-      managerContactIds.some(id => isSponsorContactUnselected(id))
+      sponsorChosen || managerContactIds.some(id => isSponsorContactUnselected(id))
     // 후원사만 고르면 미선택 노출. autofill sentinel은 후원사 로드 전에도 라벨 매칭.
     if (!needsUnselectedOption) return managerOptions
     return withSponsorContactUnselectedOption(managerOptions)
@@ -406,7 +407,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 mode="multiple"
                 withAllOption={false}
                 inputSize="small"
-                placeholder="후원사를 선택하세요"
+                placeholder="후원사를 선택해 주세요"
                 width={240}
                 options={sponsorOptions}
                 value={sponsorIds}
@@ -432,7 +433,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               <CmsSelect
                 withAllOption={trainedTeachersDefaults}
                 inputSize="small"
-                placeholder="후원사를 선택하세요"
+                placeholder="후원사를 선택해 주세요"
                 width={240}
                 options={sponsorOptions}
                 value={sponsorId}
@@ -461,7 +462,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
               mode="multiple"
               withAllOption={false}
               inputSize="small"
-              placeholder="후원사 담당자를 선택하세요"
+              placeholder="후원사 담당자를 선택해 주세요"
               width={240}
               showSearch
               optionFilterProp="label"
@@ -473,11 +474,7 @@ function ProgramRegistrationBasicInfoSponsorFieldsInner({
                 sponsorIds.length > 0 &&
                 !managerContactsReady
               }
-              disabled={
-                allowMultipleSponsors
-                  ? sponsorIds.length === 0
-                  : !sponsorId
-              }
+              disabled={allowMultipleSponsors ? sponsorIds.length === 0 : !sponsorId}
               onChange={v => {
                 const next = Array.isArray(v) ? v.map(String) : []
                 setManagerContactIds(next)

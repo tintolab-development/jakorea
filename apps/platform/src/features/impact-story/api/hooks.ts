@@ -159,8 +159,10 @@ export function useImpactStoriesList(params: ImpactStoriesListParams): ImpactSto
   const categoryId = categoryIdFromKey(categories, params.category) ?? null
   const q = params.q.trim()
   const pageIndex = Math.max(params.page, 1) - 1
+  const unknownRemoteCategory =
+    params.category !== 'all' && !categoriesPending && categoryId == null
   const listEnabled =
-    remote && (params.category === 'all' || categoryId != null || !categoriesPending)
+    remote && !unknownRemoteCategory && (params.category === 'all' || categoryId != null)
 
   const query = useQuery({
     queryKey: platformQueryKeys.impactStory.list({
@@ -199,6 +201,18 @@ export function useImpactStoriesList(params: ImpactStoriesListParams): ImpactSto
       }
     }
 
+    if (unknownRemoteCategory) {
+      return {
+        items: [],
+        totalPages: 1,
+        totalCount: 0,
+        currentPage: params.page,
+        isRemoteEnabled: remote,
+        isPending: false,
+        isError: false,
+      }
+    }
+
     if (!query.data) {
       return {
         items: [],
@@ -213,9 +227,13 @@ export function useImpactStoriesList(params: ImpactStoriesListParams): ImpactSto
 
     const totalCount = query.data.totalCount ?? 0
     const totalPages = query.data.totalPages ?? 0
+    const items = filterImpactStories(mapPublicStoryListItems(query.data.items), {
+      category: params.category,
+      q: '',
+    })
 
     return {
-      items: mapPublicStoryListItems(query.data.items),
+      items,
       totalPages: totalCount === 0 ? 1 : totalPages,
       totalCount,
       currentPage: params.page,
@@ -223,7 +241,16 @@ export function useImpactStoriesList(params: ImpactStoriesListParams): ImpactSto
       isPending: false,
       isError: false,
     }
-  }, [categoriesPending, params, q, query.data, query.isError, query.isPending, remote])
+  }, [
+    categoriesPending,
+    params,
+    q,
+    query.data,
+    query.isError,
+    query.isPending,
+    remote,
+    unknownRemoteCategory,
+  ])
 }
 
 export function useFeaturedImpactStories(): ImpactStoryListItem[] {

@@ -70,7 +70,7 @@ export function UjatWageInfoFields({
                     }}
                     options={paymentItemOptions}
                     disabled={!paymentCatalog.ready}
-                    placeholder="선택하세요"
+                    placeholder="선택해 주세요"
                     style={{ width: '100%', minWidth: 0 }}
                   />
                 )}
@@ -80,9 +80,7 @@ export function UjatWageInfoFields({
                   type="button"
                   variant="secondary"
                   size="small"
-                  onClick={() =>
-                    setPaymentItemValues(resolveUjatDefaultPaymentItemValues())
-                  }
+                  onClick={() => setPaymentItemValues(resolveUjatDefaultPaymentItemValues())}
                 >
                   기본 항목 추가
                 </CmsButton>

@@ -16,7 +16,7 @@ import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-
 import { InterviewSelectModal } from '@/features/recruit-guide/ui/interview-select-modal'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
-import { CmsButton, ConfirmModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, ConfirmModal, NO_SELECTION_ALERT, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -65,7 +65,7 @@ export function InterviewSectionCard({ items }: Props) {
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={e => {
               e.stopPropagation()
@@ -106,10 +106,7 @@ export function InterviewSectionCard({ items }: Props) {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '선택된 항목이 없습니다.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)

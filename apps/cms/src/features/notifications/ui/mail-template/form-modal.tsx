@@ -3,13 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
-import {
-  CmsButton,
-  CmsInput,
-  CmsInputIconClick,
-  ConfirmModal,
-  useCmsAlert,
-} from '@/shared/ui'
+import { CmsButton, CmsInput, CmsInputIconClick, ConfirmModal, useCmsAlert } from '@/shared/ui'
 import { MAIL_API_CHANNEL_TYPE } from '@/features/notifications/api/adapters/mail-channel'
 import { getNotificationsApiErrorMessage } from '@/features/notifications/api/get-notifications-api-error'
 import { shouldUseMailTemplatesRemoteApi } from '@/features/notifications/api/mail-template-service'
@@ -115,7 +109,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
               placeholder={
                 senderNameReadOnly
                   ? '발신 메일 입력 시 프로필 표시명이 적용됩니다'
-                  : '발신자명을 입력하세요'
+                  : '발신자명을 입력해 주세요'
               }
               value={senderName}
               onChange={event => {
@@ -136,7 +130,7 @@ const BasicSettingsFields = memo(function BasicSettingsFields({
               inputSize="small"
               width="100%"
               allowClear={false}
-              placeholder="발신 메일을 입력하세요"
+              placeholder="발신 메일을 입력해 주세요"
               value={senderEmail}
               onChange={event => onSenderEmailChange(event.target.value)}
             />
@@ -366,11 +360,7 @@ export function FormModal({
               <div className="notification-fullpage-modal__notice-actions">
                 {isEdit ? (
                   <>
-                    <CmsButton
-                      variant="cancel"
-                      size="large"
-                      type="button"
-                      onClick={onClose} >
+                    <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
                       닫기
                     </CmsButton>
                     <CmsButton
@@ -378,7 +368,8 @@ export function FormModal({
                       size="large"
                       type="button"
                       disabled={submitting}
-                      onClick={() => setDeleteOpen(true)} >
+                      onClick={() => setDeleteOpen(true)}
+                    >
                       삭제
                     </CmsButton>
                     <CmsButton
@@ -386,7 +377,8 @@ export function FormModal({
                       size="large"
                       type="button"
                       disabled={submitting}
-                      onClick={handlePreview} >
+                      onClick={handlePreview}
+                    >
                       미리보기
                     </CmsButton>
                     <CmsButton
@@ -394,17 +386,14 @@ export function FormModal({
                       size="large"
                       type="button"
                       disabled={submitting}
-                      onClick={handleSubmit} >
+                      onClick={handleSubmit}
+                    >
                       수정
                     </CmsButton>
                   </>
                 ) : (
                   <>
-                    <CmsButton
-                      variant="cancel"
-                      size="large"
-                      type="button"
-                      onClick={onClose} >
+                    <CmsButton variant="cancel" size="large" type="button" onClick={onClose}>
                       취소
                     </CmsButton>
                     <CmsButton
@@ -412,7 +401,8 @@ export function FormModal({
                       size="large"
                       type="button"
                       disabled={submitting}
-                      onClick={handlePreview} >
+                      onClick={handlePreview}
+                    >
                       미리보기
                     </CmsButton>
                     <CmsButton
@@ -420,7 +410,8 @@ export function FormModal({
                       size="large"
                       type="button"
                       disabled={submitting}
-                      onClick={handleSubmit} >
+                      onClick={handleSubmit}
+                    >
                       등록
                     </CmsButton>
                   </>
@@ -442,7 +433,8 @@ export function FormModal({
                           disabled={syncSenderProfilesMutation.isPending}
                           onClick={() => {
                             void handleSyncSenderProfiles()
-                          }} >
+                          }}
+                        >
                           {syncSenderProfilesMutation.isPending
                             ? '동기화 중…'
                             : '발신 프로필 동기화'}

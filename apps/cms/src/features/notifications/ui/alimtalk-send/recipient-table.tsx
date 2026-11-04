@@ -31,8 +31,7 @@ export function RecipientTable({
   blockedKeysByRecipientId,
   onVariableChange,
 }: RecipientTableProps) {
-  const needScroll =
-    recipients.length * TABLE_ROW_HEIGHT + TABLE_HEADER_HEIGHT > TABLE_MAX_HEIGHT
+  const needScroll = recipients.length * TABLE_ROW_HEIGHT + TABLE_HEADER_HEIGHT > TABLE_MAX_HEIGHT
 
   const showVariableColumn = recipients.some(recipient => {
     const manualCount = manualKeysByRecipientId?.[recipient.id]?.length ?? 0
@@ -100,7 +99,7 @@ export function RecipientTable({
                   width="100%"
                   allowClear={false}
                   value={record.variables?.[key] ?? ''}
-                  placeholder="변수값을 입력하세요"
+                  placeholder="변수값을 입력해 주세요"
                   onChange={event => onVariableChange?.(record.id, key, event.target.value)}
                 />
               </label>

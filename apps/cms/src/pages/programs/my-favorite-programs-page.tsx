@@ -59,7 +59,7 @@ export function MyFavoriteProgramsPage() {
         setPrograms(data)
       } catch (error) {
         console.error('관심 프로그램 로드 실패:', error)
-        } finally {
+      } finally {
         setLoading(false)
       }
     },
@@ -100,7 +100,7 @@ export function MyFavoriteProgramsPage() {
       await loadPrograms(userId) // 목록 새로고침
     } catch (error) {
       console.error('관심 프로그램 해제 실패:', error)
-      }
+    }
   }
 
   const getProgramStatus = (program: FavoriteProgram) => {
@@ -203,7 +203,7 @@ export function MyFavoriteProgramsPage() {
         <Space size="middle" wrap align="start">
           <LabeledSearchInput
             label="프로그램명"
-            placeholder="프로그램명을 입력하세요"
+            placeholder="프로그램명을 입력해 주세요"
             value={filters.search || ''}
             onChange={handleSearchChange}
             width={300}
@@ -231,7 +231,8 @@ export function MyFavoriteProgramsPage() {
           </Select>
           <CmsButton
             variant="default"
-            onClick={() => setParams({ status: undefined, category: undefined, search: undefined })} >
+            onClick={() => setParams({ status: undefined, category: undefined, search: undefined })}
+          >
             필터 초기화
           </CmsButton>
         </Space>

@@ -41,10 +41,6 @@
   background: var(--color-mint-01, #01a1af) !important;
 }
 
-.hero-banners-page .ant-switch {
-  min-width: 44px;
-}
-
 .hero-banner-table .ant-table-tbody > tr > td {
   vertical-align: middle;
 }

@@ -65,8 +65,10 @@ async function fillTextNearLabel(page: Page, label: string, placeholder: string,
 
 async function selectPaymentItemsB(page: Page) {
   await clickSectionNavIfVisible(page, '임금 정보')
-  const trigger = page.getByRole('button', { name: '지급 항목을 선택하세요' }).first()
-  const fieldTrigger = detailInfoField(page, '지급 항목').locator('.cms-select-multi__trigger').first()
+  const trigger = page.getByRole('button', { name: '지급 항목을 선택해 주세요' }).first()
+  const fieldTrigger = detailInfoField(page, '지급 항목')
+    .locator('.cms-select-multi__trigger')
+    .first()
   const opener = (await trigger.isVisible().catch(() => false)) ? trigger : fieldTrigger
   if (!(await opener.isVisible().catch(() => false))) return
   await opener.click()
@@ -90,20 +92,30 @@ async function selectPaymentItemsB(page: Page) {
 /** 현재 RHF 공통정보 UI (국문/영문/공고용)에 맞춘 격리 입력. live page object의 구 placeholder는 쓰지 않는다. */
 export async function fillIsolatedCommonInfo(page: Page) {
   await clickSectionNavIfVisible(page, '기본 정보')
-  await fillTextNearLabel(page, '대표 프로그램명 (국문)', '대표 프로그램명을 입력하세요', VALUES_B.title)
-  await fillTextNearLabel(page, '대표 프로그램명 (영문)', '대표 프로그램명을 입력하세요', VALUES_B.titleEn)
+  await fillTextNearLabel(
+    page,
+    '대표 프로그램명 (국문)',
+    '대표 프로그램명을 입력해 주세요',
+    VALUES_B.title
+  )
+  await fillTextNearLabel(
+    page,
+    '대표 프로그램명 (영문)',
+    '대표 프로그램명을 입력해 주세요',
+    VALUES_B.titleEn
+  )
   await fillTextNearLabel(
     page,
     '공고용 프로그램명',
-    '모집 시 노출될 프로그램명을 입력하세요',
+    '모집 시 노출될 프로그램명을 입력해 주세요',
     VALUES_B.announcement
   )
-  await selectByPlaceholder(page, '세부 프로그램명을 선택하세요')
-  await fillParagraphDateByPlaceholder(page, '사업 운영 기간을 선택하세요', 'range', {
+  await selectByPlaceholder(page, '세부 프로그램명을 선택해 주세요')
+  await fillParagraphDateByPlaceholder(page, '사업 운영 기간을 선택해 주세요', 'range', {
     futureMonthClicks: 2,
     required: true,
   })
-  await selectByPlaceholderIfVisible(page, '사업 분야를 선택하세요', '경제금융')
+  await selectByPlaceholderIfVisible(page, '사업 분야를 선택해 주세요', '경제금융')
   await selectNearLabelIfVisible(page, '사업 분야', '경제금융')
   await selectNearLabel(page, '후원사', 'RHF-B-후원사')
   await selectNearLabel(page, '후원사 담당자', 'RHF-B-담당자')
@@ -115,7 +127,10 @@ export async function fillIsolatedCommonInfo(page: Page) {
   await selectByPlaceholderIfVisible(page, 'IPS 유형', 'Inspire')
   const course = detailInfoField(page, '교육 과정')
   if (await course.isVisible().catch(() => false)) {
-    const selected = await course.locator('.ant-select-selection-item').innerText().catch(() => '')
+    const selected = await course
+      .locator('.ant-select-selection-item')
+      .innerText()
+      .catch(() => '')
     if (!selected.trim() || selected.includes('전체') || selected.includes('선택')) {
       await selectNearLabel(page, '교육 과정')
     }
@@ -133,14 +148,16 @@ export async function fillIsolatedCommonInfo(page: Page) {
   }
   await selectPaymentItemsB(page)
   await clickSectionNavIfVisible(page, '교육 진행 일정 설정')
-  await fillParagraphDateByPlaceholder(page, '진행 기간을 선택하세요', 'range', {
+  await fillParagraphDateByPlaceholder(page, '진행 기간을 선택해 주세요', 'range', {
     required: true,
     force: true,
     label: '교육 진행 일정 선택',
   })
   await clickSectionNavIfVisible(page, '기본 정보')
   await expect(
-    detailInfoField(page, '대표 프로그램명 (국문)').getByPlaceholder('대표 프로그램명을 입력하세요')
+    detailInfoField(page, '대표 프로그램명 (국문)').getByPlaceholder(
+      '대표 프로그램명을 입력해 주세요'
+    )
   ).toHaveValue(VALUES_B.title)
 }
 
@@ -180,7 +197,10 @@ async function selectInstructorRecruitTargets(page: Page) {
   await trigger.click()
   const panel = page.locator('.cms-select-multi__panel:visible').last()
   await expect(panel).toBeVisible({ timeout: 10_000 })
-  const row = panel.locator('.cms-select-multi__row').filter({ hasText: /^성인$|성인/ }).first()
+  const row = panel
+    .locator('.cms-select-multi__row')
+    .filter({ hasText: /^성인$|성인/ })
+    .first()
   await expect(row).toBeVisible({ timeout: 10_000 })
   const checkbox = row.locator('.ant-checkbox-input, .cms-select-multi__checkbox').first()
   const checked = (await row.locator('.ant-checkbox-checked').count()) > 0
@@ -209,11 +229,16 @@ async function fillIsolatedInstructorRecruit(page: Page) {
   await expect(panel).toBeVisible({ timeout: 15_000 })
   await forceAnnouncementPublished(page)
   const dateOpts = { futureMonthClicks: 2, root: panel, force: true } as const
-  await fillParagraphDateByPlaceholder(page, '프로그램 운영 기간을 선택하세요', 'range', dateOpts)
+  await fillParagraphDateByPlaceholder(
+    page,
+    '프로그램 운영 기간을 선택해 주세요',
+    'range',
+    dateOpts
+  )
   await selectInstructorRecruitTargets(page)
-  await fillByPlaceholder(panel, '상세 모집 대상을 입력하세요', '성인 강사')
-  await expect(panel.getByPlaceholder('상세 모집 대상을 입력하세요')).toHaveValue('성인 강사')
-  await fillParagraphDateByPlaceholder(page, '모집 기간을 선택하세요', 'range', dateOpts)
+  await fillByPlaceholder(panel, '상세 모집 대상을 입력해 주세요', '성인 강사')
+  await expect(panel.getByPlaceholder('상세 모집 대상을 입력해 주세요')).toHaveValue('성인 강사')
+  await fillParagraphDateByPlaceholder(page, '모집 기간을 선택해 주세요', 'range', dateOpts)
   await fillParagraphDateByPlaceholder(page, '합격자 발표일', 'single', {
     ...dateOpts,
     preferLaterDays: true,
@@ -239,7 +264,10 @@ async function fillIsolatedInstructorRecruit(page: Page) {
 }
 
 async function fillIsolatedInstitutionRecruitExtras(page: Page) {
-  await page.getByRole('tab', { name: /참여 기관 모집/ }).click().catch(() => undefined)
+  await page
+    .getByRole('tab', { name: /참여 기관 모집/ })
+    .click()
+    .catch(() => undefined)
   await forceAnnouncementPublished(page)
   const maxInputs = page.getByPlaceholder('최대값 입력')
   const maxCount = await maxInputs.count()
@@ -251,7 +279,7 @@ async function fillIsolatedInstitutionRecruitExtras(page: Page) {
     }
   }
   await selectNearLabelIfVisible(page, '교육 대상')
-  const targetTrigger = page.getByRole('button', { name: /교육 대상을 선택하세요/ }).first()
+  const targetTrigger = page.getByRole('button', { name: /교육 대상을 선택해 주세요/ }).first()
   if (await targetTrigger.isVisible().catch(() => false)) {
     await targetTrigger.click()
     const panel = page.locator('.cms-select-multi__panel:visible').last()
@@ -306,7 +334,9 @@ export async function fillRegistrationThroughComplete(page: Page) {
   await expect(
     page.getByRole('group', { name: /강사 모집 정보/ }).getByPlaceholder('담당 문의처')
   ).toHaveValue('JA Korea 1사1교 운영팀')
-  const institutionRecruitTab = page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ }).first()
+  const institutionRecruitTab = page
+    .getByRole('tab', { name: /참여 기관 모집|참여자 모집/ })
+    .first()
   await expect(institutionRecruitTab).toBeVisible({ timeout: 15_000 })
   await institutionRecruitTab.click()
   await waitActiveWizardTabPanel(page, institutionRecruitTab)
@@ -352,10 +382,22 @@ async function fillThirdPartyRecipientIfEmpty(page: Page) {
   await expect(table, '제3자 동의 「제공받는 곳」 표가 보여야 합니다').toBeVisible({
     timeout: 15_000,
   })
-  if (await table.getByText(THIRD_PARTY_RECIPIENT_VALUE, { exact: true }).first().isVisible().catch(() => false)) {
+  if (
+    await table
+      .getByText(THIRD_PARTY_RECIPIENT_VALUE, { exact: true })
+      .first()
+      .isVisible()
+      .catch(() => false)
+  ) {
     return
   }
-  if (await table.getByText('배정된 교육 대상 학교').first().isVisible().catch(() => false)) {
+  if (
+    await table
+      .getByText('배정된 교육 대상 학교')
+      .first()
+      .isVisible()
+      .catch(() => false)
+  ) {
     return
   }
 
@@ -366,9 +408,10 @@ async function fillThirdPartyRecipientIfEmpty(page: Page) {
   if (!(await editWrap.isVisible().catch(() => false))) {
     await card.click()
   }
-  await expect(editWrap, '제3자 동의 단락 선택 후 제공받는 곳 셀을 편집할 수 있어야 합니다').toBeVisible(
-    { timeout: 10_000 }
-  )
+  await expect(
+    editWrap,
+    '제3자 동의 단락 선택 후 제공받는 곳 셀을 편집할 수 있어야 합니다'
+  ).toBeVisible({ timeout: 10_000 })
   const recipientCell = card.locator('[role="row"]').nth(1).locator('[role="gridcell"]').nth(0)
   await expect(recipientCell, '빈 「제공받는 곳」 셀을 클릭할 수 있어야 합니다').toBeVisible({
     timeout: 10_000,
@@ -407,7 +450,10 @@ async function visitApplicationTabsAndFillRequired(page: Page) {
   await waitActiveWizardTabPanel(page, institutionTab)
   await clickSectionNavIfVisible(page, '개인정보')
   await expect(
-    page.locator('[data-paragraph-id*="third-party"]').getByText(THIRD_PARTY_RECIPIENT_VALUE).first()
+    page
+      .locator('[data-paragraph-id*="third-party"]')
+      .getByText(THIRD_PARTY_RECIPIENT_VALUE)
+      .first()
   ).toBeVisible({ timeout: 15_000 })
 }
 
@@ -422,7 +468,10 @@ export async function completeAndCapture(page: Page, log: IsolatedNetworkLog) {
     await waitActiveWizardTabPanel(page, institutionTab)
     await clickSectionNavIfVisible(page, '개인정보')
     await expect(
-      page.locator('[data-paragraph-id*="third-party"]').getByText(THIRD_PARTY_RECIPIENT_VALUE).first()
+      page
+        .locator('[data-paragraph-id*="third-party"]')
+        .getByText(THIRD_PARTY_RECIPIENT_VALUE)
+        .first()
     ).toBeVisible({ timeout: 15_000 })
   }
   const requiredDialog = page.getByRole('dialog').filter({ hasText: '필수 항목 미입력' })
@@ -436,16 +485,19 @@ export async function completeAndCapture(page: Page, log: IsolatedNetworkLog) {
     .toBeGreaterThan(0)
     .catch(() => undefined)
   await expect
-    .poll(() => {
-      return log.formVersionPuts.some(item => {
-        const overlayKeys = Object.keys(overlayFromFormVersionPut(item.body))
-        const raw = JSON.stringify(item.body ?? {})
-        return (
-          overlayKeys.some(key => key.startsWith('application.economy.')) ||
-          raw.includes('program-application-economy-seed')
-        )
-      })
-    }, { timeout: 60_000 })
+    .poll(
+      () => {
+        return log.formVersionPuts.some(item => {
+          const overlayKeys = Object.keys(overlayFromFormVersionPut(item.body))
+          const raw = JSON.stringify(item.body ?? {})
+          return (
+            overlayKeys.some(key => key.startsWith('application.economy.')) ||
+            raw.includes('program-application-economy-seed')
+          )
+        })
+      },
+      { timeout: 60_000 }
+    )
     .toBe(true)
   const successDialog = page.getByRole('dialog').filter({ hasText: '등록되었습니다.' })
   await expect(successDialog).toBeVisible({ timeout: 60_000 })
@@ -465,8 +517,16 @@ export function bindingCodes(log: IsolatedNetworkLog): string {
 }
 
 export async function dismissVisibleDialogs(page: Page) {
-  const dialog = page.getByRole('dialog').filter({ hasText: /임시 저장|필수 항목|입력 확인|등록 실패/ })
-  if (!(await dialog.first().isVisible().catch(() => false))) return
+  const dialog = page
+    .getByRole('dialog')
+    .filter({ hasText: /임시 저장|필수 항목|입력 확인|등록 실패/ })
+  if (
+    !(await dialog
+      .first()
+      .isVisible()
+      .catch(() => false))
+  )
+    return
   const confirm = dialog.getByRole('button', { name: '확인' }).first()
   if (await confirm.isVisible().catch(() => false)) {
     await confirm.click().catch(() => undefined)
@@ -484,9 +544,12 @@ export async function expectWizardCommonTitle(page: Page, value: string) {
     .click({ timeout: 8_000 })
     .catch(() => undefined)
   await clickSectionNavIfVisible(page, '기본 정보')
-  await expect(page.getByPlaceholder('대표 프로그램명을 입력하세요').first()).toHaveValue(value, {
-    timeout: 20_000,
-  })
+  await expect(page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()).toHaveValue(
+    value,
+    {
+      timeout: 20_000,
+    }
+  )
 }
 
 export async function openCompanySchoolRecruitNav(page: Page) {
@@ -510,7 +573,9 @@ export async function saveWizardDraft(page: Page) {
   const draft = page.getByRole('button', { name: /임시저장|임시 저장/ }).first()
   await expect(draft).toBeVisible({ timeout: 15_000 })
   await draft.click()
-  const done = page.getByRole('dialog').filter({ hasText: /임시 저장 완료|임시 저장 실패|임시 저장/ })
+  const done = page
+    .getByRole('dialog')
+    .filter({ hasText: /임시 저장 완료|임시 저장 실패|임시 저장/ })
   await expect(done.first()).toBeVisible({ timeout: 20_000 })
   const confirm = done.getByRole('button', { name: '확인' }).first()
   if (await confirm.isVisible().catch(() => false)) await confirm.click()
@@ -526,11 +591,20 @@ const ISOLATED_PNG_BUFFER = Buffer.from(
 )
 
 export async function fillInstitutionRecruitMedia(page: Page) {
-  await page.getByRole('tab', { name: /참여 기관 모집|참여자 모집/ }).first().click().catch(() => undefined)
+  await page
+    .getByRole('tab', { name: /참여 기관 모집|참여자 모집/ })
+    .first()
+    .click()
+    .catch(() => undefined)
   await clickSectionNavIfVisible(page, '상세 정보')
   await expect(page.getByText('썸네일 이미지').first()).toBeVisible({ timeout: 20_000 })
   const thumbRemove = page.locator('.thumbnail-upload-field').getByRole('button', { name: /삭제/ })
-  if (await thumbRemove.first().isVisible().catch(() => false)) {
+  if (
+    await thumbRemove
+      .first()
+      .isVisible()
+      .catch(() => false)
+  ) {
     await thumbRemove.first().click()
   }
   const thumb = page.locator('.thumbnail-upload-field input[type="file"]').first()

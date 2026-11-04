@@ -52,7 +52,7 @@ export function buildAdminFaqManagementFilterFields(
       key: 'author',
       type: 'search',
       label: '작성자명',
-      placeholder: '작성자명을 입력하세요',
+      placeholder: '작성자명을 입력해 주세요',
       width: '18%',
     },
     {

@@ -13,7 +13,7 @@ export const GEMINI_APPROVED_TRAINING_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'institutionName',
     type: 'search',
     label: '기관명',
-    placeholder: '기관명을 입력하세요',
+    placeholder: '기관명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   createInstitutionAddressRegionFilterField(),

@@ -16,18 +16,16 @@ export function MfaModalHeader({ isLocalTest = false, showQrSetup = false }: Mfa
           <>
             개발/테스트 환경입니다.
             <br />
-            아래 입력란에 안내된 6자리 테스트 코드를 입력하세요.
+            아래 입력란에 안내된 6자리 테스트 코드를 입력해 주세요.
           </>
         ) : showQrSetup ? (
           <>
             Microsoft Authenticator 어플에서 아래 QR을 등록한 뒤,
             <br />
-            화면에 표시된 6자리 코드를 입력하세요.
+            화면에 표시된 6자리 코드를 입력해 주세요.
           </>
         ) : (
-          <>
-            등록된 인증 앱의 6자리 코드를 입력하세요.
-          </>
+          <>등록된 인증 앱의 6자리 코드를 입력해 주세요.</>
         )}
       </p>
     </header>

@@ -33,7 +33,7 @@ export function CalendarSearch({
       <div className="calendar-search__input">
         <CmsInput
           width={'100%'}
-          placeholder="프로그램명을 입력하세요"
+          placeholder="프로그램명을 입력해 주세요"
           icon={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
           value={keyword}
           onChange={e => onKeywordChange(e.target.value)}
@@ -42,8 +42,7 @@ export function CalendarSearch({
       </div>
       <div className="calendar-search__filters">
         {options.map(opt => {
-          const pair =
-            programColorMap.get(String(opt.id)) ?? getScheduleColorPair(String(opt.id))
+          const pair = programColorMap.get(String(opt.id)) ?? getScheduleColorPair(String(opt.id))
           const rowStyle = {
             ['--calendar-search-checkbox-fill']: pair.bg,
             ['--calendar-search-checkbox-check']: pair.text,

@@ -5,12 +5,12 @@
  */
 
 /* 뷰포트 정중앙 — 바깥 스크롤 없음 (높이는 뷰포트에 맞춤) */
-.ant-modal-wrap:has(.ant-modal.teal-header-modal--large.story-form-modal) {
+.ant-modal-wrap:has(.ant-modal.content-modal.teal-header-modal.story-form-modal) {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   overflow-x: hidden !important;
-  overflow-y: auto !important;
+  overflow-y: hidden !important;
   padding: 16px !important;
   box-sizing: border-box !important;
   position: fixed !important;
@@ -73,12 +73,19 @@
   padding-top: 24px !important;
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   width: 100%;
   align-items: stretch;
   display: flex;
   flex-direction: column;
+}
+
+/* 공통 에디터 CSS가 resized 시 overflow-y:auto 를 켜 1px 스크롤이 깜빡인다 */
+.story-form-modal.content-modal.teal-header-modal.ant-modal:has(
+    .rich-text-editor[data-resized='true']
+  )
+  .teal-header-modal__body {
+  overflow: hidden !important;
 }
 
 /* 본문(첨부) ↔ 푸터 30px */

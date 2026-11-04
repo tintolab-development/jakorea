@@ -145,9 +145,7 @@ export function AdminManagedProgramHistory({
   const adminAccountId = user.adminAccountId
   const memberId = user.memberId
   const canFetchRemote =
-    adminAccountId != null && adminAccountId > 0
-      ? true
-      : memberId != null && memberId > 0
+    adminAccountId != null && adminAccountId > 0 ? true : memberId != null && memberId > 0
 
   const { data: remotePrograms = [], isLoading: remoteProgramsLoading } =
     useMemberAdminProgramsQuery({ memberId, adminAccountId }, membersRemote && canFetchRemote)
@@ -197,7 +195,7 @@ export function AdminManagedProgramHistory({
         key: 'title',
         type: 'search',
         label: '프로그램명',
-        placeholder: '프로그램명을 입력하세요',
+        placeholder: '프로그램명을 입력해 주세요',
         width: colWidth,
       },
       {
@@ -460,7 +458,8 @@ export function AdminManagedProgramHistory({
             <FilterTableToolbarButton
               variant="delete"
               disabled={selectedRowKeys.length === 0}
-              onClick={handleOpenDeleteModal} >
+              onClick={handleOpenDeleteModal}
+            >
               이력 삭제
             </FilterTableToolbarButton>
           ) : null

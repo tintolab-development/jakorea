@@ -47,11 +47,13 @@ test.describe('CS-B04/B05 상세 GET→PATCH→재GET', () => {
     await expect(page.getByText(VALUES_B.announcement).first()).toBeVisible()
 
     await page.getByRole('button', { name: '정보 수정' }).first().click()
-    await expect(page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요').first()).toBeVisible({
+    await expect(
+      page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요').first()
+    ).toBeVisible({
       timeout: 20_000,
     })
     await page
-      .getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요')
+      .getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요')
       .first()
       .fill('RHF-B-공고명-PATCH')
     await clickSaveIfVisible(page)
@@ -71,7 +73,10 @@ test.describe('CS-B04/B05 상세 GET→PATCH→재GET', () => {
     expect(overlay['economyRegistration.wageInfo.grade1Fee']).toBe(
       createdOverlay['economyRegistration.wageInfo.grade1Fee']
     )
-    expect(overlay['economyRecruit.detailInfo.thumbFileObjectId'] ?? overlay['recruit.detailInfo.thumbFileObjectId']).toEqual(
+    expect(
+      overlay['economyRecruit.detailInfo.thumbFileObjectId'] ??
+        overlay['recruit.detailInfo.thumbFileObjectId']
+    ).toEqual(
       createdOverlay['economyRecruit.detailInfo.thumbFileObjectId'] ??
         createdOverlay['recruit.detailInfo.thumbFileObjectId']
     )
@@ -89,9 +94,11 @@ test.describe('CS-B04/B05 상세 GET→PATCH→재GET', () => {
     await fillRegistrationThroughComplete(page)
     await completeAndCapture(page, log)
     const created = log.createProgram?.body as { recruitments?: unknown }
-    expect(created.recruitments == null || created.recruitments === undefined || (Array.isArray(created.recruitments) && created.recruitments.length === 0)).toBe(
-      true
-    )
+    expect(
+      created.recruitments == null ||
+        created.recruitments === undefined ||
+        (Array.isArray(created.recruitments) && created.recruitments.length === 0)
+    ).toBe(true)
 
     await expect(page).toHaveURL(/programId=/, { timeout: 60_000 })
     await openCompanySchoolRecruitNav(page)
@@ -100,7 +107,12 @@ test.describe('CS-B04/B05 상세 GET→PATCH→재GET', () => {
     await expect(edit).toBeVisible({ timeout: 30_000 })
     await edit.click()
     const notes = page.getByPlaceholder('비고란을 작성하세요 (없으면 -로 입력)')
-    if (await notes.first().isVisible().catch(() => false)) {
+    if (
+      await notes
+        .first()
+        .isVisible()
+        .catch(() => false)
+    ) {
       await notes.first().fill('RHF-B-모집비고-PATCH')
     }
     await clickSaveIfVisible(page)

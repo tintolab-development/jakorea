@@ -165,6 +165,17 @@ assert.equal(merged.donationCta1.href, '/support/individual')
 assert.equal(merged.donationCta1.external, false)
 assert.equal(merged.strips[0]?.href, '/programs')
 
+const unlinkStrip = mergePublicMainWithFallback(
+  {
+    stripBanners: [
+      { id: 2, displayOrder: 1, bannerText: '링크 없는 띠배너' },
+    ],
+  },
+  fallback,
+)
+assert.equal(unlinkStrip.strips[0]?.label, '링크 없는 띠배너')
+assert.equal(unlinkStrip.strips[0]?.href, undefined)
+
 const featuredFallback: HomeMainFallback = {
   ...fallback,
   featuredStory: {

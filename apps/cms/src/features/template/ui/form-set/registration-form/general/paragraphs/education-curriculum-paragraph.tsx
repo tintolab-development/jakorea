@@ -188,7 +188,7 @@ function ProgramRegistrationCurriculumUnitContentInputs({ chartIndex }: { chartI
       <CurriculumOverlayTextInput
         recordKey={CURRICULUM_UNIT_NAME_KEY}
         index={chartIndex}
-        placeholder="단원명을 입력하세요"
+        placeholder="단원명을 입력해 주세요"
         style={{ minWidth: 0, flex: '1 1 0' }}
       />
       <DetailInfoForm.InputsSeparator />
@@ -297,9 +297,7 @@ function ProgramRegistrationCurriculumChartSessionBlock({
                 `curriculum.unitContent[${chartIndex}]`,
               ]}
               fullRow
-              edit={
-                <ProgramRegistrationCurriculumUnitContentInputs chartIndex={chartIndex} />
-              }
+              edit={<ProgramRegistrationCurriculumUnitContentInputs chartIndex={chartIndex} />}
               view="-"
             />
           </DetailInfoForm.Row>
@@ -356,8 +354,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
   }
   const replaceFirstTraining =
     scheduleCurriculumPreEducation && preEducationDisplayMode === 'replaceFirst'
-  const prependTraining =
-    scheduleCurriculumPreEducation && preEducationDisplayMode === 'prepend'
+  const prependTraining = scheduleCurriculumPreEducation && preEducationDisplayMode === 'prepend'
   const [ipsBySession] = useProgramRegistrationOverlayKv<
     Record<number, ProgramRegistrationIpsTypeValue>
   >('generalRegistration.educationCurriculum.ipsBySession', {})
@@ -587,9 +584,7 @@ export function ProgramRegistrationEducationCurriculumParagraph({
 
   const renderIndividualPreEducationScheduleBlock = () => {
     const scheduleRange = parseStoredEducationScheduleRange(preEducationScheduleLine)
-    const scheduleHasClock = Boolean(
-      scheduleRange && educationScheduleRangeHasClock(scheduleRange)
-    )
+    const scheduleHasClock = Boolean(scheduleRange && educationScheduleRangeHasClock(scheduleRange))
     return (
       <div key="pre-education" className="program-registration-schedule-curriculum__block">
         <div className="program-registration-schedule-curriculum__session-heading">
@@ -693,7 +688,9 @@ export function ProgramRegistrationEducationCurriculumParagraph({
             </DetailInfoForm.Row>
           ) : null
           const extraRows =
-            showEducationPlacePerSchedule && !trainingSession && isEducationPlaceVisibleAt(chartIndex) ? (
+            showEducationPlacePerSchedule &&
+            !trainingSession &&
+            isEducationPlaceVisibleAt(chartIndex) ? (
               <>
                 {ipsExtraRows}
                 <ProgramRegistrationEducationPlacePerScheduleRow
@@ -801,8 +798,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
           value={participationForSession(roundIndex)}
           onChange={onParticipationRadioChange(roundIndex)}
         >
-          <CmsRadio size="medium" value="individual">개인</CmsRadio>
-          <CmsRadio size="medium" value="team">팀</CmsRadio>
+          <CmsRadio size="medium" value="individual">
+            개인
+          </CmsRadio>
+          <CmsRadio size="medium" value="team">
+            팀
+          </CmsRadio>
         </CmsRadioGroup>
       }
       view="-"
@@ -848,8 +849,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                     value={participationForSession(roundIndex)}
                     onChange={onParticipationRadioChange(roundIndex)}
                   >
-                    <CmsRadio size="medium" value="individual">개인</CmsRadio>
-                    <CmsRadio size="medium" value="team">팀</CmsRadio>
+                    <CmsRadio size="medium" value="individual">
+                      개인
+                    </CmsRadio>
+                    <CmsRadio size="medium" value="team">
+                      팀
+                    </CmsRadio>
                   </CmsRadioGroup>
                 }
                 view="-"
@@ -871,8 +876,12 @@ export function ProgramRegistrationEducationCurriculumParagraph({
                 value={participationForSession(roundIndex)}
                 onChange={onParticipationRadioChange(roundIndex)}
               >
-                <CmsRadio size="medium" value="individual">개인</CmsRadio>
-                <CmsRadio size="medium" value="team">팀</CmsRadio>
+                <CmsRadio size="medium" value="individual">
+                  개인
+                </CmsRadio>
+                <CmsRadio size="medium" value="team">
+                  팀
+                </CmsRadio>
               </CmsRadioGroup>
             }
             view="-"

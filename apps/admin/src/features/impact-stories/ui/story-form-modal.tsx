@@ -23,6 +23,7 @@ import {
   RichTextEditor,
 } from '@/shared/rich-text'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
   CmsInput,
@@ -257,7 +258,7 @@ export function StoryFormModal({
 
   const handleSubmit = useCallback(() => {
     if (!publishedAt || !publishedAt.isValid()) {
-      showAlert({ title: '입력 확인', content: '게시일시를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const m = publishedAt.minute()
@@ -269,17 +270,17 @@ export function StoryFormModal({
       return
     }
     if (!categoryId) {
-      showAlert({ title: '입력 확인', content: '카테고리를 선택해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const t = title.trim()
     if (!t) {
-      showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const contentHtml = getHTML().trim()
     if (isEmptyAdminHtml(contentHtml)) {
-      showAlert({ title: '입력 확인', content: '게시글 내용을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const bodyError = getRemoteRichTextBodyError(contentHtml)
@@ -288,7 +289,7 @@ export function StoryFormModal({
       return
     }
     if (!thumbnail) {
-      showAlert({ title: '입력 확인', content: '썸네일 이미지를 등록해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (isPinned && pinnedCountExcludingSelf >= IMPACT_STORY_PIN_MAX) {
@@ -395,7 +396,7 @@ export function StoryFormModal({
                   inputSize="large"
                   width={240}
                   value={categoryId || undefined}
-                  placeholder="카테고리를 선택하세요"
+                  placeholder="카테고리를 선택해 주세요"
                   options={categoryOptions}
                   onChange={v => setCategoryId(String(v ?? ''))}
                 />
@@ -472,7 +473,7 @@ export function StoryFormModal({
           >
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
-                label="썸네일"
+                label="대표 썸네일"
                 required
                 view={null}
                 edit={

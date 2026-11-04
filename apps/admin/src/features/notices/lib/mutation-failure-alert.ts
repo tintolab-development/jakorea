@@ -3,6 +3,7 @@
  */
 
 import {
+  type AdminMutationAlert,
   mapCommonRemoteMutationFailure,
   readApiErrorCode,
   readApiErrorField,
@@ -19,7 +20,7 @@ export function noticeMutationFailureAlert(
   error: unknown,
   fallbackContent: string,
   title = '저장 실패',
-): { title: string; content: string } {
+): AdminMutationAlert {
   const common = mapCommonRemoteMutationFailure(error)
   if (common) return common
 

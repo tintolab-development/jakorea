@@ -15,7 +15,7 @@ import {
   HTTP_LINK_URL_FORMAT_ALERT,
   isValidHttpLinkUrl,
 } from '@/shared/lib/http-link-url'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './worldwide-form.css'
 
@@ -60,6 +60,7 @@ export function WorldwideFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',

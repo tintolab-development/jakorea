@@ -5,10 +5,7 @@
 import { useCallback, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type {
-  BannerSaveInput,
-  CorporateGuideBanner,
-} from '@/entities/corporate-guide/model/types'
+import type { BannerSaveInput, CorporateGuideBanner } from '@/entities/corporate-guide/model/types'
 import {
   CmsButton,
   CmsTextArea,
@@ -185,7 +182,8 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -194,7 +192,8 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             수정
           </CmsButton>
         </>
@@ -256,7 +255,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   inputSize="large"
                   width="100%"
                   rows={3}
-                  placeholder="메인 텍스트를 입력하세요"
+                  placeholder="메인 텍스트를 입력해 주세요"
                   value={mainText}
                   onChange={e => {
                     setMainText(e.target.value)
@@ -286,7 +285,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
                   inputSize="large"
                   width="100%"
                   rows={4}
-                  placeholder="서브 텍스트를 입력하세요"
+                  placeholder="서브 텍스트를 입력해 주세요"
                   value={subText}
                   onChange={e => {
                     setSubText(e.target.value)

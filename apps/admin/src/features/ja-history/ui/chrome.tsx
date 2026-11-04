@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Image } from 'antd'
 import { JaHistorySaveError, type JaHistoryMedia } from '@/entities/ja-history/model/types'
-import { CmsButton, CmsInput, CmsTextArea } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsTextArea, REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 
 type TextProps = {
   editing: boolean
@@ -191,8 +191,9 @@ export function jaHistorySaveAlert(error: unknown, fallback: string) {
     if (error.code === 'OPTIMISTIC_LOCK') {
       return { title: '저장 실패', content: error.message }
     }
+    if (error.code === 'REQUIRED') return REQUIRED_FIELDS_INCOMPLETE_ALERT
     return {
-      title: error.code === 'REQUIRED' ? '입력 확인' : '저장 실패',
+      title: '저장 실패',
       content: error.message,
     }
   }

@@ -20,6 +20,21 @@ function resolveMinResizeHeight(minHeight: string | number | undefined): number 
   return RICH_TEXT_EDITOR_DEFAULT_MIN_HEIGHT_PX
 }
 
+/** ContentModal max-height `100dvh - 32px` 와 동일 */
+const MODAL_VIEWPORT_INSET_PX = 32
+/** 서브픽셀·보더로 모달 본문에 스크롤이 생기는 여유 */
+const MODAL_RESIZE_SLACK_PX = 8
+
+function maxEditorHeightInModal(editorRoot: HTMLElement, startEditorHeight: number): number | null {
+  const modal = editorRoot.closest('.ant-modal-content')
+  if (!(modal instanceof HTMLElement)) return null
+
+  const viewport = window.visualViewport?.height ?? window.innerHeight
+  const maxModal = viewport - MODAL_VIEWPORT_INSET_PX
+  const chrome = modal.getBoundingClientRect().height - startEditorHeight
+  return Math.floor(maxModal - chrome - MODAL_RESIZE_SLACK_PX)
+}
+
 /**
  * Headless 에디터 셸 — Pro Simple Editor / UI Components 미사용.
  * 툴바는 `toolbar` 슬롯으로 앱별 주입 (Ant Design, PF 등).
@@ -58,6 +73,7 @@ export function RichTextEditor({
 
       const startY = event.clientY
       const startHeight = root.getBoundingClientRect().height
+      const maxInModal = maxEditorHeightInModal(root, startHeight)
       const pointerId = event.pointerId
       event.currentTarget.setPointerCapture(pointerId)
 
@@ -69,7 +85,10 @@ export function RichTextEditor({
       }
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
-        const nextHeight = Math.max(minResizeHeight, startHeight + moveEvent.clientY - startY)
+        let nextHeight = Math.max(minResizeHeight, startHeight + moveEvent.clientY - startY)
+        if (maxInModal != null) {
+          nextHeight = Math.min(nextHeight, Math.max(minResizeHeight, maxInModal))
+        }
         applyHeight(nextHeight)
       }
 

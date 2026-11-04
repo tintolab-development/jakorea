@@ -56,7 +56,3 @@
 .impact-stories-page .ant-switch-checked {
   background: var(--color-mint-01, #01a1af) !important;
 }
-
-.impact-stories-page .ant-switch {
-  min-width: 40px;
-}

@@ -59,6 +59,7 @@ import {
   CmsInput,
   CmsSelect,
   ConfirmModal,
+  NO_SELECTION_ALERT,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -230,6 +231,7 @@ export function RecruitApplicantsPage() {
     applySearch,
     searchParams,
     patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<ApplicantPendingFilters, RecruitApplicantListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -323,7 +325,7 @@ export function RecruitApplicantsPage() {
 
   const requireSelection = useCallback(() => {
     if (selectedRowKeys.length > 0) return true
-    showAlert({ title: '항목 선택', content: '선택된 항목이 없습니다.' })
+    showAlert(NO_SELECTION_ALERT)
     return false
   }, [selectedRowKeys.length, showAlert])
 
@@ -525,6 +527,7 @@ export function RecruitApplicantsPage() {
   return (
     <div className="recruit-applicants-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split recruit-applicants-page__filter">
             <div className="admin-filter-area__head">
@@ -571,7 +574,7 @@ export function RecruitApplicantsPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.applicantName}
-                  placeholder="지원자명을 입력하세요"
+                  placeholder="지원자명을 입력해 주세요"
                   onChange={value =>
                     patchPendingFilters(prev => ({ ...prev, applicantName: value }))
                   }
@@ -587,7 +590,7 @@ export function RecruitApplicantsPage() {
                   inputMode="numeric"
                   autoComplete="tel"
                   value={pendingFilters.phone}
-                  placeholder="연락처를 입력하세요"
+                  placeholder="연락처를 입력해 주세요"
                   onChange={event => {
                     const result = applyKoreanPhoneInputChange(
                       pendingFilters.phone,
@@ -609,7 +612,7 @@ export function RecruitApplicantsPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.email}
-                  placeholder="이메일을 입력하세요"
+                  placeholder="이메일을 입력해 주세요"
                   onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
                   onPressEnter={handleSearch}
                 />
@@ -676,11 +679,13 @@ export function RecruitApplicantsPage() {
                 </div>
               </div>
               <div className="admin-filter-area__actions">
-                <CmsButton className="admin-filter-area__search-button"
+                <CmsButton
+                  className="admin-filter-area__search-button"
                   variant="primary"
                   size="medium"
                   type="button"
-                  onClick={handleSearch} >
+                  onClick={handleSearch}
+                >
                   조회
                 </CmsButton>
               </div>
@@ -698,7 +703,8 @@ export function RecruitApplicantsPage() {
               loading={removeMutation.isPending}
               onClick={() => {
                 if (requireSelection()) setBulkDeleteOpen(true)
-              }} >
+              }}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton
@@ -708,7 +714,8 @@ export function RecruitApplicantsPage() {
               loading={confirmMutation.isPending}
               onClick={() => {
                 if (requireSelection()) setBulkConfirmOpen(true)
-              }} >
+              }}
+            >
               선택 확인
             </CmsButton>
           </>

@@ -45,9 +45,9 @@ export class GeminiPerformancePage {
     await expect(this.page.getByText('연수방식', { exact: true }).first()).toBeVisible()
     await expect(this.page.getByText('연수장소', { exact: true }).first()).toBeVisible()
     await expect(this.page.getByText('연수일', { exact: true }).first()).toBeVisible()
-    await expect(
-      this.page.getByPlaceholder('강사명을 입력하세요')
-    ).toBeVisible({ timeout: 10_000 })
+    await expect(this.page.getByPlaceholder('강사명을 입력해 주세요')).toBeVisible({
+      timeout: 10_000,
+    })
   }
 
   async expectRegisterControls() {
@@ -58,9 +58,7 @@ export class GeminiPerformancePage {
   }
 
   dataRows() {
-    return this.page.locator(
-      'tbody.ant-table-tbody tr.ant-table-row:not(.ant-table-measure-row)'
-    )
+    return this.page.locator('tbody.ant-table-tbody tr.ant-table-row:not(.ant-table-measure-row)')
   }
 
   async rowCount(): Promise<number> {
@@ -68,7 +66,7 @@ export class GeminiPerformancePage {
   }
 
   async applyInstructorFilter(instructorName: string) {
-    const input = this.page.getByPlaceholder('강사명을 입력하세요')
+    const input = this.page.getByPlaceholder('강사명을 입력해 주세요')
     await input.fill(instructorName)
     const searchBtn = this.page.getByRole('button', { name: /조회|검색/ }).first()
     if (await searchBtn.isVisible().catch(() => false)) {
@@ -85,7 +83,9 @@ export class GeminiPerformancePage {
 
   async applyTrainingMethodFilter(label: '온라인' | '오프라인' | '전체'): Promise<boolean> {
     const methodSelect = this.page
-      .locator('.table-filter-group__field, .filter-field, .ant-form-item, .table-filter-group__grid-cell')
+      .locator(
+        '.table-filter-group__field, .filter-field, .ant-form-item, .table-filter-group__grid-cell'
+      )
       .filter({ hasText: '연수방식' })
       .locator('.ant-select')
       .first()

@@ -39,7 +39,7 @@ export function CtaButtonsNestedTable({
               inputSize="medium"
               width="100%"
               value={primary.label}
-              placeholder="버튼명을 입력하세요"
+              placeholder="버튼명을 입력해 주세요"
               aria-label="버튼명 01"
               onChange={event => onChangePrimary({ label: event.target.value })}
             />
@@ -58,7 +58,7 @@ export function CtaButtonsNestedTable({
               inputSize="medium"
               width="100%"
               value={primary.href}
-              placeholder="연결 링크를 입력하세요"
+              placeholder="연결 링크를 입력해 주세요"
               aria-label="연결 링크 01"
               onChange={event => onChangePrimary({ href: event.target.value })}
             />
@@ -75,7 +75,7 @@ export function CtaButtonsNestedTable({
               inputSize="medium"
               width="100%"
               value={secondary.label}
-              placeholder="버튼명을 입력하세요"
+              placeholder="버튼명을 입력해 주세요"
               aria-label="버튼명 02"
               onChange={event => onChangeSecondary({ label: event.target.value })}
             />
@@ -94,7 +94,7 @@ export function CtaButtonsNestedTable({
               inputSize="medium"
               width="100%"
               value={secondary.href}
-              placeholder="연결 링크를 입력하세요"
+              placeholder="연결 링크를 입력해 주세요"
               aria-label="연결 링크 02"
               onChange={event => onChangeSecondary({ href: event.target.value })}
             />
