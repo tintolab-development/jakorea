@@ -13,7 +13,6 @@ import {
   hasDuplicateCategoryName,
   hasImpactCategoryDraftChanges,
   IMPACT_CATEGORY_NAME_INVALID_CHARACTERS_MESSAGE,
-  IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE,
   validateImpactCategoryName,
 } from '@/features/impact-stories/lib/category-domain'
 import { CategoryDeleteBlockedModal } from '@/features/impact-stories/ui/category-delete-blocked-modal'
@@ -61,7 +60,6 @@ function showCategoryNameValidationAlert(
   validation: ReturnType<typeof validateImpactCategoryName>
 ) {
   if (validation === 'empty') {
-    showAlert({ title: '안내', content: IMPACT_CATEGORY_NAME_REQUIRED_MESSAGE })
     return
   }
   if (validation === 'invalid_characters') {
