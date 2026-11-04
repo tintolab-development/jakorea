@@ -17,6 +17,12 @@ function requiredText(value: string, requiredCode: string, tooLongCode: string, 
         throw new Error(tooLongCode);
     return normalized;
 }
+function optionalText(value: string, tooLongCode: string, maxLength: number) {
+    const normalized = value.trimEnd();
+    if (normalized.length > maxLength)
+        throw new Error(tooLongCode);
+    return normalized;
+}
 function interviewYear(value: number | null): number | undefined {
     if (value == null)
         return undefined;
@@ -81,8 +87,8 @@ export async function saveCultureService(items: CultureSaveItem[], cached?: Recr
             const id = CULTURE_ID[item.id];
             if (id == null)
                 throw new Error('CULTURE_ITEMS_INVALID');
-            const title = requiredText(item.title, 'CULTURE_TITLE_REQUIRED', 'CULTURE_TITLE_TOO_LONG', 500);
-            const description = requiredText(item.description, 'CULTURE_DESCRIPTION_REQUIRED', 'CULTURE_DESCRIPTION_TOO_LONG', 2000);
+            const title = optionalText(item.title, 'CULTURE_TITLE_TOO_LONG', 500);
+            const description = optionalText(item.description, 'CULTURE_DESCRIPTION_TOO_LONG', 2000);
             return {
                 id,
                 title,
