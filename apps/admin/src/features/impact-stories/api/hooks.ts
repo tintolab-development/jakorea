@@ -227,7 +227,8 @@ export function useSetImpactStoryPublic() {
         return setStoryPublicService(id, isPublic, cached)
       }
       const hit = mergedStoriesFromListCache(queryClient).find(row => row.id === id)
-      return setStoryPublicService(id, isPublic, hit)
+      if (hit) return setStoryPublicService(id, isPublic, hit)
+      return setStoryPublicService(id, isPublic)
     },
     retry: false,
     onSuccess: data => {
