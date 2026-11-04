@@ -58,6 +58,7 @@ import {
   showDeleteCompletedAlert,
   showRegisterCompletedAlert,
   showUpdateCompletedAlert,
+  NO_SELECTION_ALERT,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -172,6 +173,7 @@ export function ImpactStoriesPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<StoryPendingFilters, ImpactStoryListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -300,10 +302,7 @@ export function ImpactStoriesPage() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '선택된 항목이 없습니다.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -456,6 +455,7 @@ export function ImpactStoriesPage() {
   return (
     <div className="impact-stories-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split impact-stories-page__filter">
             <div className="admin-filter-area__head">

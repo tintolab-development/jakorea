@@ -44,6 +44,7 @@ import {
   CmsDateRangePicker,
   AdminFilterTextInput,
   ConfirmModal,
+  NO_SELECTION_ALERT,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -137,6 +138,7 @@ export function ReportListPanel({ kind }: Props) {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<PendingFilters, ReportListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -191,10 +193,7 @@ export function ReportListPanel({ kind }: Props) {
 
   const handleBulkDeleteClick = () => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 보고서를 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -369,6 +368,7 @@ export function ReportListPanel({ kind }: Props) {
   return (
     <div className="rd-list">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">

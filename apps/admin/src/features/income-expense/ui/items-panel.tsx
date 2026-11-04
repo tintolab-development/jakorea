@@ -45,6 +45,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   ConfirmModal,
+  NO_SELECTION_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -218,10 +219,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '삭제할 항목을 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)

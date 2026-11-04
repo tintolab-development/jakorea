@@ -50,6 +50,7 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  NO_SELECTION_ALERT,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -153,6 +154,7 @@ export function NoticesPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<NoticePendingFilters, NoticeListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -274,10 +276,7 @@ export function NoticesPage() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '선택된 항목이 없습니다.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -407,6 +406,7 @@ export function NoticesPage() {
         @see apps/cms table-filter-group-layout · mergedAutoFillTrailingFieldKeys
       */}
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split notices-page__filter">
             <div className="admin-filter-area__head">

@@ -7,6 +7,7 @@ import {
   readApiErrorCode,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
+import { NO_SELECTION_ALERT } from '@/shared/ui'
 
 const VERSION_CONFLICT_ALERT = {
   title: '저장 실패',
@@ -117,7 +118,7 @@ function mapRecruitGuideSaveFailureAlert(
     return { title: '수정 실패', content: '직무 인터뷰를 찾을 수 없습니다.' }
   }
   if (code === 'INTERVIEW_NONE_SELECTED') {
-    return { title: '항목 선택', content: '선택된 항목이 없습니다.' }
+    return NO_SELECTION_ALERT
   }
   if (code === 'INTERVIEW_TITLE_REQUIRED') {
     return { title: '입력 확인', content: '게시글 제목을 입력해 주세요.' }

@@ -51,6 +51,7 @@ import {
   CmsSelect,
   ConfirmModal,
   FilterTableLayout,
+  NO_SELECTION_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -185,6 +186,7 @@ export function PopupsPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<PopupPendingFilters, PopupListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -345,10 +347,7 @@ export function PopupsPage() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 팝업을 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -474,6 +473,7 @@ export function PopupsPage() {
   return (
     <div className="popups-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area popups-page__filter-row">
             <div className="admin-filter-area__field admin-filter-area__field--control">

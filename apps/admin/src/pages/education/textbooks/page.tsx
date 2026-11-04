@@ -56,6 +56,7 @@ import {
   CmsSelect,
   ConfirmModal,
   FilterTableLayout,
+  NO_SELECTION_ALERT,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -207,6 +208,7 @@ export function EducationTextbooksPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<TextbookPendingFilters, EducationTextbookListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -345,10 +347,7 @@ export function EducationTextbooksPage() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '선택된 항목이 없습니다.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -543,6 +542,7 @@ export function EducationTextbooksPage() {
   return (
     <div className="education-textbooks-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area education-textbooks-page__filter">
             <div className="admin-filter-area__field admin-filter-area__field--control">

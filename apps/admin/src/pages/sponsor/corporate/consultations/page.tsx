@@ -55,6 +55,7 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  NO_SELECTION_ALERT,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -207,6 +208,7 @@ export function CorporateConsultationsPage() {
     applySearch,
     searchParams,
     patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<ConsultationPendingFilters, CorporateConsultationListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -390,10 +392,7 @@ export function CorporateConsultationsPage() {
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '선택된 항목이 없습니다.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkDeleteOpen(true)
@@ -401,10 +400,7 @@ export function CorporateConsultationsPage() {
 
   const handleBulkConfirmClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '항목 선택',
-        content: '선택된 항목이 없습니다.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setBulkConfirmOpen(true)
@@ -571,6 +567,7 @@ export function CorporateConsultationsPage() {
   return (
     <div className="corp-consultations-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split corp-consultations-page__filter">
             <div className="admin-filter-area__head">

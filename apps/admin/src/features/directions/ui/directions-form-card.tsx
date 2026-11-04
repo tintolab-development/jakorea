@@ -21,7 +21,7 @@ import {
   directionsSaveFailureAlert,
   validateDirectionsBeforeSave,
 } from '@/features/directions/lib/save-validation'
-import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './directions-form-card.css'
 
@@ -83,6 +83,7 @@ export function DirectionsFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(directionsSaveFailureAlert(error))
       void queryClient.invalidateQueries({ queryKey: directionsQueryKeys.all })
@@ -113,7 +114,7 @@ export function DirectionsFormCard({ data }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending}
@@ -122,7 +123,7 @@ export function DirectionsFormCard({ data }: Props) {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -133,7 +134,7 @@ export function DirectionsFormCard({ data }: Props) {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

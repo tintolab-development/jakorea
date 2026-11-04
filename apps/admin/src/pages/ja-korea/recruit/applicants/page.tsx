@@ -59,6 +59,7 @@ import {
   CmsInput,
   CmsSelect,
   ConfirmModal,
+  NO_SELECTION_ALERT,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -230,6 +231,7 @@ export function RecruitApplicantsPage() {
     applySearch,
     searchParams,
     patchSearchParams,
+    hasActiveFilters,
   } = useListFilterUrl<ApplicantPendingFilters, RecruitApplicantListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -323,7 +325,7 @@ export function RecruitApplicantsPage() {
 
   const requireSelection = useCallback(() => {
     if (selectedRowKeys.length > 0) return true
-    showAlert({ title: '항목 선택', content: '선택된 항목이 없습니다.' })
+    showAlert(NO_SELECTION_ALERT)
     return false
   }, [selectedRowKeys.length, showAlert])
 
@@ -525,6 +527,7 @@ export function RecruitApplicantsPage() {
   return (
     <div className="recruit-applicants-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area admin-filter-area--split recruit-applicants-page__filter">
             <div className="admin-filter-area__head">

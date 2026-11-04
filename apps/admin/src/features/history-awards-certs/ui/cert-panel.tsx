@@ -55,6 +55,7 @@ import {
   ConfirmModal,
   useCmsAlert,
   FilterTableLayout,
+  NO_SELECTION_ALERT,
   showDeleteCompletedAlert,
 } from '@/shared/ui'
 
@@ -158,6 +159,7 @@ export function CertPanel() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<CertPendingFilters, CertListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -299,7 +301,7 @@ export function CertPanel() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({ title: '선택 항목 없음', content: '삭제할 인증을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -393,6 +395,7 @@ export function CertPanel() {
   return (
     <div className="hac-panel">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">

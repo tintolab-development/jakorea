@@ -58,6 +58,10 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -172,6 +176,7 @@ export function StripBannersPage() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<StripBannerPendingFilters, StripBannerListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -297,8 +302,10 @@ export function StripBannersPage() {
       try {
         if (formVariant === 'detail' && editingBanner) {
           await updateMutation.mutateAsync({ id: editingBanner.id, patch: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditingBanner(null)
@@ -324,6 +331,7 @@ export function StripBannersPage() {
       setFormOpen(false)
       setEditingBanner(null)
       setSelectedRowKeys(prev => prev.filter(key => String(key) !== editingBanner.id))
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         stripBannerMutationFailureAlert(
@@ -337,10 +345,7 @@ export function StripBannersPage() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({
-        title: '선택 항목 없음',
-        content: '삭제할 배너를 선택해 주세요.',
-      })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -352,6 +357,7 @@ export function StripBannersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       showAlert(
         stripBannerMutationFailureAlert(
@@ -447,6 +453,7 @@ export function StripBannersPage() {
   return (
     <div className="strip-banners-page">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area strip-banners-page__filter">
             <div className="admin-filter-area__field admin-filter-area__field--control">

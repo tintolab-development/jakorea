@@ -55,6 +55,7 @@ import {
   ConfirmModal,
   useCmsAlert,
   FilterTableLayout,
+  NO_SELECTION_ALERT,
   showDeleteCompletedAlert,
 } from '@/shared/ui'
 
@@ -169,6 +170,7 @@ export function HistoryPanel() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
+    hasActiveFilters,
   } = useListFilterUrl<HistoryPendingFilters, HistoryListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -303,7 +305,7 @@ export function HistoryPanel() {
 
   const handleDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
-      showAlert({ title: '선택 항목 없음', content: '삭제할 연혁을 선택해 주세요.' })
+      showAlert(NO_SELECTION_ALERT)
       return
     }
     setDeleteConfirmOpen(true)
@@ -391,6 +393,7 @@ export function HistoryPanel() {
   return (
     <div className="hac-panel">
       <FilterTableLayout
+        hasActiveFilters={hasActiveFilters}
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
