@@ -2,6 +2,7 @@ import { createAgreementNoticeDraft } from '../writing-form/draft-schema.js'
 import { createAgreementPortraitDraft } from '../writing-form/draft-schema.js'
 import { createEducatorFacilitatorPledgeDraft } from '../writing-form/draft-schema.js'
 import { createPaymentStatementPreConsentDraft } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
+import { createReceiptPreConsentDraft } from '../paragraph-ids/receipt-pre-consent-draft.js'
 import type { WritingFormDraft } from '../writing-form/draft-schema.js'
 
 export type MemberConsentFieldKey =
@@ -10,6 +11,7 @@ export type MemberConsentFieldKey =
   | 'consentFacilitatorPledge'
   | 'consentAdministrativeJoint'
   | 'consentSexOffenseCheck'
+  | 'consentReceiptPreConsent'
 
 export type MemberConsentTemplateEntry = {
   fieldKey: MemberConsentFieldKey
@@ -44,6 +46,11 @@ export const MEMBER_CONSENT_TEMPLATE_MAP: Record<MemberConsentFieldKey, MemberCo
       templateId: 'agreement-crime',
       modalTitle: '성범죄 경력조회 동의서',
     },
+    consentReceiptPreConsent: {
+      fieldKey: 'consentReceiptPreConsent',
+      templateId: 'agreement-receipt-pre-consent',
+      modalTitle: '영수증 발급 사전 동의서',
+    },
   }
 
 /** Platform 강사 신청 — InstructorConsentDocumentKey */
@@ -66,6 +73,19 @@ export function resolveInstructorApplyConsentTemplate(
   return MEMBER_CONSENT_TEMPLATE_MAP[INSTRUCTOR_TO_MEMBER[key]]
 }
 
+export const RECEIPT_PRE_CONSENT_WRITE_KEY = 'consentReceiptPreConsent' as const
+
+export type DocumentConsentWriteKey = InstructorApplyConsentKey | typeof RECEIPT_PRE_CONSENT_WRITE_KEY
+
+export function resolveDocumentConsentTemplate(
+  key: DocumentConsentWriteKey
+): MemberConsentTemplateEntry {
+  if (key === RECEIPT_PRE_CONSENT_WRITE_KEY) {
+    return MEMBER_CONSENT_TEMPLATE_MAP.consentReceiptPreConsent
+  }
+  return resolveInstructorApplyConsentTemplate(key)
+}
+
 export function isCrimeConsentTemplate(templateId: string): boolean {
   return templateId === 'agreement-crime'
 }
@@ -73,6 +93,7 @@ export function isCrimeConsentTemplate(templateId: string): boolean {
 const SEED_FACTORIES: Record<string, () => WritingFormDraft> = {
   'agreement-portrait': createAgreementPortraitDraft,
   'agreement-third-party': createPaymentStatementPreConsentDraft,
+  'agreement-receipt-pre-consent': createReceiptPreConsentDraft,
   'agreement-expense': createEducatorFacilitatorPledgeDraft,
   'agreement-notice': createAgreementNoticeDraft,
 }

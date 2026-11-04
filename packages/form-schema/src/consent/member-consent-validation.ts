@@ -12,6 +12,10 @@ import {
 } from '../writing-form/id-type-resident-input.js'
 import type { PaymentStatementBasicInfoValues } from './payment-statement-basic-info.js'
 import {
+  isReceiptPreConsentBasicInfoIncomplete,
+  type ReceiptPreConsentBasicInfoValues,
+} from './receipt-pre-consent-basic-info.js'
+import {
   isIdTypeResidentNumberFormatInvalid,
   isPaymentStatementResidentNumberFormatInvalid,
 } from './payment-statement-resident-number.js'
@@ -171,9 +175,12 @@ const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
   'document-payment-order-pre-consent',
 ])
 
+const RECEIPT_PRE_CONSENT_TEMPLATE_IDS = new Set(['agreement-receipt-pre-consent'])
+
 export type MemberConsentDraftValidationOptions = {
   templateId?: string
   paymentStatementBasicInfo?: Partial<PaymentStatementBasicInfoValues>
+  receiptPreConsentBasicInfo?: Partial<ReceiptPreConsentBasicInfoValues>
 }
 
 function resolveParagraphConsentLabel(paragraph: WritingFormParagraph): string {
@@ -275,6 +282,17 @@ export function listMemberConsentIncompleteRequiredFields(
         paragraphId: 'paymentRecord',
         fieldId: 'paymentRecord',
         label: '지급조서 기본 정보',
+      })
+    }
+  }
+
+  if (templateId != null && RECEIPT_PRE_CONSENT_TEMPLATE_IDS.has(templateId)) {
+    const receiptValues = options?.receiptPreConsentBasicInfo ?? options?.paymentStatementBasicInfo
+    if (isReceiptPreConsentBasicInfoIncomplete(receiptValues)) {
+      fields.push({
+        paragraphId: 'paymentRecord',
+        fieldId: 'paymentRecord',
+        label: '지급 확인 정보',
       })
     }
   }

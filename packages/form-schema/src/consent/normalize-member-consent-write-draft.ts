@@ -9,6 +9,7 @@ import {
   type WritingFormParagraph,
 } from '../writing-form/draft-schema.js'
 import { overlayPaymentStatementPreConsentSeedHorizontalTables } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
+import { overlayReceiptPreConsentSeedHorizontalTables } from '../paragraph-ids/receipt-pre-consent-draft.js'
 
 function clearNoticeInteractiveParagraph(paragraph: WritingFormParagraph): WritingFormParagraph {
   if (paragraph.id !== AGREEMENT_NOTICE_PARAGRAPH_IDS.subject) return paragraph
@@ -90,6 +91,14 @@ export function normalizeMemberConsentWriteDraft(
   ) {
     // 가로형 표(p1~p4)를 최신 시드로 덮으면 bottomConsent:'agree'가 다시 들어옴 → 응답 필드 재비움
     next = overlayPaymentStatementPreConsentSeedHorizontalTables(next)
+    next = {
+      ...next,
+      paragraphs: next.paragraphs.map(clearWritingFormParagraphBottomConsent),
+    }
+  }
+
+  if (templateId === 'agreement-receipt-pre-consent') {
+    next = overlayReceiptPreConsentSeedHorizontalTables(next)
     next = {
       ...next,
       paragraphs: next.paragraphs.map(clearWritingFormParagraphBottomConsent),
