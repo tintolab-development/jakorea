@@ -69,9 +69,13 @@
 }
 
 .participating-individual-participant-assignment-section__table-outer
-  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):hover,
+  .status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):hover,
 .participating-individual-participant-assignment-section__table-outer
-  .status-dropdown-cell__status-trigger--tag-100:not(.status-dropdown-cell__status-trigger--open):focus-visible {
+  .status-dropdown-cell__status-trigger--tag-100:not(
+    .status-dropdown-cell__status-trigger--open
+  ):focus-visible {
   border-color: transparent !important;
   box-shadow: none !important;
   background: transparent !important;
@@ -124,7 +128,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 500;
   line-height: 150%;
