@@ -77,6 +77,31 @@ describe('detail-operational-save-merge', () => {
     expect(merged[GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]).toEqual(['adult'])
   })
 
+  it('GENERAL 기관 모집 저장은 라이브 강사 overlay store를 정본으로 읽지 않는다', () => {
+    replaceGeneralRecruitOverlayForScope('recruitment-instructor', {
+      [GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]: ['stale-from-store'],
+    })
+    const program = {
+      ...baseProgram(),
+      registrationOverlay: {
+        ...baseProgram().registrationOverlay,
+        [GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]: ['elementary'],
+        'recruit.notes': '기관-비고-유지',
+      },
+    }
+    const values = programToRecruitmentTabEditValues(program, 'participant')
+    const merged = buildMergedRegistrationOverlayForRecruitSave({
+      program,
+      remotePatch: {},
+      values: { ...values, remarks: '기관-비고-PATCH' },
+      audience: 'participant',
+    })
+    expect(merged[GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]).toEqual(['elementary'])
+    expect(merged[GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]).not.toEqual([
+      'stale-from-store',
+    ])
+  })
+
   it('원격 SSOT 모드에서는 브라우저 overlay store를 저장 source로 사용하지 않는다', () => {
     replaceGeneralRecruitOverlayForScope('recruitment-instructor', {
       [GENERAL_RECRUIT_OVERLAY_KEYS.instructor.recruitTargets]: ['stale-local'],
