@@ -47,8 +47,12 @@ import {
   minActiveRequiredAlert,
   wouldRemoveLastActive,
 } from '@/shared/lib/min-active-guard'
-
 import './page.css'
+
+/** Figma 15:4976 — 배너 이미지 열 240 / 관리 열 140 */
+const HERO_BANNER_IMAGE_COL_WIDTH = 240
+const HERO_BANNER_ACTION_COL_WIDTH = 140
+
 export function HeroBannersPage() {
   const { showAlert } = useCmsAlert()
   const listQuery = useHeroBannersList()
@@ -218,8 +222,9 @@ export function HeroBannersPage() {
       {
         title: '배너 이미지',
         key: 'image',
-        width: 232,
+        width: HERO_BANNER_IMAGE_COL_WIDTH,
         align: 'center',
+        className: 'hero-banner-table__col--image',
         render: (_value, record) => (
           <div className="hero-banners-page__thumb-wrap">
             <Image
@@ -235,17 +240,19 @@ export function HeroBannersPage() {
         title: '배너 텍스트 및 링크',
         key: 'textLink',
         align: 'left',
+        className: 'hero-banner-table__col--text-link',
         render: (_value, record) => <HeroBannerTextLinkCell banner={record} />,
       },
       {
         title: '관리',
         key: 'actions',
-        width: 120,
+        width: HERO_BANNER_ACTION_COL_WIDTH,
         align: 'center',
+        className: 'hero-banner-table__col--actions',
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="small"
             type="button"
             onClick={e => {
               e.stopPropagation()

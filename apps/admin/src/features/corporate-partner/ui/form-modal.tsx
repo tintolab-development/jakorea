@@ -361,8 +361,8 @@ function CorporatePartnerFormBody({
             view={null}
             edit={
               <div>
-                <div className="corporate-partner-form-modal__image-row">
-                  <div className="corporate-partner-form-modal__preview">
+                <div className="file-select-image-cell">
+                  <div className="file-select-image-cell__preview">
                     {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
                   </div>
                   <FileSelectField

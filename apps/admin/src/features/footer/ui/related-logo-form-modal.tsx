@@ -272,8 +272,8 @@ export function RelatedLogoFormModal({
             label="로고 이미지"
             view={null}
             edit={
-              <div className="footer-related-logo-form-modal__image-row">
-                <div className="footer-related-logo-form-modal__preview">
+              <div className="file-select-image-cell">
+                <div className="file-select-image-cell__preview">
                   {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
                 </div>
                 <FileSelectField

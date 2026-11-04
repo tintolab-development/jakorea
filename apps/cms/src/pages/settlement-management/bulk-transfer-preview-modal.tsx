@@ -12,6 +12,7 @@ import type { AccountPaymentRow } from '@/features/settlement-management/model/a
 import type { SettlementExportHistoryResponse } from '@/shared/api/generated/settlement/schemas'
 import {
   downloadIssuedSettlementExportFile,
+  downloadIssuedSettlementExportFileOrReissue,
   notifySettlementExportDownloadError,
 } from '@/features/settlement-management/api/account-payments/download-issued-export-file'
 import { shouldUseSettlementRemote } from '@/features/settlement-management/hooks/use-settlement-remote-enabled'
@@ -30,6 +31,7 @@ export interface BulkTransferPreviewModalProps {
   onCancel: () => void
   rows: AccountPaymentRow[]
   serverExport?: SettlementExportHistoryResponse | null
+  onReissueExport?: () => Promise<SettlementExportHistoryResponse | null>
 }
 
 export function BulkTransferPreviewModal({
@@ -37,6 +39,7 @@ export function BulkTransferPreviewModal({
   onCancel,
   rows,
   serverExport,
+  onReissueExport,
 }: BulkTransferPreviewModalProps) {
   const usesServerFile = serverExport?.deliveryMethod === 'SERVER_FILE'
   const serverFileReady =
@@ -59,11 +62,18 @@ export function BulkTransferPreviewModal({
           })
           return
         }
-        await downloadIssuedSettlementExportFile({
-          serverExport,
-          filenamePrefix: '대량이체',
-          reason: '대량이체 양식 발급',
-        })
+        if (onReissueExport) {
+          await downloadIssuedSettlementExportFileOrReissue({
+            serverExport,
+            kind: 'bulk-transfer',
+            onReissue: onReissueExport,
+          })
+        } else {
+          await downloadIssuedSettlementExportFile({
+            serverExport,
+            kind: 'bulk-transfer',
+          })
+        }
         return
       }
       if (shouldUseSettlementRemote('accountPayments')) {
@@ -85,7 +95,7 @@ export function BulkTransferPreviewModal({
         onAlreadyDownloaded: onCancel,
       })
     }
-  }, [onCancel, rows, serverExport])
+  }, [onCancel, onReissueExport, rows, serverExport])
 
   return (
     <ContentModal

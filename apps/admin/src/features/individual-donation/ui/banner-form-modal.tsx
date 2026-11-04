@@ -215,8 +215,8 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
             view={null}
             edit={
               <div>
-                <div className="individual-donation-banner-modal__image-row">
-                  <div className="individual-donation-banner-modal__preview">
+                <div className="file-select-image-cell">
+                  <div className="file-select-image-cell__preview">
                     {imageUrl ? (
                       <img src={imageUrl} alt="배너 미리보기" />
                     ) : (

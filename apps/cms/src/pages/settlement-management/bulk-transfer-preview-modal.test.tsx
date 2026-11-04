@@ -20,6 +20,7 @@ const downloadIssuedSettlementExportFile = vi.fn().mockResolvedValue(undefined)
 vi.mock('@/features/settlement-management/api/account-payments/download-issued-export-file', () => ({
   downloadIssuedSettlementExportFile: (...args: unknown[]) =>
     downloadIssuedSettlementExportFile(...args),
+  downloadIssuedSettlementExportFileOrReissue: vi.fn(),
   notifySettlementExportDownloadError: vi.fn(),
 }))
 
@@ -48,8 +49,7 @@ describe('BulkTransferPreviewModal SERVER_FILE 다운로드', () => {
 
     expect(downloadIssuedSettlementExportFile).toHaveBeenCalledWith({
       serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
-      filenamePrefix: '대량이체',
-      reason: '대량이체 양식 발급',
+      kind: 'bulk-transfer',
     })
   })
 })

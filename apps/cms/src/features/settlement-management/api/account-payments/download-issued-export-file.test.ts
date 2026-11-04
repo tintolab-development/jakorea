@@ -22,11 +22,7 @@ vi.mock('@/shared/ui/cms-alert-modal-api', () => ({
 
 import { customInstance } from '@/shared/api/orval-mutator'
 import { cmsAlertModal } from '@/shared/ui/cms-alert-modal-api'
-import {
-  downloadBlob,
-  generateFilename,
-  recordDownloadAccessLog,
-} from '@/shared/utils/file-download'
+import { downloadBlob, recordDownloadAccessLog } from '@/shared/utils/file-download'
 import {
   FILE_DOWNLOAD_TOKEN_INVALID_MESSAGE,
   FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED,
@@ -36,8 +32,10 @@ import {
   getSettlementApiErrorCode,
   getSettlementApiErrorMessage,
 } from '@/features/settlement-management/api/get-settlement-api-error'
+import { buildSettlementFormExcelFilename } from './settlement-form-download'
 import {
   downloadIssuedSettlementExportFile,
+  downloadIssuedSettlementExportFileOrReissue,
   notifySettlementExportDownloadError,
 } from './download-issued-export-file'
 
@@ -92,11 +90,10 @@ describe('downloadIssuedSettlementExportFile', () => {
         fileObjectId: 91,
         downloadUrl: '/api/admin/files/91/download',
       },
-      filenamePrefix: '대량이체',
-      reason: '대량이체 양식 다운로드',
+      kind: 'bulk-transfer',
     })
 
-    const filename = generateFilename('대량이체', 'xlsx')
+    const filename = buildSettlementFormExcelFilename('bulk-transfer')
     expect(mockedRecordAccessLog).toHaveBeenCalledWith(filename)
     expect(mockedRecordAccessLog.mock.invocationCallOrder[0] ?? 0).toBeLessThan(
       mockedInstance.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
@@ -106,14 +103,14 @@ describe('downloadIssuedSettlementExportFile', () => {
       expect.objectContaining({
         url: '/api/admin/files/91/sensitive-downloads',
         method: 'POST',
-        data: { reason: '대량이체 양식 다운로드' },
+        data: { reason: '대량이체 양식 발급' },
       })
     )
     expect(mockedInstance.mock.calls[1]?.[0]).toEqual(
       expect.objectContaining({
         url: '/api/admin/files/91/sensitive-downloads/stream',
         method: 'POST',
-        data: { reason: '대량이체 양식 다운로드', relayToken: 'relay-token-1' },
+        data: { reason: '대량이체 양식 발급', relayToken: 'relay-token-1' },
         responseType: 'blob',
       })
     )
@@ -127,8 +124,7 @@ describe('downloadIssuedSettlementExportFile', () => {
     await expect(
       downloadIssuedSettlementExportFile({
         serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
-        filenamePrefix: '대량이체',
-        reason: '대량이체 양식 다운로드',
+        kind: 'bulk-transfer',
       })
     ).rejects.toThrow('log failed')
 
@@ -148,8 +144,7 @@ describe('downloadIssuedSettlementExportFile', () => {
     await expect(
       downloadIssuedSettlementExportFile({
         serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
-        filenamePrefix: '대량이체',
-        reason: '대량이체 양식 다운로드',
+        kind: 'bulk-transfer',
       })
     ).rejects.toSatisfy(error => {
       expect(getSettlementApiErrorCode(error)).toBe(SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED)
@@ -170,8 +165,7 @@ describe('downloadIssuedSettlementExportFile', () => {
     await expect(
       downloadIssuedSettlementExportFile({
         serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
-        filenamePrefix: '대량이체',
-        reason: '대량이체 양식 다운로드',
+        kind: 'bulk-transfer',
       })
     ).rejects.toSatisfy(error => {
       expect(getSettlementApiErrorCode(error)).toBe(FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED)
@@ -188,8 +182,7 @@ describe('downloadIssuedSettlementExportFile', () => {
     await expect(
       downloadIssuedSettlementExportFile({
         serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
-        filenamePrefix: '대량이체',
-        reason: '대량이체 양식 다운로드',
+        kind: 'bulk-transfer',
       })
     ).rejects.toEqual(alreadyDownloaded)
 
@@ -207,6 +200,71 @@ describe('downloadIssuedSettlementExportFile', () => {
     })
     expect(mockedDownloadBlob).not.toHaveBeenCalled()
     expect(mockedInstance).toHaveBeenCalledTimes(1)
+  })
+
+  it('세금신고는 reason을 세금신고 양식 발급으로 보낸다', async () => {
+    const fileBlob = new Blob(['xlsx'], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    mockedInstance
+      .mockResolvedValueOnce({
+        relayToken: 'relay-token-2',
+        streamUrl: '/api/admin/files/92/sensitive-downloads/stream',
+      })
+      .mockResolvedValueOnce(fileBlob)
+
+    await downloadIssuedSettlementExportFile({
+      serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 92 },
+      kind: 'tax-report',
+    })
+
+    expect(mockedInstance.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        data: { reason: '세금신고 양식 발급' },
+      })
+    )
+    expect(mockedDownloadBlob).toHaveBeenCalledWith(
+      fileBlob,
+      buildSettlementFormExcelFilename('tax-report'),
+      { skipAccessLog: true }
+    )
+  })
+
+  it('409 ALREADY_DOWNLOADED면 재발급 후 새 fileObjectId로 받는다', async () => {
+    const fileBlob = new Blob(['xlsx'], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
+    mockedInstance
+      .mockRejectedValueOnce(axiosError(409, SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED))
+      .mockResolvedValueOnce({
+        relayToken: 'relay-token-3',
+        streamUrl: '/api/admin/files/99/sensitive-downloads/stream',
+      })
+      .mockResolvedValueOnce(fileBlob)
+    const onReissue = vi.fn().mockResolvedValue({
+      deliveryMethod: 'SERVER_FILE',
+      fileObjectId: 99,
+    })
+
+    await downloadIssuedSettlementExportFileOrReissue({
+      serverExport: { deliveryMethod: 'SERVER_FILE', fileObjectId: 91 },
+      kind: 'bulk-transfer',
+      onReissue,
+    })
+
+    expect(onReissue).toHaveBeenCalledTimes(1)
+    expect(mockedInstance.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({
+        url: '/api/admin/files/91/sensitive-downloads',
+      })
+    )
+    expect(mockedInstance.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        url: '/api/admin/files/99/sensitive-downloads',
+        data: { reason: '대량이체 양식 발급' },
+      })
+    )
+    expect(mockedDownloadBlob).toHaveBeenCalledTimes(1)
   })
 })
 

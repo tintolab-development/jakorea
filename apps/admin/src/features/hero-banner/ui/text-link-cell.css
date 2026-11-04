@@ -1,5 +1,6 @@
 /**
- * 목록 셀 내 DetailInfoForm — 값(td) 텍스트 스펙
+ * 목록 셀 내 DetailInfoForm — Figma 20:9032 Vertical Cell Small
+ * 라벨 160 · 행 44 · 값 14/500/150% · 바깥 셀 padding 8×12
  */
 
 .hero-banner-text-link-cell {
@@ -7,67 +8,65 @@
   min-width: 0;
 }
 
+.hero-banner-text-link-cell .detail-info-form__field {
+  min-height: 44px;
+  --detail-info-label-w: 160px;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.hero-banner-text-link-cell .detail-info-form__field-label {
+  padding: 4px 12px;
+}
+
 .hero-banner-text-link-cell .detail-info-form__field-content,
 .hero-banner-text-link-cell .detail-info-form__field-content--view {
   display: flex;
   align-items: center;
-  overflow: visible;
-  color: var(--main-BK, #3d3d3d);
-  text-align: left;
-  text-overflow: clip;
-  font-family: Pretendard, var(--font-family-primary, sans-serif);
-  font-size: 15px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 150%; /* 22.5px */
+  min-height: 44px;
   min-width: 0;
-  height: auto;
+  padding: 10px 12px;
+  overflow: hidden;
 }
 
 .hero-banner-text-link-cell .detail-info-form__field-content > *,
 .hero-banner-text-link-cell .detail-info-form__field-content--view > span {
-  display: block;
-  overflow: visible;
-  color: inherit;
-  text-align: left;
-  font: inherit;
-  line-height: inherit;
-  white-space: pre-line;
   min-width: 0;
   max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.hero-banner-text-link-cell__multiline {
+.hero-banner-text-link-cell__value,
+.hero-banner-text-link-cell__link {
   display: block;
-  white-space: pre-line;
-  overflow: visible;
-  text-align: left;
-  word-break: keep-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hero-banner-text-link-cell__link {
-  display: block;
   text-decoration: underline;
 }
 
 .hero-banner-text-link-cell .detail-info-form__field-content > .hero-banner-text-link-cell__empty {
   display: block;
-  color: var(--Content-disabled, rgba(61, 61, 61, 0.50));
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
 }
 
 .cms-data-table.hero-banner-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td:has(.hero-banner-text-link-cell),
+  > td.hero-banner-table__col--text-link,
 .cms-data-table.hero-banner-table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):hover
-  > td:has(.hero-banner-text-link-cell) {
+  > td.hero-banner-table__col--text-link {
   text-align: left;
   white-space: normal;
   height: auto !important;
   max-height: none;
-  min-height: 52px !important;
-  padding: 12px 16px !important;
+  min-height: 192px !important;
+  padding: 8px 12px !important;
   vertical-align: middle;
 }

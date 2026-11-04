@@ -5,6 +5,7 @@
 import ExcelJS from '@zurmokeeper/exceljs'
 import dayjs from 'dayjs'
 import { downloadExcel } from '@/shared/utils/file-download'
+import { buildSettlementFormExcelFilename } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 import {
   BULK_TRANSFER_HEADER_LABELS,
   buildBulkTransferSheetRows,
@@ -15,7 +16,8 @@ import type { AccountPaymentRow } from '@/features/settlement-management/model/a
 export const BULK_TRANSFER_EXCEL_PREFIX = '[JA Korea] CMS 어드민_대량이체 양식'
 
 export function buildBulkTransferExcelFilename(now: dayjs.Dayjs | Date = dayjs()): string {
-  return `${BULK_TRANSFER_EXCEL_PREFIX}_${dayjs(now).format('YYMMDD')}.xlsx`
+  const date = dayjs.isDayjs(now) ? now.toDate() : now
+  return buildSettlementFormExcelFilename('bulk-transfer', date)
 }
 
 const HEADER_FILL = 'FF01A1AF'
