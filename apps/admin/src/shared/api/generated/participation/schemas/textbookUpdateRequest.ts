@@ -42,7 +42,7 @@ export interface TextbookUpdateRequest {
   sessionDescription: string;
   /**
      * @minLength 0
-     * @maxLength 100000
+     * @maxLength 2000000
      */
   unitIntroHtml?: string;
   version: number;

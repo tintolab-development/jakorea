@@ -11,7 +11,7 @@ import type { CorporateConsultation } from '@/entities/corporate-consultation/mo
 import { shouldUseCorporateConsultationRemoteApi } from '@/features/corporate-consultation/api/capabilities'
 import { downloadCorporateConsultationAttachmentService } from '@/features/corporate-consultation/api/service'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
-import { CmsButton, ConfirmModal, ContentModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, ConfirmModal, ContentModal, HomepagePiiRevealAction, useCmsAlert } from '@/shared/ui'
 
 import './detail-modal.css'
 
@@ -22,9 +22,13 @@ type Props = {
   data: CorporateConsultation | null
   confirmLoading?: boolean
   deleteLoading?: boolean
+  canRevealPii?: boolean
+  piiRevealed?: boolean
+  revealLoading?: boolean
   onCancel: () => void
   onConfirm: () => void
   onDelete: () => void
+  onRevealPii?: () => void
 }
 
 function statusLabel(status: CorporateConsultation['status']): string {
@@ -58,9 +62,13 @@ export function CorporateConsultationDetailModal({
   data,
   confirmLoading = false,
   deleteLoading = false,
+  canRevealPii = false,
+  piiRevealed = false,
+  revealLoading = false,
   onCancel,
   onConfirm,
   onDelete,
+  onRevealPii,
 }: Props) {
   const { showAlert } = useCmsAlert()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -70,7 +78,7 @@ export function CorporateConsultationDetailModal({
   }, [open])
 
   const isConfirmed = data?.status === 'confirmed'
-  const busy = confirmLoading || deleteLoading
+  const busy = confirmLoading || deleteLoading || revealLoading
 
   const confirmedView = (() => {
     if (!data?.confirmedAt) {
@@ -159,6 +167,13 @@ export function CorporateConsultationDetailModal({
         신청 삭제
       </CmsButton>
       <div className="corp-consult-detail-modal__footer-end">
+        <HomepagePiiRevealAction
+          canReveal={canRevealPii && Boolean(onRevealPii)}
+          revealed={piiRevealed}
+          loading={revealLoading}
+          disabled={busy && !revealLoading}
+          onReveal={() => onRevealPii?.()}
+        />
         <CmsButton
           variant="secondary"
           size="large"

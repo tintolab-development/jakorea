@@ -104,6 +104,8 @@ export * from './corporateStepResponse';
 export * from './dailyMetric';
 export * from './dailyMetricGroup';
 export * from './dailyStatistics';
+export * from './detail7Params';
+export * from './detail8Params';
 export * from './directionsResponse';
 export * from './directionsUpdateRequest';
 export * from './disclosureResponse';

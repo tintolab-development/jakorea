@@ -56,11 +56,15 @@ export function useCorporateConsultationsList(
   })
 }
 
-export function useCorporateConsultationDetail(id: string | null, enabled = true) {
+export function useCorporateConsultationDetail(
+  id: string | null,
+  enabled = true,
+  revealPii = false,
+) {
   const dataSource = source()
   return useQuery({
-    queryKey: corporateConsultationQueryKeys.detail(dataSource, id ?? ''),
-    queryFn: () => getCorporateConsultationService(id!, DEFAULT_CONFIRM_ACTOR),
+    queryKey: corporateConsultationQueryKeys.detail(dataSource, id ?? '', revealPii),
+    queryFn: () => getCorporateConsultationService(id!, DEFAULT_CONFIRM_ACTOR, { revealPii }),
     enabled: Boolean(id) && enabled,
     staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
     retry: dataSource === 'remote' ? 1 : false,
@@ -98,16 +102,18 @@ export function useConfirmCorporateConsultations(_filter: CorporateConsultationL
     retry: false,
     onSuccess: updatedRows => {
       for (const row of updatedRows) {
-        const detailKey = corporateConsultationQueryKeys.detail(source(), row.id)
-        const existing = queryClient.getQueryData<CorporateConsultation>(detailKey)
-        if (existing) {
-          queryClient.setQueryData(detailKey, {
-            ...existing,
-            status: row.status,
-            confirmedAt: row.confirmedAt,
-            confirmedByName: row.confirmedByName ?? existing.confirmedByName,
-          })
-        }
+        queryClient.setQueriesData<CorporateConsultation>(
+          { queryKey: corporateConsultationQueryKeys.detail(source(), row.id) },
+          existing =>
+            existing
+              ? {
+                  ...existing,
+                  status: row.status,
+                  confirmedAt: row.confirmedAt,
+                  confirmedByName: row.confirmedByName ?? existing.confirmedByName,
+                }
+              : existing,
+        )
         patchInfiniteListRow(queryClient, corporateConsultationQueryKeys.lists(), row)
       }
       if (updatedRows.length === 0) {

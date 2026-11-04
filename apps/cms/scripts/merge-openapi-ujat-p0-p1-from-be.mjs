@@ -59,6 +59,10 @@ const ALLOCATION_SSOT_SCHEMAS = [
   'AllocationCell',
   'VolunteerRow',
   'MemberPortalEducationScheduleItem',
+  'MemberPortalEducationScheduleGroupTime',
+  'MemberPortalEducationScheduleAssignment',
+  'MemberPortalEducationScheduleAssignmentSubmission',
+  'MemberPortalAssignmentSubmissionRequest',
 ]
 
 const be = JSON.parse(readFileSync(bePath, 'utf8'))

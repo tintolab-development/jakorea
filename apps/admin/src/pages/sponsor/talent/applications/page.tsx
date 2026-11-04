@@ -20,7 +20,9 @@ import {
 } from '@/features/talent-donation-application/api/hooks'
 import { talentDonationApplicationQueryKeys } from '@/features/talent-donation-application/api/query-keys'
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status'
+import { useHomepagePiiView } from '@/features/auth/hooks/use-homepage-pii-view'
 import { getTalentDonationApplicationService } from '@/features/talent-donation-application/api/service'
+import { HOMEPAGE_PII_REVEAL_COPY } from '@/shared/lib/homepage-pii'
 import {
   DEFAULT_CONFIRM_ACTOR,
   TALENT_DONATION_APPLICATIONS_CHANGED_EVENT,
@@ -281,8 +283,11 @@ export function TalentDonationApplicationsPage() {
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [detailRow, setDetailRow] = useState<TalentDonationApplication | null>(null)
+  const [piiRevealed, setPiiRevealed] = useState(false)
+  const [revealLoading, setRevealLoading] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
+  const canRevealPii = useHomepagePiiView()
   const { detailId, openDetail, closeDetail } = useUrlDetailId(
     searchParams,
     patchSearchParams,
@@ -307,16 +312,18 @@ export function TalentDonationApplicationsPage() {
   useEffect(() => {
     if (!detailId) {
       setDetailRow(null)
+      setPiiRevealed(false)
       return
     }
 
+    setPiiRevealed(false)
     setDetailRow(prev => {
       if (prev?.id === detailId) return prev
       return rows.find(item => item.id === detailId) ?? prev
     })
 
     let cancelled = false
-    void getTalentDonationApplicationService(detailId, DEFAULT_CONFIRM_ACTOR)
+    void getTalentDonationApplicationService(detailId, DEFAULT_CONFIRM_ACTOR, { revealPii: false })
       .then(item => {
         if (cancelled || !item) return
         setDetailRow(item)
@@ -348,12 +355,44 @@ export function TalentDonationApplicationsPage() {
   const refreshDetailFromList = useCallback(
     async (id: string) => {
       void listQuery.refetch()
-      const detail = await getTalentDonationApplicationService(id, DEFAULT_CONFIRM_ACTOR)
+      const detail = await getTalentDonationApplicationService(id, DEFAULT_CONFIRM_ACTOR, {
+        revealPii: piiRevealed,
+      })
       setDetailRow(detail)
       if (!detail) closeDetail()
     },
-    [closeDetail, listQuery]
+    [closeDetail, listQuery, piiRevealed]
   )
+
+  const handleRevealPii = useCallback(async () => {
+    if (!detailId || piiRevealed) return
+    setRevealLoading(true)
+    try {
+      const detail = await getTalentDonationApplicationService(detailId, DEFAULT_CONFIRM_ACTOR, {
+        revealPii: true,
+      })
+      if (!detail) {
+        showAlert({
+          title: '조회 실패',
+          content: '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
+        })
+        return
+      }
+      setDetailRow(detail)
+      setPiiRevealed(true)
+    } catch (error) {
+      showAlert({
+        title: isAdminForbidden(error)
+          ? HOMEPAGE_PII_REVEAL_COPY.forbiddenTitle
+          : '조회 실패',
+        content: isAdminForbidden(error)
+          ? HOMEPAGE_PII_REVEAL_COPY.forbiddenContent
+          : '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
+      })
+    } finally {
+      setRevealLoading(false)
+    }
+  }, [detailId, piiRevealed, showAlert])
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
@@ -743,6 +782,12 @@ export function TalentDonationApplicationsPage() {
         data={detailRow}
         confirmLoading={confirmMutation.isPending && detailOpen}
         deleteLoading={removeMutation.isPending && detailOpen}
+        canRevealPii={canRevealPii}
+        piiRevealed={piiRevealed}
+        revealLoading={revealLoading}
+        onRevealPii={() => {
+          void handleRevealPii()
+        }}
         onCancel={closeDetail}
         onConfirm={() => {
           void handleDetailConfirm()

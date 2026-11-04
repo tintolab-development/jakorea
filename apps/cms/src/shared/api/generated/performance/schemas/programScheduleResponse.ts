@@ -28,6 +28,6 @@ export interface ProgramScheduleResponse {
   scheduleOrigin?: string;
   ujatEducationStage?: string;
   ujatPlanRowId?: string;
-  startDate?: string;
   endDate?: string;
+  startDate?: string;
 }

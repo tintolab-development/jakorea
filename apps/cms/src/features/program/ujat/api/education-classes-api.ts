@@ -5,52 +5,36 @@
  */
 
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
-import customInstance from '@/shared/api/orval-mutator'
+import { getJAKoreaCMSBackendAPIDashboardSubset } from '@/shared/api/generated/dashboard/dashboard-api'
 import type { EducationClassAddRequest } from '@/shared/api/generated/dashboard/schemas/educationClassAddRequest'
 import type { EducationClassListResponse } from '@/shared/api/generated/dashboard/schemas/educationClassListResponse'
-import type { EducationClassResponse } from '@/shared/api/generated/dashboard/schemas/educationClassResponse'
+import type { EducationClassRemappingMapping } from '@/shared/api/generated/dashboard/schemas/educationClassRemappingMapping'
+import type { EducationClassRemappingRequest } from '@/shared/api/generated/dashboard/schemas/educationClassRemappingRequest'
+import type { EducationClassRemappingResponse } from '@/shared/api/generated/dashboard/schemas/educationClassRemappingResponse'
 
-function programPath(programId: string, suffix: string): string {
-  return `/api/admin/programs/${encodeURIComponent(programId)}${suffix}`
+const dashboardApi = getJAKoreaCMSBackendAPIDashboardSubset()
+
+function toNumericId(value: string, label: string): number {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Invalid ${label}: ${value}`)
+  }
+  return parsed
 }
 
-export type UjatEducationClassRemappingItemRequest = {
-  fromGrade: string
-  fromClassName: string
-  toGrade?: string | null
-  toClassName?: string | null
-  unassign?: boolean
-}
-
-export type UjatEducationClassRemappingRequest = {
-  expectedRevision: number
-  applyFromScheduleId?: number | null
-  applyFromDate?: string | null
-  mappings: UjatEducationClassRemappingItemRequest[]
-}
-
-export type UjatEducationClassRemappingResponse = {
-  programId?: number | null
-  organizationApplicationId?: number | null
-  revision?: number | null
-  applyFromScheduleId?: number | null
-  applyFromDate?: string | null
-  affectedScheduleIds?: number[] | null
-  classes?: EducationClassResponse[] | null
-}
+export type UjatEducationClassRemappingItemRequest = EducationClassRemappingMapping
+export type UjatEducationClassRemappingRequest = EducationClassRemappingRequest
+export type UjatEducationClassRemappingResponse = EducationClassRemappingResponse
 
 export async function fetchUjatEducationClasses(
   programId: string,
   applicationId: string
 ): Promise<EducationClassListResponse> {
   return unwrapApiBody(
-    await customInstance({
-      url: programPath(
-        programId,
-        `/ujat/organization-applications/${encodeURIComponent(applicationId)}/education-classes`
-      ),
-      method: 'GET',
-    })
+    await dashboardApi.listEducationClasses(
+      toNumericId(programId, 'programId'),
+      toNumericId(applicationId, 'applicationId')
+    )
   )
 }
 
@@ -60,14 +44,11 @@ export async function postUjatEducationClasses(
   body: EducationClassAddRequest
 ): Promise<EducationClassListResponse> {
   return unwrapApiBody(
-    await customInstance({
-      url: programPath(
-        programId,
-        `/ujat/organization-applications/${encodeURIComponent(applicationId)}/education-classes`
-      ),
-      method: 'POST',
-      data: body,
-    })
+    await dashboardApi.addEducationClasses(
+      toNumericId(programId, 'programId'),
+      toNumericId(applicationId, 'applicationId'),
+      body
+    )
   )
 }
 
@@ -78,13 +59,10 @@ export async function postUjatEducationClassRemappings(
   body: UjatEducationClassRemappingRequest
 ): Promise<UjatEducationClassRemappingResponse> {
   return unwrapApiBody(
-    await customInstance({
-      url: programPath(
-        programId,
-        `/ujat/organization-applications/${encodeURIComponent(applicationId)}/education-class-remappings`
-      ),
-      method: 'POST',
-      data: body,
-    })
+    await dashboardApi.remapEducationClasses(
+      toNumericId(programId, 'programId'),
+      toNumericId(applicationId, 'applicationId'),
+      body
+    )
   )
 }
