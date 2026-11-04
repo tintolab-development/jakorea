@@ -526,11 +526,7 @@ function TextbookFormBody({
         onCancel={onCancel}
         title={modalTitle}
         size="large"
-        className={
-          isCreate
-            ? 'education-textbook-form-modal education-textbook-form-modal--create'
-            : 'education-textbook-form-modal'
-        }
+        className="education-textbook-form-modal"
         footer={footer}
       >
         {/*

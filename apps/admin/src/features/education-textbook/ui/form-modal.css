@@ -58,14 +58,6 @@
   overflow: hidden;
 }
 
-.content-modal.education-textbook-form-modal--create.teal-header-modal--large .ant-modal-content,
-.education-textbook-form-modal--create.content-modal.teal-header-modal.ant-modal .ant-modal-content {
-  height: min(746px, calc(100vh - 32px));
-  height: min(746px, calc(100dvh - 32px));
-  max-height: min(746px, calc(100vh - 32px));
-  max-height: min(746px, calc(100dvh - 32px));
-}
-
 .content-modal.education-textbook-form-modal.teal-header-modal.ant-modal:has(
     .rich-text-editor[data-resized='true']
   )
