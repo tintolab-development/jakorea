@@ -141,7 +141,7 @@ export function MetricsSectionCard({ items }: Props) {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { description: e.target.value })}
-                placeholder="설명을 입력하세요"
+                placeholder="설명을 입력해 주세요"
                 aria-label={`${record.itemLabel} 설명`}
               />
             )

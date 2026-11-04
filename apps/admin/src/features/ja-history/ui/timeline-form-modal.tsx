@@ -221,7 +221,7 @@ function TimelineFormBody({
           <DraftTextArea
             initialValue={record.text}
             rows={2}
-            placeholder="설명 텍스트를 입력하세요"
+            placeholder="설명 텍스트를 입력해 주세요"
             ariaLabel={`${record.year || periodLabel} 설명 텍스트`}
             onValue={text => {
               const event = periodsRef.current.find(item => item.id === periodId)?.events[
@@ -393,7 +393,7 @@ function TimelineFormBody({
                 <DraftTextArea
                   initialValue={headingRef.current}
                   rows={2}
-                  placeholder="타이틀을 입력하세요"
+                  placeholder="타이틀을 입력해 주세요"
                   ariaLabel="타이틀"
                   onValue={value => {
                     headingRef.current = value
@@ -418,7 +418,7 @@ function TimelineFormBody({
                 <DraftTextArea
                   initialValue={bodyRef.current}
                   rows={3}
-                  placeholder="서브 텍스트를 입력하세요"
+                  placeholder="서브 텍스트를 입력해 주세요"
                   ariaLabel="서브 텍스트"
                   onValue={value => {
                     bodyRef.current = value

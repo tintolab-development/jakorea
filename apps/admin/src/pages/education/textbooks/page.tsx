@@ -571,7 +571,7 @@ export function EducationTextbooksPage() {
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.title}
-                placeholder="교재명을 입력하세요"
+                placeholder="교재명을 입력해 주세요"
                 onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
                 onPressEnter={handleSearch}
               />
@@ -631,11 +631,13 @@ export function EducationTextbooksPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -650,14 +652,16 @@ export function EducationTextbooksPage() {
               size="h40"
               type="button"
               onClick={handleBulkDeleteClick}
-              disabled={removeMutation.isPending} >
+              disabled={removeMutation.isPending}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton
               variant="secondary"
               size="h40"
               type="button"
-              onClick={() => setTargetsOpen(true)} >
+              onClick={() => setTargetsOpen(true)}
+            >
               교육 대상 관리
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

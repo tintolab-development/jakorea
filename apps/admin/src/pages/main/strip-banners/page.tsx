@@ -432,7 +432,8 @@ export function StripBannersPage() {
             onClick={e => {
               e.stopPropagation()
               openDetail(record)
-            }} >
+            }}
+          >
             수정
           </CmsButton>
         ),
@@ -472,7 +473,7 @@ export function StripBannersPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="배너 문구를 입력하세요"
+                placeholder="배너 문구를 입력해 주세요"
                 value={pendingFilters.text}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, text: value }))}
                 onPressEnter={handleSearch}
@@ -495,11 +496,13 @@ export function StripBannersPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -519,7 +522,8 @@ export function StripBannersPage() {
               size="h40"
               type="button"
               onClick={handleDeleteClick}
-              loading={removeMutation.isPending} >
+              loading={removeMutation.isPending}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

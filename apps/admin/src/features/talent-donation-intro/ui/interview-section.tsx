@@ -142,7 +142,8 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -152,7 +153,8 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
@@ -179,7 +181,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 inputSize="large"
                 width="100%"
                 value={draft.mainText}
-                placeholder="메인 텍스트를 입력하세요"
+                placeholder="메인 텍스트를 입력해 주세요"
                 onChange={e => setDraft(prev => ({ ...prev, mainText: e.target.value }))}
               />
             }
@@ -197,7 +199,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 width="100%"
                 rows={4}
                 value={draft.subText}
-                placeholder="서브 텍스트를 입력하세요"
+                placeholder="서브 텍스트를 입력해 주세요"
                 onChange={e => setDraft(prev => ({ ...prev, subText: e.target.value }))}
               />
             }
@@ -213,7 +215,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
                 inputSize="large"
                 width="100%"
                 value={draft.buttonLabel}
-                placeholder="버튼명을 입력하세요"
+                placeholder="버튼명을 입력해 주세요"
                 onChange={e => setDraft(prev => ({ ...prev, buttonLabel: e.target.value }))}
               />
             }

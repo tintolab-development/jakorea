@@ -46,7 +46,7 @@ export function CertFormModal({
   if (!open) return null
   return (
     <CertFormBody
-      key={variant === 'edit' ? initial?.id ?? 'edit' : 'create'}
+      key={variant === 'edit' ? (initial?.id ?? 'edit') : 'create'}
       variant={variant}
       initial={initial}
       confirmLoading={confirmLoading}
@@ -131,7 +131,8 @@ function CertFormBody({
                   setDeleteConfirmOpen(true)
                 }}
                 disabled={confirmLoading || deleteLoading}
-                loading={deleteLoading} >
+                loading={deleteLoading}
+              >
                 인증 삭제
               </CmsButton>
             ) : null}
@@ -140,7 +141,8 @@ function CertFormBody({
               size="large"
               type="button"
               onClick={onCancel}
-              disabled={confirmLoading || deleteLoading} >
+              disabled={confirmLoading || deleteLoading}
+            >
               취소
             </CmsButton>
             <CmsButton
@@ -149,7 +151,8 @@ function CertFormBody({
               type="button"
               loading={confirmLoading}
               disabled={deleteLoading}
-              onClick={handleSubmit} >
+              onClick={handleSubmit}
+            >
               {primaryLabel}
             </CmsButton>
           </>
@@ -197,7 +200,7 @@ function CertFormBody({
                   width="100%"
                   value={content}
                   onChange={e => setContent(e.target.value)}
-                  placeholder="내용을 입력하세요"
+                  placeholder="내용을 입력해 주세요"
                 />
               }
             />
@@ -212,7 +215,7 @@ function CertFormBody({
                   width="100%"
                   value={organization}
                   onChange={e => setOrganization(e.target.value)}
-                  placeholder="인증 기관명을 입력하세요"
+                  placeholder="인증 기관명을 입력해 주세요"
                 />
               }
             />

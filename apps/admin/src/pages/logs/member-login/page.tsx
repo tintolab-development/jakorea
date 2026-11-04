@@ -189,7 +189,8 @@ export function MemberLoginLogPage() {
   const loading = listQuery.isLoading || listQuery.isFetching
 
   const nameLabel = audience === 'admin' ? '관리자명' : '사용자명'
-  const namePlaceholder = audience === 'admin' ? '관리자명을 입력하세요' : '사용자명을 입력하세요'
+  const namePlaceholder =
+    audience === 'admin' ? '관리자명을 입력해 주세요' : '사용자명을 입력해 주세요'
 
   const handleTabChange = useCallback(
     (next: MemberLoginAudience) => {
@@ -297,7 +298,7 @@ export function MemberLoginLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="아이디를 입력하세요"
+                placeholder="아이디를 입력해 주세요"
                 value={pendingFilters.loginId}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
                 onPressEnter={applySearch}
@@ -319,11 +320,13 @@ export function MemberLoginLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>

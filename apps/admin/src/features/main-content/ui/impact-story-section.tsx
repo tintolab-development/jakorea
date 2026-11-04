@@ -2,10 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { ImpactStoryOption, ImpactStorySection } from '@/entities/main-content/model/types'
-import {
-  useImpactStoryDetail,
-  useUpdateImpactStory,
-} from '@/features/impact-stories/api/hooks'
+import { useImpactStoryDetail, useUpdateImpactStory } from '@/features/impact-stories/api/hooks'
 import { useSaveImpactStorySection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
@@ -46,15 +43,7 @@ function mimeFromFile(file: File): 'image/jpeg' | 'image/png' {
   return 'image/jpeg'
 }
 
-function CoverPreview({
-  src,
-  alt,
-  loading,
-}: {
-  src?: string
-  alt: string
-  loading?: boolean
-}) {
+function CoverPreview({ src, alt, loading }: { src?: string; alt: string; loading?: boolean }) {
   const [broken, setBroken] = useState(false)
   useEffect(() => {
     setBroken(false)
@@ -82,7 +71,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
 
   const selectOptions = useMemo(
     () => options.map(opt => ({ value: opt.id, label: opt.title })),
-    [options],
+    [options]
   )
 
   const featuredId = isEditing ? draft.featuredContentId : data.featuredContentId
@@ -128,7 +117,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       reader.onload = () => setPendingPreview(String(reader.result ?? ''))
       reader.readAsDataURL(file)
     },
-    [showAlert],
+    [showAlert]
   )
 
   const handleSave = useCallback(async () => {
@@ -171,14 +160,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '임팩트 스토리'))
     }
-  }, [
-    draft,
-    pendingFile,
-    saveMutation,
-    showAlert,
-    storyQuery.data,
-    updateStoryMutation,
-  ])
+  }, [draft, pendingFile, saveMutation, showAlert, storyQuery.data, updateStoryMutation])
 
   const mode = isEditing ? 'edit' : 'view'
   const titleText = isEditing ? draft.title : data.title
@@ -209,7 +191,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                 rows={2}
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력하세요"
+                placeholder="타이틀 문구를 입력해 주세요"
               />
             }
           />
@@ -224,7 +206,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                 width="100%"
                 value={draft.youtubeUrl}
                 onChange={e => setDraft(prev => ({ ...prev, youtubeUrl: e.target.value }))}
-                placeholder="유튜브 링크를 입력하세요"
+                placeholder="유튜브 링크를 입력해 주세요"
               />
             }
           />

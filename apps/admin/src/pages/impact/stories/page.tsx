@@ -513,7 +513,7 @@ export function ImpactStoriesPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.authorName}
-                  placeholder="작성자명을 입력하세요"
+                  placeholder="작성자명을 입력해 주세요"
                   onChange={value => patchPendingFilters(prev => ({ ...prev, authorName: value }))}
                   onPressEnter={handleSearch}
                 />

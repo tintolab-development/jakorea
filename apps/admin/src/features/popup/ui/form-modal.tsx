@@ -22,10 +22,7 @@ import {
   createPublishPeriodDisabledDate,
   isPublishPeriodExpired,
 } from '@/shared/lib/publish-period'
-import {
-  HTTP_LINK_URL_FORMAT_ALERT,
-  isValidHttpLinkUrl,
-} from '@/shared/lib/http-link-url'
+import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '@/shared/lib/http-link-url'
 import { formatDateDot } from '@/shared/lib/format-display'
 import './form-modal.css'
 
@@ -123,9 +120,7 @@ function PopupFormBody({
   onDelete,
 }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
-  const [formMode, setFormMode] = useState<'view' | 'edit'>(
-    variant === 'create' ? 'edit' : 'view'
-  )
+  const [formMode, setFormMode] = useState<'view' | 'edit'>(variant === 'create' ? 'edit' : 'view')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const [isActive, setIsActive] = useState(() =>
@@ -137,9 +132,7 @@ function PopupFormBody({
   const [imageFileName, setImageFileName] = useState(() =>
     variant === 'detail' && initial ? (initial.imageFileName ?? '') : ''
   )
-  const [name, setName] = useState(() =>
-    variant === 'detail' && initial ? initial.name : ''
-  )
+  const [name, setName] = useState(() => (variant === 'detail' && initial ? initial.name : ''))
   const [altText, setAltText] = useState(() =>
     variant === 'detail' && initial ? initial.altText : ''
   )
@@ -275,8 +268,7 @@ function PopupFormBody({
       imageUrl,
       imageFileName: imageFileName || undefined,
       imageFile: pendingImageFile,
-      imageAssetId:
-        !pendingImageFile && !imageCleared ? initial?.imageAssetId : undefined,
+      imageAssetId: !pendingImageFile && !imageCleared ? initial?.imageAssetId : undefined,
       name,
       altText,
       periodStart: start.format('YYYY-MM-DD'),
@@ -338,7 +330,8 @@ function PopupFormBody({
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
                 disabled={confirmLoading || deleteLoading}
-                loading={deleteLoading} >
+                loading={deleteLoading}
+              >
                 팝업 삭제
               </CmsButton>
             ) : null}
@@ -347,7 +340,8 @@ function PopupFormBody({
               size="large"
               type="button"
               onClick={onCancel}
-              disabled={confirmLoading || deleteLoading} >
+              disabled={confirmLoading || deleteLoading}
+            >
               취소
             </CmsButton>
             <CmsButton
@@ -356,7 +350,8 @@ function PopupFormBody({
               type="button"
               loading={confirmLoading}
               disabled={confirmLoading || deleteLoading}
-              onClick={handlePrimaryAction} >
+              onClick={handlePrimaryAction}
+            >
               {primaryLabel}
             </CmsButton>
           </>
@@ -374,9 +369,7 @@ function PopupFormBody({
                 <DetailInfoForm.Field
                   label="등록일시"
                   readOnlyDisplay
-                  view={
-                    <span className="popup-form-modal__created-at">{createdAtLabel}</span>
-                  }
+                  view={<span className="popup-form-modal__created-at">{createdAtLabel}</span>}
                 />
                 <DetailInfoForm.Field
                   label="사용 여부"
@@ -481,7 +474,7 @@ function PopupFormBody({
                   <CmsInput
                     inputSize="large"
                     width="100%"
-                    placeholder="팝업명을 입력하세요"
+                    placeholder="팝업명을 입력해 주세요"
                     value={name}
                     onChange={e => setName(e.target.value)}
                   />
@@ -497,7 +490,7 @@ function PopupFormBody({
                   <CmsInput
                     inputSize="large"
                     width="100%"
-                    placeholder="대체 텍스트를 입력하세요"
+                    placeholder="대체 텍스트를 입력해 주세요"
                     value={altText}
                     onChange={e => setAltText(e.target.value)}
                   />
@@ -556,7 +549,7 @@ function PopupFormBody({
                     <CmsInput
                       inputSize="large"
                       width="100%"
-                      placeholder="연결 URL을 입력하세요"
+                      placeholder="연결 URL을 입력해 주세요"
                       value={linkUrl}
                       disabled={!linkEnabled}
                       onChange={e => setLinkUrl(e.target.value)}
@@ -611,9 +604,7 @@ export function PopupFormModal({
   if (!open) return null
 
   const formKey =
-    variant === 'detail'
-      ? `detail-${initial?.id ?? 'unknown'}`
-      : `create-${String(open)}`
+    variant === 'detail' ? `detail-${initial?.id ?? 'unknown'}` : `create-${String(open)}`
 
   return (
     <PopupFormBody

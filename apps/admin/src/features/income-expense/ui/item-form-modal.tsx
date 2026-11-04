@@ -113,7 +113,8 @@ export function ItemFormModal({
             size="large"
             type="button"
             disabled={confirmLoading}
-            onClick={onCancel} >
+            onClick={onCancel}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -122,7 +123,8 @@ export function ItemFormModal({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             등록
           </CmsButton>
         </>
@@ -167,7 +169,7 @@ export function ItemFormModal({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="항목명을 입력하세요"
+                placeholder="항목명을 입력해 주세요"
                 value={name}
                 onChange={e => setName(e.target.value)}
               />

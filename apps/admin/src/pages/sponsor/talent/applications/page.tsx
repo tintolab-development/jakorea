@@ -382,9 +382,7 @@ export function TalentDonationApplicationsPage() {
       setPiiRevealed(true)
     } catch (error) {
       showAlert({
-        title: isAdminForbidden(error)
-          ? HOMEPAGE_PII_REVEAL_COPY.forbiddenTitle
-          : '조회 실패',
+        title: isAdminForbidden(error) ? HOMEPAGE_PII_REVEAL_COPY.forbiddenTitle : '조회 실패',
         content: isAdminForbidden(error)
           ? HOMEPAGE_PII_REVEAL_COPY.forbiddenContent
           : '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
@@ -605,7 +603,7 @@ export function TalentDonationApplicationsPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.applicantName}
-                  placeholder="신청자명을 입력하세요."
+                  placeholder="신청자명을 입력해 주세요."
                   onChange={value =>
                     patchPendingFilters(prev => ({ ...prev, applicantName: value }))
                   }
@@ -621,7 +619,7 @@ export function TalentDonationApplicationsPage() {
                   inputMode="numeric"
                   autoComplete="tel"
                   value={pendingFilters.phone}
-                  placeholder="연락처를 입력하세요."
+                  placeholder="연락처를 입력해 주세요."
                   onChange={e => {
                     const result = applyKoreanPhoneInputChange(
                       pendingFilters.phone,
@@ -643,7 +641,7 @@ export function TalentDonationApplicationsPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.email}
-                  placeholder="이메일을 입력하세요."
+                  placeholder="이메일을 입력해 주세요."
                   onChange={value => patchPendingFilters(prev => ({ ...prev, email: value }))}
                   onPressEnter={handleSearch}
                 />
@@ -713,11 +711,13 @@ export function TalentDonationApplicationsPage() {
                 </div>
               </div>
               <div className="admin-filter-area__actions">
-                <CmsButton className="admin-filter-area__search-button"
+                <CmsButton
+                  className="admin-filter-area__search-button"
                   variant="primary"
                   size="medium"
                   type="button"
-                  onClick={handleSearch} >
+                  onClick={handleSearch}
+                >
                   조회
                 </CmsButton>
               </div>
@@ -733,7 +733,8 @@ export function TalentDonationApplicationsPage() {
               size="h40"
               type="button"
               loading={removeMutation.isPending && !detailOpen}
-              onClick={handleBulkDeleteClick} >
+              onClick={handleBulkDeleteClick}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton
@@ -741,7 +742,8 @@ export function TalentDonationApplicationsPage() {
               size="h40"
               type="button"
               loading={confirmMutation.isPending && !detailOpen}
-              onClick={handleBulkConfirmClick} >
+              onClick={handleBulkConfirmClick}
+            >
               선택 확인
             </CmsButton>
           </>

@@ -144,7 +144,7 @@ export function PartnershipSectionCard({ items }: Props) {
                 rows={3}
                 value={value}
                 onChange={e => handleDraftChange(record.step, { description: e.target.value })}
-                placeholder="단계 설명을 입력하세요"
+                placeholder="단계 설명을 입력해 주세요"
                 aria-label={`${record.step}단계 설명`}
               />
             )

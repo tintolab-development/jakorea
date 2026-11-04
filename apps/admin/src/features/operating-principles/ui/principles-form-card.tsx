@@ -29,7 +29,12 @@ import {
   PrinciplesSortableTable,
 } from '@/features/operating-principles/ui/sortable-table'
 import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
-import { CMS_TABLE_NO_COL_CLASS, CMS_TABLE_SORT_COL_CLASS, CMS_TABLE_USAGE_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
+import {
+  CMS_TABLE_NO_COL_CLASS,
+  CMS_TABLE_SORT_COL_CLASS,
+  CMS_TABLE_USAGE_COL_CLASS,
+  TABLE_COLUMN_WIDTHS,
+} from '@/shared/constants/table'
 
 import './principles-form-card.css'
 type Props = {
@@ -38,28 +43,18 @@ type Props = {
 
 type DraftTexts = Record<string, { title: string; subText: string }>
 
-function SectionTitle({
-  children,
-  note,
-}: {
-  children: ReactNode
-  note?: ReactNode
-}) {
+function SectionTitle({ children, note }: { children: ReactNode; note?: ReactNode }) {
   return (
     <div className="principles-form-section-title">
       <span className="principles-form-section-title__marker" aria-hidden />
       <span className="principles-form-section-title__text">{children}</span>
-      {note != null ? (
-        <span className="principles-form-section-title__note">{note}</span>
-      ) : null}
+      {note != null ? <span className="principles-form-section-title__note">{note}</span> : null}
     </div>
   )
 }
 
 function buildDraftTexts(rows: OperatingPrinciple[]): DraftTexts {
-  return Object.fromEntries(
-    rows.map(row => [row.id, { title: row.title, subText: row.subText }])
-  )
+  return Object.fromEntries(rows.map(row => [row.id, { title: row.title, subText: row.subText }]))
 }
 
 function cloneIntro(intro: OperatingPrinciplesIntro): OperatingPrinciplesIntro {
@@ -227,7 +222,11 @@ export function PrinciplesFormCard({ data }: Props) {
           const value = draftTexts[record.id]?.title ?? record.title
           return (
             <CmsTextArea
-              className={fieldClass(isEditing, 'cms-textarea--fixed-rows', 'principles-title-field')}
+              className={fieldClass(
+                isEditing,
+                'cms-textarea--fixed-rows',
+                'principles-title-field'
+              )}
               inputSize="medium"
               width="100%"
               rows={2}
@@ -238,7 +237,7 @@ export function PrinciplesFormCard({ data }: Props) {
                 if (!isEditing) return
                 handleDraftTextChange(record.id, 'title', e.target.value)
               }}
-              placeholder="타이틀을 입력하세요"
+              placeholder="타이틀을 입력해 주세요"
               aria-label={`타이틀 ${record.sortOrder}`}
             />
           )
@@ -263,7 +262,7 @@ export function PrinciplesFormCard({ data }: Props) {
                 if (!isEditing) return
                 handleDraftTextChange(record.id, 'subText', e.target.value)
               }}
-              placeholder="서브 텍스트를 입력하세요 (Enter=문단 줄바꿈, Platform에 그대로 반영)"
+              placeholder="서브 텍스트를 입력해 주세요 (Enter=문단 줄바꿈, Platform에 그대로 반영)"
               aria-label={`서브 텍스트 ${record.sortOrder}`}
             />
           )
@@ -293,7 +292,8 @@ export function PrinciplesFormCard({ data }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -303,7 +303,8 @@ export function PrinciplesFormCard({ data }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
@@ -340,7 +341,7 @@ export function PrinciplesFormCard({ data }: Props) {
                       if (!isEditing) return
                       setDraftIntro(prev => ({ ...prev, topSubText: e.target.value }))
                     }}
-                    placeholder="상단 서브 텍스트를 입력하세요"
+                    placeholder="상단 서브 텍스트를 입력해 주세요"
                   />
                 }
               />
@@ -373,9 +374,7 @@ export function PrinciplesFormCard({ data }: Props) {
         </section>
 
         <section className="principles-form-section principles-form-section--table">
-          <SectionTitle note="아이콘 이미지는 수정 및 삭제가 불가합니다.">
-            운영 원칙
-          </SectionTitle>
+          <SectionTitle note="아이콘 이미지는 수정 및 삭제가 불가합니다.">운영 원칙</SectionTitle>
           <PrinciplesSortableTable
             rows={rows}
             columns={columns}

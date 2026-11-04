@@ -380,7 +380,8 @@ export function CertPanel() {
             onClick={e => {
               e.stopPropagation()
               openEdit(record)
-            }} >
+            }}
+          >
             수정
           </CmsButton>
         ),
@@ -418,7 +419,7 @@ export function CertPanel() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="내용을 입력하세요"
+                placeholder="내용을 입력해 주세요"
                 value={pendingFilters.content}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
                 onPressEnter={handleSearch}
@@ -429,7 +430,7 @@ export function CertPanel() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="인증 기관명을 입력하세요"
+                placeholder="인증 기관명을 입력해 주세요"
                 value={pendingFilters.organization}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, organization: value }))}
                 onPressEnter={handleSearch}
@@ -468,11 +469,13 @@ export function CertPanel() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={handleSearch} >
+                onClick={handleSearch}
+              >
                 조회
               </CmsButton>
             </div>
@@ -487,7 +490,8 @@ export function CertPanel() {
               size="h40"
               type="button"
               onClick={handleDeleteClick}
-              loading={removeMutation.isPending} >
+              loading={removeMutation.isPending}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

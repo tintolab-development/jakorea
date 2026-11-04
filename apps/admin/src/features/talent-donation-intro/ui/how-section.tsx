@@ -119,7 +119,7 @@ export function HowSectionCard({ items }: Props) {
                 rows={2}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { title: e.target.value })}
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
                 aria-label={`${record.id}번 타이틀`}
               />
             )
@@ -143,7 +143,7 @@ export function HowSectionCard({ items }: Props) {
                 rows={3}
                 value={value}
                 onChange={e => handleDraftChange(record.id, { description: e.target.value })}
-                placeholder="설명 텍스트를 입력하세요"
+                placeholder="설명 텍스트를 입력해 주세요"
                 aria-label={`${record.id}번 설명 텍스트`}
               />
             )
@@ -169,7 +169,8 @@ export function HowSectionCard({ items }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -179,7 +180,8 @@ export function HowSectionCard({ items }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>

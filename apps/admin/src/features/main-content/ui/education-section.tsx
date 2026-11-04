@@ -61,7 +61,7 @@ export function EducationSectionCard({ data }: Props) {
                 width="100%"
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력하세요"
+                placeholder="타이틀 문구를 입력해 주세요"
               />
             }
           />

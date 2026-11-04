@@ -17,10 +17,16 @@ export function BranchesTable({ branches, mode, onChangeLink }: BranchesTablePro
     <div className="ja-worldwide-table-wrap" role="region" aria-label="지부 연결 링크">
       <div className="ja-worldwide-branches" role="table">
         <div className="ja-worldwide-branches__row ja-worldwide-branches__row--head" role="row">
-          <div className="ja-worldwide-branches__cell ja-worldwide-branches__cell--head" role="columnheader">
+          <div
+            className="ja-worldwide-branches__cell ja-worldwide-branches__cell--head"
+            role="columnheader"
+          >
             지부명
           </div>
-          <div className="ja-worldwide-branches__cell ja-worldwide-branches__cell--head" role="columnheader">
+          <div
+            className="ja-worldwide-branches__cell ja-worldwide-branches__cell--head"
+            role="columnheader"
+          >
             연결 링크
           </div>
         </div>
@@ -36,7 +42,7 @@ export function BranchesTable({ branches, mode, onChangeLink }: BranchesTablePro
                   width="100%"
                   value={branch.linkUrl}
                   onChange={e => onChangeLink(branch.id, e.target.value)}
-                  placeholder="연결 링크를 입력하세요"
+                  placeholder="연결 링크를 입력해 주세요"
                   aria-label={`${branch.name} 연결 링크`}
                 />
               ) : (

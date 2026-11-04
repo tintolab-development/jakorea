@@ -55,7 +55,7 @@ const PartnerNameField = memo(function PartnerNameField({
       <CmsInput
         inputSize="large"
         width="100%"
-        placeholder="기업명을 입력하세요"
+        placeholder="기업명을 입력해 주세요"
         value={value}
         onChange={e => {
           const next = e.target.value
@@ -176,15 +176,12 @@ function CorporatePartnerFormBody({
 }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
   const maxOrder = mode === 'create' ? totalCount + 1 : Math.max(totalCount, 1)
-  const defaultOrder =
-    mode === 'edit' && initial ? initial.sortOrder : totalCount + 1
+  const defaultOrder = mode === 'edit' && initial ? initial.sortOrder : totalCount + 1
 
   const [isPublic, setIsPublic] = useState(() =>
     mode === 'edit' && initial ? initial.isPublic : true
   )
-  const [logoUrl, setLogoUrl] = useState(() =>
-    mode === 'edit' && initial ? initial.logoUrl : ''
-  )
+  const [logoUrl, setLogoUrl] = useState(() => (mode === 'edit' && initial ? initial.logoUrl : ''))
   const [logoFile, setLogoFile] = useState<File | undefined>(undefined)
   const [logoFileName, setLogoFileName] = useState(() =>
     mode === 'edit' && initial ? (initial.logoFileName ?? '') : ''
@@ -206,8 +203,8 @@ function CorporatePartnerFormBody({
     })
   }, [])
 
-  /** 시안: * 1부터 N 사이의 숫자를 입력하세요. */
-  const sortHelper = `* 1부터 ${maxOrder} 사이의 숫자를 입력하세요.`
+  /** 시안: * 1부터 N 사이의 숫자를 입력해 주세요. */
+  const sortHelper = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
 
   /** 노출 순서 입력값 1…maxOrder 범위로 정규화 (빈 문자열은 허용 — 입력 중) */
   const normalizeSortOrderInput = useCallback(
@@ -278,7 +275,7 @@ function CorporatePartnerFormBody({
     }
     const orderNum = Math.floor(Number(sortOrder))
     if (!Number.isFinite(orderNum) || orderNum < 1 || orderNum > maxOrder) {
-      nextErrors.sortOrder = `* 1부터 ${maxOrder} 사이의 숫자를 입력하세요.`
+      nextErrors.sortOrder = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
     }
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -313,7 +310,8 @@ function CorporatePartnerFormBody({
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -322,7 +320,8 @@ function CorporatePartnerFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             {confirmLabel}
           </CmsButton>
         </>
@@ -364,11 +363,7 @@ function CorporatePartnerFormBody({
               <div>
                 <div className="corporate-partner-form-modal__image-row">
                   <div className="corporate-partner-form-modal__preview">
-                    {logoUrl ? (
-                      <img src={logoUrl} alt="로고 미리보기" />
-                    ) : (
-                      <ImagePlaceholderIcon />
-                    )}
+                    {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
                   </div>
                   <FileSelectField
                     className="corporate-partner-form-modal__file-field"
@@ -425,15 +420,11 @@ function CorporatePartnerFormBody({
                     placeholder={String(defaultOrder)}
                     value={sortOrder}
                     onChange={e => {
-                      setSortOrder(
-                        normalizeSortOrderInput(e.target.value, { allowEmpty: true })
-                      )
+                      setSortOrder(normalizeSortOrderInput(e.target.value, { allowEmpty: true }))
                       setErrors(prev => ({ ...prev, sortOrder: undefined }))
                     }}
                     onBlur={() => {
-                      setSortOrder(prev =>
-                        normalizeSortOrderInput(prev, { allowEmpty: false })
-                      )
+                      setSortOrder(prev => normalizeSortOrderInput(prev, { allowEmpty: false }))
                     }}
                     onKeyDown={e => {
                       // 음수·소수·e 입력 차단
@@ -477,10 +468,7 @@ export function CorporatePartnerFormModal({
 }) {
   if (!open) return null
 
-  const formKey =
-    mode === 'edit'
-      ? `edit-${initial?.id ?? 'unknown'}`
-      : `create-${totalCount}`
+  const formKey = mode === 'edit' ? `edit-${initial?.id ?? 'unknown'}` : `create-${totalCount}`
 
   return (
     <CorporatePartnerFormBody

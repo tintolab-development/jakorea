@@ -65,7 +65,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
               value={card.description}
               rows={3}
               label={`${record.id} 설명`}
-              placeholder="설명을 입력하세요"
+              placeholder="설명을 입력해 주세요"
               onChange={description => {
                 setDraft(prev => ({
                   ...prev,
@@ -126,7 +126,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
                 onChange={title => setDraft(prev => ({ ...prev, title }))}
                 rows={2}
                 label="타이틀"
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
               />
             }
           />
@@ -142,7 +142,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
                 onChange={lead => setDraft(prev => ({ ...prev, lead }))}
                 rows={3}
                 label="서브 텍스트"
-                placeholder="서브 텍스트를 입력하세요"
+                placeholder="서브 텍스트를 입력해 주세요"
               />
             }
           />
@@ -175,7 +175,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
                 onChange={footnote => setDraft(prev => ({ ...prev, footnote }))}
                 rows={3}
                 label="하단 텍스트"
-                placeholder="하단 텍스트를 입력하세요"
+                placeholder="하단 텍스트를 입력해 주세요"
               />
             }
           />

@@ -5,13 +5,7 @@ import type {
   OrganizationChartInfo,
   OrganizationChartSaveInput,
 } from '@/entities/organization-chart/model/types'
-import {
-  CmsButton,
-  CmsInput,
-  ContentModal,
-  FileSelectField,
-  useCmsAlert,
-} from '@/shared/ui'
+import { CmsButton, CmsInput, ContentModal, FileSelectField, useCmsAlert } from '@/shared/ui'
 
 import './org-chart-form-modal.css'
 
@@ -70,12 +64,7 @@ type FormBodyProps = {
   onSubmit: (values: OrganizationChartSaveInput) => void
 }
 
-function OrgChartFormBody({
-  initial,
-  confirmLoading,
-  onCancel,
-  onSubmit,
-}: FormBodyProps) {
+function OrgChartFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
   const [mainTitle, setMainTitle] = useState(initial.mainTitle)
   const [imageUrl, setImageUrl] = useState(initial.imageUrl)
@@ -168,7 +157,8 @@ function OrgChartFormBody({
             size="large"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -177,7 +167,8 @@ function OrgChartFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             저장
           </CmsButton>
         </>
@@ -198,7 +189,7 @@ function OrgChartFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
                 value={mainTitle}
                 onChange={e => setMainTitle(e.target.value)}
               />

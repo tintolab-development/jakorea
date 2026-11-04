@@ -244,7 +244,7 @@ export function PiiAccessLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회 대상을 입력하세요"
+                placeholder="조회 대상을 입력해 주세요"
                 value={pendingFilters.targetName}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, targetName: value }))}
                 onPressEnter={applySearch}
@@ -255,7 +255,7 @@ export function PiiAccessLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회 목적을 입력하세요"
+                placeholder="조회 목적을 입력해 주세요"
                 value={pendingFilters.purpose}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, purpose: value }))}
                 onPressEnter={applySearch}
@@ -266,7 +266,7 @@ export function PiiAccessLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회자명을 입력하세요"
+                placeholder="조회자명을 입력해 주세요"
                 value={pendingFilters.accessorName}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, accessorName: value }))}
                 onPressEnter={applySearch}
@@ -288,11 +288,13 @@ export function PiiAccessLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>

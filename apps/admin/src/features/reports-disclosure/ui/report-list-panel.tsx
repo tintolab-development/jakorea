@@ -392,7 +392,7 @@ export function ReportListPanel({ kind }: Props) {
                   patchPendingFilters(prev => ({ ...prev, attachmentName: value }))
                 }
                 onPressEnter={() => applySearch()}
-                placeholder="첨부파일명을 입력하세요"
+                placeholder="첨부파일명을 입력해 주세요"
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">

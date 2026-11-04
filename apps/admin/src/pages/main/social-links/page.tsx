@@ -202,7 +202,7 @@ export function SocialLinksPage() {
               width="100%"
               value={draftUrls[record.id] ?? record.linkUrl}
               onChange={e => handleDraftChange(record.id, e.target.value)}
-              placeholder="연결 링크를 입력하세요"
+              placeholder="연결 링크를 입력해 주세요"
               aria-label={`${record.name} 연결 링크`}
             />
           ) : (
@@ -230,7 +230,8 @@ export function SocialLinksPage() {
                   size="h40"
                   type="button"
                   onClick={handleCancelEdit}
-                  disabled={saveMutation.isPending} >
+                  disabled={saveMutation.isPending}
+                >
                   취소
                 </CmsButton>
                 <CmsButton
@@ -240,7 +241,8 @@ export function SocialLinksPage() {
                   loading={saveMutation.isPending}
                   onClick={() => {
                     void handleSave()
-                  }} >
+                  }}
+                >
                   저장
                 </CmsButton>
               </>
@@ -250,7 +252,8 @@ export function SocialLinksPage() {
                 size="h40"
                 type="button"
                 onClick={handleStartEdit}
-                disabled={listQuery.isLoading || rows.length === 0} >
+                disabled={listQuery.isLoading || rows.length === 0}
+              >
                 수정
               </CmsButton>
             )}

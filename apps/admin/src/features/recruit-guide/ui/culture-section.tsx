@@ -96,10 +96,7 @@ export function CultureSectionCard({ items }: Props) {
       setIsEditing(false)
     } catch (err) {
       showAlert(
-        recruitGuideSaveFailureAlert(
-          err,
-          '조직문화 저장에 실패했습니다. 다시 시도해 주세요.'
-        )
+        recruitGuideSaveFailureAlert(err, '조직문화 저장에 실패했습니다. 다시 시도해 주세요.')
       )
     }
   }, [drafts, items, saveMutation, showAlert])
@@ -130,7 +127,7 @@ export function CultureSectionCard({ items }: Props) {
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
-              placeholder="타이틀을 입력하세요"
+              placeholder="타이틀을 입력해 주세요"
               aria-label={`${record.itemLabel} 타이틀`}
               onChange={e => handleDraftChange(record.id, { title: e.target.value })}
             />
@@ -153,7 +150,7 @@ export function CultureSectionCard({ items }: Props) {
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
-              placeholder="설명 텍스트를 입력하세요"
+              placeholder="설명 텍스트를 입력해 주세요"
               aria-label={`${record.itemLabel} 설명 텍스트`}
               onChange={e => handleDraftChange(record.id, { description: e.target.value })}
             />
@@ -178,7 +175,8 @@ export function CultureSectionCard({ items }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -188,7 +186,8 @@ export function CultureSectionCard({ items }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>

@@ -442,7 +442,7 @@ export function HistoryPanel() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="검색어를 입력하세요"
+                placeholder="검색어를 입력해 주세요"
                 value={pendingFilters.content}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, content: value }))}
                 onPressEnter={handleSearch}

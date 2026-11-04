@@ -229,7 +229,7 @@ export function FileDownloadLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="파일명을 입력하세요"
+                placeholder="파일명을 입력해 주세요"
                 value={pendingFilters.fileName}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, fileName: value }))}
                 onPressEnter={applySearch}
@@ -240,7 +240,7 @@ export function FileDownloadLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="사용자명을 입력하세요"
+                placeholder="사용자명을 입력해 주세요"
                 value={pendingFilters.userName}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, userName: value }))}
                 onPressEnter={applySearch}
@@ -262,11 +262,13 @@ export function FileDownloadLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>

@@ -46,7 +46,7 @@ export function AwardFormModal({
   if (!open) return null
   return (
     <AwardFormBody
-      key={variant === 'edit' ? initial?.id ?? 'edit' : 'create'}
+      key={variant === 'edit' ? (initial?.id ?? 'edit') : 'create'}
       variant={variant}
       initial={initial}
       confirmLoading={confirmLoading}
@@ -77,9 +77,7 @@ function AwardFormBody({
   const [awardedOn, setAwardedOn] = useState<Dayjs | null>(() =>
     variant === 'edit' && initial?.awardedOn ? dayjs(initial.awardedOn) : null
   )
-  const [title, setTitle] = useState(() =>
-    variant === 'edit' && initial ? initial.title : ''
-  )
+  const [title, setTitle] = useState(() => (variant === 'edit' && initial ? initial.title : ''))
   const [organization, setOrganization] = useState(() =>
     variant === 'edit' && initial ? initial.organization : ''
   )
@@ -131,7 +129,8 @@ function AwardFormBody({
                   setDeleteConfirmOpen(true)
                 }}
                 disabled={confirmLoading || deleteLoading}
-                loading={deleteLoading} >
+                loading={deleteLoading}
+              >
                 수상 삭제
               </CmsButton>
             ) : null}
@@ -140,7 +139,8 @@ function AwardFormBody({
               size="large"
               type="button"
               onClick={onCancel}
-              disabled={confirmLoading || deleteLoading} >
+              disabled={confirmLoading || deleteLoading}
+            >
               취소
             </CmsButton>
             <CmsButton
@@ -149,7 +149,8 @@ function AwardFormBody({
               type="button"
               loading={confirmLoading}
               disabled={deleteLoading}
-              onClick={handleSubmit} >
+              onClick={handleSubmit}
+            >
               {primaryLabel}
             </CmsButton>
           </>
@@ -197,7 +198,7 @@ function AwardFormBody({
                   width="100%"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  placeholder="상명을 입력하세요"
+                  placeholder="상명을 입력해 주세요"
                 />
               }
             />
@@ -212,7 +213,7 @@ function AwardFormBody({
                   width="100%"
                   value={organization}
                   onChange={e => setOrganization(e.target.value)}
-                  placeholder="수여 기관명을 입력하세요"
+                  placeholder="수여 기관명을 입력해 주세요"
                 />
               }
             />

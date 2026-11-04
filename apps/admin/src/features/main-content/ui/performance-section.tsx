@@ -81,7 +81,7 @@ export function PerformanceSectionCard({ data }: Props) {
                 width="100%"
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력하세요"
+                placeholder="타이틀 문구를 입력해 주세요"
               />
             }
           />
@@ -101,7 +101,7 @@ export function PerformanceSectionCard({ data }: Props) {
                 rows={2}
                 value={draft.bottomText}
                 onChange={e => setDraft(prev => ({ ...prev, bottomText: e.target.value }))}
-                placeholder="하단 문구를 입력하세요"
+                placeholder="하단 문구를 입력해 주세요"
               />
             }
           />

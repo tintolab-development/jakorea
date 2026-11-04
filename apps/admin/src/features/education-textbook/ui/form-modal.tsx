@@ -111,18 +111,8 @@ function ThumbnailFileIcon({ className }: { className?: string }) {
         strokeWidth="1.4"
         strokeLinejoin="round"
       />
-      <path
-        d="M11.5 2.5V5.8H14.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M7 9.5h6M7 12.5h4.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
+      <path d="M11.5 2.5V5.8H14.5" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M7 9.5h6M7 12.5h4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
   )
 }
@@ -188,17 +178,14 @@ function TextbookFormBody({
   }, [initial])
 
   /** view↔edit 전환 시 에디터 리셋 금지 — 엔티티 id 기준 */
-  const editorResetKey = useMemo(
-    () => (initial?.id != null ? initial.id : 'new'),
-    [initial?.id]
-  )
+  const editorResetKey = useMemo(() => (initial?.id != null ? initial.id : 'new'), [initial?.id])
 
   const editorEnabled = canEdit
   const { editor, getMarkdown } = useNoticeWysiwygEditor(
     editorEnabled,
     initialMarkdown,
     editorResetKey,
-    { placeholder: '단원 소개 내용을 입력하세요' }
+    { placeholder: '단원 소개 내용을 입력해 주세요' }
   )
 
   const resetFromInitial = useCallback(() => {
@@ -241,16 +228,10 @@ function TextbookFormBody({
   }, [open, resetFromInitial])
 
   const activeFieldOptions = useMemo(() => {
-    const available =
-      mode === 'create'
-        ? businessFields.filter(f => f.isActive)
-        : businessFields
+    const available = mode === 'create' ? businessFields.filter(f => f.isActive) : businessFields
     // 상세/수정 시 현재 선택 분야가 미사용이어도 옵션에 유지
     const options = available.map(f => ({ value: f.id, label: f.name }))
-    if (
-      businessFieldId &&
-      !options.some(o => o.value === businessFieldId)
-    ) {
+    if (businessFieldId && !options.some(o => o.value === businessFieldId)) {
       const current = businessFields.find(f => f.id === businessFieldId)
       if (current) {
         options.unshift({ value: current.id, label: current.name })
@@ -383,8 +364,7 @@ function TextbookFormBody({
     unitSessionText,
   ])
 
-  const modalTitle =
-    mode === 'create' ? '교재 등록' : mode === 'edit' ? '교재 수정' : '교재 상세'
+  const modalTitle = mode === 'create' ? '교재 등록' : mode === 'edit' ? '교재 수정' : '교재 상세'
 
   const footer = (
     <>
@@ -396,7 +376,8 @@ function TextbookFormBody({
           type="button"
           loading={deleteLoading}
           disabled={confirmLoading || deleteLoading}
-          onClick={() => setDeleteConfirmOpen(true)} >
+          onClick={() => setDeleteConfirmOpen(true)}
+        >
           교재 삭제
         </CmsButton>
       ) : null}
@@ -405,7 +386,8 @@ function TextbookFormBody({
         size="large"
         type="button"
         onClick={onCancel}
-        disabled={confirmLoading || deleteLoading} >
+        disabled={confirmLoading || deleteLoading}
+      >
         취소
       </CmsButton>
       {isView ? (
@@ -414,7 +396,8 @@ function TextbookFormBody({
           size="large"
           type="button"
           onClick={onRequestEdit}
-          disabled={deleteLoading} >
+          disabled={deleteLoading}
+        >
           수정
         </CmsButton>
       ) : (
@@ -424,7 +407,8 @@ function TextbookFormBody({
           type="button"
           loading={confirmLoading}
           disabled={confirmLoading || deleteLoading}
-          onClick={handleSubmit} >
+          onClick={handleSubmit}
+        >
           {isCreate ? '교재 등록' : '저장'}
         </CmsButton>
       )}
@@ -439,20 +423,16 @@ function TextbookFormBody({
         }
       : null
 
-  const unitIntroContent =
-    mode === 'view' ? (initial?.unitIntroMarkdown ?? '').trim() : ''
+  const unitIntroContent = mode === 'view' ? (initial?.unitIntroMarkdown ?? '').trim() : ''
 
-  const fieldLabel = businessFieldId
-    ? (fieldNameById.get(businessFieldId) ?? '-')
-    : '-'
+  const fieldLabel = businessFieldId ? (fieldNameById.get(businessFieldId) ?? '-') : '-'
   const targetsLabel =
     educationTargetIds.length > 0
       ? educationTargetIds.map(id => targetNameById.get(id) ?? id).join(', ')
       : '-'
 
   const previewUrl = thumbnailUrl || (isView ? DEFAULT_TEXTBOOK_THUMBNAIL : '')
-  const thumbFileLabel =
-    thumbnailFileName?.trim() || (previewUrl ? '기본 썸네일' : '-')
+  const thumbFileLabel = thumbnailFileName?.trim() || (previewUrl ? '기본 썸네일' : '-')
 
   return (
     <>
@@ -566,9 +546,7 @@ function TextbookFormBody({
                       value={educationTargetIds}
                       options={targetOptions}
                       onChange={value =>
-                        setEducationTargetIds(
-                          (Array.isArray(value) ? value : [value]).map(String)
-                        )
+                        setEducationTargetIds((Array.isArray(value) ? value : [value]).map(String))
                       }
                     />
                   }
@@ -581,7 +559,7 @@ function TextbookFormBody({
                     <CmsInput
                       inputSize="large"
                       width="100%"
-                      placeholder="교육 효과를 입력하세요"
+                      placeholder="교육 효과를 입력해 주세요"
                       value={educationEffect}
                       onChange={e => setEducationEffect(e.target.value)}
                     />
@@ -606,7 +584,7 @@ function TextbookFormBody({
                     <CmsInput
                       inputSize="large"
                       width="100%"
-                      placeholder="교재명을 입력하세요"
+                      placeholder="교재명을 입력해 주세요"
                       value={title}
                       onChange={e => setTitle(e.target.value)}
                     />
@@ -630,7 +608,7 @@ function TextbookFormBody({
                       rows={3}
                       autoSize={false}
                       className="cms-textarea--fixed-rows"
-                      placeholder="교재 설명을 입력하세요"
+                      placeholder="교재 설명을 입력해 주세요"
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                     />
@@ -720,15 +698,13 @@ function TextbookFormBody({
                         onChange={e => setUnitCount(e.target.value.replace(/[^\d]/g, ''))}
                         aria-label="총 단원 수"
                       />
-                      <span className="education-textbook-form-modal__session-suffix">
-                        단원
-                      </span>
+                      <span className="education-textbook-form-modal__session-suffix">단원</span>
                       <DetailInfoForm.TdDivider />
                       <CmsInput
                         className="education-textbook-form-modal__session-text"
                         inputSize="large"
                         width="100%"
-                        placeholder="상세 차시 설명을 입력하세요"
+                        placeholder="상세 차시 설명을 입력해 주세요"
                         value={unitSessionText}
                         onChange={e => setUnitSessionText(e.target.value)}
                       />
@@ -743,10 +719,7 @@ function TextbookFormBody({
                   view={
                     unitIntroContent ? (
                       <div className="education-textbook-form-modal__rt-view">
-                        <RichTextViewer
-                          content={unitIntroContent}
-                          contentFormat="markdown"
-                        />
+                        <RichTextViewer content={unitIntroContent} contentFormat="markdown" />
                       </div>
                     ) : isView ? (
                       <span>-</span>
@@ -801,9 +774,7 @@ export function EducationTextbookFormModal({
    * create / 다른 교재 id 전환 시에만 리셋.
    */
   const formKey =
-    mode === 'create'
-      ? 'textbook-form-create'
-      : `textbook-form-${initial?.id ?? 'unknown'}`
+    mode === 'create' ? 'textbook-form-create' : `textbook-form-${initial?.id ?? 'unknown'}`
 
   return (
     <TextbookFormBody

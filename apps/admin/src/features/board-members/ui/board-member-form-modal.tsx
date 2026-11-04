@@ -176,7 +176,7 @@ function BoardMemberFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="한글 성명을 입력하세요"
+                placeholder="한글 성명을 입력해 주세요"
                 value={nameKo}
                 onChange={e => setNameKo(e.target.value)}
               />
@@ -192,7 +192,7 @@ function BoardMemberFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="영문 성명을 입력하세요"
+                placeholder="영문 성명을 입력해 주세요"
                 value={nameEn}
                 onChange={e => setNameEn(e.target.value)}
               />
@@ -208,7 +208,7 @@ function BoardMemberFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="직위를 입력하세요"
+                placeholder="직위를 입력해 주세요"
                 value={position}
                 onChange={e => setPosition(e.target.value)}
               />
@@ -224,7 +224,7 @@ function BoardMemberFormBody({
               <CmsInput
                 inputSize="large"
                 width="100%"
-                placeholder="소속 및 직책을 입력하세요"
+                placeholder="소속 및 직책을 입력해 주세요"
                 value={affiliation}
                 onChange={e => setAffiliation(e.target.value)}
               />

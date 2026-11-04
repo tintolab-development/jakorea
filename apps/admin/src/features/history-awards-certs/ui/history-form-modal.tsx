@@ -1,10 +1,7 @@
 import { useCallback, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type {
-  HistoryCreateInput,
-  HistoryItem,
-} from '@/entities/history-awards-certs/model/types'
+import type { HistoryCreateInput, HistoryItem } from '@/entities/history-awards-certs/model/types'
 import { coerceRadioBoolean } from '@/features/history-awards-certs/lib/format'
 import { deleteConfirmContent } from '@/features/history-awards-certs/lib/delete-guards'
 import {
@@ -45,7 +42,7 @@ export function HistoryFormModal({
   if (!open) return null
   return (
     <HistoryFormBody
-      key={variant === 'edit' ? initial?.id ?? 'edit' : 'create'}
+      key={variant === 'edit' ? (initial?.id ?? 'edit') : 'create'}
       variant={variant}
       initial={initial}
       confirmLoading={confirmLoading}
@@ -126,7 +123,8 @@ function HistoryFormBody({
                   setDeleteConfirmOpen(true)
                 }}
                 disabled={confirmLoading || deleteLoading}
-                loading={deleteLoading} >
+                loading={deleteLoading}
+              >
                 연혁 삭제
               </CmsButton>
             ) : null}
@@ -135,7 +133,8 @@ function HistoryFormBody({
               size="large"
               type="button"
               onClick={onCancel}
-              disabled={confirmLoading || deleteLoading} >
+              disabled={confirmLoading || deleteLoading}
+            >
               취소
             </CmsButton>
             <CmsButton
@@ -144,7 +143,8 @@ function HistoryFormBody({
               type="button"
               loading={confirmLoading}
               disabled={deleteLoading}
-              onClick={handleSubmit} >
+              onClick={handleSubmit}
+            >
               {primaryLabel}
             </CmsButton>
           </>
@@ -214,7 +214,7 @@ function HistoryFormBody({
                   autoSize={{ minRows: 1, maxRows: 3 }}
                   value={content}
                   onChange={e => setContent(e.target.value)}
-                  placeholder="내용을 입력하세요"
+                  placeholder="내용을 입력해 주세요"
                 />
               }
             />

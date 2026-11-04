@@ -20,15 +20,15 @@ type MetricsNestedTableProps = {
 }
 
 /** 실적 및 성과 td — 라벨|값 × 2열 × 2행 */
-export function MetricsNestedTable({
-  metrics,
-  mode,
-  onChangeMetric,
-}: MetricsNestedTableProps) {
+export function MetricsNestedTable({ metrics, mode, onChangeMetric }: MetricsNestedTableProps) {
   const items = metrics.slice(0, 4)
 
   return (
-    <div className="main-content-nested-table main-content-nested-table--metrics" role="group" aria-label="실적 및 성과">
+    <div
+      className="main-content-nested-table main-content-nested-table--metrics"
+      role="group"
+      aria-label="실적 및 성과"
+    >
       {items.map(metric => (
         <div key={metric.id} className="main-content-nested-table__cell">
           <div className="main-content-nested-table__label">{metric.label}</div>
@@ -89,7 +89,11 @@ export function CtaNestedTable({
   ] as const
 
   return (
-    <div className="main-content-nested-table main-content-nested-table--cta" role="group" aria-label="CTA 버튼">
+    <div
+      className="main-content-nested-table main-content-nested-table--cta"
+      role="group"
+      aria-label="CTA 버튼"
+    >
       {rows.map(row => (
         <div key={row.key} className="main-content-nested-table__row">
           <div className="main-content-nested-table__cell">
@@ -101,7 +105,7 @@ export function CtaNestedTable({
                   width="100%"
                   value={row.data.label}
                   onChange={e => row.onChange({ label: e.target.value })}
-                  placeholder="버튼명을 입력하세요"
+                  placeholder="버튼명을 입력해 주세요"
                 />
               ) : (
                 <span>{row.data.label || '-'}</span>
@@ -117,7 +121,7 @@ export function CtaNestedTable({
                   width="100%"
                   value={row.data.linkUrl}
                   onChange={e => row.onChange({ linkUrl: e.target.value })}
-                  placeholder="연결 링크를 입력하세요"
+                  placeholder="연결 링크를 입력해 주세요"
                 />
               ) : (
                 <span className="main-content-nested-table__url">{row.data.linkUrl || '-'}</span>

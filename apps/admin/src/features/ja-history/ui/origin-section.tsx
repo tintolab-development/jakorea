@@ -35,7 +35,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
         () => setEditing(false),
         error => {
           showAlert(jaHistorySaveAlert(error, 'JA의 시작 저장에 실패했습니다. 다시 시도해 주세요.'))
-        },
+        }
       )
   }
 
@@ -51,7 +51,11 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
     >
       <div className="ja-history-subsection">
         <h3 className="ja-history-subsection__title">소개 텍스트</h3>
-        <div className="ja-history-header-table ja-history-header-table--split" role="group" aria-label="소개 텍스트">
+        <div
+          className="ja-history-header-table ja-history-header-table--split"
+          role="group"
+          aria-label="소개 텍스트"
+        >
           <div className="ja-history-header-table__cell">
             <div className="ja-history-header-table__label">소개 타이틀</div>
             <div className="ja-history-header-table__value ja-history-header-table__value--center">
@@ -61,7 +65,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
                 onChange={title => patch({ title })}
                 rows={2}
                 label="소개 타이틀"
-                placeholder="소개 타이틀을 입력하세요"
+                placeholder="소개 타이틀을 입력해 주세요"
               />
             </div>
           </div>
@@ -74,15 +78,22 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
                 onChange={body => patch({ body })}
                 rows={4}
                 label="소개 텍스트"
-                placeholder="소개 텍스트를 입력하세요"
+                placeholder="소개 텍스트를 입력해 주세요"
               />
             </div>
           </div>
         </div>
       </div>
       <div className="ja-history-subsection">
-        <h3 className="ja-history-subsection__title">{draft.learningEyebrow || 'LEARNING BY DOING'}</h3>
-        <DetailInfoForm title="LEARNING BY DOING" hideHeader mode="edit" className="ja-history-form">
+        <h3 className="ja-history-subsection__title">
+          {draft.learningEyebrow || 'LEARNING BY DOING'}
+        </h3>
+        <DetailInfoForm
+          title="LEARNING BY DOING"
+          hideHeader
+          mode="edit"
+          className="ja-history-form"
+        >
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="상단 타이틀"
@@ -94,7 +105,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
                   onChange={learningTitle => patch({ learningTitle })}
                   rows={1}
                   label="상단 타이틀"
-                  placeholder="상단 타이틀을 입력하세요"
+                  placeholder="상단 타이틀을 입력해 주세요"
                 />
               }
             />
@@ -110,7 +121,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
                   onChange={learningBody => patch({ learningBody })}
                   rows={3}
                   label="상단 텍스트"
-                  placeholder="상단 텍스트를 입력하세요"
+                  placeholder="상단 텍스트를 입력해 주세요"
                 />
               }
             />
@@ -133,7 +144,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
                   onChange={learningOutro => patch({ learningOutro })}
                   rows={3}
                   label="하단 메인 텍스트"
-                  placeholder="하단 메인 텍스트를 입력하세요"
+                  placeholder="하단 메인 텍스트를 입력해 주세요"
                 />
               }
             />
@@ -149,7 +160,7 @@ export function OriginSection({ origin }: { origin: JaHistoryOrigin }) {
                   onChange={learningEmphasis => patch({ learningEmphasis })}
                   rows={2}
                   label="하단 서브 텍스트"
-                  placeholder="하단 서브 텍스트를 입력하세요"
+                  placeholder="하단 서브 텍스트를 입력해 주세요"
                 />
               }
             />

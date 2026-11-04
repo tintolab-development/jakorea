@@ -89,12 +89,9 @@ export function DirectionsFormCard({ data }: Props) {
     }
   }, [draft, saveMutation, showAlert, queryClient])
 
-  const updateDraft = useCallback(
-    (patch: Partial<Omit<DirectionsInfo, 'updatedAt'>>) => {
-      setDraft(prev => ({ ...prev, ...patch }))
-    },
-    []
-  )
+  const updateDraft = useCallback((patch: Partial<Omit<DirectionsInfo, 'updatedAt'>>) => {
+    setDraft(prev => ({ ...prev, ...patch }))
+  }, [])
 
   return (
     <div
@@ -119,7 +116,8 @@ export function DirectionsFormCard({ data }: Props) {
                 size="large"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -129,7 +127,8 @@ export function DirectionsFormCard({ data }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
@@ -216,19 +215,14 @@ export function DirectionsFormCard({ data }: Props) {
                     if (!isEditing) return
                     updateDraft({ kakaoMapHtml: e.target.value })
                   }}
-                  placeholder="카카오맵에서 복사한 HTML 코드를 입력하세요"
+                  placeholder="카카오맵에서 복사한 HTML 코드를 입력해 주세요"
                 />
               }
             />
           </DetailInfoForm.Row>
         </DetailInfoForm>
 
-        <DetailInfoForm
-          className="directions-card__contact"
-          title="연락처"
-          hideHeader
-          mode="edit"
-        >
+        <DetailInfoForm className="directions-card__contact" title="연락처" hideHeader mode="edit">
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="전화번호"

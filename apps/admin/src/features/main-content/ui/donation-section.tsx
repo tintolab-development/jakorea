@@ -54,12 +54,8 @@ export function DonationSectionCard({ data }: Props) {
       cta1={cta1}
       cta2={cta2}
       mode={mode}
-      onChangeCta1={patch =>
-        setDraft(prev => ({ ...prev, cta1: { ...prev.cta1, ...patch } }))
-      }
-      onChangeCta2={patch =>
-        setDraft(prev => ({ ...prev, cta2: { ...prev.cta2, ...patch } }))
-      }
+      onChangeCta1={patch => setDraft(prev => ({ ...prev, cta1: { ...prev.cta1, ...patch } }))}
+      onChangeCta2={patch => setDraft(prev => ({ ...prev, cta2: { ...prev.cta2, ...patch } }))}
     />
   )
 
@@ -88,7 +84,7 @@ export function DonationSectionCard({ data }: Props) {
                 rows={2}
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력하세요"
+                placeholder="타이틀 문구를 입력해 주세요"
               />
             }
           />

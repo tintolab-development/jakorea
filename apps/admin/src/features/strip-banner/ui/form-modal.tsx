@@ -14,10 +14,7 @@ import {
   useCmsAlert,
 } from '@/shared/ui'
 import type { StripBanner, StripBannerCreateInput } from '@/entities/strip-banner/model/types'
-import {
-  HTTP_LINK_URL_FORMAT_ALERT,
-  isValidHttpLinkUrl,
-} from '@/shared/lib/http-link-url'
+import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '@/shared/lib/http-link-url'
 import { formatDateDot } from '@/shared/lib/format-display'
 import {
   buildPublishPeriodExpiredAlert,
@@ -81,17 +78,13 @@ function StripBannerFormBody({
   onDelete,
 }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
-  const [formMode, setFormMode] = useState<'view' | 'edit'>(
-    variant === 'create' ? 'edit' : 'view'
-  )
+  const [formMode, setFormMode] = useState<'view' | 'edit'>(variant === 'create' ? 'edit' : 'view')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const [isActive, setIsActive] = useState(() =>
     variant === 'detail' && initial ? initial.isActive : true
   )
-  const [text, setText] = useState(() =>
-    variant === 'detail' && initial ? initial.text : ''
-  )
+  const [text, setText] = useState(() => (variant === 'detail' && initial ? initial.text : ''))
   const [periodRange, setPeriodRange] = useState<[Dayjs | null, Dayjs | null]>(() => {
     if (variant === 'detail' && initial) {
       return [
@@ -204,7 +197,8 @@ function StripBannerFormBody({
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
                 disabled={confirmLoading || deleteLoading}
-                loading={deleteLoading} >
+                loading={deleteLoading}
+              >
                 배너 삭제
               </CmsButton>
             ) : null}
@@ -213,7 +207,8 @@ function StripBannerFormBody({
               size="large"
               type="button"
               onClick={onCancel}
-              disabled={confirmLoading || deleteLoading} >
+              disabled={confirmLoading || deleteLoading}
+            >
               취소
             </CmsButton>
             <CmsButton
@@ -222,7 +217,8 @@ function StripBannerFormBody({
               type="button"
               loading={confirmLoading}
               disabled={confirmLoading || deleteLoading}
-              onClick={handlePrimaryAction} >
+              onClick={handlePrimaryAction}
+            >
               {primaryLabel}
             </CmsButton>
           </>
@@ -306,7 +302,7 @@ function StripBannerFormBody({
                   <CmsInput
                     inputSize="large"
                     width="100%"
-                    placeholder="배너 문구를 입력하세요"
+                    placeholder="배너 문구를 입력해 주세요"
                     value={text}
                     maxLength={TEXT_MAX_LENGTH}
                     onChange={e => setText(e.target.value)}
@@ -366,7 +362,7 @@ function StripBannerFormBody({
                     <CmsInput
                       inputSize="large"
                       width="100%"
-                      placeholder="연결 링크를 입력하세요"
+                      placeholder="연결 링크를 입력해 주세요"
                       value={linkUrl}
                       disabled={!linkEnabled}
                       onChange={e => setLinkUrl(e.target.value)}
@@ -421,9 +417,7 @@ export function StripBannerFormModal({
   if (!open) return null
 
   const formKey =
-    variant === 'detail'
-      ? `detail-${initial?.id ?? 'unknown'}`
-      : `create-${String(open)}`
+    variant === 'detail' ? `detail-${initial?.id ?? 'unknown'}` : `create-${String(open)}`
 
   return (
     <StripBannerFormBody

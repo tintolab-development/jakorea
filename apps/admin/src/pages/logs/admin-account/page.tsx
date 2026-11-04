@@ -265,7 +265,7 @@ export function AdminAccountLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="관리자명을 입력하세요"
+                placeholder="관리자명을 입력해 주세요"
                 value={pendingFilters.name}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
                 onPressEnter={applySearch}
@@ -276,7 +276,7 @@ export function AdminAccountLogPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="아이디를 입력하세요"
+                placeholder="아이디를 입력해 주세요"
                 value={pendingFilters.loginId}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, loginId: value }))}
                 onPressEnter={applySearch}
@@ -315,11 +315,13 @@ export function AdminAccountLogPage() {
               />
             </div>
             <div className="admin-filter-area__actions">
-              <CmsButton className="admin-filter-area__search-button"
+              <CmsButton
+                className="admin-filter-area__search-button"
                 variant="primary"
                 size="medium"
                 type="button"
-                onClick={applySearch} >
+                onClick={applySearch}
+              >
                 조회
               </CmsButton>
             </div>

@@ -31,10 +31,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
     setDraftLink(donateCta.linkUrl)
   }, [donateCta.buttonLabel, donateCta.linkUrl, isEditing])
 
-  const rows = useMemo<Row[]>(
-    () => [{ key: 'donate', ...donateCta }],
-    [donateCta]
-  )
+  const rows = useMemo<Row[]>(() => [{ key: 'donate', ...donateCta }], [donateCta])
 
   const handleEdit = useCallback(() => {
     setDraftLabel(donateCta.buttonLabel)
@@ -87,7 +84,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
               width="100%"
               value={draftLabel}
               onChange={e => setDraftLabel(e.target.value)}
-              placeholder="버튼명을 입력하세요"
+              placeholder="버튼명을 입력해 주세요"
               aria-label="개인후원 CTA 버튼명"
             />
           ) : (
@@ -108,7 +105,7 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 width="100%"
                 value={draftLink}
                 onChange={e => setDraftLink(e.target.value)}
-                placeholder="연결 링크를 입력하세요"
+                placeholder="연결 링크를 입력해 주세요"
                 aria-label="성장 후원하기 연결 링크"
               />
             )
@@ -138,7 +135,8 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -148,7 +146,8 @@ export function DonateCtaSectionCard({ donateCta }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
