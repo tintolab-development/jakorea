@@ -110,7 +110,7 @@ export function PermissionRequestModal({
         </Form.Item>
 
         <Form.Item label="요청 역할" name="requestedRole">
-          <Select placeholder="역할을 선택하세요" options={roleOptions} />
+          <Select placeholder="역할을 선택해 주세요" options={roleOptions} />
         </Form.Item>
 
         <Form.Item label="요청 사유" name="reason">

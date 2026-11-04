@@ -213,7 +213,7 @@ export function buildMfaResetRequest(input: {
     return { ok: false, message: '사유에 인증번호나 토큰을 넣을 수 없습니다.' }
   }
   if (!MFA_RECOVERY_TYPES.includes(recoveryType as MfaRecoveryType)) {
-    return { ok: false, message: '복구 유형을 선택하세요.' }
+    return { ok: false, message: '복구 유형을 선택해 주세요.' }
   }
   if (!verificationReference) return { ok: false, message: '내부 티켓 번호를 입력해 주세요.' }
   if (verificationReference.length > 120) {

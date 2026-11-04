@@ -692,7 +692,7 @@ function BasicInfoSection({
                     <CmsSelect
                       withAllOption={false}
                       inputSize="small"
-                      placeholder="세부 프로그램명을 선택하세요"
+                      placeholder="세부 프로그램명을 선택해 주세요"
                       width="100%"
                       options={detailedProgramOptions}
                       value={
@@ -732,7 +732,7 @@ function BasicInfoSection({
                         presetMode="period"
                         value={start ?? dayjs()}
                         width="100%"
-                        placeholder="사업 운영 기간을 선택하세요"
+                        placeholder="사업 운영 기간을 선택해 주세요"
                         preferPeriodModeInPopover
                         showTimeToggle={false}
                         appliedSurfaceRange={operationRange}
@@ -825,7 +825,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="사업 분야를 선택하세요"
+                      placeholder="사업 분야를 선택해 주세요"
                       width="100%"
                       options={[...BUSINESS_AREA_OPTIONS]}
                       value={field.value || undefined}
@@ -858,7 +858,7 @@ function BasicInfoSection({
                       inputSize="small"
                       mode="multiple"
                       withAllOption={false}
-                      placeholder="후원사를 선택하세요"
+                      placeholder="후원사를 선택해 주세요"
                       width="100%"
                       showSearch
                       optionFilterProp="label"
@@ -912,7 +912,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       mode="multiple"
-                      placeholder="후원사 담당자를 선택하세요"
+                      placeholder="후원사 담당자를 선택해 주세요"
                       width="100%"
                       showSearch
                       optionFilterProp="label"
@@ -1042,7 +1042,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="교육 과정을 선택하세요"
+                      placeholder="교육 과정을 선택해 주세요"
                       width="100%"
                       options={[...PROGRAM_REGISTRATION_EDUCATION_COURSE_OPTIONS]}
                       value={field.value || undefined}
@@ -1072,7 +1072,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="IP Owned를 선택하세요"
+                      placeholder="IP Owned를 선택해 주세요"
                       width="100%"
                       options={[...PROGRAM_REGISTRATION_IP_OWNED_OPTIONS]}
                       value={field.value || undefined}
@@ -1104,7 +1104,7 @@ function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="Course Delivered By를 선택하세요"
+                      placeholder="Course Delivered By를 선택해 주세요"
                       width="100%"
                       options={[...PROGRAM_REGISTRATION_COURSE_DELIVERED_BY_OPTIONS]}
                       value={field.value || undefined}

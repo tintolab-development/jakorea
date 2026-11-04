@@ -349,7 +349,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="세부 프로그램명을 선택하세요"
+                  placeholder="세부 프로그램명을 선택해 주세요"
                   width="100%"
                   options={detailedProgramOptions}
                   value={detailedProgramId}
@@ -373,7 +373,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   presetMode="period"
                   value={operationAnchorDate}
                   width="100%"
-                  placeholder="사업 운영 기간을 선택하세요"
+                  placeholder="사업 운영 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   excludeBusinessPeriodConstraint
                   appliedSurfaceRange={operationRange}
@@ -429,7 +429,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="사업 분야를 선택하세요"
+                  placeholder="사업 분야를 선택해 주세요"
                   width={240}
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField}
@@ -449,7 +449,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="후원사를 선택하세요"
+                  placeholder="후원사를 선택해 주세요"
                   width={240}
                   options={sponsorOptions}
                   value={selectedSponsorId}
@@ -474,7 +474,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                   mode="multiple"
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="후원사 담당자를 선택하세요"
+                  placeholder="후원사 담당자를 선택해 주세요"
                   width={240}
                   showSearch
                   optionFilterProp="label"
@@ -526,7 +526,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="선택하세요"
+                  placeholder="선택해 주세요"
                   width={240}
                   options={educationCourseSelectOptions}
                   value={educationCourse}
@@ -544,7 +544,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="선택하세요"
+                  placeholder="선택해 주세요"
                   width={240}
                   options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
                   value={ipOwned}
@@ -564,7 +564,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="선택하세요"
+                  placeholder="선택해 주세요"
                   width={240}
                   options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
                   value={courseDeliveredBy}
@@ -603,7 +603,7 @@ export function OneCOneSRegistrationBasicInfoParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="IPS 유형을 선택하세요"
+                placeholder="IPS 유형을 선택해 주세요"
                 width={240}
                 options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
                 value={ipsCategory}

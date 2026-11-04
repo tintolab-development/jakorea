@@ -404,7 +404,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
       >
         <Form.Item label="프로그램/강의 선택" name="matchingId">
           <Select
-            placeholder="프로그램을 선택하세요"
+            placeholder="프로그램을 선택해 주세요"
             onChange={handleProgramChange}
             disabled={submitting}
           >
@@ -424,7 +424,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
                 size="large"
                 format="YYYY-MM-DD"
                 locale={locale}
-                placeholder="기간을 선택하세요"
+                placeholder="기간을 선택해 주세요"
                 disabled={submitting}
                 onChange={handlePeriodChange}
                 allowClear={false}
@@ -471,7 +471,7 @@ export function SettlementSubmitModal({ open, onCancel, onSuccess }: SettlementS
               <>
                 <Space direction="vertical" style={{ width: '100%' }} size="middle">
                   <Form.Item label="차시 수" name="sessions">
-                    <Select placeholder="차시 수를 선택하세요" disabled={submitting}>
+                    <Select placeholder="차시 수를 선택해 주세요" disabled={submitting}>
                       {[1, 2, 3, 4, 5, 6].map(session => (
                         <Select.Option key={session} value={session}>
                           {session}차시

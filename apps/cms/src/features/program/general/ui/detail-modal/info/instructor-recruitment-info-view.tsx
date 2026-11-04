@@ -174,7 +174,7 @@ export function GeneralProgramInstructorRecruitmentInfoView({
                         value={field.value ?? []}
                         options={[...INSTRUCTOR_TARGET_OPTIONS]}
                         onChange={v => field.onChange(parseInstructorTargetsSelectValue(v))}
-                        placeholder="모집 대상을 선택하세요"
+                        placeholder="모집 대상을 선택해 주세요"
                         className="program-detail-info-tab__target-select"
                       />
                     )}

@@ -1399,7 +1399,7 @@ function ScheduleEventBlock({
                       appliedSurfaceRange={scheduleRange}
                       appliedSurfaceWithTime={scheduleWithTime}
                       width={360}
-                      placeholder="일정을 선택하세요"
+                      placeholder="일정을 선택해 주세요"
                     />
                   ) : undefined
                 }

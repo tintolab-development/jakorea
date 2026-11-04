@@ -125,7 +125,7 @@ export function buildSmsSendCreateRequest(input: {
   const { draft, templateId, senderKey, senderProfileId } = input
   const programId = resolveSmsSendProgramId(draft.programId)
   if (!isNotificationSendWithoutProgram(draft.programId) && programId == null) {
-    throw new Error('대상 프로그램을 선택하세요.')
+    throw new Error('대상 프로그램을 선택해 주세요.')
   }
 
   const body: SmsSendCreateRequest = {
@@ -190,7 +190,7 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
     !isNotificationSendWithoutProgram(draft.programId) &&
     parseNotificationSendProgramId(draft.programId) == null
   ) {
-    return '대상 프로그램을 선택하세요.'
+    return '대상 프로그램을 선택해 주세요.'
   }
   const missingDirectContact = draft.recipients.some(
     recipient =>

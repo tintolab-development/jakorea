@@ -494,7 +494,7 @@ export function formatAlimtalkRecipientVariableGapMessage(
   const lines: string[] = []
   const needsProgram = [...new Set(gaps.flatMap(gap => gap.needsProgram))]
   if (needsProgram.length > 0) {
-    lines.push('프로그램 필수 변수가 있어 프로그램을 선택하세요.')
+    lines.push('프로그램 필수 변수가 있어 프로그램을 선택해 주세요.')
     lines.push(needsProgram.join(', '))
   }
   const unsafe = gaps.filter(gap => gap.unsafeManual.length > 0)

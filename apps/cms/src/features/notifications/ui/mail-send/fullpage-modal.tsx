@@ -509,7 +509,7 @@ export function SendFullpageModal({ open, onClose }: SendFullpageModalProps) {
 
   const handleDeleteSelected = () => {
     if (selectedRecipientIds.length === 0) {
-      showAlert({ title: '안내', content: '삭제할 수신자를 선택하세요.' })
+      showAlert({ title: '안내', content: '삭제할 수신자를 선택해 주세요.' })
       return
     }
     form.removeRecipients(selectedRecipientIds)

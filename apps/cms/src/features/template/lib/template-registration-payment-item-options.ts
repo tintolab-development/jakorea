@@ -141,5 +141,5 @@ export function useTemplateRegistrationPaymentItemOptions(): CmsSelectMultipleOp
 export function paymentItemSelectPlaceholder(state: PaymentItemCatalogState): string {
   if (state.isError) return '지급 항목을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.'
   if (!state.ready) return '지급 항목을 불러오는 중입니다.'
-  return '지급 항목을 선택하세요'
+  return '지급 항목을 선택해 주세요'
 }

@@ -266,7 +266,7 @@ describe('buildSmsSendCreateRequest', () => {
         draft: draft({ programId: 'prog-coy-2026' }),
         templateId: 101,
       })
-    ).toThrow('대상 프로그램을 선택하세요.')
+    ).toThrow('대상 프로그램을 선택해 주세요.')
   })
 
   it('maps DIRECT recipients with contact and without actorId', () => {
@@ -414,7 +414,7 @@ describe('buildSmsSendCreateRequest', () => {
 describe('validateSmsSendDraft', () => {
   it('requires template, sender phone, schedule, recipients, subject, and body', () => {
     expect(validateSmsSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
-      '대상 프로그램을 선택하세요.'
+      '대상 프로그램을 선택해 주세요.'
     )
     expect(
       validateSmsSendDraft(
@@ -456,7 +456,7 @@ describe('validateSmsSendDraft', () => {
       '발신 번호 형식이 올바르지 않습니다.'
     )
     expect(validateSmsSendDraft(draft({ sendTiming: 'scheduled', scheduledAt: null }))).toBe(
-      '예약 일시를 선택하세요.'
+      '예약 일시를 선택해 주세요.'
     )
     expect(
       validateSmsSendDraft(

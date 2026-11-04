@@ -216,7 +216,7 @@ export default function TextbookPage() {
         key: 'grade',
         type: 'select',
         label: '대상 학년',
-        placeholder: isGradeFilterEnabled ? '전체' : '교육 대상을 선택하세요',
+        placeholder: isGradeFilterEnabled ? '전체' : '교육 대상을 선택해 주세요',
         width: '16%',
         withAllOption: false,
         disabled: !isGradeFilterEnabled,

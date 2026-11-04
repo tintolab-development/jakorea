@@ -239,7 +239,7 @@ export function RecruitFormVolunteerInfoParagraph() {
                   presetMode="period"
                   value={programAnchor}
                   width="100%"
-                  placeholder="프로그램 운영 기간을 선택하세요"
+                  placeholder="프로그램 운영 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
                   showTimeToggle={false}
@@ -274,7 +274,7 @@ export function RecruitFormVolunteerInfoParagraph() {
                 inputSize="small"
                 width={240}
                 withAllOption={false}
-                placeholder="모집 대상을 선택하세요"
+                placeholder="모집 대상을 선택해 주세요"
                 options={[...VOLUNTEER_TARGET_OPTIONS]}
                 value={normalizeVolunteerTargetList(volunteerTargets ?? [])}
                 onChange={v => setVolunteerTargets(parseVolunteerTargetsSelectValue(v) ?? [])}

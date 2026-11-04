@@ -611,7 +611,7 @@ export function BasicInfoSection({
                         <CmsSelect
                           inputSize="small"
                           withAllOption={false}
-                          placeholder="세부 프로그램명을 선택하세요"
+                          placeholder="세부 프로그램명을 선택해 주세요"
                           width="100%"
                           showSearch
                           optionFilterProp="label"
@@ -676,7 +676,7 @@ export function BasicInfoSection({
                           presetMode="period"
                           value={start ?? null}
                           width="100%"
-                          placeholder="사업 운영 기간을 선택하세요"
+                          placeholder="사업 운영 기간을 선택해 주세요"
                           preferPeriodModeInPopover
                           appliedSurfaceRange={operationRange}
                           appliedSurfaceWithTime={operationRangeWithTime}
@@ -739,7 +739,7 @@ export function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="사업 분야를 선택하세요"
+                      placeholder="사업 분야를 선택해 주세요"
                       value={resolveStoredBusinessArea(field.value) || undefined}
                       options={[...BUSINESS_AREA_OPTIONS]}
                       onChange={next => {
@@ -791,7 +791,7 @@ export function BasicInfoSection({
                       inputSize="small"
                       mode="multiple"
                       withAllOption={false}
-                      placeholder="후원사를 선택하세요"
+                      placeholder="후원사를 선택해 주세요"
                       width="100%"
                       showSearch
                       optionFilterProp="label"
@@ -872,7 +872,7 @@ export function BasicInfoSection({
                           inputSize="small"
                           mode="multiple"
                           withAllOption={false}
-                          placeholder="후원사 담당자를 선택하세요"
+                          placeholder="후원사 담당자를 선택해 주세요"
                           width="100%"
                           showSearch
                           optionFilterProp="label"
@@ -1045,7 +1045,7 @@ export function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="교육 과정을 선택하세요"
+                      placeholder="교육 과정을 선택해 주세요"
                       width={240}
                       options={[...educationProcessSelectOptions]}
                       value={
@@ -1074,7 +1074,7 @@ export function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="IP Owned를 선택하세요"
+                      placeholder="IP Owned를 선택해 주세요"
                       width={240}
                       options={
                         trainedTeacherCommonInfo
@@ -1103,7 +1103,7 @@ export function BasicInfoSection({
                     <CmsSelect
                       inputSize="small"
                       withAllOption={false}
-                      placeholder="Course Delivered By를 선택하세요"
+                      placeholder="Course Delivered By를 선택해 주세요"
                       width={240}
                       options={
                         trainedTeacherCommonInfo
@@ -1162,7 +1162,7 @@ export function BasicInfoSection({
                       <CmsSelect
                         inputSize="small"
                         withAllOption={false}
-                        placeholder="IPS 유형을 선택하세요"
+                        placeholder="IPS 유형을 선택해 주세요"
                         width="100%"
                         options={[...IPS_OPTIONS]}
                         value={field.value ?? 'Prepare'}
@@ -1284,7 +1284,7 @@ export function BasicInfoSection({
                       presetMode="period"
                       value={start ?? null}
                       width="100%"
-                      placeholder="사업 운영 기간을 선택하세요"
+                      placeholder="사업 운영 기간을 선택해 주세요"
                       preferPeriodModeInPopover
                       appliedSurfaceRange={operationRange}
                       appliedSurfaceWithTime={operationRangeWithTime}
@@ -1349,7 +1349,7 @@ export function BasicInfoSection({
                 <CmsSelect
                   inputSize="small"
                   withAllOption={false}
-                  placeholder="사업 분야를 선택하세요"
+                  placeholder="사업 분야를 선택해 주세요"
                   value={resolveStoredBusinessArea(field.value) || undefined}
                   options={[...BUSINESS_AREA_OPTIONS]}
                   onChange={next => {
@@ -1552,7 +1552,7 @@ export function BasicInfoSection({
                   options={IP_OWNED_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  placeholder="IP Owned를 선택하세요"
+                  placeholder="IP Owned를 선택해 주세요"
                 />
               )}
             />
@@ -1576,7 +1576,7 @@ export function BasicInfoSection({
                   options={COURSE_DELIVERED_BY_OPTIONS}
                   onChange={v => field.onChange(v ?? undefined)}
                   width={'100%'}
-                  placeholder="Course Delivered By를 선택하세요"
+                  placeholder="Course Delivered By를 선택해 주세요"
                 />
               )}
             />

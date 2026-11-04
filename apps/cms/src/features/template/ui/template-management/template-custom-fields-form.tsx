@@ -400,7 +400,7 @@ export function TemplateCustomFieldsForm({
               className="template-custom-fields-form__secondary-textarea"
               value={secondaryValue}
               onChange={handleInputChange}
-              placeholder={activeField ? '입력해 주세요' : '위에서 항목을 선택하세요'}
+              placeholder={activeField ? '입력해 주세요' : '위에서 항목을 선택해 주세요'}
               disabled={!activeField}
               aria-label={activeField ? `${activeField.label} 입력` : '항목 선택 후 입력'}
               autoSize={{
@@ -413,7 +413,7 @@ export function TemplateCustomFieldsForm({
               className="template-custom-fields-form__secondary-input"
               value={secondaryValue}
               onChange={handleInputChange}
-              placeholder={activeField ? '입력해 주세요' : '위에서 항목을 선택하세요'}
+              placeholder={activeField ? '입력해 주세요' : '위에서 항목을 선택해 주세요'}
               disabled={!activeField}
               aria-label={activeField ? `${activeField.label} 입력` : '항목 선택 후 입력'}
               maxLength={

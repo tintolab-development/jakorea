@@ -680,7 +680,7 @@ function UjatBasicInfoLegacyParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="세부 프로그램명을 선택하세요"
+                  placeholder="세부 프로그램명을 선택해 주세요"
                   width="100%"
                   options={detailedProgramOptions}
                   value={detailedProgramSelectValue}
@@ -706,7 +706,7 @@ function UjatBasicInfoLegacyParagraph({
                   presetMode="period"
                   value={operationAnchorDate}
                   width="100%"
-                  placeholder="사업 운영 기간을 선택하세요"
+                  placeholder="사업 운영 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   excludeBusinessPeriodConstraint
                   appliedSurfaceRange={operationRange}
@@ -761,7 +761,7 @@ function UjatBasicInfoLegacyParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="사업 분야를 선택하세요"
+                  placeholder="사업 분야를 선택해 주세요"
                   width="100%"
                   options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                   value={businessField}
@@ -781,7 +781,7 @@ function UjatBasicInfoLegacyParagraph({
                 <CmsSelect
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="선택하세요"
+                  placeholder="선택해 주세요"
                   width="100%"
                   options={sponsorOptions}
                   value={sponsorId}
@@ -812,7 +812,7 @@ function UjatBasicInfoLegacyParagraph({
                   mode="multiple"
                   withAllOption={false}
                   inputSize="small"
-                  placeholder="후원사 담당자를 선택하세요"
+                  placeholder="후원사 담당자를 선택해 주세요"
                   width="100%"
                   showSearch
                   optionFilterProp="label"
@@ -899,7 +899,7 @@ function UjatBasicInfoLegacyParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="교육 과정을 선택하세요"
+                placeholder="교육 과정을 선택해 주세요"
                 width="100%"
                 options={educationCourseSelectOptions}
                 value={educationCourse}
@@ -969,7 +969,7 @@ function UjatBasicInfoLegacyParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="IPS 유형을 선택하세요"
+                placeholder="IPS 유형을 선택해 주세요"
                 width={240}
                 options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
                 value={ipsCategory}

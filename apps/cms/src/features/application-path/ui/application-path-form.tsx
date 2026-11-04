@@ -93,7 +93,7 @@ export function ApplicationPathForm({
           onChange={value => {
             setValue('programId', value)
           }}
-          placeholder="프로그램을 선택하세요"
+          placeholder="프로그램을 선택해 주세요"
           disabled={!!path || !!fixedProgramId} // 수정 시 또는 고정된 프로그램 ID가 있을 때는 변경 불가
         >
           {programs.map(program => (
@@ -119,7 +119,7 @@ export function ApplicationPathForm({
               setValue('googleFormUrl', '')
             }
           }}
-          placeholder="신청 경로를 선택하세요"
+          placeholder="신청 경로를 선택해 주세요"
         >
           <Option value="google_form">{pathTypeLabels.google_form}</Option>
           <Option value="internal">{pathTypeLabels.internal}</Option>

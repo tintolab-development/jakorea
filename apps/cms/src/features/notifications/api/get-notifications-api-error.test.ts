@@ -300,13 +300,13 @@ describe('get-notifications-api-error', () => {
         apiError(400, 'NOTIFICATION_PROGRAM_REQUIRED_FOR_RECIPIENTS'),
         'fallback'
       )
-    ).toBe('프로그램을 먼저 선택하세요.')
+    ).toBe('프로그램을 먼저 선택해 주세요.')
     expect(
       getNotificationsApiErrorMessage(
         apiError(400, 'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES'),
         'fallback'
       )
-    ).toBe('프로그램 필수 변수가 있어 프로그램을 선택하세요.')
+    ).toBe('프로그램 필수 변수가 있어 프로그램을 선택해 주세요.')
     expect(
       getNotificationsApiErrorMessage(
         apiError(400, 'NOTIFICATION_RECIPIENT_NOT_IN_PROGRAM'),
@@ -478,12 +478,12 @@ describe('NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:{키}', () => {
       'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:프로그램명,교육 일시'
     )
     expect(getNotificationsApiErrorMessage(error, 'fallback')).toBe(
-      '프로그램 필수 변수가 있어 프로그램을 선택하세요: 프로그램명, 교육 일시'
+      '프로그램 필수 변수가 있어 프로그램을 선택해 주세요: 프로그램명, 교육 일시'
     )
     expect(resolveNotificationSendFieldError(error)).toEqual({
       code: 'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES',
       field: 'program',
-      message: '프로그램 필수 변수가 있어 프로그램을 선택하세요: 프로그램명, 교육 일시',
+      message: '프로그램 필수 변수가 있어 프로그램을 선택해 주세요: 프로그램명, 교육 일시',
     })
   })
 
@@ -494,7 +494,7 @@ describe('NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:{키}', () => {
       'program required'
     )
     expect(resolveNotificationSendFieldError(error)?.message).toBe(
-      '프로그램 필수 변수가 있어 프로그램을 선택하세요: 프로그램명'
+      '프로그램 필수 변수가 있어 프로그램을 선택해 주세요: 프로그램명'
     )
   })
 

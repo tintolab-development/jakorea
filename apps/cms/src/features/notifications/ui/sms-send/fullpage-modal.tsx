@@ -389,7 +389,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
 
   function handleDeleteSelected() {
     if (selectedRecipientIds.length === 0) {
-      showAlert({ title: '안내', content: '삭제할 수신자를 선택하세요.' })
+      showAlert({ title: '안내', content: '삭제할 수신자를 선택해 주세요.' })
       return
     }
     form.removeRecipients(selectedRecipientIds)
@@ -435,7 +435,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
       if (!resolvedSenderProfileId) {
         showAlert({
           title: '필수 입력 안내',
-          content: 'NHN에 등록된 발신 번호를 선택하세요.',
+          content: 'NHN에 등록된 발신 번호를 선택해 주세요.',
         })
         return
       }

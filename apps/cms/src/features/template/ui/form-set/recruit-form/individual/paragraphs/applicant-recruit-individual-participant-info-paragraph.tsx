@@ -235,7 +235,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
                   presetMode="period"
                   value={programAnchor}
                   width="100%"
-                  placeholder="프로그램 운영 기간을 선택하세요"
+                  placeholder="프로그램 운영 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
                   showTimeToggle={false}
@@ -270,7 +270,7 @@ export function ApplicantRecruitIndividualParticipantInfoParagraph() {
                 inputSize="small"
                 width={240}
                 withAllOption={false}
-                placeholder="교육 대상을 선택하세요"
+                placeholder="교육 대상을 선택해 주세요"
                 options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
                 value={targetLevels}
                 onChange={v => setTargetLevels(Array.isArray(v) ? v.map(String) : [])}

@@ -103,8 +103,8 @@ import { RecipientTable } from './recipient-table'
 import '@/features/notifications/ui/shared/notification-fullpage-modal.css'
 import './fullpage-modal.css'
 
-const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택하세요.'
-const RECIPIENT_PROFILE_HINT = '발신 프로필을 먼저 선택하세요.'
+const EMPTY_HINT = '발신 프로필/템플릿을 먼저 선택해 주세요.'
+const RECIPIENT_PROFILE_HINT = '발신 프로필을 먼저 선택해 주세요.'
 const EMPTY_SECTION_TITLE = '발신 프로필을 먼저 선택해 주세요.'
 const EMPTY_SECTION_DESCRIPTION = '항목이 선택되면 이곳에 목록이 표시됩니다.'
 const UNSELECTED_CONTENT =
@@ -570,7 +570,7 @@ export function SendFullpageModal({ open, onClose, initialTemplateId }: SendFull
     if (selectedRecipientIds.length === 0) {
       showAlert({
         title: '안내',
-        content: '삭제할 수신자를 선택하세요.',
+        content: '삭제할 수신자를 선택해 주세요.',
       })
       return
     }

@@ -540,7 +540,7 @@ export function TableFilterGroup({
             inputSize="medium"
             className="table-filter-group__multi-select"
             aria-labelledby={fieldIds.label}
-            placeholder={field.placeholder || '선택하세요'}
+            placeholder={field.placeholder || '선택해 주세요'}
             value={arr}
             onChange={next => onFilterChange(field.key, next as string[])}
             options={field.multiSelectOptions ?? []}

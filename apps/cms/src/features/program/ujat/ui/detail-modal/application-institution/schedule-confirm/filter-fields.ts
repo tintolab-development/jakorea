@@ -59,7 +59,7 @@ export function buildUjatScheduleConfirmFilterFields(
       key: 'confirmedScheduleIsoDates',
       type: 'multiSelect',
       label: '교육 진행 확정 일정',
-      placeholder: '일정을 선택하세요',
+      placeholder: '일정을 선택해 주세요',
       multiSelectOptions: listRegisteredConfirmScheduleFilterOptions(regionKey),
       width: '25%',
     },

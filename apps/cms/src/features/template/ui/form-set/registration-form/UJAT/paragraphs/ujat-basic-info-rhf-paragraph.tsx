@@ -338,7 +338,7 @@ export function UjatBasicInfoRHFParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="선택하세요"
+                placeholder="선택해 주세요"
                 width="100%"
                 options={detailedProgramOptions}
                 value={detailedProgramSelectValue}
@@ -363,7 +363,7 @@ export function UjatBasicInfoRHFParagraph({
                 presetMode="period"
                 value={operationAnchorDate}
                 width="100%"
-                placeholder="사업 운영 기간을 선택하세요"
+                placeholder="사업 운영 기간을 선택해 주세요"
                 preferPeriodModeInPopover
                 excludeBusinessPeriodConstraint
                 appliedSurfaceRange={operationRange}
@@ -417,7 +417,7 @@ export function UjatBasicInfoRHFParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="선택하세요"
+                placeholder="선택해 주세요"
                 width="100%"
                 options={[...TEMPLATE_FORM_BUSINESS_AREA_OPTIONS]}
                 value={String(formValues.businessArea ?? '')}
@@ -437,7 +437,7 @@ export function UjatBasicInfoRHFParagraph({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="선택하세요"
+                placeholder="선택해 주세요"
                 width="100%"
                 options={sponsorOptions}
                 value={sponsorId}
@@ -463,7 +463,7 @@ export function UjatBasicInfoRHFParagraph({
                 mode="multiple"
                 withAllOption={false}
                 inputSize="small"
-                placeholder="선택하세요"
+                placeholder="선택해 주세요"
                 width="100%"
                 showSearch
                 optionFilterProp="label"
@@ -555,7 +555,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
-              placeholder="선택하세요"
+              placeholder="선택해 주세요"
               width="100%"
               options={educationCourseSelectOptions}
               value={String(formValues.educationProcess ?? '')}
@@ -571,7 +571,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
-              placeholder="선택하세요"
+              placeholder="선택해 주세요"
               width="100%"
               options={[...TEMPLATE_FORM_IP_OWNED_OPTIONS]}
               value={selectValue(formValues.ipOwned)}
@@ -589,7 +589,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
-              placeholder="선택하세요"
+              placeholder="선택해 주세요"
               width="100%"
               options={[...TEMPLATE_FORM_COURSE_DELIVERED_BY_OPTIONS]}
               value={selectValue(formValues.courseDeliveredBy)}
@@ -635,7 +635,7 @@ export function UjatBasicInfoRHFParagraph({
             <CmsSelect
               withAllOption={false}
               inputSize="small"
-              placeholder="선택하세요"
+              placeholder="선택해 주세요"
               width={240}
               options={[...PROGRAM_REGISTRATION_IPS_CATEGORY_OPTIONS]}
               value={String(formValues.ipsCategory ?? '')}

@@ -61,7 +61,7 @@ export const instructorFilterFields: FilterFieldConfig[] = [
     key: 'schoolNames',
     type: 'multiSelect',
     label: '기관명',
-    placeholder: '기관명을 선택하세요',
+    placeholder: '기관명을 선택해 주세요',
     multiSelectOptions: [],
   },
   {

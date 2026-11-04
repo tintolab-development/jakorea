@@ -20,9 +20,7 @@ export const NOTIFICATION_SEND_SCHEDULE_SHOW_TIME = {
 export type NotificationSendTiming = 'immediate' | 'scheduled'
 
 /** 입력 표시: YYYY.MM.DD(요일) HH:mm */
-export function formatNotificationSendScheduleDisplay(
-  value: Dayjs | null | undefined
-): string {
+export function formatNotificationSendScheduleDisplay(value: Dayjs | null | undefined): string {
   if (value == null) return ''
   return `${formatAppDatepickerDisplay(value)} ${value.format('HH:mm')}`
 }
@@ -51,8 +49,7 @@ export function nextNotificationSendSchedule(
   bufferSeconds: number = SCHEDULED_AT_MIN_BUFFER_SECONDS
 ): Dayjs {
   const min = now.add(bufferSeconds, 'second')
-  let candidate =
-    snapNotificationSendSchedule(min, minuteStep) ?? min.second(0).millisecond(0)
+  let candidate = snapNotificationSendSchedule(min, minuteStep) ?? min.second(0).millisecond(0)
   while (!candidate.isAfter(min)) {
     candidate = candidate.add(minuteStep > 0 ? minuteStep : 1, 'minute')
   }
@@ -87,7 +84,7 @@ export function validateNotificationScheduledAt(input: {
 }): string | null {
   if (input.sendTiming !== 'scheduled') return null
   const trimmed = input.scheduledAt?.trim()
-  if (!trimmed) return '예약 일시를 선택하세요.'
+  if (!trimmed) return '예약 일시를 선택해 주세요.'
   if (!isScheduledAtInFuture(trimmed, input.nowMs)) {
     return SCHEDULED_AT_MUST_BE_FUTURE_MESSAGE
   }
@@ -125,8 +122,6 @@ export function disablePastScheduleTimes(
     disabledMinutes: (selectedHour: number) =>
       selectedHour === min.hour() ? range(0, min.minute()) : [],
     disabledSeconds: (selectedHour: number, selectedMinute: number) =>
-      selectedHour === min.hour() && selectedMinute === min.minute()
-        ? range(0, min.second())
-        : [],
+      selectedHour === min.hour() && selectedMinute === min.minute() ? range(0, min.second()) : [],
   }
 }

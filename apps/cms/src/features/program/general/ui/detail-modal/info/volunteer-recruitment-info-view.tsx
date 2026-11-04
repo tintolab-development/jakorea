@@ -427,7 +427,7 @@ export function GeneralProgramVolunteerRecruitmentInfoView({
                         value={field.value ?? []}
                         options={[...VOLUNTEER_TARGET_OPTIONS]}
                         onChange={v => field.onChange(parseVolunteerTargetsSelectValue(v))}
-                        placeholder="모집 대상을 선택하세요"
+                        placeholder="모집 대상을 선택해 주세요"
                         className="program-detail-info-tab__target-select"
                       />
                     )}

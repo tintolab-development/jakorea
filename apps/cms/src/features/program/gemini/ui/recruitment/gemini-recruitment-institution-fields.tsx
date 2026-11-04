@@ -185,7 +185,7 @@ export function GeminiRecruitmentInstitutionFields({
                 inputSize="small"
                 width={240}
                 withAllOption={false}
-                placeholder="교육 대상을 선택하세요"
+                placeholder="교육 대상을 선택해 주세요"
                 options={GEMINI_RECRUITMENT_EDUCATION_TARGET_OPTIONS}
                 value={values.educationTargetLevels}
                 onChange={v =>
@@ -237,7 +237,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiRecruitmentPeriodDatePicker
                   value={applicationPeriod}
                   onChange={onApplicationPeriodChange}
-                  placeholder="기관 모집 기간을 선택하세요"
+                  placeholder="기관 모집 기간을 선택해 주세요"
                   dateOnly
                 />
               </div>
@@ -256,7 +256,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiRecruitmentPeriodDatePicker
                   value={trainingRequestPeriod}
                   onChange={onTrainingRequestPeriodChange}
-                  placeholder="연수 요청 가능기간을 선택하세요"
+                  placeholder="연수 요청 가능기간을 선택해 주세요"
                 />
               </div>
             ) : undefined

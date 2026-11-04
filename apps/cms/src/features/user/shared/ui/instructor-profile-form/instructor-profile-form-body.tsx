@@ -500,7 +500,8 @@ export function InstructorProfileFormBody({
       size="h32"
       adminAction="write"
       disabled={!onOpenJaGradeEvaluation}
-      onClick={() => onOpenJaGradeEvaluation?.()} >
+      onClick={() => onOpenJaGradeEvaluation?.()}
+    >
       등급 평가
     </CmsButton>
   )
@@ -749,7 +750,7 @@ export function InstructorProfileFormBody({
                   <div className="instructor-register-modal__fee-grade-select">
                     <Form.Item name="instructorFeeGrade" noStyle>
                       <CmsSelect
-                        placeholder="강사비 등급을 선택하세요"
+                        placeholder="강사비 등급을 선택해 주세요"
                         options={INSTRUCTOR_FEE_GRADE_OPTIONS}
                         inputSize="small"
                         width="100%"

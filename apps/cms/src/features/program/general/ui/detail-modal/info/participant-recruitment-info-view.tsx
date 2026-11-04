@@ -728,7 +728,7 @@ export function GeneralProgramParticipantRecruitmentInfoView({
                         value={field.value ?? []}
                         options={TARGET_LEVEL_OPTIONS}
                         onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
-                        placeholder="교육 대상을 선택하세요"
+                        placeholder="교육 대상을 선택해 주세요"
                         className="program-detail-info-tab__target-select"
                       />
                     )}

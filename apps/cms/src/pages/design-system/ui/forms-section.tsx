@@ -138,7 +138,7 @@ export function FormsSection() {
               <CmsSelect
                 inputSize={size}
                 label="Select"
-                placeholder="선택하세요"
+                placeholder="선택해 주세요"
                 options={SELECT_OPTIONS}
                 withAllOption={false}
                 allowClear
@@ -151,7 +151,7 @@ export function FormsSection() {
                 placeholder="검색어를 입력해 주세요"
                 options={['서울 강남 프로그램', '부산 해운대 프로그램']}
               />
-              <CmsDatePicker inputSize={size} label="Date" error message="날짜를 선택하세요" />
+              <CmsDatePicker inputSize={size} label="Date" error message="날짜를 선택해 주세요" />
             </div>
           </div>
         ))}

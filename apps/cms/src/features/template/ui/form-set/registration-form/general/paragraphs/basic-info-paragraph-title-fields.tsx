@@ -147,7 +147,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="세부 프로그램명을 선택하세요"
+                placeholder="세부 프로그램명을 선택해 주세요"
                 width="100%"
                 options={detailedProgramOptions}
                 value={detailedProgramSelectValue}

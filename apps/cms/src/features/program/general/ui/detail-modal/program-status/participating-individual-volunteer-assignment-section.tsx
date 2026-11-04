@@ -43,9 +43,7 @@ import {
   saveGeneralParticipantEducationScope,
 } from '@/features/program/general/api/admin-program-progress-service'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
-import {
-  EDUCATION_SCOPE_PUT_PRE_EDUCATION_MERGE_PENDING_MESSAGE,
-} from '@/features/program/general/lib/individual-approval-education-scope'
+import { EDUCATION_SCOPE_PUT_PRE_EDUCATION_MERGE_PENDING_MESSAGE } from '@/features/program/general/lib/individual-approval-education-scope'
 import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
@@ -115,47 +113,39 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     setWaitingSchedules(remoteWaitingSchedules)
     setSelectedAssignedKeys([])
     setSelectedWaitingKeys([])
-  }, [
-    isLoading,
-    remoteAssignedSchedules,
-    remoteWaitingSchedules,
-    volunteer.id,
-    program.id,
-  ])
+  }, [isLoading, remoteAssignedSchedules, remoteWaitingSchedules, volunteer.id, program.id])
 
-  const assignedColumns: ColumnsType<ParticipatingIndividualVolunteerAssignedScheduleRow> =
-    useMemo(
-      () => [
-        { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
-        {
-          title: '봉사 지역',
-          dataIndex: 'serviceRegion',
-          key: 'serviceRegion',
-          width: 445,
-          align: 'center',
-          ellipsis: true,
-        },
-        {
-          title: '자택과의 거리',
-          dataIndex: 'distanceFromHome',
-          key: 'distanceFromHome',
-          width: 445,
-          align: 'center',
-          render: (value: string) =>
-            renderDistanceFromHomeCell(value, scopeQuery.isFetching),
-        },
-        {
-          title: '담당 봉사 진행 일정',
-          dataIndex: 'scheduleLabel',
-          key: 'scheduleLabel',
-          width: 500,
-          minWidth: 500,
-          ...participatingScheduleTableColumnLayout(),
-          render: (label: string) => renderScheduleCell(label),
-        },
-      ],
-      [scopeQuery.isFetching]
-    )
+  const assignedColumns: ColumnsType<ParticipatingIndividualVolunteerAssignedScheduleRow> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
+      {
+        title: '봉사 지역',
+        dataIndex: 'serviceRegion',
+        key: 'serviceRegion',
+        width: 445,
+        align: 'center',
+        ellipsis: true,
+      },
+      {
+        title: '자택과의 거리',
+        dataIndex: 'distanceFromHome',
+        key: 'distanceFromHome',
+        width: 445,
+        align: 'center',
+        render: (value: string) => renderDistanceFromHomeCell(value, scopeQuery.isFetching),
+      },
+      {
+        title: '담당 봉사 진행 일정',
+        dataIndex: 'scheduleLabel',
+        key: 'scheduleLabel',
+        width: 500,
+        minWidth: 500,
+        ...participatingScheduleTableColumnLayout(),
+        render: (label: string) => renderScheduleCell(label),
+      },
+    ],
+    [scopeQuery.isFetching]
+  )
 
   const waitingColumns: ColumnsType<ParticipatingIndividualVolunteerWaitingScheduleRow> = useMemo(
     () => [
@@ -191,7 +181,9 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         key: 'assignmentStatus',
         width: 160,
         align: 'center',
-        render: (status: ParticipatingIndividualVolunteerWaitingScheduleRow['assignmentStatus']) => (
+        render: (
+          status: ParticipatingIndividualVolunteerWaitingScheduleRow['assignmentStatus']
+        ) => (
           <span
             className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${status === 'unavailable' ? 'cancelled' : status}`}
           >
@@ -341,7 +333,10 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             (r.preEducation === true || !selectedAssignedKeys.includes(r.id))
         )
         .map(r => r.scheduleId as number)
-      const ok = await persistAssignedScheduleIds(nextIds, payload.reason.trim() || '봉사 배정 해제')
+      const ok = await persistAssignedScheduleIds(
+        nextIds,
+        payload.reason.trim() || '봉사 배정 해제'
+      )
       if (!ok) return
       setUnassignConfirmOpen(false)
       setSelectedAssignedKeys([])
@@ -351,12 +346,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         reason: payload.reason,
       })
     },
-    [
-      assignedSchedules,
-      persistAssignedScheduleIds,
-      selectedAssignedKeys,
-      volunteer.volunteerName,
-    ]
+    [assignedSchedules, persistAssignedScheduleIds, selectedAssignedKeys, volunteer.volunteerName]
   )
 
   const handleSelectAssignConfirm = useCallback(async () => {
@@ -372,12 +362,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
     if (!ok) return
     setSelectAssignConfirmOpen(false)
     setSelectedWaitingKeys([])
-  }, [
-    assignedSchedules,
-    persistAssignedScheduleIds,
-    selectedWaitingKeys,
-    waitingSchedules,
-  ])
+  }, [assignedSchedules, persistAssignedScheduleIds, selectedWaitingKeys, waitingSchedules])
 
   const handleAddAssignConfirm = useCallback(async () => {
     if (!addAssignWaitingRowId) return
@@ -408,9 +393,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
 
   const unassignScheduleLabels = useMemo(
     () =>
-      assignedSchedules
-        .filter(r => selectedAssignedKeys.includes(r.id))
-        .map(r => r.scheduleLabel),
+      assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id)).map(r => r.scheduleLabel),
     [assignedSchedules, selectedAssignedKeys]
   )
 
@@ -450,7 +433,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
                 if (addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
-              }} >
+              }}
+            >
               추가 배정
             </CmsButton>
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
@@ -545,7 +529,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
             <CmsButton
               variant="secondary"
               size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)} >
+              onClick={() => setSelectAssignConfirmOpen(false)}
+            >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
@@ -580,7 +565,8 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
               onClick={() => {
                 setAddAssignModalOpen(false)
                 setAddAssignWaitingRowId(null)
-              }} >
+              }}
+            >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleAddAssignConfirm}>
@@ -593,7 +579,7 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
           <span style={{ display: 'block', marginBottom: 8 }}>봉사 일정 선택</span>
           <Select
             style={{ width: '100%' }}
-            placeholder="배정할 봉사 일정을 선택하세요"
+            placeholder="배정할 봉사 일정을 선택해 주세요"
             options={addAssignOptions}
             value={addAssignWaitingRowId ?? undefined}
             onChange={v => setAddAssignWaitingRowId(v)}

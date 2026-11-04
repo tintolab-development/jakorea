@@ -182,7 +182,7 @@ export function RecruitFormInstructorInfoParagraph() {
                   presetMode="period"
                   value={programAnchor}
                   width="100%"
-                  placeholder="프로그램 운영 기간을 선택하세요"
+                  placeholder="프로그램 운영 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
                   showTimeToggle={false}
@@ -217,7 +217,7 @@ export function RecruitFormInstructorInfoParagraph() {
                 inputSize="small"
                 width={240}
                 withAllOption={false}
-                placeholder="모집 대상을 선택하세요"
+                placeholder="모집 대상을 선택해 주세요"
                 options={[...INSTRUCTOR_TARGET_OPTIONS]}
                 value={recruitTargets}
                 onChange={v => setRecruitTargets(Array.isArray(v) ? v.map(String) : [])}
@@ -253,7 +253,7 @@ export function RecruitFormInstructorInfoParagraph() {
                   presetMode="period"
                   value={recruitAnchor}
                   width="100%"
-                  placeholder="모집 기간을 선택하세요"
+                  placeholder="모집 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
                   showTimeToggle={false}

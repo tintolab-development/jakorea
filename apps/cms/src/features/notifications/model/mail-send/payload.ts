@@ -48,7 +48,7 @@ export function buildMailSendPayload(draft: MailSendDraft): MailSendPayload {
 }
 
 export function validateMailSendDraft(draft: MailSendDraft): string | null {
-  if (!draft.templateId?.trim()) return '템플릿을 선택하세요.'
+  if (!draft.templateId?.trim()) return '템플릿을 선택해 주세요.'
   const senderError = validateMailSenderEmail(draft.senderEmail)
   if (senderError) return senderError
   const scheduleError = validateNotificationScheduledAt({
@@ -61,7 +61,7 @@ export function validateMailSendDraft(draft: MailSendDraft): string | null {
     !isNotificationSendWithoutProgram(draft.programId) &&
     parseNotificationSendProgramId(draft.programId) == null
   ) {
-    return '대상 프로그램을 선택하세요.'
+    return '대상 프로그램을 선택해 주세요.'
   }
   const missingDirectContact = draft.recipients.some(
     recipient =>

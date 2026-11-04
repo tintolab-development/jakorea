@@ -75,8 +75,7 @@ function patchTitlePeriod(
       startPeriodMode === 'immediate' ? null : (next.startPeriodPresetLabel ?? null),
     endPeriodPresetLabel:
       endPeriodMode === 'immediate' ? null : (next.endPeriodPresetLabel ?? null),
-    periodMode:
-      startPeriodMode === 'custom' || endPeriodMode === 'custom' ? 'custom' : 'immediate',
+    periodMode: startPeriodMode === 'custom' || endPeriodMode === 'custom' ? 'custom' : 'immediate',
   }
 }
 
@@ -107,7 +106,10 @@ function LectureReportTitlePeriodSettings({
 }) {
   const startChoice = resolveLectureReportStartPeriodChoice(active)
   const endChoice = resolveLectureReportEndPeriodChoice(active)
-  const activityDay = useMemo(() => resolveLectureReportActivityDaySample(active.startAt), [active.startAt])
+  const activityDay = useMemo(
+    () => resolveLectureReportActivityDaySample(active.startAt),
+    [active.startAt]
+  )
 
   const startAnchorDate = useMemo((): Dayjs => {
     if (active.startAt) {
@@ -150,7 +152,8 @@ function LectureReportTitlePeriodSettings({
           onChange={next => {
             const choice = String(next ?? 'immediate') as LectureReportStartPeriodChoice
             updateParagraph(active.id, cur => {
-              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                return cur
               if (choice === 'immediate') {
                 return patchTitlePeriod(cur, {
                   startPeriodMode: 'immediate',
@@ -181,11 +184,12 @@ function LectureReportTitlePeriodSettings({
             width="100%"
             suppressAutoTodayWhenEmpty
             value={active.startAt ? startAnchorDate : null}
-            placeholder="시작일을 선택하세요"
+            placeholder="시작일을 선택해 주세요"
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   startPeriodMode: 'custom',
                   startAt: next.startOf('day').toISOString(),
@@ -221,7 +225,8 @@ function LectureReportTitlePeriodSettings({
           onChange={next => {
             const choice = String(next ?? 'immediate') as LectureReportEndPeriodChoice
             updateParagraph(active.id, cur => {
-              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                return cur
               if (choice === 'immediate') {
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'immediate',
@@ -252,13 +257,14 @@ function LectureReportTitlePeriodSettings({
             width="100%"
             suppressAutoTodayWhenEmpty
             value={active.endAt ? endAnchorDate : null}
-            placeholder="종료일을 선택하세요"
+            placeholder="종료일을 선택해 주세요"
             preferPeriodModeInPopover
             appliedSurfaceRange={endAppliedSurfaceRange}
             appliedSurfaceWithTime={endAppliedSurfaceWithTime}
             onRangeChange={([, end]) => {
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'custom',
                   endAt: end.toISOString(),
@@ -269,7 +275,8 @@ function LectureReportTitlePeriodSettings({
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'custom',
                   endAt: next.endOf('day').toISOString(),
@@ -381,7 +388,8 @@ function UjatEduJournalTitlePeriodSettings({
           onChange={next => {
             const choice = String(next ?? 'immediate') as UjatEduJournalStartPeriodChoice
             updateParagraph(active.id, cur => {
-              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                return cur
               if (choice === 'immediate') {
                 return patchTitlePeriod(cur, {
                   startPeriodMode: 'immediate',
@@ -427,11 +435,12 @@ function UjatEduJournalTitlePeriodSettings({
             width="100%"
             suppressAutoTodayWhenEmpty
             value={active.startAt ? startAnchorDate : null}
-            placeholder="시작일을 선택하세요"
+            placeholder="시작일을 선택해 주세요"
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   startPeriodMode: 'custom',
                   startAt: next.startOf('day').toISOString(),
@@ -467,7 +476,8 @@ function UjatEduJournalTitlePeriodSettings({
           onChange={next => {
             const choice = String(next ?? 'immediate') as UjatEduJournalEndPeriodChoice
             updateParagraph(active.id, cur => {
-              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                return cur
               if (choice === 'immediate') {
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'immediate',
@@ -513,13 +523,14 @@ function UjatEduJournalTitlePeriodSettings({
             width="100%"
             suppressAutoTodayWhenEmpty
             value={active.endAt ? endAnchorDate : null}
-            placeholder="종료일을 선택하세요"
+            placeholder="종료일을 선택해 주세요"
             preferPeriodModeInPopover
             appliedSurfaceRange={endAppliedSurfaceRange}
             appliedSurfaceWithTime={endAppliedSurfaceWithTime}
             onRangeChange={([, end]) => {
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'custom',
                   endAt: end.toISOString(),
@@ -530,7 +541,8 @@ function UjatEduJournalTitlePeriodSettings({
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'custom',
                   endAt: next.endOf('day').toISOString(),
@@ -637,7 +649,8 @@ function UjatEduPlanTitlePeriodSettings({
           onChange={next => {
             const choice = String(next ?? 'immediate') as UjatEduPlanStartPeriodChoice
             updateParagraph(active.id, cur => {
-              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                return cur
               if (choice === 'immediate') {
                 return patchTitlePeriod(cur, {
                   startPeriodMode: 'immediate',
@@ -676,11 +689,12 @@ function UjatEduPlanTitlePeriodSettings({
             width="100%"
             suppressAutoTodayWhenEmpty
             value={active.startAt ? startAnchorDate : null}
-            placeholder="시작일을 선택하세요"
+            placeholder="시작일을 선택해 주세요"
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   startPeriodMode: 'custom',
                   startAt: next.startOf('day').toISOString(),
@@ -701,7 +715,8 @@ function UjatEduPlanTitlePeriodSettings({
           onChange={next => {
             const choice = String(next ?? 'immediate') as UjatEduPlanEndPeriodChoice
             updateParagraph(active.id, cur => {
-              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                return cur
               if (choice === 'immediate') {
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'immediate',
@@ -747,13 +762,14 @@ function UjatEduPlanTitlePeriodSettings({
             width="100%"
             suppressAutoTodayWhenEmpty
             value={active.endAt ? endAnchorDate : null}
-            placeholder="종료일을 선택하세요"
+            placeholder="종료일을 선택해 주세요"
             preferPeriodModeInPopover
             appliedSurfaceRange={endAppliedSurfaceRange}
             appliedSurfaceWithTime={endAppliedSurfaceWithTime}
             onRangeChange={([, end]) => {
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'custom',
                   endAt: end.toISOString(),
@@ -764,7 +780,8 @@ function UjatEduPlanTitlePeriodSettings({
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(cur, {
                   endPeriodMode: 'custom',
                   endAt: next.endOf('day').toISOString(),
@@ -838,7 +855,7 @@ function DefaultTitleWithPeriodSettings({
 
   const combinedAnchorDate = useMemo(() => combinedPickerValue ?? dayjs(), [combinedPickerValue])
 
-  const endPickerPlaceholder = active.endPeriodPresetLabel?.trim() || '마감일을 선택하세요'
+  const endPickerPlaceholder = active.endPeriodPresetLabel?.trim() || '마감일을 선택해 주세요'
   const surveyStartDisabledDate = useMemo(
     () => resolveSurveyTitlePeriodDisabledDate(active.id),
     [active.id]
@@ -852,13 +869,12 @@ function DefaultTitleWithPeriodSettings({
           value={startMode}
           onChange={e =>
             updateParagraph(active.id, cur => {
-              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                return cur
               const mode = e.target.value as TitleWithPeriodParagraph['startPeriodMode']
               return patchTitlePeriod(cur, {
                 startPeriodMode: mode,
-                ...(mode === 'immediate'
-                  ? { startAt: null, startPeriodPresetLabel: null }
-                  : {}),
+                ...(mode === 'immediate' ? { startAt: null, startPeriodPresetLabel: null } : {}),
               })
             })
           }
@@ -890,19 +906,17 @@ function DefaultTitleWithPeriodSettings({
             width="100%"
             suppressAutoTodayWhenEmpty
             value={active.startAt ? startAnchorDate : null}
-            placeholder="시작일을 선택하세요"
+            placeholder="시작일을 선택해 주세요"
             disabledDate={surveyStartDisabledDate}
             presetDisplayText={
-              !active.startAt ? active.startPeriodPresetLabel ?? undefined : undefined
+              !active.startAt ? (active.startPeriodPresetLabel ?? undefined) : undefined
             }
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
-                return patchTitlePeriod(
-                  patchSurveyTitleWritingPeriodCustomStartDate(cur, next),
-                  {}
-                )
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
+                return patchTitlePeriod(patchSurveyTitleWritingPeriodCustomStartDate(cur, next), {})
               })
             }}
           />
@@ -957,13 +971,12 @@ function DefaultTitleWithPeriodSettings({
           value={endMode}
           onChange={e =>
             updateParagraph(active.id, cur => {
-              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+              if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                return cur
               const mode = e.target.value as TitleWithPeriodParagraph['endPeriodMode']
               return patchTitlePeriod(cur, {
                 endPeriodMode: mode,
-                ...(mode === 'immediate'
-                  ? { endAt: null, endPeriodPresetLabel: null }
-                  : {}),
+                ...(mode === 'immediate' ? { endAt: null, endPeriodPresetLabel: null } : {}),
               })
             })
           }
@@ -999,7 +1012,8 @@ function DefaultTitleWithPeriodSettings({
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
-                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') return cur
+                if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
+                  return cur
                 return patchTitlePeriod(patchSurveyTitleWritingPeriodCustomEndDate(cur, next), {})
               })
             }}

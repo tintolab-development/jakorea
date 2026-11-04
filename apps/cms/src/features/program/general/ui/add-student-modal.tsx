@@ -199,7 +199,7 @@ export function AddStudentModal({
                     inputSize="medium"
                     width="100%"
                     withAllOption={false}
-                    placeholder="학급을 선택하세요"
+                    placeholder="학급을 선택해 주세요"
                     options={gradeClassOptions}
                   />
                 ) : (

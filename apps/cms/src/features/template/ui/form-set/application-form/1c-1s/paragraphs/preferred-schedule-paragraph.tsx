@@ -58,12 +58,13 @@ function ScheduleDateAndSessionRow({
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
-            <ParagraphDatePicker inputSize="small"
+            <ParagraphDatePicker
+              inputSize="small"
               mode="single"
               presetMode="date"
               customizable={false}
               suppressAutoTodayWhenEmpty
-              placeholder="희망 교육 날짜를 선택하세요"
+              placeholder="희망 교육 날짜를 선택해 주세요"
               value={block.date}
               onChange={next => onPatch({ date: next })}
               disabledDate={disabledDate}
@@ -133,7 +134,8 @@ function ScheduleTimeRow({
             />
             <span>교시</span>
             <DetailInfoForm.InputsSeparator />
-            <ParagraphTimePicker inputSize="small"
+            <ParagraphTimePicker
+              inputSize="small"
               value={start}
               onTimeRangeChange={range => onPatch({ classPeriod, start: range[0], end: range[1] })}
               placeholder="시간을 선택해 주세요"
