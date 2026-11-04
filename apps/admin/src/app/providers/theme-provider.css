@@ -105,3 +105,8 @@
   --color-payment-order-line-rejected-text: #464646;
   --color-payment-order-line-rejected-bg: #f2f3f5;
 }
+
+/* 토글(Switch) — Figma: 꺼짐 상태 썸 그림자 없음 (켜짐 그림자는 theme-provider.tsx handleShadow) */
+.ant-switch:not(.ant-switch-checked) .ant-switch-handle::before {
+  box-shadow: none;
+}
