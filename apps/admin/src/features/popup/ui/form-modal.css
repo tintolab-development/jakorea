@@ -93,17 +93,23 @@
 }
 
 .popup-form-modal__preview {
-  width: 72px;
-  height: 72px;
   flex-shrink: 0;
   display: flex;
+  align-items: center;
   overflow: visible;
 }
 
-.popup-form-modal__preview img {
+.popup-form-modal__preview:not(:has(img)) {
   width: 72px;
   height: 72px;
-  object-fit: cover;
+}
+
+.popup-form-modal__preview img {
+  width: auto;
+  height: auto;
+  max-height: 72px;
+  max-width: 100%;
+  object-fit: contain;
   border: 1px solid var(--Border-default, #e0e0e0);
   border-radius: 8px;
   box-sizing: border-box;
