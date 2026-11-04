@@ -669,7 +669,7 @@ export function EducationTextbooksPage() {
               type="button"
               onClick={() => setTargetsOpen(true)}
             >
-              교육 대상 관리
+              교육 대상 설정
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               교재 등록
