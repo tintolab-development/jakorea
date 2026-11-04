@@ -5,7 +5,7 @@
 export { CmsButton } from './cms-button'
 export type { CmsButtonProps, CmsButtonVariant, CmsButtonSize } from './cms-button'
 
-export { ExcelButton } from './excel-button'
+export { ExcelButton, EXCEL_EMPTY_DATA_ALERT } from './excel-button'
 export type { ExcelButtonProps } from './excel-button'
 
 export { TealHeaderModal } from './teal-header-modal'
