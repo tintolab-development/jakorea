@@ -1,9 +1,46 @@
 /**
- * 값 셀 안 중첩 DetailInfoForm — 실적 2×2 / CTA 2행
+ * 값 셀(td) 안 중첩 테이블 — 시안 2×2 / CTA 2행 가로 격자
+ * 규격: apps/admin/.cursor/rules/design/detail-info-nested-table.mdc
+ * (DetailInfoForm 중첩 금지 — flex·label 고정폭 충돌)
  */
-import { DetailInfoForm } from '@jakorea/form-template-runtime'
+import type { ReactNode } from 'react'
 import type { PerformanceMetric } from '@/entities/main-content/model/types'
 import { CmsInput } from '@/shared/ui'
+
+/** Figma Table / Vertical / Cell required — 라벨 텍스트 shrink 래퍼 */
+export function MainContentRequiredLabel({
+  children,
+  required,
+}: {
+  children: ReactNode
+  required: boolean
+}) {
+  return (
+    <span className="main-content-required-label">
+      {children}
+      {required ? (
+        <span className="main-content-required-label__mark" aria-hidden>
+          *
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
+function NestedTableLabel({ children, required }: { children: string; required: boolean }) {
+  return (
+    <div className="main-content-nested-table__label">
+      <span className="main-content-nested-table__label-inner">
+        {children}
+        {required ? (
+          <span className="main-content-nested-table__required" aria-hidden>
+            *
+          </span>
+        ) : null}
+      </span>
+    </div>
+  )
+}
 
 function formatMetricView(metric: PerformanceMetric): string {
   return `${metric.value}${metric.unit}`
@@ -14,52 +51,51 @@ type MetricsNestedTableProps = {
   mode: 'view' | 'edit'
   onChangeMetric: (
     id: PerformanceMetric['id'],
-    patch: Partial<Pick<PerformanceMetric, 'value' | 'unit'>>,
+    patch: Partial<Pick<PerformanceMetric, 'value' | 'unit'>>
   ) => void
 }
 
 /** 실적 및 성과 td — 라벨|값 × 2열 × 2행 */
-export function MetricsNestedTable({ metrics, mode, onChangeMetric }: MetricsNestedTableProps) {
+export function MetricsNestedTable({
+  metrics,
+  mode,
+  onChangeMetric,
+}: MetricsNestedTableProps) {
   const items = metrics.slice(0, 4)
-  const rows: PerformanceMetric[][] = []
-  for (let i = 0; i < items.length; i += 2) {
-    rows.push(items.slice(i, i + 2))
-  }
 
   return (
-    <DetailInfoForm
-      title="실적 및 성과"
-      hideHeader
-      mode={mode}
-      className="main-content-nested-form main-content-nested-form--metrics"
+    <div
+      className={[
+        'main-content-nested-table',
+        'main-content-nested-table--metrics',
+        mode === 'view' ? 'main-content-nested-table--view' : 'main-content-nested-table--edit',
+      ].join(' ')}
+      role="group"
+      aria-label="실적 및 성과"
     >
-      {rows.map(row => (
-        <DetailInfoForm.Row key={row.map(item => item.id).join('-')} type="double">
-          {row.map(metric => (
-            <DetailInfoForm.Field
-              key={metric.id}
-              label={metric.label}
-              required
-              labelWidth={220}
-              view={<span className="main-content-metric-view">{formatMetricView(metric)}</span>}
-              edit={
-                <div className="main-content-metric-edit">
-                  <CmsInput
-                    inputSize="compact"
-                    width="100%"
-                    value={metric.value}
-                    onChange={e => onChangeMetric(metric.id, { value: e.target.value })}
-                    placeholder="수치"
-                    aria-label={`${metric.label} 수치`}
-                  />
-                  <span className="main-content-metric-edit__unit">{metric.unit}</span>
-                </div>
-              }
-            />
-          ))}
-        </DetailInfoForm.Row>
+      {items.map(metric => (
+        <div key={metric.id} className="main-content-nested-table__cell">
+          <NestedTableLabel required={mode === 'edit'}>{metric.label}</NestedTableLabel>
+          <div className="main-content-nested-table__value">
+            {mode === 'edit' ? (
+              <div className="main-content-metric-edit">
+                <CmsInput
+                  inputSize="small"
+                  width="120px"
+                  value={metric.value}
+                  onChange={e => onChangeMetric(metric.id, { value: e.target.value })}
+                  placeholder="수치"
+                  aria-label={`${metric.label} 수치`}
+                />
+                <span className="main-content-metric-edit__unit">{metric.unit}</span>
+              </div>
+            ) : (
+              <span className="main-content-metric-view">{formatMetricView(metric)}</span>
+            )}
+          </div>
+        </div>
       ))}
-    </DetailInfoForm>
+    </div>
   )
 }
 
@@ -79,85 +115,61 @@ export function CtaNestedTable({
   onChangeCta1,
   onChangeCta2,
 }: CtaNestedTableProps) {
+  const rows = [
+    {
+      key: 'cta1',
+      buttonLabel: '버튼명 01',
+      linkLabel: '연결 링크 01',
+      data: cta1,
+      onChange: onChangeCta1,
+    },
+    {
+      key: 'cta2',
+      buttonLabel: '버튼명 02',
+      linkLabel: '연결 링크 02',
+      data: cta2,
+      onChange: onChangeCta2,
+    },
+  ] as const
+
   return (
-    <DetailInfoForm
-      title="CTA 버튼"
-      hideHeader
-      mode={mode}
-      className="main-content-nested-form main-content-nested-form--cta"
-    >
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="버튼명 01"
-          required
-          labelWidth={220}
-          view={<span className="main-content-nested-form__text">{cta1.label || '-'}</span>}
-          edit={
-            <CmsInput
-              inputSize="compact"
-              width="100%"
-              value={cta1.label}
-              onChange={e => onChangeCta1({ label: e.target.value })}
-              placeholder="버튼명을 입력해 주세요"
-            />
-          }
-        />
-        <DetailInfoForm.Field
-          label="연결 링크 01"
-          required
-          labelWidth={220}
-          view={
-            <span className="main-content-nested-form__text main-content-nested-form__text--url">
-              {cta1.linkUrl || '-'}
-            </span>
-          }
-          edit={
-            <CmsInput
-              inputSize="compact"
-              width="100%"
-              value={cta1.linkUrl}
-              onChange={e => onChangeCta1({ linkUrl: e.target.value })}
-              placeholder="연결 링크를 입력해 주세요"
-            />
-          }
-        />
-      </DetailInfoForm.Row>
-      <DetailInfoForm.Row type="double">
-        <DetailInfoForm.Field
-          label="버튼명 02"
-          required
-          labelWidth={220}
-          view={<span className="main-content-nested-form__text">{cta2.label || '-'}</span>}
-          edit={
-            <CmsInput
-              inputSize="compact"
-              width="100%"
-              value={cta2.label}
-              onChange={e => onChangeCta2({ label: e.target.value })}
-              placeholder="버튼명을 입력해 주세요"
-            />
-          }
-        />
-        <DetailInfoForm.Field
-          label="연결 링크 02"
-          required
-          labelWidth={220}
-          view={
-            <span className="main-content-nested-form__text main-content-nested-form__text--url">
-              {cta2.linkUrl || '-'}
-            </span>
-          }
-          edit={
-            <CmsInput
-              inputSize="compact"
-              width="100%"
-              value={cta2.linkUrl}
-              onChange={e => onChangeCta2({ linkUrl: e.target.value })}
-              placeholder="연결 링크를 입력해 주세요"
-            />
-          }
-        />
-      </DetailInfoForm.Row>
-    </DetailInfoForm>
+    <div className="main-content-nested-table main-content-nested-table--cta" role="group" aria-label="CTA 버튼">
+      {rows.map(row => (
+        <div key={row.key} className="main-content-nested-table__row">
+          <div className="main-content-nested-table__cell">
+            <NestedTableLabel required={mode === 'edit'}>{row.buttonLabel}</NestedTableLabel>
+            <div className="main-content-nested-table__value">
+              {mode === 'edit' ? (
+                <CmsInput
+                  inputSize="small"
+                  width="100%"
+                  value={row.data.label}
+                  onChange={e => row.onChange({ label: e.target.value })}
+                  placeholder="버튼명을 입력해 주세요"
+                />
+              ) : (
+                <span>{row.data.label || '-'}</span>
+              )}
+            </div>
+          </div>
+          <div className="main-content-nested-table__cell">
+            <NestedTableLabel required={mode === 'edit'}>{row.linkLabel}</NestedTableLabel>
+            <div className="main-content-nested-table__value">
+              {mode === 'edit' ? (
+                <CmsInput
+                  inputSize="small"
+                  width="100%"
+                  value={row.data.linkUrl}
+                  onChange={e => row.onChange({ linkUrl: e.target.value })}
+                  placeholder="연결 링크를 입력해 주세요"
+                />
+              ) : (
+                <span className="main-content-nested-table__url">{row.data.linkUrl || '-'}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }

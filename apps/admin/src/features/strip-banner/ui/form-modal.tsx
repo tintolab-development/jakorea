@@ -26,11 +26,8 @@ import './form-modal.css'
 
 const TEXT_MAX_LENGTH = 80
 
-const CREATE_DESCRIPTION =
-  '홈페이지 메인 화면 최상단에 노출되는 띠배너를 설정해 주세요. 연결 링크를 설정하면 배너에 이동 화살표가 노출되며, 배너 선택 시 입력된 주소 화면으로 이동됩니다.'
-
-const DETAIL_DESCRIPTION =
-  '홈페이지 메인 화면 최상단에 노출되는 띠배너입니다. 연결 링크가 설정된 경우, 배너에 이동 화살표가 노출되며, 배너 선택 시 입력된 주소 화면으로 이동됩니다.'
+const MODAL_DESCRIPTION =
+  '홈페이지 메인 화면 최상단에 노출되는 띠배너입니다.\n연결 링크를 설정하면 배너에 이동 화살표가 표시되며, 배너를 클릭하면 설정된 페이지로 이동합니다.'
 
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'] as const
 
@@ -117,7 +114,7 @@ function StripBannerFormBody({
     if (trimmed.length > TEXT_MAX_LENGTH) {
       showAlert({
         title: '글자 수 초과',
-        content: `배너 문구는 최대 ${TEXT_MAX_LENGTH}자까지 입력할 수 있습니다.`,
+        content: `배너 텍스트는 최대 ${TEXT_MAX_LENGTH}자까지 입력할 수 있습니다.`,
       })
       return null
     }
@@ -161,9 +158,10 @@ function StripBannerFormBody({
   }, [formMode, onSubmit, validateAndBuild, variant])
 
   const title = variant === 'create' ? '상단 띠배너 등록' : '상단 띠배너 상세'
-  const description = variant === 'create' ? CREATE_DESCRIPTION : DETAIL_DESCRIPTION
+  const description = MODAL_DESCRIPTION
+  const isView = formMode === 'view'
   const primaryLabel =
-    variant === 'create' ? '배너 등록' : formMode === 'view' ? '배너 수정' : '배너 수정'
+    variant === 'create' ? '배너 등록' : isView ? '배너 수정' : '배너 수정'
 
   const periodViewLabel =
     periodRange[0] && periodRange[1]
@@ -185,7 +183,7 @@ function StripBannerFormBody({
               <CmsButton
                 className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
                 disabled={confirmLoading || deleteLoading}
@@ -196,7 +194,7 @@ function StripBannerFormBody({
             ) : null}
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               onClick={onCancel}
               disabled={confirmLoading || deleteLoading}
@@ -205,7 +203,7 @@ function StripBannerFormBody({
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="large"
+              size="h40"
               type="button"
               loading={confirmLoading}
               disabled={confirmLoading || deleteLoading}
@@ -217,13 +215,13 @@ function StripBannerFormBody({
         }
       >
         <div className="strip-banner-form-modal__forms">
-          {variant === 'detail' ? (
-            <DetailInfoForm
-              title="등록 정보"
-              hideHeader
-              mode={formMode}
-              className="strip-banner-form-modal__form strip-banner-form-modal__form--meta"
-            >
+          <DetailInfoForm
+            title={title}
+            hideHeader
+            mode={formMode}
+            className="strip-banner-form-modal__form"
+          >
+            {variant === 'detail' ? (
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field
                   label="등록일시"
@@ -234,7 +232,7 @@ function StripBannerFormBody({
                 />
                 <DetailInfoForm.Field
                   label="사용 여부"
-                  required
+                  required={!isView}
                   view={<span>{isActive ? '사용' : '미사용'}</span>}
                   edit={
                     <CmsRadioGroup
@@ -252,16 +250,7 @@ function StripBannerFormBody({
                   }
                 />
               </DetailInfoForm.Row>
-            </DetailInfoForm>
-          ) : null}
-
-          <DetailInfoForm
-            title={title}
-            hideHeader
-            mode={formMode}
-            className="strip-banner-form-modal__form"
-          >
-            {variant === 'create' ? (
+            ) : (
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="사용 여부"
@@ -283,18 +272,18 @@ function StripBannerFormBody({
                   }
                 />
               </DetailInfoForm.Row>
-            ) : null}
+            )}
 
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
-                label="배너 문구"
-                required
+                label="배너 텍스트"
+                required={!isView}
                 view={<span>{text || '-'}</span>}
                 edit={
                   <CmsInput
-                    inputSize="large"
+                    inputSize="small"
                     width="100%"
-                    placeholder="배너 문구를 입력해 주세요"
+                    placeholder="배너 텍스트를 입력해 주세요"
                     value={text}
                     maxLength={TEXT_MAX_LENGTH}
                     onChange={e => setText(e.target.value)}
@@ -306,11 +295,11 @@ function StripBannerFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="게시 기간"
-                required
+                required={!isView}
                 view={<span>{periodViewLabel}</span>}
                 edit={
                   <CmsPeriodDatePicker
-                    inputSize="large"
+                    inputSize="small"
                     width="100%"
                     value={periodRange}
                     onChange={dates => {
@@ -326,6 +315,7 @@ function StripBannerFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="연결 링크"
+                required={!isView}
                 view={
                   <div className="strip-banner-form-modal__link-view">
                     <span>{linkEnabled ? '연결' : '미연결'}</span>
@@ -351,8 +341,9 @@ function StripBannerFormBody({
                         미연결
                       </CmsRadio>
                     </CmsRadioGroup>
+                    <DetailInfoForm.TdDivider />
                     <CmsInput
-                      inputSize="large"
+                      inputSize="small"
                       width="100%"
                       placeholder="연결 링크를 입력해 주세요"
                       value={linkUrl}

@@ -4,7 +4,7 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { DonationSection } from '@/entities/main-content/model/types'
 import { useSaveDonationSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
-import { CtaNestedTable } from '@/features/main-content/ui/nested-tables'
+import { CtaNestedTable, MainContentRequiredLabel } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
@@ -90,8 +90,9 @@ export function DonationSectionCard({ data }: Props) {
       <DetailInfoForm title="정기후원 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="타이틀 문구"
-            required
+            label={
+              <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
+            }
             view={<span className="main-content-preline">{titleText || '-'}</span>}
             edit={
               <CmsTextArea
@@ -101,13 +102,13 @@ export function DonationSectionCard({ data }: Props) {
                 rows={2}
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력해 주세요"
+                placeholder="타이틀 텍스트를 입력해 주세요"
               />
             }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field required label="CTA 버튼" view={ctaTable} edit={ctaTable} />
+          <DetailInfoForm.Field label="CTA 버튼" view={ctaTable} edit={ctaTable} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     </MainContentSectionCard>

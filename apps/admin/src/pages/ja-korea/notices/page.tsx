@@ -390,7 +390,7 @@ export function NoticesPage() {
         dataIndex: 'viewCount',
         key: 'viewCount',
         width: 110,
-        align: 'right',
+        align: 'center',
         render: (v: number) => v.toLocaleString('ko-KR'),
       },
     ],

@@ -9,7 +9,8 @@ import type {
 export type HomeStripBanner = {
   id: string
   label: string
-  href: string
+  /** 연결 링크. 없으면 화살표·이동 없음 */
+  href?: string
   backgroundColor: string
   external: boolean
 }

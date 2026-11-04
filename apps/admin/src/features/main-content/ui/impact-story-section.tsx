@@ -197,7 +197,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       <DetailInfoForm title="임팩트 스토리 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="타이틀 문구"
+            label="타이틀 텍스트"
             required
             view={<span className="main-content-preline">{titleText || '-'}</span>}
             edit={
@@ -208,7 +208,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                 rows={2}
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력해 주세요"
+                placeholder="타이틀 텍스트를 입력해 주세요"
               />
             }
           />
