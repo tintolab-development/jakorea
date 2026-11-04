@@ -43,7 +43,7 @@ alwaysApply: false
 ### 툴바 버튼 사이즈
 
 목록·카드 툴바(등록 / 선택 삭제 / 취소 / 저장) = **`size="h40"` (140×40)**  
-→ Admin 어댑터 [cms-button-action-sizes.mdc](./cms-button-action-sizes.mdc) (모달 푸터는 140×44 유지)
+→ Admin 어댑터 [cms-button-action-sizes.mdc](./cms-button-action-sizes.mdc) (모달 푸터는 140×40)
 
 CSS 강제: `table-header-label.css` `.table-header-actions--wrapper .cms-button`
 
