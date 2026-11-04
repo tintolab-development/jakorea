@@ -59,8 +59,8 @@ function ImagePlaceholderIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
+      width="24"
+      height="24"
       viewBox="0 0 48 48"
       fill="none"
       aria-hidden
@@ -271,7 +271,11 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             edit={
               <div className="hero-banner-form-modal__image-row">
                 <div className="hero-banner-form-modal__preview">
-                  {imageUrl ? <img src={imageUrl} alt="배너 미리보기" /> : <ImagePlaceholderIcon />}
+                  {imageUrl ? (
+                    <img src={imageUrl} alt="배너 미리보기" />
+                  ) : (
+                    <ImagePlaceholderIcon />
+                  )}
                 </div>
                 <div className="hero-banner-form-modal__file-field">
                   <FileSelectField
