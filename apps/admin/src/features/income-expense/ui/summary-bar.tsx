@@ -2,6 +2,7 @@
  * 수입·지출 요약 바
  */
 
+import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import type {
   FinanceItem,
   FinanceSection,
@@ -84,16 +85,25 @@ export function SummaryBar({ section, view, items }: SummaryBarProps) {
   return (
     <section className="income-expense-summary" aria-label={`${heading} 요약`}>
       <h3 className="income-expense-summary__heading">■ {heading}</h3>
-      <div className="income-expense-summary__simple">
-        <div className="income-expense-summary__cell">
-          <span className="income-expense-summary__label">총 비율</span>
-          <span className="income-expense-summary__value">{formatRatioDisplay(totalRatio)}</span>
-        </div>
-        <div className="income-expense-summary__cell">
-          <span className="income-expense-summary__label">총 금액</span>
-          <span className="income-expense-summary__value">{formatAmount(totalAmount)}</span>
-        </div>
-      </div>
+      <DetailInfoForm
+        title={heading}
+        hideHeader
+        mode="view"
+        className="income-expense-summary__form"
+      >
+        <DetailInfoForm.Row type="double">
+          <DetailInfoForm.Field
+            label="총 비율"
+            labelWidth={180}
+            view={<span>{formatRatioDisplay(totalRatio)}</span>}
+          />
+          <DetailInfoForm.Field
+            label="총 금액"
+            labelWidth={180}
+            view={<span>{formatAmount(totalAmount)}</span>}
+          />
+        </DetailInfoForm.Row>
+      </DetailInfoForm>
     </section>
   )
 }

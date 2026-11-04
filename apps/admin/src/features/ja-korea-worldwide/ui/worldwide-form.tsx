@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useState } from 'react'
+import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
   JaKoreaWorldwide,
   WorldwideBranchId,
