@@ -1,45 +1,24 @@
 /**
- * 푸터 관리 — 단일 흰 카드 배경 (3섹션 위젯 분리 금지)
- * @see individual-donation / detail-document-form-card
+ * 푸터 관리 — 섹션별 흰 카드 3개, 간격 32
  */
 
 .site-footer-page {
   display: flex;
   flex-direction: column;
+  gap: 32px;
   width: 100%;
   min-width: 0;
   min-height: calc(100vh - var(--header-height, 64px) - 64px);
-  height: calc(100vh - var(--header-height, 64px) - 64px);
 }
 
-/* 단일 흰 배경 — 카드 1장 · 섹션 gap 32px */
-.site-footer-page > .site-footer-card.admin-list-card {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  min-height: 0;
-  height: 100%;
-  margin-bottom: 0;
-  /* 테이블 관리 버튼 우측 테두리가 카드 clip 에 잘리지 않도록 가로 clip 완화 */
-  overflow-x: auto;
-  overflow-y: auto;
-}
-
-/* 항목 블록: 카드/위젯 크롬 금지 */
-.site-footer-page .footer-section,
-.site-footer-page .footer-org-section {
-  display: flex;
-  flex-direction: column;
+.site-footer-page > .admin-list-card,
+.site-footer-page .admin-list-card.footer-section,
+.site-footer-page .admin-list-card.footer-org-section {
   flex: 0 0 auto;
-  min-width: 0;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
+  margin-bottom: 0;
+  /* 테이블 관리 버튼 우측이 카드 clip 에 잘리지 않도록 */
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .site-footer-page .footer-section .admin-list-toolbar,

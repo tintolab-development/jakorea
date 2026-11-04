@@ -116,7 +116,6 @@ const COL = {
   ip: 140,
 } as const
 
-
 export function PiiAccessLogPage() {
   const { showAlert } = useCmsAlert()
 
@@ -241,17 +240,6 @@ export function PiiAccessLogPage() {
         filter={
           <div className="admin-filter-area">
             <div className="admin-filter-area__field admin-filter-area__field--control">
-              <span className="admin-filter-area__label">조회 대상</span>
-              <AdminFilterTextInput
-                inputSize="medium"
-                width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="조회 대상을 입력해 주세요"
-                value={pendingFilters.targetName}
-                onChange={value => patchPendingFilters(prev => ({ ...prev, targetName: value }))}
-                onPressEnter={applySearch}
-              />
-            </div>
-            <div className="admin-filter-area__field admin-filter-area__field--control">
               <span className="admin-filter-area__label">조회 목적</span>
               <AdminFilterTextInput
                 inputSize="medium"
@@ -274,7 +262,7 @@ export function PiiAccessLogPage() {
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">조회 일시</span>
+              <span className="admin-filter-area__label">조회일</span>
               <CmsDateRangePicker
                 inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
@@ -303,7 +291,7 @@ export function PiiAccessLogPage() {
         }
         title="개인정보 조회 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
       >
         <CmsDataTable<PiiAccessLog>
           className="cms-data-table"

@@ -302,7 +302,7 @@ export function FooterOrgInfoSection() {
 
   if (query.isLoading || !draft) {
     return (
-      <section className="footer-org-section footer-org-section--loading">
+      <section className="admin-list-card footer-org-section footer-org-section--loading">
         <PageContentLoading variant="default" />
       </section>
     )
@@ -310,7 +310,7 @@ export function FooterOrgInfoSection() {
 
   if (!data) {
     return (
-      <section className="footer-org-section page-content-error" role="alert">
+      <section className="admin-list-card footer-org-section page-content-error" role="alert">
         콘텐츠를 불러오지 못했습니다.
       </section>
     )
@@ -320,38 +320,40 @@ export function FooterOrgInfoSection() {
     <section
       className={
         isEditing
-          ? 'footer-org-section footer-org-section--editing'
-          : 'footer-org-section'
+          ? 'admin-list-card footer-org-section footer-org-section--editing'
+          : 'admin-list-card footer-org-section'
       }
     >
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
-          <span className="table-title">기관 정보</span>
+          <span className="table-title">■ 기관 정보</span>
         </div>
         <div className="table-header-actions--wrapper">
           {isEditing ? (
             <>
               <CmsButton
                 variant="secondary"
-                size="medium"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="medium"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="medium" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

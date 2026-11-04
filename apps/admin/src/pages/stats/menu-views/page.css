@@ -36,8 +36,17 @@
   border-radius: 8px;
 }
 
+.menu-views-stats-page .menu-view-stats-summary .menu-view-stats-summary__table.cms-data-table colgroup > col {
+  width: calc(100% / 6) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
 .menu-views-stats-page .menu-view-stats-summary .ant-table-thead > tr > th,
 .menu-views-stats-page .menu-view-stats-summary .ant-table-tbody > tr > td {
+  width: calc(100% / 6) !important;
+  min-width: 0 !important;
+  max-width: none !important;
   text-align: center !important;
   vertical-align: middle;
 }

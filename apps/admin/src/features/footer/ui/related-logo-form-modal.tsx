@@ -181,7 +181,7 @@ export function RelatedLogoFormModal({
         <>
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h40"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -190,7 +190,7 @@ export function RelatedLogoFormModal({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="medium"
+            size="h40"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}

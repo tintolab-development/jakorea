@@ -110,6 +110,25 @@
   overflow: visible !important;
 }
 
+/* 마지막 행 하단선 제거 — 테이블 외곽 border 와 2줄 겹침 방지 */
+.footer-section
+  .footer-sortable-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child
+  > td,
+.footer-section
+  .footer-sortable-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child:hover
+  > td,
+.footer-section
+  .footer-sortable-table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child
+  > td.ant-table-cell-row-hover {
+  border-bottom: none !important;
+}
+
 /* 관리 열(마지막) 최소 폭: 88 버튼 + 좌우 패딩 */
 .footer-section
   .footer-related-logos-table.cms-data-table
@@ -189,7 +208,7 @@
   overflow: hidden !important;
 }
 
-/* —— 유관기관 로고: 60(thumb)+12+12=84 고정 —— */
+/* —— 유관기관 로고: 72(thumb)+12+12=96 고정 —— */
 .footer-section
   .footer-related-logos-table.footer-sortable-table.cms-data-table
   .ant-table-tbody
@@ -215,9 +234,9 @@
   .ant-table-tbody
   > tr:hover
   > td.ant-table-cell-row-hover {
-  height: 84px !important;
-  min-height: 84px !important;
-  max-height: 84px !important;
+  height: 96px !important;
+  min-height: 96px !important;
+  max-height: 96px !important;
   padding: 12px !important;
   /* 로고 셀만 썸네일 클립 — 관리 열 overflow 는 last-child 규칙으로 visible */
   overflow: hidden !important;
@@ -258,8 +277,9 @@
 }
 
 .footer-section__thumb {
-  width: 195px;
-  height: 60px;
+  width: 72px;
+  height: 72px;
+  aspect-ratio: 1 / 1;
   margin: 0 auto;
   flex-shrink: 0;
   display: flex;
@@ -275,9 +295,7 @@
 .footer-section__thumb img {
   width: 100%;
   height: 100%;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
 }
 

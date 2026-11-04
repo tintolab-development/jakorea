@@ -110,7 +110,6 @@ const COL = {
   ip: 140,
 } as const
 
-
 export function FileDownloadLogPage() {
   const { showAlert } = useCmsAlert()
 
@@ -248,7 +247,7 @@ export function FileDownloadLogPage() {
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">다운로드 일시</span>
+              <span className="admin-filter-area__label">다운로드 기간</span>
               <CmsDateRangePicker
                 inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
@@ -277,7 +276,7 @@ export function FileDownloadLogPage() {
         }
         title="파일 다운로드 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
       >
         <CmsDataTable<FileDownloadLog>
           className="cms-data-table"
