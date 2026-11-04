@@ -46,7 +46,7 @@ export function toApiStoryBody(content: string): string {
 
 export function mapCategoryResponseToDomain(
   row: CategoryResponse | CategoryPayloadRow,
-  sortOrder = 0,
+  sortOrder = 0
 ): ImpactStoryCategory {
   const storyCount =
     typeof row.storyCount === 'number' && Number.isFinite(row.storyCount)
@@ -65,10 +65,7 @@ export function toCategoryCreateRequest(name: string): CategoryCreateRequest {
   return { name: name.trim() }
 }
 
-export function toCategoryUpdateRequest(
-  name: string,
-  version: number,
-): CategoryUpdateRequest {
+export function toCategoryUpdateRequest(name: string, version: number): CategoryUpdateRequest {
   return { name: name.trim(), version }
 }
 
@@ -80,23 +77,23 @@ export function isPersistedCategoryId(id: string): boolean {
 
 export function requireThumbnailAssetId(id?: number): number {
   if (id == null || id <= 0) {
-    throw new Error('섬네일 이미지를 등록해 주세요.')
+    throw new Error('썸네일 이미지를 등록해 주세요.')
   }
   return id
 }
 
 export function assertDistinctStoryAssetIds(
   thumbnailAssetId: number,
-  attachmentAssetId?: number,
+  attachmentAssetId?: number
 ): void {
   if (attachmentAssetId != null && attachmentAssetId === thumbnailAssetId) {
-    throw new Error('섬네일과 첨부 파일은 서로 다른 파일이어야 합니다.')
+    throw new Error('썸네일과 첨부 파일은 서로 다른 파일이어야 합니다.')
   }
 }
 
 function mapAssetAttachment(
   asset: StoryResponse['thumbnail'] | StoryResponse['attachment'],
-  originalName?: string | null,
+  originalName?: string | null
 ): ImpactStoryAttachment | null {
   if (asset?.assetId == null) return null
   return {
@@ -191,7 +188,7 @@ export function toStoryListParams(filter?: ImpactStoryListFilter): List6Params {
 }
 
 export function resolvePrimaryAttachmentAssetId(
-  attachments: ImpactStoryAttachment[],
+  attachments: ImpactStoryAttachment[]
 ): number | undefined {
   for (const att of attachments) {
     if (att.assetId != null && att.assetId > 0) return att.assetId
@@ -202,7 +199,7 @@ export function resolvePrimaryAttachmentAssetId(
 export function toStoryCreateRequest(
   input: ImpactStoryCreateInput,
   attachmentAssetId: number | undefined,
-  thumbnailAssetId: number,
+  thumbnailAssetId: number
 ): StoryCreateRequest {
   const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
   assertDistinctStoryAssetIds(requiredThumbnailAssetId, attachmentAssetId)
@@ -224,7 +221,7 @@ export function toStoryUpdateRequest(
   input: ImpactStoryUpdateInput,
   version: number,
   attachmentAssetId: number | undefined,
-  thumbnailAssetId: number,
+  thumbnailAssetId: number
 ): StoryUpdateRequest {
   const requiredThumbnailAssetId = requireThumbnailAssetId(thumbnailAssetId)
   assertDistinctStoryAssetIds(requiredThumbnailAssetId, attachmentAssetId)
@@ -245,7 +242,7 @@ export function toStoryUpdateRequest(
 
 export function toPublishedToggleRequest(
   row: ImpactStory,
-  published: boolean,
+  published: boolean
 ): PublishedToggleRequest {
   return {
     published,

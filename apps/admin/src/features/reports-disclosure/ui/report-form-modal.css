@@ -15,24 +15,6 @@
   margin-top: 30px;
 }
 
-.rd-form-modal .content-modal__footer-actions {
-  width: 100%;
-  justify-content: space-between;
-}
-
-.rd-form-modal__footer {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.rd-form-modal__footer-start,
-.rd-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /* th 140px · popup/hero 동일 */
 .rd-form-modal .detail-info-form__field {
   min-height: 54px;
@@ -199,8 +181,8 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
   width: 100%;
   min-width: 0;
 }

@@ -45,7 +45,7 @@ export function buildAdminFaqManagementFilterFields(
       key: 'title',
       type: 'search',
       label: '제목',
-      placeholder: '제목을 입력하세요',
+      placeholder: '제목을 입력해 주세요',
       width: '22%',
     },
     {

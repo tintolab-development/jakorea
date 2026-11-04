@@ -101,7 +101,8 @@ export function createRichTextExtensions(
     extensions.push(
       Placeholder.configure({
         placeholder,
-        emptyEditorClass: 'rich-text-editor--is-empty',
+        emptyEditorClass: 'is-editor-empty',
+        showOnlyCurrent: false,
       })
     )
   }

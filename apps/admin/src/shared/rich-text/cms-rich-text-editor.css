@@ -6,26 +6,150 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  --rt-min-height: 284px;
   --rt-body-min-height: 200px;
-  --rt-border: var(--table-line, #e0e0e0);
-  --rt-radius: 8px;
-  --rt-toolbar-border: var(--table-line, #e0e0e0);
+  --rt-border: var(--Border-default, var(--table-line, #e0e0e0));
+  --rt-radius: var(--Radius-8, 8px);
+  --rt-toolbar-border: var(--Border-default, var(--table-line, #e0e0e0));
   --rt-toolbar-bg: var(--main-WT, #fff);
   --rt-background: var(--main-WT, #fff);
   --rt-body-padding: 16px;
-  --rt-placeholder-color: var(--text-placeholder, #999);
+  --rt-placeholder-color: var(--Content-tertiary, var(--text-placeholder, #85969d));
   --rt-content-color: var(--default-BK, #3d3d3d);
 }
 
-.notice-form-modal__editor-host .cms-rich-text-editor {
-  min-height: 0;
+.cms-rich-text-editor.rich-text-editor {
+  box-sizing: border-box;
+  border-radius: var(--Radius-8, 8px);
+  border: 1px solid var(--Border-default, #e0e0e0);
 }
 
-.notice-form-modal__editor-host .cms-rich-text-editor .rich-text-editor__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: auto;
-  max-height: none;
+/*
+ * 에디터 높이 조절 ↔ ContentModal 셸 동기화
+ *
+ * 모달별 CSS가 셸 높이 고정·wrap overflow:hidden·position:fixed+transform
+ * 을 쓰면 에디터만 커지고 모달은 그대로다. 리사이즈 중(data-resized)에는 셸이
+ * 콘텐츠 높이를 따라가고, 뷰포트(100dvh - 32px)를 넘으면 본문만 스크롤한다.
+ */
+.ant-modal-wrap:has(
+    .content-modal.teal-header-modal.ant-modal .rich-text-editor[data-resized='true']
+  ) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.ant-modal-wrap:has(
+    .content-modal.teal-header-modal.ant-modal .rich-text-editor[data-resized='true']
+  )
+  .content-modal.teal-header-modal.ant-modal {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  height: auto !important;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
+  margin: 0 auto !important;
+  flex: none !important;
+}
+
+.content-modal.teal-header-modal.ant-modal:has(.rich-text-editor[data-resized='true'])
+  .ant-modal-content {
+  height: auto !important;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
+}
+
+.content-modal.teal-header-modal.ant-modal:has(.rich-text-editor[data-resized='true'])
+  .ant-modal-body,
+.content-modal.teal-header-modal.ant-modal:has(.rich-text-editor[data-resized='true'])
+  .teal-header-modal__body {
+  flex: 0 1 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.content-modal.teal-header-modal.ant-modal:has(.rich-text-editor[data-resized='true'])
+  .teal-header-modal__body {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.content-modal [class*='__form']:has(.rich-text-editor[data-resized='true']),
+.content-modal [class*='__scroll']:has(.rich-text-editor[data-resized='true']) {
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+.content-modal [class*='__section--editor']:has(.rich-text-editor[data-resized='true']) {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+}
+
+.content-modal [class*='__editor-host']:has(.rich-text-editor[data-resized='true']),
+.content-modal [class*='__rt-edit']:has(.rich-text-editor[data-resized='true']) {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+}
+
+.content-modal .rich-text-editor[data-resized='true'],
+.content-modal .cms-rich-text-editor.rich-text-editor[data-resized='true'] {
+  height: var(--rt-user-height) !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+.cms-rich-text-editor .rich-text-image-block {
+  position: relative;
+  display: block;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.cms-rich-text-editor .rich-text-image-block__drag-handle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 6;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--rt-border, #e0e0e0);
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--rt-resize-handle, #8c8c8c) 0 2px,
+      transparent 2px 4px
+    ),
+    #fff;
+  background-size: 10px 2px, auto;
+  background-position: center, 0 0;
+  background-repeat: no-repeat, no-repeat;
+  cursor: grab;
+  opacity: 0.85;
+}
+
+.cms-rich-text-editor .rich-text-image-block__drag-handle:active {
+  cursor: grabbing;
+}
+
+.cms-rich-text-editor .rich-text-image-block__drag-handle:hover,
+.cms-rich-text-editor .rich-text-image-block--selected .rich-text-image-block__drag-handle,
+.cms-rich-text-editor .ProseMirror-selectednode > .rich-text-image-block__drag-handle,
+.cms-rich-text-editor .rich-text-image-block:hover .rich-text-image-block__drag-handle {
+  opacity: 1;
 }
 
 /*

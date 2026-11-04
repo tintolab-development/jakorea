@@ -8,7 +8,6 @@
 
 /**
  * UJAT 봉사자 모집 반기. CMS 교육 진행 탭(edu_h1_volunteers/edu_h2_volunteers)에서 온 값. FIRST_HALF|SECOND_HALF(상반기/하반기·H1/H2 별칭). 폼에서 고른 상·하반기와 같아야 GET volunteer-applications?recruitHalf=… 목록에 노출됩니다. 지정 시 해당 recruit_term VOLUNTEER 모집에 붙입니다. 해당 반기 모집이 없으면 422 VOLUNTEER_RECRUITMENT_HALF_NOT_CONFIGURED. 생략 시 Asia/Seoul 달력 반기(1–6 FIRST_HALF, 7–12 SECOND_HALF). 일반(GENERAL*) 프로그램에서는 무시합니다.
- * @nullable
  */
 export type VolunteerParticipantRegisterRequestRecruitHalf = typeof VolunteerParticipantRegisterRequestRecruitHalf[keyof typeof VolunteerParticipantRegisterRequestRecruitHalf] | null;
 

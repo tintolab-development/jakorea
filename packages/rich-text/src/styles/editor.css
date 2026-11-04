@@ -10,6 +10,7 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: var(--rt-min-height, 284px);
   border: 1px solid var(--rt-border, #e0e0e0);
   border-radius: var(--rt-radius, 8px);
   background: var(--rt-background, #fff);
@@ -113,21 +114,19 @@
   cursor: text;
 }
 
-.rich-text-editor__body .tiptap.rich-text-editor--is-empty p.is-empty::before,
-.rich-text-editor__body .ProseMirror.rich-text-editor--is-empty p.is-empty::before {
-  color: var(--rt-placeholder-color, var(--text-placeholder, #999));
+/* Tiptap 3 Placeholder: emptyEditorClass 는 에디터 루트가 아니라 빈 문단에 붙는다. */
+.rich-text-editor__body .tiptap p.is-editor-empty:first-child::before,
+.rich-text-editor__body .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--rt-placeholder-color, var(--Content-tertiary, var(--text-placeholder, #85969d)));
   content: attr(data-placeholder);
   float: left;
   height: 0;
   pointer-events: none;
-}
-
-.rich-text-editor__body .tiptap.rich-text-editor--is-empty::before {
-  color: var(--rt-placeholder-color, var(--text-placeholder, #999));
-  content: attr(data-placeholder);
-  float: left;
-  height: 0;
-  pointer-events: none;
+  font-family: var(--rt-content-font-family, Pretendard, sans-serif);
+  font-size: var(--rt-content-font-size, 16px);
+  font-style: normal;
+  font-weight: 500;
+  line-height: var(--rt-content-line-height, 170%);
 }
 
 .rich-text-editor__body--loading {

@@ -20,6 +20,14 @@ const PROGRAM_PROGRESS_EXACT_PATHS = new Set([
   '/api/portal/me/generated-files/jobs/{jobId}',
 ])
 
+/** Live Springdoc operationId 가 get/replace 로 충돌하면 Orval이 get1/replace2 를 만든다. */
+const STABLE_OPERATION_IDS = {
+  '/api/admin/programs/{programId}/employee-volunteer-counts': {
+    get: 'getEmployeeVolunteerCounts',
+    put: 'replaceEmployeeVolunteerCounts',
+  },
+}
+
 function collectSchemaNames(node, names = new Set()) {
   if (node == null || typeof node !== 'object') return names
   if (Array.isArray(node)) {
@@ -53,6 +61,12 @@ function ensureOperationResponses(operation) {
   }
 }
 
+function applyStableOperationId(path, method, operation) {
+  const nextId = STABLE_OPERATION_IDS[path]?.[method]
+  if (!nextId || operation == null || typeof operation !== 'object') return operation
+  return { ...operation, operationId: nextId }
+}
+
 const filteredPaths = Object.fromEntries(
   Object.entries(spec.paths ?? {})
     .filter(([path]) => PROGRAM_PROGRESS_EXACT_PATHS.has(path))
@@ -61,7 +75,7 @@ const filteredPaths = Object.fromEntries(
       Object.fromEntries(
         Object.entries(methods ?? {}).map(([method, operation]) => [
           method,
-          ensureOperationResponses(operation),
+          applyStableOperationId(path, method, ensureOperationResponses(operation)),
         ])
       ),
     ])

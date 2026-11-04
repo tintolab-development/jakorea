@@ -3,8 +3,6 @@ import { Switch } from 'antd'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import type { Dayjs } from 'dayjs'
-import { DetailInfoFormTdDivider } from '@jakorea/form-template-runtime'
-import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
   CertCreateInput,
   CertItem,
@@ -160,7 +158,6 @@ export function CertPanel() {
     patchPendingFilters,
     applied: appliedFilter,
     applySearch,
-    patchSearchParams,
   } = useListFilterUrl<CertPendingFilters, CertListFilter>({
     initialPending: INITIAL_PENDING,
     paramConfig: searchSyncRules,
@@ -238,21 +235,6 @@ export function CertPanel() {
     applySearch()
     setSelectedRowKeys([])
   }, [applySearch])
-
-  const handleSortChange = useCallback(
-    (value: CertSortKey) => {
-      setPendingFilters(prev => ({ ...prev, sort: value }))
-      patchSearchParams(next => {
-        if (value === 'created') {
-          next.set('c_sort', value)
-        } else {
-          next.delete('c_sort')
-        }
-      })
-      setSelectedRowKeys([])
-    },
-    [patchSearchParams, setPendingFilters]
-  )
 
   const handleTogglePublic = useCallback(
     (id: string, isPublic: boolean) => {
@@ -393,7 +375,7 @@ export function CertPanel() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={e => {
               e.stopPropagation()
@@ -416,6 +398,7 @@ export function CertPanel() {
               <p className="admin-filter-area__label">공개 여부</p>
               <CmsSelect
                 inputSize="medium"
+                withAllOption
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
                 value={pendingFilters.isPublic}
                 onChange={v =>
@@ -425,7 +408,6 @@ export function CertPanel() {
                   }))
                 }
                 options={[
-                  { label: '전체', value: '' },
                   { label: '공개', value: 'true' },
                   { label: '비공개', value: 'false' },
                 ]}
@@ -499,32 +481,19 @@ export function CertPanel() {
         title="인증 목록"
         description={`총 ${totalCount.toLocaleString()}건`}
         actions={
-          <>
-            <CmsSelect
-              inputSize="medium"
-              width={140}
-              value={appliedFilter.sort ?? pendingFilters.sort}
-              onChange={v => handleSortChange((v as CertSortKey) ?? 'date')}
-              options={[
-                { label: '인증일 순', value: 'date' },
-                { label: '작성일 순', value: 'created' },
-              ]}
-            />
-            <DetailInfoFormTdDivider />
-            <div className="hac-panel__toolbar-buttons">
-              <CmsButton
-                variant="delete"
-                size="h40"
-                type="button"
-                onClick={handleDeleteClick}
-                loading={removeMutation.isPending} >
-                선택 삭제
-              </CmsButton>
-              <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
-                인증 등록
-              </CmsButton>
-            </div>
-          </>
+          <div className="hac-panel__toolbar-buttons">
+            <CmsButton
+              variant="delete"
+              size="h40"
+              type="button"
+              onClick={handleDeleteClick}
+              loading={removeMutation.isPending} >
+              선택 삭제
+            </CmsButton>
+            <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
+              인증 등록
+            </CmsButton>
+          </div>
         }
       >
         <div className="hac-panel__table-scroll">

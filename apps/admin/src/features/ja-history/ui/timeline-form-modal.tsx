@@ -4,7 +4,10 @@ import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import type { ColumnsType } from 'antd/es/table'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type { JaHistoryTimeline, JaHistoryTimelineSaveInput } from '@/entities/ja-history/model/types'
+import type {
+  JaHistoryTimeline,
+  JaHistoryTimelineSaveInput,
+} from '@/entities/ja-history/model/types'
 import {
   CmsButton,
   CmsInput,
@@ -182,7 +185,7 @@ function TimelineFormBody({
         })
       }
     },
-    [showAlert],
+    [showAlert]
   )
 
   const columns = useMemo<ColumnsType<DraftEventRow>>(() => {
@@ -202,7 +205,9 @@ function TimelineFormBody({
               initialValue={record.year}
               ariaLabel={`${periodLabel} ${record.index + 1}행 연도`}
               onValue={year => {
-                const event = periodsRef.current.find(item => item.id === periodId)?.events[record.index]
+                const event = periodsRef.current.find(item => item.id === periodId)?.events[
+                  record.index
+                ]
                 if (event) event.year = year
               }}
             />
@@ -219,7 +224,9 @@ function TimelineFormBody({
             placeholder="설명 텍스트를 입력하세요"
             ariaLabel={`${record.year || periodLabel} 설명 텍스트`}
             onValue={text => {
-              const event = periodsRef.current.find(item => item.id === periodId)?.events[record.index]
+              const event = periodsRef.current.find(item => item.id === periodId)?.events[
+                record.index
+              ]
               if (event) event.text = text
             }}
           />
@@ -230,7 +237,7 @@ function TimelineFormBody({
 
   const eventRows = useMemo<DraftEventRow[]>(
     () => (active ? active.events.map((event, index) => ({ ...event, index })) : []),
-    [active],
+    [active]
   )
 
   const handleSubmit = () => {
@@ -306,7 +313,13 @@ function TimelineFormBody({
       className="ja-history-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel} disabled={confirmLoading}>
+          <CmsButton
+            variant="secondary"
+            size="large"
+            type="button"
+            onClick={onCancel}
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -315,7 +328,8 @@ function TimelineFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             수정
           </CmsButton>
         </>
@@ -443,7 +457,7 @@ function TimelineFormBody({
                       key={active.id}
                       initialValue={active.title}
                       rows={2}
-                      placeholder="기간 제목을 입력하세요"
+                      placeholder="기간 제목을 입력해 주세요"
                       ariaLabel={`${active.label} 제목`}
                       onValue={nextTitle => {
                         const period = periodsRef.current.find(item => item.id === active.id)

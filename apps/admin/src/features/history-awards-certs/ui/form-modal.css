@@ -15,18 +15,6 @@
   margin-top: 30px;
 }
 
-.hac-form-modal .content-modal__footer-actions {
-  justify-content: space-between;
-  width: 100%;
-}
-
-.hac-form-modal__footer-start,
-.hac-form-modal__footer-end {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 /*
  * 연혁 년도/월 td — 시안: [인풋]년 + [인풋]월 한 줄 좌측 정렬
  * edit 슬롯 `> * { display:flex; width stretch }` 으로 인한 과도한 여백 보정

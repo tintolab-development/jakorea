@@ -436,7 +436,7 @@ export function NoticesPage() {
                   inputSize="medium"
                   width={FILTER_CONTROL_MAX_WIDTH_PX}
                   value={pendingFilters.title}
-                  placeholder="제목을 입력하세요"
+                  placeholder="제목을 입력해 주세요"
                   onChange={value => patchPendingFilters(prev => ({ ...prev, title: value }))}
                   onPressEnter={handleSearch}
                 />
@@ -497,11 +497,13 @@ export function NoticesPage() {
                 </div>
               </div>
               <div className="admin-filter-area__actions">
-                <CmsButton className="admin-filter-area__search-button"
+                <CmsButton
+                  className="admin-filter-area__search-button"
                   variant="primary"
                   size="medium"
                   type="button"
-                  onClick={handleSearch} >
+                  onClick={handleSearch}
+                >
                   조회
                 </CmsButton>
               </div>
@@ -517,7 +519,8 @@ export function NoticesPage() {
               size="h40"
               type="button"
               loading={removeMutation.isPending && !formOpen}
-              onClick={handleBulkDeleteClick} >
+              onClick={handleBulkDeleteClick}
+            >
               선택 삭제
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>

@@ -1,8 +1,8 @@
 /**
- * JA 살펴보기 — CTA 버튼 값 셀 안 중첩 테이블
- * 규격: apps/admin/.cursor/rules/design/detail-info-nested-table.mdc
- * 참고: main-content CtaNestedTable (버튼명|값|연결 링크|값 × 2행)
+ * JA 살펴보기 — CTA 버튼 값 셀 안 DetailInfoForm
  */
+
+import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import { CmsInput } from '@/shared/ui'
 
 type CtaPair = {
@@ -25,65 +25,82 @@ export function CtaButtonsNestedTable({
   onChangePrimary,
   onChangeSecondary,
 }: CtaButtonsNestedTableProps) {
-  const rows = [
-    {
-      key: 'primary',
-      buttonLabel: '버튼명 01',
-      linkLabel: '연결 링크 01',
-      data: primary,
-      onChange: onChangePrimary,
-    },
-    {
-      key: 'secondary',
-      buttonLabel: '버튼명 02',
-      linkLabel: '연결 링크 02',
-      data: secondary,
-      onChange: onChangeSecondary,
-    },
-  ] as const
+  const mode = editing ? 'edit' : 'view'
 
   return (
-    <div className="ja-history-cta-nested-table" role="group" aria-label="CTA 버튼">
-      {rows.map(row => (
-        <div key={row.key} className="ja-history-cta-nested-table__row">
-          <div className="ja-history-cta-nested-table__cell">
-            <div className="ja-history-cta-nested-table__label">{row.buttonLabel}</div>
-            <div className="ja-history-cta-nested-table__value">
-              {editing ? (
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  value={row.data.label}
-                  placeholder="버튼명을 입력하세요"
-                  aria-label={row.buttonLabel}
-                  onChange={event => row.onChange({ label: event.target.value })}
-                />
-              ) : (
-                <span className="ja-history-cta-nested-table__text">{row.data.label || '-'}</span>
-              )}
-            </div>
-          </div>
-          <div className="ja-history-cta-nested-table__cell">
-            <div className="ja-history-cta-nested-table__label">{row.linkLabel}</div>
-            <div className="ja-history-cta-nested-table__value">
-              {editing ? (
-                <CmsInput
-                  inputSize="medium"
-                  width="100%"
-                  value={row.data.href}
-                  placeholder="연결 링크를 입력하세요"
-                  aria-label={row.linkLabel}
-                  onChange={event => row.onChange({ href: event.target.value })}
-                />
-              ) : (
-                <span className="ja-history-cta-nested-table__text ja-history-cta-nested-table__text--url">
-                  {row.data.href || '-'}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
+    <DetailInfoForm title="CTA 버튼" hideHeader mode={mode} className="ja-history-cta-nested-form">
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="버튼명 01"
+          labelWidth={220}
+          view={<span className="ja-history-cta-nested-form__text">{primary.label || '-'}</span>}
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              value={primary.label}
+              placeholder="버튼명을 입력하세요"
+              aria-label="버튼명 01"
+              onChange={event => onChangePrimary({ label: event.target.value })}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="연결 링크 01"
+          labelWidth={220}
+          view={
+            <span className="ja-history-cta-nested-form__text ja-history-cta-nested-form__text--url">
+              {primary.href || '-'}
+            </span>
+          }
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              value={primary.href}
+              placeholder="연결 링크를 입력하세요"
+              aria-label="연결 링크 01"
+              onChange={event => onChangePrimary({ href: event.target.value })}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+      <DetailInfoForm.Row type="double">
+        <DetailInfoForm.Field
+          label="버튼명 02"
+          labelWidth={220}
+          view={<span className="ja-history-cta-nested-form__text">{secondary.label || '-'}</span>}
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              value={secondary.label}
+              placeholder="버튼명을 입력하세요"
+              aria-label="버튼명 02"
+              onChange={event => onChangeSecondary({ label: event.target.value })}
+            />
+          }
+        />
+        <DetailInfoForm.Field
+          label="연결 링크 02"
+          labelWidth={220}
+          view={
+            <span className="ja-history-cta-nested-form__text ja-history-cta-nested-form__text--url">
+              {secondary.href || '-'}
+            </span>
+          }
+          edit={
+            <CmsInput
+              inputSize="medium"
+              width="100%"
+              value={secondary.href}
+              placeholder="연결 링크를 입력하세요"
+              aria-label="연결 링크 02"
+              onChange={event => onChangeSecondary({ href: event.target.value })}
+            />
+          }
+        />
+      </DetailInfoForm.Row>
+    </DetailInfoForm>
   )
 }

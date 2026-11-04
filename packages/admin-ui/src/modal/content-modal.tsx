@@ -6,6 +6,7 @@ import { AdminTealHeaderModal } from './teal-header-modal.js'
 import './content-modal.css'
 
 export const CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS = 'content-modal__table-cell-actions'
+export const CONTENT_MODAL_FOOTER_START_CLASS = 'content-modal__footer-start'
 
 const DEFAULT_CLOSE_ICON = (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
