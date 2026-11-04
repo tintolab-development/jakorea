@@ -38,6 +38,14 @@
   text-decoration: none;
 }
 
+a.banner {
+  cursor: pointer;
+}
+
+div.banner {
+  cursor: default;
+}
+
 @media (--bp-pc-up) {
   .banner {
     padding: var(--spacing-16) 0;
