@@ -7,7 +7,7 @@
  * Size (Figma) — font-weight 600 · 폭은 min-width + 라벨 길이
  *   h52  radius 10 · padding 10×24 · min-width 없음 · font 18/135% · icon 24 · gap 8
  *   h44  radius 8  · padding 8×20  · min-width 140  · font 16/125% · icon 24 · gap 6
- *   h40  radius 8  · padding 6×16  · min-width 120  · font 14/125% · icon 20 · gap 4
+ *   h40  radius 8  · padding 6×16  · min-width 120  · font 16/125% · icon 20 · gap 4
  *   h36  radius 6  · padding 6×12  · min-width 100  · font 14/125% · icon 20 · gap 4
  *   h32  radius 6  · padding 8×10  · min-width 80   · font 12/115% · icon 16 · gap 4
  * icon = 아이콘 프레임 크기 (여백은 아이콘 SVG viewBox에 포함)
@@ -74,7 +74,7 @@
   padding: var(--Spacing-6, 6px) calc(var(--Spacing-16, 16px) - 1px) !important;
   gap: var(--Spacing-4, 4px);
   border-radius: var(--Radius-8, 8px);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 125%;
 }
 

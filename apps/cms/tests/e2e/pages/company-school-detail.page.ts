@@ -63,7 +63,7 @@ export class CompanySchoolDetailPage {
       timeout: 30_000,
     })
 
-    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력해 주세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
     await titleFilter.fill(title)
 
@@ -202,10 +202,7 @@ export class CompanySchoolDetailPage {
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         // 목록/상세 일시 5xx — 다음 시드 후보
-        if (
-          message.includes('프로그램 목록 API 실패') ||
-          message.includes('상세 셸')
-        ) {
+        if (message.includes('프로그램 목록 API 실패') || message.includes('상세 셸')) {
           continue
         }
         throw err
@@ -426,7 +423,9 @@ export class CompanySchoolDetailPage {
     await expect(content).toBeVisible({ timeout: 30_000 })
     const fullSpin = this.page.locator('.detail-fullpage-modal__loading')
     if ((await fullSpin.count()) > 0) {
-      await expect(fullSpin.first()).toBeHidden({ timeout: 60_000 }).catch(() => undefined)
+      await expect(fullSpin.first())
+        .toBeHidden({ timeout: 60_000 })
+        .catch(() => undefined)
     }
   }
 

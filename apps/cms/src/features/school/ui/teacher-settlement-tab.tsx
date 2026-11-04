@@ -42,7 +42,12 @@ export interface TeacherSettlementTabProps {
 
 type ViewMode = 'list' | 'calendar'
 
-const SETTLEMENT_ROW_STATUS_KEYS: SettlementRowStatus[] = ['pending', 'reviewing', 'completed', 'rejected']
+const SETTLEMENT_ROW_STATUS_KEYS: SettlementRowStatus[] = [
+  'pending',
+  'reviewing',
+  'completed',
+  'rejected',
+]
 
 const STATUS_TAG_STYLE: Record<SettlementRowStatus, { bg: string; color: string }> = {
   pending: { bg: '#e8f5e9', color: '#1e8c29' },
@@ -68,13 +73,16 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
     setDetailModalOpen(true)
   }, [])
 
-  const handleReject = useCallback((_reason: string) => {
-    if (!detailModalRowId) return
-    setOverrides(prev => ({
-      ...prev,
-      [detailModalRowId]: { status: 'rejected' as SettlementRowStatus },
-    }))
-  }, [detailModalRowId])
+  const handleReject = useCallback(
+    (_reason: string) => {
+      if (!detailModalRowId) return
+      setOverrides(prev => ({
+        ...prev,
+        [detailModalRowId]: { status: 'rejected' as SettlementRowStatus },
+      }))
+    },
+    [detailModalRowId]
+  )
 
   const handlePaymentComplete = useCallback(() => {
     if (!detailModalRowId) return
@@ -147,7 +155,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
 
   const getSettlementsForDate = useCallback(
     (date: Dayjs) => dateSettlementMap.get(date.format('YYYY-MM-DD')) ?? [],
-    [dateSettlementMap],
+    [dateSettlementMap]
   )
 
   const selectedDateRows = useMemo(() => {
@@ -170,7 +178,9 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
             !isCurrent && 'settlement-cal__cell--outside',
             isSelected && 'settlement-cal__cell--selected',
             isToday && 'settlement-cal__cell--today',
-          ].filter(Boolean).join(' ')}
+          ]
+            .filter(Boolean)
+            .join(' ')}
           onClick={() => {
             if (isCurrent) {
               setSelectedDate(isSelected ? null : date)
@@ -191,7 +201,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
                     key={s.id}
                     className="settlement-cal__amount-tag"
                     style={{ background: tagStyle.bg, color: tagStyle.color }}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       handleOpenDetail(s)
                     }}
@@ -205,7 +215,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
         </div>
       )
     },
-    [currentMonth, selectedDate, getSettlementsForDate, handleOpenDetail],
+    [currentMonth, selectedDate, getSettlementsForDate, handleOpenDetail]
   )
 
   // --- List view columns ---
@@ -313,16 +323,20 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
           {viewMode === 'list' ? (
             <CmsButton
               variant="secondary"
-              size="medium" className="settlement-tab__btn-view-toggle"
-              onClick={() => setViewMode('calendar')} >
+              size="medium"
+              className="settlement-tab__btn-view-toggle"
+              onClick={() => setViewMode('calendar')}
+            >
               <CalendarOutlined style={{ marginRight: 4 }} />
               캘린더 뷰로 보기
             </CmsButton>
           ) : (
             <CmsButton
               variant="secondary"
-              size="medium" className="settlement-tab__btn-view-toggle"
-              onClick={() => setViewMode('list')} >
+              size="medium"
+              className="settlement-tab__btn-view-toggle"
+              onClick={() => setViewMode('list')}
+            >
               <UnorderedListOutlined style={{ marginRight: 4 }} />
               리스트 뷰로 보기
             </CmsButton>
@@ -410,7 +424,9 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
           <div className="settlement-cal__calendar-wrap">
             <div className="settlement-cal__weekday-header">
               {CAL_WEEKDAYS.map(d => (
-                <span key={d} className="settlement-cal__weekday">{d}</span>
+                <span key={d} className="settlement-cal__weekday">
+                  {d}
+                </span>
               ))}
             </div>
             <Calendar
@@ -436,15 +452,13 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
                         checked={calendarSelectedKeys.includes(row.id)}
                         onChange={e => {
                           setCalendarSelectedKeys(prev =>
-                            e.target.checked
-                              ? [...prev, row.id]
-                              : prev.filter(k => k !== row.id),
+                            e.target.checked ? [...prev, row.id] : prev.filter(k => k !== row.id)
                           )
                         }}
                       />
                       <div
                         className="settlement-cal__detail-body"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.preventDefault()
                           handleOpenDetail(row)
                         }}
@@ -462,9 +476,11 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
                           </span>
                         </div>
                         <div className="settlement-cal__detail-program">
-                          [{row.programName.length > 40
+                          [
+                          {row.programName.length > 40
                             ? row.programName.slice(0, 40) + '...'
-                            : row.programName}]
+                            : row.programName}
+                          ]
                         </div>
                       </div>
                     </label>
@@ -475,7 +491,7 @@ export function TeacherSettlementTab({ data, teacherName, bankInfo }: TeacherSet
               <div className="settlement-cal__detail-empty">
                 {selectedDate != null
                   ? '해당 날짜의 정산 내역이 없습니다.'
-                  : '날짜를 선택하세요.'}
+                  : '날짜를 선택해 주세요.'}
               </div>
             )}
           </div>

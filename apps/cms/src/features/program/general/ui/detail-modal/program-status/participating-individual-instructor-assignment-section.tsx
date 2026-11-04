@@ -17,10 +17,7 @@ import { TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { CmsButton, ExcelButton, useCmsAlert } from '@/shared/ui'
 import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ContentModal } from '@/shared/ui/content-modal'
-import {
-  PermissionModal,
-  type PermissionModalPayload,
-} from '@/shared/components/permission-modal'
+import { PermissionModal, type PermissionModalPayload } from '@/shared/components/permission-modal'
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import { toScheduledOnlyNotifyTiming } from '@/features/program/general/lib/application-decision-notify-timing'
 import {
@@ -250,63 +247,62 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       [handleRoleChange, openRoleDropdownId]
     )
 
-  const waitingColumns: ColumnsType<ParticipatingIndividualInstructorWaitingScheduleRow> =
-    useMemo(
-      () => [
-        { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
-        {
-          title: '출강지',
-          dataIndex: 'lectureLocation',
-          key: 'lectureLocation',
-          width: 180,
-        },
-        {
-          title: '자택과의 거리',
-          dataIndex: 'distanceFromHome',
-          key: 'distanceFromHome',
-          width: 110,
-          align: 'center',
-        },
-        {
-          title: '교육 진행 희망 일정',
-          dataIndex: 'scheduleLabel',
-          key: 'scheduleLabel',
-          width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-          minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
-          ...participatingScheduleTableColumnLayout(),
-          render: (label: string) => renderScheduleCell(label),
-        },
-        {
-          title: '배정 현황',
-          dataIndex: 'assignmentStatus',
-          key: 'assignmentStatus',
-          width: 180,
-          align: 'center',
-          render: (
-            _status: ParticipatingIndividualInstructorWaitingScheduleRow['assignmentStatus'],
-            record: ParticipatingIndividualInstructorWaitingScheduleRow
-          ) => (
-            <span
-              className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${record.assignmentStatus === 'unavailable' || record.assignmentStatus === 'assignment_cancelled' ? 'cancelled' : record.assignmentStatus}`}
-            >
-              {waitingAssignmentStatusLabel(
-                record.assignmentStatus,
-                PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS,
-                record.assignmentStatusLabel
-              )}
-            </span>
-          ),
-        },
-        {
-          title: '배정 강사 수',
-          dataIndex: 'assignedInstructorCountLabel',
-          key: 'assignedInstructorCountLabel',
-          width: 110,
-          align: 'center',
-        },
-      ],
-      []
-    )
+  const waitingColumns: ColumnsType<ParticipatingIndividualInstructorWaitingScheduleRow> = useMemo(
+    () => [
+      { title: 'No.', dataIndex: 'no', key: 'no', width: 80, align: 'center' },
+      {
+        title: '출강지',
+        dataIndex: 'lectureLocation',
+        key: 'lectureLocation',
+        width: 180,
+      },
+      {
+        title: '자택과의 거리',
+        dataIndex: 'distanceFromHome',
+        key: 'distanceFromHome',
+        width: 110,
+        align: 'center',
+      },
+      {
+        title: '교육 진행 희망 일정',
+        dataIndex: 'scheduleLabel',
+        key: 'scheduleLabel',
+        width: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        minWidth: PARTICIPATING_INSTITUTIONS_SESSIONS_COLUMN_WIDTH,
+        ...participatingScheduleTableColumnLayout(),
+        render: (label: string) => renderScheduleCell(label),
+      },
+      {
+        title: '배정 현황',
+        dataIndex: 'assignmentStatus',
+        key: 'assignmentStatus',
+        width: 180,
+        align: 'center',
+        render: (
+          _status: ParticipatingIndividualInstructorWaitingScheduleRow['assignmentStatus'],
+          record: ParticipatingIndividualInstructorWaitingScheduleRow
+        ) => (
+          <span
+            className={`school-detail-fullpage-view__assignment-status school-detail-fullpage-view__assignment-status--${record.assignmentStatus === 'unavailable' || record.assignmentStatus === 'assignment_cancelled' ? 'cancelled' : record.assignmentStatus}`}
+          >
+            {waitingAssignmentStatusLabel(
+              record.assignmentStatus,
+              PARTICIPATING_INDIVIDUAL_INSTRUCTOR_WAITING_STATUS_LABELS,
+              record.assignmentStatusLabel
+            )}
+          </span>
+        ),
+      },
+      {
+        title: '배정 강사 수',
+        dataIndex: 'assignedInstructorCountLabel',
+        key: 'assignedInstructorCountLabel',
+        width: 110,
+        align: 'center',
+      },
+    ],
+    []
+  )
 
   const assignedExportRows = useMemo(
     () =>
@@ -516,13 +512,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
         showAlert({ title: '배정 취소 실패', content: message })
       }
     },
-    [
-      selectedAssignedKeys,
-      assignedSchedules,
-      assignment,
-      instructor.instructorName,
-      showAlert,
-    ]
+    [selectedAssignedKeys, assignedSchedules, assignment, instructor.instructorName, showAlert]
   )
 
   const handleSelectAssignConfirm = useCallback(
@@ -573,9 +563,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
 
   const unassignScheduleLabels = useMemo(
     () =>
-      assignedSchedules
-        .filter(r => selectedAssignedKeys.includes(r.id))
-        .map(r => r.scheduleLabel),
+      assignedSchedules.filter(r => selectedAssignedKeys.includes(r.id)).map(r => r.scheduleLabel),
     [assignedSchedules, selectedAssignedKeys]
   )
 
@@ -595,10 +583,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   return (
     <div className="school-detail-fullpage-view__instructor-tab">
       {assignment.error ? (
-        <div
-          role="alert"
-          className="school-detail-fullpage-view__assignment-error"
-        >
+        <div role="alert" className="school-detail-fullpage-view__assignment-error">
           {getGeneralProgramApiErrorMessage(
             assignment.error,
             '강사 배정 조회에 실패했습니다. 잠시 후 다시 시도해 주세요.'
@@ -623,7 +608,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
                 if (addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
-              }} >
+              }}
+            >
               추가 배정
             </CmsButton>
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
@@ -741,7 +727,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
               onClick={() => {
                 setAddAssignModalOpen(false)
                 setAddAssignWaitingRowId(null)
-              }} >
+              }}
+            >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleAddAssignSchedulePicked}>
@@ -754,7 +741,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           <span style={{ display: 'block', marginBottom: 8 }}>교육 일정 선택</span>
           <Select
             style={{ width: '100%' }}
-            placeholder="교육 일정을 선택하세요"
+            placeholder="교육 일정을 선택해 주세요"
             options={addAssignOptions}
             value={addAssignWaitingRowId ?? undefined}
             onChange={v => setAddAssignWaitingRowId(v)}

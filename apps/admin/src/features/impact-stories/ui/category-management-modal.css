@@ -191,13 +191,27 @@
   border-right-width: 0 !important;
 }
 
-.is-category-modal__table.cms-data-table .ant-table-tbody > tr:last-child > td,
+/*
+ * 입력(summary) 행 위 두줄 방지.
+ * cms-data-table `tr:not(...):not(...) > td { border-bottom }` 가
+ * 단순 last-child 규칙보다 특이도가 높아 마지막 데이터 행 하단선이 남고,
+ * summary `border-top`과 겹친다.
+ */
 .is-category-modal__table.cms-data-table
   .ant-table-tbody
-  > tr:last-child
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child
+  > td,
+.is-category-modal__table.cms-data-table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row):last-child
   > td.ant-table-cell-row-hover,
 .is-category-modal__table.cms-data-table .ant-table-summary .ant-table-cell {
   border-bottom-width: 0 !important;
+}
+
+.is-category-modal__table.cms-data-table tfoot.ant-table-summary {
+  box-shadow: none;
+  border-top: none;
 }
 
 .is-category-modal__table.cms-data-table .ant-table-summary .ant-table-cell {

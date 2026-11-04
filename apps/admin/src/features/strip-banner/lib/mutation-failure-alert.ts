@@ -6,7 +6,9 @@ import {
   MAX_ACTIVE_STRIP_BANNERS,
   StripBannerActiveLimitError,
 } from '@/entities/strip-banner/model/types'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
+  type AdminMutationAlert,
   isEnabledLimitError,
   mapCommonRemoteMutationFailure,
   readApiErrorMessage,
@@ -31,7 +33,7 @@ export function stripBannerMutationFailureAlert(
   error: unknown,
   fallbackContent: string,
   title = '저장 실패',
-): { title: string; content: string } {
+): AdminMutationAlert {
   if (isStripActiveLimit(error)) return { ...ACTIVE_LIMIT_ALERT }
 
   const common = mapCommonRemoteMutationFailure(error)
@@ -39,10 +41,10 @@ export function stripBannerMutationFailureAlert(
 
   const message = readApiErrorMessage(error) ?? ''
   if (/bannerText|banner text|배너 문구/i.test(message)) {
-    return { title: '입력 확인', content: '배너 문구를 확인해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/displayStartDate|displayEndDate|게시 기간|period/i.test(message)) {
-    return { title: '입력 확인', content: '게시 기간을 확인해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/linkUrl|link url|https?:\/\//i.test(message) && /invalid|형식|url/i.test(message)) {
     return {

@@ -45,7 +45,7 @@ export function emptyIndividualTeamInfo(): ApplyIndividualTeamInfoValues {
 }
 
 export function findIncompleteIndividualTeamInfoMessage(
-  values: ApplyIndividualTeamInfoValues,
+  values: ApplyIndividualTeamInfoValues
 ): string | null {
   if (!values.teamName.trim()) return '팀 명을 입력해 주세요.'
   if (!values.memberCountSelect.trim()) return '팀 인원 수를 선택해 주세요.'
@@ -58,7 +58,7 @@ export function findIncompleteIndividualTeamInfoMessage(
 }
 
 export function teamInfoAnswerFromValues(
-  values: ApplyIndividualTeamInfoValues,
+  values: ApplyIndividualTeamInfoValues
 ): Record<string, unknown> {
   return {
     teamName: values.teamName.trim(),
@@ -69,15 +69,13 @@ export function teamInfoAnswerFromValues(
 }
 
 export function teamInfoValuesFromDraftAnswer(
-  answer: unknown,
+  answer: unknown
 ): ApplyIndividualTeamInfoValues | null {
   if (!answer || typeof answer !== 'object' || Array.isArray(answer)) return null
   const row = answer as Record<string, unknown>
   const teamName = typeof row.teamName === 'string' ? row.teamName : ''
-  const memberCountSelect =
-    typeof row.memberCountSelect === 'string' ? row.memberCountSelect : ''
-  const customMemberCount =
-    typeof row.customMemberCount === 'string' ? row.customMemberCount : ''
+  const memberCountSelect = typeof row.memberCountSelect === 'string' ? row.memberCountSelect : ''
+  const customMemberCount = typeof row.customMemberCount === 'string' ? row.customMemberCount : ''
   const teamRole = typeof row.teamRole === 'string' ? row.teamRole : ''
   if (!teamName && !memberCountSelect) return null
   return { teamName, memberCountSelect, customMemberCount, teamRole }
@@ -96,7 +94,7 @@ export function ApplyIndividualTeamInfo({ value, onChange }: ApplyIndividualTeam
             variant="formPage"
             size="large"
             width="100%"
-            placeholder="팀 명을 입력하세요"
+            placeholder="팀 명을 입력해 주세요"
             value={value.teamName}
             onValueChange={next => patch({ teamName: next })}
           />

@@ -34,9 +34,10 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
   onEducationScheduleModeChange: _onEducationScheduleModeChange,
   overlayKeyPrefix = 'economyRegistration.educationScheduleSettings',
 }: OneCOneSEducationScheduleSettingsProps) {
-  const [dateRangeSeal, setDateRangeSeal] = useProgramRegistrationOverlayKv<
-    { start: string; end: string } | null
-  >(`${overlayKeyPrefix}.dateRangeSeal`, null)
+  const [dateRangeSeal, setDateRangeSeal] = useProgramRegistrationOverlayKv<{
+    start: string
+    end: string
+  } | null>(`${overlayKeyPrefix}.dateRangeSeal`, null)
   // 「사업 운영 기간」(economyRegistration.basicInfo.operationRangeSeal) 밖 + 오늘 이전 비활성
   const [operationRangeSeal] = useProgramRegistrationOverlayKv<EducationOperationRangeSeal>(
     educationOperationRangeSealKeyFromSchedulePrefix(overlayKeyPrefix),
@@ -87,7 +88,8 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
           fullRow
           edit={
             <div className="detail-info-form-inputs-wrapper-no-gap">
-              <ParagraphDatePicker inputSize="small"
+              <ParagraphDatePicker
+                inputSize="small"
                 mode="single"
                 presetMode="period"
                 customizable={false}
@@ -97,7 +99,7 @@ export function OneCOneSRegistrationEducationScheduleSettingsParagraph({
                 appliedSurfaceRange={appliedRange}
                 appliedSurfaceWithTime={false}
                 width={320}
-                placeholder="진행 기간을 선택하세요"
+                placeholder="진행 기간을 선택해 주세요"
                 disabledDate={disableScheduleSelectionDate}
                 onRangeChange={range => persistRange(range)}
                 onChange={next => {

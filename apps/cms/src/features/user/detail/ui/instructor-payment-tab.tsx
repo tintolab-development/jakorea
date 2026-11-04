@@ -77,14 +77,14 @@ const FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'programName',
     type: 'search',
     label: '프로그램명',
-    placeholder: '프로그램명을 입력하세요',
+    placeholder: '프로그램명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'institutionName',
     type: 'search',
     label: '참여 기관명',
-    placeholder: '기관명을 입력하세요',
+    placeholder: '기관명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
@@ -441,7 +441,8 @@ export function InstructorPaymentTab({
                   setCurrentMonth(today.startOf('month'))
                   setCalendarSelectedDate(today)
                   setViewMode('calendar')
-                }} >
+                }}
+              >
                 캘린더 뷰로 보기
               </CmsButton>
             ) : (
@@ -449,7 +450,8 @@ export function InstructorPaymentTab({
                 variant="secondary"
                 size="large"
                 icon={<ButtonListIcon />}
-                onClick={() => setViewMode('list')} >
+                onClick={() => setViewMode('list')}
+              >
                 리스트 뷰로 보기
               </CmsButton>
             )}
@@ -458,13 +460,15 @@ export function InstructorPaymentTab({
               size="large"
               icon={<ButtonDownloadIcon />}
               loading={bulkDownloadLoading}
-              onClick={() => void handleBulkDownload()} >
+              onClick={() => void handleBulkDownload()}
+            >
               지급조서 발급
             </CmsButton>
             <ExcelButton
               loading={excelExporting}
               disabled={settlementsLoading || settlementsQueryLoading}
-              onClick={() => void exportExcel()} />
+              onClick={() => void exportExcel()}
+            />
           </div>
         </div>
 

@@ -39,7 +39,7 @@ type InternalDatePickerRef = ComponentRef<typeof DatePicker>
 type RangePickerProps = ComponentProps<typeof DatePicker.RangePicker>
 
 /** placeholder 미지정 시 공통 기본값 */
-export const DEFAULT_APP_DATE_PLACEHOLDER = '날짜를 선택하세요'
+export const DEFAULT_APP_DATE_PLACEHOLDER = '날짜를 선택해 주세요'
 
 export function formatAppDatepickerDisplay(value: Dayjs | null | undefined): string {
   if (value == null) return ''
@@ -161,8 +161,8 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
   const start = value?.[0] ?? null
   const end = value?.[1] ?? null
 
-  const disabledStart = typeof disabled === 'boolean' ? disabled : disabled?.[0] ?? false
-  const disabledEnd = typeof disabled === 'boolean' ? disabled : disabled?.[1] ?? false
+  const disabledStart = typeof disabled === 'boolean' ? disabled : (disabled?.[0] ?? false)
+  const disabledEnd = typeof disabled === 'boolean' ? disabled : (disabled?.[1] ?? false)
 
   const placeholderTuple: [string, string] = Array.isArray(placeholder)
     ? [
@@ -202,8 +202,7 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
     .filter(Boolean)
     .join(' ')
 
-  const startId =
-    typeof rangeId === 'object' && rangeId != null ? rangeId.start : undefined
+  const startId = typeof rangeId === 'object' && rangeId != null ? rangeId.start : undefined
   const endId = typeof rangeId === 'object' && rangeId != null ? rangeId.end : undefined
 
   const defaultStart =
@@ -213,9 +212,7 @@ const AppDateRangePickerRender: ForwardRefRenderFunction<
         ? defaultPickerValue
         : undefined
   const defaultEnd =
-    Array.isArray(defaultPickerValue) && defaultPickerValue[1]
-      ? defaultPickerValue[1]
-      : undefined
+    Array.isArray(defaultPickerValue) && defaultPickerValue[1] ? defaultPickerValue[1] : undefined
 
   const sharedPickerProps = rest as Omit<
     DatePickerProps,

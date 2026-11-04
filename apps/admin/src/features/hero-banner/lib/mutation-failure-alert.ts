@@ -4,11 +4,13 @@
 
 import { HeroBannerMinActiveError } from '@/entities/hero-banner/model/types'
 import {
+  type AdminMutationAlert,
   isMinActiveRequiredError,
   mapCommonRemoteMutationFailure,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
 import { minActiveRequiredAlert } from '@/shared/lib/min-active-guard'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 
 const MIN_ACTIVE_ALERT = minActiveRequiredAlert('히어로 배너는')
 
@@ -16,7 +18,7 @@ export function heroBannerMutationFailureAlert(
   error: unknown,
   fallbackContent: string,
   title = '저장 실패',
-): { title: string; content: string } {
+): AdminMutationAlert {
   const common = mapCommonRemoteMutationFailure(error)
   if (common) return common
 
@@ -30,16 +32,16 @@ export function heroBannerMutationFailureAlert(
 
   if (error instanceof Error) {
     if (/배너 이미지를 등록|이미지 asset/.test(error.message)) {
-      return { title: '입력 확인', content: '배너 이미지를 등록해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
   }
 
   const message = readApiErrorMessage(error) ?? ''
   if (/image|asset|Image/i.test(message) && /required|등록|없/i.test(message)) {
-    return { title: '입력 확인', content: '배너 이미지를 등록해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/mainTitle|main title|메인 타이틀/i.test(message)) {
-    return { title: '입력 확인', content: '메인 타이틀을 확인해 주세요.' }
+    return REQUIRED_FIELDS_INCOMPLETE_ALERT
   }
   if (/linkUrl|link url|https?:\/\//i.test(message) && /invalid|형식|url/i.test(message)) {
     return {

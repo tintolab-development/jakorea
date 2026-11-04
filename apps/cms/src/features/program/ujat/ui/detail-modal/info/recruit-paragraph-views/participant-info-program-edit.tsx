@@ -18,7 +18,8 @@ import '@/features/template/ui/form-editor/form-editor.css'
 export function UjatRecruitParticipantInfoProgramEdit({
   program: _program,
   form,
-  sectionTitle = '참여 기관 모집 정보' }: {
+  sectionTitle = '참여 기관 모집 정보',
+}: {
   program: Program
   form: UseFormReturn<ProgramDetailEditFormValues>
   sectionTitle?: string
@@ -40,7 +41,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                   value={field.value ?? ''}
                   inputSize="small"
                   width="100%"
-                  placeholder="프로그램명을 입력하세요"
+                  placeholder="프로그램명을 입력해 주세요"
                 />
               )}
             />
@@ -57,7 +58,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                 form={form}
                 startName="startDate"
                 endName="endDate"
-                placeholder="프로그램 운영 기간을 선택하세요"
+                placeholder="프로그램 운영 기간을 선택해 주세요"
               />
             </div>
           }
@@ -67,7 +68,9 @@ export function UjatRecruitParticipantInfoProgramEdit({
           label="참여자 모집 현황"
           readOnlyDisplay
           view={
-            <span className="form-editor-template-field-hint-text">{UJAT_RECRUIT_PROGRESS_HINT}</span>
+            <span className="form-editor-template-field-hint-text">
+              {UJAT_RECRUIT_PROGRESS_HINT}
+            </span>
           }
         />
       </DetailInfoForm.Row>
@@ -87,7 +90,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                   value={field.value ?? []}
                   options={TEMPLATE_FORM_EDUCATION_RECRUITMENT_TARGET_OPTIONS}
                   onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
-                  placeholder="교육 대상을 선택하세요"
+                  placeholder="교육 대상을 선택해 주세요"
                 />
               )}
             />
@@ -106,7 +109,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                   value={field.value ?? ''}
                   inputSize="small"
                   width="100%"
-                  placeholder="상세 교육 대상을 입력하세요"
+                  placeholder="상세 교육 대상을 입력해 주세요"
                 />
               )}
             />
@@ -123,7 +126,7 @@ export function UjatRecruitParticipantInfoProgramEdit({
                 form={form}
                 startName="applicationStartDate"
                 endName="applicationEndDate"
-                placeholder="모집 기간을 선택하세요"
+                placeholder="모집 기간을 선택해 주세요"
                 dateOnly
               />
             </div>

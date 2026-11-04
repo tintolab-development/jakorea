@@ -67,12 +67,13 @@ function ScheduleDateAndSessionRow({
         fullRow
         edit={
           <div className="detail-info-form-inputs-wrapper-no-gap">
-            <ParagraphDatePicker inputSize="small"
+            <ParagraphDatePicker
+              inputSize="small"
               mode="single"
               presetMode="date"
               customizable={false}
               suppressAutoTodayWhenEmpty
-              placeholder="희망 교육 날짜를 선택하세요"
+              placeholder="희망 교육 날짜를 선택해 주세요"
               value={block.date}
               onChange={next => onPatch({ date: next })}
               disabledDate={disabledDate}
@@ -130,7 +131,8 @@ function ScheduleTimeRow({
             />
             <span>교시</span>
             <DetailInfoForm.InputsSeparator />
-            <ParagraphTimePicker inputSize="small"
+            <ParagraphTimePicker
+              inputSize="small"
               value={time.start}
               onChange={next => onPatch({ start: next })}
               placeholder="수업 시작"
@@ -138,7 +140,8 @@ function ScheduleTimeRow({
               showEndTimeToggle={false}
             />
             <span>~</span>
-            <ParagraphTimePicker inputSize="small"
+            <ParagraphTimePicker
+              inputSize="small"
               value={time.end}
               onChange={next => onPatch({ end: next })}
               placeholder="수업 종료"
@@ -252,10 +255,7 @@ export function TrainedTeachersProgramApplicationPreferredScheduleParagraph({
   }
 
   return (
-    <TrainedTeachersPreferredScheduleFields
-      bridge={bridge}
-      readOnlyPreview={readOnlyPreview}
-    />
+    <TrainedTeachersPreferredScheduleFields bridge={bridge} readOnlyPreview={readOnlyPreview} />
   )
 }
 
@@ -309,58 +309,75 @@ function TrainedTeachersPreferredScheduleFields({
   // 제한값 감소 시 기존 입력을 조용히 삭제하지 않는다. 초과 상태를 보여주고
   // 사용자가 직접 정리한 뒤 저장하도록 한다.
   const exceedsMaxBlocks = blocks.length > maxBlocks
-  const exceedsMaxSessions = blocks.some(block => (block.times?.length ?? 0) > sessionOptions.length)
+  const exceedsMaxSessions = blocks.some(
+    block => (block.times?.length ?? 0) > sessionOptions.length
+  )
   const displayBlocks = blocks.length > 0 ? blocks : [createEmptyBlockState()]
 
   const patchBlock = (index: number, patch: Partial<ScheduleBlockState>) => {
-    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
-      const current = (prev ?? []) as ScheduleBlockState[]
-      return current.map((b, i) => (i === index ? { ...b, ...patch } : b))
-    })
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>(
+      'application.trainedTeachers.preferredSchedules',
+      prev => {
+        const current = (prev ?? []) as ScheduleBlockState[]
+        return current.map((b, i) => (i === index ? { ...b, ...patch } : b))
+      }
+    )
   }
 
   const setBlockSession = (index: number, value: string | undefined) => {
-    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
-      const current = (prev ?? []) as ScheduleBlockState[]
-      return current.map((b, i) => {
-        if (i !== index) return b
-        const count = Math.max(1, parseInt(value ?? '1', 10) || 1)
-        const times = Array.from(
-          { length: count },
-          (_, timeIndex) => b.times?.[timeIndex] ?? createEmptyTimeState()
-        )
-        return { ...b, session: value, times }
-      })
-    })
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>(
+      'application.trainedTeachers.preferredSchedules',
+      prev => {
+        const current = (prev ?? []) as ScheduleBlockState[]
+        return current.map((b, i) => {
+          if (i !== index) return b
+          const count = Math.max(1, parseInt(value ?? '1', 10) || 1)
+          const times = Array.from(
+            { length: count },
+            (_, timeIndex) => b.times?.[timeIndex] ?? createEmptyTimeState()
+          )
+          return { ...b, session: value, times }
+        })
+      }
+    )
   }
 
   const patchBlockTime = (index: number, timeIndex: number, patch: Partial<SessionTimeState>) => {
-    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
-      const current = (prev ?? []) as ScheduleBlockState[]
-      return current.map((b, i) =>
-        i === index
-          ? {
-              ...b,
-              times: (b.times ?? []).map((t, ti) => (ti === timeIndex ? { ...t, ...patch } : t)),
-            }
-          : b
-      )
-    })
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>(
+      'application.trainedTeachers.preferredSchedules',
+      prev => {
+        const current = (prev ?? []) as ScheduleBlockState[]
+        return current.map((b, i) =>
+          i === index
+            ? {
+                ...b,
+                times: (b.times ?? []).map((t, ti) => (ti === timeIndex ? { ...t, ...patch } : t)),
+              }
+            : b
+        )
+      }
+    )
   }
 
   const removeBlock = (index: number) => {
-    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
-      const current = (prev ?? []) as ScheduleBlockState[]
-      if (current.length <= 1) return [createEmptyBlockState()]
-      return current.filter((_, i) => i !== index)
-    })
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>(
+      'application.trainedTeachers.preferredSchedules',
+      prev => {
+        const current = (prev ?? []) as ScheduleBlockState[]
+        if (current.length <= 1) return [createEmptyBlockState()]
+        return current.filter((_, i) => i !== index)
+      }
+    )
   }
 
   const addBlock = () => {
-    updateTrainedTeachersApplicationField<ScheduleBlockState[]>('application.trainedTeachers.preferredSchedules', prev => {
-      const current = (prev ?? []) as ScheduleBlockState[]
-      return current.length >= maxBlocks ? current : [...current, createEmptyBlockState()]
-    })
+    updateTrainedTeachersApplicationField<ScheduleBlockState[]>(
+      'application.trainedTeachers.preferredSchedules',
+      prev => {
+        const current = (prev ?? []) as ScheduleBlockState[]
+        return current.length >= maxBlocks ? current : [...current, createEmptyBlockState()]
+      }
+    )
   }
 
   return (
@@ -370,7 +387,8 @@ function TrainedTeachersPreferredScheduleFields({
     >
       {exceedsMaxBlocks || exceedsMaxSessions ? (
         <span style={{ color: '#d4380d' }} role="alert">
-          모집 제한값이 변경되어 기존 입력이 현재 제한을 초과했습니다. 초과한 일정·차시를 직접 정리한 후 저장해 주세요.
+          모집 제한값이 변경되어 기존 입력이 현재 제한을 초과했습니다. 초과한 일정·차시를 직접
+          정리한 후 저장해 주세요.
         </span>
       ) : null}
       {displayBlocks.map((block, index) => (

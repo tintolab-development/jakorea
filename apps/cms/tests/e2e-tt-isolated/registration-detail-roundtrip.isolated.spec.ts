@@ -23,9 +23,7 @@ test.describe('TT P4-B CREATE → 상세 GET → PATCH → 재GET', () => {
     await waitWizard(page)
     await autofillAndWalk(page)
     await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
-    await expect
-      .poll(() => log.createProgram, { timeout: 60_000 })
-      .not.toBeNull()
+    await expect.poll(() => log.createProgram, { timeout: 60_000 }).not.toBeNull()
 
     const created = parseCreatePayload(log.createProgram?.body)
     const seedTitles = uniqueVariantTitles('TCH-01')
@@ -35,15 +33,15 @@ test.describe('TT P4-B CREATE → 상세 GET → PATCH → 재GET', () => {
     await expect(page.getByRole('button', { name: '정보 수정' })).toBeVisible({
       timeout: 45_000,
     })
-    await expect(
-      page.getByText(createdTitle || seedTitles.announcementTitle).first()
-    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText(createdTitle || seedTitles.announcementTitle).first()).toBeVisible({
+      timeout: 20_000,
+    })
 
     await page.getByRole('button', { name: '정보 수정' }).click()
-    const main = page.getByPlaceholder('대표 프로그램명을 입력하세요').first()
+    const main = page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()
     await expect(main).toBeVisible({ timeout: 20_000 })
     await main.fill(CHANGED_MAIN_TITLE)
-    const publicTitle = page.getByPlaceholder('모집 시 노출될 프로그램명을 입력하세요')
+    const publicTitle = page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요')
     if (await publicTitle.isVisible().catch(() => false)) {
       await publicTitle.fill(CHANGED_ANNOUNCEMENT)
     }
@@ -82,30 +80,34 @@ test.describe('TT P4-B CREATE → 상세 GET → PATCH → 재GET', () => {
       await page.getByRole('button', { name: '정보 수정' }).click()
     }
     await expect
-      .poll(
-        () => log.programPatches.length + log.infoDetailPatches.length,
-        { timeout: 40_000 }
-      )
+      .poll(() => log.programPatches.length + log.infoDetailPatches.length, { timeout: 40_000 })
       .toBeGreaterThan(0)
 
     const patchBodies = [...log.programPatches, ...log.infoDetailPatches].map(item =>
       JSON.stringify(item.body ?? {})
     )
-    expect(patchBodies.some(text => text.includes(CHANGED_MAIN_TITLE) || text.includes(CHANGED_ANNOUNCEMENT))).toBe(
-      true
-    )
+    expect(
+      patchBodies.some(
+        text => text.includes(CHANGED_MAIN_TITLE) || text.includes(CHANGED_ANNOUNCEMENT)
+      )
+    ).toBe(true)
 
     await page.goto('/programs/trained-teachers')
     await page.goto(`/programs/trained-teachers?programId=${TT_ISOLATED_IDS.PROGRAM_ID}`)
     await expect(page.getByRole('button', { name: '정보 수정' })).toBeVisible({
       timeout: 45_000,
     })
-    await expect(page.getByText(CHANGED_MAIN_TITLE).or(page.getByText(CHANGED_ANNOUNCEMENT)).first()).toBeVisible({
+    await expect(
+      page.getByText(CHANGED_MAIN_TITLE).or(page.getByText(CHANGED_ANNOUNCEMENT)).first()
+    ).toBeVisible({
       timeout: 20_000,
     })
-    expect(log.api.some(item => item.method === 'GET' && item.path.includes(`/programs/${TT_ISOLATED_IDS.PROGRAM_ID}`))).toBe(
-      true
-    )
+    expect(
+      log.api.some(
+        item =>
+          item.method === 'GET' && item.path.includes(`/programs/${TT_ISOLATED_IDS.PROGRAM_ID}`)
+      )
+    ).toBe(true)
     assertIsolatedNetwork(log)
   })
 })

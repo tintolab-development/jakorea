@@ -123,13 +123,13 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
           label="대표 프로그램명 (국문)"
           validationKey="basicInfo.programTitleKo"
           overlayKey={titleKoKey}
-          placeholder="대표 프로그램명을 입력하세요"
+          placeholder="대표 프로그램명을 입력해 주세요"
         />
         <ProgramRegistrationOverlayTextField
           label="대표 프로그램명 (영문)"
           validationKey="basicInfo.programTitleEn"
           overlayKey={titleEnKey}
-          placeholder="대표 프로그램명을 입력하세요"
+          placeholder="대표 프로그램명을 입력해 주세요"
         />
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="double">
@@ -137,7 +137,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
           label="공고용 프로그램명"
           validationKey="basicInfo.publicProgramTitle"
           overlayKey={publicTitleKey}
-          placeholder="모집 시 노출될 프로그램명을 입력하세요"
+          placeholder="모집 시 노출될 프로그램명을 입력해 주세요"
         />
         <DetailInfoForm.Field
           label="세부 프로그램명"
@@ -147,7 +147,7 @@ function ProgramRegistrationBasicInfoTitleFieldsInner({
               <CmsSelect
                 withAllOption={false}
                 inputSize="small"
-                placeholder="세부 프로그램명을 선택하세요"
+                placeholder="세부 프로그램명을 선택해 주세요"
                 width="100%"
                 options={detailedProgramOptions}
                 value={detailedProgramSelectValue}

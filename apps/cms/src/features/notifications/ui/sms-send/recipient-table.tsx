@@ -108,7 +108,7 @@ export const RecipientTable = memo(function RecipientTable({
                   width="100%"
                   allowClear={false}
                   value={record.variables?.[key] ?? ''}
-                  placeholder="변수값을 입력하세요"
+                  placeholder="변수값을 입력해 주세요"
                   onChange={event => onVariableChange?.(record.id, key, event.target.value)}
                 />
               </label>

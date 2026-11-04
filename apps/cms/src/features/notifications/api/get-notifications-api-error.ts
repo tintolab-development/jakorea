@@ -38,8 +38,7 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   NOTIFICATION_TEMPLATE_REQUIRED_VARIABLE_MISSING: '템플릿 필수 변수가 없습니다.',
   NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED:
     '선택한 템플릿에 현재 프로그램 또는 수신자 유형에서 사용할 수 없는 변수가 포함되어 있습니다. 템플릿과 수신자 설정을 다시 확인해 주세요.',
-  NOTIFICATION_SERVER_RESERVED_VARIABLE:
-    '서버가 채우는 예약 변수는 발송 요청에 넣을 수 없습니다.',
+  NOTIFICATION_SERVER_RESERVED_VARIABLE: '서버가 채우는 예약 변수는 발송 요청에 넣을 수 없습니다.',
   ALIMTALK_TEMPLATE_MANAGED_BY_NHN:
     '알림톡 템플릿 본문은 NHN Cloud에서 관리됩니다. CMS에서는 수정할 수 없습니다.',
   ALIMTALK_TEMPLATE_DELETE_REJECTED_BY_NHN:
@@ -49,17 +48,14 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
   SMS_TEMPLATE_DELETE_REJECTED_BY_NHN: SMS_TEMPLATE_DELETE_REJECTED_BY_NHN_MESSAGE,
   DIRECT_RECIPIENT_AD_CONSENT_UNSUPPORTED:
     '직접 입력 수신자로는 광고성 템플릿을 발송할 수 없습니다.',
-  NOTIFICATION_PROGRAM_REQUIRED_FOR_RECIPIENTS: '프로그램을 먼저 선택하세요.',
+  NOTIFICATION_PROGRAM_REQUIRED_FOR_RECIPIENTS: '프로그램을 먼저 선택해 주세요.',
   NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES:
-    '프로그램 필수 변수가 있어 프로그램을 선택하세요.',
-  PROGRAM_NOT_FOUND:
-    '선택한 프로그램이 없거나 잘못된 id입니다. 프로그램 목록을 다시 불러오세요.',
-  NOTIFICATION_RECIPIENT_NOT_IN_PROGRAM:
-    '선택한 수신자가 해당 프로그램 참여자가 아닙니다.',
+    '프로그램 필수 변수가 있어 프로그램을 선택해 주세요.',
+  PROGRAM_NOT_FOUND: '선택한 프로그램이 없거나 잘못된 id입니다. 프로그램 목록을 다시 불러오세요.',
+  NOTIFICATION_RECIPIENT_NOT_IN_PROGRAM: '선택한 수신자가 해당 프로그램 참여자가 아닙니다.',
   NOTIFICATION_ADMIN_RECIPIENT_NOT_IN_PROGRAM:
     '선택한 관리자가 해당 프로그램에 배정되어 있지 않습니다.',
-  PROVIDER_UNAVAILABLE:
-    '외부 연동 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.',
+  PROVIDER_UNAVAILABLE: '외부 연동 서비스를 사용할 수 없습니다. 잠시 후 다시 시도해 주세요.',
   DATABASE_ERROR: '데이터베이스 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
   PROVIDER_CATEGORY_REQUIRED:
     '부모 카테고리가 NHN과 연결되어 있지 않습니다. 「동기화」를 먼저 실행한 뒤 다시 시도해 주세요.',
@@ -122,8 +118,7 @@ const PROVIDER_UNAVAILABLE_HINT =
 const DATABASE_ERROR_HINT =
   '잠시 후 다시 시도해 주세요. 지속되면 BE 로그에 traceId를 전달해 주세요.'
 
-const SYNC_FIRST_HINT =
-  '「동기화」를 먼저 실행해 NHN 카테고리를 맞춘 뒤 다시 시도해 주세요.'
+const SYNC_FIRST_HINT = '「동기화」를 먼저 실행해 NHN 카테고리를 맞춘 뒤 다시 시도해 주세요.'
 
 function readAxiosData(error: unknown): unknown {
   if (!error || typeof error !== 'object' || !('response' in error)) return undefined
@@ -194,10 +189,7 @@ function looksLikeDisplayNameRequired(message: string, field?: string): boolean 
 }
 
 function looksLikeSenderEmailRequired(message: string, field?: string): boolean {
-  if (
-    field === 'providerSenderEmailAddress' ||
-    field === 'provider_sender_email_address'
-  ) {
+  if (field === 'providerSenderEmailAddress' || field === 'provider_sender_email_address') {
     return true
   }
   const text = message.toLowerCase()
@@ -209,10 +201,7 @@ function looksLikeSenderEmailRequired(message: string, field?: string): boolean 
 
 /** BE: SMS template requires providerSenderPhoneNumber when NHN catalog is enabled */
 function looksLikeSenderPhoneRequired(message: string, field?: string): boolean {
-  if (
-    field === 'providerSenderPhoneNumber' ||
-    field === 'provider_sender_phone_number'
-  ) {
+  if (field === 'providerSenderPhoneNumber' || field === 'provider_sender_phone_number') {
     return true
   }
   const text = message.toLowerCase()
@@ -222,7 +211,8 @@ function looksLikeSenderPhoneRequired(message: string, field?: string): boolean 
   )
 }
 
-const PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES = 'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES'
+const PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES =
+  'NOTIFICATION_PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES'
 const TEMPLATE_VARIABLE_SCOPE_DISABLED = 'NOTIFICATION_TEMPLATE_VARIABLE_SCOPE_DISABLED'
 
 function parseCodeSuffixKeys(raw: string | undefined, prefix: string): string[] {
@@ -259,7 +249,9 @@ function parseScopeDisabledVariableNames(
     !serverMessage.startsWith(`${TEMPLATE_VARIABLE_SCOPE_DISABLED}:`)
       ? [serverMessage.trim()]
       : []
-  const keys = (fromCode.length > 0 ? fromCode : fromMessage.length > 0 ? fromMessage : fromPlainMessage)
+  const keys = (
+    fromCode.length > 0 ? fromCode : fromMessage.length > 0 ? fromMessage : fromPlainMessage
+  )
     .map(key => key.trim())
     .filter(isSafeNotificationVariableName)
   return [...new Set(keys)]
@@ -303,11 +295,12 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
   const code = getApiErrorCode(error) ?? extractApiErrorCode(data)
   const field = readErrorField(error)
   const serverMessage =
-    data != null
-      ? extractApiErrorMessage(data, { httpStatus: status, fallback: '' }).trim()
-      : ''
+    data != null ? extractApiErrorMessage(data, { httpStatus: status, fallback: '' }).trim() : ''
 
-  if (code === 'EMAIL_TEMPLATE_NAME_INVALID' || (field === 'displayName' && /invalid|정규|허용/.test(serverMessage))) {
+  if (
+    code === 'EMAIL_TEMPLATE_NAME_INVALID' ||
+    (field === 'displayName' && /invalid|정규|허용/.test(serverMessage))
+  ) {
     return MAIL_TEMPLATE_NAME_INVALID_MESSAGE
   }
 
@@ -392,11 +385,7 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
     if (code === 'NOTIFICATION_DELIVERY_NOT_FOUND') {
       return '발송 내역을 찾을 수 없습니다.'
     }
-    return (
-      ERROR_CODE_MESSAGES[code] ??
-      serverMessage ??
-      '요청한 리소스를 찾을 수 없습니다.'
-    )
+    return ERROR_CODE_MESSAGES[code] ?? serverMessage ?? '요청한 리소스를 찾을 수 없습니다.'
   }
   if (code === 'ALIMTALK_TEMPLATE_MANAGED_BY_NHN') {
     return ERROR_CODE_MESSAGES.ALIMTALK_TEMPLATE_MANAGED_BY_NHN
@@ -573,8 +562,7 @@ export function resolveNotificationSendFieldError(
       : ''
   // 프로그램 필요 변수·스코프 차단은 BE message 대신 FE 문구(+안전한 변수명)를 노출
   const useMappedMessage =
-    code === PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES ||
-    code === TEMPLATE_VARIABLE_SCOPE_DISABLED
+    code === PROGRAM_REQUIRED_FOR_TEMPLATE_VARIABLES || code === TEMPLATE_VARIABLE_SCOPE_DISABLED
   const message =
     !useMappedMessage && serverMessage && serverMessage !== rawCode
       ? serverMessage

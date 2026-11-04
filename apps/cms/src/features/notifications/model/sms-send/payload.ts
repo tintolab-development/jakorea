@@ -125,7 +125,7 @@ export function buildSmsSendCreateRequest(input: {
   const { draft, templateId, senderKey, senderProfileId } = input
   const programId = resolveSmsSendProgramId(draft.programId)
   if (!isNotificationSendWithoutProgram(draft.programId) && programId == null) {
-    throw new Error('대상 프로그램을 선택하세요.')
+    throw new Error('대상 프로그램을 선택해 주세요.')
   }
 
   const body: SmsSendCreateRequest = {
@@ -175,7 +175,7 @@ export function estimateUtf8Bytes(text: string): number {
 }
 
 export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
-  if (!draft.senderPhone.trim()) return '발신 번호를 입력하세요.'
+  if (!draft.senderPhone.trim()) return '발신 번호를 입력해 주세요.'
   if (!isValidKoreanPhoneNumber(draft.senderPhone)) {
     return '발신 번호 형식이 올바르지 않습니다.'
   }
@@ -190,14 +190,14 @@ export function validateSmsSendDraft(draft: SmsSendDraft): string | null {
     !isNotificationSendWithoutProgram(draft.programId) &&
     parseNotificationSendProgramId(draft.programId) == null
   ) {
-    return '대상 프로그램을 선택하세요.'
+    return '대상 프로그램을 선택해 주세요.'
   }
   const missingDirectContact = draft.recipients.some(
     recipient =>
       (recipient.source === 'manual' || recipient.actorType === 'DIRECT') &&
       !(normalizeKoreanPhoneDigits(recipient.phone) || recipient.phone.trim())
   )
-  if (missingDirectContact) return '직접 입력 수신자의 연락처를 입력하세요.'
+  if (missingDirectContact) return '직접 입력 수신자의 연락처를 입력해 주세요.'
 
   const composeError = firstSmsComposeIssueMessage(
     collectSmsComposeFieldIssues({

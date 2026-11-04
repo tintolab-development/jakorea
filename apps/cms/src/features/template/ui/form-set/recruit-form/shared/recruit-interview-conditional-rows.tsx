@@ -48,12 +48,13 @@ export function RecruitInterviewConditionalRows({
             validationKey={`${validationKeyPrefix}.recruitRangeSeal`}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={state.recruitAnchor}
                   width="100%"
-                  placeholder="모집 기간을 선택하세요"
+                  placeholder="모집 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
                   showTimeToggle={false}
@@ -77,7 +78,8 @@ export function RecruitInterviewConditionalRows({
             ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="date"
                   value={state.docDeadlineDate}
@@ -109,12 +111,13 @@ export function RecruitInterviewConditionalRows({
             ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="period"
                   value={state.interviewAnchor}
                   style={{ flex: '1 1 0', minWidth: 0 }}
-                  placeholder="면접 기간을 선택하세요"
+                  placeholder="면접 기간을 선택해 주세요"
                   preferPeriodModeInPopover
                   suppressAutoTodayWhenEmpty
                   appliedSurfaceRange={state.interviewRange}
@@ -147,7 +150,8 @@ export function RecruitInterviewConditionalRows({
             ]}
             edit={
               <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="date"
                   value={state.finalAnnounceDate}
@@ -180,12 +184,13 @@ export function RecruitInterviewConditionalRows({
         validationKey={`${validationKeyPrefix}.recruitRangeSeal`}
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-            <ParagraphDatePicker inputSize="small"
+            <ParagraphDatePicker
+              inputSize="small"
               mode="single"
               presetMode="period"
               value={state.recruitAnchor}
               width="100%"
-              placeholder="모집 기간을 선택하세요"
+              placeholder="모집 기간을 선택해 주세요"
               preferPeriodModeInPopover
               suppressAutoTodayWhenEmpty
               showTimeToggle={false}
@@ -209,7 +214,8 @@ export function RecruitInterviewConditionalRows({
         ]}
         edit={
           <div className={RECRUIT_FORM_MAX_SUFFIX_CLASS}>
-            <ParagraphDatePicker inputSize="small"
+            <ParagraphDatePicker
+              inputSize="small"
               mode="single"
               presetMode="date"
               value={state.finalAnnounceDate}

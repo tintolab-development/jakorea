@@ -49,16 +49,16 @@ export function ProgramRegistrationIpsTypeFields({
     onChange({ ...value, detail: String(v ?? '') })
   }
 
-  let secondaryPlaceholder = 'IPS 유형을 먼저 선택하세요'
+  let secondaryPlaceholder = 'IPS 유형을 먼저 선택해 주세요'
   let secondaryOptions: { value: string; label: string }[] = []
   let secondaryDisabled = true
 
   if (category === 'succeed') {
-    secondaryPlaceholder = '프로그램 종류를 선택하세요'
+    secondaryPlaceholder = '프로그램 종류를 선택해 주세요'
     secondaryOptions = [...PROGRAM_REGISTRATION_IPS_SUCCEED_PROGRAM_KIND_OPTIONS]
     secondaryDisabled = false
   } else if (category === 'inspire') {
-    secondaryPlaceholder = '프로그램 채널을 선택하세요'
+    secondaryPlaceholder = '프로그램 채널을 선택해 주세요'
     secondaryOptions = [...PROGRAM_REGISTRATION_IPS_INSPIRE_PROGRAM_CHANNEL_OPTIONS]
     secondaryDisabled = false
   } else if (category === 'prepare') {

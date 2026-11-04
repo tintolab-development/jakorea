@@ -46,7 +46,9 @@ describe('containsMailVariableTokens', () => {
 
 describe('buildMailSendPayload', () => {
   it('forces general purpose and derives useTemplate from templateId', () => {
-    const withoutTemplate = buildMailSendPayload(draft({ templateId: undefined, useTemplate: true }))
+    const withoutTemplate = buildMailSendPayload(
+      draft({ templateId: undefined, useTemplate: true })
+    )
     expect(withoutTemplate.purpose).toBe('general')
     expect(withoutTemplate.useTemplate).toBe(false)
 
@@ -57,8 +59,8 @@ describe('buildMailSendPayload', () => {
 
 describe('validateMailSendDraft', () => {
   it('requires template, sender email, recipients, subject, and body', () => {
-    expect(validateMailSendDraft(draft({ templateId: '' }))).toBe('템플릿을 선택하세요.')
-    expect(validateMailSendDraft(draft({ templateId: undefined }))).toBe('템플릿을 선택하세요.')
+    expect(validateMailSendDraft(draft({ templateId: '' }))).toBe('템플릿을 선택해 주세요.')
+    expect(validateMailSendDraft(draft({ templateId: undefined }))).toBe('템플릿을 선택해 주세요.')
     expect(validateMailSendDraft(draft({ senderEmail: '  ' }))).toBe(
       '발신 메일을 선택/입력해 주세요.'
     )
@@ -69,13 +71,13 @@ describe('validateMailSendDraft', () => {
     expect(validateMailSendDraft(draft({ subject: '' }))).toBe('제목을 작성하세요.')
     expect(validateMailSendDraft(draft({ bodyHtml: '' }))).toBe('내용을 작성하세요.')
     expect(validateMailSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
-      '대상 프로그램을 선택하세요.'
+      '대상 프로그램을 선택해 주세요.'
     )
   })
 
   it('requires a schedule datetime when scheduled', () => {
     expect(validateMailSendDraft(draft({ sendTiming: 'scheduled', scheduledAt: null }))).toBe(
-      '예약 일시를 선택하세요.'
+      '예약 일시를 선택해 주세요.'
     )
     expect(
       validateMailSendDraft(
@@ -127,7 +129,7 @@ describe('validateMailSendDraft', () => {
 
   it('blocks send when program id is not numeric', () => {
     expect(validateMailSendDraft(draft({ programId: 'prog-coy-2026' }))).toBe(
-      '대상 프로그램을 선택하세요.'
+      '대상 프로그램을 선택해 주세요.'
     )
   })
 
@@ -147,7 +149,7 @@ describe('validateMailSendDraft', () => {
           ],
         })
       )
-    ).toBe('직접 입력 수신자의 연락처를 입력하세요.')
+    ).toBe('직접 입력 수신자의 연락처를 입력해 주세요.')
   })
 
   it('accepts a complete immediate send', () => {

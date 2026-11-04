@@ -108,7 +108,7 @@ export function SendScheduleField({
             readOnly
             tabIndex={-1}
             disabled={!scheduled}
-            placeholder="날짜를 선택하세요"
+            placeholder="날짜를 선택해 주세요"
             value={scheduled ? displayValue : ''}
             icon={<CalendarOutlined />}
           />

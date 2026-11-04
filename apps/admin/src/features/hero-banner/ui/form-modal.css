@@ -18,42 +18,48 @@
 }
 
 .hero-banner-form-modal__image-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 16px;
-  width: 100%;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px !important;
 }
 
 .hero-banner-form-modal__preview {
-  width: 120px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   flex-shrink: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-bg-secondary, #f7f7f7);
-  border: 1px solid var(--table-line, #e0e0e0);
-  border-radius: 4px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hero-banner-form-modal__preview img {
-  width: 100%;
-  height: 100%;
+  width: 72px;
+  height: 72px;
   object-fit: cover;
+  border: 1px solid var(--Border-default, #e0e0e0);
+  border-radius: 8px;
+  box-sizing: border-box;
 }
 
-.hero-banner-form-modal__file-field {
-  flex: 1 1 280px;
-  min-width: 0;
-}
-
-.hero-banner-form-modal .detail-info-form__field-content--edit > * {
+.hero-banner-form-modal .detail-info-form__field-content--edit > *:not(.app-radio-group) {
   display: block;
   margin-block: 0 !important;
   width: 100%;
   min-width: 0;
+}
+
+/*
+ * 사용 여부 라디오: CmsRadioGroup 가로 flex·gap 유지.
+ * 위 `display:block`으로 덮으면 옵션 간격이 깨진다.
+ */
+.hero-banner-form-modal .detail-info-form__field-content--edit > .app-radio-group.ant-radio-group {
+  display: flex !important;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+  max-width: 100%;
 }
 
 .hero-banner-form-modal .file-select-field {
@@ -70,7 +76,8 @@
   gap: 16px;
 }
 
-.hero-banner-form-modal .hero-banner-form-modal__main-title-textarea.cms-textarea--large
+.hero-banner-form-modal
+  .hero-banner-form-modal__main-title-textarea.cms-textarea--large
   .cms-textarea__control {
   overflow: visible;
   height: auto;

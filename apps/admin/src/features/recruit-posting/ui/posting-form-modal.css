@@ -217,33 +217,6 @@
   max-height: none;
 }
 
-.posting-form-modal__form:has(.rich-text-editor[data-resized='true']) {
-  flex: 0 0 auto;
-  overflow: visible;
-}
-
-.posting-form-modal.content-modal .teal-header-modal__body:has(.rich-text-editor[data-resized='true']) {
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
-.posting-form-modal__section--editor:has(.rich-text-editor[data-resized='true']) {
-  flex: 0 0 auto;
-}
-
-.posting-form-modal__editor-host:has(.rich-text-editor[data-resized='true']) {
-  height: auto;
-  min-height: 0;
-  max-height: none;
-  flex: 0 0 auto;
-  overflow: visible;
-}
-
-.posting-form-modal__editor-host .rich-text-editor[data-resized='true'] {
-  height: var(--rt-user-height) !important;
-  max-height: none;
-}
-
 .posting-form-modal__attachment {
   display: flex;
   width: 100%;

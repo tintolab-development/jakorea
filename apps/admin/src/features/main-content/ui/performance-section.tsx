@@ -4,9 +4,18 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { PerformanceMetric, PerformanceSection } from '@/entities/main-content/model/types'
 import { useSavePerformanceSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
-import { MetricsNestedTable } from '@/features/main-content/ui/nested-tables'
+import {
+  MainContentRequiredLabel,
+  MetricsNestedTable,
+} from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsInput,
+  CmsTextArea,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 type Props = {
   data: PerformanceSection
@@ -32,9 +41,15 @@ export function PerformanceSectionCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    const metricsIncomplete = draft.metrics.some(metric => !metric.value.trim())
+    if (!draft.title.trim() || !draft.bottomText.trim() || metricsIncomplete) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '실적 및 성과'))
     }
@@ -73,7 +88,9 @@ export function PerformanceSectionCard({ data }: Props) {
       <DetailInfoForm title="실적 및 성과 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="타이틀 문구"
+            label={
+              <MainContentRequiredLabel required={isEditing}>타이틀 텍스트</MainContentRequiredLabel>
+            }
             view={titleText || '-'}
             edit={
               <CmsInput
@@ -81,17 +98,24 @@ export function PerformanceSectionCard({ data }: Props) {
                 width="100%"
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력하세요"
+                placeholder="타이틀 텍스트를 입력해 주세요"
               />
             }
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="실적 및 성과" view={metricsTable} edit={metricsTable} />
+          <DetailInfoForm.Field
+            label="실적 및 성과"
+            required
+            view={metricsTable}
+            edit={metricsTable}
+          />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="하단 문구"
+            label={
+              <MainContentRequiredLabel required={isEditing}>하단 텍스트</MainContentRequiredLabel>
+            }
             view={<span className="main-content-preline">{bottomText || '-'}</span>}
             edit={
               <CmsTextArea
@@ -101,7 +125,7 @@ export function PerformanceSectionCard({ data }: Props) {
                 rows={2}
                 value={draft.bottomText}
                 onChange={e => setDraft(prev => ({ ...prev, bottomText: e.target.value }))}
-                placeholder="하단 문구를 입력하세요"
+                placeholder="하단 텍스트를 입력해 주세요"
               />
             }
           />

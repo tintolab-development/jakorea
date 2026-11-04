@@ -72,7 +72,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         })
       }
     },
-    [showAlert],
+    [showAlert]
   )
 
   return (
@@ -102,8 +102,10 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
           .then(
             () => setEditing(false),
             error => {
-              showAlert(jaHistorySaveAlert(error, 'JA 살펴보기 저장에 실패했습니다. 다시 시도해 주세요.'))
-            },
+              showAlert(
+                jaHistorySaveAlert(error, 'JA 살펴보기 저장에 실패했습니다. 다시 시도해 주세요.')
+              )
+            }
           )
       }}
     >
@@ -119,7 +121,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
                 onChange={title => patch({ title })}
                 rows={2}
                 label="타이틀"
-                placeholder="타이틀을 입력하세요"
+                placeholder="타이틀을 입력해 주세요"
               />
             }
           />
@@ -135,7 +137,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
                 onChange={body => patch({ body })}
                 rows={3}
                 label="서브 텍스트"
-                placeholder="서브 텍스트를 입력하세요"
+                placeholder="서브 텍스트를 입력해 주세요"
               />
             }
           />

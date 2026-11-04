@@ -1,3 +1,8 @@
+.main-content-section-card {
+  /* Figma Table / Vertical / Cell / Medium 라벨 폭 200 */
+  --detail-info-label-w: 200px;
+}
+
 .main-content-section-card__title-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -15,44 +20,134 @@
 }
 
 /*
- * view ↔ edit UI shift 방지
- * - 단줄: padding 12×2 + medium control 40 = 64px
- * - 다줄(rows=2): padding 12×2 + textarea ~76px ≈ 100px
+ * 수정 모드 텍스트 스펙 (Figma 25:15933)
+ * - 단줄 Field / Table / Input: Medium 15px / 1.45 / py 9
+ * - 2줄 타이틀·하단: 동일 타이포, rows=2 (15×1.45×2 + py 9×2 ≈ 62)
+ * - 중첩 Small: 14px / 1.4 / h36
  */
 .main-content-section-card .detail-info-form__field-content {
-  min-height: 64px;
   box-sizing: border-box;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
 }
 
-.main-content-section-card .detail-info-form__field-content--view:has(.main-content-preline),
-.main-content-section-card .detail-info-form__field-content--edit:has(.cms-textarea) {
-  min-height: 100px;
-  align-items: flex-start;
+/* Figma 25:14919 view Medium text — 14 / 1.5 */
+.main-content-section-card .detail-info-form__field-content--view {
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.main-content-section-card .main-content-preline {
-  white-space: pre-line;
-  width: 100%;
-  min-height: 76px;
-  display: flex;
-  align-items: center;
+.main-content-section-card .detail-info-form__field-content--view .main-content-preline {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.main-content-section-card .detail-info-form__field-label {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  gap: 0;
+  overflow: visible;
+}
+
+/* 기본 DetailInfoForm required (정기후원 타이틀은 main-content-required-label 사용) */
+.main-content-section-card .detail-info-form__field-required {
+  position: relative;
+  top: -6px;
+  margin-left: 1px;
+  width: 9px;
+  height: 21px;
+  color: #c32f4a;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 /*
- * td 안 중첩 테이블 (시안)
- * 규격: apps/admin/.cursor/rules/design/detail-info-nested-table.mdc
- * — 바깥 셀: padding 20px, 격자 100% 폭
+ * Figma Table / Vertical / Cell required (25:16132)
+ * — 라벨 텍스트 shrink 래퍼 기준
+ * — right: -6.5px; bottom: 20px; translate(50%, 100%); 9×21; 16 / 1.2; #C32F4A
+ */
+
+.main-content-required-label {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.main-content-required-label__mark,
+.main-content-nested-table__required {
+  position: absolute;
+  right: -6.5px;
+  bottom: 20px;
+  width: 9px;
+  height: 21px;
+  margin: 0;
+  color: #c32f4a;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.2;
+  transform: translate(50%, 100%);
+  pointer-events: none;
+}
+
+.main-content-section-card .detail-info-form__field-content--edit > .main-content-field-control {
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.main-content-section-card .main-content-preline {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  white-space: pre-line;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--Netural-black, #3d3d3d);
+}
+
+/*
+ * 2줄 Field — resize 없음, 고정 2라인 높이
+ * control padding 9×16 + 본문 44px (15px × 1.45 × 2)
+ */
+.main-content-section-card .cms-textarea--fixed-rows.cms-textarea--medium .cms-textarea__control {
+  min-height: 62px;
+  height: 62px;
+  padding: 9px 16px;
+}
+
+.main-content-section-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  height: 44px;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+/*
+ * td 안 중첩 테이블 (Figma 25:15966 edit / 25:15933)
+ * — 바깥 Medium 값 셀: padding 12×16
+ * — 내부 Small: 라벨 180 / min-h 44 / padding 4×12 / Input 120×36 py8 px14
+ * — 필수 *: 16px #C32F4A, 라벨 텍스트 우측 상단
  * — edit 슬롯의 `> * { display:flex }` 오버라이드 필수
  */
 .main-content-section-card .detail-info-form__field-content:has(.main-content-nested-table) {
   display: flex;
-  padding: 20px;
+  padding: 12px 16px;
   justify-content: stretch;
   align-items: stretch;
   gap: 0;
   min-height: 0;
   min-width: 0;
   box-sizing: border-box;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 /*
@@ -82,7 +177,7 @@
   background: #fff;
 }
 
-/* 실적: 2열 × 2행 */
+/* 실적: 2열 × 2행 — Figma Small 라벨 180 고정, 열이 min-content로 밀려 * 가 잘리지 않게 */
 .main-content-section-card
   .detail-info-form__field-content:has(.main-content-nested-table)
   > .main-content-nested-table--metrics,
@@ -113,15 +208,37 @@
 
 /*
  * 셀: 라벨(회색) | 값
- * 긴 라벨(전문 협업 학교…)도 높이 자동 확장, 세로 중앙 정렬
+ * 실적 라벨은 한 줄(nowrap). CTA 짧은 라벨은 180px 고정.
  */
 .main-content-nested-table__cell {
   display: grid;
-  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  grid-template-columns: 180px minmax(0, 1fr);
   align-items: stretch;
   min-width: 0;
-  min-height: 50px;
+  min-height: 44px;
   box-sizing: border-box;
+}
+
+.main-content-nested-table--metrics > .main-content-nested-table__cell {
+  grid-template-columns: 180px minmax(0, 1fr);
+}
+
+/* Figma 25:14919 view Small header 200 / 25:15966 edit 180 */
+.main-content-nested-table--metrics.main-content-nested-table--view
+  > .main-content-nested-table__cell {
+  grid-template-columns: 200px minmax(0, 1fr);
+}
+
+.main-content-nested-table--metrics.main-content-nested-table--view
+  .main-content-nested-table__label {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+.main-content-nested-table--view .main-content-nested-table__value {
+  padding: 10px 12px;
+  line-height: 1.5;
 }
 
 /* 메트릭 2×2 구분선 */
@@ -140,11 +257,17 @@
 
 .main-content-nested-table__label {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   box-sizing: border-box;
-  min-width: 0;
-  padding: 12px 16px;
+  overflow: visible;
+  width: 180px;
+  min-width: 180px;
+  max-width: 180px;
+  min-height: 44px;
+  padding: 4px 12px;
   background: var(
     --BG-header,
     linear-gradient(0deg, rgba(231, 235, 239, 0.6) 0%, rgba(231, 235, 239, 0.6) 100%),
@@ -153,25 +276,33 @@
   border-right: 1px solid var(--table-line, #e0e0e0);
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 140%;
+  line-height: 1.5;
   text-align: center;
+  white-space: nowrap;
   word-break: keep-all;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
+}
+
+.main-content-nested-table__label-inner {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .main-content-nested-table__value {
   display: flex;
   align-items: center;
   min-width: 0;
-  padding: 8px 16px;
+  padding: 10px;
   box-sizing: border-box;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 140%;
+  line-height: 1.4;
 }
 
 .main-content-nested-table__value > * {
@@ -191,24 +322,36 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
   min-width: 0;
 }
 
 .main-content-metric-edit .cms-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 160px;
+  flex: 0 0 120px;
+  width: 120px;
+  max-width: 120px;
+  min-width: 120px;
+}
+
+.main-content-section-card
+  .main-content-metric-edit
+  .cms-input--small
+  .cms-input__control {
+  width: 120px;
+  min-width: 120px;
+  height: 36px;
+  padding: 8px 14px;
+  box-sizing: border-box;
 }
 
 .main-content-metric-edit__unit {
   flex-shrink: 0;
   color: var(--main-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 140%;
+  line-height: 1.5;
   white-space: nowrap;
 }
 
@@ -216,6 +359,19 @@
   white-space: nowrap;
 }
 
-.main-content-section-card .cms-textarea--fixed-rows .cms-textarea__inner textarea.ant-input {
-  resize: none;
+.main-content-field-control {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.main-content-field-error {
+  margin: 6px 0 0;
+  color: var(--color-error, #c32f4a);
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 140%;
+  white-space: pre-wrap;
 }

@@ -8,7 +8,7 @@ const PICKER_Z_INDEX = 1100
 const TABLE_MAX_HEIGHT = 400
 const TABLE_HEADER_HEIGHT = 54
 const TABLE_ROW_HEIGHT = 54
-const CONTACT_PLACEHOLDER = '수신자 정보를 입력하세요'
+const CONTACT_PLACEHOLDER = '수신자 정보를 입력해 주세요'
 
 export type RecipientManualEntry = {
   contact: string
@@ -254,14 +254,16 @@ export function RecipientManualModal({
               type="button"
               variant="cancel"
               size="small"
-              onClick={() => handleCancelInput(record.key)} >
+              onClick={() => handleCancelInput(record.key)}
+            >
               취소
             </CmsButton>
             <CmsButton
               type="button"
               variant="secondary"
               size="small"
-              onClick={() => handleRegister(record.key)} >
+              onClick={() => handleRegister(record.key)}
+            >
               등록
             </CmsButton>
           </div>
@@ -271,14 +273,16 @@ export function RecipientManualModal({
               type="button"
               variant="cancel"
               size="small"
-              onClick={() => handleEdit(record.key)} >
+              onClick={() => handleEdit(record.key)}
+            >
               수정
             </CmsButton>
             <CmsButton
               type="button"
               variant="delete"
               size="small"
-              onClick={() => handleDelete(record.key)} >
+              onClick={() => handleDelete(record.key)}
+            >
               삭제
             </CmsButton>
           </div>
@@ -301,7 +305,7 @@ export function RecipientManualModal({
                 width="100%"
                 allowClear={false}
                 value={record.variables[variableKey] ?? ''}
-                placeholder="변수값을 입력하세요"
+                placeholder="변수값을 입력해 주세요"
                 onChange={event => updateVariable(record.key, variableKey, event.target.value)}
               />
             </label>

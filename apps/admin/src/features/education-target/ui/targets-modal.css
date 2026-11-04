@@ -1,13 +1,72 @@
+/* Figma 2136:57789 — popup / multiple / w600 */
+
 .education-targets-modal__note {
-  margin: 0 0 16px;
+  margin: 0 0 30px;
   color: var(--default-BK, #3d3d3d);
   font-family: Pretendard, sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 150%;
-  opacity: 0.6;
+}
+
+/*
+ * Figma 2136:57798 header
+ * 라벨 14/700/1.5 · 64×21
+ * * 16/#C32F4A · 9×21 · x=66 (라벨 우측 +2) · y=1
+ */
+.education-targets-modal__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.education-targets-modal__name-col {
+  overflow: visible !important;
+}
+
+.education-targets-modal__name-th {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.education-targets-modal__name-th-text {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--Netural-black, #3d3d3d);
+  white-space: nowrap;
+}
+
+.education-targets-modal__required {
+  color: var(--color-red, #c32f4a);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
 }
 
 .education-targets-modal__table .ant-table-tbody > tr > td {
   vertical-align: middle;
+}
+
+.education-targets-modal__table .ant-table-tbody > tr > td.education-targets-modal__name-col {
+  padding: 10px !important;
+}
+
+.education-targets-modal__table
+  .education-targets-modal__name-col
+  .cms-input--small
+  .cms-input__control {
+  height: 36px;
+  min-height: 36px;
+  padding: 8px 14px;
+  box-sizing: border-box;
+}
+
+.education-targets-modal__table
+  .education-targets-modal__name-col
+  .cms-input--small
+  .cms-input__inner
+  .ant-input {
+  font-size: 14px !important;
+  font-weight: 500;
+  line-height: 1.4;
 }

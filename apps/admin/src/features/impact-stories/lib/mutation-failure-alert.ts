@@ -3,6 +3,7 @@
  */
 
 import {
+  type AdminMutationAlert,
   mapCommonRemoteMutationFailure,
   readApiErrorCode,
   readApiErrorMessage,
@@ -11,7 +12,7 @@ import {
 function mapBodyValidationFailure(
   error: unknown,
   title: string,
-): { title: string; content: string } | null {
+): AdminMutationAlert | null {
   const code = readApiErrorCode(error) ?? ''
   const message = readApiErrorMessage(error) ?? ''
   const blob = `${code} ${message}`
@@ -40,7 +41,7 @@ export function impactStoryMutationFailureAlert(
   error: unknown,
   fallbackContent: string,
   title = '저장 실패',
-): { title: string; content: string } {
+): AdminMutationAlert {
   const common = mapCommonRemoteMutationFailure(error)
   if (common) return common
 
@@ -50,10 +51,7 @@ export function impactStoryMutationFailureAlert(
   return { title, content: fallbackContent }
 }
 
-export function impactStoryCategoryMutationFailureAlert(error: unknown): {
-  title: string
-  content: string
-} {
+export function impactStoryCategoryMutationFailureAlert(error: unknown): AdminMutationAlert {
   const common = mapCommonRemoteMutationFailure(error)
   if (common) return common
 

@@ -114,7 +114,8 @@ export function DownloadOptionsModal({
             size="medium"
             type="button"
             onClick={handleCancel}
-            disabled={downloading} >
+            disabled={downloading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -123,7 +124,8 @@ export function DownloadOptionsModal({
             type="button"
             loading={downloading}
             disabled={!downloadCheck.allowed}
-            onClick={() => form.submit()} >
+            onClick={() => form.submit()}
+          >
             다운로드
           </CmsButton>
         </>
@@ -187,7 +189,7 @@ export function DownloadOptionsModal({
           >
             <TextArea
               rows={4}
-              placeholder="원본 데이터가 필요한 사유를 입력하세요"
+              placeholder="원본 데이터가 필요한 사유를 입력해 주세요"
               maxLength={500}
               showCount
             />

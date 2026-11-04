@@ -55,7 +55,6 @@ export function VisitorStatsTable({ unit, rows, loading }: Props) {
         loading={loading}
         pagination={false}
         tableLayout="fixed"
-        locale={{ emptyText: '검색 결과가 없습니다.' }}
       />
     </div>
   )

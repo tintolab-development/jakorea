@@ -157,13 +157,14 @@ function mapStrips(
     if (!label) return []
     if (!isWithinDisplayPeriod(banner.displayStartDate, banner.displayEndDate)) return []
     const seed = fallback[index % fallback.length]
-    const href = resolveHomeHref(banner.linkUrl, seed?.href ?? '/')
+    const link = readString(banner.linkUrl)
+    const href = link ? parseHomeHref(link) : undefined
     return [
       {
         id: banner.id != null ? `strip-${banner.id}` : `strip-${index}`,
         label,
-        href: href.href,
-        external: href.external,
+        href: href?.href,
+        external: href?.external ?? false,
         backgroundColor:
           seed?.backgroundColor ?? FALLBACK_STRIP_COLORS[index % FALLBACK_STRIP_COLORS.length]!,
       },

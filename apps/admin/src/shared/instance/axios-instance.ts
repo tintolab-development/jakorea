@@ -4,6 +4,7 @@
  * - 401 시 refresh single-flight
  */
 
+import { recordTokenIssuedAt } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   AUTH_EXPIRY_KEY,
@@ -151,6 +152,7 @@ function persistAccessToken(accessToken: string, expiresAtIso?: string) {
     localStorage.setItem(AUTH_TOKEN_KEY, accessToken)
     localStorage.setItem(AUTH_EXPIRY_KEY, expires)
   }
+  recordTokenIssuedAt()
 
   useAuthStore.setState({
     token: accessToken,

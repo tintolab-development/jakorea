@@ -40,7 +40,7 @@ describe('validateNotificationScheduledAt', () => {
         scheduledAt: null,
         nowMs,
       })
-    ).toBe('예약 일시를 선택하세요.')
+    ).toBe('예약 일시를 선택해 주세요.')
   })
 
   it('rejects past scheduledAt', () => {

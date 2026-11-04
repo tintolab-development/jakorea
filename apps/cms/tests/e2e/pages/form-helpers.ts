@@ -11,7 +11,7 @@ function isEmptySelectValue(text: string) {
     text === '해당 없음' ||
     text === '미선택' ||
     text.includes('미선택') ||
-    text.includes('선택하세요') ||
+    text.includes('선택해 주세요') ||
     text.includes('선택해 주세요')
   )
 }
@@ -530,12 +530,11 @@ async function calendarMiniTitle(dialog: Locator): Promise<string> {
 
 async function clickCalendarMiniNav(dialog: Locator, direction: 'prev' | 'next') {
   const before = await calendarMiniTitle(dialog)
-  const button = direction === 'prev' ? calendarMiniPrevButton(dialog) : calendarMiniNextButton(dialog)
+  const button =
+    direction === 'prev' ? calendarMiniPrevButton(dialog) : calendarMiniNextButton(dialog)
   await expect(button).toBeVisible({ timeout: 5_000 })
   await button.click()
-  await expect
-    .poll(async () => calendarMiniTitle(dialog), { timeout: 5_000 })
-    .not.toBe(before)
+  await expect.poll(async () => calendarMiniTitle(dialog), { timeout: 5_000 }).not.toBe(before)
 }
 
 /**
@@ -549,7 +548,8 @@ async function revealEnabledCalendarMiniDays(dialog: Locator, futureMonthClicks:
   const scan = async (direction: 'prev' | 'next', steps: number) => {
     for (let i = 0; i < steps; i += 1) {
       if (await hasEnabledDays()) return true
-      const button = direction === 'prev' ? calendarMiniPrevButton(dialog) : calendarMiniNextButton(dialog)
+      const button =
+        direction === 'prev' ? calendarMiniPrevButton(dialog) : calendarMiniNextButton(dialog)
       if ((await button.count()) === 0) break
       await clickCalendarMiniNav(dialog, direction)
     }
@@ -587,7 +587,7 @@ async function fillParagraphDateByPlaceholderOnce(
   mode: 'single' | 'range' = 'range',
   options?: FillParagraphDateOptions
 ) {
-  const labelText = options?.label ?? placeholder.replace(/을 선택하세요$/, '')
+  const labelText = options?.label ?? placeholder.replace(/을 선택해 주세요$/, '')
   const scope = options?.root ?? page
   const triggerLocator = () => {
     const byPlaceholder = scope
@@ -705,18 +705,18 @@ async function fillParagraphDateByPlaceholderOnce(
   const startIdx = wideCurrentYearWindow
     ? 0
     : futureStartWindow
-    ? futureStartDayIdx >= 0
-      ? futureStartDayIdx
-      : Math.max(dayCount - 1, 0)
-    : currentMonthWindow
-    ? currentDayIdx >= 0
-      ? currentDayIdx
-      : Math.max(dayCount - 2, 0)
-    : options?.preferLaterDays
-      ? mode === 'single'
-        ? Math.max(dayCount - 2, 0)
-        : Math.min(Math.max(dayCount - 8, 0), Math.max(dayCount - 2, 0))
-      : 0
+      ? futureStartDayIdx >= 0
+        ? futureStartDayIdx
+        : Math.max(dayCount - 1, 0)
+      : currentMonthWindow
+        ? currentDayIdx >= 0
+          ? currentDayIdx
+          : Math.max(dayCount - 2, 0)
+        : options?.preferLaterDays
+          ? mode === 'single'
+            ? Math.max(dayCount - 2, 0)
+            : Math.min(Math.max(dayCount - 8, 0), Math.max(dayCount - 2, 0))
+          : 0
   const endIdx = currentMonthWindow
     ? Math.max(dayCount - 1, startIdx + 1)
     : Math.min(startIdx + 4, dayCount - 1)
@@ -923,7 +923,9 @@ export async function uploadTinyPngIfPresent(page: Page) {
         })
         .catch(() => false)
       if (!usable) continue
-      await input.setInputFiles({ ...file, name: `e2e-upload-${seen.size}.png` }).catch(() => undefined)
+      await input
+        .setInputFiles({ ...file, name: `e2e-upload-${seen.size}.png` })
+        .catch(() => undefined)
     }
   }
 }

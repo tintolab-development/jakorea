@@ -1407,9 +1407,7 @@ export function ApplicantList({
       <InstitutionApproveModal
         open={institutionApproveTarget != null}
         schoolName={institutionApproveTarget?.name ?? ''}
-        copyVariant={
-          isCompanySchoolInstitutionApprove ? 'program-application' : 'participation'
-        }
+        copyVariant={isCompanySchoolInstitutionApprove ? 'program-application' : 'participation'}
         scheduleConfig={
           requiresInstitutionApproveScheduleAssignment ? institutionApproveScheduleConfig : null
         }
@@ -2350,7 +2348,7 @@ export function ApplicantList({
               ) {
                 showAlert({
                   title: '강사 배정 필요',
-                  content: '배정할 일정을 1개 이상 선택하세요.',
+                  content: '배정할 일정을 1개 이상 선택해 주세요.',
                 })
                 return
               }
@@ -2428,21 +2426,18 @@ export function ApplicantList({
             description={`${tableData.length}건`}
             actions={
               <div className="program-application-list-toolbar">
-                <FilterTableToolbarButton
-                  variant="delete"
-                  onClick={handleBulkRejectClick} >
+                <FilterTableToolbarButton variant="delete" onClick={handleBulkRejectClick}>
                   선택 반려
                 </FilterTableToolbarButton>
-                <FilterTableToolbarButton
-                  variant="secondary"
-                  onClick={handleBulkApproveClick} >
+                <FilterTableToolbarButton variant="secondary" onClick={handleBulkApproveClick}>
                   선택 승인
                 </FilterTableToolbarButton>
                 {showApplicationListViewToggle && displayViewMode === 'table' && (
                   <FilterTableToolbarButton
                     icon={<ButtonCalendarIcon />}
                     variant="secondary"
-                    onClick={handleViewCalendar} >
+                    onClick={handleViewCalendar}
+                  >
                     캘린더 뷰로 보기
                   </FilterTableToolbarButton>
                 )}
@@ -2450,7 +2445,8 @@ export function ApplicantList({
                   <FilterTableToolbarButton
                     variant="secondary"
                     icon={<ButtonListIcon />}
-                    onClick={handleViewList} >
+                    onClick={handleViewList}
+                  >
                     리스트 뷰로 보기
                   </FilterTableToolbarButton>
                 )}

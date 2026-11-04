@@ -2,7 +2,7 @@
  * 메뉴별 조회 통계 — 메트릭 표
  * DetailInfoForm 외곽 + 값 셀 안 nested table
  * 규격: apps/admin/.cursor/rules/design/detail-info-nested-table.mdc
- * 참고: features/main-content/ui/nested-tables.tsx
+ * 참고: features/main-content/ui/nested-tables.tsx (DetailInfoForm 중첩)
  *        features/hero-banner/ui/text-link-cell.tsx (DetailInfoForm view 행)
  */
 

@@ -299,7 +299,8 @@ export function CategoryManagementModal({
               pagination={false}
               columns={columns}
               dataSource={draft}
-              locale={{ emptyText: '등록된 카테고리가 없습니다.' }}
+              emptyTitle="등록된 카테고리가 없습니다."
+              emptyDescription={null}
               summary={() => (
                 <CmsDataTable.Summary>
                   <CmsDataTable.Summary.Row className="is-category-modal__summary">

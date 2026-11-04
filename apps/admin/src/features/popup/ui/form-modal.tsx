@@ -3,6 +3,7 @@ import dayjs, { type Dayjs } from 'dayjs'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsPeriodDatePicker,
   CmsInput,
@@ -13,6 +14,7 @@ import {
   ContentModal,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  ThumbnailPlaceholder,
   useCmsAlert,
 } from '@/shared/ui'
 import type { Popup, PopupCreateInput } from '@/entities/popup/model/types'
@@ -22,10 +24,7 @@ import {
   createPublishPeriodDisabledDate,
   isPublishPeriodExpired,
 } from '@/shared/lib/publish-period'
-import {
-  HTTP_LINK_URL_FORMAT_ALERT,
-  isValidHttpLinkUrl,
-} from '@/shared/lib/http-link-url'
+import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '@/shared/lib/http-link-url'
 import { formatDateDot } from '@/shared/lib/format-display'
 import './form-modal.css'
 
@@ -36,9 +35,42 @@ const IMAGE_GUIDE_LINES = [
 ]
 
 const MODAL_DESCRIPTION =
-  '홈페이지 진입 시 노출되는 팝업입니다.\n연결 링크가 설정된 경우, 팝업 클릭 시 입력된 주소가 새 창에서 열립니다.'
+  '홈페이지 접속 시 노출되는 팝업입니다.\n연결 링크를 설정하면 팝업을 클릭했을 때 설정된 페이지가 새 창으로 열립니다.'
 
 const WEEKDAY_KO_MIN = ['일', '월', '화', '수', '목', '금', '토'] as const
+
+function FileIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 20 20"
+      fill="none"
+      className={className}
+      aria-hidden
+    >
+      <path
+        d="M5.5 2.5h6.2L14.5 5.3V16.5a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M11.5 2.5V5.8H14.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7 9.5h6M7 12.5h4.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
 
 function coerceRadioBoolean(raw: unknown): boolean {
   if (raw === true || raw === 1) return true
@@ -78,29 +110,6 @@ function formatCreatedAt(iso: string): string {
   return `${d.format('YYYY.MM.DD')}(${WEEKDAY_KO_MIN[d.day()]}) ${d.format('HH:mm')}`
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 export type PopupFormValues = PopupCreateInput
 
 type FormBodyProps = {
@@ -123,9 +132,7 @@ function PopupFormBody({
   onDelete,
 }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
-  const [formMode, setFormMode] = useState<'view' | 'edit'>(
-    variant === 'create' ? 'edit' : 'view'
-  )
+  const [formMode, setFormMode] = useState<'view' | 'edit'>(variant === 'create' ? 'edit' : 'view')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const [isActive, setIsActive] = useState(() =>
@@ -137,9 +144,7 @@ function PopupFormBody({
   const [imageFileName, setImageFileName] = useState(() =>
     variant === 'detail' && initial ? (initial.imageFileName ?? '') : ''
   )
-  const [name, setName] = useState(() =>
-    variant === 'detail' && initial ? initial.name : ''
-  )
+  const [name, setName] = useState(() => (variant === 'detail' && initial ? initial.name : ''))
   const [altText, setAltText] = useState(() =>
     variant === 'detail' && initial ? initial.altText : ''
   )
@@ -211,47 +216,29 @@ function PopupFormBody({
       Boolean(imageUrl.trim())
 
     if (!imageUrl.trim() && !hasExistingRemoteImage) {
-      showAlert({
-        title: '이미지 필수',
-        content: '팝업 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (useRemote && variant === 'create' && !pendingImageFile) {
-      showAlert({
-        title: '이미지 필수',
-        content: '팝업 이미지를 파일로 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (useRemote && variant === 'detail' && imageCleared && !pendingImageFile) {
-      showAlert({
-        title: '이미지 필수',
-        content: '팝업 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (!name.trim()) {
-      showAlert({
-        title: '팝업명 필수',
-        content: '팝업명을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (!altText.trim()) {
-      showAlert({
-        title: '대체 텍스트 필수',
-        content: '대체 텍스트를 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     const start = periodRange[0]
     const end = periodRange[1]
     if (!start || !end) {
-      showAlert({
-        title: '게시 기간 필수',
-        content: '게시 기간을 선택해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     if (isActive && isPublishPeriodExpired(end)) {
@@ -259,10 +246,7 @@ function PopupFormBody({
       return null
     }
     if (linkEnabled && !linkUrl.trim()) {
-      showAlert({
-        title: '연결 링크 필수',
-        content: '연결 URL을 입력해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return null
     }
     const trimmedLinkUrl = linkEnabled ? linkUrl.trim() : ''
@@ -275,8 +259,7 @@ function PopupFormBody({
       imageUrl,
       imageFileName: imageFileName || undefined,
       imageFile: pendingImageFile,
-      imageAssetId:
-        !pendingImageFile && !imageCleared ? initial?.imageAssetId : undefined,
+      imageAssetId: !pendingImageFile && !imageCleared ? initial?.imageAssetId : undefined,
       name,
       altText,
       periodStart: start.format('YYYY-MM-DD'),
@@ -334,52 +317,54 @@ function PopupFormBody({
               <CmsButton
                 className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
                 disabled={confirmLoading || deleteLoading}
-                loading={deleteLoading} >
+                loading={deleteLoading}
+              >
                 팝업 삭제
               </CmsButton>
             ) : null}
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               onClick={onCancel}
-              disabled={confirmLoading || deleteLoading} >
+              disabled={confirmLoading || deleteLoading}
+            >
               취소
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="large"
+              size="h40"
               type="button"
               loading={confirmLoading}
               disabled={confirmLoading || deleteLoading}
-              onClick={handlePrimaryAction} >
+              onClick={handlePrimaryAction}
+            >
               {primaryLabel}
             </CmsButton>
           </>
         }
       >
         <div className="popup-form-modal__forms">
-          {variant === 'detail' ? (
-            <DetailInfoForm
-              title="등록 정보"
-              hideHeader
-              mode={formMode}
-              className="popup-form-modal__form popup-form-modal__form--meta"
-            >
+          <DetailInfoForm
+            title={title}
+            hideHeader
+            mode={formMode}
+            className="popup-form-modal__form"
+          >
+            {variant === 'detail' ? (
               <DetailInfoForm.Row type="double">
                 <DetailInfoForm.Field
                   label="등록일시"
                   readOnlyDisplay
-                  view={
-                    <span className="popup-form-modal__created-at">{createdAtLabel}</span>
-                  }
+                  view={<span className="popup-form-modal__created-at">{createdAtLabel}</span>}
                 />
                 <DetailInfoForm.Field
                   label="사용 여부"
+                  required
                   view={<span>{isActive ? '사용' : '미사용'}</span>}
                   edit={
                     <CmsRadioGroup
@@ -397,19 +382,11 @@ function PopupFormBody({
                   }
                 />
               </DetailInfoForm.Row>
-            </DetailInfoForm>
-          ) : null}
-
-          <DetailInfoForm
-            title={title}
-            hideHeader
-            mode={formMode}
-            className="popup-form-modal__form"
-          >
-            {variant === 'create' ? (
+            ) : (
               <DetailInfoForm.Row type="single">
                 <DetailInfoForm.Field
                   label="사용 여부"
+                  required
                   view={null}
                   edit={
                     <CmsRadioGroup
@@ -427,24 +404,21 @@ function PopupFormBody({
                   }
                 />
               </DetailInfoForm.Row>
-            ) : null}
+            )}
 
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="이미지"
+                required
                 view={
-                  <div className="popup-form-modal__image-row">
-                    <div className="popup-form-modal__preview">
-                      {imageUrl ? (
-                        <img src={imageUrl} alt={altText || '팝업 이미지'} />
-                      ) : (
-                        <ImagePlaceholderIcon />
-                      )}
-                    </div>
-                    {imageFileName ? (
+                  imageFileName ? (
+                    <div className="popup-form-modal__file-view">
+                      <FileIcon className="popup-form-modal__file-icon" />
                       <span className="popup-form-modal__file-name">{imageFileName}</span>
-                    ) : null}
-                  </div>
+                    </div>
+                  ) : (
+                    <span>-</span>
+                  )
                 }
                 edit={
                   <div className="popup-form-modal__image-row">
@@ -452,7 +426,7 @@ function PopupFormBody({
                       {imageUrl ? (
                         <img src={imageUrl} alt="팝업 미리보기" />
                       ) : (
-                        <ImagePlaceholderIcon />
+                        <ThumbnailPlaceholder />
                       )}
                     </div>
                     <FileSelectField
@@ -476,12 +450,13 @@ function PopupFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="팝업명"
+                required
                 view={<span>{name || '-'}</span>}
                 edit={
                   <CmsInput
-                    inputSize="large"
-                    width="100%"
-                    placeholder="팝업명을 입력하세요"
+                    inputSize="medium"
+                    width={240}
+                    placeholder="팝업명을 입력해 주세요"
                     value={name}
                     onChange={e => setName(e.target.value)}
                   />
@@ -491,13 +466,14 @@ function PopupFormBody({
 
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
-                label="대체 텍스트 (설명)"
+                label="대체 텍스트"
+                required
                 view={<span>{altText || '-'}</span>}
                 edit={
                   <CmsInput
-                    inputSize="large"
-                    width="100%"
-                    placeholder="대체 텍스트를 입력하세요"
+                    inputSize="medium"
+                    width={240}
+                    placeholder="대체 텍스트를 입력해 주세요"
                     value={altText}
                     onChange={e => setAltText(e.target.value)}
                   />
@@ -508,17 +484,18 @@ function PopupFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="게시 기간"
+                required
                 view={<span>{periodViewLabel}</span>}
                 edit={
                   <CmsPeriodDatePicker
-                    inputSize="large"
-                    width="100%"
+                    inputSize="medium"
+                    width={240}
                     value={periodRange}
                     onChange={dates => {
                       setPeriodRange(dates ?? [null, null])
                     }}
                     disabledDate={periodDisabledDate}
-                    placeholder="게시 기간을 선택하세요"
+                    placeholder="게시 기간을 선택해 주세요"
                   />
                 }
               />
@@ -527,6 +504,7 @@ function PopupFormBody({
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="연결 링크"
+                required
                 view={
                   <div className="popup-form-modal__link-view">
                     <span>{linkEnabled ? '연결' : '미연결'}</span>
@@ -554,9 +532,9 @@ function PopupFormBody({
                     </CmsRadioGroup>
                     <DetailInfoForm.TdDivider />
                     <CmsInput
-                      inputSize="large"
+                      inputSize="medium"
                       width="100%"
-                      placeholder="연결 URL을 입력하세요"
+                      placeholder="연결 URL을 입력해 주세요"
                       value={linkUrl}
                       disabled={!linkEnabled}
                       onChange={e => setLinkUrl(e.target.value)}
@@ -611,9 +589,7 @@ export function PopupFormModal({
   if (!open) return null
 
   const formKey =
-    variant === 'detail'
-      ? `detail-${initial?.id ?? 'unknown'}`
-      : `create-${String(open)}`
+    variant === 'detail' ? `detail-${initial?.id ?? 'unknown'}` : `create-${String(open)}`
 
   return (
     <PopupFormBody

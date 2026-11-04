@@ -53,10 +53,7 @@ function renderVolunteerScheduleLines(lines: string[]) {
   return (
     <div className="participating-institutions-section__sessions-cell">
       {displayLines.map((line, index) => (
-        <div
-          key={`${line}-${index}`}
-          className="participating-institutions-section__session-line"
-        >
+        <div key={`${line}-${index}`} className="participating-institutions-section__session-line">
           {renderProgramDetailPipeSeparated(formatCmsScheduleDisplayLabel(line))}
         </div>
       ))}
@@ -99,9 +96,9 @@ export function ParticipatingVolunteerAssignmentSection({
   const { showAlert } = useCmsAlert()
   const queryClient = useQueryClient()
   const remoteEnabled = useProgramProgressRemoteEnabledForSurface(program.id)
-  const [assignedInstitutions, setAssignedInstitutions] = useState<VolunteerAssignedInstitutionRow[]>(
-    []
-  )
+  const [assignedInstitutions, setAssignedInstitutions] = useState<
+    VolunteerAssignedInstitutionRow[]
+  >([])
   const [waitingInstitutions, setWaitingInstitutions] = useState<VolunteerWaitingInstitutionRow[]>(
     []
   )
@@ -356,10 +353,7 @@ export function ParticipatingVolunteerAssignmentSection({
   }, [selectedWaitingKeys, waitingInstitutions, showAlert])
 
   const persistAssignedOrganizations = useCallback(
-    async (
-      nextAssigned: VolunteerAssignedInstitutionRow[],
-      reason: string
-    ): Promise<boolean> => {
+    async (nextAssigned: VolunteerAssignedInstitutionRow[], reason: string): Promise<boolean> => {
       if (!remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-progress-volunteer-assigned-organizations',
@@ -418,9 +412,7 @@ export function ParticipatingVolunteerAssignmentSection({
       if (selectedAssignedKeys.length === 0) return
       const removedRows = assignedInstitutions.filter(r => selectedAssignedKeys.includes(r.id))
       const removedSchoolNames = removedRows.map(r => r.schoolName)
-      const removedSchoolIds = new Set(
-        removedRows.map(r => r.id.split('__assigned')[0] ?? r.id)
-      )
+      const removedSchoolIds = new Set(removedRows.map(r => r.id.split('__assigned')[0] ?? r.id))
       const toRemove = new Set(selectedAssignedKeys.map(String))
       const nextAssigned = renumberVolunteerAssignedRows(
         assignedInstitutions.filter(r => !toRemove.has(r.id))
@@ -498,12 +490,20 @@ export function ParticipatingVolunteerAssignmentSection({
     const school = schoolRows.find(s => s.id === waitingRow.schoolId)
     if (!school) return
 
-    const alreadyAssigned = assignedInstitutions.some(r => r.id.startsWith(`${school.id}__assigned`))
+    const alreadyAssigned = assignedInstitutions.some(r =>
+      r.id.startsWith(`${school.id}__assigned`)
+    )
     const nextAssigned = alreadyAssigned
       ? assignedInstitutions
       : renumberVolunteerAssignedRows([
           ...assignedInstitutions,
-          schoolRowToVolunteerAssignedRow(school, volunteer, 0, assignedInstitutions.length, program),
+          schoolRowToVolunteerAssignedRow(
+            school,
+            volunteer,
+            0,
+            assignedInstitutions.length,
+            program
+          ),
         ])
 
     void (async () => {
@@ -539,9 +539,7 @@ export function ParticipatingVolunteerAssignmentSection({
 
   const unassignSchoolNames = useMemo(
     () =>
-      assignedInstitutions
-        .filter(r => selectedAssignedKeys.includes(r.id))
-        .map(r => r.schoolName),
+      assignedInstitutions.filter(r => selectedAssignedKeys.includes(r.id)).map(r => r.schoolName),
     [assignedInstitutions, selectedAssignedKeys]
   )
 
@@ -566,7 +564,8 @@ export function ParticipatingVolunteerAssignmentSection({
               variant="delete"
               size="h40"
               disabled={assignedInstitutions.length === 0}
-              onClick={handleUnassignClick} >
+              onClick={handleUnassignClick}
+            >
               배정 취소
             </CmsButton>
             <CmsButton
@@ -577,7 +576,8 @@ export function ParticipatingVolunteerAssignmentSection({
                 if (addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
-              }} >
+              }}
+            >
               추가 배정
             </CmsButton>
             <ExcelButton onClick={exportAssignedExcel} loading={isAssignedExcelExporting} />
@@ -687,7 +687,8 @@ export function ParticipatingVolunteerAssignmentSection({
             <CmsButton
               variant="secondary"
               size="large"
-              onClick={() => setSelectAssignConfirmOpen(false)} >
+              onClick={() => setSelectAssignConfirmOpen(false)}
+            >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleSelectAssignConfirm}>
@@ -722,7 +723,8 @@ export function ParticipatingVolunteerAssignmentSection({
               onClick={() => {
                 setAddAssignModalOpen(false)
                 setAddAssignWaitingRowId(null)
-              }} >
+              }}
+            >
               취소
             </CmsButton>
             <CmsButton variant="primary" size="large" onClick={handleAddAssignConfirm}>
@@ -735,7 +737,7 @@ export function ParticipatingVolunteerAssignmentSection({
           <span style={{ display: 'block', marginBottom: 8 }}>기관 · 일정 선택</span>
           <Select
             style={{ width: '100%' }}
-            placeholder="배정할 기관과 일정을 선택하세요"
+            placeholder="배정할 기관과 일정을 선택해 주세요"
             options={addAssignOptions}
             value={addAssignWaitingRowId ?? undefined}
             onChange={v => setAddAssignWaitingRowId(v)}

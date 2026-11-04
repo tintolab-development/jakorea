@@ -60,12 +60,7 @@ type Props = {
   onSubmit: (values: JaHistoryHeroSaveInput) => void
 }
 
-function HeroFormBody({
-  initial,
-  confirmLoading,
-  onCancel,
-  onSubmit,
-}: Omit<Props, 'open'>) {
+function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Props, 'open'>) {
   const { showAlert } = useCmsAlert()
   const [imageUrl, setImageUrl] = useState(initial.image.url)
   const [imageFileName, setImageFileName] = useState(initial.image.fileName)
@@ -109,7 +104,7 @@ function HeroFormBody({
         })
       }
     },
-    [showAlert],
+    [showAlert]
   )
 
   const handleSubmit = () => {
@@ -143,7 +138,13 @@ function HeroFormBody({
       className="ja-history-modal"
       footer={
         <>
-          <CmsButton variant="secondary" size="large" type="button" onClick={onCancel} disabled={confirmLoading}>
+          <CmsButton
+            variant="secondary"
+            size="large"
+            type="button"
+            onClick={onCancel}
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
@@ -152,7 +153,8 @@ function HeroFormBody({
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             수정
           </CmsButton>
         </>
@@ -216,7 +218,7 @@ function HeroFormBody({
                 <DraftTextArea
                   initialValue={eyebrowRef.current}
                   rows={1}
-                  placeholder="상단 라벨을 입력하세요"
+                  placeholder="상단 라벨을 입력해 주세요"
                   ariaLabel="상단 라벨"
                   onValue={value => {
                     eyebrowRef.current = value
@@ -241,7 +243,7 @@ function HeroFormBody({
                 <DraftTextArea
                   initialValue={mainTextRef.current}
                   rows={3}
-                  placeholder="메인 텍스트를 입력하세요"
+                  placeholder="메인 텍스트를 입력해 주세요"
                   ariaLabel="메인 텍스트"
                   onValue={value => {
                     mainTextRef.current = value

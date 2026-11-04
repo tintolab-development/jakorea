@@ -50,7 +50,7 @@ export function ProgramApplicationFormIndividualTeamInfoParagraph() {
             <CmsInput
               inputSize="small"
               width="100%"
-              placeholder="팀 명을 입력하세요"
+              placeholder="팀 명을 입력해 주세요"
               value={teamName}
               onChange={event => setTeamName(event.target.value)}
             />

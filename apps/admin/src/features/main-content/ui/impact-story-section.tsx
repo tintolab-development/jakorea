@@ -2,19 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { ImpactStoryOption, ImpactStorySection } from '@/entities/main-content/model/types'
-import {
-  useImpactStoryDetail,
-  useUpdateImpactStory,
-} from '@/features/impact-stories/api/hooks'
+import { useImpactStoryDetail, useUpdateImpactStory } from '@/features/impact-stories/api/hooks'
 import { useSaveImpactStorySection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsInput,
   CmsSelect,
   CmsTextArea,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -46,15 +45,7 @@ function mimeFromFile(file: File): 'image/jpeg' | 'image/png' {
   return 'image/jpeg'
 }
 
-function CoverPreview({
-  src,
-  alt,
-  loading,
-}: {
-  src?: string
-  alt: string
-  loading?: boolean
-}) {
+function CoverPreview({ src, alt, loading }: { src?: string; alt: string; loading?: boolean }) {
   const [broken, setBroken] = useState(false)
   useEffect(() => {
     setBroken(false)
@@ -82,7 +73,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
 
   const selectOptions = useMemo(
     () => options.map(opt => ({ value: opt.id, label: opt.title })),
-    [options],
+    [options]
   )
 
   const featuredId = isEditing ? draft.featuredContentId : data.featuredContentId
@@ -128,17 +119,22 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       reader.onload = () => setPendingPreview(String(reader.result ?? ''))
       reader.readAsDataURL(file)
     },
-    [showAlert],
+    [showAlert]
   )
 
   const handleSave = useCallback(async () => {
+    if (
+      !draft.title.trim() ||
+      !draft.youtubeUrl.trim() ||
+      !draft.featuredContentId.trim() ||
+      (!pendingFile && !savedCoverUrl)
+    ) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       const story = storyQuery.data
       if (pendingFile) {
-        if (!draft.featuredContentId) {
-          showAlert({ title: '입력 확인', content: '대표 콘텐츠를 먼저 선택해 주세요.' })
-          return
-        }
         if (!story || story.id !== draft.featuredContentId) {
           showAlert({
             title: '저장 실패',
@@ -168,6 +164,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       setPendingFile(null)
       setPendingPreview('')
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '임팩트 스토리'))
     }
@@ -175,6 +172,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
     draft,
     pendingFile,
     saveMutation,
+    savedCoverUrl,
     showAlert,
     storyQuery.data,
     updateStoryMutation,
@@ -199,7 +197,8 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       <DetailInfoForm title="임팩트 스토리 관리" hideHeader mode={mode}>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="타이틀 문구"
+            label="타이틀 텍스트"
+            required
             view={<span className="main-content-preline">{titleText || '-'}</span>}
             edit={
               <CmsTextArea
@@ -209,7 +208,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                 rows={2}
                 value={draft.title}
                 onChange={e => setDraft(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="타이틀 문구를 입력하세요"
+                placeholder="타이틀 텍스트를 입력해 주세요"
               />
             }
           />
@@ -217,6 +216,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="메인 영상 유튜브 링크"
+            required
             view={youtubeUrl || '-'}
             edit={
               <CmsInput
@@ -224,7 +224,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                 width="100%"
                 value={draft.youtubeUrl}
                 onChange={e => setDraft(prev => ({ ...prev, youtubeUrl: e.target.value }))}
-                placeholder="유튜브 링크를 입력하세요"
+                placeholder="유튜브 링크를 입력해 주세요"
               />
             }
           />
@@ -232,6 +232,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="대표 콘텐츠 설정"
+            required
             view={featuredTitle}
             edit={
               <CmsSelect
@@ -248,7 +249,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                     featuredContentId: String(value ?? ''),
                   }))
                 }}
-                placeholder="대표 콘텐츠를 선택하세요"
+                placeholder="대표 콘텐츠를 선택해 주세요"
               />
             }
           />
@@ -256,6 +257,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="대표 콘텐츠 이미지"
+            required
             view={
               <div className="main-content-cover">
                 <CoverPreview src={savedCoverUrl} alt="" loading={coverLoading} />

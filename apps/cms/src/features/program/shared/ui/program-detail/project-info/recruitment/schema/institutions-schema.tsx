@@ -107,7 +107,7 @@ export function createInstitutionsSchema({
                       value={field.value ?? []}
                       options={TARGET_LEVEL_OPTIONS}
                       onChange={v => field.onChange(parseTargetLevelsSelectValue(v))}
-                      placeholder="교육 대상을 선택하세요"
+                      placeholder="교육 대상을 선택해 주세요"
                       className="program-detail-info-tab__target-select"
                     />
                   )}
@@ -164,7 +164,8 @@ export function createInstitutionsSchema({
                     name="resultAnnouncementDate"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsDatePicker inputSize="small"
+                      <CmsDatePicker
+                        inputSize="small"
                         value={toDayjs(field.value)}
                         onChange={d => field.onChange(d ? d.toISOString() : undefined)}
                         className="program-detail-info-tab__date-picker"
@@ -179,7 +180,8 @@ export function createInstitutionsSchema({
                     name="resultAnnouncementMethod"
                     control={form.control}
                     render={({ field }) => (
-                      <CmsInput inputSize="small"
+                      <CmsInput
+                        inputSize="small"
                         {...field}
                         value={field.value ?? ''}
                         placeholder="홈페이지 공지 및 담당교사 개별 안내"
@@ -205,7 +207,8 @@ export function createInstitutionsSchema({
                   name="rounds.0.classCount"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsNumericInput inputSize="small"
+                    <CmsNumericInput
+                      inputSize="small"
                       mode="integer"
                       min={0}
                       value={field.value == null ? '' : String(field.value)}
@@ -228,7 +231,8 @@ export function createInstitutionsSchema({
                   name="studentListRequired"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsRadio.Group size="medium"
+                    <CmsRadio.Group
+                      size="medium"
                       {...field}
                       value={field.value ?? undefined}
                       onChange={e => field.onChange(e.target.value)}
@@ -261,7 +265,8 @@ export function createInstitutionsSchema({
                 <div className="program-detail-info-tab__contact-inputs program-detail-info-tab__contact-inputs--even">
                   <div className="program-detail-info-tab__contact-group">
                     <span className="program-detail-info-tab__contact-label">문의처</span>
-                    <CmsInput inputSize="small"
+                    <CmsInput
+                      inputSize="small"
                       placeholder="문의처"
                       value={sponsorName ?? ''}
                       readOnly
@@ -278,7 +283,8 @@ export function createInstitutionsSchema({
                       name="contactPhone"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsPhoneInput inputSize="small"
+                        <CmsPhoneInput
+                          inputSize="small"
                           {...field}
                           value={field.value ?? ''}
                           placeholder="02-6085-6028"
@@ -297,7 +303,8 @@ export function createInstitutionsSchema({
                       name="contactEmail"
                       control={form.control}
                       render={({ field }) => (
-                        <CmsInput inputSize="small"
+                        <CmsInput
+                          inputSize="small"
                           {...field}
                           value={field.value ?? ''}
                           placeholder="ujat@jakorea.org"
@@ -324,7 +331,8 @@ export function createInstitutionsSchema({
                   name="oneLineIntroduction"
                   control={form.control}
                   render={({ field }) => (
-                    <CmsInput inputSize="small"
+                    <CmsInput
+                      inputSize="small"
                       {...field}
                       value={field.value ?? ''}
                       placeholder="비고"

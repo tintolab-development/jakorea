@@ -8,14 +8,14 @@ export const participatingVolunteersFilterFields: FilterFieldConfig[] = [
     key: 'volunteerName',
     type: 'search',
     label: '참여 봉사자명',
-    placeholder: '봉사자명을 입력하세요',
+    placeholder: '봉사자명을 입력해 주세요',
     width: FILTER_CONTROL_WIDTH,
   },
   {
     key: 'id1365',
     type: 'search',
     label: '1365 ID',
-    placeholder: '1365 ID를 입력하세요',
+    placeholder: '1365 ID를 입력해 주세요',
     width: FILTER_CONTROL_WIDTH,
   },
 ]

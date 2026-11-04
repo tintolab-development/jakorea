@@ -280,8 +280,9 @@ export default function AccountPaymentsPage() {
   const [issuedFormPreviewRows, setIssuedFormPreviewRows] = useState<AccountPaymentRow[] | null>(
     null
   )
-  const [issuedFormExport, setIssuedFormExport] =
-    useState<SettlementExportHistoryResponse | null>(null)
+  const [issuedFormExport, setIssuedFormExport] = useState<SettlementExportHistoryResponse | null>(
+    null
+  )
   const [accountFormIssueBlockedOpen, setAccountFormIssueBlockedOpen] = useState(false)
   const [accountFormIssueBlockedVariant, setAccountFormIssueBlockedVariant] = useState<
     'single' | 'multi'
@@ -311,14 +312,14 @@ export default function AccountPaymentsPage() {
         key: 'instructorName',
         type: 'search',
         label: '신청자명',
-        placeholder: '신청자명을 입력하세요',
+        placeholder: '신청자명을 입력해 주세요',
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
         key: 'programName',
         type: 'search',
         label: '프로그램명',
-        placeholder: '프로그램명을 입력하세요',
+        placeholder: '프로그램명을 입력해 주세요',
         width: FILTER_CONTROL_MAX_WIDTH_PX,
       },
       {
@@ -722,12 +723,7 @@ export default function AccountPaymentsPage() {
       setIssuedFormExport(readyExport)
       setBulkTransferPreviewOpen(true)
     })()
-  }, [
-    accountPaymentsRemote,
-    notifyExportError,
-    requestExportForKind,
-    resolveToolbarFormIssueRows,
-  ])
+  }, [accountPaymentsRemote, notifyExportError, requestExportForKind, resolveToolbarFormIssueRows])
 
   const closeBulkTransferPreview = useCallback(() => {
     setBulkTransferPreviewOpen(false)
@@ -851,7 +847,8 @@ export default function AccountPaymentsPage() {
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonCalendarIcon />}
             type="button"
-            onClick={() => setViewMode('calendar')} >
+            onClick={() => setViewMode('calendar')}
+          >
             캘린더 뷰로 보기
           </FilterTableToolbarButton>
         ) : (
@@ -860,7 +857,8 @@ export default function AccountPaymentsPage() {
             style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
             icon={<ButtonListIcon />}
             type="button"
-            onClick={() => setViewMode('list')} >
+            onClick={() => setViewMode('list')}
+          >
             리스트 뷰로 보기
           </FilterTableToolbarButton>
         )}
@@ -869,7 +867,8 @@ export default function AccountPaymentsPage() {
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
           type="button"
-          onClick={openBulkTransferPreview} >
+          onClick={openBulkTransferPreview}
+        >
           대량이체 양식 발급
         </FilterTableToolbarButton>
         <FilterTableToolbarButton
@@ -877,7 +876,8 @@ export default function AccountPaymentsPage() {
           style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
           icon={<ButtonDownloadIcon />}
           type="button"
-          onClick={openTaxFilingPreview} >
+          onClick={openTaxFilingPreview}
+        >
           세금 신고 양식 발급
         </FilterTableToolbarButton>
         {canRequestRawExport ? (
@@ -886,14 +886,16 @@ export default function AccountPaymentsPage() {
               variant="secondary"
               style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
               type="button"
-              onClick={() => openRawExportRequest('bulk-transfer')} >
+              onClick={() => openRawExportRequest('bulk-transfer')}
+            >
               대량이체 전체 원본 요청
             </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="secondary"
               style={ACCOUNT_PAYMENTS_TOOLBAR_BTN_STYLE}
               type="button"
-              onClick={() => openRawExportRequest('tax-report')} >
+              onClick={() => openRawExportRequest('tax-report')}
+            >
               세금신고 전체 원본 요청
             </FilterTableToolbarButton>
           </>
@@ -915,7 +917,8 @@ export default function AccountPaymentsPage() {
         <FilterTableToolbarButton
           variant="primary"
           type="button"
-          onClick={openAccountPaymentConfirmFromSelection} >
+          onClick={openAccountPaymentConfirmFromSelection}
+        >
           일괄 지급 처리
         </FilterTableToolbarButton>
       ) : null,

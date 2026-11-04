@@ -9,7 +9,10 @@ import { Form, Select, Input, Space, Switch } from 'antd'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { applicationPathSchema, type ApplicationPathFormData } from '@/entities/application-path/model/schema'
+import {
+  applicationPathSchema,
+  type ApplicationPathFormData,
+} from '@/entities/application-path/model/schema'
 import type { ApplicationPath } from '@/types/domain'
 import { programService } from '@/entities/program/api/program-service'
 import { fieldValidationHelp } from '@/shared/utils/error-handler'
@@ -27,20 +30,23 @@ interface ApplicationPathFormProps {
 
 const pathTypeLabels: Record<ApplicationPath['pathType'], string> = {
   google_form: '구글폼',
-  internal: '자동화 프로그램' }
+  internal: '자동화 프로그램',
+}
 
 export function ApplicationPathForm({
   path,
   onSubmit,
   onCancel,
   loading,
-  fixedProgramId }: ApplicationPathFormProps) {
+  fixedProgramId,
+}: ApplicationPathFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch } = useForm<ApplicationPathFormData>({
+    watch,
+  } = useForm<ApplicationPathFormData>({
     resolver: zodResolver(applicationPathSchema),
     defaultValues: path
       ? {
@@ -48,10 +54,13 @@ export function ApplicationPathForm({
           pathType: path.pathType,
           googleFormUrl: path.googleFormUrl || '',
           guideText: path.guideText || '',
-          isActive: path.isActive }
+          isActive: path.isActive,
+        }
       : {
           programId: fixedProgramId || '',
-          isActive: true } })
+          isActive: true,
+        },
+  })
 
   // fixedProgramId가 있으면 초기값 설정
   React.useEffect(() => {
@@ -84,7 +93,7 @@ export function ApplicationPathForm({
           onChange={value => {
             setValue('programId', value)
           }}
-          placeholder="프로그램을 선택하세요"
+          placeholder="프로그램을 선택해 주세요"
           disabled={!!path || !!fixedProgramId} // 수정 시 또는 고정된 프로그램 ID가 있을 때는 변경 불가
         >
           {programs.map(program => (
@@ -110,7 +119,7 @@ export function ApplicationPathForm({
               setValue('googleFormUrl', '')
             }
           }}
-          placeholder="신청 경로를 선택하세요"
+          placeholder="신청 경로를 선택해 주세요"
         >
           <Option value="google_form">{pathTypeLabels.google_form}</Option>
           <Option value="internal">{pathTypeLabels.internal}</Option>
@@ -140,7 +149,7 @@ export function ApplicationPathForm({
         <TextArea
           {...register('guideText')}
           rows={4}
-          placeholder="신청 경로별 안내 문구를 입력하세요"
+          placeholder="신청 경로별 안내 문구를 입력해 주세요"
         />
       </Form.Item>
 
@@ -151,9 +160,7 @@ export function ApplicationPathForm({
             setValue('isActive', checked)
           }}
         />
-        <span style={{ marginLeft: 8 }}>
-          {watch('isActive') ? '활성' : '비활성'}
-        </span>
+        <span style={{ marginLeft: 8 }}>{watch('isActive') ? '활성' : '비활성'}</span>
       </Form.Item>
 
       <Form.Item>
@@ -169,5 +176,3 @@ export function ApplicationPathForm({
     </Form>
   )
 }
-
-

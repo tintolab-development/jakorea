@@ -164,8 +164,7 @@ function VolunteerInterviewScheduleBlock({
     null,
     { typedTemplateAuthoring }
   )
-  const applyInterviewPeriodConstraint =
-    overlayStore === 'recruit' && !freezeUnavailableCalendar
+  const applyInterviewPeriodConstraint = overlayStore === 'recruit' && !freezeUnavailableCalendar
   const interviewPeriodRange = useMemo((): [Dayjs, Dayjs] | null => {
     if (!applyInterviewPeriodConstraint) return null
     if (interviewPeriodFromParent != null) {
@@ -225,12 +224,9 @@ function VolunteerInterviewScheduleBlock({
     initialTimeRange?.[0] ?? null,
     overlayNamespace
   )
-  const [interviewTimeRange, setInterviewTimeRange] = useVolunteerInterviewOverlayKv<[Dayjs, Dayjs] | null>(
-    overlayStore,
-    'interviewTimeRange',
-    initialTimeRange,
-    overlayNamespace
-  )
+  const [interviewTimeRange, setInterviewTimeRange] = useVolunteerInterviewOverlayKv<
+    [Dayjs, Dayjs] | null
+  >(overlayStore, 'interviewTimeRange', initialTimeRange, overlayNamespace)
   const [timeUnit, setTimeUnit] = useVolunteerInterviewOverlayKv<InterviewTimeUnit>(
     overlayStore,
     'timeUnit',
@@ -243,25 +239,23 @@ function VolunteerInterviewScheduleBlock({
     [],
     overlayNamespace
   )
-  const [appliedUnavailableDates, setAppliedUnavailableDates] = useVolunteerInterviewOverlayKv<string[]>(
-    overlayStore,
-    'appliedUnavailableDates',
-    seed?.appliedUnavailableDates ?? [],
-    overlayNamespace
-  )
-  const [exclusionState, setExclusionState] = useVolunteerInterviewOverlayKv<UnavailableDatesExclusionState>(
-    overlayStore,
-    'exclusionState',
-    seed
-      ? {
-          excludeNone: seed.excludeNone,
-          excludeSaturday: seed.excludeSaturday,
-          excludeSunday: seed.excludeSunday,
-          excludeHoliday: seed.excludeHoliday,
-        }
-      : createDefaultUnavailableDatesExclusionState(),
-    overlayNamespace
-  )
+  const [appliedUnavailableDates, setAppliedUnavailableDates] = useVolunteerInterviewOverlayKv<
+    string[]
+  >(overlayStore, 'appliedUnavailableDates', seed?.appliedUnavailableDates ?? [], overlayNamespace)
+  const [exclusionState, setExclusionState] =
+    useVolunteerInterviewOverlayKv<UnavailableDatesExclusionState>(
+      overlayStore,
+      'exclusionState',
+      seed
+        ? {
+            excludeNone: seed.excludeNone,
+            excludeSaturday: seed.excludeSaturday,
+            excludeSunday: seed.excludeSunday,
+            excludeHoliday: seed.excludeHoliday,
+          }
+        : createDefaultUnavailableDatesExclusionState(),
+      overlayNamespace
+    )
   const seedSlotsAppliedRef = useRef(false)
   const normalizedInterviewTime = useMemo(() => coerceDayjs(interviewTime), [interviewTime])
   const normalizedExceptionDate = useMemo(() => coerceDayjs(exceptionDate), [exceptionDate])
@@ -396,17 +390,13 @@ function VolunteerInterviewScheduleBlock({
                     applyInterviewPeriodConstraint ? disableOutsideInterviewPeriod : undefined
                   }
                   initialCalendarDate={
-                    applyInterviewPeriodConstraint
-                      ? (interviewPeriodRange?.[0] ?? null)
-                      : undefined
+                    applyInterviewPeriodConstraint ? (interviewPeriodRange?.[0] ?? null) : undefined
                   }
                   canOpenDirectUnavailableModal={
                     applyInterviewPeriodConstraint ? interviewPeriodComplete : undefined
                   }
                   onDirectUnavailableModalBlocked={
-                    applyInterviewPeriodConstraint
-                      ? handleDirectUnavailableModalBlocked
-                      : undefined
+                    applyInterviewPeriodConstraint ? handleDirectUnavailableModalBlocked : undefined
                   }
                 />
               }
@@ -420,13 +410,14 @@ function VolunteerInterviewScheduleBlock({
               validationKey={exceptionDateValidationKey}
               fullRow
               edit={
-                <ParagraphDatePicker inputSize="small"
+                <ParagraphDatePicker
+                  inputSize="small"
                   mode="single"
                   presetMode="date"
                   value={normalizedExceptionDate}
                   onChange={setExceptionDate}
                   width={240}
-                  placeholder="날짜를 선택하세요"
+                  placeholder="날짜를 선택해 주세요"
                   suppressAutoTodayWhenEmpty
                   disabledDate={
                     applyInterviewPeriodConstraint ? disableOutsideInterviewPeriod : undefined
@@ -453,7 +444,8 @@ function VolunteerInterviewScheduleBlock({
             fullRow
             edit={
               <div className="detail-info-form-inputs-wrapper">
-                <ParagraphTimePicker inputSize="small"
+                <ParagraphTimePicker
+                  inputSize="small"
                   value={normalizedInterviewTime}
                   onChange={setInterviewTime}
                   onTimeRangeChange={setInterviewTimeRange}
@@ -463,13 +455,20 @@ function VolunteerInterviewScheduleBlock({
                   endTimeAlwaysOn
                 />
                 <DetailInfoForm.InputsSeparator />
-                <CmsRadioGroup size="medium"
+                <CmsRadioGroup
+                  size="medium"
                   value={timeUnit}
                   onChange={event => setTimeUnit(String(event.target.value) as InterviewTimeUnit)}
                 >
-                  <CmsRadio size="medium" value="15">15분 단위</CmsRadio>
-                  <CmsRadio size="medium" value="30">30분 단위</CmsRadio>
-                  <CmsRadio size="medium" value="60">1시간 단위</CmsRadio>
+                  <CmsRadio size="medium" value="15">
+                    15분 단위
+                  </CmsRadio>
+                  <CmsRadio size="medium" value="30">
+                    30분 단위
+                  </CmsRadio>
+                  <CmsRadio size="medium" value="60">
+                    1시간 단위
+                  </CmsRadio>
                 </CmsRadioGroup>
               </div>
             }
@@ -587,7 +586,11 @@ function VolunteerInterviewScheduleTemplateUi({
             title={`■ 예외 일정 ${String(index + 1).padStart(2, '0')}`}
             type="exception"
             overlayStore={overlayStore}
-            overlayNamespace={exceptionInterviewOverlayNamespace(overlayStore, overlayNamespace, key)}
+            overlayNamespace={exceptionInterviewOverlayNamespace(
+              overlayStore,
+              overlayNamespace,
+              key
+            )}
             interviewRangeSealKey={interviewRangeSealKey}
             typedTemplateAuthoring={typedTemplateAuthoring}
             interviewPeriodRange={interviewPeriodRange}

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   CmsTextArea,
@@ -10,14 +11,12 @@ import {
   ContentModal,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  ThumbnailPlaceholder,
   useCmsAlert,
 } from '@/shared/ui'
 import type { HeroBanner, HeroBannerCreateInput } from '@/entities/hero-banner/model/types'
 import { shouldUseHeroBannerRemoteApi } from '@/features/hero-banner/api/capabilities'
-import {
-  HTTP_LINK_URL_FORMAT_ALERT,
-  isValidHttpLinkUrl,
-} from '@/shared/lib/http-link-url'
+import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '@/shared/lib/http-link-url'
 import './form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
@@ -27,7 +26,7 @@ const IMAGE_GUIDE_LINES = [
 ]
 
 const MODAL_DESCRIPTION =
-  '메인 화면에 노출할 배너 이미지와 문구를 선정해 주세요. 문구는 미작성 시 해당 영역 비노출 되며, 연결 링크를 설정하면 배너 클릭 시 입력된 주소가 새 창에서 열립니다.'
+  '메인 화면에 노출할 배너 이미지와 문구를 선정해 주세요.\n문구는 미작성 시 해당 영역 비노출 되며, 연결 링크를 설정하면 배너 클릭 시 입력된 주소가 새 창에서 열립니다.'
 
 function coerceRadioBoolean(raw: unknown): boolean {
   if (raw === true || raw === 1) return true
@@ -58,29 +57,6 @@ function readFileAsDataUrl(file: File): Promise<string> {
 
 export type HeroBannerFormValues = HeroBannerCreateInput
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 type FormBodyProps = {
   mode: 'create' | 'edit'
   initial?: HeroBanner | null
@@ -89,13 +65,7 @@ type FormBodyProps = {
   onSubmit: (values: HeroBannerFormValues) => void
 }
 
-function HeroBannerFormBody({
-  mode,
-  initial,
-  confirmLoading,
-  onCancel,
-  onSubmit,
-}: FormBodyProps) {
+function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit }: FormBodyProps) {
   const { showAlert } = useCmsAlert()
   const [isActive, setIsActive] = useState(() =>
     mode === 'edit' && initial ? initial.isActive : true
@@ -115,9 +85,7 @@ function HeroBannerFormBody({
   const [bottomText, setBottomText] = useState(() =>
     mode === 'edit' && initial ? initial.bottomText.replace(/\r?\n/g, ' ') : ''
   )
-  const [linkUrl, setLinkUrl] = useState(() =>
-    mode === 'edit' && initial ? initial.linkUrl : ''
-  )
+  const [linkUrl, setLinkUrl] = useState(() => (mode === 'edit' && initial ? initial.linkUrl : ''))
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null)
   const [imageCleared, setImageCleared] = useState(false)
 
@@ -165,24 +133,15 @@ function HeroBannerFormBody({
       Boolean(imageUrl.trim())
 
     if (!imageUrl.trim() && !hasExistingRemoteImage) {
-      showAlert({
-        title: '배너 이미지 필수',
-        content: '배너 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (useRemote && mode === 'create' && !pendingImageFile) {
-      showAlert({
-        title: '배너 이미지 필수',
-        content: '배너 이미지를 파일로 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (useRemote && mode === 'edit' && imageCleared && !pendingImageFile) {
-      showAlert({
-        title: '배너 이미지 필수',
-        content: '배너 이미지를 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const trimmedLinkUrl = linkUrl.trim()
@@ -195,8 +154,7 @@ function HeroBannerFormBody({
       imageUrl,
       imageFileName: imageFileName || undefined,
       imageFile: pendingImageFile,
-      imageAssetId:
-        !pendingImageFile && !imageCleared ? initial?.imageAssetId : undefined,
+      imageAssetId: !pendingImageFile && !imageCleared ? initial?.imageAssetId : undefined,
       topText,
       mainTitle,
       bottomText,
@@ -218,7 +176,7 @@ function HeroBannerFormBody({
     showAlert,
   ])
 
-  const title = mode === 'edit' ? '배너 수정' : '배너 등록'
+  const title = mode === 'edit' ? '배너 수정' : '히어로 배너 등록'
   const confirmLabel = mode === 'edit' ? '배너 수정' : '배너 등록'
 
   return (
@@ -233,19 +191,21 @@ function HeroBannerFormBody({
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
-            disabled={confirmLoading} >
+            disabled={confirmLoading}
+          >
             취소
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
-            onClick={handleSubmit} >
+            onClick={handleSubmit}
+          >
             {confirmLabel}
           </CmsButton>
         </>
@@ -281,14 +241,9 @@ function HeroBannerFormBody({
             edit={
               <div className="hero-banner-form-modal__image-row">
                 <div className="hero-banner-form-modal__preview">
-                  {imageUrl ? (
-                    <img src={imageUrl} alt="배너 미리보기" />
-                  ) : (
-                    <ImagePlaceholderIcon />
-                  )}
+                  {imageUrl ? <img src={imageUrl} alt="배너 미리보기" /> : <ThumbnailPlaceholder />}
                 </div>
                 <FileSelectField
-                  className="hero-banner-form-modal__file-field"
                   multiple={false}
                   accept={IMAGE_ACCEPT}
                   buttonLabel="파일 추가"
@@ -306,13 +261,13 @@ function HeroBannerFormBody({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="상단 문구"
+            label="상단 텍스트"
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
-                placeholder="상단 문구를 입력하세요"
+                placeholder="상단 텍스트를 입력해 주세요"
                 value={topText}
                 onChange={e => setTopText(e.target.value.replace(/\r?\n/g, ' '))}
               />
@@ -325,12 +280,11 @@ function HeroBannerFormBody({
             view={null}
             edit={
               <CmsTextArea
-                className="hero-banner-form-modal__main-title-textarea"
                 inputSize="large"
                 width="100%"
                 rows={2}
                 autoSize={{ minRows: 2, maxRows: 8 }}
-                placeholder="메인 타이틀을 입력하세요"
+                placeholder="메인 타이틀을 입력해 주세요"
                 value={mainTitle}
                 onChange={e => setMainTitle(e.target.value)}
               />
@@ -343,9 +297,9 @@ function HeroBannerFormBody({
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
-                placeholder="하단 문구를 입력하세요"
+                placeholder="하단 문구를 입력해 주세요"
                 value={bottomText}
                 onChange={e => setBottomText(e.target.value.replace(/\r?\n/g, ' '))}
               />
@@ -358,9 +312,9 @@ function HeroBannerFormBody({
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="medium"
                 width="100%"
-                placeholder="연결 링크를 입력하세요"
+                placeholder="연결 링크를 입력해 주세요"
                 value={linkUrl}
                 onChange={e => setLinkUrl(e.target.value)}
               />
@@ -389,8 +343,7 @@ export function HeroBannerFormModal({
 }) {
   if (!open) return null
 
-  const formKey =
-    mode === 'edit' ? `edit-${initial?.id ?? 'unknown'}` : `create-${String(open)}`
+  const formKey = mode === 'edit' ? `edit-${initial?.id ?? 'unknown'}` : `create-${String(open)}`
 
   return (
     <HeroBannerFormBody

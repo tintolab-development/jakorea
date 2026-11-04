@@ -9,7 +9,7 @@ export const GEMINI_RECRUITMENT_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'title',
     type: 'search',
     label: '공고명',
-    placeholder: '공고명을 입력하세요',
+    placeholder: '공고명을 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

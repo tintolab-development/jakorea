@@ -14,12 +14,7 @@ type ContentNestedTableProps = {
 
 export function ContentNestedTable({ data, mode, ariaLabel, onChange }: ContentNestedTableProps) {
   return (
-    <DetailInfoForm
-      title={ariaLabel}
-      hideHeader
-      mode={mode}
-      className="ja-korea-intro-nested-form"
-    >
+    <DetailInfoForm title={ariaLabel} hideHeader mode={mode} className="ja-korea-intro-nested-form">
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
           label="타이틀"
@@ -30,7 +25,7 @@ export function ContentNestedTable({ data, mode, ariaLabel, onChange }: ContentN
               width="100%"
               value={data.title}
               onChange={e => onChange({ title: e.target.value })}
-              placeholder="타이틀을 입력하세요"
+              placeholder="타이틀을 입력해 주세요"
               aria-label={`${ariaLabel} 타이틀`}
             />
           }
@@ -48,7 +43,7 @@ export function ContentNestedTable({ data, mode, ariaLabel, onChange }: ContentN
               rows={3}
               value={data.description}
               onChange={e => onChange({ description: e.target.value })}
-              placeholder="설명글을 입력하세요"
+              placeholder="설명글을 입력해 주세요"
               aria-label={`${ariaLabel} 설명글`}
             />
           }

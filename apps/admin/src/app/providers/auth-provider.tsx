@@ -3,9 +3,11 @@
  */
 
 import { useEffect } from 'react'
+import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
   AUTH_EXPIRY_KEY,
+  AUTH_REFRESH_TOKEN_KEY,
   AUTH_TOKEN_KEY,
 } from '@/features/auth/model/auth-storage'
 
@@ -29,12 +31,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const bufferTime = 30 * 1000
 
         if (expiryTime > now + bufferTime) {
-          if (!isAuthenticated) {
-            try {
-              await checkAuth()
-            } catch (error) {
-              console.error('Auth check failed in AuthProvider:', error)
-            }
+          try {
+            await checkAuth()
+          } catch (error) {
+            console.error('Auth check failed in AuthProvider:', error)
+          }
+        } else if (localStorage.getItem(AUTH_REFRESH_TOKEN_KEY)) {
+          try {
+            await checkAuth()
+          } catch (error) {
+            console.error('Auth check failed in AuthProvider:', error)
           }
         } else {
           useAuthStore.getState().logout()
@@ -50,20 +56,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!isAuthenticated) return
 
-    const checkSessionExpiry = () => {
-      const expiresAt = localStorage.getItem(AUTH_EXPIRY_KEY)
-      if (expiresAt) {
-        const expiryTime = new Date(expiresAt).getTime()
-        const now = Date.now()
-        const bufferTime = 30 * 1000
-        if (expiryTime <= now + bufferTime) {
-          useAuthStore.getState().logout()
-        }
-      }
-    }
+    const stopActivityTracking = startUserActivityTracking()
 
-    const interval = setInterval(checkSessionExpiry, 60 * 1000)
-    return () => clearInterval(interval)
+    const interval = setInterval(() => {
+      useAuthStore.getState().checkSessionExpiry()
+    }, 60 * 1000)
+
+    return () => {
+      clearInterval(interval)
+      stopActivityTracking()
+    }
   }, [isAuthenticated])
 
   return <>{children}</>

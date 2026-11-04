@@ -2,7 +2,9 @@
  * 개인후원 저장 실패 알림 매핑
  */
 
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
+  type AdminMutationAlert,
   isOptimisticLockConflictError,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
@@ -10,29 +12,29 @@ import {
 export function individualDonationSaveFailureAlert(
   error: unknown,
   fallbackContent: string
-): { title: string; content: string } {
+): AdminMutationAlert {
   if (error instanceof Error) {
     const code = error.message
     if (code === 'BANNER_IMAGE_REQUIRED') {
-      return { title: '입력 확인', content: '배너 이미지를 등록해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'BANNER_MAIN_TEXT_REQUIRED') {
-      return { title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'BANNER_SUB_TEXT_REQUIRED') {
-      return { title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'USAGE_MAIN_TEXT_REQUIRED') {
-      return { title: '입력 확인', content: '메인 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'USAGE_SUB_TEXT_REQUIRED') {
-      return { title: '입력 확인', content: '서브 텍스트를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'DONATE_LINK_REQUIRED') {
-      return { title: '입력 확인', content: '연결 링크를 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
     if (code === 'DONATE_LABEL_REQUIRED') {
-      return { title: '입력 확인', content: '버튼명을 입력해 주세요.' }
+      return REQUIRED_FIELDS_INCOMPLETE_ALERT
     }
   }
 

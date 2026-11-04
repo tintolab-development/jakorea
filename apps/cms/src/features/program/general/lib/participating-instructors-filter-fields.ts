@@ -19,7 +19,7 @@ export const participatingInstructorsFilterFields: FilterFieldConfig[] = [
     key: 'instructorName',
     type: 'search',
     label: '참여 강사명',
-    placeholder: '강사명을 입력하세요',
+    placeholder: '강사명을 입력해 주세요',
     width: COL_WIDTH,
   },
   createHomeAddressRegionFilterField({ label: '자택 주소지' }),

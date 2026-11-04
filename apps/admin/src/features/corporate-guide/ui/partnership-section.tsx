@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { PartnershipStep, PartnershipStepNumber } from '@/entities/corporate-guide/model/types'
 import { useSavePartnership } from '@/features/corporate-guide/api/hooks'
 import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -73,11 +74,11 @@ export function PartnershipSectionCard({ items }: Props) {
       })
       for (const row of payload) {
         if (!row.title.trim()) {
-          showAlert({ title: '입력 확인', content: '단계 제목을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!row.description.trim()) {
-          showAlert({ title: '입력 확인', content: '단계 설명을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }
@@ -144,7 +145,7 @@ export function PartnershipSectionCard({ items }: Props) {
                 rows={3}
                 value={value}
                 onChange={e => handleDraftChange(record.step, { description: e.target.value })}
-                placeholder="단계 설명을 입력하세요"
+                placeholder="단계 설명을 입력해 주세요"
                 aria-label={`${record.step}단계 설명`}
               />
             )

@@ -44,16 +44,18 @@ export function EraSection({ eras }: { eras: JaHistoryEra[] }) {
               value={draft.caption}
               rows={3}
               label={`${record.year} 설명 텍스트`}
-              placeholder="설명 텍스트를 입력하세요"
+              placeholder="설명 텍스트를 입력해 주세요"
               onChange={caption => {
-                setDrafts(prev => prev.map(item => (item.year === record.year ? { ...item, caption } : item)))
+                setDrafts(prev =>
+                  prev.map(item => (item.year === record.year ? { ...item, caption } : item))
+                )
               }}
             />
           )
         },
       },
     ],
-    [drafts, editing],
+    [drafts, editing]
   )
 
   return (
@@ -70,8 +72,13 @@ export function EraSection({ eras }: { eras: JaHistoryEra[] }) {
           .then(
             () => setEditing(false),
             error => {
-              showAlert(jaHistorySaveAlert(error, '글로벌 히스토리 저장에 실패했습니다. 다시 시도해 주세요.'))
-            },
+              showAlert(
+                jaHistorySaveAlert(
+                  error,
+                  '글로벌 히스토리 저장에 실패했습니다. 다시 시도해 주세요.'
+                )
+              )
+            }
           )
       }}
     >

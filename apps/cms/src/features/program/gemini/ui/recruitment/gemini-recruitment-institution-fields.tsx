@@ -123,9 +123,7 @@ export function GeminiRecruitmentInstitutionFields({
   useEffect(() => {
     setMinStudentCountLocal(minStudentCountCommitted)
   }, [minStudentCountCommitted])
-  const minStudentCountInput = deferTextCommit
-    ? minStudentCountLocal
-    : minStudentCountCommitted
+  const minStudentCountInput = deferTextCommit ? minStudentCountLocal : minStudentCountCommitted
 
   return (
     <>
@@ -158,7 +156,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiDeferredCmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="대표 프로그램명(국문)을 입력하세요"
+                  placeholder="대표 프로그램명(국문)을 입력해 주세요"
                   value={values.title}
                   onCommit={next => onChange({ title: next })}
                 />
@@ -166,7 +164,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <CmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="대표 프로그램명(국문)을 입력하세요"
+                  placeholder="대표 프로그램명(국문)을 입력해 주세요"
                   value={values.title}
                   onChange={e => onChange({ title: e.target.value })}
                 />
@@ -187,7 +185,7 @@ export function GeminiRecruitmentInstitutionFields({
                 inputSize="small"
                 width={240}
                 withAllOption={false}
-                placeholder="교육 대상을 선택하세요"
+                placeholder="교육 대상을 선택해 주세요"
                 options={GEMINI_RECRUITMENT_EDUCATION_TARGET_OPTIONS}
                 value={values.educationTargetLevels}
                 onChange={v =>
@@ -208,7 +206,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiDeferredCmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="상세 교육 대상을 입력하세요"
+                  placeholder="상세 교육 대상을 입력해 주세요"
                   value={values.educationTargetDetail}
                   onCommit={next => onChange({ educationTargetDetail: next })}
                 />
@@ -216,7 +214,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <CmsInput
                   inputSize="small"
                   width="100%"
-                  placeholder="상세 교육 대상을 입력하세요"
+                  placeholder="상세 교육 대상을 입력해 주세요"
                   value={values.educationTargetDetail}
                   onChange={e => onChange({ educationTargetDetail: e.target.value })}
                 />
@@ -239,7 +237,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiRecruitmentPeriodDatePicker
                   value={applicationPeriod}
                   onChange={onApplicationPeriodChange}
-                  placeholder="기관 모집 기간을 선택하세요"
+                  placeholder="기관 모집 기간을 선택해 주세요"
                   dateOnly
                 />
               </div>
@@ -258,7 +256,7 @@ export function GeminiRecruitmentInstitutionFields({
                 <GeminiRecruitmentPeriodDatePicker
                   value={trainingRequestPeriod}
                   onChange={onTrainingRequestPeriodChange}
-                  placeholder="연수 요청 가능기간을 선택하세요"
+                  placeholder="연수 요청 가능기간을 선택해 주세요"
                 />
               </div>
             ) : undefined
@@ -277,7 +275,7 @@ export function GeminiRecruitmentInstitutionFields({
                   inputSize="small"
                   mode="integer"
                   min={0}
-                  placeholder="최소 수강 인원을 입력하세요"
+                  placeholder="최소 수강 인원을 입력해 주세요"
                   width={120}
                   value={minStudentCountInput}
                   onValueChange={raw => {

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "JA Korea CMS Backend API",
-    "description": "JA Korea CMS 백엔드 API 문서입니다. 보호된 API를 호출할 때는 Swagger 우측 상단 Authorize 버튼에 관리자 또는 회원 Bearer 토큰을 입력하세요.\n\nAPI 문서 그룹:\n- admin-cms: /api/admin/** 관리자 CMS 전용\n- member-portal: /api/portal/** 회원 포탈 전용\n- shared: /api/auth/**, /api/public/**, /api/system/** 공용·운영 API\n\n문서 기준:\n- Swagger UI: 프론트 개발, QA, 로컬 API 확인용 실시간 문서\n- src/main/resources/contracts/openapi_frontend_handoff.json: 프론트 인수인계용 검증 계약\n- src/main/resources/contracts/openapi_route_snapshot.json: 릴리즈 라우트 스냅샷\n\n로컬 QA 기준:\n- local profile에서는 피그마 화면 확인용 rich demo seed가 로드됩니다.\n- 외부 URL은 canonical route만 사용합니다. 예: UJAT는 /ujat, /ujat-dgbong는 사용하지 않습니다.\n- 개인정보 원문/민감파일/export API는 감사로그 저장 실패 시 성공 처리하지 않는 fail-closed 정책을 따릅니다.\n",
+    "description": "JA Korea CMS 백엔드 API 문서입니다. 보호된 API를 호출할 때는 Swagger 우측 상단 Authorize 버튼에 관리자 또는 회원 Bearer 토큰을 입력해 주세요.\n\nAPI 문서 그룹:\n- admin-cms: /api/admin/** 관리자 CMS 전용\n- member-portal: /api/portal/** 회원 포탈 전용\n- shared: /api/auth/**, /api/public/**, /api/system/** 공용·운영 API\n\n문서 기준:\n- Swagger UI: 프론트 개발, QA, 로컬 API 확인용 실시간 문서\n- src/main/resources/contracts/openapi_frontend_handoff.json: 프론트 인수인계용 검증 계약\n- src/main/resources/contracts/openapi_route_snapshot.json: 릴리즈 라우트 스냅샷\n\n로컬 QA 기준:\n- local profile에서는 피그마 화면 확인용 rich demo seed가 로드됩니다.\n- 외부 URL은 canonical route만 사용합니다. 예: UJAT는 /ujat, /ujat-dgbong는 사용하지 않습니다.\n- 개인정보 원문/민감파일/export API는 감사로그 저장 실패 시 성공 처리하지 않는 fail-closed 정책을 따릅니다.\n",
     "contact": {
       "name": "JA Korea CMS Backend"
     },

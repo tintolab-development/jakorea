@@ -12,6 +12,7 @@ import type {
 } from '@/entities/reports-disclosure/model/types'
 import { ThumbnailEmptyIcon } from '@/features/reports-disclosure/ui/thumbnail-empty-icon'
 import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
   ConfirmModal,
@@ -204,7 +205,7 @@ export function ReportFormModal({
   const handleSubmit = () => {
     const t = title.trim()
     if (!t) {
-      showAlert({ title: '입력 확인', content: '제목을 입력해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     const hasExistingThumb =
@@ -219,18 +220,15 @@ export function ReportFormModal({
       Boolean(attachmentUrl.trim())
 
     if ((!thumbnailUrl || !thumbnailFileName) && !hasExistingThumb) {
-      showAlert({ title: '입력 확인', content: '썸네일 이미지를 등록해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if ((!attachmentUrl || !attachmentFileName) && !hasExistingAttach) {
-      showAlert({ title: '입력 확인', content: '첨부파일을 등록해 주세요.' })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     if (mode === 'create' && (!pendingThumbFile || !pendingAttachFile)) {
-      showAlert({
-        title: '입력 확인',
-        content: '썸네일과 첨부파일을 파일로 등록해 주세요.',
-      })
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
     onSubmit({
@@ -256,7 +254,7 @@ export function ReportFormModal({
         <CmsButton
           className={CONTENT_MODAL_FOOTER_START_CLASS}
           variant="delete"
-          size="large"
+          size="medium"
           type="button"
           disabled={confirmLoading || deleteLoading}
           onClick={() => setDeleteConfirmOpen(true)}
@@ -266,7 +264,7 @@ export function ReportFormModal({
       ) : null}
       <CmsButton
         variant="secondary"
-        size="large"
+        size="medium"
         type="button"
         disabled={confirmLoading || deleteLoading}
         onClick={onCancel}
@@ -275,7 +273,7 @@ export function ReportFormModal({
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="medium"
         type="button"
         loading={confirmLoading}
         disabled={deleteLoading}
@@ -293,7 +291,7 @@ export function ReportFormModal({
         onCancel={onCancel}
         title={titleText}
         description={meta.description}
-        width={720}
+        width={800}
         className="rd-form-modal content-modal content-modal--title-body-gap-always teal-header-modal"
         footer={footer}
       >
@@ -301,10 +299,11 @@ export function ReportFormModal({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="제목"
+              required
               view={null}
               edit={
                 <CmsInput
-                  inputSize="large"
+                  inputSize="medium"
                   width="100%"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
@@ -316,6 +315,7 @@ export function ReportFormModal({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="썸네일"
+              required
               view={null}
               edit={
                 <div className="rd-form-modal__image-row">
@@ -358,6 +358,7 @@ export function ReportFormModal({
           <DetailInfoForm.Row type="single">
             <DetailInfoForm.Field
               label="첨부파일"
+              required
               view={null}
               edit={
                 <div className="rd-form-modal__attach-row">

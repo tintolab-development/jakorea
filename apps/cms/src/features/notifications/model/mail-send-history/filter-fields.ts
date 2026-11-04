@@ -31,14 +31,14 @@ export const MAIL_SEND_HISTORY_FILTER_FIELDS: FilterFieldConfig[] = [
     key: 'senderInfo',
     type: 'search',
     label: '발신자 정보',
-    placeholder: '발신자 이메일 주소를 입력하세요',
+    placeholder: '발신자 이메일 주소를 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {
     key: 'receiverInfo',
     type: 'search',
     label: '수신자 정보',
-    placeholder: '수신자 이메일 주소를 입력하세요',
+    placeholder: '수신자 이메일 주소를 입력해 주세요',
     width: FILTER_CONTROL_MAX_WIDTH_PX,
   },
   {

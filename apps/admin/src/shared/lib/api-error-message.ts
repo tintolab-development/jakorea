@@ -3,6 +3,7 @@
  * (axios response.data: `{ message?, error?: { code, message } }`)
  */
 
+import type { ReactNode } from 'react'
 import axios from 'axios'
 
 export function readApiErrorMessage(error: unknown): string | undefined {
@@ -51,7 +52,7 @@ export function isOptimisticLockConflictError(error: unknown): boolean {
   return /changed by another administrator/i.test(message) || /optimistic.?lock/i.test(message)
 }
 
-export type AdminMutationAlert = { title: string; content: string }
+export type AdminMutationAlert = { title: string; content: ReactNode }
 
 const OPTIMISTIC_LOCK_ALERT: AdminMutationAlert = {
   title: '저장 실패',

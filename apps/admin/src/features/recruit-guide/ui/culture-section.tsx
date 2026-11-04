@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { CultureItem } from '@/entities/recruit-guide/model/types'
 import { useSaveRecruitCulture } from '@/features/recruit-guide/api/hooks'
 import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -84,11 +85,11 @@ export function CultureSectionCard({ items }: Props) {
       })
       for (const row of payload) {
         if (!row.title.trim()) {
-          showAlert({ title: '입력 확인', content: '타이틀을 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
         if (!row.description.trim()) {
-          showAlert({ title: '입력 확인', content: '설명 텍스트를 입력해 주세요.' })
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
           return
         }
       }
@@ -96,10 +97,7 @@ export function CultureSectionCard({ items }: Props) {
       setIsEditing(false)
     } catch (err) {
       showAlert(
-        recruitGuideSaveFailureAlert(
-          err,
-          '조직문화 저장에 실패했습니다. 다시 시도해 주세요.'
-        )
+        recruitGuideSaveFailureAlert(err, '조직문화 저장에 실패했습니다. 다시 시도해 주세요.')
       )
     }
   }, [drafts, items, saveMutation, showAlert])
@@ -130,7 +128,7 @@ export function CultureSectionCard({ items }: Props) {
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
-              placeholder="타이틀을 입력하세요"
+              placeholder="타이틀을 입력해 주세요"
               aria-label={`${record.itemLabel} 타이틀`}
               onChange={e => handleDraftChange(record.id, { title: e.target.value })}
             />
@@ -153,7 +151,7 @@ export function CultureSectionCard({ items }: Props) {
               value={value}
               readOnly={!isEditing}
               tabIndex={isEditing ? 0 : -1}
-              placeholder="설명 텍스트를 입력하세요"
+              placeholder="설명 텍스트를 입력해 주세요"
               aria-label={`${record.itemLabel} 설명 텍스트`}
               onChange={e => handleDraftChange(record.id, { description: e.target.value })}
             />
@@ -178,7 +176,8 @@ export function CultureSectionCard({ items }: Props) {
                 size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
@@ -188,7 +187,8 @@ export function CultureSectionCard({ items }: Props) {
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>

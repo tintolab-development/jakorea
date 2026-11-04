@@ -256,10 +256,10 @@ export class GeneralProgramRegistrationPage {
     await clickSectionNavIfVisible(this.page, '기본 정보')
     await expect(titleField('대표 프로그램명 (국문)')).toBeVisible({ timeout: 10_000 })
     await titleField('대표 프로그램명 (국문)')
-      .getByPlaceholder('대표 프로그램명을 입력하세요')
+      .getByPlaceholder('대표 프로그램명을 입력해 주세요')
       .fill(this.programTitle)
     await titleField('대표 프로그램명 (영문)')
-      .getByPlaceholder('대표 프로그램명을 입력하세요')
+      .getByPlaceholder('대표 프로그램명을 입력해 주세요')
       .fill(PROGRAM_EN_NAME)
 
     // DEV 자동입력 케이스의 기본값은 복수 회차라도 한 개의 상세 일정만
@@ -329,7 +329,7 @@ export class GeneralProgramRegistrationPage {
       const item = managerSelect.locator('.ant-select-selection-item').first()
       if ((await item.count()) === 0) return false
       const text = (await item.innerText()).trim()
-      return text.length > 0 && !text.includes('선택하세요')
+      return text.length > 0 && !text.includes('선택해 주세요')
     }
 
     if (
@@ -363,7 +363,7 @@ export class GeneralProgramRegistrationPage {
           .innerText()
           .catch(() => '')
       ).trim()
-      if (!text || text === '전체' || text.includes('선택하세요')) continue
+      if (!text || text === '전체' || text.includes('선택해 주세요')) continue
 
       // 기존 선택 해제 후 이 후원사만 선택
       const checkedRows = panel.locator('.cms-select-multi__row .ant-checkbox-checked')
@@ -415,34 +415,31 @@ export class GeneralProgramRegistrationPage {
       // 통합 E2E에서는 공통 운영 기간을 넓게 다시 잡아 교육 일정이 운영 기간
       // 밖으로 밀리지 않도록 한다.
       if (this.ensureFutureDates) {
-        await fillParagraphDateByPlaceholder(
-          this.page,
-          '사업 운영 기간을 선택하세요',
-          'range',
-          { futureStartWindow: true }
-        )
+        await fillParagraphDateByPlaceholder(this.page, '사업 운영 기간을 선택해 주세요', 'range', {
+          futureStartWindow: true,
+        })
       }
       return
     }
 
-    await fillByPlaceholder(this.page, '대표 프로그램명을 입력하세요', this.programTitle)
+    await fillByPlaceholder(this.page, '대표 프로그램명을 입력해 주세요', this.programTitle)
     const representativeProgramNameInputs =
-      this.page.getByPlaceholder('대표 프로그램명을 입력하세요')
+      this.page.getByPlaceholder('대표 프로그램명을 입력해 주세요')
     if ((await representativeProgramNameInputs.count()) > 1) {
       await representativeProgramNameInputs.nth(1).fill(PROGRAM_EN_NAME)
     } else {
-      await fillByPlaceholder(this.page, '대표 프로그램명(영문)을 입력하세요', PROGRAM_EN_NAME)
+      await fillByPlaceholder(this.page, '대표 프로그램명(영문)을 입력해 주세요', PROGRAM_EN_NAME)
     }
     await fillByPlaceholder(
       this.page,
-      '모집 시 노출될 프로그램명을 입력하세요',
+      '모집 시 노출될 프로그램명을 입력해 주세요',
       PROGRAM_PUBLIC_NAME
     )
 
-    await selectByPlaceholder(this.page, '세부 프로그램명을 선택하세요')
+    await selectByPlaceholder(this.page, '세부 프로그램명을 선택해 주세요')
     await fillParagraphDateByPlaceholder(
       this.page,
-      '사업 운영 기간을 선택하세요',
+      '사업 운영 기간을 선택해 주세요',
       'range',
       OPERATION_DATE_OPTS
     )
@@ -456,7 +453,7 @@ export class GeneralProgramRegistrationPage {
     await checkCheckboxIfVisible(this.page, '교사/강사')
     await checkCheckboxIfVisible(this.page, '봉사자')
 
-    await selectByPlaceholder(this.page, '사업 분야를 선택하세요', '기업가정신')
+    await selectByPlaceholder(this.page, '사업 분야를 선택해 주세요', '기업가정신')
     await selectNearLabelIfVisible(this.page, '사업 분야', '기업가정신')
     // 복원된 정상 후원사를 임의의 다른 옵션으로 바꾸지 않는다.
     // 값이 없을 때만 첫 번째 선택 가능한 후원사를 고른다.
@@ -474,7 +471,7 @@ export class GeneralProgramRegistrationPage {
       await expect(sponsorMultiText).toBeVisible({ timeout: 10_000 })
       const sponsorSelected = (await sponsorMultiText.innerText()).trim()
       expect(sponsorSelected.length).toBeGreaterThan(0)
-      expect(sponsorSelected).not.toContain('선택하세요')
+      expect(sponsorSelected).not.toContain('선택해 주세요')
       expect(sponsorSelected).not.toBe('전체')
     } else {
       await expect(sponsorField.locator('.ant-select-selection-item')).toBeVisible({
@@ -484,7 +481,7 @@ export class GeneralProgramRegistrationPage {
         await sponsorField.locator('.ant-select-selection-item').innerText()
       ).trim()
       expect(sponsorSelected.length).toBeGreaterThan(0)
-      expect(sponsorSelected).not.toContain('선택하세요')
+      expect(sponsorSelected).not.toContain('선택해 주세요')
       expect(sponsorSelected).not.toBe('전체')
     }
 
@@ -524,8 +521,8 @@ export class GeneralProgramRegistrationPage {
       await selectByPlaceholderIfVisible(this.page, '참여 방식', '개인')
     }
     await selectNearLabelIfVisible(this.page, 'IPS 유형', 'Inspire')
-    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 채널을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '프로그램 종류를 선택해 주세요')
     await selectByPlaceholderIfVisible(this.page, 'IPS 유형', 'Inspire')
 
     await this.fillEducationProgress()
@@ -535,19 +532,19 @@ export class GeneralProgramRegistrationPage {
     // 교육 진행 일정 — 운영(시작) 기간(+2개월)과 맞춤
     await fillParagraphDateByPlaceholder(
       this.page,
-      '일정을 선택하세요',
+      '일정을 선택해 주세요',
       'single',
       OPERATION_DATE_OPTS
     )
     await fillParagraphDateByPlaceholder(
       this.page,
-      '날짜를 선택하세요',
+      '날짜를 선택해 주세요',
       'single',
       OPERATION_DATE_OPTS
     )
     await fillParagraphDateByPlaceholder(
       this.page,
-      '기간을 선택하세요',
+      '기간을 선택해 주세요',
       'range',
       OPERATION_DATE_OPTS
     )
@@ -557,7 +554,7 @@ export class GeneralProgramRegistrationPage {
 
     await clickSectionNavIfVisible(this.page, '임금 정보')
     await fillAllByPlaceholder(this.page, '직접 입력', WAGE_VALUE)
-    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '지급 항목을 선택해 주세요')
 
     await clickSectionNavIfVisible(this.page, '기본 정보')
   }
@@ -570,7 +567,7 @@ export class GeneralProgramRegistrationPage {
       if (session === 'multi') {
         await clickButtonIfVisible(this.page, '강의 진행 회차 추가')
       }
-      await fillAllByPlaceholder(this.page, '단원명을 입력하세요', CURRICULUM_UNIT)
+      await fillAllByPlaceholder(this.page, '단원명을 입력해 주세요', CURRICULUM_UNIT)
       await fillAllByPlaceholder(this.page, '교육 내용을 작성하세요', CURRICULUM_CONTENT)
       return
     }
@@ -588,7 +585,7 @@ export class GeneralProgramRegistrationPage {
     await fillAllByPlaceholder(this.page, '행사 일정명을 작성하세요', SCHEDULE_DETAIL_NAME)
     await fillAllParagraphDatesByPlaceholder(
       this.page,
-      '일정을 선택하세요',
+      '일정을 선택해 주세요',
       'single',
       OPERATION_DATE_OPTS
     )
@@ -636,23 +633,21 @@ export class GeneralProgramRegistrationPage {
     if (!this.devAutofillCaseId || this.ensureFutureDates) {
       await fillParagraphDateByPlaceholder(
         this.page,
-        '프로그램 운영 기간을 선택하세요',
+        '프로그램 운영 기간을 선택해 주세요',
         'range',
-        this.ensureFutureDates
-          ? { futureStartWindow: true }
-          : operationDateOptions
+        this.ensureFutureDates ? { futureStartWindow: true } : operationDateOptions
       )
     }
-    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택하세요')
-    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택하세요')
+    await selectByPlaceholderIfVisible(this.page, '교육 대상을 선택해 주세요')
+    await selectByPlaceholderIfVisible(this.page, '모집 대상을 선택해 주세요')
     await fillByPlaceholderIfVisible(
       this.page,
-      '상세 교육 대상을 입력하세요',
+      '상세 교육 대상을 입력해 주세요',
       EDUCATION_TARGET_DETAIL
     )
     await fillByPlaceholderIfVisible(
       this.page,
-      '상세 모집 대상을 입력하세요',
+      '상세 모집 대상을 입력해 주세요',
       EDUCATION_TARGET_DETAIL
     )
     const recruitmentDateOptions = this.openRecruitment
@@ -661,7 +656,7 @@ export class GeneralProgramRegistrationPage {
 
     await fillParagraphDateByPlaceholder(
       this.page,
-      '모집 기간을 선택하세요',
+      '모집 기간을 선택해 주세요',
       'range',
       recruitmentDateOptions
     )
@@ -709,14 +704,14 @@ export class GeneralProgramRegistrationPage {
     await this.fillRecruitSharedFields({ interviewYes: true })
     await fillAllParagraphDatesByPlaceholder(
       this.page,
-      '모집 기간을 선택하세요',
+      '모집 기간을 선택해 주세요',
       'range',
       this.openRecruitment ? { currentMonthWindow: true } : RECRUIT_DATE_OPTS
     )
     await fillParagraphDateByPlaceholder(this.page, '발표일', 'single', ANNOUNCE_DATE_OPTS)
     await fillParagraphDateByPlaceholder(
       this.page,
-      '면접 기간을 선택하세요',
+      '면접 기간을 선택해 주세요',
       'range',
       this.openRecruitment || this.ensureFutureDates
         ? { currentMonthWindow: true }
@@ -752,7 +747,7 @@ export class GeneralProgramRegistrationPage {
 
   private async fillApplicationParticipantTab() {
     await this.fillApplicationConsentIfPresent()
-    await fillByPlaceholderIfVisible(this.page, '팀 명을 입력하세요', 'JA E2E 탐험대')
+    await fillByPlaceholderIfVisible(this.page, '팀 명을 입력해 주세요', 'JA E2E 탐험대')
     await selectByPlaceholderIfVisible(this.page, '인원 수')
     await fillByPlaceholderIfVisible(this.page, '팀원 수를 입력해 주세요', '4')
     await checkRadioIfVisible(this.page, '팀장')
@@ -782,7 +777,7 @@ export class GeneralProgramRegistrationPage {
     )
     await fillParagraphDateByPlaceholder(
       this.page,
-      '날짜를 선택하세요',
+      '날짜를 선택해 주세요',
       'single',
       RECRUIT_DATE_OPTS
     )
@@ -795,9 +790,7 @@ export class GeneralProgramRegistrationPage {
   async completeRegistration(): Promise<RegistrationCompleteResult> {
     const failDialog = this.page.getByRole('dialog').filter({ hasText: /등록 실패/ })
     // 풀페이지 모달 footer 「프로그램 등록 완료」 버튼과 구분
-    const successDialog = this.page
-      .getByRole('dialog')
-      .filter({ hasText: '등록되었습니다.' })
+    const successDialog = this.page.getByRole('dialog').filter({ hasText: '등록되었습니다.' })
 
     // POST가 안 나가고 실패 모달만 뜨는 경우(템플릿 draft 500 등)도 잡기 위해 race
     const outcomePromise = Promise.race([
@@ -881,7 +874,7 @@ export class GeneralProgramRegistrationPage {
       timeout: 30_000,
     })
 
-    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력하세요')
+    const titleFilter = this.page.getByPlaceholder('프로그램명을 입력해 주세요')
     await expect(titleFilter).toBeVisible({ timeout: 15_000 })
     await titleFilter.fill(result.programTitle)
     await this.page.getByRole('button', { name: '조회' }).click()

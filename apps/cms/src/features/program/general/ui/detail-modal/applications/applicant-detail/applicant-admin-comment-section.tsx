@@ -39,7 +39,7 @@ export function ApplicantAdminCommentSection({
             onChange={event => onDraftChange(event.target.value)}
             inputSize="small"
             width="100%"
-            placeholder="관리자 코멘트를 입력하세요"
+            placeholder="관리자 코멘트를 입력해 주세요"
             aria-label="관리자 코멘트"
           />
           {validationError ? (

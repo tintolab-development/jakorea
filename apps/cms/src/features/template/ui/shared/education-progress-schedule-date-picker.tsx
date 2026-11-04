@@ -33,7 +33,7 @@ export function EducationProgressScheduleDatePicker({
   appliedSurfaceRange,
   appliedSurfaceWithTime = false,
   width = '100%',
-  placeholder = '일정을 선택하세요',
+  placeholder = '일정을 선택해 주세요',
   disabled,
   readOnly,
   disabledDate,
