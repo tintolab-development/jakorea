@@ -55,6 +55,9 @@ import {
   AdminFilterTextInput,
   CmsSelect,
   ConfirmModal,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -311,6 +314,7 @@ export function ImpactStoriesPage() {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -325,8 +329,10 @@ export function ImpactStoriesPage() {
       try {
         if (formMode === 'edit' && editing) {
           await updateMutation.mutateAsync({ ...values, id: editing.id })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
