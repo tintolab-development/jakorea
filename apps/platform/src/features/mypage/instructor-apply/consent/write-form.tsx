@@ -10,7 +10,7 @@ import {
   listMemberConsentIncompleteRequiredFields,
   normalizeMemberConsentWriteDraft,
   PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
-  resolveInstructorApplyConsentTemplate,
+  resolveDocumentConsentTemplate,
   resolvePlatformConsentHiddenParagraphIds,
 } from '@jakorea/form-schema/consent'
 import {
@@ -23,6 +23,7 @@ import {
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isAxiosError } from 'axios'
@@ -46,10 +47,14 @@ import {
 } from '../../settings/api/portal-consent-documents'
 import { restoreCompatibleConsentDraftValues } from '../../settings/lib/restore-compatible-consent-draft'
 import { submitPortalConsentDocumentFromWriteState } from '../../settings/lib/submit-portal-consent-document'
-import { PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY } from '../../settings/lib/settings-consent-key'
+import { resolvePortalConsentCreateType } from '../../settings/lib/settings-consent-key'
 import type { PortalConsentDocumentDetail } from '../../settings/api/portal-consent-documents.types'
-import type { InstructorApplyConsentKey } from './catalog'
-import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
+import type { DocumentConsentWriteKey } from './catalog'
+import {
+  CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE,
+  isInstructorApplyConsentKey,
+  RECEIPT_PRE_CONSENT_WRITE_KEY,
+} from './catalog'
 import { CrimeConsentDocumentForm } from './crime-document-form'
 import { markInstructorApplyConsentAgreed } from './form-persist'
 import {
@@ -68,8 +73,8 @@ import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { useInstructorApplyLockedBasic } from '../use-instructor-apply-locked-basic'
 import styles from './consent-form.module.css'
 
-function createInitialSchemaConsentState(consentKey: InstructorApplyConsentKey): SchemaConsentWriteState {
-  const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
+function createInitialSchemaConsentState(consentKey: DocumentConsentWriteKey): SchemaConsentWriteState {
+  const { templateId } = resolveDocumentConsentTemplate(consentKey)
   const seed = createConsentTemplateSeedDraft(templateId)
   if (seed == null) {
     return {
@@ -87,19 +92,23 @@ function createInitialSchemaConsentState(consentKey: InstructorApplyConsentKey):
 
   return {
     draft,
-    paymentBasicInfo: templateId === 'agreement-third-party' ? {} : undefined,
+    paymentBasicInfo:
+      templateId === 'agreement-third-party' || templateId === 'agreement-receipt-pre-consent'
+        ? {}
+        : undefined,
     signatures: {},
   }
 }
 
 function isSchemaConsentWriteIncomplete(
-  consentKey: InstructorApplyConsentKey,
+  consentKey: DocumentConsentWriteKey,
   state: SchemaConsentWriteState
 ): boolean {
-  const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
+  const { templateId } = resolveDocumentConsentTemplate(consentKey)
   return hasMemberConsentIncompleteRequiredFields(state.draft, {
     templateId,
     paymentStatementBasicInfo: state.paymentBasicInfo,
+    receiptPreConsentBasicInfo: state.paymentBasicInfo,
   })
 }
 
@@ -140,14 +149,14 @@ export function SchemaConsentWriteForm({
   submitContext = 'instructorApply',
   onTitleAside,
 }: {
-  consentKey: InstructorApplyConsentKey
+  consentKey: DocumentConsentWriteKey
   onComplete: () => void
   readOnly?: boolean
   submitContext?: ConsentWriteSubmitContext
   /** 페이지 제목 우측 — 전자서명 만들기/수정하기 */
   onTitleAside?: (aside: ReactNode | null) => void
 }) {
-  const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
+  const { templateId } = resolveDocumentConsentTemplate(consentKey)
   const { lockedBasic, isLoading: isLockedBasicLoading } = useInstructorApplyLockedBasic()
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
@@ -196,7 +205,10 @@ export function SchemaConsentWriteForm({
         ...prev,
         draft: serverDraft,
         paymentBasicInfo:
-          serverTemplateCode === 'agreement-third-party' ? prev.paymentBasicInfo ?? {} : undefined,
+          serverTemplateCode === 'agreement-third-party' ||
+          serverTemplateCode === 'agreement-receipt-pre-consent'
+            ? prev.paymentBasicInfo ?? {}
+            : undefined,
         portalDocument: {
           documentId,
           templateVersionId: formTemplateVersion?.templateVersionId ?? null,
@@ -212,7 +224,7 @@ export function SchemaConsentWriteForm({
     if (serverDraftInitializedRef.current) return
     serverDraftInitializedRef.current = true
     setIsServerDraftLoading(true)
-    const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+    const consentType = resolvePortalConsentCreateType(consentKey)
     void createPortalConsentDocument({ consentType })
       .then(applyServerDraftDocument)
       .catch(error => {
@@ -224,7 +236,7 @@ export function SchemaConsentWriteForm({
   }, [applyServerDraftDocument, consentKey, portalSubmitEnabled, readOnly, templateId])
 
   const recoverPortalDraftVersion = useCallback(async () => {
-    const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+    const consentType = resolvePortalConsentCreateType(consentKey)
     const previousDraft = state.draft
     const document = await createPortalConsentDocument({ consentType })
     applyServerDraftDocument(document, previousDraft)
@@ -252,6 +264,7 @@ export function SchemaConsentWriteForm({
       listMemberConsentIncompleteRequiredFields(state.draft, {
         templateId,
         paymentStatementBasicInfo: state.paymentBasicInfo,
+        receiptPreConsentBasicInfo: state.paymentBasicInfo,
       }),
     [state.draft, state.paymentBasicInfo, templateId],
   )
@@ -307,7 +320,7 @@ export function SchemaConsentWriteForm({
       setIsSubmitting(true)
       void submitPortalConsentDocumentFromWriteState(consentKey, state)
         .then(() => {
-          if (submitContext === 'instructorApply') {
+          if (submitContext === 'instructorApply' && isInstructorApplyConsentKey(consentKey)) {
             markInstructorApplyConsentAgreed(consentKey)
           }
           onComplete()
@@ -344,6 +357,11 @@ export function SchemaConsentWriteForm({
       return
     }
 
+    if (consentKey === RECEIPT_PRE_CONSENT_WRITE_KEY) {
+      setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE)
+      setAlertOpen(true)
+      return
+    }
     markInstructorApplyConsentAgreed(consentKey)
     onComplete()
   }
@@ -394,9 +412,15 @@ export function SchemaConsentWriteForm({
 
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
-      if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+      if (
+        paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
+        paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
+      ) {
         return (
           <PaymentBasicInfoFields
+            variant={
+              paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord ? 'receipt' : 'payment'
+            }
             values={state.paymentBasicInfo ?? {}}
             onChange={paymentBasicInfo =>
               setState(prev => ({ ...prev, paymentBasicInfo }))
@@ -405,7 +429,10 @@ export function SchemaConsentWriteForm({
         )
       }
 
-      if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine) {
+      if (
+        paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
+        paragraph.id === RECEIPT_PRE_CONSENT_IDS.midConsentLine
+      ) {
         const body =
           paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text'
             ? paragraph.bodyText.trim()
@@ -425,7 +452,10 @@ export function SchemaConsentWriteForm({
         )
       }
 
-      if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) {
+      if (
+        paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm ||
+        paragraph.id === RECEIPT_PRE_CONSENT_IDS.finalConfirm
+      ) {
         const body =
           paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text'
             ? paragraph.bodyText.trim()
@@ -513,7 +543,7 @@ export function SchemaConsentWriteForm({
     [signerName, state.signatures?.final, templateId],
   )
 
-  if (isCrimeConsentTemplate(templateId)) {
+  if (isCrimeConsentTemplate(templateId) && isInstructorApplyConsentKey(consentKey)) {
     return (
       <CrimeConsentDocumentForm
         consentKey={consentKey}
@@ -586,7 +616,7 @@ export function InstructorApplyConsentWriteForm({
   submitContext = 'instructorApply',
   onTitleAside,
 }: {
-  consentKey: InstructorApplyConsentKey
+  consentKey: DocumentConsentWriteKey
   onComplete: () => void
   readOnly?: boolean
   submitContext?: ConsentWriteSubmitContext

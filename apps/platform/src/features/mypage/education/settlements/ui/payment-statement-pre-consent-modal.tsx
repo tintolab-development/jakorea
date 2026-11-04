@@ -8,11 +8,11 @@ type PaymentStatementPreConsentModalProps = {
 }
 
 export const PAYMENT_STATEMENT_PRE_CONSENT_MODAL_TITLE =
-  '지급조서 사전 동의서를 작성해 주세요.'
+  '영수증 발급 사전 동의서를 작성해 주세요.'
 export const PAYMENT_STATEMENT_PRE_CONSENT_MODAL_DESCRIPTION = [
-  '영수증을 제출하려면 지급조서 사전 동의서가 필요해요.',
-  '처음 한 번만 작성하면 10년간 유지되며,',
-  '동의를 철회한 경우에는 다시 작성해야 해요.',
+  '영수증을 제출하려면 영수증 발급 사전 동의서가 필요해요.',
+  '지급조서 사전 동의서와는 별도 서류이며,',
+  '제출 완료 여부는 서버 동의 상태를 기준으로 확인해요.',
 ].join('\n')
 
 export function PaymentStatementPreConsentModal({

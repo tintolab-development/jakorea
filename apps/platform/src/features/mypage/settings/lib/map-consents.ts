@@ -17,6 +17,7 @@ export const SETTINGS_CONSENT_TYPE_BY_ID: Record<SettingsConsentItemId, string> 
   marketing: 'MARKETING',
   portrait: 'PORTRAIT_RIGHTS',
   paymentStatement: 'PAYMENT_STATEMENT_CONSENT',
+  receiptPreConsent: 'RECEIPT_PRE_CONSENT',
   educatorPledge: 'FACILITATOR_PLEDGE',
   administrativeJoint: 'ADMINISTRATIVE_INFO_CONSENT',
   sexOffenseCheck: 'CRIMINAL_HISTORY_CHECK_CONSENT',
@@ -49,7 +50,8 @@ export function formatConsentDate(value: string | null | undefined): string | un
 
 function normalizeConsentType(value: string | undefined): string {
   const normalized = value?.trim().toUpperCase() ?? ''
-  return normalized === 'PAYMENT_STATEMENT_PRE_CONSENT' ? 'PAYMENT_STATEMENT_CONSENT' : normalized
+  if (normalized === 'PAYMENT_STATEMENT_PRE_CONSENT') return 'PAYMENT_STATEMENT_CONSENT'
+  return normalized
 }
 
 /**

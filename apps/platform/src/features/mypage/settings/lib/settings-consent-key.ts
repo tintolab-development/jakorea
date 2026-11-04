@@ -1,5 +1,7 @@
 import {
-  isInstructorApplyConsentKey,
+  isDocumentConsentWriteKey,
+  RECEIPT_PRE_CONSENT_WRITE_KEY,
+  type DocumentConsentWriteKey,
   type InstructorApplyConsentKey,
 } from '../../instructor-apply/consent/catalog'
 import type { SettingsConsentItemId } from './consent-catalog'
@@ -49,17 +51,18 @@ export function settingsConsentItemIdToWriteKey(id: SettingsConsentItemId): stri
   const instructorKey = settingsConsentItemIdToInstructorKey(id)
   if (instructorKey) return instructorKey
   if (id === 'portrait') return SETTINGS_PORTRAIT_CONSENT_WRITE_KEY
+  if (id === 'receiptPreConsent') return RECEIPT_PRE_CONSENT_WRITE_KEY
   return null
 }
 
 export function isSettingsConsentWriteKey(value: string): boolean {
-  return isInstructorApplyConsentKey(value) || value === SETTINGS_PORTRAIT_CONSENT_WRITE_KEY
+  return isDocumentConsentWriteKey(value) || value === SETTINGS_PORTRAIT_CONSENT_WRITE_KEY
 }
 
 export function isSettingsDocumentConsentItemId(
   id: SettingsConsentItemId,
-): id is keyof typeof SETTINGS_TO_INSTRUCTOR | 'portrait' {
-  return id in SETTINGS_TO_INSTRUCTOR || id === 'portrait'
+): id is keyof typeof SETTINGS_TO_INSTRUCTOR | 'portrait' | 'receiptPreConsent' {
+  return id in SETTINGS_TO_INSTRUCTOR || id === 'portrait' || id === 'receiptPreConsent'
 }
 
 /** POST /me/consents/documents — 강사 신청 termsType과 동일 enum */
@@ -71,4 +74,11 @@ export const PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY: Record<
   consentEducatorPledge: 'FACILITATOR_PLEDGE',
   consentAdministrativeJoint: 'ADMINISTRATIVE_INFO_CONSENT',
   consentSexOffenseCheck: 'CRIMINAL_HISTORY_CHECK_CONSENT',
+}
+
+export const PORTAL_RECEIPT_PRE_CONSENT_CREATE_TYPE = 'RECEIPT_PRE_CONSENT'
+
+export function resolvePortalConsentCreateType(key: DocumentConsentWriteKey): string {
+  if (key === RECEIPT_PRE_CONSENT_WRITE_KEY) return PORTAL_RECEIPT_PRE_CONSENT_CREATE_TYPE
+  return PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[key]
 }

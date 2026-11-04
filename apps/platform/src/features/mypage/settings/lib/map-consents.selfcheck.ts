@@ -58,6 +58,15 @@ assert.equal(adultById.marketing?.agreed, false)
 assert.equal(adultById.portrait?.withdrawable, true)
 assert.equal(adultById.paymentStatement?.agreed, true)
 assert.equal(adultById.paymentStatement?.withdrawable, true)
+assert.equal(adult.documentItems.some(item => item.id === 'receiptPreConsent'), false)
+
+const receiptOnly = buildConsentItemsFromSummaries([
+  { consentType: 'RECEIPT_PRE_CONSENT', agreed: true, documentId: 55, agreedAt: '2026-09-01T10:00:00' },
+  { consentType: 'PAYMENT_STATEMENT_CONSENT', agreed: true, documentId: 9 },
+])
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'receiptPreConsent')?.agreed, true)
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'receiptPreConsent')?.documentId, 55)
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'paymentStatement')?.documentId, 9)
 assert.equal(adultById.educatorPledge?.agreed, false)
 assert.equal(adultById.educatorPledge?.withdrawable, false)
 

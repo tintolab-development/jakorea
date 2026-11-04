@@ -11,6 +11,7 @@ export type SettingsConsentItemId =
   | 'marketing'
   | 'portrait'
   | 'paymentStatement'
+  | 'receiptPreConsent'
   | 'educatorPledge'
   | 'administrativeJoint'
   | 'sexOffenseCheck'
@@ -149,6 +150,15 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     agreed: false,
     validityLabel: '10년',
     hint: '영수증 제출 시 최초 1회 작성 · 유효기간 10년',
+  },
+  {
+    id: 'receiptPreConsent',
+    title: '영수증 발급 사전 동의서',
+    required: false,
+    kind: 'document',
+    agreed: false,
+    validityLabel: '10년',
+    hint: '영수증 제출 시 최초 1회 작성 · 유효기간은 서버 정책을 따릅니다',
   },
   {
     id: 'educatorPledge',

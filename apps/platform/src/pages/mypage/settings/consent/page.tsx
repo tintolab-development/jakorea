@@ -7,6 +7,7 @@ import {
   getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   InstructorApplyConsentWriteForm,
+  isDocumentConsentWriteKey,
   isInstructorApplyConsentKey,
   MYPAGE_SETTINGS_CONSENTS_TAB,
 } from '@/features/mypage'
@@ -71,7 +72,7 @@ export function MypageSettingsConsentPage() {
 
   const title = isPortraitKey
     ? MEMBER_CONSENT_TEMPLATE_MAP.consentPortrait.modalTitle
-    : isInstructorApplyConsentKey(consentKey)
+    : isDocumentConsentWriteKey(consentKey)
       ? getInstructorApplyConsentPageTitle(consentKey)
       : ''
   const description =
@@ -108,7 +109,7 @@ export function MypageSettingsConsentPage() {
           }
           guardianVerificationToken={minorGuardianVerificationToken}
         />
-      ) : isInstructorApplyConsentKey(consentKey) ? (
+      ) : isDocumentConsentWriteKey(consentKey) ? (
         <InstructorApplyConsentWriteForm
           consentKey={consentKey}
           readOnly={isView}

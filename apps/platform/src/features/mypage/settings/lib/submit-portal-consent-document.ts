@@ -1,4 +1,7 @@
-import { resolveInstructorApplyConsentTemplate } from '@jakorea/form-schema/consent'
+import {
+  resolveDocumentConsentTemplate,
+  toReceiptPreConsentFilledBasicInfo,
+} from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
@@ -7,12 +10,13 @@ import {
 } from '@jakorea/form-schema/writing-form'
 import { buildPortraitFilledDocument } from '@/features/auth/sign-up/lib/map-portrait-consent-filled-document'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 import { isAxiosError } from 'axios'
 import {
   fetchMemberPortalFile,
   uploadMemberPortalFile,
 } from '../../instructor-apply/api/member-file-upload'
-import type { InstructorApplyConsentKey } from '../../instructor-apply/consent/catalog'
+import type { DocumentConsentWriteKey } from '../../instructor-apply/consent/catalog'
 import { readCrimeConsentErrorCodeFromBody } from '../../instructor-apply/consent/crime-consent-original'
 import {
   submitCrimeConsentOriginal,
@@ -28,7 +32,7 @@ import {
   signPortalConsentDocumentField,
 } from '../api/portal-consent-documents'
 import { buildPortalSignatureProfileRequest } from './portal-signature-profile'
-import { PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY } from './settings-consent-key'
+import { resolvePortalConsentCreateType } from './settings-consent-key'
 import type { FormSignatureValue } from '@/shared/ui/pf-form-signature-block/types'
 import { buildPortalPortraitRightsConsentCreateRequest } from './portal-portrait-consent-create-request'
 import { resolvePortraitPortalCompleteHints } from './resolve-portrait-portal-complete'
@@ -39,6 +43,8 @@ const SIGNATURE_FILE_PURPOSE = 'ELECTRONIC_SIGNATURE'
 const FIELD_KEY_TO_SIGNATURE_SLOT: Record<string, 'mid' | 'final'> = {
   [PAYMENT_STATEMENT_PRE_CONSENT_IDS.midSignature]: 'mid',
   [PAYMENT_STATEMENT_PRE_CONSENT_IDS.tailSignature]: 'final',
+  [RECEIPT_PRE_CONSENT_IDS.midSignature]: 'mid',
+  [RECEIPT_PRE_CONSENT_IDS.tailSignature]: 'final',
   [EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.systemSignature]: 'final',
   [AGREEMENT_NOTICE_PARAGRAPH_IDS.systemSignature]: 'final',
   [AGREEMENT_PORTRAIT_PARAGRAPH_IDS.systemSignature]: 'final',
@@ -125,7 +131,7 @@ async function signDocumentSignatureFields(
 }
 
 export function buildPortalConsentFilledDocument(
-  consentKey: InstructorApplyConsentKey,
+  consentKey: DocumentConsentWriteKey,
   state: SchemaConsentWriteState,
 ): {
   templateVersionId?: number | null
@@ -133,23 +139,28 @@ export function buildPortalConsentFilledDocument(
   schemaJson: WritingFormDraft
   paymentBasicInfo?: Record<string, unknown>
 } {
-  const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
+  const { templateId } = resolveDocumentConsentTemplate(consentKey)
+  const templateCode = state.portalDocument?.templateCode?.trim() || templateId
+  const paymentBasicInfo =
+    templateCode === 'agreement-receipt-pre-consent'
+      ? toReceiptPreConsentFilledBasicInfo(state.paymentBasicInfo)
+      : state.paymentBasicInfo
   return {
     templateVersionId: state.portalDocument?.templateVersionId,
-    templateCode: state.portalDocument?.templateCode?.trim() || templateId,
+    templateCode,
     schemaJson: state.draft,
-    ...(state.paymentBasicInfo ? { paymentBasicInfo: state.paymentBasicInfo } : {}),
+    ...(paymentBasicInfo ? { paymentBasicInfo } : {}),
   }
 }
 
 async function resolveDocumentForSubmit(
-  consentKey: InstructorApplyConsentKey,
+  consentKey: DocumentConsentWriteKey,
   state: SchemaConsentWriteState,
 ): Promise<{ documentId: number; templateVersionId?: number | null; templateCode?: string | null }> {
   if (state.portalDocument?.documentId != null) {
     return state.portalDocument
   }
-  const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+  const consentType = resolvePortalConsentCreateType(consentKey)
   const created = await createPortalConsentDocument({ consentType })
   const documentId = created.documentId
   if (documentId == null) {
@@ -164,7 +175,7 @@ async function resolveDocumentForSubmit(
 
 /** 마이페이지 설정 — Portal document create → sign fields → complete */
 export async function submitPortalConsentDocumentFromWriteState(
-  consentKey: InstructorApplyConsentKey,
+  consentKey: DocumentConsentWriteKey,
   state: SchemaConsentWriteState,
 ): Promise<void> {
   const portalDocument = await resolveDocumentForSubmit(consentKey, state)
@@ -239,10 +250,10 @@ function readCrimeConsentApiFailure(error: unknown): CrimeConsentApiFailure | nu
  * `session`은 호출 화면이 메모리에 보관한다.
  */
 export async function submitPortalCrimeConsentComplete(
-  consentKey: InstructorApplyConsentKey,
+  consentKey: DocumentConsentWriteKey,
   input: { evidenceFileObjectId: number; session: CrimeConsentSubmitSession },
 ): Promise<void> {
-  const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+  const consentType = resolvePortalConsentCreateType(consentKey)
   await submitCrimeConsentOriginal(
     {
       fetchFile: fileObjectId => fetchMemberPortalFile(fileObjectId),

@@ -12,24 +12,47 @@ import formStyles from '@/shared/ui/pf-form/pf-form.module.css'
 import styles from './consent-form.module.css'
 import {
   mergePaymentStatementBasicInfo,
+  mergeReceiptPreConsentBasicInfo,
   PAYMENT_STATEMENT_DEFAULT_PURPOSE,
+  RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
+  toReceiptPreConsentFilledBasicInfo,
   type PaymentStatementBasicInfoValues,
 } from '@jakorea/form-schema/consent'
 
 export type PaymentBasicInfoFieldsProps = {
   values: Partial<PaymentStatementBasicInfoValues>
   onChange: (next: Partial<PaymentStatementBasicInfoValues>) => void
+  variant?: 'payment' | 'receipt'
 }
 
-export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFieldsProps) {
-  const merged = mergePaymentStatementBasicInfo(values)
+export function PaymentBasicInfoFields({
+  values,
+  onChange,
+  variant = 'payment',
+}: PaymentBasicInfoFieldsProps) {
+  const isReceipt = variant === 'receipt'
+  const merged = isReceipt
+    ? {
+        ...mergePaymentStatementBasicInfo({
+          ...values,
+          paymentPurpose: RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
+          residentFront: '',
+          residentBack: '',
+          affiliation: '',
+          noAffiliation: true,
+        }),
+        ...mergeReceiptPreConsentBasicInfo(values),
+        paymentPurpose: RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE,
+      }
+    : mergePaymentStatementBasicInfo(values)
   const paymentPurpose = merged.paymentPurpose
 
   const patch = <K extends keyof PaymentStatementBasicInfoValues>(
     key: K,
     value: PaymentStatementBasicInfoValues[K]
   ) => {
-    onChange({ ...merged, [key]: value })
+    const next = { ...merged, [key]: value }
+    onChange(isReceipt ? toReceiptPreConsentFilledBasicInfo(next) : next)
   }
 
   return (
@@ -56,6 +79,7 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
           />
         </PFFormField>
       </PFFormFieldRow>
+      {isReceipt ? null : (
       <PFFormFieldRow type="double">
         <PFFormField
           label="주민등록번호"
@@ -95,9 +119,10 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
           </PFFormInlineSeparatedFields>
         </PFFormField>
       </PFFormFieldRow>
+      )}
       <PFFormFieldRow type="single">
         <PFFormField
-          label="자택 주소"
+          label={isReceipt ? '지역/주소' : '자택 주소'}
           className={`${styles.paymentFixedField} ${styles.paymentInputW240}`}
         >
           <PFFormHomeAddressFields
@@ -146,7 +171,9 @@ export function PaymentBasicInfoFields({ values, onChange }: PaymentBasicInfoFie
             variant="formPage"
             size="large"
             disabled
-            placeholder={PAYMENT_STATEMENT_DEFAULT_PURPOSE}
+            placeholder={
+              isReceipt ? RECEIPT_PRE_CONSENT_DEFAULT_PURPOSE : PAYMENT_STATEMENT_DEFAULT_PURPOSE
+            }
             value={paymentPurpose}
           />
         </PFFormField>
