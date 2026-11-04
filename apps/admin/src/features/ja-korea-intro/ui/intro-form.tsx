@@ -10,7 +10,14 @@ import type {
 } from '@/entities/ja-korea-intro/model/types'
 import { useSaveJaKoreaIntro } from '@/features/ja-korea-intro/api/hooks'
 import { ContentNestedTable } from '@/features/ja-korea-intro/ui/content-nested-table'
-import { CmsButton, CmsInput, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  CmsTextArea,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './intro-form.css'
 
@@ -64,6 +71,19 @@ export function IntroFormCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    const { section01, section02 } = draft
+    const missingRequired =
+      !section01.mainTitle.trim() ||
+      !section01.subTitle.trim() ||
+      !section02.titlePhrase.trim() ||
+      !section02.content01.title.trim() ||
+      !section02.content01.description.trim() ||
+      !section02.content02.title.trim() ||
+      !section02.content02.description.trim()
+    if (missingRequired) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)

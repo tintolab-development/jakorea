@@ -12,6 +12,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   ContentModal,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
@@ -163,6 +164,10 @@ export function RelatedLogoFormModal({
   )
 
   const handleSubmit = useCallback(() => {
+    if (!name.trim() || (!logoUrl.trim() && !logoFile && logoAssetId == null)) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     const trimmedLink = linkUrl.trim()
     if (trimmedLink && !isValidHttpLinkUrl(trimmedLink)) {
       showAlert(HTTP_LINK_URL_FORMAT_ALERT)

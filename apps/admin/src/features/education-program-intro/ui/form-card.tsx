@@ -13,6 +13,7 @@ import type {
 import { useSaveProgramIntroCategory } from '@/features/education-program-intro/api/hooks'
 import { cloneProgramIntroDocument } from '@/features/education-program-intro/lib/clone-document'
 import {
+  getProgramImageSlotCount,
   isAllowedProgramIntroImage,
   PROGRAM_INTRO_IMAGE_ACCEPT,
   PROGRAM_INTRO_IMAGE_MAX_BYTES,
@@ -20,7 +21,15 @@ import {
   type ProgramIntroImageSlot,
 } from '@/features/education-program-intro/lib/image-slots'
 import { educationProgramIntroMutationFailureAlert } from '@/features/education-program-intro/lib/mutation-failure-alert'
-import { CmsButton, CmsInput, CmsTextArea, FileSelectField, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  CmsTextArea,
+  FileSelectField,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './form-card.css'
 
@@ -389,6 +398,29 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    const hasImage = (image: ProgramIntroImage) =>
+      Boolean(image?.file || image?.fileUrl.trim() || image?.assetId)
+    if (!draft.mainText.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    const incompleteSection = draft.sections.some((section, index) => {
+      const slotCount = getProgramImageSlotCount(index)
+      const missingTexts =
+        !section.programType.trim() ||
+        !section.typeDescription.trim() ||
+        !section.representativeProgram.trim() ||
+        !section.sponsorName.trim() ||
+        !section.representativeDescription.trim()
+      const missingImage = Array.from({ length: slotCount }, (_, imageIndex) => imageIndex).some(
+        imageIndex => !hasImage(section.images[imageIndex] ?? null)
+      )
+      return missingTexts || missingImage
+    })
+    if (incompleteSection) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync({
         fieldCode: draft.fieldCode,

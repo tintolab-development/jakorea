@@ -236,11 +236,20 @@ export function FooterOrgInfoSection() {
   const handleSave = useCallback(async () => {
     const text = textDraftRef.current
     if (!draft || !text) return
-    if (!text.name.trim()) {
+    if (
+      !text.name.trim() ||
+      !text.address.trim() ||
+      !text.zipCode.trim() ||
+      !text.representative.trim() ||
+      !text.businessNumber.trim() ||
+      !text.phone.trim() ||
+      !text.fax.trim() ||
+      !text.email.trim()
+    ) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
-    if (!text.email.trim()) {
+    if (!draft.logoUrl.trim() && !draft.logoFile && draft.logoAssetId == null) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
