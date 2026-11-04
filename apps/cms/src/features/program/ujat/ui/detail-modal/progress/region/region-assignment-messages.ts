@@ -1,14 +1,41 @@
 import type { UjatDirectAssignmentResponse } from '@/features/program/ujat/api/education-execution-api'
-import { getApiErrorHttpStatus, readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import {
+  getApiErrorCode,
+  getApiErrorHttpStatus,
+  readApiErrorAlertMessage,
+} from '@/shared/lib/extract-api-error-message'
+
+const REGION_ASSIGNMENT_ERROR_MESSAGES: Record<string, string> = {
+  UJAT_VOLUNTEER_ALREADY_ASSIGNED_SAME_DAY: '같은 날 이미 다른 학급에 배정된 봉사자입니다.',
+  UJAT_EDUCATION_SLOT_ALREADY_ASSIGNED: '이미 배정된 학급입니다. 최신 배정표를 확인한 뒤 다시 시도해 주세요.',
+  UJAT_REGION_VOLUNTEER_CAPACITY_EXCEEDED:
+    '해당 지역 봉사자 정원을 초과할 수 있어 배정할 수 없습니다.',
+  UJAT_PARTNER_ASSIGNMENT_CONFLICT:
+    '다른 관리자가 같은 학급을 배정했습니다. 배정표를 새로고침해 주세요.',
+  UJAT_EDUCATION_SLOT_NOT_FOUND:
+    '배정할 수 있는 학급이 아닙니다. 일정이 지났거나 확정되지 않았을 수 있습니다.',
+  UJAT_EDUCATION_SLOT_NOT_ASSIGNED: '아직 배정되지 않은 학급입니다. 배정표를 새로고침해 주세요.',
+}
+
+function hasHangul(value: string): boolean {
+  return /[\uAC00-\uD7A3]/.test(value)
+}
 
 /**
- * 서버 응답이 있는 오류는 error.code별 서버 한국어 message를 그대로 쓴다
- * (UJAT_VOLUNTEER_ALREADY_ASSIGNED_SAME_DAY, UJAT_EDUCATION_SLOT_ALREADY_ASSIGNED 등).
+ * 서버 응답이 한국어면 그대로 쓴다.
+ * error.code만 있거나 영어/코드 문자열이면 지역 배정용 한국어로 치환한다.
  * 클라이언트 검증 오류(INVALID_* 등 내부 코드)는 fallback 문구를 쓴다.
  */
 export function resolveRegionAssignmentErrorMessage(error: unknown, fallback: string): string {
   if (getApiErrorHttpStatus(error) == null) return fallback
-  return readApiErrorAlertMessage(error, fallback)
+  const code = getApiErrorCode(error)
+  const mapped = code ? REGION_ASSIGNMENT_ERROR_MESSAGES[code] : undefined
+  const serverMessage = readApiErrorAlertMessage(error, fallback)
+  if (mapped && (!serverMessage || serverMessage === code || !hasHangul(serverMessage))) {
+    return mapped
+  }
+  if (serverMessage === code && fallback) return fallback
+  return serverMessage
 }
 
 export function buildDirectAssignSuccessMessage(

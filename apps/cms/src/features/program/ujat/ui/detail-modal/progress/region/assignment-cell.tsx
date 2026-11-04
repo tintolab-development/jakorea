@@ -24,6 +24,9 @@ export function RegionAssignmentCellContent({ cell }: { cell: RegionAssignmentCe
         className={[
           'ujat-region-assignment-table__class-label',
           cell.isInvalidAssignment ? 'ujat-region-assignment-table__class-label--invalid' : '',
+          !cell.isInvalidAssignment && cell.isSolo
+            ? 'ujat-region-assignment-table__class-label--solo'
+            : '',
         ]
           .filter(Boolean)
           .join(' ')}
