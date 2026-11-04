@@ -158,6 +158,11 @@ const agreementDefinitions: TemplateDefinition[] = [
   { id: 'agreement-portrait', templateName: '초상권 수집·이용 동의', variant: 'default' },
   { id: 'agreement-third-party', templateName: '지급조서 사전 동의서', variant: 'default' },
   {
+    id: 'agreement-receipt-pre-consent',
+    templateName: '영수증 발급 사전 동의서',
+    variant: 'default',
+  },
+  {
     id: 'agreement-crime',
     templateName: '성범죄 경력조회 동의서',
     variant: 'default',

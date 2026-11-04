@@ -18,6 +18,7 @@ import {
   buildMemberPaymentStatementBasicInfoAutofill,
   type MemberPaymentStatementAutofillSource,
 } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
+import { toReceiptPreConsentFilledBasicInfo } from '@jakorea/form-schema/consent'
 import type { DateValue } from '@/types'
 import type { User } from '@/types/user'
 
@@ -169,7 +170,13 @@ export function buildMemberConsentAgreeOnlyPreviewDraft(
   const participantName = ctx.name.trim() || undefined
   const paymentBasicInfo = PAYMENT_STATEMENT_TEMPLATE_IDS.has(code)
     ? buildMemberPaymentStatementBasicInfoAutofill(buildMemberPaymentAutofillSourceFromUser(user))
-    : undefined
+    : code === 'agreement-receipt-pre-consent'
+      ? toReceiptPreConsentFilledBasicInfo(
+          buildMemberPaymentStatementBasicInfoAutofill(
+            buildMemberPaymentAutofillSourceFromUser(user)
+          )
+        )
+      : undefined
 
   return {
     draft,

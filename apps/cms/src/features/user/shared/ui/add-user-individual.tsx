@@ -284,6 +284,10 @@ export function AddUserIndividual({
   }
 
   const handleConsentComplete = (fieldKey: MemberConsentFieldKey) => {
+    if (fieldKey === 'consentReceiptPreConsent') {
+      setActiveConsentField(null)
+      return
+    }
     form.setFieldValue(fieldKey, 'agree')
     setActiveConsentField(null)
   }

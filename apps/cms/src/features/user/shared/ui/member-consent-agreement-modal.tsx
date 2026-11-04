@@ -40,7 +40,11 @@ import {
   hasMemberConsentInvalidResidentNumberFormat,
   PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
 } from '@/features/user/shared/lib/validate-member-consent-draft'
-import { mergePaymentStatementBasicInfo } from '@jakorea/form-schema/consent'
+import {
+  mergePaymentStatementBasicInfo,
+  mergeReceiptPreConsentBasicInfo,
+  toReceiptPreConsentFilledBasicInfo,
+} from '@jakorea/form-schema/consent'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
 import '@/features/template/ui/template-management/template-fullpage-modal.css'
@@ -49,6 +53,7 @@ import './member-consent-agreement-modal.css'
 const MEMBER_CONSENT_MODAL_Z_INDEX = 1200
 const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
   'agreement-third-party',
+  'agreement-receipt-pre-consent',
   'document-payment-order-pre-consent',
 ])
 
@@ -104,7 +109,11 @@ export function MemberConsentAgreementModal({
       setDraft(
         normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft))
       )
-      setPaymentBasicInfo(mergePaymentStatementBasicInfo(restored.paymentBasicInfo))
+      setPaymentBasicInfo(
+        templateId === 'agreement-receipt-pre-consent'
+          ? mergeReceiptPreConsentBasicInfo(restored.paymentBasicInfo)
+          : mergePaymentStatementBasicInfo(restored.paymentBasicInfo)
+      )
       setIsDraftLoading(false)
       return
     }
@@ -112,7 +121,11 @@ export function MemberConsentAgreementModal({
     let cancelled = false
     setIsDraftLoading(true)
     setDraft(null)
-    setPaymentBasicInfo(mergePaymentStatementBasicInfo())
+    setPaymentBasicInfo(
+      templateId === 'agreement-receipt-pre-consent'
+        ? mergeReceiptPreConsentBasicInfo()
+        : mergePaymentStatementBasicInfo()
+    )
 
     void loadWritingFormTemplateDraft(templateId)
       .then(saved => {
@@ -172,6 +185,8 @@ export function MemberConsentAgreementModal({
     const consentOptions = {
       templateId,
       paymentStatementBasicInfo: paymentBasicInfo ?? undefined,
+      receiptPreConsentBasicInfo:
+        templateId === 'agreement-receipt-pre-consent' ? paymentBasicInfo ?? undefined : undefined,
     }
 
     if (hasMemberConsentIncompleteRequiredFields(draft, consentOptions)) {
@@ -200,7 +215,10 @@ export function MemberConsentAgreementModal({
     }
     const snapshot: MemberConsentAgreementDraftSnapshot = {
       draft: normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(draft)),
-      paymentBasicInfo: mergePaymentStatementBasicInfo(paymentBasicInfo),
+      paymentBasicInfo:
+        templateId === 'agreement-receipt-pre-consent'
+          ? toReceiptPreConsentFilledBasicInfo(paymentBasicInfo)
+          : mergePaymentStatementBasicInfo(paymentBasicInfo),
     }
     onSnapshotSave?.(cloneMemberConsentAgreementDraftSnapshot(snapshot))
     onComplete()
@@ -208,9 +226,13 @@ export function MemberConsentAgreementModal({
 
   const handlePaymentBasicInfoValuesChange = useCallback(
     (values: PaymentStatementBasicInfoAutofillValues) => {
-      setPaymentBasicInfo(mergePaymentStatementBasicInfo(values))
+      setPaymentBasicInfo(
+        templateId === 'agreement-receipt-pre-consent'
+          ? mergeReceiptPreConsentBasicInfo(values)
+          : mergePaymentStatementBasicInfo(values)
+      )
     },
-    []
+    [templateId]
   )
 
   const authorDisplayName = useMemo(
@@ -232,7 +254,10 @@ export function MemberConsentAgreementModal({
     if (!PAYMENT_STATEMENT_TEMPLATE_IDS.has(templateId)) return paragraphBodyOptions
     return {
       ...paragraphBodyOptions,
-      paymentStatementBasicInfoValues: mergePaymentStatementBasicInfo(paymentBasicInfo),
+      paymentStatementBasicInfoValues:
+        templateId === 'agreement-receipt-pre-consent'
+          ? mergeReceiptPreConsentBasicInfo(paymentBasicInfo)
+          : mergePaymentStatementBasicInfo(paymentBasicInfo),
       paymentStatementBasicInfoOnValuesChange: handlePaymentBasicInfoValuesChange,
     }
   }, [handlePaymentBasicInfoValuesChange, paragraphBodyOptions, paymentBasicInfo, templateId])

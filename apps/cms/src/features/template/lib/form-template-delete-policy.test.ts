@@ -40,6 +40,9 @@ describe('form-template-delete-policy', () => {
   it('allows new catalog survey and general agreement versions but blocks operational originals', () => {
     expect(isCatalogSurveyOrGeneralAgreementTemplateCode('survey-default')).toBe(true)
     expect(isCatalogSurveyOrGeneralAgreementTemplateCode('agreement-third-party')).toBe(true)
+    expect(isCatalogSurveyOrGeneralAgreementTemplateCode('agreement-receipt-pre-consent')).toBe(
+      true
+    )
     expect(isCatalogSurveyOrGeneralAgreementTemplateCode('agreement-crime')).toBe(false)
     expect(isCatalogOriginalVersionWriteBlocked('registration-general')).toBe(true)
     expect(isCatalogOriginalVersionWriteBlocked('recruitment-instructor')).toBe(true)

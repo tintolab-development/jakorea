@@ -53,6 +53,8 @@ export type PaymentStatementBasicInfoDetailFormProps = {
    * false: 발급용과 같이 전 필드 비활성.
    */
   onlyPaymentPurposeLocked?: boolean
+  /** 영수증 발급 사전 동의서 — 주민등록번호·소속 미노출 */
+  hideResidentFields?: boolean
   /** 편집 가능 모드에서 값 변경 시 (확인·서명란 성명 동기화 등) */
   onValuesChange?: (values: PaymentStatementBasicInfoAutofillValues) => void
 }
@@ -73,6 +75,7 @@ export function PaymentStatementBasicInfoDetailForm({
   className,
   displayMode = 'editor',
   onlyPaymentPurposeLocked = false,
+  hideResidentFields = false,
   onValuesChange,
 }: PaymentStatementBasicInfoDetailFormProps) {
   const isDocumentMode = displayMode === 'document'
@@ -151,6 +154,7 @@ export function PaymentStatementBasicInfoDetailForm({
         />
       </DetailInfoForm.Row>
 
+      {hideResidentFields ? null : (
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="주민등록번호"
@@ -218,10 +222,11 @@ export function PaymentStatementBasicInfoDetailForm({
           }
         />
       </DetailInfoForm.Row>
+      )}
 
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="자택 주소"
+          label={hideResidentFields ? '지역/주소' : '자택 주소'}
           fullRow
           view={textOrDash(addressText)}
           edit={
