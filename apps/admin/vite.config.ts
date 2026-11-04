@@ -43,6 +43,9 @@ export default defineConfig(({ mode }) => {
     const entries: Record<string, ProxyOptions> = {}
     if (cmsTarget) {
       entries['/api/admin/auth'] = withNgrokSkip(cmsTarget, ngrokSkip)
+      entries['/api/admin/me'] = withNgrokSkip(cmsTarget, ngrokSkip)
+      entries['/api/auth/verification-sessions'] = withNgrokSkip(cmsTarget, ngrokSkip)
+      entries['/api/public/terms-documents'] = withNgrokSkip(cmsTarget, ngrokSkip)
     }
     if (homepageTarget) {
       entries['/api'] = withNgrokSkip(homepageTarget, ngrokSkip)
