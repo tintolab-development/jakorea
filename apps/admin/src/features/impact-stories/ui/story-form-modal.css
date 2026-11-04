@@ -73,7 +73,8 @@
   padding-top: 24px !important;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   width: 100%;
   align-items: stretch;
   display: flex;
@@ -89,11 +90,11 @@
 .story-form-modal__form {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* 라벨 — vertical 14px · 필수 * */
@@ -185,17 +186,6 @@
  * 공통 에디터는 data-resized/--rt-user-height를 직접 갱신하므로,
  * Admin 모달이 그 높이를 콘텐츠 높이로 받아야 모달도 함께 확장된다.
  */
-.story-form-modal__form:has(.rich-text-editor[data-resized='true']) {
-  flex: 0 0 auto;
-  overflow: visible;
-}
-
-.story-form-modal.content-modal
-  .teal-header-modal__body:has(.rich-text-editor[data-resized='true']) {
-  overflow-x: hidden;
-  overflow-y: auto;
-}
-
 .story-form-modal__section--editor:has(.rich-text-editor[data-resized='true']) {
   flex: 0 0 auto;
 }

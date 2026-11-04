@@ -288,7 +288,7 @@ export function StoryFormModal({
       return
     }
     if (!thumbnail) {
-      showAlert({ title: '입력 확인', content: '섬네일 이미지를 등록해 주세요.' })
+      showAlert({ title: '입력 확인', content: '썸네일 이미지를 등록해 주세요.' })
       return
     }
     if (isPinned && pinnedCountExcludingSelf >= IMPACT_STORY_PIN_MAX) {
@@ -347,7 +347,7 @@ export function StoryFormModal({
                 disabled={deleteLoading || confirmLoading}
                 onClick={() => setDeleteConfirmOpen(true)}
               >
-                게시글 삭제
+                삭제
               </CmsButton>
             ) : null}
             <CmsButton
