@@ -16,7 +16,7 @@ import {
 import { MainContentFieldControl } from '@/features/main-content/ui/field-control'
 import { CtaNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 const DONATION_DESCRIPTION =
   '후원 기업 목록은 [후원하기 관리] > [기업후원] > [후원사 목록 관리]에서 등록 및 관리된 항목이 동일하게 노출됩니다.'
@@ -58,6 +58,7 @@ export function DonationSectionCard({ data }: Props) {
       await saveMutation.mutateAsync(draft)
       setFieldErrors({})
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (error) {
       const mapped = readMainContentFieldErrors(error)
       if (mapped) {

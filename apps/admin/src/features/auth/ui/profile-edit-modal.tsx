@@ -32,6 +32,7 @@ import {
   CmsRadioGroup,
   ConfirmModal,
   ContentModal,
+  showWithdrawCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -181,7 +182,7 @@ function ProfileFieldWithAction({
       <span className="profile-edit-modal__value-with-action-text">{value}</span>
       <CmsButton
         variant="secondary"
-        size="h32"
+        size="medium"
         className="profile-edit-modal__field-action-btn"
         type="button"
         disabled={actionDisabled}
@@ -364,8 +365,12 @@ export function ProfileEditModal({ open, onCancel }: Props) {
     try {
       await withdrawCmsAdminSelf({ confirmationText: '탈퇴', currentPassword: password })
       setWithdrawModalOpen(false)
-      onCancel()
-      logout()
+      showWithdrawCompletedAlert({
+        onConfirm: () => {
+          onCancel()
+          logout()
+        },
+      })
     } catch (error) {
       showAlert({
         title: '안내',
@@ -581,7 +586,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
           <>
             <CmsButton
               variant="secondary"
-              size="large"
+              size="medium"
               type="button"
               onClick={() => setWithdrawModalOpen(false)}
               disabled={withdrawing}
@@ -590,7 +595,7 @@ export function ProfileEditModal({ open, onCancel }: Props) {
             </CmsButton>
             <CmsButton
               variant="delete"
-              size="large"
+              size="medium"
               type="button"
               loading={withdrawing}
               onClick={() => {

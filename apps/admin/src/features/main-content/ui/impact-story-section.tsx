@@ -18,7 +18,7 @@ import {
   MainContentRequiredLabel,
 } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, CmsSelect, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsInput, CmsSelect, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 type Props = {
   data: ImpactStorySection
@@ -65,6 +65,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       await saveMutation.mutateAsync(draft)
       setFieldErrors({})
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (error) {
       const mapped = readMainContentFieldErrors(error)
       if (mapped) {

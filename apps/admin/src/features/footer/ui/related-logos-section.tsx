@@ -23,7 +23,7 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -82,6 +82,7 @@ export function FooterRelatedLogosSection() {
           logoFile: values.logoFile,
         })
         setEditing(null)
+        showSaveCompletedAlert()
       } catch {
         showAlert({
           title: '저장 실패',
@@ -161,7 +162,7 @@ export function FooterRelatedLogosSection() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="h32"
+            size="medium"
             type="button"
             onClick={() => setEditing(record)} >
             수정

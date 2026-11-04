@@ -15,6 +15,7 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  showSaveCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -322,6 +323,7 @@ export function SiteInfoFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(toSaveInput({ ...draft, siteName, siteDescription }))
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (error) {
       if (error instanceof Error && error.message === 'SITE_NAME_REQUIRED') {
         setNameError('사이트명을 입력해 주세요.')
@@ -351,7 +353,7 @@ export function SiteInfoFormCard({ data }: Props) {
           {isEditing ? (
             <CmsButton
               variant="primary"
-              size="large"
+              size="medium"
               type="button"
               loading={saveMutation.isPending}
               disabled={saveMutation.isPending}
@@ -362,7 +364,7 @@ export function SiteInfoFormCard({ data }: Props) {
               저장
             </CmsButton>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

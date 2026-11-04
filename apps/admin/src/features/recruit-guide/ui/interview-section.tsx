@@ -16,7 +16,15 @@ import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-
 import { InterviewSelectModal } from '@/features/recruit-guide/ui/interview-select-modal'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 import { isTableSelectionClick } from '@/shared/lib/is-table-selection-click'
-import { CmsButton, ConfirmModal, NO_SELECTION_ALERT, useCmsAlert } from '@/shared/ui'
+import {
+  CmsButton,
+  ConfirmModal,
+  NO_SELECTION_ALERT,
+  showAddCompletedAlert,
+  showDeleteCompletedAlert,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -65,7 +73,7 @@ export function InterviewSectionCard({ items }: Props) {
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="h32"
+            size="medium"
             type="button"
             onClick={e => {
               e.stopPropagation()
@@ -84,8 +92,10 @@ export function InterviewSectionCard({ items }: Props) {
       try {
         if (picker?.type === 'add') {
           await addMutation.mutateAsync(input)
+          showAddCompletedAlert()
         } else if (picker?.type === 'edit') {
           await replaceMutation.mutateAsync({ id: picker.item.id, input })
+          showUpdateCompletedAlert()
         } else {
           return
         }
@@ -117,6 +127,7 @@ export function InterviewSectionCard({ items }: Props) {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (err) {
       showAlert(
         recruitGuideSaveFailureAlert(err, '직무 인터뷰 삭제에 실패했습니다. 다시 시도해 주세요.')

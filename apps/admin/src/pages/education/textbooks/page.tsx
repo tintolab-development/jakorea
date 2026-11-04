@@ -57,6 +57,9 @@ import {
   ConfirmModal,
   FilterTableLayout,
   NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -358,6 +361,7 @@ export function EducationTextbooksPage() {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -372,8 +376,10 @@ export function EducationTextbooksPage() {
       try {
         if ((formMode === 'edit' || formMode === 'view') && editing) {
           await updateMutation.mutateAsync({ ...values, id: editing.id })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
@@ -396,6 +402,7 @@ export function EducationTextbooksPage() {
       setEditing(null)
       setFormMode('create')
       setSelectedRowKeys(prev => prev.filter(k => k !== editing.id))
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',

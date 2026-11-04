@@ -3,7 +3,7 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryPhilosophy } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryPhilosophy } from '@/features/ja-history/api/hooks'
-import { useCmsAlert } from '@/shared/ui'
+import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { InlineText, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { PhilosophyCardNestedTable } from './philosophy-card-nested-table'
 
@@ -42,7 +42,10 @@ export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhiloso
             })),
           })
           .then(
-            () => setEditing(false),
+            () => {
+              setEditing(false)
+              showSaveCompletedAlert()
+            },
             error => {
               showAlert(
                 jaHistorySaveAlert(

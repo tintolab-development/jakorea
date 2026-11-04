@@ -49,7 +49,7 @@ import {
   NO_SELECTION_ALERT,
   showDeleteCompletedAlert,
   showRegisterCompletedAlert,
-  showUpdateCompletedAlert,
+  showSaveCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -208,7 +208,7 @@ export function ItemsPanel({ section, view }: ItemsPanelProps) {
       await updateMutation.mutateAsync(patches)
       setDrafts({})
       setIsEditing(false)
-      showUpdateCompletedAlert()
+      showSaveCompletedAlert()
     } catch (err) {
       if (err instanceof Error) {
         if (err.message === 'EMPTY_REQUIRED') {

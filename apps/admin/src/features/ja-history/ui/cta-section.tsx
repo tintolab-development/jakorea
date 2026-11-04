@@ -8,6 +8,7 @@ import {
   FileSelectField,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  showSaveCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 import { InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
@@ -99,7 +100,10 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
               : {}),
           })
           .then(
-            () => setEditing(false),
+            () => {
+              setEditing(false)
+              showSaveCompletedAlert()
+            },
             error => {
               showAlert(
                 jaHistorySaveAlert(error, 'JA 살펴보기 저장에 실패했습니다. 다시 시도해 주세요.')

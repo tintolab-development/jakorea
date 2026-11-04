@@ -14,7 +14,7 @@ import {
   validateEducationSection,
 } from '@/features/main-content/lib/validate'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, useCmsAlert } from '@/shared/ui'
+import { CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 type Props = {
   data: EducationSection
@@ -49,6 +49,7 @@ export function EducationSectionCard({ data }: Props) {
       await saveMutation.mutateAsync(draft)
       setFieldErrors({})
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (error) {
       const mapped = readMainContentFieldErrors(error)
       if (mapped) {

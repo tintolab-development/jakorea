@@ -20,7 +20,7 @@ import {
   type ProgramIntroImageSlot,
 } from '@/features/education-program-intro/lib/image-slots'
 import { educationProgramIntroMutationFailureAlert } from '@/features/education-program-intro/lib/mutation-failure-alert'
-import { CmsButton, CmsInput, CmsTextArea, FileSelectField, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsTextArea, FileSelectField, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './form-card.css'
 
@@ -397,6 +397,7 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
         sections: draft.sections,
       })
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (error) {
       showAlert(educationProgramIntroMutationFailureAlert(error))
     }
@@ -444,7 +445,7 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="medium"
                 type="button"
                 onClick={handleCancel}
                 disabled={saveMutation.isPending} >
@@ -452,7 +453,7 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="medium"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
@@ -462,7 +463,7 @@ export function ProgramIntroFormCard({ data, onEditingChange }: Props) {
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="medium" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

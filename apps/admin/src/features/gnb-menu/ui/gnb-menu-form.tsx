@@ -21,7 +21,7 @@ import {
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './gnb-menu-form.css'
 
@@ -162,6 +162,7 @@ export function GnbMenuFormCard({ data }: Props) {
       await saveMutation.mutateAsync(nextDoc)
       nameDraftRef.current = {}
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',

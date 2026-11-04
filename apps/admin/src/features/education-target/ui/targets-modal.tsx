@@ -11,7 +11,7 @@ import {
   useSaveEducationTargets,
 } from '@/features/education-target/api/hooks'
 import { IndexColorDot } from '@/features/education-target/ui/index-color-dot'
-import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, ContentModal, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import { CMS_TABLE_NO_COL_CLASS, TABLE_COLUMN_WIDTHS } from '@/shared/constants/table'
 
 import './targets-modal.css'
@@ -60,6 +60,7 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
       )
       onSaved?.()
       onCancel()
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -130,7 +131,7 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
         <>
           <CmsButton
             variant="secondary"
-            size="large"
+            size="medium"
             type="button"
             onClick={onCancel}
             disabled={saveMutation.isPending} >
@@ -138,7 +139,7 @@ export function EducationTargetsModal({ open, onCancel, onSaved }: Props) {
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="large"
+            size="medium"
             type="button"
             loading={saveMutation.isPending}
             disabled={saveMutation.isPending || rows.length === 0}

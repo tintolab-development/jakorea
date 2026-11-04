@@ -3,7 +3,7 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaKoreaBi } from '@/entities/ja-korea-bi/model/types'
 import { useSaveJaKoreaBi } from '@/features/ja-korea-bi/api/hooks'
-import { CmsButton, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './bi-form.css'
 
@@ -45,7 +45,7 @@ export function BiFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
-      showUpdateCompletedAlert()
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',

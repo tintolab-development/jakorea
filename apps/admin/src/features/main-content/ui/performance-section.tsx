@@ -17,7 +17,7 @@ import {
 import { MainContentFieldControl } from '@/features/main-content/ui/field-control'
 import { MetricsNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsInput, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 type Props = {
   data: PerformanceSection
@@ -55,6 +55,7 @@ export function PerformanceSectionCard({ data }: Props) {
       await saveMutation.mutateAsync(draft)
       setFieldErrors({})
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (error) {
       const mapped = readMainContentFieldErrors(error)
       if (mapped) {

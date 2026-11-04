@@ -10,7 +10,7 @@ import {
   isValidRegisterPassword,
   REGISTER_PASSWORD_CONDITION_MESSAGE,
 } from '@/features/auth/lib/validate-register-password'
-import { CmsButton, CmsInput, ContentModal, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, ContentModal, showChangeCompletedAlert, useCmsAlert } from '@/shared/ui'
 import './profile-password-change-modal.css'
 
 export type ProfilePasswordChangeModalProps = {
@@ -158,10 +158,7 @@ export function ProfilePasswordChangeModal({
       form.resetFields()
       onSuccess?.()
       onCancel()
-      showAlert({
-        title: '비밀번호 변경 완료',
-        content: '비밀번호가 변경되었습니다.',
-      })
+      showChangeCompletedAlert()
     } catch (error) {
       showAlert(resolvePasswordChangeFailureAlert(error))
     } finally {
