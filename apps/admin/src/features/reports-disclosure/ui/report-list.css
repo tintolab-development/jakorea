@@ -160,12 +160,10 @@
   margin: 0;
 }
 
-.rd-list__thumb-cell--a4 {
-  width: 120px;
-}
-
+/* 열 너비 100%. 고정 px는 td 패딩과 겹치면 썸네일이 한쪽으로 치우친다. */
+.rd-list__thumb-cell--a4,
 .rd-list__thumb-cell--wide {
-  width: 180px;
+  width: 100%;
 }
 
 /* 썸네일 이미지 래퍼 — 고정 치수, hover 시 grow/shrink 금지 */
@@ -243,4 +241,34 @@
 .rd-list__file-link:hover {
   color: var(--color-mint-01, #01a1af);
   opacity: 0.85;
+}
+
+/*
+ * FilterTableLayout 공통 td 패딩(8×12)이 썸네일 열 padding:0 보다 구체해서
+ * 이미지 박스가 열 중앙에서 오른쪽으로 밀린다. 같은 접두로 패딩을 다시 0으로 맞춘다.
+ */
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.rd-list__table.cms-data-table:not(.cms-data-table--fluid)
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.rd-list__thumb-col:not(.status-dropdown-cell__cell-status):not(
+    .cms-data-table__cell--h40-action
+  ):not(.cms-data-table__cell--h40-action-stack):not(.ant-table-selection-column),
+.filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.rd-list__table.cms-data-table:not(.cms-data-table--fluid)
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.rd-list__thumb-col.ant-table-cell-row-hover:not(.status-dropdown-cell__cell-status):not(
+    .cms-data-table__cell--h40-action
+  ):not(.cms-data-table__cell--h40-action-stack):not(.ant-table-selection-column) {
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  vertical-align: middle !important;
+  overflow: hidden !important;
+  text-align: center !important;
 }
