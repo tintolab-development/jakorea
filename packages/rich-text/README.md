@@ -23,6 +23,8 @@ import '@jakorea/rich-text/styles/editor.css'
 const { editor } = useRichTextEditor({ enabled: true, initialContent: '' })
 
 <RichTextEditor editor={editor} toolbar={<AppToolbar editor={editor} />} />
+{/* 기본 minHeight 284. 더 큰 고정 높이는 height */}
+<RichTextEditor editor={editor} height={369} toolbar={<AppToolbar editor={editor} />} />
 ```
 
 ## CSS 변수
@@ -31,7 +33,7 @@ const { editor } = useRichTextEditor({ enabled: true, initialContent: '' })
 
 - `--rt-border`, `--rt-background`, `--rt-toolbar-bg`
 - `--rt-content-color`, `--rt-link-color`
-- `--rt-min-height`, `--rt-body-padding`
+- `--rt-min-height` (기본 284px), `--rt-body-padding`
 - `--rt-toolbar-gap` (기본 8px), `--rt-toolbar-padding`, `--rt-toolbar-trigger-gap`
 
 앱별 노드(메일 `#{변수}` atom 등)는 `useRichTextEditor({ extraExtensions })` / `RichTextViewer extraExtensions`로 주입합니다.
