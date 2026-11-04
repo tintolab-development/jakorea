@@ -123,13 +123,18 @@ export function ImpactStorySectionCard({ data, options }: Props) {
   )
 
   const handleSave = useCallback(async () => {
+    if (
+      !draft.title.trim() ||
+      !draft.youtubeUrl.trim() ||
+      !draft.featuredContentId.trim() ||
+      (!pendingFile && !savedCoverUrl)
+    ) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       const story = storyQuery.data
       if (pendingFile) {
-        if (!draft.featuredContentId) {
-          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-          return
-        }
         if (!story || story.id !== draft.featuredContentId) {
           showAlert({
             title: '저장 실패',
@@ -163,7 +168,15 @@ export function ImpactStorySectionCard({ data, options }: Props) {
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '임팩트 스토리'))
     }
-  }, [draft, pendingFile, saveMutation, showAlert, storyQuery.data, updateStoryMutation])
+  }, [
+    draft,
+    pendingFile,
+    saveMutation,
+    savedCoverUrl,
+    showAlert,
+    storyQuery.data,
+    updateStoryMutation,
+  ])
 
   const mode = isEditing ? 'edit' : 'view'
   const titleText = isEditing ? draft.title : data.title
@@ -185,6 +198,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀 문구"
+            required
             view={<span className="main-content-preline">{titleText || '-'}</span>}
             edit={
               <CmsTextArea
@@ -202,6 +216,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="메인 영상 유튜브 링크"
+            required
             view={youtubeUrl || '-'}
             edit={
               <CmsInput
@@ -217,6 +232,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="대표 콘텐츠 설정"
+            required
             view={featuredTitle}
             edit={
               <CmsSelect
@@ -241,6 +257,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="대표 콘텐츠 이미지"
+            required
             view={
               <div className="main-content-cover">
                 <CoverPreview src={savedCoverUrl} alt="" loading={coverLoading} />

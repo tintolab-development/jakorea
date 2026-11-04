@@ -39,12 +39,13 @@ export function MetricsNestedTable({ metrics, mode, onChangeMetric }: MetricsNes
             <DetailInfoForm.Field
               key={metric.id}
               label={metric.label}
+              required
               labelWidth={220}
               view={<span className="main-content-metric-view">{formatMetricView(metric)}</span>}
               edit={
                 <div className="main-content-metric-edit">
                   <CmsInput
-                    inputSize="medium"
+                    inputSize="compact"
                     width="100%"
                     value={metric.value}
                     onChange={e => onChangeMetric(metric.id, { value: e.target.value })}
@@ -88,11 +89,12 @@ export function CtaNestedTable({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="버튼명 01"
+          required
           labelWidth={220}
           view={<span className="main-content-nested-form__text">{cta1.label || '-'}</span>}
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="compact"
               width="100%"
               value={cta1.label}
               onChange={e => onChangeCta1({ label: e.target.value })}
@@ -102,6 +104,7 @@ export function CtaNestedTable({
         />
         <DetailInfoForm.Field
           label="연결 링크 01"
+          required
           labelWidth={220}
           view={
             <span className="main-content-nested-form__text main-content-nested-form__text--url">
@@ -110,7 +113,7 @@ export function CtaNestedTable({
           }
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="compact"
               width="100%"
               value={cta1.linkUrl}
               onChange={e => onChangeCta1({ linkUrl: e.target.value })}
@@ -122,11 +125,12 @@ export function CtaNestedTable({
       <DetailInfoForm.Row type="double">
         <DetailInfoForm.Field
           label="버튼명 02"
+          required
           labelWidth={220}
           view={<span className="main-content-nested-form__text">{cta2.label || '-'}</span>}
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="compact"
               width="100%"
               value={cta2.label}
               onChange={e => onChangeCta2({ label: e.target.value })}
@@ -136,6 +140,7 @@ export function CtaNestedTable({
         />
         <DetailInfoForm.Field
           label="연결 링크 02"
+          required
           labelWidth={220}
           view={
             <span className="main-content-nested-form__text main-content-nested-form__text--url">
@@ -144,7 +149,7 @@ export function CtaNestedTable({
           }
           edit={
             <CmsInput
-              inputSize="medium"
+              inputSize="compact"
               width="100%"
               value={cta2.linkUrl}
               onChange={e => onChangeCta2({ linkUrl: e.target.value })}

@@ -6,7 +6,13 @@ import { useSavePerformanceSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MetricsNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsInput,
+  CmsTextArea,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 type Props = {
   data: PerformanceSection
@@ -32,6 +38,11 @@ export function PerformanceSectionCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    const metricsIncomplete = draft.metrics.some(metric => !metric.value.trim())
+    if (!draft.title.trim() || !draft.bottomText.trim() || metricsIncomplete) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
@@ -75,6 +86,7 @@ export function PerformanceSectionCard({ data }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀 문구"
+            required
             view={titleText || '-'}
             edit={
               <CmsInput
@@ -88,11 +100,17 @@ export function PerformanceSectionCard({ data }: Props) {
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="실적 및 성과" view={metricsTable} edit={metricsTable} />
+          <DetailInfoForm.Field
+            label="실적 및 성과"
+            required
+            view={metricsTable}
+            edit={metricsTable}
+          />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="하단 문구"
+            required
             view={<span className="main-content-preline">{bottomText || '-'}</span>}
             edit={
               <CmsTextArea

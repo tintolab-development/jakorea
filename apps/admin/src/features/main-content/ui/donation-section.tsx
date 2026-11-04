@@ -6,7 +6,12 @@ import { useSaveDonationSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { CtaNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsTextArea,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 const DONATION_DESCRIPTION =
   '후원 기업 목록은 [기업 후원 관리] > [후원사 관리]에서 등록 및 관리된 항목이 동일하게 노출됩니다.'
@@ -36,6 +41,16 @@ export function DonationSectionCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    if (
+      !draft.title.trim() ||
+      !draft.cta1.label.trim() ||
+      !draft.cta1.linkUrl.trim() ||
+      !draft.cta2.label.trim() ||
+      !draft.cta2.linkUrl.trim()
+    ) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
@@ -76,6 +91,7 @@ export function DonationSectionCard({ data }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀 문구"
+            required
             view={<span className="main-content-preline">{titleText || '-'}</span>}
             edit={
               <CmsTextArea
@@ -91,7 +107,7 @@ export function DonationSectionCard({ data }: Props) {
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field label="CTA 버튼" view={ctaTable} edit={ctaTable} />
+          <DetailInfoForm.Field required label="CTA 버튼" view={ctaTable} edit={ctaTable} />
         </DetailInfoForm.Row>
       </DetailInfoForm>
     </MainContentSectionCard>

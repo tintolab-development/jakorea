@@ -5,7 +5,12 @@ import type { EducationSection } from '@/entities/main-content/model/types'
 import { useSaveEducationSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsInput,
+  showUpdateCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 type Props = {
   data: EducationSection
@@ -28,6 +33,10 @@ export function EducationSectionCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
+    if (!draft.title.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
@@ -55,6 +64,7 @@ export function EducationSectionCard({ data }: Props) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀 문구"
+            required
             view={titleValue || '-'}
             edit={
               <CmsInput
