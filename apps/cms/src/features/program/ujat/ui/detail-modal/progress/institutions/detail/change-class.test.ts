@@ -189,8 +189,6 @@ describe('buildEducationClassRemappingRequest', () => {
         {
           fromGrade: '3',
           fromClassName: '2반',
-          toGrade: null,
-          toClassName: null,
           unassign: true,
         },
       ],
