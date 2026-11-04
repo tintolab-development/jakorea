@@ -53,8 +53,13 @@
   text-align: left;
 }
 
-.slotCard:hover:not(.slotCardActive) {
+.slotCard:hover:not(.slotCardActive):not(:disabled) {
   background: var(--color-element-hover);
+}
+
+.slotCard:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .slotCard:focus-visible {
