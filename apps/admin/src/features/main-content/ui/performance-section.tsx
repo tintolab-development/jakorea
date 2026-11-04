@@ -119,7 +119,7 @@ export function PerformanceSectionCard({ data }: Props) {
                   setFieldErrors(prev => ({ ...prev, title: '' }))
                   setDraft(prev => ({ ...prev, title: e.target.value }))
                 }}
-                placeholder="타이틀 텍스트를 입력하세요"
+                placeholder="타이틀 텍스트를 입력해 주세요"
               />
             }
           />
@@ -146,7 +146,7 @@ export function PerformanceSectionCard({ data }: Props) {
                     setFieldErrors(prev => ({ ...prev, bottomText: '' }))
                     setDraft(prev => ({ ...prev, bottomText: e.target.value }))
                   }}
-                  placeholder="하단 텍스트를 입력하세요"
+                  placeholder="하단 텍스트를 입력해 주세요"
                 />
               </MainContentFieldControl>
             }

@@ -47,7 +47,7 @@ type MetricsNestedTableProps = {
   fieldErrors?: MainContentFieldErrors
   onChangeMetric: (
     id: PerformanceMetric['id'],
-    patch: Partial<Pick<PerformanceMetric, 'value' | 'unit'>>,
+    patch: Partial<Pick<PerformanceMetric, 'value' | 'unit'>>
   ) => void
 }
 
@@ -62,7 +62,11 @@ export function MetricsNestedTable({
 
   return (
     <div
-      className="main-content-nested-table main-content-nested-table--metrics"
+      className={[
+        'main-content-nested-table',
+        'main-content-nested-table--metrics',
+        mode === 'view' ? 'main-content-nested-table--view' : 'main-content-nested-table--edit',
+      ].join(' ')}
       role="group"
       aria-label="실적 및 성과"
     >

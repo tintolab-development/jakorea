@@ -107,7 +107,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
                     setFieldErrors(prev => ({ ...prev, title: '' }))
                     setDraft(prev => ({ ...prev, title: e.target.value }))
                   }}
-                  placeholder="타이틀 텍스트를 입력하세요"
+                  placeholder="타이틀 텍스트를 입력해 주세요"
                 />
               </MainContentFieldControl>
             }
