@@ -63,7 +63,13 @@
 
 .education-targets-modal__table
   .education-targets-modal__name-col
-  .cms-input--small
+  .cms-input {
+  --cms-control-font: 14px;
+}
+
+.education-targets-modal__table
+  .education-targets-modal__name-col
+  .cms-input
   .cms-input__inner
   .ant-input {
   font-size: 14px !important;

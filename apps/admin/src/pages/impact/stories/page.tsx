@@ -659,7 +659,6 @@ export function ImpactStoriesPage() {
         onCancel={() => setCategoryOpen(false)}
         categories={categories}
         stories={allStories}
-        saving={saveCategoriesMutation.isPending}
         onSave={async next => {
           await saveCategoriesMutation.mutateAsync(next)
         }}

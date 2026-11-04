@@ -669,7 +669,7 @@ export function EducationTextbooksPage() {
               type="button"
               onClick={() => setTargetsOpen(true)}
             >
-              교육 대상 관리
+              교육 대상 설정
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               교재 등록
@@ -741,7 +741,6 @@ export function EducationTextbooksPage() {
         open={bulkDeleteOpen}
         title="교재 삭제"
         content={`선택한 교재 ${selectedRowKeys.length}건을 삭제하시겠습니까?`}
-        warningMessage="삭제된 항목은 복구할 수 없습니다."
         confirmText="삭제"
         cancelText="취소"
         danger

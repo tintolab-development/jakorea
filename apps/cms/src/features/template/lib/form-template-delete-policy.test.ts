@@ -34,6 +34,9 @@ describe('form-template-delete-policy', () => {
     expect(shouldOmitImmutableFormSchemaJson('application-participant-individual-copy-99')).toBe(
       true
     )
+    expect(shouldOmitImmutableFormSchemaJson('application-ujat-volunteer')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('application-ujat-volunteer-copy-1')).toBe(true)
+    expect(shouldOmitImmutableFormSchemaJson('application-ujat-school')).toBe(true)
     expect(shouldOmitImmutableFormSchemaJson('agreement-portrait')).toBe(false)
   })
 

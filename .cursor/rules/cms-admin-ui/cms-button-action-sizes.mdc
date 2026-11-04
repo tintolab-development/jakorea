@@ -1,5 +1,5 @@
 ---
-description: CMS·Admin 공통 — CmsButton 용도별 사이즈 (툴바 large · 모달 푸터 높이 40 · FileSelect medium, 폭은 min-width + 라벨)
+description: CMS·Admin 공통 — CmsButton 용도별 사이즈 (툴바·모달 푸터 large · FileSelect medium, 폭은 min-width + 라벨)
 globs:
   - apps/cms/src/**/*.{tsx,css}
   - apps/admin/src/**/*.{tsx,css}
@@ -12,15 +12,13 @@ alwaysApply: false
 
 | size | 높이 | min-width | padding | gap | radius | font |
 |------|------|-----------|---------|-----|--------|------|
-| **large** (h44) | **44** | **140** | 8×20 | 6 | 8 | 16/600 |
+| **large** (h44) | **44** | **140** | 8×20 (푸터 CSS는 6×16) | 6 | 8 | 16/600 |
 | medium (h40) | 40 | 120 | 6×16 | 4 | 8 | 14/600 |
-| small (h32) | 32 | 80 | 8×10 | 4 | 6 | 12/600 |
+| small (h32) | 32 | 100 | 8×10 | 4 | 6 | 12/600 |
 | h52 | 52 | 없음 | 10×24 | 8 | 10 | 18 |
 | h36 | 36 | 100 | 6×12 | 4 | 6 | 14 |
 
 여러 버튼 사이 간격은 래퍼 `gap` (목록 툴바·모달 푸터 **8px**).
-
-**모달 푸터 예외 (2026-11-04 지원 결정):** 모달 하단 버튼은 **높이 40**, 폭은 large와 같은 **min-width 140** 유지. 다른 large(목록 툴바·조회 160×44·페이지 버튼)는 44 그대로.
 
 ---
 
@@ -29,7 +27,7 @@ alwaysApply: false
 | 위치 | size | 예시 |
 |------|------|------|
 | **목록·카드 툴바** (등록 / 선택 삭제 / 취소 / 저장 / 수정) | **large** (Admin 툴바 CSS는 높이 40) | `table-header-actions--wrapper` · `admin-list-toolbar` |
-| **모달 푸터** (취소 / 등록 / 저장 / 삭제 / 확인) | **large 폭(min 140) · 높이 40** | `content-modal__footer-actions` · Confirm · Alert · 등록 모달 |
+| **모달 푸터** (취소 / 등록 / 저장 / 삭제 / 확인) | **large** | `content-modal__footer-actions` · Confirm · Alert · 등록 모달 |
 | **필터 조회** | medium (높이 40) | `admin-filter-area__search-button` · [filter-area-dimensions](./filter-area-dimensions.mdc) |
 | **FileSelectField** 「파일 추가」 | **medium** | `FileSelectField` 내부 고정 secondary medium |
 | **테이블 행 관리 버튼** | medium | 열 안 「수정」 |
@@ -37,8 +35,7 @@ alwaysApply: false
 
 ### 금지
 
-- 목록 툴바에 `size="medium"`만으로 높이 정책을 깨기 — 시안 large(또는 툴바 CSS 높이 40)
-- 모달 푸터를 `size="medium"`(120×40·14px)로 바꿔 폭·글자 정책을 깨기 — 푸터는 폭 min 140 + 높이 40
+- 모달 푸터·목록 툴바에 `size="medium"`만으로 높이 정책을 깨기 — 시안 large(또는 툴바 CSS 높이 40)
 - 화면별 `!important`로 버튼 **폭**을 px 고정
 - `width` prop, `cms-button--action` / `--footer-auto` / `--toolbar-auto` / `--no-label-ellipsis` / `--application-list-bulk`
 - FileSelect 버튼만 별도로 large 확대
@@ -52,7 +49,7 @@ alwaysApply: false
 
 | 영역 | 선택자 | 강제 |
 |------|--------|------|
-| 모달 푸터 | `.content-modal__footer-actions .cms-button.ant-btn.cms-button--h44` · `.teal-header-modal__footer …--h44` | **높이 40**·padding-block 0 (폭·글자는 h44 그대로) · 버튼 간 gap 8 |
+| 모달 푸터 | `.content-modal__footer-actions .cms-button…` | 높이 44 · padding 6×16 · gap 8 |
 | 목록 툴바 (Admin) | `.table-header-actions--wrapper .cms-button…` | 높이 40 |
 
 구현 path:
@@ -87,6 +84,4 @@ footer={
 - Admin `/design-system` · Buttons / List layout / Modals
 - CMS `/design-system` · Buttons
 
-> 메모(2026-11-04): large 기본 높이 44는 `packages/admin-ui/src/button/admin-button.css` `.cms-button--h44`. 모달 푸터 높이 40은 `packages/admin-ui/src/modal/content-modal.css`에서 반영됨(위 선택자). 화면별 CSS로 푸터 버튼 높이를 따로 박지 않는다.
-
-**Last updated:** 2026-11-04
+**Last updated:** 2026-10-31

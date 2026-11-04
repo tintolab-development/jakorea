@@ -28,13 +28,7 @@ import {
   PrincipleDragHandle,
   PrinciplesSortableTable,
 } from '@/features/operating-principles/ui/sortable-table'
-import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT,
-  CmsButton,
-  CmsTextArea,
-  showSaveCompletedAlert,
-  useCmsAlert,
-} from '@/shared/ui'
+import { CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -118,23 +112,14 @@ export function PrinciplesFormCard({ data }: Props) {
   }, [data.intro, rows])
 
   const handleSave = useCallback(async () => {
-    if (!draftIntro.topSubText.trim() || !draftIntro.mainText.trim()) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
-    const principles = rows.map(row => ({
-      id: row.id,
-      title: draftTexts[row.id]?.title ?? row.title,
-      subText: draftTexts[row.id]?.subText ?? row.subText,
-    }))
-    if (principles.some(row => !row.title.trim() || !row.subText.trim())) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
     try {
       await saveMutation.mutateAsync({
         intro: draftIntro,
-        principles,
+        principles: rows.map(row => ({
+          id: row.id,
+          title: draftTexts[row.id]?.title ?? row.title,
+          subText: draftTexts[row.id]?.subText ?? row.subText,
+        })),
       })
       setIsEditing(false)
       showSaveCompletedAlert()

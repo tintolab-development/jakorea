@@ -8,6 +8,10 @@
 
 import { useId, useRef, type ChangeEvent } from 'react'
 import './file-select-field.css'
+
+/** Figma Table/Common/Cell/File — 모달 td 이미지 추가 영역 */
+export const FILE_SELECT_IMAGE_CELL_CLASS = 'file-select-image-cell'
+export const FILE_SELECT_IMAGE_CELL_PREVIEW_CLASS = 'file-select-image-cell__preview'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { openFilePicker } from '@/shared/lib/open-file-picker'
 import {

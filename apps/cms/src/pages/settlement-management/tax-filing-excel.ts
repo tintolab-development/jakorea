@@ -3,7 +3,8 @@
  */
 
 import ExcelJS from '@zurmokeeper/exceljs'
-import { downloadExcel, generateFilename } from '@/shared/utils/file-download'
+import { downloadExcel } from '@/shared/utils/file-download'
+import { buildSettlementFormExcelFilename } from '@/features/settlement-management/api/account-payments/settlement-form-download'
 import type { AccountPaymentRow } from '@/features/settlement-management/model/account-payments-list'
 import {
   buildTaxFilingSheetLines,
@@ -189,5 +190,5 @@ export async function exportTaxFilingExcel(rows: AccountPaymentRow[]): Promise<v
   ]
 
   const buffer = await workbook.xlsx.writeBuffer()
-  await downloadExcel(buffer, generateFilename('세금신고', 'xlsx'))
+  await downloadExcel(buffer, buildSettlementFormExcelFilename('tax-report'))
 }

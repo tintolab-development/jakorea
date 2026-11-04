@@ -8,7 +8,8 @@ import type { ColumnsType } from 'antd/es/table'
 import type { CultureItem } from '@/entities/recruit-guide/model/types'
 import { useSaveRecruitCulture } from '@/features/recruit-guide/api/hooks'
 import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-failure-alert'
-import { CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -82,6 +83,16 @@ export function CultureSectionCard({ items }: Props) {
           version: item.version,
         }
       })
+      for (const row of payload) {
+        if (!row.title.trim()) {
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+          return
+        }
+        if (!row.description.trim()) {
+          showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+          return
+        }
+      }
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
       showSaveCompletedAlert()

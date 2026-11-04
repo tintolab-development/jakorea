@@ -13,6 +13,6 @@ export interface FooterPartnerResponse {
   displayOrder?: number;
   organizationName?: string;
   logo?: AssetResponse;
+  externalUrl?: string;
   version?: number;
-  externalUrl?: string | null;
 }

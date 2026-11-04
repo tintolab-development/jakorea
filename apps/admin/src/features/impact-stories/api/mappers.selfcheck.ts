@@ -50,7 +50,6 @@ const mapped = mapStoryResponseToDomain({
   published: true,
   pinned: false,
   categoryId: 3,
-  attachmentAssetIds: [77],
   attachments: [
     {
       assetId: 77,
@@ -76,7 +75,6 @@ const attachmentOnly = mapStoryResponseToDomain({
   id: 10,
   title: '첨부만',
   body: '<p>본문</p>',
-  attachmentAssetIds: [77, 88],
   attachments: [
     {
       assetId: 77,

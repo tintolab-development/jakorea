@@ -407,8 +407,8 @@ function PopupFormBody({
                   )
                 }
                 edit={
-                  <div className="popup-form-modal__image-row">
-                    <div className="popup-form-modal__preview">
+                  <div className="file-select-image-cell">
+                    <div className="file-select-image-cell__preview">
                       {imageUrl ? (
                         <img src={imageUrl} alt="팝업 미리보기" />
                       ) : (

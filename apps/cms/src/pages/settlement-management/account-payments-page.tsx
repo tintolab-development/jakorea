@@ -675,6 +675,31 @@ export default function AccountPaymentsPage() {
     ]
   )
 
+  const waitReadyFormExport = useCallback(
+    async (
+      kind: 'bulk-transfer' | 'tax-report',
+      rows: AccountPaymentRow[]
+    ): Promise<SettlementExportHistoryResponse | null> => {
+      const exportResult = await requestExportForKind(kind, rows)
+      const formLabel = kind === 'bulk-transfer' ? '대량이체' : '세금신고'
+      if (accountPaymentsRemote) {
+        if (exportResult == null) {
+          throw new Error(`${formLabel} 양식 발급 응답이 없습니다.`)
+        }
+        return assertSettlementServerExportReady(
+          await waitForSettlementExportDownload(exportResult),
+          `${formLabel} 서버 파일이 준비되지 않았습니다. 잠시 후 다시 발급해 주세요.`
+        )
+      }
+      const readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
+      if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
+        throw new Error(readyExport.failureReason || `${formLabel} 파일 생성에 실패했습니다.`)
+      }
+      return readyExport
+    },
+    [accountPaymentsRemote, requestExportForKind]
+  )
+
   const submitPreparedExport = useCallback(
     async (kind: 'bulk-transfer' | 'tax-report', body: SettlementExportRequest) => {
       if (kind === 'bulk-transfer') return bulkTransferExportMutation.mutateAsync(body)
@@ -700,21 +725,7 @@ export default function AccountPaymentsPage() {
     void (async () => {
       let readyExport: SettlementExportHistoryResponse | null = null
       try {
-        const exportResult = await requestExportForKind('bulk-transfer', rows)
-        if (accountPaymentsRemote) {
-          if (exportResult == null) {
-            throw new Error('대량이체 양식 발급 응답이 없습니다.')
-          }
-          readyExport = assertSettlementServerExportReady(
-            await waitForSettlementExportDownload(exportResult),
-            '대량이체 서버 파일이 준비되지 않았습니다. 잠시 후 다시 발급해 주세요.'
-          )
-        } else {
-          readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
-          if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
-            throw new Error(readyExport.failureReason || '대량이체 파일 생성에 실패했습니다.')
-          }
-        }
+        readyExport = await waitReadyFormExport('bulk-transfer', rows)
       } catch (error) {
         notifyExportError(error, '대량이체 파일 생성에 실패했습니다.')
         return
@@ -723,7 +734,7 @@ export default function AccountPaymentsPage() {
       setIssuedFormExport(readyExport)
       setBulkTransferPreviewOpen(true)
     })()
-  }, [accountPaymentsRemote, notifyExportError, requestExportForKind, resolveToolbarFormIssueRows])
+  }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
 
   const closeBulkTransferPreview = useCallback(() => {
     setBulkTransferPreviewOpen(false)
@@ -734,10 +745,40 @@ export default function AccountPaymentsPage() {
   const openTaxFilingPreview = useCallback(() => {
     const rows = resolveToolbarFormIssueRows('tax-report')
     if (rows === null) return
-    setIssuedFormPreviewRows(rows)
-    setIssuedFormExport(null)
-    setTaxFilingPreviewOpen(true)
-  }, [resolveToolbarFormIssueRows])
+    void (async () => {
+      let readyExport: SettlementExportHistoryResponse | null = null
+      try {
+        readyExport = await waitReadyFormExport('tax-report', rows)
+      } catch (error) {
+        notifyExportError(error, '세금신고 파일 생성에 실패했습니다.')
+        return
+      }
+      setIssuedFormPreviewRows(rows)
+      setIssuedFormExport(readyExport)
+      setTaxFilingPreviewOpen(true)
+    })()
+  }, [notifyExportError, resolveToolbarFormIssueRows, waitReadyFormExport])
+
+  const reissueIssuedFormExport = useCallback(
+    async (kind: 'bulk-transfer' | 'tax-report') => {
+      const rows = issuedFormPreviewRows
+      if (!rows?.length) return null
+      try {
+        const readyExport = await waitReadyFormExport(kind, rows)
+        setIssuedFormExport(readyExport)
+        return readyExport
+      } catch (error) {
+        notifyExportError(
+          error,
+          kind === 'bulk-transfer'
+            ? '대량이체 파일 생성에 실패했습니다.'
+            : '세금신고 파일 생성에 실패했습니다.'
+        )
+        return null
+      }
+    },
+    [issuedFormPreviewRows, notifyExportError, waitReadyFormExport]
+  )
 
   const closeTaxFilingPreview = useCallback(() => {
     setTaxFilingPreviewOpen(false)
@@ -996,21 +1037,7 @@ export default function AccountPaymentsPage() {
     void (async () => {
       let readyExport: SettlementExportHistoryResponse | null = null
       try {
-        const exportResult = await requestExportForKind('bulk-transfer', rowsForPreview)
-        if (accountPaymentsRemote) {
-          if (exportResult == null) {
-            throw new Error('대량이체 양식 발급 응답이 없습니다.')
-          }
-          readyExport = assertSettlementServerExportReady(
-            await waitForSettlementExportDownload(exportResult),
-            '대량이체 서버 파일이 준비되지 않았습니다. 잠시 후 다시 발급해 주세요.'
-          )
-        } else {
-          readyExport = exportResult ? await waitForSettlementExportDownload(exportResult) : null
-          if (readyExport?.pollingStatus === 'FAILED' || readyExport?.exportStatus === 'FAILED') {
-            throw new Error(readyExport.failureReason || '대량이체 파일 생성에 실패했습니다.')
-          }
-        }
+        readyExport = await waitReadyFormExport('bulk-transfer', rowsForPreview)
       } catch (error) {
         notifyExportError(error, '대량이체 파일 생성에 실패했습니다.')
         return
@@ -1021,9 +1048,8 @@ export default function AccountPaymentsPage() {
     })()
   }, [
     accountPaymentCompleteSuccessContext,
-    accountPaymentsRemote,
     notifyExportError,
-    requestExportForKind,
+    waitReadyFormExport,
   ])
 
   const filterLayoutClassName = 'account-payments-page__filter-table'
@@ -1247,6 +1273,7 @@ export default function AccountPaymentsPage() {
             onCancel={closeBulkTransferPreview}
             rows={issuedFormPreviewRows ?? []}
             serverExport={issuedFormExport}
+            onReissueExport={() => reissueIssuedFormExport('bulk-transfer')}
           />
         </Suspense>
       ) : null}
@@ -1268,6 +1295,8 @@ export default function AccountPaymentsPage() {
             open
             onCancel={closeTaxFilingPreview}
             rows={issuedFormPreviewRows ?? []}
+            serverExport={issuedFormExport}
+            onReissueExport={() => reissueIssuedFormExport('tax-report')}
           />
         </Suspense>
       ) : null}

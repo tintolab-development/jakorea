@@ -15,12 +15,7 @@ import {
   HTTP_LINK_URL_FORMAT_ALERT,
   isValidHttpLinkUrl,
 } from '@/shared/lib/http-link-url'
-import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT,
-  CmsButton,
-  showSaveCompletedAlert,
-  useCmsAlert,
-} from '@/shared/ui'
+import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './worldwide-form.css'
 
@@ -54,11 +49,6 @@ export function WorldwideFormCard({ data }: Props) {
   }, [data])
 
   const handleSave = useCallback(async () => {
-    const missingLink = draft.branches.find(branch => !branch.linkUrl.trim())
-    if (missingLink) {
-      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
-      return
-    }
     const invalidLink = draft.branches.find(branch => {
       const trimmed = branch.linkUrl.trim()
       return trimmed.length > 0 && !isValidHttpLinkUrl(trimmed)

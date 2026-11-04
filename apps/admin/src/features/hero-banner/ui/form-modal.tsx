@@ -239,8 +239,8 @@ function HeroBannerFormBody({ mode, initial, confirmLoading, onCancel, onSubmit 
             required
             view={null}
             edit={
-              <div className="hero-banner-form-modal__image-row">
-                <div className="hero-banner-form-modal__preview">
+              <div className="file-select-image-cell">
+                <div className="file-select-image-cell__preview">
                   {imageUrl ? <img src={imageUrl} alt="배너 미리보기" /> : <ThumbnailPlaceholder />}
                 </div>
                 <FileSelectField
