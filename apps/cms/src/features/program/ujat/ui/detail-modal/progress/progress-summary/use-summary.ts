@@ -134,7 +134,7 @@ export function useUjatEducationProgressSummary(programId?: string | null) {
   )
 
   const summaryQuery = useQuery({
-    queryKey: [...ujatQueryKeys.all, 'education-progress-summary', programId ?? ''] as const,
+    queryKey: ujatQueryKeys.educationProgressSummary(programId ?? ''),
     enabled: remoteEnabled,
     staleTime: 30_000,
     retry: false,

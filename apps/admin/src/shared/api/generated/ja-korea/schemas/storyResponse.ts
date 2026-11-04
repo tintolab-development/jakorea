@@ -19,8 +19,9 @@ export interface StoryResponse {
   body?: string;
   thumbnail?: AssetResponse | null;
   thumbnailOriginalName?: string | null;
-  attachment?: AssetResponse | null;
-  attachmentOriginalName?: string | null;
+  /** Ordered READY asset ids. Empty array means no attachments. Max 10 files, 20 MiB (20971520 bytes) each, 100 MiB (104857600 bytes) total. Allowed MIME: image/jpeg, image/png, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/x-hwp, application/vnd.hancom.hwp, application/haansofthwp, application/x-hwpx, application/vnd.hancom.hwpx, application/hwp+zip. */
+  attachmentAssetIds?: number[];
+  attachments?: AssetResponse[];
   authorName?: string;
   viewCount?: number;
   createdAt?: string;

@@ -8,15 +8,17 @@
 
 export interface ImpactUpdateRequest {
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 1000
      */
   title: string;
   /**
-     * @minLength 0
+     * http(s) YouTube URL
+     * @minLength 1
      * @maxLength 2048
+     * @pattern (?i)^https?://(www\.|m\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com)(/.*)?$
      */
-  youtubeUrl?: string;
-  featuredStoryId?: number;
+  youtubeUrl: string;
+  featuredStoryId: number;
   version: number;
 }

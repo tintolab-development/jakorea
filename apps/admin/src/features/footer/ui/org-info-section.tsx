@@ -16,6 +16,7 @@ import {
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
   PageContentLoading,
+  showSaveCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -23,7 +24,7 @@ import './org-info-section.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 로고 사이즈는 195 × 60px입니다.',
 ]
 
@@ -80,7 +81,7 @@ const OrgInlineField = memo(function OrgInlineField({
   return (
     <CmsInput
       className={fieldClass(isEditing)}
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={localValue}
       readOnly={!isEditing}
@@ -246,6 +247,7 @@ export function FooterOrgInfoSection() {
     try {
       await saveMutation.mutateAsync({ ...draft, ...text })
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
@@ -262,7 +264,7 @@ export function FooterOrgInfoSection() {
       if (!isAllowedImageFile(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }
@@ -300,7 +302,7 @@ export function FooterOrgInfoSection() {
 
   if (query.isLoading || !draft) {
     return (
-      <section className="footer-org-section footer-org-section--loading">
+      <section className="admin-list-card footer-org-section footer-org-section--loading">
         <PageContentLoading variant="default" />
       </section>
     )
@@ -308,7 +310,7 @@ export function FooterOrgInfoSection() {
 
   if (!data) {
     return (
-      <section className="footer-org-section page-content-error" role="alert">
+      <section className="admin-list-card footer-org-section page-content-error" role="alert">
         콘텐츠를 불러오지 못했습니다.
       </section>
     )
@@ -318,38 +320,40 @@ export function FooterOrgInfoSection() {
     <section
       className={
         isEditing
-          ? 'footer-org-section footer-org-section--editing'
-          : 'footer-org-section'
+          ? 'admin-list-card footer-org-section footer-org-section--editing'
+          : 'admin-list-card footer-org-section'
       }
     >
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper">
-          <span className="table-title">기관 정보</span>
+          <span className="table-title">■ 기관 정보</span>
         </div>
         <div className="table-header-actions--wrapper">
           {isEditing ? (
             <>
               <CmsButton
                 variant="secondary"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={handleCancel}
-                disabled={saveMutation.isPending} >
+                disabled={saveMutation.isPending}
+              >
                 취소
               </CmsButton>
               <CmsButton
                 variant="primary"
-                size="large"
+                size="h40"
                 type="button"
                 loading={saveMutation.isPending}
                 onClick={() => {
                   void handleSave()
-                }} >
+                }}
+              >
                 저장
               </CmsButton>
             </>
           ) : (
-            <CmsButton variant="primary" size="large" type="button" onClick={handleEdit}>
+            <CmsButton variant="primary" size="h40" type="button" onClick={handleEdit}>
               수정
             </CmsButton>
           )}

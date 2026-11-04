@@ -19,24 +19,17 @@ import {
   toNumericId,
   toRecruitPostingListParams,
 } from './mappers'
+import { resolveOrderedAttachmentAssetIds } from '@/shared/lib/resolve-attachment-asset-ids'
 import { uploadRecruitPostingAttachmentAsset } from './upload-posting-attachment'
 
 function careersApi() {
   return getJAKoreaHomepageAdminAPICareersSubset()
 }
 
-/** 첨부 0건 → undefined(제거). 새 File → upload. 기존 assetId → 유지. */
-async function resolveAttachmentAssetId(
+async function resolveAttachmentAssetIds(
   attachments: RecruitPostingAttachment[],
-): Promise<number | undefined> {
-  if (attachments.length === 0) return undefined
-  const withFile = attachments.find(att => att.file instanceof File)
-  if (withFile?.file) {
-    return uploadRecruitPostingAttachmentAsset(withFile.file)
-  }
-  const assetId = attachments[0]?.assetId
-  if (assetId != null && assetId > 0) return assetId
-  return undefined
+): Promise<number[]> {
+  return resolveOrderedAttachmentAssetIds(attachments, uploadRecruitPostingAttachmentAsset)
 }
 
 export async function listRecruitPostingsPageService(
@@ -65,9 +58,9 @@ export async function getRecruitPostingService(id: string): Promise<RecruitPosti
 export async function createRecruitPostingService(
   input: RecruitPostingCreateInput,
 ): Promise<RecruitPosting> {
-  const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
+  const attachmentAssetIds = await resolveAttachmentAssetIds(input.attachments)
   const created = await careersApi().create11(
-    toCareerPostingCreateRequest(input, attachmentAssetId),
+    toCareerPostingCreateRequest(input, attachmentAssetIds),
   )
   const mapped = mapCareerPostingAdminDetail(created)
   if (!mapped) throw new Error('채용공고를 등록하지 못했습니다.')
@@ -82,10 +75,10 @@ export async function updateRecruitPostingService(
   if (!current) {
     throw new Error('채용공고를 찾을 수 없습니다.')
   }
-  const attachmentAssetId = await resolveAttachmentAssetId(input.attachments)
+  const attachmentAssetIds = await resolveAttachmentAssetIds(input.attachments)
   const updated = await careersApi().update14(
     toNumericId(input.id),
-    toCareerPostingUpdateRequest(input, current.version, attachmentAssetId),
+    toCareerPostingUpdateRequest(input, current.version, attachmentAssetIds),
   )
   const mapped = mapCareerPostingAdminDetail(updated)
   if (!mapped) throw new Error('채용공고를 수정하지 못했습니다.')

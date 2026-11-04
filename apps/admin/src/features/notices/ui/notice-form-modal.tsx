@@ -12,6 +12,15 @@ import { DEFAULT_AUTHOR } from '@/features/notices/api/store'
 import { useNoticeWysiwygEditor } from '@/features/notices/hooks/use-notice-wysiwyg-editor'
 import { getRemoteRichTextBodyError, isEmptyAdminHtml, RichTextEditor } from '@/shared/rich-text'
 import {
+  ATTACHMENT_ACCEPT,
+  ATTACHMENT_MULTI_GENERAL_GUIDE_LINE,
+  ATTACHMENT_MULTI_TOTAL_MAX_BYTES,
+  withAttachmentFilenameGuide,
+  generalAttachmentMimeFromFile,
+  sumAttachmentBytes,
+  validateGeneralAttachmentBatch,
+} from '@/shared/lib/attachment-policy'
+import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsDatePicker,
@@ -22,27 +31,12 @@ import {
   CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   FileSelectField,
-  FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   useCmsAlert,
 } from '@/shared/ui'
 
 import './notice-form-modal.css'
 
-const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
-const MAX_BYTES = FILE_SELECT_IMAGE_MAX_TOTAL_BYTES
-
-/** 시안 가이드 (20MB · 특수문자) */
-const ATTACH_GUIDE = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-] as const
-
-function isAllowedImageFile(file: File): boolean {
-  const type = file.type.toLowerCase()
-  if (type === 'image/jpeg' || type === 'image/png') return true
-  const name = file.name.toLowerCase()
-  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
-}
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_MULTI_GENERAL_GUIDE_LINE])
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -54,10 +48,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 function mimeFromFile(file: File): NoticeAttachment['mime'] {
-  if (file.type === 'image/png' || file.name.toLowerCase().endsWith('.png')) {
-    return 'image/png'
-  }
-  return 'image/jpeg'
+  return generalAttachmentMimeFromFile(file)
 }
 
 export type NoticeFormValues = NoticeCreateInput
@@ -159,24 +150,19 @@ export function NoticeFormModal({
   const handleFilesChange = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return
+      const error = validateGeneralAttachmentBatch({
+        incoming: files,
+        existingCount: attachments.length,
+        existingBytes: sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 })),
+      })
+      if (error) {
+        showAlert({ title: '안내', content: error })
+        return
+      }
 
       const accepted: NoticeAttachment[] = []
       for (let i = 0; i < files.length; i++) {
         const file = files[i]!
-        if (!isAllowedImageFile(file)) {
-          showAlert({
-            title: '파일 형식',
-            content: 'JPG, PNG 형식만 등록할 수 있습니다.',
-          })
-          continue
-        }
-        if (file.size > MAX_BYTES) {
-          showAlert({
-            title: '파일 용량',
-            content: '파일은 최대 20MB까지 등록 가능합니다.',
-          })
-          continue
-        }
         try {
           const dataUrl = await readFileAsDataUrl(file)
           accepted.push({
@@ -197,7 +183,7 @@ export function NoticeFormModal({
         setAttachments(prev => [...prev, ...accepted])
       }
     },
-    [showAlert]
+    [attachments, showAlert]
   )
 
   const handleRemoveFile = useCallback((index: number) => {
@@ -271,7 +257,7 @@ export function NoticeFormModal({
               <CmsButton
                 className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="medium"
                 type="button"
                 disabled={deleteLoading || confirmLoading}
                 onClick={() => setDeleteConfirmOpen(true)}
@@ -281,7 +267,7 @@ export function NoticeFormModal({
             ) : null}
             <CmsButton
               variant="secondary"
-              size="large"
+              size="medium"
               type="button"
               disabled={confirmLoading || deleteLoading}
               onClick={onCancel}
@@ -290,7 +276,7 @@ export function NoticeFormModal({
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="large"
+              size="medium"
               type="button"
               loading={confirmLoading}
               onClick={handleSubmit}
@@ -307,8 +293,8 @@ export function NoticeFormModal({
               <div className="notice-form-modal__filter-field notice-form-modal__filter-field--datetime">
                 <FieldLabel required>게시일시</FieldLabel>
                 <CmsDatePicker
-                  inputSize="large"
-                  width={280}
+                  inputSize="medium"
+                  width={240}
                   showTime={{
                     format: 'HH:mm',
                     minuteStep: 30 as const,
@@ -355,7 +341,7 @@ export function NoticeFormModal({
           <div className="notice-form-modal__section">
             <FieldLabel required>제목</FieldLabel>
             <CmsInput
-              inputSize="large"
+              inputSize="medium"
               width="100%"
               value={title}
               onChange={e => setTitle(e.target.value)}
@@ -386,10 +372,11 @@ export function NoticeFormModal({
               <FileSelectField
                 className="notice-form-modal__file-field"
                 multiple
-                accept={IMAGE_ACCEPT}
+                accept={ATTACHMENT_ACCEPT.general}
                 buttonLabel="파일 추가"
                 fileNames={fileNames}
-                maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
+                currentTotalBytes={sumAttachmentBytes(attachments.map(att => att.file ?? { size: 0 }))}
+                maxTotalBytes={ATTACHMENT_MULTI_TOTAL_MAX_BYTES}
                 guideLines={ATTACH_GUIDE}
                 onFilesChange={files => {
                   void handleFilesChange(files)

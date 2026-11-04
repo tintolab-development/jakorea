@@ -131,6 +131,21 @@ export function useRegionAssignment(
       queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.directAssignmentCandidatesRoot(programId),
       }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.volunteerAssignmentProgressRoot(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.institutionAssignmentRoot(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.partnerAssignmentsRoot(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.assignmentSubmissionsRoot(programId),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ujatQueryKeys.educationProgressSummary(programId),
+      }),
     ])
   }, [programId, queryClient])
 
@@ -274,7 +289,7 @@ export function useRegionAssignment(
   })
 
   const runAutoAssign = useCallback(() => {
-    if (!remoteEnabled) return tableData
+    if (!remoteEnabled || autoAssignMutation.isPending) return tableData
     autoAssignMutation.mutate()
     return tableData
   }, [autoAssignMutation, remoteEnabled, tableData])

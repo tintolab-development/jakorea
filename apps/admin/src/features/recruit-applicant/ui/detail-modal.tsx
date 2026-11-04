@@ -23,6 +23,7 @@ import {
   CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
   HomepagePiiRevealAction,
+  PageContentLoading,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -190,7 +191,7 @@ export function RecruitApplicantDetailModal({
       <CmsButton
         className={CONTENT_MODAL_FOOTER_START_CLASS}
         variant="delete"
-        size="large"
+        size="medium"
         type="button"
         loading={deleteLoading}
         disabled={busy}
@@ -206,7 +207,7 @@ export function RecruitApplicantDetailModal({
       />
       <CmsButton
         variant="secondary"
-        size="large"
+        size="medium"
         type="button"
         disabled={busy}
         onClick={onCancel} >
@@ -214,7 +215,7 @@ export function RecruitApplicantDetailModal({
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="large"
+        size="medium"
         type="button"
         loading={confirmLoading}
         disabled={busy || isConfirmed || !data}
@@ -235,7 +236,7 @@ export function RecruitApplicantDetailModal({
         footer={footer}
       >
         {waiting ? (
-          <p className="recruit-applicant-detail-modal__loading">신청 정보를 불러오는 중입니다.</p>
+          <PageContentLoading />
         ) : data ? (
           <div className="recruit-applicant-detail-modal__scroll">
             <section

@@ -58,6 +58,9 @@ import {
   CmsSelect,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -260,8 +263,10 @@ export function CorporatePartnersPage() {
       try {
         if (formMode === 'edit' && editingPartner) {
           await updateMutation.mutateAsync({ id: editingPartner.id, patch: values })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditingPartner(null)
@@ -292,6 +297,7 @@ export function CorporatePartnersPage() {
       await removeMutation.mutateAsync(ids)
       setSelectedRowKeys([])
       setDeleteConfirmOpen(false)
+      showDeleteCompletedAlert()
     } catch (error) {
       const alert = corporatePartnerMutationFailureAlert(
         error,
@@ -372,7 +378,7 @@ export function CorporatePartnersPage() {
         render: (_value, record) => (
           <CmsButton
             variant="secondary"
-            size="h32"
+            size="medium"
             type="button"
             onClick={e => {
               e.stopPropagation()

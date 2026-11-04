@@ -12,6 +12,16 @@ import type {
 } from '@/entities/reports-disclosure/model/types'
 import { ThumbnailEmptyIcon } from '@/features/reports-disclosure/ui/thumbnail-empty-icon'
 import {
+  ATTACHMENT_ACCEPT,
+  ATTACHMENT_ERROR,
+  ATTACHMENT_PER_FILE_MAX_BYTES,
+  ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
+  ATTACHMENT_SINGLE_PDF_GUIDE_LINE,
+  validateSingleJpgPngFile,
+  withAttachmentFilenameGuide,
+  validateSinglePdfFile,
+} from '@/shared/lib/attachment-policy'
+import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
   CmsInput,
@@ -24,18 +34,13 @@ import {
 
 import './report-form-modal.css'
 
-const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
-const PDF_ACCEPT = '.pdf,application/pdf'
-const IMAGE_MAX_BYTES = 20 * 1024 * 1024
-const PDF_MAX_BYTES = 15 * 1024 * 1024
-
 const KIND_META = {
   annual: {
     label: '연차보고서',
     description:
       '연차보고서 제목 작성 및 썸네일 이미지와 첨부파일을 업로드 해주세요.\n썸네일 이미지는 A4 비율로 반영 및 노출됩니다.',
     thumbGuide: [
-      '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+      ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
       '- 권장 썸네일 사이즈는 328 × 463px입니다.',
     ],
     previewClass: 'rd-form-modal__preview--a4',
@@ -45,29 +50,14 @@ const KIND_META = {
     description:
       '회계감사 보고서 제목 작성 및 썸네일 이미지와 첨부파일을 업로드 해주세요.\n썸네일 이미지는 16:9 비율로 반영 및 노출됩니다.',
     thumbGuide: [
-      '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+      ATTACHMENT_SINGLE_JPG_PNG_GUIDE_LINE,
       '- 권장 썸네일 사이즈는 461 × 256px입니다.',
     ],
     previewClass: 'rd-form-modal__preview--wide',
   },
 } as const
 
-const ATTACH_GUIDE = [
-  '- 파일은 최대 15MB까지 pdf 형식만 등록 가능합니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
-]
-
-function isAllowedImageFile(file: File): boolean {
-  const type = file.type.toLowerCase()
-  if (type === 'image/jpeg' || type === 'image/png') return true
-  const name = file.name.toLowerCase()
-  return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png')
-}
-
-function isAllowedPdfFile(file: File): boolean {
-  if (file.type.toLowerCase() === 'application/pdf') return true
-  return file.name.toLowerCase().endsWith('.pdf')
-}
+const ATTACH_GUIDE = withAttachmentFilenameGuide([ATTACHMENT_SINGLE_PDF_GUIDE_LINE])
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -143,17 +133,11 @@ export function ReportFormModal({
   const handleThumbFiles = async (files: File[]) => {
     const file = files[0]
     if (!file) return
-    if (!isAllowedImageFile(file)) {
+    const error = validateSingleJpgPngFile(file)
+    if (error) {
       showAlert({
-        title: '파일 형식 오류',
-        content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
-      })
-      return
-    }
-    if (file.size > IMAGE_MAX_BYTES) {
-      showAlert({
-        title: '용량 초과',
-        content: '파일은 최대 20MB까지 등록 가능합니다.',
+        title: error === ATTACHMENT_ERROR.format ? '파일 형식 오류' : '용량 초과',
+        content: error,
       })
       return
     }
@@ -174,17 +158,11 @@ export function ReportFormModal({
   const handleAttachFiles = async (files: File[]) => {
     const file = files[0]
     if (!file) return
-    if (!isAllowedPdfFile(file)) {
+    const error = validateSinglePdfFile(file)
+    if (error) {
       showAlert({
-        title: '파일 형식 오류',
-        content: 'PDF 형식의 파일만 등록할 수 있습니다.',
-      })
-      return
-    }
-    if (file.size > PDF_MAX_BYTES) {
-      showAlert({
-        title: '용량 초과',
-        content: '파일은 최대 15MB까지 등록 가능합니다.',
+        title: error === ATTACHMENT_ERROR.format ? '파일 형식 오류' : '용량 초과',
+        content: error,
       })
       return
     }
@@ -336,10 +314,10 @@ export function ReportFormModal({
                   <FileSelectField
                     className="rd-form-modal__file-field"
                     multiple={false}
-                    accept={IMAGE_ACCEPT}
+                    accept={ATTACHMENT_ACCEPT.jpgPng}
                     buttonLabel="파일 추가"
                     fileNames={thumbnailFileName ? [thumbnailFileName] : []}
-                    maxTotalBytes={IMAGE_MAX_BYTES}
+                    maxTotalBytes={ATTACHMENT_PER_FILE_MAX_BYTES}
                     guideLines={meta.thumbGuide}
                     onFilesChange={files => {
                       void handleThumbFiles(files)
@@ -365,9 +343,10 @@ export function ReportFormModal({
                   <FileSelectField
                     className="rd-form-modal__file-field"
                     multiple={false}
-                    accept={PDF_ACCEPT}
+                    accept={ATTACHMENT_ACCEPT.pdf}
                     buttonLabel="파일 추가"
                     fileNames={attachmentFileName ? [attachmentFileName] : []}
+                    maxTotalBytes={ATTACHMENT_PER_FILE_MAX_BYTES}
                     guideLines={ATTACH_GUIDE}
                     onFilesChange={files => {
                       void handleAttachFiles(files)

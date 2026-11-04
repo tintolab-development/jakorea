@@ -27,17 +27,25 @@
 .hero-banner-form-modal__preview {
   width: 72px;
   height: 72px;
+  aspect-ratio: 1 / 1;
   flex-shrink: 0;
   display: flex;
+  overflow: hidden;
+  border: 1px solid var(--Border-default, #e0e0e0);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.hero-banner-form-modal__preview:not(:has(img)) {
+  border: none;
   overflow: visible;
 }
 
 .hero-banner-form-modal__preview img {
-  width: 72px;
-  height: 72px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  border: 1px solid var(--Border-default, #e0e0e0);
-  border-radius: 8px;
+  display: block;
   box-sizing: border-box;
 }
 

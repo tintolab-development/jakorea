@@ -60,6 +60,8 @@ import {
   CmsSelect,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  showChangeCompletedAlert,
+  showDeleteCompletedAlert,
   useCmsAlert,
   FilterTableLayout,
 } from '@/shared/ui'
@@ -334,6 +336,7 @@ export function RecruitApplicantsPage() {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -398,6 +401,7 @@ export function RecruitApplicantsPage() {
     if (!detailRow) return
     try {
       await confirmMutation.mutateAsync([{ id: detailRow.id, version: detailRow.version }])
+      showChangeCompletedAlert()
     } catch {
       showAlert({
         title: '확인 실패',
@@ -412,6 +416,7 @@ export function RecruitApplicantsPage() {
       await removeMutation.mutateAsync([detailRow.id])
       setSelectedRowKeys(prev => prev.filter(key => key !== detailRow.id))
       closeDetail()
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -426,6 +431,7 @@ export function RecruitApplicantsPage() {
       await confirmMutation.mutateAsync(selected.map(row => ({ id: row.id, version: row.version })))
       setSelectedRowKeys([])
       setBulkConfirmOpen(false)
+      showChangeCompletedAlert()
     } catch {
       showAlert({
         title: '확인 실패',

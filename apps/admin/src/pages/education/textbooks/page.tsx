@@ -57,6 +57,9 @@ import {
   ConfirmModal,
   FilterTableLayout,
   NO_SELECTION_ALERT,
+  showDeleteCompletedAlert,
+  showRegisterCompletedAlert,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -358,6 +361,7 @@ export function EducationTextbooksPage() {
       await removeMutation.mutateAsync(selectedRowKeys.map(String))
       setSelectedRowKeys([])
       setBulkDeleteOpen(false)
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -372,8 +376,10 @@ export function EducationTextbooksPage() {
       try {
         if ((formMode === 'edit' || formMode === 'view') && editing) {
           await updateMutation.mutateAsync({ ...values, id: editing.id })
+          showUpdateCompletedAlert()
         } else {
           await createMutation.mutateAsync(values)
+          showRegisterCompletedAlert()
         }
         setFormOpen(false)
         setEditing(null)
@@ -396,6 +402,7 @@ export function EducationTextbooksPage() {
       setEditing(null)
       setFormMode('create')
       setSelectedRowKeys(prev => prev.filter(k => k !== editing.id))
+      showDeleteCompletedAlert()
     } catch {
       showAlert({
         title: '삭제 실패',
@@ -662,7 +669,7 @@ export function EducationTextbooksPage() {
               type="button"
               onClick={() => setTargetsOpen(true)}
             >
-              교육 대상 관리
+              교육 대상 설정
             </CmsButton>
             <CmsButton variant="primary" size="h40" type="button" onClick={openCreate}>
               교재 등록
@@ -734,7 +741,6 @@ export function EducationTextbooksPage() {
         open={bulkDeleteOpen}
         title="교재 삭제"
         content={`선택한 교재 ${selectedRowKeys.length}건을 삭제하시겠습니까?`}
-        warningMessage="삭제된 항목은 복구할 수 없습니다."
         confirmText="삭제"
         cancelText="취소"
         danger

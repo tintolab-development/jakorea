@@ -132,11 +132,23 @@ export function toFooterOrganizationUpdateRequest(
   }
 }
 
+type FooterPartnerLinkWire = FooterPartnerResponse & {
+  externalUrl?: string | null
+  linkUrl?: string | null
+}
+
+function readPartnerLinkUrl(row: FooterPartnerResponse): string {
+  const wire = row as FooterPartnerLinkWire
+  const raw = wire.externalUrl ?? wire.linkUrl
+  return typeof raw === 'string' ? raw.trim() : ''
+}
+
 export function mapFooterPartnerToDomain(row: FooterPartnerResponse): FooterRelatedLogo | null {
   const partnerId = row.partnerId
   if (partnerId == null) return null
   const name = row.organizationName?.trim() ?? ''
   const logoUrl = row.logo?.publicUrl ?? ''
+  const linkUrl = readPartnerLinkUrl(row)
   const hasContent = Boolean(name || logoUrl)
   return {
     id: footerPartnerIdToFeId(partnerId),
@@ -145,6 +157,7 @@ export function mapFooterPartnerToDomain(row: FooterPartnerResponse): FooterRela
     isActive: Boolean(row.enabled),
     hasContent,
     name,
+    linkUrl,
     logoUrl,
     logoFileName: row.logo?.originalName,
     logoAssetId: row.logo?.assetId,
@@ -164,13 +177,15 @@ export function mapFooterPartnersToDomain(
 export function toFooterPartnerUpdateRequest(
   row: FooterRelatedLogo,
   logoAssetId: number | undefined,
-): FooterPartnerUpdateRequest {
+): FooterPartnerUpdateRequest & { externalUrl?: string } {
   const name = row.name.trim()
+  const linkUrl = row.linkUrl.trim()
   return {
     enabled: row.isActive,
     organizationName: name.length > 0 ? name : undefined,
     logoAssetId,
     version: row.version,
+    ...(linkUrl.length > 0 ? { externalUrl: linkUrl } : {}),
   }
 }
 

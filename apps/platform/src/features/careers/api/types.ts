@@ -101,8 +101,7 @@ export type PublicCareerPostingDetail = {
   recruitEnd?: string | null
   /** HTML. 없으면 "" */
   body?: string
-  /** 0 또는 1. null 이면 첨부 없음 */
-  attachment?: PublicCareerPostingAsset | null
+  attachments?: PublicCareerPostingAsset[]
   /** GET 성공 시 증가한 뒤의 값. 항상 숫자 */
   viewCount?: number
   /** CareerPostingPublicDetail.buttonLabel. JSON null → 화면 ''. 비면 기본 문구 */

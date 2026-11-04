@@ -9,7 +9,7 @@ import type { HowItem, HowItemId } from '@/entities/talent-donation-intro/model/
 import { useSaveHowItems } from '@/features/talent-donation-intro/api/hooks'
 import { talentDonationIntroSaveFailureAlert } from '@/features/talent-donation-intro/lib/save-failure-alert'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -83,6 +83,7 @@ export function HowSectionCard({ items }: Props) {
       }
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         talentDonationIntroSaveFailureAlert(

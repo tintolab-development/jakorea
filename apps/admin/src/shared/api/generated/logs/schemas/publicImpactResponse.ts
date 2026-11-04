@@ -8,7 +8,7 @@
 import type { PublicFeaturedStory } from './publicFeaturedStory';
 
 export interface PublicImpactResponse {
-  title?: string;
-  youtubeUrl?: string;
-  featuredStory?: PublicFeaturedStory;
+  title: string;
+  youtubeUrl: string;
+  featuredStory: PublicFeaturedStory;
 }

@@ -9,7 +9,7 @@ import type { MetricItem, MetricItemId } from '@/entities/corporate-guide/model/
 import { useSaveMetrics } from '@/features/corporate-guide/api/hooks'
 import { corporateGuideSaveFailureAlert } from '@/features/corporate-guide/lib/save-failure-alert'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -84,6 +84,7 @@ export function MetricsSectionCard({ items }: Props) {
       }
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         corporateGuideSaveFailureAlert(err, '핵심 지표 저장에 실패했습니다. 다시 시도해 주세요.')

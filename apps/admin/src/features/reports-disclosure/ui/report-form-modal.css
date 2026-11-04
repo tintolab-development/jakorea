@@ -93,8 +93,10 @@
   min-width: 0;
 }
 
-/* 미선택: 86×86 empty 슬롯 (시안) */
 .rd-form-modal__preview {
+  width: 86px;
+  height: 86px;
+  aspect-ratio: 1 / 1;
   flex: 0 0 auto;
   flex-shrink: 0;
   display: flex;
@@ -102,37 +104,16 @@
   justify-content: center;
   overflow: hidden;
   box-sizing: border-box;
-  background: var(--default-WT, #fff);
+  background: var(--color-bg-secondary, #f7f7f7);
   border: 1px solid var(--table-line, #e0e0e0);
   border-radius: 8px;
 }
 
 .rd-form-modal__preview--empty {
-  width: 86px;
-  height: 86px;
-  aspect-ratio: 1 / 1;
-  border: none; /* empty SVG 자체 stroke/bg */
+  border: none;
   background: transparent;
   border-radius: 0;
   overflow: visible;
-}
-
-/* 선택 후 연차 A4 (17:24) */
-.rd-form-modal__preview--a4:not(.rd-form-modal__preview--empty) {
-  width: 86px;
-  height: calc(86px * 24 / 17);
-  aspect-ratio: 17 / 24;
-  border-radius: 4px;
-  background: var(--color-bg-secondary, #f7f7f7);
-}
-
-/* 선택 후 회계감사 16:9 */
-.rd-form-modal__preview--wide:not(.rd-form-modal__preview--empty) {
-  width: 122px;
-  height: calc(122px * 9 / 16);
-  aspect-ratio: 16 / 9;
-  border-radius: 4px;
-  background: var(--color-bg-secondary, #f7f7f7);
 }
 
 .rd-form-modal__preview img {

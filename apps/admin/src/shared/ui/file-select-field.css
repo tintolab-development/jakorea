@@ -85,17 +85,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  aspect-ratio: 1 / 1;
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
   flex-shrink: 0;
-}
-
-.file-select-field__remove:hover svg {
-  opacity: 1;
 }
 
 .file-select-field__remove:focus {

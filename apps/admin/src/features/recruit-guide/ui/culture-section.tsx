@@ -9,7 +9,7 @@ import type { CultureItem } from '@/entities/recruit-guide/model/types'
 import { useSaveRecruitCulture } from '@/features/recruit-guide/api/hooks'
 import { recruitGuideSaveFailureAlert } from '@/features/recruit-guide/lib/save-failure-alert'
 import {
-  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+  REQUIRED_FIELDS_INCOMPLETE_ALERT, CmsButton, CmsTextArea, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -95,6 +95,7 @@ export function CultureSectionCard({ items }: Props) {
       }
       await saveMutation.mutateAsync(payload)
       setIsEditing(false)
+      showSaveCompletedAlert()
     } catch (err) {
       showAlert(
         recruitGuideSaveFailureAlert(err, '조직문화 저장에 실패했습니다. 다시 시도해 주세요.')

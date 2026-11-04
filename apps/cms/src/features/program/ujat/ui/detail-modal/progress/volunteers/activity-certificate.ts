@@ -17,13 +17,19 @@ import type {
   UjatVolunteerAssignmentProgressRow,
 } from './detail/assignment-types'
 
-/** 인증서 판정·표기용 — 활동 포기(withdrawn) 학급 행 제외 */
+/** 인증서 판정 — matrix cell.assignmentStatus=ASSIGNED 학급만. dash·포기·재배정 필요 제외 */
 export function certificateJudgmentRows(
   bundle: UjatVolunteerAssignmentProgressBundle
 ): UjatVolunteerAssignmentProgressRow[] {
   return sortVolunteerAssignmentRows(bundle.rows).filter(
-    row => row.classDisplay.kind !== 'withdrawn'
+    row => row.classDisplay.kind === 'class' && row.canAssignAttendanceManager !== false
   )
+}
+
+export function hasUjatCertificateAssignment(
+  bundle: UjatVolunteerAssignmentProgressBundle
+): boolean {
+  return certificateJudgmentRows(bundle).length > 0
 }
 
 export function resolveAssignedInstitutionNamesFromBundle(

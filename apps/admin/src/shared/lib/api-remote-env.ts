@@ -67,6 +67,18 @@ export function getApiBaseUrlForPath(requestUrl: string): string {
   if (path === '/api/admin/auth' || path.startsWith('/api/admin/auth/')) {
     return cmsOrigin
   }
+  if (path === '/api/admin/me' || path.startsWith('/api/admin/me/')) {
+    return cmsOrigin
+  }
+  if (
+    path === '/api/auth/verification-sessions' ||
+    path.startsWith('/api/auth/verification-sessions/')
+  ) {
+    return cmsOrigin
+  }
+  if (path === '/api/public/terms-documents' || path.startsWith('/api/public/terms-documents/')) {
+    return cmsOrigin
+  }
 
   if (path === '/api' || path.startsWith('/api/')) {
     return getHomepageApiBaseUrl() || cmsOrigin

@@ -137,7 +137,6 @@ const COL = {
   ip: 140,
 } as const
 
-
 export function AdminAccountLogPage() {
   const { showAlert } = useCmsAlert()
 
@@ -301,7 +300,7 @@ export function AdminAccountLogPage() {
               />
             </div>
             <div className="admin-filter-area__field admin-filter-area__field--date-range">
-              <span className="admin-filter-area__label">처리일시</span>
+              <span className="admin-filter-area__label">처리일</span>
               <CmsDateRangePicker
                 inputSize="medium"
                 width={FILTER_CONTROL_WIDE_FIELD_WIDTH_PX}
@@ -330,7 +329,7 @@ export function AdminAccountLogPage() {
         }
         title="관리자 계정 처리 이력"
         description={`총 ${total.toLocaleString('ko-KR')}건`}
-        actions={<ExcelButton onClick={handleExcel} disabled={total === 0} />}
+        actions={<ExcelButton onClick={handleExcel} empty={total === 0} />}
       >
         <CmsDataTable<AdminAccountLog>
           className="cms-data-table"

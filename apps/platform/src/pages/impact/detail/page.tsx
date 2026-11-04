@@ -153,17 +153,11 @@ export function ImpactStoryDetailPage() {
   }
 
   const body = detail.body?.trim() ?? ''
-  const attachmentName = detail.attachmentOriginalName?.trim()
-  const attachmentUrl = detail.attachmentUrl?.trim()
-  const attachmentFiles = attachmentUrl
-    ? [
-        {
-          id: detail.id,
-          fileName: attachmentName || '첨부파일',
-          href: attachmentUrl,
-        },
-      ]
-    : []
+  const attachmentFiles = detail.attachments.map(file => ({
+    id: file.id,
+    fileName: file.name,
+    href: file.fileUrl,
+  }))
 
   return (
     <section className={styles.page}>
@@ -204,10 +198,6 @@ export function ImpactStoryDetailPage() {
                 triggerLabel={`${attachmentFiles.length}개의 첨부파일`}
                 className={styles.attachmentDropdown}
               />
-            ) : attachmentName ? (
-              <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.attachmentName}>
-                {attachmentName}
-              </PFText>
             ) : null}
           </header>
 

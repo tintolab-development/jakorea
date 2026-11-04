@@ -30,7 +30,7 @@ export function HomepagePiiRevealAction({
     <>
       <CmsButton
         variant="secondary"
-        size="large"
+        size="medium"
         type="button"
         loading={loading}
         disabled={disabled || revealed}

@@ -332,14 +332,14 @@ function TextbookFormBody({
       if (!isAllowedImageFile(file)) {
         showAlert({
           title: '파일 형식',
-          content: 'JPG, PNG 형식만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }
       if (file.size > MAX_BYTES) {
         showAlert({
           title: '파일 용량',
-          content: '파일은 최대 20MB까지 등록 가능합니다.',
+          content: '20MB를 초과한 파일은 등록할 수 없습니다.',
         })
         return
       }
@@ -526,11 +526,7 @@ function TextbookFormBody({
         onCancel={onCancel}
         title={modalTitle}
         size="large"
-        className={
-          isCreate
-            ? 'education-textbook-form-modal education-textbook-form-modal--create'
-            : 'education-textbook-form-modal'
-        }
+        className="education-textbook-form-modal"
         footer={footer}
       >
         {/*
@@ -836,7 +832,6 @@ function TextbookFormBody({
                     <div className="education-textbook-form-modal__rt-edit">
                       <RichTextEditor
                         editor={editor}
-                        minHeight={isCreate ? 36 : 200}
                         allowInlineMedia
                         allowRawHtmlBlock
                         resolveImageSrc={resolveImageSrc}
@@ -858,7 +853,6 @@ function TextbookFormBody({
         open={deleteConfirmOpen}
         title="교재 삭제"
         content="선택한 교재를 삭제하시겠습니까?"
-        warningMessage="삭제된 항목은 복구할 수 없습니다."
         confirmText="삭제"
         cancelText="취소"
         danger

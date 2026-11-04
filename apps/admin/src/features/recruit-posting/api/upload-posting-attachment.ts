@@ -5,6 +5,7 @@
 
 import { getJAKoreaHomepageAdminAPICareersSubset } from '@/shared/api/generated/careers/careers-api'
 import type { ConfirmRequest } from '@/shared/api/generated/careers/schemas/confirmRequest'
+import { contentTypeForAttachmentUpload, isGeneralAttachmentFile } from '@/shared/lib/attachment-policy'
 import { resolvePresignedUploadUrl } from '@/shared/lib/presigned-upload-url'
 
 type PrepareRuntime = {
@@ -19,20 +20,10 @@ type PrepareRuntime = {
 type PostingConfirmBody = Pick<ConfirmRequest, 'version'>
 
 function resolveContentType(file: File): string {
-  if (file.type && file.type !== 'application/octet-stream') return file.type
-  const name = file.name.toLowerCase()
-  if (name.endsWith('.png')) return 'image/png'
-  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg'
-  if (name.endsWith('.pdf')) return 'application/pdf'
-  if (name.endsWith('.doc')) return 'application/msword'
-  if (name.endsWith('.docx')) {
-    return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  if (!isGeneralAttachmentFile(file) && !(file.type && file.type !== 'application/octet-stream')) {
+    throw new Error('등록할 수 없는 파일 형식입니다.')
   }
-  if (name.endsWith('.xls')) return 'application/vnd.ms-excel'
-  if (name.endsWith('.xlsx')) {
-    return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  }
-  throw new Error('지원하지 않는 첨부 파일 형식입니다.')
+  return contentTypeForAttachmentUpload(file)
 }
 
 export async function uploadRecruitPostingAttachmentAsset(file: File): Promise<number> {

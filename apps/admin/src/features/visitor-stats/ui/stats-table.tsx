@@ -32,6 +32,7 @@ export function VisitorStatsTable({ unit, rows, loading }: Props) {
         title: PERIOD_COL_TITLE[unit],
         dataIndex: 'label',
         key: 'label',
+        width: '50%',
         align: 'center',
         ellipsis: true,
       },
@@ -39,6 +40,7 @@ export function VisitorStatsTable({ unit, rows, loading }: Props) {
         title: '방문자 수',
         dataIndex: 'visitors',
         key: 'visitors',
+        width: '50%',
         align: 'center',
         render: (value: number) => formatVisitorCount(value),
       },
@@ -47,15 +49,14 @@ export function VisitorStatsTable({ unit, rows, loading }: Props) {
   )
 
   return (
-    <div className="cms-data-table visitor-stats-table">
-      <CmsDataTable<VisitorStatsRow>
-        rowKey="id"
-        columns={columns}
-        dataSource={rows}
-        loading={loading}
-        pagination={false}
-        tableLayout="fixed"
-      />
-    </div>
+    <CmsDataTable<VisitorStatsRow>
+      className="cms-data-table cms-data-table--skip-auto-no-col visitor-stats-table"
+      rowKey="id"
+      columns={columns}
+      dataSource={rows}
+      loading={loading}
+      pagination={false}
+      tableLayout="fixed"
+    />
   )
 }

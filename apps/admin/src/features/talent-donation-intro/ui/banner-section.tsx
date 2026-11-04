@@ -12,7 +12,7 @@ import type {
 import { useSaveBanner } from '@/features/talent-donation-intro/api/hooks'
 import { talentDonationIntroSaveFailureAlert } from '@/features/talent-donation-intro/lib/save-failure-alert'
 import { BannerFormModal } from '@/features/talent-donation-intro/ui/banner-form-modal'
-import { CmsButton, useCmsAlert } from '@/shared/ui'
+import { CmsButton, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -76,6 +76,7 @@ export function BannerSectionCard({ banner }: Props) {
       try {
         await saveMutation.mutateAsync(values)
         setModalOpen(false)
+        showSaveCompletedAlert()
       } catch (err) {
         showAlert(
           talentDonationIntroSaveFailureAlert(
