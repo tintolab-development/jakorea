@@ -12,6 +12,7 @@ import {
   CmsTextArea,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  showUpdateCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -157,6 +158,7 @@ export function ImpactStorySectionCard({ data, options }: Props) {
       setPendingFile(null)
       setPendingPreview('')
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '임팩트 스토리'))
     }

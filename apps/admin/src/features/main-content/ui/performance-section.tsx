@@ -6,7 +6,7 @@ import { useSavePerformanceSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MetricsNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsInput, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 type Props = {
   data: PerformanceSection
@@ -35,6 +35,7 @@ export function PerformanceSectionCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '실적 및 성과'))
     }

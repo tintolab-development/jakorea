@@ -5,7 +5,7 @@ import type { EducationSection } from '@/entities/main-content/model/types'
 import { useSaveEducationSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsInput, useCmsAlert } from '@/shared/ui'
+import { CmsInput, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 type Props = {
   data: EducationSection
@@ -31,6 +31,7 @@ export function EducationSectionCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '교육 프로그램'))
     }

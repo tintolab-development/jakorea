@@ -6,7 +6,7 @@ import { useSaveDonationSection } from '@/features/main-content/api/hooks'
 import { mainContentSaveFailureAlert } from '@/features/main-content/lib/mutation-failure-alert'
 import { CtaNestedTable } from '@/features/main-content/ui/nested-tables'
 import { MainContentSectionCard } from '@/features/main-content/ui/section-card'
-import { CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 const DONATION_DESCRIPTION =
   '후원 기업 목록은 [기업 후원 관리] > [후원사 관리]에서 등록 및 관리된 항목이 동일하게 노출됩니다.'
@@ -39,6 +39,7 @@ export function DonationSectionCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch (error) {
       showAlert(mainContentSaveFailureAlert(error, '정기후원'))
     }
