@@ -117,60 +117,61 @@ function PreferenceScheduleFields({
   const endTime = normalizeHHmm(block.endTime)
   const timeLabel = showSessionSelect ? '희망 교육 시간' : '1차시 희망 교육 시간'
 
-  const dateField = fixedScheduleOptions.length > 0 ? (
-    <DetailInfoForm.Field
-      label="희망 교육 일정"
-      view="-"
-      edit={
-        <PFSelect
-          variant="formPage"
-          size="large"
-          width={420}
-          placeholder="희망 교육 일정을 선택하세요"
-          options={fixedScheduleOptions.map(option => ({
-            value: option.value,
-            label: option.label,
-            disabled: disabledOptionValues.has(option.value),
-          }))}
-          value={block.scheduleOptionId}
-          disabled={disabled}
-          onValueChange={next => {
-            const selected = fixedScheduleOptions.find(option => option.value === next)
-            if (!selected) return
-            onPatch({
-              scheduleOptionId: selected.value,
-              session: selected.session,
-              date: selected.date,
-              classPeriod: selected.classPeriod,
-              startTime: selected.startTime,
-              endTime: selected.endTime,
-            })
-          }}
-        />
-      }
-    />
-  ) : (
-    <DetailInfoForm.Field
-      label="희망 교육일"
-      view="-"
-      edit={
-        <PFDateInput
-          variant="formPage"
-          size="large"
-          picker="date"
-          width={dateWidth}
-          className={styles.datePicker}
-          placeholder={datePlaceholder}
-          value={block.date}
-          disabled={disabled}
-          minDate={minDate}
-          maxDate={maxDate}
-          enabledDates={enabledDates}
-          onValueChange={next => onPatch({ date: next })}
-        />
-      }
-    />
-  )
+  const dateField =
+    fixedScheduleOptions.length > 0 ? (
+      <DetailInfoForm.Field
+        label="희망 교육 일정"
+        view="-"
+        edit={
+          <PFSelect
+            variant="formPage"
+            size="large"
+            width={420}
+            placeholder="희망 교육 일정을 선택해 주세요"
+            options={fixedScheduleOptions.map(option => ({
+              value: option.value,
+              label: option.label,
+              disabled: disabledOptionValues.has(option.value),
+            }))}
+            value={block.scheduleOptionId}
+            disabled={disabled}
+            onValueChange={next => {
+              const selected = fixedScheduleOptions.find(option => option.value === next)
+              if (!selected) return
+              onPatch({
+                scheduleOptionId: selected.value,
+                session: selected.session,
+                date: selected.date,
+                classPeriod: selected.classPeriod,
+                startTime: selected.startTime,
+                endTime: selected.endTime,
+              })
+            }}
+          />
+        }
+      />
+    ) : (
+      <DetailInfoForm.Field
+        label="희망 교육일"
+        view="-"
+        edit={
+          <PFDateInput
+            variant="formPage"
+            size="large"
+            picker="date"
+            width={dateWidth}
+            className={styles.datePicker}
+            placeholder={datePlaceholder}
+            value={block.date}
+            disabled={disabled}
+            minDate={minDate}
+            maxDate={maxDate}
+            enabledDates={enabledDates}
+            onValueChange={next => onPatch({ date: next })}
+          />
+        }
+      />
+    )
 
   if (fixedScheduleOptions.length > 0) {
     return <DetailInfoForm.Row type="single">{dateField}</DetailInfoForm.Row>
@@ -220,9 +221,7 @@ function PreferenceScheduleFields({
                     placeholder="수업 진행 교시"
                     value={block.classPeriod}
                     disabled={disabled}
-                    onValueChange={next =>
-                      onPatch({ classPeriod: next.replace(/[^\d]/g, '') })
-                    }
+                    onValueChange={next => onPatch({ classPeriod: next.replace(/[^\d]/g, '') })}
                   />
                   <PFText as="span" typo="bd-md-md" color="black" className={styles.timeUnit}>
                     교시
@@ -313,7 +312,7 @@ export function ApplyPreferredSchedule({
   disabled = false,
   allowRemove = true,
   showSessionUnit = true,
-  datePlaceholder = '희망 교육 날짜를 선택하세요',
+  datePlaceholder = '희망 교육 날짜를 선택해 주세요',
   dateWidth = 220,
 }: ApplyPreferredScheduleProps) {
   const cap = Math.max(1, Math.min(maxBlocks, 10))
@@ -346,7 +345,11 @@ export function ApplyPreferredSchedule({
   }
 
   return (
-    <div className={[styles.root, !showSessionUnit ? styles.compactTime : ''].filter(Boolean).join(' ')}>
+    <div
+      className={[styles.root, !showSessionUnit ? styles.compactTime : '']
+        .filter(Boolean)
+        .join(' ')}
+    >
       {displayBlocks.map((block, index) => {
         const rankTitle = resolvePreferredScheduleBlockTitle(index, displayBlocks.length, cap)
         return (
@@ -373,12 +376,14 @@ export function ApplyPreferredSchedule({
                   sessionOptions={sessionOptions}
                   dateOnlyPreferred={dateOnlyPreferred}
                   disabled={disabled}
-                  disabledOptionValues={new Set(
-                    displayBlocks
-                      .filter((_, selectedIndex) => selectedIndex !== index)
-                      .map(selectedBlock => selectedBlock.scheduleOptionId?.trim())
-                      .filter((value): value is string => Boolean(value))
-                  )}
+                  disabledOptionValues={
+                    new Set(
+                      displayBlocks
+                        .filter((_, selectedIndex) => selectedIndex !== index)
+                        .map(selectedBlock => selectedBlock.scheduleOptionId?.trim())
+                        .filter((value): value is string => Boolean(value))
+                    )
+                  }
                   fixedScheduleOptions={fixedScheduleOptions}
                   showSessionUnit={showSessionUnit}
                   datePlaceholder={datePlaceholder}
