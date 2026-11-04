@@ -28,6 +28,7 @@ import {
   STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME,
 } from '@/shared/components'
 import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
+import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import './school-affiliated-teachers-section.css'
 
 export interface SchoolAffiliatedTeachersSectionProps {
@@ -57,6 +58,7 @@ export function SchoolAffiliatedTeachersSection({
   onLinkedUserClick,
   onEmploymentStatusChange,
 }: SchoolAffiliatedTeachersSectionProps) {
+  const { showAlert } = useCmsAlert()
   const roleCode = useSessionAdminRoleCode()
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [employmentPatchById, setEmploymentPatchById] = useState<
@@ -147,7 +149,7 @@ export function SchoolAffiliatedTeachersSection({
         title: '재직 현황',
         dataIndex: 'employmentStatus',
         key: 'employmentStatus',
-        width: 116,
+        width: 140,
         align: 'center',
         onHeaderCell: () => ({ className: STATUS_DROPDOWN_CELL_TAG_100_HEADER_CLASSNAME }),
         onCell: () => ({
@@ -199,7 +201,13 @@ export function SchoolAffiliatedTeachersSection({
   )
 
   const handleWithdraw = () => {
-    if (selectedRowKeys.length === 0) return
+    if (selectedRowKeys.length === 0) {
+      showAlert({
+        title: '항목 선택 안내',
+        content: '선택된 항목이 없습니다.\n항목 선택 후 다시 시도해 주세요.',
+      })
+      return
+    }
     onWithdrawSelected?.(selectedRowKeys.map(String))
   }
 
@@ -225,11 +233,7 @@ export function SchoolAffiliatedTeachersSection({
           <div className="detail-info-form__description">{`총 ${rows.length}건`}</div>
         </div>
         <div className="school-affiliated-teachers-section__header-end">
-          <CmsButton
-            variant="delete"
-            size="medium"
-            disabled={selectedRowKeys.length === 0}
-            onClick={handleWithdraw} >
+          <CmsButton variant="delete" size="medium" onClick={handleWithdraw}>
             회원 탈퇴
           </CmsButton>
         </div>
