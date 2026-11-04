@@ -46,7 +46,7 @@ const FooterLinkField = memo(function FooterLinkField({
 
   return (
     <CmsInput
-      inputSize="medium"
+      inputSize="small"
       width="100%"
       value={localValue}
       onChange={e => {

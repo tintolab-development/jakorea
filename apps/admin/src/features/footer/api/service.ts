@@ -221,6 +221,7 @@ export async function saveFooterRelatedLogoService(
     ...row,
     isActive: input.isActive,
     name: input.name,
+    linkUrl: input.linkUrl,
     logoUrl: input.logoUrl,
     logoFileName: input.logoFileName,
     logoAssetId,

@@ -31,6 +31,7 @@ import './section-shared.css'
 const RELATED_LOGO_ACTION_COL_WIDTH = 120
 
 const EMPTY_NAME = '등록된 기관 로고가 없습니다'
+const EMPTY_LINK = '연결된 링크가 없습니다'
 
 export function FooterRelatedLogosSection() {
   const { showAlert } = useCmsAlert()
@@ -76,6 +77,7 @@ export function FooterRelatedLogosSection() {
           id: editing.id,
           isActive: values.isActive,
           name: values.name,
+          linkUrl: values.linkUrl,
           logoUrl: values.logoUrl,
           logoFileName: values.logoFileName,
           logoAssetId: values.logoAssetId,
@@ -154,6 +156,20 @@ export function FooterRelatedLogosSection() {
           ),
       },
       {
+        title: '연결 링크',
+        key: 'linkUrl',
+        minWidth: 280,
+        align: 'center',
+        ellipsis: true,
+        render: (_v, record) => {
+          const url = record.linkUrl?.trim() ?? ''
+          if (!url) {
+            return <span className="footer-section__empty-name">{EMPTY_LINK}</span>
+          }
+          return <span title={url}>{url}</span>
+        },
+      },
+      {
         title: '관리',
         key: 'action',
         /* 수정 버튼 88 + 좌우 패딩 여유 (TABLE_COLUMN_WIDTHS.action=72 는 부족) */
@@ -162,7 +178,7 @@ export function FooterRelatedLogosSection() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h32"
             type="button"
             onClick={() => setEditing(record)}
           >

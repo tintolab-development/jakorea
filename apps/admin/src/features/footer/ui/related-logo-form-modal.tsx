@@ -18,6 +18,7 @@ import {
   notifyFileSelectTotalSizeExceeded,
   useCmsAlert,
 } from '@/shared/ui'
+import { HTTP_LINK_URL_FORMAT_ALERT, isValidHttpLinkUrl } from '@/shared/lib/http-link-url'
 
 import './related-logo-form-modal.css'
 
@@ -83,6 +84,7 @@ function ImagePlaceholderIcon() {
 export type RelatedLogoFormValues = {
   isActive: boolean
   name: string
+  linkUrl: string
   logoUrl: string
   logoFileName?: string
   logoAssetId?: number
@@ -107,6 +109,7 @@ export function RelatedLogoFormModal({
   const { showAlert } = useCmsAlert()
   const [isActive, setIsActive] = useState(true)
   const [name, setName] = useState('')
+  const [linkUrl, setLinkUrl] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [logoFileName, setLogoFileName] = useState('')
   const [logoAssetId, setLogoAssetId] = useState<number | undefined>()
@@ -116,6 +119,7 @@ export function RelatedLogoFormModal({
     if (!open || !initial) return
     setIsActive(initial.isActive)
     setName(initial.name)
+    setLinkUrl(initial.linkUrl)
     setLogoUrl(initial.logoUrl)
     setLogoFileName(initial.logoFileName ?? '')
     setLogoAssetId(initial.logoAssetId)
@@ -159,15 +163,21 @@ export function RelatedLogoFormModal({
   )
 
   const handleSubmit = useCallback(() => {
+    const trimmedLink = linkUrl.trim()
+    if (trimmedLink && !isValidHttpLinkUrl(trimmedLink)) {
+      showAlert(HTTP_LINK_URL_FORMAT_ALERT)
+      return
+    }
     onSubmit({
       isActive,
       name: name.trim(),
+      linkUrl: trimmedLink,
       logoUrl: logoUrl.trim(),
       logoFileName: logoFileName || undefined,
       logoAssetId: logoFile ? undefined : logoAssetId,
       logoFile,
     })
-  }, [isActive, logoAssetId, logoFile, logoFileName, logoUrl, name, onSubmit])
+  }, [isActive, linkUrl, logoAssetId, logoFile, logoFileName, logoUrl, name, onSubmit, showAlert])
 
   return (
     <ContentModal
@@ -233,11 +243,26 @@ export function RelatedLogoFormModal({
             view={null}
             edit={
               <CmsInput
-                inputSize="large"
+                inputSize="small"
                 width="100%"
                 value={name}
                 placeholder="기관명을 입력해 주세요"
                 onChange={e => setName(e.target.value)}
+              />
+            }
+          />
+        </DetailInfoForm.Row>
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="연결 링크"
+            view={null}
+            edit={
+              <CmsInput
+                inputSize="small"
+                width="100%"
+                value={linkUrl}
+                placeholder="연결 링크를 입력해 주세요"
+                onChange={e => setLinkUrl(e.target.value)}
               />
             }
           />
