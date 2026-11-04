@@ -284,7 +284,7 @@ function PopupFormBody({
               <CmsButton
                 className={CONTENT_MODAL_FOOTER_START_CLASS}
                 variant="delete"
-                size="large"
+                size="h40"
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
                 disabled={confirmLoading || deleteLoading}
@@ -295,7 +295,7 @@ function PopupFormBody({
             ) : null}
             <CmsButton
               variant="secondary"
-              size="large"
+              size="h40"
               type="button"
               onClick={onCancel}
               disabled={confirmLoading || deleteLoading}
@@ -304,7 +304,7 @@ function PopupFormBody({
             </CmsButton>
             <CmsButton
               variant="primary"
-              size="large"
+              size="h40"
               type="button"
               loading={confirmLoading}
               disabled={confirmLoading || deleteLoading}
@@ -435,7 +435,7 @@ function PopupFormBody({
                 edit={
                   <CmsInput
                     inputSize="medium"
-                    width="100%"
+                    width={240}
                     placeholder="팝업명을 입력해 주세요"
                     value={name}
                     onChange={e => setName(e.target.value)}
@@ -452,7 +452,7 @@ function PopupFormBody({
                 edit={
                   <CmsInput
                     inputSize="medium"
-                    width="100%"
+                    width={240}
                     placeholder="대체 텍스트를 입력해 주세요"
                     value={altText}
                     onChange={e => setAltText(e.target.value)}
@@ -469,7 +469,7 @@ function PopupFormBody({
                 edit={
                   <CmsPeriodDatePicker
                     inputSize="medium"
-                    width="100%"
+                    width={240}
                     value={periodRange}
                     onChange={dates => {
                       setPeriodRange(dates ?? [null, null])
