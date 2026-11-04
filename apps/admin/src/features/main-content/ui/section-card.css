@@ -68,13 +68,6 @@
   min-height: 50px;
 }
 
-.main-content-nested-form .detail-info-form__field-label {
-  min-height: 50px;
-  font-size: 16px;
-  line-height: 140%;
-  word-break: keep-all;
-}
-
 .main-content-nested-form .detail-info-form__field-content {
   min-height: 50px;
   padding: 8px 16px;
@@ -104,9 +97,7 @@
     border-right: none;
   }
 
-  .main-content-nested-form
-    .detail-info-form__row--double
-    > .detail-info-form__field:first-child {
+  .main-content-nested-form .detail-info-form__row--double > .detail-info-form__field:first-child {
     border-bottom: 1px solid var(--table-line, #e0e0e0);
   }
 }
