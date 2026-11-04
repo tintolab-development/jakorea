@@ -562,7 +562,7 @@
 }
 
 .education-textbook-form-modal__rt-edit {
-  min-height: 200px;
+  min-height: 284px;
   min-width: 0;
 }
 
@@ -588,25 +588,6 @@
   flex-wrap: nowrap;
   width: max-content;
   min-width: max-content;
-  overflow: visible;
-}
-
-.education-textbook-form-modal--create .education-textbook-form-modal__rt-edit {
-  --rt-min-height: 36px;
-  --rt-body-min-height: 0px;
-  min-height: 36px;
-}
-
-.education-textbook-form-modal--create .education-textbook-form-modal__rt-edit .rich-text-editor {
-  min-height: 36px !important;
-  height: 36px;
-  overflow: hidden;
-}
-
-.education-textbook-form-modal--create
-  .education-textbook-form-modal__rt-edit
-  .rich-text-editor[data-resized='true'] {
-  height: auto;
   overflow: visible;
 }
 
