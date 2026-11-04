@@ -8,7 +8,7 @@ export type ProgramIntroImageSlot = {
   guideLines: readonly string[]
 }
 
-const BASE_GUIDE = '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.'
+const BASE_GUIDE = '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.'
 
 function slot(label: string, recommendedSize: string): ProgramIntroImageSlot {
   return {

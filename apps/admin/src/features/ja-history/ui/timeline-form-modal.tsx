@@ -27,7 +27,7 @@ import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } 
 const EVENT_SLOT_COUNT = 3
 
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 이미지 사이즈는 520 × 240px입니다.',
 ]
 
@@ -159,7 +159,7 @@ function TimelineFormBody({
       if (!isAllowedJaHistoryImage(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }

@@ -123,14 +123,14 @@ function ImageFieldControl({ isEditing, image, slot, sortOrder, onChange }: Imag
       if (!isAllowedProgramIntroImage(file)) {
         showAlert({
           title: '파일 형식',
-          content: 'JPG, PNG 형식만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }
       if (file.size > PROGRAM_INTRO_IMAGE_MAX_BYTES) {
         showAlert({
           title: '파일 용량',
-          content: '파일은 최대 20MB까지 등록 가능합니다.',
+          content: '20MB를 초과한 파일은 등록할 수 없습니다.',
         })
         return
       }

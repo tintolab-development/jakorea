@@ -21,7 +21,7 @@ import './banner-form-modal.css'
 
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 배너 사이즈는 740 × 790px입니다.',
 ]
 
@@ -99,7 +99,7 @@ function BannerFormBody({ initial, confirmLoading, onCancel, onSubmit }: FormBod
       if (!isAllowedImageFile(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }

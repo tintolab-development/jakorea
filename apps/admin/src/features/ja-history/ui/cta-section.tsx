@@ -15,9 +15,8 @@ import { CtaButtonsNestedTable } from './cta-buttons-nested-table'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
 const IMAGE_GUIDE_LINES = [
-  '- 파일은 최대 20MB까지 JPG, PNG 형식만 등록 가능합니다.',
+  '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
   '- 권장 이미지 사이즈는 680 × 400px입니다.',
-  '- 첨부파일명에 특수문자 포함된 경우, 등록 시 오류가 발생할 수 있습니다.',
 ]
 
 export function CtaSection({ cta }: { cta: JaHistoryCta }) {
@@ -45,7 +44,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
       if (!isAllowedJaHistoryImage(file)) {
         showAlert({
           title: '파일 형식 오류',
-          content: 'JPG, PNG 형식의 이미지만 등록할 수 있습니다.',
+          content: '등록할 수 없는 파일 형식입니다.',
         })
         return
       }

@@ -96,6 +96,7 @@ export { ThumbnailPlaceholder } from './thumbnail-placeholder'
 export {
   FILE_SELECT_MAX_TOTAL_BYTES,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
+  FILE_SELECT_MULTI_MAX_TOTAL_BYTES,
   FILE_SELECT_TOTAL_SIZE_GUIDE_LINE,
   sumFileBytes,
   isFileSelectTotalSizeExceeded,

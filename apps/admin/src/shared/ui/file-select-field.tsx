@@ -2,7 +2,7 @@
  * 파일 선택 필드 공통 컴포넌트 (디자인 시스템)
  * - hidden input + 파일명 목록(삭제 X 버튼) / 「첨부된 파일이 없습니다.」 + 「파일 추가」(h32) + 가이드
  * - 기본 다중 선택(`multiple=true`). accept·가이드 문구는 케이스별 props
- * - 첨부 합계 기본 최대 15MB (`maxTotalBytes` / `currentTotalBytes`)
+ * - 첨부 합계는 `maxTotalBytes` / `currentTotalBytes` (운영 화면은 20MB 또는 100MB를 명시)
  * - disabled 시 버튼 비활성화, input 미렌더, 삭제 버튼 미표시
  */
 
@@ -79,7 +79,7 @@ export interface FileSelectFieldProps {
    * 미전달 시 이번 선택분만 `maxTotalBytes`와 비교.
    */
   currentTotalBytes?: number
-  /** 첨부 합계 상한(byte). 기본 15MB. `0`이면 용량 검사 생략 */
+  /** 첨부 합계 상한(byte). 기본은 레거시 15MB. 운영 화면은 20MB/100MB를 명시. `0`이면 용량 검사 생략 */
   maxTotalBytes?: number
 }
 
