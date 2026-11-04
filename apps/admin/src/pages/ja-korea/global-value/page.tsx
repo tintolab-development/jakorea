@@ -20,7 +20,7 @@ import {
 } from '@/features/global-value/ui/sortable-table'
 import { ValueIcon } from '@/features/global-value/ui/value-icon'
 import { useInvalidateOnWindowEvent } from '@/shared/lib/use-invalidate-on-window-event'
-import { CmsButton, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 import {
   CMS_TABLE_NO_COL_CLASS,
   CMS_TABLE_SORT_COL_CLASS,
@@ -110,6 +110,7 @@ export function GlobalValuePage() {
       )
       setDraftTexts({})
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',

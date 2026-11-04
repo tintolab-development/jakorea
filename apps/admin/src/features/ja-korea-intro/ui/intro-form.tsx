@@ -10,7 +10,7 @@ import type {
 } from '@/entities/ja-korea-intro/model/types'
 import { useSaveJaKoreaIntro } from '@/features/ja-korea-intro/api/hooks'
 import { ContentNestedTable } from '@/features/ja-korea-intro/ui/content-nested-table'
-import { CmsButton, CmsInput, CmsTextArea, useCmsAlert } from '@/shared/ui'
+import { CmsButton, CmsInput, CmsTextArea, showUpdateCompletedAlert, useCmsAlert } from '@/shared/ui'
 
 import './intro-form.css'
 
@@ -67,6 +67,7 @@ export function IntroFormCard({ data }: Props) {
     try {
       await saveMutation.mutateAsync(draft)
       setIsEditing(false)
+      showUpdateCompletedAlert()
     } catch {
       showAlert({
         title: '저장 실패',
