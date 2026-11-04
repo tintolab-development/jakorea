@@ -96,12 +96,12 @@
   padding-top: 30px;
 }
 
-/* 테이블 «관리» 열 인라인 버튼 */
+/* 테이블 «관리» 열 인라인 버튼 — CmsButton margin:0 이어도 8px 유지 */
 .content-modal__table-cell-actions {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
 }
 
@@ -133,8 +133,14 @@
   border-right: none !important;
 }
 
-/* 푸터: 테이블–버튼 갭 30px, padding/보더 없음, 전체 너비 */
+/* 푸터: 테이블–버튼 갭 30px, 버튼 간격 8px. 래퍼는 contents 로 버튼을 이 flex에 바로 올린다 */
 .content-modal .teal-header-modal__footer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
   width: 100%;
   margin-top: 30px;
@@ -142,13 +148,12 @@
   border-top: none;
 }
 
-/* 버튼 래퍼: 100% 너비, 우측 정렬 */
 .content-modal__footer-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
+  display: contents;
+}
+
+.content-modal__footer-actions > .content-modal__footer-start {
+  margin-right: auto;
 }
 
 /*
