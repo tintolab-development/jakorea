@@ -433,7 +433,9 @@ export function MypageLectureReportWritePage() {
   const pageTitle = buildLectureReportPageTitle(lectureName)
   const pageDescription = resolveEducationSurveySectionDescription(titleParagraph?.surveyDescription)
   const period = titleParagraph?.showWritingPeriodOnForm
-    ? resolveEducationSurveyPeriodLabel(titleParagraph, loaded?.assignment.startAt)
+    ? resolveEducationSurveyPeriodLabel(titleParagraph, loaded?.assignment.startAt, {
+        submitDueAt: loaded?.assignment.submitDueAt ?? loaded?.state.submitDueAt,
+      })
     : ''
   const formProgramTitle =
     program?.title || toDisplayEducationScheduleName(loaded?.assignment.scheduleName) || '강의'

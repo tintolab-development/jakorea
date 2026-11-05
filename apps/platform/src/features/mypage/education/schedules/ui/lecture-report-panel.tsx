@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PFButton, PFMetaBadge, PFPagination, PFStateBadge, PFText } from '@/shared/ui'
+import {
+  formatDisplayClock,
+  formatDisplayDate,
+  toSeoulDisplayParts,
+} from '@/shared/lib/format-display-date'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { EducationSessionCard, EducationSessionCardHeader } from '../../shared'
 import villaIconUrl from '@/shared/assets/icons/villa.svg'
@@ -34,20 +39,14 @@ function resolveReportStatus(state: LectureReportState | undefined, row: Lecture
   // reportStatus는 서버 값만 사용 — lectureStatus로 추정하지 않는다.
   return undefined
 }
-function formatDateOnly(value: string | null): string {
-  if (!value) return ''
-  const parsed = new Date(value)
-  const parts = new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }).formatToParts(parsed)
-  const part = (type: string) => parts.find(item => item.type === type)?.value ?? ''
-  return `${part('year')}년 ${part('month')}월 ${part('day')}일(${part('weekday')})`
-}
 function formatDueDate(value: string | null): string {
-  const formatted = formatDateOnly(value)
+  const formatted = formatDisplayDate(value)
   return formatted ? `${formatted}까지` : ''
 }
 function formatTime(value: string | null): string {
-  if (!value) return ''
-  return new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(value))
+  const parts = toSeoulDisplayParts(value)
+  if (!parts?.hasTime) return ''
+  return formatDisplayClock(parts.hour, parts.minute)
 }
 function formatTimeRange(row: LectureReportAssignment): string {
   const start = formatTime(row.startAt)
@@ -206,7 +205,7 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
           <EducationSessionCard className={styles.row} key={row.assignmentId}>
             <EducationSessionCardHeader
               badge={<PFStateBadge size="small" tone={lectureStatus.tone}>{lectureStatus.label}</PFStateBadge>}
-              date={formatDateOnly(row.startAt) || '강의 일정'}
+              date={formatDisplayDate(row.startAt) || '강의 일정'}
               subtitle={timeLabel ? <PFText as="span" typo="bd-md-rg" className={styles.timeLabel}>{timeLabel}</PFText> : undefined}
               aside={<div className={styles.headerAside}>{institutionMeta}{reportMeta}</div>}
             />
