@@ -14,6 +14,14 @@ export type RegisteredSurvey = {
   expectedRespondentCount?: number | null
   /** remote form-binding id — 삭제 시 사용 */
   bindingId?: string
+  targetScope?: string | null
+  targetScopeId?: number | null
+  targetScopeLabel?: string | null
+  displayDeadlineAt?: string | null
+  resultDownloadable?: boolean | null
+  satisfactionRunMode?: 'PER_SCHEDULE' | 'ONCE_AT_END' | null
+  satisfactionWindowDays?: number | null
+  startAtLocked?: boolean | null
 }
 
 /** summary API `summaryJson.options[]` — 0건 옵션 포함 */

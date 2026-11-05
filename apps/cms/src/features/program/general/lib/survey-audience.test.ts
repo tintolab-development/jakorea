@@ -356,9 +356,11 @@ describe('general survey audience', () => {
 
     expect(getGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
+      'student',
     ])
     expect(getEnabledGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
+      'student',
     ])
     expect(getGeneralSurveyMenuItems(trainedTeachers).map(item => item.key)).toEqual([
       'survey',
@@ -379,6 +381,7 @@ describe('general survey audience', () => {
 
     expect(getEnabledGeneralSatisfactionAudienceTabs(trainedTeachers).map(tab => tab.key)).toEqual([
       'teacher',
+      'student',
     ])
     expect(getGeneralSurveyMenuItems(trainedTeachers).map(item => item.key)).toEqual([
       'survey',
@@ -387,13 +390,14 @@ describe('general survey audience', () => {
     ])
   })
 
-  it('교육받은 교사 만족도 바인딩 targetRole은 항상 TEACHER이다', () => {
+  it('교육받은 교사 만족도 바인딩은 교사/학생을 분리한다', () => {
     const trainedTeachers = program({
       id: '186264',
       backendProgramType: 'TRAINED_TEACHER',
     })
     expect(isTrainedTeachersProgram(trainedTeachers)).toBe(true)
-    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'student')).toBe('TEACHER')
+    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'student')).toBe('STUDENT')
+    expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, 'teacher')).toBe('TEACHER')
     expect(resolveSatisfactionFormBindingTargetRole(trainedTeachers, null)).toBe('TEACHER')
     const general = program({
       generalProgramAudience: 'organization',

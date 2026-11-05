@@ -28,6 +28,11 @@ export type SatisfactionSurveyViewProps<TKey extends string> = {
   onDeleteClick: () => void
   onOpenTemplatePreview: () => void
   onDownloadClick: () => void
+  downloadEnabled?: boolean
+  scheduleTabs?: ReadonlyArray<{ key: string; label: string }>
+  activeScheduleKey?: string
+  onScheduleTabChange?: (key: string) => void
+  statusMeta?: string | null
   resultsExportRef?: RefObject<HTMLDivElement | null>
   resultsResponses?: SurveyPollRawResponse[]
   /** 결과 집계 기준 게시 version (remote 바인딩) */
@@ -52,6 +57,11 @@ export function SatisfactionSurveyView<TKey extends string>({
   onDeleteClick,
   onOpenTemplatePreview,
   onDownloadClick,
+  downloadEnabled = false,
+  scheduleTabs,
+  activeScheduleKey,
+  onScheduleTabChange,
+  statusMeta,
   resultsExportRef,
   resultsResponses,
   resultsTemplateVersionId,
@@ -79,6 +89,7 @@ export function SatisfactionSurveyView<TKey extends string>({
         onShareClick={onShareClick}
         onOpenTemplatePreview={onOpenTemplatePreview}
         onDownloadClick={onDownloadClick}
+        downloadEnabled={downloadEnabled}
       />
     ) : null
 
@@ -117,7 +128,17 @@ export function SatisfactionSurveyView<TKey extends string>({
   return (
     <div className={rootClassName}>
       {audienceTabRow}
-      {activeSurvey.status === 'before_start' ? (
+      {scheduleTabs != null && scheduleTabs.length > 1 && onScheduleTabChange != null ? (
+        <CmsTextTabs
+          className="survey-management-satisfaction__schedule-tabs"
+          variant="list"
+          activeKey={activeScheduleKey ?? scheduleTabs[0]?.key}
+          onChange={onScheduleTabChange}
+          items={scheduleTabs.map(tab => ({ key: tab.key, label: tab.label }))}
+        />
+      ) : null}
+      {statusMeta ? <p className="survey-management-satisfaction__meta">{statusMeta}</p> : null}
+      {activeSurvey.status === 'before_start' && activeScheduleKey !== 'aggregate' ? (
         <SurveyNoResponseState
           title={noResponseCopy.title ?? `${activeAudienceLabel}용 만족도조사는 아직 진행 전입니다.`}
           description={noResponseCopy.description}

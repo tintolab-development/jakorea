@@ -127,7 +127,16 @@ const FORM_BINDING_ACTIVE_SLOT_CONFLICT_DEFAULT_MESSAGE =
   '같은 프로그램 양식 슬롯에 이미 활성 양식이 연결되어 있습니다. 기존 바인딩을 확인하거나 다른 대상을 선택해 주세요.'
 
 const TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY_MESSAGE =
-  '교육받은 교사 프로그램의 만족도조사는 교사만 대상으로 할 수 있습니다.'
+  '교육받은 교사 프로그램의 만족도조사는 교사 또는 학생만 대상으로 할 수 있습니다.'
+
+const COMPANY_SCHOOL_SATISFACTION_TEACHER_ONLY_MESSAGE =
+  '1사1교 프로그램의 만족도조사는 교사만 대상으로 할 수 있습니다.'
+
+const SATISFACTION_WINDOW_DAYS_INVALID_MESSAGE =
+  '만족도조사 참여 기간은 3, 7, 14, 30일 중에서만 선택할 수 있습니다.'
+
+const FORM_BINDING_NOT_DELETABLE_MESSAGE =
+  '진행 중이거나 종료된 만족도조사는 삭제할 수 없습니다.'
 
 const PROGRAM_EDUCATION_SLOT_KEY_MISMATCH_MESSAGE =
   '교육 일정의 논리 슬롯 식별자(educationSlotKey)는 변경할 수 없습니다. 일정 시간만 수정하거나 새 일정을 추가해 주세요.'
@@ -158,6 +167,17 @@ export function getProgramFormBindingErrorMessage(
   }
   if (code === 'FORM_BINDING_TEMPLATE_LOCKED') {
     return FORM_BINDING_TEMPLATE_LOCKED_MESSAGE
+  }
+  if (code === 'FORM_BINDING_NOT_DELETABLE') {
+    return FORM_BINDING_NOT_DELETABLE_MESSAGE
+  }
+  if (code === 'SATISFACTION_WINDOW_DAYS_INVALID') {
+    return SATISFACTION_WINDOW_DAYS_INVALID_MESSAGE
+  }
+  if (code === 'COMPANY_SCHOOL_SATISFACTION_TEACHER_ONLY') {
+    const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()
+    if (raw && raw !== code) return raw
+    return COMPANY_SCHOOL_SATISFACTION_TEACHER_ONLY_MESSAGE
   }
   if (code === 'TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY') {
     const raw = extractRawApiMessage(error)?.replace(/^CONFLICT:\s*/i, '').trim()

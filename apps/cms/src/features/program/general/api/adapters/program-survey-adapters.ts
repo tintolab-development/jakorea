@@ -18,6 +18,10 @@ import type {
   SurveyQuestionOptionCount,
   SurveyResultQuestionSummary,
 } from '@/features/program/shared/lib/survey-management/survey-management-types'
+import {
+  mapSatisfactionProgressStatus,
+  readSatisfactionBindingFields,
+} from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 
 export type ClassifiedFormBindingKind = 'poll' | 'satisfaction' | 'lecture_evaluation'
 
@@ -181,7 +185,7 @@ export function mapProgramSurveyToRegisteredSurvey(
       binding?.templateName?.trim() ||
       '설문',
     templateId: String(dto.templateId ?? binding?.templateId ?? ''),
-    status: resolveSurveyStatusFromBinding(binding),
+    status: mapSatisfactionProgressStatus(binding, resolveSurveyStatusFromBinding(binding)),
     responseCount: dto.responseCount ?? dto.submittedCount ?? binding?.submittedCount ?? 0,
     participantTotal: expectedRespondentCount ?? 0,
     expectedRespondentCount,
@@ -191,6 +195,34 @@ export function mapProgramSurveyToRegisteredSurvey(
         : dto.bindingId != null
           ? String(dto.bindingId)
           : undefined,
+    ...satisfactionSurveyMeta(binding),
+  }
+}
+
+function satisfactionSurveyMeta(
+  binding?: ProgramFormBindingResponse
+): Pick<
+  RegisteredSurvey,
+  | 'targetScope'
+  | 'targetScopeId'
+  | 'targetScopeLabel'
+  | 'displayDeadlineAt'
+  | 'resultDownloadable'
+  | 'satisfactionRunMode'
+  | 'satisfactionWindowDays'
+  | 'startAtLocked'
+> {
+  if (!binding) return {}
+  const extra = readSatisfactionBindingFields(binding)
+  return {
+    targetScope: binding.targetScope ?? null,
+    targetScopeId: binding.targetScopeId ?? null,
+    targetScopeLabel: binding.targetScopeLabel ?? null,
+    displayDeadlineAt: extra.displayDeadlineAt,
+    resultDownloadable: extra.resultDownloadable,
+    satisfactionRunMode: extra.satisfactionRunMode ?? null,
+    satisfactionWindowDays: extra.satisfactionWindowDays ?? null,
+    startAtLocked: extra.startAtLocked ?? null,
   }
 }
 
@@ -203,11 +235,12 @@ export function mapFormBindingToRegisteredSurvey(
     id: String(binding.templateVersionId ?? binding.templateId ?? binding.bindingId ?? index),
     title: binding.templateName?.trim() || binding.versionLabel?.trim() || '설문',
     templateId: String(binding.templateId ?? ''),
-    status: resolveSurveyStatusFromBinding(binding),
+    status: mapSatisfactionProgressStatus(binding, resolveSurveyStatusFromBinding(binding)),
     responseCount: binding.submittedCount ?? 0,
     participantTotal: expectedRespondentCount ?? 0,
     expectedRespondentCount,
     bindingId: binding.bindingId != null ? String(binding.bindingId) : undefined,
+    ...satisfactionSurveyMeta(binding),
   }
 }
 
@@ -284,6 +317,21 @@ export function classifyProgramFormBindings(
         survey: mapFormBindingToRegisteredSurvey(binding, index),
       }
     })
+}
+
+export function groupSatisfactionSurveysByAudience(
+  classified: readonly ClassifiedFormBinding[],
+  fallbackAudience: GeneralSatisfactionAudienceKey
+): Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey[]>> {
+  const grouped: Partial<Record<GeneralSatisfactionAudienceKey, RegisteredSurvey[]>> = {}
+  for (const item of classified) {
+    if (item.kind !== 'satisfaction') continue
+    const audience = item.satisfactionAudience ?? fallbackAudience
+    const list = grouped[audience] ?? []
+    list.push(item.survey)
+    grouped[audience] = list
+  }
+  return grouped
 }
 
 export function parseAnswerPreviewJson(raw: string | undefined | null): Record<string, string> {

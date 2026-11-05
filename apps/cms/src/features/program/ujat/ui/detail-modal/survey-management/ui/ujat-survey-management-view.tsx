@@ -858,7 +858,12 @@ export function UjatSurveyManagementView({
           ...scheduleTarget.target,
           active: true,
           required: false,
-        }
+          duplicatePolicy: 'ONE_SUBMITTED_PER_CONTEXT',
+          satisfactionRunMode: 'PER_SCHEDULE',
+          satisfactionWindowDays: 7,
+          startAtLocked: false,
+          startImmediately: false,
+        } as ProgramFormBindingRequest
         const result = await createBinding(payload)
         if (!result.ok) {
           await invalidateSurveyCaches()
