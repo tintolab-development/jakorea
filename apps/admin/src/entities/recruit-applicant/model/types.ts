@@ -27,9 +27,10 @@ export type RecruitApplicant = {
   id: string
   status: RecruitApplicantStatus
   jobInterest: RecruitJobInterest
-  applicantName: string
-  phone: string
-  email: string
+  /** 서버 마스킹 또는 reveal 원문. FE 재마스킹 없음. */
+  applicantName: string | null
+  phone: string | null
+  email: string | null
   careerType: RecruitCareerType
   appliedAt: string
   confirmedAt: string | null
@@ -38,13 +39,14 @@ export type RecruitApplicant = {
 
 /** 상세 모달. 목록 item에 없는 주소·학력·경력·동의·첨부는 상세 GET으로만 채운다. */
 export type RecruitApplicantDetail = RecruitApplicant & {
-  addressRoad: string
-  addressDetail: string
+  addressRoad: string | null
+  addressDetail: string | null
   educationLevel: RecruitEducationLevel | null
-  schoolName: string
-  major: string
-  educationInfo: string
-  careerInfo: string
+  /** revealPii=false 시 omitted → null. FE가 "" 로 만들지 않는다. */
+  schoolName: string | null
+  major: string | null
+  educationInfo: string | null
+  careerInfo: string | null
   privacyAgreed: boolean
   attachmentFileName: string | null
   attachmentAssetId?: number | null

@@ -30,7 +30,7 @@ import { HOMEPAGE_PII_REVEAL_COPY } from '@/shared/lib/homepage-pii'
 import { RecruitApplicantDetailModal } from '@/features/recruit-applicant/ui/detail-modal'
 import { recruitApplicantQueryKeys } from '@/features/recruit-applicant/api/query-keys'
 import { RECRUIT_APPLICANTS_CHANGED_EVENT } from '@/features/recruit-applicant/api/store'
-import { maskEmail, maskPhoneNumber } from '@/features/talent-donation-application/lib/mask'
+import { displayServerPiiAsIs } from '@/shared/lib/homepage-pii-display'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -305,6 +305,14 @@ export function RecruitApplicantsPage() {
   const [revealedForId, setRevealedForId] = useState<string | null>(null)
   const canRevealPii = useHomepagePiiView()
   const piiRevealed = Boolean(detailId) && revealedForId === detailId
+
+  useEffect(() => {
+    if (!detailId) {
+      setRevealedForId(null)
+      return
+    }
+    setRevealedForId(prev => (prev === detailId ? prev : null))
+  }, [detailId])
   const detailQuery = useRecruitApplicantDetail(detailId, { revealPii: false })
   const revealedQuery = useRecruitApplicantDetail(detailId, {
     revealPii: true,
@@ -348,12 +356,22 @@ export function RecruitApplicantsPage() {
 
   const detailRow = useMemo(() => {
     if (!detailId) return null
-    if (revealedQuery.data) return revealedQuery.data
+    if (piiRevealed && revealedQuery.isSuccess && revealedQuery.data) {
+      return revealedQuery.data
+    }
     if (detailQuery.data) return detailQuery.data
     if (remoteDetail) return null
     const listed = rows.find(row => row.id === detailId)
     return listed ? detailFromListItem(listed) : null
-  }, [detailId, detailQuery.data, remoteDetail, revealedQuery.data, rows])
+  }, [
+    detailId,
+    detailQuery.data,
+    piiRevealed,
+    remoteDetail,
+    revealedQuery.data,
+    revealedQuery.isSuccess,
+    rows,
+  ])
 
   useEffect(() => {
     if (!piiRevealed || !revealedQuery.isError) return
@@ -484,6 +502,7 @@ export function RecruitApplicantsPage() {
         width: TABLE_COLUMN_WIDTHS.name,
         align: 'center',
         ellipsis: true,
+        render: (value: string | null) => displayServerPiiAsIs(value),
       },
       {
         title: '연락처',
@@ -491,7 +510,7 @@ export function RecruitApplicantsPage() {
         key: 'phone',
         width: TABLE_COLUMN_WIDTHS.phone,
         align: 'center',
-        render: (value: string) => maskPhoneNumber(value),
+        render: (value: string | null) => displayServerPiiAsIs(value),
       },
       {
         title: '이메일',
@@ -500,7 +519,7 @@ export function RecruitApplicantsPage() {
         width: TABLE_COLUMN_WIDTHS.email,
         align: 'center',
         ellipsis: true,
-        render: (value: string) => maskEmail(value),
+        render: (value: string | null) => displayServerPiiAsIs(value),
       },
       {
         title: '경력',
