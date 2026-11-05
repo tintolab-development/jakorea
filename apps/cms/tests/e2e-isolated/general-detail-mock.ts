@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { appendFileSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, type Page, type Route } from '@playwright/test'
@@ -18,12 +18,18 @@ function parseJson(v: unknown): any {
   if (v == null) return {}
   return typeof v === 'string' ? JSON.parse(v) : v
 }
-/** 객체는 재귀 병합, 배열·원시값·null은 교체 (RFC7386과 달리 null도 값으로 보존 — 빈값 계약 확인용) */
+/**
+ * BE 계약(keonhee 57262c4676): serviceDetailJson RFC-7396 merge — 생략 키 유지, 명시 null은 해당 키 삭제,
+ * 배열·스칼라는 교체.
+ */
 export function deepMerge(base: any, patch: any): any {
   if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return patch
   if (!base || typeof base !== 'object' || Array.isArray(base)) base = {}
   const out: Record<string, any> = { ...base }
-  for (const [k, v] of Object.entries(patch)) out[k] = deepMerge(base[k], v)
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === null) delete out[k]
+    else out[k] = deepMerge(base[k], v)
+  }
   return out
 }
 
@@ -88,6 +94,10 @@ export async function installProgramDetailMock(page: Page, fixture: Record<strin
       body = req.postData()
     }
     mutations.push({ method, path: url.pathname, body })
+    // 증거 덤프(옵트인): STEP41_DUMP=<파일> 이면 변이 요청 본문을 JSONL로 남긴다
+    if (process.env.STEP41_DUMP) {
+      appendFileSync(process.env.STEP41_DUMP, JSON.stringify({ test: process.env.STEP41_CASE ?? '', method, path: url.pathname, body }) + '\n')
+    }
     if (method === 'PATCH' && url.pathname === `/api/admin/programs/${id}` && body && typeof body === 'object') {
       const next: Record<string, any> = { ...stored }
       for (const [k, v] of Object.entries(body)) {
