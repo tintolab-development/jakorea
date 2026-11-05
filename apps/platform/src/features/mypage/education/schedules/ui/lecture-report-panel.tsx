@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PFButton, PFMetaBadge, PFPagination, PFStateBadge, PFText } from '@/shared/ui'
 import { EducationSessionListSkeleton } from '@/features/mypage/shared/ui'
 import { EducationSessionCard, EducationSessionCardHeader } from '../../shared'
-import lectureTeachingMintUrl from '@/widgets/mypage-layout/image/icon/lecture-teaching-mint-24.svg'
+import villaIconUrl from '@/shared/assets/icons/villa.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
 import checkDarkMintLargeUrl from '@/shared/assets/icons/check-dark-mint-large.svg'
 import {
@@ -183,7 +183,7 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
         const timeLabel = [timeRange, row.sessionNo ? `${row.sessionNo}차시` : ''].filter(Boolean).join(' ')
         const institutionMeta = instructorProgram && (row.institutionName || row.grade) ? (
           <PFMetaBadge
-            icon={<img src={lectureTeachingMintUrl} alt="" width={24} height={24} aria-hidden="true" />}
+            icon={<img src={villaIconUrl} alt="" width={20} height={20} aria-hidden="true" />}
             primary={row.institutionName || '교육 기관'}
             secondary={row.grade || undefined}
           />
