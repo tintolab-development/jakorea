@@ -19,8 +19,11 @@ import {
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
   notifyFileSelectTotalSizeExceeded,
+  ThumbnailPlaceholder,
   useCmsAlert,
 } from '@/shared/ui'
+import { getCorporatePartnerById } from '@/features/corporate-partner/api/service'
+import { resolveCorporatePartnerLogoFileName } from '@/features/corporate-partner/lib/logo-display-name'
 
 import './form-modal.css'
 
@@ -131,27 +134,10 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
-function ImagePlaceholderIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="48"
-      height="48"
-      viewBox="0 0 48 48"
-      fill="none"
-      aria-hidden
-    >
-      <rect x="6" y="10" width="36" height="28" rx="3" stroke="#BDBDBD" strokeWidth="2" />
-      <circle cx="17" cy="20" r="3" fill="#BDBDBD" />
-      <path
-        d="M8 32L18 24L24 29L32 20L40 32"
-        stroke="#BDBDBD"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+function logoAttachmentDisplayNames(logoUrl: string, logoFileName: string): string[] {
+  if (!logoUrl.trim() && !logoFileName.trim()) return []
+  const name = resolveCorporatePartnerLogoFileName(logoFileName || undefined, logoUrl || undefined)
+  return name ? [name] : []
 }
 
 export type CorporatePartnerFormValues = CorporatePartnerCreateInput
@@ -186,7 +172,12 @@ function CorporatePartnerFormBody({
   const [logoUrl, setLogoUrl] = useState(() => (mode === 'edit' && initial ? initial.logoUrl : ''))
   const [logoFile, setLogoFile] = useState<File | undefined>(undefined)
   const [logoFileName, setLogoFileName] = useState(() =>
-    mode === 'edit' && initial ? (initial.logoFileName ?? '') : ''
+    mode === 'edit' && initial
+      ? resolveCorporatePartnerLogoFileName(initial.logoFileName, initial.logoUrl)
+      : ''
+  )
+  const [logoAssetId, setLogoAssetId] = useState<number | undefined>(() =>
+    mode === 'edit' && initial ? initial.logoAssetId : undefined
   )
   const initialName = mode === 'edit' && initial ? initial.name : ''
   const nameRef = useRef(initialName)
@@ -201,6 +192,26 @@ function CorporatePartnerFormBody({
     if (!serverSortOrderError) return
     setErrors(prev => ({ ...prev, sortOrder: serverSortOrderError }))
   }, [serverSortOrderError])
+
+  useEffect(() => {
+    if (mode !== 'edit' || !initial?.id) return
+    let cancelled = false
+    void getCorporatePartnerById(initial.id)
+      .then(partner => {
+        if (cancelled) return
+        setLogoUrl(partner.logoUrl)
+        setLogoFileName(
+          resolveCorporatePartnerLogoFileName(partner.logoFileName, partner.logoUrl)
+        )
+        setLogoAssetId(partner.logoAssetId)
+      })
+      .catch(() => {
+        /* 목록 row + URL 파생 파일명으로 표시 유지 */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [initial?.id, mode])
 
   const handleNameChange = useCallback((value: string) => {
     nameRef.current = value
@@ -269,6 +280,7 @@ function CorporatePartnerFormBody({
     setLogoUrl('')
     setLogoFile(undefined)
     setLogoFileName('')
+    setLogoAssetId(undefined)
   }, [])
 
   const handleSubmit = useCallback(() => {
@@ -293,11 +305,12 @@ function CorporatePartnerFormBody({
       isPublic,
       logoUrl: logoUrl.trim(),
       logoFile,
+      logoAssetId,
       logoFileName: logoFileName || undefined,
       name: name.trim(),
       sortOrder: orderNum,
     })
-  }, [isPublic, logoFile, logoFileName, logoUrl, maxOrder, onSubmit, sortOrder])
+  }, [isPublic, logoAssetId, logoFile, logoFileName, logoUrl, maxOrder, onSubmit, sortOrder])
 
   const title = mode === 'edit' ? '후원사 수정' : '후원사 등록'
   const confirmLabel = mode === 'edit' ? '저장' : '등록'
@@ -370,14 +383,18 @@ function CorporatePartnerFormBody({
               <div>
                 <div className="file-select-image-cell">
                   <div className="file-select-image-cell__preview">
-                    {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
+                    {logoUrl ? (
+                      <img src={logoUrl} alt="로고 미리보기" />
+                    ) : (
+                      <ThumbnailPlaceholder />
+                    )}
                   </div>
                   <FileSelectField
                     className="corporate-partner-form-modal__file-field"
                     multiple={false}
                     accept={IMAGE_ACCEPT}
                     buttonLabel="파일 추가"
-                    fileNames={logoFileName ? [logoFileName] : []}
+                    fileNames={logoAttachmentDisplayNames(logoUrl, logoFileName)}
                     maxTotalBytes={FILE_SELECT_IMAGE_MAX_TOTAL_BYTES}
                     onFilesChange={files => {
                       void handleFilesChange(files)

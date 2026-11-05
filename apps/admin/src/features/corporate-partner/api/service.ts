@@ -49,6 +49,9 @@ async function listAllRemotePartners(): Promise<CorporatePartner[]> {
     }
     return sortPartnersByOrder(acc);
 }
+export async function getCorporatePartnerById(id: string): Promise<CorporatePartner> {
+    return getRemotePartner(id);
+}
 async function getRemotePartner(id: string): Promise<CorporatePartner> {
     const numericId = Number(id);
     if (!Number.isFinite(numericId) || numericId <= 0) {

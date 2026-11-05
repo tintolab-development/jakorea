@@ -175,6 +175,7 @@ export function EducationPersonalCertificatePanel({
   }
 
   const ineligibleMessage = availabilityReasonMessage(availability)
+  const periodLabel = availability?.certificatePeriodLabel?.trim() || ''
 
   if (!actionable) {
     if (!isWithdrawnDuring) return null
@@ -190,6 +191,11 @@ export function EducationPersonalCertificatePanel({
 
   return (
     <section aria-label={documentLabel}>
+      {periodLabel ? (
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.periodLabel}>
+          {periodLabel}
+        </PFText>
+      ) : null}
       <div className={styles.actions}>
         {issued || canIssueNew ? (
           <CertificateActionButton

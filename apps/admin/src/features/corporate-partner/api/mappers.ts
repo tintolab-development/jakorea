@@ -15,17 +15,20 @@ import type { SponsorCreateRequest } from '@/shared/api/generated/sponsorship/sc
 import type { SponsorListItem } from '@/shared/api/generated/sponsorship/schemas/sponsorListItem'
 import type { SponsorResponse } from '@/shared/api/generated/sponsorship/schemas/sponsorResponse'
 import type { SponsorUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/sponsorUpdateRequest'
+import { resolveCorporatePartnerLogoFileName } from '@/features/corporate-partner/lib/logo-display-name'
 
 /** 후원사 목록 관리 — 한 화면 50건 */
 export const LIST_PAGE_SIZE = 50
 
 export function mapSponsorListItemToDomain(row: SponsorListItem): CorporatePartner {
   const id = row.id != null ? String(row.id) : ''
+  const logoUrl = row.logoUrl ?? ''
   return {
     id,
     sortOrder: row.displayOrder ?? 0,
     isPublic: Boolean(row.published),
-    logoUrl: row.logoUrl ?? '',
+    logoUrl,
+    logoFileName: resolveCorporatePartnerLogoFileName(undefined, logoUrl) || undefined,
     name: row.companyName ?? '',
     createdAt: row.createdAt ?? '',
     updatedAt: row.createdAt ?? '',

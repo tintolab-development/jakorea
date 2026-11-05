@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "JA Korea CMS Backend API",
-    "description": "JA Korea CMS 백엔드 API 문서입니다. 보호된 API를 호출할 때는 Swagger 우측 상단 Authorize 버튼에 관리자 또는 회원 Bearer 토큰을 입력해 주세요.\n\nAPI 문서 그룹:\n- admin-cms: /api/admin/** 관리자 CMS 전용\n- member-portal: /api/portal/** 회원 포탈 전용\n- shared: /api/auth/**, /api/public/**, /api/system/** 공용·운영 API\n\n문서 기준:\n- Swagger UI: 프론트 개발, QA, 로컬 API 확인용 실시간 문서\n- src/main/resources/contracts/openapi_frontend_handoff.json: 프론트 인수인계용 검증 계약\n- src/main/resources/contracts/openapi_route_snapshot.json: 릴리즈 라우트 스냅샷\n\n로컬 QA 기준:\n- local profile에서는 피그마 화면 확인용 rich demo seed가 로드됩니다.\n- 외부 URL은 canonical route만 사용합니다. 예: UJAT는 /ujat, /ujat-dgbong는 사용하지 않습니다.\n- 개인정보 원문/민감파일/export API는 감사로그 저장 실패 시 성공 처리하지 않는 fail-closed 정책을 따릅니다.\n",
+    "description": "JA Korea CMS 백엔드 API 문서입니다. 보호된 API를 호출할 때는 Swagger 우측 상단 Authorize 버튼에 관리자 또는 회원 Bearer 토큰을 입력하세요.\n\nAPI 문서 그룹:\n- admin-cms: /api/admin/** 관리자 CMS 전용\n- member-portal: /api/portal/** 회원 포탈 전용\n- shared: /api/auth/**, /api/public/**, /api/system/** 공용·운영 API\n\n문서 기준:\n- Swagger UI: 프론트 개발, QA, 로컬 API 확인용 실시간 문서\n- src/main/resources/contracts/openapi_frontend_handoff.json: 프론트 인수인계용 검증 계약\n- src/main/resources/contracts/openapi_route_snapshot.json: 릴리즈 라우트 스냅샷\n\n로컬 QA 기준:\n- local profile에서는 피그마 화면 확인용 rich demo seed가 로드됩니다.\n- 외부 URL은 canonical route만 사용합니다. 예: UJAT는 /ujat, /ujat-dgbong는 사용하지 않습니다.\n- 개인정보 원문/민감파일/export API는 감사로그 저장 실패 시 성공 처리하지 않는 fail-closed 정책을 따릅니다.\n",
     "contact": {
       "name": "JA Korea CMS Backend"
     },
@@ -648,8 +648,8 @@
         "tags": [
           "기타 API"
         ],
-        "summary": "내 회차 과제 파일·URL 수정 제출(팀 일정도 본인 제출만)",
-        "description": "### 이 API가 하는 일\n- 내 회차 과제 파일·URL 수정 제출(팀 일정도 본인 제출만)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/assignment-submissions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 합계 21개는 ASSIGNMENT_SUBMISSION_LIMIT_EXCEEDED. canResubmit=true일 때만 허용하며 기존 revision과 물리 파일은 보존. 팀 일정도 본인이 낸 건만 수정\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 전달된 fileObjectIds와 urls를 최종 파일·URL 집합으로 새 revision 저장. 파일당 최대 20MB·파일 최대 10개·전체 파일 용량 최대 100MB·URL 최대 20개·파일+URL 합계 최대 20개. 파일 11개는 ASSIGNMENT_FILE_COUNT_EXCEEDED",
+        "summary": "내 회차 과제 파일·URL 수정 제출(팀 일정도 본인 제출만, 파일당 20MB·파일 10개·전체 100MB·URL 20개·파일+URL 합계 20개 제한과 초과 오류 코드)",
+        "description": "### 이 API가 하는 일\n- 내 회차 과제 파일·URL 수정 제출(팀 일정도 본인 제출만, 파일당 20MB·파일 10개·전체 100MB·URL 20개·파일+URL 합계 20개 제한과 초과 오류 코드)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/assignment-submissions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 합계 21개는 ASSIGNMENT_SUBMISSION_LIMIT_EXCEEDED. canResubmit=true일 때만 허용하며 기존 revision과 물리 파일은 보존. 팀 일정도 본인이 낸 건만 수정\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 전달된 fileObjectIds와 urls를 최종 파일·URL 집합으로 새 revision 저장. 파일당 최대 20MB·파일 최대 10개·전체 파일 용량 최대 100MB·URL 최대 20개·파일+URL 합계 최대 20개. 파일 11개는 ASSIGNMENT_FILE_COUNT_EXCEEDED",
         "operationId": "resubmitMemberPortalScheduleAssignment",
         "parameters": [
           {
@@ -727,8 +727,8 @@
         "tags": [
           "기타 API"
         ],
-        "summary": "내 회차 과제 파일·URL 최초 제출(팀 일정도 팀원 개인별)",
-        "description": "### 이 API가 하는 일\n- 내 회차 과제 파일·URL 최초 제출(팀 일정도 팀원 개인별)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/assignment-submissions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: ASSIGNMENT_SUBMISSION_UNAVAILABLE=기간·참여 통과 후 상태 거절. 파일당 최대 20MB·파일 최대 10개·전체 파일 용량 최대 100MB·URL 최대 20개·파일+URL 합계 최대 20개. 파일 11개는 ASSIGNMENT_FILE_COUNT_EXCEEDED\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS 공통정보 회차별 과제 설정 기준 파일·https URL 제출. 팀 일정도 팀원 개인별 제출. ASSIGNMENT_SUBMISSION_NOT_ALLOWED=참여상태",
+        "summary": "내 회차 과제 파일·URL 최초 제출(팀 일정도 팀원 개인별, 파일당 20MB·파일 10개·전체 100MB·URL 20개·파일+URL 합계 20개 제한과 초과 오류 코드)",
+        "description": "### 이 API가 하는 일\n- 내 회차 과제 파일·URL 최초 제출(팀 일정도 팀원 개인별, 파일당 20MB·파일 10개·전체 100MB·URL 20개·파일+URL 합계 20개 제한과 초과 오류 코드)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/assignment-submissions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: ASSIGNMENT_SUBMISSION_UNAVAILABLE=기간·참여 통과 후 상태 거절. 파일당 최대 20MB·파일 최대 10개·전체 파일 용량 최대 100MB·URL 최대 20개·파일+URL 합계 최대 20개. 파일 11개는 ASSIGNMENT_FILE_COUNT_EXCEEDED\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS 공통정보 회차별 과제 설정 기준 파일·https URL 제출. 팀 일정도 팀원 개인별 제출. ASSIGNMENT_SUBMISSION_NOT_ALLOWED=참여상태",
         "operationId": "submitMemberPortalScheduleAssignment",
         "parameters": [
           {
@@ -6979,7 +6979,7 @@
           "기타 API"
         ],
         "summary": "비회원 공유 설문 제출",
-        "description": "### 이 API가 하는 일\n- 비회원 공유 설문 제출\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/public/surveys/{publicToken}/responses`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: OPAQUE_SHARE_TOKEN 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: FORM_ANSWERS 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: UUID capability link, 분당 제출 제한, 현재 binding/version 재검증, 파일첨부 질문 공개 공유 금지",
+        "description": "### 이 API가 하는 일\n- 비회원 공유 설문 제출\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/public/surveys/{publicToken}/responses`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: OPAQUE_SHARE_TOKEN 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: FORM_ANSWERS 개인정보 정책\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: UUID capability link, 분당 제출 제한, 현재 binding/version 재검증, 토큰 binding formType 그대로 저장, paragraph+user_info 평탄 키, 파일첨부 질문 공개 공유 금지",
         "operationId": "submit",
         "parameters": [
           {
@@ -14440,8 +14440,16 @@
             "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
             "required": false,
             "schema": {
-              "type": "boolean",
-              "default": true
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "activeYn",
+            "in": "query",
+            "description": "쿼리 파라미터입니다. 화면 필터, 선택 행, 또는 상세 화면 상태에서 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -19299,7 +19307,7 @@
           "폼/설문"
         ],
         "summary": "설문 공유 링크 생성/조회",
-        "description": "### 이 API가 하는 일\n- 설문 공유 링크 생성/조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/surveys/bindings/{bindingId}/share-link`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_TEMPLATE_WRITE 권한 필요\n- 접근 범위: ASSIGNED_PROGRAM_OR_MASTER 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 프로그램 편집 권한과 FORM_TEMPLATE_WRITE를 모두 검증하며 활성 PUBLISHED SURVEY binding만 공유 가능",
+        "description": "### 이 API가 하는 일\n- 설문 공유 링크 생성/조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/surveys/bindings/{bindingId}/share-link`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: FORM_TEMPLATE_WRITE 권한 필요\n- 접근 범위: ASSIGNED_PROGRAM_OR_MASTER 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 프로그램 편집 권한과 FORM_TEMPLATE_WRITE를 모두 검증하며 활성 PUBLISHED SURVEY·SATISFACTION binding은 PUBLIC_ANONYMOUS 공유 가능. MEMBER_AUTHENTICATED 전용은 비로그인 링크를 만들지 않음",
         "operationId": "shareLink",
         "parameters": [
           {
@@ -44659,7 +44667,7 @@
           "기타 API"
         ],
         "summary": "비회원 공유 설문 조회",
-        "description": "### 이 API가 하는 일\n- 비회원 공유 설문 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/public/surveys/{publicToken}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: OPAQUE_SHARE_TOKEN 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NO_SERVER_AUTOFILL 개인정보 정책\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 활성 공유 토큰과 동일 binding/version의 PUBLISHED SURVEY만 조회; settings/extension 내부정보 제거",
+        "description": "### 이 API가 하는 일\n- 비회원 공유 설문 조회\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/portal/public/surveys/{publicToken}`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 공개 API 또는 로그인 전 호출 가능\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: OPAQUE_SHARE_TOKEN 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: NO_SERVER_AUTOFILL 개인정보 정책\n- 감사로그 저장: 필수 아님\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 목록 조회는 page/size/status/date/search 필터를 바꿔가며 응답이 화면 필터와 일치하는지 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 활성 공유 토큰과 동일 binding/version의 PUBLISHED SURVEY 또는 SATISFACTION만 조회; formType을 SURVEY로 강제하지 않음; settings/extension 내부정보 제거; 회원 PII 자동입력 금지",
         "operationId": "form",
         "parameters": [
           {
@@ -55584,6 +55592,16 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "bindingId",
+            "in": "query",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
           }
         ],
         "responses": {
@@ -55638,6 +55656,16 @@
             "in": "path",
             "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
             "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "bindingId",
+            "in": "query",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": false,
             "schema": {
               "type": "integer",
               "format": "int64"
@@ -57663,7 +57691,7 @@
           "UJAT 지역별 교육 배정"
         ],
         "summary": "UJAT 교육일 직접배정 후보 조회",
-        "description": "빈 슬롯: 미배정 후보, 없으면 reallocationRequired=true와 같은 교육일 2인조 이동 후보. 1인 슬롯: existingPrimaryParticipantId와 같은 교육일 미배정 후보(2인조 분리 없음). 2인 슬롯은 200, assignedVolunteerCount=2, candidates=[], existingPrimaryParticipantId=null. GET은 2인이어도 409를 내지 않는다. POST만 UJAT_EDUCATION_SLOT_ALREADY_ASSIGNED(409). 미배정 후보: 같은 프로그램·같은 반기·면접/최종 PASS(또는 지원서 없는 레거시 참여자)·giveUp 아님. 같은 educationRegionCode이거나 해당 반기 totalAssignedDays=0인 봉사자를 포함한다. 해당 교육일(서울 날짜)에 이미 ASSIGNED이거나 불가 일정이면 제외. canonical ujat_organization_class_schedule_assignment.id가 아니면 UJAT_EDUCATION_SLOT_NOT_FOUND(404). 후보가 정말 없으면 candidates=[] 이고 서버 로그 reasonCode=UJAT_DIRECT_ASSIGNMENT_CANDIDATES_EMPTY. 같은 교육일 판정은 program_schedule.start_at의 서울 날짜 기준이다.",
+        "description": "빈 슬롯: 미배정 후보, 없으면 reallocationRequired=true와 같은 교육일 2인조 이동 후보. 1인 슬롯: existingPrimaryParticipantId와 같은 교육일 미배정 후보(2인조 분리 없음). assignedVolunteerCount는 이 educationSlotId의 assignmentStatus=ASSIGNED distinct 인원만(0/1/2). 같은 schedule의 다른 학급, REASSIGNMENT_REQUIRED, giveUp, 취소는 넣지 않는다. 1인이면 existingPrimaryParticipantId=그 참여자. 0 또는 2이면 null. 2인 슬롯은 200, assignedVolunteerCount=2, candidates=[], existingPrimaryParticipantId=null. GET은 2인이어도 409를 내지 않는다. POST만 UJAT_EDUCATION_SLOT_ALREADY_ASSIGNED(409). 미배정 후보: 같은 프로그램·같은 반기·면접/최종 PASS(또는 지원서 없는 레거시 참여자)·giveUp 아님. 같은 educationRegionCode이거나 해당 반기 totalAssignedDays=0인 봉사자를 포함한다. 해당 교육일(서울 날짜)에 이미 ASSIGNED이거나 불가 일정이면 제외. canonical ujat_organization_class_schedule_assignment.id가 아니면 UJAT_EDUCATION_SLOT_NOT_FOUND(404). 후보가 정말 없으면 candidates=[] 이고 서버 로그 reasonCode=UJAT_DIRECT_ASSIGNMENT_CANDIDATES_EMPTY. 같은 교육일 판정은 program_schedule.start_at의 서울 날짜 기준이다.",
         "operationId": "listUjatDirectAssignmentCandidates",
         "parameters": [
           {
@@ -65668,7 +65696,11 @@
                       "eligible": true,
                       "policyId": 91001,
                       "reasonCode": null,
-                      "blockingReasons": []
+                      "blockingReasons": [],
+                      "countedParticipationCount": 2,
+                      "certificatePeriodStartDate": "2026-03-02",
+                      "certificatePeriodEndDate": "2026-06-30",
+                      "certificatePeriodLabel": "2026년 3월 2일 ~ 2026년 6월 30일"
                     }
                   }
                 }
@@ -73063,6 +73095,13 @@
             "type": "integer",
             "format": "int64"
           },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formType": {
+            "type": "string"
+          },
           "templateVersionId": {
             "type": "integer",
             "format": "int64"
@@ -75000,7 +75039,7 @@
       },
       "InstructorRoleRequestCreateRequest": {
         "type": "object",
-        "description": "회원포탈 강사 권한 신청. CMS 강사 등록과 같은 구조화 profile/settlement/termsAgreements 계약을 사용합니다.",
+        "description": "회원포탈 강사 권한 신청. settlement은 생략 가능하며 계좌 원장은 지급조서 사전 동의서에서만 갱신됩니다.",
         "properties": {
           "requestedActivityType": {
             "type": "string",
@@ -75050,7 +75089,6 @@
           "phone",
           "profile",
           "requestedActivityType",
-          "settlement",
           "termsAgreements"
         ]
       },
@@ -81590,7 +81628,7 @@
           },
           "rawPrivacyIncluded": {
             "type": "boolean",
-            "description": "원본 개인정보 포함 여부. true이면 승인 reference가 필요합니다.",
+            "description": "true면 RAW_PRIVACY_APPROVAL_REQUIRED와 approvalReference가 필요합니다. false(MASKED_ONLY)도 대량이체·세금신고 SERVER_FILE에는 원문 계좌·주민번호를 넣습니다. 원문 노출 감사는 POST /api/admin/files/{fileObjectId}/sensitive-downloads 의 reason으로 남깁니다. 미리보기 GET만으로는 이력이 생기지 않습니다.",
             "example": false
           },
           "approvalReference": {
@@ -81621,10 +81659,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -83892,6 +83930,9 @@
             "type": "integer",
             "format": "int64"
           },
+          "formType": {
+            "type": "string"
+          },
           "templateVersionId": {
             "type": "integer",
             "format": "int64"
@@ -85069,19 +85110,25 @@
         "properties": {
           "participantId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "활동 불가 대상 봉사자 program_participant.id"
           },
           "replacementParticipantId": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "int64",
-            "nullable": true,
-            "description": "대상이 그 서울일에 ASSIGNED이면 필수. 없으면 생략 또는 null. unavailable=false 셀에는 쓰지 않음"
+            "description": "대상이 그날 ASSIGNED이면 필수. ASSIGNED가 없으면 생략 또는 null. 빈 문자열 금지"
           },
           "reason": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "관리자 메모. 없으면 null. 예: CMS 참여 불가일 설정",
             "maxLength": 1000,
-            "minLength": 0,
-            "nullable": true
+            "minLength": 0
           }
         },
         "required": [
@@ -85147,7 +85194,7 @@
           "targetSlotCount": {
             "type": "integer",
             "format": "int32",
-            "description": "빈 슬롯 수 + 보강 대상 1인 슬롯 수"
+            "description": "빈 슬롯 수 + 보강 대상 1인 슬롯 수. 같은 서울 교육일·같은 지역에서 가용 봉사자 V < 학급 수×2 이면 빈 학급을 1인씩 먼저 커버하므로 singleAssignedCount가 늘고 unassignedCount는 줄어든다. 신규 봉사자가 없고 미배정 학급이 남으면 같은 날·같은 지역의 미래 미진행 2인조에서 SECONDARY 1명만 이동한다. 원본 2인조 학급은 targetSlotCount·singleAssignedCount에 넣지 않지만, 분리 후 1인으로 남은 원본도 capacityWarnings[VOLUNTEER_SHORTAGE]와 results(reason=PAIR_SPLIT)에 포함한다."
           },
           "pairAssignedCount": {
             "type": "integer",
@@ -85209,7 +85256,7 @@
           },
           "result": {
             "type": "string",
-            "description": "ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지)",
+            "description": "ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지). 기존 2인조에서 한 명을 옮겨 1인 커버한 경우 result는 ASSIGNED_SINGLE이고 reason=PAIR_SPLIT. PAIR_SPLIT이면 대상 학급 row의 sourceEducationSlotId가 원본 학급이고, 원본 학급 row도 results에 포함된다.",
             "enum": [
               "ASSIGNED_PAIR",
               "ASSIGNED_SINGLE",
@@ -85236,6 +85283,14 @@
           },
           "reason": {
             "type": "string"
+          },
+          "sourceEducationSlotId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "reason=PAIR_SPLIT인 대상 학급 row에서 원본 학급 educationSlotId. 그 외 result는 null. FE는 educationSlotId와 sourceEducationSlotId를 모두 새로고침한다. 생략하지 않고 null로 둔다."
           }
         }
       },
@@ -91715,10 +91770,10 @@
           "ujatPlanRowId": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -99008,6 +99063,9 @@
             "type": "integer",
             "format": "int64"
           },
+          "formType": {
+            "type": "string"
+          },
           "templateVersionId": {
             "type": "integer",
             "format": "int64"
@@ -101857,6 +101915,19 @@
           },
           "canDownload": {
             "type": "boolean"
+          },
+          "countedParticipationCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "certificatePeriodStartDate": {
+            "type": "string"
+          },
+          "certificatePeriodEndDate": {
+            "type": "string"
+          },
+          "certificatePeriodLabel": {
+            "type": "string"
           }
         }
       },
@@ -103167,7 +103238,7 @@
       },
       "DocumentSlot": {
         "type": "object",
-        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | REVISED(수정요청·재제출). deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.",
+        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | FEEDBACK_REQUESTED | REVISED. NOT_SUBMITTED=제출본 없음(마감 경과여도 유지). DEADLINE_MISSED=제출본이 있고 submittedAt이 deadlineAt(Asia/Seoul 목요일 24시=금요일 00:00 exclusive) 이후. FEEDBACK_REQUESTED=기한 내 제출 후 재제출 전 최신 피드백. REVISED=그 피드백보다 늦은 재제출(revision_no만으로는 아님).",
         "properties": {
           "documentKind": {
             "type": "string"
@@ -109381,7 +109452,7 @@
               "null"
             ],
             "format": "int32",
-            "description": "UJAT 교육 진행 배정일수. allocation-matrix volunteers[].totalAssignedDays와 같은 이름·같은 계산(취소가 아닌 서로 다른 program_schedule_id 수). 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음"
+            "description": "UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수(전 반기·전 지역). allocation-matrix volunteers[].totalAssignedDays와 같은 이름이지만 목록은 educationRegionCode 필터를 쓰지 않는다. 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음"
           },
           "openingCeremonyAttended": {
             "type": [
@@ -112633,14 +112704,19 @@
         "properties": {
           "participantId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "봉사자 program_participant.id. 숫자 필수. null/omit 금지."
           },
           "memberId": {
             "type": "integer",
             "format": "int64"
           },
           "volunteerName": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "표시명(member.name). 빈 문자열 대신 값이 없으면 후보에서 제외한다."
           },
           "totalAssignedDays": {
             "type": "integer",
@@ -112664,7 +112740,10 @@
             "type": "integer",
             "format": "int64"
           }
-        }
+        },
+        "required": [
+          "participantId"
+        ]
       },
       "DirectAssignmentCandidatesResponse": {
         "type": "object",
@@ -112703,7 +112782,7 @@
           },
           "assignedVolunteerCount": {
             "type": "integer",
-            "description": "이 슬롯의 활성 배정 인원. 0=빈 슬롯, 1=1인(SECONDARY 추가 가능), 2=가득 참. GET candidates는 2인이어도 409가 아니라 200과 candidates=[] 을 반환한다. POST direct-assignment만 2인일 때 409."
+            "description": "이 educationSlotId의 assignmentStatus=ASSIGNED distinct 인원. 0=빈 슬롯, 1=1인(SECONDARY 추가 가능), 2=가득 참. 같은 일정의 다른 학급·REASSIGNMENT_REQUIRED·giveUp·취소는 세지 않는다. omit/null 금지. GET candidates는 2인이어도 409가 아니라 200과 candidates=[] 을 반환한다. POST direct-assignment만 2인일 때 409."
           }
         },
         "required": [
@@ -112714,7 +112793,7 @@
       },
       "EducationProgressSummaryResponse": {
         "type": "object",
-        "description": "UJAT 교육 진행 요약. regions는 []이며 null이 아니다. programYear는 사업연도. firstHalfActivityTerm/secondHalfActivityTerm은 순수 기수 숫자만. FE 카피: 학교 1학기/2학기/{programYear}년 종합, 봉사단 선발 예정 인원 / {term}기 최종 합격 / {programYear} 봉사단 최종 인원. wire는 firstHalf/secondHalf/total.",
+        "description": "UJAT 교육 진행 요약. regions는 []이며 null이 아니다. educationRegionCode를 생략하면 활성 교육 지역 마스터 전 열이 나온다. programYear는 program.business_year(없으면 business_start_date의 달력연도). UTC slice 금지. firstHalfActivityTerm/secondHalfActivityTerm은 저장된 순수 기수 숫자만(예: \"36\"). 회차·커리큘럼 문구가 순수 기수가 아니면 null. FE 카피: 학교 1학기/2학기/{programYear}년 종합, 봉사단 선발 예정 인원 / {term}기 최종 합격 / {programYear} 봉사단 최종 인원.",
         "properties": {
           "programId": {
             "type": "integer",
@@ -112725,21 +112804,22 @@
               "integer",
               "null"
             ],
-            "description": "사업연도. program.business_year. 없으면 business_start_date 연도. UTC slice 금지."
+            "format": "int32",
+            "description": "사업연도. program.business_year. 없으면 business_start_date 연도. 둘 다 없으면 null."
           },
           "firstHalfActivityTerm": {
             "type": [
               "string",
               "null"
             ],
-            "description": "1학기 표시용 기수 숫자 문자열. 예: \"36\". 미저장이면 null."
+            "description": "1학기 표시용 기수 숫자 문자열. 예: \"36\". 미저장·비순수 기수면 null. invent 금지."
           },
           "secondHalfActivityTerm": {
             "type": [
               "string",
               "null"
             ],
-            "description": "2학기 표시용 기수 숫자 문자열. 예: \"37\". 미저장이면 null."
+            "description": "2학기 표시용 기수 숫자 문자열. 예: \"37\". 미저장·비순수 기수면 null. invent 금지."
           },
           "regions": {
             "type": "array",
@@ -112751,7 +112831,7 @@
       },
       "HalfProgressCounts": {
         "type": "object",
-        "description": "학기 셀. null 필드=미집계(FE는 0 invent 금지). 학기 슬롯이 없으면 0. 실제 0건 집계는 0. classCount>0 이고 studentCount=0 이면 슬롯 student_count 합이 0이다.",
+        "description": "학기 셀. null 필드=미집계(FE는 0 invent 금지, '-' 또는 빈 표시). 실제 0건 집계는 0. classCount>0 이고 studentCount=0 이면 슬롯 student_count 합이 0이다.",
         "properties": {
           "progressingSchoolCount": {
             "type": [
@@ -112783,7 +112863,7 @@
               "null"
             ],
             "format": "int32",
-            "description": "최종 합격(final_result_status=PASS) 봉사자 수. 반기 필드는 그 반기 교육일에 취소가 아닌 배정이 1건 이상인 PASS 봉사자. total은 지역 PASS 봉사자 distinct."
+            "description": "최종 합격(final_result_status=PASS) 봉사자 수. 1학기/2학기 필드는 그 학기 교육일에 취소가 아닌 배정이 1건 이상인 PASS 봉사자. total은 지역 PASS 봉사자 distinct(배정 유무와 무관). 학기 슬롯이 없어도 합격 집계 쿼리가 구현되어 있으면 0."
           }
         }
       },
@@ -112814,17 +112894,19 @@
               "null"
             ],
             "format": "int32",
-            "description": "해당 프로그램·지역 봉사단 선발 예정 정원. 용량 행이 없으면 null. 저장된 0은 0."
+            "description": "해당 프로그램·지역 봉사단 선발 예정 정원. ujat_program_region_capacity.max_volunteer_count의 반기 합. 용량 행이 없으면 null. 저장된 0은 0."
           },
           "firstHalf": {
-            "$ref": "#/components/schemas/HalfProgressCounts"
+            "$ref": "#/components/schemas/HalfProgressCounts",
+            "description": "학교 1학기·봉사단 {firstHalfActivityTerm}기 최종 합격 셀"
           },
           "secondHalf": {
-            "$ref": "#/components/schemas/HalfProgressCounts"
+            "$ref": "#/components/schemas/HalfProgressCounts",
+            "description": "학교 2학기·봉사단 {secondHalfActivityTerm}기 최종 합격 셀"
           },
           "total": {
             "$ref": "#/components/schemas/HalfProgressCounts",
-            "description": "양 반기 합산/중복 제거. progressingSchoolCount·finalPassVolunteerCount는 distinct. classCount·studentCount는 합."
+            "description": "학교 {programYear}년 종합·{programYear} 봉사단 최종 인원. progressingSchoolCount·classCount·studentCount는 1·2학기 합(한쪽만 있으면 그 쪽). finalPassVolunteerCount는 지역 PASS 봉사자 distinct. 반기 한쪽만 있어도 집계한다."
           }
         }
       },
@@ -116105,15 +116187,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -117423,7 +117505,7 @@
               "string",
               "null"
             ],
-            "description": "썸네일 파일명"
+            "description": "섬네일 파일명"
           },
           "recruitmentGuide": {
             "type": [
@@ -119246,8 +119328,8 @@
           },
           "reasonCode": {
             "type": "string",
-            "description": "대표 차단 사유 코드. 발급 가능하면 null일 수 있습니다.",
-            "example": "NOT_COMPLETED"
+            "description": "대표 차단 사유 코드. 발급 가능하면 ELIGIBLE.",
+            "example": "ELIGIBLE"
           },
           "blockingReasons": {
             "type": "array",
@@ -119258,6 +119340,27 @@
             "items": {
               "type": "string"
             }
+          },
+          "countedParticipationCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "참가 인정 출석(PRESENT/ATTENDED/LATE) 건수. 포기 경계 이후 일정은 제외합니다.",
+            "example": 2
+          },
+          "certificatePeriodStartDate": {
+            "type": "string",
+            "description": "인증서 표시 기간 시작일(yyyy-MM-dd, Asia/Seoul). 포기 참가인증서는 최초 인정 일정일.",
+            "example": "2026-03-02"
+          },
+          "certificatePeriodEndDate": {
+            "type": "string",
+            "description": "인증서 표시 기간 종료일(yyyy-MM-dd, Asia/Seoul). 포기 참가인증서는 마지막 인정 일정 종료일.",
+            "example": "2026-03-16"
+          },
+          "certificatePeriodLabel": {
+            "type": "string",
+            "description": "PDF와 동일한 한글 기간 라벨",
+            "example": "2026년 3월 2일 ~ 2026년 3월 16일"
           }
         }
       },

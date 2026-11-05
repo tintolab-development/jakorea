@@ -13,14 +13,18 @@ export type PortalCertificateIssueReason =
 export type MemberCertificateAvailabilityResponse = {
   programId?: number
   participantId?: number | null
-  certificateType?: string
+  certificateType?: string | null
   available?: boolean
   eligible?: boolean
-  reason?: string
-  reasonCode?: string
-  reasonMessage?: string
+  reason?: string | null
+  reasonCode?: string | null
+  reasonMessage?: string | null
   existingIssueId?: number | null
   canDownload?: boolean
+  countedParticipationCount?: number | null
+  certificatePeriodStartDate?: string | null
+  certificatePeriodEndDate?: string | null
+  certificatePeriodLabel?: string | null
 }
 
 export type PortalCertificateIssueRequest = {
