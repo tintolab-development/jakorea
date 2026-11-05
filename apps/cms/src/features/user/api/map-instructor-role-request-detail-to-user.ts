@@ -119,9 +119,13 @@ export function mapInstructorRoleRequestDetailToUser(
       ? {
           instructorCmsSettlement: cmsSettlement,
           instructorInfo: {
-            bankName: cmsSettlement.bankName?.trim() ?? '',
-            accountNumber: cmsSettlement.accountNumber?.trim() ?? '',
-            accountHolder: cmsSettlement.accountHolder?.trim() ?? '',
+            ...(cmsSettlement.bankName?.trim() ? { bankName: cmsSettlement.bankName.trim() } : {}),
+            ...(cmsSettlement.accountNumber?.trim()
+              ? { accountNumber: cmsSettlement.accountNumber.trim() }
+              : {}),
+            ...(cmsSettlement.accountHolder?.trim()
+              ? { accountHolder: cmsSettlement.accountHolder.trim() }
+              : {}),
             isBusinessIncome: Boolean(cmsSettlement.businessIncome),
           },
         }

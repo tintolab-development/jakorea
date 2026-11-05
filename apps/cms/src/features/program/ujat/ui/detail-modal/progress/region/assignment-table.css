@@ -10,7 +10,14 @@
   --cross-table-label-w: 100px;
   --ujat-region-assignment-volunteer-col-w: 160px;
   --ujat-region-assignment-corner-divider: 1px solid
-    var(--disabled-default-stroke, rgba(61, 61, 61, 0.1));
+    var(--Border-alpha-10, rgba(61, 61, 61, 0.1));
+  /* Figma Status/red/bg-strong: C32F4A 10% on white */
+  --ujat-region-assignment-status-red-bg: linear-gradient(
+      0deg,
+      rgba(195, 47, 74, 0.1) 0%,
+      rgba(195, 47, 74, 0.1) 100%
+    ),
+    var(--White, #fff);
   width: max-content;
   min-width: 100%;
 }
@@ -51,6 +58,9 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 150%;
+  color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  overflow: hidden;
 }
 
 .ujat-region-assignment-table thead .cross-table__cell,
@@ -59,15 +69,40 @@
   font-size: 14px;
   font-weight: 700;
   line-height: 150%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ujat-region-assignment-table thead .cross-table__cell:not(.ujat-region-assignment-table__corner-days) {
+  height: 54px;
+}
+
+/* Figma table / h54 — 본문 행 52 */
+.ujat-region-assignment-table tbody .cross-table__cell {
+  height: 52px;
+  min-height: 52px;
+}
+
+/* 축 라벨(총 교육일·교육 진행일·기관명) — Figma Background/disabled 16% overlay */
+.ujat-region-assignment-table__corner-days,
+.ujat-region-assignment-table__corner-axis-top,
+.ujat-region-assignment-table__corner-axis-bottom {
+  background: var(--Background-disabled);
 }
 
 .ujat-region-assignment-table__corner-days {
+  height: 108px;
   white-space: nowrap;
   border-right: var(--ujat-region-assignment-corner-divider) !important;
 }
 
 .ujat-region-assignment-table__days-cell {
+  height: 52px;
   border-right: var(--ujat-region-assignment-corner-divider) !important;
+}
+
+.ujat-region-assignment-table__name-cell {
+  height: 52px;
 }
 
 .ujat-region-assignment-table__corner-axis-top,
@@ -85,16 +120,13 @@
 }
 
 .ujat-region-assignment-table .cross-table__cell--column-header {
+  background: var(--BG-header);
   white-space: nowrap;
 }
 
-/* 활동 포기자 — 행 전체 연한 빨간 배경 (스크린샷: #FFF0F0) */
+/* 활동 포기자 — 행 전체 Status/red 10% overlay. 이름은 검정 유지 */
 .ujat-region-assignment-table__row--withdrawn > .cross-table__cell {
-  background: #fff0f0 !important;
-}
-
-.ujat-region-assignment-table__row--withdrawn .ujat-region-assignment-table__name-cell {
-  color: var(--Status-red-main, #c32f4a);
+  background: var(--ujat-region-assignment-status-red-bg) !important;
 }
 
 .ujat-region-assignment-table .cross-table__cell--column-header,
@@ -104,19 +136,21 @@
 }
 
 .ujat-region-assignment-table__data-cell--blocked {
-  background: #fff0f0;
+  background: var(--ujat-region-assignment-status-red-bg);
 }
 
 .ujat-region-assignment-table__row--withdrawn .ujat-region-assignment-table__data-cell--blocked {
-  background: #fff0f0 !important;
+  background: var(--ujat-region-assignment-status-red-bg) !important;
 }
 
 .ujat-region-assignment-table__assignment {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--spacing-8, 8px);
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Figma: Brand/500 pill · padding 2×10 · radius 30 · Bold 14 */
@@ -143,14 +177,22 @@
 }
 
 .ujat-region-assignment-table__class-label {
+  overflow: hidden;
   color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  text-overflow: ellipsis;
   font-size: 14px;
   font-weight: 500;
   line-height: 150%;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
+/* 1인 배정(singleAssignment) — Figma Brand/500 Bold 14 */
 .ujat-region-assignment-table__class-label--solo {
-  color: var(--color-mint-01, #01a1af);
+  color: var(--Brand-500, #00a0af);
+  font-weight: 700;
 }
 
 .ujat-region-assignment-table__class-label--invalid {
@@ -159,8 +201,12 @@
 }
 
 .ujat-region-assignment-table__empty {
+  overflow: hidden;
   color: var(--default-BK, #3d3d3d);
+  text-align: center;
+  text-overflow: ellipsis;
   font-size: 14px;
   font-weight: 500;
   line-height: 150%;
+  white-space: nowrap;
 }

@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { JaHistoryEra } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryEras } from '@/features/ja-history/api/hooks'
 import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
-import { InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
+import { HistoryCopy, InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 
 export function EraSection({ eras }: { eras: JaHistoryEra[] }) {
   const { showAlert } = useCmsAlert()
@@ -38,9 +38,12 @@ export function EraSection({ eras }: { eras: JaHistoryEra[] }) {
         ellipsis: false,
         render: (_value, record) => {
           const draft = drafts.find(item => item.year === record.year) ?? record
+          if (!editing) {
+            return <HistoryCopy value={record.caption} align="center" />
+          }
           return (
             <InlineText
-              editing={editing}
+              editing
               value={draft.caption}
               rows={3}
               label={`${record.year} 설명 텍스트`}

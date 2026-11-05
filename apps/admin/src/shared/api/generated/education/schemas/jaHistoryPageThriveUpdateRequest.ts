@@ -5,7 +5,7 @@
  * Filtered for Homepage Admin education Orval codegen.
  * OpenAPI spec version: v1
  */
-import type { JaHistoryPageCardUpdate } from './jaHistoryPageCardUpdate';
+import type { JaHistoryPageThriveCardUpdate } from './jaHistoryPageThriveCardUpdate';
 
 export interface JaHistoryPageThriveUpdateRequest {
   /**
@@ -27,6 +27,6 @@ export interface JaHistoryPageThriveUpdateRequest {
      * @minItems 4
      * @maxItems 4
      */
-  cards: JaHistoryPageCardUpdate[];
+  cards: JaHistoryPageThriveCardUpdate[];
   version: number;
 }

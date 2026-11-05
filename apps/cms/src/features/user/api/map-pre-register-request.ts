@@ -296,34 +296,10 @@ export function mapCreateUserRequestToPreRegisterInstructor(
   const settlement = request.instructorCmsSettlement
   if (settlement) {
     body.settlement = toApiInstructorCmsSettlement(settlement)
-    if (settlement.bankName) body.bankName = settlement.bankName
-    if (settlement.accountNumber) body.accountNumber = settlement.accountNumber
-    if (settlement.accountHolder) body.accountHolder = settlement.accountHolder
-    body.businessIncome = settlement.businessIncome
-    if (settlement.bankAccounts?.length) {
-      body.bankAccounts = settlement.bankAccounts.map(row => ({
-        bankName: row.bankName,
-        ...(row.accountNumber ? { accountNumber: row.accountNumber } : {}),
-        ...(row.accountHolder ? { accountHolder: row.accountHolder } : {}),
-      }))
-    }
-  } else if (request.instructorInfo) {
-    const bankName = request.instructorInfo.bankName?.trim()
-    const accountNumber = request.instructorInfo.accountNumber?.trim()
-    const accountHolder = request.instructorInfo.accountHolder?.trim()
-    if (bankName) body.bankName = bankName
-    if (accountNumber) body.accountNumber = accountNumber
-    if (accountHolder) body.accountHolder = accountHolder
+    if (settlement.businessIncome != null) body.businessIncome = settlement.businessIncome
+  } else if (request.instructorInfo?.isBusinessIncome != null) {
+    body.settlement = { businessIncome: request.instructorInfo.isBusinessIncome }
     body.businessIncome = request.instructorInfo.isBusinessIncome
-    if (bankName) {
-      body.bankAccounts = [
-        {
-          bankName,
-          ...(accountNumber ? { accountNumber } : {}),
-          ...(accountHolder ? { accountHolder } : {}),
-        },
-      ]
-    }
   }
 
   return body

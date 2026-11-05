@@ -1,4 +1,5 @@
 import {
+  getUserInfoSelectedEntries,
   isUserInfoParagraph,
   type WritingFormDraft,
   type LectureReportProgramProgressParagraph,
@@ -46,8 +47,13 @@ function extractSurveyParagraphAnswer(
     }
   }
 
-  if (isUserInfoParagraph(paragraph)) {
-    return paragraph.fieldAnswers ?? {}
+    if (isUserInfoParagraph(paragraph)) {
+    const next: Record<string, string> = {}
+    for (const field of getUserInfoSelectedEntries(paragraph)) {
+      const value = paragraph.fieldAnswers?.[field.key]?.trim() ?? ''
+      if (value !== '') next[field.key] = value
+    }
+    return next
   }
 
   if (paragraph.variant === 'date') {
@@ -136,7 +142,7 @@ function isEmptyAnswer(value: unknown): boolean {
       )
       return !body && !itemText
     }
-    return Object.keys(record).length === 0
+    return Object.values(record).every(item => typeof item !== 'string' || item.trim() === '')
   }
   return false
 }
@@ -152,7 +158,8 @@ export function buildEducationSurveyAnswers(
     const key = resolveApplicationAnswerKey(paragraph)
     if (!key) continue
     const value = extractSurveyParagraphAnswer(paragraph, sidecar)
-    if (value !== undefined) answers[key] = value
+    if (value === undefined) continue
+    answers[key] = value
   }
   return answers
 }
@@ -163,10 +170,36 @@ export function validateEducationSurveyFill(
   options?: {
     fileObjectIdsByQuestion?: Record<string, number[]>
     minimumFilesPerAttachment?: number
+    requireUserInfoAnswers?: boolean
+    /** 공개 설문 등 — 지정 key만 필수 (단락 answerRequired와 무관) */
+    requiredUserInfoFieldKeys?: readonly string[]
   }
 ): EducationSurveyFillValidation {
   for (const paragraph of draft.paragraphs) {
-    if (!isAnswerRequired(paragraph) || isUserInfoParagraph(paragraph)) continue
+    if (isUserInfoParagraph(paragraph)) {
+      if (!options?.requireUserInfoAnswers) continue
+      const explicitRequiredKeys = options.requiredUserInfoFieldKeys
+      if (explicitRequiredKeys != null && explicitRequiredKeys.length > 0) {
+        const entries = getUserInfoSelectedEntries(paragraph)
+        const entryByKey = new Map(entries.map(entry => [entry.key, entry]))
+        for (const key of explicitRequiredKeys) {
+          const field = entryByKey.get(key)
+          if (field == null) continue
+          if ((paragraph.fieldAnswers?.[key] ?? '').trim() === '') {
+            return { ok: false, message: `${field.label}을 입력해 주세요.` }
+          }
+        }
+        continue
+      }
+      if (!isAnswerRequired(paragraph)) continue
+      for (const field of getUserInfoSelectedEntries(paragraph)) {
+        if ((paragraph.fieldAnswers?.[field.key] ?? '').trim() === '') {
+          return { ok: false, message: `${field.label}을 입력해 주세요.` }
+        }
+      }
+      continue
+    }
+    if (!isAnswerRequired(paragraph)) continue
     if (paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment') {
       const questionKey = resolveApplicationAnswerKey(paragraph)
       const fileCount =

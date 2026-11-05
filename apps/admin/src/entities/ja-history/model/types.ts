@@ -147,9 +147,8 @@ export type JaHistoryPhilosophySaveInput = {
     id: string
     title: string
     description: string
-    /** 로컬 저장용. 원격 philosophy PUT에는 이미지 필드가 없다. */
-    imageUrl?: string
-    imageFileName?: string
+    imageFile?: File | null
+    imageAssetId?: number | null
   }>
 }
 

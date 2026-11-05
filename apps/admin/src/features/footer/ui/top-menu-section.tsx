@@ -19,7 +19,13 @@ import {
   CMS_TABLE_USAGE_COL_CLASS,
   TABLE_COLUMN_WIDTHS,
 } from '@/shared/constants/table'
-import { CmsButton, CmsInput, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
+  CmsButton,
+  CmsInput,
+  showSaveCompletedAlert,
+  useCmsAlert,
+} from '@/shared/ui'
 
 import './section-shared.css'
 
@@ -114,12 +120,19 @@ export function FooterTopMenuSection() {
   const handleSave = useCallback(async () => {
     try {
       const linkDraft = linkDraftRef.current
-      await saveMutation.mutateAsync(
-        rows.map(row => ({
-          id: row.id,
-          linkUrl: linkDraft[row.id] ?? row.linkUrl,
-        }))
-      )
+      const payload = rows.map(row => ({
+        id: row.id,
+        linkUrl: linkDraft[row.id] ?? row.linkUrl,
+      }))
+      const missingExternalUrl = rows.some((row, index) => {
+        if (row.isInternal || !row.isActive) return false
+        return !payload[index]?.linkUrl.trim()
+      })
+      if (missingExternalUrl) {
+        showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+        return
+      }
+      await saveMutation.mutateAsync(payload)
       linkDraftRef.current = {}
       setIsEditing(false)
       showSaveCompletedAlert()

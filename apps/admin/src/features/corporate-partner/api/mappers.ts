@@ -16,7 +16,8 @@ import type { SponsorListItem } from '@/shared/api/generated/sponsorship/schemas
 import type { SponsorResponse } from '@/shared/api/generated/sponsorship/schemas/sponsorResponse'
 import type { SponsorUpdateRequest } from '@/shared/api/generated/sponsorship/schemas/sponsorUpdateRequest'
 
-export const LIST_PAGE_SIZE = 20
+/** 후원사 목록 관리 — 한 화면 50건 */
+export const LIST_PAGE_SIZE = 50
 
 export function mapSponsorListItemToDomain(row: SponsorListItem): CorporatePartner {
   const id = row.id != null ? String(row.id) : ''
@@ -56,7 +57,7 @@ export function mapSponsorResponseToDomain(row: SponsorResponse): CorporatePartn
  */
 export function toSponsorListParams(filter?: CorporatePartnerListFilter): List2Params {
   const params: List2Params = {
-    page: 0,
+    page: filter?.page ?? 0,
     size: LIST_PAGE_SIZE,
   }
   if (!filter) return params

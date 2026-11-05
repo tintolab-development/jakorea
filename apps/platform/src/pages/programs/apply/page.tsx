@@ -170,6 +170,11 @@ import {
   findMissingRequiredBottomConsentId,
   hasPreferredScheduleDateOutsideBounds,
   hasPreferredScheduleDateOutsideEducationConstraint,
+  hasPreferredScheduleDateBeforeSeoulToday,
+  hasSelectedScheduleIdsBeforeSeoulToday,
+  isScheduleChoicePast,
+  PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE,
+  seoulTodayIsoDate,
   resolveEducationScheduleApplyConstraint,
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE,
   PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE,
@@ -269,6 +274,7 @@ import {
 import {
   ApplyInstructorAvailableSchedule,
   emptyInstructorAvailableSchedule,
+  isApplyInstructorScheduleSlotPast,
   findIncompleteInstructorAvailableScheduleMessage,
   findIncompleteInterviewScheduleMessage,
   findIncompleteVolunteerActivityScheduleMessage,
@@ -1666,6 +1672,7 @@ export function ProgramApplyPage() {
             slots={instructorScheduleSlots}
             value={instructorSchedule}
             onChange={setInstructorSchedule}
+            minDate={seoulTodayIsoDate()}
             copy={showGeminiInstructorApply ? GEMINI_INSTRUCTOR_SCHEDULE_COPY : undefined}
           />
         )
@@ -1788,6 +1795,7 @@ export function ProgramApplyPage() {
             slots={volunteerActivitySlots}
             value={volunteerActivitySchedule}
             onChange={setVolunteerActivitySchedule}
+            minDate={seoulTodayIsoDate()}
             copy={VOLUNTEER_ACTIVITY_SCHEDULE_COPY}
           />
         )
@@ -1799,6 +1807,7 @@ export function ProgramApplyPage() {
             slots={interviewSlots}
             value={interviewSchedule}
             onChange={setInterviewSchedule}
+            minDate={seoulTodayIsoDate()}
             copy={INDIVIDUAL_INTERVIEW_SCHEDULE_COPY}
           />
         )
@@ -1862,7 +1871,7 @@ export function ProgramApplyPage() {
                     className={styles.multipleChoiceItem}
                     size="large"
                     checked={checked}
-                    disabled={atCap}
+                    disabled={atCap || (isScheduleChoicePast(item.label) && !checked)}
                     onCheckedChange={nextChecked => {
                       setTrainedTeachersFixedSelectedIds(prev => {
                         const next = nextChecked
@@ -2024,6 +2033,11 @@ export function ProgramApplyPage() {
                 className={styles.multipleChoiceItem}
                 size="large"
                 checked={selectedIds.includes(item.id)}
+                disabled={
+                  isApplyScheduleChoiceParagraphId(paragraph.id) &&
+                  isScheduleChoicePast(item.label) &&
+                  !selectedIds.includes(item.id)
+                }
                 onCheckedChange={checked => {
                   updateParagraph(paragraph.id, current => {
                     if (current.kind !== 'single_item' || current.variant !== 'multiple_choice') {
@@ -2633,6 +2647,18 @@ export function ProgramApplyPage() {
         setSubmitAlert({ description: '신청 가능한 교육 일정을 선택해 주세요.' })
         return
       }
+      if (
+        isTrainedTeachersFixedScheduleTarget &&
+        !trainedTeachersScheduleRuntimeHidden &&
+        trainedTeachersFixedScheduleAnswer != null &&
+        hasSelectedScheduleIdsBeforeSeoulToday(
+          trainedTeachersFixedScheduleAnswer,
+          trainedTeachersFixedScheduleChoiceItems
+        )
+      ) {
+        setSubmitAlert({ description: PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE })
+        return
+      }
       const applyScheduleChoiceParagraph = pickApplyScheduleChoiceParagraph(
         displayDraft.paragraphs,
         Array.isArray(applicationFormDocument?.paragraphs)
@@ -2739,6 +2765,15 @@ export function ProgramApplyPage() {
           return
         }
         if (!isTrainedTeachersFixedScheduleTarget) {
+          if (
+            (showEconomyPreferredSchedule &&
+              hasPreferredScheduleDateBeforeSeoulToday(economyPreferredBlocks)) ||
+            (!showEconomyPreferredSchedule &&
+              hasPreferredScheduleDateBeforeSeoulToday(preferredBlocks))
+          ) {
+            setSubmitAlert({ description: PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE })
+            return
+          }
           if (showEconomyPreferredSchedule) {
             const economyPreferredParagraph =
               displayDraft.paragraphs.find(paragraph =>
@@ -2912,7 +2947,6 @@ export function ProgramApplyPage() {
         )
         if (
           scheduleParagraph &&
-          isRequiredParagraph(scheduleParagraph) &&
           scheduleParagraph.kind === 'single_item' &&
           scheduleParagraph.variant === 'multiple_choice'
         ) {
@@ -2925,9 +2959,23 @@ export function ProgramApplyPage() {
             applicationFormDocument?.runtimeContext,
             institutionScheduleParagraph
           )
-          if (selectableCount > 0 && selected.length === 0) {
+          if (
+            isRequiredParagraph(scheduleParagraph) &&
+            selectableCount > 0 &&
+            selected.length === 0
+          ) {
             setSubmitErrorField(scheduleParagraph.id)
             setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
+            return
+          }
+          if (
+            hasSelectedScheduleIdsBeforeSeoulToday(selected, [
+              ...scheduleParagraph.items.map(item => ({ id: item.id, label: item.label })),
+              ...(applyEducationFixedScheduleChoices ?? []),
+            ])
+          ) {
+            setSubmitErrorField(scheduleParagraph.id)
+            setSubmitAlert({ description: PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE })
             return
           }
         }
@@ -3091,6 +3139,15 @@ export function ProgramApplyPage() {
           setSubmitAlert({ description: scheduleError })
           return
         }
+        if (
+          instructorSchedule.selectedSlotIds.some(id => {
+            const slot = instructorScheduleSlots.find(row => row.id === id)
+            return slot != null && isApplyInstructorScheduleSlotPast(slot)
+          })
+        ) {
+          setSubmitAlert({ description: PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE })
+          return
+        }
       }
       const interviewSubmitVisible =
         interviewBindingParagraph != null && !hiddenParagraphIds.has(interviewBindingParagraph.id)
@@ -3110,6 +3167,16 @@ export function ProgramApplyPage() {
           setSubmitAlert({ description: PROGRAM_APPLY_REQUIRED_INCOMPLETE_ALERT_MESSAGE })
           return
         }
+      }
+      if (
+        interviewSubmitVisible &&
+        interviewSchedule.selectedSlotIds.some(id => {
+          const slot = interviewSlots.find(row => row.id === id)
+          return slot != null && isApplyInstructorScheduleSlotPast(slot)
+        })
+      ) {
+        setSubmitAlert({ description: PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE })
+        return
       }
       const visibleDraftParagraph = (match: (id: string) => boolean) => {
         const found = findDraftParagraph(displayDraft, match)
@@ -3182,6 +3249,16 @@ export function ProgramApplyPage() {
           return
         }
       }
+      if (
+        volunteerActivityParagraph &&
+        volunteerActivitySchedule.selectedSlotIds.some(id => {
+          const slot = volunteerActivitySlots.find(row => row.id === id)
+          return slot != null && isApplyInstructorScheduleSlotPast(slot)
+        })
+      ) {
+        setSubmitAlert({ description: PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE })
+        return
+      }
       const ujatBasicInfoParagraph = visibleDraftParagraph(isUjatVolunteerBasicInfoParagraphId)
       if (ujatBasicInfoParagraph && isRequiredParagraph(ujatBasicInfoParagraph)) {
         const ujatBasicError = findIncompleteUjatVolunteerBasicInfoMessage(ujatVolunteerBasicInfo)
@@ -3227,6 +3304,16 @@ export function ProgramApplyPage() {
           setSubmitAlert({ description: incomplete.message })
           return
         }
+      }
+      if (
+        ujatPreferredParagraph &&
+        hasSelectedScheduleIdsBeforeSeoulToday(
+          ujatPreferredScheduleIds,
+          ujatPreferredScheduleOptions
+        )
+      ) {
+        setSubmitAlert({ description: PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE })
+        return
       }
       const ujatConfirmParagraph = visibleDraftParagraph(isUjatSubmitConfirmationParagraphId)
       if (ujatConfirmParagraph && isRequiredParagraph(ujatConfirmParagraph)) {

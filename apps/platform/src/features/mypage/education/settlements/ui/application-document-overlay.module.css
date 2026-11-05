@@ -15,9 +15,12 @@
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
   color: var(--color-neutral-black, #3d3d3d);
-  border-bottom: 1px solid var(--color-neutral-cool-200, #e8ebed);
-  background: #fff;
+  background: var(--color-neutral-white, #fff);
+  /* Figma 11229:68532 head-area: Card_small, 하단 선 없음 */
+  box-shadow: var(--shadow-card-sm);
 }
 
 .topBarTitle {
@@ -56,23 +59,43 @@
   display: flex;
   min-height: 0;
   flex: 1 1 auto;
-  padding: 48px 28px 160px;
+  /* Figma 11229:68529: 헤더(92) 아래 120px에서 문서 시작 */
+  padding: 120px 28px 160px;
   align-items: flex-start;
   justify-content: center;
   overflow: auto;
   background: var(--Color-netural-cool-50, #f5f7f7);
 }
 
+/* PC 문서: 960px 폭, radius 12, Card_Large (Figma 12689:83125). 공통 A4 컴포넌트는 그대로 두고 여기서만 덮음 */
+@media (--bp-pc-up) {
+  .documentStage > div {
+    --consent-a4-display-width: min(960px, calc(100vw - 56px));
+  }
+
+  .documentStage > div > div {
+    border-radius: 12px;
+    box-shadow: var(--shadow-card-lg);
+  }
+}
+
+.documentStage {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+/* Figma 11229:68702(배지) + 11229:68704(108px 하단 띠, 투명→검정 12% 그라데이션) */
 .bottomChrome {
   position: fixed;
-  left: 50%;
-  bottom: 36px;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1201;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 0;
   pointer-events: none;
 }
 
@@ -86,21 +109,60 @@
   background: rgba(35, 35, 35, 0.75);
   color: #fff;
   font-family: var(--font-family-base);
-  font-size: 13px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 160%;
+  pointer-events: auto;
+}
+
+.bottomChrome .pagination {
+  box-sizing: border-box;
+  width: 100%;
+  height: 108px;
+  margin-bottom: 0;
+  justify-content: center;
+  background: linear-gradient(180deg, rgba(35, 35, 35, 0) 20%, rgba(35, 35, 35, 0.12) 100%);
+  pointer-events: none;
+}
+
+.bottomChrome .pagination :global(button) {
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border-default, #d9d9d9);
+  border-radius: 8px;
+  background: var(--color-neutral-white, #fff);
+  pointer-events: auto;
+}
+
+
+.pagination > :global(div) {
+  gap: 4px;
+  padding: 0 16px;
+  font-size: 18px;
   font-weight: 400;
   line-height: 150%;
-  pointer-events: auto;
+  letter-spacing: -0.18px;
 }
 
-.pagination {
-  margin-bottom: 0;
-  pointer-events: auto;
-}
+/* PC 페이지네이션 (Figma 11229:68705): 간격 4, 비활성 버튼 선 border/light, "1" SemiBold 검정 + "/ 3" Regular #999 */
+@media (--bp-pc-up) {
+  .bottomChrome .pagination {
+    gap: 4px;
+  }
 
-.pagination :global(button) {
-  box-sizing: border-box;
-  border: 1px solid var(--color-border-default, #dfe4e6);
-  background: var(--color-neutral-white, #fff);
+  .bottomChrome .pagination :global(button:disabled) {
+    border-color: var(--color-border-light, rgba(61, 61, 61, 0.1));
+  }
+
+  .pagination > :global(div) > span {
+    color: var(--color-neutral-warm-500, #999);
+  }
+
+  .pagination > :global(div) > span:first-child {
+    color: var(--color-neutral-black, #3d3d3d);
+    font-weight: 600;
+  }
 }
 
 .state {
@@ -139,41 +201,13 @@
   }
 
   .bottomChrome {
-    left: 0;
-    right: 0;
-    bottom: 0;
-    transform: none;
     gap: 8px;
   }
 
-  .previewBadge {
-    font-size: 14px;
-    line-height: 160%;
-  }
-
-  .pagination {
-    box-sizing: border-box;
-    width: 100%;
+  .bottomChrome .pagination {
     height: 84px;
-    justify-content: center;
     background:
       linear-gradient(180deg, rgba(35, 35, 35, 0) 18%, rgba(35, 35, 35, 0.13) 100%),
       var(--Color-netural-cool-50, #f5f7f7);
-  }
-
-  .bottomChrome .pagination :global(button) {
-    width: 36px;
-    height: 36px;
-    border-color: #d9d9d9;
-    border-radius: 8px;
-  }
-
-  .pagination > :global(div) {
-    gap: 4px;
-    padding: 0 16px;
-    font-size: 18px;
-    font-weight: 400;
-    line-height: 150%;
-    letter-spacing: -0.18px;
   }
 }

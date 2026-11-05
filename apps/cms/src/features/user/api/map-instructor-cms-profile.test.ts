@@ -135,17 +135,19 @@ describe('map-instructor-cms-profile', () => {
     expect(toApiInstructorCmsProfile(profile).defaultFeeGrade).toBe('2')
   })
 
-  it('toApiInstructorCmsSettlement은 bankAccounts를 포함한다', () => {
+  it('instructorProfileFormValuesToCmsSettlement은 사업소득만 보낸다', () => {
     const settlement = instructorProfileFormValuesToCmsSettlement({
       ...INITIAL_VALUES,
       bankName: '국민',
       accountNumber: '123',
       accountHolder: '홍길동',
+      isBusinessIncome: 'yes',
     })
-    expect(settlement.bankAccounts).toHaveLength(1)
+    expect(settlement).toEqual({ businessIncome: true })
+  })
 
-    const wire = toApiInstructorCmsSettlement(settlement)
-    expect(wire).toEqual({
+  it('toApiInstructorCmsSettlement은 계좌 키를 보내지 않는다', () => {
+    const wire = toApiInstructorCmsSettlement({
       bankName: '국민',
       accountNumber: '123',
       accountHolder: '홍길동',
@@ -159,6 +161,11 @@ describe('map-instructor-cms-profile', () => {
         },
       ],
     })
+    expect(wire).toEqual({ businessIncome: false })
+    expect(wire).not.toHaveProperty('bankName')
+    expect(wire).not.toHaveProperty('accountNumber')
+    expect(wire).not.toHaveProperty('accountHolder')
+    expect(wire).not.toHaveProperty('bankAccounts')
   })
 
   it('JA 평가 등급(jaEvaluationGrade) → defaultJaGrade round-trip', () => {

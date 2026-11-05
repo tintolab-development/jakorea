@@ -60,15 +60,6 @@
   gap: 8px;
 }
 
-.individual-settlement-review-reject-modal__form .detail-info-form__field {
-  --detail-info-label-w: 120px !important;
-}
-
-.individual-settlement-review-reject-modal__form .cms-textarea,
-.individual-settlement-review-reject-modal__textarea .cms-textarea__control {
-  width: 100%;
-}
-
 /* 산출 내역 상세: cms-data-table 셀 규격, 합계 행만 민트 배경·발급 버튼 */
 .individual-settlement-review-detail-modal
   .cms-data-table

@@ -6,8 +6,16 @@ import { REQUIRED_FIELDS_INCOMPLETE_ALERT } from '@/shared/ui'
 import {
   type AdminMutationAlert,
   isOptimisticLockConflictError,
+  readApiErrorCode,
+  readApiErrorField,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
+
+export function isSponsorshipOrderConflict(error: unknown): boolean {
+  const code = readApiErrorCode(error) ?? (error instanceof Error ? error.message : '')
+  const field = readApiErrorField(error)
+  return code === 'SPONSORSHIP_ORDER_CONFLICT' || field === 'displayOrder'
+}
 
 export function corporatePartnerMutationFailureAlert(
   error: unknown,
@@ -27,6 +35,20 @@ export function corporatePartnerMutationFailureAlert(
     return {
       title: '저장 실패',
       content: '다른 관리자가 내용을 수정했습니다.\n새로고침 후 다시 시도해 주세요.',
+    }
+  }
+
+  const code = readApiErrorCode(error) ?? ''
+  if (code === 'VERSION_CONFLICT') {
+    return {
+      title: '저장 실패',
+      content: '다른 관리자가 내용을 수정했습니다.\n새로고침 후 다시 시도해 주세요.',
+    }
+  }
+  if (isSponsorshipOrderConflict(error)) {
+    return {
+      title: '입력 확인',
+      content: '노출 순서는 허용 범위 안의 숫자로 입력해 주세요.',
     }
   }
 

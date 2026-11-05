@@ -83,24 +83,16 @@ import {
   shouldPatchGeneralProgramDetailUrl,
 } from '@/features/program/general/lib/general-program-detail-route'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
-import { companySchoolCompatibilityOverlayFromDetailEditValues } from '@/features/program/1c-1s/lib/detail-form-compatibility-overlay'
 import {
-  applyLiveEconomyAnnouncementToProgram,
-  ECONOMY_PUBLIC_PROGRAM_TITLE_KEY,
-  mergeCompanySchoolDetailSaveOverlay,
+  buildCompanySchoolDetailTypedSave,
+  collectCompanySchoolParagraphOverlayFormPatch,
   readEconomyRegistrationOverlayForSave,
-  resolveCompanySchoolDetailSaveAnnouncementTitle,
-  resolveCompanySchoolDetailSaveTitleFields,
-  resolveCompanySchoolDetailSaveLiveFormValues,
   seedEconomyRegistrationOverlayFromProgram,
-  writeEconomyRegistrationOverlayFromProgramDraft,
+  serializeCompanySchoolDetailPatchOverlay,
 } from '@/features/program/1c-1s/lib/registration-overlay-sync'
+import { subscribeProgramRegistrationOverlay } from '@/features/template/ui/form-set/registration-form/general/program-registration-overlay-sync'
 import { prepareRecruitOperationalEditFromProgram } from '@/features/program/general/lib/detail-operational-save-merge'
 import { listIncompleteDetailRecruitmentHighlightKeys } from '@/features/program/general/lib/detail-recruitment-required-highlight'
-import {
-  hasIncompleteEconomyProgramRegistrationRequiredFields,
-  listIncompleteEconomyProgramRegistrationRequiredFields,
-} from '@/features/program/general/lib/economy-program-registration-required-fields'
 import type { RegistrationWizardIncompleteMapVariant } from '@/features/program/shared/lib/registration-wizard-incomplete-map'
 import {
   RegistrationWizardValidationHighlightProvider,
@@ -108,11 +100,7 @@ import {
   useDetailEditRequiredHighlightRequest,
 } from '@/features/program/shared/ui/registration/registration-wizard-validation-highlight'
 import { useProgramOperationDateErrorFocus } from '@/features/program/shared/lib/use-program-operation-date-error-focus'
-import {
-  detailEditValuesToProgramPatch,
-  narrowProgramDetailPatchForCommonInfoSave,
-  programToDetailEditValues,
-} from '@/features/program/shared/model/program-detail-edit-schema'
+import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
 import {
   getGeneralRecruitmentRemoteUnavailableReason,
   programToRecruitmentTabEditValues,
@@ -1535,17 +1523,16 @@ export function ProgramDetailFullPageModal({
           ? async (draft, patch) => {
               try {
                 if (isCompanySchoolDetail && !isTrainedTeachersDetail) {
-                  const liveOverlay = { ...readEconomyRegistrationOverlayForSave() }
-                  const draftForSave = applyLiveEconomyAnnouncementToProgram(
-                    draft,
-                    liveOverlay,
-                    displayProgram.generalCommonInfo?.announcementTitle
-                  )
-                  const registrationOverlay = mergeCompanySchoolDetailSaveOverlay(
-                    draftForSave,
-                    liveOverlay
-                  )
-                  const merged = { ...draftForSave, registrationOverlay }
+                  const built = buildCompanySchoolDetailTypedSave({
+                    program: displayProgram,
+                    values: infoForm.getValues(),
+                  })
+                  const registrationOverlay = serializeCompanySchoolDetailPatchOverlay({
+                    typedProgram: built.draft,
+                    leftoverOverlay: displayProgram.registrationOverlay ?? {},
+                    liveOverlay: built.registrationOverlay,
+                  })
+                  const merged = { ...draft, ...built.draft, registrationOverlay }
                   const roundsChanged =
                     JSON.stringify(merged.rounds ?? []) !== JSON.stringify(draft.rounds ?? [])
                   const periodUnchanged =
@@ -1553,23 +1540,20 @@ export function ProgramDetailFullPageModal({
                     String(merged.endDate ?? '') === String(displayProgram.endDate ?? '')
                   const patchForSave: Partial<Program> = periodUnchanged
                     ? (Object.fromEntries(
-                        Object.entries(patch).filter(
+                        Object.entries({ ...patch, ...built.patch }).filter(
                           ([key]) => key !== 'startDate' && key !== 'endDate'
                         )
                       ) as Partial<Program>)
-                    : patch
-                  await persistProgramPatch(
-                    merged,
-                    {
-                      ...patchForSave,
-                      generalCommonInfo: {
-                        ...patchForSave.generalCommonInfo,
-                        announcementTitle: merged.generalCommonInfo?.announcementTitle,
-                      },
-                      registrationOverlay,
-                      ...(roundsChanged && merged.rounds ? { rounds: merged.rounds } : {}),
-                    }
-                  )
+                    : { ...patch, ...built.patch }
+                  await persistProgramPatch(merged, {
+                    ...patchForSave,
+                    generalCommonInfo: {
+                      ...patchForSave.generalCommonInfo,
+                      announcementTitle: merged.generalCommonInfo?.announcementTitle,
+                    },
+                    registrationOverlay,
+                    ...(roundsChanged && merged.rounds ? { rounds: merged.rounds } : {}),
+                  })
                   return
                 }
                 await persistProgramPatch(draft, patch)
@@ -1580,6 +1564,29 @@ export function ProgramDetailFullPageModal({
             }
           : undefined,
     })
+
+  useEffect(() => {
+    if (!isCompanySchoolDetail || isTrainedTeachersDetail || !isEditModeInfo || !displayProgram) {
+      return
+    }
+    const flushParagraphOverlayIntoTypedForm = () => {
+      const patch = collectCompanySchoolParagraphOverlayFormPatch(
+        readEconomyRegistrationOverlayForSave(),
+        displayProgram
+      )
+      for (const [field, value] of Object.entries(patch)) {
+        infoForm.setValue(field as never, value as never, { shouldDirty: true })
+      }
+    }
+    flushParagraphOverlayIntoTypedForm()
+    return subscribeProgramRegistrationOverlay(flushParagraphOverlayIntoTypedForm)
+  }, [
+    displayProgram,
+    infoForm,
+    isCompanySchoolDetail,
+    isEditModeInfo,
+    isTrainedTeachersDetail,
+  ])
 
   const handleInfoSave = useCallback(async () => {
     if (displayProgram) {
@@ -1598,59 +1605,12 @@ export function ProgramDetailFullPageModal({
       }
     }
     if (isCompanySchoolDetail && !isTrainedTeachersDetail && displayProgram) {
-      const values = infoForm.getValues()
-      const liveOverlay = readEconomyRegistrationOverlayForSave()
-      const liveAnnouncement = resolveCompanySchoolDetailSaveAnnouncementTitle({
-        formAnnouncement: values.announcementTitle,
-        overlayAnnouncement: liveOverlay[ECONOMY_PUBLIC_PROGRAM_TITLE_KEY],
-        programAnnouncement: displayProgram.generalCommonInfo?.announcementTitle,
+      const built = buildCompanySchoolDetailTypedSave({
+        program: displayProgram,
+        values: infoForm.getValues(),
       })
-      if (typeof liveAnnouncement === 'string') {
-        infoForm.setValue('announcementTitle', liveAnnouncement)
-      }
-      // 등록 단락에서 바꾼 대표 프로그램명이 아래 overlay 재작성(폼 기준)에 덮이지 않고 PATCH에 실리게 한다.
-      const liveTitles = resolveCompanySchoolDetailSaveTitleFields(liveOverlay, displayProgram)
-      if (liveTitles.mainTitle !== undefined) infoForm.setValue('mainTitle', liveTitles.mainTitle)
-      if (liveTitles.title !== undefined) infoForm.setValue('title', liveTitles.title)
-      if (liveTitles.titleEn !== undefined) infoForm.setValue('titleEn', liveTitles.titleEn)
-      // 기본정보·공통정보 단락(overlay) 수정값도 폼에 올려, 아래 재작성·PATCH에서 이전 값으로 덮이지 않게 한다.
-      const liveFormValues = resolveCompanySchoolDetailSaveLiveFormValues(liveOverlay, displayProgram)
-      for (const [field, value] of Object.entries(liveFormValues)) {
-        infoForm.setValue(field as keyof typeof liveFormValues, value as never)
-      }
-      const valuesForPatch = infoForm.getValues()
-      const patch = narrowProgramDetailPatchForCommonInfoSave(
-        detailEditValuesToProgramPatch(valuesForPatch, displayProgram)
-      )
-      const formCompat = companySchoolCompatibilityOverlayFromDetailEditValues({
-        ...valuesForPatch,
-        announcementTitle: liveAnnouncement,
-      })
-      const draftFromForm = {
-        ...displayProgram,
-        ...patch,
-        generalCommonInfo: {
-          ...displayProgram.generalCommonInfo,
-          ...patch.generalCommonInfo,
-          announcementTitle: liveAnnouncement ?? patch.generalCommonInfo?.announcementTitle,
-        },
-        registrationOverlay: {
-          ...(displayProgram.registrationOverlay ?? {}),
-          ...formCompat,
-        },
-      }
-      writeEconomyRegistrationOverlayFromProgramDraft(draftFromForm)
-      const overlay = readEconomyRegistrationOverlayForSave()
-      const economyParticipant = {
-        individual: false,
-        organization: true,
-        teacherInstructor: true,
-        volunteer: false,
-      }
-      if (hasIncompleteEconomyProgramRegistrationRequiredFields(overlay, economyParticipant)) {
-        detailRequiredHighlight.report(
-          listIncompleteEconomyProgramRegistrationRequiredFields(overlay, economyParticipant)
-        )
+      if (built.incomplete.length > 0) {
+        detailRequiredHighlight.report(built.incomplete)
         void showAlert({
           title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
           content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,

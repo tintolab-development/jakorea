@@ -91,6 +91,70 @@ describe('program-update-common-string-fields', () => {
     )
   })
 
+  it('patch mode skips clearFields when merged nested contact fields are unchanged', () => {
+    const existing = baseProgram({
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: 'JA Korea 프로그램 운영팀',
+          recruitmentTargetDetail: '초·중·고 학생 대상',
+        },
+      },
+    })
+    const body: Parameters<typeof applyProgramMissingCommonStringFieldsToUpdateRequest>[0] = {}
+    applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+      mode: 'patch',
+      patch: { generalCommonInfo: { announcementTitle: '수정 공고' } },
+      existing,
+      merged: {
+        ...existing,
+        generalCommonInfo: {
+          ...existing.generalCommonInfo,
+          announcementTitle: '수정 공고',
+        },
+      },
+    })
+    expect(body.contactName).toBeUndefined()
+    expect(body.recruitmentTargetDetail).toBeUndefined()
+    expect(body.clearFields ?? []).not.toContain('contactName')
+    expect(body.clearFields ?? []).not.toContain('recruitmentTargetDetail')
+  })
+
+  it('patch mode uses clearFields when contact domain keys are explicitly emptied', () => {
+    const existing = baseProgram({
+      contactName: '문의처',
+      recruitmentTargetDetail: '모집상세',
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactName: '문의처',
+          recruitmentTargetDetail: '모집상세',
+        },
+      },
+    })
+    const body: Parameters<typeof applyProgramMissingCommonStringFieldsToUpdateRequest>[0] = {}
+    applyProgramMissingCommonStringFieldsToUpdateRequest(body, {
+      mode: 'patch',
+      patch: {
+        contactName: '',
+        recruitmentTargetDetail: '',
+        generalCommonInfo: {
+          participantRecruitmentInfo: { contactName: '', recruitmentTargetDetail: '' },
+        },
+      },
+      existing,
+      merged: {
+        ...existing,
+        contactName: '',
+        recruitmentTargetDetail: '',
+        generalCommonInfo: { participantRecruitmentInfo: { contactName: '', recruitmentTargetDetail: '' } },
+      },
+    })
+    expect(body.contactName).toBeUndefined()
+    expect(body.recruitmentTargetDetail).toBeUndefined()
+    expect(body.clearFields).toEqual(
+      expect.arrayContaining(['contactName', 'recruitmentTargetDetail'])
+    )
+  })
+
   it('patch mode only wires touched and changed fields', () => {
     const body: Parameters<typeof applyProgramMissingCommonStringFieldsToUpdateRequest>[0] = {}
     applyProgramMissingCommonStringFieldsToUpdateRequest(body, {

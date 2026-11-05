@@ -128,11 +128,17 @@ export function toFooterOrganizationUpdateRequest(
     email: input.email.trim(),
     logoAssetId,
     version,
-  }
+  } as FooterOrganizationUpdateRequest
+}
+
+type FooterPartnerLinkWire = FooterPartnerResponse & {
+  externalUrl?: string | null
+  linkUrl?: string | null
 }
 
 function readPartnerLinkUrl(row: FooterPartnerResponse): string {
-  const raw = row.externalUrl
+  const wire = row as FooterPartnerLinkWire
+  const raw = wire.externalUrl ?? wire.linkUrl
   return typeof raw === 'string' ? raw.trim() : ''
 }
 

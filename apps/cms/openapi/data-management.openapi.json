@@ -7058,15 +7058,24 @@
       },
       "AttendanceManagerUpdateRequest": {
         "type": "object",
-        "description": "UJAT 교육일 출결 담당자 지정/해제 요청",
+        "required": [
+          "organizationApplicationId",
+          "participantId"
+        ],
         "properties": {
+          "organizationApplicationId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "배정 매트릭스 열 SSOT. AllocationColumn.organizationApplicationId. 생략·null·0 치환 금지."
+          },
           "participantId": {
             "type": "integer",
             "format": "int64",
-            "description": "출결 담당자로 지정할 program_participant.id. null이면 해당 교육일(scheduleId)의 출결 담당을 해제한다. 0이나 다른 id로 치환하지 않는다.",
-            "nullable": true
+            "nullable": true,
+            "description": "출결 담당자로 지정할 program_participant.id. 이 organizationApplicationId 열에 ASSIGNED인 봉사자만 허용. null이면 해당 열(scheduleId+organizationApplicationId)의 출결 담당을 해제한다. 0이나 다른 id로 치환하지 않는다. JSON null로 보낸다."
           }
-        }
+        },
+        "description": "UJAT 기관 열(organizationApplicationId) 출결 담당자 지정/해제 요청. 같은 교육일(scheduleId)에 기관이 여러 개면 열마다 담당자가 다르다. CMS 지역 배정 모달의 기관별 선택은 서로 덮어쓰지 않는다."
       },
       "CapacityLimitRequest": {
         "type": "object",
@@ -16949,7 +16958,7 @@
           },
           "rawPrivacyIncluded": {
             "type": "boolean",
-            "description": "true면 RAW_PRIVACY_APPROVAL_REQUIRED와 approvalReference가 필요합니다. false(MASKED_ONLY)도 대량이체·세금신고 SERVER_FILE에는 원문 계좌·주민번호를 넣습니다. 원문 노출 감사는 POST /api/admin/files/{fileObjectId}/sensitive-downloads 의 reason으로 남깁니다. 미리보기 GET만으로는 이력이 생기지 않습니다.",
+            "description": "원본 개인정보 포함 여부. true이면 승인 reference가 필요합니다.",
             "example": false
           },
           "approvalReference": {
@@ -16980,10 +16989,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -20337,7 +20346,7 @@
           "targetSlotCount": {
             "type": "integer",
             "format": "int32",
-            "description": "빈 슬롯 수 + 보강 대상 1인 슬롯 수. 같은 서울 교육일·같은 지역에서 가용 봉사자 V < 학급 수×2 이면 빈 학급을 1인씩 먼저 커버하므로 singleAssignedCount가 늘고 unassignedCount는 줄어든다. 신규 봉사자가 없고 미배정 학급이 남으면 같은 날·같은 지역의 미래 미진행 2인조에서 SECONDARY 1명만 이동한다. 원본 2인조 학급은 targetSlotCount·singleAssignedCount에 넣지 않지만, 분리 후 1인으로 남은 원본도 capacityWarnings[VOLUNTEER_SHORTAGE]와 results(reason=PAIR_SPLIT)에 포함한다."
+            "description": "빈 슬롯 수 + 보강 대상 1인 슬롯 수"
           },
           "pairAssignedCount": {
             "type": "integer",
@@ -20399,7 +20408,7 @@
           },
           "result": {
             "type": "string",
-            "description": "ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지). 기존 2인조에서 한 명을 옮겨 1인 커버한 경우 result는 ASSIGNED_SINGLE이고 reason=PAIR_SPLIT. PAIR_SPLIT이면 대상 학급 row의 sourceEducationSlotId가 원본 학급이고, 원본 학급 row도 results에 포함된다.",
+            "description": "ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지)",
             "enum": [
               "ASSIGNED_PAIR",
               "ASSIGNED_SINGLE",
@@ -20426,12 +20435,6 @@
           },
           "reason": {
             "type": "string"
-          },
-          "sourceEducationSlotId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "reason=PAIR_SPLIT인 대상 학급 row에서 원본 학급 educationSlotId. 그 외 result는 null. FE는 educationSlotId와 sourceEducationSlotId를 모두 새로고침한다. 생략하지 않고 null로 둔다.",
-            "nullable": true
           }
         }
       },
@@ -26631,10 +26634,10 @@
           "ujatPlanRowId": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           }
         }
@@ -43514,7 +43517,7 @@
           "totalAssignedDays": {
             "type": "integer",
             "format": "int32",
-            "description": "UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수(전 반기·전 지역). allocation-matrix volunteers[].totalAssignedDays와 같은 이름이지만 목록은 educationRegionCode 필터를 쓰지 않는다. 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음",
+            "description": "UJAT 교육 진행 배정일수. allocation-matrix volunteers[].totalAssignedDays와 같은 이름·같은 계산(취소가 아닌 서로 다른 program_schedule_id 수). 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음",
             "nullable": true
           },
           "openingCeremonyAttended": {
@@ -46894,7 +46897,8 @@
             "description": "학급 라벨. ASSIGNED/REASSIGNMENT_REQUIRED는 class_label_snapshot, 없으면 교육 슬롯 class_label. UNASSIGNED는 null. 빈 문자열 금지"
           },
           "attendanceManager": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "이 열(scheduleId+organizationApplicationId)의 출결 담당 여부. ASSIGNED이고 해당 기관 열에 attendance_manager_yn=true인 셀만 true. 같은 교육일의 다른 기관 열과 공유하지 않는다. UNASSIGNED/REASSIGNMENT_REQUIRED는 false."
           },
           "singleAssignment": {
             "type": "boolean"
@@ -50033,15 +50037,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "memberId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
-          },
           "adminAccountId": {
             "type": "integer",
             "format": "int64",
             "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
+          },
+          "memberId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
           }
         }
       },
@@ -51316,7 +51320,7 @@
           },
           "thumbnailFileName": {
             "type": "string",
-            "description": "섬네일 파일명",
+            "description": "썸네일 파일명",
             "nullable": true
           },
           "recruitmentGuide": {

@@ -1188,10 +1188,10 @@ export interface CreateUserRequest {
     position?: string
   }
   instructorInfo?: {
-    bankName: string
-    accountNumber: string
-    accountHolder: string
-    isBusinessIncome: boolean
+    bankName?: string
+    accountNumber?: string
+    accountHolder?: string
+    isBusinessIncome?: boolean
   }
   isActive?: boolean
   id1365?: string
@@ -1457,7 +1457,12 @@ export async function createUser(request: CreateUserRequest): Promise<Omit<User,
 
   // 강사 정보 설정
   if (request.role === 'INSTRUCTOR' && request.instructorInfo) {
-    newUser.instructorInfo = request.instructorInfo
+    newUser.instructorInfo = {
+      bankName: request.instructorInfo.bankName ?? '',
+      accountNumber: request.instructorInfo.accountNumber ?? '',
+      accountHolder: request.instructorInfo.accountHolder ?? '',
+      isBusinessIncome: request.instructorInfo.isBusinessIncome ?? false,
+    }
   }
 
   if (request.role === 'INSTRUCTOR') {

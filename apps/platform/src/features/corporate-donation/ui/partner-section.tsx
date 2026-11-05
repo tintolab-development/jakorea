@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { HOME_PARTNER_LOGO_ROWS, type HomePartnerLogo } from '@/features/home'
+import { type HomePartnerLogo } from '@/features/home'
+import { gridCellsFromPartnerRows } from '@/features/home/lib/split-partner-logo-rows'
 import homePartnerStyles from '@/features/home/ui/partner-marquee-section.module.css'
 import { PFText } from '@/shared/ui'
 import { usePublicCorporatePartnerRows } from '../api/hooks'
@@ -23,12 +24,8 @@ function LogoChips({ logos, hidden }: { logos: readonly HomePartnerLogo[]; hidde
 }
 
 export function PartnerSection() {
-  const { rows } = usePublicCorporatePartnerRows()
-  const partnerRows = rows.length > 0 ? rows : HOME_PARTNER_LOGO_ROWS
-  const flatLogos = useMemo(
-    () => partnerRows.flatMap(row => [...row]),
-    [partnerRows],
-  )
+  const { rows: partnerRows } = usePublicCorporatePartnerRows()
+  const gridCells = useMemo(() => gridCellsFromPartnerRows(partnerRows), [partnerRows])
   const [marqueeNode, setMarqueeNode] = useState<HTMLDivElement | null>(null)
   const [marqueeInView, setMarqueeInView] = useState(false)
 
@@ -58,15 +55,19 @@ export function PartnerSection() {
 
       <div className={styles.visual}>
         <ul className={homePartnerStyles.logoGrid} aria-label="함께해준 기업 로고">
-          {flatLogos.map((logo, index) => (
-            <li className={homePartnerStyles.logoChip} key={`${logo.name}-${index}`}>
-              {logo.logoUrl ? (
-                <img className={homePartnerStyles.logoImage} src={logo.logoUrl} alt={logo.name} />
-              ) : (
-                <span className={homePartnerStyles.logoText}>{logo.name}</span>
-              )}
-            </li>
-          ))}
+          {gridCells.map((logo, index) =>
+            logo ? (
+              <li className={homePartnerStyles.logoChip} key={`${logo.name}-${index}`}>
+                {logo.logoUrl ? (
+                  <img className={homePartnerStyles.logoImage} src={logo.logoUrl} alt={logo.name} />
+                ) : (
+                  <span className={homePartnerStyles.logoText}>{logo.name}</span>
+                )}
+              </li>
+            ) : (
+              <li className={homePartnerStyles.logoGridEmpty} key={`empty-${index}`} aria-hidden />
+            ),
+          )}
         </ul>
 
         <div

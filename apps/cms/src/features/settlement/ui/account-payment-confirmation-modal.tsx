@@ -49,6 +49,13 @@ function formatWon(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`
 }
 
+/** 일괄 지급 확인 모달 — 선택 행 프로그램명 요약 */
+export function formatAccountPaymentBulkProgramDisplay(programNames: string[]): string {
+  const uniquePrograms = [...new Set(programNames)]
+  if (uniquePrograms.length === 1) return uniquePrograms[0]
+  return `${uniquePrograms[0]} 외 ${uniquePrograms.length - 1}개`
+}
+
 function PaymentCompleteButtonLabel() {
   return <strong className="account-payment-confirm-modal__strong">[계좌 지급 완료]</strong>
 }
@@ -147,13 +154,7 @@ export function buildAccountPaymentConfirmationPayloadForSelection(
   if (rows.length === 1) {
     return buildAccountPaymentSingleConfirmationPayloadFromListRow(rows[0])
   }
-  const uniquePrograms = [...new Set(rows.map(r => r.programName))]
-  const programDisplay =
-    uniquePrograms.length === 1
-      ? rows.length > 1
-        ? `${uniquePrograms[0]} 외 ${rows.length - 1}개`
-        : uniquePrograms[0]
-      : `${uniquePrograms[0]} 외 ${uniquePrograms.length - 1}개`
+  const programDisplay = formatAccountPaymentBulkProgramDisplay(rows.map(r => r.programName))
   const recipientName = rows[0].instructorName?.trim() || '신청자'
   return {
     kind: 'bulk',

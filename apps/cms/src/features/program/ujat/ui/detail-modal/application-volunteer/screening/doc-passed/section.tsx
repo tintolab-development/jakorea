@@ -39,10 +39,10 @@ export function DocPassedSection({
   onVolunteerApplicantDetailMetaChange,
 }: DocPassedSectionProps) {
   const canWrite = useUjatCanWrite()
-  const { labels: educationRegionLabels } = useUjatEducationRegions()
+  const { regions: educationRegions } = useUjatEducationRegions()
   const filterFields = useMemo(
-    () => buildUjatVolunteerDocPassedFilterRows()[0] ?? [],
-    [educationRegionLabels]
+    () => buildUjatVolunteerDocPassedFilterRows(educationRegions)[0] ?? [],
+    [educationRegions]
   )
 
   const {

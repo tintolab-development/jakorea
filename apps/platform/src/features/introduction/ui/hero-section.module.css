@@ -336,12 +336,22 @@
     font-weight: 700;
     line-height: 140%;
     letter-spacing: -0.6px;
+    opacity: 0;
+    transform: translateY(40px);
+    pointer-events: none;
     transition:
-      font-size 350ms ease-in-out,
-      font-weight 350ms ease-in-out,
-      line-height 350ms ease-in-out,
-      letter-spacing 350ms ease-in-out,
-      transform 350ms ease-in-out;
+      font-size 700ms ease-in-out,
+      font-weight 700ms ease-in-out,
+      line-height 700ms ease-in-out,
+      letter-spacing 700ms ease-in-out,
+      opacity 700ms ease-in-out,
+      transform 700ms ease-in-out;
+  }
+
+  .isHeadline .intro {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
   }
 
   .message {
@@ -358,18 +368,20 @@
     opacity: 0;
     transform: translateY(48px);
     transition:
-      opacity 350ms ease-in-out,
-      transform 350ms ease-in-out;
+      opacity 700ms ease-in-out,
+      transform 700ms ease-in-out;
     pointer-events: none;
   }
 
   .isRevealed .intro {
+    opacity: 1;
     font-size: 34px;
     font-weight: 400;
     line-height: 144%;
     letter-spacing: -0.68px;
     transform: translateY(-72px);
     color: var(--color-primary-800);
+    pointer-events: auto;
   }
 
   .isRevealed .message {
@@ -382,7 +394,7 @@
     position: absolute;
     inset: 0;
     flex: none;
-    transition: opacity 400ms ease-in-out;
+    transition: opacity 650ms ease-in-out;
   }
 
   .isSplit .openingStage {
@@ -450,7 +462,7 @@
     width: 100%;
     height: 100%;
     flex-direction: column;
-    transition: transform 400ms ease-in-out;
+    transition: transform 650ms ease-in-out;
   }
 
   .isVisionStack .brandSlides {
@@ -479,7 +491,7 @@
   }
 
   .phaseInspiring .inspiringLead {
-    animation: inspiringSlideUp 500ms ease-in-out 750ms both;
+    animation: inspiringSlideUp 700ms ease-in-out 280ms both;
   }
 
   .inspiringTitle {
@@ -601,7 +613,7 @@
     width: 100%;
     height: 100%;
     flex-direction: column;
-    transition: transform 400ms ease-in-out;
+    transition: transform 650ms ease-in-out;
   }
 
   .isVisionStack .contentSlides {
@@ -632,7 +644,7 @@
   }
 
   .phaseInspiring .inspiringBlocks {
-    animation: inspiringSlideRight 500ms ease-in-out 750ms both;
+    animation: inspiringSlideRight 700ms ease-in-out 280ms both;
   }
 
   .infoBlock {

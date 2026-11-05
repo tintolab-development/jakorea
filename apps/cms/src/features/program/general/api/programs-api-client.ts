@@ -533,15 +533,21 @@ function parseTotalCountHeader(value: unknown): number | null {
 /** 응답 목록 전체 — `X-Total-Count`(없으면 마지막 페이지가 size 미만)까지 페이지 수집 */
 export async function fetchAdminProgramSurveyResponsesRemote(
   programId: string,
-  templateVersionId: string
+  templateVersionId: string,
+  bindingId?: string
 ): Promise<SurveyResponseListItem[]> {
   const url = `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/responses`
+  const bindingQuery = bindingId?.trim()
   const items: SurveyResponseListItem[] = []
   for (let page = 0; page < SURVEY_RESPONSES_MAX_PAGES; page += 1) {
     const response = await axiosClient.request<unknown>({
       url,
       method: 'GET',
-      params: { page, size: SURVEY_RESPONSES_PAGE_SIZE },
+      params: {
+        page,
+        size: SURVEY_RESPONSES_PAGE_SIZE,
+        ...(bindingQuery ? { bindingId: bindingQuery } : {}),
+      },
     })
     const body = unwrapApiBody<SurveyResponseListItem[] | { items?: SurveyResponseListItem[] }>(
       response.data
@@ -557,7 +563,8 @@ export async function fetchAdminProgramSurveyResponsesRemote(
 
 export async function fetchAdminProgramSurveySummaryRemote(
   programId: string,
-  templateVersionId: string
+  templateVersionId: string,
+  bindingId?: string
 ): Promise<
   import('@/shared/api/generated/dashboard/schemas/surveySummaryResponse').SurveySummaryResponse[]
 > {
@@ -570,6 +577,7 @@ export async function fetchAdminProgramSurveySummaryRemote(
     await customInstance({
       url: `/api/admin/programs/${encodeURIComponent(programId)}/surveys/${encodeURIComponent(templateVersionId)}/summary`,
       method: 'GET',
+      params: bindingId?.trim() ? { bindingId: bindingId.trim() } : undefined,
     })
   )
   if (Array.isArray(body)) return body

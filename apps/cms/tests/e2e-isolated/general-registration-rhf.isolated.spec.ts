@@ -4,6 +4,7 @@ import {
   REGISTRATION_CASES,
 } from '../e2e/pages/general-program-registration.page'
 import {
+  ISOLATED_GENERAL_FIXTURE,
   assertIsolatedNetwork,
   installIsolatedRegistrationNetwork,
   type IsolatedNetworkLog,
@@ -55,12 +56,27 @@ async function runRepresentativeCase(
     skipOptionalUploads: true,
     safeWagePaymentItems: true,
     programTitle: `격리RHF-${regCase.label}-${Date.now()}`,
+    detailedProgramLabel: ISOLATED_GENERAL_FIXTURE.detailedProgramName,
+    sponsorLabel: ISOLATED_GENERAL_FIXTURE.sponsorName,
+    sponsorManagerLabel: ISOLATED_GENERAL_FIXTURE.contactName,
+    paymentItemLabel: ISOLATED_GENERAL_FIXTURE.paymentItemName,
   })
   await registration.openNewRegistration()
   await expectWizardOpen(page)
   await registration.fillCommonInfo()
+  console.log('[AUDIT common]', JSON.stringify(await registration.auditEmptyVisibleFields()))
   await registration.goToRecruitment()
   await registration.fillRecruitmentInfo()
+  for (const tab of ['참여 기관 모집 정보', '참여자 모집 정보', '강사 모집 정보', '봉사자 모집 정보']) {
+    const t = page.getByRole('tab', { name: tab }).or(page.getByText(tab, { exact: true })).first()
+    if ((await t.count()) === 0) continue
+    await t.click()
+    await page.waitForTimeout(500)
+    console.log(`[AUDIT recruit ${tab}]`, JSON.stringify(await registration.auditEmptyVisibleFields()))
+  }
+  if (audience === 'organization') {
+    expect(await registration.assertRecruitTabRoundTripStrict(), '모집 탭 왕복').toBeGreaterThanOrEqual(6)
+  }
   await registration.goToApplication()
   await registration.fillApplicationInfo()
   await registration.completeRegistration()
@@ -71,11 +87,70 @@ async function runRepresentativeCase(
   const createText = JSON.stringify(log.createProgram?.body ?? {})
   expect(createText).not.toContain('application.')
   expect(createText).not.toContain('blob:')
+  // 화면에서 클릭한 세부 프로그램·후원사·담당자가 CREATE Body에 직렬화되는지
+  console.log('[STEP41] CREATE body', audience, createText.slice(0, 4000))
+  expect(createText).toContain(ISOLATED_GENERAL_FIXTURE.sponsorId)
+  expect(createText).toContain(ISOLATED_GENERAL_FIXTURE.contactId)
+  expect(createText).not.toContain('__sponsor_contact_unselected__')
+  // 일정형은 세부 프로그램이 「해당없음」으로 잠긴다(basic-info-paragraph-title-fields.tsx:63-68). 커리큘럼형만 선택 id를 단언한다.
+  const isScheduleStructure = createText.includes('\\"generalProgramEducationStructure\\":\\"schedule\\"') ||
+    createText.includes('"generalProgramEducationStructure":"schedule"')
+  if (isScheduleStructure) {
+    expect(createText).toContain('__detailed_program_none__')
+  } else {
+    expect(
+      createText.includes(ISOLATED_GENERAL_FIXTURE.detailedProgramId) ||
+        createText.includes(ISOLATED_GENERAL_FIXTURE.detailedProgramName)
+    ).toBe(true)
+  }
+  // 역할별 모집 대상: 직렬화 값과 역할 간 비혼입(PHASE 3), 강사 기본값 「성인」 저장(FIX_VERIFIED 대상)
+  const createBody = (log.createProgram?.body ?? {}) as Record<string, unknown>
+  const sdjRaw = createBody.serviceDetailJson
+  const sdj = (typeof sdjRaw === 'string' ? JSON.parse(sdjRaw) : sdjRaw ?? {}) as Record<string, any>
+  const sdjOverlay = JSON.stringify(sdj)
+  const recruitments = (createBody.recruitments ?? []) as Array<Record<string, unknown>>
+  const findDeep = (obj: unknown, key: string): unknown => {
+    if (obj == null || typeof obj !== 'object') return undefined
+    if (key in (obj as Record<string, unknown>)) return (obj as Record<string, unknown>)[key]
+    for (const v of Object.values(obj as Record<string, unknown>)) {
+      const hit = findDeep(v, key)
+      if (hit !== undefined) return hit
+    }
+    return undefined
+  }
+  if (recruitments.some(r => r.recruitmentType === 'INSTRUCTOR')) {
+    expect(findDeep(sdj, 'recruit.instructor.recruitTargets'), '강사 모집 대상 overlay').toEqual(['adult'])
+    expect(
+      (findDeep(sdj, 'instructorRecruitmentInfo') as Record<string, unknown> | undefined)?.recruitmentTarget,
+      '강사 모집 대상 라벨'
+    ).toBe('성인')
+  }
+  if (recruitments.some(r => r.recruitmentType === 'VOLUNTEER')) {
+    expect(findDeep(sdj, 'recruit.volunteer.volunteerTargets'), '봉사자 모집 대상').toEqual(['university'])
+  }
+  if (audience === 'organization') {
+    expect(createBody.targetLevels, '기관 교육 대상').toEqual(['high'])
+  }
+  console.log('[STEP41] role targets', JSON.stringify({
+    targetLevels: createBody.targetLevels,
+    instructor: findDeep(sdj, 'recruit.instructor.recruitTargets'),
+    volunteer: findDeep(sdj, 'recruit.volunteer.volunteerTargets'),
+    recruitments: recruitments.map(r => `${r.recruitmentType}/${r.targetType}`),
+    sdjBytes: sdjOverlay.length,
+  }))
   // P2(방안 C): 양식 PUT/binding은 CREATE 이후에 나간다.
   await expect
     .poll(() => log.formVersionPuts.length + log.formBindings.length, { timeout: 30_000 })
     .toBeGreaterThan(0)
   expect(log.programDraftRequests).toHaveLength(0)
+  if (process.env.STEP41_DUMP) {
+    // 증거 덤프(환경변수로만 동작): CREATE 전체 Body + 양식 PUT/바인딩
+    const fs = await import('node:fs')
+    fs.writeFileSync(
+      `${process.env.STEP41_DUMP}-${audience}.json`,
+      JSON.stringify({ create: log.createProgram, formVersionPuts: log.formVersionPuts, formBindings: log.formBindings, api: log.api }, null, 1)
+    )
+  }
   return { registration, capturedTitle }
 }
 

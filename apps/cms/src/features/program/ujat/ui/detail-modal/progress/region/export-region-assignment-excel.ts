@@ -80,7 +80,9 @@ function applyBodyStyle(
 function formatAssignmentCell(cell: RegionAssignmentCell | undefined): string {
   if (!cell || cell.kind === 'empty') return '-'
   const classLabel = formatUjatGradeClassDisplayLabel(cell.classLabel)
-  return cell.isAttendanceManager ? `출결 / ${classLabel}` : classLabel
+  const showAttendance =
+    cell.isAttendanceManager && (cell.assignmentStatus ?? '').trim().toUpperCase() === 'ASSIGNED'
+  return showAttendance ? `출결 / ${classLabel}` : classLabel
 }
 
 function selectedAssignedCount(cells: Array<RegionAssignmentCell | undefined>): number {

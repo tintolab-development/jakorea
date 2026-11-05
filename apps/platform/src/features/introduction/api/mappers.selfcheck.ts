@@ -1,5 +1,9 @@
 import assert from 'node:assert/strict'
 import {
+  resolveHistorySelection,
+  resolveYearForPeriod,
+} from '../lib/achievement-data.ts'
+import {
   hasOrganizationContent,
   mapHistoryByYear,
   mapPublicOrganization,
@@ -111,5 +115,14 @@ const historyOnly = mapHistoryByYear([
 assert.equal(historyOnly[2016]?.months[0]?.items[0], '지역 거점 교육 확대')
 
 assert.equal(hasOrganizationContent(mapPublicOrganization({})), false)
+
+const mixedYears = mapHistoryByYear([
+  { year: 2024, month: 12, content: '최근 연혁' },
+  { year: 2020, month: 1, content: '과거 연혁' },
+])
+assert.deepEqual(resolveHistorySelection(mixedYears), { periodId: '2021-2025', year: 2024 })
+assert.equal(resolveYearForPeriod('2026-now', mixedYears), 2026)
+assert.equal(resolveYearForPeriod('2021-2025', mixedYears), 2024)
+assert.equal(resolveYearForPeriod('2016-2020', mixedYears), 2020)
 
 console.log('introduction mapPublicOrganization selfcheck: ok')

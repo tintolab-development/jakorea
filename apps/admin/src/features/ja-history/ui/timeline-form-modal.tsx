@@ -1,7 +1,5 @@
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useRef, useState } from 'react'
 import { Image } from 'antd'
-import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import type { ColumnsType } from 'antd/es/table'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type {
@@ -10,9 +8,9 @@ import type {
 } from '@/entities/ja-history/model/types'
 import {
   CmsButton,
-  CmsInput,
+  CmsRadio,
+  CmsRadioGroup,
   CmsTextArea,
-  CmsTextTabs,
   ContentModal,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
@@ -23,13 +21,12 @@ import {
 } from '@/shared/ui'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
-/** API `periods[].events` maxItems */
-const EVENT_SLOT_COUNT = 3
-
 const IMAGE_GUIDE_LINES = [
   '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
-  '- 권장 이미지 사이즈는 520 × 240px입니다.',
+  '- 권장 배너 사이즈는 520 × 240px입니다.',
 ]
+
+const EVENTS_MAX = 8
 
 type Props = {
   open: boolean
@@ -41,10 +38,9 @@ type Props = {
 }
 
 type DraftEvent = {
+  key: string
   year: string
   text: string
-  /** 시드에 연도가 있으면 연도 칸은 고정 텍스트다. */
-  yearLocked: boolean
 }
 
 type DraftPeriod = {
@@ -54,23 +50,29 @@ type DraftPeriod = {
   events: DraftEvent[]
 }
 
-type DraftEventRow = DraftEvent & { index: number }
+let eventKeySeq = 0
+
+function nextEventKey(): string {
+  eventKeySeq += 1
+  return `timeline-event-${eventKeySeq}`
+}
 
 function draftPeriods(periods: JaHistoryTimeline['periods']): DraftPeriod[] {
   return periods.map(period => ({
     id: period.id,
     label: period.label,
     title: period.title,
-    events: Array.from({ length: EVENT_SLOT_COUNT }, (_, index) => {
-      const event = period.events[index]
-      const year = event?.year ?? ''
-      return {
-        year,
-        text: event?.text ?? '',
-        yearLocked: year.trim().length > 0,
-      }
-    }),
+    events: period.events.map(event => ({
+      key: nextEventKey(),
+      year: event.year,
+      text: event.text,
+    })),
   }))
+}
+
+function modalDescription(title: string): string {
+  const sectionName = title.replace(/\s*수정$/, '')
+  return `JA History의 ${sectionName}의 이미지와 텍스트를 설정해 주세요.`
 }
 
 const DraftTextArea = memo(function DraftTextArea({
@@ -105,33 +107,6 @@ const DraftTextArea = memo(function DraftTextArea({
   )
 })
 
-const DraftYearInput = memo(function DraftYearInput({
-  initialValue,
-  ariaLabel,
-  onValue,
-}: {
-  initialValue: string
-  ariaLabel: string
-  onValue: (value: string) => void
-}) {
-  const [value, setValue] = useState(initialValue)
-  return (
-    <CmsInput
-      className="ja-history-modal__year-input"
-      inputSize="medium"
-      width="100%"
-      value={value}
-      placeholder="연도"
-      aria-label={ariaLabel}
-      onChange={event => {
-        const next = event.target.value
-        setValue(next)
-        onValue(next)
-      }}
-    />
-  )
-})
-
 function TimelineFormBody({
   title,
   initial,
@@ -146,11 +121,19 @@ function TimelineFormBody({
   const [imageAssetId, setImageAssetId] = useState<number | undefined>(initial.image.assetId)
   const headingRef = useRef(initial.title)
   const bodyRef = useRef(initial.body)
-  const periodsRef = useRef(draftPeriods(initial.periods))
+  const [periods, setPeriods] = useState(() => draftPeriods(initial.periods))
   const [activeId, setActiveId] = useState(initial.periods[0]?.id ?? '')
   const [errors, setErrors] = useState<{ image?: string; title?: string; body?: string }>({})
 
-  const active = periodsRef.current.find(period => period.id === activeId) ?? periodsRef.current[0]
+  const active = periods.find(period => period.id === activeId) ?? periods[0]
+
+  const patchActiveEvents = (updater: (events: DraftEvent[]) => DraftEvent[]) => {
+    setPeriods(prev =>
+      prev.map(period =>
+        period.id === active?.id ? { ...period, events: updater(period.events) } : period
+      )
+    )
+  }
 
   const handleFilesChange = useCallback(
     async (files: File[]) => {
@@ -189,62 +172,9 @@ function TimelineFormBody({
     [showAlert]
   )
 
-  const columns = useMemo<ColumnsType<DraftEventRow>>(() => {
-    const periodId = active?.id ?? ''
-    const periodLabel = active?.label ?? ''
-    return [
-      {
-        title: '연도',
-        dataIndex: 'year',
-        width: 200,
-        align: 'center',
-        render: (_value, record) =>
-          record.yearLocked ? (
-            record.year
-          ) : (
-            <DraftYearInput
-              initialValue={record.year}
-              ariaLabel={`${periodLabel} ${record.index + 1}행 연도`}
-              onValue={year => {
-                const event = periodsRef.current.find(item => item.id === periodId)?.events[
-                  record.index
-                ]
-                if (event) event.year = year
-              }}
-            />
-          ),
-      },
-      {
-        title: '설명 텍스트',
-        key: 'text',
-        ellipsis: false,
-        render: (_value, record) => (
-          <DraftTextArea
-            initialValue={record.text}
-            rows={2}
-            placeholder="설명 텍스트를 입력해 주세요"
-            ariaLabel={`${record.year || periodLabel} 설명 텍스트`}
-            onValue={text => {
-              const event = periodsRef.current.find(item => item.id === periodId)?.events[
-                record.index
-              ]
-              if (event) event.text = text
-            }}
-          />
-        ),
-      },
-    ]
-  }, [active?.id, active?.label])
-
-  const eventRows = useMemo<DraftEventRow[]>(
-    () => (active ? active.events.map((event, index) => ({ ...event, index })) : []),
-    [active]
-  )
-
   const handleSubmit = () => {
     const heading = headingRef.current
     const body = bodyRef.current
-    const periods = periodsRef.current
     const nextErrors: typeof errors = {}
     if (!imageUrl.trim()) nextErrors.image = '대표 이미지를 등록해 주세요.'
     if (!heading.trim()) nextErrors.title = '타이틀을 입력해 주세요.'
@@ -265,22 +195,19 @@ function TimelineFormBody({
           }
           continue
         }
-        if (!/^\d{4}$/.test(year)) {
-          if (!alertMessage) {
-            alertMessage = `${period.label} 연도는 4자리로 입력해 주세요.`
-            alertPeriodId = period.id
-          }
-          continue
+        if (events.some(item => item.year === year) && !alertMessage) {
+          alertMessage = `${period.label}에 같은 연도가 있습니다.`
+          alertPeriodId = period.id
         }
         events.push({ year, text: event.text.trimEnd() })
       }
-      if (events.length > 0 && !period.title.trim() && !alertMessage) {
-        alertMessage = `${period.label} 제목을 입력해 주세요.`
+      if (events.length > EVENTS_MAX && !alertMessage) {
+        alertMessage = `${period.label} 연혁은 최대 ${EVENTS_MAX}건까지 저장할 수 있습니다.`
         alertPeriodId = period.id
       }
       return {
         id: period.id,
-        title: period.title.trimEnd(),
+        title: period.title,
         events,
       }
     })
@@ -289,11 +216,7 @@ function TimelineFormBody({
       setErrors(nextErrors)
       if (alertPeriodId) setActiveId(alertPeriodId)
       if (alertMessage) {
-        showAlert(
-          /4자리/.test(alertMessage)
-            ? { title: '입력 확인', content: alertMessage }
-            : REQUIRED_FIELDS_INCOMPLETE_ALERT
-        )
+        showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       }
       return
     }
@@ -313,9 +236,9 @@ function TimelineFormBody({
       open
       onCancel={onCancel}
       title={title}
-      description="대표 이미지, 제목, 본문과 기간별 연혁 문구를 수정해 주세요. 기간 라벨은 고정이고, 내용이 없는 행도 연도와 설명을 입력할 수 있습니다."
-      size="large"
-      className="ja-history-modal"
+      description={modalDescription(title)}
+      width={800}
+      className="ja-history-modal ja-history-timeline-modal"
       footer={
         <>
           <CmsButton
@@ -343,7 +266,7 @@ function TimelineFormBody({
       <DetailInfoForm title={title} hideHeader mode="edit" className="ja-history-form">
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="대표 이미지"
+            label="이미지"
             required
             view={null}
             edit={
@@ -422,7 +345,7 @@ function TimelineFormBody({
               <div>
                 <DraftTextArea
                   initialValue={bodyRef.current}
-                  rows={3}
+                  rows={4}
                   placeholder="서브 텍스트를 입력해 주세요"
                   ariaLabel="서브 텍스트"
                   onValue={value => {
@@ -440,52 +363,51 @@ function TimelineFormBody({
         </DetailInfoForm.Row>
       </DetailInfoForm>
 
-      <div className="ja-history-modal__periods">
-        <CmsTextTabs
-          variant="list"
-          ariaLabel="연혁 기간"
-          activeKey={active?.id ?? ''}
-          onChange={setActiveId}
-          items={periodsRef.current.map(period => ({ key: period.id, label: period.label }))}
-          wrap
-        />
-
-        {active ? (
-          <div className="ja-history-timeline-period-panel">
-            <DetailInfoForm title="기간 제목" hideHeader mode="edit" className="ja-history-form">
-              <DetailInfoForm.Row type="single">
-                <DetailInfoForm.Field
-                  label="기간 제목"
-                  view={null}
-                  edit={
-                    <DraftTextArea
-                      key={active.id}
-                      initialValue={active.title}
-                      rows={2}
-                      placeholder="기간 제목을 입력해 주세요"
-                      ariaLabel={`${active.label} 제목`}
-                      onValue={nextTitle => {
-                        const period = periodsRef.current.find(item => item.id === active.id)
-                        if (period) period.title = nextTitle
-                      }}
-                    />
-                  }
+      <DetailInfoForm title="연혁" hideHeader mode="edit" className="ja-history-form">
+        <DetailInfoForm.Row type="single">
+          <DetailInfoForm.Field
+            label="연혁"
+            required
+            view={null}
+            edit={
+              <CmsRadioGroup
+                size="medium"
+                value={active?.id ?? ''}
+                onChange={event => setActiveId(String(event.target.value))}
+                aria-label="연혁 기간"
+              >
+                {periods.map(period => (
+                  <CmsRadio key={period.id} size="medium" value={period.id}>
+                    {period.label}
+                  </CmsRadio>
+                ))}
+              </CmsRadioGroup>
+            }
+          />
+        </DetailInfoForm.Row>
+        {(active?.events ?? []).map(event => (
+          <DetailInfoForm.Row type="single" key={event.key}>
+            <DetailInfoForm.Field
+              label={event.year.trim() || '연도'}
+              required
+              view={null}
+              edit={
+                <DraftTextArea
+                  initialValue={event.text}
+                  rows={event.text.includes('\n') || event.text.length > 42 ? 2 : 1}
+                  placeholder="설명 텍스트를 입력해 주세요"
+                  ariaLabel={`${event.year.trim() || '연도'} 설명 텍스트`}
+                  onValue={text => {
+                    patchActiveEvents(events =>
+                      events.map(item => (item.key === event.key ? { ...item, text } : item))
+                    )
+                  }}
                 />
-              </DetailInfoForm.Row>
-            </DetailInfoForm>
-            <CmsDataTable<DraftEventRow>
-              key={active.id}
-              className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
-              columns={columns}
-              dataSource={eventRows}
-              pagination={false}
-              rowKey="index"
+              }
             />
-          </div>
-        ) : (
-          <p className="ja-history-empty">등록된 기간이 없습니다.</p>
-        )}
-      </div>
+          </DetailInfoForm.Row>
+        ))}
+      </DetailInfoForm>
     </ContentModal>
   )
 }

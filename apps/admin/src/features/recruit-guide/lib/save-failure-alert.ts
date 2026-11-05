@@ -65,11 +65,8 @@ function mapRecruitGuideSaveFailureAlert(
   if (code === 'BANNER_SUB_TEXT_02_TOO_LONG') {
     return { title: '입력 확인', content: '서브 텍스트 02는 2,000자 이내로 입력해 주세요.' }
   }
-  if (code === 'CULTURE_TITLE_REQUIRED') {
-    return REQUIRED_FIELDS_INCOMPLETE_ALERT
-  }
-  if (code === 'CULTURE_DESCRIPTION_REQUIRED') {
-    return REQUIRED_FIELDS_INCOMPLETE_ALERT
+  if (code === 'CULTURE_TITLE_REQUIRED' || code === 'CULTURE_DESCRIPTION_REQUIRED') {
+    return { title: '입력 확인', content: fallbackContent }
   }
   if (code === 'CULTURE_TITLE_TOO_LONG') {
     return { title: '입력 확인', content: '조직문화 타이틀은 500자 이내로 입력해 주세요.' }
@@ -151,6 +148,18 @@ function mapRecruitGuideSaveFailureAlert(
     return { title: '파일 확인', content: '배너 이미지 파일을 확인한 후 다시 시도해 주세요.' }
   }
   if (/VALIDATION_ERROR/i.test(code)) {
+    const isCultureDescription = field === 'description' || Boolean(field?.endsWith('description'))
+    const isCultureTitle =
+      fallbackContent.includes('조직문화') &&
+      (field === 'title' || Boolean(field?.endsWith('.title')))
+    if (isCultureDescription || isCultureTitle) {
+      return {
+        title: '입력 확인',
+        content: isCultureDescription
+          ? '조직문화 설명은 2,000자 이내로 입력해 주세요.'
+          : '조직문화 타이틀은 500자 이내로 입력해 주세요.',
+      }
+    }
     if (field === 'title') {
       return { title: '입력 확인', content: '인터뷰 제목을 확인해 주세요.' }
     }

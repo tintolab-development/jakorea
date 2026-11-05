@@ -37,10 +37,10 @@ export function DocScreeningSection({
 }: DocScreeningSectionProps) {
   const canWrite = useUjatCanWrite()
   const tableWrapRef = useRef<HTMLDivElement>(null)
-  const { labels: educationRegionLabels } = useUjatEducationRegions()
+  const { regions: educationRegions } = useUjatEducationRegions()
   const filterFields = useMemo(
-    () => buildUjatVolunteerDocScreeningFilterFields(),
-    [educationRegionLabels]
+    () => buildUjatVolunteerDocScreeningFilterFields(educationRegions),
+    [educationRegions]
   )
 
   const {

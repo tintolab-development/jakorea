@@ -583,23 +583,37 @@ export type SurveyResponsesDetailPolicy =
 export function useGeneralProgramSurveyResponses(
   programId: string | undefined,
   templateVersionId: string | undefined,
-  options?: { detailPolicy?: SurveyResponsesDetailPolicy }
+  options?: { detailPolicy?: SurveyResponsesDetailPolicy; bindingId?: string }
 ) {
   const surfaceRemote = useProgramsReadsRemoteEnabledForSurface(programId)
-  const remoteEnabled = surfaceRemote && Boolean(templateVersionId)
+  const bindingId = options?.bindingId?.trim() ?? ''
+  const remoteEnabled = surfaceRemote && Boolean(templateVersionId) && bindingId.length > 0
   const queryClient = useQueryClient()
   const detailPolicy = options?.detailPolicy ?? 'when-preview-short'
   const query = useQuery({
     queryKey: [
-      ...generalProgramQueryKeys.surveyResponses(programId ?? '', templateVersionId ?? ''),
+      ...generalProgramQueryKeys.surveyResponses(
+        programId ?? '',
+        templateVersionId ?? '',
+        bindingId
+      ),
       detailPolicy,
     ],
     queryFn: async () => {
-      const items = await fetchGeneralProgramSurveyResponses(programId!, templateVersionId!)
+      const items = await fetchGeneralProgramSurveyResponses(
+        programId!,
+        templateVersionId!,
+        bindingId
+      )
       if (detailPolicy === 'public-text-only') {
         const summary = await queryClient.fetchQuery({
-          queryKey: generalProgramQueryKeys.surveySummary(programId!, templateVersionId!),
-          queryFn: () => fetchGeneralProgramSurveySummary(programId!, templateVersionId!),
+          queryKey: generalProgramQueryKeys.surveySummary(
+            programId!,
+            templateVersionId!,
+            bindingId
+          ),
+          queryFn: () =>
+            fetchGeneralProgramSurveySummary(programId!, templateVersionId!, bindingId),
           staleTime: SURVEY_SUMMARY_STALE_MS,
           retry: false,
         })
@@ -627,13 +641,21 @@ export function useGeneralProgramSurveyResponses(
 
 export function useGeneralProgramSurveySummary(
   programId: string | undefined,
-  templateVersionId: string | undefined
+  templateVersionId: string | undefined,
+  bindingId?: string
 ) {
   const surfaceRemote = useProgramsReadsRemoteEnabledForSurface(programId)
-  const remoteEnabled = surfaceRemote && Boolean(templateVersionId)
+  const scopedBindingId = bindingId?.trim() ?? ''
+  const remoteEnabled =
+    surfaceRemote && Boolean(templateVersionId) && scopedBindingId.length > 0
   const query = useQuery({
-    queryKey: generalProgramQueryKeys.surveySummary(programId ?? '', templateVersionId ?? ''),
-    queryFn: () => fetchGeneralProgramSurveySummary(programId!, templateVersionId!),
+    queryKey: generalProgramQueryKeys.surveySummary(
+      programId ?? '',
+      templateVersionId ?? '',
+      scopedBindingId
+    ),
+    queryFn: () =>
+      fetchGeneralProgramSurveySummary(programId!, templateVersionId!, scopedBindingId),
     enabled: remoteEnabled,
     staleTime: SURVEY_SUMMARY_STALE_MS,
     retry: false,

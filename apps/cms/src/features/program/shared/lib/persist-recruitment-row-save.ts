@@ -167,6 +167,45 @@ function assignOptionalString(
   body[key] = value ?? ''
 }
 
+function trimmedRowText(value: string | null | undefined): string | undefined {
+  const next = value?.trim()
+  return next ? next : undefined
+}
+
+/** 값이 있을 때만 보낸다. 빈 문자열로 저장을 강제하지 않는다. */
+function assignNonEmptyString(
+  body: ProgramRecruitmentRequest,
+  key: 'announcementTitle' | 'summary',
+  value: string | null | undefined
+): void {
+  const next = trimmedRowText(value)
+  if (!next) return
+  body[key] = next
+}
+
+/**
+ * 참여자(기관) 행 remarks — 본문 `""`는 삭제가 아니다.
+ * 실값이 있으면 remarks, 이전 값을 지울 때만 clearFields.
+ */
+function assignParticipantRemarks(
+  body: ProgramRecruitmentRequest,
+  clearFields: string[],
+  nextValue: string | null | undefined,
+  previousValue: string | null | undefined
+): void {
+  const next = trimmedRowText(nextValue)
+  const previous = trimmedRowText(previousValue)
+  if (next === previous) {
+    if (next) body.remarks = next
+    return
+  }
+  if (next) {
+    body.remarks = next
+    return
+  }
+  if (previous && !clearFields.includes('remarks')) clearFields.push('remarks')
+}
+
 function assignOptionalDate(
   body: ProgramRecruitmentRequest,
   clearFields: string[],
@@ -424,15 +463,29 @@ export function buildProgramRecruitmentRowSaveRequest(args: {
   ) {
     body.recruitTerm = row.recruitTerm
   }
-  assignOptionalString(body, 'announcementTitle', row.announcementTitle)
-  assignOptionalString(body, 'summary', row.summary)
+  if (audience === 'participant') {
+    assignNonEmptyString(body, 'announcementTitle', row.announcementTitle)
+    assignNonEmptyString(body, 'summary', row.summary)
+  } else {
+    assignOptionalString(body, 'announcementTitle', row.announcementTitle)
+    assignOptionalString(body, 'summary', row.summary)
+  }
   assignOptionalString(body, 'programDescription', row.programDescription)
   assignOptionalString(body, 'recruitmentGuide', row.recruitmentGuide)
   assignOptionalString(body, 'applicationMethod', row.applicationMethod)
   assignOptionalString(body, 'learningSupportContent', row.learningSupportContent)
   assignOptionalString(body, 'additionalContentHtml', row.additionalContentHtml)
-  assignOptionalString(body, 'remarks', row.remarks)
-  assignOptionalString(body, 'otherMatters', row.otherMatters)
+  if (audience === 'participant') {
+    assignParticipantRemarks(
+      body,
+      clearFields,
+      row.remarks,
+      pickRecruitmentCopyRow(baseline, audience, volunteerHalf)?.remarks
+    )
+  } else {
+    assignOptionalString(body, 'remarks', row.remarks)
+    assignOptionalString(body, 'otherMatters', row.otherMatters)
+  }
   assignOptionalString(body, 'contactName', row.contactName)
   assignOptionalString(body, 'contactPhone', row.contactPhone)
   assignOptionalString(body, 'contactEmail', row.contactEmail)

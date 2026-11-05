@@ -13,8 +13,13 @@ export interface RegionProgressSummary {
   educationRegionName?: string | null;
   /** 해당 지역 기관 신청(APPROVED|APPROVAL_COMPLETED|FINAL_SELECTED) 학교/기관 수. 집계 불가면 null. 실제 0건이면 0. */
   appliedSchoolCount?: number | null;
+  /** 해당 프로그램·지역 봉사단 선발 예정 정원. 용량 행이 없으면 null. 저장된 0은 0. */
+  plannedSelectionVolunteerCount?: number | null;
   firstHalf?: HalfProgressCounts;
   secondHalf?: HalfProgressCounts;
-  /** 양 반기 합산/중복 제거. progressingSchoolCount·finalPassVolunteerCount는 distinct. classCount·studentCount는 합. 반기 값이 null이면 합도 null 성분을 유지하지 않고 집계 가능한 쪽만 반영한다. */
+  /** 양 반기 합산/중복 제거. progressingSchoolCount·finalPassVolunteerCount는 distinct. classCount·studentCount는 합. */
   total?: HalfProgressCounts;
 }
+
+/** JABACK schema alias */
+export type UjatEducationProgressRegionSummary = RegionProgressSummary;

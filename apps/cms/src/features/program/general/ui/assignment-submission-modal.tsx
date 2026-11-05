@@ -283,7 +283,6 @@ export function AssignmentSubmissionModal({
         }}
         mode={feedbackMode ?? 'write'}
         volunteerName={feedbackStudentName}
-        subjectLabel="회원"
         docTypeLabel={
           feedbackTarget != null ? `${feedbackTarget.roundNumber}회차 과제` : '과제'
         }

@@ -6,9 +6,13 @@ import type { Program } from '@/types/domain'
 import { applyEconomyRegistrationOverlayToProgram } from '@/features/program/general/lib/economy-registration-overlay-to-program'
 import { parseCompanySchoolWageAmountFromPricing } from '@/features/program/shared/lib/company-school-wage-pricing'
 import {
+  detailEditValuesToProgramPatch,
+  narrowProgramDetailPatchForCommonInfoSave,
   programToDetailEditValues,
   type ProgramDetailEditFormValues,
 } from '@/features/program/shared/model/program-detail-edit-schema'
+import { listIncompleteEconomyProgramRegistrationRequiredFields } from '@/features/program/general/lib/economy-program-registration-required-fields'
+import { companySchoolCompatibilityOverlayFromDetailEditValues } from './detail-form-compatibility-overlay'
 import { normalizeProgramBusinessAreaValue } from '@/features/program/shared/lib/program-detail-info-constants'
 import { initialProgramRegistrationSurveyItems } from '@/features/template/lib/program-registration-survey-items'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
@@ -26,6 +30,7 @@ import {
 import { resolveSponsorContactIdsFromProgram } from '@/features/program/shared/lib/sponsor-contact-unselected-option'
 import { resolveProgramPaymentItemIdsFromLabels } from '@/features/program/shared/lib/program-wage-payment-item-helpers'
 import { preserveCompanySchoolCompatibilityOverlay } from './serialize-registration-overlay-from-canonical'
+import { isKnownCompanySchoolCommonInfoOverlayKey } from './registration-rhf-values'
 
 export const ECONOMY_REGISTRATION_OVERLAY_PREFIX = 'economyRegistration.' as const
 
@@ -394,4 +399,133 @@ export function resolveCompanySchoolDetailSaveLiveFormValues(
     if (!sameOverlayValue(liveValues[key], baseValues[key])) changed[key] = liveValues[key]
   }
   return changed as Partial<ProgramDetailEditFormValues>
+}
+
+function omitKnownCompanySchoolEconomyOverlayKeys(
+  overlay: Record<string, unknown>
+): Record<string, unknown> {
+  const next: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(overlay)) {
+    if (isKnownCompanySchoolCommonInfoOverlayKey(key)) continue
+    next[key] = value
+  }
+  return next
+}
+
+function pickKnownCompanySchoolEconomyOverlayKeys(
+  overlay: Record<string, unknown> | undefined
+): Record<string, unknown> {
+  const next: Record<string, unknown> = {}
+  if (overlay == null) return next
+  for (const [key, value] of Object.entries(overlay)) {
+    if (!isKnownCompanySchoolCommonInfoOverlayKey(key)) continue
+    next[key] = value
+  }
+  return next
+}
+
+/** 1사1교 상세 PATCH overlay — Typed Program 정본, leftover 는 sidecar·모집·강사·신청 */
+export const COMPANY_SCHOOL_DETAIL_REQUIRED_PARTICIPANT = {
+  individual: false,
+  organization: true,
+  teacherInstructor: true,
+  volunteer: false,
+} as const
+
+/** Overlay store를 읽지 않는다. Typed 폼 값 + GET leftover → PATCH overlay. */
+export function buildCompanySchoolDetailTypedSave(args: {
+  program: Program
+  values: ProgramDetailEditFormValues
+}): {
+  values: ProgramDetailEditFormValues
+  patch: Partial<Program>
+  draft: Program
+  registrationOverlay: Record<string, unknown>
+  incomplete: string[]
+} {
+  const values = args.values
+  const patch = narrowProgramDetailPatchForCommonInfoSave(
+    detailEditValuesToProgramPatch(values, args.program)
+  )
+  const formCompat = companySchoolCompatibilityOverlayFromDetailEditValues(values)
+  const draft: Program = {
+    ...args.program,
+    ...patch,
+    generalCommonInfo: {
+      ...args.program.generalCommonInfo,
+      ...patch.generalCommonInfo,
+      announcementTitle:
+        values.announcementTitle ?? patch.generalCommonInfo?.announcementTitle,
+    },
+    registrationOverlay: {
+      ...(args.program.registrationOverlay ?? {}),
+      ...formCompat,
+    },
+  }
+  const registrationOverlay = serializeCompanySchoolDetailPatchOverlay({
+    typedProgram: draft,
+    leftoverOverlay: args.program.registrationOverlay ?? {},
+    liveOverlay: formCompat,
+  })
+  return {
+    values,
+    patch: {
+      ...patch,
+      generalCommonInfo: {
+        ...patch.generalCommonInfo,
+        announcementTitle: draft.generalCommonInfo?.announcementTitle,
+      },
+      registrationOverlay,
+    },
+    draft: { ...draft, registrationOverlay },
+    registrationOverlay,
+    incomplete: listIncompleteEconomyProgramRegistrationRequiredFields(
+      registrationOverlay,
+      COMPANY_SCHOOL_DETAIL_REQUIRED_PARTICIPANT
+    ),
+  }
+}
+
+export function collectCompanySchoolParagraphOverlayFormPatch(
+  liveOverlay: Record<string, unknown>,
+  program: Program
+): Partial<ProgramDetailEditFormValues> {
+  const next: Record<string, unknown> = {
+    ...resolveCompanySchoolDetailSaveLiveFormValues(liveOverlay, program),
+  }
+  const announcement = resolveCompanySchoolDetailSaveAnnouncementTitle({
+    formAnnouncement: program.generalCommonInfo?.announcementTitle,
+    overlayAnnouncement: liveOverlay[ECONOMY_PUBLIC_PROGRAM_TITLE_KEY],
+    programAnnouncement: program.generalCommonInfo?.announcementTitle,
+  })
+  if (typeof announcement === 'string') next.announcementTitle = announcement
+  const titles = resolveCompanySchoolDetailSaveTitleFields(liveOverlay, program)
+  if (titles.mainTitle !== undefined) next.mainTitle = titles.mainTitle
+  if (titles.title !== undefined) next.title = titles.title
+  if (titles.titleEn !== undefined) next.titleEn = titles.titleEn
+  return next as Partial<ProgramDetailEditFormValues>
+}
+
+export function serializeCompanySchoolDetailPatchOverlay(args: {
+  typedProgram: Program
+  leftoverOverlay?: Record<string, unknown>
+  liveOverlay?: Record<string, unknown>
+}): Record<string, unknown> {
+  const leftover = args.leftoverOverlay ?? {}
+  const live = args.liveOverlay ?? {}
+  const typedOverlay = args.typedProgram.registrationOverlay ?? {}
+  const sidecar = omitKnownCompanySchoolEconomyOverlayKeys({
+    ...leftover,
+    ...typedOverlay,
+    ...live,
+  })
+  const known = {
+    ...pickKnownCompanySchoolEconomyOverlayKeys(leftover),
+    ...pickKnownCompanySchoolEconomyOverlayKeys(typedOverlay),
+    ...pickKnownCompanySchoolEconomyOverlayKeys(live),
+  }
+  return mergeCompanySchoolDetailSaveOverlay(
+    { ...args.typedProgram, registrationOverlay: sidecar },
+    { ...sidecar, ...known }
+  )
 }

@@ -102,7 +102,7 @@ export function InterviewSectionCard({ slot, siblingLinkedStoryIds = [] }: Props
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
-    if (!draft.linkedStoryTitle.trim() && !draft.linkedStoryId) {
+    if (!draft.linkedStoryId?.trim()) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }

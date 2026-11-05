@@ -64,3 +64,22 @@ export function isPersonalCertificateActionable(availability: {
   if (!availability) return false
   return availability.canDownload === true || availability.available === true
 }
+
+export function portalCertificateDocumentLabel(
+  certificateType: string | null | undefined,
+): '수료증' | '참가인증서' {
+  const normalized = (certificateType ?? '').trim().toUpperCase()
+  if (normalized === 'PARTICIPATION' || normalized.includes('PARTICIPATION')) {
+    return '참가인증서'
+  }
+  return '수료증'
+}
+
+export function portalCertificateIssueType(
+  certificateType: string | null | undefined,
+): 'AUTO' | 'COMPLETION' | 'PARTICIPATION' {
+  const normalized = (certificateType ?? '').trim().toUpperCase()
+  if (normalized === 'COMPLETION') return 'COMPLETION'
+  if (normalized === 'PARTICIPATION') return 'PARTICIPATION'
+  return 'AUTO'
+}

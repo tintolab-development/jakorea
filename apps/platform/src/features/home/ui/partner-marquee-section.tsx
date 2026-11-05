@@ -6,6 +6,7 @@ import jaArrowCtaTealUrl from '../image/icon/ja-arrow-cta-teal.svg'
 import { useHomeMain } from '../api/use-home-main'
 import type { HomeDonationCta } from '../lib/view'
 import type { HomePartnerLogo } from '../lib/home-fallback-content'
+import { gridCellsFromPartnerRows } from '../lib/split-partner-logo-rows'
 import { SkeletonBlock } from './skeleton-block'
 import styles from './partner-marquee-section.module.css'
 
@@ -101,12 +102,9 @@ function PartnerLogoSkeleton() {
 
 export function PartnerMarqueeSection() {
   const { partnerRows, donationTitle, donationCta1, donationCta2, isPending } = useHomeMain()
-  const flatLogos = useMemo(
-    () => partnerRows.flatMap(row => [...row]),
-    [partnerRows],
-  )
+  const gridCells = useMemo(() => gridCellsFromPartnerRows(partnerRows), [partnerRows])
+  const hasLogos = partnerRows.some(row => row.length > 0)
   const donationTitleLines = donationTitle.split(/\r?\n/).filter(Boolean)
-  const hasLogos = flatLogos.length > 0
   const [marqueeNode, setMarqueeNode] = useState<HTMLDivElement | null>(null)
   const [marqueeInView, setMarqueeInView] = useState(false)
 
@@ -134,15 +132,19 @@ export function PartnerMarqueeSection() {
           <PartnerHeader />
 
           <ul className={styles.logoGrid} aria-label="후원 기업 로고">
-            {flatLogos.map((logo, index) => (
-              <li className={styles.logoChip} key={`${logo.name}-${index}`}>
-                {logo.logoUrl ? (
-                  <img className={styles.logoImage} src={logo.logoUrl} alt={logo.name} />
-                ) : (
-                  <span className={styles.logoText}>{logo.name}</span>
-                )}
-              </li>
-            ))}
+            {gridCells.map((logo, index) =>
+              logo ? (
+                <li className={styles.logoChip} key={`${logo.name}-${index}`}>
+                  {logo.logoUrl ? (
+                    <img className={styles.logoImage} src={logo.logoUrl} alt={logo.name} />
+                  ) : (
+                    <span className={styles.logoText}>{logo.name}</span>
+                  )}
+                </li>
+              ) : (
+                <li className={styles.logoGridEmpty} key={`empty-${index}`} aria-hidden />
+              ),
+            )}
           </ul>
 
           <div

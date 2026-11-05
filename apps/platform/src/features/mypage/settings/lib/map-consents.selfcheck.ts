@@ -58,6 +58,30 @@ assert.equal(adultById.marketing?.agreed, false)
 assert.equal(adultById.portrait?.withdrawable, true)
 assert.equal(adultById.paymentStatement?.agreed, true)
 assert.equal(adultById.paymentStatement?.withdrawable, true)
+assert.equal(adult.documentItems.some(item => item.id === 'receiptPreConsent'), false)
+
+const receiptOnly = buildConsentItemsFromSummaries([
+  {
+    consentType: 'AGREEMENT_RECEIPT_PRE_CONSENT',
+    agreed: true,
+    signed: true,
+    listed: false,
+    documentId: 55,
+    agreedAt: '2026-09-01T10:00:00',
+  },
+  { consentType: 'PAYMENT_STATEMENT_CONSENT', agreed: true, signed: true, listed: true, documentId: 9 },
+  { consentType: 'PORTRAIT_RIGHTS', agreed: true, listed: null },
+])
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'receiptPreConsent')?.agreed, true)
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'receiptPreConsent')?.signed, true)
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'receiptPreConsent')?.listed, false)
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'receiptPreConsent')?.documentId, 55)
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'paymentStatement')?.documentId, 9)
+assert.equal(receiptOnly.documentItems.find(item => item.id === 'paymentStatement')?.listed, true)
+assert.equal(
+  receiptOnly.basicItems.find(item => item.id === 'portrait')?.listed,
+  undefined,
+)
 assert.equal(adultById.educatorPledge?.agreed, false)
 assert.equal(adultById.educatorPledge?.withdrawable, false)
 
@@ -199,6 +223,47 @@ assert.equal(isolated.documentItems.find(item => item.id === 'sexOffenseCheck')?
 assert.equal(
   isolated.documentItems.find(item => item.id === 'sexOffenseCheck')?.withdrawable,
   true,
+)
+
+const preferSubmittedPayment = buildConsentItemsFromSummaries([
+  {
+    consentType: 'PAYMENT_STATEMENT_PRE_CONSENT',
+    agreed: false,
+    signed: false,
+    status: 'DRAFT',
+    documentId: null,
+  },
+  {
+    consentType: 'PAYMENT_STATEMENT_CONSENT',
+    agreed: true,
+    signed: true,
+    documentId: 88,
+  },
+])
+assert.equal(
+  preferSubmittedPayment.documentItems.find(item => item.id === 'paymentStatement')?.documentId,
+  88,
+)
+assert.equal(
+  preferSubmittedPayment.documentItems.find(item => item.id === 'paymentStatement')?.agreed,
+  true,
+)
+assert.equal(
+  preferSubmittedPayment.documentItems.find(item => item.id === 'paymentStatement')?.signed,
+  true,
+)
+
+const stringDocumentId = buildConsentItemsFromSummaries([
+  {
+    consentType: 'PAYMENT_STATEMENT_CONSENT',
+    agreed: true,
+    signed: true,
+    documentId: '91' as unknown as number,
+  },
+])
+assert.equal(
+  stringDocumentId.documentItems.find(item => item.id === 'paymentStatement')?.documentId,
+  91,
 )
 
 const draftNotAgreed = buildConsentItemsFromSummaries([

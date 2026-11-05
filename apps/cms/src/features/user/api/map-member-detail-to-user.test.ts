@@ -500,6 +500,30 @@ describe('mapInstructorMemberDetailToUser', () => {
     })
   })
 
+  it('계좌가 없으면 instructorInfo 계좌를 이름으로 채우지 않는다', () => {
+    const user = mapInstructorMemberDetailToUser(
+      baseInstructorDetail({
+        member: {
+          memberId: 101,
+          uuid: 'instructor-uuid',
+          email: 'i@example.com',
+          name: '김강사',
+          roles: ['INSTRUCTOR'],
+          status: 'ACTIVE',
+        },
+        instructorProfile: {
+          memberId: 101,
+          primaryActivityType: 'GENERAL',
+          businessIncomeYn: false,
+        },
+      })
+    )
+
+    expect(user.instructorInfo?.bankName).toBe('')
+    expect(user.instructorInfo?.accountNumber).toBe('')
+    expect(user.instructorInfo?.accountHolder).toBe('')
+  })
+
   it('SCHOOL_TEACHER여도 루트 계좌를 instructorInfo에 매핑한다', () => {
     const user = mapInstructorMemberDetailToUser(
       baseInstructorDetail({

@@ -10,6 +10,7 @@ describe('memberConsentViewRequiresPrivacyReveal', () => {
     expect(memberConsentViewRequiresPrivacyReveal('document-payment-order-pre-consent')).toBe(true)
     expect(memberConsentViewRequiresPrivacyReveal('agreement-notice')).toBe(true)
     expect(memberConsentViewRequiresPrivacyReveal('agreement-crime')).toBe(true)
+    expect(memberConsentViewRequiresPrivacyReveal('agreement-receipt-pre-consent')).toBe(true)
   })
 
   it('초상권·교육진행자는 열람 사유 모달 불필요', () => {

@@ -25,6 +25,7 @@ const AGREEMENT_TEMPLATE_CODE_BY_TERMS_TYPE: Record<string, string> = {
   PORTRAIT_RIGHTS: 'agreement-portrait',
   PAYMENT_STATEMENT_PRE_CONSENT: 'agreement-third-party',
   PAYMENT_STATEMENT_CONSENT: 'agreement-third-party',
+  RECEIPT_PRE_CONSENT: 'agreement-receipt-pre-consent',
   FACILITATOR_PLEDGE: 'agreement-expense',
   ADMINISTRATIVE_INFO_CONSENT: 'agreement-notice',
 }
@@ -33,6 +34,7 @@ const SNAPSHOT_FIELD_KEYS_BY_TERMS_TYPE: Record<string, string[]> = {
   PORTRAIT_RIGHTS: ['consentPortrait'],
   PAYMENT_STATEMENT_PRE_CONSENT: ['consentPaymentStatement', 'consentWithholdingTax'],
   PAYMENT_STATEMENT_CONSENT: ['consentPaymentStatement', 'consentWithholdingTax'],
+  RECEIPT_PRE_CONSENT: ['consentReceiptPreConsent'],
   FACILITATOR_PLEDGE: ['consentEducatorPledge', 'consentFacilitatorPledge'],
   ADMINISTRATIVE_INFO_CONSENT: ['consentAdministrativeJoint'],
   CRIMINAL_HISTORY_CHECK_CONSENT: ['consentSexOffenseCheck'],
@@ -103,6 +105,21 @@ export function mapAgreementSnapshotToFilledDocument(
   if (templateCode) request.templateCode = templateCode
   if (templateCode === 'agreement-third-party') {
     request.paymentBasicInfo = mapPaymentBasicInfo(snapshot.paymentBasicInfo)
+  }
+  if (templateCode === 'agreement-receipt-pre-consent') {
+    const mapped = mapPaymentBasicInfo(snapshot.paymentBasicInfo)
+    if (mapped) {
+      request.paymentBasicInfo = {
+        nameKo: mapped.nameKo,
+        nameEn: mapped.nameEn,
+        addressRoad: mapped.addressRoad,
+        addressDetail: mapped.addressDetail,
+        bankName: mapped.bankName,
+        accountNumber: mapped.accountNumber,
+        accountHolder: mapped.accountHolder,
+        paymentPurpose: mapped.paymentPurpose,
+      }
+    }
   }
   return request
 }

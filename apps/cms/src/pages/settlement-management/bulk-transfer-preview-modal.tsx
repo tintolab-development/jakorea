@@ -3,7 +3,7 @@
  * Workbook·ExcelJS는 동적 import 청크로 분리해 Vite dev에서 모듈 fetch 실패를 줄입니다.
  */
 
-import { lazy, Suspense, useCallback, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { Spin } from 'antd'
 import type { Sheet } from '@fortune-sheet/core'
 import { ContentModal } from '@/shared/ui/content-modal'
@@ -21,6 +21,10 @@ import {
   BULK_TRANSFER_SHEET_COLUMN_COUNT,
   buildBulkTransferFortuneSheet,
 } from '@/pages/settlement-management/bulk-transfer-fortune-data'
+import {
+  applyBulkTransferWithholdingAmounts,
+  loadBulkTransferWithholdingAmounts,
+} from '@/pages/settlement-management/bulk-transfer-withholding'
 import { ButtonDownloadIcon } from '@/shared/ui/icons/ButtonIcons'
 import './bulk-transfer-preview-modal.css'
 
@@ -46,10 +50,31 @@ export function BulkTransferPreviewModal({
     usesServerFile &&
     serverExport?.fileObjectId != null &&
     Number.isFinite(serverExport.fileObjectId)
+  const [previewRows, setPreviewRows] = useState(rows)
+
+  useEffect(() => {
+    if (!open) return
+    setPreviewRows(rows)
+    if (!shouldUseSettlementRemote('accountPayments')) return
+    let cancelled = false
+    void loadBulkTransferWithholdingAmounts(rows)
+      .then(withholding => {
+        if (cancelled) return
+        setPreviewRows(applyBulkTransferWithholdingAmounts(rows, withholding))
+      })
+      .catch(() => {
+        if (cancelled) return
+        setPreviewRows(rows)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, rows])
+
   const sheetData: Sheet[] = useMemo(() => {
-    const sheet = buildBulkTransferFortuneSheet(rows)
+    const sheet = buildBulkTransferFortuneSheet(previewRows)
     return [sheet]
-  }, [rows])
+  }, [previewRows])
 
   const handleDownload = useCallback(async () => {
     try {
@@ -86,7 +111,7 @@ export function BulkTransferPreviewModal({
       }
       const { exportBulkTransferExcel } =
         await import('@/pages/settlement-management/bulk-transfer-excel')
-      await exportBulkTransferExcel(rows)
+      await exportBulkTransferExcel(previewRows)
     } catch (error) {
       notifySettlementExportDownloadError({
         error,
@@ -95,7 +120,7 @@ export function BulkTransferPreviewModal({
         onAlreadyDownloaded: onCancel,
       })
     }
-  }, [onCancel, onReissueExport, rows, serverExport])
+  }, [onCancel, onReissueExport, previewRows, serverExport])
 
   return (
     <ContentModal

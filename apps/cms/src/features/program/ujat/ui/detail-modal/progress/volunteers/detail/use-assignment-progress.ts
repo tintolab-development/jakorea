@@ -6,6 +6,7 @@ import {
   isInvalidAttendanceArrivalTimeError,
 } from '@/shared/lib/attendance-arrival-time'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { resolveRegionAssignmentErrorMessage } from '../../region/region-assignment-messages'
 import {
   ATTENDANCE_CORRECTION_NOT_OPEN_ALERT,
   isAttendanceRecordingNotOpenError,
@@ -149,7 +150,12 @@ export function useVolunteerAssignmentProgress(input: {
     mutationFn: updateVolunteerScheduleRole,
     retry: false,
     onSuccess: () => invalidate(),
-    onError: error => showMutationError(error, '역할 변경에 실패했습니다.'),
+    onError: error => {
+      showAlert({
+        title: '오류',
+        content: resolveRegionAssignmentErrorMessage(error, '역할 변경에 실패했습니다.'),
+      })
+    },
   })
 
   const cancelAssignment = useCallback(
@@ -228,12 +234,20 @@ export function useVolunteerAssignmentProgress(input: {
       if (row.scheduleId == null || row.participantId == null) {
         throw new Error('MISSING_ROLE_TARGET')
       }
+      if (
+        row.organizationApplicationId == null ||
+        !Number.isFinite(row.organizationApplicationId) ||
+        row.organizationApplicationId <= 0
+      ) {
+        throw new Error('MISSING_ROLE_TARGET')
+      }
       if (nextRole === 'attendance_manager' && row.canAssignAttendanceManager !== true) {
         return Promise.resolve()
       }
       return roleMutation.mutateAsync({
         programId: input.programId,
         scheduleId: row.scheduleId,
+        organizationApplicationId: row.organizationApplicationId,
         participantId: row.participantId,
         role: nextRole,
       })

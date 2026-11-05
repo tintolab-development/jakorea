@@ -215,7 +215,7 @@ export function mapMemberListItemToUser(item: MemberListItemResponse): Omit<User
     user.instructorInfo = {
       bankName: info.bankName?.trim() ?? '',
       accountNumber: info.accountNumber?.trim() ?? '',
-      accountHolder: info.accountHolder?.trim() ?? user.name,
+      accountHolder: info.accountHolder?.trim() ?? '',
       isBusinessIncome: Boolean(info.isBusinessIncome),
     }
   }

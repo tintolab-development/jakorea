@@ -1,5 +1,74 @@
 @import '../../../../../shared/ui/program-application-list-toolbar.css';
 
+.ujat-education-progress-attendance {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Figma 4082:112750 — 풀페이지 본문에 카드 크롬 없음 */
+.ujat-education-progress-attendance__filter-layout.filter-table-layout {
+  background: transparent;
+  box-shadow: none !important;
+  border-radius: 0;
+  margin-bottom: 0;
+  padding: 0;
+}
+
+.ujat-education-progress-attendance
+  .ujat-institution-application-region-tabs.cms-text-tabs
+  .cms-text-tabs__row {
+  margin-bottom: 32px;
+}
+
+.ujat-education-progress-attendance__filter-layout .filter-table-layout__divider {
+  padding: 32px 0;
+}
+
+.ujat-education-progress-attendance__filter-layout .filter-table-layout__divider::before {
+  border-top-color: var(--table-line, #e0e0e0);
+}
+
+.ujat-education-progress-attendance__filter-layout .filter-table-layout__title {
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ujat-education-progress-attendance__filter-layout .filter-table-layout__toolbar {
+  align-items: flex-end;
+  gap: var(--spacing-32, 32px);
+  min-height: 40px;
+  margin-bottom: 16px;
+}
+
+.ujat-education-progress-attendance__filter-layout .filter-table-layout__toolbar-main {
+  align-items: center;
+  gap: 0;
+}
+
+.ujat-education-progress-attendance .table-header-title--wrapper {
+  align-items: center;
+  gap: var(--spacing-8, 8px);
+  padding-left: 8px;
+}
+
+.ujat-education-progress-attendance .table-title {
+  font-size: 18px;
+  line-height: 140%;
+  padding: 0;
+}
+
+.ujat-education-progress-attendance .table-description {
+  font-size: 14px;
+  line-height: 150%;
+  color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
+  opacity: 1;
+}
+
 .ujat-education-progress-attendance__groups {
   display: flex;
   flex-direction: column;
@@ -18,29 +87,239 @@
 .ujat-attendance-session-group__header {
   width: 100%;
   min-width: 0;
+  min-height: 40px;
+  gap: var(--spacing-32, 32px);
+}
+
+.ujat-education-progress-attendance__empty {
+  padding: 48px 16px;
+  color: var(--default-BK, #3d3d3d);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 150%;
+  text-align: center;
+  opacity: 0.6;
 }
 
 .ujat-attendance-session-group__table-wrap {
+  --ujat-attendance-table-min-width: 1546px;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   overflow-x: auto;
   overflow-y: visible;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
-.ujat-attendance-table__status-cell {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.ujat-attendance-session-group__table-wrap .ujat-attendance-table.cms-data-table {
+  overflow-x: visible;
+  min-width: 0;
   width: 100%;
+}
+
+.ujat-attendance-session-group__table-wrap .ujat-attendance-table .ant-table-container {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+.ujat-attendance-session-group__table-wrap .ujat-attendance-table .ant-table-content {
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ujat-attendance-session-group__table-wrap .ujat-attendance-table table.ant-table {
+  table-layout: fixed !important;
+  width: max(100%, var(--ujat-attendance-table-min-width, 1546px)) !important;
+}
+
+/*
+ * cms-data-table 기본: No. 이후 col width:auto → Ant Design width 무시.
+ * Figma 4082:112548 열 폭을 colgroup·th/td 모두 고정.
+ */
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(1) {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(2) {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(3) {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(4),
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(5),
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(6) {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(7) {
+  width: 526px !important;
+  min-width: 526px !important;
+  max-width: none !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-thead
+  > tr
+  > th.cms-table-col--no,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr
+  > td.cms-table-col--no {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-thead
+  > tr
+  > th.ujat-attendance-table__col-name,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr
+  > td.ujat-attendance-table__col-name,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-thead
+  > tr
+  > th.ujat-attendance-table__col-assigned-class,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr
+  > td.ujat-attendance-table__col-assigned-class {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-thead
+  > tr
+  > th.ujat-attendance-table__col-contact,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr
+  > td.ujat-attendance-table__col-contact,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-thead
+  > tr
+  > th.ujat-attendance-table__col-email,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr
+  > td.ujat-attendance-table__col-email,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-thead
+  > tr
+  > th.ujat-attendance-table__col-status,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr
+  > td.ujat-attendance-table__col-status {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-thead
+  > tr
+  > th.ujat-attendance-table__col-remarks,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr
+  > td.ujat-attendance-table__col-remarks {
+  width: auto !important;
+  min-width: 526px !important;
+  max-width: none !important;
+  white-space: normal !important;
+}
+
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-thead
+  > tr
+  > th:not(.ant-table-cell-scrollbar)
+  .ant-table-cell-content,
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td
+  .ant-table-cell-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ujat-attendance-table__remarks {
+  display: block;
+  white-space: pre-line;
+  text-align: center;
+  color: var(--main-BK, #3d3d3d);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 150%;
 }
 
 .ujat-attendance-table .ant-table-tbody > tr.ujat-attendance-table__row--dropout > td {
   opacity: 0.85;
 }
 
-.ujat-attendance-session-group__table-wrap .ujat-attendance-table table.ant-table {
-  table-layout: fixed !important;
-  width: 100% !important;
-  min-width: 100%;
+.ujat-attendance-session-group__table-wrap
+  .ujat-attendance-table
+  .ant-table-tbody
+  > tr:not(.ant-table-measure-row)
+  > td.ujat-attendance-table__col-remarks
+  .ant-table-cell-content {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
 }

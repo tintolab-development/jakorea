@@ -173,3 +173,12 @@
 .footer-org-section__logo-empty {
   opacity: 0.6;
 }
+
+.footer-org-section__field-error {
+  margin-top: 6px;
+  color: var(--color-error, #e53935);
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 150%;
+}

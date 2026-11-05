@@ -41,7 +41,7 @@ describe('attachUjatProgressVolunteerRegisterContext', () => {
       {
         ...baseRequest,
         previousUjatTerm: { year: '2024', term: '2' },
-        educationRegionCode: 'SEOUL',
+        educationRegionCode: 'CUSTOM_1793704314696',
         applicationType: 'UJAT_GRADUATE',
         id1365: '09151234',
         thirdPartyRecipient: '-',
@@ -49,12 +49,29 @@ describe('attachUjatProgressVolunteerRegisterContext', () => {
       'h2'
     )
     expect(request).not.toHaveProperty('previousUjatTerm')
-    expect(request).not.toHaveProperty('educationRegionCode')
+    expect(request.educationRegionCode).toBe('CUSTOM_1793704314696')
     expect(request).not.toHaveProperty('applicationType')
     expect(request).not.toHaveProperty('id1365')
     expect(request).not.toHaveProperty('thirdPartyRecipient')
     expect(request.volunteerKind).toBe('GENERAL')
     expect(request.recruitHalf).toBe('SECOND_HALF')
+  })
+
+  it('educationRegionCode가 비면 서울로 채우지 않고 omit 한다', () => {
+    const request = attachUjatProgressVolunteerRegisterContext(
+      { ...baseRequest, educationRegionCode: '   ' },
+      'h1'
+    )
+    expect(request).not.toHaveProperty('educationRegionCode')
+  })
+
+  it('오버라이드 educationRegionCode는 마스터 code를 그대로 쓴다', () => {
+    const request = attachUjatProgressVolunteerRegisterContext(
+      baseRequest,
+      'h1',
+      'CUSTOM_1793704314696'
+    )
+    expect(request.educationRegionCode).toBe('CUSTOM_1793704314696')
   })
 })
 

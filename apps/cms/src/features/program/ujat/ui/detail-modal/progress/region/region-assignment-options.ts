@@ -1,3 +1,4 @@
+import { isUjatAllocationAssignmentStatusAssigned } from '@/features/program/ujat/api/allocation-matrix-adapters'
 import type { UjatDirectAssignmentCandidatesResponse } from '@/features/program/ujat/api/education-execution-api'
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
@@ -18,22 +19,39 @@ function formatRegionDirectAssignClassOptionLabel(
   return `${dateLabel} ｜ ${classLabel} (${institutionName})`
 }
 
-export const REGION_DIRECT_ASSIGN_SECONDARY_LABEL = '두 번째 봉사자 배정'
+/**
+ * 후보/직접배정 API와 동일: start_at IS NULL OR start_at > now().
+ * 표시용 달력일 문자열·UTC slice 비교 금지. Instant만 Date.parse.
+ */
+export function isRegionDirectAssignEducationNotStarted(
+  educationStartAt: string | null | undefined,
+  nowMs = Date.now()
+): boolean {
+  const start = educationStartAt == null ? null : Date.parse(educationStartAt)
+  return start == null || start > nowMs
+}
 
-/** 학급 슬롯 배정 인원 — 재배정 필요 건은 미배정으로 본다 */
+/**
+ * 학급 슬롯 점유 — GET assignedVolunteerCount와 동일.
+ * assignmentStatus === ASSIGNED ∩ 같은 educationSlotId ∩ giveUp 아님. participantId distinct.
+ * REASSIGNMENT_REQUIRED / UNASSIGNED / 다른 학급 슬롯은 넣지 않는다.
+ */
 function countRegionClassSlotAssignees(
-  classLabel: string,
-  rows: RegionAssignmentVolunteerRow[],
-  columnIndex: number
+  educationSlotId: string,
+  rows: RegionAssignmentVolunteerRow[]
 ): number {
-  return rows.filter(row => {
-    const cell = row.cells[columnIndex]
-    return (
-      cell?.kind === 'assigned' &&
-      !cell.isInvalidAssignment &&
-      cell.classLabel === classLabel
+  const assigneeIds = new Set<string>()
+  for (const row of rows) {
+    if (row.isWithdrawnVolunteer) continue
+    const assignedHere = row.cells.some(
+      cell =>
+        cell.kind === 'assigned' &&
+        cell.educationSlotId === educationSlotId &&
+        (cell.assignmentStatus ?? '').trim().toUpperCase() === 'ASSIGNED'
     )
-  }).length
+    if (assignedHere) assigneeIds.add(row.id)
+  }
+  return assigneeIds.size
 }
 
 export function getRegionAssignmentTableData(
@@ -57,56 +75,125 @@ function volunteerAssignedDays(row: RegionAssignmentVolunteerRow): number {
   return row.totalAssignedDays
 }
 
+/** columns=[]여도 volunteers 행 수를 숨기지 않는다 */
+export function getRegionAssignmentDisplayedVolunteerCount(
+  table: Pick<RegionAssignmentTableData, 'volunteerCount'>
+): number {
+  return table.volunteerCount
+}
+
+/** 매트릭스 int. null이면 0일 */
+export function formatRegionAssignmentTotalAssignedDays(
+  totalAssignedDays: number | null | undefined
+): string {
+  return `${totalAssignedDays ?? 0}일`
+}
+
+/** allocation-matrix `isoDate`(educationStartAt → Asia/Seoul YYYY-MM-DD). UTC slice 금지. */
+function seoulCalendarDay(column: RegionAssignmentColumn): string | null {
+  const ymd = column.isoDate?.trim()
+  return ymd && /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? ymd : null
+}
+
+function isAssignedMatrixCell(
+  cell: RegionAssignmentVolunteerRow['cells'][number] | undefined
+): boolean {
+  return (
+    cell?.kind === 'assigned' &&
+    cell.isInvalidAssignment !== true &&
+    isUjatAllocationAssignmentStatusAssigned(cell.assignmentStatus)
+  )
+}
+
+function isUnavailableMatrixCell(
+  cell: RegionAssignmentVolunteerRow['cells'][number] | undefined
+): boolean {
+  return cell?.kind === 'empty' && cell.blockedEmpty === true
+}
+
+/** 대체 후보: 그 열 UNASSIGNED (REASSIGNMENT_REQUIRED·ASSIGNED·unavailable 제외) */
+function isUnassignedAvailableOnColumn(
+  row: RegionAssignmentVolunteerRow,
+  columnIndex: number
+): boolean {
+  const cell = row.cells[columnIndex]
+  if (isUnavailableMatrixCell(cell)) return false
+  if (cell?.kind === 'assigned') return false
+  return isVolunteerUnassignedOnColumn(row, columnIndex)
+}
+
 /**
- * 대체 배정 검사 대상 열 — 같은 날 판정은 서울 날짜 기준이라 선택 날짜의 모든 일정 열을 본다.
+ * 대체 배정 검사 대상 열 — 같은 서울 달력일의 모든 일정 열.
  */
 function getBlockedDateSubstituteColumnIndices(
   columns: RegionAssignmentColumn[],
-  dateLabels: string[]
+  seoulDays: string[]
 ): number[] {
+  const daySet = new Set(seoulDays)
   return columns
     .map((column, index) => ({ column, index }))
-    .filter(({ column }) => dateLabels.includes(column.dateLabel))
+    .filter(({ column }) => {
+      const day = seoulCalendarDay(column)
+      return day != null && daySet.has(day)
+    })
     .map(({ index }) => index)
 }
 
-/** 같은 날 어느 일정에도 배정되지 않았고, 그 날 활동 불가도 아닌 봉사자 */
+/** 같은 서울일에 어느 일정에도 ASSIGNED가 없고, 그날 활동 불가도 아닌 봉사자 */
 function isVolunteerFreeOnColumnIndices(
   row: RegionAssignmentVolunteerRow,
   columnIndices: number[]
 ): boolean {
-  return columnIndices.every(index => {
-    const cell = row.cells[index]
-    if (cell?.kind === 'empty' && cell.blockedEmpty) return false
-    return isVolunteerUnassignedOnColumn(row, index)
-  })
+  if (columnIndices.length === 0) return false
+  return columnIndices.every(index => isUnassignedAvailableOnColumn(row, index))
 }
 
 /**
- * 직접 배정 학급 옵션 — 빈 슬롯·1인 슬롯(두 번째 봉사자 배정)은 선택 가능, 2인이 찬 슬롯만 비활성.
+ * 직접 배정 학급 옵션.
+ * 만석·지난 교육일·임시 슬롯은 목록에 넣지 않는다. 미래·미만석만 선택 가능.
  */
 export function getRegionDirectAssignClassOptionsFromData(
-  data: RegionAssignmentTableData
+  data: RegionAssignmentTableData,
+  nowMs = Date.now()
 ): { value: string; label: string; disabled?: boolean }[] {
   const { columns, rows } = data
 
-  return columns.flatMap((column, columnIndex) =>
-    column.classSlots.map(slot => {
-      const label = formatRegionDirectAssignClassOptionLabel(
-        column.dateLabel,
-        formatUjatGradeClassDisplayLabel(slot.classLabel),
-        column.institutionName
-      )
-      const assignees = countRegionClassSlotAssignees(slot.classLabel, rows, columnIndex)
-      if (assignees >= 2) {
-        return { value: slot.id, label: `${label} · 배정 완료`, disabled: true }
-      }
-      if (assignees === 1) {
-        return { value: slot.id, label: `${label} · ${REGION_DIRECT_ASSIGN_SECONDARY_LABEL}` }
-      }
-      return { value: slot.id, label }
+  return columns.flatMap(column =>
+    column.classSlots.flatMap(slot => {
+      if (slot.isEducationSlotId === false) return []
+      if (countRegionClassSlotAssignees(slot.id, rows) >= 2) return []
+      if (!isRegionDirectAssignEducationNotStarted(column.educationStartAt, nowMs)) return []
+      return [
+        {
+          value: slot.id,
+          label: formatRegionDirectAssignClassOptionLabel(
+            column.dateLabel,
+            formatUjatGradeClassDisplayLabel(slot.classLabel),
+            column.institutionName
+          ),
+        },
+      ]
     })
   )
+}
+
+export function isRegionDirectAssignClassSlotSelectable(
+  data: RegionAssignmentTableData,
+  classSlotId: string | undefined,
+  nowMs = Date.now()
+): boolean {
+  if (!classSlotId) return false
+  return getRegionDirectAssignClassOptionsFromData(data, nowMs).some(
+    option => option.value === classSlotId && option.disabled !== true
+  )
+}
+
+export function isRegionDirectAssignClassSlotFull(
+  data: RegionAssignmentTableData,
+  classSlotId: string | undefined
+): boolean {
+  if (!classSlotId) return false
+  return countRegionClassSlotAssignees(classSlotId, data.rows) >= 2
 }
 
 export function getRegionDirectAssignClassOptions(
@@ -126,8 +213,10 @@ export function getRegionDirectAssignClassOptions(
 export function mapRegionDirectAssignCandidateOptions(
   response: UjatDirectAssignmentCandidatesResponse | null | undefined
 ): { value: string; label: string }[] {
+  const existingPrimaryId = response?.existingPrimaryParticipantId
   return (response?.candidates ?? []).flatMap(candidate => {
     if (candidate.participantId == null) return []
+    if (existingPrimaryId != null && candidate.participantId === existingPrimaryId) return []
     const name = candidate.volunteerName?.trim() || '-'
     const sourceClass = formatUjatGradeClassDisplayLabel(candidate.sourceClassLabel)
     const label =
@@ -138,68 +227,67 @@ export function mapRegionDirectAssignCandidateOptions(
   })
 }
 
-function getColumnIndicesForDateLabels(
+function getColumnIndicesForSeoulDays(
   columns: RegionAssignmentColumn[],
-  dateLabels: readonly string[]
+  seoulDays: readonly string[]
 ): number[] {
-  const labelSet = new Set(dateLabels)
+  const daySet = new Set(seoulDays)
   return columns
     .map((column, index) => ({ column, index }))
-    .filter(({ column }) => labelSet.has(column.dateLabel))
+    .filter(({ column }) => {
+      const day = seoulCalendarDay(column)
+      return day != null && daySet.has(day)
+    })
     .map(({ index }) => index)
 }
 
 /**
- * 선택한 교육일(서울 date = column.dateLabel)에 **활성 배정(ASSIGNED)** 이 있는지.
- * REASSIGNMENT_REQUIRED / UNASSIGNED 만 있으면 false (대체 없이 불가 등록).
+ * 선택한 서울 달력일에 **활성 배정(ASSIGNED)** 이 있는지.
+ * REASSIGNMENT_REQUIRED / UNASSIGNED / unavailable 만 있으면 false (대체 없이 불가 등록).
  */
 export function regionUnavailabilityRequiresReplacementForDate(
   data: RegionAssignmentTableData,
   volunteerId: string,
-  dateLabel: string
+  seoulDay: string
 ): boolean {
   const row = data.rows.find(item => item.id === volunteerId)
   if (!row) return false
-  const indices = getColumnIndicesForDateLabels(data.columns, [dateLabel])
-  return indices.some(index => {
-    const cell = row.cells[index]
-    return cell?.kind === 'assigned' && cell.isInvalidAssignment !== true
-  })
+  const indices = getColumnIndicesForSeoulDays(data.columns, [seoulDay])
+  return indices.some(index => isAssignedMatrixCell(row.cells[index]))
 }
 
 /** 선택한 불가일 중 하나라도 활성 배정이 있으면 대체 봉사자 필수 */
 export function regionUnavailabilityRequiresReplacement(
   data: RegionAssignmentTableData,
   volunteerId: string,
-  dateLabels: readonly string[]
+  seoulDays: readonly string[]
 ): boolean {
-  const unique = [...new Set(dateLabels)]
-  return unique.some(label =>
-    regionUnavailabilityRequiresReplacementForDate(data, volunteerId, label)
-  )
+  const unique = [...new Set(seoulDays)]
+  return unique.some(day => regionUnavailabilityRequiresReplacementForDate(data, volunteerId, day))
 }
 
 /**
  * 참여 불가일 POST 대상 scheduleId — 활동 불가는 서울 날짜 단위로 적용되므로 날짜당 1건.
- * 대상 봉사자가 그 날 배정된 일정이 있으면 그 일정(대체자가 해당 배정을 넘겨받음), 없으면 그 날 첫 일정.
+ * 대상 봉사자가 그 날 ASSIGNED 일정이 있으면 그 일정, 없으면 그 날 첫 일정.
  */
 export function selectRegionUnavailabilityScheduleIds(
   data: RegionAssignmentTableData,
   volunteerId: string,
-  dateLabels: readonly string[]
+  seoulDays: readonly string[]
 ): string[] {
   const target = data.rows.find(row => row.id === volunteerId)
+  const daySet = new Set(seoulDays)
   const byDate = new Map<string, { assigned?: string; first?: string }>()
 
   data.columns.forEach((column, index) => {
-    if (!column.scheduleId || !dateLabels.includes(column.dateLabel)) return
-    const dateKey = column.isoDate || column.dateLabel
-    const entry = byDate.get(dateKey) ?? {}
+    const day = seoulCalendarDay(column)
+    if (!column.scheduleId || day == null || !daySet.has(day)) return
+    const entry = byDate.get(day) ?? {}
     entry.first ??= column.scheduleId
-    if (!entry.assigned && target?.cells[index]?.kind === 'assigned') {
+    if (!entry.assigned && isAssignedMatrixCell(target?.cells[index])) {
       entry.assigned = column.scheduleId
     }
-    byDate.set(dateKey, entry)
+    byDate.set(day, entry)
   })
 
   return [...byDate.values()].flatMap(entry => {
@@ -231,18 +319,30 @@ export function getRegionBlockedDateVolunteerOptions(
   )
 }
 
-/** 참여 불가일 설정 — 지역 내 모든 교육일(중복 일자 제거, 열 순서 유지) */
+/** 참여 불가일 설정 — 지역 내 모든 교육일(서울 달력일 distinct, 열 순서 유지) */
 export function getRegionEducationDateOptionsFromData(
   data: RegionAssignmentTableData
 ): { value: string; label: string }[] {
   const seen = new Set<string>()
 
   return data.columns.reduce<{ value: string; label: string }[]>((acc, column) => {
-    if (seen.has(column.dateLabel)) return acc
-    seen.add(column.dateLabel)
-    acc.push({ value: column.dateLabel, label: column.dateLabel })
+    const value = seoulCalendarDay(column)
+    if (!value || seen.has(value)) return acc
+    seen.add(value)
+    const label = column.dateLabel.trim() && column.dateLabel !== '-' ? column.dateLabel : value
+    acc.push({ value, label })
     return acc
   }, [])
+}
+
+/** 참여 불가일 설정 — 해당 봉사자에게 활성 배정이 있는 교육일만 */
+export function getRegionAssignedEducationDateOptionsFromData(
+  data: RegionAssignmentTableData,
+  volunteerId: string
+): { value: string; label: string }[] {
+  return getRegionEducationDateOptionsFromData(data).filter(option =>
+    regionUnavailabilityRequiresReplacementForDate(data, volunteerId, option.value)
+  )
 }
 
 export function getRegionEducationDateOptions(
@@ -266,6 +366,7 @@ export function getRegionBlockedDateSubstituteVolunteerOptionsFromData(
 
   const uniqueDateLabels = [...new Set(blockedDateLabels)]
   const columnIndices = getBlockedDateSubstituteColumnIndices(columns, uniqueDateLabels)
+  if (columnIndices.length === 0) return []
 
   return rows
     .filter(

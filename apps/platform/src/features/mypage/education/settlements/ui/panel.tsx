@@ -145,7 +145,11 @@ export function EducationSettlementPanel({
       : undefined
   const area = resolveSettlementAreaFromPathname(location.pathname)
   const operationEnd = readProgramOperationEndAt(operationEndAt)
-  const receiptConsent = useReceiptPaymentStatementConsent()
+  const receiptConsent = useReceiptPaymentStatementConsent({
+    applicationId,
+    area,
+    applicationType: applicationType ?? undefined,
+  })
   const handleReceiptWrite =
     documentKind === 'receipt' ? receiptConsent.tryWriteReceipt : undefined
 

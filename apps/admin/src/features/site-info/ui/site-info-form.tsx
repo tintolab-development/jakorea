@@ -326,6 +326,16 @@ export function SiteInfoFormCard({ data }: Props) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
+    if (!siteDescription.trim()) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    const hasOgImage = Boolean(draft.ogImageUrl.trim() || draft.ogImageFile || draft.ogAssetId)
+    const hasFavicon = Boolean(draft.faviconUrl.trim() || draft.faviconFile || draft.faviconAssetId)
+    if (!hasOgImage || !hasFavicon) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     setNameError(undefined)
     try {
       await saveMutation.mutateAsync(toSaveInput({ ...draft, siteName, siteDescription }))

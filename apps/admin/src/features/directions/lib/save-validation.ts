@@ -9,6 +9,7 @@ import {
   isOptimisticLockConflictError,
   readApiErrorMessage,
 } from '@/shared/lib/api-error-message'
+import { REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE } from '@/shared/ui'
 
 export type DirectionsAlert = {
   title: string
@@ -70,6 +71,21 @@ export function validateDirectionsBeforeSave(data: DirectionsInfo): DirectionsAl
   const phone = data.phone.trimEnd()
   const fax = data.fax.trimEnd()
   const email = data.email.trimEnd()
+
+  if (
+    !addressKo.trim() ||
+    !addressEn.trim() ||
+    !kakaoMapHtml.trim() ||
+    !phone.trim() ||
+    !fax.trim() ||
+    !email.trim()
+  ) {
+    return {
+      title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+      content:
+        "입력되지 않은 필수 항목이 있습니다.\n'*' 표시된 필수 항목을 모두 작성해 주세요.",
+    }
+  }
 
   if (addressKo.length > FIELD_LIMITS.addressKo) {
     return {

@@ -4,6 +4,10 @@ import { isAxiosError } from 'axios'
 export const LOGIN_APPROVAL_PENDING_MESSAGE =
   '관리자에 의해 승인이 필요한 계정입니다. 승인 완료 후 로그인할 수 있습니다.'
 
+const SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY = 'SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY'
+const SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY_MESSAGE =
+  '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.'
+
 const LOGIN_APPROVAL_PENDING_CODES = new Set([
   'PENDING_VERIFICATION',
   'APPROVAL_REQUIRED',
@@ -30,6 +34,21 @@ export function isLoginApprovalPendingApiError(error: unknown): boolean {
 export function getLoginApiErrorMessage(error: unknown, fallback: string): string {
   if (isLoginApprovalPendingApiError(error)) {
     return LOGIN_APPROVAL_PENDING_MESSAGE
+  }
+
+  if (isAxiosError(error)) {
+    const code = extractErrorCode(error.response?.data)
+    if (code === SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY) {
+      const data = error.response?.data
+      const nested =
+        data && typeof data === 'object'
+          ? (data as { error?: { message?: unknown }; message?: unknown }).error?.message
+          : undefined
+      if (typeof nested === 'string' && nested.trim() && nested.trim() !== code) {
+        return nested.trim()
+      }
+      return SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY_MESSAGE
+    }
   }
 
   if (isAxiosError(error)) {
@@ -65,6 +84,7 @@ export function formatPortalProfileUpdateError(error: unknown, fallback: string)
   const message = getLoginApiErrorMessage(error, fallback)
   if (!isAxiosError(error)) return message
   const code = extractErrorCode(error.response?.data)
+  if (code === SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY) return message
   if (code && message && !message.includes(code)) {
     return `${code}: ${message}`
   }

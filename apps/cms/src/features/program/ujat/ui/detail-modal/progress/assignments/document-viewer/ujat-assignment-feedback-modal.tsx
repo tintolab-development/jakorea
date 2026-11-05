@@ -3,8 +3,12 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsTextArea } from '@/shared/ui/cms-textarea'
+import './ujat-assignment-feedback-modal.css'
 
 export type UjatFeedbackModalMode = 'write' | 'view'
+
+/** 문서 보기(풀페이지) 위에 뜨는 컨텐츠 모달 */
+const FEEDBACK_MODAL_Z_INDEX = 1200
 
 interface UjatAssignmentFeedbackModalProps {
   open: boolean
@@ -12,8 +16,6 @@ interface UjatAssignmentFeedbackModalProps {
   mode: UjatFeedbackModalMode
   volunteerName: string
   docTypeLabel: string
-  /** 대상 호칭 — 기본 봉사자 (일반 과제는 학생 등) */
-  subjectLabel?: string
   existingFeedback?: string
   submitting?: boolean
   onSubmit: (feedback: string) => void | Promise<void>
@@ -25,7 +27,6 @@ export function UjatAssignmentFeedbackModal({
   mode,
   volunteerName,
   docTypeLabel,
-  subjectLabel = '봉사자',
   existingFeedback = '',
   submitting = false,
   onSubmit,
@@ -45,10 +46,10 @@ export function UjatAssignmentFeedbackModal({
   }, [text, onSubmit, submitting])
 
   const isWrite = mode === 'write'
-  const title = isWrite ? `피드백 작성` : `피드백 보기`
+  const title = isWrite ? '피드백 작성' : '피드백 보기'
   const description = isWrite
-    ? `**[${volunteerName}]** ${subjectLabel}에게 전달할 피드백을 작성해 주세요.`
-    : `**[${volunteerName}]** ${subjectLabel}에게 전달된 피드백입니다.`
+    ? `**[${volunteerName}]** 님에게 전달할 피드백을 작성해 주세요.`
+    : `**[${volunteerName}]** 님에게 전달된 피드백입니다.`
   const formClassName = [
     'ujat-assignment-feedback-modal__form',
     !isWrite && 'ujat-assignment-feedback-modal__form--view',
@@ -64,7 +65,7 @@ export function UjatAssignmentFeedbackModal({
       width={800}
       className="ujat-assignment-feedback-modal"
       description={description}
-      descriptionGap="compact"
+      zIndex={FEEDBACK_MODAL_Z_INDEX}
       footer={
         isWrite ? (
           <>
@@ -75,12 +76,13 @@ export function UjatAssignmentFeedbackModal({
               variant="primary"
               size="medium"
               disabled={!text.trim() || submitting}
-              onClick={handleSubmit} >
-              {submitting ? '등록 중…' : '피드백 전달'}
+              onClick={handleSubmit}
+            >
+              저장
             </CmsButton>
           </>
         ) : (
-          <CmsButton variant="primary" size="medium" onClick={onCancel}>
+          <CmsButton variant="secondary" size="medium" onClick={onCancel}>
             확인
           </CmsButton>
         )
@@ -95,6 +97,7 @@ export function UjatAssignmentFeedbackModal({
         <DetailInfoForm.Row>
           <DetailInfoForm.Field
             label="피드백"
+            required={isWrite}
             view={
               <div className="ujat-assignment-feedback-modal__feedback-content">
                 {existingFeedback || '-'}
@@ -109,7 +112,6 @@ export function UjatAssignmentFeedbackModal({
                 placeholder="피드백을 작성해 주세요"
                 rows={4}
                 maxLength={4000}
-                showCount
                 autoFocus
                 className="ujat-assignment-feedback-modal__textarea"
               />

@@ -67,11 +67,23 @@ function cloneIntro(intro: OperatingPrinciplesIntro): OperatingPrinciplesIntro {
 function fieldClass(isEditing: boolean, ...extra: Array<string | false | undefined>) {
   return [
     'principles-inline-field',
+    'cms-textarea--fixed-rows',
     isEditing ? 'principles-inline-field--edit' : 'principles-inline-field--readonly',
     ...extra,
   ]
     .filter(Boolean)
     .join(' ')
+}
+
+function RequiredColumnTitle({ children }: { children: string }) {
+  return (
+    <span>
+      {children}
+      <span className="principles-col-required" aria-hidden>
+        *
+      </span>
+    </span>
+  )
 }
 
 export function PrinciplesFormCard({ data }: Props) {
@@ -215,19 +227,15 @@ export function PrinciplesFormCard({ data }: Props) {
         render: (_value, record) => <PrincipleIcon iconKey={record.iconKey} size={48} />,
       },
       {
-        title: '타이틀',
+        title: <RequiredColumnTitle>타이틀</RequiredColumnTitle>,
         key: 'title',
-        width: 280,
+        width: 320,
         className: 'principles-sortable-table__col--title',
         render: (_value, record) => {
           const value = draftTexts[record.id]?.title ?? record.title
           return (
             <CmsTextArea
-              className={fieldClass(
-                isEditing,
-                'cms-textarea--fixed-rows',
-                'principles-title-field'
-              )}
+              className={fieldClass(isEditing, 'principles-title-field')}
               inputSize="medium"
               width="100%"
               rows={2}
@@ -245,14 +253,14 @@ export function PrinciplesFormCard({ data }: Props) {
         },
       },
       {
-        title: '서브 텍스트',
+        title: <RequiredColumnTitle>서브 텍스트</RequiredColumnTitle>,
         key: 'subText',
         className: 'principles-sortable-table__col--subText',
         render: (_value, record) => {
           const value = draftTexts[record.id]?.subText ?? record.subText
           return (
             <CmsTextArea
-              className={fieldClass(isEditing, 'cms-textarea--fixed-rows')}
+              className={fieldClass(isEditing)}
               inputSize="medium"
               width="100%"
               rows={3}
@@ -328,10 +336,12 @@ export function PrinciplesFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="상단 서브 텍스트"
+                required
+                labelWidth={200}
                 view={null}
                 edit={
                   <CmsTextArea
-                    className={fieldClass(isEditing, 'cms-textarea--fixed-rows')}
+                    className={fieldClass(isEditing)}
                     inputSize="medium"
                     width="100%"
                     rows={1}
@@ -350,10 +360,12 @@ export function PrinciplesFormCard({ data }: Props) {
             <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
                 label="메인 텍스트"
+                required
+                labelWidth={200}
                 view={null}
                 edit={
                   <CmsTextArea
-                    className={fieldClass(isEditing, 'cms-textarea--fixed-rows')}
+                    className={fieldClass(isEditing)}
                     inputSize="medium"
                     width="100%"
                     rows={2}

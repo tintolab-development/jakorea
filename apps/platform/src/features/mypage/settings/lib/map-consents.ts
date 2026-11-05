@@ -17,6 +17,7 @@ export const SETTINGS_CONSENT_TYPE_BY_ID: Record<SettingsConsentItemId, string> 
   marketing: 'MARKETING',
   portrait: 'PORTRAIT_RIGHTS',
   paymentStatement: 'PAYMENT_STATEMENT_CONSENT',
+  receiptPreConsent: 'RECEIPT_PRE_CONSENT',
   educatorPledge: 'FACILITATOR_PLEDGE',
   administrativeJoint: 'ADMINISTRATIVE_INFO_CONSENT',
   sexOffenseCheck: 'CRIMINAL_HISTORY_CHECK_CONSENT',
@@ -49,7 +50,22 @@ export function formatConsentDate(value: string | null | undefined): string | un
 
 function normalizeConsentType(value: string | undefined): string {
   const normalized = value?.trim().toUpperCase() ?? ''
-  return normalized === 'PAYMENT_STATEMENT_PRE_CONSENT' ? 'PAYMENT_STATEMENT_CONSENT' : normalized
+  if (normalized === 'PAYMENT_STATEMENT_PRE_CONSENT') return 'PAYMENT_STATEMENT_CONSENT'
+  if (normalized === 'AGREEMENT_RECEIPT_PRE_CONSENT') return 'RECEIPT_PRE_CONSENT'
+  return normalized
+}
+
+export function readPortalConsentDocumentId(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value.trim())
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+  return undefined
+}
+
+function consentItemCompleteness(item: SettingsConsentItem): number {
+  return (item.signed ? 4 : 0) + (item.agreed ? 2 : 0) + (item.documentId != null ? 1 : 0)
 }
 
 /**
@@ -75,8 +91,7 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       continue
     }
     const meta = CATALOG_BY_TYPE.get(consentType)
-    if (!meta || seen.has(meta.id)) continue
-    seen.add(meta.id)
+    if (!meta) continue
 
     const expired = summary.expired === true
     const reconsentRequired = summary.reconsentRequired === true
@@ -98,11 +113,22 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       agreed,
       agreedAt: agreed ? formatConsentAgreedAt(summary.agreedAt) : undefined,
       hint: expired || reconsentRequired ? EXPIRED_HINT : meta.hint,
-      documentId: summary.documentId ?? undefined,
+      documentId: readPortalConsentDocumentId(summary.documentId),
       withdrawable: summary.withdrawable === true,
       status: summary.status,
+      signed: summary.signed === true,
+      listed: typeof summary.listed === 'boolean' ? summary.listed : undefined,
     }
-    ;(DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems).push(item)
+    const target = DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems
+    if (seen.has(meta.id)) {
+      const index = target.findIndex(row => row.id === meta.id)
+      if (index >= 0 && consentItemCompleteness(item) > consentItemCompleteness(target[index]!)) {
+        target[index] = item
+      }
+      continue
+    }
+    seen.add(meta.id)
+    target.push(item)
   }
 
   return { basicItems, documentItems }

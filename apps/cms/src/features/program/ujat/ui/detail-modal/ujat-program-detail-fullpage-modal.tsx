@@ -32,6 +32,7 @@ import { UjatInstitutionApplicationDetailPage } from './application-institution/
 import { UjatInstitutionScheduleAssignPage } from './application-institution/schedule-assign/page'
 import { UjatInstitutionScheduleConfirmList } from './application-institution/schedule-confirm/list'
 import { UjatEducationProgressSummarySection } from './progress/progress-summary/section'
+import { UjatEducationProgressSummaryExcelButton } from './progress/progress-summary/excel-button'
 import { UjatEducationProgressAssignmentsSection } from './progress/assignments/section'
 import { UjatEducationProgressAttendanceSection } from './progress/attendance/section'
 import { UjatEducationProgressInstitutionsSection } from './progress/institutions/section'
@@ -1595,6 +1596,13 @@ export function UjatProgramDetailFullPageModal({
       onClose={handleClose}
       title={title}
       headerTrailing={<DetailFullpageBreadcrumb items={headerBreadcrumbItems} />}
+      contentExtra={
+        activeLnb === 'education_progress' && activeTab === 'edu_summary' ? (
+          <UjatEducationProgressSummaryExcelButton
+            programId={displayProgram?.id ?? programId}
+          />
+        ) : undefined
+      }
       closeAriaLabel="닫기"
       className="program-detail-fullpage-modal ujat-program-detail-fullpage-modal"
       sidebar={
@@ -1843,7 +1851,9 @@ export function UjatProgramDetailFullPageModal({
           )}
           {activeLnb === 'education_progress' && activeTab === 'edu_summary' && (
             <div className="program-detail-fullpage-modal__info-tab">
-              <UjatEducationProgressSummarySection programId={displayProgram?.id ?? programId} />
+              <UjatEducationProgressSummarySection
+                programId={displayProgram?.id ?? programId}
+              />
             </div>
           )}
 

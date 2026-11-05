@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCmsAlert } from '@/shared/ui'
 import { shouldUseUjatApplicationsRemoteApi } from '@/features/program/ujat/api/applications-remote-capabilities'
@@ -25,15 +25,13 @@ import type { UjatInstitutionApplicationRegionKey } from '../../application-inst
 import type { EducationProgressHalfKey } from '../tabs'
 import type { RegionAttendanceManagerAssignments } from './attendance-manager'
 import {
-  applyRegionAttendanceManagersFromData,
-  collectAttendanceManagerPuts,
+  isAttendanceManagerClientError,
+  resolveAttendanceManagerPuts,
 } from './attendance-manager'
 import type { RegionBlockedDateModalPayload } from './blocked-date-modal'
 import {
   buildAutoAssignResultAlert,
   collectAutoAssignRefreshSlotIds,
-  summarizeAutoAssignResult,
-  type AutoAssignResultSummary,
 } from './auto-assign-result'
 import {
   buildDirectAssignSuccessMessage,
@@ -43,6 +41,8 @@ import { resolveRegionUnavailabilityErrorMessage } from './region-unavailability
 import { setRegionAssignmentTableData } from './region-assignment-store'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import {
+  isRegionDirectAssignClassSlotFull,
+  isRegionDirectAssignClassSlotSelectable,
   regionUnavailabilityRequiresReplacement,
   regionUnavailabilityRequiresReplacementForDate,
   selectRegionUnavailabilityScheduleIds,
@@ -72,6 +72,7 @@ export function useRegionAssignment(
   const educationRegionCode = toUjatEducationRegionCode(regionKey)
   /** 상·하반기 탭 → 항상 semesterType 전송. FE에서 전 반기 응답을 분류하지 않는다. */
   const semesterType = toUjatRecruitHalfApi(half)
+  const hasEducationRegionCode = Boolean(educationRegionCode)
 
   useNotifyProgramApiUnavailableOnce(
     !remoteEnabled,
@@ -79,13 +80,19 @@ export function useRegionAssignment(
     'UJAT 진행 현황 · 지역 배정'
   )
 
+  const matrixQueryKey = ujatQueryKeys.allocationMatrix(
+    programId,
+    educationRegionCode,
+    semesterType
+  )
   const matrixQuery = useQuery({
-    queryKey: ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
-    enabled: remoteEnabled,
+    queryKey: matrixQueryKey,
+    enabled: remoteEnabled && hasEducationRegionCode,
     queryFn: async () => {
       const matrix = await fetchUjatAllocationMatrix(programId, {
         educationRegionCode,
         semesterType,
+        recruitHalf: semesterType,
       })
       const orgAssignments = matrixColumnsIncludeEducationSlots(matrix)
         ? { content: [] }
@@ -124,7 +131,8 @@ export function useRegionAssignment(
   }, [matrixQuery.data, regionKey])
 
   const invalidateMatrix = useCallback(async () => {
-    // unavailability는 allocation-matrix queryFn 안에서 함께 fetch → matrix invalidate로 갱신
+    // 뱃지 SSOT: PUT overlay 없이 같은 programId+region+semesterType matrix GET을 즉시 다시 받는다.
+    await queryClient.refetchQueries({ queryKey: matrixQueryKey })
     await Promise.all([
       queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.allocationMatrixRoot(programId),
@@ -148,7 +156,7 @@ export function useRegionAssignment(
         queryKey: ujatQueryKeys.educationProgressSummary(programId),
       }),
     ])
-  }, [programId, queryClient])
+  }, [matrixQueryKey, programId, queryClient])
 
   const showMutationError = useCallback(
     (error: unknown, fallback: string) => {
@@ -157,12 +165,6 @@ export function useRegionAssignment(
     },
     [invalidateMatrix, showAlert]
   )
-
-  const autoAssignScopeKey = `${programId}:${educationRegionCode}:${semesterType}`
-  const [autoAssignResult, setAutoAssignResult] = useState<{
-    scopeKey: string
-    summary: AutoAssignResultSummary
-  } | null>(null)
 
   const autoAssignMutation = useMutation({
     mutationFn: () =>
@@ -182,7 +184,6 @@ export function useRegionAssignment(
           )
         )
       }
-      setAutoAssignResult({ scopeKey: autoAssignScopeKey, summary: summarizeAutoAssignResult(response) })
       showAlert(buildAutoAssignResultAlert(response))
     },
     onError: error => {
@@ -196,6 +197,12 @@ export function useRegionAssignment(
       const educationSlotId = Number(payload.classSlotId)
       if (!Number.isFinite(participantId) || !Number.isFinite(educationSlotId)) {
         throw new Error('INVALID_DIRECT_ASSIGN_IDS')
+      }
+      if (!isRegionDirectAssignClassSlotSelectable(tableData, payload.classSlotId)) {
+        throw new Error('DIRECT_ASSIGN_SLOT_NOT_SELECTABLE')
+      }
+      if (isRegionDirectAssignClassSlotFull(tableData, payload.classSlotId)) {
+        throw new Error('DIRECT_ASSIGN_SLOT_FULL')
       }
       return postUjatDirectAssignment(programId, educationSlotId, { participantId })
     },
@@ -272,33 +279,32 @@ export function useRegionAssignment(
 
   const attendanceManagerMutation = useMutation({
     mutationFn: async (assignments: RegionAttendanceManagerAssignments) => {
-      const puts = collectAttendanceManagerPuts(tableData, assignments)
+      const puts = resolveAttendanceManagerPuts(tableData, assignments)
       for (const item of puts) {
         await putUjatAttendanceManager(programId, item.scheduleId, {
+          organizationApplicationId: item.organizationApplicationId,
           participantId: item.participantId,
         })
       }
     },
     retry: false,
-    onMutate: assignments => {
-      const previous = tableData
-      setRegionAssignmentTableData(
-        programId,
-        half,
-        regionKey,
-        applyRegionAttendanceManagersFromData(tableData, assignments)
-      )
-      return { previous }
-    },
     onSuccess: async () => {
       await invalidateMatrix()
       showAlert({ title: '안내', content: '출결 담당자가 저장되었습니다.' })
     },
-    onError: (error, _assignments, context) => {
-      if (context?.previous) {
-        setRegionAssignmentTableData(programId, half, regionKey, context.previous)
+    onError: error => {
+      showAlert({
+        title: '오류',
+        content: resolveRegionAssignmentErrorMessage(
+          error,
+          error instanceof Error && isAttendanceManagerClientError(error)
+            ? error.message
+            : '출결 담당자 저장에 실패했습니다.'
+        ),
+      })
+      if (!isAttendanceManagerClientError(error)) {
+        void invalidateMatrix()
       }
-      showMutationError(error, '출결 담당자 저장에 실패했습니다.')
     },
   })
 
@@ -311,9 +317,11 @@ export function useRegionAssignment(
   const confirmDirectAssign = useCallback(
     (payload: { classSlotId: string; volunteerId: string }) => {
       if (!remoteEnabled) return
+      if (!isRegionDirectAssignClassSlotSelectable(tableData, payload.classSlotId)) return
+      if (isRegionDirectAssignClassSlotFull(tableData, payload.classSlotId)) return
       directAssignMutation.mutate(payload)
     },
-    [directAssignMutation, remoteEnabled]
+    [directAssignMutation, remoteEnabled, tableData]
   )
 
   const confirmBlockedDate = useCallback(
@@ -325,14 +333,17 @@ export function useRegionAssignment(
   )
 
   const saveAttendanceManagers = useCallback(
-    (assignments: RegionAttendanceManagerAssignments) => {
-      if (!remoteEnabled) return
-      attendanceManagerMutation.mutate(assignments)
+    async (assignments: RegionAttendanceManagerAssignments) => {
+      if (!remoteEnabled) return false
+      try {
+        await attendanceManagerMutation.mutateAsync(assignments)
+        return true
+      } catch {
+        return false
+      }
     },
     [attendanceManagerMutation, remoteEnabled]
   )
-
-  const dismissAutoAssignResult = useCallback(() => setAutoAssignResult(null), [])
 
   return {
     tableData,
@@ -340,13 +351,12 @@ export function useRegionAssignment(
     isLoading: remoteEnabled && matrixQuery.isLoading,
     isError: remoteEnabled && matrixQuery.isError,
     isRemote: remoteEnabled,
-    autoAssignResultSummary:
-      autoAssignResult?.scopeKey === autoAssignScopeKey ? autoAssignResult.summary : null,
-    dismissAutoAssignResult,
+    refetchMatrix: () => matrixQuery.refetch(),
     runAutoAssign,
     confirmDirectAssign,
     confirmBlockedDate,
     saveAttendanceManagers,
+    isSavingAttendanceManagers: attendanceManagerMutation.isPending,
     isMutating:
       autoAssignMutation.isPending ||
       directAssignMutation.isPending ||

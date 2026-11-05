@@ -8,7 +8,7 @@ import {
 } from '@/shared/hooks'
 import type { JusoAddressItem } from '@/shared/hooks'
 import { highlightKeyword } from '@/shared/lib/highlight-keyword'
-import { PFButton, PFModal, PFPagination, PFText, PFTextInput } from '@/shared/ui'
+import { PFButton, PFLoadingSpinner, PFModal, PFPagination, PFText, PFTextInput } from '@/shared/ui'
 import styles from './address-search-modal.module.css'
 
 const LIVE_SEARCH_DEBOUNCE_MS = 280
@@ -192,7 +192,12 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
           ) : null}
         </div>
 
-        <div className={styles.addressModalBody}>
+        <div className={styles.addressModalBody} aria-busy={loading || undefined}>
+          {loading && hasSearched ? (
+            <div className={styles.addressModalLoading}>
+              <PFLoadingSpinner label="주소 검색 중" />
+            </div>
+          ) : null}
           {!hasSearched ? (
             <div className={styles.addressModalTip}>
               <PFText as="div" typo="bd-lg-sb" color="black">
@@ -238,13 +243,8 @@ export function AddressSearchModal({ open, onClose, onSelect }: AddressSearchMod
             </div>
           ) : null}
 
-          {hasSearched ? (
+          {hasSearched && !loading ? (
             <div className={styles.addressModalResults}>
-              {loading && !hasAddressResults ? (
-                <PFText typo="bd-sm-rg" color="neutral-warm-500">
-                  검색 중입니다.
-                </PFText>
-              ) : null}
               {error ? (
                 <div className={styles.addressResultNotice}>
                   <PFText typo="bd-md-sb" color="error">

@@ -97,15 +97,17 @@ export function EducationSettlementApplicationDocumentOverlay({
           </PFText>
         ) : null}
         {!loading && !error && applicationDocument != null ? (
-          <ConsentDocumentA4Page title={sheetTitle} pageIndex={safePage - 1}>
-            <EducationSettlementApplicationDocumentView
-              document={applicationDocument}
-              programTitle={programTitle}
-              page={activePage}
-              onRefreshDocument={onRefreshDocument}
-              refreshing={refreshing}
-            />
-          </ConsentDocumentA4Page>
+          <div className={styles.documentStage}>
+            <ConsentDocumentA4Page title={sheetTitle} pageIndex={safePage - 1}>
+              <EducationSettlementApplicationDocumentView
+                document={applicationDocument}
+                programTitle={programTitle}
+                page={activePage}
+                onRefreshDocument={onRefreshDocument}
+                refreshing={refreshing}
+              />
+            </ConsentDocumentA4Page>
+          </div>
         ) : null}
       </div>
 

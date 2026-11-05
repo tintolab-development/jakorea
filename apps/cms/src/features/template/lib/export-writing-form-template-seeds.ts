@@ -29,6 +29,7 @@ import { createUjatRecruitFormVolunteerDraft } from '@/features/template/model/u
 import { createTrainedTeachersRecruitFormInstitutionDraft } from '@/features/template/model/trained-teachers-recruit-form-institution-draft'
 import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { createReceiptPreConsentDraft } from '@/features/template/model/receipt-pre-consent-draft'
 import { createSettlementApplicationIssuanceDraft } from '@/features/template/model/settlement-application-issuance-draft'
 import {
   createAgreementNoticeDraft,
@@ -246,6 +247,12 @@ const WRITING_FORM_SEED_SPECS: WritingFormSeedSpec[] = [
     payload: 'A',
     createDraft: () => createPaymentStatementPreConsentDraft(),
     note: '발급 document-payment-order-pre-consent와 동일 schema, templateCode만 분리.',
+  },
+  {
+    templateCode: 'agreement-receipt-pre-consent',
+    payload: 'A',
+    createDraft: () => createReceiptPreConsentDraft(),
+    note: '참여자/봉사자 영수증 발급 사전 동의서. 지급조서(agreement-third-party)와 독립.',
   },
   {
     templateCode: 'agreement-crime',

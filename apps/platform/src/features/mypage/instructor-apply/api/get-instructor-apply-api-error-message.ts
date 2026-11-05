@@ -11,6 +11,18 @@ function readEnvelopeMessage(data: unknown): string | undefined {
 
 export function getInstructorApplyApiErrorMessage(error: unknown, fallback: string): string {
   if (isAxiosError(error)) {
+    const data = error.response?.data
+    const code =
+      data && typeof data === 'object'
+        ? (data as { error?: { code?: unknown }; code?: unknown }).error?.code ??
+          (data as { code?: unknown }).code
+        : undefined
+    if (code === 'SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY') {
+      const envelope = readEnvelopeMessage(data)
+      if (envelope && envelope !== code) return envelope
+      return '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.'
+    }
+
     const envelope = readEnvelopeMessage(error.response?.data)
     if (envelope) return envelope
 

@@ -7,9 +7,11 @@
  */
 
 /**
- * UJAT 교육일 출결 담당자 지정/해제 요청
+ * UJAT 기관 열(organizationApplicationId) 출결 담당자 지정/해제 요청. 같은 교육일(scheduleId)에 기관이 여러 개면 열마다 담당자가 다르다. CMS 지역 배정 모달의 기관별 선택은 서로 덮어쓰지 않는다.
  */
 export interface AttendanceManagerUpdateRequest {
-  /** 출결 담당자로 지정할 program_participant.id. null이면 해당 교육일(scheduleId)의 출결 담당을 해제한다. 0이나 다른 id로 치환하지 않는다. */
-  participantId?: number | null;
+  /** 배정 매트릭스 열 SSOT. AllocationColumn.organizationApplicationId. 생략·null·0 치환 금지. */
+  organizationApplicationId: number;
+  /** 출결 담당자로 지정할 program_participant.id. 이 organizationApplicationId 열에 ASSIGNED인 봉사자만 허용. null이면 해당 열(scheduleId+organizationApplicationId)의 출결 담당을 해제한다. 0이나 다른 id로 치환하지 않는다. JSON null로 보낸다. */
+  participantId: number | null;
 }

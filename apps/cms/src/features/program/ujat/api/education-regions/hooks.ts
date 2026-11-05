@@ -11,6 +11,7 @@ import {
 } from './list-cache'
 import { ujatEducationRegionQueryKeys } from './query-keys'
 import {
+  listUjatEducationRegionsActiveRemoteService,
   listUjatEducationRegionsFilteredService,
   listUjatEducationRegionsService,
   createUjatEducationRegionService,
@@ -37,6 +38,22 @@ export function useUjatEducationRegionsList(enabled = true) {
   })
 }
 
+/** 탭·필터 — GET ?activeYn=true */
+export function useUjatEducationRegionsActiveList(enabled = true) {
+  const dataSource = source()
+  return useQuery({
+    queryKey: ujatEducationRegionQueryKeys.activeList(dataSource),
+    queryFn: () => listUjatEducationRegionsActiveRemoteService(),
+    enabled,
+    staleTime: dataSource === 'remote' ? REGION_STALE_TIME_MS : Number.POSITIVE_INFINITY,
+    retry: dataSource === 'remote' ? 1 : false,
+  })
+}
+
+function invalidateEducationRegionLists(queryClient: ReturnType<typeof useQueryClient>) {
+  return queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.lists() })
+}
+
 /** 교육 지역 관리 테이블 — 조회 버튼으로 적용한 필터 기준 */
 export function useUjatEducationRegionsFilteredList(filters: UjatEducationRegionFilters) {
   const dataSource = source()
@@ -56,8 +73,12 @@ export function useCreateUjatEducationRegion() {
     onSuccess: created => {
       applyCreatedEducationRegion(queryClient, source(), created)
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.filteredLists() }),
+    onSettled: () => {
+      void invalidateEducationRegionLists(queryClient)
+      return queryClient.invalidateQueries({
+        queryKey: ujatEducationRegionQueryKeys.filteredLists(),
+      })
+    },
   })
 }
 
@@ -75,8 +96,12 @@ export function useUpdateUjatEducationRegion() {
     onSuccess: updated => {
       applyUpdatedEducationRegion(queryClient, source(), updated)
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.filteredLists() }),
+    onSettled: () => {
+      void invalidateEducationRegionLists(queryClient)
+      return queryClient.invalidateQueries({
+        queryKey: ujatEducationRegionQueryKeys.filteredLists(),
+      })
+    },
   })
 }
 
@@ -89,8 +114,12 @@ export function useDeleteUjatEducationRegion() {
       if (result.ok !== true) return
       applyDeletedEducationRegion(queryClient, source(), id)
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.filteredLists() }),
+    onSettled: () => {
+      void invalidateEducationRegionLists(queryClient)
+      return queryClient.invalidateQueries({
+        queryKey: ujatEducationRegionQueryKeys.filteredLists(),
+      })
+    },
   })
 }
 
@@ -101,8 +130,16 @@ export function useReorderUjatEducationRegions() {
     retry: false,
     onSuccess: rows => {
       queryClient.setQueryData(ujatEducationRegionQueryKeys.list(source()), rows)
+      queryClient.setQueryData(
+        ujatEducationRegionQueryKeys.activeList(source()),
+        rows.filter(row => row.active && row.regionKey.trim())
+      )
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ujatEducationRegionQueryKeys.filteredLists() }),
+    onSettled: () => {
+      void invalidateEducationRegionLists(queryClient)
+      return queryClient.invalidateQueries({
+        queryKey: ujatEducationRegionQueryKeys.filteredLists(),
+      })
+    },
   })
 }

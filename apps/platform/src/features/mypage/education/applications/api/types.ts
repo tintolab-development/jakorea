@@ -229,6 +229,9 @@ export type PortalProgramApplicationDetail = PortalProgramApplicationListItem & 
   participation?: {
     participantId?: number
     status?: string
+    progressPercent?: number
+    firstEducationAt?: string
+    lastEducationAt?: string
     completionStatus?: string
     /** 표시용. 발급 CTA 최종 판정은 availability API */
     certificateStatus?: string

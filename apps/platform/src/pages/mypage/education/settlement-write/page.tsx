@@ -64,7 +64,11 @@ export function MypageEducationSettlementWritePage() {
   }, [remoteSettlements.enabled, remoteSettlements.items, sessionId])
 
   const title = documentKind === 'receipt' ? '영수증 제출하기' : '지급조서 작성하기'
-  const receiptConsent = useReceiptPaymentStatementConsent()
+  const receiptConsent = useReceiptPaymentStatementConsent({
+    applicationId,
+    area,
+    applicationType,
+  })
   const blockedReceiptWrite =
     documentKind === 'receipt' &&
     !receiptConsent.isConsentLoading &&

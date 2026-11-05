@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Form, Space } from 'antd'
 import type { FormInstance } from 'antd/es/form'
 import type { FormListFieldData } from 'antd/es/form/FormList'
@@ -17,7 +17,6 @@ import {
   CmsCircleAddButton,
   CmsDatePicker,
   CmsInput,
-  CmsNumericInput,
   CmsPhoneInput,
   CmsRadioGroup,
   CmsSelect,
@@ -38,6 +37,7 @@ import {
   type InstructorConsentFieldKey,
 } from '@/features/user/shared/lib/instructor-consent-field-map'
 import { MemberConsentAgreementModal } from '@/features/user/shared/ui/member-consent-agreement-modal'
+import { buildInstructorRegisterPaymentStatementProfileValues } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
 import { MemberConsentCrimeModal } from '@/features/user/shared/ui/member-consent-crime-modal'
 import {
   createEmptyMemberRegisterConsentWriteSnapshots,
@@ -63,9 +63,6 @@ import {
   type InstructorProfileFormValues,
 } from './instructor-profile-form-model'
 import '../instructor-register-modal.css'
-
-/** CMS 강사 등록 — 동의서 그룹(필수 작성 / 행정정보 공동이용). CMS는 모두 선택이라 `required`는 false */
-const CONSENT_DOCUMENT_GROUPS = getInstructorConsentDocumentGroups('cmsRegister')
 
 function chunkConsentDocumentRows<T>(items: readonly T[]): T[][] {
   const rows: T[][] = []
@@ -242,14 +239,18 @@ export function InstructorProfileFormBody({
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
-  const formLayout = getInstructorFormLayout(isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister')
+  const consentSurface = isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister'
+  const formLayout = getInstructorFormLayout(consentSurface)
+  const consentDocumentGroups = getInstructorConsentDocumentGroups(consentSurface)
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
   const homeAddress = Form.useWatch('homeAddress', form) ?? ''
+  const homeAddressDetail = Form.useWatch('homeAddressDetail', form) ?? ''
   const memberName = Form.useWatch('name', form) ?? ''
   const memberType = Form.useWatch('memberType', form) ?? 'general'
   const schoolName = Form.useWatch('schoolName', form) ?? ''
+  const affiliationName = Form.useWatch('affiliationName', form) ?? ''
   const affiliationNone = Form.useWatch('affiliationNone', form) === true
   const jaEvaluationGrade = Form.useWatch('jaEvaluationGrade', form) ?? ''
   const isTeacherMember = memberType === 'school_teacher'
@@ -261,6 +262,31 @@ export function InstructorProfileFormBody({
 
   const activeConsentEntry =
     activeConsentField != null ? resolveInstructorConsentTemplateEntry(activeConsentField) : null
+  const paymentStatementProfileValues = useMemo(
+    () =>
+      !isDetailEdit && activeConsentEntry?.templateId === 'agreement-third-party'
+        ? buildInstructorRegisterPaymentStatementProfileValues({
+            name: memberName,
+            memberType,
+            schoolName,
+            affiliationName,
+            affiliationNone,
+            homeAddress,
+            homeAddressDetail,
+          })
+        : null,
+    [
+      activeConsentEntry?.templateId,
+      affiliationName,
+      affiliationNone,
+      homeAddress,
+      homeAddressDetail,
+      isDetailEdit,
+      memberName,
+      memberType,
+      schoolName,
+    ]
+  )
 
   const handleConsentWrite = (fieldKey: InstructorConsentFieldKey) => {
     setActiveConsentField(fieldKey)
@@ -436,36 +462,6 @@ export function InstructorProfileFormBody({
     </Space.Compact>
   )
 
-  const settlementAccountFieldEdit = (
-    <div className="instructor-register-modal__settlement-account">
-      <div className="instructor-register-modal__bank-account-pair">
-        <Form.Item name="bankName" noStyle>
-          <CmsInput
-            placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.bankName}
-            inputSize="small"
-            width={120}
-          />
-        </Form.Item>
-        <Form.Item name="accountNumber" trigger="onValueChange" noStyle>
-          <CmsNumericInput
-            mode="numericText"
-            placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountNumber}
-            inputSize="small"
-            width={isDetailEdit ? 160 : 240}
-          />
-        </Form.Item>
-      </div>
-      <DetailInfoForm.InputsSeparator />
-      <Form.Item name="accountHolder" noStyle>
-        <CmsInput
-          placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountHolder}
-          inputSize="small"
-          width={isDetailEdit ? 120 : 240}
-        />
-      </Form.Item>
-    </div>
-  )
-
   const businessIncomeFieldEdit = (
     <Form.Item name="isBusinessIncome" noStyle>
       <CmsRadioGroup options={BUSINESS_INCOME_OPTIONS} size="medium" />
@@ -626,12 +622,12 @@ export function InstructorProfileFormBody({
       {!(isDetailEdit && isTeacherMember) ? (
         isDetailEdit ? (
           <>
-            <DetailInfoForm.Row type="double">
-              <DetailInfoForm.Field label="자택 주소지" view="-" edit={homeAddressFieldEdit} />
+            <DetailInfoForm.Row type="single">
               <DetailInfoForm.Field
-                label="정산 계좌 정보"
+                label="자택 주소지"
+                fullRow
                 view="-"
-                edit={settlementAccountFieldEdit}
+                edit={homeAddressFieldEdit}
               />
             </DetailInfoForm.Row>
             {basicInfoExtraBeforeBusinessIncome ? (
@@ -671,14 +667,6 @@ export function InstructorProfileFormBody({
                 fullRow
                 view="-"
                 edit={instructorCareerFieldEdit}
-              />
-            </DetailInfoForm.Row>
-            <DetailInfoForm.Row type="single">
-              <DetailInfoForm.Field
-                label="정산 계좌 정보"
-                fullRow
-                view="-"
-                edit={settlementAccountFieldEdit}
               />
             </DetailInfoForm.Row>
             {basicInfoExtraBeforeBusinessIncome}
@@ -851,16 +839,21 @@ export function InstructorProfileFormBody({
                 </DetailInfoForm.Row>
               </DetailInfoForm>
 
-              {/* 동의서 — 공용 스키마 `documentGroups`: 필수 작성 동의서 / 행정정보 공동이용 동의서 (CMS 스타일 유지, 등록은 모두 선택) */}
+              {/* 동의서 — 공용 스키마 `documentGroups`: 필수 작성 동의서 / 행정정보 공동이용 동의서 */}
               {showInstructorConsentDocuments
-                ? CONSENT_DOCUMENT_GROUPS.map(group => (
+                ? consentDocumentGroups.map(group => (
                     <DetailInfoForm
                       key={group.id}
                       title={group.title}
                       mode="edit"
                       description={group.footerText}
                       descriptionPlacement="below"
-                      className="instructor-register-modal__consent-block"
+                      className={[
+                        'instructor-register-modal__consent-block',
+                        group.required ? 'instructor-register-consent-required' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     >
                       {chunkConsentDocumentRows(group.items).map(row => (
                         <DetailInfoForm.Row
@@ -871,7 +864,6 @@ export function InstructorProfileFormBody({
                             <DetailInfoForm.Field
                               key={item.key}
                               label={item.label}
-                              required={group.required}
                               labelWidth={TERMS_CONSENT_LABEL_WIDTH}
                               view="-"
                               edit={
@@ -1181,6 +1173,8 @@ export function InstructorProfileFormBody({
           modalTitle={activeConsentEntry.modalTitle}
           memberName={memberName}
           savedSnapshot={consentWriteSnapshots.agreementByFieldKey[activeConsentField]}
+          paymentStatementProfileValues={paymentStatementProfileValues}
+          lockPaymentStatementProfileFields={paymentStatementProfileValues != null}
           onSnapshotSave={snapshot =>
             onSaveConsentAgreementSnapshot?.(activeConsentField, snapshot)
           }

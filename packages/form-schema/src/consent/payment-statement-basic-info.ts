@@ -58,3 +58,66 @@ export function mergePaymentStatementBasicInfo(
     ...values,
   })
 }
+
+/** 강사 등록·신청 기본정보와 연동해 잠글 지급조서 필드 (정산 계좌는 동의서에서만 관리) */
+export type PaymentStatementProfileLinkedValues = Pick<
+  PaymentStatementBasicInfoValues,
+  | 'nameKo'
+  | 'affiliation'
+  | 'noAffiliation'
+  | 'addressRoad'
+  | 'addressDetail'
+>
+
+export type PaymentStatementProfileLinkedSource = {
+  name?: string | null
+  homeAddress?: string | null
+  homeAddressDetail?: string | null
+  memberType?: 'general' | 'school_teacher' | string | null
+  affiliationNone?: boolean | null
+  schoolName?: string | null
+  affiliationName?: string | null
+}
+
+function resolveLinkedAffiliation(source: PaymentStatementProfileLinkedSource): {
+  affiliation: string
+  noAffiliation: boolean
+} {
+  if (source.affiliationNone) {
+    return { affiliation: '', noAffiliation: true }
+  }
+  if (source.memberType === 'school_teacher') {
+    return {
+      affiliation: source.schoolName?.trim() ?? '',
+      noAffiliation: false,
+    }
+  }
+  return {
+    affiliation: source.affiliationName?.trim() ?? '',
+    noAffiliation: false,
+  }
+}
+
+/** 성명·소속·자택 주소를 등록/신청 기본정보에서 복사 */
+export function buildPaymentStatementProfileLinkedValues(
+  source: PaymentStatementProfileLinkedSource
+): PaymentStatementProfileLinkedValues {
+  const { affiliation, noAffiliation } = resolveLinkedAffiliation(source)
+  return {
+    nameKo: source.name?.trim() ?? '',
+    affiliation,
+    noAffiliation,
+    addressRoad: source.homeAddress?.trim() ?? '',
+    addressDetail: source.homeAddressDetail?.trim() ?? '',
+  }
+}
+
+export function overlayPaymentStatementProfileLinkedValues<
+  T extends Partial<PaymentStatementBasicInfoValues>,
+>(base: T, profile: PaymentStatementProfileLinkedValues | null | undefined): T {
+  if (profile == null) return base
+  return {
+    ...base,
+    ...profile,
+  }
+}
