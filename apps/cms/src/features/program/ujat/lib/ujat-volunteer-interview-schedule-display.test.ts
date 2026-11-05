@@ -131,6 +131,28 @@ describe('resolveUjatVolunteerInterviewScheduleDisplay', () => {
     expect(display.common.availableTimeSlots).toBe('-')
   })
 
+  it('활성 상세는 nested volunteerInterviewScheduleInfo로 빈 슬롯을 채우지 않는다', () => {
+    const program = {
+      id: '186030',
+      programRecruitments: [
+        {
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF' as const,
+          interviewConfig: { schemaVersion: 1 as const, selectedSlotKeys: [] },
+        },
+      ],
+      generalCommonInfo: {
+        volunteerInterviewScheduleInfo: {
+          availableTimeSlots: '10:00 ~ 10:15',
+          recurringUnavailable: '일요일',
+        },
+      },
+    } as unknown as Program
+    const display = resolveUjatVolunteerInterviewScheduleDisplay(program, 'h2')
+    expect(display.common.availableTimeSlots).toBe('-')
+    expect(display.common.recurringUnavailable).toBe('-')
+  })
+
   it('typed 컬럼이 없으면 서버 Legacy overlay를 표시한다', () => {
     const overlayProgram = {
       id: '186030',

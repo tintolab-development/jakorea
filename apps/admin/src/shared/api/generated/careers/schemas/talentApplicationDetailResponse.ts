@@ -10,14 +10,20 @@ import type { TalentApplicationDetailResponseGender } from './talentApplicationD
 import type { TalentApplicationDetailResponseJaParticipation } from './talentApplicationDetailResponseJaParticipation';
 import type { TalentApplicationDetailResponseStatus } from './talentApplicationDetailResponseStatus';
 
+/**
+ * Admin detail is always stored original PII. Empty strings are null. List items stay masked. Not the careers talent-application revealPii contract.
+ */
 export interface TalentApplicationDetailResponse {
   id?: number;
   status?: TalentApplicationDetailResponseStatus;
+  /** Stored applicant name (original). */
   name?: string;
   birthDate?: string;
   gender?: TalentApplicationDetailResponseGender;
-  phone?: string;
-  email?: string;
+  /** Stored phone (original). Empty is null, never "". */
+  phone?: string | null;
+  /** Stored email (original). Empty is null, never "". */
+  email?: string | null;
   affiliation?: string;
   sido?: string;
   sigungu?: string;

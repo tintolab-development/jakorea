@@ -13,7 +13,7 @@ import type { ProgramRecruitmentRequestStatus } from './programRecruitmentReques
 import type { RecruitmentInterviewConfig } from './recruitmentInterviewConfig';
 
 /**
- * 프로그램 모집 유형별 canonical 설정
+ * 프로그램 모집 행 저장 요청. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields는 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.
  */
 export interface ProgramRecruitmentRequest {
   /** 모집 유형 */

@@ -1058,7 +1058,7 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
     expect(rows?.find(row => row.recruitmentType === 'VOLUNTEER')?.maxCount).toBe(0)
   })
 
-  it('프로그램 봉사자 기간은 상반기 행에만 넣고 하반기 행은 보내지 않는다', () => {
+  it('프로그램 봉사자 기간은 FIRST_HALF 행에만 넣고 recruitTerm 없는 행은 반기로 쓰지 않는다', () => {
     const rows = mapUjatProgramRecruitmentsToRequest({
       ...program,
       applicationStartDate: '2026-02-01T00:00:00+09:00',
@@ -1106,11 +1106,12 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
         },
       ],
     })
-    const h1 = rows.find(row => row.id === 182212)
+    expect(rows.some(row => row.id === 182212)).toBe(false)
+    expect(rows.some(row => row.id === 182213)).toBe(false)
+    const h1 = rows.find(row => row.recruitTerm === 'FIRST_HALF')
+    expect(h1?.id).toBeUndefined()
     expect(h1?.startAt).toBe('2026-03-01T00:00:00+09:00')
     expect(h1?.endAt).toBe('2026-03-31T00:00:00+09:00')
-    expect(h1?.recruitTerm).toBe('FIRST_HALF')
-    expect(rows.some(row => row.id === 182213)).toBe(false)
   })
 
   it('봉사자 행은 recruitTerm FIRST_HALF 행을 상반기로 쓰고 기관 행에는 recruitTerm을 보내지 않는다', () => {
@@ -1257,6 +1258,58 @@ describe('mapUjatProgramRecruitmentsToRequest', () => {
     expect(
       rows.find(row => row.recruitmentType === 'PARTICIPANT')?.interviewEnabled
     ).toBeUndefined()
+  })
+
+  it('발표 방법·면접 방식·대상 상세는 해당 행 extra 필드를 그대로 보낸다', () => {
+    const rows = mapUjatProgramRecruitmentsToRequest({
+      ...program,
+      documentPassAnnouncementMethod: '프로그램 공유 서류 방법',
+      volunteerTargetDetail: '프로그램 공유 상세',
+      programRecruitments: [
+        {
+          id: 2001,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          finalPassAnnouncementMethod: '홈페이지 공지',
+        },
+        {
+          id: 1001,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF',
+          documentPassAnnouncementMethod: '이메일 안내',
+          interviewMethod: '대면',
+          finalPassAnnouncementMethod: '문자 안내',
+          volunteerTargetDetail: '대학생 상반기',
+        },
+        {
+          id: 1002,
+          recruitmentType: 'VOLUNTEER',
+          applicationType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF',
+          documentPassAnnouncementMethod: null,
+          interviewMethod: null,
+          finalPassAnnouncementMethod: null,
+          volunteerTargetDetail: null,
+        },
+      ],
+    })
+    expect(rows.find(row => row.id === 2001)).toMatchObject({
+      finalPassAnnouncementMethod: '홈페이지 공지',
+    })
+    expect(rows.find(row => row.id === 1001)).toMatchObject({
+      documentPassAnnouncementMethod: '이메일 안내',
+      interviewMethod: '대면',
+      finalPassAnnouncementMethod: '문자 안내',
+      volunteerTargetDetail: '대학생 상반기',
+    })
+    expect(rows.find(row => row.id === 1002)).toMatchObject({
+      recruitTerm: 'SECOND_HALF',
+      documentPassAnnouncementMethod: null,
+      interviewMethod: null,
+      finalPassAnnouncementMethod: null,
+      volunteerTargetDetail: null,
+    })
   })
 })
 

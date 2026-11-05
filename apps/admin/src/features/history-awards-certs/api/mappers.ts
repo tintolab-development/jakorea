@@ -78,7 +78,6 @@ export function toHistoryListParams(
   if (filter.createdFrom) params.createdFrom = filter.createdFrom
   if (filter.createdTo) params.createdTo = filter.createdTo
   if (filter.sort === 'created') params.sort = 'CREATED_AT'
-  else if (filter.sort === 'event') params.sort = 'DATE'
   return params
 }
 
@@ -97,7 +96,6 @@ export function toAwardListParams(
   if (filter.createdFrom) params.createdFrom = filter.createdFrom
   if (filter.createdTo) params.createdTo = filter.createdTo
   if (filter.sort === 'created') params.sort = 'CREATED_AT'
-  else if (filter.sort === 'date') params.sort = 'DATE'
   return params
 }
 
@@ -116,7 +114,6 @@ export function toCertListParams(
   if (filter.createdFrom) params.createdFrom = filter.createdFrom
   if (filter.createdTo) params.createdTo = filter.createdTo
   if (filter.sort === 'created') params.sort = 'CREATED_AT'
-  else if (filter.sort === 'date') params.sort = 'DATE'
   return params
 }
 

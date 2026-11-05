@@ -7,5 +7,8 @@
  */
 
 export type Detail9Params = {
+/**
+ * false (default): masked PII. true: original PII requires HOMEPAGE_PII_VIEW; otherwise 403.
+ */
 revealPii?: boolean;
 };

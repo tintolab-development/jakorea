@@ -8,6 +8,7 @@ export type AdminAccountActionType =
   | 'permission_change'
   | 'account_create'
   | 'account_deactivate'
+  | 'identity_reverify'
 
 export const ADMIN_ACCOUNT_ACTION_LABELS: Record<AdminAccountActionType, string> = {
   password_change: '비밀번호 변경',
@@ -15,6 +16,7 @@ export const ADMIN_ACCOUNT_ACTION_LABELS: Record<AdminAccountActionType, string>
   permission_change: '권한 변경',
   account_create: '계정 생성',
   account_deactivate: '계정 비활성',
+  identity_reverify: '본인인증 재인증',
 }
 
 export const ADMIN_ACCOUNT_ACTION_TYPES = Object.keys(
@@ -25,7 +27,8 @@ export type AdminAccountLog = {
   id: string
   name: string
   loginId: string
-  actionType: AdminAccountActionType
+  /** 서버 actionType 원문. 알 수 없는 code도 그대로 보관 */
+  actionType: string
   processedAt: string
   ip: string
 }

@@ -7,7 +7,6 @@ import type {
   HistoryCreateInput,
   HistoryItem,
   HistoryListFilter,
-  HistorySortKey,
   PublicFilterValue,
 } from '@/entities/history-awards-certs/model/types'
 import {
@@ -24,6 +23,7 @@ import {
   deleteConfirmContent,
   deleteFailureAlert,
 } from '@/features/history-awards-certs/lib/delete-guards'
+import { historyAwardsCertsListRowNo } from '@/features/history-awards-certs/lib/list-row-no'
 import { HistoryFormModal } from '@/features/history-awards-certs/ui/form-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -77,7 +77,6 @@ type HistoryPendingFilters = {
   month: string
   content: string
   created: PendingDateRange
-  sort: HistorySortKey
 }
 
 const INITIAL_PENDING: HistoryPendingFilters = {
@@ -86,7 +85,6 @@ const INITIAL_PENDING: HistoryPendingFilters = {
   month: '',
   content: '',
   created: null,
-  sort: 'event',
 }
 
 const createdSyncRef: UrlDateRangePendingSyncRef = { hadCompleteInUrl: false }
@@ -96,12 +94,8 @@ function parsePublic(raw: string | null): PublicFilterValue {
   return ''
 }
 
-function parseSort(raw: string | null): HistorySortKey {
-  return raw === 'created' ? 'created' : 'event'
-}
-
 function parseApplied(searchParams: URLSearchParams): HistoryListFilter {
-  const filter: HistoryListFilter = { sort: parseSort(searchParams.get('h_sort')) }
+  const filter: HistoryListFilter = {}
   const isPublic = parsePublic(searchParams.get('h_public'))
   if (isPublic === 'true') filter.isPublic = true
   if (isPublic === 'false') filter.isPublic = false
@@ -145,12 +139,6 @@ const searchSyncRules: readonly TableSearchParamRule<HistoryPendingFilters>[] = 
     transform: v => String(v).trim(),
   },
   {
-    kind: 'param',
-    filterKey: 'sort',
-    paramKey: 'h_sort',
-    condition: f => f.sort === 'created',
-  },
-  {
     kind: 'apply',
     apply: (nextParams, f) => {
       applyDateRangeToSearchParams(nextParams, f.created, 'h_cfrom', 'h_cto')
@@ -182,7 +170,6 @@ export function HistoryPanel() {
       const year = searchParams.get('h_year') ?? ''
       const month = searchParams.get('h_month') ?? ''
       const content = searchParams.get('h_q') ?? ''
-      const sort = parseSort(searchParams.get('h_sort'))
       const from = searchParams.get('h_cfrom')
       const to = searchParams.get('h_cto')
 
@@ -200,14 +187,12 @@ export function HistoryPanel() {
           month,
           content,
           created,
-          sort,
         }
         if (
           prev.isPublic === next.isPublic &&
           prev.year === next.year &&
           prev.month === next.month &&
           prev.content === next.content &&
-          prev.sort === next.sort &&
           pendingDateRangeTupleEqual(prev.created, next.created)
         ) {
           return prev
@@ -335,7 +320,7 @@ export function HistoryPanel() {
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_v, _r, index) => totalCount - index,
+        render: (_v, _r, index) => historyAwardsCertsListRowNo(totalCount, index),
       },
       {
         title: '공개 여부',

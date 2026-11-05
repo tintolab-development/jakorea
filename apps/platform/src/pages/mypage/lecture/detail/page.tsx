@@ -534,7 +534,7 @@ export function MypageLectureDetailPage() {
           applicationId={application.id}
           programId={program.id}
           pendingSurveyCount={application.pendingSurveyCount}
-          canSubmitSurvey={application.canSubmitSurvey}
+          participantId={application.participantId}
         />
       )
     }
@@ -553,7 +553,7 @@ export function MypageLectureDetailPage() {
           applicationType={routeApplicationType}
           applicationId={application.id}
           programId={program.id}
-          canSubmitSatisfaction={application.canSubmitSatisfaction}
+          participantId={application.participantId}
         />
       )
     }

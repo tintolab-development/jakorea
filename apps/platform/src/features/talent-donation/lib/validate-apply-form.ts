@@ -1,4 +1,4 @@
-import { isValidEmail } from '@/features/auth/sign-up'
+import { isValidEmail, parseBirthDate } from '@/features/auth/sign-up'
 import {
   TALENT_APPLY_LONG_TEXT_MAX_LENGTH,
   type TalentApplyFieldKey,
@@ -18,7 +18,9 @@ export function collectTalentApplyFieldErrors(
   const errors: TalentApplyFieldErrors = {}
 
   if (!values.name.trim()) errors.name = true
-  if (!values.birthDate.trim()) errors.birthDate = true
+  if (!values.birthDate.trim() || parseBirthDate(values.birthDate) == null) {
+    errors.birthDate = true
+  }
   if (!values.gender) errors.gender = true
   if (!values.phone.trim()) errors.phone = true
   if (!values.email.trim() || !isValidEmail(values.email.trim())) errors.email = true

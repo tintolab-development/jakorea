@@ -32,6 +32,9 @@ import {
 } from '../../applications/api/activity-hooks'
 import {
   isPortalBoundFormVersionUsable,
+  isPortalSatisfactionFormType,
+  isPortalSurveyFormType,
+  isVolunteerFacingSatisfactionForm,
   PORTAL_SATISFACTION_FORM_TYPE_QUERIES,
   PORTAL_SURVEY_FORM_TYPE_QUERIES,
 } from '../../applications/lib/portal-form-list'
@@ -76,11 +79,9 @@ export type EducationSurveyFillPanelProps = {
   applicationType?: ProgramApplicationType | null
   applicationId?: string | null
   programId?: string | null
+  /** 상세 `participation.participantId` — submit `contextType=PARTICIPANT` */
+  participantId?: number | null
   pendingSurveyCount?: number
-  /** 상세 `capabilities.canSubmitSatisfaction` — false면 작성 CTA 숨김 */
-  canSubmitSatisfaction?: boolean
-  /** 상세 `capabilities.canSubmitSurvey` — false면 작성 CTA 숨김 */
-  canSubmitSurvey?: boolean
 }
 
 function surveyRenderLoadFallback(kind: EducationSurveySeedKind): string {
@@ -132,26 +133,38 @@ export function EducationSurveyFillPanel({
   applicationType,
   applicationId,
   programId,
+  participantId,
   pendingSurveyCount,
-  canSubmitSatisfaction,
-  canSubmitSurvey,
 }: EducationSurveyFillPanelProps) {
+  const hasApplicationContext = Boolean(applicationType && applicationId)
   const applicationForms = useApplicationFormsQuery(
     applicationType,
     applicationId,
     kind === 'satisfaction' ? 'SATISFACTION' : 'SURVEY',
   )
   const availableForms = useAvailableProgramFormsQuery(
-    programId,
+    hasApplicationContext ? null : programId,
     kind === 'satisfaction'
       ? PORTAL_SATISFACTION_FORM_TYPE_QUERIES
       : PORTAL_SURVEY_FORM_TYPE_QUERIES,
   )
-  const remoteForms = applicationForms.enabled ? applicationForms : availableForms
-  const surveyList = useMemo(
-    () => (remoteForms.enabled ? remoteForms.items : []),
-    [remoteForms.enabled, remoteForms.items],
-  )
+  const remoteForms = hasApplicationContext ? applicationForms : availableForms
+  const surveyList = useMemo(() => {
+    const items = remoteForms.enabled ? remoteForms.items : []
+    return items.filter(entry => {
+      if (kind === 'satisfaction') {
+        if (!isPortalSatisfactionFormType(entry.formType)) return false
+        if (
+          satisfactionAudience === 'teacher' &&
+          isVolunteerFacingSatisfactionForm(entry)
+        ) {
+          return false
+        }
+        return true
+      }
+      return isPortalSurveyFormType(entry.formType)
+    })
+  }, [kind, remoteForms.enabled, remoteForms.items, satisfactionAudience])
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
   const [rewriteEntryId, setRewriteEntryId] = useState<string | null>(null)
@@ -342,9 +355,7 @@ export function EducationSurveyFillPanel({
   )
 
   const canWrite =
-    periodBlockReason == null &&
-    (kind === 'satisfaction' ? canSubmitSatisfaction !== false : canSubmitSurvey !== false) &&
-    (selectedEntry?.canSubmit === true || selectedEntry?.canResubmit === true)
+    selectedEntry?.canSubmit === true || selectedEntry?.canResubmit === true
 
   const readOnly = !canWrite
 
@@ -391,7 +402,14 @@ export function EducationSurveyFillPanel({
       templateVersionId != null
     ) {
       submitMutation.mutate(
-        { bindingId, answers, templateVersionId },
+        {
+          bindingId,
+          answers,
+          templateVersionId,
+          ...(typeof participantId === 'number' && participantId > 0
+            ? { contextType: 'PARTICIPANT', contextId: participantId }
+            : {}),
+        },
         {
           onSuccess: showSubmitSuccessAlert,
           onError: error => {

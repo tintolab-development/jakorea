@@ -21,7 +21,7 @@ import {
   ConfirmModal,
   CONTENT_MODAL_FOOTER_START_CLASS,
   ContentModal,
-  HomepagePiiRevealAction,
+  PageContentLoading,
   useCmsAlert,
 } from '@/shared/ui'
 
@@ -32,15 +32,12 @@ dayjs.locale('ko')
 type Props = {
   open: boolean
   data: TalentDonationApplication | null
+  loading?: boolean
   confirmLoading?: boolean
   deleteLoading?: boolean
-  canRevealPii?: boolean
-  piiRevealed?: boolean
-  revealLoading?: boolean
   onCancel: () => void
   onConfirm: () => void
   onDelete: () => void
-  onRevealPii?: () => void
 }
 
 function statusLabel(status: TalentDonationApplication['status']): string {
@@ -85,15 +82,12 @@ function FileIcon({ className }: { className?: string }) {
 export function TalentDonationApplicationDetailModal({
   open,
   data,
+  loading = false,
   confirmLoading = false,
   deleteLoading = false,
-  canRevealPii = false,
-  piiRevealed = false,
-  revealLoading = false,
   onCancel,
   onConfirm,
   onDelete,
-  onRevealPii,
 }: Props) {
   const { showAlert } = useCmsAlert()
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
@@ -103,7 +97,8 @@ export function TalentDonationApplicationDetailModal({
   }, [open])
 
   const isConfirmed = data?.status === 'confirmed'
-  const busy = confirmLoading || deleteLoading || revealLoading
+  const waiting = loading && !data
+  const busy = confirmLoading || deleteLoading || waiting
 
   const confirmedView = (() => {
     if (!data?.confirmedAt) {
@@ -194,13 +189,6 @@ export function TalentDonationApplicationDetailModal({
         onClick={() => setDeleteConfirmOpen(true)} >
         신청 삭제
       </CmsButton>
-      <HomepagePiiRevealAction
-        canReveal={canRevealPii && Boolean(onRevealPii)}
-        revealed={piiRevealed}
-        loading={revealLoading}
-        disabled={busy && !revealLoading}
-        onReveal={() => onRevealPii?.()}
-      />
       <CmsButton
         variant="secondary"
         size="medium"
@@ -231,7 +219,9 @@ export function TalentDonationApplicationDetailModal({
         className="talent-app-detail-modal"
         footer={footer}
       >
-        {data ? (
+        {waiting ? (
+          <PageContentLoading />
+        ) : data ? (
           <div className="talent-app-detail-modal__scroll">
             <section
               className="talent-app-detail-modal__section"

@@ -18,6 +18,10 @@ import { shouldUseRecruitApplicantRemoteApi } from '@/features/recruit-applicant
 import { downloadRecruitApplicantAttachmentService } from '@/features/recruit-applicant/api/service'
 import { formatDateTimeDotWithKoreanWeekday } from '@/shared/lib/format-display'
 import {
+  displayServerPiiAsIs,
+  PrivacyHomeAddressDisplay,
+} from '@/shared/lib/homepage-pii-display'
+import {
   CmsButton,
   ConfirmModal,
   CONTENT_MODAL_FOOTER_START_CLASS,
@@ -76,6 +80,11 @@ function joinParts(parts: Array<string | null | undefined>, separator: string): 
     .join(separator)
 }
 
+function displayOptionalDetailText(value: string | null | undefined): string {
+  const trimmed = value?.trim()
+  return trimmed ? trimmed : '-'
+}
+
 function FileIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -122,6 +131,11 @@ export function RecruitApplicantDetailModal({
   const isConfirmed = data?.status === 'confirmed'
   const waiting = loading && !data
   const busy = confirmLoading || deleteLoading || waiting || revealLoading
+
+  const phoneDisplay = data ? displayServerPiiAsIs(data.phone) : '-'
+  const emailDisplay = data ? displayServerPiiAsIs(data.email) : '-'
+  const nameDisplay = data ? displayServerPiiAsIs(data.applicantName) : '-'
+  const addressRevealed = piiRevealed
 
   const confirmedView = (() => {
     if (!data?.confirmedAt) return <span>-</span>
@@ -304,7 +318,7 @@ export function RecruitApplicantDetailModal({
                   <DetailInfoForm.Row type="double">
                     <DetailInfoForm.Field
                       label="지원자명"
-                      view={<span>{data.applicantName || '-'}</span>}
+                      view={<span>{nameDisplay}</span>}
                       edit={null}
                       readOnlyDisplay
                     />
@@ -318,13 +332,13 @@ export function RecruitApplicantDetailModal({
                   <DetailInfoForm.Row type="double">
                     <DetailInfoForm.Field
                       label="연락처"
-                      view={<span>{data.phone || '-'}</span>}
+                      view={<span>{phoneDisplay}</span>}
                       edit={null}
                       readOnlyDisplay
                     />
                     <DetailInfoForm.Field
                       label="이메일"
-                      view={<span>{data.email || '-'}</span>}
+                      view={<span>{emailDisplay}</span>}
                       edit={null}
                       readOnlyDisplay
                     />
@@ -333,9 +347,17 @@ export function RecruitApplicantDetailModal({
                     <DetailInfoForm.Field
                       label="자택 주소"
                       view={
-                        <span>
-                          {joinParts([data.addressRoad, data.addressDetail], ', ') || '-'}
-                        </span>
+                        data ? (
+                          <PrivacyHomeAddressDisplay
+                            address={data.addressRoad}
+                            addressDetail={data.addressDetail}
+                            revealed={addressRevealed}
+                            blurClassName="program-pii-address-blur"
+                            valueShellClassName="program-detail-home-address-value"
+                          />
+                        ) : (
+                          <span>-</span>
+                        )
                       }
                       edit={null}
                       readOnlyDisplay
@@ -374,7 +396,7 @@ export function RecruitApplicantDetailModal({
                     label="학력정보"
                     view={
                       <span className="recruit-applicant-detail-modal__content">
-                        {data.educationInfo.trim() || '-'}
+                        {displayOptionalDetailText(data.educationInfo)}
                       </span>
                     }
                     edit={null}
@@ -419,7 +441,7 @@ export function RecruitApplicantDetailModal({
                     label="경력/경험/자격정보"
                     view={
                       <span className="recruit-applicant-detail-modal__content">
-                        {data.careerInfo.trim() || '-'}
+                        {displayOptionalDetailText(data.careerInfo)}
                       </span>
                     }
                     edit={null}

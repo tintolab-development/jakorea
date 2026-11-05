@@ -523,9 +523,13 @@ export interface ProgramRecruitmentWindow {
   interviewEndAt?: string | null
   announcementPublished?: boolean | null
   documentPassAnnouncementAt?: string | null
+  documentPassAnnouncementMethod?: string | null
   finalPassAnnouncementAt?: string | null
+  finalPassAnnouncementMethod?: string | null
+  interviewMethod?: string | null
   noticeExposureTiming?: RecruitmentNoticeExposureTiming | null
   volunteerTargets?: string[] | null
+  volunteerTargetDetail?: string | null
   remarksNotApplicable?: boolean | null
   interviewConfig?: RecruitmentInterviewConfig | null
   contentRevision?: number

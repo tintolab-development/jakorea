@@ -89,6 +89,17 @@ assert.deepEqual(
 assert.deepEqual(
   resolveEducationSurveyFillNotice({
     kind: 'survey',
+    status: 'in_progress',
+    periodBlockReason: 'not_started',
+    canShowFormBody: true,
+    canWrite: true,
+  }),
+  { type: 'none' },
+)
+
+assert.deepEqual(
+  resolveEducationSurveyFillNotice({
+    kind: 'survey',
     status: 'before_start',
     periodBlockReason: 'not_started',
     canShowFormBody: false,

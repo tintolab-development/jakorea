@@ -1,5 +1,6 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { PiiAccessListFilter } from '@/entities/pii-access-log/model/types'
+import { fileDownloadLogQueryKeys } from '@/features/file-download-log/api/query-keys'
 import { shouldUsePiiAccessLogRemoteApi } from './capabilities'
 import { piiAccessLogQueryKeys } from './query-keys'
 import {
@@ -16,14 +17,18 @@ export function usePiiAccessLogsList(filter: PiiAccessListFilter) {
   return useQuery({
     queryKey: piiAccessLogQueryKeys.list(dataSource, filter),
     queryFn: () => listPiiAccessLogsService(filter),
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: 0,
+    retry: false,
   })
 }
 
 export function useExportPiiAccessLogs() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (filter: PiiAccessListFilter) => exportPiiAccessLogsService(filter),
     retry: false,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: fileDownloadLogQueryKeys.all })
+    },
   })
 }

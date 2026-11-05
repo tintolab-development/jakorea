@@ -28,7 +28,9 @@ function AssignmentScheduleSection({
   onDownload: (path: string) => void
   downloading: boolean
 }) {
-  const canDownload = section.consentDocumentsDownloadPath.length > 0
+  const canDownload =
+    typeof section.consentDocumentsDownloadPath === 'string' &&
+    section.consentDocumentsDownloadPath.length > 0
 
   return (
     <section className={styles.section} aria-labelledby={`ujat-assignment-${section.id}`}>
@@ -62,7 +64,11 @@ function AssignmentScheduleSection({
             size="medium"
             variant="tertiary"
             disabled={downloading}
-            onClick={() => onDownload(section.consentDocumentsDownloadPath)}
+            onClick={() => {
+              if (section.consentDocumentsDownloadPath) {
+                onDownload(section.consentDocumentsDownloadPath)
+              }
+            }}
           >
             {DOWNLOAD_LABEL}
           </PFButton>
@@ -83,22 +89,22 @@ function AssignmentScheduleSection({
                   교육 학급
                 </PFText>
               </th>
-              <th scope="col">
+              <th className={styles.wideCol} scope="col">
                 <PFText as="span" typo="bd-md-bd" color="black">
                   봉사자 A
                 </PFText>
               </th>
-              <th scope="col">
+              <th className={styles.wideCol} scope="col">
                 <PFText as="span" typo="bd-md-bd" color="black">
                   봉사자 B
                 </PFText>
               </th>
-              <th scope="col">
+              <th className={styles.wideCol} scope="col">
                 <PFText as="span" typo="bd-md-bd" color="black">
                   사용 교재명
                 </PFText>
               </th>
-              <th scope="col">
+              <th className={styles.wideCol} scope="col">
                 <PFText as="span" typo="bd-md-bd" color="black">
                   교재 준비수량
                 </PFText>
@@ -174,7 +180,7 @@ export function UjatVolunteerAssignmentPanel({
     <div className={styles.root}>
       <div className={styles.notice} role="note">
         <img className={styles.noticeIcon} src={infoCircleUrl} alt="" width={24} height={24} />
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.noticeText}>
+        <PFText as="p" typo="bd-md-md" color="neutral-cool-600" className={styles.noticeText}>
           {NOTICE_COPY}
         </PFText>
       </div>

@@ -46,5 +46,6 @@ export const BOARD_ROLE_GROUP_ORDER: readonly BoardRoleGroup[] = [
 export const BOARD_ROLE_GROUP_LABELS: Record<BoardRoleGroup, string> = {
   board_chair_president: 'Board Chair & President',
   fiduciary_board_member: 'Fiduciary Board Member',
-  board_chair: 'Board Chair',
+  /** API role `BOARD_CHAIR` — Figma 섹션명 Board Member */
+  board_chair: 'Board Member',
 }

@@ -299,6 +299,10 @@ const guide = (
       options);
     }
 
+/**
+ * phone and email are always PrivacyMaskingSupport-masked. Original contact PII is only on GET /{id}?revealPii=true.
+ * @summary List career talent applications
+ */
 const list15 = (
     params?: List15Params,
  options?: SecondParameter<typeof customInstance<PageResponseCareerTalentApplicationListItem>>,) => {
@@ -320,6 +324,10 @@ const delete4 = (
       options);
     }
 
+/**
+ * revealPii=false (default) masks phone, email, addressRoad, and addressDetail with the same PrivacyMaskingSupport rules as the list. Name uses maskName. Education, career, and attachments stay omitted until revealed. revealPii=true returns originals only with HOMEPAGE_PII_VIEW and writes an audit/privacy log; otherwise 403.
+ * @summary Get career talent application detail
+ */
 const detail9 = (
     id: number,
     params?: Detail9Params,

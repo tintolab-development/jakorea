@@ -32,7 +32,11 @@ import { buildAssignedSettlementItems } from '../../settlements/lib/assigned-set
 import { getAllLectureReportAssignments } from '../../schedules/api/lecture-report-client'
 import { asAssignmentDisplayText } from '../../schedules/lib/instructor-assignment-support'
 import { mapPortalFormListItem } from '../../surveys/lib/map-portal-form-list-item'
-import { mapAvailableProgramFormToListItem } from '../lib/portal-form-list'
+import {
+  isPortalSatisfactionFormType,
+  isPortalSurveyFormType,
+  mapAvailableProgramFormToListItem,
+} from '../lib/portal-form-list'
 import {
   createApplicationNotice,
   createApplicationNoticeComment,
@@ -920,10 +924,12 @@ export function useApplicationFormsQuery(
   const items = useMemo(
     () =>
       (query.data ?? []).flatMap(item => {
+        if (formType === 'SURVEY' && !isPortalSurveyFormType(item.formType)) return []
+        if (formType === 'SATISFACTION' && !isPortalSatisfactionFormType(item.formType)) return []
         const mapped = mapPortalFormListItem(item)
         return mapped ? [mapped] : []
       }),
-    [query.data]
+    [formType, query.data]
   )
   return {
     enabled,
@@ -1248,6 +1254,8 @@ export function useSubmitEducationSurveyMutation(
       return submitPortalSurveyResponse(numericProgramId, input.bindingId, {
         answers: input.answers,
         templateVersionId: input.templateVersionId,
+        ...(input.contextType ? { contextType: input.contextType } : {}),
+        ...(input.contextId != null ? { contextId: input.contextId } : {}),
       })
     },
     onSuccess: () => {

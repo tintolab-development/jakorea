@@ -5307,8 +5307,10 @@
           },
           "educationInfo": {
             "type": "string",
+            "description": "Optional. Blank is stored as null. Platform UI may still require this before submit.",
             "maxLength": 2000,
-            "minLength": 0
+            "minLength": 0,
+            "nullable": true
           },
           "careerType": {
             "type": "string",
@@ -5319,8 +5321,10 @@
           },
           "careerInfo": {
             "type": "string",
+            "description": "Optional. Blank is stored as null. Platform UI may still require this before submit.",
             "maxLength": 4000,
-            "minLength": 0
+            "minLength": 0,
+            "nullable": true
           },
           "privacyAgreed": {
             "type": "boolean"
@@ -6681,13 +6685,20 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Applicant name. Always PrivacyMaskingSupport.maskName (first character + asterisks), same as sponsorship talent applications. Full name is never returned on the list."
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "description": "Always PrivacyMaskingSupport.maskPhone. Empty is null, never \"\". List never returns plaintext. Example keeps hyphens and masks the middle four digits.",
+            "example": "010-****-9154",
+            "nullable": true
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "Always PrivacyMaskingSupport.maskEmail (local prefix + *** + @domain). Empty is null, never \"\". List never returns plaintext.",
+            "example": "0915***@naver.com",
+            "nullable": true
           },
           "appliedAt": {
             "type": "string",
@@ -8956,6 +8967,7 @@
       },
       "TalentApplicationDetailResponse": {
         "type": "object",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List items stay masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -8969,7 +8981,8 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored applicant name (original)."
           },
           "birthDate": {
             "type": "string",
@@ -8983,10 +8996,14 @@
             ]
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored phone (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored email (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "affiliation": {
             "type": "string"
@@ -9188,6 +9205,7 @@
       },
       "ConsultationDetailResponse": {
         "type": "object",
+        "description": "Admin detail is always stored original PII. Empty strings are null. List stays masked. Not the careers talent-application revealPii contract.",
         "properties": {
           "id": {
             "type": "integer",
@@ -9222,16 +9240,21 @@
             "type": "string"
           },
           "contactName": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored contact name (original)."
           },
           "departmentTitle": {
             "type": "string"
           },
           "contactPhone": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored contact phone (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "consultationContent": {
-            "type": "string"
+            "type": "string",
+            "description": "Stored consultation body (original). Empty is null, never \"\".",
+            "nullable": true
           },
           "linkUrl": {
             "type": "string"
@@ -10231,23 +10254,34 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list and sponsorship talent). Original name only when revealPii=true."
           },
           "phone": {
-            "type": "string"
+            "type": "string",
+            "description": "revealPii=false: PrivacyMaskingSupport.maskPhone (same as list). revealPii=true: original. Empty is null, never \"\".",
+            "example": "010-****-9154",
+            "nullable": true
           },
           "email": {
-            "type": "string"
+            "type": "string",
+            "description": "revealPii=false: PrivacyMaskingSupport.maskEmail (same as list). revealPii=true: original. Empty is null, never \"\".",
+            "example": "0915***@naver.com",
+            "nullable": true
           },
           "addressRoad": {
-            "type": "string"
+            "type": "string",
+            "description": "revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never \"\".",
+            "nullable": true
           },
           "addressDetail": {
             "type": "string",
+            "description": "revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never \"\".",
             "nullable": true
           },
           "educationLevel": {
             "type": "string",
+            "description": "revealPii=false: omitted (null). revealPii=true: stored enum. careerType stays on the masked detail; this field does not until revealed.",
             "enum": [
               "HIGH_SCHOOL",
               "COLLEGE",
@@ -10255,17 +10289,23 @@
               "MASTER",
               "DOCTOR",
               "OTHER"
-            ]
+            ],
+            "nullable": true
           },
           "schoolName": {
-            "type": "string"
+            "type": "string",
+            "description": "revealPii=false: omitted. revealPii=true: stored school name.",
+            "nullable": true
           },
           "major": {
             "type": "string",
+            "description": "revealPii=false: omitted. revealPii=true: stored major. Empty is null, never \"\".",
             "nullable": true
           },
           "educationInfo": {
-            "type": "string"
+            "type": "string",
+            "description": "revealPii=false: omitted. revealPii=true: stored education body. Empty is null, never \"\".",
+            "nullable": true
           },
           "careerType": {
             "type": "string",
@@ -10275,7 +10315,9 @@
             ]
           },
           "careerInfo": {
-            "type": "string"
+            "type": "string",
+            "description": "revealPii=false: omitted. revealPii=true: stored career body. Empty is null, never \"\".",
+            "nullable": true
           },
           "privacyAgreed": {
             "type": "boolean"
@@ -10295,10 +10337,12 @@
           },
           "attachmentOriginalName": {
             "type": "string",
+            "description": "revealPii=false: omitted. revealPii=true: first attachment original name.",
             "nullable": true
           },
           "attachments": {
             "type": "array",
+            "description": "revealPii=false: empty array. revealPii=true: stored attachments in display order.",
             "items": {
               "$ref": "#/components/schemas/ApplicationAttachmentItem"
             }

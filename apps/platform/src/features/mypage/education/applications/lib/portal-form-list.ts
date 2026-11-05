@@ -63,6 +63,17 @@ export function isPortalSatisfactionFormType(formType: string | undefined): bool
   )
 }
 
+/** 교사 마이페이지 만족도 — 봉사자 대상 카드를 그리지 않는다. OpenAPI 필드 추가 없음. */
+export function isVolunteerFacingSatisfactionForm(item: {
+  title?: string | null
+  formType?: string
+}): boolean {
+  if (!isPortalSatisfactionFormType(item.formType) && item.formType != null) return false
+  const title = (item.title ?? '').trim()
+  if (!title) return false
+  return /봉사/.test(title) || /VOLUNTEER/i.test(title)
+}
+
 export function isPortalAssignmentFormType(formType: string | undefined): boolean {
   const normalized = normalizePortalFormType(formType)
   return normalized === 'ASSIGNMENT' || normalized === 'HOMEWORK'
@@ -139,14 +150,9 @@ export function mapPortalFormListItemToSurveyEntry(
     responseStatus !== 'REJECTED'
   const submitted = submittedByStatus || submittedByResponse || submittedByEvidence
   const targetScope = item.targetScope?.trim() || undefined
-  const targetScopeId =
-    typeof item.targetScopeId === 'number' && Number.isFinite(item.targetScopeId)
-      ? Math.trunc(item.targetScopeId)
-      : undefined
+  const targetScopeId = toPositiveInt(item.targetScopeId) ?? undefined
   const scheduleId =
-    typeof item.scheduleId === 'number' && Number.isFinite(item.scheduleId)
-      ? Math.trunc(item.scheduleId)
-      : undefined
+    resolvePortalAssignmentScheduleId(item) ?? toPositiveInt(item.scheduleId) ?? undefined
 
   const submissionStartAt = item.submissionStartAt ?? undefined
   const submissionEndAt = item.submissionEndAt ?? undefined

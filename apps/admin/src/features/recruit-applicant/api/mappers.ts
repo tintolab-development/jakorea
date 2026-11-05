@@ -26,6 +26,18 @@ import { ADMIN_LIST_PAGE_SIZE } from '@/shared/lib/admin-infinite-list'
 
 export const APPLICANT_LIST_PAGE_SIZE = ADMIN_LIST_PAGE_SIZE
 
+/** API 문자열: null/undefined/빈·공백만 → null. `""` 로 바꾸지 않는다. */
+function mapApiNullableString(value: string | null | undefined): string | null {
+  if (value == null) return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+/** @deprecated 이름만 구분; 동작은 mapApiNullableString 과 동일 */
+function mapApiPiiString(value: string | null | undefined): string | null {
+  return mapApiNullableString(value)
+}
+
 const JOB_INTEREST: Record<CareerTalentApplicationListItemJobInterest, RecruitJobInterest> = {
   MANAGEMENT_PLANNING: 'managementPlanning',
   PR_DESIGN: 'prDesign',
@@ -72,9 +84,9 @@ export function mapCareerTalentApplicationListItem(
     id: String(row.id),
     status,
     jobInterest,
-    applicantName: row.name ?? '',
-    phone: row.phone ?? '',
-    email: row.email ?? '',
+    applicantName: mapApiPiiString(row.name),
+    phone: mapApiPiiString(row.phone),
+    email: mapApiPiiString(row.email),
     careerType,
     appliedAt: row.appliedAt ?? '',
     confirmedAt: row.confirmedAt ?? null,
@@ -110,7 +122,7 @@ export function toTalentApplicationListParams(
 }
 
 const EDUCATION_LEVEL: Record<
-  CareerTalentApplicationDetailResponseEducationLevel,
+  Exclude<CareerTalentApplicationDetailResponseEducationLevel, null>,
   RecruitEducationLevel
 > = {
   HIGH_SCHOOL: 'highSchool',
@@ -124,13 +136,13 @@ const EDUCATION_LEVEL: Record<
 export function detailFromListItem(row: RecruitApplicant): RecruitApplicantDetail {
   return {
     ...row,
-    addressRoad: '',
-    addressDetail: '',
+    addressRoad: null,
+    addressDetail: null,
     educationLevel: null,
-    schoolName: '',
-    major: '',
-    educationInfo: '',
-    careerInfo: '',
+    schoolName: null,
+    major: null,
+    educationInfo: null,
+    careerInfo: null,
     privacyAgreed: false,
     attachmentFileName: null,
     confirmedByName: null,
@@ -161,13 +173,13 @@ export function mapCareerTalentApplicationDetail(
     row.attachmentOriginalName?.trim() || firstAttachment?.originalName?.trim() || null
   return {
     ...base,
-    addressRoad: row.addressRoad?.trim() ?? '',
-    addressDetail: row.addressDetail?.trim() ?? '',
+    addressRoad: mapApiPiiString(row.addressRoad),
+    addressDetail: mapApiPiiString(row.addressDetail),
     educationLevel: educationLevel ?? null,
-    schoolName: row.schoolName?.trim() ?? '',
-    major: row.major?.trim() ?? '',
-    educationInfo: row.educationInfo ?? '',
-    careerInfo: row.careerInfo ?? '',
+    schoolName: mapApiNullableString(row.schoolName),
+    major: mapApiNullableString(row.major),
+    educationInfo: mapApiNullableString(row.educationInfo),
+    careerInfo: mapApiNullableString(row.careerInfo),
     privacyAgreed: row.privacyAgreed === true,
     attachmentFileName,
     attachmentAssetId: firstAttachment?.assetId,

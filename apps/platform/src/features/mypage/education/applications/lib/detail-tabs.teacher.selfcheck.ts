@@ -284,6 +284,18 @@ assert.deepEqual(
   ujatTeacher.map(item => item.label),
   ['안내사항', '봉사자 배정 현황', '설문조사', '만족도조사'],
 )
+const ujatTeacherWithStudents = buildTeacherInProgressDetailTabItems({
+  detailCase: 'ujat-participant',
+  scheduleTabLabel: UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL,
+  surveyConfigured: true,
+  satisfactionConfigured: true,
+  teacherStudentDocumentTabsVisible: true,
+  schoolTeacherMember: true,
+})
+assert.deepEqual(
+  ujatTeacherWithStudents.map(item => item.key),
+  ['notice', 'schedule', 'students', 'survey', 'satisfaction'],
+)
 assert.ok(teacherInstructorProgramCase.some(item => item.key === 'lecture-report'))
 assert.ok(!general.some(item => item.key === 'lecture-report'))
 

@@ -6,6 +6,7 @@ import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
 import type { EducationApplicationListItem, EducationApplicationTab } from '../model/types'
 import { EDUCATION_APPLICATION_PAGE_SIZE } from '../model/types'
 import { parsePortalProgramId } from '@/features/program/api/mappers'
+import { getApplicationApiErrorCode } from '@/features/program/lib/application-api-error'
 import {
   cancelMyProgramApplication,
   fetchMyProgramApplicationDetail,
@@ -57,6 +58,7 @@ type MyProgramApplicationDetailQueryResult = {
   application: EducationApplicationListItem | undefined
   isLoading: boolean
   isError: boolean
+  errorCode: string | null
   isRemoteEnabled: boolean
   refetch: () => void
 }
@@ -224,6 +226,7 @@ export function useProbeEducationApplicationType(
           return applicationType
         } catch (error) {
           if (isNotFoundApplicationDetailError(error)) continue
+          if (isAxiosError(error) && error.response?.status === 409) return applicationType
           throw error
         }
       }
@@ -272,6 +275,7 @@ export function useMyProgramApplicationDetail(
       application: undefined,
       isLoading: false,
       isError: true,
+      errorCode: null,
       isRemoteEnabled: false,
       refetch,
     }
@@ -281,6 +285,7 @@ export function useMyProgramApplicationDetail(
       application: undefined,
       isLoading: false,
       isError: true,
+      errorCode: null,
       isRemoteEnabled: true,
       refetch,
     }
@@ -290,6 +295,7 @@ export function useMyProgramApplicationDetail(
       application: undefined,
       isLoading: true,
       isError: false,
+      errorCode: null,
       isRemoteEnabled: true,
       refetch,
     }
@@ -299,17 +305,20 @@ export function useMyProgramApplicationDetail(
       application: undefined,
       isLoading: false,
       isError: true,
+      errorCode: getApplicationApiErrorCode(query.error),
       isRemoteEnabled: true,
       refetch,
     }
   }
 
+  const application = query.data
+    ? (mapPortalProgramApplicationDetail(query.data, applicationType ?? undefined) ?? undefined)
+    : undefined
   return {
-    application: query.data
-      ? (mapPortalProgramApplicationDetail(query.data, applicationType ?? undefined) ?? undefined)
-      : undefined,
+    application,
     isLoading: false,
     isError: false,
+    errorCode: application?.portalWarningCode ?? null,
     isRemoteEnabled: true,
     refetch,
   }

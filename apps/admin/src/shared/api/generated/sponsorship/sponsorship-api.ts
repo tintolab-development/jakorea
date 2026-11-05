@@ -408,6 +408,10 @@ const delete3 = (
       options);
     }
 
+/**
+ * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / TALENT_APPLICATION) and homepage_privacy_access_log. List GET stays masked. revealPii is a deprecated no-op.
+ * @summary Get talent application detail
+ */
 const detail7 = (
     id: number,
     params?: Detail7Params,
@@ -477,6 +481,10 @@ const bulkDelete6 = (
       options);
     }
 
+/**
+ * Always stored original PII (not masked). HOMEPAGE_VIEW is enough; HOMEPAGE_PII_VIEW is not required. Every 200 writes homepage_admin_audit_log (PII_READ / CORPORATE_CONSULTATION) and homepage_privacy_access_log. List GET stays masked (maskedContactPhone). revealPii is a deprecated no-op.
+ * @summary Get corporate consultation detail
+ */
 const detail8 = (
     id: number,
     params?: Detail8Params,
