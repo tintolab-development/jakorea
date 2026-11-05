@@ -53,6 +53,11 @@ export type PaymentStatementBasicInfoDetailFormProps = {
    * false: 발급용과 같이 전 필드 비활성.
    */
   onlyPaymentPurposeLocked?: boolean
+  /**
+   * CMS 강사 신규 등록 fill — 성명·소속·자택 주소는 등록 기본정보 연동·비활성.
+   * 영문 성명·주민등록번호·정산 계좌는 계속 입력.
+   */
+  lockedProfileFields?: boolean
   /** 영수증 발급 사전 동의서 — 주민등록번호·소속 미노출 */
   hideResidentFields?: boolean
   /** 편집 가능 모드에서 값 변경 시 (확인·서명란 성명 동기화 등) */
@@ -75,6 +80,7 @@ export function PaymentStatementBasicInfoDetailForm({
   className,
   displayMode = 'editor',
   onlyPaymentPurposeLocked = false,
+  lockedProfileFields = false,
   hideResidentFields = false,
   onValuesChange,
 }: PaymentStatementBasicInfoDetailFormProps) {
@@ -95,12 +101,49 @@ export function PaymentStatementBasicInfoDetailForm({
     onValuesChange(merged)
   }, [editable, merged, onValuesChange, valuesProp?.paymentPurpose])
 
-  const v = editable ? local : merged
+  const profileLocked = lockedProfileFields && !isDocumentMode
+  const v = {
+    ...(editable ? local : merged),
+    ...(profileLocked
+      ? {
+          nameKo: merged.nameKo,
+          affiliation: merged.affiliation,
+          noAffiliation: merged.noAffiliation,
+          addressRoad: merged.addressRoad,
+          addressDetail: merged.addressDetail,
+        }
+      : {}),
+  }
   const allAutofillLocked = !editable
+  const profileFieldLocked = allAutofillLocked || profileLocked
   const patch = (next: Partial<PaymentStatementBasicInfoAutofillValues>) => {
     if (!editable) return
+    const allowed = profileLocked
+      ? {
+          ...(next.nameEn != null ? { nameEn: next.nameEn } : {}),
+          ...(next.residentFront != null ? { residentFront: next.residentFront } : {}),
+          ...(next.residentBack != null ? { residentBack: next.residentBack } : {}),
+          ...(next.bankName != null ? { bankName: next.bankName } : {}),
+          ...(next.accountNumber != null ? { accountNumber: next.accountNumber } : {}),
+          ...(next.accountHolder != null ? { accountHolder: next.accountHolder } : {}),
+          ...(next.paymentPurpose != null ? { paymentPurpose: next.paymentPurpose } : {}),
+        }
+      : next
+    if (Object.keys(allowed).length === 0) return
     setLocal(prev => {
-      const updated = { ...prev, ...next }
+      const updated = {
+        ...prev,
+        ...allowed,
+        ...(profileLocked
+          ? {
+              nameKo: merged.nameKo,
+              affiliation: merged.affiliation,
+              noAffiliation: merged.noAffiliation,
+              addressRoad: merged.addressRoad,
+              addressDetail: merged.addressDetail,
+            }
+          : {}),
+      }
       onValuesChange?.(updated)
       return updated
     })
@@ -127,7 +170,7 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(v.nameKo)}
           edit={
             <CmsInput
-              disabled={allAutofillLocked}
+              disabled={profileFieldLocked}
               inputSize="small"
               placeholder="한글 성명"
               value={v.nameKo}
@@ -195,7 +238,7 @@ export function PaymentStatementBasicInfoDetailForm({
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__affiliation">
               <CmsInput
-                disabled={allAutofillLocked || v.noAffiliation}
+                disabled={profileFieldLocked || v.noAffiliation}
                 inputSize="small"
                 placeholder="소속 기관명"
                 value={v.affiliation}
@@ -206,7 +249,7 @@ export function PaymentStatementBasicInfoDetailForm({
               />
               <DetailInfoForm.InputsSeparator />
               <CmsCheckbox
-                disabled={allAutofillLocked}
+                disabled={profileFieldLocked}
                 checked={v.noAffiliation}
                 onChange={e =>
                   patch({
@@ -231,7 +274,7 @@ export function PaymentStatementBasicInfoDetailForm({
           view={textOrDash(addressText)}
           edit={
             <div className="detail-info-form-inputs-wrapper payment-statement-basic-info-detail-form__address">
-              {editable ? (
+              {editable && !profileLocked ? (
                 <AddressSearch
                   value={v.addressRoad}
                   onChange={next => patch({ addressRoad: next })}
@@ -244,7 +287,7 @@ export function PaymentStatementBasicInfoDetailForm({
                 />
               ) : (
                 <CmsInput
-                  disabled={allAutofillLocked}
+                  disabled={profileFieldLocked}
                   inputSize="small"
                   placeholder="건물명, 도로명 또는 지번"
                   value={v.addressRoad}
@@ -255,7 +298,7 @@ export function PaymentStatementBasicInfoDetailForm({
               )}
               <DetailInfoForm.InputsSeparator />
               <CmsInput
-                disabled={allAutofillLocked}
+                disabled={profileFieldLocked}
                 inputSize="small"
                 placeholder="상세 주소"
                 value={v.addressDetail}

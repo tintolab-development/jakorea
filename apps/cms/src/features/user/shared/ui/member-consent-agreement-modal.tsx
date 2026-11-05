@@ -20,6 +20,10 @@ import {
 } from '@/features/template/model/writing-form-draft.schema'
 import { FormEditorLeftPanel } from '@/features/template/ui/form-editor/left-panel/form-editor-left-panel'
 import type { PaymentStatementBasicInfoAutofillValues } from '@/features/template/ui/form-set/detail-forms/payment-statement-basic-info-detail-form'
+import {
+  overlayPaymentStatementProfileLinkedValues,
+  type PaymentStatementProfileLinkedValues,
+} from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
 import { TealHeaderModal } from '@/shared/ui/teal-header-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -65,6 +69,10 @@ export interface MemberConsentAgreementModalProps {
   memberName?: string
   /** 신규 등록 세션 — 이전 작성완료 draft 복원 */
   savedSnapshot?: MemberConsentAgreementDraftSnapshot | null
+  /** CMS 강사 신규 등록 — 지급조서 성명·소속·주소·계좌를 등록 기본정보에서 채움 */
+  paymentStatementProfileValues?: PaymentStatementProfileLinkedValues | null
+  /** true면 위 연동 필드를 비활성 */
+  lockPaymentStatementProfileFields?: boolean
   onSnapshotSave?: (snapshot: MemberConsentAgreementDraftSnapshot) => void
   onClose: () => void
   onComplete: () => void
@@ -83,6 +91,8 @@ export function MemberConsentAgreementModal({
   modalTitle,
   memberName,
   savedSnapshot,
+  paymentStatementProfileValues,
+  lockPaymentStatementProfileFields = false,
   onSnapshotSave,
   onClose,
   onComplete,
@@ -110,9 +120,12 @@ export function MemberConsentAgreementModal({
         normalizeNoticeIdTypeResidentInputInDraft(normalizeWritingFormDraft(restored.draft))
       )
       setPaymentBasicInfo(
-        templateId === 'agreement-receipt-pre-consent'
-          ? mergeReceiptPreConsentBasicInfo(restored.paymentBasicInfo)
-          : mergePaymentStatementBasicInfo(restored.paymentBasicInfo)
+        overlayPaymentStatementProfileLinkedValues(
+          templateId === 'agreement-receipt-pre-consent'
+            ? mergeReceiptPreConsentBasicInfo(restored.paymentBasicInfo)
+            : mergePaymentStatementBasicInfo(restored.paymentBasicInfo),
+          templateId === 'agreement-third-party' ? paymentStatementProfileValues : null
+        )
       )
       setIsDraftLoading(false)
       return
@@ -122,9 +135,12 @@ export function MemberConsentAgreementModal({
     setIsDraftLoading(true)
     setDraft(null)
     setPaymentBasicInfo(
-      templateId === 'agreement-receipt-pre-consent'
-        ? mergeReceiptPreConsentBasicInfo()
-        : mergePaymentStatementBasicInfo()
+      overlayPaymentStatementProfileLinkedValues(
+        templateId === 'agreement-receipt-pre-consent'
+          ? mergeReceiptPreConsentBasicInfo()
+          : mergePaymentStatementBasicInfo(),
+        templateId === 'agreement-third-party' ? paymentStatementProfileValues : null
+      )
     )
 
     void loadWritingFormTemplateDraft(templateId)
@@ -226,13 +242,18 @@ export function MemberConsentAgreementModal({
 
   const handlePaymentBasicInfoValuesChange = useCallback(
     (values: PaymentStatementBasicInfoAutofillValues) => {
-      setPaymentBasicInfo(
+      const next =
         templateId === 'agreement-receipt-pre-consent'
           ? mergeReceiptPreConsentBasicInfo(values)
           : mergePaymentStatementBasicInfo(values)
+      setPaymentBasicInfo(
+        overlayPaymentStatementProfileLinkedValues(
+          next,
+          templateId === 'agreement-third-party' ? paymentStatementProfileValues : null
+        )
       )
     },
-    [templateId]
+    [paymentStatementProfileValues, templateId]
   )
 
   const authorDisplayName = useMemo(
@@ -259,8 +280,16 @@ export function MemberConsentAgreementModal({
           ? mergeReceiptPreConsentBasicInfo(paymentBasicInfo)
           : mergePaymentStatementBasicInfo(paymentBasicInfo),
       paymentStatementBasicInfoOnValuesChange: handlePaymentBasicInfoValuesChange,
+      paymentStatementBasicInfoLockedProfileFields:
+        templateId === 'agreement-third-party' && lockPaymentStatementProfileFields,
     }
-  }, [handlePaymentBasicInfoValuesChange, paragraphBodyOptions, paymentBasicInfo, templateId])
+  }, [
+    handlePaymentBasicInfoValuesChange,
+    lockPaymentStatementProfileFields,
+    paragraphBodyOptions,
+    paymentBasicInfo,
+    templateId,
+  ])
 
   const paragraphInteractionMode = useMemo(
     () => resolveAgreementConsentFillInteractionMode(templateId),

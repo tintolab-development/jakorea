@@ -109,8 +109,6 @@ export function buildMemberPaymentAutofillSourceFromUser(
     | 'role'
   >
 ): MemberPaymentStatementAutofillSource {
-  const settlement = user.instructorCmsSettlement
-  const info = user.instructorInfo
   const isSchoolTeacher =
     user.instructorMemberProfile === 'school_teacher' ||
     (user.role === 'INSTRUCTOR' && user.schoolEnrollmentStatus === 'ENROLLED')
@@ -120,9 +118,6 @@ export function buildMemberPaymentAutofillSourceFromUser(
     birthDate: dateValueToBirthDigits(user.birthDate),
     homeAddress: user.detailAddress,
     homeAddressDetail: user.detailAddressDetail,
-    bankName: settlement?.bankName ?? info?.bankName,
-    accountNumber: settlement?.accountNumber ?? info?.accountNumber,
-    accountHolder: settlement?.accountHolder ?? info?.accountHolder,
     memberType: isSchoolTeacher ? 'school_teacher' : 'general',
     schoolName: user.affiliatedSchoolName ?? user.affiliation,
     affiliationName: user.affiliation,

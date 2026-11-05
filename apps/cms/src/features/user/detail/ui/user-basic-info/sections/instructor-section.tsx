@@ -13,7 +13,6 @@ import {
   detailAddressView,
   genderBirthView,
   instructorApplicationTypeLine,
-  instructorBankView,
   instructorCareerYearsLine,
   instructorFeeGradeLine,
   oneLineIntroLine,
@@ -37,10 +36,7 @@ import {
   InstructorFeeGradeSelect,
 } from './instructor-fee-ja-edit'
 import { formatDate } from '@/shared/utils'
-import { RestrictedPiiClickable } from '@/features/user/detail/ui/restricted-pii-clickable'
-import { canAdminAction } from '@/shared/lib/admin-role-policy'
-import { useSessionAdminRoleCode } from '@/shared/lib/use-session-admin-role-code'
-import { CmsInput, CmsNumericInput, CmsRadioGroup, CmsCheckbox } from '@/shared/ui'
+import { CmsInput, CmsRadioGroup, CmsCheckbox } from '@/shared/ui'
 import { CmsDateTextInput } from '@/shared/ui/date-text-input'
 import { toApiGender } from '@/features/user/api/map-member-gender-birth'
 import { INSTRUCTOR_FORM_PLACEHOLDERS } from '@jakorea/domain/instructor/form-copy'
@@ -180,8 +176,6 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
     onMemberInfoDraftChange,
     cmsMayEditBasicProfileFields,
   } = ctx
-  const roleCode = useSessionAdminRoleCode()
-  const canRevealAccount = canAdminAction({ roleCode, action: 'piiAccount' })
   const isInstructorPermissionDetail = isInstructorPermissionDetailView(ctx)
   const useCompactBasicInfo = isInstructorPermissionCompactBasicInfo(ctx)
   const canEditFeeJa = canEditInstructorFeeJaFields(ctx)
@@ -424,9 +418,10 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
         </EditableRow>
       )}
 
-      <EditableRow type="double">
+      <EditableRow type="single">
         <EditableField
           label="자택 주소지"
+          fullRow
           readOnlyDisplay={editing.isReadOnlyDisplay}
           view={<span>{detailAddressView(user, personalInfoRevealed)}</span>}
           edit={
@@ -437,51 +432,6 @@ export function InstructorSection(ctx: BasicInfoSectionContext) {
               onDetailChange={next => onMemberInfoDraftChange?.({ detailAddressDetail: next })}
               detailAriaLabel="자택 주소지 상세"
             />
-          }
-        />
-        <EditableField
-          label="정산 계좌 정보"
-          readOnlyDisplay={editing.isReadOnlyDisplay}
-          view={
-            <RestrictedPiiClickable action="piiAccount">
-              <span>{instructorBankView(user, personalInfoRevealed && canRevealAccount)}</span>
-            </RestrictedPiiClickable>
-          }
-          edit={
-            <span className="user-basic-info-section__inline-segments">
-              <CmsInput
-                value={d?.instructorBankName ?? ''}
-                onChange={e =>
-                  onMemberInfoDraftChange?.({ instructorBankName: e.target.value })
-                }
-                inputSize="small"
-                width={120}
-                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.bankName}
-                aria-label="은행명"
-              />
-              <CmsNumericInput
-                mode="numericText"
-                value={d?.instructorAccountNumber ?? ''}
-                onValueChange={next =>
-                  onMemberInfoDraftChange?.({ instructorAccountNumber: next })
-                }
-                inputSize="small"
-                width={160}
-                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountNumber}
-                aria-label="계좌번호"
-              />
-              <DetailInfoForm.InputsSeparator />
-              <CmsInput
-                value={d?.instructorAccountHolder ?? ''}
-                onChange={e =>
-                  onMemberInfoDraftChange?.({ instructorAccountHolder: e.target.value })
-                }
-                inputSize="small"
-                width={120}
-                placeholder={INSTRUCTOR_FORM_PLACEHOLDERS.accountHolder}
-                aria-label="예금주"
-              />
-            </span>
           }
         />
       </EditableRow>

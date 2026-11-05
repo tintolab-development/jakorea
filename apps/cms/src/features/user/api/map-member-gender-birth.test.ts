@@ -225,9 +225,6 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
     })
     const settlement = instructorProfileFormValuesToCmsSettlement({
       ...INITIAL_VALUES,
-      bankName: '국민',
-      accountNumber: '123',
-      accountHolder: '홍길동',
       isBusinessIncome: 'yes',
     })
 
@@ -254,16 +251,12 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
       regionSigungu: '고양시',
       organizationCategory: 'SCHOOL',
     })
-    expect(body.settlement?.bankName).toBe('국민')
-    expect(body.settlement?.accountNumber).toBe('123')
-    expect(body.settlement?.accountHolder).toBe('홍길동')
+    expect(body.settlement?.bankName).toBeUndefined()
+    expect(body.settlement?.accountNumber).toBeUndefined()
+    expect(body.settlement?.accountHolder).toBeUndefined()
     expect(body.settlement?.businessIncome).toBe(true)
     expect(body.jaGrade).toBeUndefined()
-    expect(body.settlement?.bankAccounts?.[0]).toMatchObject({
-      bankName: '국민',
-      accountNumber: '123',
-      accountHolder: '홍길동',
-    })
+    expect(body.settlement?.bankAccounts).toBeUndefined()
     expect('organizationText' in body).toBe(false)
     expect(body.jaGrade).toBeUndefined()
   })
