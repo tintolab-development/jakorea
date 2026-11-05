@@ -22,7 +22,10 @@ import { isBirthDateInputIncomplete, isValidBirthDateFormValue } from '@/shared/
 import { CmsButton, ContentModal, showRegisterCompletedAlert } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { CMS_ALERT_MODAL_Z_INDEX } from '@/shared/constants/modal-z-index'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { isCrimeConsentReadyForSubmit } from '@/features/user/api/attach-filled-documents'
 import { collectCmsInstructorRegisterValidation } from '@/features/user/shared/lib/validate-cms-instructor-register'
@@ -145,7 +148,11 @@ export function InstructorRegisterModal({
       const values = mergeInstructorRegisterFormValues(rawValues)
 
       if (hasUnsetConsentSelections(values, INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS)) {
-        showRegisterAlert(showAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE)
+        showRegisterAlert(
+          showAlert,
+          REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE
+        )
         return
       }
 
@@ -172,7 +179,11 @@ export function InstructorRegisterModal({
 
       const { missingRequired, formatMessages } = validateInstructorRegister(values)
       if (missingRequired) {
-        showRegisterAlert(showAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE)
+        showRegisterAlert(
+          showAlert,
+          REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+          REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE
+        )
         return
       }
       if (formatMessages.length > 0) {
@@ -181,7 +192,11 @@ export function InstructorRegisterModal({
       }
       void handleFinish(values)
     } catch {
-      showRegisterAlert(showAlert, REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE)
+      showRegisterAlert(
+        showAlert,
+        REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+        REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE
+      )
     }
   }
 

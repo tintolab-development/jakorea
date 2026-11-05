@@ -10,7 +10,10 @@ import {
 import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { isValidKoreanPhoneNumber } from '@/shared/utils/phone-validation'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import {
   REQUIRED_CONSENT_DISAGREE_ALERT_TITLE,
   buildRequiredConsentDisagreeAlertMessage,
@@ -170,7 +173,7 @@ export function AdminRegisterModal({
     const { missingRequired, formatMessages } = collectAdminRegisterValidation(values)
     if (missingRequired) {
       showAlert({
-        title: '안내',
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return

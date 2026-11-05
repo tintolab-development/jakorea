@@ -36,7 +36,10 @@ import {
   JA_GRADE_POLICY_NOT_READY_MESSAGE,
   JA_GRADE_SCALE_QUESTION_IDS,
 } from '@/features/user/detail/lib/ja-grade-evaluation-constants'
-import { REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE } from '@/shared/constants/messages'
+import {
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+} from '@/shared/constants/messages'
 import { handleError } from '@/shared/utils/error-handler'
 import '@/features/template/ui/form-editor/form-editor.css'
 import '@/features/template/ui/paragraph/shared/paragraph-card.css'
@@ -183,7 +186,7 @@ export function JaGradeEvaluationModal({
     const validation = validateJaGradeEvaluationDraft(draft)
     if (!validation.valid) {
       showAlert({
-        title: '안내',
+        title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
         content: REQUIRED_FIELDS_INCOMPLETE_ALERT_MESSAGE,
       })
       return

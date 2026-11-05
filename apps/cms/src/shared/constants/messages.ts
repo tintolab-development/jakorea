@@ -4,7 +4,7 @@
  */
 
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 제목 (회원 신규 등록과 동일) */
-export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 미입력'
+export const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 입력 안내'
 
 /** 폼 제출 — 필수 항목 미완 시 AlertModal 본문 (`*` 빨간색). 필드명 미안내 */
 export {
