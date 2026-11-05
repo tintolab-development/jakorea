@@ -6,6 +6,16 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./privacy": {
+      "types": "./dist/privacy/index.d.ts",
+      "import": "./dist/privacy/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -13,7 +23,7 @@
     "clsx": "^2.1.1"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && cp src/privacy/privacy-home-address-display.css dist/privacy/",
     "dev": "tsc -w -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
