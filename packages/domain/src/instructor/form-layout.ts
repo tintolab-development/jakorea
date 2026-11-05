@@ -139,8 +139,9 @@ const CMS_DETAIL_CONSENT_LAYOUT: InstructorFormConsentLayout = CMS_CONSENT_LAYOU
 
 /**
  * Platform 강사 신청 — 동의서 4건을 두 섹션으로 노출. CMS 8건과 별개.
- * 1. 필수 작성 동의서* (지급조서|교육진행자 / 성범죄경력) — 모두 작성·동의해야 제출 가능.
- * 2. 행정정보 공동이용 동의서 — 선택 (2026-10-29 필수 해제).
+ * 1. 기본 정보
+ * 2. 필수 작성 동의서* (지급조서|교육진행자 / 성범죄경력) — 모두 작성·동의해야 제출 가능.
+ * 3. 행정정보 공동이용 동의서 — 선택 (2026-10-29 필수 해제).
  */
 const PLATFORM_APPLY_CONSENT_LAYOUT: InstructorFormConsentLayout = {
   title: REQUIRED_DOCUMENT_GROUP.title,
@@ -195,9 +196,9 @@ export const INSTRUCTOR_FORM_LAYOUT: Record<InstructorFormSurface, InstructorFor
   platformApply: {
     surface: 'platformApply',
     sections: [
+      'basic',
       'consent',
       'consentAdministrative',
-      'basic',
       'education',
       'career',
       'ja',
