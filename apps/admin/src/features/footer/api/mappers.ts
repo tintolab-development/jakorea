@@ -129,7 +129,7 @@ export function toFooterOrganizationUpdateRequest(
     email: input.email.trim() || undefined,
     logoAssetId,
     version,
-  }
+  } as FooterOrganizationUpdateRequest
 }
 
 type FooterPartnerLinkWire = FooterPartnerResponse & {
