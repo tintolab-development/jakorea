@@ -24,9 +24,9 @@ export interface ProgramRecruitmentRequest {
   status?: ProgramRecruitmentRequestStatus;
   startAt?: string;
   endAt?: string;
-  /** 해당 모집 유형의 프로그램 운영 시작일. 수정 시 미전송하면 기존 값을 보존하고, 최초 생성에만 사업 운영 시작일을 fallback */
+  /** 해당 모집 유형의 프로그램 운영 시작일. 수정 시 미전송하면 기존 값을 보존한다. UJAT 최초 생성에서 생략하면 null이며 사업 시작일로 채우지 않는다. */
   operationStartDate?: string;
-  /** 해당 모집 유형의 프로그램 운영 종료일. 수정 시 미전송하면 기존 값을 보존하고, 최초 생성에만 사업 운영 종료일을 fallback */
+  /** 해당 모집 유형의 프로그램 운영 종료일. 수정 시 미전송하면 기존 값을 보존한다. UJAT 최초 생성에서 생략하면 null이며 사업 종료일로 채우지 않는다. */
   operationEndDate?: string;
   /** 최대 모집 인원. null이면 제한 없음 */
   maxCount?: number;
@@ -84,6 +84,14 @@ export interface ProgramRecruitmentRequest {
   remarksNotApplicable?: boolean | null;
   /** 봉사자 면접 슬롯 설정. VOLUNTEER만. 객체 생략(null)은 기존 유지, 빈 객체는 명시적 빈 typed 값. */
   interviewConfig?: RecruitmentInterviewConfig | null;
+  /** 1차 서류 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
+  documentPassAnnouncementMethod?: string | null;
+  /** 최종 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
+  finalPassAnnouncementMethod?: string | null;
+  /** 2차 면접 방식. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
+  interviewMethod?: string | null;
+  /** 봉사자 모집 대상 상세. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
+  volunteerTargetDetail?: string | null;
   /** 동시 수정 검증용. 조회 응답 contentRevision 과 같아야 한다. 생략하면 검사하지 않는다. */
   expectedRevision?: number | null;
   /** null 로 비울 필드 이름. 예: ["maxCount","remarks","interviewConfig"] */

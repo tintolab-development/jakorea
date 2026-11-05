@@ -7,14 +7,13 @@
  */
 
 /**
- * 캘린더 이벤트 유형. null은 PROGRAM_SCHEDULE.
+ * 캘린더 이벤트 유형. null은 PROGRAM_SCHEDULE. 프로그램 운영기간 fill은 내려주지 않는다.
  */
 export type PortalScheduleItemEventType = typeof PortalScheduleItemEventType[keyof typeof PortalScheduleItemEventType] | null;
 
 
 export const PortalScheduleItemEventType = {
   PROGRAM_SCHEDULE: 'PROGRAM_SCHEDULE',
-  PROGRAM_PERIOD: 'PROGRAM_PERIOD',
   ASSIGNMENT_DEADLINE: 'ASSIGNMENT_DEADLINE',
   SATISFACTION_DEADLINE: 'SATISFACTION_DEADLINE',
   SURVEY_DEADLINE: 'SURVEY_DEADLINE',

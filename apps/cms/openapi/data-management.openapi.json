@@ -8961,6 +8961,59 @@
           "fileName"
         ]
       },
+      "SettlementApplicationCreateRequest": {
+        "type": "object",
+        "description": "강사 지급조서(정산 신청) 최초 제출. GET /settlement-applications 와 동일 컬렉션.",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "format": "uuid",
+            "description": "중복 제출 방지 키"
+          },
+          "assignmentId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "강사 배정 ID (program_individual_application.id 아님)"
+          },
+          "programScheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "프로그램 일정 ID. scheduleId 와 둘 중 하나 필수, 둘 다 있으면 같아야 함."
+          },
+          "scheduleId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "programScheduleId 별칭"
+          },
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentFileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "requestedItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationRequestedItemRequest"
+            }
+          },
+          "evidenceAttachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationEvidenceAttachmentRequest"
+            }
+          }
+        },
+        "required": [
+          "assignmentId",
+          "idempotencyKey"
+        ]
+      },
       "SettlementApplicationEvidenceAttachmentRequest": {
         "type": "object",
         "properties": {
@@ -8988,34 +9041,6 @@
           },
           "evidenceSubmitted": {
             "type": "boolean"
-          }
-        }
-      },
-      "SettlementApplicationResubmitRequest": {
-        "type": "object",
-        "properties": {
-          "formResponseId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "attachmentFileIds": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          "requestedItems": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SettlementApplicationRequestedItemRequest"
-            }
-          },
-          "evidenceAttachments": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SettlementApplicationEvidenceAttachmentRequest"
-            }
           }
         }
       },
@@ -9249,6 +9274,34 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          }
+        }
+      },
+      "SettlementApplicationResubmitRequest": {
+        "type": "object",
+        "properties": {
+          "formResponseId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentFileIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          "requestedItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationRequestedItemRequest"
+            }
+          },
+          "evidenceAttachments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettlementApplicationEvidenceAttachmentRequest"
             }
           }
         }
@@ -16994,10 +17047,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           }
         },
@@ -17433,7 +17486,7 @@
         "properties": {
           "formType": {
             "type": "string",
-            "description": "REGISTRATION | RECRUITMENT | APPLICATION | SURVEY | SATISFACTION | LECTURE_EVALUATION 등. 교육받은 교사 프로그램은 SURVEY, SATISFACTION, LECTURE_EVALUATION을 허용합니다. SATISFACTION은 교사 대상(targetRole=TEACHER)만 허용하며 학생 대상·대상 미지정은 400 TRAINED_TEACHER_SATISFACTION_TEACHER_ONLY."
+            "description": "REGISTRATION | RECRUITMENT | APPLICATION | SURVEY | SATISFACTION | LECTURE_EVALUATION 등. 교육받은 교사 프로그램의 SATISFACTION은 교사(targetRole=TEACHER)와 학생(STUDENT) 모두 허용합니다."
           },
           "templateId": {
             "type": "integer",
@@ -17495,6 +17548,23 @@
           "displayOrder": {
             "type": "integer",
             "format": "int32"
+          },
+          "satisfactionRunMode": {
+            "type": "string",
+            "description": "SATISFACTION만. PER_SCHEDULE | ONCE_AT_END. 생략 시 targetScope=SCHEDULE이면 PER_SCHEDULE, 아니면 ONCE_AT_END."
+          },
+          "satisfactionWindowDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "SATISFACTION만. 일정 종료(또는 시작일) 후 참여 일수. 허용값 3, 7, 14, 30. 생략 시 7."
+          },
+          "startAtLocked": {
+            "type": "boolean",
+            "description": "SATISFACTION만. true면 관리자가 지정한 submissionStartAt을 이후 일정 변경이 덮어쓰지 않습니다."
+          },
+          "startImmediately": {
+            "type": "boolean",
+            "description": "SATISFACTION ONCE_AT_END만. true면 시작 시각을 현재 시각으로 둡니다."
           }
         }
       },
@@ -17545,11 +17615,11 @@
           },
           "operationStartDate": {
             "type": "string",
-            "description": "해당 모집 유형의 프로그램 운영 시작일. 수정 시 미전송하면 기존 값을 보존하고, 최초 생성에만 사업 운영 시작일을 fallback"
+            "description": "해당 모집 유형의 프로그램 운영 시작일. 수정 시 미전송하면 기존 값을 보존한다. UJAT 최초 생성에서 생략하면 null이며 사업 시작일로 채우지 않는다."
           },
           "operationEndDate": {
             "type": "string",
-            "description": "해당 모집 유형의 프로그램 운영 종료일. 수정 시 미전송하면 기존 값을 보존하고, 최초 생성에만 사업 운영 종료일을 fallback"
+            "description": "해당 모집 유형의 프로그램 운영 종료일. 수정 시 미전송하면 기존 값을 보존한다. UJAT 최초 생성에서 생략하면 null이며 사업 종료일로 채우지 않는다."
           },
           "maxCount": {
             "type": "integer",
@@ -17714,6 +17784,26 @@
                 "type": "null"
               }
             ]
+          },
+          "documentPassAnnouncementMethod": {
+            "type": "string",
+            "description": "1차 서류 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, \"\" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.",
+            "nullable": true
+          },
+          "finalPassAnnouncementMethod": {
+            "type": "string",
+            "description": "최종 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, \"\" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.",
+            "nullable": true
+          },
+          "interviewMethod": {
+            "type": "string",
+            "description": "2차 면접 방식. 이 모집 행만 저장. null 생략은 기존 유지, \"\" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.",
+            "nullable": true
+          },
+          "volunteerTargetDetail": {
+            "type": "string",
+            "description": "봉사자 모집 대상 상세. 이 모집 행만 저장. null 생략은 기존 유지, \"\" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.",
+            "nullable": true
           },
           "expectedRevision": {
             "type": "integer",
@@ -20040,6 +20130,33 @@
             "type": "integer",
             "format": "int64",
             "description": "대상별 예상 응답 인원. submittedCount(실제 제출 수)와 별개다. 대상을 확정할 수 없으면 null. 0은 그 대상 참여 인원이 0명일 때만.",
+            "nullable": true
+          },
+          "resultDownloadable": {
+            "type": "boolean",
+            "description": "SATISFACTION만. 참여 기간이 끝난 뒤에만 true. 전원 제출만으로 true가 되지 않는다.",
+            "nullable": true
+          },
+          "displayDeadlineAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "SATISFACTION만. 사용자 표시용 마감 시각(23:59:59 KST). 저장값은 exclusive next-day 00:00일 수 있다.",
+            "nullable": true
+          },
+          "satisfactionRunMode": {
+            "type": "string",
+            "description": "SATISFACTION만. PER_SCHEDULE | ONCE_AT_END.",
+            "nullable": true
+          },
+          "satisfactionWindowDays": {
+            "type": "integer",
+            "format": "int32",
+            "description": "SATISFACTION만. 3 | 7 | 14 | 30.",
+            "nullable": true
+          },
+          "startAtLocked": {
+            "type": "boolean",
+            "description": "SATISFACTION만. 관리자가 시작 시각을 고정했는지.",
             "nullable": true
           }
         }
@@ -26201,6 +26318,26 @@
                 "type": "null"
               }
             ]
+          },
+          "documentPassAnnouncementMethod": {
+            "type": "string",
+            "description": "1차 서류 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. VOLUNTEER가 아니면 null.",
+            "nullable": true
+          },
+          "finalPassAnnouncementMethod": {
+            "type": "string",
+            "description": "최종 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. PARTICIPANT·VOLUNTEER가 아니면 null.",
+            "nullable": true
+          },
+          "interviewMethod": {
+            "type": "string",
+            "description": "2차 면접 방식. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. VOLUNTEER가 아니면 null.",
+            "nullable": true
+          },
+          "volunteerTargetDetail": {
+            "type": "string",
+            "description": "봉사자 모집 대상 상세. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. VOLUNTEER가 아니면 null.",
+            "nullable": true
           },
           "contentRevision": {
             "type": "integer",
@@ -35121,7 +35258,7 @@
           },
           "documentPassAnnouncementMethod": {
             "type": "string",
-            "description": "1차 서류 합격 발표 방법. interviewEnabled가 true이고 해당 모집 행 overlay에 값이 있을 때만 채웁니다. 빈 문자열은 null.",
+            "description": "1차 서류 합격 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null.",
             "nullable": true
           },
           "interviewStartAt": {
@@ -35138,7 +35275,7 @@
           },
           "interviewMethod": {
             "type": "string",
-            "description": "면접 방식. interviewEnabled가 true이고 해당 모집 행 overlay에 값이 있을 때만 채웁니다. 빈 문자열은 null.",
+            "description": "면접 방식. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null.",
             "nullable": true
           },
           "finalPassAnnouncementAt": {
@@ -35149,7 +35286,7 @@
           },
           "finalPassAnnouncementMethod": {
             "type": "string",
-            "description": "최종 합격 발표 방법. 해당 모집 행 overlay에 값이 있으면 면접 여부와 무관하게 채웁니다. 빈 문자열은 null.",
+            "description": "최종 합격 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null.",
             "nullable": true
           },
           "programDescription": {
@@ -38689,59 +38826,65 @@
           },
           "grade": {
             "type": "string",
+            "description": "학년 숫자 키. 예: 1. 없으면 null.",
             "example": "1",
             "nullable": true
           },
           "gradeLabel": {
             "type": "string",
+            "description": "학년 표시. 예: 1학년. 같은 행 grade에서만 만든다. 없으면 null.",
+            "example": "1학년",
             "nullable": true
           },
           "className": {
             "type": "string",
+            "description": "학급 숫자 키. 예: 2. 없으면 null.",
             "example": "2",
             "nullable": true
           },
           "classLabel": {
             "type": "string",
+            "description": "학급 표시. 예: 2반. 같은 행 className에서만 만든다. 저장된 결합 class_label(예: 1-2)을 쓰지 않는다.",
+            "example": "2반",
             "nullable": true
           },
           "classNo": {
             "type": "string",
+            "description": "학급 번호. className과 같은 숫자 키.",
+            "example": "1",
             "nullable": true
           },
           "volunteerAName": {
             "type": "string",
-            "nullable": true
-          },
-          "volunteerA": {
-            "type": "string",
+            "description": "봉사자 A 표시 정본. 미배정은 null. 빈 문자열 금지. volunteerA 별칭 없음.",
             "nullable": true
           },
           "volunteerBName": {
             "type": "string",
-            "nullable": true
-          },
-          "volunteerB": {
-            "type": "string",
+            "description": "봉사자 B 표시 정본. 미배정은 null. 빈 문자열 금지. volunteerB 별칭 없음.",
             "nullable": true
           },
           "textbookName": {
             "type": "string",
+            "description": "사용 교재명. 이 기관 신청에 저장된 교재. 없으면 null.",
             "nullable": true
           },
           "studentCount": {
             "type": "integer",
             "format": "int32",
-            "description": "준비 수량(학급 학생 수).",
+            "description": "학급 학생 수. 교재 준비수량이 아님. FE는 이 값으로 준비수량을 그리지 않는다.",
             "nullable": true
           },
           "textbookQuantity": {
             "type": "integer",
             "format": "int32",
+            "description": "교재 준비수량(정수). 화면 「교재 준비수량」정본. 학생 수와 같더라도 이 필드에 넣는다. 없으면 null.",
             "nullable": true
           },
           "textbookQuantityLabel": {
             "type": "string",
+            "description": "교재 준비수량 표시. 예: 28권. 있으면 FE는 이것만 쓴다. 없으면 textbookQuantity. 둘 다 없으면 FE가 '-'.",
+            "example": "28권",
             "nullable": true
           }
         }
@@ -38756,30 +38899,30 @@
           "scheduleStartAt": {
             "type": "string",
             "format": "date-time",
-            "description": "교육일 시작. Asia/Seoul offset.",
+            "description": "교육일 시작. 항상 Asia/Seoul +09:00. date와 같은 달력일. UTC Z 직렬화 금지.",
             "example": "2026-04-03T00:00:00+09:00",
             "nullable": true
           },
           "date": {
             "type": "string",
-            "description": "Asia/Seoul YYYY-MM-DD. FE가 date를 읽을 때 사용.",
+            "description": "교육일 Asia/Seoul YYYY-MM-DD. UTC slice(0,10) 금지. scheduleStartAt과 달력일이 다르면 date가 정본.",
             "example": "2026-04-03",
             "nullable": true
           },
           "attendanceManagerName": {
             "type": "string",
-            "description": "해당 일정의 출결 담당자 이름. 없으면 null.",
+            "description": "해당 일정의 출결 담당자 이름. attendanceManager 별칭 없음. 없으면 null.",
             "nullable": true
           },
           "consentDocumentsDownloadPath": {
             "type": "string",
-            "description": "동의서 일괄 다운로드 GET path. JA 시스템 확인 요청이 있고 배정 봉사자가 있을 때만 채운다. 없으면 null.",
+            "description": "동의서 일괄 다운로드 GET path. JA 시스템 확인 요청이 있고 해당 일정에 배정 봉사자가 있을 때만 채운다. 없으면 null. 빈 문자열 금지. 필드 생략 금지.",
             "example": "/api/portal/me/program-applications/ORGANIZATION/1/class-assignments/11/consent-documents",
             "nullable": true
           },
           "rows": {
             "type": "array",
-            "description": "학급 행. 없으면 [].",
+            "description": "학급 행. 없으면 []. null 금지. 총 학급 수는 FE가 rows.length로 센다.",
             "items": {
               "$ref": "#/components/schemas/MemberPortalUjatClassAssignmentRow"
             }
@@ -38788,7 +38931,7 @@
       },
       "MemberPortalUjatClassAssignmentsResponse": {
         "type": "object",
-        "description": "UJAT 기관 마이페이지 배정 탭. schedules는 항상 배열이며 배정이 없으면 [].",
+        "description": "UJAT 기관 마이페이지 배정 탭. schedules는 항상 배열이며 배정이 없으면 []. FE는 이 GET만 SSOT로 쓴다. slots/content/items·answers·다른 학기 배정으로 채우지 않는다.",
         "properties": {
           "schedules": {
             "type": "array",
@@ -40027,10 +40170,9 @@
           },
           "eventType": {
             "type": "string",
-            "description": "캘린더 이벤트 유형. null은 PROGRAM_SCHEDULE.",
+            "description": "캘린더 이벤트 유형. null은 PROGRAM_SCHEDULE. 프로그램 운영기간 fill은 내려주지 않는다.",
             "enum": [
               "PROGRAM_SCHEDULE",
-              "PROGRAM_PERIOD",
               "ASSIGNMENT_DEADLINE",
               "SATISFACTION_DEADLINE",
               "SURVEY_DEADLINE",
@@ -40119,7 +40261,7 @@
           },
           "status": {
             "type": "string",
-            "description": "이벤트 상태. 교육/운영기간은 SCHEDULED. 마감형은 NOT_SUBMITTED|SUBMITTED|OVERDUE|CLOSED 등.",
+            "description": "이벤트 상태. 교육 일정은 SCHEDULED. 마감형은 NOT_SUBMITTED|SUBMITTED|OVERDUE|CLOSED 등.",
             "nullable": true
           },
           "timeAvailability": {

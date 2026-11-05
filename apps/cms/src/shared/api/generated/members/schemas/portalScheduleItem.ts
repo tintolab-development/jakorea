@@ -18,7 +18,7 @@ export interface PortalScheduleItem {
   locationName?: string;
   address?: string;
   participationRole?: string;
-  /** 캘린더 이벤트 유형. null은 PROGRAM_SCHEDULE. */
+  /** 캘린더 이벤트 유형. null은 PROGRAM_SCHEDULE. 프로그램 운영기간 fill은 내려주지 않는다. */
   eventType?: PortalScheduleItemEventType;
   /** 유형 접두사 안정 식별자. 서로 다른 eventType 간 숫자 ID가 같아도 충돌하지 않는다. */
   eventId?: string | null;
@@ -48,7 +48,7 @@ export interface PortalScheduleItem {
   receiptId?: number | null;
   /** 서버가 계산한 마감 Instant. 상시(기간 없음) 설문은 이벤트를 만들지 않으므로 null이 아니다. */
   deadlineAt?: string | null;
-  /** 이벤트 상태. 교육/운영기간은 SCHEDULED. 마감형은 NOT_SUBMITTED|SUBMITTED|OVERDUE|CLOSED 등. */
+  /** 이벤트 상태. 교육 일정은 SCHEDULED. 마감형은 NOT_SUBMITTED|SUBMITTED|OVERDUE|CLOSED 등. */
   status?: string | null;
   /** TIME_PRESENT | DATE_ONLY | SOURCE_TIME_NOT_AVAILABLE. 원천에 시각이 없으면 서버가 00:00~23:59를 만들지 않는다. */
   timeAvailability?: string | null;
