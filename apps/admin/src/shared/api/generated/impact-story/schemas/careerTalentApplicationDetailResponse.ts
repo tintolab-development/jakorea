@@ -16,21 +16,33 @@ export interface CareerTalentApplicationDetailResponse {
   status?: CareerTalentApplicationDetailResponseStatus;
   version?: number;
   jobInterest?: CareerTalentApplicationDetailResponseJobInterest;
+  /** Applicant name. revealPii=false uses PrivacyMaskingSupport.maskName (same as list and sponsorship talent). Original name only when revealPii=true. */
   name?: string;
-  phone?: string;
-  email?: string;
-  addressRoad?: string;
+  /** revealPii=false: PrivacyMaskingSupport.maskPhone (same as list). revealPii=true: original. Empty is null, never "". */
+  phone?: string | null;
+  /** revealPii=false: PrivacyMaskingSupport.maskEmail (same as list). revealPii=true: original. Empty is null, never "". */
+  email?: string | null;
+  /** revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never "". */
+  addressRoad?: string | null;
+  /** revealPii=false: PrivacyMaskingSupport.maskAddress. revealPii=true: original. Empty is null, never "". */
   addressDetail?: string | null;
+  /** revealPii=false: omitted (null). revealPii=true: stored enum. careerType stays on the masked detail; this field does not until revealed. */
   educationLevel?: CareerTalentApplicationDetailResponseEducationLevel;
-  schoolName?: string;
+  /** revealPii=false: omitted. revealPii=true: stored school name. */
+  schoolName?: string | null;
+  /** revealPii=false: omitted. revealPii=true: stored major. Empty is null, never "". */
   major?: string | null;
-  educationInfo?: string;
+  /** revealPii=false: omitted. revealPii=true: stored education body. Empty is null, never "". */
+  educationInfo?: string | null;
   careerType?: CareerTalentApplicationDetailResponseCareerType;
-  careerInfo?: string;
+  /** revealPii=false: omitted. revealPii=true: stored career body. Empty is null, never "". */
+  careerInfo?: string | null;
   privacyAgreed?: boolean;
   appliedAt?: string;
   confirmedAt?: string | null;
   confirmedByName?: string | null;
+  /** revealPii=false: omitted. revealPii=true: first attachment original name. */
   attachmentOriginalName?: string | null;
+  /** revealPii=false: empty array. revealPii=true: stored attachments in display order. */
   attachments?: ApplicationAttachmentItem[];
 }

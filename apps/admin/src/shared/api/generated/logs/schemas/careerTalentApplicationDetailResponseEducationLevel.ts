@@ -6,7 +6,10 @@
  * OpenAPI spec version: v1
  */
 
-export type CareerTalentApplicationDetailResponseEducationLevel = typeof CareerTalentApplicationDetailResponseEducationLevel[keyof typeof CareerTalentApplicationDetailResponseEducationLevel];
+/**
+ * revealPii=false: omitted (null). revealPii=true: stored enum. careerType stays on the masked detail; this field does not until revealed.
+ */
+export type CareerTalentApplicationDetailResponseEducationLevel = typeof CareerTalentApplicationDetailResponseEducationLevel[keyof typeof CareerTalentApplicationDetailResponseEducationLevel] | null;
 
 
 export const CareerTalentApplicationDetailResponseEducationLevel = {

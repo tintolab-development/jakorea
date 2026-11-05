@@ -9,12 +9,33 @@ import type { AwardsSort } from './awardsSort';
 
 export type AwardsParams = {
 published?: boolean;
+/**
+ * Case-insensitive contains (LIKE %term%) on awardName. Blank omitted. Max 500.
+ */
 awardName?: string;
+/**
+ * Case-insensitive contains (LIKE %term%) on awardingInstitution. Blank omitted. Max 500.
+ */
 institution?: string;
+/**
+ * YYYY-MM-DD inclusive on awardedDate (calendar date column, not timezone conversion).
+ */
 awardedFrom?: string;
+/**
+ * YYYY-MM-DD inclusive on awardedDate. from after to → 400.
+ */
 awardedTo?: string;
+/**
+ * YYYY-MM-DD. Inclusive start of Asia/Seoul calendar day on createdAt.
+ */
 createdFrom?: string;
+/**
+ * YYYY-MM-DD. Inclusive through end of Asia/Seoul calendar day on createdAt (next Seoul midnight exclusive). from after to → 400.
+ */
 createdTo?: string;
+/**
+ * Admin list sort. Query omitted or DATE: event calendar date descending (history year/month, award awardedDate, certification certifiedDate) then id DESC. CREATED_AT: createdAt DESC then id DESC. No additional sort values.
+ */
 sort?: AwardsSort;
 page?: number;
 size?: number;
