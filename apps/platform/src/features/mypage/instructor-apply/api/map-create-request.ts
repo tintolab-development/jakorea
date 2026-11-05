@@ -281,26 +281,8 @@ export function mapInstructorFormValuesToPortalEditableProfile(
 export function mapInstructorFormValuesToPortalSettlement(
   values: InstructorSharedProfileFormValues,
 ): InstructorRoleRequestSettlement {
-  const bankName = values.bankName.trim()
-  const accountNumber = values.accountNumber.trim()
-  const accountHolder = values.accountHolder.trim()
   return {
     businessIncome: values.isBusinessIncome === 'yes',
-    ...(bankName ? { bankName } : {}),
-    ...(accountNumber ? { accountNumber } : {}),
-    ...(accountHolder ? { accountHolder } : {}),
-    ...(bankName
-      ? {
-          bankAccounts: [
-            {
-              bankName,
-              ...(accountNumber ? { accountNumber } : {}),
-              ...(accountHolder ? { accountHolder } : {}),
-              current: true,
-            },
-          ],
-        }
-      : {}),
   }
 }
 

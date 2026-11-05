@@ -21,6 +21,7 @@ type BuildSettlementWriteDraftInput = {
   expenseDate?: string
   enabledItemTypes?: string[]
   name: string
+  nameEn?: string
   residentFront?: string
   residentBack?: string
   homeAddress: string
@@ -67,6 +68,7 @@ export function buildSettlementWriteDraft(
     },
     basic: {
       name: input.name,
+      nameEn: input.nameEn?.trim() ?? '',
       residentFront: input.residentFront?.trim() ?? '',
       residentBack: input.residentBack?.trim() ?? '',
       homeAddress: input.homeAddress,
@@ -109,6 +111,7 @@ export function buildSettlementWriteDraft(
 export function hydrateSettlementWriteFormState(draft: SettlementWriteDraft) {
   return {
     name: draft.basic.name,
+    nameEn: draft.basic.nameEn ?? '',
     residentFront: draft.basic.residentFront,
     residentBack: draft.basic.residentBack,
     homeAddress: draft.basic.homeAddress,

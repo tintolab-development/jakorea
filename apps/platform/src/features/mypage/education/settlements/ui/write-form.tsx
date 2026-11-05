@@ -53,8 +53,11 @@ import {
 } from '../lib/write-path'
 import { EducationSettlementSessionBanner } from './settlement-session-banner'
 import { mapIndividualSettlementDetailToDraft } from '../lib/map-individual-settlement-detail'
-import { usePaymentStatementConsentBasicInfo } from '../hooks/use-payment-statement-consent-basic-info'
-import { useInstructorApplyLockedBasic } from '@/features/mypage/instructor-apply'
+import { useSettlementConsentSidecar } from '../hooks/use-payment-statement-consent-basic-info'
+import {
+  composeSettlementWriteBasic,
+  readSettlementMemberProfileBasic,
+} from '../lib/map-payment-statement-basic-info'
 import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import {
@@ -98,10 +101,6 @@ type EducationSettlementWriteFormProps = {
   documentKind?: SettlementDocumentKind
   applicationType?: string | null
   programType?: string | null
-}
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, '')
 }
 
 function RadioGroup<T extends string>({
@@ -449,14 +448,12 @@ export function EducationSettlementWriteForm({
 }: EducationSettlementWriteFormProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { lockedBasic } = useInstructorApplyLockedBasic()
   const { profile } = useMypageMember()
   const profileQuery = usePortalProfileQuery({ enabled: true })
   const existingDetail = useIndividualSettlementDetailQuery(session?.settlementApplicationId)
   const isInstructor = isInstructorMypageProfile(profile)
   const isReceipt = documentKind === 'receipt'
-  const consentBasicQuery = usePaymentStatementConsentBasicInfo(!isReceipt)
-  const consentBasic = isReceipt ? {} : consentBasicQuery.basic
+  const consentSidecarQuery = useSettlementConsentSidecar(documentKind)
   const individualSchedules = useIndividualSettlementSchedulesQuery(
     shouldUseIndividualSettlementSchedulesApi(applicationType, programType) ? applicationId : null,
   )
@@ -490,20 +487,16 @@ export function EducationSettlementWriteForm({
 
   const initialDraft = (location.state as SettlementWriteDraftLocationState | null)?.draft
   const hydrated = initialDraft ? hydrateSettlementWriteFormState(initialDraft) : null
-  const settlement = profileQuery.data?.instructorProfile?.settlement
+  const composedBasic = useMemo(
+    () =>
+      composeSettlementWriteBasic({
+        kind: documentKind,
+        member: readSettlementMemberProfileBasic(profileQuery.data),
+        consent: consentSidecarQuery.sidecar,
+      }),
+    [consentSidecarQuery.sidecar, documentKind, profileQuery.data],
+  )
 
-  const [bank, setBank] = useState(
-    hydrated?.bank || consentBasic.bank || settlement?.bankName || '',
-  )
-  const [accountNumber, setAccountNumber] = useState(
-    hydrated?.accountNumber || consentBasic.accountNumber || settlement?.accountNumber || '',
-  )
-  const [accountHolder, setAccountHolder] = useState(
-    hydrated?.accountHolder ||
-      consentBasic.accountHolder ||
-      settlement?.accountHolder ||
-      lockedBasic.name,
-  )
   const [tripType, setTripType] = useState<TripType>(hydrated?.tripType ?? 'round_trip')
   const [departTransit, setDepartTransit] = useState(hydrated?.departTransit ?? '')
   const [departAmount, setDepartAmount] = useState(hydrated?.departAmount ?? '')
@@ -539,54 +532,15 @@ export function EducationSettlementWriteForm({
   const [alertMessage, setAlertMessage] = useState('')
   const prefilledFromDetail = useRef(Boolean(hydrated))
 
-  const name = hydrated?.name || consentBasic.name || lockedBasic.name
-  const residentFront = hydrated?.residentFront || consentBasic.residentFront || ''
-  const residentBack = hydrated?.residentBack || consentBasic.residentBack || ''
-  const homeAddress = hydrated?.homeAddress || consentBasic.homeAddress || lockedBasic.homeAddress
-  const homeAddressDetail =
-    hydrated?.homeAddressDetail || consentBasic.homeAddressDetail || lockedBasic.homeAddressDetail
-  const accountSeeded = useRef(
-    Boolean(
-      hydrated?.bank ||
-        hydrated?.accountNumber ||
-        hydrated?.accountHolder ||
-        consentBasic.bank ||
-        consentBasic.accountNumber ||
-        consentBasic.accountHolder,
-    ),
-  )
-
-  useEffect(() => {
-    setAccountHolder(prev => (prev === '' && name ? name : prev))
-  }, [name])
-
-  useEffect(() => {
-    if (accountSeeded.current) return
-    if (consentBasicQuery.isLoading) return
-    if (consentBasic.bank || consentBasic.accountNumber || consentBasic.accountHolder) {
-      setBank(consentBasic.bank || '')
-      setAccountNumber(consentBasic.accountNumber || '')
-      setAccountHolder(consentBasic.accountHolder || consentBasic.name || name)
-      accountSeeded.current = true
-      return
-    }
-    if (settlement?.bankName || settlement?.accountNumber || settlement?.accountHolder) {
-      setBank(prev => prev || settlement.bankName || '')
-      setAccountNumber(prev => prev || settlement.accountNumber || '')
-      setAccountHolder(prev => prev || settlement.accountHolder || name)
-      accountSeeded.current = true
-      return
-    }
-    accountSeeded.current = true
-  }, [
-    consentBasic.accountHolder,
-    consentBasic.accountNumber,
-    consentBasic.bank,
-    consentBasic.name,
-    consentBasicQuery.isLoading,
-    name,
-    settlement,
-  ])
+  const name = composedBasic.name
+  const nameEn = composedBasic.nameEn
+  const residentFront = composedBasic.residentFront
+  const residentBack = composedBasic.residentBack
+  const homeAddress = composedBasic.homeAddress
+  const homeAddressDetail = composedBasic.homeAddressDetail
+  const bank = composedBasic.bank
+  const accountNumber = composedBasic.accountNumber
+  const accountHolder = composedBasic.accountHolder
 
   const amountItemTypeKey = amountItems.map(item => item.itemType).join('|')
   useEffect(() => {
@@ -653,8 +607,12 @@ export function EducationSettlementWriteForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!isReceipt && consentBasicQuery.isLoading) {
-      showAlert('지급조서 사전 동의서 정보를 불러오는 중입니다.')
+    if (consentSidecarQuery.isLoading || profileQuery.isPending) {
+      showAlert(
+        isReceipt
+          ? '영수증 발급 사전 동의서 정보를 불러오는 중입니다.'
+          : '지급조서 사전 동의서 정보를 불러오는 중입니다.',
+      )
       return
     }
     if (isReceipt && payableItems.length === 0) {
@@ -701,6 +659,7 @@ export function EducationSettlementWriteForm({
       expenseDate: toSeoulIsoDate(session?.heldAt),
       enabledItemTypes: payableItems.map(item => item.itemType),
       name,
+      nameEn,
       residentFront,
       residentBack,
       homeAddress,
@@ -781,8 +740,10 @@ export function EducationSettlementWriteForm({
           title={`${basicSectionNo}. 기본 정보`}
           required
           description={
-            !isReceipt && consentBasicQuery.isLoading
-              ? '지급조서 사전 동의서 정보를 불러오는 중입니다.'
+            consentSidecarQuery.isLoading
+              ? isReceipt
+                ? '영수증 발급 사전 동의서 정보를 불러오는 중입니다.'
+                : '지급조서 사전 동의서 정보를 불러오는 중입니다.'
               : undefined
           }
         >
@@ -793,17 +754,24 @@ export function EducationSettlementWriteForm({
               </PFFormField>
             </PFFormFieldRow>
             <PFFormFieldRow type="single">
-              <PFFormField label="주민등록번호">
-                <PFFormResidentNumberInput
-                  disabled
-                  fillRow
-                  frontValue={residentFront}
-                  backValue={residentBack}
-                  onFrontChange={() => undefined}
-                  onBackChange={() => undefined}
-                />
+              <PFFormField label="영문명">
+                <PFTextInput variant="formPage" size="large" disabled value={nameEn} />
               </PFFormField>
             </PFFormFieldRow>
+            {isReceipt ? null : (
+              <PFFormFieldRow type="single">
+                <PFFormField label="주민등록번호">
+                  <PFFormResidentNumberInput
+                    disabled
+                    fillRow
+                    frontValue={residentFront}
+                    backValue={residentBack}
+                    onFrontChange={() => undefined}
+                    onBackChange={() => undefined}
+                  />
+                </PFFormField>
+              </PFFormFieldRow>
+            )}
             <PFFormFieldRow type="single">
               <PFFormField label="자택 주소">
                 <PFFormHomeAddressFields
@@ -826,9 +794,9 @@ export function EducationSettlementWriteForm({
                         size="large"
                         width={200}
                         placeholder="은행명"
-                        disabled={isReceipt}
+                        disabled
                         value={bank}
-                        onValueChange={isReceipt ? () => undefined : setBank}
+                        onValueChange={() => undefined}
                       />
                       <PFTextInput
                         variant="formPage"
@@ -836,11 +804,9 @@ export function EducationSettlementWriteForm({
                         width={200}
                         inputMode="numeric"
                         placeholder="계좌번호를 입력해 주세요."
-                        disabled={isReceipt}
+                        disabled
                         value={accountNumber}
-                        onValueChange={
-                          isReceipt ? () => undefined : value => setAccountNumber(digitsOnly(value))
-                        }
+                        onValueChange={() => undefined}
                       />
                     </PFFormControlCluster>
                   </PFFormInlineSegment>
@@ -851,9 +817,9 @@ export function EducationSettlementWriteForm({
                       size="large"
                       width={200}
                       placeholder="예금주명"
-                      disabled={isReceipt}
+                      disabled
                       value={accountHolder}
-                      onValueChange={isReceipt ? () => undefined : setAccountHolder}
+                      onValueChange={() => undefined}
                     />
                   </PFFormInlineSegment>
                 </PFFormInlineRow>

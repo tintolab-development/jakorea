@@ -72,7 +72,7 @@ assert.equal(body.profile.career.rows[0]?.companyName, 'ABC')
 assert.equal(body.profile.essays.freeWrite1, '소개')
 assert.equal(body.profile.oneLineIntro, '한줄')
 
-assert.equal(body.settlement.bankName, '국민')
+assert.equal(body.settlement.bankName, undefined)
 assert.equal(body.settlement.businessIncome, false)
 
 assert.equal(body.termsAgreements[0]?.termsType, 'PAYMENT_STATEMENT_PRE_CONSENT')

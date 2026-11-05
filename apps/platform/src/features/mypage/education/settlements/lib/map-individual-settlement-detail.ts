@@ -92,6 +92,7 @@ export function mapIndividualSettlementDetailToDraft(input: {
     },
     basic: {
       name: input.name,
+      nameEn: '',
       residentFront: '',
       residentBack: '',
       homeAddress: input.homeAddress,

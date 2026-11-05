@@ -179,36 +179,6 @@ export function InstructorBasicProfileFields({
         </PFFormField>
       </PFFormFieldRow>
       <PFFormFieldRow type="single">
-        <PFFormField label="정산 계좌 정보">
-          <PFFormInlineSeparatedFields>
-            <PFTextInput
-              variant="formPage"
-              size="large"
-              width={120}
-              placeholder={PH.bankName}
-              value={values.bankName}
-              onValueChange={value => patch('bankName', value)}
-            />
-            <PFTextInput
-              variant="formPage"
-              size="large"
-              width={240}
-              placeholder={PH.accountNumber}
-              value={values.accountNumber}
-              onValueChange={value => patch('accountNumber', value)}
-            />
-            <PFTextInput
-              variant="formPage"
-              size="large"
-              width={240}
-              placeholder={PH.accountHolder}
-              value={values.accountHolder}
-              onValueChange={value => patch('accountHolder', value)}
-            />
-          </PFFormInlineSeparatedFields>
-        </PFFormField>
-      </PFFormFieldRow>
-      <PFFormFieldRow type="single">
         <PFFormField label="사업소득자 여부">
           <InstructorProfileRadioGroup
             name="isBusinessIncome"

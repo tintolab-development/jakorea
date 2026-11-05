@@ -9,6 +9,8 @@ import {
   isCrimeConsentTemplate,
   listMemberConsentIncompleteRequiredFields,
   normalizeMemberConsentWriteDraft,
+  overlayPaymentStatementProfileLinkedValues,
+  buildPaymentStatementProfileLinkedValues,
   PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
   resolveDocumentConsentTemplate,
   resolvePlatformConsentHiddenParagraphIds,
@@ -56,7 +58,7 @@ import {
   RECEIPT_PRE_CONSENT_WRITE_KEY,
 } from './catalog'
 import { CrimeConsentDocumentForm } from './crime-document-form'
-import { markInstructorApplyConsentAgreed } from './form-persist'
+import { loadInstructorApplyFormDraft, markInstructorApplyConsentAgreed } from './form-persist'
 import {
   clearSchemaConsentWriteState,
   loadSchemaConsentWriteState,
@@ -168,6 +170,25 @@ export function SchemaConsentWriteForm({
 }) {
   const { templateId } = resolveDocumentConsentTemplate(consentKey)
   const { lockedBasic, isLoading: isLockedBasicLoading } = useInstructorApplyLockedBasic()
+  const paymentStatementProfileValues = useMemo(() => {
+    if (submitContext !== 'instructorApply' || templateId !== 'agreement-third-party') {
+      return null
+    }
+    const draft = loadInstructorApplyFormDraft()
+    const memberType = lockedBasic.memberType || draft?.memberType
+    return buildPaymentStatementProfileLinkedValues({
+      name: lockedBasic.name || draft?.name,
+      memberType,
+      schoolName: lockedBasic.schoolName || draft?.schoolName,
+      affiliationName: lockedBasic.affiliationName || draft?.affiliationName,
+      affiliationNone:
+        memberType === 'school_teacher'
+          ? false
+          : Boolean(lockedBasic.affiliationNone || draft?.affiliationNone),
+      homeAddress: draft?.homeAddress || lockedBasic.homeAddress,
+      homeAddressDetail: draft?.homeAddressDetail || lockedBasic.homeAddressDetail,
+    })
+  }, [lockedBasic, submitContext, templateId])
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -188,6 +209,19 @@ export function SchemaConsentWriteForm({
     clearSchemaConsentWriteState(consentKey)
     return normalized
   })
+
+  const paymentBasicInfo = useMemo(
+    () =>
+      overlayPaymentStatementProfileLinkedValues(
+        state.paymentBasicInfo ?? {},
+        paymentStatementProfileValues
+      ),
+    [paymentStatementProfileValues, state.paymentBasicInfo]
+  )
+  const writeState = useMemo(
+    () => ({ ...state, paymentBasicInfo }),
+    [paymentBasicInfo, state]
+  )
 
   const applyServerDraftDocument = useCallback(
     (document: PortalConsentDocumentDetail, restoreFromDraft?: WritingFormDraft) => {
@@ -217,7 +251,12 @@ export function SchemaConsentWriteForm({
         paymentBasicInfo:
           serverTemplateCode === 'agreement-third-party' ||
           serverTemplateCode === 'agreement-receipt-pre-consent'
-            ? prev.paymentBasicInfo ?? {}
+            ? overlayPaymentStatementProfileLinkedValues(
+                prev.paymentBasicInfo ?? {},
+                serverTemplateCode === 'agreement-third-party'
+                  ? paymentStatementProfileValues
+                  : null
+              )
             : undefined,
         portalDocument: {
           documentId,
@@ -226,7 +265,7 @@ export function SchemaConsentWriteForm({
         },
       }))
     },
-    [lockedBasic.name, templateId],
+    [lockedBasic.name, paymentStatementProfileValues, templateId],
   )
 
   useEffect(() => {
@@ -254,8 +293,8 @@ export function SchemaConsentWriteForm({
 
   useEffect(() => {
     if (readOnly) return
-    saveSchemaConsentWriteState(consentKey, state)
-  }, [consentKey, readOnly, state])
+    saveSchemaConsentWriteState(consentKey, writeState)
+  }, [consentKey, readOnly, writeState])
 
   useEffect(() => {
     if (readOnly || templateId !== 'agreement-notice') return
@@ -273,11 +312,11 @@ export function SchemaConsentWriteForm({
     () =>
       listMemberConsentIncompleteRequiredFields(state.draft, {
         templateId,
-        paymentStatementBasicInfo: state.paymentBasicInfo,
+        paymentStatementBasicInfo: paymentBasicInfo,
       }),
-    [state.draft, state.paymentBasicInfo, templateId],
+    [paymentBasicInfo, state.draft, templateId],
   )
-  const incomplete = isSchemaConsentWriteIncomplete(consentKey, state)
+  const incomplete = isSchemaConsentWriteIncomplete(consentKey, writeState)
 
   const handleSubmit = () => {
     if (isSubmitting) return
@@ -308,7 +347,7 @@ export function SchemaConsentWriteForm({
     if (
       hasMemberConsentInvalidResidentNumberFormat(state.draft, {
         templateId,
-        paymentStatementBasicInfo: state.paymentBasicInfo,
+        paymentStatementBasicInfo: paymentBasicInfo,
       })
     ) {
       setAlertMessage(PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE)
@@ -327,7 +366,7 @@ export function SchemaConsentWriteForm({
 
     if (portalSubmitEnabled) {
       setIsSubmitting(true)
-      void submitPortalConsentDocumentFromWriteState(consentKey, state)
+      void submitPortalConsentDocumentFromWriteState(consentKey, writeState)
         .then(() => {
           if (submitContext === 'instructorApply' && isInstructorApplyConsentKey(consentKey)) {
             markInstructorApplyConsentAgreed(consentKey)
@@ -403,8 +442,8 @@ export function SchemaConsentWriteForm({
     if (templateId === 'agreement-notice') {
       return lockedBasic.name.trim() || '회원'
     }
-    return resolvePaymentConsentSignerName(state.paymentBasicInfo, lockedBasic.name)
-  }, [lockedBasic.name, state.paymentBasicInfo, templateId])
+    return resolvePaymentConsentSignerName(paymentBasicInfo, lockedBasic.name)
+  }, [lockedBasic.name, paymentBasicInfo, templateId])
 
   const lockedNoticeSubjectMemberName =
     templateId === 'agreement-notice' ? lockedBasic.name.trim() : undefined
@@ -430,9 +469,17 @@ export function SchemaConsentWriteForm({
         return (
           <PaymentBasicInfoFields
             variant="payment"
-            values={state.paymentBasicInfo ?? {}}
-            onChange={paymentBasicInfo =>
-              setState(prev => ({ ...prev, paymentBasicInfo }))
+            values={paymentBasicInfo}
+            lockProfileFields={paymentStatementProfileValues != null}
+            profileValues={paymentStatementProfileValues}
+            onChange={next =>
+              setState(prev => ({
+                ...prev,
+                paymentBasicInfo: overlayPaymentStatementProfileLinkedValues(
+                  next,
+                  paymentStatementProfileValues
+                ),
+              }))
             }
           />
         )
@@ -516,8 +563,9 @@ export function SchemaConsentWriteForm({
     },
     [
       signerName,
+      paymentBasicInfo,
+      paymentStatementProfileValues,
       state.draft.paragraphs,
-      state.paymentBasicInfo,
       state.signatures?.final,
       state.signatures?.mid,
       updateParagraph,
