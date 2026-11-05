@@ -72,14 +72,20 @@ function toReportStatus(dto: UjatAssignmentDocumentDto | null | undefined): Ujat
   }
 }
 
+function parseFormResponseId(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+  if (typeof value === 'string' && /^\d+$/.test(value.trim())) {
+    const parsed = Number(value.trim())
+    if (Number.isSafeInteger(parsed) && parsed > 0) return parsed
+  }
+  return undefined
+}
+
 function toReportState(dto: UjatAssignmentDocumentDto | null | undefined): UjatAssignmentReportState {
   const rawStatus = dto?.status?.trim().toUpperCase()
   const status = toReportStatus(dto)
   if (status === 'not_submitted') return { status }
-  const formResponseId =
-    typeof dto?.formResponseId === 'number' && Number.isFinite(dto.formResponseId)
-      ? dto.formResponseId
-      : undefined
+  const formResponseId = parseFormResponseId(dto?.formResponseId)
   return {
     status,
     submittedDateLabel: formatAssignmentWeekdayDate(dto?.submittedAt),

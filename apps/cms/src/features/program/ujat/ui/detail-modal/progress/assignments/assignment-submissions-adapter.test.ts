@@ -229,6 +229,14 @@ describe('wire 슬롯 → 목록 7종 (JABACK assignment-submissions 계약)', (
     expect(row.log.formResponseId).toBe(9001)
   })
 
+  it('formResponseId가 숫자 문자열이면 보기용 id로 파싱한다', () => {
+    const row = volunteerFrom(
+      { status: 'SUBMITTED', submittedAt: '2026-04-16T10:00:00+09:00', formResponseId: '9001' as unknown as number },
+      { status: 'NOT_SUBMITTED', submittedAt: null, formResponseId: null }
+    )
+    expect(row.plan.formResponseId).toBe(9001)
+  })
+
   it('계획서 마감 후 제출 + 일지 기한 내 승인 → 교육계획서 기한 미준수', () => {
     const row = volunteerFrom(
       {
