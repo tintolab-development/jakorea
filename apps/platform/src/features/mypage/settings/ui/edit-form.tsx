@@ -401,7 +401,7 @@ export function SettingsEditForm({
                   size="xlarge"
                   value={displayPhone === EMPTY_SETTINGS_VALUE ? '' : displayPhone}
                   required
-                  readOnly
+                  disabled
                 />
                 <PFButton
                   size="xlarge"
@@ -655,7 +655,7 @@ export function SettingsEditForm({
                   size="xlarge"
                   value={guardianPhone ? formatSettingsPhone(guardianPhone) : ''}
                   required
-                  readOnly
+                  disabled
                 />
                 <PFButton
                   size="xlarge"

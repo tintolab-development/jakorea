@@ -174,7 +174,7 @@ export function SettingsInstructorBasicFields({
               <PFTextInput
                 size="xlarge"
                 value={displayPhone === EMPTY_SETTINGS_VALUE ? '' : displayPhone}
-                readOnly
+                disabled
               />
               <PFButton
                 size="xlarge"
