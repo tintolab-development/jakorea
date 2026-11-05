@@ -5,6 +5,7 @@ import type {
   PortalSettlementApplication,
 } from '../../applications/api/activity-client.ts'
 import type { EducationScheduleItem } from '../../schedules/model/types.ts'
+import type { LectureFeePreview } from '../lib/lecture-fee-preview.ts'
 import type { EducationSettlementItem } from '../model/types.ts'
 import {
   canSubmitFromAvailableActions,
@@ -49,6 +50,7 @@ export type SettlementLectureReportJoin = {
   startAt?: string | null
   endAt?: string | null
   sessionNo?: number | null
+  lectureFeePreview?: LectureFeePreview | null
 }
 
 const COMPLETED_LECTURE = new Set(['COMPLETED', 'DONE', 'HELD', 'FINISHED'])
@@ -199,12 +201,16 @@ function resolveInstitutionMeta(
   lecture: SettlementLectureReportJoin | undefined,
   schedule: EducationScheduleItem,
 ): { institutionName?: string; grade?: string } {
-  const institutionName = lecture?.institutionName?.trim() || schedule.locationName?.trim() || ''
-  const grade = lecture?.grade?.trim() || ''
-  return {
-    ...(institutionName ? { institutionName } : {}),
-    ...(grade ? { grade } : {}),
+  if (lecture) {
+    const institutionName = lecture.institutionName?.trim() || ''
+    const grade = lecture.grade?.trim() || ''
+    return {
+      ...(institutionName ? { institutionName } : {}),
+      ...(grade ? { grade } : {}),
+    }
   }
+  const institutionName = schedule.locationName?.trim() || ''
+  return institutionName ? { institutionName } : {}
 }
 
 function isLectureReportSubmitted(status: string | null | undefined): boolean | null {
@@ -398,11 +404,15 @@ export function buildAssignedSettlementItems(
     return {
       id: scheduleId != null ? String(scheduleId) : schedule.id,
       scheduleId,
-      sessionNumber: schedule.sessionNumber,
+      sessionNumber:
+        lecture?.sessionNo && lecture.sessionNo > 0 ? lecture.sessionNo : schedule.sessionNumber,
       heldAt: schedule.heldAt,
       sessionMeta: formatSettlementSessionMeta(schedule, lecture),
       ...institutionMeta,
       ...(institutionLabel ? { institutionLabel } : {}),
+      ...(lecture?.startAt != null ? { lectureStartAt: lecture.startAt } : {}),
+      ...(lecture?.endAt != null ? { lectureEndAt: lecture.endAt } : {}),
+      ...(lecture ? { lectureFeePreview: lecture.lectureFeePreview ?? null } : {}),
       progress,
       status,
       ...(deadlineAt ? { deadlineAt } : {}),

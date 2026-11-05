@@ -1,11 +1,17 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import {
+  parseLectureFeePreview,
+  type LectureFeePreview,
+} from '../../settlements/lib/lecture-fee-preview'
+import {
   buildLectureReportSubmitBody,
   getLectureReportApiErrorMessage,
   type LectureReportContextType,
   type LectureReportFormBinding,
   type LectureReportSubmitInput,
 } from '../lib/lecture-report-contract'
+
+export type { LectureFeePreview }
 
 export type LectureReportStatus = 'UPCOMING' | 'AVAILABLE' | 'OVERDUE' | 'BUSINESS_ENDED' | 'SUBMITTED'
 export type LectureReportLectureStatus = 'UPCOMING' | 'COMPLETED'
@@ -31,6 +37,8 @@ export type LectureReportAssignment = {
   institutionAddress?: string | null
   /** 서버 숫자 km. 문자열이 아니다. */
   distanceFromHome?: number | null
+  /** 지급조서 확인 강의비 산출. 키는 항상 존재. 미리보기 없으면 null */
+  lectureFeePreview?: LectureFeePreview | null
 }
 
 export type LectureReportPage = {
@@ -113,6 +121,24 @@ function isSafeNonNegativeInteger(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
 
+function emptyToNull(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
+}
+
+function normalizeLectureReportAssignment(value: unknown): LectureReportAssignment {
+  const row = (isRecord(value) ? value : {}) as LectureReportAssignment
+  return {
+    ...row,
+    institutionName: emptyToNull(row.institutionName),
+    grade: emptyToNull(row.grade),
+    lectureFeePreview: parseLectureFeePreview(
+      isRecord(value) ? value.lectureFeePreview : null,
+    ),
+  }
+}
+
 function unwrap<T>(value: unknown): T {
   if (isRecord(value) && 'success' in value) {
     if (value.success !== true || !('data' in value) || value.data == null) {
@@ -139,7 +165,7 @@ function unwrapPage(value: unknown): LectureReportPage {
     throw new LectureReportApiError(value)
   }
   return {
-    items: value.items as LectureReportAssignment[],
+    items: value.items.map(normalizeLectureReportAssignment),
     page: value.page,
     size: value.size,
     totalElements: value.totalElements,

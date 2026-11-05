@@ -5,8 +5,15 @@ import type {
   SettlementApplicationDocumentResponse,
   SettlementApplicationDocumentTotal,
 } from '../api/application-document-types'
+import { lectureFeeTypeDisplayLabel } from './lecture-fee-preview'
 
 export const SETTLEMENT_DOCUMENT_EMPTY = '-'
+
+function displayDocumentLectureFeeType(value: string | null | undefined): string {
+  const fromCode = lectureFeeTypeDisplayLabel(value)
+  if (fromCode !== SETTLEMENT_DOCUMENT_EMPTY) return fromCode
+  return displaySettlementDocumentText(value)
+}
 
 export function displaySettlementDocumentText(value: string | null | undefined): string {
   const trimmed = value?.trim()
@@ -166,7 +173,7 @@ export function buildSettlementDocumentCalcRows(
   calc: SettlementApplicationDocumentCalcInfo,
 ): SettlementDocumentInfoRow[] {
   return [
-    { label: '강의비 유형', value: displaySettlementDocumentText(calc.lectureFeeType) },
+    { label: '강의비 유형', value: displayDocumentLectureFeeType(calc.lectureFeeType) },
     {
       label: '강사비 책정',
       value: formatSettlementDocumentAmount(calc.instructorFeeAmount),

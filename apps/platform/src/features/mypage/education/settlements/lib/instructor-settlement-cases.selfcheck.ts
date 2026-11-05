@@ -294,7 +294,7 @@ const mixed = build({
 assert.equal(mixed.length, 2)
 assert.equal(mixed[0]?.status, 'waiting_confirm')
 assert.equal(mixed[1]?.status, 'upcoming')
-assert.equal(mixed[0]?.institutionLabel, '가천 대학교')
+assert.equal(mixed[0]?.institutionLabel, undefined)
 
 assert.equal(
   resolveSettlementAreaFromPathname('/mypage/lectures/INSTRUCTOR/12'),

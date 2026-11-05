@@ -1,3 +1,7 @@
+import type { LectureFeePreview } from '../lib/lecture-fee-preview'
+
+export type { LectureFeePreview }
+
 export type EducationSettlementProgress = 'completed' | 'upcoming'
 
 export type EducationSettlementStatus =
@@ -29,6 +33,12 @@ export type EducationSettlementItem = {
   institutionName?: string
   /** 학년. 강의보고서 뱃지 `secondary` */
   grade?: string
+  /** 강의 시작. lecture-report-assignments.startAt */
+  lectureStartAt?: string | null
+  /** 강의 종료. lecture-report-assignments.endAt */
+  lectureEndAt?: string | null
+  /** 지급조서 확인 강의비 산출. 조인된 배정에만. 없으면 null */
+  lectureFeePreview?: LectureFeePreview | null
   progress: EducationSettlementProgress
   status: EducationSettlementStatus
   deadlineAt?: string
