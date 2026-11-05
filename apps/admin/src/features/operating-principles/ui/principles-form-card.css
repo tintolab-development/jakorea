@@ -80,14 +80,14 @@
  */
 .principles-form-card .detail-info-form__field {
   min-height: 54px;
-  --detail-info-label-w: 160px;
-  grid-template-columns: 160px minmax(0, 1fr);
+  --detail-info-label-w: 200px;
+  grid-template-columns: 200px minmax(0, 1fr);
 }
 
 .principles-form-card .detail-info-form__field-label {
-  width: 160px;
-  min-width: 160px;
-  max-width: 160px;
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
   min-height: 54px;
   padding: 12px 16px;
   box-sizing: border-box;
@@ -155,16 +155,27 @@
   font-weight: 600;
 }
 
-/* 수정: 일반 컨트롤 + resize 비활성 (detail-document-form-card) */
-.principles-form-card .principles-inline-field--edit .cms-textarea--fixed-rows
+/*
+ * 시안 Field/Table Input resizable=false.
+ * 조회·수정 모두 높이 조절 핸들 없음 — 모드 전환 시 그립 유무로 텍스트가 흔들리지 않게 함.
+ * CmsTextArea 기본 resize:vertical · rows=1 expandable-single-row 를 덮음.
+ */
+.principles-form-card
+  .principles-inline-field.cms-textarea--fixed-rows
   .cms-textarea__inner
   textarea.ant-input,
 .principles-form-card
-  .principles-inline-field--edit.cms-textarea--fixed-rows
+  .principles-inline-field.cms-textarea--expandable-single-row
   .cms-textarea__inner
   textarea.ant-input {
   resize: none !important;
-  overflow-y: auto;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.principles-col-required {
+  margin-left: 2px;
+  color: #c32f4a;
 }
 
 /* 사용 여부 Switch — DS mint-01 */
@@ -178,29 +189,6 @@
 
 .principles-sortable-table .ant-table-tbody > tr > td {
   vertical-align: middle;
-}
-
-/* 긴 텍스트 열만 상단 — 아이콘·스위치·순서 등은 middle 유지 */
-.principles-form-card--editing
-  .principles-sortable-table
-  .ant-table-tbody
-  > tr
-  > td.principles-sortable-table__col--title,
-.principles-form-card--editing
-  .principles-sortable-table
-  .ant-table-tbody
-  > tr
-  > td.principles-sortable-table__col--subText {
-  vertical-align: top;
-}
-
-.principles-form-card--editing
-  .principles-sortable-table
-  .principles-title-field.principles-inline-field--edit
-  .cms-textarea__inner
-  textarea.ant-input {
-  min-height: 72px;
-  line-height: 150%;
 }
 
 .principles-sortable-table .ant-table-tbody > tr > td.principles-sortable-table__col--icon {
