@@ -15,6 +15,7 @@ export interface AllocationCell {
   assignmentGroupId?: string;
   /** 학급 라벨. ASSIGNED/REASSIGNMENT_REQUIRED는 class_label_snapshot, 없으면 교육 슬롯 class_label. UNASSIGNED는 null. 빈 문자열 금지 */
   classLabel?: string | null;
+  /** 이 열(scheduleId+organizationApplicationId)의 출결 담당 여부. ASSIGNED이고 해당 기관 열에 attendance_manager_yn=true인 셀만 true. 같은 교육일의 다른 기관 열과 공유하지 않는다. UNASSIGNED/REASSIGNMENT_REQUIRED는 false. */
   attendanceManager?: boolean;
   singleAssignment?: boolean;
   unavailable?: boolean;

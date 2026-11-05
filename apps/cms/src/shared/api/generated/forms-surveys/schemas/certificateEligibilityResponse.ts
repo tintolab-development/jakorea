@@ -24,8 +24,16 @@ export interface CertificateEligibilityResponse {
   eligible?: boolean;
   /** 적용된 정책 ID */
   policyId?: number;
-  /** 대표 차단 사유 코드. 발급 가능하면 null일 수 있습니다. */
+  /** 대표 차단 사유 코드. 발급 가능하면 ELIGIBLE. */
   reasonCode?: string;
   /** 발급 차단 사유 목록 */
   blockingReasons?: string[];
+  /** 참가 인정 출석(PRESENT/ATTENDED/LATE) 건수. 포기 경계 이후 일정은 제외합니다. */
+  countedParticipationCount?: number;
+  /** 인증서 표시 기간 시작일(yyyy-MM-dd, Asia/Seoul). 포기 참가인증서는 최초 인정 일정일. */
+  certificatePeriodStartDate?: string;
+  /** 인증서 표시 기간 종료일(yyyy-MM-dd, Asia/Seoul). 포기 참가인증서는 마지막 인정 일정 종료일. */
+  certificatePeriodEndDate?: string;
+  /** PDF와 동일한 한글 기간 라벨 */
+  certificatePeriodLabel?: string;
 }
