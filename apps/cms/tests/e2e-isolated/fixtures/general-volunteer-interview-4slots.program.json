@@ -1,0 +1,157 @@
+{
+ "sponsorId": "163001",
+ "sponsors": [
+  {
+   "sponsorId": "163001",
+   "sponsorContactIds": [
+    "163101"
+   ]
+  }
+ ],
+ "title": "격리RHF-기관_커리큘럼형_단일-1793862999071",
+ "type": "online",
+ "format": "workshop",
+ "category": "school",
+ "description": "E2E 프로그램 설명입니다.",
+ "startDate": "2026-12-31T15:00:00.000Z",
+ "endDate": "2027-01-05T14:59:59.999Z",
+ "businessStartDate": "2027-01-01",
+ "businessEndDate": "2027-01-05",
+ "applicationStartDate": "2026-12-31T15:00:00.000Z",
+ "applicationEndDate": "2027-01-05T14:59:59.999Z",
+ "recruitments": [
+  {
+   "recruitmentType": "PARTICIPANT",
+   "targetType": "ORGANIZATION",
+   "status": "ACTIVE",
+   "startAt": "2026-12-31T15:00:00.000Z",
+   "endAt": "2027-01-05T14:59:59.999Z",
+   "operationStartDate": "2027-01-01",
+   "operationEndDate": "2027-01-05",
+   "maxCount": 30,
+   "selectionMethod": "ADMIN_REVIEW",
+   "finalPassAnnouncementAt": "2027-01-03T15:00:00.000Z",
+   "interviewStartAt": "2026-12-31T15:00:00.000Z",
+   "interviewEndAt": "2027-01-05T14:59:59.999Z",
+   "applicationType": "ORGANIZATION",
+   "programDescription": "E2E 프로그램 설명입니다.",
+   "recruitmentGuide": "<p>E2E 모집 상세 본문 1</p>",
+   "applicationMethod": "<p>E2E 모집 상세 본문 2</p>",
+   "learningSupportContent": "<p>E2E 모집 상세 본문 3</p>",
+   "additionalContentHtml": "<p>E2E 모집 상세 본문 4</p>",
+   "contactName": "JA Korea 프로그램 운영팀",
+   "contactPhone": "02-1234-5678",
+   "contactEmail": "program-e2e@jakorea.org",
+   "remarks": "E2E 자동 등록 테스트용 비고",
+   "id": 92001
+  },
+  {
+   "recruitmentType": "INSTRUCTOR",
+   "targetType": "TEACHER",
+   "status": "ACTIVE",
+   "startAt": "2026-12-31T15:00:00.000Z",
+   "endAt": "2027-01-05T14:59:59.999Z",
+   "operationStartDate": "2027-01-01",
+   "operationEndDate": "2027-01-05",
+   "maxCount": 30,
+   "selectionMethod": "ADMIN_REVIEW",
+   "applicationType": "INSTRUCTOR",
+   "programDescription": "E2E 프로그램 설명입니다.",
+   "recruitmentGuide": "<p>E2E 모집 상세 본문 1</p>",
+   "applicationMethod": "<p>E2E 모집 상세 본문 2</p>",
+   "additionalContentHtml": "<p>E2E 모집 상세 본문 3</p>",
+   "contactName": "JA Korea 프로그램 운영팀",
+   "contactPhone": "02-1234-5678",
+   "contactEmail": "program-e2e@jakorea.org",
+   "remarks": "E2E 자동 등록 테스트용 비고",
+   "otherMatters": "<p>E2E 모집 상세 본문 4</p>",
+   "id": 92002
+  },
+  {
+   "recruitmentType": "VOLUNTEER",
+   "targetType": "COLLEGE_STUDENT",
+   "status": "ACTIVE",
+   "startAt": "2026-12-31T15:00:00.000Z",
+   "endAt": "2027-01-05T14:59:59.999Z",
+   "operationStartDate": "2027-01-01",
+   "operationEndDate": "2027-01-05",
+   "maxCount": 30,
+   "selectionMethod": "ADMIN_REVIEW",
+   "interviewEnabled": true,
+   "applicationType": "VOLUNTEER",
+   "programDescription": "E2E 프로그램 설명입니다.",
+   "recruitmentGuide": "<p>E2E 모집 상세 본문 1</p>",
+   "applicationMethod": "<p>E2E 모집 상세 본문 2</p>",
+   "additionalContentHtml": "<p>E2E 모집 상세 본문 3</p>",
+   "contactName": "JA Korea 프로그램 운영팀",
+   "contactPhone": "02-1234-5678",
+   "contactEmail": "program-e2e@jakorea.org",
+   "remarks": "E2E 자동 등록 테스트용 비고",
+   "otherMatters": "<p>E2E 모집 상세 본문 4</p>",
+   "interviewStartAt": "2026-12-31T15:00:00.000Z",
+   "interviewEndAt": "2027-01-05T14:59:59.999Z",
+   "interviewConfig": {
+    "schemaVersion": 1,
+    "selectedSlotKeys": [
+     "1793840400000-1793842200000",
+     "1793842200000-1793844000000",
+     "1793844000000-1793845800000",
+     "1793845800000-1793847600000"
+    ],
+    "timeUnit": 30,
+    "interviewTimeRange": [
+     "2026-11-05T01:00:00.000Z",
+     "2026-11-05T03:00:00.000Z"
+    ],
+    "specificUnavailableDates": [],
+    "appliedUnavailableDates": [],
+    "exclusionState": {
+     "excludeSaturday": false,
+     "excludeSunday": false,
+     "excludeHoliday": true
+    },
+    "exceptions": []
+   },
+   "id": 92003
+  }
+ ],
+ "businessArea": "기업가정신",
+ "detailedProgramId": 163006,
+ "titleEn": "JA Entrepreneurship Classroom 2026 E2E",
+ "mainTitle": "격리RHF-기관_커리큘럼형_단일-1793862999071",
+ "district": "초·중·고 학생 대상 기업가정신 체험 교육",
+ "ips": "Inspire",
+ "targetLevel": "high",
+ "targetLevels": [
+  "high"
+ ],
+ "institutionType": "inside_school",
+ "ipOwned": "JA",
+ "courseDeliveredBy": "JA",
+ "partnerInvolvement": true,
+ "programChannel": "해당 없음",
+ "educationProcess": "Traditional (Paper)",
+ "totalParticipants": 30,
+ "generalVolunteers": 30,
+ "instructors": 30,
+ "contactEmail": "program-e2e@jakorea.org",
+ "contactPhone": "02-1234-5678",
+ "oneLineIntroduction": "E2E 자동 등록 테스트용 비고",
+ "additionalContentHtml": "<p>E2E 모집 상세 본문 4</p>",
+ "recruitmentGuide": "<p>E2E 모집 상세 본문 1</p>",
+ "learningSupportContent": "<p>E2E 모집 상세 본문 3</p>",
+ "applicationTargetMode": "ORGANIZATION",
+ "serviceDetailJson": "{\"schemaVersion\":1,\"generalCommonInfo\":{\"educationScheduleMode\":\"date\",\"educationScheduleLines\":[\"27년 1월 1일(금) 16:17 ~ 17:17\"],\"sponsorManagementId\":\"163001\",\"sponsorManagementIds\":[\"163001\"],\"announcementTitle\":\"JA 기업가정신 교실 참여자 모집\",\"detailedProgramName\":\"격리 세부 프로그램\",\"venueKind\":\"inside\",\"venueDetail\":\"서울시 중구 JA Korea 교육장\",\"sponsorManagerContactIds\":[\"163001::163101\"],\"sponsorManagerContactId\":\"163001::163101\",\"sponsorManagerLine\":\"격리 담당자 담당 | 02-000-0000\",\"educationFormScheduleDetail\":\"common\",\"participationScheduleDetail\":\"common\",\"ipsScheduleDetail\":\"common\",\"educationFormLabel\":\"온라인\",\"ipsTypeSummary\":\"일정 공통 | Inspire | 해당 없음\",\"scheduleCurriculumPreEducation\":false,\"curriculumSessions\":[{\"sessionNo\":1,\"sessionLabel\":\"1차시\",\"title\":\"E2E 1차시 단원 — 기업가정신 기초\",\"description\":\"E2E 교육 내용 — 창업 마인드셋과 경제 기초를 학습합니다.\",\"assignmentEnabled\":false}],\"scheduleDetails\":[],\"wageGradeRows\":[{\"grade\":\"1급 강사비\",\"pricing\":\"1시간 당 | 기본 : 150,000원\"},{\"grade\":\"2급 강사비\",\"pricing\":\"1시간 당 | 기본 : 150,000원\"},{\"grade\":\"3급 강사비\",\"pricing\":\"1시간 당 | 기본 : 150,000원\"}],\"paymentItems\":\"격리 강사 교통비\",\"deductionItems\":\"원천징수세액\",\"kpi\":{\"finalParticipants\":30,\"instructorCount\":30,\"volunteerCount\":30,\"finalSchools\":0,\"finalClasses\":0},\"participantRecruitmentInfo\":{\"educationTarget\":\"고등학교\",\"recruitmentTarget\":\"고등학교\",\"educationTargetDetail\":\"초·중·고 학생 대상 기업가정신 체험 교육\",\"recruitmentTargetDetail\":\"초·중·고 학생 대상 기업가정신 체험 교육\",\"contactOrganizationName\":\"JA Korea 프로그램 운영팀\",\"inquiryTel\":\"02-1234-5678\",\"inquiryEmail\":\"program-e2e@jakorea.org\",\"recruitmentPeriodLabel\":\"2027.01.01(금) ~ 2027.01.05 23:59\",\"operationPeriodLabel\":\"2027.01.01(금) ~ 2027.01.05 23:59\",\"programDescription\":\"E2E 프로그램 설명입니다.\",\"recruitmentGuide\":\"<p>E2E 모집 상세 본문 1</p>\",\"applicationMethod\":\"<p>E2E 모집 상세 본문 2</p>\",\"learningSupportContent\":\"<p>E2E 모집 상세 본문 3</p>\",\"additionalContentHtml\":\"<p>E2E 모집 상세 본문 4</p>\",\"remarks\":\"E2E 자동 등록 테스트용 비고\",\"announcementPublished\":true,\"announcementPublishedLabel\":\"게시\",\"preEducationNoticeRequired\":true,\"advanceGuidanceRequired\":true,\"preEducationNoticeRequiredLabel\":\"작성\",\"advanceGuidanceRequiredLabel\":\"작성\",\"studentListRequired\":\"required\",\"studentListRequiredLabel\":\"제출 필요\",\"maxAssignableInstructors\":2,\"maxClassCount\":3,\"finalAnnouncementLabel\":\"2027.01.04(월) | 이메일 및 CMS 알림으로 개별 안내\",\"resultAnnouncementLabel\":\"2027.01.04(월) | 이메일 및 CMS 알림으로 개별 안내\"},\"instructorRecruitmentInfo\":{\"recruitmentTarget\":\"성인\",\"recruitmentTargetDetail\":\"초·중·고 학생 대상 기업가정신 체험 교육\",\"contactOrganizationName\":\"JA Korea 프로그램 운영팀\",\"inquiryTel\":\"02-1234-5678\",\"inquiryEmail\":\"program-e2e@jakorea.org\",\"recruitmentPeriodLabel\":\"2027.01.01(금) ~ 2027.01.05 23:59\",\"operationPeriodLabel\":\"2027.01.01(금) ~ 2027.01.05 23:59\",\"programDescription\":\"E2E 프로그램 설명입니다.\",\"recruitmentGuide\":\"<p>E2E 모집 상세 본문 1</p>\",\"applicationMethod\":\"<p>E2E 모집 상세 본문 2</p>\",\"additionalContentHtml\":\"<p>E2E 모집 상세 본문 3</p>\",\"remarks\":\"E2E 자동 등록 테스트용 비고\",\"otherMatters\":\"<p>E2E 모집 상세 본문 4</p>\",\"announcementPublished\":true,\"announcementPublishedLabel\":\"게시\",\"finalAnnouncementLabel\":\"2027.01.04(월) | 이메일 및 CMS 알림으로 개별 안내\",\"resultAnnouncementLabel\":\"2027.01.04(월) | 이메일 및 CMS 알림으로 개별 안내\"},\"volunteerRecruitmentInfo\":{\"recruitmentTarget\":\"대학(원)생\",\"recruitmentTargetDetail\":\"초·중·고 학생 대상 기업가정신 체험 교육\",\"contactOrganizationName\":\"JA Korea 프로그램 운영팀\",\"inquiryTel\":\"02-1234-5678\",\"inquiryEmail\":\"program-e2e@jakorea.org\",\"recruitmentPeriodLabel\":\"2027.01.01(금) ~ 2027.01.05 23:59\",\"operationPeriodLabel\":\"2027.01.01(금) ~ 2027.01.05 23:59\",\"programDescription\":\"E2E 프로그램 설명입니다.\",\"recruitmentGuide\":\"<p>E2E 모집 상세 본문 1</p>\",\"applicationMethod\":\"<p>E2E 모집 상세 본문 2</p>\",\"additionalContentHtml\":\"<p>E2E 모집 상세 본문 3</p>\",\"remarks\":\"E2E 자동 등록 테스트용 비고\",\"otherMatters\":\"<p>E2E 모집 상세 본문 4</p>\",\"announcementPublished\":true,\"announcementPublishedLabel\":\"게시\",\"volunteerInterviewEnabled\":true,\"generalVolunteerInterviewEnabled\":true,\"volunteerInterviewEnabledLabel\":\"면접 있음\",\"finalAnnouncementLabel\":\"2027.01.04(월) | 이메일 및 CMS 알림으로 개별 안내\",\"resultAnnouncementLabel\":\"2027.01.04(월) | 이메일 및 CMS 알림으로 개별 안내\",\"documentPassAnnouncementDate\":\"2027-01-03T15:00:00.000Z\",\"documentPassAnnouncementMethod\":\"이메일 및 CMS 알림으로 개별 안내\",\"interviewStartDate\":\"2026-12-31T15:00:00.000Z\",\"interviewEndDate\":\"2027-01-05T14:59:59.999Z\",\"interviewMethod\":\"온라인\",\"finalPassAnnouncementDate\":\"2027-01-03T15:00:00.000Z\",\"finalPassAnnouncementMethod\":\"이메일 및 CMS 알림으로 개별 안내\"}},\"generalParticipantTypes\":[\"school_institution\",\"teacher_instructor\",\"volunteer\"],\"generalSurveyMenuKeys\":[\"survey\",\"satisfaction\",\"lecture_evaluation\"],\"targetLevels\":[\"high\"],\"program\":{\"targetLevels\":[\"high\"]},\"generalProgramEducationStructure\":\"curriculum\",\"generalProgramSessionRound\":\"single\",\"generalProgramAudience\":\"organization\",\"instructorApplicationStartDate\":\"2026-12-31T15:00:00.000Z\",\"instructorApplicationEndDate\":\"2027-01-05T14:59:59.999Z\",\"volunteerApplicationStartDate\":\"2026-12-31T15:00:00.000Z\",\"volunteerApplicationEndDate\":\"2027-01-05T14:59:59.999Z\",\"resultAnnouncementDate\":\"2027-01-03T15:00:00.000Z\",\"resultAnnouncementMethod\":\"이메일 및 CMS 알림으로 개별 안내\",\"studentListRequired\":\"required\",\"generalVolunteerInterviewEnabled\":true,\"registration\":{\"overlay\":{\"generalRegistration.basicInfo.operationAnchorIso\":null,\"generalRegistration.educationScheduleSettings.singleDateIso\":null,\"generalRegistration.educationScheduleSettings.periodDateIso\":null,\"generalRegistration.basicInfo.footerIpsType\":{\"category\":\"\",\"detail\":\"\"},\"generalRegistration.basicInfo.localProgramTitleKo\":\"격리RHF-기관_커리큘럼형_단일-1793862999071\",\"generalRegistration.basicInfo.programTitleEn\":\"JA Entrepreneurship Classroom 2026 E2E\",\"generalRegistration.basicInfo.publicProgramTitle\":\"JA 기업가정신 교실 참여자 모집\",\"generalRegistration.basicInfo.detailedProgramId\":\"163006\",\"generalRegistration.basicInfo.detailedProgramName\":\"격리 세부 프로그램\",\"generalRegistration.basicInfo.businessField\":\"entrepreneurship\",\"generalRegistration.basicInfo.partnerInvolvement\":\"yes\",\"generalRegistration.basicInfo.educationVenueKind\":\"inside\",\"generalRegistration.basicInfo.educationVenueDetail\":\"서울시 중구 JA Korea 교육장\",\"generalRegistration.basicInfo.educationCourse\":\"traditional_paper\",\"generalRegistration.basicInfo.ipOwned\":\"ja\",\"generalRegistration.basicInfo.courseDeliveredBy\":\"ja\",\"generalRegistration.basicInfo.operationRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-05T14:59:59.999Z\"},\"generalRegistration.basicInfo.surveyItems\":{\"survey\":true,\"satisfaction\":true,\"lecture_evaluation\":true},\"generalRegistration.basicInfo.localSponsorId\":\"163001\",\"generalRegistration.basicInfo.localSponsorIds\":[\"163001\"],\"generalRegistration.basicInfo.localManagerContactId\":\"163001::163101\",\"generalRegistration.basicInfo.localManagerContactIds\":[\"163001::163101\"],\"generalRegistration.basicInfo.sponsorManagerLine\":\"격리 담당자 담당 | 02-000-0000\",\"generalRegistration.kpi.participantCount\":30,\"generalRegistration.kpi.instructor\":30,\"generalRegistration.kpi.volunteer\":30,\"generalRegistration.kpi.dispatchedSchool\":null,\"generalRegistration.kpi.dispatchedClass\":null,\"generalRegistration.wageInfo.grade1Fee\":150000,\"generalRegistration.wageInfo.grade2Fee\":150000,\"generalRegistration.wageInfo.grade3Fee\":150000,\"generalRegistration.wageInfo.paymentItemValues\":[\"p-163201\"],\"generalRegistration.wageInfo.paymentItemLabels\":\"격리 강사 교통비\",\"generalRegistration.typeSettings.singleEducationForm\":\"online\",\"generalRegistration.typeSettings.educationForm\":\"\",\"generalRegistration.typeSettings.singleParticipation\":\"individual\",\"generalRegistration.typeSettings.ipsType\":{\"category\":\"inspire\",\"detail\":\"none\"},\"generalRegistration.educationScheduleSettings.scheduleLines\":[\"27년 1월 1일(금) 16:17 ~ 17:17\"],\"generalRegistration.educationCurriculum.unitNameBySession\":{\"1\":\"E2E 1차시 단원 — 기업가정신 기초\"},\"generalRegistration.educationCurriculum.unitContentBySession\":{\"1\":\"E2E 교육 내용 — 창업 마인드셋과 경제 기초를 학습합니다.\"},\"generalRegistration.educationCurriculum.preEducationScheduleName\":\"\",\"generalRegistration.educationScheduleCurriculum.preEducationName\":\"사전 교육\",\"recruit.detailInfo.programDescription\":\"E2E 프로그램 설명입니다.\",\"recruit.detailInfo.recruitmentGuide\":\"<p>E2E 모집 상세 본문 1</p>\",\"recruit.detailInfo.applicationMethod\":\"<p>E2E 모집 상세 본문 2</p>\",\"recruit.detailInfo.learningSupportContent\":\"<p>E2E 모집 상세 본문 3</p>\",\"recruit.detailInfo.additionalContentHtml\":\"<p>E2E 모집 상세 본문 4</p>\",\"recruit.maxAssignableInstructors\":2,\"recruit.maxClassCount\":3,\"recruit.announcementPublished\":\"published\",\"recruit.preguidanceRequired\":\"need\",\"recruit.studentListRequired\":\"need\",\"recruit.programRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-04T15:00:00.000Z\"},\"recruit.recruitRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-05T14:59:59.999Z\"},\"recruit.finalAnnounceIso\":\"2027-01-03T15:00:00.000Z\",\"recruit.finalAnnounceMethod\":\"이메일 및 CMS 알림으로 개별 안내\",\"recruit.targetLevels\":[\"high\"],\"recruit.targetLevelDetail\":\"초·중·고 학생 대상 기업가정신 체험 교육\",\"recruit.inquiryContact\":\"JA Korea 프로그램 운영팀\",\"recruit.inquiryTel\":\"02-1234-5678\",\"recruit.inquiryEmail\":\"program-e2e@jakorea.org\",\"recruit.notes\":\"E2E 자동 등록 테스트용 비고\",\"recruit.instructor.programRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-04T15:00:00.000Z\"},\"recruit.instructor.recruitTargetDetail\":\"초·중·고 학생 대상 기업가정신 체험 교육\",\"recruit.instructor.recruitRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-05T14:59:59.999Z\"},\"recruit.instructor.finalAnnounceIso\":\"2027-01-03T15:00:00.000Z\",\"recruit.instructor.finalAnnounceMethod\":\"이메일 및 CMS 알림으로 개별 안내\",\"recruit.instructor.inquiryContact\":\"JA Korea 프로그램 운영팀\",\"recruit.instructor.inquiryTel\":\"02-1234-5678\",\"recruit.instructor.inquiryEmail\":\"program-e2e@jakorea.org\",\"recruit.instructor.notes\":\"E2E 자동 등록 테스트용 비고\",\"recruitInstructor.detailInfo.programDescription\":\"E2E 프로그램 설명입니다.\",\"recruitInstructor.detailInfo.recruitmentGuide\":\"<p>E2E 모집 상세 본문 1</p>\",\"recruitInstructor.detailInfo.applicationMethod\":\"<p>E2E 모집 상세 본문 2</p>\",\"recruitInstructor.detailInfo.additionalContentHtml\":\"<p>E2E 모집 상세 본문 3</p>\",\"recruitInstructor.detailInfo.otherNotes\":\"<p>E2E 모집 상세 본문 4</p>\",\"recruit.instructor.announcementPublished\":\"published\",\"recruit.instructor.recruitTargets\":[\"adult\"],\"recruit.volunteer.programRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-04T15:00:00.000Z\"},\"recruit.volunteer.volunteerTargets\":[\"university\"],\"recruit.volunteer.volunteerTargetDetail\":\"초·중·고 학생 대상 기업가정신 체험 교육\",\"recruit.volunteer.recruitRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-05T14:59:59.999Z\"},\"recruit.volunteer.finalAnnounceIso\":\"2027-01-03T15:00:00.000Z\",\"recruit.volunteer.docDeadlineIso\":\"2027-01-03T15:00:00.000Z\",\"recruit.volunteer.docAnnounceMethod\":\"이메일 및 CMS 알림으로 개별 안내\",\"recruit.volunteer.inquiryContact\":\"JA Korea 프로그램 운영팀\",\"recruit.volunteer.inquiryTel\":\"02-1234-5678\",\"recruit.volunteer.inquiryEmail\":\"program-e2e@jakorea.org\",\"recruit.volunteer.notes\":\"E2E 자동 등록 테스트용 비고\",\"recruitVolunteer.detailInfo.programDescription\":\"E2E 프로그램 설명입니다.\",\"recruit.volunteer.interviewRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-05T14:59:59.999Z\"},\"recruit.volunteer.interviewMethod\":\"온라인\",\"recruit.volunteer.finalAnnounceMethod\":\"이메일 및 CMS 알림으로 개별 안내\",\"recruitVolunteer.detailInfo.recruitmentGuide\":\"<p>E2E 모집 상세 본문 1</p>\",\"recruitVolunteer.detailInfo.applicationMethod\":\"<p>E2E 모집 상세 본문 2</p>\",\"recruitVolunteer.detailInfo.additionalContentHtml\":\"<p>E2E 모집 상세 본문 3</p>\",\"recruitVolunteer.detailInfo.otherNotes\":\"<p>E2E 모집 상세 본문 4</p>\",\"recruit.volunteer.announcementPublished\":\"published\",\"generalRegistration.educationScheduleCurriculum.eventNameByDetail\":{},\"generalRegistration.educationScheduleCurriculum.scheduleDateByDetailIso\":{},\"generalRegistration.educationScheduleCurriculum.groupTimesByDetail\":{},\"generalRegistration.educationScheduleCurriculum.assignmentByDetail\":{},\"generalRegistration.educationCurriculum.progressSessionByRound\":{\"1\":\"E2E 1차시 단원 — 기업가정신 기초\"},\"generalRegistration.educationCurriculum.roundContentByRound\":{\"1\":\"E2E 교육 내용 — 창업 마인드셋과 경제 기초를 학습합니다.\"},\"generalRegistration.educationCurriculum.assignmentByRound\":{\"1\":{\"enabled\":false,\"period\":\"\"}},\"generalRegistration.educationCurriculum.preEducationScheduleLine\":null,\"recruit.individual.targetLevels\":[\"high\"],\"recruit.individual.targetLevelDetail\":\"초·중·고 학생 대상 기업가정신 체험 교육\",\"recruit.individual.inquiryContact\":\"JA Korea 프로그램 운영팀\",\"recruit.individual.inquiryTel\":\"02-1234-5678\",\"recruit.individual.inquiryEmail\":\"program-e2e@jakorea.org\",\"recruit.individual.notes\":\"E2E 자동 등록 테스트용 비고\",\"recruit.notesNotApplicable\":false,\"recruit.individual.notesNotApplicable\":false,\"recruit.detailInfo.otherNotes\":\"E2E 자동 등록 테스트용 비고\",\"recruitInstructor.detailInfo.learningSupportContent\":\"\",\"recruit.volunteer.notesNotApplicable\":false,\"recruitVolunteer.detailInfo.learningSupportContent\":\"\",\"recruit.individual.announcementPublished\":\"published\",\"recruit.individual.recruitRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-05T14:59:59.999Z\"},\"recruit.individual.programRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-04T15:00:00.000Z\"},\"recruit.individual.finalAnnounceIso\":\"2027-01-03T15:00:00.000Z\",\"recruit.individual.finalAnnounceMethod\":\"이메일 및 CMS 알림으로 개별 안내\",\"recruit.individual.docDeadlineIso\":\"2027-01-03T15:00:00.000Z\",\"recruit.individual.docAnnounceMethod\":\"이메일 및 CMS 알림으로 개별 안내\",\"recruit.individual.interviewRangeSeal\":{\"start\":\"2026-12-31T15:00:00.000Z\",\"end\":\"2027-01-05T14:59:59.999Z\"},\"recruit.individual.interviewMethod\":\"온라인\"}}}",
+ "paymentItems": [
+  {
+   "itemType": "TRANSPORTATION",
+   "useYn": true
+  }
+ ],
+ "programType": "GENERAL",
+ "id": 91001,
+ "status": "PENDING",
+ "lifecycleStatus": "RECRUITING_STUDENTS",
+ "createdAt": "2026-11-05T00:00:00.000Z",
+ "updatedAt": "2026-11-05T00:00:00.000Z"
+}
