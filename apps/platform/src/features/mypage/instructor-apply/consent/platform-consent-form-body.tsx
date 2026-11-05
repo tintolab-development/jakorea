@@ -8,7 +8,6 @@ import {
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
-import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 import type { ReactNode } from 'react'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFFormSection } from '@/shared/ui'
@@ -193,16 +192,9 @@ export function PlatformConsentFormBody({
           : null
 
         const content =
-          documentPreview &&
-          (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
-            paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord)
+          documentPreview && paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord
             ? (
-                <ConsentPreviewPaymentInfo
-                  values={paymentBasicInfo}
-                  variant={
-                    paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord ? 'receipt' : 'payment'
-                  }
-                />
+                <ConsentPreviewPaymentInfo values={paymentBasicInfo} variant="payment" />
               )
             : previewChrome != null
               ? previewChrome.content

@@ -92,10 +92,7 @@ function createInitialSchemaConsentState(consentKey: DocumentConsentWriteKey): S
 
   return {
     draft,
-    paymentBasicInfo:
-      templateId === 'agreement-third-party' || templateId === 'agreement-receipt-pre-consent'
-        ? {}
-        : undefined,
+    paymentBasicInfo: templateId === 'agreement-third-party' ? {} : undefined,
     signatures: {},
   }
 }
@@ -108,7 +105,6 @@ function isSchemaConsentWriteIncomplete(
   return hasMemberConsentIncompleteRequiredFields(state.draft, {
     templateId,
     paymentStatementBasicInfo: state.paymentBasicInfo,
-    receiptPreConsentBasicInfo: state.paymentBasicInfo,
   })
 }
 
@@ -121,6 +117,20 @@ const SERVER_DRAFT_LOADING_MESSAGE = '동의서 양식을 불러오는 중입니
 const PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE =
   '동의서 양식이 변경되었습니다. 최신 양식을 다시 확인해 주세요.'
 const MEMBER_PROFILE_LOADING_MESSAGE = '회원 정보를 불러오는 중입니다.'
+const PORTAL_CONSENT_TERMS_NOT_PUBLISHED_MESSAGE =
+  '영수증 발급 사전 동의 약관이 아직 게시되지 않았습니다. 잠시 후 다시 시도해 주세요.'
+const CONSENT_RECEIPT_RRN_NOT_ALLOWED_MESSAGE =
+  '주민등록번호는 영수증 발급 사전 동의에 포함할 수 없습니다.'
+const CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE =
+  '영수증 발급 사전 동의에는 지급조서 기본 정보를 넣을 수 없습니다.'
+
+const PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES: Record<string, string> = {
+  PORTAL_CONSENT_TERMS_NOT_PUBLISHED: PORTAL_CONSENT_TERMS_NOT_PUBLISHED_MESSAGE,
+  CONSENT_RECEIPT_RRN_NOT_ALLOWED: CONSENT_RECEIPT_RRN_NOT_ALLOWED_MESSAGE,
+  CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED: CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE,
+  PORTAL_CONSENT_REQUIRED_SIGNATURE_MISSING: SIGNATURE_REQUIRED_ALERT_MESSAGE,
+  PORTAL_CONSENT_TEMPLATE_VERSION_CHANGED: PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE,
+}
 
 function readPortalConsentTemplateErrorCode(error: unknown): string | null {
   if (!isAxiosError(error)) return null
@@ -264,7 +274,6 @@ export function SchemaConsentWriteForm({
       listMemberConsentIncompleteRequiredFields(state.draft, {
         templateId,
         paymentStatementBasicInfo: state.paymentBasicInfo,
-        receiptPreConsentBasicInfo: state.paymentBasicInfo,
       }),
     [state.draft, state.paymentBasicInfo, templateId],
   )
@@ -332,6 +341,11 @@ export function SchemaConsentWriteForm({
               setAlertMessage(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
               setAlertOpen(true)
             })
+            return
+          }
+          if (code && PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code]) {
+            setAlertMessage(PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code])
+            setAlertOpen(true)
             return
           }
           if (code === 'PORTAL_CONSENT_TEMPLATE_VERSION_MISMATCH') {
@@ -412,15 +426,10 @@ export function SchemaConsentWriteForm({
 
   const renderParagraphSlot = useCallback(
     (paragraph: WritingFormParagraph) => {
-      if (
-        paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
-        paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
-      ) {
+      if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
         return (
           <PaymentBasicInfoFields
-            variant={
-              paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord ? 'receipt' : 'payment'
-            }
+            variant="payment"
             values={state.paymentBasicInfo ?? {}}
             onChange={paymentBasicInfo =>
               setState(prev => ({ ...prev, paymentBasicInfo }))

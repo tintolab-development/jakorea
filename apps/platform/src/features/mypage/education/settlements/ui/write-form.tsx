@@ -455,8 +455,8 @@ export function EducationSettlementWriteForm({
   const existingDetail = useIndividualSettlementDetailQuery(session?.settlementApplicationId)
   const isInstructor = isInstructorMypageProfile(profile)
   const isReceipt = documentKind === 'receipt'
-  const consentBasicQuery = usePaymentStatementConsentBasicInfo(true)
-  const consentBasic = consentBasicQuery.basic
+  const consentBasicQuery = usePaymentStatementConsentBasicInfo(!isReceipt)
+  const consentBasic = isReceipt ? {} : consentBasicQuery.basic
   const individualSchedules = useIndividualSettlementSchedulesQuery(
     shouldUseIndividualSettlementSchedulesApi(applicationType, programType) ? applicationId : null,
   )
@@ -653,7 +653,7 @@ export function EducationSettlementWriteForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (isReceipt && consentBasicQuery.isLoading) {
+    if (!isReceipt && consentBasicQuery.isLoading) {
       showAlert('지급조서 사전 동의서 정보를 불러오는 중입니다.')
       return
     }
@@ -781,7 +781,7 @@ export function EducationSettlementWriteForm({
           title={`${basicSectionNo}. 기본 정보`}
           required
           description={
-            consentBasicQuery.isLoading
+            !isReceipt && consentBasicQuery.isLoading
               ? '지급조서 사전 동의서 정보를 불러오는 중입니다.'
               : undefined
           }

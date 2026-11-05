@@ -51,6 +51,7 @@ export function formatConsentDate(value: string | null | undefined): string | un
 function normalizeConsentType(value: string | undefined): string {
   const normalized = value?.trim().toUpperCase() ?? ''
   if (normalized === 'PAYMENT_STATEMENT_PRE_CONSENT') return 'PAYMENT_STATEMENT_CONSENT'
+  if (normalized === 'AGREEMENT_RECEIPT_PRE_CONSENT') return 'RECEIPT_PRE_CONSENT'
   return normalized
 }
 
@@ -103,6 +104,8 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       documentId: summary.documentId ?? undefined,
       withdrawable: summary.withdrawable === true,
       status: summary.status,
+      signed: summary.signed === true,
+      listed: typeof summary.listed === 'boolean' ? summary.listed : undefined,
     }
     ;(DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems).push(item)
   }

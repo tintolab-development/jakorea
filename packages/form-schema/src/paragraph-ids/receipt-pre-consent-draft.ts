@@ -193,7 +193,7 @@ const paymentRecord = normalizeVerticalTableParagraph({
   kind: 'single_item',
   variant: 'vertical_table',
   verticalTableFlavor: 'text',
-  requiredMark: true,
+  requiredMark: false,
   paragraphTitle: '지급 확인 정보',
   paragraphDescription: '',
   participatesInTitleNumbering: true,
@@ -202,7 +202,7 @@ const paymentRecord = normalizeVerticalTableParagraph({
   showBottomText: false,
   showBottomConsent: false,
   bottomConsent: 'agree',
-  answerRequired: true,
+  answerRequired: false,
 })
 
 const finalConfirm: AgreementExplanationTextParagraph = {

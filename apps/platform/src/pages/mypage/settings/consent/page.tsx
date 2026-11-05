@@ -8,7 +8,6 @@ import {
   getInstructorApplyConsentPageTitle,
   InstructorApplyConsentWriteForm,
   isDocumentConsentWriteKey,
-  isInstructorApplyConsentKey,
   MYPAGE_SETTINGS_CONSENTS_TAB,
 } from '@/features/mypage'
 import { MEMBER_CONSENT_TEMPLATE_MAP } from '@jakorea/form-schema/consent'
@@ -75,10 +74,9 @@ export function MypageSettingsConsentPage() {
     : isDocumentConsentWriteKey(consentKey)
       ? getInstructorApplyConsentPageTitle(consentKey)
       : ''
-  const description =
-    isInstructorApplyConsentKey(consentKey)
-      ? getInstructorApplyConsentPageDescription(consentKey)
-      : undefined
+  const description = isDocumentConsentWriteKey(consentKey)
+    ? getInstructorApplyConsentPageDescription(consentKey)
+    : undefined
 
   const handleComplete = () => {
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })

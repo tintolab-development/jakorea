@@ -1,7 +1,4 @@
-import {
-  resolveDocumentConsentTemplate,
-  toReceiptPreConsentFilledBasicInfo,
-} from '@jakorea/form-schema/consent'
+import { resolveDocumentConsentTemplate } from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS,
@@ -141,10 +138,8 @@ export function buildPortalConsentFilledDocument(
 } {
   const { templateId } = resolveDocumentConsentTemplate(consentKey)
   const templateCode = state.portalDocument?.templateCode?.trim() || templateId
-  const paymentBasicInfo =
-    templateCode === 'agreement-receipt-pre-consent'
-      ? toReceiptPreConsentFilledBasicInfo(state.paymentBasicInfo)
-      : state.paymentBasicInfo
+  const omitPaymentBasicInfo = templateCode === 'agreement-receipt-pre-consent'
+  const paymentBasicInfo = omitPaymentBasicInfo ? undefined : state.paymentBasicInfo
   return {
     templateVersionId: state.portalDocument?.templateVersionId,
     templateCode,
