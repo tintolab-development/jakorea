@@ -1,7 +1,7 @@
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import type { PaymentStatementBasicInfoValues } from '@jakorea/form-schema/consent'
 import type { FormSignatureValue } from '@/shared/ui'
-import type { InstructorApplyConsentKey } from './catalog'
+import type { DocumentConsentWriteKey } from './catalog'
 
 const DRAFT_STORAGE_PREFIX = 'platform.instructor-apply.consent-schema-draft.v2.'
 
@@ -26,7 +26,7 @@ function canUseSessionStorage(): boolean {
 }
 
 export function loadSchemaConsentWriteState(
-  key: InstructorApplyConsentKey,
+  key: DocumentConsentWriteKey,
   fallback: SchemaConsentWriteState
 ): SchemaConsentWriteState {
   if (!canUseSessionStorage()) return fallback
@@ -52,7 +52,7 @@ export function loadSchemaConsentWriteState(
 }
 
 export function saveSchemaConsentWriteState(
-  key: InstructorApplyConsentKey,
+  key: DocumentConsentWriteKey,
   state: SchemaConsentWriteState
 ): void {
   if (!canUseSessionStorage()) return
@@ -64,7 +64,7 @@ export function saveSchemaConsentWriteState(
 }
 
 /** 양식 작성 화면 재진입 시 이전 session draft(서명·입력 포함) 제거 */
-export function clearSchemaConsentWriteState(key: InstructorApplyConsentKey): void {
+export function clearSchemaConsentWriteState(key: DocumentConsentWriteKey): void {
   if (!canUseSessionStorage()) return
   try {
     window.sessionStorage.removeItem(`${DRAFT_STORAGE_PREFIX}${key}`)

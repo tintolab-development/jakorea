@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion'
+import { HERO_PHASE_STEP_DELTA, HERO_PHASE_STEP_MS } from '../lib/hero-copy'
 import {
   getNextIntroductionScrollY,
+  getPreviousIntroductionScrollY,
+  resolveHeroPhaseWheelStep,
   resolveIntroductionScrollState,
   resolveWorldwideRevealProgress,
   type IntroductionScrollState,
@@ -14,7 +17,7 @@ import heroStyles from './hero-section.module.css'
 import styles from './introduction-scroll.module.css'
 
 const INITIAL_STATE: IntroductionScrollState = {
-  heroPhase: 'intro',
+  heroPhase: 'idle',
   isFramePushed: false,
   activeValueIndex: 0,
 }
@@ -48,7 +51,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
     ? scrollState.heroPhase
     : mediaReady && (!isPcUp || prefersReducedMotion)
       ? 'message'
-      : 'intro'
+      : 'idle'
 
   const isFramePushed = isDesktopMotion && scrollState.isFramePushed
   const activeValueIndex = isDesktopMotion ? scrollState.activeValueIndex : 0
@@ -72,6 +75,25 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
     if (!track) return
 
     let frameId = 0
+    let wheelAccum = 0
+    let stepLockedUntil = 0
+
+    const currentHeroState = (): IntroductionScrollState => scrollStateRef.current
+
+    const stepHeroPhase = (direction: 1 | -1) => {
+      const now = performance.now()
+      if (now < stepLockedUntil) return false
+      const state = currentHeroState()
+      const top =
+        direction > 0
+          ? getNextIntroductionScrollY(state, scrollRangeRef.current, valueCount)
+          : getPreviousIntroductionScrollY(state, scrollRangeRef.current, valueCount)
+      if (top == null) return false
+      stepLockedUntil = now + HERO_PHASE_STEP_MS
+      wheelAccum = 0
+      window.scrollTo({ top, behavior: 'smooth' })
+      return true
+    }
 
     const measureMetrics = () => {
       scrollRangeRef.current = Math.max(1, track.offsetHeight - window.innerHeight)
@@ -121,10 +143,59 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
       handleScroll()
     }
 
+    const handleWheel = (event: WheelEvent) => {
+      const state = currentHeroState()
+      if (state.isFramePushed || state.heroPhase === 'exit') return
+      const goingDown = event.deltaY > 0
+      if (goingDown && state.heroPhase === 'mission') return
+      if (!goingDown && state.heroPhase === 'idle') return
+
+      event.preventDefault()
+      if (performance.now() < stepLockedUntil) return
+
+      const stepped = resolveHeroPhaseWheelStep(
+        wheelAccum,
+        event.deltaY,
+        HERO_PHASE_STEP_DELTA,
+      )
+      wheelAccum = stepped.accumulated
+      if (stepped.direction === 0) return
+      stepHeroPhase(stepped.direction)
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || event.repeat) return
+      const target = event.target
+      if (
+        target instanceof HTMLElement &&
+        (target.closest('input, textarea, select, [contenteditable="true"]') ||
+          target.getAttribute('role') === 'textbox')
+      ) {
+        return
+      }
+
+      const state = currentHeroState()
+      if (state.isFramePushed || state.heroPhase === 'exit') return
+
+      const downKeys = new Set(['ArrowDown', 'PageDown', ' '])
+      const upKeys = new Set(['ArrowUp', 'PageUp'])
+      let direction: 1 | -1 | 0 = 0
+      if (downKeys.has(event.key)) direction = 1
+      if (upKeys.has(event.key)) direction = -1
+      if (direction === 0) return
+      if (direction > 0 && state.heroPhase === 'mission') return
+      if (direction < 0 && state.heroPhase === 'idle') return
+
+      if (!stepHeroPhase(direction)) return
+      event.preventDefault()
+    }
+
     measureMetrics()
     syncState()
     window.addEventListener('scroll', handleScroll, { passive: true })
     window.addEventListener('resize', handleResize, { passive: true })
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('keydown', handleKeyDown)
 
     const content = valueContentRef.current
     const viewport = content?.parentElement
@@ -140,12 +211,20 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
     return () => {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('resize', handleResize)
+      window.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('keydown', handleKeyDown)
       resizeObserver?.disconnect()
       if (frameId !== 0) window.cancelAnimationFrame(frameId)
     }
   }, [isDesktopMotion, valueCount])
 
-  const showMessage = activePhase !== 'intro'
+  const showHeadline = activePhase === 'intro'
+  const showMessage =
+    activePhase === 'message' ||
+    activePhase === 'inspiring' ||
+    activePhase === 'vision' ||
+    activePhase === 'mission' ||
+    activePhase === 'exit'
   const showSplit =
     activePhase === 'inspiring' ||
     activePhase === 'vision' ||
@@ -153,7 +232,9 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
     activePhase === 'exit'
   const showVisionStack =
     activePhase === 'vision' || activePhase === 'mission' || activePhase === 'exit'
-  const showArrow = isDesktopMotion && (activePhase === 'intro' || activePhase === 'message')
+  const showArrow =
+    isDesktopMotion &&
+    (activePhase === 'idle' || activePhase === 'intro' || activePhase === 'message')
 
   const handleScrollArrowClick = () => {
     const track = trackRef.current
@@ -177,6 +258,7 @@ export function IntroductionScroll({ view }: { view: IntroductionPageContent }) 
 
   /** HeroStage 자손 셀렉터용 phase 클래스 (hero-section.module.css) */
   const heroPhaseClassName = [
+    showHeadline ? heroStyles.isHeadline : undefined,
     showMessage ? heroStyles.isRevealed : undefined,
     showSplit ? heroStyles.isSplit : undefined,
     activePhase === 'inspiring' ? heroStyles.phaseInspiring : undefined,

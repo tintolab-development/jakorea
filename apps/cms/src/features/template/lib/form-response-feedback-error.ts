@@ -3,7 +3,11 @@
  * BE: POST /api/admin/form-responses/{responseId}/feedback
  */
 
-import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
+import {
+  getApiErrorCode,
+  getApiErrorHttpStatus,
+  readApiErrorAlertMessage,
+} from '@/shared/lib/extract-api-error-message'
 
 const FEEDBACK_ERROR_MESSAGES: Readonly<Record<string, string>> = {
   FORM_RESPONSE_FEEDBACK_CONTENT_REQUIRED: '피드백 내용을 입력해 주세요.',
@@ -25,5 +29,9 @@ export function getFormResponseFeedbackErrorMessage(error: unknown): string {
   const status = getApiErrorHttpStatus(error)
   if (status === 409) return FEEDBACK_ERROR_MESSAGES.FORM_RESPONSE_FEEDBACK_STATUS_INVALID!
   if (status === 403) return '피드백 등록 권한이 없습니다.'
-  return '피드백 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  if (status === 404) return '피드백을 등록할 제출 문서를 찾을 수 없습니다.'
+  return readApiErrorAlertMessage(
+    error,
+    '피드백 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  )
 }

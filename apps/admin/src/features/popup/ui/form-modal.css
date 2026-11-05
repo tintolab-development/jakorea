@@ -89,6 +89,62 @@
   white-space: nowrap;
 }
 
+.popup-form-modal__image-row {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  align-items: center !important;
+  justify-content: flex-start;
+  gap: 12px !important;
+  width: 100%;
+}
+
+.popup-form-modal__preview {
+  width: 72px;
+  height: 72px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--Border-default, #e0e0e0);
+  border-radius: 8px;
+  box-sizing: border-box;
+  background: var(--color-bg-secondary, #f7f7f7);
+}
+
+.popup-form-modal__preview:not(:has(img)) {
+  background: transparent;
+  border: none;
+}
+
+.popup-form-modal__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.popup-form-modal__file-field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.popup-form-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.popup-form-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
 /* 시안 Table / Common / Cell / File — px 12, 아이콘 20 + 파일명 gap 2 */
 .popup-form-modal__form .detail-info-form__field-content--view:has(.popup-form-modal__file-view) {
   padding-inline: 12px;

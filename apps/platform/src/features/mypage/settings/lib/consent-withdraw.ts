@@ -12,6 +12,7 @@ export const FIVE_POLICY_CONSENT_TYPES = [
 /** documentId 없이 유형으로 철회 가능한 항목. 아동 개인정보는 기존 정책 유지 */
 export const TYPE_WITHDRAWABLE_CONSENT_TYPES = [
   ...FIVE_POLICY_CONSENT_TYPES,
+  'RECEIPT_PRE_CONSENT',
   'CHILD_PRIVACY_COLLECTION',
 ] as const
 
@@ -83,9 +84,9 @@ export function canWithdrawConsent(input: {
 
 function normalizeWithdrawConsentType(value: string | undefined): string {
   const normalized = value?.trim().toUpperCase() ?? ''
-  return normalized === 'PAYMENT_STATEMENT_PRE_CONSENT'
-    ? 'PAYMENT_STATEMENT_CONSENT'
-    : normalized
+  if (normalized === 'PAYMENT_STATEMENT_PRE_CONSENT') return 'PAYMENT_STATEMENT_CONSENT'
+  if (normalized === 'AGREEMENT_RECEIPT_PRE_CONSENT') return 'RECEIPT_PRE_CONSENT'
+  return normalized
 }
 
 export function resolveConsentWithdrawTarget(input: {

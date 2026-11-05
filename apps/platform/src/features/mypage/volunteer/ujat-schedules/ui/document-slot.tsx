@@ -9,6 +9,7 @@ import {
   canViewUjatEducationDocumentFeedback,
   canViewUjatEducationDocumentResponse,
   formatUjatEducationDocumentDeadline,
+  isUjatEducationDocumentSlotSubmitted,
   resolveUjatEducationDocumentGuide,
   ujatEducationDocumentTitle,
 } from '../lib/documents'
@@ -44,8 +45,7 @@ export function UjatEducationDocumentSlotBlock({
   const canRevise = canEnterUjatEducationDocumentRevise(slot)
   const canView = canViewUjatEducationDocumentResponse(slot)
   const canFeedback = canViewUjatEducationDocumentFeedback(slot)
-  const submitted =
-    slot.status === 'SUBMITTED' || slot.status === 'APPROVED' || slot.status === 'REVISED'
+  const submitted = isUjatEducationDocumentSlotSubmitted(slot.status)
   const guide = resolveUjatEducationDocumentGuide(kind, slot, setup)
 
   return (

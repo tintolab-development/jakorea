@@ -36,6 +36,7 @@ import { AgreementAdminProxyConfirmBlock } from '@/features/template/ui/paragrap
 import { PaymentPreConsentFixedBlock } from '@/features/template/ui/paragraph/explanation/payment-pre-consent-fixed-block'
 import { StaticDescriptionLines } from '@/features/template/ui/paragraph/explanation/static-description-lines'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@/features/template/model/receipt-pre-consent-draft'
 import { HorizontalTableParagraphBody } from '@/features/template/ui/paragraph/table/horizontal-table-paragraph-body'
 import { VerticalTableParagraphBody } from '@/features/template/ui/paragraph/table/vertical-table-paragraph-body'
 import { UserProfileParagraphBody } from '@/features/template/ui/paragraph/single-item/user-profile-paragraph-body'
@@ -442,7 +443,9 @@ function renderBody(
       const isPaymentPreConsentSheetBar =
         renderMode !== 'contentOnly' &&
         (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
-          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm)
+          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.midConsentLine ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.finalConfirm)
       if (isPaymentPreConsentSheetBar) {
         return (
           <PaymentPreConsentFixedBlock tone="disabled">{body || ph}</PaymentPreConsentFixedBlock>
@@ -555,7 +558,10 @@ function renderBody(
         />
       )
     case 'vertical_table':
-      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+      if (
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
+        p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
+      ) {
         return (
           <BasicInfoParagraph
             values={paragraphBodyOptions?.paymentStatementBasicInfoValues}
@@ -565,6 +571,10 @@ function renderBody(
             }
             onlyPaymentPurposeLocked={
               paragraphBodyOptions?.paymentStatementBasicInfoOnlyPaymentPurposeLocked
+            }
+            hideResidentFields={
+              paragraphBodyOptions?.paymentStatementBasicInfoHideResidentFields === true ||
+              p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
             }
           />
         )

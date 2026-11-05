@@ -79,20 +79,6 @@ function formatInstructorHomeAddress(
   return fromPortal || EMPTY_SETTINGS_VALUE
 }
 
-function formatSettlementAccountDisplay(settlement: InstructorRoleRequestSettlement | undefined): string {
-  if (!settlement) return EMPTY_SETTINGS_VALUE
-  const account =
-    settlement.bankAccounts?.find(item => item.current) ?? settlement.bankAccounts?.[0]
-  const bankName = settlement.bankName?.trim() || account?.bankName?.trim() || ''
-  const accountNumber = settlement.accountNumber?.trim() || account?.accountNumber?.trim() || ''
-  const accountHolder = settlement.accountHolder?.trim() || account?.accountHolder?.trim() || ''
-  const bankPart = [bankName, accountNumber].filter(Boolean).join(' ')
-  if (!bankPart && !accountHolder) return EMPTY_SETTINGS_VALUE
-  if (!accountHolder) return bankPart
-  if (!bankPart) return accountHolder
-  return `${bankPart} | ${accountHolder}`
-}
-
 function formatBusinessIncomeDisplay(settlement: InstructorRoleRequestSettlement | undefined): string {
   if (!settlement) return EMPTY_SETTINGS_VALUE
   return settlement.businessIncome ? '해당' : '해당 없음'
@@ -167,7 +153,6 @@ export function mapInstructorBasicSettingsRows(
     ...affiliationRows,
     { label: '강사 경력', value: formatInstructorCareerSummary(cms) },
     { label: '자택 주소', value: formatInstructorHomeAddress(cms, profile) },
-    { label: '정산 계좌 정보', value: formatSettlementAccountDisplay(settlement) },
     { label: '강사비 등급', value: formatFeeGradeLabel(cms, profile) },
     { label: '사업소득자 여부', value: formatBusinessIncomeDisplay(settlement) },
     {

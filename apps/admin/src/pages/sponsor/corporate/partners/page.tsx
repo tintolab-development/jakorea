@@ -2,7 +2,7 @@
  * 후원사 목록 관리
  */
 
-import { useCallback, useMemo, useState, type Key } from 'react'
+import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 import type { Dayjs } from 'dayjs'
 import { Image, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -19,6 +19,7 @@ import {
   useSetCorporatePartnerPublic,
   useUpdateCorporatePartner,
 } from '@/features/corporate-partner/api/hooks'
+import { LIST_PAGE_SIZE } from '@/features/corporate-partner/api/mappers'
 import { corporatePartnerQueryKeys } from '@/features/corporate-partner/api/query-keys'
 import { CORPORATE_PARTNERS_CHANGED_EVENT } from '@/features/corporate-partner/api/store'
 import { corporatePartnerMutationFailureAlert } from '@/features/corporate-partner/lib/mutation-failure-alert'
@@ -174,6 +175,7 @@ export function CorporatePartnersPage() {
     },
   })
 
+  const [listPage, setListPage] = useState(0)
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [formOpen, setFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
@@ -189,7 +191,26 @@ export function CorporatePartnersPage() {
     )
   }, [appliedFilter])
 
-  const listQuery = useCorporatePartnersList(appliedFilter)
+  const listFilter = useMemo(
+    () => ({ ...appliedFilter, page: listPage }),
+    [appliedFilter, listPage],
+  )
+  const appliedFilterKey = useMemo(
+    () =>
+      JSON.stringify({
+        isPublic: appliedFilter.isPublic ?? '',
+        name: appliedFilter.name ?? '',
+        from: appliedFilter.registeredFrom ?? '',
+        to: appliedFilter.registeredTo ?? '',
+      }),
+    [appliedFilter],
+  )
+
+  useEffect(() => {
+    setListPage(0)
+  }, [appliedFilterKey])
+
+  const listQuery = useCorporatePartnersList(listFilter)
   /**
    * 등록 모달용 전체 건수.
    * 필터 없는 목록이면 listQuery.totalCount로 충분하고,
@@ -200,21 +221,23 @@ export function CorporatePartnersPage() {
     formOpen && formMode === 'create' && hasActiveFilter
   )
   const createMutation = useCreateCorporatePartner()
-  const updateMutation = useUpdateCorporatePartner(appliedFilter)
-  const removeMutation = useRemoveCorporatePartners(appliedFilter)
-  const reorderMutation = useReorderCorporatePartners(appliedFilter)
-  const setPublicMutation = useSetCorporatePartnerPublic(appliedFilter)
+  const updateMutation = useUpdateCorporatePartner(listFilter)
+  const removeMutation = useRemoveCorporatePartners(listFilter)
+  const reorderMutation = useReorderCorporatePartners(listFilter)
+  const setPublicMutation = useSetCorporatePartnerPublic(listFilter)
 
-  const rows = useMemo(() => listQuery.data?.items ?? [], [listQuery.data?.items])
-  const totalCount = listQuery.data?.totalCount ?? rows.length
-  const allCount = hasActiveFilter
-    ? (unfilteredCountQuery.data?.totalCount ?? unfilteredCountQuery.data?.items.length ?? 0)
-    : totalCount
+  const rows = useMemo(() => {
+    const items = listQuery.data?.items ?? []
+    return [...items].sort((a, b) => a.sortOrder - b.sortOrder)
+  }, [listQuery.data?.items])
+  const totalCount = listQuery.data?.totalCount ?? 0
+  const allCount = hasActiveFilter ? (unfilteredCountQuery.data?.totalCount ?? 0) : totalCount
 
   useInvalidateOnWindowEvent(CORPORATE_PARTNERS_CHANGED_EVENT, corporatePartnerQueryKeys.lists())
 
   const handleSearch = useCallback(() => {
     applySearch()
+    setListPage(0)
     setSelectedRowKeys([])
   }, [applySearch])
 
@@ -323,7 +346,7 @@ export function CorporatePartnersPage() {
         width: TABLE_COLUMN_WIDTHS.index,
         className: CMS_TABLE_NO_COL_CLASS,
         align: 'center',
-        render: (_value, _record, index) => index + 1,
+        render: (_value, _record, index) => listPage * LIST_PAGE_SIZE + index + 1,
       },
       {
         title: '공개 여부',
@@ -389,7 +412,7 @@ export function CorporatePartnersPage() {
         ),
       },
     ],
-    [handleTogglePublic, openEdit, setPublicMutation.isPending]
+    [handleTogglePublic, listPage, openEdit, setPublicMutation.isPending]
   )
 
   const formLoading = formMode === 'edit' ? updateMutation.isPending : createMutation.isPending
@@ -425,7 +448,7 @@ export function CorporatePartnersPage() {
               <AdminFilterTextInput
                 inputSize="medium"
                 width={FILTER_CONTROL_MAX_WIDTH_PX}
-                placeholder="기업명 검색"
+                placeholder="기업명을 입력해 주세요"
                 value={pendingFilters.name}
                 onChange={value => patchPendingFilters(prev => ({ ...prev, name: value }))}
                 onPressEnter={handleSearch}
@@ -481,6 +504,17 @@ export function CorporatePartnersPage() {
           loading={listQuery.isLoading || reorderMutation.isPending}
           disabled={reorderMutation.isPending}
           onRowsReorder={handleRowsReorder}
+          pagination={{
+            current: listPage + 1,
+            pageSize: LIST_PAGE_SIZE,
+            total: totalCount,
+            showSizeChanger: false,
+            hideOnSinglePage: true,
+            onChange: current => {
+              setListPage(Math.max(0, (current ?? 1) - 1))
+              setSelectedRowKeys([])
+            },
+          }}
           rowSelection={{
             selectedRowKeys,
             onChange: keys => setSelectedRowKeys(keys),

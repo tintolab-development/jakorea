@@ -205,7 +205,9 @@ export {
   InstructorApplyForm,
   InstructorApplyPendingReviewView,
   InstructorApplyRejectedReviewView,
+  isDocumentConsentWriteKey,
   isInstructorApplyConsentKey,
+  RECEIPT_PRE_CONSENT_WRITE_KEY,
   isInstructorRoleRequestPendingReview,
   isInstructorRoleRequestRejected,
   mapInstructorApplyFormToCreateRequest,
@@ -215,6 +217,7 @@ export {
   useInstructorApplyLockedBasic,
 } from './instructor-apply'
 export type {
+  DocumentConsentWriteKey,
   InstructorApplyConsentKey,
   InstructorApplyFormProps,
   InstructorApplyLockedBasicInfo,

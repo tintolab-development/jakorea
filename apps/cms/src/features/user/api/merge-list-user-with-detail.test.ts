@@ -129,6 +129,40 @@ describe('mergeListUserWithFetchedDetail', () => {
     })
   })
 
+  it('상세 계좌가 비면 목록 계좌로 채우지 않는다', () => {
+    const list = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      instructorInfo: {
+        bankName: '우리은행',
+        accountNumber: '1002-859-723089',
+        accountHolder: '김강사',
+        isBusinessIncome: false,
+      },
+    })
+    const fetched = baseUser({
+      id: 'teacher-uuid',
+      role: 'INSTRUCTOR',
+      name: '김강사',
+      instructorInfo: {
+        bankName: '',
+        accountNumber: '',
+        accountHolder: '',
+        isBusinessIncome: true,
+      },
+    })
+
+    const merged = mergeListUserWithFetchedDetail(list, fetched)
+
+    expect(merged.instructorInfo).toEqual({
+      bankName: '',
+      accountNumber: '',
+      accountHolder: '',
+      isBusinessIncome: true,
+    })
+  })
+
   it('관리자 목록 slug id는 admin-account-{adminAccountId}로 canonicalize한다', () => {
     const list = baseUser({
       id: 'local-demo-admin-viewer',

@@ -18,6 +18,7 @@ import {
   buildMemberPaymentStatementBasicInfoAutofill,
   type MemberPaymentStatementAutofillSource,
 } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
+import { toReceiptPreConsentFilledBasicInfo } from '@jakorea/form-schema/consent'
 import type { DateValue } from '@/types'
 import type { User } from '@/types/user'
 
@@ -108,8 +109,6 @@ export function buildMemberPaymentAutofillSourceFromUser(
     | 'role'
   >
 ): MemberPaymentStatementAutofillSource {
-  const settlement = user.instructorCmsSettlement
-  const info = user.instructorInfo
   const isSchoolTeacher =
     user.instructorMemberProfile === 'school_teacher' ||
     (user.role === 'INSTRUCTOR' && user.schoolEnrollmentStatus === 'ENROLLED')
@@ -119,9 +118,6 @@ export function buildMemberPaymentAutofillSourceFromUser(
     birthDate: dateValueToBirthDigits(user.birthDate),
     homeAddress: user.detailAddress,
     homeAddressDetail: user.detailAddressDetail,
-    bankName: settlement?.bankName ?? info?.bankName,
-    accountNumber: settlement?.accountNumber ?? info?.accountNumber,
-    accountHolder: settlement?.accountHolder ?? info?.accountHolder,
     memberType: isSchoolTeacher ? 'school_teacher' : 'general',
     schoolName: user.affiliatedSchoolName ?? user.affiliation,
     affiliationName: user.affiliation,
@@ -169,7 +165,13 @@ export function buildMemberConsentAgreeOnlyPreviewDraft(
   const participantName = ctx.name.trim() || undefined
   const paymentBasicInfo = PAYMENT_STATEMENT_TEMPLATE_IDS.has(code)
     ? buildMemberPaymentStatementBasicInfoAutofill(buildMemberPaymentAutofillSourceFromUser(user))
-    : undefined
+    : code === 'agreement-receipt-pre-consent'
+      ? toReceiptPreConsentFilledBasicInfo(
+          buildMemberPaymentStatementBasicInfoAutofill(
+            buildMemberPaymentAutofillSourceFromUser(user)
+          )
+        )
+      : undefined
 
   return {
     draft,

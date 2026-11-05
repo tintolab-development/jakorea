@@ -20,13 +20,11 @@ export function CategoryDeleteBlockedModal({ open, onClose, zIndex = Z }: Props)
     <ContentModal
       open={open}
       onCancel={onClose}
-      title="카테고리 삭제 불가"
+      title="카테고리 삭제 불가 안내"
       width={WIDTH}
       zIndex={zIndex}
       className="is-category-delete-blocked"
-      description={
-        '현재 해당 카테고리에 등록된 게시글이 있습니다.\n카테고리를 삭제하려면 등록된 게시글을 삭제하거나 다른 카테고리로 변경해 주세요.'
-      }
+      description="등록된 게시글이 있는 카테고리는 삭제할 수 없습니다."
       footer={
         <CmsButton variant="primary" size="medium" type="button" onClick={onClose}>
           확인

@@ -1,10 +1,11 @@
-import { resolveActiveValueIndex } from './global-value-phase'
+import { resolveActiveValueIndex } from './global-value-phase.ts'
 import {
   getHeroPhaseScrollY,
   getNextHeroPhase,
+  getPreviousHeroPhase,
   resolveHeroPhase,
   type HeroPhase,
-} from './hero-phase'
+} from './hero-phase.ts'
 
 /** Admin 고정 5항목. 응답 길이가 달라도 accordion 분모로 사용 */
 export const DEFAULT_GLOBAL_VALUE_COUNT = 5
@@ -21,9 +22,9 @@ export const DEFAULT_GLOBAL_VALUE_COUNT = 5
  * 4) end hold + JA Worldwide reveal (frontier=마지막, panel translateY로 Worldwide 노출)
  *
  * track 높이 비율:
- * Hero 520vh + Push 100vh + Value accordion 500vh + hold/reveal 200vh
+ * Hero 680vh + Push 100vh + Value accordion 500vh + hold/reveal 200vh
  */
-export const INTRODUCTION_HERO_VH = 520
+export const INTRODUCTION_HERO_VH = 680
 /** Mission → Value Push/Up 전용 스크롤 (CSS 600ms와 별개로 accordion과 구간 분리) */
 export const INTRODUCTION_PUSH_VH = 100
 export const INTRODUCTION_VALUE_VH = 500
@@ -191,6 +192,33 @@ export function getNextIntroductionScrollY(
   if (!next || next === 'exit') return null
   return getIntroductionScrollY(
     { heroPhase: next, isFramePushed: false, activeValueIndex: 0 },
+    totalScrollRange,
+    valueCount,
+  )
+}
+
+/** 휠 역방향: Hero phase 하나만 이전. idle·Value 구간은 null */
+export function resolveHeroPhaseWheelStep(
+  accumulated: number,
+  delta: number,
+  threshold: number,
+): { accumulated: number; direction: 1 | -1 | 0 } {
+  const next = accumulated + delta
+  if (next >= threshold) return { accumulated: 0, direction: 1 }
+  if (next <= -threshold) return { accumulated: 0, direction: -1 }
+  return { accumulated: next, direction: 0 }
+}
+
+export function getPreviousIntroductionScrollY(
+  state: IntroductionScrollState,
+  totalScrollRange: number,
+  valueCount = DEFAULT_GLOBAL_VALUE_COUNT,
+): number | null {
+  if (state.isFramePushed || state.heroPhase === 'exit') return null
+  const previous = getPreviousHeroPhase(state.heroPhase)
+  if (!previous) return null
+  return getIntroductionScrollY(
+    { heroPhase: previous, isFramePushed: false, activeValueIndex: 0 },
     totalScrollRange,
     valueCount,
   )

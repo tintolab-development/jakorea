@@ -7,6 +7,7 @@ import {
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@/features/template/model/receipt-pre-consent-draft'
 
 export type FormDocumentPreviewRenderMode = 'card' | 'contentOnly'
 
@@ -71,6 +72,8 @@ export function isAgreementDocumentSignatureParagraph(
 const AGREEMENT_A4_CONFIRM_TEXT_RULE_IDS = new Set<string>([
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine,
   PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm,
+  RECEIPT_PRE_CONSENT_IDS.midConsentLine,
+  RECEIPT_PRE_CONSENT_IDS.finalConfirm,
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing,
   AGREEMENT_PORTRAIT_PARAGRAPH_IDS.confirmationClosing,
 ])

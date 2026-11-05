@@ -168,6 +168,12 @@
   list-style: none;
 }
 
+.logoGridEmpty {
+  min-width: 0;
+  height: 72px;
+  list-style: none;
+}
+
 .logoChip {
   display: flex;
   box-sizing: border-box;

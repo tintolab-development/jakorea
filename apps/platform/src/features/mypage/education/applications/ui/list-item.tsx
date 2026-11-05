@@ -84,7 +84,7 @@ export function EducationApplicationListItemRow({
             </div>
             {showCertificateHint ? (
               <PFText as="p" typo="bd-sm-md" color="primary-700" className={styles.certificateHint}>
-                수료증 발급·다운로드 가능
+                인증서 발급·다운로드 가능
               </PFText>
             ) : null}
           </div>

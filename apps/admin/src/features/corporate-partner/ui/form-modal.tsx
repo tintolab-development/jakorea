@@ -28,7 +28,7 @@ const IMAGE_ACCEPT =
   '.jpg,.jpeg,.png,.ai,.eps,.svg,image/jpeg,image/png,image/svg+xml,application/postscript,application/illustrator'
 const IMAGE_GUIDE_LINES = [
   '- 파일은 JPG, PNG, AI, EPS, SVG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
-  '- 권장 로고 사이즈는 300 × 110px입니다.',
+  '- 권장 배너 사이즈는 300 × 110px입니다.',
 ]
 
 /** Notion / 시안 description */
@@ -53,7 +53,7 @@ const PartnerNameField = memo(function PartnerNameField({
   return (
     <div>
       <CmsInput
-        inputSize="large"
+        inputSize="medium"
         width="100%"
         placeholder="기업명을 입력해 주세요"
         value={value}
@@ -162,6 +162,7 @@ type FormBodyProps = {
   /** 현재 전체 후원사 수 (create: max=n+1, edit: max=n) */
   totalCount: number
   confirmLoading?: boolean
+  serverSortOrderError?: string
   onCancel: () => void
   onSubmit: (values: CorporatePartnerFormValues) => void
 }
@@ -171,6 +172,7 @@ function CorporatePartnerFormBody({
   initial,
   totalCount,
   confirmLoading,
+  serverSortOrderError,
   onCancel,
   onSubmit,
 }: FormBodyProps) {
@@ -195,6 +197,11 @@ function CorporatePartnerFormBody({
     sortOrder?: string
   }>({})
 
+  useEffect(() => {
+    if (!serverSortOrderError) return
+    setErrors(prev => ({ ...prev, sortOrder: serverSortOrderError }))
+  }, [serverSortOrderError])
+
   const handleNameChange = useCallback((value: string) => {
     nameRef.current = value
     setErrors(prev => {
@@ -203,8 +210,8 @@ function CorporatePartnerFormBody({
     })
   }, [])
 
-  /** 시안: * 1부터 N 사이의 숫자를 입력해 주세요. */
-  const sortHelper = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
+  /** Figma 36:48360 — ※ 1부터 N 사이의 숫자를 입력해 주세요. */
+  const sortHelper = `※ 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
 
   /** 노출 순서 입력값 1…maxOrder 범위로 정규화 (빈 문자열은 허용 — 입력 중) */
   const normalizeSortOrderInput = useCallback(
@@ -275,7 +282,7 @@ function CorporatePartnerFormBody({
     }
     const orderNum = Math.floor(Number(sortOrder))
     if (!Number.isFinite(orderNum) || orderNum < 1 || orderNum > maxOrder) {
-      nextErrors.sortOrder = `* 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
+      nextErrors.sortOrder = `※ 1부터 ${maxOrder} 사이의 숫자를 입력해 주세요.`
     }
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -307,7 +314,7 @@ function CorporatePartnerFormBody({
         <>
           <CmsButton
             variant="secondary"
-            size="medium"
+            size="h40"
             type="button"
             onClick={onCancel}
             disabled={confirmLoading}
@@ -316,7 +323,7 @@ function CorporatePartnerFormBody({
           </CmsButton>
           <CmsButton
             variant="primary"
-            size="medium"
+            size="h40"
             type="button"
             loading={confirmLoading}
             disabled={confirmLoading}
@@ -411,7 +418,7 @@ function CorporatePartnerFormBody({
               <div>
                 <div className="corporate-partner-form-modal__sort-row">
                   <CmsInput
-                    inputSize="large"
+                    inputSize="medium"
                     width={160}
                     inputMode="numeric"
                     min={1}
@@ -455,6 +462,7 @@ export function CorporatePartnerFormModal({
   initial,
   totalCount,
   confirmLoading,
+  serverSortOrderError,
   onCancel,
   onSubmit,
 }: {
@@ -463,6 +471,7 @@ export function CorporatePartnerFormModal({
   initial?: CorporatePartner | null
   totalCount: number
   confirmLoading?: boolean
+  serverSortOrderError?: string
   onCancel: () => void
   onSubmit: (values: CorporatePartnerFormValues) => void
 }) {
@@ -477,6 +486,7 @@ export function CorporatePartnerFormModal({
       initial={initial}
       totalCount={totalCount}
       confirmLoading={confirmLoading}
+      serverSortOrderError={serverSortOrderError}
       onCancel={onCancel}
       onSubmit={onSubmit}
     />

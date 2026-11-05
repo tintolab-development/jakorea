@@ -1,9 +1,15 @@
+import axios from 'axios'
 import type {
   OperatingPrinciplesDoc,
   OperatingPrinciplesSavePayload,
 } from '@/entities/operating-principles/model/types'
 import { getJAKoreaHomepageAdminAPIJAKoreaSubset } from '@/shared/api/generated/ja-korea/ja-korea-api'
-import { mapPrincipleManagementToDomain, toPrincipleUpdateRequest } from './mappers'
+import { isOptimisticLockConflictError } from '@/shared/lib/api-error-message'
+import {
+  applyFreshPrincipleLock,
+  mapPrincipleManagementToDomain,
+  toPrincipleUpdateRequest,
+} from './mappers'
 
 function jaKoreaApi() {
   return getJAKoreaHomepageAdminAPIJAKoreaSubset()
@@ -14,9 +20,23 @@ async function getRemoteDoc(): Promise<OperatingPrinciplesDoc> {
   return mapPrincipleManagementToDomain(response)
 }
 
+function isPrincipleLockConflict(error: unknown): boolean {
+  if (isOptimisticLockConflictError(error)) return true
+  return axios.isAxiosError(error) && error.response?.status === 409
+}
+
 async function putRemoteDoc(doc: OperatingPrinciplesDoc): Promise<OperatingPrinciplesDoc> {
-  const updated = await jaKoreaApi().updatePrinciples(toPrincipleUpdateRequest(doc))
-  return mapPrincipleManagementToDomain(updated)
+  try {
+    const updated = await jaKoreaApi().updatePrinciples(toPrincipleUpdateRequest(doc))
+    return mapPrincipleManagementToDomain(updated)
+  } catch (error) {
+    if (!isPrincipleLockConflict(error)) throw error
+    const fresh = await getRemoteDoc()
+    const retried = await jaKoreaApi().updatePrinciples(
+      toPrincipleUpdateRequest(applyFreshPrincipleLock(doc, fresh)),
+    )
+    return mapPrincipleManagementToDomain(retried)
+  }
 }
 
 async function resolveDoc(cached?: OperatingPrinciplesDoc): Promise<OperatingPrinciplesDoc> {

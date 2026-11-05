@@ -1,0 +1,36 @@
+---
+description: CMS Antd Table에서 특정 1개 컬럼만 리사이즈하고 나머지는 고정하는 표준 패턴
+globs:
+  - "apps/cms/src/**/*.tsx"
+alwaysApply: false
+---
+
+# Resizable single column (CMS Table)
+
+`Antd Table`에서 **한 컬럼만 가변**이고 나머지 컬럼은 고정일 때, 아래 패턴을 사용한다.
+
+## 필수 원칙
+
+1. 가변 컬럼 폭은 `useState`로 관리 (`const [nameWidth, setNameWidth] = useState(기본폭)`).
+2. 나머지 컬럼은 `width`를 상수로 고정하고 변경하지 않는다.
+3. 테이블은 `tableLayout="fixed"`를 사용한다.
+4. `scroll.x`는 숫자 합산 대신 `scroll={{ x: 'max-content' }}`를 우선 사용한다.
+5. `className`은 `cms-data-table--fluid`를 피하고 `cms-data-table--skip-auto-no-col` 조합을 우선한다.
+
+## 헤더 리사이즈 구현
+
+- `components.header.cell`로 `ResizableHeaderCell`을 주입한다.
+- 가변 컬럼에만 `onHeaderCell`을 달아 드래그 핸들을 노출한다.
+- 드래그 계산은 `startX`/`currentX` delta로 반영하되 최소 폭(`minWidth`)만 보장한다.
+
+## 화면 끝 드래그 보정 (중요)
+
+`clientX` 기반 계산은 커서가 뷰포트 오른쪽 끝에 닿으면 증가가 멈춘다.  
+따라서 드래그 중 `requestAnimationFrame` 루프를 돌려, 커서가 오른쪽 경계(`window.innerWidth - 2`)에 있으면 폭을 추가 증가시킨다.
+
+## 체크리스트
+
+- 다른 컬럼 폭이 리사이즈 중에도 변하지 않는가
+- 가변 컬럼이 화면 너비를 넘어도 계속 확장되는가
+- 확장 시 테이블 전체 폭이 증가하고 가로 스크롤이 생기는가
+- `mouseup`에서 이벤트/RAF 정리가 되는가

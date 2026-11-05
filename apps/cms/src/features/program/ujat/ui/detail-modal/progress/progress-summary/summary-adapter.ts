@@ -1,22 +1,19 @@
-import {
-  findUjatEducationRegionKeyByCode,
-  listUjatEducationRegionsActive,
-} from '@/features/program/ujat/lib/ujat-education-regions'
 import type { EducationProgressSummaryResponse } from '@/shared/api/generated/dashboard/schemas/educationProgressSummaryResponse'
 import type { HalfProgressCounts } from '@/shared/api/generated/dashboard/schemas/halfProgressCounts'
-import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { buildRegionRow } from './summary-display'
+import {
+  copyFromEducationProgressSummaryResponse,
+  schoolSemesterGroupLabel,
+  UJAT_EDU_PROGRESS_PLANNED_SELECTION_LABEL,
+  volunteerFinalRowLabel,
+  volunteerPassRowLabel,
+} from './summary-copy'
 import type {
+  UjatEducationProgressColumnRegion,
   UjatEducationProgressRegionValues,
   UjatEducationProgressSchoolSummary,
   UjatEducationProgressVolunteerSummary,
 } from './types'
-
-function nullRegionValues(): UjatEducationProgressRegionValues {
-  return Object.fromEntries(
-    listUjatEducationRegionsActive().map(region => [region.key, null])
-  ) as UjatEducationProgressRegionValues
-}
 
 function readCount(
   counts: HalfProgressCounts | undefined,
@@ -26,25 +23,50 @@ function readCount(
   return typeof value === 'number' ? value : null
 }
 
+export function columnRegionsFromSummaryResponse(
+  response: EducationProgressSummaryResponse
+): UjatEducationProgressColumnRegion[] {
+  const seen = new Set<string>()
+  const columns: UjatEducationProgressColumnRegion[] = []
+  for (const row of response.regions ?? []) {
+    const key = row.educationRegionCode?.trim()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    columns.push({
+      key,
+      label: row.educationRegionName?.trim() || key,
+    })
+  }
+  return columns
+}
+
 function mapRegionValues(
   response: EducationProgressSummaryResponse,
   read: (row: NonNullable<EducationProgressSummaryResponse['regions']>[number]) => number | null
 ): UjatEducationProgressRegionValues {
-  const values = nullRegionValues()
+  const values: UjatEducationProgressRegionValues = {}
   for (const row of response.regions ?? []) {
-    const regionKey = findUjatEducationRegionKeyByCode(row.educationRegionCode)
-    if (!regionKey || !(regionKey in values)) continue
-    values[regionKey as UjatInstitutionApplicationRegionKey] = read(row)
+    const key = row.educationRegionCode?.trim()
+    if (!key) continue
+    values[key] = read(row)
   }
   return values
 }
 
 export function adaptUjatEducationProgressSummary(response: EducationProgressSummaryResponse): {
+  columnRegions: UjatEducationProgressColumnRegion[]
   schoolSummary: UjatEducationProgressSchoolSummary
   volunteerSummary: UjatEducationProgressVolunteerSummary
 } {
+  const copy = copyFromEducationProgressSummaryResponse(response)
+  const columnRegions = columnRegionsFromSummaryResponse(response)
   const appliedSchools = mapRegionValues(response, row =>
     typeof row.appliedSchoolCount === 'number' ? row.appliedSchoolCount : null
+  )
+  const plannedSelection = mapRegionValues(response, row =>
+    typeof row.plannedSelectionVolunteerCount === 'number'
+      ? row.plannedSelectionVolunteerCount
+      : null
   )
   const firstHalfSchools = mapRegionValues(response, row =>
     readCount(row.firstHalf, 'progressingSchoolCount')
@@ -62,6 +84,11 @@ export function adaptUjatEducationProgressSummary(response: EducationProgressSum
   const secondHalfStudents = mapRegionValues(response, row =>
     readCount(row.secondHalf, 'studentCount')
   )
+  const totalSchools = mapRegionValues(response, row =>
+    readCount(row.total, 'progressingSchoolCount')
+  )
+  const totalClasses = mapRegionValues(response, row => readCount(row.total, 'classCount'))
+  const totalStudents = mapRegionValues(response, row => readCount(row.total, 'studentCount'))
   const firstHalfVolunteers = mapRegionValues(response, row =>
     readCount(row.firstHalf, 'finalPassVolunteerCount')
   )
@@ -73,12 +100,13 @@ export function adaptUjatEducationProgressSummary(response: EducationProgressSum
   )
 
   return {
+    columnRegions,
     schoolSummary: {
       appliedSchools: buildRegionRow(appliedSchools),
       semesters: [
         {
           tone: 'h1',
-          label: '상반기',
+          label: schoolSemesterGroupLabel('h1', copy.year),
           metrics: {
             operating_schools: buildRegionRow(firstHalfSchools),
             operating_classes: buildRegionRow(firstHalfClasses),
@@ -87,11 +115,20 @@ export function adaptUjatEducationProgressSummary(response: EducationProgressSum
         },
         {
           tone: 'h2',
-          label: '하반기',
+          label: schoolSemesterGroupLabel('h2', copy.year),
           metrics: {
             operating_schools: buildRegionRow(secondHalfSchools),
             operating_classes: buildRegionRow(secondHalfClasses),
             operating_students: buildRegionRow(secondHalfStudents),
+          },
+        },
+        {
+          tone: 'grand',
+          label: schoolSemesterGroupLabel('grand', copy.year),
+          metrics: {
+            operating_schools: buildRegionRow(totalSchools),
+            operating_classes: buildRegionRow(totalClasses),
+            operating_students: buildRegionRow(totalStudents),
           },
         },
       ],
@@ -99,22 +136,26 @@ export function adaptUjatEducationProgressSummary(response: EducationProgressSum
     volunteerSummary: {
       rows: [
         {
+          key: 'planned_selection',
+          label: UJAT_EDU_PROGRESS_PLANNED_SELECTION_LABEL,
+          row: buildRegionRow(plannedSelection),
+        },
+        {
           key: 'h1_final_pass',
-          label: '상반기 최종 합격',
+          label: volunteerPassRowLabel('h1', copy.firstHalfTerm),
           tone: 'h1',
           row: buildRegionRow(firstHalfVolunteers),
         },
         {
           key: 'h2_final_pass',
-          label: '하반기 최종 합격',
+          label: volunteerPassRowLabel('h2', copy.secondHalfTerm),
           tone: 'h2',
           row: buildRegionRow(secondHalfVolunteers),
         },
         {
           key: 'final_total',
-          label: '합계',
+          label: volunteerFinalRowLabel(copy.year),
           tone: 'grand',
-          mergedTotalOnly: true,
           row: buildRegionRow(totalVolunteers),
         },
       ],

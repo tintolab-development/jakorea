@@ -200,6 +200,11 @@ export const TEMPLATE_CODE_CATALOG: Record<string, TemplateCodeCatalogEntry> = {
     category: 'AGREEMENT',
     variant: 'default',
   },
+  'agreement-receipt-pre-consent': {
+    templateName: '영수증 발급 사전 동의서',
+    category: 'AGREEMENT',
+    variant: 'default',
+  },
   'agreement-crime': {
     templateName: '성범죄 경력조회 동의서',
     category: 'AGREEMENT',

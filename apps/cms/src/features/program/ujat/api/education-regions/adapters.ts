@@ -7,9 +7,8 @@ export function mapEducationRegionResponse(
   dto: UjatEducationRegionResponse
 ): UjatEducationRegion {
   const id = dto.id != null ? String(dto.id) : ''
-  const regionKey = dto.code?.trim() || (id ? `region_${id}` : `region_${Date.now()}`)
-  const name =
-    dto.nameKo?.trim() || dto.displayName?.trim() || regionKey
+  const regionKey = dto.code?.trim() ?? ''
+  const name = dto.displayName?.trim() || dto.nameKo?.trim() || regionKey
   return {
     id,
     regionKey,
@@ -19,7 +18,7 @@ export function mapEducationRegionResponse(
     createdByName: dto.createdByName?.trim() ?? '',
     updatedByName: dto.updatedByName?.trim() ?? '',
     createdAt: dto.createdAt ?? new Date().toISOString(),
-    hasUsageHistory: false,
+    hasUsageHistory: dto.hasUsageHistory === true,
   }
 }
 

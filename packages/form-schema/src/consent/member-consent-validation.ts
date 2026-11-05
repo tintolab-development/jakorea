@@ -11,6 +11,7 @@ import {
   isIdTypeResidentOptionId,
 } from '../writing-form/id-type-resident-input.js'
 import type { PaymentStatementBasicInfoValues } from './payment-statement-basic-info.js'
+import { RECEIPT_PRE_CONSENT_IDS } from '../paragraph-ids/receipt-pre-consent-draft.js'
 import {
   isIdTypeResidentNumberFormatInvalid,
   isPaymentStatementResidentNumberFormatInvalid,
@@ -171,6 +172,8 @@ const PAYMENT_STATEMENT_TEMPLATE_IDS = new Set([
   'document-payment-order-pre-consent',
 ])
 
+const RECEIPT_PRE_CONSENT_TEMPLATE_IDS = new Set(['agreement-receipt-pre-consent'])
+
 export type MemberConsentDraftValidationOptions = {
   templateId?: string
   paymentStatementBasicInfo?: Partial<PaymentStatementBasicInfoValues>
@@ -277,6 +280,10 @@ export function listMemberConsentIncompleteRequiredFields(
         label: '지급조서 기본 정보',
       })
     }
+  }
+
+  if (templateId != null && RECEIPT_PRE_CONSENT_TEMPLATE_IDS.has(templateId)) {
+    return fields.filter(field => field.paragraphId !== RECEIPT_PRE_CONSENT_IDS.paymentRecord)
   }
 
   return fields

@@ -58,19 +58,34 @@ function baseValues(
 }
 
 describe('instructor register consent validation', () => {
-  it('선택 동의 미동의만으로는 필수 누락이 되지 않는다', () => {
+  it('마케팅·초상권·행정정보 미동의만으로는 CMS 강사 등록 필수 누락이 아니다', () => {
     const result = collectInstructorRegisterValidation(
       baseValues({
+        consentPaymentStatement: 'agree',
+        consentEducatorPledge: 'agree',
+        consentSexOffenseCheck: 'agree',
         consentMarketing: 'disagree',
         consentPortrait: 'disagree',
-        consentPaymentStatement: 'disagree',
-      })
+        consentAdministrativeJoint: 'disagree',
+      }),
+      {},
+      { requiredConsentAgreeKeys: [...getInstructorRequiredConsentAgreeKeys('cmsRegister')] }
     )
     expect(result.missingRequired).toBe(false)
   })
 
-  it('강사 신규 등록 필수 동의 키는 이용약관·개인정보뿐이다', () => {
+  it('강사 신규 등록 필수 동의 키는 이용약관·개인정보 + 필수 작성 동의서 3종이다', () => {
     expect([...getInstructorRequiredConsentAgreeKeys('cmsRegister')]).toEqual([
+      'consentTermsOfService',
+      'consentPersonal',
+      'consentPaymentStatement',
+      'consentEducatorPledge',
+      'consentSexOffenseCheck',
+    ])
+  })
+
+  it('CMS 강사 상세 수정은 이용약관·개인정보만 필수다', () => {
+    expect([...getInstructorRequiredConsentAgreeKeys('cmsDetailEdit')]).toEqual([
       'consentTermsOfService',
       'consentPersonal',
     ])
@@ -84,6 +99,35 @@ describe('instructor register consent validation', () => {
       'consentEducatorPledge',
       'consentSexOffenseCheck',
     ])
+  })
+
+  it('필수 작성 동의서 1건이라도 미동의하면 CMS 강사 신규 등록 필수 누락이다', () => {
+    const allAgreed = {
+      consentPaymentStatement: 'agree',
+      consentEducatorPledge: 'agree',
+      consentAdministrativeJoint: 'agree',
+      consentSexOffenseCheck: 'agree',
+    } as const
+    const options = {
+      requiredConsentAgreeKeys: [...getInstructorRequiredConsentAgreeKeys('cmsRegister')],
+    }
+    expect(collectInstructorRegisterValidation(baseValues(allAgreed), {}, options).missingRequired).toBe(
+      false
+    )
+    expect(
+      collectInstructorRegisterValidation(
+        baseValues({ ...allAgreed, consentPaymentStatement: 'disagree' }),
+        {},
+        options
+      ).missingRequired
+    ).toBe(true)
+    expect(
+      collectInstructorRegisterValidation(
+        baseValues({ ...allAgreed, consentAdministrativeJoint: 'disagree' }),
+        {},
+        options
+      ).missingRequired
+    ).toBe(false)
   })
 
   it('동의서 1건이라도 미작성(미동의)이면 Platform 강사 신청 필수 누락이다', () => {
@@ -128,7 +172,11 @@ describe('instructor register consent validation', () => {
     expect(buildRequiredConsentDisagreeAlertMessage(labels)).toBe(
       '서비스 이용약관, 개인정보 수집·이용 동의에 동의하지 않을 경우, 가입이 불가합니다.'
     )
-    expect(collectInstructorRegisterValidation(values).missingRequired).toBe(true)
+    expect(
+      collectInstructorRegisterValidation(values, {}, {
+        requiredConsentAgreeKeys: [...getInstructorRequiredConsentAgreeKeys('cmsRegister')],
+      }).missingRequired
+    ).toBe(true)
   })
 
   it('약관·동의 라디오 미선택 시 hasUnsetConsentSelections가 true다', () => {

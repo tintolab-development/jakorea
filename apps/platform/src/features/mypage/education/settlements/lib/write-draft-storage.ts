@@ -11,6 +11,7 @@ function sanitizeDraftForStorage(draft: SettlementWriteDraft): SettlementWriteDr
     ...draft,
     basic: {
       ...draft.basic,
+      nameEn: draft.basic.nameEn ?? '',
       residentFront: '',
       residentBack: '',
       accountNumber: '',
@@ -41,6 +42,10 @@ export function loadSettlementWriteDraft(
       },
       enabledItemTypes: parsed.enabledItemTypes ?? [],
       extraItems: parsed.extraItems ?? [],
+      basic: {
+        ...parsed.basic,
+        nameEn: parsed.basic?.nameEn ?? '',
+      },
       transport: {
         ...parsed.transport,
         depart: {

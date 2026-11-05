@@ -26,9 +26,9 @@ export function useCreateFormResponseFeedbackMutation() {
         formResponseId: responseId,
         feedbacks: [
           {
-            feedbackId: created.feedbackId ?? null,
-            content: created.content ?? null,
-            createdAt: created.createdAt ?? null,
+            feedbackId: created?.feedbackId ?? null,
+            content: created?.content ?? null,
+            createdAt: created?.createdAt ?? null,
           },
         ],
       })

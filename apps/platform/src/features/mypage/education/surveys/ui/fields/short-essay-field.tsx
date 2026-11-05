@@ -19,7 +19,12 @@ export function SurveyShortEssayField({
 }: SurveyShortEssayFieldProps) {
   const placeholder = paragraph.bodyPlaceholder || '질문을 입력해 주세요'
   const items = paragraph.items ?? []
-  const rows = paragraph.variant === 'short_essay' ? paragraph.itemInputRows ?? 1 : 4
+  const rows =
+    paragraph.variant === 'short_essay'
+      ? paragraph.itemInputRows === 1
+        ? 1
+        : (paragraph.itemInputRows ?? 4)
+      : 4
   const showItemTitle = paragraph.showItemTitle !== false
 
   if (items.length === 0) {

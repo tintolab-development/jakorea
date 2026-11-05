@@ -32,6 +32,8 @@ const MEMBER_ERROR_CODE_MESSAGES: Record<string, string> = {
     '프로그램 담당 이력이 있어 승인을 취소할 수 없습니다.',
   /** CMS 회원 삭제 — 관리자 현재 비밀번호 불일치 */
   CMS_MEMBER_DELETE_CURRENT_PASSWORD_INVALID: MEMBER_DELETE_CURRENT_PASSWORD_INVALID_ALERT_CONTENT,
+  SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
+    '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
 }
 
 export function isMemberDeleteCurrentPasswordInvalidError(error: unknown): boolean {

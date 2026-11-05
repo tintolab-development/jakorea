@@ -42,6 +42,10 @@ export const INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE =
 
 export const INDIVIDUAL_SETTLEMENT_EMPTY_SCHEDULES_MESSAGE = '정산 대상 일정이 없어요'
 
+export const RECEIPT_PRE_CONSENT_REQUIRED_CODE = 'RECEIPT_PRE_CONSENT_REQUIRED'
+export const RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE =
+  '영수증 발급 사전 동의를 완료한 뒤 정산을 신청할 수 있습니다.'
+
 export const INDIVIDUAL_INELIGIBLE_REASON = {
   ATTENDANCE_NOT_QUALIFIED: 'ATTENDANCE_NOT_QUALIFIED',
   SCHEDULE_NOT_ENDED: 'SCHEDULE_NOT_ENDED',
@@ -71,6 +75,7 @@ const INELIGIBLE_REASON_MESSAGES: Record<string, string> = {
   INDIVIDUAL_SETTLEMENT_DISABLED: INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
   SETTLEMENT_NOT_FOUND:
     '개인 프로그램 신청 정산만 이 화면에서 조회할 수 있습니다. 강사·기관 프로그램은 강사 배정 정산을 이용해 주세요.',
+  RECEIPT_PRE_CONSENT_REQUIRED: RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
 }
 
 export function normalizeIndividualIneligibleReason(
@@ -123,4 +128,8 @@ export function individualSettlementApiErrorMessage(
   const code = readIndividualSettlementErrorCode(error)
   if (code && INELIGIBLE_REASON_MESSAGES[code]) return INELIGIBLE_REASON_MESSAGES[code]
   return fallback
+}
+
+export function isReceiptPreConsentRequiredError(error: unknown): boolean {
+  return readIndividualSettlementErrorCode(error) === RECEIPT_PRE_CONSENT_REQUIRED_CODE
 }

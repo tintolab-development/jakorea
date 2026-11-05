@@ -11,9 +11,6 @@ describe('isInstructorRegisterBasicInfoIncompleteForConsent', () => {
     email: 'test@example.com',
     homeAddress: '서울특별시 강남구',
     homeAddressDetail: '101호',
-    bankName: 'KB국민은행',
-    accountNumber: '1234567890',
-    accountHolder: '홍길동',
     affiliationName: 'JA Korea',
   }
 

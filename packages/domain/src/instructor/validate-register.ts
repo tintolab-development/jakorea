@@ -272,9 +272,6 @@ export function collectInstructorRegisterValidation(
     missingRequired = true
   }
   if (isBlank(values.instructorCareer)) missingRequired = true
-  if (isBlank(values.bankName)) missingRequired = true
-  if (isBlank(values.accountNumber)) missingRequired = true
-  if (isBlank(values.accountHolder)) missingRequired = true
   if (!values.isBusinessIncome) missingRequired = true
   if (isBlank(values.oneLineIntro)) missingRequired = true
 
@@ -315,9 +312,6 @@ export type InstructorConsentBasicInfoInput = Pick<
   | 'email'
   | 'homeAddress'
   | 'homeAddressDetail'
-  | 'bankName'
-  | 'accountNumber'
-  | 'accountHolder'
   | 'memberType'
   | 'schoolName'
   | 'affiliationNone'
@@ -351,10 +345,6 @@ export function isInstructorRegisterBasicInfoIncompleteForConsent(
   ) {
     return true
   }
-
-  if (!values.bankName?.trim()) return true
-  if (!values.accountNumber?.trim()) return true
-  if (!values.accountHolder?.trim()) return true
 
   if (values.memberType === 'school_teacher') {
     if (!values.schoolName?.trim()) return true

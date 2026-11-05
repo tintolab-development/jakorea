@@ -8,7 +8,7 @@ import {
   useAdminTableDndReorder,
 } from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
-import type { ColumnsType, TableProps } from 'antd/es/table'
+import type { ColumnsType, TablePaginationConfig, TableProps } from 'antd/es/table'
 import type { CorporatePartner } from '@/entities/corporate-partner/model/types'
 
 export function CorporatePartnerDragHandle() {
@@ -23,6 +23,7 @@ export function CorporatePartnersSortableTable({
   onRowsReorder,
   locale,
   disabled = false,
+  pagination = false,
 }: {
   rows: CorporatePartner[]
   columns: ColumnsType<CorporatePartner>
@@ -31,6 +32,7 @@ export function CorporatePartnersSortableTable({
   onRowsReorder: (reorderedRows: CorporatePartner[]) => void
   locale?: TableProps<CorporatePartner>['locale']
   disabled?: boolean
+  pagination?: TablePaginationConfig | false
 }) {
   const { items, rowIds, dndContextProps } = useAdminTableDndReorder({
     rows,
@@ -46,7 +48,7 @@ export function CorporatePartnersSortableTable({
         loading={loading}
         dataSource={items}
         columns={columns}
-        pagination={false}
+        pagination={pagination}
         rowSelection={rowSelection}
         locale={locale}
         components={{ body: { row: AdminSortableTableRow } }}

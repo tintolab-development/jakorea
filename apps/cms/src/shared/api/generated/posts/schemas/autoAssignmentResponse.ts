@@ -11,7 +11,7 @@ import type { CapacityWarning } from './capacityWarning';
 export interface AutoAssignmentResponse {
   programId?: number;
   educationRegionCode?: string;
-  /** 빈 슬롯 수 + 보강 대상 1인 슬롯 수 */
+  /** 빈 슬롯 수 + 보강 대상 1인 슬롯 수. 같은 서울 교육일·같은 지역에서 가용 봉사자 V < 학급 수×2 이면 빈 학급을 1인씩 먼저 커버하므로 singleAssignedCount가 늘고 unassignedCount는 줄어든다. 신규 봉사자가 없고 미배정 학급이 남으면 같은 날·같은 지역의 미래 미진행 2인조에서 SECONDARY 1명만 이동한다. 원본 2인조 학급은 targetSlotCount·singleAssignedCount에 넣지 않지만, 분리 후 1인으로 남은 원본도 capacityWarnings[VOLUNTEER_SHORTAGE]와 results(reason=PAIR_SPLIT)에 포함한다. */
   targetSlotCount?: number;
   pairAssignedCount?: number;
   singleAssignedCount?: number;

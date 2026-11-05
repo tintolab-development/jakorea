@@ -4088,6 +4088,7 @@ function createDefaultSurveyShortEssayParagraph(
     paragraphDescription: '없다면 ‘없음’으로 기재해 주세요',
     participatesInTitleNumbering: true,
     showItemTitle: false,
+    itemInputRows: 4,
     items: [
       {
         id: itemId,

@@ -15,8 +15,51 @@
   margin-top: 30px;
 }
 
+.corporate-partner-form-modal .teal-header-modal__footer .cms-button {
+  min-width: 120px;
+}
+
+.corporate-partner-form-modal .file-select-image-cell .file-select-field__guide-line {
+  white-space: normal;
+}
+
 .corporate-partner-form-modal__form {
   width: 100%;
+}
+
+.corporate-partner-form-modal__image-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 시안: 사각 미리보기 placeholder (로고 가로형은 목록 테이블에서 적용) */
+.corporate-partner-form-modal__preview {
+  width: 86px;
+  height: 86px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary, #f7f7f7);
+  border: 1px solid var(--table-line, #e0e0e0);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.corporate-partner-form-modal__preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.corporate-partner-form-modal__file-field {
+  flex: 1 1 280px;
+  min-width: 0;
 }
 
 /* DetailInfoForm edit 슬롯 — FileSelect/Input 레이아웃 보존 */
@@ -48,6 +91,20 @@
 
 .corporate-partner-form-modal .app-radio-group .ant-radio-wrapper {
   margin-inline-end: 0;
+}
+
+.corporate-partner-form-modal .file-select-field {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.corporate-partner-form-modal .file-select-field__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
 }
 
 /* 노출 순서: input 160×40 + helper 가로, gap 16px */

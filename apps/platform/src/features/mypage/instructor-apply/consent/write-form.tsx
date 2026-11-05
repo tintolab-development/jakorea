@@ -9,8 +9,10 @@ import {
   isCrimeConsentTemplate,
   listMemberConsentIncompleteRequiredFields,
   normalizeMemberConsentWriteDraft,
+  overlayPaymentStatementProfileLinkedValues,
+  buildPaymentStatementProfileLinkedValues,
   PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE,
-  resolveInstructorApplyConsentTemplate,
+  resolveDocumentConsentTemplate,
   resolvePlatformConsentHiddenParagraphIds,
 } from '@jakorea/form-schema/consent'
 import {
@@ -23,6 +25,7 @@ import {
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isAxiosError } from 'axios'
@@ -46,12 +49,16 @@ import {
 } from '../../settings/api/portal-consent-documents'
 import { restoreCompatibleConsentDraftValues } from '../../settings/lib/restore-compatible-consent-draft'
 import { submitPortalConsentDocumentFromWriteState } from '../../settings/lib/submit-portal-consent-document'
-import { PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY } from '../../settings/lib/settings-consent-key'
+import { resolvePortalConsentCreateType } from '../../settings/lib/settings-consent-key'
 import type { PortalConsentDocumentDetail } from '../../settings/api/portal-consent-documents.types'
-import type { InstructorApplyConsentKey } from './catalog'
-import { CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE } from './catalog'
+import type { DocumentConsentWriteKey } from './catalog'
+import {
+  CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE,
+  isInstructorApplyConsentKey,
+  RECEIPT_PRE_CONSENT_WRITE_KEY,
+} from './catalog'
 import { CrimeConsentDocumentForm } from './crime-document-form'
-import { markInstructorApplyConsentAgreed } from './form-persist'
+import { loadInstructorApplyFormDraft, markInstructorApplyConsentAgreed } from './form-persist'
 import {
   clearSchemaConsentWriteState,
   loadSchemaConsentWriteState,
@@ -68,8 +75,8 @@ import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { useInstructorApplyLockedBasic } from '../use-instructor-apply-locked-basic'
 import styles from './consent-form.module.css'
 
-function createInitialSchemaConsentState(consentKey: InstructorApplyConsentKey): SchemaConsentWriteState {
-  const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
+function createInitialSchemaConsentState(consentKey: DocumentConsentWriteKey): SchemaConsentWriteState {
+  const { templateId } = resolveDocumentConsentTemplate(consentKey)
   const seed = createConsentTemplateSeedDraft(templateId)
   if (seed == null) {
     return {
@@ -93,10 +100,10 @@ function createInitialSchemaConsentState(consentKey: InstructorApplyConsentKey):
 }
 
 function isSchemaConsentWriteIncomplete(
-  consentKey: InstructorApplyConsentKey,
+  consentKey: DocumentConsentWriteKey,
   state: SchemaConsentWriteState
 ): boolean {
-  const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
+  const { templateId } = resolveDocumentConsentTemplate(consentKey)
   return hasMemberConsentIncompleteRequiredFields(state.draft, {
     templateId,
     paymentStatementBasicInfo: state.paymentBasicInfo,
@@ -112,6 +119,20 @@ const SERVER_DRAFT_LOADING_MESSAGE = '동의서 양식을 불러오는 중입니
 const PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE =
   '동의서 양식이 변경되었습니다. 최신 양식을 다시 확인해 주세요.'
 const MEMBER_PROFILE_LOADING_MESSAGE = '회원 정보를 불러오는 중입니다.'
+const PORTAL_CONSENT_TERMS_NOT_PUBLISHED_MESSAGE =
+  '영수증 발급 사전 동의 약관이 아직 게시되지 않았습니다. 잠시 후 다시 시도해 주세요.'
+const CONSENT_RECEIPT_RRN_NOT_ALLOWED_MESSAGE =
+  '주민등록번호는 영수증 발급 사전 동의에 포함할 수 없습니다.'
+const CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE =
+  '영수증 발급 사전 동의에는 지급조서 기본 정보를 넣을 수 없습니다.'
+
+const PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES: Record<string, string> = {
+  PORTAL_CONSENT_TERMS_NOT_PUBLISHED: PORTAL_CONSENT_TERMS_NOT_PUBLISHED_MESSAGE,
+  CONSENT_RECEIPT_RRN_NOT_ALLOWED: CONSENT_RECEIPT_RRN_NOT_ALLOWED_MESSAGE,
+  CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED: CONSENT_PAYMENT_BASIC_INFO_NOT_ALLOWED_MESSAGE,
+  PORTAL_CONSENT_REQUIRED_SIGNATURE_MISSING: SIGNATURE_REQUIRED_ALERT_MESSAGE,
+  PORTAL_CONSENT_TEMPLATE_VERSION_CHANGED: PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE,
+}
 
 function readPortalConsentTemplateErrorCode(error: unknown): string | null {
   if (!isAxiosError(error)) return null
@@ -140,15 +161,34 @@ export function SchemaConsentWriteForm({
   submitContext = 'instructorApply',
   onTitleAside,
 }: {
-  consentKey: InstructorApplyConsentKey
+  consentKey: DocumentConsentWriteKey
   onComplete: () => void
   readOnly?: boolean
   submitContext?: ConsentWriteSubmitContext
   /** 페이지 제목 우측 — 전자서명 만들기/수정하기 */
   onTitleAside?: (aside: ReactNode | null) => void
 }) {
-  const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
+  const { templateId } = resolveDocumentConsentTemplate(consentKey)
   const { lockedBasic, isLoading: isLockedBasicLoading } = useInstructorApplyLockedBasic()
+  const paymentStatementProfileValues = useMemo(() => {
+    if (submitContext !== 'instructorApply' || templateId !== 'agreement-third-party') {
+      return null
+    }
+    const draft = loadInstructorApplyFormDraft()
+    const memberType = lockedBasic.memberType || draft?.memberType
+    return buildPaymentStatementProfileLinkedValues({
+      name: lockedBasic.name || draft?.name,
+      memberType,
+      schoolName: lockedBasic.schoolName || draft?.schoolName,
+      affiliationName: lockedBasic.affiliationName || draft?.affiliationName,
+      affiliationNone:
+        memberType === 'school_teacher'
+          ? false
+          : Boolean(lockedBasic.affiliationNone || draft?.affiliationNone),
+      homeAddress: draft?.homeAddress || lockedBasic.homeAddress,
+      homeAddressDetail: draft?.homeAddressDetail || lockedBasic.homeAddressDetail,
+    })
+  }, [lockedBasic, submitContext, templateId])
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -169,6 +209,19 @@ export function SchemaConsentWriteForm({
     clearSchemaConsentWriteState(consentKey)
     return normalized
   })
+
+  const paymentBasicInfo = useMemo(
+    () =>
+      overlayPaymentStatementProfileLinkedValues(
+        state.paymentBasicInfo ?? {},
+        paymentStatementProfileValues
+      ),
+    [paymentStatementProfileValues, state.paymentBasicInfo]
+  )
+  const writeState = useMemo(
+    () => ({ ...state, paymentBasicInfo }),
+    [paymentBasicInfo, state]
+  )
 
   const applyServerDraftDocument = useCallback(
     (document: PortalConsentDocumentDetail, restoreFromDraft?: WritingFormDraft) => {
@@ -196,7 +249,15 @@ export function SchemaConsentWriteForm({
         ...prev,
         draft: serverDraft,
         paymentBasicInfo:
-          serverTemplateCode === 'agreement-third-party' ? prev.paymentBasicInfo ?? {} : undefined,
+          serverTemplateCode === 'agreement-third-party' ||
+          serverTemplateCode === 'agreement-receipt-pre-consent'
+            ? overlayPaymentStatementProfileLinkedValues(
+                prev.paymentBasicInfo ?? {},
+                serverTemplateCode === 'agreement-third-party'
+                  ? paymentStatementProfileValues
+                  : null
+              )
+            : undefined,
         portalDocument: {
           documentId,
           templateVersionId: formTemplateVersion?.templateVersionId ?? null,
@@ -204,7 +265,7 @@ export function SchemaConsentWriteForm({
         },
       }))
     },
-    [lockedBasic.name, templateId],
+    [lockedBasic.name, paymentStatementProfileValues, templateId],
   )
 
   useEffect(() => {
@@ -212,7 +273,7 @@ export function SchemaConsentWriteForm({
     if (serverDraftInitializedRef.current) return
     serverDraftInitializedRef.current = true
     setIsServerDraftLoading(true)
-    const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+    const consentType = resolvePortalConsentCreateType(consentKey)
     void createPortalConsentDocument({ consentType })
       .then(applyServerDraftDocument)
       .catch(error => {
@@ -224,7 +285,7 @@ export function SchemaConsentWriteForm({
   }, [applyServerDraftDocument, consentKey, portalSubmitEnabled, readOnly, templateId])
 
   const recoverPortalDraftVersion = useCallback(async () => {
-    const consentType = PORTAL_CONSENT_CREATE_TYPE_BY_INSTRUCTOR_KEY[consentKey]
+    const consentType = resolvePortalConsentCreateType(consentKey)
     const previousDraft = state.draft
     const document = await createPortalConsentDocument({ consentType })
     applyServerDraftDocument(document, previousDraft)
@@ -232,8 +293,8 @@ export function SchemaConsentWriteForm({
 
   useEffect(() => {
     if (readOnly) return
-    saveSchemaConsentWriteState(consentKey, state)
-  }, [consentKey, readOnly, state])
+    saveSchemaConsentWriteState(consentKey, writeState)
+  }, [consentKey, readOnly, writeState])
 
   useEffect(() => {
     if (readOnly || templateId !== 'agreement-notice') return
@@ -251,11 +312,11 @@ export function SchemaConsentWriteForm({
     () =>
       listMemberConsentIncompleteRequiredFields(state.draft, {
         templateId,
-        paymentStatementBasicInfo: state.paymentBasicInfo,
+        paymentStatementBasicInfo: paymentBasicInfo,
       }),
-    [state.draft, state.paymentBasicInfo, templateId],
+    [paymentBasicInfo, state.draft, templateId],
   )
-  const incomplete = isSchemaConsentWriteIncomplete(consentKey, state)
+  const incomplete = isSchemaConsentWriteIncomplete(consentKey, writeState)
 
   const handleSubmit = () => {
     if (isSubmitting) return
@@ -286,7 +347,7 @@ export function SchemaConsentWriteForm({
     if (
       hasMemberConsentInvalidResidentNumberFormat(state.draft, {
         templateId,
-        paymentStatementBasicInfo: state.paymentBasicInfo,
+        paymentStatementBasicInfo: paymentBasicInfo,
       })
     ) {
       setAlertMessage(PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE)
@@ -305,9 +366,9 @@ export function SchemaConsentWriteForm({
 
     if (portalSubmitEnabled) {
       setIsSubmitting(true)
-      void submitPortalConsentDocumentFromWriteState(consentKey, state)
+      void submitPortalConsentDocumentFromWriteState(consentKey, writeState)
         .then(() => {
-          if (submitContext === 'instructorApply') {
+          if (submitContext === 'instructorApply' && isInstructorApplyConsentKey(consentKey)) {
             markInstructorApplyConsentAgreed(consentKey)
           }
           onComplete()
@@ -319,6 +380,11 @@ export function SchemaConsentWriteForm({
               setAlertMessage(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
               setAlertOpen(true)
             })
+            return
+          }
+          if (code && PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code]) {
+            setAlertMessage(PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code])
+            setAlertOpen(true)
             return
           }
           if (code === 'PORTAL_CONSENT_TEMPLATE_VERSION_MISMATCH') {
@@ -344,6 +410,11 @@ export function SchemaConsentWriteForm({
       return
     }
 
+    if (consentKey === RECEIPT_PRE_CONSENT_WRITE_KEY) {
+      setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE)
+      setAlertOpen(true)
+      return
+    }
     markInstructorApplyConsentAgreed(consentKey)
     onComplete()
   }
@@ -371,8 +442,8 @@ export function SchemaConsentWriteForm({
     if (templateId === 'agreement-notice') {
       return lockedBasic.name.trim() || '회원'
     }
-    return resolvePaymentConsentSignerName(state.paymentBasicInfo, lockedBasic.name)
-  }, [lockedBasic.name, state.paymentBasicInfo, templateId])
+    return resolvePaymentConsentSignerName(paymentBasicInfo, lockedBasic.name)
+  }, [lockedBasic.name, paymentBasicInfo, templateId])
 
   const lockedNoticeSubjectMemberName =
     templateId === 'agreement-notice' ? lockedBasic.name.trim() : undefined
@@ -397,15 +468,27 @@ export function SchemaConsentWriteForm({
       if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
         return (
           <PaymentBasicInfoFields
-            values={state.paymentBasicInfo ?? {}}
-            onChange={paymentBasicInfo =>
-              setState(prev => ({ ...prev, paymentBasicInfo }))
+            variant="payment"
+            values={paymentBasicInfo}
+            lockProfileFields={paymentStatementProfileValues != null}
+            profileValues={paymentStatementProfileValues}
+            onChange={next =>
+              setState(prev => ({
+                ...prev,
+                paymentBasicInfo: overlayPaymentStatementProfileLinkedValues(
+                  next,
+                  paymentStatementProfileValues
+                ),
+              }))
             }
           />
         )
       }
 
-      if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine) {
+      if (
+        paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
+        paragraph.id === RECEIPT_PRE_CONSENT_IDS.midConsentLine
+      ) {
         const body =
           paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text'
             ? paragraph.bodyText.trim()
@@ -425,7 +508,10 @@ export function SchemaConsentWriteForm({
         )
       }
 
-      if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) {
+      if (
+        paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm ||
+        paragraph.id === RECEIPT_PRE_CONSENT_IDS.finalConfirm
+      ) {
         const body =
           paragraph.kind === 'single_item' && paragraph.variant === 'agreement_explanation_text'
             ? paragraph.bodyText.trim()
@@ -477,8 +563,9 @@ export function SchemaConsentWriteForm({
     },
     [
       signerName,
+      paymentBasicInfo,
+      paymentStatementProfileValues,
       state.draft.paragraphs,
-      state.paymentBasicInfo,
       state.signatures?.final,
       state.signatures?.mid,
       updateParagraph,
@@ -513,7 +600,7 @@ export function SchemaConsentWriteForm({
     [signerName, state.signatures?.final, templateId],
   )
 
-  if (isCrimeConsentTemplate(templateId)) {
+  if (isCrimeConsentTemplate(templateId) && isInstructorApplyConsentKey(consentKey)) {
     return (
       <CrimeConsentDocumentForm
         consentKey={consentKey}
@@ -586,7 +673,7 @@ export function InstructorApplyConsentWriteForm({
   submitContext = 'instructorApply',
   onTitleAside,
 }: {
-  consentKey: InstructorApplyConsentKey
+  consentKey: DocumentConsentWriteKey
   onComplete: () => void
   readOnly?: boolean
   submitContext?: ConsentWriteSubmitContext

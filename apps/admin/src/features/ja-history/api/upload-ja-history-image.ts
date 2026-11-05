@@ -1,6 +1,6 @@
 /**
  * JA History 교체 가능 이미지 — prepare → binary upload → confirm
- * purpose: JA_HISTORY_HERO_IMAGE | JA_HISTORY_WORLD_TIMELINE_IMAGE | JA_HISTORY_KOREA_TIMELINE_IMAGE
+ * purpose: JA_HISTORY_HERO_IMAGE | JA_HISTORY_WORLD_TIMELINE_IMAGE | JA_HISTORY_KOREA_TIMELINE_IMAGE | JA_HISTORY_PHILOSOPHY_CARD_IMAGE
  * JA_HISTORY_LOCKED_MEDIA 는 호출하지 않는다 (prepareUpload 400).
  */
 
@@ -11,6 +11,7 @@ export type JaHistoryUploadPurpose =
   | 'JA_HISTORY_HERO_IMAGE'
   | 'JA_HISTORY_WORLD_TIMELINE_IMAGE'
   | 'JA_HISTORY_KOREA_TIMELINE_IMAGE'
+  | 'JA_HISTORY_PHILOSOPHY_CARD_IMAGE'
 
 type PrepareRuntime = {
   assetId?: number

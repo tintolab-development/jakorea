@@ -1,5 +1,8 @@
 import '@/shared/ui/cross-table.css'
-import type { UjatEducationProgressVolunteerSummary } from './types'
+import type {
+  UjatEducationProgressColumnRegion,
+  UjatEducationProgressVolunteerSummary,
+} from './types'
 import {
   formatSummaryCellValue,
   summaryToneClassName,
@@ -17,16 +20,20 @@ import {
 const DATA = 'cross-table__cell cross-table__cell--data'
 
 export function UjatEducationProgressVolunteerSummaryTable({
+  regions,
   summary,
 }: {
+  regions: readonly UjatEducationProgressColumnRegion[]
   summary: UjatEducationProgressVolunteerSummary
 }) {
-  const regionColCount = 8
-  const totalColCount = 1
+  const mergedColSpan = Math.max(regions.length + 1, 1)
 
   return (
-    <UjatEducationProgressSummaryMatrixShell ariaLabel="봉사단 교육 진행 요약">
-      <UjatEducationProgressSummaryRegionHeader />
+    <UjatEducationProgressSummaryMatrixShell
+      regions={regions}
+      ariaLabel="봉사단 교육 진행 요약"
+    >
+      <UjatEducationProgressSummaryRegionHeader regions={regions} />
       <tbody>
         {summary.rows.map(row => {
           if (row.mergedTotalOnly) {
@@ -43,7 +50,7 @@ export function UjatEducationProgressVolunteerSummaryTable({
                   </UjatEducationProgressSummaryCategoryCellInner>
                 </th>
                 <td
-                  colSpan={regionColCount + totalColCount}
+                  colSpan={mergedColSpan}
                   className={`${DATA} ${UJAT_EDU_PROGRESS_SUMMARY_TOTAL_CELL_CLASSNAME} ujat-edu-progress-summary__cell--merged-total`}
                 >
                   {formatSummaryCellValue(row.row.total)}
@@ -67,7 +74,7 @@ export function UjatEducationProgressVolunteerSummaryTable({
                   {row.label}
                 </UjatEducationProgressSummaryCategoryCellInner>
               </th>
-              <UjatEducationProgressSummaryRegionDataCells row={row.row} />
+              <UjatEducationProgressSummaryRegionDataCells regions={regions} row={row.row} />
             </tr>
           )
         })}

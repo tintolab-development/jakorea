@@ -55,6 +55,15 @@ import {
   hasPreferredScheduleDateOutsideBounds,
   hasPreferredScheduleDateOutsideEducationConstraint,
   resolveEducationScheduleApplyConstraint,
+  seoulTodayIsoDate,
+  clampIsoMinDateToToday,
+  isIsoDateBeforeSeoulToday,
+  isSeoulScheduleStartPassed,
+  clampEducationScheduleApplyConstraint,
+  hasPreferredScheduleDateBeforeSeoulToday,
+  hasSelectedScheduleIdsBeforeSeoulToday,
+  isScheduleChoicePast,
+  PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE,
   filterItemsByScheduleDateBounds,
   filterGeminiInstructorSlotsByTrainingRequestPeriod,
   isGeminiTrainingRequestPeriodConfigured,
@@ -715,7 +724,7 @@ assert.deepEqual(
     { scheduleInputMode: 'fixed_schedule_options', scheduleOptions: [{ scheduleId: 187123 }] },
     { items: [] }
   ),
-  [{ id: 'schedule:187123', label: '187123' }]
+  [{ id: 'schedule:187123', label: '187123', scheduleId: 187123 }]
 )
 assert.deepEqual(
   readRuntimeFixedScheduleChoiceItems(
@@ -1367,6 +1376,64 @@ function testEducationScheduleApplyConstraint() {
 }
 
 testEducationScheduleApplyConstraint()
+
+function testPastScheduleSeoulTodayClamp() {
+  const now = new Date('2026-11-05T03:00:00.000Z')
+  assert.equal(seoulTodayIsoDate(now), '2026-11-05')
+  assert.equal(isIsoDateBeforeSeoulToday('2026-11-04', now), true)
+  assert.equal(isIsoDateBeforeSeoulToday('2026-11-05', now), false)
+  assert.equal(isIsoDateBeforeSeoulToday('2026-11-06', now), false)
+  assert.equal(clampIsoMinDateToToday(null, now), '2026-11-05')
+  assert.equal(clampIsoMinDateToToday('2026-10-01', now), '2026-11-05')
+  assert.equal(clampIsoMinDateToToday('2026-12-01', now), '2026-12-01')
+  assert.equal(isScheduleChoicePast('26년 11월 4일(수) 09:30 ~ 12:20', now), true)
+  assert.equal(isScheduleChoicePast('26년 11월 5일(목) 09:30 ~ 12:20', now), false)
+  assert.equal(isSeoulScheduleStartPassed('2026-11-05', '09:00', now), true)
+  assert.equal(isSeoulScheduleStartPassed('2026-11-05', '15:00', now), false)
+  assert.equal(isSeoulScheduleStartPassed('2026-11-05', '00:00', now), false)
+  assert.equal(isSeoulScheduleStartPassed('2026-11-06', '09:00', now), false)
+  assert.equal(
+    hasPreferredScheduleDateBeforeSeoulToday([{ date: '2026-11-04' }, { date: '2026-11-05' }], now),
+    true,
+  )
+  assert.equal(hasPreferredScheduleDateBeforeSeoulToday([{ date: '2026-11-05' }], now), false)
+  assert.equal(
+    hasSelectedScheduleIdsBeforeSeoulToday(
+      ['a', 'b'],
+      [
+        { id: 'a', label: '26년 11월 5일(목)' },
+        { id: 'b', label: '26년 11월 4일(수)' },
+      ],
+      now,
+    ),
+    true,
+  )
+  const clamped = clampEducationScheduleApplyConstraint(
+    {
+      minDate: '2026-10-01',
+      maxDate: '2026-12-31',
+      enabledDates: new Set(['2026-11-04', '2026-11-05', '2026-11-10']),
+      configured: true,
+    },
+    now,
+  )
+  assert.equal(clamped.minDate, '2026-11-05')
+  assert.equal(clamped.enabledDates?.has('2026-11-04'), false)
+  assert.equal(clamped.enabledDates?.has('2026-11-05'), true)
+  const futureMin = clampEducationScheduleApplyConstraint(
+    {
+      minDate: '2026-12-01',
+      maxDate: '2026-12-31',
+      enabledDates: null,
+      configured: true,
+    },
+    now,
+  )
+  assert.equal(futureMin.minDate, '2026-12-01')
+  assert.equal(PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE, '이미 지난 일정은 선택할 수 없습니다.')
+}
+
+testPastScheduleSeoulTodayClamp()
 
 function testEmptyFixedScheduleApplyGate() {
   const education = { id: 'schedule:187653', scheduleId: 187653, label: '본교육' }

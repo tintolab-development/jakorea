@@ -7,6 +7,8 @@ import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { FooterOrgInfo, FooterOrgInfoSaveInput } from '@/entities/footer/model/types'
 import { useFooterOrgInfo, useSaveFooterOrgInfo } from '@/features/footer/api/hooks'
+import { footerOrgSaveFailureAlert } from '@/features/footer/lib/mutation-failure-alert'
+import { readApiErrorField } from '@/shared/lib/api-error-message'
 import {
   REQUIRED_FIELDS_INCOMPLETE_ALERT,
   CmsButton,
@@ -22,6 +24,7 @@ import {
 
 import './org-info-section.css'
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const IMAGE_ACCEPT = '.jpg,.jpeg,.png,image/jpeg,image/png'
 const IMAGE_GUIDE_LINES = [
   '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
@@ -64,11 +67,13 @@ const OrgInlineField = memo(function OrgInlineField({
   sourceValue,
   isEditing,
   resetKey,
+  error,
   onDraftChange,
 }: {
   sourceValue: string
   isEditing: boolean
   resetKey: number
+  error?: string
   onDraftChange: (value: string) => void
 }) {
   const [localValue, setLocalValue] = useState(sourceValue)
@@ -79,20 +84,28 @@ const OrgInlineField = memo(function OrgInlineField({
   }, [isEditing, resetKey, sourceValue])
 
   return (
-    <CmsInput
-      className={fieldClass(isEditing)}
-      inputSize="small"
-      width="100%"
-      value={localValue}
-      readOnly={!isEditing}
-      tabIndex={isEditing ? 0 : -1}
-      onChange={e => {
-        if (!isEditing) return
-        const next = e.target.value
-        setLocalValue(next)
-        onDraftChange(next)
-      }}
-    />
+    <div>
+      <CmsInput
+        className={fieldClass(isEditing)}
+        inputSize="small"
+        width="100%"
+        value={localValue}
+        readOnly={!isEditing}
+        tabIndex={isEditing ? 0 : -1}
+        aria-invalid={Boolean(error)}
+        onChange={e => {
+          if (!isEditing) return
+          const next = e.target.value
+          setLocalValue(next)
+          onDraftChange(next)
+        }}
+      />
+      {error ? (
+        <p className="footer-org-section__field-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   )
 })
 
@@ -162,6 +175,7 @@ export function FooterOrgInfoSection() {
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState<FooterOrgInfoSaveInput | null>(null)
   const [textResetKey, setTextResetKey] = useState(0)
+  const [emailError, setEmailError] = useState<string>()
   const textDraftRef = useRef<OrgTextDraft | null>(null)
 
   const syncTextDraft = useCallback((source: FooterOrgInfoSaveInput) => {
@@ -182,6 +196,7 @@ export function FooterOrgInfoSection() {
       setDraft(next)
       syncTextDraft(next)
     }
+    setEmailError(undefined)
     setIsEditing(true)
   }, [data, syncTextDraft])
 
@@ -192,6 +207,7 @@ export function FooterOrgInfoSection() {
       syncTextDraft(next)
     }
     setIsEditing(false)
+    setEmailError(undefined)
     setTextResetKey(key => key + 1)
   }, [data, syncTextDraft])
 
@@ -229,30 +245,47 @@ export function FooterOrgInfoSection() {
     [handleTextDraftChange]
   )
   const handleEmailChange = useCallback(
-    (value: string) => handleTextDraftChange('email', value),
+    (value: string) => {
+      setEmailError(undefined)
+      handleTextDraftChange('email', value)
+    },
     [handleTextDraftChange]
   )
 
   const handleSave = useCallback(async () => {
     const text = textDraftRef.current
     if (!draft || !text) return
-    if (!text.name.trim()) {
+    if (
+      !text.name.trim() ||
+      !text.address.trim() ||
+      !text.zipCode.trim() ||
+      !text.representative.trim() ||
+      !text.businessNumber.trim() ||
+      !text.phone.trim() ||
+      !text.fax.trim() ||
+      !text.email.trim()
+    ) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
       return
     }
-    if (!text.email.trim()) {
+    if (!draft.logoUrl.trim() && !draft.logoFile && draft.logoAssetId == null) {
       showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
+    if (!EMAIL_RE.test(text.email.trim())) {
+      setEmailError('올바른 이메일 주소 형식으로 입력해 주세요.')
       return
     }
     try {
       await saveMutation.mutateAsync({ ...draft, ...text })
       setIsEditing(false)
+      setEmailError(undefined)
       showSaveCompletedAlert()
-    } catch {
-      showAlert({
-        title: '저장 실패',
-        content: '기관 정보 저장에 실패했습니다. 다시 시도해 주세요.',
-      })
+    } catch (error) {
+      if (readApiErrorField(error) === 'email') {
+        setEmailError('올바른 이메일 주소 형식으로 입력해 주세요.')
+      }
+      showAlert(footerOrgSaveFailureAlert(error))
       void query.refetch()
     }
   }, [draft, query, saveMutation, showAlert])
@@ -466,6 +499,7 @@ export function FooterOrgInfoSection() {
                   sourceValue={data.email}
                   isEditing={isEditing}
                   resetKey={textResetKey}
+                  error={emailError}
                   onDraftChange={handleEmailChange}
                 />
               }

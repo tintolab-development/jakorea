@@ -16,6 +16,7 @@ import {
   RelatedLogoFormModal,
   type RelatedLogoFormValues,
 } from '@/features/footer/ui/related-logo-form-modal'
+import { footerRelatedLogoSaveFailureAlert } from '@/features/footer/lib/mutation-failure-alert'
 import { FooterDragHandle, FooterSortableTable } from '@/features/footer/ui/sortable-table'
 import {
   CMS_TABLE_NO_COL_CLASS,
@@ -85,11 +86,8 @@ export function FooterRelatedLogosSection() {
         })
         setEditing(null)
         showSaveCompletedAlert()
-      } catch {
-        showAlert({
-          title: '저장 실패',
-          content: '유관기관 로고 저장에 실패했습니다. 다시 시도해 주세요.',
-        })
+      } catch (error) {
+        showAlert(footerRelatedLogoSaveFailureAlert(error))
       }
     },
     [editing, saveMutation, showAlert]
@@ -178,7 +176,7 @@ export function FooterRelatedLogosSection() {
         render: (_v, record) => (
           <CmsButton
             variant="secondary"
-            size="small"
+            size="h32"
             type="button"
             onClick={() => setEditing(record)}
           >

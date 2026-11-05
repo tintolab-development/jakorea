@@ -127,12 +127,29 @@ function mapAttendance(item: UjatAttendanceItemDto | undefined): UjatVolunteerAt
   return { kind: 'dash' }
 }
 
+function sameOrganizationApplicationId(
+  left: number | string | null | undefined,
+  right: number | string | null | undefined
+): boolean {
+  if (left == null || right == null) return false
+  const a = typeof left === 'number' ? left : Number(left)
+  const b = typeof right === 'number' ? right : Number(right)
+  return Number.isFinite(a) && Number.isFinite(b) && a === b
+}
+
 function findActivePartnerAssignment(
   assignments: readonly UjatPartnerAssignmentResponse[] | undefined,
-  participantId: number
+  participantId: number,
+  organizationApplicationId?: number | null
 ): UjatPartnerAssignmentResponse | undefined {
   const matches = (assignments ?? []).filter(item => {
     if (isCancelledAssignment(item.status) || item.cancelledAt) return false
+    if (
+      organizationApplicationId != null &&
+      !sameOrganizationApplicationId(item.organizationApplicationId, organizationApplicationId)
+    ) {
+      return false
+    }
     return (
       item.primaryParticipantId === participantId || item.secondaryParticipantId === participantId
     )
@@ -423,7 +440,8 @@ export function buildVolunteerAssignmentProgressView(
     const submission = findSubmission(submissions, draft.scheduleId, participantId)
     const partnerAssignment = findActivePartnerAssignment(
       sources.partnerAssignmentsByScheduleId[scheduleKey],
-      participantId
+      participantId,
+      draft.organizationApplicationId
     )
     const attendanceItem = (sources.attendancesByScheduleId[scheduleKey] ?? []).find(
       item => item.participantId === participantId
@@ -472,11 +490,13 @@ export function buildVolunteerAssignmentProgressView(
       } else if (assigned) partner = { kind: 'undecided' }
     }
 
+    const assignedForManager = isUjatAllocationAssignmentStatusAssigned(assignmentStatus)
     const attendanceManager =
-      cell?.attendanceManager === true ||
-      partnerAssignment?.attendanceManagerParticipantId === participantId
-    const canAssignAttendanceManager =
-      !abandoned && isUjatAllocationAssignmentStatusAssigned(assignmentStatus)
+      assignedForManager &&
+      (cell?.attendanceManager === true ||
+        (cell?.attendanceManager == null &&
+          partnerAssignment?.attendanceManagerParticipantId === participantId))
+    const canAssignAttendanceManager = !abandoned && assignedForManager
 
     return {
       id: rowIdentity(draft),

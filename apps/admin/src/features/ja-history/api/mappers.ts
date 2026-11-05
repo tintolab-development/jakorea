@@ -35,6 +35,12 @@ export function mapJaHistoryMedia(media?: JaHistoryPageMediaResponse | null): Ja
   }
 }
 
+function mapTimelineEventYear(year: unknown): string {
+  if (typeof year === 'string') return year
+  if (typeof year === 'number' && Number.isFinite(year)) return String(year)
+  return ''
+}
+
 function mapTimeline(row?: JaHistoryPageTimelineResponse | null): JaHistoryTimeline {
   return {
     image: mapJaHistoryMedia(row?.image),
@@ -45,7 +51,7 @@ function mapTimeline(row?: JaHistoryPageTimelineResponse | null): JaHistoryTimel
       label: period.label ?? '',
       title: period.title ?? '',
       events: (period.events ?? []).map(event => ({
-        year: event.year == null ? '' : String(event.year),
+        year: mapTimelineEventYear(event.year),
         text: event.text ?? '',
       })),
     })),
@@ -177,7 +183,7 @@ export function toJaHistoryTimelineUpdateRequest(
       id: period.id,
       title: period.title.trimEnd(),
       events: period.events.map(event => ({
-        year: requireYearNumber(event.year, period.id),
+        year: event.year.trim(),
         text: event.text.trimEnd(),
       })),
     })),
@@ -193,11 +199,17 @@ export function toJaHistoryPhilosophyUpdateRequest(
     eyebrow: input.eyebrow.trimEnd(),
     title: input.title.trimEnd(),
     lead: input.lead.trimEnd(),
-    cards: input.cards.map(card => ({
-      id: card.id,
-      title: card.title.trimEnd(),
-      description: card.description.trimEnd(),
-    })),
+    cards: input.cards.map(card => {
+      if (card.imageAssetId == null) {
+        throw new Error('교육 카드 이미지를 등록해 주세요.')
+      }
+      return {
+        id: card.id,
+        title: card.title.trimEnd(),
+        description: card.description.trimEnd(),
+        imageAssetId: card.imageAssetId,
+      }
+    }),
     version,
   }
 }

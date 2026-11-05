@@ -46,13 +46,48 @@ const WORLD_TIMELINE: JaHistoryTimeline = {
       title: '청소년 비즈니스 교육의 시작',
       events: [
         { year: '1919', text: '방과후교실에서 비즈니스 교육 시작' },
-        { year: '1920', text: 'Junior Achivement로 이름 변경' },
+        { year: '1920', text: 'Junior Achievement로 이름 변경' },
         { year: '1929', text: '실물 창업에 기반한 기업가정신 교육 진행' },
       ],
     },
-    { id: '1955-1962', label: '1955-1962', title: '', events: [] },
-    { id: '1969-2000', label: '1969-2000', title: '', events: [] },
-    { id: '2019-now', label: '2019-Now', title: '', events: [] },
+    {
+      id: '1955-1962',
+      label: '1955-1962',
+      title: '',
+      events: [
+        { year: '1955', text: '캐나다 밴쿠버에 JA 첫 국제 사무소 개설' },
+        { year: '1962', text: 'JA를 모델로 한 Young Enterprise 영국에서 출범' },
+      ],
+    },
+    {
+      id: '1969-2000',
+      label: '1969-2000',
+      title: '',
+      events: [
+        { year: '1969', text: '컴퓨터 시뮬레이션 교육 도입' },
+        { year: '1974', text: '학교에서 직접 운영할 수 있는 교육 프로그램 연구 및 개발' },
+        { year: '1980 ~ 1990', text: '아프리카, 중남미, 유럽, 아시아로 JA 네트워크 확장' },
+        {
+          year: '1994',
+          text: '급증하는 세계적 경제교육 수요를 충족시키기 위해 Junior Achievement International 창설',
+        },
+        {
+          year: '2000',
+          text: '온라인 학습과 오프라인 활동을 결합한 게임형 시뮬레이션 교육 본격화',
+        },
+      ],
+    },
+    {
+      id: '2019-now',
+      label: '2019-Now',
+      title: '',
+      events: [
+        { year: '2019', text: 'JA 창립 100주년' },
+        { year: '2020', text: '코로나19 대응 디지털 교육 프로그램 확대' },
+        { year: '2022', text: '2022년부터 5년 연속 노벨평화상 후보 추천' },
+        { year: 'Now', text: '2050년까지 청소년에게 연간 1억 건의 학습 경험 제공 목표' },
+      ],
+    },
   ],
 }
 
@@ -82,9 +117,63 @@ const KOREA_TIMELINE: JaHistoryTimeline = {
         },
       ],
     },
-    { id: '2007-2015', label: '2007-2015', title: '', events: [] },
-    { id: '2016-2020', label: '2016-2020', title: '', events: [] },
-    { id: '2021-now', label: '2021-NOW', title: '', events: [] },
+    {
+      id: '2007-2015',
+      label: '2007-2015',
+      title: '',
+      events: [
+        {
+          year: '2007',
+          text: lines([
+            '대학생 경제교육봉사단 표창(서울시)',
+            '대학생, 기업 파트너가 학교 정규 수업에 참여하는 교육 모델을 전국으로 확장',
+          ]),
+        },
+        { year: '2014', text: '청소년 SW 교육 시작' },
+        { year: '2015', text: '누적 교육 수혜자 100만 명 돌파' },
+      ],
+    },
+    {
+      id: '2016-2020',
+      label: '2016-2020',
+      title: '',
+      events: [
+        {
+          year: '2016',
+          text: '급변하는 산업 환경을 반영한 디지털 리터러시 교육 확대 (ICT, 코딩, 데이터, 정보보안 등)',
+        },
+        { year: '2019', text: '대한민국 경제교육대상(기획재정부)' },
+        {
+          year: '2020',
+          text: lines([
+            '기업가정신 확산·진흥 유공 포상(중소벤처기업부)',
+            '누적 교육 봉사자 10만 명 돌파',
+          ]),
+        },
+      ],
+    },
+    {
+      id: '2021-now',
+      label: '2021-NOW',
+      title: '',
+      events: [
+        {
+          year: '2021',
+          text: lines([
+            '온라인 체험형 경제교육 플랫폼 JA Finance Park 개발 및 운영',
+            '생성형 AI 활용 교육 및 AI 윤리 교육 확대',
+          ]),
+        },
+        {
+          year: '2026',
+          text: 'JA Asia Pacific Company of the Year Competition(COYC) 개최',
+        },
+        {
+          year: 'Now',
+          text: 'BETTER GROUND High School 등 한국 개발 교육 프로그램의 글로벌 운영 (6개국)',
+        },
+      ],
+    },
   ],
 }
 

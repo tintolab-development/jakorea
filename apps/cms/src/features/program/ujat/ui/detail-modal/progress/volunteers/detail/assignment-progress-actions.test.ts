@@ -172,24 +172,32 @@ describe('volunteer assignment mutations', () => {
     ).resolves.toEqual({})
   })
 
-  it('출결 담당 지정은 attendance-manager PUT에 participantId를 보낸다', async () => {
+  it('출결 담당 지정은 attendance-manager PUT에 기관 열과 participantId를 보낸다', async () => {
     await updateVolunteerScheduleRole({
       programId: '42',
       scheduleId: 10,
+      organizationApplicationId: 1691554,
       participantId: 7,
       role: 'attendance_manager',
     })
-    expect(putUjatAttendanceManager).toHaveBeenCalledWith('42', 10, { participantId: 7 })
+    expect(putUjatAttendanceManager).toHaveBeenCalledWith('42', 10, {
+      organizationApplicationId: 1691554,
+      participantId: 7,
+    })
   })
 
   it('해당 없음은 attendance-manager PUT에 participantId null을 보낸다', async () => {
     await updateVolunteerScheduleRole({
       programId: '42',
       scheduleId: 10,
+      organizationApplicationId: 1691554,
       participantId: 7,
       role: 'none',
     })
-    expect(putUjatAttendanceManager).toHaveBeenCalledWith('42', 10, { participantId: null })
+    expect(putUjatAttendanceManager).toHaveBeenCalledWith('42', 10, {
+      organizationApplicationId: 1691554,
+      participantId: null,
+    })
   })
 
   it('성공 후 봉사자 배정·파트너·불참 사유 쿼리를 무효화한다', async () => {

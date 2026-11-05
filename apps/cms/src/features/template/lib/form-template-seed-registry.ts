@@ -48,6 +48,7 @@ import { createEconomyRecruitFormInstitutionDraft } from '@/features/template/mo
 import { buildOperationalImmutableFormSchemaDraft } from '@/features/template/lib/operational-form-schema-copy-merge'
 import { createPaymentStatementIssuanceDraft } from '@/features/template/model/payment-statement-issuance-draft'
 import { createPaymentStatementPreConsentDraft } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { createReceiptPreConsentDraft } from '@/features/template/model/receipt-pre-consent-draft'
 import { createSettlementApplicationIssuanceDraft } from '@/features/template/model/settlement-application-issuance-draft'
 import {
   createAgreementNoticeDraft,
@@ -93,6 +94,7 @@ const FORM_TEMPLATE_SEED_FACTORIES: Record<string, FormTemplateSeedFactory> = {
   'survey-teacher': () => createDefaultSurveyDraft(),
   'survey-admin': () => createDefaultSurveyDraft(),
   'agreement-third-party': () => createPaymentStatementPreConsentDraft(),
+  'agreement-receipt-pre-consent': () => createReceiptPreConsentDraft(),
   'agreement-notice': () => createAgreementNoticeDraft(),
   'agreement-expense': () => createEducatorFacilitatorPledgeDraft(),
   'agreement-portrait': () => createAgreementPortraitDraft(),

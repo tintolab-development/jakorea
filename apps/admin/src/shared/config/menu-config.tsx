@@ -75,7 +75,7 @@ export const menuItems: MenuItemConfig[] = [
         key: 'ja-korea-transparency-group',
         label: '투명경영',
         children: [
-          { key: '/ja-korea/principles', label: '소개 및 운영원칙 관리' },
+          { key: '/ja-korea/principles', label: '운영원칙 관리' },
           { key: '/ja-korea/income-expense', label: '수입&지출 관리' },
           { key: '/ja-korea/reports-disclosure', label: '보고서 및 공시 관리' },
         ],
@@ -258,7 +258,7 @@ const PAGE_TITLE_BY_PATH: Record<string, string> = {
   '/ja-korea/worldwide': 'JA Worldwide 관리',
   '/ja-korea/history-awards-certs': '연혁/수상/인증 관리',
   '/ja-korea/bi': 'BI 소개 관리',
-  '/ja-korea/principles': '소개 및 운영원칙 관리',
+  '/ja-korea/principles': '운영원칙 관리',
   '/ja-korea/income-expense': '수입&지출 관리',
   '/ja-korea/reports-disclosure': '보고서 및 공시 관리',
   '/ja-korea/ja-history': 'JA History',

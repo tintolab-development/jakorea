@@ -9,6 +9,7 @@ import {
   createUjatEducationRegion as createLocal,
   clearUjatEducationRegionsLocalStorage,
   deleteUjatEducationRegion as deleteLocal,
+  readActiveUjatEducationRegionsOrdered,
   readUjatEducationRegions,
   reorderUjatEducationRegions as reorderLocal,
   updateUjatEducationRegion as updateLocal,
@@ -58,6 +59,34 @@ export async function listUjatEducationRegionsService(): Promise<UjatEducationRe
     (await fetchAdminUjatEducationRegionsRemote()).map(mapEducationRegionResponse)
   )
   setUjatEducationRegionsRemoteSnapshot(items)
+  return items
+}
+
+/** 탭·필터용 — GET ?activeYn=true, displayOrder ASC */
+export async function listUjatEducationRegionsActiveRemoteService(): Promise<
+  UjatEducationRegion[]
+> {
+  if (!shouldUseUjatEducationRegionsRemoteApi()) {
+    return readActiveUjatEducationRegionsOrdered()
+  }
+  clearUjatEducationRegionsLocalStorage()
+  const items = normalizeEducationRegionSort(
+    (
+      await fetchAdminUjatEducationRegionsRemote({
+        activeYn: true,
+        includeInactive: false,
+      })
+    )
+      .map(mapEducationRegionResponse)
+      .filter(row => row.regionKey.trim() && row.active)
+  )
+  const snapshot = getUjatEducationRegionsRemoteSnapshot()
+  if (!snapshot) {
+    setUjatEducationRegionsRemoteSnapshot(items)
+  } else {
+    const inactive = snapshot.filter(row => !row.active)
+    setUjatEducationRegionsRemoteSnapshot(normalizeEducationRegionSort([...items, ...inactive]))
+  }
   return items
 }
 
@@ -148,7 +177,15 @@ export async function updateUjatEducationRegionService(
       id,
       mapEducationRegionUpdateRequest(patch)
     )
-    return mapEducationRegionResponse(dto)
+    const mapped = mapEducationRegionResponse(dto)
+    if (remoteSnapshot) {
+      setUjatEducationRegionsRemoteSnapshot(
+        normalizeEducationRegionSort(
+          remoteSnapshot.map(row => (row.id === mapped.id ? mapped : row))
+        )
+      )
+    }
+    return mapped
   } catch (error) {
     rethrowDuplicateNameFromRemote(error)
   }
@@ -192,6 +229,5 @@ export async function reorderUjatEducationRegionsService(
   const missing = current.filter(row => !orderedIds.includes(row.id))
   const next = normalizeEducationRegionSort([...ordered, ...missing])
   await reorderAdminUjatEducationRegionsRemote(mapEducationRegionReorderRequest(next))
-  setUjatEducationRegionsRemoteSnapshot(next)
-  return next
+  return listUjatEducationRegionsService()
 }

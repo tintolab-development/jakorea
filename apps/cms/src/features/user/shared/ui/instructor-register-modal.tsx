@@ -12,7 +12,12 @@ import {
   collectDisagreedRequiredConsentLabels,
   hasUnsetConsentSelections,
 } from '@jakorea/domain/shared/required-consent-alert'
-import { INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS } from '@jakorea/domain/instructor/consent'
+import {
+  INSTRUCTOR_CONSENT_DOCUMENT_ITEMS,
+  INSTRUCTOR_CONSENT_RADIO_ITEMS,
+  INSTRUCTOR_REGISTER_ALL_CONSENT_KEYS,
+} from '@jakorea/domain/instructor/consent'
+import { getInstructorRequiredConsentAgreeKeys } from '@jakorea/domain/instructor/form-layout'
 import { isBirthDateInputIncomplete, isValidBirthDateFormValue } from '@/shared/ui/date-text-input'
 import { CmsButton, ContentModal, showRegisterCompletedAlert } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
@@ -43,10 +48,15 @@ export type { InstructorRegisterModalFormValues } from '@/features/user/shared/u
 
 const FORM_ID = 'cms-instructor-register-modal-form'
 
+const INSTRUCTOR_REGISTER_REQUIRED_CONSENT_AGREE_KEYS =
+  getInstructorRequiredConsentAgreeKeys('cmsRegister')
+
 const INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS = [
-  { key: 'consentTermsOfService', label: '서비스 이용약관' },
-  { key: 'consentPersonal', label: '개인정보 수집·이용 동의' },
-] as const
+  ...INSTRUCTOR_CONSENT_RADIO_ITEMS,
+  ...INSTRUCTOR_CONSENT_DOCUMENT_ITEMS,
+].filter(item =>
+  INSTRUCTOR_REGISTER_REQUIRED_CONSENT_AGREE_KEYS.includes(item.key)
+)
 
 const CRIME_CONSENT_EVIDENCE_REQUIRED_ALERT_MESSAGE = '성범죄경력 조회 동의서 파일을 첨부해 주세요.'
 
@@ -140,11 +150,8 @@ export function InstructorRegisterModal({
       }
 
       const disagreedRequiredLabels = collectDisagreedRequiredConsentLabels(
-        {
-          consentTermsOfService: values.consentTermsOfService,
-          consentPersonal: values.consentPersonal,
-        },
-        [...INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS]
+        values,
+        INSTRUCTOR_REGISTER_REQUIRED_CONSENT_FIELDS
       )
       if (disagreedRequiredLabels.length > 0) {
         showRegisterAlert(

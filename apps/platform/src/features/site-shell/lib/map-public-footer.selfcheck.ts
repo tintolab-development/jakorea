@@ -62,7 +62,22 @@ const remote = mapPublicFooter({
     fax: '070-4275-5115',
     email: 'jakorea@jakorea.org',
   },
-  partners: [],
+  partners: [
+    {
+      partnerId: 1,
+      organizationName: '기획재정부',
+      logoUrl: 'https://cdn.example.test/moef.png',
+      externalUrl: 'https://www.moef.go.kr',
+      displayOrder: 1,
+    },
+    {
+      partnerId: 2,
+      organizationName: '국세청',
+      logoUrl: 'https://cdn.example.test/nts.png',
+      externalUrl: '   ',
+      displayOrder: 2,
+    },
+  ],
 })
 
 assert.ok(remote)
@@ -77,7 +92,9 @@ assert.equal(
 assert.equal(remote.addressLine.includes('('), false)
 const donation = remote.menus.find(menu => menu.key === 'DONATION')
 assert.equal(donation?.kind, 'noop')
-assert.equal(remote.partners.length, 0)
+assert.equal(remote.partners.length, 2)
+assert.equal(remote.partners[0]?.href, 'https://www.moef.go.kr')
+assert.equal(remote.partners[1]?.href, null)
 assert.equal(mapPublicFooter([]), null)
 
 console.log('map-public-footer.selfcheck ok')

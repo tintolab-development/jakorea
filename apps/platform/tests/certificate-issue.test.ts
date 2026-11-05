@@ -87,15 +87,15 @@ describe('개인 수료증 API 계약', () => {
     ).toEqual({ kind: 'download', issueId: 14 })
   })
 
-  it('canIssueCertificate가 없거나 false면 버튼을 숨긴다', () => {
+  it('canIssueCertificate가 false여도 availability가 가능하면 발급 버튼이다', () => {
     expect(
       resolveCertificateCtaView({
         isTeacher: false,
         applicationType: 'INDIVIDUAL',
         canIssueCertificate: false,
-        availability: { available: true, canDownload: false },
+        availability: { available: true, canDownload: false, certificateType: 'PARTICIPATION' },
       }),
-    ).toEqual({ kind: 'hidden' })
+    ).toEqual({ kind: 'issue' })
   })
 
   it('목록은 certificateAvailable을 복사하고 ISSUE_CERTIFICATE는 availableActions로 둔다', () => {

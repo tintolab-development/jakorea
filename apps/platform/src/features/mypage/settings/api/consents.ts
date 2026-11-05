@@ -18,6 +18,12 @@ export type PortalConsentSummary = {
   required?: boolean
   agreed?: boolean
   signed?: boolean
+  /**
+   * RECEIPT_PRE_CONSENT / PAYMENT_STATEMENT_CONSENT / FACILITATOR_PLEDGE /
+   * ADMINISTRATIVE_INFO_CONSENT / CRIMINAL_HISTORY_CHECK_CONSENT 만 boolean.
+   * 그 외 타입은 omit/null — true로 정규화하지 않는다.
+   */
+  listed?: boolean | null
   status?: string
   agreedAt?: string
   expiresAt?: string

@@ -205,7 +205,16 @@ export class CompanySchoolRegistrationPage {
     await expect(instructorTab).toHaveAttribute('aria-selected', 'true', { timeout: 10_000 })
     await this.fillRecruitSharedFields()
     await this.expectVolunteerRecruitTabAbsent()
-    await this.page.keyboard.press('Escape').catch(() => undefined)
+    const cancelDialog = this.page.getByRole('dialog').filter({ hasText: '작성 취소 안내' })
+    if (await cancelDialog.isVisible().catch(() => false)) {
+      await cancelDialog.getByRole('button', { name: '돌아가기' }).click()
+      await expect(cancelDialog).toBeHidden({ timeout: 10_000 })
+    }
+    await this.page
+      .locator('.date-time-picker-popover__backdrop:visible')
+      .first()
+      .click({ position: { x: 1, y: 1 }, force: true })
+      .catch(() => undefined)
     const institutionTab = this.page
       .getByRole('tab', { name: /참여 기관 모집|참여자 모집/ })
       .first()

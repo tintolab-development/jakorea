@@ -50,6 +50,30 @@ function individualDraft(
 }
 
 describe('mapPatchUserBasicInfoToApiRequest', () => {
+  it('강사 상세 PATCH에 계좌 키를 넣지 않는다', () => {
+    const body = mapPatchUserBasicInfoToApiRequest({
+      name: '김강사',
+      instructorInfo: {
+        bankName: '국민',
+        accountNumber: '************',
+        accountHolder: '김**',
+        isBusinessIncome: true,
+      },
+      instructorCmsSettlement: {
+        bankName: '국민',
+        accountNumber: '************',
+        accountHolder: '김**',
+        businessIncome: true,
+        bankAccounts: [],
+      },
+    })
+
+    expect(body.instructorInfo).toEqual({ isBusinessIncome: true })
+    expect(body.settlement).toEqual({ businessIncome: true })
+    expect(body.instructorInfo).not.toHaveProperty('bankName')
+    expect(body.settlement).not.toHaveProperty('bankAccounts')
+  })
+
   it('instructorCertifications를 instructorInfo.certifications로 매핑한다', () => {
     const body = mapPatchUserBasicInfoToApiRequest({
       name: '김강사',

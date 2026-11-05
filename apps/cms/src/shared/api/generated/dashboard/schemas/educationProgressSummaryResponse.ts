@@ -8,9 +8,18 @@
 import type { RegionProgressSummary } from './regionProgressSummary';
 
 /**
- * UJAT 교육 진행 요약. regions는 []이며 null이 아니다. 기수·연도 필드는 내려주지 않는다. 라벨(상반기/하반기/합계)은 FE 고정 카피.
+ * UJAT 교육 진행 요약. regions는 []이며 null이 아니다. programYear는 사업연도. firstHalfActivityTerm/secondHalfActivityTerm은 순수 기수 숫자만. FE 카피: 학교 1학기/2학기/{programYear}년 종합, 봉사단 선발 예정 인원 / {term}기 최종 합격 / {programYear} 봉사단 최종 인원. wire는 firstHalf/secondHalf/total.
  */
 export interface EducationProgressSummaryResponse {
   programId?: number;
+  /** 사업연도. program.business_year. 없으면 business_start_date 연도. UTC slice 금지. */
+  programYear?: number | null;
+  /** 1학기 표시용 기수 숫자 문자열. 예: "36". 미저장이면 null. */
+  firstHalfActivityTerm?: string | null;
+  /** 2학기 표시용 기수 숫자 문자열. 예: "37". 미저장이면 null. */
+  secondHalfActivityTerm?: string | null;
   regions?: RegionProgressSummary[];
 }
+
+/** JABACK schema alias */
+export type UjatEducationProgressSummaryResponse = EducationProgressSummaryResponse;

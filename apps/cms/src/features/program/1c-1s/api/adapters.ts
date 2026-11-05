@@ -26,6 +26,7 @@ import {
   serializeCompanySchoolServiceDetailJson,
   serializeCompanySchoolServiceDetailJsonForUpdatePatch,
 } from './service-detail-json'
+import { hydrateCompanySchoolDetailFromGet } from '../lib/hydrate-company-school-detail-get'
 import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { toProgramRecruitmentWindows } from '@/features/program/shared/lib/program-edit-window'
 import { mapListParticipantRecruitment } from '@/features/program/shared/lib/format-recruitment-headcount'
@@ -338,15 +339,17 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
     backendProgramType: dto.programType ?? COMPANY_SCHOOL_PROGRAM_API_TYPE,
     programRecruitments: toProgramRecruitmentWindows(dto.recruitments),
   })
-  return applyBusinessPeriodHistoriesFromDto(
-    applyResolvedAnnouncementTitle(
-      applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
-      {
-        serviceDetailJson: dto.serviceDetailJson,
-        overlay: details.registrationOverlay,
-      }
-    ),
-    dto
+  return hydrateCompanySchoolDetailFromGet(
+    applyBusinessPeriodHistoriesFromDto(
+      applyResolvedAnnouncementTitle(
+        applyParticipantRecruitmentColumnsFromResponse(mapped, dto),
+        {
+          serviceDetailJson: dto.serviceDetailJson,
+          overlay: details.registrationOverlay,
+        }
+      ),
+      dto
+    )
   )
 }
 

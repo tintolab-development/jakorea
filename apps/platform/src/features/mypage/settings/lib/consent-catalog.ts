@@ -11,6 +11,7 @@ export type SettingsConsentItemId =
   | 'marketing'
   | 'portrait'
   | 'paymentStatement'
+  | 'receiptPreConsent'
   | 'educatorPledge'
   | 'administrativeJoint'
   | 'sexOffenseCheck'
@@ -31,6 +32,10 @@ export type SettingsConsentItem = {
   withdrawable?: boolean
   /** 서버 `status` — WITHDRAWN이면 철회 버튼 비활성 */
   status?: string
+  /** 서버 `signed` — 동의서 게이트는 agreed && signed */
+  signed?: boolean
+  /** 서버 listed. boolean만 유지. null은 true로 올리지 않는다. */
+  listed?: boolean
 }
 
 export type BasicConsentAudience = {
@@ -149,6 +154,14 @@ export const DOCUMENT_CONSENT_ITEMS: SettingsConsentItem[] = [
     agreed: false,
     validityLabel: '10년',
     hint: '영수증 제출 시 최초 1회 작성 · 유효기간 10년',
+  },
+  {
+    id: 'receiptPreConsent',
+    title: '영수증 발급 사전 동의서',
+    required: false,
+    kind: 'document',
+    agreed: false,
+    hint: '정산·영수증 신규 제출 시 작성. 본문은 법무 확정 전 초안이며, 유효기간은 서버 정책을 따릅니다.',
   },
   {
     id: 'educatorPledge',

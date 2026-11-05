@@ -1,6 +1,7 @@
 import {
   formatResidentNumberForPreview,
   mergePaymentStatementBasicInfo,
+  mergeReceiptPreConsentBasicInfo,
   type PaymentStatementBasicInfoValues,
 } from '@jakorea/form-schema/consent'
 import previewTypography from './consent-document-preview-typography.module.css'
@@ -42,11 +43,15 @@ function PaymentField({
 /** CMS A4 `PaymentStatementBasicInfoDetailForm` document(view) 배치 */
 export function ConsentPreviewPaymentInfo({
   values,
+  variant = 'payment',
 }: {
   values?: Partial<PaymentStatementBasicInfoValues>
+  variant?: 'payment' | 'receipt'
 }) {
-  const merged = mergePaymentStatementBasicInfo(values)
-  const resident = formatResidentNumberForPreview(merged.residentFront, merged.residentBack)
+  const isReceipt = variant === 'receipt'
+  const receiptMerged = mergeReceiptPreConsentBasicInfo(values)
+  const paymentMerged = mergePaymentStatementBasicInfo(values)
+  const merged = isReceipt ? receiptMerged : paymentMerged
   const address = [merged.addressRoad, merged.addressDetail].filter(part => part.trim()).join(' ')
   const account = [textOrDash(merged.bankName), merged.accountNumber, merged.accountHolder]
     .filter(part => part && part !== '-')
@@ -58,12 +63,26 @@ export function ConsentPreviewPaymentInfo({
         <PaymentField label="성명" value={textOrDash(merged.nameKo)} />
         <PaymentField label="영문 성명" value={textOrDash(merged.nameEn)} />
       </div>
+      {isReceipt ? null : (
+        <div className={previewTypography.paymentInfoRow}>
+          <PaymentField
+            label="주민등록번호"
+            value={textOrDash(
+              formatResidentNumberForPreview(paymentMerged.residentFront, paymentMerged.residentBack),
+            )}
+          />
+          <PaymentField
+            label="소속"
+            value={displayAffiliation(paymentMerged.affiliation, paymentMerged.noAffiliation)}
+          />
+        </div>
+      )}
       <div className={previewTypography.paymentInfoRow}>
-        <PaymentField label="주민등록번호" value={textOrDash(resident)} />
-        <PaymentField label="소속" value={displayAffiliation(merged.affiliation, merged.noAffiliation)} />
-      </div>
-      <div className={previewTypography.paymentInfoRow}>
-        <PaymentField label="자택 주소" value={textOrDash(address)} single />
+        <PaymentField
+          label={isReceipt ? '지역/주소' : '자택 주소'}
+          value={textOrDash(address)}
+          single
+        />
       </div>
       <div className={previewTypography.paymentInfoRow}>
         <PaymentField label="정산 계좌 정보" value={textOrDash(account)} single />

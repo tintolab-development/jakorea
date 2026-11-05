@@ -20,7 +20,9 @@ export function isConsentSignaturesComplete(
 
 export function resolveConsentSignatureSlots(templateId: string): ConsentSignatureSlot[] {
   if (isCrimeConsentTemplate(templateId)) return []
-  if (templateId === 'agreement-third-party') return ['mid', 'final']
+  if (templateId === 'agreement-third-party' || templateId === 'agreement-receipt-pre-consent') {
+    return ['mid', 'final']
+  }
   return ['final']
 }
 

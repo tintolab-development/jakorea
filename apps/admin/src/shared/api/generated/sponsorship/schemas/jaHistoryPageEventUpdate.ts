@@ -7,7 +7,11 @@
  */
 
 export interface JaHistoryPageEventUpdate {
-  year: number;
+  /**
+     * @minLength 0
+     * @maxLength 32
+     */
+  year: string;
   /**
      * @minLength 0
      * @maxLength 10000

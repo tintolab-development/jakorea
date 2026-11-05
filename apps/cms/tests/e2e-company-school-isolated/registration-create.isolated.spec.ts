@@ -127,7 +127,6 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
       )
       .toBe(true)
     expect(log.programDraftPuts).toHaveLength(0)
-    await page.keyboard.press('Escape').catch(() => undefined)
     await page.goto('/programs/company-school')
     const createButton = page.getByRole('button', { name: '신규 등록' }).first()
     await expect(createButton).toBeVisible({ timeout: 45_000 })
@@ -164,10 +163,35 @@ test.describe('CS-B01/B03/B06/B07 신규 등록 격리 E2E', () => {
     await openFreshWizard(page)
     await fillRegistrationThroughComplete(page)
     await page.getByRole('button', { name: '프로그램 등록 완료' }).click()
+    const failTitle = page.getByText('등록 실패', { exact: true }).or(page.getByText('서버 오류', { exact: true }))
+    await expect(failTitle.first()).toBeVisible({ timeout: 30_000 })
+    const failConfirm = page.locator('.alert-modal').getByRole('button', { name: '확인' })
+    if (await failConfirm.isVisible().catch(() => false)) {
+      await failConfirm.click()
+    }
+    await expect(failTitle.first()).toBeHidden({ timeout: 10_000 })
     await expect.poll(() => log.createProgram, { timeout: 60_000 }).not.toBeNull()
     await expect(page.getByText('1사1교 프로그램 등록').first()).toBeVisible()
     await expectWizardCommonTitle(page, VALUES_B.title)
     expect(log.mutations.filter(item => item.path === '/api/admin/programs')).toHaveLength(1)
+    await expectWizardCommonTitle(page, VALUES_B.title)
+    const complete = page.getByRole('button', { name: '프로그램 등록 완료' })
+    if (!(await complete.isVisible().catch(() => false))) {
+      const toRecruit = page.getByRole('button', { name: '모집 정보 작성하기' })
+      if (await toRecruit.isVisible().catch(() => false)) await toRecruit.click()
+      const toApplication = page.getByRole('button', { name: '신청 정보 작성하기' })
+      await expect(toApplication).toBeVisible({ timeout: 30_000 })
+      await toApplication.click()
+    }
+    await expect(complete).toBeVisible({ timeout: 30_000 })
+    await complete.click()
+    await expect
+      .poll(
+        () => log.mutations.filter(item => item.path === '/api/admin/programs').length,
+        { timeout: 60_000 },
+      )
+      .toBe(2)
+    await expect(page.getByRole('heading', { name: '등록 완료' })).toBeVisible({ timeout: 20_000 })
   })
 
   test('CS-B06 blob URL이 CREATE overlay에 저장되지 않는다', async ({ page }) => {

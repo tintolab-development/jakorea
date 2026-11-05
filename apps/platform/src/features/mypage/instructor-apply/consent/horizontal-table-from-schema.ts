@@ -3,6 +3,7 @@ import {
   type HorizontalTableParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 
 export type HorizontalTablePlatformView = {
   headers: readonly string[]
@@ -33,7 +34,10 @@ export function resolveHorizontalTablePlatformView(
 
 /** CMS·runtime과 동일 — Platform `ConsentInfoTable` 강조 열 */
 function isHorizontalTableEmphasizedBodyCell(paragraphId: string, colIndex: number): boolean {
-  if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection) {
+  if (
+    paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection ||
+    paragraphId === RECEIPT_PRE_CONSENT_IDS.p1Collection
+  ) {
     return colIndex === 2
   }
   if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection) {
@@ -41,7 +45,8 @@ function isHorizontalTableEmphasizedBodyCell(paragraphId: string, colIndex: numb
   }
   if (
     paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty ||
-    paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty
+    paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty ||
+    paragraphId === RECEIPT_PRE_CONSENT_IDS.p2ThirdParty
   ) {
     return colIndex !== 1
   }
@@ -55,9 +60,19 @@ function isHorizontalTableEmphasizedBodyCell(paragraphId: string, colIndex: numb
 export function resolvePaymentStatementWriteEmphasizedColumns(
   paragraphId: string
 ): readonly number[] | undefined {
-  if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection) return [1, 2]
+  if (
+    paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p1Collection ||
+    paragraphId === RECEIPT_PRE_CONSENT_IDS.p1Collection
+  ) {
+    return [1, 2]
+  }
   if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p2RrnCollection) return [0, 2]
-  if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty) return [0, 2, 3]
+  if (
+    paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty ||
+    paragraphId === RECEIPT_PRE_CONSENT_IDS.p2ThirdParty
+  ) {
+    return [0, 2, 3]
+  }
   if (paragraphId === PAYMENT_STATEMENT_PRE_CONSENT_IDS.p4RrnThirdParty) return [0, 1, 2, 3]
   return undefined
 }

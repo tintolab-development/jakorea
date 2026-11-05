@@ -25,6 +25,7 @@ assert.deepEqual(FIVE_POLICY_CONSENT_TYPES, [
   'CRIMINAL_HISTORY_CHECK_CONSENT',
 ])
 assert.ok(TYPE_WITHDRAWABLE_CONSENT_TYPES.includes('CHILD_PRIVACY_COLLECTION'))
+assert.ok(TYPE_WITHDRAWABLE_CONSENT_TYPES.includes('RECEIPT_PRE_CONSENT'))
 assert.equal(isFivePolicyConsentType('PAYMENT_STATEMENT_PRE_CONSENT'), false)
 assert.equal(isFivePolicyConsentType('CHILD_PRIVACY_COLLECTION'), false)
 
@@ -61,6 +62,12 @@ assert.deepEqual(
     consentType: 'PAYMENT_STATEMENT_PRE_CONSENT',
   }),
   { kind: 'type', consentType: 'PAYMENT_STATEMENT_CONSENT' },
+)
+assert.deepEqual(
+  resolveConsentWithdrawTarget({
+    consentType: 'AGREEMENT_RECEIPT_PRE_CONSENT',
+  }),
+  { kind: 'type', consentType: 'RECEIPT_PRE_CONSENT' },
 )
 assert.deepEqual(
   resolveConsentWithdrawTarget({ consentType: 'CHILD_PRIVACY_COLLECTION' }),

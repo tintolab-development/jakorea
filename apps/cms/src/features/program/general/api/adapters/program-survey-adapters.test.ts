@@ -308,6 +308,21 @@ describe('classifyFormBindingByTemplateId', () => {
     )
   })
 
+  it('keeps SATISFACTION aliases on the satisfaction tab', () => {
+    expect(
+      classifyFormBindingByTemplateId({
+        formType: 'SATISFACTION_SURVEY',
+        templateName: '설문조사',
+      })
+    ).toBe('satisfaction')
+    expect(
+      classifyFormBindingByTemplateId({
+        formType: 'PROGRAM_SATISFACTION',
+        templateName: '설문조사',
+      })
+    ).toBe('satisfaction')
+  })
+
   it('keeps a SURVEY slot on the poll list even when the template name is satisfaction or lecture', () => {
     expect(
       classifyFormBindingByTemplateId({
@@ -603,6 +618,15 @@ describe('resolveSurveyShareClipboardUrl', () => {
     ).toBe('https://platform.example.com/surveys/share/abc')
   })
 
+  it('builds the Platform UI URL when accessMode is omitted but a public token exists', () => {
+    expect(
+      resolveSurveyShareClipboardUrl(
+        { shareToken: 'abc' },
+        'https://platform.example.com'
+      )
+    ).toBe('https://platform.example.com/surveys/share/abc')
+  })
+
   it('builds the Platform UI URL from a public formPath token when shareToken is omitted', () => {
     const backendResponse = {
       accessMode: 'PUBLIC_ANONYMOUS',
@@ -640,10 +664,24 @@ describe('describeSurveyShareClipboardFailure', () => {
   it('explains member-only surveys', () => {
     expect(
       describeSurveyShareClipboardFailure(
-        { accessMode: 'MEMBER_AUTHENTICATED', shareToken: 'abc' },
+        {
+          accessMode: 'MEMBER_AUTHENTICATED',
+          shareToken: 'abc',
+          formPath: '/api/portal/me/programs/1/form-bindings/2/render',
+          submitPath: '/api/portal/me/programs/1/form-bindings/2/responses',
+        },
         'https://platform.example.com'
       )
     ).toContain('회원 전용')
+    expect(
+      describeSurveyShareClipboardFailure(
+        {
+          accessMode: 'MEMBER_AUTHENTICATED',
+          formPath: '/api/portal/me/programs/1/form-bindings/2/render',
+        },
+        'https://platform.example.com'
+      )
+    ).toContain('/api/portal/me/programs/1/form-bindings/2/render')
   })
 
   it('explains a missing Platform origin', () => {

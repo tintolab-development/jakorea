@@ -10,7 +10,7 @@ import {
   type UjatManagerEvaluation,
   type UjatVolunteerApplicationType,
 } from '@/features/program/ujat/model/ujat-volunteer-screening-constants'
-import { getUjatVolunteerPreferredRegionLabels } from '@/features/program/ujat/lib/ujat-education-regions'
+import { listUjatEducationRegionsActive } from '@/features/program/ujat/lib/ujat-education-regions'
 
 const ALL = 'ALL'
 
@@ -86,14 +86,21 @@ function withDocScreeningFilterWidth(field: FilterFieldConfig): FilterFieldConfi
 }
 
 /** FilterTableLayout `fields` — 공통 filterResponsiveWrap(4개 이상 flex-wrap) */
-export function buildUjatVolunteerDocScreeningFilterFields(): FilterFieldConfig[] {
-  return buildUjatVolunteerDocScreeningFilterRows().flat().map(withDocScreeningFilterWidth)
+export function buildUjatVolunteerDocScreeningFilterFields(
+  regions: ReturnType<typeof listUjatEducationRegionsActive> = listUjatEducationRegionsActive()
+): FilterFieldConfig[] {
+  return buildUjatVolunteerDocScreeningFilterRows(regions).flat().map(withDocScreeningFilterWidth)
 }
 
-export function buildUjatVolunteerDocScreeningFilterRows(): FilterFieldConfig[][] {
+export function buildUjatVolunteerDocScreeningFilterRows(
+  regions: ReturnType<typeof listUjatEducationRegionsActive> = listUjatEducationRegionsActive()
+): FilterFieldConfig[][] {
   const regionOptions = [
     { label: '전체', value: ALL },
-    ...getUjatVolunteerPreferredRegionLabels().map(label => ({ label, value: label })),
+    ...regions.map(region => ({
+      label: region.label,
+      value: region.key,
+    })),
   ]
 
   return [

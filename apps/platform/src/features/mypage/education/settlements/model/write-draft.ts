@@ -38,6 +38,7 @@ export type SettlementWriteDraft = {
   }
   basic: {
     name: string
+    nameEn: string
     residentFront: string
     residentBack: string
     homeAddress: string

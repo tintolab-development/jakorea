@@ -1,13 +1,16 @@
-import { useId, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { FileAttachmentParagraph } from '@jakorea/form-schema/writing-form'
-import { formatSingleFileUploadHint, validateUploadBatch } from '@/shared/lib/file-upload-policy'
 import {
-  PFButton,
+  FILE_UPLOAD_MAX_COUNT,
+  formatSingleFileUploadHint,
+  validateUploadBatch,
+} from '@/shared/lib/file-upload-policy'
+import {
   PFFormField,
   PFFormFieldHintText,
   PFFormFieldRow,
   PFFormFieldTable,
-  PFItemDeleteButton,
+  PFFormFileAttach,
   PFText,
 } from '@/shared/ui'
 import styles from './file-attachment-field.module.css'
@@ -37,66 +40,36 @@ export function SurveyFileAttachmentField({
   disabled = false,
   uploading = false,
 }: SurveyFileAttachmentFieldProps) {
-  const inputId = useId()
-  const inputRef = useRef<HTMLInputElement>(null)
   const [policyError, setPolicyError] = useState<string | null>(null)
+  const atCap = fileNames.length >= FILE_UPLOAD_MAX_COUNT
+  const busy = disabled || uploading
 
   return (
     <div className={styles.root}>
-      {fileNames.length > 0 ? (
-        <ul className={styles.fileList}>
-          {fileNames.map((name, index) => (
-            <li key={`${index}-${name}`} className={styles.fileChip}>
-              <PFText as="span" typo="bd-md-md" color="black" className={styles.fileName}>
-                {name}
-              </PFText>
-              {disabled ? null : (
-                <PFItemDeleteButton
-                  aria-label={`${name} 삭제`}
-                  disabled={uploading}
-                  onClick={() => onFileRemove?.(index)}
-                />
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : null}
       <PFFormFieldTable>
         <PFFormFieldRow type="single">
           <PFFormField label="첨부 파일">
             <div className={styles.attachRow}>
-              <input
-                ref={inputRef}
-                id={inputId}
-                className={styles.fileInput}
-                type="file"
-                accept={IMAGE_UPLOAD_ACCEPT}
-                multiple
-                disabled={disabled || uploading}
-                onChange={event => {
-                  const files = Array.from(event.target.files ?? [])
-                  event.target.value = ''
-                  if (files.length === 0) return
-                  const error = validateUploadBatch({
-                    currentCount: fileNames.length,
-                    currentTotalBytes: 0,
-                    incoming: files,
-                  })
-                  setPolicyError(error)
-                  if (error) return
-                  onFileAdd?.(files)
-                }}
-              />
-              <PFButton
-                type="button"
-                variant="secondary"
-                size="medium"
-                className={styles.fileButton}
-                disabled={disabled || uploading}
-                onClick={() => inputRef.current?.click()}
-              >
-                {uploading ? '업로드 중…' : '파일 추가'}
-              </PFButton>
+              {disabled ? null : (
+                <PFFormFileAttach
+                  className={styles.trigger}
+                  accept={IMAGE_UPLOAD_ACCEPT}
+                  buttonLabel="파일 추가"
+                  aria-label="교육 사진 첨부"
+                  uploading={uploading}
+                  disabled={busy || atCap}
+                  onFileSelect={file => {
+                    const error = validateUploadBatch({
+                      currentCount: fileNames.length,
+                      currentTotalBytes: 0,
+                      incoming: [file],
+                    })
+                    setPolicyError(error)
+                    if (error) return
+                    onFileAdd?.([file])
+                  }}
+                />
+              )}
               <div className={styles.hints}>
                 {IMAGE_UPLOAD_HINTS.map(hint => (
                   <PFFormFieldHintText key={hint} as="p" className={styles.hintLine}>
@@ -105,6 +78,20 @@ export function SurveyFileAttachmentField({
                 ))}
               </div>
             </div>
+            {fileNames.length > 0 ? (
+              <div className={styles.files}>
+                {fileNames.map((name, index) => (
+                  <PFFormFileAttach
+                    key={`${index}-${name}`}
+                    hideTrigger
+                    fileName={name}
+                    disabled={busy}
+                    onFileSelect={() => {}}
+                    onRemove={disabled ? undefined : () => onFileRemove?.(index)}
+                  />
+                ))}
+              </div>
+            ) : null}
             {policyError ? (
               <PFText as="p" role="alert" typo="bd-sm-rg" color="error" className={styles.fileError}>
                 {policyError}

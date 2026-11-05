@@ -10,6 +10,7 @@ import type { PublicSurveyFormResponseForm } from './publicSurveyFormResponseFor
 export interface PublicSurveyFormResponse {
   programId?: number;
   bindingId?: number;
+  formType?: string;
   templateVersionId?: number;
   targetScope?: string;
   targetScopeId?: number;

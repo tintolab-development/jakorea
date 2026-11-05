@@ -8,6 +8,8 @@ interface BasicInfoParagraphProps {
   values?: Partial<PaymentStatementBasicInfoAutofillValues>
   displayMode?: PaymentStatementIssuanceParagraphDisplayMode
   onlyPaymentPurposeLocked?: boolean
+  lockedProfileFields?: boolean
+  hideResidentFields?: boolean
   onValuesChange?: (values: PaymentStatementBasicInfoAutofillValues) => void
 }
 
@@ -15,6 +17,8 @@ export function BasicInfoParagraph({
   values,
   displayMode = 'editor',
   onlyPaymentPurposeLocked,
+  lockedProfileFields,
+  hideResidentFields,
   onValuesChange,
 }: BasicInfoParagraphProps) {
   return (
@@ -23,6 +27,8 @@ export function BasicInfoParagraph({
         values={values}
         displayMode={displayMode}
         onlyPaymentPurposeLocked={onlyPaymentPurposeLocked}
+        lockedProfileFields={lockedProfileFields}
+        hideResidentFields={hideResidentFields}
         onValuesChange={onValuesChange}
       />
     </div>

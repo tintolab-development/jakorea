@@ -21,13 +21,22 @@ import type {
   PublicTransparencyResponse,
 } from './types'
 
-const PRINCIPLE_ICONS: readonly TransparencyPrincipleIcon[] = [
-  'audit',
-  'governance',
-  'privacy',
-  'asset',
-  'partnership',
-]
+/** 아이콘은 displayOrder가 아니라 행 id / iconCode에 고정. */
+const PRINCIPLE_ICON_BY_ID: Record<number, TransparencyPrincipleIcon> = {
+  1: 'audit',
+  2: 'governance',
+  3: 'privacy',
+  4: 'asset',
+  5: 'partnership',
+}
+
+const PRINCIPLE_ICON_BY_CODE: Record<string, TransparencyPrincipleIcon> = {
+  TRANSPARENCY_PRINCIPLE_1: 'audit',
+  TRANSPARENCY_PRINCIPLE_2: 'governance',
+  TRANSPARENCY_PRINCIPLE_3: 'privacy',
+  TRANSPARENCY_PRINCIPLE_4: 'asset',
+  TRANSPARENCY_PRINCIPLE_5: 'partnership',
+}
 
 const AUDIT_COVER_GRADIENTS = [
   'linear-gradient(135deg, #14424e 0%, #1f6f7d 100%)',
@@ -81,12 +90,29 @@ function splitDescription(subText: string): string[] {
   return [trimmed]
 }
 
-function resolvePrincipleIcon(
-  row: PublicPrincipleResponse,
-  index: number,
-): TransparencyPrincipleIcon {
-  const order = row.displayOrder ?? index + 1
-  return PRINCIPLE_ICONS[Math.max(0, order - 1) % PRINCIPLE_ICONS.length]!
+function resolvePrincipleIcon(row: PublicPrincipleResponse): TransparencyPrincipleIcon {
+  if (row.iconCode && PRINCIPLE_ICON_BY_CODE[row.iconCode]) {
+    return PRINCIPLE_ICON_BY_CODE[row.iconCode]
+  }
+  if (row.id != null && PRINCIPLE_ICON_BY_ID[row.id]) {
+    return PRINCIPLE_ICON_BY_ID[row.id]
+  }
+  if (row.itemCode === 'PRINCIPLE_1' || row.itemCode === 'TRANSPARENCY_PRINCIPLE_1') {
+    return 'audit'
+  }
+  if (row.itemCode === 'PRINCIPLE_2' || row.itemCode === 'TRANSPARENCY_PRINCIPLE_2') {
+    return 'governance'
+  }
+  if (row.itemCode === 'PRINCIPLE_3' || row.itemCode === 'TRANSPARENCY_PRINCIPLE_3') {
+    return 'privacy'
+  }
+  if (row.itemCode === 'PRINCIPLE_4' || row.itemCode === 'TRANSPARENCY_PRINCIPLE_4') {
+    return 'asset'
+  }
+  if (row.itemCode === 'PRINCIPLE_5' || row.itemCode === 'TRANSPARENCY_PRINCIPLE_5') {
+    return 'partnership'
+  }
+  throw new Error(`Unknown public principle icon for id=${row.id ?? '?'}`)
 }
 
 function slugifyId(label: string, fallback: string): string {
@@ -178,8 +204,16 @@ export function mapPublicTransparency(
   response: PublicTransparencyResponse,
 ): TransparencyPageContent {
   const principles = [...(response.principles ?? [])]
-    .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
-    .map((row, index) => {
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => {
+      const orderA = a.row.displayOrder
+      const orderB = b.row.displayOrder
+      if (typeof orderA === 'number' && typeof orderB === 'number' && orderA !== orderB) {
+        return orderA - orderB
+      }
+      return a.index - b.index
+    })
+    .map(({ row, index }) => {
       const title = asText(row.title)
       const description = splitDescription(asText(row.subText))
       return {
@@ -187,12 +221,11 @@ export function mapPublicTransparency(
           row.id != null
             ? String(row.id)
             : asText(row.itemCode) || `principle-${index + 1}`,
-        icon: resolvePrincipleIcon(row, index),
+        icon: resolvePrincipleIcon(row),
         title,
         description,
       } satisfies TransparencyPrinciple
     })
-    .filter(row => row.title || row.description.length > 0)
 
   const revenueSummary = mapFinanceSummary(
     response.incomeChart ?? response.incomeTable,

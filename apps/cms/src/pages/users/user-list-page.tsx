@@ -1040,9 +1040,6 @@ export function UserListPage() {
         consentWriteSnapshots: snapshots,
         certifications: buildInstructorRegisterCertifications(values.licenseRows),
         instructorInfo: {
-          bankName: values.bankName.trim(),
-          accountNumber: values.accountNumber.trim(),
-          accountHolder: values.accountHolder.trim(),
           isBusinessIncome: values.isBusinessIncome === 'yes',
         },
         isActive: true,

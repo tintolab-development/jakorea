@@ -25,7 +25,9 @@ import {
 } from '@/features/program/shared/lib/certificate-serial'
 import {
   CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
-  certificateIssuePrecheckBlockMessage,
+  CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION,
+  selectIssuableCertificatePlan,
+  type CertificateIssuePlan,
   messageForCertificateReasonCode,
 } from '@/features/program/shared/lib/certificate-eligibility'
 
@@ -41,7 +43,7 @@ export const CERTIFICATE_DOWNLOAD_LOG_FALLBACK =
   '파일 다운로드 이력을 기록하지 못했습니다. PDF를 생성하지 않았습니다.'
 
 export const CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK =
-  '수료증 발급 가능 여부를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+  '수료증/참가인증서 발급 가능 여부를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.'
 
 export function getCertificateEligibilityErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'response' in error) {
@@ -79,20 +81,43 @@ export async function fetchCertificateEligibility(params: {
   )
 }
 
+export async function resolveCertificateIssuePlan(params: {
+  participantId: string | number | null | undefined
+  activityWithdrawn?: boolean
+}): Promise<CertificateIssuePlan | null> {
+  const parsed = parseCertificateSerialInt64(params.participantId)
+  if (parsed == null) return null
+  const [completion, participation] = await Promise.all([
+    fetchCertificateEligibility({
+      participantId: parsed,
+      certificateType: CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+    }),
+    fetchCertificateEligibility({
+      participantId: parsed,
+      certificateType: CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION,
+    }),
+  ])
+  return selectIssuableCertificatePlan({
+    activityWithdrawn: params.activityWithdrawn === true,
+    completion,
+    participation,
+  })
+}
+
 /**
- * 발급 CTA 전 서버 eligibility만 본다. 동의 근거·기간 만료면 안내 문구, 통과면 null.
+ * 발급 CTA 전 서버 eligibility만 본다. 수료증이 막혀도 참가인증서가 허용되면 통과한다.
  * participantId를 파싱할 수 없으면 조회를 건너뛴다(발급 API 409에 맡김).
  */
 export async function resolveCertificateIssuePrecheckMessage(
-  participantId: string | number | null | undefined
+  participantId: string | number | null | undefined,
+  options?: { activityWithdrawn?: boolean }
 ): Promise<string | null> {
-  const parsed = parseCertificateSerialInt64(participantId)
-  if (parsed == null) return null
-  const eligibility = await fetchCertificateEligibility({
-    participantId: parsed,
-    certificateType: CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
+  const plan = await resolveCertificateIssuePlan({
+    participantId,
+    activityWithdrawn: options?.activityWithdrawn,
   })
-  return certificateIssuePrecheckBlockMessage(eligibility)
+  if (plan == null) return null
+  return plan.eligible ? null : plan.blockMessage
 }
 
 export class CertificateSerialAllocateError extends Error {

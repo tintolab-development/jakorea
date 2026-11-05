@@ -1,4 +1,5 @@
 import { unwrapApiBody } from '@/features/data-management/api/unwrap-api-body'
+import { getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import type { FormResponseFeedbackListResponse } from '@/features/template/lib/form-response-feedback-list'
 import { getJAKoreaCMSBackendAPIFormsSurveysSubset } from '@/shared/api/generated/forms-surveys/forms-surveys-api'
 import type {
@@ -107,17 +108,28 @@ export async function deleteFormTemplateRemote(templateId: number): Promise<Form
   return unwrapApiBody(await formsSurveysApi.deleteTemplate(templateId))
 }
 
+const SKIP_GLOBAL_FEEDBACK_ALERT = { skipGlobalErrorAlert: true } as const
+
 /** POST /api/admin/form-responses/{responseId}/feedback — Wave11 */
 export async function createFormResponseFeedbackRemote(
   responseId: number,
   body: FormResponseFeedbackCreateRequest
 ): Promise<FormResponseFeedbackResponse> {
-  return unwrapApiBody(await formsSurveysApi.createFeedback(responseId, body))
+  return unwrapApiBody(
+    await formsSurveysApi.createFeedback(responseId, body, SKIP_GLOBAL_FEEDBACK_ALERT)
+  )
 }
 
 /** GET /api/admin/form-responses/{responseId}/feedback — operationId getFormResponseFeedback */
 export async function getFormResponseFeedbackRemote(
   responseId: number
 ): Promise<FormResponseFeedbackListResponse> {
-  return unwrapApiBody(await formsSurveysApi.getFeedback(responseId))
+  try {
+    return unwrapApiBody(await formsSurveysApi.getFeedback(responseId, SKIP_GLOBAL_FEEDBACK_ALERT))
+  } catch (error) {
+    if (getApiErrorHttpStatus(error) === 404) {
+      return { formResponseId: responseId, feedbacks: [] }
+    }
+    throw error
+  }
 }

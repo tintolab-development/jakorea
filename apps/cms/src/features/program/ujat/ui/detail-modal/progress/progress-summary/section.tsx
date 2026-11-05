@@ -9,7 +9,7 @@ export function UjatEducationProgressSummarySection({
 }: {
   programId?: string | null
 }) {
-  const { schoolSummary, volunteerSummary, loading, isError, isRemote } =
+  const { columnRegions, schoolSummary, volunteerSummary, loading, isError, isRemote } =
     useUjatEducationProgressSummary(programId)
   if (loading) {
     return (
@@ -39,7 +39,10 @@ export function UjatEducationProgressSummarySection({
           학교 교육 진행 요약
         </h2>
         <div className="ujat-edu-progress-summary__table-wrap">
-          <UjatEducationProgressSchoolSummaryTable summary={schoolSummary} />
+          <UjatEducationProgressSchoolSummaryTable
+            regions={columnRegions}
+            summary={schoolSummary}
+          />
         </div>
       </section>
 
@@ -51,7 +54,10 @@ export function UjatEducationProgressSummarySection({
           봉사단 교육 진행 요약
         </h2>
         <div className="ujat-edu-progress-summary__table-wrap">
-          <UjatEducationProgressVolunteerSummaryTable summary={volunteerSummary} />
+          <UjatEducationProgressVolunteerSummaryTable
+            regions={columnRegions}
+            summary={volunteerSummary}
+          />
         </div>
       </section>
     </div>

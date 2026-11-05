@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { buildMemberPaymentStatementBasicInfoAutofill } from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
+import {
+  buildInstructorRegisterPaymentStatementProfileValues,
+  buildMemberPaymentStatementBasicInfoAutofill,
+} from '@/features/user/shared/lib/build-member-payment-statement-consent-autofill'
 
 describe('buildMemberPaymentStatementBasicInfoAutofill', () => {
   it('maps instructor register form fields to payment statement basic info', () => {
@@ -9,9 +12,6 @@ describe('buildMemberPaymentStatementBasicInfoAutofill', () => {
         birthDate: '1990.05.01',
         homeAddress: '서울특별시 강남구',
         homeAddressDetail: '101호',
-        bankName: 'KB국민은행',
-        accountNumber: '1234567890',
-        accountHolder: '홍길동',
         memberType: 'school_teacher',
         schoolName: '○○고등학교',
       })
@@ -21,10 +21,27 @@ describe('buildMemberPaymentStatementBasicInfoAutofill', () => {
       residentFront: '900501',
       addressRoad: '서울특별시 강남구',
       addressDetail: '101호',
-      bankName: 'KB국민은행',
-      accountNumber: '1234567890',
       accountHolder: '홍길동',
       affiliation: '○○고등학교',
+    })
+  })
+
+  it('instructor register profile values copy name, affiliation, and address only', () => {
+    expect(
+      buildInstructorRegisterPaymentStatementProfileValues({
+        name: '홍길동',
+        birthDate: '1990.05.01',
+        homeAddress: '서울특별시 강남구',
+        homeAddressDetail: '101호',
+        memberType: 'general',
+        affiliationName: 'JA Korea',
+      })
+    ).toEqual({
+      nameKo: '홍길동',
+      affiliation: 'JA Korea',
+      noAffiliation: false,
+      addressRoad: '서울특별시 강남구',
+      addressDetail: '101호',
     })
   })
 

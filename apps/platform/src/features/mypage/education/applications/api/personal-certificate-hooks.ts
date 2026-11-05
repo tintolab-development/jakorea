@@ -70,10 +70,11 @@ export function useIssuePersonalCertificateMutation(options?: {
     onSuccess: async (response, variables) => {
       const programId = String(variables.programId)
       await queryClient.invalidateQueries({
-        queryKey: platformQueryKeys.mypage.programApplications.certificateAvailability(
+        queryKey: [
+          ...platformQueryKeys.mypage.programApplications.all(),
+          'certificate-availability',
           programId,
-          variables.certificateType?.trim() || 'AUTO',
-        ),
+        ],
       })
       if (options?.applicationType && options?.applicationId) {
         await queryClient.invalidateQueries({

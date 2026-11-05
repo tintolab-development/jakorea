@@ -90,6 +90,7 @@ import type { PaymentStatementBasicInfoAutofillValues } from '@/features/templat
 import type { LectureFeeCalculationAutofillValues } from '@/features/template/ui/form-set/detail-forms/lecture-fee-calculation-detail-form'
 import type { PaymentStatementIssuanceParagraphDisplayMode } from '@/features/template/ui/form-set/payment-statement-issuance/display-mode'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@/features/template/model/receipt-pre-consent-draft'
 import { AGREEMENT_NOTICE_PARAGRAPH_IDS } from '@/features/template/model/writing-form-draft.schema'
 import { AgreementNoticeSubjectFillFields } from '@/features/template/ui/form-set/agreement-notice/agreement-notice-subject-fill-fields'
 import { BasicInfoParagraph } from '@/features/template/ui/form-set/payment-statement-issuance/paragraphs/basic-info-paragraph'
@@ -159,6 +160,10 @@ export type RenderFormParagraphBodyOptions = {
   paymentStatementBasicInfoValues?: Partial<PaymentStatementBasicInfoAutofillValues>
   /** true: 지급조서 기본정보에서 「지급 목적」만 비활성, 나머지 필드는 편집 가능(사전 동의 템플릿 등) */
   paymentStatementBasicInfoOnlyPaymentPurposeLocked?: boolean
+  /** CMS 강사 신규 등록 fill — 성명·소속·자택 주소 비활성(등록 기본정보 연동) */
+  paymentStatementBasicInfoLockedProfileFields?: boolean
+  /** 영수증 발급 사전 동의서 — 주민등록번호·소속 행 숨김 */
+  paymentStatementBasicInfoHideResidentFields?: boolean
   /** 편집 가능 모드 — 기본정보 값 변경(성명 → 확인·서명란 동기화) */
   paymentStatementBasicInfoOnValuesChange?: (
     values: PaymentStatementBasicInfoAutofillValues
@@ -428,10 +433,14 @@ export function renderFormParagraphBody(
         )
       }
       const isPaymentPreConsentIntro =
-        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro && structureLocked
+        (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.intro ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.intro) &&
+        structureLocked
       const isPaymentPreConsentWhiteSheetBar =
         (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine ||
-          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) &&
+          p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.midConsentLine ||
+          p.id === RECEIPT_PRE_CONSENT_IDS.finalConfirm) &&
         structureLocked &&
         options?.agreementAdminProxyConfirm !== true
       const isAgreementNoticeExplanationParagraph =
@@ -651,12 +660,20 @@ export function renderFormParagraphBody(
       )
     }
     case 'vertical_table': {
-      if (p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord) {
+      if (
+        p.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
+        p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
+      ) {
         return (
           <BasicInfoParagraph
             values={options?.paymentStatementBasicInfoValues}
             displayMode={options?.paymentStatementDisplayMode ?? 'editor'}
             onlyPaymentPurposeLocked={options?.paymentStatementBasicInfoOnlyPaymentPurposeLocked}
+            lockedProfileFields={options?.paymentStatementBasicInfoLockedProfileFields}
+            hideResidentFields={
+              options?.paymentStatementBasicInfoHideResidentFields === true ||
+              p.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord
+            }
             onValuesChange={options?.paymentStatementBasicInfoOnValuesChange}
           />
         )

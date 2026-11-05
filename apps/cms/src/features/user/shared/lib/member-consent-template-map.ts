@@ -4,6 +4,7 @@ export type MemberConsentFieldKey =
   | 'consentFacilitatorPledge'
   | 'consentAdministrativeJoint'
   | 'consentSexOffenseCheck'
+  | 'consentReceiptPreConsent'
 
 export type MemberConsentTemplateEntry = {
   fieldKey: MemberConsentFieldKey
@@ -38,6 +39,11 @@ export const MEMBER_CONSENT_TEMPLATE_MAP: Record<MemberConsentFieldKey, MemberCo
       templateId: 'agreement-crime',
       modalTitle: '성범죄경력 조회 동의서',
     },
+    consentReceiptPreConsent: {
+      fieldKey: 'consentReceiptPreConsent',
+      templateId: 'agreement-receipt-pre-consent',
+      modalTitle: '영수증 발급 사전 동의서',
+    },
   }
 
 export const MEMBER_CONSENT_FIELD_KEYS = Object.keys(
@@ -53,6 +59,7 @@ export function resolveMemberConsentTemplateEntry(
 const CONSENT_LABEL_TO_FIELD_KEY: Record<string, MemberConsentFieldKey> = {
   '초상권 수집·이용 동의': 'consentPortrait',
   '지급조서 사전 동의서': 'consentWithholdingTax',
+  '영수증 발급 사전 동의서': 'consentReceiptPreConsent',
   '교육진행자 서약서': 'consentFacilitatorPledge',
   '교육진행자 동의 서약서': 'consentFacilitatorPledge',
   'JA Korea 교육진행자 서약서(안)': 'consentFacilitatorPledge',

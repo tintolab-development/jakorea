@@ -7,7 +7,8 @@ import {
 
 const REGION_ASSIGNMENT_ERROR_MESSAGES: Record<string, string> = {
   UJAT_VOLUNTEER_ALREADY_ASSIGNED_SAME_DAY: '같은 날 이미 다른 학급에 배정된 봉사자입니다.',
-  UJAT_EDUCATION_SLOT_ALREADY_ASSIGNED: '이미 배정된 학급입니다. 최신 배정표를 확인한 뒤 다시 시도해 주세요.',
+  UJAT_EDUCATION_SLOT_ALREADY_ASSIGNED:
+    '해당 교육일·학급에는 이미 봉사자 2명이 배정되어 있습니다.',
   UJAT_REGION_VOLUNTEER_CAPACITY_EXCEEDED:
     '해당 지역 봉사자 정원을 초과할 수 있어 배정할 수 없습니다.',
   UJAT_PARTNER_ASSIGNMENT_CONFLICT:
@@ -15,6 +16,8 @@ const REGION_ASSIGNMENT_ERROR_MESSAGES: Record<string, string> = {
   UJAT_EDUCATION_SLOT_NOT_FOUND:
     '배정할 수 있는 학급이 아닙니다. 일정이 지났거나 확정되지 않았을 수 있습니다.',
   UJAT_EDUCATION_SLOT_NOT_ASSIGNED: '아직 배정되지 않은 학급입니다. 배정표를 새로고침해 주세요.',
+  UJAT_ATTENDANCE_MANAGER_NOT_ASSIGNED:
+    '해당 교육일에 배정된 봉사자만 지정할 수 있습니다.',
 }
 
 function hasHangul(value: string): boolean {

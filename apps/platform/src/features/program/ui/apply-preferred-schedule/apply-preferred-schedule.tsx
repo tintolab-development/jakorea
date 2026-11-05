@@ -11,6 +11,10 @@ import {
   type PFSelectOption,
 } from '@/shared/ui'
 import { resolvePreferredScheduleBlockTitle } from '@jakorea/form-schema/program-application'
+import {
+  clampEducationScheduleApplyConstraint,
+  isIsoDateBeforeSeoulToday,
+} from '../../lib/apply-form-schedule'
 import styles from './apply-preferred-schedule.module.css'
 
 export type ApplyPreferredScheduleBlock = {
@@ -326,6 +330,17 @@ export function ApplyPreferredSchedule({
   }
 
   const displayBlocks = blocks.slice(0, cap)
+  const selectable = clampEducationScheduleApplyConstraint({
+    minDate,
+    maxDate,
+    enabledDates,
+    configured: true,
+  })
+  const pastFixedOptionValues = new Set(
+    fixedScheduleOptions
+      .filter(option => isIsoDateBeforeSeoulToday(option.date))
+      .map(option => option.value),
+  )
 
   const patchBlock = (index: number, patch: Partial<ApplyPreferredScheduleBlock>) => {
     setBlocks(blocks.map((block, i) => (i === index ? { ...block, ...patch } : block)))
@@ -369,20 +384,21 @@ export function ApplyPreferredSchedule({
                 <PreferenceScheduleFields
                   block={block}
                   onPatch={patch => patchBlock(index, patch)}
-                  minDate={minDate}
-                  maxDate={maxDate}
-                  enabledDates={enabledDates}
+                  minDate={selectable.minDate}
+                  maxDate={selectable.maxDate}
+                  enabledDates={selectable.enabledDates}
                   showSessionSelect={showSessionSelect}
                   sessionOptions={sessionOptions}
                   dateOnlyPreferred={dateOnlyPreferred}
                   disabled={disabled}
                   disabledOptionValues={
-                    new Set(
-                      displayBlocks
+                    new Set([
+                      ...pastFixedOptionValues,
+                      ...displayBlocks
                         .filter((_, selectedIndex) => selectedIndex !== index)
                         .map(selectedBlock => selectedBlock.scheduleOptionId?.trim())
-                        .filter((value): value is string => Boolean(value))
-                    )
+                        .filter((value): value is string => Boolean(value)),
+                    ])
                   }
                   fixedScheduleOptions={fixedScheduleOptions}
                   showSessionUnit={showSessionUnit}

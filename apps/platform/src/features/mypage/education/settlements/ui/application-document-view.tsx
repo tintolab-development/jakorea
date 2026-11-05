@@ -5,16 +5,18 @@ import {
   buildSettlementDocumentBasicRows,
   buildSettlementDocumentCalcRows,
   displaySettlementDocumentText,
+  buildSettlementDocumentLineSpans,
   formatSettlementDocumentAmount,
-  formatSettlementDocumentLectureDate,
+  formatSettlementDocumentLectureDateParts,
   formatSettlementDocumentSignedAmount,
   formatSettlementDocumentTotalLabel,
-  isSettlementDocumentDeductionLine,
+  layoutSettlementDocumentInfoRows,
   settlementDocumentFirstColumnHeader,
   settlementDocumentFirstColumnValue,
   settlementDocumentLinesSectionTitle,
   settlementDocumentPayDeductionLabel,
   warnIfSettlementDocumentTotalMismatch,
+  type SettlementDocumentInfoRow,
 } from '../lib/format-application-document'
 import { fetchPortalSignedDownloadBlob } from '@/shared/lib/portal-signed-download-fetch'
 import styles from './application-document-view.module.css'
@@ -47,16 +49,64 @@ function formatAttachmentSize(fileSize: number | undefined): string | null {
   return `${(fileSize / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function pairInfoRows(
-  rows: Array<{ label: string; value: string }>,
-): Array<[ { label: string; value: string }, { label: string; value: string } | null ]> {
-  const pairs: Array<
-    [{ label: string; value: string }, { label: string; value: string } | null]
-  > = []
-  for (let i = 0; i < rows.length; i += 2) {
-    pairs.push([rows[i]!, rows[i + 1] ?? null])
-  }
-  return pairs
+/** 시안 `line`(1px 구분선)으로 값 나누기 — 예: 날짜 | 회차, 계좌 | 예금주 */
+function DividedParts({ parts, className }: { parts: string[]; className: string }) {
+  if (parts.length < 2) return <>{parts[0] ?? ''}</>
+  return (
+    <span className={className}>
+      {parts.map((part, index) => (
+        <span key={`${part}-${index}`} className={styles.partGroup}>
+          {index > 0 ? <span className={styles.partDivider} aria-hidden /> : null}
+          <span>{part}</span>
+        </span>
+      ))}
+    </span>
+  )
+}
+
+function InfoValue({ row }: { row: SettlementDocumentInfoRow }) {
+  return row.parts ? (
+    <DividedParts parts={row.parts} className={styles.infoParts} />
+  ) : (
+    <>{row.value}</>
+  )
+}
+
+function InfoTable({ rows }: { rows: SettlementDocumentInfoRow[] }) {
+  return (
+    <div className={styles.infoTableWrap}>
+      <table className={styles.infoTable}>
+        <colgroup>
+          <col className={styles.colInfoLabel} />
+          <col />
+          <col className={styles.colInfoLabel} />
+          <col />
+        </colgroup>
+        <tbody>
+          {layoutSettlementDocumentInfoRows(rows).map(([left, right]) => (
+            <tr key={left.label}>
+              <th scope="row">{left.label}</th>
+              {right ? (
+                <>
+                  <td>
+                    <InfoValue row={left} />
+                  </td>
+                  <th scope="row">{right.label}</th>
+                  <td>
+                    <InfoValue row={right} />
+                  </td>
+                </>
+              ) : (
+                <td colSpan={3}>
+                  <InfoValue row={left} />
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 export function EducationSettlementApplicationDocumentView({
@@ -112,6 +162,15 @@ export function EducationSettlementApplicationDocumentView({
   const calcRows = showCalc ? buildSettlementDocumentCalcRows(document.calcInfo!) : []
   const firstColumnHeader = settlementDocumentFirstColumnHeader(document.documentType)
   const linesTitle = settlementDocumentLinesSectionTitle(document.documentType)
+  const lineCells = document.lines.map(line => {
+    const dateParts = formatSettlementDocumentLectureDateParts(line)
+    return {
+      first: settlementDocumentFirstColumnValue(document.documentType, line, programTitle),
+      dateParts,
+      date: dateParts.join(' | '),
+    }
+  })
+  const lineSpans = buildSettlementDocumentLineSpans(lineCells)
 
   if (page === 'attachments') {
     return (
@@ -166,57 +225,13 @@ export function EducationSettlementApplicationDocumentView({
     <div className={styles.body}>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>기본 정보</h2>
-        <div className={styles.infoTableWrap}>
-          <table className={styles.infoTable}>
-            <tbody>
-              {pairInfoRows(basicRows).map(([left, right]) => (
-                <tr key={left.label}>
-                  <th scope="row">{left.label}</th>
-                  <td>{left.value}</td>
-                  {right ? (
-                    <>
-                      <th scope="row">{right.label}</th>
-                      <td>{right.value}</td>
-                    </>
-                  ) : (
-                    <>
-                      <th scope="row" />
-                      <td />
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <InfoTable rows={basicRows} />
       </section>
 
       {showCalc ? (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>강의비 산출 정보</h2>
-          <div className={styles.infoTableWrap}>
-            <table className={styles.infoTable}>
-              <tbody>
-                {pairInfoRows(calcRows).map(([left, right]) => (
-                  <tr key={left.label}>
-                    <th scope="row">{left.label}</th>
-                    <td>{left.value}</td>
-                    {right ? (
-                      <>
-                        <th scope="row">{right.label}</th>
-                        <td>{right.value}</td>
-                      </>
-                    ) : (
-                      <>
-                        <th scope="row" />
-                        <td />
-                      </>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <InfoTable rows={calcRows} />
         </section>
       ) : null}
 
@@ -251,20 +266,20 @@ export function EducationSettlementApplicationDocumentView({
                 </tr>
               ) : (
                 document.lines.map((line, index) => {
-                  const deduction = isSettlementDocumentDeductionLine(line)
+                  const cell = lineCells[index]!
+                  const span = lineSpans[index]!
                   return (
-                    <tr
-                      key={`${line.category ?? ''}-${line.description ?? ''}-${index}`}
-                      className={deduction ? styles.deductionRow : undefined}
-                    >
-                      <td>
-                        {settlementDocumentFirstColumnValue(
-                          document.documentType,
-                          line,
-                          programTitle,
-                        )}
-                      </td>
-                      <td>{formatSettlementDocumentLectureDate(line)}</td>
+                    <tr key={`${line.category ?? ''}-${line.description ?? ''}-${index}`}>
+                      {span.firstRowSpan > 0 ? (
+                        <td rowSpan={span.firstRowSpan > 1 ? span.firstRowSpan : undefined}>
+                          {cell.first}
+                        </td>
+                      ) : null}
+                      {span.dateRowSpan > 0 ? (
+                        <td rowSpan={span.dateRowSpan > 1 ? span.dateRowSpan : undefined}>
+                          <DividedParts parts={cell.dateParts} className={styles.lineParts} />
+                        </td>
+                      ) : null}
                       <td>{settlementDocumentPayDeductionLabel(line)}</td>
                       <td>{displaySettlementDocumentText(line.category)}</td>
                       <td>{displaySettlementDocumentText(line.description)}</td>
@@ -278,8 +293,10 @@ export function EducationSettlementApplicationDocumentView({
             </tbody>
             <tfoot>
               <tr className={styles.summaryRow}>
-                <th scope="row">합계</th>
-                <td colSpan={4} className={styles.summaryFormula}>
+                <th scope="row" colSpan={2}>
+                  합계
+                </th>
+                <td colSpan={3} className={styles.summaryFormula}>
                   {formatSettlementDocumentTotalLabel(document.total)}
                 </td>
                 <td className={`${styles.amountCell} ${styles.summaryTotal}`}>

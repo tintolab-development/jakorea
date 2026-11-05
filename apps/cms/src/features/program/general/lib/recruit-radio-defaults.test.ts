@@ -1,11 +1,20 @@
 /** @vitest-environment node */
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Program } from '@/types/domain'
-import { withGeneralRecruitRadioDefaults } from './recruit-radio-defaults'
+import {
+  RECRUIT_INSTRUCTOR_TARGETS_DEFAULT,
+  RECRUIT_INSTRUCTOR_TARGETS_KEY,
+  withGeneralRecruitRadioDefaults,
+} from './recruit-radio-defaults'
 import { prefillDetailEditRecruitRadioDefaults } from './recruit-radio-edit-prefill'
 import { buildGeneralProgramCreateFromWizardRhf } from './overlay-phase1/build-registration-create-from-rhf'
 import { createDefaultRegistrationWizardUiValues } from './overlay-phase1/registration-wizard-ui-values'
 import { programToDetailEditValues } from '@/features/program/shared/model/program-detail-edit-schema'
+import { listIncompleteGeneralProgramRecruitmentRequiredFields } from './registration-recruitment-required-fields'
+import {
+  registerGeneralRegistrationWizardRhf,
+  type GeneralRegistrationWizardRhfApi,
+} from './overlay-phase1/registration-wizard-rhf-api'
 import {
   clearOperationalSeedDefaultSuppression,
   suppressOperationalSeedDefaults,
@@ -27,6 +36,7 @@ describe('withGeneralRecruitRadioDefaults', () => {
       'recruit.individual.announcementPublished': 'published',
       'recruit.individual.interviewRequired': 'yes',
       'recruit.instructor.announcementPublished': 'published',
+      [RECRUIT_INSTRUCTOR_TARGETS_KEY]: [...RECRUIT_INSTRUCTOR_TARGETS_DEFAULT],
       'recruit.volunteer.announcementPublished': 'published',
       'recruit.volunteer.interviewRequired': 'yes',
     })
@@ -70,7 +80,152 @@ describe('withGeneralRecruitRadioDefaults', () => {
     expect(withGeneralRecruitRadioDefaults({}, tab)).toEqual({})
     expect(withGeneralRecruitRadioDefaults({}, tab, { wizardKv: true })).toEqual({
       'recruit.instructor.announcementPublished': 'published',
+      [RECRUIT_INSTRUCTOR_TARGETS_KEY]: [...RECRUIT_INSTRUCTOR_TARGETS_DEFAULT],
     })
+  })
+
+  it('강사 모집 대상: teacherInstructor이고 키가 없으면 성인으로 채운다', () => {
+    expect(
+      withGeneralRecruitRadioDefaults({}, { ...NONE, teacherInstructor: true }, { wizardKv: true })[
+        RECRUIT_INSTRUCTOR_TARGETS_KEY
+      ]
+    ).toEqual(['adult'])
+  })
+
+  it("강사 모집 대상: 사용자 값 ['high']는 유지한다", () => {
+    const kv = { [RECRUIT_INSTRUCTOR_TARGETS_KEY]: ['high'] }
+    expect(
+      withGeneralRecruitRadioDefaults(kv, { ...NONE, teacherInstructor: true }, { wizardKv: true })[
+        RECRUIT_INSTRUCTOR_TARGETS_KEY
+      ]
+    ).toEqual(['high'])
+  })
+
+  it('강사 모집 대상: 명시적 []는 유지한다', () => {
+    const kv = { [RECRUIT_INSTRUCTOR_TARGETS_KEY]: [] }
+    expect(
+      withGeneralRecruitRadioDefaults(kv, { ...NONE, teacherInstructor: true }, { wizardKv: true })[
+        RECRUIT_INSTRUCTOR_TARGETS_KEY
+      ]
+    ).toEqual([])
+  })
+
+  it('강사 모집 대상: teacherInstructor=false면 채우지 않는다', () => {
+    expect(
+      withGeneralRecruitRadioDefaults({}, { ...NONE, organization: true }, { wizardKv: true })[
+        RECRUIT_INSTRUCTOR_TARGETS_KEY
+      ]
+    ).toBeUndefined()
+  })
+
+  it('강사 모집 대상: wizardKv=false이고 억제된 경우 채우지 않는다', () => {
+    suppressOperationalSeedDefaults('general-recruit', ['recruit.instructor'])
+    expect(
+      withGeneralRecruitRadioDefaults({}, { ...NONE, teacherInstructor: true })[
+        RECRUIT_INSTRUCTOR_TARGETS_KEY
+      ]
+    ).toBeUndefined()
+  })
+})
+
+const INSTRUCTOR_TAB = { ...NONE, teacherInstructor: true }
+
+function registerWizardKv(
+  kv: Record<string, unknown>,
+  participant: typeof ALL = INSTRUCTOR_TAB
+) {
+  const values = {
+    ...createDefaultRegistrationWizardUiValues({ participant }),
+    recruitmentKv: kv,
+  }
+  const api: GeneralRegistrationWizardRhfApi = {
+    getValues: () => values as never,
+    getPath: () => undefined,
+    setPath: vi.fn(),
+    reset: vi.fn(),
+    applyOverlayRecord: vi.fn(),
+    isDirty: () => false,
+    markBaseline: vi.fn(),
+  }
+  registerGeneralRegistrationWizardRhf(api)
+  return values
+}
+
+describe('강사 모집 대상 — 필수 검사와 CREATE가 같은 기본값을 읽는다', () => {
+  afterEach(() => {
+    registerGeneralRegistrationWizardRhf(null)
+  })
+
+  it('키가 없으면 필수 검사는 미입력으로 보지 않고 CREATE에 성인을 싣는다', () => {
+    const kv: Record<string, unknown> = {}
+    registerWizardKv(kv)
+    const missing = listIncompleteGeneralProgramRecruitmentRequiredFields({
+      participant: INSTRUCTOR_TAB,
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      educationScheduleMode: 'date',
+      volunteerExceptionScheduleCount: 0,
+    })
+    expect(missing).not.toContain('recruit.instructor.recruitTargets')
+
+    const values = createDefaultRegistrationWizardUiValues({
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      curriculumChartSessionCount: 1,
+      participant: INSTRUCTOR_TAB,
+    })
+    const built = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-instructor-targets-default',
+      uiValues: {
+        ...values,
+        programTitleKo: '[BOT-TEST] instructor targets default',
+        recruitmentKv: kv,
+      } as typeof values,
+    })
+    expect(built.persistOverlay[RECRUIT_INSTRUCTOR_TARGETS_KEY]).toEqual(['adult'])
+    expect(built.program.instructorTargets).toEqual(['adult'])
+    const detail = JSON.parse(built.createRequest.serviceDetailJson ?? '{}') as {
+      generalCommonInfo?: { instructorRecruitmentInfo?: { recruitmentTarget?: string } }
+      registration?: { overlay?: Record<string, unknown> }
+    }
+    expect(detail.generalCommonInfo?.instructorRecruitmentInfo?.recruitmentTarget).toBe('성인')
+    expect(detail.registration?.overlay?.[RECRUIT_INSTRUCTOR_TARGETS_KEY]).toEqual(['adult'])
+  })
+
+  it('명시적 []이면 필수 검사가 막는다', () => {
+    registerWizardKv({ [RECRUIT_INSTRUCTOR_TARGETS_KEY]: [] })
+    expect(
+      listIncompleteGeneralProgramRecruitmentRequiredFields({
+        participant: INSTRUCTOR_TAB,
+        programType: 'curriculum',
+        sessionRoundType: 'single',
+        educationScheduleMode: 'date',
+        volunteerExceptionScheduleCount: 0,
+      })
+    ).toContain('recruit.instructor.recruitTargets')
+  })
+
+  it('기관 targetLevels와 봉사자 volunteerTargets는 그대로 직렬화한다', () => {
+    const values = createDefaultRegistrationWizardUiValues({
+      programType: 'curriculum',
+      sessionRoundType: 'single',
+      curriculumChartSessionCount: 1,
+      participant: ALL,
+    })
+    const built = buildGeneralProgramCreateFromWizardRhf({
+      id: 'local-target-regression',
+      uiValues: {
+        ...values,
+        programTitleKo: '[BOT-TEST] target regression',
+        recruitmentKv: {
+          'recruit.targetLevels': ['high'],
+          'recruit.volunteer.volunteerTargets': ['university'],
+        },
+      } as typeof values,
+    })
+    expect(built.persistOverlay['recruit.targetLevels']).toEqual(['high'])
+    expect(built.persistOverlay['recruit.volunteer.volunteerTargets']).toEqual(['university'])
+    expect(built.persistOverlay[RECRUIT_INSTRUCTOR_TARGETS_KEY]).toEqual(['adult'])
   })
 })
 

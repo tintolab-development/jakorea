@@ -11,7 +11,7 @@ import {
   showSaveCompletedAlert,
   useCmsAlert,
 } from '@/shared/ui'
-import { InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
+import { HistoryCopy, InlineText, MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
 import { CtaButtonsNestedTable } from './cta-buttons-nested-table'
 import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } from './image-file'
 
@@ -78,6 +78,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
   return (
     <SectionFrame
       title="JA 살펴보기"
+      marker={false}
       editing={editing}
       saving={saveMutation.isPending}
       onEdit={() => setEditing(true)}
@@ -112,11 +113,16 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
           )
       }}
     >
-      <DetailInfoForm title="JA 살펴보기" hideHeader mode="edit" className="ja-history-form">
+      <DetailInfoForm
+        title="JA 살펴보기"
+        hideHeader
+        mode={editing ? 'edit' : 'view'}
+        className="ja-history-form"
+      >
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀"
-            view={null}
+            view={<HistoryCopy value={cta.title} />}
             edit={
               <InlineText
                 editing={editing}
@@ -132,7 +138,7 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="서브 텍스트"
-            view={null}
+            view={<HistoryCopy value={cta.body} />}
             edit={
               <InlineText
                 editing={editing}
@@ -148,10 +154,10 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="이미지"
-            view={null}
+            view={<MediaPreview media={cta.image} size="cta" />}
             edit={
               <div className="ja-history-cta-image">
-                <MediaPreview media={draft.image} size="thumb" />
+                <MediaPreview media={draft.image} size="cta" />
                 <FileSelectField
                   className="ja-history-cta-image__field"
                   disabled={!editing}
@@ -172,7 +178,15 @@ export function CtaSection({ cta }: { cta: JaHistoryCta }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="CTA 버튼"
-            view={null}
+            view={
+              <CtaButtonsNestedTable
+                editing={false}
+                primary={{ label: cta.primaryLabel, href: cta.primaryHref }}
+                secondary={{ label: cta.secondaryLabel, href: cta.secondaryHref }}
+                onChangePrimary={() => undefined}
+                onChangeSecondary={() => undefined}
+              />
+            }
             edit={
               <CtaButtonsNestedTable
                 editing={editing}

@@ -8,7 +8,7 @@ export type PublicJaHistoryMedia = {
 }
 
 export type PublicJaHistoryTimelineEvent = {
-  year?: number | string | null
+  year?: string | number | null
   text?: string | null
 }
 

@@ -79,6 +79,7 @@ function filterInterview2Applicants(
     if (nameQ && !row.name.toLowerCase().includes(nameQ)) return false
     if (
       filters.preferredRegion !== UJAT_VOLUNTEER_INTERVIEW2_FILTER_ALL &&
+      row.preferredRegionCode !== filters.preferredRegion &&
       row.preferredRegion !== filters.preferredRegion
     ) {
       return false

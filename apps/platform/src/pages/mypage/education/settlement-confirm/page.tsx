@@ -21,8 +21,14 @@ import {
   useApplicationSettlementsQuery,
   useSubmitIndividualSettlementMutation,
 } from '@/features/mypage/education/applications/api/activity-hooks'
-import { overlaySettlementBasicWithPaymentConsent } from '@/features/mypage/education/settlements/lib/map-payment-statement-basic-info'
-import { usePaymentStatementConsentBasicInfo } from '@/features/mypage/education/settlements/hooks/use-payment-statement-consent-basic-info'
+import {
+  composeSettlementWriteBasic,
+  readSettlementMemberProfileBasic,
+} from '@/features/mypage/education/settlements/lib/map-payment-statement-basic-info'
+import { useSettlementConsentSidecar } from '@/features/mypage/education/settlements/hooks/use-payment-statement-consent-basic-info'
+import { usePortalProfileQuery } from '@/features/auth/sign-in'
+import { useReceiptPaymentStatementConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
+import { buildSettlementReceiptConsentPath } from '@/features/mypage/education/settlements/lib/consent-path'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import {
   buildIndividualSettlementResubmitRequest,
@@ -34,7 +40,9 @@ import {
 } from '@/features/mypage/education/settlements/lib/application-document-errors'
 import {
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
+  RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
   individualSettlementApiErrorMessage,
+  isReceiptPreConsentRequiredError,
   shouldUseIndividualSettlementSchedulesApi,
 } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
 import { getProgramApplicationApiErrorMessage } from '@/features/program/lib/application-api-error'
@@ -84,7 +92,13 @@ export function MypageEducationSettlementConfirmPage() {
     { programType },
   )
   const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
-  const consentBasicQuery = usePaymentStatementConsentBasicInfo(!viewMode)
+  const profileQuery = usePortalProfileQuery({ enabled: !viewMode })
+  const consentSidecarQuery = useSettlementConsentSidecar(viewMode ? null : documentKind)
+  const receiptConsent = useReceiptPaymentStatementConsent({
+    applicationId,
+    area,
+    applicationType,
+  })
   const [alertOpen, setAlertOpen] = useState(false)
   const [alertMessage, setAlertMessage] = useState('')
 
@@ -119,9 +133,13 @@ export function MypageEducationSettlementConfirmPage() {
     if (!storedDraft) return null
     return {
       ...storedDraft,
-      basic: overlaySettlementBasicWithPaymentConsent(storedDraft.basic, consentBasicQuery.basic),
+      basic: composeSettlementWriteBasic({
+        kind: documentKind,
+        member: readSettlementMemberProfileBasic(profileQuery.data),
+        consent: consentSidecarQuery.sidecar,
+      }),
     }
-  }, [consentBasicQuery.basic, storedDraft, viewMode])
+  }, [consentSidecarQuery.sidecar, documentKind, profileQuery.data, storedDraft, viewMode])
 
   useEffect(() => {
     if (!applicationId || !sessionId) {
@@ -134,7 +152,7 @@ export function MypageEducationSettlementConfirmPage() {
       }
       return
     }
-    if (!draft) {
+    if (!storedDraft) {
       navigate(
         buildSettlementWritePath({ applicationId, sessionId, area, applicationType }),
         { replace: true },
@@ -143,7 +161,7 @@ export function MypageEducationSettlementConfirmPage() {
   }, [
     applicationId,
     area,
-    draft,
+    storedDraft,
     navigate,
     remoteSettlements.isLoading,
     session,
@@ -214,9 +232,30 @@ export function MypageEducationSettlementConfirmPage() {
     )
   }
 
+  if (consentSidecarQuery.isLoading || profileQuery.isPending) {
+    return (
+      <PFFormPage aria-label={title} className={styles.page} innerClassName={titleInnerClassName} title={title}>
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          기본 정보를 불러오는 중입니다.
+        </PFText>
+      </PFFormPage>
+    )
+  }
+
   const handleComplete = () => {
     if (remoteSettlements.individualDisabled) {
       setAlertMessage(INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE)
+      setAlertOpen(true)
+      return
+    }
+    if (consentSidecarQuery.isLoading || profileQuery.isPending) {
+      return
+    }
+    if (documentKind === 'receipt' && receiptConsent.isConsentLoading) {
+      return
+    }
+    if (documentKind === 'receipt' && !receiptConsent.isConsentSubmitted) {
+      setAlertMessage(RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
       setAlertOpen(true)
       return
     }
@@ -258,6 +297,11 @@ export function MypageEducationSettlementConfirmPage() {
           navigate(buildSettlementTabPath(applicationId, area, applicationType))
         })
         .catch(error => {
+          if (documentKind === 'receipt' && isReceiptPreConsentRequiredError(error)) {
+            setAlertMessage(RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
+            setAlertOpen(true)
+            return
+          }
           setAlertMessage(
             individualSettlementApiErrorMessage(
               error,
@@ -298,7 +342,22 @@ export function MypageEducationSettlementConfirmPage() {
         open={alertOpen}
         title="안내"
         description={alertMessage}
-        onConfirm={() => setAlertOpen(false)}
+        onConfirm={() => {
+          setAlertOpen(false)
+          if (
+            documentKind === 'receipt' &&
+            alertMessage === RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE
+          ) {
+            navigate(
+              buildSettlementReceiptConsentPath({
+                applicationId,
+                mode: 'write',
+                area,
+                applicationType,
+              }),
+            )
+          }
+        }}
       />
     </PFFormPage>
   )

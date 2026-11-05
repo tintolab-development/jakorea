@@ -8,7 +8,7 @@
 
 export interface FooterOrganizationUpdateRequest {
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 200
      */
   organizationName: string;
@@ -18,40 +18,40 @@ export interface FooterOrganizationUpdateRequest {
      */
   organizationDescription?: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 500
      */
-  address?: string;
+  address: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 20
      */
-  postalCode?: string;
+  postalCode: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 100
      */
-  representativeName?: string;
+  representativeName: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 50
      */
-  businessRegistrationNumber?: string;
+  businessRegistrationNumber: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 50
      */
-  phone?: string;
+  phone: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 50
      */
-  fax?: string;
+  fax: string;
   /**
-     * @minLength 0
+     * @minLength 1
      * @maxLength 255
      */
-  email?: string;
-  logoAssetId?: number;
+  email: string;
+  logoAssetId: number;
   version: number;
 }

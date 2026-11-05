@@ -139,7 +139,8 @@ export function EducationSettlementConfirmView({
 
   const basicRows: PFInfoReviewItem[] = [
     { label: '성명', value: draft.basic.name },
-    { label: '주민등록번호', value: resident },
+    { label: '영문명', value: draft.basic.nameEn },
+    ...(isReceiptWriteDraft(draft) ? [] : [{ label: '주민등록번호', value: resident }]),
     { label: '자택 주소', value: formatSettlementHomeAddress(draft) },
     { label: '정산 계좌 정보', value: formatSettlementAccountInfo(draft) },
   ]

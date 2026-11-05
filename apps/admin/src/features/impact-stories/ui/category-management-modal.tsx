@@ -18,14 +18,14 @@ import {
 
 import './category-management-modal.css'
 
-/** 모달 가로 패딩 30×2 제외 (600 − 60). 관리 열: h40 min-width 120 ×2 + gap 8 + 셀 패딩 10×2 */
+/** 모달 가로 패딩 30×2 제외 (600 − 60). 관리 열 200px · 행 버튼 H32 폭 80 */
 const TABLE_INNER_WIDTH = 540
-const ACTIONS_COL_WIDTH = 268
+const ACTIONS_COL_WIDTH = 200
 const NAME_COL_WIDTH = TABLE_INNER_WIDTH - ACTIONS_COL_WIDTH
 /** 최대 6행은 잘리지 않게 전부 노출. 7행부터 tbody만 세로 스크롤 */
 const VISIBLE_CATEGORY_ROWS = 6
-/** 관리 버튼 h40 + 셀 패딩 10×2 */
-const CATEGORY_ROW_HEIGHT = 60
+/** 관리 버튼 H32 + 셀 패딩 10×2 */
+const CATEGORY_ROW_HEIGHT = 52
 const TABLE_BODY_SCROLL_Y = VISIBLE_CATEGORY_ROWS * CATEGORY_ROW_HEIGHT
 
 const CATEGORY_MODAL_Z = 1000
@@ -62,7 +62,7 @@ function CategoryGuideModal({
       className="is-category-delete-blocked"
       description={body}
       footer={
-        <CmsButton variant="secondary" size="medium" type="button" onClick={onClose}>
+        <CmsButton variant="secondary" size="h40" type="button" onClick={onClose}>
           확인
         </CmsButton>
       }
@@ -108,15 +108,17 @@ export function CategoryManagementModal({
         align: 'center',
         render: (_: string, row) =>
           editingId === row.id ? (
-            <CmsInput
-              ref={editInputRef}
-              inputSize="medium"
-              width="100%"
-              value={editDraft}
-              onChange={e => setEditDraft(e.target.value)}
-              onPressEnter={submitEdit}
-              aria-label="카테고리명 편집"
-            />
+            <div className="is-category-modal__compose">
+              <CmsInput
+                ref={editInputRef}
+                inputSize="small"
+                width="100%"
+                value={editDraft}
+                onChange={e => setEditDraft(e.target.value)}
+                onPressEnter={submitEdit}
+                aria-label="카테고리명 편집"
+              />
+            </div>
           ) : (
             <span className="is-category-modal__name-text">{row.name}</span>
           ),
@@ -129,27 +131,22 @@ export function CategoryManagementModal({
         render: (_: unknown, row) =>
           editingId === row.id ? (
             <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
-              <CmsButton type="button" variant="default" size="medium" onClick={cancelEdit}>
+              <CmsButton type="button" variant="default" size="h32" onClick={cancelEdit}>
                 취소
               </CmsButton>
-              <CmsButton type="button" variant="secondary" size="medium" onClick={submitEdit}>
+              <CmsButton type="button" variant="secondary" size="h32" onClick={submitEdit}>
                 등록
               </CmsButton>
             </div>
           ) : (
             <div className={CONTENT_MODAL_TABLE_CELL_ACTIONS_CLASS}>
-              <CmsButton
-                type="button"
-                variant="default"
-                size="medium"
-                onClick={() => startEdit(row)}
-              >
+              <CmsButton type="button" variant="default" size="h32" onClick={() => startEdit(row)}>
                 수정
               </CmsButton>
               <CmsButton
                 type="button"
                 variant="delete"
-                size="medium"
+                size="h32"
                 onClick={() => requestDeleteCategory(row)}
               >
                 삭제
@@ -175,7 +172,7 @@ export function CategoryManagementModal({
     <>
       <CmsButton
         variant="default"
-        size="medium"
+        size="h40"
         type="button"
         disabled={ctrl.isSaving}
         onClick={ctrl.handleClose}
@@ -184,7 +181,7 @@ export function CategoryManagementModal({
       </CmsButton>
       <CmsButton
         variant="secondary"
-        size="medium"
+        size="h40"
         type="button"
         disabled={ctrl.isSaving}
         onClick={ctrl.openCompose}
@@ -193,7 +190,7 @@ export function CategoryManagementModal({
       </CmsButton>
       <CmsButton
         variant="primary"
-        size="medium"
+        size="h40"
         type="button"
         loading={ctrl.isSaving}
         disabled={ctrl.isSaving}
@@ -239,9 +236,9 @@ export function CategoryManagementModal({
                             <div className="is-category-modal__compose">
                               <CmsInput
                                 ref={ctrl.newInputRef}
-                                inputSize="medium"
+                                inputSize="small"
                                 width="100%"
-                                placeholder="카테고리명을 입력해주세요"
+                                placeholder="카테고리명을 입력해 주세요"
                                 value={ctrl.newDraft}
                                 onChange={e => ctrl.setNewDraft(e.target.value)}
                                 onPressEnter={ctrl.submitNew}
@@ -254,7 +251,7 @@ export function CategoryManagementModal({
                               <CmsButton
                                 type="button"
                                 variant="default"
-                                size="medium"
+                                size="h32"
                                 onClick={ctrl.cancelNew}
                               >
                                 취소
@@ -262,7 +259,7 @@ export function CategoryManagementModal({
                               <CmsButton
                                 type="button"
                                 variant="secondary"
-                                size="medium"
+                                size="h32"
                                 onClick={ctrl.submitNew}
                               >
                                 등록

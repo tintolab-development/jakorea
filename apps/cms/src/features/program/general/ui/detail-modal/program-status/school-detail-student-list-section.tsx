@@ -114,14 +114,22 @@ import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/moda
 import { FormCertificatePdfExportOverlay } from '@/pages/templates/form-certificate-pdf-export-overlay'
 import { handleError } from '@/shared/utils/error-handler'
 import { unmaskRosterStudentForCertificateIssue } from '@/features/program/shared/lib/unmask-for-certificate-issue'
-import { buildStudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
+import {
+  buildStudentCertificateDownloadContext,
+  certificateKindFromEligibilityApiType,
+} from '../../../lib/build-student-certificate-issuance'
 import type { StudentCertificateDownloadContext } from '../../../lib/build-student-certificate-issuance'
 import { resolveStudentCertificateKind } from '../../../lib/resolve-student-certificate-kind'
 import {
   CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
   getCertificateEligibilityErrorMessage,
-  resolveCertificateIssuePrecheckMessage,
+  resolveCertificateIssuePlan,
 } from '@/features/program/shared/api/certificate-serial-api'
+import {
+  certificateCertifiedPeriodIssueBlockMessage,
+  readCertificateCertifiedPeriod,
+  type CertificateIssuePlan,
+} from '@/features/program/shared/lib/certificate-eligibility'
 import { resolveOrganizationPortraitConsentDownload } from '../../../lib/student-portrait-consent'
 import {
   downloadOrganizationPortraitConsentFile,
@@ -175,6 +183,8 @@ export interface SchoolDetailStudentListSectionProps {
   programEndDate?: Date | string | null
   /** 프로그램 참여 신청일 — 발급 가능 기한(3년) 산정 */
   participationAppliedAt?: Date | string | null
+  /** 기관 활동 포기 — 학생 참가인증서에 사업 전체 기간을 쓰지 않는다 */
+  activityWithdrawn?: boolean
   /** 학생 만족도조사 운영 여부 (공통 정보 > 설문 진행 항목) */
   hasStudentSatisfactionSurvey?: boolean
   /** 풀페이지 등에서 상단에 이미 정보 수정/개인정보 상세보기 있을 때 버튼만 숨기거나 콜백으로 위임 */
@@ -206,6 +216,7 @@ export function SchoolDetailStudentListSection({
   programStartDate = null,
   programEndDate = null,
   participationAppliedAt: _participationAppliedAt = null,
+  activityWithdrawn = false,
   hasStudentSatisfactionSurvey = true,
   readOnly = false,
   studentListInfoEditComingSoonAlert = false,
@@ -249,6 +260,9 @@ export function SchoolDetailStudentListSection({
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
   const [certificateEligibilityChecking, setCertificateEligibilityChecking] = useState(false)
+  const [certificateIssuePlan, setCertificateIssuePlan] = useState<CertificateIssuePlan | null>(
+    null
+  )
   const [portraitConsentDownloading, setPortraitConsentDownloading] = useState(false)
   /** 정보 수정 세션 — GET 재조회로 revision이 바뀌어도 PUT 기준은 고정 */
   const rosterEditSessionRef = useRef<StudentRosterCommitSession | null>(null)
@@ -356,11 +370,15 @@ export function SchoolDetailStudentListSection({
     const participantId = student?.participantId
     setCertificateEligibilityChecking(true)
     try {
-      const blockMessage = await resolveCertificateIssuePrecheckMessage(participantId)
-      if (blockMessage) {
-        showAlert({ title: '안내', content: blockMessage })
+      const plan = await resolveCertificateIssuePlan({
+        participantId,
+        activityWithdrawn,
+      })
+      if (plan != null && !plan.eligible) {
+        showAlert({ title: '안내', content: plan.blockMessage ?? '발급할 수 없습니다.' })
         return
       }
+      setCertificateIssuePlan(plan)
       setCertificateIssueModalOpen(true)
     } catch (error) {
       showAlert({
@@ -372,6 +390,7 @@ export function SchoolDetailStudentListSection({
       setCertificateEligibilityChecking(false)
     }
   }, [
+    activityWithdrawn,
     certificateEligibilityChecking,
     certificateExportActive,
     isStudentListEditMode,
@@ -423,11 +442,24 @@ export function SchoolDetailStudentListSection({
         schoolId,
         attendanceSessionsByStudentId[student.id]
       )
-      const certificateKind = resolveStudentCertificateKind({
-        sessions,
-        satisfactionSurveyRequired: hasStudentSatisfactionSurvey,
-        satisfactionSurveyCompleted: unmaskedStudent.satisfactionSurveyCompleted === true,
+      const certificateKind = certificateIssuePlan
+        ? certificateKindFromEligibilityApiType(certificateIssuePlan.apiType)
+        : resolveStudentCertificateKind({
+            sessions,
+            satisfactionSurveyRequired: hasStudentSatisfactionSurvey,
+            satisfactionSurveyCompleted: unmaskedStudent.satisfactionSurveyCompleted === true,
+          })
+      const certifiedPeriod = readCertificateCertifiedPeriod(
+        certificateIssuePlan?.eligibility as object | null | undefined
+      )
+      const certifiedPeriodBlock = certificateCertifiedPeriodIssueBlockMessage({
+        activityWithdrawn,
+        period: certifiedPeriod,
       })
+      if (certifiedPeriodBlock) {
+        showAlert({ title: '안내', content: certifiedPeriodBlock })
+        return
+      }
 
       setCertificateExportContext(
         buildStudentCertificateDownloadContext({
@@ -438,6 +470,10 @@ export function SchoolDetailStudentListSection({
           programTitle,
           programStartDate,
           programEndDate,
+          certifiedPeriodLabel: certifiedPeriod?.label,
+          certifiedPeriodStart: certifiedPeriod?.start,
+          certifiedPeriodEnd: certifiedPeriod?.end,
+          requireCertifiedPeriod: activityWithdrawn,
           issuanceReasonLabel: reasonLabel,
           ...(programId != null ? { programId } : {}),
           organizationApplicationId: organizationApplicationKey,
@@ -447,7 +483,9 @@ export function SchoolDetailStudentListSection({
       setCertificateExportActive(true)
     },
     [
+      activityWithdrawn,
       attendanceSessionsByStudentId,
+      certificateIssuePlan,
       educationGrade,
       hasStudentSatisfactionSurvey,
       mergedStudentList,
@@ -466,6 +504,7 @@ export function SchoolDetailStudentListSection({
   const handleCertificateExportComplete = useCallback((success: boolean) => {
     setCertificateExportContext(null)
     setCertificateExportActive(false)
+    setCertificateIssuePlan(null)
     if (!success) {
       handleError(new Error('student certificate pdf export failed'), {
         context: 'schoolDetailStudentListSection.certificateDownload',
@@ -1101,7 +1140,7 @@ export function SchoolDetailStudentListSection({
             onClick={() => {
               void handleCertificateIssueClick()
             }} >
-            수료증/참여인증서 발급
+            수료증/참가인증서 발급
           </FilterTableToolbarButton>
         </>
       ) : null}

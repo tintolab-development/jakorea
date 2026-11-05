@@ -4,10 +4,12 @@ import {
   EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 import type { SettingsConsentItemId } from './consent-catalog'
 
 export type ConsentDocumentPreviewBodyVariant =
   | 'payment'
+  | 'receipt'
   | 'expense'
   | 'notice'
   | 'portrait'
@@ -25,6 +27,13 @@ const PAYMENT_A4_CONFIG: ConsentDocumentPreviewConfig = {
   a4HiddenParagraphIds: new Set([PAYMENT_STATEMENT_PRE_CONSENT_IDS.title]),
   pageBreakBeforeParagraphIds: new Set([PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord]),
   bodyVariant: 'payment',
+}
+
+const RECEIPT_A4_CONFIG: ConsentDocumentPreviewConfig = {
+  templateId: 'agreement-receipt-pre-consent',
+  a4HiddenParagraphIds: new Set([RECEIPT_PRE_CONSENT_IDS.title]),
+  pageBreakBeforeParagraphIds: new Set([RECEIPT_PRE_CONSENT_IDS.paymentRecord]),
+  bodyVariant: 'receipt',
 }
 
 const EDUCATOR_A4_CONFIG: ConsentDocumentPreviewConfig = {
@@ -59,6 +68,7 @@ const PREVIEW_CONFIG_BY_ITEM_ID: Partial<Record<SettingsConsentItemId, ConsentDo
   {
     portrait: PORTRAIT_A4_CONFIG,
     paymentStatement: PAYMENT_A4_CONFIG,
+    receiptPreConsent: RECEIPT_A4_CONFIG,
     educatorPledge: EDUCATOR_A4_CONFIG,
     administrativeJoint: NOTICE_A4_CONFIG,
     sexOffenseCheck: CRIME_CONFIG,
@@ -92,6 +102,7 @@ export function resolveConsentDocumentPreviewBodyVariant(
   templateId: string | undefined,
 ): ConsentDocumentPreviewBodyVariant {
   if (templateId === 'agreement-third-party') return 'payment'
+  if (templateId === 'agreement-receipt-pre-consent') return 'receipt'
   if (templateId === 'agreement-expense') return 'expense'
   if (templateId === 'agreement-notice') return 'notice'
   if (templateId === 'agreement-portrait') return 'portrait'

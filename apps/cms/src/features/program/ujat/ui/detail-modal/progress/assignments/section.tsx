@@ -27,6 +27,13 @@ export function UjatEducationProgressAssignmentsSection({
     getDefaultUjatEducationRegionKey
   )
 
+  useEffect(() => {
+    if (regions.length === 0) return
+    if (regions.some(region => region.key === activeRegion)) return
+    const next = regions[0]?.key?.trim()
+    if (next) setActiveRegion(next)
+  }, [activeRegion, regions])
+
   const {
     pendingFilters,
     handleFilterChange,

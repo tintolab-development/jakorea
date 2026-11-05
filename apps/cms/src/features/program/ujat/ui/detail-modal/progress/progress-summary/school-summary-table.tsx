@@ -1,12 +1,13 @@
 import '@/shared/ui/cross-table.css'
-import type { UjatEducationProgressSchoolSummary } from './types'
+import type {
+  UjatEducationProgressColumnRegion,
+  UjatEducationProgressSchoolSummary,
+} from './types'
 import {
   UJAT_EDU_PROGRESS_SCHOOL_METRIC_ORDER,
   UJAT_EDU_PROGRESS_SCHOOL_METRIC_LABEL,
 } from './types'
-import {
-  summaryToneClassName,
-} from './summary-display'
+import { summaryToneClassName } from './summary-display'
 import {
   SUMMARY_CATEGORY_TD,
   SUMMARY_PLAIN_ROW_CLASSNAME,
@@ -18,17 +19,19 @@ import {
 } from './region-matrix-table'
 
 export function UjatEducationProgressSchoolSummaryTable({
+  regions,
   summary,
 }: {
+  regions: readonly UjatEducationProgressColumnRegion[]
   summary: UjatEducationProgressSchoolSummary
 }) {
-
   return (
     <UjatEducationProgressSummaryMatrixShell
+      regions={regions}
       ariaLabel="학교 교육 진행 요약"
       labelColCount={2}
     >
-      <UjatEducationProgressSummaryRegionHeader categoryColSpan={2} />
+      <UjatEducationProgressSummaryRegionHeader regions={regions} categoryColSpan={2} />
       <tbody>
         <tr className={SUMMARY_PLAIN_ROW_CLASSNAME}>
           <td className={SUMMARY_CATEGORY_TD} colSpan={2}>
@@ -36,7 +39,10 @@ export function UjatEducationProgressSchoolSummaryTable({
               신청 학교
             </UjatEducationProgressSummaryCategoryCellInner>
           </td>
-          <UjatEducationProgressSummaryRegionDataCells row={summary.appliedSchools} />
+          <UjatEducationProgressSummaryRegionDataCells
+            regions={regions}
+            row={summary.appliedSchools}
+          />
         </tr>
         {summary.semesters.map(semester =>
           UJAT_EDU_PROGRESS_SCHOOL_METRIC_ORDER.map((metricKey, metricIndex) => (
@@ -71,6 +77,7 @@ export function UjatEducationProgressSchoolSummaryTable({
                 </UjatEducationProgressSummaryCategoryCellInner>
               </th>
               <UjatEducationProgressSummaryRegionDataCells
+                regions={regions}
                 row={semester.metrics[metricKey]}
               />
             </tr>

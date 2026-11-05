@@ -1,5 +1,6 @@
 import { collectInstructorRegisterValidation } from '@jakorea/domain/instructor/validate-register'
 import type { InstructorRegisterFormatChecks } from '@jakorea/domain/instructor/validate-register'
+import { getInstructorRequiredConsentAgreeKeys } from '@jakorea/domain/instructor/form-layout'
 import {
   mapInstructorRegisterFormValuesToValidationInput,
   type InstructorRegisterModalFormValues,
@@ -24,6 +25,7 @@ export function collectCmsInstructorRegisterValidation(
       requireEducation: true,
       requireCareer: true,
       requireFreeWrite: false,
+      requiredConsentAgreeKeys: [...getInstructorRequiredConsentAgreeKeys('cmsRegister')],
     }
   )
 }

@@ -496,25 +496,36 @@ export function UjatSurveyManagementView({
   const satisfactionResponseVersionId =
     satisfactionSurveysByAudience[activeSatisfactionAudience]?.id ?? undefined
   const lectureResponseVersionId = lectureEvalSurvey?.id ?? undefined
+  const pollBindingId = activeRegisteredSurvey?.bindingId
+  const satisfactionBindingId =
+    satisfactionSurveysByAudience[activeSatisfactionAudience]?.bindingId
+  const lectureBindingId = lectureEvalSurvey?.bindingId
 
   const {
     pollResponses: remotePollResponses,
     initialLoading: pollResponsesLoading,
     isRemoteDataSource: pollResponsesRemote,
-  } = useGeneralProgramSurveyResponses(programId, pollResponseVersionId)
+  } = useGeneralProgramSurveyResponses(programId, pollResponseVersionId, {
+    bindingId: pollBindingId,
+  })
   const {
     pollResponses: remoteSatisfactionResponses,
     initialLoading: satisfactionResponsesLoading,
     isRemoteDataSource: satisfactionResponsesRemote,
-  } = useGeneralProgramSurveyResponses(programId, satisfactionResponseVersionId)
+  } = useGeneralProgramSurveyResponses(programId, satisfactionResponseVersionId, {
+    bindingId: satisfactionBindingId,
+  })
   const {
     pollResponses: remoteLectureResponses,
     initialLoading: lectureResponsesLoading,
     isRemoteDataSource: lectureResponsesRemote,
-  } = useGeneralProgramSurveyResponses(programId, lectureResponseVersionId)
+  } = useGeneralProgramSurveyResponses(programId, lectureResponseVersionId, {
+    bindingId: lectureBindingId,
+  })
   const { totalResponseCount: remotePollSummaryCount } = useGeneralProgramSurveySummary(
     programId,
-    pollResponseVersionId
+    pollResponseVersionId,
+    pollBindingId
   )
 
   const pollResponses = useMemo((): UjatSurveyPollRawResponse[] => {
@@ -753,7 +764,10 @@ export function UjatSurveyManagementView({
         handleError(error, { context: 'ujatSurveyShareLink' })
         void showAlert({
           title: '공유',
-          content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
         })
       }
     })()
@@ -986,7 +1000,10 @@ export function UjatSurveyManagementView({
         handleError(error, { context: 'ujatSatisfactionShareLink' })
         void showAlert({
           title: '공유',
-          content: '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '공유 링크를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.'
+          ),
         })
       }
     })()

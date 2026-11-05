@@ -20,7 +20,7 @@ export interface JaHistoryPagePeriodUpdate {
   title: string;
   /**
      * @minItems 0
-     * @maxItems 3
+     * @maxItems 8
      */
   events: JaHistoryPageEventUpdate[];
 }

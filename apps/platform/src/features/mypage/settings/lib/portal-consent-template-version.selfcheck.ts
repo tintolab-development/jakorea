@@ -3,7 +3,7 @@ import { resolveInstructorApplyConsentTemplate } from '@jakorea/form-schema/cons
 import { restoreCompatibleConsentDraftValues } from './restore-compatible-consent-draft.ts'
 
 function buildFilledDocument(
-  consentKey: 'consentPaymentStatement' | 'consentEducatorPledge',
+  consentKey: 'consentPaymentStatement' | 'consentEducatorPledge' | 'consentReceiptPreConsent',
   state: {
     draft: { schemaVersion: 1; formSettings: { titleNumbering: 'numeric' }; paragraphs: [] }
     paymentBasicInfo?: { nameKo?: string }
@@ -14,12 +14,19 @@ function buildFilledDocument(
     }
   },
 ) {
-  const { templateId } = resolveInstructorApplyConsentTemplate(consentKey)
+  const templateCode =
+    state.portalDocument?.templateCode?.trim() ||
+    (consentKey === 'consentReceiptPreConsent'
+      ? 'agreement-receipt-pre-consent'
+      : resolveInstructorApplyConsentTemplate(consentKey).templateId)
+  const omitPaymentBasicInfo = templateCode === 'agreement-receipt-pre-consent'
   return {
     templateVersionId: state.portalDocument?.templateVersionId,
-    templateCode: state.portalDocument?.templateCode?.trim() || templateId,
+    templateCode,
     schemaJson: state.draft,
-    ...(state.paymentBasicInfo ? { paymentBasicInfo: state.paymentBasicInfo } : {}),
+    ...(!omitPaymentBasicInfo && state.paymentBasicInfo
+      ? { paymentBasicInfo: state.paymentBasicInfo }
+      : {}),
   }
 }
 
@@ -121,5 +128,17 @@ assert.equal(
   resolveConsentPreviewTemplateId({ filledDocument: { templateVersionId: null } }, 'agreement-portrait'),
   'agreement-portrait',
 )
+
+const receiptFilled = buildFilledDocument('consentReceiptPreConsent', {
+  ...state,
+  portalDocument: {
+    documentId: 9001,
+    templateVersionId: 123,
+    templateCode: 'agreement-receipt-pre-consent',
+  },
+})
+assert.equal(receiptFilled.templateCode, 'agreement-receipt-pre-consent')
+assert.equal(receiptFilled.templateVersionId, 123)
+assert.equal('paymentBasicInfo' in receiptFilled, false)
 
 console.log('portal-consent-template-version.selfcheck: ok')
