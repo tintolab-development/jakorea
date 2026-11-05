@@ -116,6 +116,7 @@ export function UjatEducationProgressAttendanceSection({
         onFilterChange={handleFilterChange}
         onSearch={handleSearch}
         showFilter
+        filterResponsiveWrap={false}
         title={firstSessionTitle}
         hideExcelDownload
         actions={
