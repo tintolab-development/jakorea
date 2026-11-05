@@ -190,10 +190,21 @@ function formatInstitutionLabel(
   lecture: SettlementLectureReportJoin | undefined,
   schedule: EducationScheduleItem,
 ): string | undefined {
-  const institution = lecture?.institutionName?.trim() || schedule.locationName?.trim()
-  const grade = lecture?.grade?.trim()
-  const label = [institution, grade].filter(Boolean).join(' · ')
+  const { institutionName, grade } = resolveInstitutionMeta(lecture, schedule)
+  const label = [institutionName, grade].filter(Boolean).join(' · ')
   return label || undefined
+}
+
+function resolveInstitutionMeta(
+  lecture: SettlementLectureReportJoin | undefined,
+  schedule: EducationScheduleItem,
+): { institutionName?: string; grade?: string } {
+  const institutionName = lecture?.institutionName?.trim() || schedule.locationName?.trim() || ''
+  const grade = lecture?.grade?.trim() || ''
+  return {
+    ...(institutionName ? { institutionName } : {}),
+    ...(grade ? { grade } : {}),
+  }
 }
 
 function isLectureReportSubmitted(status: string | null | undefined): boolean | null {
@@ -381,6 +392,8 @@ export function buildAssignedSettlementItems(
         hasPayableItems !== false
     const submittedAt = settlement?.submittedAt ?? receipt?.submittedAt
     const ineligibleMessage = individualIneligibleMessage(individual?.ineligibleReason)
+    const institutionMeta = resolveInstitutionMeta(lecture, schedule)
+    const institutionLabel = formatInstitutionLabel(lecture, schedule)
 
     return {
       id: scheduleId != null ? String(scheduleId) : schedule.id,
@@ -388,9 +401,8 @@ export function buildAssignedSettlementItems(
       sessionNumber: schedule.sessionNumber,
       heldAt: schedule.heldAt,
       sessionMeta: formatSettlementSessionMeta(schedule, lecture),
-      ...(formatInstitutionLabel(lecture, schedule)
-        ? { institutionLabel: formatInstitutionLabel(lecture, schedule) }
-        : {}),
+      ...institutionMeta,
+      ...(institutionLabel ? { institutionLabel } : {}),
       progress,
       status,
       ...(deadlineAt ? { deadlineAt } : {}),

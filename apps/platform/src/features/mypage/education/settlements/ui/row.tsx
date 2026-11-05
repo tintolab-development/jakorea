@@ -28,7 +28,8 @@ import checkMintUrl from '@/shared/assets/icons/check-mint-small.svg'
 import clockGrayUrl from '@/shared/assets/icons/clock-gray.svg'
 import alertRedUrl from '@/shared/assets/icons/alert-red.svg'
 import alertBlack24Url from '@/shared/assets/icons/alert-black-24.svg'
-import { PFButton, PFCategoryBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
+import villaIconUrl from '@/shared/assets/icons/villa.svg'
+import { PFButton, PFMetaBadge, PFModal, PFStateBadge, PFText } from '@/shared/ui'
 import styles from './row.module.css'
 
 type EducationSettlementRowProps = {
@@ -48,6 +49,12 @@ const MARK_ICON = {
   alert: alertRedUrl,
   neutral: clockGrayUrl,
 } as const
+
+function formatSchoolGradeBadge(raw: string): string | undefined {
+  const trimmed = raw.trim()
+  if (!trimmed) return undefined
+  return trimmed.endsWith('학년') ? trimmed : `${trimmed}학년`
+}
 
 const UNSUBMITTED_DEADLINE_STATUSES = new Set([
   'upcoming',
@@ -168,6 +175,26 @@ export function EducationSettlementRow({
     documentKind === 'payment_statement' && item.sessionMeta
       ? `${formatEducationSessionDate(item.heldAt)} ${item.sessionMeta}`
       : formatEducationSessionDate(item.heldAt)
+  const institutionName = item.institutionName?.trim() || ''
+  const grade = item.grade?.trim() || ''
+  const institutionPrimary =
+    institutionName || (grade ? '교육 기관' : item.institutionLabel?.trim() || '')
+  const institutionMeta =
+    documentKind === 'payment_statement' && (institutionPrimary || grade) ? (
+      <PFMetaBadge
+        icon={<img src={villaIconUrl} alt="" width={20} height={20} aria-hidden="true" />}
+        primary={institutionPrimary || '교육 기관'}
+        secondary={formatSchoolGradeBadge(grade)}
+      />
+    ) : null
+  const statusMark =
+    config.markLabel && config.markTone ? (
+      <EducationSessionStatusMark
+        tone={config.markTone}
+        label={config.markLabel}
+        iconSrc={MARK_ICON[config.markTone]}
+      />
+    ) : null
   const reapplyDisabled = isSettlementDeadlinePassed(item.deadlineAt)
   const receiptReapplyUnavailable =
     documentKind === 'receipt' &&
@@ -289,23 +316,18 @@ export function EducationSettlementRow({
           }
           date={headline}
           subtitle={
-            documentKind === 'payment_statement' && item.institutionLabel ? (
-              <PFCategoryBadge size="small" variant="secondary">
-                {item.institutionLabel}
-              </PFCategoryBadge>
-            ) : item.sessionMeta && documentKind !== 'payment_statement' ? (
+            item.sessionMeta && documentKind !== 'payment_statement' ? (
               <PFText as="span" typo="bd-lg-rg">
                 {item.sessionMeta}
               </PFText>
             ) : undefined
           }
           aside={
-            config.markLabel && config.markTone ? (
-              <EducationSessionStatusMark
-                tone={config.markTone}
-                label={config.markLabel}
-                iconSrc={MARK_ICON[config.markTone]}
-              />
+            institutionMeta || statusMark ? (
+              <div className={styles.headerAside}>
+                {institutionMeta}
+                {statusMark}
+              </div>
             ) : undefined
           }
         />

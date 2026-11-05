@@ -25,6 +25,10 @@ export type EducationSettlementItem = {
   sessionMeta: string
   /** 배정 학교·기관명. API에 값이 있을 때만 채운다. */
   institutionLabel?: string
+  /** 학교·기관명. 강의보고서 뱃지 `primary` */
+  institutionName?: string
+  /** 학년. 강의보고서 뱃지 `secondary` */
+  grade?: string
   progress: EducationSettlementProgress
   status: EducationSettlementStatus
   deadlineAt?: string
