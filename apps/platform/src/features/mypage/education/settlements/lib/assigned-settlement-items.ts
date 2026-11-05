@@ -404,6 +404,7 @@ export function buildAssignedSettlementItems(
     return {
       id: scheduleId != null ? String(scheduleId) : schedule.id,
       scheduleId,
+      ...(lecture?.assignmentId != null ? { assignmentId: lecture.assignmentId } : {}),
       sessionNumber:
         lecture?.sessionNo && lecture.sessionNo > 0 ? lecture.sessionNo : schedule.sessionNumber,
       heldAt: schedule.heldAt,
@@ -434,7 +435,9 @@ export function buildAssignedSettlementItems(
           : {}),
       ...(individual?.currentRevisionNo != null
         ? { currentRevisionNo: individual.currentRevisionNo }
-        : {}),
+        : settlement?.revisionNo != null
+          ? { currentRevisionNo: settlement.revisionNo }
+          : {}),
       ...(receipt?.receiptId != null ? { receiptId: receipt.receiptId } : {}),
       ...(payableItems.length > 0 ? { payableItems } : {}),
       ...(hasPayableItems != null ? { hasPayableItems } : {}),

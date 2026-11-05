@@ -27,6 +27,8 @@ export type SettlementWriteDraft = {
     applicationId: string
     sessionId: string
     scheduleId?: number
+    /** 강사 배정 ID. 프로그램 신청 ID가 아님 */
+    assignmentId?: number
     isInstructor: boolean
     documentKind: SettlementDocumentKind
     programTitle?: string

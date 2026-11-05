@@ -21,6 +21,17 @@ import {
   useApplicationSettlementsQuery,
   useSubmitIndividualSettlementMutation,
 } from '@/features/mypage/education/applications/api/activity-hooks'
+import { useSubmitInstructorSettlementMutation } from '@/features/mypage/education/settlements/api/use-submit-instructor-settlement-mutation'
+import {
+  buildInstructorSettlementCreateRequest,
+  buildInstructorSettlementResubmitRequest,
+} from '@/features/mypage/education/settlements/lib/build-instructor-settlement-submit'
+import {
+  instructorSettlementApiErrorMessage,
+  isInstructorPaymentStatementSubmit,
+  isPaymentStatementConsentRequiredError,
+  PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE,
+} from '@/features/mypage/education/settlements/lib/instructor-settlement-contract'
 import {
   composeSettlementWriteBasic,
   readSettlementMemberProfileBasic,
@@ -28,7 +39,10 @@ import {
 import { useSettlementConsentSidecar } from '@/features/mypage/education/settlements/hooks/use-payment-statement-consent-basic-info'
 import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { useReceiptPaymentStatementConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
-import { buildSettlementReceiptConsentPath } from '@/features/mypage/education/settlements/lib/consent-path'
+import {
+  buildSettlementPaymentConsentPath,
+  buildSettlementReceiptConsentPath,
+} from '@/features/mypage/education/settlements/lib/consent-path'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import {
   buildIndividualSettlementResubmitRequest,
@@ -92,6 +106,11 @@ export function MypageEducationSettlementConfirmPage() {
     { programType }
   )
   const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
+  const instructorSubmitMutation = useSubmitInstructorSettlementMutation()
+  const isInstructorSubmit = isInstructorPaymentStatementSubmit({
+    applicationType,
+    documentKind,
+  })
   const profileQuery = usePortalProfileQuery({ enabled: !viewMode })
   const consentSidecarQuery = useSettlementConsentSidecar(viewMode ? null : documentKind)
   const receiptConsent = useReceiptPaymentStatementConsent({
@@ -266,7 +285,7 @@ export function MypageEducationSettlementConfirmPage() {
       setAlertOpen(true)
       return
     }
-    if (!useIndividualSettlementApi) {
+    if (!isInstructorSubmit && !useIndividualSettlementApi) {
       setAlertMessage(
         documentKind === 'receipt'
           ? '이 신청 유형에서는 일정별 정산을 제출할 수 없습니다.'
@@ -275,7 +294,7 @@ export function MypageEducationSettlementConfirmPage() {
       setAlertOpen(true)
       return
     }
-    if (submitMutation.isPending) return
+    if (submitMutation.isPending || instructorSubmitMutation.isPending) return
     const submitFailedMessage =
       documentKind === 'receipt'
         ? '영수증 제출에 실패했습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
@@ -286,6 +305,38 @@ export function MypageEducationSettlementConfirmPage() {
         : '지급조서 제출에 필요한 일정 정보가 없습니다. 작성 화면으로 돌아가 다시 시도해 주세요.'
     try {
       const settlementApplicationId = draft.meta.settlementApplicationId
+      if (isInstructorSubmit) {
+        const resubmit =
+          draft.meta.resubmit === true && settlementApplicationId != null
+            ? buildInstructorSettlementResubmitRequest(draft)
+            : undefined
+        const create = resubmit ? undefined : buildInstructorSettlementCreateRequest(draft)
+        void instructorSubmitMutation
+          .mutateAsync({
+            settlementApplicationId,
+            create,
+            resubmit,
+          })
+          .then(() => {
+            clearSettlementWriteDraft(applicationId, sessionId)
+            navigate(buildSettlementTabPath(applicationId, area, applicationType))
+          })
+          .catch(error => {
+            if (isPaymentStatementConsentRequiredError(error)) {
+              setAlertMessage(PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE)
+              setAlertOpen(true)
+              return
+            }
+            setAlertMessage(
+              instructorSettlementApiErrorMessage(
+                error,
+                getProgramApplicationApiErrorMessage(error, submitFailedMessage)
+              )
+            )
+            setAlertOpen(true)
+          })
+        return
+      }
       const resubmit =
         draft.meta.resubmit === true &&
         settlementApplicationId != null &&
@@ -340,7 +391,7 @@ export function MypageEducationSettlementConfirmPage() {
         draft={draft}
         programTitle={application?.title}
         session={session}
-        submitting={submitMutation.isPending}
+        submitting={submitMutation.isPending || instructorSubmitMutation.isPending}
         readOnly={false}
         onComplete={handleComplete}
         onBack={handleBack}
@@ -360,6 +411,10 @@ export function MypageEducationSettlementConfirmPage() {
                 applicationType,
               })
             )
+            return
+          }
+          if (alertMessage === PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE) {
+            navigate(buildSettlementPaymentConsentPath({ applicationId, mode: 'write' }))
           }
         }}
       />

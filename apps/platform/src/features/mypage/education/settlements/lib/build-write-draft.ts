@@ -11,6 +11,7 @@ type BuildSettlementWriteDraftInput = {
   applicationId: string
   sessionId: string
   scheduleId?: number
+  assignmentId?: number
   isInstructor: boolean
   documentKind?: SettlementDocumentKind
   programTitle?: string
@@ -57,6 +58,7 @@ export function buildSettlementWriteDraft(
       applicationId: input.applicationId,
       sessionId: input.sessionId,
       scheduleId: input.scheduleId,
+      assignmentId: input.assignmentId,
       isInstructor: input.isInstructor,
       documentKind,
       programTitle: input.programTitle,

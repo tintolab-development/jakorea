@@ -610,6 +610,9 @@ export const platformQueryKeys = {
     /** 정산 신청 목록 — GET /api/portal/me/settlement-applications (Class C) */
     settlementApplications: () =>
       [...platformQueryKeys.mypage.all(), 'settlement-applications'] as const,
+    /** 강사 정산 신청 상세 — GET/POST /api/portal/me/settlement-applications (Class D) */
+    settlementApplication: (applicationId: number) =>
+      [...platformQueryKeys.mypage.settlementApplications(), applicationId] as const,
     /**
      * 강의보고서 배정 목록 — GET /api/portal/me/programs/{programId}/lecture-report-assignments (Class C)
      */

@@ -83,7 +83,12 @@ assert.equal(
 
 const case02 = build({
   schedules: [completedSchedule],
-  lectureReports: [{ scheduleId: 1, reportStatus: 'SUBMITTED', lectureStatus: 'COMPLETED' }],
+  lectureReports: [{
+    scheduleId: 1,
+    assignmentId: 12345,
+    reportStatus: 'SUBMITTED',
+    lectureStatus: 'COMPLETED',
+  }],
   settlements: [
     {
       programId: 100,
@@ -94,6 +99,7 @@ const case02 = build({
   ],
 })[0]
 assert.equal(case02?.status, 'pending_submit')
+assert.equal(case02?.assignmentId, 12345)
 const case02Ui = resolveSettlementStatusUi(case02!.status, 'payment_statement')
 assert.equal(case02Ui.writeDisabled, undefined)
 assert.equal(case02Ui.writeLabel, '지급조서 작성하기')
