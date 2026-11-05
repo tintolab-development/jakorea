@@ -18,6 +18,11 @@
 .notice {
   width: 100%;
   margin: 0;
+  white-space: normal;
+}
+
+.notice {
+  text-align: left;
 }
 
 .actions {

@@ -39,6 +39,10 @@ import {
   lectureReportBackPath,
   lectureReportPreviewPath,
 } from '@/features/mypage/education/schedules/lib/lecture-report-path'
+import {
+  lectureReportOverdueWarningText,
+  shouldShowLectureReportOverdueWarning,
+} from '@/features/mypage/education/schedules/lib/lecture-report-policy'
 import { LectureReportSubmitCompleteModal } from '@/features/mypage/education/schedules/ui/lecture-report-submit-complete-modal'
 import { buildSettlementWritePath } from '@/features/mypage/education/settlements/lib/write-path'
 import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
@@ -476,7 +480,10 @@ export function MypageLectureReportWritePage() {
       ) : null}
       {!loading && !error && loaded && draft ? (
         <>
-          {loaded.state.reportStatus === 'OVERDUE' ? (
+          {shouldShowLectureReportOverdueWarning(
+            loaded.state.reportStatus,
+            loaded.state.canSubmit,
+          ) ? (
             <PFText
               as="p"
               role="status"
@@ -484,7 +491,7 @@ export function MypageLectureReportWritePage() {
               color="neutral-cool-600"
               className={styles.notice}
             >
-              제출 기한이 지났습니다. 사업 운영 종료 전까지 지각 제출할 수 있습니다.
+              {lectureReportOverdueWarningText()}
             </PFText>
           ) : null}
           {fileUploadError ? (

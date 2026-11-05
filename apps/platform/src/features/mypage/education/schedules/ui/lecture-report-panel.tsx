@@ -65,10 +65,13 @@ function lectureStatusPresentation(value: string | null | undefined): { label: s
     default: return { label: '진행 현황 확인 중', tone: 'disabled' }
   }
 }
-function reportMessage(status: LectureReportStatus | undefined): string {
+function reportMessage(status: LectureReportStatus | undefined, canSubmit: boolean): string {
   switch (status) {
     case 'SUBMITTED': return '강의보고서 제출이 완료되었습니다'
-    case 'OVERDUE': return '강의보고서 제출기한이 마감되었어요'
+    case 'OVERDUE':
+      return canSubmit
+        ? '제출 기한이 지났지만 사업 운영기간 내에는 제출할 수 있어요'
+        : '강의보고서 제출기한이 마감되었어요'
     case 'AVAILABLE': return '기한 내에 강의보고서를 제출해 주세요'
     case 'UPCOMING': return '강의보고서는 강의 진행 이후 작성이 가능해요'
     case 'BUSINESS_ENDED': return '사업 운영이 종료되어 강의보고서를 제출할 수 없어요'
@@ -209,7 +212,7 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
             />
             <div className={[styles.reportGuide, submitted ? styles.reportGuideSubmitted : undefined].filter(Boolean).join(' ')}>
               <div className={styles.reportGuideCopy}>
-                <p className={styles.reportMessage}>{reportMessage(reportStatus)}</p>
+                <p className={styles.reportMessage}>{reportMessage(reportStatus, action === 'write')}</p>
                 {reportStatus !== 'UPCOMING' && row.submitDueAt ? <p className={styles.reportDueDate}>{formatDueDate(row.submitDueAt)}</p> : null}
               </div>
               <PFButton
