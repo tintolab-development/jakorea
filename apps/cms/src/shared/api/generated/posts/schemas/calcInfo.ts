@@ -5,21 +5,22 @@
  * Filtered for CMS posts management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { CalcInfoLectureFeeType } from './calcInfoLectureFeeType';
 
 /**
- * 지급조서(PAYMENT_STATEMENT)만. 영수증 경로는 null.
+ * 지급조서(PAYMENT_STATEMENT)만. 영수증 경로는 null. 제출 전 미리보기 lectureFeePreview와 산식 동일. taxIncomeType이 아님.
  */
 export interface CalcInfo {
-  /** 강의비 유형(스냅샷 taxIncomeType 등) */
-  lectureFeeType?: string;
-  /** 강사비 책정액 */
+  /** 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null. */
+  lectureFeeType?: CalcInfoLectureFeeType;
+  /** 강사비 책정 단가(원). 총액 아님. 제출 전 lectureFeePreview.instructorFeeAmount와 동일. 없으면 null. */
   instructorFeeAmount?: number;
   /** 사업소득자 여부 */
   businessIncomeYn?: boolean;
-  /** 교육 진행 차시. 제출 스냅샷에 없으면 null */
+  /** 교육 진행 차시 번호(sessionNo와 동일). 제출 스냅샷에 없으면 null */
   educationSessionCount?: number;
   /** 총 학생 수. 제출 스냅샷에 없으면 null */
   totalStudentCount?: number;
-  /** 총 강의비 */
+  /** 이번 회차 총 강의비(원). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. */
   totalLectureFee?: number;
 }

@@ -5,6 +5,7 @@
  * Filtered for CMS member management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { PortalScheduleItemEventType } from './portalScheduleItemEventType';
 
 export interface PortalScheduleItem {
   scheduleId?: number;
@@ -17,4 +18,38 @@ export interface PortalScheduleItem {
   locationName?: string;
   address?: string;
   participationRole?: string;
+  /** 캘린더 이벤트 유형. null은 PROGRAM_SCHEDULE. */
+  eventType?: PortalScheduleItemEventType;
+  /** 유형 접두사 안정 식별자. 서로 다른 eventType 간 숫자 ID가 같아도 충돌하지 않는다. */
+  eventId?: string | null;
+  /** 강사 배정 ID. LECTURE_REPORT_DEADLINE 상세 경로용. 그 외는 null. */
+  assignmentId?: number | null;
+  /** 제출된 강의보고서 ID. 미제출이면 null. */
+  lectureReportId?: number | null;
+  /** 강의보고서 상태. SUBMITTED | AVAILABLE | OVERDUE | BUSINESS_ENDED | UPCOMING. 강의보고서 외 이벤트는 null. */
+  reportStatus?: string | null;
+  /** 현재 로그인 회원의 제출/응답 가능 여부. 해당 없는 유형은 null. */
+  canSubmit?: boolean | null;
+  /** 마감 시각 경과 여부. 해당 없는 유형은 null. */
+  isOverdue?: boolean | null;
+  /** 마감의 Asia/Seoul 달력 날짜(yyyy-MM-dd). 마감형 이벤트만. FE가 Instant에서 재계산하지 않는다. */
+  deadlineDate?: string | null;
+  /** 캘린더 표시 제목. 없으면 scheduleName/programTitle을 쓴다. */
+  title?: string | null;
+  /** 상세 화면 이동용 신청 ID. */
+  applicationId?: number | null;
+  /** 상세 화면 이동용 신청 유형. INDIVIDUAL | ORGANIZATION | VOLUNTEER | INSTRUCTOR. */
+  applicationType?: string | null;
+  /** 과제·설문·만족도 바인딩 ID. */
+  formBindingId?: number | null;
+  /** 본인 제출 form_response ID. 미제출이면 null. 다른 회원 응답은 내려주지 않는다. */
+  formResponseId?: number | null;
+  /** 본인 최신 영수증 ID. 없으면 null. 강사 지급조서 ID가 아니다. */
+  receiptId?: number | null;
+  /** 서버가 계산한 마감 Instant. 상시(기간 없음) 설문은 이벤트를 만들지 않으므로 null이 아니다. */
+  deadlineAt?: string | null;
+  /** 이벤트 상태. 교육/운영기간은 SCHEDULED. 마감형은 NOT_SUBMITTED|SUBMITTED|OVERDUE|CLOSED 등. */
+  status?: string | null;
+  /** TIME_PRESENT | DATE_ONLY | SOURCE_TIME_NOT_AVAILABLE. 원천에 시각이 없으면 서버가 00:00~23:59를 만들지 않는다. */
+  timeAvailability?: string | null;
 }

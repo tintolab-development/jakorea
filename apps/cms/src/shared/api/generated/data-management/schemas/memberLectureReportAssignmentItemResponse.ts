@@ -5,6 +5,7 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberLectureFeePreview } from './memberLectureFeePreview';
 
 export interface MemberLectureReportAssignmentItemResponse {
   assignmentId?: number;
@@ -15,8 +16,10 @@ export interface MemberLectureReportAssignmentItemResponse {
   endAt?: string;
   scheduleName?: string;
   sessionNo?: number;
-  institutionName?: string;
-  grade?: string;
+  /** 기관(학교) 프로그램이면 학교/기관명. 개인형이면 null. 빈 문자열 금지. */
+  institutionName?: string | null;
+  /** 기관 프로그램 학년(숫자 또는 n학년). 개인형이거나 없으면 null. 빈 문자열 금지. */
+  grade?: string | null;
   lectureStatus?: string;
   reportStatus?: string;
   submitDueAt?: string;
@@ -26,4 +29,6 @@ export interface MemberLectureReportAssignmentItemResponse {
   institutionAddress?: string;
   /** 자택-기관 거리(km) 숫자. 문자열 아님. 없으면 null */
   distanceFromHome?: string | null;
+  /** 지급조서 제출 전 강의비 산출 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. 없으면 null. */
+  lectureFeePreview?: MemberLectureFeePreview | null;
 }

@@ -20,7 +20,7 @@ export interface AllocationCell {
   singleAssignment?: boolean;
   unavailable?: boolean;
   needsReassignment?: boolean;
-  /** 대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 라벨만 있고 상태 없는 셀 금지 */
+  /** 대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED */
   assignmentStatus?: AllocationCellAssignmentStatus;
   /** 대체 봉사자 program_participant.id. unavailable=false이면 null */
   replacementParticipantId?: number | null;
