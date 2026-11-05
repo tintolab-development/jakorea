@@ -17,7 +17,7 @@ import { isAllowedJaHistoryImage, JA_HISTORY_IMAGE_ACCEPT, readJaHistoryImage } 
 
 const IMAGE_GUIDE_LINES = [
   '- 파일은 JPG, PNG 형식만 등록 가능하며, 최대 20MB까지 첨부할 수 있습니다.',
-  '- 권장 이미지 사이즈는 1920 × 1200px입니다.',
+  '- 권장 배너 사이즈는 1920 × 1200px입니다.',
 ]
 
 const DraftTextArea = memo(function DraftTextArea({
@@ -66,9 +66,8 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
   const [imageFileName, setImageFileName] = useState(initial.image.fileName)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imageAssetId, setImageAssetId] = useState<number | undefined>(initial.image.assetId)
-  const eyebrowRef = useRef(initial.eyebrow)
   const mainTextRef = useRef(initial.mainText)
-  const [errors, setErrors] = useState<{ image?: string; eyebrow?: string; mainText?: string }>({})
+  const [errors, setErrors] = useState<{ image?: string; mainText?: string }>({})
 
   const handleFilesChange = useCallback(
     async (files: File[]) => {
@@ -108,11 +107,9 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
   )
 
   const handleSubmit = () => {
-    const eyebrow = eyebrowRef.current
     const mainText = mainTextRef.current
     const nextErrors: typeof errors = {}
     if (!imageUrl.trim()) nextErrors.image = '히어로 이미지를 등록해 주세요.'
-    if (!eyebrow.trim()) nextErrors.eyebrow = '상단 라벨을 입력해 주세요.'
     if (!mainText.trim()) nextErrors.mainText = '메인 텍스트를 입력해 주세요.'
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
@@ -123,7 +120,7 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
       imageFileName,
       imageFile,
       imageAssetId: imageAssetId ?? null,
-      eyebrow,
+      eyebrow: initial.eyebrow,
       mainText,
     })
   }
@@ -155,7 +152,7 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
             disabled={confirmLoading}
             onClick={handleSubmit}
           >
-            수정
+            저장
           </CmsButton>
         </>
       }
@@ -210,31 +207,6 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="상단 라벨"
-            required
-            view={null}
-            edit={
-              <div>
-                <DraftTextArea
-                  initialValue={eyebrowRef.current}
-                  rows={1}
-                  placeholder="상단 라벨을 입력해 주세요"
-                  ariaLabel="상단 라벨"
-                  onValue={value => {
-                    eyebrowRef.current = value
-                  }}
-                />
-                {errors.eyebrow ? (
-                  <p className="ja-history-modal__field-error" role="alert">
-                    {errors.eyebrow}
-                  </p>
-                ) : null}
-              </div>
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
             label="메인 텍스트"
             required
             view={null}
@@ -242,7 +214,7 @@ function HeroFormBody({ initial, confirmLoading, onCancel, onSubmit }: Omit<Prop
               <div>
                 <DraftTextArea
                   initialValue={mainTextRef.current}
-                  rows={3}
+                  rows={2}
                   placeholder="메인 텍스트를 입력해 주세요"
                   ariaLabel="메인 텍스트"
                   onValue={value => {

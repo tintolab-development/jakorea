@@ -65,6 +65,27 @@ export function InlineInput({
   )
 }
 
+export function HistoryCopy({
+  value,
+  align = 'start',
+}: {
+  value: string
+  align?: 'start' | 'center'
+}) {
+  return (
+    <p
+      className={[
+        'ja-history-copy',
+        align === 'center' ? 'ja-history-copy--center' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      {value || '-'}
+    </p>
+  )
+}
+
 export function MediaPreview({
   media,
   tone = 'plain',
@@ -72,7 +93,7 @@ export function MediaPreview({
 }: {
   media: JaHistoryMedia
   tone?: 'plain' | 'mark'
-  size?: 'default' | 'wide' | 'banner' | 'hero' | 'era' | 'thumb'
+  size?: 'default' | 'wide' | 'banner' | 'hero' | 'era' | 'thumb' | 'card' | 'origin' | 'cta'
 }) {
   return (
     <span
@@ -84,6 +105,9 @@ export function MediaPreview({
         size === 'hero' ? 'ja-history-preview--hero' : '',
         size === 'era' ? 'ja-history-preview--era' : '',
         size === 'thumb' ? 'ja-history-preview--thumb' : '',
+        size === 'card' ? 'ja-history-preview--card' : '',
+        size === 'origin' ? 'ja-history-preview--origin' : '',
+        size === 'cta' ? 'ja-history-preview--cta' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -127,6 +151,8 @@ export function LockedMedia({
 
 type SectionFrameProps = {
   title: string
+  /** Figma Title 마커. 히어로·연혁·시작·CTA는 없음. */
+  marker?: boolean
   note?: string
   editing?: boolean
   saving?: boolean
@@ -138,6 +164,7 @@ type SectionFrameProps = {
 
 export function SectionFrame({
   title,
+  marker = true,
   note,
   editing = false,
   saving = false,
@@ -150,7 +177,7 @@ export function SectionFrame({
     <section className="admin-list-card ja-history-section">
       <div className="admin-list-toolbar">
         <div className="table-header-title--wrapper ja-history-section__heading">
-          <span className="table-title">■ {title}</span>
+          <span className="table-title">{marker ? `■ ${title}` : title}</span>
           {note ? <span className="ja-history-section__note">{note}</span> : null}
         </div>
         <div className="table-header-actions--wrapper ja-history-section__actions">
