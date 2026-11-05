@@ -23,6 +23,8 @@ export type SettlementDeadlineNotice = 'overdue' | 'operation_ended'
 export type EducationSettlementItem = {
   id: string
   scheduleId?: number | null
+  /** 강사 배정 ID. lecture-report-assignments.assignmentId */
+  assignmentId?: number | null
   sessionNumber: number
   heldAt: string
   /** 예: 10:00~11:20 3차시 */
@@ -58,6 +60,7 @@ export type EducationSettlementItem = {
     itemType: string
     itemName: string
     evidenceRequired: boolean | null
+    maxLimitWon?: number | null
   }>
   submittedItems?: Array<{
     itemType?: string

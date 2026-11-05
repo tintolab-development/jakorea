@@ -12,10 +12,25 @@ export function parseSettlementAmount(value: string): number {
   return Number.isFinite(n) ? n : 0
 }
 
-export function formatSettlementAmountInput(value: string): string {
+/** 지급조서 식사비 안내 문구(시간 당 최대 3만원)와 동일한 상한 */
+export const INSTRUCTOR_MEAL_MAX_WON = 30_000
+
+export function readPositiveWonLimit(value: number | null | undefined): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null
+  return Math.floor(value)
+}
+
+export function formatSettlementAmountInput(
+  value: string,
+  maxWon?: number | null,
+): string {
   const digits = digitsOnly(value)
   if (!digits) return ''
-  return Number(digits).toLocaleString('ko-KR')
+  let amount = Number(digits)
+  if (!Number.isFinite(amount)) return ''
+  const limit = readPositiveWonLimit(maxWon)
+  if (limit != null && amount > limit) amount = limit
+  return amount.toLocaleString('ko-KR')
 }
 
 export function formatSettlementAmountDisplay(value: string): string {

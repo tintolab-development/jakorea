@@ -12,6 +12,7 @@ import {
   hydrateSettlementWriteFormState,
 } from '../lib/build-write-draft'
 import {
+  INSTRUCTOR_MEAL_MAX_WON,
   formatSettlementAmountInput,
   parseSettlementAmount,
 } from '../lib/format-write-draft'
@@ -28,6 +29,7 @@ import {
   overlayPayableEvidenceRequired,
   pickAmountPayableItems,
   pickTransportPayableItem,
+  readPayableMaxLimitWon,
   receiptPaymentItemLabel,
   sortReceiptPayableItems,
 } from '../lib/payment-items'
@@ -146,6 +148,7 @@ function AmountWithWon({
   disabled = false,
   placeholder = '직접 입력',
   ariaLabel,
+  maxWon,
 }: {
   width?: number
   value: string
@@ -153,6 +156,7 @@ function AmountWithWon({
   disabled?: boolean
   placeholder?: string
   ariaLabel?: string
+  maxWon?: number | null
 }) {
   return (
     <div className={styles.amountRow}>
@@ -167,7 +171,7 @@ function AmountWithWon({
         disabled={disabled}
         value={value}
         aria-label={ariaLabel}
-        onValueChange={next => onChange(formatSettlementAmountInput(next))}
+        onValueChange={next => onChange(formatSettlementAmountInput(next, maxWon))}
       />
       <PFText as="span" typo="bd-md-rg" color="black">
         원
@@ -317,6 +321,7 @@ function TripLegBlock({
   attachments,
   uploadEnabled,
   showReceiptUpload = true,
+  amountMaxWon,
   onTransitChange,
   onAmountChange,
   onFileNamesChange,
@@ -331,6 +336,7 @@ function TripLegBlock({
   attachments?: SettlementReceiptAttachment[]
   uploadEnabled: boolean
   showReceiptUpload?: boolean
+  amountMaxWon?: number | null
   onTransitChange: (next: string) => void
   onAmountChange: (next: string) => void
   onFileNamesChange: (next: string[]) => void
@@ -362,6 +368,7 @@ function TripLegBlock({
               value={amount}
               onChange={onAmountChange}
               ariaLabel={`${prefix} 지출 금액`}
+              maxWon={amountMaxWon}
             />
           </PFFormField>
         </PFFormFieldRow>
@@ -393,6 +400,7 @@ function AmountReceiptSection({
   footer,
   amountLabel,
   item,
+  maxWon,
   onChange,
   onError,
 }: {
@@ -403,11 +411,27 @@ function AmountReceiptSection({
   footer?: string
   amountLabel: string
   item: SettlementAmountItemDraft
+  maxWon?: number | null
   onChange: (next: SettlementAmountItemDraft) => void
   onError: (message: string) => void
 }) {
   return (
-    <PFFormSection id={id} title={title} required={required} description={description} footer={footer}>
+    <PFFormSection
+      id={id}
+      title={title}
+      required={required}
+      description={description}
+      footer={
+        [
+          footer,
+          maxWon != null
+            ? `최대 ${maxWon.toLocaleString('ko-KR')}원까지 지급됩니다.`
+            : null,
+        ]
+          .filter((part): part is string => Boolean(part))
+          .join(' ') || undefined
+      }
+    >
       <PFFormFieldTable>
         <PFFormFieldRow type="single">
           <PFFormField label={amountLabel}>
@@ -415,6 +439,7 @@ function AmountReceiptSection({
               value={item.amount}
               onChange={amount => onChange({ ...item, amount })}
               ariaLabel={amountLabel}
+              maxWon={maxWon}
             />
           </PFFormField>
         </PFFormFieldRow>
@@ -499,14 +524,19 @@ export function EducationSettlementWriteForm({
   )
 
   const [tripType, setTripType] = useState<TripType>(hydrated?.tripType ?? 'round_trip')
+  const transportMaxWon = readPayableMaxLimitWon(transportItem)
   const [departTransit, setDepartTransit] = useState(hydrated?.departTransit ?? '')
-  const [departAmount, setDepartAmount] = useState(hydrated?.departAmount ?? '')
+  const [departAmount, setDepartAmount] = useState(
+    formatSettlementAmountInput(hydrated?.departAmount ?? '', transportMaxWon),
+  )
   const [departFiles, setDepartFiles] = useState<string[]>(hydrated?.departFiles ?? [])
   const [departAttachments, setDepartAttachments] = useState<SettlementReceiptAttachment[]>(
     hydrated?.departAttachments ?? []
   )
   const [returnTransit, setReturnTransit] = useState(hydrated?.returnTransit ?? '')
-  const [returnAmount, setReturnAmount] = useState(hydrated?.returnAmount ?? '')
+  const [returnAmount, setReturnAmount] = useState(
+    formatSettlementAmountInput(hydrated?.returnAmount ?? '', transportMaxWon),
+  )
   const [returnFiles, setReturnFiles] = useState<string[]>(hydrated?.returnFiles ?? [])
   const [returnAttachments, setReturnAttachments] = useState<SettlementReceiptAttachment[]>(
     hydrated?.returnAttachments ?? []
@@ -520,12 +550,15 @@ export function EducationSettlementWriteForm({
           ...base,
           itemName: item.itemName,
           evidenceRequired: isReceiptEvidenceRequired(item.evidenceRequired),
+          amount: formatSettlementAmountInput(base.amount, item.maxLimitWon),
         }
       })
     }
     return amountItems.map(createEmptyAmountItemDraft)
   })
-  const [mealAmount, setMealAmount] = useState(hydrated?.mealAmount ?? '')
+  const [mealAmount, setMealAmount] = useState(
+    formatSettlementAmountInput(hydrated?.mealAmount ?? '', INSTRUCTOR_MEAL_MAX_WON),
+  )
   const [mealFiles, setMealFiles] = useState<string[]>(hydrated?.mealFiles ?? [])
   const [activityAmount, setActivityAmount] = useState(hydrated?.activityAmount ?? '')
   const [activityFiles, setActivityFiles] = useState<string[]>(hydrated?.activityFiles ?? [])
@@ -559,10 +592,10 @@ export function EducationSettlementWriteForm({
         prefilledFromDetail.current = true
         setTripType(mapped.transport.tripType)
         setDepartTransit(mapped.transport.depart.transit)
-        setDepartAmount(mapped.transport.depart.amount)
+        setDepartAmount(formatSettlementAmountInput(mapped.transport.depart.amount, transportMaxWon))
         setDepartAttachments(mapped.transport.depart.attachments)
         setReturnTransit(mapped.transport.return.transit)
-        setReturnAmount(mapped.transport.return.amount)
+        setReturnAmount(formatSettlementAmountInput(mapped.transport.return.amount, transportMaxWon))
         setReturnAttachments(mapped.transport.return.attachments)
         setExtraItems(
           amountItems.map(item => {
@@ -572,6 +605,7 @@ export function EducationSettlementWriteForm({
               ...base,
               itemName: item.itemName,
               evidenceRequired: isReceiptEvidenceRequired(item.evidenceRequired),
+              amount: formatSettlementAmountInput(base.amount, item.maxLimitWon),
             }
           })
         )
@@ -589,6 +623,7 @@ export function EducationSettlementWriteForm({
     homeAddressDetail,
     name,
     payableItems,
+    transportMaxWon,
   ])
 
   const transportTotal = useMemo(() => {
@@ -645,6 +680,7 @@ export function EducationSettlementWriteForm({
       applicationId,
       sessionId,
       scheduleId: session?.scheduleId ?? matchedIndividual?.scheduleId,
+      assignmentId: session?.assignmentId ?? undefined,
       isInstructor,
       documentKind,
       programTitle,
@@ -675,15 +711,25 @@ export function EducationSettlementWriteForm({
       transportEvidenceRequired: isReceiptEvidenceRequired(transportItem?.evidenceRequired),
       tripType,
       departTransit,
-      departAmount,
+      departAmount: formatSettlementAmountInput(departAmount, transportMaxWon),
       departFiles,
       departAttachments,
       returnTransit,
-      returnAmount,
+      returnAmount: formatSettlementAmountInput(returnAmount, transportMaxWon),
       returnFiles,
       returnAttachments,
-      extraItems: isReceipt ? extraItemsForUi : [],
-      mealAmount,
+      extraItems: isReceipt
+        ? extraItemsForUi.map(item => ({
+            ...item,
+            amount: formatSettlementAmountInput(
+              item.amount,
+              readPayableMaxLimitWon(
+                payableItems.find(payable => payable.itemType === item.itemType),
+              ),
+            ),
+          }))
+        : [],
+      mealAmount: formatSettlementAmountInput(mealAmount, INSTRUCTOR_MEAL_MAX_WON),
       mealFiles,
       activityAmount,
       activityFiles,
@@ -846,6 +892,9 @@ export function EducationSettlementWriteForm({
                 description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
                 amountLabel={item.itemName}
                 item={item}
+                maxWon={readPayableMaxLimitWon(
+                  payableItems.find(payable => payable.itemType === item.itemType),
+                )}
                 onChange={next => {
                   setExtraItems(current =>
                     current.map(row => (row.itemType === next.itemType ? next : row))
@@ -889,6 +938,7 @@ export function EducationSettlementWriteForm({
               attachments={departAttachments}
               uploadEnabled={isReceipt && isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
               showReceiptUpload={!isReceipt || isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
+              amountMaxWon={transportMaxWon}
               onTransitChange={setDepartTransit}
               onAmountChange={setDepartAmount}
               onFileNamesChange={setDepartFiles}
@@ -905,9 +955,10 @@ export function EducationSettlementWriteForm({
                 fileNames={returnFiles}
                 attachments={returnAttachments}
                 uploadEnabled={isReceipt && isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-                showReceiptUpload={!isReceipt || isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-                onTransitChange={setReturnTransit}
-                onAmountChange={setReturnAmount}
+              showReceiptUpload={!isReceipt || isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
+              amountMaxWon={transportMaxWon}
+              onTransitChange={setReturnTransit}
+              onAmountChange={setReturnAmount}
                 onFileNamesChange={setReturnFiles}
                 onAttachmentsChange={setReturnAttachments}
                 onError={showAlert}
@@ -945,6 +996,9 @@ export function EducationSettlementWriteForm({
                 }
                 amountLabel={item.itemName}
                 item={item}
+                maxWon={readPayableMaxLimitWon(
+                  payableItems.find(payable => payable.itemType === item.itemType),
+                )}
                 onChange={next => {
                   setExtraItems(current =>
                     current.map(row => (row.itemType === next.itemType ? next : row))
@@ -966,7 +1020,12 @@ export function EducationSettlementWriteForm({
               <PFFormFieldTable>
                 <PFFormFieldRow type="single">
                   <PFFormField label="식사비">
-                    <AmountWithWon value={mealAmount} onChange={setMealAmount} ariaLabel="식사비" />
+                    <AmountWithWon
+                      value={mealAmount}
+                      onChange={setMealAmount}
+                      ariaLabel="식사비"
+                      maxWon={INSTRUCTOR_MEAL_MAX_WON}
+                    />
                   </PFFormField>
                 </PFFormFieldRow>
                 <PFFormFieldRow type="single">
