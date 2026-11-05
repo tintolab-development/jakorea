@@ -5,6 +5,9 @@ import {
 } from './format-write-draft.ts'
 import { readTripLegAttachments, readTripLegFileNames } from './empty-trip-leg.ts'
 
+export const SETTLEMENT_WRITE_ALERT_TITLE = '안내'
+export const SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 미입력 안내'
+export const SETTLEMENT_RECEIPT_REQUIRED_ALERT_TITLE = '영수증 제출 안내'
 export const SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_MESSAGE = '필수 항목을 모두 작성해주세요'
 export const SETTLEMENT_MIN_EXPENSE_ITEM_MESSAGE =
   '지급조서는 최소 한개 이상의 항목이 작성된 경우에만 제출 가능합니다.'
@@ -28,12 +31,8 @@ function hasUploadedReceipts(leg: SettlementTripLegDraft): boolean {
   return readTripLegAttachments(leg).length > 0 || readTripLegFileNames(leg).length > 0
 }
 
-function isTripLegIncomplete(leg: SettlementTripLegDraft): boolean {
-  return (
-    isBlank(leg.transit) ||
-    parseSettlementAmount(leg.amount) <= 0 ||
-    !hasUploadedReceipts(leg)
-  )
+function isTripLegFieldsIncomplete(leg: SettlementTripLegDraft): boolean {
+  return isBlank(leg.transit) || parseSettlementAmount(leg.amount) <= 0
 }
 
 function isTripLegMissingReceipt(leg: SettlementTripLegDraft): boolean {
@@ -58,10 +57,16 @@ export function validateSettlementWriteDraft(
   }
 
   if (meta.isInstructor && meta.documentKind !== 'receipt') {
-    if (isTripLegIncomplete(transport.depart)) return 'required_incomplete'
-    if (transport.tripType === 'round_trip' && isTripLegIncomplete(transport.return)) {
+    if (isTripLegFieldsIncomplete(transport.depart)) return 'required_incomplete'
+    if (transport.tripType === 'round_trip' && isTripLegFieldsIncomplete(transport.return)) {
       return 'required_incomplete'
     }
+    if (!hasUploadedReceipts(transport.depart)) return 'receipt_required'
+    if (transport.tripType === 'round_trip' && !hasUploadedReceipts(transport.return)) {
+      return 'receipt_required'
+    }
+    if (isAmountMissingReceipt(meal.amount, meal.fileNames.length)) return 'receipt_required'
+    if (isAmountMissingReceipt(activity.amount, activity.fileNames.length)) return 'receipt_required'
     return null
   }
 
@@ -137,4 +142,18 @@ export function resolveSettlementWriteValidationMessage(
     case 'upload_incomplete':
       return SETTLEMENT_RECEIPT_UPLOAD_INCOMPLETE_MESSAGE
   }
+}
+
+export function resolveSettlementWriteValidationAlert(
+  error: SettlementWriteValidationError,
+  documentKind: SettlementWriteDraft['meta']['documentKind'] = 'receipt',
+): { title: string; description: string } {
+  const description = resolveSettlementWriteValidationMessage(error, documentKind)
+  if (error === 'receipt_required') {
+    return { title: SETTLEMENT_RECEIPT_REQUIRED_ALERT_TITLE, description }
+  }
+  if (error === 'required_incomplete') {
+    return { title: SETTLEMENT_REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE, description }
+  }
+  return { title: SETTLEMENT_WRITE_ALERT_TITLE, description }
 }

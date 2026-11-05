@@ -43,7 +43,8 @@ import {
 } from '../lib/settlement-options'
 import type { SettlementDocumentKind } from '../lib/settlement-status-ui'
 import {
-  resolveSettlementWriteValidationMessage,
+  SETTLEMENT_WRITE_ALERT_TITLE,
+  resolveSettlementWriteValidationAlert,
   validateSettlementWriteDraft,
 } from '../lib/validate-write-draft'
 import { saveSettlementWriteDraft } from '../lib/write-draft-storage'
@@ -529,6 +530,7 @@ export function EducationSettlementWriteForm({
   const [activityAmount, setActivityAmount] = useState(hydrated?.activityAmount ?? '')
   const [activityFiles, setActivityFiles] = useState<string[]>(hydrated?.activityFiles ?? [])
   const [alertOpen, setAlertOpen] = useState(false)
+  const [alertTitle, setAlertTitle] = useState(SETTLEMENT_WRITE_ALERT_TITLE)
   const [alertMessage, setAlertMessage] = useState('')
   const prefilledFromDetail = useRef(Boolean(hydrated))
 
@@ -595,7 +597,8 @@ export function EducationSettlementWriteForm({
     return depart + back
   }, [departAmount, returnAmount, tripType])
 
-  const showAlert = (message: string) => {
+  const showAlert = (message: string, title = SETTLEMENT_WRITE_ALERT_TITLE) => {
+    setAlertTitle(title)
     setAlertMessage(message)
     setAlertOpen(true)
   }
@@ -688,7 +691,8 @@ export function EducationSettlementWriteForm({
 
     const validationError = validateSettlementWriteDraft(draft)
     if (validationError) {
-      showAlert(resolveSettlementWriteValidationMessage(validationError, documentKind))
+      const alert = resolveSettlementWriteValidationAlert(validationError, documentKind)
+      showAlert(alert.description, alert.title)
       return
     }
 
@@ -714,7 +718,11 @@ export function EducationSettlementWriteForm({
   return (
     <>
       <form className={styles.form} onSubmit={handleSubmit}>
-        <EducationSettlementSessionBanner programTitle={programTitle} session={session} />
+        <EducationSettlementSessionBanner
+          programTitle={programTitle}
+          session={session}
+          institutionTitle={!isReceipt}
+        />
         {isReceipt && evidencePolicyUnconfigured ? (
           <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
             {individualIneligibleMessage('EVIDENCE_POLICY_UNCONFIGURED')}
@@ -1020,7 +1028,7 @@ export function EducationSettlementWriteForm({
       </form>
       <PFAlertModal
         open={alertOpen}
-        title="안내"
+        title={alertTitle}
         description={alertMessage}
         onConfirm={() => setAlertOpen(false)}
       />
