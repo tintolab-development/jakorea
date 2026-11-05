@@ -167,11 +167,96 @@ test('G06 Legacy/Unknown sidecar·빈값 계약 보존 + 한 항목 수정', asy
     if (ov && 'recruit.instructor.recruitTargets' in ov) expect(ov['recruit.instructor.recruitTargets']).toEqual(['adult'])
   }
   const after = parseServiceDetail(getStored())!
-  expect(after.e2eUnknownSidecar, '재GET root sidecar').toEqual(SIDECAR)
-  expect(after.registration?.overlay?.['e2e.unknown.sidecar'], '재GET overlay sidecar').toEqual(SIDECAR)
+  expect(after.e2eUnknownSidecar, '재GET root sidecar(미전송 → 유지)').toEqual(SIDECAR)
+  // RFC-7396: FE가 그대로 되돌려 보낸 내부 null 은 BE에서 키 삭제(null→부재). 나머지 빈값은 보존
+  const { nil: _nil, ...SIDECAR_WITHOUT_NULL } = SIDECAR
+  expect(after.registration?.overlay?.['e2e.unknown.sidecar'], '재GET overlay sidecar(null 키는 삭제)').toEqual(SIDECAR_WITHOUT_NULL)
   expect(getStored().recruitments, '모집 행 유지').toEqual(fixture.recruitments)
   expect(JSON.stringify(patches.map(p => p.body))).toContain('G06 공고명')
   await openDetailTab(page, 'info')
   await enterDetailEdit(page, 'info')
   await expect(page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요').first()).toHaveValue('G06 공고명')
+})
+
+/** G07 (merge-patch null 감사) — 저장값이 있는 overlay 키에 FE가 null/''을 보내 BE에서 삭제되는지 */
+test('G07 저장된 overlay 값을 null/빈값으로 덮어 보내지 않는다(공통정보·강사 모집 저장)', async ({ page }) => {
+  const fixture = structuredClone(DETAIL_FIXTURE)
+  const sdj = parseServiceDetail(fixture) ?? {}
+  const SEEDED: Record<string, unknown> = {
+    'generalRegistration.kpi.dispatchedSchool': 2,
+    'generalRegistration.kpi.dispatchedClass': 3,
+    'generalRegistration.basicInfo.operationAnchorIso': '2027-01-01',
+    'generalRegistration.educationScheduleSettings.singleDateIso': '2027-01-10',
+    'generalRegistration.educationScheduleSettings.periodDateIso': '2027-01-10',
+    'generalRegistration.educationCurriculum.preEducationScheduleLine': '2027.01.05 사전교육',
+    'generalRegistration.educationCurriculum.preEducationScheduleName': '사전교육',
+    'recruitInstructor.detailInfo.learningSupportContent': '<p>강사 학습 지원</p>',
+    'recruitVolunteer.detailInfo.learningSupportContent': '<p>봉사 학습 지원</p>',
+  }
+  sdj.registration.overlay = { ...sdj.registration.overlay, ...SEEDED }
+  // canonical KPI(generalCommonInfo.kpi)도 0이 아닌 값으로 — overlay null 미러가 canonical을 0으로 덮는지 확인
+  sdj.generalCommonInfo.kpi = { ...sdj.generalCommonInfo.kpi, finalSchools: 5, finalClasses: 7 }
+  fixture.serviceDetailJson = JSON.stringify(sdj)
+  fixture.recruitments = fixture.recruitments.map((r: any) =>
+    r.recruitmentType === 'INSTRUCTOR' ? { ...r, learningSupportContent: '<p>행 학습 지원</p>', announcementTitle: '행 공고' } : r
+  )
+  const { mutations, getStored } = await setup(page, fixture)
+  const report: Record<string, unknown> = {}
+  const collect = (label: string, patches: { path: string; body: any }[]) => {
+    for (const p of patches) {
+      const ov = parseServiceDetail(p.body)?.registration?.overlay
+      if (/recruitments\/\d+$/.test(p.path)) {
+        report[`${label}:row.learningSupportContent`] = p.body?.learningSupportContent
+        report[`${label}:row.announcementTitle`] = p.body?.announcementTitle
+      }
+      const iri = parseServiceDetail(p.body)?.generalCommonInfo?.instructorRecruitmentInfo
+      if (iri && 'learningSupportContent' in iri) report[`${label}:gci.iri.learningSupportContent`] = iri.learningSupportContent
+      const gk = parseServiceDetail(p.body)?.generalCommonInfo?.kpi
+      if (gk) report[`${label}:gci.kpi`] = gk
+      if (!ov) continue
+      for (const k of Object.keys(SEEDED)) report[`${label}:${k}`] = k in ov ? ov[k] : '<omitted>'
+    }
+  }
+  await openDetailTab(page, 'info')
+  await enterDetailEdit(page, 'info')
+  await page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요').first().fill('G07 공고명')
+  const a = await saveDetailEdit(page, mutations)
+  expect(a.blocked, `저장 차단: ${a.blocked}`).toBeNull()
+  collect('common', a.patches)
+  await openDetailTab(page, 'recruitment', '강사 모집 정보')
+  await enterDetailEdit(page, 'instructors')
+  await page.getByPlaceholder(REMARK).first().fill('G07 강사 비고')
+  const b = await saveDetailEdit(page, mutations)
+  expect(b.blocked, `저장 차단: ${b.blocked}`).toBeNull()
+  collect('instructor', b.patches)
+  console.log('[G07] sent', JSON.stringify(report))
+  console.log('[G07] stored gci.kpi after', JSON.stringify(parseServiceDetail(getStored())?.generalCommonInfo?.kpi))
+  for (const [k, v] of Object.entries(report)) {
+    if (k.endsWith(':gci.kpi')) {
+      expect.soft((v as any).finalSchools, `${k} finalSchools`).toBe(5)
+      expect.soft((v as any).finalClasses, `${k} finalClasses`).toBe(7)
+    }
+  }
+  // 의도된 비우기: dispatched*는 canonical generalCommonInfo.kpi가 SSOT(registration-overlay-sync.ts:76-78,
+  // general-registration-overlay-from-program.ts:779-781), preEducation*은 nested 커리큘럼 미러(…:453, 699-723)
+  const INTENTIONAL = new Set([
+    'generalRegistration.kpi.dispatchedSchool',
+    'generalRegistration.kpi.dispatchedClass',
+    'generalRegistration.educationCurriculum.preEducationScheduleLine',
+    'generalRegistration.educationCurriculum.preEducationScheduleName',
+  ])
+  const lost = Object.entries(report).filter(([k, v]) => {
+    const key = k.split(':')[1]
+    if (!(key in SEEDED) || INTENTIONAL.has(key)) return false
+    return v !== '<omitted>' && v !== SEEDED[key]
+  })
+  expect(lost, 'merge-patch에서 저장값을 지우거나 바꾸는 키').toEqual([])
+  expect(report['instructor:row.learningSupportContent'], '강사 행 학습지원 유지').toBe('<p>행 학습 지원</p>')
+  expect(report['instructor:row.announcementTitle'], '강사 행 공고 유지').toBe('행 공고')
+  if ('instructor:gci.iri.learningSupportContent' in report) {
+    expect(report['instructor:gci.iri.learningSupportContent']).toBe('<p>행 학습 지원</p>')
+  }
+  const kpiAfter = parseServiceDetail(getStored())?.generalCommonInfo?.kpi
+  expect(kpiAfter?.finalSchools, '재GET canonical KPI').toBe(5)
+  expect(kpiAfter?.finalClasses).toBe(7)
 })
