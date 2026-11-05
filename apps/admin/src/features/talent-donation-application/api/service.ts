@@ -3,7 +3,6 @@ import { toAdminListPage, type AdminListPage } from '@/shared/lib/admin-infinite
 import { getJAKoreaHomepageAdminAPISponsorshipSubset } from '@/shared/api/generated/sponsorship/sponsorship-api';
 import { mapTalentApplicationDetailToDomain, mapTalentApplicationListItemToDomain, toTalentApplicationListParams, toTalentApplicationStatusUpdateRequest, } from './mappers';
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status';
-import { toRevealPiiQueryParam } from '@/shared/lib/homepage-pii';
 function sponsorshipApi() {
     return getJAKoreaHomepageAdminAPISponsorshipSubset();
 }
@@ -14,17 +13,13 @@ async function listRemote(filter: TalentDonationApplicationListFilter, page: num
 export async function listTalentDonationApplicationsPageService(filter: TalentDonationApplicationListFilter = {}, page = 0): Promise<AdminListPage<TalentDonationApplication>> {
     return listRemote(filter, page);
 }
-export async function getTalentDonationApplicationService(id: string, actorName?: string, options?: {
-    revealPii?: boolean;
-}): Promise<TalentDonationApplication | null> {
+export async function getTalentDonationApplicationService(id: string, actorName?: string): Promise<TalentDonationApplication | null> {
     void actorName;
     const numericId = Number(id);
     if (!Number.isFinite(numericId) || numericId <= 0)
         return null;
     try {
-        const row = await sponsorshipApi().detail7(numericId, {
-            revealPii: toRevealPiiQueryParam(options?.revealPii),
-        });
+        const row = await sponsorshipApi().detail7(numericId);
         return mapTalentApplicationDetailToDomain(row);
     }
     catch (error) {

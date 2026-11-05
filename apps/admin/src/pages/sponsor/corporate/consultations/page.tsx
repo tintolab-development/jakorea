@@ -17,17 +17,15 @@ import {
   useRemoveCorporateConsultations,
 } from '@/features/corporate-consultation/api/hooks'
 import { corporateConsultationQueryKeys } from '@/features/corporate-consultation/api/query-keys'
-import { useHomepagePiiView } from '@/features/auth/hooks/use-homepage-pii-view'
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status'
 import { getCorporateConsultationService } from '@/features/corporate-consultation/api/service'
-import { HOMEPAGE_PII_REVEAL_COPY } from '@/shared/lib/homepage-pii'
 import { formatDateTimeDot } from '@/shared/lib/format-display'
 import {
   CORPORATE_CONSULTATIONS_CHANGED_EVENT,
   DEFAULT_CONFIRM_ACTOR,
 } from '@/features/corporate-consultation/api/store'
-import { maskPhoneNumber } from '@/features/corporate-consultation/lib/phone-mask'
 import { corporateConsultationMutationFailureAlert } from '@/features/corporate-consultation/lib/mutation-failure-alert'
+import { displayServerPiiAsIs } from '@/shared/lib/homepage-pii-display'
 import { CorporateConsultationDetailModal } from '@/features/corporate-consultation/ui/detail-modal'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
@@ -283,11 +281,9 @@ export function CorporateConsultationsPage() {
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [detailRow, setDetailRow] = useState<CorporateConsultation | null>(null)
-  const [piiRevealed, setPiiRevealed] = useState(false)
-  const [revealLoading, setRevealLoading] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
-  const canRevealPii = useHomepagePiiView()
   const { detailId, openDetail, closeDetail } = useUrlDetailId(
     searchParams,
     patchSearchParams,
@@ -312,20 +308,24 @@ export function CorporateConsultationsPage() {
   useEffect(() => {
     if (!detailId) {
       setDetailRow(null)
-      setPiiRevealed(false)
+      setDetailLoading(false)
       return
     }
 
-    setPiiRevealed(false)
-    setDetailRow(prev => {
-      if (prev?.id === detailId) return prev
-      return rows.find(item => item.id === detailId) ?? prev
-    })
-
+    setDetailRow(null)
+    setDetailLoading(true)
     let cancelled = false
-    void getCorporateConsultationService(detailId, DEFAULT_CONFIRM_ACTOR, { revealPii: false })
+    void getCorporateConsultationService(detailId, DEFAULT_CONFIRM_ACTOR)
       .then(item => {
-        if (cancelled || !item) return
+        if (cancelled) return
+        if (!item) {
+          showAlert({
+            title: '신청을 찾을 수 없음',
+            content: '신청 정보를 찾을 수 없습니다.',
+          })
+          closeDetail()
+          return
+        }
         setDetailRow(item)
       })
       .catch(error => {
@@ -335,6 +335,7 @@ export function CorporateConsultationsPage() {
             title: '권한 없음',
             content: '해당 신청을 조회할 권한이 없습니다.',
           })
+          closeDetail()
           return
         }
         if (isAdminNotFound(error)) {
@@ -342,55 +343,33 @@ export function CorporateConsultationsPage() {
             title: '신청을 찾을 수 없음',
             content: '신청 정보를 찾을 수 없습니다.',
           })
+          closeDetail()
+          return
         }
+        showAlert({
+          title: '조회 실패',
+          content: '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+        })
+        closeDetail()
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false)
       })
 
     return () => {
       cancelled = true
     }
-    // 목록 갱신마다 상세 GET을 다시 치지 않는다. 시드는 detailId 변경 시의 rows만 쓴다.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- rows
-  }, [detailId, showAlert])
+  }, [closeDetail, detailId, showAlert])
 
   const refreshDetailFromList = useCallback(
     async (id: string) => {
       void listQuery.refetch()
-      const detail = await getCorporateConsultationService(id, DEFAULT_CONFIRM_ACTOR, {
-        revealPii: piiRevealed,
-      })
+      const detail = await getCorporateConsultationService(id, DEFAULT_CONFIRM_ACTOR)
       setDetailRow(detail)
       if (!detail) closeDetail()
     },
-    [closeDetail, listQuery, piiRevealed]
+    [closeDetail, listQuery]
   )
-
-  const handleRevealPii = useCallback(async () => {
-    if (!detailId || piiRevealed) return
-    setRevealLoading(true)
-    try {
-      const detail = await getCorporateConsultationService(detailId, DEFAULT_CONFIRM_ACTOR, {
-        revealPii: true,
-      })
-      if (!detail) {
-        showAlert({
-          title: '조회 실패',
-          content: '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
-        })
-        return
-      }
-      setDetailRow(detail)
-      setPiiRevealed(true)
-    } catch (error) {
-      showAlert({
-        title: isAdminForbidden(error) ? HOMEPAGE_PII_REVEAL_COPY.forbiddenTitle : '조회 실패',
-        content: isAdminForbidden(error)
-          ? HOMEPAGE_PII_REVEAL_COPY.forbiddenContent
-          : '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
-      })
-    } finally {
-      setRevealLoading(false)
-    }
-  }, [detailId, piiRevealed, showAlert])
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
@@ -531,7 +510,7 @@ export function CorporateConsultationsPage() {
         width: COL.contact,
         align: 'center',
         ellipsis: true,
-        render: (v: string) => v || '-',
+        render: (v: string) => displayServerPiiAsIs(v),
       },
       {
         title: '부서/직함명',
@@ -548,7 +527,7 @@ export function CorporateConsultationsPage() {
         key: 'phone',
         width: COL.phone,
         align: 'center',
-        render: (v: string) => maskPhoneNumber(v),
+        render: (v: string) => displayServerPiiAsIs(v),
       },
       {
         title: '신청일시',
@@ -731,7 +710,6 @@ export function CorporateConsultationsPage() {
             onRow={record => ({
               onClick: e => {
                 if (isTableSelectionClick(e)) return
-                setDetailRow(record)
                 openDetail(record.id)
               },
               style: { cursor: 'pointer' },
@@ -747,15 +725,10 @@ export function CorporateConsultationsPage() {
 
       <CorporateConsultationDetailModal
         open={detailOpen}
+        loading={detailLoading}
         data={detailRow}
         confirmLoading={confirmMutation.isPending && detailOpen}
         deleteLoading={removeMutation.isPending && detailOpen}
-        canRevealPii={canRevealPii}
-        piiRevealed={piiRevealed}
-        revealLoading={revealLoading}
-        onRevealPii={() => {
-          void handleRevealPii()
-        }}
         onCancel={closeDetail}
         onConfirm={() => {
           void handleDetailConfirm()

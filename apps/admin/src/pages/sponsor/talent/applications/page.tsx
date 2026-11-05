@@ -20,16 +20,14 @@ import {
 } from '@/features/talent-donation-application/api/hooks'
 import { talentDonationApplicationQueryKeys } from '@/features/talent-donation-application/api/query-keys'
 import { isAdminForbidden, isAdminNotFound } from '@/features/system-inbox/lib/http-status'
-import { useHomepagePiiView } from '@/features/auth/hooks/use-homepage-pii-view'
 import { getTalentDonationApplicationService } from '@/features/talent-donation-application/api/service'
-import { HOMEPAGE_PII_REVEAL_COPY } from '@/shared/lib/homepage-pii'
 import {
   DEFAULT_CONFIRM_ACTOR,
   TALENT_DONATION_APPLICATIONS_CHANGED_EVENT,
 } from '@/features/talent-donation-application/api/store'
 import { talentDonationApplicationMutationFailureAlert } from '@/features/talent-donation-application/lib/mutation-failure-alert'
-import { maskEmail, maskPhoneNumber } from '@/features/talent-donation-application/lib/mask'
 import { TalentDonationApplicationDetailModal } from '@/features/talent-donation-application/ui/detail-modal'
+import { displayServerPiiAsIs } from '@/shared/lib/homepage-pii-display'
 import {
   FILTER_CONTROL_MAX_WIDTH_PX,
   FILTER_CONTROL_WIDE_FIELD_WIDTH_PX,
@@ -287,11 +285,9 @@ export function TalentDonationApplicationsPage() {
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const [detailRow, setDetailRow] = useState<TalentDonationApplication | null>(null)
-  const [piiRevealed, setPiiRevealed] = useState(false)
-  const [revealLoading, setRevealLoading] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false)
-  const canRevealPii = useHomepagePiiView()
   const { detailId, openDetail, closeDetail } = useUrlDetailId(
     searchParams,
     patchSearchParams,
@@ -316,20 +312,24 @@ export function TalentDonationApplicationsPage() {
   useEffect(() => {
     if (!detailId) {
       setDetailRow(null)
-      setPiiRevealed(false)
+      setDetailLoading(false)
       return
     }
 
-    setPiiRevealed(false)
-    setDetailRow(prev => {
-      if (prev?.id === detailId) return prev
-      return rows.find(item => item.id === detailId) ?? prev
-    })
-
+    setDetailRow(null)
+    setDetailLoading(true)
     let cancelled = false
-    void getTalentDonationApplicationService(detailId, DEFAULT_CONFIRM_ACTOR, { revealPii: false })
+    void getTalentDonationApplicationService(detailId, DEFAULT_CONFIRM_ACTOR)
       .then(item => {
-        if (cancelled || !item) return
+        if (cancelled) return
+        if (!item) {
+          showAlert({
+            title: '신청을 찾을 수 없음',
+            content: '신청 정보를 찾을 수 없습니다.',
+          })
+          closeDetail()
+          return
+        }
         setDetailRow(item)
       })
       .catch(error => {
@@ -339,6 +339,7 @@ export function TalentDonationApplicationsPage() {
             title: '권한 없음',
             content: '해당 신청을 조회할 권한이 없습니다.',
           })
+          closeDetail()
           return
         }
         if (isAdminNotFound(error)) {
@@ -346,55 +347,33 @@ export function TalentDonationApplicationsPage() {
             title: '신청을 찾을 수 없음',
             content: '신청 정보를 찾을 수 없습니다.',
           })
+          closeDetail()
+          return
         }
+        showAlert({
+          title: '조회 실패',
+          content: '신청 상세를 불러오지 못했습니다. 다시 시도해 주세요.',
+        })
+        closeDetail()
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false)
       })
 
     return () => {
       cancelled = true
     }
-    // 목록 갱신마다 상세 GET을 다시 치지 않는다. 시드는 detailId 변경 시의 rows만 쓴다.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- rows
-  }, [detailId, showAlert])
+  }, [closeDetail, detailId, showAlert])
 
   const refreshDetailFromList = useCallback(
     async (id: string) => {
       void listQuery.refetch()
-      const detail = await getTalentDonationApplicationService(id, DEFAULT_CONFIRM_ACTOR, {
-        revealPii: piiRevealed,
-      })
+      const detail = await getTalentDonationApplicationService(id, DEFAULT_CONFIRM_ACTOR)
       setDetailRow(detail)
       if (!detail) closeDetail()
     },
-    [closeDetail, listQuery, piiRevealed]
+    [closeDetail, listQuery]
   )
-
-  const handleRevealPii = useCallback(async () => {
-    if (!detailId || piiRevealed) return
-    setRevealLoading(true)
-    try {
-      const detail = await getTalentDonationApplicationService(detailId, DEFAULT_CONFIRM_ACTOR, {
-        revealPii: true,
-      })
-      if (!detail) {
-        showAlert({
-          title: '조회 실패',
-          content: '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
-        })
-        return
-      }
-      setDetailRow(detail)
-      setPiiRevealed(true)
-    } catch (error) {
-      showAlert({
-        title: isAdminForbidden(error) ? HOMEPAGE_PII_REVEAL_COPY.forbiddenTitle : '조회 실패',
-        content: isAdminForbidden(error)
-          ? HOMEPAGE_PII_REVEAL_COPY.forbiddenContent
-          : '개인정보 원문을 불러오지 못했습니다. 다시 시도해 주세요.',
-      })
-    } finally {
-      setRevealLoading(false)
-    }
-  }, [detailId, piiRevealed, showAlert])
 
   const handleBulkDeleteClick = useCallback(() => {
     if (selectedRowKeys.length === 0) {
@@ -526,7 +505,7 @@ export function TalentDonationApplicationsPage() {
         width: COL.name,
         align: 'center',
         ellipsis: true,
-        render: (v: string) => v || '-',
+        render: (v: string) => displayServerPiiAsIs(v),
       },
       {
         title: '연락처',
@@ -534,7 +513,7 @@ export function TalentDonationApplicationsPage() {
         key: 'phone',
         width: COL.phone,
         align: 'center',
-        render: (v: string) => maskPhoneNumber(v),
+        render: (v: string) => displayServerPiiAsIs(v),
       },
       {
         title: '이메일',
@@ -543,7 +522,7 @@ export function TalentDonationApplicationsPage() {
         width: COL.email,
         align: 'center',
         ellipsis: true,
-        render: (v: string) => maskEmail(v),
+        render: (v: string) => displayServerPiiAsIs(v),
       },
       {
         title: 'JA 프로그램 참여 이력',
@@ -768,7 +747,6 @@ export function TalentDonationApplicationsPage() {
             onRow={record => ({
               onClick: e => {
                 if (isTableSelectionClick(e)) return
-                setDetailRow(record)
                 openDetail(record.id)
               },
               style: { cursor: 'pointer' },
@@ -784,15 +762,10 @@ export function TalentDonationApplicationsPage() {
 
       <TalentDonationApplicationDetailModal
         open={detailOpen}
+        loading={detailLoading}
         data={detailRow}
         confirmLoading={confirmMutation.isPending && detailOpen}
         deleteLoading={removeMutation.isPending && detailOpen}
-        canRevealPii={canRevealPii}
-        piiRevealed={piiRevealed}
-        revealLoading={revealLoading}
-        onRevealPii={() => {
-          void handleRevealPii()
-        }}
         onCancel={closeDetail}
         onConfirm={() => {
           void handleDetailConfirm()

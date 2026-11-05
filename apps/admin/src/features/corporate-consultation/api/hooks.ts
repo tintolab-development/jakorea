@@ -56,18 +56,15 @@ export function useCorporateConsultationsList(
   })
 }
 
-export function useCorporateConsultationDetail(
-  id: string | null,
-  enabled = true,
-  revealPii = false,
-) {
+export function useCorporateConsultationDetail(id: string | null, enabled = true) {
   const dataSource = source()
   return useQuery({
-    queryKey: corporateConsultationQueryKeys.detail(dataSource, id ?? '', revealPii),
-    queryFn: () => getCorporateConsultationService(id!, DEFAULT_CONFIRM_ACTOR, { revealPii }),
+    queryKey: corporateConsultationQueryKeys.detail(dataSource, id ?? ''),
+    queryFn: () => getCorporateConsultationService(id!, DEFAULT_CONFIRM_ACTOR),
     enabled: Boolean(id) && enabled,
-    staleTime: dataSource === 'remote' ? 30_000 : Number.POSITIVE_INFINITY,
-    retry: dataSource === 'remote' ? 1 : false,
+    staleTime: dataSource === 'remote' ? 0 : Number.POSITIVE_INFINITY,
+    gcTime: dataSource === 'remote' ? 0 : 15 * 60_000,
+    retry: false,
   })
 }
 
