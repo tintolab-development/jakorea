@@ -899,28 +899,15 @@ export function toApiInstructorCmsProfile(
   }
 }
 
-/** CMS proposal DTO → OpenAPI `InstructorCmsSettlement` (pre-register·PATCH wire) */
+/**
+ * CMS proposal DTO → OpenAPI `InstructorCmsSettlement` (pre-register·PATCH wire).
+ * 계좌 원장은 지급조서 사전 동의서만 갱신 — bankName/accountNumber/accountHolder/bankAccounts 생략.
+ */
 export function toApiInstructorCmsSettlement(
   settlement: InstructorCmsSettlement
 ): ApiInstructorCmsSettlement {
-  const bankAccounts = settlement.bankAccounts
-    ?.map(row => ({
-      ...(row.id != null ? { id: row.id } : {}),
-      bankName: row.bankName.trim(),
-      ...(row.accountNumber?.trim() ? { accountNumber: row.accountNumber.trim() } : {}),
-      ...(row.accountHolder?.trim() ? { accountHolder: row.accountHolder.trim() } : {}),
-      ...(row.current != null ? { current: row.current } : {}),
-    }))
-    .filter(row => row.bankName)
-
   return {
-    ...(settlement.bankName?.trim() ? { bankName: settlement.bankName.trim() } : {}),
-    ...(settlement.accountNumber?.trim()
-      ? { accountNumber: settlement.accountNumber.trim() }
-      : {}),
-    ...(settlement.accountHolder?.trim() ? { accountHolder: settlement.accountHolder.trim() } : {}),
     businessIncome: settlement.businessIncome ?? false,
-    ...(bankAccounts?.length ? { bankAccounts } : {}),
   }
 }
 

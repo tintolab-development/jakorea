@@ -287,6 +287,21 @@ describe('normalizeSettlementApiErrorCode', () => {
     )
   })
 
+  it('409 SETTLEMENT_BANK_ACCOUNT_REQUIRED는 지급조서 사전 동의서 완료를 안내한다', () => {
+    const error = {
+      response: {
+        status: 409,
+        data: {
+          message: '요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+          error: { code: 'SETTLEMENT_BANK_ACCOUNT_REQUIRED', field: 'bankAccount' },
+        },
+      },
+    }
+    expect(getSettlementApiErrorMessage(error, 'fallback')).toBe(
+      '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.'
+    )
+  })
+
   it('getNormalizedSettlementApiError는 axios 응답에서 동일 정규화를 한다', () => {
     const error = {
       response: {

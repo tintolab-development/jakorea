@@ -43,6 +43,19 @@ describe('formatInstructorSettlementAccountParts', () => {
     expect(instructorBankLine(user, true)).toBe('농협 123456-12-123456 | 박틴토')
   })
 
+  it('계좌가 없으면 빈 문자열이 아니라 - 를 보여 준다', () => {
+    const user = instructor({
+      instructorInfo: {
+        bankName: '',
+        accountNumber: '',
+        accountHolder: '',
+        isBusinessIncome: false,
+      },
+    })
+    expect(instructorBankLine(user, false)).toBe('-')
+    expect(instructorBankLine(user, true)).toBe('-')
+  })
+
   it('복성 예금주는 앞 2글자와 마지막 글자를 남긴다', () => {
     const parts = formatInstructorSettlementAccountParts({
       bankName: '신한',

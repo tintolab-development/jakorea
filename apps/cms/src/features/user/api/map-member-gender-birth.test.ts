@@ -183,7 +183,7 @@ describe('mapCreateUserRequestToPreRegisterSchool', () => {
 })
 
 describe('mapCreateUserRequestToPreRegisterInstructor', () => {
-  it('강사 등록 요청에 계좌·주소 필드를 매핑한다', () => {
+  it('강사 등록 요청에 주소와 사업소득만 매핑하고 계좌는 보내지 않는다', () => {
     const body = mapCreateUserRequestToPreRegisterInstructor({
       email: 'i@test.com',
       password: 'i@test.com',
@@ -203,9 +203,12 @@ describe('mapCreateUserRequestToPreRegisterInstructor', () => {
 
     expect(body.homeAddress).toBe('자택로 1')
     expect(body.rawPassword).toBe('i@test.com')
-    expect(body.bankName).toBe('농협')
     expect(body.businessIncome).toBe(false)
-    expect(body.bankAccounts?.[0]?.bankName).toBe('농협')
+    expect(body.settlement).toEqual({ businessIncome: false })
+    expect(body.bankName).toBeUndefined()
+    expect(body.accountNumber).toBeUndefined()
+    expect(body.accountHolder).toBeUndefined()
+    expect(body.bankAccounts).toBeUndefined()
   })
 
   it('profile/settlement를 OpenAPI wire 형식으로 정규화한다', () => {

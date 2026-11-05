@@ -122,6 +122,13 @@ const UJAT_P0_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_INTERVIEW_CONFLICT: '면접 평가가 진행·완료된 신청은 재배정할 수 없습니다.',
 }
 
+const SETTLEMENT_ACCOUNT_ERROR_MESSAGES: Record<string, string> = {
+  SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
+    '정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.',
+  SETTLEMENT_BANK_ACCOUNT_REQUIRED:
+    '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
+}
+
 /** 수료증·참여인증서 — 서버 message가 비거나 code만 있을 때 */
 const CERTIFICATE_ISSUE_ERROR_MESSAGES: Record<string, string> = {
   CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE:
@@ -200,15 +207,22 @@ export function extractApiErrorMessage(
     return certificateMapped
   }
 
+  const settlementMapped = code ? SETTLEMENT_ACCOUNT_ERROR_MESSAGES[code] : undefined
+  if (settlementMapped && (!serverMessage || serverMessage === code)) {
+    return settlementMapped
+  }
+
   if (
     serverMessage &&
     !(ujatMapped && serverMessage === code) &&
-    !(certificateMapped && serverMessage === code)
+    !(certificateMapped && serverMessage === code) &&
+    !(settlementMapped && serverMessage === code)
   ) {
     return serverMessage
   }
   if (ujatMapped) return ujatMapped
   if (certificateMapped) return certificateMapped
+  if (settlementMapped) return settlementMapped
 
   const nestedCode = envelope?.error?.code?.trim()
   if (nestedCode) return nestedCode

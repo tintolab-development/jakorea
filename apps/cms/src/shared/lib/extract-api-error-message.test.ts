@@ -78,6 +78,21 @@ describe('extractApiErrorMessage', () => {
     ).toBe('ADMIN_EMAIL_ALREADY_EXISTS')
   })
 
+  it('정산 계좌 가드 코드는 서버 메시지가 없으면 동의서 안내를 쓴다', () => {
+    expect(
+      extractApiErrorMessage({
+        error: { code: 'SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY' },
+      })
+    ).toBe('정산 계좌는 지급조서 사전 동의서에서만 입력·수정할 수 있습니다.')
+    expect(
+      extractApiErrorMessage({
+        error: { code: 'SETTLEMENT_BANK_ACCOUNT_REQUIRED' },
+      })
+    ).toBe(
+      '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.'
+    )
+  })
+
   it('UJAT P0 코드는 서버 메시지가 코드일 때 한글 안내로 바꾼다', () => {
     expect(
       extractApiErrorMessage({

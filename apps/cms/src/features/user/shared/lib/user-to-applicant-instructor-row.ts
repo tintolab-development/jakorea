@@ -230,8 +230,16 @@ export function maskedUserForInstructorDetail(user: Omit<User, 'password'>): Omi
     instructorInfo: user.instructorInfo
       ? {
           ...user.instructorInfo,
-          accountNumber: MASKING_POLICY.accountNumber(user.instructorInfo.accountNumber),
-          accountHolder: MASKING_POLICY.accountHolderName(user.instructorInfo.accountHolder),
+          ...(user.instructorInfo.accountNumber?.trim()
+            ? {
+                accountNumber: MASKING_POLICY.accountNumber(user.instructorInfo.accountNumber),
+              }
+            : {}),
+          ...(user.instructorInfo.accountHolder?.trim()
+            ? {
+                accountHolder: MASKING_POLICY.accountHolderName(user.instructorInfo.accountHolder),
+              }
+            : {}),
         }
       : user.instructorInfo,
   }
