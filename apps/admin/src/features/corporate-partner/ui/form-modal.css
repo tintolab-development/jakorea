@@ -15,6 +15,14 @@
   margin-top: 30px;
 }
 
+.corporate-partner-form-modal .teal-header-modal__footer .cms-button {
+  min-width: 120px;
+}
+
+.corporate-partner-form-modal .file-select-image-cell .file-select-field__guide-line {
+  white-space: normal;
+}
+
 .corporate-partner-form-modal__form {
   width: 100%;
 }
