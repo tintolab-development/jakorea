@@ -15,7 +15,14 @@ export const PARTICIPANT_NOT_COMPLETED = 'PARTICIPANT_NOT_COMPLETED' as const
 export const CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE =
   '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.'
 
-export const ISSUANCE_PERIOD_EXPIRED_MESSAGE = '수료증 발급 기간이 만료되었습니다.'
+export const ISSUANCE_PERIOD_EXPIRED_MESSAGE =
+  '신청일로부터 3년이 지나 발급할 수 없습니다.'
+
+export const CERTIFICATE_APPLICATION_DATE_UNAVAILABLE =
+  'CERTIFICATE_APPLICATION_DATE_UNAVAILABLE' as const
+
+export const CERTIFICATE_APPLICATION_DATE_UNAVAILABLE_MESSAGE =
+  '신청일을 확인할 수 없어 발급할 수 없습니다.'
 
 export const PARTICIPANT_NOT_COMPLETED_MESSAGE = '수료 조건을 충족하지 않아 발급할 수 없습니다.'
 
@@ -34,6 +41,7 @@ export const CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE =
 
 const CERTIFICATE_REASON_MESSAGES: Record<string, string> = {
   [CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE]: CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE,
+  [CERTIFICATE_APPLICATION_DATE_UNAVAILABLE]: CERTIFICATE_APPLICATION_DATE_UNAVAILABLE_MESSAGE,
   [ISSUANCE_PERIOD_EXPIRED]: ISSUANCE_PERIOD_EXPIRED_MESSAGE,
   [PARTICIPANT_NOT_COMPLETED]: PARTICIPANT_NOT_COMPLETED_MESSAGE,
   [CERTIFICATE_NO_RECOGNIZED_RECORD]: CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE,
@@ -54,10 +62,16 @@ export function normalizeCertificateReasonCode(
   return reason?.trim().toUpperCase() ?? ''
 }
 
+const SATISFACTION_SURVEY_NOT_COMPLETED = 'SATISFACTION_SURVEY_NOT_COMPLETED'
+
 export function certificateBlockingReasons(
   eligibility: CertificateEligibilityLike | null | undefined
 ): string[] {
-  return Array.isArray(eligibility?.blockingReasons) ? [...eligibility.blockingReasons] : []
+  return Array.isArray(eligibility?.blockingReasons)
+    ? eligibility.blockingReasons.filter(
+        reason => normalizeCertificateReasonCode(reason) !== SATISFACTION_SURVEY_NOT_COMPLETED
+      )
+    : []
 }
 
 export function isCertificateConsentEvidenceUnavailable(
@@ -104,6 +118,9 @@ export function certificateIssuePrecheckBlockMessage(
   eligibility: CertificateEligibilityLike | null | undefined
 ): string | null {
   if (isCertificateEligibleForIssue(eligibility)) return null
+  if (eligibilityHasReason(eligibility, CERTIFICATE_APPLICATION_DATE_UNAVAILABLE)) {
+    return CERTIFICATE_APPLICATION_DATE_UNAVAILABLE_MESSAGE
+  }
   if (eligibilityHasReason(eligibility, CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE)) {
     return CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE
   }

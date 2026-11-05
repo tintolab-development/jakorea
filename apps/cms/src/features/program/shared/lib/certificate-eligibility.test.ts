@@ -48,6 +48,21 @@ describe('isCertificateEligibleForIssue', () => {
     expect(certificateBlockingReasons({ eligible: true, blockingReasons: null })).toEqual([])
   })
 
+  it('ignores SATISFACTION_SURVEY_NOT_COMPLETED as a completion block', () => {
+    expect(
+      isCertificateEligibleForIssue({
+        eligible: true,
+        blockingReasons: ['SATISFACTION_SURVEY_NOT_COMPLETED'],
+      })
+    ).toBe(true)
+    expect(
+      certificateBlockingReasons({
+        eligible: true,
+        blockingReasons: ['SATISFACTION_SURVEY_NOT_COMPLETED', PARTICIPANT_NOT_COMPLETED],
+      })
+    ).toEqual([PARTICIPANT_NOT_COMPLETED])
+  })
+
   it('rejects missing eligible or blocking reasons', () => {
     expect(isCertificateEligibleForIssue(undefined)).toBe(false)
     expect(isCertificateEligibleForIssue({ eligible: false, policyId: 1 })).toBe(false)
