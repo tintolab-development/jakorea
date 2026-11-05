@@ -69,6 +69,10 @@ function getPublicSurveySubmitErrorMessage(error: unknown): string {
       return '아직 설문 작성 기간이 시작되지 않았습니다.'
     case 'FORM_SUBMISSION_CLOSED':
       return '설문 작성 기간이 종료되어 제출할 수 없습니다.'
+    case 'PUBLIC_SURVEY_GUEST_NAME_REQUIRED':
+      return '이름을 입력해 주세요.'
+    case 'PUBLIC_SURVEY_GUEST_BIRTH_DATE_REQUIRED':
+      return '생년월일을 입력해 주세요. YYYY-MM-DD 또는 숫자 8자리로 입력해 주세요.'
     case 'PUBLIC_SURVEY_NOT_FOUND':
       return '유효하지 않거나 삭제된 설문 링크입니다.'
     default:

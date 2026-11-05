@@ -1,19 +1,19 @@
 import type { TitleWithPeriodParagraph } from '@jakorea/form-schema/writing-form'
 import {
-  LECTURE_REPORT_END_ACTIVITY_PRESET_LABEL,
   resolveTitleEndPeriodMode,
   resolveTitleStartPeriodMode,
   titlePeriodEndDisplayText,
 } from '@jakorea/form-schema/writing-form'
 import {
-  formatDisplayDate,
+  formatDisplayDateParts,
   formatDisplayDateTime,
   formatDisplayDateTimeRange,
-  toSeoulDateOnly,
+  toSeoulDisplayParts,
 } from '@/shared/lib/format-display-date'
 
-function pad2(value: number): string {
-  return String(value).padStart(2, '0')
+export type EducationSurveyPeriodLabelOptions = {
+  /** 서버 effectiveDeadline Instant. 있으면 이 시각만 종료로 쓴다. FE에서 익월 5일을 계산하지 않는다. */
+  submitDueAt?: string | null
 }
 
 function resolveSurveyStartInstant(
@@ -25,41 +25,20 @@ function resolveSurveyStartInstant(
   return surveyCreatedAt ?? new Date().toISOString()
 }
 
-/** 활동일 기준 익월 5일 (`YYYY-MM-DD`) */
-function lectureReportEndDateOnly(activityInstant: string): string | null {
-  const dateOnly = toSeoulDateOnly(activityInstant)
-  if (!dateOnly) return null
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateOnly)
-  if (!match) return null
-  let year = Number(match[1])
-  let month = Number(match[2]) + 1
-  if (month > 12) {
-    year += 1
-    month = 1
+function formatSubmitDueEndLabel(submitDueAt: string): string | null {
+  const parts = toSeoulDisplayParts(submitDueAt)
+  if (!parts) return formatDisplayDateTime(submitDueAt) || null
+  if (parts.hour === 23 && parts.minute >= 59) {
+    return `${formatDisplayDateParts(parts)} 24:00`
   }
-  return `${year}-${pad2(month)}-05`
-}
-
-function formatEndOfCalendarDay(dateOnly: string): string {
-  const date = formatDisplayDate(dateOnly)
-  return date ? `${date} 24:00` : ''
-}
-
-function resolveActivityRelativeEndLabel(
-  paragraph: TitleWithPeriodParagraph,
-  activityInstant: string,
-): string | null {
-  const preset = paragraph.endPeriodPresetLabel?.trim() ?? ''
-  if (preset !== LECTURE_REPORT_END_ACTIVITY_PRESET_LABEL) return null
-  const endDate = lectureReportEndDateOnly(activityInstant)
-  if (!endDate) return null
-  return formatEndOfCalendarDay(endDate) || null
+  return formatDisplayDateTime(submitDueAt) || null
 }
 
 /** 설문 제목형 — 기간은 Platform `formatDisplayDate*` SSOT. 마감 없음은 종료 생략. */
 export function resolveEducationSurveyPeriodLabel(
   paragraph: TitleWithPeriodParagraph,
   surveyCreatedAt?: string | null,
+  options?: EducationSurveyPeriodLabelOptions,
 ): string {
   const startRaw = resolveSurveyStartInstant(paragraph, surveyCreatedAt)
   const start = formatDisplayDateTime(startRaw) || startRaw.slice(0, 10)
@@ -69,9 +48,10 @@ export function resolveEducationSurveyPeriodLabel(
     return `${start} ~`
   }
 
-  const activityEnd = resolveActivityRelativeEndLabel(paragraph, startRaw)
-  if (activityEnd) {
-    return `${start} ~ ${activityEnd}`
+  const submitDueAt = options?.submitDueAt?.trim()
+  if (submitDueAt) {
+    const dueEnd = formatSubmitDueEndLabel(submitDueAt)
+    if (dueEnd) return `${start} ~ ${dueEnd}`
   }
 
   if (paragraph.endPeriodPresetLabel?.trim()) {

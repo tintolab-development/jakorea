@@ -32,7 +32,7 @@ export type EducationSurveyFormBodyProps = {
 }
 
 /** 공개(외부) 만족도·설문 공유 — 설문자 정보 중 이름만 필수 */
-export const PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS = ['name'] as const
+export const PUBLIC_SURVEY_REQUIRED_USER_INFO_FIELD_KEYS = ['name', 'birthDate'] as const
 
 function isBodyOnlyParagraph(paragraph: WritingFormParagraph): boolean {
   return paragraph.kind === 'description' && paragraph.variant === 'closing'
