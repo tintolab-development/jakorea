@@ -193,7 +193,9 @@ export function PlatformConsentFormBody({
 
         const content =
           documentPreview && paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord
-            ? <ConsentPreviewPaymentInfo values={paymentBasicInfo} />
+            ? (
+                <ConsentPreviewPaymentInfo values={paymentBasicInfo} variant="payment" />
+              )
             : previewChrome != null
               ? previewChrome.content
               : slot != null

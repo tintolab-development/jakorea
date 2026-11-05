@@ -2,11 +2,14 @@ import assert from 'node:assert/strict'
 import {
   INDIVIDUAL_SETTLEMENT_DISABLED_CODE,
   INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE,
+  RECEIPT_PRE_CONSENT_REQUIRED_CODE,
+  RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE,
   individualIneligibleMessage,
   individualSettlementApiErrorMessage,
   isEvidencePolicyUnconfigured,
   isGeneralIndividualProgramType,
   isIndividualScheduleSettlementAudience,
+  isReceiptPreConsentRequiredError,
   normalizeIndividualIneligibleReason,
   readIndividualSettlementErrorCode,
   shouldUseIndividualSettlementSchedulesApi,
@@ -89,5 +92,15 @@ assert.equal(
   individualIneligibleMessage('SUBMISSION_DEADLINE_PASSED'),
 )
 assert.equal(INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE.includes('일정별 정산'), true)
+
+const receiptConsentAxios = Object.assign(new Error('conflict'), {
+  isAxiosError: true,
+  response: {
+    status: 409,
+    data: { error: { code: RECEIPT_PRE_CONSENT_REQUIRED_CODE } },
+  },
+})
+assert.equal(isReceiptPreConsentRequiredError(receiptConsentAxios), true)
+assert.equal(individualSettlementApiErrorMessage(receiptConsentAxios), RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE)
 
 console.log('individual-settlement-contract.selfcheck: ok')

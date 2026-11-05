@@ -5,8 +5,8 @@
 
 export const COMPANY_SCHOOL_TYPED_SSOT = {
   create: 'RHF → CompanySchoolRegistrationCanonical → Program / API mapper',
-  get: 'API response → typed mapper → Program/view. legacy registration.overlay 는 import 전용',
-  patch: 'GET baseline Program + 편집 RHF → 변경 필드만 PATCH',
+  get: 'API response → mapCompanySchoolDetailToProgram → hydrateCompanySchoolDetailFromGet. overlay 는 import/sidecar/wire',
+  patch: 'GET typed Program + 상세 RHF Typed Draft → buildCompanySchoolDetailTypedSave → wire serializer. overlay store 는 단락 UI adapter만',
   draft: 'typed canonical snapshot → versioned local draft (settingsJson)',
   preview: 'typed draft 또는 GET view model',
   recruitmentsRowPriority:

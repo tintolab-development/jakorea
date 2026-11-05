@@ -333,35 +333,6 @@ export function SettingsInstructorBasicFields({
             />
           </div>
 
-          <div className={styles.settlementAccountField}>
-            <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
-              정산 계좌 정보
-            </PFText>
-            <PFTextInput
-              size="xlarge"
-              placeholder="은행명"
-              value={values.bankName}
-              onValueChange={value => patch({ bankName: value })}
-              required
-            />
-            <div className={styles.settlementAccountSplit}>
-              <PFTextInput
-                size="xlarge"
-                placeholder="계좌번호"
-                value={values.accountNumber}
-                onValueChange={value => patch({ accountNumber: value })}
-                required
-              />
-              <PFTextInput
-                size="xlarge"
-                placeholder="예금주"
-                value={values.accountHolder}
-                onValueChange={value => patch({ accountHolder: value })}
-                required
-              />
-            </div>
-          </div>
-
           <div className={styles.schoolStatusField}>
             <PFText as="span" typo="label-md" color="inherit" className={styles.fieldLabel}>
               사업소득자 여부

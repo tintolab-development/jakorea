@@ -115,6 +115,10 @@ for (const employmentStatus of ['TRANSFERRED', 'WITHDRAWN', ''] as const) {
   assert.equal(body.affiliationName, 'JA Korea')
   assert.equal('teacherEmploymentStatus' in body, false)
   assert.equal('schoolOrganizationId' in body, false)
+  assert.deepEqual(body.instructorProfile?.settlement, { businessIncome: false })
+  assert.equal('bankName' in (body.instructorProfile?.settlement ?? {}), false)
+  assert.equal('accountNumber' in (body.instructorProfile?.settlement ?? {}), false)
+  assert.equal('accountHolder' in (body.instructorProfile?.settlement ?? {}), false)
 }
 
 console.log('map-instructor-basic-profile-update selfcheck: ok')

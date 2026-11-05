@@ -160,6 +160,14 @@
   flex-direction: row;
 }
 
+/* 모달 하단 large 버튼: 높이만 40 (폭 min-width 140·글자 16px 유지) — cms-button-action-sizes 모달 푸터 규칙 */
+.content-modal__footer-actions .cms-button.ant-btn.cms-button--h44,
+.teal-header-modal__footer .cms-button.ant-btn.cms-button--h44 {
+  height: 40px !important;
+  min-height: 40px !important;
+  padding-block: 0 !important;
+}
+
 /* description prop 본문 — 전 모달 공통 */
 .content-modal__description {
   margin: 0;

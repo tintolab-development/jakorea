@@ -12,6 +12,7 @@ import {
   CmsRadio,
   CmsRadioGroup,
   ContentModal,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   FileSelectField,
   FILE_SELECT_IMAGE_MAX_TOTAL_BYTES,
   isFileSelectTotalSizeExceeded,
@@ -163,6 +164,10 @@ export function RelatedLogoFormModal({
   )
 
   const handleSubmit = useCallback(() => {
+    if (isActive && (!name.trim() || (!logoUrl.trim() && !logoFile && logoAssetId == null))) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     const trimmedLink = linkUrl.trim()
     if (trimmedLink && !isValidHttpLinkUrl(trimmedLink)) {
       showAlert(HTTP_LINK_URL_FORMAT_ALERT)
@@ -272,8 +277,8 @@ export function RelatedLogoFormModal({
             label="로고 이미지"
             view={null}
             edit={
-              <div className="file-select-image-cell">
-                <div className="file-select-image-cell__preview">
+              <div className="footer-related-logo-form-modal__image-row">
+                <div className="footer-related-logo-form-modal__preview">
                   {logoUrl ? <img src={logoUrl} alt="로고 미리보기" /> : <ImagePlaceholderIcon />}
                 </div>
                 <FileSelectField

@@ -14,6 +14,7 @@ const CERTIFICATE_ISSUANCE_TEMPLATE_NAMES = new Set(
 
 const AGREEMENT_WRITING_TEMPLATE_IDS = new Set([
   'agreement-third-party',
+  'agreement-receipt-pre-consent',
   'agreement-notice',
   'agreement-expense',
   'agreement-portrait',

@@ -41,6 +41,7 @@ import {
   CmsInput,
   ConfirmModal,
   NO_SELECTION_ALERT,
+  REQUIRED_FIELDS_INCOMPLETE_ALERT,
   PageContentLoading,
   showDeleteCompletedAlert,
   showRegisterCompletedAlert,
@@ -237,6 +238,18 @@ export function BoardPanel() {
       position: draftMap[row.id]?.position ?? row.position,
       affiliation: draftMap[row.id]?.affiliation ?? row.affiliation,
     }))
+    if (
+      patches.some(
+        row =>
+          !row.nameKo.trim() ||
+          !row.nameEn.trim() ||
+          !row.position.trim() ||
+          !row.affiliation.trim()
+      )
+    ) {
+      showAlert(REQUIRED_FIELDS_INCOMPLETE_ALERT)
+      return
+    }
     try {
       await bulkUpdateMutation.mutateAsync(patches)
       draftMapRef.current = {}

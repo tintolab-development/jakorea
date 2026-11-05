@@ -251,6 +251,17 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateRegistryDefinition> = {
     previewStrategy: 'a4-content-only',
     previewHeaderTitleFallback: '지급조서 사전 동의서',
   },
+  'agreement-receipt-pre-consent': {
+    id: 'agreement-receipt-pre-consent',
+    category: 'agreement',
+    rendererKey: 'agreement-shell',
+    agreementConfigKey: 'agreement-receipt-pre-consent',
+    usesAgreementShell: true,
+    suppressUserPreviewStrip: true,
+    selfManagedPreview: true,
+    previewStrategy: 'a4-content-only',
+    previewHeaderTitleFallback: '영수증 발급 사전 동의서',
+  },
   'agreement-crime': {
     id: 'agreement-crime',
     category: 'agreement',

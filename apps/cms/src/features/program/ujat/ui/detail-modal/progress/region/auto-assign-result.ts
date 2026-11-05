@@ -73,11 +73,38 @@ export function summarizeAutoAssignResult(
     if (text) warnings.push(text)
   }
 
+  const pairSplitCount = (response?.results ?? []).filter(
+    row => row.reason?.trim().toUpperCase() === 'PAIR_SPLIT'
+  ).length
+  if (pairSplitCount > 0) {
+    warnings.push(
+      `기존 2인조에서 한 명을 옮겨 1인 학급을 커버했습니다. (${pairSplitCount}건)`
+    )
+  }
+
   return {
     lines,
     warnings,
     hasVolunteerShortage: hasShortageWarning || single > 0 || secondaryUnfilled > 0,
   }
+}
+
+export function collectAutoAssignRefreshSlotIds(
+  results: UjatAutoAssignmentResponse['results']
+): number[] {
+  const ids = new Set<number>()
+  for (const row of results ?? []) {
+    if (typeof row.educationSlotId === 'number' && Number.isFinite(row.educationSlotId)) {
+      ids.add(row.educationSlotId)
+    }
+    if (
+      typeof row.sourceEducationSlotId === 'number' &&
+      Number.isFinite(row.sourceEducationSlotId)
+    ) {
+      ids.add(row.sourceEducationSlotId)
+    }
+  }
+  return [...ids]
 }
 
 export type AutoAssignResultAlert = {

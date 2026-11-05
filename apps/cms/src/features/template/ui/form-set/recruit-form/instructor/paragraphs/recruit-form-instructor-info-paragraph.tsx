@@ -4,7 +4,10 @@ import type { Dayjs } from 'dayjs'
 import type { ParticipantRecruitmentAnnouncementPublishedValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { INSTRUCTOR_TARGET_OPTIONS } from '@/features/program/shared/lib/program-detail-info-constants'
 import { ParticipantRecruitmentAnnouncementPublishedRadios } from '@/features/program/shared/ui/participant-recruitment-announcement-published-radios'
-import { RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT } from '@/features/program/general/lib/recruit-radio-defaults'
+import {
+  RECRUIT_ANNOUNCEMENT_PUBLISHED_DEFAULT,
+  RECRUIT_INSTRUCTOR_TARGETS_DEFAULT,
+} from '@/features/program/general/lib/recruit-radio-defaults'
 import { ParagraphDatePicker } from '@/features/template/ui/shared/paragraph-date-picker'
 import { useInstructorRecruitField } from '@/features/template/ui/form-set/recruit-form/instructor/instructor-recruit-form-rhf'
 import { RegistrationWizardDetailInfoForm as DetailInfoForm } from '@/features/program/shared/ui/registration/registration-wizard-detail-info-form'
@@ -66,7 +69,7 @@ export function RecruitFormInstructorInfoParagraph() {
     )
   const [recruitTargets, setRecruitTargets] = useInstructorRecruitField<string[]>(
     'recruit.instructor.recruitTargets',
-    ['adult']
+    RECRUIT_INSTRUCTOR_TARGETS_DEFAULT
   )
 
   const [programAnchorIso, setProgramAnchorIso] = useInstructorRecruitField<string | null>(

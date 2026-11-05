@@ -4,6 +4,7 @@ export * from './member-consent-validation.js'
 export * from './normalize-member-consent-write-draft.js'
 export * from './notice-subject-contact.js'
 export * from './payment-statement-basic-info.js'
+export * from './receipt-pre-consent-basic-info.js'
 export * from './payment-statement-resident-number.js'
 export {
   applyResidentBackMaskedDisplayChange,

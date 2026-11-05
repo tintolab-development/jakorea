@@ -29,7 +29,10 @@ import {
   resolveAttendanceManagerPuts,
 } from './attendance-manager'
 import type { RegionBlockedDateModalPayload } from './blocked-date-modal'
-import { buildAutoAssignResultAlert } from './auto-assign-result'
+import {
+  buildAutoAssignResultAlert,
+  collectAutoAssignRefreshSlotIds,
+} from './auto-assign-result'
 import {
   buildDirectAssignSuccessMessage,
   resolveRegionAssignmentErrorMessage,
@@ -166,9 +169,22 @@ export function useRegionAssignment(
   const autoAssignMutation = useMutation({
     mutationFn: () =>
       postUjatPartnerAssignmentsAuto(programId, { educationRegionCode, semesterType }),
-    onSuccess: async () => {
+    onSuccess: async response => {
       await invalidateMatrix()
-      showAlert(buildAutoAssignResultAlert())
+      const refreshSlotIds = collectAutoAssignRefreshSlotIds(response.results)
+      if (refreshSlotIds.length > 0) {
+        await Promise.all(
+          refreshSlotIds.map(educationSlotId =>
+            queryClient.invalidateQueries({
+              queryKey: ujatQueryKeys.directAssignmentCandidates(
+                programId,
+                String(educationSlotId)
+              ),
+            })
+          )
+        )
+      }
+      showAlert(buildAutoAssignResultAlert(response))
     },
     onError: error => {
       showMutationError(error, '자동 배정에 실패했습니다. 잠시 후 다시 시도해 주세요.')

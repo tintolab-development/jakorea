@@ -671,9 +671,6 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
       : draft.instructorBusinessIncome === '해당 없음'
         ? false
         : undefined
-  const bankName = (draft.instructorBankName ?? '').trim()
-  const accountNumber = (draft.instructorAccountNumber ?? '').trim()
-  const accountHolder = (draft.instructorAccountHolder ?? '').trim()
   const bio = (draft.bio ?? '').trim()
   const certifications = buildInstructorRegisterCertifications(draft.licenseRows)
   const profileBase = draft.instructorCmsProfile
@@ -687,9 +684,6 @@ export function draftToAdminProvisionedInstructorBasicInfoPatch(
     ...(affiliationNone ? { affiliation: undefined } : affiliationName ? { affiliation: affiliationName } : {}),
     ...(bio ? { bio } : {}),
     instructorInfo: {
-      ...(bankName ? { bankName } : {}),
-      ...(accountNumber ? { accountNumber } : {}),
-      ...(accountHolder ? { accountHolder } : {}),
       ...(businessIncome !== undefined ? { isBusinessIncome: businessIncome } : {}),
     } as NonNullable<User['instructorInfo']>,
     ...(certifications != null ? { instructorCertifications: certifications } : {}),

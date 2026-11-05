@@ -84,6 +84,17 @@ const SPONSOR_ID = 163001
 const CONTACT_ID = 163101
 const DETAILED_PROGRAM_ID = 163006
 
+/** 격리 Mock 계약 fixture — 화면에서 실제 클릭으로 고를 라벨과 CREATE 직렬화 기대값 */
+export const ISOLATED_GENERAL_FIXTURE = {
+  sponsorId: String(SPONSOR_ID),
+  sponsorName: '격리 후원사',
+  contactId: String(CONTACT_ID),
+  contactName: '격리 담당자',
+  detailedProgramId: String(DETAILED_PROGRAM_ID),
+  detailedProgramName: '격리 세부 프로그램',
+  paymentItemName: '격리 강사 교통비',
+} as const
+
 function sponsorRow() {
   return {
     id: SPONSOR_ID,
@@ -96,7 +107,10 @@ function sponsorRow() {
 
 function contactRow() {
   return {
-    id: CONTACT_ID,
+    // SponsorContactResponse 계약: id·sponsorId string, primary boolean
+    id: String(CONTACT_ID),
+    sponsorId: String(SPONSOR_ID),
+    primary: true,
     sponsorContactId: String(CONTACT_ID),
     name: '격리 담당자',
     contactName: '격리 담당자',
@@ -108,11 +122,12 @@ function contactRow() {
 
 function detailedProgramRow() {
   return {
+    // DetailedProgramResponse 계약(generated schemas/detailedProgramResponse.ts): id number, nameKo/nameEn, useYn
     id: DETAILED_PROGRAM_ID,
-    detailedProgramId: String(DETAILED_PROGRAM_ID),
-    name: '격리 세부 프로그램',
-    detailedProgramName: '격리 세부 프로그램',
-    status: 'ACTIVE',
+    nameKo: '격리 세부 프로그램',
+    nameEn: 'Isolated Detailed Program',
+    useYn: true,
+    inUse: true,
   }
 }
 
@@ -392,7 +407,26 @@ export async function installIsolatedRegistrationNetwork(
     }
     // 지급항목 카탈로그(정산 설정) — 앱이 등록 위저드 진입 시 읽는다. 빈 설정으로 응답한다.
     if (method === 'GET' && pathname === '/api/admin/settlement-configs/current') {
-      await route.fulfill(json({ wageItems: [], paymentItems: [] }))
+      // 일반 등록 필수 「지급 항목」(registration-required-fields.ts:265-269) 선택용 — PaymentItemResponse 계약 fixture 1건
+      await route.fulfill(
+        json({
+          configId: 163200,
+          useYn: true,
+          wageItems: [],
+          paymentItems: [
+            {
+              id: 163201,
+              paymentItemType: 'TRANSPORT_INSTRUCTOR',
+              itemName: ISOLATED_GENERAL_FIXTURE.paymentItemName,
+              maxAmount: 50000,
+              taxableYn: false,
+              evidenceRequiredYn: false,
+              useYn: true,
+            },
+          ],
+          deductionItems: [],
+        })
+      )
       return
     }
     if (method === 'GET' && pathname === '/api/admin/form-templates') {
@@ -409,6 +443,11 @@ export async function installIsolatedRegistrationNetwork(
       const versionId = Number(pathname.split('/').at(-1))
       const copied = copiedVersions.get(versionId)
       await route.fulfill(json(copied ?? versionResponse({ templateId: 800000, versionId })))
+      return
+    }
+    if (method === 'GET' && pathname === '/api/admin/applications/counts') {
+      // 계약: ApplicationCountResponse[] (application-counts-api-client.ts:26). 신규 프로그램은 신청 0건.
+      await route.fulfill(json([]))
       return
     }
     if (method === 'GET' && isAllowedGet(pathname)) {
@@ -557,9 +596,11 @@ export async function installIsolatedRegistrationNetwork(
         return
       }
       if (method === 'POST' && pathname.endsWith('/form-bindings')) {
-        log.formBindings = Array.isArray(mutation.body)
-          ? mutation.body
-          : [mutation.body]
+        // 역할별 바인딩 POST가 여러 번 나가므로 누적한다(마지막 요청만 남던 캡처 결함 수정)
+        log.formBindings = [
+          ...log.formBindings,
+          ...(Array.isArray(mutation.body) ? mutation.body : [mutation.body]),
+        ]
         await route.fulfill(json({ id: 1 }))
         return
       }
@@ -588,9 +629,14 @@ export async function installIsolatedRegistrationNetwork(
   return log
 }
 
+/** index.html이 로드하는 웹폰트 CSS(차단은 유지, API 누출이 아니므로 실패 사유에서만 제외) */
+const BLOCKED_STATIC_FONT_ASSET =
+  /^GET https:\/\/(fonts\.googleapis\.com\/css2?|fonts\.gstatic\.com\/|cdn\.jsdelivr\.net\/gh\/toss\/tossface\/)/
+
 export function assertIsolatedNetwork(log: IsolatedNetworkLog) {
-  if (log.blockedExternal.length > 0) {
-    throw new Error(`외부 origin 요청이 차단됨: ${log.blockedExternal.join(', ')}`)
+  const blockedNonFont = log.blockedExternal.filter(item => !BLOCKED_STATIC_FONT_ASSET.test(item))
+  if (blockedNonFont.length > 0) {
+    throw new Error(`외부 origin 요청이 차단됨: ${blockedNonFont.join(', ')}`)
   }
   if (log.continuedApi.length > 0) {
     throw new Error(`API continue 발생: ${log.continuedApi.join(', ')}`)

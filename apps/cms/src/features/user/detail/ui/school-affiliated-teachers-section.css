@@ -2,6 +2,9 @@
 .school-affiliated-teachers-section {
   width: 100%;
   min-width: 0;
+  /* 풀페이지 __content flex 높이 안에서 표가 넘치면 padding-bottom이 스크롤 끝에 안 남음 */
+  padding-bottom: var(--detail-fullpage-padding-bottom, 52px);
+  box-sizing: border-box;
 }
 
 .school-affiliated-teachers-section__header {
@@ -49,6 +52,16 @@
  */
 .school-affiliated-teachers-section__body
   .school-affiliated-teachers-section__table.cms-data-table
+  .ant-table-thead
+  > tr
+  > th.ant-table-cell.status-dropdown-cell__header--tag-100 {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.school-affiliated-teachers-section__body
+  .school-affiliated-teachers-section__table.cms-data-table
   .ant-table-tbody
   > tr
   > td.status-dropdown-cell__cell-status--tag-100,
@@ -57,9 +70,9 @@
   .ant-table-tbody
   > tr:hover
   > td.status-dropdown-cell__cell-status--tag-100 {
-  width: 116px !important;
-  min-width: 116px !important;
-  max-width: 116px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
   padding-left: 0 !important;

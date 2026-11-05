@@ -20,7 +20,12 @@ assert.equal(isPaymentStatementPreConsentSubmitted([unpaid]), false)
 assert.equal(isPaymentStatementPreConsentSubmitted([paid]), true)
 assert.equal(pickPaymentStatementConsentDocumentId([paid]), null)
 assert.equal(pickPaymentStatementConsentDocumentId([{ ...paid, documentId: 42 }]), 42)
-assert.equal(pickPaymentStatementConsentDocumentId([{ ...unpaid, documentId: 42 }]), null)
+assert.equal(pickPaymentStatementConsentDocumentId([{ ...unpaid, signed: true, documentId: 42 }]), 42)
+assert.equal(pickPaymentStatementConsentDocumentId([{ ...unpaid, documentId: 42 }]), 42)
+assert.equal(
+  pickPaymentStatementConsentDocumentId([{ ...paid, documentId: '42' as unknown as number }]),
+  42,
+)
 assert.equal(
   isPaymentStatementPreConsentSubmitted([
     { ...unpaid, id: 'educatorPledge', title: '교육진행자 서약서', agreed: true },

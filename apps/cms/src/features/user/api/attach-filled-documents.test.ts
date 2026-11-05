@@ -88,6 +88,24 @@ describe('mapPaymentBasicInfo', () => {
 })
 
 describe('mapAgreementSnapshotToFilledDocument', () => {
+  it('영수증 발급 사전 동의서는 주민등록번호 키를 빼서 붙인다', () => {
+    const filled = mapAgreementSnapshotToFilledDocument('RECEIPT_PRE_CONSENT', {
+      draft: stubDraft(),
+      paymentBasicInfo: {
+        nameKo: '김참여자',
+        residentFront: '900101',
+        residentBack: '1234567',
+        affiliation: '학교',
+        paymentPurpose: '실비 또는 활동비 지급',
+      },
+    })
+    expect(filled.templateCode).toBe('agreement-receipt-pre-consent')
+    expect(filled.paymentBasicInfo).toMatchObject({ nameKo: '김참여자' })
+    expect(filled.paymentBasicInfo).not.toHaveProperty('residentFront')
+    expect(filled.paymentBasicInfo).not.toHaveProperty('residentBack')
+    expect(filled.paymentBasicInfo).not.toHaveProperty('affiliation')
+  })
+
   it('지급조서는 templateCode와 paymentBasicInfo를 붙인다', () => {
     const filled = mapAgreementSnapshotToFilledDocument('PAYMENT_STATEMENT_PRE_CONSENT', {
       draft: stubDraft(),

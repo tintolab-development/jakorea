@@ -11,6 +11,7 @@ import type { IndividualSettlementReviewDecision } from '@/shared/api/generated/
 import type { IndividualSettlementReviewDetail } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewDetail'
 import type { IndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewListItem'
 import type { IndividualSettlementReviewRequest } from '@/shared/api/generated/dashboard/schemas/individualSettlementReviewRequest'
+import type { SettlementStatusChangeRequestNotificationType } from '@/shared/api/generated/settlement/schemas/settlementStatusChangeRequestNotificationType'
 import type { PageResponseIndividualSettlementReviewListItem } from '@/shared/api/generated/dashboard/schemas/pageResponseIndividualSettlementReviewListItem'
 
 export const INDIVIDUAL_SETTLEMENT_REVIEW_LIST_URL =
@@ -166,12 +167,19 @@ export async function rejectIndividualSettlementReviewRemote(input: {
   settlementApplicationId: number
   expectedRevisionNo: number
   reason: string
+  notificationType?: SettlementStatusChangeRequestNotificationType
+  scheduledNotificationAt?: string
 }): Promise<IndividualSettlementReviewDecision> {
   const reason = input.reason.trim()
-  const body: IndividualSettlementReviewRequest = {
+  const body: IndividualSettlementReviewRequest & {
+    notificationType?: SettlementStatusChangeRequestNotificationType
+    scheduledNotificationAt?: string
+  } = {
     expectedRevisionNo: input.expectedRevisionNo,
     reason,
   }
+  if (input.notificationType) body.notificationType = input.notificationType
+  if (input.scheduledNotificationAt) body.scheduledNotificationAt = input.scheduledNotificationAt
   const response = await customInstance<unknown>({
     url: individualSettlementReviewRejectUrl(input.settlementApplicationId),
     method: 'PATCH',

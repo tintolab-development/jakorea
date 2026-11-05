@@ -5,6 +5,7 @@ export const MEMBER_CONSENT_VIEW_AUTO_PRIVACY_REASON = '동의서 보기'
 
 const PRIVACY_REVEAL_TEMPLATE_IDS = new Set<string>([
   'agreement-third-party',
+  'agreement-receipt-pre-consent',
   'document-payment-order-pre-consent',
   'agreement-notice',
   AGREEMENT_CRIME_TEMPLATE_CODE,

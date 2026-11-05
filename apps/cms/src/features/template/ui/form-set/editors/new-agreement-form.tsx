@@ -41,6 +41,7 @@ import {
   persistWritingFormTemplateDraft,
 } from '@/features/template/lib/writing-form-template-local-save'
 import { overlayPaymentStatementPreConsentSeedHorizontalTables } from '@/features/template/model/payment-statement-pre-consent-draft'
+import { overlayReceiptPreConsentSeedHorizontalTables } from '@/features/template/model/receipt-pre-consent-draft'
 import {
   ensureAgreementNoticeConfirmationClosing,
   ensureAgreementNoticeInstitutionPurposeParagraphs,
@@ -264,6 +265,9 @@ export function AgreementWritingFormShell({
         templateCode === 'document-payment-order-pre-consent'
       ) {
         normalized = overlayPaymentStatementPreConsentSeedHorizontalTables(normalized)
+      }
+      if (templateCode === 'agreement-receipt-pre-consent') {
+        normalized = overlayReceiptPreConsentSeedHorizontalTables(normalized)
       }
       if (templateCode === 'agreement-notice') {
         normalized = ensureAgreementNoticeConfirmationClosing(normalized)

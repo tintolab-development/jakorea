@@ -171,9 +171,9 @@ export interface User {
 
   // 강사 전용 (§2.1)
   instructorInfo?: {
-    bankName: string
-    accountNumber: string
-    accountHolder: string
+    bankName?: string
+    accountNumber?: string
+    accountHolder?: string
     isBusinessIncome: boolean // 사업소득자 여부 (3.3% vs 8.8%)
     // 강의 신청, 매칭/일정 확인
     // 강의보고서 제출

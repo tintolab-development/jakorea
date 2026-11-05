@@ -4,7 +4,7 @@
 
 import type { ReactNode } from 'react'
 import type { RadioChangeEvent } from 'antd'
-import { CmsRadio } from '@/shared/ui/cms-radio'
+import { CmsRadio, type CmsRadioSize } from '@/shared/ui/cms-radio'
 
 export interface ModalSpecTableRadioOption<T extends string = string> {
   value: T
@@ -17,6 +17,9 @@ export interface ModalSpecTableRadioCellProps<T extends string = string> {
   options: ModalSpecTableRadioOption<T>[]
   'aria-label'?: string
   className?: string
+  /** 미지정 시 기존과 같이 CmsRadio 기본(large) */
+  size?: CmsRadioSize
+  disabled?: boolean
 }
 
 export function ModalSpecTableRadioCell<T extends string = string>({
@@ -25,6 +28,8 @@ export function ModalSpecTableRadioCell<T extends string = string>({
   options,
   'aria-label': ariaLabel,
   className,
+  size,
+  disabled,
 }: ModalSpecTableRadioCellProps<T>) {
   const handleChange = (e: RadioChangeEvent) => {
     onChange(e.target.value as T)
@@ -36,6 +41,8 @@ export function ModalSpecTableRadioCell<T extends string = string>({
       value={value}
       onChange={handleChange}
       aria-label={ariaLabel}
+      size={size}
+      disabled={disabled}
     >
       {options.map(opt => (
         <CmsRadio key={String(opt.value)} value={opt.value}>

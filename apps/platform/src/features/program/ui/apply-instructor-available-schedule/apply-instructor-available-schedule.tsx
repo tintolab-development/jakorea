@@ -11,6 +11,10 @@ import {
   isDefaultEducationSlotName,
   stripDefaultEducationSlotNameFromLabel,
 } from '@/shared/lib/education-schedule-name'
+import {
+  clampIsoMinDateToToday,
+  isSeoulScheduleStartPassed,
+} from '../../lib/apply-form-schedule'
 import { PFDatePickerCalendar } from '@/shared/ui/pf-date-input'
 import {
   PFFormField,
@@ -343,6 +347,17 @@ function readSessionLabelForScheduleSummary(slot: ApplyInstructorScheduleSlot): 
 function resolveScheduleSummaryDateKey(slot: ApplyInstructorScheduleSlot): string | undefined {
   if (slot.dateKey) return slot.dateKey
   return parseKoreanEducationScheduleLabel(slot.label).dateKey
+}
+
+function slotStartHHmm(slot: ApplyInstructorScheduleSlot): string | null {
+  const range = resolveSlotChipTimeRange(slot)
+  const match = range.match(/(\d{1,2}:\d{2})/)
+  return match?.[1] ?? null
+}
+
+export function isApplyInstructorScheduleSlotPast(slot: ApplyInstructorScheduleSlot): boolean {
+  const dateKey = resolveScheduleSummaryDateKey(slot) ?? null
+  return isSeoulScheduleStartPassed(dateKey, slotStartHHmm(slot))
 }
 
 /**
@@ -891,7 +906,8 @@ export function ApplyInstructorAvailableSchedule({
 }: ApplyInstructorAvailableScheduleProps) {
   const selected = slots.filter(slot => value.selectedSlotIds.includes(slot.id))
   const showCalendar = slots.length > 0 && slots.every(slot => slot.dateKey != null)
-  const anchorDateKey = firstSlotDateKey(slots) ?? minDate
+  const selectableMinDate = clampIsoMinDateToToday(minDate)
+  const anchorDateKey = firstSlotDateKey(slots) ?? selectableMinDate
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(anchorDateKey)
 
   useEffect(() => {
@@ -907,6 +923,10 @@ export function ApplyInstructorAvailableSchedule({
     : slots
 
   const toggle = (slotId: string) => {
+    const slot = slots.find(item => item.id === slotId)
+    if (slot && isApplyInstructorScheduleSlotPast(slot) && !value.selectedSlotIds.includes(slotId)) {
+      return
+    }
     const next = value.selectedSlotIds.includes(slotId)
       ? value.selectedSlotIds.filter(id => id !== slotId)
       : [...value.selectedSlotIds, slotId]
@@ -935,7 +955,7 @@ export function ApplyInstructorAvailableSchedule({
             initialViewMonth={monthStartOf(anchorDateKey)}
             markedDates={markedDates}
             enabledDates={markedDates}
-            minDate={minDate}
+            minDate={selectableMinDate}
             maxDate={maxDate}
             onSelectDate={setSelectedDateKey}
           />
@@ -957,6 +977,7 @@ export function ApplyInstructorAvailableSchedule({
           ) : (
             visibleSlots.map(slot => {
               const active = value.selectedSlotIds.includes(slot.id)
+              const past = isApplyInstructorScheduleSlotPast(slot)
               const cardLines = resolveScheduleSlotCardLines(slot)
               return (
                 <button
@@ -964,6 +985,7 @@ export function ApplyInstructorAvailableSchedule({
                   type="button"
                   role="listitem"
                   aria-pressed={active}
+                  disabled={past && !active}
                   className={[
                     styles.slotCard,
                     slotChipInterview ? styles.slotCardInterview : undefined,

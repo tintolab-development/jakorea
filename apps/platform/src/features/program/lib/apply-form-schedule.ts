@@ -35,6 +35,7 @@ import {
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
+import { toSeoulDateOnly, toSeoulDisplayParts } from '../../../shared/lib/format-display-date.ts'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
 import type { ApplyPreferredScheduleBlock } from '../ui/apply-preferred-schedule/apply-preferred-schedule'
 import type {
@@ -592,6 +593,108 @@ export const PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE_MESSAGE =
 
 export const PREFERRED_SCHEDULE_EDUCATION_RANGE_UNCONFIGURED_MESSAGE =
   '신청 가능한 교육 일정이 설정되지 않았습니다. 관리자에게 확인해 주세요.'
+
+export const PAST_SCHEDULE_NOT_SELECTABLE_MESSAGE = '이미 지난 일정은 선택할 수 없습니다.'
+
+/** Asia/Seoul 달력 `YYYY-MM-DD`. */
+export function seoulTodayIsoDate(now: Date = new Date()): string {
+  return toSeoulDateOnly(now) ?? ''
+}
+
+export function clampIsoMinDateToToday(minDate: string | null | undefined, now: Date = new Date()): string {
+  const today = seoulTodayIsoDate(now)
+  const min = readIsoDateOrNull(minDate)
+  if (min == null) return today
+  return min > today ? min : today
+}
+
+export function isIsoDateBeforeSeoulToday(date: string | null | undefined, now: Date = new Date()): boolean {
+  const iso = readIsoDateOrNull(date)
+  if (!iso) return false
+  const today = seoulTodayIsoDate(now)
+  return Boolean(today) && iso < today
+}
+
+/** 라벨(`26년 11월 5일`) 또는 ISO에서 첫 달력일을 읽는다. 없으면 null. */
+export function parseScheduleChoiceIsoDate(label: string | null | undefined): string | null {
+  if (label == null) return null
+  const trimmed = label.trim()
+  if (!trimmed) return null
+  const iso = readIsoDateOrNull(trimmed)
+  if (iso) return iso
+  const dates = extractEducationScheduleCalendarDates([trimmed])
+  return [...dates][0] ?? null
+}
+
+export function isScheduleChoicePast(label: string | null | undefined, now: Date = new Date()): boolean {
+  const date = parseScheduleChoiceIsoDate(label)
+  if (date == null) return false
+  return isIsoDateBeforeSeoulToday(date, now)
+}
+
+/**
+ * 당일 슬롯: 시작 시각(`HH:mm`)이 서울 현재 시각보다 이전이면 지남.
+ * `00:00`·없음은 날짜만 본다.
+ */
+export function isSeoulScheduleStartPassed(
+  date: string | null | undefined,
+  startHHmm: string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  const iso = readIsoDateOrNull(date)
+  if (!iso) return false
+  if (isIsoDateBeforeSeoulToday(iso, now)) return true
+  if (iso !== seoulTodayIsoDate(now)) return false
+  const match = startHHmm?.trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return false
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return false
+  if (hour === 0 && minute === 0) return false
+  const parts = toSeoulDisplayParts(now)
+  if (!parts?.hasTime) return false
+  const nowMinutes = parts.hour * 60 + parts.minute
+  return nowMinutes >= hour * 60 + minute
+}
+
+export function clampEducationScheduleApplyConstraint(
+  constraint: EducationScheduleApplyConstraint,
+  now: Date = new Date(),
+): EducationScheduleApplyConstraint {
+  const today = seoulTodayIsoDate(now)
+  const minDate = clampIsoMinDateToToday(constraint.minDate, now)
+  if (constraint.enabledDates == null) {
+    return { ...constraint, minDate }
+  }
+  const enabledDates = new Set([...constraint.enabledDates].filter(date => !today || date >= today))
+  const sorted = [...enabledDates].sort()
+  return {
+    ...constraint,
+    minDate: sorted[0] ?? minDate,
+    enabledDates,
+  }
+}
+
+export function hasPreferredScheduleDateBeforeSeoulToday(
+  blocks: readonly Pick<ApplyPreferredScheduleBlock, 'date'>[],
+  now: Date = new Date(),
+): boolean {
+  return blocks.some(block => isIsoDateBeforeSeoulToday(block.date, now))
+}
+
+export function hasSelectedScheduleIdsBeforeSeoulToday(
+  selectedIds: readonly string[],
+  items: readonly { id: string; date?: string | null; label?: string | null }[],
+  now: Date = new Date(),
+): boolean {
+  const byId = new Map(items.map(item => [item.id, item]))
+  return selectedIds.some(id => {
+    const item = byId.get(id)
+    if (!item) return false
+    const date = readIsoDateOrNull(item.date) ?? parseScheduleChoiceIsoDate(item.label ?? '')
+    return isIsoDateBeforeSeoulToday(date, now)
+  })
+}
 
 function readEducationScheduleRangeBounds(
   range: { start?: string | null; end?: string | null } | null | undefined

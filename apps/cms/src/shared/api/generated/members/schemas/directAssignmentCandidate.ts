@@ -7,9 +7,11 @@
  */
 
 export interface DirectAssignmentCandidate {
-  participantId?: number;
+  /** 봉사자 program_participant.id. 숫자 필수. null/omit 금지. */
+  participantId: number;
   memberId?: number;
-  volunteerName?: string;
+  /** 표시명(member.name). 빈 문자열 대신 값이 없으면 후보에서 제외한다. */
+  volunteerName?: string | null;
   totalAssignedDays?: number;
   alreadyAssignedOnEducationDate?: boolean;
   sourceAssignmentGroupId?: string;

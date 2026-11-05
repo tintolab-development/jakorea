@@ -1,6 +1,7 @@
 import { DetailInfoForm } from '@/features/form-template'
 import { PFDateInput, PFSelect, PFText, PFTextInput, PFTimeInput } from '@/shared/ui'
 import { resolvePreferredScheduleBlockTitle } from '@jakorea/form-schema/program-application'
+import { clampEducationScheduleApplyConstraint } from '../../lib/apply-form-schedule'
 import {
   ECONOMY_PREFERRED_SCHEDULE_BLOCK_COUNT,
   createEmptyEconomyPreferredScheduleBlock,
@@ -215,6 +216,12 @@ export function ApplyEconomyPreferredSchedule({
   const patchBlock = (index: number, patch: Partial<EconomyPreferredScheduleBlock>) => {
     onChange(blocks.map((block, i) => (i === index ? { ...block, ...patch } : block)))
   }
+  const selectable = clampEducationScheduleApplyConstraint({
+    minDate,
+    maxDate,
+    enabledDates,
+    configured: true,
+  })
   return (
     <div className={styles.root}>
       {blocks.map((block, index) => (
@@ -229,9 +236,9 @@ export function ApplyEconomyPreferredSchedule({
           }
           block={block}
           onPatch={patch => patchBlock(index, patch)}
-          minDate={minDate}
-          maxDate={maxDate}
-          enabledDates={enabledDates}
+          minDate={selectable.minDate}
+          maxDate={selectable.maxDate}
+          enabledDates={selectable.enabledDates}
           disabled={disabled}
         />
       ))}

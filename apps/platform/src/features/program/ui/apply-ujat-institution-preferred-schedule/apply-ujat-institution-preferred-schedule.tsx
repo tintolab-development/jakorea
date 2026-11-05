@@ -1,3 +1,4 @@
+import { isIsoDateBeforeSeoulToday } from '@/features/program/lib/apply-form-schedule'
 import type { UjatPreferredEducationScheduleOption } from '@/features/program/lib/ujat-preferred-education-schedule-options'
 import {
   isUjatPreferredScheduleOptionSelected,
@@ -88,6 +89,7 @@ export function ApplyUjatInstitutionPreferredSchedule({
       onChange(selectedIds.filter(token => token !== option.id))
       return
     }
+    if (isIsoDateBeforeSeoulToday(option.date)) return
     if (selected.length >= UJAT_PREFERRED_EDUCATION_DATE_MAX) return
     onChange([...selected.map(row => row.id), option.id])
   }
@@ -102,12 +104,14 @@ export function ApplyUjatInstitutionPreferredSchedule({
         ) : (
           options.map(option => {
             const active = isUjatPreferredScheduleOptionSelected(option, selectedIds)
+            const past = isIsoDateBeforeSeoulToday(option.date)
             return (
               <button
                 key={option.id}
                 type="button"
                 role="listitem"
                 aria-pressed={active}
+                disabled={past && !active}
                 className={[
                   slotStyles.slotCard,
                   slotStyles.slotCardInterview,

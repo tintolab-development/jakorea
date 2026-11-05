@@ -10,7 +10,7 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -w -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --experimental-strip-types --experimental-transform-types src/consent/resident-back-mask.test.ts && node --experimental-strip-types --experimental-transform-types draft-schema.normalize-date-time.test.ts && pnpm build && node --experimental-strip-types --experimental-transform-types src/consent/apply-agreement-notice-subject-member-name.test.ts && node --experimental-strip-types --experimental-transform-types src/program-application/program-application-parity.test.ts"
+    "test": "node --experimental-strip-types --experimental-transform-types src/consent/resident-back-mask.test.ts && node --experimental-strip-types --experimental-transform-types draft-schema.normalize-date-time.test.ts && pnpm build && node --experimental-strip-types --experimental-transform-types src/paragraph-ids/receipt-pre-consent-draft.test.ts && node --experimental-strip-types --experimental-transform-types src/consent/receipt-pre-consent-basic-info.test.ts && node --experimental-strip-types --experimental-transform-types src/consent/payment-statement-profile-link.test.ts && node --experimental-strip-types --experimental-transform-types src/consent/apply-agreement-notice-subject-member-name.test.ts && node --experimental-strip-types --experimental-transform-types src/program-application/program-application-parity.test.ts"
   },
   "dependencies": {
     "@jakorea/domain": "workspace:*",

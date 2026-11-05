@@ -204,23 +204,12 @@ function resolveMergedInstructorInfo(
   if (!fetchedInfo) return listInfo
   if (!listInfo) return fetchedInfo
 
-  const fetchedHasBank =
-    Boolean(fetchedInfo.bankName?.trim()) ||
-    Boolean(fetchedInfo.accountNumber?.trim()) ||
-    Boolean(fetchedInfo.accountHolder?.trim())
-
   return {
     ...listInfo,
     ...fetchedInfo,
-    bankName: fetchedHasBank
-      ? fetchedInfo.bankName || listInfo.bankName
-      : listInfo.bankName || fetchedInfo.bankName,
-    accountNumber: fetchedHasBank
-      ? fetchedInfo.accountNumber || listInfo.accountNumber
-      : listInfo.accountNumber || fetchedInfo.accountNumber,
-    accountHolder: fetchedHasBank
-      ? fetchedInfo.accountHolder || listInfo.accountHolder
-      : listInfo.accountHolder || fetchedInfo.accountHolder,
+    bankName: fetchedInfo.bankName,
+    accountNumber: fetchedInfo.accountNumber,
+    accountHolder: fetchedInfo.accountHolder,
     isBusinessIncome: fetchedInfo.isBusinessIncome ?? listInfo.isBusinessIncome,
   }
 }

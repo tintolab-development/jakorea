@@ -162,6 +162,7 @@ type FormBodyProps = {
   /** 현재 전체 후원사 수 (create: max=n+1, edit: max=n) */
   totalCount: number
   confirmLoading?: boolean
+  serverSortOrderError?: string
   onCancel: () => void
   onSubmit: (values: CorporatePartnerFormValues) => void
 }
@@ -171,6 +172,7 @@ function CorporatePartnerFormBody({
   initial,
   totalCount,
   confirmLoading,
+  serverSortOrderError,
   onCancel,
   onSubmit,
 }: FormBodyProps) {
@@ -194,6 +196,11 @@ function CorporatePartnerFormBody({
     name?: string
     sortOrder?: string
   }>({})
+
+  useEffect(() => {
+    if (!serverSortOrderError) return
+    setErrors(prev => ({ ...prev, sortOrder: serverSortOrderError }))
+  }, [serverSortOrderError])
 
   const handleNameChange = useCallback((value: string) => {
     nameRef.current = value
@@ -455,6 +462,7 @@ export function CorporatePartnerFormModal({
   initial,
   totalCount,
   confirmLoading,
+  serverSortOrderError,
   onCancel,
   onSubmit,
 }: {
@@ -463,6 +471,7 @@ export function CorporatePartnerFormModal({
   initial?: CorporatePartner | null
   totalCount: number
   confirmLoading?: boolean
+  serverSortOrderError?: string
   onCancel: () => void
   onSubmit: (values: CorporatePartnerFormValues) => void
 }) {
@@ -477,6 +486,7 @@ export function CorporatePartnerFormModal({
       initial={initial}
       totalCount={totalCount}
       confirmLoading={confirmLoading}
+      serverSortOrderError={serverSortOrderError}
       onCancel={onCancel}
       onSubmit={onSubmit}
     />

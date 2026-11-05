@@ -7,7 +7,7 @@ import {
   getInstructorApplyConsentPageDescription,
   getInstructorApplyConsentPageTitle,
   InstructorApplyConsentWriteForm,
-  isInstructorApplyConsentKey,
+  isDocumentConsentWriteKey,
   MYPAGE_SETTINGS_CONSENTS_TAB,
 } from '@/features/mypage'
 import { MEMBER_CONSENT_TEMPLATE_MAP } from '@jakorea/form-schema/consent'
@@ -71,13 +71,12 @@ export function MypageSettingsConsentPage() {
 
   const title = isPortraitKey
     ? MEMBER_CONSENT_TEMPLATE_MAP.consentPortrait.modalTitle
-    : isInstructorApplyConsentKey(consentKey)
+    : isDocumentConsentWriteKey(consentKey)
       ? getInstructorApplyConsentPageTitle(consentKey)
       : ''
-  const description =
-    isInstructorApplyConsentKey(consentKey)
-      ? getInstructorApplyConsentPageDescription(consentKey)
-      : undefined
+  const description = isDocumentConsentWriteKey(consentKey)
+    ? getInstructorApplyConsentPageDescription(consentKey)
+    : undefined
 
   const handleComplete = () => {
     void queryClient.invalidateQueries({ queryKey: platformQueryKeys.mypage.consents() })
@@ -108,7 +107,7 @@ export function MypageSettingsConsentPage() {
           }
           guardianVerificationToken={minorGuardianVerificationToken}
         />
-      ) : isInstructorApplyConsentKey(consentKey) ? (
+      ) : isDocumentConsentWriteKey(consentKey) ? (
         <InstructorApplyConsentWriteForm
           consentKey={consentKey}
           readOnly={isView}

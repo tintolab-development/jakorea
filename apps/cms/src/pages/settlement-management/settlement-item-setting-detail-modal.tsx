@@ -60,7 +60,7 @@ import {
 
 const BASIS_UNIT_OPTIONS_SIMPLE = [{ value: '전체', label: '전체' }]
 
-const CONDITION_TEXTAREA_PLACEHOLDER = '내용을 입력해 주세요.'
+const CONDITION_TEXTAREA_PLACEHOLDER = '내용을 입력해 주세요'
 
 function SettlementItemBasisNumericInput(props: CmsNumericInputProps) {
   return <CmsNumericInput allowClear={false} {...props} />
@@ -309,6 +309,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
               rows={6}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -318,6 +319,7 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
               rows={5}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -330,6 +332,9 @@ function SettlementItemSettingDetailTier1Body({ itemId }: { itemId: string }) {
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
@@ -517,6 +522,9 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           {GEMINI_SESSION_ROWS.map(row => (
@@ -526,12 +534,12 @@ function SettlementItemSettingDetailGeminiBody({ itemId }: { itemId: string }) {
                   <SettlementItemBasisNumericInput
                     mode="currency"
                     inputSize="medium"
-                    suffix="원"
                     value={sessionValue(row.key)}
                     onValueChange={next => setSessionValue(row.key, next)}
                     aria-label={`${row.label} 금액`}
                   />
                 </div>
+                <span className="modal-spec-table__suffix-text">원</span>
               </div>
             </ModalSpecTableRow>
           ))}
@@ -584,6 +592,7 @@ function SettlementItemSettingDetailAssistantBody({ itemId }: { itemId: string }
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -593,6 +602,7 @@ function SettlementItemSettingDetailAssistantBody({ itemId }: { itemId: string }
               rows={5}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -840,6 +850,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -849,6 +860,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
               rows={5}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -908,6 +920,7 @@ function SettlementItemSettingDetailSimpleLaborBody({ itemId }: { itemId: string
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -978,6 +991,7 @@ function SettlementItemSettingDetailLodgingBody({
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -987,6 +1001,7 @@ function SettlementItemSettingDetailLodgingBody({
               rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -999,6 +1014,9 @@ function SettlementItemSettingDetailLodgingBody({
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
@@ -1023,12 +1041,12 @@ function SettlementItemSettingDetailLodgingBody({
                 <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
-                  suffix="원"
                   value={maxLimitStr}
                   onValueChange={setMaxLimitStr}
                   aria-label={isLodgingOneToOne ? '지급액' : '최대 한도 금액'}
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">원</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="증빙 자료 제출 여부" labelVariant="basis">
@@ -1037,6 +1055,7 @@ function SettlementItemSettingDetailLodgingBody({
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1096,6 +1115,7 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -1105,6 +1125,7 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
               rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -1117,6 +1138,9 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
@@ -1125,12 +1149,12 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
                 <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
-                  suffix="원"
                   value={maxLimitStr}
                   onValueChange={setMaxLimitStr}
                   aria-label="최대 한도 금액"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">원</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="증빙 자료 제출 여부" labelVariant="basis">
@@ -1139,6 +1163,7 @@ function SettlementItemSettingDetailMealBody({ itemId }: { itemId: string }) {
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1201,6 +1226,7 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -1210,6 +1236,7 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
               rows={3}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -1222,6 +1249,9 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="최대 한도 금액" labelVariant="basis">
@@ -1230,12 +1260,12 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
                 <SettlementItemBasisNumericInput
                   mode="currency"
                   inputSize="medium"
-                  suffix="원"
                   value={maxLimitStr}
                   onValueChange={setMaxLimitStr}
                   aria-label="최대 한도 금액"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">원</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="증빙 자료 제출 여부" labelVariant="basis">
@@ -1244,6 +1274,7 @@ function SettlementItemSettingDetailVolunteerActivityBody({ itemId }: { itemId: 
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1486,6 +1517,9 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           className="settlement-item-setting-detail-modal__section-label"
         >
           조건
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="조건">
           <ModalSpecTableRow label="공제 요건" labelVariant="paymentRequirementShort">
@@ -1494,6 +1528,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
               rows={3}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="공제 요건"
             />
           </ModalSpecTableRow>
@@ -1553,7 +1588,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={rateDailyWorkerStr}
                   error={Boolean(inputErrors.rateDailyWorker)}
                   message={inputErrors.rateDailyWorker ?? undefined}
@@ -1563,6 +1597,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="일용근로소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="근로소득세액공제율" labelVariant="basis">
@@ -1573,7 +1608,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={taxCreditRateStr}
                   error={Boolean(inputErrors.taxCreditRate)}
                   message={inputErrors.taxCreditRate ?? undefined}
@@ -1583,6 +1617,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="근로소득세액공제율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1594,6 +1629,9 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
           className="settlement-item-setting-detail-modal__section-label"
         >
           소득 유형별 원천징수율
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="소득 유형별 원천징수율">
           <ModalSpecTableRow label="사업소득" labelVariant="basis">
@@ -1604,7 +1642,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={rateBusinessStr}
                   error={Boolean(inputErrors.rateBusiness)}
                   message={inputErrors.rateBusiness ?? undefined}
@@ -1614,6 +1651,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="사업소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="기타소득" labelVariant="basis">
@@ -1624,7 +1662,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={rateOtherStr}
                   error={Boolean(inputErrors.rateOther)}
                   message={inputErrors.rateOther ?? undefined}
@@ -1634,9 +1671,19 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="기타소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
-          <ModalSpecTableRow label="상금 (기타소득)" labelVariant="basis">
+          <ModalSpecTableRow
+            label={
+              <>
+                상금
+                <br />
+                (기타소득)
+              </>
+            }
+            labelVariant="basis"
+          >
             <div className="modal-spec-table__field-row">
               <div className="modal-spec-table__input-wrap">
                 <SettlementItemBasisNumericInput
@@ -1644,7 +1691,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={ratePrizeStr}
                   error={Boolean(inputErrors.ratePrize)}
                   message={inputErrors.ratePrize ?? undefined}
@@ -1654,6 +1700,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="상금 기타소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow
@@ -1673,7 +1720,6 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   groupThousands={false}
                   precision={2}
                   inputSize="medium"
-                  suffix="%"
                   value={rateInterviewStr}
                   error={Boolean(inputErrors.rateInterview)}
                   message={inputErrors.rateInterview ?? undefined}
@@ -1683,6 +1729,7 @@ function SettlementItemSettingDetailWithholdingDailyWorkerBody({ itemId }: { ite
                   aria-label="면접비·지원금·경품 기타소득 세율"
                 />
               </div>
+              <span className="modal-spec-table__suffix-text">%</span>
             </div>
           </ModalSpecTableRow>
         </ModalSpecTable>
@@ -1754,6 +1801,7 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
               rows={isStudentTransport ? 3 : 6}
               value={qualificationText}
               onChange={e => setQualificationText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="지급 요건"
             />
           </ModalSpecTableRow>
@@ -1763,6 +1811,7 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
               rows={isStudentTransport ? 3 : 5}
               value={remarkText}
               onChange={e => setRemarkText(e.target.value)}
+              placeholder={CONDITION_TEXTAREA_PLACEHOLDER}
               aria-label="비고"
             />
           </ModalSpecTableRow>
@@ -1775,6 +1824,9 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
           className="settlement-item-setting-detail-modal__section-label"
         >
           산정 기준
+          <span className="settlement-item-setting-detail-modal__required-mark" aria-hidden="true">
+            *
+          </span>
         </h3>
         <ModalSpecTable aria-label="산정 기준">
           <ModalSpecTableRow label="산정 기준 단위" labelVariant="basis">
@@ -1787,7 +1839,7 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
                   onValueChange={setDistanceKmStr}
                 />
               </div>
-              <span className="modal-spec-table__suffix-text">km(편도) 초과 시</span>
+              <span className="modal-spec-table__suffix-text">km(편도) 이상</span>
             </div>
           </ModalSpecTableRow>
           <ModalSpecTableRow label="이용 수단" labelVariant="basis">
@@ -1796,6 +1848,8 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
               onChange={setCommuteMode}
               options={TRANSPORT_COMMUTE_RADIO_OPTIONS}
               aria-label="이용 수단"
+              size="medium"
+              disabled
             />
           </ModalSpecTableRow>
           <ModalSpecTableRow label="증빙 자료 제출 여부" labelVariant="basis">
@@ -1804,6 +1858,8 @@ function SettlementItemSettingDetailTransportBody({ itemId }: { itemId: string }
               onChange={setEvidenceSubmission}
               options={SIMPLE_LABOR_EVIDENCE_RADIO_OPTIONS}
               aria-label="증빙 자료 제출 여부"
+              size="medium"
+              disabled
             />
           </ModalSpecTableRow>
         </ModalSpecTable>
