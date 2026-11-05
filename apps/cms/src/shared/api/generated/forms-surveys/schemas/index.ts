@@ -1377,6 +1377,7 @@ export * from './settlementApplicationAttachmentResponse';
 export * from './settlementApplicationAvailabilityResponse';
 export * from './settlementApplicationCalculationDetailResponse';
 export * from './settlementApplicationConfirmRequest';
+export * from './settlementApplicationCreateRequest';
 export * from './settlementApplicationDocumentResponse';
 export * from './settlementApplicationDocumentResponseDocumentType';
 export * from './settlementApplicationEvidenceAttachmentRequest';
