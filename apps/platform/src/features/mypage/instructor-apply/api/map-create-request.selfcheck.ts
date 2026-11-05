@@ -72,8 +72,7 @@ assert.equal(body.profile.career.rows[0]?.companyName, 'ABC')
 assert.equal(body.profile.essays.freeWrite1, '소개')
 assert.equal(body.profile.oneLineIntro, '한줄')
 
-assert.equal(body.settlement.bankName, undefined)
-assert.equal(body.settlement.businessIncome, false)
+assert.equal('settlement' in body, false)
 
 assert.equal(body.termsAgreements[0]?.termsType, 'PAYMENT_STATEMENT_PRE_CONSENT')
 /** 동기 매핑 fallback — 원격 제출 시 resolveInstructorApplyTermsAgreementVersions로 교체 */

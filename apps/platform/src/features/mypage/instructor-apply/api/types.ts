@@ -131,7 +131,8 @@ export type InstructorRoleRequestCreateRequest = {
   phone: string
   email: string
   profile: InstructorRoleRequestProfile
-  settlement: InstructorRoleRequestSettlement
+  /** 생략. 계좌 원장은 지급조서 사전 동의서에서만 갱신된다. */
+  settlement?: InstructorRoleRequestSettlement
   termsAgreements: InstructorRoleRequestTermsAgreement[]
 }
 

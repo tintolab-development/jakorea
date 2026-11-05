@@ -317,7 +317,6 @@ export function mapInstructorApplyFormToCreateRequest(
     phone: formatKoreanPhoneNumber(values.contact.trim()),
     email: values.email.trim(),
     profile: mapInstructorFormValuesToCmsProfile(values),
-    settlement: mapInstructorFormValuesToPortalSettlement(values),
     termsAgreements: mapTermsAgreements(values),
   }
 }
