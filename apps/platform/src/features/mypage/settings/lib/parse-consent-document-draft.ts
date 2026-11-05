@@ -151,6 +151,33 @@ function readPaymentBasicInfoRecord(
   return Object.keys(next).length > 0 ? next : undefined
 }
 
+function readPaymentBasicInfoFromUnknown(
+  value: unknown,
+  depth = 0,
+): Partial<PaymentStatementBasicInfoValues> | undefined {
+  if (value == null || depth > 4) return undefined
+  if (typeof value === 'string') {
+    const record = parseJsonRecord(value)
+    return record ? readPaymentBasicInfoFromUnknown(record, depth + 1) : undefined
+  }
+  const direct = readPaymentBasicInfoRecord(value)
+  if (direct) return direct
+  if (!isRecord(value)) return undefined
+  const nestedKeys = [
+    'paymentBasicInfo',
+    'paymentStatementBasicInfo',
+    'filledDocument',
+    'data',
+    'content',
+    'schemaJson',
+  ] as const
+  for (const key of nestedKeys) {
+    const nested = readPaymentBasicInfoFromUnknown(value[key], depth + 1)
+    if (nested) return nested
+  }
+  return undefined
+}
+
 function parseJsonRecord(value: string): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(value) as unknown
@@ -165,19 +192,9 @@ export function readPaymentBasicInfoFromConsentDetail(
   detail: PortalConsentDocumentDetail | null | undefined,
 ): Partial<PaymentStatementBasicInfoValues> | undefined {
   if (detail == null) return undefined
-  const fromFilled = readPaymentBasicInfoRecord(detail.filledDocument?.paymentBasicInfo)
-  if (fromFilled) return fromFilled
-
-  const payloads: unknown[] = [detail.schemaJson, detail.content]
-  for (const payload of payloads) {
-    const record = typeof payload === 'string' ? parseJsonRecord(payload) : payload
-    if (!isRecord(record)) continue
-    const nested = readPaymentBasicInfoRecord(record.paymentBasicInfo)
-    if (nested) return nested
-    const filled = isRecord(record.filledDocument)
-      ? readPaymentBasicInfoRecord(record.filledDocument.paymentBasicInfo)
-      : undefined
-    if (filled) return filled
-  }
-  return undefined
+  return (
+    readPaymentBasicInfoFromUnknown(detail.filledDocument?.paymentBasicInfo) ??
+    readPaymentBasicInfoFromUnknown(detail.filledDocument) ??
+    readPaymentBasicInfoFromUnknown(detail)
+  )
 }

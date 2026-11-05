@@ -55,6 +55,19 @@ function normalizeConsentType(value: string | undefined): string {
   return normalized
 }
 
+export function readPortalConsentDocumentId(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) return value
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value.trim())
+    if (Number.isFinite(parsed) && parsed > 0) return parsed
+  }
+  return undefined
+}
+
+function consentItemCompleteness(item: SettingsConsentItem): number {
+  return (item.signed ? 4 : 0) + (item.agreed ? 2 : 0) + (item.documentId != null ? 1 : 0)
+}
+
 /**
  * `GET /api/portal/me/consents` 응답 행을 그대로 카드로 만든다.
  * 행 구성·순서·필수·철회 가능 여부는 서버 값, 제목·종류·약관 보기는 화면 카탈로그.
@@ -78,8 +91,7 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       continue
     }
     const meta = CATALOG_BY_TYPE.get(consentType)
-    if (!meta || seen.has(meta.id)) continue
-    seen.add(meta.id)
+    if (!meta) continue
 
     const expired = summary.expired === true
     const reconsentRequired = summary.reconsentRequired === true
@@ -101,13 +113,22 @@ export function buildConsentItemsFromSummaries(summaries: PortalConsentSummary[]
       agreed,
       agreedAt: agreed ? formatConsentAgreedAt(summary.agreedAt) : undefined,
       hint: expired || reconsentRequired ? EXPIRED_HINT : meta.hint,
-      documentId: summary.documentId ?? undefined,
+      documentId: readPortalConsentDocumentId(summary.documentId),
       withdrawable: summary.withdrawable === true,
       status: summary.status,
       signed: summary.signed === true,
       listed: typeof summary.listed === 'boolean' ? summary.listed : undefined,
     }
-    ;(DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems).push(item)
+    const target = DOCUMENT_SECTION_IDS.has(meta.id) ? documentItems : basicItems
+    if (seen.has(meta.id)) {
+      const index = target.findIndex(row => row.id === meta.id)
+      if (index >= 0 && consentItemCompleteness(item) > consentItemCompleteness(target[index]!)) {
+        target[index] = item
+      }
+      continue
+    }
+    seen.add(meta.id)
+    target.push(item)
   }
 
   return { basicItems, documentItems }

@@ -1,4 +1,5 @@
 import type { SettingsConsentItem } from '../../../settings/lib/consent-catalog.ts'
+import { readPortalConsentDocumentId } from '../../../settings/lib/map-consents.ts'
 
 export function isReceiptPreConsentSubmitted(
   documentItems: readonly SettingsConsentItem[],
@@ -14,8 +15,5 @@ export function pickReceiptPreConsentDocumentId(
   const item = documentItems.find(
     row => row.id === 'receiptPreConsent' && row.agreed === true && row.signed === true,
   )
-  const documentId = item?.documentId
-  return typeof documentId === 'number' && Number.isFinite(documentId) && documentId > 0
-    ? documentId
-    : null
+  return readPortalConsentDocumentId(item?.documentId) ?? null
 }

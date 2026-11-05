@@ -225,6 +225,47 @@ assert.equal(
   true,
 )
 
+const preferSubmittedPayment = buildConsentItemsFromSummaries([
+  {
+    consentType: 'PAYMENT_STATEMENT_PRE_CONSENT',
+    agreed: false,
+    signed: false,
+    status: 'DRAFT',
+    documentId: null,
+  },
+  {
+    consentType: 'PAYMENT_STATEMENT_CONSENT',
+    agreed: true,
+    signed: true,
+    documentId: 88,
+  },
+])
+assert.equal(
+  preferSubmittedPayment.documentItems.find(item => item.id === 'paymentStatement')?.documentId,
+  88,
+)
+assert.equal(
+  preferSubmittedPayment.documentItems.find(item => item.id === 'paymentStatement')?.agreed,
+  true,
+)
+assert.equal(
+  preferSubmittedPayment.documentItems.find(item => item.id === 'paymentStatement')?.signed,
+  true,
+)
+
+const stringDocumentId = buildConsentItemsFromSummaries([
+  {
+    consentType: 'PAYMENT_STATEMENT_CONSENT',
+    agreed: true,
+    signed: true,
+    documentId: '91' as unknown as number,
+  },
+])
+assert.equal(
+  stringDocumentId.documentItems.find(item => item.id === 'paymentStatement')?.documentId,
+  91,
+)
+
 const draftNotAgreed = buildConsentItemsFromSummaries([
   {
     consentType: 'PAYMENT_STATEMENT_CONSENT',
