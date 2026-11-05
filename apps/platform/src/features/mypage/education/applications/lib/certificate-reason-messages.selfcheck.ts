@@ -17,7 +17,15 @@ assert.equal(messageForPortalCertificateReasonCode('OTHER'), null)
 assert.equal(messageForPortalCertificateReasonCode(null), null)
 assert.equal(
   messageForPortalCertificateReasonCode('ISSUANCE_PERIOD_EXPIRED'),
-  '수료증 발급 기간이 만료되었습니다.'
+  '신청일로부터 3년이 지나 발급할 수 없습니다.'
+)
+assert.equal(
+  messageForPortalCertificateReasonCode('MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED'),
+  '참가인증서는 CMS 관리자만 발급할 수 있습니다.'
+)
+assert.equal(
+  messageForPortalCertificateReasonCode('CERTIFICATE_APPLICATION_DATE_UNAVAILABLE'),
+  '신청일을 확인할 수 없습니다.'
 )
 
 assert.equal(

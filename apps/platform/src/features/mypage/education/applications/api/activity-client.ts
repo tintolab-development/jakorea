@@ -1036,6 +1036,8 @@ export type PortalIndividualPayableItem = {
   itemType?: string
   itemName?: string
   evidenceRequired?: boolean | null
+  maxLimitWon?: number | null
+  maxAmount?: number | null
 }
 
 export type PortalIndividualSubmittedItem = {

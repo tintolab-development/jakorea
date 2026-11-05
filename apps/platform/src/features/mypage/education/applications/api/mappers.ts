@@ -51,6 +51,7 @@ const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   DOCUMENT_PASSED: 'document_passed',
   DOC_PASSED: 'document_passed',
   IN_PROGRESS: 'in_progress',
+  INSTRUCTOR_REPORTS_PENDING: 'in_progress',
   COMPLETED: 'completed',
   FINISHED: 'completed',
   WITHDRAWN: 'withdrawn',

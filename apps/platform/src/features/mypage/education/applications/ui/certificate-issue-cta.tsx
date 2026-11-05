@@ -16,9 +16,7 @@ import {
 } from '../lib/certificate-cta'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import {
-  isPersonalCertificateActionable,
   portalCertificateDocumentLabel,
-  portalCertificateIssueType,
 } from '../lib/personal-certificate-eligibility'
 import styles from './certificate-issue-cta.module.css'
 
@@ -61,19 +59,8 @@ export function CertificateIssueCta({
     enabled: availabilityEnabled,
     certificateType: 'COMPLETION',
   })
-  const participationEnabled =
-    availabilityEnabled &&
-    completionQuery.isFetched &&
-    !isPersonalCertificateActionable(completionQuery.data)
-  const participationQuery = useMyCertificateAvailabilityQuery({
-    programId,
-    enabled: participationEnabled,
-    certificateType: 'PARTICIPATION',
-  })
   const availabilityQuery = {
-    data: isPersonalCertificateActionable(participationQuery.data)
-      ? participationQuery.data
-      : completionQuery.data,
+    data: completionQuery.data,
   }
   const issueMutation = useIssueMyCertificateMutation({
     applicationType,
@@ -150,7 +137,7 @@ export function CertificateIssueCta({
       const result = await issueMutation.mutateAsync({
         programId: parsedProgramId,
         participantId,
-        certificateType: portalCertificateIssueType(availability.certificateType),
+        certificateType: 'COMPLETION',
       })
       setConfirmOpen(false)
       setCompleteIssueId(result.certificateIssueId)

@@ -57,7 +57,7 @@ export function EducationPersonalCertificatePanel({
   const autoQuery = usePersonalCertificateAvailabilityQuery({
     programId,
     enabled: eligibleSurface && !isWithdrawnDuring,
-    certificateType: 'AUTO',
+    certificateType: 'COMPLETION',
   })
   const participationQuery = usePersonalCertificateAvailabilityQuery({
     programId,
@@ -102,7 +102,11 @@ export function EducationPersonalCertificatePanel({
       : null)
   const issued = existingIssueId != null
   const canIssueNew =
-    !issued && availability?.available === true && availability?.canDownload !== true
+    !isWithdrawnDuring &&
+    !issued &&
+    availability?.available === true &&
+    availability?.canDownload !== true &&
+    portalCertificateIssueType(availability?.certificateType) !== 'PARTICIPATION'
   const actionable = isPersonalCertificateActionable(availability) || localIssueId != null
   const participantId =
     (availability?.participantId != null && Number(availability.participantId) > 0
@@ -149,9 +153,7 @@ export function EducationPersonalCertificatePanel({
       const issuedResponse = await issueMutation.mutateAsync({
         programId: programIdNumber,
         participantId,
-        certificateType: isWithdrawnDuring
-          ? 'PARTICIPATION'
-          : portalCertificateIssueType(availability?.certificateType),
+        certificateType: 'COMPLETION',
         issueReason: 'PERSONAL_ARCHIVE',
       })
       const issueId = readPortalCertificateIssueId(issuedResponse)

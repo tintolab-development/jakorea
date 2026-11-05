@@ -21,6 +21,17 @@ assert.equal(generalOrganization.educationTargetLabel, '')
 assert.equal(generalOrganization.educationFormLabel, '')
 assert.equal(generalOrganization.educationForm, undefined)
 
+const instructorReportsPending = mapPortalProgramApplicationListItem({
+  applicationId: 9001,
+  applicationType: 'INSTRUCTOR',
+  programId: 900,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '강의보고서 미제출',
+  displayStatus: 'INSTRUCTOR_REPORTS_PENDING',
+})
+assert.equal(instructorReportsPending?.displayStatus, 'in_progress')
+
 const generalYouth = mapPortalProgramApplicationListItem({
   applicationId: 2,
   applicationType: 'INDIVIDUAL',

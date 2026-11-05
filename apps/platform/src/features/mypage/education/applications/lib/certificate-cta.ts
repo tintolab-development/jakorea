@@ -106,6 +106,10 @@ export function resolveCertificateCtaView(input: {
     if (issueId == null) return { kind: 'hidden' }
     return { kind: 'download', issueId }
   }
+  const certificateType = normalizeCode(availability.certificateType)
+  if (certificateType === 'PARTICIPATION' || certificateType.includes('PARTICIPATION')) {
+    return { kind: 'hidden' }
+  }
   if (availability.available === true) {
     return { kind: 'issue' }
   }

@@ -95,7 +95,7 @@ describe('개인 수료증 API 계약', () => {
         canIssueCertificate: false,
         availability: { available: true, canDownload: false, certificateType: 'PARTICIPATION' },
       }),
-    ).toEqual({ kind: 'issue' })
+    ).toEqual({ kind: 'hidden' })
   })
 
   it('목록은 certificateAvailable을 복사하고 ISSUE_CERTIFICATE는 availableActions로 둔다', () => {

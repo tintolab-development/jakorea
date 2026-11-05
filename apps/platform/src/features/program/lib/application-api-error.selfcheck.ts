@@ -108,7 +108,12 @@ const contractErrorCases = [
     'CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE',
     '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
   ],
-  ['ISSUANCE_PERIOD_EXPIRED', '수료증 발급 기간이 만료되었습니다.'],
+  ['ISSUANCE_PERIOD_EXPIRED', '신청일로부터 3년이 지나 발급할 수 없습니다.'],
+  ['CERTIFICATE_APPLICATION_DATE_UNAVAILABLE', '신청일을 확인할 수 없습니다.'],
+  [
+    'MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED',
+    '참가인증서는 CMS 관리자만 발급할 수 있습니다.',
+  ],
 ] as const
 
 for (const [code, message] of contractErrorCases) {

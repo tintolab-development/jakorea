@@ -139,7 +139,7 @@ assert.equal(
     certificateStatus: 'NOT_ELIGIBLE',
     availability: { available: true, canDownload: false, certificateType: 'PARTICIPATION' },
   }).kind,
-  'issue',
+  'hidden',
 )
 
 assert.equal(
