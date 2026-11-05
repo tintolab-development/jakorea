@@ -13,6 +13,7 @@ export function isAssignmentReportSubmitted(status: UjatAssignmentReportStatus):
   return status === 'submitted' || status === 'revised' || status === 'deadline_missed'
 }
 
+/** 미제출 > 기한 미준수 > 제출 완료. 마감만 지난 미제출은 not_submitted다. */
 export function resolveAssignmentSubmissionStatus(
   row: Pick<UjatAssignmentVolunteerRow, 'plan' | 'log'>
 ): UjatAssignmentSubmissionStatusKey {
