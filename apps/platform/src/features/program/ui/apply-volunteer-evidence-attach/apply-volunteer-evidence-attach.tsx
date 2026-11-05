@@ -125,21 +125,6 @@ export function ApplyVolunteerEvidenceAttach({
 
   return (
     <div className={styles.evidence}>
-      <div className={styles.evidenceRow}>
-        <PFFormFileAttach
-          className={styles.trigger}
-          accept={EVIDENCE_ACCEPT}
-          buttonLabel="파일 추가"
-          aria-label="증빙서류 첨부"
-          uploading={uploading}
-          disabled={ownFiles.length >= FILE_UPLOAD_MAX_COUNT}
-          onFileSelect={handleFileSelect}
-        />
-        <p className={styles.hint}>
-          <span>{EVIDENCE_HINT}</span>
-          <span>파일명에 특수문자가 있으면 등록되지 않을 수 있습니다.</span>
-        </p>
-      </div>
       {ownFiles.length > 0 ? (
         <div className={styles.files}>
           {ownFiles.map(file => (
@@ -156,6 +141,21 @@ export function ApplyVolunteerEvidenceAttach({
           ))}
         </div>
       ) : null}
+      <div className={styles.evidenceRow}>
+        <PFFormFileAttach
+          className={styles.trigger}
+          accept={EVIDENCE_ACCEPT}
+          buttonLabel="파일 추가"
+          aria-label="증빙서류 첨부"
+          uploading={uploading}
+          disabled={ownFiles.length >= FILE_UPLOAD_MAX_COUNT}
+          onFileSelect={handleFileSelect}
+        />
+        <p className={styles.hint}>
+          <span>{EVIDENCE_HINT}</span>
+          <span>파일명에 특수문자가 있으면 등록되지 않을 수 있습니다.</span>
+        </p>
+      </div>
       {uploadError ? <p className={styles.evidenceError}>{uploadError}</p> : null}
     </div>
   )
