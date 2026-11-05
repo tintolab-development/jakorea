@@ -10,7 +10,7 @@ import type { InstructorCmsSettlement } from './instructorCmsSettlement';
 import type { TermsAgreementRequest } from './termsAgreementRequest';
 
 /**
- * 회원포탈 강사 권한 신청. CMS 강사 등록과 같은 구조화 profile/settlement/termsAgreements 계약을 사용합니다.
+ * 회원포탈 강사 권한 신청. settlement은 생략 가능하며 계좌 원장은 지급조서 사전 동의서에서만 갱신됩니다.
  */
 export interface InstructorRoleRequestCreateRequest {
   /** @minLength 1 */
@@ -25,7 +25,7 @@ export interface InstructorRoleRequestCreateRequest {
   /** @minLength 1 */
   email: string;
   profile: InstructorCmsProfile;
-  settlement: InstructorCmsSettlement;
+  settlement?: InstructorCmsSettlement;
   /**
      * @minItems 3
      * @maxItems 4

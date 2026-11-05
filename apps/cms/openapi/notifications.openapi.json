@@ -7682,6 +7682,13 @@
             "type": "integer",
             "format": "int64"
           },
+          "bindingId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "formType": {
+            "type": "string"
+          },
           "templateVersionId": {
             "type": "integer",
             "format": "int64"
@@ -9583,7 +9590,7 @@
       },
       "InstructorRoleRequestCreateRequest": {
         "type": "object",
-        "description": "회원포탈 강사 권한 신청. CMS 강사 등록과 같은 구조화 profile/settlement/termsAgreements 계약을 사용합니다.",
+        "description": "회원포탈 강사 권한 신청. settlement은 생략 가능하며 계좌 원장은 지급조서 사전 동의서에서만 갱신됩니다.",
         "properties": {
           "requestedActivityType": {
             "type": "string",
@@ -9633,7 +9640,6 @@
           "phone",
           "profile",
           "requestedActivityType",
-          "settlement",
           "termsAgreements"
         ]
       },
@@ -16078,7 +16084,7 @@
           },
           "rawPrivacyIncluded": {
             "type": "boolean",
-            "description": "원본 개인정보 포함 여부. true이면 승인 reference가 필요합니다.",
+            "description": "true면 RAW_PRIVACY_APPROVAL_REQUIRED와 approvalReference가 필요합니다. false(MASKED_ONLY)도 대량이체·세금신고 SERVER_FILE에는 원문 계좌·주민번호를 넣습니다. 원문 노출 감사는 POST /api/admin/files/{fileObjectId}/sensitive-downloads 의 reason으로 남깁니다. 미리보기 GET만으로는 이력이 생기지 않습니다.",
             "example": false
           },
           "approvalReference": {
@@ -16109,10 +16115,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -18244,6 +18250,9 @@
             "type": "integer",
             "format": "int64"
           },
+          "formType": {
+            "type": "string"
+          },
           "templateVersionId": {
             "type": "integer",
             "format": "int64"
@@ -19391,16 +19400,21 @@
         "properties": {
           "participantId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "활동 불가 대상 봉사자 program_participant.id"
           },
           "replacementParticipantId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "대상이 그날 ASSIGNED이면 필수. ASSIGNED가 없으면 생략 또는 null. 빈 문자열 금지",
+            "nullable": true
           },
           "reason": {
             "type": "string",
+            "description": "관리자 메모. 없으면 null. 예: CMS 참여 불가일 설정",
             "maxLength": 1000,
-            "minLength": 0
+            "minLength": 0,
+            "nullable": true
           }
         },
         "required": [
@@ -19466,7 +19480,7 @@
           "targetSlotCount": {
             "type": "integer",
             "format": "int32",
-            "description": "빈 슬롯 수 + 보강 대상 1인 슬롯 수"
+            "description": "빈 슬롯 수 + 보강 대상 1인 슬롯 수. 같은 서울 교육일·같은 지역에서 가용 봉사자 V < 학급 수×2 이면 빈 학급을 1인씩 먼저 커버하므로 singleAssignedCount가 늘고 unassignedCount는 줄어든다. 신규 봉사자가 없고 미배정 학급이 남으면 같은 날·같은 지역의 미래 미진행 2인조에서 SECONDARY 1명만 이동한다. 원본 2인조 학급은 targetSlotCount·singleAssignedCount에 넣지 않지만, 분리 후 1인으로 남은 원본도 capacityWarnings[VOLUNTEER_SHORTAGE]와 results(reason=PAIR_SPLIT)에 포함한다."
           },
           "pairAssignedCount": {
             "type": "integer",
@@ -19528,7 +19542,7 @@
           },
           "result": {
             "type": "string",
-            "description": "ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지)",
+            "description": "ASSIGNED_PAIR | ASSIGNED_SINGLE(빈 슬롯에 1인만 배정) | UNASSIGNED(빈 슬롯 배정 실패) | SECONDARY_ADDED(기존 1인 슬롯에 두 번째 봉사자 추가) | SECONDARY_UNAVAILABLE(기존 1인 슬롯 보강 실패, 1인 유지). 기존 2인조에서 한 명을 옮겨 1인 커버한 경우 result는 ASSIGNED_SINGLE이고 reason=PAIR_SPLIT. PAIR_SPLIT이면 대상 학급 row의 sourceEducationSlotId가 원본 학급이고, 원본 학급 row도 results에 포함된다.",
             "enum": [
               "ASSIGNED_PAIR",
               "ASSIGNED_SINGLE",
@@ -19555,6 +19569,12 @@
           },
           "reason": {
             "type": "string"
+          },
+          "sourceEducationSlotId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "reason=PAIR_SPLIT인 대상 학급 row에서 원본 학급 educationSlotId. 그 외 result는 null. FE는 educationSlotId와 sourceEducationSlotId를 모두 새로고침한다. 생략하지 않고 null로 둔다.",
+            "nullable": true
           }
         }
       },
@@ -25754,10 +25774,10 @@
           "ujatPlanRowId": {
             "type": "string"
           },
-          "endDate": {
+          "startDate": {
             "type": "string"
           },
-          "startDate": {
+          "endDate": {
             "type": "string"
           }
         }
@@ -32807,6 +32827,9 @@
             "type": "integer",
             "format": "int64"
           },
+          "formType": {
+            "type": "string"
+          },
           "templateVersionId": {
             "type": "integer",
             "format": "int64"
@@ -35458,6 +35481,19 @@
           },
           "canDownload": {
             "type": "boolean"
+          },
+          "countedParticipationCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "certificatePeriodStartDate": {
+            "type": "string"
+          },
+          "certificatePeriodEndDate": {
+            "type": "string"
+          },
+          "certificatePeriodLabel": {
+            "type": "string"
           }
         }
       },
@@ -36644,7 +36680,7 @@
       },
       "DocumentSlot": {
         "type": "object",
-        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | REVISED(수정요청·재제출). deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.",
+        "description": "한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | FEEDBACK_REQUESTED | REVISED. NOT_SUBMITTED=제출본 없음(마감 경과여도 유지). DEADLINE_MISSED=제출본이 있고 submittedAt이 deadlineAt(Asia/Seoul 목요일 24시=금요일 00:00 exclusive) 이후. FEEDBACK_REQUESTED=기한 내 제출 후 재제출 전 최신 피드백. REVISED=그 피드백보다 늦은 재제출(revision_no만으로는 아님).",
         "properties": {
           "documentKind": {
             "type": "string"
@@ -42637,7 +42673,7 @@
           "totalAssignedDays": {
             "type": "integer",
             "format": "int32",
-            "description": "UJAT 교육 진행 배정일수. allocation-matrix volunteers[].totalAssignedDays와 같은 이름·같은 계산(취소가 아닌 서로 다른 program_schedule_id 수). 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음",
+            "description": "UJAT 교육 진행 배정일수. 취소가 아닌 서로 다른 program_schedule_id 수(전 반기·전 지역). allocation-matrix volunteers[].totalAssignedDays와 같은 이름이지만 목록은 educationRegionCode 필터를 쓰지 않는다. 배정이 없거나 UJAT이 아니면 null. 0으로 채우지 않음",
             "nullable": true
           },
           "openingCeremonyAttended": {
@@ -45744,14 +45780,17 @@
         "properties": {
           "participantId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "봉사자 program_participant.id. 숫자 필수. null/omit 금지."
           },
           "memberId": {
             "type": "integer",
             "format": "int64"
           },
           "volunteerName": {
-            "type": "string"
+            "type": "string",
+            "description": "표시명(member.name). 빈 문자열 대신 값이 없으면 후보에서 제외한다.",
+            "nullable": true
           },
           "totalAssignedDays": {
             "type": "integer",
@@ -45775,7 +45814,10 @@
             "type": "integer",
             "format": "int64"
           }
-        }
+        },
+        "required": [
+          "participantId"
+        ]
       },
       "DirectAssignmentCandidatesResponse": {
         "type": "object",
@@ -45790,10 +45832,12 @@
           },
           "scheduleId": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "educationRegionCode": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "reallocationRequired": {
             "type": "boolean"
@@ -45807,18 +45851,43 @@
           "existingPrimaryParticipantId": {
             "type": "integer",
             "format": "int64",
-            "description": "1인 배정 슬롯이면 기존 배정 봉사자 participantId. 선택한 후보는 두 번째 봉사자(SECONDARY)로 추가된다. 빈 슬롯이면 null.",
-            "nullable": true
+            "nullable": true,
+            "description": "1인 배정 슬롯이면 기존 배정 봉사자 participantId. 선택한 후보는 두 번째 봉사자(SECONDARY)로 추가된다. 빈 슬롯·2인 슬롯이면 null. 2인 슬롯에서 이 값으로 추가 배정을 시도하지 않는다."
+          },
+          "assignedVolunteerCount": {
+            "type": "integer",
+            "description": "이 educationSlotId의 assignmentStatus=ASSIGNED distinct 인원. 0=빈 슬롯, 1=1인(SECONDARY 추가 가능), 2=가득 참. 같은 일정의 다른 학급·REASSIGNMENT_REQUIRED·giveUp·취소는 세지 않는다. omit/null 금지. GET candidates는 2인이어도 409가 아니라 200과 candidates=[] 을 반환한다. POST direct-assignment만 2인일 때 409."
           }
-        }
+        },
+        "required": [
+          "assignedVolunteerCount",
+          "candidates",
+          "reallocationRequired"
+        ]
       },
       "EducationProgressSummaryResponse": {
         "type": "object",
-        "description": "UJAT 교육 진행 요약. regions는 []이며 null이 아니다. 기수·연도 필드는 내려주지 않는다. 라벨(상반기/하반기/합계)은 FE 고정 카피.",
+        "description": "UJAT 교육 진행 요약. regions는 []이며 null이 아니다. educationRegionCode를 생략하면 활성 교육 지역 마스터 전 열이 나온다. programYear는 program.business_year(없으면 business_start_date의 달력연도). UTC slice 금지. firstHalfActivityTerm/secondHalfActivityTerm은 저장된 순수 기수 숫자만(예: \"36\"). 회차·커리큘럼 문구가 순수 기수가 아니면 null. FE 카피: 학교 1학기/2학기/{programYear}년 종합, 봉사단 선발 예정 인원 / {term}기 최종 합격 / {programYear} 봉사단 최종 인원.",
         "properties": {
           "programId": {
             "type": "integer",
             "format": "int64"
+          },
+          "programYear": {
+            "type": "integer",
+            "format": "int32",
+            "description": "사업연도. program.business_year. 없으면 business_start_date 연도. 둘 다 없으면 null.",
+            "nullable": true
+          },
+          "firstHalfActivityTerm": {
+            "type": "string",
+            "description": "1학기 표시용 기수 숫자 문자열. 예: \"36\". 미저장·비순수 기수면 null. invent 금지.",
+            "nullable": true
+          },
+          "secondHalfActivityTerm": {
+            "type": "string",
+            "description": "2학기 표시용 기수 숫자 문자열. 예: \"37\". 미저장·비순수 기수면 null. invent 금지.",
+            "nullable": true
           },
           "regions": {
             "type": "array",
@@ -45830,7 +45899,7 @@
       },
       "HalfProgressCounts": {
         "type": "object",
-        "description": "반기 셀. null 필드=미집계(FE는 0 invent 금지, '-' 또는 빈 표시). 실제 0건 집계는 0.",
+        "description": "학기 셀. null 필드=미집계(FE는 0 invent 금지, '-' 또는 빈 표시). 실제 0건 집계는 0. classCount>0 이고 studentCount=0 이면 슬롯 student_count 합이 0이다.",
         "properties": {
           "progressingSchoolCount": {
             "type": "integer",
@@ -45853,7 +45922,7 @@
           "finalPassVolunteerCount": {
             "type": "integer",
             "format": "int32",
-            "description": "최종 합격(final_result_status=PASS) 봉사자 수. 반기 필드는 그 반기 교육일에 취소가 아닌 배정이 1건 이상인 PASS 봉사자. total은 지역 PASS 봉사자 distinct.",
+            "description": "최종 합격(final_result_status=PASS) 봉사자 수. 1학기/2학기 필드는 그 학기 교육일에 취소가 아닌 배정이 1건 이상인 PASS 봉사자. total은 지역 PASS 봉사자 distinct(배정 유무와 무관). 학기 슬롯이 없어도 합격 집계 쿼리가 구현되어 있으면 0.",
             "nullable": true
           }
         }
@@ -45875,15 +45944,23 @@
             "description": "해당 지역 기관 신청(APPROVED|APPROVAL_COMPLETED|FINAL_SELECTED) 학교/기관 수. 집계 불가면 null. 실제 0건이면 0.",
             "nullable": true
           },
+          "plannedSelectionVolunteerCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "해당 프로그램·지역 봉사단 선발 예정 정원. ujat_program_region_capacity.max_volunteer_count의 반기 합. 용량 행이 없으면 null. 저장된 0은 0.",
+            "nullable": true
+          },
           "firstHalf": {
-            "$ref": "#/components/schemas/HalfProgressCounts"
+            "$ref": "#/components/schemas/HalfProgressCounts",
+            "description": "학교 1학기·봉사단 {firstHalfActivityTerm}기 최종 합격 셀"
           },
           "secondHalf": {
-            "$ref": "#/components/schemas/HalfProgressCounts"
+            "$ref": "#/components/schemas/HalfProgressCounts",
+            "description": "학교 2학기·봉사단 {secondHalfActivityTerm}기 최종 합격 셀"
           },
           "total": {
             "$ref": "#/components/schemas/HalfProgressCounts",
-            "description": "양 반기 합산/중복 제거. progressingSchoolCount·finalPassVolunteerCount는 distinct. classCount·studentCount는 합. 반기 값이 null이면 합도 null 성분을 유지하지 않고 집계 가능한 쪽만 반영한다."
+            "description": "학교 {programYear}년 종합·{programYear} 봉사단 최종 인원. progressingSchoolCount·classCount·studentCount는 1·2학기 합(한쪽만 있으면 그 쪽). finalPassVolunteerCount는 지역 PASS 봉사자 distinct. 반기 한쪽만 있어도 집계한다."
           }
         }
       },
@@ -46031,13 +46108,12 @@
           },
           "assignmentStatus": {
             "type": "string",
-            "nullable": true,
             "enum": [
               "ASSIGNED",
               "UNASSIGNED",
               "REASSIGNMENT_REQUIRED"
             ],
-            "description": "대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED"
+            "description": "대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 라벨만 있고 상태 없는 셀 금지"
           },
           "replacementParticipantId": {
             "type": "integer",
@@ -49157,15 +49233,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -50440,7 +50516,7 @@
           },
           "thumbnailFileName": {
             "type": "string",
-            "description": "썸네일 파일명",
+            "description": "섬네일 파일명",
             "nullable": true
           },
           "recruitmentGuide": {
@@ -52212,8 +52288,8 @@
           },
           "reasonCode": {
             "type": "string",
-            "description": "대표 차단 사유 코드. 발급 가능하면 null일 수 있습니다.",
-            "example": "NOT_COMPLETED"
+            "description": "대표 차단 사유 코드. 발급 가능하면 ELIGIBLE.",
+            "example": "ELIGIBLE"
           },
           "blockingReasons": {
             "type": "array",
@@ -52224,6 +52300,27 @@
             "items": {
               "type": "string"
             }
+          },
+          "countedParticipationCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "참가 인정 출석(PRESENT/ATTENDED/LATE) 건수. 포기 경계 이후 일정은 제외합니다.",
+            "example": 2
+          },
+          "certificatePeriodStartDate": {
+            "type": "string",
+            "description": "인증서 표시 기간 시작일(yyyy-MM-dd, Asia/Seoul). 포기 참가인증서는 최초 인정 일정일.",
+            "example": "2026-03-02"
+          },
+          "certificatePeriodEndDate": {
+            "type": "string",
+            "description": "인증서 표시 기간 종료일(yyyy-MM-dd, Asia/Seoul). 포기 참가인증서는 마지막 인정 일정 종료일.",
+            "example": "2026-03-16"
+          },
+          "certificatePeriodLabel": {
+            "type": "string",
+            "description": "PDF와 동일한 한글 기간 라벨",
+            "example": "2026년 3월 2일 ~ 2026년 3월 16일"
           }
         }
       },

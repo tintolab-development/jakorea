@@ -9,7 +9,7 @@ import type { DocumentSlotAnswers } from './documentSlotAnswers';
 import type { FormResponseFile } from './formResponseFile';
 
 /**
- * 한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | REVISED(수정요청·재제출). deadlineAt은 Asia/Seoul 목요일 24시(금요일 00:00) exclusive Instant입니다.
+ * 한 교육일의 계획서 또는 일지 슬롯. status는 NOT_SUBMITTED | SUBMITTED | APPROVED | DEADLINE_MISSED | FEEDBACK_REQUESTED | REVISED. NOT_SUBMITTED=제출본 없음(마감 경과여도 유지). DEADLINE_MISSED=제출본이 있고 submittedAt이 deadlineAt(Asia/Seoul 목요일 24시=금요일 00:00 exclusive) 이후. FEEDBACK_REQUESTED=기한 내 제출 후 재제출 전 최신 피드백. REVISED=그 피드백보다 늦은 재제출(revision_no만으로는 아님).
  */
 export interface DocumentSlot {
   documentKind?: string;

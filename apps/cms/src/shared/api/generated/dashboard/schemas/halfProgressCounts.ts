@@ -7,7 +7,7 @@
  */
 
 /**
- * 학기 셀. null 필드=미집계(FE는 0 invent 금지). 학기 슬롯이 없으면 0. 실제 0건 집계는 0. classCount>0 이고 studentCount=0 이면 슬롯 student_count 합이 0이다.
+ * 학기 셀. null 필드=미집계(FE는 0 invent 금지, '-' 또는 빈 표시). 실제 0건 집계는 0. classCount>0 이고 studentCount=0 이면 슬롯 student_count 합이 0이다.
  */
 export interface HalfProgressCounts {
   /** 확정 학급 슬롯이 있는 진행 학교/기관 수 */
@@ -16,9 +16,6 @@ export interface HalfProgressCounts {
   classCount?: number | null;
   /** 학급 슬롯 student_count 합 */
   studentCount?: number | null;
-  /** 최종 합격(PASS) 봉사자. 1학기/2학기 필드는 그 학기 배정이 있는 PASS. total은 지역 PASS distinct. */
+  /** 최종 합격(final_result_status=PASS) 봉사자 수. 1학기/2학기 필드는 그 학기 교육일에 취소가 아닌 배정이 1건 이상인 PASS 봉사자. total은 지역 PASS 봉사자 distinct(배정 유무와 무관). 학기 슬롯이 없어도 합격 집계 쿼리가 구현되어 있으면 0. */
   finalPassVolunteerCount?: number | null;
 }
-
-/** JABACK schema alias */
-export type UjatEducationProgressHalfCounts = HalfProgressCounts;
