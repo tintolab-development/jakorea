@@ -13,7 +13,7 @@ import type { ProgramRecruitmentRequestStatus } from './programRecruitmentReques
 import type { RecruitmentInterviewConfig } from './recruitmentInterviewConfig';
 
 /**
- * 프로그램 모집 유형별 canonical 설정
+ * 프로그램 모집 행 저장 요청. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields는 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다.
  */
 export interface ProgramRecruitmentRequest {
   /** 모집 유형 */
@@ -92,4 +92,12 @@ export interface ProgramRecruitmentRequest {
   thumbnailFileObjectId?: number | null;
   /** 프로그램 신규 등록 시 이 모집 행에 연결할 첨부파일 fileObjectId 목록. 요청 순서가 표시 순서이며, 생성 트랜잭션에서만 사용합니다. */
   attachmentFileObjectIds?: number[] | null;
+  /** 1차 서류 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
+  documentPassAnnouncementMethod?: string | null;
+  /** 최종 발표 방법. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
+  finalPassAnnouncementMethod?: string | null;
+  /** 2차 면접 방식. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
+  interviewMethod?: string | null;
+  /** 봉사자 모집 대상 상세. 이 모집 행만 저장. null 생략은 기존 유지, "" 또는 clearFields 항목은 해당 행만 비움. UJAT VOLUNTEER는 recruitTerm이 다른 행으로 복사하지 않는다. */
+  volunteerTargetDetail?: string | null;
 }

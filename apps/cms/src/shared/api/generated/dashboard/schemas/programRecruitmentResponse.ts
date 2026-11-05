@@ -12,7 +12,7 @@ import type { ProgramRecruitmentResponseRecruitTerm } from './programRecruitment
 import type { RecruitmentInterviewConfig } from './recruitmentInterviewConfig';
 
 /**
- * 프로그램 모집 행 응답. 모집 행마다 공고 문구·담당자·대표 이미지·첨부·신청 양식을 따로 가진다.
+ * 프로그램 모집 행 응답. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다.
  */
 export interface ProgramRecruitmentResponse {
   id?: number;
@@ -82,4 +82,12 @@ export interface ProgramRecruitmentResponse {
   interviewConfig?: RecruitmentInterviewConfig | null;
   /** 행 내용 수정 revision. PATCH expectedRevision 과 비교한다. */
   contentRevision?: number | null;
+  /** 1차 서류 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null. VOLUNTEER가 아니면 null. */
+  documentPassAnnouncementMethod?: string | null;
+  /** 최종 발표 방법. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null. PARTICIPANT·VOLUNTEER가 아니면 null. */
+  finalPassAnnouncementMethod?: string | null;
+  /** 2차 면접 방식. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null. VOLUNTEER가 아니면 null. */
+  interviewMethod?: string | null;
+  /** 봉사자 모집 대상 상세. 이 모집 행 typed 컬럼만. 없으면 null. overlay·프로그램 컬럼·다른 반기 행으로 채우지 않는다. 빈 문자열은 null. VOLUNTEER가 아니면 null. */
+  volunteerTargetDetail?: string | null;
 }

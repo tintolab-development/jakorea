@@ -14,11 +14,9 @@ export interface MemberPortalUjatClassAssignmentRow {
   classLabel?: string | null;
   classNo?: string | null;
   volunteerAName?: string | null;
-  volunteerA?: string | null;
   volunteerBName?: string | null;
-  volunteerB?: string | null;
   textbookName?: string | null;
-  /** 준비 수량(학급 학생 수). */
+  /** 학급 학생 수. 교재 준비수량이 아님. */
   studentCount?: number | null;
   textbookQuantity?: number | null;
   textbookQuantityLabel?: string | null;

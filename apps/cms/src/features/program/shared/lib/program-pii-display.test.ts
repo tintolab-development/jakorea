@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import { render } from '@testing-library/react'
 import {
+  PRIVACY_ADDRESS_BE_MASK_RUN,
   PRIVACY_ADDRESS_BLUR_TOKEN,
   displayServerPiiAsIs,
   isPrivacyAddressBlurToken,
@@ -79,6 +80,20 @@ describe('program-pii-display', () => {
     )
     expect(container.textContent).toBe('강서구 화곡동 *****')
     expect(container.querySelector('.program-pii-address-blur')?.textContent).toBe('*****')
+  })
+
+  it('blurs BE maskAddress **** in road when detail is null', () => {
+    const { container } = render(
+      createElement(PrivacyHomeAddressDisplay, {
+        address: '강원특별****',
+        addressDetail: null,
+        revealed: false,
+      })
+    )
+    expect(container.querySelector('.program-pii-address-blur')?.textContent).toBe(
+      PRIVACY_ADDRESS_BE_MASK_RUN
+    )
+    expect(container.textContent).toContain('강원특별')
   })
 
   it('HomeAddressDisplay mask=true blurs token even when address already includes it', () => {

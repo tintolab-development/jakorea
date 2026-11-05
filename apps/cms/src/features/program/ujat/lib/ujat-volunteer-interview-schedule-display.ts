@@ -195,25 +195,25 @@ export function resolveUjatVolunteerInterviewScheduleDisplay(
     return fromOverlay.display
   }
 
-  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
-  const availableTimeSlots = info?.availableTimeSlots?.trim()
-  if (availableTimeSlots && availableTimeSlots !== '-') {
-    return {
-      common: {
-        recurringUnavailable: info?.recurringUnavailable?.trim() || '-',
-        specificUnavailableDates: info?.specificUnavailableDates?.trim() || '-',
-        availableTimeSlots,
-      },
-      exceptions: (info?.exceptions ?? []).map(exception => ({
-        exceptionDate: exception.exceptionDate?.trim() || '-',
-        availableTimeSlots: exception.availableTimeSlots?.trim() || '-',
-      })),
+  if (options?.allowOverlayFallback) {
+    const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+    const availableTimeSlots = info?.availableTimeSlots?.trim()
+    if (availableTimeSlots && availableTimeSlots !== '-') {
+      return {
+        common: {
+          recurringUnavailable: info?.recurringUnavailable?.trim() || '-',
+          specificUnavailableDates: info?.specificUnavailableDates?.trim() || '-',
+          availableTimeSlots,
+        },
+        exceptions: (info?.exceptions ?? []).map(exception => ({
+          exceptionDate: exception.exceptionDate?.trim() || '-',
+          availableTimeSlots: exception.availableTimeSlots?.trim() || '-',
+        })),
+      }
     }
   }
 
   if (fromOverlay) return fromOverlay.display
-  void options
-  void half
   return EMPTY_UJAT_VOLUNTEER_INTERVIEW_SCHEDULE
 }
 
@@ -240,18 +240,18 @@ export function resolveUjatVolunteerInterviewScheduleEditSeed(
     : null
   if (fromOverlay?.seed) return fromOverlay.seed
 
-  const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
-  const availableTimeSlots = info?.availableTimeSlots?.trim()
-  if (availableTimeSlots && availableTimeSlots !== '-') {
-    return buildVolunteerInterviewScheduleEditSeed({
-      recurringUnavailable: info?.recurringUnavailable ?? '',
-      specificUnavailableDateIsos: info?.specificUnavailableDateIsos,
-      selectedTimeSlotLabels: availableTimeSlots.split(',').map(label => label.trim()).filter(Boolean),
-    })
+  if (options?.allowOverlayFallback) {
+    const info = program.generalCommonInfo?.volunteerInterviewScheduleInfo
+    const availableTimeSlots = info?.availableTimeSlots?.trim()
+    if (availableTimeSlots && availableTimeSlots !== '-') {
+      return buildVolunteerInterviewScheduleEditSeed({
+        recurringUnavailable: info?.recurringUnavailable ?? '',
+        specificUnavailableDateIsos: info?.specificUnavailableDateIsos,
+        selectedTimeSlotLabels: availableTimeSlots.split(',').map(label => label.trim()).filter(Boolean),
+      })
+    }
   }
 
-  void options
-  void half
   return undefined
 }
 

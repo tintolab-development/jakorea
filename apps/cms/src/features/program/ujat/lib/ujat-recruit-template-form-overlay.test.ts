@@ -1077,4 +1077,110 @@ describe('UJAT recruit form overlay', () => {
     expect(applied.resultAnnouncementDate).toBe(overlayIso)
     expect(applied.finalPassAnnouncementDate).toBe(overlayIso)
   })
+
+  it('H2 행이 없으면 H1 모집·운영·문의처를 표시하지 않는다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      volunteerApplicationStartDate: '2027-01-01T00:00:00Z',
+      volunteerApplicationEndDate: '2027-01-31T00:00:00Z',
+      startDate: '2027-02-01',
+      endDate: '2027-06-30',
+      contactName: 'H1 담당',
+      contactPhone: '010-1111-1111',
+      interviewStartDate: '2027-02-10',
+      interviewEndDate: '2027-02-20',
+      programRecruitments: [
+        {
+          id: 201,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+          startAt: '2027-01-01T00:00:00Z',
+          endAt: '2027-01-31T00:00:00Z',
+          operationStartDate: '2027-02-01',
+          operationEndDate: '2027-06-30',
+          contactName: 'H1 담당',
+          contactPhone: '010-1111-1111',
+          interviewStartAt: '2027-02-10',
+          interviewEndAt: '2027-02-20',
+        },
+      ],
+    }
+    const h2 = resolveUjatRecruitCanonicalDisplayProgram(program, 'volunteer_h2')
+    expect(h2.volunteerApplicationStartDate).toBeUndefined()
+    expect(h2.startDate).toBe('')
+    expect(h2.contactName).toBeUndefined()
+    expect(h2.interviewStartDate).toBeUndefined()
+    expect(programToUjatRecruitCanonicalFormValues(program, 'volunteer_h2').announcementTitle).toBe(
+      ''
+    )
+  })
+
+  it('기관 최종 발표는 행 finalPassAnnouncementAt·Method만 쓴다', () => {
+    const program = {
+      ...UJAT_INSTITUTION_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      resultAnnouncementDate: '2020-01-01',
+      resultAnnouncementMethod: '프로그램 컬럼 방법',
+      programRecruitments: [
+        {
+          id: 101,
+          recruitmentType: 'PARTICIPANT',
+          finalPassAnnouncementAt: '2027-03-16T00:00:00Z',
+          finalPassAnnouncementMethod: '행 발표 방법',
+        },
+      ],
+    }
+    const displayed = resolveUjatRecruitCanonicalDisplayProgram(program, 'institution')
+    const values = programToUjatRecruitCanonicalFormValues(program, 'institution')
+    expect(displayed.resultAnnouncementDate).toBe('2027-03-16T00:00:00Z')
+    expect(displayed.resultAnnouncementMethod).toBe('행 발표 방법')
+    expect(values.resultAnnouncementDate).toBe('2027-03-16T00:00:00Z')
+    expect(values.resultAnnouncementMethod).toBe('행 발표 방법')
+  })
+
+  it('봉사자 발표 방법·대상 상세는 해당 반기 행만 쓰고 nested로 채우지 않는다', () => {
+    const program = {
+      ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM,
+      volunteerTargetDetail: '프로그램 공유 상세',
+      documentPassAnnouncementMethod: '프로그램 서류 방법',
+      finalPassAnnouncementMethod: '프로그램 최종 방법',
+      resultAnnouncementDate: '2020-01-01',
+      generalCommonInfo: {
+        ...UJAT_VOLUNTEER_RECRUIT_TEMPLATE_PREVIEW_PROGRAM.generalCommonInfo,
+        volunteerRecruitmentInfo: {
+          recruitmentTargetDetail: 'nested 상세',
+        },
+      },
+      programRecruitments: [
+        {
+          id: 201,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'FIRST_HALF' as const,
+          volunteerTargetDetail: 'H1 상세',
+          documentPassAnnouncementAt: '2027-03-01T00:00:00Z',
+          documentPassAnnouncementMethod: 'H1 서류 방법',
+          finalPassAnnouncementAt: '2027-03-20T00:00:00Z',
+          finalPassAnnouncementMethod: 'H1 최종 방법',
+        },
+        {
+          id: 202,
+          recruitmentType: 'VOLUNTEER',
+          recruitTerm: 'SECOND_HALF' as const,
+          volunteerTargetDetail: '',
+          documentPassAnnouncementAt: null,
+          documentPassAnnouncementMethod: null,
+          finalPassAnnouncementAt: null,
+          finalPassAnnouncementMethod: null,
+        },
+      ],
+    }
+    const h1 = resolveUjatRecruitCanonicalDisplayProgram(program, 'volunteer_h1')
+    const h2 = resolveUjatRecruitCanonicalDisplayProgram(program, 'volunteer_h2')
+    expect(h1.volunteerTargetDetail).toBe('H1 상세')
+    expect(h1.documentPassAnnouncementMethod).toBe('H1 서류 방법')
+    expect(h1.finalPassAnnouncementDate).toBe('2027-03-20T00:00:00Z')
+    expect(h1.resultAnnouncementDate).toBe('')
+    expect(h2.volunteerTargetDetail).toBe('')
+    expect(h2.documentPassAnnouncementMethod).toBe('')
+    expect(h2.finalPassAnnouncementDate).toBe('')
+  })
 })

@@ -64,11 +64,12 @@ function resolveParticipantNotesDisplay(program: Program): string {
 function resolveEducationTargetLabel(program: Program, isTemplateAuthoring: boolean): string {
   const fromLevels = formatTargetLevelsLabel(resolveProgramTargetLevels(program))
   if (fromLevels !== '-') return fromLevels
+  if (!isTemplateAuthoring) return '-'
   const nested =
     program.generalCommonInfo?.participantRecruitmentInfo?.educationTarget?.trim() ||
     program.generalCommonInfo?.participantRecruitmentInfo?.recruitmentTarget?.trim()
   if (nested) return nested
-  return isTemplateAuthoring ? '초등학교' : '-'
+  return '초등학교'
 }
 
 export function UjatRecruitParticipantInfoProgramView({
