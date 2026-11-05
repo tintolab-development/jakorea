@@ -7,9 +7,9 @@
  */
 
 /**
- * 대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED
+ * 대문자. ASSIGNED | UNASSIGNED | REASSIGNMENT_REQUIRED. 라벨만 있고 상태 없는 셀 금지
  */
-export type AllocationCellAssignmentStatus = typeof AllocationCellAssignmentStatus[keyof typeof AllocationCellAssignmentStatus] | null;
+export type AllocationCellAssignmentStatus = typeof AllocationCellAssignmentStatus[keyof typeof AllocationCellAssignmentStatus];
 
 
 export const AllocationCellAssignmentStatus = {
