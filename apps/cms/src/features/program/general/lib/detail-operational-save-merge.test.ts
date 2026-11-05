@@ -27,6 +27,40 @@ beforeEach(() => {
   resetGeneralRecruitOverlayStoreForTests()
 })
 
+function slotKeysAt(startIso: string, count: number): string[] {
+  const keys: string[] = []
+  let start = dayjs(startIso)
+  for (let i = 0; i < count; i += 1) {
+    const end = start.add(30, 'minute')
+    keys.push(`${start.valueOf()}-${end.valueOf()}`)
+    start = end
+  }
+  return keys
+}
+
+function volunteerProgramWithSlots(selectedSlotKeys: string[]): Program {
+  return {
+    ...baseProgram(),
+    generalParticipantTypes: ['volunteer'],
+    generalVolunteerInterviewEnabled: true,
+    registrationOverlay: {
+      'recruit.volunteer.interview.selectedSlotKeys': selectedSlotKeys,
+    },
+  }
+}
+
+function mergedVolunteerOverlay(program: Program) {
+  const values = programToRecruitmentTabEditValues(program, 'volunteer')
+  const patched = { ...values, volunteerRecruitmentInterviewEnabled: 'yes' as const }
+  const patch = detailEditValuesToProgramPatch(patched, program)
+  return buildMergedRegistrationOverlayForRecruitSave({
+    program,
+    remotePatch: patch,
+    values: patched,
+    audience: 'volunteer',
+  })
+}
+
 function baseProgram(): Program {
   return {
     id: 'merge-test',
@@ -261,49 +295,76 @@ describe('detail-operational-save-merge', () => {
     ).toBe('공휴일')
   })
 
-  it('슬롯 toggle가 default 버킷에만 있어도 저장 merge는 긴 selectedSlotKeys를 쓴다', () => {
-    const slotAStart = dayjs('2026-03-26T10:00:00')
-    const slotAEnd = slotAStart.add(30, 'minute')
-    const slotBStart = dayjs('2026-03-26T10:30:00')
-    const slotBEnd = slotBStart.add(30, 'minute')
-    const selectedSlotKeys = [
-      `${slotAStart.valueOf()}-${slotAEnd.valueOf()}`,
-      `${slotBStart.valueOf()}-${slotBEnd.valueOf()}`,
-    ]
+  it('슬롯 줄이기 — default에 긴 배열이 있어도 활성 스코프의 짧은 selectedSlotKeys가 최종이다', () => {
+    const fourSlots = slotKeysAt('2026-03-26T10:00:00', 4)
+    const twoSlots = fourSlots.slice(0, 2)
+    const program = volunteerProgramWithSlots(twoSlots)
 
     replaceGeneralRecruitOverlayForScope('__default__', {
-      'recruit.volunteer.interview.selectedSlotKeys': selectedSlotKeys,
+      'recruit.volunteer.interview.selectedSlotKeys': fourSlots,
       'recruit.volunteer.interview.timeUnit': '30',
     })
+    ensureRecruitOperationalEditScope(program, 'volunteer')
     replaceGeneralRecruitOverlayForScope('recruitment-volunteer', {
-      'recruit.volunteer.interview.selectedSlotKeys': [
-        `${slotAStart.valueOf()}-${slotAEnd.valueOf()}`,
-      ],
+      'recruit.volunteer.interview.selectedSlotKeys': twoSlots,
       'recruit.volunteer.interview.timeUnit': '30',
     })
 
-    const program: Program = {
-      ...baseProgram(),
-      generalParticipantTypes: ['volunteer'],
-      generalVolunteerInterviewEnabled: true,
-      registrationOverlay: {
-        'recruit.volunteer.interview.selectedSlotKeys': [
-          `${slotAStart.valueOf()}-${slotAEnd.valueOf()}`,
-        ],
-      },
-    }
-    const values = programToRecruitmentTabEditValues(program, 'volunteer')
-    const patch = detailEditValuesToProgramPatch(
-      { ...values, volunteerRecruitmentInterviewEnabled: 'yes' },
-      program
+    expect(mergedVolunteerOverlay(program)['recruit.volunteer.interview.selectedSlotKeys']).toEqual(
+      twoSlots
     )
-    const mergedOverlay = buildMergedRegistrationOverlayForRecruitSave({
-      program,
-      remotePatch: patch,
-      values: { ...values, volunteerRecruitmentInterviewEnabled: 'yes' },
-      audience: 'volunteer',
+  })
+
+  it('슬롯 전부 해제 — 활성에 []가 있으면 다른 버킷의 긴 배열보다 활성이 이긴다', () => {
+    const fourSlots = slotKeysAt('2026-03-26T10:00:00', 4)
+    const program = volunteerProgramWithSlots(fourSlots)
+
+    replaceGeneralRecruitOverlayForScope('__default__', {
+      'recruit.volunteer.interview.selectedSlotKeys': fourSlots,
     })
-    expect(mergedOverlay['recruit.volunteer.interview.selectedSlotKeys']).toEqual(selectedSlotKeys)
+    ensureRecruitOperationalEditScope(program, 'volunteer')
+    replaceGeneralRecruitOverlayForScope('recruitment-volunteer', {
+      'recruit.volunteer.interview.selectedSlotKeys': [],
+    })
+
+    expect(mergedVolunteerOverlay(program)['recruit.volunteer.interview.selectedSlotKeys']).toEqual(
+      []
+    )
+  })
+
+  it('슬롯 변경 없음 — 버킷 값이 같으면 그 값이 유지된다', () => {
+    const twoSlots = slotKeysAt('2026-03-26T10:00:00', 2)
+    const program = volunteerProgramWithSlots(twoSlots)
+    const bucket = {
+      'recruit.volunteer.interview.selectedSlotKeys': twoSlots,
+      'recruit.volunteer.interview.timeUnit': '30',
+    }
+
+    replaceGeneralRecruitOverlayForScope('__default__', bucket)
+    ensureRecruitOperationalEditScope(program, 'volunteer')
+    replaceGeneralRecruitOverlayForScope('recruitment-volunteer', bucket)
+
+    expect(mergedVolunteerOverlay(program)['recruit.volunteer.interview.selectedSlotKeys']).toEqual(
+      twoSlots
+    )
+  })
+
+  it('활성에 selectedSlotKeys가 없으면 default 버킷 값으로 복구한다', () => {
+    const twoSlots = slotKeysAt('2026-03-26T10:00:00', 2)
+    const program = volunteerProgramWithSlots(['stale-only'])
+
+    replaceGeneralRecruitOverlayForScope('__default__', {
+      'recruit.volunteer.interview.selectedSlotKeys': twoSlots,
+      'recruit.volunteer.interview.timeUnit': '30',
+    })
+    ensureRecruitOperationalEditScope(program, 'volunteer')
+    replaceGeneralRecruitOverlayForScope('recruitment-volunteer', {
+      'recruit.volunteer.interview.timeUnit': '30',
+    })
+
+    expect(mergedVolunteerOverlay(program)['recruit.volunteer.interview.selectedSlotKeys']).toEqual(
+      twoSlots
+    )
   })
 
   it('봉사자 면접 슬롯 toggle는 활성 catalog 스코프에 쌓여 저장 merge에 반영된다', () => {
