@@ -95,6 +95,7 @@ export function useUjatEducationProgressAttendance(
   const queryClient = useQueryClient()
   const remoteEnabled = shouldUseUjatApplicationsRemoteApi() && Boolean(programId)
   const educationRegionCode = toUjatEducationRegionCode(regionKey)
+  const hasEducationRegionCode = Boolean(educationRegionCode)
   const semesterType = toUjatRecruitHalfApi(half)
 
   useNotifyProgramApiUnavailableOnce(
@@ -115,7 +116,7 @@ export function useUjatEducationProgressAttendance(
       ...ujatQueryKeys.allocationMatrix(programId, educationRegionCode, semesterType),
       'attendance-sessions',
     ],
-    enabled: remoteEnabled,
+    enabled: remoteEnabled && hasEducationRegionCode,
     queryFn: async () => {
       const matrix = await fetchUjatAllocationMatrix(programId, {
         educationRegionCode,
@@ -246,8 +247,8 @@ export function useUjatEducationProgressAttendance(
     correctSessionVolunteerAttendance,
     savingSessionId: saveMutation.isPending ? (saveMutation.variables?.sessionId ?? null) : null,
     getSessionVolunteers,
-    isLoading: remoteEnabled && attendanceQuery.isLoading,
-    isError: remoteEnabled && attendanceQuery.isError,
+    isLoading: remoteEnabled && (!hasEducationRegionCode || attendanceQuery.isLoading),
+    isError: remoteEnabled && hasEducationRegionCode && attendanceQuery.isError,
     isRemote: remoteEnabled,
   }
 }

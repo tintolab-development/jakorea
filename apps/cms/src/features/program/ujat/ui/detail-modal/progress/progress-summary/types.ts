@@ -1,11 +1,14 @@
-import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
-
 export type UjatEducationProgressSummaryTone = 'h1' | 'h2' | 'grand'
 
 export type UjatEducationProgressSummaryCellValue = number | null
 
+export type UjatEducationProgressColumnRegion = {
+  key: string
+  label: string
+}
+
 export type UjatEducationProgressRegionValues = Record<
-  UjatInstitutionApplicationRegionKey,
+  string,
   UjatEducationProgressSummaryCellValue
 >
 

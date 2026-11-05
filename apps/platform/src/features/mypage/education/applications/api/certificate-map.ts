@@ -13,6 +13,10 @@ export type PortalCertificateAvailability = {
   reasonMessage?: string | null
   existingIssueId?: number | null
   canDownload: boolean
+  countedParticipationCount?: number | null
+  certificatePeriodStartDate?: string | null
+  certificatePeriodEndDate?: string | null
+  certificatePeriodLabel?: string | null
 }
 
 export type PortalCertificateIssueRequest = {
@@ -73,6 +77,10 @@ export function mapPortalCertificateAvailability(
     reasonMessage: readOptionalString(record.reasonMessage),
     existingIssueId: readOptionalNumber(record.existingIssueId),
     canDownload: readBoolean(record.canDownload),
+    countedParticipationCount: readOptionalNumber(record.countedParticipationCount),
+    certificatePeriodStartDate: readOptionalString(record.certificatePeriodStartDate),
+    certificatePeriodEndDate: readOptionalString(record.certificatePeriodEndDate),
+    certificatePeriodLabel: readOptionalString(record.certificatePeriodLabel),
   }
 }
 

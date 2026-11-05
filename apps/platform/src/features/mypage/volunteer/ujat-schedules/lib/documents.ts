@@ -7,7 +7,17 @@ export type UjatEducationDocumentStatus =
   | 'SUBMITTED'
   | 'APPROVED'
   | 'DEADLINE_MISSED'
+  | 'FEEDBACK_REQUESTED'
   | 'REVISED'
+
+/** BE 문서 슬롯 6종 중 제출본이 있는 5종. revision_no로 REVISED를 추론하지 않는다. */
+const SUBMITTED_DOCUMENT_STATUSES = new Set<UjatEducationDocumentStatus>([
+  'SUBMITTED',
+  'APPROVED',
+  'DEADLINE_MISSED',
+  'FEEDBACK_REQUESTED',
+  'REVISED',
+])
 
 export type UjatEducationDocumentUnavailableReason =
   | 'FORM_TEMPLATE_VERSION_NOT_PUBLISHED'
@@ -123,6 +133,7 @@ function parseStatus(value: unknown): UjatEducationDocumentStatus | null {
     code === 'SUBMITTED' ||
     code === 'APPROVED' ||
     code === 'DEADLINE_MISSED' ||
+    code === 'FEEDBACK_REQUESTED' ||
     code === 'REVISED'
   ) {
     return code
@@ -265,6 +276,7 @@ export function ujatEducationDocumentTitle(kind: UjatEducationDocumentKind): str
 export function ujatEducationDocumentStatusLabel(status: UjatEducationDocumentStatus): string {
   switch (status) {
     case 'SUBMITTED':
+    case 'FEEDBACK_REQUESTED':
       return '제출 완료'
     case 'APPROVED':
       return '승인 완료'
@@ -277,12 +289,16 @@ export function ujatEducationDocumentStatusLabel(status: UjatEducationDocumentSt
   }
 }
 
+export function isUjatEducationDocumentSlotSubmitted(
+  status: UjatEducationDocumentStatus,
+): boolean {
+  return SUBMITTED_DOCUMENT_STATUSES.has(status)
+}
+
 export function ujatEducationDocumentStatusTone(
   status: UjatEducationDocumentStatus,
 ): 'submitted' | 'unsubmitted' {
-  return status === 'SUBMITTED' || status === 'APPROVED' || status === 'REVISED'
-    ? 'submitted'
-    : 'unsubmitted'
+  return isUjatEducationDocumentSlotSubmitted(status) ? 'submitted' : 'unsubmitted'
 }
 
 export function formatUjatEducationDocumentDeadline(
@@ -356,6 +372,13 @@ export function resolveUjatEducationDocumentGuide(
       message: `${title} 수정 제출이 완료되었어요`,
     }
   }
+  if (slot.status === 'FEEDBACK_REQUESTED') {
+    return {
+      statusLabel: `${title} 제출 완료`,
+      statusTone: 'submitted',
+      message: '담당자의 피드백이 있어요',
+    }
+  }
   if (slot.status === 'SUBMITTED') {
     return {
       statusLabel: `${title} 제출 완료`,
@@ -372,10 +395,17 @@ export function resolveUjatEducationDocumentGuide(
       message: `${title} 승인이 완료되었어요`,
     }
   }
-  if (slot.status === 'DEADLINE_MISSED' && slot.formResponseId == null) {
+  if (slot.status === 'DEADLINE_MISSED') {
+    if (slot.formResponseId == null) {
+      return {
+        statusLabel: '미제출',
+        statusTone: 'unsubmitted',
+        message: `${title} 제출 기한이 마감되었어요`,
+      }
+    }
     return {
-      statusLabel: '미제출',
-      statusTone: 'unsubmitted',
+      statusLabel: '기한 미준수',
+      statusTone: 'submitted',
       message: `${title} 제출 기한이 마감되었어요`,
     }
   }

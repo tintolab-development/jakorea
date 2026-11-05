@@ -1,6 +1,7 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import { messageForPortalCertificateReasonCode } from '../lib/certificate-reason-messages'
 import { savePortalCertificatePdfDownload } from '../lib/personal-certificate-render-download'
+import { mapPortalCertificateAvailability } from './certificate-map'
 import type {
   MemberCertificateAvailabilityResponse,
   PortalCertificateIssueRequest,
@@ -83,7 +84,7 @@ export async function fetchPersonalCertificateAvailability(
     signal: options?.signal,
     params: { certificateType },
   })
-  return unwrapEnvelope<MemberCertificateAvailabilityResponse>(data)
+  return mapPortalCertificateAvailability(data)
 }
 
 export async function issuePersonalCertificate(

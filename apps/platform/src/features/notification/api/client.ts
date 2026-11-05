@@ -40,7 +40,8 @@ export type MemberNotificationResponse = {
   recipientId: number
   eventId: number
   eventType: string
-  notificationCategory: string
+  /** BE는 미분류 시 null. 표시는 notificationCategoryLabel(예: 기타)만 사용한다. */
+  notificationCategory: string | null
   notificationCategoryLabel: string
   title: string
   message: string
@@ -77,7 +78,7 @@ function parseNotification(value: unknown): MemberNotificationResponse {
     !isSafeNonNegativeInteger(value.recipientId) ||
     !isSafeNonNegativeInteger(value.eventId) ||
     typeof value.eventType !== 'string' ||
-    typeof value.notificationCategory !== 'string' ||
+    !isNullableString(value.notificationCategory) ||
     typeof value.notificationCategoryLabel !== 'string' ||
     typeof value.title !== 'string' ||
     typeof value.message !== 'string' ||

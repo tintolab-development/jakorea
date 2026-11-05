@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react'
-import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import {
   formatSummaryCellValue,
   regionValuesInOrder,
   UJAT_EDU_PROGRESS_SUMMARY_TOTAL_CELL_CLASSNAME,
 } from './summary-display'
-import type { UjatEducationProgressRegionRow } from './types'
+import type {
+  UjatEducationProgressColumnRegion,
+  UjatEducationProgressRegionRow,
+} from './types'
 
 const CELL = 'cross-table__cell'
 const COLUMN_HEADER = `${CELL} cross-table__cell--column-header`
@@ -30,12 +32,12 @@ export function UjatEducationProgressSummaryCategoryCellInner({
 }
 
 export function UjatEducationProgressSummaryRegionHeader({
+  regions,
   categoryColSpan = 1,
 }: {
+  regions: readonly UjatEducationProgressColumnRegion[]
   categoryColSpan?: number
 }) {
-  const { regions } = useUjatEducationRegions()
-
   return (
     <thead>
       <tr>
@@ -58,16 +60,20 @@ export function UjatEducationProgressSummaryRegionHeader({
 }
 
 export function UjatEducationProgressSummaryRegionDataCells({
+  regions,
   row,
   emphasizeTotal = true,
   regionDataClassName,
 }: {
+  regions: readonly UjatEducationProgressColumnRegion[]
   row: UjatEducationProgressRegionRow
   emphasizeTotal?: boolean
   regionDataClassName?: string
 }) {
-  const { regions } = useUjatEducationRegions()
-  const regionValues = regionValuesInOrder(row)
+  const regionValues = regionValuesInOrder(
+    row,
+    regions.map(region => region.key)
+  )
   const regionCellClassName = [DATA, regionDataClassName].filter(Boolean).join(' ')
   return (
     <>
@@ -90,15 +96,16 @@ export function UjatEducationProgressSummaryRegionDataCells({
 }
 
 export function UjatEducationProgressSummaryMatrixShell({
+  regions,
   ariaLabel,
   labelColCount = 1,
   children,
 }: {
+  regions: readonly UjatEducationProgressColumnRegion[]
   ariaLabel: string
   labelColCount?: 1 | 2
   children: ReactNode
 }) {
-  const { regions } = useUjatEducationRegions()
   const shellClassName = [
     'cross-table',
     'ujat-edu-progress-summary__matrix',

@@ -70,6 +70,11 @@
   line-height: 150%;
   color: var(--Content-disabled, rgba(61, 61, 61, 0.5));
   opacity: 1;
+  white-space: nowrap;
+}
+
+.ujat-education-progress-assignments .table-description .ujat-inline-divided-segments {
+  flex-wrap: nowrap;
 }
 
 .ujat-education-progress-assignments__groups {
@@ -106,10 +111,22 @@
 
 .ujat-education-progress-assignments__table-wrap {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table.cms-data-table {
+  overflow-x: visible;
+  min-width: 0;
+  width: 100%;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table
+  .ant-table-container {
+  width: 100%;
+  min-width: 0;
 }
 
 .ujat-education-progress-assignments__table-wrap
@@ -117,7 +134,161 @@
   table.ant-table {
   table-layout: fixed !important;
   width: 100% !important;
-  min-width: 100%;
+}
+
+/*
+ * cms-data-table 기본: No. 이후 col width:auto → Ant Design width 무시.
+ * Figma 4082:114026 열 폭을 colgroup·th/td 모두 고정.
+ */
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(1) {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(2) {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(3) {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(4) {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(5) {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(6),
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(7) {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}
+
+.ujat-education-progress-assignments__table-wrap
+  .ujat-education-progress-assignments__table:not(:has(col.ant-table-selection-col))
+  colgroup
+  > col:nth-child(8) {
+  width: auto !important;
+  min-width: 80px !important;
+  max-width: none !important;
+}
+
+.ujat-education-progress-assignments__table .ant-table-thead > tr > th.cms-table-col--no,
+.ujat-education-progress-assignments__table .ant-table-tbody > tr > td.cms-table-col--no {
+  width: 80px !important;
+  min-width: 80px !important;
+  max-width: 80px !important;
+}
+
+.ujat-education-progress-assignments__table
+  .ant-table-thead
+  > tr
+  > th.ujat-education-progress-assignments__col-name,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-education-progress-assignments__col-name,
+.ujat-education-progress-assignments__table
+  .ant-table-thead
+  > tr
+  > th.ujat-education-progress-assignments__col-assigned-class,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-education-progress-assignments__col-assigned-class {
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
+}
+
+.ujat-education-progress-assignments__table
+  .ant-table-thead
+  > tr
+  > th.ujat-education-progress-assignments__col-institution,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-education-progress-assignments__col-institution,
+.ujat-education-progress-assignments__table
+  .ant-table-thead
+  > tr
+  > th.ujat-education-progress-assignments__col-plan,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-education-progress-assignments__col-plan,
+.ujat-education-progress-assignments__table
+  .ant-table-thead
+  > tr
+  > th.ujat-education-progress-assignments__col-log,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-education-progress-assignments__col-log {
+  width: 180px !important;
+  min-width: 180px !important;
+  max-width: 180px !important;
+}
+
+.ujat-education-progress-assignments__table
+  .ant-table-thead
+  > tr
+  > th.ujat-education-progress-assignments__col-status,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-education-progress-assignments__col-status {
+  width: 240px !important;
+  min-width: 240px !important;
+  max-width: 240px !important;
+}
+
+.ujat-education-progress-assignments__table
+  .ant-table-thead
+  > tr
+  > th.ujat-education-progress-assignments__col-remarks,
+.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr
+  > td.ujat-education-progress-assignments__col-remarks {
+  width: auto !important;
+  min-width: 80px !important;
+  max-width: none !important;
+  white-space: normal !important;
 }
 
 .ujat-education-progress-assignments__status {
@@ -159,37 +330,38 @@
   opacity: 0.85;
 }
 
-/* Figma 행 56 (h32 버튼 + cell padding 12) · 비고 2줄은 auto */
-.ujat-education-progress-assignments__table
+/*
+ * Figma 행 56 (h32 + padding 12).
+ * 풀페이지·FilterTableLayout·No.열 공통 52px / max-height 52보다 우선.
+ * 비고 2줄은 58 등으로 늘어난다.
+ */
+.detail-fullpage-modal
+  .ujat-education-progress-assignments
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table.ujat-education-progress-assignments__table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td,
-.ujat-education-progress-assignments__table
+  > td.ant-table-cell,
+.detail-fullpage-modal
+  .ujat-education-progress-assignments
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table.ujat-education-progress-assignments__table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.ant-table-cell-row-hover {
+  > td.ant-table-cell.ant-table-cell-row-hover,
+.detail-fullpage-modal
+  .ujat-education-progress-assignments
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table.ujat-education-progress-assignments__table
+  .ant-table-tbody
+  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
+  > td.ant-table-cell.cms-table-col--no {
   height: auto !important;
   min-height: 56px !important;
-}
-
-.ujat-education-progress-assignments__table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.ujat-education-progress-assignments__remarks-cell,
-.ujat-education-progress-assignments__table
-  .ant-table-tbody
-  > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.ujat-education-progress-assignments__remarks-cell.ant-table-cell-row-hover {
-  white-space: normal !important;
-}
-
-.ujat-education-progress-assignments__table .ujat-volunteer-assignment-table__plan-log-cell-inner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin: 0 auto;
-  box-sizing: border-box;
+  max-height: none !important;
 }
 
 .ujat-education-progress-assignments__table
@@ -204,22 +376,44 @@
   vertical-align: middle !important;
 }
 
-.ujat-education-progress-assignments__table
+/* Figma 13222:515441 — cell padding 12, Button / h32가 셀 가로를 채움 */
+.detail-fullpage-modal
+  .ujat-education-progress-assignments
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table.ujat-education-progress-assignments__table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.ujat-volunteer-assignment-table__plan-log-cell,
-.ujat-education-progress-assignments__table
+  > td.ant-table-cell.ujat-volunteer-assignment-table__plan-log-cell,
+.detail-fullpage-modal
+  .ujat-education-progress-assignments
+  .filter-table-layout
+  .filter-table-layout__table
+  .ant-table-wrapper.cms-data-table.ujat-education-progress-assignments__table
   .ant-table-tbody
   > tr:not(.ant-table-placeholder):not(.ant-table-measure-row)
-  > td.ujat-volunteer-assignment-table__plan-log-cell.ant-table-cell-row-hover {
+  > td.ant-table-cell.ujat-volunteer-assignment-table__plan-log-cell.ant-table-cell-row-hover {
   padding: 12px !important;
 }
 
+.ujat-education-progress-assignments__table .ujat-volunteer-assignment-table__plan-log-cell-inner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  margin: 0 auto;
+}
+
+/* 180px 셀 · padding 12 → 버튼이 셀 가로를 채움 (1546 프레임에서 156×32) */
 .ujat-education-progress-assignments__table
   .ujat-volunteer-assignment-table__plan-log-cell-inner
-  .cms-button {
-  width: 100%;
-  max-width: 100%;
+  .cms-button.ant-btn {
+  flex: 1 1 auto;
   box-sizing: border-box;
-  flex-shrink: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 32px !important;
 }

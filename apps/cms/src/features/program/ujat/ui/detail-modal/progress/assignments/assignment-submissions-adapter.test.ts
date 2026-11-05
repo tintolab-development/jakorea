@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { filterVisibleAssignmentVolunteers, formatAssignmentRemarks } from './assignment-display'
+import {
+  filterVisibleAssignmentVolunteers,
+  formatAssignmentRemarks,
+  isAssignmentLogViewEnabled,
+  isAssignmentPlanViewEnabled,
+  resolveAssignmentSubmissionStatus,
+} from './assignment-display'
 import {
   buildUjatAssignmentSessionsFromResponse,
   formatAssignmentPeriodLabel,
@@ -185,6 +191,85 @@ describe('formatAssignmentPeriodLabel', () => {
 
   it('값이 없으면 -', () => {
     expect(formatAssignmentPeriodLabel(null)).toBe('-')
+  })
+})
+
+describe('wire 슬롯 → 목록 7종 (JABACK assignment-submissions 계약)', () => {
+  function volunteerFrom(plan: object, log: object) {
+    const [session] = buildUjatAssignmentSessionsFromResponse({
+      regionKey: 'seoul',
+      half: 'h2',
+      response: {
+        sessions: [
+          {
+            scheduleId: 186381,
+            educationDate: '2026-04-03',
+            volunteers: [{ participantId: 1, plan, log }],
+          },
+        ],
+      },
+    })
+    return session.volunteers[0]
+  }
+
+  it('계획서 미제출 + 일지 기한 내 제출 → 교육계획서 미제출', () => {
+    const row = volunteerFrom(
+      { status: 'NOT_SUBMITTED', submittedAt: null, feedbackDeliveredAt: null, formResponseId: null },
+      {
+        status: 'SUBMITTED',
+        submittedAt: '2026-04-16T10:00:00+09:00',
+        feedbackDeliveredAt: null,
+        formResponseId: 9001,
+      }
+    )
+    expect(resolveAssignmentSubmissionStatus(row)).toBe('plan_not_submitted')
+    expect(isAssignmentPlanViewEnabled(row.plan)).toBe(false)
+    expect(isAssignmentLogViewEnabled(row.log)).toBe(true)
+    expect(row.plan.formResponseId).toBeUndefined()
+    expect(row.log.formResponseId).toBe(9001)
+  })
+
+  it('formResponseId가 숫자 문자열이면 보기용 id로 파싱한다', () => {
+    const row = volunteerFrom(
+      { status: 'SUBMITTED', submittedAt: '2026-04-16T10:00:00+09:00', formResponseId: '9001' as unknown as number },
+      { status: 'NOT_SUBMITTED', submittedAt: null, formResponseId: null }
+    )
+    expect(row.plan.formResponseId).toBe(9001)
+  })
+
+  it('계획서 마감 후 제출 + 일지 기한 내 승인 → 교육계획서 기한 미준수', () => {
+    const row = volunteerFrom(
+      {
+        status: 'DEADLINE_MISSED',
+        submittedAt: '2026-04-03T00:00:00+09:00',
+        formResponseId: 9002,
+      },
+      {
+        status: 'APPROVED',
+        submittedAt: '2026-04-16T09:00:00+09:00',
+        formResponseId: 9003,
+      }
+    )
+    expect(resolveAssignmentSubmissionStatus(row)).toBe('plan_deadline_missed')
+    expect(isAssignmentPlanViewEnabled(row.plan)).toBe(true)
+    expect(row.plan.submittedDateLabel).toBeTruthy()
+  })
+
+  it('둘 다 없음(마감 경과 포함) → 미제출, DEADLINE_MISSED로 올리지 않음', () => {
+    const row = volunteerFrom(
+      { status: 'NOT_SUBMITTED', submittedAt: null, formResponseId: null },
+      { status: 'NOT_SUBMITTED', submittedAt: null, formResponseId: null }
+    )
+    expect(resolveAssignmentSubmissionStatus(row)).toBe('not_submitted')
+    expect(row.plan.status).toBe('not_submitted')
+    expect(row.log.status).toBe('not_submitted')
+  })
+
+  it('알 수 없는 status는 미제출과 동등', () => {
+    const row = volunteerFrom({ status: 'rejected' }, { status: ' ' })
+    expect(row.plan.status).toBe('not_submitted')
+    expect(row.log.status).toBe('not_submitted')
+    expect(resolveAssignmentSubmissionStatus(row)).toBe('not_submitted')
   })
 })
 

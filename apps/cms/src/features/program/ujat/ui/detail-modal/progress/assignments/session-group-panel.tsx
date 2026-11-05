@@ -75,9 +75,7 @@ export function UjatAssignmentSessionGroupPanel({
           ) : null}
         </div>
       ) : null}
-      <div className="ujat-education-progress-assignments__table-wrap">
-        <UjatEducationProgressAssignmentTable rows={session.volunteers} regionLabel={regionLabel} />
-      </div>
+      <UjatEducationProgressAssignmentTable rows={session.volunteers} regionLabel={regionLabel} />
     </section>
   )
 }

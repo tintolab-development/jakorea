@@ -277,7 +277,7 @@ export function UjatAssignmentDocumentViewerModal({
           responseId,
           body: { content: feedback },
         })
-        setSubmittedFeedback(result.content?.trim() || feedback)
+        setSubmittedFeedback(result?.content?.trim() || feedback)
         setFeedbackMode(null)
         void queryClient.invalidateQueries({
           queryKey: ujatQueryKeys.assignmentSubmissionsAll(),

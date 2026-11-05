@@ -190,21 +190,19 @@
 }
 
 .ujat-edu-progress-summary__matrix.cross-table {
-  min-width: 960px;
+  min-width: 1544px;
 }
 
-.ujat-edu-progress-summary__region-col {
-  width: auto;
-}
-
+.ujat-edu-progress-summary__region-col,
 .ujat-edu-progress-summary__total-col {
-  width: 88px;
+  width: auto;
+  min-width: 136px;
 }
 
 .ujat-edu-progress-summary__matrix .cross-table__cell--data,
 .ujat-edu-progress-summary__matrix .cross-table__cell--row-header {
   text-align: center;
-  font-weight: 500;
+  font-weight: 700;
   line-height: 150%;
 }
 

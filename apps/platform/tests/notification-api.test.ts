@@ -103,6 +103,28 @@ describe('member notification API contract', () => {
     )
   })
 
+  it('notificationCategory가 null이어도 notificationCategoryLabel이 있으면 파싱한다', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        items: [
+          {
+            ...notification(2308, null, '2026-10-31T22:51:02.268443Z'),
+            notificationCategory: null,
+            notificationCategoryLabel: '기타',
+          },
+        ],
+        page: 0,
+        size: 20,
+        totalElements: 1,
+        totalPages: 1,
+      },
+    })
+
+    const result = await fetchMyNotifications({})
+    expect(result.items[0]?.notificationCategory).toBeNull()
+    expect(result.items[0]?.notificationCategoryLabel).toBe('기타')
+  })
+
   it('readAt이 누락된 응답은 읽지 않은 알림으로 임의 처리하지 않는다', async () => {
     const invalid = notification(101, null, '2026-10-27T09:00:00Z')
     delete (invalid as { readAt?: string | null }).readAt
