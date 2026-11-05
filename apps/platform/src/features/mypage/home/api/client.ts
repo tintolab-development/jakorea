@@ -31,8 +31,14 @@ export type PortalScheduleItem = {
   scheduleId?: number
   applicationId?: number
   applicationType?: string
-  /** BE 캘린더 이벤트 유형(과제·설문·교육 일정 등). 없으면 교육 일정으로 처리 */
+  /**
+   * BE 캘린더 이벤트 유형(과제·설문·교육 일정·LECTURE_REPORT_DEADLINE 등).
+   * OpenAPI PortalScheduleItem에는 아직 없으며, 응답에 있으면 매퍼가 구분한다.
+   */
   eventType?: string
+  /** OpenAPI 미기재. 마감·과제 등 scheduleId가 없는 이벤트 공통 식별자. */
+  eventId?: number | string
+  id?: number | string
   programId?: number
   programTitle?: string
   scheduleName?: string

@@ -7,6 +7,7 @@ export type MypageScheduleEventType =
   | 'receipt'
   | 'education'
   | 'program'
+  | 'lecture_report_deadline'
 
 export type MypageScheduleEvent = {
   id: string

@@ -9,7 +9,13 @@ import {
 } from '@/features/mypage/lib/constants'
 import type { MypageScheduleEvent, MypageScheduleEventType } from '../model/schedule-types'
 
-export type MypageScheduleActivitySection = 'schedule' | 'satisfaction' | 'survey' | 'settlement'
+export type MypageScheduleActivitySection =
+  | 'schedule'
+  | 'assignment'
+  | 'satisfaction'
+  | 'survey'
+  | 'settlement'
+  | 'lecture-report'
 
 export function resolveMypageScheduleActivitySection(
   type: MypageScheduleEventType,
@@ -21,6 +27,10 @@ export function resolveMypageScheduleActivitySection(
       return 'survey'
     case 'receipt':
       return 'settlement'
+    case 'lecture_report_deadline':
+      return 'lecture-report'
+    case 'assignment':
+      return 'assignment'
     default:
       return 'schedule'
   }
@@ -85,6 +95,9 @@ export function resolveMypageScheduleEventDetailPath(
   const applicationId = event.applicationId ?? application?.id
   if (!applicationId) return null
 
-  const applicationType = application?.applicationType ?? event.applicationType
+  const applicationType =
+    event.type === 'lecture_report_deadline'
+      ? 'INSTRUCTOR'
+      : (application?.applicationType ?? event.applicationType)
   return buildApplicationDetailPath(applicationId, applicationType, section)
 }

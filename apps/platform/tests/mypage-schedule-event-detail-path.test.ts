@@ -78,4 +78,48 @@ describe('resolveMypageScheduleEventDetailPath', () => {
       '/mypage/lectures/INSTRUCTOR/12?section=schedule',
     )
   })
+
+  it('routes lecture report deadline events to the lecture-report tab, not write', () => {
+    const queryClient = new QueryClient()
+    const event: MypageScheduleEvent = {
+      id: 'lecture_report_deadline:10',
+      programName: '강의',
+      title: '강의보고서 제출 마감',
+      time: '종일',
+      type: 'lecture_report_deadline',
+      startDate: '2026-11-05',
+      endDate: '2026-11-05',
+      applicationId: '12',
+    }
+
+    expect(resolveMypageScheduleEventDetailPath(queryClient, event)).toBe(
+      '/mypage/lectures/INSTRUCTOR/12?section=lecture-report',
+    )
+  })
+
+  it('routes assignment, survey, receipt, and program events to matching tabs', () => {
+    const queryClient = new QueryClient()
+    const base = {
+      programName: '프로그램',
+      title: '일정',
+      time: '',
+      startDate: '2026-11-05',
+      endDate: '2026-11-05',
+      applicationId: '501',
+      applicationType: 'INDIVIDUAL' as const,
+    }
+
+    expect(
+      resolveMypageScheduleEventDetailPath(queryClient, { ...base, id: 'a', type: 'assignment' }),
+    ).toBe('/mypage/education/INDIVIDUAL/501?section=assignment')
+    expect(
+      resolveMypageScheduleEventDetailPath(queryClient, { ...base, id: 's', type: 'survey' }),
+    ).toBe('/mypage/education/INDIVIDUAL/501?section=survey')
+    expect(
+      resolveMypageScheduleEventDetailPath(queryClient, { ...base, id: 'r', type: 'receipt' }),
+    ).toBe('/mypage/education/INDIVIDUAL/501?section=settlement')
+    expect(
+      resolveMypageScheduleEventDetailPath(queryClient, { ...base, id: 'p', type: 'program' }),
+    ).toBe('/mypage/education/INDIVIDUAL/501?section=schedule')
+  })
 })

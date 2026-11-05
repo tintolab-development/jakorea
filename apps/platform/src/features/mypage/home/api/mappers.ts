@@ -1,18 +1,16 @@
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
-import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+import { toSeoulDateOnly } from '@/shared/lib/format-display-date'
+import {
+  formatPortalCalendarTimeRange,
+  mapPortalCalendarEventTitle,
+  resolvePortalCalendarDateKey,
+  resolvePortalCalendarEventId,
+  resolvePortalCalendarEventType,
+} from '../lib/calendar-event-map'
 import type { MypageScheduleEvent, MypageScheduleEventType } from '../model/schedule-types'
 import type { PortalScheduleItem } from './client'
 
 export { mapPortalDashboardStats } from './dashboard-stats'
-
-const CALENDAR_EVENT_TYPES = new Set<MypageScheduleEventType>([
-  'assignment',
-  'satisfaction',
-  'survey',
-  'receipt',
-  'education',
-  'program',
-])
 
 const APPLICATION_TYPE_SET = new Set<ProgramApplicationType>([
   'INDIVIDUAL',
@@ -29,54 +27,48 @@ function readProgramApplicationType(value: string | undefined): ProgramApplicati
   return undefined
 }
 
-function mapPortalScheduleEventType(item: PortalScheduleItem): MypageScheduleEventType {
-  const normalized = item.eventType?.trim().toLowerCase()
-  if (normalized && CALENDAR_EVENT_TYPES.has(normalized as MypageScheduleEventType)) {
-    return normalized as MypageScheduleEventType
-  }
-  return 'education'
+function mapPortalScheduleEventType(item: PortalScheduleItem): MypageScheduleEventType | null {
+  const resolved = resolvePortalCalendarEventType(item.eventType)
+  if (resolved.kind === 'unsupported') return null
+  if (resolved.kind === 'legacy_education') return 'education'
+  return resolved.type
 }
 
 function pad(value: number): string {
   return String(value).padStart(2, '0')
 }
 
-function toDateKey(value: string | undefined): string | null {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-}
-
-function formatClock(value: string | undefined): string | null {
-  if (!value) return null
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
-
-function formatTimeRange(item: PortalScheduleItem): string {
-  if (item.allDay) return '종일'
-  const start = formatClock(item.startAt)
-  const end = formatClock(item.endAt)
-  if (start && end) return `${start}~${end}`
-  return start ?? end ?? '종일'
-}
-
 export function mapPortalScheduleItem(item: PortalScheduleItem): MypageScheduleEvent | null {
-  const startDate = toDateKey(item.startAt)
-  if (!startDate || item.scheduleId == null) return null
-  const endDate = toDateKey(item.endAt) ?? startDate
+  const type = mapPortalScheduleEventType(item)
+  if (type == null) return null
+
+  const startDate = resolvePortalCalendarDateKey(item)
+  const eventId = resolvePortalCalendarEventId(type, item)
+  if (!startDate || eventId == null) return null
+
+  const endDate = toSeoulDateOnly(item.endAt) ?? startDate
+  const { time, allDayTimeConflict } = formatPortalCalendarTimeRange(item)
+  if (allDayTimeConflict && import.meta.env.DEV) {
+    console.warn('portal calendar allDay=true but startAt/endAt include a clock', {
+      eventId,
+      eventType: item.eventType,
+      startAt: item.startAt,
+      endAt: item.endAt,
+    })
+  }
+
   const applicationType =
-    readProgramApplicationType(item.applicationType) ??
-    readProgramApplicationType(item.participationRole)
+    type === 'lecture_report_deadline'
+      ? 'INSTRUCTOR'
+      : (readProgramApplicationType(item.applicationType) ??
+        readProgramApplicationType(item.participationRole))
 
   return {
-    id: String(item.scheduleId),
+    id: eventId,
     programName: item.programTitle?.trim() || '프로그램',
-    title: toDisplayEducationScheduleName(item.scheduleName) || item.locationName?.trim() || '일정',
-    time: formatTimeRange(item),
-    type: mapPortalScheduleEventType(item),
+    title: mapPortalCalendarEventTitle(item, type),
+    time,
+    type,
     startDate,
     endDate,
     ...(item.programId != null ? { programId: String(item.programId) } : {}),
