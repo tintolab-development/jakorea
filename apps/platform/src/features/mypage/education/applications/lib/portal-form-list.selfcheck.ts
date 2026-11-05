@@ -7,6 +7,7 @@ import {
   isPortalBoundFormVersionUsable,
   isPortalSatisfactionFormType,
   isPortalSurveyFormType,
+  isVolunteerFacingSatisfactionForm,
   mapAvailableProgramFormToListItem,
   mapPortalFormListItemToSurveyEntry,
   resolveCanonicalPortalFormBindingId,
@@ -44,6 +45,24 @@ assert.equal(isPortalSurveyFormType('SATISFACTION'), false)
 assert.equal(isPortalSurveyFormType('LECTURE_EVALUATION'), false)
 assert.equal(isPortalSatisfactionFormType('SATISFACTION'), true)
 assert.equal(isPortalSatisfactionFormType('LECTURE_EVALUATION'), false)
+assert.equal(
+  isVolunteerFacingSatisfactionForm({ formType: 'SATISFACTION', title: '봉사자 만족도조사' }),
+  true,
+)
+assert.equal(
+  isVolunteerFacingSatisfactionForm({ formType: 'SATISFACTION', title: '만족도조사 (교사용)' }),
+  false,
+)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 188868,
+    formType: 'SURVEY',
+    targetScope: 'SCHEDULE',
+    scheduleId: '187582',
+    status: 'NOT_SUBMITTED',
+  } as never)?.scheduleId,
+  187582,
+)
 assert.equal(isPortalBoundFormVersionUsable('PUBLISHED'), true)
 assert.equal(isPortalBoundFormVersionUsable('ARCHIVED'), true)
 assert.equal(isPortalBoundFormVersionUsable(undefined), true)
@@ -90,6 +109,26 @@ assert.equal(scheduleBinding?.id, '188865')
 assert.equal(scheduleBinding?.targetScope, 'SCHEDULE')
 assert.equal(scheduleBinding?.scheduleId, 187156)
 assert.equal(scheduleBinding?.required, true)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 188866,
+    formType: 'SURVEY',
+    targetScope: 'SCHEDULE',
+    targetScopeId: 187582,
+    status: 'NOT_SUBMITTED',
+  })?.scheduleId,
+  187582,
+)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 188867,
+    formType: 'SURVEY',
+    targetScope: 'SCHEDULE',
+    scheduleId: Number('187582'),
+    status: 'NOT_SUBMITTED',
+  })?.scheduleId,
+  187582,
+)
 
 assert.equal(mapPortalFormListItemToSurveyEntry({ title: 'id 없음' }), null)
 

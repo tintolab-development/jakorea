@@ -98,6 +98,12 @@ function hasStatus(value: string, tokens: readonly string[]): boolean {
   return tokens.includes(value)
 }
 
+/** Application GET `program.surveyConfigured` / `satisfactionConfigured` — boolean only. */
+function readConfiguredFlag(value: unknown): boolean | undefined {
+  if (value === true || value === false) return value
+  return undefined
+}
+
 function resolveDisplayStatusFromApplicationFields(input: {
   applicationStatus?: string | null
   participationStatus?: string | null
@@ -610,9 +616,12 @@ export function mapPortalProgramApplicationDetail(
       programType: detail.program.programType,
       educationFormLabel: detail.program.educationFormLabel,
       educationJournalEnabled: detail.program.educationJournalEnabled,
-      surveyConfigured: detail.program.surveyConfigured,
-      satisfactionConfigured: detail.program.satisfactionConfigured,
+      surveyConfigured: readConfiguredFlag(detail.program.surveyConfigured),
+      satisfactionConfigured: readConfiguredFlag(detail.program.satisfactionConfigured),
     }
+  }
+  if (detail.portalWarningCode?.trim()) {
+    mapped.portalWarningCode = detail.portalWarningCode.trim()
   }
   const recruitmentLabel = formatDateRange(
     detail.program?.recruitmentStartAt,

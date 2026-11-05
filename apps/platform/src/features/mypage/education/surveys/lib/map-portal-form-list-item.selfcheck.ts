@@ -56,6 +56,7 @@ const schedule = mapPortalFormListItem({
 assert.equal(schedule?.id, '188865')
 assert.equal(schedule?.targetScope, 'SCHEDULE')
 assert.equal(schedule?.targetScopeId, 187156)
+assert.equal(schedule?.scheduleId, 187156)
 
 const noDates = mapPortalFormListItem({ bindingId: 3, status: 'NOT_SUBMITTED' })
 assert.ok(noDates)

@@ -159,10 +159,12 @@ export type EducationApplicationListItem = {
   pendingSurveyCount?: number
   /** 상세 `summary.satisfactionPendingCount` — 로컬 추정 금지 */
   satisfactionPendingCount?: number
-  /** 상세 `capabilities.canSubmitSatisfaction` — false면 만족도 작성 CTA 숨김 */
+  /** 상세 `capabilities.canSubmitSatisfaction` — 목록 `canSubmit`/`canResubmit`이 제출 SSOT */
   canSubmitSatisfaction?: boolean
-  /** 상세 `capabilities.canSubmitSurvey` — false면 설문 작성 CTA 숨김 */
+  /** 상세 `capabilities.canSubmitSurvey` — 목록 `canSubmit`/`canResubmit`이 제출 SSOT */
   canSubmitSurvey?: boolean
+  /** 409 `PORTAL_ANSWER_PRIVACY_UNVERIFIABLE` — answers는 유지하고 코드만 표시 */
+  portalWarningCode?: string
   /** 상세 `summary.surveyPendingCount` — 로컬 추정 금지 */
   surveyPendingCount?: number
   /**

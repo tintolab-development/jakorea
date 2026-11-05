@@ -157,6 +157,15 @@ function readEducationApplicationType(value: string | undefined): ProgramApplica
   return null
 }
 
+/** 신청 GET `program.*Configured` boolean이 있으면 catalog GET으로 덮지 않는다. */
+function pickApplicationConfiguredFlag(
+  applicationValue: boolean | null | undefined,
+  catalogValue: boolean | undefined,
+): boolean | undefined {
+  if (applicationValue === true || applicationValue === false) return applicationValue
+  return catalogValue
+}
+
 function buildDetailPath(
   applicationId: string,
   section: DetailSection,
@@ -222,9 +231,14 @@ export function MypageEducationDetailPage() {
           applicationProgram.educationFormLabel ?? remoteProgram.educationFormLabel,
         educationJournalEnabled:
           applicationProgram.educationJournalEnabled ?? remoteProgram.educationJournalEnabled,
-        surveyConfigured: applicationProgram.surveyConfigured ?? remoteProgram.surveyConfigured,
-        satisfactionConfigured:
-          applicationProgram.satisfactionConfigured ?? remoteProgram.satisfactionConfigured,
+        surveyConfigured: pickApplicationConfiguredFlag(
+          applicationProgram.surveyConfigured,
+          remoteProgram.surveyConfigured,
+        ),
+        satisfactionConfigured: pickApplicationConfiguredFlag(
+          applicationProgram.satisfactionConfigured,
+          remoteProgram.satisfactionConfigured,
+        ),
       },
       application,
     )
@@ -260,15 +274,18 @@ export function MypageEducationDetailPage() {
     (isActivityStatus || isWithdrawnDuring) &&
     isOrganizationEducationApplication(application, program)
 
+  const formsApplicationType =
+    routeApplicationType ?? application?.applicationType ?? resolvedApplicationType ?? null
+
   const studentDocumentPolicyQuery = useOrganizationStudentDocumentPolicyQuery(
-    routeApplicationType ?? application?.applicationType ?? null,
+    formsApplicationType,
     applicationId,
     { organizationProgram: program?.programAudience === 'organization' },
-    { enabled: isTeacherOrgActivityDetail && !isUjatParticipant },
+    { enabled: isTeacherOrgActivityDetail },
   )
 
   const teacherStudentDocumentTabsVisible = useMemo(() => {
-    if (!isTeacher || !isTeacherOrgActivityDetail || isUjatParticipant) return false
+    if (!isTeacher || !isTeacherOrgActivityDetail) return false
     return shouldShowTeacherStudentDocumentDependentTabs(studentDocumentPolicyQuery.data, {
       policyQueryEnabled: true,
       // 이 신청 건의 policy가 아직 없을 때만 탭을 숨깁니다.
@@ -279,13 +296,12 @@ export function MypageEducationDetailPage() {
   }, [
     isTeacher,
     isTeacherOrgActivityDetail,
-    isUjatParticipant,
     studentDocumentPolicyQuery.data,
     studentDocumentPolicyQuery.isError,
     studentDocumentPolicyQuery.isPending,
   ])
   const isStudentDocumentPolicyPending =
-    isTeacherOrgActivityDetail && !isUjatParticipant && studentDocumentPolicyQuery.isPending
+    isTeacherOrgActivityDetail && studentDocumentPolicyQuery.isPending
 
   const activityTabOptions = useMemo(
     () =>
@@ -296,19 +312,25 @@ export function MypageEducationDetailPage() {
             scheduleTabLabel: isUjatParticipant
               ? UJAT_PARTICIPANT_ASSIGNMENT_TAB_LABEL
               : EDUCATION_ACTIVITY_SCHEDULE_TAB_LABEL,
-            surveyConfigured: program.surveyConfigured,
-            satisfactionConfigured: program.satisfactionConfigured,
+            surveyConfigured: pickApplicationConfiguredFlag(
+              application?.programConfig?.surveyConfigured,
+              program.surveyConfigured,
+            ),
+            satisfactionConfigured: pickApplicationConfiguredFlag(
+              application?.programConfig?.satisfactionConfigured,
+              program.satisfactionConfigured,
+            ),
             educationJournalEnabled:
               isTeacher &&
               program.programType === 'TRAINED_TEACHER' &&
               program.educationJournalEnabled === true,
             schoolTeacherMember: isSchoolTeacher,
-            ...(isTeacher
-              ? { teacherStudentDocumentTabsVisible: teacherStudentDocumentTabsVisible !== false }
-              : {}),
+            ...(isTeacher ? { teacherStudentDocumentTabsVisible } : {}),
           }
         : null,
     [
+      application?.programConfig?.satisfactionConfigured,
+      application?.programConfig?.surveyConfigured,
       isSchoolTeacher,
       isTeacher,
       isUjatParticipant,
@@ -348,8 +370,12 @@ export function MypageEducationDetailPage() {
     const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
       preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
       preferredScheduleOptionValues: application.preferredScheduleOptionValues,
-      educationScheduleLines: program.educationScheduleLines,
-      schedules: program.eventSchedules,
+      ...(shouldUseUjatApplicationContent(application.detailCase)
+        ? {}
+        : {
+            educationScheduleLines: program.educationScheduleLines,
+            schedules: program.eventSchedules,
+          }),
     })
 
     const contentApplicationType = resolveOrganizationApplicationTypeForContent(
@@ -635,7 +661,7 @@ export function MypageEducationDetailPage() {
       <section className={styles.page}>
         <EducationDetailBack onClick={handleBack} />
         <PFText as="p" typo="hd-md" color="black" className={styles.empty}>
-          신청 정보를 찾을 수 없어요
+          {remoteApplicationQuery.errorCode ?? '신청 정보를 찾을 수 없어요'}
         </PFText>
         <PFButton variant="secondary" onClick={() => navigate(MYPAGE_EDUCATION_PATH)}>
           교육현황으로
@@ -709,8 +735,12 @@ export function MypageEducationDetailPage() {
   const preferredEducationScheduleLabel = resolvePreferredEducationScheduleDisplayLabel({
     preferredEducationScheduleLabel: application.preferredEducationScheduleLabel,
     preferredScheduleOptionValues: application.preferredScheduleOptionValues,
-    educationScheduleLines: program.educationScheduleLines,
-    schedules: program.eventSchedules,
+    ...(shouldUseUjatApplicationContent(application.detailCase)
+      ? {}
+      : {
+          educationScheduleLines: program.educationScheduleLines,
+          schedules: program.eventSchedules,
+        }),
   })
 
   const showNoticeWrite = canWriteEducationNotice(member.profile, application.displayStatus)
@@ -778,14 +808,14 @@ export function MypageEducationDetailPage() {
       if (isUjatParticipant) {
         return (
           <UjatVolunteerAssignmentPanel
-            applicationType={routeApplicationType ?? application.applicationType ?? null}
+            applicationType={formsApplicationType}
             applicationId={application.id}
           />
         )
       }
       return (
         <EducationSchedulePanel
-          applicationType={routeApplicationType}
+          applicationType={formsApplicationType}
           applicationId={application.id}
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
@@ -800,9 +830,9 @@ export function MypageEducationDetailPage() {
       return (
         <EducationStudentsPanel
           applicationId={application.id}
-          applicationType={routeApplicationType ?? application.applicationType ?? null}
+          applicationType={formsApplicationType}
           organizationProgram={
-            routeApplicationType === 'ORGANIZATION' || program.programAudience === 'organization'
+            formsApplicationType === 'ORGANIZATION' || program.programAudience === 'organization'
           }
           lastParticipatedSession={
             isWithdrawnDuring ? application.lastParticipatedSession : undefined
@@ -828,16 +858,19 @@ export function MypageEducationDetailPage() {
           kind="survey"
           displayStatus={application.displayStatus}
           withdrawalPhase={application.withdrawalPhase}
-          configured={program.surveyConfigured}
+          configured={pickApplicationConfiguredFlag(
+            application.programConfig?.surveyConfigured,
+            program.surveyConfigured,
+          )}
           remoteDetailEnabled={remoteDetailEnabled}
           programTitle={program.title}
           educationScheduleLines={program.educationScheduleLines}
           educationTargetLabel={program.educationTargetDetailLabel}
-          applicationType={routeApplicationType}
+          applicationType={formsApplicationType}
           applicationId={application.id}
           programId={program.id}
+          participantId={application.participantId}
           pendingSurveyCount={application.pendingSurveyCount}
-          canSubmitSurvey={application.canSubmitSurvey}
         />
       )
     }
@@ -851,18 +884,25 @@ export function MypageEducationDetailPage() {
       return (
         <EducationSurveySection
           kind="satisfaction"
-          satisfactionAudience="student"
+          satisfactionAudience={
+            isTeacher && isOrganizationEducationApplication(application, program)
+              ? 'teacher'
+              : 'student'
+          }
           displayStatus={application.displayStatus}
           withdrawalPhase={application.withdrawalPhase}
-          configured={program.satisfactionConfigured}
+          configured={pickApplicationConfiguredFlag(
+            application.programConfig?.satisfactionConfigured,
+            program.satisfactionConfigured,
+          )}
           remoteDetailEnabled={remoteDetailEnabled}
           programTitle={program.title}
           educationScheduleLines={program.educationScheduleLines}
           educationTargetLabel={program.educationTargetDetailLabel}
-          applicationType={routeApplicationType}
+          applicationType={formsApplicationType}
           applicationId={application.id}
           programId={program.id}
-          canSubmitSatisfaction={application.canSubmitSatisfaction}
+          participantId={application.participantId}
         />
       )
     }
@@ -934,6 +974,12 @@ export function MypageEducationDetailPage() {
         }
         asideAlign={!showTeacherAssignment && showPersonalCertificatePanel ? 'end' : 'start'}
       />
+
+      {application.portalWarningCode ? (
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          {application.portalWarningCode}
+        </PFText>
+      ) : null}
 
       {ujatScheduleBanner && appliedSection === 'application' ? (
         <UjatScheduleBanner

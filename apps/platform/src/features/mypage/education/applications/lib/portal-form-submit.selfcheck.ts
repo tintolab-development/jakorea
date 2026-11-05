@@ -27,6 +27,18 @@ const contextualBody = buildPortalBoundFormSubmitBody({
 
 assert.equal(contextualBody.contextType, 'PROGRAM_SCHEDULE')
 assert.equal(contextualBody.contextId, 991)
+
+const participantBody = buildPortalBoundFormSubmitBody({
+  programId: 186495,
+  bindingId: 1,
+  templateVersionId: 70,
+  answers: {},
+  contextType: 'PARTICIPANT',
+  contextId: 190001,
+})
+assert.equal(participantBody.contextType, 'PARTICIPANT')
+assert.equal(participantBody.contextId, 190001)
+assert.equal(participantBody.programFormBindingId, 1)
 assert.deepEqual(contextualBody.fileObjectIdsByQuestion, { attachment: [123] })
 
 console.log('portal-form-submit.selfcheck: ok')

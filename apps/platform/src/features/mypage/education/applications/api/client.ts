@@ -1,4 +1,6 @@
+import { isAxiosError } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
+import { getApplicationApiErrorCode } from '@/features/program/lib/application-api-error'
 import type {
   PortalProgramApplicationDetail,
   PortalProgramApplicationListPage,
@@ -68,16 +70,50 @@ export async function fetchMyProgramApplications(
   return normalizeListPage(data, query.size)
 }
 
+function readPrivacyUnverifiableDetail(
+  payload: unknown,
+): PortalProgramApplicationDetail | null {
+  if (!payload || typeof payload !== 'object') return null
+  const record = payload as Record<string, unknown>
+  const nested = record.data
+  const candidate =
+    nested && typeof nested === 'object' && !Array.isArray(nested) ? nested : payload
+  if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return null
+  const detail = candidate as PortalProgramApplicationDetail
+  if (detail.answers == null && detail.program == null && detail.applicationId == null) {
+    return null
+  }
+  return unwrapEnvelope<PortalProgramApplicationDetail>(detail)
+}
+
 export async function fetchMyProgramApplicationDetail(
   applicationType: ProgramApplicationType,
   applicationId: string,
   signal?: AbortSignal,
 ): Promise<PortalProgramApplicationDetail> {
-  const { data } = await axiosClient.get<unknown>(
-    `${MY_PROGRAM_APPLICATIONS_PATH}/${applicationType}/${applicationId}`,
-    { signal },
-  )
-  return unwrapEnvelope<PortalProgramApplicationDetail>(data)
+  try {
+    const { data } = await axiosClient.get<unknown>(
+      `${MY_PROGRAM_APPLICATIONS_PATH}/${applicationType}/${applicationId}`,
+      { signal },
+    )
+    return unwrapEnvelope<PortalProgramApplicationDetail>(data)
+  } catch (error) {
+    if (
+      isAxiosError(error) &&
+      error.response?.status === 409 &&
+      getApplicationApiErrorCode(error) === 'PORTAL_ANSWER_PRIVACY_UNVERIFIABLE'
+    ) {
+      const detail = readPrivacyUnverifiableDetail(error.response.data)
+      if (detail) {
+        return {
+          ...detail,
+          portalWarningCode: 'PORTAL_ANSWER_PRIVACY_UNVERIFIABLE',
+        }
+      }
+      throw error
+    }
+    throw error
+  }
 }
 
 /**
