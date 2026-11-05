@@ -64,9 +64,6 @@ import {
 } from './instructor-profile-form-model'
 import '../instructor-register-modal.css'
 
-/** CMS 강사 등록 — 동의서 그룹(필수 작성 / 행정정보 공동이용). CMS는 모두 선택이라 `required`는 false */
-const CONSENT_DOCUMENT_GROUPS = getInstructorConsentDocumentGroups('cmsRegister')
-
 function chunkConsentDocumentRows<T>(items: readonly T[]): T[][] {
   const rows: T[][] = []
   for (let index = 0; index < items.length; index += 2) {
@@ -242,7 +239,9 @@ export function InstructorProfileFormBody({
   className,
 }: InstructorProfileFormBodyProps) {
   const isDetailEdit = layoutVariant === 'detailEdit'
-  const formLayout = getInstructorFormLayout(isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister')
+  const consentSurface = isDetailEdit ? 'cmsDetailEdit' : 'cmsRegister'
+  const formLayout = getInstructorFormLayout(consentSurface)
+  const consentDocumentGroups = getInstructorConsentDocumentGroups(consentSurface)
   const [activeConsentField, setActiveConsentField] = useState<InstructorConsentFieldKey | null>(
     null
   )
@@ -851,9 +850,9 @@ export function InstructorProfileFormBody({
                 </DetailInfoForm.Row>
               </DetailInfoForm>
 
-              {/* 동의서 — 공용 스키마 `documentGroups`: 필수 작성 동의서 / 행정정보 공동이용 동의서 (CMS 스타일 유지, 등록은 모두 선택) */}
+              {/* 동의서 — 공용 스키마 `documentGroups`: 필수 작성 동의서 / 행정정보 공동이용 동의서 */}
               {showInstructorConsentDocuments
-                ? CONSENT_DOCUMENT_GROUPS.map(group => (
+                ? consentDocumentGroups.map(group => (
                     <DetailInfoForm
                       key={group.id}
                       title={group.title}
