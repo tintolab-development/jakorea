@@ -1,5 +1,6 @@
 import type { LectureReportProgramProgressParagraph } from '@jakorea/form-schema/writing-form'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
+import hostStyles from '@/features/program/ui/apply-form-field-host.module.css'
 import { formatDisplayDate, toSeoulDateOnly } from '@/shared/lib/format-display-date'
 import {
   PFFormField,
@@ -47,7 +48,7 @@ export function LectureReportProgramProgressField({
   }
 
   return (
-    <PFFormFieldTable className={styles.table}>
+    <PFFormFieldTable className={[styles.table, hostStyles.root].join(' ')}>
       <PFFormFieldRow type="double">
         <PFFormField label="프로그램명">
           <PFTextInput

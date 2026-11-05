@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import type { TitleWithPeriodParagraph, WritingFormDraft } from '@jakorea/form-schema/writing-form'
@@ -43,7 +43,7 @@ import { LectureReportSubmitCompleteModal } from '@/features/mypage/education/sc
 import { buildSettlementWritePath } from '@/features/mypage/education/settlements/lib/write-path'
 import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { platformQueryKeys } from '@/shared/api/query-keys'
-import { PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
 import styles from './page.module.css'
 import {
   buildLectureReportPageTitle,
@@ -52,6 +52,24 @@ import {
 import { resolveEducationSurveySectionDescription } from '@/features/mypage/education/surveys/lib/survey-section-title'
 import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
 import { toSeoulDateOnly } from '@/shared/lib/format-display-date'
+
+const REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE = '필수 항목 입력 안내'
+
+const REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION = (
+  <>
+    입력되지 않은 필수 항목이 있어요.
+    {'\n'}
+    &apos;
+    <PFText as="span" typo="bd-md-rg" color="error">
+      *
+    </PFText>
+    &apos; 표시된 필수 항목을 모두 작성해 주세요.
+  </>
+)
+
+const EDUCATION_PHOTOS_INCOMPLETE_ALERT_TITLE = '교육 사진 첨부 안내'
+const EDUCATION_PHOTOS_INCOMPLETE_ALERT_DESCRIPTION =
+  '교육 장면 사진을 2장 이상 첨부해 주세요'
 
 type LoadedReport = {
   assignment: LectureReportAssignment
@@ -144,6 +162,7 @@ export function MypageLectureReportWritePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [alert, setAlert] = useState<{ title: string; description: ReactNode } | null>(null)
   const [submitCompleteOpen, setSubmitCompleteOpen] = useState(false)
   const [settlementSessionId, setSettlementSessionId] = useState('')
   const programQuery = useProgramDetail(
@@ -357,12 +376,21 @@ export function MypageLectureReportWritePage() {
       minimumFilesPerAttachment: 2,
     })
     if (!validation.ok) {
-      setError(validation.message)
+      setAlert(
+        validation.incomplete === 'file_attachment'
+          ? {
+              title: EDUCATION_PHOTOS_INCOMPLETE_ALERT_TITLE,
+              description: EDUCATION_PHOTOS_INCOMPLETE_ALERT_DESCRIPTION,
+            }
+          : {
+              title: REQUIRED_FIELDS_INCOMPLETE_ALERT_TITLE,
+              description: REQUIRED_FIELDS_INCOMPLETE_ALERT_DESCRIPTION,
+            },
+      )
       return
     }
 
     setBusy(true)
-    setError('')
     try {
       await submitLectureReport(loaded.assignment.assignmentId, buildSubmitInput())
       const latest = await getLectureReportState(loaded.assignment.assignmentId)
@@ -381,12 +409,13 @@ export function MypageLectureReportWritePage() {
       setSettlementSessionId(String(loaded.assignment.scheduleId))
       setSubmitCompleteOpen(true)
     } catch (cause) {
-      setError(
-        getLectureReportApiErrorMessage(
+      setAlert({
+        title: '안내',
+        description: getLectureReportApiErrorMessage(
           cause,
-          cause instanceof Error ? cause.message : '강의보고서 제출에 실패했습니다.'
-        )
-      )
+          cause instanceof Error ? cause.message : '강의보고서 제출에 실패했습니다.',
+        ),
+      })
     } finally {
       setBusy(false)
     }
@@ -503,6 +532,12 @@ export function MypageLectureReportWritePage() {
         </>
       ) : null}
 
+      <PFAlertModal
+        open={alert != null}
+        title={alert?.title ?? ''}
+        description={alert?.description}
+        onConfirm={() => setAlert(null)}
+      />
       <LectureReportSubmitCompleteModal
         open={submitCompleteOpen}
         hidePaymentStatementCta={isGeminiSettlementProgram({

@@ -8,7 +8,9 @@ import {
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
 import type { SurveySidecarState } from './survey-sidecar'
 
-export type EducationSurveyFillValidation = { ok: true } | { ok: false; message: string }
+export type EducationSurveyFillValidation =
+  | { ok: true }
+  | { ok: false; message: string; incomplete?: 'file_attachment' }
 
 function isAnswerRequired(paragraph: WritingFormParagraph): boolean {
   if (paragraph.kind === 'single_item') {
@@ -209,7 +211,11 @@ export function validateEducationSurveyFill(
       const minimum = options?.minimumFilesPerAttachment ?? 1
       if (fileCount < minimum) {
         const title = paragraph.paragraphTitle?.trim() || '교육 사진'
-        return { ok: false, message: `${title}을(를) ${minimum}장 이상 첨부해 주세요.` }
+        return {
+          ok: false,
+          incomplete: 'file_attachment',
+          message: `${title}을(를) ${minimum}장 이상 첨부해 주세요.`,
+        }
       }
       continue
     }
