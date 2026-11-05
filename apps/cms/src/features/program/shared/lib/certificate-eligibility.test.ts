@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CERTIFICATE_CERTIFIED_PERIOD_MISSING_MESSAGE,
   CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE,
   CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE_MESSAGE,
+  CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE,
   ISSUANCE_PERIOD_EXPIRED,
   ISSUANCE_PERIOD_EXPIRED_MESSAGE,
   PARTICIPANT_NOT_COMPLETED,
@@ -10,6 +12,10 @@ import {
   certificateIssuePrecheckBlockMessage,
   isCertificateEligibleForIssue,
   messageForCertificateReasonCode,
+  certificateCertifiedPeriodIssueBlockMessage,
+  hasUsableCertificateCertifiedPeriod,
+  readCertificateCertifiedPeriod,
+  selectIssuableCertificatePlan,
 } from './certificate-eligibility'
 
 describe('isCertificateEligibleForIssue', () => {
@@ -122,5 +128,140 @@ describe('messageForCertificateReasonCode', () => {
       PARTICIPANT_NOT_COMPLETED_MESSAGE
     )
     expect(messageForCertificateReasonCode('OTHER')).toBeNull()
+    expect(messageForCertificateReasonCode('NO_RECOGNIZED_RECORD')).toBe(
+      CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE
+    )
+  })
+})
+
+describe('selectIssuableCertificatePlan', () => {
+  const eligible = { eligible: true, blockingReasons: [] as string[] }
+  const ineligible = {
+    eligible: false,
+    reasonCode: PARTICIPANT_NOT_COMPLETED,
+    blockingReasons: [PARTICIPANT_NOT_COMPLETED],
+  }
+  const noRecord = {
+    eligible: false,
+    reasonCode: 'NO_RECOGNIZED_RECORD',
+    blockingReasons: ['NO_RECOGNIZED_RECORD'],
+  }
+
+  it('GIVE_UP uses PARTICIPATION only and never COMPLETION', () => {
+    const plan = selectIssuableCertificatePlan({
+      activityWithdrawn: true,
+      completion: eligible,
+      participation: eligible,
+    })
+    expect(plan.apiType).toBe('PARTICIPATION')
+    expect(plan.eligible).toBe(true)
+  })
+
+  it('GIVE_UP with no recognized record is not issuable', () => {
+    const plan = selectIssuableCertificatePlan({
+      activityWithdrawn: true,
+      completion: ineligible,
+      participation: noRecord,
+    })
+    expect(plan.apiType).toBe('PARTICIPATION')
+    expect(plan.eligible).toBe(false)
+    expect(plan.blockMessage).toBe(CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE)
+  })
+
+  it('keeps COMPLETION when the participant is eligible to complete', () => {
+    const plan = selectIssuableCertificatePlan({
+      activityWithdrawn: false,
+      completion: eligible,
+      participation: eligible,
+    })
+    expect(plan.apiType).toBe('COMPLETION')
+    expect(plan.eligible).toBe(true)
+  })
+})
+
+describe('readCertificateCertifiedPeriod', () => {
+  it('reads official BE period fields and ignores unofficial aliases', () => {
+    expect(
+      readCertificateCertifiedPeriod({
+        certificatePeriodStartDate: '2026-03-01',
+        certificatePeriodEndDate: '2026-04-10',
+        certificatePeriodLabel: '2026.03.01 ~ 2026.04.10',
+        countedParticipationCount: 2,
+      })
+    ).toEqual({
+      start: '2026-03-01',
+      end: '2026-04-10',
+      label: '2026.03.01 ~ 2026.04.10',
+      countedParticipationCount: 2,
+    })
+    expect(
+      readCertificateCertifiedPeriod({
+        participationStartDate: '2026-03-01',
+        participationEndDate: '2026-04-10',
+        certifiedStartDate: '2026-03-01',
+        certifiedEndDate: '2026-04-10',
+      })
+    ).toBeNull()
+    expect(
+      readCertificateCertifiedPeriod({
+        certificatePeriodStartDate: null,
+        certificatePeriodEndDate: null,
+        certificatePeriodLabel: null,
+        countedParticipationCount: null,
+      })
+    ).toBeNull()
+    expect(readCertificateCertifiedPeriod({ eligible: true })).toBeNull()
+  })
+})
+
+describe('certificateCertifiedPeriodIssueBlockMessage', () => {
+  const recognized = {
+    start: '2026-03-01',
+    end: '2026-04-10',
+    label: '2026.03.01 ~ 2026.04.10',
+    countedParticipationCount: 2,
+  }
+
+  it('keeps normal completion on the existing program-period fallback', () => {
+    expect(
+      certificateCertifiedPeriodIssueBlockMessage({
+        activityWithdrawn: false,
+        period: null,
+      })
+    ).toBeNull()
+    expect(hasUsableCertificateCertifiedPeriod(null)).toBe(false)
+  })
+
+  it('allows GIVE_UP when the server certified period is present', () => {
+    expect(
+      certificateCertifiedPeriodIssueBlockMessage({
+        activityWithdrawn: true,
+        period: recognized,
+      })
+    ).toBeNull()
+    expect(hasUsableCertificateCertifiedPeriod(recognized)).toBe(true)
+  })
+
+  it('blocks GIVE_UP with 0 counted records without filling the program period', () => {
+    expect(
+      certificateCertifiedPeriodIssueBlockMessage({
+        activityWithdrawn: true,
+        period: {
+          start: null,
+          end: null,
+          label: null,
+          countedParticipationCount: 0,
+        },
+      })
+    ).toBe(CERTIFICATE_NO_RECOGNIZED_RECORD_MESSAGE)
+  })
+
+  it('blocks GIVE_UP when certified period fields are missing', () => {
+    expect(
+      certificateCertifiedPeriodIssueBlockMessage({
+        activityWithdrawn: true,
+        period: null,
+      })
+    ).toBe(CERTIFICATE_CERTIFIED_PERIOD_MISSING_MESSAGE)
   })
 })

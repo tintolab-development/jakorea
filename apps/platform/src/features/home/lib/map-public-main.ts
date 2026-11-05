@@ -16,6 +16,7 @@ import type {
   HomeHeroSlide,
   HomePartnerLogo,
 } from './home-fallback-content.ts'
+import { partnerRowsFromOrderedLogos } from './split-partner-logo-rows.ts'
 
 /**
  * Fallback 규율
@@ -210,10 +211,7 @@ function mapPartnerRows(
     if (!name) return []
     return [{ name, logoUrl: readString(row.logoUrl) }]
   })
-  if (logos.length === 0) return []
-
-  const mid = Math.ceil(logos.length / 2)
-  return [logos.slice(0, mid), logos.slice(mid)]
+  return partnerRowsFromOrderedLogos(logos)
 }
 
 function mapPopups(remote: PublicMainResponse['popups']): readonly HomePopup[] {

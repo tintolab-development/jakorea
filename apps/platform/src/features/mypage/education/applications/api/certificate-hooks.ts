@@ -57,11 +57,14 @@ export function useIssueMyCertificateMutation(input: {
     onSuccess: async (_result, request) => {
       const tasks = [
         queryClient.invalidateQueries({
-          queryKey: platformQueryKeys.mypage.certificates.availability(
-            request.programId,
-            request.certificateType ?? PORTAL_CERTIFICATE_TYPE_COMPLETION,
-          ),
-          exact: true,
+          queryKey: platformQueryKeys.mypage.certificates.all(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: [
+            ...platformQueryKeys.mypage.programApplications.all(),
+            'certificate-availability',
+            String(request.programId),
+          ],
         }),
         queryClient.invalidateQueries({
           queryKey: platformQueryKeys.mypage.programApplications.listPrefix(),

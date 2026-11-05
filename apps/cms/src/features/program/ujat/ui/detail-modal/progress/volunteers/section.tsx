@@ -80,12 +80,13 @@ export function UjatEducationProgressVolunteersSection({
   const [volunteer1365PreviewOpen, setVolunteer1365PreviewOpen] = useState(false)
   const { regions: educationRegions } = useUjatEducationRegions()
   const filterFields = useMemo(
-    () => buildUjatEducationProgressVolunteerFilterFields(),
+    () => buildUjatEducationProgressVolunteerFilterFields(educationRegions),
     [educationRegions]
   )
 
   const {
     pendingFilters,
+    appliedFilters,
     handleFilterChange,
     handleSearch,
     tableData,
@@ -98,6 +99,12 @@ export function UjatEducationProgressVolunteersSection({
     addVolunteerFromMember,
     refreshVolunteerList,
   } = useUjatEducationProgressVolunteers(program.id, half)
+
+  const selectedRegionKey =
+    appliedFilters.regionKey.trim() || pendingFilters.regionKey.trim()
+  const registerEducationRegionCode = selectedRegionKey
+    ? toUjatEducationRegionCode(selectedRegionKey)
+    : undefined
 
   const selectedVolunteerId = selectedRowKeys.length === 1 ? String(selectedRowKeys[0]) : ''
   const { detail: selectedVolunteerDetail } = useUjatEducationProgressVolunteerDetail({
@@ -438,6 +445,7 @@ export function UjatEducationProgressVolunteersSection({
         memberId={addRegistrationMemberId ?? ''}
         program={program}
         volunteerHalf={half}
+        educationRegionCode={registerEducationRegionCode}
         onClose={() => setAddRegistrationMemberId(null)}
         onComplete={memberId => addVolunteerFromMember(memberId)}
       />

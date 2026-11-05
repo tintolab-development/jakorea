@@ -3,6 +3,12 @@ import type { SchoolDetailStudentRow } from '../model/school-detail-types'
 import { resolveStudentCertificateTemplateName } from './student-certificate-template'
 import type { StudentCertificateKind } from './resolve-student-certificate-kind'
 
+export function certificateKindFromEligibilityApiType(
+  apiType: 'COMPLETION' | 'PARTICIPATION'
+): StudentCertificateKind {
+  return apiType === 'COMPLETION' ? 'completion' : 'participation'
+}
+
 export const COMPLETION_CERTIFICATE_DOCUMENT_TITLE = '수료증'
 export const PARTICIPATION_CERTIFICATE_DOCUMENT_TITLE = '참가인증서'
 
@@ -49,22 +55,31 @@ function formatAffiliation(
     .join(' ')
 }
 
+function formatProgramPeriodDate(value: Date | string | null | undefined): string | null {
+  if (value == null || value === '') return null
+  if (typeof value === 'string') {
+    const ymd = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (ymd && !value.includes('T') && !value.includes('Z')) {
+      return `${ymd[1]}.${ymd[2]}.${ymd[3]}`
+    }
+  }
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date)
+  return parts.replaceAll('-', '.')
+}
+
 function formatProgramPeriod(
   programStartDate?: Date | string | null,
   programEndDate?: Date | string | null
 ): string {
-  const format = (value: Date | string | null | undefined): string | null => {
-    if (value == null || value === '') return null
-    const date = value instanceof Date ? value : new Date(value)
-    if (Number.isNaN(date.getTime())) return null
-    const y = date.getFullYear()
-    const m = String(date.getMonth() + 1).padStart(2, '0')
-    const d = String(date.getDate()).padStart(2, '0')
-    return `${y}.${m}.${d}`
-  }
-
-  const start = format(programStartDate)
-  const end = format(programEndDate)
+  const start = formatProgramPeriodDate(programStartDate)
+  const end = formatProgramPeriodDate(programEndDate)
   if (start && end) return `${start} ~ ${end}`
   return '2026.01.01 ~ 2026.12.31'
 }
@@ -74,6 +89,24 @@ export function buildStudentCertificateProgramPeriodLabel(
   programEndDate?: Date | string | null
 ): string {
   return formatProgramPeriod(programStartDate, programEndDate)
+}
+
+/** 서버 `certificatePeriodLabel`을 최우선. 없으면 시작·종료일로만 조합하고, 한쪽만 있으면 쓰지 않는다. */
+export function resolveStudentCertificateProgramPeriodLabel(input: {
+  certifiedPeriodLabel?: string | null
+  certifiedPeriodStart?: Date | string | null
+  certifiedPeriodEnd?: Date | string | null
+  programStartDate?: Date | string | null
+  programEndDate?: Date | string | null
+  requireCertifiedPeriod?: boolean
+}): string | null {
+  const certifiedLabel = input.certifiedPeriodLabel?.trim()
+  if (certifiedLabel) return certifiedLabel
+  const certifiedStart = formatProgramPeriodDate(input.certifiedPeriodStart)
+  const certifiedEnd = formatProgramPeriodDate(input.certifiedPeriodEnd)
+  if (certifiedStart && certifiedEnd) return `${certifiedStart} ~ ${certifiedEnd}`
+  if (input.requireCertifiedPeriod) return null
+  return formatProgramPeriod(input.programStartDate, input.programEndDate)
 }
 
 export function buildStudentCertificateParticipantInfo(
@@ -118,6 +151,14 @@ export function buildStudentCertificateDownloadContext(input: {
   programTitle: string
   programStartDate?: Date | string | null
   programEndDate?: Date | string | null
+  /** 서버 `certificatePeriodLabel`. 있으면 날짜 조합보다 우선한다. */
+  certifiedPeriodLabel?: string | null
+  /** 서버 `certificatePeriodStartDate`. */
+  certifiedPeriodStart?: Date | string | null
+  /** 서버 `certificatePeriodEndDate`. */
+  certifiedPeriodEnd?: Date | string | null
+  /** GIVE_UP 참가인증서 — 인증 기간이 없으면 프로그램 전체 기간으로 대체하지 않는다. */
+  requireCertifiedPeriod?: boolean
   issuanceReasonLabel: string
   programId?: string | number
   organizationApplicationId?: string | number
@@ -134,10 +175,15 @@ export function buildStudentCertificateDownloadContext(input: {
     schoolName: input.schoolName,
     educationGrade: input.educationGrade,
     programTitle: input.programTitle,
-    programPeriodLabel: buildStudentCertificateProgramPeriodLabel(
-      input.programStartDate,
-      input.programEndDate
-    ),
+    programPeriodLabel:
+      resolveStudentCertificateProgramPeriodLabel({
+        certifiedPeriodLabel: input.certifiedPeriodLabel,
+        certifiedPeriodStart: input.certifiedPeriodStart,
+        certifiedPeriodEnd: input.certifiedPeriodEnd,
+        programStartDate: input.programStartDate,
+        programEndDate: input.programEndDate,
+        requireCertifiedPeriod: input.requireCertifiedPeriod,
+      }) ?? '',
     issuanceReasonLabel: input.issuanceReasonLabel,
     ...(input.programId != null ? { programId: input.programId } : {}),
     ...(input.organizationApplicationId != null

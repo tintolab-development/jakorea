@@ -32,6 +32,8 @@ export type ClassifiedFormBinding = {
 const PROGRAM_SURVEY_MANAGEMENT_FORM_TYPES = new Set([
   'SURVEY',
   'SATISFACTION',
+  'SATISFACTION_SURVEY',
+  'PROGRAM_SATISFACTION',
   'LECTURE_EVALUATION',
 ])
 
@@ -69,6 +71,7 @@ type SurveyShareLinkClipboardSource = {
   shareToken?: string | null
   accessMode?: string | null
   formPath?: string | null
+  submitPath?: string | null
 }
 
 function readPublicSurveyShareToken(response: SurveyShareLinkClipboardSource): string | null {
@@ -89,10 +92,13 @@ export function resolveSurveyShareClipboardUrl(
   response: SurveyShareLinkClipboardSource,
   platformOrigin: string | null | undefined
 ): string | null {
-  if (response.accessMode?.trim().toUpperCase() !== 'PUBLIC_ANONYMOUS') return null
+  const accessMode = response.accessMode?.trim().toUpperCase()
+  if (accessMode === 'MEMBER_AUTHENTICATED') return null
   const token = readPublicSurveyShareToken(response)
+  if (!token) return null
+  if (accessMode && accessMode !== 'PUBLIC_ANONYMOUS') return null
   const origin = platformOrigin?.trim().replace(/\/$/, '')
-  if (!origin || !token) return null
+  if (!origin) return null
   return `${origin}/surveys/share/${encodeURIComponent(token)}`
 }
 
@@ -103,7 +109,12 @@ export function describeSurveyShareClipboardFailure(
 ): string {
   const subject = kind === 'satisfaction' ? '만족도조사' : '설문'
   if (response?.accessMode?.trim().toUpperCase() === 'MEMBER_AUTHENTICATED') {
-    return `회원 전용 ${subject}는 비로그인 공유 링크를 만들 수 없습니다.`
+    const memberPaths = [response.formPath, response.submitPath]
+      .map(path => path?.trim())
+      .filter((path): path is string => Boolean(path))
+    const pathHint =
+      memberPaths.length > 0 ? ` 회원 전용 경로: ${memberPaths.join(' · ')}` : ''
+    return `회원 전용 ${subject}는 비로그인 공유 링크를 만들 수 없습니다.${pathHint}`
   }
   const origin = platformOrigin?.trim()
   if (!origin) {
@@ -217,7 +228,13 @@ export function classifyFormBindingByTemplateId(
   // 설문조사 탭은 비는데 같은 SURVEY 슬롯 재등록은 서버가 거절한다.
   const formType = normalizeProgramFormBindingType(binding.formType)
   if (formType === 'LECTURE_EVALUATION') return 'lecture_evaluation'
-  if (formType === 'SATISFACTION') return 'satisfaction'
+  if (
+    formType === 'SATISFACTION' ||
+    formType === 'SATISFACTION_SURVEY' ||
+    formType === 'PROGRAM_SATISFACTION'
+  ) {
+    return 'satisfaction'
+  }
   if (formType === 'SURVEY') return 'poll'
 
   const templateId = String(binding.templateId ?? '').trim()

@@ -3,17 +3,17 @@
   min-width: 0;
 }
 
+/* Figma 36:47073 — 로고 셀 290px, 이미지 250×92 contain */
 .corporate-partners-page__thumb-wrap {
   display: inline-flex;
   flex: 0 0 auto;
-  width: 86px;
-  height: 86px;
-  aspect-ratio: 1 / 1;
+  width: 250px;
+  height: 92px;
   flex-shrink: 0;
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--color-border, #e0e0e0);
-  background: var(--color-bg-secondary, #f7f7f7);
+  background: var(--color-neutral-white, #fff);
   cursor: pointer;
 }
 
@@ -28,7 +28,7 @@
 .corporate-partners-page__thumb {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 

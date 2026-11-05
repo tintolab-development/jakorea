@@ -128,7 +128,7 @@ export function toFooterOrganizationUpdateRequest(
     email: input.email.trim(),
     logoAssetId,
     version,
-  }
+  } as FooterOrganizationUpdateRequest
 }
 
 type FooterPartnerLinkWire = FooterPartnerResponse & {

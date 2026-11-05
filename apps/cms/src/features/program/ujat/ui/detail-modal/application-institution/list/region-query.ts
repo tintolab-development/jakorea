@@ -14,7 +14,9 @@ export function parseUjatInstitutionEducationRegionParam(
   if (!trimmed) return null
   if (isUjatInstitutionApplicationRegionKey(trimmed)) return trimmed
   const fromCode = findUjatEducationRegionKeyByCode(trimmed)
-  return fromCode && isUjatInstitutionApplicationRegionKey(fromCode) ? fromCode : null
+  if (fromCode) return fromCode
+  if (/^[a-z][a-z0-9_]*$/.test(trimmed)) return toUjatEducationRegionCode(trimmed)
+  return null
 }
 
 export function resolveUjatInstitutionEducationRegionKey(

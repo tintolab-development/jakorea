@@ -80,9 +80,9 @@
 }
 
 @media (--bp-pc-up) {
-  /* Hero 520 + Push 100 + Value 500 + hold/reveal 200 = 1320vh */
+  /* Hero 680 + Push 100 + Value 500 + hold/reveal 200 = 1480vh */
   .root.isMotionTrack {
-    height: 1320vh;
+    height: 1480vh;
   }
 
   .sticky {

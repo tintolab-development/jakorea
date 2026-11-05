@@ -52,7 +52,7 @@ export interface GeminiRecruitmentDetailResponse {
   remarks?: string | null;
   /** 기타사항. Gemini 찾아가는 연수 모집에는 입력란이 없어 항상 null. 하위 호환 필드로 유지한다. */
   otherMatters?: string | null;
-  /** 섬네일 파일명 */
+  /** 썸네일 파일명 */
   thumbnailFileName?: string | null;
   /** 모집 안내 */
   recruitmentGuide?: string | null;

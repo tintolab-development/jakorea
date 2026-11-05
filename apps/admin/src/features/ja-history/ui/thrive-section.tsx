@@ -6,7 +6,7 @@ import '@jakorea/form-template-runtime/detail-info-form.css'
 import type { JaHistoryThrive, JaHistoryThriveCard } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryThrive } from '@/features/ja-history/api/hooks'
 import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
-import { InlineText, SectionFrame, jaHistorySaveAlert } from './chrome'
+import { HistoryCopy, InlineText, SectionFrame, jaHistorySaveAlert } from './chrome'
 
 export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
   const { showAlert } = useCmsAlert()
@@ -31,12 +31,16 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
         title: '제목',
         key: 'title',
         width: 400,
+        align: 'center',
         className: 'ja-history-col-text',
         render: (_value, record) => {
           const card = draft.cards.find(item => item.id === record.id) ?? record
+          if (!editing) {
+            return <HistoryCopy value={record.title} align="center" />
+          }
           return (
             <InlineText
-              editing={editing}
+              editing
               value={card.title}
               rows={1}
               label={`${record.id} 제목`}
@@ -56,12 +60,16 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
       {
         title: '설명',
         key: 'description',
+        align: 'center',
         className: 'ja-history-col-text',
         render: (_value, record) => {
           const card = draft.cards.find(item => item.id === record.id) ?? record
+          if (!editing) {
+            return <HistoryCopy value={record.description} align="center" />
+          }
           return (
             <InlineText
-              editing={editing}
+              editing
               value={card.description}
               rows={3}
               label={`${record.id} 설명`}
@@ -80,6 +88,18 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
       },
     ],
     [draft.cards, editing]
+  )
+
+  const cardsTable = (
+    <div className="ja-history-thrive-cards">
+      <CmsDataTable<JaHistoryThriveCard>
+        className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
+        columns={columns}
+        dataSource={thrive.cards}
+        pagination={false}
+        rowKey="id"
+      />
+    </div>
   )
 
   return (
@@ -117,11 +137,16 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
           )
       }}
     >
-      <DetailInfoForm title="글로벌 전략 Thrive" hideHeader mode="edit" className="ja-history-form">
+      <DetailInfoForm
+        title="글로벌 전략 Thrive"
+        hideHeader
+        mode={editing ? 'edit' : 'view'}
+        className="ja-history-form"
+      >
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="타이틀"
-            view={null}
+            view={<HistoryCopy value={thrive.title} />}
             edit={
               <InlineText
                 editing={editing}
@@ -137,7 +162,7 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="서브 텍스트"
-            view={null}
+            view={<HistoryCopy value={thrive.lead} />}
             edit={
               <InlineText
                 editing={editing}
@@ -151,26 +176,12 @@ export function ThriveSection({ thrive }: { thrive: JaHistoryThrive }) {
           />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="카드 섹션"
-            view={null}
-            edit={
-              <div className="ja-history-thrive-cards">
-                <CmsDataTable<JaHistoryThriveCard>
-                  className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table"
-                  columns={columns}
-                  dataSource={thrive.cards}
-                  pagination={false}
-                  rowKey="id"
-                />
-              </div>
-            }
-          />
+          <DetailInfoForm.Field label="카드 섹션" view={cardsTable} edit={cardsTable} />
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
             label="하단 텍스트"
-            view={null}
+            view={<HistoryCopy value={thrive.footnote} />}
             edit={
               <InlineText
                 editing={editing}

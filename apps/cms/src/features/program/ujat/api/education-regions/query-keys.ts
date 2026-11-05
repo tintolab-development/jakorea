@@ -5,6 +5,8 @@ export const ujatEducationRegionQueryKeys = {
   lists: () => [...ujatEducationRegionQueryKeys.all, 'list'] as const,
   list: (source: 'remote' | 'local') =>
     [...ujatEducationRegionQueryKeys.lists(), source] as const,
+  activeList: (source: 'remote' | 'local') =>
+    [...ujatEducationRegionQueryKeys.lists(), source, 'active'] as const,
   filteredLists: () => [...ujatEducationRegionQueryKeys.all, 'filtered'] as const,
   filteredList: (source: 'remote' | 'local', filters: UjatEducationRegionFilters) =>
     [

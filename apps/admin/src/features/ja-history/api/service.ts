@@ -120,8 +120,25 @@ export async function saveJaHistoryKoreaTimelineService(input: JaHistoryTimeline
 }
 export async function saveJaHistoryPhilosophyService(input: JaHistoryPhilosophySaveInput, cached?: JaHistoryData): Promise<JaHistoryData> {
     try {
-        const { version } = await resolveVersion(cached);
-        const updated = await jaKoreaApi().updatePhilosophy(toJaHistoryPhilosophyUpdateRequest(input, version));
+        const { data, version } = await resolveVersion(cached);
+        const cards = [];
+        for (const card of input.cards) {
+            const current = data.philosophy.cards.find(item => item.id === card.id);
+            const imageAssetId = await resolveImageAssetId({
+                imageFile: card.imageFile,
+                imageAssetId: card.imageAssetId,
+                fallbackAssetId: current?.image.assetId,
+                purpose: 'JA_HISTORY_PHILOSOPHY_CARD_IMAGE',
+                requiredLabel: '교육 카드 이미지를 등록해 주세요.',
+            });
+            cards.push({
+                id: card.id,
+                title: card.title,
+                description: card.description,
+                imageAssetId,
+            });
+        }
+        const updated = await jaKoreaApi().updatePhilosophy(toJaHistoryPhilosophyUpdateRequest({ ...input, cards }, version));
         return mapJaHistoryPageResponseToDomain(updated);
     }
     catch (error) {

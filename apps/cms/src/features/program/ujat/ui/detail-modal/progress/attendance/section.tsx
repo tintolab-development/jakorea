@@ -4,6 +4,7 @@ import { useTableExcelExport } from '@/shared/hooks/use-table-excel-export'
 import { ExcelButton, FilterTableToolbarButton } from '@/shared/ui'
 import { useUjatCanWrite } from '@/features/program/ujat/lib/use-can-write'
 import { getDefaultUjatEducationRegionKey } from '@/features/program/ujat/lib/ujat-education-regions'
+import { useUjatEducationRegions } from '@/features/program/ujat/hooks/use-ujat-education-regions'
 import type { UjatInstitutionApplicationRegionKey } from '../../application-institution/list/regions'
 import { UjatInstitutionApplicationRegionTabs } from '../../application-institution/list/region-tabs'
 import type { EducationProgressHalfKey } from '../tabs'
@@ -28,9 +29,17 @@ export function UjatEducationProgressAttendanceSection({
   half: EducationProgressHalfKey
 }) {
   const canWrite = useUjatCanWrite()
+  const { regions: educationRegions } = useUjatEducationRegions()
   const [activeRegion, setActiveRegion] = useState<UjatInstitutionApplicationRegionKey>(
     getDefaultUjatEducationRegionKey
   )
+
+  useEffect(() => {
+    if (educationRegions.length === 0) return
+    if (educationRegions.some(region => region.key === activeRegion)) return
+    const next = educationRegions[0]?.key?.trim()
+    if (next) setActiveRegion(next)
+  }, [activeRegion, educationRegions])
   const [openFirstSessionCorrection, setOpenFirstSessionCorrection] = useState<(() => void) | null>(
     null
   )

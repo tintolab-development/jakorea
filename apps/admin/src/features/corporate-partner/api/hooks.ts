@@ -27,6 +27,7 @@ function filterKey(filter?: CorporatePartnerListFilter): string {
     name: filter?.name ?? '',
     from: filter?.registeredFrom ?? '',
     to: filter?.registeredTo ?? '',
+    page: filter?.page ?? 0,
   })
 }
 
@@ -125,8 +126,8 @@ export function useUpdateCorporatePartner(filter?: CorporatePartnerListFilter) {
     mutationFn: ({ id, patch }: { id: string; patch: CorporatePartnerUpdateInput }) =>
       updateCorporatePartnerService(id, patch, cachedList(queryClient, filter)?.items),
     retry: false,
-    onSuccess: data => {
-      patchPartnerInLists(queryClient, data, filter)
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: corporatePartnerQueryKeys.lists() })
     },
   })
 }
@@ -151,32 +152,22 @@ export function useRemoveCorporatePartners(filter?: CorporatePartnerListFilter) 
   })
 }
 
-export function useReorderCorporatePartners(filter?: CorporatePartnerListFilter) {
+export function useReorderCorporatePartners(_filter?: CorporatePartnerListFilter) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (orderedIds: string[]) => {
       // 필터 없는 전체 캐시 우선 (reorder는 전역 순서 기준)
-      const unfiltered = cachedList(queryClient, undefined)?.items
-      const filtered = cachedList(queryClient, filter)?.items
-      return reorderCorporatePartnersService(orderedIds, unfiltered ?? filtered)
+      const unfiltered = cachedList(queryClient, undefined)
+      const unfilteredComplete =
+        unfiltered != null && unfiltered.items.length >= (unfiltered.totalCount ?? 0)
+      return reorderCorporatePartnersService(
+        orderedIds,
+        unfilteredComplete ? unfiltered.items : undefined,
+      )
     },
     retry: false,
-    onSuccess: rows => {
-      queryClient.setQueryData(corporatePartnerQueryKeys.list(source(), filterKey(undefined)), {
-        items: rows,
-        totalCount: rows.length,
-      })
-      if (filterKey(filter) !== filterKey(undefined)) {
-        queryClient.setQueryData(
-          corporatePartnerQueryKeys.list(source(), filterKey(filter)),
-          (old: CorporatePartnerListResult | undefined) => {
-            if (!old) return { items: rows, totalCount: rows.length }
-            const keep = new Set(old.items.map(row => row.id))
-            const items = rows.filter(row => keep.has(row.id))
-            return { items, totalCount: old.totalCount }
-          },
-        )
-      }
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: corporatePartnerQueryKeys.lists() })
     },
   })
 }

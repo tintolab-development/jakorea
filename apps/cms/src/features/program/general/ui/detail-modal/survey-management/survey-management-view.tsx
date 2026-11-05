@@ -357,6 +357,15 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     : undefined
   const lectureResponseVersionId =
     activeTab === 'lecture_evaluation' ? lectureEvalSurvey?.id : undefined
+  const pollBindingId =
+    activeTab === 'survey'
+      ? registeredSurveys.find(item => item.id === activeRegisteredSurveyId)?.bindingId
+      : undefined
+  const satisfactionBindingId = isGeneralSatisfactionSurveyNavTab(activeTab)
+    ? satisfactionSurveysByAudience[activeSatisfactionAudience]?.bindingId
+    : undefined
+  const lectureBindingId =
+    activeTab === 'lecture_evaluation' ? lectureEvalSurvey?.bindingId : undefined
 
   const {
     pollResponses: remotePollResponses,
@@ -364,24 +373,29 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     isRemoteDataSource: pollResponsesRemote,
   } = useGeneralProgramSurveyResponses(program.id, pollResponseVersionId, {
     detailPolicy: 'public-text-only',
+    bindingId: pollBindingId,
   })
   const {
     pollResponses: remoteSatisfactionResponses,
     isRemoteDataSource: satisfactionResponsesRemote,
   } = useGeneralProgramSurveyResponses(program.id, satisfactionResponseVersionId, {
     detailPolicy: 'public-text-only',
+    bindingId: satisfactionBindingId,
   })
   const {
     pollResponses: remoteLectureResponses,
     isRemoteDataSource: lectureResponsesRemote,
-  } = useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId)
+  } = useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId, {
+    bindingId: lectureBindingId,
+  })
   const {
     totalResponseCount: remotePollSummaryCount,
     questionSummaries: pollQuestionSummaries,
-  } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId)
+  } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId, pollBindingId)
   const { questionSummaries: satisfactionQuestionSummaries } = useGeneralProgramSurveySummary(
     program.id,
-    satisfactionResponseVersionId
+    satisfactionResponseVersionId,
+    satisfactionBindingId
   )
 
   useEffect(() => {

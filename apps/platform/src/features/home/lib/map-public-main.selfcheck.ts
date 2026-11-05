@@ -288,6 +288,28 @@ assert.equal(isWithinDisplayPeriod('2026-09-21', '2027-09-15', now), false)
 assert.equal(isWithinDisplayPeriod('2020-01-01', '2020-12-31', now), false)
 assert.equal(isWithinDisplayPeriod(undefined, undefined, now), true)
 
+const oddSponsors = mergePublicMainWithFallback(
+  {
+    sponsors: [
+      { id: 1, displayOrder: 1, companyName: 'A', logoUrl: '/a.png' },
+      { id: 2, displayOrder: 2, companyName: 'B', logoUrl: '/b.png' },
+      { id: 3, displayOrder: 3, companyName: 'C', logoUrl: '/c.png' },
+      { id: 4, displayOrder: 4, companyName: 'D', logoUrl: '/d.png' },
+      { id: 5, displayOrder: 5, companyName: 'E', logoUrl: '/e.png' },
+    ],
+  },
+  fallback,
+)
+assert.equal(oddSponsors.partnerRows.length, 2)
+assert.deepEqual(
+  oddSponsors.partnerRows[0]?.map(row => row.name),
+  ['A', 'B'],
+)
+assert.deepEqual(
+  oddSponsors.partnerRows[1]?.map(row => row.name),
+  ['C', 'D', 'E'],
+)
+
 const missing = mergePublicMainWithFallback(null, fallback)
 assert.equal(missing.source, 'fallback')
 assert.equal(missing.youtubeUrl, fallback.youtubeUrl)

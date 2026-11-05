@@ -24,11 +24,11 @@ assert.equal(
 )
 assert.equal(
   shouldShowDetailCertificateCta({ ...personalCompleted, canIssueCertificate: false }),
-  false,
+  true,
 )
 assert.equal(
   shouldShowDetailCertificateCta({ ...personalCompleted, canIssueCertificate: null }),
-  false,
+  true,
 )
 assert.equal(
   shouldShowDetailCertificateCta({
@@ -130,7 +130,16 @@ assert.equal(
     canIssueCertificate: false,
     availability: { available: true, canDownload: false },
   }).kind,
-  'hidden',
+  'issue',
+)
+
+assert.equal(
+  resolveCertificateCtaView({
+    ...personalCompleted,
+    certificateStatus: 'NOT_ELIGIBLE',
+    availability: { available: true, canDownload: false, certificateType: 'PARTICIPATION' },
+  }).kind,
+  'issue',
 )
 
 assert.equal(

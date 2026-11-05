@@ -22,4 +22,5 @@ export interface JaHistoryPageCardUpdate {
      * @maxLength 10000
      */
   description: string;
+  imageAssetId: number;
 }

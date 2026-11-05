@@ -688,8 +688,7 @@ export function MypageEducationDetailPage() {
   })
   const showPersonalCertificatePanel =
     !isProgramApplicationStatus &&
-    !isWithdrawnDuring &&
-    isActivityStatus &&
+    (isActivityStatus || isWithdrawnDuring) &&
     shouldShowPersonalCertificateAction({
       isTeacher,
       applicationType: routeApplicationType ?? application.applicationType,
@@ -926,6 +925,7 @@ export function MypageEducationDetailPage() {
               programGroup={application.programGroup}
               detailCase={application.detailCase}
               isTeacher={isTeacher}
+              isWithdrawnDuring={isWithdrawnDuring}
               certificateStatus={application.certificateStatus}
               canIssueCertificateHint={application.canIssueCertificate}
               participantIdHint={application.participantId}

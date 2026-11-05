@@ -10,12 +10,12 @@ import type { DirectAssignmentCandidate } from './directAssignmentCandidate';
 export interface DirectAssignmentCandidatesResponse {
   programId?: number;
   educationSlotId?: number;
-  scheduleId?: number;
-  educationRegionCode?: string;
-  reallocationRequired?: boolean;
-  candidates?: DirectAssignmentCandidate[];
+  scheduleId?: number | null;
+  educationRegionCode?: string | null;
+  reallocationRequired: boolean;
+  candidates: DirectAssignmentCandidate[];
   /** 1인 배정 슬롯이면 기존 배정 봉사자 participantId. 선택한 후보는 두 번째 봉사자(SECONDARY)로 추가된다. 빈 슬롯·2인 슬롯이면 null. 2인 슬롯에서 이 값으로 추가 배정을 시도하지 않는다. */
   existingPrimaryParticipantId?: number | null;
-  /** 이 educationSlotId의 assignmentStatus=ASSIGNED distinct 인원. 0=빈 슬롯, 1=1인(SECONDARY 추가 가능), 2=가득 참. 같은 일정의 다른 학급·REASSIGNMENT_REQUIRED·giveUp·취소는 세지 않는다. omit/null 금지. GET candidates는 2인이어도 409가 아니라 200과 candidates=[] 을 반환한다. POST direct-assignment만 2인일 때 409. */
+  /** 이 슬롯의 활성 배정 인원. 0=빈 슬롯, 1=1인(SECONDARY 추가 가능), 2=가득 참. GET candidates는 2인이어도 409가 아니라 200과 candidates=[] 을 반환한다. POST direct-assignment만 2인일 때 409. */
   assignedVolunteerCount: number;
 }

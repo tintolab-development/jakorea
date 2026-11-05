@@ -7,6 +7,7 @@
  */
 
 export interface JaHistoryPageEventResponse {
-  year?: number;
+  /** @maxLength 32 */
+  year?: string;
   text?: string;
 }

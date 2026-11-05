@@ -11,5 +11,9 @@ export interface JaHistoryPagePeriodResponse {
   id?: string;
   label?: string;
   title?: string;
+  /**
+     * @minItems 0
+     * @maxItems 8
+     */
   events?: JaHistoryPageEventResponse[];
 }

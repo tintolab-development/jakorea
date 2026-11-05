@@ -188,6 +188,7 @@ export * from './jaHistoryPagePhilosophyUpdateRequest';
 export * from './jaHistoryPagePublicResponse';
 export * from './jaHistoryPageResponse';
 export * from './jaHistoryPageThriveCardResponse';
+export * from './jaHistoryPageThriveCardUpdate';
 export * from './jaHistoryPageThriveResponse';
 export * from './jaHistoryPageThriveUpdateRequest';
 export * from './jaHistoryPageTimelineResponse';

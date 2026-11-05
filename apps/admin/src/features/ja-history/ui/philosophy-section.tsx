@@ -1,119 +1,215 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { DetailInfoForm } from '@jakorea/form-template-runtime'
 import '@jakorea/form-template-runtime/detail-info-form.css'
-import type { JaHistoryPhilosophy } from '@/entities/ja-history/model/types'
+import type { ColumnsType } from 'antd/es/table'
+import type { JaHistoryPhilosophy, JaHistoryPhilosophyCard } from '@/entities/ja-history/model/types'
 import { useSaveJaHistoryPhilosophy } from '@/features/ja-history/api/hooks'
-import { showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
-import { InlineText, SectionFrame, jaHistorySaveAlert } from './chrome'
-import { PhilosophyCardNestedTable } from './philosophy-card-nested-table'
+import { CmsButton, CmsDataTable, showSaveCompletedAlert, useCmsAlert } from '@/shared/ui'
+import { MediaPreview, SectionFrame, jaHistorySaveAlert } from './chrome'
+import { PhilosophyCardFormModal, type PhilosophyCardFormValues } from './philosophy-card-form-modal'
+import { PhilosophyIntroFormModal } from './philosophy-intro-form-modal'
+
+function cardOrderLabel(index: number): string {
+  return String(index + 1).padStart(2, '0')
+}
+
+type PhilosophyCardRow = JaHistoryPhilosophyCard & { orderLabel: string; index: number }
+
+function philosophySavePayload(
+  philosophy: JaHistoryPhilosophy,
+  cards: JaHistoryPhilosophyCard[],
+  cardPatch?: { id: string; values: PhilosophyCardFormValues }
+) {
+  return {
+    eyebrow: philosophy.eyebrow,
+    title: philosophy.title,
+    lead: philosophy.lead,
+    cards: cards.map(card => {
+      if (cardPatch && card.id === cardPatch.id) {
+        return {
+          id: card.id,
+          title: cardPatch.values.title,
+          description: cardPatch.values.description,
+          imageFile: cardPatch.values.imageFile,
+          imageAssetId: cardPatch.values.imageAssetId ?? card.image.assetId ?? null,
+        }
+      }
+      return {
+        id: card.id,
+        title: card.title,
+        description: card.description,
+        imageAssetId: card.image.assetId ?? null,
+      }
+    }),
+  }
+}
 
 export function PhilosophySection({ philosophy }: { philosophy: JaHistoryPhilosophy }) {
   const { showAlert } = useCmsAlert()
   const saveMutation = useSaveJaHistoryPhilosophy()
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(philosophy)
+  const [introOpen, setIntroOpen] = useState(false)
+  const [editingCard, setEditingCard] = useState<{
+    card: JaHistoryPhilosophyCard
+    index: number
+  } | null>(null)
 
-  useEffect(() => {
-    if (!editing) setDraft(philosophy)
-  }, [editing, philosophy])
+  const cards = philosophy.cards
+  const rows = useMemo<PhilosophyCardRow[]>(
+    () =>
+      cards.map((card, index) => ({
+        ...card,
+        index,
+        orderLabel: cardOrderLabel(index),
+      })),
+    [cards]
+  )
 
-  const cards = editing ? draft.cards : philosophy.cards
+  const columns = useMemo<ColumnsType<PhilosophyCardRow>>(
+    () => [
+      {
+        title: '카드 순서',
+        dataIndex: 'orderLabel',
+        width: 200,
+        align: 'center',
+      },
+      {
+        title: '이미지',
+        dataIndex: 'image',
+        width: 200,
+        align: 'center',
+        render: (_value, record) => <MediaPreview media={record.image} size="card" />,
+      },
+      {
+        title: '타이틀',
+        dataIndex: 'title',
+        align: 'center',
+        render: (value: string) => <p className="ja-history-philosophy-table__copy">{value || '-'}</p>,
+      },
+      {
+        title: '텍스트',
+        dataIndex: 'description',
+        align: 'center',
+        ellipsis: false,
+        render: (value: string) => (
+          <p className="ja-history-philosophy-table__copy">{value || '-'}</p>
+        ),
+      },
+      {
+        title: '관리',
+        key: 'actions',
+        width: 140,
+        align: 'center',
+        render: (_value, record) => (
+          <CmsButton
+            variant="secondary"
+            size="h32"
+            type="button"
+            onClick={() => setEditingCard({ card: record, index: record.index })}
+          >
+            수정
+          </CmsButton>
+        ),
+      },
+    ],
+    []
+  )
 
   return (
-    <SectionFrame
-      title="믿음을 키우는 교육"
-      editing={editing}
-      saving={saveMutation.isPending}
-      onEdit={() => setEditing(true)}
-      onCancel={() => setEditing(false)}
-      onSave={() => {
-        void saveMutation
-          .mutateAsync({
-            eyebrow: draft.eyebrow,
-            title: draft.title,
-            lead: draft.lead,
-            cards: draft.cards.map(card => ({
-              id: card.id,
-              title: card.title,
-              description: card.description,
-              ...(card.image.url.startsWith('data:')
-                ? { imageUrl: card.image.url, imageFileName: card.image.fileName }
-                : {}),
-            })),
-          })
-          .then(
-            () => {
-              setEditing(false)
-              showSaveCompletedAlert()
-            },
-            error => {
-              showAlert(
-                jaHistorySaveAlert(
-                  error,
-                  '믿음을 키우는 교육 저장에 실패했습니다. 다시 시도해 주세요.'
-                )
-              )
-            }
-          )
-      }}
-    >
-      <DetailInfoForm title="믿음을 키우는 교육" hideHeader mode="edit" className="ja-history-form">
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="타이틀"
-            view={null}
-            edit={
-              <InlineText
-                editing={editing}
-                value={draft.title}
-                onChange={title => setDraft(prev => ({ ...prev, title }))}
-                rows={2}
+    <>
+      <SectionFrame title="믿음을 키우는 교육" marker={false} onEdit={() => setIntroOpen(true)}>
+        <div className="ja-history-philosophy">
+          <DetailInfoForm
+            title="믿음을 키우는 교육"
+            hideHeader
+            mode="view"
+            className="ja-history-form ja-history-philosophy-intro"
+          >
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
                 label="타이틀"
-                placeholder="타이틀을 입력해 주세요"
+                view={<p className="ja-history-philosophy-intro__text">{philosophy.title || '-'}</p>}
+                edit={null}
               />
-            }
-          />
-        </DetailInfoForm.Row>
-        <DetailInfoForm.Row type="single">
-          <DetailInfoForm.Field
-            label="서브 텍스트"
-            view={null}
-            edit={
-              <InlineText
-                editing={editing}
-                value={draft.lead}
-                onChange={lead => setDraft(prev => ({ ...prev, lead }))}
-                rows={3}
-                label="서브 텍스트"
-                placeholder="서브 텍스트를 입력해 주세요"
-              />
-            }
-          />
-        </DetailInfoForm.Row>
-        {cards.map((card, index) => {
-          const label = `교육 카드 ${String(index + 1).padStart(2, '0')}`
-          const nested = (
-            <PhilosophyCardNestedTable
-              card={card}
-              editing={editing}
-              ariaLabel={label}
-              onChange={patch => {
-                setDraft(prev => ({
-                  ...prev,
-                  cards: prev.cards.map(item =>
-                    item.id === card.id ? { ...item, ...patch } : item
-                  ),
-                }))
-              }}
-            />
-          )
-          return (
-            <DetailInfoForm.Row key={card.id} type="single">
-              <DetailInfoForm.Field label={label} view={null} edit={nested} />
             </DetailInfoForm.Row>
-          )
-        })}
-      </DetailInfoForm>
-    </SectionFrame>
+            <DetailInfoForm.Row type="single">
+              <DetailInfoForm.Field
+                label="서브 텍스트"
+                view={<p className="ja-history-philosophy-intro__text">{philosophy.lead || '-'}</p>}
+                edit={null}
+              />
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+
+          <CmsDataTable<PhilosophyCardRow>
+            className="cms-data-table cms-data-table--skip-auto-no-col ja-history-table ja-history-philosophy-table"
+            columns={columns}
+            dataSource={rows}
+            pagination={false}
+            rowKey="id"
+          />
+        </div>
+      </SectionFrame>
+      <PhilosophyIntroFormModal
+        open={introOpen}
+        initial={philosophy}
+        confirmLoading={saveMutation.isPending && editingCard == null}
+        onCancel={() => setIntroOpen(false)}
+        onSubmit={values => {
+          void saveMutation
+            .mutateAsync(
+              philosophySavePayload(
+                { ...philosophy, title: values.title, lead: values.lead },
+                cards
+              )
+            )
+            .then(
+              () => {
+                setIntroOpen(false)
+                showSaveCompletedAlert()
+              },
+              error => {
+                showAlert(
+                  jaHistorySaveAlert(
+                    error,
+                    '믿음을 키우는 교육 저장에 실패했습니다. 다시 시도해 주세요.'
+                  )
+                )
+              }
+            )
+        }}
+      />
+      {editingCard ? (
+        <PhilosophyCardFormModal
+          open
+          orderLabel={cardOrderLabel(editingCard.index)}
+          initial={editingCard.card}
+          confirmLoading={saveMutation.isPending}
+          onCancel={() => setEditingCard(null)}
+          onSubmit={values => {
+            void saveMutation
+              .mutateAsync(
+                philosophySavePayload(philosophy, cards, {
+                  id: editingCard.card.id,
+                  values,
+                })
+              )
+              .then(
+                () => {
+                  setEditingCard(null)
+                  showSaveCompletedAlert()
+                },
+                error => {
+                  showAlert(
+                    jaHistorySaveAlert(
+                      error,
+                      '믿음을 키우는 교육 저장에 실패했습니다. 다시 시도해 주세요.'
+                    )
+                  )
+                }
+              )
+          }}
+        />
+      ) : null}
+    </>
   )
 }

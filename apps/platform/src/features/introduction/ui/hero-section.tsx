@@ -36,6 +36,7 @@ export function HeroStage({
   showArrow = false,
   onScrollArrowClick,
 }: HeroStageProps) {
+  const showHeadline = isHeroPhaseAtLeast(activePhase, 'intro')
   const showMessage = isHeroPhaseAtLeast(activePhase, 'message')
   const showSplit = isHeroPhaseAtLeast(activePhase, 'inspiring')
   const missionActive = activePhase === 'mission' || activePhase === 'exit'
@@ -55,7 +56,10 @@ export function HeroStage({
           draggable={false}
         />
         <div className={styles.openingText}>
-          <h1 className={styles.intro}>
+          <h1
+            className={styles.intro}
+            aria-hidden={isDesktopMotion && !showHeadline ? true : undefined}
+          >
             <span className={styles.introDesktop}>
               <Lines lines={hero.introLines} />
             </span>

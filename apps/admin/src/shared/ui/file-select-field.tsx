@@ -177,7 +177,7 @@ export function FileSelectField({
           <CmsButton
             type="button"
             variant="secondary"
-            size="medium"
+            size="h32"
             disabled={disabled}
             tabIndex={disabled ? undefined : -1}
             onClick={() => openFilePicker(inputRef.current)} >

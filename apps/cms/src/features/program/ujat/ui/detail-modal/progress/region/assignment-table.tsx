@@ -1,5 +1,8 @@
 import '@/shared/ui/cross-table.css'
-import { getRegionAssignmentInstitutionHeaderLabel } from './region-assignment-options'
+import {
+  formatRegionAssignmentTotalAssignedDays,
+  getRegionAssignmentInstitutionHeaderLabel,
+} from './region-assignment-options'
 import { RegionAssignmentCellContent } from './assignment-cell'
 import type { RegionAssignmentTableData } from './types'
 import './assignment-table.css'
@@ -76,7 +79,7 @@ export function RegionAssignmentTable({ data }: { data: RegionAssignmentTableDat
                   className="cross-table__cell cross-table__cell--row-header ujat-region-assignment-table__days-cell"
                   scope="row"
                 >
-                  {row.totalAssignedDays}일
+                  {formatRegionAssignmentTotalAssignedDays(row.totalAssignedDays)}
                 </th>
                 <th
                   className="cross-table__cell cross-table__cell--row-header ujat-region-assignment-table__name-cell"

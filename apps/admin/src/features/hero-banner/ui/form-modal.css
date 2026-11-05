@@ -49,7 +49,9 @@
   box-sizing: border-box;
 }
 
-.hero-banner-form-modal .detail-info-form__field-content--edit > *:not(.app-radio-group) {
+.hero-banner-form-modal
+  .detail-info-form__field-content--edit
+  > *:not(.app-radio-group):not(.file-select-image-cell) {
   display: block;
   margin-block: 0 !important;
   width: 100%;

@@ -72,14 +72,19 @@ import {
 import { screeningWithdrawCompleteContent } from '@/features/program/general/lib/screening-subject-kind'
 import {
   CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION,
-  certificateIssuePrecheckBlockMessage,
+  CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION,
+  certificateCertifiedPeriodIssueBlockMessage,
+  readCertificateCertifiedPeriod,
+  selectIssuableCertificatePlan,
+  type CertificateIssuePlan,
 } from '@/features/program/shared/lib/certificate-eligibility'
 import {
   CERTIFICATE_ELIGIBILITY_FETCH_FALLBACK,
   fetchCertificateEligibility,
   getCertificateEligibilityErrorMessage,
-  resolveCertificateIssuePrecheckMessage,
+  resolveCertificateIssuePlan,
 } from '@/features/program/shared/api/certificate-serial-api'
+import { certificateKindFromEligibilityApiType } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { parseCertificateSerialInt64 } from '@/features/program/shared/lib/certificate-serial'
 import { cmsQueryKeys } from '@/shared/api/query-keys'
 import type { StudentCertificateDownloadContext } from '@/features/program/general/lib/build-student-certificate-issuance'
@@ -159,6 +164,9 @@ export function ParticipatingParticipantFullpageView({
     useState<StudentCertificateDownloadContext | null>(null)
   const [certificateExportActive, setCertificateExportActive] = useState(false)
   const [certificateEligibilityChecking, setCertificateEligibilityChecking] = useState(false)
+  const [certificateIssuePlan, setCertificateIssuePlan] = useState<CertificateIssuePlan | null>(
+    null
+  )
   const availableTabKeys = useMemo(() => getParticipantDetailTabKeys(program), [program])
   const visibleActiveTab = availableTabKeys.includes(activeTab) ? activeTab : 'application'
 
@@ -190,9 +198,35 @@ export function ParticipatingParticipantFullpageView({
       }),
     enabled: certificateParticipantId != null,
   })
-  const certificateIssueBlockMessage = certificateIssuePrecheckBlockMessage(
-    certificateEligibilityQuery.data
+  const certificateParticipationQuery = useQuery({
+    queryKey: cmsQueryKeys.certificates.eligibility(
+      certificateParticipantId ?? 0,
+      CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION
+    ),
+    queryFn: () =>
+      fetchCertificateEligibility({
+        participantId: certificateParticipantId as number,
+        certificateType: CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION,
+      }),
+    enabled: certificateParticipantId != null,
+  })
+  const certificatePlan = useMemo(
+    () =>
+      selectIssuableCertificatePlan({
+        activityWithdrawn: isActivityWithdrawn,
+        completion: certificateEligibilityQuery.data,
+        participation: certificateParticipationQuery.data,
+      }),
+    [
+      certificateEligibilityQuery.data,
+      certificateParticipationQuery.data,
+      isActivityWithdrawn,
+    ]
   )
+  const certificateQueriesReady =
+    certificateEligibilityQuery.isSuccess && certificateParticipationQuery.isSuccess
+  const certificateIssueBlockMessage =
+    certificateQueriesReady && !certificatePlan.eligible ? certificatePlan.blockMessage : null
 
   const educationScopeQuery = useQuery({
     queryKey: generalProgramProgressQueryKeys.educationScope(program.id, mergedParticipant.id),
@@ -526,11 +560,20 @@ export function ParticipatingParticipantFullpageView({
     }
     setCertificateEligibilityChecking(true)
     try {
-      const blockMessage = await resolveCertificateIssuePrecheckMessage(mergedParticipant.id)
-      if (blockMessage) {
-        showAlert({ title: '안내', content: blockMessage })
+      const plan = await resolveCertificateIssuePlan({
+        participantId: mergedParticipant.id,
+        activityWithdrawn: isActivityWithdrawn,
+      })
+      if (plan == null) {
+        setCertificateIssuePlan(null)
+        setCertificateIssueModalOpen(true)
         return
       }
+      if (!plan.eligible) {
+        showAlert({ title: '안내', content: plan.blockMessage ?? '발급할 수 없습니다.' })
+        return
+      }
+      setCertificateIssuePlan(plan)
       setCertificateIssueModalOpen(true)
     } catch (error) {
       showAlert({
@@ -545,6 +588,7 @@ export function ParticipatingParticipantFullpageView({
     certificateEligibilityChecking,
     certificateExportActive,
     certificateIssueBlockMessage,
+    isActivityWithdrawn,
     isApplicationInfoEditing,
     mergedParticipant.id,
     showAlert,
@@ -556,6 +600,13 @@ export function ParticipatingParticipantFullpageView({
 
   const handleCertificateIssueConfirm = useCallback(
     async (_reason: CertificateIssueReasonValue, reasonLabel: string) => {
+      if (certificateIssuePlan != null && !certificateIssuePlan.eligible) {
+        showAlert({
+          title: '안내',
+          content: certificateIssuePlan.blockMessage ?? '발급할 수 없습니다.',
+        })
+        return
+      }
       try {
         const [lectureAttendanceSessions, profileHydrated] = await Promise.all([
           progressRemoteEnabled
@@ -570,12 +621,30 @@ export function ParticipatingParticipantFullpageView({
             : mergedParticipant,
         ])
 
+        const certifiedPeriod = readCertificateCertifiedPeriod(
+          certificateIssuePlan?.eligibility as object | null | undefined
+        )
+        const certifiedPeriodBlock = certificateCertifiedPeriodIssueBlockMessage({
+          activityWithdrawn: isActivityWithdrawn,
+          period: certifiedPeriod,
+        })
+        if (certifiedPeriodBlock) {
+          showAlert({ title: '안내', content: certifiedPeriodBlock })
+          return
+        }
         setCertificateExportContext(
           buildParticipatingParticipantCertificateContext({
             participant: { ...profileHydrated, lectureAttendanceSessions },
             program,
             hasStudentSatisfactionSurvey,
             issuanceReasonLabel: reasonLabel,
+            ...(certificateIssuePlan
+              ? { certificateKind: certificateKindFromEligibilityApiType(certificateIssuePlan.apiType) }
+              : {}),
+            certifiedPeriodLabel: certifiedPeriod?.label,
+            certifiedPeriodStart: certifiedPeriod?.start,
+            certifiedPeriodEnd: certifiedPeriod?.end,
+            requireCertifiedPeriod: isActivityWithdrawn,
           })
         )
         setCertificateExportActive(true)
@@ -589,19 +658,42 @@ export function ParticipatingParticipantFullpageView({
         })
       }
     },
-    [hasStudentSatisfactionSurvey, mergedParticipant, program, progressRemoteEnabled, showAlert]
+    [
+      certificateIssuePlan,
+      hasStudentSatisfactionSurvey,
+      isActivityWithdrawn,
+      mergedParticipant,
+      program,
+      progressRemoteEnabled,
+      showAlert,
+    ]
   )
 
   const handleCertificateExportComplete = useCallback((success: boolean) => {
     setCertificateExportContext(null)
     setCertificateExportActive(false)
     setCertificateIssueModalOpen(false)
+    setCertificateIssuePlan(null)
+    if (success && certificateParticipantId != null) {
+      void queryClient.invalidateQueries({
+        queryKey: cmsQueryKeys.certificates.eligibility(
+          certificateParticipantId,
+          CERTIFICATE_ELIGIBILITY_TYPE_COMPLETION
+        ),
+      })
+      void queryClient.invalidateQueries({
+        queryKey: cmsQueryKeys.certificates.eligibility(
+          certificateParticipantId,
+          CERTIFICATE_ELIGIBILITY_TYPE_PARTICIPATION
+        ),
+      })
+    }
     if (!success) {
       handleError(new Error('participant certificate pdf export failed'), {
         context: 'participatingParticipantFullpageView.certificateDownload',
       })
     }
-  }, [])
+  }, [certificateParticipantId, queryClient])
 
   const handleAdminCommentEditEnter = useCallback(() => {
     if (isApplicationInfoEditing) return
@@ -738,13 +830,12 @@ export function ParticipatingParticipantFullpageView({
                     icon={<ButtonDownloadIcon />}
                     disabled={
                       certificateExportActive ||
-                      certificateEligibilityChecking ||
-                      certificateIssueBlockMessage != null
+                      certificateEligibilityChecking
                     }
                     onClick={() => {
                       void handleCertificateIssueClick()
                     }} >
-                    수료증/참여인증서 발급
+                    수료증/참가인증서 발급
                   </CmsButton>
                 </>
               ) : null}
