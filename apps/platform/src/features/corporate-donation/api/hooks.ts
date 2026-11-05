@@ -1,6 +1,6 @@
 import { useMutation, queryOptions, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { HOME_PARTNER_LOGO_ROWS, type HomePartnerLogo } from '@/features/home'
+import { type HomePartnerLogo } from '@/features/home'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { isHomepageApiConfigured } from '@/shared/lib/api-remote-env'
 import { queryRetryDelay, shouldRetryQuery } from '@/shared/lib/query-retry'
@@ -99,10 +99,9 @@ export function usePublicCorporatePartnerRows(): {
   })
 
   const rows = useMemo(() => {
-    if (!remote || query.isError) return HOME_PARTNER_LOGO_ROWS
-    if (!query.data) return HOME_PARTNER_LOGO_ROWS
-    return mapCorporateSponsorRows(query.data, HOME_PARTNER_LOGO_ROWS)
-  }, [query.data, query.isError, remote])
+    if (!remote || query.isPending || query.isError || !query.data) return []
+    return mapCorporateSponsorRows(query.data)
+  }, [query.data, query.isError, query.isPending, remote])
 
   return {
     rows,

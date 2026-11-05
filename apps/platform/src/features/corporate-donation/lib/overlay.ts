@@ -1,4 +1,5 @@
 import type { HomePartnerLogo } from '@/features/home'
+import { partnerRowsFromOrderedLogos } from '@/features/home/lib/split-partner-logo-rows'
 import {
   readOptionalText,
   normalizePublicCopy,
@@ -163,7 +164,6 @@ export function buildCorporateSponsorshipView(
 
 export function mapCorporateSponsorRows(
   remote: readonly PublicCorporateSponsorResponse[] | undefined,
-  fallback: readonly (readonly HomePartnerLogo[])[],
 ): readonly (readonly HomePartnerLogo[])[] {
   const logos = [...(remote ?? [])]
     .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
@@ -172,8 +172,5 @@ export function mapCorporateSponsorRows(
       if (!name) return []
       return [{ name, logoUrl: readOptionalText(row.logoUrl) }]
     })
-  if (logos.length === 0) return fallback
-
-  const mid = Math.ceil(logos.length / 2)
-  return [logos.slice(0, mid), logos.slice(mid)]
+  return partnerRowsFromOrderedLogos(logos)
 }
