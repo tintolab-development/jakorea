@@ -1,5 +1,6 @@
 import type { SettlementTripLegDraft, SettlementWriteDraft } from '../model/write-draft.ts'
 import { SETTLEMENT_TRANSIT_OPTIONS, SETTLEMENT_TRIP_TYPE_OPTIONS } from './settlement-options.ts'
+import { isInstructorTransportSectionVisible } from './instructor-transport-preview.ts'
 import { isTransportPaymentItemType } from './payment-items.ts'
 import { readTripLegFileNames } from './empty-trip-leg.ts'
 
@@ -138,7 +139,10 @@ export function hasSettlementTransportSection(draft: SettlementWriteDraft): bool
   if (isReceiptWriteDraft(draft)) {
     return isTransportEnabled(draft) && started
   }
-  return started || draft.meta.isInstructor
+  if (draft.meta.isInstructor) {
+    return isInstructorTransportSectionVisible(draft.transport.autoPreview)
+  }
+  return started
 }
 
 export function hasSettlementMealSection(draft: SettlementWriteDraft): boolean {
@@ -169,7 +173,14 @@ export function formatSettlementPaymentPurpose(draft: SettlementWriteDraft): str
   const returnStarted =
     draft.transport.tripType === 'round_trip' &&
     isSettlementTripLegStarted(draft.transport.return)
-  if (isSettlementTripLegStarted(draft.transport.depart) || returnStarted) {
+  if (
+    isSettlementTripLegStarted(draft.transport.depart) ||
+    returnStarted ||
+    (draft.meta.isInstructor &&
+      isInstructorTransportSectionVisible(draft.transport.autoPreview) &&
+      (draft.transport.autoPreview?.totalTransportFeeWon != null ||
+        draft.transport.autoPreview?.oneWayDistanceKm != null))
+  ) {
     names.push('교통비')
   }
   if (hasSettlementMealSection(draft)) names.push('식사비')

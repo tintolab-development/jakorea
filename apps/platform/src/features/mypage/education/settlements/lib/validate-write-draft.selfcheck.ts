@@ -96,7 +96,7 @@ const instructorPaymentMissingReceipt = buildSettlementWriteDraft({
   departTransit: 'bus',
   departAmount: '5,000',
 })
-assert.equal(validateSettlementWriteDraft(instructorPaymentMissingReceipt), 'receipt_required')
+assert.equal(validateSettlementWriteDraft(instructorPaymentMissingReceipt), null)
 assert.equal(
   resolveSettlementWriteValidationAlert('receipt_required').title,
   '영수증 제출 안내',
@@ -115,6 +115,6 @@ const instructorPaymentMissingTransit = buildSettlementWriteDraft({
   departAmount: '5,000',
   departFiles: ['receipt.jpg'],
 })
-assert.equal(validateSettlementWriteDraft(instructorPaymentMissingTransit), 'required_incomplete')
+assert.equal(validateSettlementWriteDraft(instructorPaymentMissingTransit), null)
 
 console.log('validate-write-draft.selfcheck: ok')

@@ -34,6 +34,7 @@ import {
   payableEvidenceRequired,
   sortReceiptPayableItems,
 } from '../lib/payment-items'
+import { InstructorTransportFeeBlock } from './instructor-transport-fee-block'
 import { EducationSettlementSessionBanner } from './settlement-session-banner'
 import { PFButton, PFInfoReview, PFText, type PFInfoReviewItem } from '@/shared/ui'
 import styles from './confirm-view.module.css'
@@ -217,29 +218,39 @@ export function EducationSettlementConfirmView({
 
       {showTransport ? (
         <ConfirmSection title="교통비 신청">
-          <PFInfoReview
-            accentFirstRow={false}
-            rows={[{ label: '신청 구분', value: resolveSettlementTripTypeLabel(draft.transport.tripType) }]}
-          />
+          {isReceipt ? (
+            <>
+              <PFInfoReview
+                accentFirstRow={false}
+                rows={[
+                  { label: '신청 구분', value: resolveSettlementTripTypeLabel(draft.transport.tripType) },
+                ]}
+              />
 
-          <ConfirmTripLegBlock
-            heading={draft.transport.tripType === 'round_trip' ? '가는 편(출발)' : '가는 편'}
-            leg={draft.transport.depart}
-            showReceipt={showTransportReceipt}
-          />
+              <ConfirmTripLegBlock
+                heading={draft.transport.tripType === 'round_trip' ? '가는 편(출발)' : '가는 편'}
+                leg={draft.transport.depart}
+                showReceipt={showTransportReceipt}
+              />
 
-          {draft.transport.tripType === 'round_trip' ? (
-            <ConfirmTripLegBlock
-              heading="오는 편(귀가)"
-              leg={draft.transport.return}
-              showReceipt={showTransportReceipt}
+              {draft.transport.tripType === 'round_trip' ? (
+                <ConfirmTripLegBlock
+                  heading="오는 편(귀가)"
+                  leg={draft.transport.return}
+                  showReceipt={showTransportReceipt}
+                />
+              ) : null}
+
+              <ConfirmAmountSummary
+                label="총 산정 교통비"
+                amount={transportTotal > 0 ? `${transportTotal.toLocaleString('ko-KR')}원` : ''}
+              />
+            </>
+          ) : (
+            <InstructorTransportFeeBlock
+              preview={draft.transport.autoPreview ?? session?.instructorTransportPreview ?? null}
             />
-          ) : null}
-
-          <ConfirmAmountSummary
-            label="총 산정 교통비"
-            amount={transportTotal > 0 ? `${transportTotal.toLocaleString('ko-KR')}원` : ''}
-          />
+          )}
         </ConfirmSection>
       ) : null}
 

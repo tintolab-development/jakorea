@@ -17,6 +17,8 @@ import {
   parseSettlementAmount,
 } from '../lib/format-write-draft'
 import { findIndividualScheduleForSession } from '../lib/assigned-settlement-items'
+import { isInstructorTransportSectionVisible } from '../lib/instructor-transport-preview'
+import { InstructorTransportFeeBlock } from './instructor-transport-fee-block'
 import {
   individualIneligibleMessage,
   isEvidencePolicyUnconfigured,
@@ -708,7 +710,10 @@ export function EducationSettlementWriteForm({
       accountHolder,
       transportItemType: transportItem?.itemType ?? (!isReceipt ? 'TRANSPORTATION' : undefined),
       transportItemName: transportItem?.itemName,
-      transportEvidenceRequired: isReceiptEvidenceRequired(transportItem?.evidenceRequired),
+      transportEvidenceRequired: isReceipt
+        ? isReceiptEvidenceRequired(transportItem?.evidenceRequired)
+        : false,
+      transportAutoPreview: isReceipt ? null : (session?.instructorTransportPreview ?? null),
       tripType,
       departTransit,
       departAmount: formatSettlementAmountInput(departAmount, transportMaxWon),
@@ -756,7 +761,10 @@ export function EducationSettlementWriteForm({
 
   let sectionNo = 1
   const basicSectionNo = sectionNo++
-  const showTransportSection = Boolean((!isReceipt || transportItem) && (transportItem || !isReceipt))
+  const instructorTransportPreview = session?.instructorTransportPreview ?? null
+  const showTransportSection = isReceipt
+    ? Boolean(transportItem)
+    : isInstructorTransportSectionVisible(instructorTransportPreview)
   const wageSectionNos = wageExtras.map(() => sectionNo++)
   const transportSectionNo = showTransportSection ? sectionNo++ : null
   const restSectionNos = restExtras.map(() => sectionNo++)
@@ -909,75 +917,80 @@ export function EducationSettlementWriteForm({
           <PFFormSection
             id="settlement-transport"
             title={`${transportSectionNo}. 교통비 신청`}
-            required={!isReceipt && isInstructor}
             description={
               isReceipt
                 ? '가는 편과 오는 편을 구분해 실제 사용한 교통비를 신청해 주세요.'
-                : '강의 과정에서 발생한 교통비에 한해 신청해 주세요.'
+                : '편도 30km 이상 이동 시 지원되는 비용입니다.'
             }
           >
-            <PFFormFieldTable>
-              <PFFormFieldRow type="single">
-                <PFFormField label="신청 구분">
-                  <RadioGroup
-                    name="trip-type"
-                    value={tripType}
-                    onChange={setTripType}
-                    options={SETTLEMENT_TRIP_TYPE_OPTIONS}
+            {isReceipt ? (
+              <>
+                <PFFormFieldTable>
+                  <PFFormFieldRow type="single">
+                    <PFFormField label="신청 구분">
+                      <RadioGroup
+                        name="trip-type"
+                        value={tripType}
+                        onChange={setTripType}
+                        options={SETTLEMENT_TRIP_TYPE_OPTIONS}
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                </PFFormFieldTable>
+
+                <TripLegBlock
+                  prefix="가는 편"
+                  heading={tripType === 'round_trip' ? '가는 편(출발)' : undefined}
+                  transit={departTransit}
+                  amount={departAmount}
+                  fileNames={departFiles}
+                  attachments={departAttachments}
+                  uploadEnabled={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
+                  showReceiptUpload={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
+                  amountMaxWon={transportMaxWon}
+                  onTransitChange={setDepartTransit}
+                  onAmountChange={setDepartAmount}
+                  onFileNamesChange={setDepartFiles}
+                  onAttachmentsChange={setDepartAttachments}
+                  onError={showAlert}
+                />
+
+                {tripType === 'round_trip' ? (
+                  <TripLegBlock
+                    prefix="오는 편"
+                    heading="오는 편(귀가)"
+                    transit={returnTransit}
+                    amount={returnAmount}
+                    fileNames={returnFiles}
+                    attachments={returnAttachments}
+                    uploadEnabled={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
+                    showReceiptUpload={isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
+                    amountMaxWon={transportMaxWon}
+                    onTransitChange={setReturnTransit}
+                    onAmountChange={setReturnAmount}
+                    onFileNamesChange={setReturnFiles}
+                    onAttachmentsChange={setReturnAttachments}
+                    onError={showAlert}
                   />
-                </PFFormField>
-              </PFFormFieldRow>
-            </PFFormFieldTable>
+                ) : null}
 
-            <TripLegBlock
-              prefix="가는 편"
-              heading={tripType === 'round_trip' ? '가는 편(출발)' : undefined}
-              transit={departTransit}
-              amount={departAmount}
-              fileNames={departFiles}
-              attachments={departAttachments}
-              uploadEnabled={isReceipt && isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-              showReceiptUpload={!isReceipt || isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-              amountMaxWon={transportMaxWon}
-              onTransitChange={setDepartTransit}
-              onAmountChange={setDepartAmount}
-              onFileNamesChange={setDepartFiles}
-              onAttachmentsChange={setDepartAttachments}
-              onError={showAlert}
-            />
-
-            {tripType === 'round_trip' ? (
-              <TripLegBlock
-                prefix="오는 편"
-                heading="오는 편(귀가)"
-                transit={returnTransit}
-                amount={returnAmount}
-                fileNames={returnFiles}
-                attachments={returnAttachments}
-                uploadEnabled={isReceipt && isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-              showReceiptUpload={!isReceipt || isReceiptEvidenceRequired(transportItem?.evidenceRequired)}
-              amountMaxWon={transportMaxWon}
-              onTransitChange={setReturnTransit}
-              onAmountChange={setReturnAmount}
-                onFileNamesChange={setReturnFiles}
-                onAttachmentsChange={setReturnAttachments}
-                onError={showAlert}
-              />
-            ) : null}
-
-            <PFFormFieldTable>
-              <PFFormFieldRow type="single">
-                <PFFormField label="총 산정 교통비">
-                  <AmountWithWon
-                    placeholder=" "
-                    disabled
-                    value={transportTotal > 0 ? transportTotal.toLocaleString('ko-KR') : ''}
-                    onChange={() => undefined}
-                    ariaLabel="총 산정 교통비"
-                  />
-                </PFFormField>
-              </PFFormFieldRow>
-            </PFFormFieldTable>
+                <PFFormFieldTable>
+                  <PFFormFieldRow type="single">
+                    <PFFormField label="총 산정 교통비">
+                      <AmountWithWon
+                        placeholder=" "
+                        disabled
+                        value={transportTotal > 0 ? transportTotal.toLocaleString('ko-KR') : ''}
+                        onChange={() => undefined}
+                        ariaLabel="총 산정 교통비"
+                      />
+                    </PFFormField>
+                  </PFFormFieldRow>
+                </PFFormFieldTable>
+              </>
+            ) : (
+              <InstructorTransportFeeBlock preview={instructorTransportPreview} />
+            )}
           </PFFormSection>
         ) : null}
 

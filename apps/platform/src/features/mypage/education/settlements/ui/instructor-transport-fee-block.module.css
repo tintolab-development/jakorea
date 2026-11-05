@@ -1,0 +1,19 @@
+.root {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-16);
+}
+
+.total {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  align-self: stretch;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-20);
+  border-radius: var(--radius-16);
+  background: var(--color-neutral-cool-50, #f5f7f7);
+}

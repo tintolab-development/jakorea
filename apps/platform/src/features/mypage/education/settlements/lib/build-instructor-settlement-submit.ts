@@ -1,9 +1,6 @@
 import type { SettlementWriteDraft } from '../model/write-draft.ts'
-import { readTripLegAttachments } from './empty-trip-leg.ts'
-import {
-  parseSettlementAmount,
-  isSettlementTripLegStarted,
-} from './format-write-draft.ts'
+import { parseSettlementAmount } from './format-write-draft.ts'
+import { isInstructorTransportBelowMinimum } from './instructor-transport-preview.ts'
 import { isReceiptWageItemType, normalizePaymentItemType } from './payment-items.ts'
 import { LECTURE_FEE_TYPE_CODES } from './lecture-fee-preview.ts'
 
@@ -92,23 +89,19 @@ export function buildInstructorSettlementPayloadParts(draft: SettlementWriteDraf
   const evidenceAttachments: InstructorSettlementEvidenceAttachment[] = []
 
   const transportType = draft.transport.itemType?.trim()
-  if (transportType) {
-    const departStarted = isSettlementTripLegStarted(draft.transport.depart)
-    const returnStarted =
-      draft.transport.tripType === 'round_trip' && isSettlementTripLegStarted(draft.transport.return)
-    const amount =
-      (departStarted ? parseSettlementAmount(draft.transport.depart.amount) : 0) +
-      (returnStarted ? parseSettlementAmount(draft.transport.return.amount) : 0)
-    const fileObjectIds = [
-      ...(departStarted ? readTripLegAttachments(draft.transport.depart).map(file => file.fileObjectId) : []),
-      ...(returnStarted ? readTripLegAttachments(draft.transport.return).map(file => file.fileObjectId) : []),
-    ]
+  const autoPreview = draft.transport.autoPreview
+  if (
+    transportType &&
+    !isInstructorTransportBelowMinimum(autoPreview) &&
+    autoPreview?.totalTransportFeeWon != null &&
+    autoPreview.totalTransportFeeWon > 0
+  ) {
     pushItem(requestedItems, evidenceAttachments, {
       itemType: transportType,
       itemName: draft.transport.itemName,
-      amount,
-      fileObjectIds,
-      evidenceRequired: draft.transport.evidenceRequired,
+      amount: autoPreview.totalTransportFeeWon,
+      fileObjectIds: [],
+      evidenceRequired: false,
     })
   }
 

@@ -1,3 +1,4 @@
+import type { InstructorTransportPreview } from '../lib/instructor-transport-preview'
 import type { SettlementDocumentKind } from '../lib/settlement-status-ui'
 
 export type SettlementTripType = 'one_way' | 'round_trip'
@@ -54,6 +55,7 @@ export type SettlementWriteDraft = {
     itemType?: string
     itemName?: string
     evidenceRequired?: boolean
+    autoPreview?: InstructorTransportPreview | null
     tripType: SettlementTripType
     depart: SettlementTripLegDraft
     return: SettlementTripLegDraft

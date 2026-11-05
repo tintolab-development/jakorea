@@ -31,10 +31,6 @@ function hasUploadedReceipts(leg: SettlementTripLegDraft): boolean {
   return readTripLegAttachments(leg).length > 0 || readTripLegFileNames(leg).length > 0
 }
 
-function isTripLegFieldsIncomplete(leg: SettlementTripLegDraft): boolean {
-  return isBlank(leg.transit) || parseSettlementAmount(leg.amount) <= 0
-}
-
 function isTripLegMissingReceipt(leg: SettlementTripLegDraft): boolean {
   return isSettlementTripLegStarted(leg) && !hasUploadedReceipts(leg)
 }
@@ -57,14 +53,6 @@ export function validateSettlementWriteDraft(
   }
 
   if (meta.isInstructor && meta.documentKind !== 'receipt') {
-    if (isTripLegFieldsIncomplete(transport.depart)) return 'required_incomplete'
-    if (transport.tripType === 'round_trip' && isTripLegFieldsIncomplete(transport.return)) {
-      return 'required_incomplete'
-    }
-    if (!hasUploadedReceipts(transport.depart)) return 'receipt_required'
-    if (transport.tripType === 'round_trip' && !hasUploadedReceipts(transport.return)) {
-      return 'receipt_required'
-    }
     if (isAmountMissingReceipt(meal.amount, meal.fileNames.length)) return 'receipt_required'
     if (isAmountMissingReceipt(activity.amount, activity.fileNames.length)) return 'receipt_required'
     return null

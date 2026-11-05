@@ -22,7 +22,13 @@ const base = {
   accountHolder: '홍길동',
   transportItemType: 'TRANSPORTATION',
   transportItemName: '교통비',
-  transportEvidenceRequired: true,
+  transportEvidenceRequired: false,
+  transportAutoPreview: {
+    oneWayDistanceKm: 30,
+    fuelCostWon: 12_000,
+    tollFeeWon: 3_000,
+    totalTransportFeeWon: 15_000,
+  },
   tripType: 'round_trip' as const,
   departTransit: 'bus',
   departAmount: '12,000',
@@ -61,12 +67,9 @@ assert.equal(created.requestedItems.some(item => item.itemType === 'LECTURE_FEE'
 assert.equal(created.requestedItems.some(item => item.itemType === 'TRANSPORTATION'), true)
 assert.equal(
   created.requestedItems.find(item => item.itemType === 'TRANSPORTATION')?.requestedAmount,
-  24000,
+  15_000,
 )
-assert.deepEqual(
-  created.evidenceAttachments.find(item => item.itemType === 'TRANSPORTATION')?.fileObjectIds,
-  [9001, 9002],
-)
+assert.equal(created.evidenceAttachments.some(item => item.itemType === 'TRANSPORTATION'), false)
 assert.equal(created.requestedItems.find(item => item.itemType === 'MEAL')?.requestedAmount, 10000)
 assert.equal('residentFront' in created, false)
 assert.equal('accountNumber' in created, false)
@@ -75,6 +78,22 @@ const resubmit = buildInstructorSettlementResubmitRequest(draft)
 assert.equal('idempotencyKey' in resubmit, false)
 assert.equal('assignmentId' in resubmit, false)
 assert.equal(resubmit.requestedItems.length, created.requestedItems.length)
+
+const belowMin = buildSettlementWriteDraft({
+  ...base,
+  transportAutoPreview: {
+    oneWayDistanceKm: 10,
+    fuelCostWon: 1,
+    tollFeeWon: 1,
+    totalTransportFeeWon: 2,
+  },
+})
+assert.equal(
+  buildInstructorSettlementCreateRequest(belowMin).requestedItems.some(
+    item => item.itemType === 'TRANSPORTATION',
+  ),
+  false,
+)
 
 const withoutAssignment = buildSettlementWriteDraft({ ...base, assignmentId: undefined })
 assert.throws(

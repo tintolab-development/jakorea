@@ -1,3 +1,4 @@
+import type { InstructorTransportPreview } from './instructor-transport-preview.ts'
 import type { SettlementDocumentKind } from './settlement-status-ui.ts'
 import { createSettlementIdempotencyKey } from './seoul-deadline.ts'
 import { emptySettlementTripLeg } from './empty-trip-leg.ts'
@@ -33,6 +34,7 @@ type BuildSettlementWriteDraftInput = {
   transportItemType?: string
   transportItemName?: string
   transportEvidenceRequired?: boolean
+  transportAutoPreview?: InstructorTransportPreview | null
   tripType: SettlementWriteDraft['transport']['tripType']
   departTransit: string
   departAmount: string
@@ -84,6 +86,7 @@ export function buildSettlementWriteDraft(
       itemType: input.transportItemType,
       itemName: input.transportItemName,
       evidenceRequired: input.transportEvidenceRequired,
+      autoPreview: input.transportAutoPreview ?? null,
       tripType: input.tripType,
       depart: {
         transit: input.departTransit,
