@@ -3,7 +3,7 @@
 const CERTIFICATE_STATUS_LABELS: Record<string, string> = {
   AVAILABLE: '발급 가능',
   COMPLETION_ISSUED: '수료증 발급 완료',
-  PARTICIPATION_ISSUED: '참여증 발급 완료',
+  PARTICIPATION_ISSUED: '참가인증서 발급 완료',
   NOT_ELIGIBLE: '발급 불가',
   PENDING: '발급 대기',
   REQUESTED: '발급 요청',

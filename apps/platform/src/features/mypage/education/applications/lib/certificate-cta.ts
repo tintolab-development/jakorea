@@ -63,8 +63,7 @@ export function shouldShowDetailCertificateCta(input: {
   detailCase?: string | null
   canIssueCertificate?: boolean | null
 }): boolean {
-  if (!isPersonalCompletionCertificateSurface(input)) return false
-  return input.canIssueCertificate === true
+  return isPersonalCompletionCertificateSurface(input)
 }
 
 export function shouldFetchIndividualCertificateAvailability(input: {
@@ -77,7 +76,7 @@ export function shouldFetchIndividualCertificateAvailability(input: {
   programId?: string | number | null
 }): boolean {
   if (input.programId == null || String(input.programId).trim() === '') return false
-  return shouldShowDetailCertificateCta(input)
+  return isPersonalCompletionCertificateSurface(input)
 }
 
 function availabilityIssueId(
@@ -99,8 +98,6 @@ export function resolveCertificateCtaView(input: {
   availability?: PortalCertificateAvailability | null
 }): CertificateCtaView {
   if (!shouldShowDetailCertificateCta(input)) return { kind: 'hidden' }
-  const status = normalizeCode(input.certificateStatus)
-  if (status === 'NOT_ELIGIBLE') return { kind: 'hidden' }
   const availability = input.availability
   if (!availability) return { kind: 'hidden' }
 

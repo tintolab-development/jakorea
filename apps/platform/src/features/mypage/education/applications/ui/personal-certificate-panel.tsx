@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import type { ProgramDetailCase } from '@/features/program'
 import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
-import { PFAlertModal, PFButton, PFLoadingSpinner } from '@/shared/ui'
+import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
+import { availabilityReasonMessage } from '../api/personal-certificate-client'
 import {
   useDownloadPersonalCertificateMutation,
   useIssuePersonalCertificateMutation,
@@ -13,6 +14,8 @@ import type { ProgramApplicationType } from '../api/types'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import {
   isPersonalCertificateActionable,
+  portalCertificateDocumentLabel,
+  portalCertificateIssueType,
   shouldShowPersonalCertificateAction,
 } from '../lib/personal-certificate-eligibility'
 import styles from './personal-certificate-panel.module.css'
@@ -25,6 +28,7 @@ type EducationPersonalCertificatePanelProps = {
   programGroup?: string | null
   detailCase?: ProgramDetailCase | string | null
   isTeacher?: boolean
+  isWithdrawnDuring?: boolean
   /** 상세 힌트 — 발급 가능 여부의 최종 판정으로 쓰지 않는다 */
   certificateStatus?: string | null
   canIssueCertificateHint?: boolean | null
@@ -39,6 +43,7 @@ export function EducationPersonalCertificatePanel({
   programGroup,
   detailCase,
   isTeacher,
+  isWithdrawnDuring = false,
   canIssueCertificateHint,
   participantIdHint,
 }: EducationPersonalCertificatePanelProps) {
@@ -49,10 +54,17 @@ export function EducationPersonalCertificatePanel({
     detailCase,
     isTeacher,
   })
-  const availabilityQuery = usePersonalCertificateAvailabilityQuery({
+  const autoQuery = usePersonalCertificateAvailabilityQuery({
     programId,
-    enabled: eligibleSurface,
+    enabled: eligibleSurface && !isWithdrawnDuring,
+    certificateType: 'AUTO',
   })
+  const participationQuery = usePersonalCertificateAvailabilityQuery({
+    programId,
+    enabled: eligibleSurface && isWithdrawnDuring,
+    certificateType: 'PARTICIPATION',
+  })
+  const availability = isWithdrawnDuring ? participationQuery.availability : autoQuery.availability
   const issueMutation = useIssuePersonalCertificateMutation({
     applicationType: applicationType ?? null,
     applicationId,
@@ -65,8 +77,6 @@ export function EducationPersonalCertificatePanel({
   useEffect(() => {
     setLocalIssueId(null)
   }, [programId, applicationId])
-
-  const availability = availabilityQuery.availability
 
   useEffect(() => {
     if (!availability || typeof canIssueCertificateHint !== 'boolean') return
@@ -82,6 +92,9 @@ export function EducationPersonalCertificatePanel({
 
   if (!eligibleSurface) return null
 
+  const documentLabel = isWithdrawnDuring
+    ? '참가인증서'
+    : portalCertificateDocumentLabel(availability?.certificateType)
   const existingIssueId =
     localIssueId ??
     (availability?.existingIssueId != null && Number(availability.existingIssueId) > 0
@@ -97,8 +110,10 @@ export function EducationPersonalCertificatePanel({
       : null) ?? (participantIdHint != null && participantIdHint > 0 ? participantIdHint : null)
 
   const busy =
-    availabilityQuery.isLoading ||
-    availabilityQuery.isFetching ||
+    autoQuery.isLoading ||
+    autoQuery.isFetching ||
+    participationQuery.isLoading ||
+    participationQuery.isFetching ||
     issueMutation.isPending ||
     downloadMutation.isPending
 
@@ -106,20 +121,23 @@ export function EducationPersonalCertificatePanel({
     try {
       await downloadMutation.mutateAsync({
         certificateIssueId: issueId,
-        fileName: buildCertificateDownloadFileName({ memberName: displayName }),
+        fileName: buildCertificateDownloadFileName({
+          documentLabel,
+          memberName: displayName,
+        }),
       })
     } catch (error) {
       setAlertMessage(
         error instanceof Error && error.message.trim()
           ? error.message
-          : '수료증을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+          : `${documentLabel}을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.`,
       )
     }
   }
 
   const handleIssue = async () => {
     if (participantId == null) {
-      setAlertMessage('참가자 정보가 없어 수료증을 발급할 수 없습니다.')
+      setAlertMessage(`참가자 정보가 없어 ${documentLabel}을 발급할 수 없습니다.`)
       return
     }
     const programIdNumber = Number(programId)
@@ -128,35 +146,50 @@ export function EducationPersonalCertificatePanel({
       return
     }
     try {
-      const issued = await issueMutation.mutateAsync({
+      const issuedResponse = await issueMutation.mutateAsync({
         programId: programIdNumber,
         participantId,
-        certificateType: 'AUTO',
+        certificateType: isWithdrawnDuring
+          ? 'PARTICIPATION'
+          : portalCertificateIssueType(availability?.certificateType),
         issueReason: 'PERSONAL_ARCHIVE',
       })
-      const issueId = readPortalCertificateIssueId(issued)
+      const issueId = readPortalCertificateIssueId(issuedResponse)
       if (issueId == null) {
-        await availabilityQuery.refetch()
-        setAlertMessage('수료증이 발급되었습니다. 다운로드를 다시 시도해 주세요.')
+        if (isWithdrawnDuring) await participationQuery.refetch()
+        else await autoQuery.refetch()
+        setAlertMessage(`${documentLabel}이 발급되었습니다. 다운로드를 다시 시도해 주세요.`)
         return
       }
       setLocalIssueId(issueId)
       await handleDownload(issueId)
-      await availabilityQuery.refetch()
+      if (isWithdrawnDuring) await participationQuery.refetch()
+      else await autoQuery.refetch()
     } catch (error) {
       setAlertMessage(
         error instanceof Error && error.message.trim()
           ? error.message
-          : '수료증을 발급하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+          : `${documentLabel}을 발급하지 못했습니다. 잠시 후 다시 시도해 주세요.`,
       )
     }
   }
 
-  // 발급·다운로드가 가능할 때만 노출. 불가 사유(발급 불가 등)는 헤더에 띄우지 않는다.
-  if (!actionable) return null
+  const ineligibleMessage = availabilityReasonMessage(availability)
+
+  if (!actionable) {
+    if (!isWithdrawnDuring) return null
+    if (autoQuery.isLoading || participationQuery.isLoading) return null
+    return (
+      <section aria-label="참가인증서">
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          {ineligibleMessage || '인정된 교육 실적이 없어 참가인증서를 발급할 수 없습니다.'}
+        </PFText>
+      </section>
+    )
+  }
 
   return (
-    <section aria-label="수료증">
+    <section aria-label={documentLabel}>
       <div className={styles.actions}>
         {issued || canIssueNew ? (
           <CertificateActionButton
@@ -169,7 +202,7 @@ export function EducationPersonalCertificatePanel({
               void handleIssue()
             }}
           >
-            {issued ? '수료증 다운로드' : '수료증 발급하기'}
+            {issued ? `${documentLabel} 다운로드` : `${documentLabel} 발급하기`}
           </CertificateActionButton>
         ) : null}
       </div>
@@ -185,8 +218,8 @@ export function EducationPersonalCertificatePanel({
           blocking
           label={
             downloadMutation.isPending
-              ? '수료증을 다운로드하는 중'
-              : '수료증을 발급하는 중'
+              ? `${documentLabel}을 다운로드하는 중`
+              : `${documentLabel}을 발급하는 중`
           }
         />
       ) : null}
@@ -206,20 +239,17 @@ function CertificateActionButton({
   return (
     <PFButton
       type="button"
-      variant="certificate"
+      variant="secondary"
+      size="medium"
+      width={200}
       disabled={disabled}
-      className={styles.actionButton}
       onClick={onClick}
+      className={styles.button}
     >
-      {children}
-      <img
-        className={styles.actionIllustration}
-        src={illustDiplomaUrl}
-        alt=""
-        width={48}
-        height={48}
-        aria-hidden="true"
-      />
+      <span className={styles.buttonInner}>
+        <img src={illustDiplomaUrl} alt="" width={24} height={24} />
+        {children}
+      </span>
     </PFButton>
   )
 }
