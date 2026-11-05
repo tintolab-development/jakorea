@@ -21,6 +21,10 @@ import type {
   EducationTeacherDeliveryStatus,
   EducationUjatTemporarySchedule,
 } from '../model/types'
+import {
+  resolveLastParticipatedSession,
+  resolvePortalWithdrawalPhase,
+} from './map-portal-withdrawal-phase'
 import type {
   PortalProgramApplicationDetail,
   PortalProgramApplicationListItem,
@@ -247,6 +251,8 @@ export function mapPortalProgramApplicationListItem(
   if (!applicationType || row.applicationId == null || row.programId == null || !title) return null
 
   const displayStatus = resolvePortalDisplayStatus(row)
+  const withdrawalPhase = resolvePortalWithdrawalPhase(row, displayStatus)
+  const lastParticipatedSession = resolveLastParticipatedSession(row)
   const detailCase = mapDetailCase(applicationType, row.programGroup, row.programType)
   const thumbnailUrl =
     row.thumbnailFileObjectId == null ? undefined : portalPublicFileContentUrl(row.thumbnailFileObjectId)
@@ -278,6 +284,8 @@ export function mapPortalProgramApplicationListItem(
     educationFormLabel: '',
     thumbnailUrl,
     displayStatus,
+    ...(withdrawalPhase ? { withdrawalPhase } : {}),
+    ...(lastParticipatedSession != null ? { lastParticipatedSession } : {}),
     detailCase,
     programType: row.programType,
     programGroup: row.programGroup,
@@ -558,6 +566,12 @@ export function mapPortalProgramApplicationDetail(
   })
   if (!mapped) return null
   mapped.displayStatus = displayStatus
+  const withdrawalPhase = resolvePortalWithdrawalPhase(detail, displayStatus)
+  if (withdrawalPhase) mapped.withdrawalPhase = withdrawalPhase
+  else delete mapped.withdrawalPhase
+  const lastParticipatedSession = resolveLastParticipatedSession(detail)
+  if (lastParticipatedSession != null) mapped.lastParticipatedSession = lastParticipatedSession
+  else delete mapped.lastParticipatedSession
   mapped.recruitmentStatus = mapApplicationRecruitmentStatus({
     recruitmentStartAt: detail.recruitmentStartAt ?? detail.program?.recruitmentStartAt,
     recruitmentEndAt: detail.recruitmentEndAt ?? detail.program?.recruitmentEndAt,
