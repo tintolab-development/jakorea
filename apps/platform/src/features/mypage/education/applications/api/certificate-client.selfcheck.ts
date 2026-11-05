@@ -25,12 +25,18 @@ const availability = mapPortalCertificateAvailability({
     participantId: 1695043,
     existingIssueId: null,
     canDownload: false,
+    countedParticipationCount: 3,
+    certificatePeriodStartDate: '2026-03-01',
+    certificatePeriodEndDate: '2026-04-10',
+    certificatePeriodLabel: '2026.03.01 ~ 2026.04.10',
   },
 })
 assert.equal(availability.available, true)
 assert.equal(availability.canDownload, false)
 assert.equal(availability.participantId, 1695043)
 assert.equal(availability.existingIssueId, null)
+assert.equal(availability.countedParticipationCount, 3)
+assert.equal(availability.certificatePeriodLabel, '2026.03.01 ~ 2026.04.10')
 
 const issued = mapPortalCertificateIssueResult({
   issueId: 14,
