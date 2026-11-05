@@ -1,9 +1,8 @@
 import type { ProgramApplicationType } from '@/features/mypage/education/applications/api/types'
-import { toSeoulDateOnly } from '@/shared/lib/format-display-date'
 import {
   formatPortalCalendarTimeRange,
   mapPortalCalendarEventTitle,
-  resolvePortalCalendarDateKey,
+  resolvePortalCalendarDateSpan,
   resolvePortalCalendarEventId,
   resolvePortalCalendarEventType,
 } from '../lib/calendar-event-map'
@@ -19,7 +18,7 @@ const APPLICATION_TYPE_SET = new Set<ProgramApplicationType>([
   'VOLUNTEER',
 ])
 
-function readProgramApplicationType(value: string | undefined): ProgramApplicationType | undefined {
+function readProgramApplicationType(value: string | undefined | null): ProgramApplicationType | undefined {
   const normalized = value?.trim().toUpperCase()
   if (normalized && APPLICATION_TYPE_SET.has(normalized as ProgramApplicationType)) {
     return normalized as ProgramApplicationType
@@ -34,19 +33,24 @@ function mapPortalScheduleEventType(item: PortalScheduleItem): MypageScheduleEve
   return resolved.type
 }
 
-function pad(value: number): string {
-  return String(value).padStart(2, '0')
+function readOptionalId(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
+    return String(value)
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value.trim()
+  }
+  return undefined
 }
 
 export function mapPortalScheduleItem(item: PortalScheduleItem): MypageScheduleEvent | null {
   const type = mapPortalScheduleEventType(item)
   if (type == null) return null
 
-  const startDate = resolvePortalCalendarDateKey(item)
+  const span = resolvePortalCalendarDateSpan(item, type)
   const eventId = resolvePortalCalendarEventId(type, item)
-  if (!startDate || eventId == null) return null
+  if (!span || eventId == null) return null
 
-  const endDate = toSeoulDateOnly(item.endAt) ?? startDate
   const { time, allDayTimeConflict } = formatPortalCalendarTimeRange(item)
   if (allDayTimeConflict && import.meta.env.DEV) {
     console.warn('portal calendar allDay=true but startAt/endAt include a clock', {
@@ -63,17 +67,28 @@ export function mapPortalScheduleItem(item: PortalScheduleItem): MypageScheduleE
       : (readProgramApplicationType(item.applicationType) ??
         readProgramApplicationType(item.participationRole))
 
+  const scheduleId = readOptionalId(item.scheduleId)
+  const formBindingId = readOptionalId(item.formBindingId)
+  const assignmentId = readOptionalId(item.assignmentId)
+
   return {
     id: eventId,
     programName: item.programTitle?.trim() || '프로그램',
     title: mapPortalCalendarEventTitle(item, type),
     time,
     type,
-    startDate,
-    endDate,
+    startDate: span.startDate,
+    endDate: span.endDate,
+    ...(item.allDay != null ? { allDay: item.allDay } : {}),
     ...(item.programId != null ? { programId: String(item.programId) } : {}),
     ...(item.applicationId != null ? { applicationId: String(item.applicationId) } : {}),
     ...(applicationType ? { applicationType } : {}),
+    ...(scheduleId ? { scheduleId } : {}),
+    ...(formBindingId ? { formBindingId } : {}),
+    ...(assignmentId ? { assignmentId } : {}),
+    ...(item.reportStatus?.trim() ? { reportStatus: item.reportStatus.trim() } : {}),
+    ...(typeof item.canSubmit === 'boolean' ? { canSubmit: item.canSubmit } : {}),
+    ...(item.status?.trim() ? { status: item.status.trim() } : {}),
   }
 }
 
@@ -84,18 +99,12 @@ export function mapPortalScheduleItems(items: PortalScheduleItem[] | undefined):
   })
 }
 
-/** BE Instant/OffsetDateTime — offset 필수. 로컬 월 경계를 그대로 보낸다. */
-function formatOffset(date: Date): string {
-  const offsetMin = -date.getTimezoneOffset()
-  const sign = offsetMin >= 0 ? '+' : '-'
-  const abs = Math.abs(offsetMin)
-  return `${sign}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`
-}
-
+/** Asia/Seoul 달력월 → UTC Instant. 로컬 midnight/23:59를 보내지 않는다. */
 export function portalCalendarRange(month: Date): { from: string; to: string } {
-  const start = new Date(month.getFullYear(), month.getMonth(), 1, 0, 0, 0)
-  const end = new Date(month.getFullYear(), month.getMonth() + 1, 0, 23, 59, 59)
-  const format = (date: Date) =>
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${formatOffset(date)}`
-  return { from: format(start), to: format(end) }
+  const year = month.getFullYear()
+  const monthIndex = month.getMonth()
+  const fromUtcMs = Date.UTC(year, monthIndex, 1) - 9 * 60 * 60 * 1000
+  const toUtcMs = Date.UTC(year, monthIndex + 1, 1) - 9 * 60 * 60 * 1000
+  const formatInstant = (utcMs: number) => new Date(utcMs).toISOString().replace(/\.\d{3}Z$/, 'Z')
+  return { from: formatInstant(fromUtcMs), to: formatInstant(toUtcMs) }
 }

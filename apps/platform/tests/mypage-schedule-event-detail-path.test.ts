@@ -82,7 +82,7 @@ describe('resolveMypageScheduleEventDetailPath', () => {
   it('routes lecture report deadline events to the lecture-report tab, not write', () => {
     const queryClient = new QueryClient()
     const event: MypageScheduleEvent = {
-      id: 'lecture_report_deadline:10',
+      id: 'LECTURE_REPORT_DEADLINE:10',
       programName: '강의',
       title: '강의보고서 제출 마감',
       time: '종일',
@@ -90,10 +90,32 @@ describe('resolveMypageScheduleEventDetailPath', () => {
       startDate: '2026-11-05',
       endDate: '2026-11-05',
       applicationId: '12',
+      assignmentId: '10',
+      reportStatus: 'AVAILABLE',
     }
 
     expect(resolveMypageScheduleEventDetailPath(queryClient, event)).toBe(
       '/mypage/lectures/INSTRUCTOR/12?section=lecture-report',
+    )
+  })
+
+  it('opens submitted lecture report as preview when assignmentId is present', () => {
+    const queryClient = new QueryClient()
+    const event: MypageScheduleEvent = {
+      id: 'LECTURE_REPORT_DEADLINE:10',
+      programName: '강의',
+      title: '강의보고서 제출 마감',
+      time: '종일',
+      type: 'lecture_report_deadline',
+      startDate: '2026-11-05',
+      endDate: '2026-11-05',
+      applicationId: '12',
+      assignmentId: '10',
+      reportStatus: 'SUBMITTED',
+    }
+
+    expect(resolveMypageScheduleEventDetailPath(queryClient, event)).toBe(
+      '/mypage/lectures/INSTRUCTOR/12?section=lecture-report&lectureReportPreviewAssignmentId=10',
     )
   })
 
@@ -110,16 +132,48 @@ describe('resolveMypageScheduleEventDetailPath', () => {
     }
 
     expect(
-      resolveMypageScheduleEventDetailPath(queryClient, { ...base, id: 'a', type: 'assignment' }),
-    ).toBe('/mypage/education/INDIVIDUAL/501?section=assignment')
+      resolveMypageScheduleEventDetailPath(queryClient, {
+        ...base,
+        id: 'a',
+        type: 'assignment',
+        formBindingId: '9',
+      }),
+    ).toBe('/mypage/education/INDIVIDUAL/501?section=assignment&formBindingId=9')
     expect(
-      resolveMypageScheduleEventDetailPath(queryClient, { ...base, id: 's', type: 'survey' }),
-    ).toBe('/mypage/education/INDIVIDUAL/501?section=survey')
+      resolveMypageScheduleEventDetailPath(queryClient, {
+        ...base,
+        id: 's',
+        type: 'survey',
+        formBindingId: '2',
+      }),
+    ).toBe('/mypage/education/INDIVIDUAL/501?section=survey&formBindingId=2')
+    expect(
+      resolveMypageScheduleEventDetailPath(queryClient, {
+        ...base,
+        id: 'sat',
+        type: 'satisfaction',
+        formBindingId: '3',
+      }),
+    ).toBe('/mypage/education/INDIVIDUAL/501?section=satisfaction&formBindingId=3')
     expect(
       resolveMypageScheduleEventDetailPath(queryClient, { ...base, id: 'r', type: 'receipt' }),
     ).toBe('/mypage/education/INDIVIDUAL/501?section=settlement')
-    expect(
-      resolveMypageScheduleEventDetailPath(queryClient, { ...base, id: 'p', type: 'program' }),
-    ).toBe('/mypage/education/INDIVIDUAL/501?section=schedule')
+  })
+
+  it('does not send instructor receipt deadlines to settlement (지급조서)', () => {
+    const queryClient = new QueryClient()
+    const event: MypageScheduleEvent = {
+      id: 'EXPENSE_RECEIPT_DEADLINE:INSTRUCTOR:12',
+      programName: '강의',
+      title: '영수증 신청 마감',
+      time: '종일',
+      type: 'receipt',
+      startDate: '2026-11-30',
+      endDate: '2026-11-30',
+      applicationId: '12',
+      applicationType: 'INSTRUCTOR',
+    }
+
+    expect(resolveMypageScheduleEventDetailPath(queryClient, event)).toBeNull()
   })
 })

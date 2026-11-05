@@ -6,7 +6,6 @@ export type MypageScheduleEventType =
   | 'survey'
   | 'receipt'
   | 'education'
-  | 'program'
   | 'lecture_report_deadline'
 
 export type MypageScheduleEvent = {
@@ -21,7 +20,14 @@ export type MypageScheduleEvent = {
   startDate: string
   /** YYYY-MM-DD */
   endDate: string
+  allDay?: boolean
   programId?: string
   applicationId?: string
   applicationType?: ProgramApplicationType
+  scheduleId?: string
+  formBindingId?: string
+  assignmentId?: string
+  reportStatus?: string
+  canSubmit?: boolean
+  status?: string
 }

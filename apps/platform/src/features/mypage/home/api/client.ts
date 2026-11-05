@@ -27,27 +27,43 @@ export type PortalApplicationSummary = {
   ended?: number
 }
 
+/**
+ * GET /api/portal/me/calendar PortalScheduleItem.
+ * eventType: PROGRAM_SCHEDULE | ASSIGNMENT_DEADLINE | SATISFACTION_DEADLINE |
+ * SURVEY_DEADLINE | EXPENSE_RECEIPT_DEADLINE | LECTURE_REPORT_DEADLINE.
+ * null eventType 은 PROGRAM_SCHEDULE. PROGRAM_PERIOD 는 신규 계약에 없고, 오면 그리지 않는다.
+ */
 export type PortalScheduleItem = {
-  scheduleId?: number
-  applicationId?: number
-  applicationType?: string
-  /**
-   * BE 캘린더 이벤트 유형(과제·설문·교육 일정·LECTURE_REPORT_DEADLINE 등).
-   * OpenAPI PortalScheduleItem에는 아직 없으며, 응답에 있으면 매퍼가 구분한다.
-   */
-  eventType?: string
-  /** OpenAPI 미기재. 마감·과제 등 scheduleId가 없는 이벤트 공통 식별자. */
-  eventId?: number | string
-  id?: number | string
-  programId?: number
-  programTitle?: string
-  scheduleName?: string
-  startAt?: string
-  endAt?: string
-  allDay?: boolean
-  locationName?: string
-  address?: string
-  participationRole?: string
+  eventId?: number | string | null
+  eventType?: string | null
+  title?: string | null
+  id?: number | string | null
+  programId?: number | null
+  programTitle?: string | null
+  scheduleId?: number | null
+  scheduleName?: string | null
+  applicationId?: number | null
+  applicationType?: string | null
+  assignmentId?: number | null
+  lectureReportId?: number | null
+  reportStatus?: string | null
+  canSubmit?: boolean | null
+  isOverdue?: boolean | null
+  formBindingId?: number | null
+  formResponseId?: number | null
+  receiptId?: number | null
+  startAt?: string | null
+  endAt?: string | null
+  allDay?: boolean | null
+  deadlineAt?: string | null
+  deadlineDate?: string | null
+  /** 서버 effectiveDeadline Instant. deadlineDate와 동일 시각. 없으면 null. */
+  submitDueAt?: string | null
+  status?: string | null
+  participationRole?: string | null
+  timeAvailability?: string | null
+  locationName?: string | null
+  address?: string | null
 }
 
 export type PortalDashboardResponse = {

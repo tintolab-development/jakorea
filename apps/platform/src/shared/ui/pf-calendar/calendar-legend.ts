@@ -10,6 +10,5 @@ export const CALENDAR_LEGEND_ITEMS: CalendarLegendItem[] = [
   { key: 'survey', label: '설문조사', color: '#FA8484' },
   { key: 'receipt', label: '영수증 신청 마감', color: '#9EE9F7' },
   { key: 'education', label: '교육 일정', color: '#C593FF' },
-  { key: 'program', label: '프로그램 일정', color: '#9FE35B' },
   { key: 'lecture_report_deadline', label: '강의보고서 제출 마감', color: '#F07917' },
 ]

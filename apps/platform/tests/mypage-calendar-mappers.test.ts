@@ -1,27 +1,51 @@
 import { describe, expect, it } from 'vitest'
-import { mapPortalScheduleItem, mapPortalScheduleItems } from '../src/features/mypage/home/api/mappers'
+import {
+  mapPortalScheduleItem,
+  mapPortalScheduleItems,
+  portalCalendarRange,
+} from '../src/features/mypage/home/api/mappers'
 import {
   formatPortalCalendarTimeRange,
   resolvePortalCalendarEventType,
 } from '../src/features/mypage/home/lib/calendar-event-map'
 
 describe('portal calendar event types', () => {
-  it('keeps missing eventType as legacy education', () => {
+  it('keeps missing eventType as PROGRAM_SCHEDULE / education', () => {
     expect(resolvePortalCalendarEventType(undefined)).toEqual({ kind: 'legacy_education' })
+    expect(resolvePortalCalendarEventType(null)).toEqual({ kind: 'legacy_education' })
     expect(resolvePortalCalendarEventType('')).toEqual({ kind: 'legacy_education' })
   })
 
-  it('maps the seven calendar types including lecture report deadline', () => {
-    expect(resolvePortalCalendarEventType('education')).toEqual({ kind: 'mapped', type: 'education' })
-    expect(resolvePortalCalendarEventType('PROGRAM')).toEqual({ kind: 'mapped', type: 'program' })
-    expect(resolvePortalCalendarEventType('assignment')).toEqual({ kind: 'mapped', type: 'assignment' })
-    expect(resolvePortalCalendarEventType('satisfaction')).toEqual({ kind: 'mapped', type: 'satisfaction' })
-    expect(resolvePortalCalendarEventType('survey')).toEqual({ kind: 'mapped', type: 'survey' })
-    expect(resolvePortalCalendarEventType('receipt')).toEqual({ kind: 'mapped', type: 'receipt' })
+  it('maps the six BE calendar eventTypes', () => {
+    expect(resolvePortalCalendarEventType('PROGRAM_SCHEDULE')).toEqual({
+      kind: 'mapped',
+      type: 'education',
+    })
+    expect(resolvePortalCalendarEventType('ASSIGNMENT_DEADLINE')).toEqual({
+      kind: 'mapped',
+      type: 'assignment',
+    })
+    expect(resolvePortalCalendarEventType('SATISFACTION_DEADLINE')).toEqual({
+      kind: 'mapped',
+      type: 'satisfaction',
+    })
+    expect(resolvePortalCalendarEventType('SURVEY_DEADLINE')).toEqual({
+      kind: 'mapped',
+      type: 'survey',
+    })
+    expect(resolvePortalCalendarEventType('EXPENSE_RECEIPT_DEADLINE')).toEqual({
+      kind: 'mapped',
+      type: 'receipt',
+    })
     expect(resolvePortalCalendarEventType('LECTURE_REPORT_DEADLINE')).toEqual({
       kind: 'mapped',
       type: 'lecture_report_deadline',
     })
+  })
+
+  it('still maps legacy lowercase FE types from older responses', () => {
+    expect(resolvePortalCalendarEventType('education')).toEqual({ kind: 'mapped', type: 'education' })
+    expect(resolvePortalCalendarEventType('assignment')).toEqual({ kind: 'mapped', type: 'assignment' })
   })
 
   it('does not coerce unknown eventType to education', () => {
@@ -37,16 +61,39 @@ describe('portal calendar event types', () => {
 })
 
 describe('portal calendar time display', () => {
-  it('shows education clocks as HH:mm~HH:mm', () => {
+  it('shows TIME_PRESENT education clocks and never 종일', () => {
     expect(
       formatPortalCalendarTimeRange({
-        startAt: '2026-11-05T09:00:00+09:00',
-        endAt: '2026-11-05T10:30:00+09:00',
+        allDay: false,
+        timeAvailability: 'TIME_PRESENT',
+        startAt: '2026-11-10T05:00:00Z',
+        endAt: '2026-11-10T07:00:00Z',
       }),
-    ).toEqual({ time: '09:00~10:30', allDayTimeConflict: false })
+    ).toEqual({ time: '14:00~16:00', allDayTimeConflict: false })
   })
 
-  it('does not label date-only program events as 종일 unless allDay is true', () => {
+  it('renders DATE_ONLY and allDay as 종일', () => {
+    expect(
+      formatPortalCalendarTimeRange({
+        timeAvailability: 'DATE_ONLY',
+        allDay: true,
+        startAt: '2026-10-31T15:00:00Z',
+        endAt: '2026-11-30T15:00:00Z',
+      }),
+    ).toEqual({ time: '종일', allDayTimeConflict: false })
+  })
+
+  it('does not invent clocks for SOURCE_TIME_NOT_AVAILABLE', () => {
+    expect(
+      formatPortalCalendarTimeRange({
+        timeAvailability: 'SOURCE_TIME_NOT_AVAILABLE',
+        startAt: '2026-11-05T00:00:00+09:00',
+        endAt: '2026-11-05T23:59:00+09:00',
+      }),
+    ).toEqual({ time: '', allDayTimeConflict: false })
+  })
+
+  it('does not label date-only events as 종일 unless allDay or DATE_ONLY', () => {
     expect(formatPortalCalendarTimeRange({ startAt: '2026-11-05' })).toEqual({
       time: '',
       allDayTimeConflict: false,
@@ -72,173 +119,244 @@ describe('portal calendar time display', () => {
       }),
     ).toEqual({ time: '09:00~10:00', allDayTimeConflict: true })
   })
+})
 
-  it('converts UTC instants to KST dates across the month boundary', () => {
-    const event = mapPortalScheduleItem({
-      scheduleId: 8,
-      eventType: 'education',
-      startAt: '2026-10-31T15:30:00Z',
-      endAt: '2026-10-31T16:00:00Z',
-    })
-    expect(event).toMatchObject({
-      startDate: '2026-11-01',
-      endDate: '2026-11-01',
-      time: '00:30~01:00',
+describe('portalCalendarRange Instant', () => {
+  it('sends KST month bounds as UTC Instants', () => {
+    expect(portalCalendarRange(new Date(2026, 10, 15))).toEqual({
+      from: '2026-10-31T15:00:00Z',
+      to: '2026-11-30T15:00:00Z',
     })
   })
 })
 
-describe('mapPortalScheduleItem lecture report calendar', () => {
-  it('keeps education events and prefixes ids by type', () => {
+describe('mapPortalScheduleItem BE contract', () => {
+  it('maps timed PROGRAM_SCHEDULE without coercing to all-day', () => {
     const education = mapPortalScheduleItem({
-      scheduleId: 10,
-      applicationId: 501,
-      applicationType: 'INDIVIDUAL',
-      eventType: 'education',
-      programId: 99,
-      programTitle: '경제교육',
-      scheduleName: '1회차',
-      startAt: '2026-11-05T00:00:00+09:00',
-      endAt: '2026-11-05T02:00:00+09:00',
+      eventId: 'PROGRAM_SCHEDULE:11',
+      eventType: 'PROGRAM_SCHEDULE',
+      scheduleId: 11,
+      applicationId: 3,
+      applicationType: 'INSTRUCTOR',
+      title: '2회차',
+      startAt: '2026-11-10T05:00:00Z',
+      endAt: '2026-11-10T07:00:00Z',
+      allDay: false,
+      timeAvailability: 'TIME_PRESENT',
+      status: 'SCHEDULED',
     })
 
     expect(education).toMatchObject({
-      id: 'education:10',
+      id: 'PROGRAM_SCHEDULE:11',
       type: 'education',
-      title: '1회차',
-      time: '00:00~02:00',
-      startDate: '2026-11-05',
-      applicationType: 'INDIVIDUAL',
+      title: '2회차',
+      time: '14:00~16:00',
+      startDate: '2026-11-10',
+      endDate: '2026-11-10',
+      allDay: false,
+      applicationType: 'INSTRUCTOR',
+      scheduleId: '11',
     })
   })
 
-  it('maps LECTURE_REPORT_DEADLINE without inventing a due date', () => {
+  it('does not render leftover PROGRAM_PERIOD from older backends', () => {
+    expect(resolvePortalCalendarEventType('PROGRAM_PERIOD')).toEqual({ kind: 'unsupported' })
+    expect(
+      mapPortalScheduleItem({
+        eventId: 'PROGRAM_PERIOD:100',
+        eventType: 'PROGRAM_PERIOD',
+        programId: 100,
+        programTitle: '경제교육',
+        allDay: true,
+        timeAvailability: 'DATE_ONLY',
+        startAt: '2026-10-31T15:00:00Z',
+        endAt: '2026-11-30T15:00:00Z',
+      }),
+    ).toBeNull()
+    expect(
+      mapPortalScheduleItems([
+        {
+          eventId: 'PROGRAM_PERIOD:100',
+          eventType: 'PROGRAM_PERIOD',
+          startAt: '2026-10-31T15:00:00Z',
+          endAt: '2026-11-30T15:00:00Z',
+        },
+        {
+          eventId: 'PROGRAM_SCHEDULE:307',
+          eventType: 'PROGRAM_SCHEDULE',
+          scheduleId: 307,
+          startAt: '2026-08-07T01:00:00Z',
+          endAt: '2026-08-07T03:00:00Z',
+          allDay: false,
+          timeAvailability: 'TIME_PRESENT',
+        },
+      ]).map(item => item.id),
+    ).toEqual(['PROGRAM_SCHEDULE:307'])
+  })
+
+  it('uses deadlineDate for lecture report and does not recompute Instant+23:59', () => {
     const deadline = mapPortalScheduleItem({
-      scheduleId: 10,
-      applicationId: 12,
+      eventId: 'LECTURE_REPORT_DEADLINE:10',
       eventType: 'LECTURE_REPORT_DEADLINE',
-      programId: 99,
+      assignmentId: 10,
+      applicationId: 12,
       programTitle: '경제교육',
-      scheduleName: '',
-      startAt: '2026-11-05T15:00:00+09:00',
-      endAt: '2026-11-05T15:00:00+09:00',
       allDay: true,
+      timeAvailability: 'DATE_ONLY',
+      deadlineDate: '2026-11-05',
+      deadlineAt: '2026-11-05T15:00:00Z',
+      startAt: '2026-11-05T15:00:00Z',
+      reportStatus: 'AVAILABLE',
+      status: 'NOT_SUBMITTED',
     })
 
     expect(deadline).toMatchObject({
-      id: 'lecture_report_deadline:10',
+      id: 'LECTURE_REPORT_DEADLINE:10',
       type: 'lecture_report_deadline',
       title: '강의보고서 제출 마감',
       applicationType: 'INSTRUCTOR',
-      time: '15:00',
+      time: '종일',
+      startDate: '2026-11-05',
+      endDate: '2026-11-05',
+      assignmentId: '10',
+    })
+  })
+
+  it('falls back to deadlineAt then submitDueAt without inventing 익월 5일', () => {
+    const fromDeadlineAt = mapPortalScheduleItem({
+      eventId: 'LECTURE_REPORT_DEADLINE:11',
+      eventType: 'LECTURE_REPORT_DEADLINE',
+      assignmentId: 11,
+      allDay: true,
+      timeAvailability: 'DATE_ONLY',
+      deadlineAt: '2026-10-15T14:59:59Z',
+    })
+    expect(fromDeadlineAt).toMatchObject({
+      startDate: '2026-10-15',
+      endDate: '2026-10-15',
+    })
+
+    const fromSubmitDueAt = mapPortalScheduleItem({
+      eventId: 'LECTURE_REPORT_DEADLINE:12',
+      eventType: 'LECTURE_REPORT_DEADLINE',
+      assignmentId: 12,
+      allDay: true,
+      timeAvailability: 'DATE_ONLY',
+      submitDueAt: '2026-10-15T14:59:59Z',
+    })
+    expect(fromSubmitDueAt).toMatchObject({
+      startDate: '2026-10-15',
+      endDate: '2026-10-15',
+    })
+  })
+
+  it('keeps SUBMITTED deadline events', () => {
+    const submitted = mapPortalScheduleItem({
+      eventId: 'ASSIGNMENT_DEADLINE:9:INDIVIDUAL:501',
+      eventType: 'ASSIGNMENT_DEADLINE',
+      formBindingId: 9,
+      applicationId: 501,
+      applicationType: 'INDIVIDUAL',
+      title: '과제 제출',
+      deadlineDate: '2026-11-05',
+      allDay: true,
+      timeAvailability: 'DATE_ONLY',
+      status: 'SUBMITTED',
+    })
+
+    expect(submitted).toMatchObject({
+      id: 'ASSIGNMENT_DEADLINE:9:INDIVIDUAL:501',
+      type: 'assignment',
+      status: 'SUBMITTED',
       startDate: '2026-11-05',
     })
   })
 
-  it('uses the server scheduleName as the deadline label', () => {
-    const named = mapPortalScheduleItem({
-      scheduleId: 11,
-      eventType: 'lecture_report_deadline',
-      programTitle: '경제교육',
-      scheduleName: '지연 제출 가능',
-      startAt: '2026-11-06T00:00:00+09:00',
-    })
-
-    expect(named?.title).toBe('지연 제출 가능')
-  })
-
-  it('maps deadline events that only have eventId', () => {
-    const deadline = mapPortalScheduleItem({
-      eventId: 'lr-88',
-      eventType: 'LECTURE_REPORT_DEADLINE',
-      programTitle: '경제교육',
-      startAt: '2026-11-05',
-      allDay: true,
-    })
-
-    expect(deadline).toMatchObject({
-      id: 'lecture_report_deadline:lr-88',
-      type: 'lecture_report_deadline',
-      time: '종일',
-    })
-  })
-
-  it('keeps education and multiple deadline events on the same date', () => {
+  it('maps receipt, survey, and satisfaction as distinct types on the same day', () => {
     const sameDay = mapPortalScheduleItems([
       {
+        eventId: 'PROGRAM_SCHEDULE:10',
+        eventType: 'PROGRAM_SCHEDULE',
         scheduleId: 10,
-        eventType: 'education',
         programTitle: '경제교육',
         scheduleName: '1회차',
         startAt: '2026-11-05T00:00:00+09:00',
         endAt: '2026-11-05T02:00:00+09:00',
+        allDay: false,
+        timeAvailability: 'TIME_PRESENT',
       },
       {
-        scheduleId: 10,
+        eventId: 'LECTURE_REPORT_DEADLINE:10',
         eventType: 'LECTURE_REPORT_DEADLINE',
+        assignmentId: 10,
         programTitle: '경제교육',
-        startAt: '2026-11-05T15:00:00+09:00',
+        deadlineDate: '2026-11-05',
         allDay: true,
+        timeAvailability: 'DATE_ONLY',
       },
       {
-        scheduleId: 22,
-        eventType: 'LECTURE_REPORT_DEADLINE',
-        programTitle: '다른 강의',
-        startAt: '2026-11-05T15:00:00+09:00',
+        eventId: 'SURVEY_DEADLINE:2:INDIVIDUAL:1',
+        eventType: 'SURVEY_DEADLINE',
+        formBindingId: 2,
+        applicationId: 1,
+        applicationType: 'INDIVIDUAL',
+        deadlineDate: '2026-11-05',
         allDay: true,
+        timeAvailability: 'DATE_ONLY',
+      },
+      {
+        eventId: 'SATISFACTION_DEADLINE:3:INDIVIDUAL:1',
+        eventType: 'SATISFACTION_DEADLINE',
+        formBindingId: 3,
+        applicationId: 1,
+        applicationType: 'INDIVIDUAL',
+        deadlineDate: '2026-11-05',
+        allDay: true,
+        timeAvailability: 'DATE_ONLY',
+      },
+      {
+        eventId: 'EXPENSE_RECEIPT_DEADLINE:INDIVIDUAL:1',
+        eventType: 'EXPENSE_RECEIPT_DEADLINE',
+        applicationId: 1,
+        applicationType: 'INDIVIDUAL',
+        deadlineDate: '2026-11-05',
+        allDay: true,
+        timeAvailability: 'DATE_ONLY',
       },
     ])
 
     expect(sameDay.map(item => item.id)).toEqual([
-      'education:10',
-      'lecture_report_deadline:10',
-      'lecture_report_deadline:22',
+      'PROGRAM_SCHEDULE:10',
+      'LECTURE_REPORT_DEADLINE:10',
+      'SURVEY_DEADLINE:2:INDIVIDUAL:1',
+      'SATISFACTION_DEADLINE:3:INDIVIDUAL:1',
+      'EXPENSE_RECEIPT_DEADLINE:INDIVIDUAL:1',
+    ])
+    expect(sameDay.map(item => item.type)).toEqual([
+      'education',
+      'lecture_report_deadline',
+      'survey',
+      'satisfaction',
+      'receipt',
     ])
   })
 
-  it('maps the remaining activity types with fallback titles', () => {
-    const mapped = mapPortalScheduleItems([
-      {
-        eventId: 1,
-        eventType: 'assignment',
-        programTitle: '경제교육',
-        startAt: '2026-11-05T23:59:00+09:00',
-      },
-      {
-        eventId: 2,
-        eventType: 'survey',
-        programTitle: '경제교육',
-        startAt: '2026-11-05',
-        allDay: true,
-      },
-      {
-        eventId: 3,
-        eventType: 'satisfaction',
-        programTitle: '경제교육',
-        startAt: '2026-11-06T18:00:00+09:00',
-      },
-      {
-        eventId: 4,
-        eventType: 'receipt',
-        programTitle: '경제교육',
-        startAt: '2026-11-07',
-        allDay: true,
-      },
-      {
-        scheduleId: 5,
-        eventType: 'program',
-        programTitle: '경제교육',
-        startAt: '2026-11-01',
-        endAt: '2026-11-30',
-      },
-    ])
+  it('does not drop DATE_ONLY education that has no clock', () => {
+    const allDayEducation = mapPortalScheduleItem({
+      eventId: 'PROGRAM_SCHEDULE:12',
+      eventType: 'PROGRAM_SCHEDULE',
+      scheduleId: 12,
+      allDay: true,
+      timeAvailability: 'DATE_ONLY',
+      startAt: '2026-11-10T15:00:00Z',
+      endAt: '2026-11-11T15:00:00Z',
+    })
 
-    expect(mapped.map(item => [item.type, item.title, item.time])).toEqual([
-      ['assignment', '과제 제출', '23:59'],
-      ['survey', '설문조사', '종일'],
-      ['satisfaction', '만족도조사', '18:00'],
-      ['receipt', '영수증 신청 마감', '종일'],
-      ['program', '프로그램 일정', ''],
-    ])
+    expect(allDayEducation).toMatchObject({
+      type: 'education',
+      time: '종일',
+      startDate: '2026-11-11',
+      endDate: '2026-11-11',
+    })
   })
 })
