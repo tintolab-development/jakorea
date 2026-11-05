@@ -97,6 +97,37 @@ describe('institution assignment sources', () => {
     expect(attendanceManagerForScheduleFromSources(sources, 10)).toBe('김봉사')
   })
 
+  it('같은 scheduleId라도 다른 기관 열의 출결 담당자를 가져오지 않는다', () => {
+    const mixed: InstitutionAssignmentSources = {
+      organizationApplicationId: 100,
+      matrix: {
+        columns: [
+          {
+            scheduleId: 10,
+            organizationApplicationId: 100,
+            educationStartAt: '2026-05-08T09:00:00',
+          },
+        ],
+        volunteers: [
+          { participantId: 7, volunteerName: '김봉사' },
+          { participantId: 99, volunteerName: '다른학교담당' },
+        ],
+      },
+      partnerAssignmentsByScheduleId: {
+        '10': [
+          {
+            scheduleId: 10,
+            organizationApplicationId: 200,
+            primaryParticipantId: 99,
+            attendanceManagerParticipantId: 99,
+            status: 'ASSIGNED',
+          },
+        ],
+      },
+    }
+    expect(attendanceManagerForScheduleFromSources(mixed, 10)).toBe('미정')
+  })
+
   it('partner-assignments가 비어도 matrix cell volunteerName으로 학급 봉사자를 채운다', () => {
     const matrixOnly: InstitutionAssignmentSources = {
       organizationApplicationId: 1691554,
@@ -119,6 +150,7 @@ describe('institution assignment sources', () => {
                 organizationApplicationId: 1691554,
                 classLabel: '2학년 1반',
                 attendanceManager: true,
+                assignmentStatus: 'ASSIGNED',
               },
             ],
           },

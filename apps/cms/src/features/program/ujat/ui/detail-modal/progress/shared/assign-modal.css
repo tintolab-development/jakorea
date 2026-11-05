@@ -110,12 +110,6 @@
   line-height: 150%;
 }
 
-.ujat-assignment-assign-modal__hint {
-  color: var(--Content-secondary, #525252);
-  font-size: 13px;
-  line-height: 150%;
-}
-
 .ujat-assignment-assign-modal__footer {
   display: flex;
   width: 100%;

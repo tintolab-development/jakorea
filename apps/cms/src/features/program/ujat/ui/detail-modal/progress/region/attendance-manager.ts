@@ -8,6 +8,7 @@ export type RegionAttendanceManagerSelectOption = {
 
 export type RegionAttendanceManagerPut = {
   scheduleId: number
+  organizationApplicationId: number
   participantId: number | null
 }
 
@@ -85,41 +86,136 @@ export function getRegionAttendanceManagerScheduleItemsFromData(
 export const ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE =
   '출결 담당자를 저장할 교육 일정이 없습니다. 배정표를 새로고침해 주세요.'
 
+export const ATTENDANCE_MANAGER_UNAPPLIED_MESSAGE =
+  '배정되지 않은 봉사자는 출결 담당자로 저장할 수 없습니다. 배정표를 확인한 뒤 다시 선택해 주세요.'
+
+const ATTENDANCE_MANAGER_CLIENT_MESSAGES = new Set([
+  ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE,
+  ATTENDANCE_MANAGER_UNAPPLIED_MESSAGE,
+])
+
+export function isAttendanceManagerClientError(error: unknown): boolean {
+  return error instanceof Error && ATTENDANCE_MANAGER_CLIENT_MESSAGES.has(error.message)
+}
+
+function parsePositiveId(value: string | number | undefined): number | undefined {
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed) || parsed <= 0) return undefined
+  return parsed
+}
+
+function intendedParticipantIdForAssignment(
+  data: RegionAssignmentTableData,
+  columnIndex: number,
+  volunteerId: string | null
+): number | null | undefined {
+  if (volunteerId === null) return null
+
+  const participantId = parsePositiveId(volunteerId)
+  if (participantId == null) return undefined
+
+  const row = data.rows.find(item => item.id === volunteerId)
+  if (!row || row.isWithdrawnVolunteer) return undefined
+  if (!isRegionAttendanceManagerCandidateCell(row.cells[columnIndex])) return undefined
+  return participantId
+}
+
+export type AttendanceManagerPutIssues = {
+  unappliedLabels: string[]
+}
+
+function columnLabel(
+  data: RegionAssignmentTableData,
+  columnId: string,
+  columnIndex: number
+): string {
+  const column = columnIndex >= 0 ? data.columns[columnIndex] : undefined
+  if (!column) return columnId
+  return formatAttendanceManagerScheduleLabel(
+    column.isoDate,
+    column.dateLabel,
+    column.institutionName
+  )
+}
+
+/** 저장할 수 없는 선택. PUT 전에 막는다. 같은 날짜 다른 기관 열은 서로 다른 PUT. */
+export function getAttendanceManagerPutIssues(
+  data: RegionAssignmentTableData,
+  assignments: RegionAttendanceManagerAssignments
+): AttendanceManagerPutIssues {
+  const unappliedLabels: string[] = []
+
+  for (const [columnId, volunteerId] of Object.entries(assignments)) {
+    const columnIndex = data.columns.findIndex(column => column.id === columnId)
+    const label = columnLabel(data, columnId, columnIndex)
+    const column = columnIndex >= 0 ? data.columns[columnIndex] : undefined
+
+    if (!column) {
+      unappliedLabels.push(label)
+      continue
+    }
+
+    const scheduleId = parsePositiveId(column.scheduleId)
+    const organizationApplicationId = parsePositiveId(column.organizationApplicationId)
+    if (scheduleId == null || organizationApplicationId == null) {
+      unappliedLabels.push(label)
+      continue
+    }
+
+    const intended = intendedParticipantIdForAssignment(data, columnIndex, volunteerId)
+    if (intended === undefined) {
+      unappliedLabels.push(label)
+    }
+  }
+
+  return { unappliedLabels }
+}
+
 /**
- * 출결 담당 PUT 목록. scheduleId당 1건.
- * ASSIGNED가 아닌 행·0·비유한 participantId는 보내지 않는다.
+ * 출결 담당 PUT 목록. 열(scheduleId + organizationApplicationId)당 1건.
+ * ASSIGNED가 아닌 행·0·비유한 participantId·기관 id는 보내지 않는다.
  * 뱃지는 PUT 응답/로컬 overlay가 아니라 GET allocation-matrix cells.attendanceManager 만 쓴다.
  */
 export function collectAttendanceManagerPuts(
   data: RegionAssignmentTableData,
   assignments: RegionAttendanceManagerAssignments
 ): RegionAttendanceManagerPut[] {
-  const byScheduleId = new Map<number, number | null>()
+  const byColumnKey = new Map<string, RegionAttendanceManagerPut>()
 
   for (const [columnId, volunteerId] of Object.entries(assignments)) {
     const columnIndex = data.columns.findIndex(column => column.id === columnId)
     if (columnIndex < 0) continue
 
-    const scheduleId = Number(data.columns[columnIndex]?.scheduleId)
-    if (!Number.isFinite(scheduleId) || scheduleId <= 0) continue
+    const column = data.columns[columnIndex]
+    const scheduleId = parsePositiveId(column?.scheduleId)
+    const organizationApplicationId = parsePositiveId(column?.organizationApplicationId)
+    if (scheduleId == null || organizationApplicationId == null) continue
 
-    if (volunteerId === null) {
-      if (!byScheduleId.has(scheduleId)) byScheduleId.set(scheduleId, null)
-      continue
-    }
+    const intended = intendedParticipantIdForAssignment(data, columnIndex, volunteerId)
+    if (intended === undefined) continue
 
-    const participantId = Number(volunteerId)
-    if (!Number.isFinite(participantId) || participantId <= 0) continue
-
-    const row = data.rows.find(item => item.id === volunteerId)
-    if (!row || row.isWithdrawnVolunteer) continue
-    if (!isRegionAttendanceManagerCandidateCell(row.cells[columnIndex])) continue
-
-    byScheduleId.set(scheduleId, participantId)
+    byColumnKey.set(`${scheduleId}:${organizationApplicationId}`, {
+      scheduleId,
+      organizationApplicationId,
+      participantId: intended,
+    })
   }
 
-  return [...byScheduleId.entries()].map(([scheduleId, participantId]) => ({
-    scheduleId,
-    participantId,
-  }))
+  return [...byColumnKey.values()]
+}
+
+/** 검증 통과 시에만 PUT 목록. 실패면 사용자 메시지 Error. */
+export function resolveAttendanceManagerPuts(
+  data: RegionAssignmentTableData,
+  assignments: RegionAttendanceManagerAssignments
+): RegionAttendanceManagerPut[] {
+  const issues = getAttendanceManagerPutIssues(data, assignments)
+  if (issues.unappliedLabels.length > 0) {
+    throw new Error(ATTENDANCE_MANAGER_UNAPPLIED_MESSAGE)
+  }
+  const puts = collectAttendanceManagerPuts(data, assignments)
+  if (puts.length === 0) {
+    throw new Error(ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE)
+  }
+  return puts
 }

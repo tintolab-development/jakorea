@@ -173,17 +173,19 @@ export async function correctVolunteerAttendance(input: {
 }
 
 /**
- * 봉사자 상세 역할 셀 → 출결 담당 지정/해제.
- * `attendance_manager`: `{ participantId: <id> }`
- * `none`(해당 없음): `{ participantId: null }` — 키 생략/skip 금지.
+ * 봉사자 상세 역할 셀 → 출결 담당 지정/해제. 기관 열 단위.
+ * `attendance_manager`: `{ organizationApplicationId, participantId: <id> }`
+ * `none`(해당 없음): `{ organizationApplicationId, participantId: null }` — 키 생략/skip 금지.
  */
 export async function updateVolunteerScheduleRole(input: {
   programId: string
   scheduleId: number
+  organizationApplicationId: number
   participantId: number
   role: 'attendance_manager' | 'none'
 }) {
   return putUjatAttendanceManager(input.programId, input.scheduleId, {
+    organizationApplicationId: input.organizationApplicationId,
     participantId: input.role === 'attendance_manager' ? input.participantId : null,
   })
 }

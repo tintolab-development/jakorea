@@ -25,8 +25,8 @@ import type { UjatInstitutionApplicationRegionKey } from '../../application-inst
 import type { EducationProgressHalfKey } from '../tabs'
 import type { RegionAttendanceManagerAssignments } from './attendance-manager'
 import {
-  ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE,
-  collectAttendanceManagerPuts,
+  isAttendanceManagerClientError,
+  resolveAttendanceManagerPuts,
 } from './attendance-manager'
 import type { RegionBlockedDateModalPayload } from './blocked-date-modal'
 import { buildAutoAssignResultAlert } from './auto-assign-result'
@@ -38,6 +38,7 @@ import { resolveRegionUnavailabilityErrorMessage } from './region-unavailability
 import { setRegionAssignmentTableData } from './region-assignment-store'
 import { getUjatEducationRegionLabel } from '@/features/program/ujat/lib/ujat-education-regions'
 import {
+  isRegionDirectAssignClassSlotFull,
   isRegionDirectAssignClassSlotSelectable,
   regionUnavailabilityRequiresReplacement,
   regionUnavailabilityRequiresReplacementForDate,
@@ -88,6 +89,7 @@ export function useRegionAssignment(
       const matrix = await fetchUjatAllocationMatrix(programId, {
         educationRegionCode,
         semesterType,
+        recruitHalf: semesterType,
       })
       const orgAssignments = matrixColumnsIncludeEducationSlots(matrix)
         ? { content: [] }
@@ -126,7 +128,8 @@ export function useRegionAssignment(
   }, [matrixQuery.data, regionKey])
 
   const invalidateMatrix = useCallback(async () => {
-    // unavailability는 allocation-matrix queryFn 안에서 함께 fetch → matrix invalidate로 갱신
+    // 뱃지 SSOT: PUT overlay 없이 같은 programId+region+semesterType matrix GET을 즉시 다시 받는다.
+    await queryClient.refetchQueries({ queryKey: matrixQueryKey })
     await Promise.all([
       queryClient.invalidateQueries({
         queryKey: ujatQueryKeys.allocationMatrixRoot(programId),
@@ -150,7 +153,7 @@ export function useRegionAssignment(
         queryKey: ujatQueryKeys.educationProgressSummary(programId),
       }),
     ])
-  }, [programId, queryClient])
+  }, [matrixQueryKey, programId, queryClient])
 
   const showMutationError = useCallback(
     (error: unknown, fallback: string) => {
@@ -181,6 +184,9 @@ export function useRegionAssignment(
       }
       if (!isRegionDirectAssignClassSlotSelectable(tableData, payload.classSlotId)) {
         throw new Error('DIRECT_ASSIGN_SLOT_NOT_SELECTABLE')
+      }
+      if (isRegionDirectAssignClassSlotFull(tableData, payload.classSlotId)) {
+        throw new Error('DIRECT_ASSIGN_SLOT_FULL')
       }
       return postUjatDirectAssignment(programId, educationSlotId, { participantId })
     },
@@ -257,19 +263,17 @@ export function useRegionAssignment(
 
   const attendanceManagerMutation = useMutation({
     mutationFn: async (assignments: RegionAttendanceManagerAssignments) => {
-      const puts = collectAttendanceManagerPuts(tableData, assignments)
-      if (puts.length === 0) {
-        throw new Error(ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE)
-      }
+      const puts = resolveAttendanceManagerPuts(tableData, assignments)
       for (const item of puts) {
         await putUjatAttendanceManager(programId, item.scheduleId, {
+          organizationApplicationId: item.organizationApplicationId,
           participantId: item.participantId,
         })
       }
     },
     retry: false,
     onSuccess: async () => {
-      await queryClient.refetchQueries({ queryKey: matrixQueryKey })
+      await invalidateMatrix()
       showAlert({ title: '안내', content: '출결 담당자가 저장되었습니다.' })
     },
     onError: error => {
@@ -277,11 +281,14 @@ export function useRegionAssignment(
         title: '오류',
         content: resolveRegionAssignmentErrorMessage(
           error,
-          error instanceof Error && error.message === ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE
-            ? ATTENDANCE_MANAGER_PUTS_EMPTY_MESSAGE
+          error instanceof Error && isAttendanceManagerClientError(error)
+            ? error.message
             : '출결 담당자 저장에 실패했습니다.'
         ),
       })
+      if (!isAttendanceManagerClientError(error)) {
+        void invalidateMatrix()
+      }
     },
   })
 
@@ -295,6 +302,7 @@ export function useRegionAssignment(
     (payload: { classSlotId: string; volunteerId: string }) => {
       if (!remoteEnabled) return
       if (!isRegionDirectAssignClassSlotSelectable(tableData, payload.classSlotId)) return
+      if (isRegionDirectAssignClassSlotFull(tableData, payload.classSlotId)) return
       directAssignMutation.mutate(payload)
     },
     [directAssignMutation, remoteEnabled, tableData]
@@ -309,9 +317,14 @@ export function useRegionAssignment(
   )
 
   const saveAttendanceManagers = useCallback(
-    (assignments: RegionAttendanceManagerAssignments) => {
-      if (!remoteEnabled) return
-      attendanceManagerMutation.mutate(assignments)
+    async (assignments: RegionAttendanceManagerAssignments) => {
+      if (!remoteEnabled) return false
+      try {
+        await attendanceManagerMutation.mutateAsync(assignments)
+        return true
+      } catch {
+        return false
+      }
     },
     [attendanceManagerMutation, remoteEnabled]
   )
@@ -322,10 +335,12 @@ export function useRegionAssignment(
     isLoading: remoteEnabled && matrixQuery.isLoading,
     isError: remoteEnabled && matrixQuery.isError,
     isRemote: remoteEnabled,
+    refetchMatrix: () => matrixQuery.refetch(),
     runAutoAssign,
     confirmDirectAssign,
     confirmBlockedDate,
     saveAttendanceManagers,
+    isSavingAttendanceManagers: attendanceManagerMutation.isPending,
     isMutating:
       autoAssignMutation.isPending ||
       directAssignMutation.isPending ||

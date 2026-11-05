@@ -58,12 +58,20 @@ const ALLOCATION_SSOT_SCHEMAS = [
   'AllocationEducationSlot',
   'AllocationCell',
   'VolunteerRow',
+  'AttendanceManagerUpdateRequest',
   'MemberPortalEducationScheduleItem',
   'MemberPortalEducationScheduleGroupTime',
   'MemberPortalEducationScheduleAssignment',
   'MemberPortalEducationScheduleAssignmentSubmission',
   'MemberPortalAssignmentSubmissionRequest',
+  'DirectAssignmentCandidatesResponse',
 ]
+
+const ATTENDANCE_MANAGER_PUT_PATH =
+  '/api/admin/program-execution/programs/{programId}/ujat/schedules/{scheduleId}/attendance-manager'
+
+const DIRECT_ASSIGNMENT_CANDIDATES_GET_PATH =
+  '/api/admin/program-execution/programs/{programId}/ujat/education-slots/{educationSlotId}/direct-assignment-candidates'
 
 const be = JSON.parse(readFileSync(bePath, 'utf8'))
 const fe = JSON.parse(readFileSync(feBackendPath, 'utf8'))
@@ -82,6 +90,22 @@ if (beJobPath) {
   pathCount += 1
 } else {
   console.warn(`BE missing path ${PORTAL_JOB_PATH}`)
+}
+
+const beAttendanceManagerPath = be.paths?.[ATTENDANCE_MANAGER_PUT_PATH]
+if (beAttendanceManagerPath) {
+  fe.paths[ATTENDANCE_MANAGER_PUT_PATH] = beAttendanceManagerPath
+  pathCount += 1
+} else {
+  console.warn(`BE missing path ${ATTENDANCE_MANAGER_PUT_PATH}`)
+}
+
+const beDirectAssignmentCandidatesPath = be.paths?.[DIRECT_ASSIGNMENT_CANDIDATES_GET_PATH]
+if (beDirectAssignmentCandidatesPath) {
+  fe.paths[DIRECT_ASSIGNMENT_CANDIDATES_GET_PATH] = beDirectAssignmentCandidatesPath
+  pathCount += 1
+} else {
+  console.warn(`BE missing path ${DIRECT_ASSIGNMENT_CANDIDATES_GET_PATH}`)
 }
 
 const previousUjat = be.components?.schemas?.VolunteerPreviousUjatTermRequest

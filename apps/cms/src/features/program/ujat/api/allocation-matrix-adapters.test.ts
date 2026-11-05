@@ -78,6 +78,42 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     expect(table.rows[1]?.cells[0]).toMatchObject({ kind: 'empty', blockedEmpty: true })
   })
 
+  it('필터 지역과 다른 educationRegionCode 봉사자의 ASSIGNED 셀도 행에 남긴다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        ...MATRIX,
+        volunteers: [
+          MATRIX.volunteers![0]!,
+          {
+            participantId: 303,
+            volunteerName: '부산파트너',
+            educationRegionCode: 'BUSAN',
+            giveUp: false,
+            totalAssignedDays: 1,
+            cells: [
+              {
+                columnKey: '10:100',
+                scheduleId: 10,
+                organizationApplicationId: 100,
+                educationSlotId: 501,
+                classLabel: '3-1',
+                assignmentStatus: 'ASSIGNED',
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows.map(row => row.id)).toEqual(['201', '303'])
+    expect(table.rows[1]?.cells[0]).toMatchObject({
+      kind: 'assigned',
+      classLabel: '3-1',
+      assignmentStatus: 'ASSIGNED',
+      educationSlotId: '501',
+    })
+  })
+
   it('organizationRegion null 은 빈 문자열 invent 없이 UI - 로 표시한다', () => {
     const table = mapAllocationMatrixToRegionTableData({
       matrix: {
@@ -390,7 +426,7 @@ describe('mapAllocationMatrixToRegionTableData', () => {
     })
   })
 
-  it('FIRST_HALF columns=[]이면 cells=[]이고 totalAssignedDays 응답(0)을 그대로 둔다', () => {
+  it('FIRST_HALF columns=[]이면 봉사자 행을 유지하고 totalAssignedDays 응답(0)을 그대로 둔다', () => {
     const table = mapAllocationMatrixToRegionTableData({
       matrix: {
         programId: 186495,
@@ -398,25 +434,98 @@ describe('mapAllocationMatrixToRegionTableData', () => {
         semesterType: 'FIRST_HALF',
         columns: [],
         volunteers: [
-          {
-            participantId: 1,
-            volunteerName: '김민수',
-            totalAssignedDays: 0,
-            cells: [],
-          },
-          {
-            participantId: 2,
-            volunteerName: '이서연',
-            totalAssignedDays: 0,
-            cells: [],
-          },
+          { participantId: 1695056, volunteerName: 'v1', totalAssignedDays: 0, cells: [] },
+          { participantId: 1695057, volunteerName: 'v2', totalAssignedDays: 0, cells: [] },
+          { participantId: 1695058, volunteerName: 'v3', totalAssignedDays: 0, cells: [] },
+          { participantId: 1695059, volunteerName: 'v4', totalAssignedDays: 0, cells: [] },
+          { participantId: 1695063, volunteerName: 'v5', cells: [] },
         ],
       },
       regionKey: 'seoul',
     })
     expect(table.columns).toEqual([])
-    expect(table.rows.map(row => row.totalAssignedDays)).toEqual([0, 0])
+    expect(table.volunteerCount).toBe(5)
+    expect(table.rows).toHaveLength(5)
+    expect(table.rows.map(row => row.totalAssignedDays)).toEqual([0, 0, 0, 0, 0])
     expect(table.rows.every(row => row.cells.length === 0)).toBe(true)
+  })
+
+  it('ASSIGNED 셀이 있어도 totalAssignedDays를 cells로 다시 세지 않는다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        programId: 186495,
+        educationRegionCode: 'SEOUL',
+        semesterType: 'SECOND_HALF',
+        columns: [
+          {
+            columnKey: '187580:1',
+            scheduleId: 187580,
+            organizationApplicationId: 1,
+            educationStartAt: '2026-10-31T15:00:00Z',
+          },
+        ],
+        volunteers: [
+          {
+            participantId: 1695056,
+            volunteerName: 'v1',
+            totalAssignedDays: 0,
+            cells: [
+              {
+                columnKey: '187580:1',
+                scheduleId: 187580,
+                assignmentStatus: 'ASSIGNED',
+                classLabel: '1학년 1반',
+              },
+            ],
+          },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.rows[0]?.cells[0]?.kind).toBe('assigned')
+    expect(table.rows[0]?.totalAssignedDays).toBe(0)
+  })
+
+  it('SECOND_HALF 186495 SEOUL educationStartAt은 Asia/Seoul 달력일로 헤더를 만든다', () => {
+    const table = mapAllocationMatrixToRegionTableData({
+      matrix: {
+        programId: 186495,
+        educationRegionCode: 'SEOUL',
+        semesterType: 'SECOND_HALF',
+        columns: [
+          {
+            columnKey: '187580:1',
+            scheduleId: 187580,
+            educationStartAt: '2026-10-31T15:00:00Z',
+          },
+          {
+            columnKey: '187581:1',
+            scheduleId: 187581,
+            educationStartAt: '2026-11-12T15:00:00Z',
+          },
+          {
+            columnKey: '187582:1',
+            scheduleId: 187582,
+            educationStartAt: '2026-11-19T15:00:00Z',
+          },
+        ],
+        volunteers: [
+          { participantId: 1695056, volunteerName: 'v1', totalAssignedDays: 3, cells: [] },
+        ],
+      },
+      regionKey: 'seoul',
+    })
+    expect(table.columns.map(column => column.isoDate)).toEqual([
+      '2026-11-01',
+      '2026-11-13',
+      '2026-11-20',
+    ])
+    expect(table.columns.map(column => column.dateLabel)).toEqual([
+      '11월 1일',
+      '11월 13일',
+      '11월 20일',
+    ])
+    expect(table.rows[0]?.totalAssignedDays).toBe(3)
   })
 
   it('SECOND_HALF ASSIGNED classLabel(2학년 1반/2반)을 matrix 응답 그대로 유지한다', () => {

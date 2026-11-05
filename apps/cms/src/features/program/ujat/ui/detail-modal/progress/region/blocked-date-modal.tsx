@@ -52,13 +52,6 @@ export function RegionBlockedDateModal({
   )
   const [formError, setFormError] = useState<string | null>(null)
 
-  const assignedDateOptions = useMemo(() => {
-    if (!volunteerId) return []
-    return educationDateOptions.filter(option =>
-      getRequiresReplacement(volunteerId, [option.value])
-    )
-  }, [educationDateOptions, getRequiresReplacement, volunteerId])
-
   const requiresReplacement = useMemo(() => {
     if (!volunteerId || blockedDateLabels.length === 0) return false
     return getRequiresReplacement(volunteerId, blockedDateLabels)
@@ -67,7 +60,15 @@ export function RegionBlockedDateModal({
   const substituteVolunteerOptions = useMemo(() => {
     if (!requiresReplacement || !volunteerId || blockedDateLabels.length === 0) return []
     return getSubstituteVolunteerOptions(volunteerId, blockedDateLabels)
-  }, [blockedDateLabels, getRequiresReplacement, getSubstituteVolunteerOptions, requiresReplacement, volunteerId])
+  }, [
+    blockedDateLabels,
+    getSubstituteVolunteerOptions,
+    requiresReplacement,
+    volunteerId,
+  ])
+
+  const canSelectReplacement =
+    requiresReplacement && substituteVolunteerOptions.length > 0
 
   useEffect(() => {
     if (!open) return
@@ -86,7 +87,9 @@ export function RegionBlockedDateModal({
     if (!volunteerId || blockedDateLabels.length === 0) return false
     if (
       !volunteerOptions.some(option => option.value === volunteerId) ||
-      !blockedDateLabels.every(label => assignedDateOptions.some(option => option.value === label))
+      !blockedDateLabels.every(label =>
+        educationDateOptions.some(option => option.value === label)
+      )
     ) {
       return false
     }
@@ -94,8 +97,8 @@ export function RegionBlockedDateModal({
     if (!substituteVolunteerId) return false
     return substituteVolunteerOptions.some(option => option.value === substituteVolunteerId)
   }, [
-    assignedDateOptions,
     blockedDateLabels,
+    educationDateOptions,
     requiresReplacement,
     substituteVolunteerId,
     substituteVolunteerOptions,
@@ -207,45 +210,47 @@ export function RegionBlockedDateModal({
             placeholder={
               !volunteerId
                 ? '봉사자를 먼저 선택해 주세요'
-                : assignedDateOptions.length === 0
-                  ? '배정된 교육일이 없습니다'
+                : educationDateOptions.length === 0
+                  ? '선택 가능한 교육일이 없습니다'
                   : '참여 불가한 날짜를 선택해 주세요'
             }
             value={blockedDateLabels}
-            disabled={!volunteerId || assignedDateOptions.length === 0}
+            disabled={!volunteerId || educationDateOptions.length === 0}
             onChange={value => {
               const next = Array.isArray(value) ? value.map(String) : []
               setBlockedDateLabels(next)
               setSubstituteVolunteerId(undefined)
             }}
-            options={[...assignedDateOptions]}
+            options={[...educationDateOptions]}
             aria-label="참여 불가일"
           />
         </div>
 
-        {requiresReplacement ? (
-          <div className="ujat-assignment-assign-modal__field">
-            <RequiredLabel>대체 봉사자</RequiredLabel>
-            <CmsSelect
-              inputSize="large"
-              width="100%"
-              withAllOption={false}
-              placeholder={
-                substituteVolunteerOptions.length === 0
-                  ? '선택 가능한 대체 봉사자가 없습니다'
-                  : '대체 봉사자를 선택해 주세요'
-              }
-              value={substituteVolunteerId}
-              disabled={substituteVolunteerOptions.length === 0}
-              onChange={value => {
-                setSubstituteVolunteerId(value == null ? undefined : String(value))
-                setFormError(null)
-              }}
-              options={[...substituteVolunteerOptions]}
-              aria-label="대체 봉사자"
-            />
-          </div>
-        ) : null}
+        <div className="ujat-assignment-assign-modal__field">
+          <RequiredLabel>대체 봉사자</RequiredLabel>
+          <CmsSelect
+            inputSize="large"
+            width="100%"
+            withAllOption={false}
+            placeholder={
+              !volunteerId || blockedDateLabels.length === 0
+                ? '대체 봉사자를 선택해 주세요'
+                : !requiresReplacement
+                  ? '배정된 교육이 없어 대체가 필요 없습니다'
+                  : substituteVolunteerOptions.length === 0
+                    ? '선택 가능한 대체 봉사자가 없습니다'
+                    : '대체 봉사자를 선택해 주세요'
+            }
+            value={substituteVolunteerId}
+            disabled={!canSelectReplacement}
+            onChange={value => {
+              setSubstituteVolunteerId(value == null ? undefined : String(value))
+              setFormError(null)
+            }}
+            options={[...substituteVolunteerOptions]}
+            aria-label="대체 봉사자"
+          />
+        </div>
 
         {formError ? (
           <p

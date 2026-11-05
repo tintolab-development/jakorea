@@ -17,13 +17,15 @@ const TABLE_SELECT_WIDTH = 140
 export type RegionAttendanceManagerModalProps = {
   open: boolean
   scheduleItems: ReadonlyArray<RegionAttendanceManagerScheduleItem>
+  saving?: boolean
   onCancel: () => void
-  onSave: (assignments: RegionAttendanceManagerAssignments) => void
+  onSave: (assignments: RegionAttendanceManagerAssignments) => void | Promise<void>
 }
 
 export function RegionAttendanceManagerModal({
   open,
   scheduleItems,
+  saving = false,
   onCancel,
   onSave,
 }: RegionAttendanceManagerModalProps) {
@@ -38,21 +40,23 @@ export function RegionAttendanceManagerModal({
   }, [scheduleItems])
 
   useEffect(() => {
-    if (!open) return
+    if (!open || saving) return
 
     const initial: Record<string, string | undefined> = {}
     for (const item of scheduleItems) {
       initial[item.columnId] = item.currentManagerId
     }
     setSelections(initial)
-  }, [open, scheduleItems])
+  }, [open, saving, scheduleItems])
 
   const handleCancel = useCallback(() => {
+    if (saving) return
     setSelections({})
     onCancel()
-  }, [onCancel])
+  }, [onCancel, saving])
 
   const handleSave = useCallback(() => {
+    if (saving) return
     const missingLabels = scheduleItems
       .filter(item => {
         if (item.volunteerOptions.length === 0) return false
@@ -86,13 +90,18 @@ export function RegionAttendanceManagerModal({
       }
     }
 
-    onSave(assignments)
-    setSelections({})
-  }, [onSave, scheduleItems, selections, showAlert])
+    void onSave(assignments)
+  }, [onSave, saving, scheduleItems, selections, showAlert])
 
   const footer = (
     <div className="ujat-region-attendance-manager-modal__footer">
-      <CmsButton variant="secondary" size="h40" type="button" onClick={handleCancel}>
+      <CmsButton
+        variant="secondary"
+        size="h40"
+        type="button"
+        disabled={saving}
+        onClick={handleCancel}
+      >
         닫기
       </CmsButton>
       <CmsButton
@@ -100,6 +109,7 @@ export function RegionAttendanceManagerModal({
         size="h40"
         type="button"
         disabled={scheduleItems.length === 0}
+        loading={saving}
         onClick={handleSave}
       >
         저장
@@ -160,7 +170,7 @@ export function RegionAttendanceManagerModal({
                           placeholder={placeholder}
                           title={placeholder}
                           value={selections[item.columnId]}
-                          disabled={item.volunteerOptions.length === 0}
+                          disabled={saving || item.volunteerOptions.length === 0}
                           onChange={value =>
                             setSelections(prev => ({
                               ...prev,

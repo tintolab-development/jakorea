@@ -2543,6 +2543,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               programStartDate={program.startDate}
               programEndDate={program.endDate}
               participationAppliedAt={mergedDetail.participationAppliedAt}
+              activityWithdrawn={isActivityWithdrawn}
               hasStudentSatisfactionSurvey={normalizeGeneralSurveyMenuKeys(
                 program.generalSurveyMenuKeys ?? []
               ).includes('satisfaction')}

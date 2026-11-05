@@ -5,6 +5,7 @@ import {
   type StudentCertificateDownloadContext,
 } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { resolveStudentCertificateKind } from '@/features/program/general/lib/resolve-student-certificate-kind'
+import type { StudentCertificateKind } from '@/features/program/general/lib/resolve-student-certificate-kind'
 import type { Program } from '@/types/domain'
 import { resolveGeneralProgramDisplayTitle } from '@/features/program/general/lib/detail-common-info-display'
 import { mapApiBirthDateToDisplay } from '@/features/program/general/api/adapters/student-roster-adapters'
@@ -38,14 +39,22 @@ export function buildParticipatingParticipantCertificateContext(input: {
   program: Program
   hasStudentSatisfactionSurvey?: boolean
   issuanceReasonLabel: string
+  /** 서버 eligibility 유형. 없으면 출석 세션 힌트만 사용한다. */
+  certificateKind?: StudentCertificateKind
+  certifiedPeriodLabel?: string | null
+  certifiedPeriodStart?: Date | string | null
+  certifiedPeriodEnd?: Date | string | null
+  requireCertifiedPeriod?: boolean
 }): StudentCertificateDownloadContext {
   const { participant, program, hasStudentSatisfactionSurvey = false, issuanceReasonLabel } = input
   const student = toParticipatingParticipantCertificateStudent(participant)
-  const certificateKind = resolveStudentCertificateKind({
-    sessions: participant.lectureAttendanceSessions,
-    satisfactionSurveyRequired: hasStudentSatisfactionSurvey,
-    satisfactionSurveyCompleted: participant.satisfactionSurveyCompleted,
-  })
+  const certificateKind =
+    input.certificateKind ??
+    resolveStudentCertificateKind({
+      sessions: participant.lectureAttendanceSessions,
+      satisfactionSurveyRequired: hasStudentSatisfactionSurvey,
+      satisfactionSurveyCompleted: participant.satisfactionSurveyCompleted,
+    })
 
   return buildStudentCertificateDownloadContext({
     student,
@@ -55,6 +64,10 @@ export function buildParticipatingParticipantCertificateContext(input: {
     programTitle: resolveGeneralProgramDisplayTitle(program),
     programStartDate: program.startDate,
     programEndDate: program.endDate,
+    certifiedPeriodLabel: input.certifiedPeriodLabel,
+    certifiedPeriodStart: input.certifiedPeriodStart,
+    certifiedPeriodEnd: input.certifiedPeriodEnd,
+    requireCertifiedPeriod: input.requireCertifiedPeriod,
     issuanceReasonLabel,
     programId: program.id,
   })

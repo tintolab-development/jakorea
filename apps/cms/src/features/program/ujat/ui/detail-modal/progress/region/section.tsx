@@ -26,6 +26,7 @@ import {
   getRegionBlockedDateSubstituteVolunteerOptionsFromData,
   getRegionBlockedDateVolunteerOptionsFromData,
   regionUnavailabilityRequiresReplacement,
+  getRegionAssignmentDisplayedVolunteerCount,
   getRegionDirectAssignClassOptionsFromData,
   getRegionEducationDateOptionsFromData,
 } from './region-assignment-options'
@@ -64,10 +65,12 @@ export function UjatEducationProgressRegionAssignmentSection({
     isLoading,
     isError,
     isRemote,
+    refetchMatrix,
     runAutoAssign,
     confirmDirectAssign,
     confirmBlockedDate,
     saveAttendanceManagers,
+    isSavingAttendanceManagers,
     isMutating,
   } = useRegionAssignment(programId, half, activeRegion)
 
@@ -113,13 +116,14 @@ export function UjatEducationProgressRegionAssignmentSection({
     [tableData]
   )
 
-  /** 교육일 컬럼이 없으면 배정표를 그리지 않는다 (봉사자만 오고 columns=[]인 BE 반기 필터 응답 포함) */
+  /** 교육일 열이 없으면 배정 액션만 막는다. 봉사자 행·총 교육일 0은 그대로 표시한다. */
   const hasScheduleColumns = tableData.columns.length > 0
   const actionsDisabled = isLoading || isError || isMutating || !hasScheduleColumns
 
   const handleOpenDirectAssignModal = useCallback(() => {
+    void refetchMatrix()
     setDirectAssignModalOpen(true)
-  }, [])
+  }, [refetchMatrix])
 
   const handleOpenDownloadModal = useCallback(() => {
     setDownloadModalOpen(true)
@@ -187,9 +191,9 @@ export function UjatEducationProgressRegionAssignmentSection({
   }, [])
 
   const handleSaveAttendanceManager = useCallback(
-    (assignments: RegionAttendanceManagerAssignments) => {
-      saveAttendanceManagers(assignments)
-      setAttendanceManagerModalOpen(false)
+    async (assignments: RegionAttendanceManagerAssignments) => {
+      const saved = await saveAttendanceManagers(assignments)
+      if (saved) setAttendanceManagerModalOpen(false)
     },
     [saveAttendanceManagers]
   )
@@ -205,7 +209,7 @@ export function UjatEducationProgressRegionAssignmentSection({
         <div className="table-header-title--wrapper">
           <div className="table-title">{tableData.regionLabel} 지역 교육 배정</div>
           <span className="table-description">
-            총 {hasScheduleColumns ? tableData.volunteerCount : 0}명
+            총 {getRegionAssignmentDisplayedVolunteerCount(tableData)}명
           </span>
         </div>
 
@@ -287,8 +291,6 @@ export function UjatEducationProgressRegionAssignmentSection({
         volunteerOptions={directAssignCandidates.volunteerOptions}
         volunteerOptionsLoading={directAssignCandidates.loading}
         volunteerOptionsError={directAssignCandidates.errorMessage}
-        volunteerOptionsEmptyHint={directAssignCandidates.emptyHint}
-        existingPrimaryVolunteerName={directAssignCandidates.existingPrimaryVolunteerName}
         onClassSlotChange={setDirectAssignClassSlotId}
         onCancel={handleCloseDirectAssignModal}
         onConfirm={handleConfirmDirectAssign}
@@ -316,6 +318,7 @@ export function UjatEducationProgressRegionAssignmentSection({
       <RegionAttendanceManagerModal
         open={attendanceManagerModalOpen}
         scheduleItems={attendanceManagerScheduleItems}
+        saving={isSavingAttendanceManagers}
         onCancel={handleCloseAttendanceManagerModal}
         onSave={handleSaveAttendanceManager}
       />

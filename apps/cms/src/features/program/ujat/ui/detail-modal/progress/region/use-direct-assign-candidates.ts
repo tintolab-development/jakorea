@@ -37,13 +37,6 @@ export function useDirectAssignCandidates(input: {
     retry: false,
   })
 
-  const existingPrimaryVolunteerName = useMemo(() => {
-    const primaryId = query.data?.existingPrimaryParticipantId
-    if (primaryId == null) return null
-    const row = input.tableData.rows.find(item => item.id === String(primaryId))
-    return row?.name ?? '-'
-  }, [input.tableData.rows, query.data?.existingPrimaryParticipantId])
-
   const volunteerOptions = useMemo(
     () => mapRegionDirectAssignCandidateOptions(query.data),
     [query.data]
@@ -60,27 +53,9 @@ export function useDirectAssignCandidates(input: {
       : '배정 가능한 봉사자를 불러오지 못했습니다.'
   }, [educationSlotId, input.classSlotId, query.error, selectable])
 
-  const emptyHint = useMemo(() => {
-    if (!input.classSlotId || !selectable || educationSlotId == null) return null
-    if (query.isFetching || query.error) return null
-    if (!query.isFetched) return null
-    if (volunteerOptions.length > 0) return null
-    return '이 학급의 서버 후보가 없습니다. 참여 봉사자 탭의 배정 대기는 이 목록에 자동으로 포함되지 않습니다.'
-  }, [
-    educationSlotId,
-    input.classSlotId,
-    query.error,
-    query.isFetched,
-    query.isFetching,
-    selectable,
-    volunteerOptions.length,
-  ])
-
   return {
     volunteerOptions,
-    existingPrimaryVolunteerName,
     loading: query.isFetching,
     errorMessage,
-    emptyHint,
   }
 }

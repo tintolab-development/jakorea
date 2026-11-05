@@ -31,8 +31,12 @@ export type UjatAllocationCellDto = {
   singleAssignment?: boolean | null
   unavailable?: boolean | null
   needsReassignment?: boolean | null
+  /** BE 항상 대문자 3값. 라벨만 있고 상태 없는 셀 없음 */
   assignmentStatus?: 'ASSIGNED' | 'UNASSIGNED' | 'REASSIGNMENT_REQUIRED' | string | null
-  /** 참여 불가 대체 봉사자. 있으면 unavailability GET 없이 표시 */
+  /**
+   * 참여 불가 대체 봉사자. unavailable=false이면 null.
+   * 있으면 unavailability GET 없이 표시
+   */
   replacementParticipantId?: number | null
   replacementVolunteerName?: string | null
 }
@@ -152,8 +156,23 @@ export type UjatDirectAssignmentCandidatesResponse = {
   candidates?: UjatDirectAssignmentCandidate[] | null
   /** 일부 래퍼·별칭. fetch 정규화 후 candidates로 합친다 */
   items?: UjatDirectAssignmentCandidate[] | null
-  /** 1인 슬롯이면 기존 배정 봉사자 participantId(선택 후보는 SECONDARY로 추가), 빈 슬롯이면 null */
+  /** 1인 슬롯만 PRIMARY id. 빈 슬롯·2인 슬롯은 null */
   existingPrimaryParticipantId?: number | null
+  /** 슬롯 활성 배정 인원. 0 빈 / 1 SECONDARY 추가 / 2 가득. omit·null 금지 */
+  assignedVolunteerCount: number
+}
+
+export type UjatDirectAssignmentSlotOccupancy = 'empty' | 'primary' | 'full' | 'unknown'
+
+export function readUjatDirectAssignmentOccupancy(
+  response: Pick<UjatDirectAssignmentCandidatesResponse, 'assignedVolunteerCount'> | null | undefined
+): UjatDirectAssignmentSlotOccupancy {
+  const count = response?.assignedVolunteerCount
+  if (typeof count !== 'number' || !Number.isFinite(count)) return 'unknown'
+  if (count >= 2) return 'full'
+  if (count === 1) return 'primary'
+  if (count === 0) return 'empty'
+  return 'unknown'
 }
 
 function readNullableNumber(value: unknown): number | null {
@@ -202,9 +221,14 @@ export function normalizeUjatDirectAssignmentCandidatesResponse(
 ): UjatDirectAssignmentCandidatesResponse {
   const body = unwrapApiBody<unknown>(payload)
   if (Array.isArray(body)) {
-    return { candidates: body.map(normalizeDirectAssignmentCandidate) }
+    return {
+      candidates: body.map(normalizeDirectAssignmentCandidate),
+      assignedVolunteerCount: Number.NaN,
+    }
   }
-  if (body == null || typeof body !== 'object') return { candidates: [] }
+  if (body == null || typeof body !== 'object') {
+    return { candidates: [], assignedVolunteerCount: Number.NaN }
+  }
   const o = body as Record<string, unknown>
   if (!('candidates' in o) && !('items' in o) && 'data' in o) {
     return normalizeUjatDirectAssignmentCandidatesResponse(o.data)
@@ -228,6 +252,8 @@ export function normalizeUjatDirectAssignmentCandidatesResponse(
     existingPrimaryParticipantId: readNullableNumber(
       o.existingPrimaryParticipantId ?? o.existing_primary_participant_id
     ),
+    assignedVolunteerCount:
+      readNullableNumber(o.assignedVolunteerCount ?? o.assigned_volunteer_count) ?? Number.NaN,
   }
 }
 
@@ -242,9 +268,14 @@ export type UjatDirectAssignmentResponse = {
 
 export type UjatAttendanceManagerUpdateRequest = {
   /**
+   * 배정 매트릭스 열 SSOT. AllocationColumn.organizationApplicationId.
+   * omit / undefined / null / 0 금지.
+   */
+  organizationApplicationId: number
+  /**
    * 출결 담당 participantId.
-   * - number: 지정
-   * - null: 해당 교육일 출결 담당 해제 (키를 빼고 undefined로 보내지 말 것)
+   * - number: 해당 열 지정
+   * - null: 해당 열(scheduleId+organizationApplicationId)만 해제 (키를 빼고 undefined로 보내지 말 것)
    */
   participantId: number | null
 }
@@ -420,13 +451,16 @@ export async function fetchUjatDirectAssignmentCandidates(
   educationSlotId: string | number
 ): Promise<UjatDirectAssignmentCandidatesResponse> {
   return normalizeUjatDirectAssignmentCandidatesResponse(
-    await customInstance({
-      url: executionUjatPath(
-        programId,
-        `/education-slots/${encodeURIComponent(String(educationSlotId))}/direct-assignment-candidates`
-      ),
-      method: 'GET',
-    })
+    await customInstance(
+      {
+        url: executionUjatPath(
+          programId,
+          `/education-slots/${encodeURIComponent(String(educationSlotId))}/direct-assignment-candidates`
+        ),
+        method: 'GET',
+      },
+      { skipGlobalErrorAlert: true }
+    )
   )
 }
 
@@ -452,15 +486,25 @@ export async function putUjatAttendanceManager(
   scheduleId: string | number,
   body: UjatAttendanceManagerUpdateRequest
 ): Promise<void> {
-  // participantId: null 은 JSON null로 유지. undefined/omit 금지(담당 해제 누락).
-  const participantId = body.participantId === undefined ? null : body.participantId
+  const organizationApplicationId = body.organizationApplicationId
+  if (!Number.isFinite(organizationApplicationId) || organizationApplicationId <= 0) {
+    throw new Error('출결 담당자를 저장할 교육 일정이 없습니다. 배정표를 새로고침해 주세요.')
+  }
+  // participantId: null 은 JSON null로 유지. undefined/omit/0 치환 금지.
+  const participantId = body.participantId
+  if (participantId === undefined) {
+    throw new Error('출결 담당자를 저장할 교육 일정이 없습니다. 배정표를 새로고침해 주세요.')
+  }
+  if (participantId !== null && (!Number.isFinite(participantId) || participantId <= 0)) {
+    throw new Error('출결 담당자를 저장할 교육 일정이 없습니다. 배정표를 새로고침해 주세요.')
+  }
   const payload = await customInstance({
     url: executionUjatPath(
       programId,
       `/schedules/${encodeURIComponent(String(scheduleId))}/attendance-manager`
     ),
     method: 'PUT',
-    data: { participantId },
+    data: { organizationApplicationId, participantId },
   })
   if (payload != null && typeof payload === 'object') {
     const envelope = payload as { success?: boolean; message?: string; error?: { message?: string } }
