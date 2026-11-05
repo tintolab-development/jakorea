@@ -7,6 +7,7 @@ import {
   formatSettlementAmountDisplay,
   formatSettlementFileNames,
   formatSettlementHomeAddress,
+  formatSettlementPaymentPurpose,
   formatSettlementResidentNumber,
   hasSettlementActivitySection,
   hasSettlementMealSection,
@@ -17,6 +18,14 @@ import {
   resolveSettlementTripTypeLabel,
   startedReceiptExtraItems,
 } from '../lib/format-write-draft'
+import {
+  formatInstructorFeeAssignment,
+  formatLectureFeeSessionProgress,
+  formatLectureFeeWon,
+  lectureFeeTypeDisplayLabel,
+} from '../lib/lecture-fee-preview'
+import { readInstructorBusinessIncomeConfirmLabel } from '../lib/instructor-settlement-summary'
+import { usePortalProfileQuery } from '@/features/auth/sign-in'
 import { readTripLegFileNames } from '../lib/empty-trip-leg'
 import {
   isReceiptEvidenceRequired,
@@ -117,6 +126,8 @@ export function EducationSettlementConfirmView({
   onComplete,
   onBack,
 }: EducationSettlementConfirmViewProps) {
+  const isReceipt = isReceiptWriteDraft(draft)
+  const profileQuery = usePortalProfileQuery({ enabled: !isReceipt })
   const transportTotal = computeSettlementTransportTotal(draft)
   const showTransport = hasSettlementTransportSection(draft)
   const showMeal = hasSettlementMealSection(draft)
@@ -136,13 +147,33 @@ export function EducationSettlementConfirmView({
         draft.transport.evidenceRequired),
   )
   const resident = formatSettlementResidentNumber(draft)
-
+  const lectureFeePreview = session?.lectureFeePreview ?? null
+  const businessIncome = readInstructorBusinessIncomeConfirmLabel(profileQuery.data)
+  const sessionNo =
+    lectureFeePreview?.educationSessionCount ??
+    (session && session.sessionNumber > 0 ? session.sessionNumber : null)
+  const calcRows: PFInfoReviewItem[] = [
+    { label: '강의비 유형', value: lectureFeeTypeDisplayLabel(lectureFeePreview?.lectureFeeType) },
+    { label: '강사비 배정', value: formatInstructorFeeAssignment(lectureFeePreview) },
+    { label: '사업소득자 여부', value: businessIncome },
+    {
+      label: '교육 진행 차시',
+      value: formatLectureFeeSessionProgress({
+        sessionNo,
+        educationSessionCount: lectureFeePreview?.educationSessionCount,
+        startAt: session?.lectureStartAt,
+        endAt: session?.lectureEndAt,
+      }),
+    },
+  ]
+  const totalLectureFee = formatLectureFeeWon(lectureFeePreview?.totalLectureFee)
   const basicRows: PFInfoReviewItem[] = [
     { label: '성명', value: draft.basic.name },
-    { label: '영문명', value: draft.basic.nameEn },
-    ...(isReceiptWriteDraft(draft) ? [] : [{ label: '주민등록번호', value: resident }]),
+    ...(isReceipt ? [{ label: '영문명', value: draft.basic.nameEn }] : []),
+    ...(isReceipt ? [] : [{ label: '주민등록번호', value: resident }]),
     { label: '자택 주소', value: formatSettlementHomeAddress(draft) },
     { label: '정산 계좌 정보', value: formatSettlementAccountInfo(draft) },
+    ...(isReceipt ? [] : [{ label: '지급 목적', value: formatSettlementPaymentPurpose(draft) }]),
   ]
 
   return (
@@ -150,7 +181,15 @@ export function EducationSettlementConfirmView({
       <EducationSettlementSessionBanner
         programTitle={programTitle ?? draft.meta.programTitle}
         session={session}
+        institutionTitle={!isReceipt}
       />
+
+      {!isReceipt ? (
+        <ConfirmSection title="강의비 산출 정보">
+          <PFInfoReview rows={calcRows} accentFirstRow={false} />
+          <ConfirmAmountSummary label="총 강의비" amount={totalLectureFee} />
+        </ConfirmSection>
+      ) : null}
 
       <ConfirmSection title="기본 정보">
         <PFInfoReview rows={basicRows} accentFirstRow={false} />

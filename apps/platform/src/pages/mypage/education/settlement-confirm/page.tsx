@@ -77,19 +77,19 @@ export function MypageEducationSettlementConfirmPage() {
   const area = resolveSettlementAreaFromPathname(location.pathname)
   const remoteQuery = useMyProgramApplicationDetail(
     remoteEnabled ? applicationType : null,
-    remoteEnabled ? applicationId : null,
+    remoteEnabled ? applicationId : null
   )
   const application = remoteQuery.application
   const programType = application?.programConfig?.programType ?? null
   const useIndividualSettlementApi = shouldUseIndividualSettlementSchedulesApi(
     applicationType,
-    programType,
+    programType
   )
   const remoteSettlements = useApplicationSettlementsQuery(
     applicationType,
     applicationId,
     application?.programId ?? '',
-    { programType },
+    { programType }
   )
   const submitMutation = useSubmitIndividualSettlementMutation(applicationId)
   const profileQuery = usePortalProfileQuery({ enabled: !viewMode })
@@ -153,10 +153,9 @@ export function MypageEducationSettlementConfirmPage() {
       return
     }
     if (!storedDraft) {
-      navigate(
-        buildSettlementWritePath({ applicationId, sessionId, area, applicationType }),
-        { replace: true },
-      )
+      navigate(buildSettlementWritePath({ applicationId, sessionId, area, applicationType }), {
+        replace: true,
+      })
     }
   }, [
     applicationId,
@@ -171,8 +170,7 @@ export function MypageEducationSettlementConfirmPage() {
   ])
 
   if (viewMode) {
-    const handleClose = () =>
-      navigate(buildSettlementTabPath(applicationId, area, applicationType))
+    const handleClose = () => navigate(buildSettlementTabPath(applicationId, area, applicationType))
     if (!session || documentId == null) {
       if (remoteSettlements.isLoading) {
         return (
@@ -218,13 +216,17 @@ export function MypageEducationSettlementConfirmPage() {
   const title =
     documentKind === 'receipt'
       ? '영수증 제출 전에\n정보가 맞는지 확인해 주세요.'
-      : '지급조서 신청 전에\n정보가 맞는지 확인해 주세요.'
-  const titleInnerClassName =
-    documentKind === 'receipt' ? `${styles.inner} ${styles.titleCentered}` : styles.inner
+      : '지급조서 제출 전에\n정보가 맞는지 확인해 주세요.'
+  const titleInnerClassName = `${styles.inner} ${styles.titleCentered}`
 
   if (remoteSettlements.individualDisabled) {
     return (
-      <PFFormPage aria-label={title} className={styles.page} innerClassName={titleInnerClassName} title={title}>
+      <PFFormPage
+        aria-label={title}
+        className={styles.page}
+        innerClassName={titleInnerClassName}
+        title={title}
+      >
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           {INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE}
         </PFText>
@@ -234,7 +236,12 @@ export function MypageEducationSettlementConfirmPage() {
 
   if (consentSidecarQuery.isLoading || profileQuery.isPending) {
     return (
-      <PFFormPage aria-label={title} className={styles.page} innerClassName={titleInnerClassName} title={title}>
+      <PFFormPage
+        aria-label={title}
+        className={styles.page}
+        innerClassName={titleInnerClassName}
+        title={title}
+      >
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
           기본 정보를 불러오는 중입니다.
         </PFText>
@@ -263,7 +270,7 @@ export function MypageEducationSettlementConfirmPage() {
       setAlertMessage(
         documentKind === 'receipt'
           ? '이 신청 유형에서는 일정별 정산을 제출할 수 없습니다.'
-          : '이 신청 유형에서는 지급조서를 제출할 수 없습니다.',
+          : '이 신청 유형에서는 지급조서를 제출할 수 없습니다.'
       )
       setAlertOpen(true)
       return
@@ -305,8 +312,8 @@ export function MypageEducationSettlementConfirmPage() {
           setAlertMessage(
             individualSettlementApiErrorMessage(
               error,
-              getProgramApplicationApiErrorMessage(error, submitFailedMessage),
-            ),
+              getProgramApplicationApiErrorMessage(error, submitFailedMessage)
+            )
           )
           setAlertOpen(true)
         })
@@ -344,17 +351,14 @@ export function MypageEducationSettlementConfirmPage() {
         description={alertMessage}
         onConfirm={() => {
           setAlertOpen(false)
-          if (
-            documentKind === 'receipt' &&
-            alertMessage === RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE
-          ) {
+          if (documentKind === 'receipt' && alertMessage === RECEIPT_PRE_CONSENT_REQUIRED_MESSAGE) {
             navigate(
               buildSettlementReceiptConsentPath({
                 applicationId,
                 mode: 'write',
                 area,
                 applicationType,
-              }),
+              })
             )
           }
         }}

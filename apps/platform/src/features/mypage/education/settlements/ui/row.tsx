@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { EducationSettlementItem } from '../model/types'
 import { EDUCATION_SETTLEMENT_PROGRESS_LABEL } from '../lib/settlement-rules'
+import { formatSettlementGradeLabel } from '../lib/format-write-draft'
 import { formatDisplayDate } from '@/shared/lib/format-display-date'
 import {
   isSettlementDeadlinePassed,
@@ -51,9 +52,7 @@ const MARK_ICON = {
 } as const
 
 function formatSchoolGradeBadge(raw: string): string | undefined {
-  const trimmed = raw.trim()
-  if (!trimmed) return undefined
-  return trimmed.endsWith('학년') ? trimmed : `${trimmed}학년`
+  return formatSettlementGradeLabel(raw) || undefined
 }
 
 const UNSUBMITTED_DEADLINE_STATUSES = new Set([

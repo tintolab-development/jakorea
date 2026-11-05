@@ -26,3 +26,14 @@ export function readInstructorBusinessIncomeLabel(
   if (!settlement || typeof settlement.businessIncome !== 'boolean') return MISSING
   return settlement.businessIncome ? '해당' : '해당 없음'
 }
+
+/** 지급조서 확인 — 사업소득 여부 + 원천세 안내 */
+export function readInstructorBusinessIncomeConfirmLabel(
+  profile: PortalProfileResponse | null | undefined,
+): string {
+  const settlement = profile?.instructorProfile?.settlement
+  if (!settlement || typeof settlement.businessIncome !== 'boolean') return MISSING
+  return settlement.businessIncome
+    ? '해당, 사업소득 3.3% 적용'
+    : '해당 없음, 기타소득 8.8% 적용'
+}

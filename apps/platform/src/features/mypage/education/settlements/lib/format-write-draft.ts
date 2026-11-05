@@ -57,6 +57,39 @@ export function formatSettlementFileNames(fileNames: string[]): string {
   return fileNames.join(', ')
 }
 
+export function formatSettlementGradeLabel(raw: string | null | undefined): string {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed) return ''
+  return trimmed.endsWith('학년') ? trimmed : `${trimmed}학년`
+}
+
+/** 기관 프로그램은 프로그램명 대신 `학교명 학년`. institutionOnly면 없으면 '-' */
+export function formatSettlementSessionBannerTitle(
+  session: { institutionName?: string | null; grade?: string | null } | undefined,
+  programTitle?: string,
+  options?: { institutionOnly?: boolean },
+): string {
+  const institutionName = session?.institutionName?.trim() ?? ''
+  const grade = formatSettlementGradeLabel(session?.grade)
+  const institutionTitle = [institutionName, grade].filter(Boolean).join(' ')
+  if (options?.institutionOnly) return institutionTitle || '-'
+  if (institutionTitle) return institutionTitle
+  return programTitle?.trim() ?? ''
+}
+
+export function formatSettlementEducationSessionProgress(
+  session: { sessionNumber?: number; sessionMeta?: string } | undefined,
+): string {
+  if (!session) return ''
+  const sessionLabel =
+    typeof session.sessionNumber === 'number' && session.sessionNumber > 0
+      ? `${session.sessionNumber}차시`
+      : ''
+  const timeMatch = session.sessionMeta?.trim().match(/(\d{2}:\d{2})\s*[~\-–]\s*(\d{2}:\d{2})/)
+  const time = timeMatch ? `${timeMatch[1]} ~ ${timeMatch[2]}` : ''
+  return [sessionLabel, time].filter(Boolean).join(', ')
+}
+
 export function isSettlementTripLegStarted(leg: SettlementTripLegDraft): boolean {
   return (
     leg.transit.trim() !== '' ||
@@ -113,6 +146,21 @@ export function hasSettlementActivitySection(draft: SettlementWriteDraft): boole
     )
   }
   return parseSettlementAmount(draft.activity.amount) > 0 || draft.activity.fileNames.length > 0
+}
+
+/** 지급조서 확인 기본정보 — 신청한 항목명으로 `교통비, 식사비 지급` */
+export function formatSettlementPaymentPurpose(draft: SettlementWriteDraft): string {
+  const names: string[] = []
+  const returnStarted =
+    draft.transport.tripType === 'round_trip' &&
+    isSettlementTripLegStarted(draft.transport.return)
+  if (isSettlementTripLegStarted(draft.transport.depart) || returnStarted) {
+    names.push('교통비')
+  }
+  if (hasSettlementMealSection(draft)) names.push('식사비')
+  if (hasSettlementActivitySection(draft)) names.push('활동비')
+  if (names.length === 0) return ''
+  return `${names.join(', ')} 지급`
 }
 
 export function startedReceiptExtraItems(draft: SettlementWriteDraft) {
