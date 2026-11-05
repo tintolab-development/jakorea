@@ -1,3 +1,4 @@
+import type { InstructorTransportPreview } from '../lib/instructor-transport-preview'
 import type { LectureFeePreview } from '../lib/lecture-fee-preview'
 
 export type { LectureFeePreview }
@@ -41,6 +42,8 @@ export type EducationSettlementItem = {
   lectureEndAt?: string | null
   /** 지급조서 확인 강의비 산출. 조인된 배정에만. 없으면 null */
   lectureFeePreview?: LectureFeePreview | null
+  /** 강사 교통비 자동 산출. 서버 미리보기만. 없으면 null */
+  instructorTransportPreview?: InstructorTransportPreview | null
   progress: EducationSettlementProgress
   status: EducationSettlementStatus
   deadlineAt?: string

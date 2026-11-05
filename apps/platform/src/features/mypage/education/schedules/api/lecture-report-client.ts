@@ -1,5 +1,9 @@
 import { axiosClient } from '@/shared/api/axios-instance'
 import {
+  parseInstructorTransportPreview,
+  type InstructorTransportPreview,
+} from '../../settlements/lib/instructor-transport-preview'
+import {
   parseLectureFeePreview,
   type LectureFeePreview,
 } from '../../settlements/lib/lecture-fee-preview'
@@ -39,6 +43,7 @@ export type LectureReportAssignment = {
   distanceFromHome?: number | null
   /** 지급조서 확인 강의비 산출. 키는 항상 존재. 미리보기 없으면 null */
   lectureFeePreview?: LectureFeePreview | null
+  instructorTransportPreview?: InstructorTransportPreview | null
 }
 
 export type LectureReportPage = {
@@ -136,6 +141,7 @@ function normalizeLectureReportAssignment(value: unknown): LectureReportAssignme
     lectureFeePreview: parseLectureFeePreview(
       isRecord(value) ? value.lectureFeePreview : null,
     ),
+    instructorTransportPreview: parseInstructorTransportPreview(value),
   }
 }
 

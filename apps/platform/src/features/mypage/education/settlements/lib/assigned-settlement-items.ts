@@ -5,6 +5,7 @@ import type {
   PortalSettlementApplication,
 } from '../../applications/api/activity-client.ts'
 import type { EducationScheduleItem } from '../../schedules/model/types.ts'
+import type { InstructorTransportPreview } from '../lib/instructor-transport-preview.ts'
 import type { LectureFeePreview } from '../lib/lecture-fee-preview.ts'
 import type { EducationSettlementItem } from '../model/types.ts'
 import {
@@ -51,6 +52,7 @@ export type SettlementLectureReportJoin = {
   endAt?: string | null
   sessionNo?: number | null
   lectureFeePreview?: LectureFeePreview | null
+  instructorTransportPreview?: InstructorTransportPreview | null
 }
 
 const COMPLETED_LECTURE = new Set(['COMPLETED', 'DONE', 'HELD', 'FINISHED'])
@@ -414,6 +416,7 @@ export function buildAssignedSettlementItems(
       ...(lecture?.startAt != null ? { lectureStartAt: lecture.startAt } : {}),
       ...(lecture?.endAt != null ? { lectureEndAt: lecture.endAt } : {}),
       ...(lecture ? { lectureFeePreview: lecture.lectureFeePreview ?? null } : {}),
+      ...(lecture ? { instructorTransportPreview: lecture.instructorTransportPreview ?? null } : {}),
       progress,
       status,
       ...(deadlineAt ? { deadlineAt } : {}),

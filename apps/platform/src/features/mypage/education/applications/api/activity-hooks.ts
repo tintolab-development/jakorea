@@ -1085,6 +1085,7 @@ export function useApplicationSettlementsQuery(
                 endAt: row.endAt,
                 sessionNo: row.sessionNo,
                 lectureFeePreview: row.lectureFeePreview ?? null,
+                instructorTransportPreview: row.instructorTransportPreview ?? null,
               })),
         programId,
         operationEndAt: options?.operationEndAt,
