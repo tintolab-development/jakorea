@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { ColumnsType } from 'antd/es/table'
+import { CMS_TABLE_NO_COL_CLASS } from '@/shared/constants/table'
+import { useContainerFitTableScrollX } from '@/shared/lib/resolve-table-min-scroll-x'
 import { CmsButton } from '@/shared/ui'
 import { CmsDataTable } from '@/shared/ui/cms-data-table'
 import {
@@ -19,11 +21,34 @@ import type {
 import { formatUjatGradeClassDisplayLabel } from '@/features/program/ujat/lib/ujat-grade-class-display'
 import './section.css'
 
-const PLAN_LOG_CELL_CLASSNAME = 'ujat-volunteer-assignment-table__plan-log-cell'
-const REMARKS_CELL_CLASSNAME = 'ujat-education-progress-assignments__remarks-cell'
+/** Figma 4082:114026 — 고정 열. 비고는 flex(프레임 1546에서 406, min 80). */
+const UJAT_ASSIGNMENT_COL_WIDTH = {
+  no: 80,
+  name: 140,
+  institution: 180,
+  assignedClass: 140,
+  status: 240,
+  plan: 180,
+  log: 180,
+  remarksMin: 80,
+} as const
 
-/** Figma 4082:114026 열 합(1140) + 비고(406) */
-const UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X = 1546
+const COL_CLASS = {
+  name: 'ujat-education-progress-assignments__col-name',
+  institution: 'ujat-education-progress-assignments__col-institution',
+  assignedClass: 'ujat-education-progress-assignments__col-assigned-class',
+  status: 'ujat-education-progress-assignments__col-status',
+  plan: 'ujat-volunteer-assignment-table__plan-log-cell ujat-education-progress-assignments__col-plan',
+  log: 'ujat-volunteer-assignment-table__plan-log-cell ujat-education-progress-assignments__col-log',
+  remarks: 'ujat-education-progress-assignments__col-remarks',
+} as const
+
+function columnCellClass(className: string) {
+  return {
+    onHeaderCell: () => ({ className }),
+    onCell: () => ({ className }),
+  }
+}
 
 function renderPlanLogViewButton(
   label: string,
@@ -35,9 +60,10 @@ function renderPlanLogViewButton(
       <CmsButton
         type="button"
         variant="default"
-        size="small"
+        size="h32"
         disabled={!enabled}
-        onClick={enabled ? onView : undefined} >
+        onClick={enabled ? onView : undefined}
+      >
         {label}
       </CmsButton>
     </div>
@@ -105,48 +131,54 @@ export function UjatEducationProgressAssignmentTable({
         title: 'No.',
         dataIndex: 'no',
         key: 'no',
-        width: 80,
+        width: UJAT_ASSIGNMENT_COL_WIDTH.no,
         align: 'center',
+        className: CMS_TABLE_NO_COL_CLASS,
+        ...columnCellClass(CMS_TABLE_NO_COL_CLASS),
       },
       {
         title: '봉사자명',
         dataIndex: 'name',
         key: 'name',
-        width: 140,
+        width: UJAT_ASSIGNMENT_COL_WIDTH.name,
         align: 'center',
         ellipsis: true,
+        ...columnCellClass(COL_CLASS.name),
       },
       {
         title: '배정 기관',
         dataIndex: 'institutionName',
         key: 'institutionName',
-        width: 180,
+        width: UJAT_ASSIGNMENT_COL_WIDTH.institution,
         align: 'center',
         ellipsis: true,
+        ...columnCellClass(COL_CLASS.institution),
       },
       {
         title: '배정 학급',
         dataIndex: 'assignedClass',
         key: 'assignedClass',
-        width: 140,
+        width: UJAT_ASSIGNMENT_COL_WIDTH.assignedClass,
         align: 'center',
+        ellipsis: true,
+        ...columnCellClass(COL_CLASS.assignedClass),
         render: (assignedClass: string) => formatUjatGradeClassDisplayLabel(assignedClass),
       },
       {
         title: '제출 현황',
         key: 'submissionStatus',
-        width: 240,
+        width: UJAT_ASSIGNMENT_COL_WIDTH.status,
         align: 'center',
+        ...columnCellClass(COL_CLASS.status),
         render: (_: unknown, record: UjatAssignmentVolunteerRow) =>
           renderSubmissionStatus(record),
       },
       {
         title: '교육 계획서',
         key: 'educationPlan',
-        width: 180,
+        width: UJAT_ASSIGNMENT_COL_WIDTH.plan,
         align: 'center',
-        onHeaderCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
-        onCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
+        ...columnCellClass(COL_CLASS.plan),
         render: (_: unknown, record: UjatAssignmentVolunteerRow) =>
           renderPlanLogViewButton(
             '교육 계획서 보기',
@@ -157,10 +189,9 @@ export function UjatEducationProgressAssignmentTable({
       {
         title: '교육 일지',
         key: 'educationLog',
-        width: 180,
+        width: UJAT_ASSIGNMENT_COL_WIDTH.log,
         align: 'center',
-        onHeaderCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
-        onCell: () => ({ className: PLAN_LOG_CELL_CLASSNAME }),
+        ...columnCellClass(COL_CLASS.log),
         render: (_: unknown, record: UjatAssignmentVolunteerRow) =>
           renderPlanLogViewButton(
             '교육일지 보기',
@@ -171,31 +202,41 @@ export function UjatEducationProgressAssignmentTable({
       {
         title: '비고',
         key: 'remarks',
+        minWidth: UJAT_ASSIGNMENT_COL_WIDTH.remarksMin,
         align: 'center',
-        onHeaderCell: () => ({ className: REMARKS_CELL_CLASSNAME }),
-        onCell: () => ({ className: REMARKS_CELL_CLASSNAME }),
+        ...columnCellClass(COL_CLASS.remarks),
         render: (_: unknown, record: UjatAssignmentVolunteerRow) => renderRemarks(record),
       },
     ],
     [openViewer]
   )
 
+  const { tableWrapRef, tableScrollX } = useContainerFitTableScrollX(
+    columns as ColumnsType<unknown>,
+    { includeSelection: false }
+  )
+
   return (
     <>
-      <CmsDataTable<UjatAssignmentVolunteerRow & { no: number }>
-        rowKey="id"
-        className="cms-data-table ujat-education-progress-assignments__table"
-        columns={columns}
-        dataSource={tableData}
-        pagination={false}
-        tableLayout="fixed"
-        scroll={{ x: UJAT_ASSIGNMENT_TABLE_MIN_SCROLL_X }}
-        onRow={record => ({
-          className: record.isDropout
-            ? 'ujat-education-progress-assignments__row--dropout'
-            : undefined,
-        })}
-      />
+      <div
+        ref={tableWrapRef}
+        className="ujat-education-progress-assignments__table-wrap cms-data-table-fit-scroll-wrap"
+      >
+        <CmsDataTable<UjatAssignmentVolunteerRow & { no: number }>
+          rowKey="id"
+          className="cms-data-table cms-data-table--skip-auto-no-col ujat-education-progress-assignments__table"
+          columns={columns}
+          dataSource={tableData}
+          pagination={false}
+          tableLayout="fixed"
+          scroll={tableScrollX != null ? { x: tableScrollX } : undefined}
+          onRow={record => ({
+            className: record.isDropout
+              ? 'ujat-education-progress-assignments__row--dropout'
+              : undefined,
+          })}
+        />
+      </div>
 
       <UjatAssignmentDocumentViewerModal
         open={viewerTarget != null}
