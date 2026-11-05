@@ -24,13 +24,6 @@ const ERA_FILE: Record<string, string> = {
   '1980': 'era-1980.png',
 }
 
-const PHILOSOPHY_FILE: Record<string, string> = {
-  practice: 'philosophy-practice.png',
-  'role-model': 'philosophy-role-model.png',
-  mindset: 'philosophy-mindset.png',
-  support: 'philosophy-support.png',
-}
-
 const THRIVE_FILE: Record<string, string> = {
   empower: 'thrive-empower.svg',
   digital: 'thrive-digital.svg',
@@ -43,9 +36,18 @@ function asText(value: unknown, fallback: string): string {
 }
 
 function asYear(value: unknown, fallback: string): string {
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   if (typeof value === 'string') return value
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
   return fallback
+}
+
+function mapRemoteMedia(
+  media: PublicJaHistoryMedia | null | undefined,
+  fallbackAlt = '',
+): HistoryMediaView {
+  const url = typeof media?.url === 'string' ? media.url.trim() : ''
+  const alt = typeof media?.alt === 'string' ? media.alt : fallbackAlt
+  return { url, alt }
 }
 
 function splitOriginTitle(title: string): { englishTitle: string; koreanTitle: string } {
@@ -59,15 +61,13 @@ function splitOriginTitle(title: string): { englishTitle: string; koreanTitle: s
 
 function mapPeriods(
   periods: PublicJaHistoryTimelinePeriod[] | null | undefined,
-  fallback: HistoryTimelinePeriodView[],
 ): HistoryTimelinePeriodView[] {
-  if (!Array.isArray(periods)) return fallback
-  return periods.map((period, index) => {
-    const fallbackPeriod = fallback[index]
+  if (!Array.isArray(periods)) return []
+  return periods.map(period => {
     const events = Array.isArray(period.events) ? period.events : []
     return {
-      id: asText(period.id, fallbackPeriod?.id ?? ''),
-      label: asText(period.label, fallbackPeriod?.label ?? ''),
+      id: asText(period.id, ''),
+      label: asText(period.label, ''),
       title: asText(period.title, ''),
       events: events.map(event => ({
         year: asYear(event?.year, ''),
@@ -83,7 +83,14 @@ function mapTimeline(
   resolveMedia: HistoryMediaResolver,
   fileName: string,
 ): HistoryTimelineView {
-  if (!remote) return fallback
+  if (!remote) {
+    return {
+      image: fallback.image,
+      title: fallback.title,
+      body: fallback.body,
+      periods: [],
+    }
+  }
   return {
     image: resolveMedia(remote.image, {
       fileName,
@@ -92,7 +99,7 @@ function mapTimeline(
     }),
     title: asText(remote.title, fallback.title),
     body: asText(remote.body, fallback.body),
-    periods: mapPeriods(remote.periods, fallback.periods),
+    periods: mapPeriods(remote.periods),
   }
 }
 
@@ -180,11 +187,7 @@ export function mapPublicJaHistoryPage(
                   id,
                   title: asText(card?.title, ''),
                   description: asText(card?.description, ''),
-                  image: resolveMedia(card?.image, {
-                    fileName: PHILOSOPHY_FILE[id] ?? '',
-                    url: fallbackCard?.image.url ?? '',
-                    alt: fallbackCard?.image.alt ?? '',
-                  }),
+                  image: mapRemoteMedia(card?.image, fallbackCard?.image.alt ?? ''),
                 }
               })
             : fallback.philosophy.cards,
