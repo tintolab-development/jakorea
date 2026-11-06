@@ -181,7 +181,7 @@ describe('TRAINED_TEACHER 등록 canonical CREATE', () => {
       }
     }
     expect(json.program?.generalCommonInfo?.educationScheduleLines).toEqual([
-      '2026.11.11(수) ~ 2026.11.18(수)',
+      '26년 11월 11일(수) ~ 26년 11월 18일(수)',
     ])
     expect(seoulDay(json.program!.generalCommonInfo!.educationScheduleRange!.start)).toBe(
       '2026-11-11'

@@ -91,7 +91,8 @@ type ActivityTabOptions = {
    */
   instructorAssignmentVisible?: boolean
   /**
-   * 강의현황 상세(기관형·제미나이 외): 배정 현황(`assignment`) 뒤에 안내사항·강의보고서·설문·만족도·정산을 둔다.
+   * 강의현황 상세(기관형·제미나이 외): 배정 현황(`assignment`) 뒤에 안내사항·강의보고서·정산을 둔다.
+   * 강사 강의현황에는 설문조사·만족도조사 탭을 두지 않는다.
    * `instructorAssignmentVisible`과 함께 true일 때만 적용된다. 강의 일정 탭은 두지 않는다.
    */
   instructorAssignmentWithActivityTabs?: boolean
@@ -186,7 +187,8 @@ function appendSettlementTab(items: EducationDetailTabItem[], options: ActivityT
 
 /**
  * 진행 중 / 진행 완료 탭 (일반·강사 등).
- * 설문·만족도는 진행 중 내용이 없어도 노출하되, 프로그램 미설정(`*Configured === false`)이면 비노출.
+ * 교육·봉사현황: 설문·만족도는 프로그램 미설정(`*Configured === false`)이면 비노출.
+ * 강의현황(`instructorAssignmentVisible`): 강사 설문·만족도 진행이 없으므로 탭 자체를 두지 않는다.
  */
 export function buildInProgressDetailTabItems(
   options: ActivityTabOptions
@@ -231,7 +233,9 @@ export function buildInProgressDetailTabItems(
   if (options.lectureReportVisible === true) {
     items.push({ key: 'lecture-report', label: '강의보고서' })
   }
-  appendSurveySatisfactionTabs(items, options)
+  if (!instructorAssignment) {
+    appendSurveySatisfactionTabs(items, options)
+  }
   appendSettlementTab(items, options)
   return items
 }

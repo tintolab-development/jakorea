@@ -8,7 +8,7 @@
 
 export interface PreferredScheduleSessionTime {
   sessionIndex?: number;
-  classPeriod?: string | null;
+  classPeriod?: string;
   startTime?: string;
   endTime?: string;
   timeRange?: string;

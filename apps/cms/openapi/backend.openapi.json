@@ -648,8 +648,8 @@
         "tags": [
           "기타 API"
         ],
-        "summary": "내 회차 과제 파일·URL 수정 제출(팀 일정도 본인 제출만)",
-        "description": "### 이 API가 하는 일\n- 내 회차 과제 파일·URL 수정 제출(팀 일정도 본인 제출만)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/assignment-submissions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 합계 21개는 ASSIGNMENT_SUBMISSION_LIMIT_EXCEEDED. canResubmit=true일 때만 허용하며 기존 revision과 물리 파일은 보존. 팀 일정도 본인이 낸 건만 수정\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 전달된 fileObjectIds와 urls를 최종 파일·URL 집합으로 새 revision 저장. 파일당 최대 20MB·파일 최대 10개·전체 파일 용량 최대 100MB·URL 최대 20개·파일+URL 합계 최대 20개. 파일 11개는 ASSIGNMENT_FILE_COUNT_EXCEEDED",
+        "summary": "내 회차 과제 파일·URL 수정 제출(팀 일정도 본인 제출만, 파일당 20MB·파일 10개·전체 100MB·URL 20개·파일+URL 합계 20개 제한과 초과 오류 코드)",
+        "description": "### 이 API가 하는 일\n- 내 회차 과제 파일·URL 수정 제출(팀 일정도 본인 제출만, 파일당 20MB·파일 10개·전체 100MB·URL 20개·파일+URL 합계 20개 제한과 초과 오류 코드)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `PUT /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/assignment-submissions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 합계 21개는 ASSIGNMENT_SUBMISSION_LIMIT_EXCEEDED. canResubmit=true일 때만 허용하며 기존 revision과 물리 파일은 보존. 팀 일정도 본인이 낸 건만 수정\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: 전달된 fileObjectIds와 urls를 최종 파일·URL 집합으로 새 revision 저장. 파일당 최대 20MB·파일 최대 10개·전체 파일 용량 최대 100MB·URL 최대 20개·파일+URL 합계 최대 20개. 파일 11개는 ASSIGNMENT_FILE_COUNT_EXCEEDED",
         "operationId": "resubmitMemberPortalScheduleAssignment",
         "parameters": [
           {
@@ -727,8 +727,8 @@
         "tags": [
           "기타 API"
         ],
-        "summary": "내 회차 과제 파일·URL 최초 제출(팀 일정도 팀원 개인별)",
-        "description": "### 이 API가 하는 일\n- 내 회차 과제 파일·URL 최초 제출(팀 일정도 팀원 개인별)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/assignment-submissions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: ASSIGNMENT_SUBMISSION_UNAVAILABLE=기간·참여 통과 후 상태 거절. 파일당 최대 20MB·파일 최대 10개·전체 파일 용량 최대 100MB·URL 최대 20개·파일+URL 합계 최대 20개. 파일 11개는 ASSIGNMENT_FILE_COUNT_EXCEEDED\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS 공통정보 회차별 과제 설정 기준 파일·https URL 제출. 팀 일정도 팀원 개인별 제출. ASSIGNMENT_SUBMISSION_NOT_ALLOWED=참여상태",
+        "summary": "내 회차 과제 파일·URL 최초 제출(팀 일정도 팀원 개인별, 파일당 20MB·파일 10개·전체 100MB·URL 20개·파일+URL 합계 20개 제한과 초과 오류 코드)",
+        "description": "### 이 API가 하는 일\n- 내 회차 과제 파일·URL 최초 제출(팀 일정도 팀원 개인별, 파일당 20MB·파일 10개·전체 100MB·URL 20개·파일+URL 합계 20개 제한과 초과 오류 코드)\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/portal/me/program-applications/{applicationType}/{applicationId}/schedules/{scheduleId}/assignment-submissions`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: ASSIGNMENT_SUBMISSION_UNAVAILABLE=기간·참여 통과 후 상태 거절. 파일당 최대 20MB·파일 최대 10개·전체 파일 용량 최대 100MB·URL 최대 20개·파일+URL 합계 최대 20개. 파일 11개는 ASSIGNMENT_FILE_COUNT_EXCEEDED\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 일반/교사/강사 회원 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: SELF_OWNED 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS 공통정보 회차별 과제 설정 기준 파일·https URL 제출. 팀 일정도 팀원 개인별 제출. ASSIGNMENT_SUBMISSION_NOT_ALLOWED=참여상태",
         "operationId": "submitMemberPortalScheduleAssignment",
         "parameters": [
           {
@@ -18851,6 +18851,75 @@
         }
       }
     },
+    "/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/cancel-approval": {
+      "post": {
+        "tags": [
+          "기타 API"
+        ],
+        "summary": "교육받은 교사 기관 신청 승인 취소",
+        "description": "### 이 API가 하는 일\n- 교육받은 교사 기관 신청 승인 취소\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/cancel-approval`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: APPLICATION_WRITE 권한 필요\n- 접근 범위: 담당 프로그램 범위 내에서만 가능\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 기본 마스킹 응답\n- 감사로그 저장: 필수\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 신청/배정 상태는 `SUBMITTED`, `WAITING_REVIEW`, `APPROVED`, `REJECTED`, `AUTO_REJECTED`, `WAITING_ASSIGNMENT`, `ASSIGNED`, `CANCELLED`를 기준으로 버튼 노출과 상태 배지를 분기합니다.\n- 동시 승인/배정 충돌은 409로 처리되며, 프론트는 목록과 상세를 재조회해 최신 상태를 보여줍니다.\n### Swagger에서 확인할 때\n- 요청 전 목록/상세를 먼저 조회하고, 변경 요청 후 동일 목록/상세를 재조회해 상태값과 이력 반영 여부를 확인합니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: CMS institution detail cancel-approval; dedicated TT path; same ApplicationDecisionCancelRequest as general org",
+        "operationId": "cancelTrainedTeacherOrganizationApproval",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "description": "대상 리소스 식별자입니다. 목록/상세 화면에서 받은 id 값을 그대로 전달합니다.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplicationDecisionCancelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDecisionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "409": {
+            "description": "상태 전이, 중복 요청, 동시성 정책 위반입니다. 화면 상태를 재조회한 뒤 안내합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/approve": {
       "post": {
         "tags": [
@@ -34278,6 +34347,40 @@
         }
       }
     },
+    "/api/admin/auth/activity": {
+      "post": {
+        "tags": [
+          "인증/세션"
+        ],
+        "summary": "Record authenticated administrator user activity",
+        "description": "### 이 API가 하는 일\n- Record authenticated administrator user activity\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `POST /api/admin/auth/activity`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: ADMIN_SESSION 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 변경 API는 성공 후 관련 목록/상세를 반드시 재조회합니다. 상태 충돌 또는 중복 요청은 409로 처리합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Explicit client signal for user input; 60 second database write throttle",
+        "operationId": "recordActivity",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/admin-permission-requests/{requestId}/reject": {
       "post": {
         "tags": [
@@ -46361,7 +46464,7 @@
           {
             "name": "statusGroup",
             "in": "query",
-            "description": "회원포탈 교육/강의/봉사 현황 탭용 statusGroup. 허용값: WAITING | IN_PROGRESS | COMPLETED | CANCELLED. 생략 시 전체(작성 중 포함). displayStatus 매핑: WAITING → 결과 대기, 서류 합격 (작성 중은 목록 비노출/WAITING 제외); IN_PROGRESS → 진행 중; COMPLETED → 진행 완료, 활동 포기, 신청 반려, 승인 취소, 신청 취소 (지원자 본인 취소 건은 포털 목록 히스토리에서 제외되므로 목록에 안 나올 수 있음); CANCELLED → deprecated. COMPLETED와 동일. 종료 탭은 COMPLETED만 사용. GENERAL 개인(INDIVIDUAL) 진행 완료: 사업기간이 종료되면(KST 사업 종료일 다음날 또는 period_status=COMPLETED) 만족도 조사 제출 여부와 관계없이 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도 제출이 있거나, 수료 투영(completion_status=COMPLETED)과 본인 만족도 제출이 있을 때만 진행 완료. 강사(INSTRUCTOR) 진행 완료: 배정된 강의보고서 제출 대상 전건 제출, 또는 사업 운영기간 종료 (미제출 건이 있어도 프로그램은 종료, 개별 보고서는 미제출 유지). 활동 포기·신청 반려는 이 판정보다 우선. 알 수 없는 값은 400 INVALID_REQUEST.",
+            "description": "회원포탈 교육/강의/봉사 현황 탭용 statusGroup. 허용값: WAITING | IN_PROGRESS | COMPLETED | CANCELLED. 생략 시 전체(작성 중 포함). displayStatus 매핑: WAITING → 결과 대기, 서류 합격, 승인 대기 (작성 중은 목록 비노출/WAITING 제외); IN_PROGRESS → 진행 중; COMPLETED → 진행 완료, 활동 포기, 신청 반려, 신청 취소 (지원자 본인 취소 건은 포털 목록 히스토리에서 제외되므로 목록에 안 나올 수 있음); CANCELLED → deprecated. COMPLETED와 동일. 종료 탭은 COMPLETED만 사용. GENERAL 개인(INDIVIDUAL) 진행 완료: 사업기간이 종료되면(KST 사업 종료일 다음날 또는 period_status=COMPLETED) 만족도 조사 제출 여부와 관계없이 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도 제출이 있거나, 수료 투영(completion_status=COMPLETED)과 본인 만족도 제출이 있을 때만 진행 완료. 강사(INSTRUCTOR) 진행 완료: 배정된 강의보고서 제출 대상 전건 제출, 또는 사업 운영기간 종료 (미제출 건이 있어도 프로그램은 종료, 개별 보고서는 미제출 유지). 활동 포기·신청 반려는 이 판정보다 우선. 알 수 없는 값은 400 INVALID_REQUEST.",
             "required": false,
             "schema": {
               "type": "string",
@@ -56472,6 +56575,15 @@
             }
           },
           {
+            "name": "statusGroup",
+            "in": "query",
+            "description": "표시 그룹 필터. APPLICATION_PENDING=SUBMITTED+WAITING+WAITING_REVIEW+PENDING+REJECTION_CANCELLED. APPLICATION_REJECTED=REJECTED+APPROVAL_CANCELLED. 단일 status와 함께 주면 교집합. 알 수 없는 값은 400 UNSUPPORTED_APPLICATION_STATUS_GROUP.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "keyword",
             "in": "query",
             "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
@@ -56983,6 +57095,15 @@
             }
           },
           {
+            "name": "statusGroup",
+            "in": "query",
+            "description": "표시 그룹 필터. APPLICATION_PENDING=SUBMITTED+WAITING+WAITING_REVIEW+PENDING+REJECTION_CANCELLED. APPLICATION_REJECTED=REJECTED+APPROVAL_CANCELLED. 단일 status와 함께 주면 교집합. 알 수 없는 값은 400 UNSUPPORTED_APPLICATION_STATUS_GROUP.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "keyword",
             "in": "query",
             "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
@@ -57100,6 +57221,15 @@
             "name": "status",
             "in": "query",
             "description": "상태 필터입니다. 응답 enum 값과 화면 배지 라벨을 매핑해서 사용합니다.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "statusGroup",
+            "in": "query",
+            "description": "표시 그룹 필터. APPLICATION_PENDING=SUBMITTED+WAITING+WAITING_REVIEW+PENDING+REJECTION_CANCELLED. APPLICATION_REJECTED=REJECTED+APPROVAL_CANCELLED. 단일 status와 함께 주면 교집합. 알 수 없는 값은 400 UNSUPPORTED_APPLICATION_STATUS_GROUP.",
             "required": false,
             "schema": {
               "type": "string"
@@ -66006,6 +66136,40 @@
         }
       }
     },
+    "/api/admin/auth/session": {
+      "get": {
+        "tags": [
+          "인증/세션"
+        ],
+        "summary": "Read authenticated administrator bound session status",
+        "description": "### 이 API가 하는 일\n- Read authenticated administrator bound session status\n- API 분류: 내부 처리 또는 보조 API\n- 사용하는 화면: 화면 직접 호출보다는 운영/진단 또는 내부 처리에서 사용합니다.\n- 호출 방식: `GET /api/admin/auth/session`\n\n### 화면/프론트 사용 기준\n- 요청값 출처: Swagger 요청 폼 또는 화면 필터/선택값\n- 응답 사용 위치: 응답 본문을 화면 상태와 조회 캐시에 반영\n- 프론트 조회 키: 화면별 조회 키 정책에 따름\n- 구현 상태: 구현 완료\n- 로컬/스테이징 준비도: 준비 상태 정보 없음\n- 외부 연동 확인: 외부 연동 대기 없음\n- 스테이징 점검 기준: 스테이징 기본 검증 대상\n- 화면에서는 이 API 응답을 기준으로 목록, 상세, 상태 배지, 버튼 노출 여부를 갱신합니다.\n\n### 권한/보안\n- 호출 가능 계정: 관리자 계정\n- 필요 권한: 별도 세부 권한 없음\n- 접근 범위: ADMIN_SESSION 범위 정책\n- 인증 API가 아니라면 Swagger 우측 상단 Authorize에 관리자 또는 회원 Bearer 토큰을 입력한 뒤 호출합니다.\n\n### 개인정보/감사 정책\n- 개인정보 노출 기준: 개인정보 없음\n- 감사로그 저장: 필수 아님\n- 개인정보 원문 조회, 민감파일 다운로드, export 계열 요청은 감사로그 저장에 실패하면 요청도 차단됩니다.\n\n### 상태값/화면 배지 기준\n- 조회 API는 응답 원본 status/code 값을 화면 배지 라벨과 분리해서 보관합니다. 라벨은 프론트 표시용, 원본 값은 후속 API 호출 조건으로 사용합니다.\n### Swagger에서 확인할 때\n- 로그인/MFA 흐름은 토큰 발급과 만료 응답을 함께 확인합니다. local profile에서는 문서의 로컬 데모 계정으로 호출할 수 있습니다.\n- 로컬 더미 데이터는 `local` profile에서만 사용합니다. 운영/스테이징 데이터와 혼동하지 않습니다.\n- 인증이 필요한 API는 먼저 로그인/MFA API로 토큰을 받은 뒤 Authorize에 입력합니다.\n\n### 프론트 구현 참고\n- 성공 응답은 화면 상태 또는 조회 캐시에 반영하고, 실패 응답은 error.code 기준으로 알림/팝업을 분기합니다.\n- 목록 API는 페이지/필터/검색어/정렬 조건을 조회 키에 포함해 캐시 충돌을 피합니다.\n- 생성/수정/삭제 API 성공 후에는 관련 목록과 상세 조회를 다시 불러옵니다.\n- 날짜, 금액, 상태 배지는 백엔드 원본 값과 화면 정의서의 라벨 매핑을 기준으로 표시합니다.\n- 검토 메모: Read-only session snapshot with 12h absolute expiry and legacy refresh idle deadline; never extends session",
+        "operationId": "getAdminSessionStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatusResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 값이 유효하지 않습니다. error.code와 검증 상세 내용을 사용자 메시지로 변환합니다."
+          },
+          "401": {
+            "description": "인증이 필요하거나 토큰이 만료되었습니다. 로그인 또는 토큰 갱신 흐름으로 이동합니다."
+          },
+          "403": {
+            "description": "현재 계정에 필요한 권한 또는 접근 범위가 없습니다. 버튼 노출 조건도 함께 점검합니다."
+          },
+          "500": {
+            "description": "감사로그 저장 또는 서버 처리 실패입니다. 개인정보/민감파일 요청은 감사 실패 시 차단 정책(fail-closed 정책)으로 성공 처리하지 않습니다."
+          }
+        }
+      }
+    },
     "/api/admin/applications/{applicationType}/{applicationId}/available-actions": {
       "get": {
         "tags": [
@@ -67657,64 +67821,6 @@
           }
         }
       }
-    },
-    "/api/admin/programs/{programId}/trained-teacher/organization-applications/{applicationId}/cancel-approval": {
-      "post": {
-        "tags": [
-          "교육받은 교사"
-        ],
-        "operationId": "cancelTrainedTeacherOrganizationApproval",
-        "summary": "교육받은 교사 기관 신청 승인 취소",
-        "description": "APPLICATION_WRITE와 담당 프로그램 범위가 필요합니다. programId와 applicationId가 TRAINED_TEACHER ORGANIZATION APPROVED 신청으로 일치할 때만 승인 취소합니다. 공통 /api/admin/organization-applications/{applicationId}/cancel-approval 과 give-up / remove-from-progress 를 쓰지 않습니다. body는 일반 기관과 동일한 ApplicationDecisionCancelRequest입니다. reason 필수(minLength 2, maxLength 500). notification 생략 시 IMMEDIATE. notification.timing은 IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. SCHEDULED일 때만 scheduledAt(현재 이후 ISO-8601). selectedScheduleId/slots/preferredScheduleRank/requestedScheduleId는 이 API에 없습니다. 성공 시 toStatus=APPROVAL_CANCELLED이며 해당 신청 OSA(TEMP_ASSIGNED 포함)만 해제합니다. educationSchedules와 preferredScheduleBlocks는 변경하지 않습니다. 출석/진행이 시작된 일정은 409 APPLICATION_DECISION_CONFLICT입니다. programId 불일치는 404 TRAINED_TEACHER_ORGANIZATION_APPLICATION_NOT_FOUND. APPROVED가 아니면 409 APPLICATION_DECISION_CONFLICT. 미발송 승인 알림은 중단하고, 이미 발송됐으면 취소 사유 알림을 notification.timing으로 예약합니다. notificationEventId는 미발송이면 JSON null이며 필드를 omit하지 않습니다.",
-        "parameters": [
-          {
-            "name": "programId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "applicationId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ApplicationDecisionCancelRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "승인 취소 후 APPROVAL_CANCELLED",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApplicationDecisionResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "TRAINED_TEACHER_ORGANIZATION_APPLICATION_NOT_FOUND"
-          },
-          "409": {
-            "description": "APPLICATION_DECISION_CONFLICT (APPROVED가 아님, 또는 출석/진행 이력으로 승인 취소 불가)"
-          }
-        }
-      }
     }
   },
   "components": {
@@ -68957,7 +69063,8 @@
             "type": "string"
           },
           "detailJson": {
-            "type": "string"
+            "type": "string",
+            "description": "지급요건/비고는 여기만. 교통 minOneWayKm·minDistanceKm dual-write. 1사1교 금액 정본 fixedAmountWon. sessionNUniversityWon null 키 금지"
           }
         }
       },
@@ -69046,7 +69153,8 @@
             ]
           },
           "itemName": {
-            "type": "string"
+            "type": "string",
+            "description": "PUT 임금 제목. GET WageItemResponse.name"
           },
           "amount": {
             "type": "integer",
@@ -69262,7 +69370,8 @@
             "type": "string"
           },
           "layout": {
-            "type": "string"
+            "type": "string",
+            "description": "transport | lodging | meal | activity. ACTIVITY는 activity만. volunteerActivity는 읽기 alias"
           },
           "maxLimitWon": {
             "type": "integer",
@@ -69272,7 +69381,8 @@
             "type": "string"
           },
           "detailJson": {
-            "type": "string"
+            "type": "string",
+            "description": "지급요건/비고는 detailJson.qualificationLines / remarkLines 전용. 교통 minOneWayKm·minDistanceKm dual-write"
           },
           "eligiblePayeeTypes": {
             "type": [
@@ -69375,7 +69485,8 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "GET 임금 제목. PUT은 WageItemUpsertRequest.itemName"
           },
           "amount": {
             "type": "integer",
@@ -69394,7 +69505,8 @@
             "type": "string"
           },
           "layout": {
-            "type": "string"
+            "type": "string",
+            "description": "tier1 | specialLecture | gemini"
           },
           "basisHours": {
             "type": "integer",
@@ -78870,14 +78982,11 @@
           },
           "participantId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true
+            "format": "int64"
           },
           "notificationEventId": {
             "type": "integer",
-            "format": "int64",
-            "nullable": true,
-            "description": "결정 알림 이벤트 id. 미발송이면 JSON null이며 필드를 omit하지 않습니다."
+            "format": "int64"
           },
           "availableActions": {
             "type": "array",
@@ -81823,10 +81932,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -83554,20 +83663,10 @@
             "format": "int32"
           },
           "date": {
-            "type": "string",
-            "format": "date"
+            "type": "string"
           },
           "dayOfWeek": {
-            "type": "string",
-            "enum": [
-              "월",
-              "화",
-              "수",
-              "목",
-              "금",
-              "토",
-              "일"
-            ]
+            "type": "string"
           },
           "sessionCount": {
             "type": "integer",
@@ -83623,12 +83722,7 @@
               "string",
               "null"
             ],
-            "description": "MATCHED | UNMATCHED | INACTIVE_OR_DELETED.",
-            "enum": [
-              "MATCHED",
-              "UNMATCHED",
-              "INACTIVE_OR_DELETED"
-            ]
+            "description": "MATCHED | UNMATCHED | INACTIVE_OR_DELETED."
           }
         }
       },
@@ -83640,10 +83734,7 @@
             "format": "int32"
           },
           "classPeriod": {
-            "type": [
-              "string",
-              "null"
-            ]
+            "type": "string"
           },
           "startTime": {
             "type": "string"
@@ -83837,9 +83928,11 @@
             "nullable": true
           },
           "textbookDeliveryStatus": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
-            "nullable": true,
             "enum": [
               "PREPARING",
               "SHIPPING",
@@ -87567,7 +87660,8 @@
             "type": "string"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "requestedStudentCount": {
             "type": "integer",
@@ -90541,7 +90635,8 @@
             "type": "string"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "instructorTypeSnapshot": {
             "type": "string"
@@ -90936,7 +91031,8 @@
             "format": "int64"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "managerComment": {
             "type": [
@@ -95213,6 +95309,18 @@
           "password"
         ]
       },
+      "ActivityResult": {
+        "type": "object",
+        "properties": {
+          "lastUserActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "boolean"
+          }
+        }
+      },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
         "description": "관리자 승인/반려 처리 요청. 승인 시 roleCode를 함께 보내면 신청자가 선택한 권한 유형 대신 MASTER가 최종 승인한 권한 유형으로 적용됩니다.",
@@ -97355,7 +97463,7 @@
               "null"
             ],
             "format": "date-time",
-            "description": "낙관적 동시성 토큰. GET 응답의 updatedAt과 같아야 한다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다."
+            "description": "낙관적 동시성 토큰. GET 응답의 updatedAt 문자열을 그대로 보낸다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다. GET updatedAt이 마이크로초이면 JavaScript Date.toISOString()은 밀리초로 잘리는데, 그 밀리초 토큰은 같은 밀리초 구간의 저장된 값과 일치하면 허용한다."
           }
         }
       },
@@ -98053,7 +98161,7 @@
       },
       "OrganizationApplicationUpdateRequest": {
         "type": "object",
-        "description": "승인된 기관 신청 정보를 부분 수정합니다. 생략한 항목은 현재 운영 스냅샷 값을 유지합니다.",
+        "description": "승인된 기관 신청 정보를 부분 수정합니다. 생략한 항목은 현재 운영 스냅샷 값을 유지합니다. teacherTel(일반전화)과 teacherPhone(휴대전화)은 서로 채우지 않으며, null은 해당 스냅샷을 지웁니다.",
         "properties": {
           "requestedGrade": {
             "type": "string",
@@ -98087,6 +98195,10 @@
             "writeOnly": true
           },
           "teacherPhone": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "teacherTel": {
             "type": "string",
             "writeOnly": true
           },
@@ -102618,15 +102730,15 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료.",
+            "description": "회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료. SUBMITTED·WAITING_REVIEW는 결과 대기. 반려 취소 후 REJECTION_CANCELLED는 승인 대기.",
             "enum": [
               "결과 대기",
+              "승인 대기",
               "서류 합격",
               "진행 중",
               "진행 완료",
               "활동 포기",
               "신청 반려",
-              "승인 취소",
               "작성 중",
               "신청 취소"
             ],
@@ -103043,15 +103155,15 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료.",
+            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료. SUBMITTED·WAITING_REVIEW는 결과 대기. 반려 취소 후 REJECTION_CANCELLED는 승인 대기.",
             "enum": [
               "결과 대기",
+              "승인 대기",
               "서류 합격",
               "진행 중",
               "진행 완료",
               "활동 포기",
               "신청 반려",
-              "승인 취소",
               "작성 중",
               "신청 취소"
             ],
@@ -106126,7 +106238,8 @@
           },
           "submitted": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "표시상태가 결과 대기·서류 합격·승인 대기인 건수. 반려 취소 후 REJECTION_CANCELLED(승인 대기)를 포함하며, APPROVAL_CANCELLED는 rejected에만 넣는다."
           },
           "approved": {
             "type": "integer",
@@ -106134,7 +106247,8 @@
           },
           "rejected": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "표시상태가 '신청 반려'인 건수. REJECTED와 APPROVAL_CANCELLED를 포함한다. 승인 취소 라벨은 더 이상 반환하지 않으며 이중 가산하지 않는다."
           },
           "cancelled": {
             "type": "integer",
@@ -106157,7 +106271,7 @@
           "ended": {
             "type": "integer",
             "format": "int64",
-            "description": "마이페이지 교육·봉사 현황 「종료」 탭과 동일: 진행 완료+활동 포기+신청 반려+신청 취소."
+            "description": "마이페이지 교육·봉사 현황 「종료」 탭과 동일: 진행 완료+활동 포기+신청 반려+신청 취소. 신청 반려에는 REJECTED와 APPROVAL_CANCELLED가 포함된다."
           }
         }
       },
@@ -110379,9 +110493,11 @@
             "nullable": true
           },
           "textbookDeliveryStatus": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
-            "nullable": true,
             "enum": [
               "PREPARING",
               "SHIPPING",
@@ -110449,7 +110565,7 @@
           },
           "educationSchedules": {
             "type": "array",
-            "description": "기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다.",
+            "description": "기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. TRAINED_TEACHER 기관 진행 상세(DATE)는 배정된 MATCHED 지망 전부를 포함하며 지망 1건으로 자르지 않습니다. 같은 scheduleId는 합치지 않습니다. 진행 미편입(미승인)이면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다. scheduleStatus는 일반 프로그램 participants sessions[].scheduleStatus 와 같은 교육 진행(시각) SSOT이며 출석과 별개입니다.",
             "items": {
               "$ref": "#/components/schemas/TrainedTeacherOrganizationEducationSchedule"
             }
@@ -110480,7 +110596,7 @@
               "null"
             ],
             "format": "int32",
-            "description": "일정 session_no(회차). 없으면 null."
+            "description": "program_schedule.session_no(프로그램 전체 회차 번호). 1시간 슬롯의 수업 차시 수(시안 N차시)가 아니며 preferenceRank도 아니다. CMS가 `${round}차시`로 그리면 session_no=7 은 7차시로 보인다. 슬롯 차시 수가 필요하면 별도 필드를 추가해야 하며 이 값은 바꾸지 않는다. 없으면 null. 0을 넣지 않는다."
           },
           "label": {
             "type": [
@@ -110510,7 +110626,7 @@
               "string",
               "null"
             ],
-            "description": "교육 진행 상태. UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 일반 프로그램 participants sessions[].scheduleStatus · 대시보드 program-schedules.scheduleStatus 와 동일 계열. 출석과 별개. 산출 불가면 null. 빈 문자열 없음.",
+            "description": "교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus · 일반 프로그램 participants sessions[].scheduleStatus 와 동일 규칙. 출석 제출과 별개. 산출 불가면 null. 빈 문자열 금지.",
             "enum": [
               "UNSCHEDULED",
               "SCHEDULED",
@@ -111894,7 +112010,8 @@
             "type": "string"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "temporaryAssignmentStatus": {
             "type": [
@@ -112527,7 +112644,8 @@
             "description": "강사 실명. 프로그램 관리에서는 마스킹하지 않습니다."
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "homeAddress": {
             "type": "string",
@@ -112788,7 +112906,8 @@
             }
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "managerComment": {
             "type": [
@@ -116905,15 +117024,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -120091,6 +120210,38 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "SessionStatusResult": {
+        "type": "object",
+        "properties": {
+          "sessionStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "absoluteExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUserActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refreshIdleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idlePolicyEnforced": {
+            "type": "boolean"
+          },
+          "serverNow": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

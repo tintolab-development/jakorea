@@ -55,13 +55,15 @@ const individualInstructorTabs = buildInProgressDetailTabItems({
 })
 assert.deepEqual(
   individualInstructorTabs.map(item => item.key),
-  ['assignment', 'notice', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
+  ['assignment', 'notice', 'lecture-report', 'settlement'],
 )
 assert.deepEqual(
   individualInstructorTabs.map(item => item.label),
-  ['배정 현황', '안내사항', '강의보고서', '설문조사', '만족도조사', '정산현황'],
+  ['배정 현황', '안내사항', '강의보고서', '정산현황'],
 )
 assert.ok(!individualInstructorTabs.some(item => item.label === '강의 일정'))
+assert.ok(!individualInstructorTabs.some(item => item.key === 'survey'))
+assert.ok(!individualInstructorTabs.some(item => item.key === 'satisfaction'))
 assert.deepEqual(
   buildWithdrawnDuringDetailTabItems({
     ...options,
@@ -71,7 +73,7 @@ assert.deepEqual(
     instructorAssignmentVisible: true,
     instructorAssignmentWithActivityTabs: true,
   }).map(item => item.key),
-  ['assignment', 'lecture-report', 'survey', 'satisfaction', 'settlement'],
+  ['assignment', 'lecture-report', 'settlement'],
 )
 // 기관형 진행 중 포기: 배정 현황이 첫 번째, 강의 일정 탭 없음.
 assert.deepEqual(

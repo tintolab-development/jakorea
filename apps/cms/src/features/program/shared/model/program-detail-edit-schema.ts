@@ -1308,22 +1308,25 @@ export function programToDetailEditValues(
         program.backendProgramType === 'TRAINED_TEACHER' ||
         looksLikeTrainedTeacherProgramId(program.id)
       const isUjatProgram = isUjatDetailEditProgram(program)
-      const keys: readonly string[] = isUjatProgram
+      const keys: readonly string[] | undefined = isUjatProgram
         ? resolveUjatPersistedSurveyMenuKeysForSave(
             program.generalParticipantTypes == null ? program.ujatRegistrationOverlay : undefined,
             program.generalSurveyMenuKeys
           ) ?? []
         : isTrainedTeacherSeed
         ? program.generalSurveyMenuKeys === undefined
-          ? []
+          ? undefined
           : normalizeGeneralSurveyMenuKeys(program.generalSurveyMenuKeys)
         : resolveProgramSurveyMenuKeys(program)
       return {
-        surveySurvey: keys.includes('survey'),
-        surveySatisfaction: keys.includes('satisfaction'),
-        surveyVolunteerSatisfaction: keys.includes('volunteer_satisfaction'),
-        surveySchoolSatisfaction: keys.includes('school_satisfaction'),
-        surveyLectureEvaluation: keys.includes('lecture_evaluation'),
+        surveySurvey: keys === undefined ? undefined : keys.includes('survey'),
+        surveySatisfaction: keys === undefined ? undefined : keys.includes('satisfaction'),
+        surveyVolunteerSatisfaction:
+          keys === undefined ? undefined : keys.includes('volunteer_satisfaction'),
+        surveySchoolSatisfaction:
+          keys === undefined ? undefined : keys.includes('school_satisfaction'),
+        surveyLectureEvaluation:
+          keys === undefined ? undefined : keys.includes('lecture_evaluation'),
         generalParticipantTypes: program.generalParticipantTypes,
       }
     })(),
@@ -1588,7 +1591,10 @@ export function detailEditValuesToProgramPatch(
       : existing.generalSurveyMenuKeys
   const registrationOverlay =
     isTrainedTeacherProgram && surveyKeysTouched
-      ? syncSurveyItemsIntoRegistrationOverlay({}, generalSurveyMenuKeys)
+      ? syncSurveyItemsIntoRegistrationOverlay(
+          existing.registrationOverlay,
+          generalSurveyMenuKeys
+        )
       : undefined
   const ujatParticipantTypes = isUjatProgram
     ? existing.generalParticipantTypes ??

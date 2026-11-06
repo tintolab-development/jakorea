@@ -93,6 +93,12 @@ function resolvePageTitle(tab: SettingsTab, mode: SettingsMode, isInstructor: bo
   return '회원 정보 설정'
 }
 
+const INSTRUCTOR_SETTLEMENT_ACCOUNT_GUIDE = [
+  '정산 계좌를 변경하려면 [약관 및 정책 동의 관리]에서',
+  '지급조서 사전 동의서를 다시 작성해 주세요.',
+  '변경한 계좌는 이후 신청하는 정산 건부터 반영돼요.',
+].join('\n')
+
 function resolveLnbKey(tab: SettingsTab, mode: SettingsMode) {
   if (
     tab === 'profile' ||
@@ -212,10 +218,23 @@ export function MypageSettingsPage() {
     <ProgramBackButton size="small" label="마이페이지로" onClick={() => navigate(MYPAGE_PATH)} />
   )
 
+  const showInstructorSettlementAccountGuide = isInstructor && tab === 'profile'
   const pageTitleNode = (
-    <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
-      {pageTitle}
-    </PFText>
+    <div className={styles.pageHeading}>
+      <PFText as="h1" typo="hd-lg" color="black" className={styles.pageTitle}>
+        {pageTitle}
+      </PFText>
+      {showInstructorSettlementAccountGuide ? (
+        <PFText
+          as="p"
+          typo="bd-lg-rg"
+          color="primary-800"
+          className={styles.instructorSettlementAccountGuide}
+        >
+          {INSTRUCTOR_SETTLEMENT_ACCOUNT_GUIDE}
+        </PFText>
+      ) : null}
+    </div>
   )
 
   const mobilePageHeader = (

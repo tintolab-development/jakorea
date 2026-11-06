@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Program } from '@/types/domain'
 import {
+  detailEditValuesToProgramPatch,
+  programToDetailEditValues,
+} from '@/features/program/shared/model/program-detail-edit-schema'
+import {
   mapTrainedTeacherDetailToProgram,
   mapTrainedTeacherToUpdateRequest,
 } from '@/features/program/trained-teachers/api/adapters'
@@ -213,6 +217,49 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
     expect(afterB.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
   })
 
+  it('B 성공 후 A 실패를 가정하면 B nested 는 남고 A 제목은 이전 값이다', () => {
+    const existing = ttProgram()
+    const slices = buildTrainedTeachersCommonInfoSaveSlices({
+      educationStructure: 'curriculum',
+      teacherTrainingEnabled: true,
+      educationJournalEnabled: false,
+      curriculumSessions: existing.generalCommonInfo?.curriculumSessions,
+      scheduleDetails: existing.generalCommonInfo?.scheduleDetails,
+    })
+    const b = mapTrainedTeacherInfoSaveToRequest({ commonInfo: slices.infoDetailCommonInfo })
+    const afterB = mergeTrainedTeacherInfoDetailIntoProgram(existing, {
+      teacherTrainingEnabled: b.teacherTrainingEnabled,
+      educationJournalEnabled: b.educationJournalEnabled,
+      configJson: b.configJson,
+    })
+    expect(afterB.mainTitle).toBe('기존 대표')
+    expect(afterB.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
+    expect(afterB.generalCommonInfo?.educationJournalEnabled).toBe(false)
+  })
+
+  it('B 이후 stale A payload 는 B nested 를 programs JSON 에 넣지 않는다', () => {
+    const existing = ttProgram()
+    const slices = buildTrainedTeachersCommonInfoSaveSlices({
+      educationStructure: 'curriculum',
+      teacherTrainingEnabled: true,
+      educationJournalEnabled: false,
+      curriculumSessions: [
+        { sessionLabel: '1회차', title: 'B 이후 회차', description: '내용1' },
+      ],
+      scheduleDetails: [],
+    })
+    const b = mapTrainedTeacherInfoSaveToRequest({ commonInfo: slices.infoDetailCommonInfo })
+    const afterB = mergeTrainedTeacherInfoDetailIntoProgram(existing, {
+      teacherTrainingEnabled: b.teacherTrainingEnabled,
+      educationJournalEnabled: b.educationJournalEnabled,
+      configJson: b.configJson,
+    })
+    const staleA = parseA(existing, { mainTitle: '오래된 A' })
+    expect(staleA.envelope.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
+    expect(staleA.envelope.program?.generalCommonInfo?.teacherTrainingEnabled).toBeUndefined()
+    expect(afterB.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('B 이후 회차')
+  })
+
   it('A 성공 후 B 실패를 가정하면 A 소유 모집정보는 남고 B 플래그는 이전 값이다', () => {
     const existing = ttProgram()
     const { request } = parseA(existing, { mainTitle: 'A만 성공' })
@@ -273,6 +320,66 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
     expect(envelope.registration?.overlay?.['application.institution.teacherTel']).toBe(
       '02-111-1111'
     )
+  })
+
+  it('overlay-only GET (program envelope 없음) sidecar 를 hydrate 한다', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '91011',
+      title: '레거시 공고명',
+      mainTitle: '레거시 대표명',
+      programType: 'TRAINED_TEACHER',
+      serviceDetailJson: JSON.stringify({
+        registration: {
+          overlay: {
+            unknownSidecarKey: 'preserve-me',
+            'application.institution.teacherTel': '02-111-1111',
+          },
+        },
+      }),
+    } as Parameters<typeof mapTrainedTeacherDetailToProgram>[0])
+    expect(mapped.registrationOverlay?.unknownSidecarKey).toBe('preserve-me')
+    const { envelope } = parseA(mapped, { mainTitle: 'TT-05 레거시 이후 대표' })
+    expect(envelope.registration?.overlay?.unknownSidecarKey).toBe('preserve-me')
+  })
+
+  it('설문 overlay 미러 패치가 leftover sidecar 를 객체 교체로 지우지 않는다', () => {
+    const { envelope } = parseA(ttProgram(), {
+      registrationOverlay: {
+        'trainedTeachersRegistration.basicInfo.surveyItems': { survey: false },
+      },
+    })
+    expect(envelope.registration?.overlay?.unknownSidecarKey).toBe('preserve-me')
+    expect(envelope.registration?.overlay?.['application.institution.teacherTel']).toBe(
+      '02-111-1111'
+    )
+  })
+
+  it('RHF 공통정보 저장은 leftover overlay sidecar 를 PATCH 에 남긴다', () => {
+    const existing = ttProgram()
+    const values = {
+      ...programToDetailEditValues(existing),
+      announcementTitle: 'TT-05 레거시 이후 대표',
+    }
+    const patch = detailEditValuesToProgramPatch(values, existing)
+    const { envelope } = parseA(existing, patch)
+    expect(envelope.registration?.overlay?.unknownSidecarKey).toBe('preserve-me')
+    expect(envelope.registration?.overlay?.['application.institution.teacherTel']).toBe(
+      '02-111-1111'
+    )
+  })
+
+  it('overlay-only GET 에서 설문을 건드리지 않으면 keys 를 생략한다', () => {
+    const existing = ttProgram()
+    delete existing.generalSurveyMenuKeys
+    const values = programToDetailEditValues(existing)
+    const patch = detailEditValuesToProgramPatch(
+      { ...values, announcementTitle: 'TT-05 레거시 이후 대표' },
+      existing
+    )
+    expect(patch.generalSurveyMenuKeys).toBeUndefined()
+    const { envelope } = parseA(existing, patch)
+    expect(envelope.generalSurveyMenuKeys).toBeUndefined()
+    expect(envelope.registration?.overlay?.unknownSidecarKey).toBe('preserve-me')
   })
 
   it('설문을 생략하면 keys 를 보내지 않아 기존 선택을 유지하는 계약을 따른다', () => {

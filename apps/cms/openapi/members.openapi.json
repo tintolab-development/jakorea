@@ -8879,7 +8879,8 @@
             "type": "string"
           },
           "detailJson": {
-            "type": "string"
+            "type": "string",
+            "description": "지급요건/비고는 여기만. 교통 minOneWayKm·minDistanceKm dual-write. 1사1교 금액 정본 fixedAmountWon. sessionNUniversityWon null 키 금지"
           }
         }
       },
@@ -8968,7 +8969,8 @@
             ]
           },
           "itemName": {
-            "type": "string"
+            "type": "string",
+            "description": "PUT 임금 제목. GET WageItemResponse.name"
           },
           "amount": {
             "type": "integer",
@@ -9174,7 +9176,8 @@
             "type": "string"
           },
           "layout": {
-            "type": "string"
+            "type": "string",
+            "description": "transport | lodging | meal | activity. ACTIVITY는 activity만. volunteerActivity는 읽기 alias"
           },
           "maxLimitWon": {
             "type": "integer",
@@ -9184,7 +9187,8 @@
             "type": "string"
           },
           "detailJson": {
-            "type": "string"
+            "type": "string",
+            "description": "지급요건/비고는 detailJson.qualificationLines / remarkLines 전용. 교통 minOneWayKm·minDistanceKm dual-write"
           },
           "eligiblePayeeTypes": {
             "type": "array",
@@ -9285,7 +9289,8 @@
             ]
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "GET 임금 제목. PUT은 WageItemUpsertRequest.itemName"
           },
           "amount": {
             "type": "integer",
@@ -9304,7 +9309,8 @@
             "type": "string"
           },
           "layout": {
-            "type": "string"
+            "type": "string",
+            "description": "tier1 | specialLecture | gemini"
           },
           "basisHours": {
             "type": "integer",
@@ -21420,10 +21426,10 @@
             "maxItems": 5000,
             "minItems": 0
           },
-          "rawPrivacyApprovalValid": {
+          "dateRangeValid": {
             "type": "boolean"
           },
-          "dateRangeValid": {
+          "rawPrivacyApprovalValid": {
             "type": "boolean"
           }
         },
@@ -23254,6 +23260,17 @@
           },
           "textbookName": {
             "type": "string"
+          },
+          "textbookDeliveryStatus": {
+            "type": "string",
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ],
+            "nullable": true
           },
           "educationCompletionCount": {
             "type": "integer",
@@ -26853,7 +26870,8 @@
             "type": "string"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "requestedStudentCount": {
             "type": "integer",
@@ -29685,7 +29703,8 @@
             "type": "string"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "instructorTypeSnapshot": {
             "type": "string"
@@ -30056,7 +30075,8 @@
             "format": "int64"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "managerComment": {
             "type": "string",
@@ -34143,6 +34163,18 @@
           "password"
         ]
       },
+      "ActivityResult": {
+        "type": "object",
+        "properties": {
+          "lastUserActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "boolean"
+          }
+        }
+      },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
         "description": "관리자 승인/반려 처리 요청. 승인 시 roleCode를 함께 보내면 신청자가 선택한 권한 유형 대신 MASTER가 최종 승인한 권한 유형으로 적용됩니다.",
@@ -36236,7 +36268,7 @@
           "expectedUpdatedAt": {
             "type": "string",
             "format": "date-time",
-            "description": "낙관적 동시성 토큰. GET 응답의 updatedAt과 같아야 한다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다.",
+            "description": "낙관적 동시성 토큰. GET 응답의 updatedAt 문자열을 그대로 보낸다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다. GET updatedAt이 마이크로초이면 JavaScript Date.toISOString()은 밀리초로 잘리는데, 그 밀리초 토큰은 같은 밀리초 구간의 저장된 값과 일치하면 허용한다.",
             "nullable": true
           }
         }
@@ -36893,7 +36925,7 @@
       },
       "OrganizationApplicationUpdateRequest": {
         "type": "object",
-        "description": "승인된 기관 신청 정보를 부분 수정합니다. 생략한 항목은 현재 운영 스냅샷 값을 유지합니다.",
+        "description": "승인된 기관 신청 정보를 부분 수정합니다. 생략한 항목은 현재 운영 스냅샷 값을 유지합니다. teacherTel(일반전화)과 teacherPhone(휴대전화)은 서로 채우지 않으며, null은 해당 스냅샷을 지웁니다.",
         "properties": {
           "requestedGrade": {
             "type": "string",
@@ -36927,6 +36959,10 @@
             "writeOnly": true
           },
           "teacherPhone": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "teacherTel": {
             "type": "string",
             "writeOnly": true
           },
@@ -41176,15 +41212,15 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료.",
+            "description": "회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료. SUBMITTED·WAITING_REVIEW는 결과 대기. 반려 취소 후 REJECTION_CANCELLED는 승인 대기.",
             "enum": [
               "결과 대기",
+              "승인 대기",
               "서류 합격",
               "진행 중",
               "진행 완료",
               "활동 포기",
               "신청 반려",
-              "승인 취소",
               "작성 중",
               "신청 취소"
             ],
@@ -41583,15 +41619,15 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료.",
+            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료. SUBMITTED·WAITING_REVIEW는 결과 대기. 반려 취소 후 REJECTION_CANCELLED는 승인 대기.",
             "enum": [
               "결과 대기",
+              "승인 대기",
               "서류 합격",
               "진행 중",
               "진행 완료",
               "활동 포기",
               "신청 반려",
-              "승인 취소",
               "작성 중",
               "신청 취소"
             ],
@@ -44450,7 +44486,8 @@
           },
           "submitted": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "표시상태가 결과 대기·서류 합격·승인 대기인 건수. 반려 취소 후 REJECTION_CANCELLED(승인 대기)를 포함하며, APPROVAL_CANCELLED는 rejected에만 넣는다."
           },
           "approved": {
             "type": "integer",
@@ -44458,7 +44495,8 @@
           },
           "rejected": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "description": "표시상태가 '신청 반려'인 건수. REJECTED와 APPROVAL_CANCELLED를 포함한다. 승인 취소 라벨은 더 이상 반환하지 않으며 이중 가산하지 않는다."
           },
           "cancelled": {
             "type": "integer",
@@ -44481,7 +44519,7 @@
           "ended": {
             "type": "integer",
             "format": "int64",
-            "description": "마이페이지 교육·봉사 현황 「종료」 탭과 동일: 진행 완료+활동 포기+신청 반려+신청 취소."
+            "description": "마이페이지 교육·봉사 현황 「종료」 탭과 동일: 진행 완료+활동 포기+신청 반려+신청 취소. 신청 반려에는 REJECTED와 APPROVAL_CANCELLED가 포함된다."
           }
         }
       },
@@ -48548,6 +48586,17 @@
           "textbookName": {
             "type": "string"
           },
+          "textbookDeliveryStatus": {
+            "type": "string",
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ],
+            "nullable": true
+          },
           "educationCompletionCount": {
             "type": "integer",
             "format": "int64"
@@ -48596,7 +48645,7 @@
           },
           "educationSchedules": {
             "type": "array",
-            "description": "기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다.",
+            "description": "기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. TRAINED_TEACHER 기관 진행 상세(DATE)는 배정된 MATCHED 지망 전부를 포함하며 지망 1건으로 자르지 않습니다. 같은 scheduleId는 합치지 않습니다. 진행 미편입(미승인)이면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다. scheduleStatus는 일반 프로그램 participants sessions[].scheduleStatus 와 같은 교육 진행(시각) SSOT이며 출석과 별개입니다.",
             "items": {
               "$ref": "#/components/schemas/TrainedTeacherOrganizationEducationSchedule"
             }
@@ -48622,7 +48671,7 @@
           "round": {
             "type": "integer",
             "format": "int32",
-            "description": "일정 session_no(회차). 없으면 null.",
+            "description": "program_schedule.session_no(프로그램 전체 회차 번호). 1시간 슬롯의 수업 차시 수(시안 N차시)가 아니며 preferenceRank도 아니다. CMS가 `${round}차시`로 그리면 session_no=7 은 7차시로 보인다. 슬롯 차시 수가 필요하면 별도 필드를 추가해야 하며 이 값은 바꾸지 않는다. 없으면 null. 0을 넣지 않는다.",
             "nullable": true
           },
           "label": {
@@ -48640,6 +48689,17 @@
             "type": "string",
             "format": "date-time",
             "description": "일정 종료 시각. 없으면 null.",
+            "nullable": true
+          },
+          "scheduleStatus": {
+            "type": "string",
+            "description": "교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus · 일반 프로그램 participants sessions[].scheduleStatus 와 동일 규칙. 출석 제출과 별개. 산출 불가면 null. 빈 문자열 금지.",
+            "enum": [
+              "UNSCHEDULED",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ],
             "nullable": true
           }
         }
@@ -49966,7 +50026,8 @@
             "type": "string"
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "temporaryAssignmentStatus": {
             "type": "string",
@@ -50559,7 +50620,8 @@
             "description": "강사 실명. 프로그램 관리에서는 마스킹하지 않습니다."
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "homeAddress": {
             "type": "string",
@@ -50800,7 +50862,8 @@
             }
           },
           "applicationStatus": {
-            "type": "string"
+            "type": "string",
+            "description": "정규화된 application_status. 목록과 상세는 같은 코드를 반환한다. CMS 「승인 대기」=statusGroup=APPLICATION_PENDING(SUBMITTED, WAITING, WAITING_REVIEW, PENDING, REJECTION_CANCELLED; REVIEWING 등 WAITING_REVIEW 별칭 포함). 「신청 반려」=statusGroup=APPLICATION_REJECTED(REJECTED, APPROVAL_CANCELLED). REJECTION_CANCELLED는 반려 취소 후 승인 대기이며 상세에서 대기 중으로 바꾸지 않는다. 단일 status=는 정규화 등호이며 그룹의 다른 상태를 포함하지 않는다."
           },
           "managerComment": {
             "type": "string",
@@ -54851,15 +54914,15 @@
             "type": "string",
             "format": "date-time"
           },
-          "adminAccountId": {
-            "type": "integer",
-            "format": "int64",
-            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
-          },
           "memberId": {
             "type": "integer",
             "format": "int64",
             "description": "사람 회원 행의 canonical memberId. 관리자 행에서는 null입니다."
+          },
+          "adminAccountId": {
+            "type": "integer",
+            "format": "int64",
+            "description": "관리자 행의 canonical adminAccountId. 사람 회원 행에서는 null입니다."
           }
         }
       },
@@ -57951,6 +58014,38 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "SessionStatusResult": {
+        "type": "object",
+        "properties": {
+          "sessionStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "absoluteExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUserActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refreshIdleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idlePolicyEnforced": {
+            "type": "boolean"
+          },
+          "serverNow": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

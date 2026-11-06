@@ -7,19 +7,19 @@
  */
 
 /**
- * 회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료.
+ * 회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료. SUBMITTED·WAITING_REVIEW는 결과 대기. 반려 취소 후 REJECTION_CANCELLED는 승인 대기.
  */
 export type MemberPortalApplicationDetailDisplayStatus = typeof MemberPortalApplicationDetailDisplayStatus[keyof typeof MemberPortalApplicationDetailDisplayStatus];
 
 
 export const MemberPortalApplicationDetailDisplayStatus = {
   결과_대기: '결과 대기',
+  승인_대기: '승인 대기',
   서류_합격: '서류 합격',
   진행_중: '진행 중',
   진행_완료: '진행 완료',
   활동_포기: '활동 포기',
   신청_반려: '신청 반려',
-  승인_취소: '승인 취소',
   작성_중: '작성 중',
   신청_취소: '신청 취소',
 } as const;

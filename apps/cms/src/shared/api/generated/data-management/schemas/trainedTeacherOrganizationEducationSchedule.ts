@@ -5,11 +5,12 @@
  * Filtered for CMS data management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { TrainedTeacherOrganizationEducationScheduleScheduleStatus } from './trainedTeacherOrganizationEducationScheduleScheduleStatus';
 
 export interface TrainedTeacherOrganizationEducationSchedule {
   /** program_schedule.id. 출석 조회·저장의 scheduleId 로 사용합니다. */
   scheduleId?: number;
-  /** 일정 session_no(회차). 없으면 null. */
+  /** program_schedule.session_no(프로그램 전체 회차 번호). 1시간 슬롯의 수업 차시 수(시안 N차시)가 아니며 preferenceRank도 아니다. CMS가 `${round}차시`로 그리면 session_no=7 은 7차시로 보인다. 슬롯 차시 수가 필요하면 별도 필드를 추가해야 하며 이 값은 바꾸지 않는다. 없으면 null. 0을 넣지 않는다. */
   round?: number | null;
   /** 일정명. 없으면 null. */
   label?: string | null;
@@ -17,4 +18,6 @@ export interface TrainedTeacherOrganizationEducationSchedule {
   startAt?: string | null;
   /** 일정 종료 시각. 없으면 null. */
   endAt?: string | null;
+  /** 교육 진행(시각 기준). UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 대시보드 program-schedules.scheduleStatus · 일반 프로그램 participants sessions[].scheduleStatus 와 동일 규칙. 출석 제출과 별개. 산출 불가면 null. 빈 문자열 금지. */
+  scheduleStatus?: TrainedTeacherOrganizationEducationScheduleScheduleStatus;
 }

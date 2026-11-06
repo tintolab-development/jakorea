@@ -66,6 +66,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "orval": "^8.17.0",
     "typescript": "~5.9.3",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vitest": "^4.0.16"
   }
 }

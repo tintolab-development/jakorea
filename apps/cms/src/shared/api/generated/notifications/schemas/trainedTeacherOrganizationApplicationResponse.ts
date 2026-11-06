@@ -6,6 +6,7 @@
  * OpenAPI spec version: v9
  */
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
+import type { TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus } from './trainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus';
 
 export interface TrainedTeacherOrganizationApplicationResponse {
   applicationId?: number;
@@ -51,6 +52,8 @@ export interface TrainedTeacherOrganizationApplicationResponse {
   completedEducationRoundCount?: number;
   progressLabel?: string;
   textbookName?: string;
+  /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
+  textbookDeliveryStatus?: TrainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus;
   educationCompletionCount?: number;
   /** 활동 포기 시각이 있으면 true. applicationStatus는 APPROVED를 유지합니다. */
   activityWithdrawn?: boolean | null;

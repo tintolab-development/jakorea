@@ -40,11 +40,21 @@ import {
   lectureReportPreviewPath,
 } from '@/features/mypage/education/schedules/lib/lecture-report-path'
 import {
+  lectureReportCompleteSettlementWritePath,
+  lectureReportCompleteTabPath,
+  resolveInstructorLectureApplicationId,
+  resolveLectureSettlementSessionId,
+} from '@/features/mypage/education/schedules/lib/lecture-report-complete-navigation'
+import {
   lectureReportOverdueWarningText,
   shouldShowLectureReportOverdueWarning,
 } from '@/features/mypage/education/schedules/lib/lecture-report-policy'
 import { LectureReportSubmitCompleteModal } from '@/features/mypage/education/schedules/ui/lecture-report-submit-complete-modal'
-import { buildSettlementWritePath } from '@/features/mypage/education/settlements/lib/write-path'
+import { fetchSettlementApplications } from '@/features/mypage/education/applications/api/activity-client'
+import {
+  findSettlementApplicationForLectureAssignment,
+  isKnownSettlementApplicationSubmitted,
+} from '@/features/mypage/education/settlements/lib/settlement-join'
 import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
 import { platformQueryKeys } from '@/shared/api/query-keys'
 import { PFAlertModal, PFButton, PFFormPage, PFLoadingSpinner, PFText } from '@/shared/ui'
@@ -169,6 +179,7 @@ export function MypageLectureReportWritePage() {
   const [alert, setAlert] = useState<{ title: string; description: ReactNode } | null>(null)
   const [submitCompleteOpen, setSubmitCompleteOpen] = useState(false)
   const [settlementSessionId, setSettlementSessionId] = useState('')
+  const [paymentStatementAlreadySubmitted, setPaymentStatementAlreadySubmitted] = useState(false)
   const programQuery = useProgramDetail(
     loaded?.state.programId == null ? null : String(loaded.state.programId),
     { fresh: true }
@@ -410,7 +421,30 @@ export function MypageLectureReportWritePage() {
       void queryClient.invalidateQueries({
         queryKey: platformQueryKeys.mypage.lectureReportAssignments(String(loaded.state.programId)),
       })
-      setSettlementSessionId(String(loaded.assignment.scheduleId))
+      let alreadySubmitted = false
+      try {
+        const settlements = await queryClient.fetchQuery({
+          queryKey: platformQueryKeys.mypage.settlementApplications(),
+          queryFn: ({ signal }) => fetchSettlementApplications(signal),
+          staleTime: 0,
+        })
+        alreadySubmitted = isKnownSettlementApplicationSubmitted(
+          findSettlementApplicationForLectureAssignment(settlements, {
+            assignmentId: loaded.assignment.assignmentId,
+            scheduleId: loaded.assignment.scheduleId,
+            programId: loaded.state.programId,
+          }),
+        )
+      } catch {
+        alreadySubmitted = false
+      }
+      setPaymentStatementAlreadySubmitted(alreadySubmitted)
+      setSettlementSessionId(
+        resolveLectureSettlementSessionId({
+          scheduleId: loaded.assignment.scheduleId,
+          assignmentId: loaded.assignment.assignmentId,
+        }),
+      )
       setSubmitCompleteOpen(true)
     } catch (cause) {
       setAlert({
@@ -549,29 +583,48 @@ export function MypageLectureReportWritePage() {
       />
       <LectureReportSubmitCompleteModal
         open={submitCompleteOpen}
-        hidePaymentStatementCta={isGeminiSettlementProgram({
-          programType: program?.programType,
-          detailCase: program?.detailCase,
-        })}
+        hidePaymentStatementCta={
+          paymentStatementAlreadySubmitted ||
+          isGeminiSettlementProgram({
+            programType: program?.programType,
+            detailCase: program?.detailCase,
+          })
+        }
         onLater={() => {
+          const appId = resolveInstructorLectureApplicationId({
+            routeApplicationId: applicationId,
+            instructorApplicationId:
+              loaded?.assignment.instructorApplicationId ?? loaded?.state.instructorApplicationId,
+          })
           setSubmitCompleteOpen(false)
-          navigate(backPath, { replace: true })
+          navigate(lectureReportCompleteTabPath(appId), { replace: true })
         }}
         onWritePaymentStatement={() => {
-          const sessionId = settlementSessionId.trim()
+          const appId = resolveInstructorLectureApplicationId({
+            routeApplicationId: applicationId,
+            instructorApplicationId:
+              loaded?.assignment.instructorApplicationId ?? loaded?.state.instructorApplicationId,
+          })
+          const sessionId =
+            settlementSessionId.trim() ||
+            resolveLectureSettlementSessionId({
+              scheduleId: loaded?.assignment.scheduleId,
+              assignmentId: loaded?.assignment.assignmentId,
+            })
+          const writePath = lectureReportCompleteSettlementWritePath(appId, sessionId)
           setSubmitCompleteOpen(false)
-          if (!sessionId) {
-            navigate(backPath, { replace: true })
+          if (!writePath) {
+            navigate(lectureReportCompleteTabPath(appId), { replace: true })
             return
           }
-          navigate(
-            buildSettlementWritePath({
-              applicationId,
-              sessionId,
-              area: 'lecture',
-              applicationType: 'INSTRUCTOR',
-            }),
-          )
+          if (loaded?.state.programId != null) {
+            void queryClient.invalidateQueries({
+              queryKey: platformQueryKeys.mypage.lectureReportAssignments(
+                String(loaded.state.programId),
+              ),
+            })
+          }
+          navigate(writePath, { replace: true })
         }}
       />
     </PFFormPage>
