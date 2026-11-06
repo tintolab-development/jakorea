@@ -48,7 +48,7 @@ export interface ProgramRecruitmentResponse {
   announcementTitle?: string | null;
   /** 이 모집 행의 한 줄 소개. 비어 있으면 null. */
   summary?: string | null;
-  /** 이 모집 행의 담당자 이름. GENERAL_*\/UJAT 외 유형은 null(프로그램 contactName 사용). */
+  /** 이 모집 행의 담당자 이름. GENERAL_*\/UJAT\/TRAINED_TEACHER 참여자 행 포함. 비어 있으면 null. */
   contactName?: string | null;
   /** 이 모집 행의 담당자 연락처. 비어 있으면 null. */
   contactPhone?: string | null;
