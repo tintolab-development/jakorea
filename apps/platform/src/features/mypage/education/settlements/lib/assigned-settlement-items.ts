@@ -85,6 +85,19 @@ export function findIndividualScheduleForSession(
   })
 }
 
+export function findAssignedSettlementItem(
+  items: readonly EducationSettlementItem[] | undefined,
+  sessionId: string,
+): EducationSettlementItem | undefined {
+  const key = sessionId.trim()
+  if (!key || !items?.length) return undefined
+  const byId = items.find(item => item.id === key)
+  if (byId) return byId
+  const numeric = Number(key)
+  if (!Number.isSafeInteger(numeric) || numeric <= 0) return undefined
+  return items.find(item => item.scheduleId === numeric || item.assignmentId === numeric)
+}
+
 export type BuildAssignedSettlementItemsInput = {
   schedules: readonly EducationScheduleItem[]
   scopeStatus: PortalEducationScheduleScopeStatus | null | undefined

@@ -22,6 +22,7 @@ import {
   useSubmitIndividualSettlementMutation,
 } from '@/features/mypage/education/applications/api/activity-hooks'
 import { useSubmitInstructorSettlementMutation } from '@/features/mypage/education/settlements/api/use-submit-instructor-settlement-mutation'
+import { findAssignedSettlementItem } from '@/features/mypage/education/settlements/lib/assigned-settlement-items'
 import {
   buildInstructorSettlementCreateRequest,
   buildInstructorSettlementResubmitRequest,
@@ -123,7 +124,7 @@ export function MypageEducationSettlementConfirmPage() {
 
   const session = useMemo(() => {
     if (!remoteSettlements.enabled) return undefined
-    return remoteSettlements.items.find(item => item.id === sessionId)
+    return findAssignedSettlementItem(remoteSettlements.items, sessionId)
   }, [remoteSettlements.enabled, remoteSettlements.items, sessionId])
 
   const storedDraft = useMemo(() => {
@@ -428,7 +429,14 @@ export function MypageEducationSettlementConfirmPage() {
             return
           }
           if (alertMessage === PAYMENT_STATEMENT_CONSENT_REQUIRED_MESSAGE) {
-            navigate(buildSettlementPaymentConsentPath({ applicationId, mode: 'write' }))
+            navigate(
+              buildSettlementPaymentConsentPath({
+                applicationId,
+                mode: 'write',
+                area,
+                applicationType,
+              }),
+            )
           }
         }}
       />

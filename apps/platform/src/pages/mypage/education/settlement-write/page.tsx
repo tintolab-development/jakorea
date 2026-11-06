@@ -13,10 +13,11 @@ import {
   useProbeEducationApplicationType,
 } from '@/features/mypage/education/applications'
 import { useApplicationSettlementsQuery } from '@/features/mypage/education/applications/api/activity-hooks'
+import { findAssignedSettlementItem } from '@/features/mypage/education/settlements/lib/assigned-settlement-items'
 import { readEducationApplicationTypeFromRoute } from '@/features/mypage/education/applications/lib/education-application-route'
 import { educationApplicationDetailPath } from '@/features/mypage'
 import { INDIVIDUAL_SETTLEMENT_DISABLED_MESSAGE } from '@/features/mypage/education/settlements/lib/individual-settlement-contract'
-import { useReceiptPaymentStatementConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
+import { useSettlementPreConsent } from '@/features/mypage/education/settlements/hooks/use-receipt-payment-statement-consent'
 import { PaymentStatementPreConsentModal } from '@/features/mypage/education/settlements/ui/payment-statement-pre-consent-modal'
 import { isRemoteApiConfigured } from '@/shared/lib/api-remote-env'
 import { isGeminiSettlementProgram } from '@/features/mypage/education/settlements/lib/payment-statement-status'
@@ -60,19 +61,18 @@ export function MypageEducationSettlementWritePage() {
 
   const session = useMemo(() => {
     if (!remoteSettlements.enabled) return undefined
-    return remoteSettlements.items.find(item => item.id === sessionId)
+    return findAssignedSettlementItem(remoteSettlements.items, sessionId)
   }, [remoteSettlements.enabled, remoteSettlements.items, sessionId])
 
   const title = documentKind === 'receipt' ? '영수증 제출하기' : '지급조서 작성하기'
-  const receiptConsent = useReceiptPaymentStatementConsent({
+  const preConsent = useSettlementPreConsent({
+    documentKind,
     applicationId,
     area,
     applicationType,
   })
-  const blockedReceiptWrite =
-    documentKind === 'receipt' &&
-    !receiptConsent.isConsentLoading &&
-    !receiptConsent.isConsentSubmitted
+  const blockedPreConsentWrite =
+    !preConsent.isConsentLoading && !preConsent.isConsentSubmitted
   const backPath = applicationId
     ? buildSettlementTabPath(applicationId, area, applicationType)
     : educationApplicationDetailPath(applicationId)
@@ -106,7 +106,7 @@ export function MypageEducationSettlementWritePage() {
     )
   }
 
-  if (documentKind === 'receipt' && receiptConsent.isConsentLoading) {
+  if (preConsent.isConsentLoading) {
     return (
       <PFFormPage
         aria-label={title}
@@ -120,7 +120,7 @@ export function MypageEducationSettlementWritePage() {
     )
   }
 
-  if (blockedReceiptWrite) {
+  if (blockedPreConsentWrite) {
     return (
       <>
         <PFFormPage
@@ -132,8 +132,9 @@ export function MypageEducationSettlementWritePage() {
         </PFFormPage>
         <PaymentStatementPreConsentModal
           open
+          variant={documentKind}
           onCancel={() => navigate(backPath)}
-          onWriteConsent={receiptConsent.goToConsents}
+          onWriteConsent={preConsent.goToConsents}
         />
       </>
     )
