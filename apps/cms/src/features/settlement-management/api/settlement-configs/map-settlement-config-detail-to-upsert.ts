@@ -1,4 +1,7 @@
-import type { SettlementItemSettingDetail } from '@/features/settlement-management/model/settlement-item-setting-detail'
+import {
+  sanitizeSettlementConfigLines,
+  type SettlementItemSettingDetail,
+} from '@/features/settlement-management/model/settlement-item-setting-detail'
 import type { SettlementItemSettingRow } from '@/features/settlement-management/model/settlement-item-settings'
 import {
   evidenceRequiredYnFromSubmission,
@@ -13,7 +16,6 @@ import type {
   SettlementConfigUpdateRequest,
   WageItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
-
 function stripDeprecatedWithholdingKeys(json: string): string {
   try {
     const parsed: unknown = JSON.parse(json)
@@ -117,8 +119,8 @@ function wageItemToUpsert(
     layout: item.layout,
     basisHours: detail.basisHours,
     maxLimitWon: detail.maxLimitWon ?? undefined,
-    qualificationLines: detail.qualificationLines,
-    remarkLines: detail.remarkLines,
+    qualificationLines: sanitizeSettlementConfigLines(detail.qualificationLines),
+    remarkLines: sanitizeSettlementConfigLines(detail.remarkLines),
     description: meta.description,
     detailJson: (() => {
       const merged = mergeDetailJson(item.detailJson, detailPatch)
@@ -161,8 +163,8 @@ function paymentItemToUpsert(
 
   const detailPatch: Record<string, unknown> = {
     evidenceSubmission: detail.evidenceSubmission,
-    qualificationLines: detail.qualificationLines,
-    remarkLines: detail.remarkLines,
+    qualificationLines: sanitizeSettlementConfigLines(detail.qualificationLines),
+    remarkLines: sanitizeSettlementConfigLines(detail.remarkLines),
   }
   if (detail.layout === 'transport') {
     detailPatch.transportCommuteMode = detail.transportCommuteMode
@@ -215,8 +217,8 @@ function deductionItemToUpsert(
     description: meta.description,
     detailJson: stripDeprecatedWithholdingKeys(
       mergeDetailJson(item.detailJson, {
-        qualificationLines: detail.qualificationLines,
-        remarkLines: detail.remarkLines,
+        qualificationLines: sanitizeSettlementConfigLines(detail.qualificationLines),
+        remarkLines: sanitizeSettlementConfigLines(detail.remarkLines),
         withholdingExclusionMaxWon: detail.withholdingExclusionMaxWon,
         withholdingEarnedIncomeDeductionWon: detail.withholdingEarnedIncomeDeductionWon,
         withholdingTaxRateBusiness: detail.withholdingTaxRateBusiness,

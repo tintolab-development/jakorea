@@ -48,5 +48,34 @@ describe('mapSettlementConfigToSections', () => {
     const deduction = sections.find(s => s.kind === 'deduction')?.items[0]
     expect(deduction?.title).toBe('일용근로자 원천징수세액')
     expect(deduction?.description).toBe('소득 유형별 원천징수 기준과 세율을 설정합니다.')
+    // API description 비었을 때 Figma 제목 하단 문구 폴백
+    expect(paymentRows[0]?.description).toBe('편도 30km 이상 이동 시 지원되는 비용입니다.')
+    expect(paymentRows[1]?.description).toBe('활동비로 지원되는 비용입니다.')
+    const wageRows = sections.find(s => s.kind === 'wage')?.items ?? []
+    expect(wageRows.find(r => r.wageItemType === WageItemResponseWageItemType.GEMINI)?.description).toBe(
+      'Gemini 프로그램에서 사용되는 강사 임금입니다.'
+    )
+    expect(wageRows.find(r => r.wageItemType === WageItemResponseWageItemType.TIER1)?.description).toBe(
+      '상세 기준에 따라 적용되는 임금입니다.'
+    )
+  })
+
+  it('API description이 있으면 Figma 폴백으로 덮지 않는다', () => {
+    const sections = mapSettlementConfigToSections({
+      configName: 'JA Korea 기본 정산 설정',
+      paymentItems: [
+        {
+          id: 166201,
+          paymentItemType: PaymentItemResponsePaymentItemType.TRANSPORT_INSTRUCTOR,
+          itemName: '강사 교통비',
+          description: '서버에서 온 설명',
+          maxLimitWon: 99_000,
+          useYn: true,
+        },
+      ],
+      deductionItems: [{ id: 166301, itemName: '원천징수세액', useYn: true }],
+    })
+    expect(sections.find(s => s.kind === 'payment')?.items[0]?.description).toBe('서버에서 온 설명')
+    expect(sections.find(s => s.kind === 'deduction')?.items[0]?.title).toBe('원천징수세액')
   })
 })

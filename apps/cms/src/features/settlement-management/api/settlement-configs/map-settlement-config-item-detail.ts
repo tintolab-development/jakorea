@@ -3,6 +3,7 @@ import {
   getCatalogSettlementItemSettingDetailByWageType,
   getCatalogSettlementItemSettingDetailForDeduction,
   parseEditableLines,
+  sanitizeSettlementConfigLines,
   type SettlementItemSettingDetail,
 } from '@/features/settlement-management/model/settlement-item-setting-detail'
 import type {
@@ -35,7 +36,9 @@ function readStringArray(value: unknown): string[] {
     return parseEditableLines(value)
   }
   if (!Array.isArray(value)) return []
-  return value.filter((line): line is string => typeof line === 'string' && line.trim().length > 0)
+  return sanitizeSettlementConfigLines(
+    value.filter((line): line is string => typeof line === 'string')
+  )
 }
 
 function firstLines(...values: unknown[]): string[] {
@@ -238,7 +241,7 @@ export function mapWageItemToSettingDetail(item: WageItemResponse): SettlementIt
 
   const basisHours =
     firstNumber(item.basisHours, extra.basis_hours, detail.basisHours) ??
-    (layout === 'transport' ? readNumber(detail.minDistanceKm ?? detail.minOneWayKm) : null) ??
+    (layout === 'transport' ? readNumber(detail.minOneWayKm ?? detail.minDistanceKm) : null) ??
     1
 
   const mapped: SettlementItemSettingDetail = {
@@ -278,18 +281,9 @@ export function mapPaymentItemToSettingDetail(
   const extra = asRecord(item)
   const detail = parseDetailJson(item.detailJson ?? extra.detail_json)
   const layout = normalizeLayout(item.layout ?? (extra.layout as string | undefined))
-  const qualificationLines = firstLines(
-    extra.qualificationLines,
-    extra.qualification_lines,
-    detail.qualificationLines,
-    detail.qualification_lines
-  )
-  const remarkLines = firstLines(
-    extra.remarkLines,
-    extra.remark_lines,
-    detail.remarkLines,
-    detail.remark_lines
-  )
+  // 지급: top-level 없음 — detailJson.qualificationLines / remarkLines 만
+  const qualificationLines = firstLines(detail.qualificationLines, detail.qualification_lines)
+  const remarkLines = firstLines(detail.remarkLines, detail.remark_lines)
 
   // 거리 canonical: minOneWayKm → minDistanceKm → 30
   const minKm = readNumber(detail.minOneWayKm ?? detail.minDistanceKm)
@@ -356,18 +350,9 @@ export function mapDeductionItemToSettingDetail(
     maxLimitWon: null,
     basicFeeWon: null,
     longDistanceFeeWon: null,
-    qualificationLines: firstLines(
-      extra.qualificationLines,
-      extra.qualification_lines,
-      detail.qualificationLines,
-      detail.qualification_lines
-    ),
-    remarkLines: firstLines(
-      extra.remarkLines,
-      extra.remark_lines,
-      detail.remarkLines,
-      detail.remark_lines
-    ),
+    // 공제: top-level 없음 — detailJson.qualificationLines / remarkLines 만
+    qualificationLines: firstLines(detail.qualificationLines, detail.qualification_lines),
+    remarkLines: firstLines(detail.remarkLines, detail.remark_lines),
     withholdingExclusionMaxWon: readOptionalNumber(detail, 'withholdingExclusionMaxWon'),
     withholdingEarnedIncomeDeductionWon: readOptionalNumber(
       detail,

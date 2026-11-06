@@ -71,11 +71,21 @@ export interface SettlementItemSettingDetail {
   geminiSession4UniversityWon?: number | null
 }
 
+/** API/카탈로그에 넣지 않는 UI placeholder. 불릿은 FE 표시용으로만 붙인다. */
+const SETTLEMENT_CONFIG_LINE_PLACEHOLDERS = new Set(['내용을 입력해 주세요', '금액'])
+
+const LEADING_BULLET_RE = /^\s*[•\-·*]\s*/
+
+/** 불릿 제거·placeholder/빈 줄 제외 — GET 매핑·PUT 직렬화 공통 */
+export function sanitizeSettlementConfigLines(lines: readonly string[] | null | undefined): string[] {
+  if (!lines?.length) return []
+  return lines
+    .map(line => line.replace(LEADING_BULLET_RE, '').trim())
+    .filter(line => line.length > 0 && !SETTLEMENT_CONFIG_LINE_PLACEHOLDERS.has(line))
+}
+
 export function parseEditableLines(text: string): string[] {
-  return text
-    .split('\n')
-    .map(line => line.replace(/^\s*[•\-*]\s*/, '').trim())
-    .filter(Boolean)
+  return sanitizeSettlementConfigLines(text.split('\n'))
 }
 
 export function parseWonStringToNumber(s: string): number | null {
@@ -404,4 +414,54 @@ const WITHHOLDING_CATALOG_DETAIL: SettlementItemSettingDetail = {
 
 export function getCatalogSettlementItemSettingDetailForDeduction(): SettlementItemSettingDetail {
   return cloneCatalogDetail(WITHHOLDING_CATALOG_DETAIL)
+}
+
+
+/** Figma 모달 제목 하단 description — API description 비었을 때만 폴백 (API wins) */
+export const FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS = {
+  TIER1: '상세 기준에 따라 적용되는 임금입니다.',
+  TIER2: '상세 기준에 따라 적용되는 임금입니다.',
+  TIER3: '일반적으로 사용되는 강사 임금입니다.',
+  SPECIAL_LECTURE: '금액 한도가 별도 적용되는 임금입니다.',
+  OTHER_LABOR: '금액 한도가 별도 적용되는 임금입니다.',
+  GEMINI: 'Gemini 프로그램에서 사용되는 강사 임금입니다.',
+  TRANSPORT_INSTRUCTOR: '편도 30km 이상 이동 시 지원되는 비용입니다.',
+  TRANSPORT_STUDENT: '편도 30km 이상 이동 시 지원되는 비용입니다.',
+  LODGING_GENERAL: '타지로 출장 시 지원되는 비용입니다.',
+  LODGING_1C1S: '타지로 출장 시 지원되는 비용입니다.',
+  MEAL: '식사 시 지원되는 비용입니다.',
+  ACTIVITY: '활동비로 지원되는 비용입니다.',
+  WITHHOLDING: '소득 유형별 원천징수 기준과 세율을 설정합니다.',
+} as const
+
+export function getCatalogSettlementItemDescriptionByWageType(
+  wageItemType?: string | null
+): string | undefined {
+  const key = wageItemType?.trim().toUpperCase()
+  if (!key) return undefined
+  if (key === 'TIER1') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.TIER1
+  if (key === 'TIER2') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.TIER2
+  if (key === 'TIER3') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.TIER3
+  if (key === 'SPECIAL_LECTURE') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.SPECIAL_LECTURE
+  if (key === 'OTHER_LABOR') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.OTHER_LABOR
+  if (key === 'GEMINI') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.GEMINI
+  return undefined
+}
+
+export function getCatalogSettlementItemDescriptionByPaymentType(
+  paymentItemType?: string | null
+): string | undefined {
+  const key = paymentItemType?.trim().toUpperCase()
+  if (!key) return undefined
+  if (key === 'TRANSPORT_INSTRUCTOR') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.TRANSPORT_INSTRUCTOR
+  if (key === 'TRANSPORT_STUDENT') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.TRANSPORT_STUDENT
+  if (key === 'LODGING_GENERAL') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.LODGING_GENERAL
+  if (key === 'LODGING_1C1S') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.LODGING_1C1S
+  if (key === 'MEAL') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.MEAL
+  if (key === 'ACTIVITY') return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.ACTIVITY
+  return undefined
+}
+
+export function getCatalogSettlementItemDescriptionForWithholding(): string {
+  return FIGMA_SETTLEMENT_ITEM_DESCRIPTIONS.WITHHOLDING
 }

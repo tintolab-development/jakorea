@@ -207,7 +207,47 @@ describe('mapWageItemToSettingDetail', () => {
     })
     expect(detail.maxLimitWon).toBe(500_000)
   })
+
+
+  it('API session1Won 0은 유효값이라 카탈로그로 덮어쓰지 않는다', () => {
+    const detail = mapWageItemToSettingDetail({
+      wageItemType: WageItemResponseWageItemType.GEMINI,
+      name: 'Gemini 강사비',
+      layout: 'gemini',
+      detailJson: JSON.stringify({
+        session1Won: 0,
+        session2Won: 111_000,
+        session3Won: 222_000,
+        session4Won: 333_000,
+      }),
+      rateItems: [
+        { unitCount: 1, amount: 0 },
+        { unitCount: 2, amount: 111_000 },
+        { unitCount: 3, amount: 222_000 },
+        { unitCount: 4, amount: 333_000 },
+      ],
+    })
+
+    expect(detail.geminiSession1Won).toBe(0)
+    expect(detail.geminiSession2Won).toBe(111_000)
+    expect(detail.geminiSession3Won).toBe(222_000)
+    expect(detail.geminiSession4Won).toBe(333_000)
+  })
+
+  it('지급요건 배열 길이가 0보다 크면 카탈로그를 덮어쓴다', () => {
+    const detail = mapWageItemToSettingDetail({
+      wageItemType: WageItemResponseWageItemType.TIER1,
+      name: '1급 강사비',
+      layout: 'tier1',
+      qualificationLines: ['• API 요건'],
+      remarkLines: ['내용을 입력해 주세요', '실제 비고'],
+    })
+
+    expect(detail.qualificationLines).toEqual(['API 요건'])
+    expect(detail.remarkLines).toEqual(['실제 비고'])
+  })
 })
+
 
 describe('mapPaymentItemToSettingDetail', () => {
   it('GET에 없으면 강사 교통비 카탈로그(30km·자차·불필요·disabled용 기본)를 채운다', () => {
@@ -412,7 +452,65 @@ describe('mapPaymentItemToSettingDetail', () => {
     expect(detail.qualificationLines).toEqual(['참여자에게 지급되는 지원비'])
     expect(detail.remarkLines).toEqual([])
   })
+
+
+  it('지급 항목은 top-level 지급요건·비고를 무시하고 detailJson만 읽는다', () => {
+    const detail = mapPaymentItemToSettingDetail({
+      paymentItemType: PaymentItemResponsePaymentItemType.MEAL,
+      itemName: '식사비',
+      layout: 'meal',
+      evidenceRequiredYn: true,
+      qualificationLines: ['top-level 무시'],
+      detailJson: JSON.stringify({
+        qualificationLines: ['· detailJson 요건', '내용을 입력해 주세요'],
+        remarkLines: ['금액', '실제 비고'],
+      }),
+    } as Parameters<typeof mapPaymentItemToSettingDetail>[0])
+
+    expect(detail.qualificationLines).toEqual(['detailJson 요건'])
+    expect(detail.remarkLines).toEqual(['실제 비고'])
+  })
+
+  it('교통비는 minOneWayKm을 우선 읽고 commuteMode는 private_car|public_transit만 허용한다', () => {
+    const detail = mapPaymentItemToSettingDetail({
+      paymentItemType: PaymentItemResponsePaymentItemType.TRANSPORT_INSTRUCTOR,
+      itemName: '강사 교통비',
+      layout: 'transport',
+      evidenceRequiredYn: false,
+      detailJson: JSON.stringify({
+        minOneWayKm: 45,
+        minDistanceKm: 30,
+        transportCommuteMode: 'private_car',
+      }),
+    })
+    expect(detail.basisHours).toBe(45)
+    expect(detail.transportCommuteMode).toBe('private_car')
+
+    const ignored = mapPaymentItemToSettingDetail({
+      paymentItemType: PaymentItemResponsePaymentItemType.TRANSPORT_STUDENT,
+      itemName: '학생 교통비',
+      layout: 'transport',
+      evidenceRequiredYn: true,
+      detailJson: JSON.stringify({ transportCommuteMode: 'user_choice' }),
+    })
+    expect(ignored.transportCommuteMode).toBe('public_transit')
+  })
+
+  it('LODGING_1C1S는 detailJson.fixedAmountWon 80000을 정본으로 읽는다', () => {
+    const detail = mapPaymentItemToSettingDetail({
+      paymentItemType: PaymentItemResponsePaymentItemType.LODGING_1C1S,
+      itemName: '숙박비 (1사1교)',
+      layout: 'lodging',
+      maxLimitWon: 99_000,
+      maxAmount: 99_000,
+      evidenceRequiredYn: false,
+      detailJson: JSON.stringify({ fixedAmountWon: 80_000 }),
+    })
+    expect(detail.maxLimitWon).toBe(80_000)
+    expect(detail.evidenceSubmission).toBe('not_required')
+  })
 })
+
 
 describe('mapDeductionItemToSettingDetail', () => {
   it('원천징수 서버 값이 없으면 기획 기본값을 표시한다', () => {
@@ -494,4 +592,21 @@ describe('mapDeductionItemToSettingDetail', () => {
     expect(detail.withholdingEarnedIncomeTaxCreditRate).toBeUndefined()
     expect(detail.withholdingTaxRateBusiness).toBe(3.3)
   })
+
+
+  it('공제 항목은 top-level 지급요건·비고를 무시하고 detailJson만 읽는다', () => {
+    const detail = mapDeductionItemToSettingDetail({
+      itemName: '일용근로자 원천징수세액',
+      layout: 'withholdingDailyWorker',
+      qualificationLines: ['top-level 무시'],
+      detailJson: JSON.stringify({
+        qualificationLines: ['- detail 요건'],
+        remarkLines: ['내용을 입력해 주세요'],
+      }),
+    } as Parameters<typeof mapDeductionItemToSettingDetail>[0])
+
+    expect(detail.qualificationLines).toEqual(['detail 요건'])
+    expect(detail.remarkLines).toEqual([])
+  })
 })
+
