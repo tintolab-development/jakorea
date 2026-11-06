@@ -23255,6 +23255,17 @@
           "textbookName": {
             "type": "string"
           },
+          "textbookDeliveryStatus": {
+            "type": "string",
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ],
+            "nullable": true
+          },
           "educationCompletionCount": {
             "type": "integer",
             "format": "int64"
@@ -34142,6 +34153,18 @@
           "email",
           "password"
         ]
+      },
+      "ActivityResult": {
+        "type": "object",
+        "properties": {
+          "lastUserActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "boolean"
+          }
+        }
       },
       "AdminAccountApprovalDecisionRequest": {
         "type": "object",
@@ -48548,6 +48571,17 @@
           "textbookName": {
             "type": "string"
           },
+          "textbookDeliveryStatus": {
+            "type": "string",
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ],
+            "nullable": true
+          },
           "educationCompletionCount": {
             "type": "integer",
             "format": "int64"
@@ -57951,6 +57985,38 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "SessionStatusResult": {
+        "type": "object",
+        "properties": {
+          "sessionStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "absoluteExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastUserActivityAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refreshIdleExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idlePolicyEnforced": {
+            "type": "boolean"
+          },
+          "serverNow": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

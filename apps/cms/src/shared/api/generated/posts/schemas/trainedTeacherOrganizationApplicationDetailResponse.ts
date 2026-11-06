@@ -7,6 +7,7 @@
  */
 import type { GradeBlock } from './gradeBlock';
 import type { PreferredScheduleBlock } from './preferredScheduleBlock';
+import type { TrainedTeacherOrganizationApplicationDetailResponseTextbookDeliveryStatus } from './trainedTeacherOrganizationApplicationDetailResponseTextbookDeliveryStatus';
 import type { TrainedTeacherOrganizationEducationSchedule } from './trainedTeacherOrganizationEducationSchedule';
 
 export interface TrainedTeacherOrganizationApplicationDetailResponse {
@@ -50,6 +51,8 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   completedEducationRoundCount?: number;
   progressLabel?: string;
   textbookName?: string;
+  /** 저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다. */
+  textbookDeliveryStatus?: TrainedTeacherOrganizationApplicationDetailResponseTextbookDeliveryStatus;
   educationCompletionCount?: number;
   activityWithdrawn?: boolean;
   giveUpAt?: string;
