@@ -7,12 +7,12 @@ import {
   formatParticipatingIndividualParticipantAttendanceScheduleLabel,
   formatParticipatingIndividualParticipantAttendanceShortDateLabel,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-display'
-import type {
-  ParticipatingIndividualParticipantAbsenceReason,
-  ParticipatingIndividualParticipantAttendanceBundle,
-  ParticipatingIndividualParticipantAttendanceRow,
-  ParticipatingIndividualParticipantAttendanceStatus,
-  ParticipatingIndividualParticipantAttendanceSummary,
+import {
+  type ParticipatingIndividualParticipantAbsenceReason,
+  type ParticipatingIndividualParticipantAttendanceBundle,
+  type ParticipatingIndividualParticipantAttendanceRow,
+  type ParticipatingIndividualParticipantAttendanceStatus,
+  type ParticipatingIndividualParticipantAttendanceSummary,
 } from '@/features/program/general/lib/participating-individual-participant-attendance-types'
 import { mapDashboardScheduleDeliveryToEducationProgress } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import { buildParticipatingSchoolSessionKey } from '@/features/program/general/lib/participating-institution-activity-withdraw'
@@ -104,12 +104,13 @@ function mapProgressStatusToDetailStatus(
 function isAssignedSessionWithdrawn(
   participant: ParticipatingIndividualParticipantRow,
   session: ParticipatingSchoolSession,
-  index: number
+  index: number,
+  stopIndex: number | null
 ): boolean {
   if (!participant.activityWithdrawn) return false
-  const stopKey = participant.activityWithdrawStopSessionKey?.trim()
-  if (!stopKey) return false
-  return buildParticipatingSchoolSessionKey(session, index) === stopKey
+  if (stopIndex != null) return index >= stopIndex
+  return buildParticipatingSchoolSessionKey(session, index) ===
+    (participant.activityWithdrawStopSessionKey?.trim() ?? '')
 }
 
 /**
@@ -134,6 +135,15 @@ export function buildParticipatingIndividualParticipantAttendanceRowsFromAssigne
   const attendanceByScheduleId = new Map(
     (input.attendanceSessions ?? []).map(session => [session.id, session] as const)
   )
+
+  const stopKey = input.participant.activityWithdrawStopSessionKey?.trim()
+  const stopIndex =
+    input.participant.activityWithdrawn && stopKey
+      ? input.assignedSessions.findIndex(
+          (session, index) => buildParticipatingSchoolSessionKey(session, index) === stopKey
+        )
+      : null
+  const resolvedStopIndex = stopIndex != null && stopIndex >= 0 ? stopIndex : null
 
   const rows = input.assignedSessions.flatMap((session, index) => {
     const scheduleId =
@@ -164,7 +174,12 @@ export function buildParticipatingIndividualParticipantAttendanceRowsFromAssigne
         session.deliveryScheduleStatus ??
           (session.status === 'completed' ? 'COMPLETED' : 'SCHEDULED')
       )
-    const withdrawn = isAssignedSessionWithdrawn(input.participant, session, index)
+    const withdrawn = isAssignedSessionWithdrawn(
+      input.participant,
+      session,
+      index,
+      resolvedStopIndex
+    )
 
     return [
       {
@@ -177,9 +192,15 @@ export function buildParticipatingIndividualParticipantAttendanceRowsFromAssigne
         ),
         attendanceStatus: withdrawn ? 'withdrawn' : recordedStatus,
         attendanceRecorded: withdrawn ? false : attendanceRecorded,
+        lateMinutes:
+          itemStatus === 'late' && typeof attendanceItem?.lateMinutes === 'number'
+            ? attendanceItem.lateMinutes
+            : self?.lateMinutes,
         lateTime:
           itemStatus === 'late'
-            ? formatArrivalTimeForDisplay(attendanceItem?.arrivalTime)
+            ? typeof attendanceItem?.lateMinutes === 'number'
+              ? `${attendanceItem.lateMinutes}분`
+              : formatArrivalTimeForDisplay(attendanceItem?.arrivalTime)
             : self?.lateTime,
         remark: attendanceItem?.absenceReason ?? self?.remark,
         educationProgress,
@@ -251,18 +272,17 @@ export function getParticipatingIndividualParticipantAttendanceBundle(
 
 export function mergeParticipatingIndividualAbsenceReasons(
   remote: ParticipatingIndividualParticipantAbsenceReason[] | null,
-  fromRows: ParticipatingIndividualParticipantAbsenceReason[]
+  _fromRows: ParticipatingIndividualParticipantAbsenceReason[]
 ): ParticipatingIndividualParticipantAbsenceReason[] {
-  if (remote == null) return fromRows
-  const bySchedule = new Map(
-    remote.map(item => [item.scheduleRowId, item] as const)
-  )
-  for (const local of fromRows) {
-    if (!bySchedule.has(local.scheduleRowId)) {
-      bySchedule.set(local.scheduleRowId, local)
-    }
-  }
-  return [...bySchedule.values()]
+  return remote ?? []
+}
+
+export function resolveVisibleParticipatingIndividualAbsenceReasons(input: {
+  remote: ParticipatingIndividualParticipantAbsenceReason[] | null
+  rows?: ParticipatingIndividualParticipantAttendanceRow[]
+}): ParticipatingIndividualParticipantAbsenceReason[] {
+  void input.rows
+  return input.remote ?? []
 }
 
 export function sortParticipatingIndividualParticipantAttendanceRows(

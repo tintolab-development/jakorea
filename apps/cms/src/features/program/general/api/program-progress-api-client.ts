@@ -772,6 +772,18 @@ export async function fetchEmployeeVolunteerCountsRemote(
   )
 }
 
+/** POST /api/admin/programs/{programId}/completion/rebuild-participants */
+export async function rebuildProgramCompletionParticipantsRemote(
+  programId: string
+): Promise<unknown> {
+  return unwrapApiBody(
+    await customInstance({
+      url: `/api/admin/programs/${encodeURIComponent(programId)}/completion/rebuild-participants`,
+      method: 'POST',
+    })
+  )
+}
+
 /** PUT /api/admin/programs/{programId}/employee-volunteer-counts */
 export async function putEmployeeVolunteerCountsRemote(
   programId: string,

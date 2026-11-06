@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildAttendanceItemRequest,
   buildProgressAttendanceSessionsFromRemote,
   mapApiAttendanceStatusToUi,
   mapDashboardScheduleStatusToEducationProgress,
+  resolveAttendanceWriteFileObjectIds,
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 
 describe('progress-attendance-adapters', () => {
@@ -373,5 +375,38 @@ describe('progress-attendance-adapters', () => {
     expect(sessions[0]?.attendanceRecordingOpen).toBe(true)
     expect(row?.attendanceRecorded).toBe(false)
     expect(row?.attendanceStatus).toBeUndefined()
+  })
+
+  it('omits evidence files for 출석·지각 and sends [] for 결석 without new files', () => {
+    expect(
+      resolveAttendanceWriteFileObjectIds({
+        attendanceStatus: 'present',
+        evidenceFileObjectIds: [2056505],
+      })
+    ).toBeUndefined()
+    expect(
+      resolveAttendanceWriteFileObjectIds({
+        attendanceStatus: 'late',
+        evidenceFileObjectIds: [2056505],
+      })
+    ).toBeUndefined()
+    expect(resolveAttendanceWriteFileObjectIds({ attendanceStatus: 'absent' })).toEqual([])
+    expect(
+      resolveAttendanceWriteFileObjectIds({
+        attendanceStatus: 'excused_absence',
+        evidenceFileObjectIds: [99],
+      })
+    ).toEqual([99])
+    expect(buildAttendanceItemRequest({
+      participantId: '1694970',
+      attendanceStatus: 'absent',
+      fileObjectIds: [],
+    }).fileObjectIds).toEqual([])
+    expect(
+      buildAttendanceItemRequest({
+        participantId: '1694970',
+        attendanceStatus: 'present',
+      }).fileObjectIds
+    ).toBeUndefined()
   })
 })

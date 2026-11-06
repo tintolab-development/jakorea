@@ -56,7 +56,7 @@ function mapCorrectionPayloadToAttendancePatch(
     }
   }
   if (payload.status === 'absence') {
-    return { attendanceStatus: 'absent' }
+    return { attendanceStatus: 'absent', evidenceFileObjectIds: [] }
   }
   return { attendanceStatus: 'present' }
 }
