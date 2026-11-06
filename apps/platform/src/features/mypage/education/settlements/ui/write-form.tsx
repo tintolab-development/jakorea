@@ -18,6 +18,10 @@ import {
 } from '../lib/format-write-draft'
 import { findIndividualScheduleForSession } from '../lib/assigned-settlement-items'
 import { isInstructorTransportSectionVisible } from '../lib/instructor-transport-preview'
+import {
+  isLectureFeeSettlementBlocked,
+  lectureFeeSettlementBlockerMessage,
+} from '../lib/lecture-fee-preview'
 import { InstructorTransportFeeBlock } from './instructor-transport-fee-block'
 import {
   individualIneligibleMessage,
@@ -504,6 +508,8 @@ export function EducationSettlementWriteForm({
     payableItems,
   )
   const submittedItems = session?.submittedItems ?? matchedIndividual?.submittedItems ?? []
+  const lectureFeeBlocked = !isReceipt && isLectureFeeSettlementBlocked(session?.lectureFeePreview)
+  const lectureFeeBlockerMessage = lectureFeeSettlementBlockerMessage(session?.lectureFeePreview)
   const receiptSubmitBlocked =
     isReceipt &&
     (payableItems.length === 0 ||
@@ -678,6 +684,10 @@ export function EducationSettlementWriteForm({
           individualIneligibleMessage(matchedIndividual?.ineligibleReason) ??
           '지금은 영수증을 제출할 수 없습니다.',
       )
+      return
+    }
+    if (lectureFeeBlocked) {
+      showAlert(lectureFeeBlockerMessage ?? '지금은 정산을 신청할 수 없습니다.')
       return
     }
 
@@ -1096,11 +1106,16 @@ export function EducationSettlementWriteForm({
         ) : null}
 
         <div className={styles.actions}>
+          {lectureFeeBlockerMessage ? (
+            <PFText as="p" typo="bd-md-rg" color="error">
+              {lectureFeeBlockerMessage}
+            </PFText>
+          ) : null}
           <PFButton
             type="submit"
             size="xlarge"
             width={240}
-            disabled={receiptSubmitBlocked}
+            disabled={receiptSubmitBlocked || lectureFeeBlocked}
           >
             신청하기
           </PFButton>

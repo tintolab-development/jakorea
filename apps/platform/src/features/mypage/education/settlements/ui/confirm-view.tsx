@@ -21,7 +21,11 @@ import {
 import {
   formatInstructorFeeAssignment,
   formatLectureFeeSessionProgress,
+  formatRecognizedSessionCountLabel,
   formatTotalLectureFee,
+  hasConfirmedLectureFeeTotal,
+  isLectureFeeSettlementBlocked,
+  lectureFeeSettlementBlockerMessage,
   lectureFeeTypeDisplayLabel,
 } from '../lib/lecture-fee-preview'
 import { readInstructorBusinessIncomeConfirmLabel } from '../lib/instructor-settlement-summary'
@@ -149,6 +153,12 @@ export function EducationSettlementConfirmView({
   )
   const resident = formatSettlementResidentNumber(draft)
   const lectureFeePreview = session?.lectureFeePreview ?? null
+  const lectureFeeBlocked = isLectureFeeSettlementBlocked(lectureFeePreview)
+  const lectureFeeBlockerMessage = lectureFeeSettlementBlockerMessage(lectureFeePreview)
+  const confirmedLectureFee = hasConfirmedLectureFeeTotal(lectureFeePreview)
+  const recognizedSessionLabel = formatRecognizedSessionCountLabel(
+    lectureFeePreview?.recognizedSessionCount,
+  )
   const businessIncome = readInstructorBusinessIncomeConfirmLabel(profileQuery.data)
   const sessionNo =
     lectureFeePreview?.educationSessionCount ??
@@ -158,7 +168,7 @@ export function EducationSettlementConfirmView({
     { label: '강사비 배정', value: formatInstructorFeeAssignment(lectureFeePreview) },
     { label: '사업소득자 여부', value: businessIncome },
     {
-      label: '교육 진행 차시',
+      label: '교육 진행 회차',
       value: formatLectureFeeSessionProgress({
         sessionNo,
         educationSessionCount: lectureFeePreview?.educationSessionCount,
@@ -166,6 +176,9 @@ export function EducationSettlementConfirmView({
         endAt: session?.lectureEndAt,
       }),
     },
+    ...(recognizedSessionLabel
+      ? [{ label: '인정 차시', value: recognizedSessionLabel }]
+      : []),
   ]
   const totalLectureFee = formatTotalLectureFee(lectureFeePreview)
   const basicRows: PFInfoReviewItem[] = [
@@ -188,7 +201,14 @@ export function EducationSettlementConfirmView({
       {!isReceipt ? (
         <ConfirmSection title="강의비 산출 정보">
           <PFInfoReview rows={calcRows} accentFirstRow={false} />
-          <ConfirmAmountSummary label="총 강의비" amount={totalLectureFee} />
+          {confirmedLectureFee ? (
+            <ConfirmAmountSummary label="총 강의비" amount={totalLectureFee} />
+          ) : null}
+          {lectureFeeBlockerMessage ? (
+            <PFText as="p" typo="bd-md-rg" color="error" className={styles.sectionFooter}>
+              {lectureFeeBlockerMessage}
+            </PFText>
+          ) : null}
         </ConfirmSection>
       ) : null}
 
@@ -317,7 +337,7 @@ export function EducationSettlementConfirmView({
             type="button"
             size="xlarge"
             width="100%"
-            disabled={submitting}
+            disabled={submitting || lectureFeeBlocked}
             onClick={onComplete}
           >
             {submitting ? '제출 중' : '신청 완료하기'}
