@@ -219,14 +219,15 @@ export function SchemaConsentWriteForm({
     return normalized
   })
 
-  const paymentBasicInfo = useMemo(
-    () =>
-      overlayPaymentStatementProfileLinkedValues(
-        state.paymentBasicInfo ?? {},
-        paymentStatementProfileValues
-      ),
-    [paymentStatementProfileValues, state.paymentBasicInfo]
-  )
+  const paymentBasicInfo = useMemo(() => {
+    if (templateId !== 'agreement-third-party') {
+      return templateId === 'agreement-receipt-pre-consent' ? state.paymentBasicInfo : undefined
+    }
+    return overlayPaymentStatementProfileLinkedValues(
+      state.paymentBasicInfo ?? {},
+      paymentStatementProfileValues
+    )
+  }, [paymentStatementProfileValues, state.paymentBasicInfo, templateId])
   const writeState = useMemo(
     () => ({ ...state, paymentBasicInfo }),
     [paymentBasicInfo, state]
@@ -474,7 +475,7 @@ export function SchemaConsentWriteForm({
         return (
           <PaymentBasicInfoFields
             variant="payment"
-            values={paymentBasicInfo}
+            values={paymentBasicInfo ?? {}}
             lockProfileFields={paymentStatementProfileValues != null}
             profileValues={paymentStatementProfileValues}
             onChange={next =>
