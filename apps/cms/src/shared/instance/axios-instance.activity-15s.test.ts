@@ -140,6 +140,44 @@ describe('CMS: Activity and Session after 10-15 seconds', () => {
       !String(config.url).includes('/refresh'))).toBe(true)
   })
 
+  it('Session GET 401 with a valid sid refreshes once and retries GET once', async () => {
+    const jwt = (jti: string) =>
+      'hdr.' + btoa(JSON.stringify({ accountType: 'ADMIN', sid: 'same-session', jti })).replace(/=+$/, '') + '.sig'
+    const oldAccess = jwt('old')
+    const newAccess = jwt('refreshed')
+    localStorage.setItem('auth_token', oldAccess)
+    localStorage.setItem('auth_refresh_token', 'refresh-before')
+    useAuthStore.setState({ token: oldAccess })
+
+    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      const url = String(config.url ?? '')
+      if (url.endsWith('/refresh')) {
+        expect(config.headers.get('Authorization')).toBeFalsy()
+        return ok(config, {
+          accessToken: newAccess, refreshToken: 'refresh-after', expiresInSeconds: 3600,
+        })
+      }
+      if (url.endsWith('/session')) {
+        if (config.headers.get('Authorization') === 'Bearer ' + oldAccess) {
+          throw unauthorized(config)
+        }
+        expect(config.headers.get('Authorization')).toBe('Bearer ' + newAccess)
+        return ok(config, sessionData())
+      }
+      throw new Error('Unexpected request: ' + url)
+    })
+
+    const session = await getAdminAuthSession()
+    expect(session.absoluteExpiresAt).toBeTruthy()
+    expect(useAuthStore.getState().token).toBe(newAccess)
+    expect(localStorage.getItem('auth_refresh_token')).toBe('refresh-after')
+    expect(adapterMock).toHaveBeenCalledTimes(3)
+    expect(adapterMock.mock.calls.filter(([config]: [InternalAxiosRequestConfig]) =>
+      String(config.url).endsWith('/refresh'))).toHaveLength(1)
+    expect(adapterMock.mock.calls.filter(([config]: [InternalAxiosRequestConfig]) =>
+      String(config.url).endsWith('/session'))).toHaveLength(2)
+  })
+
   it('a rejected Refresh cannot logout a newer session adopted while the request was pending', async () => {
     const jwt = (jti: string) =>
       'hdr.' + btoa(JSON.stringify({ accountType: 'ADMIN', sid: 'same-session', jti })).replace(/=+$/, '') + '.sig'
