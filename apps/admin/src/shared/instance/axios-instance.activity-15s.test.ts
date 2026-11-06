@@ -122,6 +122,88 @@ describe('Homepage Admin: Activity and Session after 10-15 seconds', () => {
     expect(String(config.url)).toContain('/activity')
   })
 
+  it('a late Session 401 from a superseded token never starts Refresh or logout', async () => {
+    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      // Simulate an access-token rotation while a Session GET is in flight.
+      useAuthStore.setState({ token: TOKEN_B })
+      throw unauthorized(config)
+    })
+
+    await expect(getAdminAuthSession()).rejects.toMatchObject({ response: { status: 401 } })
+    expect(adapterMock).toHaveBeenCalledTimes(1)
+    const sent = adapterMock.mock.calls[0][0] as InternalAxiosRequestConfig
+    expect(sent.headers.get('Authorization')).toBe('Bearer ' + TOKEN_A)
+    expect(useAuthStore.getState().token).toBe(TOKEN_B)
+    expect(adapterMock.mock.calls.every(([config]: [InternalAxiosRequestConfig]) =>
+      !String(config.url).includes('/refresh'))).toBe(true)
+  })
+
+  it('Session GET 401 with a valid sid refreshes once and retries GET once', async () => {
+    const jwt = (jti: string) =>
+      'hdr.' + btoa(JSON.stringify({ accountType: 'ADMIN', sid: 'same-session', jti })).replace(/=+$/, '') + '.sig'
+    const oldAccess = jwt('old')
+    const newAccess = jwt('refreshed')
+    localStorage.setItem('hp_admin_auth_token', oldAccess)
+    localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-before')
+    useAuthStore.setState({ token: oldAccess })
+
+    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      const url = String(config.url ?? '')
+      if (url.endsWith('/refresh')) {
+        expect(config.headers.get('Authorization')).toBeFalsy()
+        return success(config, {
+          accessToken: newAccess, refreshToken: 'refresh-after', expiresInSeconds: 3600,
+        })
+      }
+      if (url.endsWith('/session')) {
+        if (config.headers.get('Authorization') === 'Bearer ' + oldAccess) {
+          throw unauthorized(config)
+        }
+        expect(config.headers.get('Authorization')).toBe('Bearer ' + newAccess)
+        return success(config, sessionData())
+      }
+      throw new Error('Unexpected request: ' + url)
+    })
+
+    const session = await getAdminAuthSession()
+    expect(session.absoluteExpiresAt).toBeTruthy()
+    expect(useAuthStore.getState().token).toBe(newAccess)
+    expect(localStorage.getItem('hp_admin_auth_refresh_token')).toBe('refresh-after')
+    expect(adapterMock).toHaveBeenCalledTimes(3)
+    expect(adapterMock.mock.calls.filter(([config]: [InternalAxiosRequestConfig]) =>
+      String(config.url).endsWith('/refresh'))).toHaveLength(1)
+    expect(adapterMock.mock.calls.filter(([config]: [InternalAxiosRequestConfig]) =>
+      String(config.url).endsWith('/session'))).toHaveLength(2)
+  })
+
+  it('a rejected Refresh cannot logout a newer session adopted while the request was pending', async () => {
+    const jwt = (jti: string) =>
+      'hdr.' + btoa(JSON.stringify({ accountType: 'ADMIN', sid: 'same-session', jti })).replace(/=+$/, '') + '.sig'
+    const oldAccess = jwt('old')
+    const newAccess = jwt('new')
+    localStorage.setItem('hp_admin_auth_token', oldAccess)
+    localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-old')
+    useAuthStore.setState({ token: oldAccess })
+
+    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      const url = String(config.url ?? '')
+      if (url.endsWith('/session')) throw unauthorized(config)
+      if (url.endsWith('/refresh')) {
+        // A sibling tab has already rotated to a new credential set.
+        localStorage.setItem('hp_admin_auth_token', newAccess)
+        localStorage.setItem('hp_admin_auth_refresh_token', 'refresh-rotated-by-other-tab')
+        useAuthStore.setState({ token: newAccess })
+        throw unauthorized(config)
+      }
+      throw new Error('Unexpected request: ' + url)
+    })
+
+    await expect(getAdminAuthSession()).rejects.toMatchObject({ response: { status: 401 } })
+    expect(useAuthStore.getState().token).toBe(newAccess)
+    expect(localStorage.getItem('hp_admin_auth_refresh_token')).toBe('refresh-rotated-by-other-tab')
+    expect(adapterMock).toHaveBeenCalledTimes(2)
+  })
+
   it('login and Refresh remain anonymous', async () => {
     adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => success(config, {}))
     await axiosInstance.post('/api/admin/auth/login', { email: 'fixture@example.invalid', password: 'fixture' })
