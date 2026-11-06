@@ -7,7 +7,6 @@ import type {
 } from '@/entities/recruit-posting/model/types'
 import { useAdminInfiniteList } from '@/shared/hooks/use-admin-infinite-list'
 import { shouldUseRecruitPostingRemoteApi } from './capabilities'
-import { canToggleRecruitPostingVisibility } from './permissions'
 import { recruitPostingQueryKeys } from './query-keys'
 import {
   createRecruitPostingService,
@@ -58,20 +57,6 @@ export function useRecruitPostingDetail(id: string | undefined, enabled = true) 
     gcTime: 15 * 60_000,
     retry: dataSource === 'remote' ? 1 : false,
   })
-}
-
-export function useCanToggleRecruitPostingPublic() {
-  const remote = shouldUseRecruitPostingRemoteApi()
-  const query = useQuery({
-    queryKey: [...recruitPostingQueryKeys.all, 'publish-permission'] as const,
-    queryFn: () => canToggleRecruitPostingVisibility(),
-    enabled: remote,
-    staleTime: 30_000,
-    gcTime: 15 * 60_000,
-    retry: false,
-  })
-  if (!remote) return true
-  return query.data === true
 }
 
 export function useSetRecruitPostingPublic() {

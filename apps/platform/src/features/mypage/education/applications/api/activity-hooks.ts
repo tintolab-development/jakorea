@@ -853,6 +853,15 @@ function invalidateApplicationAttendanceQueries(
         'attendance',
       ],
     }),
+    queryClient.invalidateQueries({
+      queryKey: platformQueryKeys.mypage.certificates.all(),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [
+        ...platformQueryKeys.mypage.programApplications.all(),
+        'certificate-availability',
+      ],
+    }),
   ])
 }
 

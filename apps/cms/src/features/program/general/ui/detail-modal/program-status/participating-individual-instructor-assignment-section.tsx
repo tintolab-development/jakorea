@@ -61,10 +61,8 @@ import {
 import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
-import {
-  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
-  programHasActiveInstructorRecruitment,
-} from '@/features/program/general/lib/general-instructor-recruitment-required'
+import { hasActiveInstructorRecruitment } from '@/features/program/general/lib/detail-meta'
+import { GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE } from '@/features/program/general/lib/general-instructor-recruitment-required'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
@@ -121,17 +119,17 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const [assignSubmitting, setAssignSubmitting] = useState(false)
   const assignInFlightRef = useRef(false)
 
+  const instructorRecruitmentReady = hasActiveInstructorRecruitment(program)
   const assignment = useParticipatingInstructorInstitutionAssignment({
     programId: program.id,
     instructor,
     schoolRows,
     instructorList,
     isCompanySchool: false,
-    enabled: true,
+    enabled: instructorRecruitmentReady,
 
     maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
-  const canAssignInstructor = programHasActiveInstructorRecruitment(program)
 
   useEffect(() => {
     setAssignedSchedules(assignment.assignedSchedules)
@@ -365,7 +363,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   }, [selectedAssignedKeys.length, showAlert])
 
   const handleSelectAssignClick = useCallback(() => {
-    if (!programHasActiveInstructorRecruitment(program)) {
+    if (!instructorRecruitmentReady) {
       showAlert({
         title: '배정 실패',
         content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
@@ -381,25 +379,25 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     )
     if (!movable) return
     setSelectAssignConfirmOpen(true)
-  }, [program, selectedWaitingKeys, waitingSchedules, showAlert])
+  }, [instructorRecruitmentReady, selectedWaitingKeys, waitingSchedules, showAlert])
 
   const createAssignmentsFromWaiting = useCallback(
     async (
       selectedRows: ParticipatingIndividualInstructorWaitingScheduleRow[],
       notifyPayload?: PermissionModalPayload
     ) => {
+      if (!instructorRecruitmentReady) {
+        showAlert({
+          title: '배정 실패',
+          content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+        })
+        return false
+      }
       if (!assignment.remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-individual-instructor-assign',
           '참여 강사 · 교육 일정 배정'
         )
-        return false
-      }
-      if (!programHasActiveInstructorRecruitment(program)) {
-        showAlert({
-          title: '배정 실패',
-          content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
-        })
         return false
       }
       const memberId = Number(instructor.memberId)
@@ -484,7 +482,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       assignment,
       instructor.instructorApplicationId,
       instructor.memberId,
-      program,
+      instructorRecruitmentReady,
+      program.id,
       showAlert,
     ]
   )
@@ -622,9 +621,9 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <CmsButton
               variant="secondary"
               size="h40"
-              disabled={!canAssignInstructor || addAssignOptions.length === 0}
+              disabled={!instructorRecruitmentReady || addAssignOptions.length === 0}
               onClick={() => {
-                if (!canAssignInstructor) {
+                if (!instructorRecruitmentReady) {
                   showAlert({
                     title: '배정 실패',
                     content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
@@ -671,7 +670,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <CmsButton
               variant="secondary"
               size="h40"
-              disabled={!canAssignInstructor}
+              disabled={!instructorRecruitmentReady}
               onClick={handleSelectAssignClick}
             >
               선택 배정

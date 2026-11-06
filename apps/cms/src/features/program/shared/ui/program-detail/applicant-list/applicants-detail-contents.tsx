@@ -72,6 +72,7 @@ import {
 import {
   individualApplicationDecisionButtonLabels,
   isIndividualInterviewDocumentDecisionStage,
+  shouldBlockIndividualFinalApproveForInterview,
   type IndividualApplicantScreeningStage,
 } from '@/features/program/general/lib/individual-application-visibility'
 import type { GeneralManagerEvaluation } from '@/features/program/general/lib/volunteer-screening-constants'
@@ -337,7 +338,8 @@ function headerBtnsPendingParticipation(
   onReject: (id: string) => void,
   onRevealPersonalInfo: () => void,
   availableActions?: string[],
-  labels: { reject: string; approve: string } = individualApplicationDecisionButtonLabels(false)
+  labels: { reject: string; approve: string } = individualApplicationDecisionButtonLabels(false),
+  approveGate?: { disabled: boolean; title?: string }
 ): ApplicantHeaderActionItem[] {
   const items: ApplicantHeaderActionItem[] = []
   if (canPerformApplicationAction(availableActions, 'REJECT')) {
@@ -349,11 +351,14 @@ function headerBtnsPendingParticipation(
     })
   }
   if (canPerformApplicationAction(availableActions, 'APPROVE')) {
+    const approveDisabled = approveGate?.disabled === true
     items.push({
       key: 'approve',
       variant: 'secondary',
       label: labels.approve,
-      onClick: () => onApprove(applicantId),
+      disabled: approveDisabled,
+      title: approveDisabled ? approveGate?.title : undefined,
+      onClick: approveDisabled ? undefined : () => onApprove(applicantId),
     })
   }
   items.push(headerBtnPrivacy(onRevealPersonalInfo))
@@ -401,6 +406,7 @@ function resolveApplicantHeaderItems(params: {
   onEnterAdminCommentEdit?: () => void
   individualAvailableActions?: string[]
   individualSecondInterviewScreeningStatus?: GeneralSecondInterviewScreeningStatus
+  individualInterviewResultStatus?: string | null
   institutionAvailableActions?: string[]
   instructorAvailableActions?: string[]
   isCancelledInstitution?: boolean
@@ -448,6 +454,7 @@ function resolveApplicantHeaderItems(params: {
     onEnterAdminCommentEdit,
     individualAvailableActions,
     individualSecondInterviewScreeningStatus,
+    individualInterviewResultStatus,
     institutionAvailableActions,
     instructorAvailableActions,
     isCancelledInstitution = false,
@@ -604,6 +611,14 @@ function resolveApplicantHeaderItems(params: {
         : isIndividual && !useDocumentDecisionLabels
           ? undefined
           : individualAvailableActions
+    const blockFinalApprove =
+      isIndividual &&
+      shouldBlockIndividualFinalApproveForInterview({
+        program,
+        screeningStage: individualScreeningStage,
+        interviewResultStatus: individualInterviewResultStatus,
+        secondInterviewScreeningStatus: individualSecondInterviewScreeningStatus,
+      })
     return headerBtnsPendingParticipation(
       applicantId,
       onApprove,
@@ -612,6 +627,9 @@ function resolveApplicantHeaderItems(params: {
       availableActions,
       isIndividual
         ? individualApplicationDecisionButtonLabels(useDocumentDecisionLabels)
+        : undefined,
+      blockFinalApprove
+        ? { disabled: true, title: '면접 합격 후 최종 승인' }
         : undefined
     )
   }
@@ -1504,6 +1522,7 @@ export function ApplicantsDetailContents({
           : handleAdminCommentEditEnter,
       individualAvailableActions: individualData?.availableActions,
       individualSecondInterviewScreeningStatus: individualData?.secondInterviewScreeningStatus,
+      individualInterviewResultStatus: individualData?.interviewResultStatus,
       institutionAvailableActions: institutionData?.availableActions,
       instructorAvailableActions: instructorData?.availableActions,
       program,

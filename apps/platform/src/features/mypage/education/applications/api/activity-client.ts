@@ -377,6 +377,8 @@ export type PortalFormListItem = {
   form?: Record<string, unknown> | null
   answers?: Record<string, unknown> | null
   draftAnswers?: Record<string, unknown> | null
+  /** 바인딩 대상 역할. 없으면 untyped로 제출 가능 */
+  targetRole?: string | null
 }
 
 export type PortalAvailableProgramForm = {
@@ -393,6 +395,7 @@ export type PortalAvailableProgramForm = {
   submissionStartAt?: string | null
   submissionEndAt?: string | null
   alreadySubmitted: boolean
+  targetRole?: string | null
 }
 
 export type PortalFormListResponse = {

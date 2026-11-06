@@ -488,4 +488,21 @@ describe('individual approval education scope', () => {
     })
     expect(shape).toMatchObject({ blockedReason: expect.stringContaining('FIXED_DATE') })
   })
+
+  it('normalizes DATE and PROGRAM_DEFINED to FIXED_DATE for approval', () => {
+    expect(
+      resolveIndividualApprovalProgramShape({
+        educationStructure: 'SCHEDULE',
+        sessionRound: 'MULTI',
+        educationScheduleMode: 'PROGRAM_DEFINED',
+      })
+    ).toMatchObject({ educationScheduleMode: 'FIXED_DATE' })
+    expect(
+      resolveIndividualApprovalProgramShape({
+        educationStructure: 'SCHEDULE',
+        sessionRound: 'MULTI',
+        educationScheduleMode: 'DATE',
+      })
+    ).toMatchObject({ educationScheduleMode: 'FIXED_DATE' })
+  })
 })

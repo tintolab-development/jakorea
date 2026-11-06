@@ -6,6 +6,7 @@ import {
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { resolveApplicationAnswerKey } from '@/features/program/lib/application-answer-key'
+import { PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH } from '@/features/program/lib/portal-application-free-text'
 import type { SurveySidecarState } from './survey-sidecar'
 
 export type EducationSurveyFillValidation =
@@ -109,6 +110,29 @@ function extractSurveyParagraphAnswer(
   return undefined
 }
 
+function surveyFreeTextLength(value: unknown): number {
+  if (typeof value === 'string') return value.length
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return 0
+  const record = value as Record<string, unknown>
+  let total = typeof record.bodyText === 'string' ? record.bodyText.length : 0
+  if (Array.isArray(record.items)) {
+    for (const item of record.items) {
+      if (item && typeof item === 'object' && typeof (item as { bodyText?: unknown }).bodyText === 'string') {
+        total += (item as { bodyText: string }).bodyText.length
+      }
+    }
+  }
+  if (Array.isArray(record.fieldDataRows)) {
+    for (const row of record.fieldDataRows) {
+      if (!row || typeof row !== 'object') continue
+      for (const cell of Object.values(row as Record<string, unknown>)) {
+        if (typeof cell === 'string') total += cell.length
+      }
+    }
+  }
+  return total
+}
+
 function isEmptyAnswer(value: unknown): boolean {
   if (value == null) return true
   if (typeof value === 'string') return value.trim() === ''
@@ -200,6 +224,13 @@ export function validateEducationSurveyFill(
         }
       }
       continue
+    }
+    const valueForLength = extractSurveyParagraphAnswer(paragraph, sidecar)
+    if (surveyFreeTextLength(valueForLength) > PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH) {
+      return {
+        ok: false,
+        message: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
+      }
     }
     if (!isAnswerRequired(paragraph)) continue
     if (paragraph.kind === 'single_item' && paragraph.variant === 'file_attachment') {

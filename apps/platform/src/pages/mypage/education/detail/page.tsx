@@ -944,36 +944,46 @@ export function MypageEducationDetailPage() {
           />
         }
         aside={
-          showTeacherAssignment ? (
-            <TeacherEducationAssignmentAside
-              applicationId={application.id}
-              applicationType={application.applicationType ?? routeApplicationType ?? undefined}
-              assignment={application.teacherAssignment ?? { instructors: [] }}
-              sexOffenseInquiryCase={
-                application.displayStatus === 'in_progress' ? sexOffenseInquiryCase : undefined
-              }
-            />
-          ) : showPersonalCertificatePanel ? (
-            <EducationPersonalCertificatePanel
-              programId={application.programId ?? program.id}
-              applicationId={application.id}
-              applicationType={
-                application.applicationType ?? routeApplicationType ?? resolvedApplicationType
-              }
-              programType={
-                application.programType ?? application.programConfig?.programType ?? program.programType
-              }
-              programGroup={application.programGroup}
-              detailCase={application.detailCase}
-              isTeacher={isTeacher}
-              isWithdrawnDuring={isWithdrawnDuring}
-              certificateStatus={application.certificateStatus}
-              canIssueCertificateHint={application.canIssueCertificate}
-              participantIdHint={application.participantId}
-            />
+          showTeacherAssignment || showPersonalCertificatePanel ? (
+            <>
+              {showTeacherAssignment ? (
+                <TeacherEducationAssignmentAside
+                  applicationId={application.id}
+                  applicationType={application.applicationType ?? routeApplicationType ?? undefined}
+                  assignment={application.teacherAssignment ?? { instructors: [] }}
+                  sexOffenseInquiryCase={
+                    application.displayStatus === 'in_progress' ? sexOffenseInquiryCase : undefined
+                  }
+                />
+              ) : null}
+              {showPersonalCertificatePanel ? (
+                <EducationPersonalCertificatePanel
+                  programId={application.programId ?? program.id}
+                  applicationId={application.id}
+                  applicationType={
+                    application.applicationType ?? routeApplicationType ?? resolvedApplicationType
+                  }
+                  programType={
+                    application.programType ??
+                    application.programConfig?.programType ??
+                    program.programType
+                  }
+                  programGroup={application.programGroup}
+                  detailCase={application.detailCase}
+                  isTeacher={isTeacher}
+                  isWithdrawnDuring={isWithdrawnDuring}
+                  certificateStatus={application.certificateStatus}
+                  canIssueCertificateHint={application.canIssueCertificate}
+                  participantIdHint={application.participantId}
+                />
+              ) : null}
+            </>
           ) : undefined
         }
-        asideAlign={!showTeacherAssignment && showPersonalCertificatePanel ? 'end' : 'start'}
+        asideAlign={
+          showPersonalCertificatePanel && !showTeacherAssignment ? 'end' : 'start'
+        }
+        asideStacked={showTeacherAssignment && showPersonalCertificatePanel}
       />
 
       {application.portalWarningCode ? (

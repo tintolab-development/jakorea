@@ -11,11 +11,12 @@ import {
 } from '../api/certificate-hooks'
 import type { ProgramApplicationType } from '../api/types'
 import {
-  resolveCertificateCtaView,
+  resolveExclusivePersonalCertificateSlot,
   shouldFetchIndividualCertificateAvailability,
 } from '../lib/certificate-cta'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import {
+  portalCertificateCtaButtonLabel,
   portalCertificateDocumentLabel,
 } from '../lib/personal-certificate-eligibility'
 import styles from './certificate-issue-cta.module.css'
@@ -43,7 +44,7 @@ export function CertificateIssueCta({
   programGroup,
   detailCase,
   canIssueCertificate,
-  certificateStatus,
+  certificateStatus: _certificateStatus,
 }: CertificateIssueCtaProps) {
   const availabilityEnabled = shouldFetchIndividualCertificateAvailability({
     isTeacher,
@@ -59,8 +60,19 @@ export function CertificateIssueCta({
     enabled: availabilityEnabled,
     certificateType: 'COMPLETION',
   })
+  const participationQuery = useMyCertificateAvailabilityQuery({
+    programId,
+    enabled: availabilityEnabled,
+    certificateType: 'PARTICIPATION',
+  })
+  const slot = resolveExclusivePersonalCertificateSlot({
+    completion: completionQuery.data,
+    participation: participationQuery.data,
+  })
+  const activeKind = slot.type
+  const view = slot.view
   const availabilityQuery = {
-    data: completionQuery.data,
+    data: activeKind === 'PARTICIPATION' ? participationQuery.data : completionQuery.data,
   }
   const issueMutation = useIssueMyCertificateMutation({
     applicationType,
@@ -74,18 +86,12 @@ export function CertificateIssueCta({
   const [completeIssueId, setCompleteIssueId] = useState<number | null>(null)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
-  const view = resolveCertificateCtaView({
-    isTeacher,
-    applicationType,
-    programType,
-    programGroup,
-    detailCase,
-    canIssueCertificate,
-    certificateStatus,
-    availability: availabilityQuery.data,
-  })
   const isBusy = issueMutation.isPending || downloadMutation.isPending
-  const documentLabel = portalCertificateDocumentLabel(availabilityQuery.data?.certificateType)
+  const documentLabel = portalCertificateDocumentLabel(
+    activeKind === 'PARTICIPATION'
+      ? 'PARTICIPATION'
+      : availabilityQuery.data?.certificateType,
+  )
 
   const handleDownload = async (issueId: number) => {
     if (isBusy || pendingRef.current) return
@@ -110,21 +116,14 @@ export function CertificateIssueCta({
   const handleIssue = async () => {
     if (isBusy || pendingRef.current) return
     const availability = availabilityQuery.data
-    const existingIssueId = availability?.existingIssueId
-    if (
-      availability?.canDownload === true ||
-      (typeof existingIssueId === 'number' && existingIssueId > 0)
-    ) {
+    if (view.kind === 'download') {
       setConfirmOpen(false)
-      if (typeof existingIssueId === 'number' && existingIssueId > 0) {
-        await handleDownload(existingIssueId)
-      }
+      await handleDownload(view.issueId)
       return
     }
     const participantId = availability?.participantId
     const parsedProgramId = Number(programId)
     if (
-      !availability?.certificateType ||
       participantId == null ||
       !Number.isInteger(parsedProgramId) ||
       parsedProgramId <= 0
@@ -137,7 +136,8 @@ export function CertificateIssueCta({
       const result = await issueMutation.mutateAsync({
         programId: parsedProgramId,
         participantId,
-        certificateType: 'COMPLETION',
+        certificateType: activeKind === 'PARTICIPATION' ? 'PARTICIPATION' : 'COMPLETION',
+        issueReason: 'PERSONAL_ARCHIVE',
       })
       setConfirmOpen(false)
       setCompleteIssueId(result.certificateIssueId)
@@ -152,10 +152,12 @@ export function CertificateIssueCta({
     }
   }
 
-  if (!availabilityEnabled || view.kind === 'hidden') return null
+  if (!availabilityEnabled || !activeKind || view.kind === 'hidden') return null
 
-  const title =
-    view.kind === 'download' ? `${documentLabel} 다운받기` : `${documentLabel} 발급하기`
+  const title = portalCertificateCtaButtonLabel({
+    certificateType: activeKind,
+    action: view.kind === 'download' ? 'download' : 'issue',
+  })
   const issuedDateLabel = completeIssuedAt ? formatDisplayDate(completeIssuedAt) : ''
 
   return (

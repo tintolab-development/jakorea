@@ -51,7 +51,7 @@ export const INSTRUCTOR_ASSIGNMENT_WRITE_CONFLICT_MESSAGES: Record<string, strin
   INSTRUCTOR_REPRESENTATIVE_ASSIGNMENT_SCOPE_NOT_FOUND:
     '대표 강사로 지정할 기관 배정 정보를 찾을 수 없습니다.',
   GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT:
-    '강사 모집이 없는 일반 기관 프로그램에는 강사를 배정할 수 없습니다.',
+    '강사 모집이 없는 프로그램에는 강사를 배정할 수 없습니다.',
 }
 
 export function normalizeAvailabilityItems(

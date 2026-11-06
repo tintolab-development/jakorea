@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 import { Spin } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { FilterTableLayout } from '@/shared/components/filter-table-layout'
@@ -47,6 +48,9 @@ import {
 } from '@/features/program/shared/lib/certificate-eligibility'
 import { certificateKindFromEligibilityApiType } from '@/features/program/general/lib/build-student-certificate-issuance'
 import { shouldUseGeneralProgramProgressRemoteApi } from '@/features/program/general/api/program-progress-remote-capabilities'
+import { rebuildProgramCompletionParticipantsRemote } from '@/features/program/general/api/program-progress-api-client'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
+import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
 import { shouldUseGeneralApplicationsRemoteApi } from '@/features/program/general/api/applications-remote-capabilities'
 import { CertificateBulkIssueReasonModal } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
 import type { CertificateIssueReasonValue } from '@/features/user/detail/ui/modal/certificate-bulk-issue-reason-modal'
@@ -94,6 +98,28 @@ export function ParticipatingParticipantsSection({
   onNavigateToSurveyCategory,
 }: ParticipatingParticipantsSectionProps) {
   const { showAlert } = useCmsAlert()
+  const rebuildCompletionMutation = useMutation({
+    mutationFn: async () => {
+      if (!programId) throw new Error('programId is required')
+      return rebuildProgramCompletionParticipantsRemote(programId)
+    },
+    onSuccess: () => {
+      showAlert({
+        title: '수료 재계산',
+        content: '수료 재계산이 완료되었습니다.',
+      })
+    },
+    onError: error => {
+      const fallback =
+        getApiErrorCode(error) === 'PROGRAM_COMPLETION_NOT_COMPLETED'
+          ? '프로그램이 종료된 뒤에만 수료를 재계산할 수 있습니다.'
+          : '수료 재계산에 실패했습니다.'
+      showAlert({
+        title: '수료 재계산',
+        content: getGeneralProgramApiErrorMessage(error, fallback),
+      })
+    },
+  })
   const {
     filters,
     appliedFilters,
@@ -432,6 +458,15 @@ export function ParticipatingParticipantsSection({
         description={`${filteredParticipants.length}건`}
         actions={
           <div className="program-application-list-toolbar">
+            <FilterTableToolbarButton
+              variant="secondary"
+              disabled={rebuildCompletionMutation.isPending || !programId}
+              onClick={() => {
+                if (!programId || rebuildCompletionMutation.isPending) return
+                rebuildCompletionMutation.mutate()
+              }} >
+              수료 재계산
+            </FilterTableToolbarButton>
             <FilterTableToolbarButton
               variant="secondary"
               icon={<ButtonDownloadIcon />}

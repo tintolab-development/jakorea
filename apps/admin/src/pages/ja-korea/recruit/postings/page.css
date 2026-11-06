@@ -24,6 +24,8 @@
   font-weight: 500;
 }
 
-.recruit-postings-page .ant-switch-checked {
+/* 공개 여부 Switch — 공지·배너 목록과 동일 mint */
+.recruit-postings-page .ant-switch.ant-switch-checked,
+.recruit-postings-page .ant-switch.ant-switch-checked:hover:not(.ant-switch-disabled) {
   background: var(--color-mint-01, #01a1af) !important;
 }

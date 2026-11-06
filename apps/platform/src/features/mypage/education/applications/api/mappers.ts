@@ -112,11 +112,9 @@ function readConfiguredFlag(value: unknown): boolean | undefined {
 function resolveDisplayStatusFromApplicationFields(input: {
   applicationStatus?: string | null
   participationStatus?: string | null
-  completionStatus?: string | null
 }): EducationDisplayStatus {
   const applicationStatus = (input.applicationStatus ?? '').trim().toUpperCase()
   const participationStatus = (input.participationStatus ?? '').trim().toUpperCase()
-  const completionStatus = (input.completionStatus ?? '').trim().toUpperCase()
 
   if (hasStatus(applicationStatus, ['APPROVAL_CANCELLED'])) {
     return 'approval_cancelled'
@@ -143,12 +141,7 @@ function resolveDisplayStatusFromApplicationFields(input: {
   ) {
     return 'withdrawn'
   }
-  if (
-    completionStatus === 'COMPLETED' ||
-    participationStatus === 'COMPLETED' ||
-    applicationStatus === 'COMPLETED' ||
-    applicationStatus === 'FINISHED'
-  ) {
+  if (applicationStatus === 'COMPLETED' || applicationStatus === 'FINISHED') {
     return 'completed'
   }
   if (
@@ -171,7 +164,7 @@ function resolveDisplayStatusFromApplicationFields(input: {
   return 'waiting_result'
 }
 
-/** 상세·목록 공통: displayStatus 우선, 없으면 applicationStatus·참여 상태로 탭 분류. */
+/** 상세·목록 공통: GET displayStatus SSOT. 수료·사업종료일로 재계산하지 않는다. */
 export function resolvePortalDisplayStatus(
   detail: PortalProgramApplicationDetail | PortalProgramApplicationListItem,
 ): EducationDisplayStatus {
@@ -186,7 +179,6 @@ export function resolvePortalDisplayStatus(
   return resolveDisplayStatusFromApplicationFields({
     applicationStatus: detail.applicationStatus,
     participationStatus: detail.participationStatus ?? participation?.status,
-    completionStatus: participation?.completionStatus,
   })
 }
 

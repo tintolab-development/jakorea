@@ -40,7 +40,7 @@ export function EducationSurveyList({ items, selectedId, onSelect }: EducationSu
                   color={
                     item.status === 'in_progress'
                       ? 'primary-500'
-                      : item.status === 'before_start'
+                      : item.status === 'before_start' || item.status === 'period_closed'
                         ? 'neutral-cool-600'
                         : 'neutral-cool-500'
                   }

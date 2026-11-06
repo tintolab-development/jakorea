@@ -36,6 +36,19 @@ assert.equal(lateCorrected.attendanceStatus, 'late')
 assert.equal(lateCorrected.absenceReasonStatus, 'NOT_REQUIRED')
 assert.equal(lateCorrected.absenceReason, undefined)
 
+const absentCorrected = mapPortalEducationSchedule(
+  {
+    scheduleId: 187273,
+    attendanceStatus: 'ABSENT',
+    absenceReasonStatus: 'NOT_REQUIRED',
+    absenceReason: '늦잠',
+    availableActions: ['VIEW_ATTENDANCE'],
+  },
+  0,
+)
+assert.equal(absentCorrected.attendanceStatus, 'absent')
+assert.equal(absentCorrected.absenceReason, undefined)
+
 const noScheduleId = mapPortalEducationSchedule(
   {
     sessionNo: 3,

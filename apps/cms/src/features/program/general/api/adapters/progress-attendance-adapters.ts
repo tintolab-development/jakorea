@@ -201,14 +201,16 @@ function mapParticipantRow(
   const status = mapApiAttendanceStatusToUi(attendance?.status)
   const attendanceRecorded =
     status != null && isScheduleAttendanceOpenForDisplay(schedule)
-  const lateTime =
-    status === 'late' ? formatArrivalTimeForDisplay(attendance?.arrivalTime) : undefined
   const lateMinutes =
-    typeof attendance?.lateMinutes === 'number' && Number.isFinite(attendance.lateMinutes)
+    status === 'late' && typeof attendance?.lateMinutes === 'number'
       ? attendance.lateMinutes
-      : attendance?.lateMinutes === null
-        ? null
-        : undefined
+      : undefined
+  const lateTime =
+    status === 'late'
+      ? lateMinutes != null
+        ? `${lateMinutes}분`
+        : formatArrivalTimeForDisplay(attendance?.arrivalTime)
+      : undefined
   const affiliationResolved = resolveStoredAffiliation({
     affiliationOrganizationId: participant.organizationId,
     affiliationDisplayName: participant.organizationName,
@@ -307,6 +309,20 @@ export function buildProgressAttendanceSessionsFromRemote(params: {
 export type AttendanceItemWriteRequest = AttendanceItemRequest & {
   /** 결석·사유 정정 증빙. 없거나 빈 배열이면 이번 정정에 증빙 없음 */
   fileObjectIds?: number[]
+}
+
+/**
+ * 출석·지각은 증빙을 보내지 않는다(ABSENCE_EVIDENCE_NOT_ALLOWED).
+ * 결석·사유 불참은 이번 정정 파일만. 없으면 [] 로 이전 첨부를 비운다.
+ */
+export function resolveAttendanceWriteFileObjectIds(input: {
+  attendanceStatus: ParticipatingIndividualProgressAttendanceStatus
+  evidenceFileObjectIds?: number[]
+}): number[] | undefined {
+  if (input.attendanceStatus === 'present' || input.attendanceStatus === 'late') {
+    return undefined
+  }
+  return input.evidenceFileObjectIds ?? []
 }
 
 export function buildAttendanceItemRequest(params: {

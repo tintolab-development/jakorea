@@ -95,6 +95,8 @@ export interface GeneralIndividualApplicantRow {
   assignedInterviewDateLabel?: string
   assignedInterviewTime?: string
   secondInterviewScreeningStatus?: GeneralSecondInterviewScreeningStatus
+  /** 면접 평가/합격 원문 상태 (EVALUATED | INTERVIEW_EVALUATED | PASSED | INTERVIEW_PASSED) */
+  interviewResultStatus?: string | null
   totalScore?: number | null
   managerAScore?: number | null
   managerBScore?: number | null

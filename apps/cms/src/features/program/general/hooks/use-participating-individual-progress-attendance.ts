@@ -9,6 +9,7 @@ import {
 } from '@/features/program/general/api/admin-program-progress-service'
 import {
   buildAttendanceItemRequest,
+  resolveAttendanceWriteFileObjectIds,
   buildProgressAttendanceSessionsFromRemote,
 } from '@/features/program/general/api/adapters/progress-attendance-adapters'
 import { generalProgramProgressQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
@@ -158,7 +159,12 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
             attendanceStatus: patch.attendanceStatus,
             lateTime: patch.lateTime,
             remark: patch.remark,
-            fileObjectIds: isTarget ? payload.patch.evidenceFileObjectIds : undefined,
+            fileObjectIds: isTarget
+              ? resolveAttendanceWriteFileObjectIds({
+                  attendanceStatus: patch.attendanceStatus,
+                  evidenceFileObjectIds: payload.patch.evidenceFileObjectIds,
+                })
+              : undefined,
           }),
         ]
       })
@@ -175,6 +181,9 @@ export function useParticipatingIndividualProgressAttendance(program: Program) {
         })
         await queryClient.invalidateQueries({
           queryKey: [...generalProgramProgressQueryKeys.all, 'program-attendances-bulk', programId],
+        })
+        await queryClient.invalidateQueries({
+          queryKey: generalProgramProgressQueryKeys.absenceReasons(programId),
         })
       }
     },

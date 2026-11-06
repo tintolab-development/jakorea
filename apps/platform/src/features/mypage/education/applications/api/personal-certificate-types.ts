@@ -3,7 +3,12 @@
  * CertificateIssueRequest / CertificateIssueResponse (포털 me 경로).
  */
 
-export type PortalPersonalCertificateType = 'AUTO' | 'COMPLETION' | 'PARTICIPATION' | string
+export type PortalPersonalCertificateType =
+  | 'AUTO'
+  | 'COMPLETION'
+  | 'PARTICIPATION'
+  | 'INSTRUCTOR_ACTIVITY'
+  | 'VOLUNTEER_ACTIVITY'
 
 export type PortalCertificateIssueReason =
   | 'INSTITUTION_SUBMISSION'
@@ -30,7 +35,7 @@ export type MemberCertificateAvailabilityResponse = {
 export type PortalCertificateIssueRequest = {
   programId: number
   participantId: number
-  /** 생략 또는 AUTO → 서버가 COMPLETION/PARTICIPATION 결정 */
+  /** 참가인증서는 리터럴 PARTICIPATION. 생략/AUTO는 서버가 COMPLETION으로 본다 */
   certificateType?: PortalPersonalCertificateType
   issueReason?: PortalCertificateIssueReason
 }

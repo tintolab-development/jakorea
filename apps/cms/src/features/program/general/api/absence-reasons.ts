@@ -18,6 +18,7 @@ export type ProgramAbsenceReasonItem = {
   revisionNo?: number
   fileObjectIds?: number[]
   originalFileNames?: Array<string | null>
+  attachments?: Array<unknown | null>
   latestRevision?: boolean
 }
 

@@ -5,6 +5,10 @@ import type {
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import hostStyles from '@/features/program/ui/apply-form-field-host.module.css'
 import { PFFormField, PFFormFieldRow, PFFormFieldTable, PFTextarea } from '@/shared/ui'
+import {
+  PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH,
+  clipApplicationFreeText,
+} from '@/features/program/lib/portal-application-free-text'
 import styles from './short-essay-field.module.css'
 
 type SurveyShortEssayFieldProps = {
@@ -44,7 +48,10 @@ export function SurveyShortEssayField({
         placeholder={props.placeholder}
         value={props.value}
         disabled={disabled}
-        onValueChange={props.onValueChange}
+        maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
+        message={`${clipApplicationFreeText(props.value).length}/${PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}`}
+        messageAlign="end"
+        onValueChange={next => props.onValueChange(clipApplicationFreeText(next))}
       />
     </div>
   )

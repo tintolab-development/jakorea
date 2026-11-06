@@ -1361,10 +1361,30 @@ export function mapIndividualApplicationToApplicantRow(
       dto.interviewStatus,
       dto.giveUpYn
     ),
+    interviewResultStatus: (() => {
+      const candidates = [
+        dto.finalResultStatus,
+        dto.interviewStatus,
+        dto.applicationStatus,
+      ]
+        .map(value => (typeof value === 'string' ? value.trim().toUpperCase() : ''))
+        .filter(Boolean)
+      const pass = new Set([
+        'EVALUATED',
+        'INTERVIEW_EVALUATED',
+        'PASSED',
+        'INTERVIEW_PASSED',
+      ])
+      return candidates.find(value => pass.has(value)) ?? candidates[0] ?? null
+    })(),
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
       dto.finalResultStatus,
       dto.reserveRank
     ),
+    canEditManagerAEvaluation:
+      dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true,
+    canEditManagerBEvaluation:
+      dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true,
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     detail: {
       interviewAvailability,
@@ -1392,6 +1412,24 @@ export function mapIndividualApplicationDetailToApplicantRow(
   const canEditDocumentEvaluation =
     dto.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION') === true
 
+  const interviewStatusCandidates = [
+    dto.applicationStatus,
+    screening?.finalResultStatus,
+    ...(screening?.interviewEvaluations ?? []).map(item => item.evaluationStatus),
+  ]
+    .map(value => (typeof value === 'string' ? value.trim().toUpperCase() : ''))
+    .filter(value => value.length > 0)
+  const interviewPassStatuses = new Set([
+    'EVALUATED',
+    'INTERVIEW_EVALUATED',
+    'PASSED',
+    'INTERVIEW_PASSED',
+  ])
+  const interviewResultStatus =
+    interviewStatusCandidates.find(value => interviewPassStatuses.has(value)) ??
+    interviewStatusCandidates[0] ??
+    null
+
   return {
     ...base,
     id: toId(dto.id) || base.id,
@@ -1400,8 +1438,10 @@ export function mapIndividualApplicationDetailToApplicantRow(
     availableActions: dto.availableActions ?? base.availableActions,
     privacyMaskingLevel: dto.privacyMaskingLevel === 'UNMASKED' ? 'UNMASKED' : 'MASKED',
     canRevealPersonalInfo: dto.canRevealPersonalInfo === true,
-    canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditDocumentEvaluation,
-    canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditDocumentEvaluation,
+    canEditManagerAEvaluation:
+      canEditDocumentEvaluation && dto.canEditManagerAEvaluation !== false,
+    canEditManagerBEvaluation:
+      canEditDocumentEvaluation && dto.canEditManagerBEvaluation !== false,
     affiliation: profile?.affiliationSchool?.trim() || base.affiliation || '',
     educationGrade: isK12SchoolAffiliationName(
       profile?.affiliationSchool?.trim() || base.affiliation
@@ -1455,6 +1495,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
       dto.assignedInterviewSlotId != null ? 'ASSIGNED' : 'WAITING_ASSIGNMENT',
       screening?.giveUpYn
     ),
+    interviewResultStatus,
     secondInterviewScreeningStatus: mapApiFinalResultToSecondInterviewStatus(
       screening?.finalResultStatus,
       screening?.reserveRank

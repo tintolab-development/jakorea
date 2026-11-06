@@ -44,6 +44,7 @@ export async function issueMyCertificate(
     programId: input.programId,
     participantId: input.participantId,
     certificateType: input.certificateType ?? PORTAL_CERTIFICATE_TYPE_COMPLETION,
+    issueReason: input.issueReason ?? 'PERSONAL_ARCHIVE',
   })
   return mapPortalCertificateIssueResult(data)
 }

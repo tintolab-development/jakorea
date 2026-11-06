@@ -57,6 +57,18 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
     '첫 교육이 시작되기 전에는 활동 포기할 수 없습니다.',
   INVALID_BUSINESS_INCOME_EARNER_STATUS: '사업소득자 여부는 해당 또는 해당 없음만 저장할 수 있습니다.',
   FORBIDDEN_APPLICATION_ACTION: '이 프로그램 유형에서는 해당 작업을 할 수 없습니다.',
+  INDIVIDUAL_INTERVIEW_REQUIRED: '면접 합격 후 최종 승인',
+  GENERAL_INDIVIDUAL_SCHEDULE_MODE_FIXED_DATE_ONLY:
+    '기간형(PERIOD) 교육 일정은 개인 승인에 사용할 수 없습니다.',
+  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT:
+    '강사 모집이 없는 프로그램에는 강사를 배정할 수 없습니다.',
+  ATTENDANCE_AFTER_GIVE_UP: '활동 포기 이후 회차에는 출결을 저장할 수 없습니다.',
+  PROGRAM_COMPLETION_NOT_COMPLETED: '프로그램이 종료된 뒤에만 수료를 재계산할 수 있습니다.',
+  FORM_ANSWER_TYPE_INVALID: '입력 형식이 올바르지 않습니다.',
+  FORM_ANSWER_REQUIRED: '필수 입력값을 입력해 주세요.',
+  FORM_ANSWER_TOO_LONG: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
+  FORM_REQUIRED_CONSENT_NOT_AGREED: '필수 동의 항목에 동의해 주세요.',
+  FORM_BINDING_TARGET_ROLE_MISMATCH: '현재 참여 역할에 해당하지 않는 설문입니다.',
   FORM_RESPONSE_ALREADY_SUBMITTED:
     '이미 제출된 응답입니다. 수정은 응답 수정으로 해 주세요.',
   INSTRUCTOR_PARTICIPATION_CONSENT_REQUIRED:

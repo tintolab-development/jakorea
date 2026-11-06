@@ -56,6 +56,39 @@ export function isIndividualInterviewDocumentDecisionStage(
   return isParticipantInterviewProgram(program) && screeningStage === 'doc1'
 }
 
+const INDIVIDUAL_INTERVIEW_PASS_STATUSES = new Set([
+  'EVALUATED',
+  'INTERVIEW_EVALUATED',
+  'PASSED',
+  'INTERVIEW_PASSED',
+])
+
+export function isIndividualInterviewPassedStatus(status: string | null | undefined): boolean {
+  return INDIVIDUAL_INTERVIEW_PASS_STATUSES.has((status ?? '').trim().toUpperCase())
+}
+
+export function hasIndividualInterviewPass(input: {
+  interviewResultStatus?: string | null
+  secondInterviewScreeningStatus?: string | null
+}): boolean {
+  if (input.secondInterviewScreeningStatus === 'pass') return true
+  return isIndividualInterviewPassedStatus(input.interviewResultStatus)
+}
+
+/** 면접 필요인데 미합격이면 최종 승인(참여 승인)만 막는다. 서류 승인은 그대로. */
+export function shouldBlockIndividualFinalApproveForInterview(input: {
+  program: Program | null | undefined
+  screeningStage?: IndividualApplicantScreeningStage
+  interviewResultStatus?: string | null
+  secondInterviewScreeningStatus?: string | null
+}): boolean {
+  if (!isParticipantInterviewProgram(input.program)) return false
+  if (isIndividualInterviewDocumentDecisionStage(input.program, input.screeningStage ?? 'main')) {
+    return false
+  }
+  return !hasIndividualInterviewPass(input)
+}
+
 /** 1차 서류 심사 대상자 상세 — 담당자 서류 평가 */
 export function shouldShowIndividualManagerEvaluationSection(
   program: Program | null | undefined,

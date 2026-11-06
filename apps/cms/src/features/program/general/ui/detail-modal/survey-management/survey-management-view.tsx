@@ -424,23 +424,26 @@ export function GeneralSurveyManagementView({
     (satisfactionSurveysByAudience[activeSatisfactionAudience]
       ? [satisfactionSurveysByAudience[activeSatisfactionAudience]!]
       : [])
-  const satisfactionScheduleTabsForQuery = sortSatisfactionScheduleDisplayItemsDesc(
-    audienceSatisfactionBindingsForQuery.map(survey => {
-      const slot = satisfactionScheduleOptionsQuery.schedules.find(
-        row => row.id === survey.targetScopeId
-      )
-      return {
-        key: survey.bindingId ?? survey.id,
-        label: formatSatisfactionPerScheduleDisplayName({
-          scheduleName: slot?.scheduleName ?? survey.targetScopeLabel,
+  const satisfactionScheduleTabsForQuery = (() => {
+    const items = sortSatisfactionScheduleDisplayItemsDesc(
+      audienceSatisfactionBindingsForQuery.map(survey => {
+        const slot = satisfactionScheduleOptionsQuery.schedules.find(
+          row => row.id === survey.targetScopeId
+        )
+        return {
+          key: survey.bindingId ?? survey.id,
+          label: formatSatisfactionPerScheduleDisplayName({
+            scheduleName: slot?.scheduleName ?? survey.targetScopeLabel,
+            sessionNo: slot?.sessionNo,
+            startAt: slot?.startAt ?? slot?.startDate ?? null,
+          }),
           sessionNo: slot?.sessionNo,
           startAt: slot?.startAt ?? slot?.startDate ?? null,
-        }),
-        sessionNo: slot?.sessionNo,
-        startAt: slot?.startAt ?? slot?.startDate ?? null,
-      }
-    })
-  ).map(({ key, label }) => ({ key, label }))
+        }
+      })
+    ).map(({ key, label }) => ({ key, label }))
+    return items
+  })()
   const resolvedSatisfactionScheduleTabForQuery =
     satisfactionScheduleTab != null &&
     satisfactionScheduleTabsForQuery.some(tab => tab.key === satisfactionScheduleTab)
@@ -485,12 +488,16 @@ export function GeneralSurveyManagementView({
     detailPolicy: 'public-text-only',
     bindingId: satisfactionBindingId,
   })
-  const { pollResponses: remoteLectureResponses, isRemoteDataSource: lectureResponsesRemote } =
-    useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId, {
-      bindingId: lectureBindingId,
-    })
-  const { totalResponseCount: remotePollSummaryCount, questionSummaries: pollQuestionSummaries } =
-    useGeneralProgramSurveySummary(program.id, pollResponseVersionId, pollBindingId)
+  const {
+    pollResponses: remoteLectureResponses,
+    isRemoteDataSource: lectureResponsesRemote,
+  } = useGeneralProgramSurveyResponses(program.id, lectureResponseVersionId, {
+    bindingId: lectureBindingId,
+  })
+  const {
+    totalResponseCount: remotePollSummaryCount,
+    questionSummaries: pollQuestionSummaries,
+  } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId, pollBindingId)
   const { questionSummaries: satisfactionQuestionSummaries } = useGeneralProgramSurveySummary(
     program.id,
     satisfactionResponseVersionId,
@@ -632,8 +639,8 @@ export function GeneralSurveyManagementView({
 
   const satisfactionResponses = useMemo((): SurveyPollRawResponse[] => {
     if (satisfactionResponsesRemote) return remoteSatisfactionResponses ?? []
-    return pollResponses
-  }, [pollResponses, remoteSatisfactionResponses, satisfactionResponsesRemote])
+    return []
+  }, [remoteSatisfactionResponses, satisfactionResponsesRemote])
 
   useEffect(() => {
     if (!pollResponsesRemote || !activeRegisteredSurveyId) return
