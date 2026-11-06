@@ -1,6 +1,10 @@
 import type { ProgramFormBindingRequest } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingRequest'
 import type { ProgramFormBindingResponse } from '@/shared/api/generated/forms-surveys/schemas/programFormBindingResponse'
-import type { SurveyProgressStatus } from './survey-management-types'
+import type {
+  SurveyProgressStatus,
+  SurveyQuestionOptionCount,
+  SurveyResultQuestionSummary,
+} from './survey-management-types'
 
 export const SATISFACTION_RUN_MODE_PER_SCHEDULE = 'PER_SCHEDULE' as const
 export const SATISFACTION_RUN_MODE_ONCE_AT_END = 'ONCE_AT_END' as const
@@ -146,6 +150,52 @@ export function aggregateSatisfactionCounts(
     submittedCount: submitted,
     expectedRespondentCount: missingExpected ? null : expected,
   }
+}
+
+function cloneQuestionOptions(
+  options: SurveyQuestionOptionCount[] | undefined
+): SurveyQuestionOptionCount[] | undefined {
+  if (options == null) return undefined
+  return options.map(option => ({ ...option }))
+}
+
+/** 일정별 summary `options.count`를 questionKey·option value 기준으로 더한다. */
+export function mergeSatisfactionQuestionSummaries(
+  groups: ReadonlyArray<SurveyResultQuestionSummary[] | null | undefined>
+): SurveyResultQuestionSummary[] {
+  const byKey = new Map<string, SurveyResultQuestionSummary>()
+  const order: string[] = []
+  for (const group of groups) {
+    if (group == null) continue
+    for (const question of group) {
+      const key = question.questionKey.trim()
+      if (!key) continue
+      const existing = byKey.get(key)
+      if (existing == null) {
+        byKey.set(key, {
+          ...question,
+          options: cloneQuestionOptions(question.options),
+        })
+        order.push(key)
+        continue
+      }
+      if (existing.options == null && question.options == null) continue
+      const optionMap = new Map<string, SurveyQuestionOptionCount>()
+      for (const option of existing.options ?? []) {
+        optionMap.set(option.value, { ...option })
+      }
+      for (const option of question.options ?? []) {
+        const prev = optionMap.get(option.value)
+        if (prev == null) {
+          optionMap.set(option.value, { ...option })
+          continue
+        }
+        optionMap.set(option.value, { ...prev, count: prev.count + option.count })
+      }
+      existing.options = [...optionMap.values()].sort((a, b) => a.displayOrder - b.displayOrder)
+    }
+  }
+  return order.map(key => byKey.get(key)).filter((row): row is SurveyResultQuestionSummary => row != null)
 }
 
 export function satisfactionDeadlinePreviewCopy(windowDays: SatisfactionWindowDays): string {

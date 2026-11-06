@@ -3,6 +3,7 @@ import {
   SATISFACTION_RUN_MODE_ONCE_AT_END,
   SATISFACTION_RUN_MODE_PER_SCHEDULE,
   aggregateSatisfactionCounts,
+  mergeSatisfactionQuestionSummaries,
   canDownloadSatisfactionAggregate,
   canDownloadSatisfactionResults,
   mapSatisfactionProgressStatus,
@@ -62,5 +63,50 @@ describe('satisfaction-binding-contract', () => {
 
   it('keys rows by bindingId + targetScopeId, not session_no', () => {
     expect(satisfactionBindingRowKey({ bindingId: 501, targetScopeId: 3001 })).toBe('501:3001')
+  })
+
+  it('sums option counts across schedule summaries without inventing questions', () => {
+    expect(
+      mergeSatisfactionQuestionSummaries([
+        [
+          {
+            questionKey: 'survey-paragraph-score',
+            questionLabel: '일정',
+            questionType: 'SCALE_TYPE',
+            displayOrder: 2,
+            required: true,
+            options: [
+              { value: 'yes', label: '그렇다', displayOrder: 0, count: 1 },
+              { value: 'no', label: '아니다', displayOrder: 1, count: 0 },
+            ],
+          },
+        ],
+        [
+          {
+            questionKey: 'survey-paragraph-score',
+            questionLabel: '일정',
+            questionType: 'SCALE_TYPE',
+            displayOrder: 2,
+            required: true,
+            options: [
+              { value: 'yes', label: '그렇다', displayOrder: 0, count: 1 },
+              { value: 'no', label: '아니다', displayOrder: 1, count: 0 },
+            ],
+          },
+        ],
+      ])
+    ).toEqual([
+      {
+        questionKey: 'survey-paragraph-score',
+        questionLabel: '일정',
+        questionType: 'SCALE_TYPE',
+        displayOrder: 2,
+        required: true,
+        options: [
+          { value: 'yes', label: '그렇다', displayOrder: 0, count: 2 },
+          { value: 'no', label: '아니다', displayOrder: 1, count: 0 },
+        ],
+      },
+    ])
   })
 })

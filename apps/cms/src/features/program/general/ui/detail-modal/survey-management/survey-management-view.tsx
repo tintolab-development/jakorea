@@ -143,6 +143,7 @@ import { buildGeneralSurveyEmptyState } from './survey-empty-state'
 import {
   useGeneralProgramSurveyFormBindingMutations,
   useGeneralProgramSurveyResponses,
+  useGeneralProgramSurveyResultsForBindings,
   useGeneralProgramSurveys,
   useGeneralProgramSurveySummary,
 } from '@/features/program/general/hooks/use-general-program-posts-surveys'
@@ -421,10 +422,11 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
       : audienceSatisfactionBindingsForQuery.find(
           survey => (survey.bindingId ?? survey.id) === resolvedSatisfactionScheduleTabForQuery
         ) ?? audienceSatisfactionBindingsForQuery[0] ?? null
-  const activeSatisfactionSurveyId = selectedSatisfactionBindingForQuery?.id
+  const isSatisfactionAggregateTabForQuery =
+    resolvedSatisfactionScheduleTabForQuery === SATISFACTION_AGGREGATE_TAB
   const pollResponseVersionId = activeTab === 'survey' ? activeRegisteredSurveyId ?? undefined : undefined
   const satisfactionResponseVersionId = isGeneralSatisfactionSurveyNavTab(activeTab)
-    ? activeSatisfactionSurveyId
+    ? (selectedSatisfactionBindingForQuery?.id ?? audienceSatisfactionBindingsForQuery[0]?.id)
     : undefined
   const lectureResponseVersionId =
     activeTab === 'lecture_evaluation' ? lectureEvalSurvey?.id : undefined
@@ -432,9 +434,21 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     activeTab === 'survey'
       ? registeredSurveys.find(item => item.id === activeRegisteredSurveyId)?.bindingId
       : undefined
-  const satisfactionBindingId = isGeneralSatisfactionSurveyNavTab(activeTab)
-    ? selectedSatisfactionBindingForQuery?.bindingId
-    : undefined
+  const satisfactionResultBindingIds = useMemo(() => {
+    if (!isGeneralSatisfactionSurveyNavTab(activeTab)) return []
+    if (isSatisfactionAggregateTabForQuery) {
+      return audienceSatisfactionBindingsForQuery
+        .map(item => item.bindingId?.trim())
+        .filter((id): id is string => Boolean(id))
+    }
+    const bindingId = selectedSatisfactionBindingForQuery?.bindingId?.trim()
+    return bindingId ? [bindingId] : []
+  }, [
+    activeTab,
+    audienceSatisfactionBindingsForQuery,
+    isSatisfactionAggregateTabForQuery,
+    selectedSatisfactionBindingForQuery,
+  ])
   const lectureBindingId =
     activeTab === 'lecture_evaluation' ? lectureEvalSurvey?.bindingId : undefined
 
@@ -448,11 +462,14 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
   })
   const {
     pollResponses: remoteSatisfactionResponses,
+    questionSummaries: satisfactionQuestionSummaries,
     isRemoteDataSource: satisfactionResponsesRemote,
-  } = useGeneralProgramSurveyResponses(program.id, satisfactionResponseVersionId, {
-    detailPolicy: 'public-text-only',
-    bindingId: satisfactionBindingId,
-  })
+  } = useGeneralProgramSurveyResultsForBindings(
+    program.id,
+    satisfactionResponseVersionId,
+    satisfactionResultBindingIds,
+    { detailPolicy: 'public-text-only' }
+  )
   const {
     pollResponses: remoteLectureResponses,
     isRemoteDataSource: lectureResponsesRemote,
@@ -463,11 +480,6 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     totalResponseCount: remotePollSummaryCount,
     questionSummaries: pollQuestionSummaries,
   } = useGeneralProgramSurveySummary(program.id, pollResponseVersionId, pollBindingId)
-  const { questionSummaries: satisfactionQuestionSummaries } = useGeneralProgramSurveySummary(
-    program.id,
-    satisfactionResponseVersionId,
-    satisfactionBindingId
-  )
 
   useEffect(() => {
     // remote ON이면 mock으로 덮어쓰지 않음 — remote 목록 effect가 채움
@@ -576,7 +588,6 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
     (isSatisfactionAggregateTab && audienceSatisfactionBindings[0]
       ? {
           ...audienceSatisfactionBindings[0],
-          id: SATISFACTION_AGGREGATE_TAB,
           title: '전체 일정 합산',
           bindingId: undefined,
           status: audienceSatisfactionBindings.every(item => item.status === 'finished')
@@ -603,8 +614,24 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
         participantTotal: resolveSurveyResultsParticipantTotal(survey, programTotal),
       }
     }
+    if (isSatisfactionAggregateTab && activeSatisfactionSurvey != null) {
+      next[activeSatisfactionAudience] = {
+        ...activeSatisfactionSurvey,
+        participantTotal: resolveSurveyResultsParticipantTotal(
+          activeSatisfactionSurvey,
+          programTotal
+        ),
+      }
+    }
     return next
-  }, [isTrainedTeacherSatisfaction, program.totalParticipants, satisfactionSurveysByAudience])
+  }, [
+    activeSatisfactionAudience,
+    activeSatisfactionSurvey,
+    isSatisfactionAggregateTab,
+    isTrainedTeacherSatisfaction,
+    program.totalParticipants,
+    satisfactionSurveysByAudience,
+  ])
   const lectureEvalSurveyForView =
     lectureEvalSurvey == null
       ? null
@@ -623,8 +650,8 @@ export function GeneralSurveyManagementView({ program, activeTab }: GeneralSurve
 
   const satisfactionResponses = useMemo((): SurveyPollRawResponse[] => {
     if (satisfactionResponsesRemote) return remoteSatisfactionResponses ?? []
-    return pollResponses
-  }, [pollResponses, remoteSatisfactionResponses, satisfactionResponsesRemote])
+    return []
+  }, [remoteSatisfactionResponses, satisfactionResponsesRemote])
 
   useEffect(() => {
     if (!pollResponsesRemote || !activeRegisteredSurveyId) return
