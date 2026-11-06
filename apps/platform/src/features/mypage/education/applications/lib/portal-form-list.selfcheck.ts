@@ -96,6 +96,19 @@ assert.notDeepEqual(
   })
 )
 
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 201,
+    formType: 'SATISFACTION',
+    templateName: '만족도조사 (학생용)',
+    targetScope: 'SCHEDULE',
+    targetScopeLabel: '공통 교육 예정 1',
+    scheduleStartAt: '2026-11-12T03:00:00.000Z',
+    status: 'NOT_SUBMITTED',
+  })?.title,
+  '1회차 · 2026.11.12(목) 만족도조사 (학생용)',
+)
+
 const scheduleBinding = mapPortalFormListItemToSurveyEntry({
   bindingId: 188865,
   title: '행사 설문',

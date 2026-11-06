@@ -43,6 +43,7 @@ const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   '진행 완료': 'completed',
   '활동 포기': 'withdrawn',
   '신청 반려': 'rejected',
+  '승인 취소': 'approval_cancelled',
   '작성 중': 'waiting_result',
   '신청 취소': 'withdrawn',
   // 영문/코드형 displayStatus (일부 환경·상세 폴백)
@@ -59,6 +60,9 @@ const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   GIVEN_UP: 'withdrawn',
   REJECTED: 'rejected',
   AUTO_REJECTED: 'rejected',
+  INTERVIEW_FAILED: 'rejected',
+  CANCELLED_BY_ADMIN: 'rejected',
+  APPROVAL_CANCELLED: 'approval_cancelled',
   CANCELLED: 'withdrawn',
   CANCELED: 'withdrawn',
 }
@@ -114,7 +118,20 @@ function resolveDisplayStatusFromApplicationFields(input: {
   const participationStatus = (input.participationStatus ?? '').trim().toUpperCase()
   const completionStatus = (input.completionStatus ?? '').trim().toUpperCase()
 
-  if (hasStatus(applicationStatus, ['REJECTED', 'AUTO_REJECTED', 'FINAL_REJECTED', 'FINAL_FAILED', 'FAILED'])) {
+  if (hasStatus(applicationStatus, ['APPROVAL_CANCELLED'])) {
+    return 'approval_cancelled'
+  }
+  if (
+    hasStatus(applicationStatus, [
+      'REJECTED',
+      'AUTO_REJECTED',
+      'FINAL_REJECTED',
+      'FINAL_FAILED',
+      'FAILED',
+      'INTERVIEW_FAILED',
+      'CANCELLED_BY_ADMIN',
+    ])
+  ) {
     return 'rejected'
   }
   if (hasStatus(applicationStatus, ['CANCELLED', 'CANCELED'])) return 'withdrawn'

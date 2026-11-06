@@ -1,3 +1,8 @@
+import {
+  composeSatisfactionSurveyDisplayTitle,
+  formatSatisfactionPerScheduleDisplayName,
+  hasSatisfactionScheduleDisplayParts,
+} from '../../../../../shared/lib/education-schedule-name.ts'
 import { toSeoulDateOnly } from '../../../../../shared/lib/format-display-date.ts'
 import type {
   PortalAvailableProgramForm,
@@ -31,6 +36,34 @@ export function isPortalBoundFormVersionUsable(
   return (versionStatus ?? '').trim().toUpperCase() !== 'DRAFT'
 }
 
+function resolveSatisfactionListTitle(item: {
+  formType?: string
+  title?: string | null
+  templateName?: string | null
+  targetScope?: string | null
+  targetScopeLabel?: string | null
+  sessionNo?: number | null
+  scheduleStartAt?: string | null
+  startAt?: string | null
+}): string {
+  const formName = item.templateName?.trim() || item.title?.trim() || '만족도조사'
+  if (!isPortalSatisfactionFormType(item.formType)) {
+    return item.title?.trim() || item.templateName?.trim() || '설문'
+  }
+  if (!isPortalScheduleTargetScope(item.targetScope ?? undefined)) return formName
+  const scheduleInput = {
+    scheduleName: item.targetScopeLabel,
+    sessionNo: item.sessionNo,
+    startAt: item.scheduleStartAt ?? item.startAt,
+  }
+  if (!hasSatisfactionScheduleDisplayParts(scheduleInput)) return formName
+  return composeSatisfactionSurveyDisplayTitle({
+    formName,
+    perSchedule: true,
+    scheduleDisplayName: formatSatisfactionPerScheduleDisplayName(scheduleInput),
+  })
+}
+
 export function mapAvailableProgramFormToListItem(
   item: PortalAvailableProgramForm
 ): PortalFormListItem {
@@ -38,9 +71,10 @@ export function mapAvailableProgramFormToListItem(
     bindingId: item.bindingId,
     templateVersionId: item.templateVersionId,
     formType: item.formType,
-    title: item.templateName,
+    title: resolveSatisfactionListTitle(item),
     targetScope: item.targetScope,
     targetScopeId: item.targetScopeId,
+    targetScopeLabel: item.targetScopeLabel,
     required: item.required,
     submissionStartAt: item.submissionStartAt,
     submissionEndAt: item.submissionEndAt,
@@ -159,7 +193,7 @@ export function mapPortalFormListItemToSurveyEntry(
 
   return {
     id: String(bindingId),
-    title: item.title?.trim() || '설문',
+    title: resolveSatisfactionListTitle(item),
     status: resolveEducationSurveyListStatus(submitted, {
       submissionStartAt,
       submissionEndAt,
@@ -187,6 +221,28 @@ export function mapPortalFormListItemToSurveyEntry(
     ...(responseStatus ? { responseStatus } : {}),
     revisionNo: item.revisionNo,
     retentionExpiresAt: item.retentionExpiresAt,
+  }
+}
+
+/** 목록 제목에 날짜가 없으면 교육 진행 예정일 줄로 `회차 · 날짜`를 맞춘다. */
+export function applySatisfactionScheduleLineDate(
+  entry: EducationSurveyListEntry,
+  scheduleLine: string | null | undefined
+): EducationSurveyListEntry {
+  if (!isPortalSatisfactionFormType(entry.formType)) return entry
+  if (!isPortalScheduleTargetScope(entry.targetScope)) return entry
+  if (entry.title.includes(' · ') || !scheduleLine?.trim()) return entry
+  const roundMatch = /^(\d+)회차$/u.exec(entry.title.trim())
+  return {
+    ...entry,
+    title: composeSatisfactionSurveyDisplayTitle({
+      formName: roundMatch ? undefined : entry.title,
+      perSchedule: true,
+      scheduleDisplayName: formatSatisfactionPerScheduleDisplayName({
+        sessionNo: roundMatch ? Number(roundMatch[1]) : null,
+        scheduleLine,
+      }),
+    }),
   }
 }
 

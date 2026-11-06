@@ -15,6 +15,8 @@ assert.equal(getEducationDisplayStatusTone('in_progress'), 'progress')
 assert.equal(getEducationDisplayStatusTone('completed'), 'completed')
 assert.equal(getEducationDisplayStatusTone('rejected'), 'rejected')
 
-assert.equal(Object.keys(TEACHER_EDUCATION_DISPLAY_STATUS_LABEL).length, 6)
+assert.equal(getEducationDisplayStatusLabel('approval_cancelled'), '승인 취소')
+assert.equal(getEducationDisplayStatusTone('approval_cancelled'), 'cancelled')
+assert.equal(Object.keys(TEACHER_EDUCATION_DISPLAY_STATUS_LABEL).length, 7)
 
 console.log('display-status.teacher.selfcheck: ok')

@@ -59,6 +59,10 @@
   color: var(--color-status-error-default);
 }
 
+.statusCancelled {
+  color: var(--color-neutral-cool-700);
+}
+
 @media (--bp-below-pc) {
   .header {
     gap: var(--spacing-8);

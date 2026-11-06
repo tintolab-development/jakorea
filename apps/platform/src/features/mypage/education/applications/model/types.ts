@@ -13,8 +13,14 @@ export type EducationDisplayStatus =
   | 'completed'
   | 'withdrawn'
   | 'rejected'
+  | 'approval_cancelled'
 
-export type EducationDisplayStatusTone = 'pending' | 'progress' | 'completed' | 'rejected'
+export type EducationDisplayStatusTone =
+  | 'pending'
+  | 'progress'
+  | 'completed'
+  | 'rejected'
+  | 'cancelled'
 
 /**
  * 활동 포기 시점.
