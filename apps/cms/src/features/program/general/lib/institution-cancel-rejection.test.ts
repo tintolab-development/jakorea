@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildInstitutionCancelRejectionMessage,
+  patchInstitutionForCancelRejection,
   resolveInstitutionCancelRejectionNotifyVariant,
 } from '@/features/program/general/lib/institution-cancel-rejection'
 import { buildInstitutionCancelRejectCompleteDescription } from '@/features/program/shared/ui/detail-modal/components/institution-cancel-reject-complete-modal'
@@ -50,6 +51,15 @@ describe('institution-cancel-rejection', () => {
     expect(buildInstitutionCancelRejectionMessage('진월초등학교', 'alreadySent')).toContain(
       '반려 취소 알림이 새롭게 발송됩니다.'
     )
+  })
+
+  it('반려 취소 패치는 REJECTION_CANCELLED로 복원한다', () => {
+    const restored = patchInstitutionForCancelRejection({
+      ...baseRow,
+      applicationStatus: 'APPROVAL_CANCELLED',
+    })
+    expect(restored.approvalStatus).toBe('pending')
+    expect(restored.applicationStatus).toBe('REJECTION_CANCELLED')
   })
 })
 

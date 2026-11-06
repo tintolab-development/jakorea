@@ -369,6 +369,15 @@ describe('getGeneralProgramApiErrorMessage program schedule codes', () => {
     ).toContain('educationSlotKey')
   })
 
+  it('maps PROGRAM_SCHEDULE_LOCKED', () => {
+    expect(
+      getGeneralProgramApiErrorMessage(
+        { response: { data: { error: { code: 'PROGRAM_SCHEDULE_LOCKED' } } } },
+        'fallback'
+      )
+    ).toContain('출결·정산')
+  })
+
   it('maps PROGRAM_SCHEDULE_NOT_ACTIVE', () => {
     expect(
       getGeneralProgramApiErrorMessage(

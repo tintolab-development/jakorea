@@ -276,7 +276,7 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     region: row.region,
     educationGrade: row.educationGrade,
     teacherName: row.teacherName,
-    teacherPhone: row.teacherPhone ?? row.contact,
+    teacherPhone: row.teacherPhone,
     teacherMobile: row.teacherMobile ?? row.contact,
     teacherEmail: row.teacherEmail,
     classCount: row.classCount,

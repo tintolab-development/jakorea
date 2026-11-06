@@ -976,9 +976,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       onSaveBasicInfo?.({
         id: detail.id,
         ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
-        ...(typeof privacy.phone === 'string'
-          ? { teacherPhone: privacy.phone, teacherMobile: privacy.phone }
-          : {}),
+        ...(typeof privacy.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
         ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
       })
     },
@@ -1039,9 +1037,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
         enterApplicationInfoEdit({
           ...mergedDetail,
           ...(typeof privacy?.name === 'string' ? { teacherName: privacy.name } : {}),
-          ...(typeof privacy?.phone === 'string'
-            ? { teacherPhone: privacy.phone, teacherMobile: privacy.phone }
-            : {}),
+          ...(typeof privacy?.phone === 'string' ? { teacherMobile: privacy.phone } : {}),
           ...(typeof privacy?.email === 'string' ? { teacherEmail: privacy.email } : {}),
         })
       })
@@ -2454,7 +2450,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               hideCombinedClass={!isGeneralOrganizationProgram(program)}
               schoolName={
                 isApplicationDetailEditing ? (
-                  <InstitutionReadonlyInput value={mergedDetail.schoolName ?? ''} />
+                  <InstitutionReadonlyInput width={240} value={mergedDetail.schoolName ?? ''} />
                 ) : (
                   mergedDetail.schoolName
                 )

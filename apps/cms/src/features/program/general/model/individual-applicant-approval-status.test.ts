@@ -3,6 +3,7 @@ import type { GeneralIndividualApplicantRow } from '@/features/program/general/m
 import {
   patchGeneralIndividualApplicantForApprovalStatus,
   patchGeneralIndividualApplicantForCancelApproval,
+  patchGeneralIndividualApplicantForCancelRejection,
 } from '@/features/program/general/model/individual-applicant'
 
 const pendingApplicant: GeneralIndividualApplicantRow = {
@@ -38,5 +39,15 @@ describe('patchGeneralIndividualApplicantForApprovalStatus', () => {
     expect(row.applicationStatus).toBe('APPROVAL_CANCELLED')
     expect(row.availableActions).not.toContain('CANCEL_REJECTION')
     expect(row.availableActions).not.toContain('CANCEL_APPROVAL')
+  })
+
+  it('반려 취소 패치는 REJECTION_CANCELLED와 승인 대기를 반영한다', () => {
+    const rejected = patchGeneralIndividualApplicantForCancelApproval(pendingApplicant, {
+      notifyTiming: 'immediate',
+      rejectionReason: '일정 중복',
+    })
+    const restored = patchGeneralIndividualApplicantForCancelRejection(rejected)
+    expect(restored.approvalStatus).toBe('pending')
+    expect(restored.applicationStatus).toBe('REJECTION_CANCELLED')
   })
 })

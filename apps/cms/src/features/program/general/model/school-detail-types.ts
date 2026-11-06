@@ -8,6 +8,7 @@ import type { ProgramEnrollmentDisplayStatus } from '@/shared/constants/status'
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import type { SettlementStatusKey } from '@/features/program/general/model/participating-instructors'
 import type { StudentPortraitConsentSubmission } from '../lib/student-portrait-consent'
+import type { ApplicantPreferredScheduleBlock } from '@/features/program/shared/model/applicant-institution'
 
 export type InstructorRoleKey = 'lead' | 'assistant'
 
@@ -95,6 +96,8 @@ export interface SchoolDetailForModal {
   participationAppliedAt?: string
   /** 기관 신청 상세 `gradeBlocks` — 등록 학년·학급 SSOT */
   gradeBlocks?: GradeBlock[] | null
+  /** TT 기관 신청 상세 `preferredScheduleBlocks` — 상세·목록 병합 표시용 */
+  preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
   instructors: SchoolDetailInstructorRow[]
 }
 

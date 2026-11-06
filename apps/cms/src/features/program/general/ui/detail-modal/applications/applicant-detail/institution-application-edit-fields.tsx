@@ -272,9 +272,16 @@ function FieldStack({
   )
 }
 
-export function InstitutionReadonlyInput({ value }: { value: string }) {
+/** Figma Field/Table — 신청 기관명 hug 240, 기관 소재지·상세 주소는 셀 fill */
+export function InstitutionReadonlyInput({
+  value,
+  width = '100%',
+}: {
+  value: string
+  width?: number | string
+}) {
   return (
-    <CmsInput inputSize="small" width="100%" value={value} disabled readOnly />
+    <CmsInput inputSize="small" width={width} value={value} disabled readOnly />
   )
 }
 
@@ -290,9 +297,8 @@ export function InstitutionGradeSelectEdit({
   return (
     <FieldStack error={error}>
       <CmsSelect
-        className="institution-basic-info__full-width-control"
         inputSize="small"
-        width="100%"
+        width={120}
         withAllOption={false}
         placeholder="학년 선택"
         value={value || undefined}
@@ -336,6 +342,7 @@ export function InstitutionClassAndStudentCountEdit({
         />
         <span style={nowrapSpanStyle}>개 학급</span>
         <DetailInfoForm.InputsSeparator />
+        <span style={nowrapSpanStyle}>총</span>
         <CmsNumericInput
           inputSize="small"
           mode="integer"
@@ -577,7 +584,7 @@ export function InstitutionTeacherEdit({
         {teacherOptions ? (
           <CmsSelect
             inputSize="small"
-            width={160}
+            width={120}
             withAllOption={false}
             loading={isTeacherOptionsLoading}
             placeholder={isTeacherOptionsLoading ? '교사 목록 불러오는 중…' : '교사 선택'}
@@ -609,7 +616,7 @@ export function InstitutionTeacherEdit({
         <span style={nowrapSpanStyle}>Tel</span>
         <CmsPhoneInput
           inputSize="small"
-          width={240}
+          width={200}
           placeholder="담당 교사의 내선 번호(직통 번호)"
           value={phone}
           onChange={e => onChange({ teacherPhone: e.target.value })}
@@ -618,7 +625,7 @@ export function InstitutionTeacherEdit({
         <span style={nowrapSpanStyle}>M</span>
         <CmsPhoneInput
           inputSize="small"
-          width={240}
+          width={200}
           placeholder="담당 교사의 휴대폰 번호"
           value={mobile}
           onChange={e => onChange({ teacherMobile: e.target.value })}
@@ -627,7 +634,7 @@ export function InstitutionTeacherEdit({
         <span style={nowrapSpanStyle}>E-mail</span>
         <CmsInput
           inputSize="small"
-          width={240}
+          width={200}
           placeholder="담당 교사의 이메일"
           value={email}
           onChange={e => onChange({ teacherEmail: e.target.value })}

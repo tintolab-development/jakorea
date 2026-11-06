@@ -427,7 +427,7 @@ describe('cancelIndividualApplicationApprovalRemote', () => {
       applicationId: 1690625,
       applicationType: 'INDIVIDUAL',
       fromStatus: 'APPROVED',
-      toStatus: 'REJECTED',
+      toStatus: 'APPROVAL_CANCELLED',
       availableActions: ['VIEW', 'CANCEL_REJECTION', 'RESEND_NOTIFICATION'],
     })
 

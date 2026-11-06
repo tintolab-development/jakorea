@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
   approveGeneralIndividualApplication,
@@ -28,6 +28,12 @@ import {
   submitGeneralIndividualDocumentResult,
   submitGeneralIndividualDocumentResultBulk,
 } from '@/features/program/general/api/admin-applications-service'
+import {
+  buildGeneralIndividualApplicationsApiQuery,
+  buildGeneralInstructorApplicationsApiQuery,
+  buildGeneralOrganizationApplicationsApiQuery,
+  serializeApplicationsApiQuery,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
 import { generalApplicationsQueryKeys } from '@/features/program/general/api/general-applications-query-keys'
 import { useApplicationsRemoteEnabledForSurface } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
@@ -41,6 +47,8 @@ type UseGeneralProgramApplicationsRemoteSyncOptions = {
   usesProgramInstitutionApplications: boolean
   instructorColumnPreset: string
   individualScreeningStage?: 'doc1'
+  /** 조회(apply) 이후 필터. statusGroup=APPLICATION_REJECTED 등 서버 query에 포함 */
+  listFilters?: Record<string, unknown>
   setInstitutionList: (rows: ApplicantSchoolRow[]) => void
   setInstructorList: (rows: ApplicantInstructorRow[]) => void
   setIndividualList: (rows: GeneralIndividualApplicantRow[]) => void
@@ -52,6 +60,7 @@ export function useGeneralProgramApplicationsRemoteSync({
   usesProgramInstitutionApplications,
   instructorColumnPreset,
   individualScreeningStage,
+  listFilters = {},
   setInstitutionList,
   setInstructorList,
   setIndividualList,
@@ -66,10 +75,29 @@ export function useGeneralProgramApplicationsRemoteSync({
   const organizationApplicationsForInstructorCalendar =
     menu === 'instructors' && instructorColumnPreset === 'general-detail'
 
+  const organizationApiQuery = useMemo(
+    () => buildGeneralOrganizationApplicationsApiQuery(listFilters),
+    [listFilters]
+  )
+  const instructorApiQuery = useMemo(
+    () => buildGeneralInstructorApplicationsApiQuery(listFilters),
+    [listFilters]
+  )
+  const individualApiQuery = useMemo(
+    () => buildGeneralIndividualApplicationsApiQuery(listFilters),
+    [listFilters]
+  )
+
   const organizationQuery = useInfiniteQuery({
-    queryKey: generalApplicationsQueryKeys.organizationList(programId ?? ''),
+    queryKey: generalApplicationsQueryKeys.organizationList(
+      programId ?? '',
+      serializeApplicationsApiQuery(organizationApiQuery)
+    ),
     queryFn: ({ pageParam }) =>
-      fetchGeneralOrganizationApplicationsPage(programId!, { queryClient }, { page: pageParam }),
+      fetchGeneralOrganizationApplicationsPage(programId!, { queryClient }, {
+        page: pageParam,
+        ...organizationApiQuery,
+      }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled:
@@ -81,9 +109,15 @@ export function useGeneralProgramApplicationsRemoteSync({
   })
 
   const instructorQuery = useInfiniteQuery({
-    queryKey: generalApplicationsQueryKeys.instructorList(programId ?? ''),
+    queryKey: generalApplicationsQueryKeys.instructorList(
+      programId ?? '',
+      serializeApplicationsApiQuery(instructorApiQuery)
+    ),
     queryFn: ({ pageParam }) =>
-      fetchGeneralInstructorApplicationsPage(programId!, { page: pageParam }),
+      fetchGeneralInstructorApplicationsPage(programId!, {
+        page: pageParam,
+        ...instructorApiQuery,
+      }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     enabled:
@@ -97,12 +131,12 @@ export function useGeneralProgramApplicationsRemoteSync({
   const individualQuery = useInfiniteQuery({
     queryKey: generalApplicationsQueryKeys.individualList(
       programId ?? '',
-      individualScreeningStage ?? null
+      `${individualScreeningStage ?? 'all'}:${serializeApplicationsApiQuery(individualApiQuery)}`
     ),
     queryFn: ({ pageParam }) =>
       fetchGeneralIndividualApplicationsPage(programId!, {
         doc1: individualScreeningStage === 'doc1',
-        query: { page: pageParam },
+        query: { page: pageParam, ...individualApiQuery },
       }),
     initialPageParam: 0,
     getNextPageParam: lastPage => (lastPage.hasMore ? lastPage.page + 1 : undefined),

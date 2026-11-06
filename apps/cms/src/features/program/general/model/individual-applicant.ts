@@ -199,11 +199,15 @@ export function patchGeneralIndividualApplicantForCancelRejection(
   notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): GeneralIndividualApplicantRow {
   const pending = patchGeneralIndividualApplicantForApprovalStatus(row, 'pending')
+  const restored = {
+    ...pending,
+    applicationStatus: 'REJECTION_CANCELLED',
+  }
   if (!notifyOptions) {
-    return pending
+    return restored
   }
   return {
-    ...pending,
+    ...restored,
     approvalNotificationSentAt: resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
   }
 }

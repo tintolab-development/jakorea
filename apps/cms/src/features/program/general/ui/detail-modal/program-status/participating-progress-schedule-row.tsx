@@ -49,28 +49,32 @@ export function ParticipatingProgressScheduleValue({
   session,
   shape = null,
   detailScheduleTimeSpan = null,
+  statusBadge,
 }: {
   session: ParticipatingSchoolSession
   shape?: GeneralEducationScheduleShape | null
   detailScheduleTimeSpan?: string | null
+  /** 전달되면 일반 세션 status fallback을 쓰지 않는다. null이면 뱃지 생략. */
+  statusBadge?: { label: string; statusClass: string } | null
 }) {
   const line = formatGeneralEducationScheduleLine(session, shape, { detailScheduleTimeSpan })
-  const { label: statusLabel, statusClass } = resolveSessionProgressDisplay(session)
-  const status = (
+  const resolved =
+    statusBadge === undefined ? resolveSessionProgressDisplay(session) : statusBadge
+  const status = resolved ? (
     <span
       key="status"
-      className={`participating-institution-application-info__session-status ${statusClass}`}
+      className={`participating-institution-application-info__session-status ${resolved.statusClass}`}
     >
-      {statusLabel}
+      {resolved.label}
     </span>
-  )
+  ) : null
   const parts = line
     .split(' | ')
     .map(part => part.trim())
     .filter(Boolean)
   return (
     <ProgramDetailTdSegmentWrap>
-      {withProgramDetailTdDivider([...parts, status])}
+      {withProgramDetailTdDivider(status ? [...parts, status] : parts)}
     </ProgramDetailTdSegmentWrap>
   )
 }

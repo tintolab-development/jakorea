@@ -185,22 +185,98 @@ export function mapIndividualApplicationToApprovalStatus(input: {
   return 'pending'
 }
 
+export const ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED = 'APPLICATION_REJECTED'
+
+export type ApplicationApprovalApiListQuery = {
+  status?: string
+  statusGroup?: typeof ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED
+}
+
+/**
+ * 목록 GET 필터. 「신청 반려」는 statusGroup=APPLICATION_REJECTED
+ * (REJECTED+APPROVAL_CANCELLED). 단일 status=REJECTED는 승인 취소 건을 빠뜨린다.
+ * 승인 대기는 단일 status=WAITING_REVIEW가 REJECTION_CANCELLED를 제외하므로 서버 status를 생략한다.
+ */
+export function mapApprovalStatusToApiListQuery(
+  status?: ApplicantApprovalStatusKey
+): ApplicationApprovalApiListQuery {
+  if (!status) return {}
+  switch (status) {
+    case 'approved':
+      return { status: 'APPROVED' }
+    case 'rejected':
+      return { statusGroup: ADMIN_LIST_STATUS_GROUP_APPLICATION_REJECTED }
+    case 'cancelled':
+      return { status: 'CANCELLED' }
+    case 'pending':
+      return {}
+    default:
+      return {}
+  }
+}
+
+/** 단일 status= 정확 일치. 신청 반려 그룹 조회에는 {@link mapApprovalStatusToApiListQuery}를 쓴다. */
 export function mapApprovalStatusToApiFilter(
   status?: ApplicantApprovalStatusKey
 ): string | undefined {
-  if (!status) return undefined
-  switch (status) {
-    case 'approved':
-      return 'APPROVED'
-    case 'rejected':
-      return 'REJECTED'
-    case 'cancelled':
-      return 'CANCELLED'
-    case 'pending':
-      return 'WAITING_REVIEW'
-    default:
-      return undefined
+  if (status === 'rejected') return undefined
+  if (status === 'pending') return 'WAITING_REVIEW'
+  return mapApprovalStatusToApiListQuery(status).status
+}
+
+function trimListQueryValue(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
+}
+
+function readUiApprovalStatusFilter(value: unknown): ApplicantApprovalStatusKey | undefined {
+  if (value === 'pending' || value === 'approved' || value === 'rejected' || value === 'cancelled') {
+    return value
   }
+  return undefined
+}
+
+export function buildGeneralOrganizationApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { organizationName?: string; teacherName?: string } {
+  const organizationName = trimListQueryValue(filters.organizationName)
+  const teacherName = trimListQueryValue(filters.teacherName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(organizationName ? { organizationName } : {}),
+    ...(teacherName ? { teacherName } : {}),
+  }
+}
+
+export function buildGeneralIndividualApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { keyword?: string } {
+  const keyword = trimListQueryValue(filters.applicantName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(keyword ? { keyword } : {}),
+  }
+}
+
+export function buildGeneralInstructorApplicationsApiQuery(
+  filters: Record<string, unknown> = {}
+): ApplicationApprovalApiListQuery & { keyword?: string } {
+  const keyword = trimListQueryValue(filters.instructorName)
+  return {
+    ...mapApprovalStatusToApiListQuery(readUiApprovalStatusFilter(filters.approvalStatus)),
+    ...(keyword ? { keyword } : {}),
+  }
+}
+
+export function serializeApplicationsApiQuery(query: Record<string, unknown>): string {
+  return JSON.stringify({
+    status: query.status ?? '',
+    statusGroup: query.statusGroup ?? '',
+    keyword: query.keyword ?? '',
+    organizationName: query.organizationName ?? '',
+    teacherName: query.teacherName ?? '',
+  })
 }
 
 /**

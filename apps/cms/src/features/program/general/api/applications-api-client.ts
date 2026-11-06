@@ -43,6 +43,8 @@ import type {
 
 export type ApplicationsListQuery = {
   status?: string
+  /** CMS 「신청 반려」 그룹. REJECTED + APPROVAL_CANCELLED. 단일 status=REJECTED와 구분 */
+  statusGroup?: 'APPLICATION_REJECTED' | string
   page?: number
   size?: number
   /** 봉사자명 등 부분 검색 (`GET …/volunteer-applications`) */
