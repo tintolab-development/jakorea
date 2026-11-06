@@ -60,7 +60,7 @@ function resolveRequestUrl(config: InternalAxiosRequestConfig): string {
   return config.url ?? raw
 }
 
-function isExcludedFromAutoRefresh(url?: string): boolean {
+function isExcludedFromBearerAuth(url?: string): boolean {
   if (!url) return false
   const path = url.split('?')[0] ?? url
   const prefix = adminAuthPaths.prefix
@@ -68,9 +68,15 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
     path.includes(`${prefix}/login`) ||
     path.includes(`${prefix}/refresh`) ||
     path.includes(`${prefix}/logout`) ||
-    path.includes(`${prefix}/activity`) ||
     path.includes(`${prefix}/mfa/`)
   )
+}
+
+/** Activity requires Bearer but must not trigger an automatic refresh on 401. */
+function isExcludedFromAutoRefresh(url?: string): boolean {
+  if (!url) return false
+  const path = url.split('?')[0] ?? url
+  return isExcludedFromBearerAuth(url) || path === `${adminAuthPaths.prefix}/activity`
 }
 
 function clearAuthorizationHeader(
@@ -331,7 +337,7 @@ axiosInstance.interceptors.request.use(
     config.baseURL = getApiBaseUrlForPath(config.url ?? '')
     const url = resolveRequestUrl(config)
 
-    if (retryable.skipAuth || isExcludedFromAutoRefresh(url)) {
+    if (retryable.skipAuth || isExcludedFromBearerAuth(url)) {
       config.headers = clearAuthorizationHeader(config.headers)
       return config
     }
