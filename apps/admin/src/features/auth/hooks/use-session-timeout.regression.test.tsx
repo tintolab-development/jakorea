@@ -1,6 +1,25 @@
 /** @vitest-environment jsdom */
-import { act, cleanup, renderHook } from '@testing-library/react'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mounted: { root: Root; container: HTMLDivElement }[] = []
+function renderHook<T>(callback: () => T) {
+  const result = { current: undefined as T }
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+  mounted.push({ root, container })
+  function Probe() { result.current = callback(); return null }
+  act(() => { root.render(<Probe />) })
+  return { result }
+}
+function cleanup() {
+  for (const { root, container } of mounted.splice(0)) {
+    act(() => { root.unmount() })
+    container.remove()
+  }
+}
 
 const sessionRequest = vi.hoisted(() => vi.fn())
 const activityRequest = vi.hoisted(() => vi.fn())
