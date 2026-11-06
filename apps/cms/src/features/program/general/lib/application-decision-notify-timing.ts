@@ -27,8 +27,23 @@ export type ScreeningNotifyFields = {
   scheduledAt?: string
 }
 
+/** 예약 발송 시각은 Asia/Seoul offset ISO-8601. UTC `Z` / date slice(0,10) 금지. */
 function toScheduledAtIso(manualNotifyAt?: Dayjs | null): string | undefined {
-  return manualNotifyAt?.toISOString()
+  if (manualNotifyAt == null) return undefined
+  const instant = manualNotifyAt.toDate()
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(instant)
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find(part => part.type === type)?.value ?? ''
+  return `${read('year')}-${read('month')}-${read('day')}T${read('hour')}:${read('minute')}:${read('second')}+09:00`
 }
 
 /**

@@ -443,6 +443,18 @@ export function resolveOrganizationApproveScheduleOptionsFromPreferred(
       // 클라이언트가 날짜·시간으로 다시 계산하거나 education-slots 응답에 의존하지 않는다.
       confirmableScheduleId = scheduleId
       sessionNo = round
+      if (!assignableById.has(scheduleId)) {
+        assignableById.set(scheduleId, {
+          scheduleId,
+          optionKey: `slot:${scheduleId}`,
+          label,
+          confirmableScheduleId: scheduleId,
+          assignable: true,
+          preferredRecord: false,
+          sessionNo,
+          round,
+        })
+      }
     } else if (periodMode) {
       // TT 상세 응답은 기간형이어도 서버가 실제 program_schedule 매칭을
       // 함께 제공한다. 이 경우 일반 PERIOD의 requested-schedule 행 대신
@@ -900,9 +912,13 @@ const ORGANIZATION_APPROVE_ERROR_FALLBACKS: Record<string, string> = {
   TRAINED_TEACHER_PREFERRED_SCHEDULE_NOT_SUPPORTED:
     '기간형 희망 일정 선택을 지원하지 않는 신청입니다. 신청 상세를 새로고침해 주세요.',
   TRAINED_TEACHER_PREFERRED_SCHEDULE_PERIOD_REQUIRED:
-    '기간형 프로그램에서만 희망 일정 순위를 선택할 수 있습니다.',
+    '기간형 교육받은 교사 신청만 희망 일정 순위로 확정할 수 있습니다.',
   TRAINED_TEACHER_PREFERRED_SCHEDULE_OUTSIDE_PERIOD:
     '선택한 희망 일정이 프로그램 교육 기간을 벗어났습니다. 신청 상세를 새로고침한 뒤 다시 시도해 주세요.',
+  TRAINED_TEACHER_PREFERRED_SCHEDULE_CONFLICT:
+    '승인 요청에 일정 선택 값이 함께 전달되었습니다. 희망 일정만 다시 선택해 주세요.',
+  TRAINED_TEACHER_PREFERRED_SCHEDULE_SUBMITTED_REQUIRED:
+    '제출된 신청만 승인할 수 있습니다. 목록을 새로고침한 후 다시 시도해 주세요.',
 }
 
 export function formatOrganizationApplicationApproveErrorMessage(error: unknown): string | null {
