@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { PaymentItemResponsePaymentItemType } from '@/shared/api/generated/settlement/schemas/paymentItemResponsePaymentItemType'
 import type { SettlementConfigResponse } from '@/shared/api/generated/settlement/schemas'
 import type { SettlementItemSettingRow } from '@/features/settlement-management/model/settlement-item-settings'
-import { mapPaymentItemToSettingDetail } from './map-settlement-config-item-detail'
+import {
+  mapPaymentItemToSettingDetail,
+  mapWageItemToSettingDetail,
+} from './map-settlement-config-item-detail'
 import { buildSettlementConfigUpdateRequest } from './map-settlement-config-detail-to-upsert'
 
 describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => {
@@ -213,10 +216,10 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
     })
     expect(dj).not.toHaveProperty('withholdingTaxRateDailyWorker')
     expect(dj).not.toHaveProperty('withholdingEarnedIncomeTaxCreditRate')
-    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
+    expect(body.deductionItems?.[0]?.itemName).toBe('원천징수')
   })
 
-  it('원천징수 PUT itemName은 화면 제목(API itemName)을 그대로 보낸다', () => {
+  it('원천징수 PUT itemName은 화면 제목과 달라도 API 값을 그대로 보낸다', () => {
     const config = {
       configName: 'current',
       deductionItems: [
@@ -261,7 +264,7 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
       { title: '원천징수세액', description: item.description }
     )
 
-    expect(body.deductionItems?.[0]?.itemName).toBe('원천징수세액')
+    expect(body.deductionItems?.[0]?.itemName).toBe('일용근로자 원천징수세액')
   })
 
   it('placeholder·불릿은 PUT JSON에 넣지 않는다', () => {
@@ -450,6 +453,52 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
     expect(dj.session1UniversityWon).toBe(0)
     expect(dj.session4UniversityWon).toBeUndefined()
     expect(dj).not.toHaveProperty('session4UniversityWon')
+  })
+
+  it('Gemini API 지급요건이 카탈로그와 다르면 PUT에도 API 원문을 넣는다', () => {
+    const apiQualification = '제미나이 프로그램에서 사용되는 강사 임금'
+    const apiRemark = '서버 비고'
+    const config = {
+      configName: 'current',
+      wageItems: [
+        {
+          id: 166106,
+          wageItemType: 'GEMINI',
+          name: '제미나이 강사비',
+          layout: 'gemini',
+          qualificationLines: ['Gemini 프로그램에서 사용되는 강사 임금'],
+          detailJson: JSON.stringify({
+            qualificationLines: [apiQualification],
+            remarkLines: [apiRemark],
+          }),
+          rateItems: [],
+        },
+      ],
+    } as SettlementConfigResponse
+    const item: SettlementItemSettingRow = {
+      id: 'w-166106',
+      apiItemId: 166106,
+      sectionKind: 'wage',
+      wageItemType: 'GEMINI',
+      title: '제미나이 강사비',
+      description: '',
+      iconKey: 'wage_gemini',
+    }
+    const detail = mapWageItemToSettingDetail(config.wageItems![0]!)
+
+    expect(detail.qualificationLines).toEqual([apiQualification])
+    expect(detail.remarkLines).toEqual([apiRemark])
+
+    const body = buildSettlementConfigUpdateRequest(config, item, detail, {
+      title: '제미나이 강사비',
+      description: '',
+    })
+    const wage = body.wageItems?.[0]
+    expect(wage?.qualificationLines).toEqual([apiQualification])
+    expect(wage?.remarkLines).toEqual([apiRemark])
+    const dj = JSON.parse(wage?.detailJson ?? '{}') as Record<string, unknown>
+    expect(dj.qualificationLines).toEqual([apiQualification])
+    expect(dj.remarkLines).toEqual([apiRemark])
   })
 
 })

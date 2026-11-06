@@ -144,7 +144,7 @@ export function mapSettlementConfigToSections(
   const deductionItems: SettlementItemSettingRow[] = (config.deductionItems ?? [])
     .filter(item => item.useYn !== false)
     .map(item => {
-      const name = item.itemName?.trim() || '공제 항목'
+      const name = item.itemName?.trim() || '공제 항목' // API itemName 패스스루
       const description = item.description?.trim()
       const isWithholding =
         item.layout === 'withholdingDailyWorker' ||

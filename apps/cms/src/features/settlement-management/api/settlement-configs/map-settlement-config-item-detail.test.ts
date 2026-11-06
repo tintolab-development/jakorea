@@ -154,6 +154,24 @@ describe('mapWageItemToSettingDetail', () => {
     expect(detail.geminiSession4UniversityWon).toBeNull()
   })
 
+  it('Gemini API 지급요건·비고가 카탈로그와 다르면 detailJson 원문을 쓴다', () => {
+    const detail = mapWageItemToSettingDetail({
+      id: 166106,
+      wageItemType: WageItemResponseWageItemType.GEMINI,
+      name: '제미나이 강사비',
+      layout: 'gemini',
+      qualificationLines: ['Gemini 프로그램에서 사용되는 강사 임금'],
+      remarkLines: ['카탈로그 비고'],
+      detailJson: JSON.stringify({
+        qualificationLines: ['제미나이 프로그램에서 사용되는 강사 임금'],
+        remarkLines: ['서버 비고'],
+      }),
+    })
+
+    expect(detail.qualificationLines).toEqual(['제미나이 프로그램에서 사용되는 강사 임금'])
+    expect(detail.remarkLines).toEqual(['서버 비고'])
+  })
+
   it('flat 필드가 있으면 카탈로그를 덮어쓰지 않는다', () => {
     const detail = mapWageItemToSettingDetail({
       wageItemType: WageItemResponseWageItemType.TIER1,

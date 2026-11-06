@@ -256,17 +256,18 @@ export function mapWageItemToSettingDetail(item: WageItemResponse): SettlementIt
     maxLimitWon,
     basicFeeWon: readNumber(detail.basicFeeWon),
     longDistanceFeeWon: readNumber(detail.longDistanceFeeWon),
+    // 임금: detailJson.qualificationLines / remarkLines 가 있으면 그대로 (카탈로그·top-level보다 우선)
     qualificationLines: firstLines(
-      item.qualificationLines,
-      extra.qualification_lines,
       detail.qualificationLines,
-      detail.qualification_lines
+      detail.qualification_lines,
+      item.qualificationLines,
+      extra.qualification_lines
     ),
     remarkLines: firstLines(
-      item.remarkLines,
-      extra.remark_lines,
       detail.remarkLines,
-      detail.remark_lines
+      detail.remark_lines,
+      item.remarkLines,
+      extra.remark_lines
     ),
     ...geminiSessionsFromWageItem(item, detail),
   }

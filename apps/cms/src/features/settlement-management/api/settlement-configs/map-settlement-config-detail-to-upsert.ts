@@ -68,10 +68,14 @@ function wageItemToUpsert(
   detail: SettlementItemSettingDetail,
   meta: { title: string; description: string; emojiOverride?: string | null }
 ): NonNullable<SettlementConfigUpdateRequest['wageItems']>[number] {
+  const qualificationLines = sanitizeSettlementConfigLines(detail.qualificationLines)
+  const remarkLines = sanitizeSettlementConfigLines(detail.remarkLines)
   const detailPatch: Record<string, unknown> = {
     compareKind: detail.compareKind,
     basicFeeWon: detail.basicFeeWon,
     longDistanceFeeWon: detail.longDistanceFeeWon,
+    qualificationLines,
+    remarkLines,
   }
   if (detail.layout === 'gemini') {
     // 자체 연수 → sessionNWon + rateItems. 대학생은 detailJson만(rateItems 단일). null 키는 생략(4차시 대학생 등).
@@ -119,8 +123,8 @@ function wageItemToUpsert(
     layout: item.layout,
     basisHours: detail.basisHours,
     maxLimitWon: detail.maxLimitWon ?? undefined,
-    qualificationLines: sanitizeSettlementConfigLines(detail.qualificationLines),
-    remarkLines: sanitizeSettlementConfigLines(detail.remarkLines),
+    qualificationLines,
+    remarkLines,
     description: meta.description,
     detailJson: (() => {
       const merged = mergeDetailJson(item.detailJson, detailPatch)
@@ -207,7 +211,7 @@ function deductionItemToUpsert(
 ): NonNullable<SettlementConfigUpdateRequest['deductionItems']>[number] {
   return {
     id: item.id,
-    itemName: meta.title,
+    itemName: item.itemName ?? '',
     deductionRate: item.deductionRate,
     deductionAmount: item.deductionAmount,
     useYn: item.useYn,
