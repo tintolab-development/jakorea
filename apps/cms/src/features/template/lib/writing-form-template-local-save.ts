@@ -47,6 +47,20 @@ function writeFile(file: LocalSaveFile): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(file))
 }
 
+/**
+ * overlay 인자를 생략하거나 빈 `{}`로 넘기면 기존 sidecar를 지우지 않는다.
+ * 명시 키가 있는 snapshot은 그 값으로 교체한다(빈 문자열·null·[] 유지).
+ */
+function nextPersistedOverlay(
+  incoming: Record<string, unknown> | undefined,
+  previous: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (incoming == null || Object.keys(incoming).length === 0) {
+    return previous != null ? cloneJson(previous) : undefined
+  }
+  return cloneJson({ ...(previous ?? {}), ...incoming })
+}
+
 /** QuotaExceededError / 용량 부족 — 임시저장 UI 실패 문구 분기용 */
 export function isLocalStorageQuotaExceededError(error: unknown): boolean {
   if (error == null || typeof error !== 'object') return false
@@ -82,14 +96,25 @@ export function persistWritingFormTemplateSave(args: {
   settingsJson?: Record<string, unknown>
 }): void {
   const file = readFile()
+  const previous = file.byTemplateId[args.templateId]
   file.byTemplateId[args.templateId] = {
     version: 1,
     templateId: args.templateId,
     savedAt: new Date().toISOString(),
     draft: cloneJson(normalizeWritingFormDraft(args.draft)),
-    overlay: args.overlay != null ? cloneJson(args.overlay) : undefined,
-    editorState: args.editorState != null ? cloneJson(args.editorState) : undefined,
-    settingsJson: args.settingsJson != null ? cloneJson(args.settingsJson) : undefined,
+    overlay: nextPersistedOverlay(args.overlay, previous?.overlay),
+    editorState:
+      args.editorState != null
+        ? cloneJson(args.editorState)
+        : previous?.editorState != null
+          ? cloneJson(previous.editorState)
+          : undefined,
+    settingsJson:
+      args.settingsJson != null
+        ? cloneJson(args.settingsJson)
+        : previous?.settingsJson != null
+          ? cloneJson(previous.settingsJson)
+          : undefined,
   }
   writeFile(file)
   if (typeof window !== 'undefined') {
