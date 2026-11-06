@@ -4,6 +4,7 @@
  */
 
 import { create } from 'zustand'
+import { readJwtSidClaim } from '@jakorea/domain/session'
 import type { User, LoginRequest } from '@/types/user'
 import type { MfaState } from '@/types/mfa'
 import {
@@ -470,6 +471,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       let token = localStorage.getItem(TOKEN_STORAGE_KEY)
       let expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
       const userStr = localStorage.getItem('auth_user')
+      const tokenAtStart = token
+      const sidAtStart = readJwtSidClaim(token)
+      const isCurrentLogin = () => Boolean(token) &&
+        localStorage.getItem(TOKEN_STORAGE_KEY) === token &&
+        localStorage.getItem('auth_user') === userStr &&
+        (sidAtStart ? readJwtSidClaim(token) === sidAtStart : token === tokenAtStart)
 
       if (!token || !expiresAt || !userStr) {
         set({ isAuthenticated: false, user: null, token: null, expiresAt: null })
@@ -485,15 +492,16 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           if (shouldRefreshAccessToken(expiryTime.getTime(), now.getTime())) {
             const refreshed = await get().refreshToken()
             if (!refreshed) {
-              get().logout()
+              if (isCurrentLogin()) get().logout()
               return
             }
             token = localStorage.getItem(TOKEN_STORAGE_KEY)
             expiresAt = localStorage.getItem(TOKEN_EXPIRY_KEY)
             if (!token || !expiresAt) {
-              get().logout()
+              if (!localStorage.getItem(TOKEN_STORAGE_KEY)) get().logout()
               return
             }
+            if (!isCurrentLogin()) return
             expiryTime = new Date(expiresAt)
           }
 
@@ -515,6 +523,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             }
           }
 
+          if (!isCurrentLogin()) return
           const commitSessionUser = (sessionUser: Omit<User, 'password'>) => {
             const normalizedUser = withSessionAdminRole(sessionUser)
             localStorage.setItem('auth_user', JSON.stringify(normalizedUser))
@@ -532,13 +541,14 @@ export const useAuthStore = create<AuthState>()((set, get) => {
             commitSessionUser(storedUser)
           } else {
             console.warn('User not found or inactive, logging out')
-            get().logout()
+            if (isCurrentLogin()) get().logout()
             return
           }
 
           await refreshAdminSessionFromMe()
         } catch (error) {
           console.error('Unexpected error in checkAuth:', error)
+          if (!isCurrentLogin()) return
           try {
             const storedUser = JSON.parse(userStr)
             if (storedUser && storedUser.isActive) {
@@ -552,10 +562,10 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               })
               await refreshAdminSessionFromMe()
             } else {
-              get().logout()
+              if (isCurrentLogin()) get().logout()
             }
           } catch {
-            get().logout()
+            if (isCurrentLogin()) get().logout()
           }
         } finally {
           set({ _isCheckingAuth: false, _checkAuthPromise: null })
