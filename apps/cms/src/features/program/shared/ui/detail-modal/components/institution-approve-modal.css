@@ -1,8 +1,14 @@
+.institution-approve-modal.teal-header-modal .teal-header-modal__body {
+  overflow-x: hidden;
+}
+
 .institution-approve-modal__schedule-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-top: 16px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .institution-approve-modal__schedule-chips {
@@ -20,6 +26,8 @@
   flex-direction: column;
   gap: 8px;
   border-radius: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .institution-approve-modal__assigned-tags {
@@ -50,11 +58,11 @@
 .institution-approve-modal .institution-approve-modal__schedule-cards {
   display: flex;
   flex-direction: column;
-  width: 540px;
   box-sizing: border-box;
-  display: flex;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 16px;
-  flex-direction: column;
   gap: 10px;
   align-self: stretch;
   border-radius: var(--Radius-12, 12px);

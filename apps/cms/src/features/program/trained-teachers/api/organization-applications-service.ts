@@ -1,11 +1,16 @@
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
-import type { OrganizationApplicationApprovePayload } from '@/features/program/general/api/applications-api-client'
+import type {
+  ApplicationDecisionCancelRequestWithNotification,
+  OrganizationApplicationApprovePayload,
+} from '@/features/program/general/api/applications-api-client'
+import type { ApplicationDecisionResponse } from '@/shared/api/generated/dashboard/schemas/applicationDecisionResponse'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapTrainedTeacherOrganizationApplicationToRow } from './organization-applications-adapters'
 import type { TrainedTeacherOrganizationDecisionResponse } from './trained-teacher-organization-approve-payload'
 import {
   approveTrainedTeacherOrganizationApplicationRemote,
+  cancelTrainedTeacherOrganizationApplicationApprovalRemote,
   fetchTrainedTeacherOrganizationApplicationRemote,
   fetchTrainedTeacherOrganizationApplicationsRemote,
   giveUpTrainedTeacherOrganizationApplicationRemote,
@@ -52,6 +57,19 @@ export async function approveTrainedTeacherOrganizationApplication(
 ): Promise<TrainedTeacherOrganizationDecisionResponse | undefined> {
   assertRemoteReady()
   return approveTrainedTeacherOrganizationApplicationRemote(programId, applicationId, payload)
+}
+
+export async function cancelTrainedTeacherOrganizationApplicationApproval(
+  programId: string,
+  applicationId: string,
+  payload: ApplicationDecisionCancelRequestWithNotification
+): Promise<ApplicationDecisionResponse> {
+  assertRemoteReady()
+  return cancelTrainedTeacherOrganizationApplicationApprovalRemote(
+    programId,
+    applicationId,
+    payload
+  )
 }
 
 export async function rejectTrainedTeacherOrganizationApplication(

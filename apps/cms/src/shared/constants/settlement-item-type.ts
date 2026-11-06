@@ -1,16 +1,23 @@
 import type { SettlementItemType } from '@/types/domain'
 
-/** 정산 설정 공제 항목의 Figma/API canonical label. */
-export const SETTLEMENT_WITHHOLDING_ITEM_LABEL = '원천징수세액' as const
-export const LEGACY_SETTLEMENT_WITHHOLDING_ITEM_LABEL = '일용근로자 원천징수세액' as const
+/** 정산 설정 공제 항목 — BE 시드 canonical itemName (layout=withholdingDailyWorker로 식별). */
+export const SETTLEMENT_WITHHOLDING_ITEM_LABEL = '일용근로자 원천징수세액' as const
+/** UI/구 시드 짧은 표기 — normalize 시 canonical로 올림 */
+export const SHORT_SETTLEMENT_WITHHOLDING_ITEM_LABEL = '원천징수세액' as const
+/** @deprecated SHORT와 동일. 기존 import 호환 */
+export const LEGACY_SETTLEMENT_WITHHOLDING_ITEM_LABEL = SHORT_SETTLEMENT_WITHHOLDING_ITEM_LABEL
 
 export function normalizeSettlementWithholdingItemLabel(value: string | undefined): string | undefined {
   if (value == null) return undefined
   const trimmed = value.trim()
   if (!trimmed) return ''
-  return trimmed === LEGACY_SETTLEMENT_WITHHOLDING_ITEM_LABEL
-    ? SETTLEMENT_WITHHOLDING_ITEM_LABEL
-    : trimmed
+  if (
+    trimmed === SHORT_SETTLEMENT_WITHHOLDING_ITEM_LABEL ||
+    trimmed === SETTLEMENT_WITHHOLDING_ITEM_LABEL
+  ) {
+    return SETTLEMENT_WITHHOLDING_ITEM_LABEL
+  }
+  return trimmed
 }
 
 /** `SettlementFrontendItemResponse.type` / 정산 항목 enum → 화면 라벨 */

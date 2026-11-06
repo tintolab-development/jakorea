@@ -133,18 +133,6 @@ export const programTrainedTeachersRecruitmentSaveSchema = programParticipantRec
     educationTargetDetail: requiredText('교육 대상 상세를 입력해주세요'),
     resultAnnouncementDate: requiredText('합격자 발표일을 선택해주세요'),
     resultAnnouncementMethod: requiredText('발표 방법을 입력해주세요'),
-    recruitmentContactOrganizationName: requiredText('문의처를 입력해주세요'),
-    contactPhone: z.preprocess(
-      emptyToUndefined,
-      z
-        .string({ required_error: '문의처 전화번호를 입력해주세요' })
-        .min(1, '문의처 전화번호를 입력해주세요')
-        .refine(
-          value => isValidKoreanPhoneNumber(value),
-          '올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)'
-        )
-    ),
-    contactEmail: requiredText('문의처 이메일을 입력해주세요'),
     remarks: requiredText('비고를 입력해주세요'),
   })
   .superRefine((values, ctx) => {

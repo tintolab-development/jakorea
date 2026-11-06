@@ -240,6 +240,8 @@ describe('InstitutionApproveModal schedule sources', () => {
         ],
       },
       educationScheduleMode: 'date',
+      isTrainedTeacherProgram: true,
+      applicationStatus: 'SUBMITTED',
       educationStructure: 'curriculum',
       sessionRound: 'single',
     })
@@ -248,7 +250,7 @@ describe('InstitutionApproveModal schedule sources', () => {
     const choice = await screen.findByRole('button', {
       name: /2026\.\s*04\.\s*20\(월\) 09:30 ~ 12:20/,
     })
-    expect(screen.getByText('2차시')).toBeTruthy()
+    expect(screen.queryByText('2차시')).toBeNull()
     expect((choice as HTMLButtonElement).disabled).toBe(false)
     fireEvent.click(choice)
     await waitFor(() => expect(choice.getAttribute('aria-pressed')).toBe('true'))
@@ -257,6 +259,45 @@ describe('InstitutionApproveModal schedule sources', () => {
     fireEvent.click(approve)
     await waitFor(() => expect(onConfirm).toHaveBeenCalled())
     expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ selectedScheduleId: 187134 })
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('preferredScheduleRank')
+  })
+
+  it('교육받은 교사 날짜형은 education-slots가 비어도 MATCHED scheduleId로 승인한다', async () => {
+    fetchSlots.mockResolvedValue([])
+    const { onConfirm } = renderModal({
+      scheduleConfig: {
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 1,
+            date: '2026-04-20',
+            dayOfWeek: '월',
+            sessionCount: 1,
+            sessionTimes: [],
+            scheduleId: 187702,
+            startAt: '2026-04-20T00:30:00Z',
+            endAt: '2026-04-20T03:20:00Z',
+            round: null,
+            label: '2026.04.20(월) 09:30 ~ 12:20',
+            scheduleStatus: 'MATCHED',
+          },
+        ],
+      },
+      educationScheduleMode: 'date',
+      isTrainedTeacherProgram: true,
+      applicationStatus: 'SUBMITTED',
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+    })
+
+    const choice = await screen.findByRole('button', {
+      name: /2026\.\s*04\.\s*20\(월\) 09:30 ~ 12:20/,
+    })
+    fireEvent.click(choice)
+    fireEvent.click(screen.getByRole('button', { name: '승인' }))
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ selectedScheduleId: 187702 })
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('preferredScheduleRank')
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
   })
 
   it('교육받은 교사 기간형도 매칭된 일정 id를 선택 확정한다', async () => {

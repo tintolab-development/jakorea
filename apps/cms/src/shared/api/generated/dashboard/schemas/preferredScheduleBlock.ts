@@ -5,12 +5,14 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { PreferredScheduleBlockDayOfWeek } from './preferredScheduleBlockDayOfWeek';
+import type { PreferredScheduleBlockScheduleStatus } from './preferredScheduleBlockScheduleStatus';
 import type { PreferredScheduleSessionTime } from './preferredScheduleSessionTime';
 
 export interface PreferredScheduleBlock {
   preferenceRank?: number;
   date?: string;
-  dayOfWeek?: string;
+  dayOfWeek?: PreferredScheduleBlockDayOfWeek;
   sessionCount?: number;
   sessionTimes?: PreferredScheduleSessionTime[];
   /** 실제 program_schedule.id. 매핑되지 않은 legacy/삭제 일정은 null. */
@@ -24,5 +26,5 @@ export interface PreferredScheduleBlock {
   /** 실제 일정명 또는 회차 라벨. */
   label?: string | null;
   /** MATCHED | UNMATCHED | INACTIVE_OR_DELETED. */
-  scheduleStatus?: string | null;
+  scheduleStatus?: PreferredScheduleBlockScheduleStatus;
 }

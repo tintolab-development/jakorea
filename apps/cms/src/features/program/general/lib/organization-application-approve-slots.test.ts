@@ -684,6 +684,26 @@ describe('period organization approval does not use date-slot mapping', () => {
     expect(date.options[0]?.assignmentNote).toContain('연결되지 않은')
   })
 
+  it('교육받은 교사 MATCHED scheduleId는 education-slots가 비어도 배정 후보가 된다', () => {
+    const result = resolveOrganizationApproveScheduleOptionsFromPreferred(
+      [
+        {
+          scheduleId: 187702,
+          label: '2026.04.20(월) 09:30 ~ 12:20',
+          scheduleStatus: 'MATCHED',
+        },
+      ],
+      [],
+      'date',
+      null,
+      true,
+      true,
+      true
+    )
+    expect(result.options[0]?.confirmableScheduleId).toBe(187702)
+    expect(result.assignableOptions.map(option => option.confirmableScheduleId)).toEqual([187702])
+  })
+
   it('복수 회차와 기간 지정 최대 일정 2개 이상은 여러 일정 배정 문구를 쓴다', () => {
     expect(
       organizationEducationScheduleAssignmentHint({

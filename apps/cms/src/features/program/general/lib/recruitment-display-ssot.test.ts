@@ -226,19 +226,115 @@ describe('모집 정보 display — 공통정보 폴백 금지', () => {
     expect(display.operationPeriodLabel).not.toContain('11. 11')
   })
 
-  it('교육받은 교사 — nested 라벨이 없으면 컬럼으로 조회를 복원한다', () => {
+  it('교육받은 교사 — 프로그램 컬럼만 있으면 대상·기간·문의처는 -', () => {
     const program: Program = {
       ...commonOnlyProgram(),
       id: '186005',
+      backendProgramType: 'TRAINED_TEACHER',
       generalParticipantTypes: ['school_institution'],
       generalProgramAudience: 'organization',
     }
     const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
-    expect(display.targetLabel).toBe('초등학교')
-    expect(display.recruitmentPeriodLabel).not.toBe('-')
-    expect(display.operationPeriodLabel).not.toBe('-')
-    expect(display.contactPhone).toBe('02-0000-0000')
-    expect(display.contactEmail).toBe('common@jakorea.org')
+    expect(display.targetLabel).toBe('-')
+    expect(display.targetDetailLabel).toBe('-')
+    expect(display.recruitmentPeriodLabel).toBe('-')
+    expect(display.operationPeriodLabel).toBe('-')
+    expect(display.contactOrganizationName).toBe('-')
+    expect(display.contactPhone).toBe('-')
+    expect(display.contactEmail).toBe('-')
+  })
+
+  it('교육받은 교사 — 모집 행 문의처가 있으면 nested·컬럼과 달라도 행을 표시한다', () => {
+    const program: Program = {
+      ...commonOnlyProgram(),
+      id: '186546',
+      backendProgramType: 'TRAINED_TEACHER',
+      contactName: '컬럼담당',
+      contactPhone: '02-0000-0000',
+      contactEmail: 'column@jakorea.org',
+      generalParticipantTypes: ['school_institution'],
+      programRecruitments: [
+        {
+          id: 187105,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          startAt: '2026-11-30T15:00:00Z',
+          endAt: '2026-12-13T15:00:00Z',
+          operationStartDate: '2026-11-28',
+          operationEndDate: '2026-12-31',
+          contactName: '이하은',
+          contactPhone: '031-234-5678',
+          contactEmail: 'recruit@jakorea.org',
+          remarks: '일정은 학교 사정에 따라 조율할 수 있습니다.',
+          applicationFormBindingId: 190427,
+        },
+      ],
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: 'nested담당',
+          inquiryTel: '02-111-1111',
+          inquiryEmail: 'nested@jakorea.org',
+          operationPeriodLabel: '2026.12.01(화) ~ 2026.12.30(수)',
+          recruitmentPeriodLabel: '잘못된 라벨',
+        },
+      },
+    }
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
+    expect(display.contactOrganizationName).toBe('이하은')
+    expect(display.contactPhone).toBe('031-234-5678')
+    expect(display.contactEmail).toBe('recruit@jakorea.org')
+    expect(display.operationPeriodLabel).toContain('2026.11.28')
+    expect(display.operationPeriodLabel).toContain('2026.12.31')
+    expect(display.operationPeriodLabel).not.toContain('12.30')
+    expect(display.recruitmentPeriodLabel).toContain('2026.12.01')
+    expect(display.recruitmentPeriodLabel).toContain('2026.12.14')
+  })
+
+  it('교육받은 교사 — 모집 행 문의처가 null이면 nested·컬럼으로 채우지 않는다', () => {
+    const program: Program = {
+      ...commonOnlyProgram(),
+      id: '186546',
+      backendProgramType: 'TRAINED_TEACHER',
+      contactName: '이하은',
+      contactPhone: '031-234-5678',
+      contactEmail: 'recruit@jakorea.org',
+      remarks: '컬럼 비고',
+      generalParticipantTypes: ['school_institution'],
+      programRecruitments: [
+        {
+          id: 187105,
+          recruitmentType: 'PARTICIPANT',
+          applicationType: 'ORGANIZATION',
+          startAt: '2026-11-30T15:00:00Z',
+          endAt: '2026-12-13T15:00:00Z',
+          operationStartDate: '2026-11-28',
+          operationEndDate: '2026-12-31',
+          contactName: null,
+          contactPhone: null,
+          contactEmail: null,
+          remarks: '일정은 학교 사정에 따라 조율할 수 있습니다.',
+        },
+      ],
+      generalCommonInfo: {
+        participantRecruitmentInfo: {
+          contactOrganizationName: '이하은',
+          inquiryTel: '031-234-5678',
+          inquiryEmail: 'recruit@jakorea.org',
+          remarks: 'nested 비고',
+          operationPeriodLabel: '2026.12.01(화) ~ 2026.12.30(수)',
+          recruitmentPeriodLabel: '2026.12.01(화) ~ 2026.12.14(월)',
+        },
+      },
+    }
+    const display = resolveGeneralProgramParticipantRecruitmentDisplay(program)
+    expect(display.contactOrganizationName).toBe('-')
+    expect(display.contactPhone).toBe('-')
+    expect(display.contactEmail).toBe('-')
+    expect(display.notes).toBe('일정은 학교 사정에 따라 조율할 수 있습니다.')
+    expect(display.operationPeriodLabel).toContain('2026.11.28')
+    expect(display.operationPeriodLabel).toContain('2026.12.31')
+    expect(display.operationPeriodLabel).not.toContain('12.01')
+    expect(display.recruitmentPeriodLabel).toContain('2026.12.01')
   })
 
   it('모집 행 문구는 nested RecruitmentInfo만 쓰고 공통 Program 필드로 채우지 않는다', () => {

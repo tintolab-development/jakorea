@@ -193,22 +193,25 @@ describe('buildSettlementConfigUpdateRequest payment evidenceRequiredYn', () => 
         remarkLines: [],
         withholdingEarnedIncomeDeductionWon: 100_000,
         withholdingExclusionMaxWon: 1_000,
-        withholdingTaxRateDailyWorker: 6,
         withholdingTaxRateBusiness: 3.3,
         withholdingTaxRateOther: 0.06,
-        withholdingEarnedIncomeTaxCreditRate: 55,
+        withholdingTaxRatePrize: 4.4,
+        withholdingTaxRateInterview: 22,
       },
-      { title: '원천징수', description: '' }
+      { title: '일용근로자 원천징수세액', description: '' }
     )
 
     expect(body.earnedIncomeDeduction).toBe(100_000)
     expect(body.smallTaxExemptionThreshold).toBe(1_000)
-    expect(JSON.parse(body.deductionItems?.[0]?.detailJson ?? '{}')).toMatchObject({
+    const dj = JSON.parse(body.deductionItems?.[0]?.detailJson ?? '{}') as Record<string, unknown>
+    expect(dj).toMatchObject({
       legacyField: 'keep-on-update',
-      withholdingTaxRateDailyWorker: 6,
       withholdingTaxRateBusiness: 3.3,
       withholdingTaxRateOther: 0.06,
-      withholdingEarnedIncomeTaxCreditRate: 55,
+      withholdingTaxRatePrize: 4.4,
+      withholdingTaxRateInterview: 22,
     })
+    expect(dj).not.toHaveProperty('withholdingTaxRateDailyWorker')
+    expect(dj).not.toHaveProperty('withholdingEarnedIncomeTaxCreditRate')
   })
 })

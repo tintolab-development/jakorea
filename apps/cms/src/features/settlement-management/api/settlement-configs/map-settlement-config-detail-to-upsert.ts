@@ -14,6 +14,19 @@ import type {
   WageItemResponse,
 } from '@/shared/api/generated/settlement/schemas'
 
+function stripDeprecatedWithholdingKeys(json: string): string {
+  try {
+    const parsed: unknown = JSON.parse(json)
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return json
+    const obj = { ...(parsed as Record<string, unknown>) }
+    delete obj.withholdingTaxRateDailyWorker
+    delete obj.withholdingEarnedIncomeTaxCreditRate
+    return JSON.stringify(obj)
+  } catch {
+    return json
+  }
+}
+
 function mergeDetailJson(existing: string | undefined, patch: Record<string, unknown>): string {
   let base: Record<string, unknown> = {}
   if (existing?.trim()) {
@@ -59,10 +72,23 @@ function wageItemToUpsert(
     longDistanceFeeWon: detail.longDistanceFeeWon,
   }
   if (detail.layout === 'gemini') {
+    // 자체 연수 → sessionNWon + rateItems. 대학생은 detailJson만(rateItems 단일). null 키는 생략(4차시 대학생 등).
     detailPatch.session1Won = detail.geminiSession1Won ?? 0
     detailPatch.session2Won = detail.geminiSession2Won
     detailPatch.session3Won = detail.geminiSession3Won
     detailPatch.session4Won = detail.geminiSession4Won
+    if (detail.geminiSession1UniversityWon != null) {
+      detailPatch.session1UniversityWon = detail.geminiSession1UniversityWon
+    }
+    if (detail.geminiSession2UniversityWon != null) {
+      detailPatch.session2UniversityWon = detail.geminiSession2UniversityWon
+    }
+    if (detail.geminiSession3UniversityWon != null) {
+      detailPatch.session3UniversityWon = detail.geminiSession3UniversityWon
+    }
+    if (detail.geminiSession4UniversityWon != null) {
+      detailPatch.session4UniversityWon = detail.geminiSession4UniversityWon
+    }
   }
 
   const rateItems =
@@ -94,7 +120,28 @@ function wageItemToUpsert(
     qualificationLines: detail.qualificationLines,
     remarkLines: detail.remarkLines,
     description: meta.description,
-    detailJson: mergeDetailJson(item.detailJson, detailPatch),
+    detailJson: (() => {
+      const merged = mergeDetailJson(item.detailJson, detailPatch)
+      if (detail.layout !== 'gemini') return merged
+      try {
+        const obj = JSON.parse(merged) as Record<string, unknown>
+        for (const key of [
+          'session1UniversityWon',
+          'session2UniversityWon',
+          'session3UniversityWon',
+          'session4UniversityWon',
+          'session1CollegeWon',
+          'session2CollegeWon',
+          'session3CollegeWon',
+          'session4CollegeWon',
+        ]) {
+          if (obj[key] == null) delete obj[key]
+        }
+        return JSON.stringify(obj)
+      } catch {
+        return merged
+      }
+    })(),
     rateItems,
   }
 }
@@ -104,6 +151,14 @@ function paymentItemToUpsert(
   detail: SettlementItemSettingDetail,
   meta: { title: string; description: string; emojiOverride?: string | null }
 ): NonNullable<SettlementConfigUpdateRequest['paymentItems']>[number] {
+  const isActivity = item.paymentItemType === 'ACTIVITY' || detail.layout === 'activity'
+  const isLodging1c1s = item.paymentItemType === 'LODGING_1C1S'
+  const wireLayout = isActivity
+    ? 'activity'
+    : detail.layout === 'volunteerActivity'
+      ? 'activity'
+      : (item.layout ?? detail.layout)
+
   const detailPatch: Record<string, unknown> = {
     evidenceSubmission: detail.evidenceSubmission,
     qualificationLines: detail.qualificationLines,
@@ -111,12 +166,17 @@ function paymentItemToUpsert(
   }
   if (detail.layout === 'transport') {
     detailPatch.transportCommuteMode = detail.transportCommuteMode
-    detailPatch.minDistanceKm = detail.basisHours
+    // dual-write; canonical read is minOneWayKm
     detailPatch.minOneWayKm = detail.basisHours
+    detailPatch.minDistanceKm = detail.basisHours
   }
   if (detail.layout === 'lodging') {
     detailPatch.basisUnit = detail.basisUnit
     detailPatch.basisHours = detail.basisHours
+  }
+  if (isLodging1c1s && detail.maxLimitWon != null) {
+    // BE seed 정본: fixedAmountWon (UI 라벨 지급액)
+    detailPatch.fixedAmountWon = detail.maxLimitWon
   }
 
   return {
@@ -125,14 +185,14 @@ function paymentItemToUpsert(
     itemName: meta.title,
     maxAmount: detail.maxLimitWon ?? item.maxAmount,
     maxLimitWon: detail.maxLimitWon ?? undefined,
-    taxableYn: item.taxableYn,
+    taxableYn: isLodging1c1s ? true : item.taxableYn,
     evidenceRequiredYn: evidenceRequiredYnFromSubmission(detail.evidenceSubmission) as NonNullable<
       SettlementConfigUpdateRequest['paymentItems']
     >[number]['evidenceRequiredYn'],
     useYn: item.useYn,
     iconKey: item.iconKey,
     emojiOverride: meta.emojiOverride ?? item.emojiOverride,
-    layout: item.layout ?? detail.layout,
+    layout: wireLayout,
     description: meta.description,
     detailJson: mergeDetailJson(item.detailJson, detailPatch),
   }
@@ -153,18 +213,18 @@ function deductionItemToUpsert(
     emojiOverride: meta.emojiOverride ?? item.emojiOverride,
     layout: item.layout ?? detail.layout,
     description: meta.description,
-    detailJson: mergeDetailJson(item.detailJson, {
-      qualificationLines: detail.qualificationLines,
-      remarkLines: detail.remarkLines,
-      withholdingExclusionMaxWon: detail.withholdingExclusionMaxWon,
-      withholdingEarnedIncomeDeductionWon: detail.withholdingEarnedIncomeDeductionWon,
-      withholdingTaxRateDailyWorker: detail.withholdingTaxRateDailyWorker,
-      withholdingTaxRateBusiness: detail.withholdingTaxRateBusiness,
-      withholdingTaxRateOther: detail.withholdingTaxRateOther,
-      withholdingTaxRatePrize: detail.withholdingTaxRatePrize,
-      withholdingTaxRateInterview: detail.withholdingTaxRateInterview,
-      withholdingEarnedIncomeTaxCreditRate: detail.withholdingEarnedIncomeTaxCreditRate,
-    }),
+    detailJson: stripDeprecatedWithholdingKeys(
+      mergeDetailJson(item.detailJson, {
+        qualificationLines: detail.qualificationLines,
+        remarkLines: detail.remarkLines,
+        withholdingExclusionMaxWon: detail.withholdingExclusionMaxWon,
+        withholdingEarnedIncomeDeductionWon: detail.withholdingEarnedIncomeDeductionWon,
+        withholdingTaxRateBusiness: detail.withholdingTaxRateBusiness,
+        withholdingTaxRateOther: detail.withholdingTaxRateOther,
+        withholdingTaxRatePrize: detail.withholdingTaxRatePrize,
+        withholdingTaxRateInterview: detail.withholdingTaxRateInterview,
+      })
+    ),
   }
 }
 

@@ -1,8 +1,8 @@
 /**
  * 일반 프로그램 상세 — 참여자 모집 정보 표시값
- * SSOT: serviceDetailJson.generalCommonInfo.participantRecruitmentInfo (모집 양식)
- * 일반·1사1교: 교육 대상 / 모집 기간 / 문의처 — 공통정보 Program 폴백 없음. 빈값 '-'
- * 교육받은 교사: nested 라벨이 없으면 컬럼(applicationStartDate 등)으로 조회 복원
+ * GET `recruitments[]` 가 있으면 모집기간·운영기간·문의처는 그 행만.
+ * 행 필드가 null이면 nested·프로그램 컬럼으로 채우지 않고 `-`.
+ * 행이 없을 때만 nested participantRecruitmentInfo. 공통정보 Program 폴백 없음.
  */
 
 import {
@@ -15,15 +15,11 @@ import {
   resolveAnnouncement,
 } from '@/features/program/shared/lib/announcement-label'
 import {
-  formatDateRange,
-  formatTargetLevelsLabel,
   getParticipantRecruitmentStatus,
   getParticipantRecruitmentLifecycle,
   getRecruitmentStatusLabelForStatus,
-  resolveProgramTargetLevels,
 } from '@/features/program/shared/lib/program-detail-info-constants'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
-import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 import {
   buildInstitutionApplicationRecruitLimitVisibilityBridge,
   getInstitutionApplicationProgramBridge,
@@ -298,45 +294,27 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     labelBool(info?.announcementPublished, '게시', '미게시')
   )
 
-  /** 일반·1사1교: 모집 양식만. 교육받은 교사: nested 라벨이 비면 컬럼 폴백(저장 라운드트립) */
-  const isTrainedTeachers = isTrainedTeachersDetailProgram(program)
-  const targetFromLevels = formatTargetLevelsLabel(resolveProgramTargetLevels(program))
-  const targetLabel = pickDisplayString(
-    info?.educationTarget,
-    info?.recruitmentTarget,
-    isTrainedTeachers && targetFromLevels !== '-' ? targetFromLevels : undefined
-  )
+  const targetLabel = pickDisplayString(info?.educationTarget, info?.recruitmentTarget)
   const targetDetailLabel = pickDisplayString(
     info?.educationTargetDetail,
-    info?.recruitmentTargetDetail,
-    isTrainedTeachers ? program.educationTargetDetail : undefined
+    info?.recruitmentTargetDetail
   )
 
   const notes = info?.notesNotApplicable
     ? '-'
     : pickDisplayString(
-        info?.remarks,
-        isTrainedTeachers || isCompanySchoolProgram(program) ? program.remarks : undefined
+        useRow ? row?.remarks : undefined,
+        useRow ? undefined : info?.remarks,
+        !useRow && isCompanySchoolProgram(program) ? program.remarks : undefined
       )
 
-  // 모집 행에 문의처가 있으면 행 우선. 행이 비어 있으면 nested·컬럼으로 복원
-  // (등록 CREATE가 행에 문의처를 못 실었던 구간 호환 + TT 컬럼 폴백).
   const rowContactName = row?.contactName?.trim() || undefined
   const rowContactPhone = row?.contactPhone?.trim() || undefined
   const rowContactEmail = row?.contactEmail?.trim() || undefined
   const contactOrganizationName = formatRecruitmentInquiryContactName(
-    rowContactName ??
-      info?.contactOrganizationName ??
-      (isTrainedTeachers ? program.contactName : undefined),
-    rowContactName ? undefined : info?.contactName
+    useRow ? rowContactName : (rowContactName ?? info?.contactOrganizationName),
+    useRow ? undefined : rowContactName ? undefined : info?.contactName
   )
-
-  const operationFromProgram = isTrainedTeachers
-    ? formatDateRange(program.startDate, program.endDate)
-    : undefined
-  const recruitmentFromProgram = isTrainedTeachers
-    ? formatDateRange(program.applicationStartDate, program.applicationEndDate)
-    : undefined
 
   return {
     interviewEnabledLabel,
@@ -354,10 +332,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     operationPeriodLabel: pickDisplayString(
       operationPeriodLabelFromWindow(row),
       audienceOperationPeriodLabelFromRecruitmentRow(program, 'participant'),
-      useRow ? undefined : info?.operationPeriodLabel,
-      !useRow && operationFromProgram && operationFromProgram !== '-'
-        ? operationFromProgram
-        : undefined
+      useRow ? undefined : info?.operationPeriodLabel
     ),
     recruitmentStatusLabel: getRecruitmentStatusLabelForStatus(recruitmentStatus, 'participant'),
     recruitmentStatusLifecycle: lifecycle,
@@ -365,10 +340,7 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     targetDetailLabel,
     recruitmentPeriodLabel: pickDisplayString(
       recruitmentPeriodLabelFromWindow(row),
-      useRow ? undefined : info?.recruitmentPeriodLabel,
-      !useRow && recruitmentFromProgram && recruitmentFromProgram !== '-'
-        ? recruitmentFromProgram
-        : undefined
+      useRow ? undefined : info?.recruitmentPeriodLabel
     ),
     documentPassAnnouncementDate: program.documentPassAnnouncementDate,
     documentPassAnnouncementMethod: program.documentPassAnnouncementMethod,
@@ -382,18 +354,16 @@ export function resolveGeneralProgramParticipantRecruitmentDisplay(
     contactPhone: formatRecruitmentInquiryPhone(
       pickDisplayString(
         rowContactPhone,
-        rowContactPhone ? undefined : info?.inquiryTel,
-        rowContactPhone ? undefined : info?.tel,
-        rowContactPhone ? undefined : info?.contactPhone,
-        !rowContactPhone && isTrainedTeachers ? program.contactPhone : undefined
+        useRow || rowContactPhone
+          ? undefined
+          : (info?.inquiryTel ?? info?.tel ?? info?.contactPhone)
       )
     ),
     contactEmail: pickDisplayString(
       rowContactEmail,
-      rowContactEmail ? undefined : info?.inquiryEmail,
-      rowContactEmail ? undefined : info?.email,
-      rowContactEmail ? undefined : info?.contactEmail,
-      !rowContactEmail && isTrainedTeachers ? program.contactEmail : undefined
+      useRow || rowContactEmail
+        ? undefined
+        : (info?.inquiryEmail ?? info?.email ?? info?.contactEmail)
     ),
     notes,
   }

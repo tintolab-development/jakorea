@@ -93,7 +93,11 @@ export function readActiveTrainedTeachersRecruitmentOverlayValue(
   const current = api
   if (current == null || !isTrainedTeachersRecruitmentOverlayKey(key)) return defaultValue
   const raw = readTrainedTeachersRecruitmentOverlayValue(current.getValues().recruitment, key)
-  return raw === undefined ? defaultValue : raw
+  if (raw === undefined) {
+    if (typeof defaultValue === 'number') return undefined
+    return defaultValue
+  }
+  return raw
 }
 
 export function peekActiveTrainedTeachersRecruitmentOverlayRecord(): Record<string, unknown> | null {
@@ -109,12 +113,10 @@ export function patchActiveTrainedTeachersRecruitmentOverlay(
   const { recruitment, rest } = splitTrainedTeachersRecruitmentOverlay(partial)
   if (Object.keys(recruitment).length === 0) return partial
   const values = api.getValues()
-  api.reset(
-    {
-      ...values,
-      recruitment: applyTrainedTeachersRecruitmentOverlayRecord(values.recruitment, recruitment),
-    },
-    { keepDefaultValues: true }
+  api.setPath(
+    'recruitment',
+    applyTrainedTeachersRecruitmentOverlayRecord(values.recruitment, recruitment),
+    { shouldDirty: true }
   )
   return rest
 }

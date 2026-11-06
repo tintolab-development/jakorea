@@ -1,12 +1,16 @@
 import { useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ApplicantSchoolRow } from '@/features/program/shared/model/applicant-institution'
-import type { OrganizationApplicationApprovePayload } from '@/features/program/general/api/applications-api-client'
+import type {
+  ApplicationDecisionCancelRequestWithNotification,
+  OrganizationApplicationApprovePayload,
+} from '@/features/program/general/api/applications-api-client'
 import type { ApplicationRejectRequest } from '@/shared/api/generated/dashboard/schemas/applicationRejectRequest'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { trainedTeacherQueryKeys } from './query-keys'
 import {
   approveTrainedTeacherOrganizationApplication,
+  cancelTrainedTeacherOrganizationApplicationApproval,
   listTrainedTeacherOrganizationApplications,
   rejectTrainedTeacherOrganizationApplication,
   resendTrainedTeacherOrganizationApplicationNotification,
@@ -100,6 +104,11 @@ export function useTrainedTeacherOrganizationApplicationsRemoteSync({
       approveTrainedTeacherOrganizationApplication(programId!, applicationId, payload),
     rejectOrganization: (applicationId: string, payload: ApplicationRejectRequest) =>
       rejectTrainedTeacherOrganizationApplication(programId!, applicationId, payload),
+    cancelOrganizationApproval: (
+      applicationId: string,
+      payload: ApplicationDecisionCancelRequestWithNotification
+    ) =>
+      cancelTrainedTeacherOrganizationApplicationApproval(programId!, applicationId, payload),
     resendOrganizationNotification: (
       applicationId: string,
       payload: {

@@ -31,6 +31,9 @@ export function emptyTrainedTeachersRecruitFormState(): TrainedTeachersRecruitFo
   return {
     announcementPublished: '',
     studentListRequired: '',
+    maxClassCount: null,
+    maxScheduleCount: null,
+    maxSessionsPerDay: null,
     programAnchorIso: null,
     programRangeSeal: null,
     recruitAnchorIso: null,
@@ -122,6 +125,13 @@ function asOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined
 }
 
+function asNullableNumber(value: unknown): number | null {
+  if (value == null || value === '') return null
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   return value.map(item => String(item).trim()).filter(Boolean)
@@ -189,7 +199,7 @@ export function writeTrainedTeachersRecruitmentOverlayValue(
   const field = INSTITUTION_FIELD_BY_KEY[key]
   if (field == null) return next
   if (field === 'maxClassCount' || field === 'maxScheduleCount' || field === 'maxSessionsPerDay') {
-    next[field] = asOptionalNumber(value)
+    next[field] = asNullableNumber(value)
     return next
   }
   if (field === 'targetLevels') {

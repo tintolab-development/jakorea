@@ -172,7 +172,7 @@ function clampKpiDraftValue(value: number | null | undefined): number | undefine
 export function seedDraft(
   commonInfo: TrainedTeachersCommonInfo,
   educatedTeachers: number | undefined,
-  totals: { totalParticipants?: number; participatingSchoolCount?: number } | undefined,
+  _totals: { totalParticipants?: number; participatingSchoolCount?: number } | undefined,
   _typeFields: {
     educationStructure: 'curriculum' | 'schedule'
     sessionRound: 'single' | 'multi'
@@ -189,13 +189,9 @@ export function seedDraft(
   )
   const maxGroupCount = Math.max(1, ...parsedGroups.map(groups => groups.length))
   return {
-    kpiFinalParticipants: clampKpiDraftValue(
-      commonInfo.kpi?.finalParticipants ?? totals?.totalParticipants
-    ),
+    kpiFinalParticipants: clampKpiDraftValue(commonInfo.kpi?.finalParticipants),
     kpiEducatedTeachers: clampKpiDraftValue(educatedTeachers),
-    kpiFinalSchools: clampKpiDraftValue(
-      commonInfo.kpi?.finalSchools ?? totals?.participatingSchoolCount
-    ),
+    kpiFinalSchools: clampKpiDraftValue(commonInfo.kpi?.finalSchools),
     kpiFinalClasses: clampKpiDraftValue(commonInfo.kpi?.finalClasses),
     educationJournalEnabled: commonInfo.educationJournalEnabled === true,
     teacherTrainingEnabled: commonInfo.teacherTrainingEnabled === true,

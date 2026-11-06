@@ -131,7 +131,13 @@ export function mapSettlementConfigToSections(
       apiItemId: item.id,
       sectionKind: 'payment' as const,
       paymentItemType,
-      layout: item.layout,
+      // ACTIVITY wire layout = activity (meal/volunteerActivity 정규화)
+      layout:
+        paymentItemType === 'ACTIVITY'
+          ? 'activity'
+          : item.layout === 'volunteerActivity'
+            ? 'activity'
+            : item.layout,
       title: item.itemName ?? '지급 항목',
       description: formatPaymentDescription(item),
       iconKey,
@@ -145,15 +151,17 @@ export function mapSettlementConfigToSections(
     .map(item => {
       const name = normalizeSettlementWithholdingItemLabel(item.itemName) ?? '공제 항목'
       const description = item.description?.trim()
+      const isWithholding =
+        item.layout === 'withholdingDailyWorker' || name === SETTLEMENT_WITHHOLDING_ITEM_LABEL
       return {
         id: item.id != null ? `d-${item.id}` : `d-${name}`,
         apiItemId: item.id,
         sectionKind: 'deduction' as const,
-        layout: item.layout,
+        layout: item.layout ?? (isWithholding ? 'withholdingDailyWorker' : item.layout),
         title: name,
         description:
           description ||
-          (name === SETTLEMENT_WITHHOLDING_ITEM_LABEL
+          (isWithholding
             ? '소득 유형별 원천징수 기준과 세율을 설정합니다.'
             : item.deductionRate
               ? `공제율 ${item.deductionRate}`
