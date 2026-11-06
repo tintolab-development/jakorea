@@ -314,6 +314,26 @@ describe('UJAT program adapters', () => {
     expect(updated.managerName).toBeUndefined()
   })
 
+  it('PATCH rounds keep GET program_schedule id', () => {
+    const withRound: Program = {
+      ...program,
+      updatedAt: '2026-10-31T12:10:00.059740Z',
+      rounds: [
+        {
+          id: '187700',
+          programId: program.id,
+          roundNumber: 1,
+          startDate: '2026-03-01T00:00:00.000Z',
+          endDate: '2026-03-01T01:00:00.000Z',
+          status: 'active',
+        },
+      ],
+    }
+    const updated = toUpdateRequest(withRound, { rounds: withRound.rounds })
+    expect(updated.rounds?.[0]?.id).toBe('187700')
+    expect(updated.expectedUpdatedAt).toBe('2026-10-31T12:10:00.059740Z')
+  })
+
   it('상세 PATCH payload는 Typed 운영 필드를 registration.overlay에 재기록하지 않는다', () => {
     const updated = toUpdateRequest(
       program,
