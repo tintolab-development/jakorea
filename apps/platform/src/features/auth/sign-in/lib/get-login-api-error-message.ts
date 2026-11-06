@@ -79,14 +79,7 @@ export function getLoginApiErrorMessage(error: unknown, fallback: string): strin
   return fallback
 }
 
-/** PATCH `/me/profile` 등 — `error.code` + `error.message` 를 알림에 그대로 사용 */
+/** PATCH `/me/profile` 등 — 사용자에게는 서버 메시지·매핑 문구만 보여 준다 */
 export function formatPortalProfileUpdateError(error: unknown, fallback: string): string {
-  const message = getLoginApiErrorMessage(error, fallback)
-  if (!isAxiosError(error)) return message
-  const code = extractErrorCode(error.response?.data)
-  if (code === SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY) return message
-  if (code && message && !message.includes(code)) {
-    return `${code}: ${message}`
-  }
-  return message
+  return getLoginApiErrorMessage(error, fallback)
 }

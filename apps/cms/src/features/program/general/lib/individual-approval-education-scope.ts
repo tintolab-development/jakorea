@@ -717,8 +717,7 @@ export function formatIndividualApprovalScopeErrorMessage(error: unknown): strin
     httpStatus: getApiErrorHttpStatus(error),
     fallback: '교육 일정 승인에 실패했습니다. 신청과 교육 일정을 다시 확인해 주세요.',
   }).trim()
-  if (code && message && !message.includes(code)) return `${message} (${code})`
-  return message || code || '교육 일정 승인에 실패했습니다. 신청과 교육 일정을 다시 확인해 주세요.'
+  return message || '교육 일정 승인에 실패했습니다. 신청과 교육 일정을 다시 확인해 주세요.'
 }
 
 export function individualApprovalEducationSlotsQueryKey(programId: string) {

@@ -225,9 +225,6 @@ export function extractApiErrorMessage(
   if (certificateMapped) return certificateMapped
   if (settlementMapped) return settlementMapped
 
-  const nestedCode = envelope?.error?.code?.trim()
-  if (nestedCode) return nestedCode
-
   if (typeof data === 'string' && data.trim()) {
     return data.trim()
   }

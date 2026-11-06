@@ -383,9 +383,7 @@ export function useUjatInstitutionApplicationList(
           const successIds = (result.successIds ?? []).map(String)
           if (failureCount > 0) {
             const lines = failures.map(failure => {
-              const message = failure.message?.trim() || '현재 상태에서는 처리할 수 없습니다.'
-              const code = failure.code?.trim()
-              return code ? `${message} (${code})` : message
+              return failure.message?.trim() || '현재 상태에서는 처리할 수 없습니다.'
             })
             showAlert({
               title: successIds.length > 0 ? '일부 처리 실패' : '처리 실패',

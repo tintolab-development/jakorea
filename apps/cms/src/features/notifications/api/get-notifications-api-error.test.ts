@@ -181,7 +181,7 @@ describe('get-notifications-api-error', () => {
     ).toBe('발신 번호를 선택해 주세요.')
   })
 
-  it('PROVIDER_UNAVAILABLE은 code·traceId를 함께 노출한다', () => {
+  it('PROVIDER_UNAVAILABLE은 안내·서버 메시지·traceId를 노출하고 코드는 숨긴다', () => {
     const message = getNotificationsApiErrorMessage(
       {
         response: {
@@ -199,7 +199,7 @@ describe('get-notifications-api-error', () => {
       'fallback'
     )
     expect(message).toContain('외부 연동 서비스를 사용할 수 없습니다')
-    expect(message).toContain('code: PROVIDER_UNAVAILABLE')
+    expect(message).not.toContain('PROVIDER_UNAVAILABLE')
     expect(message).toContain('message: hub down')
     expect(message).toContain('traceId: trace-abc')
   })
