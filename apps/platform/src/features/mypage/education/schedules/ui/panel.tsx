@@ -38,8 +38,8 @@ type EducationSchedulePanelProps = {
 }
 
 /**
- * 교육일정 탭 — 신청 GET .../schedules 응답만 SSOT.
- * 프로그램 상세 일정이나 로컬 시드/목업 데이터는 사용하지 않는다.
+ * 교육일정 탭 — 신청 GET .../schedules 응답만 SSOT. 행 수 = 배정 items.
+ * 프로그램 상세 일정·preferred 지망으로 행을 채우거나 MATCHED를 거르지 않는다.
  */
 export function EducationSchedulePanel({
   lastParticipatedSession,

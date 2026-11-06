@@ -193,7 +193,7 @@ export type PortalEducationSchedule = {
   groupTimes?: PortalEducationScheduleGroupTime[]
   assignment?: PortalEducationScheduleAssignment | null
   scheduleStatus?: string
-  /** 교육받은 교사 MATCHED 지망 순위. 없으면 omit. 목록 순서로 만들지 않는다. */
+  /** 배정된 운영 일정의 신청 지망 순위 라벨. 행 수를 늘리지 않는다. 없으면 omit. */
   preferenceRank?: number | null
   assignmentStatus?: string | null
   surveyCount?: number

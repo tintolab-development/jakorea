@@ -125,7 +125,7 @@ export type EducationScheduleItem = {
   assignmentStatus?: string | null
   /** 일정 운영 상태. CANCELLED 등은 본인 현재 활동으로 표시하지 않는다. */
   scheduleStatus?: string | null
-  /** MATCHED 지망 순위. 없으면 omit. 0·index로 채우지 않는다. */
+  /** 배정된 운영 일정의 신청 지망 순위 라벨. 없으면 omit. 0·index로 채우지 않는다. */
   preferenceRank?: number
   /**
    * TRAINED_TEACHER 기관 운영일 1행=1일.

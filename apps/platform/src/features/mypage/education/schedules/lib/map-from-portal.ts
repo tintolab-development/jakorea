@@ -242,7 +242,7 @@ function resolveOperationalDayRowLabel(
   return EDUCATION_SCHEDULE_EMPTY_LABEL
 }
 
-/** CMS `duration = ${슬롯 수}차시`. sessionNo·커리큘럼 1차시/2차시로 접지 않는다. */
+/** 이 행(portal item)의 groupTimes 슬롯 수. sessionNo·커리큘럼 차시로 접지 않고, 다른 지망 item과 합치지 않는다. */
 function resolveOperationalDayDurationLabel(
   groupTimes: PortalEducationScheduleGroupTime[] | undefined,
 ): string {
@@ -253,7 +253,7 @@ function resolveOperationalDayDurationLabel(
 }
 
 /**
- * 신청 GET .../schedules → 교육일정 탭 행.
+ * 신청 GET .../schedules → 교육일정 탭 행. 행 수 = items 수(배정 집합).
  * startAt이 없어도 매핑은 유지한다. 화면은 scheduleId 있는 배정 일정만 노출한다.
  * assignment.enabled가 true가 아니면 과제 블록 omit.
  * 카드 청록 라벨은 공통정보(차시/단원명/일정명)만 쓴다.
