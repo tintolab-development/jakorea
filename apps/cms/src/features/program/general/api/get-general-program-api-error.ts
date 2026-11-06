@@ -45,8 +45,6 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_ASSIGNMENT_SCHEDULE_REQUIRED: '활성 교육 일정이 있는 기관만 배정할 수 있습니다.',
   VOLUNTEER_ASSIGNMENT_ORGANIZATION_SCHEDULE_REQUIRED:
     '기관이 배정되지 않은 회차에는 봉사자를 배정할 수 없습니다.',
-  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT:
-    '강사 모집이 없는 일반 기관 프로그램에는 강사를 배정할 수 없습니다.',
   GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED:
     '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.',
   ATTENDANCE_SCOPE_UNVERIFIED: '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.',
