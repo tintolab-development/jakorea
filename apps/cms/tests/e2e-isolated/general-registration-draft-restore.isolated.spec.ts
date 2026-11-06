@@ -127,3 +127,108 @@ test('GENERAL 임시저장 → 이어서 작성 복원 → 새로고침 유지',
   await verify('새로고침')
   expect(log.unexpected).toEqual([])
 })
+
+test('GENERAL Legacy overlay-only Draft fixture 복원', async ({ page }) => {
+  test.setTimeout(480_000)
+  const log = await installIsolatedRegistrationNetwork(page)
+  await page.goto('/programs/general')
+  const title = `격리LEGACY-${Date.now()}`
+  const reg = new GeneralProgramRegistrationPage(page, ORG, {
+    skipOptionalUploads: true,
+    safeWagePaymentItems: true,
+    programTitle: title,
+    detailedProgramLabel: ISOLATED_GENERAL_FIXTURE.detailedProgramName,
+    sponsorLabel: ISOLATED_GENERAL_FIXTURE.sponsorName,
+    sponsorManagerLabel: ISOLATED_GENERAL_FIXTURE.contactName,
+    paymentItemLabel: ISOLATED_GENERAL_FIXTURE.paymentItemName,
+  })
+  await reg.openNewRegistration()
+  await reg.fillCommonInfo()
+  await reg.goToRecruitment()
+  await reg.fillRecruitmentInfo()
+  await reg.goToApplication()
+  await reg.fillApplicationInfo()
+  await confirmDraftSave(page)
+
+  await page.getByRole('banner').filter({ hasText: '일반 프로그램 등록' }).getByLabel('닫기').click()
+  const leave = page.getByRole('dialog').filter({ hasText: '작성 취소 안내' })
+  if (await leave.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    await leave.getByRole('button', { name: '저장 안 함' }).click()
+  }
+  await expect(page.getByRole('button', { name: /신규 등록/ })).toBeVisible({ timeout: 20_000 })
+
+  const converted = await page.evaluate(() => {
+    const key = 'cms.jakorea.writingFormTemplateSaves.v1'
+    const file = JSON.parse(localStorage.getItem(key) ?? '{}') as {
+      byTemplateId?: Record<string, { overlay?: Record<string, unknown>; settingsJson?: Record<string, unknown> }>
+    }
+    const ids = Object.keys(file.byTemplateId ?? {})
+    for (const id of ids) {
+      if (!id.startsWith('registration-wizard:GENERAL:')) continue
+      const record = file.byTemplateId![id]
+      const overlay = { ...(record.overlay ?? {}) }
+      overlay['generalRegistration.basicInfo.localProgramTitleKo'] = 'LEGACY 대표명'
+      overlay['generalRegistration.basicInfo.publicProgramTitle'] = 'LEGACY 공고명'
+      overlay['recruit.notes'] = 'LEGACY 기관 비고'
+      overlay['recruit.instructor.notes'] = 'LEGACY 강사 비고'
+      overlay['recruit.volunteer.notes'] = 'LEGACY 봉사 비고'
+      overlay['e2e.unknown.sidecar'] = { keep: 'x', zero: 0, no: false, empty: '', list: [] }
+      record.overlay = overlay
+      const settings = { ...(record.settingsJson ?? {}) }
+      delete settings.generalRegistrationCanonical
+      delete settings.companySchoolRegistrationCanonical
+      record.settingsJson = settings
+    }
+    localStorage.setItem(key, JSON.stringify(file))
+    const metaKey = 'cms.jakorea.registrationProgramDrafts.v1'
+    const meta = JSON.parse(localStorage.getItem(metaKey) ?? '{}') as {
+      byProgramType?: Record<string, { programTitleKo?: string }>
+    }
+    if (meta.byProgramType?.GENERAL) {
+      meta.byProgramType.GENERAL.programTitleKo = ''
+      localStorage.setItem(metaKey, JSON.stringify(meta))
+    }
+    return { ids, program: localStorage.getItem(metaKey) ?? '' }
+  })
+  expect(converted.ids.some(id => id.startsWith('registration-wizard:GENERAL:'))).toBe(true)
+  expect(converted.program).toContain('GENERAL')
+
+  await page.getByRole('button', { name: /신규 등록/ }).click()
+  const notice = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+  await expect(notice).toBeVisible({ timeout: 20_000 })
+  await notice.getByRole('radio', { name: '이어서 작성' }).check()
+  await notice.getByRole('button', { name: '이어서 작성' }).click()
+  await expect(page.getByText('일반 프로그램 등록', { exact: true })).toBeVisible({ timeout: 30_000 })
+
+  const commonInput = page.getByPlaceholder('대표 프로그램명을 입력해 주세요').first()
+  const appBack = page.getByRole('button', { name: '모집 정보 돌아가기' })
+  await expect(commonInput.or(appBack).first()).toBeVisible({ timeout: 30_000 })
+  if (await appBack.isVisible().catch(() => false)) {
+    await appBack.click()
+    await expect(page).toHaveURL(/generalStep=recruit-/, { timeout: 15_000 })
+  }
+  const recBack = page.getByRole('button', { name: /(공통|기본|프로그램) 정보 돌아가기/ }).first()
+  if (await recBack.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    await recBack.click()
+  }
+  await expect(commonInput).toHaveValue(title, { timeout: 20_000 })
+  await expect(page.getByPlaceholder('모집 시 노출될 프로그램명을 입력해 주세요').first()).not.toHaveValue(
+    'LEGACY 공고명'
+  )
+  const afterStore = await page.evaluate(() => ({
+    saves: localStorage.getItem('cms.jakorea.writingFormTemplateSaves.v1') ?? '',
+    program: localStorage.getItem('cms.jakorea.registrationProgramDrafts.v1') ?? '',
+  }))
+  expect(afterStore.saves).toContain('LEGACY 대표명')
+  expect(afterStore.saves).toContain('LEGACY 기관 비고')
+  expect(afterStore.saves).toContain('"keep":"x"')
+  expect(afterStore.saves).toContain('"zero":0')
+  expect(afterStore.saves).toContain('"no":false')
+  expect(afterStore.saves).toContain('"empty":""')
+  expect(afterStore.saves).toContain('"list":[]')
+  expect(afterStore.program).toContain('GENERAL')
+  await reg.goToRecruitment()
+  await recruitTab(page, '참여 기관 모집 정보')
+  await expect(page.getByPlaceholder(REMARK).first()).toHaveValue('LEGACY 기관 비고')
+  expect(log.unexpected).toEqual([])
+})
