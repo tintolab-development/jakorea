@@ -26,6 +26,8 @@ export type InstructorAssignmentListItemEnriched = InstructorAssignmentListItemR
   distanceKm?: number
   longDistance?: boolean
   homeAddress?: string
+  lectureLocationName?: string | null
+  lecturePlaceAddress?: string | null
 }
 
 /** requested-schedules — resolvedScheduleId null = 일정 미생성 */

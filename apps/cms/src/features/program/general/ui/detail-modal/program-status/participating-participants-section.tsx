@@ -14,6 +14,10 @@ import {
   STUDENT_CERTIFICATE_ISSUE_SELECT_ONLY_ONE_ALERT_MESSAGE,
 } from '@/shared/constants/messages'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import {
+  formatEducationRoundSessionLabel,
+  parseConfirmedCurriculumSessionCount,
+} from '@/shared/lib/education-schedule-name'
 import type { ParticipatingIndividualParticipantRow } from '@/features/program/general/model/participating-individual-participants'
 import { participatingIndividualParticipantsFilterFields } from '@/features/program/general/lib/participating-individual-participants-filter-fields'
 import {
@@ -402,7 +406,10 @@ export function ParticipatingParticipantsSection({
               .map(session => {
                 const date = session.date?.trim() ?? ''
                 const time = session.timeRange?.trim() ?? ''
-                const round = session.classNum ?? (session.round ? `${session.round}차시` : '')
+                const round = formatEducationRoundSessionLabel({
+                  roundNumber: session.round,
+                  curriculumSessionCount: parseConfirmedCurriculumSessionCount(session.classNum),
+                })
                 const line = session.scheduleLabel?.trim() || [date, time].filter(Boolean).join(' ')
                 return formatCmsScheduleDisplayLabel(round ? `${line} | ${round}` : line)
               })

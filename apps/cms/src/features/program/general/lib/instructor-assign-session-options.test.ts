@@ -54,6 +54,60 @@ describe('resolveInstructorAssignSessionDisplayLabels', () => {
   })
 })
 
+describe('mapParticipatingSessionsToInstructorAssignOptions — 회차/차시/시간대', () => {
+  it('UTC instant는 서울 시각으로 바꾸고 round를 회차로 표시한다', () => {
+    const options = mapParticipatingSessionsToInstructorAssignOptions([
+      session({
+        round: 1,
+        date: '2026.11.06',
+        dayOfWeek: '금',
+        classNum: '',
+        duration: '2차시',
+        timeRange: '06:05~06:10',
+        startAt: '2026-11-06T06:05:00Z',
+        endAt: '2026-11-06T06:10:00Z',
+      }),
+      session({
+        round: 2,
+        date: '2026.11.06',
+        dayOfWeek: '금',
+        classNum: '',
+        duration: '2차시',
+        timeRange: '06:15~06:20',
+        startAt: '2026-11-06T06:15:00Z',
+        endAt: '2026-11-06T06:20:00Z',
+      }),
+    ])
+    expect(options[0]?.scheduleLabel).toBe('2026.11.06(금) 15:05 ~ 15:10')
+    expect(options[0]?.sessionRoundLabel).toBe('1회차 (2차시)')
+    expect(options[1]?.scheduleLabel).toBe('2026.11.06(금) 15:15 ~ 15:20')
+    expect(options[1]?.sessionRoundLabel).toBe('2회차 (2차시)')
+  })
+
+  it('이미 KST offset이 있으면 중복 변환하지 않는다', () => {
+    const options = mapParticipatingSessionsToInstructorAssignOptions([
+      session({
+        round: 3,
+        date: '2026.11.06',
+        dayOfWeek: '금',
+        classNum: '',
+        duration: '1차시',
+        startAt: '2026-11-06T15:05:00+09:00',
+        endAt: '2026-11-06T15:10:00+09:00',
+      }),
+    ])
+    expect(options[0]?.scheduleLabel).toBe('2026.11.06(금) 15:05 ~ 15:10')
+    expect(options[0]?.sessionRoundLabel).toBe('3회차 (1차시)')
+  })
+
+  it('차시 정보가 없으면 회차만 표시한다', () => {
+    const options = mapParticipatingSessionsToInstructorAssignOptions([
+      session({ round: 1, classNum: '1교시', duration: '2시간' }),
+    ])
+    expect(options[0]?.sessionRoundLabel).toBe('1회차')
+  })
+})
+
 describe('mapParticipatingSessionsToInstructorAssignOptions — isSessionDisabled', () => {
   it('isSessionDisabled가 true인 회차(강사 정원 도달)는 disabled, 나머지는 선택 가능', () => {
     const options = mapParticipatingSessionsToInstructorAssignOptions(

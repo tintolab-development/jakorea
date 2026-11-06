@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   composeSatisfactionSurveyDisplayTitle,
+  formatEducationRoundSessionLabel,
   formatSatisfactionPerScheduleDisplayName,
   isDefaultEducationSlotName,
+  parseConfirmedCurriculumSessionCount,
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
 } from './education-schedule-name'
@@ -127,6 +129,25 @@ describe('composeSatisfactionSurveyDisplayTitle', () => {
         scheduleDisplayName: '1회차 · 2026.11.12(목)',
       })
     ).toBe('만족도조사 (학생용)')
+  })
+})
+
+describe('formatEducationRoundSessionLabel', () => {
+  it('keeps 회차 and 차시 as independent values', () => {
+    expect(
+      formatEducationRoundSessionLabel({ roundNumber: 1, curriculumSessionCount: 2 })
+    ).toBe('1회차 (2차시)')
+    expect(
+      formatEducationRoundSessionLabel({ roundNumber: 2, curriculumSessionCount: 2 })
+    ).toBe('2회차 (2차시)')
+    expect(
+      formatEducationRoundSessionLabel({ roundNumber: 3, curriculumSessionCount: 1 })
+    ).toBe('3회차 (1차시)')
+    expect(formatEducationRoundSessionLabel({ roundNumber: 1 })).toBe('1회차')
+    expect(formatEducationRoundSessionLabel({ curriculumSessionCount: 2 })).toBe('2차시')
+    expect(formatEducationRoundSessionLabel({})).toBe('')
+    expect(parseConfirmedCurriculumSessionCount('2차시')).toBe(2)
+    expect(parseConfirmedCurriculumSessionCount('1회차')).toBeNull()
   })
 })
 
