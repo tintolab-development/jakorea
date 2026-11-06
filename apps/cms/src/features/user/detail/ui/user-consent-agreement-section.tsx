@@ -4,6 +4,7 @@
 
 import { Spin } from 'antd'
 import { useCallback, useState, type CSSProperties, type ReactNode } from 'react'
+import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/required-consent-alert'
 import type { User } from '@/types/user'
 import type { TermsAgreementRequest } from '@/shared/api/generated/members/schemas/termsAgreementRequest'
 import { CmsButton } from '@/shared/ui/cms-button'
@@ -97,11 +98,13 @@ export type ConsentFieldValueSchema =
       type: 'remote_consent'
       agreed: boolean
       agreedAtDisplay?: string
+      consentStatus?: string
     }
   | {
       type: 'document'
       agreed: boolean
       agreedAtDisplay?: string
+      consentStatus?: string
       formResponseId?: number
       consentRecordId?: number
       filledDocumentId?: number
@@ -302,19 +305,26 @@ function ConsentValueDisplay({ value }: { value: ReactNode }) {
 function ConsentDocumentRow({
   agreed,
   agreedAtDisplay,
+  consentStatus,
   onOpenDocument,
 }: {
   agreed: boolean
   /** 동의한 경우에만 표시 (예: 2026.01.15 09:15:42) */
   agreedAtDisplay?: string
+  consentStatus?: string
   onOpenDocument?: () => void
 }) {
   const open = onOpenDocument
+  const statusLabel = resolveConsentStatusDisplayLabel({
+    agreed,
+    consentStatus,
+    agreedLabel: '동의',
+  })
 
   return (
     <span className="user-consent-agreement-section__value-inner">
       <span className="user-consent-agreement-section__value-status">
-        {agreed ? '동의' : '미동의'}
+        {statusLabel}
       </span>
       <span className="user-consent-agreement-section__value-sep" aria-hidden>
         |
@@ -354,7 +364,11 @@ function resolveConsentFieldView(
 ): ReactNode {
   switch (value.type) {
     case 'remote_consent': {
-      const status = value.agreed ? '동의' : '미동의'
+      const status = resolveConsentStatusDisplayLabel({
+        agreed: value.agreed,
+        consentStatus: value.consentStatus,
+        agreedLabel: '동의',
+      })
       const text = value.agreedAtDisplay ? `${status} | ${value.agreedAtDisplay}` : status
       return consentFieldContent(text)
     }
@@ -363,6 +377,7 @@ function resolveConsentFieldView(
         <ConsentDocumentRow
           agreed={value.agreed}
           agreedAtDisplay={value.agreedAtDisplay}
+          consentStatus={value.consentStatus}
           onOpenDocument={
             value.agreed ? () => ctx.openDocumentForLabel(fieldLabel, value) : undefined
           }
