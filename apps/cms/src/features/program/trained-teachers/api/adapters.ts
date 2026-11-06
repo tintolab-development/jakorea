@@ -270,30 +270,15 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     }) || undefined
   const remarks = dto.remarks?.trim() || undefined
   const educationTargetDetail = dto.educationTargetDetail?.trim() || undefined
-  const nestedStudentListRequired = toStudentListRequired(
-    (
-      details.generalCommonInfo?.participantRecruitmentInfo as
-        | { studentListRequired?: string }
-        | undefined
-    )?.studentListRequired
-  )
 
   const nestedKpi = details.generalCommonInfo?.kpi
   const rootFinalParticipants = toJavaInt(dto.totalParticipants)
   const resolvedKpi = nestedKpi
     ? {
         ...nestedKpi,
-        finalParticipants: rootFinalParticipants ?? nestedKpi.finalParticipants,
+        ...(rootFinalParticipants != null ? { finalParticipants: rootFinalParticipants } : {}),
       }
-    : rootFinalParticipants != null
-      ? {
-          finalParticipants: rootFinalParticipants,
-          instructorCount: 0,
-          volunteerCount: 0,
-          finalSchools: 0,
-          finalClasses: 0,
-        }
-      : undefined
+    : undefined
   const topVenue = dto.venue?.trim() || undefined
   const topVenueDetail =
     typeof dto.venueDetail === 'string' ? dto.venueDetail.trim() || undefined : undefined
@@ -330,9 +315,9 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
           : undefined,
     // 세부 프로그램 마스터 id — 일반 프로그램 어댑터와 동일하게 top-level 필드로 읽어온다.
     detailedProgramId: dto.detailedProgramId != null ? String(dto.detailedProgramId) : undefined,
-    type: (dto.type as ProgramType | undefined) ?? 'offline',
-    format: (dto.format as ProgramFormat | undefined) ?? 'workshop',
-    category: (dto.category as ProgramCategory | undefined) ?? 'school',
+    type: dto.type as ProgramType,
+    format: dto.format as ProgramFormat,
+    category: dto.category as ProgramCategory,
     description: dto.description,
     rounds:
       dto.rounds?.map((round, index) => ({
@@ -350,7 +335,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     ...resolveBusinessPeriodDates(dto),
     applicationStartDate: dto.applicationStartDate,
     applicationEndDate: dto.applicationEndDate,
-    status: (dto.status as Status | undefined) ?? 'pending',
+    status: dto.status as Status,
     lifecycleStatus:
       toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
       toTypedProgramLifecycleStatus(dto.periodStatus),
@@ -392,7 +377,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     contactPhone: dto.contactPhone?.trim() || undefined,
     oneLineIntroduction: dto.oneLineIntroduction,
     keyVisualImage: dto.keyVisualImage,
-    posterImage: details.posterImage ?? dto.keyVisualImage,
+    posterImage: details.posterImage,
     settlementRuleId: dto.settlementRuleId,
     applicationPathId: dto.applicationPathId,
     additionalContentHtml: dto.additionalContentHtml,
@@ -403,7 +388,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
     recruitmentTargetDetail: dto.recruitmentTargetDetail?.trim() || undefined,
     // BE 응답은 구버전/Primary 데이터에서 serviceDetailJson 중첩값만 제공할 수 있다.
     // top-level 컬럼이 있으면 그것을 우선하고, 없을 때만 같은 원격 응답의 nested 값을 사용한다.
-    studentListRequired: toStudentListRequired(dto.studentListRequired) ?? nestedStudentListRequired,
+    studentListRequired: toStudentListRequired(dto.studentListRequired),
     remarks,
     educationTargetDetail,
     generalParticipantTypes: Array.isArray(details.generalParticipantTypes)
@@ -577,7 +562,7 @@ export function mapTrainedTeacherToUpdateRequest(
     educationTargetDetail: merged.educationTargetDetail,
     studentListRequired: merged.studentListRequired,
     oneLineIntroduction: merged.oneLineIntroduction,
-    keyVisualImage: merged.keyVisualImage ?? merged.posterImage,
+    keyVisualImage: merged.keyVisualImage,
     settlementRuleId: merged.settlementRuleId,
     applicationPathId: merged.applicationPathId,
     additionalContentHtml: merged.additionalContentHtml,

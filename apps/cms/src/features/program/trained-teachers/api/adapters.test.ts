@@ -999,6 +999,16 @@ describe('mapTrainedTeacherDetailToProgram typed vs nested snapshot', () => {
 })
 
 describe('mapTrainedTeacherDetailToProgram KPI root echo', () => {
+  it('does not invent kpi zeros when only totalParticipants is present', () => {
+    const mapped = mapTrainedTeacherDetailToProgram({
+      id: '186546',
+      title: 'TT',
+      totalParticipants: 200,
+    } as ProgramResponse)
+    expect(mapped.totalParticipants).toBe(200)
+    expect(mapped.generalCommonInfo?.kpi).toBeUndefined()
+  })
+
   it('prefers totalParticipants over nested kpi finalParticipants', () => {
     const mapped = mapTrainedTeacherDetailToProgram({
       id: '186005',

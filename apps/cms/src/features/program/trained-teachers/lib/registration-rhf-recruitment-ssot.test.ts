@@ -122,4 +122,21 @@ describe('TT 등록 모집 RHF SSOT', () => {
       'recruit.institution.announcementPublished'
     )
   })
+
+  it('신청 가능 최대 학급 수는 시드 기본값 없이 빈 칸이며 지울 수 있다', () => {
+    const empty = emptyTrainedTeachersRecruitFormState()
+    expect(empty.maxClassCount).toBeNull()
+    const cleared = applyTrainedTeachersRecruitmentOverlayRecord(filledRecruit(), {
+      [K.maxClassCount]: undefined,
+    })
+    expect(cleared.maxClassCount).toBeNull()
+    const values = createDefaultTrainedTeachersRegistrationRhfValues()
+    expect(listIncompleteTrainedTeachersRecruitmentRequiredFields(values)).toContain(
+      'recruit.institution.maxClassCount'
+    )
+    values.recruitment = { ...filledRecruit(), maxClassCount: 3 }
+    expect(listIncompleteTrainedTeachersRecruitmentRequiredFields(values)).not.toContain(
+      'recruit.institution.maxClassCount'
+    )
+  })
 })
