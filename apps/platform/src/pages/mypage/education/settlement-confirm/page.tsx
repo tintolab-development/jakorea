@@ -157,8 +157,22 @@ export function MypageEducationSettlementConfirmPage() {
         member: readSettlementMemberProfileBasic(profileQuery.data),
         consent: consentSidecarQuery.sidecar,
       }),
+      transport: {
+        ...storedDraft.transport,
+        autoPreview:
+          documentKind === 'receipt'
+            ? storedDraft.transport.autoPreview
+            : (session?.instructorTransportPreview ?? storedDraft.transport.autoPreview ?? null),
+      },
     }
-  }, [consentSidecarQuery.sidecar, documentKind, profileQuery.data, storedDraft, viewMode])
+  }, [
+    consentSidecarQuery.sidecar,
+    documentKind,
+    profileQuery.data,
+    session?.instructorTransportPreview,
+    storedDraft,
+    viewMode,
+  ])
 
   useEffect(() => {
     if (!applicationId || !sessionId) {

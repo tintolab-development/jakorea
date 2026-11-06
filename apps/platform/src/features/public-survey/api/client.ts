@@ -1,5 +1,11 @@
 import type { InternalAxiosRequestConfig } from 'axios'
 import { axiosClient } from '@/shared/api/axios-instance'
+import {
+  composeSatisfactionSurveyDisplayTitle,
+  formatSatisfactionPerScheduleDisplayName,
+  hasSatisfactionScheduleDisplayParts,
+  isSatisfactionPerScheduleBinding,
+} from '@/shared/lib/education-schedule-name'
 
 export type PublicSurveyFormType =
   | 'SURVEY'
@@ -22,6 +28,13 @@ export type PublicSurveyFormResponse = {
   formType?: PublicSurveyFormType
   targetScope?: string
   targetScopeId?: number
+  targetScopeLabel?: string
+  sessionNo?: number
+  scheduleStartAt?: string
+  startAt?: string
+  satisfactionRunMode?: string
+  templateName?: string
+  title?: string
   form?: Record<string, unknown>
 }
 
@@ -72,6 +85,58 @@ function normalizeFormType(value: unknown): string | undefined {
   return next || undefined
 }
 
+function readOptionalName(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined
+  const next = value.trim()
+  return next || undefined
+}
+
+function readNestedFormName(form: unknown): string | undefined {
+  if (!form || typeof form !== 'object') return undefined
+  const record = form as Record<string, unknown>
+  return readOptionalName(record.templateName) ?? readOptionalName(record.title)
+}
+
+export function resolvePublicSurveyDisplayTitle(
+  response: Pick<
+    PublicSurveyFormResponse,
+    | 'templateName'
+    | 'title'
+    | 'form'
+    | 'formType'
+    | 'targetScope'
+    | 'targetScopeLabel'
+    | 'sessionNo'
+    | 'scheduleStartAt'
+    | 'startAt'
+    | 'satisfactionRunMode'
+  >
+): string | undefined {
+  const formName =
+    readOptionalName(response.templateName) ??
+    readOptionalName(response.title) ??
+    readNestedFormName(response.form)
+  if (resolvePublicSurveyKind(response.formType) !== 'satisfaction') return formName
+  const perSchedule = isSatisfactionPerScheduleBinding({
+    runMode: response.satisfactionRunMode,
+    targetScope: response.targetScope,
+  })
+  if (!perSchedule) return formName
+  const scheduleInput = {
+    scheduleName: response.targetScopeLabel,
+    sessionNo: response.sessionNo,
+    startAt: response.scheduleStartAt ?? response.startAt,
+  }
+  if (!hasSatisfactionScheduleDisplayParts(scheduleInput)) return formName
+  return (
+    composeSatisfactionSurveyDisplayTitle({
+      formName: formName ?? '',
+      perSchedule: true,
+      scheduleDisplayName: formatSatisfactionPerScheduleDisplayName(scheduleInput),
+    }) || formName
+  )
+}
+
 export function resolvePublicSurveyKind(
   formType: string | undefined
 ): 'survey' | 'satisfaction' {
@@ -108,6 +173,8 @@ export async function fetchPublicSurveyForm(
   return {
     ...response,
     formType: normalizeFormType(response.formType),
+    templateName: readOptionalName(response.templateName) ?? readNestedFormName(response.form),
+    title: readOptionalName(response.title),
   }
 }
 

@@ -1,9 +1,12 @@
 import {
   applyAgreementNoticeSubjectMemberName,
   buildPlatformConsentFillOptions,
+  collectMemberConsentUnagreedRequiredLabels,
   createConsentTemplateSeedDraft,
+  formatMemberConsentDisagreedRequiredAlertMessage,
   formatMemberConsentIncompleteRequiredAlertMessage,
   getMemberConsentInvalidNoticeSubjectContactAlertMessage,
+  MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE,
   hasMemberConsentIncompleteRequiredFields,
   hasMemberConsentInvalidResidentNumberFormat,
   isCrimeConsentTemplate,
@@ -190,7 +193,13 @@ export function SchemaConsentWriteForm({
     })
   }, [lockedBasic, submitContext, templateId])
   const [alertOpen, setAlertOpen] = useState(false)
+  const [alertTitle, setAlertTitle] = useState('안내')
   const [alertMessage, setAlertMessage] = useState(CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE)
+  const openAlert = useCallback((message: string, title = '안내') => {
+    setAlertTitle(title)
+    setAlertMessage(message)
+    setAlertOpen(true)
+  }, [])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const portalSubmitEnabled = isRemoteApiConfigured() && Boolean(getAccessToken())
   const serverDraftInitializedRef = useRef(false)
@@ -278,11 +287,10 @@ export function SchemaConsentWriteForm({
       .then(applyServerDraftDocument)
       .catch(error => {
         console.debug('portal consent draft create failed', error)
-        setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE)
-        setAlertOpen(true)
+        openAlert(PORTAL_SUBMIT_FAILED_MESSAGE)
       })
       .finally(() => setIsServerDraftLoading(false))
-  }, [applyServerDraftDocument, consentKey, portalSubmitEnabled, readOnly, templateId])
+  }, [applyServerDraftDocument, consentKey, openAlert, portalSubmitEnabled, readOnly, templateId])
 
   const recoverPortalDraftVersion = useCallback(async () => {
     const consentType = resolvePortalConsentCreateType(consentKey)
@@ -321,27 +329,31 @@ export function SchemaConsentWriteForm({
   const handleSubmit = () => {
     if (isSubmitting) return
     if (isServerDraftLoading) {
-      setAlertMessage(SERVER_DRAFT_LOADING_MESSAGE)
-      setAlertOpen(true)
+      openAlert(SERVER_DRAFT_LOADING_MESSAGE)
       return
     }
     if (templateId === 'agreement-notice' && isLockedBasicLoading && !lockedBasic.name.trim()) {
-      setAlertMessage(MEMBER_PROFILE_LOADING_MESSAGE)
-      setAlertOpen(true)
+      openAlert(MEMBER_PROFILE_LOADING_MESSAGE)
       return
     }
     if (incomplete) {
-      setAlertMessage(
-        formatMemberConsentIncompleteRequiredAlertMessage(incompleteRequiredFields) ||
-          CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE,
-      )
-      setAlertOpen(true)
+      const unagreedLabels = collectMemberConsentUnagreedRequiredLabels(state.draft)
+      if (unagreedLabels.length > 0) {
+        openAlert(
+          formatMemberConsentDisagreedRequiredAlertMessage(unagreedLabels),
+          MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE,
+        )
+      } else {
+        openAlert(
+          formatMemberConsentIncompleteRequiredAlertMessage(incompleteRequiredFields) ||
+            CONSENT_WRITE_INCOMPLETE_ALERT_MESSAGE,
+        )
+      }
       return
     }
     const contactFormatMessage = getMemberConsentInvalidNoticeSubjectContactAlertMessage(state.draft)
     if (contactFormatMessage != null) {
-      setAlertMessage(contactFormatMessage)
-      setAlertOpen(true)
+      openAlert(contactFormatMessage)
       return
     }
     if (
@@ -350,8 +362,7 @@ export function SchemaConsentWriteForm({
         paymentStatementBasicInfo: paymentBasicInfo,
       })
     ) {
-      setAlertMessage(PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE)
-      setAlertOpen(true)
+      openAlert(PAYMENT_STATEMENT_RESIDENT_NUMBER_INVALID_ALERT_MESSAGE)
       return
     }
 
@@ -359,8 +370,7 @@ export function SchemaConsentWriteForm({
       signatureSlots.length > 0 &&
       !isConsentSignaturesComplete(state.signatures, signatureSlots)
     ) {
-      setAlertMessage(SIGNATURE_REQUIRED_ALERT_MESSAGE)
-      setAlertOpen(true)
+      openAlert(SIGNATURE_REQUIRED_ALERT_MESSAGE)
       return
     }
 
@@ -377,14 +387,12 @@ export function SchemaConsentWriteForm({
           const code = readPortalConsentTemplateErrorCode(error)
           if (code === 'PORTAL_CONSENT_TEMPLATE_VERSION_CHANGED') {
             void recoverPortalDraftVersion().finally(() => {
-              setAlertMessage(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
-              setAlertOpen(true)
+              openAlert(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
             })
             return
           }
           if (code && PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code]) {
-            setAlertMessage(PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code])
-            setAlertOpen(true)
+            openAlert(PORTAL_CONSENT_SUBMIT_ERROR_MESSAGES[code])
             return
           }
           if (code === 'PORTAL_CONSENT_TEMPLATE_VERSION_MISMATCH') {
@@ -398,21 +406,18 @@ export function SchemaConsentWriteForm({
             )
               .catch(() => recoverPortalDraftVersion())
               .finally(() => {
-                setAlertMessage(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
-                setAlertOpen(true)
+                openAlert(PORTAL_CONSENT_TEMPLATE_CHANGED_MESSAGE)
               })
             return
           }
-          setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE)
-          setAlertOpen(true)
+          openAlert(PORTAL_SUBMIT_FAILED_MESSAGE)
         })
         .finally(() => setIsSubmitting(false))
       return
     }
 
     if (consentKey === RECEIPT_PRE_CONSENT_WRITE_KEY) {
-      setAlertMessage(PORTAL_SUBMIT_FAILED_MESSAGE)
-      setAlertOpen(true)
+      openAlert(PORTAL_SUBMIT_FAILED_MESSAGE)
       return
     }
     markInstructorApplyConsentAgreed(consentKey)
@@ -647,7 +652,7 @@ export function SchemaConsentWriteForm({
       </form>
       <PFAlertModal
         open={alertOpen}
-        title="안내"
+        title={alertTitle}
         description={alertMessage}
         onConfirm={() => setAlertOpen(false)}
       />

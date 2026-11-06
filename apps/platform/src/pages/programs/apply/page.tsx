@@ -2069,6 +2069,10 @@ export function ProgramApplyPage() {
       const isSingleLine = paragraph.itemInputRows === 1
       const items = paragraph.items ?? []
       const placeholder = paragraph.bodyPlaceholder || '답변을 입력해 주세요'
+      const essayMaxLength =
+        typeof paragraph.maxLength === 'number' && paragraph.maxLength > 0
+          ? paragraph.maxLength
+          : 1000
 
       const commitBody = (next: string) => {
         updateParagraph(paragraph.id, current =>
@@ -2085,6 +2089,7 @@ export function ProgramApplyPage() {
               variant="formPage"
               value={paragraph.bodyText}
               placeholder={placeholder}
+              maxLength={essayMaxLength}
               onValueChange={commitBody}
             />
           )
@@ -2094,6 +2099,9 @@ export function ProgramApplyPage() {
             variant="formPage"
             value={paragraph.bodyText}
             placeholder={placeholder}
+            maxLength={essayMaxLength}
+            message={`${paragraph.bodyText.length}/${essayMaxLength}`}
+            messageStatus={paragraph.bodyText.length > essayMaxLength ? 'error' : 'neutral'}
             onValueChange={commitBody}
           />
         )
@@ -2123,6 +2131,7 @@ export function ProgramApplyPage() {
                 label={paragraph.showItemTitle ? item.label?.trim() || undefined : undefined}
                 value={item.bodyText}
                 placeholder={item.placeholder || placeholder}
+                maxLength={essayMaxLength}
                 onValueChange={onItemChange}
               />
             ) : (
@@ -2131,6 +2140,8 @@ export function ProgramApplyPage() {
                 label={paragraph.showItemTitle ? item.label?.trim() || undefined : undefined}
                 value={item.bodyText}
                 placeholder={item.placeholder || placeholder}
+                maxLength={essayMaxLength}
+                message={`${item.bodyText.length}/${essayMaxLength}`}
                 onValueChange={onItemChange}
               />
             )

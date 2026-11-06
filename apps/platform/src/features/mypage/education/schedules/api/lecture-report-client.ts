@@ -43,6 +43,7 @@ export type LectureReportAssignment = {
   distanceFromHome?: number | null
   /** 지급조서 확인 강의비 산출. 키는 항상 존재. 미리보기 없으면 null */
   lectureFeePreview?: LectureFeePreview | null
+  /** GET items[].transportPreview 파싱 결과. 산출 없으면 null */
   instructorTransportPreview?: InstructorTransportPreview | null
 }
 

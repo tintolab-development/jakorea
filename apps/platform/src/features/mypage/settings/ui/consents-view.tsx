@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAxiosError } from 'axios'
+import { resolveConsentStatusDisplayLabel } from '@jakorea/domain/shared/required-consent-alert'
 import { settingsConsentWritePath } from '@/features/mypage'
 import { useQueryClient } from '@tanstack/react-query'
 import { TermsViewModal, useTermsViewModal } from '@/features/auth'
@@ -220,14 +221,25 @@ function ConsentRequirementLabel({ required }: { required: boolean }) {
   )
 }
 
-function ConsentStatusBadge({ agreed }: { agreed: boolean }) {
+function ConsentStatusBadge({
+  agreed,
+  consentStatus,
+}: {
+  agreed: boolean
+  consentStatus?: string
+}) {
+  const label = resolveConsentStatusDisplayLabel({
+    agreed,
+    consentStatus,
+    agreedLabel: '동의함',
+  })
   return (
     <PFStateBadge
       size="small"
-      tone={agreed ? 'progress' : 'disabled'}
+      tone={label === '미동의' ? 'disabled' : 'progress'}
       className={styles.statusBadge}
     >
-      {agreed ? '동의함' : '미동의'}
+      {label}
     </PFStateBadge>
   )
 }
@@ -309,7 +321,7 @@ function ConsentCard({
               : styles.statusInfo
           }
         >
-          <ConsentStatusBadge agreed={agreed} />
+          <ConsentStatusBadge agreed={agreed} consentStatus={item.consentStatus} />
           {item.kind === 'document' && agreed && (item.agreedAt || item.validityLabel) ? (
             <PFText typo="bd-sm-rg" color="neutral-cool-500">
               {[
