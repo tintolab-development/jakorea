@@ -16,6 +16,8 @@ on:
       - 'apps/admin/src/features/auth/hooks/use-session-timeout.regression.test.tsx'
       - 'apps/cms/src/app/providers/auth-provider.tsx'
       - 'apps/admin/src/app/providers/auth-provider.tsx'
+      - 'apps/cms/src/app/providers/auth-provider.activity-regression.test.tsx'
+      - 'apps/admin/src/app/providers/auth-provider.activity-regression.test.tsx'
       - '.github/workflows/admin-activity-bearer-pr.yml'
 
 permissions:
@@ -48,14 +50,16 @@ jobs:
             src/shared/instance/axios-instance.activity-session.test.ts \
             src/shared/instance/axios-instance.refresh-lock.test.ts \
             src/shared/instance/axios-instance.activity-15s.test.ts \
-            src/features/auth/hooks/use-session-timeout.regression.test.tsx
+            src/features/auth/hooks/use-session-timeout.regression.test.tsx \
+            src/app/providers/auth-provider.activity-regression.test.tsx
       - name: Homepage Admin Activity Bearer and 16-second sustained regression
         run: |
           pnpm --filter cms exec vitest run \
             --root "$GITHUB_WORKSPACE/apps/admin" \
             --config "$GITHUB_WORKSPACE/apps/admin/vite.config.ts" \
             src/shared/instance/axios-instance.activity-15s.test.ts \
-            src/features/auth/hooks/use-session-timeout.regression.test.tsx
+            src/features/auth/hooks/use-session-timeout.regression.test.tsx \
+            src/app/providers/auth-provider.activity-regression.test.tsx
       - name: Ensure both interceptors separate Bearer and Refresh exclusion
         run: |
           python3 - <<'PY'
