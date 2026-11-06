@@ -61,7 +61,47 @@ describe('Activity/Session refresh 분기', () => {
       response: { status: 401 },
     })
     expect(adapterMock).toHaveBeenCalledTimes(1)
+    expect((adapterMock.mock.calls[0][0] as InternalAxiosRequestConfig).headers.get('Authorization'))
+      .toBe(`Bearer ${useAuthStore.getState().token}`)
     expect(logoutMock).not.toHaveBeenCalled()
+  })
+
+  it('Activity 200에는 ADMIN Bearer 헤더를 포함하고 Refresh는 호출하지 않는다', async () => {
+    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => ({
+      data: { lastUserActivityAt: '2026-11-06T12:00:00Z', updated: true },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    }))
+
+    const response = await axiosClient.post(adminAuthPaths.activity(), undefined, {
+      skipRefresh: true,
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(adapterMock).toHaveBeenCalledTimes(1)
+    expect((adapterMock.mock.calls[0][0] as InternalAxiosRequestConfig).headers.get('Authorization'))
+      .toBe(`Bearer ${useAuthStore.getState().token}`)
+  })
+
+  it('로그인/Refresh 전용 skipAuth 요청에는 ADMIN Bearer 헤더를 넣지 않는다', async () => {
+    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => ({
+      data: { accessToken: 'fixture', refreshToken: 'fixture2' },
+      status: 200,
+      statusText: 'OK',
+      headers: {},
+      config,
+    }))
+
+    await axiosClient.post(adminAuthPaths.refresh(), { refreshToken: 'fixture' }, {
+      skipAuth: true,
+      skipRefresh: true,
+    } as never)
+
+    expect(adapterMock).toHaveBeenCalledTimes(1)
+    expect((adapterMock.mock.calls[0][0] as InternalAxiosRequestConfig).headers.get('Authorization'))
+      .toBeUndefined()
   })
 
   it('FE13 sid 없는 Session GET 401은 Refresh 없이 재로그인한다', async () => {
