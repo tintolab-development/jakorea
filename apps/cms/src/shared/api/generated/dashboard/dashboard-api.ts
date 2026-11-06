@@ -13,6 +13,7 @@ import type {
   ApiResponseDecision,
   ApiResponseDetail,
   ApiResponseNotificationReadAllResponse,
+  ApplicationDecisionCancelRequest,
   ApplicationDecisionResponse,
   BulkResultRequest,
   DashboardHomeResponse,
@@ -3737,7 +3738,24 @@ const dashboardHome = (
       options);
     }
 
-return {recordVolunteerDocumentEvaluation,getUjatTypedDetail,replaceUjatTypedDetail,patchUjatTypedDetail,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,listEducationClasses,addEducationClasses,remapEducationClasses,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,updateVolunteerApplicationActivityRegion,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,rejectIndividualSettlementApplication,approveIndividualSettlementApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list13,getDashboardShortcutBadges,listIndividualSettlementApplications,getIndividualSettlementApplication,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome}};
+/**
+ * APPLICATION_WRITE와 담당 프로그램 범위가 필요합니다. programId와 applicationId가 TRAINED_TEACHER ORGANIZATION APPROVED 신청으로 일치할 때만 승인 취소합니다. 공통 /api/admin/organization-applications/{applicationId}/cancel-approval 과 give-up / remove-from-progress 를 쓰지 않습니다. body는 일반 기관과 동일한 ApplicationDecisionCancelRequest입니다. reason 필수(minLength 2, maxLength 500). notification 생략 시 IMMEDIATE. notification.timing은 IMMEDIATE | SCHEDULED | ON_ANNOUNCEMENT. SCHEDULED일 때만 scheduledAt(현재 이후 ISO-8601). selectedScheduleId/slots/preferredScheduleRank/requestedScheduleId는 이 API에 없습니다. 성공 시 toStatus=APPROVAL_CANCELLED이며 해당 신청 OSA(TEMP_ASSIGNED 포함)만 해제합니다. educationSchedules와 preferredScheduleBlocks는 변경하지 않습니다. 출석/진행이 시작된 일정은 409 APPLICATION_DECISION_CONFLICT입니다. programId 불일치는 404 TRAINED_TEACHER_ORGANIZATION_APPLICATION_NOT_FOUND. APPROVED가 아니면 409 APPLICATION_DECISION_CONFLICT. 미발송 승인 알림은 중단하고, 이미 발송됐으면 취소 사유 알림을 notification.timing으로 예약합니다. notificationEventId는 미발송이면 JSON null이며 필드를 omit하지 않습니다.
+ * @summary 교육받은 교사 기관 신청 승인 취소
+ */
+const cancelTrainedTeacherOrganizationApproval = (
+    programId: number,
+    applicationId: number,
+    applicationDecisionCancelRequest: ApplicationDecisionCancelRequest,
+ options?: SecondParameter<typeof customInstance<ApplicationDecisionResponse>>,) => {
+      return customInstance<ApplicationDecisionResponse>(
+      {url: `/api/admin/programs/${programId}/trained-teacher/organization-applications/${applicationId}/cancel-approval`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: applicationDecisionCancelRequest
+    },
+      options);
+    }
+
+return {recordVolunteerDocumentEvaluation,getUjatTypedDetail,replaceUjatTypedDetail,patchUjatTypedDetail,getTemporarySchedule,saveTemporarySchedule,preferences1,updatePreferences1,getDashboardPreferences,saveDashboardPreferences,recordIndividualDocumentEvaluation,getWidgetProgramFilters,saveWidgetProgramFilters,saveDashboardWidgetLayout,saveDashboardShortcutVisibility,dashboardPreferences,saveDashboardPreferences1,requestScheduleChange,listEducationClasses,addEducationClasses,remapEducationClasses,removeOrganizationFromProgress,resendTrainedTeacherOrganizationApplicationNotification,giveUpOrganizationActivity,resendOrganizationApplicationNotification,readDashboardShortcutBadge,unmaskIndividualApplicationDetail,resendIndividualApplicationNotification,bulkIndividualDocumentResult,resendGeminiOrganizationApplicationNotification,updateVolunteerApplicationActivityRegion,organizationApplicationDetail,updateOrganizationApplication,markRead2,hide1,markClicked1,readAllNotifications,instructorApplication,updateInstructorApplication,rejectIndividualSettlementApplication,approveIndividualSettlementApplication,individualApplicationDetail,updateIndividualApplication,volunteerApplicationDetail,volunteerApplications,listAssignments,organizationApplications,organizationApplication,organizationApplications1,instructorApplications,individualApplications,notifications1,unreadNotificationCount,list13,getDashboardShortcutBadges,listIndividualSettlementApplications,getIndividualSettlementApplication,organizationApplications2,dashboardWidgets,dashboardShortcuts,dashboardRecruitments,dashboardProgramSchedules,dashboardProgramInquiries,dashboardNotificationCount,dashboardKpiProgress,dashboardHome,cancelTrainedTeacherOrganizationApproval}};
 export type RecordVolunteerDocumentEvaluationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['recordVolunteerDocumentEvaluation']>>>
 export type GetUjatTypedDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['getUjatTypedDetail']>>>
 export type ReplaceUjatTypedDetailResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['replaceUjatTypedDetail']>>>
@@ -3804,3 +3822,4 @@ export type DashboardProgramInquiriesResult = NonNullable<Awaited<ReturnType<Ret
 export type DashboardNotificationCountResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardNotificationCount']>>>
 export type DashboardKpiProgressResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardKpiProgress']>>>
 export type DashboardHomeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['dashboardHome']>>>
+export type CancelTrainedTeacherOrganizationApprovalResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getJAKoreaCMSBackendAPIDashboardSubset>['cancelTrainedTeacherOrganizationApproval']>>>
