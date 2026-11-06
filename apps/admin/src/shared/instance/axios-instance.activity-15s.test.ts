@@ -120,6 +120,22 @@ describe('Homepage Admin: Activity and Session after 10-15 seconds', () => {
     expect(String(config.url)).toContain('/activity')
   })
 
+  it('a late Session 401 from a superseded token never starts Refresh or logout', async () => {
+    adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => {
+      // Simulate an access-token rotation while a Session GET is in flight.
+      useAuthStore.setState({ token: TOKEN_B })
+      throw unauthorized(config)
+    })
+
+    await expect(getAdminAuthSession()).rejects.toMatchObject({ response: { status: 401 } })
+    expect(adapterMock).toHaveBeenCalledTimes(1)
+    const sent = adapterMock.mock.calls[0][0] as InternalAxiosRequestConfig
+    expect(sent.headers.get('Authorization')).toBe('Bearer ' + TOKEN_A)
+    expect(useAuthStore.getState().token).toBe(TOKEN_B)
+    expect(adapterMock.mock.calls.every(([config]: [InternalAxiosRequestConfig]) =>
+      !String(config.url).includes('/refresh'))).toBe(true)
+  })
+
   it('login and Refresh remain anonymous', async () => {
     adapterMock.mockImplementation(async (config: InternalAxiosRequestConfig) => success(config, {}))
     await axiosInstance.post('/api/admin/auth/login', { email: 'fixture@example.invalid', password: 'fixture' })
