@@ -107,16 +107,37 @@ describe('assigned instructor query view', () => {
 })
 
 describe('parseAssignedInstructorList', () => {
-  it('동의서 없는 배정 강사도 이름만 남긴다', () => {
+  it('성공 빈 목록은 instructors=[] 이다', () => {
+    expect(parseAssignedInstructorList({ instructors: [] })).toEqual({ instructors: [] })
+  })
+
+  it('CASE_D 배정 필드를 그대로 남긴다', () => {
     expect(
       parseAssignedInstructorList({
-        instructors: [{ instructorMemberId: 190001, name: '이건희' }],
+        instructors: [
+          {
+            instructorMemberId: 190001,
+            name: '강사명',
+            assignmentId: 1694860,
+            programScheduleId: 187274,
+            assignmentStatus: 'ASSIGNED',
+            consentDocumentsRequested: false,
+            consents: [],
+            phone: null,
+            email: null,
+          },
+        ],
       }),
     ).toEqual({
       instructors: [
         {
           instructorMemberId: 190001,
-          name: '이건희',
+          name: '강사명',
+          assignmentId: 1694860,
+          programScheduleId: 187274,
+          assignmentStatus: 'ASSIGNED',
+          phone: null,
+          email: null,
           consentDocumentsRequested: false,
           consents: [],
         },
@@ -124,37 +145,50 @@ describe('parseAssignedInstructorList', () => {
     })
   })
 
-  it('envelope·instructorName 응답도 매핑한다', () => {
+  it('상세 teacherAssignment.assignments 로는 채우지 않는다', () => {
+    expect(
+      parseAssignedInstructorList({
+        assignments: [
+          {
+            instructorMemberId: 190001,
+            instructorName: '이건희',
+            assignmentId: 1694860,
+          },
+        ],
+      }),
+    ).toEqual({ instructors: [] })
+  })
+
+  it('axios data 래퍼의 instructors만 읽는다', () => {
     expect(
       parseAssignedInstructorList({
         success: true,
         data: {
-          assignments: [
-            { instructorMemberId: '190002', instructorName: '김강사' },
-            { instructorMemberId: 190002, instructorName: '김강사' },
-          ],
+          instructors: [{ instructorMemberId: 190002, name: '김강사', consents: [] }],
         },
       }).instructors,
     ).toEqual([
       {
         instructorMemberId: 190002,
         name: '김강사',
-        consentDocumentsRequested: false,
-        consents: [],
-      },
-      {
-        instructorMemberId: 190002,
-        name: '김강사',
+        assignmentId: null,
+        programScheduleId: null,
+        assignmentStatus: null,
+        phone: null,
+        email: null,
         consentDocumentsRequested: false,
         consents: [],
       },
     ])
   })
 
-  it('이름이 없는 행은 만들지 않는다', () => {
+  it('이름 또는 instructorMemberId가 없는 행은 만들지 않는다', () => {
     expect(
       parseAssignedInstructorList({
-        instructors: [{ instructorMemberId: 1, consents: [] }],
+        instructors: [
+          { instructorMemberId: 1, consents: [] },
+          { name: '이름만' },
+        ],
       }),
     ).toEqual({ instructors: [] })
   })
