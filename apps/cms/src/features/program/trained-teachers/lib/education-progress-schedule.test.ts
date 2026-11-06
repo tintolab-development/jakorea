@@ -58,8 +58,8 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
     ).toEqual([])
   })
 
-  it('1691599처럼 MATCHED 지망 7건이면 1~7지망 행을 모두 그린다', () => {
-    const preferred = [
+  it('서버가 배정한 educationSchedules 7건이면 7행을 그린다', () => {
+    const assigned = [
       { rank: 1, date: '2026-11-13', id: 187703, day: '금' },
       { rank: 2, date: '2026-11-16', id: 187704, day: '월' },
       { rank: 3, date: '2026-11-17', id: 187701, day: '화' },
@@ -69,7 +69,7 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
       { rank: 7, date: '2026-11-27', id: 187705, day: '금' },
     ]
     const rows = buildTrainedTeacherEducationProgressRows(
-      preferred.map(item =>
+      assigned.map(item =>
         session({
           date: item.date.replace(/-/g, '.'),
           dayOfWeek: item.day,
@@ -80,7 +80,7 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
           deliveryScheduleStatus: 'SCHEDULED',
         })
       ),
-      preferred.map(item => ({
+      assigned.map(item => ({
         preferenceRank: item.rank,
         date: item.date,
         dayOfWeek: item.day,
@@ -109,7 +109,7 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
     )
   })
 
-  it('같은 지망·같은 희망 날짜의 연속 슬롯은 N차시로 묶고 scheduleId는 모두 남긴다', () => {
+  it('같은 날 slots 3건이면 3행을 그리고 합치지 않는다', () => {
     const rows = buildTrainedTeacherEducationProgressRows(
       [
         session({
@@ -171,13 +171,17 @@ describe('buildTrainedTeacherEducationProgressRows', () => {
       ]
     )
 
-    expect(rows).toHaveLength(1)
-    expect(rows[0]?.rowLabel).toBe('1지망')
-    expect(rows[0]?.session.duration).toBe('3차시')
-    expect(rows[0]?.session.timeRange).toBe('09:30~12:20')
-    expect(rows[0]?.attendanceScheduleIds).toEqual([1, 2, 3])
+    expect(rows).toHaveLength(3)
+    expect(rows.map(row => row.rowLabel)).toEqual(['1지망', '1지망', '1지망'])
+    expect(rows.map(row => row.session.duration)).toEqual(['1차시', '1차시', '1차시'])
+    expect(rows.map(row => row.session.timeRange)).toEqual([
+      '09:30~10:20',
+      '10:30~11:20',
+      '11:30~12:20',
+    ])
+    expect(rows.map(row => row.attendanceScheduleIds)).toEqual([[1], [2], [3]])
     expect(formatTrainedTeacherEducationProgressDateTime(rows[0]!.session)).toBe(
-      '2026.04.20(월) 09:30 ~ 12:20'
+      '2026.04.20(월) 09:30 ~ 10:20'
     )
   })
 

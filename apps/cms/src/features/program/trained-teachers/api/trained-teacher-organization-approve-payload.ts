@@ -50,7 +50,7 @@ function uniquePositiveScheduleIds(ids: readonly (number | null | undefined)[]):
  *
  * - 일정이 없고 IMMEDIATE면 undefined를 반환해 기존 무본문 승인을 유지한다.
  * - PERIOD만 서버가 내려준 preferenceRank를 preferredScheduleRank로 보낸다.
- * - DATE(FIXED_DATE 포함)는 preferredScheduleRank를 넣지 않고 MATCHED scheduleId만 보낸다.
+ * - DATE(FIXED_DATE 포함)는 preferredScheduleRank를 넣지 않고 선택한 scheduleId만 보낸다.
  * - preferredScheduleRank와 selectedScheduleId·slots를 함께 만들지 않는다.
  * - 단일 일정은 selectedScheduleId만, 복수 일정은 slots만 만든다.
  * - requestedScheduleId는 이 함수의 입력·출력에 포함하지 않는다.

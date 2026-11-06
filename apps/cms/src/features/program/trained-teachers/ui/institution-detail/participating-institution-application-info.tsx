@@ -79,9 +79,9 @@ export interface TrainedTeachersParticipatingInstitutionApplicationInfoProps {
   usesTextbook?: boolean
   textbookEditFullWidth?: boolean
   institutionId: string
-  /** 상세 GET `educationSchedules` — 교육 진행 일정 행 SSOT */
+  /** 상세 GET `educationSchedules` — 승인 확정 운영 일정 행 SSOT. preferred로 채우지 않는다. */
   educationScheduleSessions?: ParticipatingSchoolSession[]
-  /** 상세 GET `preferredScheduleBlocks` — MATCHED scheduleId → 지망 라벨만 */
+  /** 상세 GET `preferredScheduleBlocks` — MATCHED scheduleId → 지망 라벨 룩업만 */
   preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
   schoolName: ReactNode
   educationGrade: ReactNode

@@ -134,8 +134,8 @@ function kstDateTimeParts(value: string | null | undefined): { date: string; tim
 }
 
 /**
- * TT 상세 `educationSchedules[]`(기관 실제 진행 일정) → 출석 세션.
- * 출석 조회 scheduleIds SSOT — 희망 일정(preferredScheduleBlocks)으로 대체하지 않는다.
+ * TT 상세 `educationSchedules[]`(승인으로 확정된 운영 일정) → 출석 세션.
+ * 출석 조회 scheduleIds SSOT — 희망 일정(preferredScheduleBlocks)으로 채우거나 자르지 않는다.
  */
 export function mapTrainedTeacherEducationSchedulesToSessions(
   schedules: ReadonlyArray<TrainedTeacherOrganizationEducationSchedule> | null | undefined

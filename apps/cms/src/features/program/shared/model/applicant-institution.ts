@@ -133,7 +133,7 @@ export interface ApplicantSchoolRow {
   preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
   /** TT 기관 신청 상세 `gradeBlocks` — 학생 명단 학급 Select SSOT. 목록 응답에는 없음 */
   gradeBlocks?: GradeBlock[] | null
-  /** TT 기관 신청 상세 `educationSchedules` — 출석 조회 scheduleIds SSOT. 목록 응답에는 없음 */
+  /** TT 기관 신청 상세 `educationSchedules` — 승인 확정 운영 일정·출석 scheduleIds SSOT. 목록 응답에는 없음 */
   educationScheduleSessions?: ParticipatingSchoolSession[]
   /** TT 교육 대상 (org-application additive) */
   educationTarget?: string
