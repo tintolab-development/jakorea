@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { isValidKoreanPhoneNumber } from '@jakorea/domain/shared/korean-phone'
 
 export const programRoundSchema = z.object({
+  id: z.string().optional(),
   roundNumber: z.number().min(1, '회차 번호를 입력해주세요'),
   startDate: z.string().min(1, '시작일을 선택해주세요'),
   endDate: z.string().min(1, '종료일을 선택해주세요'),

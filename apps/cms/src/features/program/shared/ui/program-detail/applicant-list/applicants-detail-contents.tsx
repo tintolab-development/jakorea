@@ -39,6 +39,7 @@ import {
   canPerformApplicationAction,
   canRestoreRejectedApplication,
   hasExplicitApplicationAction,
+  isApprovalCancelledApplicationStatus,
 } from '@/features/program/shared/lib/application-available-actions'
 import { resolveVolunteerInterview2CancelPassButtonLabel } from '@/features/program/general/lib/volunteer-interview2-cancel-pass'
 import type { GeneralSecondInterviewScreeningStatus } from '@/features/program/general/lib/volunteer-screening-constants'
@@ -59,7 +60,10 @@ import {
   unmaskInstructorApplicationPrivacyRemote,
   unmaskOrganizationApplicationPrivacyRemote,
 } from '@/features/program/general/api/applications-api-client'
-import { mapInstructorApplicationDetailToApplicantRow } from '@/features/program/general/api/adapters/general-applications-adapters'
+import {
+  mapInstructorApplicationDetailToApplicantRow,
+  mapOrganizationApplicationDetailToApplicantSchoolRow,
+} from '@/features/program/general/api/adapters/general-applications-adapters'
 import { resolveApplicantCancelApprovalState } from '@/features/program/general/lib/applicant-cancel-approval-policy'
 import {
   type ApplicantInstructorRow,
@@ -339,8 +343,12 @@ function headerBtnsPendingParticipation(
   onRevealPersonalInfo: () => void,
   availableActions?: string[],
   labels: { reject: string; approve: string } = individualApplicationDecisionButtonLabels(false),
-  approveGate?: { disabled: boolean; title?: string }
+  approveGate?: { disabled: boolean; title?: string },
+  applicationStatus?: string | null
 ): ApplicantHeaderActionItem[] {
+  if (isApprovalCancelledApplicationStatus(applicationStatus)) {
+    return [headerBtnPrivacy(onRevealPersonalInfo)]
+  }
   const items: ApplicantHeaderActionItem[] = []
   if (canPerformApplicationAction(availableActions, 'REJECT')) {
     items.push({
@@ -646,7 +654,12 @@ function resolveApplicantHeaderItems(params: {
         : undefined,
       blockFinalApprove
         ? { disabled: true, title: '면접 합격 후 최종 승인' }
-        : undefined
+        : undefined,
+      isInstructor
+        ? instructorApplicationStatus
+        : isInstitution
+          ? institutionApplicationStatus
+          : individualApplicationStatus
     )
   }
   return null
@@ -1261,7 +1274,8 @@ export function ApplicantsDetailContents({
 
   const [institutionTeacherPrivacy, setInstitutionTeacherPrivacy] = useState<{
     teacherName?: string
-    contact?: string
+    teacherTel?: string
+    teacherPhone?: string
     teacherEmail?: string
   } | null>(null)
 
@@ -1297,8 +1311,10 @@ export function ApplicantsDetailContents({
       )
       return {
         name: safeDetail.teacherName?.trim() || undefined,
-        phone: safeDetail.teacherPhone?.trim() || undefined,
+        teacherTel: safeDetail.teacherTel,
+        teacherPhone: safeDetail.teacherPhone,
         email: safeDetail.teacherEmail?.trim() || undefined,
+        detail: safeDetail,
       }
     },
     [institutionData?.id, program?.id, queryClient]
@@ -1306,10 +1322,24 @@ export function ApplicantsDetailContents({
 
   const applyInstitutionTeacherPersonalInfo = useCallback((payload: unknown) => {
     if (payload == null || typeof payload !== 'object') return
-    const privacy = payload as { name?: unknown; phone?: unknown; email?: unknown }
+    const privacy = payload as {
+      name?: unknown
+      teacherTel?: unknown
+      teacherPhone?: unknown
+      phone?: unknown
+      email?: unknown
+    }
+    const teacherTel = typeof privacy.teacherTel === 'string' ? privacy.teacherTel : undefined
+    const teacherPhone =
+      typeof privacy.teacherPhone === 'string'
+        ? privacy.teacherPhone
+        : typeof privacy.phone === 'string'
+          ? privacy.phone
+          : undefined
     setInstitutionTeacherPrivacy({
       ...(typeof privacy.name === 'string' ? { teacherName: privacy.name } : {}),
-      ...(typeof privacy.phone === 'string' ? { contact: privacy.phone } : {}),
+      ...(teacherTel != null ? { teacherTel } : {}),
+      ...(teacherPhone != null ? { teacherPhone } : {}),
       ...(typeof privacy.email === 'string' ? { teacherEmail: privacy.email } : {}),
     })
   }, [])
@@ -1373,13 +1403,16 @@ export function ApplicantsDetailContents({
       ...institutionData,
       teacherName:
         institutionTeacherPrivacy.teacherName ?? institutionData.teacherName,
-      /** 전화만 — Tel/E-mail 을 ` | `로 이어붙이지 않음(디바이더 셀에서 조립) */
-      contact: institutionTeacherPrivacy.contact ?? institutionData.contact,
+      /** 휴대전화만. Tel은 detail.teacherTel — 한 번호로 합치지 않음 */
+      contact: institutionTeacherPrivacy.teacherPhone ?? institutionData.contact,
       detail: {
         ...institutionData.detail,
         teacherInfo: undefined,
-        ...(institutionTeacherPrivacy.contact
-          ? { teacherPhone: institutionTeacherPrivacy.contact }
+        ...(institutionTeacherPrivacy.teacherTel != null
+          ? { teacherTel: institutionTeacherPrivacy.teacherTel }
+          : {}),
+        ...(institutionTeacherPrivacy.teacherPhone != null
+          ? { teacherPhone: institutionTeacherPrivacy.teacherPhone }
           : {}),
         ...(institutionTeacherPrivacy.teacherEmail
           ? { teacherEmail: institutionTeacherPrivacy.teacherEmail }
@@ -1459,6 +1492,14 @@ export function ApplicantsDetailContents({
     setEditUnmaskConfirmOpen(true)
   }, [individualDetailEdit.enterEdit, personalInfoRevealed])
 
+  const requestStartInstitutionEdit = useCallback(() => {
+    if (personalInfoRevealed && institutionWithMerge) {
+      institutionDetailEdit.enterEdit(institutionWithMerge)
+      return
+    }
+    setEditUnmaskConfirmOpen(true)
+  }, [institutionDetailEdit, institutionWithMerge, personalInfoRevealed])
+
   const closeEditUnmaskConfirm = useCallback(() => {
     if (editUnmaskConfirmLoading) return
     setEditUnmaskConfirmOpen(false)
@@ -1471,12 +1512,35 @@ export function ApplicantsDetailContents({
       .then(result => {
         if (!result.ok) return
         setEditUnmaskConfirmOpen(false)
-        individualDetailEdit.enterEdit()
+        if (isInstitution && institutionWithMerge && result.payload != null) {
+          const payload = result.payload as { detail?: unknown }
+          const dto =
+            payload.detail != null && typeof payload.detail === 'object'
+              ? payload.detail
+              : result.payload
+          const seeded = mapOrganizationApplicationDetailToApplicantSchoolRow(
+            dto as Parameters<typeof mapOrganizationApplicationDetailToApplicantSchoolRow>[0],
+            institutionWithMerge
+          )
+          institutionDetailEdit.enterEdit(seeded)
+          return
+        }
+        if (isIndividual) {
+          individualDetailEdit.enterEdit()
+        }
       })
       .finally(() => {
         setEditUnmaskConfirmLoading(false)
       })
-  }, [editUnmaskConfirmLoading, individualDetailEdit.enterEdit, revealWithReason])
+  }, [
+    editUnmaskConfirmLoading,
+    individualDetailEdit,
+    institutionDetailEdit,
+    institutionWithMerge,
+    isIndividual,
+    isInstitution,
+    revealWithReason,
+  ])
 
   const headerExtraContent = useMemo(() => {
     const items = resolveApplicantHeaderItems({
@@ -1503,7 +1567,7 @@ export function ApplicantsDetailContents({
       isGeneralInstitutionEditEnabled,
       isEditingInstitutionDetail: institutionDetailEdit.isEditing,
       isSavingInstitutionDetail: institutionDetailEdit.isSaving,
-      onEnterInstitutionEdit: institutionDetailEdit.enterEdit,
+      onEnterInstitutionEdit: requestStartInstitutionEdit,
       onCancelInstitutionEdit: institutionDetailEdit.cancelEdit,
       onSaveInstitutionEdit: () => {
         void institutionDetailEdit.saveEdit().then(result => {
@@ -1566,7 +1630,7 @@ export function ApplicantsDetailContents({
   }, [
     applicantId,
     isApprovedInstitution,
-    institutionDetailEdit.enterEdit,
+    requestStartInstitutionEdit,
     institutionDetailEdit.cancelEdit,
     institutionDetailEdit.isEditing,
     institutionDetailEdit.isSaving,
@@ -1900,6 +1964,17 @@ export function ApplicantsDetailContents({
         />
         {adminCommentModals}
         {combinedClassProcess.modals}
+        <ConfirmModal
+          open={editUnmaskConfirmOpen}
+          title="정보 수정 안내"
+          content={APPLICATION_INFO_EDIT_UNMASK_CONFIRM_CONTENT}
+          confirmText="정보 수정"
+          cancelText="취소"
+          onConfirm={confirmEditUnmaskAndStartEdit}
+          onCancel={closeEditUnmaskConfirm}
+          confirmLoading={editUnmaskConfirmLoading}
+          zIndex={APPLICATION_INFO_EDIT_UNMASK_MODAL_Z_INDEX}
+        />
       </>
     )
   }
@@ -1916,7 +1991,7 @@ export function ApplicantsDetailContents({
           <div className="applicant-contents__page-bottom-spacer" aria-hidden />
         ) : null}
         {personalInfoRevealModal}
-        {isIndividual ? (
+        {isIndividual || isInstitution ? (
           <ConfirmModal
             open={editUnmaskConfirmOpen}
             title="정보 수정 안내"

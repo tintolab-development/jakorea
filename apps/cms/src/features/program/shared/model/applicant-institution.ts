@@ -258,6 +258,13 @@ export function patchApplicantSchoolForApprovalStatus(
   }
 }
 
+function withoutDirectDecisionActions(actions?: string[]): string[] | undefined {
+  if (actions == null) return undefined
+  return actions.filter(
+    action => action !== 'APPROVE' && action !== 'REJECT' && action !== 'CANCEL_APPROVAL'
+  )
+}
+
 export function patchApplicantSchoolForCancelApproval(
   row: ApplicantSchoolRow,
   notifyOptions: ApplicantSchoolApprovalNotifyOptions
@@ -265,6 +272,7 @@ export function patchApplicantSchoolForCancelApproval(
   return {
     ...patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions),
     applicationStatus: 'APPROVAL_CANCELLED',
+    availableActions: withoutDirectDecisionActions(row.availableActions),
   }
 }
 
@@ -273,11 +281,15 @@ export function patchApplicantSchoolForCancelRejection(
   notifyOptions?: ApplicantSchoolApprovalNotifyOptions
 ): ApplicantSchoolRow {
   const pending = patchApplicantSchoolForApprovalStatus(row, 'pending')
+  const restored = {
+    ...pending,
+    applicationStatus: 'REJECTION_CANCELLED',
+  }
   if (!notifyOptions) {
-    return pending
+    return restored
   }
   return {
-    ...pending,
+    ...restored,
     approvalNotificationSentAt: resolveApplicantSchoolApprovalNotificationSentAt(notifyOptions),
   }
 }

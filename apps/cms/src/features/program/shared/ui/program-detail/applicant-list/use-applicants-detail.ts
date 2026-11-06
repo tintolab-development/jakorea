@@ -298,6 +298,7 @@ export function useApplicantsDetail({
       isTrainedTeachersSurface ? false : usesProgramInstitutionApplications,
     instructorColumnPreset,
     individualScreeningStage,
+    listFilters: appliedFilters,
     setInstitutionList,
     setInstructorList,
     setIndividualList,

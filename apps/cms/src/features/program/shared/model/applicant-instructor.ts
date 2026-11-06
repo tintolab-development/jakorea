@@ -306,6 +306,9 @@ export function patchApplicantInstructorForCancelApproval(
   return {
     ...rejected,
     applicationStatus: 'APPROVAL_CANCELLED',
+    availableActions: (row.availableActions ?? []).filter(
+      action => action !== 'APPROVE' && action !== 'REJECT' && action !== 'CANCEL_APPROVAL'
+    ),
     assignedLectures: undefined,
     assignedSchoolId: undefined,
     assignedSchoolName: undefined,
@@ -319,11 +322,15 @@ export function patchApplicantInstructorForCancelRejection(
   notifyOptions?: ApplicantInstructorApprovalNotifyOptions
 ): ApplicantInstructorRow {
   const pending = patchApplicantInstructorForApprovalStatus(row, 'pending')
+  const restored = {
+    ...pending,
+    applicationStatus: 'REJECTION_CANCELLED',
+  }
   if (!notifyOptions) {
-    return pending
+    return restored
   }
   return {
-    ...pending,
+    ...restored,
     approvalNotificationSentAt: resolveApplicantInstructorApprovalNotificationSentAt(notifyOptions),
   }
 }
