@@ -451,6 +451,12 @@ function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
 
 function mergeTrainedTeacherUpdateProgram(program: Program, patch: Partial<Program>): Program {
   const merged: Program = { ...program, ...patch }
+  if (patch.registrationOverlay != null && typeof patch.registrationOverlay === 'object') {
+    merged.registrationOverlay = {
+      ...(program.registrationOverlay ?? {}),
+      ...patch.registrationOverlay,
+    }
+  }
   if (patch.generalCommonInfo) {
     const existingRecruitment = program.generalCommonInfo?.participantRecruitmentInfo
     const patchRecruitment = patch.generalCommonInfo.participantRecruitmentInfo

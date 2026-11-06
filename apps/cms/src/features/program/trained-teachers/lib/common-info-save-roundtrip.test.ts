@@ -336,9 +336,9 @@ describe('교육받은 교사 공통정보 저장 왕복', () => {
         },
       },
     })
-    expect(values.surveySurvey).toBe(false)
-    expect(values.surveySatisfaction).toBe(false)
-    expect(values.surveyLectureEvaluation).toBe(false)
+    expect(values.surveySurvey).toBeUndefined()
+    expect(values.surveySatisfaction).toBeUndefined()
+    expect(values.surveyLectureEvaluation).toBeUndefined()
   })
 
   it('설문 키 []는 전부 해제로 저장·재조회되고 overlay fallback으로 다시 켜지지 않는다', () => {
