@@ -47,7 +47,7 @@ const base = {
     },
     {
       itemType: 'LECTURE_FEE',
-      itemName: '강의비',
+      itemName: '강사비',
       evidenceRequired: false,
       amount: '480000',
       attachments: [],
@@ -64,13 +64,22 @@ const created = buildInstructorSettlementCreateRequest(draft)
 assert.equal(created.idempotencyKey, '550e8400-e29b-41d4-a716-446655440000')
 assert.equal(created.assignmentId, 12345)
 assert.equal(created.programScheduleId, 88)
-assert.equal(created.requestedItems.some(item => item.itemType === 'LECTURE_FEE'), false)
-assert.equal(created.requestedItems.some(item => item.itemType === 'TRANSPORTATION'), true)
+assert.equal(
+  created.requestedItems.some(item => item.itemType === 'LECTURE_FEE'),
+  false
+)
+assert.equal(
+  created.requestedItems.some(item => item.itemType === 'TRANSPORTATION'),
+  true
+)
 assert.equal(
   created.requestedItems.find(item => item.itemType === 'TRANSPORTATION')?.requestedAmount,
-  15_000,
+  15_000
 )
-assert.equal(created.evidenceAttachments.some(item => item.itemType === 'TRANSPORTATION'), false)
+assert.equal(
+  created.evidenceAttachments.some(item => item.itemType === 'TRANSPORTATION'),
+  false
+)
 assert.equal(created.requestedItems.find(item => item.itemType === 'MEAL')?.requestedAmount, 10000)
 assert.equal('residentFront' in created, false)
 assert.equal('accountNumber' in created, false)
@@ -92,15 +101,15 @@ const belowMin = buildSettlementWriteDraft({
 })
 assert.equal(
   buildInstructorSettlementCreateRequest(belowMin).requestedItems.some(
-    item => item.itemType === 'TRANSPORTATION',
+    item => item.itemType === 'TRANSPORTATION'
   ),
-  false,
+  false
 )
 
 const withoutAssignment = buildSettlementWriteDraft({ ...base, assignmentId: undefined })
 assert.throws(
   () => buildInstructorSettlementCreateRequest(withoutAssignment),
-  /ASSIGNMENT_ID_REQUIRED/,
+  /ASSIGNMENT_ID_REQUIRED/
 )
 
 console.log('build-instructor-settlement-submit.selfcheck: ok')

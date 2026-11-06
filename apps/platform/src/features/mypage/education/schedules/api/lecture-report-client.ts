@@ -18,7 +18,12 @@ import {
 
 export type { LectureFeePreview }
 
-export type LectureReportStatus = 'UPCOMING' | 'AVAILABLE' | 'OVERDUE' | 'BUSINESS_ENDED' | 'SUBMITTED'
+export type LectureReportStatus =
+  | 'UPCOMING'
+  | 'AVAILABLE'
+  | 'OVERDUE'
+  | 'BUSINESS_ENDED'
+  | 'SUBMITTED'
 export type LectureReportLectureStatus = 'UPCOMING' | 'COMPLETED'
 export type LectureReportInstructorRole = 'LEAD' | 'ASSISTANT'
 
@@ -48,7 +53,7 @@ export type LectureReportAssignment = {
   institutionAddress?: string | null
   /** 서버 숫자 km. 문자열이 아니다. */
   distanceFromHome?: number | null
-  /** 지급조서 확인 강의비 산출. 키는 항상 존재. 미리보기 없으면 null */
+  /** 지급조서 확인 강사비 산출. 키는 항상 존재. 미리보기 없으면 null */
   lectureFeePreview?: LectureFeePreview | null
   /** GET items[].transportPreview 파싱 결과. 산출 없으면 null */
   instructorTransportPreview?: InstructorTransportPreview | null
@@ -153,9 +158,7 @@ function normalizeLectureReportAssignment(value: unknown): LectureReportAssignme
     sessionNo: scheduleFields.sessionNo ?? row.sessionNo ?? null,
     scheduleName: scheduleFields.scheduleName ?? emptyToNull(row.scheduleName),
     curriculumSessionCount: scheduleFields.curriculumSessionCount,
-    lectureFeePreview: parseLectureFeePreview(
-      isRecord(value) ? value.lectureFeePreview : null,
-    ),
+    lectureFeePreview: parseLectureFeePreview(isRecord(value) ? value.lectureFeePreview : null),
     instructorTransportPreview: parseInstructorTransportPreview(value),
   }
 }
@@ -202,31 +205,28 @@ export async function getLectureReportAssignments(
   programId: number,
   page = 0,
   signal?: AbortSignal,
-  size = LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX,
+  size = LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX
 ): Promise<LectureReportPage> {
-  const safeSize = Math.min(
-    Math.max(1, Math.trunc(size)),
-    LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX,
-  )
+  const safeSize = Math.min(Math.max(1, Math.trunc(size)), LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX)
   const { data } = await axiosClient.get(
     `/api/portal/me/programs/${programId}/lecture-report-assignments`,
     {
       params: { page, size: safeSize },
       signal,
-    },
+    }
   )
   return unwrapPage(unwrap(data))
 }
 
 export async function getAllLectureReportAssignments(
   programId: number,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<LectureReportAssignment[]> {
   const first = await getLectureReportAssignments(
     programId,
     0,
     signal,
-    LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX,
+    LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX
   )
   const items = [...(first.items ?? [])]
   const totalPages = Math.max(1, first.totalPages ?? 1)
@@ -235,7 +235,7 @@ export async function getAllLectureReportAssignments(
       programId,
       page,
       signal,
-      LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX,
+      LECTURE_REPORT_ASSIGNMENT_PAGE_SIZE_MAX
     )
     items.push(...(next.items ?? []))
   }
@@ -244,16 +244,16 @@ export async function getAllLectureReportAssignments(
 
 export async function getLectureReportState(assignmentId: number): Promise<LectureReportState> {
   const { data } = await axiosClient.get(
-    `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`,
+    `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`
   )
   return unwrap(data)
 }
 
 export async function getLectureReportBinding(
-  assignmentId: number,
+  assignmentId: number
 ): Promise<LectureReportFormBinding> {
   const { data } = await axiosClient.get(
-    `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report/form-binding`,
+    `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report/form-binding`
   )
   return unwrap(data)
 }
@@ -264,10 +264,10 @@ export async function getLectureReportBinding(
  */
 export async function renderLectureReport(
   programId: number,
-  bindingId: number,
+  bindingId: number
 ): Promise<Record<string, unknown>> {
   const { data } = await axiosClient.get(
-    `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/render`,
+    `/api/portal/me/programs/${programId}/form-bindings/${bindingId}/render`
   )
   return unwrap(data)
 }
@@ -279,21 +279,19 @@ export async function renderLectureReport(
  */
 export async function submitLectureReport(
   assignmentId: number,
-  input: LectureReportSubmitInput,
+  input: LectureReportSubmitInput
 ): Promise<{ reportId: number; formResponseId?: number }> {
   const { data } = await axiosClient.post(
     `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report`,
-    buildLectureReportSubmitBody(input),
+    buildLectureReportSubmitBody(input)
   )
   return unwrap(data)
 }
 
-export async function getLectureReportContent(
-  assignmentId: number,
-): Promise<LectureReportContent> {
+export async function getLectureReportContent(assignmentId: number): Promise<LectureReportContent> {
   const { data } = await axiosClient.get(
     `/api/portal/me/instructor-assignments/${assignmentId}/lecture-report/content`,
-    { headers: { 'Cache-Control': 'no-store' } },
+    { headers: { 'Cache-Control': 'no-store' } }
   )
   return unwrap(data)
 }

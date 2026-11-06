@@ -30,18 +30,18 @@ export type LectureFeePreview = {
 const MISSING = '-'
 
 const LECTURE_FEE_TYPE_LABELS: Record<LectureFeeTypeCode, string> = {
-  GRADE_1: '1급 강의비',
-  GRADE_2: '2급 강의비',
-  GRADE_3: '3급 강의비',
+  GRADE_1: '1급 강사비',
+  GRADE_2: '2급 강사비',
+  GRADE_3: '3급 강사비',
 }
 
-export const LECTURE_FEE_SETTLEMENT_BLOCKER_MESSAGE: Record<LectureFeeSettlementBlockerCode, string> =
-  {
-    SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED:
-      '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
-    SETTLEMENT_WAGE_RATE_NOT_CONFIGURED:
-      '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
-  }
+export const LECTURE_FEE_SETTLEMENT_BLOCKER_MESSAGE: Record<
+  LectureFeeSettlementBlockerCode,
+  string
+> = {
+  SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED: '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_WAGE_RATE_NOT_CONFIGURED: '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -95,7 +95,7 @@ export function lectureFeeTypeDisplayLabel(code: string | null | undefined): str
 
 /** PER_HOUR는 레거시 저장값. 시급 비례가 아니므로 차시당으로 표시한다. */
 export function instructorFeeUnitDisplayLabel(
-  unit: InstructorFeeCalculationUnit | null | undefined,
+  unit: InstructorFeeCalculationUnit | null | undefined
 ): string {
   if (unit === 'PER_HOUR' || unit === 'PER_CLASS') return '차시당'
   if (unit === 'PER_SESSION' || unit === 'PER_LECTURE') return '출강 1회당'
@@ -108,19 +108,19 @@ export function formatLectureFeeWon(amount: number | null | undefined): string {
 }
 
 export function hasConfirmedLectureFeeTotal(
-  preview: LectureFeePreview | null | undefined,
+  preview: LectureFeePreview | null | undefined
 ): boolean {
   return preview?.totalLectureFee != null && Number.isSafeInteger(preview.totalLectureFee)
 }
 
-/** 지급조서 확인 '총 강의비'. 서버 실적 확정 totalLectureFee만. 시급×분/60·차시 곱셈 금지. */
+/** 지급조서 확인 '총 강사비'. 서버 실적 확정 totalLectureFee만. 시급×분/60·차시 곱셈 금지. */
 export function formatTotalLectureFee(preview: LectureFeePreview | null | undefined): string {
   if (!hasConfirmedLectureFeeTotal(preview)) return MISSING
   return formatLectureFeeWon(preview?.totalLectureFee)
 }
 
 export function lectureFeeSettlementBlockerMessage(
-  preview: LectureFeePreview | null | undefined,
+  preview: LectureFeePreview | null | undefined
 ): string | null {
   const code = preview?.settlementBlockerCode
   if (!code) return null
@@ -128,19 +128,19 @@ export function lectureFeeSettlementBlockerMessage(
 }
 
 export function isLectureFeeSettlementBlocked(
-  preview: LectureFeePreview | null | undefined,
+  preview: LectureFeePreview | null | undefined
 ): boolean {
   return preview?.settlementBlockerCode != null
 }
 
-export function formatRecognizedSessionCountLabel(
-  count: number | null | undefined,
-): string | null {
+export function formatRecognizedSessionCountLabel(count: number | null | undefined): string | null {
   if (count == null || !Number.isSafeInteger(count) || count < 0) return null
   return `인정 ${count}차시`
 }
 
-export function formatInstructorFeeAssignment(preview: LectureFeePreview | null | undefined): string {
+export function formatInstructorFeeAssignment(
+  preview: LectureFeePreview | null | undefined
+): string {
   if (!preview) return MISSING
   const unitLabel = instructorFeeUnitDisplayLabel(preview.instructorFeeCalculationUnit)
   const amountLabel =
@@ -175,7 +175,9 @@ export function formatLectureFeeSessionProgress(input: {
   endAt?: string | null
 }): string {
   const sessionNo =
-    typeof input.sessionNo === 'number' && Number.isSafeInteger(input.sessionNo) && input.sessionNo > 0
+    typeof input.sessionNo === 'number' &&
+    Number.isSafeInteger(input.sessionNo) &&
+    input.sessionNo > 0
       ? input.sessionNo
       : typeof input.educationSessionCount === 'number' &&
           Number.isSafeInteger(input.educationSessionCount) &&

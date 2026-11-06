@@ -40,7 +40,7 @@ export type EducationSettlementItem = {
   lectureStartAt?: string | null
   /** 강의 종료. lecture-report-assignments.endAt */
   lectureEndAt?: string | null
-  /** 지급조서 확인 강의비 산출. 조인된 배정에만. 없으면 null */
+  /** 지급조서 확인 강사비 산출. 조인된 배정에만. 없으면 null */
   lectureFeePreview?: LectureFeePreview | null
   /** 강사 교통비 자동 산출. 서버 미리보기만. 없으면 null */
   instructorTransportPreview?: InstructorTransportPreview | null

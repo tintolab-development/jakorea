@@ -11,10 +11,10 @@ type EducationSettlementSummaryProps = {
   businessIncomeLabel?: string
   /**
    * gemini: Figma 11001-287013 — 1행 지급조서 처리 현황 | 프로그램 진행 회차 | 사업소득자 여부,
-   * 2행 강의비 책정 기준(전체 폭).
+   * 2행 강사비 책정 기준(전체 폭).
    */
   layout?: 'default' | 'gemini'
-  /** gemini: 차시별 강의비(`1차시 0원` …). 비어 있으면 feeGradeLabel 한 줄 */
+  /** gemini: 차시별 강사비(`1차시 0원` …). 비어 있으면 feeGradeLabel 한 줄 */
   feeBasisItems?: readonly string[]
 }
 
@@ -62,12 +62,14 @@ export function EducationSettlementSummary({
             </PFFormField>
           </PFFormFieldRow>
           <PFFormFieldRow>
-            <PFFormField label="강의비 책정 기준" labelWidth="wider">
+            <PFFormField label="강사비 책정 기준" labelWidth="wider">
               {feeBasisItems.length > 0 ? (
                 <span className={styles.feeBasisList}>
                   {feeBasisItems.map((label, index) => (
                     <span key={`${index}-${label}`} className={styles.feeBasisItem}>
-                      {index > 0 ? <span className={styles.feeBasisDivider} aria-hidden="true" /> : null}
+                      {index > 0 ? (
+                        <span className={styles.feeBasisDivider} aria-hidden="true" />
+                      ) : null}
                       {label}
                     </span>
                   ))}
@@ -88,14 +90,11 @@ export function EducationSettlementSummary({
       </PFText>
       <PFFormFieldTable radius="rounded">
         <PFFormFieldRow type="double">
-          <PFFormField
-            label={processTitle}
-            labelWidth={showInstructorFields ? undefined : 'wider'}
-          >
+          <PFFormField label={processTitle} labelWidth={showInstructorFields ? undefined : 'wider'}>
             {processLabel}
           </PFFormField>
           {showInstructorFields ? (
-            <PFFormField label="강의비 책정 기준">{feeGradeLabel ?? '-'}</PFFormField>
+            <PFFormField label="강사비 책정 기준">{feeGradeLabel ?? '-'}</PFFormField>
           ) : (
             <PFFormField label="프로그램 진행 회차" labelWidth="wider">
               <span className={styles.sessionValue}>

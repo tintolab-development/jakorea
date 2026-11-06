@@ -40,10 +40,14 @@ assert.deepEqual(
     recognizedSessionCount: 2,
     actualTrainingMinutes: 90,
     settlementBlockerCode: null,
-  },
+  }
 )
-assert.equal(parseLectureFeePreview({ instructorFeeCalculationUnit: 'PER_CLASS' })?.instructorFeeCalculationUnit, 'PER_CLASS')
-assert.equal(lectureFeeTypeDisplayLabel('GRADE_3'), '3급 강의비')
+assert.equal(
+  parseLectureFeePreview({ instructorFeeCalculationUnit: 'PER_CLASS' })
+    ?.instructorFeeCalculationUnit,
+  'PER_CLASS'
+)
+assert.equal(lectureFeeTypeDisplayLabel('GRADE_3'), '3급 강사비')
 assert.equal(lectureFeeTypeDisplayLabel(null), '-')
 assert.equal(lectureFeeTypeDisplayLabel('BUSINESS_INCOME'), '-')
 assert.equal(formatLectureFeeWon(240000), '240,000원')
@@ -66,8 +70,10 @@ const qaPreview = parseLectureFeePreview({
 assert.equal(qaPreview?.totalLectureFee, 450000)
 assert.equal(formatTotalLectureFee(qaPreview), '450,000원')
 assert.notEqual(
-  formatLectureFeeWon((qaPreview?.instructorFeeAmount ?? 0) * (qaPreview?.educationSessionCount ?? 0)),
-  formatTotalLectureFee(qaPreview),
+  formatLectureFeeWon(
+    (qaPreview?.instructorFeeAmount ?? 0) * (qaPreview?.educationSessionCount ?? 0)
+  ),
+  formatTotalLectureFee(qaPreview)
 )
 
 const stringTotal = parseLectureFeePreview({
@@ -101,7 +107,7 @@ assert.equal(
     educationSessionCount: null,
     ...EMPTY_COUNTS,
   }),
-  '차시당 240,000원',
+  '차시당 240,000원'
 )
 assert.equal(
   formatInstructorFeeAssignment({
@@ -112,7 +118,7 @@ assert.equal(
     educationSessionCount: null,
     ...EMPTY_COUNTS,
   }),
-  '차시당',
+  '차시당'
 )
 assert.equal(
   formatInstructorFeeAssignment({
@@ -123,7 +129,7 @@ assert.equal(
     educationSessionCount: null,
     ...EMPTY_COUNTS,
   }),
-  '240,000원',
+  '240,000원'
 )
 assert.equal(
   formatInstructorFeeAssignment({
@@ -136,7 +142,7 @@ assert.equal(
     actualTrainingMinutes: 10,
     settlementBlockerCode: null,
   }),
-  '출강 1회당 180,000원',
+  '출강 1회당 180,000원'
 )
 assert.equal(formatInstructorFeeAssignment(null), '-')
 
@@ -168,7 +174,7 @@ assert.equal(formatInstructorFeeAssignment(assignment1694890), '차시당 450,00
 assert.equal(isLectureFeeSettlementBlocked(assignment1694890), true)
 assert.equal(
   lectureFeeSettlementBlockerMessage(assignment1694890),
-  '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.'
 )
 assert.equal(formatRecognizedSessionCountLabel(assignment1694890?.recognizedSessionCount), null)
 
@@ -210,7 +216,7 @@ const wageMissing = parseLectureFeePreview({
 })
 assert.equal(
   lectureFeeSettlementBlockerMessage(wageMissing),
-  '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
+  '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.'
 )
 
 console.log('lecture-fee-preview.selfcheck: ok')

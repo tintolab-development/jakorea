@@ -31,7 +31,7 @@
   }
 }
 
-/* Figma 11001-286941 강의비 책정 기준: 항목 간격 4px 12px, 14px 세로 구분선 */
+/* Figma 11001-286941 강사비 책정 기준: 항목 간격 4px 12px, 14px 세로 구분선 */
 .feeBasisList {
   display: flex;
   flex-wrap: wrap;
