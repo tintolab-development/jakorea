@@ -61,6 +61,7 @@ import {
 import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import { hasActiveInstructorRecruitment } from '@/features/program/general/lib/detail-meta'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
@@ -117,13 +118,14 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   const [assignSubmitting, setAssignSubmitting] = useState(false)
   const assignInFlightRef = useRef(false)
 
+  const instructorRecruitmentReady = hasActiveInstructorRecruitment(program)
   const assignment = useParticipatingInstructorInstitutionAssignment({
     programId: program.id,
     instructor,
     schoolRows,
     instructorList,
     isCompanySchool: false,
-    enabled: true,
+    enabled: instructorRecruitmentReady,
 
     maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
@@ -376,6 +378,13 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       selectedRows: ParticipatingIndividualInstructorWaitingScheduleRow[],
       notifyPayload?: PermissionModalPayload
     ) => {
+      if (!instructorRecruitmentReady) {
+        showAlert({
+          title: '안내',
+          content: '강사 모집이 없는 프로그램에는 강사를 배정할 수 없습니다.',
+        })
+        return false
+      }
       if (!assignment.remoteEnabled) {
         notifyProgramApiUnavailable(
           'general-individual-instructor-assign',
@@ -465,6 +474,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       assignment,
       instructor.instructorApplicationId,
       instructor.memberId,
+      instructorRecruitmentReady,
       program.id,
       showAlert,
     ]
@@ -603,9 +613,9 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <CmsButton
               variant="secondary"
               size="h40"
-              disabled={addAssignOptions.length === 0}
+              disabled={!instructorRecruitmentReady || addAssignOptions.length === 0}
               onClick={() => {
-                if (addAssignOptions.length === 0) return
+                if (!instructorRecruitmentReady || addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
               }}
@@ -642,7 +652,12 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <span className="table-description">{waitingSchedules.length}건</span>
           </div>
           <div className="info-section-buttons--wrapper">
-            <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
+            <CmsButton
+              variant="secondary"
+              size="h40"
+              disabled={!instructorRecruitmentReady}
+              onClick={handleSelectAssignClick}
+            >
               선택 배정
             </CmsButton>
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />

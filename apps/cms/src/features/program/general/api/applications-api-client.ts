@@ -194,12 +194,35 @@ function sanitizeScreeningResultPayload<T extends ScreeningResultNotifyFields>(p
   } as T
 }
 
+function positiveAssignmentId(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return undefined
+  return Math.trunc(value)
+}
+
 function sanitizeInterviewAssignmentPayload<
-  T extends { notifyTiming?: string | null; scheduledAt?: string | null },
+  T extends {
+    notifyTiming?: string | null
+    scheduledAt?: string | null
+    volunteerApplicationId?: number | null
+    individualApplicationId?: number | null
+    interviewSlotId?: number | null
+  },
 >(payload: T): T {
-  const { scheduledAt, ...rest } = payload
+  const {
+    scheduledAt,
+    volunteerApplicationId,
+    individualApplicationId,
+    interviewSlotId,
+    ...rest
+  } = payload
+  const volunteerId = positiveAssignmentId(volunteerApplicationId)
+  const individualId = positiveAssignmentId(individualApplicationId)
+  const slotId = positiveAssignmentId(interviewSlotId)
   return {
     ...rest,
+    ...(volunteerId != null && individualId == null ? { volunteerApplicationId: volunteerId } : {}),
+    ...(individualId != null && volunteerId == null ? { individualApplicationId: individualId } : {}),
+    ...(slotId != null ? { interviewSlotId: slotId } : {}),
     ...(payload.notifyTiming === 'MANUAL' && scheduledAt ? { scheduledAt } : {}),
   } as T
 }

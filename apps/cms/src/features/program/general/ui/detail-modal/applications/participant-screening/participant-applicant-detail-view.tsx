@@ -24,7 +24,10 @@ import {
   resolveApplicantNotificationResendSentAt,
   toApplicantNotificationResendNotifyOptions,
 } from '@/features/program/general/lib/applicant-notification-resend'
-import type { IndividualApplicantScreeningStage } from '@/features/program/general/lib/individual-application-visibility'
+import {
+  shouldBlockIndividualFinalApproveForInterview,
+  type IndividualApplicantScreeningStage,
+} from '@/features/program/general/lib/individual-application-visibility'
 import {
   screeningDoc1DetailTitle,
   screeningDocPassedDetailTitle,
@@ -515,6 +518,7 @@ export function GeneralParticipantApplicantDetailView({
       evaluation: NonNullable<GeneralIndividualApplicantRow['managerAEvaluation']>
     ) => {
       if (!applicant) return
+      if (!applicant.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION')) return
       try {
         const response = await updateIndividualDocumentEvaluationRemote(applicant.id, managerSlot, {
           evaluation: evaluation.toUpperCase(),
@@ -585,6 +589,21 @@ export function GeneralParticipantApplicantDetailView({
         individualScreeningStage={screeningStage}
         onBack={() => {}}
         onApprove={id => {
+          if (
+            screeningStage !== 'doc1' &&
+            shouldBlockIndividualFinalApproveForInterview({
+              program,
+              screeningStage,
+              interviewResultStatus: applicant.interviewResultStatus,
+              secondInterviewScreeningStatus: applicant.secondInterviewScreeningStatus,
+            })
+          ) {
+            void showAlert({
+              title: '안내',
+              content: '면접 합격 후 최종 승인',
+            })
+            return
+          }
           setApproveTarget({ id, name: applicant.applicantName })
         }}
         onReject={id => {
@@ -633,7 +652,10 @@ export function GeneralParticipantApplicantDetailView({
           usesApplicationMock ? undefined : applicant.canRevealPersonalInfo === true
         }
         onIndividualManagerEvaluationChange={
-          usesApplicationMock ? undefined : saveManagerEvaluation
+          usesApplicationMock ||
+          !applicant.availableActions?.includes('UPDATE_DOCUMENT_EVALUATION')
+            ? undefined
+            : saveManagerEvaluation
         }
         onIndividualTeamRoleChange={usesApplicationMock ? undefined : saveTeamRole}
       />
