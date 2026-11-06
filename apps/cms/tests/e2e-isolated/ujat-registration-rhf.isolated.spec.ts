@@ -77,7 +77,7 @@ async function completeNewUjatRegistrationWizard(
   })
 
   await registration.goToRecruitment()
-  await expect(page.getByRole('heading', { name: '참여 기관 모집 정보' })).toBeVisible({
+  await expect(page.getByRole('tab', { name: '참여 기관 모집 정보' })).toBeVisible({
     timeout: 30_000,
   })
   await expect(page.getByPlaceholder('담당 문의처').first()).not.toHaveValue('')
@@ -203,6 +203,22 @@ test.describe('UJAT 신규 등록 Typed RHF 격리 Mock E2E', () => {
     expect(createIndex).toBeGreaterThanOrEqual(0)
     expect(typedIndex).toBeGreaterThan(createIndex)
     expect(capacityIndex).toBeGreaterThan(typedIndex)
+
+    const formCopies = log.mutations.filter(
+      item =>
+        item.method === 'POST' &&
+        (/\/versions\/copy$/.test(item.path) || /\/form-templates\/\d+\/versions$/.test(item.path))
+    )
+    expect(
+      formCopies.length,
+      `모집 양식 COPY/복제 API가 있어야 합니다. mutations=${mutationOrder.join(' | ')}`
+    ).toBeGreaterThanOrEqual(2)
+    expect(log.formVersionPuts.length, '변경된 양식 Version PUT').toBeGreaterThanOrEqual(2)
+    expect(log.formVersionPublishes.length, 'Version publish').toBeGreaterThanOrEqual(2)
+    expect(log.formBindings.length, 'Program/Form Binding').toBeGreaterThan(0)
+    const bindingText = JSON.stringify(log.formBindings)
+    expect(bindingText).toMatch(/recruitment-ujat-school|PARTICIPANT|ORGANIZATION|institution/i)
+    expect(bindingText).toMatch(/recruitment-ujat-volunteer|VOLUNTEER/i)
   })
 
   test('Region Capacity 500 이후 동일 programId PUT 재시도는 CREATE를 중복하지 않는다', async ({
@@ -291,7 +307,7 @@ test.describe('UJAT 신규 등록 Typed RHF 격리 Mock E2E', () => {
     const registration = new UjatProgramRegistrationPage(page)
     await registration.openNewRegistration()
     await registration.goToRecruitment()
-    await expect(page.getByRole('heading', { name: '참여 기관 모집 정보' })).toBeVisible({
+    await expect(page.getByRole('tab', { name: '참여 기관 모집 정보' })).toBeVisible({
       timeout: 30_000,
     })
     const contact = page.getByPlaceholder('담당 문의처').first()
@@ -368,5 +384,145 @@ test.describe('UJAT 신규 등록 Typed RHF 격리 Mock E2E', () => {
     await registration.goToApplication()
     await expect(page.getByRole('button', { name: '프로그램 등록 완료' })).toBeVisible()
     expect(log.unexpected).toEqual([])
+  })
+
+  test('시나리오 B-empty — 명시한 빈 문의처가 이어쓰기에서 기본값으로 되돌아가지 않는다', async ({
+    page,
+  }) => {
+    test.setTimeout(360_000)
+    await installIsolatedRegistrationNetwork(page)
+    await page.goto('/programs/ujat')
+    await expect(page.getByRole('button', { name: /신규 등록/ })).toBeVisible({ timeout: 45_000 })
+
+    const registration = new UjatProgramRegistrationPage(page)
+    await registration.openNewRegistration()
+    await registration.goToRecruitment()
+    const contact = page.getByPlaceholder('담당 문의처').first()
+    await expect(contact).not.toHaveValue('')
+    await contact.fill('')
+    await expect(contact).toHaveValue('')
+
+    await confirmDraftSave(page)
+    await page
+      .getByRole('banner')
+      .filter({ hasText: 'UJAT 프로그램 등록' })
+      .getByLabel('닫기')
+      .click()
+    const leave = page.getByRole('dialog').filter({ hasText: '작성 취소 안내' })
+    if (await leave.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await leave.getByRole('button', { name: '저장 안 함' }).click()
+    }
+
+    await page.getByRole('button', { name: /신규 등록/ }).click()
+    const notice = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    await expect(notice).toBeVisible({ timeout: 20_000 })
+    await notice.getByRole('radio', { name: '이어서 작성' }).check()
+    await notice.getByRole('button', { name: '이어서 작성' }).click()
+    await expect(page.getByPlaceholder('담당 문의처').first()).toHaveValue('')
+  })
+
+  test('시나리오 C — 실제 Draft payload의 unknown sidecar가 이어쓰기 후 저장에도 남는다', async ({
+    page,
+  }) => {
+    test.setTimeout(360_000)
+    const log = await installIsolatedRegistrationNetwork(page)
+    await page.goto('/programs/ujat')
+    await expect(page.getByRole('button', { name: /신규 등록/ })).toBeVisible({ timeout: 45_000 })
+
+    const registration = new UjatProgramRegistrationPage(page)
+    await registration.openNewRegistration()
+    await registration.goToRecruitment()
+    await confirmDraftSave(page)
+
+    const injected = await page.evaluate(() => {
+      const saveKey = 'cms.jakorea.writingFormTemplateSaves.v1'
+      const raw = localStorage.getItem(saveKey)
+      if (!raw) return { ok: false as const, templateIds: [] as string[] }
+      const file = JSON.parse(raw) as {
+        byTemplateId?: Record<string, { overlay?: Record<string, unknown> }>
+      }
+      const templateIds = Object.keys(file.byTemplateId ?? {}).filter(id =>
+        id.includes('recruitment-ujat-school')
+      )
+      if (templateIds.length === 0) return { ok: false as const, templateIds }
+      for (const templateId of templateIds) {
+        const record = file.byTemplateId?.[templateId]
+        if (!record) continue
+        record.overlay = {
+          ...(record.overlay ?? {}),
+          'ujat.recruit.institution.publicTitle': 'legacy-public-title',
+          unknownSidecarKey: 'preserve-me',
+        }
+      }
+      localStorage.setItem(saveKey, JSON.stringify(file))
+      return { ok: true as const, templateIds }
+    })
+    expect(
+      injected.ok,
+      `실제 모집 양식 Draft overlay가 있어야 합니다: ${injected.templateIds.join(', ')}`
+    ).toBe(true)
+
+    await page
+      .getByRole('banner')
+      .filter({ hasText: 'UJAT 프로그램 등록' })
+      .getByLabel('닫기')
+      .click()
+    const leave = page.getByRole('dialog').filter({ hasText: '작성 취소 안내' })
+    if (await leave.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await leave.getByRole('button', { name: '저장 안 함' }).click()
+    }
+
+    const reinjected = await page.evaluate(() => {
+      const saveKey = 'cms.jakorea.writingFormTemplateSaves.v1'
+      const raw = localStorage.getItem(saveKey)
+      if (!raw) return { ok: false as const, templateIds: [] as string[] }
+      const file = JSON.parse(raw) as {
+        byTemplateId?: Record<string, { overlay?: Record<string, unknown> }>
+      }
+      const templateIds = Object.keys(file.byTemplateId ?? {}).filter(id =>
+        id.includes('recruitment-ujat-school')
+      )
+      if (templateIds.length === 0) return { ok: false as const, templateIds }
+      for (const templateId of templateIds) {
+        const record = file.byTemplateId?.[templateId]
+        if (!record) continue
+        record.overlay = {
+          ...(record.overlay ?? {}),
+          'ujat.recruit.institution.publicTitle': 'legacy-public-title',
+          unknownSidecarKey: 'preserve-me',
+        }
+      }
+      localStorage.setItem(saveKey, JSON.stringify(file))
+      return { ok: true as const, templateIds }
+    })
+    expect(reinjected.ok, `닫기 이후에도 모집 Draft가 있어야 합니다: ${reinjected.templateIds.join(', ')}`).toBe(
+      true
+    )
+
+    await page.getByRole('button', { name: /신규 등록/ }).click()
+    const notice = page.getByRole('dialog').filter({ hasText: '임시저장 이력 안내' })
+    await expect(notice).toBeVisible({ timeout: 20_000 })
+    await notice.getByRole('radio', { name: '이어서 작성' }).check()
+    await notice.getByRole('button', { name: '이어서 작성' }).click()
+    await expect(page.getByText('UJAT 프로그램 등록', { exact: true })).toBeVisible({
+      timeout: 30_000,
+    })
+    await confirmDraftSave(page)
+    const preserved = await page.evaluate(() => {
+      const raw = localStorage.getItem('cms.jakorea.writingFormTemplateSaves.v1')
+      if (!raw) return null
+      const file = JSON.parse(raw) as {
+        byTemplateId?: Record<string, { overlay?: Record<string, unknown> }>
+      }
+      const overlays = Object.entries(file.byTemplateId ?? {})
+        .filter(([id]) => id.includes('recruitment-ujat-school'))
+        .map(([, record]) => record.overlay ?? {})
+      return overlays[0] ?? null
+    })
+    expect(preserved).toMatchObject({
+      unknownSidecarKey: 'preserve-me',
+      'ujat.recruit.institution.publicTitle': 'legacy-public-title',
+    })
+    expect(log.createProgram).toBeNull()
   })
 })
