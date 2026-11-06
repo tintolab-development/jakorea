@@ -97,6 +97,20 @@ export function disableSurveyPollScheduleOptionsWithSurvey(
   return options.map(option => (used.has(option.value) ? { ...option, disabled: true } : option))
 }
 
+/** 아직 바인딩되지 않은 일정 value만. 일정별 만족도조사 자동 매핑에 사용한다. */
+export function collectUnboundSurveyPollScheduleValues(
+  options: ReadonlyArray<SurveyPollScheduleSelectOption>
+): string[] {
+  return options
+    .filter(
+      option =>
+        option.disabled !== true &&
+        option.value.trim() !== '' &&
+        option.value !== SURVEY_POLL_TARGET_ALL_VALUE
+    )
+    .map(option => option.value)
+}
+
 /** TCH 행사별 — scheduleDetails 행사명 라벨 매칭 대상 (후보 소스는 education-slots만). */
 export function isTrainedTeacherEventScheduleProgram(
   program: Program | null | undefined
@@ -168,6 +182,40 @@ export function filterSurveyPollEducationSlotCandidates<T>(
   schedules: ReadonlyArray<T>
 ): T[] {
   return schedules.filter(schedule => isSurveyPollEducationSlotCandidate(schedule))
+}
+
+export type SatisfactionScheduleSortKey = {
+  startAt?: string | null
+  sessionNo?: number | null
+}
+
+/** 만족도 결과 일정 셀렉트 — 최신 일정(종료·회차)이 위 */
+export function compareSatisfactionScheduleDesc(
+  a: SatisfactionScheduleSortKey,
+  b: SatisfactionScheduleSortKey
+): number {
+  const aStart = Date.parse(String(a.startAt ?? ''))
+  const bStart = Date.parse(String(b.startAt ?? ''))
+  const aOk = Number.isFinite(aStart)
+  const bOk = Number.isFinite(bStart)
+  if (aOk && bOk && aStart !== bStart) return bStart - aStart
+  if (aOk !== bOk) return aOk ? -1 : 1
+  const aSession =
+    typeof a.sessionNo === 'number' && Number.isFinite(a.sessionNo)
+      ? a.sessionNo
+      : Number.NEGATIVE_INFINITY
+  const bSession =
+    typeof b.sessionNo === 'number' && Number.isFinite(b.sessionNo)
+      ? b.sessionNo
+      : Number.NEGATIVE_INFINITY
+  if (aSession !== bSession) return bSession - aSession
+  return 0
+}
+
+export function sortSatisfactionScheduleDisplayItemsDesc<T extends SatisfactionScheduleSortKey>(
+  items: ReadonlyArray<T>
+): T[] {
+  return [...items].sort(compareSatisfactionScheduleDesc)
 }
 
 function sortSchedulesForSurveyPoll(

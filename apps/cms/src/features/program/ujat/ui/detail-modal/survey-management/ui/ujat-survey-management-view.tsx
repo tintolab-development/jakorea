@@ -74,6 +74,11 @@ import { getSurveyWritingTemplateSelectOptions } from '../lib/ujat-survey-templa
 import {
   buildUjatSurveyWritingPreviewSession,
 } from '../lib/open-ujat-survey-writing-preview'
+import { resolveSatisfactionSurveyDisplayTitle } from '@/features/program/shared/lib/survey-management/satisfaction-survey-display-title'
+import {
+  resolveSatisfactionPreviewPeriod,
+  type SatisfactionFormEditPeriod,
+} from '@/features/program/shared/lib/survey-management/satisfaction-form-edit-period'
 import { UjatSurveyTemplateEditModal } from './ujat-survey-template-edit-modal'
 import {
   SurveyTemplateEditModal,
@@ -253,7 +258,12 @@ export function UjatSurveyManagementView({
   const openUjatSurveyTemplatePreview = useCallback(
     (
       survey: { id: string; templateId: string; title: string; bindingId?: string },
-      options?: { allowEdit?: boolean }
+      options?: {
+        allowEdit?: boolean
+        displayTitle?: string
+        overwriteTitle?: boolean
+        displayPeriod?: SatisfactionFormEditPeriod | null
+      }
     ) => {
       const catalogRow = findWritingTemplateRowByDefinitionId(survey.templateId)
       const allowEdit = options?.allowEdit ?? true
@@ -271,8 +281,10 @@ export function UjatSurveyManagementView({
           : undefined
       void buildUjatSurveyWritingPreviewSession({
         templateId: survey.templateId,
-        title: survey.title,
+        title: options?.displayTitle ?? survey.title,
         versionId: survey.id,
+        overwriteTitle: options?.overwriteTitle,
+        displayPeriod: options?.displayPeriod,
         onEditForm,
       })
         .then(session => {
@@ -382,7 +394,7 @@ export function UjatSurveyManagementView({
     surveyCreateModalOpen || satisfactionCreateModalOpen || lectureEvalCreateModalOpen
   const surveyScheduleOptionsQuery = useProgramSurveyScheduleOptions(
     displayProgram,
-    registerScheduleModalOpen
+    registerScheduleModalOpen || isUjatSatisfactionSurveyTab(activeTab)
   )
   const registerScheduleOptions = useMemo(() => {
     const raw = surveyScheduleOptionsQuery.options ?? []
@@ -638,7 +650,8 @@ export function UjatSurveyManagementView({
           const editLoad = await loadProgramSurveyFormEditAfterBinding(
             String(displayProgram.id),
             result.binding,
-            selectedSurveyTemplateId
+            selectedSurveyTemplateId,
+            { schedules: surveyScheduleOptionsQuery.schedules }
           )
           setSurveyCreateModalOpen(false)
           setSelectedSurveyScheduleValue(null)
@@ -683,6 +696,7 @@ export function UjatSurveyManagementView({
     selectedSurveyTemplateId,
     showAlert,
     showUjatRegisterScheduleField,
+    surveyScheduleOptionsQuery.schedules,
     surveysRemote,
   ])
 
@@ -873,8 +887,19 @@ export function UjatSurveyManagementView({
         if (displayProgram != null && result.binding != null) {
           const editLoad = await loadProgramSurveyFormEditAfterBinding(
             String(displayProgram.id),
-            result.binding,
-            selectedSatisfactionTemplateId
+            {
+              ...result.binding,
+              formType: result.binding.formType ?? payload.formType,
+              targetScope: result.binding.targetScope ?? payload.targetScope,
+              targetScopeId: result.binding.targetScopeId ?? payload.targetScopeId,
+            },
+            selectedSatisfactionTemplateId,
+            {
+              schedules: surveyScheduleOptionsQuery.schedules,
+              windowDays: 7,
+              targetScope: result.binding.targetScope ?? payload.targetScope,
+              targetScopeId: result.binding.targetScopeId ?? payload.targetScopeId,
+            }
           )
           setSatisfactionCreateModalOpen(false)
           if (editLoad.ok) {
@@ -914,6 +939,7 @@ export function UjatSurveyManagementView({
     resolveRegisterScheduleTarget,
     selectedSatisfactionTemplateId,
     showAlert,
+    surveyScheduleOptionsQuery.schedules,
     surveysRemote,
   ])
 
@@ -961,8 +987,21 @@ export function UjatSurveyManagementView({
     if (!activeSatisfactionSurvey) return
     openUjatSurveyTemplatePreview(activeSatisfactionSurvey, {
       allowEdit: canEditRegisteredSurveyForm(activeSatisfactionSurvey),
+      displayTitle: resolveSatisfactionSurveyDisplayTitle(
+        activeSatisfactionSurvey,
+        surveyScheduleOptionsQuery.schedules
+      ),
+      overwriteTitle: true,
+      displayPeriod: resolveSatisfactionPreviewPeriod(
+        activeSatisfactionSurvey,
+        surveyScheduleOptionsQuery.schedules
+      ),
     })
-  }, [activeSatisfactionSurvey, openUjatSurveyTemplatePreview])
+  }, [
+    activeSatisfactionSurvey,
+    openUjatSurveyTemplatePreview,
+    surveyScheduleOptionsQuery.schedules,
+  ])
 
   const handleShareSatisfactionSurvey = useCallback(() => {
     if (!activeSatisfactionSurvey || programId == null) return

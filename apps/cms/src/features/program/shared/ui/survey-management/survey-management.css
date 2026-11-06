@@ -243,21 +243,35 @@
 
 .survey-management-create-modal__hint {
   margin: 0;
-  color: var(--default-BK, #3d3d3d);
-  font-family: var(--font-family-primary, 'Pretendard', sans-serif);
+  color: #737373;
+  font-family: 'Noto Sans KR';
   font-size: 13px;
+  font-style: normal;
   font-weight: 400;
-  line-height: 150%;
-  opacity: 0.7;
+  line-height: 19px; /* 146.154% */
 }
 
-.survey-management-satisfaction__schedule-tabs {
+.survey-management-satisfaction__schedule-select {
   margin: 0 0 16px;
 }
 
-.survey-management-satisfaction__meta {
-  margin: 0 0 12px;
-  color: var(--default-BK, #3d3d3d);
-  font-size: 14px;
-  line-height: 150%;
+.survey-management-deadline-hint__container {
+  display: flex;
+  width: 540px;
+  padding: 10px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border-radius: 8px;
+  background: #e6f6f7;
+}
+
+.survey-management-deadline-hint__container p {
+  margin: 0;
+  color: #00a0af;
+  font-family: 'Noto Sans KR';
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 19px; /* 146.154% */
 }

@@ -33,10 +33,30 @@ export type SatisfactionBindingReadFields = SatisfactionBindingWriteFields & {
 export type SatisfactionFormBindingResponse = ProgramFormBindingResponse &
   SatisfactionBindingReadFields
 
-export function isSatisfactionWindowDays(
-  value: unknown
-): value is SatisfactionWindowDays {
+export function isSatisfactionWindowDays(value: unknown): value is SatisfactionWindowDays {
   return SATISFACTION_WINDOW_DAYS.includes(value as SatisfactionWindowDays)
+}
+
+const KO_WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
+/** 등록 모달 예시 — 1회차 종료일(11.12 목) */
+const SATISFACTION_WINDOW_EXAMPLE_SESSION_END = { year: 2026, month: 11, day: 12 } as const
+
+function formatSatisfactionExampleDate(year: number, month: number, day: number): string {
+  const date = new Date(year, month - 1, day)
+  return `${date.getMonth() + 1}.${String(date.getDate()).padStart(2, '0')}(${KO_WEEKDAYS[date.getDay()]})`
+}
+
+/** 참여 기간 선택에 맞춰 등록 모달 예시 마감일을 만든다. 3일 → 11.12~11.15, 7일 → 11.12~11.19 */
+export function formatSatisfactionWindowExampleLine(windowDays: number): string {
+  const { year, month, day } = SATISFACTION_WINDOW_EXAMPLE_SESSION_END
+  const sessionEnd = formatSatisfactionExampleDate(year, month, day)
+  const deadline = new Date(year, month - 1, day + windowDays)
+  const deadlineLabel = formatSatisfactionExampleDate(
+    deadline.getFullYear(),
+    deadline.getMonth() + 1,
+    deadline.getDate()
+  )
+  return `예) 1회차 ${sessionEnd} 12:00 종료 → ${deadlineLabel} 23:59 마감`
 }
 
 export function readSatisfactionRunMode(
@@ -53,8 +73,14 @@ export function readSatisfactionRunMode(
 }
 
 export function readSatisfactionWindowDays(value: unknown): SatisfactionWindowDays | null {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return null
-  const days = Math.trunc(value)
+  const numeric =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim() !== ''
+        ? Number(value)
+        : NaN
+  if (!Number.isFinite(numeric)) return null
+  const days = Math.trunc(numeric)
   return isSatisfactionWindowDays(days) ? days : null
 }
 
@@ -63,14 +89,13 @@ export function readSatisfactionBindingFields(
 ): SatisfactionBindingReadFields {
   const row = (binding ?? {}) as SatisfactionFormBindingResponse
   return {
-    satisfactionRunMode: readSatisfactionRunMode(row.satisfactionRunMode, row.targetScope) ?? undefined,
+    satisfactionRunMode:
+      readSatisfactionRunMode(row.satisfactionRunMode, row.targetScope) ?? undefined,
     satisfactionWindowDays: readSatisfactionWindowDays(row.satisfactionWindowDays) ?? undefined,
     startAtLocked: typeof row.startAtLocked === 'boolean' ? row.startAtLocked : undefined,
     startImmediately: typeof row.startImmediately === 'boolean' ? row.startImmediately : undefined,
-    displayDeadlineAt:
-      typeof row.displayDeadlineAt === 'string' ? row.displayDeadlineAt : null,
-    resultDownloadable:
-      typeof row.resultDownloadable === 'boolean' ? row.resultDownloadable : null,
+    displayDeadlineAt: typeof row.displayDeadlineAt === 'string' ? row.displayDeadlineAt : null,
+    resultDownloadable: typeof row.resultDownloadable === 'boolean' ? row.resultDownloadable : null,
     progressStatus: typeof row.progressStatus === 'string' ? row.progressStatus : null,
   }
 }
@@ -86,18 +111,11 @@ export function mapSatisfactionProgressStatus(
   return fallback
 }
 
-/** SATISFACTION 결과 다운로드 — `resultDownloadable === true`만. 제출 완료율로 켜지 않는다. */
-export function canDownloadSatisfactionResults(input: {
-  resultDownloadable?: boolean | null
-}): boolean {
-  return input.resultDownloadable === true
-}
-
-export function canDownloadSatisfactionAggregate(
-  bindings: ReadonlyArray<{ resultDownloadable?: boolean | null }>
+/** SATISFACTION 결과 다운로드 — 진행 후 항상 가능. `resultDownloadable`로 막지 않는다. */
+export function canDownloadSatisfactionResults(
+  _input?: { resultDownloadable?: boolean | null }
 ): boolean {
-  if (bindings.length === 0) return false
-  return bindings.every(item => canDownloadSatisfactionResults(item))
+  return true
 }
 
 export function satisfactionBindingRowKey(input: {
@@ -120,42 +138,6 @@ export function satisfactionScheduleLabel(input: {
   if (label) return label
   if (input.targetScope?.trim().toUpperCase() === 'PROGRAM') return '종료 시 1회'
   return '일정'
-}
-
-export type SatisfactionAggregateCounts = {
-  submittedCount: number
-  expectedRespondentCount: number | null
-}
-
-/** expected가 하나라도 null이면 합산 분모도 null — 제출률을 숨긴다. */
-export function aggregateSatisfactionCounts(
-  rows: ReadonlyArray<{ responseCount?: number; expectedRespondentCount?: number | null }>
-): SatisfactionAggregateCounts {
-  let submitted = 0
-  let expected = 0
-  let missingExpected = false
-  for (const row of rows) {
-    submitted += Number.isFinite(row.responseCount) ? Number(row.responseCount) : 0
-    if (row.expectedRespondentCount == null) {
-      missingExpected = true
-      continue
-    }
-    expected += row.expectedRespondentCount
-  }
-  return {
-    submittedCount: submitted,
-    expectedRespondentCount: missingExpected ? null : expected,
-  }
-}
-
-export function satisfactionDeadlinePreviewCopy(windowDays: SatisfactionWindowDays): string {
-  return `화면 마감은 시작일로부터 ${windowDays}일째 23:59:59(Asia/Seoul)입니다. 사업 운영 종료가 더 빠르면 그 시각이 최종 마감입니다.`
-}
-
-export function satisfactionStartHintCopy(runMode: SatisfactionRunMode): string {
-  return runMode === SATISFACTION_RUN_MODE_ONCE_AT_END
-    ? '기본 시작일은 마지막 교육 일정 종료일입니다. 관리자가 시작을 직접 지정하면 이후 일정 변경이 덮어쓰지 않습니다.'
-    : '기본 시작은 해당 일정 종료 시각입니다.'
 }
 
 export function buildSatisfactionBindingWriteFields(input: {

@@ -70,7 +70,7 @@ export function SurveyRegisteredActions({
   }
 
   const resultsDownloadEnabled =
-    downloadEnabled ?? (layout === 'satisfaction' ? false : canDownloadSurveyResults(survey))
+    downloadEnabled ?? (layout === 'satisfaction' ? true : canDownloadSurveyResults(survey))
 
   return (
     <div className={rootClassName}>

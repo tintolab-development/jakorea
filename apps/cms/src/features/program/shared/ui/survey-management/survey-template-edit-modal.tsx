@@ -36,6 +36,10 @@ import {
   type ProgramSurveyFormEditTarget,
 } from '../../lib/survey-management/save-program-survey-form-edit'
 import {
+  applySurveyTitleCustomPeriodToDraft,
+  type SatisfactionFormEditPeriod,
+} from '../../lib/survey-management/satisfaction-form-edit-period'
+import {
   applyProgramSurveyTitleToParagraph,
   findProgramSurveyTitleParagraphId,
   readProgramSurveyTitle,
@@ -47,6 +51,7 @@ import {
 export type ProgramSurveyFormEdit = {
   target: ProgramSurveyFormEditTarget
   initialDraft: WritingFormDraft
+  displayPeriod?: SatisfactionFormEditPeriod | null
 }
 
 export type SurveyTemplateEditModalProps = {
@@ -95,9 +100,12 @@ function SurveyTemplateEditModalInner({
   const getInitialDraft = useCallback(
     () =>
       (programEdit != null
-        ? seedProgramSurveyTitle(
-            forceSurveyTitleWritingPeriodOn(programEdit.initialDraft),
-            programEdit.target.title
+        ? applySurveyTitleCustomPeriodToDraft(
+            seedProgramSurveyTitle(
+              forceSurveyTitleWritingPeriodOn(programEdit.initialDraft),
+              programEdit.target.title
+            ),
+            programEdit.displayPeriod
           )
         : null) ??
       buildDefaultSurveyWritingDraft(templateId, { templateName: templateRow?.templateName }),
