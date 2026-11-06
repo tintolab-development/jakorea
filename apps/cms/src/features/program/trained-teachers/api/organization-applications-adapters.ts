@@ -21,6 +21,7 @@ import type { PreferredScheduleSessionTime } from '@/shared/api/generated/dashbo
 import type { ProgramSchedule } from '@/types/domain'
 import type { TrainedTeacherOrganizationApplicationDetailResponse } from './organization-applications-types'
 import type { TrainedTeacherOrganizationApplicationResponse } from '@/shared/api/generated/dashboard/schemas/trainedTeacherOrganizationApplicationResponse'
+import type { GradeBlock } from '@/shared/api/generated/dashboard/schemas/gradeBlock'
 
 /** YYYY-MM-DD → YYYY.MM.DD (목록 세션 표시용). 이미 점 구분 문자열이면 공백만 정리. */
 function formatPreferredScheduleDateForSession(raw: string): string {
@@ -242,6 +243,23 @@ type TrainedTeacherOrganizationApplicationDto = (
   requestedEducationFormat?: string | null
   textbookId?: number | string | null
   textbookDeliveryStatus?: string | null
+  gradeBlocks?: GradeBlock[] | null
+}
+
+function ownDeliveryStatus(source: object, key = 'textbookDeliveryStatus'): unknown {
+  return Object.prototype.hasOwnProperty.call(source, key)
+    ? (source as Record<string, unknown>)[key]
+    : undefined
+}
+
+/** PREPARING/SHIPPING/DELIVERED만 배지. null·NOT_APPLICABLE·그 외는 배지 없음. */
+function mapStoredTextbookDeliveryToBadge(
+  raw: unknown
+): TextbookStatusKey | undefined {
+  if (typeof raw !== 'string') return undefined
+  const mapped = mapTextbookDeliveryStatusToBadge(raw)
+  if (mapped === 'not_applicable') return undefined
+  return mapped
 }
 
 function formatResultNotificationSentAt(iso?: string | null): string | undefined {
@@ -331,19 +349,27 @@ export function mapPreferredScheduleBlocks(
 }
 
 /**
- * 교재 배송 배지. 일반 참여 기관과 같이 `textbookDeliveryStatus`만 쓴다.
- * 없으면 invent 하지 않는다. 학년 블록 값은 루트가 비었을 때만.
+ * 교재 배송 배지. 루트 textbookDeliveryStatus 우선, 없으면 gradeBlocks[].
+ * 저장값이 없으면 invent 하지 않는다. PREPARING 기본 채움 금지.
  */
 export function readTrainedTeacherTextbookDeliveryStatus(
   dto: TrainedTeacherOrganizationApplicationDto
 ): TextbookStatusKey | undefined {
-  const root = dto.textbookDeliveryStatus?.trim()
-  if (root) return mapTextbookDeliveryStatusToBadge(root)
-  const blocks = 'gradeBlocks' in dto ? dto.gradeBlocks : undefined
-  if (!Array.isArray(blocks)) return undefined
+  const hasRoot = Object.prototype.hasOwnProperty.call(dto, 'textbookDeliveryStatus')
+  if (hasRoot) {
+    const rootRaw = ownDeliveryStatus(dto)
+    if (typeof rootRaw === 'string' && rootRaw.trim() !== '') {
+      return mapStoredTextbookDeliveryToBadge(rootRaw)
+    }
+  }
+  const blocks = Array.isArray(dto.gradeBlocks) ? dto.gradeBlocks : undefined
+  if (!blocks) return undefined
   for (const block of blocks) {
-    const status = block?.textbookDeliveryStatus?.trim()
-    if (status) return mapTextbookDeliveryStatusToBadge(status)
+    if (block == null || !Object.prototype.hasOwnProperty.call(block, 'textbookDeliveryStatus')) {
+      continue
+    }
+    const mapped = mapStoredTextbookDeliveryToBadge(ownDeliveryStatus(block))
+    if (mapped) return mapped
   }
   return undefined
 }

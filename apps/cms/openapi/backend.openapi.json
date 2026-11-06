@@ -83812,6 +83812,17 @@
           "textbookName": {
             "type": "string"
           },
+          "textbookDeliveryStatus": {
+            "type": "string",
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
+            "nullable": true,
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ]
+          },
           "educationCompletionCount": {
             "type": "integer",
             "format": "int64"
@@ -110318,6 +110329,17 @@
           },
           "textbookName": {
             "type": "string"
+          },
+          "textbookDeliveryStatus": {
+            "type": "string",
+            "description": "저장된 교재 배송 상태. 없으면 null. PREPARING으로 기본 채움하지 않습니다.",
+            "nullable": true,
+            "enum": [
+              "PREPARING",
+              "SHIPPING",
+              "DELIVERED",
+              "NOT_APPLICABLE"
+            ]
           },
           "educationCompletionCount": {
             "type": "integer",

@@ -53,6 +53,42 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(mapApplicantSchoolToParticipatingSchool(missing, 0).textbookStatus).toBe(
       'not_applicable'
     )
+
+    const storedNull = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1691599,
+        textbookName: '성공하는 경제생활',
+        textbookId: 168033,
+        textbookDeliveryStatus: null,
+        gradeBlocks: null,
+      },
+      0,
+      '186551'
+    )
+    expect(storedNull.textbookName).toBe('성공하는 경제생활')
+    expect(storedNull.textbookStatus).toBeUndefined()
+
+    const notApplicable = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1691599,
+        textbookDeliveryStatus: 'NOT_APPLICABLE',
+        gradeBlocks: [{ textbookDeliveryStatus: 'PREPARING' }],
+      },
+      0,
+      '186551'
+    )
+    expect(notApplicable.textbookStatus).toBeUndefined()
+
+    const rootNullGradeBlock = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1691599,
+        textbookDeliveryStatus: null,
+        gradeBlocks: [{ textbookDeliveryStatus: 'SHIPPING' }],
+      },
+      0,
+      '186551'
+    )
+    expect(rootNullGradeBlock.textbookStatus).toBe('shipping')
   })
 
   it('maps core list fields', () => {
