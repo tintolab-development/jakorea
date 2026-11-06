@@ -42,6 +42,7 @@ import type { ProgramApplicationType } from '../../applications/api/types'
 import type { EducationSurveyListEntry } from '../lib/survey-list-types'
 import { resolveEducationSurveyFillNotice } from '../lib/fill-notice'
 import {
+  portalFormSubmissionPeriodBlockMessage,
   resolvePortalFormSubmissionPeriodBlockForEntry,
   type PortalFormSubmissionPeriodBlockReason,
 } from '../lib/portal-form-submission-period'
@@ -63,6 +64,7 @@ import { EducationSurveyHeader } from './survey-header'
 import { EducationSurveyList } from './survey-list'
 import { EducationSurveyPeriodEndedPanel } from './period-ended-panel'
 import { EducationSurveySubmitConfirm } from './submit-confirm'
+import { isPortalFormTargetRoleMismatch } from '../lib/portal-form-target-role'
 import styles from './fill-panel.module.css'
 
 export type EducationSurveyFillPanelProps = {
@@ -152,6 +154,7 @@ export function EducationSurveyFillPanel({
   const surveyList = useMemo(() => {
     const items = remoteForms.enabled ? remoteForms.items : []
     return items.filter(entry => {
+      if (isPortalFormTargetRoleMismatch(entry.targetRole, applicationType)) return false
       if (kind === 'satisfaction') {
         if (!isPortalSatisfactionFormType(entry.formType)) return false
         if (
@@ -164,7 +167,7 @@ export function EducationSurveyFillPanel({
       }
       return isPortalSurveyFormType(entry.formType)
     })
-  }, [kind, remoteForms.enabled, remoteForms.items, satisfactionAudience])
+  }, [applicationType, kind, remoteForms.enabled, remoteForms.items, satisfactionAudience])
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
   const [rewriteEntryId, setRewriteEntryId] = useState<string | null>(null)
@@ -390,6 +393,13 @@ export function EducationSurveyFillPanel({
 
   const performSubmit = () => {
     if (!canWrite || submitMutation.isPending) return
+    if (isPortalFormTargetRoleMismatch(selectedEntry?.targetRole, applicationType)) {
+      setConfirmOpen(false)
+      setAlertTitle('제출 실패')
+      setAlertDescription('현재 참여 역할에 해당하지 않는 설문입니다.')
+      setAlertOpen(true)
+      return
+    }
     const answers = buildEducationSurveyAnswers(draft, sidecar)
     const bindingId = parsePortalProgramId(selectedEntryId)
     const templateVersionId =
@@ -568,6 +578,12 @@ export function EducationSurveyFillPanel({
     <div className={styles.body}>
       {titleParagraph ? (
         <EducationSurveyHeader paragraph={titleParagraph} surveyCreatedAt={surveyCreatedAt} />
+      ) : null}
+
+      {readOnly && effectivePeriodBlockReason === 'closed' ? (
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.periodInlineNotice}>
+          {portalFormSubmissionPeriodBlockMessage('closed', kind)}
+        </PFText>
       ) : null}
 
       <EducationSurveyFormBody

@@ -1,4 +1,8 @@
-export type EducationSurveyListStatus = 'before_start' | 'in_progress' | 'submitted'
+export type EducationSurveyListStatus =
+  | 'before_start'
+  | 'in_progress'
+  | 'period_closed'
+  | 'submitted'
 
 export type EducationSurveyListEntry = {
   id: string
@@ -26,6 +30,7 @@ export type EducationSurveyListEntry = {
   bindingId?: number
   canSubmit?: boolean
   canResubmit?: boolean
+  targetRole?: string | null
   responseStatus?: string
   revisionNo?: number
   retentionExpiresAt?: string | null
@@ -33,5 +38,6 @@ export type EducationSurveyListEntry = {
 
 export function educationSurveyListStatusLabel(status: EducationSurveyListStatus): string {
   if (status === 'before_start') return '시작 전'
+  if (status === 'period_closed') return '기간 종료'
   return status === 'in_progress' ? '진행중' : '제출 완료'
 }

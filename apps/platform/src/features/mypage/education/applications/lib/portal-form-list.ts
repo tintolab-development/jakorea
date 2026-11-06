@@ -46,6 +46,7 @@ export function mapAvailableProgramFormToListItem(
     submissionEndAt: item.submissionEndAt,
     status: item.alreadySubmitted ? 'SUBMITTED' : 'NOT_SUBMITTED',
     canSubmit: item.alreadySubmitted !== true,
+    targetRole: item.targetRole ?? undefined,
   }
 }
 
@@ -184,6 +185,7 @@ export function mapPortalFormListItemToSurveyEntry(
     bindingId: resolveCanonicalPortalFormBindingId(item) ?? undefined,
     canSubmit: item.canSubmit === true,
     canResubmit: item.canResubmit === true,
+    targetRole: item.targetRole ?? undefined,
     ...(responseStatus ? { responseStatus } : {}),
     revisionNo: item.revisionNo,
     retentionExpiresAt: item.retentionExpiresAt,
