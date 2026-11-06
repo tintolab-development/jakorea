@@ -203,7 +203,7 @@ export function MypageLectureDetailPage() {
    * 강의 일정 탭은 두지 않는다. 목록이 비어 있으면 패널의 빈 상태 문구를 보여준다.
    */
   const instructorAssignmentVisible = true
-  /** 기관형·제미나이 외(일반 개인형 등): 배정 현황 뒤에 안내사항·강의보고서·설문·만족도·정산 탭을 둔다. */
+  /** 기관형·제미나이 외(일반 개인형 등): 배정 현황 뒤에 안내사항·강의보고서·정산 탭을 둔다. */
   const instructorAssignmentWithActivityTabs = !institutionAssignmentProgram && !isGeminiProgram
 
   const activityTabOptions = useMemo(
