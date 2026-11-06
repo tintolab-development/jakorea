@@ -6,6 +6,7 @@ import {
   mapPreferredScheduleBlocksToSessions,
   mapProgramSchedulesToPreferredScheduleBlocks,
   mapTrainedTeacherOrganizationApplicationToRow,
+  formatTrainedTeacherRequestedEducationFormat,
 } from './organization-applications-adapters'
 
 describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
@@ -50,9 +51,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
       '186551'
     )
     expect(missing.textbookStatus).toBeUndefined()
-    expect(mapApplicantSchoolToParticipatingSchool(missing, 0).textbookStatus).toBe(
-      'not_applicable'
-    )
+    expect(mapApplicantSchoolToParticipatingSchool(missing, 0).textbookStatus).toBe('preparing')
 
     const storedNull = mapTrainedTeacherOrganizationApplicationToRow(
       {
@@ -67,6 +66,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     )
     expect(storedNull.textbookName).toBe('성공하는 경제생활')
     expect(storedNull.textbookStatus).toBeUndefined()
+    expect(mapApplicantSchoolToParticipatingSchool(storedNull, 0).textbookStatus).toBe('preparing')
 
     const notApplicable = mapTrainedTeacherOrganizationApplicationToRow(
       {
@@ -89,6 +89,63 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
       '186551'
     )
     expect(rootNullGradeBlock.textbookStatus).toBe('shipping')
+  })
+
+  it('maps root textbookKits/textbookQuantity and kitCount/bookCount aliases', () => {
+    const fromKits = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1691599,
+        textbookName: '성공하는 경제생활',
+        textbookKits: 1,
+        textbookQuantity: 24,
+      },
+      0,
+      '186551'
+    )
+    expect(fromKits.textbookKits).toBe(1)
+    expect(fromKits.textbookQuantity).toBe(24)
+    expect(mapApplicantSchoolToParticipatingSchool(fromKits, 0).textbookKits).toBe(1)
+    expect(mapApplicantSchoolToParticipatingSchool(fromKits, 0).textbookQuantity).toBe(24)
+    expect(getSchoolDetailByRow(mapApplicantSchoolToParticipatingSchool(fromKits, 0))).toMatchObject({
+      textbookKits: 1,
+      textbookQuantity: 24,
+    })
+
+    const fromAlias = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1691599,
+        kitCount: 2,
+        bookCount: 48,
+      },
+      0,
+      '186551'
+    )
+    expect(fromAlias.textbookKits).toBe(2)
+    expect(fromAlias.textbookQuantity).toBe(48)
+    expect(mapApplicantSchoolToParticipatingSchool(fromAlias, 0).textbookStatus).toBe('preparing')
+
+    const prefersRoot = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1691599,
+        textbookKits: 1,
+        textbookQuantity: 24,
+        kitCount: 9,
+        bookCount: 216,
+      },
+      0,
+      '186551'
+    )
+    expect(prefersRoot.textbookKits).toBe(1)
+    expect(prefersRoot.textbookQuantity).toBe(24)
+
+    const missing = mapTrainedTeacherOrganizationApplicationToRow(
+      { applicationId: 1691599, textbookName: '성공하는 경제생활' },
+      0,
+      '186551'
+    )
+    expect(missing.textbookKits).toBeUndefined()
+    expect(missing.textbookQuantity).toBeUndefined()
+    expect(mapApplicantSchoolToParticipatingSchool(missing, 0).textbookKits).toBeUndefined()
   })
 
   it('maps core list fields', () => {
@@ -475,12 +532,23 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
 
     expect(row.detail).toMatchObject({
       addressDetail: '2층 교무실',
-      educationType: '온/오프라인',
+      educationType: '혼합',
       applicationReason: '상세 신청 사유',
       teacherEmail: 'teacher@example.com',
       textbookId: '55',
     })
     expect(row.detail?.otherRequests).toBeUndefined()
+    expect(formatTrainedTeacherRequestedEducationFormat(null)).toBe('')
+    expect(formatTrainedTeacherRequestedEducationFormat('-')).toBe('')
+    expect(formatTrainedTeacherRequestedEducationFormat('혼합')).toBe('혼합')
+    expect(formatTrainedTeacherRequestedEducationFormat('offline')).toBe('오프라인')
+    expect(
+      mapTrainedTeacherOrganizationApplicationToRow(
+        { applicationId: 1, educationFormat: 'online' },
+        0,
+        'p1'
+      ).detail?.educationType
+    ).toBe('온라인')
   })
   it('maps progress completeness additive fields (0 is not missing)', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(

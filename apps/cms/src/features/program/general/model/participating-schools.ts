@@ -115,6 +115,10 @@ export interface ParticipatingSchoolRow {
   textbookName?: string
   /** TT 교재 마스터 id (상세 GET 병합 시) */
   textbookId?: string
+  /** 기관 신청 루트 키트 수. 없으면 omit — 클라이언트 재계산 금지 */
+  textbookKits?: number
+  /** 기관 신청 루트 권수. 없으면 omit */
+  textbookQuantity?: number
   /** 담당 교사 전화(마스킹 가능) — contact와 동일 출처일 수 있음 */
   teacherPhone?: string
   teacherMobile?: string

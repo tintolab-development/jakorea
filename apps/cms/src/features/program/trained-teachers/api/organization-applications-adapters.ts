@@ -1,5 +1,4 @@
 import {
-  formatRequestedEducationFormat,
   mapApiApplicationStatusToApprovalStatus,
   mapTextbookDeliveryStatusToBadge,
 } from '@/features/program/general/api/adapters/general-applications-adapters'
@@ -250,8 +249,14 @@ type TrainedTeacherOrganizationApplicationDto = (
   applicationReason?: string | null
   otherRequests?: string | null
   requestedEducationFormat?: string | null
+  /** 신청 답 educationFormat (online|offline|hybrid). requestedEducationFormat과 동일 의미 */
+  educationFormat?: string | null
   textbookId?: number | string | null
   textbookDeliveryStatus?: string | null
+  textbookKits?: number | null
+  textbookQuantity?: number | null
+  kitCount?: number | null
+  bookCount?: number | null
   gradeBlocks?: GradeBlock[] | null
 }
 
@@ -261,14 +266,62 @@ function ownDeliveryStatus(source: object, key = 'textbookDeliveryStatus'): unkn
     : undefined
 }
 
+/**
+ * TT 신청 교육 형태. ONLINE→온라인, OFFLINE→오프라인, HYBRID→혼합.
+ * 이미 한글이면 그대로. 프로그램 공통 교육 형태로 채우지 않는다.
+ */
+export function formatTrainedTeacherRequestedEducationFormat(
+  raw: string | null | undefined
+): string {
+  const trimmed = raw?.trim() ?? ''
+  if (!trimmed || trimmed === '-') return ''
+  if (
+    trimmed === '온라인' ||
+    trimmed === '오프라인' ||
+    trimmed === '혼합' ||
+    trimmed === '온/오프라인' ||
+    trimmed === '온·오프라인' ||
+    trimmed === '온오프라인'
+  ) {
+    return trimmed === '온·오프라인' || trimmed === '온오프라인' ? '온/오프라인' : trimmed
+  }
+  switch (trimmed.toUpperCase()) {
+    case 'ONLINE':
+      return '온라인'
+    case 'OFFLINE':
+      return '오프라인'
+    case 'HYBRID':
+      return '혼합'
+    default:
+      return ''
+  }
+}
+
+/** TT 상세/목록 루트 키트·권수. gradeBlocks·프로그램 materials로 채우지 않는다. */
+export function readTrainedTeacherTextbookKitFields(
+  dto: TrainedTeacherOrganizationApplicationDto
+): { textbookKits?: number; textbookQuantity?: number } {
+  const textbookKits = toNonNegativeCount(dto.textbookKits) ?? toNonNegativeCount(dto.kitCount)
+  const textbookQuantity =
+    toNonNegativeCount(dto.textbookQuantity) ?? toNonNegativeCount(dto.bookCount)
+  return {
+    ...(textbookKits != null ? { textbookKits } : {}),
+    ...(textbookQuantity != null ? { textbookQuantity } : {}),
+  }
+}
+
 /** PREPARING/SHIPPING/DELIVERED만 배지. null·NOT_APPLICABLE·그 외는 배지 없음. */
 function mapStoredTextbookDeliveryToBadge(
   raw: unknown
 ): TextbookStatusKey | undefined {
   if (typeof raw !== 'string') return undefined
   const mapped = mapTextbookDeliveryStatusToBadge(raw)
-  if (mapped === 'not_applicable') return undefined
-  return mapped
+  if (mapped !== 'not_applicable') return mapped
+  const normalized = raw.trim().toUpperCase()
+  if (normalized === 'BEFORE_SHIPPING' || normalized === 'PREPARE') return 'preparing'
+  if (normalized === 'IN_TRANSIT' || normalized === 'SHIP') return 'shipping'
+  if (normalized === 'DELIVERY_COMPLETED' || normalized === 'DELIVER') return 'delivered'
+  return undefined
 }
 
 function formatResultNotificationSentAt(iso?: string | null): string | undefined {
@@ -406,7 +459,9 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
   /** BE 계약: otherRequests는 answers 투영만. memo로 덮지 않음 */
   const otherRequests = dto.otherRequests?.trim() || undefined
   const educationType =
-    formatRequestedEducationFormat(dto.requestedEducationFormat) || undefined
+    formatTrainedTeacherRequestedEducationFormat(
+      dto.requestedEducationFormat ?? dto.educationFormat
+    ) || undefined
   const lectureRound = dto.lectureRound?.trim() || undefined
   const progressLabel = dto.progressLabel?.trim() || undefined
   const textbookName = dto.textbookName?.trim() || undefined
@@ -425,6 +480,7 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     dto.teacherEmailMasked?.trim() || dto.teacherEmail?.trim() || undefined
   const textbookId = dto.textbookId == null ? undefined : String(dto.textbookId)
   const textbookStatus = readTrainedTeacherTextbookDeliveryStatus(dto)
+  const textbookKitFields = readTrainedTeacherTextbookKitFields(dto)
   const detailFields = {
     ...(addressDetail ? { addressDetail } : {}),
     ...(applicationReason ? { applicationReason } : {}),
@@ -463,6 +519,7 @@ export function mapTrainedTeacherOrganizationApplicationToRow(
     completedEducationRoundCount,
     textbookName,
     ...(textbookStatus ? { textbookStatus } : {}),
+    ...textbookKitFields,
     educationJournalCount,
     journalSubmitted,
     educationCompletionCount,

@@ -147,6 +147,10 @@ export interface ApplicantSchoolRow {
   completedEducationRoundCount?: number
   /** TT 교재명 */
   textbookName?: string
+  /** TT 상세/목록 루트 `textbookKits`·`kitCount`. 없으면 omit */
+  textbookKits?: number
+  /** TT 상세/목록 루트 `textbookQuantity`·`bookCount`. 없으면 omit */
+  textbookQuantity?: number
   /** 교재 배송 배지. 서버 `textbookDeliveryStatus`가 있을 때만. PREPARING으로 채우지 않음 */
   textbookStatus?: TextbookStatusKey
   /** TT 교육일지 수. 최소 0. */

@@ -285,6 +285,8 @@ export function getSchoolDetailByRow(row: ParticipatingSchoolRow): SchoolDetailF
     textbookStatus: row.textbookStatus,
     textbookName: row.textbookName,
     textbookId: row.textbookId,
+    textbookKits: row.textbookKits,
+    textbookQuantity: row.textbookQuantity,
     addressDetail: row.addressDetail,
     educationFormat: row.educationFormat,
     applicationReason: row.applicationReason,
