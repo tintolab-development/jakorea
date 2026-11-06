@@ -7,8 +7,8 @@ import type {
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import {
   GENERAL_SATISFACTION_ACTION_LABELS,
+  GENERAL_INDIVIDUAL_SATISFACTION_EMPTY_COPY,
   GENERAL_SATISFACTION_EMPTY_COPY,
-  GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
 } from '@/features/program/shared/lib/survey-management/survey-copy'
 import { resolveProgramSurveyMenuKeys } from '@/features/program/general/lib/general-survey-menu-keys'
 
@@ -202,62 +202,13 @@ export function resolveGeneralSatisfactionAudienceFromNavTab(
 }
 
 export function getGeneralSatisfactionEmptyCopy(
-  audience: GeneralSatisfactionAudienceKey,
+  _audience: GeneralSatisfactionAudienceKey,
   program: Program
 ): SurveyEmptyCopy {
-  if (isInstitutionTeacherOnlySatisfactionProgram(program)) {
-    return {
-      title: GENERAL_SATISFACTION_EMPTY_COPY.title,
-      description: GENERAL_SATISFACTION_EMPTY_COPY.description,
-      secondaryDescription: '만족도조사 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다.',
-      registerButton: '만족도조사 등록',
-    }
-  }
-
   if (isGeneralIndividualProgram(program)) {
-    if (audience === 'teacher') {
-      return {
-        title: GENERAL_SATISFACTION_EMPTY_COPY.title,
-        description: GENERAL_SATISFACTION_EMPTY_COPY.description,
-
-        registerButton: '만족도조사 등록',
-      }
-    }
-    if (audience === 'volunteer_h1' || audience === 'volunteer_h2') {
-      return {
-        ...GENERAL_SATISFACTION_EMPTY_COPY,
-        secondaryDescription:
-          '만족도조사 등록 시 해당 프로그램 참여 봉사자에게 동일하게 노출됩니다. 마지막 교육 일정 이후 진행됩니다.',
-        registerButton: '만족도조사 등록',
-      }
-    }
-    return {
-      ...GENERAL_SATISFACTION_EMPTY_COPY,
-      secondaryDescription: '만족도조사 등록 시 해당 프로그램 참여자에게 동일하게 노출됩니다.',
-      registerButton: '만족도조사 등록',
-    }
+    return GENERAL_INDIVIDUAL_SATISFACTION_EMPTY_COPY
   }
-  if (audience === 'student') {
-    return {
-      ...GENERAL_STUDENT_SATISFACTION_EMPTY_COPY,
-      registerButton: '만족도조사 등록',
-    }
-  }
-  if (audience === 'volunteer_h1' || audience === 'volunteer_h2') {
-    return {
-      ...GENERAL_SATISFACTION_EMPTY_COPY,
-      secondaryDescription:
-        '만족도조사 등록 시 해당 프로그램 참여 봉사자에게 동일하게 노출됩니다. 마지막 교육 일정 이후 진행됩니다.',
-      registerButton: '만족도조사 등록',
-    }
-  }
-  return {
-    title: GENERAL_SATISFACTION_EMPTY_COPY.title,
-    description: GENERAL_SATISFACTION_EMPTY_COPY.description,
-    secondaryDescription:
-      '기관별 개별 폼이 아닌 하나의 폼으로 진행되며, 등록 시 해당 프로그램의 모든 학교에 동일하게 노출됩니다. 수업 직후 바로 진행됩니다.',
-    registerButton: '만족도조사 등록',
-  }
+  return GENERAL_SATISFACTION_EMPTY_COPY
 }
 
 export function getGeneralSatisfactionNoResponseTitle(
