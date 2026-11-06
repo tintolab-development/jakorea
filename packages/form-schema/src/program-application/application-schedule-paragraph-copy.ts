@@ -12,9 +12,12 @@ import {
 } from './schedule-paragraph-visibility.js'
 
 const FIXED_SCHEDULE_DESCRIPTION_SINGLE_ROUND =
-  '진행 가능한 일정을 모두 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정 중 1타임에 배정됩니다.'
+  '진행할 일정을 1개 선택해 주세요. 모두 동일한 커리큘럼이며, 선택한 일정에 배정됩니다.'
 
 const FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX =
+  '진행할 일정을 1개 선택해 주세요.'
+
+const FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND_SELECT_ALL =
   '진행 가능한 일정을 모두 선택해 주세요.'
 
 const FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND =
@@ -60,7 +63,7 @@ function resolveMultiRoundFixedScheduleDescription(
       roundsValue == null ||
       roundsValue <= 0
     ) {
-      return FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX
+      return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND_SELECT_ALL
     }
     return FIXED_SCHEDULE_DESCRIPTION_MULTI_ROUND.replace(
       'N차시',
@@ -91,6 +94,23 @@ export function resolveApplicationFixedScheduleParagraphDescription(
     return `${FIXED_SCHEDULE_DESCRIPTION_CURRICULUM_SINGLE_ROUND_PREFIX} 수업은 1일, ${sessions}차시 운영됩니다.`
   }
   return FIXED_SCHEDULE_DESCRIPTION_SINGLE_ROUND
+}
+
+/**
+ * 날짜 지정 고정 일정 체크박스 상한.
+ * 단일 회차 + 날짜 지정(커리큘럼·일정형)은 승인 배정 「희망 일정 중 1개」이므로 신청도 1개만 선택.
+ * 복수 회차 날짜 지정은 모집 `maxScheduleCount`가 있을 때만 제한한다.
+ */
+export function resolveApplicationFixedScheduleMaxSelectionCount(
+  input: ApplicationScheduleParagraphCopyInput
+): number | null {
+  if (input.educationScheduleMode === 'date' && input.sessionRound === 'single') {
+    return 1
+  }
+  if (input.maxScheduleCount != null && input.maxScheduleCount >= 1) {
+    return Math.floor(input.maxScheduleCount)
+  }
+  return null
 }
 
 /** 기간 지정 지망 카드 설명 — 일정형 단일은 날짜만, 커리큘럼은 차시·시간 포함 */
