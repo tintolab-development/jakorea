@@ -1410,11 +1410,7 @@ export function ApplicantList({
       <InstitutionApproveModal
         open={institutionApproveTarget != null}
         schoolName={institutionApproveTarget?.name ?? ''}
-        copyVariant={
-          isCompanySchoolInstitutionApprove || isTrainedTeacherProgram
-            ? 'program-application'
-            : 'participation'
-        }
+        copyVariant={isCompanySchoolInstitutionApprove ? 'program-application' : 'participation'}
         scheduleConfig={
           requiresInstitutionApproveScheduleAssignment ? institutionApproveScheduleConfig : null
         }

@@ -10,6 +10,7 @@ import {
   fetchProgramParticipantsRemote,
   patchParticipantTextbookDeliveryRemote,
 } from '@/features/program/general/api/program-progress-api-client'
+import { getApiErrorCode, getApiErrorHttpStatus } from '@/shared/lib/extract-api-error-message'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from './capabilities'
 import { mapTrainedTeacherOrganizationApplicationToRow } from './organization-applications-adapters'
 import type { TrainedTeacherOrganizationDecisionResponse } from './trained-teacher-organization-approve-payload'
@@ -125,7 +126,6 @@ export async function removeTrainedTeacherOrganizationApplicationFromProgress(
 
 function matchesOrganizationApplication(
   item: {
-    participantId?: number
     organizationApplicationId?: number
     sourceApplicationId?: number
   },
@@ -133,8 +133,7 @@ function matchesOrganizationApplication(
 ): boolean {
   return (
     item.organizationApplicationId === applicationNumeric ||
-    item.sourceApplicationId === applicationNumeric ||
-    item.participantId === applicationNumeric
+    item.sourceApplicationId === applicationNumeric
   )
 }
 
@@ -162,19 +161,37 @@ async function resolveOrganizationParticipantId(
   }
 }
 
+const MISSING_ORGANIZATION_PARTICIPANT_MESSAGE =
+  '기관 참여자를 찾지 못했습니다. 새로고침 후 다시 시도해 주세요.'
+
 /**
  * TT 진행 현황 교재 배송 변경.
- * OpenAPI 스키마: PATCH /api/admin/programs/{programId}/participants/{participantId}/textbook-delivery
- * 표시 SSOT는 TT org-application GET. 쓰기는 participantId 기준 textbook-delivery.
+ * PATCH /api/admin/programs/{programId}/participants/{participantId}/textbook-delivery
+ * 표시 SSOT는 TT org-application GET 루트 textbookDeliveryStatus.
  */
 export async function updateTrainedTeacherOrganizationApplicationTextbookDelivery(
   programId: string,
   applicationId: string,
-  textbookDeliveryStatus: TextbookDeliveryUpdateRequestTextbookDeliveryStatus
+  textbookDeliveryStatus: TextbookDeliveryUpdateRequestTextbookDeliveryStatus,
+  cachedParticipantId?: string
 ) {
   assertRemoteReady()
   const payload = { textbookDeliveryStatus }
-  const participantId =
-    (await resolveOrganizationParticipantId(programId, applicationId)) ?? applicationId
-  return patchParticipantTextbookDeliveryRemote(programId, participantId, payload)
+  const resolveId = () => resolveOrganizationParticipantId(programId, applicationId)
+  const participantId = cachedParticipantId?.trim() || (await resolveId())
+  if (!participantId) {
+    throw new Error(MISSING_ORGANIZATION_PARTICIPANT_MESSAGE)
+  }
+  try {
+    return await patchParticipantTextbookDeliveryRemote(programId, participantId, payload)
+  } catch (error) {
+    const shouldRefetchParticipant =
+      Boolean(cachedParticipantId?.trim()) &&
+      getApiErrorHttpStatus(error) === 404 &&
+      getApiErrorCode(error) === 'PARTICIPANT_NOT_FOUND'
+    if (!shouldRefetchParticipant) throw error
+    const freshId = await resolveId()
+    if (!freshId || freshId === participantId) throw error
+    return patchParticipantTextbookDeliveryRemote(programId, freshId, payload)
+  }
 }

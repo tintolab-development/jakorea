@@ -19,7 +19,10 @@ import {
 } from './education-journals-client'
 import type { EducationJournalGeneratedFileJobResponse } from '@/shared/api/generated/dashboard/schemas/educationJournalGeneratedFileJobResponse'
 import { listTrainedTeacherOrganizationApplications } from './organization-applications-service'
-import { mapPreferredScheduleBlocksToSessions } from './organization-applications-adapters'
+import {
+  mapPreferredScheduleBlocksToSessions,
+  resolveTrainedTeacherTextbookDeliveryBadge,
+} from './organization-applications-adapters'
 import type { EducationJournalCreateRequest } from '@/shared/api/generated/dashboard/schemas/educationJournalCreateRequest'
 
 function assertRemoteReady(): void {
@@ -200,8 +203,10 @@ function hasSelectedTrainedTeacherTextbook(row: ApplicantSchoolRow): boolean {
 export function resolveTrainedTeacherParticipatingTextbookStatus(
   row: ApplicantSchoolRow
 ): ParticipatingSchoolRow['textbookStatus'] {
-  if (row.textbookStatus && row.textbookStatus !== 'not_applicable') return row.textbookStatus
-  return hasSelectedTrainedTeacherTextbook(row) ? 'preparing' : 'not_applicable'
+  return resolveTrainedTeacherTextbookDeliveryBadge(
+    row.textbookStatus,
+    hasSelectedTrainedTeacherTextbook(row)
+  )
 }
 
 /** 승인된 기관 신청 → 진행 현황 참여 기관 목록 */

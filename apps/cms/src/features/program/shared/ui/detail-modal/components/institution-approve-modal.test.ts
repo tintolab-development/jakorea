@@ -300,6 +300,65 @@ describe('InstitutionApproveModal schedule sources', () => {
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
   })
 
+  it('교육받은 교사 날짜형은 MATCHED가 아니어도 희망 일정을 골라 1개만 배정한다', async () => {
+    fetchSlots.mockResolvedValue([])
+    const { onConfirm } = renderModal({
+      scheduleConfig: {
+        preferredScheduleBlocks: [
+          {
+            preferenceRank: 1,
+            date: '2026-04-20',
+            dayOfWeek: '월',
+            sessionCount: 1,
+            sessionTimes: [],
+            scheduleId: 187702,
+            startAt: '2026-04-20T00:30:00Z',
+            endAt: '2026-04-20T03:20:00Z',
+            round: null,
+            label: '2026.04.20(월) 09:30 ~ 12:20',
+            scheduleStatus: 'UNMATCHED',
+          },
+          {
+            preferenceRank: 2,
+            date: '2026-04-27',
+            dayOfWeek: '월',
+            sessionCount: 1,
+            sessionTimes: [],
+            scheduleId: 187703,
+            startAt: '2026-04-27T00:30:00Z',
+            endAt: '2026-04-27T03:20:00Z',
+            round: null,
+            label: '2026.04.27(월) 09:30 ~ 12:20',
+            scheduleStatus: null,
+          },
+        ],
+      },
+      educationScheduleMode: 'date',
+      isTrainedTeacherProgram: true,
+      applicationStatus: 'SUBMITTED',
+      educationStructure: 'curriculum',
+      sessionRound: 'single',
+    })
+
+    expect(await screen.findByText(/선택한 일정으로 교육이 배정/)).toBeTruthy()
+    expect(screen.getByText('교육은 한 개의 일정에만 배정할 수 있습니다.')).toBeTruthy()
+    const first = await screen.findByRole('button', {
+      name: /2026\.\s*04\.\s*20\(월\) 09:30 ~ 12:20/,
+    })
+    const second = screen.getByRole('button', {
+      name: /2026\.\s*04\.\s*27\(월\) 09:30 ~ 12:20/,
+    })
+    fireEvent.click(first)
+    fireEvent.click(second)
+    expect(first.getAttribute('aria-pressed')).toBe('false')
+    expect(second.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: '승인' }))
+    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
+    expect(onConfirm.mock.calls[0]?.[0]).toMatchObject({ selectedScheduleId: 187703 })
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
+    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('preferredScheduleRank')
+  })
+
   it('교육받은 교사 기간형도 매칭된 일정 id를 선택 확정한다', async () => {
     fetchSlots.mockResolvedValue([])
     const { onConfirm } = renderModal({
@@ -504,7 +563,7 @@ describe('InstitutionApproveModal schedule sources', () => {
     expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
   })
 
-  it('교육받은 교사 MATCHED가 아닌 일정은 비활성으로 보이고 무본문 승인을 유지한다', async () => {
+  it('교육받은 교사에 배정 가능한 희망 일정이 없으면 승인할 수 없다', async () => {
     fetchSlots.mockResolvedValue([])
     const { onConfirm } = renderModal({
       scheduleConfig: {
@@ -546,11 +605,9 @@ describe('InstitutionApproveModal schedule sources', () => {
     expect(screen.getByText(/서버가 프로그램 운영 일정과 연결하지 못한 희망 일정/)).toBeTruthy()
     expect(screen.getByText(/종료되었거나 삭제된 일정/)).toBeTruthy()
     const approve = screen.getByRole('button', { name: '승인' }) as HTMLButtonElement
-    await waitFor(() => expect(approve.disabled).toBe(false))
+    await waitFor(() => expect(approve.disabled).toBe(true))
     fireEvent.click(approve)
-    await waitFor(() => expect(onConfirm).toHaveBeenCalled())
-    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('selectedScheduleId')
-    expect(onConfirm.mock.calls[0]?.[0]).not.toHaveProperty('slots')
+    expect(onConfirm).not.toHaveBeenCalled()
   })
 
   it('기간 지정 단일 회차는 희망 일정 행 id 1건만 승인하고 공통 슬롯 id는 보내지 않는다', async () => {

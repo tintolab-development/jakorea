@@ -59,7 +59,7 @@ export type InstitutionApproveModalProps = {
   scheduleConfig?: InstitutionApproveScheduleConfig | null
   /**
    * 기본 `participation`은 「기관 승인 안내」·프로그램 참여 카피.
-   * `program-application`은 일반 기관과 같은 「프로그램 신청 승인 안내」카피(일정 배정 UI와 무관).
+   * `program-application`은 1사1교처럼 일정 배정 UI 없이 「프로그램 신청 승인 안내」카피만 쓴다.
    */
   copyVariant?: InstitutionApproveCopyVariant
   onCancel: () => void
@@ -257,8 +257,8 @@ export function InstitutionApproveModal({
         educationScheduleMode,
         requestedSchedules,
         hasStructuredPreferredScheduleSource,
-        hasStructuredPreferredScheduleSource,
-        hasStructuredPreferredScheduleSource
+        false,
+        hasStructuredPreferredScheduleSource && !periodSchedule
       ),
     [
       educationScheduleMode,
@@ -300,10 +300,6 @@ export function InstitutionApproveModal({
             | undefined
           const requestedRow: RequestedScheduleResponse | undefined =
             index >= 0 ? requestedRowsForDetail[index] : undefined
-          const cardEducationStructure = hasStructuredPreferredScheduleSource
-            ? 'schedule'
-            : educationStructure
-          const cardSessionRound = hasStructuredPreferredScheduleSource ? 'multi' : sessionRound
           const card = formatOrganizationApproveScheduleCard({
             label: source?.label ?? option.label,
             startAt: source?.startAt,
@@ -315,8 +311,8 @@ export function InstitutionApproveModal({
               requestedRow?.sessionCount ??
               (source as { sessionCount?: number } | undefined)?.sessionCount,
             educationScheduleMode,
-            educationStructure: cardEducationStructure,
-            sessionRound: cardSessionRound,
+            educationStructure,
+            sessionRound,
             curriculumChartSessionCount,
             curriculumSessions,
             sessionsPerRound,
@@ -518,7 +514,7 @@ export function InstitutionApproveModal({
               card.scheduleStatus?.trim().toUpperCase() !== 'INACTIVE_OR_DELETED'
             : hasStructuredPreferredScheduleSource
             ? card.confirmableScheduleId != null &&
-              card.scheduleStatus?.trim().toUpperCase() === 'MATCHED'
+              card.scheduleStatus?.trim().toUpperCase() !== 'INACTIVE_OR_DELETED'
             : periodSchedule || card.confirmableScheduleId != null
         )
       : commonAssignmentCards
@@ -543,9 +539,7 @@ export function InstitutionApproveModal({
     })
   }
 
-  const allowUnassignedApproval =
-    isTrainedTeacherPeriodApproval ||
-    (hasStructuredPreferredScheduleSource && selectableCards.length === 0)
+  const allowUnassignedApproval = isTrainedTeacherPeriodApproval
   const scheduleSelectionRequired =
     usesScheduleSection && !autoAssignSchedule && !allowUnassignedApproval
   const handleConfirm = (payload: PermissionModalPayload) => {

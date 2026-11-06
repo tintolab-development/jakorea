@@ -72,6 +72,7 @@ import { generalApplicationsQueryKeys } from '@/features/program/general/api/gen
 import { mergeOrganizationApplicationDetailOntoSchoolDetail } from '@/features/program/general/lib/school-detail'
 import type { OrganizationApplicationDetailResponse } from '@/shared/api/generated/dashboard/schemas/organizationApplicationDetailResponse'
 import { MemberAdminCommentModal } from '@/features/user/detail/ui/modal/member-admin-comment-modal'
+import { resolveTrainedTeacherTextbookDeliveryBadge } from '@/features/program/trained-teachers/api/organization-applications-adapters'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
 import {
   getTrainedTeacherOrganizationApplication,
@@ -687,14 +688,21 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       mergedDetail.textbookName?.trim() !== '-') ||
     (typeof mergedDetail.textbookKits === 'number' && mergedDetail.textbookKits > 0) ||
     (typeof mergedDetail.textbookQuantity === 'number' && mergedDetail.textbookQuantity > 0)
-  const textbookDeliveryStatus =
-    mergedDetail.textbookStatus && mergedDetail.textbookStatus !== 'not_applicable'
+  const storedTextbookDelivery =
+    mergedDetail.textbookStatus === 'preparing' ||
+    mergedDetail.textbookStatus === 'shipping' ||
+    mergedDetail.textbookStatus === 'delivered' ||
+    mergedDetail.textbookStatus === 'not_applicable'
       ? mergedDetail.textbookStatus
-      : hasSelectedTextbook
-        ? 'preparing'
-        : null
+      : undefined
+  const textbookDeliveryStatus = resolveTrainedTeacherTextbookDeliveryBadge(
+    storedTextbookDelivery,
+    hasSelectedTextbook
+  )
   const textbookStatusCell =
-    textbookDeliveryStatus == null ? null : onTextbookStatusChange != null ? (
+    textbookDeliveryStatus === 'not_applicable' ? (
+      <TextbookStatusBadge status="not_applicable" />
+    ) : onTextbookStatusChange != null ? (
       <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
         <StatusDropdownCell<TextbookStatusKey>
           status={textbookDeliveryStatus}

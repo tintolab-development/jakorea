@@ -32,7 +32,10 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
       0,
       '186551'
     )
-    expect(fromGradeBlock.textbookStatus).toBe('preparing')
+    expect(fromGradeBlock.textbookStatus).toBeUndefined()
+    expect(mapApplicantSchoolToParticipatingSchool(fromGradeBlock, 0).textbookStatus).toBe(
+      'preparing'
+    )
 
     const prefersRoot = mapTrainedTeacherOrganizationApplicationToRow(
       {
@@ -77,18 +80,25 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
       0,
       '186551'
     )
-    expect(notApplicable.textbookStatus).toBeUndefined()
+    expect(notApplicable.textbookStatus).toBe('not_applicable')
+    expect(mapApplicantSchoolToParticipatingSchool(notApplicable, 0).textbookStatus).toBe(
+      'not_applicable'
+    )
 
     const rootNullGradeBlock = mapTrainedTeacherOrganizationApplicationToRow(
       {
         applicationId: 1691599,
+        textbookName: '성공하는 경제생활',
         textbookDeliveryStatus: null,
         gradeBlocks: [{ textbookDeliveryStatus: 'SHIPPING' }],
       },
       0,
       '186551'
     )
-    expect(rootNullGradeBlock.textbookStatus).toBe('shipping')
+    expect(rootNullGradeBlock.textbookStatus).toBeUndefined()
+    expect(mapApplicantSchoolToParticipatingSchool(rootNullGradeBlock, 0).textbookStatus).toBe(
+      'preparing'
+    )
   })
 
   it('maps root textbookKits/textbookQuantity and kitCount/bookCount aliases', () => {

@@ -310,17 +310,20 @@ export function readTrainedTeacherTextbookKitFields(
   }
 }
 
-/** PREPARING/SHIPPING/DELIVERED만 배지. null·NOT_APPLICABLE·그 외는 배지 없음. */
+/** 루트 textbookDeliveryStatus 와이어 → 배지. null/빈값은 omit. NOT_APPLICABLE은 해당 없음. */
 function mapStoredTextbookDeliveryToBadge(
   raw: unknown
 ): TextbookStatusKey | undefined {
   if (typeof raw !== 'string') return undefined
-  const mapped = mapTextbookDeliveryStatusToBadge(raw)
+  const normalized = raw.trim()
+  if (!normalized || normalized === '-') return undefined
+  const mapped = mapTextbookDeliveryStatusToBadge(normalized)
   if (mapped !== 'not_applicable') return mapped
-  const normalized = raw.trim().toUpperCase()
-  if (normalized === 'BEFORE_SHIPPING' || normalized === 'PREPARE') return 'preparing'
-  if (normalized === 'IN_TRANSIT' || normalized === 'SHIP') return 'shipping'
-  if (normalized === 'DELIVERY_COMPLETED' || normalized === 'DELIVER') return 'delivered'
+  const upper = normalized.toUpperCase()
+  if (upper === 'NOT_APPLICABLE') return 'not_applicable'
+  if (upper === 'BEFORE_SHIPPING' || upper === 'PREPARE') return 'preparing'
+  if (upper === 'IN_TRANSIT' || upper === 'SHIP') return 'shipping'
+  if (upper === 'DELIVERY_COMPLETED' || upper === 'DELIVER') return 'delivered'
   return undefined
 }
 
@@ -411,29 +414,30 @@ export function mapPreferredScheduleBlocks(
 }
 
 /**
- * 교재 배송 배지. 루트 textbookDeliveryStatus 우선, 없으면 gradeBlocks[].
- * 저장값이 없으면 invent 하지 않는다. PREPARING 기본 채움 금지.
+ * 교재 배송 배지. TT 진행 현황 SSOT는 루트 textbookDeliveryStatus만.
+ * gradeBlocks[].textbookDeliveryStatus는 쓰지 않는다. 없으면 invent하지 않는다.
  */
 export function readTrainedTeacherTextbookDeliveryStatus(
   dto: TrainedTeacherOrganizationApplicationDto
 ): TextbookStatusKey | undefined {
-  const hasRoot = Object.prototype.hasOwnProperty.call(dto, 'textbookDeliveryStatus')
-  if (hasRoot) {
-    const rootRaw = ownDeliveryStatus(dto)
-    if (typeof rootRaw === 'string' && rootRaw.trim() !== '') {
-      return mapStoredTextbookDeliveryToBadge(rootRaw)
-    }
+  if (!Object.prototype.hasOwnProperty.call(dto, 'textbookDeliveryStatus')) return undefined
+  return mapStoredTextbookDeliveryToBadge(ownDeliveryStatus(dto))
+}
+
+/** 저장된 루트 상태 + 교재 선택 여부 → 화면 배지. GET null은 교재 있으면 배송 전. */
+export function resolveTrainedTeacherTextbookDeliveryBadge(
+  stored: TextbookStatusKey | undefined,
+  hasSelectedTextbook: boolean
+): TextbookStatusKey {
+  if (
+    stored === 'preparing' ||
+    stored === 'shipping' ||
+    stored === 'delivered' ||
+    stored === 'not_applicable'
+  ) {
+    return stored
   }
-  const blocks = Array.isArray(dto.gradeBlocks) ? dto.gradeBlocks : undefined
-  if (!blocks) return undefined
-  for (const block of blocks) {
-    if (block == null || !Object.prototype.hasOwnProperty.call(block, 'textbookDeliveryStatus')) {
-      continue
-    }
-    const mapped = mapStoredTextbookDeliveryToBadge(ownDeliveryStatus(block))
-    if (mapped) return mapped
-  }
-  return undefined
+  return hasSelectedTextbook ? 'preparing' : 'not_applicable'
 }
 
 /** TT organization-application DTO → ApplicantSchoolRow */

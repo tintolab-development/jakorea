@@ -51,6 +51,7 @@ import {
   extractApiErrorMessage,
   getApiErrorCode,
   getApiErrorHttpStatus,
+  readApiErrorAlertMessage,
 } from '@/shared/lib/extract-api-error-message'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import axios from 'axios'
@@ -222,15 +223,13 @@ export function useProgressSchoolList({
           })
           return
         }
-        const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
-        const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
         showAlert({
           title: '교재 배송 변경 실패',
           content: isTrainedTeachersSurface
-            ? extractApiErrorMessage(responseData, {
-                httpStatus,
-                fallback: '교재 배송 현황을 변경하지 못했습니다. 다시 시도해 주세요.',
-              })
+            ? readApiErrorAlertMessage(
+                error,
+                '교재 배송 현황을 변경하지 못했습니다. 다시 시도해 주세요.'
+              )
             : getGeneralProgramApiErrorMessage(
                 error,
                 '교재 배송 현황을 변경하지 못했습니다. 다시 시도해 주세요.'
@@ -247,32 +246,40 @@ export function useProgressSchoolList({
           return
         }
         void (async () => {
+          const participantCacheKey = trainedTeacherQueryKeys.organizationParticipantId(
+            programId,
+            applicationId
+          )
+          const cachedParticipantId = queryClient.getQueryData<string>(participantCacheKey)
+          const invalidateTtTextbookDeliveryQueries = async () => {
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: generalProgramProgressQueryKeys.participants(programId, 'ORGANIZATION'),
+            })
+          }
           try {
             const response = await updateTrainedTeacherOrganizationApplicationTextbookDelivery(
               programId,
               applicationId,
-              deliveryStatus
+              deliveryStatus,
+              cachedParticipantId
             )
+            if (response.participantId != null) {
+              queryClient.setQueryData(participantCacheKey, String(response.participantId))
+            }
             applyResolvedStatus(response.textbookDeliveryStatus)
-            await queryClient.invalidateQueries({
-              queryKey: trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
-            })
-            await queryClient.invalidateQueries({
-              queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
-            })
-            await queryClient.invalidateQueries({
-              queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationId),
-            })
+            await invalidateTtTextbookDeliveryQueries()
           } catch (error) {
-            await queryClient.invalidateQueries({
-              queryKey: trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
-            })
-            await queryClient.invalidateQueries({
-              queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
-            })
-            await queryClient.invalidateQueries({
-              queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationId),
-            })
+            queryClient.removeQueries({ queryKey: participantCacheKey })
+            await invalidateTtTextbookDeliveryQueries()
             alertTextbookDeliveryFailure(error)
           }
         })()
