@@ -706,9 +706,11 @@ export function useToggleApplicationNoticeReactionMutation(
 
 export function useApplicationSchedulesQuery(
   applicationType: ProgramApplicationType | null | undefined,
-  applicationId: string | null | undefined
+  applicationId: string | null | undefined,
+  options?: { programType?: string | null },
 ) {
   const enabled = isActivityQueryEnabled(applicationType, applicationId)
+  const programType = options?.programType
   const query = useQuery({
     queryKey: platformQueryKeys.mypage.programApplications.schedules(
       applicationType ?? '',
@@ -726,10 +728,17 @@ export function useApplicationSchedulesQuery(
             educationStructure: query.data?.educationStructure,
             sessionRound: query.data?.sessionRound,
             applicationType,
+            programType,
           }),
         ),
       ),
-    [applicationType, query.data?.educationStructure, query.data?.items, query.data?.sessionRound],
+    [
+      applicationType,
+      programType,
+      query.data?.educationStructure,
+      query.data?.items,
+      query.data?.sessionRound,
+    ],
   )
   return {
     enabled,
@@ -1032,7 +1041,9 @@ export function useApplicationSettlementsQuery(
   programId: string | null | undefined,
   options?: { operationEndAt?: string | null; programType?: string | null; enabled?: boolean }
 ) {
-  const schedules = useApplicationSchedulesQuery(applicationType, applicationId)
+  const schedules = useApplicationSchedulesQuery(applicationType, applicationId, {
+    programType: options?.programType,
+  })
   const enabled = schedules.enabled && options?.enabled !== false
   const individualAudience = shouldUseIndividualSettlementSchedulesApi(
     applicationType,

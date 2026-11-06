@@ -118,6 +118,7 @@ export {
   canSubmitEducationAbsenceReason,
   EDUCATION_SCHEDULE_ATTENDANCE_LABEL,
   EDUCATION_SCHEDULE_PROGRESS_LABEL,
+  educationScheduleProgressLabel,
   resolveEducationAssignmentGuide,
   resolveEducationScheduleProgressStatus,
   resolveEducationScheduleRowProgressStatus,

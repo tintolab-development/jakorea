@@ -266,4 +266,31 @@ const submittedByResponse = mapPortalFormListItemToSurveyEntry({
 assert.equal(submittedByResponse?.status, 'submitted')
 assert.equal(submittedByResponse?.responseStatus, 'APPROVED')
 
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 1,
+    formType: 'SATISFACTION',
+    title: '만족도조사',
+    targetScope: 'SCHEDULE',
+    targetScopeLabel: '1지망',
+    preferenceRank: 1,
+    sessionNo: 3,
+    scheduleId: 187703,
+    scheduleStartAt: '2026-11-13T06:07:00Z',
+    status: 'NOT_SUBMITTED',
+    targetRole: 'TEACHER',
+  })?.title,
+  '1지망',
+)
+assert.equal(
+  mapPortalFormListItemToSurveyEntry({
+    bindingId: 2,
+    formType: 'SATISFACTION',
+    title: '만족도조사',
+    preferenceRank: 2,
+    status: 'NOT_SUBMITTED',
+  })?.title,
+  '2지망',
+)
+
 console.log('portal-form-list.selfcheck: ok')

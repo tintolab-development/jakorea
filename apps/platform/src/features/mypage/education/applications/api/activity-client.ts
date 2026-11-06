@@ -193,6 +193,8 @@ export type PortalEducationSchedule = {
   groupTimes?: PortalEducationScheduleGroupTime[]
   assignment?: PortalEducationScheduleAssignment | null
   scheduleStatus?: string
+  /** 교육받은 교사 MATCHED 지망 순위. 없으면 omit. 목록 순서로 만들지 않는다. */
+  preferenceRank?: number | null
   assignmentStatus?: string | null
   surveyCount?: number
   absenceReasonStatus?: string
@@ -356,6 +358,7 @@ export type PortalFormListItem = {
   targetScopeLabel?: string | null
   scheduleId?: number | null
   sessionNo?: number | null
+  preferenceRank?: number | null
   scheduleStartAt?: string | null
   required?: boolean
   submissionStartAt?: string | null

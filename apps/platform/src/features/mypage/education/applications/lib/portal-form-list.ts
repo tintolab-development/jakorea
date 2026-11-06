@@ -36,6 +36,16 @@ export function isPortalBoundFormVersionUsable(
   return (versionStatus ?? '').trim().toUpperCase() !== 'DRAFT'
 }
 
+function positivePreferenceRank(value: unknown): number | undefined {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim().length > 0
+        ? Number(value)
+        : Number.NaN
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined
+}
+
 function resolveSatisfactionListTitle(item: {
   formType?: string
   title?: string | null
@@ -43,13 +53,18 @@ function resolveSatisfactionListTitle(item: {
   targetScope?: string | null
   targetScopeLabel?: string | null
   sessionNo?: number | null
+  preferenceRank?: number | null
   scheduleStartAt?: string | null
   startAt?: string | null
 }): string {
-  const formName = item.templateName?.trim() || item.title?.trim() || '만족도조사'
   if (!isPortalSatisfactionFormType(item.formType)) {
     return item.title?.trim() || item.templateName?.trim() || '설문'
   }
+  const scopeLabel = item.targetScopeLabel?.trim()
+  const preferenceRank = positivePreferenceRank(item.preferenceRank)
+  if (scopeLabel && /^\d+지망$/u.test(scopeLabel)) return scopeLabel
+  if (preferenceRank != null) return `${preferenceRank}지망`
+  const formName = item.templateName?.trim() || item.title?.trim() || '만족도조사'
   if (!isPortalScheduleTargetScope(item.targetScope ?? undefined)) return formName
   const scheduleInput = {
     scheduleName: item.targetScopeLabel,
@@ -223,28 +238,6 @@ export function mapPortalFormListItemToSurveyEntry(
     ...(responseStatus ? { responseStatus } : {}),
     revisionNo: item.revisionNo,
     retentionExpiresAt: item.retentionExpiresAt,
-  }
-}
-
-/** 목록 제목에 날짜가 없으면 교육 진행 예정일 줄로 `회차 · 날짜`를 맞춘다. */
-export function applySatisfactionScheduleLineDate(
-  entry: EducationSurveyListEntry,
-  scheduleLine: string | null | undefined
-): EducationSurveyListEntry {
-  if (!isPortalSatisfactionFormType(entry.formType)) return entry
-  if (!isPortalScheduleTargetScope(entry.targetScope)) return entry
-  if (entry.title.includes(' · ') || !scheduleLine?.trim()) return entry
-  const roundMatch = /^(\d+)회차$/u.exec(entry.title.trim())
-  return {
-    ...entry,
-    title: composeSatisfactionSurveyDisplayTitle({
-      formName: roundMatch ? undefined : entry.title,
-      perSchedule: true,
-      scheduleDisplayName: formatSatisfactionPerScheduleDisplayName({
-        sessionNo: roundMatch ? Number(roundMatch[1]) : null,
-        scheduleLine,
-      }),
-    }),
   }
 }
 

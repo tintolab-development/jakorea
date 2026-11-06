@@ -166,6 +166,20 @@ export function capFixedScheduleSelectedIds(
   return unique.slice(0, maxCount)
 }
 
+/** 상한 1이면 새로 고른 항목으로 교체(라디오). 그 외는 추가 후 cap. */
+export function toggleFixedScheduleSelectedIds(
+  selectedIds: readonly string[],
+  id: string,
+  checked: boolean,
+  maxCount?: number | null,
+): string[] {
+  const token = id.trim()
+  if (!token) return capFixedScheduleSelectedIds(selectedIds, maxCount)
+  if (!checked) return selectedIds.filter(value => value !== token)
+  if (maxCount === 1) return [token]
+  return capFixedScheduleSelectedIds([...selectedIds, token], maxCount)
+}
+
 export function selectedFixedScheduleIdsFromDraftAnswer(raw: unknown): string[] {
   if (!Array.isArray(raw)) return []
   return (
