@@ -33877,12 +33877,21 @@
             "type": "string",
             "writeOnly": true
           },
+          "teacherTel": {
+            "type": "string",
+            "nullable": true,
+            "writeOnly": true,
+            "description": "교사 일반 전화. 휴대전화(teacherPhone)와 별도. 생략 시 유지, null이면 삭제."
+          },
           "teacherPhone": {
             "type": "string",
-            "writeOnly": true
+            "nullable": true,
+            "writeOnly": true,
+            "description": "교사 휴대전화. 일반 전화(teacherTel)와 별도. 생략 시 유지, null이면 삭제."
           },
           "teacherEmail": {
             "type": "string",
+            "nullable": true,
             "writeOnly": true
           },
           "textbookId": {
@@ -45603,6 +45612,17 @@
             "format": "date-time",
             "description": "일정 종료 시각. 없으면 null.",
             "nullable": true
+          },
+          "scheduleStatus": {
+            "type": "string",
+            "nullable": true,
+            "description": "교육 진행 상태. UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED. 일반 프로그램 participants sessions[].scheduleStatus · 대시보드 program-schedules.scheduleStatus 와 동일 계열. 출석과 별개. 산출 불가면 null. 빈 문자열 없음.",
+            "enum": [
+              "UNSCHEDULED",
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED"
+            ]
           }
         }
       },

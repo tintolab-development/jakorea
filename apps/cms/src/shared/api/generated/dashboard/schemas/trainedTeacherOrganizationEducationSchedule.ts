@@ -5,6 +5,7 @@
  * Filtered for CMS dashboard Orval codegen (1st pilot).
  * OpenAPI spec version: v9
  */
+import type { ParticipantSessionProgressScheduleStatus } from './participantSessionProgressScheduleStatus';
 
 export interface TrainedTeacherOrganizationEducationSchedule {
   /** program_schedule.id. 출석 조회·저장의 scheduleId 로 사용합니다. */
@@ -17,4 +18,11 @@ export interface TrainedTeacherOrganizationEducationSchedule {
   startAt?: string | null;
   /** 일정 종료 시각. 없으면 null. */
   endAt?: string | null;
+  /**
+   * 교육 진행 상태. UNSCHEDULED|SCHEDULED|IN_PROGRESS|COMPLETED.
+   * 일반 프로그램 participants sessions[].scheduleStatus 와 동일 계열. 출석과 별개.
+   * 산출 불가면 null. 빈 문자열 없음.
+   * @nullable
+   */
+  scheduleStatus?: ParticipantSessionProgressScheduleStatus;
 }
