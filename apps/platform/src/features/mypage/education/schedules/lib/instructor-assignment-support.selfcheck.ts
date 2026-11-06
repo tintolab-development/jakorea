@@ -149,9 +149,20 @@ assert.deepEqual(formatAssignmentWaitingStatus('CANCELLED'), {
   tone: 'cancelled', label: '배정 취소', disabled: false,
 })
 
-// 차시 자리: 일정형+복수 회차는 일정명, 그 외 N차시
-assert.equal(formatAssignmentSessionLabel({ sessionNo: 2, scheduleName: '세부 일정 01' }, false), '2차시')
-assert.equal(formatAssignmentSessionLabel({ sessionNo: null, scheduleName: '세부 일정 01' }, false), '-')
+// 회차/차시 자리: sessionNo는 회차. 일정형+복수 회차는 일정명
+assert.equal(formatAssignmentSessionLabel({ sessionNo: 2, scheduleName: '세부 일정 01' }, false), '2회차')
+assert.equal(formatAssignmentSessionLabel({ sessionNo: null, scheduleName: '세부 일정 01' }, false), '세부 일정 01')
+assert.equal(
+  formatAssignmentSessionLabel(
+    { sessionNo: 2, scheduleName: '세부 일정 01', curriculumSessionCount: 2 },
+    false,
+  ),
+  '2회차 (2차시)',
+)
+assert.equal(
+  formatAssignmentSessionLabel({ sessionNo: null, scheduleName: null, scheduleRole: 'PRE_EDUCATION' }, false),
+  '사전교육',
+)
 assert.equal(formatAssignmentSessionLabel({ sessionNo: 2, scheduleName: ' 세부 일정 01 ' }, true), '세부 일정 01')
 assert.equal(formatAssignmentSessionLabel({ sessionNo: 2, scheduleName: null }, true), '-')
 

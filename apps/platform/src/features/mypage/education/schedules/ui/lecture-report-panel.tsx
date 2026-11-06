@@ -24,6 +24,7 @@ import {
 } from '../lib/lecture-report-preview-url'
 import { LectureReportPreviewModalContainer } from './lecture-report-preview-modal-container'
 import styles from './lecture-report-panel.module.css'
+import { formatLectureReportCardTimeSubtitle } from '../lib/instructor-education-schedule-display'
 import { clampLectureReportPage, resolveLectureReportAction } from '../lib/lecture-report-policy'
 
 type Props = { applicationId: string; programId: number; instructorProgram: boolean }
@@ -182,7 +183,7 @@ export function LectureReportPanel({ applicationId, programId, instructorProgram
         const lectureStatus = lectureStatusPresentation(row.lectureStatus)
         const statusLoaded = state != null || row.reportStatus != null
         const timeRange = formatTimeRange(row)
-        const timeLabel = [timeRange, row.sessionNo ? `${row.sessionNo}차시` : ''].filter(Boolean).join(' ')
+        const timeLabel = formatLectureReportCardTimeSubtitle({ ...row, timeRange })
         const institutionMeta = instructorProgram && (row.institutionName || row.grade) ? (
           <PFMetaBadge
             icon={<img src={villaIconUrl} alt="" width={20} height={20} aria-hidden="true" />}

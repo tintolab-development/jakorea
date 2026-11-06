@@ -32,6 +32,10 @@ export type InstructorAssignmentItem = {
   endAt: string | null
   sessionNo: number | null
   scheduleName: string | null
+  scheduleRole?: string | null
+  educationSlotKey?: string | null
+  scheduleKind?: string | null
+  curriculumSessionCount?: number | null
   distanceKm: number | null
   distanceStatus: string | null
 }
@@ -81,6 +85,10 @@ export function mapLectureReportAssignmentToInstructorItem(
     endAt: row.endAt,
     sessionNo: row.sessionNo,
     scheduleName: row.scheduleName,
+    scheduleRole: row.scheduleRole ?? null,
+    educationSlotKey: row.educationSlotKey ?? null,
+    scheduleKind: row.scheduleKind ?? null,
+    curriculumSessionCount: row.curriculumSessionCount ?? null,
     distanceKm,
     distanceStatus: distanceKm != null ? 'CALCULATED' : null,
   }
