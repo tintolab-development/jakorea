@@ -29,6 +29,9 @@ import { TEXTBOOK_STATUS_OPTION_KEYS } from '@/features/program/general/model/pa
 import type { TextbookStatusKey } from '@/features/program/general/model/participating-schools'
 import { useParticipatingInstitutionDetailEdit } from '@/features/program/general/hooks/use-participating-institution-detail-edit'
 import { shouldShowInstitutionApplicationEducationFormatField } from '@/features/program/general/lib/institution-application-detail-edit-policy'
+import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
+import { resolveStoredEducationFormLabel } from '@/features/program/shared/model/program-detail-edit-schema'
+import { resolveTrainedTeachersEducationFormView } from '@/features/program/trained-teachers/lib/common-info-display'
 import {
   canParticipatingInstitutionApplicationInfoEdit,
   getParticipatingInstitutionApplicationInfoEditBlockedAlertMessage,
@@ -202,11 +205,17 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
           : {}),
       teacherEmail: remote.detail?.teacherEmail,
       addressDetail: remote.detail?.addressDetail,
-      educationFormat: remote.detail?.educationType,
+      ...(remote.detail?.educationType?.trim()
+        ? { educationFormat: remote.detail.educationType.trim() }
+        : {}),
       textbookId: remote.detail?.textbookId,
       lectureRound: remote.lectureRound,
       textbookName: remote.textbookName,
       ...(remote.textbookStatus ? { textbookStatus: remote.textbookStatus } : {}),
+      ...(typeof remote.textbookKits === 'number' ? { textbookKits: remote.textbookKits } : {}),
+      ...(typeof remote.textbookQuantity === 'number'
+        ? { textbookQuantity: remote.textbookQuantity }
+        : {}),
       applicationReason: remote.detail?.applicationReason,
       otherRequests: remote.detail?.otherRequests,
       gradeBlocks: remote.gradeBlocks ?? null,
@@ -307,6 +316,23 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     enrollmentStatus: programProgressStatus,
   })
   const showEducationFormatField = shouldShowInstitutionApplicationEducationFormatField(program)
+  const applicationEducationFormatDisplay = useMemo(() => {
+    const fromApplication = mergedDetail.educationFormat?.trim() ?? ''
+    if (fromApplication) return fromApplication
+    const common = resolveGeneralProgramCommonInfo(program)
+    const storedLabel = resolveStoredEducationFormLabel({
+      educationFormLabel: common.educationFormLabel,
+      scheduleDetails: common.scheduleDetails,
+      curriculumSessions: common.curriculumSessions,
+    }).trim()
+    const fromProgram = resolveTrainedTeachersEducationFormView({
+      programType: program.type,
+      educationFormScheduleDetail: common.educationFormScheduleDetail,
+      educationFormLabel: storedLabel,
+    }).formLabel.trim()
+    if (!fromProgram || fromProgram === '-' || fromProgram.includes('참여자')) return '-'
+    return fromProgram
+  }, [mergedDetail.educationFormat, program])
 
   useEffect(() => {
     if (isApplicationInfoEditing && !canEditApplicationInfo) {
@@ -653,10 +679,20 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
       `E-mail : ${displayServerPiiAsIs(mergedDetail.teacherEmail, mergedDetail.teacherEmail)}`,
   ].filter((v): v is string => Boolean(v))
 
+  const hasSelectedTextbook =
+    ((mergedDetail.textbookId?.trim() ?? '') !== '' &&
+      mergedDetail.textbookId?.trim() !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
+    ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
+      mergedDetail.textbookName?.trim() !== '해당 없음' &&
+      mergedDetail.textbookName?.trim() !== '-') ||
+    (typeof mergedDetail.textbookKits === 'number' && mergedDetail.textbookKits > 0) ||
+    (typeof mergedDetail.textbookQuantity === 'number' && mergedDetail.textbookQuantity > 0)
   const textbookDeliveryStatus =
     mergedDetail.textbookStatus && mergedDetail.textbookStatus !== 'not_applicable'
       ? mergedDetail.textbookStatus
-      : null
+      : hasSelectedTextbook
+        ? 'preparing'
+        : null
   const textbookStatusCell =
     textbookDeliveryStatus == null ? null : onTextbookStatusChange != null ? (
       <span className={STATUS_DROPDOWN_CELL_INLINE_TAG100_CLASSNAME}>
@@ -674,13 +710,17 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     ) : (
       <TextbookStatusBadge status={textbookDeliveryStatus} />
     )
-
-  const hasSelectedTextbook =
-    ((mergedDetail.textbookId?.trim() ?? '') !== '' &&
-      mergedDetail.textbookId?.trim() !== TEXTBOOK_NOT_USED_OPTION_VALUE) ||
-    ((mergedDetail.textbookName?.trim() ?? '') !== '' &&
-      mergedDetail.textbookName?.trim() !== '해당 없음')
-  const textbookNameView = !hasSelectedTextbook ? '해당 없음' : textbookDisplay.textbookName
+  const textbookNameView = !hasSelectedTextbook
+    ? '해당 없음'
+    : textbookDisplay.textbookName?.trim() &&
+        textbookDisplay.textbookName.trim() !== '-' &&
+        textbookDisplay.textbookName.trim() !== '해당 없음'
+      ? textbookDisplay.textbookName.trim()
+      : (mergedDetail.textbookName?.trim() &&
+          mergedDetail.textbookName.trim() !== '-' &&
+          mergedDetail.textbookName.trim() !== '해당 없음'
+          ? mergedDetail.textbookName.trim()
+          : '')
   const kitsAndQty = hasSelectedTextbook
     ? formatParticipatingInstitutionKitQuantity(
         textbookDisplay.textbookKits,
@@ -726,7 +766,11 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
     ) : (
       <div className="participating-institution-application-info__textbook-value">
         <ProgramDetailTdSegmentWrap>
-          {withProgramDetailTdDivider([textbookNameView, kitsAndQty, textbookStatusCell])}
+          {withProgramDetailTdDivider(
+            [textbookNameView, kitsAndQty !== '-' ? kitsAndQty : null, textbookStatusCell].filter(
+              (part): part is NonNullable<typeof part> => part != null && part !== ''
+            )
+          )}
         </ProgramDetailTdSegmentWrap>
       </div>
     )
@@ -911,7 +955,7 @@ export function TrainedTeachersParticipatingInstitutionDetailView({
                     error={applicationInfoValidationErrors?.educationFormat}
                   />
                 ) : (
-                  (mergedDetail.educationFormat ?? '-')
+                  applicationEducationFormatDisplay
                 )
               }
               teacherInfo={

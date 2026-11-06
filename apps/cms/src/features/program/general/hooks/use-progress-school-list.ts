@@ -36,7 +36,10 @@ import {
 } from '@/features/program/1c-1s/lib/use-company-school-surface-remote'
 import { useTrainedTeacherParticipatingInstitutions } from '@/features/program/trained-teachers/api/education-journals-hooks'
 import { shouldUseTrainedTeacherProgramsRemoteApi } from '@/features/program/trained-teachers/api/capabilities'
-import { removeTrainedTeacherOrganizationApplicationFromProgress } from '@/features/program/trained-teachers/api/organization-applications-service'
+import {
+  removeTrainedTeacherOrganizationApplicationFromProgress,
+  updateTrainedTeacherOrganizationApplicationTextbookDelivery,
+} from '@/features/program/trained-teachers/api/organization-applications-service'
 import { trainedTeacherQueryKeys } from '@/features/program/trained-teachers/api/query-keys'
 import {
   notifyProgramApiUnavailable,
@@ -193,6 +196,89 @@ export function useProgressSchoolList({
 
   const handleTextbookStatusChange = useCallback(
     (recordId: string, status: TextbookStatusKey) => {
+      const record = schoolList.find(row => row.id === recordId)
+      const applicationId = record?.organizationApplicationId ?? recordId
+      const deliveryStatus = mapTextbookStatusKeyToDeliveryStatus(status)
+
+      const applyResolvedStatus = (serverStatus?: string | null) => {
+        if (!serverStatus) return
+        const resolvedStatus = mapTextbookDeliveryStatusToBadge(serverStatus)
+        setSchoolList(prev =>
+          prev.map(row =>
+            row.id === recordId ? { ...row, textbookStatus: resolvedStatus } : row
+          )
+        )
+      }
+
+      const alertTextbookDeliveryFailure = (error: unknown) => {
+        const isConcurrentStateChange =
+          getApiErrorHttpStatus(error) === 409 &&
+          getApiErrorCode(error) === 'TEXTBOOK_DELIVERY_CONCURRENT_STATE_CHANGE'
+        if (isConcurrentStateChange) {
+          showAlert({
+            title: '교재 배송 변경 실패',
+            content:
+              '교재 배송 상태가 다른 요청으로 변경되었습니다. 새로고침 후 다시 시도해 주세요.',
+          })
+          return
+        }
+        const responseData = axios.isAxiosError(error) ? error.response?.data : undefined
+        const httpStatus = axios.isAxiosError(error) ? error.response?.status : undefined
+        showAlert({
+          title: '교재 배송 변경 실패',
+          content: isTrainedTeachersSurface
+            ? extractApiErrorMessage(responseData, {
+                httpStatus,
+                fallback: '교재 배송 현황을 변경하지 못했습니다. 다시 시도해 주세요.',
+              })
+            : getGeneralProgramApiErrorMessage(
+                error,
+                '교재 배송 현황을 변경하지 못했습니다. 다시 시도해 주세요.'
+              ),
+        })
+      }
+
+      if (isTrainedTeachersSurface) {
+        if (!ttRemoteEnabled || !programId) {
+          notifyProgramApiUnavailable(
+            'trained-teacher-organization-application-textbook-delivery-status',
+            '교육받은 교사 · 교재 배송 현황 변경'
+          )
+          return
+        }
+        void (async () => {
+          try {
+            const response = await updateTrainedTeacherOrganizationApplicationTextbookDelivery(
+              programId,
+              applicationId,
+              deliveryStatus
+            )
+            applyResolvedStatus(response.textbookDeliveryStatus)
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationId),
+            })
+          } catch (error) {
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.participatingInstitutionsProgram(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplicationsProgram(programId),
+            })
+            await queryClient.invalidateQueries({
+              queryKey: trainedTeacherQueryKeys.organizationApplication(programId, applicationId),
+            })
+            alertTextbookDeliveryFailure(error)
+          }
+        })()
+        return
+      }
+
       if (!remoteEnabled || !programId) {
         notifyProgramApiUnavailable(
           'general-participating-institution-textbook-delivery-status',
@@ -200,23 +286,14 @@ export function useProgressSchoolList({
         )
         return
       }
-      const record = schoolList.find(row => row.id === recordId)
       void (async () => {
         try {
           const response = await updateGeneralParticipatingInstitutionTextbookDelivery(
             programId,
             recordId,
-            mapTextbookStatusKeyToDeliveryStatus(status)
+            deliveryStatus
           )
-          const serverStatus = response.textbookDeliveryStatus
-          if (serverStatus) {
-            const resolvedStatus = mapTextbookDeliveryStatusToBadge(serverStatus)
-            setSchoolList(prev =>
-              prev.map(row =>
-                row.id === recordId ? { ...row, textbookStatus: resolvedStatus } : row
-              )
-            )
-          }
+          applyResolvedStatus(response.textbookDeliveryStatus)
           await queryClient.invalidateQueries({
             queryKey: generalProgramProgressQueryKeys.institutions(programId),
           })
@@ -242,24 +319,20 @@ export function useProgressSchoolList({
                 ),
               })
             }
-            showAlert({
-              title: '교재 배송 변경 실패',
-              content:
-                '교재 배송 상태가 다른 요청으로 변경되었습니다. 새로고침 후 다시 시도해 주세요.',
-            })
-            return
           }
-          showAlert({
-            title: '교재 배송 변경 실패',
-            content: getGeneralProgramApiErrorMessage(
-              error,
-              '교재 배송 현황을 변경하지 못했습니다. 다시 시도해 주세요.'
-            ),
-          })
+          alertTextbookDeliveryFailure(error)
         }
       })()
     },
-    [programId, queryClient, remoteEnabled, schoolList, showAlert]
+    [
+      isTrainedTeachersSurface,
+      programId,
+      queryClient,
+      remoteEnabled,
+      schoolList,
+      showAlert,
+      ttRemoteEnabled,
+    ]
   )
 
   const handleSchoolDeleteClick = useCallback(() => {

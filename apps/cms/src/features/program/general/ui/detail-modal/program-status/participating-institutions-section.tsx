@@ -416,14 +416,17 @@ export function ParticipatingInstitutionsSection({
                       className: `${STATUS_DROPDOWN_CELL_CLASSNAME} ${STATUS_DROPDOWN_CELL_TAG_100_CLASSNAME}`,
                     },
               render: (status: TextbookStatusKey, record: ParticipatingSchoolRow) => {
-                const hasTextbook = Boolean(
-                  record.textbookId?.trim() || record.textbookName?.trim()
-                )
+                const hasTextbook = isTrainedTeachersSurface
+                  ? status != null && status !== 'not_applicable'
+                  : Boolean(
+                      record.textbookId?.trim() ||
+                        record.textbookName?.trim() ||
+                        (typeof record.textbookKits === 'number' && record.textbookKits > 0) ||
+                        (typeof record.textbookQuantity === 'number' &&
+                          record.textbookQuantity > 0)
+                    )
                 if (!hasTextbook)
                   return <ParticipatingInstitutionTextbookStatusBadge status="not_applicable" />
-                if (isTrainedTeachersSurface) {
-                  return <ParticipatingInstitutionTextbookStatusBadge status={status} />
-                }
                 return (
                   <StatusDropdownCell<TextbookStatusKey>
                     status={status ?? null}
@@ -588,9 +591,7 @@ export function ParticipatingInstitutionsSection({
           savedInstructorPatches={savedInstructorPatches}
           instructorList={instructorHook.instructorList}
           onCancelApproval={handleSchoolApprovalCancel}
-          onTextbookStatusChange={
-            isTrainedTeachersSurface ? undefined : handleTextbookStatusChange
-          }
+          onTextbookStatusChange={handleTextbookStatusChange}
         />
       </div>
     )
