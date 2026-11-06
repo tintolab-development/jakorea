@@ -14,6 +14,10 @@ import type {
 } from '@/features/program/general/lib/build-registration-create-form-bindings'
 import { loadRegistrationWizardFormDraft } from '@/features/program/general/lib/registration-wizard-form-draft'
 import { resolveRegistrationProgramDraftProgramType } from '@/features/program/general/lib/resolve-program-api-type-for-draft'
+import {
+  peekActiveTrainedTeachersApplicationOverlayRecord,
+  peekActiveTrainedTeachersRecruitmentOverlayRecord,
+} from '@/features/program/trained-teachers/lib/registration-rhf-api'
 
 /** 수정하지 않은 신청 양식도 프로그램 전용 COPY로 발행해야 하는 프로그램 유형(GENERAL만). */
 function shouldAlwaysApplyApplicationForms(program: Program): boolean {
@@ -90,10 +94,11 @@ export async function prepareRegistrationCreateFormBindings(args: {
     }
 
     const overlay =
-      spec.templateCode === 'recruitment-trained-teachers' ||
-      spec.templateCode === 'application-trained-teachers'
-        ? null
-        : collectOperationalOverlayForCatalogId(spec.templateCode)
+      spec.templateCode === 'recruitment-trained-teachers'
+        ? peekActiveTrainedTeachersRecruitmentOverlayRecord()
+        : spec.templateCode === 'application-trained-teachers'
+          ? peekActiveTrainedTeachersApplicationOverlayRecord()
+          : collectOperationalOverlayForCatalogId(spec.templateCode)
     const wizardSaved = await loadRegistrationWizardFormDraft({
       programType: programDraftType,
       templateCode: spec.templateCode,

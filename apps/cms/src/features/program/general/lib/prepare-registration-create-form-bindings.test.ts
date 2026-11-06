@@ -69,6 +69,15 @@ vi.mock('@/features/program/general/lib/registration-operational-form-drafts', (
     createSeedDraftForOperationalCatalogId(...args),
 }))
 
+const peekActiveTrainedTeachersRecruitmentOverlayRecord = vi.fn()
+const peekActiveTrainedTeachersApplicationOverlayRecord = vi.fn()
+vi.mock('@/features/program/trained-teachers/lib/registration-rhf-api', () => ({
+  peekActiveTrainedTeachersRecruitmentOverlayRecord: () =>
+    peekActiveTrainedTeachersRecruitmentOverlayRecord(),
+  peekActiveTrainedTeachersApplicationOverlayRecord: () =>
+    peekActiveTrainedTeachersApplicationOverlayRecord(),
+}))
+
 vi.mock(
   '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush',
   () => ({
@@ -97,6 +106,8 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
     vi.clearAllMocks()
     httpCalls.length = 0
     collectOperationalOverlayForCatalogId.mockReturnValue(null)
+    peekActiveTrainedTeachersRecruitmentOverlayRecord.mockReturnValue(null)
+    peekActiveTrainedTeachersApplicationOverlayRecord.mockReturnValue(null)
     createSeedDraftForOperationalCatalogId.mockReturnValue(createProgramRegistrationDraft())
     listAllRegistrationCreateFormSpecs.mockReturnValue(individualProgramBindingSpecs)
     loadRegistrationWizardFormDraft.mockResolvedValue(null)
@@ -248,5 +259,39 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
         expect(result?.forms).toEqual([])
       }
     )
+
+    it('TRAINED_TEACHER RHF overlay가 있으면 모집·신청 Form Version 적용 목록에 넣는다', async () => {
+      resolveProgramOperationalBindingKind.mockReturnValue('TRAINED_TEACHER')
+      listAllRegistrationCreateFormSpecs.mockReturnValue([
+        {
+          templateCode: 'recruitment-trained-teachers',
+          formType: 'RECRUITMENT',
+          targetRole: 'ORGANIZATION',
+          nameHints: [],
+        },
+        {
+          templateCode: 'application-trained-teachers',
+          formType: 'APPLICATION',
+          targetRole: 'ORGANIZATION',
+          nameHints: [],
+        },
+      ])
+      peekActiveTrainedTeachersRecruitmentOverlayRecord.mockReturnValue({
+        'recruit.maxClassCount': 4,
+        'trainedTeachersRecruit.detailInfo.programDescription': '모집 설명',
+      })
+      peekActiveTrainedTeachersApplicationOverlayRecord.mockReturnValue({
+        'application.trainedTeachers.preferredSchedules': [],
+      })
+      const result = await prepareRegistrationCreateFormBindings({ program })
+      expect(result?.forms.map(item => item.templateCode)).toEqual([
+        'recruitment-trained-teachers',
+        'application-trained-teachers',
+      ])
+      expect(result?.forms[0]?.overlay).toMatchObject({ 'recruit.maxClassCount': 4 })
+      expect(result?.forms[1]?.overlay).toMatchObject({
+        'application.trainedTeachers.preferredSchedules': [],
+      })
+    })
   })
 })
