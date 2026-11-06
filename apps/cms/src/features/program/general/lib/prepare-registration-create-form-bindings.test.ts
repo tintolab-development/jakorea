@@ -78,6 +78,14 @@ vi.mock('@/features/program/trained-teachers/lib/registration-rhf-api', () => ({
     peekActiveTrainedTeachersApplicationOverlayRecord(),
 }))
 
+const peekActiveUjatRecruitInstitutionOverlayRecord = vi.fn()
+const peekActiveUjatRecruitVolunteerOverlayRecord = vi.fn()
+vi.mock('@/features/program/ujat/lib/ujat-registration-rhf-api', () => ({
+  peekActiveUjatRecruitInstitutionOverlayRecord: () =>
+    peekActiveUjatRecruitInstitutionOverlayRecord(),
+  peekActiveUjatRecruitVolunteerOverlayRecord: () => peekActiveUjatRecruitVolunteerOverlayRecord(),
+}))
+
 vi.mock(
   '@/features/template/ui/form-set/recruit-form/shared/recruit-detail-info-additional-content-flush',
   () => ({
@@ -108,6 +116,8 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
     collectOperationalOverlayForCatalogId.mockReturnValue(null)
     peekActiveTrainedTeachersRecruitmentOverlayRecord.mockReturnValue(null)
     peekActiveTrainedTeachersApplicationOverlayRecord.mockReturnValue(null)
+    peekActiveUjatRecruitInstitutionOverlayRecord.mockReturnValue(null)
+    peekActiveUjatRecruitVolunteerOverlayRecord.mockReturnValue(null)
     createSeedDraftForOperationalCatalogId.mockReturnValue(createProgramRegistrationDraft())
     listAllRegistrationCreateFormSpecs.mockReturnValue(individualProgramBindingSpecs)
     loadRegistrationWizardFormDraft.mockResolvedValue(null)
@@ -291,6 +301,47 @@ describe('prepareRegistrationCreateFormBindings (CREATE 후 적용할 양식 목
       expect(result?.forms[0]?.overlay).toMatchObject({ 'recruit.maxClassCount': 4 })
       expect(result?.forms[1]?.overlay).toMatchObject({
         'application.trainedTeachers.preferredSchedules': [],
+      })
+    })
+
+    it('UJAT typed 모집 RHF overlay가 있으면 모집 Form Version 적용 목록에 넣는다', async () => {
+      resolveProgramOperationalBindingKind.mockReturnValue('UJAT')
+      listAllRegistrationCreateFormSpecs.mockReturnValue([
+        {
+          templateCode: 'recruitment-ujat-school',
+          formType: 'RECRUITMENT',
+          targetRole: 'ORGANIZATION',
+          nameHints: [],
+        },
+        {
+          templateCode: 'recruitment-ujat-volunteer',
+          formType: 'RECRUITMENT',
+          targetRole: 'VOLUNTEER',
+          nameHints: [],
+        },
+        {
+          templateCode: 'application-ujat-school',
+          formType: 'APPLICATION',
+          targetRole: 'ORGANIZATION',
+          nameHints: [],
+        },
+      ])
+      peekActiveUjatRecruitInstitutionOverlayRecord.mockReturnValue({
+        'ujat.recruit.institution.publicTitle': 'RHF 기관 공고',
+      })
+      peekActiveUjatRecruitVolunteerOverlayRecord.mockReturnValue({
+        'ujat.recruit.volunteer.h1.publicTitle': 'H1 공고',
+      })
+      const result = await prepareRegistrationCreateFormBindings({ program })
+      expect(result?.forms.map(item => item.templateCode)).toEqual([
+        'recruitment-ujat-school',
+        'recruitment-ujat-volunteer',
+      ])
+      expect(result?.forms[0]?.overlay).toMatchObject({
+        'ujat.recruit.institution.publicTitle': 'RHF 기관 공고',
+      })
+      expect(result?.forms[1]?.overlay).toMatchObject({
+        'ujat.recruit.volunteer.h1.publicTitle': 'H1 공고',
       })
     })
   })

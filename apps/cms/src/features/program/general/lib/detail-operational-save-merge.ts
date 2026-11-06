@@ -265,7 +265,11 @@ function peekVolunteerInterviewOverlayForSave(catalogCodes: readonly string[]): 
 }
 
 function skipLiveCatalogPeekForTypedRecruitSave(program: Program): boolean {
-  return isGeneralRecruitmentRowProgram(program) || isTrainedTeachersDetailProgram(program)
+  return (
+    isGeneralRecruitmentRowProgram(program) ||
+    isTrainedTeachersDetailProgram(program) ||
+    program.backendProgramType?.trim().toUpperCase() === 'UJAT'
+  )
 }
 
 export function buildMergedRegistrationOverlayForRecruitSave(args: {
