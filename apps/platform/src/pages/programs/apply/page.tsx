@@ -157,6 +157,13 @@ import {
   resolveVolunteerPortalActivityScheduleEnabledForHidden,
   resolveVolunteerPortalInterviewEnabledForHidden,
 } from '@/features/program/lib/portal-volunteer-interview-visibility'
+import { resolveIndividualPortalInterviewEnabledForHidden } from '@/features/program/lib/portal-individual-interview-visibility'
+import {
+  PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH,
+  clipApplicationFreeText,
+  findApplicationFreeTextTooLongParagraphId,
+  findIncompleteRequiredShortEssayParagraphId,
+} from '@/features/program/lib/portal-application-free-text'
 import {
   pruneSelectedSlotIdsToCurrentOptions,
   usesConfirmedOsaAvailableSchedule,
@@ -2071,12 +2078,15 @@ export function ProgramApplyPage() {
       const placeholder = paragraph.bodyPlaceholder || '답변을 입력해 주세요'
 
       const commitBody = (next: string) => {
+        const clipped = clipApplicationFreeText(next)
         updateParagraph(paragraph.id, current =>
           current.kind === 'single_item' && current.variant === 'short_essay'
-            ? { ...current, bodyText: next }
+            ? { ...current, bodyText: clipped }
             : current
         )
       }
+      const freeTextCount = clipApplicationFreeText(paragraph.bodyText ?? '').length
+      const freeTextMessage = `${freeTextCount}/${PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}`
 
       if (items.length === 0) {
         if (isSingleLine) {
@@ -2085,6 +2095,8 @@ export function ProgramApplyPage() {
               variant="formPage"
               value={paragraph.bodyText}
               placeholder={placeholder}
+              maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
+              message={freeTextMessage}
               onValueChange={commitBody}
             />
           )
@@ -2094,6 +2106,9 @@ export function ProgramApplyPage() {
             variant="formPage"
             value={paragraph.bodyText}
             placeholder={placeholder}
+            maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
+            message={freeTextMessage}
+            messageAlign="end"
             onValueChange={commitBody}
           />
         )
@@ -2103,19 +2118,22 @@ export function ProgramApplyPage() {
         <div className={styles.shortEssayItems}>
           {items.map(item => {
             const onItemChange = (nextValue: string) => {
+              const clipped = clipApplicationFreeText(nextValue)
               updateParagraph(paragraph.id, current => {
                 if (current.kind !== 'single_item' || current.variant !== 'short_essay') {
                   return current
                 }
                 return {
                   ...current,
-                  bodyText: current.items?.[0]?.id === item.id ? nextValue : current.bodyText,
+                  bodyText: current.items?.[0]?.id === item.id ? clipped : current.bodyText,
                   items: (current.items ?? []).map(entry =>
-                    entry.id === item.id ? { ...entry, bodyText: nextValue } : entry
+                    entry.id === item.id ? { ...entry, bodyText: clipped } : entry
                   ),
                 }
               })
             }
+            const itemCount = clipApplicationFreeText(item.bodyText ?? '').length
+            const itemMessage = `${itemCount}/${PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}`
 
             const control = isSingleLine ? (
               <PFTextInput
@@ -2123,6 +2141,8 @@ export function ProgramApplyPage() {
                 label={paragraph.showItemTitle ? item.label?.trim() || undefined : undefined}
                 value={item.bodyText}
                 placeholder={item.placeholder || placeholder}
+                maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
+                message={itemMessage}
                 onValueChange={onItemChange}
               />
             ) : (
@@ -2131,6 +2151,9 @@ export function ProgramApplyPage() {
                 label={paragraph.showItemTitle ? item.label?.trim() || undefined : undefined}
                 value={item.bodyText}
                 placeholder={item.placeholder || placeholder}
+                maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
+                message={itemMessage}
+                messageAlign="end"
                 onValueChange={onItemChange}
               />
             )
@@ -2324,6 +2347,13 @@ export function ProgramApplyPage() {
               formBinding: remoteForm,
             })
           : undefined,
+        individualInterviewEnabled:
+          applyCase === 'individual-general' || applyCase === 'individual-team'
+            ? resolveIndividualPortalInterviewEnabledForHidden({
+                formBinding: remoteForm,
+                runtimeContext: applicationFormDocument?.runtimeContext,
+              })
+            : undefined,
         volunteerActivityScheduleEnabled:
           applyCase === 'individual-volunteer'
             ? resolveVolunteerPortalActivityScheduleEnabledForHidden({
@@ -2566,6 +2596,31 @@ export function ProgramApplyPage() {
       }
       setSubmitErrorField(missingConsentId)
       setSubmitAlert({ description: '필수 동의 항목을 확인해 주세요.' })
+      return
+    }
+    const missingEssayId = findIncompleteRequiredShortEssayParagraphId(
+      displayDraft,
+      hiddenParagraphIds,
+    )
+    if (missingEssayId) {
+      pendingApplyIncompleteRef.current = {
+        message: '필수 입력값을 입력해 주세요.',
+        paragraphId: missingEssayId,
+      }
+      setSubmitErrorField(missingEssayId)
+      setSubmitAlert({ description: '필수 입력값을 입력해 주세요.' })
+      return
+    }
+    const tooLongId = findApplicationFreeTextTooLongParagraphId(displayDraft, hiddenParagraphIds)
+    if (tooLongId) {
+      pendingApplyIncompleteRef.current = {
+        message: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
+        paragraphId: tooLongId,
+      }
+      setSubmitErrorField(tooLongId)
+      setSubmitAlert({
+        description: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
+      })
       return
     }
     const bundle = applicationFormQuery.bundle
@@ -3515,6 +3570,14 @@ export function ProgramApplyPage() {
       if (instructorCrimeParagraph && !instructorCrimeRecord.confirmed) {
         omitParagraphIds.add(instructorCrimeParagraph.id)
         omitParagraphIds.add(resolveApplicationAnswerKey(instructorCrimeParagraph))
+      }
+      if (interviewBindingParagraph && hiddenParagraphIds.has(interviewBindingParagraph.id)) {
+        omitParagraphIds.add(interviewBindingParagraph.id)
+        omitParagraphIds.add(
+          resolveApplicationAnswerKey(
+            (interviewDraftParagraph ?? interviewBindingParagraph) as object,
+          ),
+        )
       }
       // 1사1교 슬롯 미응답(선택 단락) — placeholder 표 답을 보내지 않는다.
       if (economyLessonReplyParagraph && !economyLessonReplyAnswer) {
