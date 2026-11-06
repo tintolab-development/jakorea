@@ -68,4 +68,50 @@ describe('Homepage Admin: periodic Refresh race', () => {
     await complete(true)
     expect(logout).not.toHaveBeenCalled()
   })
+  it('a delayed boot checkAuth failure cannot revoke a newer login', async () => {
+    const expiresAt = new Date(Date.now() - 10_000).toISOString()
+    localStorage.setItem('hp_admin_auth_expires_at', expiresAt)
+    localStorage.setItem('hp_admin_auth_user', JSON.stringify({ id: 'old-user', isActive: true }))
+    useAuthStore.setState({
+      expiresAt,
+      _isCheckingAuth: false,
+      _checkAuthPromise: null,
+    })
+
+    const pending = useAuthStore.getState().checkAuth()
+    localStorage.setItem('hp_admin_auth_token', replacementAccess)
+    localStorage.setItem('hp_admin_auth_user', JSON.stringify({ id: 'new-user', isActive: true }))
+    localStorage.setItem('hp_admin_auth_expires_at', new Date(Date.now() + 3600_000).toISOString())
+    useAuthStore.setState({ token: replacementAccess, isAuthenticated: true })
+    await complete(false)
+    await pending
+
+    expect(logout).not.toHaveBeenCalled()
+    expect(useAuthStore.getState().token).toBe(replacementAccess)
+  })
+
+  it('a delayed successful boot checkAuth may not replace a different login identity', async () => {
+    const expiresAt = new Date(Date.now() - 10_000).toISOString()
+    localStorage.setItem('hp_admin_auth_expires_at', expiresAt)
+    localStorage.setItem('hp_admin_auth_user', JSON.stringify({ id: 'old-user', isActive: true }))
+    useAuthStore.setState({
+      expiresAt,
+      _isCheckingAuth: false,
+      _checkAuthPromise: null,
+    })
+
+    const pending = useAuthStore.getState().checkAuth()
+    const newUser = JSON.stringify({ id: 'new-user', isActive: true })
+    localStorage.setItem('hp_admin_auth_token', replacementAccess)
+    localStorage.setItem('hp_admin_auth_user', newUser)
+    localStorage.setItem('hp_admin_auth_expires_at', new Date(Date.now() + 3600_000).toISOString())
+    useAuthStore.setState({ token: replacementAccess, isAuthenticated: true })
+    await complete(true)
+    await pending
+
+    expect(logout).not.toHaveBeenCalled()
+    expect(useAuthStore.getState().token).toBe(replacementAccess)
+    expect(localStorage.getItem('hp_admin_auth_user')).toBe(newUser)
+  })
+
 })
