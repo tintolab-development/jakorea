@@ -139,6 +139,28 @@ function emptyPage<T>(items: T[] = []) {
   }
 }
 
+/** 격리 E2E에서 세션 경고 모달이 클릭을 가로채지 않도록 유휴·절대 만료를 충분히 남긴다. */
+function adminAuthSessionStatus() {
+  const nowMs = Date.now()
+  const iso = (ms: number) => new Date(ms).toISOString()
+  return {
+    sessionStartedAt: iso(nowMs - 60_000),
+    lastUserActivityAt: iso(nowMs),
+    serverNow: iso(nowMs),
+    absoluteExpiresAt: iso(nowMs + 12 * 60 * 60 * 1000),
+    idleExpiresAt: iso(nowMs + 30 * 60 * 1000),
+    refreshIdleExpiresAt: iso(nowMs + 30 * 60 * 1000),
+    idlePolicyEnforced: true,
+  }
+}
+
+function adminAuthActivityStatus() {
+  return {
+    lastUserActivityAt: new Date().toISOString(),
+    updated: true,
+  }
+}
+
 const SPONSOR_ID = 163001
 const CONTACT_ID = 163101
 const DETAILED_PROGRAM_ID = 163006
@@ -392,11 +414,13 @@ function persistInfoDetailPatch(store: IsolatedProgramStore, body: Record<string
 
 function isAllowedGet(pathname: string): boolean {
   if (pathname === '/api/admin/me') return true
+  if (pathname === '/api/admin/auth/session') return true
   if (pathname === '/api/admin/programs') return true
   if (pathname === '/api/admin/programs/overview-stages') return true
   if (pathname === '/api/admin/sponsors') return true
   if (pathname === '/api/admin/detailed-programs') return true
   if (pathname === '/api/admin/form-templates') return true
+  if (pathname === '/api/admin/applications/counts') return true
   if (pathname === '/api/admin/form-templates/create-options') return true
   if (pathname === '/api/admin/notifications') return true
   if (pathname === '/api/admin/me/dashboard-preferences') return true
@@ -421,6 +445,7 @@ function isAllowedGet(pathname: string): boolean {
 }
 
 function isAllowedMutation(method: string, pathname: string): boolean {
+  if (method === 'POST' && pathname === '/api/admin/auth/activity') return true
   if (method === 'PUT' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) return true
   if (method === 'POST' && /^\/api\/admin\/form-template-versions\/\d+\/publish$/.test(pathname)) {
     return true
@@ -560,6 +585,10 @@ export async function installTtIsolatedNetwork(
       return
     }
 
+    if (method === 'GET' && pathname === '/api/admin/auth/session') {
+      await route.fulfill(json(adminAuthSessionStatus()))
+      return
+    }
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(
         json({
@@ -648,6 +677,11 @@ export async function installTtIsolatedNetwork(
           ])
         )
       )
+      return
+    }
+    if (method === 'GET' && pathname === '/api/admin/applications/counts') {
+      // ApplicationCountResponse[] — 신규·격리 프로그램은 신청 0건.
+      await route.fulfill(json([]))
       return
     }
     if (method === 'GET' && pathname === '/api/admin/form-templates') {
@@ -784,6 +818,10 @@ export async function installTtIsolatedNetwork(
       }
       log.mutations.push(mutation)
 
+      if (method === 'POST' && pathname === '/api/admin/auth/activity') {
+        await route.fulfill(json(adminAuthActivityStatus()))
+        return
+      }
       if (failMode === 'put' && method === 'PUT' && pathname.includes('/form-template-versions/')) {
         log.formVersionPuts.push(mutation)
         await route.fulfill(json({ error: { code: 'PUT_FAILED', message: 'mock put fail' } }, 500))

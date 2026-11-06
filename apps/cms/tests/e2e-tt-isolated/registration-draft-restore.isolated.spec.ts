@@ -59,29 +59,31 @@ async function expectCaseTitles(
   )
 }
 
-async function saveDraft(page: import('@playwright/test').Page) {
-  await page.getByRole('button', { name: '임시저장' }).click()
+async function dismissDraftDialogs(page: import('@playwright/test').Page) {
   const overwrite = page.getByRole('dialog').filter({ hasText: '임시 저장본 덮어쓰기' })
   if (await overwrite.isVisible().catch(() => false)) {
     await overwrite.getByRole('button', { name: '임시 저장' }).click()
+    await expect(overwrite).toBeHidden({ timeout: 10_000 })
   }
-  const done = page.getByRole('dialog').filter({ hasText: /임시 저장/ })
-  await expect(done.first()).toBeVisible({ timeout: 20_000 })
-  const confirm = done.getByRole('button', { name: '확인' }).first()
-  if (await confirm.isVisible().catch(() => false)) {
-    await confirm.click()
-  }
-  await expect(done.first())
-    .toBeHidden({ timeout: 10_000 })
-    .catch(() => undefined)
-}
-
-async function closeWizard(page: import('@playwright/test').Page) {
   const leftover = page.getByRole('dialog').filter({ hasText: /임시 저장/ })
   if (await leftover.isVisible().catch(() => false)) {
     const confirm = leftover.getByRole('button', { name: '확인' }).first()
-    if (await confirm.isVisible().catch(() => false)) await confirm.click()
+    if (await confirm.isVisible().catch(() => false)) {
+      await confirm.click()
+      await expect(leftover).toBeHidden({ timeout: 10_000 }).catch(() => undefined)
+    }
   }
+}
+
+async function saveDraft(page: import('@playwright/test').Page) {
+  await page.getByRole('button', { name: '임시저장' }).click()
+  const draftDialog = page.getByRole('dialog').filter({ hasText: /임시 저장/ })
+  await expect(draftDialog.first()).toBeVisible({ timeout: 20_000 })
+  await dismissDraftDialogs(page)
+}
+
+async function closeWizard(page: import('@playwright/test').Page) {
+  await dismissDraftDialogs(page)
   await page
     .getByRole('banner')
     .filter({ hasText: '교육받은 교사 프로그램 등록' })
