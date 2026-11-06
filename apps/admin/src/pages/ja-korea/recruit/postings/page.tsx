@@ -15,7 +15,6 @@ import type {
   RecruitPostingVisibility,
 } from '@/entities/recruit-posting/model/types'
 import {
-  useCanToggleRecruitPostingPublic,
   useCreateRecruitPosting,
   useRecruitPostingsList,
   useRemoveRecruitPostings,
@@ -253,7 +252,6 @@ export function RecruitPostingsPage() {
   })
 
   const listQuery = useRecruitPostingsList(appliedFilter)
-  const canTogglePublic = useCanToggleRecruitPostingPublic()
   const setPublicMutation = useSetRecruitPostingPublic()
   const createMutation = useCreateRecruitPosting()
   const updateMutation = useUpdateRecruitPosting()
@@ -291,7 +289,6 @@ export function RecruitPostingsPage() {
 
   const handleTogglePublic = useCallback(
     (id: string, isPublic: boolean, version: number) => {
-      if (!canTogglePublic) return
       void setPublicMutation.mutateAsync({ id, isPublic, version }).catch(() => {
         showAlert({
           title: '공개 여부 변경 실패',
@@ -300,7 +297,7 @@ export function RecruitPostingsPage() {
         void listQuery.refetch()
       })
     },
-    [canTogglePublic, listQuery, setPublicMutation, showAlert]
+    [listQuery, setPublicMutation, showAlert]
   )
 
   const handleBulkDeleteClick = useCallback(() => {
@@ -415,7 +412,6 @@ export function RecruitPostingsPage() {
         render: (value: boolean, row) => (
           <Switch
             checked={value}
-            disabled={!canTogglePublic}
             onClick={(_, e) => e.stopPropagation()}
             onChange={checked => {
               handleTogglePublic(row.id, checked, row.version)
@@ -494,7 +490,7 @@ export function RecruitPostingsPage() {
         ),
       },
     ],
-    [canTogglePublic, handleTogglePublic, openEdit, rowNoMap]
+    [handleTogglePublic, openEdit, rowNoMap]
   )
 
   return (
