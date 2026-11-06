@@ -61,6 +61,10 @@ import {
 import { toInstructorAssignmentCancelRequest } from '@/features/program/general/lib/instructor-cancel-fault-party'
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
+import {
+  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+  programHasActiveInstructorRecruitment,
+} from '@/features/program/general/lib/general-instructor-recruitment-required'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
@@ -127,6 +131,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
 
     maxAssignableInstructors: resolveRequiredAssignableInstructorCount(program),
   })
+  const canAssignInstructor = programHasActiveInstructorRecruitment(program)
 
   useEffect(() => {
     setAssignedSchedules(assignment.assignedSchedules)
@@ -360,6 +365,13 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   }, [selectedAssignedKeys.length, showAlert])
 
   const handleSelectAssignClick = useCallback(() => {
+    if (!programHasActiveInstructorRecruitment(program)) {
+      showAlert({
+        title: '배정 실패',
+        content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+      })
+      return
+    }
     if (selectedWaitingKeys.length === 0) {
       showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
       return
@@ -369,7 +381,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     )
     if (!movable) return
     setSelectAssignConfirmOpen(true)
-  }, [selectedWaitingKeys, waitingSchedules, showAlert])
+  }, [program, selectedWaitingKeys, waitingSchedules, showAlert])
 
   const createAssignmentsFromWaiting = useCallback(
     async (
@@ -381,6 +393,13 @@ export function ParticipatingIndividualInstructorAssignmentSection({
           'general-individual-instructor-assign',
           '참여 강사 · 교육 일정 배정'
         )
+        return false
+      }
+      if (!programHasActiveInstructorRecruitment(program)) {
+        showAlert({
+          title: '배정 실패',
+          content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+        })
         return false
       }
       const memberId = Number(instructor.memberId)
@@ -465,7 +484,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
       assignment,
       instructor.instructorApplicationId,
       instructor.memberId,
-      program.id,
+      program,
       showAlert,
     ]
   )
@@ -603,8 +622,15 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <CmsButton
               variant="secondary"
               size="h40"
-              disabled={addAssignOptions.length === 0}
+              disabled={!canAssignInstructor || addAssignOptions.length === 0}
               onClick={() => {
+                if (!canAssignInstructor) {
+                  showAlert({
+                    title: '배정 실패',
+                    content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+                  })
+                  return
+                }
                 if (addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
@@ -642,7 +668,12 @@ export function ParticipatingIndividualInstructorAssignmentSection({
             <span className="table-description">{waitingSchedules.length}건</span>
           </div>
           <div className="info-section-buttons--wrapper">
-            <CmsButton variant="secondary" size="h40" onClick={handleSelectAssignClick}>
+            <CmsButton
+              variant="secondary"
+              size="h40"
+              disabled={!canAssignInstructor}
+              onClick={handleSelectAssignClick}
+            >
               선택 배정
             </CmsButton>
             <ExcelButton onClick={exportWaitingExcel} loading={isWaitingExcelExporting} />

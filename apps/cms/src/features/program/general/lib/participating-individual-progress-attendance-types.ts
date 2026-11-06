@@ -43,6 +43,8 @@ export type ParticipatingIndividualProgressAttendanceParticipantRow = {
   persistedAttendanceStatus?: ParticipatingIndividualProgressAttendanceStatus
   attendanceRecorded: boolean
   lateTime?: string
+  /** 서버 lateMinutes. status만으로 분을 만들지 않는다. */
+  lateMinutes?: number | null
   remark?: string
 }
 

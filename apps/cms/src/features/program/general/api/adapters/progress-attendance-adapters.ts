@@ -203,6 +203,12 @@ function mapParticipantRow(
     status != null && isScheduleAttendanceOpenForDisplay(schedule)
   const lateTime =
     status === 'late' ? formatArrivalTimeForDisplay(attendance?.arrivalTime) : undefined
+  const lateMinutes =
+    typeof attendance?.lateMinutes === 'number' && Number.isFinite(attendance.lateMinutes)
+      ? attendance.lateMinutes
+      : attendance?.lateMinutes === null
+        ? null
+        : undefined
   const affiliationResolved = resolveStoredAffiliation({
     affiliationOrganizationId: participant.organizationId,
     affiliationDisplayName: participant.organizationName,
@@ -231,6 +237,7 @@ function mapParticipantRow(
     ...(attendanceRecorded ? { attendanceStatus: status } : {}),
     ...(status != null ? { persistedAttendanceStatus: status } : {}),
     lateTime,
+    lateMinutes,
     remark: attendance?.absenceReason ?? undefined,
   }
 }

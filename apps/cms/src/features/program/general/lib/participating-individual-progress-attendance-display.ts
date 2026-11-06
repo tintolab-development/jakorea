@@ -51,12 +51,20 @@ export function toProgressAttendanceStatusTextKind(
 export function resolveProgressAttendanceStatusLabel(
   row: Pick<
     ParticipatingIndividualProgressAttendanceParticipantRow,
-    'attendanceRecorded' | 'attendanceStatus' | 'lateTime'
+    'attendanceRecorded' | 'attendanceStatus' | 'lateTime' | 'lateMinutes'
   >
 ): string {
   if (!row.attendanceRecorded || row.attendanceStatus == null) return '-'
-  if (row.attendanceStatus === 'late' && row.lateTime?.trim()) {
-    return `지각 (${row.lateTime.trim()})`
+  if (row.attendanceStatus === 'late') {
+    if (row.lateMinutes != null && Number.isFinite(row.lateMinutes)) {
+      return row.lateTime?.trim()
+        ? `${row.lateMinutes}분 지각 (${row.lateTime.trim()})`
+        : `${row.lateMinutes}분 지각`
+    }
+    if (row.lateTime?.trim()) {
+      return `지각 (${row.lateTime.trim()})`
+    }
+    return PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_STATUS_LABELS.late
   }
   return PARTICIPATING_INDIVIDUAL_PROGRESS_ATTENDANCE_STATUS_LABELS[row.attendanceStatus]
 }

@@ -40,7 +40,30 @@ export function guardGeneralVolunteerWithdrawActivity(row: GeneralVolunteerAppli
   return false
 }
 
+const VOLUNTEER_ASSIGNMENT_BLOCKED_APPLICATION_STATUSES = new Set([
+  'APPROVAL_CANCELLED',
+  'REJECTED',
+  'AUTO_REJECTED',
+  'INTERVIEW_FAILED',
+  'GIVE_UP',
+  'CANCELLED',
+  'COMPLETED',
+])
+
+export function isVolunteerAssignmentBlockedApplicationStatus(
+  status: string | null | undefined,
+): boolean {
+  return VOLUNTEER_ASSIGNMENT_BLOCKED_APPLICATION_STATUSES.has(status?.trim().toUpperCase() ?? '')
+}
+
 export function guardGeneralVolunteerAssignInterview(row: GeneralVolunteerApplicantRow): boolean {
+  if (isVolunteerAssignmentBlockedApplicationStatus(row.applicationStatus)) {
+    cmsAlertModal.show({
+      title: '면접일 배정 안내',
+      content: '현재 신청 상태에서는 승인·반려·취소 처리를 수행할 수 없습니다.',
+    })
+    return false
+  }
   if (row.interviewAssignmentStatus === 'not_required') {
     cmsAlertModal.show({
       title: '면접일 배정 안내',

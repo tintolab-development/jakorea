@@ -8,7 +8,7 @@ export const GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED =
 export const ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_TITLE = '출석 저장 안내'
 
 export const ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_MESSAGE =
-  '교육 일정 배정이 완료된 후 출석을 저장할 수 있습니다.'
+  '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.'
 
 export const ORGANIZATION_ATTENDANCE_SCOPE_BLOCKED_HINT =
   '기관의 교육 일정 배정을 먼저 완료해 주세요.'
@@ -136,7 +136,9 @@ export function isGeneralOrganizationAttendanceScopeRequiredError(error: unknown
   if (!code) return false
   return (
     code === GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED ||
-    code.startsWith(`${GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED}:`)
+    code.startsWith(`${GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED}:`) ||
+    code === 'ATTENDANCE_SCOPE_UNVERIFIED' ||
+    code.startsWith('ATTENDANCE_SCOPE_UNVERIFIED:')
   )
 }
 

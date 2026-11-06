@@ -13,6 +13,8 @@ import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/nor
 import {
   applyAgreementNoticeSubjectMemberName,
   collectMemberConsentDisagreedRequiredLabels,
+  collectMemberConsentUnagreedRequiredLabels,
+  formatMemberConsentDisagreedRequiredAlertMessage,
   formatMemberConsentIncompleteRequiredAlertMessage,
   getMemberConsentInvalidNoticeSubjectContactAlertMessage,
   hasMemberConsentIncompleteRequiredFields,
@@ -134,10 +136,54 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
       'disagree'
     )
 
-    expect(collectMemberConsentDisagreedRequiredLabels(draft).length).toBeGreaterThan(0)
-    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([
-      '개인정보 및 초상권 수집·이용 동의',
-    ])
+    const disagreedLabels = collectMemberConsentDisagreedRequiredLabels(draft)
+    expect(disagreedLabels).toEqual(['개인정보 및 초상권 수집·이용 동의'])
+    expect(formatMemberConsentDisagreedRequiredAlertMessage(disagreedLabels)).toBe(
+      '개인정보 및 초상권 수집·이용 동의에 동의해 주세요.',
+    )
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
+    ).toBe(true)
+  })
+
+  it('allows portrait when item 3 bottom consent is disagree', () => {
+    const base = withPersonalConsentCells(
+      normalizeWritingFormDraft(createAgreementPortraitDraft()),
+      '홍길동',
+      'JA Korea'
+    )
+    const draft = withBottomConsent(
+      base,
+      AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable,
+      'disagree'
+    )
+
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([])
+    expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([])
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
+    ).toBe(false)
+  })
+
+  it('blocks portrait when item 3 bottom consent is unset', () => {
+    const base = withPersonalConsentCells(
+      normalizeWritingFormDraft(createAgreementPortraitDraft()),
+      '홍길동',
+      'JA Korea'
+    )
+    const draft: WritingFormDraft = {
+      ...base,
+      paragraphs: base.paragraphs.map(paragraph => {
+        if (paragraph.id !== AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable) {
+          return paragraph
+        }
+        if (!('showBottomConsent' in paragraph)) return paragraph
+        return { ...paragraph, bottomConsent: undefined }
+      }),
+    }
+
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([])
+    expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([])
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
     ).toBe(true)
@@ -161,6 +207,19 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-expense' })
     ).toBe(true)
+    expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([
+      '아동·청소년 보호와 성범죄 예방',
+      '종교적 정치적 중립성 유지',
+      '개인정보 보호',
+      '품위 유지 및 성실한 교육 수행',
+    ])
+    expect(
+      formatMemberConsentDisagreedRequiredAlertMessage(
+        collectMemberConsentUnagreedRequiredLabels(draft),
+      ),
+    ).toBe(
+      '아동·청소년 보호와 성범죄 예방, 종교적 정치적 중립성 유지, 개인정보 보호, 품위 유지 및 성실한 교육 수행에 동의해 주세요.',
+    )
   })
 
   it('blocks educator pledge when a clause is disagreed', () => {

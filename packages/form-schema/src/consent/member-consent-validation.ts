@@ -78,11 +78,20 @@ function isShortEssayAnswerComplete(paragraph: {
   return items.every(item => (item.bodyText ?? '').trim() !== '')
 }
 
+/** 초상권 동의서 3번(초상권 제공·이용) — 동의/동의하지 않음 모두 제출 가능 */
+function isPortraitOptionalBottomConsentParagraph(paragraph: WritingFormParagraph): boolean {
+  return paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable
+}
+
 function isRequiredBottomConsentComplete(paragraph: WritingFormParagraph): boolean {
   if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) {
     return true
   }
-  return readParagraphBottomConsent(paragraph) === 'agree'
+  const consent = readParagraphBottomConsent(paragraph)
+  if (isPortraitOptionalBottomConsentParagraph(paragraph)) {
+    return consent === 'agree' || consent === 'disagree'
+  }
+  return consent === 'agree'
 }
 
 function isIdTypeWithInputComplete(paragraph: WritingFormParagraph): boolean {
@@ -189,6 +198,7 @@ function resolveParagraphConsentLabel(paragraph: WritingFormParagraph): string {
 
 function isRequiredParagraphExplicitlyDisagreed(paragraph: WritingFormParagraph): boolean {
   if (!resolveParagraphTitleRequiredMark(paragraph)) return false
+  if (isPortraitOptionalBottomConsentParagraph(paragraph)) return false
 
   if (readParagraphBottomConsent(paragraph) === 'disagree') return true
 
@@ -221,6 +231,7 @@ export function collectMemberConsentDisagreedRequiredLabels(
 
 function isRequiredConsentChoiceUnagreed(paragraph: WritingFormParagraph): boolean {
   if (!resolveParagraphTitleRequiredMark(paragraph)) return false
+  if (isPortraitOptionalBottomConsentParagraph(paragraph)) return false
 
   if ('showBottomConsent' in paragraph && paragraph.showBottomConsent === true) {
     if (readParagraphBottomConsent(paragraph) !== 'agree') return true

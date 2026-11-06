@@ -219,8 +219,7 @@ export function getGeneralSatisfactionEmptyCopy(
       return {
         title: GENERAL_SATISFACTION_EMPTY_COPY.title,
         description: GENERAL_SATISFACTION_EMPTY_COPY.description,
-        secondaryDescription:
-          '기관별 개별 폼이 아닌 하나의 폼으로 진행되며, 등록 시 해당 프로그램 참여 교사에게 동일하게 노출됩니다. 수업 직후 바로 진행됩니다.',
+
         registerButton: '만족도조사 등록',
       }
     }
@@ -267,23 +266,8 @@ export function getGeneralSatisfactionNoResponseTitle(
   return `${GENERAL_SATISFACTION_AUDIENCE_LABELS[audience]}용 만족도조사는 아직 진행 전입니다.`
 }
 
-export function getGeneralSatisfactionCreateDescription(
-  audience: GeneralSatisfactionAudienceKey
-): string {
-  if (audience === 'teacher') {
-    return '교사용 만족도조사를 등록하시겠습니까?\n기관별 개별 폼이 아닌 하나의 폼으로 진행되며, 등록 시 해당 프로그램 참여 교사에게 동일하게 노출됩니다.'
-  }
-  if (audience === 'volunteer_h1' || audience === 'volunteer_h2') {
-    const label = GENERAL_SATISFACTION_AUDIENCE_LABELS[audience]
-    return `${label}용 만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여 봉사자에게 동일하게 노출되며, 마지막 교육 일정 이후 진행됩니다.`
-  }
-  if (audience === 'individual') {
-    return '만족도조사를 등록하시겠습니까?\n등록 시 해당 프로그램 참여자에게 동일하게 노출되며, 기관 구분 없이 하나의 폼으로 진행됩니다.'
-  }
-  if (audience === 'student') {
-    return '만족도조사를 등록하시겠습니까?\n등록 후 링크 공유하여 비회원(학생) 대상으로 진행할 수 있습니다.\n기관 구분 없이 하나의 폼으로 진행됩니다.'
-  }
-  return '만족도조사를 등록하시겠습니까?'
+export function getGeneralSatisfactionCreateDescription(): string {
+  return '새로운 만족도조사를 등록하시겠습니까?\n사용할 템플릿과 진행 방식을 선택해 주세요.'
 }
 
 export function getGeneralSatisfactionDeleteModalTitle(
