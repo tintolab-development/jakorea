@@ -1,6 +1,22 @@
 /** @vitest-environment jsdom */
-import { act, cleanup, render } from '@testing-library/react'
+import { act, type ReactNode } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mounted: { root: Root; container: HTMLDivElement }[] = []
+function render(node: ReactNode) {
+  const container = document.createElement('div')
+  document.body.appendChild(container)
+  const root = createRoot(container)
+  mounted.push({ root, container })
+  act(() => { root.render(node) })
+}
+function cleanup() {
+  for (const { root, container } of mounted.splice(0)) {
+    act(() => { root.unmount() })
+    container.remove()
+  }
+}
 
 const tracker = vi.hoisted(() => ({
   fire: null as null | (() => void),
