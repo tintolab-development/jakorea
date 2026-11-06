@@ -4,6 +4,13 @@ import { loadSensitiveAdminFileBlob } from '@/shared/lib/admin-file-upload'
 import { downloadBlob } from '@/shared/utils/file-download'
 import { fetchAllApiPages } from '@/shared/lib/fetch-all-api-pages'
 
+export type ProgramAbsenceReasonAttachment = {
+  attachmentId?: number
+  fileObjectId?: number
+  originalFileName?: string | null
+  downloadUrl?: string | null
+}
+
 export type ProgramAbsenceReasonItem = {
   submissionId?: number
   attendanceId?: number
@@ -18,8 +25,49 @@ export type ProgramAbsenceReasonItem = {
   revisionNo?: number
   fileObjectIds?: number[]
   originalFileNames?: Array<string | null>
-  attachments?: Array<unknown | null>
+  attachments?: Array<ProgramAbsenceReasonAttachment | null>
   latestRevision?: boolean
+}
+
+export type ProgramAbsenceReasonEvidence = {
+  fileObjectIds: number[]
+  originalFileNames: string[]
+}
+
+function readPositiveFileObjectId(value: unknown): number | null {
+  const parsed = typeof value === 'number' ? value : Number(value)
+  if (!Number.isInteger(parsed) || parsed <= 0) return null
+  return parsed
+}
+
+/** GET absence-reasons — fileObjectIds와 attachments[] 모두에서 증빙을 읽는다. */
+export function resolveProgramAbsenceReasonEvidence(
+  item: ProgramAbsenceReasonItem
+): ProgramAbsenceReasonEvidence {
+  const fileObjectIds = (item.fileObjectIds ?? [])
+    .map(readPositiveFileObjectId)
+    .filter((id): id is number => id != null)
+  const originalFileNames = (item.originalFileNames ?? [])
+    .map(name => (typeof name === 'string' ? name.trim() : ''))
+    .filter(name => name.length > 0)
+
+  if (fileObjectIds.length > 0) {
+    return { fileObjectIds, originalFileNames }
+  }
+
+  const fromAttachments: ProgramAbsenceReasonEvidence = {
+    fileObjectIds: [],
+    originalFileNames: [],
+  }
+  for (const attachment of item.attachments ?? []) {
+    if (!attachment) continue
+    const fileObjectId = readPositiveFileObjectId(attachment.fileObjectId)
+    if (fileObjectId == null) continue
+    fromAttachments.fileObjectIds.push(fileObjectId)
+    const name = attachment.originalFileName?.trim()
+    if (name) fromAttachments.originalFileNames.push(name)
+  }
+  return fromAttachments
 }
 
 type AbsenceReasonPage = {

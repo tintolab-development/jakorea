@@ -448,16 +448,16 @@ describe('resolveVisibleParticipatingIndividualAbsenceReasons', () => {
     }
   }
 
-  it('uses latest GET items and does not merge attendance-row remarks', () => {
+  it('hides remote reasons when the attendance row is no longer excused', () => {
     expect(
       resolveVisibleParticipatingIndividualAbsenceReasons({
         remote: noShowRemote,
         rows: [row({ attendanceStatus: 'present' })],
       })
-    ).toEqual(noShowRemote)
+    ).toEqual([])
   })
 
-  it('shows empty when latest GET is [] even if a local excused remark exists', () => {
+  it('shows attendance-row remark when absence-reasons GET is empty', () => {
     expect(
       resolveVisibleParticipatingIndividualAbsenceReasons({
         remote: [],
@@ -468,6 +468,70 @@ describe('resolveVisibleParticipatingIndividualAbsenceReasons', () => {
           }),
         ],
       })
-    ).toEqual([])
+    ).toEqual([
+      {
+        id: 'abs-24',
+        scheduleRowId: '24',
+        dateLabel: '10월 24일',
+        reason: '병원 진료',
+        fileName: null,
+        fileObjectIds: undefined,
+        originalFileNames: undefined,
+      },
+    ])
+  })
+
+  it('prefers attendance remark over stale remote reason text', () => {
+    expect(
+      resolveVisibleParticipatingIndividualAbsenceReasons({
+        remote: noShowRemote,
+        rows: [
+          row({
+            attendanceStatus: 'excused_absence',
+            remark: '관리자 정정 사유',
+          }),
+        ],
+      })
+    ).toEqual([
+      {
+        id: 'remote-24',
+        scheduleRowId: '24',
+        dateLabel: '10월 24일',
+        reason: '관리자 정정 사유',
+        fileName: null,
+        fileObjectIds: undefined,
+        originalFileNames: undefined,
+      },
+    ])
+  })
+
+  it('shows CMS 정정 업로드 증빙 when absence-reasons GET has no files yet', () => {
+    expect(
+      resolveVisibleParticipatingIndividualAbsenceReasons({
+        remote: [],
+        rows: [
+          row({
+            attendanceStatus: 'excused_absence',
+            remark: '병원 진료',
+          }),
+        ],
+        adminEvidenceByScheduleId: {
+          '24': {
+            fileObjectIds: [2056505],
+            originalFileNames: ['확인서.pdf'],
+          },
+        },
+      })
+    ).toEqual([
+      {
+        id: 'abs-24',
+        scheduleRowId: '24',
+        dateLabel: '10월 24일',
+        reason: '병원 진료',
+        fileName: '확인서.pdf',
+        fileObjectIds: [2056505],
+        originalFileNames: ['확인서.pdf'],
+      },
+    ])
   })
 })
