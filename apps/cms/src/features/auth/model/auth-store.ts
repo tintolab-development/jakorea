@@ -701,10 +701,23 @@ export const useAuthStore = create<AuthState>()((set, get) => {
         return false
       }
 
+      const accessAtRefreshStart = state.token
+      const refreshAtRefreshStart = refreshToken
       void get()
         .refreshToken()
         .then(ok => {
-          if (!ok && nearExpiry) get().logout()
+          if (ok || !nearExpiry) return
+          const current = get()
+          // Another tab or login may have rotated the session while this refresh
+          // was in flight. Never revoke that replacement because of an old failure.
+          const storedAccess = hasStorage ? localStorage.getItem(TOKEN_STORAGE_KEY) : current.token
+          const storedRefresh = hasStorage ? localStorage.getItem(AUTH_REFRESH_TOKEN_KEY) : refreshAtRefreshStart
+          if (current.isAuthenticated &&
+              current.token === accessAtRefreshStart &&
+              storedAccess === accessAtRefreshStart &&
+              storedRefresh === refreshAtRefreshStart) {
+            current.logout()
+          }
         })
       return false
     },
