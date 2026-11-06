@@ -115,6 +115,7 @@ export type IndividualApplicationDetailEnriched = Omit<
   }
 }
 
+/** 관리자 신청 상태: 승인 대기·승인 완료·신청 반려. 승인 취소 전용 배지는 쓰지 않는다. */
 export function mapApiApplicationStatusToApprovalStatus(
   status?: string
 ): ApplicantApprovalStatusKey {
@@ -122,10 +123,18 @@ export function mapApiApplicationStatusToApprovalStatus(
   if (['APPROVED', 'ASSIGNED', 'WAITING_ASSIGNMENT'].includes(normalized)) {
     return 'approved'
   }
-  if (['REJECTED', 'AUTO_REJECTED', 'INTERVIEW_FAILED', 'CANCELLED_BY_ADMIN'].includes(normalized)) {
+  if (
+    [
+      'REJECTED',
+      'AUTO_REJECTED',
+      'INTERVIEW_FAILED',
+      'CANCELLED_BY_ADMIN',
+      'APPROVAL_CANCELLED',
+    ].includes(normalized)
+  ) {
     return 'rejected'
   }
-  if (['CANCELLED', 'CANCELED', 'APPROVAL_CANCELLED'].includes(normalized)) {
+  if (['CANCELLED', 'CANCELED'].includes(normalized)) {
     return 'cancelled'
   }
   if (normalized === 'REJECTION_CANCELLED') {
@@ -630,6 +639,7 @@ export function mapOrganizationApplicationToApplicantSchoolRow(
     teacherName: dto.teacherName?.trim() || '-',
     appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     participationRejectionReason: dto.rejectReason?.trim() || undefined,
     approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
       readResultNotificationSentAt(dto)
@@ -759,6 +769,7 @@ export function mapOrganizationApplicationDetailToApplicantSchoolRow(
     contact: teacherPhone,
     appliedAt: dto.submittedAt ?? undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     participationRejectionReason: dto.rejectReason?.trim() || undefined,
     approvalNotificationSentAt: formatOrganizationResultNotificationSentAt(
       readResultNotificationSentAt(dto)
@@ -886,6 +897,7 @@ export function mapInstructorApplicationToApplicantInstructorRow(
     schoolName: primarySchoolName && primarySchoolName !== '-' ? primarySchoolName : '',
     preferredSchools: preferredSchools.length > 0 ? preferredSchools : undefined,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus,
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade),
     instructorFeeGradeLabel:
       formatInstructorFeeGradeLabel(readRuntimeString(dto, 'instructorFeeGradeSnapshot')) ||
@@ -1003,6 +1015,7 @@ export function mapInstructorApplicationDetailToApplicantRow(
     accountNumber: basicInfoSupplement.accountNumber,
     accountHolder: basicInfoSupplement.accountHolder,
     approvalStatus: mapApiApplicationStatusToApprovalStatus(dto.applicationStatus),
+    applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     evaluationGrade: formatJaEvaluationGradeLabel(dto.jaEvaluationGrade) ?? base.evaluationGrade,
     instructorFeeGradeLabel:
       formatInstructorFeeGradeLabel(dto.feePolicy?.instructorFeeGrade) ||
@@ -1353,6 +1366,7 @@ export function mapIndividualApplicationToApplicantRow(
       finalResultStatus: dto.finalResultStatus,
       reserveRank: dto.reserveRank,
     }),
+    applicationStatus: dto.applicationStatus,
     memberId: dto.memberId != null ? String(dto.memberId) : undefined,
     affiliationOrganizationId: affiliation.affiliationOrganizationId,
     adminComment: dto.managerComment ?? undefined,
@@ -1460,6 +1474,7 @@ export function mapIndividualApplicationDetailToApplicantRow(
       finalResultStatus: screening?.finalResultStatus,
       reserveRank: screening?.reserveRank,
     }),
+    applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     adminComment: dto.managerComment ?? undefined,
     programId: toId(dto.programId) || base.programId,
     preferredEducationSchedules:

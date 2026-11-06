@@ -13,6 +13,7 @@ export type EducationDisplayStatus =
   | 'completed'
   | 'withdrawn'
   | 'rejected'
+  | 'cancelled'
   | 'approval_cancelled'
 
 export type EducationDisplayStatusTone =

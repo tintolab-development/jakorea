@@ -262,7 +262,10 @@ export function patchApplicantSchoolForCancelApproval(
   row: ApplicantSchoolRow,
   notifyOptions: ApplicantSchoolApprovalNotifyOptions
 ): ApplicantSchoolRow {
-  return patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions)
+  return {
+    ...patchApplicantSchoolForApprovalStatus(row, 'rejected', notifyOptions),
+    applicationStatus: 'APPROVAL_CANCELLED',
+  }
 }
 
 export function patchApplicantSchoolForCancelRejection(

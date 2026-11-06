@@ -95,6 +95,8 @@ export interface ApplicantInstructorRow {
   appliedAt?: string
   affiliation?: string
   approvalStatus: ApplicantInstructorApprovalStatusKey
+  /** 서버 원본 신청 상태. 화면용 approvalStatus와 분리한다. */
+  applicationStatus?: string
   /** 신청 학교(필터용) */
   schoolName: string
   /** 일정 변경&취소 이력 횟수. 1 이상일 때만 강사 상세 모달 강사명 옆 배지 표시 */
@@ -295,14 +297,15 @@ export function patchApplicantInstructorForApprovalStatus(
   }
 }
 
-/** 승인 취소 — 승인 대기 복원 + 배정·승인 알림 예약 정보 제거 */
+/** 승인 취소 — 신청 반려 + 배정 해제. 승인 대기 복원은 반려 취소만. */
 export function patchApplicantInstructorForCancelApproval(
   row: ApplicantInstructorRow,
   notifyOptions: ApplicantInstructorApprovalNotifyOptions
 ): ApplicantInstructorRow {
-  const pending = patchApplicantInstructorForApprovalStatus(row, 'pending')
+  const rejected = patchApplicantInstructorForApprovalStatus(row, 'rejected', notifyOptions)
   return {
-    ...pending,
+    ...rejected,
+    applicationStatus: 'APPROVAL_CANCELLED',
     assignedLectures: undefined,
     assignedSchoolId: undefined,
     assignedSchoolName: undefined,

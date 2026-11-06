@@ -101,6 +101,7 @@ const PROGRAM_APPLICATION_STATUSES = new Set<EducationDisplayStatus>([
   'waiting_result',
   'document_passed',
   'rejected',
+  'cancelled',
   'approval_cancelled',
 ])
 

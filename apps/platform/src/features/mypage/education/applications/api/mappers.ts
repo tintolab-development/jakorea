@@ -43,9 +43,9 @@ const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   '진행 완료': 'completed',
   '활동 포기': 'withdrawn',
   '신청 반려': 'rejected',
-  '승인 취소': 'approval_cancelled',
+  '승인 취소': 'rejected',
   '작성 중': 'waiting_result',
-  '신청 취소': 'withdrawn',
+  '신청 취소': 'cancelled',
   // 영문/코드형 displayStatus (일부 환경·상세 폴백)
   WAITING_RESULT: 'waiting_result',
   WAITING: 'waiting_result',
@@ -62,9 +62,9 @@ const DISPLAY_STATUS_FROM_API: Record<string, EducationDisplayStatus> = {
   AUTO_REJECTED: 'rejected',
   INTERVIEW_FAILED: 'rejected',
   CANCELLED_BY_ADMIN: 'rejected',
-  APPROVAL_CANCELLED: 'approval_cancelled',
-  CANCELLED: 'withdrawn',
-  CANCELED: 'withdrawn',
+  APPROVAL_CANCELLED: 'rejected',
+  CANCELLED: 'cancelled',
+  CANCELED: 'cancelled',
 }
 
 const APPLICATION_TYPE_SET = new Set<ProgramApplicationType>([
@@ -116,9 +116,6 @@ function resolveDisplayStatusFromApplicationFields(input: {
   const applicationStatus = (input.applicationStatus ?? '').trim().toUpperCase()
   const participationStatus = (input.participationStatus ?? '').trim().toUpperCase()
 
-  if (hasStatus(applicationStatus, ['APPROVAL_CANCELLED'])) {
-    return 'approval_cancelled'
-  }
   if (
     hasStatus(applicationStatus, [
       'REJECTED',
@@ -128,11 +125,12 @@ function resolveDisplayStatusFromApplicationFields(input: {
       'FAILED',
       'INTERVIEW_FAILED',
       'CANCELLED_BY_ADMIN',
+      'APPROVAL_CANCELLED',
     ])
   ) {
     return 'rejected'
   }
-  if (hasStatus(applicationStatus, ['CANCELLED', 'CANCELED'])) return 'withdrawn'
+  if (hasStatus(applicationStatus, ['CANCELLED', 'CANCELED'])) return 'cancelled'
   if (
     applicationStatus.startsWith('GIVE_UP') ||
     applicationStatus === 'GIVEN_UP' ||

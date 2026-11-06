@@ -36,8 +36,8 @@ import {
 import {
   APPLICATION_ACTION_CANCEL_FINAL_FAIL,
   APPLICATION_ACTION_CANCEL_FINAL_PASS,
-  canCancelParticipantApplicationRejection,
   canPerformApplicationAction,
+  canRestoreRejectedApplication,
   hasExplicitApplicationAction,
 } from '@/features/program/shared/lib/application-available-actions'
 import { resolveVolunteerInterview2CancelPassButtonLabel } from '@/features/program/general/lib/volunteer-interview2-cancel-pass'
@@ -409,6 +409,10 @@ function resolveApplicantHeaderItems(params: {
   individualInterviewResultStatus?: string | null
   institutionAvailableActions?: string[]
   instructorAvailableActions?: string[]
+  institutionApplicationStatus?: string | null
+  instructorApplicationStatus?: string | null
+  individualApplicationStatus?: string | null
+  allowCancelRejection?: boolean
   isCancelledInstitution?: boolean
   isCancelledInstructor?: boolean
   program?: Program | null
@@ -457,6 +461,10 @@ function resolveApplicantHeaderItems(params: {
     individualInterviewResultStatus,
     institutionAvailableActions,
     instructorAvailableActions,
+    institutionApplicationStatus,
+    instructorApplicationStatus,
+    individualApplicationStatus,
+    allowCancelRejection = true,
     isCancelledInstitution = false,
     isCancelledInstructor = false,
     program = null,
@@ -571,10 +579,14 @@ function resolveApplicantHeaderItems(params: {
     const availableActions = isRejectedInstructor
       ? instructorAvailableActions
       : institutionAvailableActions
+    const applicationStatus = isRejectedInstructor
+      ? instructorApplicationStatus
+      : institutionApplicationStatus
     const items: ApplicantHeaderActionItem[] = []
     if (
+      allowCancelRejection &&
       onCancelReject &&
-      canPerformApplicationAction(availableActions, 'CANCEL_REJECTION')
+      canRestoreRejectedApplication({ availableActions, applicationStatus })
     ) {
       items.push(headerBtnCancelReject(applicantId, onCancelReject))
     }
@@ -593,8 +605,12 @@ function resolveApplicantHeaderItems(params: {
       items.push(headerBtnCancelFinalFail(applicantId, onCancelFinalFail))
     }
     if (
+      allowCancelRejection &&
       onCancelReject &&
-      canCancelParticipantApplicationRejection(individualAvailableActions)
+      canRestoreRejectedApplication({
+        availableActions: individualAvailableActions,
+        applicationStatus: individualApplicationStatus,
+      })
     ) {
       items.push(headerBtnCancelReject(applicantId, onCancelReject))
     }
@@ -1525,6 +1541,10 @@ export function ApplicantsDetailContents({
       individualInterviewResultStatus: individualData?.interviewResultStatus,
       institutionAvailableActions: institutionData?.availableActions,
       instructorAvailableActions: instructorData?.availableActions,
+      institutionApplicationStatus: institutionData?.applicationStatus,
+      instructorApplicationStatus: instructorData?.applicationStatus,
+      individualApplicationStatus: individualData?.applicationStatus,
+      allowCancelRejection: !isTrainedTeachers,
       program,
       individualScreeningStage,
     })
@@ -1594,6 +1614,7 @@ export function ApplicantsDetailContents({
     handleAdminCommentEditEnter,
     handleIndividualAdminCommentEditEnter,
     handleInstructorAdminCommentEditEnter,
+    isTrainedTeachers,
   ])
 
   const tabBarExtraContent = headerExtraContent

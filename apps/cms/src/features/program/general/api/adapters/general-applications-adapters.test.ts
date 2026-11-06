@@ -332,7 +332,7 @@ describe('general-applications-adapters', () => {
     expect(mapApiApplicationStatusToApprovalStatus('WAITING_REVIEW')).toBe('pending')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTED')).toBe('rejected')
     expect(mapApiApplicationStatusToApprovalStatus('CANCELLED')).toBe('cancelled')
-    expect(mapApiApplicationStatusToApprovalStatus('APPROVAL_CANCELLED')).toBe('cancelled')
+    expect(mapApiApplicationStatusToApprovalStatus('APPROVAL_CANCELLED')).toBe('rejected')
     expect(mapApiApplicationStatusToApprovalStatus('REJECTION_CANCELLED')).toBe('pending')
   })
 

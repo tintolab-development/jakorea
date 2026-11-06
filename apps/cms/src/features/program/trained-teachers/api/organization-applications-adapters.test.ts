@@ -120,7 +120,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
     expect(row.preferredScheduleBlocks).toEqual([])
   })
 
-  it('APPROVAL_CANCELLED를 cancelled 배지 토큰으로 매핑하고 REJECTED로 바꾸지 않는다', () => {
+  it('APPROVAL_CANCELLED를 신청 반려(rejected)로 표시한다', () => {
     const row = mapTrainedTeacherOrganizationApplicationToRow(
       {
         applicationId: 1691592,
@@ -138,7 +138,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
       '186551'
     )
     expect(row.applicationStatus).toBe('APPROVAL_CANCELLED')
-    expect(row.approvalStatus).toBe('cancelled')
+    expect(row.approvalStatus).toBe('rejected')
     expect(row.preferredScheduleBlocks).toHaveLength(1)
     expect(row.preferredScheduleBlocks?.[0]?.date).toBe('2026-11-07')
   })
