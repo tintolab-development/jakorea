@@ -805,6 +805,7 @@ export * from './memberGuardianVerificationCreateRequest';
 export * from './memberGuardianVerificationNiceStartRequest';
 export * from './memberGuardianVerificationSessionResponse';
 export * from './memberGuardianVerificationStatusResponse';
+export * from './memberInstructorTransportPreview';
 export * from './memberLectureAttendanceResponse';
 export * from './memberLectureFeePreview';
 export * from './memberLectureFeePreviewInstructorFeeCalculationUnit';

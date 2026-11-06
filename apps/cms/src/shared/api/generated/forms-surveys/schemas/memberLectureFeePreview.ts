@@ -9,7 +9,7 @@ import type { MemberLectureFeePreviewInstructorFeeCalculationUnit } from './memb
 import type { MemberLectureFeePreviewLectureFeeType } from './memberLectureFeePreviewLectureFeeType';
 
 /**
- * 제출 전 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. FE는 프로그램 overlay·프로필 defaultFeeGrade·다른 회차로 hydrate 하지 않는다. 단가만 있고 총액 산식이 불가하면 instructorFeeAmount는 채우고 totalLectureFee는 null (그 반대도 허용). 금액 단위는 원(정수).
+ * 제출 전 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. FE는 시급×시간을 계산하지 않으며 프로그램 overlay·프로필 defaultFeeGrade·다른 회차로 hydrate 하지 않는다. PER_HOUR는 이 배정 강의 시간(실적 시각, 없으면 startAt~endAt Asia/Seoul)에 단가를 적용한 정수 원. PER_SESSION/PER_LECTURE/FIXED는 단가=총액. educationSessionCount(차시 번호)는 곱하지 않는다. 단가만 있고 총액 산식이 불가하면 instructorFeeAmount는 채우고 totalLectureFee는 null (그 반대도 허용). 금액 단위는 원(정수). 키는 항상 존재.
  */
 export interface MemberLectureFeePreview {
   /** 이 배정/프로그램에 적용된 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 코드만 내려 주고 표시 라벨은 FE. 없으면 null. */
@@ -18,8 +18,8 @@ export interface MemberLectureFeePreview {
   instructorFeeCalculationUnit?: MemberLectureFeePreviewInstructorFeeCalculationUnit;
   /** 책정 단가(원). 시안 강사비 배정 금액. 총액 아님. 없으면 null. */
   instructorFeeAmount?: number | null;
-  /** 이번 회차 총 강의비(원). 서버 산식만. FE 계산 금지. 없으면 null. */
+  /** 이번 회차 총 강의비(원, 정수). 서버 산식만. FE 계산 금지. 예: PER_HOUR + startAt~endAt 03:55~04:55(60분) + instructorFeeAmount=450000 → totalLectureFee=450000. 차시 번호 2를 곱하지 않음. 산출 불가 시 null. */
   totalLectureFee?: number | null;
-  /** 이번 일정 차시 번호. sessionNo와 동일. 없으면 null. */
+  /** 이번 일정 차시 번호. sessionNo와 동일. 시수/횟수 배수가 아님. 없으면 null. */
   educationSessionCount?: number | null;
 }

@@ -219,6 +219,45 @@ export function collectMemberConsentDisagreedRequiredLabels(
     .map(resolveParagraphConsentLabel)
 }
 
+function isRequiredConsentChoiceUnagreed(paragraph: WritingFormParagraph): boolean {
+  if (!resolveParagraphTitleRequiredMark(paragraph)) return false
+
+  if ('showBottomConsent' in paragraph && paragraph.showBottomConsent === true) {
+    if (readParagraphBottomConsent(paragraph) !== 'agree') return true
+  }
+
+  if (paragraph.kind !== 'single_item' || paragraph.variant !== 'multiple_choice') {
+    return false
+  }
+  if (!paragraph.items.some(item => isDisagreeChoiceItem(item))) return false
+  return !isMultipleChoiceAnswerComplete(paragraph)
+}
+
+/** 필수 동의 단락 중 「동의」가 아닌 항목 (미선택 · 동의하지 않음) 라벨 */
+export function collectMemberConsentUnagreedRequiredLabels(draft: WritingFormDraft): string[] {
+  return draft.paragraphs
+    .filter(isRequiredConsentChoiceUnagreed)
+    .map(resolveParagraphConsentLabel)
+}
+
+/** Platform·동의서 작성 — 필수 항목에 「동의하지 않음」 선택 시 알림 제목 */
+export const MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE = '필수 동의 항목 안내'
+
+/**
+ * 필수 동의 단락에 명시적 「동의하지 않음」 선택 시 팝업 본문 (Platform 동의서/서약서).
+ * - 단건: `{항목}에 동의해 주세요.`
+ * - 다건: `{항목1}, {항목2}에 동의해 주세요.`
+ */
+export function formatMemberConsentDisagreedRequiredAlertMessage(
+  labels: readonly string[]
+): string {
+  const cleaned = labels.map(label => label.trim()).filter(label => label.length > 0)
+  if (cleaned.length === 0) {
+    return '필수 동의 항목에 동의해 주세요.'
+  }
+  return `${cleaned.join(', ')}에 동의해 주세요.`
+}
+
 export type MemberConsentIncompleteRequiredField = {
   paragraphId: string
   fieldId: string

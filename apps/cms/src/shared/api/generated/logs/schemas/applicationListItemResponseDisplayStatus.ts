@@ -19,6 +19,7 @@ export const ApplicationListItemResponseDisplayStatus = {
   진행_완료: '진행 완료',
   활동_포기: '활동 포기',
   신청_반려: '신청 반려',
+  승인_취소: '승인 취소',
   작성_중: '작성 중',
   신청_취소: '신청 취소',
 } as const;

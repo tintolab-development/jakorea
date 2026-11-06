@@ -5,6 +5,7 @@
  * Filtered for CMS settlement management Orval codegen.
  * OpenAPI spec version: v9
  */
+import type { MemberInstructorTransportPreview } from './memberInstructorTransportPreview';
 import type { MemberLectureFeePreview } from './memberLectureFeePreview';
 
 export interface MemberLectureReportAssignmentItemResponse {
@@ -31,4 +32,6 @@ export interface MemberLectureReportAssignmentItemResponse {
   distanceFromHome?: string | null;
   /** 지급조서 제출 전 강의비 산출 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. 없으면 null. */
   lectureFeePreview?: MemberLectureFeePreview | null;
+  /** 지급조서 제출 전 강사 교통비 미리보기. 객체는 항상 존재. oneWayDistanceKm는 distanceFromHome과 동일. 편도 30 미만 또는 지급 항목 없으면 금액 null. 제출 CalcInfo·CMS 교통비 스냅샷과 산식 동일. */
+  transportPreview?: MemberInstructorTransportPreview | null;
 }
