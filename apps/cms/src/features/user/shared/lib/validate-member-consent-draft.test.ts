@@ -255,6 +255,15 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     ).toBe(true)
   })
 
+  const completeReceiptBasicInfo = {
+    nameKo: '김참여자',
+    addressRoad: '서울시 종로구',
+    addressDetail: '1',
+    bankName: '국민',
+    accountNumber: '123',
+    accountHolder: '김참여자',
+  }
+
   it('allows receipt-pre-consent third-party consent to be disagree', () => {
     const draft = withBottomConsent(
       normalizeWritingFormDraft(createReceiptPreConsentDraft()),
@@ -267,8 +276,18 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, {
         templateId: 'agreement-receipt-pre-consent',
+        receiptPreConsentBasicInfo: completeReceiptBasicInfo,
       })
     ).toBe(false)
+  })
+
+  it('blocks receipt-pre-consent when 지급 확인 정보가 비어 있다', () => {
+    const draft = normalizeWritingFormDraft(createReceiptPreConsentDraft())
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, {
+        templateId: 'agreement-receipt-pre-consent',
+      })
+    ).toBe(true)
   })
 
   it('blocks receipt-pre-consent third-party consent when unset', () => {
@@ -287,6 +306,7 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, {
         templateId: 'agreement-receipt-pre-consent',
+        receiptPreConsentBasicInfo: completeReceiptBasicInfo,
       })
     ).toBe(true)
   })

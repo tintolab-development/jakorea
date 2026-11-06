@@ -15,7 +15,9 @@ export const PAYMENT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
 export const RECEIPT_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([
   RECEIPT_PRE_CONSENT_IDS.midDate,
   RECEIPT_PRE_CONSENT_IDS.tailDate,
-  RECEIPT_PRE_CONSENT_IDS.paymentRecord,
+  /** midConsentLine / finalConfirm + ConsentSignatureStatement */
+  RECEIPT_PRE_CONSENT_IDS.midSignature,
+  RECEIPT_PRE_CONSENT_IDS.tailSignature,
 ])
 
 export const EDUCATOR_CONSENT_PLATFORM_HIDDEN_PARAGRAPH_IDS = new Set<string>([

@@ -21,7 +21,8 @@ function buildFilledDocument(
       : resolveInstructorApplyConsentTemplate(consentKey).templateId)
   const allowPaymentBasicInfo =
     templateCode === 'agreement-third-party' ||
-    templateCode === 'document-payment-order-pre-consent'
+    templateCode === 'document-payment-order-pre-consent' ||
+    templateCode === 'agreement-receipt-pre-consent'
   const paymentBasicInfo =
     allowPaymentBasicInfo &&
     state.paymentBasicInfo &&
@@ -145,7 +146,7 @@ const receiptFilled = buildFilledDocument('consentReceiptPreConsent', {
 })
 assert.equal(receiptFilled.templateCode, 'agreement-receipt-pre-consent')
 assert.equal(receiptFilled.templateVersionId, 123)
-assert.equal('paymentBasicInfo' in receiptFilled, false)
+assert.equal(receiptFilled.paymentBasicInfo?.nameKo, '이건희')
 
 const expenseFilled = buildFilledDocument('consentEducatorPledge', {
   ...state,

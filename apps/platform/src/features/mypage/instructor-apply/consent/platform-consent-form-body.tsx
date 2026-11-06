@@ -4,10 +4,12 @@ import type {
 } from '@jakorea/form-schema/consent'
 import {
   AGREEMENT_NOTICE_PARAGRAPH_IDS,
+  EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS,
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@jakorea/form-schema/writing-form'
 import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/payment-statement-pre-consent-draft'
+import { RECEIPT_PRE_CONSENT_IDS } from '@jakorea/form-schema/paragraph-ids/receipt-pre-consent-draft'
 import type { ReactNode } from 'react'
 import type { FormUpdateParagraph } from '@jakorea/form-template-runtime'
 import { PFFormSection } from '@/shared/ui'
@@ -68,10 +70,13 @@ function shouldHideParagraph(
   return false
 }
 
-/** 제목·카드 셸 없이 본문만 (마무리글, 전자서명 슬롯, 지급조서 중간 안내 등) */
+/** 제목·카드 셸 없이 본문만 (마무리글, 전자서명 슬롯, 지급조서·영수증 진술문 등) */
 function isBodyOnlyParagraph(paragraph: WritingFormParagraph, documentPreview?: boolean): boolean {
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.midConsentLine) return true
   if (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.finalConfirm) return true
+  if (paragraph.id === RECEIPT_PRE_CONSENT_IDS.midConsentLine) return true
+  if (paragraph.id === RECEIPT_PRE_CONSENT_IDS.finalConfirm) return true
+  if (paragraph.id === EDUCATOR_FACILITATOR_PLEDGE_PARAGRAPH_IDS.violationClosing) return true
   if (
     paragraph.kind === 'description' &&
     paragraph.variant === 'system' &&
@@ -192,9 +197,16 @@ export function PlatformConsentFormBody({
           : null
 
         const content =
-          documentPreview && paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord
+          documentPreview &&
+          (paragraph.id === PAYMENT_STATEMENT_PRE_CONSENT_IDS.paymentRecord ||
+            paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord)
             ? (
-                <ConsentPreviewPaymentInfo values={paymentBasicInfo} variant="payment" />
+                <ConsentPreviewPaymentInfo
+                  values={paymentBasicInfo}
+                  variant={
+                    paragraph.id === RECEIPT_PRE_CONSENT_IDS.paymentRecord ? 'receipt' : 'payment'
+                  }
+                />
               )
             : previewChrome != null
               ? previewChrome.content
