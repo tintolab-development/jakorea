@@ -6,7 +6,7 @@ import {
 } from './settlement-correction-calculation-unit'
 
 describe('settlement-correction-calculation-unit', () => {
-  it('옵션 3종(출강 1회당·1시간당·1차시당)을 노출한다', () => {
+  it('옵션 3종(출강 1회당·차시당(레거시)·1차시당)을 노출한다', () => {
     expect(SETTLEMENT_CORRECTION_CALCULATION_UNIT_OPTIONS.map(o => o.value)).toEqual([
       'PER_LECTURE',
       'PER_HOUR',
@@ -14,7 +14,7 @@ describe('settlement-correction-calculation-unit', () => {
     ])
     expect(SETTLEMENT_CORRECTION_CALCULATION_UNIT_OPTIONS.map(o => o.label)).toEqual([
       '출강 1회당',
-      '1시간당',
+      '차시당(레거시)',
       '1차시당',
     ])
   })
@@ -22,7 +22,7 @@ describe('settlement-correction-calculation-unit', () => {
   it('서버 단위를 라벨로 복원하고 알 수 없으면 null', () => {
     expect(settlementCorrectionCalculationUnitLabel('PER_CLASS')).toBe('1차시당')
     expect(settlementCorrectionCalculationUnitLabel('PER_LECTURE')).toBe('출강 1회당')
-    expect(settlementCorrectionCalculationUnitLabel('PER_HOUR')).toBe('1시간당')
+    expect(settlementCorrectionCalculationUnitLabel('PER_HOUR')).toBe('차시당(레거시)')
     expect(settlementCorrectionCalculationUnitLabel('SESSION')).toBeNull()
   })
 
