@@ -131,7 +131,13 @@ export function useSessionTimeout() {
     const tick = () => {
       const nowMs = correctedNowMs(Date.now(), serverClockOffsetMs)
       const view = resolveSessionWarningView({ session, nowMs })
-      if (view && view.remainingMs <= 0) {
+      // The warning view becomes null after an idle deadline has already passed.
+      // Check that boundary explicitly instead of silently leaving an expired idle UI alive.
+      const idleExpiresAtMs = session?.idlePolicyEnforced
+        ? parseInstantMs(session.idleExpiresAt)
+        : null
+      if ((view && view.remainingMs <= 0) ||
+          (idleExpiresAtMs != null && idleExpiresAtMs <= nowMs)) {
         // A client timer (clock skew, suspended tab, stale status) is not a server
         // revocation verdict. Recheck GET Session; only a current 401 may logout.
         const clientNow = Date.now()
