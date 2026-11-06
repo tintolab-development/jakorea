@@ -11,6 +11,14 @@ assert.equal(
   portalCertificateAvailabilityPath(186514),
   '/api/portal/me/programs/186514/certificates/availability?certificateType=COMPLETION',
 )
+assert.equal(
+  portalCertificateAvailabilityPath(186339, 'PARTICIPATION'),
+  '/api/portal/me/programs/186339/certificates/availability?certificateType=PARTICIPATION',
+)
+assert.equal(
+  portalCertificateAvailabilityPath(186339, 'AUTO'),
+  '/api/portal/me/programs/186339/certificates/availability?certificateType=AUTO',
+)
 assert.equal(portalCertificateIssuePath(), '/api/portal/me/certificates/issues')
 assert.equal(
   portalCertificateDownloadPath(14),

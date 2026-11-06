@@ -4,6 +4,7 @@ import { useMypageMember } from '@/features/mypage/hooks/use-mypage-member'
 import illustDiplomaUrl from '@/shared/assets/illustration/illust-diploma.svg'
 import { PFAlertModal, PFButton, PFLoadingSpinner, PFText } from '@/shared/ui'
 import { availabilityReasonMessage } from '../api/personal-certificate-client'
+import type { MemberCertificateAvailabilityResponse } from '../api/personal-certificate-types'
 import {
   useDownloadPersonalCertificateMutation,
   useIssuePersonalCertificateMutation,
@@ -11,9 +12,13 @@ import {
 } from '../api/personal-certificate-hooks'
 import { readPortalCertificateIssueId } from '../api/personal-certificate-types'
 import type { ProgramApplicationType } from '../api/types'
+import {
+  resolveAutoPersonalCertificateSlot,
+  resolvePortalCertificateIssueParticipantId,
+} from '../lib/certificate-cta'
 import { buildCertificateDownloadFileName } from '../lib/certificate-download-file-name'
 import {
-  isPersonalCertificateActionable,
+  portalCertificateCtaButtonLabel,
   portalCertificateDocumentLabel,
   portalCertificateIssueType,
   shouldShowPersonalCertificateAction,
@@ -34,6 +39,8 @@ type EducationPersonalCertificatePanelProps = {
   canIssueCertificateHint?: boolean | null
   participantIdHint?: number | null
 }
+
+type CertificateKind = 'COMPLETION' | 'PARTICIPATION'
 
 export function EducationPersonalCertificatePanel({
   programId,
@@ -56,15 +63,9 @@ export function EducationPersonalCertificatePanel({
   })
   const autoQuery = usePersonalCertificateAvailabilityQuery({
     programId,
-    enabled: eligibleSurface && !isWithdrawnDuring,
-    certificateType: 'COMPLETION',
+    enabled: eligibleSurface,
+    certificateType: 'AUTO',
   })
-  const participationQuery = usePersonalCertificateAvailabilityQuery({
-    programId,
-    enabled: eligibleSurface && isWithdrawnDuring,
-    certificateType: 'PARTICIPATION',
-  })
-  const availability = isWithdrawnDuring ? participationQuery.availability : autoQuery.availability
   const issueMutation = useIssuePersonalCertificateMutation({
     applicationType: applicationType ?? null,
     applicationId,
@@ -72,13 +73,35 @@ export function EducationPersonalCertificatePanel({
   const downloadMutation = useDownloadPersonalCertificateMutation()
   const { displayName } = useMypageMember()
   const [alertMessage, setAlertMessage] = useState('')
-  const [localIssueId, setLocalIssueId] = useState<number | null>(null)
+  const [localIssueIds, setLocalIssueIds] = useState<
+    Partial<Record<CertificateKind, number>>
+  >({})
 
   useEffect(() => {
-    setLocalIssueId(null)
+    setLocalIssueIds({})
   }, [programId, applicationId])
 
   useEffect(() => {
+    const availability = autoQuery.availability
+    if (!availability) return
+    const fromAvailability = resolvePortalCertificateIssueParticipantId({
+      availabilityParticipantId: availability.participantId,
+    })
+    if (
+      fromAvailability != null &&
+      participantIdHint != null &&
+      participantIdHint > 0 &&
+      fromAvailability !== participantIdHint
+    ) {
+      console.warn('[personal-certificate] participantId mismatch; availability wins', {
+        availabilityParticipantId: fromAvailability,
+        applicationParticipantId: participantIdHint,
+      })
+    }
+  }, [autoQuery.availability, participantIdHint])
+
+  useEffect(() => {
+    const availability = autoQuery.availability
     if (!availability || typeof canIssueCertificateHint !== 'boolean') return
     const expected = availability.available === true || availability.canDownload === true
     if (expected !== canIssueCertificateHint) {
@@ -86,42 +109,44 @@ export function EducationPersonalCertificatePanel({
         canIssueCertificateHint,
         available: availability.available,
         canDownload: availability.canDownload,
+        certificateType: availability.certificateType,
       })
     }
-  }, [availability, canIssueCertificateHint])
+  }, [autoQuery.availability, canIssueCertificateHint])
 
   if (!eligibleSurface) return null
-
-  const documentLabel = isWithdrawnDuring
-    ? '참가인증서'
-    : portalCertificateDocumentLabel(availability?.certificateType)
-  const existingIssueId =
-    localIssueId ??
-    (availability?.existingIssueId != null && Number(availability.existingIssueId) > 0
-      ? Number(availability.existingIssueId)
-      : null)
-  const issued = existingIssueId != null
-  const canIssueNew =
-    !isWithdrawnDuring &&
-    !issued &&
-    availability?.available === true &&
-    availability?.canDownload !== true &&
-    portalCertificateIssueType(availability?.certificateType) !== 'PARTICIPATION'
-  const actionable = isPersonalCertificateActionable(availability) || localIssueId != null
-  const participantId =
-    (availability?.participantId != null && Number(availability.participantId) > 0
-      ? Number(availability.participantId)
-      : null) ?? (participantIdHint != null && participantIdHint > 0 ? participantIdHint : null)
 
   const busy =
     autoQuery.isLoading ||
     autoQuery.isFetching ||
-    participationQuery.isLoading ||
-    participationQuery.isFetching ||
     issueMutation.isPending ||
     downloadMutation.isPending
 
-  const handleDownload = async (issueId: number) => {
+  const slot = resolveAutoPersonalCertificateSlot(autoQuery.availability)
+
+  if (slot.type == null || slot.view.kind === 'hidden') {
+    if (!isWithdrawnDuring) return null
+    if (autoQuery.isLoading) return null
+    return (
+      <section aria-label="참가인증서">
+        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
+          {availabilityReasonMessage(autoQuery.availability) ||
+            '인정된 교육 실적이 없어 참가인증서를 발급할 수 없습니다.'}
+        </PFText>
+      </section>
+    )
+  }
+
+  const activeKind = slot.type
+  const activeView = slot.view
+  const activeAvailability = autoQuery.availability
+
+  const resolveParticipantId = (availability: MemberCertificateAvailabilityResponse | null) =>
+    resolvePortalCertificateIssueParticipantId({
+      availabilityParticipantId: availability?.participantId,
+    })
+
+  const handleDownload = async (issueId: number, documentLabel: string) => {
     try {
       await downloadMutation.mutateAsync({
         certificateIssueId: issueId,
@@ -139,7 +164,12 @@ export function EducationPersonalCertificatePanel({
     }
   }
 
-  const handleIssue = async () => {
+  const handleIssue = async (
+    kind: CertificateKind,
+    availability: MemberCertificateAvailabilityResponse | null,
+  ) => {
+    const documentLabel = portalCertificateDocumentLabel(kind)
+    const participantId = resolveParticipantId(availability)
     if (participantId == null) {
       setAlertMessage(`참가자 정보가 없어 ${documentLabel}을 발급할 수 없습니다.`)
       return
@@ -153,20 +183,18 @@ export function EducationPersonalCertificatePanel({
       const issuedResponse = await issueMutation.mutateAsync({
         programId: programIdNumber,
         participantId,
-        certificateType: 'COMPLETION',
+        certificateType: kind,
         issueReason: 'PERSONAL_ARCHIVE',
       })
       const issueId = readPortalCertificateIssueId(issuedResponse)
       if (issueId == null) {
-        if (isWithdrawnDuring) await participationQuery.refetch()
-        else await autoQuery.refetch()
+        await autoQuery.refetch()
         setAlertMessage(`${documentLabel}이 발급되었습니다. 다운로드를 다시 시도해 주세요.`)
         return
       }
-      setLocalIssueId(issueId)
-      await handleDownload(issueId)
-      if (isWithdrawnDuring) await participationQuery.refetch()
-      else await autoQuery.refetch()
+      setLocalIssueIds(prev => ({ ...prev, [kind]: issueId }))
+      await handleDownload(issueId, documentLabel)
+      await autoQuery.refetch()
     } catch (error) {
       setAlertMessage(
         error instanceof Error && error.message.trim()
@@ -176,43 +204,39 @@ export function EducationPersonalCertificatePanel({
     }
   }
 
-  const ineligibleMessage = availabilityReasonMessage(availability)
-  const periodLabel = availability?.certificatePeriodLabel?.trim() || ''
-
-  if (!actionable) {
-    if (!isWithdrawnDuring) return null
-    if (autoQuery.isLoading || participationQuery.isLoading) return null
-    return (
-      <section aria-label="참가인증서">
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          {ineligibleMessage || '인정된 교육 실적이 없어 참가인증서를 발급할 수 없습니다.'}
-        </PFText>
-      </section>
-    )
-  }
+  const certificateType =
+    portalCertificateIssueType(activeAvailability?.certificateType) === 'PARTICIPATION'
+      ? 'PARTICIPATION'
+      : 'COMPLETION'
+  const documentLabel = portalCertificateDocumentLabel(certificateType)
+  const title = portalCertificateCtaButtonLabel({
+    certificateType,
+    action: activeView.kind === 'download' ? 'download' : 'issue',
+  })
+  const localIssueId = localIssueIds[activeKind]
 
   return (
-    <section aria-label={documentLabel}>
-      {periodLabel ? (
-        <PFText as="p" typo="bd-md-rg" color="neutral-cool-600" className={styles.periodLabel}>
-          {periodLabel}
-        </PFText>
-      ) : null}
+    <section aria-label="증명서 발급" className={styles.root}>
       <div className={styles.actions}>
-        {issued || canIssueNew ? (
-          <CertificateActionButton
-            disabled={busy || (!issued && participantId == null)}
-            onClick={() => {
-              if (existingIssueId != null) {
-                void handleDownload(existingIssueId)
-                return
-              }
-              void handleIssue()
-            }}
-          >
-            {issued ? `${documentLabel} 다운로드` : `${documentLabel} 발급하기`}
-          </CertificateActionButton>
-        ) : null}
+        <CertificateDiplomaButton
+          disabled={
+            busy ||
+            (activeView.kind === 'issue' && resolveParticipantId(activeAvailability) == null)
+          }
+          onClick={() => {
+            if (activeView.kind === 'download') {
+              void handleDownload(activeView.issueId, documentLabel)
+              return
+            }
+            if (localIssueId != null) {
+              void handleDownload(localIssueId, documentLabel)
+              return
+            }
+            void handleIssue(activeKind, activeAvailability)
+          }}
+        >
+          {title}
+        </CertificateDiplomaButton>
       </div>
       <PFAlertModal
         open={Boolean(alertMessage)}
@@ -222,20 +246,13 @@ export function EducationPersonalCertificatePanel({
         onConfirm={() => setAlertMessage('')}
       />
       {downloadMutation.isPending || issueMutation.isPending ? (
-        <PFLoadingSpinner
-          blocking
-          label={
-            downloadMutation.isPending
-              ? `${documentLabel}을 다운로드하는 중`
-              : `${documentLabel}을 발급하는 중`
-          }
-        />
+        <PFLoadingSpinner blocking label="증명서를 처리하는 중" />
       ) : null}
     </section>
   )
 }
 
-function CertificateActionButton({
+function CertificateDiplomaButton({
   disabled,
   onClick,
   children,
@@ -247,17 +264,21 @@ function CertificateActionButton({
   return (
     <PFButton
       type="button"
-      variant="secondary"
-      size="medium"
-      width={200}
+      variant="certificate"
+      size="large"
       disabled={disabled}
+      className={styles.actionButton}
       onClick={onClick}
-      className={styles.button}
     >
-      <span className={styles.buttonInner}>
-        <img src={illustDiplomaUrl} alt="" width={24} height={24} />
-        {children}
-      </span>
+      {children}
+      <img
+        className={styles.actionIllustration}
+        src={illustDiplomaUrl}
+        alt=""
+        width={48}
+        height={48}
+        aria-hidden="true"
+      />
     </PFButton>
   )
 }

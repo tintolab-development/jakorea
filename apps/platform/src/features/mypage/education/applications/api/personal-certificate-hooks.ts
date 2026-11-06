@@ -76,6 +76,9 @@ export function useIssuePersonalCertificateMutation(options?: {
           programId,
         ],
       })
+      await queryClient.invalidateQueries({
+        queryKey: platformQueryKeys.mypage.certificates.all(),
+      })
       if (options?.applicationType && options?.applicationId) {
         await queryClient.invalidateQueries({
           queryKey: platformQueryKeys.mypage.programApplications.detail(
