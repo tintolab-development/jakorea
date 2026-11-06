@@ -490,7 +490,17 @@
   margin-top: 30px;
   padding: 0;
   justify-content: flex-end;
+  gap: 8px;
   background: transparent;
+}
+
+/* Figma ButtonH40 — 120×40 (export h-[168px] anomaly ignored) */
+.settlement-item-setting-detail-modal .teal-header-modal__footer .cms-button.ant-btn {
+  width: 120px;
+  min-width: 120px;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding-block: 0 !important;
 }
 
 /**
@@ -790,23 +800,39 @@
 }
 
 /*
- * 2026-11 시안(12432:445402) 표 셀: th 180×min 44(패딩 4×12), td min 44(패딩 10),
- * 조건 textarea는 내용 높이(14px·패딩 8×14·#e0e0e0). 공용 modal-spec-table.css 는 그대로 두고 이 모달에서만 덮어씀.
+ * 2026-11 시안 표 셀: th 패딩 4×12·배경 #f1f3f5.
+ * min-height는 variant별(지급요건 176/80/104, 비고 128/104, basis 44)을
+ * 공용 modal-spec-table.css 에 맡기고, 여기서 전역 44로 덮지 않음.
  */
 .settlement-item-setting-detail-modal.content-modal .modal-spec-table .modal-spec-table__row > .modal-spec-table__label {
-  min-height: 44px;
   padding: 4px 12px;
-  background: var(--BG-header, #f1f3f5);
+  /* solid — --BG-header gradient+#fff 는 시안 대비 너무 옅음 */
+  background: #f1f3f5;
 }
 
 .settlement-item-setting-detail-modal.content-modal
   .modal-spec-table
   .modal-spec-table__row
-  > .modal-spec-table__label
+  > .modal-spec-table__label--basis {
+  min-height: 44px;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label--basis
   + .modal-spec-table__cell {
   min-height: 44px;
   padding: 10px;
   align-items: center;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table
+  .modal-spec-table__row
+  > .modal-spec-table__label:not(.modal-spec-table__label--basis)
+  + .modal-spec-table__cell {
+  padding: 10px;
 }
 
 .settlement-item-setting-detail-modal.content-modal
@@ -847,4 +873,102 @@
 
 .settlement-item-setting-detail-modal .modal-spec-table__radio-cell.app-radio-group--medium .ant-radio-wrapper {
   gap: 8px !important;
+}
+
+
+
+/*
+ * 시안 우선: 조건(지급요건·비고) 행은 내용 높이.
+ * 공용 modal-spec-table 의 176/128/104 min-height 는 export 수치이며 시안보다 과도하게 큼.
+ */
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--payment-requirement,
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--payment-requirement-short,
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--remark {
+  min-height: 0;
+  height: auto;
+  padding: 8px 12px;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--payment-requirement
+  + .modal-spec-table__cell,
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--payment-requirement-short
+  + .modal-spec-table__cell,
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__label--remark
+  + .modal-spec-table__cell {
+  min-height: 0;
+  padding: 8px 10px;
+  align-items: flex-start;
+}
+
+.settlement-item-setting-detail-modal.content-modal
+  .modal-spec-table.modal-spec-table--condition-compact
+  .modal-spec-table__textarea {
+  min-height: 0 !important;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 140%;
+  field-sizing: content;
+}
+
+/* 표 라벨·본문 — 시안 대비 가독 (th 14→14 유지, 섹션 타이틀 이미 16) */
+.settlement-item-setting-detail-modal.content-modal .modal-spec-table__label {
+  font-size: 14px;
+}
+
+.settlement-item-setting-detail-modal.content-modal .modal-spec-table__suffix-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Gemini 산정 기준 시안: 자체 연수 : [input] 원 | 대학생 연수 : [input] 원 (인라인) */
+.settlement-item-setting-detail-modal--gemini
+  .modal-spec-table__label--basis
+  + .modal-spec-table__cell {
+  padding: 10px 16px;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__gemini-dual--inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-inline-group {
+  flex: 0 1 auto;
+  width: auto;
+  gap: 6px;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-label {
+  color: var(--default-BK, #3d3d3d);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.settlement-item-setting-detail-modal .modal-spec-table__gemini-dual-pipe {
+  flex: 0 0 auto;
+  color: #3d3d3d;
+  opacity: 0.5;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  user-select: none;
 }

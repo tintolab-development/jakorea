@@ -48,24 +48,19 @@ export function validateWithholdingAmount(value: string): string | null {
   return null
 }
 
+/** Figma 원천징수 모달에 노출되는 필드만 검증 (근로소득공제 UI 제거) */
 export type WithholdingInputErrors = {
   exclusionMax: string | null
-  earnedDeduction: string | null
-  rateDailyWorker: string | null
   rateBusiness: string | null
   rateOther: string | null
   ratePrize: string | null
   rateInterview: string | null
-  taxCreditRate: string | null
 }
 
 export const EMPTY_WITHHOLDING_INPUT_ERRORS: WithholdingInputErrors = {
   exclusionMax: null,
-  earnedDeduction: null,
-  rateDailyWorker: null,
   rateBusiness: null,
   rateOther: null,
   ratePrize: null,
   rateInterview: null,
-  taxCreditRate: null,
 }
