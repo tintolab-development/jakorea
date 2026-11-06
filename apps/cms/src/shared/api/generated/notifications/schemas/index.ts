@@ -1564,6 +1564,7 @@ export * from './trainedTeacherOrganizationApplicationDetailResponseTextbookDeli
 export * from './trainedTeacherOrganizationApplicationResponse';
 export * from './trainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus';
 export * from './trainedTeacherOrganizationEducationSchedule';
+export * from './trainedTeacherOrganizationEducationScheduleScheduleStatus';
 export * from './trainedTeacherPerformanceSummaryResponse';
 export * from './trainedTeacherProgramDetailRequest';
 export * from './trainedTeacherProgramDetailResponse';

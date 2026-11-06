@@ -115,6 +115,6 @@ export interface ProgramUpdateRequest {
   clearFields?: string[];
   /** Gemini 모집 공고 게시 상태. DRAFT 또는 PUBLISHED. 생략하면 기존 값을 유지한다. GENERAL / UJAT / COMPANY_SCHOOL / TRAINED_TEACHER에서는 무시한다. */
   draftStatus?: ProgramUpdateRequestDraftStatus;
-  /** 낙관적 동시성 토큰. GET 응답의 updatedAt과 같아야 한다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다. */
+  /** 낙관적 동시성 토큰. GET 응답의 updatedAt 문자열을 그대로 보낸다. 생략하면 기존처럼 마지막 저장이 이긴다. If-Match 헤더와 함께 보내면 값이 같아야 한다. GET updatedAt이 마이크로초이면 JavaScript Date.toISOString()은 밀리초로 잘리는데, 그 밀리초 토큰은 같은 밀리초 구간의 저장된 값과 일치하면 허용한다. */
   expectedUpdatedAt?: string | null;
 }

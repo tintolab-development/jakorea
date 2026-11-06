@@ -69,7 +69,7 @@ export interface TrainedTeacherOrganizationApplicationDetailResponse {
   teacherEmail?: string | null;
   /** 신청 당시 지정된 교재 id. 없으면 null. */
   textbookId?: number | null;
-  /** 기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다. */
+  /** 기관이 실제 진행하는 교육 일정. totalEducationRoundCount 와 같은 기준(활성 일정, 교사 연수 일정 제외, 기관 일정 배정이 있으면 배정 일정만, 활동 포기 시 중단 일정 이전만)이며 시작 시각 순. 없으면 []. TRAINED_TEACHER 기관 진행 상세(DATE)는 배정된 MATCHED 지망 전부를 포함하며 지망 1건으로 자르지 않습니다. 같은 scheduleId는 합치지 않습니다. 진행 미편입(미승인)이면 []. 출석 조회 scheduleIds 의 SSOT 이고 preferredScheduleBlocks(희망 일정)와 다를 수 있습니다. scheduleStatus는 일반 프로그램 participants sessions[].scheduleStatus 와 같은 교육 진행(시각) SSOT이며 출석과 별개입니다. */
   educationSchedules?: TrainedTeacherOrganizationEducationSchedule[];
   /** CMS 학생 명단 학급 Select SSOT. 공통 기관 신청 상세 gradeBlocks와 같은 형식이며 활성 학생 명단의 grade/className으로 묶습니다. 명단이 없으면 신청 학년(requested_grade)과 requestedClassCount만 담은 블록 1개(classes=[])이고, 둘 다 없으면 null. classes가 []이면 classCount로 반 목록을 만들지 않습니다. */
   gradeBlocks?: GradeBlock[] | null;

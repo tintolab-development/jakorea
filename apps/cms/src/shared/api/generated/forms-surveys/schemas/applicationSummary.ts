@@ -9,8 +9,10 @@
 export interface ApplicationSummary {
   total?: number;
   draft?: number;
+  /** 표시상태가 결과 대기·서류 합격·승인 대기인 건수. 반려 취소 후 REJECTION_CANCELLED(승인 대기)를 포함하며, APPROVAL_CANCELLED는 rejected에만 넣는다. */
   submitted?: number;
   approved?: number;
+  /** 표시상태가 '신청 반려'인 건수. REJECTED와 APPROVAL_CANCELLED를 포함한다. 승인 취소 라벨은 더 이상 반환하지 않으며 이중 가산하지 않는다. */
   rejected?: number;
   /** 표시상태가 '신청 취소'인 건수. 활동 포기는 포함하지 않는다(giveUp). */
   cancelled?: number;
@@ -18,6 +20,6 @@ export interface ApplicationSummary {
   completed?: number;
   /** 표시상태가 '활동 포기'인 건수. */
   giveUp?: number;
-  /** 마이페이지 교육·봉사 현황 「종료」 탭과 동일: 진행 완료+활동 포기+신청 반려+신청 취소. */
+  /** 마이페이지 교육·봉사 현황 「종료」 탭과 동일: 진행 완료+활동 포기+신청 반려+신청 취소. 신청 반려에는 REJECTED와 APPROVAL_CANCELLED가 포함된다. */
   ended?: number;
 }
