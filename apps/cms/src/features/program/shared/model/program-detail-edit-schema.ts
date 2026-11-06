@@ -523,6 +523,22 @@ export const programDetailInstitutionsEditSchema = programDetailEditSchemaBase.e
 })
 
 /**
+ * UJAT 모집정보 탭 — 화면에 없는 공통정보 필드로 저장이 막히지 않게 한다.
+ * 모집 필수 검사는 `listIncompleteUjatProgramRecruitmentTypedRequiredFields`가 담당.
+ */
+export const programDetailUjatRecruitEditSchema = programDetailInstitutionsEditSchema.extend({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  learningSupportContent: z.string().optional(),
+  managerName: z.string().optional(),
+  sponsorId: z.string().optional(),
+  applicationStartDate: z.string().optional(),
+  applicationEndDate: z.string().optional(),
+  resultAnnouncementDate: z.string().optional(),
+  resultAnnouncementMethod: z.string().optional(),
+})
+
+/**
  * 교육받은 교사·1사1교 공통 정보 — 공통정보 탭에 없는 모집 필수값 완화.
  * 일반 스키마의 모집·설명·학습지원 필수값이 화면에 없어 저장이 조용히 실패하던 것을 방지.
  */

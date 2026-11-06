@@ -26,6 +26,7 @@ import {
   normalizeUjatProgressStatus,
   resolveUjatProgressStatus,
 } from '@/features/program/ujat/lib/normalize-ujat-progress-status'
+import { toTypedProgramLifecycleStatus } from '@/shared/lib/program-typed-lifecycle'
 import { parseDetailedProgramMasterId } from '@/features/program/general/lib/detailed-program-request-id'
 import {
   buildProgramSponsorAssignmentsWire,
@@ -1012,7 +1013,7 @@ export function fromDetail(
     periodStatus,
   })
   const lifecycleStatus =
-    (dto.lifecycleStatus as ProgramLifecycleStatus | undefined) ??
+    toTypedProgramLifecycleStatus(dto.lifecycleStatus) ??
     mapPeriodStatusToLifecycle(periodStatus) ??
     'planned'
   const dtoTargetLevels = Array.isArray(

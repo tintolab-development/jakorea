@@ -13,6 +13,10 @@ import {
   toCreateRequest,
   toUpdateRequest,
 } from './adapters'
+import {
+  programDetailUjatCommonInfoEditSchema,
+  programToDetailEditValues,
+} from '@/features/program/shared/model/program-detail-edit-schema'
 import { shouldRetryQuery } from './errors'
 import { toRemoteListParams } from './list-params'
 import { parseRegistrationSnapshot } from './service-detail'
@@ -588,6 +592,47 @@ describe('UJAT detailedProgramId·detailedProgramName (id·name 둘 다 삽입, 
     })
     expect(mapped.periodStatus).toBe('SCHEDULED')
     expect(mapped.lifecycleStatus).toBe('planned')
+  })
+
+  it('GET lifecycleStatus RECRUITING_STUDENTS를 typed recruiting_students로 정규화한다', () => {
+    const mapped = fromDetail({
+      id: program.id,
+      sponsorId: program.sponsorId,
+      title: program.title,
+      startDate: String(program.startDate),
+      endDate: String(program.endDate),
+      lifecycleStatus: 'RECRUITING_STUDENTS' as ProgramResponse['lifecycleStatus'],
+      periodStatus: 'RECRUITING',
+    })
+    expect(mapped.lifecycleStatus).toBe('recruiting_students')
+  })
+
+  it('UJAT 상세 GET 필수 공통정보 값이 UJAT 저장 스키마를 통과한다', () => {
+    const mapped = fromDetail({
+      id: '91011',
+      title: 'UJAT STEP61 공고',
+      mainTitle: 'UJAT STEP61 대표',
+      programType: 'UJAT',
+      type: 'offline',
+      category: 'school',
+      lifecycleStatus: 'RECRUITING_STUDENTS' as ProgramResponse['lifecycleStatus'],
+      periodStatus: 'RECRUITING',
+      startDate: '2026-12-01',
+      endDate: '2027-11-30',
+      sponsorId: '163001',
+      managerName: '격리 담당자',
+      contactPhone: '010-1234-5678',
+      detailedProgramId: 163006,
+      businessArea: '경제금융',
+      educationProcess: 'Digital',
+      ipOwned: 'JA',
+      courseDeliveredBy: 'JA',
+      partnerInvolvement: false,
+      venue: '서울시 중구 JA Korea',
+    })
+    const values = programToDetailEditValues(mapped)
+    const parsed = programDetailUjatCommonInfoEditSchema.safeParse(values)
+    expect(parsed.success, JSON.stringify(parsed.success ? [] : parsed.error.issues)).toBe(true)
   })
 
   it('Typed 교육일정이 있으면 semesterCalendars overlay를 덮어쓰지 않는다', () => {
