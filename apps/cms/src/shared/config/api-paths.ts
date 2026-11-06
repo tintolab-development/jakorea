@@ -14,8 +14,6 @@ export const adminAuthPaths = {
   prefix: trimEnv(import.meta.env.VITE_ADMIN_AUTH_API_PREFIX as string | undefined, '/api/admin/auth'),
   login: () => `${adminAuthPaths.prefix}/login`,
   logout: () => `${adminAuthPaths.prefix}/logout`,
-  activity: () => `${adminAuthPaths.prefix}/activity`,
-  session: () => `${adminAuthPaths.prefix}/session`,
   refresh: () => `${adminAuthPaths.prefix}/refresh`,
   mfaVerify: () => `${adminAuthPaths.prefix}/mfa/verify`,
   mfaEnrollment: () => `${adminAuthPaths.prefix}/mfa/enrollment`,

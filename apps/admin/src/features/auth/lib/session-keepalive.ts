@@ -1,28 +1,32 @@
 /**
- * 관리자 세션 keep-alive.
- * 선제 refresh 게이트는 로컬 활동 시각, 서버 유휴는 Activity API가 정본.
+ * 홈페이지 어드민 세션 keep-alive 규칙 (CMS와 동일).
+ *
+ * 배경: BE는 admin refresh 때 "마지막 refresh(발급)로부터 30분(idle)"을 검사한다 (API 호출로는 갱신되지 않음).
+ * access TTL이 1시간이면 만료 직전에 refresh하는 것만으로는 BE idle에 걸리므로,
+ * 사용자가 활동 중일 때는 발급 후 20분이 지나면 미리 refresh한다.
+ *
+ * - 마지막 토큰 발급 시각: localStorage(`hp_admin_auth_issued_at`) — 새로고침/다른 탭과 공유.
+ * - 마지막 사용자 활동 시각: 탭별 메모리 (pointerdown/keydown/wheel/touchstart, 1초 throttle).
+ * - 활동이 30분 넘게 없으면 선제 refresh는 하지 않는다 (만료 임박 시 refresh-first 시도는 별도로 유지).
+ *
+ * 키 문자열은 auth-storage `AUTH_ISSUED_AT_KEY`와 같아야 한다 (순환 import 방지용 사본).
  */
-
-import {
-  isTrustedUserActivityEvent,
-  SESSION_ACTIVITY_NETWORK_THROTTLE_MS,
-  SESSION_GESTURE_DEDUPE_MS,
-  shouldIgnoreActivityTarget,
-} from '@jakorea/domain/session'
 
 export const TOKEN_ISSUED_AT_STORAGE_KEY = 'hp_admin_auth_issued_at'
 
+/** 발급 후 이 시간이 지나면 (활동 중일 때) 선제 refresh */
 export const PROACTIVE_REFRESH_AFTER_MS = 20 * 60 * 1000
+/** 마지막 활동이 이 시간 이내여야 선제 refresh */
 export const PROACTIVE_REFRESH_ACTIVITY_WINDOW_MS = 30 * 60 * 1000
 
-const LOCAL_ACTIVITY_THROTTLE_MS = 1000
+const ACTIVITY_THROTTLE_MS = 1000
 const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const
 
 let lastUserActivityAtMs = Date.now()
-let warningActivitySuppressed = false
 
 export function shouldProactivelyRefresh(input: {
   nowMs: number
+  /** localStorage에 기록이 없으면 null (배포 직후 기존 세션 등) → 활동 중이면 refresh */
   lastIssuedAtMs: number | null
   lastActivityAtMs: number
 }): boolean {
@@ -75,78 +79,20 @@ export function getLastUserActivityAt(): number {
   return lastUserActivityAtMs
 }
 
-export function resetUserActivityForTest(nowMs: number = Date.now()): void {
-  lastUserActivityAtMs = nowMs
-}
-
-export function setSessionWarningActivitySuppressed(suppressed: boolean): void {
-  warningActivitySuppressed = suppressed
-}
-
-type ActivityTrackerState = {
-  lastLocalAt: number
-  lastNetworkAt: number
-  lastGestureAt: number
-  lastGestureType: string
-}
-
-export function createActivityTrackerState(): ActivityTrackerState {
-  return { lastLocalAt: 0, lastNetworkAt: 0, lastGestureAt: 0, lastGestureType: '' }
-}
-
-export function processTrustedUserActivityEvent(
-  event: { type?: string; isTrusted?: boolean; target?: EventTarget | null },
-  state: ActivityTrackerState,
-  onNetworkActivity?: () => void,
-  nowMs: number = Date.now()
-): 'ignored' | 'local' | 'network' {
-  if (!isTrustedUserActivityEvent(event)) return 'ignored'
-  if (
-    warningActivitySuppressed ||
-    shouldIgnoreActivityTarget(event.target ?? null) ||
-    (typeof Element !== 'undefined' &&
-      event.target instanceof Element &&
-      event.target.closest('.session-warning-modal-wrap, .session-warning-modal-root'))
-  ) {
-    return 'ignored'
+export function startUserActivityTracking(target: Window = window): () => void {
+  let lastRecordedAt = 0
+  const onActivity = () => {
+    const now = Date.now()
+    if (now - lastRecordedAt < ACTIVITY_THROTTLE_MS) return
+    lastRecordedAt = now
+    recordUserActivity(now)
   }
-
-  if (
-    (event.type === 'pointerdown' && state.lastGestureType === 'touchstart') ||
-    (event.type === 'touchstart' && state.lastGestureType === 'pointerdown')
-  ) {
-    if (nowMs - state.lastGestureAt < SESSION_GESTURE_DEDUPE_MS) return 'ignored'
-  }
-  state.lastGestureAt = nowMs
-  state.lastGestureType = event.type ?? ''
-
-  if (nowMs - state.lastLocalAt >= LOCAL_ACTIVITY_THROTTLE_MS) {
-    state.lastLocalAt = nowMs
-    recordUserActivity(nowMs)
-  }
-  if (onNetworkActivity && nowMs - state.lastNetworkAt >= SESSION_ACTIVITY_NETWORK_THROTTLE_MS) {
-    state.lastNetworkAt = nowMs
-    onNetworkActivity()
-    return 'network'
-  }
-  return 'local'
-}
-
-export function startUserActivityTracking(
-  target: Window = window,
-  onNetworkActivity?: () => void
-): () => void {
-  const state = createActivityTrackerState()
-  const onActivity = (event: Event) => {
-    processTrustedUserActivityEvent(event, state, onNetworkActivity)
-  }
-
-  ACTIVITY_EVENTS.forEach(name => {
-    target.addEventListener(name, onActivity, { passive: true })
+  ACTIVITY_EVENTS.forEach(event => {
+    target.addEventListener(event, onActivity, { passive: true })
   })
   return () => {
-    ACTIVITY_EVENTS.forEach(name => {
-      target.removeEventListener(name, onActivity)
+    ACTIVITY_EVENTS.forEach(event => {
+      target.removeEventListener(event, onActivity)
     })
   }
 }

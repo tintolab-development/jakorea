@@ -3,11 +3,6 @@
  */
 
 import { useEffect } from 'react'
-import {
-  isAdminAuthForbiddenError,
-  isAdminAuthUnauthorizedError,
-  postAdminAuthActivity,
-} from '@/features/auth/api/admin-session-fetcher'
 import { startUserActivityTracking } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -15,7 +10,6 @@ import {
   AUTH_REFRESH_TOKEN_KEY,
   AUTH_TOKEN_KEY,
 } from '@/features/auth/model/auth-storage'
-import { SessionWarningModal } from '@/features/auth/ui/session-warning-modal'
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -62,13 +56,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!isAuthenticated) return
 
-    const stopActivityTracking = startUserActivityTracking(window, () => {
-      void postAdminAuthActivity().catch(error => {
-        if (isAdminAuthUnauthorizedError(error) || isAdminAuthForbiddenError(error)) {
-          useAuthStore.getState().logout()
-        }
-      })
-    })
+    const stopActivityTracking = startUserActivityTracking()
 
     const interval = setInterval(() => {
       useAuthStore.getState().checkSessionExpiry()
@@ -80,10 +68,5 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [isAuthenticated])
 
-  return (
-    <>
-      {children}
-      <SessionWarningModal />
-    </>
-  )
+  return <>{children}</>
 }

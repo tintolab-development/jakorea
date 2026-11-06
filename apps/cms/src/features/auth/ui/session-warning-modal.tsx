@@ -1,72 +1,58 @@
+/**
+ * 세션 만료 경고 모달 — ContentModal 셸
+ * X/마스크 클릭 시 세션 연장(안전한 기본 동작). zIndex 4000.
+ */
+
 import { Typography } from 'antd'
-import { SESSION_POLICY_DISPLAY } from '@jakorea/domain/session'
+import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { CmsButton, ContentModal } from '@/shared/ui'
 import { useSessionTimeout } from '../hooks/use-session-timeout'
-import './session-warning-modal.css'
+import { useAuthStore } from '@/features/auth/model/auth-store'
 
-const { Paragraph } = Typography
+const { Text, Paragraph } = Typography
 
 const SESSION_WARNING_Z_INDEX = 4000
-/** CMS Figma 16011:86297 / 16011:86520 popup 폭 */
-const SESSION_WARNING_WIDTH = 600
 
 export function SessionWarningModal() {
-  const {
-    showWarning,
-    warningKind,
-    extendError,
-    extending,
-    dismissWarning,
-    extendIdleSession,
-    logout,
-  } = useSessionTimeout()
+  const { showWarning, countdown, extendSession } = useSessionTimeout()
+  const { logout } = useAuthStore()
 
-  if (!showWarning || warningKind == null) return null
+  if (!showWarning) {
+    return null
+  }
 
-  const isIdle = warningKind === 'idle'
+  const minutes = Math.floor(countdown / 60)
+  const seconds = countdown % 60
 
   return (
     <ContentModal
-      open
-      onCancel={dismissWarning}
+      open={showWarning}
+      onCancel={extendSession}
       zIndex={SESSION_WARNING_Z_INDEX}
-      wrapClassName="session-warning-modal-wrap"
-      rootClassName="session-warning-modal-root"
-      width={SESSION_WARNING_WIDTH}
-      title={isIdle ? SESSION_POLICY_DISPLAY.idleTitle : SESSION_POLICY_DISPLAY.absoluteTitle}
+      title="세션 만료 경고"
+      width={600}
+      titlePrefix={<ExclamationCircleOutlined style={{ color: '#faad14' }} />}
       footer={
-        isIdle ? (
-          <>
-            <CmsButton variant="secondary" size="medium" type="button" onClick={() => logout()}>
-              {SESSION_POLICY_DISPLAY.idleLogoutLabel}
-            </CmsButton>
-            <CmsButton
-              variant="primary"
-              size="medium"
-              type="button"
-              loading={extending}
-              onClick={() => void extendIdleSession()}
-            >
-              {SESSION_POLICY_DISPLAY.idleExtendLabel}
-            </CmsButton>
-          </>
-        ) : (
-          <CmsButton variant="secondary" size="medium" type="button" onClick={dismissWarning}>
-            {SESSION_POLICY_DISPLAY.absoluteConfirmLabel}
+        <>
+          <CmsButton variant="primary" size="medium" type="button" onClick={extendSession}>
+            세션 연장
           </CmsButton>
-        )
+          <CmsButton variant="secondary" size="medium" type="button" onClick={() => logout()}>
+            로그아웃
+          </CmsButton>
+        </>
       }
     >
-      <div data-session-warning-root="true">
-        <Paragraph className="session-warning-modal__body">
-          {isIdle ? SESSION_POLICY_DISPLAY.idleBody : SESSION_POLICY_DISPLAY.absoluteBody}
-        </Paragraph>
-        {extendError ? (
-          <Paragraph type="danger" style={{ marginBottom: 0 }}>
-            {extendError}
-          </Paragraph>
-        ) : null}
-      </div>
+      <Paragraph>
+        <Text strong>
+          {minutes}분 {String(seconds).padStart(2, '0')}초 후 자동으로 로그아웃됩니다.
+        </Text>
+      </Paragraph>
+      <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+        비활성 상태가 {Math.floor(countdown / 60)}분 이상 지속되어 세션이 만료됩니다.
+        <br />
+        계속 사용하시려면 &apos;세션 연장&apos; 버튼을 클릭하세요.
+      </Paragraph>
     </ContentModal>
   )
 }
