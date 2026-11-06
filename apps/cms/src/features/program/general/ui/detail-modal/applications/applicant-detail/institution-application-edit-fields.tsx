@@ -16,6 +16,7 @@ import {
   CmsTextArea,
 } from '@/shared/ui'
 import { CmsSelect } from '@/shared/ui/cms-select'
+import './institution-basic-info.css'
 
 export const INSTITUTION_EDUCATION_FORMAT_OPTIONS = [
   { value: '온라인', label: '온라인' },
@@ -571,15 +572,12 @@ export function InstitutionTeacherEdit({
 
   return (
     <FieldStack error={firstError}>
-      <div
-        className="detail-info-form-inputs-wrapper detail-info-form-inputs-wrapper-no-gap"
-        style={inlineRowStyle}
-      >
+      <div className="detail-info-form-inputs-wrapper-no-gap institution-basic-info__teacher-edit">
         <span style={nowrapSpanStyle}>담당 교사</span>
         {teacherOptions ? (
           <CmsSelect
             inputSize="small"
-            width={140}
+            width={160}
             withAllOption={false}
             loading={isTeacherOptionsLoading}
             placeholder={isTeacherOptionsLoading ? '교사 목록 불러오는 중…' : '교사 선택'}
@@ -601,8 +599,8 @@ export function InstitutionTeacherEdit({
         ) : (
           <CmsInput
             inputSize="small"
-            width={140}
-            placeholder="담당 교사명"
+            width={120}
+            placeholder="교사명"
             value={name}
             onChange={e => onChange({ teacherName: e.target.value })}
           />
@@ -611,7 +609,7 @@ export function InstitutionTeacherEdit({
         <span style={nowrapSpanStyle}>Tel</span>
         <CmsPhoneInput
           inputSize="small"
-          width={170}
+          width={240}
           placeholder="담당 교사의 내선 번호(직통 번호)"
           value={phone}
           onChange={e => onChange({ teacherPhone: e.target.value })}
@@ -620,8 +618,8 @@ export function InstitutionTeacherEdit({
         <span style={nowrapSpanStyle}>M</span>
         <CmsPhoneInput
           inputSize="small"
-          width={160}
-          placeholder="휴대폰"
+          width={240}
+          placeholder="담당 교사의 휴대폰 번호"
           value={mobile}
           onChange={e => onChange({ teacherMobile: e.target.value })}
         />
@@ -629,8 +627,8 @@ export function InstitutionTeacherEdit({
         <span style={nowrapSpanStyle}>E-mail</span>
         <CmsInput
           inputSize="small"
-          width={180}
-          placeholder="이메일"
+          width={240}
+          placeholder="담당 교사의 이메일"
           value={email}
           onChange={e => onChange({ teacherEmail: e.target.value })}
         />
