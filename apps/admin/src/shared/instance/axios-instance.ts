@@ -365,6 +365,16 @@ axiosInstance.interceptors.response.use(
     const status = response.status
     const code = getErrorCode(response.data)
 
+    // A late 401 from an access token superseded by login/Refresh in this tab
+    // must not refresh, retry, or revoke the newly active admin session.
+    const sentBearer = originalRequest.headers?.get?.('Authorization')
+    const activeToken = useAuthStore.getState().token
+    if (status === 401 && typeof sentBearer === 'string' &&
+        sentBearer.startsWith('Bearer ') &&
+        sentBearer !== `Bearer ${activeToken ?? ''}`) {
+      return Promise.reject(error)
+    }
+
     if (originalRequest.skipRefresh || isExcludedFromAutoRefresh(requestUrl)) {
       return Promise.reject(error)
     }
