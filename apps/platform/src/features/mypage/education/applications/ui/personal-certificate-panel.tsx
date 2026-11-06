@@ -39,7 +39,7 @@ type EducationPersonalCertificatePanelProps = {
   participantIdHint?: number | null
 }
 
-type CertificateKind = 'COMPLETION' | 'PARTICIPATION'
+type CertificateKind = 'COMPLETION'
 
 export function EducationPersonalCertificatePanel({
   programId,
@@ -65,11 +65,6 @@ export function EducationPersonalCertificatePanel({
     enabled: eligibleSurface,
     certificateType: 'COMPLETION',
   })
-  const participationQuery = usePersonalCertificateAvailabilityQuery({
-    programId,
-    enabled: eligibleSurface,
-    certificateType: 'PARTICIPATION',
-  })
   const issueMutation = useIssuePersonalCertificateMutation({
     applicationType: applicationType ?? null,
     applicationId,
@@ -86,7 +81,7 @@ export function EducationPersonalCertificatePanel({
   }, [programId, applicationId])
 
   useEffect(() => {
-    const availability = completionQuery.availability ?? participationQuery.availability
+    const availability = completionQuery.availability
     if (!availability) return
     const fromAvailability = resolvePortalCertificateIssueParticipantId({
       availabilityParticipantId: availability.participantId,
@@ -102,10 +97,10 @@ export function EducationPersonalCertificatePanel({
         applicationParticipantId: participantIdHint,
       })
     }
-  }, [completionQuery.availability, participantIdHint, participationQuery.availability])
+  }, [completionQuery.availability, participantIdHint])
 
   useEffect(() => {
-    const availability = completionQuery.availability ?? participationQuery.availability
+    const availability = completionQuery.availability
     if (!availability || typeof canIssueCertificateHint !== 'boolean') return
     const expected = availability.available === true || availability.canDownload === true
     if (expected !== canIssueCertificateHint) {
@@ -119,7 +114,6 @@ export function EducationPersonalCertificatePanel({
   }, [
     canIssueCertificateHint,
     completionQuery.availability,
-    participationQuery.availability,
   ])
 
   if (!eligibleSurface) return null
@@ -127,24 +121,20 @@ export function EducationPersonalCertificatePanel({
   const busy =
     completionQuery.isLoading ||
     completionQuery.isFetching ||
-    participationQuery.isLoading ||
-    participationQuery.isFetching ||
     issueMutation.isPending ||
     downloadMutation.isPending
 
   const slot = resolveExclusivePersonalCertificateSlot({
     completion: completionQuery.availability,
-    participation: participationQuery.availability,
   })
 
   if (slot.type == null || slot.view.kind === 'hidden') {
     if (!isWithdrawnDuring) return null
-    if (completionQuery.isLoading || participationQuery.isLoading) return null
+    if (completionQuery.isLoading) return null
     return (
       <section aria-label="참가인증서">
         <PFText as="p" typo="bd-md-rg" color="neutral-cool-600">
-          {availabilityReasonMessage(participationQuery.availability) ||
-            availabilityReasonMessage(completionQuery.availability) ||
+          {availabilityReasonMessage(completionQuery.availability) ||
             '인정된 교육 실적이 없어 참가인증서를 발급할 수 없습니다.'}
         </PFText>
       </section>
@@ -153,10 +143,7 @@ export function EducationPersonalCertificatePanel({
 
   const activeKind = slot.type
   const activeView = slot.view
-  const activeAvailability =
-    activeKind === 'PARTICIPATION'
-      ? participationQuery.availability
-      : completionQuery.availability
+  const activeAvailability = completionQuery.availability
 
   const resolveParticipantId = (availability: MemberCertificateAvailabilityResponse | null) =>
     resolvePortalCertificateIssueParticipantId({
@@ -200,7 +187,7 @@ export function EducationPersonalCertificatePanel({
       const issuedResponse = await issueMutation.mutateAsync({
         programId: programIdNumber,
         participantId,
-        certificateType: kind,
+        certificateType: 'COMPLETION',
         issueReason: 'PERSONAL_ARCHIVE',
       })
       const certificateIssueId = readPortalCertificateIssueId(issuedResponse)
@@ -212,7 +199,7 @@ export function EducationPersonalCertificatePanel({
         setLocalIssueIds(prev => ({ ...prev, [kind]: certificateIssueId }))
       }
       await handleDownload(certificateIssueId, documentLabel)
-      await Promise.all([completionQuery.refetch(), participationQuery.refetch()])
+      await completionQuery.refetch()
     } catch (error) {
       setAlertMessage(
         error instanceof Error && error.message.trim()

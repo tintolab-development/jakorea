@@ -79,7 +79,7 @@ export async function fetchPersonalCertificateAvailability(
   programId: number | string,
   options?: { certificateType?: string; signal?: AbortSignal },
 ): Promise<MemberCertificateAvailabilityResponse> {
-  const certificateType = options?.certificateType?.trim() || 'AUTO'
+  const certificateType = options?.certificateType?.trim() || 'COMPLETION'
   const { data } = await axiosClient.get<unknown>(AVAILABILITY_PATH(programId), {
     signal: options?.signal,
     params: { certificateType },
@@ -90,11 +90,15 @@ export async function fetchPersonalCertificateAvailability(
 export async function issuePersonalCertificate(
   body: PortalCertificateIssueRequest,
 ): Promise<PortalCertificateIssueResponse> {
+  const certificateType = body.certificateType?.trim() || 'COMPLETION'
+  if (certificateType.toUpperCase() === 'PARTICIPATION') {
+    throw new Error('참가인증서는 CMS 관리자만 발급할 수 있습니다.')
+  }
   try {
     const { data } = await axiosClient.post<unknown>(ISSUE_PATH, {
       programId: body.programId,
       participantId: body.participantId,
-      certificateType: body.certificateType?.trim() || 'COMPLETION',
+      certificateType,
       issueReason: body.issueReason ?? 'PERSONAL_ARCHIVE',
     })
     const unwrapped = unwrapEnvelope<PortalCertificateIssueResponse>(data)

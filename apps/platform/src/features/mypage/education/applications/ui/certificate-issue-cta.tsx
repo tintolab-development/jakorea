@@ -60,19 +60,13 @@ export function CertificateIssueCta({
     enabled: availabilityEnabled,
     certificateType: 'COMPLETION',
   })
-  const participationQuery = useMyCertificateAvailabilityQuery({
-    programId,
-    enabled: availabilityEnabled,
-    certificateType: 'PARTICIPATION',
-  })
   const slot = resolveExclusivePersonalCertificateSlot({
     completion: completionQuery.data,
-    participation: participationQuery.data,
   })
   const activeKind = slot.type
   const view = slot.view
   const availabilityQuery = {
-    data: activeKind === 'PARTICIPATION' ? participationQuery.data : completionQuery.data,
+    data: completionQuery.data,
   }
   const issueMutation = useIssueMyCertificateMutation({
     applicationType,
@@ -87,11 +81,7 @@ export function CertificateIssueCta({
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
   const isBusy = issueMutation.isPending || downloadMutation.isPending
-  const documentLabel = portalCertificateDocumentLabel(
-    activeKind === 'PARTICIPATION'
-      ? 'PARTICIPATION'
-      : availabilityQuery.data?.certificateType,
-  )
+  const documentLabel = portalCertificateDocumentLabel('COMPLETION')
 
   const handleDownload = async (issueId: number) => {
     if (isBusy || pendingRef.current) return
@@ -136,7 +126,7 @@ export function CertificateIssueCta({
       const result = await issueMutation.mutateAsync({
         programId: parsedProgramId,
         participantId,
-        certificateType: activeKind === 'PARTICIPATION' ? 'PARTICIPATION' : 'COMPLETION',
+        certificateType: 'COMPLETION',
         issueReason: 'PERSONAL_ARCHIVE',
       })
       setConfirmOpen(false)

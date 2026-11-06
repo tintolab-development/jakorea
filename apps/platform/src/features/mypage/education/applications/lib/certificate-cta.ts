@@ -107,7 +107,6 @@ export function isPortalCertificateCtaOpen(
 
 export type ExclusivePersonalCertificateSlot =
   | { type: 'COMPLETION'; view: CertificateCtaView }
-  | { type: 'PARTICIPATION'; view: CertificateCtaView }
   | { type: null; view: { kind: 'hidden' } }
 
 function normalizeCertificateType(
@@ -116,21 +115,9 @@ function normalizeCertificateType(
   return (certificateType ?? '').trim().toUpperCase()
 }
 
-function normalizeCertificateReason(
-  availability: PortalCertificateAvailabilityLike | null | undefined,
-): string {
-  return (availability?.reasonCode ?? availability?.reason ?? '').trim().toUpperCase()
-}
-
-function isParticipationBlockedByCompletion(
-  availability: PortalCertificateAvailabilityLike | null | undefined,
-): boolean {
-  return normalizeCertificateReason(availability) === 'COMPLETION_CERTIFICATE_REQUIRED'
-}
-
 /**
  * AUTO/미지정 availability는 수료증(COMPLETION)만 평가한다.
- * 참가인증서 CTA는 GET certificateType=PARTICIPATION 응답으로만 연다.
+ * PARTICIPATION 응답으로는 포털 CTA를 열지 않는다.
  */
 export function resolveAutoPersonalCertificateSlot(
   availability: PortalCertificateAvailabilityLike | null | undefined,
@@ -153,15 +140,15 @@ export function resolveAutoPersonalCertificateSlot(
 }
 
 /**
- * 수료증·참가인증서는 한 슬롯만. 이중 조회는 COMPLETION이 이긴다.
- * AUTO 입력이 있으면 COMPLETION만 보고 PARTICIPATION CTA에 쓰지 않는다.
- * COMPLETION_CERTIFICATE_REQUIRED 이면 참가인증서 발급 CTA를 열지 않는다.
+ * 포털 메인 CTA는 수료증만. 참가인증서는 사용자 화면에서 발급하지 않는다(CMS 관리자).
+ * AUTO 입력이 있으면 COMPLETION만 본다. participation 응답으로 버튼을 열지 않는다.
  */
 export function resolveExclusivePersonalCertificateSlot(input: {
   auto?: PortalCertificateAvailabilityLike | null
   completion?: PortalCertificateAvailabilityLike | null | undefined
   participation?: PortalCertificateAvailabilityLike | null | undefined
 }): ExclusivePersonalCertificateSlot {
+  void input.participation
   if (input.auto) return resolveAutoPersonalCertificateSlot(input.auto)
   if (input.completion?.available === true) {
     return {
@@ -169,33 +156,25 @@ export function resolveExclusivePersonalCertificateSlot(input: {
       view: resolvePortalCertificateAvailabilityCtaView(input.completion),
     }
   }
-  if (
-    isPortalCertificateCtaOpen(input.participation) &&
-    !isParticipationBlockedByCompletion(input.participation)
-  ) {
-    return {
-      type: 'PARTICIPATION',
-      view: resolvePortalCertificateAvailabilityCtaView(input.participation),
-    }
-  }
   return { type: null, view: { kind: 'hidden' } }
 }
 
-/** 수료증·참가인증서는 한 슬롯만. 공존하지 않는다. 수료증이 가능하면 수료증, 아니면 참가인증서. */
+/** 수료증·참가인증서는 한 슬롯만. 포털은 수료증만 노출하고 참가인증서 CTA는 숨긴다. */
 export function resolveExclusivePersonalCertificateViews(input: {
   completion: CertificateCtaView
   participation: CertificateCtaView
 }): { completion: CertificateCtaView; participation: CertificateCtaView } {
+  void input.participation
   if (input.completion.kind !== 'hidden') {
     return { completion: input.completion, participation: { kind: 'hidden' } }
   }
-  return { completion: { kind: 'hidden' }, participation: input.participation }
+  return { completion: { kind: 'hidden' }, participation: { kind: 'hidden' } }
 }
 
 /**
  * availability API SSOT.
- * 참가인증서는 기발급 PDF 다운로드 CTA를 쓰지 않고, 적격이면 항상 발급하기.
- * 수료증만 canDownload + existingIssueId 로 다운로드를 연다.
+ * 포털 참가인증서는 자체 발급·다운로드 CTA를 열지 않는다.
+ * 수료증만 canDownload + existingIssueId 로 다운로드, available 이면 발급하기.
  */
 export function resolvePortalCertificateAvailabilityCtaView(
   availability: PortalCertificateAvailabilityLike | null | undefined,
@@ -203,16 +182,16 @@ export function resolvePortalCertificateAvailabilityCtaView(
   if (!availability) return { kind: 'hidden' }
   const isParticipation = normalizeCertificateType(availability.certificateType) === 'PARTICIPATION'
   if (isParticipation) {
-    return availability.available === true ? { kind: 'issue' } : { kind: 'hidden' }
+    return { kind: 'hidden' }
+  }
+  if (availability.available !== true) {
+    return { kind: 'hidden' }
   }
   const issueId = availabilityIssueId(availability)
   if (availability.canDownload === true && issueId != null) {
     return { kind: 'download', issueId }
   }
-  if (availability.available === true) {
-    return { kind: 'issue' }
-  }
-  return { kind: 'hidden' }
+  return { kind: 'issue' }
 }
 
 function readPositiveId(value: unknown): number | null {

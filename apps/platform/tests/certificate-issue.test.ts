@@ -80,51 +80,36 @@ describe('개인 수료증 API 계약', () => {
         completion: { available: false, canDownload: false, certificateType: 'COMPLETION' },
         participation: result,
       }),
-    ).toEqual({ type: 'PARTICIPATION', view: { kind: 'issue' } })
+    ).toEqual({ type: null, view: { kind: 'hidden' } })
   })
 
-  it('참가인증서 발급 body는 PARTICIPATION과 availability participantId를 보낸다', async () => {
-    postMock.mockResolvedValue({
-      data: {
-        certificateIssueId: 17,
-        certificateType: 'PARTICIPATION',
-        issueStatus: 'ISSUED',
-        participantId: 1694970,
-      },
-    })
-    const result = await issueMyCertificate({
-      programId: 186339,
-      participantId: 1694970,
-      certificateType: 'PARTICIPATION',
-      issueReason: 'PERSONAL_ARCHIVE',
-    })
-    expect(postMock).toHaveBeenCalledWith('/api/portal/me/certificates/issues', {
-      programId: 186339,
-      participantId: 1694970,
-      certificateType: 'PARTICIPATION',
-      issueReason: 'PERSONAL_ARCHIVE',
-    })
-    expect(result.certificateIssueId).toBe(17)
-  })
-
-  it('참가인증서 재발급은 같은 certificateIssueId 17을 에러로 보지 않는다', async () => {
-    postMock.mockResolvedValue({
-      data: {
-        certificateIssueId: 17,
+  it('issueMyCertificate는 PARTICIPATION을 네트워크로 보내지 않는다', async () => {
+    await expect(
+      issueMyCertificate({
         programId: 186339,
         participantId: 1694970,
         certificateType: 'PARTICIPATION',
-        issueStatus: 'ISSUED',
-        issuedAt: '2026-06-02T09:00:00Z',
-      },
-    })
-    const result = await issueMyCertificate({
-      programId: 186339,
-      participantId: 1694970,
-      certificateType: 'PARTICIPATION',
-      issueReason: 'PERSONAL_ARCHIVE',
-    })
-    expect(result.certificateIssueId).toBe(17)
+        issueReason: 'PERSONAL_ARCHIVE',
+      }),
+    ).rejects.toThrow('참가인증서는 CMS 관리자만 발급할 수 있습니다.')
+    expect(postMock).not.toHaveBeenCalled()
+  })
+
+  it('포털은 참가인증서 PARTICIPATION POST를 CTA로 쓰지 않는다', () => {
+    expect(
+      resolveCertificateCtaView({
+        isTeacher: false,
+        applicationType: 'INDIVIDUAL',
+        programType: 'GENERAL_INDIVIDUAL',
+        availability: {
+          available: true,
+          canDownload: true,
+          existingIssueId: 17,
+          certificateType: 'PARTICIPATION',
+          participantId: 1694970,
+        },
+      }),
+    ).toEqual({ kind: 'hidden' })
   })
 
   it('availability는 COMPLETION 쿼리와 프로그램 path를 쓴다', async () => {
@@ -188,7 +173,7 @@ describe('개인 수료증 API 계약', () => {
     ).toEqual({ kind: 'download', issueId: 14 })
   })
 
-  it('참가인증서는 canDownload·existingIssueId여도 다운로드가 아니라 발급하기다', () => {
+  it('참가인증서는 available이어도 포털 CTA를 열지 않는다', () => {
     expect(
       resolveCertificateCtaView({
         isTeacher: false,
@@ -202,17 +187,17 @@ describe('개인 수료증 API 계약', () => {
           certificateType: 'PARTICIPATION',
         },
       }),
-    ).toEqual({ kind: 'issue' })
+    ).toEqual({ kind: 'hidden' })
   })
 
-  it('canIssueCertificate가 false여도 availability가 가능하면 발급 버튼이다', () => {
+  it('canIssueCertificate가 false여도 COMPLETION availability가 가능하면 발급 버튼이다', () => {
     expect(
       resolveCertificateCtaView({
         isTeacher: true,
         applicationType: 'INDIVIDUAL',
         programType: 'GENERAL_INDIVIDUAL',
         canIssueCertificate: false,
-        availability: { available: true, canDownload: false, certificateType: 'PARTICIPATION' },
+        availability: { available: true, canDownload: false, certificateType: 'COMPLETION' },
       }),
     ).toEqual({ kind: 'issue' })
   })
@@ -275,10 +260,10 @@ describe('개인 수료증 API 계약', () => {
           participantId: 1694970,
         },
       }),
-    ).toEqual({ type: 'PARTICIPATION', view: { kind: 'issue' } })
+    ).toEqual({ type: null, view: { kind: 'hidden' } })
   })
 
-  it('수료 미충족·참가 충족이면 참가인증서만 연다', () => {
+  it('수료 미충족이면 참가인증서 발급 CTA로 대체하지 않는다', () => {
     expect(
       resolveExclusivePersonalCertificateSlot({
         completion: {
@@ -294,7 +279,7 @@ describe('개인 수료증 API 계약', () => {
           participantId: 1694970,
         },
       }),
-    ).toEqual({ type: 'PARTICIPATION', view: { kind: 'issue' } })
+    ).toEqual({ type: null, view: { kind: 'hidden' } })
   })
 
   it('availability가 불가면 참가인증서도 숨긴다', () => {
@@ -423,6 +408,6 @@ describe('개인 수료증 API 계약', () => {
           certificateType: 'PARTICIPATION',
         },
       }),
-    ).toEqual({ type: 'PARTICIPATION', view: { kind: 'issue' } })
+    ).toEqual({ type: null, view: { kind: 'hidden' } })
   })
 })

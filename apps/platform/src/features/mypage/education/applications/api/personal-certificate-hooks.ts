@@ -25,7 +25,7 @@ export function usePersonalCertificateAvailabilityQuery(options: {
     options.programId != null && String(options.programId).trim()
       ? String(options.programId).trim()
       : null
-  const certificateType = options.certificateType?.trim() || 'AUTO'
+  const certificateType = options.certificateType?.trim() || 'COMPLETION'
   const enabled =
     options.enabled !== false &&
     isRemoteApiConfigured() &&

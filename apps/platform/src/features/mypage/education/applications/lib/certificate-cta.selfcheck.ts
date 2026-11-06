@@ -149,7 +149,7 @@ assert.equal(
       participantId: 1694970,
     },
   }).kind,
-  'issue',
+  'hidden',
 )
 
 assert.equal(
@@ -192,14 +192,14 @@ assert.equal(
   }),
   1694970,
 )
-assert.deepEqual(
+assert.equal(
   resolvePortalCertificateAvailabilityCtaView({
     available: true,
     canDownload: true,
     existingIssueId: 17,
     certificateType: 'PARTICIPATION',
-  }),
-  { kind: 'issue' },
+  }).kind,
+  'hidden',
 )
 assert.equal(
   resolvePortalCertificateAvailabilityCtaView({
@@ -223,7 +223,7 @@ assert.deepEqual(
     completion: { kind: 'hidden' },
     participation: { kind: 'issue' },
   }),
-  { completion: { kind: 'hidden' }, participation: { kind: 'issue' } },
+  { completion: { kind: 'hidden' }, participation: { kind: 'hidden' } },
 )
 assert.deepEqual(
   resolveExclusivePersonalCertificateViews({
@@ -286,7 +286,7 @@ assert.deepEqual(
       participantId: 1694970,
     },
   }),
-  { type: 'PARTICIPATION', view: { kind: 'issue' } },
+  { type: null, view: { kind: 'hidden' } },
 )
 
 assert.deepEqual(
@@ -310,7 +310,7 @@ assert.deepEqual(
       participantId: 1694970,
     },
   }),
-  { type: 'PARTICIPATION', view: { kind: 'issue' } },
+  { type: null, view: { kind: 'hidden' } },
 )
 
 assert.deepEqual(
@@ -328,13 +328,22 @@ assert.deepEqual(
       certificateType: 'PARTICIPATION',
     },
   }),
-  { type: 'PARTICIPATION', view: { kind: 'issue' } },
+  { type: null, view: { kind: 'hidden' } },
 )
 
 assert.equal(
   resolvePortalCertificateAvailabilityCtaView({
     available: false,
     canDownload: false,
+    existingIssueId: 18,
+    certificateType: 'COMPLETION',
+  }).kind,
+  'hidden',
+)
+assert.equal(
+  resolvePortalCertificateAvailabilityCtaView({
+    available: false,
+    canDownload: true,
     existingIssueId: 18,
     certificateType: 'COMPLETION',
   }).kind,

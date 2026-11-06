@@ -35,7 +35,7 @@ export type MemberCertificateAvailabilityResponse = {
 export type PortalCertificateIssueRequest = {
   programId: number
   participantId: number
-  /** 참가인증서는 리터럴 PARTICIPATION. 생략/AUTO는 서버가 COMPLETION으로 본다 */
+  /** 포털 발급은 COMPLETION만. PARTICIPATION 자가 발급은 보내지 않는다. */
   certificateType?: PortalPersonalCertificateType
   issueReason?: PortalCertificateIssueReason
 }

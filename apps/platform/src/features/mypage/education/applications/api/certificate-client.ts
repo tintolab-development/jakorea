@@ -40,10 +40,14 @@ export async function fetchMyCertificateAvailability(
 export async function issueMyCertificate(
   input: PortalCertificateIssueRequest,
 ): Promise<ReturnType<typeof mapPortalCertificateIssueResult>> {
+  const certificateType = input.certificateType ?? PORTAL_CERTIFICATE_TYPE_COMPLETION
+  if (String(certificateType).trim().toUpperCase() === 'PARTICIPATION') {
+    throw new Error('참가인증서는 CMS 관리자만 발급할 수 있습니다.')
+  }
   const { data } = await axiosClient.post<unknown>(portalCertificateIssuePath(), {
     programId: input.programId,
     participantId: input.participantId,
-    certificateType: input.certificateType ?? PORTAL_CERTIFICATE_TYPE_COMPLETION,
+    certificateType,
     issueReason: input.issueReason ?? 'PERSONAL_ARCHIVE',
   })
   return mapPortalCertificateIssueResult(data)
