@@ -9,6 +9,7 @@ import type {
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
 import { formatInstitutionRegionForCalendarListDisplay } from '@/shared/lib/format-institution-region-display'
+import { formatEducationRoundSessionLabel } from '@/shared/lib/education-schedule-name'
 import type { ScheduleColorPair } from '@/features/program/shared/ui/program-schedule-colors'
 
 export type ParticipatingInstitutionsCalendarDayListEvent = {
@@ -38,10 +39,11 @@ export function parseParticipatingSessionTimeRange(
 function resolveParticipatingSessionPeriodLabel(session: ParticipatingSchoolSession): string {
   const classNum = session.classNum?.trim()
   if (classNum) {
-    if (classNum.endsWith('교시') || classNum.endsWith('차시')) return classNum
+    if (classNum.endsWith('교시')) return classNum
+    if (classNum.endsWith('차시') || classNum.endsWith('회차')) return classNum
     return `${classNum}교시`
   }
-  return `${session.round}차시`
+  return formatEducationRoundSessionLabel({ roundNumber: session.round })
 }
 
 export function formatParticipatingSessionLine(session: ParticipatingSchoolSession): string {

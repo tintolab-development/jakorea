@@ -4,11 +4,18 @@ import { resolveEffectiveGeneralProgramTypeFields } from '@/features/program/gen
 import { resolveGeneralProgramCommonInfo } from '@/features/program/general/lib/detail-common-info-display'
 import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/program/general/lib/institution-application-session-display'
 import { resolveInstitutionApplicationProgramBridge } from '@/features/program/general/lib/institution-application-program-bridge'
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import {
+  formatCmsScheduleDisplayLabel,
+  formatOrganizationScheduleRangeLabel,
+} from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { resolveSchoolDetailAttendanceSessionLeadLabel } from '@/features/program/general/lib/school-detail-attendance-display'
 import { PRE_EDUCATION_DISPLAY_LABEL } from '@/features/program/general/lib/schedule-detail-form'
 import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
-import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+import {
+  formatEducationRoundSessionLabel,
+  parseConfirmedCurriculumSessionCount,
+  toDisplayEducationScheduleName,
+} from '@/shared/lib/education-schedule-name'
 import type { Program } from '@/types/domain'
 
 function padTimePart(part: string): string {
@@ -91,6 +98,14 @@ function readCurriculumSingleDateTotalSessionText(
       ? Math.trunc(fromCount)
       : (shape.curriculumSessionLabels ?? []).filter(label => /\d+\s*차시/.test(label)).length
   return total > 1 ? `${total}차시` : null
+}
+
+function readCurriculumSessionCountNumber(
+  session: { round?: number; classNum?: string; duration?: string; scheduleLabel?: string },
+  shape: GeneralEducationScheduleShape | null | undefined
+): number | null {
+  const text = readCurriculumSessionText(session, shape)
+  return parseConfirmedCurriculumSessionCount(text)
 }
 
 function readCurriculumSessionText(
@@ -295,15 +310,36 @@ export function prepareGeneralEducationScheduleSessions(
   return [...sessions]
 }
 
-/** 스크린샷 형식: YYYY.MM.DD(요일) HH:mm ~ HH:mm | N차시 */
+/** 스크린샷 형식: YYYY.MM.DD(요일) HH:mm ~ HH:mm | N회차 */
 export function formatParticipatingSchoolSessionLine(s: ParticipatingSchoolSession): string {
+  const fromInstant = formatOrganizationScheduleRangeLabel(s.startAt, s.endAt)
   const scheduleLabel = s.scheduleLabel?.trim()
-  if (scheduleLabel) return formatCmsScheduleDisplayLabel(scheduleLabel)
+  let base = ''
+  if (fromInstant) {
+    base = fromInstant
+  } else if (scheduleLabel) {
+    base = formatCmsScheduleDisplayLabel(scheduleLabel)
+  } else {
+    const datePart = s.date.replace(/\s/g, '')
+    const [startRaw, endRaw] = s.timeRange.split('~')
+    const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
+    base = formatCmsScheduleDisplayLabel(`${datePart}(${s.dayOfWeek}) ${timePart}`)
+  }
+  const roundLabel = resolveAssignmentRoundSessionSuffix(s)
+  if (roundLabel && !base.includes(roundLabel)) return `${base} | ${roundLabel}`
+  return base
+}
 
-  const datePart = s.date.replace(/\s/g, '')
-  const [startRaw, endRaw] = s.timeRange.split('~')
-  const timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
-  return formatCmsScheduleDisplayLabel(`${datePart}(${s.dayOfWeek}) ${timePart} | ${s.round}차시`)
+function resolveAssignmentRoundSessionSuffix(
+  s: Pick<ParticipatingSchoolSession, 'round' | 'classNum' | 'duration' | 'scheduleLabel'>
+): string {
+  return formatEducationRoundSessionLabel({
+    roundNumber: s.round,
+    curriculumSessionCount:
+      parseConfirmedCurriculumSessionCount(s.classNum) ??
+      parseConfirmedCurriculumSessionCount(s.duration) ??
+      parseConfirmedCurriculumSessionCount(s.scheduleLabel),
+  })
 }
 
 function participatingSchoolSessionToApplicantInput(
@@ -369,26 +405,43 @@ export function formatVolunteerAssignmentScheduleLine(
     timePart = `${padTimePart(startRaw)} ~ ${padTimePart(endRaw ?? startRaw)}`
   }
 
+  const fromInstant = formatOrganizationScheduleRangeLabel(s.startAt, s.endAt)
+  const dateTimeBase = fromInstant || (timePart ? `${dateWithDow} ${timePart}` : dateWithDow)
+
   if (!program) {
-    const base = timePart ? `${dateWithDow} ${timePart}` : dateWithDow
-    if (s.round) return formatCmsScheduleDisplayLabel(`${base} | ${s.round}차시`)
-    return formatCmsScheduleDisplayLabel(base)
+    const roundLabel = resolveAssignmentRoundSessionSuffix(s)
+    if (roundLabel) return formatCmsScheduleDisplayLabel(`${dateTimeBase} | ${roundLabel}`)
+    return formatCmsScheduleDisplayLabel(dateTimeBase)
   }
 
-  const { sessionRound } = resolveEffectiveGeneralProgramTypeFields({
+  const shape: GeneralEducationScheduleShape = {
+    educationStructure: program.generalProgramEducationStructure,
+    sessionRound: program.generalProgramSessionRound,
+    educationScheduleMode: program.generalCommonInfo?.educationScheduleMode,
+    curriculumSessionCount: program.generalCommonInfo?.curriculumSessions?.length,
+    curriculumSessionLabels: readCurriculumSessionLabels(program),
+  }
+  const { sessionRound, educationStructure } = resolveEffectiveGeneralProgramTypeFields({
     generalProgramAudience: program.generalProgramAudience,
     generalProgramEducationStructure: program.generalProgramEducationStructure,
     generalProgramSessionRound: program.generalProgramSessionRound,
     curriculumSessions: program.generalCommonInfo?.curriculumSessions ?? null,
   })
 
+  if (educationStructure === 'curriculum') {
+    const roundLabel = formatEducationRoundSessionLabel({
+      roundNumber: sessionRound === 'single' ? null : s.round,
+      curriculumSessionCount: readCurriculumSessionCountNumber(s, shape),
+    })
+    if (roundLabel) return formatCmsScheduleDisplayLabel(`${dateTimeBase} | ${roundLabel}`)
+    return formatCmsScheduleDisplayLabel(dateTimeBase)
+  }
+
   const sessionName =
     sessionRound === 'single' ? undefined : resolveVolunteerAssignmentSessionName(s, program)
 
-  if (timePart && sessionName) return formatCmsScheduleDisplayLabel(`${dateWithDow} ${timePart} | ${sessionName}`)
-  if (timePart) return formatCmsScheduleDisplayLabel(`${dateWithDow} ${timePart}`)
-  if (sessionName) return formatCmsScheduleDisplayLabel(`${dateWithDow} | ${sessionName}`)
-  return formatCmsScheduleDisplayLabel(dateWithDow)
+  if (sessionName) return formatCmsScheduleDisplayLabel(`${dateTimeBase} | ${sessionName}`)
+  return formatCmsScheduleDisplayLabel(dateTimeBase)
 }
 
 export function buildParticipatingSchoolSessionLines(

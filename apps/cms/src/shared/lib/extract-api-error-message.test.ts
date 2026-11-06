@@ -8,6 +8,21 @@ import {
 } from './extract-api-error-message'
 
 describe('extractApiErrorMessage', () => {
+  it('매핑 없는 코드만 있으면 코드를 노출하지 않고 fallback을 쓴다', () => {
+    expect(
+      extractApiErrorMessage(
+        { success: false, error: { code: 'UNKNOWN_SNAKE_CODE' } },
+        { fallback: '요청 처리에 실패했습니다.' }
+      )
+    ).toBe('요청 처리에 실패했습니다.')
+    expect(
+      extractApiErrorMessage(
+        { success: false, error: { code: 'UNKNOWN_SNAKE_CODE' } },
+        { httpStatus: 409 }
+      )
+    ).toBe('요청한 변경이 기존 데이터와 충돌합니다.')
+  })
+
   it('error.message를 top-level message보다 우선한다', () => {
     expect(
       extractApiErrorMessage({

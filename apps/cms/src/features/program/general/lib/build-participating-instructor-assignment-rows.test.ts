@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildParticipatingInstructorAssignedScheduleRowsFromBoard,
   buildParticipatingInstructorWaitingScheduleRowsFromBoard,
   buildParticipatingInstructorWaitingSchoolRowsFromBoard,
   createSessionInstructorCapChecker,
@@ -433,5 +434,83 @@ describe('mergeInstitutionWaitingRowsBySchool (기관형 배정 확정)', () => 
     expect(qa?.sessions?.map(s => s.resolvedScheduleId).sort()).toEqual([187447, 187448])
     expect(qa?.organizationApplicationId).toBe('1691529')
     expect(rows.find(r => r.schoolId === '1695004')?.sessions).toHaveLength(1)
+  })
+})
+
+describe('buildParticipatingInstructorAssignedScheduleRowsFromBoard (개인형)', () => {
+  it('교육 시작 시각 오름차순으로 정렬하고 시간·교육 진행 장소·거리를 표시한다', () => {
+    const rows = buildParticipatingInstructorAssignedScheduleRowsFromBoard({
+      instructorMemberId: '1695076',
+      schoolRows: [school('org-1', '9', '기관명 쓰지 않음', [session(302, '2026.11.05')])],
+      scheduleLabelById: new Map([
+        ['301', { date: '2026.11.05(수)', time: '10:00 ~ 12:00', session: '1차시' }],
+        ['302', { date: '2026.11.06(목)', time: '14:00 ~ 16:00', session: '2차시' }],
+      ]),
+      schedules: [
+        {
+          id: 302,
+          startAt: '2026-11-06T05:00:00Z',
+          sessionNo: 2,
+          locationName: '일정별 장소 B',
+        },
+        {
+          id: 301,
+          startAt: '2026-11-05T01:00:00Z',
+          sessionNo: 1,
+          locationName: '공통 장소 A',
+        },
+      ],
+      assignments: [
+        {
+          assignmentId: 2,
+          programId: 1,
+          scheduleId: 302,
+          instructorMemberId: 1695076,
+          assignmentStatus: 'ASSIGNED',
+          organizationName: '기관명',
+          lectureLocationName: '일정별 장소 B',
+          distanceKm: 12.3,
+        } as InstructorAssignmentListItemEnriched,
+        {
+          assignmentId: 1,
+          programId: 1,
+          scheduleId: 301,
+          instructorMemberId: 1695076,
+          assignmentStatus: 'ASSIGNED',
+          organizationName: '기관명',
+          lecturePlaceAddress: '서울 강의장 주소',
+          distanceKm: 3,
+          longDistance: true,
+        } as InstructorAssignmentListItemEnriched,
+      ],
+    })
+    expect(rows.map(r => r.no)).toEqual([1, 2])
+    expect(rows.map(r => r.scheduleId)).toEqual(['301', '302'])
+    expect(rows[0]?.scheduleLabel).toBe('2026.11.05(수) | 10:00 ~ 12:00 | 1차시')
+    expect(rows[1]?.scheduleLabel).toBe('2026.11.06(목) | 14:00 ~ 16:00 | 2차시')
+    expect(rows[0]?.lectureLocation).toBe('서울 강의장 주소')
+    expect(rows[1]?.lectureLocation).toBe('일정별 장소 B')
+    expect(rows[0]?.distanceFromHome).toBe('3km (장거리)')
+    expect(rows[1]?.distanceFromHome).toBe('12.3km')
+  })
+
+  it('assignment 출강지가 없으면 같은 보드 일정 locationName/address를 쓰고 기관명은 쓰지 않는다', () => {
+    const rows = buildParticipatingInstructorAssignedScheduleRowsFromBoard({
+      instructorMemberId: '1',
+      schoolRows: [school('org-1', '9', '서울초등학교', [session(10, '2026.11.05')])],
+      scheduleLabelById: new Map(),
+      schedules: [{ id: 10, locationName: '교육 진행 장소', address: '도로명' }],
+      assignments: [
+        {
+          assignmentId: 9,
+          programId: 1,
+          scheduleId: 10,
+          instructorMemberId: 1,
+          assignmentStatus: 'ASSIGNED',
+          organizationName: '서울초등학교',
+        } as InstructorAssignmentListItemEnriched,
+      ],
+    })
+    expect(rows[0]?.lectureLocation).toBe('교육 진행 장소')
   })
 })

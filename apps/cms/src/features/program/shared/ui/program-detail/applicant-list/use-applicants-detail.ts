@@ -817,10 +817,9 @@ export function useApplicantsDetail({
         await refresh()
         if ((response.failureCount ?? failures.length) > 0) {
           const lines = failures.map(failure => {
-            const code = failure.code?.trim()
             const message = failure.message?.trim() || '처리하지 못했습니다.'
             const id = failure.id != null ? `${failure.id}: ` : ''
-            return `${id}${message}${code ? ` (${code})` : ''}`
+            return `${id}${message}`
           })
           showAlert({
             title: '일부 승인 실패',

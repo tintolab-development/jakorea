@@ -153,13 +153,11 @@ function appendTraceId(message: string, error: unknown, force = false): string {
 function appendDebugMeta(
   message: string,
   error: unknown,
-  options?: { code?: string; serverMessage?: string }
+  options?: { serverMessage?: string }
 ): string {
   const lines = [message]
-  const code = options?.code?.trim()
-  if (code) lines.push(`code: ${code}`)
   const serverMessage = options?.serverMessage?.trim()
-  if (serverMessage && serverMessage !== message && serverMessage !== code) {
+  if (serverMessage && serverMessage !== message) {
     lines.push(`message: ${serverMessage}`)
   }
   return appendTraceId(lines.join('\n'), error, true)
@@ -349,7 +347,6 @@ export function getNotificationsApiErrorMessage(error: unknown, fallback: string
   if (status === 503 || code === 'PROVIDER_UNAVAILABLE') {
     const base = ERROR_CODE_MESSAGES.PROVIDER_UNAVAILABLE
     return appendDebugMeta(`${base}\n\n${PROVIDER_UNAVAILABLE_HINT}`, error, {
-      code: code || 'PROVIDER_UNAVAILABLE',
       serverMessage,
     })
   }

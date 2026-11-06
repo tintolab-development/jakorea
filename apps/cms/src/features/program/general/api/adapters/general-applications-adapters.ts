@@ -484,15 +484,20 @@ export function mapOrganizationApplicationListSessionsToConfirmedSessions(
 
     const dateParts = formatPreferredScheduleDate(start)
     const round = resolveOrganizationListSessionRound(session, index)
-    const timeLabel = formatKoreanInterviewTime(start)
+    const endRaw = session.endAt?.trim()
+    const end = endRaw ? new Date(endRaw) : null
+    const timeRange =
+      end != null && !Number.isNaN(end.getTime())
+        ? `${formatKoreanInterviewTime(start)} ~ ${formatKoreanInterviewTime(end)}`
+        : formatKoreanInterviewTime(start)
 
     result.push({
       round,
       ...dateParts,
       duration: '-',
       format: '-',
-      classNum: `${round}차시`,
-      timeRange: timeLabel,
+      classNum: '',
+      timeRange,
       status: 'pending',
       resolvedScheduleId: Math.trunc(scheduleId),
       startAt: startRaw,

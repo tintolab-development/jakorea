@@ -3,6 +3,7 @@ import type { Program } from '@/types/domain'
 import {
   getOperationalFormSpec,
   isSystemCatalogOnlyFormType,
+  isSystemCatalogOnlyTemplateCode,
   listAllRegistrationCreateFormSpecs,
   listRecruitmentRowApplicationBindings,
   listVisibleOperationalFormSpecs,
@@ -22,6 +23,8 @@ describe('isSystemCatalogOnlyFormType', () => {
     expect(isSystemCatalogOnlyFormType('CERTIFICATE')).toBe(true)
     expect(isSystemCatalogOnlyFormType('APPLICATION')).toBe(false)
     expect(isSystemCatalogOnlyFormType('RECRUITMENT')).toBe(false)
+    expect(isSystemCatalogOnlyTemplateCode('registration-general')).toBe(true)
+    expect(isSystemCatalogOnlyTemplateCode('application-participant-school')).toBe(false)
   })
 })
 

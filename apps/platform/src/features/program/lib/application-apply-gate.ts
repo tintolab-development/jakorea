@@ -18,6 +18,7 @@ export type ProgramApplyGateModalKind = 'not-eligible' | 'already-applied' | 're
  * 폼 조회 403은 canApply 없이 code만 오므로, 이 사유는 canApply 생략이어도 모달이다.
  */
 const NOT_ELIGIBLE_BLOCKED_REASONS = new Set<PortalApplicationBlockedReason>([
+  /** 서버 canApply=true 이면 resolveProgramApplyGateModal이 이 사유를 무시한다(기관형 성인·강사 완화). */
   'VOLUNTEER_RECRUITMENT_TARGET_MISMATCH',
   'COLLEGE_STUDENT_REQUIRED',
   'ORGANIZATION_MEMBERSHIP_REQUIRED',
@@ -59,7 +60,8 @@ export function isAlreadyAppliedApplicationReason(
   return (
     key === 'ALREADY_APPLIED' ||
     key === 'APPLICATION_ALREADY_SUBMITTED' ||
-    key === 'UJAT_ORGANIZATION_ALREADY_APPLIED'
+    key === 'UJAT_ORGANIZATION_ALREADY_APPLIED' ||
+    key === 'CONSTRAINT_VIOLATION'
   )
 }
 

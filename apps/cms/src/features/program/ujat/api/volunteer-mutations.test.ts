@@ -15,7 +15,6 @@ describe('UJAT 봉사자 최종 결과 알림 필드', () => {
       )
     ).toEqual({
       result: 'PASS',
-      reason: undefined,
       notifyTiming: 'ON_ANNOUNCEMENT',
     })
   })

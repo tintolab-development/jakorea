@@ -4,7 +4,7 @@ import { DetailInfoForm } from '@/shared/components/detail-info-form'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
 import type { GeneralVolunteerApplicantRow } from '@/features/program/general/model/volunteer-applicant'
 import { formatGeneralJaVolunteerExperienceLabel } from '@/features/program/general/lib/volunteer-screening-constants'
-import { mapVolunteerDocumentStatusToApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
+import { mapVolunteerProgramApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { IndividualApplicantId1365Cell } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/individual-screening-sections'
 import {
@@ -63,9 +63,7 @@ function resolveStatusField(
     return {
       label: '프로그램 승인 현황',
       value: (
-        <ApprovalStatusText
-          status={mapVolunteerDocumentStatusToApprovalStatus(applicant.documentScreeningStatus)}
-        />
+        <ApprovalStatusText status={mapVolunteerProgramApprovalStatus(applicant)} />
       ),
     }
   }

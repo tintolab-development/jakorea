@@ -437,9 +437,16 @@ function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
 function mergeTrainedTeacherUpdateProgram(program: Program, patch: Partial<Program>): Program {
   const merged: Program = { ...program, ...patch }
   if (patch.generalCommonInfo) {
+    const existingRecruitment = program.generalCommonInfo?.participantRecruitmentInfo
+    const patchRecruitment = patch.generalCommonInfo.participantRecruitmentInfo
+    const { participantRecruitmentInfo: _ignored, ...patchCommonRest } = patch.generalCommonInfo
     merged.generalCommonInfo = {
       ...program.generalCommonInfo,
-      ...patch.generalCommonInfo,
+      ...patchCommonRest,
+      participantRecruitmentInfo:
+        patchRecruitment != null && typeof patchRecruitment === 'object'
+          ? { ...existingRecruitment, ...patchRecruitment }
+          : existingRecruitment,
     }
   }
   return merged

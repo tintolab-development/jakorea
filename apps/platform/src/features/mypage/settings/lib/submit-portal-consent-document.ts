@@ -31,6 +31,7 @@ import {
 import { buildPortalSignatureProfileRequest } from './portal-signature-profile'
 import { resolvePortalConsentCreateType } from './settings-consent-key'
 import type { FormSignatureValue } from '@/shared/ui/pf-form-signature-block/types'
+import type { PortalConsentDocumentDetail } from '../api/portal-consent-documents.types'
 import { buildPortalPortraitRightsConsentCreateRequest } from './portal-portrait-consent-create-request'
 import { resolvePortraitPortalCompleteHints } from './resolve-portrait-portal-complete'
 
@@ -127,6 +128,20 @@ async function signDocumentSignatureFields(
   }
 }
 
+function readCreatedConsentTemplateVersion(created: PortalConsentDocumentDetail): {
+  templateVersionId?: number | null
+  templateCode?: string | null
+} {
+  return {
+    templateVersionId:
+      created.formTemplateVersion?.templateVersionId ??
+      created.filledDocument?.templateVersionId ??
+      null,
+    templateCode:
+      created.formTemplateVersion?.templateCode ?? created.filledDocument?.templateCode ?? null,
+  }
+}
+
 const PAYMENT_BASIC_INFO_TEMPLATE_CODES = new Set([
   'agreement-third-party',
   'document-payment-order-pre-consent',
@@ -175,10 +190,11 @@ async function resolveDocumentForSubmit(
   if (documentId == null) {
     throw new Error('동의서 문서를 만들지 못했습니다.')
   }
+  const version = readCreatedConsentTemplateVersion(created)
   return {
     documentId,
-    templateVersionId: created.formTemplateVersion?.templateVersionId ?? null,
-    templateCode: created.formTemplateVersion?.templateCode ?? null,
+    templateVersionId: version.templateVersionId,
+    templateCode: version.templateCode,
   }
 }
 
@@ -231,12 +247,12 @@ export async function submitPortalPortraitConsentFromWriteState(
 
   const filledDocument = buildPortraitFilledDocument(state.draft)
   const hints = resolvePortraitPortalCompleteHints(state.draft)
+  const version = readCreatedConsentTemplateVersion(created)
 
   await completePortalConsentDocument(documentId, {
     filledDocument: {
-      templateVersionId: created.formTemplateVersion?.templateVersionId ?? null,
-      templateCode:
-        created.formTemplateVersion?.templateCode?.trim() || filledDocument.templateCode,
+      templateVersionId: version.templateVersionId,
+      templateCode: version.templateCode?.trim() || filledDocument.templateCode,
       schemaJson: filledDocument.schemaJson as unknown as Record<string, unknown>,
     },
     consentStatus: hints.consentStatus,

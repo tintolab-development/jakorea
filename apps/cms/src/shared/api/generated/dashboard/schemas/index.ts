@@ -323,6 +323,7 @@ export * from './certificateDownloadLogResponse';
 export * from './certificateEligibilityResponse';
 export * from './certificateIssueListItemResponse';
 export * from './certificateIssueRequest';
+export * from './certificateIssueRequestCertificateType';
 export * from './certificateIssueRequestIssueReason';
 export * from './certificateIssueResponse';
 export * from './certificateParticipantBulkDownloadRequest';

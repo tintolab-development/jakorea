@@ -5,6 +5,10 @@ import type { ParticipatingSchoolSession } from '@/features/program/general/mode
 import { resolveGeneralProgramLocalById } from '@/features/program/general/lib/general-program-local-cache'
 import { getGeneralInstitutionApplicationsForProgram } from '@/features/program/general/lib/institution-applications'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import {
+  formatEducationRoundSessionLabel,
+  parseConfirmedCurriculumSessionCount,
+} from '@/shared/lib/education-schedule-name'
 import type { Program } from '@/types/domain'
 
 export type InstructorLectureAssignSlot = {
@@ -130,8 +134,15 @@ function normalizeTimeRange(timeRange: string | null | undefined): string {
 }
 
 function sessionLabelFromSession(session: ParticipatingSchoolSession): string {
-  if (session.classNum?.includes('차시')) return session.classNum
-  return `${session.round}차시`
+  return (
+    formatEducationRoundSessionLabel({
+      roundNumber: session.round,
+      curriculumSessionCount:
+        parseConfirmedCurriculumSessionCount(session.classNum) ??
+        parseConfirmedCurriculumSessionCount(session.duration) ??
+        parseConfirmedCurriculumSessionCount(session.scheduleLabel),
+    }) || '-'
+  )
 }
 
 function regionDisplay(region: string): string {
@@ -158,12 +169,9 @@ function formatKstClock(raw: string | null | undefined): string | null {
   return `${hour}:${minute}`
 }
 
-/** 배정 일정 차시 라벨 — sessionNo 원본만 사용. 없으면 임의 번호를 만들지 않고 '-'. */
+/** 배정 일정 회차 라벨 — sessionNo 원본만 회차로 사용. classNum 차시 토큰으로 대체하지 않는다. */
 function assignedSessionLabel(session: ParticipatingSchoolSession): string {
-  const sessionNo = session.sessionNo
-  return typeof sessionNo === 'number' && Number.isFinite(sessionNo) && sessionNo > 0
-    ? `${sessionNo}차시`
-    : '-'
+  return formatEducationRoundSessionLabel({ roundNumber: session.sessionNo }) || '-'
 }
 
 function assignedSessionTimeRange(session: ParticipatingSchoolSession): string {
@@ -570,7 +578,7 @@ export function parseIndividualInstructorLectureAssignSchedule(
     const parsed = parseEducationScheduleLine(line)
     if (!parsed) return
     const sessionRound = index + 1
-    const sessionLabel = `${sessionRound}차시`
+    const sessionLabel = formatEducationRoundSessionLabel({ roundNumber: sessionRound }) || '-'
     const timeRange = normalizeIndividualTimeRange(parsed.startTime, parsed.endTime)
     const key = buildIndividualSlotKey(parsed.dateKey, sessionRound)
     slots.push({

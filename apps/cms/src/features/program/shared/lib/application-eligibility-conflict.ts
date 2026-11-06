@@ -14,6 +14,13 @@ const APPLICATION_DECISION_CONFLICT = 'APPLICATION_DECISION_CONFLICT'
 export const PORTRAIT_RIGHTS_CONSENT_REQUIRED = 'PORTRAIT_RIGHTS_CONSENT_REQUIRED'
 export const EXTERNAL_1365_ID_REQUIRED = 'EXTERNAL_1365_ID_REQUIRED'
 
+/** 봉사자 승인 409 — 1365 ID 미등록 */
+export const VOLUNTEER_1365_APPROVAL_BLOCKED_ALERT = {
+  title: '봉사자 신청 승인 불가 안내',
+  content:
+    '1365 ID가 등록되지 않은 봉사 신청자는\n프로그램 신청 승인이 불가합니다.',
+} as const
+
 type EligibilityRequirement =
   | typeof PORTRAIT_RIGHTS_CONSENT_REQUIRED
   | typeof EXTERNAL_1365_ID_REQUIRED
@@ -70,6 +77,38 @@ function portraitConsentDates(details: Record<string, string | undefined>): stri
     .filter((entry): entry is [string, string] => Boolean(entry[1]?.trim()))
     .map(([label, value]) => `${label} ${formatDateDot(value)}`)
   return parts.length > 0 ? parts.join(', ') : null
+}
+
+function readConflictResponseData(error: unknown): unknown {
+  if (!error || typeof error !== 'object' || !('response' in error)) return null
+  return (error as { response?: { data?: unknown } }).response?.data ?? null
+}
+
+/**
+ * 봉사자 승인에서 1365 ID만 없을 때의 안내.
+ * 초상권 등 다른 자격 미충족이 함께 있으면 `null` — 기존 자격 안내를 쓴다.
+ */
+export function readVolunteer1365ApprovalBlockedAlert(
+  error: unknown
+): { title: string; content: string } | null {
+  const data = readConflictResponseData(error)
+  if (!data || extractApiErrorCode(data) !== APPLICATION_DECISION_CONFLICT) return null
+  const requirements = parseMissingEligibilityRequirements(extractApiErrorDetails(data))
+  if (
+    !requirements.includes(EXTERNAL_1365_ID_REQUIRED) ||
+    requirements.includes(PORTRAIT_RIGHTS_CONSENT_REQUIRED)
+  ) {
+    return null
+  }
+  return VOLUNTEER_1365_APPROVAL_BLOCKED_ALERT
+}
+
+/** 일괄 승인 `failures[]` — details 없이 code·message만 올 때 */
+export function isVolunteer1365ApprovalBlockedFailure(
+  failure: { code?: string | null; message?: string | null } | null | undefined
+): boolean {
+  if (failure?.code?.trim() !== APPLICATION_DECISION_CONFLICT) return false
+  return /1365/.test(failure.message ?? '')
 }
 
 /**

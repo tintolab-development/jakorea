@@ -13,7 +13,10 @@ import type {
   ParticipatingSchoolRow,
   ParticipatingSchoolSession,
 } from '@/features/program/general/model/participating-schools'
-import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import {
+  formatCmsScheduleDisplayLabel,
+  formatOrganizationScheduleRangeLabel,
+} from '@/features/program/general/lib/organization-preferred-schedule-label'
 import { buildParticipatingSchoolSessionLines } from '@/features/program/general/lib/participating-school-session-display'
 import { getParticipatingSchoolAssignmentSessions } from '@/features/program/general/lib/participating-school-assignment-sessions'
 
@@ -98,6 +101,8 @@ function formatAvailabilityScheduleLine(
   const label = scheduleLabelById.get(String(item.scheduleId))
   const fromBoard = [label?.date, label?.time, label?.session].filter(Boolean)
   if (fromBoard.length > 0) return fromBoard.join(' | ')
+  const fromInstant = formatOrganizationScheduleRangeLabel(item.startAt, item.endAt)
+  if (fromInstant) return fromInstant
   const start = item.startAt?.trim() ? formatCmsScheduleDisplayLabel(item.startAt) : ''
   const end = item.endAt?.trim() ? formatCmsScheduleDisplayLabel(item.endAt) : ''
   if (start && end && start !== end) return `${start} ~ ${end}`

@@ -122,7 +122,7 @@ export function resolveLectureFeeBasisFromParticipatingRow(
   return {
     type: inferred ?? 'special_lecture',
     measure: DEFAULT_LECTURE_FEE_MEASURE,
-    amount: parseLectureFeeAmountDigits(row.lectureFeeAmount) || '915000',
+    amount: parseLectureFeeAmountDigits(row.lectureFeeAmount),
   }
 }
 

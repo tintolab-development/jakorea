@@ -7,7 +7,7 @@
  */
 
 /**
- * 회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료.
+ * 회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료.
  */
 export type ApplicationListItemResponseDisplayStatus = typeof ApplicationListItemResponseDisplayStatus[keyof typeof ApplicationListItemResponseDisplayStatus];
 

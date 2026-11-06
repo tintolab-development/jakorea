@@ -131,6 +131,7 @@ export function useParticipatingInstructorInstitutionAssignment(input: {
       instructorMemberId,
       schoolRows: input.schoolRows,
       scheduleLabelById: board.scheduleLabelById,
+      schedules: board.schedules,
     })
 
     if (useCompanySchoolBoard) {

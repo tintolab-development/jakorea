@@ -608,6 +608,33 @@ function testTrainedTeacherPeriodDateBounds() {
     } as never),
     null,
   )
+  assert.equal(
+    findMissingRequiredBottomConsentId({
+      schemaVersion: 1,
+      formSettings: {},
+      paragraphs: [
+        {
+          id: 'program-application-institution-seed-sex-offense-consent-submission',
+          kind: 'single_item',
+          variant: 'vertical_table',
+          showBottomConsent: true,
+          requiredMark: true,
+          answerRequired: true,
+          bottomConsent: null,
+        },
+        {
+          id: 'program-application-institution-seed-personal-info',
+          kind: 'single_item',
+          variant: 'vertical_table',
+          showBottomConsent: true,
+          requiredMark: true,
+          answerRequired: true,
+          bottomConsent: 'agree',
+        },
+      ],
+    } as never),
+    null,
+  )
 
   assert.equal(
     findIncompletePreferredScheduleMessage([

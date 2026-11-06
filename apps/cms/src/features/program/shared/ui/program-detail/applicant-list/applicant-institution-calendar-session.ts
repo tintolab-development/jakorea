@@ -46,7 +46,7 @@ function formatMinutesAsHourMinute(totalMinutes: number): string {
 
 function tryResolveInstitutionSessionRound(session: ParticipatingSchoolSession): string | null {
   if (session.round != null && session.round > 0) {
-    return `${session.round}차시`
+    return `${session.round}회차`
   }
   const classNum = session.classNum?.trim()
   if (!classNum) return null

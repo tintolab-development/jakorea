@@ -35,6 +35,18 @@ describe('buildGeneralVolunteerDoc1ListQuery', () => {
     })
   })
 
+  it('maps interview-off approval filter to application status, not document status', () => {
+    expect(
+      buildGeneralVolunteerDoc1ListQuery(
+        {
+          ...DEFAULT_GENERAL_VOLUNTEER_DOC1_FILTERS,
+          documentScreeningStatus: 'pass',
+        },
+        { interviewEnabled: false }
+      )
+    ).toEqual({ status: 'APPROVED' })
+  })
+
   it('sends isReparticipation=false for "없음"', () => {
     expect(
       buildGeneralVolunteerDoc1ListQuery({

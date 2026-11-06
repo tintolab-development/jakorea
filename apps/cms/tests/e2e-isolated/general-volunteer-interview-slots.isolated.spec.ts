@@ -3,6 +3,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { expect, test, type Page, type Route } from '@playwright/test'
 import { installIsolatedRegistrationNetwork } from './install-isolated-network'
+import {
+  applyRecruitmentRowPatch,
+  applyRfc7396ProgramPatch,
+  parseServiceDetail,
+} from './general-detail-mock'
 
 /**
  * STEP 4.1 SLOTKEYS: 일반 상세 → 모집 → 봉사자 면접 그리드에서 저장된 4슬롯 중 2개를 실제 클릭으로 해제하고
@@ -58,30 +63,11 @@ async function installProgramDetailMock(page: Page) {
     }
     mutations.push({ method, path: url.pathname, body })
     if (method === 'PATCH' && url.pathname === `/api/admin/programs/${PROGRAM_ID}` && body && typeof body === 'object') {
-      // 수정 반영: 요청 필드만 덮어써 재조회가 저장 결과를 돌려주게 한다.
-      const next = { ...stored, ...body, updatedAt: new Date().toISOString() }
-      if (Array.isArray(body.recruitments)) {
-        next.recruitments = stored.recruitments.map((r: any) => {
-          const patch = body.recruitments.find(
-            (p: any) => p.id === r.id || p.recruitmentType === r.recruitmentType
-          )
-          return patch ? { ...r, ...patch } : r
-        })
-      }
-      delete next.expectedUpdatedAt
-      stored = next
+      stored = applyRfc7396ProgramPatch(stored, body)
     }
     const rowMatch = /\/recruitments\/(\d+)$/.exec(url.pathname)
     if (method === 'PATCH' && rowMatch && body && typeof body === 'object') {
-      // 모집 행 PATCH: 해당 행만 갱신(재조회가 저장 결과를 돌려주게)
-      const rowId = Number(rowMatch[1])
-      stored = {
-        ...stored,
-        recruitments: stored.recruitments.map((r: any) =>
-          r.id === rowId ? { ...r, ...body, id: rowId } : r
-        ),
-        updatedAt: new Date().toISOString(),
-      }
+      stored = applyRecruitmentRowPatch(stored, Number(rowMatch[1]), body)
     }
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(stored) })
   })
@@ -149,7 +135,7 @@ test.describe.configure({ mode: 'serial' })
 
 test('봉사 면접 슬롯 4→2 해제 저장 시 PATCH에 남은 2개만, 재진입 2개', async ({ page }) => {
   await installIsolatedRegistrationNetwork(page)
-  const { mutations } = await installProgramDetailMock(page)
+  const { mutations, getStored } = await installProgramDetailMock(page)
   await openVolunteerRecruit(page)
   await enterEdit(page)
   await expect(selectedChips(page)).toHaveCount(4, { timeout: 20_000 })
@@ -181,6 +167,14 @@ test('봉사 면접 슬롯 4→2 해제 저장 시 PATCH에 남은 2개만, 재�
   }
   expect(keys.length, 'PATCH에 selectedSlotKeys 존재').toBeGreaterThan(0)
   for (const k of keys) expect(k).toEqual(ALL_SLOTS.slice(0, 2))
+  const storedVolunteer = getStored().recruitments.find((r: any) => r.recruitmentType === 'VOLUNTEER')
+  expect(storedVolunteer.interviewConfig.selectedSlotKeys).toEqual(ALL_SLOTS.slice(0, 2))
+  const overlaySlots = parseServiceDetail(getStored())?.registration?.overlay?.[
+    'recruit.volunteer.interview.selectedSlotKeys'
+  ]
+  expect(overlaySlots, '행 PATCH 후 프로그램 JSON 면접 슬롯 동기화(최신 입력, 최장 배열 병합 금지)').toEqual(
+    ALL_SLOTS.slice(0, 2)
+  )
   // 다른 모집 값 보존(봉사 대상)
   const patchText = JSON.stringify(patches.map(p => p.body))
   expect(patchText).not.toContain(ALL_SLOTS[2])

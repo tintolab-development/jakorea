@@ -34,7 +34,13 @@ export type IsolatedNetworkLog = {
   programDraftRequests: string[]
 }
 
-export type IsolatedFailMode = 'none' | 'put' | 'publish' | 'create' | 'portalPost'
+export type IsolatedFailMode = 'none' | 'put' | 'publish' | 'create' | 'portalPost' | 'infoDetail'
+
+export type IsolatedTtSeed = {
+  program: Record<string, unknown>
+  infoDetail?: Record<string, unknown>
+  sponsors?: Array<Record<string, unknown>>
+}
 
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost'])
 const STUBBED_EXTERNAL_HOSTS = new Set([
@@ -348,6 +354,18 @@ function persistProgramPatch(store: IsolatedProgramStore, body: Record<string, u
   store.program = next
 }
 
+function overlayInfoConfigJson(prevRaw: unknown, incomingRaw: unknown): string {
+  const prev = parseJsonObject(prevRaw)
+  const incoming = parseJsonObject(incomingRaw)
+  const prevCommon = parseJsonObject(prev.generalCommonInfo)
+  const nextCommon = parseJsonObject(incoming.generalCommonInfo)
+  return JSON.stringify({
+    ...prev,
+    ...incoming,
+    generalCommonInfo: { ...prevCommon, ...nextCommon },
+  })
+}
+
 function persistInfoDetailPatch(store: IsolatedProgramStore, body: Record<string, unknown>) {
   store.infoDetail = {
     ...store.infoDetail,
@@ -365,7 +383,9 @@ function persistInfoDetailPatch(store: IsolatedProgramStore, body: Record<string
         ? body.teacherTrainingScheduleName
         : store.infoDetail.teacherTrainingScheduleName,
     configJson:
-      typeof body.configJson === 'string' ? body.configJson : store.infoDetail.configJson,
+      typeof body.configJson === 'string'
+        ? overlayInfoConfigJson(store.infoDetail.configJson, body.configJson)
+        : store.infoDetail.configJson,
     updatedAt: new Date().toISOString(),
   }
 }
@@ -413,6 +433,12 @@ function isAllowedMutation(method: string, pathname: string): boolean {
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/form-bindings\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/form-templates\/\d+$/.test(pathname)) return true
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+$/.test(pathname)) return true
+  if (
+    (method === 'PUT' || method === 'POST') &&
+    /^\/api\/admin\/programs\/\d+\/inline-images$/.test(pathname)
+  ) {
+    return true
+  }
   if (method === 'PATCH' && /^\/api\/admin\/programs\/\d+\/trained-teacher\/detail$/.test(pathname)) {
     return true
   }
@@ -426,7 +452,7 @@ function isAllowedMutation(method: string, pathname: string): boolean {
 
 export async function installTtIsolatedNetwork(
   page: Page,
-  options?: { failMode?: IsolatedFailMode }
+  options?: { failMode?: IsolatedFailMode; seed?: IsolatedTtSeed }
 ): Promise<IsolatedNetworkLog> {
   const failMode = options?.failMode ?? 'none'
   const log: IsolatedNetworkLog = {
@@ -450,10 +476,23 @@ export async function installTtIsolatedNetwork(
   const copiedVersions = new Map<number, ReturnType<typeof versionResponse>>()
   const templateCodeByVersion = new Map<number, string>()
   let nextCopiedVersionId = 900101
+  const defaultSeedSponsors = [
+    {
+      sponsorId: String(SPONSOR_ID),
+      sponsorName: '격리 후원사',
+      sponsorContactId: String(CONTACT_ID),
+      sponsorContactName: '격리 담당자',
+      displayOrder: 0,
+    },
+  ]
   const store: IsolatedProgramStore = {
-    program: null,
-    infoDetail: emptyInfoDetail(),
-    sponsors: [],
+    program: options?.seed?.program
+      ? { ...options.seed.program, id: PROGRAM_ID, programType: 'TRAINED_TEACHER' }
+      : null,
+    infoDetail: options?.seed
+      ? (options.seed.infoDetail ?? emptyInfoDetail())
+      : emptyInfoDetail(),
+    sponsors: options?.seed?.sponsors ?? (options?.seed?.program ? defaultSeedSponsors : []),
   }
   let createdBindings: unknown[] = []
 
@@ -833,6 +872,12 @@ export async function installTtIsolatedNetwork(
       }
       if (method === 'PATCH' && pathname.endsWith('/trained-teacher/detail')) {
         log.infoDetailPatches.push(mutation)
+        if (failMode === 'infoDetail') {
+          await route.fulfill(
+            json({ error: { code: 'DETAIL_PATCH_FAILED', message: 'mock B fail' } }, 500)
+          )
+          return
+        }
         persistInfoDetailPatch(store, (mutation.body ?? {}) as Record<string, unknown>)
         await route.fulfill(json(store.infoDetail))
         return
@@ -843,6 +888,13 @@ export async function installTtIsolatedNetwork(
       }
       if (method === 'POST' && pathname.startsWith('/api/admin/files')) {
         await route.fulfill(json({ fileObjectId: 71011, contentUrl: '/files/isolated-tt' }))
+        return
+      }
+      if (
+        (method === 'PUT' || method === 'POST') &&
+        /\/programs\/\d+\/inline-images$/.test(pathname)
+      ) {
+        await route.fulfill(json({ bound: true }))
         return
       }
       if (method === 'PUT' && pathname.endsWith('/applications/draft')) {

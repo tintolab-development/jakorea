@@ -8,7 +8,7 @@
 import type { Target } from './target';
 
 /**
- * 확정된 교육 범위를 포함하는 개인 신청 일괄 승인 요청입니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.
+ * 확정된 교육 범위를 포함하는 개인·봉사자 일괄 승인 요청입니다. 봉사자 대상은 confirmedScheduleIds=[] 로 일정 없이 승인할 수 있습니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.
  */
 export interface IndividualApprovalWithScopeBulkRequest {
   /**

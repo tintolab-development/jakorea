@@ -12,5 +12,10 @@ export function findIncompleteTrainedTeachersBasicInfoMessage(
   const studentCount = Number.parseInt(values.studentCount, 10)
   if (!Number.isFinite(studentCount) || studentCount < 1) return '총 학생 수를 입력해 주세요.'
   if (!values.applicationReason.trim()) return '신청 사유를 입력해 주세요.'
+  if (!values.teacherName.trim()) return '담당 교사명을 입력해 주세요.'
+  if (!values.teacherTel.trim() && !values.teacherMobile.trim()) {
+    return '담당 교사 연락처를 입력해 주세요.'
+  }
+  if (!values.teacherEmail.trim()) return '담당 교사 이메일을 입력해 주세요.'
   return null
 }

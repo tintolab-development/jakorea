@@ -88,6 +88,8 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   APPLICATION_ALREADY_SUBMITTED: '이미 제출한 신청이 있습니다.',
   /** application-options.blockedReason — APPLICATION_ALREADY_SUBMITTED와 동일 안내 */
   ALREADY_APPLIED: '이미 제출한 신청이 있습니다.',
+  /** 기관 신청 재제출 — 구 409 코드. 현행은 APPLICATION_ALREADY_SUBMITTED */
+  CONSTRAINT_VIOLATION: '이미 제출한 신청이 있습니다.',
   PREFERRED_SCHEDULE_OUTSIDE_EDUCATION_RANGE:
     '희망 교육 일정이 프로그램 교육 가능 기간을 벗어났습니다.',
   /** Gemini 연수 요청 가능기간 밖·미설정. 교육 가능 기간 코드와 분리. */

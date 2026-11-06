@@ -27,7 +27,7 @@ export interface ApplicationListItemResponse {
   /** 신청 recruitmentId 모집 행 대표 이미지 file_object id. GENERAL_*·UJAT는 그 모집 행 값만 쓰고 프로그램 대표 이미지나 다른 모집 행으로 채우지 않는다. 그 외 유형은 프로그램 대표 이미지. 공개 GET /api/portal/programs 행 thumbnailFileObjectId와 같은 규칙. 없으면 null. */
   thumbnailFileObjectId?: number | null;
   participationStatus?: string;
-  /** 회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료. */
+  /** 회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료. */
   displayStatus?: ApplicationListItemResponseDisplayStatus;
   educationStartAt?: string;
   educationEndAt?: string;

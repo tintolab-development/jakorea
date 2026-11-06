@@ -28,6 +28,7 @@ import { hasAssignableOrganizationInstructorSchedule } from '@/features/program/
 import { formatApiDistanceKmDisplay } from '@/shared/lib/format-api-distance-km'
 import type { ProgramScheduleResponse } from '@/shared/api/generated/dashboard/schemas/programScheduleResponse'
 import { isProgramSchedulePreEducation } from '@/features/program/shared/lib/program-schedule-canonical'
+import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 
 function scheduleLinesForSchool(school: ParticipatingSchoolRow): string[] {
   const fromSessions = buildParticipatingSchoolSessionLines(
@@ -465,40 +466,93 @@ export function mergeInstitutionWaitingRowsBySchool(
   return Array.from(merged.values())
 }
 
-/** 개인형 — 배정 1건 = 일정 1행 */
+function formatIndividualScheduleLine(
+  label: { date?: string; time?: string; session?: string } | undefined,
+  lectureDate?: string
+): string {
+  const date =
+    label?.date?.trim() ||
+    (lectureDate
+      ? formatCmsScheduleDisplayLabel(extractLectureDateKey(lectureDate) ?? lectureDate)
+      : '')
+  const parts = [date, label?.time?.trim(), label?.session?.trim()].filter(Boolean)
+  return parts.join(' | ') || '-'
+}
+
+/** 개인형 출강지 = 교육 진행 장소(일정 공통·일정 별 상이). 기관명이 아니다. */
+function resolveIndividualEducationPlace(
+  assignment: InstructorAssignmentListItemEnriched,
+  schedule?: ProgramScheduleResponse
+): string {
+  return (
+    assignment.lectureLocationName?.trim() ||
+    assignment.lecturePlaceAddress?.trim() ||
+    schedule?.locationName?.trim() ||
+    schedule?.address?.trim() ||
+    '-'
+  )
+}
+
+function individualAssignmentScheduleSortKey(
+  assignment: InstructorAssignmentListItemEnriched,
+  schedule?: ProgramScheduleResponse
+): string {
+  const start = schedule?.startAt ?? schedule?.startDate ?? assignment.lectureDate ?? ''
+  const sessionNo = String(schedule?.sessionNo ?? 0).padStart(4, '0')
+  const scheduleId = String(assignment.scheduleId ?? 0).padStart(8, '0')
+  return `${start}\0${sessionNo}\0${scheduleId}`
+}
+
+/** 개인형 — 배정 1건 = 일정 1행. 교육 시작 시각 오름차순. */
 export function buildParticipatingInstructorAssignedScheduleRowsFromBoard(input: {
   assignments: InstructorAssignmentListItemEnriched[]
   instructorMemberId: string
   schoolRows: ParticipatingSchoolRow[]
   scheduleLabelById: Map<string, { date?: string; time?: string; session?: string }>
+  schedules?: ProgramScheduleResponse[]
 }): ParticipatingIndividualInstructorAssignedScheduleRow[] {
-  const filtered = input.assignments.filter(a => {
-    if (a.instructorMemberId == null) return false
-    if (String(a.instructorMemberId) !== input.instructorMemberId) return false
-    const status = (a.assignmentStatus ?? '').toUpperCase()
-    return status !== 'CANCELLED' && status !== 'CANCELED'
-  })
-  const n = filtered.length
+  const scheduleById = new Map(
+    (input.schedules ?? [])
+      .filter((schedule): schedule is ProgramScheduleResponse & { id: number } => schedule.id != null)
+      .map(schedule => [String(schedule.id), schedule])
+  )
+  const filtered = input.assignments
+    .filter(a => {
+      if (a.instructorMemberId == null) return false
+      if (String(a.instructorMemberId) !== input.instructorMemberId) return false
+      const status = (a.assignmentStatus ?? '').toUpperCase()
+      return status !== 'CANCELLED' && status !== 'CANCELED'
+    })
+    .slice()
+    .sort((left, right) => {
+      const leftKey = individualAssignmentScheduleSortKey(
+        left,
+        left.scheduleId != null ? scheduleById.get(String(left.scheduleId)) : undefined
+      )
+      const rightKey = individualAssignmentScheduleSortKey(
+        right,
+        right.scheduleId != null ? scheduleById.get(String(right.scheduleId)) : undefined
+      )
+      return leftKey.localeCompare(rightKey)
+    })
   return filtered.map((a, index) => {
     const schoolId = resolveSchoolIdForAssignment(a, input.schoolRows)
     const school = input.schoolRows.find(s => s.id === schoolId)
     const scheduleId = a.scheduleId != null ? String(a.scheduleId) : ''
+    const schedule = scheduleId ? scheduleById.get(scheduleId) : undefined
     const label = scheduleId ? input.scheduleLabelById.get(scheduleId) : undefined
-    const lectureDate = extractLectureDateKey(a.lectureDate) ?? label?.date
-    const scheduleLabel =
-      [lectureDate, label?.time, label?.session].filter(Boolean).join(' | ') || '-'
     const assignmentId = a.assignmentId != null ? String(a.assignmentId) : `assign-${index}`
     return {
       id: assignmentId,
-      no: n - index,
+      no: index + 1,
       role: a.scheduleLead ? 'lead' : 'assistant',
       slotKey: scheduleId || assignmentId,
       schoolId,
-      lectureLocation: school?.schoolName ?? a.organizationName?.trim() ?? '-',
+      lectureLocation: resolveIndividualEducationPlace(a, schedule),
       distanceFromHome: formatApiDistanceKmDisplay(a.distanceKm, {
         longDistance: a.longDistance,
       }),
-      scheduleLabel,
+      scheduleLabel: formatIndividualScheduleLine(label, a.lectureDate),
       assignmentId,
       instructorMemberId: input.instructorMemberId,
       scheduleId: scheduleId || undefined,

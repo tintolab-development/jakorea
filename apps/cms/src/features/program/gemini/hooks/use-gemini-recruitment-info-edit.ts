@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
@@ -61,6 +61,8 @@ export function useGeminiRecruitmentInfoEdit(
     canGeminiRecruitmentInfoEdit(detail.applicationPeriodStart)
 
   const [draft, setDraft] = useState<GeminiRecruitmentInfoEditDraft | null>(null)
+  const draftRef = useRef(draft)
+  draftRef.current = draft
 
   const resetDraftFromDetail = useCallback(() => {
     if (detail == null) {
@@ -112,8 +114,9 @@ export function useGeminiRecruitmentInfoEdit(
   }, [resetDraftFromDetail, setEditMode])
 
   const handleSave = useCallback(async () => {
-    if (detail == null || draft == null || !recruitmentId) return
-    const nextDraft = overlayRichText(draft)
+    const currentDraft = draftRef.current
+    if (detail == null || currentDraft == null || !recruitmentId) return
+    const nextDraft = overlayRichText(currentDraft)
     const endOverlay = beginBlockingOverlay()
     try {
       if (remoteEnabled) {
@@ -142,10 +145,15 @@ export function useGeminiRecruitmentInfoEdit(
     } finally {
       endOverlay()
     }
-  }, [detail, draft, overlayRichText, queryClient, recruitmentId, remoteEnabled, setEditMode])
+  }, [detail, overlayRichText, queryClient, recruitmentId, remoteEnabled, setEditMode])
 
   const patchDraft = useCallback((patch: Partial<GeminiRecruitmentInfoEditDraft>) => {
-    setDraft(prev => (prev == null ? prev : { ...prev, ...patch }))
+    setDraft(prev => {
+      if (prev == null) return prev
+      const next = { ...prev, ...patch }
+      draftRef.current = next
+      return next
+    })
   }, [])
 
   /** 개발용 — 수정 중인 모집 정보만 채운다. 등록일·첨부·썸네일은 유지한다. */

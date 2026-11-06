@@ -45,6 +45,22 @@ export function isSystemCatalogOnlyFormType(formType: string | null | undefined)
   )
 }
 
+/** BE templateId=1 은 registration-general (category=REGISTRATION). versions/copy 400. */
+export const REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID = 1
+
+export function isSystemCatalogOnlyTemplateCode(templateCode: string | null | undefined): boolean {
+  const code = String(templateCode ?? '').trim()
+  if (!code) return false
+  if (getRegistrationFormSpec(code) != null) return true
+  if (code.startsWith('registration-')) return true
+  const spec = getOperationalFormSpec(code)
+  return spec != null && isSystemCatalogOnlyFormType(spec.formType)
+}
+
+export function isRegistrationCatalogTemplateId(templateId: number | null | undefined): boolean {
+  return templateId === REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID
+}
+
 export type OperationalFormSpec = {
   templateCode: string
   formType: OperationalFormType

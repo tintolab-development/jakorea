@@ -225,7 +225,9 @@ describe('formatParticipatingSchoolSessionLine', () => {
     const session = baseSession({
       scheduleLabel: '26년 10월 26일(월) 10:00 ~ 12:00',
     })
-    expect(formatParticipatingSchoolSessionLine(session)).toBe('2026.10.26(월) 10:00 ~ 12:00')
+    expect(formatParticipatingSchoolSessionLine(session)).toBe(
+      '2026.10.26(월) 10:00 ~ 12:00 | 1회차'
+    )
     expect(session.scheduleLabel).toBe('26년 10월 26일(월) 10:00 ~ 12:00')
   })
 })
@@ -416,6 +418,21 @@ describe('resolveParticipatingInstitutionScheduleRowLabel', () => {
 })
 
 describe('formatVolunteerAssignmentScheduleLine', () => {
+  it('UTC instant는 서울 시각과 회차로 표시한다', () => {
+    const line = formatVolunteerAssignmentScheduleLine(
+      baseSession({
+        round: 1,
+        date: '2026.11.06',
+        dayOfWeek: '금',
+        duration: '2차시',
+        timeRange: '06:05~06:10',
+        startAt: '2026-11-06T06:05:00Z',
+        endAt: '2026-11-06T06:10:00Z',
+      })
+    )
+    expect(line).toBe('2026.11.06(금) 15:05 ~ 15:10 | 1회차 (2차시)')
+  })
+
   it('단일 회차는 날짜·시간만 노출한다', () => {
     const line = formatVolunteerAssignmentScheduleLine(
       baseSession(),
@@ -443,7 +460,7 @@ describe('formatVolunteerAssignmentScheduleLine', () => {
       })
     )
 
-    expect(line).toBe('2026.01.09(금) 09:20 ~ 11:20 | 2회차')
+    expect(line).toBe('2026.01.09(금) 09:20 ~ 11:20 | 2회차 (2차시)')
   })
 
   it('복수 일정형은 일정명을 노출한다', () => {
@@ -479,6 +496,6 @@ describe('formatVolunteerAssignmentScheduleLine', () => {
       })
     )
 
-    expect(line).toBe('2026.01.09(금) | 1회차')
+    expect(line).toBe('2026.01.09(금) | 1회차 (1차시)')
   })
 })

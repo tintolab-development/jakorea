@@ -525,6 +525,13 @@ export function ParticipatingVolunteersSection({
           const showCount = total <= 3 ? total : 2
           const displaySessions = sessions.slice(0, showCount)
           const restCount = total - showCount
+          if (total === 0) {
+            return (
+              <div className="participating-institutions-section__sessions-cell">
+                <div className="participating-institutions-section__session-line">일정 미배정</div>
+              </div>
+            )
+          }
           return (
             <div className="participating-institutions-section__sessions-cell">
               {displaySessions.map((s: ParticipatingSchoolSession, index) => (

@@ -77,6 +77,40 @@ export function readDefaultEducationSlotNameNumber(value: string | null | undefi
   return match ? positiveInt(match[1]) : null
 }
 
+export function positiveEducationNumber(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : null
+}
+
+/** 확인된 차시 수만. round/sessionNo를 차시로 쓰지 않는다. */
+export function parseConfirmedCurriculumSessionCount(
+  value: string | null | undefined
+): number | null {
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  if (!trimmed) return null
+  const match = /(?:^|[^\d])(\d+)\s*차시(?:\s|$)/u.exec(` ${trimmed} `)
+  return match ? positiveEducationNumber(Number(match[1])) : null
+}
+
+/**
+ * 배정·진행 일정 접미. 회차와 차시는 다른 값이다.
+ * - 둘 다 있으면 `1회차 (2차시)`
+ * - 회차만 있으면 `1회차`
+ * - 차시만 있으면 `2차시`
+ * - 없으면 빈 문자열. 없는 값을 만들지 않는다.
+ */
+export function formatEducationRoundSessionLabel(input: {
+  roundNumber?: number | null
+  curriculumSessionCount?: number | null
+}): string {
+  const roundNumber = positiveEducationNumber(input.roundNumber)
+  const curriculumSessionCount = positiveEducationNumber(input.curriculumSessionCount)
+  if (roundNumber != null) {
+    return appendEducationRoundSuffix('', roundNumber, curriculumSessionCount)
+  }
+  if (curriculumSessionCount != null) return `${curriculumSessionCount}차시`
+  return ''
+}
+
 /** `일시 | N회차` (+ ` (k차시)`). 이미 회차 접미가 있거나 회차를 모르면 label 그대로. */
 export function appendEducationRoundSuffix(
   label: string,

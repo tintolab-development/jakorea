@@ -32,6 +32,7 @@ import {
 } from '@/features/program/general/lib/registration-operational-form-drafts'
 import { announcementPublishedFromFormValue } from '@/features/program/shared/lib/participant-recruitment-form-options'
 import { isGeneralRecruitmentRowProgram } from '@/features/program/general/lib/is-general-recruitment-row-program'
+import { isTrainedTeachersDetailProgram } from '@/features/program/trained-teachers/lib/is-trained-teachers-detail-program'
 
 const VOLUNTEER_RECRUIT_CATALOG = 'recruitment-volunteer'
 const VOLUNTEER_INTERVIEW_PREFIX = 'recruit.volunteer.interview'
@@ -263,8 +264,8 @@ function peekVolunteerInterviewOverlayForSave(catalogCodes: readonly string[]): 
   )
 }
 
-function isGeneralProgramTypedRecruitSave(program: Program): boolean {
-  return isGeneralRecruitmentRowProgram(program)
+function skipLiveCatalogPeekForTypedRecruitSave(program: Program): boolean {
+  return isGeneralRecruitmentRowProgram(program) || isTrainedTeachersDetailProgram(program)
 }
 
 export function buildMergedRegistrationOverlayForRecruitSave(args: {
@@ -279,7 +280,7 @@ export function buildMergedRegistrationOverlayForRecruitSave(args: {
   const formPatch = recruitOverlayPatchFromDetailEditValues(args.values, args.audience)
   const peekLiveCatalog =
     !args.strictRemote &&
-    !isGeneralProgramTypedRecruitSave(args.program)
+    !skipLiveCatalogPeekForTypedRecruitSave(args.program)
   const peeked = peekLiveCatalog
     ? peekRecruitOverlaySlicesForCatalogs(
         args.audience === 'volunteer' && catalogCodes.length === 0

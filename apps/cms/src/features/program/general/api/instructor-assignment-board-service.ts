@@ -5,7 +5,11 @@
  */
 
 import dayjs from 'dayjs'
-import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+import {
+  formatEducationRoundSessionLabel,
+  toDisplayEducationScheduleName,
+} from '@/shared/lib/education-schedule-name'
+import { formatOrganizationScheduleRangeLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
 import {
   fetchInstructorAssignmentCalendarRemote,
   fetchInstructorAssignmentsRemote,
@@ -47,6 +51,15 @@ function assertGeneralAssignmentRemoteReady(): void {
   )
 }
 
+function splitRangeDateAndTime(range: string): { date?: string; time?: string } {
+  const match = range.match(/^(\d{4}\.\d{2}\.\d{2}\([^)]+\))\s+(.+)$/u)
+  if (match?.[1] && match[2] && /\d{1,2}:\d{2}/.test(match[2])) {
+    return { date: match[1], time: match[2] }
+  }
+  if (range.trim()) return { date: range.trim() }
+  return {}
+}
+
 function buildScheduleLabelById(
   schedules: ProgramScheduleResponse[]
 ): Map<string, { date?: string; time?: string; session?: string }> {
@@ -54,18 +67,16 @@ function buildScheduleLabelById(
   for (const schedule of schedules) {
     if (schedule.id == null) continue
     const start = schedule.startAt ?? schedule.startDate
+    const end = schedule.endAt ?? schedule.endDate
+    const range = formatOrganizationScheduleRangeLabel(start, end)
+    const split = splitRangeDateAndTime(range)
     const dateKey = extractLectureDateKey(start)
-    const time =
-      schedule.startAt && schedule.endAt
-        ? `${schedule.startAt.slice(11, 16)} ~ ${schedule.endAt.slice(11, 16)}`
-        : undefined
     map.set(String(schedule.id), {
-      date: dateKey ?? start,
-      time,
+      date: split.date || dateKey || start,
+      time: split.time,
       session:
-        schedule.sessionNo != null
-          ? `${schedule.sessionNo}차시`
-          : toDisplayEducationScheduleName(schedule.scheduleName),
+        formatEducationRoundSessionLabel({ roundNumber: schedule.sessionNo }) ||
+        toDisplayEducationScheduleName(schedule.scheduleName),
     })
   }
   return map
@@ -82,7 +93,7 @@ function enrichScheduleLabelFromAssignments(
     const prev = map.get(id)
     const dateKey = extractLectureDateKey(a.lectureDate) ?? a.lectureDate
     map.set(id, {
-      date: dateKey,
+      date: prev?.date ?? dateKey,
       time: prev?.time,
       session: prev?.session,
     })

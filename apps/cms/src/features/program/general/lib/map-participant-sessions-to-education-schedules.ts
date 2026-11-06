@@ -1,5 +1,8 @@
 import type { ParticipatingInstructorEducationScheduleRow } from '@/features/program/general/model/participating-instructors'
-import { toDisplayEducationScheduleName } from '@/shared/lib/education-schedule-name'
+import {
+  formatEducationRoundSessionLabel,
+  toDisplayEducationScheduleName,
+} from '@/shared/lib/education-schedule-name'
 import type { SessionProgress } from '@/shared/api/generated/dashboard/schemas/sessionProgress'
 import { normalizeDashboardScheduleDeliveryStatus } from '@/features/program/general/lib/dashboard-schedule-delivery-status'
 import { getSeoulCalendarDate } from '@/shared/utils/date'
@@ -24,7 +27,8 @@ function toSeoulCalendarDate(startAt: string): string {
 
 function formatSessionProgressLabel(session: SessionProgress, index: number): string {
   const parts: string[] = []
-  if (session.sessionNo != null) parts.push(`${session.sessionNo}차시`)
+  const roundLabel = formatEducationRoundSessionLabel({ roundNumber: session.sessionNo })
+  if (roundLabel) parts.push(roundLabel)
   const scheduleName = toDisplayEducationScheduleName(session.scheduleName)
   if (scheduleName) parts.push(scheduleName)
   if (session.startAt?.trim()) {

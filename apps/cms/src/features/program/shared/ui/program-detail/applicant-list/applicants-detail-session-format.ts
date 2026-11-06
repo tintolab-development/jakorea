@@ -16,6 +16,7 @@ import type { InstitutionApplicationProgramBridge } from '@/features/program/gen
 import { formatHopeScheduleFormOptionLine } from '@/features/program/general/lib/hope-schedule-form-option'
 import { resolveInstitutionApplicationSessionPeriodPart } from '@/features/program/general/lib/institution-application-session-display'
 import { formatCmsScheduleDisplayLabel } from '@/features/program/general/lib/organization-preferred-schedule-label'
+import { formatEducationRoundSessionLabel } from '@/shared/lib/education-schedule-name'
 import {
   formatGeneralEducationScheduleLine,
   type GeneralEducationScheduleShape,
@@ -60,7 +61,7 @@ export function getSessionLineParts(
             s.round != null
               ? s.round
               : Number.parseInt(s.classNum.replace(/\D/g, ''), 10) || 1
-          return `${roundLabel}차시`
+          return formatEducationRoundSessionLabel({ roundNumber: roundLabel })
         })()
     return { datePart, durationPart: timePart, periodPart, preset }
   }
