@@ -286,7 +286,7 @@ export function TrainedTeachersApplicantInstitutionBasicInfo({
 
   const schoolNameValue =
     isEditMode && draft ? (
-      <InstitutionReadonlyInput value={institution.schoolName ?? ''} />
+      <InstitutionReadonlyInput width={240} value={institution.schoolName ?? ''} />
     ) : (
       institution.schoolName ?? '-'
     )

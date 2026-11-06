@@ -23,6 +23,7 @@ import {
   readProgramAuditNames,
   withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
+import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
 import { applyBusinessPeriodHistoriesFromDto } from '@/features/program/shared/lib/business-period-extend'
 import {
   buildProgramSponsorAssignmentsWire,
@@ -422,16 +423,7 @@ export function mapTrainedTeacherDetailToProgram(dto: ProgramResponse): Program 
 }
 
 function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
-  return program.rounds.map(round => ({
-    roundNumber: round.roundNumber,
-    startDate: toDate(round.startDate),
-    endDate: toDate(round.endDate),
-    capacity: round.capacity,
-    classCount: round.classCount,
-    status: round.status,
-    curriculum: round.curriculum,
-    deliveryType: round.deliveryType,
-  }))
+  return mapProgramRoundsToWriteRequest(program, toDate)
 }
 
 function mergeTrainedTeacherUpdateProgram(program: Program, patch: Partial<Program>): Program {

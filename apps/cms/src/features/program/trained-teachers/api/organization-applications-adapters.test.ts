@@ -172,6 +172,7 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
             label: '2회차',
             startAt: '2026-06-05T09:00:00',
             endAt: '2026-06-05T10:00:00',
+            scheduleStatus: 'COMPLETED',
           },
           { scheduleId: 0, round: 3 },
           {
@@ -193,6 +194,10 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
         timeRange: '09:00~10:00',
         resolvedScheduleId: 501,
         educationScheduleLabel: '2회차',
+        duration: '',
+        startAt: '2026-06-05T09:00:00',
+        endAt: '2026-06-05T10:00:00',
+        deliveryScheduleStatus: 'COMPLETED',
       }),
       expect.objectContaining({
         date: '2026.11.07',
@@ -205,6 +210,47 @@ describe('mapTrainedTeacherOrganizationApplicationToRow', () => {
       'educationScheduleSessions' in
         mapTrainedTeacherOrganizationApplicationToRow({ applicationId: 1 }, 0, 'p1')
     ).toBe(false)
+  })
+
+  it('maps educationSchedules.scheduleStatus and does not treat empty string as pending', () => {
+    const row = mapTrainedTeacherOrganizationApplicationToRow(
+      {
+        applicationId: 1,
+        educationSchedules: [
+          {
+            scheduleId: 10,
+            round: 1,
+            startAt: '2026-11-03T12:00:00Z',
+            endAt: '2026-11-03T14:00:00Z',
+            scheduleStatus: 'IN_PROGRESS',
+          },
+          {
+            scheduleId: 11,
+            round: 2,
+            startAt: '2026-11-13T12:00:00Z',
+            endAt: '2026-11-13T14:00:00Z',
+            scheduleStatus: null,
+          },
+          {
+            scheduleId: 12,
+            round: 3,
+            startAt: '2026-11-20T12:00:00Z',
+            endAt: '2026-11-20T14:00:00Z',
+            scheduleStatus: '' as never,
+          },
+        ],
+      },
+      0,
+      'p1'
+    )
+    expect(row.educationScheduleSessions?.[0]?.deliveryScheduleStatus).toBe('IN_PROGRESS')
+    expect(row.educationScheduleSessions?.[1]?.deliveryScheduleStatus).toBeUndefined()
+    expect(row.educationScheduleSessions?.[2]?.deliveryScheduleStatus).toBeUndefined()
+    expect(row.educationScheduleSessions?.map(session => session.status)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ])
   })
 
   it('maps teacherMemberId for privacy unmask', () => {
@@ -587,7 +633,6 @@ describe('mapApplicantSchoolToParticipatingSchool basic info', () => {
     })
     expect(detail).toMatchObject({
       teacherName: '윤석영',
-      teacherPhone: '010-****-1234',
       teacherMobile: '010-****-1234',
       teacherEmail: 'yoon@school.kr',
       textbookName: '성공하는 경제생활',

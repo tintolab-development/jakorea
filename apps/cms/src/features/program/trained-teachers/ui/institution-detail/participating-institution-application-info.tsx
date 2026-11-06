@@ -4,16 +4,67 @@
 
 import type { ReactNode } from 'react'
 import type { ApplicantPreferredScheduleBlock } from '@/features/program/shared/model/applicant-institution'
+import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
 import { ApplicantAdminCommentSection } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/applicant-admin-comment-section'
 import {
-  INSTITUTION_APPLICATION_INFO_COLGROUP,
   InstitutionApplicationTableRowFullWidth,
+  InstitutionApplicationTableRowSingleCol,
   InstitutionApplicationTableRowTwoCols,
 } from '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-application-info-table'
+import {
+  ProgramDetailTdSegmentWrap,
+  withProgramDetailTdDivider,
+} from '@/features/program/shared/ui/program-detail-td-divider'
+import { DetailInfoForm } from '@/shared/components/detail-info-form'
+import {
+  buildTrainedTeacherEducationProgressRows,
+  formatTrainedTeacherEducationProgressDateTime,
+  resolveTrainedTeacherEducationProgressBadge,
+} from '@/features/program/trained-teachers/lib/education-progress-schedule'
 import '@/features/program/shared/ui/program-detail/applicant-list/applicant-institution-basic-info.css'
 import '@/features/program/general/ui/detail-modal/applications/applicant-detail/institution-basic-info.css'
 import '@/features/program/general/ui/detail-modal/program-status/participating-institution-application-info.css'
-import { TrainedTeachersPreferredScheduleDetailSection } from './preferred-schedule-detail-section'
+
+/** Figma 14931:806953 — 라벨 열 180px, 2·4열 수직 표 */
+const TT_APPLICATION_INFO_COLGROUP = (
+  <colgroup>
+    <col style={{ width: '180px' }} />
+    <col />
+    <col style={{ width: '180px' }} />
+    <col />
+  </colgroup>
+)
+
+const TT_APPLICATION_SCHEDULE_COLGROUP = (
+  <colgroup>
+    <col style={{ width: '180px' }} />
+    <col />
+  </colgroup>
+)
+
+function TrainedTeacherEducationProgressValue({
+  session,
+  statusBadge,
+}: {
+  session: ParticipatingSchoolSession
+  statusBadge: ReturnType<typeof resolveTrainedTeacherEducationProgressBadge>
+}) {
+  const datetime = formatTrainedTeacherEducationProgressDateTime(session)
+  const duration = session.duration?.trim() ?? ''
+  const status = statusBadge ? (
+    <span
+      className={`participating-institution-application-info__session-status ${statusBadge.statusClass}`}
+    >
+      {statusBadge.label}
+    </span>
+  ) : null
+  const parts = [datetime, duration].filter(Boolean)
+  return (
+    <ProgramDetailTdSegmentWrap className="participating-institution-application-info__schedule-value">
+      {withProgramDetailTdDivider(status ? [...parts, status] : parts)}
+    </ProgramDetailTdSegmentWrap>
+  )
+}
 
 export interface TrainedTeachersParticipatingInstitutionApplicationInfoProps {
   formError?: string
@@ -28,7 +79,9 @@ export interface TrainedTeachersParticipatingInstitutionApplicationInfoProps {
   usesTextbook?: boolean
   textbookEditFullWidth?: boolean
   institutionId: string
-  /** remote SoT — 없으면 empty state */
+  /** 상세 GET `educationSchedules` — 교육 진행 일정 행 SSOT */
+  educationScheduleSessions?: ParticipatingSchoolSession[]
+  /** 상세 GET `preferredScheduleBlocks` — MATCHED scheduleId → 지망 라벨만 */
   preferredScheduleBlocks?: ApplicantPreferredScheduleBlock[]
   schoolName: ReactNode
   educationGrade: ReactNode
@@ -54,6 +107,7 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
   usesTextbook = true,
   textbookEditFullWidth = false,
   institutionId: _institutionId,
+  educationScheduleSessions = [],
   preferredScheduleBlocks = [],
   schoolName,
   educationGrade,
@@ -66,6 +120,10 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
   otherRequests,
 }: TrainedTeachersParticipatingInstitutionApplicationInfoProps) {
   void _institutionId
+  const progressRows = buildTrainedTeacherEducationProgressRows(
+    educationScheduleSessions,
+    preferredScheduleBlocks
+  )
 
   return (
     <div className="institution-basic-info applicant-institution-basic-info participating-institution-application-info">
@@ -86,7 +144,7 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
         <div className="applicant-institution-basic-info__basic-info-fields">
           <div className="applicant-institution-basic-info__table-wrap participating-institution-application-info__table-wrap--overview">
             <table className="applicant-institution-basic-info__table">
-              {INSTITUTION_APPLICATION_INFO_COLGROUP}
+              {TT_APPLICATION_INFO_COLGROUP}
               <tbody>
                 <InstitutionApplicationTableRowFullWidth
                   label="프로그램 진행 현황"
@@ -104,7 +162,7 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
 
           <div className="applicant-institution-basic-info__table-wrap">
             <table className="applicant-institution-basic-info__table">
-              {INSTITUTION_APPLICATION_INFO_COLGROUP}
+              {TT_APPLICATION_INFO_COLGROUP}
               <tbody>
                 <InstitutionApplicationTableRowTwoCols
                   label1="참여 기관명"
@@ -141,11 +199,41 @@ export function TrainedTeachersParticipatingInstitutionApplicationInfo({
         </div>
       </section>
 
-      <TrainedTeachersPreferredScheduleDetailSection
-        blocks={preferredScheduleBlocks}
-        sectionTitle="교육 진행 일정"
-        emptyClassName="participating-institution-application-info__schedule-empty"
-      />
+      <section className="applicant-institution-basic-info__section">
+        <h3 className="applicant-institution-basic-info__title">교육 진행 일정</h3>
+        {progressRows.length === 0 ? (
+          <DetailInfoForm title="교육 진행 일정" hideHeader mode="view">
+            <DetailInfoForm.Row type="custom">
+              <p className="detail-info-form__field-content participating-institution-application-info__schedule-empty">
+                등록된 교육 일정이 없습니다.
+              </p>
+            </DetailInfoForm.Row>
+          </DetailInfoForm>
+        ) : (
+          <div className="applicant-institution-basic-info__table-wrap">
+            <table className="applicant-institution-basic-info__table participating-institution-application-info__schedule-table">
+              {TT_APPLICATION_SCHEDULE_COLGROUP}
+              <tbody>
+                {progressRows.map((row, index) => (
+                  <InstitutionApplicationTableRowSingleCol
+                    key={`${row.attendanceScheduleIds.join('-') || 'none'}-${index}`}
+                    label={row.rowLabel}
+                    valueColSpan={1}
+                    value={
+                      <TrainedTeacherEducationProgressValue
+                        session={row.session}
+                        statusBadge={resolveTrainedTeacherEducationProgressBadge(
+                          row.session.deliveryScheduleStatus
+                        )}
+                      />
+                    }
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   )
 }

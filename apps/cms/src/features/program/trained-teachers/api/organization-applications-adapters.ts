@@ -154,18 +154,27 @@ export function mapTrainedTeacherEducationSchedulesToSessions(
       const isoDate = start?.date ?? ''
       const startTime = start?.time ?? ''
       const endTime = end?.time ?? ''
+      const scheduleStatus =
+        typeof schedule.scheduleStatus === 'string' ? schedule.scheduleStatus.trim() : ''
+      const hasRound =
+        typeof schedule.round === 'number' && Number.isFinite(schedule.round)
+      const strippedLabel = stripDefaultEducationSlotNameFromLabel(schedule.label)
       return {
-        round: schedule.round ?? index + 1,
+        round:
+          hasRound && schedule.round != null && schedule.round > 0
+            ? Math.trunc(schedule.round)
+            : index + 1,
         date: isoDate ? formatPreferredScheduleDateForSession(isoDate) : '',
         dayOfWeek: isoDate ? dayOfWeekFromIsoDate(isoDate) : '',
-        duration: '1차시',
+        duration: hasRound ? '' : strippedLabel || '',
         format: '',
         classNum: '',
         timeRange: startTime && endTime ? `${startTime}~${endTime}` : startTime || endTime,
         resolvedScheduleId: schedule.scheduleId,
-        ...(stripDefaultEducationSlotNameFromLabel(schedule.label)
-          ? { educationScheduleLabel: stripDefaultEducationSlotNameFromLabel(schedule.label) }
-          : {}),
+        startAt: schedule.startAt ?? null,
+        endAt: schedule.endAt ?? null,
+        ...(scheduleStatus ? { deliveryScheduleStatus: scheduleStatus } : {}),
+        ...(strippedLabel ? { educationScheduleLabel: strippedLabel } : {}),
       }
     })
 }
