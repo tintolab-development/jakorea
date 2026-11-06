@@ -4,10 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const sessionRequest = vi.hoisted(() => vi.fn())
 const activityRequest = vi.hoisted(() => vi.fn())
-const isStatus = (error: unknown, status: number): boolean =>
-  Boolean(error && typeof error === 'object' &&
-    (error as { response?: { status?: number } }).response?.status === status)
-
 vi.mock('@/features/auth/api/admin-session-fetcher', () => ({
   getAdminAuthSession: (...args: unknown[]) => sessionRequest(...args),
   postAdminAuthActivity: (...args: unknown[]) => activityRequest(...args),
