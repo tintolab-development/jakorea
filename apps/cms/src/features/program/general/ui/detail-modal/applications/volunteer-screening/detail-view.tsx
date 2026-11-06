@@ -38,7 +38,10 @@ import {
 } from './interview-evaluation-section'
 import { resolveGeneralEffectiveSecondInterviewStatus } from '@/features/program/general/lib/general-volunteer-interview2-display'
 import { canReassignVolunteerInterviewAssignment } from '@/features/program/shared/lib/volunteer-interview-reassign'
-import { guardGeneralVolunteerInterview2Evaluation } from './general-volunteer-applicant-guard-actions'
+import {
+  guardGeneralVolunteerInterview2Evaluation,
+  isVolunteerAssignmentBlockedApplicationStatus,
+} from './general-volunteer-applicant-guard-actions'
 import '@/shared/components/detail-info-form/detail-info-form.css'
 import './detail.css'
 
@@ -328,6 +331,7 @@ export function GeneralVolunteerApplicantDetailView(
   }, [applicant.interviewAssignmentStatus])
 
   const assignInterviewDisabled = useMemo(() => {
+    if (isVolunteerAssignmentBlockedApplicationStatus(applicant.applicationStatus)) return true
     if (applicant.interviewAssignmentStatus === 'withdrawn') return true
     if (applicant.interviewAssignmentStatus === 'not_required') return true
     if (applicant.interviewAssignmentStatus === 'assigned') {

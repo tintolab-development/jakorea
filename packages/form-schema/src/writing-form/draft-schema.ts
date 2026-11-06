@@ -227,7 +227,7 @@ export type DropdownParagraph = WritingFormParagraphBase & {
 }
 
 /** 주관식형(단일항목·테이블 셀) 입력 글자 수 상한 */
-export const SHORT_ESSAY_MAX_LENGTH = 2000
+export const SHORT_ESSAY_MAX_LENGTH = 1000
 
 /**
  * 테이블 셀 날짜/시간 모드.

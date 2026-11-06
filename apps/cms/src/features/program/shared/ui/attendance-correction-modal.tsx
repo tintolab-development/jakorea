@@ -35,7 +35,7 @@ function toStatus(
 
 function toInitialTime(attendance: ProgramAttendanceCorrectionInitialValue): Dayjs | null {
   if (attendance.kind === 'late') return dayjs(attendance.time, 'H:mm')
-  return dayjs('8:30', 'H:mm')
+  return null
 }
 
 export type ProgramAttendanceCorrectionModalProps = {
@@ -79,7 +79,7 @@ export function ProgramAttendanceCorrectionModal({
 }: ProgramAttendanceCorrectionModalProps) {
   const { showAlert } = useCmsAlert()
   const [status, setStatus] = useState<ProgramAttendanceCorrectionStatus>('present')
-  const [attendanceTime, setAttendanceTime] = useState<Dayjs | null>(dayjs('8:30', 'H:mm'))
+  const [attendanceTime, setAttendanceTime] = useState<Dayjs | null>(null)
   const [reason, setReason] = useState('')
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
   const [uploadingEvidence, setUploadingEvidence] = useState(false)
@@ -96,14 +96,10 @@ export function ProgramAttendanceCorrectionModal({
   const showReasonTable = status === 'excused_absence'
 
   useEffect(() => {
-    if (isTimeEnabled && attendanceTime == null) {
-      setAttendanceTime(dayjs('8:30', 'H:mm'))
-      return
-    }
     if (!isTimeEnabled) {
       setAttendanceTime(null)
     }
-  }, [attendanceTime, isTimeEnabled])
+  }, [isTimeEnabled])
 
   useEffect(() => {
     if (showReasonTable) return
@@ -229,7 +225,7 @@ export function ProgramAttendanceCorrectionModal({
               value={attendanceTime}
               onChange={setAttendanceTime}
               disabled={!isTimeEnabled}
-              placeholder="8:30"
+              placeholder="HH:mm"
               width="100%"
               inputSize="large"
               zIndex={2600}

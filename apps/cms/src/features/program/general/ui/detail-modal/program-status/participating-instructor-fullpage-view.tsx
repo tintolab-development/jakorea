@@ -44,6 +44,10 @@ import { mapInstructorApplicationDetailToParticipatingRow } from '@/features/pro
 import { giveUpGeneralParticipatingInstitution } from '@/features/program/general/api/admin-program-progress-service'
 import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import {
+  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+  programHasActiveInstructorRecruitment,
+} from '@/features/program/general/lib/general-instructor-recruitment-required'
+import {
   generalApplicationsQueryKeys,
   generalProgramProgressQueryKeys,
 } from '@/features/program/general/api/general-applications-query-keys'
@@ -892,6 +896,14 @@ export function ParticipatingInstructorFullpageView({
     if (!assignGuideMode || !assignGuideSchoolId) return false
     if (assignGuideInFlightRef.current) return false
 
+    if (!programHasActiveInstructorRecruitment(program)) {
+      showAlert({
+        title: '배정 실패',
+        content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+      })
+      return false
+    }
+
     const memberId = Number(mergedInstructor.memberId)
     if (!Number.isFinite(memberId) || memberId <= 0) {
       showAlert({
@@ -1044,7 +1056,7 @@ export function ParticipatingInstructorFullpageView({
     mergedInstructor,
     mergedInstructor.instructorApplicationId,
     mergedInstructor.memberId,
-    program.id,
+    program,
     queryClient,
     schoolRows,
     selectedWaitingSchoolKeys,

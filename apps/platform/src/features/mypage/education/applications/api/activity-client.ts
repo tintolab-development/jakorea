@@ -351,8 +351,12 @@ export type PortalFormListItem = {
   templateVersionId?: number
   formType?: string
   title?: string
+  templateName?: string | null
   targetScope?: string
+  targetScopeLabel?: string | null
   scheduleId?: number | null
+  sessionNo?: number | null
+  scheduleStartAt?: string | null
   required?: boolean
   submissionStartAt?: string | null
   submissionEndAt?: string | null

@@ -1,5 +1,6 @@
 import { PFInfoReview, PFText } from '@/shared/ui'
 import {
+  formatInstructorCalculatedTransportAmount,
   formatInstructorOneWayDistanceKm,
   formatInstructorTransportWon,
   type InstructorTransportPreview,
@@ -29,7 +30,7 @@ export function InstructorTransportFeeBlock({ preview }: InstructorTransportFeeB
           총 산정 교통비
         </PFText>
         <PFText typo="bd-md-sb" color="black">
-          {formatInstructorTransportWon(preview?.totalTransportFeeWon)}
+          {formatInstructorCalculatedTransportAmount(preview)}
         </PFText>
       </div>
     </div>

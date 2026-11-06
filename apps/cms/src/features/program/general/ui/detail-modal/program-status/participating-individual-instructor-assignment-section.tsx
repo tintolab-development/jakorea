@@ -62,6 +62,7 @@ import { toInstructorAssignmentCancelRequest } from '@/features/program/general/
 import { resolveAssignableSchedulePayloadFromSession } from '@/features/program/general/lib/organization-instructor-assignable-schedule'
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { hasActiveInstructorRecruitment } from '@/features/program/general/lib/detail-meta'
+import { GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE } from '@/features/program/general/lib/general-instructor-recruitment-required'
 import { SchoolDetailUnassignCompleteModal } from './school-detail-unassign-complete-modal'
 import { SchoolDetailUnassignConfirmModal } from './school-detail-unassign-confirm-modal'
 import './instructor-assignment-status-text.css'
@@ -362,6 +363,13 @@ export function ParticipatingIndividualInstructorAssignmentSection({
   }, [selectedAssignedKeys.length, showAlert])
 
   const handleSelectAssignClick = useCallback(() => {
+    if (!instructorRecruitmentReady) {
+      showAlert({
+        title: '배정 실패',
+        content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+      })
+      return
+    }
     if (selectedWaitingKeys.length === 0) {
       showAlert({ title: '안내', content: INSTRUCTOR_ASSIGN_SELECT_SCHOOL_ALERT_MESSAGE })
       return
@@ -371,7 +379,7 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     )
     if (!movable) return
     setSelectAssignConfirmOpen(true)
-  }, [selectedWaitingKeys, waitingSchedules, showAlert])
+  }, [instructorRecruitmentReady, selectedWaitingKeys, waitingSchedules, showAlert])
 
   const createAssignmentsFromWaiting = useCallback(
     async (
@@ -380,8 +388,8 @@ export function ParticipatingIndividualInstructorAssignmentSection({
     ) => {
       if (!instructorRecruitmentReady) {
         showAlert({
-          title: '안내',
-          content: '강사 모집이 없는 프로그램에는 강사를 배정할 수 없습니다.',
+          title: '배정 실패',
+          content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
         })
         return false
       }
@@ -615,7 +623,14 @@ export function ParticipatingIndividualInstructorAssignmentSection({
               size="h40"
               disabled={!instructorRecruitmentReady || addAssignOptions.length === 0}
               onClick={() => {
-                if (!instructorRecruitmentReady || addAssignOptions.length === 0) return
+                if (!instructorRecruitmentReady) {
+                  showAlert({
+                    title: '배정 실패',
+                    content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+                  })
+                  return
+                }
+                if (addAssignOptions.length === 0) return
                 setAddAssignWaitingRowId(addAssignOptions[0]?.value ?? null)
                 setAddAssignModalOpen(true)
               }}

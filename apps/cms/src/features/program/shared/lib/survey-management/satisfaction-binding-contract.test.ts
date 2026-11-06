@@ -2,16 +2,45 @@ import { describe, expect, it } from 'vitest'
 import {
   SATISFACTION_RUN_MODE_ONCE_AT_END,
   SATISFACTION_RUN_MODE_PER_SCHEDULE,
-  aggregateSatisfactionCounts,
+  isSatisfactionPerScheduleWritingPeriodLocked,
   mergeSatisfactionQuestionSummaries,
-  canDownloadSatisfactionAggregate,
   canDownloadSatisfactionResults,
+  formatSatisfactionOnceAtEndScheduleLabel,
+  formatSatisfactionOnceAtEndStartHint,
+  formatSatisfactionWindowExampleLine,
   mapSatisfactionProgressStatus,
   readSatisfactionRunMode,
   satisfactionBindingRowKey,
 } from './satisfaction-binding-contract'
 
 describe('satisfaction-binding-contract', () => {
+  it('locks writing-period input only for SATISFACTION PER_SCHEDULE', () => {
+    expect(
+      isSatisfactionPerScheduleWritingPeriodLocked({
+        formType: 'SATISFACTION',
+        runMode: 'PER_SCHEDULE',
+      })
+    ).toBe(true)
+    expect(
+      isSatisfactionPerScheduleWritingPeriodLocked({
+        formType: 'SATISFACTION',
+        targetScope: 'SCHEDULE',
+      })
+    ).toBe(true)
+    expect(
+      isSatisfactionPerScheduleWritingPeriodLocked({
+        formType: 'SATISFACTION',
+        runMode: 'ONCE_AT_END',
+      })
+    ).toBe(false)
+    expect(
+      isSatisfactionPerScheduleWritingPeriodLocked({
+        formType: 'SURVEY',
+        targetScope: 'SCHEDULE',
+      })
+    ).toBe(false)
+  })
+
   it('maps runMode from targetScope when the field is absent', () => {
     expect(readSatisfactionRunMode(undefined, 'SCHEDULE')).toBe(SATISFACTION_RUN_MODE_PER_SCHEDULE)
     expect(readSatisfactionRunMode(undefined, 'PROGRAM')).toBe(SATISFACTION_RUN_MODE_ONCE_AT_END)
@@ -27,38 +56,35 @@ describe('satisfaction-binding-contract', () => {
     )
   })
 
-  it('does not enable download from completion rate', () => {
-    expect(canDownloadSatisfactionResults({ resultDownloadable: false })).toBe(false)
-    expect(canDownloadSatisfactionResults({ resultDownloadable: null })).toBe(false)
-    expect(canDownloadSatisfactionResults({})).toBe(false)
+  it('always enables satisfaction result download', () => {
+    expect(canDownloadSatisfactionResults({ resultDownloadable: false })).toBe(true)
+    expect(canDownloadSatisfactionResults({ resultDownloadable: null })).toBe(true)
+    expect(canDownloadSatisfactionResults({})).toBe(true)
     expect(canDownloadSatisfactionResults({ resultDownloadable: true })).toBe(true)
-    expect(
-      canDownloadSatisfactionAggregate([
-        { resultDownloadable: true },
-        { resultDownloadable: false },
-      ])
-    ).toBe(false)
-    expect(
-      canDownloadSatisfactionAggregate([
-        { resultDownloadable: true },
-        { resultDownloadable: true },
-      ])
-    ).toBe(true)
   })
 
-  it('aggregates expected as null when any row is unknown', () => {
+  it('formats the once-at-end mint hint with the last education schedule', () => {
     expect(
-      aggregateSatisfactionCounts([
-        { responseCount: 12, expectedRespondentCount: 20 },
-        { responseCount: 3, expectedRespondentCount: null },
-      ])
-    ).toEqual({ submittedCount: 15, expectedRespondentCount: null })
-    expect(
-      aggregateSatisfactionCounts([
-        { responseCount: 12, expectedRespondentCount: 20 },
-        { responseCount: 8, expectedRespondentCount: 10 },
-      ])
-    ).toEqual({ submittedCount: 20, expectedRespondentCount: 30 })
+      formatSatisfactionOnceAtEndScheduleLabel({
+        sessionNo: 3,
+        endAt: '2026-11-26T06:00:00.000Z',
+      })
+    ).toBe('3회차 11.26(목)')
+    expect(formatSatisfactionOnceAtEndStartHint('3회차 11.26(목)')).toBe(
+      '마지막 교육 일정(3회차 11.26(목))이 끝난 뒤에 시작할 수 있습니다.'
+    )
+    expect(formatSatisfactionOnceAtEndStartHint(null)).toBe(
+      '마지막 교육 일정이 끝난 뒤에 시작할 수 있습니다.'
+    )
+  })
+
+  it('builds the register-modal example from the selected window days', () => {
+    expect(formatSatisfactionWindowExampleLine(3)).toBe(
+      '예) 1회차 11.12(목) 12:00 종료 → 11.15(일) 23:59 마감'
+    )
+    expect(formatSatisfactionWindowExampleLine(7)).toBe(
+      '예) 1회차 11.12(목) 12:00 종료 → 11.19(목) 23:59 마감'
+    )
   })
 
   it('keys rows by bindingId + targetScopeId, not session_no', () => {

@@ -88,7 +88,14 @@ import {
   buildCompanySchoolWaitingInstructorRows,
   buildCompanySchoolAssignedInstructorRows,
 } from '@/features/program/1c-1s/lib/build-company-school-assignment-rows'
-import { getParticipationConsentRequiredMessage } from '@/features/program/general/api/get-general-program-api-error'
+import {
+  getGeneralProgramApiErrorMessage,
+  getParticipationConsentRequiredMessage,
+} from '@/features/program/general/api/get-general-program-api-error'
+import {
+  GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+  programHasActiveInstructorRecruitment,
+} from '@/features/program/general/lib/general-instructor-recruitment-required'
 import { formatInstructorOrganizationScheduleScopeMessage } from '@/features/program/shared/lib/instructor-organization-schedule-scope'
 import {
   cancelInstructorAssignmentRemote,
@@ -1378,6 +1385,13 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
   const finalizeSelectAssign = useCallback(
     async (rows: WaitingInstructorRow[], showApprovalAlarmSection: boolean) => {
       if (rows.length === 0) return
+      if (program && !programHasActiveInstructorRecruitment(program)) {
+        showAlert({
+          title: '배정 실패',
+          content: GENERAL_INSTRUCTOR_ASSIGNMENT_REQUIRES_RECRUITMENT_MESSAGE,
+        })
+        return
+      }
 
       if (assignmentBoardRemoteEnabled) {
         const orgAppId = row.organizationApplicationId
@@ -1494,7 +1508,10 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
               ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
               : (formatInstructorOrganizationScheduleScopeMessage(error) ??
                 getParticipationConsentRequiredMessage(error) ??
-                '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'),
+                getGeneralProgramApiErrorMessage(
+                  error,
+                  '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+                )),
           })
         } finally {
           assignInFlightRef.current = false
@@ -1596,6 +1613,7 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
       assignedRows,
       currentAssignedCount,
       programId,
+      program,
       invalidateAssignmentBoard,
       showAlert,
     ]
@@ -1724,7 +1742,10 @@ export function GeneralParticipatingInstitutionDetailView(props: SchoolDetailFul
             ? ONE_SCHOOL_PER_DAY_CONFLICT_ALERT_MESSAGE
             : (formatInstructorOrganizationScheduleScopeMessage(error) ??
               getParticipationConsentRequiredMessage(error) ??
-              '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.'),
+              getGeneralProgramApiErrorMessage(
+                error,
+                '강사 배정에 실패했습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+              )),
         })
       } finally {
         assignInFlightRef.current = false

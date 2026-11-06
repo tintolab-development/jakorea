@@ -1,21 +1,18 @@
-import type { Dayjs } from 'dayjs'
 import type { SelectProps } from 'antd'
 import { ContentModal } from '@/shared/ui/content-modal'
 import { CmsButton } from '@/shared/ui/cms-button'
 import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsRadio, CmsRadioGroup } from '@/shared/ui/cms-radio'
-import { CmsDatePicker } from '@/shared/ui/cms-datepicker'
 import {
+  SATISFACTION_ONCE_AT_END_PROGRAM_CLOSE_HINT,
   SATISFACTION_RUN_MODE_ONCE_AT_END,
   SATISFACTION_RUN_MODE_PER_SCHEDULE,
   SATISFACTION_WINDOW_DAYS,
-  satisfactionDeadlinePreviewCopy,
-  satisfactionStartHintCopy,
+  formatSatisfactionOnceAtEndStartHint,
+  formatSatisfactionWindowExampleLine,
   type SatisfactionRunMode,
   type SatisfactionWindowDays,
 } from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
-
-export type SatisfactionStartMode = 'auto' | 'immediate' | 'custom'
 
 export type SatisfactionRegisterModalProps = {
   open: boolean
@@ -33,15 +30,9 @@ export type SatisfactionRegisterModalProps = {
   onRunModeChange: (value: SatisfactionRunMode) => void
   windowDays: SatisfactionWindowDays
   onWindowDaysChange: (value: SatisfactionWindowDays) => void
-  startMode: SatisfactionStartMode
-  onStartModeChange: (value: SatisfactionStartMode) => void
-  customStartAt: Dayjs | null
-  onCustomStartAtChange: (value: Dayjs | null) => void
-  scheduleOptions: SelectProps['options']
-  scheduleValues: string[]
-  onScheduleValuesChange: (values: string[]) => void
   schedulesLoading?: boolean
   hasSessionSchedules: boolean
+  lastEducationScheduleLabel?: string | null
   onCancel: () => void
   onSubmit: () => void
 }
@@ -62,31 +53,18 @@ export function SatisfactionRegisterModal({
   onRunModeChange,
   windowDays,
   onWindowDaysChange,
-  startMode,
-  onStartModeChange,
-  customStartAt,
-  onCustomStartAtChange,
-  scheduleOptions,
-  scheduleValues,
-  onScheduleValuesChange,
   schedulesLoading = false,
   hasSessionSchedules,
+  lastEducationScheduleLabel = null,
   onCancel,
   onSubmit,
 }: SatisfactionRegisterModalProps) {
   const perSchedule = runMode === SATISFACTION_RUN_MODE_PER_SCHEDULE
-  const scheduleReady =
-    !perSchedule ||
-    (hasSessionSchedules && scheduleValues.length > 0 && scheduleValues.every(value => value !== ''))
-  const startReady =
-    runMode !== SATISFACTION_RUN_MODE_ONCE_AT_END ||
-    startMode !== 'custom' ||
-    customStartAt != null
+  const scheduleReady = !perSchedule || (!schedulesLoading && hasSessionSchedules)
   const canSubmit =
     templateValue != null &&
     templateValue !== '' &&
     scheduleReady &&
-    startReady &&
     (audienceOptions == null || (audienceValue != null && audienceValue !== ''))
 
   return (
@@ -147,78 +125,61 @@ export function SatisfactionRegisterModal({
           value={templateValue ?? undefined}
           onChange={value => onTemplateChange(value ?? null)}
         />
-        <CmsRadioGroup
-          label="진행 방식"
-          required
-          size="medium"
-          value={runMode}
-          onChange={event => onRunModeChange(event.target.value as SatisfactionRunMode)}
-        >
-          <CmsRadio value={SATISFACTION_RUN_MODE_PER_SCHEDULE}>일정별</CmsRadio>
-          <CmsRadio value={SATISFACTION_RUN_MODE_ONCE_AT_END}>종료 시 1회</CmsRadio>
-        </CmsRadioGroup>
-        <p className="survey-management-create-modal__hint">{satisfactionStartHintCopy(runMode)}</p>
-        {perSchedule ? (
-          <CmsSelect
-            width="100%"
-            mode="multiple"
-            withAllOption={false}
-            allowClear={false}
-            label="교육 일정"
-            required
-            placeholder="만족도조사를 진행할 교육 일정을 선택해 주세요"
-            options={scheduleOptions}
-            value={scheduleValues}
-            onChange={value =>
-              onScheduleValuesChange(Array.isArray(value) ? value.map(String) : [])
-            }
-            disabled={!hasSessionSchedules || schedulesLoading}
-          />
-        ) : (
+        <div>
           <CmsRadioGroup
-            label="시작 설정"
+            label="진행 방식"
             required
             size="medium"
-            value={startMode}
-            onChange={event => onStartModeChange(event.target.value as SatisfactionStartMode)}
+            value={runMode}
+            onChange={event => onRunModeChange(event.target.value as SatisfactionRunMode)}
           >
-            <CmsRadio value="immediate">바로 시작</CmsRadio>
-            <CmsRadio value="custom">직접 설정</CmsRadio>
-            <CmsRadio value="auto">마지막 교육 일정 종료일</CmsRadio>
+            <CmsRadio value={SATISFACTION_RUN_MODE_PER_SCHEDULE}>일정별</CmsRadio>
+            <CmsRadio value={SATISFACTION_RUN_MODE_ONCE_AT_END}>종료 시 1회</CmsRadio>
           </CmsRadioGroup>
-        )}
-        {runMode === SATISFACTION_RUN_MODE_ONCE_AT_END && startMode === 'custom' ? (
-          <div>
-            <p className="survey-management-create-modal__hint">시작일·시각</p>
-            <CmsDatePicker
-              showTime
-              value={customStartAt}
-              onChange={value => onCustomStartAtChange(value)}
-              placeholder="시작일·시각을 선택해 주세요"
+          <p className="survey-management-create-modal__hint">
+            {perSchedule
+              ? '확정된 모든 교육 일정에 동일한 만족도조사가 적용되며, 각 일정이 끝나면 자동으로 시작돼요.'
+              : '마지막 교육 일정이 끝나면 자동으로 시작돼요.'}
+          </p>
+        </div>
+        {perSchedule ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <CmsSelect
+              width="100%"
+              withAllOption={false}
+              allowClear={false}
+              label="참여 기간"
+              required
+              options={SATISFACTION_WINDOW_DAYS.map(days => ({
+                label: `일정 종료 후 ${days}일`,
+                value: String(days),
+              }))}
+              value={String(windowDays)}
+              onChange={value => {
+                const next = Number(value)
+                if (SATISFACTION_WINDOW_DAYS.includes(next as SatisfactionWindowDays)) {
+                  onWindowDaysChange(next as SatisfactionWindowDays)
+                }
+              }}
             />
+            <p className="survey-management-create-modal__hint">
+              선택지: 일정 종료 후 3일 / 7일 / 14일 / 30일
+            </p>
           </div>
         ) : null}
-        <CmsSelect
-          width="100%"
-          withAllOption={false}
-          allowClear={false}
-          label="참여 기간"
-          required
-          options={SATISFACTION_WINDOW_DAYS.map(days => ({
-            label: `${days}일`,
-            value: String(days),
-          }))}
-          value={String(windowDays)}
-          onChange={value => {
-            const next = Number(value)
-            if (SATISFACTION_WINDOW_DAYS.includes(next as SatisfactionWindowDays)) {
-              onWindowDaysChange(next as SatisfactionWindowDays)
-            }
-          }}
-        />
-        <p className="survey-management-create-modal__hint">
-          {satisfactionDeadlinePreviewCopy(windowDays)}
-        </p>
+        <div className="survey-management-deadline-hint__container">
+          {perSchedule ? (
+            <>
+              <p>일정마다 참여 기간이 자동으로 적용돼요.</p>
+              <p>{formatSatisfactionWindowExampleLine(windowDays)}</p>
+            </>
+          ) : (
+            <>
+              <p>{formatSatisfactionOnceAtEndStartHint(lastEducationScheduleLabel)}</p>
+              <p>{SATISFACTION_ONCE_AT_END_PROGRAM_CLOSE_HINT}</p>
+            </>
+          )}
+        </div>
       </div>
     </ContentModal>
   )

@@ -58,6 +58,7 @@ export function useProgramSurveyScheduleOptions(
 
   return {
     options,
+    schedules: query.data ?? [],
     hasSessionSchedules,
     isLoading: query.isLoading,
     isError: query.isError,

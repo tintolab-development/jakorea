@@ -70,6 +70,7 @@ const PROGRAM_APPLICATION_STATUSES = new Set<EducationDisplayStatus>([
   'waiting_result',
   'document_passed',
   'rejected',
+  'approval_cancelled',
 ])
 
 const ACTIVITY_STATUSES = new Set<EducationDisplayStatus>(['in_progress', 'completed'])

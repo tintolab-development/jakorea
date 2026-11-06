@@ -62,6 +62,8 @@ export interface GeneralVolunteerApplicantRow {
   canEditManagerBEvaluation: boolean
   /** Admin API가 현재 상태에서 허용하는 canonical action 목록 */
   availableActions: string[]
+  /** wire `applicationStatus` — 승인 취소·반려·포기 후 면접/교육일 배정 차단 */
+  applicationStatus?: string | null
   documentScreeningStatus: GeneralDocumentScreeningStatus
   documentApprovalNotifyTiming?: PermissionModalNotifyTiming
   documentRejectionNotifyTiming?: PermissionModalNotifyTiming

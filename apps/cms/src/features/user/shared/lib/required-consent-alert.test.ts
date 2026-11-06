@@ -4,6 +4,8 @@ import {
   buildRequiredConsentDisagreeAlertMessage,
   collectDisagreedRequiredConsentLabels,
   hasUnsetConsentSelections,
+  PARTIAL_CONSENT_DISPLAY_LABEL,
+  resolveConsentStatusDisplayLabel,
 } from '@jakorea/domain/shared/required-consent-alert'
 
 describe('required-consent-alert', () => {
@@ -65,5 +67,28 @@ describe('required-consent-alert', () => {
         ['consentTermsOfService', 'consentPersonalInfo'] as const
       )
     ).toBe(false)
+  })
+
+  it('consentStatus PARTIAL은 부분동의로 표시한다', () => {
+    expect(
+      resolveConsentStatusDisplayLabel({
+        agreed: true,
+        consentStatus: 'PARTIAL',
+        agreedLabel: '동의함',
+      })
+    ).toBe(PARTIAL_CONSENT_DISPLAY_LABEL)
+    expect(
+      resolveConsentStatusDisplayLabel({
+        agreed: true,
+        consentStatus: 'partial',
+        agreedLabel: '동의',
+      })
+    ).toBe('부분동의')
+    expect(
+      resolveConsentStatusDisplayLabel({
+        agreed: true,
+        agreedLabel: '동의함',
+      })
+    ).toBe('동의함')
   })
 })

@@ -6,6 +6,7 @@ import {
   buildSurveyPollResultSectionsFromSummary,
   type SurveyPollResultSection,
 } from '../../lib/survey-management/aggregate-survey-poll-results'
+import { paginateSurveyPollPdfSections } from '../../lib/survey-management/paginate-survey-poll-pdf-pages'
 import { resolveSurveyWritingDraft } from '../../lib/survey-management/survey-writing-draft'
 import type {
   SurveyPollRawResponse,
@@ -80,6 +81,8 @@ export function SurveyPollResultsView({
     )
   }, [draft, needsDraft, questionSummaries, responses, useSummary])
 
+  const pdfPages = useMemo(() => paginateSurveyPollPdfSections(sections), [sections])
+
   const renderSectionTitle = (section: SurveyPollResultSection) => (
     <>
       {section.title}
@@ -139,36 +142,42 @@ export function SurveyPollResultsView({
       </div>
 
       <div className="ujat-survey-poll-results__pdf-pages" aria-hidden>
-        <section className="ujat-survey-poll-results__pdf-page" data-form-document-pdf-page>
-          <div className="ujat-survey-poll-results__pdf-header">
-            <p className="ujat-survey-poll-results__pdf-kicker">JA Korea</p>
-            <h2 className="ujat-survey-poll-results__pdf-title">{pdfTitle}</h2>
-          </div>
-          <div className="ujat-survey-poll-results__summary ujat-survey-poll-results__pdf-summary">
-            {summary}
-          </div>
+        {pdfPages.map((pageSections, pageIndex) => (
+          <section
+            key={`pdf-page-${pageIndex}`}
+            className="ujat-survey-poll-results__pdf-page"
+            data-form-document-pdf-page
+          >
+            <div className="ujat-survey-poll-results__pdf-header">
+              <p className="ujat-survey-poll-results__pdf-kicker">JA Korea</p>
+              <h2 className="ujat-survey-poll-results__pdf-title">{pdfTitle}</h2>
+            </div>
+            <div className="ujat-survey-poll-results__summary ujat-survey-poll-results__pdf-summary">
+              {summary}
+            </div>
 
-          <div className="ujat-survey-poll-results__pdf-sections">
-            {sections.map(section => (
-              <div
-                key={`pdf-${section.paragraphId}`}
-                className="ujat-survey-poll-results__pdf-section"
-              >
-                <h3 className="ujat-survey-poll-results__pdf-section-title">
-                  {renderSectionTitle(section)}
-                </h3>
-                <div className="ujat-survey-poll-results__section-divider" aria-hidden />
-                <div className="ujat-survey-poll-results__section-body">
-                  {section.kind === 'scale' ? (
-                    <SurveyScaleResultChart data={section.data} />
-                  ) : (
-                    <SurveyTextResponsesTable rows={section.rows} />
-                  )}
+            <div className="ujat-survey-poll-results__pdf-sections">
+              {pageSections.map(section => (
+                <div
+                  key={`pdf-${pageIndex}-${section.paragraphId}`}
+                  className="ujat-survey-poll-results__pdf-section"
+                >
+                  <h3 className="ujat-survey-poll-results__pdf-section-title">
+                    {renderSectionTitle(section)}
+                  </h3>
+                  <div className="ujat-survey-poll-results__section-divider" aria-hidden />
+                  <div className="ujat-survey-poll-results__section-body">
+                    {section.kind === 'scale' ? (
+                      <SurveyScaleResultChart data={section.data} />
+                    ) : (
+                      <SurveyTextResponsesTable rows={section.rows} />
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   )

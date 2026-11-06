@@ -54,10 +54,14 @@ function optionalText(value: string | null | undefined): string | undefined {
   return trimmed ? trimmed : undefined
 }
 
-function mapAvailableActions(values: readonly string[] | undefined): string[] | undefined {
+function mapAvailableActions(
+  values: readonly string[] | undefined,
+  applicationType?: ProgramApplicationType | null,
+): string[] | undefined {
   const actions = (values ?? [])
     .map(value => value.trim().toUpperCase())
     .filter(value => value.length > 0)
+    .filter(value => !(applicationType === 'ORGANIZATION' && value === 'CHECK_IN'))
   return actions.length > 0 ? [...new Set(actions)] : undefined
 }
 
@@ -270,7 +274,7 @@ export function mapPortalEducationSchedule(
   const assignmentAllowed =
     meta?.applicationType !== 'INSTRUCTOR' && meta?.applicationType !== 'VOLUNTEER'
   const assignment = assignmentAllowed ? mapAssignment(item.assignment) : undefined
-  const availableActions = mapAvailableActions(item.availableActions)
+  const availableActions = mapAvailableActions(item.availableActions, meta?.applicationType)
   const assignmentStatus = optionalText(item.assignmentStatus ?? undefined)
   const scheduleStatus = optionalText(item.scheduleStatus)
   const classLabel = optionalText(item.classLabel)

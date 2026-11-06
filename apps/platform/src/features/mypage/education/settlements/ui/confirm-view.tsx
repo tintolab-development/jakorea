@@ -21,7 +21,7 @@ import {
 import {
   formatInstructorFeeAssignment,
   formatLectureFeeSessionProgress,
-  formatLectureFeeWon,
+  formatTotalLectureFee,
   lectureFeeTypeDisplayLabel,
 } from '../lib/lecture-fee-preview'
 import { readInstructorBusinessIncomeConfirmLabel } from '../lib/instructor-settlement-summary'
@@ -167,7 +167,7 @@ export function EducationSettlementConfirmView({
       }),
     },
   ]
-  const totalLectureFee = formatLectureFeeWon(lectureFeePreview?.totalLectureFee)
+  const totalLectureFee = formatTotalLectureFee(lectureFeePreview)
   const basicRows: PFInfoReviewItem[] = [
     { label: '성명', value: draft.basic.name },
     ...(isReceipt ? [{ label: '영문명', value: draft.basic.nameEn }] : []),
@@ -248,7 +248,7 @@ export function EducationSettlementConfirmView({
             </>
           ) : (
             <InstructorTransportFeeBlock
-              preview={draft.transport.autoPreview ?? session?.instructorTransportPreview ?? null}
+              preview={session?.instructorTransportPreview ?? draft.transport.autoPreview ?? null}
             />
           )}
         </ConfirmSection>

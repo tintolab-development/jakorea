@@ -43,6 +43,13 @@ const PROGRESS_INSTRUCTOR_ERROR_MESSAGES: Record<string, string> = {
   VOLUNTEER_ASSIGNMENT_STARTED_USE_GIVE_UP:
     '이미 시작된 봉사 일정은 배정 해제가 아니라 활동 포기로 처리해야 합니다.',
   VOLUNTEER_ASSIGNMENT_SCHEDULE_REQUIRED: '활성 교육 일정이 있는 기관만 배정할 수 있습니다.',
+  VOLUNTEER_ASSIGNMENT_ORGANIZATION_SCHEDULE_REQUIRED:
+    '기관이 배정되지 않은 회차에는 봉사자를 배정할 수 없습니다.',
+  GENERAL_ORGANIZATION_ATTENDANCE_ASSIGNMENT_SCOPE_REQUIRED:
+    '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.',
+  ATTENDANCE_SCOPE_UNVERIFIED: '배정되지 않은 일정의 학생 출결은 저장할 수 없습니다.',
+  APPLICATION_DECISION_CONFLICT:
+    '현재 신청 상태에서는 승인·반려·취소 처리를 수행할 수 없습니다.',
   INSTRUCTOR_REPRESENTATIVE_NOT_CURRENT: '현재 대표 강사가 아니면 일반 강사로 변경할 수 없습니다.',
   PROGRAM_PARTICIPANT_GIVE_UP_BEFORE_FIRST_ACTIVITY:
     '첫 교육이 시작되기 전에는 활동 포기할 수 없습니다.',

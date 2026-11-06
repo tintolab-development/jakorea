@@ -1687,6 +1687,7 @@ export function useApplicantsDetail({
         })
         await applicationsRemote.invalidateApplications()
         if (programId) {
+          const refresh = organizationApprovalRefreshTargets(programId, [id])
           await queryClient.invalidateQueries({
             queryKey: generalApplicationsQueryKeys.organizationDetail(id),
           })
@@ -1699,6 +1700,11 @@ export function useApplicantsDetail({
           await queryClient.invalidateQueries({
             queryKey: generalProgramQueryKeys.navigation(programId),
           })
+          await queryClient.invalidateQueries({ queryKey: refresh.educationSlots })
+          await queryClient.invalidateQueries({ queryKey: refresh.schedules })
+          for (const queryKey of refresh.organizationScheduleAssignments) {
+            await queryClient.invalidateQueries({ queryKey })
+          }
         }
         return { status: 'ok', response }
       } catch (error) {

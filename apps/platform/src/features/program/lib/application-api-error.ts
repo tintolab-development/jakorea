@@ -108,9 +108,9 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
   PREFERRED_SCHEDULE_SESSION_TIMES_REQUIRED:
     '진행 희망 교육 일정의 차시와 시간을 입력해 주세요.',
   FORM_ANSWER_REQUIRED: '필수 입력값을 입력해 주세요.',
-  FORM_ANSWER_TYPE_INVALID: '입력 형식이 올바르지 않습니다.',
-  FORM_ANSWER_TOO_LONG: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
   FORM_REQUIRED_CONSENT_NOT_AGREED: '필수 동의 항목에 동의해 주세요.',
+  FORM_ANSWER_TOO_LONG: '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.',
+  FORM_ANSWER_TYPE_INVALID: '입력 형식이 올바르지 않습니다.',
   FORM_BINDING_TARGET_ROLE_MISMATCH: '현재 참여 역할에 해당하지 않는 설문입니다.',
   INVALID_REQUESTED_EDUCATION_FORMAT: '희망 교육 형태를 다시 확인해 주세요.',
   FORM_OPTION_NOT_ALLOWED: '선택한 값은 사용할 수 없습니다.',
@@ -179,7 +179,10 @@ const BLOCKED_REASON_MESSAGES: Record<string, string> = {
     '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',
   CERTIFICATE_APPLICATION_DATE_UNAVAILABLE: '신청일을 확인할 수 없습니다.',
   MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED:
-    '참가인증서는 CMS 관리자만 발급할 수 있습니다.',
+    '참가인증서는 회원·학생·교사가 직접 발급할 수 없습니다.',
+  CERTIFICATE_ALREADY_ISSUED: '이미 발급된 증명서입니다.',
+  CERTIFICATE_ISSUE_NOT_ELIGIBLE: '증명서 발급 요건을 충족하지 않았습니다.',
+  ATTENDANCE_NOT_COMPLETED: '출석 요건을 충족하지 않아 발급할 수 없습니다.',
   ISSUANCE_PERIOD_EXPIRED: '신청일로부터 3년이 지나 발급할 수 없습니다.',
   PARTICIPANT_NOT_COMPLETED: '수료 조건을 충족하지 않아 발급할 수 없습니다.',
   COMPLETION_CERTIFICATE_REQUIRED: '수료 조건을 충족한 뒤에는 수료증을 발급해 주세요.',

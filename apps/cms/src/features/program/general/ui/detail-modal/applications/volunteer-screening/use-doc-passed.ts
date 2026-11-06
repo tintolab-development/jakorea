@@ -47,6 +47,7 @@ import {
 import { mapGeneralVolunteerInterviewAvailabilityToCalendarEvents } from '@/features/program/general/lib/general-volunteer-interview-calendar-events'
 import { getNotificationScheduleError } from '@/shared/lib/notification-schedule'
 import { readApiErrorAlertMessage } from '@/shared/lib/extract-api-error-message'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 
 export type GeneralVolunteerDocPassedViewMode = 'list' | 'calendar'
 
@@ -243,9 +244,12 @@ export function useGeneralVolunteerDocPassed({
           title: '면접 배정 실패',
           content:
             scheduleError?.message ??
-            readApiErrorAlertMessage(
+            getGeneralProgramApiErrorMessage(
               error,
-              '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.'
+              readApiErrorAlertMessage(
+                error,
+                '면접 일정 배정 중 오류가 발생했습니다. 다시 시도해 주세요.'
+              )
             ),
         })
         return

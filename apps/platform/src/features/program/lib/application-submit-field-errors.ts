@@ -4,6 +4,8 @@ import { isApplicationPreferredScheduleParagraphId } from './apply-form-paragrap
 
 const ANSWER_VALIDATION_CODES = new Set([
   'FORM_ANSWER_REQUIRED',
+  'FORM_REQUIRED_CONSENT_NOT_AGREED',
+  'FORM_ANSWER_TOO_LONG',
   'FORM_ANSWER_TYPE_INVALID',
   'FORM_ANSWER_TOO_LONG',
   'FORM_REQUIRED_CONSENT_NOT_AGREED',

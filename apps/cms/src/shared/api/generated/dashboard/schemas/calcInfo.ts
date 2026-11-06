@@ -8,7 +8,7 @@
 import type { CalcInfoLectureFeeType } from './calcInfoLectureFeeType';
 
 /**
- * 지급조서(PAYMENT_STATEMENT)만. 영수증 경로는 null. 제출 전 미리보기 lectureFeePreview와 산식 동일. taxIncomeType이 아님.
+ * 지급조서(PAYMENT_STATEMENT)만. 영수증 경로는 null. 제출 전 미리보기 lectureFeePreview·transportPreview와 산식 동일. taxIncomeType이 아님.
  */
 export interface CalcInfo {
   /** 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null. */
@@ -21,6 +21,14 @@ export interface CalcInfo {
   educationSessionCount?: number;
   /** 총 학생 수. 제출 스냅샷에 없으면 null */
   totalStudentCount?: number;
-  /** 이번 회차 총 강의비(원). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. */
+  /** 이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. PER_HOUR는 강의 시간×단가. educationSessionCount를 곱하지 않음. */
   totalLectureFee?: number;
+  /** 편도 km. 제출 전 transportPreview.oneWayDistanceKm와 동일. */
+  oneWayDistanceKm?: string | null;
+  /** 유류비(원, 정수). 제출 전 transportPreview.fuelCostWon와 동일. 미지급이면 null. */
+  fuelCostWon?: number | null;
+  /** 톨비(원, 정수). 제출 전 transportPreview.tollFeeWon와 동일. 미지급이면 null. */
+  tollFeeWon?: number | null;
+  /** 총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음. */
+  calculatedTransportAmount?: number | null;
 }

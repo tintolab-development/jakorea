@@ -13,7 +13,8 @@ export function clipApplicationFreeText(value: string): string {
 export function isIndividualSelfIntroParagraphId(id: string): boolean {
   return (
     id === PROGRAM_PARTICIPANT_APPLICATION_IDS.selfIntro ||
-    id === 'program-participant-application-seed-self-introduction'
+    id === 'program-participant-application-seed-self-introduction' ||
+    id === 'program-participant-application-seed-self-intro'
   )
 }
 

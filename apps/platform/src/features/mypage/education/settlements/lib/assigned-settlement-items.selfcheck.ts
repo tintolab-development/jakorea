@@ -971,4 +971,42 @@ assert.equal(rejectedCanResubmit[0]?.status, 'rejected')
 assert.equal(rejectedCanResubmit[0]?.canResubmitReceipt, true)
 assert.equal(rejectedCanResubmit[0]?.canSubmitReceipt, false)
 
+const lectureFeePreviewJoin = buildAssignedSettlementItems({
+  schedules: [
+    schedule({
+      id: '201',
+      scheduleId: 201,
+      sessionNumber: 2,
+      heldAt: '2026-04-01T10:00:00+09:00',
+    }),
+  ],
+  scopeStatus: 'ASSIGNMENT_SCOPED',
+  now: NOW,
+  programId: '100',
+  lectureReports: [
+    {
+      scheduleId: 201,
+      assignmentId: 9,
+      lectureFeePreview: {
+        lectureFeeType: 'GRADE_1',
+        instructorFeeCalculationUnit: 'PER_HOUR',
+        instructorFeeAmount: 450000,
+        totalLectureFee: 450000,
+        educationSessionCount: 2,
+      },
+      instructorTransportPreview: {
+        oneWayDistanceKm: 528.6,
+        fuelCostWon: 185010,
+        tollFeeWon: 24800,
+        calculatedTransportAmount: 209810,
+        totalTransportFeeWon: 209810,
+      },
+    },
+  ],
+})
+assert.equal(lectureFeePreviewJoin[0]?.lectureFeePreview?.totalLectureFee, 450000)
+assert.equal(lectureFeePreviewJoin[0]?.lectureFeePreview?.educationSessionCount, 2)
+assert.equal(lectureFeePreviewJoin[0]?.instructorTransportPreview?.calculatedTransportAmount, 209810)
+assert.equal(lectureFeePreviewJoin[0]?.instructorTransportPreview?.oneWayDistanceKm, 528.6)
+
 console.log('assigned-settlement-items.selfcheck: ok')

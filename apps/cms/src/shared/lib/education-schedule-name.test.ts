@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  composeSatisfactionSurveyDisplayTitle,
+  formatSatisfactionPerScheduleDisplayName,
   isDefaultEducationSlotName,
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
@@ -103,5 +105,52 @@ describe('CMS surfaces hide the default slot name', () => {
       programNameKo: '경제교육',
     } as Parameters<typeof mapScheduleItem>[0])
     expect(event?.title).toBe('경제교육')
+  })
+})
+
+describe('composeSatisfactionSurveyDisplayTitle', () => {
+  it('joins schedule and mapped form name for per-schedule', () => {
+    expect(
+      composeSatisfactionSurveyDisplayTitle({
+        formName: '만족도조사 (학생용)',
+        perSchedule: true,
+        scheduleDisplayName: '1회차 · 2026.11.12(목)',
+      })
+    ).toBe('1회차 · 2026.11.12(목) 만족도조사 (학생용)')
+  })
+
+  it('keeps only the form name when not per-schedule', () => {
+    expect(
+      composeSatisfactionSurveyDisplayTitle({
+        formName: '만족도조사 (학생용)',
+        perSchedule: false,
+        scheduleDisplayName: '1회차 · 2026.11.12(목)',
+      })
+    ).toBe('만족도조사 (학생용)')
+  })
+})
+
+describe('formatSatisfactionPerScheduleDisplayName', () => {
+  it('uses round or custom name with Seoul calendar date', () => {
+    expect(
+      formatSatisfactionPerScheduleDisplayName({
+        scheduleName: '공통 교육 예정 1',
+        sessionNo: 1,
+        startAt: '2026-11-12T03:00:00.000Z',
+      })
+    ).toBe('1회차 · 2026.11.12(목)')
+    expect(
+      formatSatisfactionPerScheduleDisplayName({
+        scheduleName: '오리엔테이션',
+        sessionNo: 2,
+        startAt: '2026-11-12T03:00:00.000Z',
+      })
+    ).toBe('오리엔테이션 · 2026.11.12(목)')
+    expect(
+      formatSatisfactionPerScheduleDisplayName({
+        scheduleName: '공통 교육 예정 2',
+        scheduleLine: '2026년 11월 5일(목) 02:00 ~ 02:20',
+      })
+    ).toBe('2회차 · 2026.11.05(목)')
   })
 })

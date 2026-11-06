@@ -127,6 +127,19 @@ async function signDocumentSignatureFields(
   }
 }
 
+const PAYMENT_BASIC_INFO_TEMPLATE_CODES = new Set([
+  'agreement-third-party',
+  'document-payment-order-pre-consent',
+])
+
+function readFilledPaymentBasicInfo(
+  value: SchemaConsentWriteState['paymentBasicInfo'],
+): Record<string, unknown> | undefined {
+  if (value == null || typeof value !== 'object' || Array.isArray(value)) return undefined
+  if (Object.keys(value).length === 0) return undefined
+  return value as Record<string, unknown>
+}
+
 export function buildPortalConsentFilledDocument(
   consentKey: DocumentConsentWriteKey,
   state: SchemaConsentWriteState,
@@ -138,8 +151,9 @@ export function buildPortalConsentFilledDocument(
 } {
   const { templateId } = resolveDocumentConsentTemplate(consentKey)
   const templateCode = state.portalDocument?.templateCode?.trim() || templateId
-  const omitPaymentBasicInfo = templateCode === 'agreement-receipt-pre-consent'
-  const paymentBasicInfo = omitPaymentBasicInfo ? undefined : state.paymentBasicInfo
+  const paymentBasicInfo = PAYMENT_BASIC_INFO_TEMPLATE_CODES.has(templateCode)
+    ? readFilledPaymentBasicInfo(state.paymentBasicInfo)
+    : undefined
   return {
     templateVersionId: state.portalDocument?.templateVersionId,
     templateCode,

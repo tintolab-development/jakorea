@@ -8,6 +8,7 @@ import {
   type WritingFormDraft,
 } from '@jakorea/form-schema/writing-form'
 import { writingFormDraftFromApplicationForm } from '@/features/program/lib/application-form-draft'
+import { applySurveyDisplayTitleToDraft } from '@/features/mypage/education/surveys/lib/seed-survey-draft'
 import {
   buildEducationSurveyAnswers,
   validateEducationSurveyFill,
@@ -27,6 +28,7 @@ import { platformQueryKeys } from '@/shared/api/query-keys'
 import {
   fetchPublicSurveyForm,
   publicSurveySubmitMatchesForm,
+  resolvePublicSurveyDisplayTitle,
   resolvePublicSurveyKind,
   submitPublicSurveyResponse,
 } from '@/features/public-survey/api/client'
@@ -63,6 +65,10 @@ function getPublicSurveySubmitErrorMessage(error: unknown): string {
   switch (readPublicSurveyErrorCode(error)) {
     case 'FORM_ANSWER_REQUIRED':
       return '필수 문항에 답변해 주세요.'
+    case 'FORM_ANSWER_TOO_LONG':
+      return '입력값이 허용 길이를 초과했습니다.'
+    case 'FORM_REQUIRED_CONSENT_NOT_AGREED':
+      return '필수 동의 항목에 동의해 주세요.'
     case 'FORM_ANSWER_NOT_ALLOWED':
       return '제출할 수 없는 항목이 포함되어 있습니다. 입력 내용을 확인한 뒤 다시 시도해 주세요.'
     case 'FORM_SUBMISSION_NOT_STARTED':
@@ -126,8 +132,16 @@ export function PublicSurveyPage() {
     if (!surveyQuery.data?.form) return null
     const fromForm = writingFormDraftFromApplicationForm(surveyQuery.data.form)
     if (!fromForm) return null
-    return stripPublicSurveyUserInfoAnswers(fromForm)
-  }, [surveyQuery.data?.form])
+    const surveyKind = resolvePublicSurveyKind(surveyQuery.data.formType)
+    const displayTitle =
+      resolvePublicSurveyDisplayTitle(surveyQuery.data) ||
+      (surveyKind === 'satisfaction' ? '만족도조사' : '설문조사')
+    return applySurveyDisplayTitleToDraft(
+      stripPublicSurveyUserInfoAnswers(fromForm),
+      displayTitle,
+      surveyKind === 'satisfaction' ? { overwrite: true } : undefined
+    )
+  }, [surveyQuery.data])
 
   useEffect(() => {
     if (!remoteDraft) return
@@ -223,7 +237,7 @@ export function PublicSurveyPage() {
     <main className={styles.page}>
       <div className={styles.inner}>
         {titleParagraph ? (
-          <EducationSurveyHeader paragraph={titleParagraph} />
+          <EducationSurveyHeader paragraph={titleParagraph} fallbackTitle={programTitle} />
         ) : (
           <header className={styles.fallbackHeader}>
             <PFText as="h1" typo="hd-sm" color="black">

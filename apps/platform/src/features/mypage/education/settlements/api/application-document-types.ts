@@ -25,6 +25,10 @@ export type SettlementApplicationDocumentCalcInfo = {
   educationSessionCount: number | null
   totalStudentCount: number | null
   totalLectureFee: number | null
+  oneWayDistanceKm?: number | null
+  fuelCostWon?: number | null
+  tollFeeWon?: number | null
+  calculatedTransportAmount?: number | null
 }
 
 export type SettlementApplicationDocumentLineDirection = 'PAYMENT' | 'DEDUCTION'

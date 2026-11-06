@@ -3,6 +3,7 @@ import {
   formatInstructorFeeAssignment,
   formatLectureFeeSessionProgress,
   formatLectureFeeWon,
+  formatTotalLectureFee,
   lectureFeeTypeDisplayLabel,
   parseLectureFeePreview,
 } from './lecture-fee-preview.ts'
@@ -31,6 +32,41 @@ assert.equal(lectureFeeTypeDisplayLabel('BUSINESS_INCOME'), '-')
 assert.equal(formatLectureFeeWon(240000), '240,000원')
 assert.equal(formatLectureFeeWon(0), '0원')
 assert.equal(formatLectureFeeWon(null), '-')
+assert.equal(formatLectureFeeWon(450000.5), '-')
+assert.equal(formatTotalLectureFee(null), '-')
+
+const qaPreview = parseLectureFeePreview({
+  lectureFeeType: 'GRADE_1',
+  instructorFeeCalculationUnit: 'PER_HOUR',
+  instructorFeeAmount: 450000,
+  totalLectureFee: 450000,
+  educationSessionCount: 2,
+})
+assert.equal(qaPreview?.totalLectureFee, 450000)
+assert.equal(formatTotalLectureFee(qaPreview), '450,000원')
+assert.notEqual(
+  formatLectureFeeWon((qaPreview?.instructorFeeAmount ?? 0) * (qaPreview?.educationSessionCount ?? 0)),
+  formatTotalLectureFee(qaPreview),
+)
+
+const stringTotal = parseLectureFeePreview({
+  lectureFeeType: 'GRADE_1',
+  instructorFeeCalculationUnit: 'PER_HOUR',
+  instructorFeeAmount: 450000,
+  totalLectureFee: '450000',
+  educationSessionCount: 2,
+})
+assert.equal(stringTotal?.totalLectureFee, null)
+assert.equal(formatTotalLectureFee(stringTotal), '-')
+
+const missingTotal = parseLectureFeePreview({
+  lectureFeeType: 'GRADE_1',
+  instructorFeeCalculationUnit: 'PER_HOUR',
+  instructorFeeAmount: 450000,
+  educationSessionCount: 2,
+})
+assert.equal(missingTotal?.totalLectureFee, null)
+assert.equal(formatTotalLectureFee(missingTotal), '-')
 assert.equal(
   formatInstructorFeeAssignment({
     lectureFeeType: 'GRADE_3',

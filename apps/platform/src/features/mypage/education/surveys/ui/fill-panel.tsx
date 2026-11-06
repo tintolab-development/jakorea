@@ -19,6 +19,7 @@ import { useSettingsView } from '@/features/mypage/settings/hooks/use-settings-v
 import { PFAlertModal, PFButton, PFText } from '@/shared/ui'
 import {
   clearEducationSurveyPreviewAnswers,
+  applySurveyDisplayTitleToDraft,
   createEducationSurveySeedDraft,
   EDUCATION_SURVEY_SEED_CREATED_AT,
   type EducationSatisfactionAudience,
@@ -31,6 +32,7 @@ import {
   useSubmitEducationSurveyMutation,
 } from '../../applications/api/activity-hooks'
 import {
+  applySatisfactionScheduleLineDate,
   isPortalBoundFormVersionUsable,
   isPortalSatisfactionFormType,
   isPortalSurveyFormType,
@@ -120,7 +122,11 @@ function resolveFillDraft(options: {
   const hasAnswers = Boolean(remoteAnswers && Object.keys(remoteAnswers).length > 0)
   const submitted = options.selectedEntry?.status === 'submitted'
   const forFill = submitted || hasAnswers ? seeded : clearEducationSurveyPreviewAnswers(seeded)
-  return applyEducationSurveyAnswersToDraft(forFill, remoteAnswers)
+  return applySurveyDisplayTitleToDraft(
+    applyEducationSurveyAnswersToDraft(forFill, remoteAnswers),
+    options.selectedEntry?.title,
+    options.kind === 'satisfaction' ? { overwrite: true } : undefined,
+  )
 }
 
 export function EducationSurveyFillPanel({
@@ -153,21 +159,32 @@ export function EducationSurveyFillPanel({
   const remoteForms = hasApplicationContext ? applicationForms : availableForms
   const surveyList = useMemo(() => {
     const items = remoteForms.enabled ? remoteForms.items : []
-    return items.filter(entry => {
-      if (isPortalFormTargetRoleMismatch(entry.targetRole, applicationType)) return false
-      if (kind === 'satisfaction') {
-        if (!isPortalSatisfactionFormType(entry.formType)) return false
-        if (
-          satisfactionAudience === 'teacher' &&
-          isVolunteerFacingSatisfactionForm(entry)
-        ) {
-          return false
+    return items
+      .filter(entry => {
+        if (isPortalFormTargetRoleMismatch(entry.targetRole, applicationType)) return false
+        if (kind === 'satisfaction') {
+          if (!isPortalSatisfactionFormType(entry.formType)) return false
+          if (
+            satisfactionAudience === 'teacher' &&
+            isVolunteerFacingSatisfactionForm(entry)
+          ) {
+            return false
+          }
+          return true
         }
-        return true
-      }
-      return isPortalSurveyFormType(entry.formType)
-    })
-  }, [applicationType, kind, remoteForms.enabled, remoteForms.items, satisfactionAudience])
+        return isPortalSurveyFormType(entry.formType)
+      })
+      .map((entry, index) =>
+        applySatisfactionScheduleLineDate(entry, educationScheduleLines?.[index])
+      )
+  }, [
+    applicationType,
+    educationScheduleLines,
+    kind,
+    remoteForms.enabled,
+    remoteForms.items,
+    satisfactionAudience,
+  ])
   const showList = surveyList.length >= 2
   const [selectedId, setSelectedId] = useState(() => surveyList[0]?.id ?? '')
   const [rewriteEntryId, setRewriteEntryId] = useState<string | null>(null)
@@ -577,7 +594,11 @@ export function EducationSurveyFillPanel({
   const body = (
     <div className={styles.body}>
       {titleParagraph ? (
-        <EducationSurveyHeader paragraph={titleParagraph} surveyCreatedAt={surveyCreatedAt} />
+        <EducationSurveyHeader
+          paragraph={titleParagraph}
+          surveyCreatedAt={surveyCreatedAt}
+          fallbackTitle={selectedEntry?.title}
+        />
       ) : null}
 
       {readOnly && effectivePeriodBlockReason === 'closed' ? (

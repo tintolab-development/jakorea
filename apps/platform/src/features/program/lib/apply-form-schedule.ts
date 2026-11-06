@@ -883,6 +883,21 @@ export const TRAINED_TEACHERS_REQUIRED_CONSENT_IDS = [
   'program-application-trained-teachers-seed-third-party',
 ] as const
 
+const FORM_REQUIRED_CONSENT_ID_MARKERS = ['seed-personal-info', 'seed-third-party'] as const
+
+function isAlwaysRequiredApplicationConsentParagraphId(id: string): boolean {
+  return FORM_REQUIRED_CONSENT_ID_MARKERS.some(marker => id.includes(marker))
+}
+
+function isRequiredBottomConsentParagraph(paragraph: WritingFormDraft['paragraphs'][number]): boolean {
+  if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) return false
+  if (isAlwaysRequiredApplicationConsentParagraphId(paragraph.id)) return true
+  return (
+    ('answerRequired' in paragraph && paragraph.answerRequired === true) ||
+    ('requiredMark' in paragraph && paragraph.requiredMark === true)
+  )
+}
+
 export function findMissingRequiredBottomConsentId(
   draft: WritingFormDraft | null | undefined
 ): string | null {
@@ -904,12 +919,8 @@ export function findMissingRequiredBottomConsentId(
   }
 
   const requiredConsent = draft.paragraphs.find(paragraph => {
-    if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) return false
-    const required =
-      ('answerRequired' in paragraph && paragraph.answerRequired === true) ||
-      ('requiredMark' in paragraph && paragraph.requiredMark === true)
-    if (!required) return false
-    return paragraph.bottomConsent !== 'agree'
+    if (!isRequiredBottomConsentParagraph(paragraph)) return false
+    return !('bottomConsent' in paragraph) || paragraph.bottomConsent !== 'agree'
   })
   return requiredConsent?.id ?? null
 }

@@ -122,10 +122,10 @@ export function mapApiApplicationStatusToApprovalStatus(
   if (['APPROVED', 'ASSIGNED', 'WAITING_ASSIGNMENT'].includes(normalized)) {
     return 'approved'
   }
-  if (['REJECTED', 'AUTO_REJECTED'].includes(normalized)) {
+  if (['REJECTED', 'AUTO_REJECTED', 'INTERVIEW_FAILED', 'CANCELLED_BY_ADMIN'].includes(normalized)) {
     return 'rejected'
   }
-  if (['CANCELLED', 'CANCELED'].includes(normalized)) {
+  if (['CANCELLED', 'CANCELED', 'APPROVAL_CANCELLED'].includes(normalized)) {
     return 'cancelled'
   }
   if (normalized === 'REJECTION_CANCELLED') {
@@ -1739,6 +1739,7 @@ export function mapVolunteerApplicationToGeneralVolunteerApplicantRow(
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation === true,
     canEditManagerBEvaluation: dto.canEditManagerBEvaluation === true,
     availableActions: dto.availableActions ?? [],
+    applicationStatus: dto.applicationStatus ?? null,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(dto.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? 0,
     interviewAssignmentStatus: mapVolunteerInterviewAssignmentFromWire({
@@ -1837,6 +1838,7 @@ export function mapVolunteerApplicationDetailToApplicantRow(
     canEditManagerAEvaluation: dto.canEditManagerAEvaluation ?? canEditEvaluation,
     canEditManagerBEvaluation: dto.canEditManagerBEvaluation ?? canEditEvaluation,
     availableActions: dto.availableActions ?? base.availableActions,
+    applicationStatus: dto.applicationStatus ?? base.applicationStatus,
     documentScreeningStatus: mapApiDocumentStatusToScreeningStatus(screening?.documentStatus),
     interviewSlotCount: dto.interviewAvailabilityCount ?? base.interviewSlotCount,
     interviewAssignmentStatus,

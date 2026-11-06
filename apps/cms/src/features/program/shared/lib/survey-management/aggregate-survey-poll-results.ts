@@ -104,7 +104,12 @@ export function aggregateTextResults(
 }
 
 function getParagraphTitle(paragraphs: WritingFormParagraph[], paragraph: WritingFormParagraph) {
-  return getFormNavDisplayLine(paragraphs, paragraph, 'q123')
+  const forNumbering = paragraphs.map(item =>
+    item.kind === 'single_item' && item.variant === 'user_info'
+      ? { ...item, participatesInTitleNumbering: false }
+      : item
+  )
+  return getFormNavDisplayLine(forNumbering, paragraph, 'q123')
 }
 
 /**
@@ -122,8 +127,12 @@ export async function buildSurveyPollResultSections(
   return buildSurveyPollResultSectionsFromDraft(draft, responses)
 }
 
-/** 편집기 번호 규칙과 동일 — 제목·마무리 단락만 번호에서 제외 */
-const SUMMARY_UNNUMBERED_QUESTION_TYPES = new Set(['SURVEY_TITLE_WITH_PERIOD', 'CLOSING'])
+/** 결과 번호 — 제목·마무리·설문자 정보는 열외. 본 문항은 1번부터. */
+const SUMMARY_UNNUMBERED_QUESTION_TYPES = new Set([
+  'SURVEY_TITLE_WITH_PERIOD',
+  'CLOSING',
+  'USER_INFO',
+])
 const SUMMARY_CHART_QUESTION_TYPES = new Set(['SCALE_TYPE', 'MULTIPLE_CHOICE', 'STAR_RATE'])
 /** 서버 주관식 문항 타입 — 설문은 `SHORT_ESSAY`, 그 외 템플릿 호환 */
 export const SURVEY_ESSAY_QUESTION_TYPES: ReadonlySet<string> = new Set([
@@ -145,11 +154,12 @@ export function buildSurveyPollResultSectionsFromSummary(
 
   for (const question of questions) {
     if (question.displayOrder == null) continue
-    if (!SUMMARY_UNNUMBERED_QUESTION_TYPES.has(question.questionType)) sequence += 1
+    const unnumbered =
+      SUMMARY_UNNUMBERED_QUESTION_TYPES.has(question.questionType) ||
+      question.questionLabel.trim() === '설문자 정보'
+    if (!unnumbered) sequence += 1
     const label = question.questionLabel.trim() || '제목 없음'
-    const title = SUMMARY_UNNUMBERED_QUESTION_TYPES.has(question.questionType)
-      ? label
-      : `Q${sequence}. ${label}`
+    const title = unnumbered ? label : `Q${sequence}. ${label}`
 
     if (SUMMARY_CHART_QUESTION_TYPES.has(question.questionType) && question.options != null) {
       sections.push({

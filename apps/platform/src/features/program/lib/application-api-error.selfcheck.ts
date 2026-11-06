@@ -57,9 +57,9 @@ assert.equal(
 
 const contractErrorCases = [
   ['FORM_ANSWER_REQUIRED', '필수 입력값을 입력해 주세요.'],
-  ['FORM_ANSWER_TYPE_INVALID', '입력 형식이 올바르지 않습니다.'],
-  ['FORM_ANSWER_TOO_LONG', '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.'],
   ['FORM_REQUIRED_CONSENT_NOT_AGREED', '필수 동의 항목에 동의해 주세요.'],
+  ['FORM_ANSWER_TOO_LONG', '입력 가능한 글자 수를 초과했습니다. 1,000자 이하로 작성해 주세요.'],
+  ['FORM_ANSWER_TYPE_INVALID', '입력 형식이 올바르지 않습니다.'],
   ['FORM_BINDING_TARGET_ROLE_MISMATCH', '현재 참여 역할에 해당하지 않는 설문입니다.'],
   ['INVALID_REQUESTED_EDUCATION_FORMAT', '희망 교육 형태를 다시 확인해 주세요.'],
   ['FORM_OPTION_NOT_ALLOWED', '선택한 값은 사용할 수 없습니다.'],
@@ -115,7 +115,7 @@ const contractErrorCases = [
   ['CERTIFICATE_APPLICATION_DATE_UNAVAILABLE', '신청일을 확인할 수 없습니다.'],
   [
     'MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED',
-    '참가인증서는 CMS 관리자만 발급할 수 있습니다.',
+    '참가인증서는 회원·학생·교사가 직접 발급할 수 없습니다.',
   ],
 ] as const
 
@@ -282,8 +282,8 @@ assert.equal(
 )
 
 assert.equal(isApplicationAnswerValidationErrorCode('FORM_ANSWER_REQUIRED'), true)
-assert.equal(isApplicationAnswerValidationErrorCode('FORM_ANSWER_TOO_LONG'), true)
 assert.equal(isApplicationAnswerValidationErrorCode('FORM_REQUIRED_CONSENT_NOT_AGREED'), true)
+assert.equal(isApplicationAnswerValidationErrorCode('FORM_ANSWER_TOO_LONG'), true)
 assert.equal(isApplicationAnswerValidationErrorCode('RUNTIME_SCHEDULE_STALE'), false)
 assert.equal(
   isApplicationAnswerValidationErrorCode('PREFERRED_SCHEDULE_OUTSIDE_TRAINING_REQUEST_RANGE'),

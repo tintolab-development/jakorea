@@ -32,6 +32,30 @@ const instructorReportsPending = mapPortalProgramApplicationListItem({
 })
 assert.equal(instructorReportsPending?.displayStatus, 'in_progress')
 
+const approvalCancelled = mapPortalProgramApplicationListItem({
+  applicationId: 1691547,
+  applicationType: 'ORGANIZATION',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '승인 취소 프로그램',
+  applicationStatus: 'APPROVAL_CANCELLED',
+  displayStatus: '승인 취소',
+})
+assert.equal(approvalCancelled?.displayStatus, 'approval_cancelled')
+
+const approvalCancelledFromStatus = mapPortalProgramApplicationListItem({
+  applicationId: 1691548,
+  applicationType: 'VOLUNTEER',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '승인 취소 봉사',
+  applicationStatus: 'APPROVAL_CANCELLED',
+  participationStatus: 'ACTIVE',
+})
+assert.equal(approvalCancelledFromStatus?.displayStatus, 'approval_cancelled')
+
 const generalYouth = mapPortalProgramApplicationListItem({
   applicationId: 2,
   applicationType: 'INDIVIDUAL',

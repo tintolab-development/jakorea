@@ -159,7 +159,6 @@ import {
 } from '@/features/program/lib/portal-volunteer-interview-visibility'
 import { resolveIndividualPortalInterviewEnabledForHidden } from '@/features/program/lib/portal-individual-interview-visibility'
 import {
-  PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH,
   clipApplicationFreeText,
   findApplicationFreeTextTooLongParagraphId,
   findIncompleteRequiredShortEssayParagraphId,
@@ -2076,6 +2075,10 @@ export function ProgramApplyPage() {
       const isSingleLine = paragraph.itemInputRows === 1
       const items = paragraph.items ?? []
       const placeholder = paragraph.bodyPlaceholder || '답변을 입력해 주세요'
+      const essayMaxLength =
+        typeof paragraph.maxLength === 'number' && paragraph.maxLength > 0
+          ? paragraph.maxLength
+          : 1000
 
       const commitBody = (next: string) => {
         const clipped = clipApplicationFreeText(next)
@@ -2085,8 +2088,6 @@ export function ProgramApplyPage() {
             : current
         )
       }
-      const freeTextCount = clipApplicationFreeText(paragraph.bodyText ?? '').length
-      const freeTextMessage = `${freeTextCount}/${PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}`
 
       if (items.length === 0) {
         if (isSingleLine) {
@@ -2095,8 +2096,7 @@ export function ProgramApplyPage() {
               variant="formPage"
               value={paragraph.bodyText}
               placeholder={placeholder}
-              maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
-              message={freeTextMessage}
+              maxLength={essayMaxLength}
               onValueChange={commitBody}
             />
           )
@@ -2106,9 +2106,9 @@ export function ProgramApplyPage() {
             variant="formPage"
             value={paragraph.bodyText}
             placeholder={placeholder}
-            maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
-            message={freeTextMessage}
-            messageAlign="end"
+            maxLength={essayMaxLength}
+            message={`${paragraph.bodyText.length}/${essayMaxLength}`}
+            messageStatus={paragraph.bodyText.length > essayMaxLength ? 'error' : 'neutral'}
             onValueChange={commitBody}
           />
         )
@@ -2132,17 +2132,13 @@ export function ProgramApplyPage() {
                 }
               })
             }
-            const itemCount = clipApplicationFreeText(item.bodyText ?? '').length
-            const itemMessage = `${itemCount}/${PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}`
-
             const control = isSingleLine ? (
               <PFTextInput
                 variant="formPage"
                 label={paragraph.showItemTitle ? item.label?.trim() || undefined : undefined}
                 value={item.bodyText}
                 placeholder={item.placeholder || placeholder}
-                maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
-                message={itemMessage}
+                maxLength={essayMaxLength}
                 onValueChange={onItemChange}
               />
             ) : (
@@ -2151,9 +2147,8 @@ export function ProgramApplyPage() {
                 label={paragraph.showItemTitle ? item.label?.trim() || undefined : undefined}
                 value={item.bodyText}
                 placeholder={item.placeholder || placeholder}
-                maxLength={PROGRAM_APPLICATION_FREE_TEXT_MAX_LENGTH}
-                message={itemMessage}
-                messageAlign="end"
+                maxLength={essayMaxLength}
+                message={`${item.bodyText.length}/${essayMaxLength}`}
                 onValueChange={onItemChange}
               />
             )

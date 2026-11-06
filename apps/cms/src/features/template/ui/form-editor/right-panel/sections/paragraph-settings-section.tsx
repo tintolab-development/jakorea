@@ -7,9 +7,11 @@ import { TitleWithPeriodSettingsSection } from '@/features/template/ui/form-edit
 export function ParagraphSettingsSection({
   active,
   updateParagraph,
+  lockSurveyWritingPeriodInput = false,
 }: {
   active: WritingFormParagraph
   updateParagraph: FormEditorRightPanelUpdateParagraph
+  lockSurveyWritingPeriodInput?: boolean
 }) {
   return (
     <>
@@ -20,7 +22,11 @@ export function ParagraphSettingsSection({
               단락 카드 하단 「작성 기간」을 켜면 시작일·마감일을 설정할 수 있습니다.
             </span>
           ) : null}
-          <TitleWithPeriodSettingsSection active={active} updateParagraph={updateParagraph} />
+          <TitleWithPeriodSettingsSection
+            active={active}
+            updateParagraph={updateParagraph}
+            lockSurveyWritingPeriodInput={lockSurveyWritingPeriodInput}
+          />
         </>
       ) : null}
 

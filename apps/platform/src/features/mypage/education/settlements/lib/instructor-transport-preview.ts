@@ -5,6 +5,9 @@ export type InstructorTransportPreview = {
   oneWayDistanceKm: number | null
   fuelCostWon: number | null
   tollFeeWon: number | null
+  /** 서버 총 산정 교통비. FE에서 유류+톨을 더하지 않는다. */
+  calculatedTransportAmount: number | null
+  /** calculatedTransportAmount와 동일. 기존 제출 payload 호환. */
   totalTransportFeeWon: number | null
 }
 
@@ -22,9 +25,8 @@ function parseFiniteNumber(value: unknown): number | null {
 }
 
 function parseWonInteger(value: unknown): number | null {
-  const n = parseFiniteNumber(value)
-  if (n == null || !Number.isSafeInteger(n)) return null
-  return n
+  if (typeof value === 'number' && Number.isSafeInteger(value)) return value
+  return null
 }
 
 function readNestedPreview(record: Record<string, unknown>): Record<string, unknown> | null {
@@ -44,24 +46,29 @@ export function parseInstructorTransportPreview(value: unknown): InstructorTrans
   if (!isRecord(value)) return null
   const nested = readNestedPreview(value)
   const source = nested ?? value
+  const calculatedTransportAmount = parseWonInteger(
+    source.calculatedTransportAmount ??
+      source.totalTransportFeeWon ??
+      source.totalTransportFee ??
+      source.transportTotalAmount,
+  )
   const preview: InstructorTransportPreview = {
     oneWayDistanceKm: parseFiniteNumber(
-      source.oneWayDistanceKm ?? source.distanceFromHome ?? source.distanceKm ?? value.distanceFromHome,
+      source.oneWayDistanceKm ??
+        source.distanceFromHome ??
+        source.distanceKm ??
+        value.distanceFromHome,
     ),
     fuelCostWon: parseWonInteger(source.fuelCostWon ?? source.fuelCost),
     tollFeeWon: parseWonInteger(source.tollFeeWon ?? source.tollAmount ?? source.tollFee),
-    totalTransportFeeWon: parseWonInteger(
-      source.totalTransportFeeWon ??
-        source.calculatedTransportAmount ??
-        source.totalTransportFee ??
-        source.transportTotalAmount,
-    ),
+    calculatedTransportAmount,
+    totalTransportFeeWon: calculatedTransportAmount,
   }
   if (
     preview.oneWayDistanceKm == null &&
     preview.fuelCostWon == null &&
     preview.tollFeeWon == null &&
-    preview.totalTransportFeeWon == null
+    preview.calculatedTransportAmount == null
   ) {
     return null
   }
@@ -91,4 +98,13 @@ export function formatInstructorOneWayDistanceKm(km: number | null | undefined):
 export function formatInstructorTransportWon(amount: number | null | undefined): string {
   if (amount == null || !Number.isSafeInteger(amount)) return '-'
   return `${amount.toLocaleString('ko-KR')}원`
+}
+
+/** 총 산정 교통비. 서버 calculatedTransportAmount만. 유류비+톨비 합산 금지. */
+export function formatInstructorCalculatedTransportAmount(
+  preview: InstructorTransportPreview | null | undefined,
+): string {
+  return formatInstructorTransportWon(
+    preview?.calculatedTransportAmount ?? preview?.totalTransportFeeWon,
+  )
 }

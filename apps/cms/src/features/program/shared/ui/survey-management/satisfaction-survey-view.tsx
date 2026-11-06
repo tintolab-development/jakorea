@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { CmsSelect } from '@/shared/ui/cms-select'
 import { CmsTextTabs } from '@/shared/ui/cms-text-tabs'
 import type {
   RegisteredSurvey,
@@ -32,7 +33,6 @@ export type SatisfactionSurveyViewProps<TKey extends string> = {
   scheduleTabs?: ReadonlyArray<{ key: string; label: string }>
   activeScheduleKey?: string
   onScheduleTabChange?: (key: string) => void
-  statusMeta?: string | null
   resultsExportRef?: RefObject<HTMLDivElement | null>
   resultsResponses?: SurveyPollRawResponse[]
   /** 결과 집계 기준 게시 version (remote 바인딩) */
@@ -57,11 +57,10 @@ export function SatisfactionSurveyView<TKey extends string>({
   onDeleteClick,
   onOpenTemplatePreview,
   onDownloadClick,
-  downloadEnabled = false,
+  downloadEnabled = true,
   scheduleTabs,
   activeScheduleKey,
   onScheduleTabChange,
-  statusMeta,
   resultsExportRef,
   resultsResponses,
   resultsTemplateVersionId,
@@ -129,16 +128,17 @@ export function SatisfactionSurveyView<TKey extends string>({
     <div className={rootClassName}>
       {audienceTabRow}
       {scheduleTabs != null && scheduleTabs.length > 1 && onScheduleTabChange != null ? (
-        <CmsTextTabs
-          className="survey-management-satisfaction__schedule-tabs"
-          variant="list"
-          activeKey={activeScheduleKey ?? scheduleTabs[0]?.key}
-          onChange={onScheduleTabChange}
-          items={scheduleTabs.map(tab => ({ key: tab.key, label: tab.label }))}
+        <CmsSelect
+          className="survey-management-satisfaction__schedule-select"
+          width={360}
+          withAllOption={false}
+          allowClear={false}
+          options={scheduleTabs.map(tab => ({ label: tab.label, value: tab.key }))}
+          value={activeScheduleKey ?? scheduleTabs[0]?.key}
+          onChange={value => onScheduleTabChange(String(value ?? ''))}
         />
       ) : null}
-      {statusMeta ? <p className="survey-management-satisfaction__meta">{statusMeta}</p> : null}
-      {activeSurvey.status === 'before_start' && activeScheduleKey !== 'aggregate' ? (
+      {activeSurvey.status === 'before_start' ? (
         <SurveyNoResponseState
           title={noResponseCopy.title ?? `${activeAudienceLabel}용 만족도조사는 아직 진행 전입니다.`}
           description={noResponseCopy.description}

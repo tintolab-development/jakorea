@@ -45,6 +45,7 @@ import {
 import { notifyProgramApiUnavailable } from '@/features/program/shared/lib/program-api-unavailable'
 import { EDUCATION_SCOPE_PUT_PRE_EDUCATION_MERGE_PENDING_MESSAGE } from '@/features/program/general/lib/individual-approval-education-scope'
 import { getApiErrorCode } from '@/shared/lib/extract-api-error-message'
+import { getGeneralProgramApiErrorMessage } from '@/features/program/general/api/get-general-program-api-error'
 import './instructor-assignment-status-text.css'
 import './participating-institutions-section.css'
 
@@ -285,7 +286,10 @@ export function ParticipatingIndividualVolunteerAssignmentSection({
         }
         showAlert({
           title: '안내',
-          content: '봉사 배정 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          content: getGeneralProgramApiErrorMessage(
+            error,
+            '봉사 배정 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+          ),
         })
         return false
       }

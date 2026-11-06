@@ -8165,7 +8165,7 @@
           "lateMinutes": {
             "type": "integer",
             "format": "int32",
-            "description": "지각 분. arrivalTime이 JA 내부 정시 마감(08:30 Asia/Seoul wall-clock)을 넘기면 08:30부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다.",
+            "description": "지각 분. 회차 시작 30분 전을 정시 마감으로 보고 그 시각부터 arrivalTime까지의 분. arrivalTime이 없거나 정시 이하면 null. status/internalLate만으로 분을 invent하지 않는다.",
             "nullable": true
           },
           "volunteer1365Minutes": {
@@ -37344,7 +37344,7 @@
       },
       "CalcInfo": {
         "type": "object",
-        "description": "지급조서(PAYMENT_STATEMENT)만. 영수증 경로는 null. 제출 전 미리보기 lectureFeePreview와 산식 동일. taxIncomeType이 아님.",
+        "description": "지급조서(PAYMENT_STATEMENT)만. 영수증 경로는 null. 제출 전 미리보기 lectureFeePreview·transportPreview와 산식 동일. taxIncomeType이 아님.",
         "properties": {
           "lectureFeeType": {
             "type": "string",
@@ -37378,7 +37378,35 @@
           "totalLectureFee": {
             "type": "integer",
             "format": "int64",
-            "description": "이번 회차 총 강의비(원). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식."
+            "description": "이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. PER_HOUR는 강의 시간×단가. educationSessionCount를 곱하지 않음."
+          },
+          "oneWayDistanceKm": {
+            "type": "string",
+            "format": "double",
+            "description": "편도 km. 제출 전 transportPreview.oneWayDistanceKm와 동일.",
+            "example": 528.6,
+            "nullable": true
+          },
+          "fuelCostWon": {
+            "type": "integer",
+            "format": "int64",
+            "description": "유류비(원, 정수). 제출 전 transportPreview.fuelCostWon와 동일. 미지급이면 null.",
+            "example": 185010,
+            "nullable": true
+          },
+          "tollFeeWon": {
+            "type": "integer",
+            "format": "int64",
+            "description": "톨비(원, 정수). 제출 전 transportPreview.tollFeeWon와 동일. 미지급이면 null.",
+            "example": 24800,
+            "nullable": true
+          },
+          "calculatedTransportAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음.",
+            "example": 209810,
+            "nullable": true
           }
         }
       },
@@ -37474,9 +37502,43 @@
           }
         }
       },
+      "MemberInstructorTransportPreview": {
+        "type": "object",
+        "description": "제출 전 강사 교통비 미리보기. FE는 네이버 거리×오피넷 유가+통행료를 계산하지 않는다. 왕복 자동 산정 = 네이버 지도 이동 거리(왕복) × 출강일 오피넷 유가 스냅샷 + 통행료. 편도 30.0km 이상(포함)만 지급. 편도 30 미만은 fuelCostWon/tollFeeWon/calculatedTransportAmount=null. 프로그램에 강사 교통비 지급 항목이 없으면 금액은 null. 이미 산출된 금액은 유가 변동으로 다시 계산하지 않는다. 자차·증빙 없음. 금액 JSON은 정수 number(문자열·소수 원 금지). oneWayDistanceKm는 distanceFromHome과 동일.",
+        "properties": {
+          "oneWayDistanceKm": {
+            "type": "string",
+            "format": "double",
+            "description": "편도 km. distanceFromHome과 동일. 528.6 같은 소수 허용. 없으면 null.",
+            "example": 528.6,
+            "nullable": true
+          },
+          "fuelCostWon": {
+            "type": "integer",
+            "format": "int64",
+            "description": "유류비(원, 정수). 왕복 거리×출강일 유가. 미지급·산출 불가면 null.",
+            "example": 185010,
+            "nullable": true
+          },
+          "tollFeeWon": {
+            "type": "integer",
+            "format": "int64",
+            "description": "톨비(원, 정수). 왕복 통행료. 미지급·산출 불가면 null. 고속도로 없으면 0.",
+            "example": 24800,
+            "nullable": true
+          },
+          "calculatedTransportAmount": {
+            "type": "integer",
+            "format": "int64",
+            "description": "총 산정 교통비(원, 정수)=유류비+톨비. 왕복 산식 결과. 제출 후 CalcInfo.calculatedTransportAmount와 동일. 미지급이면 null.",
+            "example": 209810,
+            "nullable": true
+          }
+        }
+      },
       "MemberLectureFeePreview": {
         "type": "object",
-        "description": "제출 전 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. FE는 프로그램 overlay·프로필 defaultFeeGrade·다른 회차로 hydrate 하지 않는다. 단가만 있고 총액 산식이 불가하면 instructorFeeAmount는 채우고 totalLectureFee는 null (그 반대도 허용). 금액 단위는 원(정수).",
+        "description": "제출 전 미리보기. 제출 스냅샷 CalcInfo와 산식 동일. FE는 시급×시간을 계산하지 않으며 프로그램 overlay·프로필 defaultFeeGrade·다른 회차로 hydrate 하지 않는다. PER_HOUR는 이 배정 강의 시간(실적 시각, 없으면 startAt~endAt Asia/Seoul)에 단가를 적용한 정수 원. PER_SESSION/PER_LECTURE/FIXED는 단가=총액. educationSessionCount(차시 번호)는 곱하지 않는다. 단가만 있고 총액 산식이 불가하면 instructorFeeAmount는 채우고 totalLectureFee는 null (그 반대도 허용). 금액 단위는 원(정수). 키는 항상 존재.",
         "properties": {
           "lectureFeeType": {
             "type": "string",
@@ -37505,20 +37567,20 @@
             "type": "integer",
             "format": "int64",
             "description": "책정 단가(원). 시안 강사비 배정 금액. 총액 아님. 없으면 null.",
-            "example": 240000,
+            "example": 450000,
             "nullable": true
           },
           "totalLectureFee": {
             "type": "integer",
             "format": "int64",
-            "description": "이번 회차 총 강의비(원). 서버 산식만. FE 계산 금지. 없으면 null.",
-            "example": 480000,
+            "description": "이번 회차 총 강의비(원, 정수). 서버 산식만. FE 계산 금지. 예: PER_HOUR + startAt~endAt 03:55~04:55(60분) + instructorFeeAmount=450000 → totalLectureFee=450000. 차시 번호 2를 곱하지 않음. 산출 불가 시 null.",
+            "example": 450000,
             "nullable": true
           },
           "educationSessionCount": {
             "type": "integer",
             "format": "int32",
-            "description": "이번 일정 차시 번호. sessionNo와 동일. 없으면 null.",
+            "description": "이번 일정 차시 번호. sessionNo와 동일. 시수/횟수 배수가 아님. 없으면 null.",
             "example": 2,
             "nullable": true
           }
@@ -37602,6 +37664,17 @@
             "oneOf": [
               {
                 "$ref": "#/components/schemas/MemberLectureFeePreview"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transportPreview": {
+            "description": "지급조서 제출 전 강사 교통비 미리보기. 객체는 항상 존재. oneWayDistanceKm는 distanceFromHome과 동일. 편도 30 미만 또는 지급 항목 없으면 금액 null. 제출 CalcInfo·CMS 교통비 스냅샷과 산식 동일.",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MemberInstructorTransportPreview"
               },
               {
                 "type": "null"
@@ -37964,6 +38037,7 @@
               "진행 완료",
               "활동 포기",
               "신청 반려",
+              "승인 취소",
               "작성 중",
               "신청 취소"
             ],
@@ -38370,6 +38444,7 @@
               "진행 완료",
               "활동 포기",
               "신청 반려",
+              "승인 취소",
               "작성 중",
               "신청 취소"
             ],

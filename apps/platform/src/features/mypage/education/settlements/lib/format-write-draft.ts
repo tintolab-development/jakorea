@@ -178,7 +178,8 @@ export function formatSettlementPaymentPurpose(draft: SettlementWriteDraft): str
     returnStarted ||
     (draft.meta.isInstructor &&
       isInstructorTransportSectionVisible(draft.transport.autoPreview) &&
-      (draft.transport.autoPreview?.totalTransportFeeWon != null ||
+      (draft.transport.autoPreview?.calculatedTransportAmount != null ||
+        draft.transport.autoPreview?.totalTransportFeeWon != null ||
         draft.transport.autoPreview?.oneWayDistanceKm != null))
   ) {
     names.push('교통비')

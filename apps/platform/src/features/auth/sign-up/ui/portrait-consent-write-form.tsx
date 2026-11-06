@@ -1,5 +1,9 @@
 import {
-  hasMemberConsentIncompleteRequiredFields,
+  collectMemberConsentUnagreedRequiredLabels,
+  formatMemberConsentDisagreedRequiredAlertMessage,
+  formatMemberConsentIncompleteRequiredAlertMessage,
+  listMemberConsentIncompleteRequiredFields,
+  MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE,
   MEMBER_CONSENT_TEMPLATE_MAP,
   normalizeMemberConsentWriteDraft,
   portraitPersonalConsentNameValue,
@@ -107,6 +111,7 @@ export function PortraitConsentWriteForm({
   const draftScope = portraitConsentDraftScope(bridge)
 
   const [alertOpen, setAlertOpen] = useState(false)
+  const [alertTitle, setAlertTitle] = useState('안내')
   const [alertMessage, setAlertMessage] = useState(INCOMPLETE_ALERT_MESSAGE)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [state, setState] = useState<PortraitConsentWriteState>(() => {
@@ -131,9 +136,15 @@ export function PortraitConsentWriteForm({
     savePortraitConsentDraftState(state, draftScope)
   }, [draftScope, saveDraftState, state])
 
-  const incomplete = hasMemberConsentIncompleteRequiredFields(state.draft, {
-    templateId: TEMPLATE_ID,
-  })
+  const incompleteFields = useMemo(
+    () =>
+      listMemberConsentIncompleteRequiredFields(state.draft, {
+        templateId: TEMPLATE_ID,
+      }),
+    [state.draft],
+  )
+
+  const incomplete = incompleteFields.length > 0
 
   const hiddenParagraphIds = useMemo(
     () => resolvePlatformConsentHiddenParagraphIds(TEMPLATE_ID),
@@ -160,11 +171,22 @@ export function PortraitConsentWriteForm({
   const handleSubmit = () => {
     if (isSubmitting) return
     if (incomplete) {
-      setAlertMessage(INCOMPLETE_ALERT_MESSAGE)
+      const unagreedLabels = collectMemberConsentUnagreedRequiredLabels(state.draft)
+      if (unagreedLabels.length > 0) {
+        setAlertTitle(MEMBER_CONSENT_DISAGREED_REQUIRED_ALERT_TITLE)
+        setAlertMessage(formatMemberConsentDisagreedRequiredAlertMessage(unagreedLabels))
+      } else {
+        setAlertTitle('안내')
+        setAlertMessage(
+          formatMemberConsentIncompleteRequiredAlertMessage(incompleteFields) ||
+            INCOMPLETE_ALERT_MESSAGE,
+        )
+      }
       setAlertOpen(true)
       return
     }
     if (!hasPortraitSignature(state.signatures?.final)) {
+      setAlertTitle('안내')
       setAlertMessage(SIGNATURE_REQUIRED_ALERT_MESSAGE)
       setAlertOpen(true)
       return
@@ -174,6 +196,7 @@ export function PortraitConsentWriteForm({
       void onSubmitAsync(state)
         .then(() => onComplete())
         .catch(() => {
+          setAlertTitle('안내')
           setAlertMessage(SUBMIT_FAILED_ALERT_MESSAGE)
           setAlertOpen(true)
         })
@@ -248,7 +271,7 @@ export function PortraitConsentWriteForm({
       </form>
       <PFAlertModal
         open={alertOpen}
-        title="안내"
+        title={alertTitle}
         description={alertMessage}
         onConfirm={() => setAlertOpen(false)}
       />

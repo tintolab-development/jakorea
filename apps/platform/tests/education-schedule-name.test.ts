@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  composeSatisfactionSurveyDisplayTitle,
+  formatSatisfactionPerScheduleDisplayName,
   isDefaultEducationSlotName,
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
@@ -72,5 +74,29 @@ describe('portal mypage surfaces', () => {
     expect(resolveEducationScheduleRowLabel({ educationStructure: 'SCHEDULE', scheduleName: '발대식' })).toBe(
       '발대식',
     )
+  })
+})
+
+describe('formatSatisfactionPerScheduleDisplayName', () => {
+  it('matches CMS list/select copy', () => {
+    expect(
+      formatSatisfactionPerScheduleDisplayName({
+        scheduleName: '공통 교육 예정 1',
+        sessionNo: 1,
+        startAt: '2026-11-12T03:00:00.000Z',
+      }),
+    ).toBe('1회차 · 2026.11.12(목)')
+  })
+})
+
+describe('composeSatisfactionSurveyDisplayTitle', () => {
+  it('joins schedule and mapped form name for per-schedule', () => {
+    expect(
+      composeSatisfactionSurveyDisplayTitle({
+        formName: '만족도조사 (학생용)',
+        perSchedule: true,
+        scheduleDisplayName: '1회차 · 2026.11.12(목)',
+      }),
+    ).toBe('1회차 · 2026.11.12(목) 만족도조사 (학생용)')
   })
 })

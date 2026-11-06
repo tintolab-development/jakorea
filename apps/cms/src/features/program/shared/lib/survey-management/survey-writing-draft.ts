@@ -12,7 +12,6 @@ import {
 } from '@/features/template/lib/writing-form-template-local-save'
 import {
   createDefaultSurveyDraft,
-  DEFAULT_SURVEY_PARAGRAPH_IDS,
   normalizeWritingFormDraft,
   type WritingFormDraft,
 } from '@/features/template/model/writing-form-draft.schema'
@@ -52,19 +51,25 @@ export function rememberSurveyWritingDraft(templateId: string, draft: WritingFor
   draftCache.set(templateId, normalizeWritingFormDraft(draft))
 }
 
-function applyTemplateNameToDefaultDraft(
+/** 제목 단락 `surveyTitle`이 비어 있으면 등록 설문명·템플릿명을 채운다 (미리보기·공유 헤더). */
+export function applySurveyDisplayTitleToDraft(
   draft: WritingFormDraft,
-  displayName: string | undefined
+  displayName: string | undefined,
+  options?: { overwrite?: boolean }
 ): WritingFormDraft {
-  if (displayName == null || displayName === '') return draft
-  return normalizeWritingFormDraft({
-    ...draft,
-    paragraphs: draft.paragraphs.map(paragraph =>
-      paragraph.id === DEFAULT_SURVEY_PARAGRAPH_IDS.title && paragraph.kind === 'description'
-        ? { ...paragraph, surveyTitle: displayName }
-        : paragraph
-    ),
+  const title = displayName?.trim() ?? ''
+  if (!title) return draft
+  let changed = false
+  const paragraphs = draft.paragraphs.map(paragraph => {
+    if (paragraph.kind !== 'description' || paragraph.variant !== 'survey_title_with_period') {
+      return paragraph
+    }
+    if (!options?.overwrite && paragraph.surveyTitle.trim() !== '') return paragraph
+    if (paragraph.surveyTitle === title) return paragraph
+    changed = true
+    return { ...paragraph, surveyTitle: title }
   })
+  return changed ? { ...draft, paragraphs } : draft
 }
 
 /** remote 없을 때·로드 실패 시 시드 */
@@ -75,7 +80,7 @@ export function buildDefaultSurveyWritingDraft(
   const row = findWritingTemplateRowByDefinitionId(templateId)
   const displayName = (options?.templateName ?? row?.templateName)?.trim()
   const defaultDraft = normalizeWritingFormDraft(createDefaultSurveyDraft())
-  return applyTemplateNameToDefaultDraft(defaultDraft, displayName)
+  return applySurveyDisplayTitleToDraft(defaultDraft, displayName)
 }
 
 /**
@@ -97,7 +102,12 @@ export async function resolveSurveyWritingDraft(
         staleTime: options?.fresh ? 0 : SURVEY_VERSION_DRAFT_STALE_MS,
         retry: false,
       })
-      if (saved?.draft != null) return normalizeWritingFormDraft(saved.draft)
+      if (saved?.draft != null) {
+        return applySurveyDisplayTitleToDraft(
+          normalizeWritingFormDraft(saved.draft),
+          options?.templateName
+        )
+      }
     } catch (error) {
       console.warn('[survey-writing-draft] version load failed; using template draft', error)
     }
@@ -105,7 +115,10 @@ export async function resolveSurveyWritingDraft(
   try {
     const saved = await loadWritingFormTemplateDraft(templateId)
     if (saved?.draft != null) {
-      const draft = normalizeWritingFormDraft(saved.draft)
+      const draft = applySurveyDisplayTitleToDraft(
+        normalizeWritingFormDraft(saved.draft),
+        options?.templateName
+      )
       rememberSurveyWritingDraft(templateId, draft)
       return draft
     }
@@ -126,7 +139,9 @@ export function resolveSurveyWritingDraftSync(
   options?: ResolveSurveyWritingDraftOptions
 ): WritingFormDraft {
   const cached = peekSurveyWritingDraft(templateId)
-  if (cached != null) return cached
+  if (cached != null) {
+    return applySurveyDisplayTitleToDraft(cached, options?.templateName)
+  }
   return buildDefaultSurveyWritingDraft(templateId, options)
 }
 
