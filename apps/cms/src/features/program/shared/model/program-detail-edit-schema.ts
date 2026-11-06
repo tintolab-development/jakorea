@@ -996,17 +996,7 @@ export function programToDetailEditValues(
 
       const fromProgram = firstPlainKoreanPhoneForEdit(program.contactPhone)
       const sponsorUnselected = sponsorManagerContactIds.some(isSponsorContactUnselected)
-      if (sponsorUnselected) {
-        // TT: top-level contactPhone 이 모집 Tel 폴백 (participant-recruitment-display)
-        if (
-          fromProgram &&
-          program.id != null &&
-          looksLikeTrainedTeacherProgramId(String(program.id))
-        ) {
-          return fromProgram
-        }
-        return undefined
-      }
+      if (sponsorUnselected) return undefined
       return fromProgram
     })(),
     contactEmail:
@@ -1518,15 +1508,19 @@ export function detailEditValuesToProgramPatch(
   const isTrainedTeacherProgram =
     existing.backendProgramType === 'TRAINED_TEACHER' ||
     looksLikeTrainedTeacherProgramId(existing.id)
-  const contactOrganizationName =
-    values.recruitmentContactOrganizationName?.trim() ||
-    existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
+  const ttParticipantInquiry =
+    isTrainedTeacherProgram && recruitmentAudience === 'participant'
+  const contactOrganizationName = ttParticipantInquiry
+    ? values.recruitmentContactOrganizationName?.trim() || undefined
+    : values.recruitmentContactOrganizationName?.trim() ||
+      existing.generalCommonInfo?.participantRecruitmentInfo?.contactOrganizationName
   /** 문의처 표시명 — BE contactName (managerName/후원 담당자와 분리) */
-  const inquiryContactName =
-    values.recruitmentContactOrganizationName?.trim() ||
-    existing.contactName?.trim() ||
-    existing.generalCommonInfo?.participantRecruitmentInfo?.contactName?.trim() ||
-    undefined
+  const inquiryContactName = ttParticipantInquiry
+    ? values.recruitmentContactOrganizationName?.trim() || undefined
+    : values.recruitmentContactOrganizationName?.trim() ||
+      existing.contactName?.trim() ||
+      existing.generalCommonInfo?.participantRecruitmentInfo?.contactName?.trim() ||
+      undefined
   const instructorContactOrganizationName =
     values.instructorRecruitmentContactOrganizationName?.trim() ||
     existing.generalCommonInfo?.instructorRecruitmentInfo?.contactOrganizationName
@@ -1644,8 +1638,8 @@ export function detailEditValuesToProgramPatch(
       existing.sponsorId,
     managerName: values.managerName,
     contactName: inquiryContactName,
-    contactPhone,
-    contactEmail,
+    contactPhone: ttParticipantInquiry ? contactPhone?.trim() || undefined : contactPhone,
+    contactEmail: ttParticipantInquiry ? contactEmail?.trim() || undefined : contactEmail,
     institutionType:
       values.venueKind === 'outside'
         ? 'outside_school'
@@ -1953,15 +1947,27 @@ export function detailEditValuesToProgramPatch(
           resultAnnouncementDate,
           resultAnnouncementMethod
         ),
-        inquiryTel: contactPhone?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel,
-        inquiryEmail:
-          contactEmail?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryEmail,
-        contactPhone: contactPhone?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.contactPhone,
-        contactEmail: contactEmail?.trim() || existing.generalCommonInfo?.participantRecruitmentInfo?.contactEmail,
+        inquiryTel: ttParticipantInquiry
+          ? contactPhone?.trim() || undefined
+          : contactPhone?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryTel,
+        inquiryEmail: ttParticipantInquiry
+          ? contactEmail?.trim() || undefined
+          : contactEmail?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.inquiryEmail,
+        contactPhone: ttParticipantInquiry
+          ? contactPhone?.trim() || undefined
+          : contactPhone?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.contactPhone,
+        contactEmail: ttParticipantInquiry
+          ? contactEmail?.trim() || undefined
+          : contactEmail?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.contactEmail,
         contactOrganizationName,
-        contactName:
-          values.recruitmentContactOrganizationName?.trim() ||
-          existing.generalCommonInfo?.participantRecruitmentInfo?.contactName,
+        contactName: ttParticipantInquiry
+          ? values.recruitmentContactOrganizationName?.trim() || undefined
+          : values.recruitmentContactOrganizationName?.trim() ||
+            existing.generalCommonInfo?.participantRecruitmentInfo?.contactName,
       },
       instructorRecruitmentInfo: {
         ...existing.generalCommonInfo?.instructorRecruitmentInfo,

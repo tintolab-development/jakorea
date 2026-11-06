@@ -65,6 +65,16 @@ describe('programTrainedTeachersRecruitmentSaveSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('참여자 행 문의처가 비어 있어도 저장할 수 있다', () => {
+    const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
+      ...complete,
+      recruitmentContactOrganizationName: '',
+      contactPhone: '',
+      contactEmail: '',
+    })
+    expect(result.success).toBe(true)
+  })
+
   it('날짜 지정형은 최대 일정·1일 최대 차시를 저장 필수값으로 요구하지 않는다', () => {
     const result = programTrainedTeachersRecruitmentSaveSchema.safeParse({
       ...complete,
