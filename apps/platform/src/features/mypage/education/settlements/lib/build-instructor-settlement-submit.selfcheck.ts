@@ -27,6 +27,7 @@ const base = {
     oneWayDistanceKm: 30,
     fuelCostWon: 12_000,
     tollFeeWon: 3_000,
+    calculatedTransportAmount: 15_000,
     totalTransportFeeWon: 15_000,
   },
   tripType: 'round_trip' as const,
@@ -85,6 +86,7 @@ const belowMin = buildSettlementWriteDraft({
     oneWayDistanceKm: 10,
     fuelCostWon: 1,
     tollFeeWon: 1,
+    calculatedTransportAmount: 2,
     totalTransportFeeWon: 2,
   },
 })

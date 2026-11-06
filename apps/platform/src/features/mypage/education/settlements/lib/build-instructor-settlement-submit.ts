@@ -90,16 +90,18 @@ export function buildInstructorSettlementPayloadParts(draft: SettlementWriteDraf
 
   const transportType = draft.transport.itemType?.trim()
   const autoPreview = draft.transport.autoPreview
+  const transportAmount =
+    autoPreview?.calculatedTransportAmount ?? autoPreview?.totalTransportFeeWon ?? null
   if (
     transportType &&
     !isInstructorTransportBelowMinimum(autoPreview) &&
-    autoPreview?.totalTransportFeeWon != null &&
-    autoPreview.totalTransportFeeWon > 0
+    transportAmount != null &&
+    transportAmount > 0
   ) {
     pushItem(requestedItems, evidenceAttachments, {
       itemType: transportType,
       itemName: draft.transport.itemName,
-      amount: autoPreview.totalTransportFeeWon,
+      amount: transportAmount,
       fileObjectIds: [],
       evidenceRequired: false,
     })

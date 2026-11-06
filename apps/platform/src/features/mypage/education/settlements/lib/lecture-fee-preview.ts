@@ -74,8 +74,13 @@ export function instructorFeeUnitDisplayLabel(
 }
 
 export function formatLectureFeeWon(amount: number | null | undefined): string {
-  if (amount == null || !Number.isFinite(amount)) return MISSING
+  if (amount == null || !Number.isSafeInteger(amount)) return MISSING
   return `${amount.toLocaleString('ko-KR')}원`
+}
+
+/** 지급조서 확인 '총 강의비'. 서버 totalLectureFee만. 시급×시간·차시 곱셈 금지. */
+export function formatTotalLectureFee(preview: LectureFeePreview | null | undefined): string {
+  return formatLectureFeeWon(preview?.totalLectureFee)
 }
 
 export function formatInstructorFeeAssignment(preview: LectureFeePreview | null | undefined): string {
@@ -105,6 +110,7 @@ function formatSeoulClock(iso: string | null | undefined): string {
   return `${hour}:${minute}`
 }
 
+/** 교육 진행 차시 라벨. educationSessionCount는 차시 번호(sessionNo)이며 총액 배율이 아니다. */
 export function formatLectureFeeSessionProgress(input: {
   sessionNo?: number | null
   educationSessionCount?: number | null
