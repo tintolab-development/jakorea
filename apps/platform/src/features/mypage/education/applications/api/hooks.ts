@@ -88,8 +88,8 @@ function emptyRemoteResult(refetch: () => void): MyProgramApplicationsQueryResul
 
 /**
  * 내 프로그램 신청 목록.
- * - `options.tab` 없음: applicationType별 전체(최대 100) 조회 — 교육/봉사 기존 클라이언트 탭 필터용
- * - `options.tab` 있음: 탭별 statusGroup 1회 + 서버 page/size (강의현황)
+ * - `options.tab` 없음: applicationType별 전체(최대 20) 조회 — 봉사 등 클라이언트 탭 필터용
+ * - `options.tab` 있음: 탭별 statusGroup + 서버 page/size (교육·강의현황)
  */
 export function useMyProgramApplications(
   scope: MypageApplicationScope,
@@ -260,6 +260,7 @@ export function useMyProgramApplicationDetail(
     enabled,
     staleTime: APPLICATIONS_STALE_MS,
     gcTime: APPLICATIONS_GC_MS,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     retry: shouldRetryQuery,

@@ -522,6 +522,40 @@ assert.equal(certificateDetailIssued.certificateStatus, 'COMPLETION_ISSUED')
 assert.equal(certificateDetailIssued.canIssueCertificate, true)
 assert.equal(certificateDetailIssued.certificateAvailable, undefined)
 
+const personalCompletedNotGraduated = mapPortalProgramApplicationDetail({
+  applicationId: 1694691,
+  applicationType: 'INDIVIDUAL',
+  programId: 186339,
+  programTitle: '개인 일정 종료 만족도 제출',
+  programGroup: 'GENERAL',
+  programType: 'GENERAL_INDIVIDUAL',
+  applicationStatus: 'APPROVED',
+  displayStatus: '진행 완료',
+  participation: {
+    participantId: 1694970,
+    completionStatus: 'NOT_COMPLETED',
+  },
+})
+assert.equal(personalCompletedNotGraduated?.displayStatus, 'completed')
+assert.equal(personalCompletedNotGraduated?.participantId, 1694970)
+
+assert.equal(
+  mapPortalProgramApplicationDetail({
+    applicationId: 1694691,
+    applicationType: 'INDIVIDUAL',
+    programId: 186339,
+    programTitle: 'displayStatus 없을 때 completionStatus로 완료 만들지 않음',
+    programGroup: 'GENERAL',
+    programType: 'GENERAL_INDIVIDUAL',
+    applicationStatus: 'APPROVED',
+    participation: {
+      participantId: 1694970,
+      completionStatus: 'COMPLETED',
+    },
+  })?.displayStatus,
+  'in_progress',
+)
+
 const certificateDetailAvailable = mapPortalProgramApplicationDetail({
   applicationId: 1694719,
   applicationType: 'INDIVIDUAL',
