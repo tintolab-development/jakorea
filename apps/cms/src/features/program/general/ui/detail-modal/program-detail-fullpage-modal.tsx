@@ -125,6 +125,7 @@ import {
 } from '@/shared/constants/messages'
 import { PRE_EDUCATION_SCHEDULE_REQUIRED_MESSAGE } from '@/features/program/general/model/common-info-edit-schema'
 import { handleError } from '@/shared/utils/error-handler'
+import { showUpdateCompletedAlert } from '@/shared/ui'
 import { useCmsAlert } from '@/shared/ui/cms-alert-modal-provider'
 import { isProgramTypeSettingsSaveBlocked } from '@/features/program/shared/lib/program-edit-window'
 import {
@@ -2206,7 +2207,9 @@ export function ProgramDetailFullPageModal({
                   }
                   throw new Error('trainedTeacherBasicInfoValidationFailed')
                 }
-                const basicOk = await infoTriggerSave(progressTables)
+                const basicOk = await infoTriggerSave(progressTables, {
+                  skipSuccessAlert: trainedTeacherRemoteEnabled,
+                })
                 if (!basicOk) {
                   // API 오류는 onSaveEdit → handleError 에서 이미 안내
                   throw new Error('trainedTeacherBasicInfoSaveFailed')
@@ -2223,6 +2226,7 @@ export function ProgramDetailFullPageModal({
                             commonInfo: payload.commonInfo,
                           },
                         })
+                        showUpdateCompletedAlert()
                       } catch (error) {
                         handleError(error, {
                           context: 'programDetailFullpageModal.trainedTeacherInfoSave',

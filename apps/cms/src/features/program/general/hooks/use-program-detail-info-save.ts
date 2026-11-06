@@ -102,7 +102,10 @@ export function useProgramDetailInfoSave({
   }, [])
 
   const triggerSave = useCallback(
-    async (extraCommonInfo?: ProgramDetailInfoSaveExtraCommon): Promise<boolean> => {
+    async (
+      extraCommonInfo?: ProgramDetailInfoSaveExtraCommon,
+      options?: { skipSuccessAlert?: boolean }
+    ): Promise<boolean> => {
       if (savingRef.current || !onSaveEdit || !program) return false
       savingRef.current = true
       saveFailureRef.current = null
@@ -292,7 +295,9 @@ export function useProgramDetailInfoSave({
           },
         }
         await onSaveEdit(draftToSave, remotePatch, program)
-        showUpdateCompletedAlert()
+        if (!options?.skipSuccessAlert) {
+          showUpdateCompletedAlert()
+        }
         return true
       } catch (error) {
         const data =
