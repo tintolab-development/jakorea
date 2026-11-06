@@ -34,6 +34,10 @@ import {
 } from '../../../shared/lib/education-schedule-name.ts'
 import { PROGRAM_PARTICIPANT_APPLICATION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-individual-draft'
 import { PROGRAM_APPLICATION_FORM_INSTITUTION_IDS } from '@jakorea/form-schema/paragraph-ids/program-application-form-institution-draft'
+import {
+  isApplicationSexOffenseInquiryParagraphId,
+  isApplicationSexOffenseSubmissionParagraphId,
+} from './apply-form-paragraph-ids.ts'
 import type { WritingFormDraft } from '@jakorea/form-schema/writing-form'
 import { toSeoulDateOnly, toSeoulDisplayParts } from '../../../shared/lib/format-display-date.ts'
 import { readApplyScheduleMetaFromProgram } from './apply-form-schedule-meta.ts'
@@ -890,6 +894,8 @@ function isAlwaysRequiredApplicationConsentParagraphId(id: string): boolean {
 }
 
 function isRequiredBottomConsentParagraph(paragraph: WritingFormDraft['paragraphs'][number]): boolean {
+  if (isApplicationSexOffenseSubmissionParagraphId(paragraph.id)) return false
+  if (isApplicationSexOffenseInquiryParagraphId(paragraph.id)) return false
   if (!('showBottomConsent' in paragraph) || paragraph.showBottomConsent !== true) return false
   if (isAlwaysRequiredApplicationConsentParagraphId(paragraph.id)) return true
   return (
