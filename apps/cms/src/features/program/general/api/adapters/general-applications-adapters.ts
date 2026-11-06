@@ -3,6 +3,7 @@ import type {
   ApplicantSchoolRow,
 } from '@/features/program/shared/model/applicant-institution'
 import {
+  positiveEducationNumber,
   stripDefaultEducationSlotNameFromLabel,
   toDisplayEducationScheduleName,
 } from '@/shared/lib/education-schedule-name'
@@ -1265,7 +1266,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       const byStart = (a.startAt ?? '').localeCompare(b.startAt ?? '')
       return byStart || (a.sessionNo ?? 0) - (b.sessionNo ?? 0)
     })
-    .map((session, index) => {
+    .map(session => {
       const canonical = readProgramScheduleCanonicalFields(session)
       const scheduleName = toDisplayEducationScheduleName(session.scheduleName) || ''
       const start = session.startAt ? new Date(session.startAt) : null
@@ -1283,7 +1284,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         validStart && validEnd && end.getTime() > start.getTime()
           ? `${Math.round((end.getTime() - start.getTime()) / 60_000)}분`
           : '-'
-      const round = session.sessionNo ?? index + 1
+      const sessionNo = positiveEducationNumber(session.sessionNo)
       const resolvedScheduleId = session.resolvedScheduleId ?? session.scheduleId ?? null
       const scheduleUnresolved =
         session.scheduleUnresolved ??
@@ -1291,11 +1292,12 @@ export function mapSessionProgressToParticipatingSchoolSessions(
       const scheduleLabel = !validStart && scheduleName ? scheduleName : undefined
       const deliveryScheduleStatus = session.scheduleStatus?.trim() || undefined
       return {
-        round,
+        round: sessionNo ?? 0,
+        sessionNo: session.sessionNo ?? null,
         ...dateParts,
         duration,
         format: scheduleName || '-',
-        classNum: `${round}교시`,
+        classNum: '',
         timeRange,
         ...(scheduleLabel ? { scheduleLabel } : {}),
         ...(deliveryScheduleStatus ? { deliveryScheduleStatus } : {}),
@@ -1304,6 +1306,7 @@ export function mapSessionProgressToParticipatingSchoolSessions(
         requestedScheduleId: session.requestedScheduleId ?? undefined,
         scheduleUnresolved,
         startAt: session.startAt?.trim() || undefined,
+        endAt: session.endAt?.trim() || undefined,
         ...(scheduleName ? { scheduleName } : {}),
         ...(canonical.scheduleRole ? { scheduleRole: String(canonical.scheduleRole) } : {}),
         ...(canonical.educationSlotKey ? { educationSlotKey: canonical.educationSlotKey } : {}),

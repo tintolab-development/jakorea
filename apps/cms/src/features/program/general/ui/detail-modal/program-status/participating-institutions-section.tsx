@@ -52,13 +52,10 @@ import { useProgramTextbookCatalog } from '@/features/textbook/hooks/use-program
 import { CMS_TABLE_NO_COL_CLASS, CMS_DATA_TABLE_ROW_DISABLED_CLASS } from '@/shared/constants/table'
 import { renderProgramDetailPipeSeparated } from '@/features/program/shared/ui/program-detail-td-divider'
 import { ParticipatingInstitutionsCalendarView } from './participating-institutions-calendar-view'
+import { ParticipatingProgressEducationScheduleCell } from '../../../lib/participating-progress-education-schedule-cell'
 import {
   buildParticipatingSchoolPreferredScheduleLines,
-  formatGeneralEducationScheduleLine,
-  prepareGeneralEducationScheduleSessions,
-  readCurriculumSessionLabels,
-  readProgramEducationScheduleLines,
-  resolveScheduleDetailTimeSpan,
+  withParticipatingProgressCurriculumShape,
 } from '../../../lib/participating-school-session-display'
 import { generalEducationScheduleShapeFromBridge } from '@/features/program/shared/ui/program-detail/applicant-list/applicants-detail-session-format'
 import { isCompanySchoolProgram } from '@/features/program/1c-1s/lib/is-company-school-program'
@@ -291,18 +288,13 @@ export function ParticipatingInstitutionsSection({
     () => resolveInstitutionApplicationProgramBridge(program),
     [program]
   )
-  const educationScheduleShape = useMemo(() => {
-    const shape = generalEducationScheduleShapeFromBridge(programBridge)
-    if (!shape) return null
-    return { ...shape, curriculumSessionLabels: readCurriculumSessionLabels(program) }
-  }, [program, programBridge])
-  const detailScheduleTimeSpan = useMemo(
-    () => resolveScheduleDetailTimeSpan(program?.generalCommonInfo?.scheduleDetails),
-    [program]
-  )
-  const educationScheduleLines = useMemo(
-    () => readProgramEducationScheduleLines(program),
-    [program]
+  const educationScheduleShape = useMemo(
+    () =>
+      withParticipatingProgressCurriculumShape(
+        generalEducationScheduleShapeFromBridge(programBridge),
+        program
+      ),
+    [program, programBridge]
   )
   const maxClassCount = isCompanySchool ? programBridge.maxClassCount : undefined
   const showTextbookFeatures = program
@@ -358,22 +350,17 @@ export function ParticipatingInstitutionsSection({
         ...participatingScheduleTableColumnLayout(),
         render: (_: unknown, record: ParticipatingSchoolRow) => {
           const assignedSessions = resolveParticipatingProgressAssignedSessions(record.sessions)
-          const sessionLines = showAssignedEducationSchedule
-            ? prepareGeneralEducationScheduleSessions(assignedSessions, educationScheduleShape, {
-                detailScheduleTimeSpan,
-                educationScheduleLines:
-                  assignedSessions.length === 0 ? educationScheduleLines : [],
-              })
-                .map(session =>
-                  formatGeneralEducationScheduleLine(session, educationScheduleShape, {
-                    detailScheduleTimeSpan,
-                  })
-                )
-                .filter(Boolean)
-            : buildParticipatingSchoolPreferredScheduleLines(
-                resolveParticipatingInstitutionPreferredDisplaySessions(record)
-              )
-          if (showAssignedEducationSchedule && sessionLines.length === 0) return '-'
+          if (showAssignedEducationSchedule) {
+            return (
+              <ParticipatingProgressEducationScheduleCell
+                sessions={assignedSessions}
+                shape={educationScheduleShape}
+              />
+            )
+          }
+          const sessionLines = buildParticipatingSchoolPreferredScheduleLines(
+            resolveParticipatingInstitutionPreferredDisplaySessions(record)
+          )
           const total = sessionLines.length
           const showCount = total <= 3 ? total : 2
           const displaySessions = sessionLines.slice(0, showCount)
@@ -500,9 +487,7 @@ export function ParticipatingInstitutionsSection({
           ]),
     ],
     [
-      detailScheduleTimeSpan,
       educationScheduleColumnTitle,
-      educationScheduleLines,
       educationScheduleShape,
       showAssignedEducationSchedule,
       getInstructorDisplayForSchool,

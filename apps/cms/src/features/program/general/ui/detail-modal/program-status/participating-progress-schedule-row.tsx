@@ -3,7 +3,7 @@
  */
 
 import {
-  formatGeneralEducationScheduleLine,
+  formatParticipatingProgressEducationScheduleLine,
   type GeneralEducationScheduleShape,
 } from '@/features/program/general/lib/participating-school-session-display'
 import type { ParticipatingSchoolSession } from '@/features/program/general/model/participating-schools'
@@ -48,13 +48,13 @@ function resolveSessionProgressDisplay(session: ParticipatingSchoolSession): {
 export function ParticipatingProgressScheduleValue({
   session,
   shape = null,
-  detailScheduleTimeSpan = null,
+  detailScheduleTimeSpan: _detailScheduleTimeSpan = null,
 }: {
   session: ParticipatingSchoolSession
   shape?: GeneralEducationScheduleShape | null
   detailScheduleTimeSpan?: string | null
 }) {
-  const line = formatGeneralEducationScheduleLine(session, shape, { detailScheduleTimeSpan })
+  const line = formatParticipatingProgressEducationScheduleLine(session, shape)
   const { label: statusLabel, statusClass } = resolveSessionProgressDisplay(session)
   const status = (
     <span

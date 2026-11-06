@@ -36,8 +36,7 @@ function educationSlotDeliveryScheduleStatus(
 }
 
 function educationSlotToParticipatingSession(
-  slot: ProgramEducationSlotResponse,
-  index: number
+  slot: ProgramEducationSlotResponse
 ): ParticipatingSchoolSession | null {
   const scheduleId = positiveScheduleId(slot.scheduleId)
   if (scheduleId == null) return null
@@ -46,7 +45,7 @@ function educationSlotToParticipatingSession(
     scheduleRole?: string
   } = {
     scheduleId,
-    sessionNo: slot.sessionNo ?? index + 1,
+    sessionNo: slot.sessionNo,
     startAt: slot.startAt,
     endAt: slot.endAt,
     scheduleStatus: educationSlotDeliveryScheduleStatus(slot),
@@ -81,7 +80,7 @@ export function resolveParticipatingIndividualProgressScheduleSessions(input: {
   }
 
   const result: ParticipatingSchoolSession[] = []
-  assignedIds.forEach((scheduleId, index) => {
+  assignedIds.forEach(scheduleId => {
     const fromParticipant = sessionByScheduleId.get(scheduleId)
     if (fromParticipant) {
       result.push(fromParticipant)
@@ -89,7 +88,7 @@ export function resolveParticipatingIndividualProgressScheduleSessions(input: {
     }
     const slot = slotByScheduleId.get(scheduleId)
     if (!slot) return
-    const fromSlot = educationSlotToParticipatingSession(slot, index)
+    const fromSlot = educationSlotToParticipatingSession(slot)
     if (fromSlot) result.push(fromSlot)
   })
   return result
