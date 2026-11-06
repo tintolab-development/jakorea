@@ -247,7 +247,29 @@ function isAllowedGet(pathname: string): boolean {
   return ALLOWED_GET_PREFIXES.some(prefix => pathname.startsWith(prefix))
 }
 
+function adminAuthSessionStatus() {
+  const nowMs = Date.now()
+  const iso = (ms: number) => new Date(ms).toISOString()
+  return {
+    sessionStartedAt: iso(nowMs - 60_000),
+    lastUserActivityAt: iso(nowMs),
+    serverNow: iso(nowMs),
+    absoluteExpiresAt: iso(nowMs + 12 * 60 * 60 * 1000),
+    idleExpiresAt: iso(nowMs + 30 * 60 * 1000),
+    refreshIdleExpiresAt: iso(nowMs + 30 * 60 * 1000),
+    idlePolicyEnforced: true,
+  }
+}
+
+function adminAuthActivityStatus() {
+  return {
+    lastUserActivityAt: new Date().toISOString(),
+    updated: true,
+  }
+}
+
 function isAllowedMutation(method: string, pathname: string): boolean {
+  if (method === 'POST' && pathname === '/api/admin/auth/activity') return true
   if (method === 'PUT' && /^\/api\/admin\/form-template-versions\/\d+$/.test(pathname)) return true
   if (method === 'POST' && /^\/api\/admin\/form-template-versions\/\d+\/publish$/.test(pathname)) {
     return true
@@ -356,6 +378,10 @@ export async function installIsolatedRegistrationNetwork(
       return
     }
 
+    if (method === 'GET' && pathname === '/api/admin/auth/session') {
+      await route.fulfill(json(adminAuthSessionStatus()))
+      return
+    }
     if (method === 'GET' && pathname === '/api/admin/me') {
       await route.fulfill(json(adminMe()))
       return
@@ -476,6 +502,10 @@ export async function installIsolatedRegistrationNetwork(
       }
       log.mutations.push(mutation)
 
+      if (method === 'POST' && pathname === '/api/admin/auth/activity') {
+        await route.fulfill(json(adminAuthActivityStatus()))
+        return
+      }
       if (method === 'POST' && pathname.endsWith('/versions/copy')) {
         const templateId = Number(pathname.split('/')[4])
         const versionId = nextCopiedVersionId
