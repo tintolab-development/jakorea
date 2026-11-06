@@ -7,6 +7,11 @@
 
 import { useEffect, useMemo } from 'react'
 import {
+  postAdminAuthActivity,
+  isAdminAuthUnauthorizedError,
+  isAdminAuthForbiddenError,
+} from '@/features/auth/api/admin-session-fetcher'
+import {
   REFRESH_TOKEN_STORAGE_KEY,
   startUserActivityTracking,
 } from '@/features/auth/lib/session-keepalive'
@@ -92,7 +97,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     // 활동 추적 (선제 refresh 게이트: 최근 30분 내 활동 + 마지막 발급 후 20분 경과)
-    const stopActivityTracking = startUserActivityTracking()
+    const stopActivityTracking = startUserActivityTracking(window, () => {
+      void postAdminAuthActivity().catch(error => {
+        if (isAdminAuthUnauthorizedError(error) || isAdminAuthForbiddenError(error)) {
+          useAuthStore.getState().logout()
+        }
+      })
+    })
 
     // 만료만 보고 바로 logout하지 않는다: refresh-first, 실패 시에만 logout (store.checkSessionExpiry)
     const checkSessionExpiry = () => {

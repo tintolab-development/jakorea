@@ -1,0 +1,16 @@
+.session-warning-modal-wrap .ant-modal-content,
+.session-warning-modal-root .ant-modal-content {
+  border-radius: 16px;
+}
+
+.session-warning-modal-wrap .ant-modal-body,
+.session-warning-modal-root .ant-modal-body {
+  white-space: pre-line;
+}
+
+.session-warning-modal-wrap .ant-modal-footer,
+.session-warning-modal-root .ant-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

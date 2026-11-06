@@ -4,6 +4,7 @@
  * - 401 시 refresh single-flight
  */
 
+import { readJwtSidClaim } from '@jakorea/domain/session'
 import { recordTokenIssuedAt } from '@/features/auth/lib/session-keepalive'
 import { useAuthStore } from '@/features/auth/model/auth-store'
 import {
@@ -67,6 +68,7 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
     path.includes(`${prefix}/login`) ||
     path.includes(`${prefix}/refresh`) ||
     path.includes(`${prefix}/logout`) ||
+    path.includes(`${prefix}/activity`) ||
     path.includes(`${prefix}/mfa/`)
   )
 }
@@ -229,6 +231,71 @@ function enqueueWhileRefreshing(originalRequest: RetryableRequest) {
   })
 }
 
+const REFRESH_LOCK_NAME = 'jakorea-hp-admin-refresh'
+const ADOPT_EXPIRY_BUFFER_MS = 30 * 1000
+
+function adoptTokensRotatedByAnotherTab(usedRefreshToken: string): string | null {
+  if (typeof window === 'undefined' || !window.localStorage) return null
+  const storedRefresh = readRefreshToken()
+  if (!storedRefresh || storedRefresh === usedRefreshToken) return null
+
+  const storedAccess = localStorage.getItem(AUTH_TOKEN_KEY)
+  const storedExpiry = localStorage.getItem(AUTH_EXPIRY_KEY)
+  if (!storedAccess || !storedExpiry) return null
+  const expiryMs = new Date(storedExpiry).getTime()
+  if (!Number.isFinite(expiryMs) || expiryMs <= Date.now() + ADOPT_EXPIRY_BUFFER_MS) return null
+
+  useAuthStore.setState({ token: storedAccess, expiresAt: storedExpiry })
+  return storedAccess
+}
+
+async function postRefreshAndPersist(refreshToken: string): Promise<string> {
+  const res = await postAuthenticationRefreshToken(refreshToken)
+  const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
+  const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
+  const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
+
+  if (!newAccessToken || !newRefreshToken) {
+    throw new Error('Invalid refresh response: missing access or refresh token')
+  }
+
+  const expiresAtIso =
+    expiresInSeconds && expiresInSeconds > 0
+      ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
+      : undefined
+
+  persistAccessToken(newAccessToken, expiresAtIso)
+  persistRefreshToken(newRefreshToken)
+
+  return newAccessToken
+}
+
+async function refreshWithAdoption(startedWithRefreshToken: string): Promise<string> {
+  const adoptedBefore = adoptTokensRotatedByAnotherTab(startedWithRefreshToken)
+  if (adoptedBefore) return adoptedBefore
+
+  const tokenToUse = readRefreshToken() ?? startedWithRefreshToken
+  try {
+    return await postRefreshAndPersist(tokenToUse)
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 409) {
+      const adopted = adoptTokensRotatedByAnotherTab(tokenToUse)
+      if (adopted) return adopted
+    }
+    throw err
+  }
+}
+
+async function refreshAcrossTabs(startedWithRefreshToken: string): Promise<string> {
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
+  if (locks && typeof locks.request === 'function') {
+    return await locks.request(REFRESH_LOCK_NAME, () =>
+      refreshWithAdoption(startedWithRefreshToken)
+    )
+  }
+  return refreshWithAdoption(startedWithRefreshToken)
+}
+
 async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
   if (refreshPromise) {
     return refreshPromise
@@ -236,24 +303,7 @@ async function runSingleFlightRefresh(refreshToken: string): Promise<string> {
 
   refreshPromise = (async () => {
     try {
-      const res = await postAuthenticationRefreshToken(refreshToken)
-      const newAccessToken = parseAccessTokenFromRefreshBody(res.data)
-      const newRefreshToken = parseRefreshTokenFromRefreshBody(res.data)
-      const expiresInSeconds = parseExpiresInFromRefreshBody(res.data)
-
-      if (!newAccessToken || !newRefreshToken) {
-        throw new Error('Invalid refresh response: missing access or refresh token')
-      }
-
-      const expiresAtIso =
-        expiresInSeconds && expiresInSeconds > 0
-          ? new Date(Date.now() + expiresInSeconds * 1000).toISOString()
-          : undefined
-
-      persistAccessToken(newAccessToken, expiresAtIso)
-      persistRefreshToken(newRefreshToken)
-
-      return newAccessToken
+      return await refreshAcrossTabs(refreshToken)
     } finally {
       refreshPromise = null
     }
@@ -318,6 +368,12 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    const isSessionPath = requestUrl.includes(`${adminAuthPaths.prefix}/session`)
+    if (isSessionPath && !readJwtSidClaim(useAuthStore.getState().token)) {
+      handleAuthFailure()
+      return Promise.reject(error)
+    }
+
     const refreshToken = readRefreshToken()
     if (!refreshToken) {
       handleAuthFailure()
@@ -341,9 +397,6 @@ axiosInstance.interceptors.response.use(
     } catch (err) {
       processQueue(null, err)
       isRefreshing = false
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY)
-      }
       handleAuthFailure()
       return Promise.reject(err)
     }

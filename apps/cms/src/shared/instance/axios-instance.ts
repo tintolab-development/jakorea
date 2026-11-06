@@ -21,6 +21,7 @@ import {
   parseAuthTokenResponse,
 } from '@/features/auth/lib/parse-auth-token-response'
 import { recordTokenIssuedAt } from '@/features/auth/lib/session-keepalive'
+import { readJwtSidClaim } from '@jakorea/domain/session'
 import { recordBackendErrorForE2e } from '@/features/e2e-error-log/lib/record-from-axios-error'
 import { getApiBaseUrl } from '@/shared/lib/api-remote-env'
 import { isRequestCanceledError } from '@/shared/lib/is-request-canceled-error'
@@ -103,6 +104,7 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
     path.includes(`${prefix}/login`) ||
     path.includes(`${prefix}/refresh`) ||
     path.includes(`${prefix}/logout`) ||
+    path.includes(`${prefix}/activity`) ||
     path.includes(`${prefix}/mfa/`) ||
     path.includes(`${prefix}/signup`) ||
     path.includes(`${prefix}/sso/`)
@@ -401,6 +403,12 @@ axiosClient.interceptors.response.use(
     const isAccessTokenFailure = status === 401 && isAccessTokenUnauthorizedCode(code)
     if (!isAccessTokenFailure || originalRequest._retry) {
       showGlobalApiErrorAlert(error, originalRequest)
+      return Promise.reject(error)
+    }
+
+    const isSessionPath = requestUrl.includes(`${adminAuthPaths.prefix}/session`)
+    if (isSessionPath && !readJwtSidClaim(useAuthStore.getState().token)) {
+      handleAuthFailure()
       return Promise.reject(error)
     }
 
