@@ -5,34 +5,34 @@
  * Filtered for CMS performance (education-record) Orval codegen.
  * OpenAPI spec version: v9
  */
-import type { CalcInfoLectureFeeType } from './calcInfoLectureFeeType';
+import type { CalcInfoLectureFeeType } from './calcInfoLectureFeeType'
 
 /**
  * 지급조서(PAYMENT_STATEMENT)만. 영수증 경로는 null. 제출 전 미리보기 lectureFeePreview·transportPreview와 산식 동일. taxIncomeType이 아님.
  */
 export interface CalcInfo {
-  /** 강의비 유형 코드. GRADE_1=1급 강의비, GRADE_2=2급 강의비, GRADE_3=3급 강의비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null. */
-  lectureFeeType?: CalcInfoLectureFeeType;
+  /** 강사비 유형 코드. GRADE_1=1급 강사비, GRADE_2=2급 강사비, GRADE_3=3급 강사비. 제출 전 lectureFeePreview.lectureFeeType과 동일. 없으면 null. */
+  lectureFeeType?: CalcInfoLectureFeeType
   /** 강사비 책정 단가(원). 총액 아님. 제출 전 lectureFeePreview.instructorFeeAmount와 동일. 없으면 null. */
-  instructorFeeAmount?: number;
+  instructorFeeAmount?: number
   /** 사업소득자 여부 */
-  businessIncomeYn?: boolean;
+  businessIncomeYn?: boolean
   /** 교육 진행 차시 번호(sessionNo와 동일). 제출 스냅샷에 없으면 null */
-  educationSessionCount?: number;
+  educationSessionCount?: number
   /** 총 학생 수. 제출 스냅샷에 없으면 null */
-  totalStudentCount?: number;
-  /** 이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일. 실적 확정액만. PER_HOUR를 시급×시간으로 계산하지 않음. */
-  totalLectureFee?: number | null;
+  totalStudentCount?: number
+  /** 이번 회차 총 강사비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일. 실적 확정액만. PER_HOUR를 시급×시간으로 계산하지 않음. */
+  totalLectureFee?: number | null
   /** 실적 분으로 산출한 인정 차시. 제출 스냅샷에 없으면 null. */
-  recognizedSessionCount?: number | null;
+  recognizedSessionCount?: number | null
   /** 배정 actual_training_* 분. 제출 스냅샷에 없으면 null. */
-  actualTrainingMinutes?: number | null;
+  actualTrainingMinutes?: number | null
   /** 편도 km. 제출 전 transportPreview.oneWayDistanceKm와 동일. */
-  oneWayDistanceKm?: string | null;
+  oneWayDistanceKm?: string | null
   /** 유류비(원, 정수). 제출 전 transportPreview.fuelCostWon와 동일. 미지급이면 null. */
-  fuelCostWon?: number | null;
+  fuelCostWon?: number | null
   /** 톨비(원, 정수). 제출 전 transportPreview.tollFeeWon와 동일. 미지급이면 null. */
-  tollFeeWon?: number | null;
+  tollFeeWon?: number | null
   /** 총 산정 교통비(원, 정수)=유류비+톨비. 제출 전 transportPreview.calculatedTransportAmount와 동일. 편도 30 미만 미지급은 null. 원천징수·과세 합산에 넣지 않음. */
-  calculatedTransportAmount?: number | null;
+  calculatedTransportAmount?: number | null
 }
