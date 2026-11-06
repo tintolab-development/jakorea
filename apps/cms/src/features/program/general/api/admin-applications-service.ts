@@ -859,7 +859,14 @@ export function mapSecondInterviewStatusToFinalResultPayload(
     ...(notify?.notifyTiming ? { notifyTiming: notify.notifyTiming } : {}),
     ...(notify?.scheduledAt ? { scheduledAt: notify.scheduledAt } : {}),
   }
-  if (status === 'pass') return { result: 'PASS', reason, ...notifyFields }
+  if (status === 'pass') {
+    const trimmedReason = reason?.trim()
+    return {
+      result: 'PASS',
+      ...(trimmedReason ? { reason: trimmedReason } : {}),
+      ...notifyFields,
+    }
+  }
   if (status === 'fail') return { result: 'FAIL', reason, ...notifyFields }
   const rank = Number(status.replace('reserve', '')) as 1 | 2 | 3 | 4
   return { result: 'RESERVE', reserveRank: rank, reason, ...notifyFields }

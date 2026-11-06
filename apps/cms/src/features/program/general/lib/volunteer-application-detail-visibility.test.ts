@@ -4,8 +4,10 @@ import {
   mapVolunteerDocumentStatusToApprovalStatus,
   shouldShowVolunteerInterviewAvailabilitySection,
   shouldShowVolunteerManagerEvaluationSection,
+  mapVolunteerProgramApprovalStatus,
   volunteerApplicationApprovalStatusLabel,
   volunteerApplicationDecisionButtonLabels,
+  volunteerProgramApprovalStatusLabel,
 } from './volunteer-application-detail-visibility'
 import { buildGeneralVolunteerDoc1FilterFields } from './volunteer-doc-screening-filter-fields'
 
@@ -35,6 +37,21 @@ describe('volunteer application detail visibility (interview off)', () => {
     expect(volunteerApplicationApprovalStatusLabel('pending')).toBe(APPROVAL_STATUS_LABELS.pending)
     expect(volunteerApplicationApprovalStatusLabel('pass')).toBe(APPROVAL_STATUS_LABELS.approved)
     expect(volunteerApplicationApprovalStatusLabel('fail')).toBe(APPROVAL_STATUS_LABELS.rejected)
+  })
+
+  it('면접 없음 승인은 applicationStatus APPROVED를 일정 미배정과 섞지 않는다', () => {
+    expect(
+      mapVolunteerProgramApprovalStatus({
+        applicationStatus: 'APPROVED',
+        documentScreeningStatus: 'pending',
+      })
+    ).toBe('approved')
+    expect(
+      volunteerProgramApprovalStatusLabel({
+        applicationStatus: 'APPROVED',
+        documentScreeningStatus: 'pending',
+      })
+    ).toBe(APPROVAL_STATUS_LABELS.approved)
   })
 
   it('면접 없음 목록 필터에서 담당자 평가를 빼고 프로그램 승인 현황을 쓴다', () => {

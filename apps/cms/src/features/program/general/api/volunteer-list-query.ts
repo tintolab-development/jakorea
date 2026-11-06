@@ -113,13 +113,25 @@ function buildInterview2SharedListQuery(
   }
 }
 
+const APPLICATION_STATUS_TO_API: Record<string, string> = {
+  pass: 'APPROVED',
+  fail: 'REJECTED',
+  pending: 'SUBMITTED',
+}
+
 /** 1차 서류 심사 대상자 필터 → `GET …/volunteer-applications` query */
 export function buildGeneralVolunteerDoc1ListQuery(
-  filters: GeneralVolunteerDoc1Filters
+  filters: GeneralVolunteerDoc1Filters,
+  options?: { interviewEnabled?: boolean }
 ): ApplicationsListQuery {
   const keyword = trimKeyword(filters.volunteerName)
+  const interviewEnabled = options?.interviewEnabled !== false
+  const applicationStatus =
+    !interviewEnabled && filters.documentScreeningStatus !== GENERAL_VOLUNTEER_FILTER_ALL
+      ? APPLICATION_STATUS_TO_API[filters.documentScreeningStatus]
+      : undefined
   const documentStatus =
-    filters.documentScreeningStatus !== GENERAL_VOLUNTEER_FILTER_ALL
+    interviewEnabled && filters.documentScreeningStatus !== GENERAL_VOLUNTEER_FILTER_ALL
       ? DOC_STATUS_TO_API[filters.documentScreeningStatus]
       : undefined
   const managerAEvaluation = pickMapped(filters.managerAEvaluation, MANAGER_EVAL_TO_API)
@@ -133,6 +145,7 @@ export function buildGeneralVolunteerDoc1ListQuery(
 
   return {
     ...(keyword ? { keyword } : {}),
+    ...(applicationStatus ? { status: applicationStatus } : {}),
     ...(documentStatus ? { documentStatus } : {}),
     ...(managerAEvaluation ? { managerAEvaluation } : {}),
     ...(managerBEvaluation ? { managerBEvaluation } : {}),

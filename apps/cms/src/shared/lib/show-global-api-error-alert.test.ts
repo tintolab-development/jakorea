@@ -253,3 +253,44 @@ describe('showGlobalApiErrorAlert INSTRUCTOR_REVOKE_BLOCKED_BY_ACTIVE_PROGRAM', 
     })
   })
 })
+
+describe('showGlobalApiErrorAlert EXTERNAL_1365_ID_REQUIRED', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(cmsAlertModal, 'show').mockImplementation(() => undefined)
+  })
+
+  it('봉사자 1365 ID 미등록 409는 공통 처리 불가를 띄우지 않는다', () => {
+    const error = {
+      isAxiosError: true,
+      message: 'CONFLICT',
+      name: 'AxiosError',
+      toJSON: () => ({}),
+      response: {
+        status: 409,
+        data: {
+          success: false,
+          message: '1365 ID 등록 후 봉사 프로그램 참여 승인이 가능합니다.',
+          error: {
+            code: 'APPLICATION_DECISION_CONFLICT',
+            message: '1365 ID 등록 후 봉사 프로그램 참여 승인이 가능합니다.',
+            field: 'status',
+            details: {
+              missingRequirements: 'EXTERNAL_1365_ID_REQUIRED',
+              participantType: 'VOLUNTEER',
+              reason: 'EXTERNAL_1365_ID_REQUIRED',
+            },
+          },
+        },
+      },
+      config: {
+        method: 'post',
+        url: '/api/admin/volunteer-applications/190201/approve-with-education-scope',
+      },
+    } as AxiosError
+
+    expect(showGlobalApiErrorAlert(error)).toBe(false)
+    expect(cmsAlertModal.show).not.toHaveBeenCalled()
+    expect(isGlobalApiErrorAlertShown(error)).toBe(false)
+  })
+})

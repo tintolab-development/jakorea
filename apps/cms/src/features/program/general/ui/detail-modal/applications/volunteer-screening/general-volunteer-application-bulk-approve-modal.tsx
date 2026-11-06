@@ -6,6 +6,14 @@ import { PermissionModal, type PermissionModalPayload } from '@/shared/component
 import { NOTIFY_TIMING_CAPABILITY } from '@/shared/lib/notify-timing-capability'
 import '@/features/program/shared/ui/detail-modal/components/instructor-bulk-approve-modal.css'
 
+export type GeneralVolunteerApplicationApproveModalProps = {
+  open: boolean
+  volunteerName: string
+  onCancel: () => void
+  onConfirm: (payload: PermissionModalPayload) => void
+  zIndex?: number
+}
+
 export type GeneralVolunteerApplicationBulkApproveModalProps = {
   open: boolean
   subjectName: string
@@ -13,6 +21,17 @@ export type GeneralVolunteerApplicationBulkApproveModalProps = {
   onCancel: () => void
   onConfirm: (payload: PermissionModalPayload) => void
   zIndex?: number
+}
+
+export function buildGeneralVolunteerApplicationApproveCopy(volunteerName: string): {
+  title: string
+  message: string
+} {
+  const name = volunteerName.trim() || '회원'
+  return {
+    title: '프로그램 신청 승인 안내',
+    message: `**[${name}]** 님의 프로그램 신청을 승인하시겠습니까?\n승인 시 회원에게 승인 알림이 발송됩니다.`,
+  }
 }
 
 export function buildGeneralVolunteerApplicationBulkApproveCopy({
@@ -33,14 +52,37 @@ export function buildGeneralVolunteerApplicationBulkApproveCopy({
 function VolunteerApplicationBulkApproveInfoCallout() {
   return (
     <p className="instructor-bulk-approve-modal__callout-text">
-      일괄 승인 시 선택된 모든 봉사자의{' '}
-      <span className="instructor-bulk-approve-modal__callout-em">일정 배정은</span>
-      <br />
+      봉사자 일괄 승인 시{' '}
       <span className="instructor-bulk-approve-modal__callout-em">
-        승인 후 봉사자 상세에서 개별 배정이 필요
+        일정 및 기관 배정은 승인 후 봉사자 상세에서 개별 설정이 필요
       </span>
       합니다.
     </p>
+  )
+}
+
+export function GeneralVolunteerApplicationApproveModal({
+  open,
+  volunteerName,
+  onCancel,
+  onConfirm,
+  zIndex,
+}: GeneralVolunteerApplicationApproveModalProps) {
+  const copy = buildGeneralVolunteerApplicationApproveCopy(volunteerName)
+  return (
+    <PermissionModal
+      open={open}
+      variant="approve"
+      className="instructor-bulk-approve-modal"
+      title={copy.title}
+      message={copy.message}
+      infoCallout={<VolunteerApplicationBulkApproveInfoCallout />}
+      confirmLabel="승인"
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      zIndex={zIndex}
+      notifyTimingCapability={NOTIFY_TIMING_CAPABILITY.timedBulk}
+    />
   )
 }
 
@@ -61,7 +103,7 @@ export function GeneralVolunteerApplicationBulkApproveModal({
       title={copy.title}
       message={copy.message}
       infoCallout={<VolunteerApplicationBulkApproveInfoCallout />}
-      confirmLabel="합격"
+      confirmLabel="승인"
       onCancel={onCancel}
       onConfirm={onConfirm}
       zIndex={zIndex}

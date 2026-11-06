@@ -16,7 +16,7 @@ import {
   type GeneralManagerEvaluation,
 } from '@/features/program/general/lib/volunteer-screening-constants'
 import { ApprovalStatusText } from '@/shared/components/approval-status-text'
-import { mapVolunteerDocumentStatusToApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
+import { mapVolunteerProgramApprovalStatus } from '@/features/program/general/lib/volunteer-application-detail-visibility'
 import { GeneralDocumentScreeningStatusText, GeneralManagerEvaluationBadge } from './status-text'
 
 const NAME_COLUMN_WIDTH = 140
@@ -174,8 +174,8 @@ export function useGeneralVolunteerDocScreeningColumns({
           minWidth: DOCUMENT_STATUS_COLUMN_WIDTH,
           align: 'center',
           onCell: () => ({ className: 'general-volunteer-screening__screening-status-cell' }),
-          render: (status: GeneralVolunteerApplicantRow['documentScreeningStatus']) => (
-            <ApprovalStatusText status={mapVolunteerDocumentStatusToApprovalStatus(status)} />
+          render: (_: unknown, record) => (
+            <ApprovalStatusText status={mapVolunteerProgramApprovalStatus(record)} />
           ),
         },
       ]
