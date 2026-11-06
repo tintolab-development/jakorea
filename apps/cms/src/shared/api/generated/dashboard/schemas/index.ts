@@ -1114,9 +1114,7 @@ export * from './preferenceResponse';
 export * from './preferenceUpdateRequest';
 export * from './preferredEducationScheduleResponse';
 export * from './preferredScheduleBlock';
-export * from './preferredScheduleBlockDayOfWeek';
 export * from './preferredScheduleBlockRequest';
-export * from './preferredScheduleBlockScheduleStatus';
 export * from './preferredScheduleSessionTime';
 export * from './preferredScheduleSessionTimeRequest';
 export * from './preRegisterConflictResolveRequest';
@@ -1562,6 +1560,7 @@ export * from './trainedTeacherOrganizationApplicationDetailResponseTextbookDeli
 export * from './trainedTeacherOrganizationApplicationResponse';
 export * from './trainedTeacherOrganizationApplicationResponseTextbookDeliveryStatus';
 export * from './trainedTeacherOrganizationEducationSchedule';
+export * from './trainedTeacherOrganizationEducationScheduleScheduleStatus';
 export * from './trainedTeacherPerformanceSummaryResponse';
 export * from './trainedTeacherProgramDetailRequest';
 export * from './trainedTeacherProgramDetailResponse';

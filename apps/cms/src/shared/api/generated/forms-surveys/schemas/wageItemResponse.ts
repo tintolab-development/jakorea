@@ -11,12 +11,14 @@ import type { WageItemResponseWageItemType } from './wageItemResponseWageItemTyp
 export interface WageItemResponse {
   id?: number;
   wageItemType?: WageItemResponseWageItemType;
+  /** GET 임금 제목. PUT은 WageItemUpsertRequest.itemName */
   name?: string;
   amount?: number;
   calculationUnit?: string;
   editableYn?: boolean;
   iconKey?: string;
   emojiOverride?: string;
+  /** tier1 | specialLecture | gemini */
   layout?: string;
   basisHours?: number;
   maxLimitWon?: number;

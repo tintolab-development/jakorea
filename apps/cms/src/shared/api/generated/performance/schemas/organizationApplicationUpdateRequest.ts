@@ -7,7 +7,7 @@
  */
 
 /**
- * 승인된 기관 신청 정보를 부분 수정합니다. 생략한 항목은 현재 운영 스냅샷 값을 유지합니다.
+ * 승인된 기관 신청 정보를 부분 수정합니다. 생략한 항목은 현재 운영 스냅샷 값을 유지합니다. teacherTel(일반전화)과 teacherPhone(휴대전화)은 서로 채우지 않으며, null은 해당 스냅샷을 지웁니다.
  */
 export interface OrganizationApplicationUpdateRequest {
   requestedGrade?: string;
@@ -18,6 +18,7 @@ export interface OrganizationApplicationUpdateRequest {
   teacherMemberId?: number;
   teacherName?: string;
   teacherPhone?: string;
+  teacherTel?: string;
   teacherEmail?: string;
   textbookId?: number;
   applicationReason?: string;

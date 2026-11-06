@@ -20,5 +20,6 @@ export interface PaymentItemUpsertRequest {
   layout?: string;
   maxLimitWon?: number;
   description?: string;
+  /** 지급요건/비고는 여기만. 교통 minOneWayKm·minDistanceKm dual-write. 1사1교 금액 정본 fixedAmountWon. sessionNUniversityWon null 키 금지 */
   detailJson?: string;
 }
