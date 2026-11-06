@@ -6,6 +6,7 @@ on:
     paths:
       - 'apps/cms/src/shared/instance/axios-instance.ts'
       - 'apps/admin/src/shared/instance/axios-instance.ts'
+      - 'apps/cms/src/shared/instance/axios-instance.activity-bearer.test.ts'
       - 'apps/cms/src/shared/instance/axios-instance.activity-session.test.ts'
       - '.github/workflows/admin-activity-bearer-pr.yml'
 
@@ -35,6 +36,7 @@ jobs:
       - name: Activity Bearer and Refresh regression tests
         run: |
           pnpm --filter cms exec vitest run \
+            src/shared/instance/axios-instance.activity-bearer.test.ts \
             src/shared/instance/axios-instance.activity-session.test.ts \
             src/shared/instance/axios-instance.refresh-lock.test.ts
       - name: Ensure both interceptors separate Bearer and Refresh exclusion
