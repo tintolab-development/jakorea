@@ -31,7 +31,7 @@ describe('개인 수료증 API 계약', () => {
     postMock.mockReset()
   })
 
-  it('메인 CTA availability는 certificateType=AUTO를 명시한다', async () => {
+  it('AUTO availability는 수료증만 평가하고 PARTICIPATION CTA로 쓰지 않는다', async () => {
     getMock.mockResolvedValue({
       data: {
         available: true,
@@ -74,6 +74,13 @@ describe('개인 수료증 API 계약', () => {
     expect(result.certificateType).toBe('PARTICIPATION')
     expect(result.participantId).toBe(1694970)
     expect(result.available).toBe(true)
+    expect(resolveAutoPersonalCertificateSlot(result).type).toBeNull()
+    expect(
+      resolveExclusivePersonalCertificateSlot({
+        completion: { available: false, canDownload: false, certificateType: 'COMPLETION' },
+        participation: result,
+      }),
+    ).toEqual({ type: 'PARTICIPATION', view: { kind: 'issue' } })
   })
 
   it('참가인증서 발급 body는 PARTICIPATION과 availability participantId를 보낸다', async () => {
@@ -92,6 +99,26 @@ describe('개인 수료증 API 계약', () => {
       issueReason: 'PERSONAL_ARCHIVE',
     })
     expect(postMock).toHaveBeenCalledWith('/api/portal/me/certificates/issues', {
+      programId: 186339,
+      participantId: 1694970,
+      certificateType: 'PARTICIPATION',
+      issueReason: 'PERSONAL_ARCHIVE',
+    })
+    expect(result.certificateIssueId).toBe(17)
+  })
+
+  it('참가인증서 재발급은 같은 certificateIssueId 17을 에러로 보지 않는다', async () => {
+    postMock.mockResolvedValue({
+      data: {
+        certificateIssueId: 17,
+        programId: 186339,
+        participantId: 1694970,
+        certificateType: 'PARTICIPATION',
+        issueStatus: 'ISSUED',
+        issuedAt: '2026-06-02T09:00:00Z',
+      },
+    })
+    const result = await issueMyCertificate({
       programId: 186339,
       participantId: 1694970,
       certificateType: 'PARTICIPATION',
@@ -120,7 +147,7 @@ describe('개인 수료증 API 계약', () => {
 
   it('발급 body는 programId·participantId·COMPLETION을 보낸다', async () => {
     postMock.mockResolvedValue({
-      data: { issueId: 14, issueStatus: 'ISSUED', issuedAt: '2026-11-01T07:11:50Z' },
+      data: { certificateIssueId: 14, issueStatus: 'ISSUED', issuedAt: '2026-11-01T07:11:50Z' },
     })
     const result = await issueMyCertificate({
       programId: 186514,
@@ -159,6 +186,23 @@ describe('개인 수료증 API 계약', () => {
         availability: { available: true, canDownload: true, existingIssueId: 14 },
       }),
     ).toEqual({ kind: 'download', issueId: 14 })
+  })
+
+  it('참가인증서는 canDownload·existingIssueId여도 다운로드가 아니라 발급하기다', () => {
+    expect(
+      resolveCertificateCtaView({
+        isTeacher: false,
+        applicationType: 'INDIVIDUAL',
+        programType: 'GENERAL_INDIVIDUAL',
+        canIssueCertificate: true,
+        availability: {
+          available: true,
+          canDownload: true,
+          existingIssueId: 17,
+          certificateType: 'PARTICIPATION',
+        },
+      }),
+    ).toEqual({ kind: 'issue' })
   })
 
   it('canIssueCertificate가 false여도 availability가 가능하면 발급 버튼이다', () => {
@@ -231,7 +275,7 @@ describe('개인 수료증 API 계약', () => {
           participantId: 1694970,
         },
       }),
-    ).toEqual({ type: 'PARTICIPATION', view: { kind: 'download', issueId: 17 } })
+    ).toEqual({ type: 'PARTICIPATION', view: { kind: 'issue' } })
   })
 
   it('수료 미충족·참가 충족이면 참가인증서만 연다', () => {

@@ -140,6 +140,10 @@ export function CertificateIssueCta({
         issueReason: 'PERSONAL_ARCHIVE',
       })
       setConfirmOpen(false)
+      if (result.certificateIssueId == null) {
+        setAlertMessage(`${documentLabel} 발급 결과를 확인하지 못했습니다.`)
+        return
+      }
       setCompleteIssueId(result.certificateIssueId)
       setCompleteIssuedAt(result.issuedAt ?? null)
     } catch (error) {

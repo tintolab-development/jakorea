@@ -41,8 +41,7 @@ export type PortalCertificateIssueRequest = {
 }
 
 export type PortalCertificateIssueResponse = {
-  /** OpenAPI CertificateIssueResponse.issueId — 일부 응답은 certificateIssueId */
-  issueId?: number
+  /** 포털 발급 응답 SSOT. OpenAPI/도메인 issueId 와 동일 값. */
   certificateIssueId?: number
   programId?: number
   participantId?: number
@@ -60,7 +59,7 @@ export function readPortalCertificateIssueId(
   response: PortalCertificateIssueResponse | null | undefined,
 ): number | null {
   if (!response) return null
-  const raw = response.certificateIssueId ?? response.issueId
+  const raw = response.certificateIssueId
   const id = typeof raw === 'number' ? raw : Number(raw)
   return Number.isInteger(id) && id > 0 ? id : null
 }

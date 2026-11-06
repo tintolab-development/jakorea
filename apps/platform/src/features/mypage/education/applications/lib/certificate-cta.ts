@@ -129,34 +129,33 @@ function isParticipationBlockedByCompletion(
 }
 
 /**
- * 메인 CTA는 GET availability?certificateType=AUTO 한 건만 본다.
- * COMPLETION이 열리면 수료증, PARTICIPATION이 열리면 참가인증서. 둘 다 열지 않는다.
+ * AUTO/미지정 availability는 수료증(COMPLETION)만 평가한다.
+ * 참가인증서 CTA는 GET certificateType=PARTICIPATION 응답으로만 연다.
  */
 export function resolveAutoPersonalCertificateSlot(
   availability: PortalCertificateAvailabilityLike | null | undefined,
 ): ExclusivePersonalCertificateSlot {
   if (!availability) return { type: null, view: { kind: 'hidden' } }
   const type = normalizeCertificateType(availability.certificateType)
-  const view = resolvePortalCertificateAvailabilityCtaView(availability)
-  if (view.kind === 'hidden') return { type: null, view }
-  if (type === 'COMPLETION') {
-    if (availability.available !== true) {
-      return { type: null, view: { kind: 'hidden' } }
-    }
-    return { type: 'COMPLETION', view }
-  }
   if (type === 'PARTICIPATION') {
-    if (isParticipationBlockedByCompletion(availability)) {
-      return { type: null, view: { kind: 'hidden' } }
-    }
-    return { type: 'PARTICIPATION', view }
+    return { type: null, view: { kind: 'hidden' } }
   }
-  return { type: null, view: { kind: 'hidden' } }
+  const completionAvailability =
+    type === 'COMPLETION' || type === '' || type === 'AUTO'
+      ? { ...availability, certificateType: 'COMPLETION' }
+      : availability
+  if (completionAvailability.available !== true) {
+    return { type: null, view: { kind: 'hidden' } }
+  }
+  const view = resolvePortalCertificateAvailabilityCtaView(completionAvailability)
+  if (view.kind === 'hidden') return { type: null, view }
+  return { type: 'COMPLETION', view }
 }
 
 /**
- * 수료증·참가인증서는 한 슬롯만. AUTO 응답을 우선하고, 이중 조회는 COMPLETION이 이긴다.
- * COMPLETION_CERTIFICATE_REQUIRED 이면 참가인증서 이력을 메인 CTA로 쓰지 않는다.
+ * 수료증·참가인증서는 한 슬롯만. 이중 조회는 COMPLETION이 이긴다.
+ * AUTO 입력이 있으면 COMPLETION만 보고 PARTICIPATION CTA에 쓰지 않는다.
+ * COMPLETION_CERTIFICATE_REQUIRED 이면 참가인증서 발급 CTA를 열지 않는다.
  */
 export function resolveExclusivePersonalCertificateSlot(input: {
   auto?: PortalCertificateAvailabilityLike | null
@@ -193,11 +192,19 @@ export function resolveExclusivePersonalCertificateViews(input: {
   return { completion: { kind: 'hidden' }, participation: input.participation }
 }
 
-/** availability API SSOT — 지금 적격일 때만 다운로드. existingIssueId 단독으로는 버튼을 열지 않는다. */
+/**
+ * availability API SSOT.
+ * 참가인증서는 기발급 PDF 다운로드 CTA를 쓰지 않고, 적격이면 항상 발급하기.
+ * 수료증만 canDownload + existingIssueId 로 다운로드를 연다.
+ */
 export function resolvePortalCertificateAvailabilityCtaView(
   availability: PortalCertificateAvailabilityLike | null | undefined,
 ): CertificateCtaView {
   if (!availability) return { kind: 'hidden' }
+  const isParticipation = normalizeCertificateType(availability.certificateType) === 'PARTICIPATION'
+  if (isParticipation) {
+    return availability.available === true ? { kind: 'issue' } : { kind: 'hidden' }
+  }
   const issueId = availabilityIssueId(availability)
   if (availability.canDownload === true && issueId != null) {
     return { kind: 'download', issueId }

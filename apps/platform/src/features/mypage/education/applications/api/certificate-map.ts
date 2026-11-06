@@ -95,8 +95,7 @@ export function mapPortalCertificateAvailability(
 export function mapPortalCertificateIssueResult(payload: unknown): PortalCertificateIssueResult {
   const body = unwrapEnvelope<Record<string, unknown>>(payload)
   const record = body && typeof body === 'object' ? body : {}
-  const certificateIssueId =
-    readOptionalNumber(record.certificateIssueId) ?? readOptionalNumber(record.issueId)
+  const certificateIssueId = readOptionalNumber(record.certificateIssueId)
   if (certificateIssueId == null) {
     throw new Error('수료증 발급 결과를 확인하지 못했습니다.')
   }

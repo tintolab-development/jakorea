@@ -104,8 +104,6 @@ assert.equal(portalCertificateIssueType('AUTO'), 'AUTO')
 assert.equal(labelForPortalCertificateStatus('NOT_ELIGIBLE'), '발급 불가')
 
 assert.equal(readPortalCertificateIssueId({ certificateIssueId: 14 }), 14)
-assert.equal(readPortalCertificateIssueId({ issueId: 9 }), 9)
-assert.equal(readPortalCertificateIssueId({ certificateIssueId: 14, issueId: 1 }), 14)
 assert.equal(readPortalCertificateIssueId({}), null)
 
 console.log('personal-certificate-eligibility.selfcheck: ok')

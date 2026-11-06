@@ -199,7 +199,7 @@ assert.deepEqual(
     existingIssueId: 17,
     certificateType: 'PARTICIPATION',
   }),
-  { kind: 'download', issueId: 17 },
+  { kind: 'issue' },
 )
 assert.equal(
   resolvePortalCertificateAvailabilityCtaView({
@@ -310,7 +310,7 @@ assert.deepEqual(
       participantId: 1694970,
     },
   }),
-  { type: 'PARTICIPATION', view: { kind: 'download', issueId: 17 } },
+  { type: 'PARTICIPATION', view: { kind: 'issue' } },
 )
 
 assert.deepEqual(
@@ -328,7 +328,7 @@ assert.deepEqual(
       certificateType: 'PARTICIPATION',
     },
   }),
-  { type: 'PARTICIPATION', view: { kind: 'download', issueId: 17 } },
+  { type: 'PARTICIPATION', view: { kind: 'issue' } },
 )
 
 assert.equal(
@@ -364,15 +364,26 @@ assert.equal(
   null,
 )
 
-assert.deepEqual(
+assert.equal(
   resolveAutoPersonalCertificateSlot({
     certificateType: 'PARTICIPATION',
     available: true,
     canDownload: true,
     existingIssueId: 17,
     reasonCode: 'AVAILABLE',
+  }).type,
+  null,
+)
+
+assert.deepEqual(
+  resolveAutoPersonalCertificateSlot({
+    certificateType: 'AUTO',
+    available: true,
+    canDownload: true,
+    existingIssueId: 18,
+    reasonCode: 'AVAILABLE',
   }),
-  { type: 'PARTICIPATION', view: { kind: 'download', issueId: 17 } },
+  { type: 'COMPLETION', view: { kind: 'download', issueId: 18 } },
 )
 
 assert.equal(
