@@ -153,6 +153,23 @@ describe('CMS: Session GET and Activity race protections', () => {
     expect(logout).toHaveBeenCalledTimes(1)
   })
 
+  it('an enforced idle deadline rechecks the server after the warning disappears', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-06T09:00:00Z'))
+    sessionRequest.mockReset()
+    sessionRequest
+      .mockResolvedValueOnce(currentStatus({
+        idlePolicyEnforced: true,
+        idleExpiresAt: new Date(Date.now() + 1000).toISOString(),
+      }))
+      .mockRejectedValueOnce(fail(401))
+    renderHook(() => useSessionTimeout())
+    await flush()
+    await act(async () => { await vi.advanceTimersByTimeAsync(2300) })
+    expect(sessionRequest).toHaveBeenCalledTimes(2)
+    expect(logout).toHaveBeenCalledTimes(1)
+  })
+
   it('a client countdown expiration rechecks the server before ending login', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-11-06T09:00:00Z'))
