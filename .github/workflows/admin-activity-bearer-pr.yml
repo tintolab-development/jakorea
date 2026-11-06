@@ -22,6 +22,7 @@ on:
       - 'apps/admin/src/features/auth/model/auth-store.ts'
       - 'apps/cms/src/features/auth/model/auth-store.refresh-race.test.ts'
       - 'apps/admin/src/features/auth/model/auth-store.refresh-race.test.ts'
+      - 'apps/admin/src/shared/lib/api-remote-env.admin-session.test.ts'
       - '.github/workflows/admin-activity-bearer-pr.yml'
 
 permissions:
@@ -65,7 +66,8 @@ jobs:
             src/shared/instance/axios-instance.activity-15s.test.ts \
             src/features/auth/hooks/use-session-timeout.regression.test.tsx \
             src/app/providers/auth-provider.activity-regression.test.tsx \
-            src/features/auth/model/auth-store.refresh-race.test.ts
+            src/features/auth/model/auth-store.refresh-race.test.ts \
+            src/shared/lib/api-remote-env.admin-session.test.ts
       - name: Ensure both interceptors separate Bearer and Refresh exclusion
         run: |
           python3 - <<'PY'
