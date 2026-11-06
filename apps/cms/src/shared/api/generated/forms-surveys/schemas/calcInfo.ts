@@ -21,8 +21,12 @@ export interface CalcInfo {
   educationSessionCount?: number;
   /** 총 학생 수. 제출 스냅샷에 없으면 null */
   totalStudentCount?: number;
-  /** 이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일 산식. PER_HOUR는 강의 시간×단가. educationSessionCount를 곱하지 않음. */
-  totalLectureFee?: number;
+  /** 이번 회차 총 강의비(원, 정수). 제출 전 lectureFeePreview.totalLectureFee와 동일. 실적 확정액만. PER_HOUR를 시급×시간으로 계산하지 않음. */
+  totalLectureFee?: number | null;
+  /** 실적 분으로 산출한 인정 차시. 제출 스냅샷에 없으면 null. */
+  recognizedSessionCount?: number | null;
+  /** 배정 actual_training_* 분. 제출 스냅샷에 없으면 null. */
+  actualTrainingMinutes?: number | null;
   /** 편도 km. 제출 전 transportPreview.oneWayDistanceKm와 동일. */
   oneWayDistanceKm?: string | null;
   /** 유류비(원, 정수). 제출 전 transportPreview.fuelCostWon와 동일. 미지급이면 null. */
