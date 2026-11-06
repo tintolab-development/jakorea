@@ -413,6 +413,16 @@ axiosInstance.interceptors.response.use(
     } catch (err) {
       processQueue(null, err)
       isRefreshing = false
+      const sentBearer = originalRequest.headers?.get?.('Authorization')
+      const currentToken = useAuthStore.getState().token
+      const storedRefresh = readRefreshToken()
+      const newerAccessToken = typeof sentBearer === 'string' &&
+        sentBearer.startsWith('Bearer ') && sentBearer !== `Bearer ${currentToken ?? ''}`
+      const rotatedInAnotherTab = Boolean(storedRefresh && storedRefresh !== refreshToken)
+      if (newerAccessToken || rotatedInAnotherTab) {
+        // A stale failed Refresh must not logout/revoke a newer access/refresh session.
+        return Promise.reject(err)
+      }
       handleAuthFailure()
       return Promise.reject(err)
     }
