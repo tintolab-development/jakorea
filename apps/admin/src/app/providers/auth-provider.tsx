@@ -63,9 +63,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!isAuthenticated) return
 
     const stopActivityTracking = startUserActivityTracking(window, () => {
+      const initial = useAuthStore.getState()
+      if (!initial.isAuthenticated || !initial.token) return
+      const requestedToken = initial.token
       void postAdminAuthActivity().catch(error => {
-        if (isAdminAuthUnauthorizedError(error) || isAdminAuthForbiddenError(error)) {
-          useAuthStore.getState().logout()
+        const current = useAuthStore.getState()
+        // A delayed 401 from the previous access token must not end a refreshed login.
+        if (!current.isAuthenticated || current.token !== requestedToken) return
+        if (isAdminAuthUnauthorizedError(error)) {
+          current.logout()
+        } else if (isAdminAuthForbiddenError(error)) {
+          // Permission/account-type mismatch is not token expiration.
+          console.warn('[ADMIN_SESSION] Activity was denied (403); verify ADMIN JWT and sid.')
         }
       })
     })

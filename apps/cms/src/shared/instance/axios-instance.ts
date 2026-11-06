@@ -394,6 +394,16 @@ axiosClient.interceptors.response.use(
     const status = response.status
     const code = getErrorCode(response.data)
 
+    // A late 401 from an access token superseded by login/Refresh in this tab
+    // must not refresh, retry, or revoke the newly active admin session.
+    const sentBearer = originalRequest.headers?.get?.('Authorization')
+    const activeToken = useAuthStore.getState().token
+    if (status === 401 && typeof sentBearer === 'string' &&
+        sentBearer.startsWith('Bearer ') &&
+        sentBearer !== `Bearer ${activeToken ?? ''}`) {
+      return Promise.reject(error)
+    }
+
     if (originalRequest.skipRefresh || isExcludedFromAutoRefresh(requestUrl)) {
       if (!isSessionAuthUtilityPath(requestUrl) && !originalRequest.skipGlobalErrorAlert) {
         showGlobalApiErrorAlert(error, originalRequest)
@@ -441,7 +451,16 @@ axiosClient.interceptors.response.use(
     } catch (err) {
       processQueue(null, err)
       isRefreshing = false
-      // refresh 키는 logout()이 원격 revoke 후 제거한다 (선삭제 금지)
+      const sentBearer = originalRequest.headers?.get?.('Authorization')
+      const currentToken = useAuthStore.getState().token
+      const storedRefresh = readRefreshToken()
+      const newerAccessToken = typeof sentBearer === 'string' &&
+        sentBearer.startsWith('Bearer ') && sentBearer !== `Bearer ${currentToken ?? ''}`
+      const rotatedInAnotherTab = Boolean(storedRefresh && storedRefresh !== refreshToken)
+      if (newerAccessToken || rotatedInAnotherTab) {
+        // A stale failed Refresh must not logout/revoke a newer access/refresh session.
+        return Promise.reject(err)
+      }
       handleAuthFailure()
       return Promise.reject(err)
     }
