@@ -33,16 +33,16 @@
       "description": "회원 본인의 통합 동의 조회, 전자서명, 철회 API"
     },
     {
-      "name": "수료증/참여인증서",
-      "description": "수료증과 참여인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
-    },
-    {
       "name": "기타 API",
       "description": "교사회원의 UJAT 교육일별 배정 봉사자 민감 동의서 일괄 다운로드 API"
     },
     {
       "name": "기타 API",
       "description": "회원 포탈 일반 사용자 로그인/세션 API. 관리자 인증과 분리된 canonical surface입니다."
+    },
+    {
+      "name": "수료증/참가인증서",
+      "description": "수료증과 참가인증서 발급, 조회, 다운로드, 상태 확인 API입니다."
     },
     {
       "name": "기타 API",
@@ -225,6 +225,10 @@
       "description": "UJAT 신청기관 임시배정, 기관 일정 확인 및 지역별 교육배정 준비 API"
     },
     {
+      "name": "수료증/참가인증서",
+      "description": "수료증/참가인증서 발급, 이력, 차단 사유 API"
+    },
+    {
       "name": "기타 API",
       "description": "GENERAL_ORGANIZATION 동일 기관 신청 학년 합반 canonical API"
     },
@@ -279,10 +283,6 @@
     {
       "name": "알림",
       "description": "알림 템플릿, 이벤트, 발송 상태 API"
-    },
-    {
-      "name": "수료증/참여인증서",
-      "description": "수료증/참여인증서 발급, 이력, 차단 사유 API"
     },
     {
       "name": "기타 API",
@@ -10969,8 +10969,15 @@
           },
           "certificateType": {
             "type": "string",
-            "description": "증명서 유형. 생략 또는 AUTO면 수료조건에 따라 COMPLETION/PARTICIPATION을 서버가 결정합니다.",
-            "example": "AUTO"
+            "description": "증명서 유형. COMPLETION | PARTICIPATION | INSTRUCTOR_ACTIVITY | VOLUNTEER_ACTIVITY | AUTO. 생략 또는 AUTO는 COMPLETION만 평가한다. 포털 자가 발급은 COMPLETION만 허용한다. PARTICIPATION은 409 MEMBER_PARTICIPATION_CERTIFICATE_SELF_ISSUE_NOT_ALLOWED.",
+            "enum": [
+              "COMPLETION",
+              "PARTICIPATION",
+              "INSTRUCTOR_ACTIVITY",
+              "VOLUNTEER_ACTIVITY",
+              "AUTO"
+            ],
+            "example": "COMPLETION"
           },
           "issueReason": {
             "type": "string",
@@ -10989,7 +10996,7 @@
       },
       "CertificateIssueResponse": {
         "type": "object",
-        "description": "수료증/참여인증서 발급 상세 응답",
+        "description": "수료증/참가인증서 발급 상세 응답",
         "properties": {
           "issueId": {
             "type": "integer",
@@ -13204,10 +13211,11 @@
       },
       "IndividualApprovalWithScopeRequest": {
         "type": "object",
-        "description": "개인 신청 승인 및 교육 일정 확정. timing을 생략하면 승인 알림을 즉시 발송합니다.",
+        "description": "개인 신청 승인 및 교육 일정 확정. 봉사자 승인 전용 호출은 confirmedScheduleIds=[] 로 일정 없이 승인할 수 있습니다. 개인 신청은 서비스 계층에서 일정 1건 이상을 요구합니다. timing을 생략하면 승인 알림을 즉시 발송합니다.",
         "properties": {
           "confirmedScheduleIds": {
             "type": "array",
+            "description": "관리자가 확정한 교육 일정 ID. 봉사자 승인에서 빈 배열이면 신청만 승인하고 교육 범위는 변경하지 않습니다. null은 거부합니다.",
             "items": {
               "type": "integer",
               "format": "int64"
@@ -13367,7 +13375,7 @@
       },
       "IndividualApprovalWithScopeBulkRequest": {
         "type": "object",
-        "description": "확정된 교육 범위를 포함하는 개인 신청 일괄 승인 요청입니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.",
+        "description": "확정된 교육 범위를 포함하는 개인·봉사자 일괄 승인 요청입니다. 봉사자 대상은 confirmedScheduleIds=[] 로 일정 없이 승인할 수 있습니다. 부분 성공이 가능하므로 successCount와 failureCount를 확인해야 합니다. timing은 모든 대상에 동일하게 적용합니다.",
         "properties": {
           "targets": {
             "type": "array",
@@ -13406,6 +13414,7 @@
           },
           "confirmedScheduleIds": {
             "type": "array",
+            "description": "관리자가 확정한 교육 일정 ID. 봉사자 일괄 승인에서 빈 배열이면 신청만 승인합니다. null은 거부합니다.",
             "items": {
               "type": "integer",
               "format": "int64"
@@ -24135,6 +24144,7 @@
           "amount": {
             "type": "integer",
             "format": "int64",
+            "description": "승인 스냅샷 금액(원). 승인 팝업과 상세의 단일 기준. 프로그램 임금 카탈로그 단가가 아닙니다.",
             "minimum": 0
           },
           "instructorFeeGrade": {
@@ -25138,7 +25148,7 @@
           },
           "contactName": {
             "type": "string",
-            "description": "이 모집 행의 담당자 이름. GENERAL_*/UJAT 외 유형은 null(프로그램 contactName 사용).",
+            "description": "이 모집 행의 담당자 이름. TRAINED_TEACHER 참여자 행 포함. 비어 있으면 null. 프로그램 컬럼으로 채우지 않는다.",
             "nullable": true
           },
           "contactPhone": {
@@ -25551,7 +25561,7 @@
           },
           "serviceDetailJson": {
             "type": "string",
-            "description": "유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. Nested program.generalCommonInfo.participantRecruitmentInfo is the 모집 정보 display SSOT. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted."
+            "description": "유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. CMS 모집 정보 표시 정본은 recruitments[] 행(문의처·운영기간·모집기간). nested participantRecruitmentInfo 기간 라벨은 행과 같은 구간이다. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted."
           },
           "attachmentFileNames": {
             "type": "array",
@@ -35721,7 +35731,7 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료.",
+            "description": "회원포탈 신청 표시상태. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료.",
             "enum": [
               "결과 대기",
               "서류 합격",
@@ -36128,7 +36138,7 @@
           },
           "displayStatus": {
             "type": "string",
-            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 수료 투영과 본인 만족도 제출이 있을 때만 진행 완료.",
+            "description": "회원포탈 신청 표시상태. 목록 ApplicationListItemResponse.displayStatus와 같은 계산입니다. GENERAL 개인(INDIVIDUAL)은 사업기간이 종료되면 만족도 조사 없이도 진행 완료. 사업기간 중에는 개인 배정 일정이 모두 종료되고 본인 만족도를 제출했거나, 수료 투영과 본인 만족도 제출이 있을 때 진행 완료.",
             "enum": [
               "결과 대기",
               "서류 합격",

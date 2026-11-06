@@ -95,7 +95,7 @@ export interface ProgramResponse {
   venueDetail?: string;
   venueKind?: string;
   studentListRequired?: string;
-  /** 유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. Nested program.generalCommonInfo.participantRecruitmentInfo is the 모집 정보 display SSOT. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted. */
+  /** 유형별 config JSON 문자열. TRAINED_TEACHER: {schemaVersion, program}. CMS 모집 정보 표시 정본은 recruitments[] 행(문의처·운영기간·모집기간). nested participantRecruitmentInfo 기간 라벨은 행과 같은 구간이다. remarks ≠ oneLineIntroduction. educationTargetDetail ≠ district. maxAssignableInstructors is always 0. instructorRecruitmentInfo/volunteerRecruitmentInfo omitted. */
   serviceDetailJson?: string;
   attachmentFileNames?: string[];
   adminAssignments?: ProgramAdminAssignmentResponse[];

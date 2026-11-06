@@ -11,7 +11,10 @@ export interface FeePolicy {
   basisType: string;
   /** @minLength 1 */
   measure: string;
-  /** @minimum 0 */
+  /**
+     * 승인 스냅샷 금액(원). 승인 팝업과 상세의 단일 기준. 프로그램 임금 카탈로그 단가가 아닙니다.
+     * @minimum 0
+     */
   amount: number;
   /** @minLength 1 */
   instructorFeeGrade: string;
