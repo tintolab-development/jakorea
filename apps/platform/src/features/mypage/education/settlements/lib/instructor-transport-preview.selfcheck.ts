@@ -33,8 +33,18 @@ assert.equal(
   isInstructorTransportSectionVisible({ ...emptyAmounts, oneWayDistanceKm: 10 }),
   false,
 )
-assert.equal(isInstructorTransportSectionVisible({ ...emptyAmounts, oneWayDistanceKm: 30 }), true)
-assert.equal(isInstructorTransportSectionVisible(null), true)
+assert.equal(isInstructorTransportSectionVisible({ ...emptyAmounts, oneWayDistanceKm: 18.8 }), false)
+assert.equal(isInstructorTransportSectionVisible({ ...emptyAmounts, oneWayDistanceKm: 30 }), false)
+assert.equal(isInstructorTransportSectionVisible(null), false)
+assert.equal(
+  isInstructorTransportSectionVisible({
+    ...emptyAmounts,
+    oneWayDistanceKm: 30,
+    calculatedTransportAmount: 15000,
+    totalTransportFeeWon: 15000,
+  }),
+  true,
+)
 
 assert.deepEqual(
   parseInstructorTransportPreview({

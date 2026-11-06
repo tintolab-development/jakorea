@@ -75,7 +75,7 @@ export function parseInstructorTransportPreview(value: unknown): InstructorTrans
   return preview
 }
 
-/** 거리가 확인됐고 편도 30km 미만이면 섹션 비노출·미지급 */
+/** 거리가 확인됐고 편도 30km 미만이면 미지급 */
 export function isInstructorTransportBelowMinimum(
   preview: InstructorTransportPreview | null | undefined,
 ): boolean {
@@ -83,10 +83,23 @@ export function isInstructorTransportBelowMinimum(
   return km != null && km < INSTRUCTOR_TRANSPORT_MIN_ONE_WAY_KM
 }
 
+function readInstructorTransportPaidAmount(
+  preview: InstructorTransportPreview | null | undefined,
+): number | null {
+  const amount = preview?.calculatedTransportAmount ?? preview?.totalTransportFeeWon
+  if (amount == null || !Number.isSafeInteger(amount) || amount <= 0) return null
+  return amount
+}
+
+/** 편도 30km 이상(포함)이고 서버가 교통비 금액을 준 경우만 지급 항목으로 노출 */
 export function isInstructorTransportSectionVisible(
   preview: InstructorTransportPreview | null | undefined,
 ): boolean {
-  return !isInstructorTransportBelowMinimum(preview)
+  if (!preview) return false
+  if (isInstructorTransportBelowMinimum(preview)) return false
+  const km = preview.oneWayDistanceKm
+  if (km == null || km < INSTRUCTOR_TRANSPORT_MIN_ONE_WAY_KM) return false
+  return readInstructorTransportPaidAmount(preview) != null
 }
 
 export function formatInstructorOneWayDistanceKm(km: number | null | undefined): string {

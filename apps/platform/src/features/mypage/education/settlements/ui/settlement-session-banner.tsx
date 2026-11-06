@@ -7,7 +7,7 @@ import styles from './settlement-session-banner.module.css'
 type EducationSettlementSessionBannerProps = {
   programTitle?: string
   session?: EducationSettlementItem
-  /** 지급조서: 프로그램명 대신 기관명+학년. 없으면 '-' */
+  /** 지급조서: 기관명+학년 우선. 개인형처럼 없으면 프로그램명 */
   institutionTitle?: boolean
 }
 

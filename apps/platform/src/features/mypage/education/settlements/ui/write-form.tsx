@@ -644,6 +644,9 @@ export function EducationSettlementWriteForm({
   const orderedExtras = sortReceiptPayableItems(extraItemsForUi)
   const wageExtras = orderedExtras.filter(item => isReceiptWageItemType(item.itemType, item.itemName))
   const restExtras = orderedExtras.filter(item => !isReceiptWageItemType(item.itemType, item.itemName))
+  const instructorTransportPreview = session?.instructorTransportPreview ?? null
+  const showInstructorTransportSection =
+    isInstructorTransportSectionVisible(instructorTransportPreview)
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -708,8 +711,12 @@ export function EducationSettlementWriteForm({
       bank,
       accountNumber,
       accountHolder,
-      transportItemType: transportItem?.itemType ?? (!isReceipt ? 'TRANSPORTATION' : undefined),
-      transportItemName: transportItem?.itemName,
+      transportItemType:
+        transportItem?.itemType ??
+        (!isReceipt && showInstructorTransportSection ? 'TRANSPORTATION' : undefined),
+      transportItemName: showInstructorTransportSection
+        ? (transportItem?.itemName ?? (!isReceipt ? '교통비' : undefined))
+        : transportItem?.itemName,
       transportEvidenceRequired: isReceipt
         ? isReceiptEvidenceRequired(transportItem?.evidenceRequired)
         : false,
@@ -761,13 +768,14 @@ export function EducationSettlementWriteForm({
 
   let sectionNo = 1
   const basicSectionNo = sectionNo++
-  const instructorTransportPreview = session?.instructorTransportPreview ?? null
   const showTransportSection = isReceipt
     ? Boolean(transportItem)
-    : isInstructorTransportSectionVisible(instructorTransportPreview)
+    : showInstructorTransportSection
   const wageSectionNos = wageExtras.map(() => sectionNo++)
   const transportSectionNo = showTransportSection ? sectionNo++ : null
   const restSectionNos = restExtras.map(() => sectionNo++)
+  const mealSectionNo = !isReceipt ? sectionNo++ : null
+  const activitySectionNo = !isReceipt ? sectionNo++ : null
 
   return (
     <>
@@ -1026,7 +1034,7 @@ export function EducationSettlementWriteForm({
           <>
             <PFFormSection
               id="settlement-meal"
-              title="3. 식사비 신청"
+              title={`${mealSectionNo}. 식사비 신청`}
               description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
               footer="1인 기준, 시간 당 최대 3만원까지 지급됩니다."
             >
@@ -1057,7 +1065,7 @@ export function EducationSettlementWriteForm({
 
             <PFFormSection
               id="settlement-activity"
-              title="4. 활동비 신청"
+              title={`${activitySectionNo}. 활동비 신청`}
               description="사전에 담당자와 협의되지 않은 비용은 지급이 반려될 수 있습니다. 반드시 사전 협의 후 신청해 주세요."
               footer="사용한 금액의 영수증을 제출해 주세요."
             >
