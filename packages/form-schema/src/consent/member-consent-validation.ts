@@ -11,6 +11,7 @@ import {
   isIdTypeResidentOptionId,
 } from '../writing-form/id-type-resident-input.js'
 import type { PaymentStatementBasicInfoValues } from './payment-statement-basic-info.js'
+import { PAYMENT_STATEMENT_PRE_CONSENT_IDS } from '../paragraph-ids/payment-statement-pre-consent-draft.js'
 import { RECEIPT_PRE_CONSENT_IDS } from '../paragraph-ids/receipt-pre-consent-draft.js'
 import {
   isIdTypeResidentNumberFormatInvalid,
@@ -78,9 +79,19 @@ function isShortEssayAnswerComplete(paragraph: {
   return items.every(item => (item.bodyText ?? '').trim() !== '')
 }
 
-/** 초상권 동의서 3번(초상권 제공·이용) — 동의/동의하지 않음 모두 제출 가능 */
-function isPortraitOptionalBottomConsentParagraph(paragraph: WritingFormParagraph): boolean {
-  return paragraph.id === AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable
+/**
+ * 동의 라디오는 필수, 「동의」 선택은 아님.
+ * - 초상권 3번(초상권 제공·이용)
+ * - 지급조서·영수증 사전 동의 「개인정보 제3자 제공·이용」
+ */
+const OPTIONAL_AGREE_BOTTOM_CONSENT_PARAGRAPH_IDS = new Set<string>([
+  AGREEMENT_PORTRAIT_PARAGRAPH_IDS.portraitUsageTable,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty,
+  RECEIPT_PRE_CONSENT_IDS.p2ThirdParty,
+])
+
+function isOptionalAgreeBottomConsentParagraph(paragraph: WritingFormParagraph): boolean {
+  return OPTIONAL_AGREE_BOTTOM_CONSENT_PARAGRAPH_IDS.has(paragraph.id)
 }
 
 function isRequiredBottomConsentComplete(paragraph: WritingFormParagraph): boolean {
@@ -88,7 +99,7 @@ function isRequiredBottomConsentComplete(paragraph: WritingFormParagraph): boole
     return true
   }
   const consent = readParagraphBottomConsent(paragraph)
-  if (isPortraitOptionalBottomConsentParagraph(paragraph)) {
+  if (isOptionalAgreeBottomConsentParagraph(paragraph)) {
     return consent === 'agree' || consent === 'disagree'
   }
   return consent === 'agree'
@@ -198,7 +209,7 @@ function resolveParagraphConsentLabel(paragraph: WritingFormParagraph): string {
 
 function isRequiredParagraphExplicitlyDisagreed(paragraph: WritingFormParagraph): boolean {
   if (!resolveParagraphTitleRequiredMark(paragraph)) return false
-  if (isPortraitOptionalBottomConsentParagraph(paragraph)) return false
+  if (isOptionalAgreeBottomConsentParagraph(paragraph)) return false
 
   if (readParagraphBottomConsent(paragraph) === 'disagree') return true
 
@@ -231,7 +242,7 @@ export function collectMemberConsentDisagreedRequiredLabels(
 
 function isRequiredConsentChoiceUnagreed(paragraph: WritingFormParagraph): boolean {
   if (!resolveParagraphTitleRequiredMark(paragraph)) return false
-  if (isPortraitOptionalBottomConsentParagraph(paragraph)) return false
+  if (isOptionalAgreeBottomConsentParagraph(paragraph)) return false
 
   if ('showBottomConsent' in paragraph && paragraph.showBottomConsent === true) {
     if (readParagraphBottomConsent(paragraph) !== 'agree') return true

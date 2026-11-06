@@ -9,6 +9,14 @@ import {
   type WritingFormDraft,
   type WritingFormParagraph,
 } from '@/features/template/model/writing-form-draft.schema'
+import {
+  createPaymentStatementPreConsentDraft,
+  PAYMENT_STATEMENT_PRE_CONSENT_IDS,
+} from '@/features/template/model/payment-statement-pre-consent-draft'
+import {
+  createReceiptPreConsentDraft,
+  RECEIPT_PRE_CONSENT_IDS,
+} from '@/features/template/model/receipt-pre-consent-draft'
 import { normalizeMemberConsentWriteDraft } from '@/features/user/shared/lib/normalize-member-consent-write-draft'
 import {
   applyAgreementNoticeSubjectMemberName,
@@ -186,6 +194,100 @@ describe('hasMemberConsentIncompleteRequiredFields', () => {
     expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([])
     expect(
       hasMemberConsentIncompleteRequiredFields(draft, { templateId: 'agreement-portrait' })
+    ).toBe(true)
+  })
+
+  it('allows payment-statement third-party consent to be disagree', () => {
+    const draft = withBottomConsent(
+      normalizeWritingFormDraft(createPaymentStatementPreConsentDraft()),
+      PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty,
+      'disagree'
+    )
+
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([])
+    expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([])
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, {
+        templateId: 'agreement-third-party',
+        paymentStatementBasicInfo: {
+          nameKo: '홍길동',
+          residentFront: '900101',
+          residentBack: '1234567',
+          addressRoad: '서울시 종로구',
+          addressDetail: '1',
+          bankName: '국민',
+          accountNumber: '123',
+          accountHolder: '홍길동',
+          noAffiliation: true,
+        },
+      })
+    ).toBe(false)
+  })
+
+  it('blocks payment-statement third-party consent when unset', () => {
+    const base = normalizeWritingFormDraft(createPaymentStatementPreConsentDraft())
+    const draft: WritingFormDraft = {
+      ...base,
+      paragraphs: base.paragraphs.map(paragraph => {
+        if (paragraph.id !== PAYMENT_STATEMENT_PRE_CONSENT_IDS.p3ThirdParty) return paragraph
+        if (!('showBottomConsent' in paragraph)) return paragraph
+        return { ...paragraph, bottomConsent: undefined }
+      }),
+    }
+
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([])
+    expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([])
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, {
+        templateId: 'agreement-third-party',
+        paymentStatementBasicInfo: {
+          nameKo: '홍길동',
+          residentFront: '900101',
+          residentBack: '1234567',
+          addressRoad: '서울시 종로구',
+          addressDetail: '1',
+          bankName: '국민',
+          accountNumber: '123',
+          accountHolder: '홍길동',
+          noAffiliation: true,
+        },
+      })
+    ).toBe(true)
+  })
+
+  it('allows receipt-pre-consent third-party consent to be disagree', () => {
+    const draft = withBottomConsent(
+      normalizeWritingFormDraft(createReceiptPreConsentDraft()),
+      RECEIPT_PRE_CONSENT_IDS.p2ThirdParty,
+      'disagree'
+    )
+
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([])
+    expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([])
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, {
+        templateId: 'agreement-receipt-pre-consent',
+      })
+    ).toBe(false)
+  })
+
+  it('blocks receipt-pre-consent third-party consent when unset', () => {
+    const base = normalizeWritingFormDraft(createReceiptPreConsentDraft())
+    const draft: WritingFormDraft = {
+      ...base,
+      paragraphs: base.paragraphs.map(paragraph => {
+        if (paragraph.id !== RECEIPT_PRE_CONSENT_IDS.p2ThirdParty) return paragraph
+        if (!('showBottomConsent' in paragraph)) return paragraph
+        return { ...paragraph, bottomConsent: undefined }
+      }),
+    }
+
+    expect(collectMemberConsentDisagreedRequiredLabels(draft)).toEqual([])
+    expect(collectMemberConsentUnagreedRequiredLabels(draft)).toEqual([])
+    expect(
+      hasMemberConsentIncompleteRequiredFields(draft, {
+        templateId: 'agreement-receipt-pre-consent',
+      })
     ).toBe(true)
   })
 
