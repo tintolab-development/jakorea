@@ -302,6 +302,8 @@ export type RenderFormParagraphBodyOptions = {
   hideSurveyWritingPeriod?: boolean
   /** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」토글 ON 고정(카드 하단 토글 disabled) */
   lockSurveyWritingPeriodToggleOn?: boolean
+  /** 만족도조사 일정별 — 제목 단락「작성 기간」날짜 인풋 비활성 */
+  lockSurveyWritingPeriodInput?: boolean
 }
 
 export function renderFormParagraphBody(
@@ -383,6 +385,7 @@ export function renderFormParagraphBody(
           paragraph={p}
           onChange={next => updateParagraph(p.id, () => next)}
           isEditMode={titlePeriodEditMode}
+          periodInputDisabled={options?.lockSurveyWritingPeriodInput === true}
         />
       )
     case 'user_profile':

@@ -189,8 +189,8 @@ export type SatisfactionScheduleSortKey = {
   sessionNo?: number | null
 }
 
-/** 만족도 결과 일정 셀렉트 — 최신 일정(종료·회차)이 위 */
-export function compareSatisfactionScheduleDesc(
+/** 만족도 결과 일정 셀렉트 — 날짜 오름차순, 같은 날이면 회차 오름차순 */
+export function compareSatisfactionScheduleAsc(
   a: SatisfactionScheduleSortKey,
   b: SatisfactionScheduleSortKey
 ): number {
@@ -198,24 +198,24 @@ export function compareSatisfactionScheduleDesc(
   const bStart = Date.parse(String(b.startAt ?? ''))
   const aOk = Number.isFinite(aStart)
   const bOk = Number.isFinite(bStart)
-  if (aOk && bOk && aStart !== bStart) return bStart - aStart
+  if (aOk && bOk && aStart !== bStart) return aStart - bStart
   if (aOk !== bOk) return aOk ? -1 : 1
   const aSession =
     typeof a.sessionNo === 'number' && Number.isFinite(a.sessionNo)
       ? a.sessionNo
-      : Number.NEGATIVE_INFINITY
+      : Number.POSITIVE_INFINITY
   const bSession =
     typeof b.sessionNo === 'number' && Number.isFinite(b.sessionNo)
       ? b.sessionNo
-      : Number.NEGATIVE_INFINITY
-  if (aSession !== bSession) return bSession - aSession
+      : Number.POSITIVE_INFINITY
+  if (aSession !== bSession) return aSession - bSession
   return 0
 }
 
-export function sortSatisfactionScheduleDisplayItemsDesc<T extends SatisfactionScheduleSortKey>(
+export function sortSatisfactionScheduleDisplayItemsAsc<T extends SatisfactionScheduleSortKey>(
   items: ReadonlyArray<T>
 ): T[] {
-  return [...items].sort(compareSatisfactionScheduleDesc)
+  return [...items].sort(compareSatisfactionScheduleAsc)
 }
 
 function sortSchedulesForSurveyPoll(
@@ -233,6 +233,16 @@ function sortSchedulesForSurveyPoll(
     if (aSession !== bSession) return aSession - bSession
     return (a.id ?? Number.MAX_SAFE_INTEGER) - (b.id ?? Number.MAX_SAFE_INTEGER)
   })
+}
+
+/** 종료 시 1회 안내 — education-slots 중 마지막 교육 일정. */
+export function pickLastSurveyPollEducationSlot(
+  schedules: ReadonlyArray<ProgramScheduleResponse> | null | undefined
+): ProgramScheduleResponse | null {
+  const sorted = sortSchedulesForSurveyPoll(
+    filterSurveyPollEducationSlotCandidates(schedules ?? [])
+  )
+  return sorted.at(-1) ?? null
 }
 
 function formatAdminScheduleAsCommonInfoEducationLine(

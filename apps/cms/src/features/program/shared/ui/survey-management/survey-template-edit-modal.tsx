@@ -52,6 +52,8 @@ export type ProgramSurveyFormEdit = {
   target: ProgramSurveyFormEditTarget
   initialDraft: WritingFormDraft
   displayPeriod?: SatisfactionFormEditPeriod | null
+  /** 만족도조사 일정별 — 제목 단락「작성 기간」인풋 비활성 */
+  lockWritingPeriodInput?: boolean
 }
 
 export type SurveyTemplateEditModalProps = {
@@ -118,7 +120,13 @@ function SurveyTemplateEditModalInner({
 
   /** 프로그램 > 설문조사 수정 — 제목 단락「작성 기간」토글 ON 고정 */
   const paragraphBodyOptions = useMemo<RenderFormParagraphBodyOptions | undefined>(
-    () => (programEdit != null ? { lockSurveyWritingPeriodToggleOn: true } : undefined),
+    () =>
+      programEdit != null
+        ? {
+            lockSurveyWritingPeriodToggleOn: true,
+            lockSurveyWritingPeriodInput: programEdit.lockWritingPeriodInput === true,
+          }
+        : undefined,
     [programEdit]
   )
 
@@ -274,6 +282,7 @@ function SurveyTemplateEditModalInner({
             updateParagraph={editor.updateParagraph}
             editorKind="survey"
             showTitleNumbering={false}
+            lockSurveyWritingPeriodInput={programEdit?.lockWritingPeriodInput === true}
             singleItemListActiveItemId={editor.singleItemListActiveItemId}
             horizontalTableRowSelection={tableRowSelection.activeHorizontalTableRowSelection}
             onHorizontalTableBodyRowDeleted={tableRowSelection.focusHorizontalTableBodyRow}

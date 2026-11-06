@@ -814,9 +814,11 @@ function UjatEduPlanTitlePeriodSettings({
 function DefaultTitleWithPeriodSettings({
   active,
   updateParagraph,
+  lockSurveyWritingPeriodInput = false,
 }: {
   active: TitleWithPeriodParagraph
   updateParagraph: FormEditorRightPanelUpdateParagraph
+  lockSurveyWritingPeriodInput?: boolean
 }) {
   const startMode = resolveTitleStartPeriodMode(active)
   const endMode = resolveTitleEndPeriodMode(active)
@@ -867,6 +869,7 @@ function DefaultTitleWithPeriodSettings({
         <CmsRadioGroup
           size="medium"
           value={startMode}
+          disabled={lockSurveyWritingPeriodInput}
           onChange={e =>
             updateParagraph(active.id, cur => {
               if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
@@ -907,6 +910,7 @@ function DefaultTitleWithPeriodSettings({
             suppressAutoTodayWhenEmpty
             value={active.startAt ? startAnchorDate : null}
             placeholder="시작일을 선택해 주세요"
+            disabled={lockSurveyWritingPeriodInput}
             disabledDate={surveyStartDisabledDate}
             presetDisplayText={
               !active.startAt ? (active.startPeriodPresetLabel ?? undefined) : undefined
@@ -935,6 +939,7 @@ function DefaultTitleWithPeriodSettings({
             dualStartPlaceholder="시작일"
             dualEndPlaceholder="마감일"
             disabledDate={surveyStartDisabledDate}
+            disabled={lockSurveyWritingPeriodInput}
             onCommitRange={range => {
               updateParagraph(active.id, cur => {
                 if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period') {
@@ -969,6 +974,7 @@ function DefaultTitleWithPeriodSettings({
         <CmsRadioGroup
           size="medium"
           value={endMode}
+          disabled={lockSurveyWritingPeriodInput}
           onChange={e =>
             updateParagraph(active.id, cur => {
               if (cur.kind !== 'description' || cur.variant !== 'survey_title_with_period')
@@ -1009,6 +1015,7 @@ function DefaultTitleWithPeriodSettings({
             suppressAutoTodayWhenEmpty
             value={active.endAt ? endAnchorDate : null}
             placeholder={endPickerPlaceholder}
+            disabled={lockSurveyWritingPeriodInput}
             onChange={next => {
               if (next == null) return
               updateParagraph(active.id, cur => {
@@ -1027,9 +1034,11 @@ function DefaultTitleWithPeriodSettings({
 export function TitleWithPeriodSettingsSection({
   active,
   updateParagraph,
+  lockSurveyWritingPeriodInput = false,
 }: {
   active: TitleWithPeriodParagraph
   updateParagraph: FormEditorRightPanelUpdateParagraph
+  lockSurveyWritingPeriodInput?: boolean
 }) {
   if (!(active.showWritingPeriodOnForm ?? false)) {
     return null
@@ -1044,5 +1053,11 @@ export function TitleWithPeriodSettingsSection({
   if (active.id === UJAT_EDUCATION_PLAN_ISSUANCE_PARAGRAPH_IDS.title) {
     return <UjatEduPlanTitlePeriodSettings active={active} updateParagraph={updateParagraph} />
   }
-  return <DefaultTitleWithPeriodSettings active={active} updateParagraph={updateParagraph} />
+  return (
+    <DefaultTitleWithPeriodSettings
+      active={active}
+      updateParagraph={updateParagraph}
+      lockSurveyWritingPeriodInput={lockSurveyWritingPeriodInput}
+    />
+  )
 }

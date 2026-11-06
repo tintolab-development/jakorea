@@ -27,6 +27,7 @@ export function ExplanationTitle({
   onChange,
   isEditMode,
   periodLabel = DEFAULT_PERIOD_LABEL,
+  periodInputDisabled = false,
 }: {
   paragraph: TitleWithPeriodParagraph
   onChange: (next: TitleWithPeriodParagraph) => void
@@ -34,6 +35,8 @@ export function ExplanationTitle({
   isEditMode: boolean
   /** 기간 입력란 위 라벨 (미지정 시 `작성 기간`) */
   periodLabel?: string
+  /** 일정별 만족도조사 — 값은 보이되 변경 불가 */
+  periodInputDisabled?: boolean
 }) {
   const pickerValue = useMemo(
     () => resolveSurveyTitleWritingPeriodPickerValue(paragraph),
@@ -81,7 +84,8 @@ export function ExplanationTitle({
             dualStartPlaceholder={dualStartPlaceholder}
             dualEndPlaceholder={dualEndPlaceholder}
             disabledDate={disabledDate}
-            readOnly={!isEditMode}
+            disabled={periodInputDisabled}
+            readOnly={!periodInputDisabled && !isEditMode}
             onCommitRange={range => {
               onChange(
                 patchSurveyTitleWritingPeriodCustomRange(

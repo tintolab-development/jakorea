@@ -64,6 +64,7 @@ export function FormEditorRightPanel({
   structureLockedParagraphIds,
   hideParagraphKindOutline: hideParagraphKindOutlineProp,
   structureLockedTypeSelectPreset = 'default',
+  lockSurveyWritingPeriodInput = false,
 }: FormEditorRightPanelProps) {
   const activeParagraph =
     activeParagraphId != null
@@ -118,7 +119,11 @@ export function FormEditorRightPanel({
             active={active}
             className="form-editor-right-panel__form-items--after-structure-locked"
           >
-            <ParagraphSettingsSection active={active} updateParagraph={updateParagraph} />
+            <ParagraphSettingsSection
+              active={active}
+              updateParagraph={updateParagraph}
+              lockSurveyWritingPeriodInput={lockSurveyWritingPeriodInput}
+            />
           </ParagraphCustomFieldsFormShell>
         ) : null}
         {partialShortEssay && activeShortEssay ? (
@@ -163,7 +168,11 @@ export function FormEditorRightPanel({
           )}
 
           <ParagraphCustomFieldsFormShell active={active}>
-            <ParagraphSettingsSection active={active} updateParagraph={updateParagraph} />
+            <ParagraphSettingsSection
+              active={active}
+              updateParagraph={updateParagraph}
+              lockSurveyWritingPeriodInput={lockSurveyWritingPeriodInput}
+            />
             <ParagraphCustomFieldsSection
               active={active}
               updateParagraph={updateParagraph}

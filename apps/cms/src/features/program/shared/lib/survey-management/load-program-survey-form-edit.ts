@@ -6,6 +6,7 @@ import {
   buildProgramSurveyFormEditTarget,
   type ProgramSurveyFormEditTarget,
 } from '@/features/program/shared/lib/survey-management/save-program-survey-form-edit'
+import { isSatisfactionPerScheduleWritingPeriodLocked } from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 import {
   applySurveyTitleCustomPeriodToDraft,
   resolveSatisfactionFormEditPeriod,
@@ -19,6 +20,7 @@ export type ProgramSurveyFormEditPayload = {
   target: ProgramSurveyFormEditTarget
   initialDraft: WritingFormDraft
   displayPeriod?: SatisfactionFormEditPeriod | null
+  lockWritingPeriodInput?: boolean
 }
 
 export type LoadProgramSurveyFormEditResult =
@@ -69,6 +71,11 @@ export async function loadProgramSurveyFormEditAfterBinding(
       target,
       initialDraft: applySurveyTitleCustomPeriodToDraft(record.draft, period),
       displayPeriod: period,
+      lockWritingPeriodInput: isSatisfactionPerScheduleWritingPeriodLocked({
+        formType: binding.formType,
+        runMode: binding.satisfactionRunMode,
+        targetScope: options?.targetScope ?? binding.targetScope,
+      }),
     },
   }
 }

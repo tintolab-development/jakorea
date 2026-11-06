@@ -63,6 +63,74 @@ export function formatSatisfactionWindowExampleLine(windowDays: number): string 
   return `예) 1회차 ${sessionEnd} 12:00 종료 → ${deadlineLabel} 23:59 마감`
 }
 
+export const SATISFACTION_ONCE_AT_END_PROGRAM_CLOSE_HINT =
+  '만족도조사가 마감되면 프로그램이 종료 됩니다.'
+
+/** ISO instant → 서울 달력 `11.26(목)`. UTC 날짜 슬라이스 금지. */
+export function formatSatisfactionCompactSeoulDate(value: string | null | undefined): string | null {
+  if (value == null) return null
+  const trimmed = String(value).trim()
+  if (!trimmed) return null
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed)
+  const stamp = dateOnly ? new Date(`${trimmed}T12:00:00+09:00`) : new Date(trimmed)
+  if (Number.isNaN(stamp.getTime())) return null
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    month: 'numeric',
+    day: '2-digit',
+  }).formatToParts(stamp)
+  const weekday = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    weekday: 'short',
+  })
+    .format(stamp)
+    .replace('요일', '')
+  const month = parts.find(part => part.type === 'month')?.value
+  const day = parts.find(part => part.type === 'day')?.value
+  if (!month || !day || !weekday) return null
+  return `${month}.${day}(${weekday})`
+}
+
+/** 종료 시 1회 안내 괄호 — `3회차 11.26(목)` */
+export function formatSatisfactionOnceAtEndScheduleLabel(input: {
+  sessionNo?: number | null
+  endAt?: string | null
+  endDate?: string | null
+  startAt?: string | null
+  startDate?: string | null
+}): string | null {
+  const sessionNo =
+    typeof input.sessionNo === 'number' && Number.isInteger(input.sessionNo) && input.sessionNo > 0
+      ? input.sessionNo
+      : null
+  const date =
+    formatSatisfactionCompactSeoulDate(input.endAt) ??
+    formatSatisfactionCompactSeoulDate(input.endDate) ??
+    formatSatisfactionCompactSeoulDate(input.startAt) ??
+    formatSatisfactionCompactSeoulDate(input.startDate)
+  if (sessionNo != null && date != null) return `${sessionNo}회차 ${date}`
+  if (sessionNo != null) return `${sessionNo}회차`
+  return date
+}
+
+export function formatSatisfactionOnceAtEndStartHint(scheduleLabel: string | null | undefined): string {
+  const label = scheduleLabel?.trim() ?? ''
+  if (label !== '') {
+    return `마지막 교육 일정(${label})이 끝난 뒤에 시작할 수 있습니다.`
+  }
+  return '마지막 교육 일정이 끝난 뒤에 시작할 수 있습니다.'
+}
+
+/** 만족도조사 일정별 — 작성 기간은 일정 종료+참여 기간으로 고정, 인풋 비활성 */
+export function isSatisfactionPerScheduleWritingPeriodLocked(input: {
+  formType?: string | null
+  runMode?: string | null
+  targetScope?: string | null
+}): boolean {
+  if (input.formType?.trim().toUpperCase() !== 'SATISFACTION') return false
+  return readSatisfactionRunMode(input.runMode, input.targetScope) === SATISFACTION_RUN_MODE_PER_SCHEDULE
+}
+
 export function readSatisfactionRunMode(
   value: unknown,
   fallbackScope?: string | null

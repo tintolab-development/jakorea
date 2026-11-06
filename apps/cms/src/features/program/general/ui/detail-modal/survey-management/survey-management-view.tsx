@@ -86,7 +86,8 @@ import {
   SURVEY_POLL_SCHEDULE_ALREADY_REGISTERED_MESSAGE,
   collectUnboundSurveyPollScheduleValues,
   isSurveyPollBindingTargetScheduleAlreadyRegistered,
-  sortSatisfactionScheduleDisplayItemsDesc,
+  pickLastSurveyPollEducationSlot,
+  sortSatisfactionScheduleDisplayItemsAsc,
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import {
   resolveSurveyPollBindingTargetWhenScheduleFieldHidden,
@@ -103,6 +104,8 @@ import {
   SATISFACTION_RUN_MODE_PER_SCHEDULE,
   buildSatisfactionBindingWriteFields,
   canDownloadSatisfactionResults,
+  formatSatisfactionOnceAtEndScheduleLabel,
+  isSatisfactionPerScheduleWritingPeriodLocked,
   type SatisfactionFormBindingRequest,
   type SatisfactionRunMode,
   type SatisfactionWindowDays,
@@ -402,6 +405,10 @@ export function GeneralSurveyManagementView({
     () => collectUnboundSurveyPollScheduleValues(satisfactionScheduleOptionsQuery.options),
     [satisfactionScheduleOptionsQuery.options]
   )
+  const lastSatisfactionEducationScheduleLabel = useMemo(() => {
+    const last = pickLastSurveyPollEducationSlot(satisfactionScheduleOptionsQuery.schedules)
+    return last == null ? null : formatSatisfactionOnceAtEndScheduleLabel(last)
+  }, [satisfactionScheduleOptionsQuery.schedules])
   const showSurveyPollScheduleSelectField = useMemo(
     () => shouldShowSurveyPollScheduleSelectField(program),
     [program]
@@ -425,7 +432,7 @@ export function GeneralSurveyManagementView({
       ? [satisfactionSurveysByAudience[activeSatisfactionAudience]!]
       : [])
   const satisfactionScheduleTabsForQuery = (() => {
-    const items = sortSatisfactionScheduleDisplayItemsDesc(
+    const items = sortSatisfactionScheduleDisplayItemsAsc(
       audienceSatisfactionBindingsForQuery.map(survey => {
         const slot = satisfactionScheduleOptionsQuery.schedules.find(
           row => row.id === survey.targetScopeId
@@ -777,6 +784,7 @@ export function GeneralSurveyManagementView({
         displayTitle?: string
         overwriteTitle?: boolean
         displayPeriod?: SatisfactionFormEditPeriod | null
+        lockWritingPeriodInput?: boolean
         paragraphBodyOptions?: TemplateWritingUserPreviewSession['paragraphBodyOptions']
       }
     ) => {
@@ -817,7 +825,12 @@ export function GeneralSurveyManagementView({
                   ...session,
                   onEditForm: () => {
                     closeWritingUserPreview()
-                    setProgramFormEdit({ target: editTarget, initialDraft: session.draft })
+                    setProgramFormEdit({
+                      target: editTarget,
+                      initialDraft: session.draft,
+                      displayPeriod: options?.displayPeriod,
+                      lockWritingPeriodInput: options?.lockWritingPeriodInput,
+                    })
                   },
                 }
               : session
@@ -1775,6 +1788,11 @@ export function GeneralSurveyManagementView({
                 survey,
                 satisfactionScheduleOptionsQuery.schedules
               ),
+              lockWritingPeriodInput: isSatisfactionPerScheduleWritingPeriodLocked({
+                formType: 'SATISFACTION',
+                runMode: survey.satisfactionRunMode,
+                targetScope: survey.targetScope,
+              }),
             })
           }
         }}
@@ -1889,6 +1907,7 @@ export function GeneralSurveyManagementView({
         onWindowDaysChange={setSatisfactionWindowDays}
         schedulesLoading={satisfactionScheduleOptionsQuery.isLoading}
         hasSessionSchedules={satisfactionUnboundScheduleValues.length > 0}
+        lastEducationScheduleLabel={lastSatisfactionEducationScheduleLabel}
         onCancel={closeCreateModal}
         onSubmit={() => {
           void submitCreateModal()

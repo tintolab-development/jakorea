@@ -115,6 +115,7 @@ import {
 } from '@/features/program/shared/lib/survey-management/survey-poll-schedule-options'
 import { resolveUjatSurveyScheduleFieldFromOptions } from '../lib/ujat-survey-schedule-register'
 import { loadProgramSurveyFormEditAfterBinding } from '@/features/program/shared/lib/survey-management/load-program-survey-form-edit'
+import { isSatisfactionPerScheduleWritingPeriodLocked } from '@/features/program/shared/lib/survey-management/satisfaction-binding-contract'
 import { useProgramSurveyScheduleOptions } from '@/features/program/shared/hooks/use-program-survey-schedule-options'
 import { SurveyPollRegisterModal } from '@/features/program/shared/ui/survey-management/survey-poll-register-modal'
 import {
@@ -263,6 +264,7 @@ export function UjatSurveyManagementView({
         displayTitle?: string
         overwriteTitle?: boolean
         displayPeriod?: SatisfactionFormEditPeriod | null
+        lockWritingPeriodInput?: boolean
       }
     ) => {
       const catalogRow = findWritingTemplateRowByDefinitionId(survey.templateId)
@@ -302,7 +304,12 @@ export function UjatSurveyManagementView({
                   ...session,
                   onEditForm: () => {
                     closeWritingUserPreview()
-                    setProgramFormEdit({ target: editTarget, initialDraft: session.draft })
+                    setProgramFormEdit({
+                      target: editTarget,
+                      initialDraft: session.draft,
+                      displayPeriod: options?.displayPeriod,
+                      lockWritingPeriodInput: options?.lockWritingPeriodInput,
+                    })
                   },
                 }
               : session
@@ -996,6 +1003,11 @@ export function UjatSurveyManagementView({
         activeSatisfactionSurvey,
         surveyScheduleOptionsQuery.schedules
       ),
+      lockWritingPeriodInput: isSatisfactionPerScheduleWritingPeriodLocked({
+        formType: 'SATISFACTION',
+        runMode: activeSatisfactionSurvey.satisfactionRunMode,
+        targetScope: activeSatisfactionSurvey.targetScope,
+      }),
     })
   }, [
     activeSatisfactionSurvey,
