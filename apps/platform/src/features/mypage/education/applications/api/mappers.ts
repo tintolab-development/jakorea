@@ -159,6 +159,9 @@ function resolveDisplayStatusFromApplicationFields(input: {
   ) {
     return 'document_passed'
   }
+  if (hasStatus(applicationStatus, ['REJECTION_CANCELLED', 'WAITING_REVIEW', 'SUBMITTED', 'PENDING'])) {
+    return 'waiting_result'
+  }
   return 'waiting_result'
 }
 

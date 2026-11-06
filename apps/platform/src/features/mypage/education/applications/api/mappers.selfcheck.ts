@@ -56,6 +56,29 @@ const approvalCancelledFromStatus = mapPortalProgramApplicationListItem({
 })
 assert.equal(approvalCancelledFromStatus?.displayStatus, 'rejected')
 
+const rejectionCancelled = mapPortalProgramApplicationListItem({
+  applicationId: 1691550,
+  applicationType: 'INDIVIDUAL',
+  programId: 100,
+  programType: 'GENERAL_INDIVIDUAL',
+  programGroup: 'GENERAL',
+  programTitle: '반려 취소 프로그램',
+  applicationStatus: 'REJECTION_CANCELLED',
+  displayStatus: '결과 대기',
+})
+assert.equal(rejectionCancelled?.displayStatus, 'waiting_result')
+
+const rejectionCancelledFromStatus = mapPortalProgramApplicationListItem({
+  applicationId: 1691551,
+  applicationType: 'ORGANIZATION',
+  programId: 100,
+  programType: 'GENERAL_ORGANIZATION',
+  programGroup: 'GENERAL',
+  programTitle: '반려 취소 기관',
+  applicationStatus: 'REJECTION_CANCELLED',
+})
+assert.equal(rejectionCancelledFromStatus?.displayStatus, 'waiting_result')
+
 const userCancelled = mapPortalProgramApplicationListItem({
   applicationId: 1691549,
   applicationType: 'ORGANIZATION',
