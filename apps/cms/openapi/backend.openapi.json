@@ -46241,10 +46241,17 @@
           {
             "name": "certificateType",
             "in": "query",
-            "description": "쿼리 파라미터입니다. 요청값 출처: 필터/페이지네이션/선택 행에서 요청값 전달",
+            "description": "증명서 유형. 생략 또는 AUTO는 COMPLETION. 참가인증서는 PARTICIPATION을 명시한다.",
             "required": false,
             "schema": {
               "type": "string",
+              "enum": [
+                "COMPLETION",
+                "PARTICIPATION",
+                "INSTRUCTOR_ACTIVITY",
+                "VOLUNTEER_ACTIVITY",
+                "AUTO"
+              ],
               "default": "COMPLETION"
             }
           }
