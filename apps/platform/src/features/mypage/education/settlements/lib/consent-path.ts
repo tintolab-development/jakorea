@@ -5,8 +5,14 @@ import { buildSettlementTabPath, type SettlementArea } from './write-path'
 export function buildSettlementPaymentConsentPath(options: {
   applicationId: string
   mode: 'write' | 'view'
+  area?: SettlementArea
+  applicationType?: string
 }): string {
-  const returnTo = buildSettlementTabPath(options.applicationId)
+  const returnTo = buildSettlementTabPath(
+    options.applicationId,
+    options.area ?? 'education',
+    options.applicationType,
+  )
   const params = new URLSearchParams({
     returnTo,
     mode: options.mode,

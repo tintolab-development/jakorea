@@ -42,7 +42,7 @@ type EducationSettlementRowProps = {
   operationEndAt?: string
   initialRejectOpen?: boolean
   hideInstructorWrite?: boolean
-  onReceiptWrite?: (path: string) => void
+  onWrite?: (path: string) => void
 }
 
 const MARK_ICON = {
@@ -71,7 +71,7 @@ export function EducationSettlementRow({
   operationEndAt,
   initialRejectOpen = false,
   hideInstructorWrite = false,
-  onReceiptWrite,
+  onWrite,
 }: EducationSettlementRowProps) {
   const navigate = useNavigate()
   const [rejectOpen, setRejectOpen] = useState(initialRejectOpen)
@@ -214,12 +214,16 @@ export function EducationSettlementRow({
           onClick={() => {
             if (writeDisabled) return
             if (documentKind === 'payment_statement') {
+              if (onWrite) {
+                onWrite(writePath)
+                return
+              }
               navigate(writePath)
               return
             }
             if (!receiptSubmitPath) return
-            if (onReceiptWrite) {
-              onReceiptWrite(receiptSubmitPath)
+            if (onWrite) {
+              onWrite(receiptSubmitPath)
               return
             }
             navigate(receiptSubmitPath)
@@ -289,8 +293,8 @@ export function EducationSettlementRow({
         disabled={reapplyDisabled || reapplyUnavailable}
         onClick={() => {
           if (reapplyDisabled || reapplyUnavailable) return
-          if (documentKind === 'receipt' && onReceiptWrite) {
-            onReceiptWrite(reapplyPath)
+          if (onWrite) {
+            onWrite(reapplyPath)
             return
           }
           navigate(reapplyPath)
@@ -438,6 +442,10 @@ export function EducationSettlementRow({
                 onClick={() => {
                   if (reapplyDisabled) return
                   closeRejectReason()
+                  if (onWrite) {
+                    onWrite(writePath)
+                    return
+                  }
                   navigate(writePath)
                 }}
               >
@@ -454,8 +462,8 @@ export function EducationSettlementRow({
                 onClick={() => {
                   if (reapplyDisabled || receiptReapplyUnavailable) return
                   closeRejectReason()
-                  if (onReceiptWrite) {
-                    onReceiptWrite(receiptSubmitPath)
+                  if (onWrite) {
+                    onWrite(receiptSubmitPath)
                     return
                   }
                   navigate(receiptSubmitPath)
