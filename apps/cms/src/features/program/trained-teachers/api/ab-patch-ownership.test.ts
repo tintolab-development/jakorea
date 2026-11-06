@@ -217,6 +217,49 @@ describe('TRAINED_TEACHER A/B PATCH ownership', () => {
     expect(afterB.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
   })
 
+  it('B 성공 후 A 실패를 가정하면 B nested 는 남고 A 제목은 이전 값이다', () => {
+    const existing = ttProgram()
+    const slices = buildTrainedTeachersCommonInfoSaveSlices({
+      educationStructure: 'curriculum',
+      teacherTrainingEnabled: true,
+      educationJournalEnabled: false,
+      curriculumSessions: existing.generalCommonInfo?.curriculumSessions,
+      scheduleDetails: existing.generalCommonInfo?.scheduleDetails,
+    })
+    const b = mapTrainedTeacherInfoSaveToRequest({ commonInfo: slices.infoDetailCommonInfo })
+    const afterB = mergeTrainedTeacherInfoDetailIntoProgram(existing, {
+      teacherTrainingEnabled: b.teacherTrainingEnabled,
+      educationJournalEnabled: b.educationJournalEnabled,
+      configJson: b.configJson,
+    })
+    expect(afterB.mainTitle).toBe('기존 대표')
+    expect(afterB.generalCommonInfo?.teacherTrainingEnabled).toBe(true)
+    expect(afterB.generalCommonInfo?.educationJournalEnabled).toBe(false)
+  })
+
+  it('B 이후 stale A payload 는 B nested 를 programs JSON 에 넣지 않는다', () => {
+    const existing = ttProgram()
+    const slices = buildTrainedTeachersCommonInfoSaveSlices({
+      educationStructure: 'curriculum',
+      teacherTrainingEnabled: true,
+      educationJournalEnabled: false,
+      curriculumSessions: [
+        { sessionLabel: '1회차', title: 'B 이후 회차', description: '내용1' },
+      ],
+      scheduleDetails: [],
+    })
+    const b = mapTrainedTeacherInfoSaveToRequest({ commonInfo: slices.infoDetailCommonInfo })
+    const afterB = mergeTrainedTeacherInfoDetailIntoProgram(existing, {
+      teacherTrainingEnabled: b.teacherTrainingEnabled,
+      educationJournalEnabled: b.educationJournalEnabled,
+      configJson: b.configJson,
+    })
+    const staleA = parseA(existing, { mainTitle: '오래된 A' })
+    expect(staleA.envelope.program?.generalCommonInfo?.curriculumSessions).toBeUndefined()
+    expect(staleA.envelope.program?.generalCommonInfo?.teacherTrainingEnabled).toBeUndefined()
+    expect(afterB.generalCommonInfo?.curriculumSessions?.[0]?.title).toBe('B 이후 회차')
+  })
+
   it('A 성공 후 B 실패를 가정하면 A 소유 모집정보는 남고 B 플래그는 이전 값이다', () => {
     const existing = ttProgram()
     const { request } = parseA(existing, { mainTitle: 'A만 성공' })
