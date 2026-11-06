@@ -3,6 +3,7 @@
  */
 
 import { create } from 'zustand'
+import { readJwtSidClaim } from '@jakorea/domain/session'
 import type { AuthUser, LoginRequest, MfaState } from '@/entities/auth/model/types'
 import { login as loginApi } from '@/entities/auth/api/auth-service'
 import type { AuthTokenResponse } from '@/features/auth/model/admin-login-api.types'
@@ -353,6 +354,12 @@ export const useAuthStore = create<AuthState>()((set, get) => {
       let token = localStorage.getItem(AUTH_TOKEN_KEY)
       let expiresAt = localStorage.getItem(AUTH_EXPIRY_KEY)
       const userStr = localStorage.getItem(AUTH_USER_KEY)
+      const tokenAtStart = token
+      const sidAtStart = readJwtSidClaim(token)
+      const isCurrentLogin = () => Boolean(token) &&
+        localStorage.getItem(AUTH_TOKEN_KEY) === token &&
+        localStorage.getItem(AUTH_USER_KEY) === userStr &&
+        (sidAtStart ? readJwtSidClaim(token) === sidAtStart : token === tokenAtStart)
 
       if (!token || !expiresAt || !userStr) {
         set({ isAuthenticated: false, user: null, token: null, expiresAt: null })
@@ -367,22 +374,24 @@ export const useAuthStore = create<AuthState>()((set, get) => {
           if (shouldRefreshAccessToken(expiryTime.getTime(), now.getTime())) {
             const refreshed = await get().refreshToken()
             if (!refreshed) {
-              get().logout()
+              if (isCurrentLogin()) get().logout()
               return
             }
             token = localStorage.getItem(AUTH_TOKEN_KEY)
             expiresAt = localStorage.getItem(AUTH_EXPIRY_KEY)
             if (!token || !expiresAt) {
-              get().logout()
+              if (!localStorage.getItem(AUTH_TOKEN_KEY)) get().logout()
               return
             }
+            if (!isCurrentLogin()) return
           }
 
+          if (!isCurrentLogin()) return
           let storedUser: AuthUser | null = null
           try {
             storedUser = JSON.parse(userStr) as AuthUser
           } catch {
-            get().logout()
+            if (isCurrentLogin()) get().logout()
             return
           }
 
@@ -396,7 +405,7 @@ export const useAuthStore = create<AuthState>()((set, get) => {
               isAuthenticated: true,
             })
           } else {
-            get().logout()
+            if (isCurrentLogin()) get().logout()
           }
         } finally {
           set({ _isCheckingAuth: false, _checkAuthPromise: null })
