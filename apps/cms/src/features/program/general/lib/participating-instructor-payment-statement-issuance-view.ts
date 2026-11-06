@@ -111,7 +111,7 @@ function buildCalculationLines(
     {
       id: `pi-payment-statement-${row.id}-lecture`,
       itemLabel: '강사비',
-      description: '프로그램 1회 강의비',
+      description: '프로그램 1회 강사비',
       amount: lectureFee,
       kind: 'lecture_fee',
     },
@@ -133,7 +133,7 @@ function buildCalculationLines(
         lines,
       },
     ],
-    formulaLabel: '강의비 - 원천징수',
+    formulaLabel: '강사비 - 원천징수',
     totalAmount: row.scheduledSettlementAmount ?? totalAmount,
   }
 }

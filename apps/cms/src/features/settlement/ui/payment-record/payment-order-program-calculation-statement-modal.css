@@ -32,7 +32,7 @@
   margin-top: 12px;
 }
 
-/* 강사 맥락 기본정보: DetailInfoForm 2블록 — 블록 사이 간격 16px (자택 주소·계좌 / 지급 조서·강의비) */
+/* 강사 맥락 기본정보: DetailInfoForm 2블록 — 블록 사이 간격 16px (자택 주소·계좌 / 지급 조서·강사비) */
 .payment-order-calc-statement-modal__basic-group-gap {
   height: 16px;
   flex-shrink: 0;

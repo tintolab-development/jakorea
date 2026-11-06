@@ -166,7 +166,7 @@ export function ParticipatingInstructorApplicationInfo({
       </DetailInfoForm.Row>
       <DetailInfoForm.Row type="single">
         <DetailInfoForm.Field
-          label="강의비 책정 기준"
+          label="강사비 책정 기준"
           fullRow
           view={lectureFeeView}
           edit={lectureFeeEdit}
@@ -193,7 +193,7 @@ export function ParticipatingInstructorApplicationInfo({
           readOnlyDisplay
           view={<InstructorSettlementStatusText status={instructor.settlementStatus} />}
         />
-        <DetailInfoForm.Field label="강의비 책정 기준" readOnlyDisplay view={lectureFeeView} />
+        <DetailInfoForm.Field label="강사비 책정 기준" readOnlyDisplay view={lectureFeeView} />
       </DetailInfoForm.Row>
     </>
   )

@@ -1,5 +1,5 @@
 /**
- * 지급조서(발급용) — 「강의비 산출 내역」표.
+ * 지급조서(발급용) — 「강사비 산출 내역」표.
  * Ant Design Table(scroll/sticky)은 A4 미리보기에서 보더·레이아웃이 깨지므로
  * 편집·미리보기 동일하게 네이티브 HTML 테이블로 렌더한다.
  */
@@ -77,12 +77,12 @@ export function PaymentStatementIssuanceCalculationLinesTable({
   totalAmount,
   className,
 }: PaymentStatementIssuanceCalculationLinesTableProps) {
-  const tableRows = useMemo(() => buildPaymentStatementIssuanceCalculationLinesRows(blocks), [blocks])
+  const tableRows = useMemo(
+    () => buildPaymentStatementIssuanceCalculationLinesRows(blocks),
+    [blocks]
+  )
 
-  const rootClass = [
-    'payment-statement-issuance-calculation-lines-table',
-    className,
-  ]
+  const rootClass = ['payment-statement-issuance-calculation-lines-table', className]
     .filter(Boolean)
     .join(' ')
 
@@ -111,7 +111,10 @@ export function PaymentStatementIssuanceCalculationLinesTable({
           <tbody>
             {tableRows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="payment-statement-issuance-calculation-lines-table__empty">
+                <td
+                  colSpan={6}
+                  className="payment-statement-issuance-calculation-lines-table__empty"
+                >
                   -
                 </td>
               </tr>
@@ -144,7 +147,10 @@ export function PaymentStatementIssuanceCalculationLinesTable({
           <tfoot>
             <tr className="payment-statement-issuance-calculation-lines-table__summary-row">
               <th scope="row">합계</th>
-              <td colSpan={4} className="payment-statement-issuance-calculation-lines-table__formula">
+              <td
+                colSpan={4}
+                className="payment-statement-issuance-calculation-lines-table__formula"
+              >
                 {formulaLabel}
               </td>
               <td className="payment-statement-issuance-calculation-lines-table__summary-total">

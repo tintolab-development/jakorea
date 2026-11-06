@@ -31,7 +31,7 @@ describe('AccountPaymentCompleteSuccessModal', () => {
     expect(screen.getByText('계좌 지급 일괄 확인 완료')).toBeTruthy()
     expect(screen.getByText('[김제이] 님 외 15명')).toBeTruthy()
     expect(screen.getByText(/의 계좌 지급 처리가 완료되었습니다/)).toBeTruthy()
-    expect(screen.queryByText(/강의비/)).toBeNull()
+    expect(screen.queryByText(/강사비/)).toBeNull()
     expect(screen.getByText('닫기')).toBeTruthy()
     expect(screen.getByText('대량이체 양식 발급')).toBeTruthy()
   })

@@ -1,6 +1,6 @@
 /**
  * 산출 내역서 — 신청자형 기본 정보
- * 성명·성별/생년·연락처·주소지·계좌 / 지급조서 처리 현황·강의비·사업소득 (2블록 + 16px 간격)
+ * 성명·성별/생년·연락처·주소지·계좌 / 지급조서 처리 현황·강사비·사업소득 (2블록 + 16px 간격)
  */
 
 import type { CSSProperties } from 'react'
@@ -24,9 +24,7 @@ function NameCell({ basic }: { basic: PaymentOrderCalculationStatementInstructor
   return (
     <span className="payment-order-calc-statement-modal__name-cell">
       {basic.nameKo}
-      {count != null && count > 0 ? (
-        <ScheduleChangeHistoryBadge count={count} />
-      ) : null}
+      {count != null && count > 0 ? <ScheduleChangeHistoryBadge count={count} /> : null}
     </span>
   )
 }
@@ -102,7 +100,7 @@ export function PaymentOrderCalculationStatementInstructorBasicSection({
         </DetailInfoForm.Row>
         <DetailInfoForm.Row type="double">
           <DetailInfoForm.Field
-            label="강의비 책정 기준"
+            label="강사비 책정 기준"
             view={
               <div className="payment-order-calc-statement-modal__td-divider-wrap payment-order-calc-statement-modal__td-divider-wrap--start">
                 {withProgramDetailTdDivider([

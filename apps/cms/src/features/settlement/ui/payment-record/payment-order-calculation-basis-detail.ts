@@ -33,7 +33,7 @@ export interface PaymentOrderCalculationBasisDetailLectureFeeSpecial {
 export const SPECIAL_LECTURE_FEE_TITLE = '특강 강사비'
 export const GEMINI_LECTURE_FEE_TITLE = '제미나이 강사비'
 
-/** 제미나이 강사비 — 구분 · 강의 시간 · 강의비 책정 (합계 없음) */
+/** 제미나이 강사비 — 구분 · 강의 시간 · 강사비 책정 (합계 없음) */
 export interface PaymentOrderCalculationBasisDetailLectureFeeGemini {
   layout: 'lectureFeeGemini'
   categoryLabel: string
@@ -269,9 +269,7 @@ export function resolveTravelBasisDetailTotalWon(
 }
 
 export function mapTransportationSnapshotToBasisDetail(
-  snapshot?:
-    | (SettlementTransportationSnapshotResponse & { fuelCostWon?: number | null })
-    | null
+  snapshot?: (SettlementTransportationSnapshotResponse & { fuelCostWon?: number | null }) | null
 ): PaymentOrderCalculationBasisDetailTransportSnapshot | undefined {
   if (!snapshot) return undefined
 
@@ -633,17 +631,11 @@ export function mapWithholdingCalculationDetailToBasisDetail(
     if (!looksLikeWithholding) continue
 
     const dailySalaryTotalWon = numberValue(recordValue(candidate, 'dailySalaryTotalWon'))
-    const earnedIncomeDeductionWon = numberValue(
-      recordValue(candidate, 'earnedIncomeDeductionWon')
-    )
+    const earnedIncomeDeductionWon = numberValue(recordValue(candidate, 'earnedIncomeDeductionWon'))
     const incomeTaxRatePercent = numberValue(recordValue(candidate, 'incomeTaxRatePercent'))
     const incomeTaxWon = numberValue(recordValue(candidate, 'incomeTaxWon'))
-    const earnedIncomeTaxCreditWon = numberValue(
-      recordValue(candidate, 'earnedIncomeTaxCreditWon')
-    )
-    const withholdingTaxAmountWon = numberValue(
-      recordValue(candidate, 'withholdingTaxAmountWon')
-    )
+    const earnedIncomeTaxCreditWon = numberValue(recordValue(candidate, 'earnedIncomeTaxCreditWon'))
+    const withholdingTaxAmountWon = numberValue(recordValue(candidate, 'withholdingTaxAmountWon'))
     if (
       dailySalaryTotalWon == null ||
       earnedIncomeDeductionWon == null ||
@@ -724,7 +716,7 @@ export function buildLectureFeeTierBasisDetail(
   }
 }
 
-const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강의비', '—', '-'])
+const GENERIC_LECTURE_FEE_LABELS = new Set(['강사비', '강사비', '—', '-'])
 
 export function isGenericLectureFeeCategoryLabel(title: string | undefined): boolean {
   const normalized = title?.trim()
@@ -785,17 +777,17 @@ export function lectureFeeLineDescriptionFromStandardTitle(
   lectureFeeStandardTitle: string
 ): string {
   if (isSpecialLectureFeeTitle(lectureFeeStandardTitle)) {
-    return '프로그램 1회 강의비 (특강 강사)'
+    return '프로그램 1회 강사비 (특강 강사)'
   }
   if (isGeminiLectureFeeTitle(lectureFeeStandardTitle)) {
-    return '프로그램 1회 강의비 (제미나이 강사)'
+    return '프로그램 1회 강사비 (제미나이 강사)'
   }
   const tier = LECTURE_FEE_TIER_TITLE_MAP[lectureFeeStandardTitle]
   if (tier) {
-    return `프로그램 1회 강의비 (${tier}급 강사)`
+    return `프로그램 1회 강사비 (${tier}급 강사)`
   }
   const short = lectureFeeStandardTitle.replace(/ 강사비$/, '')
-  return `프로그램 1회 강의비 (${short})`
+  return `프로그램 1회 강사비 (${short})`
 }
 
 function hashLineSeed(lineId: string): number {
@@ -830,7 +822,7 @@ function isLectureFeeBasisDetail(
 }
 
 function isLectureFeeCalculationRow(row: { kind: string; itemLabel: string }): boolean {
-  return row.kind === 'lecture_fee' || row.itemLabel === '강의비' || row.itemLabel === '강사비'
+  return row.kind === 'lecture_fee' || row.itemLabel === '강사비' || row.itemLabel === '강사비'
 }
 
 function resolveLectureFeeStandardTitleForRow(
@@ -1022,7 +1014,7 @@ export function resolvePaymentOrderCalculationBasisDetailForRow(
     return row.basisDetail
   }
 
-  // 강의비 행만 lectureFee* basisDetail을 모달에 연결한다.
+  // 강사비 행만 lectureFee* basisDetail을 모달에 연결한다.
   // BE가 withholding 등에 lectureFeeTier calculationDetail을 붙여도 강사비 모달로 열지 않는다.
   if (
     isLectureFeeCalculationRow(row) &&

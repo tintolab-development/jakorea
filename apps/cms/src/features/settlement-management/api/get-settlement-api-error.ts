@@ -10,8 +10,7 @@ const GENERIC_SETTLEMENT_API_MESSAGES = new Set([
   '요청 처리 중 오류가 발생했습니다.',
 ])
 
-export const SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED =
-  'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED'
+export const SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED = 'SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED'
 export const FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED = 'FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED'
 export const SENSITIVE_FILE_RELAY_REQUIRED = 'SENSITIVE_FILE_RELAY_REQUIRED'
 
@@ -21,8 +20,7 @@ export const FILE_DOWNLOAD_TOKEN_INVALID_MESSAGE =
   '다운로드 토큰이 만료되었거나 유효하지 않습니다. 양식을 새로 발급해 주세요.'
 export const SENSITIVE_FILE_RELAY_REQUIRED_MESSAGE =
   '민감 정산 파일은 일반 다운로드 주소로 받을 수 없습니다. 미리보기에서 엑셀 다운로드를 다시 시도해 주세요.'
-export const SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE =
-  'SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE'
+export const SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE = 'SETTLEMENT_CORRECTION_PAID_NOT_RESTORABLE'
 export const SETTLEMENT_CORRECTION_RESTORE_STATUS_UNAVAILABLE =
   'SETTLEMENT_CORRECTION_RESTORE_STATUS_UNAVAILABLE'
 export const SETTLEMENT_CONFIG_WITHHOLDING_RATE_INVALID =
@@ -64,9 +62,10 @@ export const GEMINI_TRAINING_REPORT_MISSING_MESSAGE =
 
 /** BE 2026-09-11 bulk-confirm 계약 — 공통 메시지 없을 때 FE fallback */
 const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
-  SCHEDULED_PAYMENT_DATE_REQUIRED: '강의비 지급 예정일을 입력해 주세요.',
+  SCHEDULED_PAYMENT_DATE_REQUIRED: '강사비 지급 예정일을 입력해 주세요.',
   PAYMENT_STATEMENT_IDS_REQUIRED: '확인할 지급조서를 선택해 주세요.',
-  PAYMENT_STATEMENT_NOT_FOUND: '지급조서를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
+  PAYMENT_STATEMENT_NOT_FOUND:
+    '지급조서를 찾을 수 없습니다. 목록을 새로고침한 뒤 다시 시도해 주세요.',
   [PAYMENT_STATEMENT_STATUS_CONFLICT]: PAYMENT_STATEMENT_CONFLICT_FALLBACK,
   [SETTLEMENT_EXPORT_FILE_ALREADY_DOWNLOADED]: SETTLEMENT_EXPORT_ALREADY_DOWNLOADED_MESSAGE,
   [FILE_DOWNLOAD_TOKEN_INVALID_OR_EXPIRED]: FILE_DOWNLOAD_TOKEN_INVALID_MESSAGE,
@@ -81,8 +80,10 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
     '원천징수 금액 입력값을 확인해 주세요. 0 이상의 원 단위 금액을 입력해야 합니다.',
   SETTLEMENT_EXPORT_SCOPE_TOKEN_REQUIRED:
     '선택·필터 원본 발급은 서버 발급 범위 확인(scopeToken)이 필요합니다.',
-  SETTLEMENT_EXPORT_SCOPE_TOKEN_INVALID: '발급 범위 확인이 유효하지 않습니다. 범위를 다시 확인해 주세요.',
-  SETTLEMENT_EXPORT_SCOPE_TOKEN_EXPIRED: '발급 범위 확인이 만료되었습니다. 범위를 다시 확인해 주세요.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_INVALID:
+    '발급 범위 확인이 유효하지 않습니다. 범위를 다시 확인해 주세요.',
+  SETTLEMENT_EXPORT_SCOPE_TOKEN_EXPIRED:
+    '발급 범위 확인이 만료되었습니다. 범위를 다시 확인해 주세요.',
   [SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED]: SETTLEMENT_CORRECTION_UNIT_AMOUNT_REQUIRED_MESSAGE,
   [SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID]:
     SETTLEMENT_CORRECTION_CALCULATION_UNIT_INVALID_MESSAGE,
@@ -90,10 +91,8 @@ const SETTLEMENT_BULK_CONFIRM_ERROR_MESSAGES: Record<string, string> = {
   [LEGACY_GEMINI_TAX_SNAPSHOT_MISSING]: LEGACY_GEMINI_TAX_SNAPSHOT_MISSING_MESSAGE,
   [TAX_REPORT_REQUIRED_IDENTITY_MISSING]: TAX_REPORT_REQUIRED_IDENTITY_MISSING_MESSAGE,
   [GEMINI_TRAINING_REPORT_MISSING]: GEMINI_TRAINING_REPORT_MISSING_MESSAGE,
-  SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED:
-    '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
-  SETTLEMENT_WAGE_RATE_NOT_CONFIGURED:
-    '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_ACTUAL_TRAINING_TIME_REQUIRED: '실적 시작·종료 시간이 없어 정산을 신청할 수 없습니다.',
+  SETTLEMENT_WAGE_RATE_NOT_CONFIGURED: '프로그램 강사비 단가가 없어 정산을 신청할 수 없습니다.',
   SETTLEMENT_BANK_ACCOUNT_REQUIRED:
     '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
   SETTLEMENT_ACCOUNT_UPDATE_VIA_CONSENT_ONLY:
@@ -199,7 +198,8 @@ function appendAdminPaymentIdsHint(baseMessage: string, paymentIds: number[]): s
   if (paymentIds.length === 0) return baseMessage
   // 관리자 화면용 — 개인정보 없는 지급 ID만. raw code/접미사 전체는 출력하지 않는다.
   const preview = paymentIds.slice(0, 20)
-  const more = paymentIds.length > preview.length ? ` 외 ${paymentIds.length - preview.length}건` : ''
+  const more =
+    paymentIds.length > preview.length ? ` 외 ${paymentIds.length - preview.length}건` : ''
   return `${baseMessage} (지급 ID: ${preview.join(', ')}${more})`
 }
 

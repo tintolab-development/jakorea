@@ -86,6 +86,6 @@ export interface PaymentOrderCalculationStatementCommitPayload {
   lineId: string
   status: PaymentOrderAdminLineProcessingStatus
   rejectionReason?: string
-  /** 확인 처리 시 강의비 지급 예정일 (ISO YYYY-MM-DD) */
+  /** 확인 처리 시 강사비 지급 예정일 (ISO YYYY-MM-DD) */
   lectureFeePaymentScheduledDate?: string
 }

@@ -75,11 +75,11 @@ describe('mapPaymentBasicInfo', () => {
     })
   })
 
-  it('레거시 강의비 오타는 강사비로 정규화한다', () => {
+  it('레거시 강사비 오타는 강사비로 정규화한다', () => {
     expect(
       mapPaymentBasicInfo({
         nameKo: '홍길동',
-        paymentPurpose: '강의비 또는 활동비 지급',
+        paymentPurpose: '강사비 또는 활동비 지급',
       })
     ).toMatchObject({
       paymentPurpose: '강사비 또는 활동비 지급',

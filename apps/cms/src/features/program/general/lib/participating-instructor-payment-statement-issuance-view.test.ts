@@ -19,7 +19,7 @@ const instructor = (
 })
 
 describe('buildParticipatingInstructorPaymentStatementViewOptions', () => {
-  it('없는 PII·강의비를 최강사 샘플로 채우지 않는다', () => {
+  it('없는 PII·강사비를 최강사 샘플로 채우지 않는다', () => {
     const options = buildParticipatingInstructorPaymentStatementViewOptions(instructor(), {
       id: 'set-1',
       schoolName: '진월초등학교',

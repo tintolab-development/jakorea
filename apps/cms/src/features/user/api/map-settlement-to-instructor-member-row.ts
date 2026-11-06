@@ -46,7 +46,9 @@ function paymentOrderStatusToInstructorUiStatus(
 }
 
 /** 강사 회원 상세 정산 탭·프로그램 참여 강사 — OpenAPI `statementStatus` + `paymentStatus` → 8종 UI key */
-export function resolveSettlementUiStatus(item: SettlementListItemResponse): InstructorSettlementUiStatus {
+export function resolveSettlementUiStatus(
+  item: SettlementListItemResponse
+): InstructorSettlementUiStatus {
   const paymentStatus = item.paymentStatus?.toUpperCase()
   const statementStatus = item.statementStatus?.toUpperCase()
 
@@ -76,7 +78,10 @@ export function resolveSettlementUiStatus(item: SettlementListItemResponse): Ins
   )
 }
 
-function mapItemToLine(item: SettlementFrontendItemResponse, index: number): InstructorSettlementInvoiceLineItem {
+function mapItemToLine(
+  item: SettlementFrontendItemResponse,
+  index: number
+): InstructorSettlementInvoiceLineItem {
   const amount = item.amount ?? 0
   const kind = mapSettlementFrontendItemTypeToLineKind(item.type, amount)
   return {
@@ -128,8 +133,7 @@ export function mapSettlementDetailToInstructorInvoice(
     line => line.kind === 'withholding' || line.산정항목.includes('원천')
   )
   const withholdingAmount =
-    listItem.withholdingTaxAmount ??
-    (withholdingLine ? Math.abs(withholdingLine.정산금액) : 0)
+    listItem.withholdingTaxAmount ?? (withholdingLine ? Math.abs(withholdingLine.정산금액) : 0)
   const totalAmount = settlement.totalAmount ?? listItem.netPaymentAmount ?? 0
   const lectureDate = formatIsoDateWithWeekday(listItem.lectureDate)
   const lectureFeeTitle = resolveLectureFeeStandardTitleFromSettlement(settlement)
@@ -137,7 +141,7 @@ export function mapSettlementDetailToInstructorInvoice(
     settlement.lectureFeeStandardAmount,
     settlement.items
   )
-  // taxIncomeType(BUSINESS_INCOME 등)은 소득 구분 — 강의비 책정 기준 라벨로 쓰지 않는다.
+  // taxIncomeType(BUSINESS_INCOME 등)은 소득 구분 — 강사비 책정 기준 라벨로 쓰지 않는다.
   const lectureFeeBasis =
     lectureFeeTitle !== '-'
       ? [lectureFeeTitle, lectureFeeAmount !== '-' ? lectureFeeAmount : '']
@@ -151,9 +155,7 @@ export function mapSettlementDetailToInstructorInvoice(
     sessionOrdinal
   )
   const lectureDateSessions =
-    sessionLabel !== '-'
-      ? `${lectureDate} | ${sessionLabel}`
-      : lectureDate
+    sessionLabel !== '-' ? `${lectureDate} | ${sessionLabel}` : lectureDate
 
   return {
     programName,
@@ -165,8 +167,7 @@ export function mapSettlementDetailToInstructorInvoice(
     }),
     operationPeriod: formatBusinessPeriodDisplay({
       period: settlement.period,
-      businessPeriodStart:
-        settlement.businessPeriodStart ?? listItem.businessPeriodStart,
+      businessPeriodStart: settlement.businessPeriodStart ?? listItem.businessPeriodStart,
       businessPeriodEnd: settlement.businessPeriodEnd ?? listItem.businessPeriodEnd,
       formatDate: formatIsoDateWithWeekday,
     }),
@@ -176,8 +177,7 @@ export function mapSettlementDetailToInstructorInvoice(
     ),
     lectureFeeBasis,
     businessIncomeEarner: formatBusinessIncomeEarnerLabel(settlement.businessIncomeEarnerLabel),
-    institutionName:
-      settlement.institutionName?.trim() || listItem.institutionName?.trim() || '-',
+    institutionName: settlement.institutionName?.trim() || listItem.institutionName?.trim() || '-',
     lectureDateSessions,
     lineItems: lineItems.filter(
       line => line.kind !== 'withholding' && !line.산정항목.includes('원천')
@@ -204,7 +204,8 @@ export function mapSettlementItemToInstructorMemberRow(
 
   const status = resolveSettlementUiStatus(item)
   const programName = item.programNameKo?.trim() || `프로그램 ${item.programId ?? ''}`
-  const calendarDate = item.lectureDate?.slice(0, 10) ?? item.expectedTransferDate?.slice(0, 10) ?? ''
+  const calendarDate =
+    item.lectureDate?.slice(0, 10) ?? item.expectedTransferDate?.slice(0, 10) ?? ''
 
   return {
     id: String(settlementId),
@@ -220,7 +221,11 @@ export function mapSettlementItemToInstructorMemberRow(
     status,
     scheduledAmount: item.netPaymentAmount ?? item.grossAmount ?? 0,
     detailAvailable: status !== 'none',
-    invoice: mapSettlementDetailToInstructorInvoice({ items: [], totalAmount: item.netPaymentAmount }, item, status),
+    invoice: mapSettlementDetailToInstructorInvoice(
+      { items: [], totalAmount: item.netPaymentAmount },
+      item,
+      status
+    ),
   }
 }
 

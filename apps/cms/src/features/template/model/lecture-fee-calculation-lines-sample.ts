@@ -1,11 +1,11 @@
 /**
- * 지급조서(발급용) — 「강의비 산출 내역」 미리보기용 목 데이터.
+ * 지급조서(발급용) — 「강사비 산출 내역」 미리보기용 목 데이터.
  * 스크린샷 예시(기관명·일자·차시·항목 라벨)에 맞추고, 금액 합계는 라인 amount 합과 일치한다.
  */
 
 import type { PaymentOrderCalculationStatementSessionBlock } from '@/features/settlement-management/model/payment-order-admin-list'
 
-/** 발급용 「강의비 산출 내역」테이블에 바인딩할 데이터 */
+/** 발급용 「강사비 산출 내역」테이블에 바인딩할 데이터 */
 export type PaymentStatementCalculationLinesViewModel = {
   blocks: PaymentOrderCalculationStatementSessionBlock[]
   formulaLabel: string
@@ -28,7 +28,7 @@ export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS: PaymentOrderCalculatio
         {
           id: 'issuance-sample-lecture',
           itemLabel: '강사비',
-          description: '프로그램 1회 강의비 (3급 강사)',
+          description: '프로그램 1회 강사비 (3급 강사)',
           amount: lectureFee,
           kind: 'lecture_fee',
         },
@@ -59,7 +59,7 @@ export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_BLOCKS: PaymentOrderCalculatio
   ]
 
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_FORMULA_LABEL =
-  '강의비 + 교통비 + 숙박비 - 원천징수'
+  '강사비 + 교통비 + 숙박비 - 원천징수'
 
 /** 템플릿 미리보기: 원천징수는 NN,NNN 마스킹 → 합계는 지급 항목 합(시안 415,000원) */
 export const LECTURE_FEE_CALCULATION_LINES_SAMPLE_TOTAL_AMOUNT =

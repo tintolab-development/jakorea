@@ -160,7 +160,7 @@ export function ApplicantGeneralInstructorBasicInfo({
       {showPostApprovalFields ? (
         <DetailInfoForm.Row type="single">
           <DetailInfoForm.Field
-            label="강의비 책정 기준"
+            label="강사비 책정 기준"
             fullRow
             view={lectureFeeView}
             edit={lectureFeeEdit}
@@ -195,7 +195,9 @@ export function ApplicantGeneralInstructorBasicInfo({
           lectureExperienceDisplay,
           contactDisplay,
           emailDisplay,
-          homeAddressDisplay: <HomeAddressDisplay address={instructor.address} mask={maskSensitive} />,
+          homeAddressDisplay: (
+            <HomeAddressDisplay address={instructor.address} mask={maskSensitive} />
+          ),
           accountDisplay: formatAccountDisplayContent(instructor, shouldMask),
           instructorFeeGradeView: <InstructorFeeGradeView instructor={instructor} />,
           instructorFeeGradeEdit:

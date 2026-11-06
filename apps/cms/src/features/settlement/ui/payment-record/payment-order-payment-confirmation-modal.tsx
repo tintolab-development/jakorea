@@ -20,7 +20,7 @@ function formatKoreanDateWithWeekday(value: Dayjs): string {
 export interface PaymentOrderPaymentConfirmationModalProps {
   open: boolean
   onCancel: () => void
-  /** 선택한 강의비 지급 예정일(ISO YYYY-MM-DD) */
+  /** 선택한 강사비 지급 예정일(ISO YYYY-MM-DD) */
   onConfirm: (payload: { lectureFeePaymentScheduledDateIso: string }) => void
   data: PaymentOrderProgramCalculationStatement | null
 }
@@ -68,7 +68,8 @@ export function PaymentOrderPaymentConfirmationModal({
             size="large"
             onClick={() =>
               onConfirm({ lectureFeePaymentScheduledDateIso: expectedDate.format('YYYY-MM-DD') })
-            } >
+            }
+          >
             지급조서 확인 완료
           </CmsButton>
         </div>
@@ -77,13 +78,17 @@ export function PaymentOrderPaymentConfirmationModal({
       {block0 ? (
         <div className="payment-order-payment-confirm">
           <p className="payment-order-payment-confirm__line">
-            아래 항목에 대한 <strong className="payment-order-payment-confirm__name">{instructorName}</strong>
-            님의 강의비 지급 요청을 확인 처리하시겠습니까?
+            아래 항목에 대한{' '}
+            <strong className="payment-order-payment-confirm__name">{instructorName}</strong>
+            님의 강사비 지급 요청을 확인 처리하시겠습니까?
           </p>
           <p className="payment-order-payment-confirm__line">
-            강의비는 <strong>매월 셋째주 화요일</strong>에 지급됩니다.
+            강사비는 <strong>매월 셋째주 화요일</strong>에 지급됩니다.
           </p>
-          <div className="payment-order-payment-confirm__detail-line" aria-label="참여 기관·강의일·회차">
+          <div
+            className="payment-order-payment-confirm__detail-line"
+            aria-label="참여 기관·강의일·회차"
+          >
             <span>{block0.institutionName}</span>
             <span className="payment-order-payment-confirm__sep" aria-hidden>
               |
@@ -95,7 +100,7 @@ export function PaymentOrderPaymentConfirmationModal({
             <span>{block0.lectureSessionDisplay}</span>
           </div>
           <div className="payment-order-payment-confirm__date-block">
-            <span className="payment-order-payment-confirm__date-label">강의비 지급 예정일</span>
+            <span className="payment-order-payment-confirm__date-label">강사비 지급 예정일</span>
             <DatePicker
               className="payment-order-payment-confirm__date-picker"
               value={expectedDate}

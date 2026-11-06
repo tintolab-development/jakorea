@@ -5,7 +5,10 @@ import {
   mapAccountPaymentDetailFromGetApi,
   resolveAccountPaymentMemberId,
 } from '@/features/settlement-management/api/account-payments/map-account-payment-detail'
-import type { AccountPaymentRow, AccountPaymentStatusDetail } from '@/features/settlement-management/model/account-payments-list'
+import type {
+  AccountPaymentRow,
+  AccountPaymentStatusDetail,
+} from '@/features/settlement-management/model/account-payments-list'
 import type { InstructorMemberDetailResponse } from '@/shared/api/generated/members/schemas'
 import type { AccountPaymentDetailResponse } from '@/shared/api/generated/settlement/schemas'
 
@@ -71,9 +74,9 @@ describe('resolveAccountPaymentMemberId', () => {
       payment: { instructorName: '이건희' },
       settlement: { instructorId: '190001' },
     }
-    expect(resolveAccountPaymentMemberId(detail, { ...baseRow, instructorMemberId: undefined })).toBe(
-      190001
-    )
+    expect(
+      resolveAccountPaymentMemberId(detail, { ...baseRow, instructorMemberId: undefined })
+    ).toBe(190001)
   })
 
   it('둘 다 없으면 row.instructorMemberId를 쓴다', () => {
@@ -183,7 +186,7 @@ describe('mapAccountPaymentDetailFromGetApi', () => {
         businessPeriodStart: '2026-01-01',
         businessPeriodEnd: '2026-12-31',
         period: '2026-11',
-        items: [{ type: 'instructor_fee', amount: 100_000, description: '강의비' }],
+        items: [{ type: 'instructor_fee', amount: 100_000, description: '강사비' }],
         totalAmount: 100_000,
       },
       sensitiveAccount: {

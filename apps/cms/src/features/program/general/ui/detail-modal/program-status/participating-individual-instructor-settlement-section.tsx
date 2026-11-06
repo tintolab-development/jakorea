@@ -182,7 +182,8 @@ export function ParticipatingIndividualInstructorSettlementSection({
               variant="default"
               size="h40"
               disabled={!remoteEnabled}
-              onClick={() => paymentStatementView.handleOpen(record)} >
+              onClick={() => paymentStatementView.handleOpen(record)}
+            >
               지급조서 보기
             </CmsButton>
           </div>
@@ -208,7 +209,7 @@ export function ParticipatingIndividualInstructorSettlementSection({
           </DetailInfoForm.Row>
           <DetailInfoForm.Row type="double">
             <DetailInfoForm.Field
-              label="강의비 책정 기준"
+              label="강사비 책정 기준"
               view={<LectureFeeBasisView instructor={feeViewRow} />}
             />
             <DetailInfoForm.Field
@@ -230,13 +231,15 @@ export function ParticipatingIndividualInstructorSettlementSection({
             size="h40"
             icon={<ButtonDownloadIcon />}
             disabled={!remoteEnabled || bulkDownloadLoading || downloadableRows.length === 0}
-            onClick={() => void handleBulkDownloadPaymentStatements()} >
+            onClick={() => void handleBulkDownloadPaymentStatements()}
+          >
             지급조서 일괄 다운로드
           </CmsButton>
           <ExcelButton
             onClick={exportExcel}
             loading={isExcelExporting}
-            disabled={rows.length === 0} />
+            disabled={rows.length === 0}
+          />
         </div>
       </div>
 

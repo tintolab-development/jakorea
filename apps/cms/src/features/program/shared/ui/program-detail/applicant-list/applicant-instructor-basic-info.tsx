@@ -117,7 +117,7 @@ export interface ApplicantInstructorBasicInfoProps {
   showApprovalStatus?: boolean
   /** 한 줄 소개 행 표시 여부 */
   showOneLineIntro?: boolean
-  /** 승인 완료 하단 테이블(강의비/사업소득자) 표시 여부. 미지정 시 승인 완료일 때만 표시 */
+  /** 승인 완료 하단 테이블(강사비/사업소득자) 표시 여부. 미지정 시 승인 완료일 때만 표시 */
   showPostApprovalFields?: boolean
   /** 회원 관리 강사 상세 등: 기본 정보 테이블 맨 아래 가입일·연동 소셜 행 */
   memberBasicInfoFooter?: {
@@ -178,7 +178,8 @@ export function ApplicantInstructorBasicInfo({
       instructor.instructorName
     )
 
-  const shouldShowPostApprovalFields = showPostApprovalFields ?? instructor.approvalStatus === 'approved'
+  const shouldShowPostApprovalFields =
+    showPostApprovalFields ?? instructor.approvalStatus === 'approved'
 
   return (
     <section className="applicant-instructor-basic-info">
@@ -230,9 +231,7 @@ export function ApplicantInstructorBasicInfo({
                   <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label">
                     정산 현황
                   </td>
-                  <td
-                    className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value applicant-instructor-basic-info__cell--settlement-status"
-                  >
+                  <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value applicant-instructor-basic-info__cell--settlement-status">
                     {instructor.settlementStatusLabel?.trim() || '-'}
                   </td>
                 </>
@@ -343,9 +342,7 @@ export function ApplicantInstructorBasicInfo({
       </div>
       {shouldShowPostApprovalFields ? (
         <div className="applicant-instructor-basic-info__table-wrap applicant-instructor-basic-info__post-approval-wrap">
-          <table
-            className="applicant-instructor-basic-info__table applicant-instructor-basic-info__table--post-approval"
-          >
+          <table className="applicant-instructor-basic-info__table applicant-instructor-basic-info__table--post-approval">
             <colgroup>
               <col style={{ width: '220px' }} />
               <col />
@@ -358,7 +355,7 @@ export function ApplicantInstructorBasicInfo({
                   scope="row"
                   className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--label"
                 >
-                  강의비 책정 기준
+                  강사비 책정 기준
                 </th>
                 <td className="applicant-instructor-basic-info__cell applicant-instructor-basic-info__cell--value">
                   <LectureFeeBasisView instructor={instructor} />

@@ -64,7 +64,7 @@ describe('payment-order-calculation-basis-detail', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
       {
         kind: 'lecture_fee',
-        itemLabel: '강의비',
+        itemLabel: '강사비',
         amount: 170000,
         lineId: 'lecture-gemini-1',
         lectureSessionDisplay: '2차시',
@@ -74,7 +74,7 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(detail?.layout).toBe('lectureFeeGemini')
   })
 
-  it('구분에 항목 타입 라벨 강사비 대신 강의비 책정 기준을 쓴다', () => {
+  it('구분에 항목 타입 라벨 강사비 대신 강사비 책정 기준을 쓴다', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
       {
         kind: 'lecture_fee',
@@ -104,7 +104,7 @@ describe('payment-order-calculation-basis-detail', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
       {
         kind: 'lecture_fee',
-        itemLabel: '강의비',
+        itemLabel: '강사비',
         amount: 915000,
         lineId: 'lecture-special-1',
         lectureSessionDisplay: '1차시',
@@ -125,7 +125,9 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(isSupportedBasisDetailLayout(buildLectureFeeSpecialBasisDetail(915000, '1차시'))).toBe(
       true
     )
-    expect(isSupportedBasisDetailLayout(buildLectureFeeGeminiBasisDetail(170000, '2차시'))).toBe(true)
+    expect(isSupportedBasisDetailLayout(buildLectureFeeGeminiBasisDetail(170000, '2차시'))).toBe(
+      true
+    )
     expect(isSupportedBasisDetailLayout(buildTravelBasisDetail(0))).toBe(true)
     expect(isSupportedBasisDetailLayout(buildLodgingBasisDetail(0))).toBe(true)
     expect(isSupportedBasisDetailLayout(buildMealBasisDetail())).toBe(true)
@@ -252,13 +254,13 @@ describe('payment-order-calculation-basis-detail', () => {
 
   it('lectureFeeLineDescriptionFromStandardTitle formats tier descriptions', () => {
     expect(lectureFeeLineDescriptionFromStandardTitle('1급 강사비')).toBe(
-      '프로그램 1회 강의비 (1급 강사)'
+      '프로그램 1회 강사비 (1급 강사)'
     )
     expect(lectureFeeLineDescriptionFromStandardTitle('특강 강사비')).toBe(
-      '프로그램 1회 강의비 (특강 강사)'
+      '프로그램 1회 강사비 (특강 강사)'
     )
     expect(lectureFeeLineDescriptionFromStandardTitle('제미나이 강사비')).toBe(
-      '프로그램 1회 강의비 (제미나이 강사)'
+      '프로그램 1회 강사비 (제미나이 강사)'
     )
   })
 
@@ -296,7 +298,7 @@ describe('payment-order-calculation-basis-detail', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
       {
         kind: 'lecture_fee',
-        itemLabel: '강의비',
+        itemLabel: '강사비',
         amount: 915000,
         lineId: 'lecture-schedule-name',
         lectureSessionDisplay: 'GROK_E2E_API CS03 1회차',
@@ -508,9 +510,9 @@ describe('payment-order-calculation-basis-detail', () => {
     expect(detail.lectureTimeDisplay).toBe('2차시')
   })
 
-  it('row.basisDetail 없어도 강의비·원천징수 등은 산정 기준 상세를 만든다 (교통비는 서버 basis만)', () => {
+  it('row.basisDetail 없어도 강사비·원천징수 등은 산정 기준 상세를 만든다 (교통비는 서버 basis만)', () => {
     const kinds = [
-      { kind: 'lecture_fee', itemLabel: '강의비', amount: 200000 },
+      { kind: 'lecture_fee', itemLabel: '강사비', amount: 200000 },
       { kind: 'lodging', itemLabel: '숙박비', amount: 150000 },
       { kind: 'meal', itemLabel: '식사비', amount: 30000 },
       { kind: 'activity', itemLabel: '활동비', amount: 50000 },
@@ -568,17 +570,17 @@ describe('payment-order-calculation-basis-detail', () => {
     }
   })
 
-  it('remote display snapshot은 강의비 fallback보다 우선한다', () => {
+  it('remote display snapshot은 강사비 fallback보다 우선한다', () => {
     const detail = resolvePaymentOrderCalculationBasisDetailForRow(
       {
         kind: 'lecture_fee',
-        itemLabel: '강의비',
+        itemLabel: '강사비',
         amount: 31500,
         lineId: 'lecture-remote-1',
         lectureSessionDisplay: '1차시',
         basisDetail: {
           layout: 'remote',
-          title: '강의비 산출 내역',
+          title: '강사비 산출 내역',
           lineLabels: ['회차', '단가'],
           formulaLines: ['회차별 산출'],
           summaryLabels: ['금액'],
