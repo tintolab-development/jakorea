@@ -4,6 +4,7 @@ import {
   correctedNowMs,
   createSessionWarningDismissState,
   isSessionIdleStillValid,
+  readJwtSidClaim,
   parseInstantMs,
   resolveSessionWarningView,
   type AdminAuthSessionResponse,
@@ -29,24 +30,39 @@ export function useSessionTimeout() {
   const [extending, setExtending] = useState(false)
   const dismissRef = useRef(createSessionWarningDismissState())
   const sessionRef = useRef<AdminAuthSessionResponse | null>(null)
+  const syncSequenceRef = useRef(0)
+  const expiryRecheckPendingRef = useRef(false)
+  const lastExpiryRecheckAtRef = useRef(0)
 
   const syncSession = useCallback(async () => {
-    if (!useAuthStore.getState().isAuthenticated) return
+    const initial = useAuthStore.getState()
+    if (!initial.isAuthenticated || !initial.token) return
+    const requestedToken = initial.token
+    const sequence = ++syncSequenceRef.current
+    // A response from an earlier token/request must never terminate or overwrite a newer session.
+    const isCurrent = () =>
+      syncSequenceRef.current === sequence &&
+      useAuthStore.getState().isAuthenticated &&
+      useAuthStore.getState().token === requestedToken
     try {
       const next = await getAdminAuthSession()
+      if (!isCurrent()) return
       sessionRef.current = next
       setSession(next)
       setServerClockOffsetMs(previous =>
         applyServerClockOffset(previous, next.serverNow, Date.now())
       )
     } catch (error) {
-      if (isAdminAuthUnauthorizedError(error) || isAdminAuthForbiddenError(error)) {
+      if (!isCurrent()) return
+      if (isAdminAuthUnauthorizedError(error)) {
+        // Axios has already performed the single permitted Refresh/retry for GET Session.
         logout()
         return
       }
-      if (!isAdminAuthRetryableTransportError(error)) {
-        logout()
-      }
+      // 403 is permission denial, 404 can mean the BE route is not deployed, and
+      // transport/invalid-response failures are not proof that the JWT expired.
+      sessionRef.current = null
+      setSession(null)
     }
   }, [logout])
 
@@ -56,7 +72,10 @@ export function useSessionTimeout() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      sessionRef.current = null
+      syncSequenceRef.current += 1
+      expiryRecheckPendingRef.current = false
+      lastExpiryRecheckAtRef.current = 0
+      sessionRef.current
       setSession(null)
       setVisibleKind(null)
       setRemainingMs(0)
@@ -73,9 +92,31 @@ export function useSessionTimeout() {
       if (document.visibilityState === 'visible') void syncSession()
     }
     const onStorage = (event: StorageEvent) => {
-      if (event.key === 'auth_token' || event.key === 'auth_refresh_token') {
-        void syncSession()
+      if (event.key !== 'auth_token' && event.key !== 'auth_refresh_token') return
+      const storedToken = window.localStorage.getItem('auth_token')
+      const activeToken = useAuthStore.getState().token
+      if (!storedToken) {
+        // Another tab logged out. Do not attempt a Session GET with a stale in-memory JWT.
+        if (event.key === 'auth_token') useAuthStore.getState().logout()
+        return
       }
+      if (storedToken !== activeToken) {
+        const oldSid = readJwtSidClaim(activeToken)
+        const newSid = readJwtSidClaim(storedToken)
+        if (oldSid && oldSid === newSid) {
+          // A sibling tab rotated the access token of the same login session.
+          useAuthStore.setState({
+            token: storedToken,
+            expiresAt: window.localStorage.getItem('auth_expires_at'),
+          })
+        } else {
+          // Different login identity: restore account data via the app auth store,
+          // never blindly attach the new token to the previous account's UI state.
+          void useAuthStore.getState().checkAuth()
+        }
+        return
+      }
+      void syncSession()
     }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('storage', onStorage)
@@ -91,7 +132,17 @@ export function useSessionTimeout() {
       const nowMs = correctedNowMs(Date.now(), serverClockOffsetMs)
       const view = resolveSessionWarningView({ session, nowMs })
       if (view && view.remainingMs <= 0) {
-        logout()
+        // A client timer (clock skew, suspended tab, stale status) is not a server
+        // revocation verdict. Recheck GET Session; only a current 401 may logout.
+        const clientNow = Date.now()
+        if (!expiryRecheckPendingRef.current &&
+            clientNow - lastExpiryRecheckAtRef.current >= 15_000) {
+          lastExpiryRecheckAtRef.current = clientNow
+          expiryRecheckPendingRef.current = true
+          void syncSession().finally(() => {
+            expiryRecheckPendingRef.current = false
+          })
+        }
         return
       }
       dismissRef.current.resetIfExpiryChanged(view?.kind ?? null, view?.expiresAtMs ?? null)
@@ -104,7 +155,7 @@ export function useSessionTimeout() {
     tick()
     const id = window.setInterval(tick, 1000)
     return () => window.clearInterval(id)
-  }, [isAuthenticated, session, serverClockOffsetMs, logout])
+  }, [isAuthenticated, session, serverClockOffsetMs, syncSession])
 
   const dismissWarning = useCallback(() => {
     const nowMs = correctedNowMs(Date.now(), serverClockOffsetMs)
@@ -115,13 +166,20 @@ export function useSessionTimeout() {
   }, [serverClockOffsetMs])
 
   const extendIdleSession = useCallback(async () => {
+    const requestedToken = useAuthStore.getState().token
+    const isCurrent = () => Boolean(requestedToken) &&
+      useAuthStore.getState().isAuthenticated &&
+      useAuthStore.getState().token === requestedToken
+    if (!isCurrent()) return
     setExtending(true)
     setExtendError(null)
     setSessionWarningActivitySuppressed(true)
     const previousIdle = sessionRef.current?.idleExpiresAt ?? null
     try {
       await postAdminAuthActivity()
+      if (!isCurrent()) return
       const next = await getAdminAuthSession()
+      if (!isCurrent()) return
       sessionRef.current = next
       setSession(next)
       const nowMs = correctedNowMs(Date.now(), applyServerClockOffset(0, next.serverNow, Date.now()))
@@ -134,11 +192,12 @@ export function useSessionTimeout() {
       }
       setExtendError('세션을 연장하지 못했습니다. 잠시 후 다시 시도해 주세요.')
     } catch (error) {
-      if (isAdminAuthUnauthorizedError(error) || isAdminAuthForbiddenError(error)) {
+      if (!isCurrent()) return
+      if (isAdminAuthUnauthorizedError(error)) {
         logout()
         return
       }
-      if (isAdminAuthRetryableTransportError(error)) {
+      if (isAdminAuthForbiddenError(error) || isAdminAuthRetryableTransportError(error)) {
         setExtendError('세션을 연장하지 못했습니다. 잠시 후 다시 시도해 주세요.')
         return
       }
