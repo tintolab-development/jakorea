@@ -95,7 +95,7 @@ function resolveRequestUrl(config: InternalAxiosRequestConfig): string {
   return config.url ?? raw
 }
 
-function isExcludedFromAutoRefresh(url?: string): boolean {
+function isExcludedFromBearerAuth(url?: string): boolean {
   if (!url) return false
   const path = url.split('?')[0] ?? url
   const prefix = adminAuthPaths.prefix
@@ -107,6 +107,13 @@ function isExcludedFromAutoRefresh(url?: string): boolean {
     path.includes(`${prefix}/signup`) ||
     path.includes(`${prefix}/sso/`)
   )
+}
+
+/** Activity is authenticated, but 401 must not trigger an automatic Refresh. */
+function isExcludedFromAutoRefresh(url?: string): boolean {
+  if (!url) return false
+  const path = url.split('?')[0] ?? url
+  return isExcludedFromBearerAuth(url) || path === `${adminAuthPaths.prefix}/activity`
 }
 
 /** refresh/logout 실패는 세션 핸들러·로그인 UI가 담당 — 글로벌 Alert 억제 */
@@ -353,7 +360,7 @@ axiosClient.interceptors.request.use(
     const retryable = config as RetryableRequest
     const url = resolveRequestUrl(config)
 
-    if (retryable.skipAuth || isExcludedFromAutoRefresh(url)) {
+    if (retryable.skipAuth || isExcludedFromBearerAuth(url)) {
       config.headers = clearAuthorizationHeader(config.headers)
       return config
     }
