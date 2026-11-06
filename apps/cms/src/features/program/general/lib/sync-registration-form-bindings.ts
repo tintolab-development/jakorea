@@ -18,6 +18,10 @@ import { shouldUseRemoteApi as shouldUseUjatProgramsRemoteApi } from '@/features
 import {
   getOperationalFormSpec,
   getRegistrationFormSpec,
+  isRegistrationCatalogTemplateId,
+  isSystemCatalogOnlyFormType,
+  isSystemCatalogOnlyTemplateCode,
+  REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID,
   pickOperationalFormBinding,
   programForApplicationFormEditor,
   recruitmentApplicationBindingScope,
@@ -295,6 +299,9 @@ async function copyCatalogOperationalFormVersion(args: {
   programId: string | number
   ownerProgramId?: number
 }): Promise<{ templateId: number; templateVersionId: number }> {
+  if (isRegistrationCatalogTemplateId(args.sourceTemplateId)) {
+    throw new Error('등록 양식(template 1)은 프로그램 전용 COPY 대상이 아닙니다.')
+  }
   const copyOwnerProgramId = args.ownerProgramId ?? toOwnerProgramId(args.programId)
   try {
     const copied = await copyFormTemplateVersionRemote(args.sourceTemplateId, {
@@ -396,6 +403,16 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
   if (spec == null) {
     throw new Error(`운영 양식 스펙을 찾을 수 없습니다: ${args.templateCode}`)
   }
+  const catalog = await resolveFormTemplateCatalogIds(args.templateCode).catch(() => null)
+  if (
+    isSystemCatalogOnlyFormType(spec.formType) ||
+    isSystemCatalogOnlyTemplateCode(args.templateCode)
+  ) {
+    return {
+      templateId: catalog?.templateId ?? REGISTRATION_GENERAL_CATALOG_TEMPLATE_ID,
+      templateVersionId: catalog?.templateVersionId ?? args.versionId,
+    }
+  }
   // Do this before fetching or mutating a template version. A binding PATCH
   // can be rejected after recruitment applications exist; the preflight keeps
   // that rejection from leaving a copied/published orphan version behind.
@@ -403,7 +420,6 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
 
   let draftTemplateId: number
   let publishedVersionId: number
-  const catalog = await resolveFormTemplateCatalogIds(args.templateCode).catch(() => null)
 
   if (args.reusePublished != null) {
     draftTemplateId = args.reusePublished.templateId
@@ -422,6 +438,12 @@ async function saveProgramScopedOperationalFormVersionOnce(input: {
       programId: args.program.id,
     })
     if (plan.action === 'copy-from-catalog') {
+      if (isRegistrationCatalogTemplateId(sourceTemplateId)) {
+        return {
+          templateId: sourceTemplateId,
+          templateVersionId: catalog?.templateVersionId ?? args.versionId,
+        }
+      }
       const copied = await copyCatalogOperationalFormVersion({
         sourceTemplateId,
         sourceVersionId: args.versionId,

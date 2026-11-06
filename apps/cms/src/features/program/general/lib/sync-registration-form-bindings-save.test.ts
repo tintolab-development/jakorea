@@ -134,6 +134,19 @@ describe('saveProgramScopedOperationalFormVersion', () => {
     ).toEqual({ templateId: 88, templateVersionId: 880 })
   })
 
+  it('registration-general(template 1)은 versions/copy 하지 않는다', async () => {
+    resolveFormTemplateCatalogIds.mockResolvedValue({ templateId: 1, templateVersionId: 11 })
+    const saved = await saveProgramScopedOperationalFormVersion({
+      program: { id: '186547' } as Program,
+      templateCode: 'registration-general',
+      versionId: 11,
+      draft: userDraft,
+    })
+    expect(copyFormTemplateVersionRemote).not.toHaveBeenCalled()
+    expect(saveFormTemplateVersionDraftByVersionId).not.toHaveBeenCalled()
+    expect(saved).toEqual({ templateId: 1, templateVersionId: 11 })
+  })
+
   it('copies even a DRAFT version when ownership is unknown (always COPY — shared data guard)', async () => {
     fetchFormTemplateVersionRemote.mockResolvedValue({
       templateId: 10,

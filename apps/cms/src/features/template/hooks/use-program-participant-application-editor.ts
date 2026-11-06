@@ -2317,6 +2317,20 @@ export function useProgramParticipantApplicationEditor(
         localOnly: boolean
       }) => {
         if (!payload.localOnly && persistTemplateVersionId != null && linkedProgram?.id != null) {
+          const { isSystemCatalogOnlyTemplateCode } = await import(
+            '@/features/program/general/lib/operational-form-bindings'
+          )
+          if (isSystemCatalogOnlyTemplateCode(templateId)) {
+            await persistWritingFormTemplateDraft({
+              templateId,
+              draft: payload.draft,
+              overlay: payload.overlay,
+              editorState: payload.editorState,
+              settingsJson: payload.settingsJson,
+              localOnly: true,
+            })
+            return
+          }
           const { saveProgramScopedOperationalFormVersion } = await import(
             '@/features/program/general/lib/sync-registration-form-bindings'
           )
