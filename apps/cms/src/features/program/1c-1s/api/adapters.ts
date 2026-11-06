@@ -50,6 +50,7 @@ import {
   readProgramAuditNames,
   withExpectedUpdatedAt,
 } from '@/features/program/shared/lib/program-audit-names'
+import { mapProgramRoundsToWriteRequest } from '@/features/program/shared/lib/round-write'
 import {
   applyParticipantRecruitmentColumnsFromResponse,
   applyProgramMissingCommonStringFieldsToUpdateRequest,
@@ -353,24 +354,8 @@ export function mapCompanySchoolDetailToProgram(dto: ProgramResponse): Program {
   )
 }
 
-/** GET round id만 다시 보낸다. `186016-round-1` 같은 화면용 id를 넣으면 서버가 기존 일정을 삭제 후 재생성한다. */
-function persistedRoundId(id: string | undefined): string | undefined {
-  if (!id || !/^\d+$/.test(id)) return undefined
-  return id
-}
-
 function mapRounds(program: Program): ProgramUpdateRequest['rounds'] {
-  return program.rounds.map(round => ({
-    ...(persistedRoundId(round.id) ? { id: persistedRoundId(round.id) } : {}),
-    roundNumber: round.roundNumber,
-    startDate: toDate(round.startDate),
-    endDate: toDate(round.endDate),
-    capacity: round.capacity,
-    classCount: round.classCount,
-    status: round.status,
-    curriculum: round.curriculum,
-    deliveryType: round.deliveryType,
-  }))
+  return mapProgramRoundsToWriteRequest(program, toDate)
 }
 
 /** `serializeCompanySchoolServiceDetailJson` / `companySchoolDetails`에 들어가는 도메인 키 */
