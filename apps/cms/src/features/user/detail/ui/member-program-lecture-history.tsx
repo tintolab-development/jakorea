@@ -106,7 +106,7 @@ export interface MemberProgramLectureHistoryProps {
     reason: CertificateIssueReasonValue,
     reasonLabel: string
   ) => void | Promise<void>
-  /** 수료증/참여인증서 일괄 발급 (수강·봉사 이력) */
+  /** 수료증/참가인증서 일괄 발급 (수강·봉사 이력) */
   onStudentCertificateIssue?: (
     rowIds: readonly string[],
     reason: CertificateIssueReasonValue,
@@ -652,7 +652,7 @@ export function MemberProgramLectureHistory({
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
                     }
                   >
-                    수료증/참여인증서 발급
+                    수료증/참가인증서 발급
                   </FilterTableToolbarButton>
                 )}
               {mode === 'volunteerProgram' && showCertificateBulkIssue && (
@@ -675,7 +675,7 @@ export function MemberProgramLectureHistory({
                       openCertificateIssueModal(selectedRowKeys.map(String), 'completion')
                     }
                   >
-                    수료증/참여인증서 발급
+                    수료증/참가인증서 발급
                   </FilterTableToolbarButton>
                 </>
               )}
@@ -765,7 +765,7 @@ export function MemberProgramLectureHistory({
             onCancel={() => setCertificateIssueModalOpen(false)}
             applicationIds={certificateIssueTargetIds}
             certificateDocumentLabel={
-              certificateIssueKind === 'activity' ? '활동인증서' : '수료증/참여인증서'
+              certificateIssueKind === 'activity' ? '활동인증서' : '수료증/참가인증서'
             }
             onIssue={(reason, reasonLabel) => {
               const handler =

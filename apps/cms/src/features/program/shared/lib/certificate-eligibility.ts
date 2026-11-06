@@ -118,7 +118,7 @@ export function messageForCertificateReasonCode(
 /**
  * 동의 근거 없음·발급 기간 만료는 수료/참여 유형과 무관하게 발급 CTA를 막는다.
  * eligible=true 이고 blockingReasons 가 비면 reasonCode 가 있어도 통과한다.
- * PARTICIPANT_NOT_COMPLETED 만으로는 참여인증서 경로를 닫지 않는다.
+ * PARTICIPANT_NOT_COMPLETED 만으로는 참가인증서 경로를 닫지 않는다.
  */
 export function certificateIssuePrecheckBlockMessage(
   eligibility: CertificateEligibilityLike | null | undefined

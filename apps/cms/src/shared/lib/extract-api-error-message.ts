@@ -129,7 +129,7 @@ const SETTLEMENT_ACCOUNT_ERROR_MESSAGES: Record<string, string> = {
     '지급조서 사전 동의서를 작성·완료하세요. 등록된 정산 계좌가 없어 계좌이체를 생성할 수 없습니다.',
 }
 
-/** 수료증·참여인증서 — 서버 message가 비거나 code만 있을 때 */
+/** 수료증·참가인증서 — 서버 message가 비거나 code만 있을 때 */
 const CERTIFICATE_ISSUE_ERROR_MESSAGES: Record<string, string> = {
   CERTIFICATE_CONSENT_EVIDENCE_UNAVAILABLE:
     '수료증 발급 기간을 확인할 동의 또는 신청 정보가 없습니다.',

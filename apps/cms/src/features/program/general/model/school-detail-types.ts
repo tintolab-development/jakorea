@@ -91,7 +91,7 @@ export interface SchoolDetailForModal {
   activityWithdrawStopScheduleLabel?: string
   /** BE participant availableActions — 상세 포기 버튼 게이트 */
   availableActions?: string[]
-  /** 프로그램 참여 신청일 — 수료증/참여인증서 발급 가능 기한(3년) 산정 기준 */
+  /** 프로그램 참여 신청일 — 수료증/참가인증서 발급 가능 기한(3년) 산정 기준 */
   participationAppliedAt?: string
   /** 기관 신청 상세 `gradeBlocks` — 등록 학년·학급 SSOT */
   gradeBlocks?: GradeBlock[] | null
